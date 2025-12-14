@@ -13,6 +13,9 @@ namespace WPSellServices\Core;
 use WPSellServices\Admin\Admin;
 use WPSellServices\Frontend\Frontend;
 use WPSellServices\Integrations\IntegrationManager;
+use WPSellServices\PostTypes\ServicePostType;
+use WPSellServices\PostTypes\BuyerRequestPostType;
+use WPSellServices\Services\NotificationService;
 
 /**
  * Main plugin class.
@@ -91,12 +94,73 @@ final class Plugin {
 	 */
 	public function init(): void {
 		$this->set_locale();
+		$this->register_post_types();
 		$this->define_admin_hooks();
 		$this->define_frontend_hooks();
 		$this->define_integration_hooks();
+		$this->define_notification_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
+	}
+
+	/**
+	 * Register custom post types and taxonomies.
+	 *
+	 * @return void
+	 */
+	private function register_post_types(): void {
+		$service_post_type = new ServicePostType();
+		$service_post_type->init();
+
+		$buyer_request_post_type = new BuyerRequestPostType();
+		$buyer_request_post_type->init();
+	}
+
+	/**
+	 * Define notification event hooks.
+	 *
+	 * @return void
+	 */
+	private function define_notification_hooks(): void {
+		$notification_service = new NotificationService();
+
+		// Order status change notifications.
+		$this->loader->add_action(
+			'wpss_order_status_changed',
+			function ( int $order_id, string $new_status, string $old_status ) use ( $notification_service ): void {
+				$notification_service->notify_order_status( $order_id, $new_status, $old_status );
+			},
+			10,
+			3
+		);
+
+		// New order notification.
+		$this->loader->add_action(
+			'wpss_order_status_pending_requirements',
+			function ( int $order_id ) use ( $notification_service ): void {
+				$notification_service->notify_order_created( $order_id );
+			}
+		);
+
+		// Message sent notification.
+		$this->loader->add_action(
+			'wpss_message_sent',
+			function ( $message, $conversation ) use ( $notification_service ): void {
+				// Notify other participants.
+				foreach ( $conversation->participants as $participant_id ) {
+					if ( $participant_id !== $message->sender_id ) {
+						$notification_service->notify_new_message(
+							$conversation->id,
+							$message->sender_id,
+							$participant_id
+						);
+					}
+				}
+			},
+			10,
+			2
+		);
 	}
 
 	/**

@@ -169,6 +169,9 @@ function wpss_init(): void {
 		require_once $autoloader;
 	}
 
+	// Load helper functions.
+	require_once WPSS_PLUGIN_DIR . 'src/functions.php';
+
 	// Load the plugin.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Plugin.php';
 

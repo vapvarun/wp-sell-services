@@ -1,0 +1,354 @@
+<?php
+/**
+ * WooCommerce Product Provider
+ *
+ * @package WPSellServices\Integrations\WooCommerce
+ * @since   1.0.0
+ */
+
+declare(strict_types=1);
+
+namespace WPSellServices\Integrations\WooCommerce;
+
+use WPSellServices\Integrations\Contracts\ProductProviderInterface;
+use WPSellServices\Models\Service;
+use WPSellServices\PostTypes\ServicePostType;
+
+/**
+ * Provides product functionality through WooCommerce.
+ *
+ * @since 1.0.0
+ */
+class WCProductProvider implements ProductProviderInterface {
+
+	/**
+	 * Initialize hooks.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		add_filter( 'product_type_selector', [ $this, 'add_service_type_option' ] );
+		add_action( 'woocommerce_product_options_general_product_data', [ $this, 'add_service_options' ] );
+		add_action( 'woocommerce_process_product_meta', [ $this, 'save_service_meta' ] );
+		add_filter( 'woocommerce_product_data_tabs', [ $this, 'add_service_data_tab' ] );
+		add_action( 'woocommerce_product_data_panels', [ $this, 'render_service_data_panel' ] );
+	}
+
+	/**
+	 * Check if a product is marked as a service.
+	 *
+	 * @param int $product_id Platform product ID.
+	 * @return bool
+	 */
+	public function is_service_product( int $product_id ): bool {
+		return 'yes' === get_post_meta( $product_id, '_wpss_is_service', true );
+	}
+
+	/**
+	 * Get service data from platform product.
+	 *
+	 * @param int $product_id Platform product ID.
+	 * @return Service|null
+	 */
+	public function get_service( int $product_id ): ?Service {
+		if ( ! $this->is_service_product( $product_id ) ) {
+			return null;
+		}
+
+		$service_id = get_post_meta( $product_id, '_wpss_service_id', true );
+
+		if ( $service_id ) {
+			return wpss_get_service( (int) $service_id );
+		}
+
+		// Create Service from WC product data as fallback.
+		$product = wc_get_product( $product_id );
+
+		if ( ! $product ) {
+			return null;
+		}
+
+		$service = new Service();
+		$service->id          = $product_id;
+		$service->title       = $product->get_name();
+		$service->description = $product->get_description();
+		$service->excerpt     = $product->get_short_description();
+		$service->vendor_id   = (int) get_post_field( 'post_author', $product_id );
+		$service->status      = $product->get_status();
+		$service->thumbnail_id = $product->get_image_id();
+
+		return $service;
+	}
+
+	/**
+	 * Get vendor/author IDs for a service.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return int[]
+	 */
+	public function get_service_vendors( int $product_id ): array {
+		$author_id = (int) get_post_field( 'post_author', $product_id );
+
+		if ( ! $author_id ) {
+			return [];
+		}
+
+		return [ $author_id ];
+	}
+
+	/**
+	 * Get service requirements configuration.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return array
+	 */
+	public function get_requirements( int $product_id ): array {
+		$service_id = get_post_meta( $product_id, '_wpss_service_id', true );
+
+		if ( $service_id ) {
+			return get_post_meta( (int) $service_id, '_wpss_requirements', true ) ?: [];
+		}
+
+		return get_post_meta( $product_id, '_wpss_requirements', true ) ?: [];
+	}
+
+	/**
+	 * Get estimated delivery time.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return string
+	 */
+	public function get_delivery_time( int $product_id ): string {
+		$days = (int) get_post_meta( $product_id, '_wpss_delivery_days', true );
+
+		if ( ! $days ) {
+			$service_id = get_post_meta( $product_id, '_wpss_service_id', true );
+			if ( $service_id ) {
+				$days = (int) get_post_meta( (int) $service_id, '_wpss_fastest_delivery', true );
+			}
+		}
+
+		if ( ! $days ) {
+			return '';
+		}
+
+		if ( 1 === $days ) {
+			return __( '1 day', 'wp-sell-services' );
+		}
+
+		/* translators: %d: number of days */
+		return sprintf( __( '%d days', 'wp-sell-services' ), $days );
+	}
+
+	/**
+	 * Mark a product as service type.
+	 *
+	 * @param int  $product_id Product ID.
+	 * @param bool $is_service Whether it's a service.
+	 * @return void
+	 */
+	public function set_service_type( int $product_id, bool $is_service ): void {
+		update_post_meta( $product_id, '_wpss_is_service', $is_service ? 'yes' : 'no' );
+	}
+
+	/**
+	 * Add service type option to product editor.
+	 *
+	 * @param array $options Existing product type options.
+	 * @return array
+	 */
+	public function add_service_type_option( array $options ): array {
+		// We don't add a new product type, but use a checkbox instead.
+		return $options;
+	}
+
+	/**
+	 * Add service options to product general tab.
+	 *
+	 * @return void
+	 */
+	public function add_service_options(): void {
+		global $post;
+
+		echo '<div class="options_group show_if_simple show_if_variable">';
+
+		woocommerce_wp_checkbox(
+			[
+				'id'          => '_wpss_is_service',
+				'label'       => __( 'This is a Service', 'wp-sell-services' ),
+				'description' => __( 'Enable to sell this product as a service with requirements, delivery, and messaging.', 'wp-sell-services' ),
+			]
+		);
+
+		// Link to existing service CPT.
+		$services = get_posts(
+			[
+				'post_type'      => ServicePostType::POST_TYPE,
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'post_status'    => 'publish',
+			]
+		);
+
+		$service_options = [ '' => __( '— Create new service —', 'wp-sell-services' ) ];
+
+		foreach ( $services as $service ) {
+			$service_options[ $service->ID ] = $service->post_title;
+		}
+
+		woocommerce_wp_select(
+			[
+				'id'          => '_wpss_service_id',
+				'label'       => __( 'Link to Service', 'wp-sell-services' ),
+				'description' => __( 'Link this product to an existing service or create a new one.', 'wp-sell-services' ),
+				'options'     => $service_options,
+				'class'       => 'wc-enhanced-select',
+			]
+		);
+
+		woocommerce_wp_text_input(
+			[
+				'id'          => '_wpss_delivery_days',
+				'label'       => __( 'Delivery Time (days)', 'wp-sell-services' ),
+				'description' => __( 'Default delivery time in days.', 'wp-sell-services' ),
+				'type'        => 'number',
+				'custom_attributes' => [
+					'min'  => '1',
+					'step' => '1',
+				],
+			]
+		);
+
+		woocommerce_wp_text_input(
+			[
+				'id'          => '_wpss_revisions',
+				'label'       => __( 'Revisions Included', 'wp-sell-services' ),
+				'description' => __( 'Number of revisions included. Use -1 for unlimited.', 'wp-sell-services' ),
+				'type'        => 'number',
+				'custom_attributes' => [
+					'min'  => '-1',
+					'step' => '1',
+				],
+			]
+		);
+
+		echo '</div>';
+	}
+
+	/**
+	 * Add service data tab.
+	 *
+	 * @param array $tabs Existing tabs.
+	 * @return array
+	 */
+	public function add_service_data_tab( array $tabs ): array {
+		$tabs['wpss_service'] = [
+			'label'    => __( 'Service Settings', 'wp-sell-services' ),
+			'target'   => 'wpss_service_data',
+			'class'    => [ 'show_if_wpss_service' ],
+			'priority' => 25,
+		];
+
+		return $tabs;
+	}
+
+	/**
+	 * Render service data panel.
+	 *
+	 * @return void
+	 */
+	public function render_service_data_panel(): void {
+		global $post;
+
+		echo '<div id="wpss_service_data" class="panel woocommerce_options_panel hidden">';
+		echo '<div class="options_group">';
+
+		echo '<p class="form-field">';
+		echo '<label>' . esc_html__( 'Requirements', 'wp-sell-services' ) . '</label>';
+		echo '<span class="description">' . esc_html__( 'Configure service requirements in the linked Service post.', 'wp-sell-services' ) . '</span>';
+		echo '</p>';
+
+		$service_id = get_post_meta( $post->ID, '_wpss_service_id', true );
+
+		if ( $service_id ) {
+			$edit_link = get_edit_post_link( (int) $service_id );
+			echo '<p class="form-field">';
+			echo '<a href="' . esc_url( $edit_link ) . '" class="button" target="_blank">';
+			echo esc_html__( 'Edit Linked Service', 'wp-sell-services' );
+			echo '</a>';
+			echo '</p>';
+		}
+
+		echo '</div>';
+		echo '</div>';
+	}
+
+	/**
+	 * Save service meta on product save.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return void
+	 */
+	public function save_service_meta( int $product_id ): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		$is_service    = isset( $_POST['_wpss_is_service'] ) ? 'yes' : 'no';
+		$service_id    = isset( $_POST['_wpss_service_id'] ) ? absint( $_POST['_wpss_service_id'] ) : 0;
+		$delivery_days = isset( $_POST['_wpss_delivery_days'] ) ? absint( $_POST['_wpss_delivery_days'] ) : 7;
+		$revisions     = isset( $_POST['_wpss_revisions'] ) ? intval( $_POST['_wpss_revisions'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		update_post_meta( $product_id, '_wpss_is_service', $is_service );
+		update_post_meta( $product_id, '_wpss_delivery_days', $delivery_days );
+		update_post_meta( $product_id, '_wpss_revisions', $revisions );
+
+		if ( $service_id ) {
+			update_post_meta( $product_id, '_wpss_service_id', $service_id );
+
+			// Store product ID in service meta.
+			$platform_ids = get_post_meta( $service_id, '_wpss_platform_ids', true ) ?: [];
+			$platform_ids['woocommerce'] = $product_id;
+			update_post_meta( $service_id, '_wpss_platform_ids', $platform_ids );
+		}
+	}
+
+	/**
+	 * Sync service CPT with platform product.
+	 *
+	 * @param int $service_id  Service CPT ID.
+	 * @param int $product_id  Platform product ID.
+	 * @return bool
+	 */
+	public function sync_with_service( int $service_id, int $product_id ): bool {
+		$product = wc_get_product( $product_id );
+
+		if ( ! $product ) {
+			return false;
+		}
+
+		// Update service with product data.
+		wp_update_post(
+			[
+				'ID'           => $service_id,
+				'post_title'   => $product->get_name(),
+				'post_content' => $product->get_description(),
+				'post_excerpt' => $product->get_short_description(),
+			]
+		);
+
+		// Update meta.
+		if ( $product->get_image_id() ) {
+			set_post_thumbnail( $service_id, $product->get_image_id() );
+		}
+
+		// Store platform mapping.
+		$platform_ids = get_post_meta( $service_id, '_wpss_platform_ids', true ) ?: [];
+		$platform_ids['woocommerce'] = $product_id;
+		update_post_meta( $service_id, '_wpss_platform_ids', $platform_ids );
+
+		update_post_meta( $product_id, '_wpss_service_id', $service_id );
+		update_post_meta( $product_id, '_wpss_is_service', 'yes' );
+
+		return true;
+	}
+}

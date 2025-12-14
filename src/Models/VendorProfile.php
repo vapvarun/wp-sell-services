@@ -1,0 +1,409 @@
+<?php
+/**
+ * Vendor Profile Model
+ *
+ * @package WPSellServices\Models
+ * @since   1.0.0
+ */
+
+declare(strict_types=1);
+
+namespace WPSellServices\Models;
+
+/**
+ * Represents a vendor/seller profile.
+ *
+ * @since 1.0.0
+ */
+class VendorProfile {
+
+	/**
+	 * Vendor tier levels.
+	 */
+	public const TIER_NEW       = 'new';
+	public const TIER_RISING    = 'rising';
+	public const TIER_TOP_RATED = 'top_rated';
+	public const TIER_PRO       = 'pro';
+
+	/**
+	 * Profile ID.
+	 *
+	 * @var int
+	 */
+	public int $id;
+
+	/**
+	 * WordPress user ID.
+	 *
+	 * @var int
+	 */
+	public int $user_id;
+
+	/**
+	 * Display name.
+	 *
+	 * @var string
+	 */
+	public string $display_name;
+
+	/**
+	 * Professional title/tagline.
+	 *
+	 * @var string
+	 */
+	public string $title = '';
+
+	/**
+	 * Bio/description.
+	 *
+	 * @var string
+	 */
+	public string $bio = '';
+
+	/**
+	 * Profile avatar attachment ID.
+	 *
+	 * @var int|null
+	 */
+	public ?int $avatar_id;
+
+	/**
+	 * Profile cover image attachment ID.
+	 *
+	 * @var int|null
+	 */
+	public ?int $cover_id;
+
+	/**
+	 * Country code.
+	 *
+	 * @var string
+	 */
+	public string $country = '';
+
+	/**
+	 * Languages spoken.
+	 *
+	 * @var array<string>
+	 */
+	public array $languages = [];
+
+	/**
+	 * Skills/expertise.
+	 *
+	 * @var array<string>
+	 */
+	public array $skills = [];
+
+	/**
+	 * Certifications/credentials.
+	 *
+	 * @var array<array{name: string, issuer: string, year: int}>
+	 */
+	public array $certifications = [];
+
+	/**
+	 * Education history.
+	 *
+	 * @var array<array{degree: string, institution: string, year: int}>
+	 */
+	public array $education = [];
+
+	/**
+	 * Vendor tier.
+	 *
+	 * @var string
+	 */
+	public string $tier = self::TIER_NEW;
+
+	/**
+	 * Average rating.
+	 *
+	 * @var float
+	 */
+	public float $rating = 0.0;
+
+	/**
+	 * Total reviews received.
+	 *
+	 * @var int
+	 */
+	public int $review_count = 0;
+
+	/**
+	 * Total orders completed.
+	 *
+	 * @var int
+	 */
+	public int $orders_completed = 0;
+
+	/**
+	 * Response rate percentage.
+	 *
+	 * @var float
+	 */
+	public float $response_rate = 0.0;
+
+	/**
+	 * Average response time in hours.
+	 *
+	 * @var float
+	 */
+	public float $response_time = 0.0;
+
+	/**
+	 * On-time delivery rate percentage.
+	 *
+	 * @var float
+	 */
+	public float $delivery_rate = 0.0;
+
+	/**
+	 * Order completion rate percentage.
+	 *
+	 * @var float
+	 */
+	public float $completion_rate = 0.0;
+
+	/**
+	 * Whether vendor is verified.
+	 *
+	 * @var bool
+	 */
+	public bool $is_verified = false;
+
+	/**
+	 * Whether vendor is currently available.
+	 *
+	 * @var bool
+	 */
+	public bool $is_available = true;
+
+	/**
+	 * Vacation mode end date.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public ?\DateTimeImmutable $vacation_until;
+
+	/**
+	 * Social links.
+	 *
+	 * @var array<string, string>
+	 */
+	public array $social_links = [];
+
+	/**
+	 * Member since timestamp.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public ?\DateTimeImmutable $member_since;
+
+	/**
+	 * Last active timestamp.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public ?\DateTimeImmutable $last_active;
+
+	/**
+	 * Created timestamp.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public ?\DateTimeImmutable $created_at;
+
+	/**
+	 * Updated timestamp.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public ?\DateTimeImmutable $updated_at;
+
+	/**
+	 * Create from database row.
+	 *
+	 * @param object $row Database row.
+	 * @return self
+	 */
+	public static function from_db( object $row ): self {
+		$profile = new self();
+
+		$profile->id               = (int) $row->id;
+		$profile->user_id          = (int) $row->user_id;
+		$profile->display_name     = $row->display_name;
+		$profile->title            = $row->title ?? '';
+		$profile->bio              = $row->bio ?? '';
+		$profile->avatar_id        = $row->avatar_id ? (int) $row->avatar_id : null;
+		$profile->cover_id         = $row->cover_id ? (int) $row->cover_id : null;
+		$profile->country          = $row->country ?? '';
+		$profile->languages        = $row->languages ? json_decode( $row->languages, true ) : [];
+		$profile->skills           = $row->skills ? json_decode( $row->skills, true ) : [];
+		$profile->certifications   = $row->certifications ? json_decode( $row->certifications, true ) : [];
+		$profile->education        = $row->education ? json_decode( $row->education, true ) : [];
+		$profile->tier             = $row->tier ?? self::TIER_NEW;
+		$profile->rating           = (float) $row->rating;
+		$profile->review_count     = (int) $row->review_count;
+		$profile->orders_completed = (int) $row->orders_completed;
+		$profile->response_rate    = (float) $row->response_rate;
+		$profile->response_time    = (float) $row->response_time;
+		$profile->delivery_rate    = (float) $row->delivery_rate;
+		$profile->completion_rate  = (float) $row->completion_rate;
+		$profile->is_verified      = (bool) $row->is_verified;
+		$profile->is_available     = (bool) $row->is_available;
+		$profile->social_links     = $row->social_links ? json_decode( $row->social_links, true ) : [];
+
+		// Timestamps.
+		$profile->vacation_until = $row->vacation_until ? new \DateTimeImmutable( $row->vacation_until ) : null;
+		$profile->member_since   = $row->member_since ? new \DateTimeImmutable( $row->member_since ) : null;
+		$profile->last_active    = $row->last_active ? new \DateTimeImmutable( $row->last_active ) : null;
+		$profile->created_at     = $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
+		$profile->updated_at     = $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+
+		return $profile;
+	}
+
+	/**
+	 * Get vendor profile by user ID.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return self|null
+	 */
+	public static function get_by_user_id( int $user_id ): ?self {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_vendor_profiles';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE user_id = %d",
+				$user_id
+			)
+		);
+
+		return $row ? self::from_db( $row ) : null;
+	}
+
+	/**
+	 * Get all tier levels.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_tiers(): array {
+		return [
+			self::TIER_NEW       => __( 'New Seller', 'wp-sell-services' ),
+			self::TIER_RISING    => __( 'Rising Talent', 'wp-sell-services' ),
+			self::TIER_TOP_RATED => __( 'Top Rated', 'wp-sell-services' ),
+			self::TIER_PRO       => __( 'Pro Seller', 'wp-sell-services' ),
+		];
+	}
+
+	/**
+	 * Get tier label.
+	 *
+	 * @return string
+	 */
+	public function get_tier_label(): string {
+		$tiers = self::get_tiers();
+		return $tiers[ $this->tier ] ?? $this->tier;
+	}
+
+	/**
+	 * Get WordPress user.
+	 *
+	 * @return \WP_User|null
+	 */
+	public function get_user(): ?\WP_User {
+		return get_user_by( 'id', $this->user_id ) ?: null;
+	}
+
+	/**
+	 * Get avatar URL.
+	 *
+	 * @param string $size Image size.
+	 * @return string
+	 */
+	public function get_avatar_url( string $size = 'thumbnail' ): string {
+		if ( $this->avatar_id ) {
+			$url = wp_get_attachment_image_url( $this->avatar_id, $size );
+			if ( $url ) {
+				return $url;
+			}
+		}
+
+		return get_avatar_url( $this->user_id, [ 'size' => 150 ] );
+	}
+
+	/**
+	 * Get cover image URL.
+	 *
+	 * @param string $size Image size.
+	 * @return string
+	 */
+	public function get_cover_url( string $size = 'large' ): string {
+		if ( ! $this->cover_id ) {
+			return '';
+		}
+
+		return wp_get_attachment_image_url( $this->cover_id, $size ) ?: '';
+	}
+
+	/**
+	 * Get profile URL.
+	 *
+	 * @return string
+	 */
+	public function get_profile_url(): string {
+		return home_url( '/vendor/' . $this->user_id . '/' );
+	}
+
+	/**
+	 * Check if vendor is on vacation.
+	 *
+	 * @return bool
+	 */
+	public function is_on_vacation(): bool {
+		if ( ! $this->vacation_until ) {
+			return false;
+		}
+
+		return $this->vacation_until > new \DateTimeImmutable();
+	}
+
+	/**
+	 * Get response time label.
+	 *
+	 * @return string
+	 */
+	public function get_response_time_label(): string {
+		if ( $this->response_time < 1 ) {
+			return __( 'Within an hour', 'wp-sell-services' );
+		}
+
+		if ( $this->response_time < 24 ) {
+			/* translators: %d: number of hours */
+			return sprintf(
+				_n( 'Within %d hour', 'Within %d hours', (int) $this->response_time, 'wp-sell-services' ),
+				(int) $this->response_time
+			);
+		}
+
+		$days = (int) ( $this->response_time / 24 );
+		/* translators: %d: number of days */
+		return sprintf(
+			_n( 'Within %d day', 'Within %d days', $days, 'wp-sell-services' ),
+			$days
+		);
+	}
+
+	/**
+	 * Check if vendor can accept new orders.
+	 *
+	 * @return bool
+	 */
+	public function can_accept_orders(): bool {
+		return $this->is_available && ! $this->is_on_vacation();
+	}
+}
