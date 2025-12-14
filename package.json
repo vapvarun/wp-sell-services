@@ -1,0 +1,42 @@
+{
+    "name": "wp-sell-services",
+    "version": "1.0.0",
+    "description": "A complete Fiverr-style service marketplace platform for WordPress",
+    "author": "Wbcom Designs",
+    "license": "GPL-2.0-or-later",
+    "scripts": {
+        "dev": "npm run watch",
+        "watch": "npm-run-all --parallel watch:*",
+        "watch:css": "postcss assets/css/src/**/*.css --dir assets/css --watch",
+        "watch:js": "webpack --mode development --watch",
+        "build": "npm-run-all build:*",
+        "build:css": "postcss assets/css/src/**/*.css --dir assets/css --env production",
+        "build:js": "webpack --mode production",
+        "lint:css": "stylelint 'assets/css/src/**/*.css'",
+        "lint:js": "eslint 'assets/js/src/**/*.js'",
+        "lint": "npm-run-all lint:*"
+    },
+    "devDependencies": {
+        "@tailwindcss/forms": "^0.5.7",
+        "@tailwindcss/typography": "^0.5.10",
+        "alpinejs": "^3.13.3",
+        "autoprefixer": "^10.4.16",
+        "cssnano": "^6.0.2",
+        "eslint": "^8.56.0",
+        "npm-run-all": "^4.1.5",
+        "postcss": "^8.4.32",
+        "postcss-cli": "^11.0.0",
+        "postcss-import": "^15.1.0",
+        "rtlcss": "^4.1.1",
+        "stylelint": "^16.1.0",
+        "stylelint-config-standard": "^36.0.0",
+        "tailwindcss": "^3.4.0",
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4"
+    },
+    "browserslist": [
+        "last 2 versions",
+        "> 1%",
+        "not dead"
+    ]
+}

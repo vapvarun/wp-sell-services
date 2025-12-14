@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<ruleset name="WP Sell Services Coding Standards">
+    <description>WordPress Coding Standards for WP Sell Services plugin</description>
+
+    <!-- What to scan -->
+    <file>.</file>
+
+    <!-- Exclude paths -->
+    <exclude-pattern>/vendor/*</exclude-pattern>
+    <exclude-pattern>/node_modules/*</exclude-pattern>
+    <exclude-pattern>/assets/*</exclude-pattern>
+    <exclude-pattern>/languages/*</exclude-pattern>
+    <exclude-pattern>/tests/*</exclude-pattern>
+    <exclude-pattern>*.min.js</exclude-pattern>
+    <exclude-pattern>*.min.css</exclude-pattern>
+
+    <!-- How to scan -->
+    <arg value="sp"/> <!-- Show sniff and progress -->
+    <arg name="basepath" value="."/> <!-- Strip the file paths down to the relevant bit -->
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="8"/> <!-- Enables parallel processing when available for faster results -->
+
+    <!-- Rules: Check PHP version compatibility -->
+    <config name="testVersion" value="8.1-"/>
+    <rule ref="PHPCompatibilityWP">
+        <include-pattern>*\.php$</include-pattern>
+    </rule>
+
+    <!-- Rules: WordPress Coding Standards -->
+    <config name="minimum_wp_version" value="6.4"/>
+
+    <rule ref="WordPress">
+        <!-- Allow short array syntax -->
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+        <!-- Allow PSR-4 file naming for classes -->
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+    </rule>
+
+    <rule ref="WordPress-Core"/>
+    <rule ref="WordPress-Docs"/>
+    <rule ref="WordPress-Extra"/>
+
+    <!-- Verify that the text_domain is set to the desired text-domain -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="wp-sell-services"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Allow namespaced hook names -->
+    <rule ref="WordPress.NamingConventions.ValidHookName">
+        <properties>
+            <property name="additionalWordDelimiters" value="/"/>
+        </properties>
+    </rule>
+
+    <!-- Verify that everything in the global namespace is prefixed -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="wpss"/>
+                <element value="wp_sell_services"/>
+                <element value="WPSellServices"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Allow Class::method() calls for static methods -->
+    <rule ref="WordPress.NamingConventions.ValidFunctionName">
+        <properties>
+            <property name="strict_class_methods" value="false"/>
+        </properties>
+    </rule>
+</ruleset>
