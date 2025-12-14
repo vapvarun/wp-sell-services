@@ -612,3 +612,198 @@ function wpss_get_dashboard_url( string $tab = '' ): string {
 
 	return $url;
 }
+
+/**
+ * Get order view URL.
+ *
+ * @param int $order_id Order ID.
+ * @return string
+ */
+function wpss_get_order_url( int $order_id ): string {
+	$order = wpss_get_order( $order_id );
+
+	if ( ! $order ) {
+		return '';
+	}
+
+	$dashboard_url = wpss_get_dashboard_url( 'orders' );
+
+	if ( $dashboard_url ) {
+		return add_query_arg( 'order_id', $order_id, $dashboard_url );
+	}
+
+	return home_url( '/service-order/' . $order->order_number . '/' );
+}
+
+/**
+ * Get order requirements URL.
+ *
+ * @param int $order_id Order ID.
+ * @return string
+ */
+function wpss_get_order_requirements_url( int $order_id ): string {
+	$order = wpss_get_order( $order_id );
+
+	if ( ! $order ) {
+		return '';
+	}
+
+	$dashboard_url = wpss_get_dashboard_url( 'orders' );
+
+	if ( $dashboard_url ) {
+		return add_query_arg(
+			[
+				'order_id' => $order_id,
+				'action'   => 'requirements',
+			],
+			$dashboard_url
+		);
+	}
+
+	return home_url( '/service-order/' . $order->order_number . '/requirements/' );
+}
+
+/**
+ * Get service requirements (questions buyer must answer).
+ *
+ * @param int $service_id Service ID.
+ * @return array
+ */
+function wpss_get_service_requirements( int $service_id ): array {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_service_requirements';
+
+	// Check if table exists.
+	$table_exists = $wpdb->get_var(
+		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+	);
+
+	if ( ! $table_exists ) {
+		// Fall back to post meta.
+		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
+		return is_array( $requirements ) ? $requirements : [];
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE service_id = %d ORDER BY sort_order ASC",
+			$service_id
+		),
+		ARRAY_A
+	);
+
+	return $rows ?: [];
+}
+
+/**
+ * Get submitted order requirements.
+ *
+ * @param int $order_id Order ID.
+ * @return array
+ */
+function wpss_get_order_requirements( int $order_id ): array {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_order_requirements';
+
+	// Check if table exists.
+	$table_exists = $wpdb->get_var(
+		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+	);
+
+	if ( ! $table_exists ) {
+		// Fall back to order meta.
+		$requirements = get_metadata( 'wpss_order', $order_id, '_requirements', true );
+		return is_array( $requirements ) ? $requirements : [];
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT field_key, field_value FROM {$table} WHERE order_id = %d",
+			$order_id
+		),
+		ARRAY_A
+	);
+
+	$requirements = [];
+	foreach ( $rows as $row ) {
+		$requirements[ $row['field_key'] ] = maybe_unserialize( $row['field_value'] );
+	}
+
+	return $requirements;
+}
+
+/**
+ * Get max upload size in bytes.
+ *
+ * @return int
+ */
+function wpss_get_max_upload_size(): int {
+	$upload_max = wp_max_upload_size();
+
+	/**
+	 * Filter the max upload size for requirements files.
+	 *
+	 * @param int $max_size Max size in bytes.
+	 */
+	return (int) apply_filters( 'wpss_max_upload_size', $upload_max );
+}
+
+/**
+ * Get service packages.
+ *
+ * @param int $service_id Service ID.
+ * @return array
+ */
+function wpss_get_service_packages( int $service_id ): array {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_service_packages';
+
+	// Check if table exists.
+	$table_exists = $wpdb->get_var(
+		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+	);
+
+	if ( ! $table_exists ) {
+		// Fall back to post meta.
+		$packages = get_post_meta( $service_id, '_wpss_packages', true );
+		return is_array( $packages ) ? $packages : [];
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE service_id = %d ORDER BY sort_order ASC",
+			$service_id
+		),
+		ARRAY_A
+	);
+
+	return $rows ?: [];
+}
+
+/**
+ * Get order confirmation URL (thank you page).
+ *
+ * @param int $order_id Order ID.
+ * @return string
+ */
+function wpss_get_order_confirmation_url( int $order_id ): string {
+	$order = wpss_get_order( $order_id );
+
+	if ( ! $order ) {
+		return '';
+	}
+
+	$confirmation_page = (int) get_option( 'wpss_order_confirmation_page' );
+
+	if ( $confirmation_page ) {
+		return add_query_arg( 'order_id', $order_id, get_permalink( $confirmation_page ) );
+	}
+
+	return home_url( '/service-order/' . $order->order_number . '/confirmation/' );
+}

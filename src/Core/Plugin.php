@@ -15,7 +15,11 @@ use WPSellServices\Frontend\Frontend;
 use WPSellServices\Integrations\IntegrationManager;
 use WPSellServices\PostTypes\ServicePostType;
 use WPSellServices\PostTypes\BuyerRequestPostType;
+use WPSellServices\Taxonomies\ServiceCategoryTaxonomy;
+use WPSellServices\Taxonomies\ServiceTagTaxonomy;
 use WPSellServices\Services\NotificationService;
+use WPSellServices\API\API;
+use WPSellServices\Blocks\BlocksManager;
 
 /**
  * Main plugin class.
@@ -69,6 +73,13 @@ final class Plugin {
 	private ?Frontend $frontend = null;
 
 	/**
+	 * Blocks manager instance.
+	 *
+	 * @var BlocksManager|null
+	 */
+	private ?BlocksManager $blocks_manager = null;
+
+	/**
 	 * Get plugin instance (Singleton).
 	 *
 	 * @return Plugin
@@ -99,9 +110,29 @@ final class Plugin {
 		$this->define_frontend_hooks();
 		$this->define_integration_hooks();
 		$this->define_notification_hooks();
+		$this->define_api_hooks();
+		$this->define_blocks_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
+
+		/**
+		 * Fires after the plugin is fully loaded.
+		 *
+		 * @since 1.0.0
+		 * @param Plugin $plugin Plugin instance.
+		 */
+		do_action( 'wpss_loaded', $this );
+	}
+
+	/**
+	 * Define REST API hooks.
+	 *
+	 * @return void
+	 */
+	private function define_api_hooks(): void {
+		$api = new API();
+		$this->loader->add_action( 'rest_api_init', $api, 'register_routes' );
 	}
 
 	/**
@@ -110,6 +141,14 @@ final class Plugin {
 	 * @return void
 	 */
 	private function register_post_types(): void {
+		// Register taxonomies first (before post types).
+		$service_category = new ServiceCategoryTaxonomy();
+		$service_category->init();
+
+		$service_tag = new ServiceTagTaxonomy();
+		$service_tag->init();
+
+		// Register post types.
 		$service_post_type = new ServicePostType();
 		$service_post_type->init();
 
@@ -131,6 +170,7 @@ final class Plugin {
 			function ( int $order_id, string $new_status, string $old_status ) use ( $notification_service ): void {
 				$notification_service->notify_order_status( $order_id, $new_status, $old_status );
 			},
+			null,
 			10,
 			3
 		);
@@ -158,6 +198,7 @@ final class Plugin {
 					}
 				}
 			},
+			null,
 			10,
 			2
 		);
@@ -175,7 +216,7 @@ final class Plugin {
 				load_plugin_textdomain(
 					'wp-sell-services',
 					false,
-					dirname( WPSS_PLUGIN_BASENAME ) . '/languages'
+					dirname( \WPSS_PLUGIN_BASENAME ) . '/languages'
 				);
 			}
 		);
@@ -227,6 +268,17 @@ final class Plugin {
 	}
 
 	/**
+	 * Define Gutenberg blocks hooks.
+	 *
+	 * @return void
+	 */
+	private function define_blocks_hooks(): void {
+		$this->blocks_manager = BlocksManager::instance();
+
+		$this->loader->add_action( 'init', $this->blocks_manager, 'init' );
+	}
+
+	/**
 	 * Get the loader instance.
 	 *
 	 * @return Loader
@@ -260,6 +312,15 @@ final class Plugin {
 	 */
 	public function get_frontend(): ?Frontend {
 		return $this->frontend;
+	}
+
+	/**
+	 * Get the blocks manager instance.
+	 *
+	 * @return BlocksManager|null
+	 */
+	public function get_blocks_manager(): ?BlocksManager {
+		return $this->blocks_manager;
 	}
 
 	/**

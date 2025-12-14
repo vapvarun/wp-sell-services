@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace WPSellServices\Core;
 
 use WPSellServices\Database\SchemaManager;
+use WPSellServices\Database\MigrationManager;
 
 /**
  * Fired during plugin activation.
@@ -22,13 +23,6 @@ use WPSellServices\Database\SchemaManager;
 class Activator {
 
 	/**
-	 * Database schema version.
-	 *
-	 * @var string
-	 */
-	public const SCHEMA_VERSION = '1.0.0';
-
-	/**
 	 * Run activation tasks.
 	 *
 	 * @return void
@@ -36,6 +30,7 @@ class Activator {
 	public static function activate(): void {
 		self::check_dependencies();
 		self::create_tables();
+		self::run_migrations();
 		self::create_roles();
 		self::set_default_options();
 		self::schedule_cron_events();
@@ -56,180 +51,31 @@ class Activator {
 	}
 
 	/**
-	 * Create database tables.
+	 * Create database tables using SchemaManager.
+	 *
+	 * Creates all 20 plugin tables.
 	 *
 	 * @return void
 	 */
 	private static function create_tables(): void {
-		global $wpdb;
+		$schema = new SchemaManager();
+		$schema->install();
+	}
 
-		$charset_collate = $wpdb->get_charset_collate();
+	/**
+	 * Run database migrations.
+	 *
+	 * Handles migration from woo-sell-services if needed.
+	 *
+	 * @return void
+	 */
+	private static function run_migrations(): void {
+		$schema    = new SchemaManager();
+		$migration = new MigrationManager( $schema );
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-
-		// Service Packages table.
-		$table_packages = $wpdb->prefix . 'wpss_service_packages';
-		$sql_packages   = "CREATE TABLE {$table_packages} (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			service_id bigint(20) UNSIGNED NOT NULL,
-			name varchar(100) NOT NULL,
-			description text,
-			price decimal(10,2) NOT NULL,
-			delivery_days int(11) NOT NULL,
-			revisions int(11) DEFAULT 0,
-			features longtext,
-			sort_order int(11) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_service (service_id)
-		) {$charset_collate};";
-		dbDelta( $sql_packages );
-
-		// Orders table.
-		$table_orders = $wpdb->prefix . 'wpss_orders';
-		$sql_orders   = "CREATE TABLE {$table_orders} (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			order_number varchar(50) NOT NULL,
-			customer_id bigint(20) UNSIGNED NOT NULL,
-			vendor_id bigint(20) UNSIGNED NOT NULL,
-			service_id bigint(20) UNSIGNED NOT NULL,
-			package_id bigint(20) UNSIGNED,
-			addons longtext,
-			platform varchar(50) DEFAULT 'standalone',
-			platform_order_id bigint(20) UNSIGNED,
-			platform_item_id bigint(20) UNSIGNED,
-			subtotal decimal(10,2) NOT NULL,
-			addons_total decimal(10,2) DEFAULT 0,
-			total decimal(10,2) NOT NULL,
-			currency varchar(10) DEFAULT 'USD',
-			status varchar(50) DEFAULT 'pending_payment',
-			delivery_deadline datetime,
-			original_deadline datetime,
-			payment_method varchar(50),
-			payment_status varchar(50) DEFAULT 'pending',
-			transaction_id varchar(255),
-			paid_at datetime,
-			revisions_included int(11) DEFAULT 0,
-			revisions_used int(11) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			started_at datetime,
-			completed_at datetime,
-			PRIMARY KEY (id),
-			UNIQUE KEY order_number (order_number),
-			KEY idx_customer (customer_id),
-			KEY idx_vendor (vendor_id),
-			KEY idx_status (status),
-			KEY idx_platform (platform, platform_order_id)
-		) {$charset_collate};";
-		dbDelta( $sql_orders );
-
-		// Conversations table.
-		$table_conversations = $wpdb->prefix . 'wpss_conversations';
-		$sql_conversations   = "CREATE TABLE {$table_conversations} (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			order_id bigint(20) UNSIGNED NOT NULL,
-			sender_id bigint(20) UNSIGNED NOT NULL,
-			recipient_id bigint(20) UNSIGNED NOT NULL,
-			message longtext NOT NULL,
-			message_type enum('text','delivery','revision_request','extension_request','system') DEFAULT 'text',
-			attachments longtext,
-			is_read tinyint(1) DEFAULT 0,
-			read_at datetime,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_order (order_id),
-			KEY idx_sender (sender_id),
-			KEY idx_unread (recipient_id, is_read)
-		) {$charset_collate};";
-		dbDelta( $sql_conversations );
-
-		// Deliveries table.
-		$table_deliveries = $wpdb->prefix . 'wpss_deliveries';
-		$sql_deliveries   = "CREATE TABLE {$table_deliveries} (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			order_id bigint(20) UNSIGNED NOT NULL,
-			vendor_id bigint(20) UNSIGNED NOT NULL,
-			message text,
-			attachments longtext,
-			version int(11) DEFAULT 1,
-			status enum('pending','accepted','rejected','revision_requested') DEFAULT 'pending',
-			response_message text,
-			responded_at datetime,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_order (order_id)
-		) {$charset_collate};";
-		dbDelta( $sql_deliveries );
-
-		// Reviews table.
-		$table_reviews = $wpdb->prefix . 'wpss_reviews';
-		$sql_reviews   = "CREATE TABLE {$table_reviews} (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			order_id bigint(20) UNSIGNED NOT NULL,
-			reviewer_id bigint(20) UNSIGNED NOT NULL,
-			reviewee_id bigint(20) UNSIGNED NOT NULL,
-			service_id bigint(20) UNSIGNED NOT NULL,
-			rating tinyint(3) UNSIGNED NOT NULL,
-			review text,
-			review_type enum('customer_to_vendor','vendor_to_customer'),
-			communication_rating tinyint(3) UNSIGNED,
-			quality_rating tinyint(3) UNSIGNED,
-			delivery_rating tinyint(3) UNSIGNED,
-			is_public tinyint(1) DEFAULT 1,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_order (order_id),
-			KEY idx_reviewee (reviewee_id),
-			KEY idx_service (service_id)
-		) {$charset_collate};";
-		dbDelta( $sql_reviews );
-
-		// Disputes table.
-		$table_disputes = $wpdb->prefix . 'wpss_disputes';
-		$sql_disputes   = "CREATE TABLE {$table_disputes} (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			order_id bigint(20) UNSIGNED NOT NULL,
-			initiated_by bigint(20) UNSIGNED NOT NULL,
-			reason varchar(100) NOT NULL,
-			description text NOT NULL,
-			evidence longtext,
-			status enum('open','under_review','resolved','escalated','closed') DEFAULT 'open',
-			resolution enum('refund_full','refund_partial','complete_order','cancelled','dismissed'),
-			resolution_notes text,
-			resolved_by bigint(20) UNSIGNED,
-			resolved_at datetime,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_order (order_id),
-			KEY idx_status (status)
-		) {$charset_collate};";
-		dbDelta( $sql_disputes );
-
-		// Notifications table.
-		$table_notifications = $wpdb->prefix . 'wpss_notifications';
-		$sql_notifications   = "CREATE TABLE {$table_notifications} (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			user_id bigint(20) UNSIGNED NOT NULL,
-			type varchar(50) NOT NULL,
-			title varchar(255) NOT NULL,
-			message text,
-			data longtext,
-			action_url varchar(255),
-			is_read tinyint(1) DEFAULT 0,
-			read_at datetime,
-			is_email_sent tinyint(1) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_user_unread (user_id, is_read),
-			KEY idx_type (type)
-		) {$charset_collate};";
-		dbDelta( $sql_notifications );
-
-		// Update schema version.
-		update_option( 'wpss_schema_version', self::SCHEMA_VERSION );
+		if ( $migration->should_migrate_from_wss() ) {
+			$migration->run_migrations();
+		}
 	}
 
 	/**

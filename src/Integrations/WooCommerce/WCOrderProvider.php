@@ -12,6 +12,7 @@ namespace WPSellServices\Integrations\WooCommerce;
 
 use WPSellServices\Integrations\Contracts\OrderProviderInterface;
 use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Models\ServiceItem;
 
 /**
  * Provides order functionality through WooCommerce.
@@ -368,5 +369,269 @@ class WCOrderProvider implements OrderProviderInterface {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get order by WPSS order ID.
+	 *
+	 * @param int $order_id WPSS order ID.
+	 * @return ServiceOrder|null
+	 */
+	public function get_order( int $order_id ): ?ServiceOrder {
+		return wpss_get_order( $order_id );
+	}
+
+	/**
+	 * Get order item by platform item ID.
+	 *
+	 * @param int $item_id WooCommerce item ID.
+	 * @return ServiceItem|null
+	 */
+	public function get_order_item( int $item_id ): ?ServiceItem {
+		$wpss_order_id = wc_get_order_item_meta( $item_id, '_wpss_order_id', true );
+
+		if ( ! $wpss_order_id ) {
+			return null;
+		}
+
+		$order = $this->get_order( (int) $wpss_order_id );
+
+		if ( ! $order ) {
+			return null;
+		}
+
+		return new ServiceItem(
+			$item_id,
+			$order->service_id,
+			$order->package_id,
+			$order->vendor_id,
+			(float) $order->total,
+			1
+		);
+	}
+
+	/**
+	 * Get orders for a customer.
+	 *
+	 * @param int   $user_id Customer user ID.
+	 * @param array $args    Query arguments.
+	 * @return ServiceOrder[]
+	 */
+	public function get_customer_orders( int $user_id, array $args = [] ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		$defaults = [
+			'limit'  => 20,
+			'offset' => 0,
+			'status' => '',
+		];
+		$args     = wp_parse_args( $args, $defaults );
+
+		$where = $wpdb->prepare( 'WHERE customer_id = %d AND platform = %s', $user_id, 'woocommerce' );
+
+		if ( ! empty( $args['status'] ) ) {
+			$where .= $wpdb->prepare( ' AND status = %s', $args['status'] );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} {$where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				$args['limit'],
+				$args['offset']
+			)
+		);
+
+		return array_map( [ ServiceOrder::class, 'from_db' ], $rows ?: [] );
+	}
+
+	/**
+	 * Get orders for a vendor.
+	 *
+	 * @param int   $vendor_id Vendor user ID.
+	 * @param array $args      Query arguments.
+	 * @return ServiceOrder[]
+	 */
+	public function get_vendor_orders( int $vendor_id, array $args = [] ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		$defaults = [
+			'limit'  => 20,
+			'offset' => 0,
+			'status' => '',
+		];
+		$args     = wp_parse_args( $args, $defaults );
+
+		$where = $wpdb->prepare( 'WHERE vendor_id = %d AND platform = %s', $vendor_id, 'woocommerce' );
+
+		if ( ! empty( $args['status'] ) ) {
+			$where .= $wpdb->prepare( ' AND status = %s', $args['status'] );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} {$where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				$args['limit'],
+				$args['offset']
+			)
+		);
+
+		return array_map( [ ServiceOrder::class, 'from_db' ], $rows ?: [] );
+	}
+
+	/**
+	 * Check if WC order has service items.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return bool
+	 */
+	public function has_service_items( int $order_id ): bool {
+		$wc_order = wc_get_order( $order_id );
+
+		if ( ! $wc_order ) {
+			return false;
+		}
+
+		foreach ( $wc_order->get_items() as $item ) {
+			$product_id = $item->get_product_id();
+			if ( $this->is_service_product( $product_id ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get all service items from WC order.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return ServiceItem[]
+	 */
+	public function get_service_items( int $order_id ): array {
+		$wc_order = wc_get_order( $order_id );
+
+		if ( ! $wc_order ) {
+			return [];
+		}
+
+		$items = [];
+
+		foreach ( $wc_order->get_items() as $item_id => $item ) {
+			$product_id = $item->get_product_id();
+
+			if ( ! $this->is_service_product( $product_id ) ) {
+				continue;
+			}
+
+			$service_id = $this->get_service_id_from_product( $product_id );
+
+			if ( ! $service_id ) {
+				continue;
+			}
+
+			$service   = wpss_get_service( $service_id );
+			$vendor_id = $service ? $service->vendor_id : 0;
+
+			$items[] = new ServiceItem(
+				$item_id,
+				$service_id,
+				(int) $item->get_meta( '_wpss_package_id' ),
+				$vendor_id,
+				(float) $item->get_subtotal(),
+				$item->get_quantity()
+			);
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Update WC order item meta.
+	 *
+	 * @param int    $item_id Item ID.
+	 * @param string $key     Meta key.
+	 * @param mixed  $value   Meta value.
+	 * @return bool
+	 */
+	public function update_item_meta( int $item_id, string $key, mixed $value ): bool {
+		return (bool) wc_update_order_item_meta( $item_id, $key, $value );
+	}
+
+	/**
+	 * Get WC order item meta.
+	 *
+	 * @param int    $item_id Item ID.
+	 * @param string $key     Meta key.
+	 * @param bool   $single  Return single value.
+	 * @return mixed
+	 */
+	public function get_item_meta( int $item_id, string $key, bool $single = true ): mixed {
+		return wc_get_order_item_meta( $item_id, $key, $single );
+	}
+
+	/**
+	 * Get customer data from WC order.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return array{id: int, email: string, name: string}|null
+	 */
+	public function get_customer_data( int $order_id ): ?array {
+		$wc_order = wc_get_order( $order_id );
+
+		if ( ! $wc_order ) {
+			return null;
+		}
+
+		return [
+			'id'    => $wc_order->get_customer_id(),
+			'email' => $wc_order->get_billing_email(),
+			'name'  => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+		];
+	}
+
+	/**
+	 * Handle WC order completion.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return void
+	 */
+	public function handle_order_complete( int $order_id ): void {
+		$wc_order = wc_get_order( $order_id );
+
+		if ( ! $wc_order ) {
+			return;
+		}
+
+		// Check if we already processed this.
+		if ( $wc_order->get_meta( '_wpss_processed' ) ) {
+			return;
+		}
+
+		// Process service items.
+		foreach ( $wc_order->get_items() as $item_id => $item ) {
+			$wpss_order_id = $item->get_meta( '_wpss_order_id' );
+
+			if ( ! $wpss_order_id ) {
+				// Create WPSS order for this item.
+				$this->create_from_platform_order( $order_id );
+				break;
+			}
+
+			// Update existing order to paid status.
+			$wpss_order = $this->get_order( (int) $wpss_order_id );
+
+			if ( $wpss_order && ServiceOrder::STATUS_PENDING_PAYMENT === $wpss_order->status ) {
+				$this->mark_as_paid( (int) $wpss_order_id, $wc_order->get_transaction_id() );
+				$this->update_status( (int) $wpss_order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS );
+			}
+		}
+
+		// Mark as processed.
+		$wc_order->update_meta_data( '_wpss_processed', true );
+		$wc_order->save();
 	}
 }

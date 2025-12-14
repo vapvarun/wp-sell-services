@@ -67,7 +67,7 @@ class BuyerRequestPostType {
 			'public'              => true,
 			'publicly_queryable'  => true,
 			'show_ui'             => true,
-			'show_in_menu'        => false, // Will be added to our custom admin menu.
+			'show_in_menu'        => 'wp-sell-services', // Show under our custom admin menu.
 			'query_var'           => true,
 			'rewrite'             => [
 				'slug'       => $this->get_slug(),
@@ -85,8 +85,7 @@ class BuyerRequestPostType {
 				'thumbnail',
 			],
 			'show_in_rest'        => true,
-			'rest_base'           => 'buyer-requests',
-			'rest_namespace'      => 'wpss/v1',
+			'rest_base'           => 'wpss-buyer-requests',
 		];
 
 		/**

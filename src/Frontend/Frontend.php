@@ -25,9 +25,9 @@ class Frontend {
 	public function enqueue_styles(): void {
 		wp_enqueue_style(
 			'wpss-frontend',
-			WPSS_PLUGIN_URL . 'assets/css/frontend.css',
+			\WPSS_PLUGIN_URL . 'assets/css/frontend.css',
 			array(),
-			WPSS_VERSION
+			\WPSS_VERSION
 		);
 	}
 
@@ -40,7 +40,7 @@ class Frontend {
 		// Alpine.js for reactivity.
 		wp_enqueue_script(
 			'alpinejs',
-			WPSS_PLUGIN_URL . 'assets/js/vendor/alpine.min.js',
+			\WPSS_PLUGIN_URL . 'assets/js/vendor/alpine.min.js',
 			array(),
 			'3.13.3',
 			array( 'strategy' => 'defer' )
@@ -48,9 +48,9 @@ class Frontend {
 
 		wp_enqueue_script(
 			'wpss-frontend',
-			WPSS_PLUGIN_URL . 'assets/js/frontend.js',
+			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
 			array( 'alpinejs' ),
-			WPSS_VERSION,
+			\WPSS_VERSION,
 			true
 		);
 
