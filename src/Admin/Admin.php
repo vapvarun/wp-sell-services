@@ -12,7 +12,9 @@ namespace WPSellServices\Admin;
 
 use WPSellServices\Admin\Metaboxes\ServiceMetabox;
 use WPSellServices\Admin\Metaboxes\BuyerRequestMetabox;
+use WPSellServices\Admin\Metaboxes\OrderMetabox;
 use WPSellServices\Admin\Pages\ManualOrderPage;
+use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 
@@ -38,11 +40,19 @@ class Admin {
 	private ManualOrderPage $manual_order_page;
 
 	/**
+	 * Vendors page instance.
+	 *
+	 * @var VendorsPage
+	 */
+	private VendorsPage $vendors_page;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->settings = new Settings();
+		$this->settings          = new Settings();
 		$this->manual_order_page = new ManualOrderPage();
+		$this->vendors_page      = new VendorsPage();
 		$this->init_metaboxes();
 		$this->init_pages();
 		$this->init_ajax_handlers();
@@ -86,6 +96,7 @@ class Admin {
 			'edit.php?post_type=wpss_request',                               // All Requests.
 			'post-new.php?post_type=wpss_request',                           // Add New Request.
 			'wpss-orders',                                                   // Orders.
+			'wpss-vendors',                                                  // Vendors.
 			'wpss-disputes',                                                 // Disputes.
 			'wpss-settings',                                                 // Settings.
 		];
@@ -190,6 +201,9 @@ class Admin {
 
 		$request_metabox = new BuyerRequestMetabox();
 		$request_metabox->init();
+
+		$order_metabox = new OrderMetabox();
+		$order_metabox->init();
 	}
 
 	/**
@@ -199,6 +213,7 @@ class Admin {
 	 */
 	private function init_pages(): void {
 		$this->manual_order_page->init();
+		$this->vendors_page->init();
 	}
 
 	/**
@@ -418,6 +433,7 @@ class Admin {
 		$plugin_pages = array(
 			'toplevel_page_wp-sell-services',
 			'sell-services_page_wpss-orders',
+			'sell-services_page_wpss-vendors',
 			'sell-services_page_wpss-disputes',
 			'sell-services_page_wpss-settings',
 		);

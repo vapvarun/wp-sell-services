@@ -50,6 +50,10 @@ class API {
 			new OrdersController(),
 			new ReviewsController(),
 			new VendorsController(),
+			new ConversationsController(),
+			new DisputesController(),
+			new BuyerRequestsController(),
+			new ProposalsController(),
 		];
 
 		/**

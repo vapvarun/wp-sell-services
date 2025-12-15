@@ -12,6 +12,7 @@ namespace WPSellServices\Core;
 
 use WPSellServices\Admin\Admin;
 use WPSellServices\Frontend\Frontend;
+use WPSellServices\Frontend\SingleServiceView;
 use WPSellServices\Integrations\IntegrationManager;
 use WPSellServices\PostTypes\ServicePostType;
 use WPSellServices\PostTypes\BuyerRequestPostType;
@@ -20,6 +21,7 @@ use WPSellServices\Taxonomies\ServiceTagTaxonomy;
 use WPSellServices\Services\NotificationService;
 use WPSellServices\API\API;
 use WPSellServices\Blocks\BlocksManager;
+use WPSellServices\SEO\SEO;
 
 /**
  * Main plugin class.
@@ -80,6 +82,20 @@ final class Plugin {
 	private ?BlocksManager $blocks_manager = null;
 
 	/**
+	 * SEO instance.
+	 *
+	 * @var SEO|null
+	 */
+	private ?SEO $seo = null;
+
+	/**
+	 * Single service view instance.
+	 *
+	 * @var SingleServiceView|null
+	 */
+	private ?SingleServiceView $single_service_view = null;
+
+	/**
 	 * Get plugin instance (Singleton).
 	 *
 	 * @return Plugin
@@ -112,6 +128,7 @@ final class Plugin {
 		$this->define_notification_hooks();
 		$this->define_api_hooks();
 		$this->define_blocks_hooks();
+		$this->define_seo_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -254,6 +271,10 @@ final class Plugin {
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->frontend, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->frontend, 'enqueue_scripts' );
+
+		// Initialize single service view.
+		$this->single_service_view = new SingleServiceView();
+		$this->single_service_view->init();
 	}
 
 	/**
@@ -276,6 +297,17 @@ final class Plugin {
 		$this->blocks_manager = BlocksManager::instance();
 
 		$this->loader->add_action( 'init', $this->blocks_manager, 'init' );
+	}
+
+	/**
+	 * Define SEO hooks.
+	 *
+	 * @return void
+	 */
+	private function define_seo_hooks(): void {
+		$this->seo = new SEO();
+
+		$this->loader->add_action( 'wp', $this->seo, 'init' );
 	}
 
 	/**
@@ -321,6 +353,24 @@ final class Plugin {
 	 */
 	public function get_blocks_manager(): ?BlocksManager {
 		return $this->blocks_manager;
+	}
+
+	/**
+	 * Get the SEO instance.
+	 *
+	 * @return SEO|null
+	 */
+	public function get_seo(): ?SEO {
+		return $this->seo;
+	}
+
+	/**
+	 * Get the single service view instance.
+	 *
+	 * @return SingleServiceView|null
+	 */
+	public function get_single_service_view(): ?SingleServiceView {
+		return $this->single_service_view;
 	}
 
 	/**
