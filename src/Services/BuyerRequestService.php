@@ -539,6 +539,171 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * Convert accepted proposal to order.
+	 *
+	 * Creates a service order from an accepted buyer request proposal.
+	 *
+	 * @param int $request_id  Request post ID.
+	 * @param int $proposal_id Proposal ID to accept.
+	 * @return array Result with success status and order_id if successful.
+	 */
+	public function convert_to_order( int $request_id, int $proposal_id ): array {
+		$request = $this->get( $request_id );
+
+		if ( ! $request ) {
+			return [
+				'success' => false,
+				'message' => __( 'Buyer request not found.', 'wp-sell-services' ),
+			];
+		}
+
+		// Verify request is open or in review.
+		if ( ! in_array( $request->status, [ self::STATUS_OPEN, self::STATUS_IN_REVIEW ], true ) ) {
+			return [
+				'success' => false,
+				'message' => __( 'This request is no longer accepting proposals.', 'wp-sell-services' ),
+			];
+		}
+
+		// Get proposal.
+		$proposal_service = new ProposalService();
+		$proposal = $proposal_service->get( $proposal_id );
+
+		if ( ! $proposal ) {
+			return [
+				'success' => false,
+				'message' => __( 'Proposal not found.', 'wp-sell-services' ),
+			];
+		}
+
+		// Verify proposal belongs to this request.
+		if ( $proposal['request_id'] !== $request_id ) {
+			return [
+				'success' => false,
+				'message' => __( 'Proposal does not belong to this request.', 'wp-sell-services' ),
+			];
+		}
+
+		// Verify proposal is pending.
+		if ( ProposalService::STATUS_PENDING !== $proposal['status'] ) {
+			return [
+				'success' => false,
+				'message' => __( 'This proposal has already been processed.', 'wp-sell-services' ),
+			];
+		}
+
+		global $wpdb;
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+
+		// Generate order number.
+		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
+
+		// Calculate delivery deadline.
+		$delivery_days = $proposal['proposed_days'] ?: $request->delivery_days ?: 7;
+		$deadline = gmdate( 'Y-m-d H:i:s', strtotime( "+{$delivery_days} days" ) );
+
+		// Create order.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert(
+			$orders_table,
+			[
+				'order_number'       => $order_number,
+				'customer_id'        => $request->author_id,
+				'vendor_id'          => $proposal['vendor_id'],
+				'service_id'         => $proposal['service_id'] ?: 0,
+				'package_id'         => null,
+				'addons'             => wp_json_encode( [] ),
+				'platform'           => 'request',
+				'platform_order_id'  => $request_id,
+				'subtotal'           => $proposal['proposed_price'],
+				'addons_total'       => 0,
+				'total'              => $proposal['proposed_price'],
+				'currency'           => get_option( 'wpss_currency', 'USD' ),
+				'status'             => 'pending_payment',
+				'delivery_deadline'  => $deadline,
+				'original_deadline'  => $deadline,
+				'payment_status'     => 'pending',
+				'revisions_included' => 0,
+				'revisions_used'     => 0,
+				'created_at'         => current_time( 'mysql' ),
+				'updated_at'         => current_time( 'mysql' ),
+			],
+			[ '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s' ]
+		);
+
+		if ( ! $result ) {
+			return [
+				'success' => false,
+				'message' => __( 'Failed to create order. Please try again.', 'wp-sell-services' ),
+			];
+		}
+
+		$order_id = $wpdb->insert_id;
+
+		// Accept the proposal.
+		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );
+
+		// Reject other proposals for this request.
+		$proposal_service->reject_other_proposals( $request_id, $proposal_id );
+
+		// Mark request as hired.
+		$this->mark_hired( $request_id, $proposal['vendor_id'], $proposal_id );
+
+		// Store request details in order meta for reference.
+		$wpdb->insert(
+			$wpdb->prefix . 'wpss_order_requirements',
+			[
+				'order_id'     => $order_id,
+				'field_data'   => wp_json_encode( [
+					'request_title'       => $request->title,
+					'request_description' => $request->description,
+					'proposal_cover'      => $proposal['cover_letter'],
+				] ),
+				'attachments'  => wp_json_encode( $request->attachments ),
+				'submitted_at' => current_time( 'mysql' ),
+			],
+			[ '%d', '%s', '%s', '%s' ]
+		);
+
+		// Create conversation for the order.
+		$conversation_service = new ConversationService();
+		$conversation_service->create_for_order( $order_id );
+
+		// Notify vendor.
+		$notification_service = new NotificationService();
+		$notification_service->send(
+			$proposal['vendor_id'],
+			'proposal_accepted',
+			__( 'Proposal Accepted!', 'wp-sell-services' ),
+			sprintf(
+				/* translators: %s: request title */
+				__( 'Your proposal for "%s" has been accepted. Please wait for payment to start working.', 'wp-sell-services' ),
+				$request->title
+			),
+			[ 'order_id' => $order_id, 'request_id' => $request_id ]
+		);
+
+		/**
+		 * Fires when a buyer request is converted to an order.
+		 *
+		 * @since 1.0.0
+		 * @param int    $order_id    New order ID.
+		 * @param int    $request_id  Request post ID.
+		 * @param int    $proposal_id Accepted proposal ID.
+		 * @param object $request     Request object.
+		 * @param array  $proposal    Proposal data.
+		 */
+		do_action( 'wpss_request_converted_to_order', $order_id, $request_id, $proposal_id, $request, $proposal );
+
+		return [
+			'success'      => true,
+			'message'      => __( 'Order created successfully. Proceed to payment.', 'wp-sell-services' ),
+			'order_id'     => $order_id,
+			'order_number' => $order_number,
+		];
+	}
+
+	/**
 	 * Get available statuses.
 	 *
 	 * @return array<string, string> Status slugs and labels.
