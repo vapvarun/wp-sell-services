@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin\Pages;
 
+use WPSellServices\Services\ModerationService;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -44,10 +46,11 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function init(): void {
+		// Always register admin menu - shows enabled/disabled state.
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 15 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
-		// AJAX handlers.
+		// AJAX handlers - always registered for admin use.
 		add_action( 'wp_ajax_wpss_approve_service', array( $this, 'ajax_approve_service' ) );
 		add_action( 'wp_ajax_wpss_reject_service', array( $this, 'ajax_reject_service' ) );
 		add_action( 'wp_ajax_wpss_bulk_moderate_services', array( $this, 'ajax_bulk_moderate' ) );
@@ -57,20 +60,23 @@ class ServiceModerationPage {
 		add_action( 'manage_wpss_service_posts_custom_column', array( $this, 'render_moderation_column' ), 10, 2 );
 		add_filter( 'manage_edit-wpss_service_sortable_columns', array( $this, 'sortable_columns' ) );
 
-		// Set default moderation status on new service.
-		add_action( 'save_post_wpss_service', array( $this, 'set_default_moderation_status' ), 10, 3 );
-
-		// Filter frontend queries.
-		add_action( 'pre_get_posts', array( $this, 'filter_frontend_queries' ) );
-
 		// Add quick edit support.
 		add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields' ), 10, 2 );
 
 		// Admin notices.
 		add_action( 'admin_notices', array( $this, 'pending_services_notice' ) );
 
-		// Modify publish to pending for vendors.
-		add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
+		// Only apply moderation workflow when enabled.
+		if ( ModerationService::is_enabled() ) {
+			// Set default moderation status on new service.
+			add_action( 'save_post_wpss_service', array( $this, 'set_default_moderation_status' ), 10, 3 );
+
+			// Filter frontend queries.
+			add_action( 'pre_get_posts', array( $this, 'filter_frontend_queries' ) );
+
+			// Modify publish to pending for vendors.
+			add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
+		}
 	}
 
 	/**
@@ -163,6 +169,12 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function render_page(): void {
+		// Check if moderation is enabled.
+		if ( ! ModerationService::is_enabled() ) {
+			$this->render_disabled_notice();
+			return;
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : self::STATUS_PENDING;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -951,11 +963,44 @@ class ServiceModerationPage {
 	}
 
 	/**
+	 * Render disabled notice when moderation is off.
+	 *
+	 * @return void
+	 */
+	private function render_disabled_notice(): void {
+		$settings_url = admin_url( 'admin.php?page=wpss-settings&tab=vendor' );
+		?>
+		<div class="wrap wpss-moderation-wrap">
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
+
+			<div class="notice notice-info inline" style="margin-top: 20px;">
+				<p>
+					<strong><?php esc_html_e( 'Service moderation is currently disabled.', 'wp-sell-services' ); ?></strong>
+				</p>
+				<p>
+					<?php esc_html_e( 'When enabled, new services submitted by vendors will require admin approval before they become visible on the marketplace.', 'wp-sell-services' ); ?>
+				</p>
+				<p>
+					<a href="<?php echo esc_url( $settings_url ); ?>" class="button button-primary">
+						<?php esc_html_e( 'Enable in Settings', 'wp-sell-services' ); ?>
+					</a>
+				</p>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Show admin notice for pending services.
 	 *
 	 * @return void
 	 */
 	public function pending_services_notice(): void {
+		// Only show when moderation is enabled.
+		if ( ! ModerationService::is_enabled() ) {
+			return;
+		}
+
 		$screen = get_current_screen();
 
 		// Only show on our plugin pages.

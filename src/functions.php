@@ -23,7 +23,7 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 		$currency = wpss_get_currency();
 	}
 
-	$symbols = [
+	$symbols = array(
 		'USD' => '$',
 		'EUR' => '€',
 		'GBP' => '£',
@@ -36,10 +36,10 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 		'KRW' => '₩',
 		'BRL' => 'R$',
 		'MXN' => 'MX$',
-	];
+	);
 
 	$symbol   = $symbols[ $currency ] ?? $currency . ' ';
-	$decimals = in_array( $currency, [ 'JPY', 'KRW' ], true ) ? 0 : 2;
+	$decimals = in_array( $currency, array( 'JPY', 'KRW' ), true ) ? 0 : 2;
 
 	/**
 	 * Filter the formatted price.
@@ -87,7 +87,7 @@ function wpss(): \WPSellServices\Core\Plugin {
  * @param array  $args Optional arguments to pass to template.
  * @return void
  */
-function wpss_get_template_part( string $slug, string $name = '', array $args = [] ): void {
+function wpss_get_template_part( string $slug, string $name = '', array $args = array() ): void {
 	$template = '';
 
 	// Look in theme first.
@@ -137,7 +137,7 @@ function wpss_get_template_part( string $slug, string $name = '', array $args = 
  * @param string $default_path  Default template path.
  * @return void
  */
-function wpss_get_template( string $template_name, array $args = [], string $template_path = '', string $default_path = '' ): void {
+function wpss_get_template( string $template_name, array $args = array(), string $template_path = '', string $default_path = '' ): void {
 	if ( empty( $template_path ) ) {
 		$template_path = 'wp-sell-services/';
 	}
@@ -186,7 +186,7 @@ function wpss_is_rest_request(): bool {
 
 	// Check for REST URL pattern.
 	$rest_url    = wp_parse_url( get_rest_url() );
-	$current_url = wp_parse_url( add_query_arg( [] ) );
+	$current_url = wp_parse_url( add_query_arg( array() ) );
 
 	return isset( $rest_url['path'], $current_url['path'] )
 		&& strpos( $current_url['path'], $rest_url['path'] ) === 0;
@@ -282,30 +282,30 @@ function wpss_get_active_adapter(): ?\WPSellServices\Integrations\Contracts\Ecom
 function wpss_sanitize_html( string $content ): string {
 	return wp_kses(
 		$content,
-		[
-			'a'      => [
-				'href'   => [],
-				'title'  => [],
-				'target' => [],
-				'rel'    => [],
-			],
-			'br'     => [],
-			'em'     => [],
-			'strong' => [],
-			'p'      => [],
-			'ul'     => [],
-			'ol'     => [],
-			'li'     => [],
-			'h1'     => [],
-			'h2'     => [],
-			'h3'     => [],
-			'h4'     => [],
-			'h5'     => [],
-			'h6'     => [],
-			'blockquote' => [],
-			'code'   => [],
-			'pre'    => [],
-		]
+		array(
+			'a'          => array(
+				'href'   => array(),
+				'title'  => array(),
+				'target' => array(),
+				'rel'    => array(),
+			),
+			'br'         => array(),
+			'em'         => array(),
+			'strong'     => array(),
+			'p'          => array(),
+			'ul'         => array(),
+			'ol'         => array(),
+			'li'         => array(),
+			'h1'         => array(),
+			'h2'         => array(),
+			'h3'         => array(),
+			'h4'         => array(),
+			'h5'         => array(),
+			'h6'         => array(),
+			'blockquote' => array(),
+			'code'       => array(),
+			'pre'        => array(),
+		)
 	);
 }
 
@@ -382,7 +382,7 @@ function wpss_get_currency_symbol( string $currency = '' ): string {
 		$currency = wpss_get_currency();
 	}
 
-	$symbols = [
+	$symbols = array(
 		'USD' => '$',
 		'EUR' => '€',
 		'GBP' => '£',
@@ -413,7 +413,7 @@ function wpss_get_currency_symbol( string $currency = '' ): string {
 		'AED' => 'د.إ',
 		'SAR' => '﷼',
 		'EGP' => 'E£',
-	];
+	);
 
 	/**
 	 * Filter currency symbols.
@@ -431,7 +431,7 @@ function wpss_get_currency_symbol( string $currency = '' ): string {
  * @return array
  */
 function wpss_get_currencies(): array {
-	$currencies = [
+	$currencies = array(
 		'USD' => __( 'US Dollar', 'wp-sell-services' ),
 		'EUR' => __( 'Euro', 'wp-sell-services' ),
 		'GBP' => __( 'British Pound', 'wp-sell-services' ),
@@ -462,7 +462,7 @@ function wpss_get_currencies(): array {
 		'AED' => __( 'UAE Dirham', 'wp-sell-services' ),
 		'SAR' => __( 'Saudi Riyal', 'wp-sell-services' ),
 		'EGP' => __( 'Egyptian Pound', 'wp-sell-services' ),
-	];
+	);
 
 	/**
 	 * Filter supported currencies.
@@ -506,19 +506,19 @@ function wpss_get_order_status_label( string $status ): string {
  * @return array
  */
 function wpss_get_order_statuses(): array {
-	$statuses = [
-		'pending'               => __( 'Pending', 'wp-sell-services' ),
-		'accepted'              => __( 'Accepted', 'wp-sell-services' ),
-		'rejected'              => __( 'Rejected', 'wp-sell-services' ),
+	$statuses = array(
+		'pending'                => __( 'Pending', 'wp-sell-services' ),
+		'accepted'               => __( 'Accepted', 'wp-sell-services' ),
+		'rejected'               => __( 'Rejected', 'wp-sell-services' ),
 		'requirements_submitted' => __( 'Requirements Submitted', 'wp-sell-services' ),
-		'in_progress'           => __( 'In Progress', 'wp-sell-services' ),
-		'delivered'             => __( 'Delivered', 'wp-sell-services' ),
-		'revision_requested'    => __( 'Revision Requested', 'wp-sell-services' ),
-		'completed'             => __( 'Completed', 'wp-sell-services' ),
-		'cancelled'             => __( 'Cancelled', 'wp-sell-services' ),
-		'disputed'              => __( 'Disputed', 'wp-sell-services' ),
-		'refunded'              => __( 'Refunded', 'wp-sell-services' ),
-	];
+		'in_progress'            => __( 'In Progress', 'wp-sell-services' ),
+		'delivered'              => __( 'Delivered', 'wp-sell-services' ),
+		'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
+		'completed'              => __( 'Completed', 'wp-sell-services' ),
+		'cancelled'              => __( 'Cancelled', 'wp-sell-services' ),
+		'disputed'               => __( 'Disputed', 'wp-sell-services' ),
+		'refunded'               => __( 'Refunded', 'wp-sell-services' ),
+	);
 
 	/**
 	 * Filter order statuses.
@@ -652,10 +652,10 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 
 	if ( $dashboard_url ) {
 		return add_query_arg(
-			[
+			array(
 				'order_id' => $order_id,
 				'action'   => 'requirements',
-			],
+			),
 			$dashboard_url
 		);
 	}
@@ -682,7 +682,7 @@ function wpss_get_service_requirements( int $service_id ): array {
 	if ( ! $table_exists ) {
 		// Fall back to post meta.
 		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-		return is_array( $requirements ) ? $requirements : [];
+		return is_array( $requirements ) ? $requirements : array();
 	}
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -694,7 +694,7 @@ function wpss_get_service_requirements( int $service_id ): array {
 		ARRAY_A
 	);
 
-	return $rows ?: [];
+	return $rows ?: array();
 }
 
 /**
@@ -716,7 +716,7 @@ function wpss_get_order_requirements( int $order_id ): array {
 	if ( ! $table_exists ) {
 		// Fall back to order meta.
 		$requirements = get_metadata( 'wpss_order', $order_id, '_requirements', true );
-		return is_array( $requirements ) ? $requirements : [];
+		return is_array( $requirements ) ? $requirements : array();
 	}
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -728,7 +728,7 @@ function wpss_get_order_requirements( int $order_id ): array {
 		ARRAY_A
 	);
 
-	$requirements = [];
+	$requirements = array();
 	foreach ( $rows as $row ) {
 		$requirements[ $row['field_key'] ] = maybe_unserialize( $row['field_value'] );
 	}
@@ -771,7 +771,7 @@ function wpss_get_service_packages( int $service_id ): array {
 	if ( ! $table_exists ) {
 		// Fall back to post meta.
 		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		return is_array( $packages ) ? $packages : [];
+		return is_array( $packages ) ? $packages : array();
 	}
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -783,7 +783,7 @@ function wpss_get_service_packages( int $service_id ): array {
 		ARRAY_A
 	);
 
-	return $rows ?: [];
+	return $rows ?: array();
 }
 
 /**
@@ -806,4 +806,44 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 	}
 
 	return home_url( '/service-order/' . $order->order_number . '/confirmation/' );
+}
+
+/**
+ * Add a notification for a user.
+ *
+ * Helper function to simplify adding notifications via NotificationService.
+ *
+ * @since 1.0.0
+ *
+ * @param int    $user_id User ID to notify.
+ * @param string $type    Notification type.
+ * @param string $message Notification message.
+ * @param array  $data    Additional data.
+ * @return int|false Notification ID or false on failure.
+ */
+function wpss_add_notification( int $user_id, string $type, string $message, array $data = array() ) {
+	$notification_service = new \WPSellServices\Services\NotificationService();
+
+	// Generate title from type.
+	$type_titles = array(
+		'order_created'       => __( 'New Order', 'wp-sell-services' ),
+		'order_status'        => __( 'Order Update', 'wp-sell-services' ),
+		'new_message'         => __( 'New Message', 'wp-sell-services' ),
+		'delivery_submitted'  => __( 'Delivery Submitted', 'wp-sell-services' ),
+		'delivery_accepted'   => __( 'Delivery Accepted', 'wp-sell-services' ),
+		'revision_requested'  => __( 'Revision Requested', 'wp-sell-services' ),
+		'review_received'     => __( 'New Review', 'wp-sell-services' ),
+		'dispute_opened'      => __( 'Dispute Opened', 'wp-sell-services' ),
+		'dispute_resolved'    => __( 'Dispute Resolved', 'wp-sell-services' ),
+		'deadline_warning'    => __( 'Deadline Warning', 'wp-sell-services' ),
+		'service_approved'    => __( 'Service Approved', 'wp-sell-services' ),
+		'service_rejected'    => __( 'Service Requires Changes', 'wp-sell-services' ),
+		'withdrawal_pending'  => __( 'Withdrawal Request', 'wp-sell-services' ),
+		'withdrawal_approved' => __( 'Withdrawal Approved', 'wp-sell-services' ),
+		'withdrawal_rejected' => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+	);
+
+	$title = $type_titles[ $type ] ?? ucwords( str_replace( '_', ' ', $type ) );
+
+	return $notification_service->create( $user_id, $type, $title, $message, $data );
 }

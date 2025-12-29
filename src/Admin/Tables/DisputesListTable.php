@@ -27,11 +27,11 @@ class DisputesListTable extends \WP_List_Table {
 	 */
 	public function __construct() {
 		parent::__construct(
-			[
+			array(
 				'singular' => 'dispute',
 				'plural'   => 'disputes',
 				'ajax'     => false,
-			]
+			)
 		);
 	}
 
@@ -41,7 +41,7 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	public function get_columns(): array {
-		return [
+		return array(
 			'cb'        => '<input type="checkbox" />',
 			'id'        => __( 'ID', 'wp-sell-services' ),
 			'order'     => __( 'Order', 'wp-sell-services' ),
@@ -49,7 +49,7 @@ class DisputesListTable extends \WP_List_Table {
 			'reason'    => __( 'Reason', 'wp-sell-services' ),
 			'status'    => __( 'Status', 'wp-sell-services' ),
 			'date'      => __( 'Date', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -58,11 +58,11 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	public function get_sortable_columns(): array {
-		return [
-			'id'     => [ 'id', false ],
-			'status' => [ 'status', false ],
-			'date'   => [ 'created_at', true ],
-		];
+		return array(
+			'id'     => array( 'id', false ),
+			'status' => array( 'status', false ),
+			'date'   => array( 'created_at', true ),
+		);
 	}
 
 	/**
@@ -97,21 +97,21 @@ class DisputesListTable extends \WP_List_Table {
 	 */
 	public function column_id( $item ): string {
 		$view_url = add_query_arg(
-			[
+			array(
 				'page'       => 'wpss-disputes',
 				'action'     => 'view',
 				'dispute_id' => $item->id,
-			],
+			),
 			admin_url( 'admin.php' )
 		);
 
-		$actions = [
+		$actions = array(
 			'view' => sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( $view_url ),
 				__( 'View', 'wp-sell-services' )
 			),
-		];
+		);
 
 		return sprintf(
 			'<strong><a href="%s">#%d</a></strong>%s',
@@ -177,13 +177,13 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return string
 	 */
 	public function column_reason( $item ): string {
-		$reasons = [
+		$reasons = array(
 			'quality'       => __( 'Quality Issues', 'wp-sell-services' ),
 			'delivery'      => __( 'Late Delivery', 'wp-sell-services' ),
 			'communication' => __( 'Communication Issues', 'wp-sell-services' ),
 			'not_delivered' => __( 'Not Delivered', 'wp-sell-services' ),
 			'other'         => __( 'Other', 'wp-sell-services' ),
-		];
+		);
 
 		return esc_html( $reasons[ $item->reason ] ?? $item->reason );
 	}
@@ -195,25 +195,24 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return string
 	 */
 	public function column_status( $item ): string {
-		$statuses = [
-			'open'                => __( 'Open', 'wp-sell-services' ),
-			'under_review'        => __( 'Under Review', 'wp-sell-services' ),
-			'resolved_buyer'      => __( 'Resolved (Buyer)', 'wp-sell-services' ),
-			'resolved_vendor'     => __( 'Resolved (Vendor)', 'wp-sell-services' ),
-			'resolved_mutual'     => __( 'Resolved (Mutual)', 'wp-sell-services' ),
-			'cancelled'           => __( 'Cancelled', 'wp-sell-services' ),
-		];
+		// Use statuses from DisputeService.
+		$statuses = array(
+			'open'           => __( 'Open', 'wp-sell-services' ),
+			'pending_review' => __( 'Pending Review', 'wp-sell-services' ),
+			'resolved'       => __( 'Resolved', 'wp-sell-services' ),
+			'escalated'      => __( 'Escalated', 'wp-sell-services' ),
+			'closed'         => __( 'Closed', 'wp-sell-services' ),
+		);
 
-		$label = $statuses[ $item->status ] ?? $item->status;
+		$label = $statuses[ $item->status ] ?? ucwords( str_replace( '_', ' ', $item->status ) );
 
-		$status_classes = [
-			'open'            => 'wpss-status-on-hold',
-			'under_review'    => 'wpss-status-processing',
-			'resolved_buyer'  => 'wpss-status-completed',
-			'resolved_vendor' => 'wpss-status-completed',
-			'resolved_mutual' => 'wpss-status-completed',
-			'cancelled'       => 'wpss-status-cancelled',
-		];
+		$status_classes = array(
+			'open'           => 'wpss-status-on-hold',
+			'pending_review' => 'wpss-status-processing',
+			'resolved'       => 'wpss-status-completed',
+			'escalated'      => 'wpss-status-on-hold',
+			'closed'         => 'wpss-status-cancelled',
+		);
 
 		$class = $status_classes[ $item->status ] ?? 'wpss-status-pending';
 
@@ -260,7 +259,7 @@ class DisputesListTable extends \WP_List_Table {
 		);
 
 		if ( ! $table_exists ) {
-			return [ 'all' => sprintf( '<a href="%s" class="current">%s <span class="count">(0)</span></a>', esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ), __( 'All', 'wp-sell-services' ) ) ];
+			return array( 'all' => sprintf( '<a href="%s" class="current">%s <span class="count">(0)</span></a>', esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ), __( 'All', 'wp-sell-services' ) ) );
 		}
 
 		// Get status counts.
@@ -275,7 +274,7 @@ class DisputesListTable extends \WP_List_Table {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_status = isset( $_GET['status'] ) ? sanitize_key( $_GET['status'] ) : '';
 
-		$views = [
+		$views = array(
 			'all' => sprintf(
 				'<a href="%s" class="%s">%s <span class="count">(%d)</span></a>',
 				esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ),
@@ -283,16 +282,16 @@ class DisputesListTable extends \WP_List_Table {
 				__( 'All', 'wp-sell-services' ),
 				$total
 			),
-		];
+		);
 
-		$statuses = [
-			'open'            => __( 'Open', 'wp-sell-services' ),
-			'under_review'    => __( 'Under Review', 'wp-sell-services' ),
-			'resolved_buyer'  => __( 'Resolved (Buyer)', 'wp-sell-services' ),
-			'resolved_vendor' => __( 'Resolved (Vendor)', 'wp-sell-services' ),
-			'resolved_mutual' => __( 'Resolved (Mutual)', 'wp-sell-services' ),
-			'cancelled'       => __( 'Cancelled', 'wp-sell-services' ),
-		];
+		// Use statuses from DisputeService.
+		$statuses = array(
+			'open'           => __( 'Open', 'wp-sell-services' ),
+			'pending_review' => __( 'Pending Review', 'wp-sell-services' ),
+			'resolved'       => __( 'Resolved', 'wp-sell-services' ),
+			'escalated'      => __( 'Escalated', 'wp-sell-services' ),
+			'closed'         => __( 'Closed', 'wp-sell-services' ),
+		);
 
 		foreach ( $statuses as $status => $label ) {
 			$count = isset( $counts[ $status ] ) ? (int) $counts[ $status ]->count : 0;
@@ -317,10 +316,11 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return array
 	 */
 	protected function get_bulk_actions(): array {
-		return [
-			'mark_under_review' => __( 'Mark Under Review', 'wp-sell-services' ),
-			'mark_cancelled'    => __( 'Cancel', 'wp-sell-services' ),
-		];
+		return array(
+			'mark_pending_review' => __( 'Mark Pending Review', 'wp-sell-services' ),
+			'mark_escalated'      => __( 'Escalate', 'wp-sell-services' ),
+			'mark_closed'         => __( 'Close', 'wp-sell-services' ),
+		);
 	}
 
 	/**
@@ -342,28 +342,28 @@ class DisputesListTable extends \WP_List_Table {
 		);
 
 		if ( ! $table_exists ) {
-			$this->items = [];
+			$this->items = array();
 			$this->set_pagination_args(
-				[
+				array(
 					'total_items' => 0,
 					'per_page'    => 20,
 					'total_pages' => 0,
-				]
+				)
 			);
-			$this->_column_headers = [
+			$this->_column_headers = array(
 				$this->get_columns(),
-				[],
+				array(),
 				$this->get_sortable_columns(),
-			];
+			);
 			return;
 		}
 
-		$per_page = 20;
+		$per_page     = 20;
 		$current_page = $this->get_pagenum();
 
 		// Build query.
-		$where = '1=1';
-		$params = [];
+		$where  = '1=1';
+		$params = array();
 
 		// Status filter.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -380,7 +380,7 @@ class DisputesListTable extends \WP_List_Table {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$params[] = absint( $_GET['s'] );
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$search = '%' . $wpdb->esc_like( sanitize_text_field( $_GET['s'] ) ) . '%';
+			$search   = '%' . $wpdb->esc_like( sanitize_text_field( $_GET['s'] ) ) . '%';
 			$params[] = $search;
 		}
 
@@ -400,14 +400,14 @@ class DisputesListTable extends \WP_List_Table {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$order = isset( $_GET['order'] ) && 'asc' === strtolower( $_GET['order'] ) ? 'ASC' : 'DESC';
 
-		$allowed_orderby = [ 'id', 'status', 'created_at' ];
+		$allowed_orderby = array( 'id', 'status', 'created_at' );
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
 			$orderby = 'created_at';
 		}
 
 		// Get items.
-		$offset = ( $current_page - 1 ) * $per_page;
-		$query_params = array_merge( $params, [ $per_page, $offset ] );
+		$offset       = ( $current_page - 1 ) * $per_page;
+		$query_params = array_merge( $params, array( $per_page, $offset ) );
 
 		if ( ! empty( $params ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -430,19 +430,19 @@ class DisputesListTable extends \WP_List_Table {
 
 		// Set pagination.
 		$this->set_pagination_args(
-			[
+			array(
 				'total_items' => (int) $total_items,
 				'per_page'    => $per_page,
 				'total_pages' => ceil( (int) $total_items / $per_page ),
-			]
+			)
 		);
 
 		// Set column headers.
-		$this->_column_headers = [
+		$this->_column_headers = array(
 			$this->get_columns(),
-			[],
+			array(),
 			$this->get_sortable_columns(),
-		];
+		);
 	}
 
 	/**

@@ -59,7 +59,7 @@ class BuyerRequestService {
 	 * @return int|false Post ID or false on failure.
 	 */
 	public function create( array $data ): int|false {
-		$defaults = [
+		$defaults = array(
 			'title'           => '',
 			'description'     => '',
 			'category_id'     => 0,
@@ -67,10 +67,10 @@ class BuyerRequestService {
 			'budget_min'      => 0,
 			'budget_max'      => 0,
 			'delivery_days'   => 7,
-			'attachments'     => [],
-			'skills_required' => [],
+			'attachments'     => array(),
+			'skills_required' => array(),
 			'expires_at'      => '',
-		];
+		);
 
 		$data = wp_parse_args( $data, $defaults );
 
@@ -79,13 +79,13 @@ class BuyerRequestService {
 			return false;
 		}
 
-		$post_data = [
+		$post_data = array(
 			'post_type'    => BuyerRequestPostType::POST_TYPE,
 			'post_title'   => sanitize_text_field( $data['title'] ),
 			'post_content' => wp_kses_post( $data['description'] ),
 			'post_status'  => 'publish',
 			'post_author'  => get_current_user_id(),
-		];
+		);
 
 		$post_id = wp_insert_post( $post_data, true );
 
@@ -98,7 +98,7 @@ class BuyerRequestService {
 
 		// Set category.
 		if ( $data['category_id'] ) {
-			wp_set_object_terms( $post_id, [ (int) $data['category_id'] ], ServiceCategoryTaxonomy::TAXONOMY );
+			wp_set_object_terms( $post_id, array( (int) $data['category_id'] ), ServiceCategoryTaxonomy::TAXONOMY );
 		}
 
 		/**
@@ -127,7 +127,7 @@ class BuyerRequestService {
 			return false;
 		}
 
-		$post_data = [ 'ID' => $request_id ];
+		$post_data = array( 'ID' => $request_id );
 
 		if ( isset( $data['title'] ) ) {
 			$post_data['post_title'] = sanitize_text_field( $data['title'] );
@@ -149,7 +149,7 @@ class BuyerRequestService {
 
 		// Update category.
 		if ( isset( $data['category_id'] ) ) {
-			wp_set_object_terms( $request_id, [ (int) $data['category_id'] ], ServiceCategoryTaxonomy::TAXONOMY );
+			wp_set_object_terms( $request_id, array( (int) $data['category_id'] ), ServiceCategoryTaxonomy::TAXONOMY );
 		}
 
 		/**
@@ -172,14 +172,14 @@ class BuyerRequestService {
 	 * @return void
 	 */
 	private function save_meta( int $request_id, array $data ): void {
-		$meta_fields = [
-			'budget_type'     => 'sanitize_key',
-			'budget_min'      => 'floatval',
-			'budget_max'      => 'floatval',
-			'delivery_days'   => 'absint',
-			'status'          => 'sanitize_key',
-			'expires_at'      => 'sanitize_text_field',
-		];
+		$meta_fields = array(
+			'budget_type'   => 'sanitize_key',
+			'budget_min'    => 'floatval',
+			'budget_max'    => 'floatval',
+			'delivery_days' => 'absint',
+			'status'        => 'sanitize_key',
+			'expires_at'    => 'sanitize_text_field',
+		);
 
 		foreach ( $meta_fields as $field => $sanitize ) {
 			if ( isset( $data[ $field ] ) ) {
@@ -204,7 +204,7 @@ class BuyerRequestService {
 		// Set default expiry if not set.
 		if ( ! get_post_meta( $request_id, '_wpss_expires_at', true ) && empty( $data['expires_at'] ) ) {
 			$default_days = (int) get_option( 'wpss_request_expiry_days', 30 );
-			$expires_at = gmdate( 'Y-m-d H:i:s', strtotime( "+{$default_days} days" ) );
+			$expires_at   = gmdate( 'Y-m-d H:i:s', strtotime( "+{$default_days} days" ) );
 			update_post_meta( $request_id, '_wpss_expires_at', $expires_at );
 		}
 	}
@@ -232,7 +232,7 @@ class BuyerRequestService {
 	 * @return object Formatted request.
 	 */
 	private function format_request( \WP_Post $post ): object {
-		$request = (object) [
+		$request = (object) array(
 			'id'              => $post->ID,
 			'title'           => $post->post_title,
 			'description'     => $post->post_content,
@@ -242,15 +242,15 @@ class BuyerRequestService {
 			'budget_min'      => (float) get_post_meta( $post->ID, '_wpss_budget_min', true ),
 			'budget_max'      => (float) get_post_meta( $post->ID, '_wpss_budget_max', true ),
 			'delivery_days'   => (int) get_post_meta( $post->ID, '_wpss_delivery_days', true ),
-			'attachments'     => get_post_meta( $post->ID, '_wpss_attachments', true ) ?: [],
-			'skills_required' => get_post_meta( $post->ID, '_wpss_skills_required', true ) ?: [],
+			'attachments'     => get_post_meta( $post->ID, '_wpss_attachments', true ) ?: array(),
+			'skills_required' => get_post_meta( $post->ID, '_wpss_skills_required', true ) ?: array(),
 			'expires_at'      => get_post_meta( $post->ID, '_wpss_expires_at', true ),
 			'created_at'      => $post->post_date,
 			'proposal_count'  => $this->get_proposal_count( $post->ID ),
-		];
+		);
 
 		// Get category.
-		$categories = wp_get_post_terms( $post->ID, ServiceCategoryTaxonomy::TAXONOMY );
+		$categories        = wp_get_post_terms( $post->ID, ServiceCategoryTaxonomy::TAXONOMY );
 		$request->category = ! empty( $categories ) ? $categories[0] : null;
 
 		return $request;
@@ -262,8 +262,8 @@ class BuyerRequestService {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of requests.
 	 */
-	public function get_open( array $args = [] ): array {
-		$defaults = [
+	public function get_open( array $args = array() ): array {
+		$defaults = array(
 			'posts_per_page' => 20,
 			'paged'          => 1,
 			'category_id'    => 0,
@@ -271,73 +271,73 @@ class BuyerRequestService {
 			'budget_max'     => 0,
 			'order_by'       => 'date',
 			'order'          => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$query_args = [
+		$query_args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
 			'posts_per_page' => $args['posts_per_page'],
 			'paged'          => $args['paged'],
 			'orderby'        => $args['order_by'],
 			'order'          => $args['order'],
-			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'relation' => 'AND',
-				[
+				array(
 					'key'     => '_wpss_status',
 					'value'   => self::STATUS_OPEN,
 					'compare' => '=',
-				],
-				[
+				),
+				array(
 					'relation' => 'OR',
-					[
+					array(
 						'key'     => '_wpss_expires_at',
 						'value'   => current_time( 'mysql' ),
 						'compare' => '>',
 						'type'    => 'DATETIME',
-					],
-					[
+					),
+					array(
 						'key'     => '_wpss_expires_at',
 						'compare' => 'NOT EXISTS',
-					],
-				],
-			],
-		];
+					),
+				),
+			),
+		);
 
 		// Filter by category.
 		if ( $args['category_id'] ) {
-			$query_args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-				[
+			$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
 					'taxonomy' => ServiceCategoryTaxonomy::TAXONOMY,
 					'field'    => 'term_id',
-					'terms'    => [ (int) $args['category_id'] ],
-				],
-			];
+					'terms'    => array( (int) $args['category_id'] ),
+				),
+			);
 		}
 
 		// Filter by budget.
 		if ( $args['budget_min'] > 0 ) {
-			$query_args['meta_query'][] = [
+			$query_args['meta_query'][] = array(
 				'key'     => '_wpss_budget_min',
 				'value'   => $args['budget_min'],
 				'compare' => '>=',
 				'type'    => 'DECIMAL',
-			];
+			);
 		}
 
 		if ( $args['budget_max'] > 0 ) {
-			$query_args['meta_query'][] = [
+			$query_args['meta_query'][] = array(
 				'key'     => '_wpss_budget_max',
 				'value'   => $args['budget_max'],
 				'compare' => '<=',
 				'type'    => 'DECIMAL',
-			];
+			);
 		}
 
 		$query = new \WP_Query( $query_args );
 
-		$requests = [];
+		$requests = array();
 		foreach ( $query->posts as $post ) {
 			$requests[] = $this->format_request( $post );
 		}
@@ -352,35 +352,35 @@ class BuyerRequestService {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of requests.
 	 */
-	public function get_by_buyer( int $user_id, array $args = [] ): array {
-		$defaults = [
+	public function get_by_buyer( int $user_id, array $args = array() ): array {
+		$defaults = array(
 			'posts_per_page' => 20,
 			'paged'          => 1,
 			'status'         => '',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$query_args = [
+		$query_args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
 			'author'         => $user_id,
 			'posts_per_page' => $args['posts_per_page'],
 			'paged'          => $args['paged'],
-		];
+		);
 
 		if ( $args['status'] ) {
-			$query_args['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				[
+			$query_args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
 					'key'   => '_wpss_status',
 					'value' => $args['status'],
-				],
-			];
+				),
+			);
 		}
 
 		$query = new \WP_Query( $query_args );
 
-		$requests = [];
+		$requests = array();
 		foreach ( $query->posts as $post ) {
 			$requests[] = $this->format_request( $post );
 		}
@@ -396,13 +396,13 @@ class BuyerRequestService {
 	 * @return bool True on success.
 	 */
 	public function update_status( int $request_id, string $status ): bool {
-		$valid_statuses = [
+		$valid_statuses = array(
 			self::STATUS_OPEN,
 			self::STATUS_IN_REVIEW,
 			self::STATUS_HIRED,
 			self::STATUS_EXPIRED,
 			self::STATUS_CANCELLED,
-		];
+		);
 
 		if ( ! in_array( $status, $valid_statuses, true ) ) {
 			return false;
@@ -463,28 +463,28 @@ class BuyerRequestService {
 	 * @return int Number of expired requests.
 	 */
 	public function expire_old_requests(): int {
-		$args = [
+		$args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
-			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'relation' => 'AND',
-				[
+				array(
 					'key'   => '_wpss_status',
 					'value' => self::STATUS_OPEN,
-				],
-				[
+				),
+				array(
 					'key'     => '_wpss_expires_at',
 					'value'   => current_time( 'mysql' ),
 					'compare' => '<',
 					'type'    => 'DATETIME',
-				],
-			],
-		];
+				),
+			),
+		);
 
 		$request_ids = get_posts( $args );
-		$count = 0;
+		$count       = 0;
 
 		foreach ( $request_ids as $request_id ) {
 			if ( $this->update_status( $request_id, self::STATUS_EXPIRED ) ) {
@@ -502,35 +502,35 @@ class BuyerRequestService {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of requests.
 	 */
-	public function search( string $search, array $args = [] ): array {
-		$defaults = [
+	public function search( string $search, array $args = array() ): array {
+		$defaults = array(
 			'posts_per_page' => 20,
 			'paged'          => 1,
 			'status'         => self::STATUS_OPEN,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$query_args = [
+		$query_args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
 			's'              => $search,
 			'posts_per_page' => $args['posts_per_page'],
 			'paged'          => $args['paged'],
-		];
+		);
 
 		if ( $args['status'] ) {
-			$query_args['meta_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				[
+			$query_args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
 					'key'   => '_wpss_status',
 					'value' => $args['status'],
-				],
-			];
+				),
+			);
 		}
 
 		$query = new \WP_Query( $query_args );
 
-		$requests = [];
+		$requests = array();
 		foreach ( $query->posts as $post ) {
 			$requests[] = $this->format_request( $post );
 		}
@@ -551,45 +551,45 @@ class BuyerRequestService {
 		$request = $this->get( $request_id );
 
 		if ( ! $request ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Buyer request not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Verify request is open or in review.
-		if ( ! in_array( $request->status, [ self::STATUS_OPEN, self::STATUS_IN_REVIEW ], true ) ) {
-			return [
+		if ( ! in_array( $request->status, array( self::STATUS_OPEN, self::STATUS_IN_REVIEW ), true ) ) {
+			return array(
 				'success' => false,
 				'message' => __( 'This request is no longer accepting proposals.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Get proposal.
 		$proposal_service = new ProposalService();
-		$proposal = $proposal_service->get( $proposal_id );
+		$proposal         = $proposal_service->get( $proposal_id );
 
 		if ( ! $proposal ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Proposal not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Verify proposal belongs to this request.
-		if ( $proposal['request_id'] !== $request_id ) {
-			return [
+		if ( (int) $proposal->request_id !== $request_id ) {
+			return array(
 				'success' => false,
 				'message' => __( 'Proposal does not belong to this request.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Verify proposal is pending.
-		if ( ProposalService::STATUS_PENDING !== $proposal['status'] ) {
-			return [
+		if ( ProposalService::STATUS_PENDING !== $proposal->status ) {
+			return array(
 				'success' => false,
 				'message' => __( 'This proposal has already been processed.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		global $wpdb;
@@ -599,25 +599,25 @@ class BuyerRequestService {
 		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
 
 		// Calculate delivery deadline.
-		$delivery_days = $proposal['proposed_days'] ?: $request->delivery_days ?: 7;
-		$deadline = gmdate( 'Y-m-d H:i:s', strtotime( "+{$delivery_days} days" ) );
+		$delivery_days = $proposal->delivery_days ?: $request->delivery_days ?: 7;
+		$deadline      = gmdate( 'Y-m-d H:i:s', strtotime( "+{$delivery_days} days" ) );
 
 		// Create order.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$orders_table,
-			[
+			array(
 				'order_number'       => $order_number,
 				'customer_id'        => $request->author_id,
-				'vendor_id'          => $proposal['vendor_id'],
-				'service_id'         => $proposal['service_id'] ?: 0,
+				'vendor_id'          => $proposal->vendor_id,
+				'service_id'         => isset( $proposal->service_id ) ? (int) $proposal->service_id : 0,
 				'package_id'         => null,
-				'addons'             => wp_json_encode( [] ),
+				'addons'             => wp_json_encode( array() ),
 				'platform'           => 'request',
 				'platform_order_id'  => $request_id,
-				'subtotal'           => $proposal['proposed_price'],
+				'subtotal'           => $proposal->price,
 				'addons_total'       => 0,
-				'total'              => $proposal['proposed_price'],
+				'total'              => $proposal->price,
 				'currency'           => get_option( 'wpss_currency', 'USD' ),
 				'status'             => 'pending_payment',
 				'delivery_deadline'  => $deadline,
@@ -627,15 +627,15 @@ class BuyerRequestService {
 				'revisions_used'     => 0,
 				'created_at'         => current_time( 'mysql' ),
 				'updated_at'         => current_time( 'mysql' ),
-			],
-			[ '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s' ]
+			),
+			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s' )
 		);
 
 		if ( ! $result ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to create order. Please try again.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		$order_id = $wpdb->insert_id;
@@ -647,22 +647,24 @@ class BuyerRequestService {
 		$proposal_service->reject_other_proposals( $request_id, $proposal_id );
 
 		// Mark request as hired.
-		$this->mark_hired( $request_id, $proposal['vendor_id'], $proposal_id );
+		$this->mark_hired( $request_id, $proposal->vendor_id, $proposal_id );
 
 		// Store request details in order meta for reference.
 		$wpdb->insert(
 			$wpdb->prefix . 'wpss_order_requirements',
-			[
+			array(
 				'order_id'     => $order_id,
-				'field_data'   => wp_json_encode( [
-					'request_title'       => $request->title,
-					'request_description' => $request->description,
-					'proposal_cover'      => $proposal['cover_letter'],
-				] ),
+				'field_data'   => wp_json_encode(
+					array(
+						'request_title'       => $request->title,
+						'request_description' => $request->description,
+						'proposal_cover'      => $proposal->description,
+					)
+				),
 				'attachments'  => wp_json_encode( $request->attachments ),
 				'submitted_at' => current_time( 'mysql' ),
-			],
-			[ '%d', '%s', '%s', '%s' ]
+			),
+			array( '%d', '%s', '%s', '%s' )
 		);
 
 		// Create conversation for the order.
@@ -672,7 +674,7 @@ class BuyerRequestService {
 		// Notify vendor.
 		$notification_service = new NotificationService();
 		$notification_service->send(
-			$proposal['vendor_id'],
+			$proposal->vendor_id,
 			'proposal_accepted',
 			__( 'Proposal Accepted!', 'wp-sell-services' ),
 			sprintf(
@@ -680,7 +682,10 @@ class BuyerRequestService {
 				__( 'Your proposal for "%s" has been accepted. Please wait for payment to start working.', 'wp-sell-services' ),
 				$request->title
 			),
-			[ 'order_id' => $order_id, 'request_id' => $request_id ]
+			array(
+				'order_id'   => $order_id,
+				'request_id' => $request_id,
+			)
 		);
 
 		/**
@@ -695,12 +700,12 @@ class BuyerRequestService {
 		 */
 		do_action( 'wpss_request_converted_to_order', $order_id, $request_id, $proposal_id, $request, $proposal );
 
-		return [
+		return array(
 			'success'      => true,
 			'message'      => __( 'Order created successfully. Proceed to payment.', 'wp-sell-services' ),
 			'order_id'     => $order_id,
 			'order_number' => $order_number,
-		];
+		);
 	}
 
 	/**
@@ -709,13 +714,13 @@ class BuyerRequestService {
 	 * @return array<string, string> Status slugs and labels.
 	 */
 	public static function get_statuses(): array {
-		return [
+		return array(
 			self::STATUS_OPEN      => __( 'Open', 'wp-sell-services' ),
 			self::STATUS_IN_REVIEW => __( 'In Review', 'wp-sell-services' ),
 			self::STATUS_HIRED     => __( 'Hired', 'wp-sell-services' ),
 			self::STATUS_EXPIRED   => __( 'Expired', 'wp-sell-services' ),
 			self::STATUS_CANCELLED => __( 'Cancelled', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -724,9 +729,9 @@ class BuyerRequestService {
 	 * @return array<string, string> Budget type slugs and labels.
 	 */
 	public static function get_budget_types(): array {
-		return [
+		return array(
 			self::BUDGET_FIXED => __( 'Fixed Price', 'wp-sell-services' ),
 			self::BUDGET_RANGE => __( 'Price Range', 'wp-sell-services' ),
-		];
+		);
 	}
 }

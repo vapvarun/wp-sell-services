@@ -16,6 +16,7 @@ use WPSellServices\Admin\Metaboxes\OrderMetabox;
 use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
+use WPSellServices\Admin\Pages\WithdrawalsPage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 
@@ -55,6 +56,13 @@ class Admin {
 	private ServiceModerationPage $moderation_page;
 
 	/**
+	 * Withdrawals page instance.
+	 *
+	 * @var WithdrawalsPage
+	 */
+	private WithdrawalsPage $withdrawals_page;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -62,6 +70,7 @@ class Admin {
 		$this->manual_order_page = new ManualOrderPage();
 		$this->vendors_page      = new VendorsPage();
 		$this->moderation_page   = new ServiceModerationPage();
+		$this->withdrawals_page  = new WithdrawalsPage();
 		$this->init_metaboxes();
 		$this->init_pages();
 		$this->init_ajax_handlers();
@@ -107,6 +116,7 @@ class Admin {
 			'post-new.php?post_type=wpss_request',                           // Add New Request.
 			'wpss-orders',                                                   // Orders.
 			'wpss-vendors',                                                  // Vendors.
+			'wpss-withdrawals',                                              // Withdrawals.
 			'wpss-disputes',                                                 // Disputes.
 			'wpss-settings',                                                 // Settings.
 		);
@@ -225,6 +235,7 @@ class Admin {
 		$this->manual_order_page->init();
 		$this->vendors_page->init();
 		$this->moderation_page->init();
+		$this->withdrawals_page->init();
 	}
 
 	/**
@@ -445,6 +456,7 @@ class Admin {
 			'toplevel_page_wp-sell-services',
 			'sell-services_page_wpss-orders',
 			'sell-services_page_wpss-vendors',
+			'sell-services_page_wpss-withdrawals',
 			'sell-services_page_wpss-moderation',
 			'sell-services_page_wpss-disputes',
 			'sell-services_page_wpss-settings',
@@ -660,6 +672,17 @@ class Admin {
 	 * @return void
 	 */
 	public function render_disputes_page(): void {
+		// Check if viewing a specific dispute.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$dispute_id = isset( $_GET['dispute_id'] ) ? absint( $_GET['dispute_id'] ) : 0;
+
+		if ( 'view' === $action && $dispute_id ) {
+			$this->render_dispute_detail( $dispute_id );
+			return;
+		}
+
 		$list_table = new DisputesListTable();
 		$list_table->prepare_items();
 		?>
@@ -676,6 +699,281 @@ class Admin {
 				$list_table->display();
 				?>
 			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render dispute detail view.
+	 *
+	 * @param int $dispute_id Dispute ID.
+	 * @return void
+	 */
+	private function render_dispute_detail( int $dispute_id ): void {
+		global $wpdb;
+		$disputes_table = $wpdb->prefix . 'wpss_disputes';
+		$messages_table = $wpdb->prefix . 'wpss_dispute_messages';
+		$orders_table   = $wpdb->prefix . 'wpss_orders';
+
+		// Get dispute.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$dispute = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$disputes_table} WHERE id = %d",
+				$dispute_id
+			)
+		);
+
+		if ( ! $dispute ) {
+			echo '<div class="wrap"><div class="notice notice-error"><p>' . esc_html__( 'Dispute not found.', 'wp-sell-services' ) . '</p></div></div>';
+			return;
+		}
+
+		// Get related order.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$order = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$orders_table} WHERE id = %d",
+				$dispute->order_id
+			)
+		);
+
+		// Get dispute messages.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$messages = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$messages_table} WHERE dispute_id = %d ORDER BY created_at ASC",
+				$dispute_id
+			)
+		);
+
+		$opened_by = get_userdata( $dispute->opened_by );
+		$vendor    = $order ? get_userdata( $order->vendor_id ) : null;
+		$customer  = $order ? get_userdata( $order->customer_id ) : null;
+
+		$statuses = array(
+			'open'           => __( 'Open', 'wp-sell-services' ),
+			'pending_review' => __( 'Pending Review', 'wp-sell-services' ),
+			'resolved'       => __( 'Resolved', 'wp-sell-services' ),
+			'escalated'      => __( 'Escalated', 'wp-sell-services' ),
+			'closed'         => __( 'Closed', 'wp-sell-services' ),
+		);
+
+		$resolutions = array(
+			'full_refund'      => __( 'Full Refund to Buyer', 'wp-sell-services' ),
+			'partial_refund'   => __( 'Partial Refund', 'wp-sell-services' ),
+			'favor_vendor'     => __( 'Release Payment to Vendor', 'wp-sell-services' ),
+			'favor_buyer'      => __( 'Full Refund to Buyer', 'wp-sell-services' ),
+			'mutual_agreement' => __( 'Mutual Agreement', 'wp-sell-services' ),
+		);
+
+		$reasons = array(
+			'quality'       => __( 'Quality Issues', 'wp-sell-services' ),
+			'delivery'      => __( 'Late Delivery', 'wp-sell-services' ),
+			'communication' => __( 'Communication Issues', 'wp-sell-services' ),
+			'not_delivered' => __( 'Not Delivered', 'wp-sell-services' ),
+			'other'         => __( 'Other', 'wp-sell-services' ),
+		);
+		?>
+		<div class="wrap wpss-dispute-detail">
+			<h1 class="wp-heading-inline">
+				<?php
+				printf(
+					/* translators: %d: dispute ID */
+					esc_html__( 'Dispute #%d', 'wp-sell-services' ),
+					$dispute_id
+				);
+				?>
+			</h1>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ); ?>" class="page-title-action">
+				<?php esc_html_e( 'Back to Disputes', 'wp-sell-services' ); ?>
+			</a>
+			<hr class="wp-header-end">
+
+			<div class="wpss-dispute-layout" style="display: flex; gap: 20px; margin-top: 20px;">
+				<div class="wpss-dispute-main" style="flex: 2;">
+					<!-- Dispute Info -->
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Dispute Details', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<table class="form-table">
+								<tr>
+									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+									<td>
+										<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $dispute->status ); ?>">
+											<?php echo esc_html( $statuses[ $dispute->status ] ?? $dispute->status ); ?>
+										</span>
+									</td>
+								</tr>
+								<tr>
+									<th><?php esc_html_e( 'Reason', 'wp-sell-services' ); ?></th>
+									<td><?php echo esc_html( $reasons[ $dispute->reason ] ?? $dispute->reason ); ?></td>
+								</tr>
+								<tr>
+									<th><?php esc_html_e( 'Opened By', 'wp-sell-services' ); ?></th>
+									<td>
+										<?php if ( $opened_by ) : ?>
+											<a href="<?php echo esc_url( get_edit_user_link( $opened_by->ID ) ); ?>">
+												<?php echo esc_html( $opened_by->display_name ); ?>
+											</a>
+										<?php else : ?>
+											<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
+										<?php endif; ?>
+									</td>
+								</tr>
+								<tr>
+									<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
+									<td>
+										<?php if ( $order ) : ?>
+											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order->id ) ); ?>">
+												#<?php echo esc_html( $order->order_number ); ?>
+											</a>
+										<?php else : ?>
+											<em><?php esc_html_e( 'Deleted', 'wp-sell-services' ); ?></em>
+										<?php endif; ?>
+									</td>
+								</tr>
+								<tr>
+									<th><?php esc_html_e( 'Date Opened', 'wp-sell-services' ); ?></th>
+									<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->created_at ) ) ); ?></td>
+								</tr>
+								<?php if ( ! empty( $dispute->description ) ) : ?>
+									<tr>
+										<th><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></th>
+										<td><?php echo wp_kses_post( wpautop( $dispute->description ) ); ?></td>
+									</tr>
+								<?php endif; ?>
+							</table>
+						</div>
+					</div>
+
+					<!-- Messages -->
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<?php if ( ! empty( $messages ) ) : ?>
+								<div class="wpss-dispute-messages" style="max-height: 400px; overflow-y: auto;">
+									<?php foreach ( $messages as $message ) : ?>
+										<?php $msg_user = get_userdata( $message->user_id ); ?>
+										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
+											<div style="margin-bottom: 5px;">
+												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
+												<span style="color: #666; margin-left: 10px;">
+													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
+												</span>
+											</div>
+											<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
+										</div>
+									<?php endforeach; ?>
+								</div>
+							<?php else : ?>
+								<p><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+							<?php endif; ?>
+						</div>
+					</div>
+				</div>
+
+				<div class="wpss-dispute-sidebar" style="flex: 1;">
+					<!-- Parties -->
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Parties Involved', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<p>
+								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
+								<?php if ( $customer ) : ?>
+									<a href="<?php echo esc_url( get_edit_user_link( $customer->ID ) ); ?>">
+										<?php echo esc_html( $customer->display_name ); ?>
+									</a>
+								<?php else : ?>
+									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
+								<?php endif; ?>
+							</p>
+							<p>
+								<strong><?php esc_html_e( 'Vendor:', 'wp-sell-services' ); ?></strong><br>
+								<?php if ( $vendor ) : ?>
+									<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
+										<?php echo esc_html( $vendor->display_name ); ?>
+									</a>
+								<?php else : ?>
+									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
+								<?php endif; ?>
+							</p>
+							<?php if ( $order ) : ?>
+								<p>
+									<strong><?php esc_html_e( 'Order Value:', 'wp-sell-services' ); ?></strong><br>
+									<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
+								</p>
+							<?php endif; ?>
+						</div>
+					</div>
+
+					<!-- Resolution Actions -->
+					<?php if ( ! in_array( $dispute->status, array( 'resolved', 'closed' ), true ) ) : ?>
+						<div class="postbox">
+							<h2 class="hndle"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
+									<input type="hidden" name="action" value="wpss_resolve_dispute">
+									<input type="hidden" name="dispute_id" value="<?php echo esc_attr( $dispute_id ); ?>">
+
+									<p>
+										<label for="dispute_status"><strong><?php esc_html_e( 'Update Status:', 'wp-sell-services' ); ?></strong></label><br>
+										<select name="dispute_status" id="dispute_status" style="width: 100%;">
+											<?php foreach ( $statuses as $value => $label ) : ?>
+												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->status, $value ); ?>>
+													<?php echo esc_html( $label ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+									</p>
+
+									<p>
+										<label for="resolution"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
+										<select name="resolution" id="resolution" style="width: 100%;">
+											<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
+											<?php foreach ( $resolutions as $value => $label ) : ?>
+												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
+													<?php echo esc_html( $label ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+									</p>
+
+									<p>
+										<label for="admin_notes"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
+										<textarea name="admin_notes" id="admin_notes" rows="4" style="width: 100%;"><?php echo esc_textarea( $dispute->admin_notes ?? '' ); ?></textarea>
+									</p>
+
+									<?php submit_button( __( 'Update Dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+								</form>
+							</div>
+						</div>
+					<?php else : ?>
+						<div class="postbox">
+							<h2 class="hndle"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong><br>
+									<?php echo esc_html( $resolutions[ $dispute->resolution ?? '' ] ?? __( 'N/A', 'wp-sell-services' ) ); ?>
+								</p>
+								<?php if ( ! empty( $dispute->admin_notes ) ) : ?>
+									<p>
+										<strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong><br>
+										<?php echo wp_kses_post( wpautop( $dispute->admin_notes ) ); ?>
+									</p>
+								<?php endif; ?>
+								<?php if ( ! empty( $dispute->resolved_at ) ) : ?>
+									<p>
+										<strong><?php esc_html_e( 'Resolved At:', 'wp-sell-services' ); ?></strong><br>
+										<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->resolved_at ) ) ); ?>
+									</p>
+								<?php endif; ?>
+							</div>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
 		</div>
 		<?php
 	}

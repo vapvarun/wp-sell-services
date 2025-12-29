@@ -25,12 +25,12 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'woocommerce_add_cart_item_data', [ $this, 'add_cart_item_data' ], 10, 3 );
-		add_filter( 'woocommerce_add_to_cart_validation', [ $this, 'validate_add_to_cart_hook' ], 10, 3 );
-		add_action( 'woocommerce_checkout_create_order_line_item', [ $this, 'save_order_item_meta' ], 10, 4 );
-		add_filter( 'woocommerce_get_item_data', [ $this, 'display_cart_item_data' ], 10, 2 );
-		add_filter( 'woocommerce_quantity_input_args', [ $this, 'filter_quantity_args' ], 10, 2 );
-		add_filter( 'woocommerce_is_sold_individually', [ $this, 'service_sold_individually' ], 10, 2 );
+		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
+		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart_hook' ), 10, 3 );
+		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'save_order_item_meta' ), 10, 4 );
+		add_filter( 'woocommerce_get_item_data', array( $this, 'display_cart_item_data' ), 10, 2 );
+		add_filter( 'woocommerce_quantity_input_args', array( $this, 'filter_quantity_args' ), 10, 2 );
+		add_filter( 'woocommerce_is_sold_individually', array( $this, 'service_sold_individually' ), 10, 2 );
 	}
 
 	/**
@@ -46,18 +46,23 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 			return $cart_item_data;
 		}
 
+		// Check if values already exist in cart_item_data (e.g., from AJAX handler).
+		// Fall back to $_REQUEST for front-end form submissions.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$package_id = isset( $_REQUEST['wpss_package_id'] ) ? absint( $_REQUEST['wpss_package_id'] ) : 0;
-		$addons     = isset( $_REQUEST['wpss_addons'] ) ? array_map( 'absint', (array) $_REQUEST['wpss_addons'] ) : [];
+		if ( ! isset( $cart_item_data['wpss_package_id'] ) ) {
+			$package_id = isset( $_REQUEST['wpss_package_id'] ) ? absint( $_REQUEST['wpss_package_id'] ) : 0;
+			if ( $package_id ) {
+				$cart_item_data['wpss_package_id'] = $package_id;
+			}
+		}
+
+		if ( ! isset( $cart_item_data['wpss_addons'] ) ) {
+			$addons = isset( $_REQUEST['wpss_addons'] ) ? array_map( 'absint', (array) $_REQUEST['wpss_addons'] ) : array();
+			if ( ! empty( $addons ) ) {
+				$cart_item_data['wpss_addons'] = $addons;
+			}
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		if ( $package_id ) {
-			$cart_item_data['wpss_package_id'] = $package_id;
-		}
-
-		if ( ! empty( $addons ) ) {
-			$cart_item_data['wpss_addons'] = $addons;
-		}
 
 		// Store service ID.
 		$service_id = get_post_meta( $product_id, '_wpss_service_id', true );
@@ -121,6 +126,20 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 			return true;
 		}
 
+		// Services require login - guest checkout not supported.
+		// Buyers need to submit requirements, communicate, and access deliveries.
+		if ( ! is_user_logged_in() ) {
+			wc_add_notice(
+				sprintf(
+					/* translators: %s: login URL */
+					__( 'Please <a href="%s">log in</a> to purchase services. An account is required to submit requirements and communicate with the seller.', 'wp-sell-services' ),
+					esc_url( wp_login_url( wc_get_cart_url() ) )
+				),
+				'error'
+			);
+			return false;
+		}
+
 		if ( ! $this->validate_add_to_cart( $product_id, $quantity ) ) {
 			wc_add_notice( __( 'This service cannot be added to cart at this time.', 'wp-sell-services' ), 'error' );
 			return false;
@@ -142,7 +161,7 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 	 * @param array $args       Additional arguments (package_id, addons, etc.).
 	 * @return string
 	 */
-	public function get_checkout_url( int $service_id, array $args = [] ): string {
+	public function get_checkout_url( int $service_id, array $args = array() ): string {
 		$url = wc_get_checkout_url();
 
 		// Get WC product ID from service.
@@ -153,9 +172,9 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 
 			if ( $product_id ) {
 				// Build add-to-cart URL.
-				$params = [
+				$params = array(
 					'add-to-cart' => $product_id,
-				];
+				);
 
 				if ( ! empty( $args['package_id'] ) ) {
 					$params['wpss_package_id'] = $args['package_id'];
@@ -219,7 +238,7 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 	 * @return array
 	 */
 	public function get_cart_services(): array {
-		$services = [];
+		$services = array();
 
 		if ( ! WC()->cart ) {
 			return $services;
@@ -232,12 +251,12 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 				continue;
 			}
 
-			$services[ $cart_key ] = [
+			$services[ $cart_key ] = array(
 				'product_id' => $product_id,
 				'service_id' => $cart_item['wpss_service_id'] ?? 0,
 				'package_id' => $cart_item['wpss_package_id'] ?? 0,
-				'addons'     => $cart_item['wpss_addons'] ?? [],
-			];
+				'addons'     => $cart_item['wpss_addons'] ?? array(),
+			);
 		}
 
 		return $services;
@@ -298,10 +317,10 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 			$package_name = $this->get_package_name( $cart_item['product_id'], $cart_item['wpss_package_id'] );
 
 			if ( $package_name ) {
-				$item_data[] = [
+				$item_data[] = array(
 					'key'   => __( 'Package', 'wp-sell-services' ),
 					'value' => $package_name,
-				];
+				);
 			}
 		}
 
@@ -322,15 +341,12 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 			return '';
 		}
 
-		$packages = get_post_meta( (int) $service_id, '_wpss_packages', true ) ?: [];
+		$packages = get_post_meta( (int) $service_id, '_wpss_packages', true ) ?: array();
 
-		foreach ( $packages as $package ) {
-			if ( (int) ( $package['id'] ?? 0 ) === $package_id ) {
-				return $package['name'] ?? '';
-			}
-		}
+		// Convert to indexed array and match by position (package_id is the index).
+		$packages = array_values( $packages );
 
-		return '';
+		return $packages[ $package_id ]['name'] ?? '';
 	}
 
 	/**

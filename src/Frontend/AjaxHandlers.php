@@ -52,9 +52,14 @@ class AjaxHandlers {
 
 		// Reviews.
 		add_action( 'wp_ajax_wpss_submit_review', array( $this, 'submit_review' ) );
+		add_action( 'wp_ajax_wpss_load_reviews', array( $this, 'load_reviews' ) );
+		add_action( 'wp_ajax_nopriv_wpss_load_reviews', array( $this, 'load_reviews' ) );
+		add_action( 'wp_ajax_wpss_mark_review_helpful', array( $this, 'mark_review_helpful' ) );
+		add_action( 'wp_ajax_nopriv_wpss_mark_review_helpful', array( $this, 'mark_review_helpful' ) );
 
 		// Disputes.
 		add_action( 'wp_ajax_wpss_open_dispute', array( $this, 'open_dispute' ) );
+		add_action( 'wp_ajax_wpss_add_dispute_evidence', array( $this, 'add_dispute_evidence' ) );
 
 		// Buyer requests.
 		add_action( 'wp_ajax_wpss_post_request', array( $this, 'post_request' ) );
@@ -77,6 +82,10 @@ class AjaxHandlers {
 		// Search.
 		add_action( 'wp_ajax_wpss_live_search', array( $this, 'live_search' ) );
 		add_action( 'wp_ajax_nopriv_wpss_live_search', array( $this, 'live_search' ) );
+
+		// Add to cart.
+		add_action( 'wp_ajax_wpss_add_service_to_cart', array( $this, 'add_service_to_cart' ) );
+		add_action( 'wp_ajax_nopriv_wpss_add_service_to_cart', array( $this, 'add_service_to_cart' ) );
 
 		// Notifications.
 		add_action( 'wp_ajax_wpss_get_notifications', array( $this, 'get_notifications' ) );
@@ -102,7 +111,7 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order['vendor_id'] !== $user_id ) {
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to accept this order.', 'wp-sell-services' ) ) );
 		}
 
@@ -134,7 +143,7 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order['vendor_id'] !== $user_id ) {
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to decline this order.', 'wp-sell-services' ) ) );
 		}
 
@@ -167,17 +176,17 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order['vendor_id'] !== $user_id ) {
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to deliver this order.', 'wp-sell-services' ) ) );
 		}
 
 		$delivery_service = new DeliveryService();
-		$result           = $delivery_service->submit( $order_id, $user_id, $message, $files );
+		$result           = $delivery_service->submit( $order_id, $message, $files );
 
-		if ( $result['success'] ) {
+		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Delivery submitted successfully.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( $result );
+			wp_send_json_error( array( 'message' => __( 'Failed to submit delivery.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -200,7 +209,7 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order['customer_id'] !== $user_id ) {
+		if ( ! $order || (int) $order->customer_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to request revision.', 'wp-sell-services' ) ) );
 		}
 
@@ -232,7 +241,7 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order['customer_id'] !== $user_id ) {
+		if ( ! $order || (int) $order->customer_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to accept this delivery.', 'wp-sell-services' ) ) );
 		}
 
@@ -266,7 +275,7 @@ class AjaxHandlers {
 		$order         = $order_service->get( $order_id );
 
 		// Check if user is part of the order.
-		if ( ! $order || ( (int) $order['customer_id'] !== $user_id && (int) $order['vendor_id'] !== $user_id ) ) {
+		if ( ! $order || ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to cancel this order.', 'wp-sell-services' ) ) );
 		}
 
@@ -297,7 +306,7 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order['customer_id'] !== $user_id ) {
+		if ( ! $order || (int) $order->customer_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to submit requirements.', 'wp-sell-services' ) ) );
 		}
 
@@ -464,6 +473,156 @@ class AjaxHandlers {
 	}
 
 	/**
+	 * Load more reviews for a service (AJAX pagination).
+	 *
+	 * @return void
+	 */
+	public function load_reviews(): void {
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$page       = absint( $_POST['page'] ?? 1 );
+		$per_page   = 10;
+
+		if ( ! $service_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		$review_service = new ReviewService();
+		$reviews        = $review_service->get_service_reviews(
+			$service_id,
+			array(
+				'limit'  => $per_page,
+				'offset' => ( $page - 1 ) * $per_page,
+			)
+		);
+
+		// Get total count for has_more check.
+		$rating_count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
+		$total_loaded = $page * $per_page;
+		$has_more     = $total_loaded < $rating_count;
+
+		// Generate HTML for reviews.
+		ob_start();
+		foreach ( $reviews as $review ) {
+			$reviewer = get_userdata( $review->reviewer_id );
+			?>
+			<div class="wpss-review">
+				<div class="wpss-review-header">
+					<img src="<?php echo esc_url( get_avatar_url( $review->reviewer_id, array( 'size' => 48 ) ) ); ?>"
+						alt="<?php echo esc_attr( $reviewer ? $reviewer->display_name : '' ); ?>"
+						class="wpss-review-avatar">
+					<div class="wpss-review-info">
+						<strong class="wpss-review-author">
+							<?php echo esc_html( $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+						</strong>
+						<div class="wpss-review-rating">
+							<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
+								<span class="wpss-star <?php echo $i <= $review->rating ? 'filled' : ''; ?>">★</span>
+							<?php endfor; ?>
+						</div>
+					</div>
+					<span class="wpss-review-date">
+						<?php echo esc_html( wpss_time_ago( $review->created_at->format( 'Y-m-d H:i:s' ) ) ); ?>
+					</span>
+				</div>
+
+				<div class="wpss-review-content">
+					<?php echo wp_kses_post( wpautop( $review->content ) ); ?>
+				</div>
+
+				<?php if ( ! empty( $review->response ) ) : ?>
+					<div class="wpss-review-reply">
+						<div class="wpss-reply-header">
+							<strong><?php esc_html_e( 'Seller Response:', 'wp-sell-services' ); ?></strong>
+							<?php if ( $review->response_at ) : ?>
+								<span class="wpss-reply-date">
+									<?php echo esc_html( wpss_time_ago( $review->response_at->format( 'Y-m-d H:i:s' ) ) ); ?>
+								</span>
+							<?php endif; ?>
+						</div>
+						<?php echo wp_kses_post( wpautop( $review->response ) ); ?>
+					</div>
+				<?php endif; ?>
+
+				<div class="wpss-review-actions">
+					<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
+						<span class="wpss-helpful-icon">👍</span>
+						<span class="wpss-helpful-text"><?php esc_html_e( 'Helpful', 'wp-sell-services' ); ?></span>
+						<?php if ( $review->helpful_count > 0 ) : ?>
+							<span class="wpss-helpful-count">(<?php echo esc_html( $review->helpful_count ); ?>)</span>
+						<?php endif; ?>
+					</button>
+				</div>
+			</div>
+			<?php
+		}
+		$html = ob_get_clean();
+
+		wp_send_json_success(
+			array(
+				'html'     => $html,
+				'has_more' => $has_more,
+			)
+		);
+	}
+
+	/**
+	 * Mark a review as helpful.
+	 *
+	 * @return void
+	 */
+	public function mark_review_helpful(): void {
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
+
+		$review_id = absint( $_POST['review_id'] ?? 0 );
+
+		if ( ! $review_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid review.', 'wp-sell-services' ) ) );
+		}
+
+		// Check if user already marked this review as helpful (use transient for anonymous, user meta for logged in).
+		$user_id    = get_current_user_id();
+		$ip_address = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+		$cache_key  = 'wpss_helpful_' . $review_id . '_' . ( $user_id ? 'u' . $user_id : 'ip' . md5( $ip_address ) );
+
+		if ( get_transient( $cache_key ) ) {
+			wp_send_json_error( array( 'message' => __( 'You have already marked this review as helpful.', 'wp-sell-services' ) ) );
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_reviews';
+
+		// Increment helpful count.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET helpful_count = helpful_count + 1 WHERE id = %d",
+				$review_id
+			)
+		);
+
+		// Get updated count.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$new_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT helpful_count FROM {$table} WHERE id = %d",
+				$review_id
+			)
+		);
+
+		// Set transient to prevent duplicate votes (1 week).
+		set_transient( $cache_key, 1, WEEK_IN_SECONDS );
+
+		wp_send_json_success(
+			array(
+				'count'   => $new_count,
+				'message' => __( 'Thanks for your feedback!', 'wp-sell-services' ),
+			)
+		);
+	}
+
+	/**
 	 * Open dispute for order.
 	 *
 	 * @return void
@@ -500,6 +659,157 @@ class AjaxHandlers {
 	}
 
 	/**
+	 * Add evidence to a dispute.
+	 *
+	 * @return void
+	 */
+	public function add_dispute_evidence(): void {
+		check_ajax_referer( 'wpss_add_evidence', 'nonce' );
+
+		$dispute_id  = absint( $_POST['dispute_id'] ?? 0 );
+		$description = sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) );
+		$user_id     = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in to add evidence.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $dispute_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid dispute.', 'wp-sell-services' ) ) );
+		}
+
+		$dispute_service = new DisputeService();
+		$dispute         = $dispute_service->get( $dispute_id );
+
+		if ( ! $dispute ) {
+			wp_send_json_error( array( 'message' => __( 'Dispute not found.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify user can add evidence (is part of the order).
+		$order_repo = new \WPSellServices\Database\Repositories\OrderRepository();
+		$order      = $order_repo->find( $dispute->order_id );
+
+		if ( ! $order ) {
+			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
+		}
+
+		$is_customer = (int) $order->customer_id === $user_id;
+		$is_vendor   = (int) $order->vendor_id === $user_id;
+		$is_admin    = current_user_can( 'manage_options' );
+
+		if ( ! $is_customer && ! $is_vendor && ! $is_admin ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to add evidence to this dispute.', 'wp-sell-services' ) ) );
+		}
+
+		// Handle file upload if present.
+		$evidence_type    = 'text';
+		$evidence_content = $description;
+
+		if ( ! empty( $_FILES['evidence_file'] ) && ! empty( $_FILES['evidence_file']['name'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$file = $_FILES['evidence_file'];
+
+			// Verify file upload.
+			if ( ! function_exists( 'wp_handle_upload' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+			}
+
+			$upload_overrides = array(
+				'test_form' => false,
+				'mimes'     => array(
+					'jpg|jpeg' => 'image/jpeg',
+					'png'      => 'image/png',
+					'gif'      => 'image/gif',
+					'pdf'      => 'application/pdf',
+					'doc'      => 'application/msword',
+					'docx'     => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+					'zip'      => 'application/zip',
+					'txt'      => 'text/plain',
+				),
+			);
+
+			$uploaded = wp_handle_upload( $file, $upload_overrides );
+
+			if ( isset( $uploaded['error'] ) ) {
+				wp_send_json_error( array( 'message' => $uploaded['error'] ) );
+			}
+
+			$evidence_content = $uploaded['url'];
+			$file_type        = wp_check_filetype( $uploaded['file'] );
+
+			if ( strpos( $file_type['type'], 'image/' ) === 0 ) {
+				$evidence_type = 'image';
+			} else {
+				$evidence_type = 'file';
+			}
+		}
+
+		// Must have either description or file.
+		if ( empty( $description ) && $evidence_type === 'text' ) {
+			wp_send_json_error( array( 'message' => __( 'Please provide a message or attach a file.', 'wp-sell-services' ) ) );
+		}
+
+		// Add the evidence.
+		$evidence_id = $dispute_service->add_evidence(
+			$dispute_id,
+			$user_id,
+			$evidence_type,
+			$evidence_content,
+			$evidence_type !== 'text' ? $description : ''
+		);
+
+		if ( ! $evidence_id ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to add evidence.', 'wp-sell-services' ) ) );
+		}
+
+		// Generate HTML for the new evidence item.
+		$evidence_user = get_userdata( $user_id );
+		$is_own        = true;
+
+		ob_start();
+		?>
+		<div class="wpss-evidence-item wpss-evidence-own">
+			<div class="wpss-evidence-bubble">
+				<div class="wpss-evidence-content">
+					<?php if ( ! empty( $description ) ) : ?>
+						<div class="wpss-evidence-text">
+							<?php echo wp_kses_post( nl2br( $description ) ); ?>
+						</div>
+					<?php endif; ?>
+
+					<?php if ( $evidence_type === 'image' && ! empty( $evidence_content ) ) : ?>
+						<div class="wpss-evidence-image">
+							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank">
+								<img src="<?php echo esc_url( $evidence_content ); ?>" alt="<?php esc_attr_e( 'Evidence image', 'wp-sell-services' ); ?>">
+							</a>
+						</div>
+					<?php elseif ( $evidence_type === 'file' && ! empty( $evidence_content ) ) : ?>
+						<div class="wpss-evidence-file">
+							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
+								<span class="dashicons dashicons-media-default"></span>
+								<span><?php echo esc_html( basename( $evidence_content ) ); ?></span>
+							</a>
+						</div>
+					<?php endif; ?>
+				</div>
+				<span class="wpss-evidence-time">
+					<?php echo esc_html( wp_date( get_option( 'time_format' ), time() ) ); ?>
+				</span>
+			</div>
+		</div>
+		<?php
+		$html = ob_get_clean();
+
+		wp_send_json_success(
+			array(
+				'message'     => __( 'Evidence added successfully.', 'wp-sell-services' ),
+				'evidence_id' => $evidence_id,
+				'html'        => $html,
+			)
+		);
+	}
+
+	/**
 	 * Post buyer request.
 	 *
 	 * @return void
@@ -527,17 +837,17 @@ class AjaxHandlers {
 		}
 
 		$request_service = new BuyerRequestService();
-		$result          = $request_service->create( $user_id, $data );
+		$request_id      = $request_service->create( $data );
 
-		if ( $result['success'] ) {
+		if ( $request_id ) {
 			wp_send_json_success(
 				array(
 					'message'    => __( 'Request posted successfully.', 'wp-sell-services' ),
-					'request_id' => $result['request_id'],
+					'request_id' => $request_id,
 				)
 			);
 		} else {
-			wp_send_json_error( $result );
+			wp_send_json_error( array( 'message' => __( 'Failed to create request.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -868,18 +1178,31 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function live_search(): void {
+		// Verify nonce for logged-in users, skip for guests (public search).
+		if ( is_user_logged_in() ) {
+			check_ajax_referer( 'wpss_search_nonce', 'nonce' );
+		}
+
 		$query = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );
 
 		if ( strlen( $query ) < 2 ) {
 			wp_send_json_success( array( 'results' => array() ) );
 		}
 
+		// Only show approved services in search results.
 		$services = new \WP_Query(
 			array(
 				'post_type'      => 'wpss_service',
 				'post_status'    => 'publish',
 				's'              => $query,
 				'posts_per_page' => 5,
+				'meta_query'     => array(
+					array(
+						'key'     => '_wpss_moderation_status',
+						'value'   => 'approved',
+						'compare' => '=',
+					),
+				),
 			)
 		);
 
@@ -896,6 +1219,178 @@ class AjaxHandlers {
 		}
 
 		wp_send_json_success( array( 'results' => $results ) );
+	}
+
+	/**
+	 * Add service to cart.
+	 *
+	 * Handles adding a service with selected package and extras to WooCommerce cart.
+	 *
+	 * @return void
+	 */
+	public function add_service_to_cart(): void {
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
+
+		$service_id    = absint( $_POST['service_id'] ?? 0 );
+		$package_index = absint( $_POST['package_index'] ?? 0 );
+		$quantity      = absint( $_POST['quantity'] ?? 1 );
+		$extras        = isset( $_POST['extras'] ) ? array_map( 'absint', (array) $_POST['extras'] ) : array();
+
+		if ( ! $service_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		// Check if WooCommerce is active.
+		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
+			wp_send_json_error( array( 'message' => __( 'WooCommerce is required for checkout.', 'wp-sell-services' ) ) );
+		}
+
+		// Get the service.
+		$service = get_post( $service_id );
+		if ( ! $service || 'wpss_service' !== $service->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
+		}
+
+		// Get packages.
+		$packages_raw = get_post_meta( $service_id, '_wpss_packages', true );
+		$packages     = $packages_raw ? $packages_raw : array();
+
+		// If no packages defined, create a default one.
+		if ( empty( $packages ) ) {
+			$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
+			$packages       = array(
+				array(
+					'name'          => __( 'Standard', 'wp-sell-services' ),
+					'price'         => $starting_price,
+					'delivery_time' => (int) get_post_meta( $service_id, '_wpss_delivery_time', true ),
+				),
+			);
+		}
+
+		// Validate package index.
+		if ( ! isset( $packages[ $package_index ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid package selected.', 'wp-sell-services' ) ) );
+		}
+
+		$selected_package = $packages[ $package_index ];
+		$package_price    = (float) ( $selected_package['price'] ?? 0 );
+
+		// Get linked WC product or create one.
+		$product_id = $this->get_or_create_wc_product( $service_id, $selected_package, $package_price );
+
+		if ( ! $product_id ) {
+			wp_send_json_error( array( 'message' => __( 'Could not create product for checkout.', 'wp-sell-services' ) ) );
+		}
+
+		// Calculate extras price.
+		$extras_raw   = get_post_meta( $service_id, '_wpss_extras', true );
+		$all_extras   = $extras_raw ? $extras_raw : array();
+		$extras_price = 0;
+		$extras_days  = 0;
+
+		foreach ( $extras as $extra_index ) {
+			if ( isset( $all_extras[ $extra_index ] ) ) {
+				$extras_price += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
+				$extras_days  += (int) ( $all_extras[ $extra_index ]['delivery_time'] ?? 0 );
+			}
+		}
+
+		// Add to cart.
+		$cart_item_key = WC()->cart->add_to_cart(
+			$product_id,
+			$quantity,
+			0,
+			array(),
+			array(
+				'wpss_service_id' => $service_id,
+				'wpss_package_id' => $package_index,
+				'wpss_addons'     => $extras,
+			)
+		);
+
+		if ( ! $cart_item_key ) {
+			$error_message = wc_get_notices( 'error' );
+			wc_clear_notices();
+
+			if ( ! empty( $error_message ) ) {
+				$first_error = reset( $error_message );
+				$message     = is_array( $first_error ) ? ( $first_error['notice'] ?? '' ) : $first_error;
+				wp_send_json_error( array( 'message' => wp_strip_all_tags( $message ) ) );
+			}
+
+			wp_send_json_error( array( 'message' => __( 'Could not add to cart. Please try again.', 'wp-sell-services' ) ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'    => __( 'Added to cart!', 'wp-sell-services' ),
+				'cart_count' => WC()->cart->get_cart_contents_count(),
+				'cart_url'   => wc_get_cart_url(),
+			)
+		);
+	}
+
+	/**
+	 * Get or create WooCommerce product for a service.
+	 *
+	 * @param int   $service_id Service post ID.
+	 * @param array $package    Selected package data.
+	 * @param float $price      Package price.
+	 * @return int|null Product ID or null on failure.
+	 */
+	private function get_or_create_wc_product( int $service_id, array $package, float $price ): ?int {
+		// Check if service already has a linked WC product.
+		$platform_ids_raw = get_post_meta( $service_id, '_wpss_platform_ids', true );
+		$platform_ids     = $platform_ids_raw ? $platform_ids_raw : array();
+		$product_id       = $platform_ids['woocommerce'] ?? 0;
+
+		if ( $product_id ) {
+			$product = wc_get_product( $product_id );
+			if ( $product ) {
+				// Update price to match selected package.
+				$product->set_regular_price( $price );
+				$product->save();
+				return $product_id;
+			}
+		}
+
+		// Create a new WC product.
+		$service = get_post( $service_id );
+		if ( ! $service ) {
+			return null;
+		}
+
+		$product = new \WC_Product_Simple();
+		$product->set_name( $service->post_title );
+		$product->set_description( $service->post_content );
+		$product->set_short_description( $service->post_excerpt );
+		$product->set_regular_price( $price );
+		$product->set_status( 'publish' );
+		$product->set_catalog_visibility( 'hidden' );
+		$product->set_virtual( true );
+		$product->set_sold_individually( true );
+
+		// Copy featured image.
+		$thumbnail_id = get_post_thumbnail_id( $service_id );
+		if ( $thumbnail_id ) {
+			$product->set_image_id( $thumbnail_id );
+		}
+
+		$product_id = $product->save();
+
+		if ( ! $product_id ) {
+			return null;
+		}
+
+		// Mark as service product.
+		update_post_meta( $product_id, '_wpss_is_service', 'yes' );
+		update_post_meta( $product_id, '_wpss_service_id', $service_id );
+
+		// Store the link back to service.
+		$platform_ids['woocommerce'] = $product_id;
+		update_post_meta( $service_id, '_wpss_platform_ids', $platform_ids );
+
+		return $product_id;
 	}
 
 	/**

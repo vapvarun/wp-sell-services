@@ -92,7 +92,7 @@ $deliverables       = $wpdb->get_results(
 			</div>
 
 			<!-- Order Actions -->
-			<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'delivered' ), true ) ) : ?>
+			<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval' ), true ) ) : ?>
 				<div class="wpss-order-section wpss-order-actions-section">
 					<h3><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></h3>
 
@@ -125,7 +125,7 @@ $deliverables       = $wpdb->get_results(
 						<?php endif; ?>
 
 						<?php if ( $is_customer ) : ?>
-							<?php if ( 'delivered' === $order->status ) : ?>
+							<?php if ( 'pending_approval' === $order->status ) : ?>
 								<button type="button" class="wpss-btn wpss-btn-success wpss-order-action"
 										data-action="complete" data-order="<?php echo esc_attr( $order_id ); ?>">
 									<?php esc_html_e( 'Accept & Complete', 'wp-sell-services' ); ?>
@@ -144,7 +144,7 @@ $deliverables       = $wpdb->get_results(
 							<?php endif; ?>
 						<?php endif; ?>
 
-						<?php if ( in_array( $order->status, array( 'in_progress', 'delivered' ), true ) ) : ?>
+						<?php if ( in_array( $order->status, array( 'in_progress', 'pending_approval' ), true ) ) : ?>
 							<button type="button" class="wpss-btn wpss-btn-outline wpss-btn-danger wpss-dispute-btn"
 									data-order="<?php echo esc_attr( $order_id ); ?>">
 								<?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?>
@@ -377,7 +377,7 @@ $deliverables       = $wpdb->get_results(
 <?php
 // Check if review modal should be available.
 $can_review       = 'completed' === $order->status && $is_customer && empty( $review_exists );
-$can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progress', 'delivered' ), true );
+$can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval' ), true );
 ?>
 
 <?php if ( $can_review ) : ?>

@@ -25,21 +25,23 @@ class WCAccountProvider implements AccountProviderInterface {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'init', [ $this, 'register_endpoints' ] );
-		add_filter( 'woocommerce_account_menu_items', [ $this, 'add_menu_items' ] );
-		add_filter( 'woocommerce_get_query_vars', [ $this, 'add_query_vars' ] );
+		add_action( 'init', array( $this, 'register_endpoints' ) );
+		add_filter( 'woocommerce_account_menu_items', array( $this, 'add_menu_items' ) );
+		add_filter( 'woocommerce_get_query_vars', array( $this, 'add_query_vars' ) );
 
 		// Endpoint content.
-		add_action( 'woocommerce_account_service-orders_endpoint', [ $this, 'render_orders_endpoint' ] );
-		add_action( 'woocommerce_account_vendor-services_endpoint', [ $this, 'render_services_endpoint' ] );
-		add_action( 'woocommerce_account_service-notifications_endpoint', [ $this, 'render_notifications_endpoint' ] );
-		add_action( 'woocommerce_account_vendor-dashboard_endpoint', [ $this, 'render_vendor_dashboard' ] );
+		add_action( 'woocommerce_account_service-orders_endpoint', array( $this, 'render_orders_endpoint' ) );
+		add_action( 'woocommerce_account_vendor-services_endpoint', array( $this, 'render_services_endpoint' ) );
+		add_action( 'woocommerce_account_service-notifications_endpoint', array( $this, 'render_notifications_endpoint' ) );
+		add_action( 'woocommerce_account_vendor-dashboard_endpoint', array( $this, 'render_vendor_dashboard' ) );
+		add_action( 'woocommerce_account_service-disputes_endpoint', array( $this, 'render_disputes_endpoint' ) );
 
 		// Endpoint titles.
-		add_filter( 'woocommerce_endpoint_service-orders_title', [ $this, 'service_orders_title' ] );
-		add_filter( 'woocommerce_endpoint_vendor-services_title', [ $this, 'vendor_services_title' ] );
-		add_filter( 'woocommerce_endpoint_service-notifications_title', [ $this, 'notifications_title' ] );
-		add_filter( 'woocommerce_endpoint_vendor-dashboard_title', [ $this, 'vendor_dashboard_title' ] );
+		add_filter( 'woocommerce_endpoint_service-orders_title', array( $this, 'service_orders_title' ) );
+		add_filter( 'woocommerce_endpoint_vendor-services_title', array( $this, 'vendor_services_title' ) );
+		add_filter( 'woocommerce_endpoint_service-notifications_title', array( $this, 'notifications_title' ) );
+		add_filter( 'woocommerce_endpoint_vendor-dashboard_title', array( $this, 'vendor_dashboard_title' ) );
+		add_filter( 'woocommerce_endpoint_service-disputes_title', array( $this, 'disputes_title' ) );
 	}
 
 	/**
@@ -62,6 +64,7 @@ class WCAccountProvider implements AccountProviderInterface {
 		}
 
 		$items['service-notifications'] = __( 'Notifications', 'wp-sell-services' );
+		$items['service-disputes']      = __( 'Disputes', 'wp-sell-services' );
 
 		// Add logout back at the end.
 		if ( $logout ) {
@@ -81,6 +84,7 @@ class WCAccountProvider implements AccountProviderInterface {
 		add_rewrite_endpoint( 'vendor-dashboard', EP_ROOT | EP_PAGES );
 		add_rewrite_endpoint( 'vendor-services', EP_ROOT | EP_PAGES );
 		add_rewrite_endpoint( 'service-notifications', EP_ROOT | EP_PAGES );
+		add_rewrite_endpoint( 'service-disputes', EP_ROOT | EP_PAGES );
 	}
 
 	/**
@@ -94,6 +98,7 @@ class WCAccountProvider implements AccountProviderInterface {
 		$vars['vendor-dashboard']      = 'vendor-dashboard';
 		$vars['vendor-services']       = 'vendor-services';
 		$vars['service-notifications'] = 'service-notifications';
+		$vars['service-disputes']      = 'service-disputes';
 
 		return $vars;
 	}
@@ -163,10 +168,10 @@ class WCAccountProvider implements AccountProviderInterface {
 
 		wpss_get_template(
 			'myaccount/service-orders.php',
-			[
+			array(
 				'orders'  => $orders,
 				'user_id' => $user_id,
-			]
+			)
 		);
 	}
 
@@ -184,20 +189,20 @@ class WCAccountProvider implements AccountProviderInterface {
 		$user_id = get_current_user_id();
 
 		$services = get_posts(
-			[
+			array(
 				'post_type'      => \WPSellServices\PostTypes\ServicePostType::POST_TYPE,
 				'author'         => $user_id,
 				'posts_per_page' => -1,
-				'post_status'    => [ 'publish', 'pending', 'draft' ],
-			]
+				'post_status'    => array( 'publish', 'pending', 'draft' ),
+			)
 		);
 
 		wpss_get_template(
 			'myaccount/vendor-services.php',
-			[
+			array(
 				'services' => $services,
 				'user_id'  => $user_id,
-			]
+			)
 		);
 	}
 
@@ -226,10 +231,10 @@ class WCAccountProvider implements AccountProviderInterface {
 
 		wpss_get_template(
 			'myaccount/notifications.php',
-			[
+			array(
 				'notifications' => $notifications,
 				'user_id'       => $user_id,
-			]
+			)
 		);
 	}
 
@@ -267,11 +272,11 @@ class WCAccountProvider implements AccountProviderInterface {
 
 		wpss_get_template(
 			'myaccount/vendor-dashboard.php',
-			[
+			array(
 				'vendor'  => $vendor,
 				'stats'   => $stats,
 				'user_id' => $user_id,
-			]
+			)
 		);
 	}
 
@@ -349,5 +354,101 @@ class WCAccountProvider implements AccountProviderInterface {
 	 */
 	public function vendor_dashboard_title(): string {
 		return __( 'Vendor Dashboard', 'wp-sell-services' );
+	}
+
+	/**
+	 * Render disputes endpoint content.
+	 *
+	 * @return void
+	 */
+	public function render_disputes_endpoint(): void {
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			return;
+		}
+
+		// Check if viewing a specific dispute.
+		$dispute_id = get_query_var( 'service-disputes' );
+
+		if ( $dispute_id && is_numeric( $dispute_id ) ) {
+			$this->render_single_dispute( (int) $dispute_id, $user_id );
+			return;
+		}
+
+		// Get user's disputes.
+		$dispute_service = new \WPSellServices\Services\DisputeService();
+		$disputes        = $dispute_service->get_by_user( $user_id );
+
+		wpss_get_template(
+			'myaccount/service-disputes.php',
+			array(
+				'disputes' => $disputes,
+				'user_id'  => $user_id,
+			)
+		);
+	}
+
+	/**
+	 * Render a single dispute view.
+	 *
+	 * @param int $dispute_id Dispute ID.
+	 * @param int $user_id    Current user ID.
+	 * @return void
+	 */
+	private function render_single_dispute( int $dispute_id, int $user_id ): void {
+		$dispute_service = new \WPSellServices\Services\DisputeService();
+		$dispute         = $dispute_service->get( $dispute_id );
+
+		if ( ! $dispute ) {
+			echo '<div class="woocommerce-error">' . esc_html__( 'Dispute not found.', 'wp-sell-services' ) . '</div>';
+			return;
+		}
+
+		// Get order to verify access.
+		$order_repo = new \WPSellServices\Database\Repositories\OrderRepository();
+		$order      = $order_repo->find( $dispute->order_id );
+
+		if ( ! $order ) {
+			echo '<div class="woocommerce-error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';
+			return;
+		}
+
+		// Check if user is part of the dispute.
+		$is_customer = (int) $order->customer_id === $user_id;
+		$is_vendor   = (int) $order->vendor_id === $user_id;
+
+		if ( ! $is_customer && ! $is_vendor && ! current_user_can( 'manage_options' ) ) {
+			echo '<div class="woocommerce-error">' . esc_html__( 'You do not have permission to view this dispute.', 'wp-sell-services' ) . '</div>';
+			return;
+		}
+
+		// Get evidence.
+		$evidence = $dispute_service->get_evidence( $dispute_id );
+
+		// Get service.
+		$service = get_post( $order->service_id );
+
+		wpss_get_template(
+			'disputes/dispute-view.php',
+			array(
+				'dispute'     => $dispute,
+				'order'       => $order,
+				'service'     => $service,
+				'evidence'    => $evidence,
+				'user_id'     => $user_id,
+				'is_customer' => $is_customer,
+				'is_vendor'   => $is_vendor,
+			)
+		);
+	}
+
+	/**
+	 * Disputes endpoint title.
+	 *
+	 * @return string
+	 */
+	public function disputes_title(): string {
+		return __( 'Disputes', 'wp-sell-services' );
 	}
 }

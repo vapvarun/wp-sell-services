@@ -22,9 +22,9 @@ class ProposalService {
 	/**
 	 * Proposal statuses.
 	 */
-	public const STATUS_PENDING  = 'pending';
-	public const STATUS_ACCEPTED = 'accepted';
-	public const STATUS_REJECTED = 'rejected';
+	public const STATUS_PENDING   = 'pending';
+	public const STATUS_ACCEPTED  = 'accepted';
+	public const STATUS_REJECTED  = 'rejected';
 	public const STATUS_WITHDRAWN = 'withdrawn';
 
 	/**
@@ -55,7 +55,7 @@ class ProposalService {
 
 		// Check if request exists and is open.
 		$request_service = new BuyerRequestService();
-		$request = $request_service->get( $request_id );
+		$request         = $request_service->get( $request_id );
 
 		if ( ! $request || $request->status !== BuyerRequestService::STATUS_OPEN ) {
 			return false;
@@ -71,18 +71,18 @@ class ProposalService {
 			return false;
 		}
 
-		$proposal_data = [
-			'request_id'     => $request_id,
-			'vendor_id'      => $vendor_id,
-			'description'    => sanitize_textarea_field( $data['description'] ),
-			'price'          => (float) $data['price'],
-			'delivery_days'  => (int) ( $data['delivery_days'] ?? $request->delivery_days ),
-			'status'         => self::STATUS_PENDING,
-			'attachments'    => isset( $data['attachments'] ) ? wp_json_encode( $data['attachments'] ) : null,
-			'meta'           => isset( $data['meta'] ) ? wp_json_encode( $data['meta'] ) : null,
-			'created_at'     => current_time( 'mysql' ),
-			'updated_at'     => current_time( 'mysql' ),
-		];
+		$proposal_data = array(
+			'request_id'    => $request_id,
+			'vendor_id'     => $vendor_id,
+			'description'   => sanitize_textarea_field( $data['description'] ),
+			'price'         => (float) $data['price'],
+			'delivery_days' => (int) ( $data['delivery_days'] ?? $request->delivery_days ),
+			'status'        => self::STATUS_PENDING,
+			'attachments'   => isset( $data['attachments'] ) ? wp_json_encode( $data['attachments'] ) : null,
+			'meta'          => isset( $data['meta'] ) ? wp_json_encode( $data['meta'] ) : null,
+			'created_at'    => current_time( 'mysql' ),
+			'updated_at'    => current_time( 'mysql' ),
+		);
 
 		$result = $wpdb->insert( $this->table, $proposal_data );
 
@@ -136,10 +136,10 @@ class ProposalService {
 	 * @return object Formatted proposal.
 	 */
 	private function format_proposal( object $proposal ): object {
-		$proposal->price = (float) $proposal->price;
+		$proposal->price         = (float) $proposal->price;
 		$proposal->delivery_days = (int) $proposal->delivery_days;
-		$proposal->attachments = $proposal->attachments ? json_decode( $proposal->attachments, true ) : [];
-		$proposal->meta = $proposal->meta ? json_decode( $proposal->meta, true ) : [];
+		$proposal->attachments   = $proposal->attachments ? json_decode( $proposal->attachments, true ) : array();
+		$proposal->meta          = $proposal->meta ? json_decode( $proposal->meta, true ) : array();
 
 		return $proposal;
 	}
@@ -160,7 +160,7 @@ class ProposalService {
 			return false;
 		}
 
-		$update_data = [ 'updated_at' => current_time( 'mysql' ) ];
+		$update_data = array( 'updated_at' => current_time( 'mysql' ) );
 
 		if ( isset( $data['description'] ) ) {
 			$update_data['description'] = sanitize_textarea_field( $data['description'] );
@@ -181,7 +181,7 @@ class ProposalService {
 		$result = $wpdb->update(
 			$this->table,
 			$update_data,
-			[ 'id' => $proposal_id ]
+			array( 'id' => $proposal_id )
 		);
 
 		if ( $result !== false ) {
@@ -218,7 +218,7 @@ class ProposalService {
 
 		// Verify buyer owns the request.
 		$request_service = new BuyerRequestService();
-		$request = $request_service->get( $proposal->request_id );
+		$request         = $request_service->get( $proposal->request_id );
 
 		if ( ! $request || $request->author_id !== $buyer_id ) {
 			return false;
@@ -227,11 +227,11 @@ class ProposalService {
 		// Update proposal status.
 		$result = $wpdb->update(
 			$this->table,
-			[
+			array(
 				'status'     => self::STATUS_ACCEPTED,
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $proposal_id ]
+			),
+			array( 'id' => $proposal_id )
 		);
 
 		if ( $result !== false ) {
@@ -276,23 +276,23 @@ class ProposalService {
 
 		// Verify buyer owns the request.
 		$request_service = new BuyerRequestService();
-		$request = $request_service->get( $proposal->request_id );
+		$request         = $request_service->get( $proposal->request_id );
 
 		if ( ! $request || $request->author_id !== $buyer_id ) {
 			return false;
 		}
 
-		$meta = $proposal->meta;
+		$meta                     = $proposal->meta;
 		$meta['rejection_reason'] = $reason;
 
 		$result = $wpdb->update(
 			$this->table,
-			[
+			array(
 				'status'     => self::STATUS_REJECTED,
 				'meta'       => wp_json_encode( $meta ),
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $proposal_id ]
+			),
+			array( 'id' => $proposal_id )
 		);
 
 		if ( $result !== false ) {
@@ -334,11 +334,11 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			[
+			array(
 				'status'     => self::STATUS_WITHDRAWN,
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $proposal_id ]
+			),
+			array( 'id' => $proposal_id )
 		);
 
 		if ( $result !== false ) {
@@ -358,32 +358,80 @@ class ProposalService {
 	}
 
 	/**
+	 * Update proposal status directly.
+	 *
+	 * Use this for simple status updates without full accept/reject workflow.
+	 *
+	 * @param int    $proposal_id Proposal ID.
+	 * @param string $status      New status.
+	 * @return bool True on success.
+	 */
+	public function update_status( int $proposal_id, string $status ): bool {
+		global $wpdb;
+
+		$valid_statuses = array(
+			self::STATUS_PENDING,
+			self::STATUS_ACCEPTED,
+			self::STATUS_REJECTED,
+			self::STATUS_WITHDRAWN,
+		);
+
+		if ( ! in_array( $status, $valid_statuses, true ) ) {
+			return false;
+		}
+
+		$result = $wpdb->update(
+			$this->table,
+			array(
+				'status'     => $status,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $proposal_id )
+		);
+
+		if ( false !== $result ) {
+			/**
+			 * Fires when a proposal status is updated.
+			 *
+			 * @since 1.0.0
+			 * @param int    $proposal_id Proposal ID.
+			 * @param string $status      New status.
+			 */
+			do_action( 'wpss_proposal_status_updated', $proposal_id, $status );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Reject all other proposals for a request.
 	 *
 	 * @param int $request_id Request ID.
 	 * @param int $except_id Proposal ID to exclude.
 	 * @return void
 	 */
-	private function reject_other_proposals( int $request_id, int $except_id ): void {
+	public function reject_other_proposals( int $request_id, int $except_id ): void {
 		global $wpdb;
 
 		$wpdb->update(
 			$this->table,
-			[
+			array(
 				'status'     => self::STATUS_REJECTED,
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[
+			),
+			array(
 				'request_id' => $request_id,
 				'status'     => self::STATUS_PENDING,
-			]
+			)
 		);
 
 		// The accepted one might have been updated, restore it.
 		$wpdb->update(
 			$this->table,
-			[ 'status' => self::STATUS_ACCEPTED ],
-			[ 'id' => $except_id ]
+			array( 'status' => self::STATUS_ACCEPTED ),
+			array( 'id' => $except_id )
 		);
 	}
 
@@ -394,30 +442,30 @@ class ProposalService {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of proposals.
 	 */
-	public function get_by_request( int $request_id, array $args = [] ): array {
+	public function get_by_request( int $request_id, array $args = array() ): array {
 		global $wpdb;
 
-		$defaults = [
+		$defaults = array(
 			'status'   => '',
 			'limit'    => 50,
 			'offset'   => 0,
 			'order_by' => 'created_at',
 			'order'    => 'ASC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'request_id = %d' ];
-		$values = [ $request_id ];
+		$where  = array( 'request_id = %d' );
+		$values = array( $request_id );
 
 		if ( $args['status'] ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$values[] = $args['status'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$values[] = $args['limit'];
-		$values[] = $args['offset'];
+		$values[]     = $args['limit'];
+		$values[]     = $args['offset'];
 
 		$sql = $wpdb->prepare(
 			"SELECT * FROM {$this->table}
@@ -429,7 +477,7 @@ class ProposalService {
 
 		$proposals = $wpdb->get_results( $sql );
 
-		return array_map( [ $this, 'format_proposal' ], $proposals );
+		return array_map( array( $this, 'format_proposal' ), $proposals );
 	}
 
 	/**
@@ -439,30 +487,30 @@ class ProposalService {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of proposals.
 	 */
-	public function get_by_vendor( int $vendor_id, array $args = [] ): array {
+	public function get_by_vendor( int $vendor_id, array $args = array() ): array {
 		global $wpdb;
 
-		$defaults = [
+		$defaults = array(
 			'status'   => '',
 			'limit'    => 20,
 			'offset'   => 0,
 			'order_by' => 'created_at',
 			'order'    => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'vendor_id = %d' ];
-		$values = [ $vendor_id ];
+		$where  = array( 'vendor_id = %d' );
+		$values = array( $vendor_id );
 
 		if ( $args['status'] ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$values[] = $args['status'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$values[] = $args['limit'];
-		$values[] = $args['offset'];
+		$values[]     = $args['limit'];
+		$values[]     = $args['offset'];
 
 		$sql = $wpdb->prepare(
 			"SELECT * FROM {$this->table}
@@ -474,7 +522,7 @@ class ProposalService {
 
 		$proposals = $wpdb->get_results( $sql );
 
-		return array_map( [ $this, 'format_proposal' ], $proposals );
+		return array_map( array( $this, 'format_proposal' ), $proposals );
 	}
 
 	/**
@@ -547,17 +595,17 @@ class ProposalService {
 			)
 		);
 
-		$counts = [
+		$counts = array(
 			self::STATUS_PENDING   => 0,
 			self::STATUS_ACCEPTED  => 0,
 			self::STATUS_REJECTED  => 0,
 			self::STATUS_WITHDRAWN => 0,
 			'total'                => 0,
-		];
+		);
 
 		foreach ( $results as $row ) {
 			$counts[ $row->status ] = (int) $row->count;
-			$counts['total'] += (int) $row->count;
+			$counts['total']       += (int) $row->count;
 		}
 
 		return $counts;
@@ -580,7 +628,7 @@ class ProposalService {
 
 		$result = $wpdb->delete(
 			$this->table,
-			[ 'id' => $proposal_id ]
+			array( 'id' => $proposal_id )
 		);
 
 		if ( $result ) {
@@ -605,11 +653,11 @@ class ProposalService {
 	 * @return array<string, string> Status slugs and labels.
 	 */
 	public static function get_statuses(): array {
-		return [
+		return array(
 			self::STATUS_PENDING   => __( 'Pending', 'wp-sell-services' ),
 			self::STATUS_ACCEPTED  => __( 'Accepted', 'wp-sell-services' ),
 			self::STATUS_REJECTED  => __( 'Rejected', 'wp-sell-services' ),
 			self::STATUS_WITHDRAWN => __( 'Withdrawn', 'wp-sell-services' ),
-		];
+		);
 	}
 }

@@ -53,12 +53,12 @@ class WCOrderProvider implements OrderProviderInterface {
 			}
 
 			// Get service data.
-			$service  = wpss_get_service( $service_id );
+			$service   = wpss_get_service( $service_id );
 			$vendor_id = $service ? $service->vendor_id : 0;
 
 			// Get selected package and addons from item meta.
 			$package_id = (int) $item->get_meta( '_wpss_package_id' );
-			$addons     = $item->get_meta( '_wpss_addons' ) ?: [];
+			$addons     = $item->get_meta( '_wpss_addons' ) ?: array();
 
 			// Calculate totals.
 			$subtotal     = (float) $item->get_subtotal();
@@ -83,30 +83,30 @@ class WCOrderProvider implements OrderProviderInterface {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->insert(
 				$table,
-				[
-					'order_number'        => wpss_generate_order_number(),
-					'customer_id'         => $wc_order->get_customer_id(),
-					'vendor_id'           => $vendor_id,
-					'service_id'          => $service_id,
-					'package_id'          => $package_id ?: null,
-					'addons'              => wp_json_encode( $addons ),
-					'platform'            => 'woocommerce',
-					'platform_order_id'   => $wc_order_id,
-					'platform_item_id'    => $item_id,
-					'subtotal'            => $subtotal,
-					'addons_total'        => $addons_total,
-					'total'               => $subtotal + $addons_total,
-					'currency'            => $wc_order->get_currency(),
-					'status'              => ServiceOrder::STATUS_PENDING_PAYMENT,
-					'delivery_deadline'   => $deadline->format( 'Y-m-d H:i:s' ),
-					'original_deadline'   => $deadline->format( 'Y-m-d H:i:s' ),
-					'payment_method'      => $wc_order->get_payment_method(),
-					'payment_status'      => 'pending',
-					'revisions_included'  => $revisions,
-					'created_at'          => current_time( 'mysql' ),
-					'updated_at'          => current_time( 'mysql' ),
-				],
-				[ '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' ]
+				array(
+					'order_number'       => wpss_generate_order_number(),
+					'customer_id'        => $wc_order->get_customer_id(),
+					'vendor_id'          => $vendor_id,
+					'service_id'         => $service_id,
+					'package_id'         => $package_id ?: null,
+					'addons'             => wp_json_encode( $addons ),
+					'platform'           => 'woocommerce',
+					'platform_order_id'  => $wc_order_id,
+					'platform_item_id'   => $item_id,
+					'subtotal'           => $subtotal,
+					'addons_total'       => $addons_total,
+					'total'              => $subtotal + $addons_total,
+					'currency'           => $wc_order->get_currency(),
+					'status'             => ServiceOrder::STATUS_PENDING_PAYMENT,
+					'delivery_deadline'  => $deadline->format( 'Y-m-d H:i:s' ),
+					'original_deadline'  => $deadline->format( 'Y-m-d H:i:s' ),
+					'payment_method'     => $wc_order->get_payment_method(),
+					'payment_status'     => 'pending',
+					'revisions_included' => $revisions,
+					'created_at'         => current_time( 'mysql' ),
+					'updated_at'         => current_time( 'mysql' ),
+				),
+				array( '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
 			);
 
 			$order_id = (int) $wpdb->insert_id;
@@ -210,7 +210,7 @@ class WCOrderProvider implements OrderProviderInterface {
 
 		$wc_status = $wc_order->get_status();
 
-		if ( in_array( $wc_status, [ 'cancelled', 'failed' ], true ) ) {
+		if ( in_array( $wc_status, array( 'cancelled', 'failed' ), true ) ) {
 			return 'failed';
 		}
 
@@ -241,11 +241,11 @@ class WCOrderProvider implements OrderProviderInterface {
 		}
 
 		$refund = wc_create_refund(
-			[
+			array(
 				'amount'   => $amount,
 				'reason'   => $reason,
 				'order_id' => $order->platform_order_id,
-			]
+			)
 		);
 
 		if ( is_wp_error( $refund ) ) {
@@ -295,13 +295,13 @@ class WCOrderProvider implements OrderProviderInterface {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->update(
 			$table,
-			[
+			array(
 				'status'     => $status,
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $order_id ],
-			[ '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $order_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -319,15 +319,15 @@ class WCOrderProvider implements OrderProviderInterface {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->update(
 			$table,
-			[
+			array(
 				'payment_status' => 'paid',
 				'transaction_id' => $transaction_id,
 				'paid_at'        => current_time( 'mysql' ),
 				'updated_at'     => current_time( 'mysql' ),
-			],
-			[ 'id' => $order_id ],
-			[ '%s', '%s', '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $order_id ),
+			array( '%s', '%s', '%s', '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -360,15 +360,12 @@ class WCOrderProvider implements OrderProviderInterface {
 	 * @return array|null
 	 */
 	private function get_package_data( int $service_id, int $package_id ): ?array {
-		$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
+		$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
 
-		foreach ( $packages as $package ) {
-			if ( (int) ( $package['id'] ?? 0 ) === $package_id ) {
-				return $package;
-			}
-		}
+		// Convert to indexed array and match by position (package_id is the index).
+		$packages = array_values( $packages );
 
-		return null;
+		return $packages[ $package_id ] ?? null;
 	}
 
 	/**
@@ -417,15 +414,15 @@ class WCOrderProvider implements OrderProviderInterface {
 	 * @param array $args    Query arguments.
 	 * @return ServiceOrder[]
 	 */
-	public function get_customer_orders( int $user_id, array $args = [] ): array {
+	public function get_customer_orders( int $user_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		$defaults = [
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
 			'status' => '',
-		];
+		);
 		$args     = wp_parse_args( $args, $defaults );
 
 		$where = $wpdb->prepare( 'WHERE customer_id = %d AND platform = %s', $user_id, 'woocommerce' );
@@ -443,7 +440,7 @@ class WCOrderProvider implements OrderProviderInterface {
 			)
 		);
 
-		return array_map( [ ServiceOrder::class, 'from_db' ], $rows ?: [] );
+		return array_map( array( ServiceOrder::class, 'from_db' ), $rows ?: array() );
 	}
 
 	/**
@@ -453,15 +450,15 @@ class WCOrderProvider implements OrderProviderInterface {
 	 * @param array $args      Query arguments.
 	 * @return ServiceOrder[]
 	 */
-	public function get_vendor_orders( int $vendor_id, array $args = [] ): array {
+	public function get_vendor_orders( int $vendor_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		$defaults = [
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
 			'status' => '',
-		];
+		);
 		$args     = wp_parse_args( $args, $defaults );
 
 		$where = $wpdb->prepare( 'WHERE vendor_id = %d AND platform = %s', $vendor_id, 'woocommerce' );
@@ -479,7 +476,7 @@ class WCOrderProvider implements OrderProviderInterface {
 			)
 		);
 
-		return array_map( [ ServiceOrder::class, 'from_db' ], $rows ?: [] );
+		return array_map( array( ServiceOrder::class, 'from_db' ), $rows ?: array() );
 	}
 
 	/**
@@ -515,10 +512,10 @@ class WCOrderProvider implements OrderProviderInterface {
 		$wc_order = wc_get_order( $order_id );
 
 		if ( ! $wc_order ) {
-			return [];
+			return array();
 		}
 
-		$items = [];
+		$items = array();
 
 		foreach ( $wc_order->get_items() as $item_id => $item ) {
 			$product_id = $item->get_product_id();
@@ -586,11 +583,11 @@ class WCOrderProvider implements OrderProviderInterface {
 			return null;
 		}
 
-		return [
+		return array(
 			'id'    => $wc_order->get_customer_id(),
 			'email' => $wc_order->get_billing_email(),
 			'name'  => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-		];
+		);
 	}
 
 	/**
