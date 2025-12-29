@@ -1,0 +1,1052 @@
+<?php
+/**
+ * Service Moderation Page
+ *
+ * Admin page for reviewing and approving vendor services.
+ *
+ * @package WPSellServices\Admin\Pages
+ * @since   1.0.0
+ */
+
+declare(strict_types=1);
+
+namespace WPSellServices\Admin\Pages;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Service Moderation Page Class.
+ *
+ * @since 1.0.0
+ */
+class ServiceModerationPage {
+
+	/**
+	 * Moderation statuses.
+	 */
+	public const STATUS_PENDING  = 'pending';
+	public const STATUS_APPROVED = 'approved';
+	public const STATUS_REJECTED = 'rejected';
+
+	/**
+	 * Meta key for moderation status.
+	 */
+	public const META_KEY = '_wpss_moderation_status';
+
+	/**
+	 * Meta key for rejection reason.
+	 */
+	public const REJECTION_REASON_KEY = '_wpss_rejection_reason';
+
+	/**
+	 * Initialize the page.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 15 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+
+		// AJAX handlers.
+		add_action( 'wp_ajax_wpss_approve_service', array( $this, 'ajax_approve_service' ) );
+		add_action( 'wp_ajax_wpss_reject_service', array( $this, 'ajax_reject_service' ) );
+		add_action( 'wp_ajax_wpss_bulk_moderate_services', array( $this, 'ajax_bulk_moderate' ) );
+
+		// Add moderation column to services list.
+		add_filter( 'manage_wpss_service_posts_columns', array( $this, 'add_moderation_column' ) );
+		add_action( 'manage_wpss_service_posts_custom_column', array( $this, 'render_moderation_column' ), 10, 2 );
+		add_filter( 'manage_edit-wpss_service_sortable_columns', array( $this, 'sortable_columns' ) );
+
+		// Set default moderation status on new service.
+		add_action( 'save_post_wpss_service', array( $this, 'set_default_moderation_status' ), 10, 3 );
+
+		// Filter frontend queries.
+		add_action( 'pre_get_posts', array( $this, 'filter_frontend_queries' ) );
+
+		// Add quick edit support.
+		add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields' ), 10, 2 );
+
+		// Admin notices.
+		add_action( 'admin_notices', array( $this, 'pending_services_notice' ) );
+
+		// Modify publish to pending for vendors.
+		add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
+	}
+
+	/**
+	 * Add submenu page.
+	 *
+	 * @return void
+	 */
+	public function add_menu_page(): void {
+		$pending_count = $this->get_pending_count();
+		$menu_title    = __( 'Moderation', 'wp-sell-services' );
+
+		if ( $pending_count > 0 ) {
+			$menu_title .= sprintf( ' <span class="awaiting-mod">%d</span>', $pending_count );
+		}
+
+		add_submenu_page(
+			'wp-sell-services',
+			__( 'Service Moderation', 'wp-sell-services' ),
+			$menu_title,
+			'manage_options',
+			'wpss-moderation',
+			array( $this, 'render_page' )
+		);
+	}
+
+	/**
+	 * Enqueue page scripts.
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public function enqueue_scripts( string $hook ): void {
+		if ( 'sell-services_page_wpss-moderation' !== $hook ) {
+			return;
+		}
+
+		wp_enqueue_style( 'wpss-admin' );
+		wp_enqueue_script( 'wpss-admin' );
+
+		wp_add_inline_script(
+			'wpss-admin',
+			'window.wpssModeration = ' . wp_json_encode(
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'wpss_moderation' ),
+					'i18n'    => array(
+						'confirmApprove' => __( 'Approve this service?', 'wp-sell-services' ),
+						'confirmReject'  => __( 'Reject this service?', 'wp-sell-services' ),
+						'rejectReason'   => __( 'Please provide a reason for rejection:', 'wp-sell-services' ),
+						'loading'        => __( 'Processing...', 'wp-sell-services' ),
+						'approved'       => __( 'Service approved!', 'wp-sell-services' ),
+						'rejected'       => __( 'Service rejected.', 'wp-sell-services' ),
+						'error'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+						'selectServices' => __( 'Please select at least one service.', 'wp-sell-services' ),
+						'confirmBulk'    => __( 'Apply this action to selected services?', 'wp-sell-services' ),
+					),
+				)
+			)
+		);
+	}
+
+	/**
+	 * Get count of pending services.
+	 *
+	 * @return int
+	 */
+	public function get_pending_count(): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT p.ID)
+				FROM {$wpdb->posts} p
+				LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
+				WHERE p.post_type = 'wpss_service'
+				AND p.post_status = 'publish'
+				AND (pm.meta_value = %s OR pm.meta_value IS NULL)",
+				self::META_KEY,
+				self::STATUS_PENDING
+			)
+		);
+
+		return absint( $count );
+	}
+
+	/**
+	 * Render the moderation page.
+	 *
+	 * @return void
+	 */
+	public function render_page(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : self::STATUS_PENDING;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$paged = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
+
+		$args = array(
+			'post_type'      => 'wpss_service',
+			'post_status'    => 'publish',
+			'posts_per_page' => 20,
+			'paged'          => $paged,
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+		);
+
+		if ( 'all' !== $status_filter ) {
+			if ( self::STATUS_PENDING === $status_filter ) {
+				$args['meta_query'] = array(
+					'relation' => 'OR',
+					array(
+						'key'     => self::META_KEY,
+						'value'   => self::STATUS_PENDING,
+						'compare' => '=',
+					),
+					array(
+						'key'     => self::META_KEY,
+						'compare' => 'NOT EXISTS',
+					),
+				);
+			} else {
+				$args['meta_query'] = array(
+					array(
+						'key'     => self::META_KEY,
+						'value'   => $status_filter,
+						'compare' => '=',
+					),
+				);
+			}
+		}
+
+		$query    = new \WP_Query( $args );
+		$services = $query->posts;
+
+		// Get counts for tabs.
+		$counts = $this->get_status_counts();
+		?>
+		<div class="wrap wpss-moderation-wrap">
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
+
+			<!-- Status Tabs -->
+			<ul class="subsubsub">
+				<li>
+					<a href="<?php echo esc_url( add_query_arg( 'status', 'all' ) ); ?>"
+						class="<?php echo 'all' === $status_filter ? 'current' : ''; ?>">
+						<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
+						<span class="count">(<?php echo esc_html( array_sum( $counts ) ); ?>)</span>
+					</a> |
+				</li>
+				<li>
+					<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_PENDING ) ); ?>"
+						class="<?php echo self::STATUS_PENDING === $status_filter ? 'current' : ''; ?>">
+						<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
+						<span class="count">(<?php echo esc_html( $counts[ self::STATUS_PENDING ] ?? 0 ); ?>)</span>
+					</a> |
+				</li>
+				<li>
+					<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_APPROVED ) ); ?>"
+						class="<?php echo self::STATUS_APPROVED === $status_filter ? 'current' : ''; ?>">
+						<?php esc_html_e( 'Approved', 'wp-sell-services' ); ?>
+						<span class="count">(<?php echo esc_html( $counts[ self::STATUS_APPROVED ] ?? 0 ); ?>)</span>
+					</a> |
+				</li>
+				<li>
+					<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_REJECTED ) ); ?>"
+						class="<?php echo self::STATUS_REJECTED === $status_filter ? 'current' : ''; ?>">
+						<?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?>
+						<span class="count">(<?php echo esc_html( $counts[ self::STATUS_REJECTED ] ?? 0 ); ?>)</span>
+					</a>
+				</li>
+			</ul>
+
+			<!-- Bulk Actions -->
+			<form method="post" id="wpss-moderation-form">
+				<?php wp_nonce_field( 'wpss_moderation_bulk', 'wpss_moderation_nonce' ); ?>
+
+				<div class="tablenav top">
+					<div class="alignleft actions bulkactions">
+						<select name="bulk_action" id="bulk-action-selector">
+							<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
+							<option value="approve"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></option>
+							<option value="reject"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></option>
+						</select>
+						<button type="button" class="button wpss-bulk-action-btn" id="doaction">
+							<?php esc_html_e( 'Apply', 'wp-sell-services' ); ?>
+						</button>
+					</div>
+				</div>
+
+				<table class="wp-list-table widefat fixed striped wpss-moderation-table">
+					<thead>
+						<tr>
+							<td class="manage-column column-cb check-column">
+								<input type="checkbox" id="cb-select-all-1">
+							</td>
+							<th scope="col" class="manage-column column-thumbnail"><?php esc_html_e( 'Image', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-title"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-date"><?php esc_html_e( 'Submitted', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-actions"><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php if ( empty( $services ) ) : ?>
+							<tr>
+								<td colspan="9">
+									<?php esc_html_e( 'No services found.', 'wp-sell-services' ); ?>
+								</td>
+							</tr>
+						<?php else : ?>
+							<?php foreach ( $services as $service ) : ?>
+								<?php $this->render_service_row( $service ); ?>
+							<?php endforeach; ?>
+						<?php endif; ?>
+					</tbody>
+					<tfoot>
+						<tr>
+							<td class="manage-column column-cb check-column">
+								<input type="checkbox" id="cb-select-all-2">
+							</td>
+							<th scope="col" class="manage-column column-thumbnail"><?php esc_html_e( 'Image', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-title"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-date"><?php esc_html_e( 'Submitted', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+							<th scope="col" class="manage-column column-actions"><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
+						</tr>
+					</tfoot>
+				</table>
+
+				<!-- Pagination -->
+				<?php if ( $query->max_num_pages > 1 ) : ?>
+					<div class="tablenav bottom">
+						<div class="tablenav-pages">
+							<?php
+							$page_links = paginate_links(
+								array(
+									'base'      => add_query_arg( 'paged', '%#%' ),
+									'format'    => '',
+									'prev_text' => '&laquo;',
+									'next_text' => '&raquo;',
+									'total'     => $query->max_num_pages,
+									'current'   => $paged,
+								)
+							);
+							echo wp_kses_post( $page_links );
+							?>
+						</div>
+					</div>
+				<?php endif; ?>
+			</form>
+		</div>
+
+		<style>
+			.wpss-moderation-table .column-cb { width: 30px; }
+			.wpss-moderation-table .column-thumbnail { width: 60px; }
+			.wpss-moderation-table .column-title { width: 25%; }
+			.wpss-moderation-table .column-vendor { width: 12%; }
+			.wpss-moderation-table .column-category { width: 12%; }
+			.wpss-moderation-table .column-price { width: 8%; }
+			.wpss-moderation-table .column-date { width: 10%; }
+			.wpss-moderation-table .column-status { width: 10%; }
+			.wpss-moderation-table .column-actions { width: 15%; }
+			.wpss-moderation-table .service-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+			.wpss-moderation-table .wpss-status-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+			.wpss-moderation-table .wpss-status-pending { background: #fff3cd; color: #856404; }
+			.wpss-moderation-table .wpss-status-approved { background: #d4edda; color: #155724; }
+			.wpss-moderation-table .wpss-status-rejected { background: #f8d7da; color: #721c24; }
+			.wpss-moderation-table .row-actions { padding-top: 5px; }
+			.wpss-moderation-table .row-actions a { margin-right: 10px; }
+			.wpss-moderation-table .approve-action { color: #46b450; }
+			.wpss-moderation-table .reject-action { color: #dc3232; }
+			.wpss-rejection-reason { color: #666; font-size: 12px; font-style: italic; margin-top: 5px; }
+		</style>
+
+		<script>
+		jQuery(function($) {
+			var wpssModeration = window.wpssModeration || {};
+
+			// Approve single service.
+			$(document).on('click', '.wpss-approve-service', function(e) {
+				e.preventDefault();
+				var $btn = $(this);
+				var serviceId = $btn.data('service');
+
+				if (!confirm(wpssModeration.i18n.confirmApprove)) {
+					return;
+				}
+
+				$btn.text(wpssModeration.i18n.loading);
+
+				$.post(wpssModeration.ajaxUrl, {
+					action: 'wpss_approve_service',
+					service_id: serviceId,
+					nonce: wpssModeration.nonce
+				}, function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						alert(response.data.message || wpssModeration.i18n.error);
+						$btn.text('Approve');
+					}
+				}).fail(function() {
+					alert(wpssModeration.i18n.error);
+					$btn.text('Approve');
+				});
+			});
+
+			// Reject single service.
+			$(document).on('click', '.wpss-reject-service', function(e) {
+				e.preventDefault();
+				var $btn = $(this);
+				var serviceId = $btn.data('service');
+
+				var reason = prompt(wpssModeration.i18n.rejectReason);
+				if (reason === null) {
+					return;
+				}
+
+				$btn.text(wpssModeration.i18n.loading);
+
+				$.post(wpssModeration.ajaxUrl, {
+					action: 'wpss_reject_service',
+					service_id: serviceId,
+					reason: reason,
+					nonce: wpssModeration.nonce
+				}, function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						alert(response.data.message || wpssModeration.i18n.error);
+						$btn.text('Reject');
+					}
+				}).fail(function() {
+					alert(wpssModeration.i18n.error);
+					$btn.text('Reject');
+				});
+			});
+
+			// Bulk actions.
+			$('#doaction').on('click', function() {
+				var action = $('#bulk-action-selector').val();
+				if (!action) {
+					return;
+				}
+
+				var serviceIds = [];
+				$('input[name="service_ids[]"]:checked').each(function() {
+					serviceIds.push($(this).val());
+				});
+
+				if (serviceIds.length === 0) {
+					alert(wpssModeration.i18n.selectServices);
+					return;
+				}
+
+				if (!confirm(wpssModeration.i18n.confirmBulk)) {
+					return;
+				}
+
+				var reason = '';
+				if (action === 'reject') {
+					reason = prompt(wpssModeration.i18n.rejectReason);
+					if (reason === null) {
+						return;
+					}
+				}
+
+				$.post(wpssModeration.ajaxUrl, {
+					action: 'wpss_bulk_moderate_services',
+					bulk_action: action,
+					service_ids: serviceIds,
+					reason: reason,
+					nonce: wpssModeration.nonce
+				}, function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						alert(response.data.message || wpssModeration.i18n.error);
+					}
+				});
+			});
+
+			// Select all checkboxes.
+			$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
+				$('input[name="service_ids[]"]').prop('checked', $(this).prop('checked'));
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render a single service row.
+	 *
+	 * @param \WP_Post $service The service post.
+	 * @return void
+	 */
+	private function render_service_row( \WP_Post $service ): void {
+		$status           = get_post_meta( $service->ID, self::META_KEY, true );
+		$status           = $status ? $status : self::STATUS_PENDING;
+		$rejection_reason = get_post_meta( $service->ID, self::REJECTION_REASON_KEY, true );
+		$vendor           = get_user_by( 'ID', $service->post_author );
+		$categories       = get_the_terms( $service->ID, 'wpss_service_category' );
+		$price            = get_post_meta( $service->ID, '_wpss_starting_price', true );
+		$thumbnail        = get_the_post_thumbnail_url( $service->ID, 'thumbnail' );
+		?>
+		<tr>
+			<th scope="row" class="check-column">
+				<input type="checkbox" name="service_ids[]" value="<?php echo esc_attr( $service->ID ); ?>">
+			</th>
+			<td class="column-thumbnail">
+				<?php if ( $thumbnail ) : ?>
+					<img src="<?php echo esc_url( $thumbnail ); ?>" alt="" class="service-thumb">
+				<?php else : ?>
+					<span class="dashicons dashicons-format-image" style="font-size: 40px; color: #ccc;"></span>
+				<?php endif; ?>
+			</td>
+			<td class="column-title">
+				<strong>
+					<a href="<?php echo esc_url( get_edit_post_link( $service->ID ) ); ?>">
+						<?php echo esc_html( $service->post_title ); ?>
+					</a>
+				</strong>
+				<div class="row-actions">
+					<span class="edit">
+						<a href="<?php echo esc_url( get_edit_post_link( $service->ID ) ); ?>">
+							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
+						</a>
+					</span>
+					|
+					<span class="view">
+						<a href="<?php echo esc_url( get_permalink( $service->ID ) ); ?>" target="_blank">
+							<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
+						</a>
+					</span>
+				</div>
+			</td>
+			<td class="column-vendor">
+				<?php if ( $vendor ) : ?>
+					<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
+						<?php echo esc_html( $vendor->display_name ); ?>
+					</a>
+				<?php else : ?>
+					<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
+				<?php endif; ?>
+			</td>
+			<td class="column-category">
+				<?php
+				if ( $categories && ! is_wp_error( $categories ) ) {
+					$cat_names = wp_list_pluck( $categories, 'name' );
+					echo esc_html( implode( ', ', $cat_names ) );
+				} else {
+					echo '—';
+				}
+				?>
+			</td>
+			<td class="column-price">
+				<?php echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '—'; ?>
+			</td>
+			<td class="column-date">
+				<?php echo esc_html( get_the_date( '', $service ) ); ?>
+			</td>
+			<td class="column-status">
+				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+					<?php echo esc_html( ucfirst( $status ) ); ?>
+				</span>
+				<?php if ( self::STATUS_REJECTED === $status && $rejection_reason ) : ?>
+					<div class="wpss-rejection-reason">
+						<?php echo esc_html( $rejection_reason ); ?>
+					</div>
+				<?php endif; ?>
+			</td>
+			<td class="column-actions">
+				<?php if ( self::STATUS_APPROVED !== $status ) : ?>
+					<a href="#" class="button button-small wpss-approve-service approve-action" data-service="<?php echo esc_attr( $service->ID ); ?>">
+						<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<?php if ( self::STATUS_REJECTED !== $status ) : ?>
+					<a href="#" class="button button-small wpss-reject-service reject-action" data-service="<?php echo esc_attr( $service->ID ); ?>">
+						<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Get status counts.
+	 *
+	 * @return array
+	 */
+	private function get_status_counts(): array {
+		global $wpdb;
+
+		$counts = array(
+			self::STATUS_PENDING  => 0,
+			self::STATUS_APPROVED => 0,
+			self::STATUS_REJECTED => 0,
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT
+					COALESCE(pm.meta_value, %s) as status,
+					COUNT(*) as count
+				FROM {$wpdb->posts} p
+				LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
+				WHERE p.post_type = 'wpss_service'
+				AND p.post_status = 'publish'
+				GROUP BY COALESCE(pm.meta_value, %s)",
+				self::STATUS_PENDING,
+				self::META_KEY,
+				self::STATUS_PENDING
+			)
+		);
+
+		foreach ( $results as $row ) {
+			if ( isset( $counts[ $row->status ] ) ) {
+				$counts[ $row->status ] = absint( $row->count );
+			}
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * AJAX: Approve a service.
+	 *
+	 * @return void
+	 */
+	public function ajax_approve_service(): void {
+		check_ajax_referer( 'wpss_moderation', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+
+		if ( ! $service_id || get_post_type( $service_id ) !== 'wpss_service' ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		update_post_meta( $service_id, self::META_KEY, self::STATUS_APPROVED );
+		delete_post_meta( $service_id, self::REJECTION_REASON_KEY );
+
+		/**
+		 * Fires when a service is approved.
+		 *
+		 * @param int $service_id The service ID.
+		 */
+		do_action( 'wpss_service_approved', $service_id );
+
+		// Notify vendor.
+		$this->notify_vendor( $service_id, 'approved' );
+
+		wp_send_json_success( array( 'message' => __( 'Service approved.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * AJAX: Reject a service.
+	 *
+	 * @return void
+	 */
+	public function ajax_reject_service(): void {
+		check_ajax_referer( 'wpss_moderation', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$reason     = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
+
+		if ( ! $service_id || get_post_type( $service_id ) !== 'wpss_service' ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		update_post_meta( $service_id, self::META_KEY, self::STATUS_REJECTED );
+
+		if ( $reason ) {
+			update_post_meta( $service_id, self::REJECTION_REASON_KEY, $reason );
+		}
+
+		/**
+		 * Fires when a service is rejected.
+		 *
+		 * @param int    $service_id The service ID.
+		 * @param string $reason     The rejection reason.
+		 */
+		do_action( 'wpss_service_rejected', $service_id, $reason );
+
+		// Notify vendor.
+		$this->notify_vendor( $service_id, 'rejected', $reason );
+
+		wp_send_json_success( array( 'message' => __( 'Service rejected.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * AJAX: Bulk moderate services.
+	 *
+	 * @return void
+	 */
+	public function ajax_bulk_moderate(): void {
+		check_ajax_referer( 'wpss_moderation', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$bulk_action = sanitize_text_field( wp_unslash( $_POST['bulk_action'] ?? '' ) );
+		$service_ids = array_map( 'absint', (array) ( $_POST['service_ids'] ?? array() ) );
+		$reason      = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
+
+		if ( empty( $service_ids ) ) {
+			wp_send_json_error( array( 'message' => __( 'No services selected.', 'wp-sell-services' ) ) );
+		}
+
+		$processed = 0;
+
+		foreach ( $service_ids as $service_id ) {
+			if ( get_post_type( $service_id ) !== 'wpss_service' ) {
+				continue;
+			}
+
+			if ( 'approve' === $bulk_action ) {
+				update_post_meta( $service_id, self::META_KEY, self::STATUS_APPROVED );
+				delete_post_meta( $service_id, self::REJECTION_REASON_KEY );
+				do_action( 'wpss_service_approved', $service_id );
+				$this->notify_vendor( $service_id, 'approved' );
+			} elseif ( 'reject' === $bulk_action ) {
+				update_post_meta( $service_id, self::META_KEY, self::STATUS_REJECTED );
+				if ( $reason ) {
+					update_post_meta( $service_id, self::REJECTION_REASON_KEY, $reason );
+				}
+				do_action( 'wpss_service_rejected', $service_id, $reason );
+				$this->notify_vendor( $service_id, 'rejected', $reason );
+			}
+
+			++$processed;
+		}
+
+		wp_send_json_success(
+			array(
+				/* translators: %d: number of services processed */
+				'message' => sprintf( __( '%d services processed.', 'wp-sell-services' ), $processed ),
+			)
+		);
+	}
+
+	/**
+	 * Notify vendor about moderation decision.
+	 *
+	 * @param int    $service_id The service ID.
+	 * @param string $status     The moderation status.
+	 * @param string $reason     Optional rejection reason.
+	 * @return void
+	 */
+	private function notify_vendor( int $service_id, string $status, string $reason = '' ): void {
+		$service = get_post( $service_id );
+		if ( ! $service ) {
+			return;
+		}
+
+		$vendor = get_user_by( 'ID', $service->post_author );
+		if ( ! $vendor ) {
+			return;
+		}
+
+		$subject = 'approved' === $status
+			? __( 'Your service has been approved', 'wp-sell-services' )
+			: __( 'Your service was not approved', 'wp-sell-services' );
+
+		$message = sprintf(
+			/* translators: %s: service title */
+			__( 'Hello, your service "%s" has been reviewed.', 'wp-sell-services' ),
+			$service->post_title
+		);
+		$message .= "\n\n";
+
+		if ( 'approved' === $status ) {
+			$message .= __( 'Your service has been approved and is now live on the marketplace.', 'wp-sell-services' );
+			$message .= "\n\n";
+			$message .= __( 'View your service: ', 'wp-sell-services' ) . get_permalink( $service_id );
+		} else {
+			$message .= __( 'Unfortunately, your service was not approved.', 'wp-sell-services' );
+			if ( $reason ) {
+				$message .= "\n\n";
+				$message .= __( 'Reason: ', 'wp-sell-services' ) . $reason;
+			}
+			$message .= "\n\n";
+			$message .= __( 'Please review and update your service, then resubmit for approval.', 'wp-sell-services' );
+			$message .= "\n";
+			$message .= __( 'Edit your service: ', 'wp-sell-services' ) . get_edit_post_link( $service_id, 'raw' );
+		}
+
+		wp_mail( $vendor->user_email, $subject, $message );
+	}
+
+	/**
+	 * Set default moderation status on new service.
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @param bool     $update  Whether this is an update.
+	 * @return void
+	 */
+	public function set_default_moderation_status( int $post_id, \WP_Post $post, bool $update ): void {
+		// Skip if updating existing post.
+		if ( $update ) {
+			return;
+		}
+
+		// Skip auto-drafts.
+		if ( 'auto-draft' === $post->post_status ) {
+			return;
+		}
+
+		// Skip if meta already exists.
+		if ( metadata_exists( 'post', $post_id, self::META_KEY ) ) {
+			return;
+		}
+
+		// Admins get auto-approved.
+		if ( current_user_can( 'manage_options' ) ) {
+			update_post_meta( $post_id, self::META_KEY, self::STATUS_APPROVED );
+		} else {
+			update_post_meta( $post_id, self::META_KEY, self::STATUS_PENDING );
+		}
+	}
+
+	/**
+	 * Filter frontend queries to only show approved services.
+	 *
+	 * @param \WP_Query $query The query object.
+	 * @return void
+	 */
+	public function filter_frontend_queries( \WP_Query $query ): void {
+		// Skip admin.
+		if ( is_admin() ) {
+			return;
+		}
+
+		// Skip if not main query or not our post type.
+		if ( ! $query->is_main_query() ) {
+			return;
+		}
+
+		// Check if querying services.
+		$post_type = $query->get( 'post_type' );
+		if ( 'wpss_service' !== $post_type && ! $query->is_singular( 'wpss_service' ) ) {
+			// Also check archive.
+			if ( ! $query->is_post_type_archive( 'wpss_service' ) ) {
+				return;
+			}
+		}
+
+		// Add meta query for approved status.
+		$meta_query_raw      = $query->get( 'meta_query' );
+		$existing_meta_query = $meta_query_raw ? $meta_query_raw : array();
+
+		$existing_meta_query[] = array(
+			'key'     => self::META_KEY,
+			'value'   => self::STATUS_APPROVED,
+			'compare' => '=',
+		);
+
+		$query->set( 'meta_query', $existing_meta_query );
+	}
+
+	/**
+	 * Add moderation column to services list.
+	 *
+	 * @param array $columns Existing columns.
+	 * @return array
+	 */
+	public function add_moderation_column( array $columns ): array {
+		$new_columns = array();
+
+		foreach ( $columns as $key => $value ) {
+			$new_columns[ $key ] = $value;
+
+			// Add moderation column after title.
+			if ( 'title' === $key ) {
+				$new_columns['wpss_moderation'] = __( 'Moderation', 'wp-sell-services' );
+			}
+		}
+
+		return $new_columns;
+	}
+
+	/**
+	 * Render moderation column.
+	 *
+	 * @param string $column  Column name.
+	 * @param int    $post_id Post ID.
+	 * @return void
+	 */
+	public function render_moderation_column( string $column, int $post_id ): void {
+		if ( 'wpss_moderation' !== $column ) {
+			return;
+		}
+
+		$status_raw = get_post_meta( $post_id, self::META_KEY, true );
+		$status     = $status_raw ? $status_raw : self::STATUS_PENDING;
+
+		$status_labels = array(
+			self::STATUS_PENDING  => __( 'Pending', 'wp-sell-services' ),
+			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
+			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
+		);
+
+		$label = $status_labels[ $status ] ?? ucfirst( $status );
+
+		printf(
+			'<span class="wpss-status-badge wpss-status-%s" style="display:inline-block;padding:3px 8px;border-radius:3px;font-size:11px;font-weight:600;">%s</span>',
+			esc_attr( $status ),
+			esc_html( $label )
+		);
+
+		// Add inline styles for status badges.
+		static $styles_added = false;
+		if ( ! $styles_added ) {
+			echo '<style>
+				.wpss-status-pending { background: #fff3cd; color: #856404; }
+				.wpss-status-approved { background: #d4edda; color: #155724; }
+				.wpss-status-rejected { background: #f8d7da; color: #721c24; }
+			</style>';
+			$styles_added = true;
+		}
+	}
+
+	/**
+	 * Make moderation column sortable.
+	 *
+	 * @param array $columns Sortable columns.
+	 * @return array
+	 */
+	public function sortable_columns( array $columns ): array {
+		$columns['wpss_moderation'] = 'wpss_moderation';
+		return $columns;
+	}
+
+	/**
+	 * Quick edit fields.
+	 *
+	 * @param string $column_name Column name.
+	 * @param string $post_type   Post type.
+	 * @return void
+	 */
+	public function quick_edit_fields( string $column_name, string $post_type ): void {
+		if ( 'wpss_moderation' !== $column_name || 'wpss_service' !== $post_type ) {
+			return;
+		}
+		?>
+		<fieldset class="inline-edit-col-right">
+			<div class="inline-edit-col">
+				<label>
+					<span class="title"><?php esc_html_e( 'Moderation', 'wp-sell-services' ); ?></span>
+					<select name="wpss_moderation_status">
+						<option value="<?php echo esc_attr( self::STATUS_PENDING ); ?>"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></option>
+						<option value="<?php echo esc_attr( self::STATUS_APPROVED ); ?>"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></option>
+						<option value="<?php echo esc_attr( self::STATUS_REJECTED ); ?>"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></option>
+					</select>
+				</label>
+			</div>
+		</fieldset>
+		<?php
+	}
+
+	/**
+	 * Show admin notice for pending services.
+	 *
+	 * @return void
+	 */
+	public function pending_services_notice(): void {
+		$screen = get_current_screen();
+
+		// Only show on our plugin pages.
+		if ( ! $screen || strpos( $screen->id, 'wp-sell-services' ) === false ) {
+			return;
+		}
+
+		// Skip the moderation page itself.
+		if ( 'sell-services_page_wpss-moderation' === $screen->id ) {
+			return;
+		}
+
+		$pending_count = $this->get_pending_count();
+
+		if ( $pending_count > 0 ) {
+			printf(
+				'<div class="notice notice-warning"><p>%s <a href="%s">%s</a></p></div>',
+				sprintf(
+					esc_html(
+						/* translators: %d: Number of services pending moderation review. */
+						_n(
+							'You have %d service pending review.',
+							'You have %d services pending review.',
+							$pending_count,
+							'wp-sell-services'
+						)
+					),
+					esc_html( $pending_count )
+				),
+				esc_url( admin_url( 'admin.php?page=wpss-moderation' ) ),
+				esc_html__( 'Review now', 'wp-sell-services' )
+			);
+		}
+	}
+
+	/**
+	 * Intercept publish action for vendors to set pending status.
+	 *
+	 * @param array $data    Post data.
+	 * @param array $postarr Post array.
+	 * @return array
+	 */
+	public function intercept_publish( array $data, array $postarr ): array {
+		// Only for services.
+		if ( 'wpss_service' !== $data['post_type'] ) {
+			return $data;
+		}
+
+		// Admins can publish directly.
+		if ( current_user_can( 'manage_options' ) ) {
+			return $data;
+		}
+
+		// If being published, check if it's pending moderation.
+		if ( 'publish' === $data['post_status'] ) {
+			$post_id = $postarr['ID'] ?? 0;
+
+			// For new posts, we'll set meta in save_post hook.
+			// For existing posts, check current moderation status.
+			if ( $post_id ) {
+				$moderation_status = get_post_meta( $post_id, self::META_KEY, true );
+
+				// If rejected or new, reset to pending.
+				if ( self::STATUS_REJECTED === $moderation_status || ! $moderation_status ) {
+					update_post_meta( $post_id, self::META_KEY, self::STATUS_PENDING );
+					delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
+				}
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Get moderation status for a service.
+	 *
+	 * @param int $service_id Service ID.
+	 * @return string
+	 */
+	public static function get_status( int $service_id ): string {
+		$status = get_post_meta( $service_id, self::META_KEY, true );
+		return $status ? $status : self::STATUS_PENDING;
+	}
+
+	/**
+	 * Check if a service is approved.
+	 *
+	 * @param int $service_id Service ID.
+	 * @return bool
+	 */
+	public static function is_approved( int $service_id ): bool {
+		return self::get_status( $service_id ) === self::STATUS_APPROVED;
+	}
+}

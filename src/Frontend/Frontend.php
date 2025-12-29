@@ -54,20 +54,44 @@ class Frontend {
 			true
 		);
 
+		// Legacy 'wpss' for backward compatibility.
 		wp_localize_script(
 			'wpss-frontend',
 			'wpss',
 			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'restUrl' => rest_url( 'wpss/v1/' ),
+				'nonce'   => wp_create_nonce( 'wpss_frontend_nonce' ),
+			)
+		);
+
+		// Primary 'wpssData' object used by frontend.js.
+		wp_localize_script(
+			'wpss-frontend',
+			'wpssData',
+			array(
 				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-				'restUrl'         => rest_url( 'wpss/v1/' ),
-				'nonce'           => wp_create_nonce( 'wpss_frontend_nonce' ),
-				'pollingInterval' => 10000, // 10 seconds.
+				'apiUrl'          => rest_url( 'wpss/v1/' ),
+				'nonce'           => wp_create_nonce( 'wpss_proposal_action' ),
+				'restNonce'       => wp_create_nonce( 'wp_rest' ),
+				'pollingInterval' => 10000,
 				'i18n'            => array(
-					'loading'      => __( 'Loading...', 'wp-sell-services' ),
-					'error'        => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'sendMessage'  => __( 'Send', 'wp-sell-services' ),
-					'uploadFile'   => __( 'Upload File', 'wp-sell-services' ),
-					'confirmTitle' => __( 'Are you sure?', 'wp-sell-services' ),
+					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
+					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'ajaxError'                   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'sendMessage'                 => __( 'Send', 'wp-sell-services' ),
+					'uploadFile'                  => __( 'Upload File', 'wp-sell-services' ),
+					'confirmTitle'                => __( 'Are you sure?', 'wp-sell-services' ),
+					'submitting'                  => __( 'Submitting...', 'wp-sell-services' ),
+					'processing'                  => __( 'Processing...', 'wp-sell-services' ),
+					'proposalDescriptionRequired' => __( 'Please provide a proposal description.', 'wp-sell-services' ),
+					'proposalPriceRequired'       => __( 'Please enter a valid price.', 'wp-sell-services' ),
+					'proposalDeliveryRequired'    => __( 'Please enter delivery time in days.', 'wp-sell-services' ),
+					'proposalSubmitted'           => __( 'Proposal submitted successfully!', 'wp-sell-services' ),
+					'proposalFailed'              => __( 'Failed to submit proposal.', 'wp-sell-services' ),
+					'confirmAcceptProposal'       => __( 'Accept this proposal and create an order?', 'wp-sell-services' ),
+					'rejectProposalReason'        => __( 'Please provide a reason for rejection (optional):', 'wp-sell-services' ),
+					'confirmWithdrawProposal'     => __( 'Withdraw this proposal?', 'wp-sell-services' ),
 				),
 			)
 		);

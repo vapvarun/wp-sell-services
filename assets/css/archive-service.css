@@ -1,0 +1,445 @@
+/**
+ * WP Sell Services - Archive Styles
+ *
+ * @package WPSellServices
+ * @since   1.0.0
+ */
+
+/* ==========================================================================
+   Archive Layout
+   ========================================================================== */
+
+.wpss-services-archive {
+	padding: 2rem 0;
+}
+
+.wpss-services-content {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+/* ==========================================================================
+   Archive Header
+   ========================================================================== */
+
+.wpss-archive-header {
+	margin-bottom: 1.5rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border);
+}
+
+.wpss-archive-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.75rem;
+	color: var(--wpss-black);
+}
+
+.wpss-archive-description {
+	margin: 0;
+	color: var(--wpss-text);
+	font-size: 1rem;
+}
+
+/* ==========================================================================
+   Filters Bar
+   ========================================================================== */
+
+.wpss-filters-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem;
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	margin-bottom: 1.5rem;
+}
+
+.wpss-filter-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-filter-toggle .wpss-icon-filter::before {
+	content: "\2630";
+}
+
+.wpss-filters-bar-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-left: auto;
+}
+
+.wpss-category-filter,
+.wpss-sort-filter {
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-white);
+	font-size: 0.875rem;
+	cursor: pointer;
+	min-width: 160px;
+}
+
+.wpss-category-filter:focus,
+.wpss-sort-filter:focus {
+	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+/* ==========================================================================
+   Results Info
+   ========================================================================== */
+
+.wpss-results-info {
+	font-size: 0.875rem;
+	color: var(--wpss-text);
+}
+
+/* ==========================================================================
+   Services Grid
+   ========================================================================== */
+
+.wpss-services-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 1.5rem;
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.wpss-pagination {
+	margin-top: 2rem;
+	display: flex;
+	justify-content: center;
+}
+
+.wpss-pagination ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wpss-pagination li {
+	margin: 0;
+}
+
+.wpss-pagination a,
+.wpss-pagination span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 40px;
+	height: 40px;
+	padding: 0 0.75rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-white);
+	color: var(--wpss-text);
+	text-decoration: none;
+	font-size: 0.875rem;
+	transition: all var(--wpss-transition);
+}
+
+.wpss-pagination a:hover {
+	border-color: var(--wpss-primary);
+	color: var(--wpss-primary);
+}
+
+.wpss-pagination .current {
+	background: var(--wpss-primary);
+	border-color: var(--wpss-primary);
+	color: var(--wpss-white);
+}
+
+/* ==========================================================================
+   Archive Sidebar
+   ========================================================================== */
+
+.wpss-archive-sidebar {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 320px;
+	height: 100%;
+	background: var(--wpss-white);
+	z-index: 99998;
+	transform: translateX(-100%);
+	transition: transform 0.3s ease;
+	overflow-y: auto;
+	box-shadow: var(--wpss-shadow-lg);
+}
+
+.wpss-archive-sidebar.is-open {
+	transform: translateX(0);
+}
+
+.wpss-sidebar-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--wpss-border);
+	position: sticky;
+	top: 0;
+	background: var(--wpss-white);
+	z-index: 1;
+}
+
+.wpss-sidebar-header h3 {
+	margin: 0;
+	font-size: 1.125rem;
+}
+
+.wpss-sidebar-close {
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	cursor: pointer;
+	color: var(--wpss-text-light);
+	padding: 0;
+	line-height: 1;
+}
+
+.wpss-sidebar-close:hover {
+	color: var(--wpss-text);
+}
+
+/* ==========================================================================
+   Filter Form
+   ========================================================================== */
+
+.wpss-filter-form {
+	padding: 1.5rem;
+}
+
+.wpss-filter-section {
+	margin-bottom: 1.5rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border);
+}
+
+.wpss-filter-section:last-of-type {
+	border-bottom: none;
+}
+
+.wpss-filter-section h4 {
+	margin: 0 0 1rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--wpss-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+/* Category List */
+.wpss-category-list,
+.wpss-subcategory-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wpss-category-list > li {
+	margin-bottom: 0.5rem;
+}
+
+.wpss-category-link {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem 0;
+	color: var(--wpss-text);
+	text-decoration: none;
+	font-size: 0.938rem;
+	transition: color var(--wpss-transition);
+}
+
+.wpss-category-link:hover {
+	color: var(--wpss-primary);
+}
+
+.wpss-category-link .wpss-count {
+	color: var(--wpss-text-light);
+	font-size: 0.813rem;
+}
+
+.wpss-subcategory-list {
+	padding-left: 1rem;
+	margin-top: 0.25rem;
+}
+
+.wpss-subcategory-list li {
+	margin-bottom: 0.25rem;
+}
+
+.wpss-subcategory-list a {
+	display: flex;
+	justify-content: space-between;
+	color: var(--wpss-text-light);
+	text-decoration: none;
+	font-size: 0.875rem;
+	padding: 0.25rem 0;
+}
+
+.wpss-subcategory-list a:hover {
+	color: var(--wpss-primary);
+}
+
+/* Price Inputs */
+.wpss-price-inputs {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-price-inputs input {
+	flex: 1;
+	padding: 0.5rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	font-size: 0.875rem;
+	text-align: center;
+}
+
+.wpss-price-inputs input:focus {
+	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+.wpss-price-separator {
+	color: var(--wpss-text-light);
+}
+
+/* Rating Options */
+.wpss-rating-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wpss-rating-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+	font-size: 0.875rem;
+}
+
+.wpss-rating-option input {
+	margin: 0;
+}
+
+.wpss-rating-option .wpss-stars {
+	display: flex;
+	gap: 2px;
+}
+
+.wpss-rating-option .wpss-star {
+	color: var(--wpss-border);
+	font-size: 1rem;
+}
+
+.wpss-rating-option .wpss-star.filled {
+	color: var(--wpss-star);
+}
+
+.wpss-rating-option .wpss-label {
+	color: var(--wpss-text-light);
+}
+
+/* Delivery Options */
+.wpss-delivery-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wpss-checkbox-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+	font-size: 0.875rem;
+	color: var(--wpss-text);
+}
+
+.wpss-checkbox-option input {
+	margin: 0;
+}
+
+/* Filter Actions */
+.wpss-filter-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 1.5rem;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (min-width: 1024px) {
+	.wpss-services-archive .wpss-container {
+		display: grid;
+		grid-template-columns: 280px 1fr;
+		gap: 2rem;
+	}
+
+	.wpss-archive-sidebar {
+		position: sticky;
+		top: 2rem;
+		left: auto;
+		width: 100%;
+		height: auto;
+		max-height: calc(100vh - 4rem);
+		transform: none;
+		box-shadow: none;
+		border: 1px solid var(--wpss-border);
+		border-radius: var(--wpss-radius);
+		order: -1;
+	}
+
+	.wpss-filter-toggle {
+		display: none;
+	}
+
+	.wpss-sidebar-header {
+		display: none;
+	}
+
+	.wpss-services-content {
+		order: 1;
+	}
+}
+
+@media (max-width: 640px) {
+	.wpss-filters-bar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-filters-bar-controls {
+		flex-direction: column;
+		margin-left: 0;
+	}
+
+	.wpss-category-filter,
+	.wpss-sort-filter {
+		width: 100%;
+	}
+
+	.wpss-services-grid {
+		grid-template-columns: 1fr;
+	}
+}

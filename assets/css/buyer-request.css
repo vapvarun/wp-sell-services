@@ -1,0 +1,664 @@
+/**
+ * WP Sell Services - Buyer Request Styles
+ *
+ * @package WPSellServices
+ * @since   1.0.0
+ */
+
+/* ==========================================================================
+   Archive Layout
+   ========================================================================== */
+
+.wpss-requests-archive {
+	padding: 2rem 0;
+}
+
+.wpss-requests-archive .wpss-container {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 2rem;
+}
+
+.wpss-requests-content {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+/* ==========================================================================
+   Archive Header
+   ========================================================================== */
+
+.wpss-request-archive-header {
+	margin-bottom: 1.5rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border);
+}
+
+.wpss-request-archive-header .wpss-archive-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.75rem;
+	color: var(--wpss-black);
+}
+
+.wpss-request-archive-header .wpss-archive-description {
+	margin: 0;
+	color: var(--wpss-text);
+	font-size: 1rem;
+}
+
+/* ==========================================================================
+   Request List
+   ========================================================================== */
+
+.wpss-requests-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+/* ==========================================================================
+   Request Card
+   ========================================================================== */
+
+.wpss-request-card {
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	padding: 1.5rem;
+	transition: box-shadow var(--wpss-transition);
+}
+
+.wpss-request-card:hover {
+	box-shadow: var(--wpss-shadow);
+}
+
+.wpss-request-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 1rem;
+}
+
+.wpss-request-buyer {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.wpss-buyer-avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.wpss-buyer-info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.wpss-buyer-name {
+	font-weight: 500;
+	color: var(--wpss-black);
+	font-size: 0.938rem;
+}
+
+.wpss-request-date {
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+}
+
+.wpss-request-category {
+	display: inline-block;
+	padding: 0.25rem 0.75rem;
+	background: var(--wpss-gray-100);
+	color: var(--wpss-text);
+	font-size: 0.75rem;
+	border-radius: var(--wpss-radius-sm);
+}
+
+.wpss-request-card-body {
+	margin-bottom: 1rem;
+}
+
+.wpss-request-title {
+	margin: 0 0 0.75rem;
+	font-size: 1.125rem;
+	line-height: 1.4;
+}
+
+.wpss-request-title a {
+	color: var(--wpss-black);
+	text-decoration: none;
+}
+
+.wpss-request-title a:hover {
+	color: var(--wpss-primary);
+}
+
+.wpss-request-excerpt {
+	color: var(--wpss-text);
+	font-size: 0.938rem;
+	line-height: 1.6;
+	margin-bottom: 1rem;
+}
+
+.wpss-request-skills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.wpss-skill-tag {
+	display: inline-block;
+	padding: 0.25rem 0.625rem;
+	background: var(--wpss-primary-light);
+	color: var(--wpss-primary);
+	font-size: 0.75rem;
+	border-radius: var(--wpss-radius-sm);
+}
+
+.wpss-skill-more {
+	font-size: 0.75rem;
+	color: var(--wpss-text-light);
+	padding: 0.25rem 0;
+}
+
+.wpss-request-card-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border);
+}
+
+.wpss-request-meta {
+	display: flex;
+	gap: 1.5rem;
+}
+
+.wpss-request-meta-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.wpss-meta-label {
+	font-size: 0.75rem;
+	color: var(--wpss-text-light);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.wpss-meta-value {
+	font-weight: 600;
+	color: var(--wpss-black);
+	font-size: 0.938rem;
+}
+
+.wpss-request-budget .wpss-meta-value {
+	color: var(--wpss-primary);
+}
+
+.wpss-request-actions {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.wpss-request-expires {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+}
+
+/* ==========================================================================
+   Single Request Layout
+   ========================================================================== */
+
+.wpss-single-request {
+	padding: 2rem 0;
+}
+
+.wpss-request-layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 2rem;
+}
+
+.wpss-request-main {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+/* ==========================================================================
+   Request Header
+   ========================================================================== */
+
+.wpss-request-header {
+	margin-bottom: 1.5rem;
+}
+
+.wpss-request-status-badge {
+	display: inline-block;
+	padding: 0.25rem 0.75rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	border-radius: var(--wpss-radius-sm);
+	margin-bottom: 0.75rem;
+}
+
+.wpss-request-status-badge.wpss-status-open {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.wpss-request-status-badge.wpss-status-in_review {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.wpss-request-status-badge.wpss-status-hired {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.wpss-request-status-badge.wpss-status-expired,
+.wpss-request-status-badge.wpss-status-cancelled {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.wpss-request-header .wpss-request-title {
+	margin: 0 0 0.75rem;
+	font-size: 1.75rem;
+	line-height: 1.3;
+	color: var(--wpss-black);
+}
+
+.wpss-request-meta-bar {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	color: var(--wpss-text-light);
+	font-size: 0.875rem;
+}
+
+.wpss-request-meta-bar a {
+	color: var(--wpss-primary);
+	text-decoration: none;
+}
+
+/* ==========================================================================
+   Request Content Sections
+   ========================================================================== */
+
+.wpss-request-section {
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	padding: 1.5rem;
+}
+
+.wpss-request-section h2 {
+	margin: 0 0 1rem;
+	font-size: 1.125rem;
+	color: var(--wpss-black);
+}
+
+.wpss-request-text {
+	color: var(--wpss-text);
+	line-height: 1.7;
+}
+
+.wpss-skills-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.wpss-attachments-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wpss-attachment-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem;
+	background: var(--wpss-gray-100);
+	border-radius: var(--wpss-radius-sm);
+	color: var(--wpss-text);
+	text-decoration: none;
+	font-size: 0.875rem;
+}
+
+.wpss-attachment-item:hover {
+	background: var(--wpss-gray-200);
+}
+
+/* ==========================================================================
+   Proposals Section
+   ========================================================================== */
+
+.wpss-request-proposals h2 {
+	margin-bottom: 1.5rem;
+}
+
+.wpss-proposals-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.wpss-proposal-item {
+	padding: 1.25rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-white);
+}
+
+.wpss-proposal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 1rem;
+}
+
+.wpss-proposal-vendor {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.wpss-proposal-vendor .wpss-vendor-avatar {
+	width: 48px;
+	height: 48px;
+}
+
+.wpss-proposal-vendor .wpss-vendor-name {
+	font-weight: 600;
+	color: var(--wpss-black);
+	text-decoration: none;
+}
+
+.wpss-proposal-vendor .wpss-vendor-name:hover {
+	color: var(--wpss-primary);
+}
+
+.wpss-vendor-stats {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+}
+
+.wpss-vendor-rating .wpss-star {
+	color: var(--wpss-star);
+}
+
+.wpss-proposal-meta {
+	text-align: right;
+}
+
+.wpss-proposal-price {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--wpss-primary);
+}
+
+.wpss-proposal-delivery {
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+}
+
+.wpss-proposal-description {
+	color: var(--wpss-text);
+	line-height: 1.6;
+	margin-bottom: 1rem;
+}
+
+.wpss-proposal-actions {
+	display: flex;
+	gap: 0.75rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border);
+}
+
+.wpss-proposal-status {
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border);
+}
+
+/* ==========================================================================
+   Request Sidebar
+   ========================================================================== */
+
+.wpss-request-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.wpss-request-details-card,
+.wpss-buyer-card {
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	padding: 1.5rem;
+}
+
+.wpss-request-details-card h3,
+.wpss-buyer-card h3 {
+	margin: 0 0 1rem;
+	font-size: 1rem;
+	color: var(--wpss-black);
+}
+
+.wpss-details-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-bottom: 1.5rem;
+}
+
+.wpss-detail-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.wpss-detail-label {
+	color: var(--wpss-text-light);
+	font-size: 0.875rem;
+}
+
+.wpss-detail-value {
+	font-weight: 500;
+	color: var(--wpss-black);
+}
+
+.wpss-detail-budget {
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--wpss-primary);
+}
+
+.wpss-proposal-submitted {
+	text-align: center;
+	padding: 1rem;
+	background: #dcfce7;
+	border-radius: var(--wpss-radius);
+	margin-bottom: 1rem;
+}
+
+.wpss-proposal-submitted-icon {
+	font-size: 2rem;
+	color: #166534;
+	margin-bottom: 0.5rem;
+}
+
+.wpss-proposal-submitted p {
+	margin: 0 0 1rem;
+	color: #166534;
+	font-size: 0.875rem;
+}
+
+.wpss-request-closed {
+	text-align: center;
+	padding: 1rem;
+	background: var(--wpss-gray-100);
+	border-radius: var(--wpss-radius);
+}
+
+.wpss-request-closed p {
+	margin: 0;
+	color: var(--wpss-text-light);
+	font-size: 0.875rem;
+}
+
+.wpss-buyer-profile {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.wpss-buyer-profile .wpss-buyer-avatar {
+	width: 64px;
+	height: 64px;
+}
+
+.wpss-buyer-profile .wpss-buyer-name {
+	font-weight: 600;
+	color: var(--wpss-black);
+	display: block;
+	margin-bottom: 0.25rem;
+}
+
+.wpss-buyer-member-since {
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+}
+
+/* ==========================================================================
+   No Results
+   ========================================================================== */
+
+.wpss-no-requests {
+	text-align: center;
+	padding: 3rem 2rem;
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+}
+
+.wpss-no-requests .wpss-no-results-icon {
+	color: var(--wpss-text-light);
+	margin-bottom: 1rem;
+}
+
+.wpss-no-requests .wpss-no-results-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.25rem;
+	color: var(--wpss-black);
+}
+
+.wpss-no-requests .wpss-no-results-message {
+	margin: 0 0 1.5rem;
+	color: var(--wpss-text);
+}
+
+/* ==========================================================================
+   Archive Sidebar (Filter)
+   ========================================================================== */
+
+.wpss-request-sidebar.wpss-archive-sidebar {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 320px;
+	height: 100%;
+	background: var(--wpss-white);
+	z-index: 99998;
+	transform: translateX(-100%);
+	transition: transform 0.3s ease;
+	overflow-y: auto;
+	box-shadow: var(--wpss-shadow-lg);
+}
+
+.wpss-request-sidebar.is-open {
+	transform: translateX(0);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (min-width: 1024px) {
+	.wpss-requests-archive .wpss-container {
+		grid-template-columns: 280px 1fr;
+	}
+
+	.wpss-request-sidebar.wpss-archive-sidebar {
+		position: sticky;
+		top: 2rem;
+		left: auto;
+		width: 100%;
+		height: auto;
+		max-height: calc(100vh - 4rem);
+		transform: none;
+		box-shadow: none;
+		border: 1px solid var(--wpss-border);
+		border-radius: var(--wpss-radius);
+		order: -1;
+	}
+
+	.wpss-request-layout {
+		grid-template-columns: 1fr 340px;
+	}
+
+	.wpss-request-sidebar {
+		position: sticky;
+		top: 2rem;
+		height: fit-content;
+	}
+}
+
+@media (max-width: 768px) {
+	.wpss-request-card-footer {
+		flex-direction: column;
+		gap: 1rem;
+		align-items: stretch;
+	}
+
+	.wpss-request-meta {
+		justify-content: space-between;
+	}
+
+	.wpss-request-actions {
+		justify-content: space-between;
+	}
+
+	.wpss-proposal-header {
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.wpss-proposal-meta {
+		text-align: left;
+	}
+
+	.wpss-proposal-actions {
+		flex-wrap: wrap;
+	}
+}

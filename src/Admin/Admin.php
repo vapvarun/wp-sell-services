@@ -15,6 +15,7 @@ use WPSellServices\Admin\Metaboxes\BuyerRequestMetabox;
 use WPSellServices\Admin\Metaboxes\OrderMetabox;
 use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
+use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 
@@ -47,12 +48,20 @@ class Admin {
 	private VendorsPage $vendors_page;
 
 	/**
+	 * Service moderation page instance.
+	 *
+	 * @var ServiceModerationPage
+	 */
+	private ServiceModerationPage $moderation_page;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->settings          = new Settings();
 		$this->manual_order_page = new ManualOrderPage();
 		$this->vendors_page      = new VendorsPage();
+		$this->moderation_page   = new ServiceModerationPage();
 		$this->init_metaboxes();
 		$this->init_pages();
 		$this->init_ajax_handlers();
@@ -65,9 +74,9 @@ class Admin {
 	 * @return void
 	 */
 	private function init_menu_highlights(): void {
-		add_filter( 'parent_file', [ $this, 'set_parent_menu' ] );
-		add_filter( 'submenu_file', [ $this, 'set_submenu_file' ] );
-		add_action( 'admin_menu', [ $this, 'reorder_admin_submenu' ], 999 );
+		add_filter( 'parent_file', array( $this, 'set_parent_menu' ) );
+		add_filter( 'submenu_file', array( $this, 'set_submenu_file' ) );
+		add_action( 'admin_menu', array( $this, 'reorder_admin_submenu' ), 999 );
 	}
 
 	/**
@@ -83,14 +92,15 @@ class Admin {
 		}
 
 		$menu_slug = 'wp-sell-services';
-		$ordered   = [];
-		$rest      = [];
+		$ordered   = array();
+		$rest      = array();
 
 		// Define the desired order of menu slugs.
-		$order = [
+		$order = array(
 			'wp-sell-services',                                              // Dashboard.
 			'edit.php?post_type=wpss_service',                               // All Services.
 			'post-new.php?post_type=wpss_service',                           // Add New Service.
+			'wpss-moderation',                                               // Service Moderation.
 			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
 			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
 			'edit.php?post_type=wpss_request',                               // All Requests.
@@ -99,10 +109,10 @@ class Admin {
 			'wpss-vendors',                                                  // Vendors.
 			'wpss-disputes',                                                 // Disputes.
 			'wpss-settings',                                                 // Settings.
-		];
+		);
 
 		// Build a map of slug => menu item.
-		$menu_map = [];
+		$menu_map = array();
 		foreach ( $submenu[ $menu_slug ] as $item ) {
 			$menu_map[ $item[2] ] = $item;
 		}
@@ -137,12 +147,12 @@ class Admin {
 		}
 
 		// Set parent menu for Service and Buyer Request CPTs.
-		if ( in_array( $current_screen->post_type, [ 'wpss_service', 'wpss_request' ], true ) ) {
+		if ( in_array( $current_screen->post_type, array( 'wpss_service', 'wpss_request' ), true ) ) {
 			return 'wp-sell-services';
 		}
 
 		// Set parent menu for Service taxonomy.
-		if ( $current_screen->taxonomy === 'wpss_service_category' || $current_screen->taxonomy === 'wpss_service_tag' ) {
+		if ( 'wpss_service_category' === $current_screen->taxonomy || 'wpss_service_tag' === $current_screen->taxonomy ) {
 			return 'wp-sell-services';
 		}
 
@@ -163,27 +173,27 @@ class Admin {
 		}
 
 		// Highlight correct submenu for Service CPT.
-		if ( $current_screen->post_type === 'wpss_service' ) {
-			if ( $current_screen->base === 'edit' ) {
+		if ( 'wpss_service' === $current_screen->post_type ) {
+			if ( 'edit' === $current_screen->base ) {
 				return 'edit.php?post_type=wpss_service';
 			}
-			if ( $current_screen->base === 'post' ) {
+			if ( 'post' === $current_screen->base ) {
 				return 'edit.php?post_type=wpss_service';
 			}
 		}
 
 		// Highlight correct submenu for Buyer Request CPT.
-		if ( $current_screen->post_type === 'wpss_request' ) {
+		if ( 'wpss_request' === $current_screen->post_type ) {
 			return 'edit.php?post_type=wpss_request';
 		}
 
 		// Highlight correct submenu for Service Category taxonomy.
-		if ( $current_screen->taxonomy === 'wpss_service_category' ) {
+		if ( 'wpss_service_category' === $current_screen->taxonomy ) {
 			return 'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service';
 		}
 
 		// Highlight correct submenu for Service Tag taxonomy.
-		if ( $current_screen->taxonomy === 'wpss_service_tag' ) {
+		if ( 'wpss_service_tag' === $current_screen->taxonomy ) {
 			return 'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service';
 		}
 
@@ -214,6 +224,7 @@ class Admin {
 	private function init_pages(): void {
 		$this->manual_order_page->init();
 		$this->vendors_page->init();
+		$this->moderation_page->init();
 	}
 
 	/**
@@ -222,7 +233,7 @@ class Admin {
 	 * @return void
 	 */
 	private function init_ajax_handlers(): void {
-		add_action( 'wp_ajax_wpss_get_service_packages', [ $this, 'ajax_get_service_packages' ] );
+		add_action( 'wp_ajax_wpss_get_service_packages', array( $this, 'ajax_get_service_packages' ) );
 	}
 
 	/**
@@ -234,30 +245,30 @@ class Admin {
 		check_ajax_referer( 'wpss_create_manual_order', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 
 		if ( ! $service_id ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid service ID.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid service ID.', 'wp-sell-services' ) ) );
 		}
 
 		$packages = wpss_get_service_packages( $service_id );
 
-		$formatted_packages = [];
+		$formatted_packages = array();
 		foreach ( $packages as $package ) {
-			$formatted_packages[] = [
+			$formatted_packages[] = array(
 				'id'              => $package['id'] ?? 0,
 				'name'            => $package['name'] ?? __( 'Standard', 'wp-sell-services' ),
 				'price'           => (float) ( $package['price'] ?? 0 ),
 				'formatted_price' => wpss_format_price( (float) ( $package['price'] ?? 0 ) ),
 				'delivery_days'   => (int) ( $package['delivery_days'] ?? 7 ),
 				'revisions'       => (int) ( $package['revisions'] ?? 0 ),
-			];
+			);
 		}
 
-		wp_send_json_success( [ 'packages' => $formatted_packages ] );
+		wp_send_json_success( array( 'packages' => $formatted_packages ) );
 	}
 
 	/**
@@ -271,7 +282,7 @@ class Admin {
 
 		// Load on plugin pages or CPT edit screens.
 		$load_assets = $this->is_plugin_page( $hook )
-			|| ( $post_type && in_array( $post_type, [ 'wpss_service', 'wpss_request' ], true ) );
+			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) );
 
 		if ( ! $load_assets ) {
 			return;
@@ -301,7 +312,7 @@ class Admin {
 
 		// Load on plugin pages or CPT edit screens.
 		$load_assets = $this->is_plugin_page( $hook )
-			|| ( $post_type && in_array( $post_type, [ 'wpss_service', 'wpss_request' ], true ) );
+			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) );
 
 		if ( ! $load_assets ) {
 			return;
@@ -434,6 +445,7 @@ class Admin {
 			'toplevel_page_wp-sell-services',
 			'sell-services_page_wpss-orders',
 			'sell-services_page_wpss-vendors',
+			'sell-services_page_wpss-moderation',
 			'sell-services_page_wpss-disputes',
 			'sell-services_page_wpss-settings',
 		);

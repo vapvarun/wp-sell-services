@@ -23,17 +23,17 @@ if ( ! $order ) {
 	return;
 }
 
-$user_id   = get_current_user_id();
-$is_vendor = (int) $order->vendor_id === $user_id;
+$user_id     = get_current_user_id();
+$is_vendor   = (int) $order->vendor_id === $user_id;
 $is_customer = (int) $order->customer_id === $user_id;
-$service   = get_post( $order->service_id );
-$vendor    = get_userdata( $order->vendor_id );
-$customer  = get_userdata( $order->customer_id );
+$service     = get_post( $order->service_id );
+$vendor      = get_userdata( $order->vendor_id );
+$customer    = get_userdata( $order->customer_id );
 
 // Get messages.
 global $wpdb;
 $messages_table = $wpdb->prefix . 'wpss_order_messages';
-$messages = $wpdb->get_results(
+$messages       = $wpdb->get_results(
 	$wpdb->prepare(
 		"SELECT * FROM {$messages_table} WHERE order_id = %d ORDER BY created_at ASC",
 		$order_id
@@ -42,7 +42,7 @@ $messages = $wpdb->get_results(
 
 // Get deliverables.
 $deliverables_table = $wpdb->prefix . 'wpss_order_deliverables';
-$deliverables = $wpdb->get_results(
+$deliverables       = $wpdb->get_results(
 	$wpdb->prepare(
 		"SELECT * FROM {$deliverables_table} WHERE order_id = %d ORDER BY created_at DESC",
 		$order_id
@@ -79,8 +79,8 @@ $deliverables = $wpdb->get_results(
 				<div class="wpss-service-card-mini">
 					<?php if ( $service && has_post_thumbnail( $service->ID ) ) : ?>
 						<img src="<?php echo esc_url( get_the_post_thumbnail_url( $service->ID, 'thumbnail' ) ); ?>"
-							 alt="<?php echo esc_attr( $service->post_title ); ?>"
-							 class="wpss-service-thumb">
+							alt="<?php echo esc_attr( $service->post_title ); ?>"
+							class="wpss-service-thumb">
 					<?php endif; ?>
 					<div class="wpss-service-details">
 						<h3><?php echo esc_html( $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ) ); ?></h3>
@@ -92,7 +92,7 @@ $deliverables = $wpdb->get_results(
 			</div>
 
 			<!-- Order Actions -->
-			<?php if ( in_array( $order->status, [ 'pending', 'accepted', 'in_progress', 'delivered' ], true ) ) : ?>
+			<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'delivered' ), true ) ) : ?>
 				<div class="wpss-order-section wpss-order-actions-section">
 					<h3><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></h3>
 
@@ -109,7 +109,7 @@ $deliverables = $wpdb->get_results(
 								</button>
 							<?php endif; ?>
 
-							<?php if ( in_array( $order->status, [ 'accepted', 'requirements_submitted' ], true ) ) : ?>
+							<?php if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) : ?>
 								<button type="button" class="wpss-btn wpss-btn-primary wpss-order-action"
 										data-action="start" data-order="<?php echo esc_attr( $order_id ); ?>">
 									<?php esc_html_e( 'Start Working', 'wp-sell-services' ); ?>
@@ -136,7 +136,7 @@ $deliverables = $wpdb->get_results(
 								</button>
 							<?php endif; ?>
 
-							<?php if ( in_array( $order->status, [ 'pending', 'accepted' ], true ) ) : ?>
+							<?php if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) : ?>
 								<button type="button" class="wpss-btn wpss-btn-outline wpss-order-action"
 										data-action="cancel" data-order="<?php echo esc_attr( $order_id ); ?>">
 									<?php esc_html_e( 'Cancel Order', 'wp-sell-services' ); ?>
@@ -144,7 +144,7 @@ $deliverables = $wpdb->get_results(
 							<?php endif; ?>
 						<?php endif; ?>
 
-						<?php if ( in_array( $order->status, [ 'in_progress', 'delivered' ], true ) ) : ?>
+						<?php if ( in_array( $order->status, array( 'in_progress', 'delivered' ), true ) ) : ?>
 							<button type="button" class="wpss-btn wpss-btn-outline wpss-btn-danger wpss-dispute-btn"
 									data-order="<?php echo esc_attr( $order_id ); ?>">
 								<?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?>
@@ -184,9 +184,9 @@ $deliverables = $wpdb->get_results(
 										$file_type = get_post_mime_type( $file_id );
 										?>
 										<a href="<?php echo esc_url( $file_url ); ?>"
-										   class="wpss-file-download"
-										   target="_blank"
-										   download>
+											class="wpss-file-download"
+											target="_blank"
+											download>
 											<span class="wpss-file-icon"></span>
 											<span class="wpss-file-name"><?php echo esc_html( $file_name ); ?></span>
 										</a>
@@ -211,9 +211,9 @@ $deliverables = $wpdb->get_results(
 							?>
 							<div class="wpss-message <?php echo $is_own_message ? 'wpss-message-own' : ''; ?> <?php echo $message->is_system ? 'wpss-message-system' : ''; ?>">
 								<?php if ( ! $message->is_system ) : ?>
-									<img src="<?php echo esc_url( get_avatar_url( $message->user_id, [ 'size' => 40 ] ) ); ?>"
-										 alt="<?php echo esc_attr( $message_user ? $message_user->display_name : '' ); ?>"
-										 class="wpss-message-avatar">
+									<img src="<?php echo esc_url( get_avatar_url( $message->user_id, array( 'size' => 40 ) ) ); ?>"
+										alt="<?php echo esc_attr( $message_user ? $message_user->display_name : '' ); ?>"
+										class="wpss-message-avatar">
 								<?php endif; ?>
 								<div class="wpss-message-content">
 									<?php if ( ! $message->is_system ) : ?>
@@ -235,13 +235,13 @@ $deliverables = $wpdb->get_results(
 					<?php endif; ?>
 				</div>
 
-				<?php if ( ! in_array( $order->status, [ 'completed', 'cancelled', 'refunded' ], true ) ) : ?>
+				<?php if ( ! in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ) : ?>
 					<form class="wpss-message-form" id="wpss-message-form" data-order="<?php echo esc_attr( $order_id ); ?>">
 						<?php wp_nonce_field( 'wpss_send_message', 'wpss_message_nonce' ); ?>
 						<textarea name="message"
-								  placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>"
-								  rows="3"
-								  required></textarea>
+									placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>"
+									rows="3"
+									required></textarea>
 						<div class="wpss-message-form-footer">
 							<button type="button" class="wpss-btn wpss-btn-icon wpss-attach-btn" title="<?php esc_attr_e( 'Attach File', 'wp-sell-services' ); ?>">
 								<span class="wpss-icon-attach"></span>
@@ -290,9 +290,9 @@ $deliverables = $wpdb->get_results(
 				<?php $other_party = $is_vendor ? $customer : $vendor; ?>
 				<?php if ( $other_party ) : ?>
 					<div class="wpss-user-card">
-						<img src="<?php echo esc_url( get_avatar_url( $other_party->ID, [ 'size' => 60 ] ) ); ?>"
-							 alt="<?php echo esc_attr( $other_party->display_name ); ?>"
-							 class="wpss-user-avatar">
+						<img src="<?php echo esc_url( get_avatar_url( $other_party->ID, array( 'size' => 60 ) ) ); ?>"
+							alt="<?php echo esc_attr( $other_party->display_name ); ?>"
+							class="wpss-user-avatar">
 						<div class="wpss-user-info">
 							<strong><?php echo esc_html( $other_party->display_name ); ?></strong>
 							<?php if ( ! $is_vendor ) : ?>
@@ -373,6 +373,107 @@ $deliverables = $wpdb->get_results(
 		</aside>
 	</div>
 </div>
+
+<?php
+// Check if review modal should be available.
+$can_review       = 'completed' === $order->status && $is_customer && empty( $review_exists );
+$can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progress', 'delivered' ), true );
+?>
+
+<?php if ( $can_review ) : ?>
+<!-- Review Modal -->
+<div class="wpss-modal" id="wpss-review-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+	<div class="wpss-modal-backdrop"></div>
+	<div class="wpss-modal-dialog">
+		<div class="wpss-modal-header">
+			<h3><?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?></h3>
+			<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
+		</div>
+		<form class="wpss-review-form" id="wpss-review-form">
+			<?php wp_nonce_field( 'wpss_submit_review', 'wpss_review_nonce' ); ?>
+			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+
+			<div class="wpss-modal-body">
+				<div class="wpss-form-group wpss-rating-input">
+					<label><?php esc_html_e( 'Overall Rating', 'wp-sell-services' ); ?> <span class="required">*</span></label>
+					<div class="wpss-star-rating" role="group" aria-label="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
+						<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
+							<input type="radio" name="rating" id="star-<?php echo esc_attr( $i ); ?>" value="<?php echo esc_attr( $i ); ?>" required>
+							<label for="star-<?php echo esc_attr( $i ); ?>" title="<?php echo esc_attr( $i ); ?> <?php esc_attr_e( 'stars', 'wp-sell-services' ); ?>">★</label>
+						<?php endfor; ?>
+					</div>
+				</div>
+
+				<div class="wpss-form-group">
+					<label for="review-comment"><?php esc_html_e( 'Your Review', 'wp-sell-services' ); ?> <span class="required">*</span></label>
+					<textarea name="comment" id="review-comment" rows="4" required
+								placeholder="<?php esc_attr_e( 'Share your experience with this service...', 'wp-sell-services' ); ?>"></textarea>
+				</div>
+			</div>
+
+			<div class="wpss-modal-footer">
+				<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-close-btn">
+					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
+				</button>
+				<button type="submit" class="wpss-btn wpss-btn-primary">
+					<?php esc_html_e( 'Submit Review', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+<?php endif; ?>
+
+<?php if ( $can_open_dispute ) : ?>
+<!-- Dispute Modal -->
+<div class="wpss-modal" id="wpss-dispute-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+	<div class="wpss-modal-backdrop"></div>
+	<div class="wpss-modal-dialog">
+		<div class="wpss-modal-header">
+			<h3><?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?></h3>
+			<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
+		</div>
+		<form class="wpss-dispute-form" id="wpss-dispute-form">
+			<?php wp_nonce_field( 'wpss_open_dispute', 'wpss_dispute_nonce' ); ?>
+			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+
+			<div class="wpss-modal-body">
+				<div class="wpss-notice wpss-notice-warning">
+					<p><?php esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first.', 'wp-sell-services' ); ?></p>
+				</div>
+
+				<div class="wpss-form-group">
+					<label for="dispute-reason"><?php esc_html_e( 'Reason for Dispute', 'wp-sell-services' ); ?> <span class="required">*</span></label>
+					<select name="reason" id="dispute-reason" required>
+						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
+						<option value="not_delivered"><?php esc_html_e( 'Work not delivered', 'wp-sell-services' ); ?></option>
+						<option value="poor_quality"><?php esc_html_e( 'Poor quality work', 'wp-sell-services' ); ?></option>
+						<option value="not_as_described"><?php esc_html_e( 'Not as described', 'wp-sell-services' ); ?></option>
+						<option value="communication"><?php esc_html_e( 'Communication issues', 'wp-sell-services' ); ?></option>
+						<option value="deadline"><?php esc_html_e( 'Missed deadline', 'wp-sell-services' ); ?></option>
+						<option value="other"><?php esc_html_e( 'Other', 'wp-sell-services' ); ?></option>
+					</select>
+				</div>
+
+				<div class="wpss-form-group">
+					<label for="dispute-description"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?> <span class="required">*</span></label>
+					<textarea name="description" id="dispute-description" rows="4" required
+								placeholder="<?php esc_attr_e( 'Please describe the issue in detail...', 'wp-sell-services' ); ?>"></textarea>
+				</div>
+			</div>
+
+			<div class="wpss-modal-footer">
+				<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-close-btn">
+					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
+				</button>
+				<button type="submit" class="wpss-btn wpss-btn-danger">
+					<?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+<?php endif; ?>
 
 <?php
 /**

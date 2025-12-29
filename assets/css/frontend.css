@@ -1880,3 +1880,169 @@
 	color: #856404;
 	border: 1px solid #ffeeba;
 }
+
+/* ==========================================================================
+   Modals (Review & Dispute)
+   ========================================================================== */
+
+.wpss-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 99999;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+}
+
+.wpss-modal.wpss-modal-open {
+	display: flex;
+}
+
+.wpss-modal-backdrop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgb(0 0 0 / 50%);
+}
+
+.wpss-modal-dialog {
+	position: relative;
+	background: var(--wpss-white);
+	border-radius: var(--wpss-radius-lg);
+	width: 100%;
+	max-width: 480px;
+	max-height: 90vh;
+	overflow-y: auto;
+	box-shadow: var(--wpss-shadow-lg);
+}
+
+.wpss-modal-header {
+	padding: 1.5rem 1.5rem 1rem;
+	border-bottom: 1px solid var(--wpss-border);
+	position: relative;
+}
+
+.wpss-modal-header h3 {
+	margin: 0;
+	font-size: 1.25rem;
+}
+
+.wpss-modal-close {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	cursor: pointer;
+	color: var(--wpss-text-light);
+	padding: 0;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+
+.wpss-modal-close:hover {
+	color: var(--wpss-text);
+}
+
+.wpss-modal-body {
+	padding: 1.5rem;
+}
+
+.wpss-modal-footer {
+	padding: 1rem 1.5rem 1.5rem;
+	border-top: 1px solid var(--wpss-border);
+	display: flex;
+	gap: 0.75rem;
+	justify-content: flex-end;
+}
+
+body.wpss-modal-active {
+	overflow: hidden;
+}
+
+/* ==========================================================================
+   Star Rating Input
+   ========================================================================== */
+
+.wpss-star-rating {
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: flex-end;
+	gap: 0.25rem;
+}
+
+.wpss-star-rating input {
+	display: none;
+}
+
+.wpss-star-rating label {
+	font-size: 2rem;
+	color: var(--wpss-border);
+	cursor: pointer;
+	transition: color 0.15s;
+}
+
+.wpss-star-rating label:hover,
+.wpss-star-rating label:hover ~ label,
+.wpss-star-rating input:checked ~ label {
+	color: var(--wpss-star);
+}
+
+/* ==========================================================================
+   Form Groups
+   ========================================================================== */
+
+.wpss-form-group {
+	margin-bottom: 1.25rem;
+}
+
+.wpss-form-group:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-form-group label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 500;
+	color: var(--wpss-secondary);
+}
+
+.wpss-form-group label .required {
+	color: var(--wpss-danger);
+}
+
+.wpss-form-group textarea,
+.wpss-form-group select,
+.wpss-form-group input[type="text"],
+.wpss-form-group input[type="email"],
+.wpss-form-group input[type="number"] {
+	width: 100%;
+	padding: 0.75rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	font-size: 0.938rem;
+	transition: border-color var(--wpss-transition);
+}
+
+.wpss-form-group textarea:focus,
+.wpss-form-group select:focus,
+.wpss-form-group input:focus {
+	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+.wpss-form-group textarea {
+	resize: vertical;
+	min-height: 100px;
+}

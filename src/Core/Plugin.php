@@ -13,6 +13,8 @@ namespace WPSellServices\Core;
 use WPSellServices\Admin\Admin;
 use WPSellServices\Frontend\Frontend;
 use WPSellServices\Frontend\SingleServiceView;
+use WPSellServices\Frontend\ServiceArchiveView;
+use WPSellServices\Frontend\BuyerRequestArchiveView;
 use WPSellServices\Integrations\IntegrationManager;
 use WPSellServices\PostTypes\ServicePostType;
 use WPSellServices\PostTypes\BuyerRequestPostType;
@@ -94,6 +96,20 @@ final class Plugin {
 	 * @var SingleServiceView|null
 	 */
 	private ?SingleServiceView $single_service_view = null;
+
+	/**
+	 * Service archive view instance.
+	 *
+	 * @var ServiceArchiveView|null
+	 */
+	private ?ServiceArchiveView $service_archive_view = null;
+
+	/**
+	 * Buyer request archive view instance.
+	 *
+	 * @var BuyerRequestArchiveView|null
+	 */
+	private ?BuyerRequestArchiveView $buyer_request_archive_view = null;
 
 	/**
 	 * Get plugin instance (Singleton).
@@ -275,6 +291,14 @@ final class Plugin {
 		// Initialize single service view.
 		$this->single_service_view = new SingleServiceView();
 		$this->single_service_view->init();
+
+		// Initialize service archive view.
+		$this->service_archive_view = new ServiceArchiveView();
+		$this->service_archive_view->init();
+
+		// Initialize buyer request archive view.
+		$this->buyer_request_archive_view = new BuyerRequestArchiveView();
+		$this->buyer_request_archive_view->init();
 	}
 
 	/**

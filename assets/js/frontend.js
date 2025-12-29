@@ -21,6 +21,9 @@
 		WPSS.initMessages();
 		WPSS.initOrderActions();
 		WPSS.initReviews();
+		WPSS.initModals();
+		WPSS.initFilterSidebar();
+		WPSS.initProposals();
 	};
 
 	/**
@@ -470,40 +473,130 @@
 	};
 
 	/**
+	 * Show modal utility.
+	 */
+	WPSS.showModal = function(modalId) {
+		const $modal = $('#' + modalId);
+		if ($modal.length) {
+			$modal.addClass('wpss-modal-open');
+			$('body').addClass('wpss-modal-active');
+		}
+	};
+
+	/**
+	 * Hide modal utility.
+	 */
+	WPSS.hideModal = function(modalId) {
+		const $modal = modalId ? $('#' + modalId) : $('.wpss-modal.wpss-modal-open');
+		$modal.removeClass('wpss-modal-open');
+		$('body').removeClass('wpss-modal-active');
+	};
+
+	/**
+	 * Initialize modal handlers.
+	 */
+	WPSS.initModals = function() {
+		// Close modal on backdrop click.
+		$(document).on('click', '.wpss-modal-backdrop', function() {
+			WPSS.hideModal();
+		});
+
+		// Close modal on close button click.
+		$(document).on('click', '.wpss-modal-close, .wpss-modal-close-btn', function() {
+			WPSS.hideModal();
+		});
+
+		// Close modal on escape key.
+		$(document).on('keydown', function(e) {
+			if (e.key === 'Escape') {
+				WPSS.hideModal();
+			}
+		});
+
+		// Review form submission.
+		$(document).on('submit', '#wpss-review-form', function(e) {
+			e.preventDefault();
+			WPSS.submitReview($(this));
+		});
+
+		// Dispute form submission.
+		$(document).on('submit', '#wpss-dispute-form', function(e) {
+			e.preventDefault();
+			WPSS.submitDispute($(this));
+		});
+
+		// Dispute button click.
+		$(document).on('click', '.wpss-dispute-btn', function(e) {
+			e.preventDefault();
+			WPSS.showModal('wpss-dispute-modal');
+		});
+	};
+
+	/**
 	 * Show review modal.
 	 */
 	WPSS.showReviewModal = function(orderId) {
-		// Simple implementation.
-		const rating = prompt('Rating (1-5 stars):');
+		WPSS.showModal('wpss-review-modal');
+	};
 
-		if (!rating || rating < 1 || rating > 5) {
-			alert('Please enter a rating between 1 and 5.');
-			return;
-		}
+	/**
+	 * Submit review via AJAX.
+	 */
+	WPSS.submitReview = function($form) {
+		const $btn = $form.find('button[type="submit"]');
+		const btnText = $btn.text();
 
-		const review = prompt('Write your review:');
-
-		if (!review || !review.trim()) {
-			return;
-		}
+		$btn.prop('disabled', true).text('Submitting...');
 
 		$.ajax({
-			url: wpssData.apiUrl + 'orders/' + orderId + '/review',
+			url: wpss.ajaxUrl,
 			type: 'POST',
-			beforeSend: function(xhr) {
-				xhr.setRequestHeader('X-WP-Nonce', wpssData.nonce);
+			data: $form.serialize() + '&action=wpss_submit_review',
+			success: function(response) {
+				if (response.success) {
+					WPSS.hideModal();
+					alert(response.data.message || 'Review submitted successfully!');
+					location.reload();
+				} else {
+					alert(response.data.message || 'Failed to submit review.');
+				}
 			},
-			data: {
-				rating: parseInt(rating),
-				review: review
+			error: function() {
+				alert('An error occurred. Please try again.');
 			},
-			success: function() {
-				alert('Thank you for your review!');
-				location.reload();
+			complete: function() {
+				$btn.prop('disabled', false).text(btnText);
+			}
+		});
+	};
+
+	/**
+	 * Submit dispute via AJAX.
+	 */
+	WPSS.submitDispute = function($form) {
+		const $btn = $form.find('button[type="submit"]');
+		const btnText = $btn.text();
+
+		$btn.prop('disabled', true).text('Submitting...');
+
+		$.ajax({
+			url: wpss.ajaxUrl,
+			type: 'POST',
+			data: $form.serialize() + '&action=wpss_open_dispute',
+			success: function(response) {
+				if (response.success) {
+					WPSS.hideModal();
+					alert(response.data.message || 'Dispute opened successfully.');
+					location.reload();
+				} else {
+					alert(response.data.message || 'Failed to open dispute.');
+				}
 			},
-			error: function(xhr) {
-				const response = xhr.responseJSON || {};
-				alert(response.message || 'Failed to submit review.');
+			error: function() {
+				alert('An error occurred. Please try again.');
+			},
+			complete: function() {
+				$btn.prop('disabled', false).text(btnText);
 			}
 		});
 	};
@@ -530,6 +623,188 @@
 			},
 			error: function() {
 				alert('An error occurred. Please try again.');
+			}
+		});
+	};
+
+	/**
+	 * Initialize filter sidebar toggle.
+	 */
+	WPSS.initFilterSidebar = function() {
+		const $toggle = $('.wpss-filter-toggle');
+		const $sidebar = $('#wpss-sidebar');
+		const $close = $('.wpss-sidebar-close');
+
+		if (!$toggle.length || !$sidebar.length) {
+			return;
+		}
+
+		$toggle.on('click', function() {
+			$sidebar.addClass('is-open');
+			$('body').addClass('wpss-sidebar-open');
+		});
+
+		$close.on('click', function() {
+			$sidebar.removeClass('is-open');
+			$('body').removeClass('wpss-sidebar-open');
+		});
+
+		// Close on backdrop click.
+		$(document).on('click', function(e) {
+			if ($sidebar.hasClass('is-open') && !$(e.target).closest('#wpss-sidebar, .wpss-filter-toggle').length) {
+				$sidebar.removeClass('is-open');
+				$('body').removeClass('wpss-sidebar-open');
+			}
+		});
+	};
+
+	/**
+	 * Initialize proposal handlers.
+	 */
+	WPSS.initProposals = function() {
+		// Submit proposal button - open modal.
+		$(document).on('click', '.wpss-submit-proposal-btn', function(e) {
+			e.preventDefault();
+			WPSS.showModal('wpss-proposal-modal');
+		});
+
+		// Proposal form submission.
+		$(document).on('submit', '#wpss-proposal-form', function(e) {
+			e.preventDefault();
+			WPSS.submitProposal($(this));
+		});
+
+		// Accept proposal.
+		$(document).on('click', '.wpss-accept-proposal', function(e) {
+			e.preventDefault();
+
+			const $btn = $(this);
+			const proposalId = $btn.data('proposal');
+
+			if (!confirm(wpssData.i18n?.confirmAcceptProposal || 'Accept this proposal and create an order?')) {
+				return;
+			}
+
+			WPSS.handleProposalAction($btn, proposalId, 'accept');
+		});
+
+		// Reject proposal.
+		$(document).on('click', '.wpss-reject-proposal', function(e) {
+			e.preventDefault();
+
+			const $btn = $(this);
+			const proposalId = $btn.data('proposal');
+			const reason = prompt(wpssData.i18n?.rejectProposalReason || 'Please provide a reason for rejection (optional):');
+
+			if (reason === null) {
+				return; // Cancelled.
+			}
+
+			WPSS.handleProposalAction($btn, proposalId, 'reject', reason);
+		});
+
+		// Withdraw proposal (vendor).
+		$(document).on('click', '.wpss-withdraw-proposal', function(e) {
+			e.preventDefault();
+
+			const $btn = $(this);
+			const proposalId = $btn.data('proposal');
+
+			if (!confirm(wpssData.i18n?.confirmWithdrawProposal || 'Withdraw this proposal?')) {
+				return;
+			}
+
+			WPSS.handleProposalAction($btn, proposalId, 'withdraw');
+		});
+	};
+
+	/**
+	 * Submit proposal via AJAX.
+	 */
+	WPSS.submitProposal = function($form) {
+		const $btn = $form.find('button[type="submit"]');
+		const btnText = $btn.text();
+
+		// Validate fields.
+		const description = $form.find('[name="description"]').val();
+		const price = parseFloat($form.find('[name="price"]').val()) || 0;
+		const deliveryDays = parseInt($form.find('[name="delivery_days"]').val()) || 0;
+
+		if (!description || !description.trim()) {
+			alert(wpssData.i18n?.proposalDescriptionRequired || 'Please provide a proposal description.');
+			return;
+		}
+
+		if (price <= 0) {
+			alert(wpssData.i18n?.proposalPriceRequired || 'Please enter a valid price.');
+			return;
+		}
+
+		if (deliveryDays <= 0) {
+			alert(wpssData.i18n?.proposalDeliveryRequired || 'Please enter delivery time in days.');
+			return;
+		}
+
+		$btn.prop('disabled', true).text(wpssData.i18n?.submitting || 'Submitting...');
+
+		$.ajax({
+			url: wpssData.ajaxUrl,
+			type: 'POST',
+			data: $form.serialize() + '&action=wpss_submit_proposal',
+			success: function(response) {
+				if (response.success) {
+					WPSS.hideModal('wpss-proposal-modal');
+					alert(response.data.message || wpssData.i18n?.proposalSubmitted || 'Proposal submitted successfully!');
+					location.reload();
+				} else {
+					alert(response.data.message || wpssData.i18n?.proposalFailed || 'Failed to submit proposal.');
+				}
+			},
+			error: function() {
+				alert(wpssData.i18n?.ajaxError || 'An error occurred. Please try again.');
+			},
+			complete: function() {
+				$btn.prop('disabled', false).text(btnText);
+			}
+		});
+	};
+
+	/**
+	 * Handle proposal action (accept/reject/withdraw).
+	 */
+	WPSS.handleProposalAction = function($btn, proposalId, action, reason) {
+		const btnText = $btn.text();
+		$btn.prop('disabled', true).text(wpssData.i18n?.processing || 'Processing...');
+
+		const data = {
+			action: 'wpss_' + action + '_proposal',
+			proposal_id: proposalId,
+			nonce: wpssData.nonce
+		};
+
+		if (reason) {
+			data.reason = reason;
+		}
+
+		$.ajax({
+			url: wpssData.ajaxUrl,
+			type: 'POST',
+			data: data,
+			success: function(response) {
+				if (response.success) {
+					if (response.data.redirect) {
+						window.location.href = response.data.redirect;
+					} else {
+						location.reload();
+					}
+				} else {
+					alert(response.data.message || 'Action failed.');
+					$btn.prop('disabled', false).text(btnText);
+				}
+			},
+			error: function() {
+				alert(wpssData.i18n?.ajaxError || 'An error occurred. Please try again.');
+				$btn.prop('disabled', false).text(btnText);
 			}
 		});
 	};
