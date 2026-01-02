@@ -12,7 +12,7 @@
 	 * Initialize admin functionality
 	 */
 	function init() {
-		initPackageTabs();
+		initPackagesRepeater();
 		initFAQRepeater();
 		initRequirementsRepeater();
 		initAddonsRepeater();
@@ -22,27 +22,90 @@
 	}
 
 	/**
-	 * Package tabs functionality
+	 * Packages repeater functionality
 	 */
-	function initPackageTabs() {
-		var $nav = $('.wpss-packages-nav');
-		var $content = $('.wpss-packages-content');
+	function initPackagesRepeater() {
+		var $container = $('#wpss-packages-list');
+		var $addButton = $('#wpss-add-package');
+		var maxPackages = 3;
 
-		if (!$nav.length || !$content.length) {
+		if (!$container.length || !$addButton.length) {
 			return;
 		}
 
-		$nav.on('click', '.wpss-package-nav-btn', function(e) {
+		// Add Package
+		$addButton.on('click', function(e) {
 			e.preventDefault();
-			var tier = $(this).data('tier');
+			var count = $container.find('.wpss-package-item').length;
+			if (count >= maxPackages) {
+				return;
+			}
 
-			// Update nav buttons
-			$nav.find('.wpss-package-nav-btn').removeClass('active');
-			$(this).addClass('active');
+			var template = wp.template('wpss-package-item');
+			$container.append(template({ index: count }));
 
-			// Update panels
-			$content.find('.wpss-package-panel').removeClass('active');
-			$content.find('.wpss-package-panel[data-tier="' + tier + '"]').addClass('active');
+			// Hide add button if max reached
+			if (count + 1 >= maxPackages) {
+				$addButton.hide();
+			}
+		});
+
+		// Remove Package (not first one)
+		$(document).on('click', '.wpss-remove-package', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			$(this).closest('.wpss-package-item').remove();
+			reindexPackages();
+			$addButton.show();
+		});
+
+		// Toggle collapse/expand
+		$(document).on('click', '.wpss-package-toggle', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			$(this).closest('.wpss-package-item').toggleClass('collapsed');
+		});
+
+		// Click header to toggle (but not on buttons)
+		$(document).on('click', '.wpss-package-header', function(e) {
+			if (!$(e.target).closest('button').length) {
+				$(this).closest('.wpss-package-item').toggleClass('collapsed');
+			}
+		});
+
+		// Update title in header when name changes
+		$(document).on('input', '.wpss-package-name-input', function() {
+			var $item = $(this).closest('.wpss-package-item');
+			var name = $(this).val() || 'New Package';
+			$item.find('.wpss-package-title').text(name);
+		});
+
+		// Update price in header when price changes
+		$(document).on('input', '.wpss-package-price-input', function() {
+			var $item = $(this).closest('.wpss-package-item');
+			var price = parseFloat($(this).val()) || 0;
+			var formatted = price > 0 ? '$' + price.toFixed(2) : '';
+			$item.find('.wpss-package-price-display').text(formatted);
+		});
+	}
+
+	/**
+	 * Reindex packages after removal
+	 */
+	function reindexPackages() {
+		$('#wpss-packages-list .wpss-package-item').each(function(index) {
+			$(this).attr('data-index', index);
+			$(this).find('input, select, textarea').each(function() {
+				var name = $(this).attr('name');
+				if (name) {
+					$(this).attr('name', name.replace(/wpss_packages\[\d+\]/, 'wpss_packages[' + index + ']'));
+				}
+			});
+			// First package cannot be removed
+			var $removeBtn = $(this).find('.wpss-remove-package');
+			if (index === 0) {
+				$removeBtn.remove();
+			}
 		});
 	}
 
@@ -277,12 +340,20 @@
 	}
 
 	/**
-	 * Initialize sortable for FAQs, requirements, and gallery
+	 * Initialize sortable for packages, FAQs, requirements, addons, and gallery
 	 */
 	function initSortable() {
 		if (!$.fn.sortable) {
 			return;
 		}
+
+		$('#wpss-packages-list').sortable({
+			handle: '.wpss-sortable-handle',
+			placeholder: 'wpss-sortable-placeholder',
+			update: function() {
+				reindexPackages();
+			}
+		});
 
 		$('#wpss-faqs-list').sortable({
 			handle: '.wpss-sortable-handle',

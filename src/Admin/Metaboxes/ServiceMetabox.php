@@ -200,135 +200,231 @@ class ServiceMetabox {
 	 */
 	public function render_packages_metabox( \WP_Post $post ): void {
 		$packages = get_post_meta( $post->ID, '_wpss_packages', true );
-		$packages = ! empty( $packages ) ? $packages : array();
 
-		// Ensure at least Basic package exists.
-		$default_packages = array(
-			'basic'    => array(
-				'name'          => __( 'Basic', 'wp-sell-services' ),
-				'description'   => '',
-				'price'         => '',
-				'delivery_days' => '',
-				'revisions'     => '',
-				'features'      => array(),
-			),
-			'standard' => array(
-				'name'          => __( 'Standard', 'wp-sell-services' ),
-				'description'   => '',
-				'price'         => '',
-				'delivery_days' => '',
-				'revisions'     => '',
-				'features'      => array(),
-			),
-			'premium'  => array(
-				'name'          => __( 'Premium', 'wp-sell-services' ),
-				'description'   => '',
-				'price'         => '',
-				'delivery_days' => '',
-				'revisions'     => '',
-				'features'      => array(),
-			),
-		);
+		// Migrate old keyed format to new indexed format.
+		if ( ! empty( $packages ) && ! isset( $packages[0] ) ) {
+			$packages = array_values( $packages );
+		}
 
-		$packages   = wp_parse_args( $packages, $default_packages );
-		$tier_icons = array(
-			'basic'    => 'dashicons-star-empty',
-			'standard' => 'dashicons-star-half',
-			'premium'  => 'dashicons-star-filled',
-		);
+		// Default: 1 package.
+		if ( empty( $packages ) || ! is_array( $packages ) ) {
+			$packages = array(
+				array(
+					'name'          => __( 'Standard', 'wp-sell-services' ),
+					'description'   => '',
+					'price'         => '',
+					'delivery_days' => '',
+					'revisions'     => '',
+					'features'      => array(),
+				),
+			);
+		}
+
+		$package_count = count( $packages );
 		?>
 		<div class="wpss-packages-wrapper">
-			<p class="description"><?php esc_html_e( 'Define pricing tiers for your service. At minimum, Basic package is required.', 'wp-sell-services' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Define your service package. Add more packages for tiered pricing (up to 3).', 'wp-sell-services' ); ?></p>
 
-			<div class="wpss-packages-nav">
-				<?php $first = true; ?>
-				<?php foreach ( $packages as $tier => $package ) : ?>
-					<button type="button" class="wpss-package-nav-btn <?php echo $first ? 'active' : ''; ?>" data-tier="<?php echo esc_attr( $tier ); ?>">
-						<span class="dashicons <?php echo esc_attr( $tier_icons[ $tier ] ?? 'dashicons-star-empty' ); ?>"></span>
-						<?php echo esc_html( ucfirst( $tier ) ); ?>
-					</button>
-					<?php $first = false; ?>
+			<div id="wpss-packages-list">
+				<?php foreach ( $packages as $index => $package ) : ?>
+					<?php $this->render_package_item( (int) $index, $package ); ?>
 				<?php endforeach; ?>
 			</div>
 
-			<div class="wpss-packages-content">
-				<?php $first = true; ?>
-				<?php foreach ( $packages as $tier => $package ) : ?>
-					<div class="wpss-package-panel <?php echo $first ? 'active' : ''; ?>" data-tier="<?php echo esc_attr( $tier ); ?>">
-						<div class="wpss-package-fields">
-							<div class="wpss-field-row">
-								<div class="wpss-field-group wpss-field-half">
-									<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
-									<input type="text" name="wpss_packages[<?php echo esc_attr( $tier ); ?>][name]"
-											value="<?php echo esc_attr( $package['name'] ?? '' ); ?>" class="widefat"
-											placeholder="<?php echo esc_attr( ucfirst( $tier ) ); ?>">
-								</div>
-								<div class="wpss-field-group wpss-field-quarter">
-									<label>
-										<span class="dashicons dashicons-money-alt"></span>
-										<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
-									</label>
-									<div class="wpss-input-with-prefix">
-										<span class="wpss-input-prefix">$</span>
-										<input type="number" name="wpss_packages[<?php echo esc_attr( $tier ); ?>][price]"
-												value="<?php echo esc_attr( $package['price'] ?? '' ); ?>"
-												min="0" step="0.01" placeholder="0.00">
-									</div>
-								</div>
-							</div>
+			<button type="button" class="button button-secondary" id="wpss-add-package"
+					<?php echo $package_count >= 3 ? 'style="display:none;"' : ''; ?>>
+				<span class="dashicons dashicons-plus-alt2"></span>
+				<?php esc_html_e( 'Add Package', 'wp-sell-services' ); ?>
+			</button>
+		</div>
 
-							<div class="wpss-field-row">
-								<div class="wpss-field-group wpss-field-full">
-									<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
-									<textarea name="wpss_packages[<?php echo esc_attr( $tier ); ?>][description]"
-												rows="2" class="widefat"
-												placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $package['description'] ?? '' ); ?></textarea>
-								</div>
-							</div>
-
-							<div class="wpss-field-row">
-								<div class="wpss-field-group wpss-field-third">
-									<label>
-										<span class="dashicons dashicons-clock"></span>
-										<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
-									</label>
-									<div class="wpss-input-with-suffix">
-										<input type="number" name="wpss_packages[<?php echo esc_attr( $tier ); ?>][delivery_days]"
-												value="<?php echo esc_attr( $package['delivery_days'] ?? '' ); ?>"
-												min="1" max="365" placeholder="7">
-										<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
-									</div>
-								</div>
-								<div class="wpss-field-group wpss-field-third">
-									<label>
-										<span class="dashicons dashicons-update"></span>
-										<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
-									</label>
-									<div class="wpss-input-with-suffix">
-										<input type="number" name="wpss_packages[<?php echo esc_attr( $tier ); ?>][revisions]"
-												value="<?php echo esc_attr( $package['revisions'] ?? '' ); ?>"
-												min="0" max="20" placeholder="2">
-										<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
-									</div>
-								</div>
-							</div>
-
-							<div class="wpss-field-row">
-								<div class="wpss-field-group wpss-field-full">
-									<label>
-										<span class="dashicons dashicons-yes-alt"></span>
-										<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
-									</label>
-									<textarea name="wpss_packages[<?php echo esc_attr( $tier ); ?>][features]"
-												rows="4" class="widefat"
-												placeholder="<?php esc_attr_e( "Feature 1\nFeature 2\nFeature 3", 'wp-sell-services' ); ?>"><?php echo esc_textarea( implode( "\n", (array) ( $package['features'] ?? array() ) ) ); ?></textarea>
-									<p class="description"><?php esc_html_e( 'Enter one feature per line', 'wp-sell-services' ); ?></p>
-								</div>
+		<script type="text/html" id="tmpl-wpss-package-item">
+			<div class="wpss-package-item collapsed" data-index="{{data.index}}">
+				<div class="wpss-package-header">
+					<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+					<span class="wpss-package-title"><?php esc_html_e( 'New Package', 'wp-sell-services' ); ?></span>
+					<span class="wpss-package-price-display"></span>
+					<div class="wpss-package-actions">
+						<button type="button" class="wpss-package-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
+							<span class="dashicons dashicons-arrow-down-alt2"></span>
+						</button>
+						<button type="button" class="wpss-remove-package" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
+							<span class="dashicons dashicons-trash"></span>
+						</button>
+					</div>
+				</div>
+				<div class="wpss-package-body">
+					<div class="wpss-package-row">
+						<div class="wpss-package-field wpss-package-field-wide">
+							<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
+							<input type="text" name="wpss_packages[{{data.index}}][name]"
+									class="widefat wpss-package-name-input"
+									placeholder="<?php esc_attr_e( 'e.g., Standard, Premium, Enterprise', 'wp-sell-services' ); ?>">
+						</div>
+						<div class="wpss-package-field">
+							<label>
+								<span class="dashicons dashicons-money-alt"></span>
+								<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
+							</label>
+							<div class="wpss-input-with-prefix">
+								<span class="wpss-input-prefix">$</span>
+								<input type="number" name="wpss_packages[{{data.index}}][price]"
+										class="wpss-package-price-input"
+										min="0" step="0.01" placeholder="0.00">
 							</div>
 						</div>
 					</div>
-					<?php $first = false; ?>
-				<?php endforeach; ?>
+					<div class="wpss-package-row">
+						<div class="wpss-package-field wpss-package-field-full">
+							<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
+							<textarea name="wpss_packages[{{data.index}}][description]"
+									rows="2" class="widefat"
+									placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"></textarea>
+						</div>
+					</div>
+					<div class="wpss-package-row wpss-package-row-grid">
+						<div class="wpss-package-field">
+							<label>
+								<span class="dashicons dashicons-clock"></span>
+								<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
+							</label>
+							<div class="wpss-input-with-suffix">
+								<input type="number" name="wpss_packages[{{data.index}}][delivery_days]"
+										min="1" max="365" placeholder="7">
+								<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+						<div class="wpss-package-field">
+							<label>
+								<span class="dashicons dashicons-update"></span>
+								<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
+							</label>
+							<div class="wpss-input-with-suffix">
+								<input type="number" name="wpss_packages[{{data.index}}][revisions]"
+										min="0" max="20" placeholder="2">
+								<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+					</div>
+					<div class="wpss-package-row">
+						<div class="wpss-package-field wpss-package-field-full">
+							<label>
+								<span class="dashicons dashicons-yes-alt"></span>
+								<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
+							</label>
+							<textarea name="wpss_packages[{{data.index}}][features]"
+									rows="3" class="widefat"
+									placeholder="<?php esc_attr_e( "Feature 1\nFeature 2\nFeature 3", 'wp-sell-services' ); ?>"></textarea>
+							<p class="description"><?php esc_html_e( 'Enter one feature per line', 'wp-sell-services' ); ?></p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render a single package item.
+	 *
+	 * @param int   $index   Package index.
+	 * @param array $package Package data.
+	 * @return void
+	 */
+	private function render_package_item( int $index, array $package ): void {
+		$is_first     = ( 0 === $index );
+		$package_name = ! empty( $package['name'] ) ? $package['name'] : __( 'New Package', 'wp-sell-services' );
+		$price        = ! empty( $package['price'] ) ? (float) $package['price'] : 0;
+		?>
+		<div class="wpss-package-item" data-index="<?php echo esc_attr( $index ); ?>">
+			<div class="wpss-package-header">
+				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<span class="wpss-package-title"><?php echo esc_html( $package_name ); ?></span>
+				<span class="wpss-package-price-display">
+					<?php if ( $price > 0 ) : ?>
+						$<?php echo esc_html( number_format( $price, 2 ) ); ?>
+					<?php endif; ?>
+				</span>
+				<div class="wpss-package-actions">
+					<button type="button" class="wpss-package-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
+						<span class="dashicons dashicons-arrow-down-alt2"></span>
+					</button>
+					<?php if ( ! $is_first ) : ?>
+						<button type="button" class="wpss-remove-package" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
+							<span class="dashicons dashicons-trash"></span>
+						</button>
+					<?php endif; ?>
+				</div>
+			</div>
+			<div class="wpss-package-body">
+				<div class="wpss-package-row">
+					<div class="wpss-package-field wpss-package-field-wide">
+						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
+						<input type="text" name="wpss_packages[<?php echo esc_attr( $index ); ?>][name]"
+								value="<?php echo esc_attr( $package['name'] ?? '' ); ?>"
+								class="widefat wpss-package-name-input"
+								placeholder="<?php esc_attr_e( 'e.g., Standard, Premium, Enterprise', 'wp-sell-services' ); ?>">
+					</div>
+					<div class="wpss-package-field">
+						<label>
+							<span class="dashicons dashicons-money-alt"></span>
+							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-input-with-prefix">
+							<span class="wpss-input-prefix">$</span>
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][price]"
+									value="<?php echo esc_attr( $package['price'] ?? '' ); ?>"
+									class="wpss-package-price-input"
+									min="0" step="0.01" placeholder="0.00">
+						</div>
+					</div>
+				</div>
+				<div class="wpss-package-row">
+					<div class="wpss-package-field wpss-package-field-full">
+						<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
+						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][description]"
+								rows="2" class="widefat"
+								placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $package['description'] ?? '' ); ?></textarea>
+					</div>
+				</div>
+				<div class="wpss-package-row wpss-package-row-grid">
+					<div class="wpss-package-field">
+						<label>
+							<span class="dashicons dashicons-clock"></span>
+							<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-input-with-suffix">
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][delivery_days]"
+									value="<?php echo esc_attr( $package['delivery_days'] ?? '' ); ?>"
+									min="1" max="365" placeholder="7">
+							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+					<div class="wpss-package-field">
+						<label>
+							<span class="dashicons dashicons-update"></span>
+							<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-input-with-suffix">
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][revisions]"
+									value="<?php echo esc_attr( $package['revisions'] ?? '' ); ?>"
+									min="0" max="20" placeholder="2">
+							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+				</div>
+				<div class="wpss-package-row">
+					<div class="wpss-package-field wpss-package-field-full">
+						<label>
+							<span class="dashicons dashicons-yes-alt"></span>
+							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
+						</label>
+						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][features]"
+								rows="3" class="widefat"
+								placeholder="<?php esc_attr_e( "Feature 1\nFeature 2\nFeature 3", 'wp-sell-services' ); ?>"><?php echo esc_textarea( implode( "\n", (array) ( $package['features'] ?? array() ) ) ); ?></textarea>
+						<p class="description"><?php esc_html_e( 'Enter one feature per line', 'wp-sell-services' ); ?></p>
+					</div>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -872,24 +968,27 @@ class ServiceMetabox {
 			update_post_meta( $post_id, '_wpss_status', sanitize_key( $_POST['wpss_status'] ) );
 		}
 
-		// Save packages.
+		// Save packages (indexed array format).
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below.
 		$packages_data = isset( $_POST['wpss_packages'] ) ? wp_unslash( $_POST['wpss_packages'] ) : array();
 		if ( is_array( $packages_data ) && ! empty( $packages_data ) ) {
 			$packages = array();
-			foreach ( $packages_data as $tier => $package ) {
-				$packages[ sanitize_key( $tier ) ] = array(
-					'name'          => sanitize_text_field( $package['name'] ?? '' ),
-					'description'   => sanitize_textarea_field( $package['description'] ?? '' ),
-					'price'         => (float) ( $package['price'] ?? 0 ),
-					'delivery_days' => absint( $package['delivery_days'] ?? 0 ),
-					'revisions'     => absint( $package['revisions'] ?? 0 ),
-					'features'      => array_filter( array_map( 'sanitize_text_field', explode( "\n", $package['features'] ?? '' ) ) ),
-				);
+			foreach ( $packages_data as $package ) {
+				// Only save packages with name or price.
+				if ( ! empty( $package['name'] ) || ! empty( $package['price'] ) ) {
+					$packages[] = array(
+						'name'          => sanitize_text_field( $package['name'] ?? '' ),
+						'description'   => sanitize_textarea_field( $package['description'] ?? '' ),
+						'price'         => (float) ( $package['price'] ?? 0 ),
+						'delivery_days' => absint( $package['delivery_days'] ?? 0 ),
+						'revisions'     => absint( $package['revisions'] ?? 0 ),
+						'features'      => array_filter( array_map( 'sanitize_text_field', explode( "\n", $package['features'] ?? '' ) ) ),
+					);
+				}
 			}
 			update_post_meta( $post_id, '_wpss_packages', $packages );
 
-			// Update starting price.
+			// Update starting price (min of all packages).
 			$prices         = array_filter( wp_list_pluck( $packages, 'price' ) );
 			$starting_price = ! empty( $prices ) ? min( $prices ) : 0;
 			update_post_meta( $post_id, '_wpss_starting_price', $starting_price );
