@@ -15,6 +15,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use WP_Query;
+use WPSellServices\Services\ModerationService;
 
 /**
  * REST controller for services.
@@ -40,116 +41,116 @@ class ServicesController extends RestController {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
+					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => '__return_true',
 					'args'                => $this->get_collection_params(),
-				],
-				'schema' => [ $this, 'get_public_item_schema' ],
-			]
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
 		);
 
 		// GET /services/{id} - Get single service.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
+					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'id' => [
+					'args'                => array(
+						'id' => array(
 							'description' => __( 'Service ID.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
-						],
-					],
-				],
-				'schema' => [ $this, 'get_public_item_schema' ],
-			]
+						),
+					),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
 		);
 
 		// POST /services - Create service (vendors only).
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'create_item_permissions_check' ],
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
-				],
-			]
+				),
+			)
 		);
 
 		// PUT/PATCH /services/{id} - Update service.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => [ $this, 'update_item' ],
-					'permission_callback' => [ $this, 'update_item_permissions_check' ],
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
-				],
-			]
+				),
+			)
 		);
 
 		// DELETE /services/{id} - Delete service.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_item' ],
-					'permission_callback' => [ $this, 'delete_item_permissions_check' ],
-				],
-			]
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+				),
+			)
 		);
 
 		// GET /services/{id}/packages - Get service packages.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/packages',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_packages' ],
+					'callback'            => array( $this, 'get_packages' ),
 					'permission_callback' => '__return_true',
-				],
-			]
+				),
+			)
 		);
 
 		// GET /services/{id}/faqs - Get service FAQs.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/faqs',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_faqs' ],
+					'callback'            => array( $this, 'get_faqs' ),
 					'permission_callback' => '__return_true',
-				],
-			]
+				),
+			)
 		);
 
 		// GET /services/{id}/reviews - Get service reviews.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/reviews',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_reviews' ],
+					'callback'            => array( $this, 'get_reviews' ),
 					'permission_callback' => '__return_true',
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -162,25 +163,25 @@ class ServicesController extends RestController {
 	public function get_items( $request ) {
 		$pagination = $this->get_pagination_args( $request );
 
-		$args = [
+		$args = array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
 			'posts_per_page' => $pagination['per_page'],
 			'offset'         => $pagination['offset'],
 			'orderby'        => $request->get_param( 'orderby' ) ?: 'date',
 			'order'          => $request->get_param( 'order' ) ?: 'DESC',
-		];
+		);
 
 		// Filter by category.
 		$category = $request->get_param( 'category' );
 		if ( $category ) {
-			$args['tax_query'] = [
-				[
+			$args['tax_query'] = array(
+				array(
 					'taxonomy' => 'wpss_service_category',
 					'field'    => is_numeric( $category ) ? 'term_id' : 'slug',
 					'terms'    => $category,
-				],
-			];
+				),
+			);
 		}
 
 		// Filter by vendor.
@@ -200,29 +201,29 @@ class ServicesController extends RestController {
 		$max_price = $request->get_param( 'max_price' );
 
 		if ( $min_price || $max_price ) {
-			$args['meta_query'] = [];
+			$args['meta_query'] = array();
 
 			if ( $min_price ) {
-				$args['meta_query'][] = [
+				$args['meta_query'][] = array(
 					'key'     => '_wpss_base_price',
 					'value'   => (float) $min_price,
 					'compare' => '>=',
 					'type'    => 'DECIMAL',
-				];
+				);
 			}
 
 			if ( $max_price ) {
-				$args['meta_query'][] = [
+				$args['meta_query'][] = array(
 					'key'     => '_wpss_base_price',
 					'value'   => (float) $max_price,
 					'compare' => '<=',
 					'type'    => 'DECIMAL',
-				];
+				);
 			}
 		}
 
-		$query = new WP_Query( $args );
-		$services = [];
+		$query    = new WP_Query( $args );
+		$services = array();
 
 		foreach ( $query->posts as $post ) {
 			$services[] = $this->prepare_item_for_response( $post, $request )->get_data();
@@ -244,13 +245,13 @@ class ServicesController extends RestController {
 	 */
 	public function get_item( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$service = get_post( $service_id );
+		$service    = get_post( $service_id );
 
 		if ( ! $service || 'wpss_service' !== $service->post_type ) {
 			return new WP_Error(
 				'not_found',
 				__( 'Service not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -264,14 +265,17 @@ class ServicesController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		$service_data = [
+		// Determine post status based on moderation setting.
+		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
+
+		$service_data = array(
 			'post_type'    => 'wpss_service',
 			'post_title'   => sanitize_text_field( $request->get_param( 'title' ) ),
 			'post_content' => wp_kses_post( $request->get_param( 'description' ) ),
 			'post_excerpt' => sanitize_textarea_field( $request->get_param( 'excerpt' ) ?: '' ),
-			'post_status'  => 'pending',
+			'post_status'  => $post_status,
 			'post_author'  => get_current_user_id(),
-		];
+		);
 
 		$service_id = wp_insert_post( $service_data, true );
 
@@ -318,17 +322,17 @@ class ServicesController extends RestController {
 	 */
 	public function update_item( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$service = get_post( $service_id );
+		$service    = get_post( $service_id );
 
 		if ( ! $service || 'wpss_service' !== $service->post_type ) {
 			return new WP_Error(
 				'not_found',
 				__( 'Service not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
-		$update_data = [ 'ID' => $service_id ];
+		$update_data = array( 'ID' => $service_id );
 
 		if ( $request->has_param( 'title' ) ) {
 			$update_data['post_title'] = sanitize_text_field( $request->get_param( 'title' ) );
@@ -380,13 +384,13 @@ class ServicesController extends RestController {
 	 */
 	public function delete_item( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$service = get_post( $service_id );
+		$service    = get_post( $service_id );
 
 		if ( ! $service || 'wpss_service' !== $service->post_type ) {
 			return new WP_Error(
 				'not_found',
 				__( 'Service not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -402,7 +406,7 @@ class ServicesController extends RestController {
 			return new WP_Error(
 				'delete_failed',
 				__( 'Failed to delete service.', 'wp-sell-services' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
@@ -414,7 +418,7 @@ class ServicesController extends RestController {
 		 */
 		do_action( 'wpss_rest_service_deleted', $service_id, $force );
 
-		return new WP_REST_Response( [ 'deleted' => true ], 200 );
+		return new WP_REST_Response( array( 'deleted' => true ), 200 );
 	}
 
 	/**
@@ -425,10 +429,10 @@ class ServicesController extends RestController {
 	 */
 	public function get_packages( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
+		$packages   = get_post_meta( $service_id, '_wpss_packages', true );
 
 		if ( ! is_array( $packages ) ) {
-			$packages = [];
+			$packages = array();
 		}
 
 		return new WP_REST_Response( $packages, 200 );
@@ -442,10 +446,10 @@ class ServicesController extends RestController {
 	 */
 	public function get_faqs( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$faqs = get_post_meta( $service_id, '_wpss_faqs', true );
+		$faqs       = get_post_meta( $service_id, '_wpss_faqs', true );
 
 		if ( ! is_array( $faqs ) ) {
-			$faqs = [];
+			$faqs = array();
 		}
 
 		return new WP_REST_Response( $faqs, 200 );
@@ -473,12 +477,12 @@ class ServicesController extends RestController {
 
 		// Add reviewer info.
 		foreach ( $reviews as &$review ) {
-			$user = get_user_by( 'id', $review['customer_id'] );
-			$review['reviewer'] = [
+			$user               = get_user_by( 'id', $review['customer_id'] );
+			$review['reviewer'] = array(
 				'id'     => $review['customer_id'],
 				'name'   => $user ? $user->display_name : 'Anonymous',
-				'avatar' => get_avatar_url( $review['customer_id'], [ 'size' => 48 ] ),
-			];
+				'avatar' => get_avatar_url( $review['customer_id'], array( 'size' => 48 ) ),
+			);
 		}
 
 		return new WP_REST_Response( $reviews, 200 );
@@ -502,7 +506,7 @@ class ServicesController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to create services.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -528,7 +532,7 @@ class ServicesController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to edit this service.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -553,7 +557,7 @@ class ServicesController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $service, $request ) {
-		$data = [
+		$data = array(
 			'id'          => $service->ID,
 			'title'       => $service->post_title,
 			'slug'        => $service->post_name,
@@ -561,26 +565,26 @@ class ServicesController extends RestController {
 			'excerpt'     => $service->post_excerpt,
 			'status'      => $service->post_status,
 			'link'        => get_permalink( $service->ID ),
-			'vendor'      => [
+			'vendor'      => array(
 				'id'     => (int) $service->post_author,
 				'name'   => get_the_author_meta( 'display_name', $service->post_author ),
-				'avatar' => get_avatar_url( $service->post_author, [ 'size' => 96 ] ),
-			],
-			'pricing'     => [
+				'avatar' => get_avatar_url( $service->post_author, array( 'size' => 96 ) ),
+			),
+			'pricing'     => array(
 				'base_price' => (float) get_post_meta( $service->ID, '_wpss_base_price', true ),
 				'currency'   => wpss_get_currency(),
-			],
-			'delivery'    => [
-				'time'     => get_post_meta( $service->ID, '_wpss_delivery_time', true ),
+			),
+			'delivery'    => array(
+				'time'      => get_post_meta( $service->ID, '_wpss_delivery_time', true ),
 				'revisions' => (int) get_post_meta( $service->ID, '_wpss_revisions', true ),
-			],
+			),
 			'images'      => $this->get_service_images( $service->ID ),
-			'categories'  => wp_get_object_terms( $service->ID, 'wpss_service_category', [ 'fields' => 'all' ] ),
-			'tags'        => wp_get_object_terms( $service->ID, 'wpss_service_tag', [ 'fields' => 'names' ] ),
+			'categories'  => wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ),
+			'tags'        => wp_get_object_terms( $service->ID, 'wpss_service_tag', array( 'fields' => 'names' ) ),
 			'rating'      => $this->get_service_rating( $service->ID ),
 			'created_at'  => $service->post_date_gmt,
 			'updated_at'  => $service->post_modified_gmt,
-		];
+		);
 
 		/**
 		 * Filter service REST response data.
@@ -601,20 +605,20 @@ class ServicesController extends RestController {
 	 * @return array
 	 */
 	private function get_service_images( int $service_id ): array {
-		$images = [];
+		$images = array();
 
 		// Featured image.
 		$thumbnail_id = get_post_thumbnail_id( $service_id );
 		if ( $thumbnail_id ) {
-			$images[] = [
+			$images[] = array(
 				'id'    => $thumbnail_id,
 				'url'   => wp_get_attachment_url( $thumbnail_id ),
-				'sizes' => [
+				'sizes' => array(
 					'thumbnail' => wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' ),
 					'medium'    => wp_get_attachment_image_url( $thumbnail_id, 'medium' ),
 					'large'     => wp_get_attachment_image_url( $thumbnail_id, 'large' ),
-				],
-			];
+				),
+			);
 		}
 
 		// Gallery images.
@@ -622,15 +626,15 @@ class ServicesController extends RestController {
 		if ( is_array( $gallery ) ) {
 			foreach ( $gallery as $item ) {
 				if ( 'image' === ( $item['type'] ?? '' ) && ! empty( $item['attachment_id'] ) ) {
-					$images[] = [
+					$images[] = array(
 						'id'    => $item['attachment_id'],
 						'url'   => wp_get_attachment_url( $item['attachment_id'] ),
-						'sizes' => [
+						'sizes' => array(
 							'thumbnail' => wp_get_attachment_image_url( $item['attachment_id'], 'thumbnail' ),
 							'medium'    => wp_get_attachment_image_url( $item['attachment_id'], 'medium' ),
 							'large'     => wp_get_attachment_image_url( $item['attachment_id'], 'large' ),
-						],
-					];
+						),
+					);
 				}
 			}
 		}
@@ -647,7 +651,7 @@ class ServicesController extends RestController {
 	private function get_service_rating( int $service_id ): array {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'wpss_reviews';
+		$table  = $wpdb->prefix . 'wpss_reviews';
 		$rating = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT AVG(rating) as average, COUNT(*) as count FROM {$table} WHERE service_id = %d",
@@ -655,10 +659,10 @@ class ServicesController extends RestController {
 			)
 		);
 
-		return [
+		return array(
 			'average' => $rating ? round( (float) $rating->average, 2 ) : 0,
 			'count'   => $rating ? (int) $rating->count : 0,
-		];
+		);
 	}
 
 	/**
@@ -696,51 +700,51 @@ class ServicesController extends RestController {
 	 * @return array
 	 */
 	public function get_collection_params(): array {
-		return [
-			'page'      => [
+		return array(
+			'page'      => array(
 				'description' => __( 'Current page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 1,
-			],
-			'per_page'  => [
+			),
+			'per_page'  => array(
 				'description' => __( 'Items per page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 10,
 				'maximum'     => 100,
-			],
-			'category'  => [
+			),
+			'category'  => array(
 				'description' => __( 'Filter by category ID or slug.', 'wp-sell-services' ),
 				'type'        => 'string',
-			],
-			'vendor'    => [
+			),
+			'vendor'    => array(
 				'description' => __( 'Filter by vendor ID.', 'wp-sell-services' ),
 				'type'        => 'integer',
-			],
-			'search'    => [
+			),
+			'search'    => array(
 				'description' => __( 'Search term.', 'wp-sell-services' ),
 				'type'        => 'string',
-			],
-			'min_price' => [
+			),
+			'min_price' => array(
 				'description' => __( 'Minimum price filter.', 'wp-sell-services' ),
 				'type'        => 'number',
-			],
-			'max_price' => [
+			),
+			'max_price' => array(
 				'description' => __( 'Maximum price filter.', 'wp-sell-services' ),
 				'type'        => 'number',
-			],
-			'orderby'   => [
+			),
+			'orderby'   => array(
 				'description' => __( 'Order by field.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'enum'        => [ 'date', 'title', 'price', 'rating' ],
+				'enum'        => array( 'date', 'title', 'price', 'rating' ),
 				'default'     => 'date',
-			],
-			'order'     => [
+			),
+			'order'     => array(
 				'description' => __( 'Sort order.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'enum'        => [ 'ASC', 'DESC' ],
+				'enum'        => array( 'ASC', 'DESC' ),
 				'default'     => 'DESC',
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -749,48 +753,48 @@ class ServicesController extends RestController {
 	 * @return array
 	 */
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'service',
 			'type'       => 'object',
 			'properties' => array_merge(
 				$this->get_common_schema_properties(),
-				[
-					'title'       => [
+				array(
+					'title'       => array(
 						'description' => __( 'Service title.', 'wp-sell-services' ),
 						'type'        => 'string',
-						'context'     => [ 'view', 'edit' ],
+						'context'     => array( 'view', 'edit' ),
 						'required'    => true,
-					],
-					'description' => [
+					),
+					'description' => array(
 						'description' => __( 'Service description.', 'wp-sell-services' ),
 						'type'        => 'string',
-						'context'     => [ 'view', 'edit' ],
-					],
-					'excerpt'     => [
+						'context'     => array( 'view', 'edit' ),
+					),
+					'excerpt'     => array(
 						'description' => __( 'Service excerpt.', 'wp-sell-services' ),
 						'type'        => 'string',
-						'context'     => [ 'view', 'edit' ],
-					],
-					'base_price'  => [
+						'context'     => array( 'view', 'edit' ),
+					),
+					'base_price'  => array(
 						'description' => __( 'Base price.', 'wp-sell-services' ),
 						'type'        => 'number',
-						'context'     => [ 'view', 'edit' ],
-					],
-					'categories'  => [
+						'context'     => array( 'view', 'edit' ),
+					),
+					'categories'  => array(
 						'description' => __( 'Category IDs.', 'wp-sell-services' ),
 						'type'        => 'array',
-						'items'       => [ 'type' => 'integer' ],
-						'context'     => [ 'view', 'edit' ],
-					],
-					'tags'        => [
+						'items'       => array( 'type' => 'integer' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'tags'        => array(
 						'description' => __( 'Tags.', 'wp-sell-services' ),
 						'type'        => 'array',
-						'items'       => [ 'type' => 'string' ],
-						'context'     => [ 'view', 'edit' ],
-					],
-				]
+						'items'       => array( 'type' => 'string' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+				)
 			),
-		];
+		);
 	}
 }

@@ -254,7 +254,7 @@ $order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_p
 						<?php if ( ! empty( $resolution['refund_amount'] ) && $resolution['refund_amount'] > 0 ) : ?>
 							<div class="wpss-resolution-refund">
 								<strong><?php esc_html_e( 'Refund Amount:', 'wp-sell-services' ); ?></strong>
-								<?php echo wp_kses_post( wc_price( $resolution['refund_amount'] ) ); ?>
+								<?php echo wp_kses_post( wpss_format_price( (float) $resolution['refund_amount'] ) ); ?>
 							</div>
 						<?php endif; ?>
 						<?php if ( ! empty( $resolution['notes'] ) ) : ?>
@@ -308,7 +308,7 @@ $order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_p
 					</div>
 					<div class="wpss-order-amount">
 						<span class="wpss-label"><?php esc_html_e( 'Order Total', 'wp-sell-services' ); ?></span>
-						<span class="wpss-value"><?php echo wp_kses_post( wc_price( $order->total ) ); ?></span>
+						<span class="wpss-value"><?php echo wp_kses_post( wpss_format_price( (float) $order->total ) ); ?></span>
 					</div>
 					<a href="<?php echo esc_url( $order_url ); ?>" class="wpss-view-order-link">
 						<?php esc_html_e( 'View Order', 'wp-sell-services' ); ?>

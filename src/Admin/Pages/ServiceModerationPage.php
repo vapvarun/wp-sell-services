@@ -109,7 +109,7 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'sell-services_page_wpss-moderation' !== $hook ) {
+		if ( 'wp-sell-services_page_wpss-moderation' !== $hook ) {
 			return;
 		}
 
@@ -1009,7 +1009,7 @@ class ServiceModerationPage {
 		}
 
 		// Skip the moderation page itself.
-		if ( 'sell-services_page_wpss-moderation' === $screen->id ) {
+		if ( 'wp-sell-services_page_wpss-moderation' === $screen->id ) {
 			return;
 		}
 

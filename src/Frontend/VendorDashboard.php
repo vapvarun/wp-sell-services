@@ -86,18 +86,18 @@ class VendorDashboard {
 	 * @return void
 	 */
 	public function init(): void {
-		add_shortcode( 'wpss_vendor_dashboard', [ $this, 'render_dashboard' ] );
-		add_shortcode( 'wpss_become_vendor', [ $this, 'render_registration_form' ] );
+		add_shortcode( 'wpss_vendor_dashboard', array( $this, 'render_dashboard' ) );
+		add_shortcode( 'wpss_become_vendor', array( $this, 'render_registration_form' ) );
 
 		// AJAX handlers.
-		add_action( 'wp_ajax_wpss_update_vendor_profile', [ $this, 'ajax_update_profile' ] );
-		add_action( 'wp_ajax_wpss_request_withdrawal', [ $this, 'ajax_request_withdrawal' ] );
-		add_action( 'wp_ajax_wpss_add_portfolio_item', [ $this, 'ajax_add_portfolio_item' ] );
-		add_action( 'wp_ajax_wpss_delete_portfolio_item', [ $this, 'ajax_delete_portfolio_item' ] );
-		add_action( 'wp_ajax_wpss_toggle_featured_portfolio', [ $this, 'ajax_toggle_featured_portfolio' ] );
-		add_action( 'wp_ajax_wpss_reorder_portfolio', [ $this, 'ajax_reorder_portfolio' ] );
-		add_action( 'wp_ajax_wpss_update_service_status', [ $this, 'ajax_update_service_status' ] );
-		add_action( 'wp_ajax_wpss_vendor_registration', [ $this, 'ajax_vendor_registration' ] );
+		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'ajax_update_profile' ) );
+		add_action( 'wp_ajax_wpss_request_withdrawal', array( $this, 'ajax_request_withdrawal' ) );
+		add_action( 'wp_ajax_wpss_add_portfolio_item', array( $this, 'ajax_add_portfolio_item' ) );
+		add_action( 'wp_ajax_wpss_delete_portfolio_item', array( $this, 'ajax_delete_portfolio_item' ) );
+		add_action( 'wp_ajax_wpss_toggle_featured_portfolio', array( $this, 'ajax_toggle_featured_portfolio' ) );
+		add_action( 'wp_ajax_wpss_reorder_portfolio', array( $this, 'ajax_reorder_portfolio' ) );
+		add_action( 'wp_ajax_wpss_update_service_status', array( $this, 'ajax_update_service_status' ) );
+		add_action( 'wp_ajax_wpss_vendor_registration', array( $this, 'ajax_vendor_registration' ) );
 	}
 
 	/**
@@ -106,7 +106,7 @@ class VendorDashboard {
 	 * @param array $atts Shortcode attributes.
 	 * @return string Dashboard HTML.
 	 */
-	public function render_dashboard( array $atts = [] ): string {
+	public function render_dashboard( array $atts = array() ): string {
 		if ( ! is_user_logged_in() ) {
 			return $this->render_login_required();
 		}
@@ -118,9 +118,9 @@ class VendorDashboard {
 		}
 
 		$atts = shortcode_atts(
-			[
+			array(
 				'tab' => isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'overview', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			],
+			),
 			$atts,
 			'wpss_vendor_dashboard'
 		);
@@ -168,36 +168,36 @@ class VendorDashboard {
 	 * @return void
 	 */
 	private function render_dashboard_nav( string $active_tab ): void {
-		$tabs = [
-			'overview'  => [
+		$tabs = array(
+			'overview'  => array(
 				'label' => __( 'Overview', 'wp-sell-services' ),
 				'icon'  => 'dashicons-dashboard',
-			],
-			'orders'    => [
+			),
+			'orders'    => array(
 				'label' => __( 'Orders', 'wp-sell-services' ),
 				'icon'  => 'dashicons-clipboard',
-			],
-			'services'  => [
+			),
+			'services'  => array(
 				'label' => __( 'Services', 'wp-sell-services' ),
 				'icon'  => 'dashicons-portfolio',
-			],
-			'earnings'  => [
+			),
+			'earnings'  => array(
 				'label' => __( 'Earnings', 'wp-sell-services' ),
 				'icon'  => 'dashicons-chart-area',
-			],
-			'portfolio' => [
+			),
+			'portfolio' => array(
 				'label' => __( 'Portfolio', 'wp-sell-services' ),
 				'icon'  => 'dashicons-images-alt2',
-			],
-			'analytics' => [
+			),
+			'analytics' => array(
 				'label' => __( 'Analytics', 'wp-sell-services' ),
 				'icon'  => 'dashicons-chart-line',
-			],
-			'profile'   => [
+			),
+			'profile'   => array(
 				'label' => __( 'Profile', 'wp-sell-services' ),
 				'icon'  => 'dashicons-admin-users',
-			],
-		];
+			),
+		);
 
 		/**
 		 * Filter dashboard tabs.
@@ -233,9 +233,12 @@ class VendorDashboard {
 		$profile  = $this->vendor_service->get_vendor_profile( $vendor_id );
 
 		// Get recent orders.
-		$recent_orders = $this->order_service->get_by_vendor( $vendor_id, [
-			'limit' => 5,
-		] );
+		$recent_orders = $this->order_service->get_by_vendor(
+			$vendor_id,
+			array(
+				'limit' => 5,
+			)
+		);
 
 		// Get pending actions count.
 		$pending_requirements = $this->order_service->count_by_status( $vendor_id, 'requirements_pending' );
@@ -249,19 +252,19 @@ class VendorDashboard {
 				<div class="wpss-stats-grid">
 					<div class="wpss-stat-card">
 						<span class="wpss-stat-label"><?php esc_html_e( 'Available Balance', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['available_balance'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['available_balance'] ) ); ?></span>
 					</div>
 					<div class="wpss-stat-card">
 						<span class="wpss-stat-label"><?php esc_html_e( 'Pending Clearance', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['pending_clearance'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['pending_clearance'] ) ); ?></span>
 					</div>
 					<div class="wpss-stat-card">
 						<span class="wpss-stat-label"><?php esc_html_e( 'This Month', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['this_month'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['this_month'] ) ); ?></span>
 					</div>
 					<div class="wpss-stat-card">
 						<span class="wpss-stat-label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['total_earned'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['total_earned'] ) ); ?></span>
 					</div>
 				</div>
 			</div>
@@ -271,19 +274,52 @@ class VendorDashboard {
 				<h3><?php esc_html_e( 'Pending Actions', 'wp-sell-services' ); ?></h3>
 				<div class="wpss-action-list">
 					<?php if ( $pending_requirements > 0 ) : ?>
-						<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'orders', 'status' => 'requirements_pending' ] ) ); ?>" class="wpss-action-item wpss-action-warning">
+						<a href="
+						<?php
+						echo esc_url(
+							add_query_arg(
+								array(
+									'tab'    => 'orders',
+									'status' => 'requirements_pending',
+								)
+							)
+						);
+						?>
+									" class="wpss-action-item wpss-action-warning">
 							<span class="wpss-action-count"><?php echo esc_html( $pending_requirements ); ?></span>
 							<span class="wpss-action-label"><?php esc_html_e( 'Awaiting Requirements', 'wp-sell-services' ); ?></span>
 						</a>
 					<?php endif; ?>
 					<?php if ( $pending_delivery > 0 ) : ?>
-						<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'orders', 'status' => 'in_progress' ] ) ); ?>" class="wpss-action-item">
+						<a href="
+						<?php
+						echo esc_url(
+							add_query_arg(
+								array(
+									'tab'    => 'orders',
+									'status' => 'in_progress',
+								)
+							)
+						);
+						?>
+									" class="wpss-action-item">
 							<span class="wpss-action-count"><?php echo esc_html( $pending_delivery ); ?></span>
 							<span class="wpss-action-label"><?php esc_html_e( 'To Deliver', 'wp-sell-services' ); ?></span>
 						</a>
 					<?php endif; ?>
 					<?php if ( $pending_revision > 0 ) : ?>
-						<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'orders', 'status' => 'revision_requested' ] ) ); ?>" class="wpss-action-item wpss-action-urgent">
+						<a href="
+						<?php
+						echo esc_url(
+							add_query_arg(
+								array(
+									'tab'    => 'orders',
+									'status' => 'revision_requested',
+								)
+							)
+						);
+						?>
+									" class="wpss-action-item wpss-action-urgent">
 							<span class="wpss-action-count"><?php echo esc_html( $pending_revision ); ?></span>
 							<span class="wpss-action-label"><?php esc_html_e( 'Revision Requests', 'wp-sell-services' ); ?></span>
 						</a>
@@ -334,7 +370,7 @@ class VendorDashboard {
 									<td><a href="<?php echo esc_url( $this->get_order_url( $order['id'] ) ); ?>">#<?php echo esc_html( $order['id'] ); ?></a></td>
 									<td><?php echo esc_html( $order['service_title'] ?? '' ); ?></td>
 									<td><?php echo esc_html( get_userdata( $order['customer_id'] )->display_name ?? '' ); ?></td>
-									<td><?php echo wp_kses_post( wc_price( $order['total'] ) ); ?></td>
+									<td><?php echo wp_kses_post( wpss_format_price( (float) $order['total'] ) ); ?></td>
 									<td><span class="wpss-status wpss-status-<?php echo esc_attr( $order['status'] ); ?>"><?php echo esc_html( $this->get_status_label( $order['status'] ) ); ?></span></td>
 								</tr>
 							<?php endforeach; ?>
@@ -359,21 +395,21 @@ class VendorDashboard {
 		$status = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$page   = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		$args = [
+		$args = array(
 			'limit'  => 20,
 			'offset' => ( $page - 1 ) * 20,
-		];
+		);
 
 		if ( $status ) {
 			$args['status'] = $status;
 		}
 
 		$orders      = $this->order_service->get_by_vendor( $vendor_id, $args );
-		$total_count = $this->order_service->count_by_vendor( $vendor_id, $status ? [ 'status' => $status ] : [] );
+		$total_count = $this->order_service->count_by_vendor( $vendor_id, $status ? array( 'status' => $status ) : array() );
 		$total_pages = ceil( $total_count / 20 );
 
 		// Status filters.
-		$statuses = [
+		$statuses = array(
 			''                     => __( 'All Orders', 'wp-sell-services' ),
 			'requirements_pending' => __( 'Requirements Pending', 'wp-sell-services' ),
 			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
@@ -382,7 +418,7 @@ class VendorDashboard {
 			'completed'            => __( 'Completed', 'wp-sell-services' ),
 			'cancelled'            => __( 'Cancelled', 'wp-sell-services' ),
 			'disputed'             => __( 'Disputed', 'wp-sell-services' ),
-		];
+		);
 		?>
 		<div class="wpss-orders-tab">
 			<h3><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h3>
@@ -390,8 +426,19 @@ class VendorDashboard {
 			<!-- Status Filters -->
 			<div class="wpss-status-filters">
 				<?php foreach ( $statuses as $key => $label ) : ?>
-					<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'orders', 'status' => $key ] ) ); ?>"
-					   class="<?php echo $status === $key ? 'active' : ''; ?>">
+					<a href="
+					<?php
+					echo esc_url(
+						add_query_arg(
+							array(
+								'tab'    => 'orders',
+								'status' => $key,
+							)
+						)
+					);
+					?>
+					"
+						class="<?php echo $status === $key ? 'active' : ''; ?>">
 						<?php echo esc_html( $label ); ?>
 					</a>
 				<?php endforeach; ?>
@@ -417,7 +464,7 @@ class VendorDashboard {
 								<td><a href="<?php echo esc_url( $this->get_order_url( $order['id'] ) ); ?>">#<?php echo esc_html( $order['id'] ); ?></a></td>
 								<td><?php echo esc_html( $order['service_title'] ?? '' ); ?></td>
 								<td><?php echo esc_html( get_userdata( $order['customer_id'] )->display_name ?? '' ); ?></td>
-								<td><?php echo wp_kses_post( wc_price( $order['total'] ) ); ?></td>
+								<td><?php echo wp_kses_post( wpss_format_price( (float) $order['total'] ) ); ?></td>
 								<td><?php echo $order['due_date'] ? esc_html( wp_date( get_option( 'date_format' ), strtotime( $order['due_date'] ) ) ) : '—'; ?></td>
 								<td><span class="wpss-status wpss-status-<?php echo esc_attr( $order['status'] ); ?>"><?php echo esc_html( $this->get_status_label( $order['status'] ) ); ?></span></td>
 								<td>
@@ -433,14 +480,16 @@ class VendorDashboard {
 					<div class="wpss-pagination">
 						<?php
 						echo wp_kses_post(
-							paginate_links( [
-								'base'      => add_query_arg( 'paged', '%#%' ),
-								'format'    => '',
-								'current'   => $page,
-								'total'     => $total_pages,
-								'prev_text' => '&laquo;',
-								'next_text' => '&raquo;',
-							] )
+							paginate_links(
+								array(
+									'base'      => add_query_arg( 'paged', '%#%' ),
+									'format'    => '',
+									'current'   => $page,
+									'total'     => $total_pages,
+									'prev_text' => '&laquo;',
+									'next_text' => '&raquo;',
+								)
+							)
 						);
 						?>
 					</div>
@@ -481,7 +530,7 @@ class VendorDashboard {
 							<div class="wpss-service-info">
 								<h4><?php echo esc_html( $service['title'] ); ?></h4>
 								<div class="wpss-service-meta">
-									<span class="wpss-service-price"><?php esc_html_e( 'From', 'wp-sell-services' ); ?> <?php echo wp_kses_post( wc_price( $service['starting_price'] ?? 0 ) ); ?></span>
+									<span class="wpss-service-price"><?php esc_html_e( 'From', 'wp-sell-services' ); ?> <?php echo wp_kses_post( wpss_format_price( (float) $service['starting_price'] ?? 0 ) ); ?></span>
 									<span class="wpss-service-status wpss-status-<?php echo esc_attr( $service['status'] ); ?>">
 										<?php echo esc_html( ucfirst( $service['status'] ) ); ?>
 									</span>
@@ -524,7 +573,7 @@ class VendorDashboard {
 	 */
 	private function render_earnings_tab( int $vendor_id ): void {
 		$earnings = $this->earnings_service->get_summary( $vendor_id );
-		$history  = $this->earnings_service->get_history( $vendor_id, [ 'limit' => 20 ] );
+		$history  = $this->earnings_service->get_history( $vendor_id, array( 'limit' => 20 ) );
 		$methods  = $this->earnings_service->get_withdrawal_methods();
 		?>
 		<div class="wpss-earnings-tab">
@@ -535,11 +584,11 @@ class VendorDashboard {
 				<div class="wpss-stats-grid">
 					<div class="wpss-stat-card wpss-stat-primary">
 						<span class="wpss-stat-label"><?php esc_html_e( 'Available for Withdrawal', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['available_balance'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['available_balance'] ) ); ?></span>
 					</div>
 					<div class="wpss-stat-card">
 						<span class="wpss-stat-label"><?php esc_html_e( 'Pending Clearance', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['pending_clearance'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['pending_clearance'] ) ); ?></span>
 						<span class="wpss-stat-note">
 							<?php
 							printf(
@@ -552,11 +601,11 @@ class VendorDashboard {
 					</div>
 					<div class="wpss-stat-card">
 						<span class="wpss-stat-label"><?php esc_html_e( 'Pending Withdrawal', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['pending_withdrawal'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['pending_withdrawal'] ) ); ?></span>
 					</div>
 					<div class="wpss-stat-card">
 						<span class="wpss-stat-label"><?php esc_html_e( 'Total Withdrawn', 'wp-sell-services' ); ?></span>
-						<span class="wpss-stat-value"><?php echo wp_kses_post( wc_price( $earnings['withdrawn'] ) ); ?></span>
+						<span class="wpss-stat-value"><?php echo wp_kses_post( wpss_format_price( (float) $earnings['withdrawn'] ) ); ?></span>
 					</div>
 				</div>
 			</div>
@@ -570,15 +619,15 @@ class VendorDashboard {
 						<div class="wpss-form-row">
 							<label for="withdrawal_amount"><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></label>
 							<input type="number" name="amount" id="withdrawal_amount"
-								   min="<?php echo esc_attr( get_option( 'wpss_min_withdrawal', 50 ) ); ?>"
-								   max="<?php echo esc_attr( $earnings['available_balance'] ); ?>"
-								   step="0.01" required>
+									min="<?php echo esc_attr( get_option( 'wpss_min_withdrawal', 50 ) ); ?>"
+									max="<?php echo esc_attr( $earnings['available_balance'] ); ?>"
+									step="0.01" required>
 							<span class="wpss-form-note">
 								<?php
 								printf(
 									/* translators: %s: minimum withdrawal amount */
 									esc_html__( 'Minimum: %s', 'wp-sell-services' ),
-									wp_kses_post( wc_price( get_option( 'wpss_min_withdrawal', 50 ) ) )
+									wp_kses_post( wpss_format_price( (float) get_option( 'wpss_min_withdrawal', 50 ) ) )
 								);
 								?>
 							</span>
@@ -606,7 +655,7 @@ class VendorDashboard {
 						printf(
 							/* translators: %s: minimum withdrawal amount */
 							esc_html__( 'You need at least %s in available balance to request a withdrawal.', 'wp-sell-services' ),
-							wp_kses_post( wc_price( get_option( 'wpss_min_withdrawal', 50 ) ) )
+							wp_kses_post( wpss_format_price( (float) get_option( 'wpss_min_withdrawal', 50 ) ) )
 						);
 						?>
 					</p>
@@ -633,7 +682,7 @@ class VendorDashboard {
 									<td><?php echo esc_html( $transaction['description'] ); ?></td>
 									<td class="<?php echo $transaction['type'] === 'credit' ? 'wpss-amount-positive' : 'wpss-amount-negative'; ?>">
 										<?php echo $transaction['type'] === 'credit' ? '+' : '-'; ?>
-										<?php echo wp_kses_post( wc_price( abs( $transaction['amount'] ) ) ); ?>
+										<?php echo wp_kses_post( wpss_format_price( (float) abs( $transaction['amount'] ) ) ); ?>
 									</td>
 									<td><span class="wpss-status wpss-status-<?php echo esc_attr( $transaction['status'] ); ?>"><?php echo esc_html( ucfirst( $transaction['status'] ) ); ?></span></td>
 								</tr>
@@ -655,7 +704,7 @@ class VendorDashboard {
 	 * @return void
 	 */
 	private function render_portfolio_tab( int $vendor_id ): void {
-		$portfolio = $this->portfolio_service->get_by_vendor( $vendor_id, [ 'limit' => 100 ] );
+		$portfolio = $this->portfolio_service->get_by_vendor( $vendor_id, array( 'limit' => 100 ) );
 		$max_items = (int) get_option( 'wpss_max_portfolio_items', 50 );
 		?>
 		<div class="wpss-portfolio-tab">
@@ -817,10 +866,54 @@ class VendorDashboard {
 			<div class="wpss-tab-header">
 				<h3><?php esc_html_e( 'Analytics', 'wp-sell-services' ); ?></h3>
 				<div class="wpss-period-selector">
-					<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'analytics', 'period' => '7' ] ) ); ?>" class="<?php echo '7' === $period ? 'active' : ''; ?>"><?php esc_html_e( '7 Days', 'wp-sell-services' ); ?></a>
-					<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'analytics', 'period' => '30' ] ) ); ?>" class="<?php echo '30' === $period ? 'active' : ''; ?>"><?php esc_html_e( '30 Days', 'wp-sell-services' ); ?></a>
-					<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'analytics', 'period' => '90' ] ) ); ?>" class="<?php echo '90' === $period ? 'active' : ''; ?>"><?php esc_html_e( '90 Days', 'wp-sell-services' ); ?></a>
-					<a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'analytics', 'period' => '365' ] ) ); ?>" class="<?php echo '365' === $period ? 'active' : ''; ?>"><?php esc_html_e( 'Year', 'wp-sell-services' ); ?></a>
+					<a href="
+					<?php
+					echo esc_url(
+						add_query_arg(
+							array(
+								'tab'    => 'analytics',
+								'period' => '7',
+							)
+						)
+					);
+					?>
+					" class="<?php echo '7' === $period ? 'active' : ''; ?>"><?php esc_html_e( '7 Days', 'wp-sell-services' ); ?></a>
+					<a href="
+					<?php
+					echo esc_url(
+						add_query_arg(
+							array(
+								'tab'    => 'analytics',
+								'period' => '30',
+							)
+						)
+					);
+					?>
+					" class="<?php echo '30' === $period ? 'active' : ''; ?>"><?php esc_html_e( '30 Days', 'wp-sell-services' ); ?></a>
+					<a href="
+					<?php
+					echo esc_url(
+						add_query_arg(
+							array(
+								'tab'    => 'analytics',
+								'period' => '90',
+							)
+						)
+					);
+					?>
+					" class="<?php echo '90' === $period ? 'active' : ''; ?>"><?php esc_html_e( '90 Days', 'wp-sell-services' ); ?></a>
+					<a href="
+					<?php
+					echo esc_url(
+						add_query_arg(
+							array(
+								'tab'    => 'analytics',
+								'period' => '365',
+							)
+						)
+					);
+					?>
+					" class="<?php echo '365' === $period ? 'active' : ''; ?>"><?php esc_html_e( 'Year', 'wp-sell-services' ); ?></a>
 				</div>
 			</div>
 
@@ -888,7 +981,7 @@ class VendorDashboard {
 									<td><a href="<?php echo esc_url( get_permalink( $service['id'] ) ); ?>"><?php echo esc_html( $service['title'] ); ?></a></td>
 									<td><?php echo esc_html( number_format( $service['views'] ) ); ?></td>
 									<td><?php echo esc_html( $service['orders'] ); ?></td>
-									<td><?php echo wp_kses_post( wc_price( $service['revenue'] ) ); ?></td>
+									<td><?php echo wp_kses_post( wpss_format_price( (float) $service['revenue'] ) ); ?></td>
 								</tr>
 							<?php endforeach; ?>
 						</tbody>
@@ -952,12 +1045,12 @@ class VendorDashboard {
 
 					<div class="wpss-form-row">
 						<label for="skills"><?php esc_html_e( 'Skills', 'wp-sell-services' ); ?></label>
-						<input type="text" name="skills" id="skills" value="<?php echo esc_attr( implode( ', ', $profile['skills'] ?? [] ) ); ?>" placeholder="<?php esc_attr_e( 'Enter skills separated by commas', 'wp-sell-services' ); ?>">
+						<input type="text" name="skills" id="skills" value="<?php echo esc_attr( implode( ', ', $profile['skills'] ?? array() ) ); ?>" placeholder="<?php esc_attr_e( 'Enter skills separated by commas', 'wp-sell-services' ); ?>">
 					</div>
 
 					<div class="wpss-form-row">
 						<label for="languages"><?php esc_html_e( 'Languages', 'wp-sell-services' ); ?></label>
-						<input type="text" name="languages" id="languages" value="<?php echo esc_attr( implode( ', ', $profile['languages'] ?? [] ) ); ?>" placeholder="<?php esc_attr_e( 'e.g., English (Native), Spanish (Fluent)', 'wp-sell-services' ); ?>">
+						<input type="text" name="languages" id="languages" value="<?php echo esc_attr( implode( ', ', $profile['languages'] ?? array() ) ); ?>" placeholder="<?php esc_attr_e( 'e.g., English (Native), Spanish (Fluent)', 'wp-sell-services' ); ?>">
 					</div>
 
 					<div class="wpss-form-row">
@@ -1034,7 +1127,7 @@ class VendorDashboard {
 	 * @param array $atts Shortcode attributes.
 	 * @return string Registration form HTML.
 	 */
-	public function render_registration_form( array $atts = [] ): string {
+	public function render_registration_form( array $atts = array() ): string {
 		if ( ! is_user_logged_in() ) {
 			return $this->render_login_required();
 		}
@@ -1129,10 +1222,10 @@ class VendorDashboard {
 		$user_id = get_current_user_id();
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
 		}
 
-		$data = [
+		$data = array(
 			'display_name'       => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
 			'tagline'            => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
 			'bio'                => wp_kses_post( wp_unslash( $_POST['bio'] ?? '' ) ),
@@ -1145,7 +1238,7 @@ class VendorDashboard {
 			'available_for_work' => ! empty( $_POST['available_for_work'] ),
 			'response_time'      => absint( $_POST['response_time'] ?? 24 ),
 			'avatar_id'          => absint( $_POST['avatar_id'] ?? 0 ),
-		];
+		);
 
 		$result = $this->vendor_service->update_profile( $user_id, $data );
 
@@ -1167,14 +1260,14 @@ class VendorDashboard {
 		$user_id = get_current_user_id();
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
 		}
 
 		$amount  = floatval( $_POST['amount'] ?? 0 );
 		$method  = sanitize_text_field( wp_unslash( $_POST['method'] ?? '' ) );
 		$details = sanitize_textarea_field( wp_unslash( $_POST['details'] ?? '' ) );
 
-		$result = $this->earnings_service->request_withdrawal( $user_id, $amount, $method, [ 'payment_details' => $details ] );
+		$result = $this->earnings_service->request_withdrawal( $user_id, $amount, $method, array( 'payment_details' => $details ) );
 
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
@@ -1194,18 +1287,18 @@ class VendorDashboard {
 		$user_id = get_current_user_id();
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
 		}
 
-		$data = [
+		$data = array(
 			'title'        => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
 			'description'  => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
-			'media'        => array_map( 'absint', json_decode( stripslashes( $_POST['media'] ?? '[]' ), true ) ?: [] ),
+			'media'        => array_map( 'absint', json_decode( stripslashes( $_POST['media'] ?? '[]' ), true ) ?: array() ),
 			'external_url' => esc_url_raw( wp_unslash( $_POST['external_url'] ?? '' ) ),
 			'tags'         => array_map( 'trim', explode( ',', sanitize_text_field( wp_unslash( $_POST['tags'] ?? '' ) ) ) ),
 			'service_id'   => absint( $_POST['service_id'] ?? 0 ),
 			'is_featured'  => ! empty( $_POST['is_featured'] ),
-		];
+		);
 
 		$item_id = absint( $_POST['item_id'] ?? 0 );
 
@@ -1273,15 +1366,15 @@ class VendorDashboard {
 		$user_id = get_current_user_id();
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
 		}
 
-		$order = array_map( 'absint', $_POST['order'] ?? [] );
+		$order = array_map( 'absint', $_POST['order'] ?? array() );
 
 		if ( $this->portfolio_service->reorder( $user_id, $order ) ) {
-			wp_send_json_success( [ 'message' => __( 'Portfolio reordered successfully.', 'wp-sell-services' ) ] );
+			wp_send_json_success( array( 'message' => __( 'Portfolio reordered successfully.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( [ 'message' => __( 'Failed to reorder portfolio.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Failed to reorder portfolio.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -1300,24 +1393,28 @@ class VendorDashboard {
 		$service = get_post( $service_id );
 
 		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
-			wp_send_json_error( [ 'message' => __( 'Service not found.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
 		}
 
 		$new_status = 'publish' === $status ? 'draft' : 'publish';
 
-		$result = wp_update_post( [
-			'ID'          => $service_id,
-			'post_status' => $new_status,
-		] );
+		$result = wp_update_post(
+			array(
+				'ID'          => $service_id,
+				'post_status' => $new_status,
+			)
+		);
 
 		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
-		wp_send_json_success( [
-			'message'    => __( 'Service status updated.', 'wp-sell-services' ),
-			'new_status' => $new_status,
-		] );
+		wp_send_json_success(
+			array(
+				'message'    => __( 'Service status updated.', 'wp-sell-services' ),
+				'new_status' => $new_status,
+			)
+		);
 	}
 
 	/**
@@ -1329,33 +1426,38 @@ class VendorDashboard {
 		check_ajax_referer( 'wpss_vendor_registration', 'wpss_registration_nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( [ 'message' => __( 'You must be logged in to register as a vendor.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'You must be logged in to register as a vendor.', 'wp-sell-services' ) ) );
 		}
 
 		$user_id = get_current_user_id();
 
 		if ( $this->vendor_service->is_vendor( $user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'You are already registered as a vendor.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'You are already registered as a vendor.', 'wp-sell-services' ) ) );
 		}
 
-		$data = [
-			'display_name'  => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
-			'tagline'       => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
-			'bio'           => wp_kses_post( wp_unslash( $_POST['bio'] ?? '' ) ),
-			'skills'        => array_map( 'trim', explode( ',', sanitize_text_field( wp_unslash( $_POST['skills'] ?? '' ) ) ) ),
-			'terms_agreed'  => ! empty( $_POST['terms_agreed'] ),
-		];
+		$data = array(
+			'display_name' => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
+			'tagline'      => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
+			'bio'          => wp_kses_post( wp_unslash( $_POST['bio'] ?? '' ) ),
+			'skills'       => array_map( 'trim', explode( ',', sanitize_text_field( wp_unslash( $_POST['skills'] ?? '' ) ) ) ),
+			'terms_agreed' => ! empty( $_POST['terms_agreed'] ),
+		);
 
 		if ( ! $data['terms_agreed'] ) {
-			wp_send_json_error( [ 'message' => __( 'You must agree to the terms and conditions.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'You must agree to the terms and conditions.', 'wp-sell-services' ) ) );
 		}
 
 		$result = $this->vendor_service->register_vendor( $user_id, $data );
 
 		if ( $result['success'] ) {
-			wp_send_json_success( array_merge( $result, [
-				'redirect' => $this->get_dashboard_url(),
-			] ) );
+			wp_send_json_success(
+				array_merge(
+					$result,
+					array(
+						'redirect' => $this->get_dashboard_url(),
+					)
+				)
+			);
 		} else {
 			wp_send_json_error( $result );
 		}
@@ -1372,7 +1474,12 @@ class VendorDashboard {
 		if ( $page_id ) {
 			return add_query_arg( 'order_id', $order_id, get_permalink( $page_id ) );
 		}
-		return add_query_arg( [ 'tab' => 'orders', 'order_id' => $order_id ] );
+		return add_query_arg(
+			array(
+				'tab'      => 'orders',
+				'order_id' => $order_id,
+			)
+		);
 	}
 
 	/**
@@ -1402,7 +1509,7 @@ class VendorDashboard {
 	 * @return string Status label.
 	 */
 	private function get_status_label( string $status ): string {
-		$labels = [
+		$labels = array(
 			'pending'              => __( 'Pending', 'wp-sell-services' ),
 			'requirements_pending' => __( 'Requirements Pending', 'wp-sell-services' ),
 			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
@@ -1412,7 +1519,7 @@ class VendorDashboard {
 			'cancelled'            => __( 'Cancelled', 'wp-sell-services' ),
 			'disputed'             => __( 'Disputed', 'wp-sell-services' ),
 			'late'                 => __( 'Late', 'wp-sell-services' ),
-		];
+		);
 
 		return $labels[ $status ] ?? ucfirst( str_replace( '_', ' ', $status ) );
 	}

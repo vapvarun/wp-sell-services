@@ -71,8 +71,27 @@ class Settings {
 			wp_send_json_error( array( 'message' => __( 'Missing required data.', 'wp-sell-services' ) ) );
 		}
 
-		// Define page content based on field.
-		$page_content = $this->get_page_content( $field );
+		// Check if a page with this shortcode already exists.
+		$page_content     = $this->get_page_content( $field );
+		$existing_page_id = $this->find_existing_page( $field, $page_content );
+
+		if ( $existing_page_id ) {
+			// Page already exists - update option and return existing page.
+			$options           = get_option( 'wpss_pages', array() );
+			$options[ $field ] = $existing_page_id;
+			update_option( 'wpss_pages', $options );
+
+			wp_send_json_success(
+				array(
+					'page_id'  => $existing_page_id,
+					'title'    => get_the_title( $existing_page_id ),
+					'view_url' => get_permalink( $existing_page_id ),
+					'edit_url' => get_edit_post_link( $existing_page_id, 'raw' ),
+					'existing' => true,
+					'message'  => __( 'Existing page found and linked.', 'wp-sell-services' ),
+				)
+			);
+		}
 
 		// Create the page.
 		$page_id = wp_insert_post(
@@ -101,6 +120,45 @@ class Settings {
 				'edit_url' => get_edit_post_link( $page_id, 'raw' ),
 			)
 		);
+	}
+
+	/**
+	 * Find an existing page with the WPSS shortcode.
+	 *
+	 * @param string $field        Page field key.
+	 * @param string $page_content Expected shortcode content.
+	 * @return int|null Page ID if found, null otherwise.
+	 */
+	private function find_existing_page( string $field, string $page_content ): ?int {
+		// First check if we already have a valid page ID stored.
+		$options = get_option( 'wpss_pages', array() );
+		if ( ! empty( $options[ $field ] ) ) {
+			$stored_page = get_post( $options[ $field ] );
+			if ( $stored_page && 'page' === $stored_page->post_type && 'trash' !== $stored_page->post_status ) {
+				return (int) $stored_page->ID;
+			}
+		}
+
+		// If no shortcode, skip search.
+		if ( empty( $page_content ) ) {
+			return null;
+		}
+
+		// Search for pages containing this shortcode.
+		$pages = get_posts(
+			array(
+				'post_type'      => 'page',
+				'post_status'    => array( 'publish', 'draft', 'private' ),
+				'posts_per_page' => 1,
+				's'              => $page_content,
+			)
+		);
+
+		if ( ! empty( $pages ) ) {
+			return (int) $pages[0]->ID;
+		}
+
+		return null;
 	}
 
 	/**

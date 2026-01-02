@@ -104,6 +104,10 @@ class SingleServiceView {
 			true
 		);
 
+		// Get checkout and cart URLs with WooCommerce fallback.
+		$checkout_url = function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout/' );
+		$cart_url     = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+
 		wp_localize_script(
 			'wpss-single-service',
 			'wpssService',
@@ -111,8 +115,8 @@ class SingleServiceView {
 				'serviceId'   => get_the_ID(),
 				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 				'nonce'       => wp_create_nonce( 'wpss_service_nonce' ),
-				'checkoutUrl' => wc_get_checkout_url(),
-				'cartUrl'     => wc_get_cart_url(),
+				'checkoutUrl' => $checkout_url,
+				'cartUrl'     => $cart_url,
 				'i18n'        => array(
 					'addingToCart' => __( 'Adding to cart...', 'wp-sell-services' ),
 					'added'        => __( 'Added to cart!', 'wp-sell-services' ),
@@ -267,8 +271,8 @@ class SingleServiceView {
 		<div class="wpss-service-meta">
 			<div class="wpss-meta-item wpss-meta-vendor">
 				<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 32 ) ) ); ?>"
-					 alt="<?php echo esc_attr( $vendor->display_name ?? '' ); ?>"
-					 class="wpss-vendor-mini-avatar">
+					alt="<?php echo esc_attr( $vendor->display_name ?? '' ); ?>"
+					class="wpss-vendor-mini-avatar">
 				<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>" class="wpss-vendor-name">
 					<?php echo esc_html( $vendor->display_name ?? __( 'Unknown Vendor', 'wp-sell-services' ) ); ?>
 				</a>
@@ -431,8 +435,8 @@ class SingleServiceView {
 			<div class="wpss-vendor-profile">
 				<div class="wpss-vendor-header">
 					<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 100 ) ) ); ?>"
-						 alt="<?php echo esc_attr( $vendor->display_name ); ?>"
-						 class="wpss-vendor-avatar">
+						alt="<?php echo esc_attr( $vendor->display_name ); ?>"
+						class="wpss-vendor-avatar">
 					<div class="wpss-vendor-info">
 						<h3 class="wpss-vendor-name">
 							<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>">
@@ -474,7 +478,7 @@ class SingleServiceView {
 					</div>
 
 					<a href="#" class="wpss-btn wpss-btn-outline wpss-contact-btn"
-					   data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+						data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 						<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
 					</a>
 				</div>
@@ -704,10 +708,10 @@ class SingleServiceView {
 								<?php foreach ( $extras as $index => $extra ) : ?>
 									<label class="wpss-extra-option">
 										<input type="checkbox"
-											   name="extras[]"
-											   value="<?php echo esc_attr( $index ); ?>"
-											   data-price="<?php echo esc_attr( $extra['price'] ?? 0 ); ?>"
-											   data-time="<?php echo esc_attr( $extra['delivery_time'] ?? 0 ); ?>">
+												name="extras[]"
+												value="<?php echo esc_attr( $index ); ?>"
+												data-price="<?php echo esc_attr( $extra['price'] ?? 0 ); ?>"
+												data-time="<?php echo esc_attr( $extra['delivery_time'] ?? 0 ); ?>">
 										<span class="wpss-extra-info">
 											<span class="wpss-extra-title"><?php echo esc_html( $extra['title'] ?? '' ); ?></span>
 											<?php if ( ! empty( $extra['description'] ) ) : ?>
@@ -732,11 +736,11 @@ class SingleServiceView {
 							<div class="wpss-quantity-input">
 								<button type="button" class="wpss-quantity-btn wpss-quantity-minus">-</button>
 								<input type="number"
-									   id="wpss-quantity"
-									   name="quantity"
-									   value="1"
-									   min="1"
-									   max="<?php echo esc_attr( apply_filters( 'wpss_max_order_quantity', 10 ) ); ?>">
+										id="wpss-quantity"
+										name="quantity"
+										value="1"
+										min="1"
+										max="<?php echo esc_attr( apply_filters( 'wpss_max_order_quantity', 10 ) ); ?>">
 								<button type="button" class="wpss-quantity-btn wpss-quantity-plus">+</button>
 							</div>
 						</div>
@@ -801,8 +805,8 @@ class SingleServiceView {
 				<div class="wpss-modal-body">
 					<div class="wpss-contact-vendor-info">
 						<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 50 ) ) ); ?>"
-							 alt="<?php echo esc_attr( $vendor->display_name ); ?>"
-							 class="wpss-vendor-avatar">
+							alt="<?php echo esc_attr( $vendor->display_name ); ?>"
+							class="wpss-vendor-avatar">
 						<div class="wpss-vendor-details">
 							<strong><?php echo esc_html( $vendor->display_name ); ?></strong>
 							<?php
@@ -846,10 +850,10 @@ class SingleServiceView {
 							<div class="wpss-form-field">
 								<label for="wpss-contact-message"><?php esc_html_e( 'Your Message', 'wp-sell-services' ); ?></label>
 								<textarea id="wpss-contact-message"
-										  name="message"
-										  rows="5"
-										  placeholder="<?php esc_attr_e( 'Tell the seller what you need...', 'wp-sell-services' ); ?>"
-										  required></textarea>
+											name="message"
+											rows="5"
+											placeholder="<?php esc_attr_e( 'Tell the seller what you need...', 'wp-sell-services' ); ?>"
+											required></textarea>
 								<p class="wpss-field-hint">
 									<?php esc_html_e( 'Be specific about your requirements for better assistance.', 'wp-sell-services' ); ?>
 								</p>
@@ -858,10 +862,10 @@ class SingleServiceView {
 							<div class="wpss-form-field">
 								<label for="wpss-contact-attachment"><?php esc_html_e( 'Attach Files (optional)', 'wp-sell-services' ); ?></label>
 								<input type="file"
-									   id="wpss-contact-attachment"
-									   name="attachments[]"
-									   multiple
-									   accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
+										id="wpss-contact-attachment"
+										name="attachments[]"
+										multiple
+										accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
 								<p class="wpss-field-hint">
 									<?php esc_html_e( 'Max 5 files. Allowed: images, PDF, Word, ZIP.', 'wp-sell-services' ); ?>
 								</p>

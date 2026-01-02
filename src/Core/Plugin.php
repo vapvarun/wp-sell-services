@@ -12,6 +12,7 @@ namespace WPSellServices\Core;
 
 use WPSellServices\Admin\Admin;
 use WPSellServices\Frontend\Frontend;
+use WPSellServices\Frontend\Shortcodes;
 use WPSellServices\Frontend\SingleServiceView;
 use WPSellServices\Frontend\ServiceArchiveView;
 use WPSellServices\Frontend\BuyerRequestArchiveView;
@@ -91,6 +92,13 @@ final class Plugin {
 	private ?SEO $seo = null;
 
 	/**
+	 * Shortcodes instance.
+	 *
+	 * @var Shortcodes|null
+	 */
+	private ?Shortcodes $shortcodes = null;
+
+	/**
 	 * Single service view instance.
 	 *
 	 * @var SingleServiceView|null
@@ -145,6 +153,7 @@ final class Plugin {
 		$this->define_api_hooks();
 		$this->define_blocks_hooks();
 		$this->define_seo_hooks();
+		$this->define_shortcode_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -335,6 +344,19 @@ final class Plugin {
 	}
 
 	/**
+	 * Define shortcode hooks.
+	 *
+	 * Shortcodes need to be available on both frontend and admin (for editor preview).
+	 *
+	 * @return void
+	 */
+	private function define_shortcode_hooks(): void {
+		$this->shortcodes = new Shortcodes();
+
+		$this->loader->add_action( 'init', $this->shortcodes, 'init' );
+	}
+
+	/**
 	 * Get the loader instance.
 	 *
 	 * @return Loader
@@ -386,6 +408,15 @@ final class Plugin {
 	 */
 	public function get_seo(): ?SEO {
 		return $this->seo;
+	}
+
+	/**
+	 * Get the shortcodes instance.
+	 *
+	 * @return Shortcodes|null
+	 */
+	public function get_shortcodes(): ?Shortcodes {
+		return $this->shortcodes;
 	}
 
 	/**

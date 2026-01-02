@@ -26,9 +26,9 @@ class ManualOrderPage {
 	 */
 	public function init(): void {
 		// Priority 20 to ensure parent menu is registered first (default is 10).
-		add_action( 'admin_menu', [ $this, 'add_menu_page' ], 20 );
-		add_action( 'wp_ajax_wpss_create_manual_order', [ $this, 'handle_create_order' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
+		add_action( 'wp_ajax_wpss_create_manual_order', array( $this, 'handle_create_order' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
 	/**
@@ -43,7 +43,7 @@ class ManualOrderPage {
 			__( 'Create Test Order', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-create-order',
-			[ $this, 'render_page' ]
+			array( $this, 'render_page' )
 		);
 	}
 
@@ -54,7 +54,7 @@ class ManualOrderPage {
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'sell-services_page_wpss-create-order' !== $hook ) {
+		if ( 'wp-sell-services_page_wpss-create-order' !== $hook ) {
 			return;
 		}
 
@@ -64,10 +64,10 @@ class ManualOrderPage {
 		wp_add_inline_script(
 			'wpss-admin',
 			'window.wpssManualOrder = ' . wp_json_encode(
-				[
+				array(
 					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'wpss_create_manual_order' ),
-				]
+				)
 			) . ';'
 		);
 	}
@@ -80,21 +80,21 @@ class ManualOrderPage {
 	public function render_page(): void {
 		// Get all published services.
 		$services = get_posts(
-			[
+			array(
 				'post_type'      => 'wpss_service',
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
-			]
+			)
 		);
 
 		// Get users.
 		$users = get_users(
-			[
+			array(
 				'orderby' => 'display_name',
 				'order'   => 'ASC',
-			]
+			)
 		);
 		?>
 		<div class="wrap">
@@ -193,12 +193,12 @@ class ManualOrderPage {
 									</th>
 									<td>
 										<input type="number"
-											   name="total"
-											   id="total"
-											   class="regular-text"
-											   step="0.01"
-											   min="0"
-											   placeholder="<?php esc_attr_e( 'Auto-calculated from service', 'wp-sell-services' ); ?>">
+												name="total"
+												id="total"
+												class="regular-text"
+												step="0.01"
+												min="0"
+												placeholder="<?php esc_attr_e( 'Auto-calculated from service', 'wp-sell-services' ); ?>">
 										<p class="description"><?php esc_html_e( 'Leave empty to use the service/package price.', 'wp-sell-services' ); ?></p>
 									</td>
 								</tr>
@@ -225,12 +225,12 @@ class ManualOrderPage {
 									</th>
 									<td>
 										<input type="number"
-											   name="delivery_days"
-											   id="delivery_days"
-											   class="small-text"
-											   min="1"
-											   value="7"
-											   placeholder="7">
+												name="delivery_days"
+												id="delivery_days"
+												class="small-text"
+												min="1"
+												value="7"
+												placeholder="7">
 										<p class="description"><?php esc_html_e( 'Number of days for delivery deadline from order start.', 'wp-sell-services' ); ?></p>
 									</td>
 								</tr>
@@ -242,10 +242,10 @@ class ManualOrderPage {
 									</th>
 									<td>
 										<textarea name="notes"
-												  id="notes"
-												  rows="3"
-												  class="large-text"
-												  placeholder="<?php esc_attr_e( 'Optional notes about this test order...', 'wp-sell-services' ); ?>"></textarea>
+													id="notes"
+													rows="3"
+													class="large-text"
+													placeholder="<?php esc_attr_e( 'Optional notes about this test order...', 'wp-sell-services' ); ?>"></textarea>
 									</td>
 								</tr>
 							</tbody>
@@ -510,7 +510,7 @@ class ManualOrderPage {
 		check_ajax_referer( 'wpss_create_manual_order', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		$service_id    = absint( $_POST['service_id'] ?? 0 );
@@ -522,19 +522,19 @@ class ManualOrderPage {
 		$notes         = sanitize_textarea_field( $_POST['notes'] ?? '' );
 
 		if ( ! $service_id || ! $customer_id ) {
-			wp_send_json_error( [ 'message' => __( 'Service and Customer are required.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Service and Customer are required.', 'wp-sell-services' ) ) );
 		}
 
 		$service = get_post( $service_id );
 		if ( ! $service || 'wpss_service' !== $service->post_type ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid service.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
 		$vendor_id = (int) $service->post_author;
 
 		// Prevent customer = vendor.
 		if ( $customer_id === $vendor_id ) {
-			wp_send_json_error( [ 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
 		// Get price if not specified.
@@ -576,7 +576,7 @@ class ManualOrderPage {
 		global $wpdb;
 		$result = $wpdb->insert(
 			$wpdb->prefix . 'wpss_orders',
-			[
+			array(
 				'order_number'       => $order_number,
 				'customer_id'        => $customer_id,
 				'vendor_id'          => $vendor_id,
@@ -598,14 +598,34 @@ class ManualOrderPage {
 				'started_at'         => 'in_progress' === $status ? current_time( 'mysql', true ) : null,
 				'created_at'         => current_time( 'mysql', true ),
 				'updated_at'         => current_time( 'mysql', true ),
-			],
-			[
-				'%s', '%d', '%d', '%d', '%d', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s',
-			]
+			),
+			array(
+				'%s',
+				'%d',
+				'%d',
+				'%d',
+				'%d',
+				'%s',
+				'%d',
+				'%f',
+				'%f',
+				'%f',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%d',
+				'%d',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+			)
 		);
 
 		if ( ! $result ) {
-			wp_send_json_error( [ 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
 		}
 
 		$order_id = $wpdb->insert_id;
@@ -614,7 +634,7 @@ class ManualOrderPage {
 		if ( $notes ) {
 			$wpdb->insert(
 				$wpdb->prefix . 'wpss_conversations',
-				[
+				array(
 					'order_id'   => $order_id,
 					'sender_id'  => get_current_user_id(),
 					'message'    => sprintf(
@@ -624,8 +644,8 @@ class ManualOrderPage {
 					),
 					'type'       => 'system',
 					'created_at' => current_time( 'mysql', true ),
-				],
-				[ '%d', '%d', '%s', '%s', '%s' ]
+				),
+				array( '%d', '%d', '%s', '%s', '%s' )
 			);
 		}
 
@@ -633,13 +653,13 @@ class ManualOrderPage {
 		do_action( 'wpss_order_created', $order_id, $status );
 
 		wp_send_json_success(
-			[
+			array(
 				'order_id'         => $order_id,
 				'order_number'     => $order_number,
 				'status'           => $status,
 				'view_url'         => wpss_get_order_url( $order_id ),
 				'requirements_url' => wpss_get_order_requirements_url( $order_id ),
-			]
+			)
 		);
 	}
 }

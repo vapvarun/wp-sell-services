@@ -238,6 +238,12 @@ function wpss_deactivate(): void {
 	// Run deactivator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Deactivator.php';
 	Core\Deactivator::deactivate();
+
+	// Also deactivate Pro plugin if active (Pro depends on Free).
+	$pro_plugin = 'wp-sell-services-pro/wp-sell-services-pro.php';
+	if ( is_plugin_active( $pro_plugin ) ) {
+		deactivate_plugins( $pro_plugin );
+	}
 }
 
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\wpss_deactivate' );
