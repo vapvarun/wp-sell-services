@@ -15,6 +15,7 @@
 		initPackageTabs();
 		initFAQRepeater();
 		initRequirementsRepeater();
+		initAddonsRepeater();
 		initGalleryUpload();
 		initSortable();
 		initColorPicker();
@@ -143,6 +144,82 @@
 	}
 
 	/**
+	 * Addons repeater functionality
+	 */
+	function initAddonsRepeater() {
+		var $container = $('#wpss-addons-list');
+		var $addButton = $('#wpss-add-addon');
+
+		if (!$container.length || !$addButton.length) {
+			return;
+		}
+
+		// Add Addon using WordPress template
+		$addButton.on('click', function(e) {
+			e.preventDefault();
+			var index = $container.find('.wpss-addon-item').length;
+			var template = wp.template('wpss-addon-item');
+			$container.append(template({ index: index }));
+		});
+
+		// Remove Addon
+		$(document).on('click', '.wpss-remove-addon', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			$(this).closest('.wpss-addon-item').remove();
+			reindexAddons();
+		});
+
+		// Toggle Addon collapse/expand
+		$(document).on('click', '.wpss-addon-toggle', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			$(this).closest('.wpss-addon-item').toggleClass('collapsed');
+		});
+
+		// Handle field type change to show/hide conditional fields
+		$(document).on('change', '.wpss-addon-field-type', function() {
+			var $item = $(this).closest('.wpss-addon-item');
+			var $quantityFields = $item.find('.wpss-addon-quantity-fields');
+			var $dropdownFields = $item.find('.wpss-addon-dropdown-fields');
+			var type = $(this).val();
+
+			// Hide all conditional fields first
+			$quantityFields.slideUp(200);
+			$dropdownFields.slideUp(200);
+
+			// Show relevant fields based on type
+			if (type === 'quantity') {
+				$quantityFields.slideDown(200);
+			} else if (type === 'dropdown') {
+				$dropdownFields.slideDown(200);
+			}
+		});
+
+		// Update addon title in header when title input changes
+		$(document).on('input', '.wpss-addon-title-input', function() {
+			var $item = $(this).closest('.wpss-addon-item');
+			var title = $(this).val() || 'New Add-on';
+			$item.find('.wpss-addon-header .wpss-addon-title').text(title);
+		});
+	}
+
+	/**
+	 * Reindex addons after removal
+	 */
+	function reindexAddons() {
+		$('#wpss-addons-list .wpss-addon-item').each(function(index) {
+			$(this).attr('data-index', index);
+			$(this).find('input, select, textarea').each(function() {
+				var name = $(this).attr('name');
+				if (name) {
+					$(this).attr('name', name.replace(/wpss_addons\[\d+\]/, 'wpss_addons[' + index + ']'));
+				}
+			});
+		});
+	}
+
+	/**
 	 * Gallery upload functionality
 	 */
 	function initGalleryUpload() {
@@ -220,6 +297,14 @@
 			placeholder: 'wpss-sortable-placeholder',
 			update: function() {
 				reindexRequirements();
+			}
+		});
+
+		$('#wpss-addons-list').sortable({
+			handle: '.wpss-sortable-handle',
+			placeholder: 'wpss-sortable-placeholder',
+			update: function() {
+				reindexAddons();
 			}
 		});
 

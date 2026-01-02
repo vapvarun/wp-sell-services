@@ -1327,6 +1327,281 @@
 	}
 }
 
+/* ==========================================================================
+   Service Addons Metabox
+   ========================================================================== */
+
+.wpss-addons-wrapper {
+	padding: 10px 0;
+}
+
+.wpss-addons-wrapper > p.description {
+	color: var(--wpss-admin-text-light);
+	margin: 0 0 15px;
+	font-style: normal;
+}
+
+#wpss-addons-list {
+	margin-bottom: 15px;
+}
+
+.wpss-addon-item {
+	background: #fff;
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: 8px;
+	margin-bottom: 12px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+	overflow: hidden;
+}
+
+.wpss-addon-item:hover {
+	border-color: #b4b9be;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.wpss-addon-item:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-addon-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 15px;
+	background: #f8f9fa;
+	border-bottom: 1px solid var(--wpss-admin-border);
+	cursor: pointer;
+}
+
+.wpss-addon-header .wpss-sortable-handle {
+	cursor: move;
+	color: #c3c4c7;
+	transition: color 0.2s ease;
+}
+
+.wpss-addon-header .wpss-sortable-handle:hover {
+	color: var(--wpss-admin-text);
+}
+
+.wpss-addon-header .wpss-addon-title {
+	flex: 1;
+	font-weight: 600;
+	font-size: 13px;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-addon-actions {
+	display: flex;
+	gap: 4px;
+}
+
+.wpss-addon-toggle,
+.wpss-remove-addon {
+	background: none;
+	border: none;
+	color: #c3c4c7;
+	padding: 5px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+	border-radius: 4px;
+}
+
+.wpss-addon-toggle:hover {
+	color: var(--wpss-admin-primary);
+	background: rgba(29, 191, 115, 0.1);
+}
+
+.wpss-remove-addon:hover {
+	color: var(--wpss-admin-danger);
+	background: rgba(214, 54, 56, 0.1);
+}
+
+.wpss-addon-toggle .dashicons,
+.wpss-remove-addon .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+.wpss-addon-body {
+	padding: 15px;
+}
+
+.wpss-addon-item.collapsed .wpss-addon-body {
+	display: none;
+}
+
+.wpss-addon-item.collapsed .wpss-addon-toggle .dashicons {
+	transform: rotate(-90deg);
+}
+
+.wpss-addon-row {
+	margin-bottom: 12px;
+}
+
+.wpss-addon-row:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-addon-row-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 15px;
+}
+
+.wpss-addon-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.wpss-addon-field label {
+	font-weight: 500;
+	font-size: 13px;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-addon-field-full {
+	grid-column: 1 / -1;
+}
+
+.wpss-addon-field-checkbox {
+	flex-direction: row;
+	align-items: center;
+	padding-top: 24px;
+}
+
+.wpss-addon-field-checkbox label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 400;
+	cursor: pointer;
+}
+
+.wpss-addon-field-checkbox input[type="checkbox"] {
+	margin: 0;
+}
+
+/* Add button styling */
+#wpss-add-addon {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+#wpss-add-addon .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	margin-top: 2px;
+}
+
+@media screen and (max-width: 782px) {
+	.wpss-addon-row-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-addon-field-checkbox {
+		padding-top: 0;
+	}
+}
+
+/* ==========================================================================
+   Branded Meta Box Enhancements
+   ========================================================================== */
+
+/* Remove default WordPress meta box padding for our branded boxes */
+#wpss_service_details .inside,
+#wpss_service_packages .inside,
+#wpss_service_faqs .inside,
+#wpss_service_requirements .inside,
+#wpss_service_addons .inside,
+#wpss_service_gallery .inside,
+#wpss_service_stats .inside {
+	padding: 0;
+	margin: 0;
+}
+
+/* Add internal padding */
+.wpss-details-wrapper,
+.wpss-packages-wrapper,
+.wpss-faqs-wrapper,
+.wpss-requirements-wrapper,
+.wpss-addons-wrapper,
+.wpss-gallery-wrapper,
+.wpss-stats-wrapper {
+	padding: 12px;
+}
+
+/* Branded meta box headers */
+#wpss_service_details .postbox-header,
+#wpss_service_packages .postbox-header,
+#wpss_service_faqs .postbox-header,
+#wpss_service_requirements .postbox-header,
+#wpss_service_addons .postbox-header,
+#wpss_service_gallery .postbox-header,
+#wpss_service_stats .postbox-header {
+	border-bottom-color: var(--wpss-admin-primary);
+	border-bottom-width: 2px;
+}
+
+/* Meta box title with icon */
+#wpss_service_details .postbox-header h2,
+#wpss_service_packages .postbox-header h2,
+#wpss_service_faqs .postbox-header h2,
+#wpss_service_requirements .postbox-header h2,
+#wpss_service_addons .postbox-header h2,
+#wpss_service_gallery .postbox-header h2,
+#wpss_service_stats .postbox-header h2 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+#wpss_service_details .postbox-header h2::before {
+	content: "\f339";
+	font-family: dashicons;
+	color: var(--wpss-admin-primary);
+}
+
+#wpss_service_packages .postbox-header h2::before {
+	content: "\f155";
+	font-family: dashicons;
+	color: var(--wpss-admin-primary);
+}
+
+#wpss_service_faqs .postbox-header h2::before {
+	content: "\f223";
+	font-family: dashicons;
+	color: var(--wpss-admin-primary);
+}
+
+#wpss_service_requirements .postbox-header h2::before {
+	content: "\f163";
+	font-family: dashicons;
+	color: var(--wpss-admin-primary);
+}
+
+#wpss_service_addons .postbox-header h2::before {
+	content: "\f132";
+	font-family: dashicons;
+	color: var(--wpss-admin-primary);
+}
+
+#wpss_service_gallery .postbox-header h2::before {
+	content: "\f161";
+	font-family: dashicons;
+	color: var(--wpss-admin-primary);
+}
+
+#wpss_service_stats .postbox-header h2::before {
+	content: "\f239";
+	font-family: dashicons;
+	color: var(--wpss-admin-primary);
+}
+
 @media screen and (max-width: 782px) {
 	.wpss-details-grid {
 		grid-template-columns: 1fr;
