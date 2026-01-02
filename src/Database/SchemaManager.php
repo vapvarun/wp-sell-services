@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.1.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -101,7 +101,7 @@ class SchemaManager {
 	private function create_tables(): void {
 		$charset_collate = $this->wpdb->get_charset_collate();
 
-		$tables = [
+		$tables = array(
 			$this->get_service_packages_table( $charset_collate ),
 			$this->get_service_addons_table( $charset_collate ),
 			$this->get_service_faqs_table( $charset_collate ),
@@ -122,7 +122,7 @@ class SchemaManager {
 			$this->get_wallet_transactions_table( $charset_collate ),
 			$this->get_service_platform_map_table( $charset_collate ),
 			$this->get_analytics_events_table( $charset_collate ),
-		];
+		);
 
 		foreach ( $tables as $sql ) {
 			dbDelta( $sql );
@@ -158,6 +158,9 @@ class SchemaManager {
 	/**
 	 * Get service addons table SQL.
 	 *
+	 * Field types: checkbox, quantity, dropdown, text.
+	 * Price types: flat, percentage, quantity_based.
+	 *
 	 * @param string $charset_collate Charset collation.
 	 * @return string SQL statement.
 	 */
@@ -169,13 +172,22 @@ class SchemaManager {
 			service_id bigint(20) unsigned NOT NULL,
 			title varchar(255) NOT NULL,
 			description text,
-			price decimal(10,2) NOT NULL,
+			field_type varchar(50) DEFAULT 'checkbox',
+			price decimal(10,2) NOT NULL DEFAULT 0,
+			price_type varchar(50) DEFAULT 'flat',
+			min_quantity int(11) DEFAULT 1,
+			max_quantity int(11) DEFAULT 10,
+			is_required tinyint(1) DEFAULT 0,
+			options longtext,
 			delivery_days_extra int(11) DEFAULT 0,
+			applies_to longtext,
 			is_active tinyint(1) DEFAULT 1,
 			sort_order int(11) DEFAULT 0,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_service (service_id)
+			KEY idx_service (service_id),
+			KEY idx_active (service_id, is_active)
 		) {$charset_collate};";
 	}
 
@@ -698,7 +710,7 @@ class SchemaManager {
 	 * @return void
 	 */
 	public function uninstall(): void {
-		$tables = [
+		$tables = array(
 			'analytics_events',
 			'service_platform_map',
 			'wallet_transactions',
@@ -719,7 +731,7 @@ class SchemaManager {
 			'service_faqs',
 			'service_addons',
 			'service_packages',
-		];
+		);
 
 		foreach ( $tables as $table ) {
 			$table_name = $this->get_table_name( $table );
@@ -735,7 +747,7 @@ class SchemaManager {
 	 * @return array<string, string> Table names keyed by short name.
 	 */
 	public function get_tables(): array {
-		return [
+		return array(
 			'service_packages'     => $this->get_table_name( 'service_packages' ),
 			'service_addons'       => $this->get_table_name( 'service_addons' ),
 			'service_faqs'         => $this->get_table_name( 'service_faqs' ),
@@ -756,6 +768,6 @@ class SchemaManager {
 			'wallet_transactions'  => $this->get_table_name( 'wallet_transactions' ),
 			'service_platform_map' => $this->get_table_name( 'service_platform_map' ),
 			'analytics_events'     => $this->get_table_name( 'analytics_events' ),
-		];
+		);
 	}
 }

@@ -154,12 +154,12 @@ class Test_Command extends WP_CLI_Command {
 	public function tables(): void {
 		global $wpdb;
 
+		// Note: Messages stored in conversations table (merged design).
 		$tables = array(
 			'wpss_orders'           => 'Service orders',
 			'wpss_service_packages' => 'Service packages',
 			'wpss_service_addons'   => 'Service add-ons',
-			'wpss_conversations'    => 'Conversations',
-			'wpss_messages'         => 'Messages',
+			'wpss_conversations'    => 'Conversations (includes messages)',
 			'wpss_deliveries'       => 'Deliveries',
 			'wpss_reviews'          => 'Reviews',
 			'wpss_disputes'         => 'Disputes',
