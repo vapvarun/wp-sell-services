@@ -169,6 +169,14 @@ function wpss_init(): void {
 		require_once $autoloader;
 	}
 
+	// Load WP-CLI commands.
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		$cli_command = WPSS_PLUGIN_DIR . 'tests/cli/class-test-command.php';
+		if ( file_exists( $cli_command ) ) {
+			require_once $cli_command;
+		}
+	}
+
 	// Load helper functions.
 	require_once WPSS_PLUGIN_DIR . 'src/functions.php';
 
