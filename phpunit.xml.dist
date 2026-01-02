@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+	bootstrap="tests/bootstrap.php"
+	backupGlobals="false"
+	colors="true"
+	convertDeprecationsToExceptions="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+>
+	<testsuites>
+		<testsuite name="unit">
+			<directory suffix="Test.php">./tests/Unit</directory>
+		</testsuite>
+		<testsuite name="integration">
+			<directory suffix="Test.php">./tests/Integration</directory>
+		</testsuite>
+		<testsuite name="api">
+			<directory suffix="Test.php">./tests/API</directory>
+		</testsuite>
+	</testsuites>
+
+	<coverage>
+		<report>
+			<clover outputFile="coverage/clover.xml"/>
+			<html outputDirectory="coverage/html"/>
+		</report>
+		<include>
+			<directory suffix=".php">./src</directory>
+		</include>
+		<exclude>
+			<directory suffix=".php">./vendor</directory>
+			<directory suffix=".php">./tests</directory>
+		</exclude>
+	</coverage>
+
+	<php>
+		<const name="WPSS_TESTING" value="true"/>
+		<env name="WP_TESTS_DOMAIN" value="localhost"/>
+		<env name="WP_TESTS_EMAIL" value="admin@localhost"/>
+		<env name="WP_TESTS_TITLE" value="WP Sell Services Tests"/>
+	</php>
+</phpunit>
