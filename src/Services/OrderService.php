@@ -265,7 +265,7 @@ class OrderService {
 		}
 
 		// Calculate delivery deadline from now.
-		$service = $order->get_service();
+		$service       = $order->get_service();
 		$delivery_days = 7;
 
 		if ( $order->package_id && $service ) {
@@ -276,6 +276,15 @@ class OrderService {
 					break;
 				}
 			}
+		}
+
+		// Add addon delivery days (can be negative for rush delivery).
+		if ( ! empty( $order->addons ) && is_array( $order->addons ) ) {
+			foreach ( $order->addons as $addon ) {
+				$delivery_days += (int) ( $addon['delivery_days_extra'] ?? 0 );
+			}
+			// Ensure delivery days doesn't go below 1.
+			$delivery_days = max( 1, $delivery_days );
 		}
 
 		$deadline = new \DateTimeImmutable( '+' . $delivery_days . ' days' );

@@ -76,6 +76,20 @@ class WCOrderProvider implements OrderProviderInterface {
 				}
 			}
 
+			// Add addon delivery days and calculate addon totals.
+			if ( ! empty( $addons ) && is_array( $addons ) ) {
+				foreach ( $addons as $addon ) {
+					// Add extra delivery days from addon (can be negative for rush delivery).
+					$delivery_days += (int) ( $addon['delivery_days_extra'] ?? 0 );
+
+					// Calculate addon price contribution.
+					$addons_total += (float) ( $addon['price'] ?? 0 );
+				}
+
+				// Ensure delivery days doesn't go below 1.
+				$delivery_days = max( 1, $delivery_days );
+			}
+
 			// Calculate deadline.
 			$deadline = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
 
