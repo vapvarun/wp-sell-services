@@ -171,9 +171,16 @@ function wpss_init(): void {
 
 	// Load WP-CLI commands.
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		// Test commands.
 		$cli_command = WPSS_PLUGIN_DIR . 'tests/cli/class-test-command.php';
 		if ( file_exists( $cli_command ) ) {
 			require_once $cli_command;
+		}
+
+		// Service management commands.
+		$service_commands = WPSS_PLUGIN_DIR . 'src/CLI/ServiceCommands.php';
+		if ( file_exists( $service_commands ) ) {
+			require_once $service_commands;
 		}
 	}
 
