@@ -156,3 +156,35 @@ add_action('wpss_loaded', function($plugin) {
     // Register pro features
 });
 ```
+
+## Basecamp Project Tracking
+
+**Project**: WP Sell Services
+**Project ID**: `45156734`
+
+### Card Table Columns
+
+| Column | ID | URL | Purpose |
+|--------|-----|-----|---------|
+| Bugs | `9381846253` | https://3.basecamp.com/5798509/buckets/45156734/card_tables/columns/9381846253 | Active bugs to fix |
+| Ready for Testing | `9381846060` | https://3.basecamp.com/5798509/buckets/45156734/card_tables/columns/9381846060 | Fixed bugs awaiting QA |
+
+### Workflow
+1. Pick bug card from **Bugs** column
+2. Fix the issue and commit with descriptive message
+3. Add comment to card with:
+   - Root cause
+   - Fix applied
+   - Files changed
+   - Testing steps
+4. Move card to **Ready for Testing** column
+5. QA team verifies fix and moves to Done
+
+### Comment Format (HTML)
+```html
+<strong>✅ Fixed</strong><br><br>
+<strong>Root Cause:</strong><br>Description<br><br>
+<strong>Fix Applied:</strong><br>What was changed<br><br>
+<strong>Files Changed:</strong><br>• file1.php<br>• file2.php<br><br>
+<strong>Testing Steps:</strong><br>1. Step one<br>2. Step two
+```
