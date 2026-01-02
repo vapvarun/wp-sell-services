@@ -61,7 +61,7 @@ class ServiceGrid extends AbstractBlock {
 	 * @return array
 	 */
 	public function get_keywords(): array {
-		return [ 'services', 'grid', 'listing', 'gigs', 'marketplace' ];
+		return array( 'services', 'grid', 'listing', 'gigs', 'marketplace' );
 	}
 
 	/**
@@ -70,48 +70,48 @@ class ServiceGrid extends AbstractBlock {
 	 * @return array
 	 */
 	public function get_attributes(): array {
-		return [
-			'columns'        => [
+		return array(
+			'columns'        => array(
 				'type'    => 'number',
 				'default' => 3,
-			],
-			'perPage'        => [
+			),
+			'perPage'        => array(
 				'type'    => 'number',
 				'default' => 9,
-			],
-			'category'       => [
+			),
+			'category'       => array(
 				'type'    => 'number',
 				'default' => 0,
-			],
-			'orderBy'        => [
+			),
+			'orderBy'        => array(
 				'type'    => 'string',
 				'default' => 'date',
-			],
-			'order'          => [
+			),
+			'order'          => array(
 				'type'    => 'string',
 				'default' => 'DESC',
-			],
-			'showPagination' => [
+			),
+			'showPagination' => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showRating'     => [
+			),
+			'showRating'     => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showPrice'      => [
+			),
+			'showPrice'      => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showSeller'     => [
+			),
+			'showSeller'     => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'featured'       => [
+			),
+			'featured'       => array(
 				'type'    => 'boolean',
 				'default' => false,
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -124,7 +124,7 @@ class ServiceGrid extends AbstractBlock {
 	public function render( array $attributes, string $content = '' ): string {
 		$this->start_render();
 
-		$defaults = [
+		$defaults = array(
 			'columns'        => 3,
 			'perPage'        => 9,
 			'category'       => 0,
@@ -135,45 +135,45 @@ class ServiceGrid extends AbstractBlock {
 			'showPrice'      => true,
 			'showSeller'     => true,
 			'featured'       => false,
-		];
+		);
 
 		$attributes = wp_parse_args( $attributes, $defaults );
 
 		// Query arguments.
-		$args = [
+		$args = array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
 			'posts_per_page' => $attributes['perPage'],
 			'orderby'        => $attributes['orderBy'],
 			'order'          => $attributes['order'],
 			'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-		];
+		);
 
 		// Filter by category.
 		if ( ! empty( $attributes['category'] ) ) {
-			$args['tax_query'] = [
-				[
+			$args['tax_query'] = array(
+				array(
 					'taxonomy' => 'wpss_service_category',
 					'field'    => 'term_id',
 					'terms'    => $attributes['category'],
-				],
-			];
+				),
+			);
 		}
 
 		// Filter featured only.
 		if ( $attributes['featured'] ) {
-			$args['meta_query'] = [
-				[
+			$args['meta_query'] = array(
+				array(
 					'key'     => '_wpss_featured',
 					'value'   => '1',
 					'compare' => '=',
-				],
-			];
+				),
+			);
 		}
 
 		$query = new \WP_Query( $args );
 
-		$wrapper_classes = [ 'wpss-grid-cols-' . $attributes['columns'] ];
+		$wrapper_classes = array( 'wpss-grid-cols-' . $attributes['columns'] );
 		?>
 		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?>>
 			<?php if ( $query->have_posts() ) : ?>
@@ -190,12 +190,12 @@ class ServiceGrid extends AbstractBlock {
 					<div class="wpss-pagination">
 						<?php
 						echo paginate_links(
-							[
+							array(
 								'total'     => $query->max_num_pages,
 								'current'   => max( 1, get_query_var( 'paged' ) ),
 								'prev_text' => '&laquo;',
 								'next_text' => '&raquo;',
-							]
+							)
 						);
 						?>
 					</div>
@@ -221,11 +221,11 @@ class ServiceGrid extends AbstractBlock {
 	 * @return void
 	 */
 	private function render_service_card( array $attributes ): void {
-		$service_id = get_the_ID();
-		$thumbnail  = get_the_post_thumbnail_url( $service_id, 'medium_large' );
-		$seller_id  = get_post_field( 'post_author', $service_id );
-		$price      = get_post_meta( $service_id, '_wpss_starting_price', true );
-		$rating     = get_post_meta( $service_id, '_wpss_average_rating', true );
+		$service_id   = get_the_ID();
+		$thumbnail    = get_the_post_thumbnail_url( $service_id, 'medium_large' );
+		$seller_id    = get_post_field( 'post_author', $service_id );
+		$price        = get_post_meta( $service_id, '_wpss_starting_price', true );
+		$rating       = get_post_meta( $service_id, '_wpss_rating_average', true );
 		$review_count = get_post_meta( $service_id, '_wpss_review_count', true );
 		?>
 		<article class="wpss-service-card">

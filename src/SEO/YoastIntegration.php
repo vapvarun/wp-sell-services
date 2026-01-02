@@ -24,40 +24,40 @@ class YoastIntegration {
 	 */
 	public function init(): void {
 		// Title and meta.
-		add_filter( 'wpseo_title', [ $this, 'modify_title' ], 10, 1 );
-		add_filter( 'wpseo_metadesc', [ $this, 'modify_description' ], 10, 1 );
-		add_filter( 'wpseo_canonical', [ $this, 'modify_canonical' ], 10, 1 );
+		add_filter( 'wpseo_title', array( $this, 'modify_title' ), 10, 1 );
+		add_filter( 'wpseo_metadesc', array( $this, 'modify_description' ), 10, 1 );
+		add_filter( 'wpseo_canonical', array( $this, 'modify_canonical' ), 10, 1 );
 
 		// Open Graph.
-		add_filter( 'wpseo_opengraph_type', [ $this, 'set_og_type' ], 10, 1 );
-		add_filter( 'wpseo_opengraph_title', [ $this, 'modify_og_title' ], 10, 1 );
-		add_filter( 'wpseo_opengraph_desc', [ $this, 'modify_og_description' ], 10, 1 );
-		add_filter( 'wpseo_opengraph_image', [ $this, 'modify_og_image' ], 10, 1 );
-		add_filter( 'wpseo_add_opengraph_additional_images', [ $this, 'add_gallery_images' ], 10, 1 );
+		add_filter( 'wpseo_opengraph_type', array( $this, 'set_og_type' ), 10, 1 );
+		add_filter( 'wpseo_opengraph_title', array( $this, 'modify_og_title' ), 10, 1 );
+		add_filter( 'wpseo_opengraph_desc', array( $this, 'modify_og_description' ), 10, 1 );
+		add_filter( 'wpseo_opengraph_image', array( $this, 'modify_og_image' ), 10, 1 );
+		add_filter( 'wpseo_add_opengraph_additional_images', array( $this, 'add_gallery_images' ), 10, 1 );
 
 		// Twitter cards.
-		add_filter( 'wpseo_twitter_title', [ $this, 'modify_og_title' ], 10, 1 );
-		add_filter( 'wpseo_twitter_description', [ $this, 'modify_og_description' ], 10, 1 );
+		add_filter( 'wpseo_twitter_title', array( $this, 'modify_og_title' ), 10, 1 );
+		add_filter( 'wpseo_twitter_description', array( $this, 'modify_og_description' ), 10, 1 );
 
 		// Schema.
-		add_filter( 'wpseo_schema_graph_pieces', [ $this, 'add_schema_pieces' ], 10, 2 );
-		add_filter( 'wpseo_schema_webpage', [ $this, 'modify_webpage_schema' ], 10, 1 );
+		add_filter( 'wpseo_schema_graph_pieces', array( $this, 'add_schema_pieces' ), 10, 2 );
+		add_filter( 'wpseo_schema_webpage', array( $this, 'modify_webpage_schema' ), 10, 1 );
 
 		// Breadcrumbs.
-		add_filter( 'wpseo_breadcrumb_links', [ $this, 'modify_breadcrumbs' ], 10, 1 );
+		add_filter( 'wpseo_breadcrumb_links', array( $this, 'modify_breadcrumbs' ), 10, 1 );
 
 		// Sitemap.
-		add_filter( 'wpseo_sitemap_entry', [ $this, 'modify_sitemap_entry' ], 10, 3 );
-		add_filter( 'wpseo_sitemap_exclude_post', [ $this, 'exclude_from_sitemap' ], 10, 2 );
+		add_filter( 'wpseo_sitemap_entry', array( $this, 'modify_sitemap_entry' ), 10, 3 );
+		add_filter( 'wpseo_sitemap_exclude_post', array( $this, 'exclude_from_sitemap' ), 10, 2 );
 
 		// Meta box.
-		add_action( 'add_meta_boxes', [ $this, 'add_seo_hints_meta_box' ], 20 );
+		add_action( 'add_meta_boxes', array( $this, 'add_seo_hints_meta_box' ), 20 );
 
 		// Analysis.
-		add_filter( 'wpseo_primary_term_taxonomies', [ $this, 'add_primary_taxonomy' ], 10, 2 );
+		add_filter( 'wpseo_primary_term_taxonomies', array( $this, 'add_primary_taxonomy' ), 10, 2 );
 
 		// Robots.
-		add_filter( 'wpseo_robots', [ $this, 'modify_robots' ], 10, 1 );
+		add_filter( 'wpseo_robots', array( $this, 'modify_robots' ), 10, 1 );
 	}
 
 	/**
@@ -73,7 +73,7 @@ class YoastIntegration {
 
 		$service_id = get_the_ID();
 		$price      = get_post_meta( $service_id, '_wpss_starting_price', true );
-		$rating     = get_post_meta( $service_id, '_wpss_rating', true );
+		$rating     = get_post_meta( $service_id, '_wpss_rating_average', true );
 
 		// Add price indicator if not already in title.
 		if ( $price && strpos( $title, '$' ) === false && strpos( $title, 'Starting' ) === false ) {
@@ -157,7 +157,7 @@ class YoastIntegration {
 		}
 
 		$service_id = get_the_ID();
-		$rating     = (float) get_post_meta( $service_id, '_wpss_rating', true );
+		$rating     = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 
 		// Add star rating if available.
 		if ( $rating >= 4.5 ) {
@@ -180,9 +180,9 @@ class YoastIntegration {
 
 		$service_id    = get_the_ID();
 		$price         = get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days = get_post_meta( $service_id, '_wpss_delivery_days', true );
+		$delivery_days = get_post_meta( $service_id, '_wpss_fastest_delivery', true );
 
-		$additions = [];
+		$additions = array();
 
 		if ( $price ) {
 			$additions[] = sprintf(
@@ -288,9 +288,9 @@ class YoastIntegration {
 		$price      = get_post_meta( $service_id, '_wpss_starting_price', true );
 
 		// Add about reference.
-		$data['about'] = [
+		$data['about'] = array(
 			'@id' => get_permalink( $service_id ) . '#service',
-		];
+		);
 
 		return $data;
 	}
@@ -307,7 +307,7 @@ class YoastIntegration {
 		}
 
 		$service_id = get_the_ID();
-		$new_links  = [];
+		$new_links  = array();
 
 		// Keep home link.
 		if ( isset( $links[0] ) ) {
@@ -315,10 +315,10 @@ class YoastIntegration {
 		}
 
 		// Add Services archive.
-		$new_links[] = [
+		$new_links[] = array(
 			'url'  => get_post_type_archive_link( 'wpss_service' ),
 			'text' => __( 'Services', 'wp-sell-services' ),
-		];
+		);
 
 		// Add category.
 		$categories = get_the_terms( $service_id, 'wpss_service_category' );
@@ -329,23 +329,23 @@ class YoastIntegration {
 			if ( $category->parent ) {
 				$parent = get_term( $category->parent );
 				if ( $parent && ! is_wp_error( $parent ) ) {
-					$new_links[] = [
+					$new_links[] = array(
 						'url'  => get_term_link( $parent ),
 						'text' => $parent->name,
-					];
+					);
 				}
 			}
 
-			$new_links[] = [
+			$new_links[] = array(
 				'url'  => get_term_link( $category ),
 				'text' => $category->name,
-			];
+			);
 		}
 
 		// Add current page (last item without link).
-		$new_links[] = [
+		$new_links[] = array(
 			'text' => get_the_title( $service_id ),
-		];
+		);
 
 		return $new_links;
 	}
@@ -364,24 +364,24 @@ class YoastIntegration {
 		}
 
 		// Add images to sitemap entry.
-		$images   = [];
+		$images   = array();
 		$thumb_id = get_post_thumbnail_id( $post->ID );
 
 		if ( $thumb_id ) {
-			$images[] = [
+			$images[] = array(
 				'src'   => wp_get_attachment_image_url( $thumb_id, 'full' ),
 				'title' => get_post_meta( $thumb_id, '_wp_attachment_image_alt', true ) ?: $post->post_title,
-			];
+			);
 		}
 
 		// Add gallery images.
 		$gallery = get_post_meta( $post->ID, '_wpss_gallery', true );
 		if ( is_array( $gallery ) ) {
 			foreach ( $gallery as $image_id ) {
-				$images[] = [
+				$images[] = array(
 					'src'   => wp_get_attachment_image_url( $image_id, 'full' ),
 					'title' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ) ?: $post->post_title,
-				];
+				);
 			}
 		}
 
@@ -418,7 +418,7 @@ class YoastIntegration {
 		add_meta_box(
 			'wpss_seo_hints',
 			__( 'Service SEO Tips', 'wp-sell-services' ),
-			[ $this, 'render_seo_hints_meta_box' ],
+			array( $this, 'render_seo_hints_meta_box' ),
 			'wpss_service',
 			'side',
 			'low'
@@ -432,94 +432,94 @@ class YoastIntegration {
 	 * @return void
 	 */
 	public function render_seo_hints_meta_box( $post ): void {
-		$hints = [];
+		$hints = array();
 
 		// Check title length.
 		$title_length = strlen( $post->post_title );
 		if ( $title_length < 30 ) {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'warning',
 				'message' => __( 'Title is too short. Consider making it 40-60 characters.', 'wp-sell-services' ),
-			];
+			);
 		} elseif ( $title_length > 70 ) {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'warning',
 				'message' => __( 'Title is too long. Keep it under 60 characters.', 'wp-sell-services' ),
-			];
+			);
 		} else {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'good',
 				'message' => __( 'Title length is good.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Check featured image.
 		if ( ! has_post_thumbnail( $post->ID ) ) {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'error',
 				'message' => __( 'Add a featured image for better visibility.', 'wp-sell-services' ),
-			];
+			);
 		} else {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'good',
 				'message' => __( 'Featured image is set.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Check content length.
 		$content_length = str_word_count( wp_strip_all_tags( $post->post_content ) );
 		if ( $content_length < 100 ) {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'warning',
 				'message' => sprintf(
 					/* translators: %d: word count */
 					__( 'Description has only %d words. Aim for 200+ words.', 'wp-sell-services' ),
 					$content_length
 				),
-			];
+			);
 		} else {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'good',
 				'message' => __( 'Description length is good.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Check category.
 		$categories = get_the_terms( $post->ID, 'wpss_service_category' );
 		if ( ! $categories || is_wp_error( $categories ) ) {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'error',
 				'message' => __( 'Add at least one category for better discoverability.', 'wp-sell-services' ),
-			];
+			);
 		} else {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'good',
 				'message' => __( 'Category is assigned.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Check price.
 		$price = get_post_meta( $post->ID, '_wpss_starting_price', true );
 		if ( ! $price ) {
-			$hints[] = [
+			$hints[] = array(
 				'type'    => 'warning',
 				'message' => __( 'Set a starting price to show in search results.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Output hints.
 		echo '<ul class="wpss-seo-hints">';
 		foreach ( $hints as $hint ) {
-			$icon_class = [
+			$icon_class = array(
 				'error'   => 'dashicons-warning',
 				'warning' => 'dashicons-info',
 				'good'    => 'dashicons-yes-alt',
-			];
-			$color      = [
+			);
+			$color      = array(
 				'error'   => '#dc3232',
 				'warning' => '#ffb900',
 				'good'    => '#46b450',
-			];
+			);
 
 			printf(
 				'<li style="color: %s; margin-bottom: 8px;"><span class="dashicons %s"></span> %s</li>',

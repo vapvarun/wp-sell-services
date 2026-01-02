@@ -23,9 +23,9 @@ class SchemaMarkup {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'wp_head', [ $this, 'output_schema' ], 10 );
-		add_action( 'wp_head', [ $this, 'output_organization_schema' ], 10 );
-		add_action( 'wp_head', [ $this, 'output_breadcrumb_schema' ], 10 );
+		add_action( 'wp_head', array( $this, 'output_schema' ), 10 );
+		add_action( 'wp_head', array( $this, 'output_organization_schema' ), 10 );
+		add_action( 'wp_head', array( $this, 'output_breadcrumb_schema' ), 10 );
 	}
 
 	/**
@@ -95,19 +95,19 @@ class SchemaMarkup {
 
 		// Get service meta.
 		$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_delivery_days', true );
-		$rating         = (float) get_post_meta( $service_id, '_wpss_rating', true );
+		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+		$rating         = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$review_count   = (int) get_post_meta( $service_id, '_wpss_review_count', true );
-		$orders_count   = (int) get_post_meta( $service_id, '_wpss_orders_count', true );
+		$orders_count   = (int) get_post_meta( $service_id, '_wpss_order_count', true );
 
-		$schema = [
+		$schema = array(
 			'@context'    => 'https://schema.org',
-			'@type'       => [ 'Service', 'Product' ],
+			'@type'       => array( 'Service', 'Product' ),
 			'@id'         => get_permalink( $service_id ) . '#service',
 			'name'        => get_the_title( $service_id ),
 			'description' => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 50 ) ),
 			'url'         => get_permalink( $service_id ),
-		];
+		);
 
 		// Add image.
 		$image_url = get_the_post_thumbnail_url( $service_id, 'large' );
@@ -123,44 +123,44 @@ class SchemaMarkup {
 		// Add provider (vendor).
 		if ( $vendor ) {
 			$schema['provider'] = $this->get_person_schema( $vendor_id );
-			$schema['brand']    = [
+			$schema['brand']    = array(
 				'@type' => 'Brand',
 				'name'  => $vendor->display_name,
-			];
+			);
 		}
 
 		// Add offers/pricing.
 		if ( $starting_price > 0 ) {
 			$currency = get_option( 'wpss_currency', 'USD' );
 
-			$schema['offers'] = [
+			$schema['offers'] = array(
 				'@type'           => 'Offer',
 				'price'           => $starting_price,
 				'priceCurrency'   => $currency,
 				'availability'    => 'https://schema.org/InStock',
 				'priceValidUntil' => gmdate( 'Y-m-d', strtotime( '+1 year' ) ),
 				'url'             => get_permalink( $service_id ),
-			];
+			);
 
 			// Add seller to offer.
 			if ( $vendor ) {
-				$schema['offers']['seller'] = [
+				$schema['offers']['seller'] = array(
 					'@type' => 'Person',
 					'name'  => $vendor->display_name,
-				];
+				);
 			}
 		}
 
 		// Add aggregate rating.
 		if ( $rating > 0 && $review_count > 0 ) {
-			$schema['aggregateRating'] = [
+			$schema['aggregateRating'] = array(
 				'@type'       => 'AggregateRating',
 				'ratingValue' => round( $rating, 1 ),
 				'bestRating'  => 5,
 				'worstRating' => 1,
 				'ratingCount' => $review_count,
 				'reviewCount' => $review_count,
-			];
+			);
 		}
 
 		// Add service-specific properties.
@@ -175,10 +175,10 @@ class SchemaMarkup {
 		}
 
 		// Add area served.
-		$schema['areaServed'] = [
+		$schema['areaServed'] = array(
 			'@type' => 'Place',
 			'name'  => 'Worldwide',
-		];
+		);
 
 		return apply_filters( 'wpss_service_schema', $schema, $service_id );
 	}
@@ -191,32 +191,32 @@ class SchemaMarkup {
 	public function get_service_list_schema(): array {
 		global $wp_query;
 
-		$items = [];
+		$items = array();
 		$pos   = 1;
 
 		if ( $wp_query->have_posts() ) {
 			while ( $wp_query->have_posts() ) {
 				$wp_query->the_post();
-				$items[] = [
+				$items[] = array(
 					'@type'    => 'ListItem',
 					'position' => $pos++,
-					'item'     => [
+					'item'     => array(
 						'@type' => 'Service',
 						'@id'   => get_permalink() . '#service',
 						'name'  => get_the_title(),
 						'url'   => get_permalink(),
-					],
-				];
+					),
+				);
 			}
 			wp_reset_postdata();
 		}
 
-		$schema = [
+		$schema = array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'ItemList',
 			'name'            => __( 'Services', 'wp-sell-services' ),
 			'itemListElement' => $items,
-		];
+		);
 
 		return apply_filters( 'wpss_service_list_schema', $schema );
 	}
@@ -228,7 +228,7 @@ class SchemaMarkup {
 	 * @return array
 	 */
 	public function get_category_schema( $term ): array {
-		$schema = [
+		$schema = array(
 			'@context'    => 'https://schema.org',
 			'@type'       => 'CollectionPage',
 			'@id'         => get_term_link( $term ) . '#webpage',
@@ -239,42 +239,42 @@ class SchemaMarkup {
 				$term->name
 			),
 			'url'         => get_term_link( $term ),
-		];
+		);
 
 		// Add main entity (ItemList of services).
 		$services = get_posts(
-			[
+			array(
 				'post_type'      => 'wpss_service',
 				'posts_per_page' => 10,
-				'tax_query'      => [
-					[
+				'tax_query'      => array(
+					array(
 						'taxonomy' => 'wpss_service_category',
 						'field'    => 'term_id',
 						'terms'    => $term->term_id,
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		if ( $services ) {
-			$items = [];
+			$items = array();
 			$pos   = 1;
 			foreach ( $services as $service ) {
-				$items[] = [
+				$items[] = array(
 					'@type'    => 'ListItem',
 					'position' => $pos++,
-					'item'     => [
+					'item'     => array(
 						'@type' => 'Service',
 						'name'  => $service->post_title,
 						'url'   => get_permalink( $service->ID ),
-					],
-				];
+					),
+				);
 			}
 
-			$schema['mainEntity'] = [
+			$schema['mainEntity'] = array(
 				'@type'           => 'ItemList',
 				'itemListElement' => $items,
-			];
+			);
 		}
 
 		return apply_filters( 'wpss_category_schema', $schema, $term );
@@ -289,16 +289,16 @@ class SchemaMarkup {
 	public function get_person_schema( int $user_id ): array {
 		$user         = get_userdata( $user_id );
 		$profile_url  = get_author_posts_url( $user_id );
-		$avatar_url   = get_avatar_url( $user_id, [ 'size' => 256 ] );
+		$avatar_url   = get_avatar_url( $user_id, array( 'size' => 256 ) );
 		$vendor_title = get_user_meta( $user_id, 'wpss_vendor_title', true );
 		$vendor_bio   = get_user_meta( $user_id, 'description', true );
 
-		$schema = [
-			'@type'  => 'Person',
-			'@id'    => $profile_url . '#person',
-			'name'   => $user->display_name,
-			'url'    => $profile_url,
-		];
+		$schema = array(
+			'@type' => 'Person',
+			'@id'   => $profile_url . '#person',
+			'name'  => $user->display_name,
+			'url'   => $profile_url,
+		);
 
 		if ( $avatar_url ) {
 			$schema['image'] = $avatar_url;
@@ -317,12 +317,12 @@ class SchemaMarkup {
 		$review_count = (int) get_user_meta( $user_id, 'wpss_vendor_review_count', true );
 
 		if ( $rating > 0 && $review_count > 0 ) {
-			$schema['aggregateRating'] = [
+			$schema['aggregateRating'] = array(
 				'@type'       => 'AggregateRating',
 				'ratingValue' => round( $rating, 1 ),
 				'bestRating'  => 5,
 				'ratingCount' => $review_count,
-			];
+			);
 		}
 
 		return apply_filters( 'wpss_person_schema', $schema, $user_id );
@@ -349,24 +349,24 @@ class SchemaMarkup {
 
 		// Add services offered.
 		$services = get_posts(
-			[
+			array(
 				'post_type'      => 'wpss_service',
 				'posts_per_page' => 10,
 				'author'         => $user->ID,
-			]
+			)
 		);
 
 		if ( $services ) {
 			$schema['makesOffer'] = array_map(
 				function ( $service ) {
-					return [
+					return array(
 						'@type'       => 'Offer',
-						'itemOffered' => [
+						'itemOffered' => array(
 							'@type' => 'Service',
 							'name'  => $service->post_title,
 							'url'   => get_permalink( $service->ID ),
-						],
-					];
+						),
+					);
 				},
 				$services
 			);
@@ -381,13 +381,13 @@ class SchemaMarkup {
 	 * @return array
 	 */
 	public function get_organization_schema(): array {
-		$schema = [
+		$schema = array(
 			'@context' => 'https://schema.org',
 			'@type'    => 'Organization',
 			'@id'      => home_url( '/#organization' ),
 			'name'     => get_bloginfo( 'name' ),
 			'url'      => home_url( '/' ),
-		];
+		);
 
 		$description = get_bloginfo( 'description' );
 		if ( $description ) {
@@ -412,82 +412,82 @@ class SchemaMarkup {
 	 * @return array|null
 	 */
 	public function get_breadcrumb_schema(): ?array {
-		$breadcrumbs = [];
+		$breadcrumbs = array();
 
 		if ( is_singular( 'wpss_service' ) ) {
 			$service_id = get_the_ID();
 
-			$breadcrumbs[] = [
+			$breadcrumbs[] = array(
 				'name' => __( 'Home', 'wp-sell-services' ),
 				'url'  => home_url( '/' ),
-			];
+			);
 
-			$breadcrumbs[] = [
+			$breadcrumbs[] = array(
 				'name' => __( 'Services', 'wp-sell-services' ),
 				'url'  => get_post_type_archive_link( 'wpss_service' ),
-			];
+			);
 
 			$categories = get_the_terms( $service_id, 'wpss_service_category' );
 			if ( $categories && ! is_wp_error( $categories ) ) {
-				$breadcrumbs[] = [
+				$breadcrumbs[] = array(
 					'name' => $categories[0]->name,
 					'url'  => get_term_link( $categories[0] ),
-				];
+				);
 			}
 
-			$breadcrumbs[] = [
+			$breadcrumbs[] = array(
 				'name' => get_the_title(),
 				'url'  => get_permalink(),
-			];
+			);
 		} elseif ( is_tax( 'wpss_service_category' ) ) {
 			$term = get_queried_object();
 
-			$breadcrumbs[] = [
+			$breadcrumbs[] = array(
 				'name' => __( 'Home', 'wp-sell-services' ),
 				'url'  => home_url( '/' ),
-			];
+			);
 
-			$breadcrumbs[] = [
+			$breadcrumbs[] = array(
 				'name' => __( 'Services', 'wp-sell-services' ),
 				'url'  => get_post_type_archive_link( 'wpss_service' ),
-			];
+			);
 
 			// Add parent term if exists.
 			if ( $term->parent ) {
 				$parent = get_term( $term->parent );
 				if ( $parent && ! is_wp_error( $parent ) ) {
-					$breadcrumbs[] = [
+					$breadcrumbs[] = array(
 						'name' => $parent->name,
 						'url'  => get_term_link( $parent ),
-					];
+					);
 				}
 			}
 
-			$breadcrumbs[] = [
+			$breadcrumbs[] = array(
 				'name' => $term->name,
 				'url'  => get_term_link( $term ),
-			];
+			);
 		}
 
 		if ( empty( $breadcrumbs ) ) {
 			return null;
 		}
 
-		$items = [];
+		$items = array();
 		foreach ( $breadcrumbs as $pos => $crumb ) {
-			$items[] = [
+			$items[] = array(
 				'@type'    => 'ListItem',
 				'position' => $pos + 1,
 				'name'     => $crumb['name'],
 				'item'     => $crumb['url'],
-			];
+			);
 		}
 
-		return [
+		return array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'BreadcrumbList',
 			'itemListElement' => $items,
-		];
+		);
 	}
 
 	/**
@@ -503,31 +503,31 @@ class SchemaMarkup {
 			return null;
 		}
 
-		$items = [];
+		$items = array();
 		foreach ( $faqs as $faq ) {
 			if ( empty( $faq['question'] ) || empty( $faq['answer'] ) ) {
 				continue;
 			}
 
-			$items[] = [
+			$items[] = array(
 				'@type'          => 'Question',
 				'name'           => $faq['question'],
-				'acceptedAnswer' => [
+				'acceptedAnswer' => array(
 					'@type' => 'Answer',
 					'text'  => $faq['answer'],
-				],
-			];
+				),
+			);
 		}
 
 		if ( empty( $items ) ) {
 			return null;
 		}
 
-		return [
+		return array(
 			'@context'   => 'https://schema.org',
 			'@type'      => 'FAQPage',
 			'mainEntity' => $items,
-		];
+		);
 	}
 
 	/**
@@ -556,30 +556,30 @@ class SchemaMarkup {
 			return null;
 		}
 
-		$items = [];
+		$items = array();
 		foreach ( $reviews as $review ) {
-			$items[] = [
-				'@type'        => 'Review',
-				'author'       => [
+			$items[] = array(
+				'@type'         => 'Review',
+				'author'        => array(
 					'@type' => 'Person',
 					'name'  => $review->reviewer_name,
-				],
+				),
 				'datePublished' => gmdate( 'c', strtotime( $review->created_at ) ),
 				'reviewBody'    => $review->comment,
-				'reviewRating'  => [
+				'reviewRating'  => array(
 					'@type'       => 'Rating',
 					'ratingValue' => (int) $review->rating,
 					'bestRating'  => 5,
 					'worstRating' => 1,
-				],
-			];
+				),
+			);
 		}
 
-		return [
+		return array(
 			'@context' => 'https://schema.org',
 			'@type'    => 'Product',
 			'review'   => $items,
-		];
+		);
 	}
 
 	/**

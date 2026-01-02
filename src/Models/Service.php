@@ -71,56 +71,56 @@ class Service {
 	 *
 	 * @var int[]
 	 */
-	public array $categories = [];
+	public array $categories = array();
 
 	/**
 	 * Tag IDs.
 	 *
 	 * @var int[]
 	 */
-	public array $tags = [];
+	public array $tags = array();
 
 	/**
 	 * Service packages.
 	 *
 	 * @var ServicePackage[]
 	 */
-	public array $packages = [];
+	public array $packages = array();
 
 	/**
 	 * Service add-ons.
 	 *
 	 * @var ServiceAddon[]
 	 */
-	public array $addons = [];
+	public array $addons = array();
 
 	/**
 	 * Requirement fields.
 	 *
 	 * @var array
 	 */
-	public array $requirements = [];
+	public array $requirements = array();
 
 	/**
 	 * Gallery image IDs.
 	 *
 	 * @var int[]
 	 */
-	public array $gallery = [];
+	public array $gallery = array();
 
 	/**
 	 * FAQs.
 	 *
 	 * @var array<array{question: string, answer: string}>
 	 */
-	public array $faqs = [];
+	public array $faqs = array();
 
 	/**
 	 * Platform mapping (e.g., WooCommerce product ID).
 	 *
 	 * @var array<string, int>
 	 */
-	public array $platform_ids = [];
+	public array $platform_ids = array();
 
 	/**
 	 * Average rating.
@@ -177,19 +177,19 @@ class Service {
 		$service->updated_at   = new \DateTimeImmutable( $post->post_modified_gmt );
 
 		// Load categories and tags.
-		$service->categories = wp_get_post_terms( $post->ID, 'wpss_service_category', [ 'fields' => 'ids' ] ) ?: [];
-		$service->tags       = wp_get_post_terms( $post->ID, 'wpss_service_tag', [ 'fields' => 'ids' ] ) ?: [];
+		$service->categories = wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) ) ?: array();
+		$service->tags       = wp_get_post_terms( $post->ID, 'wpss_service_tag', array( 'fields' => 'ids' ) ) ?: array();
 
 		// Load meta.
-		$service->gallery      = get_post_meta( $post->ID, '_wpss_gallery', true ) ?: [];
-		$service->requirements = get_post_meta( $post->ID, '_wpss_requirements', true ) ?: [];
-		$service->faqs         = get_post_meta( $post->ID, '_wpss_faqs', true ) ?: [];
-		$service->platform_ids = get_post_meta( $post->ID, '_wpss_platform_ids', true ) ?: [];
+		$service->gallery      = get_post_meta( $post->ID, '_wpss_gallery', true ) ?: array();
+		$service->requirements = get_post_meta( $post->ID, '_wpss_requirements', true ) ?: array();
+		$service->faqs         = get_post_meta( $post->ID, '_wpss_faqs', true ) ?: array();
+		$service->platform_ids = get_post_meta( $post->ID, '_wpss_platform_ids', true ) ?: array();
 
 		// Stats.
-		$service->rating           = (float) get_post_meta( $post->ID, '_wpss_rating', true );
+		$service->rating           = (float) get_post_meta( $post->ID, '_wpss_rating_average', true );
 		$service->review_count     = (int) get_post_meta( $post->ID, '_wpss_review_count', true );
-		$service->orders_completed = (int) get_post_meta( $post->ID, '_wpss_orders_completed', true );
+		$service->orders_completed = (int) get_post_meta( $post->ID, '_wpss_order_count', true );
 
 		return $service;
 	}

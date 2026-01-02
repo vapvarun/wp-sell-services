@@ -24,33 +24,33 @@ class RankMathIntegration {
 	 */
 	public function init(): void {
 		// Title and meta.
-		add_filter( 'rank_math/frontend/title', [ $this, 'modify_title' ], 10, 1 );
-		add_filter( 'rank_math/frontend/description', [ $this, 'modify_description' ], 10, 1 );
+		add_filter( 'rank_math/frontend/title', array( $this, 'modify_title' ), 10, 1 );
+		add_filter( 'rank_math/frontend/description', array( $this, 'modify_description' ), 10, 1 );
 
 		// Open Graph.
-		add_filter( 'rank_math/opengraph/type', [ $this, 'set_og_type' ], 10, 1 );
-		add_filter( 'rank_math/opengraph/facebook/og_title', [ $this, 'modify_og_title' ], 10, 1 );
-		add_filter( 'rank_math/opengraph/facebook/og_description', [ $this, 'modify_og_description' ], 10, 1 );
+		add_filter( 'rank_math/opengraph/type', array( $this, 'set_og_type' ), 10, 1 );
+		add_filter( 'rank_math/opengraph/facebook/og_title', array( $this, 'modify_og_title' ), 10, 1 );
+		add_filter( 'rank_math/opengraph/facebook/og_description', array( $this, 'modify_og_description' ), 10, 1 );
 
 		// Twitter.
-		add_filter( 'rank_math/opengraph/twitter/title', [ $this, 'modify_og_title' ], 10, 1 );
-		add_filter( 'rank_math/opengraph/twitter/description', [ $this, 'modify_og_description' ], 10, 1 );
+		add_filter( 'rank_math/opengraph/twitter/title', array( $this, 'modify_og_title' ), 10, 1 );
+		add_filter( 'rank_math/opengraph/twitter/description', array( $this, 'modify_og_description' ), 10, 1 );
 
 		// Schema.
-		add_filter( 'rank_math/json_ld', [ $this, 'add_schema' ], 99, 2 );
+		add_filter( 'rank_math/json_ld', array( $this, 'add_schema' ), 99, 2 );
 
 		// Breadcrumbs.
-		add_filter( 'rank_math/frontend/breadcrumb/items', [ $this, 'modify_breadcrumbs' ], 10, 2 );
+		add_filter( 'rank_math/frontend/breadcrumb/items', array( $this, 'modify_breadcrumbs' ), 10, 2 );
 
 		// Sitemap.
-		add_filter( 'rank_math/sitemap/entry', [ $this, 'modify_sitemap_entry' ], 10, 3 );
-		add_filter( 'rank_math/sitemap/exclude_post', [ $this, 'exclude_from_sitemap' ], 10, 2 );
+		add_filter( 'rank_math/sitemap/entry', array( $this, 'modify_sitemap_entry' ), 10, 3 );
+		add_filter( 'rank_math/sitemap/exclude_post', array( $this, 'exclude_from_sitemap' ), 10, 2 );
 
 		// Robots.
-		add_filter( 'rank_math/frontend/robots', [ $this, 'modify_robots' ], 10, 1 );
+		add_filter( 'rank_math/frontend/robots', array( $this, 'modify_robots' ), 10, 1 );
 
 		// Primary term.
-		add_filter( 'rank_math/primary_term_taxonomies', [ $this, 'add_primary_taxonomy' ], 10, 2 );
+		add_filter( 'rank_math/primary_term_taxonomies', array( $this, 'add_primary_taxonomy' ), 10, 2 );
 	}
 
 	/**
@@ -127,7 +127,7 @@ class RankMathIntegration {
 		}
 
 		$service_id = get_the_ID();
-		$rating     = (float) get_post_meta( $service_id, '_wpss_rating', true );
+		$rating     = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 
 		if ( $rating >= 4.5 ) {
 			$title .= ' ⭐ ' . round( $rating, 1 );
@@ -149,9 +149,9 @@ class RankMathIntegration {
 
 		$service_id    = get_the_ID();
 		$price         = get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days = get_post_meta( $service_id, '_wpss_delivery_days', true );
+		$delivery_days = get_post_meta( $service_id, '_wpss_fastest_delivery', true );
 
-		$additions = [];
+		$additions = array();
 
 		if ( $price ) {
 			$additions[] = sprintf(
@@ -179,7 +179,7 @@ class RankMathIntegration {
 	/**
 	 * Add custom schema to Rank Math output.
 	 *
-	 * @param array $data   Schema data.
+	 * @param array  $data   Schema data.
 	 * @param object $jsonld JSON-LD object.
 	 * @return array
 	 */
@@ -201,17 +201,17 @@ class RankMathIntegration {
 
 		// Get service meta.
 		$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_delivery_days', true );
-		$rating         = (float) get_post_meta( $service_id, '_wpss_rating', true );
+		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+		$rating         = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$review_count   = (int) get_post_meta( $service_id, '_wpss_review_count', true );
 
-		$service_schema = [
-			'@type'       => [ 'Service', 'Product' ],
+		$service_schema = array(
+			'@type'       => array( 'Service', 'Product' ),
 			'@id'         => get_permalink( $service_id ) . '#service',
 			'name'        => get_the_title( $service_id ),
 			'description' => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 50 ) ),
 			'url'         => get_permalink( $service_id ),
-		];
+		);
 
 		// Add image.
 		$image_url = get_the_post_thumbnail_url( $service_id, 'large' );
@@ -227,13 +227,13 @@ class RankMathIntegration {
 
 		// Add provider.
 		if ( $vendor ) {
-			$service_schema['provider'] = [
+			$service_schema['provider'] = array(
 				'@type' => 'Person',
 				'name'  => $vendor->display_name,
 				'url'   => get_author_posts_url( $vendor_id ),
-			];
+			);
 
-			$avatar = get_avatar_url( $vendor_id, [ 'size' => 256 ] );
+			$avatar = get_avatar_url( $vendor_id, array( 'size' => 256 ) );
 			if ( $avatar ) {
 				$service_schema['provider']['image'] = $avatar;
 			}
@@ -243,24 +243,24 @@ class RankMathIntegration {
 		if ( $starting_price > 0 ) {
 			$currency = get_option( 'wpss_currency', 'USD' );
 
-			$service_schema['offers'] = [
+			$service_schema['offers'] = array(
 				'@type'           => 'Offer',
 				'price'           => $starting_price,
 				'priceCurrency'   => $currency,
 				'availability'    => 'https://schema.org/InStock',
 				'priceValidUntil' => gmdate( 'Y-m-d', strtotime( '+1 year' ) ),
-			];
+			);
 		}
 
 		// Add aggregate rating.
 		if ( $rating > 0 && $review_count > 0 ) {
-			$service_schema['aggregateRating'] = [
+			$service_schema['aggregateRating'] = array(
 				'@type'       => 'AggregateRating',
 				'ratingValue' => round( $rating, 1 ),
 				'bestRating'  => 5,
 				'worstRating' => 1,
 				'ratingCount' => $review_count,
-			];
+			);
 		}
 
 		// Add to schema data.
@@ -272,7 +272,7 @@ class RankMathIntegration {
 	/**
 	 * Modify breadcrumbs.
 	 *
-	 * @param array $items   Breadcrumb items.
+	 * @param array  $items   Breadcrumb items.
 	 * @param object $crumbs Breadcrumbs object.
 	 * @return array
 	 */
@@ -282,7 +282,7 @@ class RankMathIntegration {
 		}
 
 		$service_id = get_the_ID();
-		$new_items  = [];
+		$new_items  = array();
 
 		// Keep home.
 		if ( isset( $items[0] ) ) {
@@ -290,10 +290,10 @@ class RankMathIntegration {
 		}
 
 		// Add Services archive.
-		$new_items[] = [
+		$new_items[] = array(
 			get_post_type_archive_link( 'wpss_service' ),
 			__( 'Services', 'wp-sell-services' ),
-		];
+		);
 
 		// Add category.
 		$categories = get_the_terms( $service_id, 'wpss_service_category' );
@@ -303,24 +303,24 @@ class RankMathIntegration {
 			if ( $category->parent ) {
 				$parent = get_term( $category->parent );
 				if ( $parent && ! is_wp_error( $parent ) ) {
-					$new_items[] = [
+					$new_items[] = array(
 						get_term_link( $parent ),
 						$parent->name,
-					];
+					);
 				}
 			}
 
-			$new_items[] = [
+			$new_items[] = array(
 				get_term_link( $category ),
 				$category->name,
-			];
+			);
 		}
 
 		// Add current service.
-		$new_items[] = [
+		$new_items[] = array(
 			'',
 			get_the_title( $service_id ),
-		];
+		);
 
 		return $new_items;
 	}
@@ -339,14 +339,14 @@ class RankMathIntegration {
 		}
 
 		// Add images.
-		$images = [];
+		$images = array();
 
 		$thumb_url = get_the_post_thumbnail_url( $object->ID, 'full' );
 		if ( $thumb_url ) {
-			$images[] = [
+			$images[] = array(
 				'src'   => $thumb_url,
 				'title' => $object->post_title,
-			];
+			);
 		}
 
 		$gallery = get_post_meta( $object->ID, '_wpss_gallery', true );
@@ -354,10 +354,10 @@ class RankMathIntegration {
 			foreach ( $gallery as $image_id ) {
 				$url = wp_get_attachment_image_url( $image_id, 'full' );
 				if ( $url ) {
-					$images[] = [
+					$images[] = array(
 						'src'   => $url,
 						'title' => $object->post_title,
-					];
+					);
 				}
 			}
 		}

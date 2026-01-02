@@ -47,75 +47,75 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 
 		// Get service meta.
 		$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_delivery_days', true );
-		$rating         = (float) get_post_meta( $service_id, '_wpss_rating', true );
+		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+		$rating         = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$review_count   = (int) get_post_meta( $service_id, '_wpss_review_count', true );
 
-		$schema = [
-			'@type'       => [ 'Service', 'Product' ],
-			'@id'         => $this->context->canonical . '#service',
-			'name'        => $this->context->title,
-			'description' => $this->get_description( $post ),
-			'url'         => $this->context->canonical,
-			'mainEntityOfPage' => [
+		$schema = array(
+			'@type'            => array( 'Service', 'Product' ),
+			'@id'              => $this->context->canonical . '#service',
+			'name'             => $this->context->title,
+			'description'      => $this->get_description( $post ),
+			'url'              => $this->context->canonical,
+			'mainEntityOfPage' => array(
 				'@id' => $this->context->canonical . '#webpage',
-			],
-		];
+			),
+		);
 
 		// Add image.
 		$image_id = get_post_thumbnail_id( $service_id );
 		if ( $image_id ) {
-			$schema['image'] = [
+			$schema['image'] = array(
 				'@id' => $this->context->canonical . '#primaryimage',
-			];
+			);
 		}
 
 		// Add category.
 		if ( $categories && ! is_wp_error( $categories ) ) {
-			$schema['category'] = $categories[0]->name;
+			$schema['category']    = $categories[0]->name;
 			$schema['serviceType'] = $categories[0]->name;
 		}
 
 		// Add provider.
 		if ( $vendor ) {
 			$schema['provider'] = $this->get_provider_schema( $vendor );
-			$schema['brand'] = [
+			$schema['brand']    = array(
 				'@type' => 'Brand',
 				'name'  => $vendor->display_name,
-			];
+			);
 		}
 
 		// Add offers.
 		if ( $starting_price > 0 ) {
 			$currency = get_option( 'wpss_currency', 'USD' );
 
-			$schema['offers'] = [
+			$schema['offers'] = array(
 				'@type'           => 'Offer',
 				'price'           => $starting_price,
 				'priceCurrency'   => $currency,
 				'availability'    => 'https://schema.org/InStock',
 				'priceValidUntil' => gmdate( 'Y-m-d', strtotime( '+1 year' ) ),
 				'url'             => $this->context->canonical,
-			];
+			);
 
 			if ( $vendor ) {
-				$schema['offers']['seller'] = [
+				$schema['offers']['seller'] = array(
 					'@type' => 'Person',
 					'name'  => $vendor->display_name,
-				];
+				);
 			}
 		}
 
 		// Add aggregate rating.
 		if ( $rating > 0 && $review_count > 0 ) {
-			$schema['aggregateRating'] = [
+			$schema['aggregateRating'] = array(
 				'@type'       => 'AggregateRating',
 				'ratingValue' => round( $rating, 1 ),
 				'bestRating'  => 5,
 				'worstRating' => 1,
 				'ratingCount' => $review_count,
 				'reviewCount' => $review_count,
-			];
+			);
 		}
 
 		// Add reviews if available.
@@ -134,10 +134,10 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 		}
 
 		// Add area served.
-		$schema['areaServed'] = [
+		$schema['areaServed'] = array(
 			'@type' => 'Place',
 			'name'  => 'Worldwide',
-		];
+		);
 
 		// Add FAQs if available.
 		$faqs = $this->get_faq_schema( $service_id );
@@ -170,15 +170,15 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 	 * @return array
 	 */
 	private function get_provider_schema( $vendor ): array {
-		$schema = [
+		$schema = array(
 			'@type' => 'Person',
 			'@id'   => get_author_posts_url( $vendor->ID ) . '#person',
 			'name'  => $vendor->display_name,
 			'url'   => get_author_posts_url( $vendor->ID ),
-		];
+		);
 
 		// Add avatar.
-		$avatar = get_avatar_url( $vendor->ID, [ 'size' => 256 ] );
+		$avatar = get_avatar_url( $vendor->ID, array( 'size' => 256 ) );
 		if ( $avatar ) {
 			$schema['image'] = $avatar;
 		}
@@ -190,16 +190,16 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 		}
 
 		// Add vendor rating.
-		$rating = (float) get_user_meta( $vendor->ID, 'wpss_vendor_rating', true );
+		$rating       = (float) get_user_meta( $vendor->ID, 'wpss_vendor_rating', true );
 		$review_count = (int) get_user_meta( $vendor->ID, 'wpss_vendor_review_count', true );
 
 		if ( $rating > 0 && $review_count > 0 ) {
-			$schema['aggregateRating'] = [
+			$schema['aggregateRating'] = array(
 				'@type'       => 'AggregateRating',
 				'ratingValue' => round( $rating, 1 ),
 				'bestRating'  => 5,
 				'ratingCount' => $review_count,
-			];
+			);
 		}
 
 		return $schema;
@@ -228,26 +228,26 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 		);
 
 		if ( empty( $reviews ) ) {
-			return [];
+			return array();
 		}
 
-		$schema_reviews = [];
+		$schema_reviews = array();
 		foreach ( $reviews as $review ) {
-			$schema_reviews[] = [
+			$schema_reviews[] = array(
 				'@type'         => 'Review',
-				'author'        => [
+				'author'        => array(
 					'@type' => 'Person',
 					'name'  => $review->reviewer_name ?: __( 'Anonymous', 'wp-sell-services' ),
-				],
+				),
 				'datePublished' => gmdate( 'c', strtotime( $review->created_at ) ),
 				'reviewBody'    => $review->comment,
-				'reviewRating'  => [
+				'reviewRating'  => array(
 					'@type'       => 'Rating',
 					'ratingValue' => (int) $review->rating,
 					'bestRating'  => 5,
 					'worstRating' => 1,
-				],
-			];
+				),
+			);
 		}
 
 		return $schema_reviews;
@@ -266,30 +266,30 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 			return null;
 		}
 
-		$items = [];
+		$items = array();
 		foreach ( $faqs as $faq ) {
 			if ( empty( $faq['question'] ) || empty( $faq['answer'] ) ) {
 				continue;
 			}
 
-			$items[] = [
+			$items[] = array(
 				'@type'          => 'Question',
 				'name'           => $faq['question'],
-				'acceptedAnswer' => [
+				'acceptedAnswer' => array(
 					'@type' => 'Answer',
 					'text'  => $faq['answer'],
-				],
-			];
+				),
+			);
 		}
 
 		if ( empty( $items ) ) {
 			return null;
 		}
 
-		return [
+		return array(
 			'@type'      => 'FAQPage',
 			'@id'        => $this->context->canonical . '#faq',
 			'mainEntity' => $items,
-		];
+		);
 	}
 }

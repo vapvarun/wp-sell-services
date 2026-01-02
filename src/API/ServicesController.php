@@ -205,7 +205,7 @@ class ServicesController extends RestController {
 
 			if ( $min_price ) {
 				$args['meta_query'][] = array(
-					'key'     => '_wpss_base_price',
+					'key'     => '_wpss_starting_price',
 					'value'   => (float) $min_price,
 					'compare' => '>=',
 					'type'    => 'DECIMAL',
@@ -214,7 +214,7 @@ class ServicesController extends RestController {
 
 			if ( $max_price ) {
 				$args['meta_query'][] = array(
-					'key'     => '_wpss_base_price',
+					'key'     => '_wpss_starting_price',
 					'value'   => (float) $max_price,
 					'compare' => '<=',
 					'type'    => 'DECIMAL',
@@ -571,12 +571,12 @@ class ServicesController extends RestController {
 				'avatar' => get_avatar_url( $service->post_author, array( 'size' => 96 ) ),
 			),
 			'pricing'     => array(
-				'base_price' => (float) get_post_meta( $service->ID, '_wpss_base_price', true ),
+				'base_price' => (float) get_post_meta( $service->ID, '_wpss_starting_price', true ),
 				'currency'   => wpss_get_currency(),
 			),
 			'delivery'    => array(
-				'time'      => get_post_meta( $service->ID, '_wpss_delivery_time', true ),
-				'revisions' => (int) get_post_meta( $service->ID, '_wpss_revisions', true ),
+				'time'      => (int) get_post_meta( $service->ID, '_wpss_fastest_delivery', true ) ?: 7,
+				'revisions' => (int) get_post_meta( $service->ID, '_wpss_max_revisions', true ),
 			),
 			'images'      => $this->get_service_images( $service->ID ),
 			'categories'  => wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ),
@@ -673,20 +673,21 @@ class ServicesController extends RestController {
 	 * @return void
 	 */
 	private function save_service_meta( int $service_id, WP_REST_Request $request ): void {
-		if ( $request->has_param( 'base_price' ) ) {
-			update_post_meta( $service_id, '_wpss_base_price', (float) $request->get_param( 'base_price' ) );
-		}
-
-		if ( $request->has_param( 'delivery_time' ) ) {
-			update_post_meta( $service_id, '_wpss_delivery_time', sanitize_text_field( $request->get_param( 'delivery_time' ) ) );
-		}
-
-		if ( $request->has_param( 'revisions' ) ) {
-			update_post_meta( $service_id, '_wpss_revisions', (int) $request->get_param( 'revisions' ) );
-		}
-
+		// Save packages (primary source of truth).
 		if ( $request->has_param( 'packages' ) ) {
-			update_post_meta( $service_id, '_wpss_packages', $request->get_param( 'packages' ) );
+			$packages = $request->get_param( 'packages' );
+			update_post_meta( $service_id, '_wpss_packages', $packages );
+
+			// Compute and store derived values from packages.
+			if ( is_array( $packages ) && ! empty( $packages ) ) {
+				$prices        = array_filter( wp_list_pluck( $packages, 'price' ) );
+				$delivery_days = array_filter( wp_list_pluck( $packages, 'delivery_days' ) );
+				$revisions     = wp_list_pluck( $packages, 'revisions' );
+
+				update_post_meta( $service_id, '_wpss_starting_price', ! empty( $prices ) ? min( $prices ) : 0 );
+				update_post_meta( $service_id, '_wpss_fastest_delivery', ! empty( $delivery_days ) ? min( $delivery_days ) : 7 );
+				update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revisions ) ? max( $revisions ) : 0 );
+			}
 		}
 
 		if ( $request->has_param( 'requirements' ) ) {

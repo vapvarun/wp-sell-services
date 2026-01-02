@@ -54,8 +54,8 @@ class SearchService {
 	 * @param array<string, mixed> $args Search arguments.
 	 * @return array<string, mixed> Search results.
 	 */
-	public function search( string $query, array $args = [] ): array {
-		$defaults = [
+	public function search( string $query, array $args = array() ): array {
+		$defaults = array(
 			'type'        => self::TYPE_ALL,
 			'limit'       => 20,
 			'page'        => 1,
@@ -66,46 +66,46 @@ class SearchService {
 			'country'     => '',
 			'sort_by'     => 'relevance',
 			'sort_order'  => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$results = [
-			'query'     => $query,
-			'args'      => $args,
-			'services'  => [],
-			'vendors'   => [],
-			'requests'  => [],
-			'totals'    => [
+		$results = array(
+			'query'    => $query,
+			'args'     => $args,
+			'services' => array(),
+			'vendors'  => array(),
+			'requests' => array(),
+			'totals'   => array(
 				'services' => 0,
 				'vendors'  => 0,
 				'requests' => 0,
-			],
-		];
+			),
+		);
 
 		switch ( $args['type'] ) {
 			case self::TYPE_SERVICE:
-				$results['services'] = $this->search_services( $query, $args );
+				$results['services']           = $this->search_services( $query, $args );
 				$results['totals']['services'] = $this->count_services( $query, $args );
 				break;
 
 			case self::TYPE_VENDOR:
-				$results['vendors'] = $this->search_vendors( $query, $args );
+				$results['vendors']           = $this->search_vendors( $query, $args );
 				$results['totals']['vendors'] = $this->count_vendors( $query, $args );
 				break;
 
 			case self::TYPE_REQUEST:
-				$results['requests'] = $this->search_requests( $query, $args );
+				$results['requests']           = $this->search_requests( $query, $args );
 				$results['totals']['requests'] = $this->count_requests( $query, $args );
 				break;
 
 			case self::TYPE_ALL:
 			default:
-				$results['services'] = $this->search_services( $query, $args );
-				$results['vendors'] = $this->search_vendors( $query, array_merge( $args, [ 'limit' => 5 ] ) );
-				$results['requests'] = $this->search_requests( $query, array_merge( $args, [ 'limit' => 5 ] ) );
+				$results['services']           = $this->search_services( $query, $args );
+				$results['vendors']            = $this->search_vendors( $query, array_merge( $args, array( 'limit' => 5 ) ) );
+				$results['requests']           = $this->search_requests( $query, array_merge( $args, array( 'limit' => 5 ) ) );
 				$results['totals']['services'] = $this->count_services( $query, $args );
-				$results['totals']['vendors'] = $this->count_vendors( $query, $args );
+				$results['totals']['vendors']  = $this->count_vendors( $query, $args );
 				$results['totals']['requests'] = $this->count_requests( $query, $args );
 				break;
 		}
@@ -128,91 +128,91 @@ class SearchService {
 	 * @param array<string, mixed> $args Search arguments.
 	 * @return array<\WP_Post> Service posts.
 	 */
-	public function search_services( string $query, array $args = [] ): array {
-		$query_args = [
+	public function search_services( string $query, array $args = array() ): array {
+		$query_args = array(
 			'post_type'      => ServicePostType::POST_TYPE,
 			'post_status'    => 'publish',
 			's'              => $query,
 			'posts_per_page' => $args['limit'] ?? 20,
 			'paged'          => $args['page'] ?? 1,
-		];
+		);
 
 		// Category filter.
 		if ( ! empty( $args['category_id'] ) ) {
-			$query_args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-				[
+			$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
 					'taxonomy' => ServiceCategoryTaxonomy::TAXONOMY,
 					'field'    => 'term_id',
-					'terms'    => [ (int) $args['category_id'] ],
-				],
-			];
+					'terms'    => array( (int) $args['category_id'] ),
+				),
+			);
 		}
 
 		// Price filter.
-		$meta_query = [];
+		$meta_query = array();
 
 		if ( ! empty( $args['min_price'] ) ) {
-			$meta_query[] = [
+			$meta_query[] = array(
 				'key'     => '_wpss_starting_price',
 				'value'   => (float) $args['min_price'],
 				'compare' => '>=',
 				'type'    => 'DECIMAL',
-			];
+			);
 		}
 
 		if ( ! empty( $args['max_price'] ) ) {
-			$meta_query[] = [
+			$meta_query[] = array(
 				'key'     => '_wpss_starting_price',
 				'value'   => (float) $args['max_price'],
 				'compare' => '<=',
 				'type'    => 'DECIMAL',
-			];
+			);
 		}
 
 		// Rating filter.
 		if ( ! empty( $args['min_rating'] ) ) {
-			$meta_query[] = [
-				'key'     => '_wpss_average_rating',
+			$meta_query[] = array(
+				'key'     => '_wpss_rating_average',
 				'value'   => (float) $args['min_rating'],
 				'compare' => '>=',
 				'type'    => 'DECIMAL',
-			];
+			);
 		}
 
 		if ( ! empty( $meta_query ) ) {
-			$meta_query['relation'] = 'AND';
+			$meta_query['relation']   = 'AND';
 			$query_args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		}
 
 		// Sorting.
 		switch ( $args['sort_by'] ?? 'relevance' ) {
 			case 'price_low':
-				$query_args['orderby'] = 'meta_value_num';
+				$query_args['orderby']  = 'meta_value_num';
 				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order'] = 'ASC';
+				$query_args['order']    = 'ASC';
 				break;
 
 			case 'price_high':
-				$query_args['orderby'] = 'meta_value_num';
+				$query_args['orderby']  = 'meta_value_num';
 				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order'] = 'DESC';
+				$query_args['order']    = 'DESC';
 				break;
 
 			case 'rating':
-				$query_args['orderby'] = 'meta_value_num';
-				$query_args['meta_key'] = '_wpss_average_rating'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order'] = 'DESC';
+				$query_args['orderby']  = 'meta_value_num';
+				$query_args['meta_key'] = '_wpss_rating_average'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				$query_args['order']    = 'DESC';
 				break;
 
 			case 'newest':
 				$query_args['orderby'] = 'date';
-				$query_args['order'] = 'DESC';
+				$query_args['order']   = 'DESC';
 				break;
 
 			case 'popular':
-				$query_args['orderby'] = 'meta_value_num';
+				$query_args['orderby']  = 'meta_value_num';
 				$query_args['meta_key'] = '_wpss_order_count'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order'] = 'DESC';
+				$query_args['order']    = 'DESC';
 				break;
 
 			case 'relevance':
@@ -235,24 +235,24 @@ class SearchService {
 	 */
 	private function count_services( string $query, array $args ): int {
 		$args['limit'] = 1;
-		$args['page'] = 1;
+		$args['page']  = 1;
 
-		$query_args = [
+		$query_args = array(
 			'post_type'      => ServicePostType::POST_TYPE,
 			'post_status'    => 'publish',
 			's'              => $query,
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
-		];
+		);
 
 		if ( ! empty( $args['category_id'] ) ) {
-			$query_args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-				[
+			$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
 					'taxonomy' => ServiceCategoryTaxonomy::TAXONOMY,
 					'field'    => 'term_id',
-					'terms'    => [ (int) $args['category_id'] ],
-				],
-			];
+					'terms'    => array( (int) $args['category_id'] ),
+				),
+			);
 		}
 
 		$wp_query = new \WP_Query( $query_args );
@@ -267,12 +267,12 @@ class SearchService {
 	 * @param array<string, mixed> $args Search arguments.
 	 * @return array<object> Vendor profiles.
 	 */
-	public function search_vendors( string $query, array $args = [] ): array {
-		$search_args = [
+	public function search_vendors( string $query, array $args = array() ): array {
+		$search_args = array(
 			'limit'      => $args['limit'] ?? 20,
 			'offset'     => ( ( $args['page'] ?? 1 ) - 1 ) * ( $args['limit'] ?? 20 ),
 			'min_rating' => $args['min_rating'] ?? 0,
-		];
+		);
 
 		if ( ! empty( $args['country'] ) ) {
 			$search_args['country'] = $args['country'];
@@ -293,18 +293,18 @@ class SearchService {
 
 		$vendor_profiles = $wpdb->prefix . 'wpss_vendor_profiles';
 
-		$where = "display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s";
-		$like = '%' . $wpdb->esc_like( $query ) . '%';
+		$where = 'display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s';
+		$like  = '%' . $wpdb->esc_like( $query ) . '%';
 
-		$values = [ $like, $like, $like ];
+		$values = array( $like, $like, $like );
 
 		if ( ! empty( $args['country'] ) ) {
-			$where .= ' AND country = %s';
+			$where   .= ' AND country = %s';
 			$values[] = $args['country'];
 		}
 
 		if ( ! empty( $args['min_rating'] ) ) {
-			$where .= ' AND average_rating >= %f';
+			$where   .= ' AND average_rating >= %f';
 			$values[] = (float) $args['min_rating'];
 		}
 
@@ -323,49 +323,49 @@ class SearchService {
 	 * @param array<string, mixed> $args Search arguments.
 	 * @return array<\WP_Post> Request posts.
 	 */
-	public function search_requests( string $query, array $args = [] ): array {
-		$query_args = [
+	public function search_requests( string $query, array $args = array() ): array {
+		$query_args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
 			's'              => $query,
 			'posts_per_page' => $args['limit'] ?? 20,
 			'paged'          => $args['page'] ?? 1,
-			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				[
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
 					'key'   => '_wpss_status',
 					'value' => 'open',
-				],
-			],
-		];
+				),
+			),
+		);
 
 		// Category filter.
 		if ( ! empty( $args['category_id'] ) ) {
-			$query_args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-				[
+			$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
 					'taxonomy' => ServiceCategoryTaxonomy::TAXONOMY,
 					'field'    => 'term_id',
-					'terms'    => [ (int) $args['category_id'] ],
-				],
-			];
+					'terms'    => array( (int) $args['category_id'] ),
+				),
+			);
 		}
 
 		// Budget filter.
 		if ( ! empty( $args['min_price'] ) ) {
-			$query_args['meta_query'][] = [
+			$query_args['meta_query'][] = array(
 				'key'     => '_wpss_budget_min',
 				'value'   => (float) $args['min_price'],
 				'compare' => '>=',
 				'type'    => 'DECIMAL',
-			];
+			);
 		}
 
 		if ( ! empty( $args['max_price'] ) ) {
-			$query_args['meta_query'][] = [
+			$query_args['meta_query'][] = array(
 				'key'     => '_wpss_budget_max',
 				'value'   => (float) $args['max_price'],
 				'compare' => '<=',
 				'type'    => 'DECIMAL',
-			];
+			);
 		}
 
 		$wp_query = new \WP_Query( $query_args );
@@ -381,19 +381,19 @@ class SearchService {
 	 * @return int Count.
 	 */
 	private function count_requests( string $query, array $args ): int {
-		$query_args = [
+		$query_args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
 			's'              => $query,
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
-			'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				[
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
 					'key'   => '_wpss_status',
 					'value' => 'open',
-				],
-			],
-		];
+				),
+			),
+		);
 
 		$wp_query = new \WP_Query( $query_args );
 
@@ -408,12 +408,12 @@ class SearchService {
 	 * @return array<string, mixed> Suggestions by type.
 	 */
 	public function get_suggestions( string $query, int $limit = 10 ): array {
-		$suggestions = [
-			'services'   => [],
-			'categories' => [],
-			'tags'       => [],
-			'vendors'    => [],
-		];
+		$suggestions = array(
+			'services'   => array(),
+			'categories' => array(),
+			'tags'       => array(),
+			'vendors'    => array(),
+		);
 
 		if ( strlen( $query ) < 2 ) {
 			return $suggestions;
@@ -421,71 +421,71 @@ class SearchService {
 
 		// Service title suggestions.
 		$services = new \WP_Query(
-			[
+			array(
 				'post_type'      => ServicePostType::POST_TYPE,
 				'post_status'    => 'publish',
 				's'              => $query,
 				'posts_per_page' => $limit,
 				'fields'         => 'ids',
-			]
+			)
 		);
 
 		foreach ( $services->posts as $post_id ) {
-			$suggestions['services'][] = [
+			$suggestions['services'][] = array(
 				'id'    => $post_id,
 				'title' => get_the_title( $post_id ),
 				'url'   => get_permalink( $post_id ),
-			];
+			);
 		}
 
 		// Category suggestions.
 		$categories = get_terms(
-			[
+			array(
 				'taxonomy'   => ServiceCategoryTaxonomy::TAXONOMY,
 				'search'     => $query,
 				'number'     => $limit,
 				'hide_empty' => false,
-			]
+			)
 		);
 
 		if ( ! is_wp_error( $categories ) ) {
 			foreach ( $categories as $category ) {
-				$suggestions['categories'][] = [
+				$suggestions['categories'][] = array(
 					'id'   => $category->term_id,
 					'name' => $category->name,
 					'url'  => get_term_link( $category ),
-				];
+				);
 			}
 		}
 
 		// Tag suggestions.
 		$tags = get_terms(
-			[
+			array(
 				'taxonomy'   => ServiceTagTaxonomy::TAXONOMY,
 				'search'     => $query,
 				'number'     => $limit,
 				'hide_empty' => true,
-			]
+			)
 		);
 
 		if ( ! is_wp_error( $tags ) ) {
 			foreach ( $tags as $tag ) {
-				$suggestions['tags'][] = [
+				$suggestions['tags'][] = array(
 					'id'   => $tag->term_id,
 					'name' => $tag->name,
 					'url'  => get_term_link( $tag ),
-				];
+				);
 			}
 		}
 
 		// Vendor suggestions.
-		$vendors = $this->vendor_repo->search( $query, [ 'limit' => $limit ] );
+		$vendors = $this->vendor_repo->search( $query, array( 'limit' => $limit ) );
 		foreach ( $vendors as $vendor ) {
-			$suggestions['vendors'][] = [
+			$suggestions['vendors'][] = array(
 				'id'           => $vendor->user_id,
 				'display_name' => $vendor->display_name,
 				'url'          => get_author_posts_url( $vendor->user_id ),
-			];
+			);
 		}
 
 		/**
@@ -505,10 +505,10 @@ class SearchService {
 	 * @return array<string> Popular search terms.
 	 */
 	public function get_popular_searches( int $limit = 10 ): array {
-		$searches = get_option( 'wpss_popular_searches', [] );
+		$searches = get_option( 'wpss_popular_searches', array() );
 
 		if ( empty( $searches ) ) {
-			return [];
+			return array();
 		}
 
 		// Sort by count.
@@ -530,7 +530,7 @@ class SearchService {
 			return;
 		}
 
-		$searches = get_option( 'wpss_popular_searches', [] );
+		$searches = get_option( 'wpss_popular_searches', array() );
 
 		if ( ! isset( $searches[ $query ] ) ) {
 			$searches[ $query ] = 0;
@@ -563,26 +563,26 @@ class SearchService {
 		}
 
 		// Supplement with same category.
-		$categories = wp_get_post_terms( $service_id, ServiceCategoryTaxonomy::TAXONOMY, [ 'fields' => 'ids' ] );
+		$categories = wp_get_post_terms( $service_id, ServiceCategoryTaxonomy::TAXONOMY, array( 'fields' => 'ids' ) );
 
 		if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
-			$existing_ids = array_merge( [ $service_id ], wp_list_pluck( $related, 'ID' ) );
+			$existing_ids = array_merge( array( $service_id ), wp_list_pluck( $related, 'ID' ) );
 
 			$more = new \WP_Query(
-				[
+				array(
 					'post_type'      => ServicePostType::POST_TYPE,
 					'post_status'    => 'publish',
 					'posts_per_page' => $limit - count( $related ),
 					'post__not_in'   => $existing_ids,
-					'tax_query'      => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-						[
+					'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+						array(
 							'taxonomy' => ServiceCategoryTaxonomy::TAXONOMY,
 							'field'    => 'term_id',
 							'terms'    => $categories,
-						],
-					],
+						),
+					),
 					'orderby'        => 'rand',
-				]
+				)
 			);
 
 			$related = array_merge( $related, $more->posts );
@@ -597,13 +597,13 @@ class SearchService {
 	 * @return array<string, string> Sort options.
 	 */
 	public static function get_sort_options(): array {
-		return [
+		return array(
 			'relevance'  => __( 'Relevance', 'wp-sell-services' ),
 			'newest'     => __( 'Newest', 'wp-sell-services' ),
 			'popular'    => __( 'Most Popular', 'wp-sell-services' ),
 			'rating'     => __( 'Highest Rated', 'wp-sell-services' ),
 			'price_low'  => __( 'Price: Low to High', 'wp-sell-services' ),
 			'price_high' => __( 'Price: High to Low', 'wp-sell-services' ),
-		];
+		);
 	}
 }

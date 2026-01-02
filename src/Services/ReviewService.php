@@ -62,7 +62,7 @@ class ReviewService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
 			$table,
-			[
+			array(
 				'order_id'             => $order_id,
 				'service_id'           => $order->service_id,
 				'reviewer_id'          => $reviewer_id,
@@ -77,8 +77,8 @@ class ReviewService {
 				'is_verified'          => 1,
 				'created_at'           => current_time( 'mysql' ),
 				'updated_at'           => current_time( 'mysql' ),
-			],
-			[ '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s' ]
+			),
+			array( '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
 
 		$review_id = (int) $wpdb->insert_id;
@@ -99,12 +99,12 @@ class ReviewService {
 			__( 'New Review Received', 'wp-sell-services' ),
 			/* translators: %d: star rating */
 			sprintf( __( 'You received a %d-star review', 'wp-sell-services' ), $rating ),
-			[
+			array(
 				'review_id'  => $review_id,
 				'order_id'   => $order_id,
 				'service_id' => $order->service_id,
 				'rating'     => $rating,
-			]
+			)
 		);
 
 		/**
@@ -188,15 +188,15 @@ class ReviewService {
 	 * @param array $args       Query args.
 	 * @return Review[]
 	 */
-	public function get_service_reviews( int $service_id, array $args = [] ): array {
+	public function get_service_reviews( int $service_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
-		$defaults = [
+		$defaults = array(
 			'status' => Review::STATUS_APPROVED,
 			'limit'  => 10,
 			'offset' => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
@@ -224,15 +224,15 @@ class ReviewService {
 	 * @param array $args      Query args.
 	 * @return Review[]
 	 */
-	public function get_vendor_reviews( int $vendor_id, array $args = [] ): array {
+	public function get_vendor_reviews( int $vendor_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
-		$defaults = [
+		$defaults = array(
 			'status' => Review::STATUS_APPROVED,
 			'limit'  => 10,
 			'offset' => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
@@ -278,12 +278,12 @@ class ReviewService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->update(
 			$table,
-			[
+			array(
 				'response'    => wp_kses_post( $response ),
 				'response_at' => current_time( 'mysql' ),
 				'updated_at'  => current_time( 'mysql' ),
-			],
-			[ 'id' => $review_id ]
+			),
+			array( 'id' => $review_id )
 		);
 	}
 
@@ -309,7 +309,7 @@ class ReviewService {
 		);
 
 		if ( $stats ) {
-			update_post_meta( $service_id, '_wpss_rating', round( (float) $stats->avg_rating, 2 ) );
+			update_post_meta( $service_id, '_wpss_rating_average', round( (float) $stats->avg_rating, 2 ) );
 			update_post_meta( $service_id, '_wpss_review_count', (int) $stats->review_count );
 		}
 	}
@@ -340,12 +340,12 @@ class ReviewService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$vendors_table,
-				[
+				array(
 					'rating'       => round( (float) $stats->avg_rating, 2 ),
 					'review_count' => (int) $stats->review_count,
 					'updated_at'   => current_time( 'mysql' ),
-				],
-				[ 'user_id' => $vendor_id ]
+				),
+				array( 'user_id' => $vendor_id )
 			);
 		}
 	}

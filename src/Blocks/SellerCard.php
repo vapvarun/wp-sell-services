@@ -61,7 +61,7 @@ class SellerCard extends AbstractBlock {
 	 * @return array
 	 */
 	public function get_keywords(): array {
-		return [ 'seller', 'vendor', 'profile', 'freelancer', 'user' ];
+		return array( 'seller', 'vendor', 'profile', 'freelancer', 'user' );
 	}
 
 	/**
@@ -70,36 +70,36 @@ class SellerCard extends AbstractBlock {
 	 * @return array
 	 */
 	public function get_attributes(): array {
-		return [
-			'userId'       => [
+		return array(
+			'userId'       => array(
 				'type'    => 'number',
 				'default' => 0,
-			],
-			'showBio'      => [
+			),
+			'showBio'      => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showStats'    => [
+			),
+			'showStats'    => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showRating'   => [
+			),
+			'showRating'   => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showServices' => [
+			),
+			'showServices' => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showButton'   => [
+			),
+			'showButton'   => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'layout'       => [
+			),
+			'layout'       => array(
 				'type'    => 'string',
 				'default' => 'vertical',
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -112,7 +112,7 @@ class SellerCard extends AbstractBlock {
 	public function render( array $attributes, string $content = '' ): string {
 		$this->start_render();
 
-		$defaults = [
+		$defaults = array(
 			'userId'       => 0,
 			'showBio'      => true,
 			'showStats'    => true,
@@ -120,7 +120,7 @@ class SellerCard extends AbstractBlock {
 			'showServices' => true,
 			'showButton'   => true,
 			'layout'       => 'vertical',
-		];
+		);
 
 		$attributes = wp_parse_args( $attributes, $defaults );
 
@@ -140,7 +140,7 @@ class SellerCard extends AbstractBlock {
 		// Get seller stats.
 		$stats = $this->get_seller_stats( $user_id );
 
-		$wrapper_classes = [ 'wpss-seller-layout-' . $attributes['layout'] ];
+		$wrapper_classes = array( 'wpss-seller-layout-' . $attributes['layout'] );
 		?>
 		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?>>
 			<div class="wpss-seller-card-inner">
@@ -267,14 +267,14 @@ class SellerCard extends AbstractBlock {
 		$last_active = get_user_meta( $user_id, 'wpss_last_active', true );
 		$is_online   = $last_active && ( time() - strtotime( $last_active ) ) < 900;
 
-		return [
+		return array(
 			'services'         => $services,
 			'orders_completed' => $orders_completed,
 			'rating'           => $rating,
 			'reviews'          => $reviews,
 			'response_time'    => $response_time,
 			'is_online'        => $is_online,
-		];
+		);
 	}
 
 	/**
@@ -303,15 +303,15 @@ class SellerCard extends AbstractBlock {
 	 */
 	private function render_seller_services( int $user_id ): void {
 		$services = get_posts(
-			[
+			array(
 				'post_type'      => 'wpss_service',
 				'post_status'    => 'publish',
 				'author'         => $user_id,
 				'posts_per_page' => 3,
 				'orderby'        => 'meta_value_num',
-				'meta_key'       => '_wpss_average_rating',
+				'meta_key'       => '_wpss_rating_average',
 				'order'          => 'DESC',
-			]
+			)
 		);
 
 		if ( empty( $services ) ) {

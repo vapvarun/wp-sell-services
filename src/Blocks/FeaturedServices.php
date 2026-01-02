@@ -61,7 +61,7 @@ class FeaturedServices extends AbstractBlock {
 	 * @return array
 	 */
 	public function get_keywords(): array {
-		return [ 'featured', 'popular', 'carousel', 'slider', 'top' ];
+		return array( 'featured', 'popular', 'carousel', 'slider', 'top' );
 	}
 
 	/**
@@ -70,48 +70,48 @@ class FeaturedServices extends AbstractBlock {
 	 * @return array
 	 */
 	public function get_attributes(): array {
-		return [
-			'layout'     => [
+		return array(
+			'layout'     => array(
 				'type'    => 'string',
 				'default' => 'carousel',
-			],
-			'columns'    => [
+			),
+			'columns'    => array(
 				'type'    => 'number',
 				'default' => 4,
-			],
-			'limit'      => [
+			),
+			'limit'      => array(
 				'type'    => 'number',
 				'default' => 8,
-			],
-			'autoplay'   => [
+			),
+			'autoplay'   => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'interval'   => [
+			),
+			'interval'   => array(
 				'type'    => 'number',
 				'default' => 5000,
-			],
-			'showDots'   => [
+			),
+			'showDots'   => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showArrows' => [
+			),
+			'showArrows' => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showRating' => [
+			),
+			'showRating' => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'showPrice'  => [
+			),
+			'showPrice'  => array(
 				'type'    => 'boolean',
 				'default' => true,
-			],
-			'title'      => [
+			),
+			'title'      => array(
 				'type'    => 'string',
 				'default' => '',
-			],
-		];
+			),
+		);
 	}
 
 	/**
@@ -124,7 +124,7 @@ class FeaturedServices extends AbstractBlock {
 	public function render( array $attributes, string $content = '' ): string {
 		$this->start_render();
 
-		$defaults = [
+		$defaults = array(
 			'layout'     => 'carousel',
 			'columns'    => 4,
 			'limit'      => 8,
@@ -135,26 +135,26 @@ class FeaturedServices extends AbstractBlock {
 			'showRating' => true,
 			'showPrice'  => true,
 			'title'      => __( 'Featured Services', 'wp-sell-services' ),
-		];
+		);
 
 		$attributes = wp_parse_args( $attributes, $defaults );
 
 		// Query featured services.
-		$args = [
+		$args = array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
 			'posts_per_page' => $attributes['limit'],
-			'meta_query'     => [
-				[
+			'meta_query'     => array(
+				array(
 					'key'     => '_wpss_featured',
 					'value'   => '1',
 					'compare' => '=',
-				],
-			],
+				),
+			),
 			'orderby'        => 'meta_value_num',
-			'meta_key'       => '_wpss_average_rating',
+			'meta_key'       => '_wpss_rating_average',
 			'order'          => 'DESC',
-		];
+		);
 
 		$query = new \WP_Query( $args );
 
@@ -167,10 +167,10 @@ class FeaturedServices extends AbstractBlock {
 			return $this->end_render();
 		}
 
-		$wrapper_classes = [
+		$wrapper_classes = array(
 			'wpss-featured-' . $attributes['layout'],
 			'wpss-grid-cols-' . $attributes['columns'],
-		];
+		);
 
 		$carousel_data = '';
 		if ( 'carousel' === $attributes['layout'] ) {
@@ -231,11 +231,11 @@ class FeaturedServices extends AbstractBlock {
 	 * @return void
 	 */
 	private function render_featured_card( array $attributes ): void {
-		$service_id = get_the_ID();
-		$thumbnail  = get_the_post_thumbnail_url( $service_id, 'medium_large' );
-		$seller_id  = get_post_field( 'post_author', $service_id );
-		$price      = get_post_meta( $service_id, '_wpss_starting_price', true );
-		$rating     = get_post_meta( $service_id, '_wpss_average_rating', true );
+		$service_id   = get_the_ID();
+		$thumbnail    = get_the_post_thumbnail_url( $service_id, 'medium_large' );
+		$seller_id    = get_post_field( 'post_author', $service_id );
+		$price        = get_post_meta( $service_id, '_wpss_starting_price', true );
+		$rating       = get_post_meta( $service_id, '_wpss_rating_average', true );
 		$review_count = get_post_meta( $service_id, '_wpss_review_count', true );
 		?>
 		<div class="wpss-featured-slide">
