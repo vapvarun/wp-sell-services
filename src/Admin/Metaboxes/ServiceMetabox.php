@@ -134,43 +134,11 @@ class ServiceMetabox {
 	public function render_details_metabox( \WP_Post $post ): void {
 		wp_nonce_field( 'wpss_service_meta', 'wpss_service_nonce' );
 
-		$delivery_time  = get_post_meta( $post->ID, '_wpss_delivery_time', true );
-		$revision_limit = get_post_meta( $post->ID, '_wpss_revision_limit', true );
-		$status         = get_post_meta( $post->ID, '_wpss_status', true );
-		$status         = ! empty( $status ) ? $status : 'active';
+		$status = get_post_meta( $post->ID, '_wpss_status', true );
+		$status = ! empty( $status ) ? $status : 'active';
 		?>
 		<div class="wpss-details-wrapper">
 			<div class="wpss-details-grid">
-				<div class="wpss-detail-card">
-					<div class="wpss-detail-icon">
-						<span class="dashicons dashicons-clock"></span>
-					</div>
-					<div class="wpss-detail-content">
-						<label for="wpss_delivery_time"><?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?></label>
-						<div class="wpss-detail-input">
-							<input type="number" id="wpss_delivery_time" name="wpss_delivery_time"
-									value="<?php echo esc_attr( $delivery_time ); ?>" min="1" max="365" placeholder="7">
-							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
-						</div>
-						<p class="description"><?php esc_html_e( 'Default delivery time for this service', 'wp-sell-services' ); ?></p>
-					</div>
-				</div>
-
-				<div class="wpss-detail-card">
-					<div class="wpss-detail-icon">
-						<span class="dashicons dashicons-update"></span>
-					</div>
-					<div class="wpss-detail-content">
-						<label for="wpss_revision_limit"><?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?></label>
-						<div class="wpss-detail-input">
-							<input type="number" id="wpss_revision_limit" name="wpss_revision_limit"
-									value="<?php echo esc_attr( $revision_limit ); ?>" min="0" max="20" placeholder="2">
-							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
-						</div>
-						<p class="description"><?php esc_html_e( 'Number of free revisions included', 'wp-sell-services' ); ?></p>
-					</div>
-				</div>
-
 				<div class="wpss-detail-card">
 					<div class="wpss-detail-icon">
 						<span class="dashicons dashicons-visibility"></span>
@@ -188,6 +156,10 @@ class ServiceMetabox {
 					</div>
 				</div>
 			</div>
+			<p class="wpss-details-note">
+				<span class="dashicons dashicons-info-outline"></span>
+				<?php esc_html_e( 'Delivery time and revisions are configured per package below.', 'wp-sell-services' ); ?>
+			</p>
 		</div>
 		<?php
 	}
@@ -955,15 +927,8 @@ class ServiceMetabox {
 			return;
 		}
 
-		// Save simple fields.
-		if ( isset( $_POST['wpss_delivery_time'] ) ) {
-			update_post_meta( $post_id, '_wpss_delivery_time', absint( $_POST['wpss_delivery_time'] ) );
-		}
-
-		if ( isset( $_POST['wpss_revision_limit'] ) ) {
-			update_post_meta( $post_id, '_wpss_revision_limit', absint( $_POST['wpss_revision_limit'] ) );
-		}
-
+		// Save status field.
+		// Note: Delivery time and revisions are now per-package only (see packages below).
 		if ( isset( $_POST['wpss_status'] ) ) {
 			update_post_meta( $post_id, '_wpss_status', sanitize_key( $_POST['wpss_status'] ) );
 		}
@@ -988,10 +953,22 @@ class ServiceMetabox {
 			}
 			update_post_meta( $post_id, '_wpss_packages', $packages );
 
-			// Update starting price (min of all packages).
-			$prices         = array_filter( wp_list_pluck( $packages, 'price' ) );
+			// Update computed meta values from packages.
+			$prices        = array_filter( wp_list_pluck( $packages, 'price' ) );
+			$delivery_days = array_filter( wp_list_pluck( $packages, 'delivery_days' ) );
+			$revisions     = wp_list_pluck( $packages, 'revisions' );
+
+			// Starting price = minimum package price.
 			$starting_price = ! empty( $prices ) ? min( $prices ) : 0;
 			update_post_meta( $post_id, '_wpss_starting_price', $starting_price );
+
+			// Fastest delivery = minimum delivery days (for SEO/display).
+			$fastest_delivery = ! empty( $delivery_days ) ? min( $delivery_days ) : 7;
+			update_post_meta( $post_id, '_wpss_fastest_delivery', $fastest_delivery );
+
+			// Max revisions = maximum revisions across packages.
+			$max_revisions = ! empty( $revisions ) ? max( $revisions ) : 0;
+			update_post_meta( $post_id, '_wpss_max_revisions', $max_revisions );
 		}
 
 		// Save FAQs.

@@ -743,10 +743,31 @@
 	padding: 10px 0;
 }
 
+.wpss-details-note {
+	margin: 15px 0 0;
+	padding: 10px 12px;
+	background: #f0f6fc;
+	border-left: 3px solid var(--wpss-admin-primary, #1dbf73);
+	border-radius: 0 4px 4px 0;
+	color: #555;
+	font-size: 13px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-details-note .dashicons {
+	color: var(--wpss-admin-primary, #1dbf73);
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
 .wpss-details-grid {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 	gap: 15px;
+	max-width: 400px;
 }
 
 .wpss-detail-card {
