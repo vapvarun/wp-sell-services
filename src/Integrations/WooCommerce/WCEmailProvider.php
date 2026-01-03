@@ -28,16 +28,16 @@ class WCEmailProvider {
 	 */
 	public function init(): void {
 		// Register custom email classes.
-		add_filter( 'woocommerce_email_classes', [ $this, 'register_email_classes' ] );
+		add_filter( 'woocommerce_email_classes', array( $this, 'register_email_classes' ) );
 
 		// Add email actions.
-		add_filter( 'woocommerce_email_actions', [ $this, 'register_email_actions' ] );
+		add_filter( 'woocommerce_email_actions', array( $this, 'register_email_actions' ) );
 
 		// Service order status triggers.
-		add_action( 'wpss_order_status_changed', [ $this, 'trigger_status_emails' ], 10, 3 );
-		add_action( 'wpss_requirements_submitted', [ $this, 'trigger_requirements_email' ], 10, 3 );
-		add_action( 'wpss_delivery_submitted', [ $this, 'trigger_delivery_email' ], 10, 2 );
-		add_action( 'wpss_new_order_message', [ $this, 'trigger_message_email' ], 10, 3 );
+		add_action( 'wpss_order_status_changed', array( $this, 'trigger_status_emails' ), 10, 3 );
+		add_action( 'wpss_requirements_submitted', array( $this, 'trigger_requirements_email' ), 10, 3 );
+		add_action( 'wpss_delivery_submitted', array( $this, 'trigger_delivery_email' ), 10, 2 );
+		add_action( 'wpss_new_order_message', array( $this, 'trigger_message_email' ), 10, 3 );
 	}
 
 	/**
@@ -201,7 +201,7 @@ abstract class WPSS_Email_Base extends \WC_Email {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->template_base = WPSS_PLUGIN_PATH . 'templates/emails/';
+		$this->template_base  = WPSS_PLUGIN_DIR . 'templates/emails/';
 		$this->customer_email = true;
 
 		parent::__construct();
@@ -252,10 +252,10 @@ class WPSS_Email_New_Order extends WPSS_Email_Base {
 		$this->heading        = __( 'New Order Received', 'wp-sell-services' );
 		$this->template_html  = 'new-order.php';
 		$this->template_plain = 'plain/new-order.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -295,13 +295,13 @@ class WPSS_Email_New_Order extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'sent_to_admin' => false,
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -315,13 +315,13 @@ class WPSS_Email_New_Order extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'sent_to_admin' => false,
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -344,10 +344,10 @@ class WPSS_Email_Requirements_Submitted extends WPSS_Email_Base {
 		$this->heading        = __( 'Requirements Received', 'wp-sell-services' );
 		$this->template_html  = 'requirements-submitted.php';
 		$this->template_plain = 'plain/requirements-submitted.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -359,7 +359,7 @@ class WPSS_Email_Requirements_Submitted extends WPSS_Email_Base {
 	 * @param array $field_data Submitted requirements.
 	 * @return void
 	 */
-	public function trigger( int $order_id, array $field_data = [] ): void {
+	public function trigger( int $order_id, array $field_data = array() ): void {
 		$this->service_order = $this->get_service_order( $order_id );
 
 		if ( ! $this->service_order ) {
@@ -374,7 +374,10 @@ class WPSS_Email_Requirements_Submitted extends WPSS_Email_Base {
 		}
 
 		$this->recipient = $vendor->user_email;
-		$this->object    = [ 'order' => $this->service_order, 'requirements' => $field_data ];
+		$this->object    = array(
+			'order'        => $this->service_order,
+			'requirements' => $field_data,
+		);
 
 		if ( $this->is_enabled() && $this->get_recipient() ) {
 			$this->send( $this->get_recipient(), $this->get_subject(), $this->get_content(), $this->get_headers(), $this->get_attachments() );
@@ -389,13 +392,13 @@ class WPSS_Email_Requirements_Submitted extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
-				'requirements'  => $this->object['requirements'] ?? [],
+				'requirements'  => $this->object['requirements'] ?? array(),
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -409,13 +412,13 @@ class WPSS_Email_Requirements_Submitted extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
-				'requirements'  => $this->object['requirements'] ?? [],
+				'requirements'  => $this->object['requirements'] ?? array(),
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -438,10 +441,10 @@ class WPSS_Email_Order_In_Progress extends WPSS_Email_Base {
 		$this->heading        = __( 'Your Order is In Progress', 'wp-sell-services' );
 		$this->template_html  = 'order-in-progress.php';
 		$this->template_plain = 'plain/order-in-progress.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -481,12 +484,12 @@ class WPSS_Email_Order_In_Progress extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -500,12 +503,12 @@ class WPSS_Email_Order_In_Progress extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -528,10 +531,10 @@ class WPSS_Email_Delivery_Ready extends WPSS_Email_Base {
 		$this->heading        = __( 'Your Delivery is Ready', 'wp-sell-services' );
 		$this->template_html  = 'delivery-ready.php';
 		$this->template_plain = 'plain/delivery-ready.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -571,12 +574,12 @@ class WPSS_Email_Delivery_Ready extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -590,12 +593,12 @@ class WPSS_Email_Delivery_Ready extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -618,10 +621,10 @@ class WPSS_Email_Order_Completed extends WPSS_Email_Base {
 		$this->heading        = __( 'Order Completed', 'wp-sell-services' );
 		$this->template_html  = 'order-completed.php';
 		$this->template_plain = 'plain/order-completed.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -664,12 +667,12 @@ class WPSS_Email_Order_Completed extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -683,12 +686,12 @@ class WPSS_Email_Order_Completed extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -711,10 +714,10 @@ class WPSS_Email_Revision_Requested extends WPSS_Email_Base {
 		$this->heading        = __( 'Revision Requested', 'wp-sell-services' );
 		$this->template_html  = 'revision-requested.php';
 		$this->template_plain = 'plain/revision-requested.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -754,12 +757,12 @@ class WPSS_Email_Revision_Requested extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -773,12 +776,12 @@ class WPSS_Email_Revision_Requested extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -808,10 +811,10 @@ class WPSS_Email_New_Message extends WPSS_Email_Base {
 		$this->heading        = __( 'New Message', 'wp-sell-services' );
 		$this->template_html  = 'new-message.php';
 		$this->template_plain = 'plain/new-message.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -859,13 +862,13 @@ class WPSS_Email_New_Message extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'           => $this->service_order,
 				'message_content' => $this->message_content,
 				'email_heading'   => $this->get_heading(),
 				'plain_text'      => false,
 				'email'           => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -879,13 +882,13 @@ class WPSS_Email_New_Message extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'           => $this->service_order,
 				'message_content' => $this->message_content,
 				'email_heading'   => $this->get_heading(),
 				'plain_text'      => true,
 				'email'           => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -908,10 +911,10 @@ class WPSS_Email_Order_Cancelled extends WPSS_Email_Base {
 		$this->heading        = __( 'Order Cancelled', 'wp-sell-services' );
 		$this->template_html  = 'order-cancelled.php';
 		$this->template_plain = 'plain/order-cancelled.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -954,12 +957,12 @@ class WPSS_Email_Order_Cancelled extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -973,12 +976,12 @@ class WPSS_Email_Order_Cancelled extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -1001,10 +1004,10 @@ class WPSS_Email_Dispute_Opened extends WPSS_Email_Base {
 		$this->heading        = __( 'Dispute Opened', 'wp-sell-services' );
 		$this->template_html  = 'dispute-opened.php';
 		$this->template_plain = 'plain/dispute-opened.php';
-		$this->placeholders   = [
+		$this->placeholders   = array(
 			'{order_number}' => '',
 			'{site_title}'   => $this->get_blogname(),
-		];
+		);
 
 		parent::__construct();
 	}
@@ -1025,10 +1028,10 @@ class WPSS_Email_Dispute_Opened extends WPSS_Email_Base {
 		$this->placeholders['{order_number}'] = $this->service_order->order_number;
 
 		// Send to both parties and admin.
-		$recipients = [
+		$recipients = array(
 			get_user_by( 'id', $this->service_order->customer_id ),
 			get_user_by( 'id', $this->service_order->vendor_id ),
-		];
+		);
 
 		foreach ( $recipients as $recipient ) {
 			if ( $recipient && $this->is_enabled() ) {
@@ -1046,12 +1049,12 @@ class WPSS_Email_Dispute_Opened extends WPSS_Email_Base {
 	public function get_content_html(): string {
 		return wc_get_template_html(
 			$this->template_html,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => false,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);
@@ -1065,12 +1068,12 @@ class WPSS_Email_Dispute_Opened extends WPSS_Email_Base {
 	public function get_content_plain(): string {
 		return wc_get_template_html(
 			$this->template_plain,
-			[
+			array(
 				'order'         => $this->service_order,
 				'email_heading' => $this->get_heading(),
 				'plain_text'    => true,
 				'email'         => $this,
-			],
+			),
 			'',
 			$this->template_base
 		);

@@ -246,7 +246,7 @@ class UnifiedDashboard {
 	 * @return string Login prompt HTML.
 	 */
 	private function render_login_prompt(): string {
-		$login_url = wp_login_url( get_permalink() );
+		$login_url = wp_login_url( get_permalink() ?: home_url() );
 
 		return sprintf(
 			'<div class="wpss-dashboard-login">
@@ -379,7 +379,7 @@ class UnifiedDashboard {
 	 * @return string Section URL.
 	 */
 	private function get_section_url( string $section ): string {
-		$base_url = get_permalink();
+		$base_url = get_permalink() ?: home_url();
 
 		if ( 'orders' === $section ) {
 			return $base_url;

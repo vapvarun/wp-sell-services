@@ -69,6 +69,13 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	private ?WCAccountProvider $account_provider = null;
 
 	/**
+	 * Email provider instance.
+	 *
+	 * @var WCEmailProvider|null
+	 */
+	private ?WCEmailProvider $email_provider = null;
+
+	/**
 	 * Get the unique adapter identifier.
 	 *
 	 * @return string
@@ -110,6 +117,7 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 		$this->product_provider  = new WCProductProvider();
 		$this->checkout_provider = new WCCheckoutProvider();
 		$this->account_provider  = new WCAccountProvider();
+		$this->email_provider    = new WCEmailProvider();
 
 		// Register WooCommerce-specific hooks.
 		$this->register_hooks();
@@ -134,15 +142,16 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 		$this->product_provider->init();
 		$this->checkout_provider->init();
 		$this->account_provider->init();
+		$this->email_provider->init();
 
 		// Order status changes.
-		add_action( 'woocommerce_order_status_processing', [ $this, 'handle_order_paid' ] );
-		add_action( 'woocommerce_order_status_completed', [ $this, 'handle_order_paid' ] );
-		add_action( 'woocommerce_order_status_cancelled', [ $this, 'handle_order_cancelled' ] );
-		add_action( 'woocommerce_order_status_refunded', [ $this, 'handle_order_refunded' ] );
+		add_action( 'woocommerce_order_status_processing', array( $this, 'handle_order_paid' ) );
+		add_action( 'woocommerce_order_status_completed', array( $this, 'handle_order_paid' ) );
+		add_action( 'woocommerce_order_status_cancelled', array( $this, 'handle_order_cancelled' ) );
+		add_action( 'woocommerce_order_status_refunded', array( $this, 'handle_order_refunded' ) );
 
 		// Payment complete hook.
-		add_action( 'woocommerce_payment_complete', [ $this, 'handle_payment_complete' ] );
+		add_action( 'woocommerce_payment_complete', array( $this, 'handle_payment_complete' ) );
 	}
 
 	/**
@@ -259,5 +268,17 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 			$this->account_provider = new WCAccountProvider();
 		}
 		return $this->account_provider;
+	}
+
+	/**
+	 * Get the email provider.
+	 *
+	 * @return WCEmailProvider
+	 */
+	public function get_email_provider(): WCEmailProvider {
+		if ( null === $this->email_provider ) {
+			$this->email_provider = new WCEmailProvider();
+		}
+		return $this->email_provider;
 	}
 }
