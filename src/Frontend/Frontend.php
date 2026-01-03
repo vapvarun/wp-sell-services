@@ -86,6 +86,7 @@ class Frontend {
 				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
 				'apiUrl'          => rest_url( 'wpss/v1/' ),
 				'nonce'           => wp_create_nonce( 'wpss_proposal_action' ),
+				'orderNonce'      => wp_create_nonce( 'wpss_order_action' ),
 				'restNonce'       => wp_create_nonce( 'wp_rest' ),
 				'pollingInterval' => 10000,
 				'i18n'            => array(

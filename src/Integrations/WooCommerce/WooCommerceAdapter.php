@@ -101,12 +101,21 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	}
 
 	/**
-	 * Check if WooCommerce is installed and active.
+	 * Check if WooCommerce is installed, active, and enabled in settings.
 	 *
 	 * @return bool
 	 */
 	public function is_active(): bool {
-		return class_exists( 'WooCommerce' );
+		// Check if WooCommerce is installed.
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return false;
+		}
+
+		// Check if WooCommerce integration is enabled in settings.
+		$general_settings = get_option( 'wpss_general', array() );
+
+		// Default to enabled if setting not yet set (for backward compatibility).
+		return $general_settings['enable_woocommerce'] ?? true;
 	}
 
 	/**

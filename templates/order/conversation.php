@@ -218,7 +218,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 									required></textarea>
 					</div>
 
-					<button type="submit" class="wpss-messaging__send-btn" id="wpss-send-btn" title="<?php esc_attr_e( 'Send message', 'wp-sell-services' ); ?>">
+					<button type="button" class="wpss-messaging__send-btn" id="wpss-send-btn" title="<?php esc_attr_e( 'Send message', 'wp-sell-services' ); ?>">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<line x1="22" y1="2" x2="11" y2="13"/>
 							<polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -311,9 +311,20 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 		updateAttachmentsPreview();
 	});
 
-	// Submit message.
+	// Handle send button click.
+	$sendBtn.on('click', function(e) {
+		e.preventDefault();
+		submitMessage();
+	});
+
+	// Handle form submit (Enter key).
 	$messageForm.on('submit', function(e) {
 		e.preventDefault();
+		submitMessage();
+	});
+
+	// Submit message function.
+	function submitMessage() {
 
 		var message = $messageInput.val().trim();
 		if (!message && selectedFiles.length === 0) {
@@ -333,7 +344,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 		$sendBtn.prop('disabled', true);
 
 		$.ajax({
-			url: wpss_ajax.ajax_url,
+			url: wpss.ajaxUrl,
 			type: 'POST',
 			data: formData,
 			processData: false,
@@ -362,7 +373,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 				$messageInput.focus();
 			}
 		});
-	});
+	}
 
 	// Poll for new messages (simple polling, can be replaced with WebSockets).
 	var lastMessageId = $messagesContainer.find('.wpss-messaging__message:last').data('message-id') || 0;
@@ -373,11 +384,11 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 		}
 
 		$.ajax({
-			url: wpss_ajax.ajax_url,
+			url: wpss.ajaxUrl,
 			type: 'POST',
 			data: {
 				action: 'wpss_get_new_messages',
-				nonce: wpss_ajax.nonce,
+				nonce: wpss.nonce,
 				order_id: $conversation.data('order-id'),
 				last_id: lastMessageId
 			},

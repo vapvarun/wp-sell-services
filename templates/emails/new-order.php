@@ -46,7 +46,14 @@ $buyer   = get_user_by( 'id', $order->customer_id );
 		</tr>
 		<tr>
 			<th class="td" scope="row" style="text-align:left;"><?php esc_html_e( 'Delivery Deadline', 'wp-sell-services' ); ?></th>
-			<td class="td" style="text-align:left;"><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->delivery_deadline ) ) ); ?></td>
+			<td class="td" style="text-align:left;">
+				<?php
+				$deadline_timestamp = $order->delivery_deadline instanceof \DateTimeInterface
+					? $order->delivery_deadline->getTimestamp()
+					: strtotime( $order->delivery_deadline );
+				echo esc_html( wp_date( get_option( 'date_format' ), $deadline_timestamp ) );
+				?>
+			</td>
 		</tr>
 	</tbody>
 </table>

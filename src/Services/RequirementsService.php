@@ -66,13 +66,13 @@ class RequirementsService {
 			return null;
 		}
 
-		return [
+		return array(
 			'id'           => (int) $row->id,
 			'order_id'     => (int) $row->order_id,
-			'field_data'   => json_decode( $row->field_data, true ) ?: [],
-			'attachments'  => json_decode( $row->attachments, true ) ?: [],
+			'field_data'   => json_decode( $row->field_data, true ) ?: array(),
+			'attachments'  => json_decode( $row->attachments, true ) ?: array(),
 			'submitted_at' => $row->submitted_at,
-		];
+		);
 	}
 
 	/**
@@ -85,7 +85,7 @@ class RequirementsService {
 		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
 
 		if ( empty( $requirements ) || ! is_array( $requirements ) ) {
-			return [];
+			return array();
 		}
 
 		return $requirements;
@@ -99,31 +99,31 @@ class RequirementsService {
 	 * @param array $files      Uploaded files.
 	 * @return array Result with success status and message.
 	 */
-	public function submit( int $order_id, array $field_data, array $files = [] ): array {
+	public function submit( int $order_id, array $field_data, array $files = array() ): array {
 		$order = $this->order_service->get( $order_id );
 
 		if ( ! $order ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Order not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Check if order is in correct status.
 		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS !== $order->status ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Requirements cannot be submitted for this order status.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Get service requirements.
 		$service = $order->get_service();
 		if ( ! $service ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Service not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		$fields = $this->get_service_fields( $service->id );
@@ -132,11 +132,11 @@ class RequirementsService {
 		$validation = $this->validate( $fields, $field_data, $files );
 
 		if ( ! $validation['valid'] ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Please fix the following errors:', 'wp-sell-services' ),
 				'errors'  => $validation['errors'],
-			];
+			);
 		}
 
 		// Process file uploads.
@@ -146,19 +146,19 @@ class RequirementsService {
 		$saved = $this->save( $order_id, $field_data, $attachments );
 
 		if ( ! $saved ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to save requirements. Please try again.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Start order work.
 		$this->order_service->start_work( $order_id );
 
-		return [
+		return array(
 			'success' => true,
 			'message' => __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -169,14 +169,16 @@ class RequirementsService {
 	 * @param array $files      Uploaded files.
 	 * @return array Validation result.
 	 */
-	public function validate( array $fields, array $field_data, array $files = [] ): array {
-		$errors = [];
+	public function validate( array $fields, array $field_data, array $files = array() ): array {
+		$errors = array();
 
 		foreach ( $fields as $index => $field ) {
-			$field_key = $field['label'] ?? "field_{$index}";
-			$value     = $field_data[ $field_key ] ?? '';
-			$required  = ! empty( $field['required'] );
-			$type      = $field['type'] ?? 'text';
+			// Support both 'label' and 'question' keys for field identification.
+			$field_key   = $field['label'] ?? $field['question'] ?? "field_{$index}";
+			$field_label = $field['label'] ?? $field['question'] ?? "Field {$index}";
+			$value       = $field_data[ $field_key ] ?? '';
+			$required    = ! empty( $field['required'] );
+			$type        = $field['type'] ?? 'text';
 
 			// Check required fields.
 			if ( $required ) {
@@ -185,7 +187,7 @@ class RequirementsService {
 						$errors[ $field_key ] = sprintf(
 							/* translators: %s: field label */
 							__( '%s is required.', 'wp-sell-services' ),
-							$field['label']
+							$field_label
 						);
 						continue;
 					}
@@ -193,7 +195,7 @@ class RequirementsService {
 					$errors[ $field_key ] = sprintf(
 						/* translators: %s: field label */
 						__( '%s is required.', 'wp-sell-services' ),
-						$field['label']
+						$field_label
 					);
 					continue;
 				}
@@ -207,7 +209,7 @@ class RequirementsService {
 							$errors[ $field_key ] = sprintf(
 								/* translators: %s: field label */
 								__( '%s must be a number.', 'wp-sell-services' ),
-								$field['label']
+								$field_label
 							);
 						}
 						break;
@@ -219,7 +221,7 @@ class RequirementsService {
 							$errors[ $field_key ] = sprintf(
 								/* translators: %s: field label */
 								__( 'Invalid selection for %s.', 'wp-sell-services' ),
-								$field['label']
+								$field_label
 							);
 						}
 						break;
@@ -227,13 +229,13 @@ class RequirementsService {
 					case 'checkbox':
 						if ( ! empty( $field['choices'] ) ) {
 							$choices = $this->parse_choices( $field['choices'] );
-							$values  = is_array( $value ) ? $value : [ $value ];
+							$values  = is_array( $value ) ? $value : array( $value );
 							foreach ( $values as $v ) {
 								if ( ! in_array( $v, $choices, true ) ) {
 									$errors[ $field_key ] = sprintf(
 										/* translators: %s: field label */
 										__( 'Invalid selection for %s.', 'wp-sell-services' ),
-										$field['label']
+										$field_label
 									);
 									break;
 								}
@@ -244,10 +246,10 @@ class RequirementsService {
 			}
 		}
 
-		return [
+		return array(
 			'valid'  => empty( $errors ),
 			'errors' => $errors,
-		];
+		);
 	}
 
 	/**
@@ -262,7 +264,7 @@ class RequirementsService {
 		}
 
 		if ( empty( $choices ) ) {
-			return [];
+			return array();
 		}
 
 		return array_map( 'trim', explode( ',', $choices ) );
@@ -276,7 +278,7 @@ class RequirementsService {
 	 * @return array Processed attachment data.
 	 */
 	private function process_uploads( array $files, int $order_id ): array {
-		$attachments = [];
+		$attachments = array();
 
 		if ( empty( $files ) ) {
 			return $attachments;
@@ -306,7 +308,7 @@ class RequirementsService {
 			}
 
 			// Upload file.
-			$upload = wp_handle_upload( $file, [ 'test_form' => false ] );
+			$upload = wp_handle_upload( $file, array( 'test_form' => false ) );
 
 			if ( isset( $upload['error'] ) ) {
 				continue;
@@ -314,12 +316,12 @@ class RequirementsService {
 
 			// Create attachment.
 			$attachment_id = wp_insert_attachment(
-				[
+				array(
 					'post_mime_type' => $upload['type'],
 					'post_title'     => sanitize_file_name( $file['name'] ),
 					'post_content'   => '',
 					'post_status'    => 'private',
-				],
+				),
 				$upload['file']
 			);
 
@@ -329,14 +331,14 @@ class RequirementsService {
 					wp_generate_attachment_metadata( $attachment_id, $upload['file'] )
 				);
 
-				$attachments[] = [
+				$attachments[] = array(
 					'id'   => $attachment_id,
 					'key'  => $key,
 					'name' => $file['name'],
 					'url'  => $upload['url'],
 					'type' => $upload['type'],
 					'size' => $file['size'],
-				];
+				);
 			}
 		}
 
@@ -349,14 +351,35 @@ class RequirementsService {
 	 * @return array
 	 */
 	private function get_allowed_file_types(): array {
-		$types = [
-			'jpg', 'jpeg', 'png', 'gif', 'webp',
-			'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-			'txt', 'rtf', 'csv',
-			'zip', 'rar', '7z',
-			'mp3', 'wav', 'mp4', 'mov', 'avi',
-			'psd', 'ai', 'eps', 'svg',
-		];
+		$types = array(
+			'jpg',
+			'jpeg',
+			'png',
+			'gif',
+			'webp',
+			'pdf',
+			'doc',
+			'docx',
+			'xls',
+			'xlsx',
+			'ppt',
+			'pptx',
+			'txt',
+			'rtf',
+			'csv',
+			'zip',
+			'rar',
+			'7z',
+			'mp3',
+			'wav',
+			'mp4',
+			'mov',
+			'avi',
+			'psd',
+			'ai',
+			'eps',
+			'svg',
+		);
 
 		/**
 		 * Filter allowed file types for requirements.
@@ -380,19 +403,19 @@ class RequirementsService {
 
 		// Delete existing requirements if any.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete( $table, [ 'order_id' => $order_id ] );
+		$wpdb->delete( $table, array( 'order_id' => $order_id ) );
 
 		// Insert new requirements.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->insert(
 			$table,
-			[
+			array(
 				'order_id'     => $order_id,
 				'field_data'   => wp_json_encode( $field_data ),
 				'attachments'  => wp_json_encode( $attachments ),
 				'submitted_at' => current_time( 'mysql' ),
-			],
-			[ '%d', '%s', '%s', '%s' ]
+			),
+			array( '%d', '%s', '%s', '%s' )
 		);
 
 		if ( $result ) {
@@ -429,40 +452,40 @@ class RequirementsService {
 		$requirements = $this->get( $order_id );
 
 		if ( ! $requirements ) {
-			return [];
+			return array();
 		}
 
 		$order = $this->order_service->get( $order_id );
 		if ( ! $order ) {
-			return [];
+			return array();
 		}
 
 		$service = $order->get_service();
 		if ( ! $service ) {
-			return [];
+			return array();
 		}
 
-		$fields = $this->get_service_fields( $service->id );
-		$formatted = [];
+		$fields    = $this->get_service_fields( $service->id );
+		$formatted = array();
 
 		foreach ( $fields as $field ) {
 			$key   = $field['label'] ?? '';
 			$value = $requirements['field_data'][ $key ] ?? '';
 
-			$formatted[] = [
+			$formatted[] = array(
 				'label' => $field['label'],
 				'type'  => $field['type'],
 				'value' => $this->format_value( $value, $field['type'] ),
-			];
+			);
 		}
 
 		// Add attachments.
 		if ( ! empty( $requirements['attachments'] ) ) {
-			$formatted[] = [
+			$formatted[] = array(
 				'label' => __( 'Attachments', 'wp-sell-services' ),
 				'type'  => 'attachments',
 				'value' => $requirements['attachments'],
-			];
+			);
 		}
 
 		return $formatted;

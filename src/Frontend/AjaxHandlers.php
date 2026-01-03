@@ -37,6 +37,7 @@ class AjaxHandlers {
 		// Order actions.
 		add_action( 'wp_ajax_wpss_accept_order', array( $this, 'accept_order' ) );
 		add_action( 'wp_ajax_wpss_decline_order', array( $this, 'decline_order' ) );
+		add_action( 'wp_ajax_wpss_start_work', array( $this, 'start_work' ) );
 		add_action( 'wp_ajax_wpss_deliver_order', array( $this, 'deliver_order' ) );
 		add_action( 'wp_ajax_wpss_request_revision', array( $this, 'request_revision' ) );
 		add_action( 'wp_ajax_wpss_accept_delivery', array( $this, 'accept_delivery' ) );
@@ -48,6 +49,7 @@ class AjaxHandlers {
 		// Messages.
 		add_action( 'wp_ajax_wpss_send_message', array( $this, 'send_message' ) );
 		add_action( 'wp_ajax_wpss_get_messages', array( $this, 'get_messages' ) );
+		add_action( 'wp_ajax_wpss_get_new_messages', array( $this, 'get_new_messages' ) );
 		add_action( 'wp_ajax_wpss_mark_messages_read', array( $this, 'mark_messages_read' ) );
 
 		// Reviews.
@@ -121,6 +123,43 @@ class AjaxHandlers {
 			wp_send_json_success( array( 'message' => __( 'Order accepted successfully.', 'wp-sell-services' ) ) );
 		} else {
 			wp_send_json_error( $result );
+		}
+	}
+
+	/**
+	 * Start working on order (vendor).
+	 *
+	 * @return void
+	 */
+	public function start_work(): void {
+		check_ajax_referer( 'wpss_order_action', 'nonce' );
+
+		$order_id = absint( $_POST['order_id'] ?? 0 );
+		$user_id  = get_current_user_id();
+
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+		}
+
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
+
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to start work on this order.', 'wp-sell-services' ) ) );
+		}
+
+		// Check if order is in correct status to start work.
+		$allowed_statuses = array( 'accepted', 'requirements_submitted' );
+		if ( ! in_array( $order->status, $allowed_statuses, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Order cannot be started in its current status.', 'wp-sell-services' ) ) );
+		}
+
+		$result = $order_service->start_work( $order_id );
+
+		if ( $result ) {
+			wp_send_json_success( array( 'message' => __( 'Work started! Delivery deadline has been set.', 'wp-sell-services' ) ) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to start work on order.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -246,12 +285,12 @@ class AjaxHandlers {
 		}
 
 		$delivery_service = new DeliveryService();
-		$result           = $delivery_service->accept( $order_id, $user_id );
+		$result           = $delivery_service->accept( $order_id );
 
-		if ( $result['success'] ) {
+		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Order completed successfully!', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( $result );
+			wp_send_json_error( array( 'message' => __( 'Failed to accept delivery.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -291,10 +330,16 @@ class AjaxHandlers {
 	/**
 	 * Submit requirements.
 	 *
+	 * Handles both legacy format (field_*) and new format (requirements[index]).
+	 *
 	 * @return void
 	 */
 	public function submit_requirements(): void {
-		check_ajax_referer( 'wpss_requirements_nonce', 'nonce' );
+		// Support both nonce names for backward compatibility.
+		$nonce = sanitize_text_field( wp_unslash( $_POST['wpss_requirements_nonce'] ?? $_POST['nonce'] ?? '' ) );
+		if ( ! wp_verify_nonce( $nonce, 'wpss_submit_requirements' ) && ! wp_verify_nonce( $nonce, 'wpss_requirements_nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$user_id  = get_current_user_id();
@@ -310,23 +355,71 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to submit requirements.', 'wp-sell-services' ) ) );
 		}
 
-		// Collect field data.
+		// Get service requirements to map indices to questions.
+		$service      = $order->get_service();
+		$requirements = $service ? get_post_meta( $service->id, '_wpss_requirements', true ) : array();
+		if ( ! is_array( $requirements ) ) {
+			$requirements = array();
+		}
+
+		// Collect field data - support both formats.
 		$field_data = array();
-		foreach ( $_POST as $key => $value ) {
-			if ( strpos( $key, 'field_' ) === 0 ) {
-				$field_id                = str_replace( 'field_', '', $key );
-				$field_data[ $field_id ] = is_array( $value ) ? array_map( 'sanitize_text_field', $value ) : sanitize_text_field( wp_unslash( $value ) );
+
+		// New format: requirements[index] => value.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
+		$posted_requirements = isset( $_POST['requirements'] ) ? $_POST['requirements'] : array();
+		if ( ! empty( $posted_requirements ) && is_array( $posted_requirements ) ) {
+			foreach ( $posted_requirements as $index => $value ) {
+				$index = absint( $index );
+				if ( isset( $requirements[ $index ] ) ) {
+					$question                = $requirements[ $index ]['question'] ?? "field_{$index}";
+					$field_data[ $question ] = is_array( $value )
+						? array_map( 'sanitize_textarea_field', array_map( 'wp_unslash', $value ) )
+						: sanitize_textarea_field( wp_unslash( $value ) );
+				}
 			}
 		}
 
-		// Collect files.
-		$files = isset( $_POST['files'] ) ? array_map( 'absint', $_POST['files'] ) : array();
+		// Legacy format: field_* keys.
+		foreach ( $_POST as $key => $value ) {
+			if ( strpos( $key, 'field_' ) === 0 ) {
+				$field_id                = str_replace( 'field_', '', $key );
+				$field_data[ $field_id ] = is_array( $value )
+					? array_map( 'sanitize_text_field', $value )
+					: sanitize_text_field( wp_unslash( $value ) );
+			}
+		}
+
+		// Handle file uploads.
+		$files = array();
+		if ( ! empty( $_FILES ) ) {
+			foreach ( $_FILES as $key => $file ) {
+				// Support requirements[index] format.
+				if ( strpos( $key, 'requirements' ) === 0 ) {
+					preg_match( '/requirements\[(\d+)\]/', $key, $matches );
+					if ( ! empty( $matches[1] ) ) {
+						$index = absint( $matches[1] );
+						if ( isset( $requirements[ $index ] ) ) {
+							$question           = $requirements[ $index ]['question'] ?? "field_{$index}";
+							$files[ $question ] = $file;
+						}
+					}
+				} else {
+					$files[ $key ] = $file;
+				}
+			}
+		}
 
 		$requirements_service = new RequirementsService();
 		$result               = $requirements_service->submit( $order_id, $field_data, $files );
 
 		if ( $result['success'] ) {
-			wp_send_json_success( array( 'message' => __( 'Requirements submitted successfully.', 'wp-sell-services' ) ) );
+			wp_send_json_success(
+				array(
+					'message'  => __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' ),
+					'redirect' => wpss_get_order_url( $order_id ),
+				)
+			);
 		} else {
 			wp_send_json_error( $result );
 		}
@@ -335,40 +428,164 @@ class AjaxHandlers {
 	/**
 	 * Send message.
 	 *
+	 * Accepts order_id and message from the frontend conversation template.
+	 *
 	 * @return void
 	 */
 	public function send_message(): void {
-		check_ajax_referer( 'wpss_message_nonce', 'nonce' );
+		check_ajax_referer( 'wpss_send_message', 'nonce' );
 
-		$conversation_id = absint( $_POST['conversation_id'] ?? 0 );
-		$content         = wp_kses_post( wp_unslash( $_POST['content'] ?? '' ) );
-		$attachments     = isset( $_POST['attachments'] ) ? array_map( 'absint', $_POST['attachments'] ) : array();
-		$user_id         = get_current_user_id();
+		$order_id = absint( $_POST['order_id'] ?? 0 );
+		$content  = wp_kses_post( wp_unslash( $_POST['message'] ?? '' ) );
+		$user_id  = get_current_user_id();
 
-		if ( ! $conversation_id || ! $content ) {
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $content ) {
 			wp_send_json_error( array( 'message' => __( 'Please enter a message.', 'wp-sell-services' ) ) );
 		}
 
-		$conversation_service = new ConversationService();
+		// Get order and verify access.
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
 
-		// Check permission.
-		if ( ! $conversation_service->user_can_access( $conversation_id, $user_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to send messages in this conversation.', 'wp-sell-services' ) ) );
+		if ( ! $order ) {
+			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
 
-		$result = $conversation_service->send_message( $conversation_id, $user_id, $content, $attachments );
+		// Check if user is part of this order.
+		$is_vendor   = (int) $order->vendor_id === $user_id;
+		$is_customer = (int) $order->customer_id === $user_id;
 
-		if ( $result['success'] ) {
-			$message = $conversation_service->get_message( $result['message_id'] );
-			wp_send_json_success(
-				array(
-					'message' => __( 'Message sent.', 'wp-sell-services' ),
-					'data'    => $message,
-				)
-			);
-		} else {
-			wp_send_json_error( $result );
+		if ( ! $is_vendor && ! $is_customer ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to send messages in this order.', 'wp-sell-services' ) ) );
 		}
+
+		// Handle file attachments.
+		$attachments_data = array();
+		if ( ! empty( $_FILES['attachments'] ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+			require_once ABSPATH . 'wp-admin/includes/media.php';
+
+			$files = $_FILES['attachments'];
+
+			// Handle multiple files.
+			if ( is_array( $files['name'] ) ) {
+				$file_count = count( $files['name'] );
+				for ( $i = 0; $i < $file_count; $i++ ) {
+					if ( empty( $files['name'][ $i ] ) ) {
+						continue;
+					}
+
+					$file = array(
+						'name'     => $files['name'][ $i ],
+						'type'     => $files['type'][ $i ],
+						'tmp_name' => $files['tmp_name'][ $i ],
+						'error'    => $files['error'][ $i ],
+						'size'     => $files['size'][ $i ],
+					);
+
+					$_FILES['upload_file'] = $file;
+					$attachment_id         = media_handle_upload( 'upload_file', 0 );
+
+					if ( ! is_wp_error( $attachment_id ) ) {
+						$attachments_data[] = array(
+							'id'   => $attachment_id,
+							'url'  => wp_get_attachment_url( $attachment_id ),
+							'name' => $files['name'][ $i ],
+							'type' => $files['type'][ $i ],
+						);
+					}
+				}
+			}
+		}
+
+		// Insert message into database.
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_conversations';
+
+		// Determine recipient (the other party in the order).
+		$recipient_id = $is_vendor ? (int) $order->customer_id : (int) $order->vendor_id;
+
+		$insert_data = array(
+			'order_id'     => $order_id,
+			'sender_id'    => $user_id,
+			'recipient_id' => $recipient_id,
+			'message'      => $content,
+			'message_type' => 'message',
+			'created_at'   => current_time( 'mysql', true ),
+		);
+
+		if ( ! empty( $attachments_data ) ) {
+			$insert_data['attachments'] = wp_json_encode( $attachments_data );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$inserted = $wpdb->insert(
+			$table,
+			$insert_data,
+			array( '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
+		);
+
+		if ( ! $inserted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to send message.', 'wp-sell-services' ) ) );
+		}
+
+		$message_id = $wpdb->insert_id;
+		$user       = get_userdata( $user_id );
+
+		// Generate HTML for the new message.
+		ob_start();
+		?>
+		<div class="wpss-messaging__message wpss-messaging__message--sent" data-message-id="<?php echo esc_attr( $message_id ); ?>">
+			<div class="wpss-messaging__message-content">
+				<div class="wpss-messaging__bubble">
+					<div class="wpss-messaging__text">
+						<?php echo wp_kses_post( nl2br( $content ) ); ?>
+					</div>
+					<?php if ( ! empty( $attachments_data ) ) : ?>
+						<div class="wpss-messaging__attachments">
+							<?php foreach ( $attachments_data as $attachment ) : ?>
+								<?php $is_image = strpos( $attachment['type'], 'image/' ) === 0; ?>
+								<?php if ( $is_image ) : ?>
+									<a href="<?php echo esc_url( $attachment['url'] ); ?>" target="_blank" class="wpss-messaging__attachment-image">
+										<img src="<?php echo esc_url( $attachment['url'] ); ?>" alt="<?php echo esc_attr( $attachment['name'] ); ?>">
+									</a>
+								<?php else : ?>
+									<a href="<?php echo esc_url( $attachment['url'] ); ?>" target="_blank" class="wpss-messaging__attachment-file">
+										<span class="wpss-messaging__attachment-icon">
+											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+												<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+												<polyline points="14 2 14 8 20 8"/>
+											</svg>
+										</span>
+										<span class="wpss-messaging__attachment-info">
+											<span class="wpss-messaging__attachment-name"><?php echo esc_html( $attachment['name'] ); ?></span>
+										</span>
+									</a>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+				<span class="wpss-messaging__message-time">
+					<?php echo esc_html( wp_date( get_option( 'time_format' ) ) ); ?>
+				</span>
+			</div>
+		</div>
+		<?php
+		$html = ob_get_clean();
+
+		wp_send_json_success(
+			array(
+				'message'    => __( 'Message sent.', 'wp-sell-services' ),
+				'message_id' => $message_id,
+				'html'       => $html,
+			)
+		);
 	}
 
 	/**
@@ -402,6 +619,153 @@ class AjaxHandlers {
 		);
 
 		wp_send_json_success( array( 'messages' => $messages ) );
+	}
+
+	/**
+	 * Get new messages for polling.
+	 *
+	 * Used by the conversation template to poll for new messages.
+	 *
+	 * @return void
+	 */
+	public function get_new_messages(): void {
+		check_ajax_referer( 'wpss_frontend_nonce', 'nonce' );
+
+		$order_id = absint( $_POST['order_id'] ?? 0 );
+		$last_id  = absint( $_POST['last_id'] ?? 0 );
+		$user_id  = get_current_user_id();
+
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify user has access to this order.
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
+
+		if ( ! $order ) {
+			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
+		}
+
+		$is_vendor   = (int) $order->vendor_id === $user_id;
+		$is_customer = (int) $order->customer_id === $user_id;
+
+		if ( ! $is_vendor && ! $is_customer ) {
+			wp_send_json_error( array( 'message' => __( 'Access denied.', 'wp-sell-services' ) ) );
+		}
+
+		global $wpdb;
+
+		// Get new messages after last_id that weren't sent by current user.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$messages = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT m.*, u.display_name as sender_name
+				FROM {$wpdb->prefix}wpss_conversations m
+				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
+				WHERE m.order_id = %d AND m.id > %d AND m.sender_id != %d
+				ORDER BY m.created_at ASC",
+				$order_id,
+				$last_id,
+				$user_id
+			)
+		);
+
+		if ( empty( $messages ) ) {
+			wp_send_json_success( array( 'messages' => array() ) );
+		}
+
+		// Mark new messages as read.
+		$message_ids = wp_list_pluck( $messages, 'id' );
+		if ( ! empty( $message_ids ) ) {
+			$placeholders = implode( ',', array_fill( 0, count( $message_ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->prefix}wpss_conversations SET read_at = %s WHERE id IN ($placeholders)",
+					array_merge( array( current_time( 'mysql', true ) ), $message_ids )
+				)
+			);
+		}
+
+		// Build HTML for each message.
+		$result = array();
+		foreach ( $messages as $msg ) {
+			$is_system = 'system' === $msg->type;
+
+			ob_start();
+			if ( $is_system ) :
+				?>
+				<div class="wpss-messaging__system">
+					<span class="wpss-messaging__system-text">
+						<?php echo wp_kses_post( $msg->message ); ?>
+						<span class="wpss-messaging__message-time">
+							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $msg->created_at ) ) ); ?>
+						</span>
+					</span>
+				</div>
+				<?php
+			else :
+				?>
+				<div class="wpss-messaging__message" data-message-id="<?php echo esc_attr( $msg->id ); ?>">
+					<div class="wpss-messaging__message-avatar">
+						<?php echo get_avatar( $msg->sender_id, 32 ); ?>
+					</div>
+					<div class="wpss-messaging__message-content">
+						<div class="wpss-messaging__bubble">
+							<span class="wpss-messaging__sender"><?php echo esc_html( $msg->sender_name ); ?></span>
+							<div class="wpss-messaging__text">
+								<?php echo wp_kses_post( nl2br( $msg->message ) ); ?>
+							</div>
+							<?php if ( ! empty( $msg->attachments ) ) : ?>
+								<?php $attachments = json_decode( $msg->attachments, true ); ?>
+								<?php if ( ! empty( $attachments ) ) : ?>
+									<div class="wpss-messaging__attachments">
+										<?php foreach ( $attachments as $attachment ) : ?>
+											<?php
+											$file_url  = $attachment['url'] ?? '';
+											$file_name = $attachment['name'] ?? basename( $file_url );
+											$file_type = $attachment['type'] ?? '';
+											$is_image  = strpos( $file_type, 'image/' ) === 0;
+											?>
+											<?php if ( $is_image && $file_url ) : ?>
+												<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-image">
+													<img src="<?php echo esc_url( $file_url ); ?>" alt="<?php echo esc_attr( $file_name ); ?>">
+												</a>
+											<?php else : ?>
+												<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
+													<span class="wpss-messaging__attachment-icon">
+														<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+															<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+															<polyline points="14 2 14 8 20 8"/>
+														</svg>
+													</span>
+													<span class="wpss-messaging__attachment-info">
+														<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
+													</span>
+												</a>
+											<?php endif; ?>
+										<?php endforeach; ?>
+									</div>
+								<?php endif; ?>
+							<?php endif; ?>
+						</div>
+						<span class="wpss-messaging__message-time">
+							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $msg->created_at ) ) ); ?>
+						</span>
+					</div>
+				</div>
+				<?php
+			endif;
+			$html = ob_get_clean();
+
+			$result[] = array(
+				'id'   => (int) $msg->id,
+				'html' => $html,
+			);
+		}
+
+		wp_send_json_success( array( 'messages' => $result ) );
 	}
 
 	/**

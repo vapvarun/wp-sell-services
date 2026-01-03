@@ -28,7 +28,7 @@ class DeliveryService {
 	 * @param array  $files       Delivery files.
 	 * @return bool
 	 */
-	public function submit( int $order_id, string $message, array $files = [] ): bool {
+	public function submit( int $order_id, string $message, array $files = array() ): bool {
 		$order = wpss_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -36,26 +36,26 @@ class DeliveryService {
 		}
 
 		// Validate order status allows delivery.
-		if ( ! in_array( $order->status, [ ServiceOrder::STATUS_IN_PROGRESS, ServiceOrder::STATUS_REVISION_REQUESTED, ServiceOrder::STATUS_LATE ], true ) ) {
+		if ( ! in_array( $order->status, array( ServiceOrder::STATUS_IN_PROGRESS, ServiceOrder::STATUS_REVISION_REQUESTED, ServiceOrder::STATUS_LATE ), true ) ) {
 			return false;
 		}
 
 		global $wpdb;
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
-		// Get revision number.
+		// Get version number.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$revision_count = (int) $wpdb->get_var(
+		$version_count = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$deliveries_table} WHERE order_id = %d",
 				$order_id
 			)
 		);
 
-		$revision_number = $revision_count + 1;
+		$version = $version_count + 1;
 
 		// Process uploaded files.
-		$processed_files = [];
+		$processed_files = array();
 		foreach ( $files as $file ) {
 			$processed = $this->process_file( $file, $order_id );
 			if ( $processed ) {
@@ -66,17 +66,16 @@ class DeliveryService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
 			$deliveries_table,
-			[
-				'order_id'        => $order_id,
-				'vendor_id'       => $order->vendor_id,
-				'revision_number' => $revision_number,
-				'message'         => $message,
-				'files'           => wp_json_encode( $processed_files ),
-				'status'          => 'pending',
-				'created_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
-			],
-			[ '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s' ]
+			array(
+				'order_id'    => $order_id,
+				'vendor_id'   => $order->vendor_id,
+				'version'     => $version,
+				'message'     => $message,
+				'attachments' => wp_json_encode( $processed_files ),
+				'status'      => 'pending',
+				'created_at'  => current_time( 'mysql' ),
+			),
+			array( '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
 		);
 
 		$delivery_id = (int) $wpdb->insert_id;
@@ -87,7 +86,7 @@ class DeliveryService {
 
 		// Add delivery message to conversation.
 		$conversation_service = new ConversationService();
-		$conversation = $conversation_service->get_by_order( $order_id );
+		$conversation         = $conversation_service->get_by_order( $order_id );
 
 		if ( $conversation ) {
 			$conversation_service->send_message(
@@ -135,9 +134,8 @@ class DeliveryService {
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$deliveries_table}
-				SET status = 'accepted', updated_at = %s
+				SET status = 'accepted'
 				WHERE order_id = %d AND status = 'pending'",
-				current_time( 'mysql' ),
 				$order_id
 			)
 		);
@@ -191,14 +189,14 @@ class DeliveryService {
 
 		// Add revision message to conversation.
 		$conversation_service = new ConversationService();
-		$conversation = $conversation_service->get_by_order( $order_id );
+		$conversation         = $conversation_service->get_by_order( $order_id );
 
 		if ( $conversation ) {
 			$conversation_service->send_message(
 				$conversation->id,
 				$order->customer_id,
 				$reason,
-				[],
+				array(),
 				Message::TYPE_REVISION
 			);
 		}
@@ -251,7 +249,7 @@ class DeliveryService {
 
 		// Verify file type.
 		$allowed_types = $this->get_allowed_file_types();
-		$file_type = wp_check_filetype( $file['name'] );
+		$file_type     = wp_check_filetype( $file['name'] );
 
 		if ( ! in_array( $file_type['ext'], $allowed_types, true ) ) {
 			return null;
@@ -262,9 +260,9 @@ class DeliveryService {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
-		$upload_overrides = [
+		$upload_overrides = array(
 			'test_form' => false,
-		];
+		);
 
 		$uploaded = wp_handle_upload( $file, $upload_overrides );
 
@@ -275,12 +273,12 @@ class DeliveryService {
 
 		// Create attachment.
 		$attachment_id = wp_insert_attachment(
-			[
+			array(
 				'post_title'     => sanitize_file_name( $file['name'] ),
 				'post_mime_type' => $uploaded['type'],
 				'post_status'    => 'private',
 				'post_content'   => '',
-			],
+			),
 			$uploaded['file']
 		);
 
@@ -295,13 +293,13 @@ class DeliveryService {
 		// Store order reference.
 		update_post_meta( $attachment_id, '_wpss_order_id', $order_id );
 
-		return [
+		return array(
 			'id'   => $attachment_id,
 			'name' => $file['name'],
 			'url'  => $uploaded['url'],
 			'type' => $uploaded['type'],
 			'size' => $file['size'],
-		];
+		);
 	}
 
 	/**
@@ -310,16 +308,44 @@ class DeliveryService {
 	 * @return array
 	 */
 	private function get_allowed_file_types(): array {
-		$types = [
-			'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
-			'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-			'zip', 'rar', '7z',
-			'mp3', 'wav', 'ogg',
-			'mp4', 'mov', 'avi', 'webm',
-			'txt', 'csv', 'json', 'xml',
-			'psd', 'ai', 'eps', 'sketch', 'fig',
-			'html', 'css', 'js', 'php',
-		];
+		$types = array(
+			'jpg',
+			'jpeg',
+			'png',
+			'gif',
+			'webp',
+			'svg',
+			'pdf',
+			'doc',
+			'docx',
+			'xls',
+			'xlsx',
+			'ppt',
+			'pptx',
+			'zip',
+			'rar',
+			'7z',
+			'mp3',
+			'wav',
+			'ogg',
+			'mp4',
+			'mov',
+			'avi',
+			'webm',
+			'txt',
+			'csv',
+			'json',
+			'xml',
+			'psd',
+			'ai',
+			'eps',
+			'sketch',
+			'fig',
+			'html',
+			'css',
+			'js',
+			'php',
+		);
 
 		/**
 		 * Filter allowed file types for delivery.

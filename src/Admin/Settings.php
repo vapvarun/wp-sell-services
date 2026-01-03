@@ -250,6 +250,28 @@ class Settings {
 			)
 		);
 
+		// E-commerce integration section.
+		add_settings_section(
+			'wpss_ecommerce_section',
+			__( 'E-Commerce Integration', 'wp-sell-services' ),
+			array( $this, 'render_ecommerce_section' ),
+			'wpss_general'
+		);
+
+		add_settings_field(
+			'enable_woocommerce',
+			__( 'WooCommerce Integration', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_general',
+			'wpss_ecommerce_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'enable_woocommerce',
+				'label'       => __( 'Enable WooCommerce for service checkout', 'wp-sell-services' ),
+				'default'     => true,
+			)
+		);
+
 		// Vendor settings.
 		register_setting(
 			'wpss_vendor',
@@ -697,6 +719,21 @@ class Settings {
 	}
 
 	/**
+	 * Render e-commerce section description.
+	 *
+	 * @return void
+	 */
+	public function render_ecommerce_section(): void {
+		$wc_active = class_exists( 'WooCommerce' );
+		echo '<p>' . esc_html__( 'Configure e-commerce platform for service checkout.', 'wp-sell-services' ) . '</p>';
+		if ( ! $wc_active ) {
+			echo '<p class="description" style="color: #d63638;">';
+			echo esc_html__( 'WooCommerce is not installed or active.', 'wp-sell-services' );
+			echo '</p>';
+		}
+	}
+
+	/**
 	 * Render vendor section description.
 	 *
 	 * @return void
@@ -903,6 +940,7 @@ class Settings {
 		$sanitized['platform_name']           = sanitize_text_field( $input['platform_name'] ?? '' );
 		$sanitized['currency']                = sanitize_text_field( $input['currency'] ?? 'USD' );
 		$sanitized['platform_fee_percentage'] = min( 50, max( 0, (float) ( $input['platform_fee_percentage'] ?? 10 ) ) );
+		$sanitized['enable_woocommerce']      = ! empty( $input['enable_woocommerce'] );
 
 		return $sanitized;
 	}

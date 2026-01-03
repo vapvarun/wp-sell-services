@@ -643,6 +643,17 @@ class Admin {
 	 * @return void
 	 */
 	public function render_orders_page(): void {
+		// Check if viewing a specific order.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
+
+		if ( 'view' === $action && $order_id ) {
+			$this->render_order_detail( $order_id );
+			return;
+		}
+
 		$list_table = new OrdersListTable();
 		$list_table->prepare_items();
 		?>
@@ -662,6 +673,313 @@ class Admin {
 				$list_table->display();
 				?>
 			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render order detail view.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	private function render_order_detail( int $order_id ): void {
+		global $wpdb;
+		$orders_table        = $wpdb->prefix . 'wpss_orders';
+		$conversations_table = $wpdb->prefix . 'wpss_conversations';
+		$deliveries_table    = $wpdb->prefix . 'wpss_deliveries';
+
+		// Get order.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$order = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$orders_table} WHERE id = %d",
+				$order_id
+			)
+		);
+
+		if ( ! $order ) {
+			echo '<div class="wrap"><div class="notice notice-error"><p>' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p></div></div>';
+			return;
+		}
+
+		// Get service.
+		$service = get_post( $order->service_id );
+		$vendor  = get_userdata( $order->vendor_id );
+		$buyer   = get_userdata( $order->customer_id );
+
+		// Get messages.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$messages = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$conversations_table} WHERE order_id = %d ORDER BY created_at ASC",
+				$order_id
+			)
+		);
+
+		// Get deliveries.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$deliveries = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$deliveries_table} WHERE order_id = %d ORDER BY created_at DESC",
+				$order_id
+			)
+		);
+
+		$statuses = array(
+			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
+			'pending_requirements' => __( 'Waiting for Requirements', 'wp-sell-services' ),
+			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
+			'delivered'            => __( 'Delivered', 'wp-sell-services' ),
+			'revision_requested'   => __( 'Revision Requested', 'wp-sell-services' ),
+			'completed'            => __( 'Completed', 'wp-sell-services' ),
+			'cancelled'            => __( 'Cancelled', 'wp-sell-services' ),
+			'disputed'             => __( 'Disputed', 'wp-sell-services' ),
+		);
+		?>
+		<div class="wrap wpss-order-detail">
+			<h1 class="wp-heading-inline">
+				<?php
+				printf(
+					/* translators: %s: order number */
+					esc_html__( 'Order #%s', 'wp-sell-services' ),
+					esc_html( $order->order_number )
+				);
+				?>
+			</h1>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders' ) ); ?>" class="page-title-action">
+				<?php esc_html_e( 'Back to Orders', 'wp-sell-services' ); ?>
+			</a>
+			<hr class="wp-header-end">
+
+			<div class="wpss-order-layout" style="display: flex; gap: 20px; margin-top: 20px;">
+				<div class="wpss-order-main" style="flex: 2;">
+					<!-- Order Info -->
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<table class="form-table">
+								<tr>
+									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+									<td>
+										<span class="wpss-status-badge wpss-status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+											<?php echo esc_html( $statuses[ $order->status ] ?? ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
+										</span>
+									</td>
+								</tr>
+								<tr>
+									<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
+									<td>
+										<?php if ( $service ) : ?>
+											<a href="<?php echo esc_url( get_edit_post_link( $service->ID ) ); ?>">
+												<?php echo esc_html( $service->post_title ); ?>
+											</a>
+										<?php else : ?>
+											<em><?php esc_html_e( 'Deleted', 'wp-sell-services' ); ?></em>
+										<?php endif; ?>
+									</td>
+								</tr>
+								<?php if ( ! empty( $order->package_name ) ) : ?>
+									<tr>
+										<th><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></th>
+										<td><?php echo esc_html( $order->package_name ); ?></td>
+									</tr>
+								<?php endif; ?>
+								<tr>
+									<th><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
+									<td><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></td>
+								</tr>
+								<?php if ( $order->delivery_deadline ) : ?>
+									<tr>
+										<th><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></th>
+										<td><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></td>
+									</tr>
+								<?php endif; ?>
+								<tr>
+									<th><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></th>
+									<td><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '' ); ?></td>
+								</tr>
+								<?php if ( ! empty( $order->platform_order_id ) ) : ?>
+									<tr>
+										<th><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></th>
+										<td>
+											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders&action=edit&id=' . $order->platform_order_id ) ); ?>">
+												#<?php echo esc_html( $order->platform_order_id ); ?>
+											</a>
+										</td>
+									</tr>
+								<?php endif; ?>
+							</table>
+						</div>
+					</div>
+
+					<!-- Requirements -->
+					<?php if ( ! empty( $order->requirements ) ) : ?>
+						<div class="postbox">
+							<h2 class="hndle"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<?php
+								$requirements = maybe_unserialize( $order->requirements );
+								if ( is_array( $requirements ) ) {
+									echo '<dl>';
+									foreach ( $requirements as $key => $value ) {
+										echo '<dt><strong>' . esc_html( $key ) . '</strong></dt>';
+										echo '<dd>' . esc_html( is_array( $value ) ? implode( ', ', $value ) : $value ) . '</dd>';
+									}
+									echo '</dl>';
+								} else {
+									echo wp_kses_post( wpautop( $requirements ) );
+								}
+								?>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<!-- Messages -->
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<?php if ( ! empty( $messages ) ) : ?>
+								<div class="wpss-order-messages" style="max-height: 400px; overflow-y: auto;">
+									<?php foreach ( $messages as $message ) : ?>
+										<?php $msg_user = get_userdata( $message->sender_id ); ?>
+										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
+											<div style="margin-bottom: 5px;">
+												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
+												<span style="color: #666; margin-left: 10px;">
+													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
+												</span>
+											</div>
+											<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
+											<?php if ( ! empty( $message->attachments ) ) : ?>
+												<div style="margin-top: 10px; color: #666;">
+													<span class="dashicons dashicons-paperclip"></span>
+													<?php esc_html_e( 'Has attachments', 'wp-sell-services' ); ?>
+												</div>
+											<?php endif; ?>
+										</div>
+									<?php endforeach; ?>
+								</div>
+							<?php else : ?>
+								<p><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+							<?php endif; ?>
+						</div>
+					</div>
+
+					<!-- Deliveries -->
+					<?php if ( ! empty( $deliveries ) ) : ?>
+						<div class="postbox">
+							<h2 class="hndle"><?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<?php foreach ( $deliveries as $delivery ) : ?>
+									<div class="wpss-delivery" style="padding: 10px; margin-bottom: 10px; background: #f0f9f0; border-left: 3px solid #00a32a;">
+										<div style="margin-bottom: 5px;">
+											<strong>
+												<?php
+												printf(
+													/* translators: %d: delivery number */
+													esc_html__( 'Delivery #%d', 'wp-sell-services' ),
+													$delivery->id
+												);
+												?>
+											</strong>
+											<span style="color: #666; margin-left: 10px;">
+												<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
+											</span>
+										</div>
+										<?php if ( ! empty( $delivery->message ) ) : ?>
+											<div><?php echo wp_kses_post( wpautop( $delivery->message ) ); ?></div>
+										<?php endif; ?>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						</div>
+					<?php endif; ?>
+				</div>
+
+				<div class="wpss-order-sidebar" style="flex: 1;">
+					<!-- Parties -->
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Parties', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<p>
+								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
+								<?php if ( $buyer ) : ?>
+									<a href="<?php echo esc_url( get_edit_user_link( $buyer->ID ) ); ?>">
+										<?php echo esc_html( $buyer->display_name ); ?>
+									</a>
+									<br><small><?php echo esc_html( $buyer->user_email ); ?></small>
+								<?php else : ?>
+									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
+								<?php endif; ?>
+							</p>
+							<p>
+								<strong><?php esc_html_e( 'Vendor:', 'wp-sell-services' ); ?></strong><br>
+								<?php if ( $vendor ) : ?>
+									<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
+										<?php echo esc_html( $vendor->display_name ); ?>
+									</a>
+									<br><small><?php echo esc_html( $vendor->user_email ); ?></small>
+								<?php else : ?>
+									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
+								<?php endif; ?>
+							</p>
+						</div>
+					</div>
+
+					<!-- Update Status -->
+					<?php if ( ! in_array( $order->status, array( 'completed', 'cancelled' ), true ) ) : ?>
+						<div class="postbox">
+							<h2 class="hndle"><?php esc_html_e( 'Update Order', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<?php wp_nonce_field( 'wpss_update_order', 'wpss_order_nonce' ); ?>
+									<input type="hidden" name="action" value="wpss_update_order">
+									<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+
+									<p>
+										<label for="order_status"><strong><?php esc_html_e( 'Status:', 'wp-sell-services' ); ?></strong></label><br>
+										<select name="order_status" id="order_status" style="width: 100%;">
+											<?php foreach ( $statuses as $value => $label ) : ?>
+												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $order->status, $value ); ?>>
+													<?php echo esc_html( $label ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+									</p>
+
+									<?php submit_button( __( 'Update Status', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+								</form>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<!-- Financial Summary -->
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<table style="width: 100%;">
+								<tr>
+									<td><?php esc_html_e( 'Order Total:', 'wp-sell-services' ); ?></td>
+									<td style="text-align: right;"><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></td>
+								</tr>
+								<?php if ( isset( $order->vendor_earning ) && $order->vendor_earning > 0 ) : ?>
+									<tr>
+										<td><?php esc_html_e( 'Vendor Earning:', 'wp-sell-services' ); ?></td>
+										<td style="text-align: right;"><?php echo esc_html( wpss_format_price( (float) $order->vendor_earning, $order->currency ) ); ?></td>
+									</tr>
+								<?php endif; ?>
+								<?php if ( isset( $order->platform_fee ) && $order->platform_fee > 0 ) : ?>
+									<tr>
+										<td><?php esc_html_e( 'Platform Fee:', 'wp-sell-services' ); ?></td>
+										<td style="text-align: right;"><?php echo esc_html( wpss_format_price( (float) $order->platform_fee, $order->currency ) ); ?></td>
+									</tr>
+								<?php endif; ?>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 		<?php
 	}

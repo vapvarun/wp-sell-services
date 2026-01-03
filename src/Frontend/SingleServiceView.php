@@ -129,21 +129,8 @@ class SingleServiceView {
 			)
 		);
 
-		// Lightbox for gallery.
-		wp_enqueue_style(
-			'wpss-lightbox',
-			\WPSS_PLUGIN_URL . 'assets/css/vendor/lightbox.min.css',
-			array(),
-			'2.11.3'
-		);
-
-		wp_enqueue_script(
-			'wpss-lightbox',
-			\WPSS_PLUGIN_URL . 'assets/js/vendor/lightbox.min.js',
-			array( 'jquery' ),
-			'2.11.3',
-			true
-		);
+		// Note: Lightbox functionality uses built-in fallback in single-service.js.
+		// No external library required.
 	}
 
 	/**

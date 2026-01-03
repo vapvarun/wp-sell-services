@@ -597,17 +597,28 @@ function wpss_get_vendor_url( int $user_id ): string {
  * @param string $tab Optional tab/section.
  * @return string
  */
-function wpss_get_dashboard_url( string $tab = '' ): string {
-	$dashboard_page = (int) get_option( 'wpss_dashboard_page' );
+function wpss_get_dashboard_url( string $section = '' ): string {
+	// First check wpss_pages option (newer, preferred).
+	$pages          = get_option( 'wpss_pages', array() );
+	$dashboard_page = (int) ( $pages['dashboard'] ?? 0 );
+
+	// Fallback to legacy option for backward compatibility.
+	if ( ! $dashboard_page ) {
+		$dashboard_page = (int) get_option( 'wpss_dashboard_page' );
+	}
 
 	if ( ! $dashboard_page ) {
-		return admin_url();
+		return '';
 	}
 
 	$url = get_permalink( $dashboard_page );
 
-	if ( $tab ) {
-		$url = add_query_arg( 'tab', $tab, $url );
+	if ( ! $url ) {
+		return '';
+	}
+
+	if ( $section ) {
+		$url = add_query_arg( 'section', $section, $url );
 	}
 
 	return $url;
@@ -626,7 +637,8 @@ function wpss_get_order_url( int $order_id ): string {
 		return '';
 	}
 
-	$dashboard_url = wpss_get_dashboard_url( 'orders' );
+	// Orders is the default section, so no section parameter needed.
+	$dashboard_url = wpss_get_dashboard_url();
 
 	if ( $dashboard_url ) {
 		return add_query_arg( 'order_id', $order_id, $dashboard_url );
@@ -648,7 +660,8 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 		return '';
 	}
 
-	$dashboard_url = wpss_get_dashboard_url( 'orders' );
+	// Orders is the default section, so no section parameter needed.
+	$dashboard_url = wpss_get_dashboard_url();
 
 	if ( $dashboard_url ) {
 		return add_query_arg(
@@ -1035,4 +1048,26 @@ function wpss_get_ecommerce_adapter( ?string $adapter_id = null ): ?object {
 	 * @param string|null $adapter_id  Requested adapter ID.
 	 */
 	return apply_filters( 'wpss_ecommerce_adapter', null, $adapter_id );
+}
+
+/**
+ * Check if WooCommerce integration is enabled.
+ *
+ * Returns true if WooCommerce is installed, active, AND enabled in plugin settings.
+ *
+ * @since 1.1.0
+ *
+ * @return bool True if WooCommerce integration is active.
+ */
+function wpss_is_woocommerce_enabled(): bool {
+	// Check if WooCommerce is installed.
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return false;
+	}
+
+	// Check if integration is enabled in settings.
+	$general_settings = get_option( 'wpss_general', array() );
+
+	// Default to enabled if setting not yet set.
+	return $general_settings['enable_woocommerce'] ?? true;
 }

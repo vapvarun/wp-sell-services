@@ -2,7 +2,7 @@
 /**
  * Template: Order View
  *
- * Displays a single order with conversation and actions.
+ * Displays a single order with all details in a single-column layout.
  * Uses CSS classes from orders.css design system.
  *
  * @package WPSellServices\Templates
@@ -20,6 +20,20 @@ if ( empty( $order_id ) ) {
 // Enqueue orders styles.
 wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
 
+// Enqueue requirements form script.
+wp_enqueue_script( 'wpss-requirements-form', WPSS_PLUGIN_URL . 'assets/js/requirements-form.js', array( 'jquery' ), WPSS_VERSION, true );
+wp_localize_script(
+	'wpss-requirements-form',
+	'wpss_ajax',
+	array(
+		'ajax_url' => admin_url( 'admin-ajax.php' ),
+		'i18n'     => array(
+			'submit_error' => __( 'Failed to submit requirements.', 'wp-sell-services' ),
+			'ajax_error'   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+		),
+	)
+);
+
 $order = wpss_get_order( $order_id );
 
 if ( ! $order ) {
@@ -34,37 +48,33 @@ $service     = get_post( $order->service_id );
 $vendor      = get_userdata( $order->vendor_id );
 $customer    = get_userdata( $order->customer_id );
 
-// Get messages.
+// Get deliveries.
 global $wpdb;
-$messages_table = $wpdb->prefix . 'wpss_order_messages';
-$messages       = $wpdb->get_results(
+$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
+$deliveries       = $wpdb->get_results(
 	$wpdb->prepare(
-		"SELECT * FROM {$messages_table} WHERE order_id = %d ORDER BY created_at ASC",
-		$order_id
-	)
-);
-
-// Get deliverables.
-$deliverables_table = $wpdb->prefix . 'wpss_order_deliverables';
-$deliverables       = $wpdb->get_results(
-	$wpdb->prepare(
-		"SELECT * FROM {$deliverables_table} WHERE order_id = %d ORDER BY created_at DESC",
+		"SELECT * FROM {$deliveries_table} WHERE order_id = %d ORDER BY created_at DESC",
 		$order_id
 	)
 );
 ?>
 
-<div class="wpss-order-detail">
-	<div class="wpss-order-detail__header">
-		<div class="wpss-order-detail__info">
-			<a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ); ?>" class="wpss-btn wpss-btn--text">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<line x1="19" y1="12" x2="5" y2="12"></line>
-					<polyline points="12 19 5 12 12 5"></polyline>
-				</svg>
-				<?php esc_html_e( 'Back to Orders', 'wp-sell-services' ); ?>
-			</a>
-			<h1>
+<div class="wpss-order-view">
+	<!-- Header with Back Button -->
+	<div class="wpss-order-view__header">
+		<a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ); ?>" class="wpss-order-view__back">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<line x1="19" y1="12" x2="5" y2="12"></line>
+				<polyline points="12 19 5 12 12 5"></polyline>
+			</svg>
+			<?php esc_html_e( 'Back to Orders', 'wp-sell-services' ); ?>
+		</a>
+	</div>
+
+	<!-- Order Title & Status -->
+	<div class="wpss-order-view__title-bar">
+		<div class="wpss-order-view__title-info">
+			<h1 class="wpss-order-view__title">
 				<?php
 				printf(
 					/* translators: %s: order number */
@@ -73,13 +83,13 @@ $deliverables       = $wpdb->get_results(
 				);
 				?>
 			</h1>
-			<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+			<span class="wpss-badge wpss-badge--lg wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
 				<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 			</span>
 		</div>
 
-		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval' ), true ) ) : ?>
-			<div class="wpss-order-detail__actions">
+		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements' ), true ) ) : ?>
+			<div class="wpss-order-view__actions">
 				<?php if ( $is_vendor ) : ?>
 					<?php if ( 'pending' === $order->status ) : ?>
 						<button type="button" class="wpss-btn wpss-btn--success wpss-order-action"
@@ -137,250 +147,581 @@ $deliverables       = $wpdb->get_results(
 		<?php endif; ?>
 	</div>
 
-	<div class="wpss-order-detail__grid">
-		<div class="wpss-order-detail__main">
-			<!-- Service Info -->
-			<div class="wpss-order-card">
-				<div class="wpss-order-card__body">
-					<div class="wpss-order-summary__service">
-						<?php if ( $service && has_post_thumbnail( $service->ID ) ) : ?>
-							<img src="<?php echo esc_url( get_the_post_thumbnail_url( $service->ID, 'thumbnail' ) ); ?>"
-								alt="<?php echo esc_attr( $service->post_title ); ?>"
-								class="wpss-order-summary__service-thumb">
-						<?php endif; ?>
-						<div>
-							<h3 class="wpss-order-summary__service-title">
-								<?php echo esc_html( $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ) ); ?>
-							</h3>
-							<p class="wpss-order-summary__service-package">
-								<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
-							</p>
-						</div>
-					</div>
+	<!-- Order Summary Section -->
+	<section class="wpss-order-section">
+		<div class="wpss-order-section__header">
+			<h2 class="wpss-order-section__title">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+					<polyline points="14 2 14 8 20 8"></polyline>
+					<line x1="16" y1="13" x2="8" y2="13"></line>
+					<line x1="16" y1="17" x2="8" y2="17"></line>
+					<polyline points="10 9 9 9 8 9"></polyline>
+				</svg>
+				<?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?>
+			</h2>
+		</div>
+		<div class="wpss-order-section__body">
+			<div class="wpss-order-details-grid">
+				<div class="wpss-order-detail-item">
+					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></span>
+					<span class="wpss-order-detail-item__value">#<?php echo esc_html( $order->order_number ); ?></span>
 				</div>
-			</div>
-
-			<!-- Deliverables -->
-			<?php if ( ! empty( $deliverables ) ) : ?>
-				<div class="wpss-order-card">
-					<div class="wpss-order-card__header">
-						<h3 class="wpss-order-card__title"><?php esc_html_e( 'Deliverables', 'wp-sell-services' ); ?></h3>
-					</div>
-					<div class="wpss-order-card__body">
-						<?php foreach ( $deliverables as $deliverable ) : ?>
-							<div class="wpss-deliverable">
-								<div class="wpss-deliverable__header">
-									<span class="wpss-deliverable__date">
-										<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $deliverable->created_at ) ) ); ?>
-									</span>
-									<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( $deliverable->status ); ?>">
-										<?php echo esc_html( ucfirst( $deliverable->status ) ); ?>
-									</span>
-								</div>
-								<div class="wpss-deliverable__content">
-									<?php echo wp_kses_post( wpautop( $deliverable->description ) ); ?>
-								</div>
-								<?php
-								$files = maybe_unserialize( $deliverable->files );
-								if ( ! empty( $files ) ) :
-									?>
-									<div class="wpss-deliverable__files">
-										<?php foreach ( $files as $file_id ) : ?>
-											<?php
-											$file_url  = wp_get_attachment_url( $file_id );
-											$file_name = get_the_title( $file_id );
-											?>
-											<a href="<?php echo esc_url( $file_url ); ?>"
-												class="wpss-deliverable__file"
-												target="_blank"
-												download>
-												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-													<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-													<polyline points="7 10 12 15 17 10"/>
-													<line x1="12" y1="15" x2="12" y2="3"/>
-												</svg>
-												<?php echo esc_html( $file_name ); ?>
-											</a>
-										<?php endforeach; ?>
-									</div>
-								<?php endif; ?>
-							</div>
-						<?php endforeach; ?>
-					</div>
+				<div class="wpss-order-detail-item">
+					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
+					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
-			<?php endif; ?>
-
-			<!-- Conversation -->
-			<div class="wpss-order-card">
-				<div class="wpss-order-card__header">
-					<h3 class="wpss-order-card__title"><?php esc_html_e( 'Conversation', 'wp-sell-services' ); ?></h3>
-				</div>
-				<div class="wpss-order-card__body">
-					<?php
-					// Include the conversation template.
-					wpss_get_template(
-						'order/conversation.php',
-						array(
-							'order_id'    => $order_id,
-							'order'       => $order,
-							'is_vendor'   => $is_vendor,
-							'is_customer' => $is_customer,
-						)
-					);
-					?>
+				<?php if ( $order->delivery_deadline ) : ?>
+					<div class="wpss-order-detail-item">
+						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
+						<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
+					</div>
+				<?php endif; ?>
+				<div class="wpss-order-detail-item wpss-order-detail-item--highlight">
+					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Total Amount', 'wp-sell-services' ); ?></span>
+					<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
 				</div>
 			</div>
 		</div>
+	</section>
 
-		<aside class="wpss-order-detail__sidebar">
-			<!-- Order Details -->
-			<div class="wpss-order-card">
-				<div class="wpss-order-card__header">
-					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h4>
-				</div>
-				<div class="wpss-order-summary">
-					<div class="wpss-order-summary__row">
-						<span class="wpss-order-summary__label"><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></span>
-						<span class="wpss-order-summary__value">#<?php echo esc_html( $order->order_number ); ?></span>
-					</div>
-
-					<div class="wpss-order-summary__row">
-						<span class="wpss-order-summary__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
-						<span class="wpss-order-summary__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></span>
-					</div>
-
-					<?php if ( $order->due_date ) : ?>
-						<div class="wpss-order-summary__row">
-							<span class="wpss-order-summary__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
-							<span class="wpss-order-summary__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->due_date ) ) ); ?></span>
-						</div>
-					<?php endif; ?>
-
-					<div class="wpss-order-summary__row wpss-order-summary__total">
-						<span class="wpss-order-summary__label"><?php esc_html_e( 'Total Amount', 'wp-sell-services' ); ?></span>
-						<span class="wpss-order-summary__value"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
-					</div>
+	<!-- Service & Seller Section -->
+	<section class="wpss-order-section">
+		<div class="wpss-order-section__header">
+			<h2 class="wpss-order-section__title">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+					<circle cx="8.5" cy="8.5" r="1.5"></circle>
+					<polyline points="21 15 16 10 5 21"></polyline>
+				</svg>
+				<?php esc_html_e( 'Service Details', 'wp-sell-services' ); ?>
+			</h2>
+		</div>
+		<div class="wpss-order-section__body">
+			<div class="wpss-service-info">
+				<?php if ( $service && has_post_thumbnail( $service->ID ) ) : ?>
+					<img src="<?php echo esc_url( get_the_post_thumbnail_url( $service->ID, 'medium' ) ); ?>"
+						alt="<?php echo esc_attr( $service->post_title ); ?>"
+						class="wpss-service-info__image">
+				<?php endif; ?>
+				<div class="wpss-service-info__content">
+					<h3 class="wpss-service-info__title">
+						<?php if ( $service ) : ?>
+							<a href="<?php echo esc_url( get_permalink( $service->ID ) ); ?>">
+								<?php echo esc_html( $service->post_title ); ?>
+							</a>
+						<?php else : ?>
+							<?php esc_html_e( 'Deleted Service', 'wp-sell-services' ); ?>
+						<?php endif; ?>
+					</h3>
+					<p class="wpss-service-info__price">
+						<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
+					</p>
 				</div>
 			</div>
 
-			<!-- Other Party Info -->
-			<div class="wpss-order-card">
-				<div class="wpss-order-card__header">
-					<h4 class="wpss-order-card__title">
-						<?php
-						if ( $is_vendor ) {
-							esc_html_e( 'Buyer', 'wp-sell-services' );
-						} else {
-							esc_html_e( 'Seller', 'wp-sell-services' );
-						}
-						?>
-					</h4>
-				</div>
-				<div class="wpss-order-card__body">
-					<?php $other_party = $is_vendor ? $customer : $vendor; ?>
-					<?php if ( $other_party ) : ?>
-						<div class="wpss-orders__user-cell">
-							<img src="<?php echo esc_url( get_avatar_url( $other_party->ID, array( 'size' => 48 ) ) ); ?>"
-								alt="<?php echo esc_attr( $other_party->display_name ); ?>"
-								class="wpss-orders__user-avatar" style="width:48px;height:48px;">
-							<div>
-								<strong class="wpss-orders__user-name"><?php echo esc_html( $other_party->display_name ); ?></strong>
-								<?php if ( ! $is_vendor ) : ?>
-									<?php
-									$vendor_rating = (float) get_user_meta( $other_party->ID, '_wpss_rating_average', true );
-									$vendor_count  = (int) get_user_meta( $other_party->ID, '_wpss_rating_count', true );
-									?>
-									<?php if ( $vendor_count > 0 ) : ?>
-										<div class="wpss-rating">
-											<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:var(--wpss-warning,#f59e0b)">
-												<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-											</svg>
-											<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
-											<span style="color:var(--wpss-text-muted,#6b7280)">(<?php echo esc_html( $vendor_count ); ?>)</span>
-										</div>
-									<?php endif; ?>
+			<!-- Seller/Buyer Info -->
+			<div class="wpss-party-info">
+				<?php $other_party = $is_vendor ? $customer : $vendor; ?>
+				<?php if ( $other_party ) : ?>
+					<div class="wpss-party-info__card">
+						<img src="<?php echo esc_url( get_avatar_url( $other_party->ID, array( 'size' => 64 ) ) ); ?>"
+							alt="<?php echo esc_attr( $other_party->display_name ); ?>"
+							class="wpss-party-info__avatar">
+						<div class="wpss-party-info__details">
+							<span class="wpss-party-info__role">
+								<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
+							</span>
+							<strong class="wpss-party-info__name"><?php echo esc_html( $other_party->display_name ); ?></strong>
+							<?php if ( ! $is_vendor ) : ?>
+								<?php
+								$vendor_rating = (float) get_user_meta( $other_party->ID, '_wpss_rating_average', true );
+								$vendor_count  = (int) get_user_meta( $other_party->ID, '_wpss_rating_count', true );
+								?>
+								<?php if ( $vendor_count > 0 ) : ?>
+									<div class="wpss-party-info__rating">
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="wpss-star-icon">
+											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+										</svg>
+										<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
+										<span class="wpss-party-info__rating-count">(<?php echo esc_html( $vendor_count ); ?> <?php esc_html_e( 'reviews', 'wp-sell-services' ); ?>)</span>
+									</div>
 								<?php endif; ?>
-							</div>
-						</div>
-					<?php endif; ?>
-				</div>
-			</div>
-
-			<!-- Order Timeline -->
-			<div class="wpss-order-card">
-				<div class="wpss-order-card__header">
-					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Order Timeline', 'wp-sell-services' ); ?></h4>
-				</div>
-				<div class="wpss-order-card__body">
-					<ul class="wpss-order-activity__list">
-						<li class="wpss-order-activity__item wpss-order-activity__item--completed">
-							<span class="wpss-order-activity__dot"></span>
-							<span class="wpss-order-activity__title"><?php esc_html_e( 'Order Placed', 'wp-sell-services' ); ?></span>
-							<span class="wpss-order-activity__meta"><?php echo esc_html( wp_date( 'M j, g:i A', strtotime( $order->created_at ) ) ); ?></span>
-						</li>
-
-						<?php if ( $order->started_at ) : ?>
-							<li class="wpss-order-activity__item wpss-order-activity__item--completed">
-								<span class="wpss-order-activity__dot"></span>
-								<span class="wpss-order-activity__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
-								<span class="wpss-order-activity__meta"><?php echo esc_html( wp_date( 'M j, g:i A', strtotime( $order->started_at ) ) ); ?></span>
-							</li>
-						<?php endif; ?>
-
-						<?php if ( $order->delivered_at ) : ?>
-							<li class="wpss-order-activity__item wpss-order-activity__item--completed">
-								<span class="wpss-order-activity__dot"></span>
-								<span class="wpss-order-activity__title"><?php esc_html_e( 'Delivered', 'wp-sell-services' ); ?></span>
-								<span class="wpss-order-activity__meta"><?php echo esc_html( wp_date( 'M j, g:i A', strtotime( $order->delivered_at ) ) ); ?></span>
-							</li>
-						<?php endif; ?>
-
-						<?php if ( $order->completed_at ) : ?>
-							<li class="wpss-order-activity__item wpss-order-activity__item--completed">
-								<span class="wpss-order-activity__dot"></span>
-								<span class="wpss-order-activity__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-								<span class="wpss-order-activity__meta"><?php echo esc_html( wp_date( 'M j, g:i A', strtotime( $order->completed_at ) ) ); ?></span>
-							</li>
-						<?php endif; ?>
-					</ul>
-				</div>
-			</div>
-
-			<?php if ( 'completed' === $order->status && $is_customer ) : ?>
-				<?php
-				// Check if already reviewed.
-				$review_exists = $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT id FROM {$wpdb->prefix}wpss_reviews WHERE order_id = %d",
-						$order_id
-					)
-				);
-				?>
-				<?php if ( ! $review_exists ) : ?>
-					<div class="wpss-order-card">
-						<div class="wpss-order-card__body" style="text-align:center;">
-							<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="color:var(--wpss-warning,#f59e0b);margin-bottom:0.5rem;">
-								<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-							</svg>
-							<h4 style="margin:0 0 0.5rem;"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h4>
-							<p style="color:var(--wpss-text-muted,#6b7280);margin:0 0 1rem;font-size:0.875rem;"><?php esc_html_e( 'How was your experience with this order?', 'wp-sell-services' ); ?></p>
-							<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--block wpss-write-review-btn"
-									data-order="<?php echo esc_attr( $order_id ); ?>">
-								<?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?>
-							</button>
+							<?php endif; ?>
 						</div>
 					</div>
 				<?php endif; ?>
-			<?php endif; ?>
-		</aside>
-	</div>
+			</div>
+		</div>
+	</section>
+
+	<?php
+	// Get service requirements for pending_requirements status.
+	$service_requirements  = array();
+	$submitted_data        = array();
+	$submitted_attachments = array();
+	if ( $service ) {
+		$service_requirements = get_post_meta( $service->ID, '_wpss_requirements', true );
+		if ( ! is_array( $service_requirements ) ) {
+			$service_requirements = array();
+		}
+	}
+
+	// Get submitted requirements from database.
+	$requirements_table = $wpdb->prefix . 'wpss_order_requirements';
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$submitted_row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$requirements_table} WHERE order_id = %d ORDER BY id DESC LIMIT 1",
+			$order_id
+		)
+	);
+	if ( $submitted_row ) {
+		$submitted_data        = json_decode( $submitted_row->field_data, true ) ?: array();
+		$submitted_attachments = json_decode( $submitted_row->attachments, true ) ?: array();
+	}
+	$has_submitted_requirements = ! empty( $submitted_data ) || ! empty( $submitted_attachments );
+	?>
+
+	<!-- Requirements Section (for pending_requirements status) -->
+	<?php if ( 'pending_requirements' === $order->status && $is_customer && ! empty( $service_requirements ) ) : ?>
+		<section class="wpss-order-section wpss-order-section--requirements">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 11l3 3L22 4"/>
+						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+					</svg>
+					<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<div class="wpss-alert wpss-alert--info" style="margin-bottom: 1.5rem;">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="10"/>
+						<line x1="12" y1="16" x2="12" y2="12"/>
+						<line x1="12" y1="8" x2="12.01" y2="8"/>
+					</svg>
+					<p><?php esc_html_e( 'Please provide the following information so the seller can start working on your order.', 'wp-sell-services' ); ?></p>
+				</div>
+
+				<form id="wpss-requirements-form" class="wpss-requirements-form" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
+					<input type="hidden" name="action" value="wpss_submit_requirements">
+					<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+
+					<?php foreach ( $service_requirements as $index => $requirement ) : ?>
+						<?php
+						$question    = $requirement['question'] ?? '';
+						$type        = $requirement['type'] ?? 'textarea';
+						$is_required = ! empty( $requirement['required'] );
+						$field_name  = 'requirements[' . $index . ']';
+						$field_id    = 'requirement-' . $index;
+						?>
+						<div class="wpss-form-group wpss-requirements-form__field" data-index="<?php echo esc_attr( $index ); ?>">
+							<label for="<?php echo esc_attr( $field_id ); ?>" class="wpss-label wpss-requirements-form__label">
+								<?php echo esc_html( $question ); ?>
+								<?php if ( $is_required ) : ?>
+									<span class="wpss-required">*</span>
+								<?php endif; ?>
+							</label>
+
+							<?php if ( 'file' === $type ) : ?>
+								<div class="wpss-file-upload wpss-requirements-form__upload" data-max-files="1">
+									<input type="file"
+											name="<?php echo esc_attr( $field_name ); ?>"
+											id="<?php echo esc_attr( $field_id ); ?>"
+											class="wpss-file-input wpss-requirements-form__upload-input"
+											<?php echo $is_required ? 'required' : ''; ?>>
+									<label for="<?php echo esc_attr( $field_id ); ?>" class="wpss-file-upload__label wpss-requirements-form__upload-label">
+										<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+											<polyline points="17 8 12 3 7 8"/>
+											<line x1="12" y1="3" x2="12" y2="15"/>
+										</svg>
+										<span class="wpss-file-upload__text"><?php esc_html_e( 'Choose a file or drag it here', 'wp-sell-services' ); ?></span>
+									</label>
+									<div class="wpss-requirements-form__file-list"></div>
+								</div>
+							<?php elseif ( 'text' === $type ) : ?>
+								<input type="text"
+										name="<?php echo esc_attr( $field_name ); ?>"
+										id="<?php echo esc_attr( $field_id ); ?>"
+										class="wpss-input wpss-requirements-form__input"
+										<?php echo $is_required ? 'required' : ''; ?>>
+							<?php else : ?>
+								<textarea name="<?php echo esc_attr( $field_name ); ?>"
+											id="<?php echo esc_attr( $field_id ); ?>"
+											class="wpss-textarea wpss-requirements-form__textarea"
+											rows="4"
+											<?php echo $is_required ? 'required' : ''; ?>></textarea>
+							<?php endif; ?>
+						</div>
+					<?php endforeach; ?>
+
+					<div class="wpss-form-actions">
+						<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-requirements-form__submit-btn">
+							<span class="wpss-requirements-form__submit-text">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<polyline points="9 11 12 14 22 4"/>
+									<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+								</svg>
+								<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
+							</span>
+							<span class="wpss-requirements-form__submit-loading" style="display: none;">
+								<svg width="20" height="20" viewBox="0 0 24 24" class="wpss-spinner">
+									<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
+									<path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+								</svg>
+								<?php esc_html_e( 'Submitting...', 'wp-sell-services' ); ?>
+							</span>
+						</button>
+					</div>
+				</form>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<!-- Submitted Requirements (for vendor or after submission) -->
+	<?php if ( $has_submitted_requirements && ( $is_vendor || 'requirements_submitted' === $order->status || in_array( $order->status, array( 'accepted', 'in_progress', 'pending_approval', 'completed' ), true ) ) ) : ?>
+		<section class="wpss-order-section wpss-order-section--requirements-view">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 11l3 3L22 4"/>
+						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+					</svg>
+					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
+					<?php
+					$question       = $requirement['question'] ?? '';
+					$type           = $requirement['type'] ?? 'textarea';
+					$field_key      = $question; // Data is keyed by question.
+					$response_value = $submitted_data[ $field_key ] ?? '';
+
+					// Find attachment for this field (if file type).
+					$field_attachment = null;
+					if ( 'file' === $type && ! empty( $submitted_attachments ) ) {
+						foreach ( $submitted_attachments as $att ) {
+							if ( isset( $att['key'] ) && $att['key'] === $field_key ) {
+								$field_attachment = $att;
+								break;
+							}
+						}
+					}
+					?>
+					<div class="wpss-requirement-view">
+						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $question ); ?></h4>
+						<div class="wpss-requirement-view__answer">
+							<?php if ( 'file' === $type && $field_attachment ) : ?>
+								<a href="<?php echo esc_url( $field_attachment['url'] ); ?>" class="wpss-file-link" target="_blank" download>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+										<polyline points="7 10 12 15 17 10"/>
+										<line x1="12" y1="15" x2="12" y2="3"/>
+									</svg>
+									<?php echo esc_html( $field_attachment['name'] ); ?>
+								</a>
+							<?php elseif ( $response_value ) : ?>
+								<?php echo wp_kses_post( wpautop( $response_value ) ); ?>
+							<?php else : ?>
+								<span class="wpss-text-muted"><?php esc_html_e( 'No response provided', 'wp-sell-services' ); ?></span>
+							<?php endif; ?>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<!-- Order Timeline Section -->
+	<section class="wpss-order-section">
+		<div class="wpss-order-section__header">
+			<h2 class="wpss-order-section__title">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<circle cx="12" cy="12" r="10"></circle>
+					<polyline points="12 6 12 12 16 14"></polyline>
+				</svg>
+				<?php esc_html_e( 'Order Timeline', 'wp-sell-services' ); ?>
+			</h2>
+		</div>
+		<div class="wpss-order-section__body">
+			<div class="wpss-timeline">
+				<div class="wpss-timeline__item wpss-timeline__item--completed">
+					<div class="wpss-timeline__marker"></div>
+					<div class="wpss-timeline__content">
+						<span class="wpss-timeline__title"><?php esc_html_e( 'Order Placed', 'wp-sell-services' ); ?></span>
+						<span class="wpss-timeline__date"><?php echo esc_html( $order->created_at ? wp_date( 'M j, Y \a\t g:i A', $order->created_at->getTimestamp() ) : '' ); ?></span>
+					</div>
+				</div>
+
+				<?php if ( $order->started_at ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->started_at->getTimestamp() ) ); ?></span>
+						</div>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( isset( $order->delivered_at ) && $order->delivered_at ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Delivered', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->delivered_at->getTimestamp() ) ); ?></span>
+						</div>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( $order->completed_at ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->completed_at->getTimestamp() ) ); ?></span>
+						</div>
+					</div>
+				<?php else : ?>
+					<!-- Pending steps -->
+					<?php if ( ! $order->started_at && in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) : ?>
+						<div class="wpss-timeline__item wpss-timeline__item--pending">
+							<div class="wpss-timeline__marker"></div>
+							<div class="wpss-timeline__content">
+								<span class="wpss-timeline__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
+								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+					<?php endif; ?>
+					<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements', 'in_progress' ), true ) ) : ?>
+						<div class="wpss-timeline__item wpss-timeline__item--pending">
+							<div class="wpss-timeline__marker"></div>
+							<div class="wpss-timeline__content">
+								<span class="wpss-timeline__title"><?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?></span>
+								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+						<div class="wpss-timeline__item wpss-timeline__item--pending">
+							<div class="wpss-timeline__marker"></div>
+							<div class="wpss-timeline__content">
+								<span class="wpss-timeline__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
+								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+					<?php endif; ?>
+				<?php endif; ?>
+			</div>
+		</div>
+	</section>
+
+	<!-- Deliveries Section -->
+	<?php if ( ! empty( $deliveries ) ) : ?>
+		<section class="wpss-order-section">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+						<polyline points="17 8 12 3 7 8"/>
+						<line x1="12" y1="3" x2="12" y2="15"/>
+					</svg>
+					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<?php foreach ( $deliveries as $delivery ) : ?>
+					<div class="wpss-delivery-item">
+						<div class="wpss-delivery-item__header">
+							<span class="wpss-delivery-item__date">
+								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
+							</span>
+							<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( $delivery->status ); ?>">
+								<?php echo esc_html( ucfirst( $delivery->status ) ); ?>
+							</span>
+						</div>
+						<div class="wpss-delivery-item__content">
+							<?php echo wp_kses_post( wpautop( $delivery->message ) ); ?>
+						</div>
+						<?php
+						$files = maybe_unserialize( $delivery->attachments );
+						if ( ! empty( $files ) ) :
+							?>
+							<div class="wpss-delivery-item__files">
+								<?php foreach ( $files as $file_id ) : ?>
+									<?php
+									$file_url  = wp_get_attachment_url( $file_id );
+									$file_name = get_the_title( $file_id );
+									?>
+									<a href="<?php echo esc_url( $file_url ); ?>" class="wpss-file-link" target="_blank" download>
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+											<polyline points="7 10 12 15 17 10"/>
+											<line x1="12" y1="15" x2="12" y2="3"/>
+										</svg>
+										<?php echo esc_html( $file_name ); ?>
+									</a>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<!-- Conversation Section -->
+	<section class="wpss-order-section wpss-order-section--conversation">
+		<div class="wpss-order-section__header">
+			<h2 class="wpss-order-section__title">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+				</svg>
+				<?php esc_html_e( 'Conversation', 'wp-sell-services' ); ?>
+			</h2>
+		</div>
+		<div class="wpss-order-section__body">
+			<?php
+			// Include the conversation template.
+			wpss_get_template(
+				'order/conversation.php',
+				array(
+					'order_id'    => $order_id,
+					'order'       => $order,
+					'is_vendor'   => $is_vendor,
+					'is_customer' => $is_customer,
+				)
+			);
+			?>
+		</div>
+	</section>
+
+	<!-- Review CTA (for completed orders) -->
+	<?php if ( 'completed' === $order->status && $is_customer ) : ?>
+		<?php
+		// Check if already reviewed.
+		$review_exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}wpss_reviews WHERE order_id = %d",
+				$order_id
+			)
+		);
+		?>
+		<?php if ( ! $review_exists ) : ?>
+			<section class="wpss-order-section wpss-order-section--review">
+				<div class="wpss-review-cta">
+					<svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" class="wpss-review-cta__icon">
+						<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+					</svg>
+					<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h3>
+					<p class="wpss-review-cta__text"><?php esc_html_e( 'How was your experience with this order? Your feedback helps other buyers.', 'wp-sell-services' ); ?></p>
+					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-write-review-btn"
+							data-order="<?php echo esc_attr( $order_id ); ?>">
+						<?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?>
+					</button>
+				</div>
+			</section>
+		<?php endif; ?>
+	<?php endif; ?>
 </div>
 
 <?php
+// Check if delivery modal should be available.
+$can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true );
+
 // Check if review modal should be available.
 $can_review       = 'completed' === $order->status && $is_customer && empty( $review_exists );
 $can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval' ), true );
 ?>
+
+<?php if ( $can_deliver ) : ?>
+<!-- Delivery Modal -->
+<div class="wpss-modal" id="wpss-deliver-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+	<div class="wpss-modal__backdrop"></div>
+	<div class="wpss-modal__dialog">
+		<div class="wpss-modal__header">
+			<h3 class="wpss-modal__title"><?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?></h3>
+			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			</button>
+		</div>
+		<form class="wpss-deliver-form" id="wpss-deliver-form">
+			<?php wp_nonce_field( 'wpss_order_action', 'nonce' ); ?>
+			<input type="hidden" name="action" value="wpss_deliver_order">
+			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+
+			<div class="wpss-modal__body">
+				<div class="wpss-alert wpss-alert--info">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="10"></circle>
+						<path d="M12 16v-4"></path>
+						<path d="M12 8h.01"></path>
+					</svg>
+					<p><?php esc_html_e( 'Describe what you are delivering. The buyer will review and can accept or request revisions.', 'wp-sell-services' ); ?></p>
+				</div>
+
+				<div class="wpss-form-group">
+					<label class="wpss-label" for="deliver-message">
+						<?php esc_html_e( 'Delivery Message', 'wp-sell-services' ); ?>
+						<span class="wpss-required">*</span>
+					</label>
+					<textarea
+						name="message"
+						id="deliver-message"
+						class="wpss-textarea"
+						rows="5"
+						required
+						placeholder="<?php esc_attr_e( 'Describe what you are delivering and any important notes for the buyer...', 'wp-sell-services' ); ?>"
+					></textarea>
+				</div>
+
+				<div class="wpss-form-group">
+					<label class="wpss-label" for="deliver-files">
+						<?php esc_html_e( 'Attachments (Optional)', 'wp-sell-services' ); ?>
+					</label>
+					<div class="wpss-file-upload">
+						<input
+							type="file"
+							name="files[]"
+							id="deliver-files"
+							class="wpss-file-input"
+							multiple
+							accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.rar"
+						>
+						<label for="deliver-files" class="wpss-file-label">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+								<polyline points="17 8 12 3 7 8"/>
+								<line x1="12" y1="3" x2="12" y2="15"/>
+							</svg>
+							<?php esc_html_e( 'Choose files or drag and drop', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-file-list" id="deliver-file-list"></div>
+					</div>
+					<p class="wpss-form-help"><?php esc_html_e( 'Max file size: 50MB. Supported: images, documents, archives.', 'wp-sell-services' ); ?></p>
+				</div>
+			</div>
+
+			<div class="wpss-modal__footer">
+				<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">
+					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
+				</button>
+				<button type="submit" class="wpss-btn wpss-btn--success">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<polyline points="20 6 9 17 4 12"/>
+					</svg>
+					<?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+<?php endif; ?>
 
 <?php if ( $can_review ) : ?>
 <!-- Review Modal -->
@@ -496,6 +837,564 @@ $can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progres
 </div>
 <?php endif; ?>
 
+<style>
+/* Single Column Order View Styles */
+.wpss-order-view {
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.wpss-order-view__header {
+	margin-bottom: 1rem;
+}
+
+.wpss-order-view__back {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--wpss-text-muted, #6b7280);
+	text-decoration: none;
+	font-size: 0.875rem;
+	transition: color 0.2s;
+}
+
+.wpss-order-view__back:hover {
+	color: var(--wpss-primary, #3b82f6);
+}
+
+.wpss-order-view__title-bar {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1rem;
+	padding-bottom: 1.5rem;
+	margin-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-order-view__title-info {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+}
+
+.wpss-order-view__title {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-order-view__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+/* Order Sections */
+.wpss-order-section {
+	background: var(--wpss-card-bg, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 12px;
+	margin-bottom: 1.5rem;
+	overflow: hidden;
+}
+
+.wpss-order-section__header {
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+	background: var(--wpss-bg-subtle, #f9fafb);
+}
+
+.wpss-order-section__title {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-order-section__title svg {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-order-section__body {
+	padding: 1.5rem;
+}
+
+/* Order Details Grid */
+.wpss-order-details-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 1.5rem;
+}
+
+.wpss-order-detail-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.wpss-order-detail-item__label {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.wpss-order-detail-item__value {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-order-detail-item--highlight .wpss-order-detail-item__value {
+	font-size: 1.25rem;
+	color: var(--wpss-success, #10b981);
+}
+
+/* Service Info */
+.wpss-service-info {
+	display: flex;
+	gap: 1rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+	margin-bottom: 1.5rem;
+}
+
+.wpss-service-info__image {
+	width: 120px;
+	height: 80px;
+	object-fit: cover;
+	border-radius: 8px;
+	flex-shrink: 0;
+}
+
+.wpss-service-info__content {
+	flex: 1;
+	min-width: 0;
+}
+
+.wpss-service-info__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.wpss-service-info__title a {
+	color: var(--wpss-text, #111827);
+	text-decoration: none;
+}
+
+.wpss-service-info__title a:hover {
+	color: var(--wpss-primary, #3b82f6);
+}
+
+.wpss-service-info__price {
+	margin: 0;
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--wpss-success, #10b981);
+}
+
+/* Party Info */
+.wpss-party-info__card {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.wpss-party-info__avatar {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.wpss-party-info__details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.wpss-party-info__role {
+	font-size: 0.75rem;
+	color: var(--wpss-text-muted, #6b7280);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.wpss-party-info__name {
+	font-size: 1rem;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-party-info__rating {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.875rem;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-party-info__rating .wpss-star-icon {
+	color: var(--wpss-warning, #f59e0b);
+}
+
+.wpss-party-info__rating-count {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* Timeline */
+.wpss-timeline {
+	position: relative;
+	padding-left: 2rem;
+}
+
+.wpss-timeline::before {
+	content: '';
+	position: absolute;
+	left: 7px;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: var(--wpss-border, #e5e7eb);
+}
+
+.wpss-timeline__item {
+	position: relative;
+	padding-bottom: 1.5rem;
+}
+
+.wpss-timeline__item:last-child {
+	padding-bottom: 0;
+}
+
+.wpss-timeline__marker {
+	position: absolute;
+	left: -2rem;
+	top: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--wpss-bg, #fff);
+	border: 2px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-timeline__item--completed .wpss-timeline__marker {
+	background: var(--wpss-success, #10b981);
+	border-color: var(--wpss-success, #10b981);
+}
+
+.wpss-timeline__item--pending .wpss-timeline__marker {
+	background: var(--wpss-bg, #fff);
+	border-color: var(--wpss-border, #d1d5db);
+}
+
+.wpss-timeline__content {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.wpss-timeline__title {
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-timeline__item--pending .wpss-timeline__title {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-timeline__date {
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* Delivery Items */
+.wpss-delivery-item {
+	padding: 1rem;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-radius: 8px;
+	margin-bottom: 1rem;
+}
+
+.wpss-delivery-item:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-delivery-item__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.75rem;
+}
+
+.wpss-delivery-item__date {
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-delivery-item__content {
+	color: var(--wpss-text, #111827);
+	line-height: 1.6;
+}
+
+.wpss-delivery-item__content p:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-delivery-item__files {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-file-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem;
+	background: var(--wpss-bg, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 6px;
+	color: var(--wpss-primary, #3b82f6);
+	text-decoration: none;
+	font-size: 0.875rem;
+	transition: all 0.2s;
+}
+
+.wpss-file-link:hover {
+	background: var(--wpss-primary, #3b82f6);
+	color: #fff;
+	border-color: var(--wpss-primary, #3b82f6);
+}
+
+/* Review CTA */
+.wpss-review-cta {
+	text-align: center;
+	padding: 2rem;
+}
+
+.wpss-review-cta__icon {
+	color: var(--wpss-warning, #f59e0b);
+	margin-bottom: 1rem;
+}
+
+.wpss-review-cta__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-review-cta__text {
+	margin: 0 0 1.5rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* Badge sizes */
+.wpss-badge--lg {
+	padding: 0.375rem 0.875rem;
+	font-size: 0.875rem;
+}
+
+/* Requirements Form */
+.wpss-requirements-form .wpss-form-group {
+	margin-bottom: 1.5rem;
+}
+
+.wpss-requirements-form .wpss-label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-requirements-form .wpss-required {
+	color: var(--wpss-danger, #ef4444);
+}
+
+.wpss-requirements-form .wpss-input,
+.wpss-requirements-form .wpss-textarea {
+	width: 100%;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 8px;
+	font-size: 1rem;
+	color: var(--wpss-text, #111827);
+	background: var(--wpss-bg, #fff);
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wpss-requirements-form .wpss-input:focus,
+.wpss-requirements-form .wpss-textarea:focus {
+	outline: none;
+	border-color: var(--wpss-primary, #3b82f6);
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.wpss-file-upload {
+	position: relative;
+}
+
+.wpss-file-upload .wpss-file-input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+.wpss-file-upload__label {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	padding: 2rem;
+	border: 2px dashed var(--wpss-border, #e5e7eb);
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.2s;
+	background: var(--wpss-bg-subtle, #f9fafb);
+}
+
+.wpss-file-upload__label:hover {
+	border-color: var(--wpss-primary, #3b82f6);
+	background: rgba(59, 130, 246, 0.05);
+}
+
+.wpss-file-upload__label svg {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-file-upload__text {
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-file-upload__name {
+	display: block;
+	margin-top: 0.5rem;
+	font-size: 0.875rem;
+	color: var(--wpss-primary, #3b82f6);
+	font-weight: 500;
+}
+
+.wpss-file-upload__name:empty {
+	display: none;
+}
+
+.wpss-file-upload.has-file .wpss-file-upload__label {
+	border-color: var(--wpss-success, #10b981);
+	background: rgba(16, 185, 129, 0.05);
+}
+
+.wpss-form-actions {
+	margin-top: 2rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-form-actions .wpss-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* Requirements View (Read-only) */
+.wpss-requirement-view {
+	padding: 1rem;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-radius: 8px;
+	margin-bottom: 1rem;
+}
+
+.wpss-requirement-view:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-requirement-view__question {
+	margin: 0 0 0.5rem;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-requirement-view__answer {
+	color: var(--wpss-text, #374151);
+	line-height: 1.6;
+}
+
+.wpss-requirement-view__answer p {
+	margin: 0;
+}
+
+.wpss-text-muted {
+	color: var(--wpss-text-muted, #6b7280);
+	font-style: italic;
+}
+
+/* Alert Styles */
+.wpss-alert--info {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 1rem;
+	background: rgba(59, 130, 246, 0.1);
+	border: 1px solid rgba(59, 130, 246, 0.2);
+	border-radius: 8px;
+	color: var(--wpss-primary, #3b82f6);
+}
+
+.wpss-alert--info svg {
+	flex-shrink: 0;
+	margin-top: 0.125rem;
+}
+
+.wpss-alert--info p {
+	margin: 0;
+	font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+	.wpss-order-view__title-bar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-order-view__actions {
+		justify-content: flex-start;
+	}
+
+	.wpss-order-details-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-service-info {
+		flex-direction: column;
+	}
+
+	.wpss-service-info__image {
+		width: 100%;
+		height: 160px;
+	}
+}
+</style>
+
 <?php
 /**
  * Hook: wpss_after_order_view
@@ -503,3 +1402,4 @@ $can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progres
  * @param object $order Order object.
  */
 do_action( 'wpss_after_order_view', $order );
+?>

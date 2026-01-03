@@ -136,16 +136,27 @@ class WCServiceCarrier {
 	 * @return string|false Cart item key or false on failure.
 	 */
 	public function add_to_cart( int $service_id, int $package_id = 0, array $addons = array() ) {
+		error_log( 'WPSS: add_to_cart called - service_id=' . $service_id );
+
+		// Ensure WC cart is properly initialized FIRST (critical for AJAX context).
+		if ( null === WC()->cart || null === WC()->session ) {
+			error_log( 'WPSS: Cart/session was null, calling wc_load_cart()' );
+			wc_load_cart();
+		}
+
 		$service = wpss_get_service( $service_id );
 
 		if ( ! $service ) {
+			error_log( 'WPSS: Service not found' );
 			return false;
 		}
 
 		$carrier_id = $this->get_carrier_id();
+		error_log( 'WPSS: carrier_id=' . $carrier_id );
 
 		// Check if service already in cart.
 		if ( $this->cart_has_service( $service_id ) ) {
+			error_log( 'WPSS: Service already in cart' );
 			wc_add_notice( __( 'This service is already in your cart.', 'wp-sell-services' ), 'error' );
 			return false;
 		}
@@ -159,7 +170,11 @@ class WCServiceCarrier {
 			'unique_key'      => md5( 'service_' . $service_id . '_' . $package_id . '_' . microtime() ),
 		);
 
-		return WC()->cart->add_to_cart( $carrier_id, 1, 0, array(), $cart_item_data );
+		error_log( 'WPSS: Calling WC()->cart->add_to_cart()' );
+		$result = WC()->cart->add_to_cart( $carrier_id, 1, 0, array(), $cart_item_data );
+		error_log( 'WPSS: add_to_cart result=' . ( $result ? $result : 'false' ) );
+
+		return $result;
 	}
 
 	/**

@@ -2409,6 +2409,83 @@ body.wpss-modal-active {
 }
 
 /* ==========================================================================
+   File Upload Styles
+   ========================================================================== */
+
+.wpss-file-upload {
+	position: relative;
+}
+
+.wpss-file-input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+.wpss-file-label {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 2rem;
+	border: 2px dashed var(--wpss-border);
+	border-radius: var(--wpss-radius-md);
+	background: var(--wpss-bg-subtle);
+	color: var(--wpss-text-muted);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.wpss-file-label:hover {
+	border-color: var(--wpss-primary);
+	color: var(--wpss-primary);
+	background: var(--wpss-primary-bg);
+}
+
+.wpss-file-list {
+	margin-top: 0.75rem;
+}
+
+.wpss-file-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	background: var(--wpss-bg-subtle);
+	border-radius: var(--wpss-radius-sm);
+	margin-bottom: 0.5rem;
+	font-size: 0.875rem;
+}
+
+.wpss-file-item small {
+	color: var(--wpss-text-muted);
+}
+
+/* Spinner for buttons */
+.wpss-spinner {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: wpss-spin 0.75s linear infinite;
+	vertical-align: middle;
+	margin-right: 0.5rem;
+}
+
+@keyframes wpss-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ==========================================================================
    Card (BEM Additions)
    ========================================================================== */
 
@@ -2571,4 +2648,126 @@ body.wpss-modal-active {
 .wpss-service-info__package {
 	font-size: 0.813rem;
 	color: var(--wpss-text-light);
+}
+
+/* ==========================================================================
+   Toast Notifications (BEM)
+   ========================================================================== */
+
+#wpss-notification-container {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	z-index: 10000;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	pointer-events: none;
+}
+
+.wpss-notification {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 16px;
+	background: #fff;
+	border-radius: var(--wpss-radius, 8px);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+	min-width: 300px;
+	max-width: 420px;
+	pointer-events: auto;
+	opacity: 0;
+	transform: translateX(100%);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.wpss-notification--visible {
+	opacity: 1;
+	transform: translateX(0);
+}
+
+.wpss-notification__icon {
+	flex-shrink: 0;
+	width: 22px;
+	height: 22px;
+}
+
+.wpss-notification__icon svg {
+	width: 100%;
+	height: 100%;
+}
+
+.wpss-notification__message {
+	flex: 1;
+	font-size: 0.938rem;
+	line-height: 1.4;
+	color: #333;
+}
+
+.wpss-notification__close {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	background: none;
+	border: none;
+	font-size: 20px;
+	color: #999;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	line-height: 1;
+	transition: color 0.2s ease;
+}
+
+.wpss-notification__close:hover {
+	color: #333;
+}
+
+/* Notification Types */
+.wpss-notification--success {
+	border-left: 4px solid #10b981;
+}
+
+.wpss-notification--success .wpss-notification__icon {
+	color: #10b981;
+}
+
+.wpss-notification--error {
+	border-left: 4px solid #ef4444;
+}
+
+.wpss-notification--error .wpss-notification__icon {
+	color: #ef4444;
+}
+
+.wpss-notification--warning {
+	border-left: 4px solid #f59e0b;
+}
+
+.wpss-notification--warning .wpss-notification__icon {
+	color: #f59e0b;
+}
+
+.wpss-notification--info {
+	border-left: 4px solid #3b82f6;
+}
+
+.wpss-notification--info .wpss-notification__icon {
+	color: #3b82f6;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+	#wpss-notification-container {
+		top: 10px;
+		right: 10px;
+		left: 10px;
+	}
+
+	.wpss-notification {
+		min-width: 0;
+		max-width: none;
+	}
 }

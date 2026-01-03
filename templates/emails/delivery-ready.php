@@ -48,10 +48,10 @@ $vendor  = get_user_by( 'id', $order->vendor_id );
 			<th class="td" scope="row" style="text-align:left;"><?php esc_html_e( 'Seller', 'wp-sell-services' ); ?></th>
 			<td class="td" style="text-align:left;"><?php echo esc_html( $vendor ? $vendor->display_name : __( 'N/A', 'wp-sell-services' ) ); ?></td>
 		</tr>
-		<?php if ( $order->revisions_remaining > 0 ) : ?>
+		<?php if ( $order->get_remaining_revisions() > 0 ) : ?>
 		<tr>
 			<th class="td" scope="row" style="text-align:left;"><?php esc_html_e( 'Revisions Remaining', 'wp-sell-services' ); ?></th>
-			<td class="td" style="text-align:left;"><?php echo esc_html( $order->revisions_remaining ); ?></td>
+			<td class="td" style="text-align:left;"><?php echo esc_html( $order->get_remaining_revisions() ); ?></td>
 		</tr>
 		<?php endif; ?>
 	</tbody>

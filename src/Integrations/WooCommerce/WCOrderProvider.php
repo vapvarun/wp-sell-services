@@ -37,18 +37,35 @@ class WCOrderProvider implements OrderProviderInterface {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
+		// Track created orders.
+		$first_order_id = null;
+
 		// Check each order item for service products.
 		foreach ( $wc_order->get_items() as $item_id => $item ) {
 			$product_id = $item->get_product_id();
 
-			// Check if this product is a service.
-			if ( ! $this->is_service_product( $product_id ) ) {
+			// First check item meta (carrier product approach).
+			$service_id = (int) $item->get_meta( '_wpss_service_id' );
+
+			// Fall back to product meta (legacy 1:1 mapping).
+			if ( ! $service_id ) {
+				// Check if this product is a service product.
+				if ( ! $this->is_service_product( $product_id ) ) {
+					continue;
+				}
+				$service_id = $this->get_service_id_from_product( $product_id );
+			}
+
+			if ( ! $service_id ) {
 				continue;
 			}
 
-			$service_id = $this->get_service_id_from_product( $product_id );
-
-			if ( ! $service_id ) {
+			// Skip if this item already has a WPSS order.
+			$existing_order_id = (int) $item->get_meta( '_wpss_order_id' );
+			if ( $existing_order_id ) {
+				if ( null === $first_order_id ) {
+					$first_order_id = $existing_order_id;
+				}
 				continue;
 			}
 
@@ -129,11 +146,15 @@ class WCOrderProvider implements OrderProviderInterface {
 				// Store service order ID in WC item meta.
 				wc_update_order_item_meta( $item_id, '_wpss_order_id', $order_id );
 
-				return wpss_get_order( $order_id );
+				// Track first created order.
+				if ( null === $first_order_id ) {
+					$first_order_id = $order_id;
+				}
 			}
 		}
 
-		return null;
+		// Return first created order (for backward compatibility).
+		return $first_order_id ? wpss_get_order( $first_order_id ) : null;
 	}
 
 	/**
@@ -507,6 +528,12 @@ class WCOrderProvider implements OrderProviderInterface {
 		}
 
 		foreach ( $wc_order->get_items() as $item ) {
+			// Check item meta first (carrier product approach).
+			if ( $item->get_meta( '_wpss_service_id' ) ) {
+				return true;
+			}
+
+			// Fall back to product meta check.
 			$product_id = $item->get_product_id();
 			if ( $this->is_service_product( $product_id ) ) {
 				return true;
@@ -534,11 +561,16 @@ class WCOrderProvider implements OrderProviderInterface {
 		foreach ( $wc_order->get_items() as $item_id => $item ) {
 			$product_id = $item->get_product_id();
 
-			if ( ! $this->is_service_product( $product_id ) ) {
-				continue;
-			}
+			// First check item meta (carrier product approach).
+			$service_id = (int) $item->get_meta( '_wpss_service_id' );
 
-			$service_id = $this->get_service_id_from_product( $product_id );
+			// Fall back to product meta (legacy 1:1 mapping).
+			if ( ! $service_id ) {
+				if ( ! $this->is_service_product( $product_id ) ) {
+					continue;
+				}
+				$service_id = $this->get_service_id_from_product( $product_id );
+			}
 
 			if ( ! $service_id ) {
 				continue;

@@ -74,6 +74,11 @@
 		});
 
 		// Order button click.
+		// Skip on single service pages - handled by single-service.js.
+		if (typeof wpssService !== 'undefined') {
+			return;
+		}
+
 		$widget.on('click', '.wpss-order-btn', function() {
 			const $btn = $(this);
 			const serviceId = $btn.data('service');
@@ -253,22 +258,37 @@
 	 * Perform order action via AJAX.
 	 */
 	WPSS.performOrderAction = function(orderId, action, reason) {
+		// Map frontend actions to AJAX action names.
+		const actionMap = {
+			accept: 'wpss_accept_order',
+			reject: 'wpss_decline_order',
+			start: 'wpss_start_work',
+			deliver: 'wpss_deliver_order',
+			complete: 'wpss_accept_delivery',
+			cancel: 'wpss_cancel_order'
+		};
+
+		const ajaxAction = actionMap[action] || 'wpss_' + action + '_order';
+
 		$.ajax({
-			url: wpssData.apiUrl + 'orders/' + orderId + '/' + action,
+			url: wpssData.ajaxUrl,
 			type: 'POST',
-			beforeSend: function(xhr) {
-				xhr.setRequestHeader('X-WP-Nonce', wpssData.nonce);
-			},
 			data: {
-				reason: reason || ''
+				action: ajaxAction,
+				order_id: orderId,
+				reason: reason || '',
+				nonce: wpssData.orderNonce || wpssData.nonce
 			},
 			success: function(response) {
-				// Reload page to show updated state.
-				location.reload();
+				if (response.success) {
+					// Reload page to show updated state.
+					location.reload();
+				} else {
+					alert(response.data?.message || 'Action failed. Please try again.');
+				}
 			},
 			error: function(xhr) {
-				const response = xhr.responseJSON || {};
-				alert(response.message || 'Action failed. Please try again.');
+				alert('An error occurred. Please try again.');
 			}
 		});
 	};
@@ -417,9 +437,9 @@
 				url: wpssData.ajaxUrl,
 				type: 'POST',
 				data: {
-					action: 'wpss_add_to_cart',
+					action: 'wpss_add_service_to_cart',
 					service_id: options.serviceId,
-					package_index: options.packageIndex,
+					package_id: options.packageIndex,
 					nonce: wpssData.nonce
 				},
 				success: function(response) {
@@ -444,30 +464,51 @@
 	 * Show deliver modal.
 	 */
 	WPSS.showDeliverModal = function(orderId) {
-		// Simple implementation - can be enhanced with proper modal.
-		const description = prompt('Describe your delivery:');
+		const $modal = $('#wpss-deliver-modal');
 
-		if (!description || !description.trim()) {
-			return;
+		if ($modal.length) {
+			// Use the proper modal
+			$modal.data('order', orderId);
+			$modal.find('input[name="order_id"]').val(orderId);
+			WPSS.showModal('wpss-deliver-modal');
+		} else {
+			// Fallback for when modal doesn't exist
+			const message = prompt('Describe your delivery:');
+
+			if (!message || !message.trim()) {
+				return;
+			}
+
+			WPSS.submitDelivery(orderId, message, []);
 		}
+	};
 
+	/**
+	 * Submit delivery via AJAX.
+	 */
+	WPSS.submitDelivery = function(orderId, message, files) {
 		$.ajax({
-			url: wpssData.apiUrl + 'orders/' + orderId + '/deliverables',
+			url: wpssData.ajaxUrl,
 			type: 'POST',
-			beforeSend: function(xhr) {
-				xhr.setRequestHeader('X-WP-Nonce', wpssData.nonce);
-			},
 			data: {
-				description: description,
-				files: []
+				action: 'wpss_deliver_order',
+				order_id: orderId,
+				message: message,
+				files: files || [],
+				nonce: wpssData.orderNonce || wpssData.nonce
 			},
-			success: function() {
-				// Now mark as delivered.
-				WPSS.performOrderAction(orderId, 'deliver');
+			success: function(response) {
+				if (response.success) {
+					WPSS.showNotification(response.data?.message || 'Delivery submitted successfully!', 'success');
+					setTimeout(function() {
+						location.reload();
+					}, 1500);
+				} else {
+					WPSS.showNotification(response.data?.message || 'Failed to submit delivery.', 'error');
+				}
 			},
-			error: function(xhr) {
-				const response = xhr.responseJSON || {};
-				alert(response.message || 'Failed to create delivery.');
+			error: function() {
+				WPSS.showNotification('An error occurred. Please try again.', 'error');
 			}
 		});
 	};
@@ -529,6 +570,55 @@
 		$(document).on('click', '.wpss-dispute-btn', function(e) {
 			e.preventDefault();
 			WPSS.showModal('wpss-dispute-modal');
+		});
+
+		// Delivery form submission.
+		$(document).on('submit', '#wpss-deliver-form', function(e) {
+			e.preventDefault();
+			const $form = $(this);
+			const $btn = $form.find('button[type="submit"]');
+			const originalText = $btn.html();
+
+			// Disable button
+			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> Submitting...');
+
+			const orderId = $form.find('input[name="order_id"]').val();
+			const message = $form.find('#deliver-message').val();
+
+			if (!message || !message.trim()) {
+				WPSS.showNotification('Please provide a delivery message.', 'error');
+				$btn.prop('disabled', false).html(originalText);
+				return;
+			}
+
+			WPSS.submitDelivery(orderId, message, []);
+
+			// Re-enable button after a delay (in case page doesn't reload)
+			setTimeout(function() {
+				$btn.prop('disabled', false).html(originalText);
+			}, 5000);
+		});
+
+		// Deliver button click.
+		$(document).on('click', '.wpss-deliver-btn', function(e) {
+			e.preventDefault();
+			const orderId = $(this).data('order');
+			WPSS.showDeliverModal(orderId);
+		});
+
+		// File input preview for delivery modal.
+		$(document).on('change', '#deliver-files', function() {
+			const files = this.files;
+			const $list = $('#deliver-file-list');
+			$list.empty();
+
+			if (files.length > 0) {
+				for (let i = 0; i < files.length; i++) {
+					const file = files[i];
+					const size = (file.size / 1024 / 1024).toFixed(2);
+					$list.append('<div class="wpss-file-item"><span>' + file.name + '</span><small>(' + size + ' MB)</small></div>');
+				}
+			}
 		});
 	};
 
@@ -612,7 +702,7 @@
 				action: 'wpss_request_revision',
 				order_id: orderId,
 				reason: reason,
-				nonce: wpssData.nonce
+				nonce: wpssData.orderNonce || wpssData.nonce
 			},
 			success: function(response) {
 				if (response.success) {
@@ -816,6 +906,66 @@
 		const div = document.createElement('div');
 		div.textContent = text;
 		return div.innerHTML;
+	};
+
+	/**
+	 * Show toast notification.
+	 *
+	 * @param {string} message - The message to display.
+	 * @param {string} type    - The type: 'success', 'error', 'warning', 'info'.
+	 * @param {number} duration - How long to show (ms). Default 4000.
+	 */
+	WPSS.showNotification = function(message, type, duration) {
+		type = type || 'info';
+		duration = duration || 4000;
+
+		// Create notification container if it doesn't exist.
+		let $container = $('#wpss-notification-container');
+		if (!$container.length) {
+			$container = $('<div id="wpss-notification-container"></div>');
+			$('body').append($container);
+		}
+
+		// Icon based on type.
+		const icons = {
+			success: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+			error: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+			warning: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+			info: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>'
+		};
+
+		// Create notification element.
+		const $notification = $(`
+			<div class="wpss-notification wpss-notification--${type}">
+				<span class="wpss-notification__icon">${icons[type] || icons.info}</span>
+				<span class="wpss-notification__message">${WPSS.escapeHtml(message)}</span>
+				<button type="button" class="wpss-notification__close">&times;</button>
+			</div>
+		`);
+
+		// Add to container.
+		$container.append($notification);
+
+		// Trigger animation.
+		setTimeout(function() {
+			$notification.addClass('wpss-notification--visible');
+		}, 10);
+
+		// Close button.
+		$notification.find('.wpss-notification__close').on('click', function() {
+			$notification.removeClass('wpss-notification--visible');
+			setTimeout(function() {
+				$notification.remove();
+			}, 300);
+		});
+
+		// Auto-remove after duration.
+		setTimeout(function() {
+			$notification.removeClass('wpss-notification--visible');
+			setTimeout(function() {
+				$notification.remove();
+			}, 300);
+		}, duration);
 	};
 
 	// Initialize on DOM ready.

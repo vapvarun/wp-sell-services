@@ -12,6 +12,7 @@ namespace WPSellServices\Core;
 
 use WPSellServices\Admin\Admin;
 use WPSellServices\Frontend\Frontend;
+use WPSellServices\Frontend\AjaxHandlers;
 use WPSellServices\Frontend\Shortcodes;
 use WPSellServices\Frontend\SingleServiceView;
 use WPSellServices\Frontend\TemplateLoader;
@@ -136,6 +137,13 @@ final class Plugin {
 	private array $analytics_widgets = array();
 
 	/**
+	 * AJAX handlers instance.
+	 *
+	 * @var AjaxHandlers|null
+	 */
+	private ?AjaxHandlers $ajax_handlers = null;
+
+	/**
 	 * Shortcodes instance.
 	 *
 	 * @var Shortcodes|null
@@ -215,6 +223,7 @@ final class Plugin {
 		$this->register_post_types();
 		$this->define_admin_hooks();
 		$this->define_frontend_hooks();
+		$this->define_ajax_hooks();
 		$this->define_integration_hooks();
 		$this->define_notification_hooks();
 		$this->define_api_hooks();
@@ -384,6 +393,19 @@ final class Plugin {
 		// Initialize template loader.
 		$template_loader = new TemplateLoader();
 		$template_loader->init();
+	}
+
+	/**
+	 * Define AJAX hooks.
+	 *
+	 * AJAX handlers need to be registered on both admin and frontend contexts
+	 * since admin-ajax.php runs in admin context.
+	 *
+	 * @return void
+	 */
+	private function define_ajax_hooks(): void {
+		$this->ajax_handlers = new AjaxHandlers();
+		$this->ajax_handlers->init();
 	}
 
 	/**

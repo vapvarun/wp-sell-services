@@ -31,7 +31,10 @@ echo "\n\n";
 
 echo esc_html__( 'Service:', 'wp-sell-services' ) . ' ' . esc_html( $service ? $service->title : __( 'N/A', 'wp-sell-services' ) ) . "\n";
 echo esc_html__( 'Seller:', 'wp-sell-services' ) . ' ' . esc_html( $vendor ? $vendor->display_name : __( 'N/A', 'wp-sell-services' ) ) . "\n";
-echo esc_html__( 'Expected Delivery:', 'wp-sell-services' ) . ' ' . esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->delivery_deadline ) ) ) . "\n\n";
+$deadline_timestamp = $order->delivery_deadline instanceof \DateTimeInterface
+	? $order->delivery_deadline->getTimestamp()
+	: strtotime( $order->delivery_deadline );
+echo esc_html__( 'Expected Delivery:', 'wp-sell-services' ) . ' ' . esc_html( wp_date( get_option( 'date_format' ), $deadline_timestamp ) ) . "\n\n";
 
 echo esc_html__( 'You will receive a notification when your delivery is ready.', 'wp-sell-services' ) . "\n\n";
 
