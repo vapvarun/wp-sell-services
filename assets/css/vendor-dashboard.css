@@ -862,3 +862,137 @@
 		display: block;
 	}
 }
+
+/* ==========================================================================
+   Dashboard BEM Additions
+   ========================================================================== */
+
+.wpss-dashboard__cta {
+	margin-top: 1.5rem;
+}
+
+.wpss-dashboard__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	color: var(--wpss-text-light, #6b7280);
+	font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   Stat Card Icon Variants (BEM)
+   ========================================================================== */
+
+.wpss-stat-card__icon--active {
+	background: #fef3c7;
+	color: #d97706;
+}
+
+.wpss-stat-card__icon--completed {
+	background: #d1fae5;
+	color: #059669;
+}
+
+.wpss-stat-card__icon--earnings {
+	background: #dbeafe;
+	color: #2563eb;
+}
+
+.wpss-stat-card__icon--rating {
+	background: #fef9c3;
+	color: #ca8a04;
+}
+
+/* ==========================================================================
+   Deadline (BEM)
+   ========================================================================== */
+
+.wpss-deadline__date {
+	font-weight: 600;
+	color: var(--wpss-secondary, #1e293b);
+}
+
+.wpss-deadline__remaining {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.75rem;
+	border-radius: var(--wpss-radius, 8px);
+	font-size: 0.813rem;
+	font-weight: 500;
+	background: #d1fae5;
+	color: #059669;
+}
+
+.wpss-deadline__remaining--urgent {
+	background: #fee2e2;
+	color: #dc2626;
+}
+
+/* ==========================================================================
+   Funnel / Analytics (BEM)
+   ========================================================================== */
+
+.wpss-funnel__step {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.wpss-funnel__label {
+	font-size: 0.875rem;
+	color: var(--wpss-text-light, #6b7280);
+	min-width: 100px;
+}
+
+.wpss-funnel__value {
+	font-weight: 600;
+	color: var(--wpss-secondary, #1e293b);
+}
+
+.wpss-funnel__rate {
+	font-size: 0.813rem;
+	color: var(--wpss-success, #10b981);
+	margin-left: auto;
+}
+
+.wpss-funnel__arrow {
+	color: var(--wpss-text-light, #6b7280);
+	margin: 0.5rem 0 0.5rem 3rem;
+}
+
+/* ==========================================================================
+   Metric (BEM)
+   ========================================================================== */
+
+.wpss-metric__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	margin-bottom: 0.5rem;
+}
+
+.wpss-metric__label {
+	font-size: 0.875rem;
+	color: var(--wpss-text-light, #6b7280);
+}
+
+.wpss-metric__value {
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: var(--wpss-secondary, #1e293b);
+}
+
+.wpss-metric__bar {
+	height: 8px;
+	background: var(--wpss-gray-200, #e5e7eb);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.wpss-metric__fill {
+	height: 100%;
+	background: var(--wpss-primary, #4f46e5);
+	border-radius: 4px;
+	transition: width 0.3s ease;
+}

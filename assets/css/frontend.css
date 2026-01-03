@@ -2232,3 +2232,302 @@ body.wpss-modal-active {
 	resize: vertical;
 	min-height: 100px;
 }
+
+/* ==========================================================================
+   Form Group (BEM)
+   ========================================================================== */
+
+.wpss-form-group__label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 500;
+	color: var(--wpss-secondary);
+}
+
+.wpss-form-group__required {
+	color: var(--wpss-danger);
+	margin-left: 0.25rem;
+}
+
+.wpss-form-group__input,
+.wpss-form-group__select,
+.wpss-form-group__textarea {
+	width: 100%;
+	padding: 0.75rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	font-size: 0.938rem;
+	transition: border-color var(--wpss-transition);
+}
+
+.wpss-form-group__input:focus,
+.wpss-form-group__select:focus,
+.wpss-form-group__textarea:focus {
+	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+.wpss-form-group__textarea {
+	resize: vertical;
+	min-height: 100px;
+}
+
+.wpss-form-group__hint {
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+	margin-top: 0.375rem;
+}
+
+.wpss-form-group__checkbox {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-form-group__checkbox input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	accent-color: var(--wpss-primary);
+}
+
+/* ==========================================================================
+   Modal (BEM)
+   ========================================================================== */
+
+.wpss-modal__backdrop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgb(0 0 0 / 50%);
+}
+
+.wpss-modal__dialog {
+	position: relative;
+	background: var(--wpss-white);
+	border-radius: var(--wpss-radius-lg);
+	width: 100%;
+	max-width: 480px;
+	max-height: 90vh;
+	overflow-y: auto;
+	box-shadow: var(--wpss-shadow-lg);
+}
+
+.wpss-modal__content {
+	display: flex;
+	flex-direction: column;
+}
+
+.wpss-modal__header {
+	padding: 1.5rem 1.5rem 1rem;
+	border-bottom: 1px solid var(--wpss-border);
+	position: relative;
+}
+
+.wpss-modal__title {
+	margin: 0;
+	font-size: 1.25rem;
+	color: var(--wpss-secondary);
+}
+
+.wpss-modal__close,
+.wpss-modal__close-btn {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	cursor: pointer;
+	color: var(--wpss-text-light);
+	padding: 0;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+
+.wpss-modal__close:hover,
+.wpss-modal__close-btn:hover {
+	color: var(--wpss-text);
+}
+
+.wpss-modal__body {
+	padding: 1.5rem;
+}
+
+.wpss-modal__footer {
+	padding: 1rem 1.5rem 1.5rem;
+	border-top: 1px solid var(--wpss-border);
+	display: flex;
+	gap: 0.75rem;
+	justify-content: flex-end;
+}
+
+/* ==========================================================================
+   Card (BEM Additions)
+   ========================================================================== */
+
+.wpss-card__header {
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--wpss-border);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.wpss-card__placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	background: var(--wpss-gray-100, #f3f4f6);
+	color: var(--wpss-gray-400, #9ca3af);
+}
+
+.wpss-card__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.wpss-card__badge--featured {
+	background: var(--wpss-warning);
+	color: #fff;
+}
+
+/* ==========================================================================
+   Profile (BEM)
+   ========================================================================== */
+
+.wpss-profile__avatar {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.wpss-profile__info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.wpss-profile__name {
+	font-weight: 600;
+	color: var(--wpss-secondary);
+	font-size: 1rem;
+}
+
+.wpss-profile__meta {
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+}
+
+/* ==========================================================================
+   Notice (BEM)
+   ========================================================================== */
+
+.wpss-notice__link {
+	color: var(--wpss-primary);
+	text-decoration: underline;
+}
+
+.wpss-notice__link:hover {
+	text-decoration: none;
+}
+
+/* ==========================================================================
+   Empty State (BEM Additions)
+   ========================================================================== */
+
+.wpss-empty-state__text {
+	color: var(--wpss-text);
+	font-size: 0.938rem;
+	line-height: 1.6;
+}
+
+/* ==========================================================================
+   Avatar & Media Uploaders (BEM)
+   ========================================================================== */
+
+.wpss-avatar-uploader__preview,
+.wpss-media-uploader__preview {
+	position: relative;
+	border-radius: var(--wpss-radius);
+	overflow: hidden;
+	background: var(--wpss-background);
+	border: 2px dashed var(--wpss-border);
+}
+
+.wpss-avatar-uploader__preview {
+	width: 120px;
+	height: 120px;
+	border-radius: 50%;
+}
+
+.wpss-avatar-uploader__preview img,
+.wpss-media-uploader__preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* ==========================================================================
+   Registration (BEM)
+   ========================================================================== */
+
+.wpss-registration__header {
+	text-align: center;
+	margin-bottom: 2rem;
+}
+
+.wpss-registration__title {
+	font-size: 1.75rem;
+	font-weight: 700;
+	color: var(--wpss-secondary);
+	margin: 0 0 0.5rem;
+}
+
+.wpss-registration__intro {
+	color: var(--wpss-text-light);
+	font-size: 1rem;
+	margin: 0;
+}
+
+/* ==========================================================================
+   Service Info (BEM)
+   ========================================================================== */
+
+.wpss-service-info__thumb {
+	width: 80px;
+	height: 60px;
+	border-radius: var(--wpss-radius);
+	object-fit: cover;
+	flex-shrink: 0;
+}
+
+.wpss-service-info__details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+.wpss-service-info__title {
+	font-weight: 600;
+	color: var(--wpss-secondary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.wpss-service-info__package {
+	font-size: 0.813rem;
+	color: var(--wpss-text-light);
+}

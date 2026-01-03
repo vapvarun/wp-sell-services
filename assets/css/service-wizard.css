@@ -1009,3 +1009,68 @@
 [x-cloak] {
 	display: none !important;
 }
+
+/* ==========================================================================
+   Wizard BEM Additions
+   ========================================================================== */
+
+.wpss-wizard__steps {
+	display: flex;
+	flex-direction: column;
+}
+
+.wpss-wizard__btn-prev,
+.wpss-wizard__btn-next,
+.wpss-wizard__btn-save,
+.wpss-wizard__btn-publish {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1.5rem;
+	font-size: 0.9375rem;
+	font-weight: 500;
+	border-radius: var(--wpss-radius, 8px);
+	border: none;
+	cursor: pointer;
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.wpss-wizard__btn-prev {
+	background: transparent;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-wizard__btn-prev:hover {
+	border-color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary, #4f46e5);
+}
+
+.wpss-wizard__btn-next {
+	background: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-wizard__btn-next:hover {
+	background: var(--wpss-primary-dark, #4338ca);
+}
+
+.wpss-wizard__btn-save {
+	background: var(--wpss-gray-100, #f3f4f6);
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-wizard__btn-save:hover {
+	background: var(--wpss-gray-200, #e5e7eb);
+}
+
+.wpss-wizard__btn-publish {
+	background: var(--wpss-success, #10b981);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-wizard__btn-publish:hover {
+	background: #059669;
+}

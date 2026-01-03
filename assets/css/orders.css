@@ -1243,3 +1243,144 @@
 		height: 36px;
 	}
 }
+
+/* ==========================================================================
+   Orders List BEM Additions
+   ========================================================================== */
+
+.wpss-orders__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1.5rem;
+}
+
+.wpss-orders__title {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 600;
+	color: var(--wpss-secondary, #1e293b);
+}
+
+.wpss-orders__list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.wpss-orders__empty {
+	text-align: center;
+	padding: 3rem 2rem;
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	color: var(--wpss-text-light, #6b7280);
+}
+
+/* ==========================================================================
+   Order Card BEM Additions
+   ========================================================================== */
+
+.wpss-order-card__avatar {
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.wpss-order-card__list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+
+.wpss-order-card__rating {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	color: var(--wpss-star, #fbbf24);
+}
+
+.wpss-order-card__user {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.wpss-order-card__user-info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+/* ==========================================================================
+   Table BEM Additions
+   ========================================================================== */
+
+.wpss-table__row {
+	display: contents;
+}
+
+.wpss-table__link {
+	color: var(--wpss-primary, #4f46e5);
+	text-decoration: none;
+}
+
+.wpss-table__link:hover {
+	text-decoration: underline;
+}
+
+.wpss-table__amount--positive {
+	color: var(--wpss-success, #10b981);
+}
+
+.wpss-table__amount--negative {
+	color: var(--wpss-danger, #ef4444);
+}
+
+.wpss-table__col--order,
+.wpss-table__col--service,
+.wpss-table__col--status,
+.wpss-table__col--deadline,
+.wpss-table__col--total,
+.wpss-table__col--actions {
+	padding: 1rem;
+	vertical-align: middle;
+}
+
+/* ==========================================================================
+   Requirements Form BEM Additions
+   ========================================================================== */
+
+.wpss-requirements-form__submit-text {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-requirements-form__submit-loading {
+	display: none;
+}
+
+.wpss-requirements-form__submit-btn.is-loading .wpss-requirements-form__submit-text {
+	display: none;
+}
+
+.wpss-requirements-form__submit-btn.is-loading .wpss-requirements-form__submit-loading {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* ==========================================================================
+   Requirements Page BEM Additions
+   ========================================================================== */
+
+.wpss-requirements-page__summary-info {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	color: var(--wpss-text-light, #6b7280);
+}
