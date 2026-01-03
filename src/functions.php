@@ -940,3 +940,99 @@ function wpss_has_wallet(): bool {
 
 	return null !== $wallet && method_exists( $wallet, 'get_balance' );
 }
+
+/**
+ * Add a service to cart via WooCommerce carrier product.
+ *
+ * This function handles adding a service to the WooCommerce cart
+ * using the virtual carrier product system.
+ *
+ * @since 1.1.0
+ *
+ * @param int   $service_id Service CPT ID.
+ * @param int   $package_id Package index (0, 1, 2 for basic/standard/premium).
+ * @param array $addons     Optional addon IDs.
+ * @return string|false Cart item key or false on failure.
+ */
+function wpss_add_service_to_cart( int $service_id, int $package_id = 0, array $addons = array() ) {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return false;
+	}
+
+	// Get WooCommerce adapter.
+	$adapter = wpss_get_ecommerce_adapter( 'woocommerce' );
+
+	if ( ! $adapter ) {
+		return false;
+	}
+
+	$carrier = $adapter->get_service_carrier();
+
+	if ( ! $carrier ) {
+		return false;
+	}
+
+	return $carrier->add_to_cart( $service_id, $package_id, $addons );
+}
+
+/**
+ * Get service checkout URL with WooCommerce.
+ *
+ * Generates a URL that adds a service to cart and redirects to checkout.
+ *
+ * @since 1.1.0
+ *
+ * @param int   $service_id Service CPT ID.
+ * @param int   $package_id Package index (0, 1, 2).
+ * @param array $addons     Optional addon IDs.
+ * @return string Checkout URL with add-to-cart parameters.
+ */
+function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, array $addons = array() ): string {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return '';
+	}
+
+	$adapter = wpss_get_ecommerce_adapter( 'woocommerce' );
+
+	if ( ! $adapter ) {
+		return '';
+	}
+
+	$carrier    = $adapter->get_service_carrier();
+	$carrier_id = $carrier ? $carrier->get_carrier_id() : 0;
+
+	if ( ! $carrier_id ) {
+		return '';
+	}
+
+	$params = array(
+		'add-to-cart'     => $carrier_id,
+		'wpss_service_id' => $service_id,
+		'wpss_package_id' => $package_id,
+	);
+
+	if ( ! empty( $addons ) ) {
+		$params['wpss_addons'] = $addons;
+	}
+
+	return add_query_arg( $params, wc_get_checkout_url() );
+}
+
+/**
+ * Get the active e-commerce adapter.
+ *
+ * @since 1.1.0
+ *
+ * @param string|null $adapter_id Specific adapter ID or null for active adapter.
+ * @return object|null Adapter instance or null.
+ */
+function wpss_get_ecommerce_adapter( ?string $adapter_id = null ): ?object {
+	/**
+	 * Filter the e-commerce adapter instance.
+	 *
+	 * @since 1.1.0
+	 * @param object|null $adapter     Adapter instance.
+	 * @param string|null $adapter_id  Requested adapter ID.
+	 */
+	return apply_filters( 'wpss_ecommerce_adapter', null, $adapter_id );
+}

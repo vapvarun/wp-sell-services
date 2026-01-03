@@ -33,6 +33,7 @@ class Activator {
 		self::run_migrations();
 		self::create_roles();
 		self::set_default_options();
+		self::create_wc_carrier_product();
 		self::schedule_cron_events();
 		self::flush_rewrite_rules();
 	}
@@ -172,6 +173,22 @@ class Activator {
 		// Update vendor stats.
 		if ( ! wp_next_scheduled( 'wpss_update_vendor_stats' ) ) {
 			wp_schedule_event( time(), 'twicedaily', 'wpss_update_vendor_stats' );
+		}
+	}
+
+	/**
+	 * Create WooCommerce carrier product for service orders.
+	 *
+	 * @return void
+	 */
+	private static function create_wc_carrier_product(): void {
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return;
+		}
+
+		// Use WCServiceCarrier to create the product.
+		if ( class_exists( '\WPSellServices\Integrations\WooCommerce\WCServiceCarrier' ) ) {
+			\WPSellServices\Integrations\WooCommerce\WCServiceCarrier::activate();
 		}
 	}
 

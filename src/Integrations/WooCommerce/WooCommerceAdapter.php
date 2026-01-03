@@ -76,6 +76,13 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	private ?WCEmailProvider $email_provider = null;
 
 	/**
+	 * Service carrier instance.
+	 *
+	 * @var WCServiceCarrier|null
+	 */
+	private ?WCServiceCarrier $service_carrier = null;
+
+	/**
 	 * Get the unique adapter identifier.
 	 *
 	 * @return string
@@ -118,6 +125,7 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 		$this->checkout_provider = new WCCheckoutProvider();
 		$this->account_provider  = new WCAccountProvider();
 		$this->email_provider    = new WCEmailProvider();
+		$this->service_carrier   = new WCServiceCarrier();
 
 		// Register WooCommerce-specific hooks.
 		$this->register_hooks();
@@ -143,6 +151,10 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 		$this->checkout_provider->init();
 		$this->account_provider->init();
 		$this->email_provider->init();
+		$this->service_carrier->init();
+
+		// Register adapter filter for global access.
+		add_filter( 'wpss_ecommerce_adapter', array( $this, 'provide_adapter' ), 10, 2 );
 
 		// Order status changes.
 		add_action( 'woocommerce_order_status_processing', array( $this, 'handle_order_paid' ) );
@@ -280,5 +292,33 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 			$this->email_provider = new WCEmailProvider();
 		}
 		return $this->email_provider;
+	}
+
+	/**
+	 * Get the service carrier.
+	 *
+	 * @return WCServiceCarrier
+	 */
+	public function get_service_carrier(): WCServiceCarrier {
+		if ( null === $this->service_carrier ) {
+			$this->service_carrier = new WCServiceCarrier();
+		}
+		return $this->service_carrier;
+	}
+
+	/**
+	 * Provide this adapter via filter.
+	 *
+	 * @param object|null $adapter    Existing adapter.
+	 * @param string|null $adapter_id Requested adapter ID.
+	 * @return object|null This adapter if requested or no other adapter.
+	 */
+	public function provide_adapter( ?object $adapter, ?string $adapter_id ): ?object {
+		// Return this adapter if specifically requested or if no adapter set.
+		if ( null === $adapter_id || 'woocommerce' === $adapter_id ) {
+			return $this;
+		}
+
+		return $adapter;
 	}
 }
