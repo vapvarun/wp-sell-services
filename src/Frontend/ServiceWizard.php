@@ -52,6 +52,13 @@ class ServiceWizard {
 	private array $steps = array();
 
 	/**
+	 * Wizard limits (filterable by Pro).
+	 *
+	 * @var array
+	 */
+	private array $limits = array();
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -84,6 +91,127 @@ class ServiceWizard {
 				'icon'  => 'dashicons-visibility',
 			),
 		);
+
+		$this->init_limits();
+	}
+
+	/**
+	 * Initialize wizard limits.
+	 *
+	 * Free version has conservative limits. Pro removes these via filters.
+	 *
+	 * @return void
+	 */
+	private function init_limits(): void {
+		$this->limits = array(
+			/**
+			 * Max pricing packages (tiers).
+			 *
+			 * Free: 3 (Basic, Standard, Premium)
+			 * Pro: 3 (same, but more flexibility)
+			 *
+			 * @param int $max Maximum packages.
+			 */
+			'max_packages'     => apply_filters( 'wpss_service_max_packages', 3 ),
+
+			/**
+			 * Max gallery images (additional, not including main).
+			 *
+			 * Free: 4
+			 * Pro: Unlimited (-1)
+			 *
+			 * @param int $max Maximum gallery images. -1 for unlimited.
+			 */
+			'max_gallery'      => apply_filters( 'wpss_service_max_gallery', 4 ),
+
+			/**
+			 * Max video URLs.
+			 *
+			 * Free: 1
+			 * Pro: 3
+			 *
+			 * @param int $max Maximum videos.
+			 */
+			'max_videos'       => apply_filters( 'wpss_service_max_videos', 1 ),
+
+			/**
+			 * Max service extras (add-ons).
+			 *
+			 * Free: 3
+			 * Pro: Unlimited (-1)
+			 *
+			 * @param int $max Maximum extras. -1 for unlimited.
+			 */
+			'max_extras'       => apply_filters( 'wpss_service_max_extras', 3 ),
+
+			/**
+			 * Max FAQs.
+			 *
+			 * Free: 5
+			 * Pro: Unlimited (-1)
+			 *
+			 * @param int $max Maximum FAQs. -1 for unlimited.
+			 */
+			'max_faq'          => apply_filters( 'wpss_service_max_faq', 5 ),
+
+			/**
+			 * Max buyer requirements.
+			 *
+			 * Free: 5
+			 * Pro: Unlimited (-1)
+			 *
+			 * @param int $max Maximum requirements. -1 for unlimited.
+			 */
+			'max_requirements' => apply_filters( 'wpss_service_max_requirements', 5 ),
+
+			/**
+			 * Wizard features enabled.
+			 *
+			 * Pro can add features like AI title suggestions, templates, etc.
+			 *
+			 * @param array $features Array of enabled features.
+			 */
+			'features'         => apply_filters(
+				'wpss_service_wizard_features',
+				array(
+					'ai_title'          => false, // AI-powered title suggestions.
+					'templates'         => false, // Service templates.
+					'bulk_upload'       => false, // Bulk image upload.
+					'video_upload'      => false, // Direct video upload (vs URL only).
+					'custom_fields'     => false, // Custom fields in packages.
+					'scheduled_publish' => false, // Schedule service publishing.
+				)
+			),
+		);
+	}
+
+	/**
+	 * Get wizard limits.
+	 *
+	 * @return array Limits array.
+	 */
+	public function get_limits(): array {
+		return $this->limits;
+	}
+
+	/**
+	 * Get a specific limit.
+	 *
+	 * @param string $key Limit key.
+	 * @return mixed Limit value or null if not found.
+	 */
+	public function get_limit( string $key ) {
+		return $this->limits[ $key ] ?? null;
+	}
+
+	/**
+	 * Check if a feature is enabled.
+	 *
+	 * @param string $feature Feature key.
+	 * @return bool Whether feature is enabled.
+	 */
+	public function is_feature_enabled( string $feature ): bool {
+		return ! empty( $this->limits['features'][ $feature ] );
 	}
 
 	/**
@@ -544,12 +672,14 @@ class ServiceWizard {
 							</button>
 						</div>
 					</template>
-					<div class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="data.gallery.images.length < 4">
+					<div class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()">
 						<span class="dashicons dashicons-plus-alt2"></span>
 						<span><?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?></span>
 					</div>
 				</div>
-				<div class="wpss-form-hint"><?php esc_html_e( 'Up to 4 additional images', 'wp-sell-services' ); ?></div>
+				<div class="wpss-form-hint">
+					<span x-text="limits.max_gallery === -1 ? '<?php esc_attr_e( 'Unlimited additional images', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Up to', 'wp-sell-services' ); ?> ' + limits.max_gallery + ' <?php esc_attr_e( 'additional images', 'wp-sell-services' ); ?>'"></span>
+				</div>
 			</div>
 
 			<!-- Video -->
@@ -628,10 +758,19 @@ class ServiceWizard {
 				</template>
 			</div>
 
-			<button type="button" class="wpss-btn wpss-btn--outline" @click="addRequirement()">
+			<button type="button" class="wpss-btn wpss-btn--outline" @click="addRequirement()" x-show="canAddRequirement()">
 				<span class="dashicons dashicons-plus-alt2"></span>
 				<?php esc_html_e( 'Add Requirement', 'wp-sell-services' ); ?>
 			</button>
+
+			<div class="wpss-form-hint" x-show="!canAddRequirement()" x-cloak>
+				<span class="wpss-limit-notice"><?php esc_html_e( 'Requirement limit reached.', 'wp-sell-services' ); ?></span>
+				<?php if ( ! $this->is_pro_active() ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings&tab=pro' ) ); ?>" class="wpss-upgrade-link">
+					<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
+				</a>
+				<?php endif; ?>
+			</div>
 
 			<div class="wpss-form-hint wpss-form-hint--block">
 				<strong><?php esc_html_e( 'Tip:', 'wp-sell-services' ); ?></strong>
@@ -710,10 +849,19 @@ class ServiceWizard {
 					</template>
 				</div>
 
-				<button type="button" class="wpss-btn wpss-btn--outline" @click="addExtra()">
+				<button type="button" class="wpss-btn wpss-btn--outline" @click="addExtra()" x-show="canAddExtra()">
 					<span class="dashicons dashicons-plus-alt2"></span>
 					<?php esc_html_e( 'Add Extra', 'wp-sell-services' ); ?>
 				</button>
+
+				<div class="wpss-form-hint" x-show="!canAddExtra()" x-cloak>
+					<span class="wpss-limit-notice"><?php esc_html_e( 'Extras limit reached.', 'wp-sell-services' ); ?></span>
+					<?php if ( ! $this->is_pro_active() ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings&tab=pro' ) ); ?>" class="wpss-upgrade-link">
+						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
+					</a>
+					<?php endif; ?>
+				</div>
 			</div>
 
 			<!-- FAQs -->
@@ -750,10 +898,19 @@ class ServiceWizard {
 					</template>
 				</div>
 
-				<button type="button" class="wpss-btn wpss-btn--outline" @click="addFaq()">
+				<button type="button" class="wpss-btn wpss-btn--outline" @click="addFaq()" x-show="canAddFaq()">
 					<span class="dashicons dashicons-plus-alt2"></span>
 					<?php esc_html_e( 'Add FAQ', 'wp-sell-services' ); ?>
 				</button>
+
+				<div class="wpss-form-hint" x-show="!canAddFaq()" x-cloak>
+					<span class="wpss-limit-notice"><?php esc_html_e( 'FAQ limit reached.', 'wp-sell-services' ); ?></span>
+					<?php if ( ! $this->is_pro_active() ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings&tab=pro' ) ); ?>" class="wpss-upgrade-link">
+						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
+					</a>
+					<?php endif; ?>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -1034,22 +1191,37 @@ class ServiceWizard {
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
 				'currencySymbol' => get_woocommerce_currency_symbol(),
+				'limits'         => $this->limits,
+				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
-					'saving'          => __( 'Saving...', 'wp-sell-services' ),
-					'saved'           => __( 'Draft saved!', 'wp-sell-services' ),
-					'publishing'      => __( 'Publishing...', 'wp-sell-services' ),
-					'published'       => __( 'Service published!', 'wp-sell-services' ),
-					'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'unsavedChanges'  => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
-					'confirmDelete'   => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
-					'validationTitle' => __( 'Please enter a service title', 'wp-sell-services' ),
-					'validationCat'   => __( 'Please select a category', 'wp-sell-services' ),
-					'validationDesc'  => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
-					'validationPrice' => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
-					'validationImage' => __( 'Please upload a main image', 'wp-sell-services' ),
+					'saving'            => __( 'Saving...', 'wp-sell-services' ),
+					'saved'             => __( 'Draft saved!', 'wp-sell-services' ),
+					'publishing'        => __( 'Publishing...', 'wp-sell-services' ),
+					'published'         => __( 'Service published!', 'wp-sell-services' ),
+					'error'             => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'unsavedChanges'    => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
+					'confirmDelete'     => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
+					'validationTitle'   => __( 'Please enter a service title', 'wp-sell-services' ),
+					'validationCat'     => __( 'Please select a category', 'wp-sell-services' ),
+					'validationDesc'    => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
+					'validationPrice'   => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
+					'validationImage'   => __( 'Please upload a main image', 'wp-sell-services' ),
+					'limitGallery'      => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
+					'limitExtras'       => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
+					'limitFaq'          => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
+					'limitRequirements' => __( 'You have reached the maximum number of requirements. Upgrade to Pro for unlimited requirements.', 'wp-sell-services' ),
 				),
 			)
 		);
+	}
+
+	/**
+	 * Check if Pro plugin is active.
+	 *
+	 * @return bool Whether Pro is active with valid license.
+	 */
+	private function is_pro_active(): bool {
+		return defined( 'WPSS_PRO_VERSION' ) && function_exists( 'wpss_pro' );
 	}
 
 	/**

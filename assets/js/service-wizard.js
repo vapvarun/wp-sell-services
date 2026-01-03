@@ -16,6 +16,17 @@
  * @return {Object} Alpine.js component.
  */
 function wpssServiceWizard(existingData = {}) {
+	// Get limits from PHP (Free version defaults, Pro can override)
+	const limits = wpssWizard.limits || {
+		max_packages: 3,
+		max_gallery: 4,
+		max_videos: 1,
+		max_extras: 3,
+		max_faq: 5,
+		max_requirements: 5,
+		features: {}
+	};
+
 	return {
 		// Current step
 		currentStep: 'basic',
@@ -38,6 +49,9 @@ function wpssServiceWizard(existingData = {}) {
 
 		// Has unsaved changes
 		isDirty: false,
+
+		// Wizard limits (from PHP, filterable by Pro)
+		limits: limits,
 
 		// Service data
 		data: {
@@ -269,12 +283,27 @@ function wpssServiceWizard(existingData = {}) {
 		 * Add a requirement.
 		 */
 		addRequirement() {
+			// Check limit (-1 means unlimited)
+			if (this.limits.max_requirements !== -1 && this.data.requirements.length >= this.limits.max_requirements) {
+				this.showNotice(wpssWizard.strings.limitRequirements, 'error');
+				return;
+			}
+
 			this.data.requirements.push({
 				question: '',
 				type: 'text',
 				required: false,
 				options: ''
 			});
+		},
+
+		/**
+		 * Check if can add more requirements.
+		 *
+		 * @return {boolean} Can add more.
+		 */
+		canAddRequirement() {
+			return this.limits.max_requirements === -1 || this.data.requirements.length < this.limits.max_requirements;
 		},
 
 		/**
@@ -292,12 +321,27 @@ function wpssServiceWizard(existingData = {}) {
 		 * Add an extra.
 		 */
 		addExtra() {
+			// Check limit (-1 means unlimited)
+			if (this.limits.max_extras !== -1 && this.data.extras.length >= this.limits.max_extras) {
+				this.showNotice(wpssWizard.strings.limitExtras, 'error');
+				return;
+			}
+
 			this.data.extras.push({
 				title: '',
 				description: '',
 				price: '',
 				extra_days: 0
 			});
+		},
+
+		/**
+		 * Check if can add more extras.
+		 *
+		 * @return {boolean} Can add more.
+		 */
+		canAddExtra() {
+			return this.limits.max_extras === -1 || this.data.extras.length < this.limits.max_extras;
 		},
 
 		/**
@@ -315,10 +359,25 @@ function wpssServiceWizard(existingData = {}) {
 		 * Add a FAQ.
 		 */
 		addFaq() {
+			// Check limit (-1 means unlimited)
+			if (this.limits.max_faq !== -1 && this.data.faqs.length >= this.limits.max_faq) {
+				this.showNotice(wpssWizard.strings.limitFaq, 'error');
+				return;
+			}
+
 			this.data.faqs.push({
 				question: '',
 				answer: ''
 			});
+		},
+
+		/**
+		 * Check if can add more FAQs.
+		 *
+		 * @return {boolean} Can add more.
+		 */
+		canAddFaq() {
+			return this.limits.max_faq === -1 || this.data.faqs.length < this.limits.max_faq;
 		},
 
 		/**
@@ -338,6 +397,14 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {string} type - 'main' or 'images'.
 		 */
 		openMediaUploader(type) {
+			// Check gallery limit before opening uploader for additional images
+			if (type === 'images') {
+				if (this.limits.max_gallery !== -1 && this.data.gallery.images.length >= this.limits.max_gallery) {
+					this.showNotice(wpssWizard.strings.limitGallery, 'error');
+					return;
+				}
+			}
+
 			const frame = wp.media({
 				title: type === 'main' ? 'Select Main Image' : 'Add Gallery Image',
 				multiple: false,
@@ -355,7 +422,8 @@ function wpssServiceWizard(existingData = {}) {
 						url: attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url
 					};
 				} else if (type === 'images') {
-					if (this.data.gallery.images.length < 4) {
+					const maxGallery = this.limits.max_gallery;
+					if (maxGallery === -1 || this.data.gallery.images.length < maxGallery) {
 						this.data.gallery.images.push({
 							id: attachment.id,
 							url: attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url
@@ -367,6 +435,15 @@ function wpssServiceWizard(existingData = {}) {
 			});
 
 			frame.open();
+		},
+
+		/**
+		 * Check if can add more gallery images.
+		 *
+		 * @return {boolean} Can add more.
+		 */
+		canAddGalleryImage() {
+			return this.limits.max_gallery === -1 || this.data.gallery.images.length < this.limits.max_gallery;
 		},
 
 		/**
