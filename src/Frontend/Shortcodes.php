@@ -418,12 +418,11 @@ class Shortcodes {
 
 		$request_service = new BuyerRequestService();
 		$args            = [
-			'limit'  => absint( $atts['limit'] ),
-			'status' => 'open',
+			'posts_per_page' => absint( $atts['limit'] ),
 		];
 
 		if ( $atts['category'] ) {
-			$args['category'] = absint( $atts['category'] );
+			$args['category_id'] = absint( $atts['category'] );
 		}
 
 		if ( $atts['budget_min'] ) {
@@ -434,7 +433,7 @@ class Shortcodes {
 			$args['budget_max'] = floatval( $atts['budget_max'] );
 		}
 
-		$requests = $request_service->get_all( $args );
+		$requests = $request_service->get_open( $args );
 
 		ob_start();
 		?>

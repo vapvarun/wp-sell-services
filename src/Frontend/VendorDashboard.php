@@ -88,6 +88,7 @@ class VendorDashboard {
 	public function init(): void {
 		add_shortcode( 'wpss_vendor_dashboard', array( $this, 'render_dashboard' ) );
 		add_shortcode( 'wpss_become_vendor', array( $this, 'render_registration_form' ) );
+		add_shortcode( 'wpss_vendor_registration', array( $this, 'render_registration_form' ) );
 
 		// AJAX handlers.
 		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'ajax_update_profile' ) );
