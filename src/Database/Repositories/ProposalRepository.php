@@ -20,12 +20,28 @@ use WPSellServices\Models\Proposal;
 class ProposalRepository extends AbstractRepository {
 
 	/**
+	 * Allowed columns for ordering and filtering.
+	 *
+	 * @var array<string>
+	 */
+	protected array $allowed_columns = array(
+		'id',
+		'request_id',
+		'vendor_id',
+		'price',
+		'delivery_days',
+		'status',
+		'created_at',
+		'updated_at',
+	);
+
+	/**
 	 * Get table name.
 	 *
 	 * @return string
 	 */
 	protected function get_table_name(): string {
-		return 'wpss_proposals';
+		return $this->schema->get_table_name( 'proposals' );
 	}
 
 	/**
@@ -61,7 +77,7 @@ class ProposalRepository extends AbstractRepository {
 			"SELECT * FROM {$this->table} WHERE {$where} ORDER BY created_at DESC"
 		);
 
-		return array_map( [ Proposal::class, 'from_row' ], $results );
+		return array_map( array( Proposal::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -91,7 +107,7 @@ class ProposalRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Proposal::class, 'from_row' ], $results );
+		return array_map( array( Proposal::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -123,11 +139,11 @@ class ProposalRepository extends AbstractRepository {
 	 * @return int|false Proposal ID or false on failure.
 	 */
 	public function create( array $data ) {
-		$defaults = [
+		$defaults = array(
 			'status'     => 'pending',
 			'created_at' => current_time( 'mysql' ),
 			'updated_at' => current_time( 'mysql' ),
-		];
+		);
 
 		$data = wp_parse_args( $data, $defaults );
 
@@ -143,10 +159,10 @@ class ProposalRepository extends AbstractRepository {
 	 * @return bool
 	 */
 	public function update_status( int $id, string $status, string $reason = '' ): bool {
-		$data = [
+		$data = array(
 			'status'     => $status,
 			'updated_at' => current_time( 'mysql' ),
-		];
+		);
 
 		if ( 'rejected' === $status && $reason ) {
 			$data['rejection_reason'] = $reason;
@@ -169,11 +185,11 @@ class ProposalRepository extends AbstractRepository {
 	public function accept( int $id, int $order_id ): bool {
 		return $this->update(
 			$id,
-			[
+			array(
 				'status'     => 'accepted',
 				'order_id'   => $order_id,
 				'updated_at' => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -213,7 +229,7 @@ class ProposalRepository extends AbstractRepository {
 			)
 		);
 
-		$counts = [];
+		$counts = array();
 		foreach ( $results as $row ) {
 			$counts[ $row->status ] = (int) $row->count;
 		}
@@ -244,14 +260,14 @@ class ProposalRepository extends AbstractRepository {
 			)
 		);
 
-		return [
+		return array(
 			'total'              => (int) $row->total,
 			'pending'            => (int) $row->pending,
 			'accepted'           => (int) $row->accepted,
 			'rejected'           => (int) $row->rejected,
 			'acceptance_rate'    => $row->total > 0 ? round( ( $row->accepted / $row->total ) * 100, 1 ) : 0,
 			'avg_accepted_price' => $row->avg_accepted_price ? (float) $row->avg_accepted_price : 0,
-		];
+		);
 	}
 
 	/**
@@ -287,8 +303,8 @@ class ProposalRepository extends AbstractRepository {
 
 		return (int) $wpdb->delete(
 			$this->table,
-			[ 'request_id' => $request_id ],
-			[ '%d' ]
+			array( 'request_id' => $request_id ),
+			array( '%d' )
 		);
 	}
 }

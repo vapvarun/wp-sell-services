@@ -96,6 +96,46 @@ final class Plugin {
 	private ?SEO $seo = null;
 
 	/**
+	 * Registered payment gateways.
+	 *
+	 * @var array
+	 * @since 1.1.0
+	 */
+	private array $payment_gateways = array();
+
+	/**
+	 * Registered wallet providers.
+	 *
+	 * @var array
+	 * @since 1.1.0
+	 */
+	private array $wallet_providers = array();
+
+	/**
+	 * Registered storage providers.
+	 *
+	 * @var array
+	 * @since 1.1.0
+	 */
+	private array $storage_providers = array();
+
+	/**
+	 * Registered email providers.
+	 *
+	 * @var array
+	 * @since 1.1.0
+	 */
+	private array $email_providers = array();
+
+	/**
+	 * Registered analytics widgets.
+	 *
+	 * @var array
+	 * @since 1.1.0
+	 */
+	private array $analytics_widgets = array();
+
+	/**
 	 * Shortcodes instance.
 	 *
 	 * @var Shortcodes|null
@@ -185,6 +225,7 @@ final class Plugin {
 		$this->define_vendor_dashboard_hooks();
 		$this->define_unified_dashboard_hooks();
 		$this->define_auto_vendor_hooks();
+		$this->define_provider_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -489,6 +530,94 @@ final class Plugin {
 	}
 
 	/**
+	 * Define provider hooks for Pro extension.
+	 *
+	 * These filters allow the Pro plugin to register additional providers
+	 * for payments, wallets, storage, email, and analytics.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private function define_provider_hooks(): void {
+		$this->loader->add_action(
+			'init',
+			function (): void {
+				$this->init_providers();
+			},
+			null,
+			20 // After wpss_loaded fires so Pro can register first.
+		);
+	}
+
+	/**
+	 * Initialize providers via filters.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private function init_providers(): void {
+		/**
+		 * Filter the registered payment gateways.
+		 *
+		 * Allows Pro or third-party plugins to register payment gateways
+		 * for standalone mode (without WooCommerce).
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $gateways Array of payment gateway instances.
+		 */
+		$this->payment_gateways = apply_filters( 'wpss_payment_gateways', $this->payment_gateways );
+
+		/**
+		 * Filter the registered wallet providers.
+		 *
+		 * Allows Pro or third-party plugins to register wallet integrations
+		 * for vendor payouts and balance management.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $providers Array of wallet provider instances.
+		 */
+		$this->wallet_providers = apply_filters( 'wpss_wallet_providers', $this->wallet_providers );
+
+		/**
+		 * Filter the registered storage providers.
+		 *
+		 * Allows Pro or third-party plugins to register cloud storage
+		 * for service deliveries (S3, GCS, etc.).
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $providers Array of storage provider instances.
+		 */
+		$this->storage_providers = apply_filters( 'wpss_storage_providers', $this->storage_providers );
+
+		/**
+		 * Filter the registered email providers.
+		 *
+		 * Allows Pro or third-party plugins to register email services
+		 * (SendGrid, Mailgun, SES, etc.).
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $providers Array of email provider instances.
+		 */
+		$this->email_providers = apply_filters( 'wpss_email_providers', $this->email_providers );
+
+		/**
+		 * Filter the registered analytics widgets.
+		 *
+		 * Allows Pro or third-party plugins to register analytics
+		 * dashboard widgets.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $widgets Array of analytics widget instances.
+		 */
+		$this->analytics_widgets = apply_filters( 'wpss_analytics_widgets', $this->analytics_widgets );
+	}
+
+	/**
 	 * Get the loader instance.
 	 *
 	 * @return Loader
@@ -567,6 +696,75 @@ final class Plugin {
 	 */
 	public function get_service_wizard(): ?ServiceWizard {
 		return $this->service_wizard;
+	}
+
+	/**
+	 * Get registered payment gateways.
+	 *
+	 * @since 1.1.0
+	 * @return array
+	 */
+	public function get_payment_gateways(): array {
+		return $this->payment_gateways;
+	}
+
+	/**
+	 * Get registered wallet providers.
+	 *
+	 * @since 1.1.0
+	 * @return array
+	 */
+	public function get_wallet_providers(): array {
+		return $this->wallet_providers;
+	}
+
+	/**
+	 * Get active wallet provider.
+	 *
+	 * Returns the wallet provider configured in settings, or null if none.
+	 *
+	 * @since 1.1.0
+	 * @return object|null
+	 */
+	public function get_active_wallet_provider(): ?object {
+		$active_id = get_option( 'wpss_wallet_provider', '' );
+
+		if ( empty( $active_id ) || ! isset( $this->wallet_providers[ $active_id ] ) ) {
+			// Return first available provider if configured one not found.
+			return ! empty( $this->wallet_providers ) ? reset( $this->wallet_providers ) : null;
+		}
+
+		return $this->wallet_providers[ $active_id ];
+	}
+
+	/**
+	 * Get registered storage providers.
+	 *
+	 * @since 1.1.0
+	 * @return array
+	 */
+	public function get_storage_providers(): array {
+		return $this->storage_providers;
+	}
+
+	/**
+	 * Get registered email providers.
+	 *
+	 * @since 1.1.0
+	 * @return array
+	 */
+	public function get_email_providers(): array {
+		return $this->email_providers;
+	}
+
+	/**
+	 * Get registered analytics widgets.
+	 *
+	 * @since 1.1.0
+	 * @return array
+	 */
+	public function get_analytics_widgets(): array {
+		return $this->analytics_widgets;
 	}
 
 	/**

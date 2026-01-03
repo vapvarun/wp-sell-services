@@ -20,12 +20,26 @@ use WPSellServices\Models\Notification;
 class NotificationRepository extends AbstractRepository {
 
 	/**
+	 * Allowed columns for ordering and filtering.
+	 *
+	 * @var array<string>
+	 */
+	protected array $allowed_columns = array(
+		'id',
+		'user_id',
+		'type',
+		'message',
+		'is_read',
+		'created_at',
+	);
+
+	/**
 	 * Get table name.
 	 *
 	 * @return string
 	 */
 	protected function get_table_name(): string {
-		return 'wpss_notifications';
+		return $this->schema->get_table_name( 'notifications' );
 	}
 
 	/**
@@ -43,10 +57,10 @@ class NotificationRepository extends AbstractRepository {
 	/**
 	 * Find notifications for a user.
 	 *
-	 * @param int    $user_id User ID.
-	 * @param bool   $unread_only Only unread notifications.
-	 * @param int    $limit   Limit.
-	 * @param int    $offset  Offset.
+	 * @param int  $user_id User ID.
+	 * @param bool $unread_only Only unread notifications.
+	 * @param int  $limit   Limit.
+	 * @param int  $offset  Offset.
 	 * @return Notification[]
 	 */
 	public function find_by_user( int $user_id, bool $unread_only = false, int $limit = 20, int $offset = 0 ): array {
@@ -67,7 +81,7 @@ class NotificationRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Notification::class, 'from_row' ], $results );
+		return array_map( array( Notification::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -93,7 +107,7 @@ class NotificationRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Notification::class, 'from_row' ], $results );
+		return array_map( array( Notification::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -103,10 +117,10 @@ class NotificationRepository extends AbstractRepository {
 	 * @return int|false Notification ID or false on failure.
 	 */
 	public function create( array $data ) {
-		$defaults = [
+		$defaults = array(
 			'is_read'    => 0,
 			'created_at' => current_time( 'mysql' ),
-		];
+		);
 
 		$data = wp_parse_args( $data, $defaults );
 
@@ -127,10 +141,10 @@ class NotificationRepository extends AbstractRepository {
 	public function mark_as_read( int $id ): bool {
 		return $this->update(
 			$id,
-			[
+			array(
 				'is_read' => 1,
 				'read_at' => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -145,16 +159,16 @@ class NotificationRepository extends AbstractRepository {
 
 		return (int) $wpdb->update(
 			$this->table,
-			[
+			array(
 				'is_read' => 1,
 				'read_at' => current_time( 'mysql' ),
-			],
-			[
+			),
+			array(
 				'user_id' => $user_id,
 				'is_read' => 0,
-			],
-			[ '%d', '%s' ],
-			[ '%d', '%d' ]
+			),
+			array( '%d', '%s' ),
+			array( '%d', '%d' )
 		);
 	}
 
@@ -193,7 +207,7 @@ class NotificationRepository extends AbstractRepository {
 			)
 		);
 
-		$counts = [];
+		$counts = array();
 		foreach ( $results as $row ) {
 			$counts[ $row->type ] = (int) $row->count;
 		}
@@ -231,8 +245,8 @@ class NotificationRepository extends AbstractRepository {
 
 		return (int) $wpdb->delete(
 			$this->table,
-			[ 'user_id' => $user_id ],
-			[ '%d' ]
+			array( 'user_id' => $user_id ),
+			array( '%d' )
 		);
 	}
 
@@ -244,7 +258,7 @@ class NotificationRepository extends AbstractRepository {
 	 * @param array  $data    Data to match.
 	 * @return bool
 	 */
-	public function exists( int $user_id, string $type, array $data = [] ): bool {
+	public function exists( int $user_id, string $type, array $data = array() ): bool {
 		global $wpdb;
 
 		$where = $wpdb->prepare(
@@ -288,12 +302,12 @@ class NotificationRepository extends AbstractRepository {
 			)
 		);
 
-		$grouped = [];
+		$grouped = array();
 		foreach ( $results as $row ) {
 			$date = gmdate( 'Y-m-d', strtotime( $row->created_at ) );
 
 			if ( ! isset( $grouped[ $date ] ) ) {
-				$grouped[ $date ] = [];
+				$grouped[ $date ] = array();
 			}
 
 			$grouped[ $date ][] = Notification::from_row( $row );

@@ -97,13 +97,13 @@ class ServicePackageRepository extends AbstractRepository {
 
 			// Insert new packages.
 			foreach ( $packages as $index => $package ) {
-				$features = $package['features'] ?? [];
+				$features = $package['features'] ?? array();
 				if ( is_array( $features ) ) {
 					$features = wp_json_encode( $features );
 				}
 
 				$this->insert(
-					[
+					array(
 						'service_id'    => $service_id,
 						'name'          => $package['name'] ?? '',
 						'description'   => $package['description'] ?? '',
@@ -112,7 +112,7 @@ class ServicePackageRepository extends AbstractRepository {
 						'revisions'     => (int) ( $package['revisions'] ?? 0 ),
 						'features'      => $features,
 						'sort_order'    => $index,
-					]
+					)
 				);
 			}
 
@@ -120,6 +120,8 @@ class ServicePackageRepository extends AbstractRepository {
 			return true;
 		} catch ( \Exception $e ) {
 			$this->rollback();
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional error logging.
+			error_log( 'WPSS ServicePackageRepository::save_packages() error: ' . $e->getMessage() );
 			return false;
 		}
 	}
@@ -133,8 +135,8 @@ class ServicePackageRepository extends AbstractRepository {
 	public function delete_by_service( int $service_id ): int {
 		$result = $this->wpdb->delete(
 			$this->table,
-			[ 'service_id' => $service_id ],
-			[ '%d' ]
+			array( 'service_id' => $service_id ),
+			array( '%d' )
 		);
 
 		return $result ?: 0;
@@ -148,7 +150,7 @@ class ServicePackageRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function update_order( int $package_id, int $sort_order ): bool {
-		return $this->update( $package_id, [ 'sort_order' => $sort_order ] );
+		return $this->update( $package_id, array( 'sort_order' => $sort_order ) );
 	}
 
 	/**

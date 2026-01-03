@@ -35,6 +35,44 @@ class ProposalService {
 	private string $table;
 
 	/**
+	 * Allowed columns for ORDER BY.
+	 *
+	 * @var array<string>
+	 */
+	private array $allowed_order_columns = array(
+		'id',
+		'request_id',
+		'vendor_id',
+		'price',
+		'delivery_days',
+		'status',
+		'created_at',
+		'updated_at',
+	);
+
+	/**
+	 * Validate ORDER BY column.
+	 *
+	 * @param string $column Column name.
+	 * @return string Validated column name.
+	 */
+	private function validate_orderby( string $column ): string {
+		$column = sanitize_key( $column );
+		return in_array( $column, $this->allowed_order_columns, true ) ? $column : 'created_at';
+	}
+
+	/**
+	 * Validate ORDER direction.
+	 *
+	 * @param string $order Order direction.
+	 * @return string Validated order direction.
+	 */
+	private function validate_order( string $order ): string {
+		$order = strtoupper( trim( $order ) );
+		return in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
+	}
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -455,6 +493,10 @@ class ProposalService {
 
 		$args = wp_parse_args( $args, $defaults );
 
+		// Validate ORDER BY and ORDER against whitelist.
+		$order_by = $this->validate_orderby( $args['order_by'] );
+		$order    = $this->validate_order( $args['order'] );
+
 		$where  = array( 'request_id = %d' );
 		$values = array( $request_id );
 
@@ -470,8 +512,8 @@ class ProposalService {
 		$sql = $wpdb->prepare(
 			"SELECT * FROM {$this->table}
 			WHERE {$where_clause}
-			ORDER BY {$args['order_by']} {$args['order']}
-			LIMIT %d OFFSET %d",
+			ORDER BY {$order_by} {$order}
+			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$values
 		);
 
@@ -500,6 +542,10 @@ class ProposalService {
 
 		$args = wp_parse_args( $args, $defaults );
 
+		// Validate ORDER BY and ORDER against whitelist.
+		$order_by = $this->validate_orderby( $args['order_by'] );
+		$order    = $this->validate_order( $args['order'] );
+
 		$where  = array( 'vendor_id = %d' );
 		$values = array( $vendor_id );
 
@@ -515,8 +561,8 @@ class ProposalService {
 		$sql = $wpdb->prepare(
 			"SELECT * FROM {$this->table}
 			WHERE {$where_clause}
-			ORDER BY {$args['order_by']} {$args['order']}
-			LIMIT %d OFFSET %d",
+			ORDER BY {$order_by} {$order}
+			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$values
 		);
 

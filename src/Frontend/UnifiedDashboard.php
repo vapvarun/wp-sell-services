@@ -152,14 +152,22 @@ class UnifiedDashboard {
 	 * @return bool True if accessible.
 	 */
 	private function can_access_section( string $section ): bool {
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'create' );
+		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'create' );
 		$user_id              = get_current_user_id();
 
 		if ( in_array( $section, $vendor_only_sections, true ) ) {
 			return $this->vendor_service->is_vendor( $user_id );
 		}
 
-		return true;
+		/**
+		 * Filter whether user can access a dashboard section.
+		 *
+		 * @since 1.1.0
+		 * @param bool   $can_access Whether user can access section.
+		 * @param string $section    Section slug.
+		 * @param int    $user_id    Current user ID.
+		 */
+		return apply_filters( 'wpss_can_access_dashboard_section', true, $section, $user_id );
 	}
 
 	/**
@@ -343,11 +351,21 @@ class UnifiedDashboard {
 			'services'       => __( 'My Services', 'wp-sell-services' ),
 			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),
 			'earnings'       => __( 'Earnings', 'wp-sell-services' ),
+			'wallet'         => __( 'Wallet & Earnings', 'wp-sell-services' ),
+			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
 			'messages'       => __( 'Messages', 'wp-sell-services' ),
 			'profile'        => __( 'Profile', 'wp-sell-services' ),
 			'create'         => __( 'Create Service', 'wp-sell-services' ),
 			'create-request' => __( 'Post a Request', 'wp-sell-services' ),
 		);
+
+		/**
+		 * Filter dashboard section titles.
+		 *
+		 * @since 1.1.0
+		 * @param array $titles Section titles keyed by slug.
+		 */
+		$titles = apply_filters( 'wpss_dashboard_section_titles', $titles );
 
 		return array(
 			'title' => $titles[ $section ] ?? __( 'Dashboard', 'wp-sell-services' ),
@@ -378,6 +396,17 @@ class UnifiedDashboard {
 	 */
 	private function render_section( string $section ): void {
 		$template_path = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$section}.php";
+
+		/**
+		 * Filter the template path for a dashboard section.
+		 *
+		 * Allows pro or third-party plugins to provide custom templates for sections.
+		 *
+		 * @since 1.1.0
+		 * @param string $template_path Full path to section template.
+		 * @param string $section       Section slug.
+		 */
+		$template_path = apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
 
 		if ( file_exists( $template_path ) ) {
 			$user_id        = get_current_user_id();
@@ -424,6 +453,7 @@ class UnifiedDashboard {
 			'chat'         => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>',
 			'user'         => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
 			'folder'       => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+			'chart-bar'    => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>',
 		);
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG is hardcoded and safe.

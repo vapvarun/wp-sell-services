@@ -20,12 +20,30 @@ use WPSellServices\Models\Dispute;
 class DisputeRepository extends AbstractRepository {
 
 	/**
+	 * Allowed columns for ordering and filtering.
+	 *
+	 * @var array<string>
+	 */
+	protected array $allowed_columns = array(
+		'id',
+		'order_id',
+		'opened_by',
+		'reason',
+		'status',
+		'resolved_by',
+		'resolution',
+		'created_at',
+		'updated_at',
+		'resolved_at',
+	);
+
+	/**
 	 * Get table name.
 	 *
 	 * @return string
 	 */
 	protected function get_table_name(): string {
-		return 'wpss_disputes';
+		return $this->schema->get_table_name( 'disputes' );
 	}
 
 	/**
@@ -56,7 +74,7 @@ class DisputeRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Dispute::class, 'from_row' ], $results );
+		return array_map( array( Dispute::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -90,7 +108,7 @@ class DisputeRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Dispute::class, 'from_row' ], $results );
+		return array_map( array( Dispute::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -113,7 +131,7 @@ class DisputeRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Dispute::class, 'from_row' ], $results );
+		return array_map( array( Dispute::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -132,7 +150,7 @@ class DisputeRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Dispute::class, 'from_row' ], $results );
+		return array_map( array( Dispute::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -156,7 +174,7 @@ class DisputeRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ Dispute::class, 'from_row' ], $results );
+		return array_map( array( Dispute::class, 'from_row' ), $results );
 	}
 
 	/**
@@ -166,11 +184,11 @@ class DisputeRepository extends AbstractRepository {
 	 * @return int|false Dispute ID or false on failure.
 	 */
 	public function create( array $data ) {
-		$defaults = [
+		$defaults = array(
 			'status'     => 'open',
 			'created_at' => current_time( 'mysql' ),
 			'updated_at' => current_time( 'mysql' ),
-		];
+		);
 
 		$data = wp_parse_args( $data, $defaults );
 
@@ -187,10 +205,10 @@ class DisputeRepository extends AbstractRepository {
 	public function update_status( int $id, string $status ): bool {
 		return $this->update(
 			$id,
-			[
+			array(
 				'status'     => $status,
 				'updated_at' => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -204,10 +222,10 @@ class DisputeRepository extends AbstractRepository {
 	public function assign_to_admin( int $id, int $admin_id ): bool {
 		return $this->update(
 			$id,
-			[
+			array(
 				'assigned_admin' => $admin_id,
 				'updated_at'     => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -220,10 +238,10 @@ class DisputeRepository extends AbstractRepository {
 	public function record_response( int $id ): bool {
 		return $this->update(
 			$id,
-			[
+			array(
 				'last_response_at' => current_time( 'mysql' ),
 				'updated_at'       => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -238,12 +256,12 @@ class DisputeRepository extends AbstractRepository {
 	public function resolve( int $id, string $resolution, string $notes = '' ): bool {
 		return $this->update(
 			$id,
-			[
+			array(
 				'status'           => $resolution,
 				'resolution_notes' => $notes,
 				'resolved_at'      => current_time( 'mysql' ),
 				'updated_at'       => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -259,7 +277,7 @@ class DisputeRepository extends AbstractRepository {
 			"SELECT status, COUNT(*) as count FROM {$this->table} GROUP BY status"
 		);
 
-		$counts = [];
+		$counts = array();
 		foreach ( $results as $row ) {
 			$counts[ $row->status ] = (int) $row->count;
 		}

@@ -1444,6 +1444,7 @@ class VendorDashboard {
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$data = array(
@@ -1463,10 +1464,10 @@ class VendorDashboard {
 
 		$result = $this->vendor_service->update_profile( $user_id, $data );
 
-		if ( $result['success'] ) {
-			wp_send_json_success( $result );
+		if ( $result ) {
+			wp_send_json_success( array( 'message' => __( 'Profile updated successfully.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( $result );
+			wp_send_json_error( array( 'message' => __( 'Failed to update profile.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -1482,6 +1483,7 @@ class VendorDashboard {
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$amount  = floatval( $_POST['amount'] ?? 0 );
@@ -1509,6 +1511,7 @@ class VendorDashboard {
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$data = array(
@@ -1588,6 +1591,7 @@ class VendorDashboard {
 
 		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$order = array_map( 'absint', $_POST['order'] ?? array() );
@@ -1615,6 +1619,7 @@ class VendorDashboard {
 
 		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$new_status = 'publish' === $status ? 'draft' : 'publish';
@@ -1628,6 +1633,7 @@ class VendorDashboard {
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		wp_send_json_success(
@@ -1648,12 +1654,14 @@ class VendorDashboard {
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to register as a vendor.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$user_id = get_current_user_id();
 
 		if ( $this->vendor_service->is_vendor( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You are already registered as a vendor.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$data = array(
@@ -1666,6 +1674,7 @@ class VendorDashboard {
 
 		if ( ! $data['terms_agreed'] ) {
 			wp_send_json_error( array( 'message' => __( 'You must agree to the terms and conditions.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
 		}
 
 		$result = $this->vendor_service->register_vendor( $user_id, $data );

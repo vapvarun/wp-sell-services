@@ -48,6 +48,15 @@ class Settings {
 	 * @return void
 	 */
 	public function init(): void {
+		/**
+		 * Filter the settings tabs.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $tabs Settings tabs (slug => label).
+		 */
+		$this->tabs = apply_filters( 'wpss_settings_tabs', $this->tabs );
+
 		$this->register_settings();
 		add_action( 'wp_ajax_wpss_create_page', array( $this, 'ajax_create_page' ) );
 	}

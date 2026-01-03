@@ -20,6 +20,22 @@ defined( 'ABSPATH' ) || exit;
 class ConversationRepository extends AbstractRepository {
 
 	/**
+	 * Allowed columns for ordering and filtering.
+	 *
+	 * @var array<string>
+	 */
+	protected array $allowed_columns = array(
+		'id',
+		'order_id',
+		'sender_id',
+		'recipient_id',
+		'message_type',
+		'is_read',
+		'created_at',
+		'read_at',
+	);
+
+	/**
 	 * Get the table name.
 	 *
 	 * @return string Table name.
@@ -35,26 +51,30 @@ class ConversationRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args     Query arguments.
 	 * @return array<object> Array of messages.
 	 */
-	public function get_by_order( int $order_id, array $args = [] ): array {
-		$defaults = [
+	public function get_by_order( int $order_id, array $args = array() ): array {
+		$defaults = array(
 			'orderby' => 'created_at',
 			'order'   => 'ASC',
 			'limit'   => 100,
 			'offset'  => 0,
 			'since'   => '',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
+
 		$sql    = "SELECT * FROM {$this->table} WHERE order_id = %d";
-		$params = [ $order_id ];
+		$params = array( $order_id );
 
 		if ( ! empty( $args['since'] ) ) {
 			$sql     .= ' AND created_at > %s';
 			$params[] = $args['since'];
 		}
 
-		$sql .= " ORDER BY {$args['orderby']} {$args['order']}";
+		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $args['limit'] > 0 ) {
 			$sql     .= ' LIMIT %d OFFSET %d';
@@ -77,7 +97,7 @@ class ConversationRepository extends AbstractRepository {
 	 */
 	public function get_new_messages( int $order_id, string $since, int $exclude_sender = 0 ): array {
 		$sql    = "SELECT * FROM {$this->table} WHERE order_id = %d AND created_at > %s";
-		$params = [ $order_id, $since ];
+		$params = array( $order_id, $since );
 
 		if ( $exclude_sender > 0 ) {
 			$sql     .= ' AND sender_id != %d';
@@ -176,10 +196,10 @@ class ConversationRepository extends AbstractRepository {
 	public function mark_single_as_read( int $message_id ): bool {
 		return $this->update(
 			$message_id,
-			[
+			array(
 				'is_read' => 1,
 				'read_at' => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -231,8 +251,8 @@ class ConversationRepository extends AbstractRepository {
 	public function delete_by_order( int $order_id ): int {
 		$result = $this->wpdb->delete(
 			$this->table,
-			[ 'order_id' => $order_id ],
-			[ '%d' ]
+			array( 'order_id' => $order_id ),
+			array( '%d' )
 		);
 
 		return $result ?: 0;

@@ -20,6 +20,25 @@ defined( 'ABSPATH' ) || exit;
 class ReviewRepository extends AbstractRepository {
 
 	/**
+	 * Allowed columns for ordering and filtering.
+	 *
+	 * @var array<string>
+	 */
+	protected array $allowed_columns = array(
+		'id',
+		'order_id',
+		'service_id',
+		'reviewer_id',
+		'vendor_id',
+		'rating',
+		'status',
+		'review_type',
+		'helpful_count',
+		'created_at',
+		'updated_at',
+	);
+
+	/**
 	 * Get the table name.
 	 *
 	 * @return string Table name.
@@ -35,23 +54,27 @@ class ReviewRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args       Query arguments.
 	 * @return array<object> Array of reviews.
 	 */
-	public function get_by_service( int $service_id, array $args = [] ): array {
-		$defaults = [
+	public function get_by_service( int $service_id, array $args = array() ): array {
+		$defaults = array(
 			'status'  => 'approved',
 			'orderby' => 'created_at',
 			'order'   => 'DESC',
 			'limit'   => 10,
 			'offset'  => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
+
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
 				WHERE service_id = %d AND status = %s
-				ORDER BY {$args['orderby']} {$args['order']}
-				LIMIT %d OFFSET %d",
+				ORDER BY {$orderby} {$order}
+				LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$service_id,
 				$args['status'],
 				$args['limit'],
@@ -67,23 +90,27 @@ class ReviewRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args      Query arguments.
 	 * @return array<object> Array of reviews.
 	 */
-	public function get_by_vendor( int $vendor_id, array $args = [] ): array {
-		$defaults = [
+	public function get_by_vendor( int $vendor_id, array $args = array() ): array {
+		$defaults = array(
 			'status'  => 'approved',
 			'orderby' => 'created_at',
 			'order'   => 'DESC',
 			'limit'   => 10,
 			'offset'  => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
+
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
 				WHERE vendor_id = %d AND status = %s AND review_type = 'customer_to_vendor'
-				ORDER BY {$args['orderby']} {$args['order']}
-				LIMIT %d OFFSET %d",
+				ORDER BY {$orderby} {$order}
+				LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$vendor_id,
 				$args['status'],
 				$args['limit'],
@@ -167,19 +194,19 @@ class ReviewRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		$rating_breakdown = [];
+		$rating_breakdown = array();
 		foreach ( $breakdown as $row ) {
 			$rating_breakdown[ (int) $row['rating'] ] = (int) $row['count'];
 		}
 
-		return [
+		return array(
 			'total_reviews'     => (int) ( $summary['total_reviews'] ?? 0 ),
 			'average_rating'    => round( (float) ( $summary['average_rating'] ?? 0 ), 1 ),
 			'avg_communication' => round( (float) ( $summary['avg_communication'] ?? 0 ), 1 ),
 			'avg_quality'       => round( (float) ( $summary['avg_quality'] ?? 0 ), 1 ),
 			'avg_delivery'      => round( (float) ( $summary['avg_delivery'] ?? 0 ), 1 ),
 			'breakdown'         => $rating_breakdown,
-		];
+		);
 	}
 
 	/**
@@ -204,13 +231,13 @@ class ReviewRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		return [
+		return array(
 			'total_reviews'     => (int) ( $summary['total_reviews'] ?? 0 ),
 			'average_rating'    => round( (float) ( $summary['average_rating'] ?? 0 ), 1 ),
 			'avg_communication' => round( (float) ( $summary['avg_communication'] ?? 0 ), 1 ),
 			'avg_quality'       => round( (float) ( $summary['avg_quality'] ?? 0 ), 1 ),
 			'avg_delivery'      => round( (float) ( $summary['avg_delivery'] ?? 0 ), 1 ),
-		];
+		);
 	}
 
 	/**
@@ -223,10 +250,10 @@ class ReviewRepository extends AbstractRepository {
 	public function add_vendor_reply( int $review_id, string $reply ): bool {
 		return $this->update(
 			$review_id,
-			[
+			array(
 				'vendor_reply'    => $reply,
 				'vendor_reply_at' => current_time( 'mysql' ),
-			]
+			)
 		);
 	}
 
@@ -236,11 +263,11 @@ class ReviewRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of reviews.
 	 */
-	public function get_pending_moderation( array $args = [] ): array {
-		$defaults = [
+	public function get_pending_moderation( array $args = array() ): array {
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
@@ -264,7 +291,7 @@ class ReviewRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function update_status( int $review_id, string $status ): bool {
-		return $this->update( $review_id, [ 'status' => $status ] );
+		return $this->update( $review_id, array( 'status' => $status ) );
 	}
 
 	/**

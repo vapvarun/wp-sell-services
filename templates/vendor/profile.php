@@ -15,6 +15,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Services\VendorService;
+
 // Get vendor ID from global (set by TemplateLoader) or query var.
 if ( empty( $vendor_id ) ) {
 	global $wpss_vendor_id;
@@ -27,26 +29,32 @@ if ( ! $vendor_id ) {
 
 $vendor = get_userdata( $vendor_id );
 
-if ( ! $vendor || ! get_user_meta( $vendor_id, '_wpss_is_vendor', true ) ) {
+// Use VendorService to check vendor status and get profile from database.
+$vendor_service = new VendorService();
+
+if ( ! $vendor || ! $vendor_service->is_vendor( $vendor_id ) ) {
 	echo '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</div>';
 	return;
 }
 
-// Get vendor data.
-$tagline       = get_user_meta( $vendor_id, '_wpss_vendor_tagline', true );
-$bio           = get_user_meta( $vendor_id, '_wpss_vendor_bio', true );
-$skills        = get_user_meta( $vendor_id, '_wpss_vendor_skills', true ) ?: [];
-$languages     = get_user_meta( $vendor_id, '_wpss_vendor_languages', true ) ?: [];
-$response_time = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
-$country       = get_user_meta( $vendor_id, '_wpss_vendor_country', true );
-$member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
-$is_verified   = get_user_meta( $vendor_id, '_wpss_vendor_verified', true );
-$social_links  = get_user_meta( $vendor_id, '_wpss_vendor_social', true ) ?: [];
+// Get vendor profile from database (not user meta).
+$profile = $vendor_service->get_profile( $vendor_id );
 
-// Stats.
-$rating_avg     = (float) get_user_meta( $vendor_id, '_wpss_rating_average', true );
-$rating_count   = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true );
-$completed_orders = (int) get_user_meta( $vendor_id, '_wpss_completed_orders', true );
+// Get vendor data from profile object (database) with fallbacks.
+$tagline       = $profile->tagline ?? '';
+$bio           = $profile->bio ?? '';
+$skills        = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : [];
+$languages     = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : [];
+$response_time = $vendor_service->get_response_time( $vendor_id );
+$country       = $profile->country ?? '';
+$member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
+$is_verified   = ( $profile->verification_tier ?? '' ) !== VendorService::TIER_BASIC;
+$social_links  = ! empty( $profile->social_links ) ? json_decode( $profile->social_links, true ) : [];
+
+// Stats from profile (cached in database).
+$rating_avg       = (float) ( $profile->rating_avg ?? 0 );
+$rating_count     = (int) ( $profile->rating_count ?? 0 );
+$completed_orders = (int) ( $profile->completed_orders ?? 0 );
 
 // Get services.
 $services = get_posts(
@@ -86,7 +94,8 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 		<div class="wpss-profile-header">
 			<div class="wpss-profile-cover">
 				<?php
-				$cover_image = get_user_meta( $vendor_id, '_wpss_vendor_cover', true );
+				// Get cover image from profile database record.
+				$cover_image = $profile->cover_image_id ?? 0;
 				if ( $cover_image ) :
 					?>
 					<img src="<?php echo esc_url( wp_get_attachment_url( $cover_image ) ); ?>" alt="">

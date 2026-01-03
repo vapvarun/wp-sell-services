@@ -20,6 +20,28 @@ defined( 'ABSPATH' ) || exit;
 class VendorProfileRepository extends AbstractRepository {
 
 	/**
+	 * Allowed columns for ordering and filtering.
+	 *
+	 * @var array<string>
+	 */
+	protected array $allowed_columns = array(
+		'id',
+		'user_id',
+		'display_name',
+		'avg_rating',
+		'total_reviews',
+		'total_orders',
+		'completed_orders',
+		'total_earnings',
+		'on_time_delivery_rate',
+		'verification_tier',
+		'is_available',
+		'country',
+		'created_at',
+		'updated_at',
+	);
+
+	/**
 	 * Get the table name.
 	 *
 	 * @return string Table name.
@@ -63,22 +85,26 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of vendor profiles.
 	 */
-	public function get_verified( array $args = [] ): array {
-		$defaults = [
+	public function get_verified( array $args = array() ): array {
+		$defaults = array(
 			'tier'    => 'verified',
 			'orderby' => 'avg_rating',
 			'order'   => 'DESC',
 			'limit'   => 20,
 			'offset'  => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
+
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
 
 		$sql = $this->wpdb->prepare(
 			"SELECT * FROM {$this->table}
 			WHERE verification_tier = %s AND is_available = 1 AND vacation_mode = 0
-			ORDER BY {$args['orderby']} {$args['order']}
-			LIMIT %d OFFSET %d",
+			ORDER BY {$orderby} {$order}
+			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$args['tier'],
 			$args['limit'],
 			$args['offset']
@@ -112,22 +138,26 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args    Query arguments.
 	 * @return array<object> Array of vendor profiles.
 	 */
-	public function get_by_country( string $country, array $args = [] ): array {
-		$defaults = [
+	public function get_by_country( string $country, array $args = array() ): array {
+		$defaults = array(
 			'orderby' => 'avg_rating',
 			'order'   => 'DESC',
 			'limit'   => 20,
 			'offset'  => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
+
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
 				WHERE country = %s AND is_available = 1
-				ORDER BY {$args['orderby']} {$args['order']}
-				LIMIT %d OFFSET %d",
+				ORDER BY {$orderby} {$order}
+				LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$country,
 				$args['limit'],
 				$args['offset']
@@ -192,14 +222,14 @@ class VendorProfileRepository extends AbstractRepository {
 
 		return $this->upsert(
 			$user_id,
-			[
+			array(
 				'total_orders'          => (int) ( $order_stats['total_orders'] ?? 0 ),
 				'completed_orders'      => (int) ( $order_stats['completed_orders'] ?? 0 ),
 				'total_earnings'        => (float) ( $order_stats['total_earnings'] ?? 0 ),
 				'avg_rating'            => round( (float) ( $review_stats['avg_rating'] ?? 0 ), 2 ),
 				'total_reviews'         => (int) ( $review_stats['total_reviews'] ?? 0 ),
 				'on_time_delivery_rate' => round( $on_time_rate, 2 ),
-			]
+			)
 		) !== false;
 	}
 
@@ -214,10 +244,10 @@ class VendorProfileRepository extends AbstractRepository {
 	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '' ): bool {
 		return $this->upsert(
 			$user_id,
-			[
+			array(
 				'vacation_mode'    => $enabled ? 1 : 0,
 				'vacation_message' => $message,
-			]
+			)
 		) !== false;
 	}
 
@@ -231,7 +261,7 @@ class VendorProfileRepository extends AbstractRepository {
 	public function set_availability( int $user_id, bool $available ): bool {
 		return $this->upsert(
 			$user_id,
-			[ 'is_available' => $available ? 1 : 0 ]
+			array( 'is_available' => $available ? 1 : 0 )
 		) !== false;
 	}
 
@@ -243,7 +273,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function update_verification_tier( int $user_id, string $tier ): bool {
-		$data = [ 'verification_tier' => $tier ];
+		$data = array( 'verification_tier' => $tier );
 
 		if ( 'basic' !== $tier ) {
 			$data['verified_at'] = current_time( 'mysql' );
@@ -259,11 +289,11 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args   Query arguments.
 	 * @return array<object> Array of vendor profiles.
 	 */
-	public function search( string $search, array $args = [] ): array {
-		$defaults = [
+	public function search( string $search, array $args = array() ): array {
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
-		];
+		);
 
 		$args        = wp_parse_args( $args, $defaults );
 		$search_like = '%' . $this->wpdb->esc_like( $search ) . '%';
@@ -290,11 +320,11 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of vendor profiles.
 	 */
-	public function get_pending_verification( array $args = [] ): array {
-		$defaults = [
+	public function get_pending_verification( array $args = array() ): array {
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
@@ -323,7 +353,7 @@ class VendorProfileRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		$counts = [];
+		$counts = array();
 		foreach ( $results as $row ) {
 			$counts[ $row['verification_tier'] ] = (int) $row['count'];
 		}
@@ -343,6 +373,6 @@ class VendorProfileRepository extends AbstractRepository {
 			ORDER BY country ASC"
 		);
 
-		return $results ?: [];
+		return $results ?: array();
 	}
 }

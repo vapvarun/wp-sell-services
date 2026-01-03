@@ -20,6 +20,26 @@ defined( 'ABSPATH' ) || exit;
 class OrderRepository extends AbstractRepository {
 
 	/**
+	 * Allowed columns for ordering and filtering.
+	 *
+	 * @var array<string>
+	 */
+	protected array $allowed_columns = array(
+		'id',
+		'order_number',
+		'service_id',
+		'package_id',
+		'customer_id',
+		'vendor_id',
+		'status',
+		'total',
+		'created_at',
+		'updated_at',
+		'due_date',
+		'completed_at',
+	);
+
+	/**
 	 * Get the table name.
 	 *
 	 * @return string Table name.
@@ -62,26 +82,30 @@ class OrderRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args        Query arguments.
 	 * @return array<object> Array of orders.
 	 */
-	public function get_by_customer( int $customer_id, array $args = [] ): array {
-		$defaults = [
-			'status'   => '',
-			'orderby'  => 'created_at',
-			'order'    => 'DESC',
-			'limit'    => 20,
-			'offset'   => 0,
-		];
+	public function get_by_customer( int $customer_id, array $args = array() ): array {
+		$defaults = array(
+			'status'  => '',
+			'orderby' => 'created_at',
+			'order'   => 'DESC',
+			'limit'   => 20,
+			'offset'  => 0,
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
+
 		$sql    = "SELECT * FROM {$this->table} WHERE customer_id = %d";
-		$params = [ $customer_id ];
+		$params = array( $customer_id );
 
 		if ( ! empty( $args['status'] ) ) {
 			$sql     .= ' AND status = %s';
 			$params[] = $args['status'];
 		}
 
-		$sql .= " ORDER BY {$args['orderby']} {$args['order']}";
+		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $args['limit'] > 0 ) {
 			$sql     .= ' LIMIT %d OFFSET %d';
@@ -101,26 +125,30 @@ class OrderRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args      Query arguments.
 	 * @return array<object> Array of orders.
 	 */
-	public function get_by_vendor( int $vendor_id, array $args = [] ): array {
-		$defaults = [
-			'status'   => '',
-			'orderby'  => 'created_at',
-			'order'    => 'DESC',
-			'limit'    => 20,
-			'offset'   => 0,
-		];
+	public function get_by_vendor( int $vendor_id, array $args = array() ): array {
+		$defaults = array(
+			'status'  => '',
+			'orderby' => 'created_at',
+			'order'   => 'DESC',
+			'limit'   => 20,
+			'offset'  => 0,
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
+
 		$sql    = "SELECT * FROM {$this->table} WHERE vendor_id = %d";
-		$params = [ $vendor_id ];
+		$params = array( $vendor_id );
 
 		if ( ! empty( $args['status'] ) ) {
 			$sql     .= ' AND status = %s';
 			$params[] = $args['status'];
 		}
 
-		$sql .= " ORDER BY {$args['orderby']} {$args['order']}";
+		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $args['limit'] > 0 ) {
 			$sql     .= ' LIMIT %d OFFSET %d';
@@ -150,18 +178,22 @@ class OrderRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args   Query arguments.
 	 * @return array<object> Array of orders.
 	 */
-	public function get_by_status( string $status, array $args = [] ): array {
-		$defaults = [
+	public function get_by_status( string $status, array $args = array() ): array {
+		$defaults = array(
 			'orderby' => 'created_at',
 			'order'   => 'DESC',
 			'limit'   => 20,
 			'offset'  => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
+		// Validate ORDER BY and ORDER against whitelist.
+		$orderby = $this->validate_orderby( $args['orderby'] );
+		$order   = $this->validate_order( $args['order'] );
+
 		$sql = $this->wpdb->prepare(
-			"SELECT * FROM {$this->table} WHERE status = %s ORDER BY {$args['orderby']} {$args['order']} LIMIT %d OFFSET %d",
+			"SELECT * FROM {$this->table} WHERE status = %s ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$status,
 			$args['limit'],
 			$args['offset']
@@ -215,7 +247,7 @@ class OrderRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function update_status( int $order_id, string $new_status ): bool {
-		$data = [ 'status' => $new_status ];
+		$data = array( 'status' => $new_status );
 
 		// Add timestamps based on status.
 		switch ( $new_status ) {
@@ -252,13 +284,13 @@ class OrderRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		return $stats ?: [
+		return $stats ?: array(
 			'total_orders'         => 0,
 			'completed_orders'     => 0,
 			'active_orders'        => 0,
 			'total_earnings'       => 0,
 			'avg_completion_hours' => 0,
-		];
+		);
 	}
 
 	/**
@@ -282,12 +314,12 @@ class OrderRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		return $stats ?: [
+		return $stats ?: array(
 			'total_orders'     => 0,
 			'completed_orders' => 0,
 			'active_orders'    => 0,
 			'total_spent'      => 0,
-		];
+		);
 	}
 
 	/**
@@ -297,11 +329,11 @@ class OrderRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args   Query arguments.
 	 * @return array<object> Array of orders.
 	 */
-	public function search( string $search, array $args = [] ): array {
-		$defaults = [
+	public function search( string $search, array $args = array() ): array {
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
-		];
+		);
 
 		$args        = wp_parse_args( $args, $defaults );
 		$search_like = '%' . $this->wpdb->esc_like( $search ) . '%';
@@ -349,7 +381,7 @@ class OrderRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		$counts = [];
+		$counts = array();
 		foreach ( $results as $row ) {
 			$counts[ $row['status'] ] = (int) $row['count'];
 		}

@@ -879,3 +879,64 @@ function wpss_get_page_url( string $page_key ): string {
 function wpss_get_order_status_labels(): array {
 	return wpss_get_order_statuses();
 }
+
+/**
+ * Get wallet manager instance.
+ *
+ * Returns the WalletManager from WP Sell Services Pro if available.
+ * Provides access to wallet balance, credit, debit operations.
+ *
+ * @since 1.1.0
+ *
+ * @return object|null WalletManager instance or null if Pro not active.
+ */
+function wpss_get_wallet_manager(): ?object {
+	/**
+	 * Filter the wallet manager instance.
+	 *
+	 * Pro plugin uses this to provide the WalletManager.
+	 *
+	 * @since 1.1.0
+	 * @param object|null $wallet_manager WalletManager instance.
+	 */
+	return apply_filters( 'wpss_wallet_manager', null );
+}
+
+/**
+ * Get wallet balance for a user.
+ *
+ * @since 1.1.0
+ *
+ * @param int|null $user_id User ID. Defaults to current user.
+ * @return float Wallet balance or 0 if wallet not available.
+ */
+function wpss_get_wallet_balance( ?int $user_id = null ): float {
+	if ( null === $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	if ( ! $user_id ) {
+		return 0.0;
+	}
+
+	$wallet = wpss_get_wallet_manager();
+
+	if ( ! $wallet || ! method_exists( $wallet, 'get_balance' ) ) {
+		return 0.0;
+	}
+
+	return (float) $wallet->get_balance( $user_id );
+}
+
+/**
+ * Check if wallet feature is available.
+ *
+ * @since 1.1.0
+ *
+ * @return bool True if wallet is available (Pro active with wallet enabled).
+ */
+function wpss_has_wallet(): bool {
+	$wallet = wpss_get_wallet_manager();
+
+	return null !== $wallet && method_exists( $wallet, 'get_balance' );
+}
