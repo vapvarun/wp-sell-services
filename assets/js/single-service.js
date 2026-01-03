@@ -599,12 +599,15 @@
 
         /**
          * Initialize sticky packages sidebar.
+         *
+         * JS-based sticky because CSS position:sticky is broken when a parent
+         * element has overflow:hidden (common in themes like BuddyX).
          */
         initStickyPackages: function() {
-            const $packages = $(this.config.packages);
             const $sidebar = $('.wpss-service-sidebar');
+            const $main = $('.wpss-service-main');
 
-            if (!$packages.length || !$sidebar.length) {
+            if (!$sidebar.length || !$main.length) {
                 return;
             }
 
@@ -613,30 +616,51 @@
                 return;
             }
 
+            // Store original width before making fixed (grid column width).
+            const sidebarWidth = $sidebar.outerWidth();
+            const sidebarLeft = $sidebar.offset().left;
             const sidebarTop = $sidebar.offset().top;
-            const headerHeight = 80; // Adjust based on site header.
+            const headerHeight = document.body.classList.contains('admin-bar') ? 32 + 48 : 48;
 
-            $(window).on('scroll', function() {
+            $(window).on('scroll.wpssSticky resize.wpssSticky', function() {
+                // Disable on mobile.
+                if (window.innerWidth < 992) {
+                    $sidebar.css({
+                        position: '',
+                        top: '',
+                        left: '',
+                        width: ''
+                    });
+                    return;
+                }
+
                 const scrollTop = $(window).scrollTop();
-                const mainBottom = $('.wpss-service-main').offset().top + $('.wpss-service-main').outerHeight();
+                const mainBottom = $main.offset().top + $main.outerHeight();
+                const sidebarHeight = $sidebar.outerHeight();
 
-                if (scrollTop + headerHeight > sidebarTop && scrollTop + headerHeight + $sidebar.outerHeight() < mainBottom) {
+                if (scrollTop + headerHeight > sidebarTop && scrollTop + headerHeight + sidebarHeight < mainBottom) {
+                    // Fixed in viewport.
                     $sidebar.css({
                         position: 'fixed',
                         top: headerHeight + 'px',
-                        width: $sidebar.parent().width() + 'px'
+                        left: sidebarLeft + 'px',
+                        width: sidebarWidth + 'px'
                     });
-                } else if (scrollTop + headerHeight + $sidebar.outerHeight() >= mainBottom) {
+                } else if (scrollTop + headerHeight + sidebarHeight >= mainBottom) {
+                    // Stick at bottom of main content.
                     $sidebar.css({
                         position: 'absolute',
-                        top: (mainBottom - $sidebar.outerHeight() - sidebarTop) + 'px',
-                        width: $sidebar.parent().width() + 'px'
+                        top: (mainBottom - sidebarHeight - sidebarTop + $sidebar.parent().offset().top) + 'px',
+                        left: '',
+                        width: sidebarWidth + 'px'
                     });
                 } else {
+                    // Default position.
                     $sidebar.css({
-                        position: 'relative',
-                        top: 'auto',
-                        width: '100%'
+                        position: '',
+                        top: '',
+                        left: '',
+                        width: ''
                     });
                 }
             });
