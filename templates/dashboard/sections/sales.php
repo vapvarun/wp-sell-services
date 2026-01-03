@@ -20,9 +20,9 @@ $order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
 
 if ( $order_id ) {
 	// Verify user has access to this order (buyer or vendor).
-	$order = wpss_get_order( $order_id );
+	$current_order = wpss_get_order( $order_id );
 
-	if ( $order && ( (int) $order->customer_id === $user_id || (int) $order->vendor_id === $user_id ) ) {
+	if ( $current_order && ( (int) $current_order->customer_id === $user_id || (int) $current_order->vendor_id === $user_id ) ) {
 		include WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
 		return;
 	}
@@ -72,11 +72,11 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		</div>
 	<?php else : ?>
 		<div class="wpss-orders-list">
-			<?php foreach ( $orders as $order ) : ?>
+			<?php foreach ( $orders as $order_item ) : ?>
 				<?php
-				$service       = get_post( $order->service_id );
-				$customer      = get_userdata( $order->customer_id );
-				$status_class  = 'wpss-status--' . sanitize_html_class( $order->status );
+				$service       = get_post( $order_item->service_id );
+				$customer      = get_userdata( $order_item->customer_id );
+				$status_class  = 'wpss-status--' . sanitize_html_class( $order_item->status );
 				$status_labels = wpss_get_order_status_labels();
 				?>
 				<div class="wpss-order-card">
@@ -99,15 +99,15 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 								);
 								?>
 								<span class="wpss-order-card__sep">&bull;</span>
-								<?php echo esc_html( wpss_format_price( $order->total ) ); ?>
+								<?php echo esc_html( wpss_format_price( $order_item->total ) ); ?>
 							</p>
 						</div>
 					</div>
 					<div class="wpss-order-card__actions">
 						<span class="wpss-status <?php echo esc_attr( $status_class ); ?>">
-							<?php echo esc_html( $status_labels[ $order->status ] ?? $order->status ); ?>
+							<?php echo esc_html( $status_labels[ $order_item->status ] ?? $order_item->status ); ?>
 						</span>
-						<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+						<a href="<?php echo esc_url( wpss_get_order_url( $order_item->id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 							<?php esc_html_e( 'Manage', 'wp-sell-services' ); ?>
 						</a>
 					</div>

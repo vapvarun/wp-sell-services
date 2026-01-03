@@ -21,7 +21,7 @@ $service_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
 // Verify ownership if editing.
 if ( $service_id ) {
 	$service = get_post( $service_id );
-	if ( ! $service || $service->post_author != $user_id || 'wpss_service' !== $service->post_type ) {
+	if ( ! $service || (int) $service->post_author !== $user_id || 'wpss_service' !== $service->post_type ) {
 		?>
 		<div class="wpss-alert wpss-alert--error">
 			<?php esc_html_e( 'You do not have permission to edit this service.', 'wp-sell-services' ); ?>
