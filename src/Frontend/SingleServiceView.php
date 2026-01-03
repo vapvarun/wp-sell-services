@@ -185,7 +185,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_breadcrumb( Service $service ): void {
-		$service_id = $service->get_id();
+		$service_id = $service->id;
 		$categories = get_the_terms( $service_id, 'wpss_service_category' );
 		?>
 		<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
@@ -250,7 +250,7 @@ class SingleServiceView {
 	 */
 	public function render_title( Service $service ): void {
 		?>
-		<h1 class="wpss-service-title"><?php echo esc_html( $service->get_title() ); ?></h1>
+		<h1 class="wpss-service-title"><?php echo esc_html( $service->title ); ?></h1>
 		<?php
 	}
 
@@ -261,8 +261,8 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_meta( Service $service ): void {
-		$service_id   = $service->get_id();
-		$vendor_id    = $service->get_vendor_id();
+		$service_id   = $service->id;
+		$vendor_id    = $service->vendor_id;
 		$vendor       = get_userdata( $vendor_id );
 		$rating_avg   = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$rating_count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
@@ -347,7 +347,7 @@ class SingleServiceView {
 		<div class="wpss-service-description">
 			<h2><?php esc_html_e( 'About This Service', 'wp-sell-services' ); ?></h2>
 			<div class="wpss-description-content">
-				<?php echo wp_kses_post( apply_filters( 'the_content', $service->get_description() ) ); ?>
+				<?php echo wp_kses_post( apply_filters( 'the_content', $service->description ) ); ?>
 			</div>
 
 			<?php $this->render_service_highlights( $service ); ?>
@@ -363,7 +363,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	private function render_service_highlights( Service $service ): void {
-		$highlights = get_post_meta( $service->get_id(), '_wpss_highlights', true );
+		$highlights = get_post_meta( $service->id, '_wpss_highlights', true );
 
 		if ( empty( $highlights ) || ! is_array( $highlights ) ) {
 			return;
@@ -392,7 +392,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	private function render_requirements( Service $service ): void {
-		$requirements = get_post_meta( $service->get_id(), '_wpss_requirements', true );
+		$requirements = get_post_meta( $service->id, '_wpss_requirements', true );
 
 		if ( empty( $requirements ) ) {
 			return;
@@ -404,7 +404,20 @@ class SingleServiceView {
 				<?php esc_html_e( 'To get started, the seller needs:', 'wp-sell-services' ); ?>
 			</p>
 			<div class="wpss-requirements-content">
-				<?php echo wp_kses_post( wpautop( $requirements ) ); ?>
+				<?php
+				if ( is_array( $requirements ) ) {
+					echo '<ul class="wpss-requirements-list">';
+					foreach ( $requirements as $req ) {
+						$text = is_array( $req ) ? ( $req['question'] ?? $req['text'] ?? '' ) : $req;
+						if ( ! empty( $text ) ) {
+							echo '<li>' . esc_html( $text ) . '</li>';
+						}
+					}
+					echo '</ul>';
+				} else {
+					echo wp_kses_post( wpautop( $requirements ) );
+				}
+				?>
 			</div>
 		</div>
 		<?php
@@ -417,7 +430,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_about_vendor( Service $service ): void {
-		$vendor_id = $service->get_vendor_id();
+		$vendor_id = $service->vendor_id;
 		$vendor    = get_userdata( $vendor_id );
 
 		if ( ! $vendor ) {
@@ -594,7 +607,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_vendor_card( Service $service ): void {
-		$vendor_id = $service->get_vendor_id();
+		$vendor_id = $service->vendor_id;
 		wpss_get_template_part( 'partials/vendor', 'card', array( 'vendor_id' => $vendor_id ) );
 	}
 
@@ -605,7 +618,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_related_services( Service $service ): void {
-		$service_id = $service->get_id();
+		$service_id = $service->id;
 
 		// Get related services based on category and tags.
 		$categories = get_the_terms( $service_id, 'wpss_service_category' );
@@ -676,7 +689,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_order_modal( Service $service ): void {
-		$service_id = $service->get_id();
+		$service_id = $service->id;
 		$packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
 		$extras     = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
 
@@ -779,7 +792,7 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_contact_modal( Service $service ): void {
-		$vendor_id = $service->get_vendor_id();
+		$vendor_id = $service->vendor_id;
 
 		// Don't show for own services.
 		if ( get_current_user_id() === $vendor_id ) {
@@ -845,7 +858,7 @@ class SingleServiceView {
 					<?php else : ?>
 						<form id="wpss-contact-form" class="wpss-contact-form">
 							<input type="hidden" name="vendor_id" value="<?php echo esc_attr( $vendor_id ); ?>">
-							<input type="hidden" name="service_id" value="<?php echo esc_attr( $service->get_id() ); ?>">
+							<input type="hidden" name="service_id" value="<?php echo esc_attr( $service->id ); ?>">
 
 							<div class="wpss-form-field">
 								<label for="wpss-contact-message"><?php esc_html_e( 'Your Message', 'wp-sell-services' ); ?></label>

@@ -23,10 +23,18 @@ class Frontend {
 	 * @return void
 	 */
 	public function enqueue_styles(): void {
+		// Design system tokens (must load first).
+		wp_enqueue_style(
+			'wpss-design-system',
+			\WPSS_PLUGIN_URL . 'assets/css/design-system.css',
+			array(),
+			\WPSS_VERSION
+		);
+
 		wp_enqueue_style(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/css/frontend.css',
-			array(),
+			array( 'wpss-design-system' ),
 			\WPSS_VERSION
 		);
 	}

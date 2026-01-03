@@ -14,8 +14,10 @@ use WPSellServices\Admin\Admin;
 use WPSellServices\Frontend\Frontend;
 use WPSellServices\Frontend\Shortcodes;
 use WPSellServices\Frontend\SingleServiceView;
+use WPSellServices\Frontend\TemplateLoader;
 use WPSellServices\Frontend\ServiceArchiveView;
 use WPSellServices\Frontend\BuyerRequestArchiveView;
+use WPSellServices\Frontend\ServiceWizard;
 use WPSellServices\Integrations\IntegrationManager;
 use WPSellServices\PostTypes\ServicePostType;
 use WPSellServices\PostTypes\BuyerRequestPostType;
@@ -120,6 +122,13 @@ final class Plugin {
 	private ?BuyerRequestArchiveView $buyer_request_archive_view = null;
 
 	/**
+	 * Service wizard instance.
+	 *
+	 * @var ServiceWizard|null
+	 */
+	private ?ServiceWizard $service_wizard = null;
+
+	/**
 	 * Get plugin instance (Singleton).
 	 *
 	 * @return Plugin
@@ -154,6 +163,7 @@ final class Plugin {
 		$this->define_blocks_hooks();
 		$this->define_seo_hooks();
 		$this->define_shortcode_hooks();
+		$this->define_wizard_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -308,6 +318,10 @@ final class Plugin {
 		// Initialize buyer request archive view.
 		$this->buyer_request_archive_view = new BuyerRequestArchiveView();
 		$this->buyer_request_archive_view->init();
+
+		// Initialize template loader.
+		$template_loader = new TemplateLoader();
+		$template_loader->init();
 	}
 
 	/**
@@ -354,6 +368,20 @@ final class Plugin {
 		$this->shortcodes = new Shortcodes();
 
 		$this->loader->add_action( 'init', $this->shortcodes, 'init' );
+	}
+
+	/**
+	 * Define wizard hooks.
+	 *
+	 * Service wizard needs AJAX handlers available on admin (for admin-ajax.php)
+	 * and shortcode on frontend. Initialize on both contexts.
+	 *
+	 * @return void
+	 */
+	private function define_wizard_hooks(): void {
+		$this->service_wizard = new ServiceWizard();
+
+		$this->loader->add_action( 'init', $this->service_wizard, 'init' );
 	}
 
 	/**
@@ -426,6 +454,15 @@ final class Plugin {
 	 */
 	public function get_single_service_view(): ?SingleServiceView {
 		return $this->single_service_view;
+	}
+
+	/**
+	 * Get the service wizard instance.
+	 *
+	 * @return ServiceWizard|null
+	 */
+	public function get_service_wizard(): ?ServiceWizard {
+		return $this->service_wizard;
 	}
 
 	/**

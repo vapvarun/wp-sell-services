@@ -3,6 +3,7 @@
  * Template: Order Conversation
  *
  * Displays the conversation/messaging interface for an order.
+ * Uses CSS classes from messaging.css design system.
  *
  * @package WPSellServices\Templates
  * @since   1.0.0
@@ -19,13 +20,16 @@ if ( empty( $order_id ) || empty( $order ) ) {
 	return;
 }
 
+// Enqueue messaging styles.
+wp_enqueue_style( 'wpss-messaging', WPSS_PLUGIN_URL . 'assets/css/messaging.css', array( 'wpss-design-system' ), WPSS_VERSION );
+
 $user_id     = get_current_user_id();
 $is_vendor   = $is_vendor ?? ( (int) $order->vendor_id === $user_id );
 $is_customer = $is_customer ?? ( (int) $order->customer_id === $user_id );
 
 // Get conversation participants.
-$vendor   = get_userdata( $order->vendor_id );
-$customer = get_userdata( $order->customer_id );
+$vendor     = get_userdata( $order->vendor_id );
+$customer   = get_userdata( $order->customer_id );
 $other_user = $is_vendor ? $customer : $vendor;
 
 // Get messages.
@@ -43,7 +47,7 @@ $messages = $wpdb->get_results(
 
 // Mark messages as read.
 if ( ! empty( $messages ) ) {
-	$unread_ids = [];
+	$unread_ids = array();
 	foreach ( $messages as $message ) {
 		if ( (int) $message->sender_id !== $user_id && empty( $message->read_at ) ) {
 			$unread_ids[] = (int) $message->id;
@@ -53,40 +57,48 @@ if ( ! empty( $messages ) ) {
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$wpdb->prefix}wpss_conversations SET read_at = %s WHERE id IN (" . implode( ',', array_fill( 0, count( $unread_ids ), '%d' ) ) . ')',
-				array_merge( [ current_time( 'mysql', true ) ], $unread_ids )
+				array_merge( array( current_time( 'mysql', true ) ), $unread_ids )
 			)
 		);
 	}
 }
 
 // Can send messages?
-$can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress', 'revision_requested', 'delivered' ], true );
+$can_message = in_array( $order->status, array( 'pending_requirements', 'in_progress', 'revision_requested', 'delivered' ), true );
 ?>
 
-<div class="wpss-conversation" data-order-id="<?php echo esc_attr( $order_id ); ?>">
+<div class="wpss-messaging wpss-messaging--order" data-order-id="<?php echo esc_attr( $order_id ); ?>">
 	<!-- Conversation Header -->
-	<div class="wpss-conversation-header">
-		<div class="wpss-conversation-participant">
-			<?php echo get_avatar( $other_user->ID, 48 ); ?>
-			<div class="wpss-participant-info">
-				<span class="wpss-participant-name"><?php echo esc_html( $other_user->display_name ); ?></span>
-				<span class="wpss-participant-role">
+	<div class="wpss-messaging__header">
+		<div class="wpss-messaging__header-info">
+			<div class="wpss-messaging__header-avatar">
+				<?php echo get_avatar( $other_user->ID, 40 ); ?>
+			</div>
+			<div class="wpss-messaging__header-details">
+				<span class="wpss-messaging__header-name"><?php echo esc_html( $other_user->display_name ); ?></span>
+				<span class="wpss-messaging__header-status">
 					<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
 				</span>
 			</div>
 		</div>
-		<div class="wpss-conversation-meta">
-			<span class="wpss-order-status wpss-status-<?php echo esc_attr( $order->status ); ?>">
+		<div class="wpss-messaging__header-actions">
+			<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
 				<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 			</span>
 		</div>
 	</div>
 
 	<!-- Messages Container -->
-	<div class="wpss-conversation-messages" id="wpss-messages-container">
+	<div class="wpss-messaging__messages" id="wpss-messages-container">
 		<?php if ( empty( $messages ) ) : ?>
-			<div class="wpss-no-messages">
-				<p><?php esc_html_e( 'No messages yet. Start the conversation!', 'wp-sell-services' ); ?></p>
+			<div class="wpss-messaging__empty">
+				<div class="wpss-messaging__empty-icon">
+					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+					</svg>
+				</div>
+				<h3 class="wpss-messaging__empty-title"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
+				<p class="wpss-messaging__empty-text"><?php esc_html_e( 'Start the conversation by sending a message!', 'wp-sell-services' ); ?></p>
 			</div>
 		<?php else : ?>
 			<?php
@@ -94,46 +106,46 @@ $can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress'
 			foreach ( $messages as $message ) :
 				$message_date = wp_date( get_option( 'date_format' ), strtotime( $message->created_at ) );
 				$is_own       = (int) $message->sender_id === $user_id;
-				$is_system    = $message->type === 'system';
+				$is_system    = 'system' === $message->type;
 
 				// Date separator.
 				if ( $message_date !== $current_date ) :
 					$current_date = $message_date;
 					?>
-					<div class="wpss-message-date-separator">
-						<span><?php echo esc_html( $message_date ); ?></span>
+					<div class="wpss-messaging__date-divider">
+						<span class="wpss-messaging__date-text"><?php echo esc_html( $message_date ); ?></span>
 					</div>
 				<?php endif; ?>
 
 				<?php if ( $is_system ) : ?>
-					<div class="wpss-message wpss-message-system">
-						<div class="wpss-message-content">
+					<div class="wpss-messaging__system">
+						<span class="wpss-messaging__system-text">
 							<?php echo wp_kses_post( $message->message ); ?>
-						</div>
-						<span class="wpss-message-time">
-							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
+							<span class="wpss-messaging__message-time">
+								<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
+							</span>
 						</span>
 					</div>
 				<?php else : ?>
-					<div class="wpss-message <?php echo $is_own ? 'wpss-message-own' : 'wpss-message-other'; ?>">
+					<div class="wpss-messaging__message <?php echo $is_own ? 'wpss-messaging__message--sent' : ''; ?>" data-message-id="<?php echo esc_attr( $message->id ); ?>">
 						<?php if ( ! $is_own ) : ?>
-							<div class="wpss-message-avatar">
+							<div class="wpss-messaging__message-avatar">
 								<?php echo get_avatar( $message->sender_id, 32 ); ?>
 							</div>
 						<?php endif; ?>
-						<div class="wpss-message-bubble">
-							<?php if ( ! $is_own ) : ?>
-								<span class="wpss-message-sender"><?php echo esc_html( $message->sender_name ); ?></span>
-							<?php endif; ?>
-							<div class="wpss-message-content">
-								<?php echo wp_kses_post( nl2br( $message->message ) ); ?>
-							</div>
-							<?php if ( ! empty( $message->attachments ) ) : ?>
-								<?php $attachments = json_decode( $message->attachments, true ); ?>
-								<?php if ( ! empty( $attachments ) ) : ?>
-									<div class="wpss-message-attachments">
-										<?php foreach ( $attachments as $attachment ) : ?>
-											<div class="wpss-attachment">
+						<div class="wpss-messaging__message-content">
+							<div class="wpss-messaging__bubble">
+								<?php if ( ! $is_own ) : ?>
+									<span class="wpss-messaging__sender"><?php echo esc_html( $message->sender_name ); ?></span>
+								<?php endif; ?>
+								<div class="wpss-messaging__text">
+									<?php echo wp_kses_post( nl2br( $message->message ) ); ?>
+								</div>
+								<?php if ( ! empty( $message->attachments ) ) : ?>
+									<?php $attachments = json_decode( $message->attachments, true ); ?>
+									<?php if ( ! empty( $attachments ) ) : ?>
+										<div class="wpss-messaging__attachments">
+											<?php foreach ( $attachments as $attachment ) : ?>
 												<?php
 												$file_url  = $attachment['url'] ?? '';
 												$file_name = $attachment['name'] ?? basename( $file_url );
@@ -141,25 +153,34 @@ $can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress'
 												$is_image  = strpos( $file_type, 'image/' ) === 0;
 												?>
 												<?php if ( $is_image && $file_url ) : ?>
-													<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-attachment-image">
+													<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-image">
 														<img src="<?php echo esc_url( $file_url ); ?>" alt="<?php echo esc_attr( $file_name ); ?>">
 													</a>
 												<?php else : ?>
-													<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-attachment-file">
-														<span class="wpss-attachment-icon dashicons dashicons-media-default"></span>
-														<span class="wpss-attachment-name"><?php echo esc_html( $file_name ); ?></span>
+													<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
+														<span class="wpss-messaging__attachment-icon">
+															<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+																<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+																<polyline points="14 2 14 8 20 8"/>
+															</svg>
+														</span>
+														<span class="wpss-messaging__attachment-info">
+															<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
+														</span>
 													</a>
 												<?php endif; ?>
-											</div>
-										<?php endforeach; ?>
-									</div>
+											<?php endforeach; ?>
+										</div>
+									<?php endif; ?>
 								<?php endif; ?>
-							<?php endif; ?>
-							<span class="wpss-message-time">
+							</div>
+							<span class="wpss-messaging__message-time">
 								<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
 								<?php if ( $is_own && ! empty( $message->read_at ) ) : ?>
-									<span class="wpss-message-read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
-										<span class="dashicons dashicons-yes-alt"></span>
+									<span class="wpss-messaging__message-status wpss-messaging__message-status--read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<polyline points="20 6 9 17 4 12"/>
+										</svg>
 									</span>
 								<?php endif; ?>
 							</span>
@@ -172,49 +193,57 @@ $can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress'
 
 	<!-- Message Input -->
 	<?php if ( $can_message ) : ?>
-		<div class="wpss-conversation-input">
-			<form id="wpss-message-form" class="wpss-message-form" method="post" enctype="multipart/form-data">
+		<div class="wpss-messaging__composer">
+			<form id="wpss-message-form" method="post" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'wpss_send_message', 'wpss_message_nonce' ); ?>
 				<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
-				<div class="wpss-message-input-wrapper">
-					<div class="wpss-message-attachments-preview" id="wpss-attachments-preview"></div>
+				<div class="wpss-messaging__composer-attachments" id="wpss-attachments-preview"></div>
 
-					<div class="wpss-message-input-row">
-						<label for="wpss-file-input" class="wpss-attach-btn" title="<?php esc_attr_e( 'Attach files', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-paperclip"></span>
-							<input type="file" id="wpss-file-input" name="attachments[]" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display: none;">
-						</label>
+				<div class="wpss-messaging__composer-input-area">
+					<label for="wpss-file-input" class="wpss-messaging__composer-btn" title="<?php esc_attr_e( 'Attach files', 'wp-sell-services' ); ?>">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+						</svg>
+						<input type="file" id="wpss-file-input" name="attachments[]" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display: none;">
+					</label>
 
+					<div class="wpss-messaging__composer-input-wrapper">
 						<textarea name="message"
-								  id="wpss-message-input"
-								  class="wpss-message-textarea"
-								  placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>"
-								  rows="1"
-								  maxlength="5000"
-								  required></textarea>
-
-						<button type="submit" class="wpss-send-btn" id="wpss-send-btn">
-							<span class="dashicons dashicons-arrow-right-alt"></span>
-							<span class="wpss-send-text"><?php esc_html_e( 'Send', 'wp-sell-services' ); ?></span>
-						</button>
+									id="wpss-message-input"
+									class="wpss-messaging__composer-input"
+									placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>"
+									rows="1"
+									maxlength="5000"
+									required></textarea>
 					</div>
+
+					<button type="submit" class="wpss-messaging__send-btn" id="wpss-send-btn" title="<?php esc_attr_e( 'Send message', 'wp-sell-services' ); ?>">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="22" y1="2" x2="11" y2="13"/>
+							<polygon points="22 2 15 22 11 13 2 9 22 2"/>
+						</svg>
+					</button>
 				</div>
 
-				<div class="wpss-message-hint">
+				<div class="wpss-messaging__hint">
 					<?php esc_html_e( 'Press Enter to send, Shift+Enter for new line', 'wp-sell-services' ); ?>
 				</div>
 			</form>
 		</div>
 	<?php else : ?>
-		<div class="wpss-conversation-closed">
+		<div class="wpss-messaging__closed">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+				<path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+			</svg>
 			<p>
 				<?php
-				if ( $order->status === 'completed' ) {
+				if ( 'completed' === $order->status ) {
 					esc_html_e( 'This order has been completed. You can no longer send messages.', 'wp-sell-services' );
-				} elseif ( $order->status === 'cancelled' ) {
+				} elseif ( 'cancelled' === $order->status ) {
 					esc_html_e( 'This order has been cancelled.', 'wp-sell-services' );
-				} elseif ( $order->status === 'refunded' ) {
+				} elseif ( 'refunded' === $order->status ) {
 					esc_html_e( 'This order has been refunded.', 'wp-sell-services' );
 				} else {
 					esc_html_e( 'Messaging is not available for this order status.', 'wp-sell-services' );
@@ -225,339 +254,11 @@ $can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress'
 	<?php endif; ?>
 </div>
 
-<style>
-.wpss-conversation {
-	display: flex;
-	flex-direction: column;
-	height: 600px;
-	max-height: 80vh;
-	border: 1px solid var(--wpss-border-color, #dcdcde);
-	border-radius: var(--wpss-border-radius, 8px);
-	background: var(--wpss-card-bg, #fff);
-	overflow: hidden;
-}
-
-.wpss-conversation-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 15px 20px;
-	border-bottom: 1px solid var(--wpss-border-color, #dcdcde);
-	background: var(--wpss-bg-light, #f6f7f7);
-}
-
-.wpss-conversation-participant {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.wpss-conversation-participant img {
-	width: 48px;
-	height: 48px;
-	border-radius: 50%;
-}
-
-.wpss-participant-info {
-	display: flex;
-	flex-direction: column;
-}
-
-.wpss-participant-name {
-	font-weight: 600;
-	font-size: 16px;
-	color: var(--wpss-text-primary, #1d2327);
-}
-
-.wpss-participant-role {
-	font-size: 13px;
-	color: var(--wpss-text-secondary, #646970);
-}
-
-.wpss-conversation-messages {
-	flex: 1;
-	overflow-y: auto;
-	padding: 20px;
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	background: var(--wpss-bg-light, #f6f7f7);
-}
-
-.wpss-no-messages {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	text-align: center;
-	color: var(--wpss-text-muted, #8c8f94);
-}
-
-.wpss-message-date-separator {
-	text-align: center;
-	margin: 10px 0;
-}
-
-.wpss-message-date-separator span {
-	background: var(--wpss-bg-light, #f6f7f7);
-	padding: 4px 12px;
-	font-size: 12px;
-	color: var(--wpss-text-secondary, #646970);
-	border-radius: 12px;
-	background: var(--wpss-border-color, #dcdcde);
-}
-
-.wpss-message {
-	display: flex;
-	gap: 10px;
-	max-width: 80%;
-}
-
-.wpss-message-own {
-	align-self: flex-end;
-	flex-direction: row-reverse;
-}
-
-.wpss-message-other {
-	align-self: flex-start;
-}
-
-.wpss-message-system {
-	align-self: center;
-	max-width: 90%;
-	text-align: center;
-}
-
-.wpss-message-system .wpss-message-content {
-	background: var(--wpss-bg-muted, #e8e8e8);
-	padding: 8px 15px;
-	border-radius: 15px;
-	font-size: 13px;
-	color: var(--wpss-text-secondary, #646970);
-}
-
-.wpss-message-avatar img {
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-}
-
-.wpss-message-bubble {
-	background: var(--wpss-card-bg, #fff);
-	padding: 10px 15px;
-	border-radius: 18px;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-
-.wpss-message-own .wpss-message-bubble {
-	background: var(--wpss-primary-color, #2271b1);
-	color: #fff;
-}
-
-.wpss-message-sender {
-	display: block;
-	font-size: 12px;
-	font-weight: 600;
-	margin-bottom: 4px;
-	color: var(--wpss-primary-color, #2271b1);
-}
-
-.wpss-message-content {
-	word-wrap: break-word;
-	line-height: 1.5;
-}
-
-.wpss-message-time {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	font-size: 11px;
-	color: var(--wpss-text-muted, #8c8f94);
-	margin-top: 4px;
-}
-
-.wpss-message-own .wpss-message-time {
-	color: rgba(255, 255, 255, 0.7);
-	justify-content: flex-end;
-}
-
-.wpss-message-read .dashicons {
-	font-size: 14px;
-	width: 14px;
-	height: 14px;
-}
-
-.wpss-message-attachments {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	margin-top: 10px;
-}
-
-.wpss-attachment-image img {
-	max-width: 200px;
-	max-height: 150px;
-	border-radius: 8px;
-}
-
-.wpss-attachment-file {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 8px 12px;
-	background: rgba(0, 0, 0, 0.05);
-	border-radius: 8px;
-	text-decoration: none;
-	color: inherit;
-}
-
-.wpss-message-own .wpss-attachment-file {
-	background: rgba(255, 255, 255, 0.2);
-}
-
-.wpss-conversation-input {
-	padding: 15px 20px;
-	border-top: 1px solid var(--wpss-border-color, #dcdcde);
-	background: var(--wpss-card-bg, #fff);
-}
-
-.wpss-message-input-wrapper {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.wpss-message-input-row {
-	display: flex;
-	align-items: flex-end;
-	gap: 10px;
-}
-
-.wpss-attach-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	border-radius: 50%;
-	background: var(--wpss-bg-light, #f6f7f7);
-	color: var(--wpss-text-secondary, #646970);
-	cursor: pointer;
-	transition: all 0.2s;
-}
-
-.wpss-attach-btn:hover {
-	background: var(--wpss-border-color, #dcdcde);
-	color: var(--wpss-text-primary, #1d2327);
-}
-
-.wpss-message-textarea {
-	flex: 1;
-	padding: 10px 15px;
-	border: 1px solid var(--wpss-border-color, #dcdcde);
-	border-radius: 20px;
-	resize: none;
-	font-size: 14px;
-	line-height: 1.5;
-	max-height: 120px;
-	overflow-y: auto;
-}
-
-.wpss-message-textarea:focus {
-	outline: none;
-	border-color: var(--wpss-primary-color, #2271b1);
-}
-
-.wpss-send-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 5px;
-	padding: 10px 20px;
-	background: var(--wpss-primary-color, #2271b1);
-	color: #fff;
-	border: none;
-	border-radius: 20px;
-	cursor: pointer;
-	font-weight: 500;
-	transition: background 0.2s;
-}
-
-.wpss-send-btn:hover {
-	background: var(--wpss-primary-dark, #135e96);
-}
-
-.wpss-send-btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
-.wpss-send-btn .dashicons {
-	font-size: 18px;
-	width: 18px;
-	height: 18px;
-}
-
-.wpss-message-hint {
-	font-size: 11px;
-	color: var(--wpss-text-muted, #8c8f94);
-	margin-top: 5px;
-	text-align: center;
-}
-
-.wpss-attachments-preview {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-}
-
-.wpss-attachment-preview {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 6px 10px;
-	background: var(--wpss-bg-light, #f6f7f7);
-	border-radius: 6px;
-	font-size: 12px;
-}
-
-.wpss-attachment-preview .wpss-remove-attachment {
-	cursor: pointer;
-	color: var(--wpss-danger-color, #d63638);
-}
-
-.wpss-conversation-closed {
-	padding: 20px;
-	text-align: center;
-	background: var(--wpss-bg-light, #f6f7f7);
-	color: var(--wpss-text-secondary, #646970);
-}
-
-@media (max-width: 600px) {
-	.wpss-conversation {
-		height: 500px;
-	}
-
-	.wpss-message {
-		max-width: 90%;
-	}
-
-	.wpss-send-btn .wpss-send-text {
-		display: none;
-	}
-
-	.wpss-send-btn {
-		padding: 10px;
-		border-radius: 50%;
-	}
-}
-</style>
-
 <script>
 (function($) {
 	'use strict';
 
-	var $conversation = $('.wpss-conversation');
+	var $conversation = $('.wpss-messaging--order');
 	var $messagesContainer = $('#wpss-messages-container');
 	var $messageForm = $('#wpss-message-form');
 	var $messageInput = $('#wpss-message-input');
@@ -596,15 +297,15 @@ $can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress'
 	function updateAttachmentsPreview() {
 		$attachmentsPreview.empty();
 		selectedFiles.forEach(function(file, index) {
-			var $preview = $('<div class="wpss-attachment-preview">')
-				.append('<span class="wpss-attachment-name">' + file.name + '</span>')
-				.append('<span class="wpss-remove-attachment dashicons dashicons-no-alt" data-index="' + index + '"></span>');
+			var $preview = $('<div class="wpss-messaging__composer-attachment">')
+				.append('<span class="wpss-messaging__composer-attachment-name">' + file.name + '</span>')
+				.append('<button type="button" class="wpss-messaging__composer-attachment-remove" data-index="' + index + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>');
 			$attachmentsPreview.append($preview);
 		});
 	}
 
 	// Remove attachment.
-	$attachmentsPreview.on('click', '.wpss-remove-attachment', function() {
+	$attachmentsPreview.on('click', '.wpss-messaging__composer-attachment-remove', function() {
 		var index = $(this).data('index');
 		selectedFiles.splice(index, 1);
 		updateAttachmentsPreview();
@@ -640,7 +341,7 @@ $can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress'
 			success: function(response) {
 				if (response.success) {
 					// Add message to container.
-					$messagesContainer.find('.wpss-no-messages').remove();
+					$messagesContainer.find('.wpss-messaging__empty').remove();
 					$messagesContainer.append(response.data.html);
 					scrollToBottom();
 
@@ -664,7 +365,7 @@ $can_message = in_array( $order->status, [ 'pending_requirements', 'in_progress'
 	});
 
 	// Poll for new messages (simple polling, can be replaced with WebSockets).
-	var lastMessageId = $messagesContainer.find('.wpss-message:last').data('message-id') || 0;
+	var lastMessageId = $messagesContainer.find('.wpss-messaging__message:last').data('message-id') || 0;
 
 	function pollMessages() {
 		if (!$conversation.length || $conversation.is(':hidden')) {

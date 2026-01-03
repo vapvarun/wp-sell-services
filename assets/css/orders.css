@@ -1,0 +1,1245 @@
+/**
+ * WP Sell Services - Orders Management Styles
+ *
+ * Order list, detail views, and order-related components.
+ *
+ * @package WPSellServices
+ * @since   1.0.0
+ */
+
+/* ==========================================================================
+   Orders Page Layout
+   ========================================================================== */
+
+.wpss-orders {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+/* ==========================================================================
+   Orders Filters
+   ========================================================================== */
+
+.wpss-orders__filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	padding: 1rem;
+	background: var(--wpss-white, #fff);
+	border-radius: var(--wpss-radius-lg, 12px);
+	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.wpss-orders__filter-group {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-orders__filter-label {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-orders__search {
+	flex: 1;
+	min-width: 200px;
+	position: relative;
+}
+
+.wpss-orders__search-input {
+	width: 100%;
+	padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	font-size: 0.875rem;
+}
+
+.wpss-orders__search-icon {
+	position: absolute;
+	left: 0.75rem;
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* ==========================================================================
+   Orders Table
+   ========================================================================== */
+
+.wpss-orders__table-wrapper {
+	background: var(--wpss-white, #fff);
+	border-radius: var(--wpss-radius-lg, 12px);
+	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
+	overflow: hidden;
+}
+
+.wpss-orders__table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wpss-orders__table th,
+.wpss-orders__table td {
+	padding: 1rem;
+	text-align: left;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-orders__table th {
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--wpss-text-muted, #6b7280);
+	background: var(--wpss-background, #f9fafb);
+}
+
+.wpss-orders__table tbody tr:hover {
+	background: var(--wpss-gray-50, #f8fafc);
+}
+
+.wpss-orders__table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+/* Order ID Cell */
+.wpss-orders__order-id {
+	font-weight: 600;
+	color: var(--wpss-primary, #4f46e5);
+}
+
+.wpss-orders__order-id:hover {
+	text-decoration: underline;
+}
+
+/* Service Cell */
+.wpss-orders__service-cell {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.wpss-orders__service-thumb {
+	width: 48px;
+	height: 36px;
+	object-fit: cover;
+	border-radius: var(--wpss-radius-sm, 4px);
+}
+
+.wpss-orders__service-title {
+	font-weight: 500;
+	color: var(--wpss-text, #1f2937);
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+/* User Cell */
+.wpss-orders__user-cell {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-orders__user-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+}
+
+.wpss-orders__user-name {
+	font-weight: 500;
+	color: var(--wpss-text, #1f2937);
+}
+
+/* Amount Cell */
+.wpss-orders__amount {
+	font-weight: 600;
+	color: var(--wpss-text, #1f2937);
+}
+
+/* Date Cell */
+.wpss-orders__date {
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* Actions Cell */
+.wpss-orders__actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+/* ==========================================================================
+   Order Detail Layout
+   ========================================================================== */
+
+.wpss-order-detail {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.wpss-order-detail__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.wpss-order-detail__info {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.wpss-order-detail__info h1 {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 600;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-detail__actions {
+	display: flex;
+	gap: 0.75rem;
+}
+
+.wpss-order-detail__grid {
+	display: grid;
+	grid-template-columns: 1fr 340px;
+	gap: 1.5rem;
+}
+
+@media (max-width: 991px) {
+	.wpss-order-detail__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.wpss-order-detail__main {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.wpss-order-detail__sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+/* ==========================================================================
+   Order Card Component
+   ========================================================================== */
+
+.wpss-order-card {
+	background: var(--wpss-white, #fff);
+	border-radius: var(--wpss-radius-lg, 12px);
+	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.wpss-order-card__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-order-card__title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-card__body {
+	padding: 1.5rem;
+}
+
+/* ==========================================================================
+   Order Summary Card
+   ========================================================================== */
+
+.wpss-order-summary {
+	padding: 1.5rem;
+}
+
+.wpss-order-summary__service {
+	display: flex;
+	gap: 1rem;
+	padding-bottom: 1rem;
+	margin-bottom: 1rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-order-summary__service-thumb {
+	width: 80px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: var(--wpss-radius, 8px);
+}
+
+.wpss-order-summary__service-title {
+	margin: 0 0 0.25rem;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-summary__service-package {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-order-summary__row {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.5rem 0;
+	font-size: 0.875rem;
+}
+
+.wpss-order-summary__label {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-order-summary__value {
+	font-weight: 500;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-summary__total {
+	padding-top: 1rem;
+	margin-top: 0.5rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+	font-size: 1rem;
+}
+
+.wpss-order-summary__total .wpss-order-summary__value {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--wpss-primary, #4f46e5);
+}
+
+/* ==========================================================================
+   Order Countdown
+   ========================================================================== */
+
+.wpss-order-countdown {
+	text-align: center;
+	padding: 1.5rem;
+}
+
+.wpss-order-countdown__label {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	margin-bottom: 0.5rem;
+}
+
+.wpss-order-countdown__time {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-countdown__time--warning {
+	color: var(--wpss-warning, #f59e0b);
+}
+
+.wpss-order-countdown__time--danger {
+	color: var(--wpss-danger, #ef4444);
+}
+
+.wpss-order-countdown__due {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	margin-top: 0.5rem;
+}
+
+/* ==========================================================================
+   Order Requirements
+   ========================================================================== */
+
+.wpss-order-requirements__list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.wpss-order-requirements__item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+
+.wpss-order-requirements__question {
+	font-weight: 500;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-requirements__answer {
+	color: var(--wpss-text-muted, #6b7280);
+	line-height: 1.5;
+}
+
+.wpss-order-requirements__files {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.wpss-order-requirements__file {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	background: var(--wpss-background, #f9fafb);
+	border-radius: var(--wpss-radius, 8px);
+	font-size: 0.8125rem;
+	color: var(--wpss-text, #1f2937);
+	text-decoration: none;
+}
+
+.wpss-order-requirements__file:hover {
+	background: var(--wpss-primary-light, #eef2ff);
+	color: var(--wpss-primary, #4f46e5);
+}
+
+/* ==========================================================================
+   Order Activity / Timeline
+   ========================================================================== */
+
+.wpss-order-activity__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	position: relative;
+}
+
+.wpss-order-activity__list::before {
+	content: "";
+	position: absolute;
+	left: 8px;
+	top: 12px;
+	bottom: 12px;
+	width: 2px;
+	background: var(--wpss-border, #e5e7eb);
+}
+
+.wpss-order-activity__item {
+	position: relative;
+	padding-left: 32px;
+	padding-bottom: 1rem;
+}
+
+.wpss-order-activity__item:last-child {
+	padding-bottom: 0;
+}
+
+.wpss-order-activity__dot {
+	position: absolute;
+	left: 0;
+	top: 6px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--wpss-white, #fff);
+	border: 2px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-order-activity__item--completed .wpss-order-activity__dot {
+	background: var(--wpss-success, #10b981);
+	border-color: var(--wpss-success, #10b981);
+}
+
+.wpss-order-activity__item--current .wpss-order-activity__dot {
+	background: var(--wpss-primary, #4f46e5);
+	border-color: var(--wpss-primary, #4f46e5);
+}
+
+.wpss-order-activity__title {
+	font-weight: 500;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-activity__meta {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* ==========================================================================
+   Order Deliverables
+   ========================================================================== */
+
+.wpss-deliverable {
+	background: var(--wpss-background, #f9fafb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 1.5rem;
+	margin-bottom: 1rem;
+}
+
+.wpss-deliverable:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-deliverable__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.wpss-deliverable__date {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-deliverable__content {
+	color: var(--wpss-text, #1f2937);
+	line-height: 1.6;
+	margin-bottom: 1rem;
+}
+
+.wpss-deliverable__files {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.wpss-deliverable__file {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.625rem 1rem;
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	font-size: 0.875rem;
+	color: var(--wpss-text, #1f2937);
+	text-decoration: none;
+	transition: all var(--wpss-transition, 0.2s ease);
+}
+
+.wpss-deliverable__file:hover {
+	border-color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary, #4f46e5);
+}
+
+/* ==========================================================================
+   Quick Actions
+   ========================================================================== */
+
+.wpss-quick-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wpss-quick-actions .wpss-btn {
+	justify-content: flex-start;
+}
+
+/* ==========================================================================
+   Order Status Stepper
+   ========================================================================== */
+
+.wpss-order-stepper {
+	display: flex;
+	justify-content: space-between;
+	padding: 1.5rem;
+	background: var(--wpss-white, #fff);
+	border-radius: var(--wpss-radius-lg, 12px);
+	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.wpss-order-stepper__step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	flex: 1;
+	position: relative;
+}
+
+.wpss-order-stepper__step:not(:last-child)::after {
+	content: "";
+	position: absolute;
+	top: 16px;
+	left: 50%;
+	width: 100%;
+	height: 2px;
+	background: var(--wpss-border, #e5e7eb);
+}
+
+.wpss-order-stepper__step--completed:not(:last-child)::after {
+	background: var(--wpss-success, #10b981);
+}
+
+.wpss-order-stepper__icon {
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: var(--wpss-background, #f9fafb);
+	border: 2px solid var(--wpss-border, #e5e7eb);
+	z-index: 1;
+}
+
+.wpss-order-stepper__step--completed .wpss-order-stepper__icon {
+	background: var(--wpss-success, #10b981);
+	border-color: var(--wpss-success, #10b981);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-order-stepper__step--current .wpss-order-stepper__icon {
+	background: var(--wpss-primary, #4f46e5);
+	border-color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-order-stepper__label {
+	font-size: 0.8125rem;
+	text-align: center;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-order-stepper__step--current .wpss-order-stepper__label,
+.wpss-order-stepper__step--completed .wpss-order-stepper__label {
+	color: var(--wpss-text, #1f2937);
+	font-weight: 500;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 767px) {
+	.wpss-orders__filters {
+		flex-direction: column;
+	}
+
+	.wpss-orders__search {
+		width: 100%;
+	}
+
+	.wpss-orders__table-wrapper {
+		overflow-x: auto;
+	}
+
+	.wpss-orders__table {
+		min-width: 700px;
+	}
+
+	.wpss-order-stepper {
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.wpss-order-stepper__step:not(:last-child)::after {
+		display: none;
+	}
+}
+
+/* ==========================================================================
+   Order Confirmation Page
+   ========================================================================== */
+
+.wpss-order-confirmation {
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 2.5rem 1.25rem;
+}
+
+.wpss-order-confirmation__header {
+	text-align: center;
+	margin-bottom: 2.5rem;
+}
+
+.wpss-order-confirmation__icon {
+	color: var(--wpss-success, #10b981);
+	margin-bottom: 1.25rem;
+}
+
+.wpss-order-confirmation__icon svg {
+	width: 80px;
+	height: 80px;
+}
+
+.wpss-order-confirmation__title {
+	font-size: 2rem;
+	margin: 0 0 1rem;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-confirmation__message {
+	font-size: 1.125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 0;
+}
+
+.wpss-order-confirmation__content {
+	display: grid;
+	gap: 1.5rem;
+	margin-bottom: 2.5rem;
+}
+
+.wpss-order-confirmation__card {
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 1.5rem;
+}
+
+.wpss-order-confirmation__card-title {
+	font-size: 1.125rem;
+	margin: 0 0 1.25rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+/* Order Summary Item */
+.wpss-order-confirmation__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--wpss-border-light, #f0f0f0);
+	margin-bottom: 1rem;
+}
+
+.wpss-order-confirmation__item-thumb {
+	width: 80px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: var(--wpss-radius, 8px);
+}
+
+.wpss-order-confirmation__item-details {
+	flex: 1;
+}
+
+.wpss-order-confirmation__item-title {
+	margin: 0 0 0.25rem;
+	font-size: 1rem;
+}
+
+.wpss-order-confirmation__item-vendor {
+	margin: 0;
+	color: var(--wpss-text-muted, #6b7280);
+	font-size: 0.875rem;
+}
+
+.wpss-order-confirmation__item-price {
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: var(--wpss-text, #1f2937);
+}
+
+/* Order Totals */
+.wpss-order-confirmation__totals {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wpss-order-confirmation__total-row {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-order-confirmation__total-row--grand {
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: var(--wpss-text, #1f2937);
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+	margin-top: 0.5rem;
+}
+
+/* Next Steps Card */
+.wpss-order-confirmation__card--steps {
+	background: var(--wpss-background, #f9fafb);
+}
+
+.wpss-order-confirmation__step {
+	display: flex;
+	gap: 1rem;
+	padding: 1rem 0;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+	opacity: 0.6;
+}
+
+.wpss-order-confirmation__step:last-child {
+	border-bottom: none;
+}
+
+.wpss-order-confirmation__step--active,
+.wpss-order-confirmation__step--completed {
+	opacity: 1;
+}
+
+.wpss-order-confirmation__step-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	background: var(--wpss-border, #e5e7eb);
+	color: var(--wpss-text-muted, #6b7280);
+	border-radius: 50%;
+	font-weight: 600;
+	flex-shrink: 0;
+}
+
+.wpss-order-confirmation__step--active .wpss-order-confirmation__step-number,
+.wpss-order-confirmation__step--completed .wpss-order-confirmation__step-number {
+	background: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-order-confirmation__step-content h4 {
+	margin: 0 0 0.25rem;
+	font-size: 1rem;
+}
+
+.wpss-order-confirmation__step-content p {
+	margin: 0 0 0.75rem;
+	color: var(--wpss-text-muted, #6b7280);
+	font-size: 0.875rem;
+}
+
+/* Order Details List */
+.wpss-order-confirmation__details-list {
+	display: grid;
+	grid-template-columns: 1fr 2fr;
+	gap: 0.75rem 1rem;
+}
+
+.wpss-order-confirmation__details-list dt {
+	color: var(--wpss-text-muted, #6b7280);
+	font-size: 0.875rem;
+}
+
+.wpss-order-confirmation__details-list dd {
+	margin: 0;
+	font-size: 0.875rem;
+}
+
+/* Confirmation Actions */
+.wpss-order-confirmation__actions {
+	display: flex;
+	justify-content: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+	.wpss-order-confirmation__item {
+		flex-direction: column;
+	}
+
+	.wpss-order-confirmation__actions {
+		flex-direction: column;
+	}
+
+	.wpss-order-confirmation__actions .wpss-btn {
+		width: 100%;
+		text-align: center;
+	}
+
+	.wpss-order-confirmation__details-list {
+		grid-template-columns: 1fr;
+		gap: 0.5rem;
+	}
+
+	.wpss-order-confirmation__details-list dt {
+		font-weight: 600;
+		margin-top: 0.5rem;
+	}
+}
+
+/* ==========================================================================
+   Requirements Page
+   ========================================================================== */
+
+.wpss-requirements-page {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 2rem 1rem;
+}
+
+.wpss-requirements-page__header {
+	margin-bottom: 2rem;
+}
+
+.wpss-requirements-page__title {
+	font-size: 1.75rem;
+	margin: 0 0 0.5rem;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-requirements-page__intro {
+	color: var(--wpss-text-muted, #6b7280);
+	font-size: 1rem;
+	margin: 0;
+}
+
+.wpss-requirements-page__layout {
+	display: grid;
+	grid-template-columns: 1fr 340px;
+	gap: 2rem;
+	align-items: start;
+}
+
+.wpss-requirements-page__main {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.wpss-requirements-page__sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	position: sticky;
+	top: var(--wpss-sticky-top, 32px);
+}
+
+/* Order Summary Card for Requirements */
+.wpss-requirements-page__summary {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 1rem;
+}
+
+.wpss-requirements-page__summary-thumb {
+	width: 80px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: var(--wpss-radius, 8px);
+}
+
+.wpss-requirements-page__summary-title {
+	margin: 0 0 0.25rem;
+	font-size: 1rem;
+}
+
+.wpss-requirements-page__summary-order {
+	margin: 0;
+	color: var(--wpss-text-muted, #6b7280);
+	font-size: 0.875rem;
+}
+
+@media (max-width: 900px) {
+	.wpss-requirements-page__layout {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-requirements-page__sidebar {
+		position: static;
+	}
+}
+
+/* ==========================================================================
+   Requirements Form
+   ========================================================================== */
+
+.wpss-requirements-form {
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 1.5rem;
+}
+
+.wpss-requirements-form--compact {
+	padding: 1rem;
+}
+
+.wpss-requirements-form__field {
+	margin-bottom: 1.5rem;
+}
+
+.wpss-requirements-form__label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-requirements-form__required {
+	color: var(--wpss-danger, #ef4444);
+	margin-left: 2px;
+}
+
+.wpss-requirements-form__description {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 0 0 0.625rem;
+}
+
+.wpss-requirements-form__input,
+.wpss-requirements-form__textarea,
+.wpss-requirements-form__select {
+	width: 100%;
+	padding: 0.625rem 0.875rem;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	font-size: 0.875rem;
+	line-height: 1.5;
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wpss-requirements-form__input:focus,
+.wpss-requirements-form__textarea:focus,
+.wpss-requirements-form__select:focus {
+	outline: none;
+	border-color: var(--wpss-primary, #4f46e5);
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.wpss-requirements-form__textarea {
+	resize: vertical;
+	min-height: 100px;
+}
+
+.wpss-requirements-form__hint {
+	font-size: 0.75rem;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 0.375rem 0 0;
+}
+
+/* Radio & Checkbox Groups */
+.wpss-requirements-form__radio-group,
+.wpss-requirements-form__checkbox-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+}
+
+.wpss-requirements-form__radio-option,
+.wpss-requirements-form__checkbox-option {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	cursor: pointer;
+	padding: 0.625rem 0.875rem;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	transition: border-color 0.2s, background 0.2s;
+}
+
+.wpss-requirements-form__radio-option:hover,
+.wpss-requirements-form__checkbox-option:hover {
+	border-color: var(--wpss-primary, #4f46e5);
+	background: var(--wpss-primary-light, #eef2ff);
+}
+
+.wpss-requirements-form__radio-option input,
+.wpss-requirements-form__checkbox-option input {
+	margin: 0;
+}
+
+/* File Upload Area */
+.wpss-requirements-form__upload {
+	border: 2px dashed var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 2rem 1.25rem;
+	text-align: center;
+	position: relative;
+	transition: border-color 0.2s, background 0.2s;
+}
+
+.wpss-requirements-form__upload:hover,
+.wpss-requirements-form__upload--dragover {
+	border-color: var(--wpss-primary, #4f46e5);
+	background: rgba(79, 70, 229, 0.03);
+}
+
+.wpss-requirements-form__upload-input {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.wpss-requirements-form__upload-placeholder {
+	pointer-events: none;
+}
+
+.wpss-requirements-form__upload-icon {
+	width: 48px;
+	height: 48px;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 0 auto 0.625rem;
+}
+
+.wpss-requirements-form__upload-text {
+	margin: 0 0 0.25rem;
+	font-weight: 500;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-requirements-form__upload-hint {
+	font-size: 0.75rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-requirements-form__file-list {
+	margin-top: 1rem;
+	text-align: left;
+}
+
+.wpss-requirements-form__file-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.625rem 0.75rem;
+	background: var(--wpss-background, #f9fafb);
+	border-radius: var(--wpss-radius, 8px);
+	margin-bottom: 0.5rem;
+}
+
+.wpss-requirements-form__file-item:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-requirements-form__file-info {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+}
+
+.wpss-requirements-form__file-icon {
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--wpss-white, #fff);
+	border-radius: var(--wpss-radius-sm, 4px);
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-requirements-form__file-name {
+	font-size: 0.8125rem;
+	font-weight: 500;
+}
+
+.wpss-requirements-form__file-size {
+	font-size: 0.6875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-requirements-form__file-remove {
+	cursor: pointer;
+	color: var(--wpss-danger, #ef4444);
+	padding: 0.25rem;
+	transition: color 0.2s;
+}
+
+.wpss-requirements-form__file-remove:hover {
+	color: var(--wpss-danger-dark, #dc2626);
+}
+
+/* Existing Files */
+.wpss-requirements-form__existing-files {
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-requirements-form__existing-files ul {
+	margin: 0.25rem 0 0 1.25rem;
+	padding: 0;
+}
+
+.wpss-requirements-form__existing-files li {
+	margin-bottom: 0.25rem;
+}
+
+/* Submit Section */
+.wpss-requirements-form__submit {
+	margin-top: 2rem;
+	padding-top: 1.25rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-requirements-form__submit-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.875rem 2rem;
+	font-size: 1rem;
+	font-weight: 600;
+	border: none;
+	border-radius: var(--wpss-radius, 8px);
+	cursor: pointer;
+	background: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-white, #fff);
+	transition: background 0.2s;
+}
+
+.wpss-requirements-form__submit-btn:hover {
+	background: var(--wpss-primary-dark, #4338ca);
+}
+
+.wpss-requirements-form__submit-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.wpss-requirements-form__spinner {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-top-color: var(--wpss-white, #fff);
+	border-radius: 50%;
+	animation: wpss-spin 0.8s linear infinite;
+}
+
+@keyframes wpss-spin {
+	to { transform: rotate(360deg); }
+}
+
+.wpss-requirements-form__notice {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 1rem 0 0;
+}
+
+.wpss-requirements-form__input--error,
+.wpss-requirements-form__textarea--error,
+.wpss-requirements-form__select--error {
+	border-color: var(--wpss-danger, #ef4444);
+}
+
+@media (max-width: 600px) {
+	.wpss-requirements-form__upload {
+		padding: 1.25rem 1rem;
+	}
+
+	.wpss-requirements-form__upload-icon {
+		width: 36px;
+		height: 36px;
+	}
+}

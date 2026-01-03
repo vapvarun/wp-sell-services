@@ -35,7 +35,7 @@ class TemplateLoader {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->default_path = WPSS_PLUGIN_PATH . 'templates/';
+		$this->default_path = WPSS_PLUGIN_DIR . 'templates/';
 	}
 
 	/**
@@ -44,10 +44,10 @@ class TemplateLoader {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'template_include', [ $this, 'template_include' ] );
-		add_filter( 'single_template', [ $this, 'single_service_template' ] );
-		add_filter( 'archive_template', [ $this, 'archive_service_template' ] );
-		add_filter( 'taxonomy_template', [ $this, 'taxonomy_template' ] );
+		add_filter( 'template_include', array( $this, 'template_include' ) );
+		add_filter( 'single_template', array( $this, 'single_service_template' ) );
+		add_filter( 'archive_template', array( $this, 'archive_service_template' ) );
+		add_filter( 'taxonomy_template', array( $this, 'taxonomy_template' ) );
 	}
 
 	/**
@@ -157,10 +157,10 @@ class TemplateLoader {
 
 		// Look in theme/child-theme first.
 		$template = locate_template(
-			[
+			array(
 				trailingslashit( $template_path ) . $template_name,
 				$template_name,
-			]
+			)
 		);
 
 		// Fallback to plugin templates.
@@ -184,8 +184,8 @@ class TemplateLoader {
 	 * @param array  $args Arguments to pass to template (optional).
 	 * @return void
 	 */
-	public function get_template_part( string $slug, string $name = '', array $args = [] ): void {
-		$templates = [];
+	public function get_template_part( string $slug, string $name = '', array $args = array() ): void {
+		$templates = array();
 
 		if ( $name ) {
 			$templates[] = "{$slug}-{$name}.php";
@@ -213,7 +213,7 @@ class TemplateLoader {
 	 * @param array  $args          Arguments to pass to template.
 	 * @return void
 	 */
-	public function load_template( string $template_file, array $args = [] ): void {
+	public function load_template( string $template_file, array $args = array() ): void {
 		if ( ! file_exists( $template_file ) ) {
 			return;
 		}
@@ -234,7 +234,7 @@ class TemplateLoader {
 	 * @param array  $args          Arguments to pass to template.
 	 * @return string Template content.
 	 */
-	public function get_template_html( string $template_name, array $args = [] ): string {
+	public function get_template_html( string $template_name, array $args = array() ): string {
 		ob_start();
 
 		$template = $this->locate_template( $template_name );
@@ -252,7 +252,7 @@ class TemplateLoader {
 	 * @param array  $args          Arguments to pass to template.
 	 * @return void
 	 */
-	public function include_template( string $template_name, array $args = [] ): void {
+	public function include_template( string $template_name, array $args = array() ): void {
 		$template = $this->locate_template( $template_name );
 		if ( $template ) {
 			$this->load_template( $template, $args );
@@ -293,7 +293,7 @@ class TemplateLoader {
 	 * @return array List of template files.
 	 */
 	public function get_available_templates(): array {
-		$templates = [];
+		$templates = array();
 
 		// Get plugin templates.
 		$plugin_templates = glob( $this->default_path . '*.php' );
@@ -304,7 +304,7 @@ class TemplateLoader {
 		}
 
 		// Get templates from subdirectories.
-		$subdirs = [ 'partials', 'order', 'myaccount', 'dashboard', 'vendor', 'emails' ];
+		$subdirs = array( 'partials', 'order', 'myaccount', 'dashboard', 'vendor', 'emails' );
 		foreach ( $subdirs as $subdir ) {
 			$subdir_templates = glob( $this->default_path . $subdir . '/*.php' );
 			if ( $subdir_templates ) {

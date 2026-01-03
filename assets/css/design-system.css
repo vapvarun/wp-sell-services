@@ -1,0 +1,122 @@
+/**
+ * WP Sell Services - Design System
+ *
+ * Centralized design tokens and CSS variables for consistent styling.
+ *
+ * @package WPSellServices
+ * @since   1.0.0
+ */
+
+/* ==========================================================================
+   Core Design Tokens
+   ========================================================================== */
+
+:root {
+	/* Primary - Indigo */
+	--wpss-primary: #4f46e5;
+	--wpss-primary-dark: #4338ca;
+	--wpss-primary-light: #eef2ff;
+	--wpss-primary-50: #eef2ff;
+	--wpss-primary-100: #e0e7ff;
+	--wpss-primary-500: #6366f1;
+	--wpss-primary-600: #4f46e5;
+	--wpss-primary-700: #4338ca;
+
+	/* Secondary - Slate */
+	--wpss-secondary: #1e293b;
+	--wpss-secondary-light: #475569;
+
+	/* Text Colors */
+	--wpss-text: #1f2937;
+	--wpss-text-muted: #6b7280;
+	--wpss-text-light: #9ca3af;
+
+	/* Semantic Colors */
+	--wpss-success: #10b981;
+	--wpss-success-light: #d1fae5;
+	--wpss-success-dark: #059669;
+	--wpss-warning: #f59e0b;
+	--wpss-warning-light: #fef3c7;
+	--wpss-warning-dark: #d97706;
+	--wpss-danger: #ef4444;
+	--wpss-danger-light: #fee2e2;
+	--wpss-danger-dark: #dc2626;
+	--wpss-info: #3b82f6;
+	--wpss-info-light: #dbeafe;
+	--wpss-info-dark: #2563eb;
+
+	/* Neutral */
+	--wpss-gray-50: #f8fafc;
+	--wpss-gray-100: #f1f5f9;
+	--wpss-gray-200: #e2e8f0;
+	--wpss-gray-300: #cbd5e1;
+	--wpss-gray-400: #94a3b8;
+	--wpss-gray-500: #64748b;
+	--wpss-gray-600: #475569;
+	--wpss-gray-700: #334155;
+	--wpss-gray-800: #1e293b;
+	--wpss-gray-900: #0f172a;
+
+	/* UI Colors */
+	--wpss-background: #f9fafb;
+	--wpss-white: #fff;
+	--wpss-black: #111827;
+	--wpss-border: #e5e7eb;
+	--wpss-star: #fbbf24;
+
+	/* Order Status Colors */
+	--wpss-status-pending-bg: #fef3c7;
+	--wpss-status-pending-text: #92400e;
+	--wpss-status-in-progress-bg: #e0e7ff;
+	--wpss-status-in-progress-text: #3730a3;
+	--wpss-status-completed-bg: #d1fae5;
+	--wpss-status-completed-text: #065f46;
+	--wpss-status-delivered-bg: #dbeafe;
+	--wpss-status-delivered-text: #1e40af;
+	--wpss-status-disputed-bg: #fee2e2;
+	--wpss-status-disputed-text: #991b1b;
+	--wpss-status-cancelled-bg: #f1f5f9;
+	--wpss-status-cancelled-text: #475569;
+	--wpss-status-refunded-bg: #e2e8f0;
+	--wpss-status-refunded-text: #374151;
+
+	/* Layout & Spacing */
+	--wpss-sticky-top: 32px;
+	--wpss-sidebar-width: 280px;
+	--wpss-container-max: 1200px;
+
+	/* Border Radius */
+	--wpss-radius: 8px;
+	--wpss-radius-sm: 4px;
+	--wpss-radius-lg: 12px;
+	--wpss-radius-full: 9999px;
+
+	/* Shadows */
+	--wpss-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+	--wpss-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+	--wpss-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	--wpss-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	--wpss-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+	/* Transitions */
+	--wpss-transition: 0.2s ease;
+	--wpss-transition-fast: 0.1s ease;
+	--wpss-transition-slow: 0.3s ease;
+}
+
+/* Admin bar offset adjustment */
+.admin-bar {
+	--wpss-sticky-top: 64px;
+}
+
+@media (max-width: 782px) {
+	.admin-bar {
+		--wpss-sticky-top: 78px;
+	}
+}
+
+@media (max-width: 600px) {
+	.admin-bar {
+		--wpss-sticky-top: 32px;
+	}
+}
