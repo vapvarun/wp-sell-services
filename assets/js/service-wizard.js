@@ -577,7 +577,12 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Register with Alpine
+// Expose globally for x-data="wpssServiceWizard({})" syntax.
+// This script loads BEFORE Alpine (without defer), so the function
+// is available when Alpine auto-initializes with defer.
+window.wpssServiceWizard = wpssServiceWizard;
+
+// Also register with Alpine.data() for component-style usage.
 document.addEventListener('alpine:init', () => {
 	Alpine.data('wpssServiceWizard', wpssServiceWizard);
 });

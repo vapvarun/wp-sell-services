@@ -48,6 +48,32 @@ class TemplateLoader {
 		add_filter( 'single_template', array( $this, 'single_service_template' ) );
 		add_filter( 'archive_template', array( $this, 'archive_service_template' ) );
 		add_filter( 'taxonomy_template', array( $this, 'taxonomy_template' ) );
+		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
+		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
+	}
+
+	/**
+	 * Add custom query vars.
+	 *
+	 * @param array $vars Query vars.
+	 * @return array
+	 */
+	public function add_query_vars( array $vars ): array {
+		$vars[] = 'wpss_vendor';
+		return $vars;
+	}
+
+	/**
+	 * Add rewrite rules for vendor profiles.
+	 *
+	 * @return void
+	 */
+	public function add_rewrite_rules(): void {
+		add_rewrite_rule(
+			'^vendor/([^/]+)/?$',
+			'index.php?wpss_vendor=$matches[1]',
+			'top'
+		);
 	}
 
 	/**
@@ -57,6 +83,34 @@ class TemplateLoader {
 	 * @return string
 	 */
 	public function template_include( string $template ): string {
+		// Check for vendor profile.
+		$vendor_slug = get_query_var( 'wpss_vendor' );
+		if ( $vendor_slug ) {
+			// Look up user by nicename (URL slug).
+			$user = get_user_by( 'slug', sanitize_text_field( $vendor_slug ) );
+
+			if ( $user && get_user_meta( $user->ID, '_wpss_is_vendor', true ) ) {
+				// Set global for template use.
+				global $wpss_vendor_id;
+				$wpss_vendor_id = $user->ID;
+
+				// Also set as query var for template access.
+				set_query_var( 'wpss_vendor', $user->ID );
+
+				$custom = $this->locate_template( 'vendor/profile.php' );
+				if ( $custom ) {
+					return $custom;
+				}
+			} else {
+				// Vendor not found - show 404.
+				global $wp_query;
+				$wp_query->set_404();
+				status_header( 404 );
+				nocache_headers();
+				return get_query_template( '404' );
+			}
+		}
+
 		// Check for buyer request single.
 		if ( is_singular( 'wpss_request' ) ) {
 			$custom = $this->locate_template( 'single-request.php' );

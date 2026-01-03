@@ -169,12 +169,8 @@ class Settings {
 	 */
 	private function get_page_content( string $field ): string {
 		$shortcodes = array(
-			'services_page'       => '[wpss_services]',
-			'vendor_dashboard'    => '[wpss_vendor_dashboard]',
-			'buyer_dashboard'     => '[wpss_buyer_dashboard]',
-			'vendor_registration' => '[wpss_vendor_registration]',
-			'buyer_requests'      => '[wpss_buyer_requests]',
-			'terms_of_service'    => '',
+			'services_page' => '[wpss_services]',
+			'dashboard'     => '[wpss_dashboard]',
 		);
 
 		return $shortcodes[ $field ] ?? '';
@@ -473,12 +469,8 @@ class Settings {
 		);
 
 		$pages = array(
-			'services_page'       => __( 'Services Page', 'wp-sell-services' ),
-			'vendor_dashboard'    => __( 'Vendor Dashboard', 'wp-sell-services' ),
-			'buyer_dashboard'     => __( 'Buyer Dashboard', 'wp-sell-services' ),
-			'vendor_registration' => __( 'Vendor Registration', 'wp-sell-services' ),
-			'buyer_requests'      => __( 'Buyer Requests', 'wp-sell-services' ),
-			'terms_of_service'    => __( 'Terms of Service', 'wp-sell-services' ),
+			'services_page' => __( 'Services Page', 'wp-sell-services' ),
+			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
 		);
 
 		foreach ( $pages as $key => $label ) {
@@ -848,12 +840,8 @@ class Settings {
 		$options     = get_option( $args['option_name'], array() );
 		$value       = $options[ $args['field'] ] ?? '';
 		$page_titles = array(
-			'services_page'       => __( 'Services', 'wp-sell-services' ),
-			'vendor_dashboard'    => __( 'Vendor Dashboard', 'wp-sell-services' ),
-			'buyer_dashboard'     => __( 'Buyer Dashboard', 'wp-sell-services' ),
-			'vendor_registration' => __( 'Become a Vendor', 'wp-sell-services' ),
-			'buyer_requests'      => __( 'Buyer Requests', 'wp-sell-services' ),
-			'terms_of_service'    => __( 'Terms of Service', 'wp-sell-services' ),
+			'services_page' => __( 'Services', 'wp-sell-services' ),
+			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
 		);
 
 		echo '<div class="wpss-page-select-wrap">';
@@ -983,11 +971,7 @@ class Settings {
 
 		$page_keys = array(
 			'services_page',
-			'vendor_dashboard',
-			'buyer_dashboard',
-			'vendor_registration',
-			'buyer_requests',
-			'terms_of_service',
+			'dashboard',
 		);
 
 		foreach ( $page_keys as $key ) {

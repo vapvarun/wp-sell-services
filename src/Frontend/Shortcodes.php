@@ -638,114 +638,14 @@ class Shortcodes {
 	 *
 	 * [wpss_buyer_dashboard]
 	 *
+	 * @deprecated 1.1.0 Use [wpss_dashboard] instead.
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
 	public function buyer_dashboard( array $atts = array() ): string {
-		if ( ! is_user_logged_in() ) {
-			return '<div class="wpss-notice">' . sprintf(
-				/* translators: %s: login URL */
-				__( 'Please <a href="%s">log in</a> to view your dashboard.', 'wp-sell-services' ),
-				esc_url( wp_login_url( get_permalink() ) )
-			) . '</div>';
-		}
-
-		global $wpdb;
-
-		$user_id      = get_current_user_id();
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-
-		// Get order counts by status.
-		$order_stats = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT status, COUNT(*) as count FROM {$orders_table} WHERE customer_id = %d GROUP BY status",
-				$user_id
-			)
-		);
-
-		$stats = array(
-			'active'    => 0,
-			'completed' => 0,
-			'total'     => 0,
-		);
-
-		foreach ( $order_stats as $stat ) {
-			$stats['total'] += (int) $stat->count;
-			if ( in_array( $stat->status, array( 'pending_requirements', 'in_progress', 'delivered' ), true ) ) {
-				$stats['active'] += (int) $stat->count;
-			} elseif ( 'completed' === $stat->status ) {
-				$stats['completed'] += (int) $stat->count;
-			}
-		}
-
-		// Get recent orders.
-		$recent_orders = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$orders_table} WHERE customer_id = %d ORDER BY created_at DESC LIMIT 5",
-				$user_id
-			)
-		);
-
-		ob_start();
-		?>
-		<div class="wpss-buyer-dashboard">
-			<div class="wpss-dashboard-stats">
-				<div class="wpss-stat-card">
-					<span class="wpss-stat-number"><?php echo esc_html( $stats['active'] ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Active Orders', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card">
-					<span class="wpss-stat-number"><?php echo esc_html( $stats['completed'] ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card">
-					<span class="wpss-stat-number"><?php echo esc_html( $stats['total'] ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
-				</div>
-			</div>
-
-			<div class="wpss-dashboard-section">
-				<h3><?php esc_html_e( 'Recent Orders', 'wp-sell-services' ); ?></h3>
-				<?php if ( ! empty( $recent_orders ) ) : ?>
-					<table class="wpss-orders-table">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
-								<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-								<th><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></th>
-								<th><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $recent_orders as $order ) : ?>
-								<tr>
-									<td>#<?php echo esc_html( $order->order_number ?: $order->id ); ?></td>
-									<td><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
-									<td><span class="wpss-status wpss-status-<?php echo esc_attr( $order->status ); ?>"><?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?></span></td>
-									<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
-									<td><a href="<?php echo esc_url( add_query_arg( 'order_id', $order->id, get_permalink( get_option( 'wpss_order_details_page' ) ) ) ); ?>" class="button button-small"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
-								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
-				<?php else : ?>
-					<p class="wpss-no-results"><?php esc_html_e( 'No orders yet. Browse services to get started!', 'wp-sell-services' ); ?></p>
-				<?php endif; ?>
-			</div>
-
-			<div class="wpss-dashboard-actions">
-				<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?></a>
-				<?php
-				$my_orders_page = get_option( 'wpss_my_orders_page' );
-				if ( $my_orders_page ) :
-					?>
-					<a href="<?php echo esc_url( get_permalink( $my_orders_page ) ); ?>" class="button"><?php esc_html_e( 'View All Orders', 'wp-sell-services' ); ?></a>
-				<?php endif; ?>
-			</div>
-		</div>
-		<?php
-		return ob_get_clean();
+		// Redirect to unified dashboard.
+		$unified_dashboard = new UnifiedDashboard();
+		return $unified_dashboard->render( array() );
 	}
 
 	/**

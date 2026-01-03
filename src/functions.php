@@ -847,3 +847,35 @@ function wpss_add_notification( int $user_id, string $type, string $message, arr
 
 	return $notification_service->create( $user_id, $type, $title, $message, $data );
 }
+
+/**
+ * Get page URL by settings key.
+ *
+ * @since 1.1.0
+ *
+ * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
+ * @return string Page URL or empty string.
+ */
+function wpss_get_page_url( string $page_key ): string {
+	$pages   = get_option( 'wpss_pages', array() );
+	$page_id = (int) ( $pages[ $page_key ] ?? 0 );
+
+	if ( ! $page_id ) {
+		return '';
+	}
+
+	return get_permalink( $page_id ) ?: '';
+}
+
+/**
+ * Get order status labels array.
+ *
+ * Alias for wpss_get_order_statuses() for backward compatibility.
+ *
+ * @since 1.1.0
+ *
+ * @return array<string, string> Status key => label pairs.
+ */
+function wpss_get_order_status_labels(): array {
+	return wpss_get_order_statuses();
+}

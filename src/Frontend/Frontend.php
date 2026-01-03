@@ -45,14 +45,19 @@ class Frontend {
 	 * @return void
 	 */
 	public function enqueue_scripts(): void {
-		// Alpine.js for reactivity.
-		wp_enqueue_script(
+		// Register Alpine.js (loaded in footer).
+		wp_register_script(
 			'alpinejs',
 			\WPSS_PLUGIN_URL . 'assets/js/vendor/alpine.min.js',
 			array(),
 			'3.13.3',
-			array( 'strategy' => 'defer' )
+			true
 		);
+
+		// Add defer attribute to Alpine.js so it waits for DOM and other scripts.
+		add_filter( 'script_loader_tag', array( $this, 'add_defer_attribute' ), 10, 2 );
+
+		wp_enqueue_script( 'alpinejs' );
 
 		wp_enqueue_script(
 			'wpss-frontend',
@@ -103,5 +108,24 @@ class Frontend {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Add defer attribute to Alpine.js only.
+	 *
+	 * Alpine must load with defer so it waits for other scripts (like service-wizard)
+	 * to define their x-data functions before Alpine auto-initializes.
+	 *
+	 * @param string $tag    Script tag HTML.
+	 * @param string $handle Script handle.
+	 * @return string Modified script tag.
+	 */
+	public function add_defer_attribute( string $tag, string $handle ): string {
+		// Only defer Alpine - other scripts should run immediately to register functions.
+		if ( 'alpinejs' === $handle && strpos( $tag, 'defer' ) === false ) {
+			$tag = str_replace( ' src', ' defer src', $tag );
+		}
+
+		return $tag;
 	}
 }

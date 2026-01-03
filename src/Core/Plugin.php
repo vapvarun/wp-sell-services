@@ -19,6 +19,7 @@ use WPSellServices\Frontend\ServiceArchiveView;
 use WPSellServices\Frontend\BuyerRequestArchiveView;
 use WPSellServices\Frontend\ServiceWizard;
 use WPSellServices\Frontend\VendorDashboard;
+use WPSellServices\Frontend\UnifiedDashboard;
 use WPSellServices\Integrations\IntegrationManager;
 use WPSellServices\PostTypes\ServicePostType;
 use WPSellServices\PostTypes\BuyerRequestPostType;
@@ -133,8 +134,17 @@ final class Plugin {
 	 * Vendor dashboard instance.
 	 *
 	 * @var VendorDashboard|null
+	 * @deprecated 1.1.0 Use UnifiedDashboard instead.
 	 */
 	private ?VendorDashboard $vendor_dashboard = null;
+
+	/**
+	 * Unified dashboard instance.
+	 *
+	 * @var UnifiedDashboard|null
+	 * @since 1.1.0
+	 */
+	private ?UnifiedDashboard $unified_dashboard = null;
 
 	/**
 	 * Get plugin instance (Singleton).
@@ -173,6 +183,8 @@ final class Plugin {
 		$this->define_shortcode_hooks();
 		$this->define_wizard_hooks();
 		$this->define_vendor_dashboard_hooks();
+		$this->define_unified_dashboard_hooks();
+		$this->define_auto_vendor_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -398,12 +410,82 @@ final class Plugin {
 	 *
 	 * Vendor dashboard needs AJAX handlers and shortcodes for frontend display.
 	 *
+	 * @deprecated 1.1.0 Use define_unified_dashboard_hooks instead.
 	 * @return void
 	 */
 	private function define_vendor_dashboard_hooks(): void {
 		$this->vendor_dashboard = new VendorDashboard();
 
 		$this->loader->add_action( 'init', $this->vendor_dashboard, 'init' );
+	}
+
+	/**
+	 * Define unified dashboard hooks.
+	 *
+	 * Single dashboard for both buyers and vendors.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private function define_unified_dashboard_hooks(): void {
+		$this->unified_dashboard = new UnifiedDashboard();
+
+		$this->loader->add_action( 'init', $this->unified_dashboard, 'init' );
+	}
+
+	/**
+	 * Define auto-vendor hooks.
+	 *
+	 * Automatically makes administrators vendors.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private function define_auto_vendor_hooks(): void {
+		// Auto-vendor for admins on admin_init.
+		$this->loader->add_action(
+			'admin_init',
+			function (): void {
+				$this->maybe_auto_vendor_admin();
+			}
+		);
+
+		// Also run on plugin activation.
+		register_activation_hook(
+			WPSS_PLUGIN_FILE,
+			function (): void {
+				$this->maybe_auto_vendor_admin();
+			}
+		);
+	}
+
+	/**
+	 * Maybe make admin user a vendor automatically.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private function maybe_auto_vendor_admin(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			return;
+		}
+
+		// Check if already processed.
+		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+
+		if ( $is_vendor ) {
+			return;
+		}
+
+		// Make admin a vendor.
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		$vendor_service->register( $user_id );
 	}
 
 	/**

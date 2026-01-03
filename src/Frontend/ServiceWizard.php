@@ -1013,13 +1013,18 @@ class ServiceWizard {
 			WPSS_VERSION
 		);
 
+		// Enqueue without alpinejs dependency so it loads BEFORE Alpine.
+		// This ensures wpssServiceWizard is defined when Alpine auto-starts.
 		wp_enqueue_script(
 			'wpss-service-wizard',
 			WPSS_PLUGIN_URL . 'assets/js/service-wizard.js',
-			array( 'alpinejs' ),
+			array(),
 			WPSS_VERSION,
 			true
 		);
+
+		// Make sure Alpine loads after service-wizard.
+		wp_enqueue_script( 'alpinejs' );
 
 		wp_localize_script(
 			'wpss-service-wizard',

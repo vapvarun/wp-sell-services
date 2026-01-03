@@ -1,0 +1,464 @@
+<?php
+/**
+ * Unified Dashboard
+ *
+ * Single dashboard for both buyers and vendors with context-aware navigation.
+ *
+ * @package WPSellServices\Frontend
+ * @since   1.1.0
+ */
+
+declare(strict_types=1);
+
+namespace WPSellServices\Frontend;
+
+use WPSellServices\Services\VendorService;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * UnifiedDashboard class.
+ *
+ * Replaces separate vendor and buyer dashboards with a single unified interface.
+ *
+ * @since 1.1.0
+ */
+class UnifiedDashboard {
+
+	/**
+	 * Vendor service instance.
+	 *
+	 * @var VendorService
+	 */
+	private VendorService $vendor_service;
+
+	/**
+	 * Current section.
+	 *
+	 * @var string
+	 */
+	private string $current_section = 'orders';
+
+	/**
+	 * Available sections.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
+	private array $sections = array();
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		$this->vendor_service = new VendorService();
+	}
+
+	/**
+	 * Initialize the dashboard.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		add_shortcode( 'wpss_dashboard', array( $this, 'render' ) );
+		add_action( 'wp_ajax_wpss_become_vendor', array( $this, 'ajax_become_vendor' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Enqueue dashboard assets.
+	 *
+	 * @return void
+	 */
+	public function enqueue_assets(): void {
+		if ( ! $this->is_dashboard_page() ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'wpss-unified-dashboard',
+			WPSS_PLUGIN_URL . 'assets/css/unified-dashboard.css',
+			array(),
+			WPSS_VERSION
+		);
+
+		wp_enqueue_script(
+			'wpss-unified-dashboard',
+			WPSS_PLUGIN_URL . 'assets/js/unified-dashboard.js',
+			array( 'jquery' ),
+			WPSS_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wpss-unified-dashboard',
+			'wpssUnifiedDashboard',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wpss_dashboard_nonce' ),
+				'i18n'    => array(
+					'becomeVendorConfirm' => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
+					'processing'          => __( 'Processing...', 'wp-sell-services' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Check if current page is dashboard.
+	 *
+	 * @return bool
+	 */
+	private function is_dashboard_page(): bool {
+		global $post;
+
+		if ( ! $post ) {
+			return false;
+		}
+
+		return has_shortcode( $post->post_content, 'wpss_dashboard' );
+	}
+
+	/**
+	 * Render the dashboard.
+	 *
+	 * @param array<string, mixed> $atts Shortcode attributes.
+	 * @return string Dashboard HTML.
+	 */
+	public function render( array $atts = array() ): string {
+		if ( ! is_user_logged_in() ) {
+			return $this->render_login_prompt();
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
+		$section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'orders';
+
+		// Validate section access.
+		if ( ! $this->can_access_section( $section ) ) {
+			$section = 'orders';
+		}
+
+		$this->current_section = $section;
+		$this->sections        = $this->get_sections();
+
+		ob_start();
+		$this->render_shell();
+		return ob_get_clean();
+	}
+
+	/**
+	 * Check if user can access a section.
+	 *
+	 * @param string $section Section slug.
+	 * @return bool True if accessible.
+	 */
+	private function can_access_section( string $section ): bool {
+		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'create' );
+		$user_id              = get_current_user_id();
+
+		if ( in_array( $section, $vendor_only_sections, true ) ) {
+			return $this->vendor_service->is_vendor( $user_id );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get all available sections.
+	 *
+	 * @return array<string, array<string, mixed>> Sections configuration.
+	 */
+	private function get_sections(): array {
+		$user_id   = get_current_user_id();
+		$is_vendor = $this->vendor_service->is_vendor( $user_id );
+
+		$sections = array(
+			'buying' => array(
+				'label' => __( 'Buying', 'wp-sell-services' ),
+				'items' => array(
+					'orders'   => array(
+						'icon'  => 'shopping-bag',
+						'label' => __( 'My Orders', 'wp-sell-services' ),
+					),
+					'requests' => array(
+						'icon'  => 'megaphone',
+						'label' => __( 'Buyer Requests', 'wp-sell-services' ),
+					),
+				),
+			),
+		);
+
+		if ( $is_vendor ) {
+			$sections['selling'] = array(
+				'label' => __( 'Selling', 'wp-sell-services' ),
+				'items' => array(
+					'services' => array(
+						'icon'  => 'briefcase',
+						'label' => __( 'My Services', 'wp-sell-services' ),
+					),
+					'sales'    => array(
+						'icon'  => 'receipt',
+						'label' => __( 'Sales Orders', 'wp-sell-services' ),
+					),
+					'earnings' => array(
+						'icon'  => 'wallet',
+						'label' => __( 'Earnings', 'wp-sell-services' ),
+					),
+				),
+			);
+		}
+
+		$sections['account'] = array(
+			'label' => __( 'Account', 'wp-sell-services' ),
+			'items' => array(
+				'messages' => array(
+					'icon'  => 'chat',
+					'label' => __( 'Messages', 'wp-sell-services' ),
+				),
+				'profile'  => array(
+					'icon'  => 'user',
+					'label' => __( 'Profile', 'wp-sell-services' ),
+				),
+			),
+		);
+
+		/**
+		 * Filter dashboard sections.
+		 *
+		 * @since 1.1.0
+		 * @param array $sections  Sections configuration.
+		 * @param int   $user_id   Current user ID.
+		 * @param bool  $is_vendor Whether user is a vendor.
+		 */
+		return apply_filters( 'wpss_dashboard_sections', $sections, $user_id, $is_vendor );
+	}
+
+	/**
+	 * Render login prompt.
+	 *
+	 * @return string Login prompt HTML.
+	 */
+	private function render_login_prompt(): string {
+		$login_url = wp_login_url( get_permalink() );
+
+		return sprintf(
+			'<div class="wpss-dashboard-login">
+				<div class="wpss-dashboard-login__icon">
+					<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+				</div>
+				<h2>%s</h2>
+				<p>%s</p>
+				<a href="%s" class="wpss-btn wpss-btn--primary">%s</a>
+			</div>',
+			esc_html__( 'Access Your Dashboard', 'wp-sell-services' ),
+			esc_html__( 'Please log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
+			esc_url( $login_url ),
+			esc_html__( 'Log In', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Render the dashboard shell.
+	 *
+	 * @return void
+	 */
+	private function render_shell(): void {
+		$user_id      = get_current_user_id();
+		$user         = get_userdata( $user_id );
+		$is_vendor    = $this->vendor_service->is_vendor( $user_id );
+		$section_data = $this->get_section_data( $this->current_section );
+		?>
+		<div class="wpss-dashboard">
+			<aside class="wpss-dashboard__sidebar">
+				<div class="wpss-dashboard__user">
+					<?php echo get_avatar( $user_id, 48, '', '', array( 'class' => 'wpss-dashboard__avatar' ) ); ?>
+					<div class="wpss-dashboard__user-info">
+						<span class="wpss-dashboard__user-name"><?php echo esc_html( $user->display_name ); ?></span>
+						<?php if ( $is_vendor ) : ?>
+							<span class="wpss-dashboard__user-badge"><?php esc_html_e( 'Seller', 'wp-sell-services' ); ?></span>
+						<?php endif; ?>
+					</div>
+				</div>
+
+				<nav class="wpss-dashboard__nav">
+					<?php foreach ( $this->sections as $group_key => $group ) : ?>
+						<div class="wpss-dashboard__nav-group">
+							<span class="wpss-dashboard__nav-label"><?php echo esc_html( $group['label'] ); ?></span>
+							<ul class="wpss-dashboard__nav-list">
+								<?php foreach ( $group['items'] as $item_key => $item ) : ?>
+									<li>
+										<a href="<?php echo esc_url( $this->get_section_url( $item_key ) ); ?>"
+											class="wpss-dashboard__nav-item <?php echo $this->current_section === $item_key ? 'wpss-dashboard__nav-item--active' : ''; ?>">
+											<?php $this->render_icon( $item['icon'] ); ?>
+											<span><?php echo esc_html( $item['label'] ); ?></span>
+										</a>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					<?php endforeach; ?>
+				</nav>
+
+				<?php if ( ! $is_vendor ) : ?>
+					<div class="wpss-dashboard__become-vendor">
+						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
+						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor">
+							<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+						</button>
+					</div>
+				<?php endif; ?>
+			</aside>
+
+			<main class="wpss-dashboard__content">
+				<header class="wpss-dashboard__header">
+					<h1 class="wpss-dashboard__title"><?php echo esc_html( $section_data['title'] ); ?></h1>
+					<?php if ( $this->current_section === 'services' ) : ?>
+						<a href="<?php echo esc_url( $this->get_section_url( 'create' ) ); ?>" class="wpss-btn wpss-btn--primary">
+							<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
+						</a>
+					<?php elseif ( $this->current_section === 'requests' ) : ?>
+						<a href="<?php echo esc_url( $this->get_section_url( 'create-request' ) ); ?>" class="wpss-btn wpss-btn--primary">
+							<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
+						</a>
+					<?php endif; ?>
+				</header>
+
+				<div class="wpss-dashboard__body">
+					<?php $this->render_section( $this->current_section ); ?>
+				</div>
+			</main>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Get section data.
+	 *
+	 * @param string $section Section slug.
+	 * @return array<string, mixed> Section data.
+	 */
+	private function get_section_data( string $section ): array {
+		$titles = array(
+			'orders'         => __( 'My Orders', 'wp-sell-services' ),
+			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
+			'services'       => __( 'My Services', 'wp-sell-services' ),
+			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),
+			'earnings'       => __( 'Earnings', 'wp-sell-services' ),
+			'messages'       => __( 'Messages', 'wp-sell-services' ),
+			'profile'        => __( 'Profile', 'wp-sell-services' ),
+			'create'         => __( 'Create Service', 'wp-sell-services' ),
+			'create-request' => __( 'Post a Request', 'wp-sell-services' ),
+		);
+
+		return array(
+			'title' => $titles[ $section ] ?? __( 'Dashboard', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Get section URL.
+	 *
+	 * @param string $section Section slug.
+	 * @return string Section URL.
+	 */
+	private function get_section_url( string $section ): string {
+		$base_url = get_permalink();
+
+		if ( 'orders' === $section ) {
+			return $base_url;
+		}
+
+		return add_query_arg( 'section', $section, $base_url );
+	}
+
+	/**
+	 * Render a section.
+	 *
+	 * @param string $section Section slug.
+	 * @return void
+	 */
+	private function render_section( string $section ): void {
+		$template_path = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$section}.php";
+
+		if ( file_exists( $template_path ) ) {
+			$user_id        = get_current_user_id();
+			$vendor_service = $this->vendor_service;
+			$is_vendor      = $vendor_service->is_vendor( $user_id );
+
+			include $template_path;
+		} else {
+			$this->render_section_fallback( $section );
+		}
+	}
+
+	/**
+	 * Render fallback content for missing section templates.
+	 *
+	 * @param string $section Section slug.
+	 * @return void
+	 */
+	private function render_section_fallback( string $section ): void {
+		?>
+		<div class="wpss-dashboard__empty">
+			<div class="wpss-dashboard__empty-icon">
+				<?php $this->render_icon( 'folder' ); ?>
+			</div>
+			<h3><?php esc_html_e( 'Coming Soon', 'wp-sell-services' ); ?></h3>
+			<p><?php esc_html_e( 'This section is under development.', 'wp-sell-services' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render an icon.
+	 *
+	 * @param string $icon Icon name.
+	 * @return void
+	 */
+	private function render_icon( string $icon ): void {
+		$icons = array(
+			'shopping-bag' => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+			'megaphone'    => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
+			'briefcase'    => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+			'receipt'      => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>',
+			'wallet'       => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>',
+			'chat'         => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>',
+			'user'         => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+			'folder'       => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+		);
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG is hardcoded and safe.
+		echo $icons[ $icon ] ?? '';
+	}
+
+	/**
+	 * Handle AJAX become vendor request.
+	 *
+	 * @return void
+	 */
+	public function ajax_become_vendor(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in first.', 'wp-sell-services' ) ) );
+		}
+
+		$user_id = get_current_user_id();
+
+		if ( $this->vendor_service->is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'You are already a seller.', 'wp-sell-services' ) ) );
+		}
+
+		$result = $this->vendor_service->register( $user_id );
+
+		if ( $result ) {
+			wp_send_json_success(
+				array(
+					'message'  => __( 'Welcome! You can now create and sell services.', 'wp-sell-services' ),
+					'redirect' => $this->get_section_url( 'services' ),
+				)
+			);
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Unable to complete registration. Please try again.', 'wp-sell-services' ) ) );
+		}
+	}
+}

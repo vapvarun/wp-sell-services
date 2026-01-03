@@ -104,10 +104,26 @@ class VendorDashboard {
 	/**
 	 * Render main vendor dashboard.
 	 *
+	 * @deprecated 1.1.0 Use [wpss_dashboard] shortcode instead.
 	 * @param array $atts Shortcode attributes.
 	 * @return string Dashboard HTML.
 	 */
 	public function render_dashboard( array $atts = array() ): string {
+		// Redirect to unified dashboard.
+		$unified_dashboard = new UnifiedDashboard();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just setting default section.
+		$_GET['section'] = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'services';
+		return $unified_dashboard->render( array() );
+	}
+
+	/**
+	 * Legacy render dashboard - kept for reference.
+	 *
+	 * @deprecated 1.1.0
+	 * @param array $atts Shortcode attributes.
+	 * @return string Dashboard HTML.
+	 */
+	private function render_dashboard_legacy( array $atts = array() ): string {
 		// Enqueue dashboard styles.
 		wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-dashboard.css', array( 'wpss-design-system' ), WPSS_VERSION );
 

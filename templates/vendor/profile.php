@@ -15,8 +15,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Get vendor ID from global (set by TemplateLoader) or query var.
 if ( empty( $vendor_id ) ) {
-	$vendor_id = get_query_var( 'wpss_vendor' );
+	global $wpss_vendor_id;
+	$vendor_id = $wpss_vendor_id ?: get_query_var( 'wpss_vendor' );
 }
 
 if ( ! $vendor_id ) {
