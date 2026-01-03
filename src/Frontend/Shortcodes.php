@@ -30,27 +30,28 @@ class Shortcodes {
 	 */
 	public function init(): void {
 		// Service shortcodes.
-		add_shortcode( 'wpss_services', [ $this, 'services_grid' ] );
-		add_shortcode( 'wpss_service_search', [ $this, 'service_search' ] );
-		add_shortcode( 'wpss_featured_services', [ $this, 'featured_services' ] );
-		add_shortcode( 'wpss_service_categories', [ $this, 'service_categories' ] );
+		add_shortcode( 'wpss_services', array( $this, 'services_grid' ) );
+		add_shortcode( 'wpss_service_search', array( $this, 'service_search' ) );
+		add_shortcode( 'wpss_featured_services', array( $this, 'featured_services' ) );
+		add_shortcode( 'wpss_service_categories', array( $this, 'service_categories' ) );
 
 		// Vendor shortcodes.
-		add_shortcode( 'wpss_vendors', [ $this, 'vendors_grid' ] );
-		add_shortcode( 'wpss_vendor_profile', [ $this, 'vendor_profile' ] );
-		add_shortcode( 'wpss_top_vendors', [ $this, 'top_vendors' ] );
+		add_shortcode( 'wpss_vendors', array( $this, 'vendors_grid' ) );
+		add_shortcode( 'wpss_vendor_profile', array( $this, 'vendor_profile' ) );
+		add_shortcode( 'wpss_top_vendors', array( $this, 'top_vendors' ) );
 
 		// Buyer request shortcodes.
-		add_shortcode( 'wpss_buyer_requests', [ $this, 'buyer_requests' ] );
-		add_shortcode( 'wpss_post_request', [ $this, 'post_request_form' ] );
+		add_shortcode( 'wpss_buyer_requests', array( $this, 'buyer_requests' ) );
+		add_shortcode( 'wpss_post_request', array( $this, 'post_request_form' ) );
 
 		// Dashboard shortcodes.
-		add_shortcode( 'wpss_my_orders', [ $this, 'my_orders' ] );
-		add_shortcode( 'wpss_order_details', [ $this, 'order_details' ] );
+		add_shortcode( 'wpss_buyer_dashboard', array( $this, 'buyer_dashboard' ) );
+		add_shortcode( 'wpss_my_orders', array( $this, 'my_orders' ) );
+		add_shortcode( 'wpss_order_details', array( $this, 'order_details' ) );
 
 		// Account shortcodes.
-		add_shortcode( 'wpss_login', [ $this, 'login_form' ] );
-		add_shortcode( 'wpss_register', [ $this, 'register_form' ] );
+		add_shortcode( 'wpss_login', array( $this, 'login_form' ) );
+		add_shortcode( 'wpss_register', array( $this, 'register_form' ) );
 	}
 
 	/**
@@ -61,9 +62,9 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function services_grid( array $atts = [] ): string {
+	public function services_grid( array $atts = array() ): string {
 		$atts = shortcode_atts(
-			[
+			array(
 				'category' => '',
 				'tag'      => '',
 				'vendor'   => '',
@@ -72,37 +73,37 @@ class Shortcodes {
 				'orderby'  => 'date',
 				'order'    => 'DESC',
 				'featured' => '',
-			],
+			),
 			$atts,
 			'wpss_services'
 		);
 
-		$args = [
+		$args = array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
 			'posts_per_page' => absint( $atts['limit'] ),
 			'orderby'        => $atts['orderby'],
 			'order'          => $atts['order'],
-		];
+		);
 
 		// Category filter.
 		if ( $atts['category'] ) {
-			$args['tax_query'] = [
-				[
+			$args['tax_query'] = array(
+				array(
 					'taxonomy' => 'wpss_service_category',
 					'field'    => is_numeric( $atts['category'] ) ? 'term_id' : 'slug',
 					'terms'    => $atts['category'],
-				],
-			];
+				),
+			);
 		}
 
 		// Tag filter.
 		if ( $atts['tag'] ) {
-			$args['tax_query'][] = [
+			$args['tax_query'][] = array(
 				'taxonomy' => 'wpss_service_tag',
 				'field'    => is_numeric( $atts['tag'] ) ? 'term_id' : 'slug',
 				'terms'    => $atts['tag'],
-			];
+			);
 		}
 
 		// Vendor filter.
@@ -112,12 +113,12 @@ class Shortcodes {
 
 		// Featured filter.
 		if ( 'true' === $atts['featured'] || '1' === $atts['featured'] ) {
-			$args['meta_query'] = [
-				[
+			$args['meta_query'] = array(
+				array(
 					'key'   => '_wpss_is_featured',
 					'value' => '1',
-				],
-			];
+				),
+			);
 		}
 
 		// Custom ordering.
@@ -161,14 +162,14 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function service_search( array $atts = [] ): string {
+	public function service_search( array $atts = array() ): string {
 		$atts = shortcode_atts(
-			[
-				'placeholder'      => __( 'Search services...', 'wp-sell-services' ),
-				'show_categories'  => 'true',
-				'button_text'      => __( 'Search', 'wp-sell-services' ),
-				'action'           => '',
-			],
+			array(
+				'placeholder'     => __( 'Search services...', 'wp-sell-services' ),
+				'show_categories' => 'true',
+				'button_text'     => __( 'Search', 'wp-sell-services' ),
+				'action'          => '',
+			),
 			$atts,
 			'wpss_service_search'
 		);
@@ -186,11 +187,13 @@ class Shortcodes {
 					<select name="service_category" class="wpss-search-category">
 						<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
 						<?php
-						$categories = get_terms( [
-							'taxonomy'   => 'wpss_service_category',
-							'hide_empty' => true,
-							'parent'     => 0,
-						] );
+						$categories = get_terms(
+							array(
+								'taxonomy'   => 'wpss_service_category',
+								'hide_empty' => true,
+								'parent'     => 0,
+							)
+						);
 
 						if ( ! is_wp_error( $categories ) ) :
 							foreach ( $categories as $category ) :
@@ -218,7 +221,7 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function featured_services( array $atts = [] ): string {
+	public function featured_services( array $atts = array() ): string {
 		$atts['featured'] = 'true';
 		return $this->services_grid( $atts );
 	}
@@ -231,27 +234,29 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function service_categories( array $atts = [] ): string {
+	public function service_categories( array $atts = array() ): string {
 		$atts = shortcode_atts(
-			[
+			array(
 				'parent'     => 0,
 				'show_count' => 'true',
 				'columns'    => 4,
 				'hide_empty' => 'true',
 				'limit'      => 12,
-			],
+			),
 			$atts,
 			'wpss_service_categories'
 		);
 
-		$categories = get_terms( [
-			'taxonomy'   => 'wpss_service_category',
-			'parent'     => absint( $atts['parent'] ),
-			'hide_empty' => 'true' === $atts['hide_empty'],
-			'number'     => absint( $atts['limit'] ),
-			'orderby'    => 'count',
-			'order'      => 'DESC',
-		] );
+		$categories = get_terms(
+			array(
+				'taxonomy'   => 'wpss_service_category',
+				'parent'     => absint( $atts['parent'] ),
+				'hide_empty' => 'true' === $atts['hide_empty'],
+				'number'     => absint( $atts['limit'] ),
+				'orderby'    => 'count',
+				'order'      => 'DESC',
+			)
+		);
 
 		if ( is_wp_error( $categories ) || empty( $categories ) ) {
 			return '<p class="wpss-no-results">' . esc_html__( 'No categories found.', 'wp-sell-services' ) . '</p>';
@@ -302,24 +307,26 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function vendors_grid( array $atts = [] ): string {
+	public function vendors_grid( array $atts = array() ): string {
 		$atts = shortcode_atts(
-			[
+			array(
 				'limit'   => 12,
 				'columns' => 4,
 				'orderby' => 'rating',
 				'order'   => 'DESC',
-			],
+			),
 			$atts,
 			'wpss_vendors'
 		);
 
 		$vendor_service = new VendorService();
-		$vendors        = $vendor_service->get_all( [
-			'limit'   => absint( $atts['limit'] ),
-			'orderby' => $atts['orderby'],
-			'order'   => $atts['order'],
-		] );
+		$vendors        = $vendor_service->get_all(
+			array(
+				'limit'   => absint( $atts['limit'] ),
+				'orderby' => $atts['orderby'],
+				'order'   => $atts['order'],
+			)
+		);
 
 		ob_start();
 		?>
@@ -346,7 +353,7 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function top_vendors( array $atts = [] ): string {
+	public function top_vendors( array $atts = array() ): string {
 		$atts['orderby'] = 'rating';
 		$atts['order']   = 'DESC';
 		return $this->vendors_grid( $atts );
@@ -360,11 +367,11 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function vendor_profile( array $atts = [] ): string {
+	public function vendor_profile( array $atts = array() ): string {
 		$atts = shortcode_atts(
-			[
+			array(
 				'id' => get_query_var( 'vendor_id', 0 ),
-			],
+			),
 			$atts,
 			'wpss_vendor_profile'
 		);
@@ -404,22 +411,22 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function buyer_requests( array $atts = [] ): string {
+	public function buyer_requests( array $atts = array() ): string {
 		$atts = shortcode_atts(
-			[
+			array(
 				'limit'      => 10,
 				'category'   => '',
 				'budget_min' => '',
 				'budget_max' => '',
-			],
+			),
 			$atts,
 			'wpss_buyer_requests'
 		);
 
 		$request_service = new BuyerRequestService();
-		$args            = [
+		$args            = array(
 			'posts_per_page' => absint( $atts['limit'] ),
-		];
+		);
 
 		if ( $atts['category'] ) {
 			$args['category_id'] = absint( $atts['category'] );
@@ -460,7 +467,7 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function post_request_form( array $atts = [] ): string {
+	public function post_request_form( array $atts = array() ): string {
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
@@ -489,10 +496,12 @@ class Shortcodes {
 				<select name="category" id="request_category">
 					<option value=""><?php esc_html_e( 'Select a category', 'wp-sell-services' ); ?></option>
 					<?php
-					$categories = get_terms( [
-						'taxonomy'   => 'wpss_service_category',
-						'hide_empty' => false,
-					] );
+					$categories = get_terms(
+						array(
+							'taxonomy'   => 'wpss_service_category',
+							'hide_empty' => false,
+						)
+					);
 
 					if ( ! is_wp_error( $categories ) ) :
 						foreach ( $categories as $category ) :
@@ -537,7 +546,7 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function my_orders( array $atts = [] ): string {
+	public function my_orders( array $atts = array() ): string {
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
@@ -547,11 +556,11 @@ class Shortcodes {
 		}
 
 		$atts = shortcode_atts(
-			[
+			array(
 				'type'   => 'customer', // customer or vendor.
 				'status' => '',
 				'limit'  => 20,
-			],
+			),
 			$atts,
 			'wpss_my_orders'
 		);
@@ -561,8 +570,8 @@ class Shortcodes {
 		$user_id      = get_current_user_id();
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
-		$where = [];
-		$params = [];
+		$where  = array();
+		$params = array();
 
 		if ( 'vendor' === $atts['type'] ) {
 			$where[] = 'vendor_id = %d';
@@ -572,7 +581,7 @@ class Shortcodes {
 		$params[] = $user_id;
 
 		if ( $atts['status'] ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$params[] = $atts['status'];
 		}
 
@@ -581,9 +590,9 @@ class Shortcodes {
 		$orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$orders_table}
-				WHERE " . implode( ' AND ', $where ) . "
+				WHERE " . implode( ' AND ', $where ) . '
 				ORDER BY created_at DESC
-				LIMIT %d",
+				LIMIT %d',
 				$params
 			)
 		);
@@ -625,6 +634,121 @@ class Shortcodes {
 	}
 
 	/**
+	 * Buyer dashboard shortcode.
+	 *
+	 * [wpss_buyer_dashboard]
+	 *
+	 * @param array $atts Shortcode attributes.
+	 * @return string
+	 */
+	public function buyer_dashboard( array $atts = array() ): string {
+		if ( ! is_user_logged_in() ) {
+			return '<div class="wpss-notice">' . sprintf(
+				/* translators: %s: login URL */
+				__( 'Please <a href="%s">log in</a> to view your dashboard.', 'wp-sell-services' ),
+				esc_url( wp_login_url( get_permalink() ) )
+			) . '</div>';
+		}
+
+		global $wpdb;
+
+		$user_id      = get_current_user_id();
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+
+		// Get order counts by status.
+		$order_stats = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT status, COUNT(*) as count FROM {$orders_table} WHERE customer_id = %d GROUP BY status",
+				$user_id
+			)
+		);
+
+		$stats = array(
+			'active'    => 0,
+			'completed' => 0,
+			'total'     => 0,
+		);
+
+		foreach ( $order_stats as $stat ) {
+			$stats['total'] += (int) $stat->count;
+			if ( in_array( $stat->status, array( 'pending_requirements', 'in_progress', 'delivered' ), true ) ) {
+				$stats['active'] += (int) $stat->count;
+			} elseif ( 'completed' === $stat->status ) {
+				$stats['completed'] += (int) $stat->count;
+			}
+		}
+
+		// Get recent orders.
+		$recent_orders = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$orders_table} WHERE customer_id = %d ORDER BY created_at DESC LIMIT 5",
+				$user_id
+			)
+		);
+
+		ob_start();
+		?>
+		<div class="wpss-buyer-dashboard">
+			<div class="wpss-dashboard-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-number"><?php echo esc_html( $stats['active'] ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Active Orders', 'wp-sell-services' ); ?></span>
+				</div>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-number"><?php echo esc_html( $stats['completed'] ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
+				</div>
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-number"><?php echo esc_html( $stats['total'] ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
+				</div>
+			</div>
+
+			<div class="wpss-dashboard-section">
+				<h3><?php esc_html_e( 'Recent Orders', 'wp-sell-services' ); ?></h3>
+				<?php if ( ! empty( $recent_orders ) ) : ?>
+					<table class="wpss-orders-table">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
+								<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
+								<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+								<th><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></th>
+								<th><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $recent_orders as $order ) : ?>
+								<tr>
+									<td>#<?php echo esc_html( $order->order_number ?: $order->id ); ?></td>
+									<td><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
+									<td><span class="wpss-status wpss-status-<?php echo esc_attr( $order->status ); ?>"><?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?></span></td>
+									<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
+									<td><a href="<?php echo esc_url( add_query_arg( 'order_id', $order->id, get_permalink( get_option( 'wpss_order_details_page' ) ) ) ); ?>" class="button button-small"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php else : ?>
+					<p class="wpss-no-results"><?php esc_html_e( 'No orders yet. Browse services to get started!', 'wp-sell-services' ); ?></p>
+				<?php endif; ?>
+			</div>
+
+			<div class="wpss-dashboard-actions">
+				<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?></a>
+				<?php
+				$my_orders_page = get_option( 'wpss_my_orders_page' );
+				if ( $my_orders_page ) :
+					?>
+					<a href="<?php echo esc_url( get_permalink( $my_orders_page ) ); ?>" class="button"><?php esc_html_e( 'View All Orders', 'wp-sell-services' ); ?></a>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
 	 * Order details shortcode.
 	 *
 	 * [wpss_order_details]
@@ -632,7 +756,7 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function order_details( array $atts = [] ): string {
+	public function order_details( array $atts = array() ): string {
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
@@ -689,25 +813,27 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function login_form( array $atts = [] ): string {
+	public function login_form( array $atts = array() ): string {
 		if ( is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . esc_html__( 'You are already logged in.', 'wp-sell-services' ) . '</div>';
 		}
 
 		$atts = shortcode_atts(
-			[
+			array(
 				'redirect' => '',
-			],
+			),
 			$atts,
 			'wpss_login'
 		);
 
 		$redirect = $atts['redirect'] ?: home_url();
 
-		return wp_login_form( [
-			'echo'     => false,
-			'redirect' => $redirect,
-		] );
+		return wp_login_form(
+			array(
+				'echo'     => false,
+				'redirect' => $redirect,
+			)
+		);
 	}
 
 	/**
@@ -718,7 +844,7 @@ class Shortcodes {
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
-	public function register_form( array $atts = [] ): string {
+	public function register_form( array $atts = array() ): string {
 		if ( is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . esc_html__( 'You are already logged in.', 'wp-sell-services' ) . '</div>';
 		}
