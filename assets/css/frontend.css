@@ -332,6 +332,16 @@
 	.wpss-service-layout {
 		grid-template-columns: 1fr;
 	}
+
+	.wpss-service-sidebar {
+		position: relative;
+		top: 0;
+		width: 100%;
+		max-width: 100%;
+		max-height: none;
+		justify-self: stretch;
+		order: -1;
+	}
 }
 
 .wpss-service-main {
@@ -344,6 +354,8 @@
 	align-self: start;
 	max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 32px);
 	overflow-y: auto;
+	width: 350px;
+	justify-self: end;
 }
 
 /* ==========================================================================

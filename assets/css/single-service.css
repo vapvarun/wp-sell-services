@@ -90,6 +90,8 @@
 	top: var(--wpss-sticky-top, 32px);
 	max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 32px);
 	overflow-y: auto;
+	width: 340px;
+	justify-self: end;
 }
 
 @media (max-width: 991px) {
@@ -100,6 +102,10 @@
 	.wpss-service-sidebar {
 		position: relative;
 		top: 0;
+		width: 100%;
+		max-width: 100%;
+		max-height: none;
+		justify-self: stretch;
 		order: -1;
 	}
 }
