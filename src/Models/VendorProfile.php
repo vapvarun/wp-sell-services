@@ -86,28 +86,28 @@ class VendorProfile {
 	 *
 	 * @var array<string>
 	 */
-	public array $languages = [];
+	public array $languages = array();
 
 	/**
 	 * Skills/expertise.
 	 *
 	 * @var array<string>
 	 */
-	public array $skills = [];
+	public array $skills = array();
 
 	/**
 	 * Certifications/credentials.
 	 *
 	 * @var array<array{name: string, issuer: string, year: int}>
 	 */
-	public array $certifications = [];
+	public array $certifications = array();
 
 	/**
 	 * Education history.
 	 *
 	 * @var array<array{degree: string, institution: string, year: int}>
 	 */
-	public array $education = [];
+	public array $education = array();
 
 	/**
 	 * Vendor tier.
@@ -191,7 +191,7 @@ class VendorProfile {
 	 *
 	 * @var array<string, string>
 	 */
-	public array $social_links = [];
+	public array $social_links = array();
 
 	/**
 	 * Member since timestamp.
@@ -230,36 +230,36 @@ class VendorProfile {
 	public static function from_db( object $row ): self {
 		$profile = new self();
 
-		$profile->id               = (int) $row->id;
-		$profile->user_id          = (int) $row->user_id;
-		$profile->display_name     = $row->display_name;
+		$profile->id               = (int) ( $row->id ?? 0 );
+		$profile->user_id          = (int) ( $row->user_id ?? 0 );
+		$profile->display_name     = $row->display_name ?? '';
 		$profile->title            = $row->title ?? '';
 		$profile->bio              = $row->bio ?? '';
-		$profile->avatar_id        = $row->avatar_id ? (int) $row->avatar_id : null;
-		$profile->cover_id         = $row->cover_id ? (int) $row->cover_id : null;
+		$profile->avatar_id        = isset( $row->avatar_id ) && $row->avatar_id ? (int) $row->avatar_id : null;
+		$profile->cover_id         = isset( $row->cover_id ) && $row->cover_id ? (int) $row->cover_id : null;
 		$profile->country          = $row->country ?? '';
-		$profile->languages        = $row->languages ? json_decode( $row->languages, true ) : [];
-		$profile->skills           = $row->skills ? json_decode( $row->skills, true ) : [];
-		$profile->certifications   = $row->certifications ? json_decode( $row->certifications, true ) : [];
-		$profile->education        = $row->education ? json_decode( $row->education, true ) : [];
+		$profile->languages        = isset( $row->languages ) && $row->languages ? json_decode( $row->languages, true ) : array();
+		$profile->skills           = isset( $row->skills ) && $row->skills ? json_decode( $row->skills, true ) : array();
+		$profile->certifications   = isset( $row->certifications ) && $row->certifications ? json_decode( $row->certifications, true ) : array();
+		$profile->education        = isset( $row->education ) && $row->education ? json_decode( $row->education, true ) : array();
 		$profile->tier             = $row->tier ?? self::TIER_NEW;
-		$profile->rating           = (float) $row->rating;
-		$profile->review_count     = (int) $row->review_count;
-		$profile->orders_completed = (int) $row->orders_completed;
-		$profile->response_rate    = (float) $row->response_rate;
-		$profile->response_time    = (float) $row->response_time;
-		$profile->delivery_rate    = (float) $row->delivery_rate;
-		$profile->completion_rate  = (float) $row->completion_rate;
-		$profile->is_verified      = (bool) $row->is_verified;
-		$profile->is_available     = (bool) $row->is_available;
-		$profile->social_links     = $row->social_links ? json_decode( $row->social_links, true ) : [];
+		$profile->rating           = (float) ( $row->rating ?? 0 );
+		$profile->review_count     = (int) ( $row->review_count ?? 0 );
+		$profile->orders_completed = (int) ( $row->orders_completed ?? 0 );
+		$profile->response_rate    = (float) ( $row->response_rate ?? 0 );
+		$profile->response_time    = (float) ( $row->response_time ?? 0 );
+		$profile->delivery_rate    = (float) ( $row->delivery_rate ?? 0 );
+		$profile->completion_rate  = (float) ( $row->completion_rate ?? 0 );
+		$profile->is_verified      = (bool) ( $row->is_verified ?? false );
+		$profile->is_available     = (bool) ( $row->is_available ?? true );
+		$profile->social_links     = isset( $row->social_links ) && $row->social_links ? json_decode( $row->social_links, true ) : array();
 
 		// Timestamps.
-		$profile->vacation_until = $row->vacation_until ? new \DateTimeImmutable( $row->vacation_until ) : null;
-		$profile->member_since   = $row->member_since ? new \DateTimeImmutable( $row->member_since ) : null;
-		$profile->last_active    = $row->last_active ? new \DateTimeImmutable( $row->last_active ) : null;
-		$profile->created_at     = $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
-		$profile->updated_at     = $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+		$profile->vacation_until = isset( $row->vacation_until ) && $row->vacation_until ? new \DateTimeImmutable( $row->vacation_until ) : null;
+		$profile->member_since   = isset( $row->member_since ) && $row->member_since ? new \DateTimeImmutable( $row->member_since ) : null;
+		$profile->last_active    = isset( $row->last_active ) && $row->last_active ? new \DateTimeImmutable( $row->last_active ) : null;
+		$profile->created_at     = isset( $row->created_at ) && $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
+		$profile->updated_at     = isset( $row->updated_at ) && $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
 
 		return $profile;
 	}
@@ -292,12 +292,12 @@ class VendorProfile {
 	 * @return array<string, string>
 	 */
 	public static function get_tiers(): array {
-		return [
+		return array(
 			self::TIER_NEW       => __( 'New Seller', 'wp-sell-services' ),
 			self::TIER_RISING    => __( 'Rising Talent', 'wp-sell-services' ),
 			self::TIER_TOP_RATED => __( 'Top Rated', 'wp-sell-services' ),
 			self::TIER_PRO       => __( 'Pro Seller', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -333,7 +333,7 @@ class VendorProfile {
 			}
 		}
 
-		return get_avatar_url( $this->user_id, [ 'size' => 150 ] );
+		return get_avatar_url( $this->user_id, array( 'size' => 150 ) );
 	}
 
 	/**
