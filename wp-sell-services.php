@@ -146,6 +146,89 @@ function wpss_wp_version_notice(): void {
 }
 
 /**
+ * Register PSR-4 autoloader for WPSellServices namespace.
+ *
+ * This provides a fallback autoloader that works even when
+ * Composer's vendor directory is incomplete (e.g., in distributions
+ * without dev dependencies).
+ *
+ * @return void
+ */
+function wpss_register_autoloader(): void {
+	static $registered = false;
+
+	if ( $registered ) {
+		return;
+	}
+
+	spl_autoload_register(
+		function ( string $class_name ): void {
+			$prefix   = 'WPSellServices\\';
+			$base_dir = WPSS_PLUGIN_DIR . 'src/';
+
+			// Check if the class uses the namespace prefix.
+			$len = strlen( $prefix );
+			if ( strncmp( $prefix, $class_name, $len ) !== 0 ) {
+				return;
+			}
+
+			// Get the relative class name.
+			$relative_class = substr( $class_name, $len );
+
+			// Replace namespace separators with directory separators.
+			$file = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+
+			// If the file exists, require it.
+			if ( file_exists( $file ) ) {
+				require $file;
+			}
+		}
+	);
+
+	$registered = true;
+}
+
+/**
+ * Load Composer autoloader safely.
+ *
+ * Only loads if the autoloader exists and doesn't reference missing files.
+ * This handles distributions without dev dependencies.
+ *
+ * @return bool Whether the autoloader was loaded successfully.
+ */
+function wpss_load_composer_autoloader(): bool {
+	static $loaded = null;
+
+	if ( null !== $loaded ) {
+		return $loaded;
+	}
+
+	$autoloader = WPSS_PLUGIN_DIR . 'vendor/autoload.php';
+
+	if ( ! file_exists( $autoloader ) ) {
+		$loaded = false;
+		return false;
+	}
+
+	// Check if autoload_files.php references files that don't exist.
+	$autoload_files = WPSS_PLUGIN_DIR . 'vendor/composer/autoload_files.php';
+	if ( file_exists( $autoload_files ) ) {
+		$files = require $autoload_files;
+		foreach ( $files as $file ) {
+			if ( ! file_exists( $file ) ) {
+				// Dev dependency file missing - skip Composer autoloader.
+				$loaded = false;
+				return false;
+			}
+		}
+	}
+
+	require_once $autoloader;
+	$loaded = true;
+	return true;
+}
+
+/**
  * Initialize the plugin.
  *
  * @return void
@@ -163,11 +246,11 @@ function wpss_init(): void {
 		return;
 	}
 
-	// Load Composer autoloader.
-	$autoloader = WPSS_PLUGIN_DIR . 'vendor/autoload.php';
-	if ( file_exists( $autoloader ) ) {
-		require_once $autoloader;
-	}
+	// Register custom PSR-4 autoloader (always works).
+	wpss_register_autoloader();
+
+	// Try to load Composer autoloader (for dev environments).
+	wpss_load_composer_autoloader();
 
 	// Load WP-CLI commands.
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -225,11 +308,11 @@ function wpss_activate(): void {
 		);
 	}
 
-	// Load autoloader for activation.
-	$autoloader = WPSS_PLUGIN_DIR . 'vendor/autoload.php';
-	if ( file_exists( $autoloader ) ) {
-		require_once $autoloader;
-	}
+	// Register custom PSR-4 autoloader (always works).
+	wpss_register_autoloader();
+
+	// Try to load Composer autoloader (for dev environments).
+	wpss_load_composer_autoloader();
 
 	// Run activator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Activator.php';
@@ -244,11 +327,11 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\\wpss_activate' );
  * @return void
  */
 function wpss_deactivate(): void {
-	// Load autoloader for deactivation.
-	$autoloader = WPSS_PLUGIN_DIR . 'vendor/autoload.php';
-	if ( file_exists( $autoloader ) ) {
-		require_once $autoloader;
-	}
+	// Register custom PSR-4 autoloader (always works).
+	wpss_register_autoloader();
+
+	// Try to load Composer autoloader (for dev environments).
+	wpss_load_composer_autoloader();
 
 	// Run deactivator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Deactivator.php';
