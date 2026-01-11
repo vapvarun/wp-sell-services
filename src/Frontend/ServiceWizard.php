@@ -14,6 +14,7 @@ namespace WPSellServices\Frontend;
 
 use WPSellServices\Services\VendorService;
 use WPSellServices\Services\ServiceManager;
+use WPSellServices\Services\ModerationService;
 
 /**
  * Multi-step service creation wizard for vendors.
@@ -1340,12 +1341,15 @@ class ServiceWizard {
 		// Sanitize data.
 		$sanitized = $this->sanitize_service_data( $data );
 
+		// Determine post status based on moderation setting.
+		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
+
 		// Create or update post.
 		$post_data = array(
 			'post_type'    => 'wpss_service',
 			'post_title'   => $sanitized['title'],
 			'post_content' => $sanitized['description'],
-			'post_status'  => 'publish',
+			'post_status'  => $post_status,
 			'post_author'  => $user_id,
 		);
 
@@ -1382,11 +1386,20 @@ class ServiceWizard {
 			wp_set_object_terms( $service_id, array_slice( $tags, 0, 5 ), 'wpss_service_tag' );
 		}
 
+		// Prepare success response based on post status.
+		if ( 'pending' === $post_status ) {
+			$message      = __( 'Service submitted for review. You will be notified once it is approved.', 'wp-sell-services' );
+			$redirect_url = wpss_get_dashboard_url( 'services' );
+		} else {
+			$message      = __( 'Service published successfully!', 'wp-sell-services' );
+			$redirect_url = get_permalink( $service_id );
+		}
+
 		wp_send_json_success(
 			array(
-				'message'      => __( 'Service published successfully!', 'wp-sell-services' ),
+				'message'      => $message,
 				'service_id'   => $service_id,
-				'redirect_url' => get_permalink( $service_id ),
+				'redirect_url' => $redirect_url,
 			)
 		);
 	}
