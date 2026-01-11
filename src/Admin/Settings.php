@@ -664,15 +664,23 @@ class Settings {
 						},
 						success: function(response) {
 							if (response.success) {
-								// Add new option and select it
-								$select.append('<option value="' + response.data.page_id + '">' + response.data.title + '</option>');
+								// Check if existing page was linked vs new created.
+								var isExisting = response.data.existing || false;
+								var successMsg = isExisting
+									? '<?php echo esc_js( __( 'Existing Page Linked!', 'wp-sell-services' ) ); ?>'
+									: '<?php echo esc_js( __( 'Page Created!', 'wp-sell-services' ) ); ?>';
+
+								// Add new option if not already present, then select it.
+								if ($select.find('option[value="' + response.data.page_id + '"]').length === 0) {
+									$select.append('<option value="' + response.data.page_id + '">' + response.data.title + '</option>');
+								}
 								$select.val(response.data.page_id);
 
 								// Show and update view link
 								$viewBtn.attr('href', response.data.view_url).show();
 
-								// Change button to success state
-								$btn.removeClass('creating').text('<?php echo esc_js( __( 'Page Created!', 'wp-sell-services' ) ); ?>').addClass('button-primary');
+								// Change button to success state with appropriate message.
+								$btn.removeClass('creating').text(successMsg).addClass('button-primary');
 
 								setTimeout(function() {
 									$btn.removeClass('button-primary').text('<?php echo esc_js( __( 'Create Page', 'wp-sell-services' ) ); ?>');
