@@ -538,12 +538,12 @@
 	 */
 	WPSS.initModals = function() {
 		// Close modal on backdrop click.
-		$(document).on('click', '.wpss-modal-backdrop', function() {
+		$(document).on('click', '.wpss-modal-backdrop, .wpss-modal__backdrop', function() {
 			WPSS.hideModal();
 		});
 
-		// Close modal on close button click.
-		$(document).on('click', '.wpss-modal-close, .wpss-modal-close-btn', function() {
+		// Close modal on close button click (support both naming conventions).
+		$(document).on('click', '.wpss-modal-close, .wpss-modal-close-btn, .wpss-modal__close, .wpss-modal__close-btn', function() {
 			WPSS.hideModal();
 		});
 

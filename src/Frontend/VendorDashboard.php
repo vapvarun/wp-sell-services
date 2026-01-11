@@ -1718,8 +1718,8 @@ class VendorDashboard {
 	 * @return string Dashboard URL.
 	 */
 	private function get_dashboard_url(): string {
-		$page_id = get_option( 'wpss_vendor_dashboard_page' );
-		return $page_id ? get_permalink( $page_id ) : home_url();
+		$url = wpss_get_page_url( 'dashboard' );
+		return $url ? $url : home_url();
 	}
 
 	/**
@@ -1728,8 +1728,8 @@ class VendorDashboard {
 	 * @return string Registration URL.
 	 */
 	private function get_registration_url(): string {
-		$page_id = get_option( 'wpss_become_vendor_page' );
-		return $page_id ? get_permalink( $page_id ) : home_url();
+		$url = wpss_get_page_url( 'become_vendor' );
+		return $url ? $url : home_url();
 	}
 
 	/**

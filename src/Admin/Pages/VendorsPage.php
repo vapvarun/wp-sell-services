@@ -53,7 +53,8 @@ class VendorsPage {
 	 */
 	public function init(): void {
 		add_action( 'admin_menu', [ $this, 'add_menu_page' ], 20 );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20 );
 		add_action( 'wp_ajax_wpss_update_vendor_status', [ $this, 'ajax_update_vendor_status' ] );
 		add_action( 'wp_ajax_wpss_get_vendor_details', [ $this, 'ajax_get_vendor_details' ] );
 	}

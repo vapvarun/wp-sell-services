@@ -180,6 +180,7 @@ class Settings {
 		$shortcodes = array(
 			'services_page' => '[wpss_services]',
 			'dashboard'     => '[wpss_dashboard]',
+			'become_vendor' => '[wpss_vendor_registration]',
 		);
 
 		return $shortcodes[ $field ] ?? '';
@@ -259,16 +260,14 @@ class Settings {
 		);
 
 		add_settings_field(
-			'enable_woocommerce',
-			__( 'WooCommerce Integration', 'wp-sell-services' ),
-			array( $this, 'render_checkbox_field' ),
+			'ecommerce_platform',
+			__( 'E-Commerce Platform', 'wp-sell-services' ),
+			array( $this, 'render_ecommerce_platform_field' ),
 			'wpss_general',
 			'wpss_ecommerce_section',
 			array(
 				'option_name' => 'wpss_general',
-				'field'       => 'enable_woocommerce',
-				'label'       => __( 'Enable WooCommerce for service checkout', 'wp-sell-services' ),
-				'default'     => true,
+				'field'       => 'ecommerce_platform',
 			)
 		);
 
@@ -502,6 +501,7 @@ class Settings {
 		$pages = array(
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
 			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
+			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
 		);
 
 		foreach ( $pages as $key => $label ) {
@@ -877,6 +877,72 @@ class Settings {
 	}
 
 	/**
+	 * Render e-commerce platform selection field.
+	 *
+	 * @param array<string, mixed> $args Field arguments.
+	 * @return void
+	 */
+	public function render_ecommerce_platform_field( array $args ): void {
+		$options = get_option( $args['option_name'], array() );
+		$value   = $options[ $args['field'] ] ?? 'auto';
+
+		// Get available adapters from integration manager.
+		$adapters          = array();
+		$integration_mgr   = wpss()->get_integration_manager();
+		$registered        = $integration_mgr ? $integration_mgr->get_adapters() : array();
+		$active_adapter    = $integration_mgr ? $integration_mgr->get_active_adapter() : null;
+		$active_adapter_id = $active_adapter ? $active_adapter->get_id() : '';
+
+		// Build adapter options with availability status.
+		$platform_options = array(
+			'auto' => __( 'Auto-detect (recommended)', 'wp-sell-services' ),
+		);
+
+		foreach ( $registered as $id => $adapter ) {
+			$name      = $adapter->get_name();
+			$is_active = $adapter->is_active();
+			$status    = $is_active ? __( 'Available', 'wp-sell-services' ) : __( 'Not Installed', 'wp-sell-services' );
+			$platform_options[ $id ] = sprintf( '%s (%s)', $name, $status );
+		}
+
+		printf(
+			'<select id="%1$s" name="%2$s[%1$s]">',
+			esc_attr( $args['field'] ),
+			esc_attr( $args['option_name'] )
+		);
+
+		foreach ( $platform_options as $option_value => $option_label ) {
+			printf(
+				'<option value="%s" %s>%s</option>',
+				esc_attr( $option_value ),
+				selected( $value, $option_value, false ),
+				esc_html( $option_label )
+			);
+		}
+
+		echo '</select>';
+
+		// Show current active platform.
+		if ( $active_adapter ) {
+			printf(
+				'<p class="description"><strong>%s:</strong> %s</p>',
+				esc_html__( 'Currently Active', 'wp-sell-services' ),
+				esc_html( $active_adapter->get_name() )
+			);
+		} else {
+			printf(
+				'<p class="description" style="color: #d63638;">%s</p>',
+				esc_html__( 'No e-commerce platform detected. Please install WooCommerce or another supported platform.', 'wp-sell-services' )
+			);
+		}
+
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'Select which e-commerce platform should handle service checkouts. Pro version adds support for EDD, FluentCart, SureCart, and Standalone mode.', 'wp-sell-services' )
+		);
+	}
+
+	/**
 	 * Render page select field.
 	 *
 	 * @param array<string, mixed> $args Field arguments.
@@ -888,6 +954,7 @@ class Settings {
 		$page_titles = array(
 			'services_page' => __( 'Services', 'wp-sell-services' ),
 			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
+			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
 		);
 
 		echo '<div class="wpss-page-select-wrap">';
@@ -940,7 +1007,7 @@ class Settings {
 		$sanitized['platform_name']           = sanitize_text_field( $input['platform_name'] ?? '' );
 		$sanitized['currency']                = sanitize_text_field( $input['currency'] ?? 'USD' );
 		$sanitized['platform_fee_percentage'] = min( 50, max( 0, (float) ( $input['platform_fee_percentage'] ?? 10 ) ) );
-		$sanitized['enable_woocommerce']      = ! empty( $input['enable_woocommerce'] );
+		$sanitized['ecommerce_platform']      = sanitize_key( $input['ecommerce_platform'] ?? 'auto' );
 
 		return $sanitized;
 	}
@@ -1019,6 +1086,7 @@ class Settings {
 		$page_keys = array(
 			'services_page',
 			'dashboard',
+			'become_vendor',
 		);
 
 		foreach ( $page_keys as $key ) {

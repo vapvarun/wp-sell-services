@@ -28,7 +28,8 @@ class ManualOrderPage {
 		// Priority 20 to ensure parent menu is registered first (default is 10).
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
 		add_action( 'wp_ajax_wpss_create_manual_order', array( $this, 'handle_create_order' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 	}
 
 	/**

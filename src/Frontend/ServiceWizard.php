@@ -1702,8 +1702,10 @@ class ServiceWizard {
 	 * @return string Not vendor message HTML.
 	 */
 	private function render_not_vendor(): string {
-		$page_id          = get_option( 'wpss_become_vendor_page' );
-		$registration_url = $page_id ? get_permalink( $page_id ) : home_url();
+		$registration_url = wpss_get_page_url( 'become_vendor' );
+		if ( ! $registration_url ) {
+			$registration_url = home_url();
+		}
 
 		return '<div class="wpss-notice wpss-notice-info">' .
 			esc_html__( 'You need to be a registered vendor to create services.', 'wp-sell-services' ) .
@@ -1716,7 +1718,7 @@ class ServiceWizard {
 	 * @return string Dashboard URL.
 	 */
 	private function get_dashboard_url(): string {
-		$page_id = get_option( 'wpss_vendor_dashboard_page' );
-		return $page_id ? get_permalink( $page_id ) : home_url();
+		$url = wpss_get_page_url( 'dashboard' );
+		return $url ? $url : home_url();
 	}
 }

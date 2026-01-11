@@ -1032,28 +1032,33 @@ function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, ar
 }
 
 /**
- * Get the active e-commerce adapter.
+ * Get the active e-commerce adapter or a specific adapter by ID.
  *
  * @since 1.1.0
  *
  * @param string|null $adapter_id Specific adapter ID or null for active adapter.
- * @return object|null Adapter instance or null.
+ * @return \WPSellServices\Integrations\Contracts\EcommerceAdapterInterface|null Adapter instance or null.
  */
-function wpss_get_ecommerce_adapter( ?string $adapter_id = null ): ?object {
-	/**
-	 * Filter the e-commerce adapter instance.
-	 *
-	 * @since 1.1.0
-	 * @param object|null $adapter     Adapter instance.
-	 * @param string|null $adapter_id  Requested adapter ID.
-	 */
-	return apply_filters( 'wpss_ecommerce_adapter', null, $adapter_id );
+function wpss_get_ecommerce_adapter( ?string $adapter_id = null ): ?\WPSellServices\Integrations\Contracts\EcommerceAdapterInterface {
+	$integration_mgr = wpss()->get_integration_manager();
+
+	if ( ! $integration_mgr ) {
+		return null;
+	}
+
+	// Return specific adapter if ID provided.
+	if ( null !== $adapter_id ) {
+		return $integration_mgr->get_adapter( $adapter_id );
+	}
+
+	// Return active adapter.
+	return $integration_mgr->get_active_adapter();
 }
 
 /**
  * Check if WooCommerce integration is enabled.
  *
- * Returns true if WooCommerce is installed, active, AND enabled in plugin settings.
+ * Returns true if WooCommerce is the active e-commerce adapter.
  *
  * @since 1.1.0
  *
@@ -1065,9 +1070,11 @@ function wpss_is_woocommerce_enabled(): bool {
 		return false;
 	}
 
-	// Check if integration is enabled in settings.
-	$general_settings = get_option( 'wpss_general', array() );
+	// Check if WooCommerce adapter is active.
+	$adapter = wpss_get_active_adapter();
+	if ( ! $adapter ) {
+		return false;
+	}
 
-	// Default to enabled if setting not yet set.
-	return $general_settings['enable_woocommerce'] ?? true;
+	return 'woocommerce' === $adapter->get_id();
 }

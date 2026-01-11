@@ -792,12 +792,24 @@ class Admin {
 								<?php if ( $order->delivery_deadline ) : ?>
 									<tr>
 										<th><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></th>
-										<td><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></td>
+										<td><?php
+										$deadline_timestamp = $order->delivery_deadline instanceof \DateTimeInterface
+											? $order->delivery_deadline->getTimestamp()
+											: strtotime( $order->delivery_deadline );
+										echo esc_html( wp_date( get_option( 'date_format' ), $deadline_timestamp ) );
+										?></td>
 									</tr>
 								<?php endif; ?>
 								<tr>
 									<th><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></th>
-									<td><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '' ); ?></td>
+									<td><?php
+									if ( $order->created_at ) {
+										$created_timestamp = $order->created_at instanceof \DateTimeInterface
+											? $order->created_at->getTimestamp()
+											: strtotime( $order->created_at );
+										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $created_timestamp ) );
+									}
+									?></td>
 								</tr>
 								<?php if ( ! empty( $order->platform_order_id ) ) : ?>
 									<tr>

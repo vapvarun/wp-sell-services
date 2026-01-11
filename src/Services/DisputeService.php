@@ -91,7 +91,8 @@ class DisputeService {
 		}
 
 		// Check if user is part of the order.
-		if ( $order->customer_id !== $opened_by && $order->vendor_id !== $opened_by ) {
+		// Cast to int since database returns string values.
+		if ( (int) $order->customer_id !== $opened_by && (int) $order->vendor_id !== $opened_by ) {
 			return false;
 		}
 

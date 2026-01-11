@@ -85,6 +85,9 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_live_search', array( $this, 'live_search' ) );
 		add_action( 'wp_ajax_nopriv_wpss_live_search', array( $this, 'live_search' ) );
 
+		// Contact vendor.
+		add_action( 'wp_ajax_wpss_contact_vendor', array( $this, 'contact_vendor' ) );
+
 		// Add to cart.
 		add_action( 'wp_ajax_wpss_add_service_to_cart', array( $this, 'add_service_to_cart' ) );
 		add_action( 'wp_ajax_nopriv_wpss_add_service_to_cart', array( $this, 'add_service_to_cart' ) );
@@ -799,7 +802,7 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function submit_review(): void {
-		check_ajax_referer( 'wpss_review_nonce', 'nonce' );
+		check_ajax_referer( 'wpss_submit_review', 'wpss_review_nonce' );
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$rating   = absint( $_POST['rating'] ?? 0 );
@@ -1586,6 +1589,187 @@ class AjaxHandlers {
 	}
 
 	/**
+	 * Contact vendor.
+	 *
+	 * Allows logged-in users to send a message to a service vendor.
+	 *
+	 * @return void
+	 */
+	public function contact_vendor(): void {
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
+
+		$user_id    = get_current_user_id();
+		$vendor_id  = absint( $_POST['vendor_id'] ?? 0 );
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$message    = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in to contact vendors.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $vendor_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid vendor.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $message ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a message.', 'wp-sell-services' ) ) );
+		}
+
+		// Prevent contacting yourself.
+		if ( $user_id === $vendor_id ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot contact yourself.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify vendor exists.
+		$vendor = get_userdata( $vendor_id );
+		if ( ! $vendor ) {
+			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
+		}
+
+		// Get service title for context.
+		$service_title = '';
+		if ( $service_id ) {
+			$service = get_post( $service_id );
+			if ( $service && 'wpss_service' === $service->post_type ) {
+				$service_title = $service->post_title;
+			}
+		}
+
+		// Handle file attachments.
+		$attachments = array();
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File uploads handled by media_handle_upload.
+		if ( ! empty( $_FILES['attachments'] ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+			require_once ABSPATH . 'wp-admin/includes/media.php';
+
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File uploads handled by media_handle_upload.
+			$files = $_FILES['attachments'];
+
+			// Handle multiple files.
+			if ( is_array( $files['name'] ) ) {
+				$file_count = count( $files['name'] );
+				$max_files  = 5;
+				$limit      = min( $file_count, $max_files );
+
+				for ( $i = 0; $i < $limit; $i++ ) {
+					if ( empty( $files['name'][ $i ] ) || UPLOAD_ERR_OK !== $files['error'][ $i ] ) {
+						continue;
+					}
+
+					$file = array(
+						'name'     => $files['name'][ $i ],
+						'type'     => $files['type'][ $i ],
+						'tmp_name' => $files['tmp_name'][ $i ],
+						'error'    => $files['error'][ $i ],
+						'size'     => $files['size'][ $i ],
+					);
+
+					$_FILES['upload_file'] = $file;
+					$attachment_id         = media_handle_upload( 'upload_file', 0 );
+
+					if ( ! is_wp_error( $attachment_id ) ) {
+						$attachments[] = array(
+							'id'   => $attachment_id,
+							'url'  => wp_get_attachment_url( $attachment_id ),
+							'name' => $files['name'][ $i ],
+						);
+					}
+				}
+			}
+		}
+
+		// Get sender info.
+		$sender = get_userdata( $user_id );
+
+		// Create notification for vendor.
+		$notification_service = new \WPSellServices\Services\NotificationService();
+
+		$notification_title = sprintf(
+			/* translators: %s: sender name */
+			__( 'New message from %s', 'wp-sell-services' ),
+			$sender->display_name
+		);
+
+		$notification_message = $service_title
+			? sprintf(
+				/* translators: 1: sender name, 2: service title */
+				__( '%1$s sent you a message about "%2$s"', 'wp-sell-services' ),
+				$sender->display_name,
+				$service_title
+			)
+			: sprintf(
+				/* translators: %s: sender name */
+				__( '%s sent you a message', 'wp-sell-services' ),
+				$sender->display_name
+			);
+
+		$notification_data = array(
+			'sender_id'   => $user_id,
+			'service_id'  => $service_id,
+			'message'     => $message,
+			'attachments' => $attachments,
+		);
+
+		$notification_service->create(
+			$vendor_id,
+			'contact_message',
+			$notification_title,
+			$notification_message,
+			$notification_data
+		);
+
+		// Send email to vendor.
+		$email_subject = $notification_title;
+		$email_message = sprintf(
+			/* translators: 1: vendor name, 2: sender name */
+			__(
+				"Hi %1\$s,\n\n%2\$s has sent you a message:",
+				'wp-sell-services'
+			),
+			$vendor->display_name,
+			$sender->display_name
+		);
+		$email_message .= "\n\n" . $message;
+
+		if ( $service_title ) {
+			$email_message .= "\n\n" . sprintf(
+				/* translators: %s: service title */
+				__( 'Regarding: %s', 'wp-sell-services' ),
+				$service_title
+			);
+		}
+
+		if ( ! empty( $attachments ) ) {
+			$email_message .= "\n\n" . __( 'Attachments:', 'wp-sell-services' );
+			foreach ( $attachments as $attachment ) {
+				$email_message .= "\n- " . $attachment['name'] . ': ' . $attachment['url'];
+			}
+		}
+
+		$email_message .= "\n\n" . sprintf(
+			/* translators: %s: reply email */
+			__( 'You can reply to this email or contact the sender at: %s', 'wp-sell-services' ),
+			$sender->user_email
+		);
+
+		wp_mail( $vendor->user_email, $email_subject, $email_message );
+
+		/**
+		 * Fires after a vendor contact message is sent.
+		 *
+		 * @param int    $vendor_id   Vendor user ID.
+		 * @param int    $user_id     Sender user ID.
+		 * @param int    $service_id  Service ID (may be 0).
+		 * @param string $message     Message content.
+		 * @param array  $attachments Attachment data.
+		 */
+		do_action( 'wpss_vendor_contacted', $vendor_id, $user_id, $service_id, $message, $attachments );
+
+		wp_send_json_success( array( 'message' => __( 'Your message has been sent successfully!', 'wp-sell-services' ) ) );
+	}
+
+	/**
 	 * Add service to cart.
 	 *
 	 * Handles adding a service with selected package and extras to WooCommerce cart.
@@ -1604,9 +1788,10 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
-		// Check if WooCommerce is active.
-		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
-			wp_send_json_error( array( 'message' => __( 'WooCommerce is required for checkout.', 'wp-sell-services' ) ) );
+		// Check if e-commerce adapter is active.
+		$adapter = wpss_get_active_adapter();
+		if ( ! $adapter ) {
+			wp_send_json_error( array( 'message' => __( 'No e-commerce platform is active. Please configure WooCommerce or another supported platform.', 'wp-sell-services' ) ) );
 		}
 
 		// Get the service.

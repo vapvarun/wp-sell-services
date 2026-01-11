@@ -44,7 +44,8 @@ class WithdrawalsPage {
 	 */
 	public function init(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 		add_action( 'wp_ajax_wpss_process_withdrawal', array( $this, 'ajax_process_withdrawal' ) );
 	}
 

@@ -48,7 +48,8 @@ class ServiceModerationPage {
 	public function init(): void {
 		// Always register admin menu - shows enabled/disabled state.
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 15 );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 
 		// AJAX handlers - always registered for admin use.
 		add_action( 'wp_ajax_wpss_approve_service', array( $this, 'ajax_approve_service' ) );
@@ -1054,16 +1055,25 @@ class ServiceModerationPage {
 			return $data;
 		}
 
-		// If being published, check if it's pending moderation.
+		// If being published, check if moderation is approved.
 		if ( 'publish' === $data['post_status'] ) {
 			$post_id = $postarr['ID'] ?? 0;
 
-			// For new posts, we'll set meta in save_post hook.
-			// For existing posts, check current moderation status.
-			if ( $post_id ) {
-				$moderation_status = get_post_meta( $post_id, self::META_KEY, true );
+			// For new posts, prevent publish - will be set to pending moderation.
+			if ( ! $post_id ) {
+				$data['post_status'] = 'pending';
+				return $data;
+			}
 
-				// If rejected or new, reset to pending.
+			// For existing posts, check current moderation status.
+			$moderation_status = get_post_meta( $post_id, self::META_KEY, true );
+
+			// Only allow publish if moderation status is approved.
+			if ( self::STATUS_APPROVED !== $moderation_status ) {
+				// Set post status to pending and update moderation meta.
+				$data['post_status'] = 'pending';
+
+				// If rejected or new, reset moderation to pending.
 				if ( self::STATUS_REJECTED === $moderation_status || ! $moderation_status ) {
 					update_post_meta( $post_id, self::META_KEY, self::STATUS_PENDING );
 					delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
