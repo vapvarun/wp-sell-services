@@ -454,12 +454,13 @@ class Admin {
 	private function is_plugin_page( string $hook ): bool {
 		$plugin_pages = array(
 			'toplevel_page_wp-sell-services',
-			'sell-services_page_wpss-orders',
-			'sell-services_page_wpss-vendors',
-			'sell-services_page_wpss-withdrawals',
-			'sell-services_page_wpss-moderation',
-			'sell-services_page_wpss-disputes',
-			'sell-services_page_wpss-settings',
+			'wp-sell-services_page_wpss-orders',
+			'wp-sell-services_page_wpss-vendors',
+			'wp-sell-services_page_wpss-withdrawals',
+			'wp-sell-services_page_wpss-moderation',
+			'wp-sell-services_page_wpss-disputes',
+			'wp-sell-services_page_wpss-settings',
+			'wp-sell-services_page_wpss-create-order',
 		);
 
 		return in_array( $hook, $plugin_pages, true );

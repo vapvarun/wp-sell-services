@@ -72,7 +72,7 @@ class WithdrawalsPage {
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'sell-services_page_wpss-withdrawals' !== $hook ) {
+		if ( 'wp-sell-services_page_wpss-withdrawals' !== $hook ) {
 			return;
 		}
 

@@ -82,7 +82,7 @@ class VendorsPage {
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'sell-services_page_wpss-vendors' !== $hook ) {
+		if ( 'wp-sell-services_page_wpss-vendors' !== $hook ) {
 			return;
 		}
 
