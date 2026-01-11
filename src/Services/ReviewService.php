@@ -66,19 +66,18 @@ class ReviewService {
 				'order_id'             => $order_id,
 				'service_id'           => $order->service_id,
 				'reviewer_id'          => $reviewer_id,
-				'reviewed_id'          => $order->vendor_id,
+				'reviewee_id'          => $order->vendor_id,
+				'customer_id'          => $reviewer_id,
+				'vendor_id'            => $order->vendor_id,
 				'rating'               => $rating,
-				'rating_communication' => ! empty( $data['rating_communication'] ) ? (int) $data['rating_communication'] : null,
-				'rating_quality'       => ! empty( $data['rating_quality'] ) ? (int) $data['rating_quality'] : null,
-				'rating_value'         => ! empty( $data['rating_value'] ) ? (int) $data['rating_value'] : null,
-				'title'                => sanitize_text_field( $data['title'] ?? '' ),
-				'content'              => wp_kses_post( $data['content'] ?? '' ),
+				'communication_rating' => ! empty( $data['rating_communication'] ) ? (int) $data['rating_communication'] : null,
+				'quality_rating'       => ! empty( $data['rating_quality'] ) ? (int) $data['rating_quality'] : null,
+				'delivery_rating'      => ! empty( $data['rating_value'] ) ? (int) $data['rating_value'] : null,
+				'review'               => wp_kses_post( $data['content'] ?? '' ),
 				'status'               => $this->requires_moderation() ? Review::STATUS_PENDING : Review::STATUS_APPROVED,
-				'is_verified'          => 1,
 				'created_at'           => current_time( 'mysql' ),
-				'updated_at'           => current_time( 'mysql' ),
 			),
-			array( '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s' )
+			array( '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		$review_id = (int) $wpdb->insert_id;
@@ -240,7 +239,7 @@ class ReviewService {
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$table}
-				WHERE reviewed_id = %d AND status = %s
+				WHERE vendor_id = %d AND status = %s
 				ORDER BY created_at DESC
 				LIMIT %d OFFSET %d",
 				$vendor_id,
@@ -279,9 +278,8 @@ class ReviewService {
 		return (bool) $wpdb->update(
 			$table,
 			array(
-				'response'    => wp_kses_post( $response ),
-				'response_at' => current_time( 'mysql' ),
-				'updated_at'  => current_time( 'mysql' ),
+				'vendor_reply'    => wp_kses_post( $response ),
+				'vendor_reply_at' => current_time( 'mysql' ),
 			),
 			array( 'id' => $review_id )
 		);
@@ -330,7 +328,7 @@ class ReviewService {
 			$wpdb->prepare(
 				"SELECT AVG(rating) as avg_rating, COUNT(*) as review_count
 				FROM {$reviews_table}
-				WHERE reviewed_id = %d AND status = %s",
+				WHERE vendor_id = %d AND status = %s",
 				$vendor_id,
 				Review::STATUS_APPROVED
 			)
@@ -341,9 +339,8 @@ class ReviewService {
 			$wpdb->update(
 				$vendors_table,
 				array(
-					'rating'       => round( (float) $stats->avg_rating, 2 ),
-					'review_count' => (int) $stats->review_count,
-					'updated_at'   => current_time( 'mysql' ),
+					'avg_rating'    => round( (float) $stats->avg_rating, 2 ),
+					'total_reviews' => (int) $stats->review_count,
 				),
 				array( 'user_id' => $vendor_id )
 			);

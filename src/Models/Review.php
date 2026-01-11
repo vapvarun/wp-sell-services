@@ -159,26 +159,30 @@ class Review {
 	public static function from_db( object $row ): self {
 		$review = new self();
 
-		$review->id                   = (int) $row->id;
-		$review->order_id             = (int) $row->order_id;
-		$review->service_id           = (int) $row->service_id;
-		$review->reviewer_id          = (int) $row->reviewer_id;
-		$review->reviewed_id          = (int) $row->reviewed_id;
-		$review->rating               = (int) $row->rating;
-		$review->rating_communication = $row->rating_communication ? (int) $row->rating_communication : null;
-		$review->rating_quality       = $row->rating_quality ? (int) $row->rating_quality : null;
-		$review->rating_value         = $row->rating_value ? (int) $row->rating_value : null;
-		$review->title                = $row->title ?? '';
-		$review->content              = $row->content;
-		$review->response             = $row->response ?? '';
-		$review->status               = $row->status ?? self::STATUS_PENDING;
-		$review->is_verified          = (bool) $row->is_verified;
-		$review->helpful_count        = (int) $row->helpful_count;
+		$review->id          = (int) $row->id;
+		$review->order_id    = (int) $row->order_id;
+		$review->service_id  = (int) $row->service_id;
+		$review->reviewer_id = (int) $row->reviewer_id;
+		// Map reviewee_id from DB to reviewed_id property.
+		$review->reviewed_id = (int) ( $row->reviewee_id ?? $row->vendor_id ?? 0 );
+		$review->rating      = (int) $row->rating;
+		// Map DB column names to model properties.
+		$review->rating_communication = isset( $row->communication_rating ) ? (int) $row->communication_rating : null;
+		$review->rating_quality       = isset( $row->quality_rating ) ? (int) $row->quality_rating : null;
+		$review->rating_value         = isset( $row->delivery_rating ) ? (int) $row->delivery_rating : null;
+		$review->title                = '';
+		// Map review column from DB to content property.
+		$review->content = $row->review ?? '';
+		// Map vendor_reply column from DB to response property.
+		$review->response      = $row->vendor_reply ?? '';
+		$review->status        = $row->status ?? self::STATUS_PENDING;
+		$review->is_verified   = isset( $row->is_public ) ? (bool) $row->is_public : true;
+		$review->helpful_count = (int) ( $row->helpful_count ?? 0 );
 
 		// Timestamps.
-		$review->response_at = $row->response_at ? new \DateTimeImmutable( $row->response_at ) : null;
-		$review->created_at  = $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
-		$review->updated_at  = $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+		$review->response_at = ! empty( $row->vendor_reply_at ) ? new \DateTimeImmutable( $row->vendor_reply_at ) : null;
+		$review->created_at  = ! empty( $row->created_at ) ? new \DateTimeImmutable( $row->created_at ) : null;
+		$review->updated_at  = null;
 
 		return $review;
 	}
@@ -189,11 +193,11 @@ class Review {
 	 * @return array<string, string>
 	 */
 	public static function get_statuses(): array {
-		return [
+		return array(
 			self::STATUS_PENDING  => __( 'Pending', 'wp-sell-services' ),
 			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
 			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -202,7 +206,8 @@ class Review {
 	 * @return \WP_User|null
 	 */
 	public function get_reviewer(): ?\WP_User {
-		return get_user_by( 'id', $this->reviewer_id ) ?: null;
+		$user = get_user_by( 'id', $this->reviewer_id );
+		return $user ? $user : null;
 	}
 
 	/**
@@ -240,7 +245,7 @@ class Review {
 	 * @return float
 	 */
 	public function get_average_rating(): float {
-		$ratings = [ $this->rating ];
+		$ratings = array( $this->rating );
 
 		if ( null !== $this->rating_communication ) {
 			$ratings[] = $this->rating_communication;
@@ -280,6 +285,7 @@ class Review {
 	 * @return string
 	 */
 	public static function get_stars_html( int $rating ): string {
+		/* translators: %d: star rating (1-5) */
 		$html = '<span class="wpss-stars" aria-label="' . esc_attr( sprintf( __( '%d out of 5 stars', 'wp-sell-services' ), $rating ) ) . '">';
 
 		for ( $i = 1; $i <= 5; $i++ ) {

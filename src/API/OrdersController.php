@@ -640,23 +640,17 @@ class OrdersController extends RestController {
 					$error = __( 'Reason is required for disputes.', 'wp-sell-services' );
 				} else {
 					$opened_by = $is_vendor ? 'vendor' : 'customer';
-					$result    = $order->update( array( 'status' => 'disputed' ) );
 
-					// Create dispute record.
-					global $wpdb;
-					$wpdb->insert(
-						$wpdb->prefix . 'wpss_order_disputes',
-						array(
-							'order_id'   => $order_id,
-							'opened_by'  => $user_id,
-							'reason'     => $reason,
-							'status'     => 'open',
-							'created_at' => current_time( 'mysql' ),
-						),
-						array( '%d', '%d', '%s', '%s', '%s' )
-					);
+					// Create dispute using DisputeService.
+					$dispute_service = new \WPSellServices\Services\DisputeService();
+					$dispute_id      = $dispute_service->open( $order_id, $user_id, $reason );
 
-					do_action( 'wpss_order_disputed', $order_id, $opened_by, $reason );
+					if ( $dispute_id ) {
+						$result = $order->update( array( 'status' => 'disputed' ) );
+						do_action( 'wpss_order_disputed', $order_id, $opened_by, $reason );
+					} else {
+						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
+					}
 				}
 				break;
 

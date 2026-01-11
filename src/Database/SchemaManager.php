@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.1.0';
+	const DB_VERSION = '1.2.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -109,6 +109,7 @@ class SchemaManager {
 			$this->get_orders_table( $charset_collate ),
 			$this->get_order_requirements_table( $charset_collate ),
 			$this->get_conversations_table( $charset_collate ),
+			$this->get_messages_table( $charset_collate ),
 			$this->get_deliveries_table( $charset_collate ),
 			$this->get_extension_requests_table( $charset_collate ),
 			$this->get_reviews_table( $charset_collate ),
@@ -307,6 +308,8 @@ class SchemaManager {
 	/**
 	 * Get conversations table SQL.
 	 *
+	 * Stores conversation metadata. Messages are stored in wpss_messages.
+	 *
 	 * @param string $charset_collate Charset collation.
 	 * @return string SQL statement.
 	 */
@@ -316,18 +319,45 @@ class SchemaManager {
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			order_id bigint(20) unsigned NOT NULL,
-			sender_id bigint(20) unsigned NOT NULL,
-			recipient_id bigint(20) unsigned NOT NULL,
-			message longtext NOT NULL,
-			message_type varchar(50) DEFAULT 'text',
-			attachments longtext,
-			is_read tinyint(1) DEFAULT 0,
-			read_at datetime DEFAULT NULL,
+			subject varchar(255) DEFAULT NULL,
+			participants longtext,
+			message_count int(11) DEFAULT 0,
+			unread_counts longtext,
+			is_closed tinyint(1) DEFAULT 0,
+			last_message_at datetime DEFAULT NULL,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_order (order_id),
-			KEY idx_sender (sender_id),
-			KEY idx_unread (recipient_id,is_read)
+			KEY idx_order (order_id)
+		) {$charset_collate};";
+	}
+
+	/**
+	 * Get messages table SQL.
+	 *
+	 * Stores individual messages within conversations.
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_messages_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'messages' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			conversation_id bigint(20) unsigned NOT NULL,
+			sender_id bigint(20) unsigned NOT NULL,
+			type varchar(50) DEFAULT 'text',
+			content longtext NOT NULL,
+			attachments longtext,
+			metadata longtext,
+			read_by longtext,
+			is_edited tinyint(1) DEFAULT 0,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_conversation (conversation_id),
+			KEY idx_sender (sender_id)
 		) {$charset_collate};";
 	}
 
@@ -724,6 +754,7 @@ class SchemaManager {
 			'reviews',
 			'extension_requests',
 			'deliveries',
+			'messages',
 			'conversations',
 			'order_requirements',
 			'orders',
@@ -755,6 +786,7 @@ class SchemaManager {
 			'orders'               => $this->get_table_name( 'orders' ),
 			'order_requirements'   => $this->get_table_name( 'order_requirements' ),
 			'conversations'        => $this->get_table_name( 'conversations' ),
+			'messages'             => $this->get_table_name( 'messages' ),
 			'deliveries'           => $this->get_table_name( 'deliveries' ),
 			'extension_requests'   => $this->get_table_name( 'extension_requests' ),
 			'reviews'              => $this->get_table_name( 'reviews' ),

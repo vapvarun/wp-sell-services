@@ -63,286 +63,286 @@ class DisputesController extends RestController {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
-					'permission_callback' => [ $this, 'check_permissions' ],
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array_merge(
 						$this->get_collection_params(),
-						[
-							'status' => [
+						array(
+							'status' => array(
 								'type' => 'string',
 								'enum' => array_keys( DisputeService::get_statuses() ),
-							],
-						]
+							),
+						)
 					),
-				],
-			]
+				),
+			)
 		);
 
 		// Open a dispute.
 		register_rest_route(
 			$this->namespace,
 			'/orders/(?P<order_id>[\d]+)/dispute',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'check_order_permission' ],
-					'args'                => [
-						'order_id'    => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'reason'      => [
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'check_order_permission' ),
+					'args'                => array(
+						'order_id'    => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'reason'      => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
-						],
-						'description' => [
+						),
+						'description' => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_textarea_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Get single dispute.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => [ $this, 'check_dispute_permission' ],
-					'args'                => [
-						'id' => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-			]
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'check_dispute_permission' ),
+					'args'                => array(
+						'id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+			)
 		);
 
 		// Get dispute by order.
 		register_rest_route(
 			$this->namespace,
 			'/orders/(?P<order_id>[\d]+)/dispute',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_by_order' ],
-					'permission_callback' => [ $this, 'check_order_permission' ],
-					'args'                => [
-						'order_id' => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-			]
+					'callback'            => array( $this, 'get_by_order' ),
+					'permission_callback' => array( $this, 'check_order_permission' ),
+					'args'                => array(
+						'order_id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+			)
 		);
 
 		// Submit response to dispute.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/respond',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'submit_response' ],
-					'permission_callback' => [ $this, 'check_dispute_permission' ],
-					'args'                => [
-						'id'          => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'response'    => [
+					'callback'            => array( $this, 'submit_response' ),
+					'permission_callback' => array( $this, 'check_dispute_permission' ),
+					'args'                => array(
+						'id'          => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'response'    => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'wp_kses_post',
-						],
-						'attachments' => [
+						),
+						'attachments' => array(
 							'type'    => 'array',
-							'items'   => [ 'type' => 'integer' ],
-							'default' => [],
-						],
-					],
-				],
-			]
+							'items'   => array( 'type' => 'integer' ),
+							'default' => array(),
+						),
+					),
+				),
+			)
 		);
 
 		// Add evidence.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/evidence',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_evidence' ],
-					'permission_callback' => [ $this, 'check_dispute_permission' ],
-					'args'                => [
-						'id' => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-				[
+					'callback'            => array( $this, 'get_evidence' ),
+					'permission_callback' => array( $this, 'check_dispute_permission' ),
+					'args'                => array(
+						'id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'add_evidence' ],
-					'permission_callback' => [ $this, 'check_dispute_permission' ],
-					'args'                => [
-						'id'          => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'type'        => [
+					'callback'            => array( $this, 'add_evidence' ),
+					'permission_callback' => array( $this, 'check_dispute_permission' ),
+					'args'                => array(
+						'id'          => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'type'        => array(
 							'required' => true,
 							'type'     => 'string',
-							'enum'     => [ 'text', 'image', 'file', 'link' ],
-						],
-						'content'     => [
+							'enum'     => array( 'text', 'image', 'file', 'link' ),
+						),
+						'content'     => array(
 							'required' => true,
 							'type'     => 'string',
-						],
-						'description' => [
+						),
+						'description' => array(
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_textarea_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Get timeline.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/timeline',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_timeline' ],
-					'permission_callback' => [ $this, 'check_dispute_permission' ],
-					'args'                => [
-						'id' => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-			]
+					'callback'            => array( $this, 'get_timeline' ),
+					'permission_callback' => array( $this, 'check_dispute_permission' ),
+					'args'                => array(
+						'id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+			)
 		);
 
 		// Escalate dispute.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/escalate',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'escalate' ],
-					'permission_callback' => [ $this, 'check_dispute_permission' ],
-					'args'                => [
-						'id'     => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'reason' => [
+					'callback'            => array( $this, 'escalate' ),
+					'permission_callback' => array( $this, 'check_dispute_permission' ),
+					'args'                => array(
+						'id'     => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'reason' => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_textarea_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Cancel dispute.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/cancel',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'cancel' ],
-					'permission_callback' => [ $this, 'check_dispute_permission' ],
-					'args'                => [
-						'id'     => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'reason' => [
+					'callback'            => array( $this, 'cancel' ),
+					'permission_callback' => array( $this, 'check_dispute_permission' ),
+					'args'                => array(
+						'id'     => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'reason' => array(
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_textarea_field',
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Admin: Resolve dispute.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/resolve',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'resolve' ],
-					'permission_callback' => [ $this, 'check_admin_permissions' ],
-					'args'                => [
-						'id'            => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'resolution'    => [
+					'callback'            => array( $this, 'resolve' ),
+					'permission_callback' => array( $this, 'check_admin_permissions' ),
+					'args'                => array(
+						'id'            => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'resolution'    => array(
 							'required' => true,
 							'type'     => 'string',
 							'enum'     => array_keys( DisputeService::get_resolution_types() ),
-						],
-						'notes'         => [
+						),
+						'notes'         => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_textarea_field',
-						],
-						'refund_amount' => [
+						),
+						'refund_amount' => array(
 							'type'    => 'number',
 							'default' => 0,
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Admin: Assign dispute.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/assign',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'assign' ],
-					'permission_callback' => [ $this, 'check_admin_permissions' ],
-					'args'                => [
-						'id'       => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'admin_id' => [
+					'callback'            => array( $this, 'assign' ),
+					'permission_callback' => array( $this, 'check_admin_permissions' ),
+					'args'                => array(
+						'id'       => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'admin_id' => array(
 							'required'          => true,
 							'type'              => 'integer',
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-			]
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+			)
 		);
 
 		// Get statuses and resolution types.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/options',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_options' ],
+					'callback'            => array( $this, 'get_options' ),
 					'permission_callback' => '__return_true',
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -365,7 +365,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'dispute_not_found',
 				__( 'Dispute not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -374,7 +374,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this dispute.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -399,7 +399,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -417,10 +417,10 @@ class DisputesController extends RestController {
 		$pagination = $this->get_pagination_args( $request );
 		$status     = $request->get_param( 'status' );
 
-		$args = [
+		$args = array(
 			'limit'  => $pagination['per_page'],
 			'offset' => $pagination['offset'],
-		];
+		);
 
 		if ( $status ) {
 			$args['status'] = $status;
@@ -434,7 +434,7 @@ class DisputesController extends RestController {
 			$total    = count( $disputes ); // Simplified count.
 		}
 
-		$data = array_map( [ $this, 'prepare_dispute_for_response' ], $disputes );
+		$data = array_map( array( $this, 'prepare_dispute_for_response' ), $disputes );
 
 		return $this->paginated_response( $data, $total, $pagination['page'], $pagination['per_page'] );
 	}
@@ -466,7 +466,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'dispute_not_found',
 				__( 'No dispute found for this order.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -491,17 +491,17 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'dispute_create_failed',
 				__( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
 		$dispute = $this->dispute_service->get( $dispute_id );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'message' => __( 'Dispute opened successfully.', 'wp-sell-services' ),
 				'data'    => $this->prepare_dispute_for_response( $dispute ),
-			],
+			),
 			201
 		);
 	}
@@ -524,7 +524,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'response_failed',
 				$result['message'],
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -541,7 +541,7 @@ class DisputesController extends RestController {
 		$dispute_id = (int) $request->get_param( 'id' );
 		$evidence   = $this->dispute_service->get_evidence( $dispute_id );
 
-		$data = array_map( [ $this, 'prepare_evidence_for_response' ], $evidence );
+		$data = array_map( array( $this, 'prepare_evidence_for_response' ), $evidence );
 
 		return new WP_REST_Response( $data );
 	}
@@ -559,21 +559,21 @@ class DisputesController extends RestController {
 		$content     = $request->get_param( 'content' );
 		$description = $request->get_param( 'description' ) ?? '';
 
-		$evidence_id = $this->dispute_service->add_evidence( $dispute_id, $user_id, $type, $content, $description );
+		$result = $this->dispute_service->add_evidence( $dispute_id, $user_id, $type, $content, $description );
 
-		if ( ! $evidence_id ) {
+		if ( ! $result ) {
 			return new WP_Error(
 				'evidence_add_failed',
 				__( 'Failed to add evidence.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
 		return new WP_REST_Response(
-			[
-				'message'     => __( 'Evidence added successfully.', 'wp-sell-services' ),
-				'evidence_id' => $evidence_id,
-			],
+			array(
+				'success' => true,
+				'message' => __( 'Evidence added successfully.', 'wp-sell-services' ),
+			),
 			201
 		);
 	}
@@ -608,7 +608,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'escalate_failed',
 				$result['message'],
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -632,7 +632,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'cancel_failed',
 				$result['message'],
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -658,14 +658,16 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'resolve_failed',
 				__( 'Failed to resolve dispute.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
-		return new WP_REST_Response( [
-			'success' => true,
-			'message' => __( 'Dispute resolved successfully.', 'wp-sell-services' ),
-		] );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => __( 'Dispute resolved successfully.', 'wp-sell-services' ),
+			)
+		);
 	}
 
 	/**
@@ -684,7 +686,7 @@ class DisputesController extends RestController {
 			return new WP_Error(
 				'assign_failed',
 				$result['message'],
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -698,10 +700,12 @@ class DisputesController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_options( $request ) {
-		return new WP_REST_Response( [
-			'statuses'         => DisputeService::get_statuses(),
-			'resolution_types' => DisputeService::get_resolution_types(),
-		] );
+		return new WP_REST_Response(
+			array(
+				'statuses'         => DisputeService::get_statuses(),
+				'resolution_types' => DisputeService::get_resolution_types(),
+			)
+		);
 	}
 
 	/**
@@ -712,41 +716,38 @@ class DisputesController extends RestController {
 	 * @return array
 	 */
 	private function prepare_dispute_for_response( object $dispute, bool $detailed = false ): array {
-		$opener = get_userdata( $dispute->opened_by );
+		$initiator = get_userdata( $dispute->initiated_by );
 
-		$data = [
-			'id'          => (int) $dispute->id,
-			'order_id'    => (int) $dispute->order_id,
-			'reason'      => $dispute->reason,
-			'status'      => $dispute->status,
+		$data = array(
+			'id'           => (int) $dispute->id,
+			'order_id'     => (int) $dispute->order_id,
+			'reason'       => $dispute->reason,
+			'status'       => $dispute->status,
 			'status_label' => DisputeService::get_statuses()[ $dispute->status ] ?? $dispute->status,
-			'opened_by'   => [
-				'id'     => (int) $dispute->opened_by,
-				'name'   => $opener ? $opener->display_name : '',
-				'avatar' => get_avatar_url( $dispute->opened_by, [ 'size' => 48 ] ),
-			],
-			'created_at'  => $dispute->created_at,
-			'updated_at'  => $dispute->updated_at,
-		];
+			'initiated_by' => array(
+				'id'     => (int) $dispute->initiated_by,
+				'name'   => $initiator ? $initiator->display_name : '',
+				'avatar' => get_avatar_url( $dispute->initiated_by, array( 'size' => 48 ) ),
+			),
+			'created_at'   => $dispute->created_at,
+			'updated_at'   => $dispute->updated_at,
+		);
 
 		if ( $detailed ) {
 			$data['description']       = $dispute->description;
-			$data['meta']              = $dispute->meta ?? [];
+			$data['evidence']          = $dispute->evidence ?? array();
 			$data['response_deadline'] = $dispute->response_deadline ?? null;
 			$data['resolved_at']       = $dispute->resolved_at ?? null;
+			$data['resolution']        = $dispute->resolution ?? null;
+			$data['resolution_notes']  = $dispute->resolution_notes ?? null;
 
-			// Get assigned admin if any.
-			if ( isset( $dispute->meta['assigned_to'] ) ) {
-				$admin = get_userdata( $dispute->meta['assigned_to'] );
-				$data['assigned_to'] = [
-					'id'   => $dispute->meta['assigned_to'],
-					'name' => $admin ? $admin->display_name : '',
-				];
-			}
-
-			// Get resolution details if resolved.
-			if ( isset( $dispute->meta['resolution'] ) ) {
-				$data['resolution'] = $dispute->meta['resolution'];
+			// Get resolver if resolved.
+			if ( ! empty( $dispute->resolved_by ) ) {
+				$resolver            = get_userdata( $dispute->resolved_by );
+				$data['resolved_by'] = array(
+					'id'   => (int) $dispute->resolved_by,
+					'name' => $resolver ? $resolver->display_name : '',
+				);
 			}
 		}
 
@@ -756,24 +757,27 @@ class DisputesController extends RestController {
 	/**
 	 * Prepare evidence for response.
 	 *
-	 * @param object $evidence Evidence object.
+	 * Evidence items are stored as JSON arrays in the dispute table.
+	 *
+	 * @param array $evidence Evidence item array.
 	 * @return array
 	 */
-	private function prepare_evidence_for_response( object $evidence ): array {
-		$user = get_userdata( $evidence->user_id );
+	private function prepare_evidence_for_response( array $evidence ): array {
+		$user_id = (int) ( $evidence['user_id'] ?? 0 );
+		$user    = $user_id ? get_userdata( $user_id ) : null;
 
-		return [
-			'id'          => (int) $evidence->id,
-			'type'        => $evidence->type,
-			'content'     => $evidence->content,
-			'description' => $evidence->description,
-			'user'        => [
-				'id'     => (int) $evidence->user_id,
+		return array(
+			'id'          => $evidence['id'] ?? '',
+			'type'        => $evidence['type'] ?? '',
+			'content'     => $evidence['content'] ?? '',
+			'description' => $evidence['description'] ?? '',
+			'user'        => array(
+				'id'     => $user_id,
 				'name'   => $user ? $user->display_name : '',
-				'avatar' => get_avatar_url( $evidence->user_id, [ 'size' => 48 ] ),
-			],
-			'created_at'  => $evidence->created_at,
-		];
+				'avatar' => get_avatar_url( $user_id, array( 'size' => 48 ) ),
+			),
+			'created_at'  => $evidence['created_at'] ?? '',
+		);
 	}
 
 	/**
@@ -782,20 +786,20 @@ class DisputesController extends RestController {
 	 * @return array
 	 */
 	public function get_collection_params(): array {
-		return [
-			'page'     => [
+		return array(
+			'page'     => array(
 				'description' => __( 'Current page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 1,
 				'minimum'     => 1,
-			],
-			'per_page' => [
+			),
+			'per_page' => array(
 				'description' => __( 'Items per page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 20,
 				'minimum'     => 1,
 				'maximum'     => 100,
-			],
-		];
+			),
+		);
 	}
 }

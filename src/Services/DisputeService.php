@@ -24,11 +24,11 @@ class DisputeService {
 	/**
 	 * Dispute statuses.
 	 */
-	public const STATUS_OPEN       = 'open';
-	public const STATUS_PENDING    = 'pending_review';
-	public const STATUS_RESOLVED   = 'resolved';
-	public const STATUS_ESCALATED  = 'escalated';
-	public const STATUS_CLOSED     = 'closed';
+	public const STATUS_OPEN      = 'open';
+	public const STATUS_PENDING   = 'pending_review';
+	public const STATUS_RESOLVED  = 'resolved';
+	public const STATUS_ESCALATED = 'escalated';
+	public const STATUS_CLOSED    = 'closed';
 
 	/**
 	 * Resolution types.
@@ -47,11 +47,11 @@ class DisputeService {
 	private string $table;
 
 	/**
-	 * Evidence table name.
+	 * Dispute messages table name.
 	 *
 	 * @var string
 	 */
-	private string $evidence_table;
+	private string $messages_table;
 
 	/**
 	 * Order repository.
@@ -66,7 +66,7 @@ class DisputeService {
 	public function __construct() {
 		global $wpdb;
 		$this->table          = $wpdb->prefix . 'wpss_disputes';
-		$this->evidence_table = $wpdb->prefix . 'wpss_dispute_evidence';
+		$this->messages_table = $wpdb->prefix . 'wpss_dispute_messages';
 		$this->order_repo     = new OrderRepository();
 	}
 
@@ -80,7 +80,7 @@ class DisputeService {
 	 * @param array<string, mixed> $meta Additional metadata.
 	 * @return int|false Dispute ID or false on failure.
 	 */
-	public function open( int $order_id, int $opened_by, string $reason, string $description, array $meta = [] ): int|false {
+	public function open( int $order_id, int $opened_by, string $reason, string $description, array $meta = array() ): int|false {
 		global $wpdb;
 
 		// Check if order exists.
@@ -101,16 +101,16 @@ class DisputeService {
 			return false;
 		}
 
-		$data = [
-			'order_id'    => $order_id,
-			'opened_by'   => $opened_by,
-			'reason'      => sanitize_text_field( $reason ),
-			'description' => sanitize_textarea_field( $description ),
-			'status'      => self::STATUS_OPEN,
-			'meta'        => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
-			'created_at'  => current_time( 'mysql' ),
-			'updated_at'  => current_time( 'mysql' ),
-		];
+		$data = array(
+			'order_id'     => $order_id,
+			'initiated_by' => $opened_by,
+			'reason'       => sanitize_text_field( $reason ),
+			'description'  => sanitize_textarea_field( $description ),
+			'status'       => self::STATUS_OPEN,
+			'evidence'     => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
+			'created_at'   => current_time( 'mysql' ),
+			'updated_at'   => current_time( 'mysql' ),
+		);
 
 		$result = $wpdb->insert( $this->table, $data );
 
@@ -118,7 +118,7 @@ class DisputeService {
 			$dispute_id = $wpdb->insert_id;
 
 			// Update order status.
-			$this->order_repo->update( $order_id, [ 'status' => 'disputed' ] );
+			$this->order_repo->update( $order_id, array( 'status' => 'disputed' ) );
 
 			/**
 			 * Fires when a dispute is opened.
@@ -146,15 +146,16 @@ class DisputeService {
 	public function get( int $dispute_id ): ?object {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$dispute = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$this->table} WHERE id = %d",
+				"SELECT * FROM {$this->table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$dispute_id
 			)
 		);
 
-		if ( $dispute && $dispute->meta ) {
-			$dispute->meta = json_decode( $dispute->meta, true );
+		if ( $dispute && ! empty( $dispute->evidence ) ) {
+			$dispute->evidence = json_decode( $dispute->evidence, true );
 		}
 
 		return $dispute;
@@ -169,15 +170,16 @@ class DisputeService {
 	public function get_by_order( int $order_id ): ?object {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$dispute = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$this->table} WHERE order_id = %d",
+				"SELECT * FROM {$this->table} WHERE order_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$order_id
 			)
 		);
 
-		if ( $dispute && $dispute->meta ) {
-			$dispute->meta = json_decode( $dispute->meta, true );
+		if ( $dispute && ! empty( $dispute->evidence ) ) {
+			$dispute->evidence = json_decode( $dispute->evidence, true );
 		}
 
 		return $dispute;
@@ -186,14 +188,16 @@ class DisputeService {
 	/**
 	 * Add evidence to a dispute.
 	 *
+	 * Evidence is stored in the dispute's evidence JSON column.
+	 *
 	 * @param int    $dispute_id Dispute ID.
 	 * @param int    $user_id User ID submitting evidence.
 	 * @param string $type Evidence type (text, image, file, link).
 	 * @param string $content Evidence content.
 	 * @param string $description Evidence description.
-	 * @return int|false Evidence ID or false on failure.
+	 * @return bool True on success, false on failure.
 	 */
-	public function add_evidence( int $dispute_id, int $user_id, string $type, string $content, string $description = '' ): int|false {
+	public function add_evidence( int $dispute_id, int $user_id, string $type, string $content, string $description = '' ): bool {
 		global $wpdb;
 
 		$dispute = $this->get( $dispute_id );
@@ -202,31 +206,40 @@ class DisputeService {
 			return false;
 		}
 
-		$data = [
-			'dispute_id'  => $dispute_id,
+		// Get existing evidence or initialize empty array.
+		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+
+		// Add new evidence item.
+		$evidence[] = array(
+			'id'          => uniqid( 'ev_' ),
 			'user_id'     => $user_id,
 			'type'        => sanitize_key( $type ),
 			'content'     => $content,
 			'description' => sanitize_textarea_field( $description ),
 			'created_at'  => current_time( 'mysql' ),
-		];
+		);
 
-		$result = $wpdb->insert( $this->evidence_table, $data );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->update(
+			$this->table,
+			array(
+				'evidence'   => wp_json_encode( $evidence ),
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $dispute_id )
+		);
 
-		if ( $result ) {
-			$evidence_id = $wpdb->insert_id;
-
+		if ( false !== $result ) {
 			/**
 			 * Fires when evidence is added to a dispute.
 			 *
 			 * @since 1.0.0
-			 * @param int $evidence_id Evidence ID.
-			 * @param int $dispute_id  Dispute ID.
-			 * @param int $user_id     User ID.
+			 * @param int $dispute_id Dispute ID.
+			 * @param int $user_id    User ID.
 			 */
-			do_action( 'wpss_dispute_evidence_added', $evidence_id, $dispute_id, $user_id );
+			do_action( 'wpss_dispute_evidence_added', $dispute_id, $user_id );
 
-			return $evidence_id;
+			return true;
 		}
 
 		return false;
@@ -236,23 +249,22 @@ class DisputeService {
 	 * Get evidence for a dispute.
 	 *
 	 * @param int $dispute_id Dispute ID.
-	 * @return array<object> Array of evidence objects.
+	 * @return array<array<string, mixed>> Array of evidence items.
 	 */
 	public function get_evidence( int $dispute_id ): array {
-		global $wpdb;
+		$dispute = $this->get( $dispute_id );
 
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$this->evidence_table}
-				WHERE dispute_id = %d
-				ORDER BY created_at ASC",
-				$dispute_id
-			)
-		);
+		if ( ! $dispute ) {
+			return array();
+		}
+
+		return is_array( $dispute->evidence ) ? $dispute->evidence : array();
 	}
 
 	/**
 	 * Update dispute status.
+	 *
+	 * Notes are stored in the evidence JSON column with type 'status_note'.
 	 *
 	 * @param int    $dispute_id Dispute ID.
 	 * @param string $status New status.
@@ -262,13 +274,13 @@ class DisputeService {
 	public function update_status( int $dispute_id, string $status, string $note = '' ): bool {
 		global $wpdb;
 
-		$valid_statuses = [
+		$valid_statuses = array(
 			self::STATUS_OPEN,
 			self::STATUS_PENDING,
 			self::STATUS_RESOLVED,
 			self::STATUS_ESCALATED,
 			self::STATUS_CLOSED,
-		];
+		);
 
 		if ( ! in_array( $status, $valid_statuses, true ) ) {
 			return false;
@@ -277,29 +289,32 @@ class DisputeService {
 		$dispute    = $this->get( $dispute_id );
 		$old_status = $dispute ? $dispute->status : '';
 
-		$data = [
+		$data = array(
 			'status'     => $status,
 			'updated_at' => current_time( 'mysql' ),
-		];
+		);
 
+		// Store status note in evidence JSON if provided.
 		if ( $note ) {
-			$meta         = $dispute->meta ?? [];
-			$meta['notes'] = $meta['notes'] ?? [];
-			$meta['notes'][] = [
-				'note'       => $note,
+			$evidence         = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+			$evidence[]       = array(
+				'id'         => uniqid( 'note_' ),
+				'type'       => 'status_note',
+				'note'       => sanitize_textarea_field( $note ),
 				'status'     => $status,
 				'created_at' => current_time( 'mysql' ),
-			];
-			$data['meta'] = wp_json_encode( $meta );
+			);
+			$data['evidence'] = wp_json_encode( $evidence );
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->table,
 			$data,
-			[ 'id' => $dispute_id ]
+			array( 'id' => $dispute_id )
 		);
 
-		if ( $result !== false ) {
+		if ( false !== $result ) {
 			/**
 			 * Fires when dispute status changes.
 			 *
@@ -335,27 +350,33 @@ class DisputeService {
 			return false;
 		}
 
-		$meta = $dispute->meta ?? [];
-		$meta['resolution'] = [
-			'type'          => $resolution,
-			'notes'         => $notes,
-			'resolved_by'   => $resolved_by,
-			'refund_amount' => $refund_amount,
-			'resolved_at'   => current_time( 'mysql' ),
-		];
+		// Store refund amount in evidence JSON if applicable.
+		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+		if ( $refund_amount > 0 ) {
+			$evidence[] = array(
+				'id'            => uniqid( 'refund_' ),
+				'type'          => 'refund_info',
+				'refund_amount' => $refund_amount,
+				'created_at'    => current_time( 'mysql' ),
+			);
+		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->table,
-			[
-				'status'      => self::STATUS_RESOLVED,
-				'resolved_at' => current_time( 'mysql' ),
-				'meta'        => wp_json_encode( $meta ),
-				'updated_at'  => current_time( 'mysql' ),
-			],
-			[ 'id' => $dispute_id ]
+			array(
+				'status'           => self::STATUS_RESOLVED,
+				'resolution'       => sanitize_key( $resolution ),
+				'resolution_notes' => sanitize_textarea_field( $notes ),
+				'resolved_by'      => $resolved_by,
+				'resolved_at'      => current_time( 'mysql' ),
+				'evidence'         => wp_json_encode( $evidence ),
+				'updated_at'       => current_time( 'mysql' ),
+			),
+			array( 'id' => $dispute_id )
 		);
 
-		if ( $result !== false ) {
+		if ( false !== $result ) {
 			// Handle resolution actions.
 			$this->handle_resolution( $dispute, $resolution, $refund_amount );
 
@@ -389,22 +410,22 @@ class DisputeService {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
 				// Update order status to refunded.
-				$this->order_repo->update( $dispute->order_id, [ 'status' => 'refunded' ] );
+				$this->order_repo->update( $dispute->order_id, array( 'status' => 'refunded' ) );
 				break;
 
 			case self::RESOLUTION_PARTIAL_REFUND:
 				// Update order status.
-				$this->order_repo->update( $dispute->order_id, [ 'status' => 'partially_refunded' ] );
+				$this->order_repo->update( $dispute->order_id, array( 'status' => 'partially_refunded' ) );
 				break;
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 				// Restore order to completed.
-				$this->order_repo->update( $dispute->order_id, [ 'status' => 'completed' ] );
+				$this->order_repo->update( $dispute->order_id, array( 'status' => 'completed' ) );
 				break;
 
 			case self::RESOLUTION_MUTUAL:
 				// Both parties agreed, mark as completed.
-				$this->order_repo->update( $dispute->order_id, [ 'status' => 'completed' ] );
+				$this->order_repo->update( $dispute->order_id, array( 'status' => 'completed' ) );
 				break;
 		}
 	}
@@ -416,30 +437,30 @@ class DisputeService {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of disputes.
 	 */
-	public function get_by_user( int $user_id, array $args = [] ): array {
+	public function get_by_user( int $user_id, array $args = array() ): array {
 		global $wpdb;
 
-		$defaults = [
+		$defaults = array(
 			'status'   => '',
 			'limit'    => 20,
 			'offset'   => 0,
 			'order_by' => 'created_at',
 			'order'    => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ '1=1' ];
-		$values = [];
+		$where  = array( '1=1' );
+		$values = array();
 
-		// User can be opener or part of the order.
-		$where[] = "(d.opened_by = %d OR o.customer_id = %d OR o.vendor_id = %d)";
+		// User can be initiator or part of the order.
+		$where[]  = '(d.initiated_by = %d OR o.customer_id = %d OR o.vendor_id = %d)';
 		$values[] = $user_id;
 		$values[] = $user_id;
 		$values[] = $user_id;
 
 		if ( $args['status'] ) {
-			$where[] = 'd.status = %s';
+			$where[]  = 'd.status = %s';
 			$values[] = $args['status'];
 		}
 
@@ -453,7 +474,7 @@ class DisputeService {
 			WHERE {$where_clause}
 			ORDER BY d.{$args['order_by']} {$args['order']}
 			LIMIT %d OFFSET %d",
-			array_merge( $values, [ $args['limit'], $args['offset'] ] )
+			array_merge( $values, array( $args['limit'], $args['offset'] ) )
 		);
 
 		return $wpdb->get_results( $sql );
@@ -465,24 +486,24 @@ class DisputeService {
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of disputes.
 	 */
-	public function get_all( array $args = [] ): array {
+	public function get_all( array $args = array() ): array {
 		global $wpdb;
 
-		$defaults = [
+		$defaults = array(
 			'status'   => '',
 			'limit'    => 20,
 			'offset'   => 0,
 			'order_by' => 'created_at',
 			'order'    => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ '1=1' ];
-		$values = [];
+		$where  = array( '1=1' );
+		$values = array();
 
 		if ( $args['status'] ) {
-			$where[] = 'd.status = %s';
+			$where[]  = 'd.status = %s';
 			$values[] = $args['status'];
 		}
 
@@ -519,13 +540,13 @@ class DisputeService {
 			GROUP BY status"
 		);
 
-		$counts = [
+		$counts = array(
 			self::STATUS_OPEN      => 0,
 			self::STATUS_PENDING   => 0,
 			self::STATUS_RESOLVED  => 0,
 			self::STATUS_ESCALATED => 0,
 			self::STATUS_CLOSED    => 0,
-		];
+		);
 
 		foreach ( $results as $row ) {
 			$counts[ $row->status ] = (int) $row->count;
@@ -540,13 +561,13 @@ class DisputeService {
 	 * @return array<string, string> Status slugs and labels.
 	 */
 	public static function get_statuses(): array {
-		return [
+		return array(
 			self::STATUS_OPEN      => __( 'Open', 'wp-sell-services' ),
 			self::STATUS_PENDING   => __( 'Pending Review', 'wp-sell-services' ),
 			self::STATUS_RESOLVED  => __( 'Resolved', 'wp-sell-services' ),
 			self::STATUS_ESCALATED => __( 'Escalated', 'wp-sell-services' ),
 			self::STATUS_CLOSED    => __( 'Closed', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -555,12 +576,12 @@ class DisputeService {
 	 * @return array<string, string> Resolution slugs and labels.
 	 */
 	public static function get_resolution_types(): array {
-		return [
+		return array(
 			self::RESOLUTION_REFUND         => __( 'Full Refund', 'wp-sell-services' ),
 			self::RESOLUTION_PARTIAL_REFUND => __( 'Partial Refund', 'wp-sell-services' ),
 			self::RESOLUTION_FAVOR_VENDOR   => __( 'In Favor of Vendor', 'wp-sell-services' ),
 			self::RESOLUTION_FAVOR_BUYER    => __( 'In Favor of Buyer', 'wp-sell-services' ),
 			self::RESOLUTION_MUTUAL         => __( 'Mutual Agreement', 'wp-sell-services' ),
-		];
+		);
 	}
 }

@@ -54,122 +54,122 @@ class ConversationsController extends RestController {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
-					'permission_callback' => [ $this, 'check_permissions' ],
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => $this->get_collection_params(),
-				],
-			]
+				),
+			)
 		);
 
 		// Get single conversation.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => [ $this, 'check_conversation_permission' ],
-					'args'                => [
-						'id' => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-			]
+					'callback'            => array( $this, 'get_item' ),
+					'permission_callback' => array( $this, 'check_conversation_permission' ),
+					'args'                => array(
+						'id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+			)
 		);
 
 		// Get conversation by order.
 		register_rest_route(
 			$this->namespace,
 			'/orders/(?P<order_id>[\d]+)/conversation',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_by_order' ],
-					'permission_callback' => [ $this, 'check_order_permission' ],
-					'args'                => [
-						'order_id' => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-			]
+					'callback'            => array( $this, 'get_by_order' ),
+					'permission_callback' => array( $this, 'check_order_permission' ),
+					'args'                => array(
+						'order_id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+			)
 		);
 
 		// Get messages in a conversation.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/messages',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_messages' ],
-					'permission_callback' => [ $this, 'check_conversation_permission' ],
+					'callback'            => array( $this, 'get_messages' ),
+					'permission_callback' => array( $this, 'check_conversation_permission' ),
 					'args'                => array_merge(
-						[
-							'id' => [
-								'validate_callback' => [ $this, 'validate_id' ],
-							],
-						],
+						array(
+							'id' => array(
+								'validate_callback' => array( $this, 'validate_id' ),
+							),
+						),
 						$this->get_collection_params()
 					),
-				],
-				[
+				),
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'send_message' ],
-					'permission_callback' => [ $this, 'check_conversation_permission' ],
-					'args'                => [
-						'id'          => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-						'content'     => [
+					'callback'            => array( $this, 'send_message' ),
+					'permission_callback' => array( $this, 'check_conversation_permission' ),
+					'args'                => array(
+						'id'          => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'content'     => array(
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'wp_kses_post',
-						],
-						'attachments' => [
+						),
+						'attachments' => array(
 							'type'    => 'array',
-							'items'   => [ 'type' => 'integer' ],
-							'default' => [],
-						],
-					],
-				],
-			]
+							'items'   => array( 'type' => 'integer' ),
+							'default' => array(),
+						),
+					),
+				),
+			)
 		);
 
 		// Mark messages as read.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/read',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'mark_as_read' ],
-					'permission_callback' => [ $this, 'check_conversation_permission' ],
-					'args'                => [
-						'id' => [
-							'validate_callback' => [ $this, 'validate_id' ],
-						],
-					],
-				],
-			]
+					'callback'            => array( $this, 'mark_as_read' ),
+					'permission_callback' => array( $this, 'check_conversation_permission' ),
+					'args'                => array(
+						'id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+					),
+				),
+			)
 		);
 
 		// Get unread count.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/unread-count',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_unread_count' ],
-					'permission_callback' => [ $this, 'check_permissions' ],
-				],
-			]
+					'callback'            => array( $this, 'get_unread_count' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+				),
+			)
 		);
 	}
 
@@ -192,7 +192,7 @@ class ConversationsController extends RestController {
 			return new WP_Error(
 				'conversation_not_found',
 				__( 'Conversation not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -202,7 +202,7 @@ class ConversationsController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this conversation.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -227,7 +227,7 @@ class ConversationsController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -244,14 +244,17 @@ class ConversationsController extends RestController {
 		$user_id    = get_current_user_id();
 		$pagination = $this->get_pagination_args( $request );
 
-		$conversations = $this->conversation_service->get_by_user( $user_id, [
-			'limit'  => $pagination['per_page'],
-			'offset' => $pagination['offset'],
-		] );
+		$conversations = $this->conversation_service->get_by_user(
+			$user_id,
+			array(
+				'limit'  => $pagination['per_page'],
+				'offset' => $pagination['offset'],
+			)
+		);
 
 		$total = $this->conversation_service->count_by_user( $user_id );
 
-		$data = array_map( [ $this, 'prepare_conversation_for_response' ], $conversations );
+		$data = array_map( array( $this, 'prepare_conversation_for_response' ), $conversations );
 
 		return $this->paginated_response( $data, $total, $pagination['page'], $pagination['per_page'] );
 	}
@@ -283,7 +286,7 @@ class ConversationsController extends RestController {
 			return new WP_Error(
 				'conversation_not_found',
 				__( 'No conversation found for this order.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -300,14 +303,17 @@ class ConversationsController extends RestController {
 		$conversation_id = (int) $request->get_param( 'id' );
 		$pagination      = $this->get_pagination_args( $request );
 
-		$messages = $this->conversation_service->get_messages( $conversation_id, [
-			'limit'  => $pagination['per_page'],
-			'offset' => $pagination['offset'],
-		] );
+		$messages = $this->conversation_service->get_messages(
+			$conversation_id,
+			array(
+				'limit'  => $pagination['per_page'],
+				'offset' => $pagination['offset'],
+			)
+		);
 
 		$total = $this->conversation_service->count_messages( $conversation_id );
 
-		$data = array_map( [ $this, 'prepare_message_for_response' ], $messages );
+		$data = array_map( array( $this, 'prepare_message_for_response' ), $messages );
 
 		return $this->paginated_response( $data, $total, $pagination['page'], $pagination['per_page'] );
 	}
@@ -324,23 +330,21 @@ class ConversationsController extends RestController {
 		$content         = $request->get_param( 'content' );
 		$attachments     = $request->get_param( 'attachments' );
 
-		$result = $this->conversation_service->send_message( $conversation_id, $user_id, $content, $attachments );
+		$message = $this->conversation_service->send_message( $conversation_id, $user_id, $content, $attachments );
 
-		if ( ! $result['success'] ) {
+		if ( ! $message ) {
 			return new WP_Error(
 				'message_send_failed',
-				$result['message'],
-				[ 'status' => 400 ]
+				__( 'Failed to send message. You may not have permission to message in this conversation.', 'wp-sell-services' ),
+				array( 'status' => 400 )
 			);
 		}
 
-		$message = $this->conversation_service->get_message( $result['message_id'] );
-
 		return new WP_REST_Response(
-			[
+			array(
 				'message' => __( 'Message sent successfully.', 'wp-sell-services' ),
 				'data'    => $this->prepare_message_for_response( $message ),
-			],
+			),
 			201
 		);
 	}
@@ -361,11 +365,11 @@ class ConversationsController extends RestController {
 			return new WP_Error(
 				'mark_read_failed',
 				__( 'Failed to mark messages as read.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
-		return new WP_REST_Response( [ 'message' => __( 'Messages marked as read.', 'wp-sell-services' ) ] );
+		return new WP_REST_Response( array( 'message' => __( 'Messages marked as read.', 'wp-sell-services' ) ) );
 	}
 
 	/**
@@ -378,7 +382,7 @@ class ConversationsController extends RestController {
 		$user_id = get_current_user_id();
 		$count   = $this->conversation_service->get_unread_count( $user_id );
 
-		return new WP_REST_Response( [ 'unread_count' => $count ] );
+		return new WP_REST_Response( array( 'unread_count' => $count ) );
 	}
 
 	/**
@@ -388,32 +392,46 @@ class ConversationsController extends RestController {
 	 * @return array
 	 */
 	private function prepare_conversation_for_response( object $conversation ): array {
-		$user_id        = get_current_user_id();
-		$other_user_id  = (int) $conversation->customer_id === $user_id
-			? (int) $conversation->vendor_id
-			: (int) $conversation->customer_id;
-		$other_user     = get_userdata( $other_user_id );
-		$last_message   = $this->conversation_service->get_last_message( $conversation->id );
+		$user_id = get_current_user_id();
 
-		return [
-			'id'               => (int) $conversation->id,
-			'order_id'         => (int) $conversation->order_id,
-			'service_id'       => (int) $conversation->service_id,
-			'service_title'    => get_the_title( $conversation->service_id ),
-			'other_user'       => [
-				'id'           => $other_user_id,
-				'name'         => $other_user ? $other_user->display_name : '',
-				'avatar'       => get_avatar_url( $other_user_id, [ 'size' => 48 ] ),
-			],
-			'last_message'     => $last_message ? [
+		// Get the other participant from participants array.
+		$participants  = $conversation->participants ?? array();
+		$other_user_id = 0;
+		foreach ( $participants as $participant_id ) {
+			if ( (int) $participant_id !== $user_id ) {
+				$other_user_id = (int) $participant_id;
+				break;
+			}
+		}
+		$other_user = $other_user_id ? get_userdata( $other_user_id ) : null;
+
+		// Get service_id from the associated order.
+		$order      = $conversation->get_order();
+		$service_id = $order ? (int) $order->service_id : 0;
+
+		$last_message = $this->conversation_service->get_last_message( $conversation->id );
+
+		return array(
+			'id'            => (int) $conversation->id,
+			'order_id'      => (int) $conversation->order_id,
+			'subject'       => $conversation->subject ?? '',
+			'service_id'    => $service_id,
+			'service_title' => $service_id ? get_the_title( $service_id ) : '',
+			'other_user'    => array(
+				'id'     => $other_user_id,
+				'name'   => $other_user ? $other_user->display_name : '',
+				'avatar' => get_avatar_url( $other_user_id, array( 'size' => 48 ) ),
+			),
+			'last_message'  => $last_message ? array(
 				'content'    => wp_trim_words( wp_strip_all_tags( $last_message->content ), 10 ),
 				'sender_id'  => (int) $last_message->sender_id,
-				'created_at' => $last_message->created_at,
-			] : null,
-			'unread_count'     => $this->conversation_service->get_unread_count_for_conversation( $conversation->id, $user_id ),
-			'created_at'       => $conversation->created_at,
-			'updated_at'       => $conversation->updated_at,
-		];
+				'created_at' => $last_message->created_at ? $last_message->created_at->format( 'c' ) : null,
+			) : null,
+			'unread_count'  => $this->conversation_service->get_unread_count_for_conversation( $conversation->id, $user_id ),
+			'is_closed'     => $conversation->is_closed ?? false,
+			'created_at'    => $conversation->created_at ? $conversation->created_at->format( 'c' ) : null,
+			'updated_at'    => $conversation->updated_at ? $conversation->updated_at->format( 'c' ) : null,
+		);
 	}
 
 	/**
@@ -423,38 +441,55 @@ class ConversationsController extends RestController {
 	 * @return array
 	 */
 	private function prepare_message_for_response( object $message ): array {
+		$user_id     = get_current_user_id();
 		$sender      = get_userdata( $message->sender_id );
-		$attachments = [];
+		$attachments = array();
 
-		if ( ! empty( $message->attachments ) ) {
-			$attachment_ids = json_decode( $message->attachments, true ) ?: [];
-			foreach ( $attachment_ids as $id ) {
+		// Handle attachments - could be array already or JSON string.
+		$attachment_data = $message->attachments ?? array();
+		if ( is_string( $attachment_data ) ) {
+			$decoded         = json_decode( $attachment_data, true );
+			$attachment_data = $decoded ? $decoded : array();
+		}
+
+		foreach ( $attachment_data as $attachment ) {
+			// Support both attachment ID format and full object format.
+			if ( is_array( $attachment ) && isset( $attachment['id'] ) ) {
+				$attachments[] = $attachment;
+			} elseif ( is_numeric( $attachment ) ) {
+				$id  = (int) $attachment;
 				$url = wp_get_attachment_url( $id );
 				if ( $url ) {
-					$attachments[] = [
+					$attached_file = get_attached_file( $id );
+					$attachments[] = array(
 						'id'        => $id,
 						'url'       => $url,
-						'filename'  => basename( get_attached_file( $id ) ),
+						'filename'  => $attached_file ? basename( $attached_file ) : '',
 						'type'      => get_post_mime_type( $id ),
 						'thumbnail' => wp_get_attachment_image_url( $id, 'thumbnail' ),
-					];
+					);
 				}
 			}
 		}
 
-		return [
+		// Check if current user has read this message.
+		$read_by = $message->read_by ?? array();
+		$is_read = ! empty( $read_by[ $user_id ] );
+
+		return array(
 			'id'          => (int) $message->id,
-			'sender'      => [
+			'type'        => $message->type ?? 'text',
+			'sender'      => array(
 				'id'     => (int) $message->sender_id,
-				'name'   => $sender ? $sender->display_name : '',
-				'avatar' => get_avatar_url( $message->sender_id, [ 'size' => 48 ] ),
-			],
-			'content'     => $message->content,
+				'name'   => $sender ? $sender->display_name : ( 0 === $message->sender_id ? __( 'System', 'wp-sell-services' ) : '' ),
+				'avatar' => $message->sender_id ? get_avatar_url( $message->sender_id, array( 'size' => 48 ) ) : '',
+			),
+			'content'     => $message->content ?? '',
 			'attachments' => $attachments,
-			'is_read'     => (bool) $message->is_read,
-			'read_at'     => $message->read_at,
-			'created_at'  => $message->created_at,
-		];
+			'is_read'     => $is_read,
+			'is_edited'   => $message->is_edited ?? false,
+			'created_at'  => $message->created_at ? $message->created_at->format( 'c' ) : null,
+		);
 	}
 
 	/**
@@ -463,20 +498,20 @@ class ConversationsController extends RestController {
 	 * @return array
 	 */
 	public function get_collection_params(): array {
-		return [
-			'page'     => [
+		return array(
+			'page'     => array(
 				'description' => __( 'Current page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 1,
 				'minimum'     => 1,
-			],
-			'per_page' => [
+			),
+			'per_page' => array(
 				'description' => __( 'Items per page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 20,
 				'minimum'     => 1,
 				'maximum'     => 100,
-			],
-		];
+			),
+		);
 	}
 }

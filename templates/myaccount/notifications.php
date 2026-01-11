@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$notification_icons = [
+$notification_icons = array(
 	'order_created'      => '📦',
 	'order_status'       => '🔄',
 	'new_message'        => '💬',
@@ -22,14 +22,14 @@ $notification_icons = [
 	'dispute_opened'     => '⚠️',
 	'dispute_resolved'   => '✓',
 	'deadline_warning'   => '⏰',
-];
+);
 ?>
 
 <div class="wpss-notifications">
 	<div class="wpss-notifications-header">
 		<h2><?php esc_html_e( 'Notifications', 'wp-sell-services' ); ?></h2>
 		<?php if ( ! empty( $notifications ) ) : ?>
-			<button type="button" class="button wpss-mark-all-read" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wpss_mark_all_read' ) ); ?>">
+			<button type="button" class="button wpss-mark-all-read" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wpss_notification_nonce' ) ); ?>">
 				<?php esc_html_e( 'Mark All as Read', 'wp-sell-services' ); ?>
 			</button>
 		<?php endif; ?>
@@ -43,10 +43,10 @@ $notification_icons = [
 		<div class="wpss-notifications-list">
 			<?php foreach ( $notifications as $notification ) : ?>
 				<?php
-				$data = $notification->data ? json_decode( $notification->data, true ) : [];
-				$icon = $notification_icons[ $notification->type ] ?? '📣';
+				$data      = $notification->data ? json_decode( $notification->data, true ) : array();
+				$icon      = $notification_icons[ $notification->type ] ?? '📣';
 				$is_unread = ! $notification->is_read;
-				$created = new \DateTimeImmutable( $notification->created_at );
+				$created   = new \DateTimeImmutable( $notification->created_at );
 				?>
 				<div class="wpss-notification <?php echo $is_unread ? 'wpss-unread' : ''; ?>" data-id="<?php echo esc_attr( $notification->id ); ?>">
 					<div class="wpss-notification-icon"><?php echo esc_html( $icon ); ?></div>
@@ -56,7 +56,7 @@ $notification_icons = [
 						<div class="wpss-notification-time">
 							<?php
 							/* translators: %s: time ago */
-							printf( esc_html__( '%s ago', 'wp-sell-services' ), human_time_diff( $created->getTimestamp(), time() ) );
+							printf( esc_html__( '%s ago', 'wp-sell-services' ), esc_html( human_time_diff( $created->getTimestamp(), time() ) ) );
 							?>
 						</div>
 					</div>
