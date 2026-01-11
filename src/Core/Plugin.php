@@ -30,6 +30,7 @@ use WPSellServices\Services\NotificationService;
 use WPSellServices\API\API;
 use WPSellServices\Blocks\BlocksManager;
 use WPSellServices\SEO\SEO;
+use WPSellServices\Database\SchemaManager;
 
 /**
  * Main plugin class.
@@ -219,6 +220,7 @@ final class Plugin {
 	 * @return void
 	 */
 	public function init(): void {
+		$this->maybe_upgrade_database();
 		$this->set_locale();
 		$this->register_post_types();
 		$this->define_admin_hooks();
@@ -246,6 +248,22 @@ final class Plugin {
 		 * @param Plugin $plugin Plugin instance.
 		 */
 		do_action( 'wpss_loaded', $this );
+	}
+
+	/**
+	 * Check and upgrade database if needed.
+	 *
+	 * This ensures database tables are updated when the plugin is updated
+	 * without deactivation/reactivation (e.g., via zip upload).
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	private function maybe_upgrade_database(): void {
+		$schema = new SchemaManager();
+		if ( $schema->needs_update() ) {
+			$schema->install();
+		}
 	}
 
 	/**
