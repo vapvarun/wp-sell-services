@@ -60,16 +60,16 @@ class AnalyticsService {
 	 * @return array<string, mixed> Dashboard stats.
 	 */
 	public function get_vendor_dashboard_stats( int $vendor_id ): array {
-		$order_stats = $this->order_repo->get_vendor_stats( $vendor_id );
+		$order_stats  = $this->order_repo->get_vendor_stats( $vendor_id );
 		$review_stats = $this->review_repo->get_vendor_rating_summary( $vendor_id );
 
-		return [
+		return array(
 			'orders'          => $order_stats,
 			'reviews'         => $review_stats,
 			'active_services' => $this->get_active_service_count( $vendor_id ),
 			'response_rate'   => $this->get_response_rate( $vendor_id ),
 			'recent_activity' => $this->get_recent_activity( $vendor_id ),
-		];
+		);
 	}
 
 	/**
@@ -79,13 +79,13 @@ class AnalyticsService {
 	 * @return array<string, mixed> Dashboard stats.
 	 */
 	public function get_buyer_dashboard_stats( int $buyer_id ): array {
-		return [
+		return array(
 			'orders'           => $this->get_buyer_order_stats( $buyer_id ),
 			'active_orders'    => $this->get_active_order_count( $buyer_id ),
 			'pending_reviews'  => $this->get_pending_reviews_count( $buyer_id ),
 			'total_spent'      => $this->get_total_spent( $buyer_id ),
 			'favorite_vendors' => $this->get_favorite_vendors( $buyer_id ),
-		];
+		);
 	}
 
 	/**
@@ -94,16 +94,116 @@ class AnalyticsService {
 	 * @return array<string, mixed> Platform stats.
 	 */
 	public function get_admin_dashboard_stats(): array {
-		return [
-			'total_vendors'    => $this->get_total_vendors(),
-			'total_services'   => $this->get_total_services(),
-			'total_orders'     => $this->get_total_orders(),
-			'total_revenue'    => $this->get_total_revenue(),
-			'order_stats'      => $this->get_order_stats_by_status(),
-			'recent_orders'    => $this->get_recent_orders(),
-			'top_vendors'      => $this->get_top_vendors(),
-			'top_categories'   => $this->get_top_categories(),
-		];
+		return array(
+			'total_vendors'  => $this->get_total_vendors(),
+			'total_services' => $this->get_total_services(),
+			'total_orders'   => $this->get_total_orders(),
+			'total_revenue'  => $this->get_total_revenue(),
+			'order_stats'    => $this->get_order_stats_by_status(),
+			'recent_orders'  => $this->get_recent_orders(),
+			'top_vendors'    => $this->get_top_vendors(),
+			'top_categories' => $this->get_top_categories(),
+		);
+	}
+
+	/**
+	 * Get vendor statistics for analytics tab.
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @param int $days      Number of days to look back (default 30).
+	 * @return array<string, mixed> Analytics stats.
+	 */
+	public function get_vendor_stats( int $vendor_id, int $days = 30 ): array {
+		global $wpdb;
+
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$date_from    = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+
+		// Get vendor's services.
+		$services = get_posts(
+			array(
+				'post_type'      => 'wpss_service',
+				'author'         => $vendor_id,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
+
+		// Calculate impressions (total views of all services).
+		$impressions = 0;
+		foreach ( $services as $service_id ) {
+			$impressions += (int) get_post_meta( $service_id, '_wpss_views', true );
+		}
+
+		// Get profile views from user meta (if tracked).
+		$profile_views = (int) get_user_meta( $vendor_id, '_wpss_profile_views', true );
+
+		// Get orders received in period.
+		$orders_received = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND created_at >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$vendor_id,
+				$date_from
+			)
+		);
+
+		// Clicks are not tracked separately, so we use orders as a proxy for engaged users.
+		// In a real implementation, clicks would be tracked via JavaScript events.
+		$clicks = $orders_received * 3; // Estimate: 3 clicks per order.
+
+		// Calculate rates.
+		$click_rate      = $impressions > 0 ? round( ( $clicks / $impressions ) * 100, 1 ) : 0;
+		$conversion_rate = $clicks > 0 ? round( ( $orders_received / $clicks ) * 100, 1 ) : 0;
+
+		// Get top performing services.
+		$top_services = array();
+		if ( ! empty( $services ) ) {
+			$service_stats = array();
+			foreach ( $services as $service_id ) {
+				$views = (int) get_post_meta( $service_id, '_wpss_views', true );
+
+				// Get orders for this service.
+				$service_orders = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$orders_table} WHERE service_id = %d AND created_at >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						$service_id,
+						$date_from
+					)
+				);
+
+				// Get revenue for this service.
+				$service_revenue = (float) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COALESCE(SUM(vendor_earnings), 0) FROM {$orders_table} WHERE service_id = %d AND status = 'completed' AND created_at >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						$service_id,
+						$date_from
+					)
+				);
+
+				$service_stats[] = array(
+					'id'      => $service_id,
+					'title'   => get_the_title( $service_id ),
+					'views'   => $views,
+					'orders'  => $service_orders,
+					'revenue' => $service_revenue,
+				);
+			}
+
+			// Sort by revenue descending.
+			usort( $service_stats, fn( $a, $b ) => $b['revenue'] <=> $a['revenue'] );
+			$top_services = array_slice( $service_stats, 0, 5 );
+		}
+
+		return array(
+			'profile_views'   => $profile_views,
+			'impressions'     => $impressions,
+			'clicks'          => $clicks,
+			'orders_received' => $orders_received,
+			'click_rate'      => $click_rate,
+			'conversion_rate' => $conversion_rate,
+			'top_services'    => $top_services,
+		);
 	}
 
 	/**
@@ -120,11 +220,11 @@ class AnalyticsService {
 
 		$date_from = $this->get_period_start( $period );
 
-		$where = 'vendor_id = %d AND status = %s';
-		$values = [ $vendor_id, 'completed' ];
+		$where  = 'vendor_id = %d AND status = %s';
+		$values = array( $vendor_id, 'completed' );
 
 		if ( $date_from ) {
-			$where .= ' AND created_at >= %s';
+			$where   .= ' AND created_at >= %s';
 			$values[] = $date_from;
 		}
 
@@ -141,13 +241,13 @@ class AnalyticsService {
 
 		$result = $wpdb->get_row( $sql );
 
-		return [
+		return array(
 			'period'         => $period,
 			'order_count'    => (int) ( $result->order_count ?? 0 ),
 			'total_revenue'  => (float) ( $result->total_revenue ?? 0 ),
 			'total_earnings' => (float) ( $result->total_earnings ?? 0 ),
 			'total_fees'     => (float) ( $result->total_fees ?? 0 ),
-		];
+		);
 	}
 
 	/**
@@ -162,8 +262,8 @@ class AnalyticsService {
 
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
-		$date_from = $this->get_period_start( $period );
-		$group_by = $this->get_chart_group_by( $period );
+		$date_from   = $this->get_period_start( $period );
+		$group_by    = $this->get_chart_group_by( $period );
 		$date_format = $this->get_chart_date_format( $period );
 
 		$sql = $wpdb->prepare(
@@ -183,21 +283,21 @@ class AnalyticsService {
 
 		$results = $wpdb->get_results( $sql );
 
-		$labels = [];
-		$earnings = [];
-		$orders = [];
+		$labels   = array();
+		$earnings = array();
+		$orders   = array();
 
 		foreach ( $results as $row ) {
-			$labels[] = $row->period;
+			$labels[]   = $row->period;
 			$earnings[] = (float) $row->earnings;
-			$orders[] = (int) $row->orders;
+			$orders[]   = (int) $row->orders;
 		}
 
-		return [
+		return array(
 			'labels'   => $labels,
 			'earnings' => $earnings,
 			'orders'   => $orders,
-		];
+		);
 	}
 
 	/**
@@ -207,13 +307,13 @@ class AnalyticsService {
 	 * @return int Service count.
 	 */
 	private function get_active_service_count( int $vendor_id ): int {
-		$args = [
+		$args = array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
 			'author'         => $vendor_id,
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
-		];
+		);
 
 		$query = new \WP_Query( $args );
 
@@ -230,7 +330,7 @@ class AnalyticsService {
 		global $wpdb;
 
 		$conversations_table = $wpdb->prefix . 'wpss_conversations';
-		$messages_table = $wpdb->prefix . 'wpss_messages';
+		$messages_table      = $wpdb->prefix . 'wpss_messages';
 
 		// Get conversations where vendor received a message.
 		$total = $wpdb->get_var(
@@ -277,7 +377,7 @@ class AnalyticsService {
 	private function get_recent_activity( int $vendor_id, int $limit = 10 ): array {
 		global $wpdb;
 
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$orders_table  = $wpdb->prefix . 'wpss_orders';
 		$reviews_table = $wpdb->prefix . 'wpss_reviews';
 
 		// Get recent orders.
@@ -334,7 +434,7 @@ class AnalyticsService {
 			)
 		);
 
-		$stats = [];
+		$stats = array();
 		foreach ( $results as $row ) {
 			$stats[ $row->status ] = (int) $row->count;
 		}
@@ -372,7 +472,7 @@ class AnalyticsService {
 	private function get_pending_reviews_count( int $buyer_id ): int {
 		global $wpdb;
 
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$orders_table  = $wpdb->prefix . 'wpss_orders';
 		$reviews_table = $wpdb->prefix . 'wpss_reviews';
 
 		return (int) $wpdb->get_var(
@@ -438,10 +538,10 @@ class AnalyticsService {
 	 * @return int Vendor count.
 	 */
 	private function get_total_vendors(): int {
-		$args = [
+		$args = array(
 			'role'   => 'wpss_vendor',
 			'fields' => 'ID',
-		];
+		);
 
 		$query = new \WP_User_Query( $args );
 
@@ -503,7 +603,7 @@ class AnalyticsService {
 			"SELECT status, COUNT(*) as count FROM {$orders_table} GROUP BY status"
 		);
 
-		$stats = [];
+		$stats = array();
 		foreach ( $results as $row ) {
 			$stats[ $row->status ] = (int) $row->count;
 		}
@@ -548,16 +648,16 @@ class AnalyticsService {
 	 */
 	private function get_top_categories( int $limit = 10 ): array {
 		$terms = get_terms(
-			[
+			array(
 				'taxonomy'   => 'wpss_service_category',
 				'hide_empty' => true,
 				'number'     => $limit,
 				'orderby'    => 'count',
 				'order'      => 'DESC',
-			]
+			)
 		);
 
-		return is_wp_error( $terms ) ? [] : $terms;
+		return is_wp_error( $terms ) ? array() : $terms;
 	}
 
 	/**
