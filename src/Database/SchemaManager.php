@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.2.0';
+	const DB_VERSION = '1.2.1';
 
 	/**
 	 * Option name for storing DB version.
@@ -440,6 +440,7 @@ class SchemaManager {
 			is_public tinyint(1) DEFAULT 1,
 			helpful_count int(11) DEFAULT 0,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_order (order_id),
 			KEY idx_reviewee (reviewee_id),

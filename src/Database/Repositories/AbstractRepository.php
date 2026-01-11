@@ -253,13 +253,21 @@ abstract class AbstractRepository {
 			$values     = array();
 
 			foreach ( $where as $column => $value ) {
+				// Validate column name against whitelist to prevent SQL injection.
+				$column = sanitize_key( $column );
+				if ( ! $this->is_valid_column( $column ) ) {
+					continue;
+				}
 				$format       = is_int( $value ) ? '%d' : '%s';
 				$conditions[] = "{$column} = {$format}";
 				$values[]     = $value;
 			}
 
-			$sql .= ' WHERE ' . implode( ' AND ', $conditions );
-			$sql  = $this->wpdb->prepare( $sql, ...$values ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// Only add WHERE clause if we have valid conditions.
+			if ( ! empty( $conditions ) ) {
+				$sql .= ' WHERE ' . implode( ' AND ', $conditions );
+				$sql  = $this->wpdb->prepare( $sql, ...$values ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			}
 		}
 
 		return (int) $this->wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared

@@ -16,6 +16,8 @@ use WP_REST_Response;
 use WP_Error;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\CustomFields\FieldValidator;
+use WPSellServices\Services\ConversationService;
+use WPSellServices\Services\DeliveryService;
 
 /**
  * REST API controller for orders.
@@ -308,28 +310,32 @@ class OrdersController extends RestController {
 	public function get_messages( $request ) {
 		$order_id = (int) $request->get_param( 'id' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_messages';
+		$conversation_service = new ConversationService();
+		$conversation         = $conversation_service->get_by_order( $order_id );
 
-		$messages = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE order_id = %d ORDER BY created_at ASC",
-				$order_id
-			)
-		);
+		if ( ! $conversation ) {
+			// Create conversation if it doesn't exist yet.
+			$conversation = $conversation_service->create_for_order( $order_id );
+		}
+
+		if ( ! $conversation ) {
+			return new WP_REST_Response( array() );
+		}
+
+		$messages = $conversation_service->get_messages( (int) $conversation->id );
 
 		$data = array();
 		foreach ( $messages as $message ) {
-			$user   = get_userdata( (int) $message->user_id );
+			$user   = get_userdata( (int) $message->sender_id );
 			$data[] = array(
 				'id'          => (int) $message->id,
-				'order_id'    => (int) $message->order_id,
-				'user_id'     => (int) $message->user_id,
+				'order_id'    => $order_id,
+				'user_id'     => (int) $message->sender_id,
 				'user_name'   => $user ? $user->display_name : __( 'Unknown', 'wp-sell-services' ),
-				'user_avatar' => get_avatar_url( (int) $message->user_id, array( 'size' => 48 ) ),
-				'message'     => $message->message,
-				'attachments' => maybe_unserialize( $message->attachments ) ?: array(),
-				'is_system'   => (bool) $message->is_system,
+				'user_avatar' => get_avatar_url( (int) $message->sender_id, array( 'size' => 48 ) ),
+				'message'     => $message->content,
+				'attachments' => $message->attachments ? json_decode( $message->attachments, true ) : array(),
+				'is_system'   => 'system' === $message->type,
 				'created_at'  => $message->created_at,
 			);
 		}
@@ -344,11 +350,11 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_message( $request ) {
-		$order_id = (int) $request->get_param( 'id' );
-		$message  = sanitize_textarea_field( $request->get_param( 'message' ) );
-		$user_id  = get_current_user_id();
+		$order_id     = (int) $request->get_param( 'id' );
+		$message_text = sanitize_textarea_field( $request->get_param( 'message' ) );
+		$user_id      = get_current_user_id();
 
-		if ( empty( $message ) ) {
+		if ( empty( $message_text ) ) {
 			return new WP_Error(
 				'rest_invalid_message',
 				__( 'Message cannot be empty.', 'wp-sell-services' ),
@@ -356,25 +362,32 @@ class OrdersController extends RestController {
 			);
 		}
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_messages';
+		$conversation_service = new ConversationService();
+		$conversation         = $conversation_service->get_by_order( $order_id );
 
-		$attachments = $request->get_param( 'attachments' ) ?: array();
+		if ( ! $conversation ) {
+			$conversation = $conversation_service->create_for_order( $order_id );
+		}
 
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'order_id'    => $order_id,
-				'user_id'     => $user_id,
-				'message'     => $message,
-				'attachments' => maybe_serialize( $attachments ),
-				'is_system'   => 0,
-				'created_at'  => current_time( 'mysql' ),
-			),
-			array( '%d', '%d', '%s', '%s', '%d', '%s' )
+		if ( ! $conversation ) {
+			return new WP_Error(
+				'rest_conversation_failed',
+				__( 'Failed to create or find conversation.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$attachments_raw = $request->get_param( 'attachments' );
+		$attachments     = is_array( $attachments_raw ) ? $attachments_raw : array();
+
+		$message = $conversation_service->send_message(
+			(int) $conversation->id,
+			$user_id,
+			$message_text,
+			$attachments
 		);
 
-		if ( ! $result ) {
+		if ( ! $message ) {
 			return new WP_Error(
 				'rest_message_failed',
 				__( 'Failed to create message.', 'wp-sell-services' ),
@@ -382,24 +395,22 @@ class OrdersController extends RestController {
 			);
 		}
 
-		$message_id = $wpdb->insert_id;
-
 		// Trigger notification.
-		do_action( 'wpss_order_message_created', $message_id, $order_id, $user_id );
+		do_action( 'wpss_order_message_created', (int) $message->id, $order_id, $user_id );
 
 		$user = get_userdata( $user_id );
 
 		return new WP_REST_Response(
 			array(
-				'id'          => $message_id,
+				'id'          => (int) $message->id,
 				'order_id'    => $order_id,
 				'user_id'     => $user_id,
 				'user_name'   => $user->display_name,
 				'user_avatar' => get_avatar_url( $user_id, array( 'size' => 48 ) ),
-				'message'     => $message,
+				'message'     => $message->content,
 				'attachments' => $attachments,
 				'is_system'   => false,
-				'created_at'  => current_time( 'mysql' ),
+				'created_at'  => $message->created_at,
 			),
 			201
 		);
@@ -414,37 +425,35 @@ class OrdersController extends RestController {
 	public function get_deliverables( $request ) {
 		$order_id = (int) $request->get_param( 'id' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_deliverables';
-
-		$deliverables = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE order_id = %d ORDER BY created_at DESC",
-				$order_id
-			)
-		);
+		$delivery_service = new DeliveryService();
+		$deliveries       = $delivery_service->get_order_deliveries( $order_id );
 
 		$data = array();
-		foreach ( $deliverables as $deliverable ) {
-			$files     = maybe_unserialize( $deliverable->files ) ?: array();
-			$file_data = array();
+		foreach ( $deliveries as $delivery ) {
+			$attachments = $delivery->attachments ? json_decode( $delivery->attachments, true ) : array();
+			$file_data   = array();
 
-			foreach ( $files as $attachment_id ) {
-				$file_data[] = array(
-					'id'   => $attachment_id,
-					'url'  => wp_get_attachment_url( $attachment_id ),
-					'name' => get_the_title( $attachment_id ),
-					'type' => get_post_mime_type( $attachment_id ),
-				);
+			if ( is_array( $attachments ) ) {
+				foreach ( $attachments as $attachment_id ) {
+					$file_data[] = array(
+						'id'   => $attachment_id,
+						'url'  => wp_get_attachment_url( $attachment_id ),
+						'name' => get_the_title( $attachment_id ),
+						'type' => get_post_mime_type( $attachment_id ),
+					);
+				}
 			}
 
 			$data[] = array(
-				'id'          => (int) $deliverable->id,
-				'order_id'    => (int) $deliverable->order_id,
-				'description' => $deliverable->description,
-				'files'       => $file_data,
-				'status'      => $deliverable->status,
-				'created_at'  => $deliverable->created_at,
+				'id'               => (int) $delivery->id,
+				'order_id'         => (int) $delivery->order_id,
+				'description'      => $delivery->message,
+				'files'            => $file_data,
+				'status'           => $delivery->status,
+				'version'          => (int) $delivery->version,
+				'response_message' => $delivery->response_message,
+				'responded_at'     => $delivery->responded_at,
+				'created_at'       => $delivery->created_at,
 			);
 		}
 
@@ -460,44 +469,49 @@ class OrdersController extends RestController {
 	public function create_deliverable( $request ) {
 		$order_id    = (int) $request->get_param( 'id' );
 		$description = sanitize_textarea_field( $request->get_param( 'description' ) );
-		$files       = $request->get_param( 'files' ) ?: array();
+		$files_raw   = $request->get_param( 'files' );
+		$files       = is_array( $files_raw ) ? $files_raw : array();
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_deliverables';
-
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'order_id'    => $order_id,
-				'description' => $description,
-				'files'       => maybe_serialize( array_map( 'intval', $files ) ),
-				'status'      => 'pending',
-				'created_at'  => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%s', '%s', '%s' )
-		);
+		// Use DeliveryService to create the delivery.
+		$delivery_service = new DeliveryService();
+		$result           = $delivery_service->submit( $order_id, $description, $files );
 
 		if ( ! $result ) {
 			return new WP_Error(
 				'rest_deliverable_failed',
-				__( 'Failed to create deliverable.', 'wp-sell-services' ),
+				__( 'Failed to create deliverable. Order may not be in correct status.', 'wp-sell-services' ),
 				array( 'status' => 500 )
 			);
 		}
 
-		$deliverable_id = $wpdb->insert_id;
+		// Get the latest delivery to return in response.
+		$deliveries = $delivery_service->get_order_deliveries( $order_id );
+		$delivery   = ! empty( $deliveries ) ? end( $deliveries ) : null;
 
-		// Trigger notification.
-		do_action( 'wpss_order_deliverable_created', $deliverable_id, $order_id );
+		if ( ! $delivery ) {
+			return new WP_Error(
+				'rest_deliverable_failed',
+				__( 'Delivery created but could not be retrieved.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		// Decode attachments if JSON string.
+		$attachments = $delivery->attachments ?? array();
+		if ( is_string( $attachments ) ) {
+			$decoded     = json_decode( $attachments, true );
+			$attachments = is_array( $decoded ) ? $decoded : array();
+		}
 
 		return new WP_REST_Response(
 			array(
-				'id'          => $deliverable_id,
+				'id'          => (int) $delivery->id,
 				'order_id'    => $order_id,
-				'description' => $description,
-				'files'       => $files,
-				'status'      => 'pending',
-				'created_at'  => current_time( 'mysql' ),
+				'description' => $delivery->message ?? $description,
+				'files'       => $attachments,
+				'version'     => (int) ( $delivery->version ?? 1 ),
+				'status'      => $delivery->status ?? 'pending',
+				'created_at'  => $delivery->created_at ?? current_time( 'mysql' ),
 			),
 			201
 		);
@@ -694,14 +708,30 @@ class OrdersController extends RestController {
 		$service_id   = $order->service_id;
 		$requirements = get_post_meta( $service_id, '_wpss_requirements', true ) ?: array();
 
-		// Get submitted requirements.
-		$submitted = get_post_meta( $order_id, '_wpss_submitted_requirements', true ) ?: array();
+		// Get submitted requirements from database table.
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_order_requirements';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT field_data, attachments, submitted_at FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
+				$order_id
+			)
+		);
+
+		$submitted = array();
+		if ( $row && ! empty( $row->field_data ) ) {
+			$decoded   = json_decode( $row->field_data, true );
+			$submitted = is_array( $decoded ) ? $decoded : array();
+		}
 
 		return new WP_REST_Response(
 			array(
-				'template'  => $requirements,
-				'submitted' => $submitted,
-				'status'    => empty( $submitted ) ? 'pending' : 'submitted',
+				'template'     => $requirements,
+				'submitted'    => $submitted,
+				'status'       => empty( $submitted ) ? 'pending' : 'submitted',
+				'submitted_at' => $row->submitted_at ?? null,
 			)
 		);
 	}
@@ -713,8 +743,10 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function submit_requirements( $request ) {
-		$order_id     = (int) $request->get_param( 'id' );
-		$requirements = $request->get_param( 'requirements' );
+		$order_id        = (int) $request->get_param( 'id' );
+		$requirements    = $request->get_param( 'requirements' );
+		$attachments_raw = $request->get_param( 'attachments' );
+		$attachments     = is_array( $attachments_raw ) ? $attachments_raw : array();
 
 		// Ensure requirements is an array.
 		if ( ! is_array( $requirements ) ) {
@@ -749,8 +781,49 @@ class OrdersController extends RestController {
 		// Sanitize requirements using type-aware sanitization.
 		$sanitized_requirements = $validator->sanitize_all( $template, $requirements );
 
-		// Save sanitized requirements.
-		update_post_meta( $order_id, '_wpss_submitted_requirements', $sanitized_requirements );
+		// Save sanitized requirements to database table.
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_order_requirements';
+
+		// Check if requirements already exist for this order.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$table} WHERE order_id = %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
+				$order_id
+			)
+		);
+
+		$now = current_time( 'mysql' );
+
+		if ( $existing ) {
+			// Update existing requirements.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array(
+					'field_data'   => wp_json_encode( $sanitized_requirements ),
+					'attachments'  => wp_json_encode( array_map( 'absint', $attachments ) ),
+					'submitted_at' => $now,
+				),
+				array( 'id' => $existing ),
+				array( '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+		} else {
+			// Insert new requirements.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->insert(
+				$table,
+				array(
+					'order_id'     => $order_id,
+					'field_data'   => wp_json_encode( $sanitized_requirements ),
+					'attachments'  => wp_json_encode( array_map( 'absint', $attachments ) ),
+					'submitted_at' => $now,
+				),
+				array( '%d', '%s', '%s', '%s' )
+			);
+		}
 
 		// Update order status if pending.
 		if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) {
@@ -761,9 +834,10 @@ class OrdersController extends RestController {
 
 		return new WP_REST_Response(
 			array(
-				'success'   => true,
-				'message'   => __( 'Requirements submitted successfully.', 'wp-sell-services' ),
-				'submitted' => $sanitized_requirements,
+				'success'      => true,
+				'message'      => __( 'Requirements submitted successfully.', 'wp-sell-services' ),
+				'submitted'    => $sanitized_requirements,
+				'submitted_at' => $now,
 			)
 		);
 	}
