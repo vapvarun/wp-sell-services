@@ -549,7 +549,7 @@ class ServiceWizard {
 									<?php endif; ?>
 								</label>
 								<div class="wpss-input-group">
-									<span class="wpss-input-prefix"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
+									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 									<input type="number"
 										class="wpss-form-input"
 										x-model="data.packages.<?php echo esc_attr( $tier ); ?>.price"
@@ -820,7 +820,7 @@ class ServiceWizard {
 									<div class="wpss-form-group">
 										<label class="wpss-form-label"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 										<div class="wpss-input-group">
-											<span class="wpss-input-prefix"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
+											<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 											<input type="number"
 												class="wpss-form-input"
 												x-model="data.extras[index].price"
@@ -949,7 +949,7 @@ class ServiceWizard {
 							<h3 class="wpss-service-preview-title" x-text="data.title || '<?php esc_attr_e( 'Untitled Service', 'wp-sell-services' ); ?>'"></h3>
 							<div class="wpss-service-preview-price">
 								<?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?>
-								<strong x-text="'<?php echo esc_html( get_woocommerce_currency_symbol() ); ?>' + (data.packages.basic.price || '0')"></strong>
+								<strong x-text="'<?php echo esc_html( wpss_get_currency_symbol() ); ?>' + (data.packages.basic.price || '0')"></strong>
 							</div>
 						</div>
 					</div>
@@ -989,7 +989,7 @@ class ServiceWizard {
 						<template x-for="tier in ['basic', 'standard', 'premium']" :key="tier">
 							<div class="wpss-pricing-summary-item" x-show="tier === 'basic' || data.packages[tier].enabled" x-cloak>
 								<span class="wpss-pricing-summary-name" x-text="data.packages[tier].name || tier.charAt(0).toUpperCase() + tier.slice(1)"></span>
-								<span class="wpss-pricing-summary-price" x-text="'<?php echo esc_html( get_woocommerce_currency_symbol() ); ?>' + (data.packages[tier].price || '0')"></span>
+								<span class="wpss-pricing-summary-price" x-text="'<?php echo esc_html( wpss_get_currency_symbol() ); ?>' + (data.packages[tier].price || '0')"></span>
 								<span class="wpss-pricing-summary-delivery" x-text="(data.packages[tier].delivery_time || '?') + ' <?php esc_attr_e( 'days', 'wp-sell-services' ); ?>'"></span>
 							</div>
 						</template>
@@ -1190,7 +1190,7 @@ class ServiceWizard {
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
-				'currencySymbol' => get_woocommerce_currency_symbol(),
+				'currencySymbol' => wpss_get_currency_symbol(),
 				'limits'         => $this->limits,
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
