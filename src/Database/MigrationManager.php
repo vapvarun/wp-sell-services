@@ -166,20 +166,7 @@ class MigrationManager {
 					}
 				}
 
-				// Create platform mapping.
-				$this->wpdb->insert(
-					$this->schema->get_table_name( 'service_platform_map' ),
-					[
-						'service_id'          => $service_id,
-						'platform'            => 'woocommerce',
-						'platform_product_id' => $product->ID,
-						'sync_status'         => 'migrated',
-						'last_synced_at'      => current_time( 'mysql' ),
-					],
-					[ '%d', '%s', '%d', '%s', '%s' ]
-				);
-
-				// Store old ID reference.
+				// Store old ID reference for migration tracking.
 				update_post_meta( $service_id, '_wpss_migrated_from_wss', $product->ID );
 
 				++$count;

@@ -119,8 +119,6 @@ class SchemaManager {
 			$this->get_notifications_table( $charset_collate ),
 			$this->get_wallet_transactions_table( $charset_collate ),
 			$this->get_withdrawals_table( $charset_collate ),
-			$this->get_service_platform_map_table( $charset_collate ),
-			$this->get_analytics_events_table( $charset_collate ),
 		);
 
 		foreach ( $tables as $sql ) {
@@ -649,56 +647,6 @@ class SchemaManager {
 	}
 
 	/**
-	 * Get service platform map table SQL.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_service_platform_map_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'service_platform_map' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			service_id bigint(20) unsigned NOT NULL,
-			platform varchar(50) NOT NULL,
-			platform_product_id bigint(20) unsigned NOT NULL,
-			sync_status varchar(50) DEFAULT 'synced',
-			last_synced_at datetime DEFAULT NULL,
-			PRIMARY KEY (id),
-			UNIQUE KEY unique_mapping (service_id,platform),
-			KEY idx_platform (platform,platform_product_id)
-		) {$charset_collate};";
-	}
-
-	/**
-	 * Get analytics events table SQL.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_analytics_events_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'analytics_events' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			event_type varchar(50) NOT NULL,
-			entity_type varchar(50) NOT NULL,
-			entity_id bigint(20) unsigned NOT NULL,
-			user_id bigint(20) unsigned DEFAULT NULL,
-			session_id varchar(100) DEFAULT NULL,
-			ip_hash varchar(64) DEFAULT NULL,
-			referrer varchar(255) DEFAULT NULL,
-			user_agent varchar(255) DEFAULT NULL,
-			event_data longtext,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_entity (entity_type,entity_id),
-			KEY idx_event (event_type),
-			KEY idx_date (created_at)
-		) {$charset_collate};";
-	}
-
-	/**
 	 * Drop all plugin tables.
 	 *
 	 * Used during uninstall.
@@ -760,8 +708,6 @@ class SchemaManager {
 			'notifications'        => $this->get_table_name( 'notifications' ),
 			'wallet_transactions'  => $this->get_table_name( 'wallet_transactions' ),
 			'withdrawals'          => $this->get_table_name( 'withdrawals' ),
-			'service_platform_map' => $this->get_table_name( 'service_platform_map' ),
-			'analytics_events'     => $this->get_table_name( 'analytics_events' ),
 		);
 	}
 }
