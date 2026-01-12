@@ -274,7 +274,8 @@ class ServiceModerationPage {
 		$counts = $this->get_status_counts();
 		?>
 		<div class="wrap wpss-moderation-wrap">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
+			<h1><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
+			<hr class="wp-header-end">
 
 			<!-- Status Tabs -->
 			<ul class="subsubsub">
@@ -307,6 +308,7 @@ class ServiceModerationPage {
 					</a>
 				</li>
 			</ul>
+			<div class="clear"></div>
 
 			<!-- Bulk Actions -->
 			<form method="post" id="wpss-moderation-form">
