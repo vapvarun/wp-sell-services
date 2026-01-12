@@ -119,14 +119,17 @@ class AnalyticsService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$date_from    = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
 
-		// Get vendor's services.
+		// Get vendor's services (limit to 100 for performance).
 		$services = get_posts(
 			array(
-				'post_type'      => 'wpss_service',
-				'author'         => $vendor_id,
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
+				'post_type'              => 'wpss_service',
+				'author'                 => $vendor_id,
+				'post_status'            => 'publish',
+				'posts_per_page'         => 100,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
 			)
 		);
 
@@ -307,17 +310,18 @@ class AnalyticsService {
 	 * @return int Service count.
 	 */
 	private function get_active_service_count( int $vendor_id ): int {
-		$args = array(
-			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
-			'author'         => $vendor_id,
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
+		global $wpdb;
+
+		// Use direct COUNT query instead of loading all posts.
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->posts}
+				WHERE post_type = 'wpss_service'
+				AND post_status = 'publish'
+				AND post_author = %d",
+				$vendor_id
+			)
 		);
-
-		$query = new \WP_Query( $args );
-
-		return $query->found_posts;
 	}
 
 	/**

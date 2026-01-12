@@ -166,6 +166,13 @@ class ReviewRepository extends AbstractRepository {
 	 * @return array<string, mixed> Rating summary.
 	 */
 	public function get_service_rating_summary( int $service_id ): array {
+		$cache_key = 'wpss_service_rating_' . $service_id;
+		$result    = get_transient( $cache_key );
+
+		if ( false !== $result ) {
+			return $result;
+		}
+
 		$summary = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
@@ -199,7 +206,7 @@ class ReviewRepository extends AbstractRepository {
 			$rating_breakdown[ (int) $row['rating'] ] = (int) $row['count'];
 		}
 
-		return array(
+		$result = array(
 			'total_reviews'     => (int) ( $summary['total_reviews'] ?? 0 ),
 			'average_rating'    => round( (float) ( $summary['average_rating'] ?? 0 ), 1 ),
 			'avg_communication' => round( (float) ( $summary['avg_communication'] ?? 0 ), 1 ),
@@ -207,6 +214,10 @@ class ReviewRepository extends AbstractRepository {
 			'avg_delivery'      => round( (float) ( $summary['avg_delivery'] ?? 0 ), 1 ),
 			'breakdown'         => $rating_breakdown,
 		);
+
+		set_transient( $cache_key, $result, HOUR_IN_SECONDS );
+
+		return $result;
 	}
 
 	/**
@@ -216,6 +227,13 @@ class ReviewRepository extends AbstractRepository {
 	 * @return array<string, mixed> Rating summary.
 	 */
 	public function get_vendor_rating_summary( int $vendor_id ): array {
+		$cache_key = 'wpss_vendor_rating_' . $vendor_id;
+		$result    = get_transient( $cache_key );
+
+		if ( false !== $result ) {
+			return $result;
+		}
+
 		$summary = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
@@ -231,13 +249,17 @@ class ReviewRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		return array(
+		$result = array(
 			'total_reviews'     => (int) ( $summary['total_reviews'] ?? 0 ),
 			'average_rating'    => round( (float) ( $summary['average_rating'] ?? 0 ), 1 ),
 			'avg_communication' => round( (float) ( $summary['avg_communication'] ?? 0 ), 1 ),
 			'avg_quality'       => round( (float) ( $summary['avg_quality'] ?? 0 ), 1 ),
 			'avg_delivery'      => round( (float) ( $summary['avg_delivery'] ?? 0 ), 1 ),
 		);
+
+		set_transient( $cache_key, $result, HOUR_IN_SECONDS );
+
+		return $result;
 	}
 
 	/**
@@ -309,5 +331,41 @@ class ReviewRepository extends AbstractRepository {
 		);
 
 		return false !== $result;
+	}
+
+	/**
+	 * Clear rating summary cache for a service and/or vendor.
+	 *
+	 * @param int|null $service_id Service ID to clear cache for.
+	 * @param int|null $vendor_id  Vendor ID to clear cache for.
+	 * @return void
+	 */
+	public function clear_rating_cache( ?int $service_id = null, ?int $vendor_id = null ): void {
+		if ( null !== $service_id ) {
+			delete_transient( 'wpss_service_rating_' . $service_id );
+		}
+		if ( null !== $vendor_id ) {
+			delete_transient( 'wpss_vendor_rating_' . $vendor_id );
+		}
+	}
+
+	/**
+	 * Insert a review and clear related caches.
+	 *
+	 * @param array<string, mixed> $data Review data.
+	 * @return int|false Inserted ID or false on failure.
+	 */
+	public function insert( array $data ) {
+		$result = parent::insert( $data );
+
+		if ( $result ) {
+			// Clear caches after successful insert.
+			$this->clear_rating_cache(
+				$data['service_id'] ?? null,
+				$data['vendor_id'] ?? null
+			);
+		}
+
+		return $result;
 	}
 }
