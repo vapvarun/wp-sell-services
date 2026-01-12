@@ -36,11 +36,15 @@
         <!-- Allow PSR-4 file naming for classes -->
         <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
         <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+        <!-- Allow short ternary operators (PHP 7+) -->
+        <exclude name="Universal.Operators.DisallowShortTernary"/>
+        <!-- Allow direct DB queries in repository classes (they handle their own caching) -->
+        <exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+        <exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
     </rule>
 
-    <rule ref="WordPress-Core"/>
-    <rule ref="WordPress-Docs"/>
-    <rule ref="WordPress-Extra"/>
+    <!-- Note: WordPress ruleset already includes WordPress-Core, WordPress-Docs, WordPress-Extra -->
+    <!-- Do NOT add them separately as it re-enables excluded rules -->
 
     <!-- Verify that the text_domain is set to the desired text-domain -->
     <rule ref="WordPress.WP.I18n">

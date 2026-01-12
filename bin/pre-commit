@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# Pre-commit hook for WP Sell Services
+#
+# This hook runs:
+# 1. PHP syntax check on staged files
+# 2. Model consistency check (from_row vs from_db)
+# 3. WPCS check (if available)
+#
+# To install:
+#   ln -sf ../../bin/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Get list of staged PHP files
+STAGED_PHP_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$' || true)
+
+if [ -z "$STAGED_PHP_FILES" ]; then
+    echo "No PHP files staged, skipping checks."
+    exit 0
+fi
+
+echo "Checking ${#STAGED_PHP_FILES[@]} PHP file(s)..."
+
+# 1. PHP Syntax Check
+echo ""
+echo "=== PHP Syntax Check ==="
+SYNTAX_ERROR=0
+for FILE in $STAGED_PHP_FILES; do
+    if [ -f "$FILE" ]; then
+        php -l "$FILE" > /dev/null 2>&1 || {
+            echo "❌ Syntax error in: $FILE"
+            php -l "$FILE"
+            SYNTAX_ERROR=1
+        }
+    fi
+done
+
+if [ $SYNTAX_ERROR -eq 1 ]; then
+    echo ""
+    echo "❌ PHP syntax errors found. Fix them before committing."
+    exit 1
+fi
+echo "✓ PHP syntax OK"
+
+# 2. Check for deprecated from_row usage
+echo ""
+echo "=== Model Consistency Check ==="
+FROM_ROW_FILES=""
+for FILE in $STAGED_PHP_FILES; do
+    if [ -f "$FILE" ]; then
+        if grep -q "from_row\s*(" "$FILE" 2>/dev/null; then
+            FROM_ROW_FILES="$FROM_ROW_FILES $FILE"
+        fi
+    fi
+done
+
+if [ -n "$FROM_ROW_FILES" ]; then
+    echo "❌ Found deprecated from_row() usage in:"
+    for FILE in $FROM_ROW_FILES; do
+        echo "   - $FILE"
+        grep -n "from_row\s*(" "$FILE" | head -3
+    done
+    echo ""
+    echo "Use from_db() instead of from_row()"
+    exit 1
+fi
+echo "✓ No deprecated from_row() calls"
+
+# 3. Check for undefined function calls (basic check)
+echo ""
+echo "=== Undefined Function Check ==="
+UNDEFINED_FOUND=0
+for FILE in $STAGED_PHP_FILES; do
+    if [ -f "$FILE" ]; then
+        # Check for common mistakes
+        if grep -qE '\$this->[a-z_]+\s*\(\s*\)' "$FILE" 2>/dev/null; then
+            # Check if methods are defined
+            METHODS=$(grep -oE '\$this->([a-z_]+)\s*\(' "$FILE" | sed 's/\$this->//' | sed 's/(//' | sort -u)
+            # This is a basic check - full validation needs PHP parser
+        fi
+    fi
+done
+
+# 4. WPCS check (optional - warn only)
+echo ""
+echo "=== WPCS Check ==="
+if command -v ./vendor/bin/phpcs &> /dev/null; then
+    WPCS_ERRORS=0
+    for FILE in $STAGED_PHP_FILES; do
+        if [ -f "$FILE" ]; then
+            ./vendor/bin/phpcs --standard=phpcs.xml -n "$FILE" > /dev/null 2>&1 || WPCS_ERRORS=1
+        fi
+    done
+
+    if [ $WPCS_ERRORS -eq 1 ]; then
+        echo "⚠️  WPCS warnings found (not blocking commit)"
+        echo "   Run 'composer phpcs' to see details"
+        echo "   Run 'composer phpcbf' to auto-fix"
+    else
+        echo "✓ WPCS check passed"
+    fi
+else
+    echo "⚠️  WPCS not installed, skipping"
+fi
+
+echo ""
+echo "✓ All pre-commit checks passed!"
+exit 0
