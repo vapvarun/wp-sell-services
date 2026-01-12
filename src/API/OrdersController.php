@@ -600,8 +600,7 @@ class OrdersController extends RestController {
 				} else {
 					$result = $order->update(
 						array(
-							'status'       => 'delivered',
-							'delivered_at' => current_time( 'mysql' ),
+							'status' => 'delivered',
 						)
 					);
 					do_action( 'wpss_order_delivered', $order_id );
@@ -973,12 +972,11 @@ class OrdersController extends RestController {
 			'total'             => (float) $order->total,
 			'currency'          => $order->currency,
 			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),
-			'due_date'          => $order->due_date,
-			'started_at'        => $order->started_at,
-			'delivered_at'      => $order->delivered_at,
-			'completed_at'      => $order->completed_at,
-			'created_at'        => $order->created_at,
-			'updated_at'        => $order->updated_at,
+			'due_date'          => $order->delivery_deadline ? $order->delivery_deadline->format( 'Y-m-d H:i:s' ) : null,
+			'started_at'        => $order->started_at ? $order->started_at->format( 'Y-m-d H:i:s' ) : null,
+			'completed_at'      => $order->completed_at ? $order->completed_at->format( 'Y-m-d H:i:s' ) : null,
+			'created_at'        => $order->created_at ? $order->created_at->format( 'Y-m-d H:i:s' ) : null,
+			'updated_at'        => $order->updated_at ? $order->updated_at->format( 'Y-m-d H:i:s' ) : null,
 			'available_actions' => $this->get_available_actions( $order ),
 		);
 

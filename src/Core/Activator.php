@@ -117,28 +117,68 @@ class Activator {
 	/**
 	 * Set default plugin options.
 	 *
+	 * Option names must match those registered in Settings.php.
+	 *
 	 * @return void
 	 */
 	private static function set_default_options(): void {
 		$defaults = array(
-			'wpss_general_settings'      => array(
-				'currency'              => 'USD',
-				'date_format'           => 'Y-m-d',
-				'auto_complete_days'    => 3,
-				'enable_buyer_requests' => true,
-				'enable_disputes'       => true,
+			// General settings - matches Settings.php wpss_general.
+			'wpss_general'       => array(
+				'platform_name'      => get_bloginfo( 'name' ),
+				'currency'           => 'USD',
+				'ecommerce_platform' => 'auto',
 			),
-			'wpss_notification_settings' => array(
-				'enable_email_notifications' => true,
-				'enable_live_notifications'  => true,
-				'notification_sound'         => true,
-				'polling_interval'           => 10,
+			// Commission settings - matches Settings.php wpss_commission.
+			'wpss_commission'    => array(
+				'commission_rate'     => 10,
+				'enable_vendor_rates' => true,
 			),
-			'wpss_vendor_settings'       => array(
-				'auto_approve_vendors'    => false,
-				'enable_verification'     => true,
-				'verification_tiers'      => array( 'basic', 'verified', 'pro' ),
-				'default_commission_rate' => 0,
+			// Payouts settings - matches Settings.php wpss_payouts.
+			'wpss_payouts'       => array(
+				'min_withdrawal'            => 50,
+				'clearance_days'            => 14,
+				'auto_withdrawal_enabled'   => false,
+				'auto_withdrawal_threshold' => 500,
+				'auto_withdrawal_schedule'  => 'monthly',
+			),
+			// Tax settings - matches Settings.php wpss_tax.
+			'wpss_tax'           => array(
+				'enable_tax'        => false,
+				'tax_label'         => 'Tax',
+				'tax_rate'          => 0,
+				'tax_included'      => false,
+				'tax_on_commission' => 'none',
+			),
+			// Vendor settings - matches Settings.php wpss_vendor.
+			'wpss_vendor'        => array(
+				'vendor_registration'        => 'open',
+				'max_services_per_vendor'    => 20,
+				'require_verification'       => false,
+				'require_service_moderation' => false,
+			),
+			// Order settings - matches Settings.php wpss_orders.
+			'wpss_orders'        => array(
+				'auto_complete_days'  => 3,
+				'revision_limit'      => 2,
+				'allow_disputes'      => true,
+				'dispute_window_days' => 14,
+			),
+			// Notification settings - matches Settings.php wpss_notifications.
+			'wpss_notifications' => array(
+				'notify_new_order'          => true,
+				'notify_order_completed'    => true,
+				'notify_order_cancelled'    => true,
+				'notify_delivery_submitted' => true,
+				'notify_revision_requested' => true,
+				'notify_new_message'        => true,
+				'notify_new_review'         => true,
+				'notify_dispute_opened'     => true,
+			),
+			// Advanced settings - matches Settings.php wpss_advanced.
+			'wpss_advanced'      => array(
+				'delete_data_on_uninstall' => false,
+				'enable_debug_mode'        => false,
 			),
 		);
 
@@ -146,6 +186,12 @@ class Activator {
 			if ( false === get_option( $option_name ) ) {
 				add_option( $option_name, $option_value );
 			}
+		}
+
+		// Clean up old incorrectly-named options from previous versions.
+		$old_options = array( 'wpss_general_settings', 'wpss_vendor_settings', 'wpss_notification_settings' );
+		foreach ( $old_options as $old_option ) {
+			delete_option( $old_option );
 		}
 
 		// Set activation timestamp.
@@ -174,6 +220,9 @@ class Activator {
 		if ( ! wp_next_scheduled( 'wpss_update_vendor_stats' ) ) {
 			wp_schedule_event( time(), 'twicedaily', 'wpss_update_vendor_stats' );
 		}
+
+		// Process auto-withdrawals (uses dynamic scheduling based on settings).
+		\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
 	}
 
 	/**

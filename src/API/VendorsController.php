@@ -588,7 +588,7 @@ class VendorsController extends RestController {
 		$on_time_deliveries = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$orders_table}
-				WHERE vendor_id = %d AND status = 'completed' AND delivered_at <= due_date",
+				WHERE vendor_id = %d AND status = 'completed' AND completed_at <= delivery_deadline",
 				$vendor_id
 			)
 		);

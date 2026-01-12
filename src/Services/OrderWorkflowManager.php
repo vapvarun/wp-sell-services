@@ -137,7 +137,7 @@ class OrderWorkflowManager {
 			);
 
 			// Notify vendor.
-			$this->notification_service->send(
+			$this->notification_service->create(
 				(int) $order->vendor_id,
 				'order_late',
 				__( 'Order Overdue', 'wp-sell-services' ),
@@ -146,7 +146,7 @@ class OrderWorkflowManager {
 			);
 
 			// Notify customer.
-			$this->notification_service->send(
+			$this->notification_service->create(
 				(int) $order->customer_id,
 				'order_late',
 				__( 'Order Delayed', 'wp-sell-services' ),
@@ -201,7 +201,7 @@ class OrderWorkflowManager {
 			);
 
 			// Notify customer.
-			$this->notification_service->send(
+			$this->notification_service->create(
 				(int) $order->customer_id,
 				'order_auto_completed',
 				__( 'Order Auto-Completed', 'wp-sell-services' ),
@@ -241,7 +241,7 @@ class OrderWorkflowManager {
 			$deadline = new \DateTime( $order->delivery_deadline );
 			$hours_left = max( 0, ( $deadline->getTimestamp() - time() ) / 3600 );
 
-			$this->notification_service->send(
+			$this->notification_service->create(
 				(int) $order->vendor_id,
 				'deadline_reminder',
 				__( 'Deadline Approaching', 'wp-sell-services' ),
@@ -276,7 +276,7 @@ class OrderWorkflowManager {
 		// Notify relevant party based on status.
 		switch ( $new_status ) {
 			case ServiceOrder::STATUS_IN_PROGRESS:
-				$this->notification_service->send(
+				$this->notification_service->create(
 					$order->vendor_id,
 					'order_started',
 					__( 'Order Started', 'wp-sell-services' ),
@@ -286,7 +286,7 @@ class OrderWorkflowManager {
 				break;
 
 			case ServiceOrder::STATUS_PENDING_APPROVAL:
-				$this->notification_service->send(
+				$this->notification_service->create(
 					$order->customer_id,
 					'delivery_received',
 					__( 'Delivery Received', 'wp-sell-services' ),
@@ -296,7 +296,7 @@ class OrderWorkflowManager {
 				break;
 
 			case ServiceOrder::STATUS_REVISION_REQUESTED:
-				$this->notification_service->send(
+				$this->notification_service->create(
 					$order->vendor_id,
 					'revision_requested',
 					__( 'Revision Requested', 'wp-sell-services' ),
@@ -344,11 +344,15 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		// Update vendor stats.
+		// Calculate and record commission.
+		$commission_service = new CommissionService();
+		$commission_service->record( $order_id );
+
+		// Update vendor stats (basic counts only - earnings handled by CommissionService).
 		$this->update_vendor_stats( $order->vendor_id );
 
 		// Notify both parties.
-		$this->notification_service->send(
+		$this->notification_service->create(
 			$order->customer_id,
 			'order_completed',
 			__( 'Order Completed', 'wp-sell-services' ),
@@ -356,7 +360,7 @@ class OrderWorkflowManager {
 			[ 'order_id' => $order_id ]
 		);
 
-		$this->notification_service->send(
+		$this->notification_service->create(
 			$order->vendor_id,
 			'order_completed',
 			__( 'Order Completed', 'wp-sell-services' ),
@@ -388,7 +392,7 @@ class OrderWorkflowManager {
 		}
 
 		// Notify both parties.
-		$this->notification_service->send(
+		$this->notification_service->create(
 			$order->customer_id,
 			'order_cancelled',
 			__( 'Order Cancelled', 'wp-sell-services' ),
@@ -396,7 +400,7 @@ class OrderWorkflowManager {
 			[ 'order_id' => $order_id ]
 		);
 
-		$this->notification_service->send(
+		$this->notification_service->create(
 			$order->vendor_id,
 			'order_cancelled',
 			__( 'Order Cancelled', 'wp-sell-services' ),
@@ -434,7 +438,7 @@ class OrderWorkflowManager {
 		);
 
 		// Notify customer to submit requirements.
-		$this->notification_service->send(
+		$this->notification_service->create(
 			$order->customer_id,
 			'submit_requirements',
 			__( 'Submit Order Requirements', 'wp-sell-services' ),
@@ -443,7 +447,7 @@ class OrderWorkflowManager {
 		);
 
 		// Notify vendor of new order.
-		$this->notification_service->send(
+		$this->notification_service->create(
 			$order->vendor_id,
 			'new_order',
 			__( 'New Order Received', 'wp-sell-services' ),
@@ -453,24 +457,24 @@ class OrderWorkflowManager {
 	}
 
 	/**
-	 * Update vendor statistics.
+	 * Update vendor statistics (order counts only).
+	 *
+	 * Note: Earnings are handled by CommissionService::record() which properly
+	 * calculates vendor_earnings after platform commission deduction.
 	 *
 	 * @param int $vendor_id Vendor user ID.
 	 * @return void
 	 */
 	private function update_vendor_stats( int $vendor_id ): void {
 		global $wpdb;
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$orders_table   = $wpdb->prefix . 'wpss_orders';
 		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
 
-		// Get completed orders count and total earnings.
+		// Get completed orders count.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$stats = $wpdb->get_row(
+		$completed_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT
-					COUNT(*) as completed_orders,
-					COALESCE(SUM(total), 0) as total_earnings
-				FROM {$orders_table}
+				"SELECT COUNT(*) FROM {$orders_table}
 				WHERE vendor_id = %d AND status = %s",
 				$vendor_id,
 				ServiceOrder::STATUS_COMPLETED
@@ -478,21 +482,20 @@ class OrderWorkflowManager {
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$total_orders = $wpdb->get_var(
+		$total_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d",
 				$vendor_id
 			)
 		);
 
-		// Update vendor profile.
+		// Update vendor profile order counts only (earnings updated by CommissionService).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			$profiles_table,
 			[
-				'total_orders'     => (int) $total_orders,
-				'completed_orders' => (int) $stats->completed_orders,
-				'total_earnings'   => (float) $stats->total_earnings,
+				'total_orders'     => $total_orders,
+				'completed_orders' => $completed_orders,
 				'updated_at'       => current_time( 'mysql' ),
 			],
 			[ 'user_id' => $vendor_id ]

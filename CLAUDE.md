@@ -157,6 +157,26 @@ add_action('wpss_loaded', function($plugin) {
 });
 ```
 
+### CRITICAL: Check Both Plugins Before Coding
+
+**ALWAYS check both free and pro plugins before implementing ANY feature.**
+
+| Free Plugin Owns | Pro Plugin Owns |
+|------------------|-----------------|
+| Core marketplace, CPTs, database | EDD/Fluent/SureCart adapters |
+| WooCommerce adapter | Direct payment gateways (Stripe, PayPal, Razorpay) |
+| Base admin settings UI | Cloud storage (S3, GCS) |
+| Frontend dashboard framework | Advanced analytics |
+| Order workflow, conversations | Wallet integrations |
+
+**Rules:**
+1. Free plugin provides hooks - Pro extends via those hooks
+2. Never duplicate functionality between plugins
+3. Each gateway/adapter class owns its own settings - don't duplicate in Pro.php
+4. If adding a hook in Free, check if Pro already uses a similar hook
+
+See `wp-sell-services-pro/CLAUDE.md` for detailed Pro guidelines.
+
 ## Basecamp Project Tracking
 
 **Project**: WP Sell Services

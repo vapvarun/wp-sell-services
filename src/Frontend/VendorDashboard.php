@@ -748,7 +748,7 @@ class VendorDashboard {
 			</div>
 
 			<!-- Withdrawal Request Form -->
-			<?php if ( $earnings['available_balance'] >= (float) get_option( 'wpss_min_withdrawal', 50 ) ) : ?>
+			<?php if ( $earnings['available_balance'] >= EarningsService::get_min_withdrawal_amount() ) : ?>
 				<div class="wpss-section">
 					<div class="wpss-section__header">
 						<h3 class="wpss-section__title"><?php esc_html_e( 'Request Withdrawal', 'wp-sell-services' ); ?></h3>
@@ -759,7 +759,7 @@ class VendorDashboard {
 							<div class="wpss-form-group">
 								<label class="wpss-form-group__label" for="withdrawal_amount"><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></label>
 								<input type="number" name="amount" id="withdrawal_amount" class="wpss-form-group__input"
-										min="<?php echo esc_attr( get_option( 'wpss_min_withdrawal', 50 ) ); ?>"
+										min="<?php echo esc_attr( EarningsService::get_min_withdrawal_amount() ); ?>"
 										max="<?php echo esc_attr( $earnings['available_balance'] ); ?>"
 										step="0.01" required>
 								<span class="wpss-form-group__hint">
@@ -767,7 +767,7 @@ class VendorDashboard {
 									printf(
 										/* translators: %s: minimum withdrawal amount */
 										esc_html__( 'Minimum: %s', 'wp-sell-services' ),
-										wp_kses_post( wpss_format_price( (float) get_option( 'wpss_min_withdrawal', 50 ) ) )
+										wp_kses_post( wpss_format_price( EarningsService::get_min_withdrawal_amount() ) )
 									);
 									?>
 								</span>
@@ -798,7 +798,7 @@ class VendorDashboard {
 						printf(
 							/* translators: %s: minimum withdrawal amount */
 							esc_html__( 'You need at least %s in available balance to request a withdrawal.', 'wp-sell-services' ),
-							wp_kses_post( wpss_format_price( (float) get_option( 'wpss_min_withdrawal', 50 ) ) )
+							wp_kses_post( wpss_format_price( EarningsService::get_min_withdrawal_amount() ) )
 						);
 						?>
 					</p>

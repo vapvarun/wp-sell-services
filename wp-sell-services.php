@@ -274,19 +274,9 @@ function wpss_init(): void {
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Plugin.php';
 
 	// Initialize plugin.
+	// Note: wpss_loaded action is fired inside Plugin::init() - do not fire it again here.
 	$plugin = Core\Plugin::get_instance();
 	$plugin->init();
-
-	/**
-	 * Fires after WP Sell Services is fully loaded.
-	 *
-	 * Use this hook to extend the plugin with Pro features or third-party integrations.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param Core\Plugin $plugin The plugin instance.
-	 */
-	do_action( 'wpss_loaded', $plugin );
 }
 
 // Initialize on plugins_loaded to ensure all dependencies are available.

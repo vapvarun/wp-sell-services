@@ -464,12 +464,11 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 					</div>
 				<?php endif; ?>
 
-				<?php if ( isset( $order->delivered_at ) && $order->delivered_at ) : ?>
+				<?php if ( in_array( $order->status, array( 'delivered', 'completed' ), true ) ) : ?>
 					<div class="wpss-timeline__item wpss-timeline__item--completed">
 						<div class="wpss-timeline__marker"></div>
 						<div class="wpss-timeline__content">
 							<span class="wpss-timeline__title"><?php esc_html_e( 'Delivered', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->delivered_at->getTimestamp() ) ); ?></span>
 						</div>
 					</div>
 				<?php endif; ?>

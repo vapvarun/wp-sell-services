@@ -167,6 +167,7 @@ $cron_hooks = array(
 	'wpss_auto_complete_orders',
 	'wpss_cleanup_expired_requests',
 	'wpss_update_vendor_stats',
+	'wpss_process_auto_withdrawals',
 );
 
 foreach ( $cron_hooks as $hook ) {

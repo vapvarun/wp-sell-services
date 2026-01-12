@@ -984,7 +984,7 @@ class Admin {
 								<?php endif; ?>
 								<?php if ( isset( $order->platform_fee ) && $order->platform_fee > 0 ) : ?>
 									<tr>
-										<td><?php esc_html_e( 'Platform Fee:', 'wp-sell-services' ); ?></td>
+										<td><?php esc_html_e( 'Commission:', 'wp-sell-services' ); ?></td>
 										<td style="text-align: right;"><?php echo esc_html( wpss_format_price( (float) $order->platform_fee, $order->currency ) ); ?></td>
 									</tr>
 								<?php endif; ?>
