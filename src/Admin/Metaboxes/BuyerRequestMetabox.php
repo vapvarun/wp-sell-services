@@ -31,8 +31,8 @@ class BuyerRequestMetabox {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'add_meta_boxes', [ $this, 'register_metaboxes' ] );
-		add_action( 'save_post_' . BuyerRequestPostType::POST_TYPE, [ $this, 'save_meta' ], 10, 2 );
+		add_action( 'add_meta_boxes', array( $this, 'register_metaboxes' ) );
+		add_action( 'save_post_' . BuyerRequestPostType::POST_TYPE, array( $this, 'save_meta' ), 10, 2 );
 	}
 
 	/**
@@ -44,7 +44,7 @@ class BuyerRequestMetabox {
 		add_meta_box(
 			'wpss_request_details',
 			__( 'Request Details', 'wp-sell-services' ),
-			[ $this, 'render_details_metabox' ],
+			array( $this, 'render_details_metabox' ),
 			BuyerRequestPostType::POST_TYPE,
 			'normal',
 			'high'
@@ -53,7 +53,7 @@ class BuyerRequestMetabox {
 		add_meta_box(
 			'wpss_request_proposals',
 			__( 'Proposals', 'wp-sell-services' ),
-			[ $this, 'render_proposals_metabox' ],
+			array( $this, 'render_proposals_metabox' ),
 			BuyerRequestPostType::POST_TYPE,
 			'normal',
 			'default'
@@ -62,7 +62,7 @@ class BuyerRequestMetabox {
 		add_meta_box(
 			'wpss_request_attachments',
 			__( 'Attachments', 'wp-sell-services' ),
-			[ $this, 'render_attachments_metabox' ],
+			array( $this, 'render_attachments_metabox' ),
 			BuyerRequestPostType::POST_TYPE,
 			'side',
 			'default'
@@ -78,13 +78,13 @@ class BuyerRequestMetabox {
 	public function render_details_metabox( \WP_Post $post ): void {
 		wp_nonce_field( 'wpss_request_meta', 'wpss_request_nonce' );
 
-		$status = get_post_meta( $post->ID, '_wpss_status', true ) ?: BuyerRequestService::STATUS_OPEN;
-		$budget_type = get_post_meta( $post->ID, '_wpss_budget_type', true ) ?: BuyerRequestService::BUDGET_FIXED;
-		$budget_min = get_post_meta( $post->ID, '_wpss_budget_min', true );
-		$budget_max = get_post_meta( $post->ID, '_wpss_budget_max', true );
+		$status        = get_post_meta( $post->ID, '_wpss_status', true ) ?: BuyerRequestService::STATUS_OPEN;
+		$budget_type   = get_post_meta( $post->ID, '_wpss_budget_type', true ) ?: BuyerRequestService::BUDGET_FIXED;
+		$budget_min    = get_post_meta( $post->ID, '_wpss_budget_min', true );
+		$budget_max    = get_post_meta( $post->ID, '_wpss_budget_max', true );
 		$delivery_days = get_post_meta( $post->ID, '_wpss_delivery_days', true );
-		$expires_at = get_post_meta( $post->ID, '_wpss_expires_at', true );
-		$skills = get_post_meta( $post->ID, '_wpss_skills_required', true ) ?: [];
+		$expires_at    = get_post_meta( $post->ID, '_wpss_expires_at', true );
+		$skills        = get_post_meta( $post->ID, '_wpss_skills_required', true ) ?: array();
 		?>
 		<table class="form-table wpss-metabox-table">
 			<tr>
@@ -117,14 +117,14 @@ class BuyerRequestMetabox {
 					<label>
 						<?php esc_html_e( 'Min:', 'wp-sell-services' ); ?>
 						<input type="number" name="wpss_budget_min"
-							   value="<?php echo esc_attr( $budget_min ); ?>"
-							   min="0" step="0.01" class="small-text">
+								value="<?php echo esc_attr( $budget_min ); ?>"
+								min="0" step="0.01" class="small-text">
 					</label>
 					<label style="margin-left: 10px;">
 						<?php esc_html_e( 'Max:', 'wp-sell-services' ); ?>
 						<input type="number" name="wpss_budget_max"
-							   value="<?php echo esc_attr( $budget_max ); ?>"
-							   min="0" step="0.01" class="small-text">
+								value="<?php echo esc_attr( $budget_max ); ?>"
+								min="0" step="0.01" class="small-text">
 					</label>
 				</td>
 			</tr>
@@ -132,22 +132,22 @@ class BuyerRequestMetabox {
 				<th><label for="wpss_delivery_days"><?php esc_html_e( 'Expected Delivery (days)', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<input type="number" id="wpss_delivery_days" name="wpss_delivery_days"
-						   value="<?php echo esc_attr( $delivery_days ); ?>"
-						   min="1" max="365" class="small-text">
+							value="<?php echo esc_attr( $delivery_days ); ?>"
+							min="1" max="365" class="small-text">
 				</td>
 			</tr>
 			<tr>
 				<th><label for="wpss_expires_at"><?php esc_html_e( 'Expires On', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<input type="datetime-local" id="wpss_expires_at" name="wpss_expires_at"
-						   value="<?php echo esc_attr( $expires_at ? gmdate( 'Y-m-d\TH:i', strtotime( $expires_at ) ) : '' ); ?>">
+							value="<?php echo esc_attr( $expires_at ? gmdate( 'Y-m-d\TH:i', strtotime( $expires_at ) ) : '' ); ?>">
 				</td>
 			</tr>
 			<tr>
 				<th><label for="wpss_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<textarea id="wpss_skills" name="wpss_skills" rows="3" class="large-text"
-							  placeholder="<?php esc_attr_e( 'One skill per line', 'wp-sell-services' ); ?>"><?php echo esc_textarea( implode( "\n", $skills ) ); ?></textarea>
+								placeholder="<?php esc_attr_e( 'One skill per line', 'wp-sell-services' ); ?>"><?php echo esc_textarea( implode( "\n", $skills ) ); ?></textarea>
 				</td>
 			</tr>
 		</table>
@@ -162,7 +162,7 @@ class BuyerRequestMetabox {
 	 */
 	public function render_proposals_metabox( \WP_Post $post ): void {
 		$proposal_service = new ProposalService();
-		$proposals = $proposal_service->get_by_request( $post->ID );
+		$proposals        = $proposal_service->get_by_request( $post->ID );
 
 		if ( empty( $proposals ) ) {
 			echo '<p>' . esc_html__( 'No proposals yet.', 'wp-sell-services' ) . '</p>';
@@ -205,7 +205,7 @@ class BuyerRequestMetabox {
 						</td>
 						<td>
 							<?php
-							$statuses = ProposalService::get_statuses();
+							$statuses     = ProposalService::get_statuses();
 							$status_class = 'wpss-status-' . esc_attr( $proposal->status );
 							printf(
 								'<span class="%s">%s</span>',
@@ -229,7 +229,7 @@ class BuyerRequestMetabox {
 	 * @return void
 	 */
 	public function render_attachments_metabox( \WP_Post $post ): void {
-		$attachments = get_post_meta( $post->ID, '_wpss_attachments', true ) ?: [];
+		$attachments = get_post_meta( $post->ID, '_wpss_attachments', true ) ?: array();
 		?>
 		<div class="wpss-attachments-wrapper">
 			<div id="wpss-request-attachments">
@@ -296,13 +296,13 @@ class BuyerRequestMetabox {
 			update_post_meta( $post_id, '_wpss_budget_type', sanitize_key( $_POST['wpss_budget_type'] ) );
 		}
 
-		// Save budget amounts.
+		// Save budget amounts (ensure non-negative).
 		if ( isset( $_POST['wpss_budget_min'] ) ) {
-			update_post_meta( $post_id, '_wpss_budget_min', (float) $_POST['wpss_budget_min'] );
+			update_post_meta( $post_id, '_wpss_budget_min', max( 0, (float) $_POST['wpss_budget_min'] ) );
 		}
 
 		if ( isset( $_POST['wpss_budget_max'] ) ) {
-			update_post_meta( $post_id, '_wpss_budget_max', (float) $_POST['wpss_budget_max'] );
+			update_post_meta( $post_id, '_wpss_budget_max', max( 0, (float) $_POST['wpss_budget_max'] ) );
 		}
 
 		// Save delivery days.

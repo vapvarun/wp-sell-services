@@ -11,6 +11,8 @@
  * @var int $order_id Order ID passed from parent template.
  */
 
+use WPSellServices\Services\DeliveryService;
+
 defined( 'ABSPATH' ) || exit;
 
 if ( empty( $order_id ) ) {
@@ -48,15 +50,9 @@ $service     = get_post( $order->service_id );
 $vendor      = get_userdata( $order->vendor_id );
 $customer    = get_userdata( $order->customer_id );
 
-// Get deliveries.
-global $wpdb;
-$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
-$deliveries       = $wpdb->get_results(
-	$wpdb->prepare(
-		"SELECT * FROM {$deliveries_table} WHERE order_id = %d ORDER BY created_at DESC",
-		$order_id
-	)
-);
+// Get deliveries via service layer.
+$delivery_service = new DeliveryService();
+$deliveries       = $delivery_service->get_order_deliveries( $order_id );
 ?>
 
 <div class="wpss-order-view">

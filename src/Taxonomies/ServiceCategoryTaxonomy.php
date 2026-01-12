@@ -39,13 +39,13 @@ class ServiceCategoryTaxonomy {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'init', [ $this, 'register' ], 5 );
-		add_action( 'wpss_service_category_add_form_fields', [ $this, 'add_form_fields' ] );
-		add_action( 'wpss_service_category_edit_form_fields', [ $this, 'edit_form_fields' ], 10, 2 );
-		add_action( 'created_wpss_service_category', [ $this, 'save_term_meta' ] );
-		add_action( 'edited_wpss_service_category', [ $this, 'save_term_meta' ] );
-		add_filter( 'manage_edit-wpss_service_category_columns', [ $this, 'add_columns' ] );
-		add_filter( 'manage_wpss_service_category_custom_column', [ $this, 'column_content' ], 10, 3 );
+		add_action( 'init', array( $this, 'register' ), 5 );
+		add_action( 'wpss_service_category_add_form_fields', array( $this, 'add_form_fields' ) );
+		add_action( 'wpss_service_category_edit_form_fields', array( $this, 'edit_form_fields' ), 10, 2 );
+		add_action( 'created_wpss_service_category', array( $this, 'save_term_meta' ) );
+		add_action( 'edited_wpss_service_category', array( $this, 'save_term_meta' ) );
+		add_filter( 'manage_edit-wpss_service_category_columns', array( $this, 'add_columns' ) );
+		add_filter( 'manage_wpss_service_category_custom_column', array( $this, 'column_content' ), 10, 3 );
 	}
 
 	/**
@@ -54,7 +54,7 @@ class ServiceCategoryTaxonomy {
 	 * @return void
 	 */
 	public function register(): void {
-		$labels = [
+		$labels = array(
 			'name'                       => _x( 'Service Categories', 'taxonomy general name', 'wp-sell-services' ),
 			'singular_name'              => _x( 'Service Category', 'taxonomy singular name', 'wp-sell-services' ),
 			'search_items'               => __( 'Search Categories', 'wp-sell-services' ),
@@ -76,30 +76,30 @@ class ServiceCategoryTaxonomy {
 			'items_list'                 => __( 'Categories list', 'wp-sell-services' ),
 			'back_to_items'              => __( '&larr; Back to Categories', 'wp-sell-services' ),
 			'menu_name'                  => __( 'Categories', 'wp-sell-services' ),
-		];
+		);
 
-		$args = [
-			'labels'             => $labels,
-			'hierarchical'       => true,
-			'public'             => true,
-			'show_ui'            => true,
-			'show_admin_column'  => true,
-			'show_in_nav_menus'  => true,
-			'show_in_rest'       => true,
-			'show_tagcloud'      => false,
-			'query_var'          => true,
-			'rewrite'            => [
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => true,
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'show_in_nav_menus' => true,
+			'show_in_rest'      => true,
+			'show_tagcloud'     => false,
+			'query_var'         => true,
+			'rewrite'           => array(
 				'slug'         => 'service-category',
 				'with_front'   => false,
 				'hierarchical' => true,
-			],
-			'capabilities'       => [
+			),
+			'capabilities'      => array(
 				'manage_terms' => 'manage_categories',
 				'edit_terms'   => 'manage_categories',
 				'delete_terms' => 'manage_categories',
 				'assign_terms' => 'edit_posts',
-			],
-		];
+			),
+		);
 
 		/**
 		 * Filter service category taxonomy arguments.
@@ -118,6 +118,7 @@ class ServiceCategoryTaxonomy {
 	 * @return void
 	 */
 	public function add_form_fields(): void {
+		wp_nonce_field( 'wpss_save_category_meta', 'wpss_category_meta_nonce' );
 		?>
 		<div class="form-field term-icon-wrap">
 			<label for="wpss-category-icon"><?php esc_html_e( 'Icon', 'wp-sell-services' ); ?></label>
@@ -161,6 +162,7 @@ class ServiceCategoryTaxonomy {
 		$image_id = get_term_meta( $term->term_id, '_wpss_image', true );
 		$color    = get_term_meta( $term->term_id, '_wpss_color', true );
 		$featured = get_term_meta( $term->term_id, '_wpss_featured', true );
+		wp_nonce_field( 'wpss_save_category_meta', 'wpss_category_meta_nonce' );
 		?>
 		<tr class="form-field term-icon-wrap">
 			<th scope="row"><label for="wpss-category-icon"><?php esc_html_e( 'Icon', 'wp-sell-services' ); ?></label></th>
@@ -212,7 +214,13 @@ class ServiceCategoryTaxonomy {
 	 * @return void
 	 */
 	public function save_term_meta( int $term_id ): void {
-		// Verify nonce - handled by WordPress.
+		// Verify nonce.
+		if ( ! isset( $_POST['wpss_category_meta_nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_category_meta_nonce'] ) ), 'wpss_save_category_meta' ) ) {
+			return;
+		}
+
+		// Verify capability.
 		if ( ! current_user_can( 'manage_categories' ) ) {
 			return;
 		}
@@ -244,7 +252,7 @@ class ServiceCategoryTaxonomy {
 	 * @return array<string, string> Modified columns.
 	 */
 	public function add_columns( array $columns ): array {
-		$new_columns = [];
+		$new_columns = array();
 
 		foreach ( $columns as $key => $value ) {
 			if ( 'name' === $key ) {
@@ -294,20 +302,20 @@ class ServiceCategoryTaxonomy {
 	 */
 	public static function get_featured( int $limit = 8 ): array {
 		$terms = get_terms(
-			[
+			array(
 				'taxonomy'   => self::TAXONOMY,
 				'hide_empty' => false,
 				'number'     => $limit,
-				'meta_query' => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-					[
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
 						'key'   => '_wpss_featured',
 						'value' => '1',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
-		return is_wp_error( $terms ) ? [] : $terms;
+		return is_wp_error( $terms ) ? array() : $terms;
 	}
 
 	/**

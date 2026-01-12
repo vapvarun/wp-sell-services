@@ -344,7 +344,6 @@ class DeliveryService {
 			'html',
 			'css',
 			'js',
-			'php',
 		);
 
 		/**
