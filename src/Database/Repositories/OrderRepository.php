@@ -35,7 +35,7 @@ class OrderRepository extends AbstractRepository {
 		'total',
 		'created_at',
 		'updated_at',
-		'due_date',
+		'delivery_deadline',
 		'completed_at',
 	);
 
@@ -305,7 +305,7 @@ class OrderRepository extends AbstractRepository {
 				"SELECT
 					COUNT(*) as total_orders,
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN status IN ('in_progress', 'pending_approval', 'waiting_requirements') THEN 1 ELSE 0 END) as active_orders,
+					SUM(CASE WHEN status IN ('in_progress', 'pending_approval', 'pending_requirements') THEN 1 ELSE 0 END) as active_orders,
 					SUM(total) as total_spent
 				FROM {$this->table}
 				WHERE customer_id = %d",

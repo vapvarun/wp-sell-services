@@ -56,7 +56,7 @@ class ServiceManager {
 			return null;
 		}
 
-		return new Service( $post );
+		return Service::from_post( $post );
 	}
 
 	/**
@@ -295,7 +295,7 @@ class ServiceManager {
 
 		$services = array();
 		foreach ( $query->posts as $post ) {
-			$services[] = new Service( $post );
+			$services[] = Service::from_post( $post );
 		}
 
 		return $services;
@@ -400,7 +400,7 @@ class ServiceManager {
 
 		$services = array();
 		foreach ( $query->posts as $post ) {
-			$services[] = new Service( $post );
+			$services[] = Service::from_post( $post );
 		}
 
 		return $services;

@@ -39,125 +39,125 @@ class ReviewsController extends RestController {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_items' ],
+					'callback'            => array( $this, 'get_items' ),
 					'permission_callback' => '__return_true',
 					'args'                => $this->get_collection_params(),
-				],
-				'schema' => [ $this, 'get_public_item_schema' ],
-			]
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
 		);
 
 		// Single review.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_item' ],
+					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => '__return_true',
-					'args'                => [
-						'id' => [
+					'args'                => array(
+						'id' => array(
 							'description' => __( 'Unique identifier for the review.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
-						],
-					],
-				],
-				[
+						),
+					),
+				),
+				array(
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => [ $this, 'update_item' ],
-					'permission_callback' => [ $this, 'check_update_permissions' ],
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => array( $this, 'check_update_permissions' ),
 					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
-				],
-				[
+				),
+				array(
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_item' ],
-					'permission_callback' => [ $this, 'check_delete_permissions' ],
-				],
-				'schema' => [ $this, 'get_public_item_schema' ],
-			]
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => array( $this, 'check_delete_permissions' ),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
 		);
 
 		// Create review for order.
 		register_rest_route(
 			$this->namespace,
 			'/orders/(?P<order_id>[\d]+)/review',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'check_create_permissions' ],
-					'args'                => [
-						'order_id' => [
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'check_create_permissions' ),
+					'args'                => array(
+						'order_id' => array(
 							'description' => __( 'Order ID.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
-						],
-						'rating' => [
+						),
+						'rating'   => array(
 							'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 							'minimum'     => 1,
 							'maximum'     => 5,
-						],
-						'review' => [
+						),
+						'review'   => array(
 							'description' => __( 'Review text.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Vendor reply to review.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/reply',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'create_reply' ],
-					'permission_callback' => [ $this, 'check_reply_permissions' ],
-					'args'                => [
-						'reply' => [
+					'callback'            => array( $this, 'create_reply' ),
+					'permission_callback' => array( $this, 'check_reply_permissions' ),
+					'args'                => array(
+						'reply' => array(
 							'description' => __( 'Reply text.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
-						],
-					],
-				],
-			]
+						),
+					),
+				),
+			)
 		);
 
 		// Service reviews summary.
 		register_rest_route(
 			$this->namespace,
 			'/services/(?P<service_id>[\d]+)/reviews/summary',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_service_summary' ],
+					'callback'            => array( $this, 'get_service_summary' ),
 					'permission_callback' => '__return_true',
-				],
-			]
+				),
+			)
 		);
 
 		// Vendor reviews summary.
 		register_rest_route(
 			$this->namespace,
 			'/vendors/(?P<vendor_id>[\d]+)/reviews/summary',
-			[
-				[
+			array(
+				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_vendor_summary' ],
+					'callback'            => array( $this, 'get_vendor_summary' ),
 					'permission_callback' => '__return_true',
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -173,8 +173,8 @@ class ReviewsController extends RestController {
 		$pagination = $this->get_pagination_args( $request );
 		$table      = $wpdb->prefix . 'wpss_reviews';
 
-		$where  = [ '1=1' ];
-		$values = [];
+		$where  = array( '1=1' );
+		$values = array();
 
 		// Filter by service.
 		$service_id = $request->get_param( 'service_id' );
@@ -215,8 +215,8 @@ class ReviewsController extends RestController {
 		$orderby = $request->get_param( 'orderby' ) ?: 'created_at';
 		$order   = $request->get_param( 'order' ) ?: 'DESC';
 
-		$allowed_orderby = [ 'created_at', 'rating', 'helpful_count' ];
-		$allowed_order   = [ 'ASC', 'DESC' ];
+		$allowed_orderby = array( 'created_at', 'rating', 'helpful_count' );
+		$allowed_order   = array( 'ASC', 'DESC' );
 
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
 			$orderby = 'created_at';
@@ -227,11 +227,11 @@ class ReviewsController extends RestController {
 
 		// Get reviews.
 		$query = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-		$args  = array_merge( $values, [ $pagination['per_page'], $pagination['offset'] ] );
+		$args  = array_merge( $values, array( $pagination['per_page'], $pagination['offset'] ) );
 
 		$reviews = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-		$data = [];
+		$data = array();
 		foreach ( $reviews as $review ) {
 			$data[] = $this->prepare_item_for_response( $review, $request )->get_data();
 		}
@@ -252,7 +252,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_review_not_found',
 				__( 'Review not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -263,7 +263,7 @@ class ReviewsController extends RestController {
 				return new WP_Error(
 					'rest_review_not_found',
 					__( 'Review not found.', 'wp-sell-services' ),
-					[ 'status' => 404 ]
+					array( 'status' => 404 )
 				);
 			}
 		}
@@ -287,7 +287,7 @@ class ReviewsController extends RestController {
 
 		// Get order.
 		$orders_table = $wpdb->prefix . 'wpss_orders';
-		$order = $wpdb->get_row(
+		$order        = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$orders_table} WHERE id = %d",
 				$order_id
@@ -298,7 +298,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_order_not_found',
 				__( 'Order not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -307,7 +307,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You can only review orders you placed.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -316,13 +316,13 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_order_not_completed',
 				__( 'You can only review completed orders.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
 		// Check if already reviewed.
 		$reviews_table = $wpdb->prefix . 'wpss_reviews';
-		$existing = $wpdb->get_var(
+		$existing      = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM {$reviews_table} WHERE order_id = %d",
 				$order_id
@@ -333,7 +333,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_already_reviewed',
 				__( 'You have already reviewed this order.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -342,7 +342,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_invalid_rating',
 				__( 'Rating must be between 1 and 5.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
@@ -353,24 +353,27 @@ class ReviewsController extends RestController {
 		// Create review.
 		$result = $wpdb->insert(
 			$reviews_table,
-			[
+			array(
 				'order_id'    => $order_id,
 				'service_id'  => $order->service_id,
+				'reviewer_id' => $user_id,
+				'reviewee_id' => $order->vendor_id,
 				'vendor_id'   => $order->vendor_id,
 				'customer_id' => $user_id,
+				'review_type' => 'customer_to_vendor',
 				'rating'      => $rating,
 				'review'      => $review,
 				'status'      => $status,
 				'created_at'  => current_time( 'mysql' ),
-			],
-			[ '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s' ]
+			),
+			array( '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%d', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {
 			return new WP_Error(
 				'rest_review_failed',
 				__( 'Failed to create review.', 'wp-sell-services' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
@@ -406,11 +409,11 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_review_not_found',
 				__( 'Review not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
-		$updates = [];
+		$updates = array();
 
 		// Customers can update rating and review text.
 		if ( (int) $review->customer_id === get_current_user_id() ) {
@@ -429,7 +432,7 @@ class ReviewsController extends RestController {
 		// Admins can update status.
 		if ( current_user_can( 'manage_options' ) && $request->has_param( 'status' ) ) {
 			$status = $request->get_param( 'status' );
-			if ( in_array( $status, [ 'pending', 'approved', 'rejected' ], true ) ) {
+			if ( in_array( $status, array( 'pending', 'approved', 'rejected' ), true ) ) {
 				$updates['status'] = $status;
 			}
 		}
@@ -440,9 +443,9 @@ class ReviewsController extends RestController {
 			$wpdb->update(
 				$wpdb->prefix . 'wpss_reviews',
 				$updates,
-				[ 'id' => $review_id ],
+				array( 'id' => $review_id ),
 				null,
-				[ '%d' ]
+				array( '%d' )
 			);
 
 			// Update rating cache if rating changed.
@@ -472,7 +475,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_review_not_found',
 				__( 'Review not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -481,18 +484,18 @@ class ReviewsController extends RestController {
 
 		$wpdb->delete(
 			$wpdb->prefix . 'wpss_reviews',
-			[ 'id' => $review_id ],
-			[ '%d' ]
+			array( 'id' => $review_id ),
+			array( '%d' )
 		);
 
 		// Update rating cache.
 		$this->update_rating_cache( $service_id, $vendor_id );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'deleted' => true,
 				'id'      => $review_id,
-			]
+			)
 		);
 	}
 
@@ -513,7 +516,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_review_not_found',
 				__( 'Review not found.', 'wp-sell-services' ),
-				[ 'status' => 404 ]
+				array( 'status' => 404 )
 			);
 		}
 
@@ -521,19 +524,19 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_already_replied',
 				__( 'You have already replied to this review.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				array( 'status' => 400 )
 			);
 		}
 
 		$wpdb->update(
 			$wpdb->prefix . 'wpss_reviews',
-			[
+			array(
 				'vendor_reply'    => $reply,
 				'vendor_reply_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $review_id ],
-			[ '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $review_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
 		);
 
 		do_action( 'wpss_review_reply_created', $review_id );
@@ -576,25 +579,31 @@ class ReviewsController extends RestController {
 		$average = $total > 0 ? round( (float) $stats->average, 1 ) : 0;
 
 		return new WP_REST_Response(
-			[
-				'service_id'    => $service_id,
-				'total_reviews' => $total,
+			array(
+				'service_id'     => $service_id,
+				'total_reviews'  => $total,
 				'average_rating' => $average,
-				'breakdown'     => [
+				'breakdown'      => array(
 					5 => (int) $stats->five_star,
 					4 => (int) $stats->four_star,
 					3 => (int) $stats->three_star,
 					2 => (int) $stats->two_star,
 					1 => (int) $stats->one_star,
-				],
-				'percentages'   => $total > 0 ? [
+				),
+				'percentages'    => $total > 0 ? array(
 					5 => round( ( (int) $stats->five_star / $total ) * 100, 1 ),
 					4 => round( ( (int) $stats->four_star / $total ) * 100, 1 ),
 					3 => round( ( (int) $stats->three_star / $total ) * 100, 1 ),
 					2 => round( ( (int) $stats->two_star / $total ) * 100, 1 ),
 					1 => round( ( (int) $stats->one_star / $total ) * 100, 1 ),
-				] : [ 5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0 ],
-			]
+				) : array(
+					5 => 0,
+					4 => 0,
+					3 => 0,
+					2 => 0,
+					1 => 0,
+				),
+			)
 		);
 	}
 
@@ -631,7 +640,7 @@ class ReviewsController extends RestController {
 		$average = $total > 0 ? round( (float) $stats->average, 1 ) : 0;
 
 		// Get total completed orders for response rate.
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$orders_table     = $wpdb->prefix . 'wpss_orders';
 		$completed_orders = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
@@ -642,20 +651,20 @@ class ReviewsController extends RestController {
 		$response_rate = $completed_orders > 0 ? round( ( $total / $completed_orders ) * 100, 1 ) : 0;
 
 		return new WP_REST_Response(
-			[
-				'vendor_id'       => $vendor_id,
-				'total_reviews'   => $total,
-				'average_rating'  => $average,
+			array(
+				'vendor_id'        => $vendor_id,
+				'total_reviews'    => $total,
+				'average_rating'   => $average,
 				'completed_orders' => $completed_orders,
-				'response_rate'   => $response_rate,
-				'breakdown'       => [
+				'response_rate'    => $response_rate,
+				'breakdown'        => array(
 					5 => (int) $stats->five_star,
 					4 => (int) $stats->four_star,
 					3 => (int) $stats->three_star,
 					2 => (int) $stats->two_star,
 					1 => (int) $stats->one_star,
-				],
-			]
+				),
+			)
 		);
 	}
 
@@ -725,7 +734,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_not_logged_in',
 				__( 'You must be logged in to create reviews.', 'wp-sell-services' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 
@@ -743,7 +752,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_not_logged_in',
 				__( 'You must be logged in.', 'wp-sell-services' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 
@@ -757,7 +766,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You can only edit your own reviews.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -775,7 +784,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'Only administrators can delete reviews.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -793,7 +802,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_not_logged_in',
 				__( 'You must be logged in.', 'wp-sell-services' ),
-				[ 'status' => 401 ]
+				array( 'status' => 401 )
 			);
 		}
 
@@ -807,7 +816,7 @@ class ReviewsController extends RestController {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'Only the vendor can reply to reviews.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -826,7 +835,7 @@ class ReviewsController extends RestController {
 		$vendor   = get_userdata( (int) $review->vendor_id );
 		$service  = get_post( (int) $review->service_id );
 
-		$data = [
+		$data = array(
 			'id'              => (int) $review->id,
 			'order_id'        => (int) $review->order_id,
 			'service_id'      => (int) $review->service_id,
@@ -835,7 +844,7 @@ class ReviewsController extends RestController {
 			'vendor_name'     => $vendor ? $vendor->display_name : '',
 			'customer_id'     => (int) $review->customer_id,
 			'customer_name'   => $customer ? $customer->display_name : '',
-			'customer_avatar' => get_avatar_url( (int) $review->customer_id, [ 'size' => 48 ] ),
+			'customer_avatar' => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
 			'rating'          => (int) $review->rating,
 			'review'          => $review->review,
 			'status'          => $review->status,
@@ -844,7 +853,7 @@ class ReviewsController extends RestController {
 			'vendor_reply_at' => $review->vendor_reply_at ?? null,
 			'created_at'      => $review->created_at,
 			'updated_at'      => $review->updated_at ?? null,
-		];
+		);
 
 		return new WP_REST_Response( $data );
 	}
@@ -855,47 +864,47 @@ class ReviewsController extends RestController {
 	 * @return array
 	 */
 	public function get_collection_params(): array {
-		return [
-			'page' => [
+		return array(
+			'page'       => array(
 				'description' => __( 'Current page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 1,
 				'minimum'     => 1,
-			],
-			'per_page' => [
+			),
+			'per_page'   => array(
 				'description' => __( 'Items per page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 10,
 				'minimum'     => 1,
 				'maximum'     => 100,
-			],
-			'service_id' => [
+			),
+			'service_id' => array(
 				'description' => __( 'Filter by service.', 'wp-sell-services' ),
 				'type'        => 'integer',
-			],
-			'vendor_id' => [
+			),
+			'vendor_id'  => array(
 				'description' => __( 'Filter by vendor.', 'wp-sell-services' ),
 				'type'        => 'integer',
-			],
-			'rating' => [
+			),
+			'rating'     => array(
 				'description' => __( 'Filter by rating.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'minimum'     => 1,
 				'maximum'     => 5,
-			],
-			'orderby' => [
+			),
+			'orderby'    => array(
 				'description' => __( 'Order by field.', 'wp-sell-services' ),
 				'type'        => 'string',
 				'default'     => 'created_at',
-				'enum'        => [ 'created_at', 'rating', 'helpful_count' ],
-			],
-			'order' => [
+				'enum'        => array( 'created_at', 'rating', 'helpful_count' ),
+			),
+			'order'      => array(
 				'description' => __( 'Order direction.', 'wp-sell-services' ),
 				'type'        => 'string',
 				'default'     => 'DESC',
-				'enum'        => [ 'ASC', 'DESC' ],
-			],
-		];
+				'enum'        => array( 'ASC', 'DESC' ),
+			),
+		);
 	}
 
 	/**
@@ -904,61 +913,61 @@ class ReviewsController extends RestController {
 	 * @return array
 	 */
 	public function get_item_schema(): array {
-		return [
+		return array(
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'review',
 			'type'       => 'object',
-			'properties' => [
-				'id' => [
+			'properties' => array(
+				'id'           => array(
 					'description' => __( 'Review ID.', 'wp-sell-services' ),
 					'type'        => 'integer',
-					'context'     => [ 'view', 'edit' ],
+					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
-				],
-				'order_id' => [
+				),
+				'order_id'     => array(
 					'description' => __( 'Order ID.', 'wp-sell-services' ),
 					'type'        => 'integer',
-					'context'     => [ 'view', 'edit' ],
+					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
-				],
-				'service_id' => [
+				),
+				'service_id'   => array(
 					'description' => __( 'Service ID.', 'wp-sell-services' ),
 					'type'        => 'integer',
-					'context'     => [ 'view', 'edit' ],
+					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
-				],
-				'rating' => [
+				),
+				'rating'       => array(
 					'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
 					'type'        => 'integer',
-					'context'     => [ 'view', 'edit' ],
+					'context'     => array( 'view', 'edit' ),
 					'minimum'     => 1,
 					'maximum'     => 5,
-				],
-				'review' => [
+				),
+				'review'       => array(
 					'description' => __( 'Review text.', 'wp-sell-services' ),
 					'type'        => 'string',
-					'context'     => [ 'view', 'edit' ],
-				],
-				'status' => [
+					'context'     => array( 'view', 'edit' ),
+				),
+				'status'       => array(
 					'description' => __( 'Review status.', 'wp-sell-services' ),
 					'type'        => 'string',
-					'context'     => [ 'view', 'edit' ],
-					'enum'        => [ 'pending', 'approved', 'rejected' ],
-				],
-				'vendor_reply' => [
+					'context'     => array( 'view', 'edit' ),
+					'enum'        => array( 'pending', 'approved', 'rejected' ),
+				),
+				'vendor_reply' => array(
 					'description' => __( 'Vendor reply.', 'wp-sell-services' ),
 					'type'        => 'string',
-					'context'     => [ 'view' ],
+					'context'     => array( 'view' ),
 					'readonly'    => true,
-				],
-				'created_at' => [
+				),
+				'created_at'   => array(
 					'description' => __( 'Created date.', 'wp-sell-services' ),
 					'type'        => 'string',
 					'format'      => 'date-time',
-					'context'     => [ 'view', 'edit' ],
+					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
-				],
-			],
-		];
+				),
+			),
+		);
 	}
 }

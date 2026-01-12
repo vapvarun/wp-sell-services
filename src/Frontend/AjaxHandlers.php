@@ -256,12 +256,12 @@ class AjaxHandlers {
 		}
 
 		$delivery_service = new DeliveryService();
-		$result           = $delivery_service->request_revision( $order_id, $user_id, $reason );
+		$result           = $delivery_service->request_revision( $order_id, $reason );
 
-		if ( $result['success'] ) {
+		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Revision requested successfully.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( $result );
+			wp_send_json_error( array( 'message' => __( 'Failed to request revision. Please try again.', 'wp-sell-services' ) ) );
 		}
 	}
 

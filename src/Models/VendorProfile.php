@@ -233,33 +233,37 @@ class VendorProfile {
 		$profile->id               = (int) ( $row->id ?? 0 );
 		$profile->user_id          = (int) ( $row->user_id ?? 0 );
 		$profile->display_name     = $row->display_name ?? '';
-		$profile->title            = $row->title ?? '';
+		$profile->title            = $row->tagline ?? ''; // DB column is 'tagline'.
 		$profile->bio              = $row->bio ?? '';
 		$profile->avatar_id        = isset( $row->avatar_id ) && $row->avatar_id ? (int) $row->avatar_id : null;
-		$profile->cover_id         = isset( $row->cover_id ) && $row->cover_id ? (int) $row->cover_id : null;
+		$profile->cover_id         = isset( $row->cover_image_id ) && $row->cover_image_id ? (int) $row->cover_image_id : null; // DB column is 'cover_image_id'.
 		$profile->country          = $row->country ?? '';
-		$profile->languages        = isset( $row->languages ) && $row->languages ? json_decode( $row->languages, true ) : array();
-		$profile->skills           = isset( $row->skills ) && $row->skills ? json_decode( $row->skills, true ) : array();
-		$profile->certifications   = isset( $row->certifications ) && $row->certifications ? json_decode( $row->certifications, true ) : array();
-		$profile->education        = isset( $row->education ) && $row->education ? json_decode( $row->education, true ) : array();
-		$profile->tier             = $row->verification_tier ?? $row->tier ?? self::TIER_NEW;
-		$profile->rating           = (float) ( $row->avg_rating ?? $row->rating ?? 0 );
-		$profile->review_count     = (int) ( $row->total_reviews ?? $row->review_count ?? 0 );
-		$profile->orders_completed = (int) ( $row->completed_orders ?? $row->orders_completed ?? 0 );
-		$profile->response_rate    = (float) ( $row->response_rate ?? 0 );
-		$profile->response_time    = (float) ( $row->response_time ?? 0 );
-		$profile->delivery_rate    = (float) ( $row->delivery_rate ?? 0 );
-		$profile->completion_rate  = (float) ( $row->completion_rate ?? 0 );
-		$profile->is_verified      = (bool) ( $row->is_verified ?? false );
+		$profile->tier             = $row->verification_tier ?? self::TIER_NEW;
+		$profile->rating           = (float) ( $row->avg_rating ?? 0 );
+		$profile->review_count     = (int) ( $row->total_reviews ?? 0 );
+		$profile->orders_completed = (int) ( $row->completed_orders ?? 0 );
+		$profile->response_time    = (float) ( $row->response_time_hours ?? 0 ); // DB column is 'response_time_hours'.
+		$profile->delivery_rate    = (float) ( $row->on_time_delivery_rate ?? 0 ); // DB column is 'on_time_delivery_rate'.
+		$profile->is_verified      = isset( $row->verification_tier ) && 'basic' !== $row->verification_tier;
 		$profile->is_available     = (bool) ( $row->is_available ?? true );
 		$profile->social_links     = isset( $row->social_links ) && $row->social_links ? json_decode( $row->social_links, true ) : array();
 
+		// Vacation mode - use vacation_mode flag (no vacation_until column).
+		if ( ! empty( $row->vacation_mode ) ) {
+			$profile->vacation_until = new \DateTimeImmutable( '+30 days' ); // Placeholder for "on vacation".
+		} else {
+			$profile->vacation_until = null;
+		}
+
 		// Timestamps.
-		$profile->vacation_until = isset( $row->vacation_until ) && $row->vacation_until ? new \DateTimeImmutable( $row->vacation_until ) : null;
-		$profile->member_since   = isset( $row->member_since ) && $row->member_since ? new \DateTimeImmutable( $row->member_since ) : null;
-		$profile->last_active    = isset( $row->last_active ) && $row->last_active ? new \DateTimeImmutable( $row->last_active ) : null;
-		$profile->created_at     = isset( $row->created_at ) && $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
-		$profile->updated_at     = isset( $row->updated_at ) && $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+		$profile->member_since = isset( $row->created_at ) && $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
+		$profile->last_active  = isset( $row->updated_at ) && $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+		$profile->created_at   = isset( $row->created_at ) && $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
+		$profile->updated_at   = isset( $row->updated_at ) && $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+
+		// Properties not in DB schema (remain as defaults):
+		// - languages, skills, certifications, education - future feature.
+		// - response_rate, completion_rate - not tracked yet.
 
 		return $profile;
 	}

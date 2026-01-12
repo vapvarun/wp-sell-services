@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.3.2';
+	const DB_VERSION = '1.3.3';
 
 	/**
 	 * Option name for storing DB version.
@@ -636,6 +636,7 @@ class SchemaManager {
 			method varchar(50) NOT NULL,
 			details longtext,
 			status varchar(50) DEFAULT 'pending',
+			is_auto tinyint(1) DEFAULT 0,
 			admin_note text,
 			processed_at datetime DEFAULT NULL,
 			processed_by bigint(20) unsigned DEFAULT NULL,

@@ -37,16 +37,17 @@ class EarningsService {
 	 */
 	public function get_summary( int $vendor_id ): array {
 		global $wpdb;
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$orders_table      = $wpdb->prefix . 'wpss_orders';
 		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
 
-		// Get completed orders earnings.
+		// Get completed orders earnings (uses vendor_earnings after commission).
+		// COALESCE(vendor_earnings, 0) prevents inflated earnings when vendor_earnings is NULL.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$completed = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
 					COUNT(*) as order_count,
-					COALESCE(SUM(total), 0) as total_earned
+					COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0) as total_earned
 				FROM {$orders_table}
 				WHERE vendor_id = %d AND status = %s",
 				$vendor_id,
@@ -90,19 +91,19 @@ class EarningsService {
 			)
 		);
 
-		$total_earned = (float) $completed->total_earned;
-		$withdrawn = (float) $withdrawn;
+		$total_earned       = (float) $completed->total_earned;
+		$withdrawn          = (float) $withdrawn;
 		$pending_withdrawal = (float) $pending_withdrawal;
-		$available = $total_earned - $withdrawn - $pending_withdrawal;
+		$available          = $total_earned - $withdrawn - $pending_withdrawal;
 
-		return [
+		return array(
 			'total_earned'       => $total_earned,
 			'available_balance'  => max( 0, $available ),
 			'pending_clearance'  => (float) $pending,
 			'withdrawn'          => $withdrawn,
 			'pending_withdrawal' => $pending_withdrawal,
 			'completed_orders'   => (int) $completed->order_count,
-		];
+		);
 	}
 
 	/**
@@ -112,46 +113,46 @@ class EarningsService {
 	 * @param array $args      Query arguments.
 	 * @return array Earnings records.
 	 */
-	public function get_history( int $vendor_id, array $args = [] ): array {
+	public function get_history( int $vendor_id, array $args = array() ): array {
 		global $wpdb;
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
-		$defaults = [
+		$defaults = array(
 			'limit'      => 20,
 			'offset'     => 0,
 			'start_date' => '',
 			'end_date'   => '',
 			'status'     => ServiceOrder::STATUS_COMPLETED,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'vendor_id = %d' ];
-		$params = [ $vendor_id ];
+		$where  = array( 'vendor_id = %d' );
+		$params = array( $vendor_id );
 
 		if ( $args['status'] ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$params[] = $args['status'];
 		}
 
 		if ( $args['start_date'] ) {
-			$where[] = 'completed_at >= %s';
+			$where[]  = 'completed_at >= %s';
 			$params[] = $args['start_date'];
 		}
 
 		if ( $args['end_date'] ) {
-			$where[] = 'completed_at <= %s';
+			$where[]  = 'completed_at <= %s';
 			$params[] = $args['end_date'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$params[] = $args['limit'];
-		$params[] = $args['offset'];
+		$params[]     = $args['limit'];
+		$params[]     = $args['offset'];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, order_number, service_id, total, status, completed_at, created_at
+				"SELECT id, order_number, service_id, total, vendor_earnings, commission_rate, platform_fee, status, completed_at, created_at
 				FROM {$orders_table}
 				WHERE {$where_clause}
 				ORDER BY completed_at DESC
@@ -160,17 +161,25 @@ class EarningsService {
 			)
 		);
 
-		return array_map( function( $order ) {
-			$service = get_post( $order->service_id );
-			return [
-				'id'           => (int) $order->id,
-				'order_number' => $order->order_number,
-				'service_name' => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
-				'amount'       => (float) $order->total,
-				'status'       => $order->status,
-				'date'         => $order->completed_at ?: $order->created_at,
-			];
-		}, $orders );
+		return array_map(
+			function ( $order ) {
+				$service = get_post( $order->service_id );
+				// Use vendor_earnings when available (commission calculated), fall back to total for older orders.
+				$amount = null !== $order->vendor_earnings ? (float) $order->vendor_earnings : (float) $order->total;
+				return array(
+					'id'              => (int) $order->id,
+					'order_number'    => $order->order_number,
+					'service_name'    => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+					'amount'          => $amount,
+					'order_total'     => (float) $order->total,
+					'commission_rate' => null !== $order->commission_rate ? (float) $order->commission_rate : null,
+					'platform_fee'    => null !== $order->platform_fee ? (float) $order->platform_fee : null,
+					'status'          => $order->status,
+					'date'            => $order->completed_at ?: $order->created_at,
+				);
+			},
+			$orders
+		);
 	}
 
 	/**
@@ -207,7 +216,7 @@ class EarningsService {
 				"SELECT
 					DATE_FORMAT(completed_at, %s) as period,
 					COUNT(*) as orders,
-					COALESCE(SUM(total), 0) as earnings
+					COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0) as earnings
 				FROM {$orders_table}
 				WHERE vendor_id = %d
 				AND status = %s
@@ -221,13 +230,16 @@ class EarningsService {
 			)
 		);
 
-		return array_map( function( $row ) {
-			return [
-				'period'   => $row->period,
-				'orders'   => (int) $row->orders,
-				'earnings' => (float) $row->earnings,
-			];
-		}, $results );
+		return array_map(
+			function ( $row ) {
+				return array(
+					'period'   => $row->period,
+					'orders'   => (int) $row->orders,
+					'earnings' => (float) $row->earnings,
+				);
+			},
+			$results
+		);
 	}
 
 	/**
@@ -239,28 +251,28 @@ class EarningsService {
 	 * @param array  $details   Method details (account info).
 	 * @return array Result with success status.
 	 */
-	public function request_withdrawal( int $vendor_id, float $amount, string $method, array $details = [] ): array {
+	public function request_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
 		$summary = $this->get_summary( $vendor_id );
 
 		// Check minimum withdrawal.
-		$min_withdrawal = (float) get_option( 'wpss_min_withdrawal', 50 );
+		$min_withdrawal = self::get_min_withdrawal_amount();
 		if ( $amount < $min_withdrawal ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => sprintf(
 					/* translators: %s: minimum amount */
 					__( 'Minimum withdrawal amount is %s.', 'wp-sell-services' ),
 					wpss_format_price( $min_withdrawal )
 				),
-			];
+			);
 		}
 
 		// Check available balance.
 		if ( $amount > $summary['available_balance'] ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Insufficient balance for this withdrawal.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		global $wpdb;
@@ -269,29 +281,29 @@ class EarningsService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$table,
-			[
-				'vendor_id'   => $vendor_id,
-				'amount'      => $amount,
-				'method'      => sanitize_key( $method ),
-				'details'     => wp_json_encode( $details ),
-				'status'      => self::WITHDRAWAL_PENDING,
-				'created_at'  => current_time( 'mysql' ),
-			],
-			[ '%d', '%f', '%s', '%s', '%s', '%s' ]
+			array(
+				'vendor_id'  => $vendor_id,
+				'amount'     => $amount,
+				'method'     => sanitize_key( $method ),
+				'details'    => wp_json_encode( $details ),
+				'status'     => self::WITHDRAWAL_PENDING,
+				'created_at' => current_time( 'mysql' ),
+			),
+			array( '%d', '%f', '%s', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to create withdrawal request.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		$withdrawal_id = $wpdb->insert_id;
 
 		// Notify admin.
 		$admin_email = get_option( 'admin_email' );
-		$vendor = get_user_by( 'id', $vendor_id );
+		$vendor      = get_user_by( 'id', $vendor_id );
 
 		wp_mail(
 			$admin_email,
@@ -313,11 +325,11 @@ class EarningsService {
 		 */
 		do_action( 'wpss_withdrawal_requested', $withdrawal_id, $vendor_id, $amount );
 
-		return [
+		return array(
 			'success'       => true,
 			'message'       => __( 'Withdrawal request submitted successfully.', 'wp-sell-services' ),
 			'withdrawal_id' => $withdrawal_id,
-		];
+		);
 	}
 
 	/**
@@ -327,29 +339,29 @@ class EarningsService {
 	 * @param array $args      Query arguments.
 	 * @return array Withdrawals.
 	 */
-	public function get_withdrawals( int $vendor_id, array $args = [] ): array {
+	public function get_withdrawals( int $vendor_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_withdrawals';
 
-		$defaults = [
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
 			'status' => '',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'vendor_id = %d' ];
-		$params = [ $vendor_id ];
+		$where  = array( 'vendor_id = %d' );
+		$params = array( $vendor_id );
 
 		if ( $args['status'] ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$params[] = $args['status'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$params[] = $args['limit'];
-		$params[] = $args['offset'];
+		$params[]     = $args['limit'];
+		$params[]     = $args['offset'];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$withdrawals = $wpdb->get_results(
@@ -362,18 +374,21 @@ class EarningsService {
 			)
 		);
 
-		return array_map( function( $row ) {
-			return [
-				'id'           => (int) $row->id,
-				'amount'       => (float) $row->amount,
-				'method'       => $row->method,
-				'details'      => json_decode( $row->details, true ) ?: [],
-				'status'       => $row->status,
-				'admin_note'   => $row->admin_note ?? '',
-				'processed_at' => $row->processed_at,
-				'created_at'   => $row->created_at,
-			];
-		}, $withdrawals );
+		return array_map(
+			function ( $row ) {
+				return array(
+					'id'           => (int) $row->id,
+					'amount'       => (float) $row->amount,
+					'method'       => $row->method,
+					'details'      => json_decode( $row->details, true ) ?: array(),
+					'status'       => $row->status,
+					'admin_note'   => $row->admin_note ?? '',
+					'processed_at' => $row->processed_at,
+					'created_at'   => $row->created_at,
+				);
+			},
+			$withdrawals
+		);
 	}
 
 	/**
@@ -388,12 +403,12 @@ class EarningsService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_withdrawals';
 
-		$valid_statuses = [ self::WITHDRAWAL_APPROVED, self::WITHDRAWAL_COMPLETED, self::WITHDRAWAL_REJECTED ];
+		$valid_statuses = array( self::WITHDRAWAL_APPROVED, self::WITHDRAWAL_COMPLETED, self::WITHDRAWAL_REJECTED );
 		if ( ! in_array( $status, $valid_statuses, true ) ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Invalid status.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -402,38 +417,38 @@ class EarningsService {
 		);
 
 		if ( ! $withdrawal ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Withdrawal not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$table,
-			[
+			array(
 				'status'       => $status,
 				'admin_note'   => sanitize_textarea_field( $note ),
 				'processed_at' => current_time( 'mysql' ),
 				'processed_by' => get_current_user_id(),
-			],
-			[ 'id' => $withdrawal_id ],
-			[ '%s', '%s', '%s', '%d' ],
-			[ '%d' ]
+			),
+			array( 'id' => $withdrawal_id ),
+			array( '%s', '%s', '%s', '%d' ),
+			array( '%d' )
 		);
 
 		if ( false === $result ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to update withdrawal.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Notify vendor.
 		$notification_service = new NotificationService();
-		$status_labels = self::get_withdrawal_statuses();
+		$status_labels        = self::get_withdrawal_statuses();
 
-		$notification_service->send(
+		$notification_service->create(
 			(int) $withdrawal->vendor_id,
 			'withdrawal_' . $status,
 			__( 'Withdrawal Update', 'wp-sell-services' ),
@@ -443,7 +458,7 @@ class EarningsService {
 				wpss_format_price( $withdrawal->amount ),
 				strtolower( $status_labels[ $status ] ?? $status )
 			),
-			[ 'withdrawal_id' => $withdrawal_id ]
+			array( 'withdrawal_id' => $withdrawal_id )
 		);
 
 		/**
@@ -455,10 +470,10 @@ class EarningsService {
 		 */
 		do_action( 'wpss_withdrawal_processed', $withdrawal_id, $status, $withdrawal );
 
-		return [
+		return array(
 			'success' => true,
 			'message' => __( 'Withdrawal updated successfully.', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -467,29 +482,29 @@ class EarningsService {
 	 * @param array $args Query arguments.
 	 * @return array Withdrawals.
 	 */
-	public function get_all_withdrawals( array $args = [] ): array {
+	public function get_all_withdrawals( array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_withdrawals';
 
-		$defaults = [
+		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
 			'status' => '',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ '1=1' ];
-		$params = [];
+		$where  = array( '1=1' );
+		$params = array();
 
 		if ( $args['status'] ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$params[] = $args['status'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$params[] = $args['limit'];
-		$params[] = $args['offset'];
+		$params[]     = $args['limit'];
+		$params[]     = $args['offset'];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$withdrawals = $wpdb->get_results(
@@ -504,20 +519,23 @@ class EarningsService {
 			)
 		);
 
-		return array_map( function( $row ) {
-			return [
-				'id'           => (int) $row->id,
-				'vendor_id'    => (int) $row->vendor_id,
-				'vendor_name'  => $row->vendor_name,
-				'amount'       => (float) $row->amount,
-				'method'       => $row->method,
-				'details'      => json_decode( $row->details, true ) ?: [],
-				'status'       => $row->status,
-				'admin_note'   => $row->admin_note ?? '',
-				'processed_at' => $row->processed_at,
-				'created_at'   => $row->created_at,
-			];
-		}, $withdrawals );
+		return array_map(
+			function ( $row ) {
+				return array(
+					'id'           => (int) $row->id,
+					'vendor_id'    => (int) $row->vendor_id,
+					'vendor_name'  => $row->vendor_name,
+					'amount'       => (float) $row->amount,
+					'method'       => $row->method,
+					'details'      => json_decode( $row->details, true ) ?: array(),
+					'status'       => $row->status,
+					'admin_note'   => $row->admin_note ?? '',
+					'processed_at' => $row->processed_at,
+					'created_at'   => $row->created_at,
+				);
+			},
+			$withdrawals
+		);
 	}
 
 	/**
@@ -526,10 +544,10 @@ class EarningsService {
 	 * @return array Available methods.
 	 */
 	public static function get_withdrawal_methods(): array {
-		$methods = [
+		$methods = array(
 			'paypal'        => __( 'PayPal', 'wp-sell-services' ),
 			'bank_transfer' => __( 'Bank Transfer', 'wp-sell-services' ),
-		];
+		);
 
 		/**
 		 * Filter withdrawal methods.
@@ -545,11 +563,345 @@ class EarningsService {
 	 * @return array Status labels.
 	 */
 	public static function get_withdrawal_statuses(): array {
-		return [
+		return array(
 			self::WITHDRAWAL_PENDING   => __( 'Pending', 'wp-sell-services' ),
 			self::WITHDRAWAL_APPROVED  => __( 'Approved', 'wp-sell-services' ),
 			self::WITHDRAWAL_COMPLETED => __( 'Completed', 'wp-sell-services' ),
 			self::WITHDRAWAL_REJECTED  => __( 'Rejected', 'wp-sell-services' ),
-		];
+		);
+	}
+
+	/**
+	 * Get minimum withdrawal amount from settings.
+	 *
+	 * Centralized helper to get the min withdrawal amount from the correct option.
+	 *
+	 * @return float Minimum withdrawal amount.
+	 */
+	public static function get_min_withdrawal_amount(): float {
+		// Primary location: wpss_payouts (new structure).
+		$payouts_settings = get_option( 'wpss_payouts', array() );
+		if ( isset( $payouts_settings['min_withdrawal'] ) ) {
+			return (float) $payouts_settings['min_withdrawal'];
+		}
+
+		// Fallback: wpss_vendor (old structure for backward compatibility).
+		$vendor_settings = get_option( 'wpss_vendor', array() );
+		if ( isset( $vendor_settings['min_payout_amount'] ) ) {
+			return (float) $vendor_settings['min_payout_amount'];
+		}
+
+		// Default.
+		return 50.0;
+	}
+
+	/**
+	 * Check if auto withdrawal is enabled.
+	 *
+	 * @return bool True if auto withdrawal is enabled.
+	 */
+	public static function is_auto_withdrawal_enabled(): bool {
+		$payouts_settings = get_option( 'wpss_payouts', array() );
+		return ! empty( $payouts_settings['auto_withdrawal_enabled'] );
+	}
+
+	/**
+	 * Get auto withdrawal threshold.
+	 *
+	 * @return float Threshold amount.
+	 */
+	public static function get_auto_withdrawal_threshold(): float {
+		$payouts_settings = get_option( 'wpss_payouts', array() );
+		return (float) ( $payouts_settings['auto_withdrawal_threshold'] ?? 500 );
+	}
+
+	/**
+	 * Get auto withdrawal schedule.
+	 *
+	 * @return string Schedule (weekly or monthly).
+	 */
+	public static function get_auto_withdrawal_schedule(): string {
+		$payouts_settings = get_option( 'wpss_payouts', array() );
+		$schedule         = $payouts_settings['auto_withdrawal_schedule'] ?? 'monthly';
+		return in_array( $schedule, array( 'weekly', 'monthly' ), true ) ? $schedule : 'monthly';
+	}
+
+	/**
+	 * Get vendors eligible for auto withdrawal.
+	 *
+	 * Returns vendors whose available balance exceeds the threshold.
+	 *
+	 * @return array Array of vendor data with id and balance.
+	 */
+	public function get_eligible_vendors_for_auto_withdrawal(): array {
+		global $wpdb;
+		$orders_table      = $wpdb->prefix . 'wpss_orders';
+		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
+
+		$threshold = self::get_auto_withdrawal_threshold();
+
+		// Get all vendors with completed orders.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$vendors = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT vendor_id FROM {$orders_table} WHERE status = %s",
+				ServiceOrder::STATUS_COMPLETED
+			)
+		);
+
+		$eligible = array();
+
+		foreach ( $vendors as $vendor_id ) {
+			$summary = $this->get_summary( (int) $vendor_id );
+
+			if ( $summary['available_balance'] >= $threshold ) {
+				// Check if vendor has payout method configured.
+				$payout_method  = get_user_meta( (int) $vendor_id, 'wpss_payout_method', true );
+				$payout_details = get_user_meta( (int) $vendor_id, 'wpss_payout_details', true );
+
+				if ( $payout_method && $payout_details ) {
+					$eligible[] = array(
+						'vendor_id'         => (int) $vendor_id,
+						'available_balance' => $summary['available_balance'],
+						'payout_method'     => $payout_method,
+						'payout_details'    => is_array( $payout_details ) ? $payout_details : array(),
+					);
+				}
+			}
+		}
+
+		return $eligible;
+	}
+
+	/**
+	 * Process automatic withdrawals.
+	 *
+	 * Creates withdrawal requests for eligible vendors.
+	 *
+	 * @return array Processing results.
+	 */
+	public function process_auto_withdrawals(): array {
+		if ( ! self::is_auto_withdrawal_enabled() ) {
+			return array(
+				'success'   => false,
+				'message'   => __( 'Auto withdrawal is not enabled.', 'wp-sell-services' ),
+				'processed' => 0,
+			);
+		}
+
+		$eligible = $this->get_eligible_vendors_for_auto_withdrawal();
+
+		if ( empty( $eligible ) ) {
+			return array(
+				'success'   => true,
+				'message'   => __( 'No vendors eligible for auto withdrawal.', 'wp-sell-services' ),
+				'processed' => 0,
+			);
+		}
+
+		$processed = 0;
+		$failed    = 0;
+		$results   = array();
+
+		foreach ( $eligible as $vendor ) {
+			// Create automatic withdrawal request.
+			$result = $this->create_auto_withdrawal(
+				$vendor['vendor_id'],
+				$vendor['available_balance'],
+				$vendor['payout_method'],
+				$vendor['payout_details']
+			);
+
+			if ( $result['success'] ) {
+				++$processed;
+			} else {
+				++$failed;
+			}
+
+			$results[] = array(
+				'vendor_id' => $vendor['vendor_id'],
+				'amount'    => $vendor['available_balance'],
+				'success'   => $result['success'],
+				'message'   => $result['message'],
+			);
+		}
+
+		// Log the auto withdrawal run.
+		update_option(
+			'wpss_last_auto_withdrawal_run',
+			array(
+				'timestamp' => current_time( 'mysql' ),
+				'processed' => $processed,
+				'failed'    => $failed,
+			)
+		);
+
+		return array(
+			'success'   => true,
+			'message'   => sprintf(
+				/* translators: 1: processed count, 2: failed count */
+				__( 'Auto withdrawal completed. Processed: %1$d, Failed: %2$d.', 'wp-sell-services' ),
+				$processed,
+				$failed
+			),
+			'processed' => $processed,
+			'failed'    => $failed,
+			'details'   => $results,
+		);
+	}
+
+	/**
+	 * Create automatic withdrawal request.
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param float  $amount    Amount to withdraw.
+	 * @param string $method    Withdrawal method.
+	 * @param array  $details   Method details (account info).
+	 * @return array Result with success status.
+	 */
+	private function create_auto_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// Check for any pending auto withdrawal for this vendor.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table}
+				WHERE vendor_id = %d AND status IN (%s, %s) AND is_auto = 1",
+				$vendor_id,
+				self::WITHDRAWAL_PENDING,
+				self::WITHDRAWAL_APPROVED
+			)
+		);
+
+		if ( $existing > 0 ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Vendor already has a pending auto withdrawal.', 'wp-sell-services' ),
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert(
+			$table,
+			array(
+				'vendor_id'  => $vendor_id,
+				'amount'     => $amount,
+				'method'     => sanitize_key( $method ),
+				'details'    => wp_json_encode( $details ),
+				'status'     => self::WITHDRAWAL_PENDING,
+				'is_auto'    => 1,
+				'created_at' => current_time( 'mysql' ),
+			),
+			array( '%d', '%f', '%s', '%s', '%s', '%d', '%s' )
+		);
+
+		if ( ! $result ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to create auto withdrawal request.', 'wp-sell-services' ),
+			);
+		}
+
+		$withdrawal_id = $wpdb->insert_id;
+
+		// Notify vendor.
+		$notification_service = new NotificationService();
+		$notification_service->create(
+			$vendor_id,
+			'auto_withdrawal_created',
+			__( 'Auto Withdrawal Created', 'wp-sell-services' ),
+			sprintf(
+				/* translators: %s: amount */
+				__( 'An automatic withdrawal of %s has been scheduled based on your payout settings.', 'wp-sell-services' ),
+				wpss_format_price( $amount )
+			),
+			array( 'withdrawal_id' => $withdrawal_id )
+		);
+
+		// Notify admin.
+		$admin_email = get_option( 'admin_email' );
+		$vendor      = get_user_by( 'id', $vendor_id );
+
+		wp_mail(
+			$admin_email,
+			__( '[WP Sell Services] Auto Withdrawal Request', 'wp-sell-services' ),
+			sprintf(
+				/* translators: 1: vendor name, 2: amount */
+				__( 'An automatic withdrawal of %2$s has been created for vendor %1$s. Please review in the admin panel.', 'wp-sell-services' ),
+				$vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
+				wpss_format_price( $amount )
+			)
+		);
+
+		/**
+		 * Fires when auto withdrawal is created.
+		 *
+		 * @param int   $withdrawal_id Withdrawal ID.
+		 * @param int   $vendor_id     Vendor user ID.
+		 * @param float $amount        Amount.
+		 */
+		do_action( 'wpss_auto_withdrawal_created', $withdrawal_id, $vendor_id, $amount );
+
+		return array(
+			'success'       => true,
+			'message'       => __( 'Auto withdrawal request created successfully.', 'wp-sell-services' ),
+			'withdrawal_id' => $withdrawal_id,
+		);
+	}
+
+	/**
+	 * Schedule auto withdrawal cron job.
+	 *
+	 * @return void
+	 */
+	public static function schedule_auto_withdrawal_cron(): void {
+		if ( ! self::is_auto_withdrawal_enabled() ) {
+			wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
+			return;
+		}
+
+		$schedule = self::get_auto_withdrawal_schedule();
+
+		// Clear existing schedule.
+		wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
+
+		// Schedule based on settings.
+		if ( ! wp_next_scheduled( 'wpss_process_auto_withdrawals' ) ) {
+			// Schedule for 1st of month (monthly) or Monday (weekly) at 2 AM.
+			$timestamp = self::get_next_schedule_time( $schedule );
+			wp_schedule_event( $timestamp, $schedule, 'wpss_process_auto_withdrawals' );
+		}
+	}
+
+	/**
+	 * Get next schedule time for auto withdrawal.
+	 *
+	 * @param string $schedule Schedule type (weekly or monthly).
+	 * @return int Unix timestamp for next run.
+	 */
+	private static function get_next_schedule_time( string $schedule ): int {
+		$timezone = wp_timezone();
+		$now      = new \DateTime( 'now', $timezone );
+
+		if ( 'monthly' === $schedule ) {
+			// First day of next month at 2 AM.
+			$next = new \DateTime( 'first day of next month 02:00:00', $timezone );
+		} else {
+			// Next Monday at 2 AM.
+			$next = new \DateTime( 'next monday 02:00:00', $timezone );
+		}
+
+		return $next->getTimestamp();
+	}
+
+	/**
+	 * Unschedule auto withdrawal cron job.
+	 *
+	 * @return void
+	 */
+	public static function unschedule_auto_withdrawal_cron(): void {
+		wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
 	}
 }

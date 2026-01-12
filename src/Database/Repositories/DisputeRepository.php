@@ -27,7 +27,7 @@ class DisputeRepository extends AbstractRepository {
 	protected array $allowed_columns = array(
 		'id',
 		'order_id',
-		'opened_by',
+		'initiated_by',
 		'reason',
 		'status',
 		'resolved_by',
@@ -55,7 +55,7 @@ class DisputeRepository extends AbstractRepository {
 	public function find( int $id ): ?Dispute {
 		$row = $this->find_by_id( $id );
 
-		return $row ? Dispute::from_row( $row ) : null;
+		return $row ? Dispute::from_db( $row ) : null;
 	}
 
 	/**
@@ -74,11 +74,13 @@ class DisputeRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( array( Dispute::class, 'from_row' ), $results );
+		return array_map( array( Dispute::class, 'from_db' ), $results );
 	}
 
 	/**
 	 * Find disputes by user (buyer or vendor).
+	 *
+	 * Joins with orders table to find disputes where user is customer or vendor.
 	 *
 	 * @param int    $user_id User ID.
 	 * @param string $status  Status filter (optional).
@@ -89,26 +91,29 @@ class DisputeRepository extends AbstractRepository {
 	public function find_by_user( int $user_id, string $status = '', int $limit = 20, int $offset = 0 ): array {
 		global $wpdb;
 
-		$where = $wpdb->prepare(
-			'buyer_id = %d OR vendor_id = %d',
-			$user_id,
-			$user_id
-		);
+		$orders_table = $this->schema->get_table_name( 'orders' );
 
+		$status_clause = '';
 		if ( $status ) {
-			$where .= $wpdb->prepare( ' AND status = %s', $status );
+			$status_clause = $wpdb->prepare( ' AND d.status = %s', $status );
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$this->table} WHERE {$where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT d.* FROM {$this->table} d
+				INNER JOIN {$orders_table} o ON d.order_id = o.id
+				WHERE (o.customer_id = %d OR o.vendor_id = %d) {$status_clause}
+				ORDER BY d.created_at DESC
+				LIMIT %d OFFSET %d",
+				$user_id,
+				$user_id,
 				$limit,
 				$offset
 			)
 		);
 
-		return array_map( array( Dispute::class, 'from_row' ), $results );
+		return array_map( array( Dispute::class, 'from_db' ), $results );
 	}
 
 	/**
@@ -131,30 +136,27 @@ class DisputeRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( array( Dispute::class, 'from_row' ), $results );
+		return array_map( array( Dispute::class, 'from_db' ), $results );
 	}
 
 	/**
 	 * Find disputes assigned to admin.
 	 *
+	 * @deprecated Admin assignment not yet implemented in schema.
+	 *
 	 * @param int $admin_id Admin user ID.
-	 * @return Dispute[]
+	 * @return Dispute[] Always returns empty array.
 	 */
 	public function find_by_assigned_admin( int $admin_id ): array {
-		global $wpdb;
-
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$this->table} WHERE assigned_admin = %d ORDER BY created_at DESC",
-				$admin_id
-			)
-		);
-
-		return array_map( array( Dispute::class, 'from_row' ), $results );
+		// Column 'assigned_admin' does not exist in disputes schema.
+		// TODO: Add assigned_admin column to schema if this feature is needed.
+		return array();
 	}
 
 	/**
 	 * Find disputes pending response.
+	 *
+	 * Uses updated_at as proxy for last activity since last_response_at doesn't exist.
 	 *
 	 * @param int $hours Hours since last activity.
 	 * @return Dispute[]
@@ -168,13 +170,13 @@ class DisputeRepository extends AbstractRepository {
 			$wpdb->prepare(
 				"SELECT * FROM {$this->table}
 				WHERE status = 'open'
-				AND (last_response_at IS NULL OR last_response_at < %s)
+				AND updated_at < %s
 				ORDER BY created_at ASC",
 				$cutoff
 			)
 		);
 
-		return array_map( array( Dispute::class, 'from_row' ), $results );
+		return array_map( array( Dispute::class, 'from_db' ), $results );
 	}
 
 	/**
@@ -215,22 +217,22 @@ class DisputeRepository extends AbstractRepository {
 	/**
 	 * Assign dispute to admin.
 	 *
+	 * @deprecated Admin assignment not yet implemented in schema.
+	 *
 	 * @param int $id       Dispute ID.
 	 * @param int $admin_id Admin user ID.
-	 * @return bool
+	 * @return bool Always returns false.
 	 */
 	public function assign_to_admin( int $id, int $admin_id ): bool {
-		return $this->update(
-			$id,
-			array(
-				'assigned_admin' => $admin_id,
-				'updated_at'     => current_time( 'mysql' ),
-			)
-		);
+		// Column 'assigned_admin' does not exist in disputes schema.
+		// TODO: Add assigned_admin column to schema if this feature is needed.
+		return false;
 	}
 
 	/**
 	 * Record response time.
+	 *
+	 * Updates updated_at timestamp to track last activity.
 	 *
 	 * @param int $id Dispute ID.
 	 * @return bool
@@ -239,8 +241,7 @@ class DisputeRepository extends AbstractRepository {
 		return $this->update(
 			$id,
 			array(
-				'last_response_at' => current_time( 'mysql' ),
-				'updated_at'       => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql' ),
 			)
 		);
 	}

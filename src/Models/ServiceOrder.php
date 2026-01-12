@@ -20,17 +20,17 @@ class ServiceOrder {
 	/**
 	 * Order statuses.
 	 */
-	public const STATUS_PENDING_PAYMENT     = 'pending_payment';
+	public const STATUS_PENDING_PAYMENT      = 'pending_payment';
 	public const STATUS_PENDING_REQUIREMENTS = 'pending_requirements';
-	public const STATUS_IN_PROGRESS         = 'in_progress';
-	public const STATUS_PENDING_APPROVAL    = 'pending_approval';
-	public const STATUS_REVISION_REQUESTED  = 'revision_requested';
-	public const STATUS_PENDING_REVIEW      = 'pending_review';
-	public const STATUS_COMPLETED           = 'completed';
-	public const STATUS_CANCELLED           = 'cancelled';
-	public const STATUS_DISPUTED            = 'disputed';
-	public const STATUS_ON_HOLD             = 'on_hold';
-	public const STATUS_LATE                = 'late';
+	public const STATUS_IN_PROGRESS          = 'in_progress';
+	public const STATUS_PENDING_APPROVAL     = 'pending_approval';
+	public const STATUS_REVISION_REQUESTED   = 'revision_requested';
+	public const STATUS_PENDING_REVIEW       = 'pending_review';
+	public const STATUS_COMPLETED            = 'completed';
+	public const STATUS_CANCELLED            = 'cancelled';
+	public const STATUS_DISPUTED             = 'disputed';
+	public const STATUS_ON_HOLD              = 'on_hold';
+	public const STATUS_LATE                 = 'late';
 
 	/**
 	 * Order ID.
@@ -79,7 +79,7 @@ class ServiceOrder {
 	 *
 	 * @var array<int, array{id: int, quantity: int}>
 	 */
-	public array $addons = [];
+	public array $addons = array();
 
 	/**
 	 * Platform identifier.
@@ -129,6 +129,27 @@ class ServiceOrder {
 	 * @var string
 	 */
 	public string $currency = 'USD';
+
+	/**
+	 * Commission rate applied to this order.
+	 *
+	 * @var float|null
+	 */
+	public ?float $commission_rate = null;
+
+	/**
+	 * Platform fee amount.
+	 *
+	 * @var float|null
+	 */
+	public ?float $platform_fee = null;
+
+	/**
+	 * Vendor earnings after fees.
+	 *
+	 * @var float|null
+	 */
+	public ?float $vendor_earnings = null;
 
 	/**
 	 * Order status.
@@ -236,7 +257,7 @@ class ServiceOrder {
 		$order->vendor_id          = (int) $row->vendor_id;
 		$order->service_id         = (int) $row->service_id;
 		$order->package_id         = $row->package_id ? (int) $row->package_id : null;
-		$order->addons             = $row->addons ? json_decode( $row->addons, true ) : [];
+		$order->addons             = $row->addons ? json_decode( $row->addons, true ) : array();
 		$order->platform           = $row->platform;
 		$order->platform_order_id  = $row->platform_order_id ? (int) $row->platform_order_id : null;
 		$order->platform_item_id   = $row->platform_item_id ? (int) $row->platform_item_id : null;
@@ -244,6 +265,9 @@ class ServiceOrder {
 		$order->addons_total       = (float) $row->addons_total;
 		$order->total              = (float) $row->total;
 		$order->currency           = $row->currency;
+		$order->commission_rate    = isset( $row->commission_rate ) ? (float) $row->commission_rate : null;
+		$order->platform_fee       = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
+		$order->vendor_earnings    = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
 		$order->status             = $row->status;
 		$order->payment_method     = $row->payment_method;
 		$order->payment_status     = $row->payment_status;
@@ -269,7 +293,7 @@ class ServiceOrder {
 	 * @return array<string, string>
 	 */
 	public static function get_statuses(): array {
-		return [
+		return array(
 			self::STATUS_PENDING_PAYMENT      => __( 'Pending Payment', 'wp-sell-services' ),
 			self::STATUS_PENDING_REQUIREMENTS => __( 'Waiting for Requirements', 'wp-sell-services' ),
 			self::STATUS_IN_PROGRESS          => __( 'In Progress', 'wp-sell-services' ),
@@ -281,7 +305,7 @@ class ServiceOrder {
 			self::STATUS_DISPUTED             => __( 'Disputed', 'wp-sell-services' ),
 			self::STATUS_ON_HOLD              => __( 'On Hold', 'wp-sell-services' ),
 			self::STATUS_LATE                 => __( 'Late', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -304,7 +328,7 @@ class ServiceOrder {
 			return false;
 		}
 
-		if ( in_array( $this->status, [ self::STATUS_COMPLETED, self::STATUS_CANCELLED ], true ) ) {
+		if ( in_array( $this->status, array( self::STATUS_COMPLETED, self::STATUS_CANCELLED ), true ) ) {
 			return false;
 		}
 
