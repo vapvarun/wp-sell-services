@@ -41,14 +41,14 @@ class NotificationService {
 	 * @param array  $data     Additional data.
 	 * @return int|false Notification ID or false on failure.
 	 */
-	public function create( int $user_id, string $type, string $title, string $message, array $data = [] ) {
+	public function create( int $user_id, string $type, string $title, string $message, array $data = array() ) {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_notifications';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$table,
-			[
+			array(
 				'user_id'    => $user_id,
 				'type'       => $type,
 				'title'      => $title,
@@ -56,8 +56,8 @@ class NotificationService {
 				'data'       => wp_json_encode( $data ),
 				'is_read'    => 0,
 				'created_at' => current_time( 'mysql' ),
-			],
-			[ '%d', '%s', '%s', '%s', '%s', '%d', '%s' ]
+			),
+			array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		if ( ! $result ) {
@@ -76,6 +76,9 @@ class NotificationService {
 		 */
 		do_action( 'wpss_notification_created', $notification_id, $user_id, $type, $data );
 
+		// Invalidate unread count cache.
+		$this->invalidate_unread_cache( $user_id );
+
 		// Send email notification if enabled.
 		if ( $this->should_send_email( $user_id, $type ) ) {
 			$this->send_email( $user_id, $title, $message, $data );
@@ -91,20 +94,20 @@ class NotificationService {
 	 * @param array $args    Query args.
 	 * @return array
 	 */
-	public function get_user_notifications( int $user_id, array $args = [] ): array {
+	public function get_user_notifications( int $user_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_notifications';
 
-		$defaults = [
+		$defaults = array(
 			'unread_only' => false,
 			'limit'       => 20,
 			'offset'      => 0,
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'user_id = %d' ];
-		$params = [ $user_id ];
+		$where  = array( 'user_id = %d' );
+		$params = array( $user_id );
 
 		if ( $args['unread_only'] ) {
 			$where[] = 'is_read = 0';
@@ -116,28 +119,47 @@ class NotificationService {
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$table} WHERE {$where_clause} ORDER BY created_at DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				array_merge( $params, [ $args['limit'], $args['offset'] ] )
+				array_merge( $params, array( $args['limit'], $args['offset'] ) )
 			)
 		);
 	}
 
 	/**
-	 * Get unread count.
+	 * Get unread count with caching.
 	 *
 	 * @param int $user_id User ID.
 	 * @return int
 	 */
 	public function get_unread_count( int $user_id ): int {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_notifications';
+		$cache_key = 'wpss_unread_notifications_' . $user_id;
+		$count     = wp_cache_get( $cache_key, 'wpss' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND is_read = 0",
-				$user_id
-			)
-		);
+		if ( false === $count ) {
+			global $wpdb;
+			$table = $wpdb->prefix . 'wpss_notifications';
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$count = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND is_read = 0",
+					$user_id
+				)
+			);
+
+			wp_cache_set( $cache_key, $count, 'wpss', HOUR_IN_SECONDS );
+		}
+
+		return (int) $count;
+	}
+
+	/**
+	 * Invalidate unread count cache.
+	 *
+	 * @param int $user_id User ID.
+	 * @return void
+	 */
+	private function invalidate_unread_cache( int $user_id ): void {
+		wp_cache_delete( 'wpss_unread_notifications_' . $user_id, 'wpss' );
 	}
 
 	/**
@@ -150,12 +172,24 @@ class NotificationService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_notifications';
 
+		// Get user_id before update to invalidate cache.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->update(
-			$table,
-			[ 'is_read' => 1 ],
-			[ 'id' => $notification_id ]
+		$user_id = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT user_id FROM {$table} WHERE id = %d", $notification_id )
 		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = (bool) $wpdb->update(
+			$table,
+			array( 'is_read' => 1 ),
+			array( 'id' => $notification_id )
+		);
+
+		if ( $result && $user_id ) {
+			$this->invalidate_unread_cache( $user_id );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -169,11 +203,18 @@ class NotificationService {
 		$table = $wpdb->prefix . 'wpss_notifications';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->update(
+		$result = (bool) $wpdb->update(
 			$table,
-			[ 'is_read' => 1 ],
-			[ 'user_id' => $user_id, 'is_read' => 0 ]
+			array( 'is_read' => 1 ),
+			array(
+				'user_id' => $user_id,
+				'is_read' => 0,
+			)
 		);
+
+		$this->invalidate_unread_cache( $user_id );
+
+		return $result;
 	}
 
 	/**
@@ -187,7 +228,7 @@ class NotificationService {
 		$table = $wpdb->prefix . 'wpss_notifications';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->delete( $table, [ 'id' => $notification_id ] );
+		return (bool) $wpdb->delete( $table, array( 'id' => $notification_id ) );
 	}
 
 	/**
@@ -210,10 +251,10 @@ class NotificationService {
 			__( 'New Order Received', 'wp-sell-services' ),
 			/* translators: %s: order number */
 			sprintf( __( 'You have received a new order #%s', 'wp-sell-services' ), $order->order_number ),
-			[
+			array(
 				'order_id'     => $order_id,
 				'order_number' => $order->order_number,
-			]
+			)
 		);
 	}
 
@@ -232,11 +273,11 @@ class NotificationService {
 			return;
 		}
 
-		$statuses = \WPSellServices\Models\ServiceOrder::get_statuses();
+		$statuses     = \WPSellServices\Models\ServiceOrder::get_statuses();
 		$status_label = $statuses[ $new_status ] ?? $new_status;
 
 		// Notify both customer and vendor.
-		$users = [ $order->customer_id, $order->vendor_id ];
+		$users = array( $order->customer_id, $order->vendor_id );
 
 		foreach ( $users as $user_id ) {
 			$this->create(
@@ -245,12 +286,12 @@ class NotificationService {
 				__( 'Order Status Updated', 'wp-sell-services' ),
 				/* translators: 1: order number, 2: status */
 				sprintf( __( 'Order #%1$s status changed to %2$s', 'wp-sell-services' ), $order->order_number, $status_label ),
-				[
+				array(
 					'order_id'     => $order_id,
 					'order_number' => $order->order_number,
 					'new_status'   => $new_status,
 					'old_status'   => $old_status,
-				]
+				)
 			);
 		}
 	}
@@ -264,7 +305,7 @@ class NotificationService {
 	 * @return void
 	 */
 	public function notify_new_message( int $conversation_id, int $sender_id, int $recipient_id ): void {
-		$sender = get_user_by( 'id', $sender_id );
+		$sender      = get_user_by( 'id', $sender_id );
 		$sender_name = $sender ? $sender->display_name : __( 'Someone', 'wp-sell-services' );
 
 		$this->create(
@@ -273,10 +314,10 @@ class NotificationService {
 			__( 'New Message', 'wp-sell-services' ),
 			/* translators: %s: sender name */
 			sprintf( __( '%s sent you a message', 'wp-sell-services' ), $sender_name ),
-			[
+			array(
 				'conversation_id' => $conversation_id,
 				'sender_id'       => $sender_id,
-			]
+			)
 		);
 	}
 
@@ -296,13 +337,13 @@ class NotificationService {
 		}
 
 		// Default: send emails for important notifications.
-		$important_types = [
+		$important_types = array(
 			self::TYPE_ORDER_CREATED,
 			self::TYPE_DELIVERY_SUBMITTED,
 			self::TYPE_DELIVERY_ACCEPTED,
 			self::TYPE_DISPUTE_OPENED,
 			self::TYPE_DEADLINE_WARNING,
-		];
+		);
 
 		return in_array( $type, $important_types, true );
 	}
@@ -316,14 +357,14 @@ class NotificationService {
 	 * @param array  $data    Additional data.
 	 * @return bool
 	 */
-	private function send_email( int $user_id, string $subject, string $message, array $data = [] ): bool {
+	private function send_email( int $user_id, string $subject, string $message, array $data = array() ): bool {
 		$user = get_user_by( 'id', $user_id );
 
 		if ( ! $user || ! $user->user_email ) {
 			return false;
 		}
 
-		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
 		// Build email content.
 		$email_content = $this->build_email_content( $message, $data );
@@ -348,8 +389,8 @@ class NotificationService {
 	 * @param array  $data    Additional data.
 	 * @return string
 	 */
-	private function build_email_content( string $message, array $data = [] ): string {
-		$content = '<html><body>';
+	private function build_email_content( string $message, array $data = array() ): string {
+		$content  = '<html><body>';
 		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px;">';
 		$content .= '<h2 style="color: #333;">' . esc_html( get_bloginfo( 'name' ) ) . '</h2>';
 		$content .= '<p>' . wp_kses_post( $message ) . '</p>';
@@ -357,9 +398,9 @@ class NotificationService {
 		// Add action link if order ID is available.
 		if ( ! empty( $data['order_id'] ) ) {
 			$order_url = home_url( '/service-order/' . $data['order_id'] . '/' );
-			$content .= '<p><a href="' . esc_url( $order_url ) . '" style="background: #0073aa; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 4px;">';
-			$content .= esc_html__( 'View Order', 'wp-sell-services' );
-			$content .= '</a></p>';
+			$content  .= '<p><a href="' . esc_url( $order_url ) . '" style="background: #0073aa; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 4px;">';
+			$content  .= esc_html__( 'View Order', 'wp-sell-services' );
+			$content  .= '</a></p>';
 		}
 
 		$content .= '</div>';

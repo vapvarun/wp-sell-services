@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.2.1';
+	const DB_VERSION = '1.2.2';
 
 	/**
 	 * Option name for storing DB version.
@@ -206,6 +206,7 @@ class SchemaManager {
 			KEY idx_vendor (vendor_id),
 			KEY idx_service (service_id),
 			KEY idx_status (status),
+			KEY idx_status_date (status,created_at),
 			KEY idx_platform (platform,platform_order_id),
 			KEY idx_deadline (delivery_deadline)
 		) {$charset_collate};";
@@ -372,7 +373,8 @@ class SchemaManager {
 			KEY idx_reviewee (reviewee_id),
 			KEY idx_service (service_id),
 			KEY idx_customer (customer_id),
-			KEY idx_vendor (vendor_id)
+			KEY idx_vendor (vendor_id),
+			KEY idx_vendor_status (vendor_id,status)
 		) {$charset_collate};";
 	}
 

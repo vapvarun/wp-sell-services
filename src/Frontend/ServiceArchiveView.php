@@ -197,13 +197,26 @@ class ServiceArchiveView {
 	 * @return void
 	 */
 	public function render_sidebar(): void {
-		$categories = get_terms(
+		// Fetch all categories in one query to avoid N+1.
+		$all_categories = get_terms(
 			array(
 				'taxonomy'   => 'wpss_service_category',
 				'hide_empty' => true,
-				'parent'     => 0,
 			)
 		);
+
+		// Group by parent for efficient lookup.
+		$categories         = array();
+		$children_by_parent = array();
+		if ( ! is_wp_error( $all_categories ) ) {
+			foreach ( $all_categories as $term ) {
+				if ( 0 === $term->parent ) {
+					$categories[] = $term;
+				} else {
+					$children_by_parent[ $term->parent ][] = $term;
+				}
+			}
+		}
 
 		// Get current filter values.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -236,14 +249,8 @@ class ServiceArchiveView {
 										<span class="wpss-count">(<?php echo esc_html( $category->count ); ?>)</span>
 									</a>
 									<?php
-									$children = get_terms(
-										array(
-											'taxonomy'   => 'wpss_service_category',
-											'hide_empty' => true,
-											'parent'     => $category->term_id,
-										)
-									);
-									if ( ! is_wp_error( $children ) && ! empty( $children ) ) :
+									$children = $children_by_parent[ $category->term_id ] ?? array();
+									if ( ! empty( $children ) ) :
 										?>
 										<ul class="wpss-subcategory-list">
 											<?php foreach ( $children as $child ) : ?>
