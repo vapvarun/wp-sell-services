@@ -14,6 +14,7 @@ namespace WPSellServices\Admin\Pages;
 
 use WPSellServices\Database\Repositories\VendorProfileRepository;
 use WPSellServices\Database\Repositories\OrderRepository;
+use WPSellServices\Services\CommissionService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -39,11 +40,19 @@ class VendorsPage {
 	private OrderRepository $order_repo;
 
 	/**
+	 * Commission service.
+	 *
+	 * @var CommissionService
+	 */
+	private CommissionService $commission_service;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->vendor_repo = new VendorProfileRepository();
-		$this->order_repo  = new OrderRepository();
+		$this->vendor_repo        = new VendorProfileRepository();
+		$this->order_repo         = new OrderRepository();
+		$this->commission_service = new CommissionService();
 	}
 
 	/**
@@ -57,6 +66,7 @@ class VendorsPage {
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20 );
 		add_action( 'wp_ajax_wpss_update_vendor_status', [ $this, 'ajax_update_vendor_status' ] );
 		add_action( 'wp_ajax_wpss_get_vendor_details', [ $this, 'ajax_get_vendor_details' ] );
+		add_action( 'wp_ajax_wpss_update_vendor_commission', [ $this, 'ajax_update_vendor_commission' ] );
 	}
 
 	/**
@@ -160,9 +170,9 @@ class VendorsPage {
 		$orderby_map = [
 			'created_at'   => 'vp.created_at',
 			'display_name' => 'u.display_name',
-			'rating'       => 'vp.rating',
+			'rating'       => 'vp.avg_rating',
 			'total_orders' => 'vp.total_orders',
-			'total_earned' => 'vp.total_earned',
+			'total_earned' => 'vp.total_earnings',
 		];
 
 		$orderby = $orderby_map[ $args['orderby'] ] ?? 'vp.created_at';
@@ -206,8 +216,8 @@ class VendorsPage {
 				SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_vendors,
 				SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_vendors,
 				SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_vendors,
-				AVG(rating) as avg_rating,
-				SUM(total_earned) as total_earnings
+				AVG(avg_rating) as avg_rating,
+				SUM(total_earnings) as total_earnings
 			FROM {$wpdb->prefix}wpss_vendor_profiles"
 		);
 
@@ -702,6 +712,84 @@ class VendorsPage {
 					}
 				});
 			});
+
+			// Save vendor commission rate
+			$(document).on('click', '#wpss-save-commission', function(e) {
+				e.preventDefault();
+				var $btn = $(this);
+				var vendorId = $btn.data('vendor-id');
+				var rate = $('#wpss-vendor-commission-rate').val();
+
+				if (rate === '') {
+					alert('<?php echo esc_js( __( 'Please enter a commission rate.', 'wp-sell-services' ) ); ?>');
+					return;
+				}
+
+				$btn.prop('disabled', true);
+
+				$.ajax({
+					url: wpssVendors.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'wpss_update_vendor_commission',
+						nonce: wpssVendors.nonce,
+						vendor_id: vendorId,
+						rate: rate
+					},
+					success: function(response) {
+						if (response.success) {
+							$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
+							// Reload modal content to update UI
+							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
+						} else {
+							alert(response.data.message || wpssVendors.i18n.error);
+							$btn.prop('disabled', false);
+						}
+					},
+					error: function() {
+						alert(wpssVendors.i18n.error);
+						$btn.prop('disabled', false);
+					}
+				});
+			});
+
+			// Reset vendor commission to global rate
+			$(document).on('click', '#wpss-reset-commission', function(e) {
+				e.preventDefault();
+				if (!confirm('<?php echo esc_js( __( 'Reset this vendor\'s commission rate to the global rate?', 'wp-sell-services' ) ); ?>')) {
+					return;
+				}
+
+				var $btn = $(this);
+				var vendorId = $btn.data('vendor-id');
+
+				$btn.prop('disabled', true);
+
+				$.ajax({
+					url: wpssVendors.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'wpss_update_vendor_commission',
+						nonce: wpssVendors.nonce,
+						vendor_id: vendorId,
+						reset: 'true'
+					},
+					success: function(response) {
+						if (response.success) {
+							$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
+							// Reload modal content to update UI
+							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
+						} else {
+							alert(response.data.message || wpssVendors.i18n.error);
+							$btn.prop('disabled', false);
+						}
+					},
+					error: function() {
+						alert(wpssVendors.i18n.error);
+						$btn.prop('disabled', false);
+					}
+				});
+			});
 		});
 		</script>
 		<?php
@@ -979,13 +1067,69 @@ class VendorsPage {
 					<?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( $vendor->rating ? number_format( (float) $vendor->rating, 1 ) . ' ★' : '-' ); ?></strong>
+					<strong><?php echo esc_html( $vendor->avg_rating ? number_format( (float) $vendor->avg_rating, 1 ) . ' ★' : '-' ); ?></strong>
 					<?php esc_html_e( 'Rating', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earned ?? 0 ) ) ); ?></strong>
+					<strong><?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?></strong>
 					<?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?>
 				</div>
+			</div>
+
+			<!-- Commission Rate Section -->
+			<?php
+			$effective_rate = $this->commission_service->get_effective_vendor_rate( $vendor_id );
+			$global_rate    = CommissionService::get_global_commission_rate();
+			?>
+			<div class="wpss-commission-section" style="background: #f6f7f7; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+				<h3 style="margin-top: 0;"><?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?></h3>
+				<p class="description" style="margin-bottom: 15px;">
+					<?php
+					printf(
+						/* translators: %s: global commission rate */
+						esc_html__( 'Global commission rate is %s%%. Set a custom rate below to override for this vendor.', 'wp-sell-services' ),
+						esc_html( number_format( $global_rate, 1 ) )
+					);
+					?>
+				</p>
+				<div style="display: flex; align-items: center; gap: 10px;">
+					<label for="wpss-vendor-commission-rate" class="screen-reader-text">
+						<?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?>
+					</label>
+					<input type="number" id="wpss-vendor-commission-rate"
+						   value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
+						   placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
+						   min="0" max="100" step="0.01"
+						   style="width: 100px;">
+					<span>%</span>
+					<button type="button" class="button button-primary" id="wpss-save-commission"
+							data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>">
+						<?php esc_html_e( 'Save', 'wp-sell-services' ); ?>
+					</button>
+					<?php if ( $effective_rate['is_custom'] ) : ?>
+						<button type="button" class="button" id="wpss-reset-commission"
+								data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>">
+							<?php esc_html_e( 'Reset to Global', 'wp-sell-services' ); ?>
+						</button>
+					<?php endif; ?>
+				</div>
+				<p id="wpss-commission-status" style="margin-top: 10px;">
+					<?php if ( $effective_rate['is_custom'] ) : ?>
+						<span style="color: #2271b1;">
+							<?php
+							printf(
+								/* translators: %s: custom commission rate */
+								esc_html__( 'Custom rate: %s%%', 'wp-sell-services' ),
+								esc_html( number_format( $effective_rate['rate'], 2 ) )
+							);
+							?>
+						</span>
+					<?php else : ?>
+						<span style="color: #646970;">
+							<?php esc_html_e( 'Using global rate', 'wp-sell-services' ); ?>
+						</span>
+					<?php endif; ?>
+				</p>
 			</div>
 
 			<?php if ( $vendor->bio ) : ?>
@@ -1067,5 +1211,81 @@ class VendorsPage {
 		$html = ob_get_clean();
 
 		wp_send_json_success( [ 'html' => $html ] );
+	}
+
+	/**
+	 * AJAX handler for updating vendor commission rate.
+	 *
+	 * @return void
+	 */
+	public function ajax_update_vendor_commission(): void {
+		check_ajax_referer( 'wpss_vendors_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'wp-sell-services' ) ] );
+		}
+
+		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
+
+		if ( ! $vendor_id ) {
+			wp_send_json_error( [ 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ] );
+		}
+
+		// Check if reset to global was requested.
+		$reset = isset( $_POST['reset'] ) && 'true' === $_POST['reset'];
+
+		if ( $reset ) {
+			// Reset to global rate.
+			$result = $this->commission_service->set_vendor_commission_rate( $vendor_id, null );
+
+			if ( ! $result ) {
+				wp_send_json_error( [ 'message' => __( 'Failed to reset commission rate.', 'wp-sell-services' ) ] );
+			}
+
+			$global_rate = CommissionService::get_global_commission_rate();
+
+			wp_send_json_success(
+				[
+					'message'   => __( 'Commission rate reset to global.', 'wp-sell-services' ),
+					'rate'      => $global_rate,
+					'is_custom' => false,
+				]
+			);
+		}
+
+		// Set custom rate.
+		$rate_input = isset( $_POST['rate'] ) ? sanitize_text_field( wp_unslash( $_POST['rate'] ) ) : '';
+
+		if ( '' === $rate_input ) {
+			wp_send_json_error( [ 'message' => __( 'Please enter a commission rate.', 'wp-sell-services' ) ] );
+		}
+
+		$rate = (float) $rate_input;
+
+		if ( $rate < 0 || $rate > 100 ) {
+			wp_send_json_error( [ 'message' => __( 'Commission rate must be between 0 and 100.', 'wp-sell-services' ) ] );
+		}
+
+		$result = $this->commission_service->set_vendor_commission_rate( $vendor_id, $rate );
+
+		if ( ! $result ) {
+			wp_send_json_error( [ 'message' => __( 'Failed to update commission rate.', 'wp-sell-services' ) ] );
+		}
+
+		/**
+		 * Fires when vendor commission rate is updated.
+		 *
+		 * @param int   $vendor_id Vendor user ID.
+		 * @param float $rate      New commission rate.
+		 */
+		do_action( 'wpss_vendor_commission_updated', $vendor_id, $rate );
+
+		wp_send_json_success(
+			[
+				'message'   => __( 'Commission rate updated successfully.', 'wp-sell-services' ),
+				'rate'      => $rate,
+				'is_custom' => true,
+			]
+		);
 	}
 }
