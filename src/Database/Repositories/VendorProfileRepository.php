@@ -182,7 +182,9 @@ class VendorProfileRepository extends AbstractRepository {
 				"SELECT
 					COUNT(*) as total_orders,
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) as total_earnings
+					SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) as total_earnings,
+					SUM(CASE WHEN status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as net_earnings,
+					SUM(CASE WHEN status = 'completed' THEN COALESCE(platform_fee, 0) ELSE 0 END) as total_commission
 				FROM {$orders_table}
 				WHERE vendor_id = %d",
 				$user_id
@@ -227,6 +229,8 @@ class VendorProfileRepository extends AbstractRepository {
 				'total_orders'          => (int) ( $order_stats['total_orders'] ?? 0 ),
 				'completed_orders'      => (int) ( $order_stats['completed_orders'] ?? 0 ),
 				'total_earnings'        => (float) ( $order_stats['total_earnings'] ?? 0 ),
+				'net_earnings'          => (float) ( $order_stats['net_earnings'] ?? 0 ),
+				'total_commission'      => (float) ( $order_stats['total_commission'] ?? 0 ),
 				'avg_rating'            => round( (float) ( $review_stats['avg_rating'] ?? 0 ), 2 ),
 				'total_reviews'         => (int) ( $review_stats['total_reviews'] ?? 0 ),
 				'on_time_delivery_rate' => round( $on_time_rate, 2 ),

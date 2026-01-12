@@ -61,12 +61,12 @@ class VendorsPage {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'admin_menu', [ $this, 'add_menu_page' ], 20 );
+		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
 		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20 );
-		add_action( 'wp_ajax_wpss_update_vendor_status', [ $this, 'ajax_update_vendor_status' ] );
-		add_action( 'wp_ajax_wpss_get_vendor_details', [ $this, 'ajax_get_vendor_details' ] );
-		add_action( 'wp_ajax_wpss_update_vendor_commission', [ $this, 'ajax_update_vendor_commission' ] );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
+		add_action( 'wp_ajax_wpss_update_vendor_status', array( $this, 'ajax_update_vendor_status' ) );
+		add_action( 'wp_ajax_wpss_get_vendor_details', array( $this, 'ajax_get_vendor_details' ) );
+		add_action( 'wp_ajax_wpss_update_vendor_commission', array( $this, 'ajax_update_vendor_commission' ) );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class VendorsPage {
 			__( 'Vendors', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-vendors',
-			[ $this, 'render_page' ]
+			array( $this, 'render_page' )
 		);
 	}
 
@@ -102,15 +102,15 @@ class VendorsPage {
 		wp_add_inline_script(
 			'wpss-admin',
 			'window.wpssVendors = ' . wp_json_encode(
-				[
+				array(
 					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'wpss_vendors_admin' ),
-					'i18n'    => [
+					'i18n'    => array(
 						'confirmStatusChange' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
 						'loading'             => __( 'Loading...', 'wp-sell-services' ),
 						'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					],
-				]
+					),
+				)
 			) . ';'
 		);
 	}
@@ -121,24 +121,24 @@ class VendorsPage {
 	 * @param array $args Query arguments.
 	 * @return array
 	 */
-	private function get_vendors( array $args = [] ): array {
+	private function get_vendors( array $args = array() ): array {
 		global $wpdb;
 
-		$defaults = [
+		$defaults = array(
 			'per_page' => 20,
 			'page'     => 1,
 			'status'   => '',
 			'search'   => '',
 			'orderby'  => 'created_at',
 			'order'    => 'DESC',
-		];
+		);
 
 		$args   = wp_parse_args( $args, $defaults );
 		$offset = ( $args['page'] - 1 ) * $args['per_page'];
 
 		// Build query.
-		$where = [ '1=1' ];
-		$values = [];
+		$where  = array( '1=1' );
+		$values = array();
 
 		if ( $args['status'] ) {
 			$where[]  = 'vp.status = %s';
@@ -167,13 +167,13 @@ class VendorsPage {
 			: (int) $wpdb->get_var( $count_query );
 
 		// Get vendors with stats.
-		$orderby_map = [
+		$orderby_map = array(
 			'created_at'   => 'vp.created_at',
 			'display_name' => 'u.display_name',
 			'rating'       => 'vp.avg_rating',
 			'total_orders' => 'vp.total_orders',
 			'total_earned' => 'vp.total_earnings',
-		];
+		);
 
 		$orderby = $orderby_map[ $args['orderby'] ] ?? 'vp.created_at';
 		$order   = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
@@ -190,16 +190,16 @@ class VendorsPage {
 			WHERE {$where_clause}
 			ORDER BY {$orderby} {$order}
 			LIMIT %d OFFSET %d",
-			array_merge( $values, [ $args['per_page'], $offset ] )
+			array_merge( $values, array( $args['per_page'], $offset ) )
 		);
 
 		$vendors = $wpdb->get_results( $query );
 
-		return [
+		return array(
 			'vendors' => $vendors,
 			'total'   => $total,
 			'pages'   => ceil( $total / $args['per_page'] ),
-		];
+		);
 	}
 
 	/**
@@ -221,14 +221,14 @@ class VendorsPage {
 			FROM {$wpdb->prefix}wpss_vendor_profiles"
 		);
 
-		return [
-			'total'     => (int) ( $stats->total_vendors ?? 0 ),
-			'active'    => (int) ( $stats->active_vendors ?? 0 ),
-			'pending'   => (int) ( $stats->pending_vendors ?? 0 ),
-			'suspended' => (int) ( $stats->suspended_vendors ?? 0 ),
-			'avg_rating' => round( (float) ( $stats->avg_rating ?? 0 ), 2 ),
+		return array(
+			'total'          => (int) ( $stats->total_vendors ?? 0 ),
+			'active'         => (int) ( $stats->active_vendors ?? 0 ),
+			'pending'        => (int) ( $stats->pending_vendors ?? 0 ),
+			'suspended'      => (int) ( $stats->suspended_vendors ?? 0 ),
+			'avg_rating'     => round( (float) ( $stats->avg_rating ?? 0 ), 2 ),
 			'total_earnings' => (float) ( $stats->total_earnings ?? 0 ),
-		];
+		);
 	}
 
 	/**
@@ -244,19 +244,19 @@ class VendorsPage {
 		$order        = isset( $_GET['order'] ) ? sanitize_key( $_GET['order'] ) : 'DESC';
 
 		$result = $this->get_vendors(
-			[
+			array(
 				'page'    => $current_page,
 				'status'  => $status,
 				'search'  => $search,
 				'orderby' => $orderby,
 				'order'   => $order,
-			]
+			)
 		);
 
-		$vendors    = $result['vendors'];
-		$total      = $result['total'];
+		$vendors     = $result['vendors'];
+		$total       = $result['total'];
 		$total_pages = $result['pages'];
-		$stats      = $this->get_vendor_stats();
+		$stats       = $this->get_vendor_stats();
 		?>
 		<div class="wrap wpss-vendors-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendors', 'wp-sell-services' ); ?></h1>
@@ -291,28 +291,28 @@ class VendorsPage {
 				<ul class="subsubsub">
 					<li>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors' ) ); ?>"
-						   class="<?php echo $status === '' ? 'current' : ''; ?>">
+							class="<?php echo $status === '' ? 'current' : ''; ?>">
 							<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
 							<span class="count">(<?php echo esc_html( $stats['total'] ); ?>)</span>
 						</a> |
 					</li>
 					<li>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=active' ) ); ?>"
-						   class="<?php echo $status === 'active' ? 'current' : ''; ?>">
+							class="<?php echo $status === 'active' ? 'current' : ''; ?>">
 							<?php esc_html_e( 'Active', 'wp-sell-services' ); ?>
 							<span class="count">(<?php echo esc_html( $stats['active'] ); ?>)</span>
 						</a> |
 					</li>
 					<li>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=pending' ) ); ?>"
-						   class="<?php echo $status === 'pending' ? 'current' : ''; ?>">
+							class="<?php echo $status === 'pending' ? 'current' : ''; ?>">
 							<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
 							<span class="count">(<?php echo esc_html( $stats['pending'] ); ?>)</span>
 						</a> |
 					</li>
 					<li>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=suspended' ) ); ?>"
-						   class="<?php echo $status === 'suspended' ? 'current' : ''; ?>">
+							class="<?php echo $status === 'suspended' ? 'current' : ''; ?>">
 							<?php esc_html_e( 'Suspended', 'wp-sell-services' ); ?>
 							<span class="count">(<?php echo esc_html( $stats['suspended'] ); ?>)</span>
 						</a>
@@ -328,10 +328,10 @@ class VendorsPage {
 						<?php esc_html_e( 'Search vendors', 'wp-sell-services' ); ?>
 					</label>
 					<input type="search" id="vendor-search-input" name="s"
-						   value="<?php echo esc_attr( $search ); ?>"
-						   placeholder="<?php esc_attr_e( 'Search vendors...', 'wp-sell-services' ); ?>">
+							value="<?php echo esc_attr( $search ); ?>"
+							placeholder="<?php esc_attr_e( 'Search vendors...', 'wp-sell-services' ); ?>">
 					<input type="submit" id="search-submit" class="button"
-						   value="<?php esc_attr_e( 'Search', 'wp-sell-services' ); ?>">
+							value="<?php esc_attr_e( 'Search', 'wp-sell-services' ); ?>">
 				</form>
 			</div>
 
@@ -407,14 +407,14 @@ class VendorsPage {
 						</span>
 						<span class="pagination-links">
 							<?php
-							$pagination_args = [
+							$pagination_args = array(
 								'base'      => add_query_arg( 'paged', '%#%' ),
 								'format'    => '',
 								'prev_text' => '&laquo;',
 								'next_text' => '&raquo;',
 								'total'     => $total_pages,
 								'current'   => $current_page,
-							];
+							);
 							echo wp_kses_post( paginate_links( $pagination_args ) );
 							?>
 						</span>
@@ -634,6 +634,23 @@ class VendorsPage {
 		</style>
 
 		<script>
+		// Define wpssVendors for inline script (wp_add_inline_script runs in footer, after this).
+		window.wpssVendors = window.wpssVendors || 
+		<?php
+		echo wp_json_encode(
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wpss_vendors_admin' ),
+				'i18n'    => array(
+					'confirmStatusChange' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
+					'loading'             => __( 'Loading...', 'wp-sell-services' ),
+					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+				),
+			)
+		);
+		?>
+		;
+
 		jQuery(function($) {
 			var $modal = $('#wpss-vendor-modal');
 			var $modalBody = $('#wpss-vendor-modal-body');
@@ -811,10 +828,10 @@ class VendorsPage {
 		$arrow_class = $is_sorted ? ( $order === 'ASC' ? 'asc' : 'desc' ) : '';
 
 		$url = add_query_arg(
-			[
+			array(
 				'orderby' => $column,
 				'order'   => $new_order,
-			]
+			)
 		);
 
 		printf(
@@ -833,8 +850,8 @@ class VendorsPage {
 	 */
 	private function render_vendor_row( object $vendor ): void {
 		$user    = get_userdata( (int) $vendor->user_id );
-		$avatar  = get_avatar_url( $vendor->user_id, [ 'size' => 80 ] );
-		$rating  = (float) ( $vendor->rating ?? 0 );
+		$avatar  = get_avatar_url( $vendor->user_id, array( 'size' => 80 ) );
+		$rating  = (float) ( $vendor->avg_rating ?? 0 );
 		$reviews = (int) ( $vendor->total_reviews ?? 0 );
 		$status  = $vendor->status ?? 'active';
 		?>
@@ -878,7 +895,7 @@ class VendorsPage {
 				<?php endif; ?>
 			</td>
 			<td class="column-earnings" data-colname="<?php esc_attr_e( 'Earnings', 'wp-sell-services' ); ?>">
-				<?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earned ?? 0 ) ) ); ?>
+				<?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
@@ -940,35 +957,35 @@ class VendorsPage {
 		check_ajax_referer( 'wpss_vendors_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
 		$status    = sanitize_key( $_POST['status'] ?? '' );
 
 		if ( ! $vendor_id ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
 		}
 
-		$valid_statuses = [ 'active', 'pending', 'suspended', 'rejected' ];
+		$valid_statuses = array( 'active', 'pending', 'suspended', 'rejected' );
 		if ( ! in_array( $status, $valid_statuses, true ) ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid status.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid status.', 'wp-sell-services' ) ) );
 		}
 
 		global $wpdb;
 		$result = $wpdb->update(
 			$wpdb->prefix . 'wpss_vendor_profiles',
-			[
+			array(
 				'status'     => $status,
 				'updated_at' => current_time( 'mysql', true ),
-			],
-			[ 'user_id' => $vendor_id ],
-			[ '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'user_id' => $vendor_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
 		);
 
 		if ( false === $result ) {
-			wp_send_json_error( [ 'message' => __( 'Failed to update vendor status.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Failed to update vendor status.', 'wp-sell-services' ) ) );
 		}
 
 		/**
@@ -979,7 +996,7 @@ class VendorsPage {
 		 */
 		do_action( 'wpss_vendor_status_updated', $vendor_id, $status );
 
-		wp_send_json_success( [ 'message' => __( 'Vendor status updated successfully.', 'wp-sell-services' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Vendor status updated successfully.', 'wp-sell-services' ) ) );
 	}
 
 	/**
@@ -991,13 +1008,13 @@ class VendorsPage {
 		check_ajax_referer( 'wpss_vendors_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
 
 		if ( ! $vendor_id ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
 		}
 
 		global $wpdb;
@@ -1014,19 +1031,19 @@ class VendorsPage {
 		);
 
 		if ( ! $vendor ) {
-			wp_send_json_error( [ 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
 		}
 
 		// Get services.
 		$services = get_posts(
-			[
+			array(
 				'post_type'      => 'wpss_service',
-				'post_status'    => [ 'publish', 'draft', 'pending' ],
+				'post_status'    => array( 'publish', 'draft', 'pending' ),
 				'author'         => $vendor_id,
 				'posts_per_page' => 10,
 				'orderby'        => 'date',
 				'order'          => 'DESC',
-			]
+			)
 		);
 
 		// Get recent orders.
@@ -1097,10 +1114,10 @@ class VendorsPage {
 						<?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?>
 					</label>
 					<input type="number" id="wpss-vendor-commission-rate"
-						   value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
-						   placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
-						   min="0" max="100" step="0.01"
-						   style="width: 100px;">
+							value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
+							placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
+							min="0" max="100" step="0.01"
+							style="width: 100px;">
 					<span>%</span>
 					<button type="button" class="button button-primary" id="wpss-save-commission"
 							data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>">
@@ -1210,7 +1227,7 @@ class VendorsPage {
 		<?php
 		$html = ob_get_clean();
 
-		wp_send_json_success( [ 'html' => $html ] );
+		wp_send_json_success( array( 'html' => $html ) );
 	}
 
 	/**
@@ -1222,13 +1239,13 @@ class VendorsPage {
 		check_ajax_referer( 'wpss_vendors_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [ 'message' => __( 'Permission denied.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
 		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
 
 		if ( ! $vendor_id ) {
-			wp_send_json_error( [ 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
 		}
 
 		// Check if reset to global was requested.
@@ -1239,17 +1256,17 @@ class VendorsPage {
 			$result = $this->commission_service->set_vendor_commission_rate( $vendor_id, null );
 
 			if ( ! $result ) {
-				wp_send_json_error( [ 'message' => __( 'Failed to reset commission rate.', 'wp-sell-services' ) ] );
+				wp_send_json_error( array( 'message' => __( 'Failed to reset commission rate.', 'wp-sell-services' ) ) );
 			}
 
 			$global_rate = CommissionService::get_global_commission_rate();
 
 			wp_send_json_success(
-				[
+				array(
 					'message'   => __( 'Commission rate reset to global.', 'wp-sell-services' ),
 					'rate'      => $global_rate,
 					'is_custom' => false,
-				]
+				)
 			);
 		}
 
@@ -1257,19 +1274,19 @@ class VendorsPage {
 		$rate_input = isset( $_POST['rate'] ) ? sanitize_text_field( wp_unslash( $_POST['rate'] ) ) : '';
 
 		if ( '' === $rate_input ) {
-			wp_send_json_error( [ 'message' => __( 'Please enter a commission rate.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Please enter a commission rate.', 'wp-sell-services' ) ) );
 		}
 
 		$rate = (float) $rate_input;
 
 		if ( $rate < 0 || $rate > 100 ) {
-			wp_send_json_error( [ 'message' => __( 'Commission rate must be between 0 and 100.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Commission rate must be between 0 and 100.', 'wp-sell-services' ) ) );
 		}
 
 		$result = $this->commission_service->set_vendor_commission_rate( $vendor_id, $rate );
 
 		if ( ! $result ) {
-			wp_send_json_error( [ 'message' => __( 'Failed to update commission rate.', 'wp-sell-services' ) ] );
+			wp_send_json_error( array( 'message' => __( 'Failed to update commission rate.', 'wp-sell-services' ) ) );
 		}
 
 		/**
@@ -1281,11 +1298,11 @@ class VendorsPage {
 		do_action( 'wpss_vendor_commission_updated', $vendor_id, $rate );
 
 		wp_send_json_success(
-			[
+			array(
 				'message'   => __( 'Commission rate updated successfully.', 'wp-sell-services' ),
 				'rate'      => $rate,
 				'is_custom' => true,
-			]
+			)
 		);
 	}
 }

@@ -242,10 +242,10 @@ class VendorProfile {
 		$profile->skills           = isset( $row->skills ) && $row->skills ? json_decode( $row->skills, true ) : array();
 		$profile->certifications   = isset( $row->certifications ) && $row->certifications ? json_decode( $row->certifications, true ) : array();
 		$profile->education        = isset( $row->education ) && $row->education ? json_decode( $row->education, true ) : array();
-		$profile->tier             = $row->tier ?? self::TIER_NEW;
-		$profile->rating           = (float) ( $row->rating ?? 0 );
-		$profile->review_count     = (int) ( $row->review_count ?? 0 );
-		$profile->orders_completed = (int) ( $row->orders_completed ?? 0 );
+		$profile->tier             = $row->verification_tier ?? $row->tier ?? self::TIER_NEW;
+		$profile->rating           = (float) ( $row->avg_rating ?? $row->rating ?? 0 );
+		$profile->review_count     = (int) ( $row->total_reviews ?? $row->review_count ?? 0 );
+		$profile->orders_completed = (int) ( $row->completed_orders ?? $row->orders_completed ?? 0 );
 		$profile->response_rate    = (float) ( $row->response_rate ?? 0 );
 		$profile->response_time    = (float) ( $row->response_time ?? 0 );
 		$profile->delivery_rate    = (float) ( $row->delivery_rate ?? 0 );
