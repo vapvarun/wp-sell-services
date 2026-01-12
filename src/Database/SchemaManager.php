@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.2.2';
+	const DB_VERSION = '1.3.2';
 
 	/**
 	 * Option name for storing DB version.
@@ -118,6 +118,7 @@ class SchemaManager {
 			$this->get_portfolio_items_table( $charset_collate ),
 			$this->get_notifications_table( $charset_collate ),
 			$this->get_wallet_transactions_table( $charset_collate ),
+			$this->get_withdrawals_table( $charset_collate ),
 			$this->get_service_platform_map_table( $charset_collate ),
 			$this->get_analytics_events_table( $charset_collate ),
 		);
@@ -187,6 +188,9 @@ class SchemaManager {
 			addons_total decimal(10,2) DEFAULT 0,
 			total decimal(10,2) NOT NULL,
 			currency varchar(10) DEFAULT 'USD',
+			commission_rate decimal(5,2) DEFAULT NULL,
+			platform_fee decimal(10,2) DEFAULT NULL,
+			vendor_earnings decimal(10,2) DEFAULT NULL,
 			status varchar(50) DEFAULT 'pending_payment',
 			delivery_deadline datetime DEFAULT NULL,
 			original_deadline datetime DEFAULT NULL,
@@ -503,6 +507,7 @@ class SchemaManager {
 			bio text,
 			avatar_id bigint(20) unsigned DEFAULT NULL,
 			cover_image_id bigint(20) unsigned DEFAULT NULL,
+			status varchar(50) DEFAULT 'active',
 			verification_tier varchar(50) DEFAULT 'basic',
 			verified_at datetime DEFAULT NULL,
 			country varchar(100) DEFAULT NULL,
@@ -513,6 +518,9 @@ class SchemaManager {
 			total_orders int(11) DEFAULT 0,
 			completed_orders int(11) DEFAULT 0,
 			total_earnings decimal(12,2) DEFAULT 0,
+			net_earnings decimal(12,2) DEFAULT 0,
+			total_commission decimal(12,2) DEFAULT 0,
+			custom_commission_rate decimal(5,2) DEFAULT NULL,
 			avg_rating decimal(3,2) DEFAULT 0,
 			total_reviews int(11) DEFAULT 0,
 			response_time_hours int(11) DEFAULT NULL,
@@ -525,7 +533,8 @@ class SchemaManager {
 			PRIMARY KEY (id),
 			UNIQUE KEY unique_user (user_id),
 			KEY idx_tier (verification_tier),
-			KEY idx_rating (avg_rating)
+			KEY idx_rating (avg_rating),
+			KEY idx_status (status)
 		) {$charset_collate};";
 	}
 
@@ -612,6 +621,33 @@ class SchemaManager {
 	}
 
 	/**
+	 * Get withdrawals table SQL.
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_withdrawals_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'withdrawals' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			vendor_id bigint(20) unsigned NOT NULL,
+			amount decimal(10,2) NOT NULL,
+			method varchar(50) NOT NULL,
+			details longtext,
+			status varchar(50) DEFAULT 'pending',
+			admin_note text,
+			processed_at datetime DEFAULT NULL,
+			processed_by bigint(20) unsigned DEFAULT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_vendor (vendor_id),
+			KEY idx_status (status),
+			KEY idx_vendor_status (vendor_id, status)
+		) {$charset_collate};";
+	}
+
+	/**
 	 * Get service platform map table SQL.
 	 *
 	 * @param string $charset_collate Charset collation.
@@ -672,6 +708,7 @@ class SchemaManager {
 		$tables = array(
 			'analytics_events',
 			'service_platform_map',
+			'withdrawals',
 			'wallet_transactions',
 			'notifications',
 			'portfolio_items',
@@ -721,6 +758,7 @@ class SchemaManager {
 			'portfolio_items'      => $this->get_table_name( 'portfolio_items' ),
 			'notifications'        => $this->get_table_name( 'notifications' ),
 			'wallet_transactions'  => $this->get_table_name( 'wallet_transactions' ),
+			'withdrawals'          => $this->get_table_name( 'withdrawals' ),
 			'service_platform_map' => $this->get_table_name( 'service_platform_map' ),
 			'analytics_events'     => $this->get_table_name( 'analytics_events' ),
 		);

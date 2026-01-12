@@ -237,6 +237,7 @@ final class Plugin {
 		$this->define_unified_dashboard_hooks();
 		$this->define_auto_vendor_hooks();
 		$this->define_provider_hooks();
+		$this->define_cron_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -557,16 +558,78 @@ final class Plugin {
 			return;
 		}
 
-		// Check if already processed.
-		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+		// Check if already has vendor meta.
+		$has_vendor_meta = get_user_meta( $user_id, '_wpss_is_vendor', true );
 
-		if ( $is_vendor ) {
+		// Also check if actual vendor profile exists in database.
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		$profile_exists = $vendor_service->get_profile( $user_id ) !== null;
+
+		// If both meta is set AND profile exists, we're done.
+		if ( $has_vendor_meta && $profile_exists ) {
 			return;
 		}
 
-		// Make admin a vendor.
-		$vendor_service = new \WPSellServices\Services\VendorService();
-		$vendor_service->register( $user_id );
+		// Register as vendor (creates profile and sets meta).
+		// Note: VendorService::register() checks is_vendor() which might return true
+		// if role exists. Use ensure_vendor_profile() for just the profile.
+		if ( ! $profile_exists ) {
+			$this->ensure_vendor_profile( $user_id );
+		}
+
+		// Ensure meta is set.
+		if ( ! $has_vendor_meta ) {
+			update_user_meta( $user_id, '_wpss_is_vendor', true );
+		}
+	}
+
+	/**
+	 * Ensure vendor profile exists in database.
+	 *
+	 * Creates a vendor profile if one doesn't exist, without modifying roles.
+	 *
+	 * @since 1.1.0
+	 * @param int $user_id User ID.
+	 * @return bool True if profile exists or was created.
+	 */
+	private function ensure_vendor_profile( int $user_id ): bool {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_vendor_profiles';
+
+		// Check if profile already exists.
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user_id
+			)
+		);
+
+		if ( $exists ) {
+			return true;
+		}
+
+		// Create profile.
+		$user = get_userdata( $user_id );
+
+		if ( ! $user ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert(
+			$table,
+			array(
+				'user_id'           => $user_id,
+				'display_name'      => $user->display_name,
+				'status'            => 'active',
+				'verification_tier' => 'basic',
+				'created_at'        => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%s', '%s', '%s' )
+		);
+
+		return false !== $result;
 	}
 
 	/**
@@ -655,6 +718,25 @@ final class Plugin {
 		 * @param array $widgets Array of analytics widget instances.
 		 */
 		$this->analytics_widgets = apply_filters( 'wpss_analytics_widgets', $this->analytics_widgets );
+	}
+
+	/**
+	 * Define cron action hooks.
+	 *
+	 * Registers handlers for scheduled cron events.
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	private function define_cron_hooks(): void {
+		// Auto-withdrawal processing.
+		$this->loader->add_action(
+			'wpss_process_auto_withdrawals',
+			function (): void {
+				$earnings_service = new \WPSellServices\Services\EarningsService();
+				$earnings_service->process_auto_withdrawals();
+			}
+		);
 	}
 
 	/**

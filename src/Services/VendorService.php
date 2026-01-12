@@ -74,7 +74,7 @@ class VendorService {
 	 * @param array<string, mixed> $data    Profile data.
 	 * @return bool True on success.
 	 */
-	public function register( int $user_id, array $data = [] ): bool {
+	public function register( int $user_id, array $data = array() ): bool {
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
@@ -93,14 +93,15 @@ class VendorService {
 		$this->add_vendor_capabilities( $user_id );
 
 		// Create vendor profile.
-		$profile_data = [
+		$profile_data = array(
 			'display_name'      => $data['display_name'] ?? $user->display_name,
 			'tagline'           => $data['tagline'] ?? '',
 			'bio'               => $data['bio'] ?? '',
 			'country'           => $data['country'] ?? '',
 			'city'              => $data['city'] ?? '',
+			'status'            => $data['status'] ?? 'active',
 			'verification_tier' => self::TIER_BASIC,
-		];
+		);
 
 		$profile_id = $this->profile_repo->upsert( $user_id, $profile_data );
 
@@ -164,7 +165,7 @@ class VendorService {
 	 * @return bool True on success.
 	 */
 	public function update_profile( int $user_id, array $data ): bool {
-		$allowed_fields = [
+		$allowed_fields = array(
 			'display_name',
 			'tagline',
 			'bio',
@@ -175,7 +176,7 @@ class VendorService {
 			'timezone',
 			'website',
 			'social_links',
-		];
+		);
 
 		$filtered_data = array_intersect_key( $data, array_flip( $allowed_fields ) );
 
@@ -196,7 +197,7 @@ class VendorService {
 			do_action( 'wpss_vendor_profile_updated', $user_id, $filtered_data );
 		}
 
-		return $result !== false;
+		return false !== $result;
 	}
 
 	/**
@@ -267,7 +268,7 @@ class VendorService {
 	 * @return bool True on success.
 	 */
 	public function update_verification_tier( int $user_id, string $tier ): bool {
-		$valid_tiers = [ self::TIER_BASIC, self::TIER_VERIFIED, self::TIER_PRO ];
+		$valid_tiers = array( self::TIER_BASIC, self::TIER_VERIFIED, self::TIER_PRO );
 
 		if ( ! in_array( $tier, $valid_tiers, true ) ) {
 			return false;
@@ -306,7 +307,7 @@ class VendorService {
 	 * @param array<string, mixed> $args   Query arguments.
 	 * @return array<object> Array of vendor profiles.
 	 */
-	public function search( string $search, array $args = [] ): array {
+	public function search( string $search, array $args = array() ): array {
 		return $this->profile_repo->search( $search, $args );
 	}
 
@@ -317,7 +318,7 @@ class VendorService {
 	 * @param array<string, mixed> $args    Query arguments.
 	 * @return array<object> Array of vendor profiles.
 	 */
-	public function get_by_country( string $country, array $args = [] ): array {
+	public function get_by_country( string $country, array $args = array() ): array {
 		return $this->profile_repo->get_by_country( $country, $args );
 	}
 
@@ -362,12 +363,12 @@ class VendorService {
 			return;
 		}
 
-		$capabilities = [
+		$capabilities = array(
 			'wpss_manage_services',
 			'wpss_manage_orders',
 			'wpss_view_analytics',
 			'wpss_respond_to_requests',
-		];
+		);
 
 		foreach ( $capabilities as $cap ) {
 			$user->add_cap( $cap );
@@ -413,11 +414,11 @@ class VendorService {
 	 * @return array<string, string> Tier slugs and labels.
 	 */
 	public static function get_tiers(): array {
-		return [
+		return array(
 			self::TIER_BASIC    => __( 'Basic', 'wp-sell-services' ),
 			self::TIER_VERIFIED => __( 'Verified', 'wp-sell-services' ),
 			self::TIER_PRO      => __( 'Pro', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**

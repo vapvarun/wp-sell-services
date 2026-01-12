@@ -28,6 +28,7 @@ class VendorProfileRepository extends AbstractRepository {
 		'id',
 		'user_id',
 		'display_name',
+		'status',
 		'avg_rating',
 		'total_reviews',
 		'total_orders',
