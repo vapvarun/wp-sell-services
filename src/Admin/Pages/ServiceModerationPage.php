@@ -41,6 +41,13 @@ class ServiceModerationPage {
 	public const REJECTION_REASON_KEY = '_wpss_rejection_reason';
 
 	/**
+	 * Screen option for items per page.
+	 *
+	 * @var string
+	 */
+	public const SCREEN_OPTION = 'wpss_moderation_per_page';
+
+	/**
 	 * Initialize the page.
 	 *
 	 * @return void
@@ -50,6 +57,9 @@ class ServiceModerationPage {
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 15 );
 		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
+
+		// Screen options.
+		add_filter( 'set-screen-option', array( $this, 'set_screen_option' ), 10, 3 );
 
 		// AJAX handlers - always registered for admin use.
 		add_action( 'wp_ajax_wpss_approve_service', array( $this, 'ajax_approve_service' ) );
@@ -93,7 +103,7 @@ class ServiceModerationPage {
 			$menu_title .= sprintf( ' <span class="awaiting-mod">%d</span>', $pending_count );
 		}
 
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Service Moderation', 'wp-sell-services' ),
 			$menu_title,
@@ -101,6 +111,41 @@ class ServiceModerationPage {
 			'wpss-moderation',
 			array( $this, 'render_page' )
 		);
+
+		// Add screen options.
+		add_action( "load-{$hook}", array( $this, 'add_screen_options' ) );
+	}
+
+	/**
+	 * Add screen options for items per page.
+	 *
+	 * @return void
+	 */
+	public function add_screen_options(): void {
+		$option = 'per_page';
+		$args   = array(
+			'label'   => __( 'Services per page', 'wp-sell-services' ),
+			'default' => 20,
+			'option'  => self::SCREEN_OPTION,
+		);
+
+		add_screen_option( $option, $args );
+	}
+
+	/**
+	 * Save screen option value.
+	 *
+	 * @param mixed  $status Screen option value. Default false to skip.
+	 * @param string $option The option name.
+	 * @param int    $value  The number of items per page.
+	 * @return mixed
+	 */
+	public function set_screen_option( $status, string $option, int $value ) {
+		if ( self::SCREEN_OPTION === $option ) {
+			return $value;
+		}
+
+		return $status;
 	}
 
 	/**
@@ -181,10 +226,17 @@ class ServiceModerationPage {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$paged = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 
+		// Get items per page from screen option.
+		$user_id  = get_current_user_id();
+		$per_page = get_user_meta( $user_id, self::SCREEN_OPTION, true );
+		if ( empty( $per_page ) || $per_page < 1 ) {
+			$per_page = 20;
+		}
+
 		$args = array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
-			'posts_per_page' => 20,
+			'posts_per_page' => absint( $per_page ),
 			'paged'          => $paged,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
@@ -365,8 +417,28 @@ class ServiceModerationPage {
 		</style>
 
 		<script>
+		// Define wpssModeration inline (wp_add_inline_script runs in footer, after this script).
+		window.wpssModeration = window.wpssModeration || <?php
+		echo wp_json_encode(
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wpss_moderation' ),
+				'i18n'    => array(
+					'confirmApprove' => __( 'Approve this service?', 'wp-sell-services' ),
+					'confirmReject'  => __( 'Reject this service?', 'wp-sell-services' ),
+					'rejectReason'   => __( 'Please provide a reason for rejection:', 'wp-sell-services' ),
+					'loading'        => __( 'Processing...', 'wp-sell-services' ),
+					'approved'       => __( 'Service approved!', 'wp-sell-services' ),
+					'rejected'       => __( 'Service rejected.', 'wp-sell-services' ),
+					'error'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'selectServices' => __( 'Please select at least one service.', 'wp-sell-services' ),
+					'confirmBulk'    => __( 'Apply this action to selected services?', 'wp-sell-services' ),
+				),
+			)
+		);
+		?>;
 		jQuery(function($) {
-			var wpssModeration = window.wpssModeration || {};
+			var wpssModeration = window.wpssModeration;
 
 			// Approve single service.
 			$(document).on('click', '.wpss-approve-service', function(e) {
