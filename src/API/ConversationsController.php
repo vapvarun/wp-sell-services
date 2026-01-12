@@ -425,12 +425,12 @@ class ConversationsController extends RestController {
 			'last_message'  => $last_message ? array(
 				'content'    => wp_trim_words( wp_strip_all_tags( $last_message->content ), 10 ),
 				'sender_id'  => (int) $last_message->sender_id,
-				'created_at' => $last_message->created_at ? $last_message->created_at->format( 'c' ) : null,
+				'created_at' => $last_message->created_at ?? null,
 			) : null,
 			'unread_count'  => $this->conversation_service->get_unread_count_for_conversation( $conversation->id, $user_id ),
 			'is_closed'     => $conversation->is_closed ?? false,
-			'created_at'    => $conversation->created_at ? $conversation->created_at->format( 'c' ) : null,
-			'updated_at'    => $conversation->updated_at ? $conversation->updated_at->format( 'c' ) : null,
+			'created_at'    => $conversation->created_at ?? null,
+			'updated_at'    => $conversation->updated_at ?? null,
 		);
 	}
 
@@ -488,7 +488,7 @@ class ConversationsController extends RestController {
 			'attachments' => $attachments,
 			'is_read'     => $is_read,
 			'is_edited'   => $message->is_edited ?? false,
-			'created_at'  => $message->created_at ? $message->created_at->format( 'c' ) : null,
+			'created_at'  => $message->created_at ?? null,
 		);
 	}
 
