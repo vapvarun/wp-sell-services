@@ -683,31 +683,8 @@ function wpss_get_order_requirements_url( int $order_id ): string {
  * @return array
  */
 function wpss_get_service_requirements( int $service_id ): array {
-	global $wpdb;
-
-	$table = $wpdb->prefix . 'wpss_service_requirements';
-
-	// Check if table exists.
-	$table_exists = $wpdb->get_var(
-		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
-	);
-
-	if ( ! $table_exists ) {
-		// Fall back to post meta.
-		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-		return is_array( $requirements ) ? $requirements : array();
-	}
-
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$rows = $wpdb->get_results(
-		$wpdb->prepare(
-			"SELECT * FROM {$table} WHERE service_id = %d ORDER BY sort_order ASC",
-			$service_id
-		),
-		ARRAY_A
-	);
-
-	return $rows ?: array();
+	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
+	return is_array( $requirements ) ? $requirements : array();
 }
 
 /**
@@ -772,31 +749,8 @@ function wpss_get_max_upload_size(): int {
  * @return array
  */
 function wpss_get_service_packages( int $service_id ): array {
-	global $wpdb;
-
-	$table = $wpdb->prefix . 'wpss_service_packages';
-
-	// Check if table exists.
-	$table_exists = $wpdb->get_var(
-		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
-	);
-
-	if ( ! $table_exists ) {
-		// Fall back to post meta.
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		return is_array( $packages ) ? $packages : array();
-	}
-
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$rows = $wpdb->get_results(
-		$wpdb->prepare(
-			"SELECT * FROM {$table} WHERE service_id = %d ORDER BY sort_order ASC",
-			$service_id
-		),
-		ARRAY_A
-	);
-
-	return $rows ?: array();
+	$packages = get_post_meta( $service_id, '_wpss_packages', true );
+	return is_array( $packages ) ? $packages : array();
 }
 
 /**

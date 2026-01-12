@@ -541,17 +541,11 @@ class ManualOrderPage {
 		// Get price if not specified.
 		if ( ! $total ) {
 			if ( $package_id ) {
-				global $wpdb;
-				$package = $wpdb->get_row(
-					$wpdb->prepare(
-						"SELECT * FROM {$wpdb->prefix}wpss_service_packages WHERE id = %d AND service_id = %d",
-						$package_id,
-						$service_id
-					)
-				);
-				if ( $package ) {
-					$total         = (float) $package->price;
-					$delivery_days = (int) $package->delivery_days;
+				$packages = get_post_meta( $service_id, '_wpss_packages', true );
+				if ( is_array( $packages ) && isset( $packages[ $package_id ] ) ) {
+					$package       = $packages[ $package_id ];
+					$total         = (float) ( $package['price'] ?? 0 );
+					$delivery_days = (int) ( $package['delivery_days'] ?? 0 );
 				}
 			}
 

@@ -66,19 +66,19 @@ class ServiceManager {
 	 * @return int|false Service ID or false on failure.
 	 */
 	public function create( array $data ): int|false {
-		$defaults = [
-			'title'       => '',
-			'content'     => '',
-			'excerpt'     => '',
-			'author'      => get_current_user_id(),
-			'status'      => 'draft',
-			'packages'    => [],
-			'categories'  => [],
-			'tags'        => [],
-			'gallery'     => [],
-			'faqs'        => [],
-			'requirements' => [],
-		];
+		$defaults = array(
+			'title'        => '',
+			'content'      => '',
+			'excerpt'      => '',
+			'author'       => get_current_user_id(),
+			'status'       => 'draft',
+			'packages'     => array(),
+			'categories'   => array(),
+			'tags'         => array(),
+			'gallery'      => array(),
+			'faqs'         => array(),
+			'requirements' => array(),
+		);
 
 		$data = wp_parse_args( $data, $defaults );
 
@@ -89,14 +89,14 @@ class ServiceManager {
 
 		// Create the post.
 		$post_id = wp_insert_post(
-			[
+			array(
 				'post_type'    => self::POST_TYPE,
 				'post_title'   => sanitize_text_field( $data['title'] ),
 				'post_content' => wp_kses_post( $data['content'] ),
 				'post_excerpt' => sanitize_textarea_field( $data['excerpt'] ),
 				'post_author'  => absint( $data['author'] ),
 				'post_status'  => $data['status'],
-			],
+			),
 			true
 		);
 
@@ -160,7 +160,7 @@ class ServiceManager {
 			return false;
 		}
 
-		$post_data = [ 'ID' => $service_id ];
+		$post_data = array( 'ID' => $service_id );
 
 		if ( isset( $data['title'] ) ) {
 			$post_data['post_title'] = sanitize_text_field( $data['title'] );
@@ -270,19 +270,19 @@ class ServiceManager {
 	 * @param array<string, mixed> $args      Query arguments.
 	 * @return array<Service> Array of Service objects.
 	 */
-	public function get_by_vendor( int $vendor_id, array $args = [] ): array {
-		$defaults = [
+	public function get_by_vendor( int $vendor_id, array $args = array() ): array {
+		$defaults = array(
 			'status'         => 'publish',
 			'posts_per_page' => 10,
 			'paged'          => 1,
 			'orderby'        => 'date',
 			'order'          => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => self::POST_TYPE,
 				'author'         => $vendor_id,
 				'post_status'    => $args['status'],
@@ -290,10 +290,10 @@ class ServiceManager {
 				'paged'          => $args['paged'],
 				'orderby'        => $args['orderby'],
 				'order'          => $args['order'],
-			]
+			)
 		);
 
-		$services = [];
+		$services = array();
 		foreach ( $query->posts as $post ) {
 			$services[] = new Service( $post );
 		}
@@ -308,8 +308,8 @@ class ServiceManager {
 	 * @param array<string, mixed> $args   Query arguments.
 	 * @return array<Service> Array of Service objects.
 	 */
-	public function search( string $search, array $args = [] ): array {
-		$defaults = [
+	public function search( string $search, array $args = array() ): array {
+		$defaults = array(
 			'posts_per_page' => 10,
 			'paged'          => 1,
 			'category'       => 0,
@@ -318,50 +318,50 @@ class ServiceManager {
 			'delivery_time'  => 0,
 			'orderby'        => 'relevance',
 			'order'          => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$query_args = [
+		$query_args = array(
 			'post_type'      => self::POST_TYPE,
 			'post_status'    => 'publish',
 			's'              => $search,
 			'posts_per_page' => $args['posts_per_page'],
 			'paged'          => $args['paged'],
-		];
+		);
 
 		// Category filter.
 		if ( $args['category'] > 0 ) {
-			$query_args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-				[
+			$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
 					'taxonomy' => 'wpss_service_category',
 					'field'    => 'term_id',
 					'terms'    => $args['category'],
-				],
-			];
+				),
+			);
 		}
 
 		// Price and delivery filters require meta queries.
-		$meta_query = [];
+		$meta_query = array();
 
 		if ( $args['min_price'] > 0 || $args['max_price'] > 0 ) {
 			// Price filtering would need to check package prices.
 			// This is simplified - full implementation would join with packages table.
 			if ( $args['min_price'] > 0 ) {
-				$meta_query[] = [
+				$meta_query[] = array(
 					'key'     => '_wpss_starting_price',
 					'value'   => $args['min_price'],
 					'compare' => '>=',
 					'type'    => 'NUMERIC',
-				];
+				);
 			}
 			if ( $args['max_price'] > 0 ) {
-				$meta_query[] = [
+				$meta_query[] = array(
 					'key'     => '_wpss_starting_price',
 					'value'   => $args['max_price'],
 					'compare' => '<=',
 					'type'    => 'NUMERIC',
-				];
+				);
 			}
 		}
 
@@ -398,7 +398,7 @@ class ServiceManager {
 
 		$query = new \WP_Query( $query_args );
 
-		$services = [];
+		$services = array();
 		foreach ( $query->posts as $post ) {
 			$services[] = new Service( $post );
 		}
@@ -443,26 +443,15 @@ class ServiceManager {
 	 * @return void
 	 */
 	private function save_faqs( int $service_id, array $faqs ): void {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wpss_service_faqs';
-
-		// Delete existing FAQs.
-		$wpdb->delete( $table, [ 'service_id' => $service_id ], [ '%d' ] );
-
-		// Insert new FAQs.
-		foreach ( $faqs as $index => $faq ) {
-			$wpdb->insert(
-				$table,
-				[
-					'service_id' => $service_id,
-					'question'   => sanitize_text_field( $faq['question'] ?? '' ),
-					'answer'     => wp_kses_post( $faq['answer'] ?? '' ),
-					'sort_order' => $index,
-				],
-				[ '%d', '%s', '%s', '%d' ]
+		// Sanitize FAQs before saving.
+		$sanitized_faqs = array();
+		foreach ( $faqs as $faq ) {
+			$sanitized_faqs[] = array(
+				'question' => sanitize_text_field( $faq['question'] ?? '' ),
+				'answer'   => wp_kses_post( $faq['answer'] ?? '' ),
 			);
 		}
+		update_post_meta( $service_id, '_wpss_faqs', $sanitized_faqs );
 	}
 
 	/**
@@ -472,9 +461,7 @@ class ServiceManager {
 	 * @return void
 	 */
 	private function delete_faqs( int $service_id ): void {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_faqs';
-		$wpdb->delete( $table, [ 'service_id' => $service_id ], [ '%d' ] );
+		delete_post_meta( $service_id, '_wpss_faqs' );
 	}
 
 	/**
@@ -485,34 +472,18 @@ class ServiceManager {
 	 * @return void
 	 */
 	private function save_requirements( int $service_id, array $requirements ): void {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wpss_service_requirements';
-
-		// Delete existing requirements.
-		$wpdb->delete( $table, [ 'service_id' => $service_id ], [ '%d' ] );
-
-		// Insert new requirements.
-		foreach ( $requirements as $index => $field ) {
-			$options = $field['options'] ?? [];
-			if ( is_array( $options ) ) {
-				$options = wp_json_encode( $options );
-			}
-
-			$wpdb->insert(
-				$table,
-				[
-					'service_id'  => $service_id,
-					'field_type'  => sanitize_key( $field['field_type'] ?? 'text' ),
-					'label'       => sanitize_text_field( $field['label'] ?? '' ),
-					'description' => sanitize_textarea_field( $field['description'] ?? '' ),
-					'options'     => $options,
-					'is_required' => ! empty( $field['is_required'] ) ? 1 : 0,
-					'sort_order'  => $index,
-				],
-				[ '%d', '%s', '%s', '%s', '%s', '%d', '%d' ]
+		// Sanitize requirements before saving.
+		$sanitized_requirements = array();
+		foreach ( $requirements as $field ) {
+			$sanitized_requirements[] = array(
+				'field_type'  => sanitize_key( $field['field_type'] ?? 'text' ),
+				'label'       => sanitize_text_field( $field['label'] ?? '' ),
+				'description' => sanitize_textarea_field( $field['description'] ?? '' ),
+				'options'     => $field['options'] ?? array(),
+				'is_required' => ! empty( $field['is_required'] ),
 			);
 		}
+		update_post_meta( $service_id, '_wpss_requirements', $sanitized_requirements );
 	}
 
 	/**
@@ -522,9 +493,7 @@ class ServiceManager {
 	 * @return void
 	 */
 	private function delete_requirements( int $service_id ): void {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_requirements';
-		$wpdb->delete( $table, [ 'service_id' => $service_id ], [ '%d' ] );
+		delete_post_meta( $service_id, '_wpss_requirements' );
 	}
 
 	/**

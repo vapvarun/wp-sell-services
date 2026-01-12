@@ -102,10 +102,7 @@ class SchemaManager {
 		$charset_collate = $this->wpdb->get_charset_collate();
 
 		$tables = array(
-			$this->get_service_packages_table( $charset_collate ),
 			$this->get_service_addons_table( $charset_collate ),
-			$this->get_service_faqs_table( $charset_collate ),
-			$this->get_service_requirements_table( $charset_collate ),
 			$this->get_orders_table( $charset_collate ),
 			$this->get_order_requirements_table( $charset_collate ),
 			$this->get_conversations_table( $charset_collate ),
@@ -128,32 +125,6 @@ class SchemaManager {
 		foreach ( $tables as $sql ) {
 			dbDelta( $sql );
 		}
-	}
-
-	/**
-	 * Get service packages table SQL.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_service_packages_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'service_packages' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			service_id bigint(20) unsigned NOT NULL,
-			name varchar(100) NOT NULL,
-			description text,
-			price decimal(10,2) NOT NULL,
-			delivery_days int(11) NOT NULL,
-			revisions int(11) DEFAULT 0,
-			features longtext,
-			sort_order int(11) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_service (service_id)
-		) {$charset_collate};";
 	}
 
 	/**
@@ -189,51 +160,6 @@ class SchemaManager {
 			PRIMARY KEY (id),
 			KEY idx_service (service_id),
 			KEY idx_active (service_id, is_active)
-		) {$charset_collate};";
-	}
-
-	/**
-	 * Get service FAQs table SQL.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_service_faqs_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'service_faqs' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			service_id bigint(20) unsigned NOT NULL,
-			question varchar(500) NOT NULL,
-			answer text NOT NULL,
-			sort_order int(11) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_service (service_id)
-		) {$charset_collate};";
-	}
-
-	/**
-	 * Get service requirements table SQL.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_service_requirements_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'service_requirements' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			service_id bigint(20) unsigned NOT NULL,
-			field_type varchar(50) NOT NULL,
-			label varchar(255) NOT NULL,
-			description text,
-			options longtext,
-			is_required tinyint(1) DEFAULT 0,
-			sort_order int(11) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_service (service_id)
 		) {$charset_collate};";
 	}
 
@@ -759,10 +685,7 @@ class SchemaManager {
 			'conversations',
 			'order_requirements',
 			'orders',
-			'service_requirements',
-			'service_faqs',
 			'service_addons',
-			'service_packages',
 		);
 
 		foreach ( $tables as $table ) {
@@ -780,10 +703,7 @@ class SchemaManager {
 	 */
 	public function get_tables(): array {
 		return array(
-			'service_packages'     => $this->get_table_name( 'service_packages' ),
 			'service_addons'       => $this->get_table_name( 'service_addons' ),
-			'service_faqs'         => $this->get_table_name( 'service_faqs' ),
-			'service_requirements' => $this->get_table_name( 'service_requirements' ),
 			'orders'               => $this->get_table_name( 'orders' ),
 			'order_requirements'   => $this->get_table_name( 'order_requirements' ),
 			'conversations'        => $this->get_table_name( 'conversations' ),

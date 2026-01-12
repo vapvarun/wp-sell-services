@@ -18,9 +18,9 @@
 | ID | Issue | File | Status |
 |----|-------|------|--------|
 | API-I1 | Inconsistent deliverables schema (files vs attachments, serialize vs JSON) | OrdersController.php:466-478 | DEFERRED - Naming only, code works correctly with JSON decode |
-| API-I2 | ServicesController packages from post_meta but schema defines table | ServicesController.php:432,677-680 | DEFERRED - Design decision (post_meta works) |
-| API-I3 | ServicesController FAQs from post_meta but schema defines table | ServicesController.php:447-449 | DEFERRED - Design decision (post_meta works) |
-| API-I4 | ServicesController requirements to post_meta but schema defines table | ServicesController.php:693-694 | DEFERRED - Design decision (post_meta works) |
+| API-I2 | ServicesController packages from post_meta but schema defines table | ServicesController.php:432,677-680 | RESOLVED - Standardized on post_meta, removed table definition |
+| API-I3 | ServicesController FAQs from post_meta but schema defines table | ServicesController.php:447-449 | RESOLVED - Standardized on post_meta, removed table definition |
+| API-I4 | ServicesController requirements to post_meta but schema defines table | ServicesController.php:693-694 | RESOLVED - Standardized on post_meta, removed table definition |
 | API-I5 | ConversationsController DateTime without null checks | ConversationsController.php:428,432,491 | FIXED |
 
 ---
@@ -104,3 +104,9 @@
 - 2026-01-12: M1 fixed - Added nonce verification to ServiceCategoryTaxonomy::save_term_meta()
 - 2026-01-12: L1 fixed - Added bounds checking for float budget values in BuyerRequestMetabox
 - 2026-01-12: L3 fixed - Replaced direct DB query with DeliveryService in order-view.php
+- 2026-01-12: API-I2,I3,I4 resolved - Standardized on post_meta approach for packages, FAQs, requirements:
+  - Removed table definitions from SchemaManager.php (wpss_service_packages, wpss_service_faqs, wpss_service_requirements)
+  - Updated ServiceManager.php save_faqs(), delete_faqs(), save_requirements(), delete_requirements() to use post_meta
+  - Simplified functions.php wpss_get_service_packages() and wpss_get_service_requirements() to use post_meta only
+  - Updated ManualOrderPage.php to use post_meta instead of database query for package lookup
+  - Decision: post_meta is sufficient for current needs; can migrate to dedicated tables later if needed
