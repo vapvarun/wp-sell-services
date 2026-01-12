@@ -352,11 +352,12 @@ class ReviewRepository extends AbstractRepository {
 	/**
 	 * Insert a review and clear related caches.
 	 *
-	 * @param array<string, mixed> $data Review data.
+	 * @param array<string, mixed> $data   Review data.
+	 * @param array<string>        $format Optional format array for wpdb->insert.
 	 * @return int|false Inserted ID or false on failure.
 	 */
-	public function insert( array $data ) {
-		$result = parent::insert( $data );
+	public function insert( array $data, array $format = array() ): int|false {
+		$result = parent::insert( $data, $format );
 
 		if ( $result ) {
 			// Clear caches after successful insert.
