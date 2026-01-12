@@ -58,36 +58,36 @@ class OrderService {
 	 * @param array $args        Query args.
 	 * @return ServiceOrder[]
 	 */
-	public function get_customer_orders( int $customer_id, array $args = [] ): array {
+	public function get_customer_orders( int $customer_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		$defaults = [
+		$defaults = array(
 			'status'   => '',
 			'limit'    => 20,
 			'offset'   => 0,
 			'order_by' => 'created_at',
 			'order'    => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'customer_id = %d' ];
-		$params = [ $customer_id ];
+		$where  = array( 'customer_id = %d' );
+		$params = array( $customer_id );
 
 		if ( ! empty( $args['status'] ) ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$params[] = $args['status'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$order_by = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] ) ?: 'created_at DESC';
+		$order_by     = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] ) ?: 'created_at DESC';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$order_by} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				array_merge( $params, [ $args['limit'], $args['offset'] ] )
+				array_merge( $params, array( $args['limit'], $args['offset'] ) )
 			)
 		);
 
@@ -101,36 +101,36 @@ class OrderService {
 	 * @param array $args      Query args.
 	 * @return ServiceOrder[]
 	 */
-	public function get_vendor_orders( int $vendor_id, array $args = [] ): array {
+	public function get_vendor_orders( int $vendor_id, array $args = array() ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		$defaults = [
+		$defaults = array(
 			'status'   => '',
 			'limit'    => 20,
 			'offset'   => 0,
 			'order_by' => 'created_at',
 			'order'    => 'DESC',
-		];
+		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'vendor_id = %d' ];
-		$params = [ $vendor_id ];
+		$where  = array( 'vendor_id = %d' );
+		$params = array( $vendor_id );
 
 		if ( ! empty( $args['status'] ) ) {
-			$where[] = 'status = %s';
+			$where[]  = 'status = %s';
 			$params[] = $args['status'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$order_by = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] ) ?: 'created_at DESC';
+		$order_by     = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] ) ?: 'created_at DESC';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$order_by} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				array_merge( $params, [ $args['limit'], $args['offset'] ] )
+				array_merge( $params, array( $args['limit'], $args['offset'] ) )
 			)
 		);
 
@@ -162,10 +162,10 @@ class OrderService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		$data = [
+		$data = array(
 			'status'     => $new_status,
 			'updated_at' => current_time( 'mysql' ),
-		];
+		);
 
 		// Set timestamps based on status.
 		if ( ServiceOrder::STATUS_IN_PROGRESS === $new_status && ! $order->started_at ) {
@@ -177,7 +177,7 @@ class OrderService {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update( $table, $data, [ 'id' => $order_id ] );
+		$result = $wpdb->update( $table, $data, array( 'id' => $order_id ) );
 
 		if ( false === $result ) {
 			return false;
@@ -207,46 +207,46 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
-		$transitions = [
-			ServiceOrder::STATUS_PENDING_PAYMENT => [
+		$transitions = array(
+			ServiceOrder::STATUS_PENDING_PAYMENT      => array(
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
 				ServiceOrder::STATUS_CANCELLED,
-			],
-			ServiceOrder::STATUS_PENDING_REQUIREMENTS => [
+			),
+			ServiceOrder::STATUS_PENDING_REQUIREMENTS => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_ON_HOLD,
-			],
-			ServiceOrder::STATUS_IN_PROGRESS => [
+			),
+			ServiceOrder::STATUS_IN_PROGRESS          => array(
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_ON_HOLD,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_LATE,
-			],
-			ServiceOrder::STATUS_PENDING_APPROVAL => [
+			),
+			ServiceOrder::STATUS_PENDING_APPROVAL     => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
 				ServiceOrder::STATUS_DISPUTED,
-			],
-			ServiceOrder::STATUS_REVISION_REQUESTED => [
+			),
+			ServiceOrder::STATUS_REVISION_REQUESTED   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DISPUTED,
-			],
-			ServiceOrder::STATUS_LATE => [
+			),
+			ServiceOrder::STATUS_LATE                 => array(
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DISPUTED,
-			],
-			ServiceOrder::STATUS_ON_HOLD => [
+			),
+			ServiceOrder::STATUS_ON_HOLD              => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
-			],
-			ServiceOrder::STATUS_DISPUTED => [
+			),
+			ServiceOrder::STATUS_DISPUTED             => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_CANCELLED,
-			],
-		];
+			),
+		);
 
 		return isset( $transitions[ $from ] ) && in_array( $to, $transitions[ $from ], true );
 	}
@@ -269,7 +269,7 @@ class OrderService {
 		$delivery_days = 7;
 
 		if ( $order->package_id && $service ) {
-			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
+			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: array();
 			foreach ( $packages as $package ) {
 				if ( (int) ( $package['id'] ?? 0 ) === $order->package_id ) {
 					$delivery_days = (int) ( $package['delivery_days'] ?? 7 );
@@ -295,11 +295,11 @@ class OrderService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			$table,
-			[
-				'delivery_deadline'  => $deadline->format( 'Y-m-d H:i:s' ),
-				'original_deadline'  => $deadline->format( 'Y-m-d H:i:s' ),
-			],
-			[ 'id' => $order_id ]
+			array(
+				'delivery_deadline' => $deadline->format( 'Y-m-d H:i:s' ),
+				'original_deadline' => $deadline->format( 'Y-m-d H:i:s' ),
+			),
+			array( 'id' => $order_id )
 		);
 
 		return $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS );
@@ -336,6 +336,54 @@ class OrderService {
 	}
 
 	/**
+	 * Cancel an order.
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param int    $user_id  User ID requesting cancellation.
+	 * @param string $reason   Cancellation reason.
+	 * @return array{success: bool, message?: string}
+	 */
+	public function cancel( int $order_id, int $user_id, string $reason = '' ): array {
+		$order = $this->get( $order_id );
+
+		if ( ! $order ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Order not found.', 'wp-sell-services' ),
+			);
+		}
+
+		// Check if cancellation is allowed from current status.
+		if ( ! $this->can_transition( $order->status, ServiceOrder::STATUS_CANCELLED ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This order cannot be cancelled in its current status.', 'wp-sell-services' ),
+			);
+		}
+
+		// Update status to cancelled.
+		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLED, $reason );
+
+		if ( ! $updated ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to cancel order.', 'wp-sell-services' ),
+			);
+		}
+
+		/**
+		 * Fires when an order is cancelled.
+		 *
+		 * @param int    $order_id Order ID.
+		 * @param int    $user_id  User who cancelled.
+		 * @param string $reason   Cancellation reason.
+		 */
+		do_action( 'wpss_order_cancelled', $order_id, $user_id, $reason );
+
+		return array( 'success' => true );
+	}
+
+	/**
 	 * Extend deadline.
 	 *
 	 * @param int $order_id   Order ID.
@@ -357,11 +405,11 @@ class OrderService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->update(
 			$table,
-			[
+			array(
 				'delivery_deadline' => $new_deadline->format( 'Y-m-d H:i:s' ),
 				'updated_at'        => current_time( 'mysql' ),
-			],
-			[ 'id' => $order_id ]
+			),
+			array( 'id' => $order_id )
 		);
 	}
 
@@ -377,10 +425,10 @@ class OrderService {
 	private function log_status_change( int $order_id, string $old_status, string $new_status, string $note = '' ): void {
 		// Create system message in conversation.
 		$conversation_service = new ConversationService();
-		$conversation = $conversation_service->get_by_order( $order_id );
+		$conversation         = $conversation_service->get_by_order( $order_id );
 
 		if ( $conversation ) {
-			$statuses = ServiceOrder::get_statuses();
+			$statuses  = ServiceOrder::get_statuses();
 			$old_label = $statuses[ $old_status ] ?? $old_status;
 			$new_label = $statuses[ $new_status ] ?? $new_status;
 

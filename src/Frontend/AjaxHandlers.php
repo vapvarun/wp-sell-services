@@ -506,38 +506,31 @@ class AjaxHandlers {
 			}
 		}
 
-		// Insert message into database.
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_conversations';
+		// Get or create conversation for this order.
+		$conversation_service = new ConversationService();
+		$conversation         = $conversation_service->get_by_order( $order_id );
 
-		// Determine recipient (the other party in the order).
-		$recipient_id = $is_vendor ? (int) $order->customer_id : (int) $order->vendor_id;
-
-		$insert_data = array(
-			'order_id'     => $order_id,
-			'sender_id'    => $user_id,
-			'recipient_id' => $recipient_id,
-			'message'      => $content,
-			'message_type' => 'message',
-			'created_at'   => current_time( 'mysql', true ),
-		);
-
-		if ( ! empty( $attachments_data ) ) {
-			$insert_data['attachments'] = wp_json_encode( $attachments_data );
+		if ( ! $conversation ) {
+			$conversation = $conversation_service->create_for_order( $order_id );
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$inserted = $wpdb->insert(
-			$table,
-			$insert_data,
-			array( '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
+		if ( ! $conversation ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to create conversation.', 'wp-sell-services' ) ) );
+		}
+
+		// Send the message using ConversationService.
+		$message = $conversation_service->send_message(
+			$conversation->id,
+			$user_id,
+			$content,
+			$attachments_data
 		);
 
-		if ( ! $inserted ) {
+		if ( ! $message ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to send message.', 'wp-sell-services' ) ) );
 		}
 
-		$message_id = $wpdb->insert_id;
+		$message_id = $message->id;
 		$user       = get_userdata( $user_id );
 
 		// Generate HTML for the new message.
@@ -659,16 +652,32 @@ class AjaxHandlers {
 
 		global $wpdb;
 
-		// Get new messages after last_id that weren't sent by current user.
+		// First get the conversation for this order.
+		$conversations_table = $wpdb->prefix . 'wpss_conversations';
+		$messages_table      = $wpdb->prefix . 'wpss_messages';
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$conversation = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT id FROM {$conversations_table} WHERE order_id = %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$order_id
+			)
+		);
+
+		if ( ! $conversation ) {
+			wp_send_json_success( array( 'messages' => array() ) );
+		}
+
+		// Get new messages after last_id that weren't sent by current user.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$messages = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT m.*, u.display_name as sender_name
-				FROM {$wpdb->prefix}wpss_conversations m
+				FROM {$messages_table} m
 				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
-				WHERE m.order_id = %d AND m.id > %d AND m.sender_id != %d
+				WHERE m.conversation_id = %d AND m.id > %d AND m.sender_id != %d
 				ORDER BY m.created_at ASC",
-				$order_id,
+				$conversation->id,
 				$last_id,
 				$user_id
 			)
@@ -678,17 +687,35 @@ class AjaxHandlers {
 			wp_send_json_success( array( 'messages' => array() ) );
 		}
 
-		// Mark new messages as read.
+		// Mark new messages as read by updating read_by JSON array.
 		$message_ids = wp_list_pluck( $messages, 'id' );
-		if ( ! empty( $message_ids ) ) {
-			$placeholders = implode( ',', array_fill( 0, count( $message_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query(
+		foreach ( $message_ids as $message_id ) {
+			// Get current read_by value.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$read_by_json = $wpdb->get_var(
 				$wpdb->prepare(
-					"UPDATE {$wpdb->prefix}wpss_conversations SET read_at = %s WHERE id IN ($placeholders)",
-					array_merge( array( current_time( 'mysql', true ) ), $message_ids )
+					"SELECT read_by FROM {$messages_table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$message_id
 				)
 			);
+
+			$read_by = $read_by_json ? json_decode( $read_by_json, true ) : array();
+			if ( ! is_array( $read_by ) ) {
+				$read_by = array();
+			}
+
+			// Add current user if not already in list.
+			if ( ! in_array( $user_id, $read_by, true ) ) {
+				$read_by[] = $user_id;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update(
+					$messages_table,
+					array( 'read_by' => wp_json_encode( $read_by ) ),
+					array( 'id' => $message_id ),
+					array( '%s' ),
+					array( '%d' )
+				);
+			}
 		}
 
 		// Build HTML for each message.
@@ -701,7 +728,7 @@ class AjaxHandlers {
 				?>
 				<div class="wpss-messaging__system">
 					<span class="wpss-messaging__system-text">
-						<?php echo wp_kses_post( $msg->message ); ?>
+						<?php echo wp_kses_post( $msg->content ); ?>
 						<span class="wpss-messaging__message-time">
 							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $msg->created_at ) ) ); ?>
 						</span>
@@ -718,7 +745,7 @@ class AjaxHandlers {
 						<div class="wpss-messaging__bubble">
 							<span class="wpss-messaging__sender"><?php echo esc_html( $msg->sender_name ); ?></span>
 							<div class="wpss-messaging__text">
-								<?php echo wp_kses_post( nl2br( $msg->message ) ); ?>
+								<?php echo wp_kses_post( nl2br( $msg->content ) ); ?>
 							</div>
 							<?php if ( ! empty( $msg->attachments ) ) : ?>
 								<?php $attachments = json_decode( $msg->attachments, true ); ?>
