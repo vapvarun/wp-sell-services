@@ -1,7 +1,7 @@
 # Audit Fixes Tracker
 
 **Source:** Security, API, AJAX, Templates, and Performance audits from 2026-01-11
-**Status:** In Progress
+**Status:** Complete (excluding performance items which are deferred)
 
 ---
 
@@ -37,7 +37,7 @@
 |----|-------|------|--------|
 | M1 | Missing nonce in save_term_meta() | ServiceCategoryTaxonomy.php:214-238 | FIXED |
 | M2 | PHP file uploads allowed | DeliveryService.php:344-348 | FIXED |
-| M3 | IP address storage without consent | AjaxHandlers.php:953 | PENDING |
+| M3 | IP address storage without consent | AjaxHandlers.php:953 | N/A - IP hashed for transient key (1 week expiry), not stored permanently |
 
 ### LOW Priority
 | ID | Issue | File | Status |
@@ -45,7 +45,7 @@
 | L1 | Missing bounds checking for floats | BuyerRequestMetabox.php:301,305 | FIXED |
 | L2 | Live search nonce skip for guests | AjaxHandlers.php:1547-1551 | N/A - Acceptable for public read-only endpoint |
 | L3 | Direct DB query in template | templates/order/order-view.php:52-59 | FIXED |
-| L4 | Verbose error messages | Various AJAX handlers | PENDING |
+| L4 | Verbose error messages | Various AJAX handlers | N/A - Messages are appropriately generic, no sensitive info exposed |
 
 ---
 
@@ -93,6 +93,8 @@
 ---
 
 ## Completion Log
+- 2026-01-12: L4 reviewed - Error messages are appropriately generic
+- 2026-01-12: M3 reviewed - IP only used for transient key (hashed), acceptable
 - 2026-01-12: TPL-1,2,3 reviewed - Escaping is correct (redundant but safe)
 - 2026-01-12: L2 reviewed - Acceptable for public read-only search endpoint
 - 2026-01-12: API-I1-I4 reviewed - Design decisions, code functions correctly
