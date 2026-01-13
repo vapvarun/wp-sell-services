@@ -59,10 +59,13 @@
 
 	/* UI Colors */
 	--wpss-background: #f9fafb;
+	--wpss-bg: #f9fafb;
+	--wpss-bg-subtle: #f8fafc;
 	--wpss-white: #fff;
 	--wpss-black: #111827;
 	--wpss-border: #e5e7eb;
 	--wpss-star: #fbbf24;
+	--wpss-primary-bg: #eef2ff;
 
 	/* Order Status Colors */
 	--wpss-status-pending-bg: #fef3c7;
@@ -88,8 +91,12 @@
 	/* Border Radius */
 	--wpss-radius: 8px;
 	--wpss-radius-sm: 4px;
+	--wpss-radius-md: 6px;
 	--wpss-radius-lg: 12px;
 	--wpss-radius-full: 9999px;
+
+	/* Error (alias for danger) */
+	--wpss-error: #ef4444;
 
 	/* Shadows */
 	--wpss-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -119,4 +126,146 @@
 	.admin-bar {
 		--wpss-sticky-top: 32px;
 	}
+}
+
+/* ==========================================================================
+   CSS Isolation - Prevent theme style conflicts
+   ========================================================================== */
+
+/* Box-sizing reset for all plugin elements */
+[class*="wpss-"],
+[class*="wpss-"] *,
+[class*="wpss-"] *::before,
+[class*="wpss-"] *::after {
+	box-sizing: border-box;
+}
+
+/* Modal isolation - high specificity to override theme styles */
+.wpss-modal,
+#wpss-order-modal,
+#wpss-contact-modal,
+#wpss-review-modal,
+#wpss-dispute-modal {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	font-size: 16px;
+	line-height: 1.5;
+	color: var(--wpss-text);
+}
+
+/* Modal content reset */
+.wpss-modal-content,
+.wpss-modal-dialog {
+	background: var(--wpss-white) !important;
+	border: none !important;
+	margin: 0;
+	padding: 0;
+}
+
+/* Form element resets inside modals */
+.wpss-modal input[type="text"],
+.wpss-modal input[type="number"],
+.wpss-modal input[type="email"],
+.wpss-modal textarea,
+.wpss-modal select {
+	font-family: inherit;
+	font-size: 1rem;
+	line-height: 1.5;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius-sm);
+	background: var(--wpss-white);
+	color: var(--wpss-text);
+	width: 100%;
+	margin: 0;
+}
+
+.wpss-modal input[type="checkbox"],
+.wpss-modal input[type="radio"] {
+	width: auto;
+	margin: 0;
+}
+
+/* Button resets inside modals */
+.wpss-modal button,
+.wpss-modal .wpss-btn {
+	font-family: inherit;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	cursor: pointer;
+}
+
+/* Quantity input specific styling with high specificity */
+.wpss-modal .wpss-quantity-input {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0 !important;
+	max-width: 140px !important;
+}
+
+.wpss-modal .wpss-quantity-btn {
+	width: 40px !important;
+	height: 40px !important;
+	padding: 0 !important;
+	background: var(--wpss-bg) !important;
+	border: 1px solid var(--wpss-border) !important;
+	color: var(--wpss-text) !important;
+	font-size: 1.25rem !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	flex-shrink: 0 !important;
+}
+
+.wpss-modal .wpss-quantity-btn:first-of-type {
+	border-radius: var(--wpss-radius) 0 0 var(--wpss-radius) !important;
+}
+
+.wpss-modal .wpss-quantity-btn:last-of-type {
+	border-radius: 0 var(--wpss-radius) var(--wpss-radius) 0 !important;
+}
+
+.wpss-modal .wpss-quantity-input input[type="number"] {
+	width: 60px !important;
+	height: 40px !important;
+	min-width: 60px !important;
+	padding: 0 !important;
+	border: 1px solid var(--wpss-border) !important;
+	border-left: none !important;
+	border-right: none !important;
+	border-radius: 0 !important;
+	text-align: center !important;
+	-moz-appearance: textfield !important;
+	appearance: textfield !important;
+}
+
+.wpss-modal .wpss-quantity-input input[type="number"]::-webkit-inner-spin-button,
+.wpss-modal .wpss-quantity-input input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none !important;
+	margin: 0 !important;
+}
+
+/* Order summary in modal footer */
+.wpss-modal .wpss-order-summary {
+	width: 100%;
+	margin-bottom: 1rem;
+}
+
+.wpss-modal .wpss-summary-row {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	margin-bottom: 0.5rem !important;
+}
+
+/* Extra options styling */
+.wpss-modal .wpss-extra-option {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+	padding: 0.75rem !important;
+	border: 1px solid var(--wpss-border) !important;
+	border-radius: var(--wpss-radius) !important;
+	background: var(--wpss-white) !important;
+	margin-bottom: 0.5rem !important;
+	cursor: pointer !important;
 }

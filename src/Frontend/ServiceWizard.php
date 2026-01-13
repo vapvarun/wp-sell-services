@@ -279,7 +279,7 @@ class ServiceWizard {
 
 		ob_start();
 		?>
-		<div class="wpss-wizard" id="wpss-service-wizard" data-service-id="<?php echo esc_attr( $service_id ); ?>">
+		<div class="wpss-wizard" id="wpss-service-wizard" data-service-id="<?php echo esc_attr( $service_id ); ?>" x-data="wpssServiceWizard(<?php echo $service_id ? esc_attr( wp_json_encode( $this->get_service_data( $service_id ) ) ) : '{}'; ?>)">
 			<?php wp_nonce_field( 'wpss_service_wizard', 'wpss_wizard_nonce' ); ?>
 
 			<!-- Progress Steps -->
@@ -289,7 +289,7 @@ class ServiceWizard {
 
 			<!-- Step Container -->
 			<div class="wpss-wizard__content">
-				<div class="wpss-wizard__steps" x-data="wpssServiceWizard(<?php echo $service_id ? esc_attr( wp_json_encode( $this->get_service_data( $service_id ) ) ) : '{}'; ?>)">
+				<div class="wpss-wizard__steps">
 
 					<!-- Step 1: Basic Info -->
 					<div class="wpss-wizard__step" data-step="basic" x-show="currentStep === 'basic'" x-cloak>

@@ -187,11 +187,18 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_header(): void {
+		$platform_name = wpss_get_platform_name();
 		?>
 		<header class="wpss-request-archive-header">
 			<h1 class="wpss-archive-title"><?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?></h1>
 			<p class="wpss-archive-description">
-				<?php esc_html_e( 'Browse buyer job postings and submit proposals for projects that match your skills.', 'wp-sell-services' ); ?>
+				<?php
+				printf(
+					/* translators: %s: platform name */
+					esc_html__( 'Browse buyer job postings on %s and submit proposals for projects that match your skills.', 'wp-sell-services' ),
+					esc_html( $platform_name )
+				);
+				?>
 			</p>
 		</header>
 		<?php

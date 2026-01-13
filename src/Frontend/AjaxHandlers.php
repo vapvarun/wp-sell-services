@@ -1944,7 +1944,7 @@ class AjaxHandlers {
 		$product->set_status( 'publish' );
 		$product->set_catalog_visibility( 'hidden' );
 		$product->set_virtual( true );
-		$product->set_sold_individually( true );
+		// Removed: set_sold_individually(true) - services can be purchased multiple times.
 
 		// Copy featured image.
 		$thumbnail_id = get_post_thumbnail_id( $service_id );

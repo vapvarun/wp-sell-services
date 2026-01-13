@@ -815,9 +815,10 @@ class Settings {
 		);
 
 		$pages = array(
-			'services_page' => __( 'Services Page', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
+			'services_page'  => __( 'Services Page', 'wp-sell-services' ),
+			'dashboard'      => __( 'Dashboard', 'wp-sell-services' ),
+			'become_vendor'  => __( 'Become a Vendor', 'wp-sell-services' ),
+			'create_service' => __( 'Create Service', 'wp-sell-services' ),
 		);
 
 		foreach ( $pages as $key => $label ) {

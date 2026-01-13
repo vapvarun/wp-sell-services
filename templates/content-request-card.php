@@ -157,7 +157,7 @@ if ( $expires_at ) {
 				</span>
 			<?php endif; ?>
 
-			<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
+			<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn-primary wpss-btn-sm">
 				<?php esc_html_e( 'Send Proposal', 'wp-sell-services' ); ?>
 			</a>
 		</div>

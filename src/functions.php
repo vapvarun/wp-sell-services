@@ -62,12 +62,42 @@ function wpss_format_price( float $price, string $currency = '' ): string {
  * @return string
  */
 function wpss_get_currency(): string {
+	// Read from wpss_general settings array.
+	$general_settings = get_option( 'wpss_general', array() );
+	$currency         = $general_settings['currency'] ?? 'USD';
+
 	/**
 	 * Filter the default currency.
 	 *
 	 * @param string $currency Currency code.
 	 */
-	return apply_filters( 'wpss_currency', get_option( 'wpss_currency', 'USD' ) );
+	return apply_filters( 'wpss_currency', $currency );
+}
+
+/**
+ * Get the platform name.
+ *
+ * @since 1.1.0
+ *
+ * @return string Platform name or site name as fallback.
+ */
+function wpss_get_platform_name(): string {
+	// Read from wpss_general settings array.
+	$general_settings = get_option( 'wpss_general', array() );
+	$platform_name    = $general_settings['platform_name'] ?? '';
+
+	// Fall back to site name if empty.
+	if ( empty( $platform_name ) ) {
+		$platform_name = get_bloginfo( 'name' );
+	}
+
+	/**
+	 * Filter the platform name.
+	 *
+	 * @since 1.1.0
+	 * @param string $platform_name Platform name.
+	 */
+	return apply_filters( 'wpss_platform_name', $platform_name );
 }
 
 /**
@@ -832,6 +862,20 @@ function wpss_get_page_url( string $page_key ): string {
 	}
 
 	return get_permalink( $page_id ) ?: '';
+}
+
+/**
+ * Get the Create Service page URL.
+ *
+ * Returns the URL to the Create Service page where vendors can create new services.
+ * Falls back to empty string if page not configured.
+ *
+ * @since 1.1.0
+ *
+ * @return string Create service page URL or empty string.
+ */
+function wpss_get_create_service_url(): string {
+	return wpss_get_page_url( 'create_service' );
 }
 
 /**

@@ -74,6 +74,12 @@ class ServiceModerationPage {
 		// Add quick edit support.
 		add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields' ), 10, 2 );
 
+		// Save quick edit and bulk edit moderation status.
+		add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
+
+		// Add metabox to service edit screen.
+		add_action( 'add_meta_boxes', array( $this, 'add_moderation_metabox' ) );
+
 		// Admin notices.
 		add_action( 'admin_notices', array( $this, 'pending_services_notice' ) );
 
@@ -420,7 +426,8 @@ class ServiceModerationPage {
 
 		<script>
 		// Define wpssModeration inline (wp_add_inline_script runs in footer, after this script).
-		window.wpssModeration = window.wpssModeration || <?php
+		window.wpssModeration = window.wpssModeration || 
+		<?php
 		echo wp_json_encode(
 			array(
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
@@ -438,7 +445,8 @@ class ServiceModerationPage {
 				),
 			)
 		);
-		?>;
+		?>
+		;
 		jQuery(function($) {
 			var wpssModeration = window.wpssModeration;
 
@@ -1034,6 +1042,150 @@ class ServiceModerationPage {
 				</label>
 			</div>
 		</fieldset>
+		<?php
+	}
+
+	/**
+	 * Save moderation status from quick edit, bulk edit, or admin edit screen.
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @return void
+	 */
+	public function save_moderation_status( int $post_id, \WP_Post $post ): void {
+		// Skip autosaves.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Skip revisions.
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		// Only admins can change moderation status.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Check if moderation status was submitted.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( ! isset( $_POST['wpss_moderation_status'] ) ) {
+			// If this is a new service created by admin, auto-approve.
+			if ( 'auto-draft' !== $post->post_status && ! metadata_exists( 'post', $post_id, self::META_KEY ) ) {
+				update_post_meta( $post_id, self::META_KEY, self::STATUS_APPROVED );
+			}
+			return;
+		}
+
+		// Verify nonce (from metabox or inline edit).
+		$nonce_valid = false;
+		if ( isset( $_POST['wpss_moderation_nonce'] ) ) {
+			$nonce_valid = wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_moderation_nonce'] ) ), 'wpss_moderation_metabox' );
+		}
+		// Quick edit uses WordPress's built-in inline-save action which verifies its own nonce.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$is_inline_edit = isset( $_POST['action'] ) && 'inline-save' === $_POST['action'];
+
+		if ( ! $nonce_valid && ! $is_inline_edit ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$new_status = sanitize_text_field( wp_unslash( $_POST['wpss_moderation_status'] ) );
+
+		// Validate status.
+		$valid_statuses = array( self::STATUS_PENDING, self::STATUS_APPROVED, self::STATUS_REJECTED );
+		if ( ! in_array( $new_status, $valid_statuses, true ) ) {
+			return;
+		}
+
+		$old_status = get_post_meta( $post_id, self::META_KEY, true );
+
+		// Update the moderation status.
+		update_post_meta( $post_id, self::META_KEY, $new_status );
+
+		// Clear rejection reason when approving.
+		if ( self::STATUS_APPROVED === $new_status && self::STATUS_REJECTED === $old_status ) {
+			delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
+		}
+
+		// Fire appropriate action.
+		if ( $new_status !== $old_status ) {
+			if ( self::STATUS_APPROVED === $new_status ) {
+				do_action( 'wpss_service_approved', $post_id );
+			} elseif ( self::STATUS_REJECTED === $new_status ) {
+				do_action( 'wpss_service_rejected', $post_id, '' );
+			}
+		}
+	}
+
+	/**
+	 * Add moderation metabox to service edit screen.
+	 *
+	 * @return void
+	 */
+	public function add_moderation_metabox(): void {
+		add_meta_box(
+			'wpss_moderation_status',
+			__( 'Moderation Status', 'wp-sell-services' ),
+			array( $this, 'render_moderation_metabox' ),
+			'wpss_service',
+			'side',
+			'high'
+		);
+	}
+
+	/**
+	 * Render moderation metabox.
+	 *
+	 * @param \WP_Post $post Current post.
+	 * @return void
+	 */
+	public function render_moderation_metabox( \WP_Post $post ): void {
+		$current_status = get_post_meta( $post->ID, self::META_KEY, true );
+		if ( ! $current_status ) {
+			$current_status = self::STATUS_PENDING;
+		}
+
+		$statuses = array(
+			self::STATUS_PENDING  => __( 'Pending Review', 'wp-sell-services' ),
+			self::STATUS_APPROVED => __( 'Approved', 'wp-sell-services' ),
+			self::STATUS_REJECTED => __( 'Rejected', 'wp-sell-services' ),
+		);
+
+		$status_colors = array(
+			self::STATUS_PENDING  => '#856404',
+			self::STATUS_APPROVED => '#155724',
+			self::STATUS_REJECTED => '#721c24',
+		);
+
+		wp_nonce_field( 'wpss_moderation_metabox', 'wpss_moderation_nonce' );
+		?>
+		<div class="wpss-moderation-metabox">
+			<p>
+				<label for="wpss_moderation_status"><strong><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></strong></label>
+			</p>
+			<p>
+				<select name="wpss_moderation_status" id="wpss_moderation_status" style="width: 100%;">
+					<?php foreach ( $statuses as $value => $label ) : ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $current_status, $value ); ?>>
+							<?php echo esc_html( $label ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</p>
+			<p class="description">
+				<?php if ( ! ModerationService::is_enabled() ) : ?>
+					<em><?php esc_html_e( 'Note: Service moderation is currently disabled in settings.', 'wp-sell-services' ); ?></em>
+				<?php else : ?>
+					<?php esc_html_e( 'Only approved services are visible on the frontend.', 'wp-sell-services' ); ?>
+				<?php endif; ?>
+			</p>
+		</div>
+		<style>
+			.wpss-moderation-metabox select { margin-top: 5px; }
+		</style>
 		<?php
 	}
 

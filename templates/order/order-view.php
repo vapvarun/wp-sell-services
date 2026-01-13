@@ -264,6 +264,7 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 	}
 
 	// Get submitted requirements from database.
+	global $wpdb;
 	$requirements_table = $wpdb->prefix . 'wpss_order_requirements';
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$submitted_row = $wpdb->get_row(

@@ -19,6 +19,7 @@
 		initGalleryUpload();
 		initSortable();
 		initColorPicker();
+		initCategoryImageUpload();
 	}
 
 	/**
@@ -394,6 +395,56 @@
 		if ($.fn.wpColorPicker) {
 			$('.wpss-color-picker').wpColorPicker();
 		}
+	}
+
+	/**
+	 * Initialize category image upload functionality
+	 */
+	function initCategoryImageUpload() {
+		// Upload image button
+		$(document).on('click', '.wpss-upload-image', function(e) {
+			e.preventDefault();
+
+			var $button = $(this);
+			var targetId = $button.data('target');
+			var $input = $('#' + targetId);
+			var $preview = $('#' + targetId + '-preview');
+			var $removeBtn = $button.siblings('.wpss-remove-image');
+
+			var frame = wp.media({
+				title: wpssAdmin.i18n.selectImage || 'Select Image',
+				multiple: false,
+				library: { type: 'image' },
+				button: { text: wpssAdmin.i18n.useImage || 'Use Image' }
+			});
+
+			frame.on('select', function() {
+				var attachment = frame.state().get('selection').first().toJSON();
+				var imgUrl = attachment.sizes && attachment.sizes.thumbnail
+					? attachment.sizes.thumbnail.url
+					: attachment.url;
+
+				$input.val(attachment.id);
+				$preview.html('<img src="' + imgUrl + '" style="max-width: 150px; height: auto;">');
+				$removeBtn.show();
+			});
+
+			frame.open();
+		});
+
+		// Remove image button
+		$(document).on('click', '.wpss-remove-image', function(e) {
+			e.preventDefault();
+
+			var $button = $(this);
+			var targetId = $button.data('target');
+			var $input = $('#' + targetId);
+			var $preview = $('#' + targetId + '-preview');
+
+			$input.val('');
+			$preview.html('');
+			$button.hide();
+		});
 	}
 
 	// Initialize on document ready

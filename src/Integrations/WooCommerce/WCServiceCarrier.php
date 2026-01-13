@@ -102,7 +102,7 @@ class WCServiceCarrier {
 		$product->set_price( 0 );
 		$product->set_regular_price( 0 );
 		$product->set_virtual( true );
-		$product->set_sold_individually( true );
+		// Removed: set_sold_individually(true) - services can be purchased multiple times.
 		$product->set_manage_stock( false );
 		$product->set_reviews_allowed( false );
 

@@ -61,16 +61,6 @@ class ManualOrderPage {
 
 		wp_enqueue_style( 'wpss-admin' );
 		wp_enqueue_script( 'wpss-admin' );
-
-		wp_add_inline_script(
-			'wpss-admin',
-			'window.wpssManualOrder = ' . wp_json_encode(
-				array(
-					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'wpss_create_manual_order' ),
-				)
-			) . ';'
-		);
 	}
 
 	/**
@@ -381,7 +371,19 @@ class ManualOrderPage {
 		</style>
 
 		<script>
-		jQuery(function($) {
+		(function($) {
+			// Define wpssManualOrder immediately when script executes.
+			var wpssManualOrder = <?php echo wp_json_encode(
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'wpss_create_manual_order' ),
+				)
+			); ?>;
+
+			// Also expose globally for any external needs.
+			window.wpssManualOrder = wpssManualOrder;
+
+			$(function() {
 			var $form = $('#wpss-manual-order-form');
 			var $result = $('#order-result');
 			var $submitBtn = $('#create-order-btn');
@@ -413,7 +415,7 @@ class ManualOrderPage {
 						if (response.success && response.data.packages && response.data.packages.length > 0) {
 							var options = '<option value=""><?php esc_html_e( '-- Select Package --', 'wp-sell-services' ); ?></option>';
 							$.each(response.data.packages, function(i, pkg) {
-								options += '<option value="' + pkg.id + '" data-price="' + pkg.price + '">' +
+								options += '<option value="' + pkg.id + '" data-price="' + pkg.price + '" data-delivery="' + pkg.delivery_days + '" data-revisions="' + pkg.revisions + '">' +
 									pkg.name + ' - ' + pkg.formatted_price + ' (' + pkg.delivery_days + ' days)</option>';
 							});
 							$packageSelect.html(options);
@@ -430,11 +432,16 @@ class ManualOrderPage {
 				});
 			});
 
-			// Update price when package changes
+			// Update price and delivery days when package changes
 			$('#package_id').on('change', function() {
-				var price = $(this).find(':selected').data('price');
+				var $selected = $(this).find(':selected');
+				var price = $selected.data('price');
+				var delivery = $selected.data('delivery');
 				if (price) {
 					$('#total').attr('placeholder', price);
+				}
+				if (delivery) {
+					$('#delivery_days').val(delivery);
 				}
 			});
 
@@ -497,7 +504,8 @@ class ManualOrderPage {
 				$result.hide();
 				$form.show();
 			});
-		});
+			});
+		})(jQuery);
 		</script>
 		<?php
 	}
@@ -520,7 +528,7 @@ class ManualOrderPage {
 		$total         = floatval( $_POST['total'] ?? 0 );
 		$status        = sanitize_key( $_POST['status'] ?? 'pending_requirements' );
 		$delivery_days = absint( $_POST['delivery_days'] ?? 7 );
-		$notes         = sanitize_textarea_field( $_POST['notes'] ?? '' );
+		$notes         = isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '';
 
 		if ( ! $service_id || ! $customer_id ) {
 			wp_send_json_error( array( 'message' => __( 'Service and Customer are required.', 'wp-sell-services' ) ) );
@@ -538,20 +546,23 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
-		// Get price if not specified.
-		if ( ! $total ) {
-			if ( $package_id ) {
-				$packages = get_post_meta( $service_id, '_wpss_packages', true );
-				if ( is_array( $packages ) && isset( $packages[ $package_id ] ) ) {
-					$package       = $packages[ $package_id ];
+		// Get package details including revisions.
+		$revisions_included = 2; // Default fallback.
+		if ( null !== $package_id ) {
+			$packages = get_post_meta( $service_id, '_wpss_packages', true );
+			if ( is_array( $packages ) && isset( $packages[ $package_id ] ) ) {
+				$package            = $packages[ $package_id ];
+				$revisions_included = (int) ( $package['revisions'] ?? 2 );
+				if ( ! $total ) {
 					$total         = (float) ( $package['price'] ?? 0 );
 					$delivery_days = (int) ( $package['delivery_days'] ?? 0 );
 				}
 			}
+		}
 
-			if ( ! $total ) {
-				$total = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-			}
+		// Fallback to starting price if no total specified.
+		if ( ! $total ) {
+			$total = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 		}
 
 		if ( ! $total || $total <= 0 ) {
@@ -576,7 +587,7 @@ class ManualOrderPage {
 				'customer_id'        => $customer_id,
 				'vendor_id'          => $vendor_id,
 				'service_id'         => $service_id,
-				'package_id'         => $package_id ?: null,
+				'package_id'         => $package_id ? $package_id : null,
 				'platform'           => 'manual',
 				'platform_order_id'  => null,
 				'subtotal'           => $total,
@@ -586,7 +597,7 @@ class ManualOrderPage {
 				'status'             => $status,
 				'payment_method'     => 'manual',
 				'payment_status'     => 'in_progress' === $status || 'pending_requirements' === $status ? 'paid' : 'pending',
-				'revisions_included' => 2,
+				'revisions_included' => $revisions_included,
 				'revisions_used'     => 0,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,

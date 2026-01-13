@@ -268,9 +268,9 @@ class Admin {
 		$packages = wpss_get_service_packages( $service_id );
 
 		$formatted_packages = array();
-		foreach ( $packages as $package ) {
+		foreach ( $packages as $index => $package ) {
 			$formatted_packages[] = array(
-				'id'              => $package['id'] ?? 0,
+				'id'              => $index,
 				'name'            => $package['name'] ?? __( 'Standard', 'wp-sell-services' ),
 				'price'           => (float) ( $package['price'] ?? 0 ),
 				'formatted_price' => wpss_format_price( (float) ( $package['price'] ?? 0 ) ),
@@ -291,9 +291,13 @@ class Admin {
 	public function enqueue_styles( string $hook ): void {
 		global $post_type;
 
-		// Load on plugin pages or CPT edit screens.
+		$current_screen = get_current_screen();
+		$is_taxonomy    = $current_screen && in_array( $current_screen->taxonomy, array( 'wpss_service_category', 'wpss_service_tag' ), true );
+
+		// Load on plugin pages, CPT edit screens, or taxonomy screens.
 		$load_assets = $this->is_plugin_page( $hook )
-			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) );
+			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) )
+			|| $is_taxonomy;
 
 		if ( ! $load_assets ) {
 			return;
@@ -307,7 +311,7 @@ class Admin {
 		);
 
 		// Color picker for category taxonomy.
-		if ( strpos( $hook, 'wpss_service_category' ) !== false ) {
+		if ( $is_taxonomy ) {
 			wp_enqueue_style( 'wp-color-picker' );
 		}
 	}
@@ -321,9 +325,13 @@ class Admin {
 	public function enqueue_scripts( string $hook ): void {
 		global $post_type;
 
-		// Load on plugin pages or CPT edit screens.
+		$current_screen = get_current_screen();
+		$is_taxonomy    = $current_screen && in_array( $current_screen->taxonomy, array( 'wpss_service_category', 'wpss_service_tag' ), true );
+
+		// Load on plugin pages, CPT edit screens, or taxonomy screens.
 		$load_assets = $this->is_plugin_page( $hook )
-			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) );
+			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) )
+			|| $is_taxonomy;
 
 		if ( ! $load_assets ) {
 			return;
@@ -355,7 +363,7 @@ class Admin {
 		);
 
 		// Color picker for category taxonomy.
-		if ( strpos( $hook, 'wpss_service_category' ) !== false ) {
+		if ( $is_taxonomy ) {
 			wp_enqueue_script( 'wp-color-picker' );
 		}
 	}

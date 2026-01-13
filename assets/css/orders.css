@@ -1403,3 +1403,142 @@
 	font-size: 0.875rem;
 	color: var(--wpss-text-light, #6b7280);
 }
+
+/* ==========================================================================
+   Review CTA Section - Theme-Resistant Styling
+   ========================================================================== */
+
+.wpss-order-section--review {
+	display: block !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+	margin-bottom: 30px;
+	padding-bottom: 30px;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-review-cta {
+	display: flex !important;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	padding: 2rem;
+	background: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
+	border: 1px solid var(--wpss-warning-border, #fcd34d);
+	border-radius: var(--wpss-radius-lg, 12px);
+	gap: 1rem;
+}
+
+.wpss-review-cta__icon {
+	display: block !important;
+	width: 40px;
+	height: 40px;
+	color: var(--wpss-star, #f59e0b);
+	flex-shrink: 0;
+}
+
+.wpss-review-cta__icon svg,
+.wpss-review-cta__icon polygon {
+	fill: currentColor;
+}
+
+.wpss-review-cta__title {
+	display: block !important;
+	visibility: visible !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	font-size: 1.25rem !important;
+	font-weight: 600 !important;
+	color: var(--wpss-secondary, #111827) !important;
+	line-height: 1.3 !important;
+	font-family: inherit;
+}
+
+.wpss-review-cta__text {
+	display: block !important;
+	visibility: visible !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	font-size: 0.938rem !important;
+	color: var(--wpss-text, #374151) !important;
+	line-height: 1.5 !important;
+	max-width: 400px;
+}
+
+/* Write Review Button - High Specificity */
+button.wpss-write-review-btn,
+.wpss-write-review-btn,
+.wpss-review-cta .wpss-btn {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.875rem 2rem !important;
+	font-size: 1rem !important;
+	font-weight: 600 !important;
+	color: var(--wpss-white, #fff) !important;
+	background: var(--wpss-primary, #1e40af) !important;
+	background-color: var(--wpss-primary, #1e40af) !important;
+	border: none !important;
+	border-radius: var(--wpss-radius, 8px) !important;
+	cursor: pointer !important;
+	text-decoration: none !important;
+	box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3) !important;
+	transition: all 0.2s ease !important;
+	margin-top: 0.5rem;
+}
+
+button.wpss-write-review-btn:hover,
+.wpss-write-review-btn:hover,
+.wpss-review-cta .wpss-btn:hover {
+	background: var(--wpss-primary-hover, #1e3a8a) !important;
+	background-color: var(--wpss-primary-hover, #1e3a8a) !important;
+	color: var(--wpss-white, #fff) !important;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 8px rgba(30, 64, 175, 0.4) !important;
+}
+
+button.wpss-write-review-btn:focus,
+.wpss-write-review-btn:focus,
+.wpss-review-cta .wpss-btn:focus {
+	outline: 2px solid var(--wpss-primary, #1e40af) !important;
+	outline-offset: 2px !important;
+}
+
+/* Review Modal Enhancements */
+.wpss-review-form .wpss-star-rating {
+	display: flex;
+	gap: 0.25rem;
+	margin-bottom: 1rem;
+}
+
+.wpss-review-form .wpss-star-rating .wpss-star {
+	font-size: 2rem;
+	color: var(--wpss-border, #e5e7eb);
+	cursor: pointer;
+	transition: color 0.15s ease;
+}
+
+.wpss-review-form .wpss-star-rating .wpss-star:hover,
+.wpss-review-form .wpss-star-rating .wpss-star.filled,
+.wpss-review-form .wpss-star-rating .wpss-star.hovered {
+	color: var(--wpss-star, #f59e0b);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+	.wpss-review-cta {
+		padding: 1.5rem;
+	}
+
+	.wpss-review-cta__title {
+		font-size: 1.125rem !important;
+	}
+
+	button.wpss-write-review-btn,
+	.wpss-write-review-btn {
+		width: 100%;
+		padding: 1rem !important;
+	}
+}

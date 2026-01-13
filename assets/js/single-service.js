@@ -200,15 +200,18 @@
                 const $answer = $item.find('.wpss-faq-answer');
                 const isExpanded = $question.attr('aria-expanded') === 'true';
 
-                // Toggle current.
+                // Toggle aria-expanded state.
                 $question.attr('aria-expanded', !isExpanded);
-                $answer.prop('hidden', isExpanded);
 
-                // Slide animation.
+                // Slide animation with hidden attribute management.
                 if (isExpanded) {
-                    $answer.slideUp(200);
+                    // Collapsing: animate first, then hide.
+                    $answer.slideUp(200, function() {
+                        $(this).prop('hidden', true);
+                    });
                 } else {
-                    $answer.slideDown(200);
+                    // Expanding: remove hidden first, then animate.
+                    $answer.prop('hidden', false).hide().slideDown(200);
                 }
             });
         },

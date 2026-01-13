@@ -25,9 +25,14 @@ wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-
 			<a href="<?php echo esc_url( home_url( '/my-account/vendor-services/' ) ); ?>" class="wpss-btn wpss-btn--secondary">
 				<?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?>
 			</a>
-			<a href="<?php echo esc_url( home_url( '/create-service/' ) ); ?>" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Create New Service', 'wp-sell-services' ); ?>
-			</a>
+			<?php
+			$create_service_url = wpss_get_create_service_url();
+			if ( $create_service_url ) :
+				?>
+				<a href="<?php echo esc_url( $create_service_url ); ?>" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'Create New Service', 'wp-sell-services' ); ?>
+				</a>
+			<?php endif; ?>
 		</div>
 	</header>
 

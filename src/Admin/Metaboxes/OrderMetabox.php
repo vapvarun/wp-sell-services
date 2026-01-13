@@ -169,7 +169,7 @@ class OrderMetabox {
 
 		wp_enqueue_style(
 			'wpss-order-metabox',
-			\WPSS_PLUGIN_URL . 'assets/css/admin-order.css',
+			\WPSS_PLUGIN_URL . 'assets/css/orders.css',
 			array(),
 			\WPSS_VERSION
 		);
@@ -193,6 +193,8 @@ class OrderMetabox {
 					'confirmRefund'       => __( 'Are you sure you want to process a refund?', 'wp-sell-services' ),
 					'noteAdded'           => __( 'Note added successfully.', 'wp-sell-services' ),
 					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'update'              => __( 'Update', 'wp-sell-services' ),
+					'updating'            => __( 'Updating...', 'wp-sell-services' ),
 				),
 			)
 		);

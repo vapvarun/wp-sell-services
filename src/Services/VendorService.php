@@ -126,6 +126,48 @@ class VendorService {
 	}
 
 	/**
+	 * Register a vendor with detailed response for AJAX handlers.
+	 *
+	 * Wrapper around register() that returns array response suitable for wp_send_json_*.
+	 *
+	 * @param int                  $user_id User ID.
+	 * @param array<string, mixed> $data    Profile data.
+	 * @return array{success: bool, message: string} Response array.
+	 */
+	public function register_vendor( int $user_id, array $data = array() ): array {
+		$user = get_userdata( $user_id );
+
+		if ( ! $user ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Invalid user.', 'wp-sell-services' ),
+			);
+		}
+
+		// Check if already a vendor.
+		if ( $this->is_vendor( $user_id ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You are already registered as a vendor.', 'wp-sell-services' ),
+			);
+		}
+
+		$success = $this->register( $user_id, $data );
+
+		if ( $success ) {
+			return array(
+				'success' => true,
+				'message' => __( 'Your vendor application has been submitted successfully!', 'wp-sell-services' ),
+			);
+		}
+
+		return array(
+			'success' => false,
+			'message' => __( 'Failed to register as vendor. Please try again.', 'wp-sell-services' ),
+		);
+	}
+
+	/**
 	 * Check if user is a vendor.
 	 *
 	 * @param int $user_id User ID.

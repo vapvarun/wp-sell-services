@@ -73,13 +73,24 @@ class ServiceArchiveView {
 	 * @return void
 	 */
 	public function render_header(): void {
-		$title       = $this->get_archive_title();
-		$description = $this->get_archive_description();
+		$title         = $this->get_archive_title();
+		$description   = $this->get_archive_description();
+		$platform_name = wpss_get_platform_name();
 		?>
 		<header class="wpss-archive-header">
 			<h1 class="wpss-archive-title"><?php echo esc_html( $title ); ?></h1>
 			<?php if ( $description ) : ?>
 				<p class="wpss-archive-description"><?php echo esc_html( $description ); ?></p>
+			<?php elseif ( is_post_type_archive( 'wpss_service' ) && $platform_name ) : ?>
+				<p class="wpss-archive-description">
+					<?php
+					printf(
+						/* translators: %s: platform name */
+						esc_html__( 'Browse professional services on %s', 'wp-sell-services' ),
+						esc_html( $platform_name )
+					);
+					?>
+				</p>
 			<?php endif; ?>
 		</header>
 		<?php

@@ -24,6 +24,7 @@
 		WPSS.initModals();
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
+		WPSS.initVendorRegistration();
 	};
 
 	/**
@@ -96,22 +97,41 @@
 
 	/**
 	 * FAQ Accordion.
+	 *
+	 * Note: On single service pages, single-service.js handles FAQs with enhanced animations.
+	 * This handler only runs when WPSSService is not available.
 	 */
 	WPSS.initFAQs = function() {
+		// Skip if single-service.js handles FAQs (has enhanced handler).
+		if (typeof window.WPSSService !== 'undefined') {
+			return;
+		}
+
 		const $faqs = $('.wpss-service-faqs');
 
 		if (!$faqs.length) {
 			return;
 		}
 
-		$faqs.on('click', '.wpss-faq-question', function() {
+		$faqs.on('click', '.wpss-faq-question', function(e) {
+			e.preventDefault();
+
 			const $question = $(this);
-			const $answer = $question.next('.wpss-faq-answer');
+			const $item = $question.closest('.wpss-faq-item');
+			const $answer = $item.length ? $item.find('.wpss-faq-answer') : $question.next('.wpss-faq-answer');
 			const isExpanded = $question.attr('aria-expanded') === 'true';
 
-			// Toggle state.
+			// Toggle aria-expanded state.
 			$question.attr('aria-expanded', !isExpanded);
-			$answer.prop('hidden', isExpanded);
+
+			// Toggle visibility with animation.
+			if (isExpanded) {
+				$answer.slideUp(200, function() {
+					$(this).prop('hidden', true);
+				});
+			} else {
+				$answer.prop('hidden', false).hide().slideDown(200);
+			}
 		});
 	};
 
@@ -639,7 +659,7 @@
 		$btn.prop('disabled', true).text('Submitting...');
 
 		$.ajax({
-			url: wpss.ajaxUrl,
+			url: wpssData.ajaxUrl,
 			type: 'POST',
 			data: $form.serialize() + '&action=wpss_submit_review',
 			success: function(response) {
@@ -670,7 +690,7 @@
 		$btn.prop('disabled', true).text('Submitting...');
 
 		$.ajax({
-			url: wpss.ajaxUrl,
+			url: wpssData.ajaxUrl,
 			type: 'POST',
 			data: $form.serialize() + '&action=wpss_open_dispute',
 			success: function(response) {
@@ -966,6 +986,56 @@
 				$notification.remove();
 			}, 300);
 		}, duration);
+	};
+
+	/**
+	 * Vendor Registration Form.
+	 */
+	WPSS.initVendorRegistration = function() {
+		const $form = $('#wpss-vendor-registration-form');
+
+		if (!$form.length) {
+			return;
+		}
+
+		$form.on('submit', function(e) {
+			e.preventDefault();
+
+			const $btn = $form.find('button[type="submit"]');
+			const originalText = $btn.text();
+
+			// Disable button and show loading.
+			$btn.prop('disabled', true).text(wpssData.i18n?.submitting || 'Submitting...');
+
+			$.ajax({
+				url: wpssData.ajaxUrl,
+				type: 'POST',
+				data: $form.serialize() + '&action=wpss_vendor_registration',
+				success: function(response) {
+					if (response.success) {
+						// Show success message.
+						WPSS.showNotification(response.data.message || 'Application submitted successfully!', 'success');
+
+						// Redirect if provided.
+						if (response.data.redirect) {
+							setTimeout(function() {
+								window.location.href = response.data.redirect;
+							}, 1500);
+						} else {
+							// Re-enable button.
+							$btn.prop('disabled', false).text(originalText);
+						}
+					} else {
+						WPSS.showNotification(response.data.message || wpssData.i18n?.error || 'An error occurred.', 'error');
+						$btn.prop('disabled', false).text(originalText);
+					}
+				},
+				error: function() {
+					WPSS.showNotification(wpssData.i18n?.error || 'An error occurred. Please try again.', 'error');
+					$btn.prop('disabled', false).text(originalText);
+				}
+			});
+		});
 	};
 
 	// Initialize on DOM ready.
