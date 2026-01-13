@@ -50,6 +50,11 @@ class ReviewService {
 			return null;
 		}
 
+		// Check review time window.
+		if ( ! $this->is_within_review_window( $order ) ) {
+			return null;
+		}
+
 		// Validate rating.
 		$rating = (int) ( $data['rating'] ?? 0 );
 		if ( $rating < 1 || $rating > 5 ) {
@@ -354,5 +359,137 @@ class ReviewService {
 	 */
 	private function requires_moderation(): bool {
 		return (bool) get_option( 'wpss_moderate_reviews', false );
+	}
+
+	/**
+	 * Check if order is within the review time window.
+	 *
+	 * Reviews can only be submitted within a configurable number of days
+	 * after the order is completed.
+	 *
+	 * @param ServiceOrder $order Order object.
+	 * @return bool True if within window, false if expired.
+	 */
+	public function is_within_review_window( ServiceOrder $order ): bool {
+		// If no completion date, check is invalid.
+		if ( ! $order->completed_at ) {
+			return false;
+		}
+
+		$window_days = $this->get_review_window_days();
+
+		// 0 or negative means unlimited time to review.
+		if ( $window_days <= 0 ) {
+			return true;
+		}
+
+		$deadline = $order->completed_at->modify( "+{$window_days} days" );
+		$now      = new \DateTimeImmutable();
+
+		return $now <= $deadline;
+	}
+
+	/**
+	 * Get the review time window in days.
+	 *
+	 * @return int Number of days. 0 = unlimited.
+	 */
+	public function get_review_window_days(): int {
+		$days = (int) wpss_get_option( 'general', 'review_window_days', 30 );
+
+		/**
+		 * Filter the review time window in days.
+		 *
+		 * @param int $days Number of days. 0 = unlimited.
+		 */
+		return (int) apply_filters( 'wpss_review_window_days', $days );
+	}
+
+	/**
+	 * Get remaining days to review an order.
+	 *
+	 * @param ServiceOrder $order Order object.
+	 * @return int|null Days remaining, 0 if expired, null if unlimited.
+	 */
+	public function get_remaining_review_days( ServiceOrder $order ): ?int {
+		if ( ! $order->completed_at ) {
+			return 0;
+		}
+
+		$window_days = $this->get_review_window_days();
+
+		// 0 means unlimited.
+		if ( $window_days <= 0 ) {
+			return null;
+		}
+
+		$deadline = $order->completed_at->modify( "+{$window_days} days" );
+		$now      = new \DateTimeImmutable();
+
+		if ( $now > $deadline ) {
+			return 0;
+		}
+
+		$interval = $now->diff( $deadline );
+
+		return $interval->days;
+	}
+
+	/**
+	 * Check if customer can review an order.
+	 *
+	 * Verifies all conditions: order completed, no existing review, within time window.
+	 *
+	 * @param int $order_id    Order ID.
+	 * @param int $reviewer_id Reviewer user ID.
+	 * @return array{can_review: bool, reason: string}
+	 */
+	public function can_review( int $order_id, int $reviewer_id ): array {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return array(
+				'can_review' => false,
+				'reason'     => __( 'Order not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ServiceOrder::STATUS_COMPLETED !== $order->status ) {
+			return array(
+				'can_review' => false,
+				'reason'     => __( 'Order must be completed before leaving a review.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( $order->customer_id !== $reviewer_id ) {
+			return array(
+				'can_review' => false,
+				'reason'     => __( 'Only the customer can review this order.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( $this->has_review( $order_id ) ) {
+			return array(
+				'can_review' => false,
+				'reason'     => __( 'You have already reviewed this order.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ! $this->is_within_review_window( $order ) ) {
+			$window_days = $this->get_review_window_days();
+			return array(
+				'can_review' => false,
+				'reason'     => sprintf(
+					/* translators: %d: number of days */
+					__( 'The review period has expired. Reviews must be submitted within %d days of order completion.', 'wp-sell-services' ),
+					$window_days
+				),
+			);
+		}
+
+		return array(
+			'can_review' => true,
+			'reason'     => '',
+		);
 	}
 }

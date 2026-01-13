@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.3.4';
+	const DB_VERSION = '1.3.5';
 
 	/**
 	 * Option name for storing DB version.
@@ -397,6 +397,8 @@ class SchemaManager {
 			description text NOT NULL,
 			evidence longtext,
 			status varchar(50) DEFAULT 'open',
+			response_deadline datetime DEFAULT NULL,
+			last_response_by bigint(20) unsigned DEFAULT NULL,
 			resolution varchar(50) DEFAULT NULL,
 			resolution_notes text,
 			resolved_by bigint(20) unsigned DEFAULT NULL,
@@ -405,7 +407,8 @@ class SchemaManager {
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_order (order_id),
-			KEY idx_status (status)
+			KEY idx_status (status),
+			KEY idx_deadline (response_deadline)
 		) {$charset_collate};";
 	}
 
@@ -691,23 +694,23 @@ class SchemaManager {
 	 */
 	public function get_tables(): array {
 		return array(
-			'service_addons'       => $this->get_table_name( 'service_addons' ),
-			'orders'               => $this->get_table_name( 'orders' ),
-			'order_requirements'   => $this->get_table_name( 'order_requirements' ),
-			'conversations'        => $this->get_table_name( 'conversations' ),
-			'messages'             => $this->get_table_name( 'messages' ),
-			'deliveries'           => $this->get_table_name( 'deliveries' ),
-			'extension_requests'   => $this->get_table_name( 'extension_requests' ),
-			'reviews'              => $this->get_table_name( 'reviews' ),
-			'disputes'             => $this->get_table_name( 'disputes' ),
-			'dispute_messages'     => $this->get_table_name( 'dispute_messages' ),
-			'buyer_requests'       => $this->get_table_name( 'buyer_requests' ),
-			'proposals'            => $this->get_table_name( 'proposals' ),
-			'vendor_profiles'      => $this->get_table_name( 'vendor_profiles' ),
-			'portfolio_items'      => $this->get_table_name( 'portfolio_items' ),
-			'notifications'        => $this->get_table_name( 'notifications' ),
-			'wallet_transactions'  => $this->get_table_name( 'wallet_transactions' ),
-			'withdrawals'          => $this->get_table_name( 'withdrawals' ),
+			'service_addons'      => $this->get_table_name( 'service_addons' ),
+			'orders'              => $this->get_table_name( 'orders' ),
+			'order_requirements'  => $this->get_table_name( 'order_requirements' ),
+			'conversations'       => $this->get_table_name( 'conversations' ),
+			'messages'            => $this->get_table_name( 'messages' ),
+			'deliveries'          => $this->get_table_name( 'deliveries' ),
+			'extension_requests'  => $this->get_table_name( 'extension_requests' ),
+			'reviews'             => $this->get_table_name( 'reviews' ),
+			'disputes'            => $this->get_table_name( 'disputes' ),
+			'dispute_messages'    => $this->get_table_name( 'dispute_messages' ),
+			'buyer_requests'      => $this->get_table_name( 'buyer_requests' ),
+			'proposals'           => $this->get_table_name( 'proposals' ),
+			'vendor_profiles'     => $this->get_table_name( 'vendor_profiles' ),
+			'portfolio_items'     => $this->get_table_name( 'portfolio_items' ),
+			'notifications'       => $this->get_table_name( 'notifications' ),
+			'wallet_transactions' => $this->get_table_name( 'wallet_transactions' ),
+			'withdrawals'         => $this->get_table_name( 'withdrawals' ),
 		);
 	}
 }

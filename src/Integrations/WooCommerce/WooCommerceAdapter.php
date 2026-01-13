@@ -15,6 +15,9 @@ use WPSellServices\Integrations\Contracts\OrderProviderInterface;
 use WPSellServices\Integrations\Contracts\ProductProviderInterface;
 use WPSellServices\Integrations\Contracts\CheckoutProviderInterface;
 use WPSellServices\Integrations\Contracts\AccountProviderInterface;
+use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Database\Repositories\OrderRepository;
+use WPSellServices\Services\DisputeService;
 
 /**
  * WooCommerce integration adapter.
@@ -165,14 +168,54 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 		// Register adapter filter for global access.
 		add_filter( 'wpss_ecommerce_adapter', array( $this, 'provide_adapter' ), 10, 2 );
 
-		// Order status changes.
+		// Order status changes - create orders early so requirements redirect works.
+		add_action( 'woocommerce_order_status_pending', array( $this, 'handle_order_created' ) );
+		add_action( 'woocommerce_order_status_on-hold', array( $this, 'handle_order_created' ) );
 		add_action( 'woocommerce_order_status_processing', array( $this, 'handle_order_paid' ) );
 		add_action( 'woocommerce_order_status_completed', array( $this, 'handle_order_paid' ) );
 		add_action( 'woocommerce_order_status_cancelled', array( $this, 'handle_order_cancelled' ) );
 		add_action( 'woocommerce_order_status_refunded', array( $this, 'handle_order_refunded' ) );
 
+		// Hook checkout order created to create WPSS order early.
+		add_action( 'woocommerce_checkout_order_created', array( $this, 'handle_checkout_order_created' ) );
+
 		// Payment complete hook.
 		add_action( 'woocommerce_payment_complete', array( $this, 'handle_payment_complete' ) );
+
+		// Process refunds when disputes are resolved.
+		add_action( 'wpss_dispute_resolved', array( $this, 'handle_dispute_refund' ), 10, 4 );
+	}
+
+	/**
+	 * Handle order created on checkout - creates WPSS order early.
+	 *
+	 * @param \WC_Order $order WooCommerce order object.
+	 * @return void
+	 */
+	public function handle_checkout_order_created( $order ): void {
+		if ( ! $order ) {
+			return;
+		}
+
+		$this->handle_order_created( $order->get_id() );
+	}
+
+	/**
+	 * Handle order created (pending/on-hold status).
+	 *
+	 * Creates WPSS order early so the requirements redirect works.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return void
+	 */
+	public function handle_order_created( int $order_id ): void {
+		// Check if service order already exists.
+		$service_order = $this->order_provider->get_by_platform_order( $order_id );
+
+		if ( ! $service_order ) {
+			// Create service order from WC order (status will be pending_payment).
+			$this->order_provider->create_from_platform_order( $order_id );
+		}
 	}
 
 	/**
@@ -231,6 +274,71 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	 */
 	public function handle_payment_complete( int $order_id ): void {
 		$this->handle_order_paid( $order_id );
+	}
+
+	/**
+	 * Handle dispute refund - process WooCommerce refund when dispute is resolved.
+	 *
+	 * @param int    $dispute_id    Dispute ID.
+	 * @param string $resolution    Resolution type.
+	 * @param object $dispute       Dispute object.
+	 * @param float  $refund_amount Refund amount.
+	 * @return void
+	 */
+	public function handle_dispute_refund( int $dispute_id, string $resolution, object $dispute, float $refund_amount ): void {
+		// Only process refunds for refund resolutions.
+		$refund_resolutions = array(
+			DisputeService::RESOLUTION_REFUND,
+			DisputeService::RESOLUTION_PARTIAL_REFUND,
+			DisputeService::RESOLUTION_FAVOR_BUYER,
+		);
+
+		if ( ! in_array( $resolution, $refund_resolutions, true ) ) {
+			return;
+		}
+
+		// Get the service order.
+		$order_repo = new OrderRepository();
+		$order_data = $order_repo->find( $dispute->order_id );
+
+		if ( ! $order_data ) {
+			return;
+		}
+
+		// Convert to ServiceOrder model.
+		$service_order = ServiceOrder::from_db( $order_data );
+
+		// Only process WooCommerce orders.
+		if ( 'woocommerce' !== $service_order->platform || ! $service_order->platform_order_id ) {
+			return;
+		}
+
+		// Determine refund amount.
+		$amount = $refund_amount;
+
+		// For full refund, use order total if no specific amount given.
+		if ( DisputeService::RESOLUTION_REFUND === $resolution && $amount <= 0 ) {
+			$amount = $service_order->total;
+		}
+
+		// For favor buyer without amount, use full total.
+		if ( DisputeService::RESOLUTION_FAVOR_BUYER === $resolution && $amount <= 0 ) {
+			$amount = $service_order->total;
+		}
+
+		if ( $amount <= 0 ) {
+			return;
+		}
+
+		// Build refund reason.
+		$reason = sprintf(
+			/* translators: %d: dispute ID */
+			__( 'Dispute #%d resolution refund', 'wp-sell-services' ),
+			$dispute_id
+		);
+
+		// Process the refund through WooCommerce.
+		$this->get_order_provider()->process_refund( $service_order, $amount, $reason );
 	}
 
 	/**

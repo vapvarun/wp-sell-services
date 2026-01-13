@@ -243,6 +243,80 @@ class ServiceOrder {
 	public ?\DateTimeImmutable $completed_at;
 
 	/**
+	 * Find order by ID.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return self|null
+	 */
+	public static function find( int $order_id ): ?self {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $order_id )
+		);
+
+		return $row ? self::from_db( $row ) : null;
+	}
+
+	/**
+	 * Update order fields.
+	 *
+	 * When updating status, validates the transition is allowed.
+	 *
+	 * @param array $data Fields to update.
+	 * @return bool
+	 */
+	public function update( array $data ): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// If updating status, validate the transition.
+		if ( isset( $data['status'] ) && $data['status'] !== $this->status ) {
+			$order_service = new \WPSellServices\Services\OrderService();
+			if ( ! $order_service->can_transition( $this->status, $data['status'] ) ) {
+				return false;
+			}
+		}
+
+		// Add updated timestamp.
+		$data['updated_at'] = current_time( 'mysql' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
+
+		if ( false === $result ) {
+			return false;
+		}
+
+		// Fire status change hook if status changed.
+		if ( isset( $data['status'] ) && $data['status'] !== $this->status ) {
+			$old_status   = $this->status;
+			$this->status = $data['status'];
+
+			/**
+			 * Fires when order status changes.
+			 *
+			 * @param int    $order_id   Order ID.
+			 * @param string $new_status New status.
+			 * @param string $old_status Old status.
+			 */
+			do_action( 'wpss_order_status_changed', $this->id, $data['status'], $old_status );
+			do_action( "wpss_order_status_{$data['status']}", $this->id, $old_status );
+		}
+
+		// Update instance properties.
+		foreach ( $data as $key => $value ) {
+			if ( property_exists( $this, $key ) ) {
+				$this->$key = $value;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Create from database row.
 	 *
 	 * @param object $row Database row.

@@ -1237,7 +1237,14 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 		}
 
-		$user_id    = get_current_user_id();
+		$user_id = get_current_user_id();
+
+		// Verify user is an approved vendor.
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		if ( ! $vendor_service->is_vendor( $user_id ) && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You must be an approved vendor to create services.', 'wp-sell-services' ) ) );
+		}
+
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized after decode.
 		$raw_data = isset( $_POST['data'] ) ? wp_unslash( $_POST['data'] ) : '';
@@ -1317,7 +1324,14 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 		}
 
-		$user_id    = get_current_user_id();
+		$user_id = get_current_user_id();
+
+		// Verify user is an approved vendor.
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		if ( ! $vendor_service->is_vendor( $user_id ) && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You must be an approved vendor to create services.', 'wp-sell-services' ) ) );
+		}
+
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized after decode.
 		$raw_data = isset( $_POST['data'] ) ? wp_unslash( $_POST['data'] ) : '';
@@ -1386,6 +1400,16 @@ class ServiceWizard {
 			wp_set_object_terms( $service_id, array_slice( $tags, 0, 5 ), 'wpss_service_tag' );
 		}
 
+		// Sync to WooCommerce product.
+		if ( class_exists( 'WooCommerce' ) ) {
+			$wc_provider   = new \WPSellServices\Integrations\WooCommerce\WCProductProvider();
+			$wc_product_id = $wc_provider->sync_service_to_product( $service_id );
+
+			if ( $wc_product_id ) {
+				wpss_log( sprintf( 'Service %d synced to WC product %d', $service_id, $wc_product_id ) );
+			}
+		}
+
 		// Prepare success response based on post status.
 		if ( 'pending' === $post_status ) {
 			$message      = __( 'Service submitted for review. You will be notified once it is approved.', 'wp-sell-services' );
@@ -1414,6 +1438,32 @@ class ServiceWizard {
 
 		if ( ! is_user_logged_in() || empty( $_FILES['file'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$file = $_FILES['file'];
+
+		// Validate file type - only images allowed for gallery.
+		$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp' );
+		$ext           = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+
+		if ( ! in_array( $ext, $allowed_types, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Only image files (JPG, PNG, GIF, WebP) are allowed.', 'wp-sell-services' ) ) );
+		}
+
+		// Validate MIME type to prevent extension spoofing.
+		$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+		$mime_type = $file_info['type'] ?? '';
+
+		$allowed_mimes = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' );
+		if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid file type. Please upload a valid image.', 'wp-sell-services' ) ) );
+		}
+
+		// Check file size (max 5MB for gallery images).
+		$max_size = 5 * 1024 * 1024;
+		if ( $file['size'] > $max_size ) {
+			wp_send_json_error( array( 'message' => __( 'Image file size exceeds 5MB limit.', 'wp-sell-services' ) ) );
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/image.php';

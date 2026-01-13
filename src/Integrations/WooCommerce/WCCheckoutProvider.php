@@ -31,6 +31,46 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 		add_filter( 'woocommerce_get_item_data', array( $this, 'display_cart_item_data' ), 10, 2 );
 		// Note: Services are added as separate cart items (each with unique_key) rather than
 		// increasing quantity. This matches Fiverr's model where each order is distinct.
+
+		// Hook thank you page redirect to requirements.
+		add_filter( 'woocommerce_get_return_url', array( $this, 'filter_thankyou_redirect' ), 10, 2 );
+		add_action( 'woocommerce_thankyou', array( $this, 'maybe_redirect_to_requirements' ), 5 );
+	}
+
+	/**
+	 * Filter the WooCommerce return URL for service orders.
+	 *
+	 * @param string    $return_url Default return URL.
+	 * @param \WC_Order $order      WooCommerce order.
+	 * @return string
+	 */
+	public function filter_thankyou_redirect( string $return_url, $order ): string {
+		if ( ! $order ) {
+			return $return_url;
+		}
+
+		$redirect = $this->get_thankyou_redirect( $order->get_id() );
+
+		if ( $redirect ) {
+			return $redirect;
+		}
+
+		return $return_url;
+	}
+
+	/**
+	 * Redirect to requirements page on WooCommerce thank you page.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return void
+	 */
+	public function maybe_redirect_to_requirements( int $order_id ): void {
+		$redirect = $this->get_thankyou_redirect( $order_id );
+
+		if ( $redirect ) {
+			wp_safe_redirect( $redirect );
+			exit;
+		}
 	}
 
 	/**

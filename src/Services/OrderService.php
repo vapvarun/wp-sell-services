@@ -208,25 +208,30 @@ class OrderService {
 	 */
 	public function can_transition( string $from, string $to ): bool {
 		$transitions = array(
+			// Standard workflow statuses.
 			ServiceOrder::STATUS_PENDING_PAYMENT      => array(
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
 				ServiceOrder::STATUS_CANCELLED,
+				'pending', // Alternative pending status.
 			),
 			ServiceOrder::STATUS_PENDING_REQUIREMENTS => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_ON_HOLD,
+				'requirements_submitted',
 			),
 			ServiceOrder::STATUS_IN_PROGRESS          => array(
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_ON_HOLD,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_LATE,
+				'delivered',
 			),
 			ServiceOrder::STATUS_PENDING_APPROVAL     => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
 				ServiceOrder::STATUS_DISPUTED,
+				'completed',
 			),
 			ServiceOrder::STATUS_REVISION_REQUESTED   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
@@ -237,6 +242,7 @@ class OrderService {
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DISPUTED,
+				'delivered',
 			),
 			ServiceOrder::STATUS_ON_HOLD              => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
@@ -245,8 +251,42 @@ class OrderService {
 			ServiceOrder::STATUS_DISPUTED             => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_CANCELLED,
+				'completed',
+			),
+			// REST API alternative status names.
+			'pending'                                 => array(
+				'accepted',
+				'rejected',
+				ServiceOrder::STATUS_CANCELLED,
+			),
+			'accepted'                                => array(
+				ServiceOrder::STATUS_IN_PROGRESS,
+				'in_progress',
+				'requirements_submitted',
+				ServiceOrder::STATUS_CANCELLED,
+			),
+			'requirements_submitted'                  => array(
+				ServiceOrder::STATUS_IN_PROGRESS,
+				'in_progress',
+			),
+			'delivered'                               => array(
+				ServiceOrder::STATUS_COMPLETED,
+				'completed',
+				ServiceOrder::STATUS_REVISION_REQUESTED,
+				'revision_requested',
+				ServiceOrder::STATUS_DISPUTED,
+				'disputed',
 			),
 		);
+
+		/**
+		 * Filter allowed status transitions.
+		 *
+		 * @param array  $transitions Allowed transitions map.
+		 * @param string $from        Current status.
+		 * @param string $to          Target status.
+		 */
+		$transitions = apply_filters( 'wpss_order_status_transitions', $transitions, $from, $to );
 
 		return isset( $transitions[ $from ] ) && in_array( $to, $transitions[ $from ], true );
 	}

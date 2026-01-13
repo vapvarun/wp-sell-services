@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace WPSellServices\Frontend;
 
+use WPSellServices\Core\RateLimiter;
 use WPSellServices\Services\OrderService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\DeliveryService;
@@ -106,6 +107,11 @@ class AjaxHandlers {
 	public function accept_order(): void {
 		check_ajax_referer( 'wpss_order_action', 'nonce' );
 
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'order_action' );
+		}
+
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$user_id  = get_current_user_id();
 
@@ -136,6 +142,11 @@ class AjaxHandlers {
 	 */
 	public function start_work(): void {
 		check_ajax_referer( 'wpss_order_action', 'nonce' );
+
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'order_action' );
+		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$user_id  = get_current_user_id();
@@ -205,6 +216,11 @@ class AjaxHandlers {
 	 */
 	public function deliver_order(): void {
 		check_ajax_referer( 'wpss_order_action', 'nonce' );
+
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'delivery', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'delivery' );
+		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$message  = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
@@ -344,6 +360,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
 		}
 
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'requirements', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'requirements' );
+		}
+
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$user_id  = get_current_user_id();
 
@@ -438,6 +459,11 @@ class AjaxHandlers {
 	public function send_message(): void {
 		check_ajax_referer( 'wpss_send_message', 'nonce' );
 
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'message', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'message' );
+		}
+
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$content  = wp_kses_post( wp_unslash( $_POST['message'] ?? '' ) );
 		$user_id  = get_current_user_id();
@@ -473,6 +499,22 @@ class AjaxHandlers {
 			require_once ABSPATH . 'wp-admin/includes/image.php';
 			require_once ABSPATH . 'wp-admin/includes/media.php';
 
+			// Allowed file types for conversation attachments.
+			$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
+			$allowed_mimes = array(
+				'image/jpeg',
+				'image/png',
+				'image/gif',
+				'image/webp',
+				'application/pdf',
+				'application/msword',
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+				'application/zip',
+				'text/plain',
+			);
+			$max_size      = 10 * 1024 * 1024; // 10MB per file.
+
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$files = $_FILES['attachments'];
 
 			// Handle multiple files.
@@ -490,6 +532,24 @@ class AjaxHandlers {
 						'error'    => $files['error'][ $i ],
 						'size'     => $files['size'][ $i ],
 					);
+
+					// Validate file extension.
+					$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+					if ( ! in_array( $ext, $allowed_types, true ) ) {
+						continue; // Skip invalid file types.
+					}
+
+					// Validate MIME type to prevent extension spoofing.
+					$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+					$mime_type = $file_info['type'] ?? '';
+					if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
+						continue; // Skip invalid MIME types.
+					}
+
+					// Validate file size.
+					if ( $file['size'] > $max_size ) {
+						continue; // Skip files that are too large.
+					}
 
 					$_FILES['upload_file'] = $file;
 					$attachment_id         = media_handle_upload( 'upload_file', 0 );
@@ -831,10 +891,19 @@ class AjaxHandlers {
 	public function submit_review(): void {
 		check_ajax_referer( 'wpss_submit_review', 'wpss_review_nonce' );
 
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'review', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'review' );
+		}
+
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$rating   = absint( $_POST['rating'] ?? 0 );
 		$comment  = sanitize_textarea_field( wp_unslash( $_POST['comment'] ?? '' ) );
 		$user_id  = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in to submit a review.', 'wp-sell-services' ) ) );
+		}
 
 		if ( ! $order_id || ! $rating ) {
 			wp_send_json_error( array( 'message' => __( 'Please provide a rating.', 'wp-sell-services' ) ) );
@@ -845,7 +914,14 @@ class AjaxHandlers {
 		}
 
 		$review_service = new ReviewService();
-		$review         = $review_service->create(
+
+		// Check if user can review this order with detailed reason.
+		$can_review = $review_service->can_review( $order_id, $user_id );
+		if ( ! $can_review['can_review'] ) {
+			wp_send_json_error( array( 'message' => $can_review['reason'] ) );
+		}
+
+		$review = $review_service->create(
 			$order_id,
 			$user_id,
 			array(
@@ -862,7 +938,7 @@ class AjaxHandlers {
 				)
 			);
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to submit review. Order may not be eligible for review.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to submit review. Please try again.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -964,10 +1040,20 @@ class AjaxHandlers {
 	/**
 	 * Mark a review as helpful.
 	 *
+	 * Uses atomic database operations to prevent race conditions where
+	 * concurrent requests could both pass the duplicate vote check.
+	 *
 	 * @return void
 	 */
 	public function mark_review_helpful(): void {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
+
+		// Rate limiting (uses IP for guests since nopriv allowed).
+		$current_user_id = get_current_user_id();
+		$rate_limit_user = $current_user_id > 0 ? $current_user_id : null;
+		if ( RateLimiter::check_and_track( 'helpful_vote', $rate_limit_user ) ) {
+			RateLimiter::send_error( 'helpful_vote' );
+		}
 
 		$review_id = absint( $_POST['review_id'] ?? 0 );
 
@@ -975,27 +1061,49 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid review.', 'wp-sell-services' ) ) );
 		}
 
-		// Check if user already marked this review as helpful (use transient for anonymous, user meta for logged in).
-		$user_id    = get_current_user_id();
-		$ip_address = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
-		$cache_key  = 'wpss_helpful_' . $review_id . '_' . ( $user_id ? 'u' . $user_id : 'ip' . md5( $ip_address ) );
+		global $wpdb;
+		$reviews_table = $wpdb->prefix . 'wpss_reviews';
 
-		if ( get_transient( $cache_key ) ) {
-			wp_send_json_error( array( 'message' => __( 'You have already marked this review as helpful.', 'wp-sell-services' ) ) );
+		// Verify review exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$review_exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$reviews_table} WHERE id = %d",
+				$review_id
+			)
+		);
+
+		if ( ! $review_exists ) {
+			wp_send_json_error( array( 'message' => __( 'Review not found.', 'wp-sell-services' ) ) );
 		}
 
-		// Set transient BEFORE incrementing to prevent race condition.
-		// If concurrent requests pass the check above, only one will succeed here.
-		set_transient( $cache_key, 1, WEEK_IN_SECONDS );
+		// Build unique vote identifier.
+		$user_id    = get_current_user_id();
+		$ip_address = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+		$vote_key   = '_wpss_vote_' . $review_id . '_' . ( $user_id ? 'u' . $user_id : 'ip' . md5( $ip_address ) );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_reviews';
-
-		// Increment helpful count.
+		// Use atomic INSERT IGNORE to prevent race condition.
+		// If two concurrent requests try to insert the same key, only one will succeed.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET helpful_count = helpful_count + 1 WHERE id = %d",
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
+				$vote_key,
+				time() + WEEK_IN_SECONDS,
+				'no'
+			)
+		);
+
+		// Check if our insert succeeded (rows_affected = 1) or row already existed (rows_affected = 0).
+		if ( 0 === $wpdb->rows_affected ) {
+			wp_send_json_error( array( 'message' => __( 'You have already marked this review as helpful.', 'wp-sell-services' ) ) );
+		}
+
+		// Increment helpful count atomically.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$reviews_table} SET helpful_count = helpful_count + 1 WHERE id = %d",
 				$review_id
 			)
 		);
@@ -1004,7 +1112,7 @@ class AjaxHandlers {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$new_count = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT helpful_count FROM {$table} WHERE id = %d",
+				"SELECT helpful_count FROM {$reviews_table} WHERE id = %d",
 				$review_id
 			)
 		);
@@ -1024,6 +1132,11 @@ class AjaxHandlers {
 	 */
 	public function open_dispute(): void {
 		check_ajax_referer( 'wpss_open_dispute', 'wpss_dispute_nonce' );
+
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'dispute', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'dispute' );
+		}
 
 		$order_id    = absint( $_POST['order_id'] ?? 0 );
 		$reason      = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
@@ -1520,6 +1633,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to upload files.', 'wp-sell-services' ) ) );
 		}
 
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'file_upload', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'file_upload' );
+		}
+
 		if ( empty( $_FILES['file'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'No file uploaded.', 'wp-sell-services' ) ) );
 		}
@@ -1626,14 +1744,20 @@ class AjaxHandlers {
 	public function contact_vendor(): void {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
-		$user_id    = get_current_user_id();
-		$vendor_id  = absint( $_POST['vendor_id'] ?? 0 );
-		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$message    = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
+		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to contact vendors.', 'wp-sell-services' ) ) );
 		}
+
+		// Rate limiting.
+		if ( RateLimiter::check_and_track( 'contact', $user_id ) ) {
+			RateLimiter::send_error( 'contact' );
+		}
+
+		$vendor_id  = absint( $_POST['vendor_id'] ?? 0 );
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$message    = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
 
 		if ( ! $vendor_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid vendor.', 'wp-sell-services' ) ) );
@@ -1665,13 +1789,28 @@ class AjaxHandlers {
 
 		// Handle file attachments.
 		$attachments = array();
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File uploads handled by media_handle_upload.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File uploads validated below.
 		if ( ! empty( $_FILES['attachments'] ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 			require_once ABSPATH . 'wp-admin/includes/image.php';
 			require_once ABSPATH . 'wp-admin/includes/media.php';
 
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File uploads handled by media_handle_upload.
+			// Allowed file types for contact attachments.
+			$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
+			$allowed_mimes = array(
+				'image/jpeg',
+				'image/png',
+				'image/gif',
+				'image/webp',
+				'application/pdf',
+				'application/msword',
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+				'application/zip',
+				'text/plain',
+			);
+			$max_size      = 10 * 1024 * 1024; // 10MB per file.
+
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$files = $_FILES['attachments'];
 
 			// Handle multiple files.
@@ -1692,6 +1831,24 @@ class AjaxHandlers {
 						'error'    => $files['error'][ $i ],
 						'size'     => $files['size'][ $i ],
 					);
+
+					// Validate file extension.
+					$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+					if ( ! in_array( $ext, $allowed_types, true ) ) {
+						continue; // Skip invalid file types.
+					}
+
+					// Validate MIME type to prevent extension spoofing.
+					$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+					$mime_type = $file_info['type'] ?? '';
+					if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
+						continue; // Skip invalid MIME types.
+					}
+
+					// Validate file size.
+					if ( $file['size'] > $max_size ) {
+						continue; // Skip files that are too large.
+					}
 
 					$_FILES['upload_file'] = $file;
 					$attachment_id         = media_handle_upload( 'upload_file', 0 );

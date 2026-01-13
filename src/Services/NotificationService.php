@@ -30,6 +30,7 @@ class NotificationService {
 	public const TYPE_DISPUTE_OPENED     = 'dispute_opened';
 	public const TYPE_DISPUTE_RESOLVED   = 'dispute_resolved';
 	public const TYPE_DEADLINE_WARNING   = 'deadline_warning';
+	public const TYPE_VENDOR_REGISTERED  = 'vendor_registered';
 
 	/**
 	 * Create notification.
@@ -322,6 +323,157 @@ class NotificationService {
 	}
 
 	/**
+	 * Notify vendor registration.
+	 *
+	 * Sends welcome email to the vendor and notification to admin.
+	 *
+	 * @param int   $user_id      User ID.
+	 * @param array $profile_data Profile data.
+	 * @return void
+	 */
+	public function notify_vendor_registered( int $user_id, array $profile_data ): void {
+		$user = get_user_by( 'id', $user_id );
+
+		if ( ! $user ) {
+			return;
+		}
+
+		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
+		$display_name  = $profile_data['display_name'] ?? $user->display_name;
+
+		// Create notification for the new vendor.
+		$this->create(
+			$user_id,
+			self::TYPE_VENDOR_REGISTERED,
+			__( 'Welcome to the Marketplace!', 'wp-sell-services' ),
+			/* translators: %s: platform name */
+			sprintf(
+				__( 'Congratulations! Your vendor account on %s has been created. You can now start creating services and accepting orders.', 'wp-sell-services' ),
+				$platform_name
+			),
+			array(
+				'user_id'      => $user_id,
+				'display_name' => $display_name,
+			)
+		);
+
+		// Send welcome email directly to vendor.
+		$this->send_vendor_welcome_email( $user, $display_name, $platform_name );
+
+		// Notify admin of new vendor registration.
+		$this->send_admin_vendor_notification( $user, $display_name );
+	}
+
+	/**
+	 * Send welcome email to new vendor.
+	 *
+	 * @param \WP_User $user          User object.
+	 * @param string   $display_name  Vendor display name.
+	 * @param string   $platform_name Platform name.
+	 * @return bool
+	 */
+	private function send_vendor_welcome_email( \WP_User $user, string $display_name, string $platform_name ): bool {
+		$subject = sprintf(
+			/* translators: %s: platform name */
+			__( 'Welcome to %s - Your Vendor Account is Ready!', 'wp-sell-services' ),
+			$platform_name
+		);
+
+		$dashboard_url = home_url( '/vendor-dashboard/' );
+
+		$content  = '<html><body>';
+		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
+		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
+		$content .= '<p>' . sprintf(
+			/* translators: %s: vendor display name */
+			esc_html__( 'Hello %s,', 'wp-sell-services' ),
+			esc_html( $display_name )
+		) . '</p>';
+		$content .= '<p>' . esc_html__( 'Congratulations! Your vendor account has been successfully created.', 'wp-sell-services' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'You can now:', 'wp-sell-services' ) . '</p>';
+		$content .= '<ul>';
+		$content .= '<li>' . esc_html__( 'Create and publish services', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Receive and manage orders', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Communicate with customers', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Track your earnings', 'wp-sell-services' ) . '</li>';
+		$content .= '</ul>';
+		$content .= '<p><a href="' . esc_url( $dashboard_url ) . '" style="display: inline-block; background: #0073aa; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px;">';
+		$content .= esc_html__( 'Go to Your Dashboard', 'wp-sell-services' );
+		$content .= '</a></p>';
+		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'If you have any questions, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
+		$content .= '</div>';
+		$content .= '</body></html>';
+
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+		/**
+		 * Filter vendor welcome email content.
+		 *
+		 * @param string   $content  Email content.
+		 * @param \WP_User $user     User object.
+		 * @param string   $platform Platform name.
+		 */
+		$content = apply_filters( 'wpss_vendor_welcome_email_content', $content, $user, $platform_name );
+
+		return wp_mail( $user->user_email, $subject, $content, $headers );
+	}
+
+	/**
+	 * Send admin notification for new vendor.
+	 *
+	 * @param \WP_User $user         User object.
+	 * @param string   $display_name Vendor display name.
+	 * @return bool
+	 */
+	private function send_admin_vendor_notification( \WP_User $user, string $display_name ): bool {
+		$admin_email = get_option( 'admin_email' );
+
+		if ( ! $admin_email ) {
+			return false;
+		}
+
+		$subject = sprintf(
+			/* translators: %s: vendor display name */
+			__( 'New Vendor Registration: %s', 'wp-sell-services' ),
+			$display_name
+		);
+
+		$vendors_url = admin_url( 'admin.php?page=wpss-vendors' );
+
+		$content  = '<html><body>';
+		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
+		$content .= '<h2 style="color: #333;">' . esc_html__( 'New Vendor Registration', 'wp-sell-services' ) . '</h2>';
+		$content .= '<p>' . esc_html__( 'A new vendor has registered on your marketplace.', 'wp-sell-services' ) . '</p>';
+		$content .= '<table style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
+		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Display Name', 'wp-sell-services' ) . '</strong></td>';
+		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $display_name ) . '</td></tr>';
+		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Username', 'wp-sell-services' ) . '</strong></td>';
+		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $user->user_login ) . '</td></tr>';
+		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Email', 'wp-sell-services' ) . '</strong></td>';
+		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $user->user_email ) . '</td></tr>';
+		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Registration Date', 'wp-sell-services' ) . '</strong></td>';
+		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( current_time( 'F j, Y g:i a' ) ) . '</td></tr>';
+		$content .= '</table>';
+		$content .= '<p><a href="' . esc_url( $vendors_url ) . '" style="display: inline-block; background: #0073aa; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px;">';
+		$content .= esc_html__( 'View All Vendors', 'wp-sell-services' );
+		$content .= '</a></p>';
+		$content .= '</div>';
+		$content .= '</body></html>';
+
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+		/**
+		 * Filter admin vendor notification email content.
+		 *
+		 * @param string   $content Email content.
+		 * @param \WP_User $user    User object.
+		 */
+		$content = apply_filters( 'wpss_admin_vendor_notification_content', $content, $user );
+
+		return wp_mail( $admin_email, $subject, $content, $headers );
+	}
+
+	/**
 	 * Check if email should be sent.
 	 *
 	 * @param int    $user_id User ID.
@@ -343,6 +495,7 @@ class NotificationService {
 			self::TYPE_DELIVERY_ACCEPTED,
 			self::TYPE_DISPUTE_OPENED,
 			self::TYPE_DEADLINE_WARNING,
+			self::TYPE_VENDOR_REGISTERED,
 		);
 
 		return in_array( $type, $important_types, true );

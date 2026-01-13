@@ -60,18 +60,35 @@ class TemplateLoader {
 	 */
 	public function add_query_vars( array $vars ): array {
 		$vars[] = 'wpss_vendor';
+		$vars[] = 'wpss_service_order';
+		$vars[] = 'wpss_order_action';
 		return $vars;
 	}
 
 	/**
-	 * Add rewrite rules for vendor profiles.
+	 * Add rewrite rules for vendor profiles and service orders.
 	 *
 	 * @return void
 	 */
 	public function add_rewrite_rules(): void {
+		// Vendor profile: /vendor/{username}/
 		add_rewrite_rule(
 			'^vendor/([^/]+)/?$',
 			'index.php?wpss_vendor=$matches[1]',
+			'top'
+		);
+
+		// Service order with action: /service-order/{id}/{action}/
+		add_rewrite_rule(
+			'^service-order/([0-9]+)/([^/]+)/?$',
+			'index.php?wpss_service_order=$matches[1]&wpss_order_action=$matches[2]',
+			'top'
+		);
+
+		// Service order view: /service-order/{id}/
+		add_rewrite_rule(
+			'^service-order/([0-9]+)/?$',
+			'index.php?wpss_service_order=$matches[1]',
 			'top'
 		);
 	}
@@ -83,6 +100,12 @@ class TemplateLoader {
 	 * @return string
 	 */
 	public function template_include( string $template ): string {
+		// Check for service order.
+		$order_id = get_query_var( 'wpss_service_order' );
+		if ( $order_id ) {
+			return $this->load_service_order_template( (int) $order_id );
+		}
+
 		// Check for vendor profile.
 		$vendor_slug = get_query_var( 'wpss_vendor' );
 		if ( $vendor_slug ) {
@@ -128,6 +151,71 @@ class TemplateLoader {
 		}
 
 		return $template;
+	}
+
+	/**
+	 * Load service order template with proper permission checks.
+	 *
+	 * @param int $order_id Service order ID.
+	 * @return string Template path.
+	 */
+	private function load_service_order_template( int $order_id ): string {
+		// Require login.
+		if ( ! is_user_logged_in() ) {
+			auth_redirect();
+			exit;
+		}
+
+		$order = wpss_get_order( $order_id );
+
+		// Check order exists.
+		if ( ! $order ) {
+			global $wp_query;
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
+			return get_query_template( '404' );
+		}
+
+		// Check user has access (customer, vendor, or admin).
+		$user_id = get_current_user_id();
+		if ( $order->customer_id !== $user_id && $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ), '', array( 'response' => 403 ) );
+		}
+
+		// Set global for template use.
+		global $wpss_current_order;
+		$wpss_current_order = $order;
+
+		// Determine action (requirements, delivery, review, etc.).
+		$action = get_query_var( 'wpss_order_action' );
+
+		// Load appropriate template.
+		switch ( $action ) {
+			case 'requirements':
+				$custom = $this->locate_template( 'order/order-requirements.php' );
+				break;
+
+			case 'delivery':
+				$custom = $this->locate_template( 'order/order-delivery.php' );
+				break;
+
+			case 'review':
+				$custom = $this->locate_template( 'order/order-review.php' );
+				break;
+
+			default:
+				$custom = $this->locate_template( 'order/order-view.php' );
+				break;
+		}
+
+		if ( $custom ) {
+			return $custom;
+		}
+
+		// Fallback to generic order view.
+		$fallback = $this->locate_template( 'order/order-view.php' );
+		return $fallback ?: get_query_template( '404' );
 	}
 
 	/**

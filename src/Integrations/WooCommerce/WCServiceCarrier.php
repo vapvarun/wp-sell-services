@@ -60,6 +60,9 @@ class WCServiceCarrier {
 
 		// Display service data in order.
 		add_filter( 'woocommerce_order_item_get_formatted_meta_data', array( $this, 'format_order_item_meta' ), 10, 2 );
+
+		// Validate vendor status at checkout.
+		add_action( 'woocommerce_check_cart_items', array( $this, 'validate_vendor_status_at_checkout' ) );
 	}
 
 	/**
@@ -395,6 +398,18 @@ class WCServiceCarrier {
 			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
 		}
 
+		// Verify vendor is still active and approved.
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		if ( ! $vendor_service->is_vendor( $service->vendor_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'This vendor is no longer active. Please try a different service.', 'wp-sell-services' ) ) );
+		}
+
+		// Check vendor is not suspended.
+		$vendor_profile = wpss_get_vendor( $service->vendor_id );
+		if ( $vendor_profile && 'suspended' === ( $vendor_profile->status ?? '' ) ) {
+			wp_send_json_error( array( 'message' => __( 'This vendor is currently unavailable.', 'wp-sell-services' ) ) );
+		}
+
 		$cart_key = $this->add_to_cart( $service_id, $package_id, $addons );
 
 		if ( ! $cart_key ) {
@@ -505,6 +520,75 @@ class WCServiceCarrier {
 		}
 
 		return $formatted_meta;
+	}
+
+	/**
+	 * Validate vendor status for all service items in cart at checkout.
+	 *
+	 * Prevents checkout if any vendor is no longer active or has been suspended.
+	 *
+	 * @return void
+	 */
+	public function validate_vendor_status_at_checkout(): void {
+		if ( ! WC()->cart ) {
+			return;
+		}
+
+		$vendor_service = new \WPSellServices\Services\VendorService();
+
+		foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+			// Skip non-service items.
+			if ( ! isset( $cart_item['wpss_service_id'] ) ) {
+				continue;
+			}
+
+			$service_id = (int) $cart_item['wpss_service_id'];
+			$vendor_id  = isset( $cart_item['wpss_vendor_id'] ) ? (int) $cart_item['wpss_vendor_id'] : 0;
+
+			// Get vendor ID from service if not in cart data.
+			if ( ! $vendor_id ) {
+				$service = wpss_get_service( $service_id );
+				if ( $service ) {
+					$vendor_id = $service->vendor_id;
+				}
+			}
+
+			if ( ! $vendor_id ) {
+				continue;
+			}
+
+			// Check vendor is still active.
+			if ( ! $vendor_service->is_vendor( $vendor_id ) ) {
+				$service       = wpss_get_service( $service_id );
+				$service_title = $service ? $service->title : __( 'Service', 'wp-sell-services' );
+
+				wc_add_notice(
+					sprintf(
+						/* translators: %s: Service title */
+						__( '"%s" cannot be purchased because the vendor is no longer active. Please remove this item from your cart.', 'wp-sell-services' ),
+						esc_html( $service_title )
+					),
+					'error'
+				);
+				continue;
+			}
+
+			// Check vendor is not suspended.
+			$vendor_profile = wpss_get_vendor( $vendor_id );
+			if ( $vendor_profile && 'suspended' === ( $vendor_profile->status ?? '' ) ) {
+				$service       = wpss_get_service( $service_id );
+				$service_title = $service ? $service->title : __( 'Service', 'wp-sell-services' );
+
+				wc_add_notice(
+					sprintf(
+						/* translators: %s: Service title */
+						__( '"%s" cannot be purchased because the vendor is currently unavailable. Please remove this item from your cart.', 'wp-sell-services' ),
+						esc_html( $service_title )
+					),
+					'error'
+				);
+			}
+		}
 	}
 
 	/**

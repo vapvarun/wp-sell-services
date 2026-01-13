@@ -344,6 +344,17 @@ final class Plugin {
 			10,
 			2
 		);
+
+		// Vendor registration notification.
+		$this->loader->add_action(
+			'wpss_vendor_registered',
+			function ( int $user_id, array $profile_data ) use ( $notification_service ): void {
+				$notification_service->notify_vendor_registered( $user_id, $profile_data );
+			},
+			null,
+			10,
+			2
+		);
 	}
 
 	/**
