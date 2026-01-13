@@ -456,6 +456,31 @@ function wpss_get_currency_symbol( string $currency = '' ): string {
 }
 
 /**
+ * Get currency format string for JavaScript price formatting.
+ *
+ * Returns a format string like '$%s' or '€%s' where %s is replaced
+ * with the formatted price value in JavaScript.
+ *
+ * @since 1.1.0
+ *
+ * @param string $currency Currency code. Defaults to site currency.
+ * @return string Format string with %s placeholder.
+ */
+function wpss_get_currency_format( string $currency = '' ): string {
+	$symbol = wpss_get_currency_symbol( $currency );
+
+	/**
+	 * Filter the currency format string.
+	 *
+	 * @since 1.1.0
+	 * @param string $format   Format string (e.g., '$%s').
+	 * @param string $symbol   Currency symbol.
+	 * @param string $currency Currency code.
+	 */
+	return apply_filters( 'wpss_currency_format', $symbol . '%s', $symbol, $currency );
+}
+
+/**
  * Get supported currencies.
  *
  * @return array

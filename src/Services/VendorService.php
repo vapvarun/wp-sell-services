@@ -89,6 +89,12 @@ class VendorService {
 		// Add vendor role.
 		$user->add_role( self::ROLE );
 
+		// Verify role was actually added before proceeding.
+		if ( ! in_array( self::ROLE, $user->roles, true ) ) {
+			wpss_log( 'Failed to add vendor role to user ' . $user_id, 'error' );
+			return false;
+		}
+
 		// Add vendor capabilities.
 		$this->add_vendor_capabilities( $user_id );
 

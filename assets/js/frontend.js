@@ -745,6 +745,14 @@
 		const $sidebar = $('#wpss-sidebar');
 		const $close = $('.wpss-sidebar-close');
 
+		// Handle URL select dropdowns (category/sort filters) - replaces inline onchange.
+		$(document).on('change', '.wpss-url-select', function() {
+			const url = $(this).val();
+			if (url) {
+				window.location.href = url;
+			}
+		});
+
 		if (!$toggle.length || !$sidebar.length) {
 			return;
 		}

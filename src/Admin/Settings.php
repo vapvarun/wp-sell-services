@@ -1558,6 +1558,7 @@ class Settings {
 			'services_page',
 			'dashboard',
 			'become_vendor',
+			'create_service',
 		);
 
 		foreach ( $page_keys as $key ) {

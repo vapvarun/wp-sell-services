@@ -122,7 +122,7 @@ class ServiceArchiveView {
 
 			<div class="wpss-filters-bar-controls">
 				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
-					<select class="wpss-category-filter" onchange="location.href=this.value">
+					<select class="wpss-category-filter wpss-url-select">
 						<option value="<?php echo esc_url( remove_query_arg( 'category' ) ); ?>">
 							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
 						</option>
@@ -135,7 +135,7 @@ class ServiceArchiveView {
 					</select>
 				<?php endif; ?>
 
-				<select class="wpss-sort-filter" onchange="location.href=this.value">
+				<select class="wpss-sort-filter wpss-url-select">
 					<option value="<?php echo esc_url( remove_query_arg( 'sort' ) ); ?>" <?php selected( $current_sort, 'default' ); ?>>
 						<?php esc_html_e( 'Sort: Recommended', 'wp-sell-services' ); ?>
 					</option>
@@ -190,10 +190,23 @@ class ServiceArchiveView {
 			return;
 		}
 
+		// Preserve current filter parameters in pagination links.
+		$filter_params = array( 'category', 'min_price', 'max_price', 'rating', 'delivery', 'sort' );
+		$add_args      = array();
+
+		foreach ( $filter_params as $param ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_GET[ $param ] ) && '' !== $_GET[ $param ] ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$add_args[ $param ] = sanitize_text_field( wp_unslash( $_GET[ $param ] ) );
+			}
+		}
+
 		$args = array(
 			'prev_text' => '&larr; ' . __( 'Previous', 'wp-sell-services' ),
 			'next_text' => __( 'Next', 'wp-sell-services' ) . ' &rarr;',
 			'type'      => 'list',
+			'add_args'  => $add_args,
 		);
 		?>
 		<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Service navigation', 'wp-sell-services' ); ?>">

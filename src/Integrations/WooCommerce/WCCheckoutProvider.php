@@ -29,9 +29,8 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart_hook' ), 10, 3 );
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'save_order_item_meta' ), 10, 4 );
 		add_filter( 'woocommerce_get_item_data', array( $this, 'display_cart_item_data' ), 10, 2 );
-		// Removed quantity restrictions - services can be purchased multiple times like on Fiverr.
-		// Previously: add_filter( 'woocommerce_quantity_input_args', ... ) and
-		// add_filter( 'woocommerce_is_sold_individually', ... ) forced quantity=1.
+		// Note: Services are added as separate cart items (each with unique_key) rather than
+		// increasing quantity. This matches Fiverr's model where each order is distinct.
 	}
 
 	/**
@@ -89,7 +88,8 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 			return true;
 		}
 
-		// Services should only be purchased in quantity 1.
+		// Each service order is a separate cart item (with unique_key).
+		// Quantity > 1 is not supported; add the service again for multiple orders.
 		if ( $quantity > 1 ) {
 			return false;
 		}

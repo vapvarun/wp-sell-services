@@ -984,6 +984,10 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You have already marked this review as helpful.', 'wp-sell-services' ) ) );
 		}
 
+		// Set transient BEFORE incrementing to prevent race condition.
+		// If concurrent requests pass the check above, only one will succeed here.
+		set_transient( $cache_key, 1, WEEK_IN_SECONDS );
+
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
@@ -1004,9 +1008,6 @@ class AjaxHandlers {
 				$review_id
 			)
 		);
-
-		// Set transient to prevent duplicate votes (1 week).
-		set_transient( $cache_key, 1, WEEK_IN_SECONDS );
 
 		wp_send_json_success(
 			array(

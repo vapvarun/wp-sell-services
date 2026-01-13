@@ -89,6 +89,7 @@ class Frontend {
 				'orderNonce'      => wp_create_nonce( 'wpss_order_action' ),
 				'restNonce'       => wp_create_nonce( 'wp_rest' ),
 				'pollingInterval' => 10000,
+				'currencyFormat'  => wpss_get_currency_format(),
 				'i18n'            => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),

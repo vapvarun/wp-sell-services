@@ -1521,20 +1521,28 @@ class ServiceWizard {
 			'video'  => '',
 		);
 
+		// Verify main image ownership before accepting.
 		if ( ! empty( $gallery['main']['id'] ) ) {
-			$sanitized['main'] = array(
-				'id'  => absint( $gallery['main']['id'] ),
-				'url' => esc_url( $gallery['main']['url'] ?? '' ),
-			);
+			$main_id = absint( $gallery['main']['id'] );
+			if ( $this->user_can_use_attachment( $main_id ) ) {
+				$sanitized['main'] = array(
+					'id'  => $main_id,
+					'url' => esc_url( $gallery['main']['url'] ?? '' ),
+				);
+			}
 		}
 
+		// Verify each gallery image ownership before accepting.
 		if ( ! empty( $gallery['images'] ) && is_array( $gallery['images'] ) ) {
 			foreach ( $gallery['images'] as $image ) {
 				if ( ! empty( $image['id'] ) ) {
-					$sanitized['images'][] = array(
-						'id'  => absint( $image['id'] ),
-						'url' => esc_url( $image['url'] ?? '' ),
-					);
+					$image_id = absint( $image['id'] );
+					if ( $this->user_can_use_attachment( $image_id ) ) {
+						$sanitized['images'][] = array(
+							'id'  => $image_id,
+							'url' => esc_url( $image['url'] ?? '' ),
+						);
+					}
 				}
 			}
 		}
@@ -1733,5 +1741,35 @@ class ServiceWizard {
 	private function get_dashboard_url(): string {
 		$url = wpss_get_page_url( 'dashboard' );
 		return $url ? $url : home_url();
+	}
+
+	/**
+	 * Verify current user can use an attachment.
+	 *
+	 * Checks if the attachment exists and belongs to the current user,
+	 * or if the current user is an administrator.
+	 *
+	 * @param int $attachment_id Attachment ID to verify.
+	 * @return bool True if user can use this attachment.
+	 */
+	private function user_can_use_attachment( int $attachment_id ): bool {
+		if ( $attachment_id <= 0 ) {
+			return false;
+		}
+
+		$attachment = get_post( $attachment_id );
+
+		// Attachment must exist and be an attachment post type.
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			return false;
+		}
+
+		// Admins can use any attachment.
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		// Check if current user is the attachment author.
+		return get_current_user_id() === (int) $attachment->post_author;
 	}
 }
