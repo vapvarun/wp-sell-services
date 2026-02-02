@@ -662,16 +662,16 @@ class NotificationService {
 		$message .= __( 'Thank you for providing excellent service! Reviews help build your reputation and attract more customers.', 'wp-sell-services' );
 
 		$this->create(
-			$review->vendor_id,
+			(int) $review->vendor_id,
 			self::TYPE_REVIEW_RECEIVED,
 			__( 'New Review Received', 'wp-sell-services' ),
 			$message,
 			array(
 				'review_id'    => $review_id,
 				'order_id'     => $order_id,
-				'service_id'   => $review->service_id,
+				'service_id'   => (int) $review->service_id,
 				'rating'       => $rating,
-				'reviewer_id'  => $review->customer_id,
+				'reviewer_id'  => (int) $review->customer_id,
 			)
 		);
 	}

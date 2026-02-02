@@ -395,7 +395,8 @@ class ReviewService {
 	 * @return int Number of days. 0 = unlimited.
 	 */
 	public function get_review_window_days(): int {
-		$days = (int) wpss_get_option( 'general', 'review_window_days', 30 );
+		$settings = get_option( 'wpss_general', array() );
+		$days     = (int) ( $settings['review_window_days'] ?? 30 );
 
 		/**
 		 * Filter the review time window in days.

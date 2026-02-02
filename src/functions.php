@@ -12,6 +12,23 @@ declare(strict_types=1);
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * Get a plugin option value.
+ *
+ * Retrieves a setting from one of the plugin's option groups.
+ *
+ * @param string $group   Option group name (e.g., 'general', 'vendors', 'orders').
+ * @param string $key     Option key within the group.
+ * @param mixed  $default Default value if option doesn't exist.
+ * @return mixed
+ */
+function wpss_get_option( string $group, string $key, $default = null ) {
+	$option_name = 'wpss_' . $group;
+	$options     = get_option( $option_name, array() );
+
+	return $options[ $key ] ?? $default;
+}
+
+/**
  * Format price with currency symbol.
  *
  * @param float  $price    The price to format.
@@ -1100,6 +1117,23 @@ function wpss_get_ecommerce_adapter( ?string $adapter_id = null ): ?\WPSellServi
 
 	// Return active adapter.
 	return $integration_mgr->get_active_adapter();
+}
+
+/**
+ * Get the order provider from the active e-commerce adapter.
+ *
+ * @since 1.2.0
+ *
+ * @return \WPSellServices\Integrations\Contracts\OrderProviderInterface|null Order provider or null.
+ */
+function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\OrderProviderInterface {
+	$adapter = wpss_get_ecommerce_adapter();
+
+	if ( ! $adapter ) {
+		return null;
+	}
+
+	return $adapter->get_order_provider();
 }
 
 /**

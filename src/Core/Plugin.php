@@ -732,6 +732,9 @@ final class Plugin {
 	 * @return void
 	 */
 	private function init_providers(): void {
+		// Register Test Gateway (only in debug mode).
+		$this->maybe_register_test_gateway();
+
 		/**
 		 * Filter the registered payment gateways.
 		 *
@@ -791,6 +794,22 @@ final class Plugin {
 		 * @param array $widgets Array of analytics widget instances.
 		 */
 		$this->analytics_widgets = apply_filters( 'wpss_analytics_widgets', $this->analytics_widgets );
+	}
+
+	/**
+	 * Register test gateway if in debug mode.
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	private function maybe_register_test_gateway(): void {
+		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+			return;
+		}
+
+		$test_gateway = new \WPSellServices\Integrations\Gateways\TestGateway();
+		$test_gateway->init();
+		$this->payment_gateways['test'] = $test_gateway;
 	}
 
 	/**
