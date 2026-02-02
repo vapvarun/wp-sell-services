@@ -26,12 +26,17 @@ if ( empty( $gallery_ids ) ) {
 }
 
 $gallery_ids = array_unique( array_filter( $gallery_ids ) );
+
+// Exit if no valid images after filtering.
+if ( empty( $gallery_ids ) ) {
+	return;
+}
 ?>
 
 <div class="wpss-service-gallery">
 	<div class="wpss-gallery-main">
 		<?php
-		$first_image = $gallery_ids[0];
+		$first_image = reset( $gallery_ids ); // Use reset() instead of [0] to handle non-sequential keys.
 		$is_video = get_post_meta( $service_id, '_wpss_video_url', true );
 		?>
 		<div class="wpss-gallery-active">

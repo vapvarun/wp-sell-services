@@ -245,6 +245,7 @@ class Admin {
 	 */
 	private function init_ajax_handlers(): void {
 		add_action( 'wp_ajax_wpss_get_service_packages', array( $this, 'ajax_get_service_packages' ) );
+		add_action( 'admin_post_wpss_update_order', array( $this, 'handle_update_order' ) );
 	}
 
 	/**
@@ -280,6 +281,76 @@ class Admin {
 		}
 
 		wp_send_json_success( array( 'packages' => $formatted_packages ) );
+	}
+
+	/**
+	 * Handle order status update from admin-post.php.
+	 *
+	 * @return void
+	 */
+	public function handle_update_order(): void {
+		// Verify nonce.
+		if ( ! isset( $_POST['wpss_order_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_order_nonce'] ) ), 'wpss_update_order' ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		// Check capabilities.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+		$status   = isset( $_POST['order_status'] ) ? sanitize_key( $_POST['order_status'] ) : '';
+
+		if ( ! $order_id || ! $status ) {
+			wp_die( esc_html__( 'Invalid request.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		// Valid statuses.
+		$valid_statuses = array(
+			'pending_payment',
+			'pending_requirements',
+			'in_progress',
+			'delivered',
+			'revision_requested',
+			'completed',
+			'cancelled',
+			'disputed',
+		);
+
+		if ( ! in_array( $status, $valid_statuses, true ) ) {
+			wp_die( esc_html__( 'Invalid status.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		// Update the order.
+		global $wpdb;
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$updated = $wpdb->update(
+			$orders_table,
+			array(
+				'status'     => $status,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $order_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+
+		// Redirect back to the order.
+		$redirect_url = add_query_arg(
+			array(
+				'page'     => 'wpss-orders',
+				'action'   => 'view',
+				'order_id' => $order_id,
+				'updated'  => $updated ? '1' : '0',
+			),
+			admin_url( 'admin.php' )
+		);
+
+		wp_safe_redirect( $redirect_url );
+		exit;
 	}
 
 	/**

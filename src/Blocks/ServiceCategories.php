@@ -187,9 +187,10 @@ class ServiceCategories extends AbstractBlock {
 	 * @return void
 	 */
 	private function render_category_card( \WP_Term $category, array $attributes ): void {
-		$link  = get_term_link( $category );
-		$icon  = get_term_meta( $category->term_id, '_wpss_category_icon', true );
-		$image = get_term_meta( $category->term_id, '_wpss_category_image', true );
+		$link     = get_term_link( $category );
+		$icon     = get_term_meta( $category->term_id, '_wpss_category_icon', true );
+		$image_id = get_term_meta( $category->term_id, '_wpss_category_image', true );
+		$image    = $image_id ? wp_get_attachment_image_url( (int) $image_id, 'medium' ) : '';
 		?>
 		<a href="<?php echo esc_url( $link ); ?>" class="wpss-category-card">
 			<?php if ( $attributes['showImage'] && $image ) : ?>

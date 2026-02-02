@@ -106,7 +106,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 			foreach ( $messages as $message ) :
 				$message_date = wp_date( get_option( 'date_format' ), strtotime( $message->created_at ) );
 				$is_own       = (int) $message->sender_id === $user_id;
-				$is_system    = 'system' === ( $message->message_type ?? 'text' );
+				$is_system    = 'system' === ( isset( $message->type ) ? $message->type : ( isset( $message->message_type ) ? $message->message_type : 'text' ) );
 
 				// Date separator.
 				if ( $message_date !== $current_date ) :
