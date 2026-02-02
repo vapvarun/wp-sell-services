@@ -2374,7 +2374,7 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function load_services(): void {
-		check_ajax_referer( 'wpss_blocks_nonce', 'nonce' );
+		check_ajax_referer( 'wpss_blocks_frontend', 'nonce' );
 
 		$page       = absint( $_POST['page'] ?? 1 );
 		$attributes = isset( $_POST['attributes'] ) ? json_decode( wp_unslash( $_POST['attributes'] ), true ) : array();
@@ -2546,6 +2546,44 @@ class AjaxHandlers {
 			$orders_data[]   = (int) $row->orders;
 		}
 
+		// Status distribution for doughnut chart.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$status_data = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT
+					CASE
+						WHEN status IN ('pending_requirements', 'accepted') THEN 'active'
+						WHEN status = 'in_progress' THEN 'in_progress'
+						WHEN status = 'completed' THEN 'completed'
+						WHEN status IN ('cancelled', 'refunded') THEN 'cancelled'
+						ELSE 'other'
+					END as status_group,
+					COUNT(*) as count
+				FROM {$orders_table}
+				WHERE vendor_id = %d
+				GROUP BY status_group",
+				$user_id
+			)
+		);
+
+		$status_counts = array( 0, 0, 0, 0 ); // active, in_progress, completed, cancelled
+		foreach ( $status_data as $row ) {
+			switch ( $row->status_group ) {
+				case 'active':
+					$status_counts[0] = (int) $row->count;
+					break;
+				case 'in_progress':
+					$status_counts[1] = (int) $row->count;
+					break;
+				case 'completed':
+					$status_counts[2] = (int) $row->count;
+					break;
+				case 'cancelled':
+					$status_counts[3] = (int) $row->count;
+					break;
+			}
+		}
+
 		wp_send_json_success(
 			array(
 				'stats'  => $stats,
@@ -2557,6 +2595,9 @@ class AjaxHandlers {
 					'orders'   => array(
 						'labels' => $labels,
 						'data'   => $orders_data,
+					),
+					'status'   => array(
+						'data' => $status_counts,
 					),
 				),
 			)
@@ -2675,6 +2716,15 @@ class AjaxHandlers {
 
 			case 'cancel':
 				$result = $order_service->update_status( $order_id, 'cancelled' );
+				break;
+
+			case 'refund':
+				// Only customer can request refund, or vendor can issue refund.
+				if ( in_array( $order->status, array( 'pending_payment', 'pending_requirements', 'accepted' ), true ) ) {
+					$result = $order_service->update_status( $order_id, 'refunded' );
+				} else {
+					wp_send_json_error( array( 'message' => __( 'Order cannot be refunded in its current status.', 'wp-sell-services' ) ) );
+				}
 				break;
 
 			default:
