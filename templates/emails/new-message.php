@@ -1,53 +1,26 @@
 <?php
 /**
- * New Message email
+ * New Message Email (HTML)
  *
  * @package WPSellServices\Templates\Emails
- * @version 1.0.0
- *
- * @var \WPSellServices\Models\ServiceOrder $order
- * @var string                               $message_content
- * @var string                               $email_heading
- * @var \WC_Email                            $email
+ * @since   1.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
 
 do_action( 'woocommerce_email_header', $email_heading, $email );
-
-$service = wpss_get_service( $order->service_id );
 ?>
 
-<p><?php esc_html_e( 'You have received a new message on your order:', 'wp-sell-services' ); ?></p>
+<p><?php esc_html_e( 'You have a new message on your order.', 'wp-sell-services' ); ?></p>
 
-<h2>
-	<?php
-	printf(
-		/* translators: %s: Order number */
-		esc_html__( 'Order #%s', 'wp-sell-services' ),
-		esc_html( $order->order_number )
-	);
-	?>
-</h2>
+<h2><?php printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ) ); ?></h2>
 
-<div style="background-color:#f8f9fa;padding:15px;margin:20px 0;border-left:4px solid #0073aa;">
+<?php if ( ! empty( $message_content ) ) : ?>
+<div style="background: #f7f7f7; padding: 15px; border-left: 4px solid #7f54b3; margin: 20px 0;">
 	<?php echo wp_kses_post( wpautop( $message_content ) ); ?>
 </div>
+<?php endif; ?>
 
-<table class="td" cellspacing="0" cellpadding="6" style="width: 100%; margin-bottom: 20px;" border="1">
-	<tbody>
-		<tr>
-			<th class="td" scope="row" style="text-align:left;"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
-			<td class="td" style="text-align:left;"><?php echo esc_html( $service ? $service->title : __( 'N/A', 'wp-sell-services' ) ); ?></td>
-		</tr>
-	</tbody>
-</table>
+<p><a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="button" style="background-color: #7f54b3; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;"><?php esc_html_e( 'Reply', 'wp-sell-services' ); ?></a></p>
 
-<p>
-	<a class="button" href="<?php echo esc_url( add_query_arg( 'order_id', $order->id, wpss_get_dashboard_url( 'messages' ) ) ); ?>">
-		<?php esc_html_e( 'Reply to Message', 'wp-sell-services' ); ?>
-	</a>
-</p>
-
-<?php
-do_action( 'woocommerce_email_footer', $email );
+<?php do_action( 'woocommerce_email_footer', $email ); ?>

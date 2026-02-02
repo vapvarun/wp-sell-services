@@ -80,8 +80,8 @@ class NotificationService {
 		// Invalidate unread count cache.
 		$this->invalidate_unread_cache( $user_id );
 
-		// Send email notification if enabled.
-		if ( $this->should_send_email( $user_id, $type ) ) {
+		// Send email notification if enabled and WooCommerce isn't handling it.
+		if ( $this->should_send_email( $user_id, $type ) && ! $this->is_wc_handling_email( $type ) ) {
 			$this->send_email( $user_id, $title, $message, $data );
 		}
 
@@ -245,16 +245,58 @@ class NotificationService {
 			return;
 		}
 
-		// Notify vendor.
+		// Get service and user details.
+		$service      = get_post( $order->service_id );
+		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$buyer        = get_user_by( 'id', $order->customer_id );
+		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
+		$vendor       = get_user_by( 'id', $order->vendor_id );
+		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		$amount       = wpss_format_price( $order->total );
+
+		// Notify vendor with detailed message.
+		$vendor_message = sprintf(
+			/* translators: 1: buyer name, 2: service name, 3: order number, 4: amount */
+			__( 'Great news! %1$s has placed an order for your service.<br><br><strong>Order Details:</strong><br>Service: %2$s<br>Order Number: #%3$s<br>Amount: %4$s<br><br>The buyer will submit their requirements shortly. You\'ll be notified when they do so you can start working on the order.', 'wp-sell-services' ),
+			esc_html( $buyer_name ),
+			esc_html( $service_name ),
+			esc_html( $order->order_number ),
+			esc_html( $amount )
+		);
+
 		$this->create(
 			$order->vendor_id,
 			self::TYPE_ORDER_CREATED,
 			__( 'New Order Received', 'wp-sell-services' ),
-			/* translators: %s: order number */
-			sprintf( __( 'You have received a new order #%s', 'wp-sell-services' ), $order->order_number ),
+			$vendor_message,
 			array(
 				'order_id'     => $order_id,
 				'order_number' => $order->order_number,
+				'service_name' => $service_name,
+				'amount'       => $amount,
+			)
+		);
+
+		// Notify buyer with confirmation.
+		$buyer_message = sprintf(
+			/* translators: 1: service name, 2: vendor name, 3: order number, 4: amount */
+			__( 'Thank you for your order!<br><br><strong>Order Confirmation:</strong><br>Service: %1$s<br>Seller: %2$s<br>Order Number: #%3$s<br>Amount: %4$s<br><br><strong>Next Step:</strong> Please submit your requirements so the seller can start working on your order.', 'wp-sell-services' ),
+			esc_html( $service_name ),
+			esc_html( $vendor_name ),
+			esc_html( $order->order_number ),
+			esc_html( $amount )
+		);
+
+		$this->create(
+			$order->customer_id,
+			'order_confirmation',
+			__( 'Order Confirmed', 'wp-sell-services' ),
+			$buyer_message,
+			array(
+				'order_id'     => $order_id,
+				'order_number' => $order->order_number,
+				'service_name' => $service_name,
+				'amount'       => $amount,
 			)
 		);
 	}
@@ -274,26 +316,190 @@ class NotificationService {
 			return;
 		}
 
+		// Get service and user details.
+		$service      = get_post( $order->service_id );
+		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+		$buyer        = get_user_by( 'id', $order->customer_id );
+		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
+		$vendor       = get_user_by( 'id', $order->vendor_id );
+		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+
 		$statuses     = \WPSellServices\Models\ServiceOrder::get_statuses();
 		$status_label = $statuses[ $new_status ] ?? $new_status;
 
-		// Notify both customer and vendor.
-		$users = array( $order->customer_id, $order->vendor_id );
+		// Generate context-specific messages based on status.
+		switch ( $new_status ) {
+			case 'in_progress':
+				// Notify vendor that requirements are received.
+				$this->create(
+					$order->vendor_id,
+					'order_started',
+					__( 'Order Ready to Start', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: buyer name, 2: order number, 3: service name */
+						__( '%1$s has submitted the requirements for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>You can now start working on this order. Please deliver within the agreed timeframe.', 'wp-sell-services' ),
+						esc_html( $buyer_name ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				// Notify buyer that work has started.
+				$this->create(
+					$order->customer_id,
+					'order_in_progress',
+					__( 'Your Order is In Progress', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: vendor name, 2: order number, 3: service name */
+						__( '%1$s has received your requirements and started working on Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>You\'ll be notified when the delivery is ready for your review.', 'wp-sell-services' ),
+						esc_html( $vendor_name ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				break;
 
-		foreach ( $users as $user_id ) {
-			$this->create(
-				$user_id,
-				self::TYPE_ORDER_STATUS,
-				__( 'Order Status Updated', 'wp-sell-services' ),
-				/* translators: 1: order number, 2: status */
-				sprintf( __( 'Order #%1$s status changed to %2$s', 'wp-sell-services' ), $order->order_number, $status_label ),
-				array(
-					'order_id'     => $order_id,
-					'order_number' => $order->order_number,
-					'new_status'   => $new_status,
-					'old_status'   => $old_status,
-				)
-			);
+			case 'pending_approval':
+				// Notify buyer that delivery is ready.
+				$this->create(
+					$order->customer_id,
+					self::TYPE_DELIVERY_SUBMITTED,
+					__( 'Delivery Ready for Review', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: vendor name, 2: order number, 3: service name */
+						__( '%1$s has submitted the delivery for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>Please review the delivery and either accept it to complete the order, or request a revision if changes are needed.', 'wp-sell-services' ),
+						esc_html( $vendor_name ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				break;
+
+			case 'completed':
+				// Notify both parties.
+				$this->create(
+					$order->customer_id,
+					self::TYPE_DELIVERY_ACCEPTED,
+					__( 'Order Completed', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: order number, 2: service name, 3: vendor name */
+						__( 'Order #%1$s has been completed successfully!<br><br><strong>Service:</strong> %2$s<br><strong>Seller:</strong> %3$s<br><br>Thank you for your business. If you\'re satisfied with the service, please consider leaving a review to help other buyers.', 'wp-sell-services' ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name ),
+						esc_html( $vendor_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				$this->create(
+					$order->vendor_id,
+					'order_completed_vendor',
+					__( 'Order Completed - Payment Released', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: buyer name, 2: order number, 3: service name */
+						__( 'Congratulations! %1$s has accepted the delivery for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>The payment has been released to your account. Thank you for providing excellent service!', 'wp-sell-services' ),
+						esc_html( $buyer_name ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				break;
+
+			case 'revision_requested':
+				// Notify vendor about revision request.
+				$this->create(
+					$order->vendor_id,
+					self::TYPE_REVISION_REQUESTED,
+					__( 'Revision Requested', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: buyer name, 2: order number, 3: service name */
+						__( '%1$s has requested a revision for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>Please review their feedback and submit an updated delivery.', 'wp-sell-services' ),
+						esc_html( $buyer_name ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				break;
+
+			case 'cancelled':
+				// Notify both parties.
+				$this->create(
+					$order->customer_id,
+					'order_cancelled',
+					__( 'Order Cancelled', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: order number, 2: service name */
+						__( 'Order #%1$s has been cancelled.<br><br><strong>Service:</strong> %2$s<br><br>If you have any questions about this cancellation, please contact support.', 'wp-sell-services' ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				$this->create(
+					$order->vendor_id,
+					'order_cancelled',
+					__( 'Order Cancelled', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: order number, 2: service name, 3: buyer name */
+						__( 'Order #%1$s from %3$s has been cancelled.<br><br><strong>Service:</strong> %2$s<br><br>If you have any questions about this cancellation, please contact support.', 'wp-sell-services' ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name ),
+						esc_html( $buyer_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				break;
+
+			case 'disputed':
+				// Notify both parties about dispute.
+				$this->create(
+					$order->customer_id,
+					self::TYPE_DISPUTE_OPENED,
+					__( 'Dispute Opened', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: order number, 2: service name */
+						__( 'A dispute has been opened for Order #%1$s.<br><br><strong>Service:</strong> %2$s<br><br>Our support team will review the case and get back to you soon.', 'wp-sell-services' ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				$this->create(
+					$order->vendor_id,
+					self::TYPE_DISPUTE_OPENED,
+					__( 'Dispute Opened', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: order number, 2: service name */
+						__( 'A dispute has been opened for Order #%1$s.<br><br><strong>Service:</strong> %2$s<br><br>Our support team will review the case and get back to you soon. Please prepare any relevant information.', 'wp-sell-services' ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				break;
+
+			default:
+				// Generic status update for any other status.
+				$users = array( $order->customer_id, $order->vendor_id );
+				foreach ( $users as $user_id ) {
+					$this->create(
+						$user_id,
+						self::TYPE_ORDER_STATUS,
+						__( 'Order Status Updated', 'wp-sell-services' ),
+						sprintf(
+							/* translators: 1: order number, 2: status, 3: service name */
+							__( 'Order #%1$s status has been updated to: <strong>%2$s</strong><br><br><strong>Service:</strong> %3$s', 'wp-sell-services' ),
+							esc_html( $order->order_number ),
+							esc_html( $status_label ),
+							esc_html( $service_name )
+						),
+						array( 'order_id' => $order_id, 'order_number' => $order->order_number, 'new_status' => $new_status )
+					);
+				}
+				break;
 		}
 	}
 
@@ -305,21 +511,391 @@ class NotificationService {
 	 * @param int $recipient_id    Recipient user ID.
 	 * @return void
 	 */
-	public function notify_new_message( int $conversation_id, int $sender_id, int $recipient_id ): void {
+	public function notify_new_message( int $conversation_id, int $sender_id, int $recipient_id, string $message_content = '' ): void {
+		global $wpdb;
+
 		$sender      = get_user_by( 'id', $sender_id );
 		$sender_name = $sender ? $sender->display_name : __( 'Someone', 'wp-sell-services' );
+
+		// Get conversation details for context.
+		$conversation = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT c.*, o.order_number, o.service_id
+				FROM {$wpdb->prefix}wpss_conversations c
+				LEFT JOIN {$wpdb->prefix}wpss_orders o ON c.order_id = o.id
+				WHERE c.id = %d",
+				$conversation_id
+			)
+		);
+
+		$service_name = '';
+		$order_number = '';
+
+		if ( $conversation ) {
+			$order_number = $conversation->order_number ?? '';
+			if ( ! empty( $conversation->service_id ) ) {
+				$service = get_post( $conversation->service_id );
+				$service_name = $service ? $service->post_title : '';
+			}
+		}
+
+		// Build detailed notification message.
+		$notification = sprintf(
+			/* translators: %s: sender name */
+			__( 'You have received a new message from <strong>%s</strong>.', 'wp-sell-services' ),
+			esc_html( $sender_name )
+		);
+
+		if ( $order_number ) {
+			$notification .= '<br><br>';
+			$notification .= sprintf(
+				/* translators: %s: order number */
+				__( '<strong>Order:</strong> #%s', 'wp-sell-services' ),
+				esc_html( $order_number )
+			);
+		}
+
+		if ( $service_name ) {
+			$notification .= '<br>';
+			$notification .= sprintf(
+				/* translators: %s: service name */
+				__( '<strong>Service:</strong> %s', 'wp-sell-services' ),
+				esc_html( $service_name )
+			);
+		}
+
+		// Include the actual message content.
+		if ( ! empty( $message_content ) ) {
+			// Truncate long messages for email preview.
+			$preview = wp_trim_words( wp_strip_all_tags( $message_content ), 50, '...' );
+			$notification .= '<br><br>';
+			$notification .= '<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #1e3a5f; margin: 10px 0;">';
+			$notification .= '<strong>' . esc_html__( 'Message:', 'wp-sell-services' ) . '</strong><br>';
+			$notification .= '<em>"' . esc_html( $preview ) . '"</em>';
+			$notification .= '</div>';
+		}
+
+		$notification .= '<br>';
+		$notification .= __( 'Log in to your dashboard to view the full conversation and reply.', 'wp-sell-services' );
 
 		$this->create(
 			$recipient_id,
 			self::TYPE_NEW_MESSAGE,
-			__( 'New Message', 'wp-sell-services' ),
-			/* translators: %s: sender name */
-			sprintf( __( '%s sent you a message', 'wp-sell-services' ), $sender_name ),
+			__( 'New Message Received', 'wp-sell-services' ),
+			$notification,
 			array(
 				'conversation_id' => $conversation_id,
 				'sender_id'       => $sender_id,
+				'order_id'        => $conversation ? $conversation->order_id : null,
 			)
 		);
+	}
+
+	/**
+	 * Notify review received.
+	 *
+	 * Sends notification to vendor when they receive a review.
+	 *
+	 * @param int $review_id Review ID.
+	 * @param int $order_id  Order ID.
+	 * @return void
+	 */
+	public function notify_review_received( int $review_id, int $order_id ): void {
+		global $wpdb;
+
+		// Get review details.
+		$review = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}wpss_reviews WHERE id = %d",
+				$review_id
+			)
+		);
+
+		if ( ! $review ) {
+			return;
+		}
+
+		// Get order details.
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return;
+		}
+
+		// Get reviewer info.
+		$reviewer      = get_user_by( 'id', $review->customer_id );
+		$reviewer_name = $reviewer ? $reviewer->display_name : __( 'A customer', 'wp-sell-services' );
+
+		// Get service info.
+		$service      = get_post( $review->service_id );
+		$service_name = $service ? $service->post_title : __( 'your service', 'wp-sell-services' );
+
+		// Format rating display.
+		$rating       = (int) $review->rating;
+		$rating_stars = str_repeat( '★', $rating ) . str_repeat( '☆', 5 - $rating );
+
+		// Build message.
+		$message = sprintf(
+			/* translators: 1: reviewer name, 2: service name */
+			__( '<strong>%1$s</strong> has left a review for <strong>%2$s</strong>.', 'wp-sell-services' ),
+			esc_html( $reviewer_name ),
+			esc_html( $service_name )
+		);
+
+		$message .= '<br><br>';
+		$message .= sprintf(
+			/* translators: %s: star rating */
+			__( '<strong>Rating:</strong> %s', 'wp-sell-services' ),
+			$rating_stars . ' (' . $rating . '/5)'
+		);
+
+		if ( ! empty( $review->comment ) ) {
+			$message .= '<br><br>';
+			$message .= sprintf(
+				/* translators: %s: review comment */
+				__( '<strong>Review:</strong><br><em>"%s"</em>', 'wp-sell-services' ),
+				esc_html( wp_trim_words( $review->comment, 50 ) )
+			);
+		}
+
+		$message .= '<br><br>';
+		$message .= __( 'Thank you for providing excellent service! Reviews help build your reputation and attract more customers.', 'wp-sell-services' );
+
+		$this->create(
+			$review->vendor_id,
+			self::TYPE_REVIEW_RECEIVED,
+			__( 'New Review Received', 'wp-sell-services' ),
+			$message,
+			array(
+				'review_id'    => $review_id,
+				'order_id'     => $order_id,
+				'service_id'   => $review->service_id,
+				'rating'       => $rating,
+				'reviewer_id'  => $review->customer_id,
+			)
+		);
+	}
+
+	/**
+	 * Notify dispute resolved.
+	 *
+	 * Sends notification to both parties when a dispute is resolved.
+	 *
+	 * @param int    $dispute_id    Dispute ID.
+	 * @param string $resolution    Resolution type.
+	 * @param object $dispute       Dispute object.
+	 * @param float  $refund_amount Refund amount.
+	 * @return void
+	 */
+	public function notify_dispute_resolved( int $dispute_id, string $resolution, object $dispute, float $refund_amount ): void {
+		global $wpdb;
+
+		// Get order details.
+		$order = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
+				$dispute->order_id
+			)
+		);
+
+		if ( ! $order ) {
+			return;
+		}
+
+		// Get service name.
+		$service      = get_post( $order->service_id );
+		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
+
+		// Get resolution label.
+		$resolution_labels = array(
+			'buyer_favor'  => __( 'resolved in favor of the buyer', 'wp-sell-services' ),
+			'vendor_favor' => __( 'resolved in favor of the seller', 'wp-sell-services' ),
+			'partial'      => __( 'resolved with a partial refund', 'wp-sell-services' ),
+			'mutual'       => __( 'resolved by mutual agreement', 'wp-sell-services' ),
+			'cancelled'    => __( 'cancelled', 'wp-sell-services' ),
+		);
+		$resolution_label = $resolution_labels[ $resolution ] ?? __( 'resolved', 'wp-sell-services' );
+
+		// Notify customer.
+		$customer_message = sprintf(
+			/* translators: 1: order number, 2: resolution */
+			__( 'The dispute for Order #%1$s has been <strong>%2$s</strong>.', 'wp-sell-services' ),
+			esc_html( $order->order_number ),
+			$resolution_label
+		);
+
+		$customer_message .= '<br><br>';
+		$customer_message .= sprintf(
+			/* translators: %s: service name */
+			__( '<strong>Service:</strong> %s', 'wp-sell-services' ),
+			esc_html( $service_name )
+		);
+
+		if ( $refund_amount > 0 ) {
+			$customer_message .= '<br>';
+			$customer_message .= sprintf(
+				/* translators: %s: refund amount */
+				__( '<strong>Refund Amount:</strong> %s', 'wp-sell-services' ),
+				wpss_format_price( $refund_amount )
+			);
+			$customer_message .= '<br><br>';
+			$customer_message .= __( 'The refund will be processed according to our refund policy.', 'wp-sell-services' );
+		}
+
+		$customer_message .= '<br><br>';
+		$customer_message .= __( 'If you have any questions about this resolution, please contact our support team.', 'wp-sell-services' );
+
+		$this->create(
+			$order->customer_id,
+			self::TYPE_DISPUTE_RESOLVED,
+			__( 'Dispute Resolved', 'wp-sell-services' ),
+			$customer_message,
+			array(
+				'dispute_id'    => $dispute_id,
+				'order_id'      => $dispute->order_id,
+				'resolution'    => $resolution,
+				'refund_amount' => $refund_amount,
+			)
+		);
+
+		// Notify vendor.
+		$vendor_message = sprintf(
+			/* translators: 1: order number, 2: resolution */
+			__( 'The dispute for Order #%1$s has been <strong>%2$s</strong>.', 'wp-sell-services' ),
+			esc_html( $order->order_number ),
+			$resolution_label
+		);
+
+		$vendor_message .= '<br><br>';
+		$vendor_message .= sprintf(
+			/* translators: %s: service name */
+			__( '<strong>Service:</strong> %s', 'wp-sell-services' ),
+			esc_html( $service_name )
+		);
+
+		if ( $refund_amount > 0 ) {
+			$vendor_message .= '<br>';
+			$vendor_message .= sprintf(
+				/* translators: %s: refund amount */
+				__( '<strong>Refund Amount:</strong> %s (deducted from earnings)', 'wp-sell-services' ),
+				wpss_format_price( $refund_amount )
+			);
+		}
+
+		$vendor_message .= '<br><br>';
+		$vendor_message .= __( 'Thank you for your cooperation in resolving this dispute. If you have any questions, please contact our support team.', 'wp-sell-services' );
+
+		$this->create(
+			$order->vendor_id,
+			self::TYPE_DISPUTE_RESOLVED,
+			__( 'Dispute Resolved', 'wp-sell-services' ),
+			$vendor_message,
+			array(
+				'dispute_id'    => $dispute_id,
+				'order_id'      => $dispute->order_id,
+				'resolution'    => $resolution,
+				'refund_amount' => $refund_amount,
+			)
+		);
+	}
+
+	/**
+	 * Send notification (alias for create with more descriptive name).
+	 *
+	 * Used by DisputeWorkflowManager and other services for semantic clarity.
+	 *
+	 * @param int    $user_id User to notify.
+	 * @param string $type    Notification type.
+	 * @param array  $data    Notification data.
+	 * @return int|false Notification ID or false on failure.
+	 */
+	public function send( int $user_id, string $type, array $data = array() ) {
+		// Build title and message based on type.
+		$title   = '';
+		$message = '';
+
+		switch ( $type ) {
+			case 'dispute_opened':
+				$title = __( 'Dispute Opened', 'wp-sell-services' );
+				$opener = get_user_by( 'id', $data['opened_by'] ?? 0 );
+				$opener_name = $opener ? $opener->display_name : __( 'The other party', 'wp-sell-services' );
+				$message = sprintf(
+					/* translators: 1: opener name, 2: order ID */
+					__( '<strong>%1$s</strong> has opened a dispute for Order #%2$d.', 'wp-sell-services' ),
+					esc_html( $opener_name ),
+					$data['order_id'] ?? 0
+				);
+				if ( ! empty( $data['reason'] ) ) {
+					$message .= '<br><br>';
+					$message .= sprintf(
+						/* translators: %s: dispute reason */
+						__( '<strong>Reason:</strong> %s', 'wp-sell-services' ),
+						esc_html( $data['reason'] )
+					);
+				}
+				if ( ! empty( $data['response_deadline'] ) ) {
+					$message .= '<br><br>';
+					$deadline = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $data['response_deadline'] ) );
+					$message .= sprintf(
+						/* translators: %s: deadline date */
+						__( 'Please respond by <strong>%s</strong> to avoid automatic escalation.', 'wp-sell-services' ),
+						$deadline
+					);
+				}
+				break;
+
+			case 'dispute_response_received':
+				$title = __( 'Dispute Response Received', 'wp-sell-services' );
+				$from_user = get_user_by( 'id', $data['from_user'] ?? 0 );
+				$from_name = $from_user ? $from_user->display_name : __( 'The other party', 'wp-sell-services' );
+				$message = sprintf(
+					/* translators: 1: responder name, 2: order ID */
+					__( '<strong>%1$s</strong> has responded to the dispute for Order #%2$d.', 'wp-sell-services' ),
+					esc_html( $from_name ),
+					$data['order_id'] ?? 0
+				);
+				$message .= '<br><br>';
+				$message .= __( 'Please log in to your dashboard to view the response and continue the discussion if needed.', 'wp-sell-services' );
+				break;
+
+			case 'dispute_resolved':
+				// Use dedicated method for resolved disputes.
+				return $this->notify_dispute_resolved(
+					$data['dispute_id'] ?? 0,
+					$data['resolution'] ?? 'resolved',
+					(object) array( 'order_id' => $data['order_id'] ?? 0 ),
+					$data['refund_amount'] ?? 0.0
+				);
+
+			case 'dispute_reminder':
+				$title = __( 'Dispute Response Reminder', 'wp-sell-services' );
+				$message = sprintf(
+					/* translators: %d: order ID */
+					__( 'This is a reminder that you have a pending dispute for Order #%d that requires your response.', 'wp-sell-services' ),
+					$data['order_id'] ?? 0
+				);
+				$message .= '<br><br>';
+				$message .= __( 'Please log in to your dashboard to respond to the dispute to avoid automatic escalation.', 'wp-sell-services' );
+				break;
+
+			case 'deadline_warning':
+				$title = __( 'Order Deadline Approaching', 'wp-sell-services' );
+				$message = sprintf(
+					/* translators: %d: order ID */
+					__( 'The delivery deadline for Order #%d is approaching.', 'wp-sell-services' ),
+					$data['order_id'] ?? 0
+				);
+				$message .= '<br><br>';
+				$message .= __( 'Please ensure you deliver the order on time to maintain your seller rating.', 'wp-sell-services' );
+				break;
+
+			default:
+				$title = __( 'Notification', 'wp-sell-services' );
+				$message = __( 'You have a new notification. Please check your dashboard for details.', 'wp-sell-services' );
+				break;
+		}
+
+		return $this->create( $user_id, $type, $title, $message, $data );
 	}
 
 	/**
@@ -481,6 +1057,51 @@ class NotificationService {
 	 * @return bool
 	 */
 	private function should_send_email( int $user_id, string $type ): bool {
+		// First check admin notification settings (global toggle).
+		$notification_settings = get_option( 'wpss_notifications', array() );
+
+		// Map notification types to admin setting keys.
+		// Includes both constants and types used by OrderWorkflowManager.
+		$type_to_setting = array(
+			// NotificationService constants.
+			self::TYPE_ORDER_CREATED      => 'notify_new_order',
+			self::TYPE_DELIVERY_SUBMITTED => 'notify_delivery_submitted',
+			self::TYPE_DELIVERY_ACCEPTED  => 'notify_order_completed',
+			self::TYPE_DISPUTE_OPENED     => 'notify_dispute_opened',
+			self::TYPE_DISPUTE_RESOLVED   => 'notify_dispute_opened',
+			self::TYPE_REVISION_REQUESTED => 'notify_revision_requested',
+			self::TYPE_NEW_MESSAGE        => 'notify_new_message',
+			self::TYPE_REVIEW_RECEIVED    => 'notify_new_review',
+			// Types used by OrderWorkflowManager and status notifications.
+			'new_order'                   => 'notify_new_order',
+			'order_created'               => 'notify_new_order',
+			'order_confirmation'          => 'notify_new_order',
+			'order_started'               => 'notify_new_order',
+			'order_in_progress'           => 'notify_new_order',
+			'submit_requirements'         => 'notify_new_order',
+			'order_completed'             => 'notify_order_completed',
+			'order_completed_vendor'      => 'notify_order_completed',
+			'order_auto_completed'        => 'notify_order_completed',
+			'order_cancelled'             => 'notify_order_cancelled',
+			'delivery_received'           => 'notify_delivery_submitted',
+			'revision_requested'          => 'notify_revision_requested',
+			'order_late'                  => 'notify_new_order',
+			'deadline_reminder'           => 'notify_new_order',
+			// Dispute types used by DisputeWorkflowManager.
+			'dispute_opened'              => 'notify_dispute_opened',
+			'dispute_response_received'   => 'notify_dispute_opened',
+			'dispute_resolved'            => 'notify_dispute_opened',
+			'dispute_reminder'            => 'notify_dispute_opened',
+		);
+
+		// Check if admin has disabled this notification type globally.
+		if ( isset( $type_to_setting[ $type ] ) ) {
+			$setting_key = $type_to_setting[ $type ];
+			if ( isset( $notification_settings[ $setting_key ] ) && ! $notification_settings[ $setting_key ] ) {
+				return false;
+			}
+		}
+
 		// Check user preferences.
 		$email_preferences = get_user_meta( $user_id, 'wpss_email_notifications', true );
 
@@ -488,14 +1109,40 @@ class NotificationService {
 			return (bool) $email_preferences[ $type ];
 		}
 
-		// Default: send emails for important notifications.
+		// Default: send emails for important notifications (WooCommerce-independent).
 		$important_types = array(
+			// NotificationService constants - ALL types send emails by default.
 			self::TYPE_ORDER_CREATED,
+			self::TYPE_ORDER_STATUS,
+			self::TYPE_NEW_MESSAGE,
 			self::TYPE_DELIVERY_SUBMITTED,
 			self::TYPE_DELIVERY_ACCEPTED,
+			self::TYPE_REVISION_REQUESTED,
+			self::TYPE_REVIEW_RECEIVED,
 			self::TYPE_DISPUTE_OPENED,
+			self::TYPE_DISPUTE_RESOLVED,
 			self::TYPE_DEADLINE_WARNING,
 			self::TYPE_VENDOR_REGISTERED,
+			// OrderWorkflowManager types and status notifications.
+			'new_order',
+			'order_created',
+			'order_confirmation',
+			'order_started',
+			'order_in_progress',
+			'submit_requirements',
+			'order_completed',
+			'order_completed_vendor',
+			'order_auto_completed',
+			'order_cancelled',
+			'delivery_received',
+			'revision_requested',
+			'order_late',
+			'deadline_reminder',
+			// Dispute types used by DisputeWorkflowManager.
+			'dispute_opened',
+			'dispute_response_received',
+			'dispute_resolved',
+			'dispute_reminder',
 		);
 
 		return in_array( $type, $important_types, true );
@@ -543,22 +1190,81 @@ class NotificationService {
 	 * @return string
 	 */
 	private function build_email_content( string $message, array $data = array() ): string {
-		$content  = '<html><body>';
-		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px;">';
-		$content .= '<h2 style="color: #333;">' . esc_html( get_bloginfo( 'name' ) ) . '</h2>';
-		$content .= '<p>' . wp_kses_post( $message ) . '</p>';
+		$site_name = get_bloginfo( 'name' );
+		$site_url  = home_url();
 
-		// Add action link if order ID is available.
+		// Professional email template.
+		$content = '<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #f5f5f5;">
+	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+		<tr>
+			<td align="center">
+				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+					<!-- Header -->
+					<tr>
+						<td style="background-color: #1e3a5f; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+							<h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">' . esc_html( $site_name ) . '</h1>
+						</td>
+					</tr>
+					<!-- Content -->
+					<tr>
+						<td style="padding: 40px 30px;">
+							<div style="color: #333333; font-size: 16px; line-height: 1.6;">
+								' . wp_kses_post( $message ) . '
+							</div>';
+
+		// Add action button if order ID is available.
 		if ( ! empty( $data['order_id'] ) ) {
-			$order_url = home_url( '/service-order/' . $data['order_id'] . '/' );
-			$content  .= '<p><a href="' . esc_url( $order_url ) . '" style="background: #0073aa; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 4px;">';
-			$content  .= esc_html__( 'View Order', 'wp-sell-services' );
-			$content  .= '</a></p>';
+			$order_url = wpss_get_order_url( (int) $data['order_id'] );
+			$content  .= '
+							<div style="text-align: center; margin-top: 30px;">
+								<a href="' . esc_url( $order_url ) . '" style="display: inline-block; background-color: #1e3a5f; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Order Details</a>
+							</div>';
 		}
 
-		$content .= '</div>';
-		$content .= '</body></html>';
+		$content .= '
+						</td>
+					</tr>
+					<!-- Footer -->
+					<tr>
+						<td style="background-color: #f8f9fa; padding: 25px 30px; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
+							<p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0; text-align: center;">
+								This email was sent from <a href="' . esc_url( $site_url ) . '" style="color: #1e3a5f; text-decoration: none;">' . esc_html( $site_name ) . '</a>
+							</p>
+							<p style="color: #adb5bd; font-size: 12px; margin: 0; text-align: center;">
+								If you have any questions, please contact our support team.
+							</p>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>';
 
 		return $content;
+	}
+
+	/**
+	 * Check if WooCommerce is handling emails for this notification type.
+	 *
+	 * When WooCommerce is active and enabled, it provides styled email templates
+	 * for order-related notifications. We skip sending from NotificationService
+	 * to avoid duplicate emails.
+	 *
+	 * @param string $type Notification type.
+	 * @return bool True if WooCommerce handles this email type.
+	 */
+	private function is_wc_handling_email( string $type ): bool {
+		// Always return false to ensure NotificationService sends emails directly.
+		// This makes the plugin truly WooCommerce-independent.
+		// WCEmailProvider emails are optional enhanced templates when WC is active.
+		return false;
 	}
 }

@@ -110,7 +110,21 @@ class RequirementsService {
 		}
 
 		// Check if order is in correct status.
-		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS !== $order->status ) {
+		$allowed_status = ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status;
+
+		// Allow late submission if enabled and order is in_progress without existing requirements.
+		$is_late_submission = false;
+		if ( ! $allowed_status && ServiceOrder::STATUS_IN_PROGRESS === $order->status ) {
+			$allow_late_submission = wpss_allow_late_requirements_submission();
+			$has_existing          = $this->has_requirements( $order_id );
+
+			if ( $allow_late_submission && ! $has_existing ) {
+				$allowed_status     = true;
+				$is_late_submission = true;
+			}
+		}
+
+		if ( ! $allowed_status ) {
 			return array(
 				'success' => false,
 				'message' => __( 'Requirements cannot be submitted for this order status.', 'wp-sell-services' ),
@@ -152,12 +166,19 @@ class RequirementsService {
 			);
 		}
 
-		// Start order work.
-		$this->order_service->start_work( $order_id );
+		// Start order work (only if not a late submission - order is already in progress).
+		if ( ! $is_late_submission ) {
+			$this->order_service->start_work( $order_id );
+		}
+
+		$success_message = $is_late_submission
+			? __( 'Requirements submitted successfully. The vendor has been notified.', 'wp-sell-services' )
+			: __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' );
 
 		return array(
-			'success' => true,
-			'message' => __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' ),
+			'success'         => true,
+			'message'         => $success_message,
+			'late_submission' => $is_late_submission,
 		);
 	}
 

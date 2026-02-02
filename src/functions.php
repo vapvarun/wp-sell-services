@@ -831,6 +831,27 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 }
 
 /**
+ * Check if late requirements submission is allowed.
+ *
+ * @since 1.0.0
+ *
+ * @return bool Whether late requirements submission is enabled.
+ */
+function wpss_allow_late_requirements_submission(): bool {
+	$order_settings = get_option( 'wpss_orders', array() );
+	$allow_late     = ! empty( $order_settings['allow_late_requirements'] );
+
+	/**
+	 * Filter whether late requirements submission is allowed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param bool $allow_late Whether late submission is allowed.
+	 */
+	return (bool) apply_filters( 'wpss_allow_late_requirements_submission', $allow_late );
+}
+
+/**
  * Add a notification for a user.
  *
  * Helper function to simplify adding notifications via NotificationService.

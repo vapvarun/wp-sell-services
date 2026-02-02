@@ -256,6 +256,7 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 	$service_requirements  = array();
 	$submitted_data        = array();
 	$submitted_attachments = array();
+	$submitted_at          = null;
 	if ( $service ) {
 		$service_requirements = get_post_meta( $service->ID, '_wpss_requirements', true );
 		if ( ! is_array( $service_requirements ) ) {
@@ -276,12 +277,28 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 	if ( $submitted_row ) {
 		$submitted_data        = json_decode( $submitted_row->field_data, true ) ?: array();
 		$submitted_attachments = json_decode( $submitted_row->attachments, true ) ?: array();
+		$submitted_at          = $submitted_row->submitted_at ?? null;
 	}
 	$has_submitted_requirements = ! empty( $submitted_data ) || ! empty( $submitted_attachments );
+	$service_has_requirements   = ! empty( $service_requirements );
+
+	// Determine what requirements UI to show:
+	// 1. FORM: Status is pending_requirements + user is customer + service has requirements + not yet submitted
+	// 2. READ-ONLY VIEW: Requirements have been submitted (show to both vendor and customer)
+	// 3. NOT PROVIDED: Service has requirements but none submitted and order is past pending_requirements
+	// 4. NO REQUIREMENTS: Service has no requirements defined
+	$show_requirements_form     = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
+	$show_submitted_readonly    = $has_submitted_requirements && ( $is_vendor || $is_customer );
+	$show_not_provided_notice   = ! $has_submitted_requirements && $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
+	$show_no_requirements_msg   = ! $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
+
+	// Allow late requirements submission if enabled in settings and order is in_progress without requirements.
+	$allow_late_submission      = apply_filters( 'wpss_allow_late_requirements_submission', false );
+	$show_late_requirements_form = $allow_late_submission && 'in_progress' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
 	?>
 
-	<!-- Requirements Section (for pending_requirements status) -->
-	<?php if ( 'pending_requirements' === $order->status && $is_customer && ! empty( $service_requirements ) ) : ?>
+	<!-- Requirements Section (for pending_requirements status OR late submission) -->
+	<?php if ( $show_requirements_form || $show_late_requirements_form ) : ?>
 		<section class="wpss-order-section wpss-order-section--requirements">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
@@ -293,19 +310,33 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
-				<div class="wpss-alert wpss-alert--info" style="margin-bottom: 1.5rem;">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10"/>
-						<line x1="12" y1="16" x2="12" y2="12"/>
-						<line x1="12" y1="8" x2="12.01" y2="8"/>
-					</svg>
-					<p><?php esc_html_e( 'Please provide the following information so the seller can start working on your order.', 'wp-sell-services' ); ?></p>
-				</div>
+				<?php if ( $show_late_requirements_form ) : ?>
+					<div class="wpss-alert wpss-alert--warning" style="margin-bottom: 1.5rem;">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+							<line x1="12" y1="9" x2="12" y2="13"/>
+							<line x1="12" y1="17" x2="12.01" y2="17"/>
+						</svg>
+						<p><?php esc_html_e( 'Work has already started, but you can still submit requirements to help the seller complete your order.', 'wp-sell-services' ); ?></p>
+					</div>
+				<?php else : ?>
+					<div class="wpss-alert wpss-alert--info" style="margin-bottom: 1.5rem;">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10"/>
+							<line x1="12" y1="16" x2="12" y2="12"/>
+							<line x1="12" y1="8" x2="12.01" y2="8"/>
+						</svg>
+						<p><?php esc_html_e( 'Please provide the following information so the seller can start working on your order.', 'wp-sell-services' ); ?></p>
+					</div>
+				<?php endif; ?>
 
 				<form id="wpss-requirements-form" class="wpss-requirements-form" enctype="multipart/form-data">
 					<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
 					<input type="hidden" name="action" value="wpss_submit_requirements">
 					<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+					<?php if ( $show_late_requirements_form ) : ?>
+						<input type="hidden" name="late_submission" value="1">
+					<?php endif; ?>
 
 					<?php foreach ( $service_requirements as $index => $requirement ) : ?>
 						<?php
@@ -379,8 +410,8 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 		</section>
 	<?php endif; ?>
 
-	<!-- Submitted Requirements (for vendor or after submission) -->
-	<?php if ( $has_submitted_requirements && ( $is_vendor || 'requirements_submitted' === $order->status || in_array( $order->status, array( 'accepted', 'in_progress', 'pending_approval', 'completed' ), true ) ) ) : ?>
+	<!-- Submitted Requirements (for vendor or customer after submission) -->
+	<?php if ( $show_submitted_readonly ) : ?>
 		<section class="wpss-order-section wpss-order-section--requirements-view">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
@@ -390,6 +421,17 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 					</svg>
 					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
 				</h2>
+				<?php if ( $submitted_at ) : ?>
+					<span class="wpss-order-section__timestamp">
+						<?php
+						printf(
+							/* translators: %s: submission date/time */
+							esc_html__( 'Submitted %s', 'wp-sell-services' ),
+							esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submitted_at ) ) )
+						);
+						?>
+					</span>
+				<?php endif; ?>
 			</div>
 			<div class="wpss-order-section__body">
 				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
@@ -409,11 +451,23 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 							}
 						}
 					}
+
+					// Determine if text is long (for expand/collapse).
+					$is_long_text = is_string( $response_value ) && strlen( $response_value ) > 300;
 					?>
-					<div class="wpss-requirement-view">
+					<div class="wpss-requirement-view <?php echo $is_long_text ? 'wpss-requirement-view--expandable' : ''; ?>">
 						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $question ); ?></h4>
-						<div class="wpss-requirement-view__answer">
+						<div class="wpss-requirement-view__answer <?php echo $is_long_text ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
 							<?php if ( 'file' === $type && $field_attachment ) : ?>
+								<?php
+								// Check if it's an image for preview.
+								$is_image = in_array( strtolower( pathinfo( $field_attachment['name'], PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
+								?>
+								<?php if ( $is_image ) : ?>
+									<div class="wpss-requirement-view__image-preview">
+										<img src="<?php echo esc_url( $field_attachment['url'] ); ?>" alt="<?php echo esc_attr( $field_attachment['name'] ); ?>" class="wpss-requirement-view__thumbnail" loading="lazy">
+									</div>
+								<?php endif; ?>
 								<a href="<?php echo esc_url( $field_attachment['url'] ); ?>" class="wpss-file-link" target="_blank" download>
 									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -423,13 +477,100 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 									<?php echo esc_html( $field_attachment['name'] ); ?>
 								</a>
 							<?php elseif ( $response_value ) : ?>
-								<?php echo wp_kses_post( wpautop( $response_value ) ); ?>
+								<div class="wpss-requirement-view__text-content">
+									<?php echo wp_kses_post( wpautop( $response_value ) ); ?>
+								</div>
+								<?php if ( $is_long_text ) : ?>
+									<button type="button" class="wpss-requirement-view__expand-btn" aria-expanded="false">
+										<span class="wpss-expand-text"><?php esc_html_e( 'Show more', 'wp-sell-services' ); ?></span>
+										<span class="wpss-collapse-text" style="display:none;"><?php esc_html_e( 'Show less', 'wp-sell-services' ); ?></span>
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="wpss-expand-icon">
+											<polyline points="6 9 12 15 18 9"></polyline>
+										</svg>
+									</button>
+								<?php endif; ?>
+								<button type="button" class="wpss-requirement-view__copy-btn" data-copy-text="<?php echo esc_attr( $response_value ); ?>" title="<?php esc_attr_e( 'Copy to clipboard', 'wp-sell-services' ); ?>">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+									</svg>
+								</button>
 							<?php else : ?>
 								<span class="wpss-text-muted"><?php esc_html_e( 'No response provided', 'wp-sell-services' ); ?></span>
 							<?php endif; ?>
 						</div>
 					</div>
 				<?php endforeach; ?>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<!-- Requirements Section (when service has requirements but none submitted) -->
+	<?php if ( $show_not_provided_notice && ! $show_late_requirements_form ) : ?>
+		<section class="wpss-order-section wpss-order-section--requirements-view">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 11l3 3L22 4"/>
+						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+					</svg>
+					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<div class="wpss-notice wpss-notice--warning" style="margin-bottom: 20px; padding: 15px; background: #fff8e1; border-radius: 8px; border-left: 4px solid #f59e0b;">
+					<p style="margin: 0; color: #92400e;">
+						<strong><?php esc_html_e( 'Note:', 'wp-sell-services' ); ?></strong>
+						<?php esc_html_e( 'No requirements were formally submitted for this order. Below are the questions the service requires:', 'wp-sell-services' ); ?>
+					</p>
+				</div>
+				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
+					<?php
+					$question = $requirement['question'] ?? '';
+					$type     = $requirement['type'] ?? 'textarea';
+					$required = ! empty( $requirement['required'] );
+					?>
+					<div class="wpss-requirement-view">
+						<h4 class="wpss-requirement-view__question">
+							<?php echo esc_html( $question ); ?>
+							<?php if ( $required ) : ?>
+								<span class="wpss-required" style="color: #dc3545;">*</span>
+							<?php endif; ?>
+						</h4>
+						<div class="wpss-requirement-view__answer">
+							<span class="wpss-text-muted" style="color: #6c757d; font-style: italic;">
+								<?php esc_html_e( 'Not provided', 'wp-sell-services' ); ?>
+							</span>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<!-- No Requirements Message (when service has no requirements) -->
+	<?php if ( $show_no_requirements_msg ) : ?>
+		<section class="wpss-order-section wpss-order-section--requirements-view">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 11l3 3L22 4"/>
+						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+					</svg>
+					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<div class="wpss-notice wpss-notice--info" style="padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+					<p style="margin: 0; color: #1e3a5f;">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+							<circle cx="12" cy="12" r="10"/>
+							<line x1="12" y1="16" x2="12" y2="12"/>
+							<line x1="12" y1="8" x2="12.01" y2="8"/>
+						</svg>
+						<?php esc_html_e( 'This service does not require any specific information from the buyer.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
 			</div>
 		</section>
 	<?php endif; ?>
@@ -1343,6 +1484,115 @@ $can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progres
 	font-style: italic;
 }
 
+/* Requirements View Enhancements */
+.wpss-order-section__timestamp {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	font-weight: 400;
+}
+
+.wpss-requirement-view__answer {
+	position: relative;
+}
+
+.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content {
+	max-height: 120px;
+	overflow: hidden;
+	position: relative;
+}
+
+.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 40px;
+	background: linear-gradient(transparent, var(--wpss-bg-subtle, #f9fafb));
+}
+
+.wpss-requirement-view__answer.wpss-expanded .wpss-requirement-view__text-content {
+	max-height: none;
+}
+
+.wpss-requirement-view__answer.wpss-expanded .wpss-requirement-view__text-content::after {
+	display: none;
+}
+
+.wpss-requirement-view__expand-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-top: 0.5rem;
+	padding: 0;
+	background: none;
+	border: none;
+	color: var(--wpss-primary, #3b82f6);
+	font-size: 0.875rem;
+	cursor: pointer;
+	transition: color 0.2s;
+}
+
+.wpss-requirement-view__expand-btn:hover {
+	color: var(--wpss-primary-dark, #2563eb);
+}
+
+.wpss-requirement-view__expand-btn .wpss-expand-icon {
+	transition: transform 0.2s;
+}
+
+.wpss-requirement-view__answer.wpss-expanded .wpss-expand-icon {
+	transform: rotate(180deg);
+}
+
+.wpss-requirement-view__copy-btn {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 0.25rem;
+	background: var(--wpss-bg, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 4px;
+	color: var(--wpss-text-muted, #6b7280);
+	cursor: pointer;
+	opacity: 0;
+	transition: all 0.2s;
+}
+
+.wpss-requirement-view:hover .wpss-requirement-view__copy-btn {
+	opacity: 1;
+}
+
+.wpss-requirement-view__copy-btn:hover {
+	background: var(--wpss-primary, #3b82f6);
+	border-color: var(--wpss-primary, #3b82f6);
+	color: #fff;
+}
+
+.wpss-requirement-view__copy-btn.wpss-copied {
+	background: var(--wpss-success, #10b981);
+	border-color: var(--wpss-success, #10b981);
+	color: #fff;
+}
+
+.wpss-requirement-view__image-preview {
+	margin-bottom: 0.75rem;
+}
+
+.wpss-requirement-view__thumbnail {
+	max-width: 200px;
+	max-height: 150px;
+	object-fit: cover;
+	border-radius: 8px;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	cursor: pointer;
+	transition: transform 0.2s;
+}
+
+.wpss-requirement-view__thumbnail:hover {
+	transform: scale(1.02);
+}
+
 /* Alert Styles */
 .wpss-alert--info {
 	display: flex;
@@ -1390,6 +1640,76 @@ $can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progres
 	}
 }
 </style>
+
+<script>
+(function() {
+	'use strict';
+
+	// Expand/Collapse functionality for long text responses
+	document.querySelectorAll('.wpss-requirement-view__expand-btn').forEach(function(btn) {
+		btn.addEventListener('click', function() {
+			var answer = this.closest('.wpss-requirement-view__answer');
+			var isExpanded = answer.classList.toggle('wpss-expanded');
+			var expandText = this.querySelector('.wpss-expand-text');
+			var collapseText = this.querySelector('.wpss-collapse-text');
+
+			this.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+
+			if (isExpanded) {
+				answer.classList.remove('wpss-requirement-view__answer--collapsed');
+				expandText.style.display = 'none';
+				collapseText.style.display = 'inline';
+			} else {
+				answer.classList.add('wpss-requirement-view__answer--collapsed');
+				expandText.style.display = 'inline';
+				collapseText.style.display = 'none';
+			}
+		});
+	});
+
+	// Copy to clipboard functionality
+	document.querySelectorAll('.wpss-requirement-view__copy-btn').forEach(function(btn) {
+		btn.addEventListener('click', function() {
+			var textToCopy = this.getAttribute('data-copy-text');
+			var button = this;
+
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(textToCopy).then(function() {
+					button.classList.add('wpss-copied');
+					setTimeout(function() {
+						button.classList.remove('wpss-copied');
+					}, 2000);
+				});
+			} else {
+				// Fallback for older browsers
+				var textarea = document.createElement('textarea');
+				textarea.value = textToCopy;
+				textarea.style.position = 'fixed';
+				textarea.style.opacity = '0';
+				document.body.appendChild(textarea);
+				textarea.select();
+				try {
+					document.execCommand('copy');
+					button.classList.add('wpss-copied');
+					setTimeout(function() {
+						button.classList.remove('wpss-copied');
+					}, 2000);
+				} catch (err) {
+					console.error('Copy failed', err);
+				}
+				document.body.removeChild(textarea);
+			}
+		});
+	});
+
+	// Image preview click to open in new tab
+	document.querySelectorAll('.wpss-requirement-view__thumbnail').forEach(function(img) {
+		img.addEventListener('click', function() {
+			window.open(this.src, '_blank');
+		});
+	});
+})();
+</script>
 
 <?php
 /**

@@ -25,6 +25,7 @@
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
 		WPSS.initVendorRegistration();
+		WPSS.initRequirementsView();
 	};
 
 	/**
@@ -994,6 +995,134 @@
 				$notification.remove();
 			}, 300);
 		}, duration);
+	};
+
+	/**
+	 * Requirements View - Expand/Collapse and Copy to Clipboard.
+	 */
+	WPSS.initRequirementsView = function() {
+		// Expand/Collapse toggle.
+		$(document).on('click', '.wpss-requirement-view__expand-btn', function() {
+			const $btn = $(this);
+			const $answer = $btn.closest('.wpss-requirement-view__answer');
+			const isExpanded = $btn.attr('aria-expanded') === 'true';
+
+			if (isExpanded) {
+				// Collapse.
+				$answer.removeClass('wpss-requirement-view__answer--expanded')
+					   .addClass('wpss-requirement-view__answer--collapsed');
+				$btn.attr('aria-expanded', 'false');
+				$btn.find('.wpss-expand-text').show();
+				$btn.find('.wpss-collapse-text').hide();
+			} else {
+				// Expand.
+				$answer.removeClass('wpss-requirement-view__answer--collapsed')
+					   .addClass('wpss-requirement-view__answer--expanded');
+				$btn.attr('aria-expanded', 'true');
+				$btn.find('.wpss-expand-text').hide();
+				$btn.find('.wpss-collapse-text').show();
+			}
+		});
+
+		// Copy to clipboard.
+		$(document).on('click', '.wpss-requirement-view__copy-btn', function() {
+			const $btn = $(this);
+			const text = $btn.data('copy-text');
+
+			if (!text) {
+				return;
+			}
+
+			// Use modern clipboard API if available.
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(text).then(function() {
+					WPSS.showCopySuccess($btn);
+				}).catch(function() {
+					WPSS.fallbackCopy(text, $btn);
+				});
+			} else {
+				WPSS.fallbackCopy(text, $btn);
+			}
+		});
+
+		// Image preview lightbox (simple).
+		$(document).on('click', '.wpss-requirement-view__thumbnail', function() {
+			const src = $(this).attr('src');
+			const alt = $(this).attr('alt') || '';
+
+			// Create lightbox.
+			const $lightbox = $(`
+				<div class="wpss-lightbox">
+					<div class="wpss-lightbox__backdrop"></div>
+					<div class="wpss-lightbox__content">
+						<button type="button" class="wpss-lightbox__close">&times;</button>
+						<img src="${src}" alt="${WPSS.escapeHtml(alt)}">
+					</div>
+				</div>
+			`);
+
+			$('body').append($lightbox);
+
+			// Animate in.
+			setTimeout(function() {
+				$lightbox.addClass('wpss-lightbox--visible');
+			}, 10);
+
+			// Close handlers.
+			$lightbox.on('click', '.wpss-lightbox__backdrop, .wpss-lightbox__close', function() {
+				$lightbox.removeClass('wpss-lightbox--visible');
+				setTimeout(function() {
+					$lightbox.remove();
+				}, 300);
+			});
+
+			// Close on escape.
+			$(document).on('keydown.lightbox', function(e) {
+				if (e.key === 'Escape') {
+					$lightbox.removeClass('wpss-lightbox--visible');
+					setTimeout(function() {
+						$lightbox.remove();
+					}, 300);
+					$(document).off('keydown.lightbox');
+				}
+			});
+		});
+	};
+
+	/**
+	 * Show copy success feedback.
+	 */
+	WPSS.showCopySuccess = function($btn) {
+		$btn.addClass('copied');
+
+		// Change icon to checkmark temporarily.
+		const originalHtml = $btn.html();
+		$btn.html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>');
+
+		setTimeout(function() {
+			$btn.removeClass('copied').html(originalHtml);
+		}, 2000);
+	};
+
+	/**
+	 * Fallback copy method for older browsers.
+	 */
+	WPSS.fallbackCopy = function(text, $btn) {
+		const textarea = document.createElement('textarea');
+		textarea.value = text;
+		textarea.style.position = 'fixed';
+		textarea.style.left = '-9999px';
+		document.body.appendChild(textarea);
+		textarea.select();
+
+		try {
+			document.execCommand('copy');
+			WPSS.showCopySuccess($btn);
+		} catch (err) {
+			console.error('Copy failed:', err);
+		}
+
+		document.body.removeChild(textarea);
 	};
 
 	/**

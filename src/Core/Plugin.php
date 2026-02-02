@@ -342,6 +342,13 @@ final class Plugin {
 		$this->loader->add_action(
 			'wpss_order_status_changed',
 			function ( int $order_id, string $new_status, string $old_status ) use ( $notification_service ): void {
+				// For new orders (pending_requirements with no old status), send specific new order notification.
+				if ( 'pending_requirements' === $new_status && empty( $old_status ) ) {
+					$notification_service->notify_order_created( $order_id );
+					return; // Don't send generic status update for new orders.
+				}
+
+				// For all other status changes, send generic notification.
 				$notification_service->notify_order_status( $order_id, $new_status, $old_status );
 			},
 			null,
@@ -349,7 +356,7 @@ final class Plugin {
 			3
 		);
 
-		// New order notification.
+		// New order notification (alternative hook - kept for backward compatibility).
 		$this->loader->add_action(
 			'wpss_order_status_pending_requirements',
 			function ( int $order_id ) use ( $notification_service ): void {
@@ -367,7 +374,8 @@ final class Plugin {
 						$notification_service->notify_new_message(
 							$conversation->id,
 							$message->sender_id,
-							$participant_id
+							$participant_id,
+							$message->content ?? '' // Include actual message content.
 						);
 					}
 				}
@@ -386,6 +394,28 @@ final class Plugin {
 			null,
 			10,
 			2
+		);
+
+		// Review created notification.
+		$this->loader->add_action(
+			'wpss_review_created',
+			function ( int $review_id, int $order_id ) use ( $notification_service ): void {
+				$notification_service->notify_review_received( $review_id, $order_id );
+			},
+			null,
+			10,
+			2
+		);
+
+		// Dispute resolved notification.
+		$this->loader->add_action(
+			'wpss_dispute_resolved',
+			function ( int $dispute_id, string $resolution, $dispute, float $refund_amount ) use ( $notification_service ): void {
+				$notification_service->notify_dispute_resolved( $dispute_id, $resolution, $dispute, $refund_amount );
+			},
+			null,
+			10,
+			4
 		);
 	}
 
@@ -772,6 +802,12 @@ final class Plugin {
 	 * @return void
 	 */
 	private function define_cron_hooks(): void {
+		// Initialize OrderWorkflowManager for cron and status change handling.
+		new \WPSellServices\Services\OrderWorkflowManager(
+			new \WPSellServices\Services\OrderService(),
+			new \WPSellServices\Services\NotificationService()
+		);
+
 		// Auto-withdrawal processing.
 		$this->loader->add_action(
 			'wpss_process_auto_withdrawals',

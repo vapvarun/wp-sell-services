@@ -207,8 +207,18 @@ class WCOrderProvider implements OrderProviderInterface {
 			case 'processing':
 			case 'completed':
 				if ( ServiceOrder::STATUS_PENDING_PAYMENT === $order->status ) {
-					$this->update_status( $order->id, ServiceOrder::STATUS_PENDING_REQUIREMENTS );
 					$this->mark_as_paid( $order->id, $wc_order->get_transaction_id() );
+
+					// Check if service has requirements - if not, skip directly to in_progress.
+					$service_has_requirements = $this->service_has_requirements( $order->service_id );
+
+					if ( $service_has_requirements ) {
+						$this->update_status( $order->id, ServiceOrder::STATUS_PENDING_REQUIREMENTS );
+					} else {
+						// No requirements defined - skip to in_progress.
+						$this->update_status( $order->id, ServiceOrder::STATUS_IN_PROGRESS );
+						$this->set_started_at( $order->id );
+					}
 				}
 				break;
 
@@ -362,6 +372,40 @@ class WCOrderProvider implements OrderProviderInterface {
 			),
 			array( 'id' => $order_id ),
 			array( '%s', '%s', '%s', '%s' ),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Check if service has requirements defined.
+	 *
+	 * @param int $service_id Service post ID.
+	 * @return bool
+	 */
+	private function service_has_requirements( int $service_id ): bool {
+		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
+		return ! empty( $requirements ) && is_array( $requirements );
+	}
+
+	/**
+	 * Set started_at timestamp for an order.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	private function set_started_at( int $order_id ): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (bool) $wpdb->update(
+			$table,
+			array(
+				'started_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $order_id ),
+			array( '%s', '%s' ),
 			array( '%d' )
 		);
 	}
@@ -669,7 +713,17 @@ class WCOrderProvider implements OrderProviderInterface {
 
 			if ( $wpss_order && ServiceOrder::STATUS_PENDING_PAYMENT === $wpss_order->status ) {
 				$this->mark_as_paid( (int) $wpss_order_id, $wc_order->get_transaction_id() );
-				$this->update_status( (int) $wpss_order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS );
+
+				// Check if service has requirements - if not, skip directly to in_progress.
+				$service_has_requirements = $this->service_has_requirements( $wpss_order->service_id );
+
+				if ( $service_has_requirements ) {
+					$this->update_status( (int) $wpss_order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS );
+				} else {
+					// No requirements defined - skip to in_progress.
+					$this->update_status( (int) $wpss_order_id, ServiceOrder::STATUS_IN_PROGRESS );
+					$this->set_started_at( (int) $wpss_order_id );
+				}
 			}
 		}
 

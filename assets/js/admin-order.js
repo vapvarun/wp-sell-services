@@ -30,6 +30,9 @@
 
 		// Process refund button.
 		$(document).on('click', '.wpss-process-refund', handleProcessRefund);
+
+		// Admin requirements form submission.
+		$(document).on('submit', '#wpss-admin-requirements-form', handleAdminRequirementsSubmit);
 	}
 
 	/**
@@ -240,6 +243,93 @@
 		// This would need a backend handler.
 		alert('Refund processing is not yet implemented.');
 		$button.prop('disabled', false);
+	}
+
+	/**
+	 * Handle admin requirements form submission.
+	 *
+	 * @param {Event} e Submit event.
+	 */
+	function handleAdminRequirementsSubmit(e) {
+		e.preventDefault();
+
+		var $form = $(this);
+		var $button = $form.find('.wpss-submit-requirements');
+		var $spinner = $form.find('.spinner');
+		var $errors = $form.find('.wpss-form-errors');
+		var orderId = $button.data('order');
+
+		// Collect form data.
+		var formData = $form.serializeArray();
+		var fieldData = {};
+
+		// Parse form data into field_data object.
+		formData.forEach(function(item) {
+			if (item.name.indexOf('field_data[') === 0) {
+				// Extract field key from name like "field_data[Field Name]" or "field_data[Field Name][]"
+				var match = item.name.match(/field_data\[([^\]]+)\](\[\])?/);
+				if (match) {
+					var key = match[1];
+					var isArray = match[2] === '[]';
+
+					if (isArray) {
+						if (!fieldData[key]) {
+							fieldData[key] = [];
+						}
+						fieldData[key].push(item.value);
+					} else {
+						fieldData[key] = item.value;
+					}
+				}
+			}
+		});
+
+		// Clear previous errors.
+		$errors.hide().empty();
+
+		// Disable button and show spinner.
+		$button.prop('disabled', true);
+		$spinner.addClass('is-active');
+
+		$.ajax({
+			url: wpssOrderAdmin.ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'wpss_admin_submit_requirements',
+				nonce: wpssOrderAdmin.nonce,
+				order_id: orderId,
+				field_data: fieldData
+			},
+			success: function(response) {
+				if (response.success) {
+					// Reload page to show submitted requirements.
+					location.reload();
+				} else {
+					// Show errors.
+					var errorHtml = '<p><strong>' + escapeHtml(response.data.message || 'An error occurred.') + '</strong></p>';
+
+					if (response.data.errors) {
+						errorHtml += '<ul>';
+						for (var field in response.data.errors) {
+							if (response.data.errors.hasOwnProperty(field)) {
+								errorHtml += '<li>' + escapeHtml(response.data.errors[field]) + '</li>';
+							}
+						}
+						errorHtml += '</ul>';
+					}
+
+					$errors.html(errorHtml).show();
+
+					$button.prop('disabled', false);
+					$spinner.removeClass('is-active');
+				}
+			},
+			error: function() {
+				$errors.html('<p>' + escapeHtml(wpssOrderAdmin.i18n.error || 'An error occurred.') + '</p>').show();
+				$button.prop('disabled', false);
+				$spinner.removeClass('is-active');
+			}
+		});
 	}
 
 	/**

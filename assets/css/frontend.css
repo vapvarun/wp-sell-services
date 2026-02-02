@@ -1171,6 +1171,333 @@
 	font-size: 16px;
 }
 
+/* Order Section Header with Timestamp */
+.wpss-order-section__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-bottom: 15px;
+}
+
+.wpss-order-section__title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--wpss-secondary);
+}
+
+.wpss-order-section__title svg {
+	flex-shrink: 0;
+	color: var(--wpss-text-light);
+}
+
+.wpss-order-section__timestamp {
+	font-size: 13px;
+	color: var(--wpss-text-light);
+}
+
+.wpss-order-section__body {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+/* Requirements View (Read-only) */
+.wpss-requirement-view {
+	position: relative;
+	padding: 15px;
+	background: var(--wpss-background);
+	border-radius: var(--wpss-radius);
+	border: 1px solid var(--wpss-border);
+}
+
+.wpss-requirement-view__question {
+	margin: 0 0 10px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--wpss-secondary);
+}
+
+.wpss-requirement-view__answer {
+	position: relative;
+	color: var(--wpss-text);
+	line-height: 1.6;
+}
+
+.wpss-requirement-view__answer--collapsed {
+	max-height: 100px;
+	overflow: hidden;
+}
+
+.wpss-requirement-view__answer--collapsed::after {
+	content: "";
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 40px;
+	background: linear-gradient(transparent, var(--wpss-background));
+	pointer-events: none;
+}
+
+.wpss-requirement-view__answer--expanded {
+	max-height: none;
+}
+
+.wpss-requirement-view__answer--expanded::after {
+	display: none;
+}
+
+.wpss-requirement-view__text-content {
+	font-size: 14px;
+}
+
+.wpss-requirement-view__text-content p:first-child {
+	margin-top: 0;
+}
+
+.wpss-requirement-view__text-content p:last-child {
+	margin-bottom: 0;
+}
+
+/* Expand/Collapse Button */
+.wpss-requirement-view__expand-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 10px;
+	padding: 6px 12px;
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius-sm);
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--wpss-primary);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.wpss-requirement-view__expand-btn:hover {
+	background: var(--wpss-primary);
+	color: var(--wpss-white);
+	border-color: var(--wpss-primary);
+}
+
+.wpss-requirement-view__expand-btn .wpss-expand-icon {
+	transition: transform 0.2s ease;
+}
+
+.wpss-requirement-view__expand-btn[aria-expanded="true"] .wpss-expand-icon {
+	transform: rotate(180deg);
+}
+
+/* Copy to Clipboard Button */
+.wpss-requirement-view__copy-btn {
+	position: absolute;
+	top: 15px;
+	right: 15px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius-sm);
+	color: var(--wpss-text-light);
+	cursor: pointer;
+	opacity: 0;
+	transition: all 0.2s ease;
+}
+
+.wpss-requirement-view:hover .wpss-requirement-view__copy-btn {
+	opacity: 1;
+}
+
+.wpss-requirement-view__copy-btn:hover {
+	background: var(--wpss-primary);
+	color: var(--wpss-white);
+	border-color: var(--wpss-primary);
+}
+
+.wpss-requirement-view__copy-btn.copied {
+	background: var(--wpss-success);
+	color: var(--wpss-white);
+	border-color: var(--wpss-success);
+}
+
+/* Image Preview */
+.wpss-requirement-view__image-preview {
+	margin-bottom: 12px;
+}
+
+.wpss-requirement-view__thumbnail {
+	max-width: 200px;
+	max-height: 150px;
+	width: auto;
+	height: auto;
+	border-radius: var(--wpss-radius);
+	border: 1px solid var(--wpss-border);
+	object-fit: cover;
+	cursor: pointer;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wpss-requirement-view__thumbnail:hover {
+	transform: scale(1.02);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* File Link */
+.wpss-file-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--wpss-text);
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.wpss-file-link:hover {
+	background: var(--wpss-primary);
+	color: var(--wpss-white);
+	border-color: var(--wpss-primary);
+}
+
+.wpss-file-link svg {
+	flex-shrink: 0;
+}
+
+/* Not Provided Notice */
+.wpss-requirements-notice {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 15px;
+	background: #fef3c7;
+	border: 1px solid #fcd34d;
+	border-radius: var(--wpss-radius);
+	color: #92400e;
+}
+
+.wpss-requirements-notice svg {
+	flex-shrink: 0;
+	color: #f59e0b;
+}
+
+.wpss-requirements-notice p {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+/* No Requirements Info */
+.wpss-requirements-info {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 15px;
+	background: #dbeafe;
+	border: 1px solid #93c5fd;
+	border-radius: var(--wpss-radius);
+	color: #1e40af;
+}
+
+.wpss-requirements-info svg {
+	flex-shrink: 0;
+	color: #3b82f6;
+}
+
+.wpss-requirements-info p {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+/* Lightbox for Image Preview */
+.wpss-lightbox {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 99999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.wpss-lightbox--visible {
+	opacity: 1;
+	visibility: visible;
+}
+
+.wpss-lightbox__backdrop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.85);
+	cursor: pointer;
+}
+
+.wpss-lightbox__content {
+	position: relative;
+	max-width: 90vw;
+	max-height: 90vh;
+	z-index: 1;
+}
+
+.wpss-lightbox__content img {
+	display: block;
+	max-width: 100%;
+	max-height: 90vh;
+	width: auto;
+	height: auto;
+	border-radius: var(--wpss-radius);
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.wpss-lightbox__close {
+	position: absolute;
+	top: -40px;
+	right: 0;
+	width: 36px;
+	height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--wpss-white);
+	border: none;
+	border-radius: 50%;
+	font-size: 24px;
+	line-height: 1;
+	color: var(--wpss-text);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.wpss-lightbox__close:hover {
+	background: var(--wpss-danger);
+	color: var(--wpss-white);
+}
+
 /* Sidebar Cards */
 .wpss-sidebar-card {
 	background: var(--wpss-white);

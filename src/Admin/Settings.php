@@ -755,6 +755,21 @@ class Settings {
 			)
 		);
 
+		add_settings_field(
+			'allow_late_requirements',
+			__( 'Late Requirements Submission', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'allow_late_requirements',
+				'label'       => __( 'Allow buyers to submit requirements after work has started', 'wp-sell-services' ),
+				'default'     => false,
+				'description' => __( 'If enabled, buyers can submit requirements even if the order is already in progress without them.', 'wp-sell-services' ),
+			)
+		);
+
 		// Notification settings.
 		register_setting(
 			'wpss_notifications',

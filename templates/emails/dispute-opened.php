@@ -1,58 +1,35 @@
 <?php
 /**
- * Dispute Opened email (sent to both parties)
+ * Dispute Opened Email (HTML)
  *
  * @package WPSellServices\Templates\Emails
- * @version 1.0.0
- *
- * @var \WPSellServices\Models\ServiceOrder $order
- * @var string                               $email_heading
- * @var \WC_Email                            $email
+ * @since   1.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
 
 do_action( 'woocommerce_email_header', $email_heading, $email );
-
-$service = wpss_get_service( $order->service_id );
 ?>
 
-<p><?php esc_html_e( 'A dispute has been opened on the following order:', 'wp-sell-services' ); ?></p>
+<p><?php esc_html_e( 'A dispute has been opened on your order.', 'wp-sell-services' ); ?></p>
 
-<h2>
-	<?php
-	printf(
-		/* translators: %s: Order number */
-		esc_html__( 'Order #%s', 'wp-sell-services' ),
-		esc_html( $order->order_number )
-	);
-	?>
-</h2>
+<h2><?php printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ) ); ?></h2>
 
-<table class="td" cellspacing="0" cellpadding="6" style="width: 100%; margin-bottom: 20px;" border="1">
+<table class="td" cellspacing="0" cellpadding="6" border="1" style="width: 100%; margin-bottom: 20px;">
 	<tbody>
 		<tr>
-			<th class="td" scope="row" style="text-align:left;"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
-			<td class="td" style="text-align:left;"><?php echo esc_html( $service ? $service->title : __( 'N/A', 'wp-sell-services' ) ); ?></td>
+			<th class="td" scope="row" style="text-align: left;"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
+			<td class="td"><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
 		</tr>
 		<tr>
-			<th class="td" scope="row" style="text-align:left;"><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
-			<td class="td" style="text-align:left;"><?php echo esc_html( wpss_format_price( $order->total, $order->currency ) ); ?></td>
-		</tr>
-		<tr>
-			<th class="td" scope="row" style="text-align:left;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-			<td class="td" style="text-align:left;color:#ffc107;"><strong><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></strong></td>
+			<th class="td" scope="row" style="text-align: left;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+			<td class="td" style="color: #dc3545;"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></td>
 		</tr>
 	</tbody>
 </table>
 
-<p><?php esc_html_e( 'Our support team will review the dispute and help resolve the issue. You may be contacted for additional information.', 'wp-sell-services' ); ?></p>
+<p><?php esc_html_e( 'Our support team will review this dispute and reach out to both parties.', 'wp-sell-services' ); ?></p>
 
-<p>
-	<a class="button" href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>">
-		<?php esc_html_e( 'View Order Details', 'wp-sell-services' ); ?>
-	</a>
-</p>
+<p><a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="button" style="background-color: #7f54b3; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 3px;"><?php esc_html_e( 'View Order', 'wp-sell-services' ); ?></a></p>
 
-<?php
-do_action( 'woocommerce_email_footer', $email );
+<?php do_action( 'woocommerce_email_footer', $email ); ?>

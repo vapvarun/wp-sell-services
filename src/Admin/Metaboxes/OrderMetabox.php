@@ -68,6 +68,7 @@ class OrderMetabox {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'wp_ajax_wpss_admin_update_order_status', array( $this, 'ajax_update_status' ) );
 		add_action( 'wp_ajax_wpss_admin_add_order_note', array( $this, 'ajax_add_note' ) );
+		add_action( 'wp_ajax_wpss_admin_submit_requirements', array( $this, 'ajax_submit_requirements' ) );
 	}
 
 	/**
@@ -189,12 +190,14 @@ class OrderMetabox {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_order_admin' ),
 				'i18n'    => array(
-					'confirmStatusChange' => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
-					'confirmRefund'       => __( 'Are you sure you want to process a refund?', 'wp-sell-services' ),
-					'noteAdded'           => __( 'Note added successfully.', 'wp-sell-services' ),
-					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'update'              => __( 'Update', 'wp-sell-services' ),
-					'updating'            => __( 'Updating...', 'wp-sell-services' ),
+					'confirmStatusChange'     => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
+					'confirmRefund'           => __( 'Are you sure you want to process a refund?', 'wp-sell-services' ),
+					'noteAdded'               => __( 'Note added successfully.', 'wp-sell-services' ),
+					'requirementsSaved'       => __( 'Requirements saved successfully.', 'wp-sell-services' ),
+					'error'                   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'update'                  => __( 'Update', 'wp-sell-services' ),
+					'updating'                => __( 'Updating...', 'wp-sell-services' ),
+					'savingRequirements'      => __( 'Saving...', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -448,6 +451,16 @@ class OrderMetabox {
 		}
 
 		$requirements = $order->get_requirements();
+		$service      = $order->get_service();
+
+		// Get service requirement fields.
+		$service_fields = array();
+		if ( $service ) {
+			$service_fields = get_post_meta( $service->id, '_wpss_requirements', true );
+			if ( ! is_array( $service_fields ) ) {
+				$service_fields = array();
+			}
+		}
 		?>
 		<?php if ( ! empty( $requirements ) ) : ?>
 			<div class="wpss-requirements-list">
@@ -468,8 +481,131 @@ class OrderMetabox {
 					</div>
 				<?php endforeach; ?>
 			</div>
+		<?php elseif ( ! empty( $service_fields ) ) : ?>
+			<div class="wpss-admin-requirements-form">
+				<p class="description">
+					<?php esc_html_e( 'No requirements submitted yet. You can fill in requirements on behalf of the buyer.', 'wp-sell-services' ); ?>
+				</p>
+				<form id="wpss-admin-requirements-form" class="wpss-requirements-form">
+					<input type="hidden" name="order_id" value="<?php echo esc_attr( $order->get_id() ); ?>">
+					<?php foreach ( $service_fields as $index => $field ) : ?>
+						<?php
+						$field_key   = $field['label'] ?? $field['question'] ?? "field_{$index}";
+						$field_label = $field['label'] ?? $field['question'] ?? "Field {$index}";
+						$field_type  = $field['type'] ?? 'text';
+						$required    = ! empty( $field['required'] );
+						$choices     = $field['choices'] ?? '';
+						?>
+						<div class="wpss-form-field wpss-field-<?php echo esc_attr( $field_type ); ?>">
+							<label for="wpss-req-<?php echo esc_attr( $index ); ?>">
+								<?php echo esc_html( $field_label ); ?>
+								<?php if ( $required ) : ?>
+									<span class="required">*</span>
+								<?php endif; ?>
+							</label>
+
+							<?php if ( 'textarea' === $field_type ) : ?>
+								<textarea
+									id="wpss-req-<?php echo esc_attr( $index ); ?>"
+									name="field_data[<?php echo esc_attr( $field_key ); ?>]"
+									rows="4"
+									<?php echo $required ? 'required' : ''; ?>
+								></textarea>
+
+							<?php elseif ( 'select' === $field_type ) : ?>
+								<select
+									id="wpss-req-<?php echo esc_attr( $index ); ?>"
+									name="field_data[<?php echo esc_attr( $field_key ); ?>]"
+									<?php echo $required ? 'required' : ''; ?>
+								>
+									<option value=""><?php esc_html_e( 'Select...', 'wp-sell-services' ); ?></option>
+									<?php
+									$choice_list = is_array( $choices ) ? $choices : array_map( 'trim', explode( ',', $choices ) );
+									foreach ( $choice_list as $choice ) :
+										?>
+										<option value="<?php echo esc_attr( $choice ); ?>">
+											<?php echo esc_html( $choice ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+
+							<?php elseif ( 'radio' === $field_type ) : ?>
+								<div class="wpss-radio-group">
+									<?php
+									$choice_list = is_array( $choices ) ? $choices : array_map( 'trim', explode( ',', $choices ) );
+									foreach ( $choice_list as $ci => $choice ) :
+										?>
+										<label>
+											<input
+												type="radio"
+												name="field_data[<?php echo esc_attr( $field_key ); ?>]"
+												value="<?php echo esc_attr( $choice ); ?>"
+												<?php echo ( $required && 0 === $ci ) ? '' : ''; ?>
+											>
+											<?php echo esc_html( $choice ); ?>
+										</label>
+									<?php endforeach; ?>
+								</div>
+
+							<?php elseif ( 'checkbox' === $field_type ) : ?>
+								<?php if ( ! empty( $choices ) ) : ?>
+									<div class="wpss-checkbox-group">
+										<?php
+										$choice_list = is_array( $choices ) ? $choices : array_map( 'trim', explode( ',', $choices ) );
+										foreach ( $choice_list as $choice ) :
+											?>
+											<label>
+												<input
+													type="checkbox"
+													name="field_data[<?php echo esc_attr( $field_key ); ?>][]"
+													value="<?php echo esc_attr( $choice ); ?>"
+												>
+												<?php echo esc_html( $choice ); ?>
+											</label>
+										<?php endforeach; ?>
+									</div>
+								<?php else : ?>
+									<label>
+										<input
+											type="checkbox"
+											name="field_data[<?php echo esc_attr( $field_key ); ?>]"
+											value="1"
+										>
+										<?php esc_html_e( 'Yes', 'wp-sell-services' ); ?>
+									</label>
+								<?php endif; ?>
+
+							<?php elseif ( 'number' === $field_type ) : ?>
+								<input
+									type="number"
+									id="wpss-req-<?php echo esc_attr( $index ); ?>"
+									name="field_data[<?php echo esc_attr( $field_key ); ?>]"
+									<?php echo $required ? 'required' : ''; ?>
+								>
+
+							<?php else : ?>
+								<input
+									type="text"
+									id="wpss-req-<?php echo esc_attr( $index ); ?>"
+									name="field_data[<?php echo esc_attr( $field_key ); ?>]"
+									<?php echo $required ? 'required' : ''; ?>
+								>
+							<?php endif; ?>
+						</div>
+					<?php endforeach; ?>
+
+					<p class="wpss-form-actions">
+						<button type="submit" class="button button-primary wpss-submit-requirements" data-order="<?php echo esc_attr( $order->get_id() ); ?>">
+							<?php esc_html_e( 'Save Requirements', 'wp-sell-services' ); ?>
+						</button>
+						<span class="spinner"></span>
+					</p>
+
+					<div class="wpss-form-errors" style="display: none;"></div>
+				</form>
+			</div>
 		<?php else : ?>
-			<p class="wpss-no-data"><?php esc_html_e( 'No requirements submitted yet.', 'wp-sell-services' ); ?></p>
+			<p class="wpss-no-data"><?php esc_html_e( 'This service has no requirements defined.', 'wp-sell-services' ); ?></p>
 		<?php endif; ?>
 		<?php
 	}
@@ -820,6 +956,125 @@ class OrderMetabox {
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to update status.', 'wp-sell-services' ) ) );
 		}
+	}
+
+	/**
+	 * AJAX: Submit requirements on behalf of buyer.
+	 *
+	 * @return void
+	 */
+	public function ajax_submit_requirements(): void {
+		check_ajax_referer( 'wpss_order_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+		$field_data = isset( $_POST['field_data'] ) ? array_map( 'sanitize_textarea_field', wp_unslash( (array) $_POST['field_data'] ) ) : array();
+
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid order ID.', 'wp-sell-services' ) ) );
+		}
+
+		$order = $this->order_repo->find( $order_id );
+
+		if ( ! $order ) {
+			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
+		}
+
+		// Get service requirements fields.
+		$service = $order->get_service();
+		if ( ! $service ) {
+			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
+		}
+
+		$requirements_service = new \WPSellServices\Services\RequirementsService();
+		$fields               = $requirements_service->get_service_fields( $service->id );
+
+		if ( empty( $fields ) ) {
+			wp_send_json_error( array( 'message' => __( 'This service has no requirements defined.', 'wp-sell-services' ) ) );
+		}
+
+		// Validate required fields.
+		$errors = array();
+		foreach ( $fields as $field ) {
+			$field_key = $field['label'] ?? $field['question'] ?? '';
+			$value     = $field_data[ $field_key ] ?? '';
+			$required  = ! empty( $field['required'] );
+
+			if ( $required && '' === $value ) {
+				$errors[ $field_key ] = sprintf(
+					/* translators: %s: field label */
+					__( '%s is required.', 'wp-sell-services' ),
+					$field_key
+				);
+			}
+		}
+
+		if ( ! empty( $errors ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Please fix the following errors:', 'wp-sell-services' ),
+					'errors'  => $errors,
+				)
+			);
+		}
+
+		// Save requirements directly to database (bypass status check for admin).
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_order_requirements';
+
+		// Delete existing requirements if any.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $table, array( 'order_id' => $order_id ) );
+
+		// Insert new requirements.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->insert(
+			$table,
+			array(
+				'order_id'     => $order_id,
+				'field_data'   => wp_json_encode( $field_data ),
+				'attachments'  => wp_json_encode( array() ),
+				'submitted_at' => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%s', '%s' )
+		);
+
+		if ( ! $result ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to save requirements.', 'wp-sell-services' ) ) );
+		}
+
+		// Transition order status if needed.
+		$status = $order->get_status();
+		if ( 'pending_requirements' === $status ) {
+			$this->order_repo->update_status( $order_id, 'in_progress' );
+
+			// Set started_at timestamp.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_orders',
+				array( 'started_at' => current_time( 'mysql' ) ),
+				array( 'id' => $order_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
+
+		/**
+		 * Fires after admin submits requirements on behalf of buyer.
+		 *
+		 * @param int   $order_id   Order ID.
+		 * @param array $field_data Submitted data.
+		 */
+		do_action( 'wpss_admin_requirements_submitted', $order_id, $field_data );
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Requirements saved successfully.', 'wp-sell-services' ),
+			)
+		);
 	}
 
 	/**

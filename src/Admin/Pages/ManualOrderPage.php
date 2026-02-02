@@ -468,14 +468,19 @@ class ManualOrderPage {
 					},
 					success: function(response) {
 						if (response.success) {
-							$('#order-result-message').html(
-								'Order #' + response.data.order_number + ' has been created.<br>' +
-								'Order ID: ' + response.data.order_id
-							);
+							var message = 'Order #' + response.data.order_number + ' has been created.<br>' +
+								'Order ID: ' + response.data.order_id;
+
+							// Show notice if requirements were skipped.
+							if (response.data.requirements_skipped) {
+								message += '<br><br><strong>Note:</strong> This service has no requirements defined. Order was set to "In Progress" automatically.';
+							}
+
+							$('#order-result-message').html(message);
 							$('#view-order-link').attr('href', response.data.view_url);
 							$('#requirements-link').attr('href', response.data.requirements_url);
 
-							if (response.data.status !== 'pending_requirements') {
+							if (response.data.status !== 'pending_requirements' || !response.data.has_requirements) {
 								$('#requirements-link').hide();
 							} else {
 								$('#requirements-link').show();
@@ -569,10 +574,21 @@ class ManualOrderPage {
 			$total = 10.00; // Default for testing.
 		}
 
+		// Check if service has requirements defined.
+		$service_requirements   = get_post_meta( $service_id, '_wpss_requirements', true );
+		$service_has_requirements = ! empty( $service_requirements ) && is_array( $service_requirements );
+
+		// If setting to pending_requirements but service has no requirements, auto-upgrade to in_progress.
+		$requirements_skipped = false;
+		if ( 'pending_requirements' === $status && ! $service_has_requirements ) {
+			$status               = 'in_progress';
+			$requirements_skipped = true;
+		}
+
 		// Generate order number.
 		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
 
-		// Calculate deadline.
+		// Calculate deadline (also needed if we auto-upgraded to in_progress).
 		$deadline = null;
 		if ( $delivery_days && 'in_progress' === $status ) {
 			$deadline = gmdate( 'Y-m-d H:i:s', strtotime( "+{$delivery_days} days" ) );
@@ -658,14 +674,20 @@ class ManualOrderPage {
 		// Fire order created action.
 		do_action( 'wpss_order_created', $order_id, $status );
 
-		wp_send_json_success(
-			array(
-				'order_id'         => $order_id,
-				'order_number'     => $order_number,
-				'status'           => $status,
-				'view_url'         => wpss_get_order_url( $order_id ),
-				'requirements_url' => wpss_get_order_requirements_url( $order_id ),
-			)
+		// Fire order status changed for WooCommerce email integration.
+		// WCEmailProvider listens to this hook to trigger email notifications.
+		do_action( 'wpss_order_status_changed', $order_id, $status, '' );
+
+		$response = array(
+			'order_id'              => $order_id,
+			'order_number'          => $order_number,
+			'status'                => $status,
+			'view_url'              => wpss_get_order_url( $order_id ),
+			'requirements_url'      => wpss_get_order_requirements_url( $order_id ),
+			'requirements_skipped'  => $requirements_skipped,
+			'has_requirements'      => $service_has_requirements,
 		);
+
+		wp_send_json_success( $response );
 	}
 }

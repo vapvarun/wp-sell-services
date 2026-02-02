@@ -326,6 +326,15 @@ class Admin {
 		global $wpdb;
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
+		// Get current status before update.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$old_status = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT status FROM {$orders_table} WHERE id = %d",
+				$order_id
+			)
+		);
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$updated = $wpdb->update(
 			$orders_table,
@@ -337,6 +346,18 @@ class Admin {
 			array( '%s', '%s' ),
 			array( '%d' )
 		);
+
+		// Fire status change hook for notifications.
+		if ( $updated && $old_status !== $status ) {
+			/**
+			 * Fires when order status changes via admin.
+			 *
+			 * @param int    $order_id   Order ID.
+			 * @param string $status     New status.
+			 * @param string $old_status Previous status.
+			 */
+			do_action( 'wpss_order_status_changed', $order_id, $status, $old_status );
+		}
 
 		// Redirect back to the order.
 		$redirect_url = add_query_arg(

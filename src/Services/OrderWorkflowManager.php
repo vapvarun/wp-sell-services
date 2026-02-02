@@ -275,6 +275,24 @@ class OrderWorkflowManager {
 
 		// Notify relevant party based on status.
 		switch ( $new_status ) {
+			case ServiceOrder::STATUS_PENDING_REQUIREMENTS:
+				// New order created - notify both vendor and buyer.
+				$this->notification_service->create(
+					$order->vendor_id,
+					'new_order',
+					__( 'New Order Received', 'wp-sell-services' ),
+					__( 'You have received a new order. Please wait for the buyer to submit requirements.', 'wp-sell-services' ),
+					[ 'order_id' => $order_id ]
+				);
+				$this->notification_service->create(
+					$order->customer_id,
+					'order_created',
+					__( 'Order Placed Successfully', 'wp-sell-services' ),
+					__( 'Your order has been placed. Please submit your requirements to get started.', 'wp-sell-services' ),
+					[ 'order_id' => $order_id ]
+				);
+				break;
+
 			case ServiceOrder::STATUS_IN_PROGRESS:
 				$this->notification_service->create(
 					$order->vendor_id,
