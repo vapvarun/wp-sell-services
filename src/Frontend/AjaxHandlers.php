@@ -1979,6 +1979,16 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'No e-commerce platform is active. Please configure WooCommerce or another supported platform.', 'wp-sell-services' ) ) );
 		}
 
+		// Verify WooCommerce is available for cart operations.
+		// The free version requires WooCommerce for payment processing.
+		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'WooCommerce is required for checkout. Please install and activate WooCommerce to purchase services.', 'wp-sell-services' ),
+				)
+			);
+		}
+
 		// Get the service.
 		$service = get_post( $service_id );
 		if ( ! $service || 'wpss_service' !== $service->post_type ) {
@@ -2073,6 +2083,11 @@ class AjaxHandlers {
 	 * @return int|null Product ID or null on failure.
 	 */
 	private function get_or_create_wc_product( int $service_id, array $package, float $price ): ?int {
+		// Ensure WooCommerce is available.
+		if ( ! class_exists( 'WC_Product_Simple' ) ) {
+			return null;
+		}
+
 		// Check if service already has a linked WC product.
 		$platform_ids_raw = get_post_meta( $service_id, '_wpss_platform_ids', true );
 		$platform_ids     = $platform_ids_raw ? $platform_ids_raw : array();

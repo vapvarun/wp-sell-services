@@ -47,6 +47,9 @@ class ServiceArchiveView {
 
 		// Enqueue assets.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+
+		// Modify archive query to apply filters.
+		add_action( 'pre_get_posts', array( $this, 'modify_archive_query' ) );
 	}
 
 	/**
@@ -396,5 +399,113 @@ class ServiceArchiveView {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Modify the archive query to apply filters.
+	 *
+	 * @param \WP_Query $query The WP_Query instance.
+	 * @return void
+	 */
+	public function modify_archive_query( \WP_Query $query ): void {
+		// Only modify frontend main query for service archives.
+		if ( is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( ! $query->is_post_type_archive( 'wpss_service' ) && ! $query->is_tax( 'wpss_service_category' ) && ! $query->is_tax( 'wpss_service_tag' ) ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
+		// Category filter (dropdown in filters bar).
+		if ( isset( $_GET['category'] ) && absint( $_GET['category'] ) > 0 ) {
+			$tax_query   = $query->get( 'tax_query' ) ?: array();
+			$tax_query[] = array(
+				'taxonomy' => 'wpss_service_category',
+				'field'    => 'term_id',
+				'terms'    => array( absint( $_GET['category'] ) ),
+			);
+			$query->set( 'tax_query', $tax_query );
+		}
+
+		// Price range filters.
+		$meta_query = $query->get( 'meta_query' ) ?: array();
+
+		if ( isset( $_GET['min_price'] ) && '' !== $_GET['min_price'] ) {
+			$meta_query[] = array(
+				'key'     => '_wpss_starting_price',
+				'value'   => floatval( $_GET['min_price'] ),
+				'compare' => '>=',
+				'type'    => 'DECIMAL',
+			);
+		}
+
+		if ( isset( $_GET['max_price'] ) && '' !== $_GET['max_price'] ) {
+			$meta_query[] = array(
+				'key'     => '_wpss_starting_price',
+				'value'   => floatval( $_GET['max_price'] ),
+				'compare' => '<=',
+				'type'    => 'DECIMAL',
+			);
+		}
+
+		// Rating filter.
+		if ( isset( $_GET['rating'] ) && absint( $_GET['rating'] ) > 0 ) {
+			$meta_query[] = array(
+				'key'     => '_wpss_rating_average',
+				'value'   => absint( $_GET['rating'] ),
+				'compare' => '>=',
+				'type'    => 'DECIMAL',
+			);
+		}
+
+		// Delivery time filter.
+		if ( isset( $_GET['delivery'] ) && absint( $_GET['delivery'] ) > 0 ) {
+			$meta_query[] = array(
+				'key'     => '_wpss_delivery_time',
+				'value'   => absint( $_GET['delivery'] ),
+				'compare' => '<=',
+				'type'    => 'NUMERIC',
+			);
+		}
+
+		if ( ! empty( $meta_query ) ) {
+			$meta_query['relation'] = 'AND';
+			$query->set( 'meta_query', $meta_query );
+		}
+
+		// Sort options.
+		if ( isset( $_GET['sort'] ) ) {
+			$sort = sanitize_text_field( wp_unslash( $_GET['sort'] ) );
+
+			switch ( $sort ) {
+				case 'newest':
+					$query->set( 'orderby', 'date' );
+					$query->set( 'order', 'DESC' );
+					break;
+
+				case 'rating':
+					$query->set( 'orderby', 'meta_value_num' );
+					$query->set( 'meta_key', '_wpss_rating_average' );
+					$query->set( 'order', 'DESC' );
+					break;
+
+				case 'price_low':
+					$query->set( 'orderby', 'meta_value_num' );
+					$query->set( 'meta_key', '_wpss_starting_price' );
+					$query->set( 'order', 'ASC' );
+					break;
+
+				case 'price_high':
+					$query->set( 'orderby', 'meta_value_num' );
+					$query->set( 'meta_key', '_wpss_starting_price' );
+					$query->set( 'order', 'DESC' );
+					break;
+			}
+		}
+
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 	}
 }

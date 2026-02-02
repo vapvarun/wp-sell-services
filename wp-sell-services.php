@@ -146,6 +146,44 @@ function wpss_wp_version_notice(): void {
 }
 
 /**
+ * Display admin notice when WooCommerce is not active.
+ *
+ * This is a warning notice (not error) since marketplace features work
+ * without WooCommerce - only checkout/payment requires it in the free version.
+ *
+ * @return void
+ */
+function wpss_woocommerce_notice(): void {
+	// Only show on WP Sell Services admin pages or plugins page.
+	$screen = get_current_screen();
+	if ( ! $screen ) {
+		return;
+	}
+
+	$show_on_screens = array( 'plugins', 'wpss_service', 'edit-wpss_service' );
+	$is_wpss_page    = str_contains( $screen->id, 'wpss' ) || str_contains( $screen->id, 'wp-sell-services' );
+
+	if ( ! in_array( $screen->id, $show_on_screens, true ) && ! $is_wpss_page ) {
+		return;
+	}
+
+	?>
+	<div class="notice notice-warning is-dismissible">
+		<p>
+			<strong><?php esc_html_e( 'WP Sell Services:', 'wp-sell-services' ); ?></strong>
+			<?php
+			printf(
+				/* translators: %s: WooCommerce plugin link */
+				esc_html__( 'To enable checkout and payment processing, please install and activate %s. Your marketplace is fully functional for browsing services.', 'wp-sell-services' ),
+				'<a href="' . esc_url( admin_url( 'plugin-install.php?s=woocommerce&tab=search&type=term' ) ) . '">WooCommerce</a>'
+			);
+			?>
+		</p>
+	</div>
+	<?php
+}
+
+/**
  * Register PSR-4 autoloader for WPSellServices namespace.
  *
  * This provides a fallback autoloader that works even when
@@ -277,6 +315,11 @@ function wpss_init(): void {
 	// Note: wpss_loaded action is fired inside Plugin::init() - do not fire it again here.
 	$plugin = Core\Plugin::get_instance();
 	$plugin->init();
+
+	// Show notice if WooCommerce is not active (warning, not blocking).
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		add_action( 'admin_notices', __NAMESPACE__ . '\\wpss_woocommerce_notice' );
+	}
 }
 
 // Initialize on plugins_loaded to ensure all dependencies are available.

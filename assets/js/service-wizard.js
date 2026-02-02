@@ -50,6 +50,9 @@ function wpssServiceWizard(existingData = {}) {
 		// Has unsaved changes
 		isDirty: false,
 
+		// Debounce timer for save draft
+		saveDraftDebounceTimer: null,
+
 		// Wizard limits (from PHP, filterable by Pro)
 		limits: limits,
 
@@ -461,17 +464,33 @@ function wpssServiceWizard(existingData = {}) {
 		},
 
 		/**
-		 * Save draft via AJAX.
+		 * Save draft via AJAX with debouncing.
+		 *
+		 * Uses debouncing to prevent race conditions from rapid clicks.
+		 * Only the last click within 300ms will trigger the actual save.
 		 */
-		async saveDraft() {
-			// Immediately set saving flag to prevent race conditions from rapid clicks.
+		saveDraft() {
+			// Clear any pending debounce timer.
+			if (this.saveDraftDebounceTimer) {
+				clearTimeout(this.saveDraftDebounceTimer);
+			}
+
+			// Debounce: wait 300ms before actually saving.
+			this.saveDraftDebounceTimer = setTimeout(() => {
+				this._doSaveDraft();
+			}, 300);
+		},
+
+		/**
+		 * Internal save draft implementation.
+		 * Called after debounce delay.
+		 */
+		async _doSaveDraft() {
+			// Prevent concurrent saves.
 			if (this.saving) {
 				return;
 			}
 			this.saving = true;
-
-			// Double-check after a microtask to catch any concurrent calls.
-			await Promise.resolve();
 
 			try {
 				const serviceId = document.getElementById('wpss-service-wizard').dataset.serviceId || 0;
