@@ -39,29 +39,27 @@ class Settings {
 	 * Constructor.
 	 */
 	public function __construct() {
-		// Define tabs in logical groups for better UX.
+		// Define tabs - consolidated for better UX (7 core tabs).
 		$this->tabs = array(
-			// Setup group.
-			'general'       => __( 'General', 'wp-sell-services' ),
-			'pages'         => __( 'Pages', 'wp-sell-services' ),
-			// Business group.
-			'commission'    => __( 'Commission', 'wp-sell-services' ),
-			'tax'           => __( 'Tax', 'wp-sell-services' ),
-			'payouts'       => __( 'Payouts', 'wp-sell-services' ),
-			'vendor'        => __( 'Vendor', 'wp-sell-services' ),
-			// Operations group.
-			'orders'        => __( 'Orders', 'wp-sell-services' ),
-			'notifications' => __( 'Notifications', 'wp-sell-services' ),
-			// System group (Pro tabs will be inserted before this).
-			'advanced'      => __( 'Advanced', 'wp-sell-services' ),
+			// Setup.
+			'general'  => __( 'General', 'wp-sell-services' ),
+			'pages'    => __( 'Pages', 'wp-sell-services' ),
+			// Business.
+			'payments' => __( 'Payments', 'wp-sell-services' ), // Commission + Tax + Payouts merged.
+			'vendor'   => __( 'Vendor', 'wp-sell-services' ),
+			// Operations.
+			'orders'   => __( 'Orders', 'wp-sell-services' ),
+			'emails'   => __( 'Emails', 'wp-sell-services' ), // Renamed from Notifications.
+			// System (Pro tabs inserted before this via filter).
+			'advanced' => __( 'Advanced', 'wp-sell-services' ),
 		);
 
 		// Define tab groups for visual separators.
 		$this->tab_groups = array(
 			'setup'      => array( 'general', 'pages' ),
-			'business'   => array( 'commission', 'tax', 'payouts', 'vendor' ),
-			'operations' => array( 'orders', 'notifications' ),
-			'pro'        => array(), // Pro tabs added via filter.
+			'business'   => array( 'payments', 'vendor' ),
+			'operations' => array( 'orders', 'emails' ),
+			'pro'        => array(), // Pro tabs added via filter (gateways, etc.).
 			'system'     => array( 'advanced' ),
 		);
 	}
@@ -78,12 +76,10 @@ class Settings {
 		$core_tabs = array(
 			'general',
 			'pages',
-			'commission',
-			'tax',
-			'payouts',
+			'payments',
 			'vendor',
 			'orders',
-			'notifications',
+			'emails',
 			'advanced',
 		);
 
@@ -941,7 +937,7 @@ class Settings {
 
 			<?php
 			// Check if this is a Pro/extension tab (not a core tab).
-			$core_tabs = array( 'general', 'commission', 'tax', 'payouts', 'vendor', 'orders', 'notifications', 'pages', 'advanced' );
+			$core_tabs = array( 'general', 'payments', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
 
 			if ( ! in_array( $active_tab, $core_tabs, true ) ) {
 				/**
@@ -957,19 +953,9 @@ class Settings {
 			<form method="post" action="options.php">
 				<?php
 				switch ( $active_tab ) {
-					case 'commission':
-						settings_fields( 'wpss_commission' );
-						do_settings_sections( 'wpss_commission' );
-						break;
-
-					case 'payouts':
-						settings_fields( 'wpss_payouts' );
-						do_settings_sections( 'wpss_payouts' );
-						break;
-
-					case 'tax':
-						settings_fields( 'wpss_tax' );
-						do_settings_sections( 'wpss_tax' );
+					case 'payments':
+						// Payments tab combines Commission, Tax, and Payouts with collapsible sections.
+						$this->render_payments_tab();
 						break;
 
 					case 'vendor':
@@ -982,7 +968,7 @@ class Settings {
 						do_settings_sections( 'wpss_orders' );
 						break;
 
-					case 'notifications':
+					case 'emails':
 						settings_fields( 'wpss_notifications' );
 						do_settings_sections( 'wpss_notifications' );
 						break;
@@ -1094,6 +1080,117 @@ class Settings {
 			</script>
 			<?php endif; ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render the Payments tab with collapsible sections.
+	 *
+	 * Combines Commission, Tax, and Payouts settings into one tab
+	 * with expandable accordion sections.
+	 *
+	 * @return void
+	 */
+	private function render_payments_tab(): void {
+		// We need to output all three option groups' nonces.
+		// Using a custom approach to handle multiple option groups.
+		wp_nonce_field( 'wpss_payments_combined', 'wpss_payments_nonce' );
+		?>
+		<style>
+			.wpss-payments-section {
+				background: #fff;
+				border: 1px solid #c3c4c7;
+				margin-bottom: 15px;
+			}
+			.wpss-payments-section-header {
+				padding: 12px 15px;
+				background: #f6f7f7;
+				border-bottom: 1px solid #c3c4c7;
+				cursor: pointer;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.wpss-payments-section-header:hover {
+				background: #f0f0f1;
+			}
+			.wpss-payments-section-header h3 {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 600;
+			}
+			.wpss-payments-section-toggle {
+				font-size: 20px;
+				color: #787c82;
+				transition: transform 0.2s;
+			}
+			.wpss-payments-section.collapsed .wpss-payments-section-toggle {
+				transform: rotate(-90deg);
+			}
+			.wpss-payments-section-content {
+				padding: 15px;
+			}
+			.wpss-payments-section.collapsed .wpss-payments-section-content {
+				display: none;
+			}
+			.wpss-payments-section .form-table th {
+				width: 200px;
+			}
+		</style>
+
+		<!-- Commission Section -->
+		<div class="wpss-payments-section" data-section="commission">
+			<div class="wpss-payments-section-header">
+				<h3><?php esc_html_e( 'Commission Settings', 'wp-sell-services' ); ?></h3>
+				<span class="wpss-payments-section-toggle dashicons dashicons-arrow-down-alt2"></span>
+			</div>
+			<div class="wpss-payments-section-content">
+				<p class="description"><?php esc_html_e( 'Configure the platform commission deducted from vendor earnings.', 'wp-sell-services' ); ?></p>
+				<?php
+				settings_fields( 'wpss_commission' );
+				do_settings_sections( 'wpss_commission' );
+				?>
+			</div>
+		</div>
+
+		<!-- Tax Section -->
+		<div class="wpss-payments-section" data-section="tax">
+			<div class="wpss-payments-section-header">
+				<h3><?php esc_html_e( 'Tax Settings', 'wp-sell-services' ); ?></h3>
+				<span class="wpss-payments-section-toggle dashicons dashicons-arrow-down-alt2"></span>
+			</div>
+			<div class="wpss-payments-section-content">
+				<p class="description"><?php esc_html_e( 'Configure tax calculation for services.', 'wp-sell-services' ); ?></p>
+				<?php
+				settings_fields( 'wpss_tax' );
+				do_settings_sections( 'wpss_tax' );
+				?>
+			</div>
+		</div>
+
+		<!-- Payouts Section -->
+		<div class="wpss-payments-section" data-section="payouts">
+			<div class="wpss-payments-section-header">
+				<h3><?php esc_html_e( 'Payout Settings', 'wp-sell-services' ); ?></h3>
+				<span class="wpss-payments-section-toggle dashicons dashicons-arrow-down-alt2"></span>
+			</div>
+			<div class="wpss-payments-section-content">
+				<p class="description"><?php esc_html_e( 'Configure vendor withdrawal and payout settings.', 'wp-sell-services' ); ?></p>
+				<?php
+				settings_fields( 'wpss_payouts' );
+				do_settings_sections( 'wpss_payouts' );
+				?>
+			</div>
+		</div>
+
+		<script>
+		jQuery(function($) {
+			$('.wpss-payments-section-header').on('click', function() {
+				var $section = $(this).closest('.wpss-payments-section');
+				$section.toggleClass('collapsed');
+			});
+		});
+		</script>
 		<?php
 	}
 
