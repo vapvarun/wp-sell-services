@@ -911,17 +911,20 @@ function wpss_get_page_url( string $page_key ): string {
 }
 
 /**
- * Get the Create Service page URL.
+ * Get the Create Service URL.
  *
- * Returns the URL to the Create Service page where vendors can create new services.
- * Falls back to empty string if page not configured.
+ * Returns the URL to the Dashboard create section where vendors can create new services.
  *
  * @since 1.1.0
  *
- * @return string Create service page URL or empty string.
+ * @return string Create service URL (dashboard with create section).
  */
 function wpss_get_create_service_url(): string {
-	return wpss_get_page_url( 'create_service' );
+	$dashboard_url = wpss_get_page_url( 'dashboard' );
+	if ( ! $dashboard_url ) {
+		return '';
+	}
+	return add_query_arg( 'section', 'create', $dashboard_url );
 }
 
 /**
