@@ -16,6 +16,7 @@ use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Database\Repositories\ConversationRepository;
 use WPSellServices\Database\Repositories\DeliveryRepository;
 use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Services\OrderService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -50,12 +51,20 @@ class OrderMetabox {
 	private DeliveryRepository $delivery_repo;
 
 	/**
+	 * Order service.
+	 *
+	 * @var OrderService
+	 */
+	private OrderService $order_service;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->order_repo        = new OrderRepository();
 		$this->conversation_repo = new ConversationRepository();
 		$this->delivery_repo     = new DeliveryRepository();
+		$this->order_service     = new OrderService();
 	}
 
 	/**
@@ -949,7 +958,10 @@ class OrderMetabox {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 
-		$result = $this->order_repo->update_status( $order_id, $status );
+		// Use OrderService instead of repository to ensure hooks fire.
+		// This triggers wpss_order_status_changed and wpss_order_status_{status} hooks
+		// which are needed for commission recording, notifications, etc.
+		$result = $this->order_service->update_status( $order_id, $status );
 
 		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Status updated successfully.', 'wp-sell-services' ) ) );

@@ -181,11 +181,11 @@
 						const $container = $('#wpss-messages-container');
 						$container.scrollTop($container[0].scrollHeight);
 					} else {
-						alert(response.data.message || 'Failed to send message.');
+						WPSS.showNotification(response.data.message || 'Failed to send message.', 'error');
 					}
 				},
 				error: function() {
-					alert('An error occurred. Please try again.');
+					WPSS.showNotification('An error occurred. Please try again.', 'error');
 				},
 				complete: function() {
 					$btn.prop('disabled', false);
@@ -468,14 +468,14 @@
 						if (response.data.redirect) {
 							window.location.href = response.data.redirect;
 						} else {
-							alert('Added to cart!');
+							WPSS.showNotification('Added to cart!', 'success');
 						}
 					} else {
-						alert(response.data.message || 'Failed to add to cart.');
+						WPSS.showNotification(response.data.message || 'Failed to add to cart.', 'error');
 					}
 				},
 				error: function() {
-					alert('An error occurred. Please try again.');
+					WPSS.showNotification('An error occurred. Please try again.', 'error');
 				}
 			});
 		}
@@ -666,14 +666,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					alert(response.data.message || 'Review submitted successfully!');
-					location.reload();
+					WPSS.showNotification(response.data.message || 'Review submitted successfully!', 'success');
+					setTimeout(function() {
+						location.reload();
+					}, 1500);
 				} else {
-					alert(response.data.message || 'Failed to submit review.');
+					WPSS.showNotification(response.data.message || 'Failed to submit review.', 'error');
 				}
 			},
 			error: function() {
-				alert('An error occurred. Please try again.');
+				WPSS.showNotification('An error occurred. Please try again.', 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -697,14 +699,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					alert(response.data.message || 'Dispute opened successfully.');
-					location.reload();
+					WPSS.showNotification(response.data.message || 'Dispute opened successfully. Our team will review your case.', 'success');
+					setTimeout(function() {
+						location.reload();
+					}, 1500);
 				} else {
-					alert(response.data.message || 'Failed to open dispute.');
+					WPSS.showNotification(response.data.message || 'Failed to open dispute.', 'error');
 				}
 			},
 			error: function() {
-				alert('An error occurred. Please try again.');
+				WPSS.showNotification('An error occurred. Please try again.', 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -727,13 +731,16 @@
 			},
 			success: function(response) {
 				if (response.success) {
-					location.reload();
+					WPSS.showNotification(response.data.message || 'Revision requested successfully!', 'success');
+					setTimeout(function() {
+						location.reload();
+					}, 1500);
 				} else {
-					alert(response.data.message || 'Failed to request revision.');
+					WPSS.showNotification(response.data.message || 'Failed to request revision.', 'error');
 				}
 			},
 			error: function() {
-				alert('An error occurred. Please try again.');
+				WPSS.showNotification('An error occurred. Please try again.', 'error');
 			}
 		});
 	};
