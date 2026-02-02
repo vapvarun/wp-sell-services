@@ -1335,3 +1335,44 @@ function wpss_get_vendor_services( int $vendor_id, array $args = array() ): arra
 
 	return get_posts( $query_args );
 }
+
+/**
+ * Render pagination for a WP_Query.
+ *
+ * Outputs pagination HTML using WordPress paginate_links().
+ *
+ * @since 1.2.0
+ *
+ * @param \WP_Query $query The query object to paginate.
+ * @param array     $args  Optional. Arguments to customize pagination.
+ * @return void
+ */
+function wpss_pagination( \WP_Query $query, array $args = array() ): void {
+	$total_pages = $query->max_num_pages;
+
+	if ( $total_pages <= 1 ) {
+		return;
+	}
+
+	$current_page = max( 1, get_query_var( 'paged', 1 ) );
+
+	$defaults = array(
+		'base'      => str_replace( 999999999, '%#%', esc_url( get_pagenum_link( 999999999 ) ) ),
+		'format'    => '?paged=%#%',
+		'current'   => $current_page,
+		'total'     => $total_pages,
+		'prev_text' => '&laquo;',
+		'next_text' => '&raquo;',
+		'type'      => 'list',
+	);
+
+	$args = wp_parse_args( $args, $defaults );
+
+	$pagination = paginate_links( $args );
+
+	if ( $pagination ) {
+		echo '<nav class="wpss-pagination" aria-label="' . esc_attr__( 'Pagination', 'wp-sell-services' ) . '">';
+		echo wp_kses_post( $pagination );
+		echo '</nav>';
+	}
+}

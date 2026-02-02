@@ -97,6 +97,29 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_get_notifications', array( $this, 'get_notifications' ) );
 		add_action( 'wp_ajax_wpss_mark_notification_read', array( $this, 'mark_notification_read' ) );
 		add_action( 'wp_ajax_wpss_mark_all_notifications_read', array( $this, 'mark_all_notifications_read' ) );
+
+		// Checkout/Cart.
+		add_action( 'wp_ajax_wpss_update_cart_item', array( $this, 'update_cart_item' ) );
+		add_action( 'wp_ajax_wpss_remove_requirement_file', array( $this, 'remove_requirement_file' ) );
+		add_action( 'wp_ajax_wpss_skip_requirements', array( $this, 'skip_requirements' ) );
+
+		// Blocks/Services.
+		add_action( 'wp_ajax_wpss_load_services', array( $this, 'load_services' ) );
+		add_action( 'wp_ajax_nopriv_wpss_load_services', array( $this, 'load_services' ) );
+
+		// Dashboard.
+		add_action( 'wp_ajax_wpss_get_dashboard_tab', array( $this, 'get_dashboard_tab' ) );
+		add_action( 'wp_ajax_wpss_get_dashboard_stats', array( $this, 'get_dashboard_stats' ) );
+		add_action( 'wp_ajax_wpss_service_action', array( $this, 'service_action' ) );
+		add_action( 'wp_ajax_wpss_order_action', array( $this, 'order_action' ) );
+		add_action( 'wp_ajax_wpss_filter_dashboard', array( $this, 'filter_dashboard' ) );
+		add_action( 'wp_ajax_wpss_bulk_action', array( $this, 'bulk_action' ) );
+		add_action( 'wp_ajax_wpss_search_dashboard', array( $this, 'search_dashboard' ) );
+		add_action( 'wp_ajax_wpss_paginate_dashboard', array( $this, 'paginate_dashboard' ) );
+		add_action( 'wp_ajax_wpss_export_data', array( $this, 'export_data' ) );
+
+		// Withdrawals.
+		add_action( 'wp_ajax_wpss_cancel_withdrawal', array( $this, 'cancel_withdrawal' ) );
 	}
 
 	/**
@@ -2245,5 +2268,707 @@ class AjaxHandlers {
 		);
 
 		wp_send_json_success( array( 'message' => __( 'All notifications marked as read.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * Update cart item (package, quantity, extras).
+	 *
+	 * @return void
+	 */
+	public function update_cart_item(): void {
+		check_ajax_referer( 'wpss_checkout_nonce', 'nonce' );
+
+		$service_id    = absint( $_POST['service_id'] ?? 0 );
+		$package_index = absint( $_POST['package_index'] ?? 0 );
+		$quantity      = absint( $_POST['quantity'] ?? 1 );
+		$extras        = array_map( 'absint', (array) ( $_POST['extras'] ?? array() ) );
+
+		if ( ! $service_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		// Update WooCommerce cart if active.
+		if ( class_exists( 'WooCommerce' ) && WC()->cart ) {
+			foreach ( WC()->cart->get_cart() as $cart_key => $cart_item ) {
+				if ( isset( $cart_item['wpss_service_id'] ) && (int) $cart_item['wpss_service_id'] === $service_id ) {
+					WC()->cart->set_quantity( $cart_key, $quantity );
+
+					// Update cart item data.
+					WC()->cart->cart_contents[ $cart_key ]['wpss_package_index'] = $package_index;
+					WC()->cart->cart_contents[ $cart_key ]['wpss_extras']        = $extras;
+					WC()->cart->calculate_totals();
+
+					wp_send_json_success( array( 'message' => __( 'Cart updated.', 'wp-sell-services' ) ) );
+				}
+			}
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Cart updated.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * Remove requirement file.
+	 *
+	 * @return void
+	 */
+	public function remove_requirement_file(): void {
+		check_ajax_referer( 'wpss_checkout_nonce', 'nonce' );
+
+		$file_id = absint( $_POST['file_id'] ?? 0 );
+		$user_id = get_current_user_id();
+
+		if ( ! $file_id || ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify user owns the attachment.
+		$attachment = get_post( $file_id );
+		if ( ! $attachment || (int) $attachment->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		// Delete attachment.
+		wp_delete_attachment( $file_id, true );
+
+		wp_send_json_success( array( 'message' => __( 'File removed.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * Skip requirements step.
+	 *
+	 * @return void
+	 */
+	public function skip_requirements(): void {
+		check_ajax_referer( 'wpss_checkout_nonce', 'nonce' );
+
+		$order_id = absint( $_POST['order_id'] ?? 0 );
+		$user_id  = get_current_user_id();
+
+		if ( ! $order_id || ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
+
+		if ( ! $order || (int) $order->customer_id !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		// Mark requirements as skipped (can be submitted later).
+		update_post_meta( $order_id, '_wpss_requirements_skipped', true );
+
+		$redirect_url = wpss_get_page_url( 'orders' );
+
+		wp_send_json_success(
+			array(
+				'message'  => __( 'Requirements skipped. You can submit them later.', 'wp-sell-services' ),
+				'redirect' => $redirect_url,
+			)
+		);
+	}
+
+	/**
+	 * Load services via AJAX (for blocks).
+	 *
+	 * @return void
+	 */
+	public function load_services(): void {
+		check_ajax_referer( 'wpss_blocks_nonce', 'nonce' );
+
+		$page       = absint( $_POST['page'] ?? 1 );
+		$attributes = isset( $_POST['attributes'] ) ? json_decode( wp_unslash( $_POST['attributes'] ), true ) : array();
+
+		$args = array(
+			'post_type'      => 'wpss_service',
+			'post_status'    => 'publish',
+			'posts_per_page' => absint( $attributes['postsPerPage'] ?? 12 ),
+			'paged'          => $page,
+			'orderby'        => sanitize_key( $attributes['orderBy'] ?? 'date' ),
+			'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
+		);
+
+		// Category filter.
+		if ( ! empty( $attributes['category'] ) ) {
+			$args['tax_query'] = array(
+				array(
+					'taxonomy' => 'wpss_service_category',
+					'field'    => 'term_id',
+					'terms'    => absint( $attributes['category'] ),
+				),
+			);
+		}
+
+		$query = new \WP_Query( $args );
+
+		ob_start();
+		if ( $query->have_posts() ) {
+			while ( $query->have_posts() ) {
+				$query->the_post();
+				wpss_get_template_part( 'content', 'service-card' );
+			}
+		} else {
+			echo '<p class="wpss-no-services">' . esc_html__( 'No services found.', 'wp-sell-services' ) . '</p>';
+		}
+		wp_reset_postdata();
+		$html = ob_get_clean();
+
+		// Pagination.
+		ob_start();
+		wpss_pagination( $query );
+		$pagination = ob_get_clean();
+
+		wp_send_json_success(
+			array(
+				'html'       => $html,
+				'pagination' => $pagination,
+			)
+		);
+	}
+
+	/**
+	 * Get dashboard tab content.
+	 *
+	 * @return void
+	 */
+	public function get_dashboard_tab(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$tab     = sanitize_key( $_POST['tab'] ?? 'overview' );
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		ob_start();
+
+		// Load appropriate template based on tab.
+		$template = "dashboard/tabs/{$tab}";
+		if ( ! wpss_get_template_part( $template ) ) {
+			echo '<p>' . esc_html__( 'Tab content not found.', 'wp-sell-services' ) . '</p>';
+		}
+
+		$html = ob_get_clean();
+
+		wp_send_json_success( array( 'html' => $html ) );
+	}
+
+	/**
+	 * Get dashboard statistics.
+	 *
+	 * @return void
+	 */
+	public function get_dashboard_stats(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$range   = sanitize_key( $_POST['range'] ?? 'month' );
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		global $wpdb;
+
+		// Calculate date range.
+		$end_date   = current_time( 'Y-m-d 23:59:59' );
+		$start_date = match ( $range ) {
+			'day'   => current_time( 'Y-m-d 00:00:00' ),
+			'week'  => gmdate( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
+			'year'  => gmdate( 'Y-01-01 00:00:00' ),
+			default => gmdate( 'Y-m-01 00:00:00' ), // month
+		};
+
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+
+		// Get stats.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$stats_row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT
+					COUNT(*) as total_orders,
+					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+					SUM(CASE WHEN status IN ('in_progress', 'pending_requirements') THEN 1 ELSE 0 END) as active,
+					COALESCE(SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END), 0) as earnings
+				FROM {$orders_table}
+				WHERE vendor_id = %d AND created_at BETWEEN %s AND %s",
+				$user_id,
+				$start_date,
+				$end_date
+			)
+		);
+
+		$stats = array(
+			'total_orders' => array(
+				'value'  => (int) ( $stats_row->total_orders ?? 0 ),
+				'change' => 0,
+			),
+			'completed'    => array(
+				'value'  => (int) ( $stats_row->completed ?? 0 ),
+				'change' => 0,
+			),
+			'active'       => array(
+				'value'  => (int) ( $stats_row->active ?? 0 ),
+				'change' => 0,
+			),
+			'earnings'     => array(
+				'value'  => wpss_format_price( (float) ( $stats_row->earnings ?? 0 ) ),
+				'change' => 0,
+			),
+		);
+
+		// Chart data (simple daily aggregation).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$chart_data = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT
+					DATE(created_at) as date,
+					COUNT(*) as orders,
+					COALESCE(SUM(total), 0) as earnings
+				FROM {$orders_table}
+				WHERE vendor_id = %d AND created_at BETWEEN %s AND %s
+				GROUP BY DATE(created_at)
+				ORDER BY date ASC",
+				$user_id,
+				$start_date,
+				$end_date
+			)
+		);
+
+		$labels        = array();
+		$earnings_data = array();
+		$orders_data   = array();
+
+		foreach ( $chart_data as $row ) {
+			$labels[]        = wp_date( 'M j', strtotime( $row->date ) );
+			$earnings_data[] = (float) $row->earnings;
+			$orders_data[]   = (int) $row->orders;
+		}
+
+		wp_send_json_success(
+			array(
+				'stats'  => $stats,
+				'charts' => array(
+					'earnings' => array(
+						'labels' => $labels,
+						'data'   => $earnings_data,
+					),
+					'orders'   => array(
+						'labels' => $labels,
+						'data'   => $orders_data,
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Handle service action from dashboard.
+	 *
+	 * @return void
+	 */
+	public function service_action(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$action     = sanitize_key( $_POST['service_action'] ?? '' );
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$user_id    = get_current_user_id();
+
+		if ( ! $service_id || ! $action ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify ownership.
+		$service = get_post( $service_id );
+		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$message = '';
+
+		switch ( $action ) {
+			case 'pause':
+				wp_update_post(
+					array(
+						'ID'          => $service_id,
+						'post_status' => 'draft',
+					)
+				);
+				$message = __( 'Service paused.', 'wp-sell-services' );
+				break;
+
+			case 'unpublish':
+				wp_update_post(
+					array(
+						'ID'          => $service_id,
+						'post_status' => 'draft',
+					)
+				);
+				$message = __( 'Service unpublished.', 'wp-sell-services' );
+				break;
+
+			case 'publish':
+				wp_update_post(
+					array(
+						'ID'          => $service_id,
+						'post_status' => 'publish',
+					)
+				);
+				$message = __( 'Service published.', 'wp-sell-services' );
+				break;
+
+			case 'delete':
+				wp_trash_post( $service_id );
+				$message = __( 'Service deleted.', 'wp-sell-services' );
+				break;
+
+			default:
+				wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
+		}
+
+		wp_send_json_success( array( 'message' => $message ) );
+	}
+
+	/**
+	 * Handle order action from dashboard.
+	 *
+	 * @return void
+	 */
+	public function order_action(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$action   = sanitize_key( $_POST['order_action'] ?? '' );
+		$order_id = absint( $_POST['order_id'] ?? 0 );
+		$user_id  = get_current_user_id();
+
+		if ( ! $order_id || ! $action ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
+
+		if ( ! $order ) {
+			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify user is part of order.
+		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$result = array( 'success' => false );
+
+		switch ( $action ) {
+			case 'accept':
+				if ( (int) $order->vendor_id === $user_id ) {
+					$result = $order_service->update_status( $order_id, 'accepted' );
+				}
+				break;
+
+			case 'start':
+				if ( (int) $order->vendor_id === $user_id ) {
+					$result['success'] = $order_service->start_work( $order_id );
+				}
+				break;
+
+			case 'cancel':
+				$result = $order_service->update_status( $order_id, 'cancelled' );
+				break;
+
+			default:
+				wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! empty( $result['success'] ) ) {
+			wp_send_json_success( array( 'message' => __( 'Order updated.', 'wp-sell-services' ) ) );
+		} else {
+			wp_send_json_error( array( 'message' => $result['message'] ?? __( 'Action failed.', 'wp-sell-services' ) ) );
+		}
+	}
+
+	/**
+	 * Filter dashboard content.
+	 *
+	 * @return void
+	 */
+	public function filter_dashboard(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
+		$filter  = sanitize_key( $_POST['filter'] ?? 'all' );
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		ob_start();
+
+		// Load filtered content based on tab.
+		$template = "dashboard/partials/{$tab}-list";
+		set_query_var( 'wpss_filter', $filter );
+		set_query_var( 'wpss_user_id', $user_id );
+		wpss_get_template_part( $template );
+
+		$html = ob_get_clean();
+
+		wp_send_json_success( array( 'html' => $html ) );
+	}
+
+	/**
+	 * Handle bulk action.
+	 *
+	 * @return void
+	 */
+	public function bulk_action(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$action  = sanitize_key( $_POST['bulk_action'] ?? '' );
+		$ids     = array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) );
+		$type    = sanitize_key( $_POST['type'] ?? 'services' );
+		$user_id = get_current_user_id();
+
+		if ( empty( $ids ) || ! $action ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$processed = 0;
+
+		if ( 'services' === $type ) {
+			foreach ( $ids as $service_id ) {
+				$service = get_post( $service_id );
+				if ( $service && 'wpss_service' === $service->post_type && (int) $service->post_author === $user_id ) {
+					switch ( $action ) {
+						case 'delete':
+							wp_trash_post( $service_id );
+							++$processed;
+							break;
+						case 'pause':
+							wp_update_post(
+								array(
+									'ID'          => $service_id,
+									'post_status' => 'draft',
+								)
+							);
+							++$processed;
+							break;
+						case 'publish':
+							wp_update_post(
+								array(
+									'ID'          => $service_id,
+									'post_status' => 'publish',
+								)
+							);
+							++$processed;
+							break;
+					}
+				}
+			}
+		}
+
+		/* translators: %d: number of items processed */
+		wp_send_json_success( array( 'message' => sprintf( __( '%d items updated.', 'wp-sell-services' ), $processed ) ) );
+	}
+
+	/**
+	 * Search dashboard content.
+	 *
+	 * @return void
+	 */
+	public function search_dashboard(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
+		$query   = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		ob_start();
+
+		// Load search results based on tab.
+		$template = "dashboard/partials/{$tab}-list";
+		set_query_var( 'wpss_search', $query );
+		set_query_var( 'wpss_user_id', $user_id );
+		wpss_get_template_part( $template );
+
+		$html = ob_get_clean();
+
+		wp_send_json_success( array( 'html' => $html ) );
+	}
+
+	/**
+	 * Paginate dashboard content.
+	 *
+	 * @return void
+	 */
+	public function paginate_dashboard(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
+		$page    = absint( $_POST['page'] ?? 1 );
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		ob_start();
+
+		// Load paginated content.
+		$template = "dashboard/partials/{$tab}-list";
+		set_query_var( 'wpss_page', $page );
+		set_query_var( 'wpss_user_id', $user_id );
+		wpss_get_template_part( $template );
+
+		$html = ob_get_clean();
+
+		wp_send_json_success( array( 'html' => $html ) );
+	}
+
+	/**
+	 * Export data as CSV.
+	 *
+	 * @return void
+	 */
+	public function export_data(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$type    = sanitize_key( $_POST['type'] ?? 'orders' );
+		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
+		$range   = sanitize_key( $_POST['range'] ?? 'month' );
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_die( esc_html__( 'Please log in.', 'wp-sell-services' ) );
+		}
+
+		global $wpdb;
+
+		// Calculate date range.
+		$end_date   = current_time( 'Y-m-d 23:59:59' );
+		$start_date = match ( $range ) {
+			'day'   => current_time( 'Y-m-d 00:00:00' ),
+			'week'  => gmdate( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
+			'year'  => gmdate( 'Y-01-01 00:00:00' ),
+			default => gmdate( 'Y-m-01 00:00:00' ),
+		};
+
+		$filename = "wpss-{$type}-export-" . gmdate( 'Y-m-d' ) . '.csv';
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		$output = fopen( 'php://output', 'w' );
+
+		if ( 'orders' === $type ) {
+			fputcsv( $output, array( 'Order ID', 'Service', 'Customer', 'Status', 'Total', 'Created' ) );
+
+			$orders_table = $wpdb->prefix . 'wpss_orders';
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$orders = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$orders_table}
+					WHERE vendor_id = %d AND created_at BETWEEN %s AND %s
+					ORDER BY created_at DESC",
+					$user_id,
+					$start_date,
+					$end_date
+				)
+			);
+
+			foreach ( $orders as $order ) {
+				$service  = get_post( $order->service_id );
+				$customer = get_userdata( $order->customer_id );
+				fputcsv(
+					$output,
+					array(
+						$order->id,
+						$service ? $service->post_title : 'N/A',
+						$customer ? $customer->display_name : 'N/A',
+						$order->status,
+						$order->total,
+						$order->created_at,
+					)
+				);
+			}
+		}
+
+		fclose( $output );
+		exit;
+	}
+
+	/**
+	 * Cancel withdrawal request.
+	 *
+	 * @return void
+	 */
+	public function cancel_withdrawal(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$withdrawal_id = absint( $_POST['withdrawal_id'] ?? 0 );
+		$user_id       = get_current_user_id();
+
+		if ( ! $withdrawal_id || ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		global $wpdb;
+
+		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// Verify ownership and status.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$withdrawal = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$withdrawals_table} WHERE id = %d AND vendor_id = %d",
+				$withdrawal_id,
+				$user_id
+			)
+		);
+
+		if ( ! $withdrawal ) {
+			wp_send_json_error( array( 'message' => __( 'Withdrawal not found.', 'wp-sell-services' ) ) );
+		}
+
+		if ( 'pending' !== $withdrawal->status ) {
+			wp_send_json_error( array( 'message' => __( 'Only pending withdrawals can be cancelled.', 'wp-sell-services' ) ) );
+		}
+
+		// Cancel withdrawal.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$withdrawals_table,
+			array(
+				'status'     => 'cancelled',
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $withdrawal_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+
+		// Restore balance to vendor.
+		$vendor_repo = new \WPSellServices\Database\Repositories\VendorProfileRepository();
+		$vendor      = $vendor_repo->find_by_user_id( $user_id );
+
+		if ( $vendor ) {
+			$vendor_repo->update(
+				$vendor->id,
+				array(
+					'pending_balance'   => max( 0, (float) $vendor->pending_balance - (float) $withdrawal->amount ),
+					'available_balance' => (float) $vendor->available_balance + (float) $withdrawal->amount,
+				)
+			);
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Withdrawal cancelled. Balance restored.', 'wp-sell-services' ) ) );
 	}
 }
