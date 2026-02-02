@@ -979,10 +979,8 @@ class Settings {
 						break;
 
 					case 'advanced':
-						settings_fields( 'wpss_advanced' );
-						do_settings_sections( 'wpss_advanced' );
-						// Allow Pro plugin to add sections (e.g., Analytics).
-						do_action( 'wpss_advanced_settings_sections' );
+						// Advanced tab uses accordion style for consistency with Pro sections.
+						$this->render_advanced_tab();
 						break;
 
 					default:
@@ -1189,6 +1187,99 @@ class Settings {
 		jQuery(function($) {
 			$('.wpss-payments-section-header').on('click', function() {
 				var $section = $(this).closest('.wpss-payments-section');
+				$section.toggleClass('collapsed');
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render the Advanced tab with collapsible sections.
+	 *
+	 * Uses accordion pattern for consistency with Pro sections.
+	 *
+	 * @return void
+	 */
+	private function render_advanced_tab(): void {
+		?>
+		<style>
+			.wpss-advanced-section {
+				background: #fff;
+				border: 1px solid #c3c4c7;
+				margin-bottom: 15px;
+			}
+			.wpss-advanced-section-header {
+				padding: 12px 15px;
+				background: #f6f7f7;
+				border-bottom: 1px solid #c3c4c7;
+				cursor: pointer;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.wpss-advanced-section-header:hover {
+				background: #f0f0f1;
+			}
+			.wpss-advanced-section-header h3 {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 600;
+			}
+			.wpss-advanced-section-toggle {
+				font-size: 20px;
+				color: #787c82;
+				transition: transform 0.2s;
+			}
+			.wpss-advanced-section.collapsed .wpss-advanced-section-toggle {
+				transform: rotate(-90deg);
+			}
+			.wpss-advanced-section-content {
+				padding: 15px;
+			}
+			.wpss-advanced-section.collapsed .wpss-advanced-section-content {
+				display: none;
+			}
+			.wpss-advanced-section .form-table th {
+				width: 200px;
+			}
+			.wpss-pro-badge {
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: #fff;
+				font-size: 11px;
+				padding: 2px 8px;
+				border-radius: 3px;
+				font-weight: 500;
+			}
+		</style>
+
+		<!-- System Section -->
+		<div class="wpss-advanced-section" data-section="system">
+			<div class="wpss-advanced-section-header">
+				<h3><?php esc_html_e( 'System Settings', 'wp-sell-services' ); ?></h3>
+				<span class="wpss-advanced-section-toggle dashicons dashicons-arrow-down-alt2"></span>
+			</div>
+			<div class="wpss-advanced-section-content">
+				<p class="description"><?php esc_html_e( 'Configure advanced system options.', 'wp-sell-services' ); ?></p>
+				<form method="post" action="options.php">
+					<?php
+					settings_fields( 'wpss_advanced' );
+					do_settings_sections( 'wpss_advanced' );
+					submit_button( __( 'Save Changes', 'wp-sell-services' ) );
+					?>
+				</form>
+			</div>
+		</div>
+
+		<?php
+		// Allow Pro plugin to add sections (e.g., Analytics).
+		do_action( 'wpss_advanced_settings_sections' );
+		?>
+
+		<script>
+		jQuery(function($) {
+			$('.wpss-advanced-section-header').on('click', function() {
+				var $section = $(this).closest('.wpss-advanced-section');
 				$section.toggleClass('collapsed');
 			});
 		});
