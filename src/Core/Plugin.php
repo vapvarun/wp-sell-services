@@ -220,6 +220,7 @@ final class Plugin {
 	 * @return void
 	 */
 	public function init(): void {
+		$this->init_updater();
 		$this->maybe_upgrade_database();
 		$this->maybe_create_vendor_role();
 		$this->set_locale();
@@ -250,6 +251,20 @@ final class Plugin {
 		 * @param Plugin $plugin Plugin instance.
 		 */
 		do_action( 'wpss_loaded', $this );
+	}
+
+	/**
+	 * Initialize the plugin updater.
+	 *
+	 * Sets up EDD Software Licensing for automatic updates.
+	 * No license required for the free version.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private function init_updater(): void {
+		$updater = new Updater();
+		$updater->init();
 	}
 
 	/**
