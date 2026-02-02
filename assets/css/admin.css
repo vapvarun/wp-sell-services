@@ -1686,3 +1686,618 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* ==========================================================================
+   Vendors Page
+   ========================================================================== */
+
+.wpss-vendors-page {
+	max-width: 1400px;
+}
+
+.wpss-vendor-stats {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 15px;
+	margin: 20px 0;
+}
+
+.wpss-vendor-stats .wpss-stat-card {
+	text-align: center;
+	display: block;
+}
+
+.wpss-vendor-stats .wpss-stat-number {
+	display: block;
+	font-size: 28px;
+	font-weight: 600;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-vendor-stats .wpss-stat-label {
+	display: block;
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+	margin-top: 5px;
+}
+
+.wpss-stat-active .wpss-stat-number { color: var(--wpss-admin-success); }
+.wpss-stat-pending .wpss-stat-number { color: var(--wpss-admin-warning); }
+.wpss-stat-suspended .wpss-stat-number { color: var(--wpss-admin-danger); }
+
+.wpss-vendors-filters {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 15px 0;
+}
+
+.wpss-vendors-filters .subsubsub {
+	margin: 0;
+}
+
+.wpss-vendors-filters .search-box {
+	display: flex;
+	gap: 5px;
+}
+
+.wpss-vendors-table .column-vendor { width: 20%; }
+.wpss-vendors-table .column-services { width: 8%; text-align: center; }
+.wpss-vendors-table .column-orders { width: 8%; text-align: center; }
+.wpss-vendors-table .column-rating { width: 10%; text-align: center; }
+.wpss-vendors-table .column-earnings { width: 12%; text-align: right; }
+.wpss-vendors-table .column-status { width: 10%; }
+.wpss-vendors-table .column-joined { width: 12%; }
+.wpss-vendors-table .column-actions { width: 15%; }
+
+.wpss-vendor-info {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wpss-vendor-avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+
+.wpss-vendor-name {
+	font-weight: 500;
+}
+
+.wpss-vendor-email {
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-rating-stars {
+	color: #ffb900;
+}
+
+.wpss-rating-count {
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-status-active { background: #d4edda; color: #155724; }
+.wpss-status-pending { background: #fff3cd; color: #856404; }
+.wpss-status-suspended { background: #f8d7da; color: #721c24; }
+
+.wpss-vendor-actions {
+	display: flex;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+.wpss-vendor-actions .button {
+	padding: 2px 8px;
+	font-size: 12px;
+}
+
+.wpss-no-items {
+	text-align: center;
+	padding: 40px 20px;
+	color: var(--wpss-admin-text-light);
+}
+
+/* Vendors Modal */
+.wpss-modal {
+	position: fixed;
+	z-index: 100000;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.6);
+}
+
+.wpss-modal-content {
+	background-color: var(--wpss-admin-white);
+	margin: 5% auto;
+	padding: 0;
+	border-radius: 4px;
+	width: 80%;
+	max-width: 800px;
+	max-height: 80vh;
+	overflow-y: auto;
+	position: relative;
+}
+
+.wpss-modal-close {
+	position: absolute;
+	right: 15px;
+	top: 10px;
+	font-size: 28px;
+	font-weight: bold;
+	cursor: pointer;
+	color: var(--wpss-admin-text-light);
+	z-index: 1;
+}
+
+.wpss-modal-close:hover { color: var(--wpss-admin-text); }
+
+.wpss-modal-loading {
+	padding: 60px;
+	text-align: center;
+}
+
+.wpss-modal-loading .spinner {
+	float: none;
+	margin: 0 10px 0 0;
+}
+
+#wpss-vendor-modal-body .wpss-vendor-details {
+	padding: 20px;
+}
+
+.wpss-vendor-header {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+	margin-bottom: 20px;
+}
+
+.wpss-vendor-header img {
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+}
+
+.wpss-vendor-header h2 {
+	margin: 0 0 5px;
+}
+
+.wpss-vendor-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 15px;
+	margin-bottom: 20px;
+}
+
+.wpss-vendor-stat {
+	background: #f6f7f7;
+	padding: 15px;
+	border-radius: 4px;
+	text-align: center;
+}
+
+.wpss-vendor-stat strong {
+	display: block;
+	font-size: 20px;
+	margin-bottom: 5px;
+}
+
+/* ==========================================================================
+   Vendor Detail Page
+   ========================================================================== */
+
+.wpss-vendor-detail-page {
+	max-width: 1400px;
+}
+
+/* Header Actions */
+.wpss-detail-header-actions {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+}
+
+.wpss-back-link {
+	text-decoration: none;
+	font-size: 14px;
+	color: #2271b1;
+}
+
+.wpss-back-link:hover {
+	color: #135e96;
+}
+
+.wpss-detail-buttons {
+	display: flex;
+	gap: 8px;
+}
+
+/* Vendor Header */
+.wpss-detail-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 24px;
+	background: var(--wpss-admin-white);
+	padding: 24px;
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: 4px;
+	margin-bottom: 20px;
+}
+
+.wpss-detail-avatar {
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.wpss-detail-info {
+	flex: 1;
+}
+
+.wpss-detail-name {
+	margin: 0 0 5px;
+	font-size: 24px;
+	font-weight: 600;
+}
+
+.wpss-detail-email {
+	margin: 0 0 5px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-detail-tagline {
+	margin: 0;
+	font-style: italic;
+	color: #50575e;
+}
+
+.wpss-detail-status-area {
+	text-align: right;
+}
+
+.wpss-detail-status-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	justify-content: flex-end;
+}
+
+.wpss-detail-status-row select {
+	min-width: 140px;
+}
+
+.wpss-detail-member-since {
+	margin: 10px 0 0;
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+}
+
+/* Stats Row */
+.wpss-detail-stats-row {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 15px;
+	margin-bottom: 20px;
+}
+
+.wpss-detail-stat-card {
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: 4px;
+	padding: 20px;
+	text-align: center;
+}
+
+.wpss-detail-stat-number {
+	display: block;
+	font-size: 28px;
+	font-weight: 600;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-detail-stat-label {
+	display: block;
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+	margin-top: 5px;
+}
+
+/* Tab Navigation */
+.wpss-detail-tabs {
+	display: flex;
+	gap: 0;
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-bottom: none;
+	border-radius: 4px 4px 0 0;
+}
+
+.wpss-detail-tab {
+	background: none;
+	border: none;
+	padding: 15px 24px;
+	cursor: pointer;
+	font-size: 14px;
+	color: #50575e;
+	border-bottom: 3px solid transparent;
+	transition: all 0.2s ease;
+}
+
+.wpss-detail-tab:hover {
+	background: #f6f7f7;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-detail-tab.active {
+	color: #2271b1;
+	border-bottom-color: #2271b1;
+	font-weight: 500;
+}
+
+/* Tab Content */
+.wpss-detail-tab-content {
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-top: none;
+	border-radius: 0 0 4px 4px;
+	padding: 24px;
+	min-height: 400px;
+}
+
+.wpss-tab-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 60px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-tab-loading .spinner {
+	float: none;
+	margin-right: 10px;
+}
+
+/* Tab Content Sections */
+.wpss-tab-section {
+	margin-bottom: 30px;
+}
+
+.wpss-tab-section:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-tab-section h3 {
+	margin: 0 0 15px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-info-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 15px;
+}
+
+.wpss-info-item {
+	display: flex;
+	flex-direction: column;
+}
+
+.wpss-info-label {
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+	text-transform: uppercase;
+	margin-bottom: 4px;
+}
+
+.wpss-info-value {
+	font-size: 14px;
+	color: var(--wpss-admin-text);
+}
+
+/* Social Links */
+.wpss-social-links {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.wpss-social-link {
+	display: inline-flex;
+	align-items: center;
+	padding: 5px 12px;
+	background: #f6f7f7;
+	border-radius: 3px;
+	text-decoration: none;
+	color: #2271b1;
+	font-size: 13px;
+}
+
+.wpss-social-link:hover {
+	background: #e7e8ea;
+}
+
+/* Tables in tabs */
+.wpss-detail-tab-content .widefat {
+	border: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-detail-tab-content .tablenav {
+	margin: 15px 0 0;
+}
+
+/* Earnings Section */
+.wpss-earnings-summary {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 15px;
+	margin-bottom: 20px;
+}
+
+.wpss-earnings-card {
+	background: #f6f7f7;
+	padding: 15px;
+	border-radius: 4px;
+	text-align: center;
+}
+
+.wpss-earnings-card strong {
+	display: block;
+	font-size: 20px;
+	margin-bottom: 5px;
+}
+
+/* Commission Form */
+.wpss-commission-form {
+	background: #f6f7f7;
+	padding: 20px;
+	border-radius: 4px;
+	margin-bottom: 20px;
+}
+
+.wpss-commission-form h4 {
+	margin: 0 0 15px;
+}
+
+.wpss-commission-form .form-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wpss-commission-form input[type="number"] {
+	width: 100px;
+}
+
+.wpss-commission-status {
+	margin-top: 10px;
+}
+
+/* Settings Section */
+.wpss-settings-section {
+	background: #f6f7f7;
+	padding: 20px;
+	border-radius: 4px;
+	margin-bottom: 20px;
+}
+
+.wpss-settings-section h4 {
+	margin: 0 0 15px;
+}
+
+.wpss-toggle-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+/* Vacation Mode */
+.wpss-vacation-message {
+	margin-top: 10px;
+}
+
+.wpss-vacation-message textarea {
+	width: 100%;
+	max-width: 400px;
+}
+
+/* Reviews */
+.wpss-review-item {
+	padding: 15px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-review-item:last-child {
+	border-bottom: none;
+}
+
+.wpss-review-header {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 10px;
+}
+
+.wpss-review-rating {
+	color: #ffb900;
+}
+
+.wpss-review-meta {
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-review-content {
+	margin: 0;
+}
+
+/* Vendor Page Responsive */
+@media (max-width: 1200px) {
+	.wpss-vendor-stats {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.wpss-detail-stats-row {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.wpss-earnings-summary {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 782px) {
+	.wpss-vendor-stats {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-vendors-filters {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+
+	.wpss-detail-header {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.wpss-detail-status-area {
+		text-align: center;
+	}
+
+	.wpss-detail-status-row {
+		justify-content: center;
+	}
+
+	.wpss-detail-stats-row {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-detail-tabs {
+		flex-wrap: wrap;
+	}
+
+	.wpss-detail-tab {
+		flex: 1 1 auto;
+		text-align: center;
+	}
+
+	.wpss-info-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-earnings-summary {
+		grid-template-columns: 1fr;
+	}
+}
