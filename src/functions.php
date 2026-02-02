@@ -1159,3 +1159,179 @@ function wpss_is_woocommerce_enabled(): bool {
 
 	return 'woocommerce' === $adapter->get_id();
 }
+
+/**
+ * Get total order count for a user (as customer).
+ *
+ * @since 1.2.0
+ *
+ * @param int $user_id User ID.
+ * @return int Order count.
+ */
+function wpss_get_user_order_count( int $user_id ): int {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	return (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$table} WHERE customer_id = %d",
+			$user_id
+		)
+	);
+}
+
+/**
+ * Get active order count for a user (as customer).
+ *
+ * Active orders are those not in completed, cancelled, or refunded status.
+ *
+ * @since 1.2.0
+ *
+ * @param int $user_id User ID.
+ * @return int Active order count.
+ */
+function wpss_get_user_active_order_count( int $user_id ): int {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	return (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$table} WHERE customer_id = %d AND status NOT IN ('completed', 'cancelled', 'refunded')",
+			$user_id
+		)
+	);
+}
+
+/**
+ * Get orders for a user (as customer).
+ *
+ * @since 1.2.0
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    Query arguments (limit, offset, status).
+ * @return array Array of order objects.
+ */
+function wpss_get_user_orders( int $user_id, array $args = array() ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	$defaults = array(
+		'limit'  => 10,
+		'offset' => 0,
+		'status' => '',
+	);
+	$args = wp_parse_args( $args, $defaults );
+
+	$sql = "SELECT * FROM {$table} WHERE customer_id = %d";
+	$params = array( $user_id );
+
+	if ( ! empty( $args['status'] ) ) {
+		$sql .= ' AND status = %s';
+		$params[] = $args['status'];
+	}
+
+	$sql .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+	$params[] = $args['limit'];
+	$params[] = $args['offset'];
+
+	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+}
+
+/**
+ * Get notifications for a user.
+ *
+ * @since 1.2.0
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    Query arguments (limit, offset, unread_only).
+ * @return array Array of notification objects.
+ */
+function wpss_get_user_notifications( int $user_id, array $args = array() ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	$defaults = array(
+		'limit'       => 20,
+		'offset'      => 0,
+		'unread_only' => false,
+	);
+	$args = wp_parse_args( $args, $defaults );
+
+	$sql = "SELECT * FROM {$table} WHERE user_id = %d";
+	$params = array( $user_id );
+
+	if ( $args['unread_only'] ) {
+		$sql .= ' AND is_read = 0';
+	}
+
+	$sql .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+	$params[] = $args['limit'];
+	$params[] = $args['offset'];
+
+	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+}
+
+/**
+ * Get orders for a vendor.
+ *
+ * @since 1.2.0
+ *
+ * @param int   $vendor_id Vendor user ID.
+ * @param array $args      Query arguments (limit, offset, status).
+ * @return array Array of order objects.
+ */
+function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	$defaults = array(
+		'limit'  => 10,
+		'offset' => 0,
+		'status' => '',
+	);
+	$args = wp_parse_args( $args, $defaults );
+
+	$sql = "SELECT * FROM {$table} WHERE vendor_id = %d";
+	$params = array( $vendor_id );
+
+	if ( ! empty( $args['status'] ) ) {
+		$sql .= ' AND status = %s';
+		$params[] = $args['status'];
+	}
+
+	$sql .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+	$params[] = $args['limit'];
+	$params[] = $args['offset'];
+
+	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+}
+
+/**
+ * Get services for a vendor.
+ *
+ * @since 1.2.0
+ *
+ * @param int   $vendor_id Vendor user ID.
+ * @param array $args      Query arguments (limit, offset, status).
+ * @return \WP_Post[] Array of service posts.
+ */
+function wpss_get_vendor_services( int $vendor_id, array $args = array() ): array {
+	$defaults = array(
+		'limit'  => 10,
+		'offset' => 0,
+		'status' => 'publish',
+	);
+	$args = wp_parse_args( $args, $defaults );
+
+	$query_args = array(
+		'post_type'      => 'wpss_service',
+		'author'         => $vendor_id,
+		'posts_per_page' => $args['limit'],
+		'offset'         => $args['offset'],
+		'post_status'    => $args['status'],
+		'orderby'        => 'date',
+		'order'          => 'DESC',
+	);
+
+	return get_posts( $query_args );
+}
