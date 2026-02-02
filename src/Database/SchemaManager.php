@@ -403,12 +403,14 @@ class SchemaManager {
 			resolution_notes text,
 			resolved_by bigint(20) unsigned DEFAULT NULL,
 			resolved_at datetime DEFAULT NULL,
+			assigned_admin bigint(20) unsigned DEFAULT NULL,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_order (order_id),
 			KEY idx_status (status),
-			KEY idx_deadline (response_deadline)
+			KEY idx_deadline (response_deadline),
+			KEY idx_assigned_admin (assigned_admin)
 		) {$charset_collate};";
 	}
 
@@ -658,8 +660,6 @@ class SchemaManager {
 	 */
 	public function uninstall(): void {
 		$tables = array(
-			'analytics_events',
-			'service_platform_map',
 			'withdrawals',
 			'wallet_transactions',
 			'notifications',

@@ -142,15 +142,20 @@ class DisputeRepository extends AbstractRepository {
 	/**
 	 * Find disputes assigned to admin.
 	 *
-	 * @deprecated Admin assignment not yet implemented in schema.
-	 *
 	 * @param int $admin_id Admin user ID.
-	 * @return Dispute[] Always returns empty array.
+	 * @return Dispute[]
 	 */
 	public function find_by_assigned_admin( int $admin_id ): array {
-		// Column 'assigned_admin' does not exist in disputes schema.
-		// TODO: Add assigned_admin column to schema if this feature is needed.
-		return array();
+		global $wpdb;
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$this->table} WHERE assigned_admin = %d ORDER BY created_at DESC",
+				$admin_id
+			)
+		);
+
+		return array_map( array( Dispute::class, 'from_db' ), $results );
 	}
 
 	/**
@@ -217,16 +222,18 @@ class DisputeRepository extends AbstractRepository {
 	/**
 	 * Assign dispute to admin.
 	 *
-	 * @deprecated Admin assignment not yet implemented in schema.
-	 *
 	 * @param int $id       Dispute ID.
 	 * @param int $admin_id Admin user ID.
-	 * @return bool Always returns false.
+	 * @return bool
 	 */
 	public function assign_to_admin( int $id, int $admin_id ): bool {
-		// Column 'assigned_admin' does not exist in disputes schema.
-		// TODO: Add assigned_admin column to schema if this feature is needed.
-		return false;
+		return $this->update(
+			$id,
+			array(
+				'assigned_admin' => $admin_id,
+				'updated_at'     => current_time( 'mysql' ),
+			)
+		);
 	}
 
 	/**

@@ -431,7 +431,7 @@ class API {
 					return [
 						'id'           => (int) $order->id,
 						'order_number' => $order->order_number,
-						'service'      => $service ? $service->post_title : '',
+						'service'      => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
 						'total'        => wpss_format_currency( (float) $order->total, $order->currency ),
 						'created_at'   => $order->created_at,
 					];
