@@ -949,50 +949,49 @@ class Settings {
 				 */
 				do_action( 'wpss_settings_tab_' . $active_tab );
 			} else {
-				?>
-			<form method="post" action="options.php">
-				<?php
-				switch ( $active_tab ) {
-					case 'payments':
-						// Payments tab combines Commission, Tax, and Payouts with collapsible sections.
-						$this->render_payments_tab();
-						break;
+				// Tabs with multiple option groups render their own forms.
+				if ( 'payments' === $active_tab ) {
+					$this->render_payments_tab();
+				} elseif ( 'advanced' === $active_tab ) {
+					$this->render_advanced_tab();
+				} else {
+					// Standard tabs with single option group.
+					?>
+					<form method="post" action="options.php">
+						<?php
+						switch ( $active_tab ) {
+							case 'vendor':
+								settings_fields( 'wpss_vendor' );
+								do_settings_sections( 'wpss_vendor' );
+								break;
 
-					case 'vendor':
-						settings_fields( 'wpss_vendor' );
-						do_settings_sections( 'wpss_vendor' );
-						break;
+							case 'orders':
+								settings_fields( 'wpss_orders' );
+								do_settings_sections( 'wpss_orders' );
+								break;
 
-					case 'orders':
-						settings_fields( 'wpss_orders' );
-						do_settings_sections( 'wpss_orders' );
-						break;
+							case 'emails':
+								settings_fields( 'wpss_notifications' );
+								do_settings_sections( 'wpss_notifications' );
+								break;
 
-					case 'emails':
-						settings_fields( 'wpss_notifications' );
-						do_settings_sections( 'wpss_notifications' );
-						break;
+							case 'pages':
+								settings_fields( 'wpss_pages' );
+								do_settings_sections( 'wpss_pages' );
+								break;
 
-					case 'pages':
-						settings_fields( 'wpss_pages' );
-						do_settings_sections( 'wpss_pages' );
-						break;
+							default:
+								settings_fields( 'wpss_general' );
+								do_settings_sections( 'wpss_general' );
+								break;
+						}
 
-					case 'advanced':
-						// Advanced tab uses accordion style for consistency with Pro sections.
-						$this->render_advanced_tab();
-						break;
-
-					default:
-						settings_fields( 'wpss_general' );
-						do_settings_sections( 'wpss_general' );
-						break;
+						submit_button();
+						?>
+					</form>
+					<?php
 				}
-
-				submit_button();
-				?>
-			</form>
-			<?php } ?>
+			} ?>
 
 			<?php if ( 'pages' === $active_tab ) : ?>
 			<script>
@@ -1092,9 +1091,7 @@ class Settings {
 	 * @return void
 	 */
 	private function render_payments_tab(): void {
-		// We need to output all three option groups' nonces.
-		// Using a custom approach to handle multiple option groups.
-		wp_nonce_field( 'wpss_payments_combined', 'wpss_payments_nonce' );
+		// Each section has its own form for proper WordPress Settings API handling.
 		?>
 		<style>
 			.wpss-payments-section {
@@ -1146,10 +1143,13 @@ class Settings {
 			</div>
 			<div class="wpss-payments-section-content">
 				<p class="description"><?php esc_html_e( 'Configure the platform commission deducted from vendor earnings.', 'wp-sell-services' ); ?></p>
-				<?php
-				settings_fields( 'wpss_commission' );
-				do_settings_sections( 'wpss_commission' );
-				?>
+				<form method="post" action="options.php">
+					<?php
+					settings_fields( 'wpss_commission' );
+					do_settings_sections( 'wpss_commission' );
+					submit_button( __( 'Save Commission Settings', 'wp-sell-services' ) );
+					?>
+				</form>
 			</div>
 		</div>
 
@@ -1161,10 +1161,13 @@ class Settings {
 			</div>
 			<div class="wpss-payments-section-content">
 				<p class="description"><?php esc_html_e( 'Configure tax calculation for services.', 'wp-sell-services' ); ?></p>
-				<?php
-				settings_fields( 'wpss_tax' );
-				do_settings_sections( 'wpss_tax' );
-				?>
+				<form method="post" action="options.php">
+					<?php
+					settings_fields( 'wpss_tax' );
+					do_settings_sections( 'wpss_tax' );
+					submit_button( __( 'Save Tax Settings', 'wp-sell-services' ) );
+					?>
+				</form>
 			</div>
 		</div>
 
@@ -1176,10 +1179,13 @@ class Settings {
 			</div>
 			<div class="wpss-payments-section-content">
 				<p class="description"><?php esc_html_e( 'Configure vendor withdrawal and payout settings.', 'wp-sell-services' ); ?></p>
-				<?php
-				settings_fields( 'wpss_payouts' );
-				do_settings_sections( 'wpss_payouts' );
-				?>
+				<form method="post" action="options.php">
+					<?php
+					settings_fields( 'wpss_payouts' );
+					do_settings_sections( 'wpss_payouts' );
+					submit_button( __( 'Save Payout Settings', 'wp-sell-services' ) );
+					?>
+				</form>
 			</div>
 		</div>
 
