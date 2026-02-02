@@ -981,6 +981,8 @@ class Settings {
 					case 'advanced':
 						settings_fields( 'wpss_advanced' );
 						do_settings_sections( 'wpss_advanced' );
+						// Allow Pro plugin to add sections (e.g., Analytics).
+						do_action( 'wpss_advanced_settings_sections' );
 						break;
 
 					default:
