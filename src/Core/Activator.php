@@ -85,18 +85,34 @@ class Activator {
 	 * @return void
 	 */
 	private static function create_roles(): void {
-		// Add vendor capabilities to existing roles.
+		// Vendor capabilities.
 		$vendor_caps = array(
 			'wpss_manage_services'     => true,
 			'wpss_manage_orders'       => true,
 			'wpss_view_analytics'      => true,
 			'wpss_respond_to_requests' => true,
+			'read'                     => true, // Basic WordPress capability.
 		);
 
-		// Get roles that should have vendor capabilities.
-		$vendor_roles = array( 'administrator', 'shop_manager', 'author' );
+		// Create the vendor role if it doesn't exist.
+		if ( ! get_role( 'wpss_vendor' ) ) {
+			add_role(
+				'wpss_vendor',
+				__( 'Vendor', 'wp-sell-services' ),
+				$vendor_caps
+			);
+		} else {
+			// Role exists, ensure it has all capabilities.
+			$vendor_role = get_role( 'wpss_vendor' );
+			foreach ( $vendor_caps as $cap => $grant ) {
+				$vendor_role->add_cap( $cap, $grant );
+			}
+		}
 
-		foreach ( $vendor_roles as $role_name ) {
+		// Add vendor capabilities to existing roles that should have them.
+		$roles_with_vendor_caps = array( 'administrator', 'shop_manager', 'author' );
+
+		foreach ( $roles_with_vendor_caps as $role_name ) {
 			$role = get_role( $role_name );
 			if ( $role ) {
 				foreach ( $vendor_caps as $cap => $grant ) {

@@ -464,11 +464,14 @@ function wpssServiceWizard(existingData = {}) {
 		 * Save draft via AJAX.
 		 */
 		async saveDraft() {
+			// Immediately set saving flag to prevent race conditions from rapid clicks.
 			if (this.saving) {
 				return;
 			}
-
 			this.saving = true;
+
+			// Double-check after a microtask to catch any concurrent calls.
+			await Promise.resolve();
 
 			try {
 				const serviceId = document.getElementById('wpss-service-wizard').dataset.serviceId || 0;

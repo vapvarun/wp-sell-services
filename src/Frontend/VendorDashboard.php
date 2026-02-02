@@ -98,6 +98,7 @@ class VendorDashboard {
 		add_action( 'wp_ajax_wpss_toggle_featured_portfolio', array( $this, 'ajax_toggle_featured_portfolio' ) );
 		add_action( 'wp_ajax_wpss_reorder_portfolio', array( $this, 'ajax_reorder_portfolio' ) );
 		add_action( 'wp_ajax_wpss_update_service_status', array( $this, 'ajax_update_service_status' ) );
+		add_action( 'wp_ajax_wpss_delete_service', array( $this, 'ajax_delete_service' ) );
 		add_action( 'wp_ajax_wpss_vendor_registration', array( $this, 'ajax_vendor_registration' ) );
 	}
 
@@ -667,6 +668,9 @@ class VendorDashboard {
 										<?php else : ?>
 											<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 										<?php endif; ?>
+									</button>
+									<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--ghost wpss-btn--danger wpss-delete-service" data-service-id="<?php echo esc_attr( $service['id'] ); ?>" title="<?php esc_attr_e( 'Delete', 'wp-sell-services' ); ?>">
+										<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
 									</button>
 								</div>
 							</div>
@@ -1642,6 +1646,43 @@ class VendorDashboard {
 				'new_status' => $new_status,
 			)
 		);
+	}
+
+	/**
+	 * AJAX: Delete a service.
+	 *
+	 * @return void
+	 */
+	public function ajax_delete_service(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$user_id    = get_current_user_id();
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+
+		$service = get_post( $service_id );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Service not found or you do not have permission to delete it.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Check if service has any active orders.
+		$order_service = new OrderService();
+		$active_orders = $order_service->get_by_service( $service_id, array( 'status' => array( 'pending', 'in_progress', 'revision' ) ) );
+
+		if ( ! empty( $active_orders ) ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot delete service with active orders.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		$result = wp_trash_post( $service_id );
+
+		if ( ! $result ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete service.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Service deleted successfully.', 'wp-sell-services' ) ) );
 	}
 
 	/**

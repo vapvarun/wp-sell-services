@@ -98,6 +98,9 @@ class UnifiedDashboard {
 				'i18n'    => array(
 					'becomeVendorConfirm' => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
 					'processing'          => __( 'Processing...', 'wp-sell-services' ),
+					'confirmDelete'       => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
+					'pause'               => __( 'Pause', 'wp-sell-services' ),
+					'activate'            => __( 'Activate', 'wp-sell-services' ),
 				),
 			)
 		);

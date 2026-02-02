@@ -30,6 +30,12 @@
 
 			// Profile form submission
 			$(document).on('submit', '[data-ajax-form="update-profile"]', this.handleProfileUpdate.bind(this));
+
+			// Toggle service status
+			$(document).on('click', '.wpss-toggle-status', this.handleToggleStatus.bind(this));
+
+			// Delete service
+			$(document).on('click', '.wpss-delete-service', this.handleDeleteService.bind(this));
 		},
 
 		/**
@@ -142,6 +148,102 @@
 					$button
 						.prop('disabled', false)
 						.text(originalText);
+				}
+			});
+		},
+
+		/**
+		 * Handle toggle service status.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleToggleStatus: function (e) {
+			e.preventDefault();
+
+			const $button = $(e.currentTarget);
+			const serviceId = $button.data('service-id');
+			const currentStatus = $button.data('current-status');
+
+			$button.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_update_service_status',
+					nonce: wpssUnifiedDashboard.nonce,
+					service_id: serviceId,
+					status: currentStatus
+				},
+				success: function (response) {
+					if (response.success) {
+						$button.data('current-status', response.data.new_status);
+
+						const $card = $button.closest('.wpss-card');
+						const $badge = $card.find('.wpss-badge');
+						const newStatusText = response.data.new_status === 'publish' ? 'Published' : 'Draft';
+						$badge.text(newStatusText);
+						$badge.removeClass('wpss-badge--success wpss-badge--neutral');
+						$badge.addClass(response.data.new_status === 'publish' ? 'wpss-badge--success' : 'wpss-badge--neutral');
+
+						if (response.data.new_status === 'publish') {
+							$button.html('<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>');
+							$button.attr('title', wpssUnifiedDashboard.i18n.pause || 'Pause');
+						} else {
+							$button.html('<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>');
+							$button.attr('title', wpssUnifiedDashboard.i18n.activate || 'Activate');
+						}
+					} else {
+						alert(response.data.message || 'An error occurred.');
+					}
+					$button.prop('disabled', false);
+				},
+				error: function () {
+					alert('An error occurred. Please try again.');
+					$button.prop('disabled', false);
+				}
+			});
+		},
+
+		/**
+		 * Handle delete service.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleDeleteService: function (e) {
+			e.preventDefault();
+
+			const $button = $(e.currentTarget);
+			const serviceId = $button.data('service-id');
+			const $card = $button.closest('.wpss-card');
+
+			if (!confirm(wpssUnifiedDashboard.i18n.confirmDelete || 'Are you sure you want to delete this service? This action cannot be undone.')) {
+				return;
+			}
+
+			$button.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_delete_service',
+					nonce: wpssUnifiedDashboard.nonce,
+					service_id: serviceId
+				},
+				success: function (response) {
+					if (response.success) {
+						$card.fadeOut(300, function () {
+							$(this).remove();
+						});
+					} else {
+						alert(response.data.message || 'An error occurred.');
+						$button.prop('disabled', false);
+					}
+				},
+				error: function () {
+					alert('An error occurred. Please try again.');
+					$button.prop('disabled', false);
 				}
 			});
 		}

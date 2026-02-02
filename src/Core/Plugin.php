@@ -221,6 +221,7 @@ final class Plugin {
 	 */
 	public function init(): void {
 		$this->maybe_upgrade_database();
+		$this->maybe_create_vendor_role();
 		$this->set_locale();
 		$this->register_post_types();
 		$this->define_admin_hooks();
@@ -265,6 +266,37 @@ final class Plugin {
 		if ( $schema->needs_update() ) {
 			$schema->install();
 		}
+	}
+
+	/**
+	 * Ensure the vendor role exists.
+	 *
+	 * This handles existing installations where the role was never created
+	 * during activation (bug fix for vendor registration errors).
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	private function maybe_create_vendor_role(): void {
+		// Only run once per request and only if role doesn't exist.
+		if ( get_role( 'wpss_vendor' ) ) {
+			return;
+		}
+
+		// Vendor capabilities.
+		$vendor_caps = array(
+			'wpss_manage_services'     => true,
+			'wpss_manage_orders'       => true,
+			'wpss_view_analytics'      => true,
+			'wpss_respond_to_requests' => true,
+			'read'                     => true,
+		);
+
+		add_role(
+			'wpss_vendor',
+			__( 'Vendor', 'wp-sell-services' ),
+			$vendor_caps
+		);
 	}
 
 	/**
