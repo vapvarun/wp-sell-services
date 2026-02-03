@@ -205,9 +205,10 @@ class Dispute {
 	public static function get_statuses(): array {
 		return [
 			self::STATUS_OPEN      => __( 'Open', 'wp-sell-services' ),
-			self::STATUS_IN_REVIEW => __( 'In Review', 'wp-sell-services' ),
+			self::STATUS_PENDING   => __( 'Pending Review', 'wp-sell-services' ),
+			self::STATUS_ESCALATED => __( 'Escalated', 'wp-sell-services' ),
 			self::STATUS_RESOLVED  => __( 'Resolved', 'wp-sell-services' ),
-			self::STATUS_CANCELLED => __( 'Cancelled', 'wp-sell-services' ),
+			self::STATUS_CLOSED    => __( 'Closed', 'wp-sell-services' ),
 		];
 	}
 
@@ -335,7 +336,7 @@ class Dispute {
 	 * @return bool
 	 */
 	public function is_open(): bool {
-		return in_array( $this->status, [ self::STATUS_OPEN, self::STATUS_IN_REVIEW ], true );
+		return in_array( $this->status, [ self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_ESCALATED ], true );
 	}
 
 	/**

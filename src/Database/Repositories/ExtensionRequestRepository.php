@@ -127,7 +127,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 				INNER JOIN {$wpdb->prefix}wpss_orders o ON e.order_id = o.id
 				WHERE e.status = 'pending'
 				AND e.requested_by != %d
-				AND (o.buyer_id = %d OR o.vendor_id = %d)
+				AND (o.customer_id = %d OR o.vendor_id = %d)
 				ORDER BY e.created_at DESC",
 				$user_id,
 				$user_id,
