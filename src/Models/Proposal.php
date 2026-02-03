@@ -130,8 +130,8 @@ class Proposal {
 		$proposal->vendor_id         = (int) $row->vendor_id;
 		$proposal->service_id        = $row->service_id ? (int) $row->service_id : null;
 		$proposal->cover_letter      = $row->cover_letter;
-		$proposal->price             = (float) $row->price;
-		$proposal->delivery_days     = (int) $row->delivery_days;
+		$proposal->price             = (float) ( $row->proposed_price ?? 0 );
+		$proposal->delivery_days     = (int) ( $row->proposed_days ?? 0 );
 		$proposal->status            = $row->status;
 		$proposal->rejection_reason  = $row->rejection_reason ?? null;
 		$proposal->withdrawal_reason = $row->withdrawal_reason ?? null;

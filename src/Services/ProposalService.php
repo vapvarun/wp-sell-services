@@ -43,11 +43,10 @@ class ProposalService {
 		'id',
 		'request_id',
 		'vendor_id',
-		'price',
-		'delivery_days',
+		'proposed_price',
+		'proposed_days',
 		'status',
 		'created_at',
-		'updated_at',
 	);
 
 	/**
@@ -110,16 +109,14 @@ class ProposalService {
 		}
 
 		$proposal_data = array(
-			'request_id'    => $request_id,
-			'vendor_id'     => $vendor_id,
-			'description'   => sanitize_textarea_field( $data['description'] ),
-			'price'         => (float) $data['price'],
-			'delivery_days' => (int) ( $data['delivery_days'] ?? $request->delivery_days ),
-			'status'        => self::STATUS_PENDING,
-			'attachments'   => isset( $data['attachments'] ) ? wp_json_encode( $data['attachments'] ) : null,
-			'meta'          => isset( $data['meta'] ) ? wp_json_encode( $data['meta'] ) : null,
-			'created_at'    => current_time( 'mysql' ),
-			'updated_at'    => current_time( 'mysql' ),
+			'request_id'     => $request_id,
+			'vendor_id'      => $vendor_id,
+			'cover_letter'   => sanitize_textarea_field( $data['description'] ),
+			'proposed_price' => (float) $data['price'],
+			'proposed_days'  => (int) ( $data['delivery_days'] ?? $request->delivery_days ),
+			'status'         => self::STATUS_PENDING,
+			'attachments'    => isset( $data['attachments'] ) ? wp_json_encode( $data['attachments'] ) : null,
+			'created_at'     => current_time( 'mysql' ),
 		);
 
 		$result = $wpdb->insert( $this->table, $proposal_data );
@@ -174,10 +171,9 @@ class ProposalService {
 	 * @return object Formatted proposal.
 	 */
 	private function format_proposal( object $proposal ): object {
-		$proposal->price         = (float) $proposal->price;
-		$proposal->delivery_days = (int) $proposal->delivery_days;
-		$proposal->attachments   = $proposal->attachments ? json_decode( $proposal->attachments, true ) : array();
-		$proposal->meta          = $proposal->meta ? json_decode( $proposal->meta, true ) : array();
+		$proposal->proposed_price = (float) $proposal->proposed_price;
+		$proposal->proposed_days  = (int) $proposal->proposed_days;
+		$proposal->attachments    = $proposal->attachments ? json_decode( $proposal->attachments, true ) : array();
 
 		return $proposal;
 	}
@@ -198,18 +194,18 @@ class ProposalService {
 			return false;
 		}
 
-		$update_data = array( 'updated_at' => current_time( 'mysql' ) );
+		$update_data = array();
 
 		if ( isset( $data['description'] ) ) {
-			$update_data['description'] = sanitize_textarea_field( $data['description'] );
+			$update_data['cover_letter'] = sanitize_textarea_field( $data['description'] );
 		}
 
 		if ( isset( $data['price'] ) ) {
-			$update_data['price'] = (float) $data['price'];
+			$update_data['proposed_price'] = (float) $data['price'];
 		}
 
 		if ( isset( $data['delivery_days'] ) ) {
-			$update_data['delivery_days'] = (int) $data['delivery_days'];
+			$update_data['proposed_days'] = (int) $data['delivery_days'];
 		}
 
 		if ( isset( $data['attachments'] ) ) {
@@ -265,10 +261,7 @@ class ProposalService {
 		// Update proposal status.
 		$result = $wpdb->update(
 			$this->table,
-			array(
-				'status'     => self::STATUS_ACCEPTED,
-				'updated_at' => current_time( 'mysql' ),
-			),
+			array( 'status' => self::STATUS_ACCEPTED ),
 			array( 'id' => $proposal_id )
 		);
 
@@ -320,16 +313,9 @@ class ProposalService {
 			return false;
 		}
 
-		$meta                     = $proposal->meta;
-		$meta['rejection_reason'] = $reason;
-
 		$result = $wpdb->update(
 			$this->table,
-			array(
-				'status'     => self::STATUS_REJECTED,
-				'meta'       => wp_json_encode( $meta ),
-				'updated_at' => current_time( 'mysql' ),
-			),
+			array( 'status' => self::STATUS_REJECTED ),
 			array( 'id' => $proposal_id )
 		);
 
@@ -372,10 +358,7 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array(
-				'status'     => self::STATUS_WITHDRAWN,
-				'updated_at' => current_time( 'mysql' ),
-			),
+			array( 'status' => self::STATUS_WITHDRAWN ),
 			array( 'id' => $proposal_id )
 		);
 
@@ -420,10 +403,7 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array(
-				'status'     => $status,
-				'updated_at' => current_time( 'mysql' ),
-			),
+			array( 'status' => $status ),
 			array( 'id' => $proposal_id )
 		);
 
@@ -455,10 +435,7 @@ class ProposalService {
 
 		$wpdb->update(
 			$this->table,
-			array(
-				'status'     => self::STATUS_REJECTED,
-				'updated_at' => current_time( 'mysql' ),
-			),
+			array( 'status' => self::STATUS_REJECTED ),
 			array(
 				'request_id' => $request_id,
 				'status'     => self::STATUS_PENDING,

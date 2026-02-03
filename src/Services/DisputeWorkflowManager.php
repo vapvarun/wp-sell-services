@@ -147,7 +147,7 @@ class DisputeWorkflowManager {
 		$response_type = 'response';
 		if ( current_user_can( 'manage_options' ) ) {
 			$response_type = 'admin_response';
-		} elseif ( (int) $dispute->initiator_id === $user_id ) {
+		} elseif ( (int) $dispute->initiated_by === $user_id ) {
 			$response_type = 'opener_response';
 		}
 
@@ -179,7 +179,7 @@ class DisputeWorkflowManager {
 		$this->update_response_deadline( $dispute_id, $user_id );
 
 		// Update dispute status if it was awaiting response.
-		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiator_id !== $user_id ) {
+		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiated_by !== $user_id ) {
 			$this->dispute_service->update_status( $dispute_id, DisputeService::STATUS_PENDING );
 		}
 
@@ -406,7 +406,7 @@ class DisputeWorkflowManager {
 		}
 
 		// Only opener can cancel, or admin.
-		if ( (int) $dispute->initiator_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( (int) $dispute->initiated_by !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			return [
 				'success' => false,
 				'message' => __( 'You are not authorized to cancel this dispute.', 'wp-sell-services' ),
@@ -902,7 +902,7 @@ class DisputeWorkflowManager {
 		if ( $dispute ) {
 			$timeline[] = [
 				'type'       => 'dispute_opened',
-				'user_id'    => $dispute->initiator_id,
+				'user_id'    => $dispute->initiated_by,
 				'content'    => $dispute->description,
 				'created_at' => $dispute->created_at,
 			];

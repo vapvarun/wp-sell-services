@@ -371,6 +371,23 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Find order by external platform order ID.
+	 *
+	 * @param int    $platform_order_id External platform order ID.
+	 * @param string $platform          Platform identifier.
+	 * @return object|null Order object or null.
+	 */
+	public function get_by_external_order( int $platform_order_id, string $platform ): ?object {
+		return $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table} WHERE platform_order_id = %d AND platform = %s LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$platform_order_id,
+				$platform
+			)
+		);
+	}
+
+	/**
 	 * Count orders by status.
 	 *
 	 * @return array<string, int> Status counts.

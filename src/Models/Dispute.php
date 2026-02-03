@@ -20,10 +20,11 @@ class Dispute {
 	/**
 	 * Dispute statuses.
 	 */
-	public const STATUS_OPEN        = 'open';
-	public const STATUS_IN_REVIEW   = 'in_review';
-	public const STATUS_RESOLVED    = 'resolved';
-	public const STATUS_CANCELLED   = 'cancelled';
+	public const STATUS_OPEN      = 'open';
+	public const STATUS_PENDING   = 'pending_review';
+	public const STATUS_RESOLVED  = 'resolved';
+	public const STATUS_ESCALATED = 'escalated';
+	public const STATUS_CLOSED    = 'closed';
 
 	/**
 	 * Dispute reasons.

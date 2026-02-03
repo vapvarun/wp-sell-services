@@ -112,10 +112,10 @@ class ServiceAddon {
 
 		$addon->id           = (int) $row->id;
 		$addon->service_id   = (int) $row->service_id;
-		$addon->name         = $row->name;
+		$addon->name         = $row->title;
 		$addon->description  = $row->description ?? '';
 		$addon->price        = (float) $row->price;
-		$addon->extra_days   = (int) $row->extra_days;
+		$addon->extra_days   = (int) $row->delivery_days_extra;
 		$addon->max_quantity = (int) $row->max_quantity;
 		$addon->is_required  = (bool) $row->is_required;
 		$addon->sort_order   = (int) $row->sort_order;
