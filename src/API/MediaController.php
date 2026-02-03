@@ -56,7 +56,7 @@ class MediaController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
+					'permission_callback' => array( $this, 'check_read_permissions' ),
 				),
 			)
 		);
@@ -101,18 +101,18 @@ class MediaController extends RestController {
 			);
 		}
 
-		// Validate file type using WordPress MIME checking.
+		// Verify MIME type matches extension to prevent disguised uploads.
+		$filetype = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+		if ( ! $filetype['ext'] || ! $filetype['type'] ) {
+			return new WP_Error( 'invalid_type', __( 'File type could not be verified.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		// Validate file type against allowed list using the verified extension.
 		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx,zip' ) );
-		$file_ext      = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+		$file_ext      = strtolower( $filetype['ext'] );
 
 		if ( ! in_array( $file_ext, $allowed_types, true ) ) {
 			return new WP_Error( 'invalid_type', __( 'File type not allowed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Verify MIME type matches extension to prevent disguised uploads.
-		$filetype = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-		if ( ! $filetype['type'] ) {
-			return new WP_Error( 'invalid_type', __( 'File type could not be verified.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
 		// Use WordPress media handling.
@@ -204,21 +204,69 @@ class MediaController extends RestController {
 	}
 
 	/**
+	 * Check read permissions for file info.
+	 *
+	 * Allows file uploader, order participants, and admins.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error
+	 */
+	public function check_read_permissions( WP_REST_Request $request ) {
+		$perm_check = $this->check_permissions( $request );
+		if ( is_wp_error( $perm_check ) ) {
+			return $perm_check;
+		}
+
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$attachment_id = (int) $request->get_param( 'id' );
+		$attachment    = get_post( $attachment_id );
+
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			return new WP_Error( 'not_found', __( 'File not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		$user_id = get_current_user_id();
+
+		// File uploader can access.
+		$uploader = (int) get_post_meta( $attachment_id, '_wpss_uploader', true );
+		if ( $uploader === $user_id || (int) $attachment->post_author === $user_id ) {
+			return true;
+		}
+
+		// Check if file is linked to an order the user participates in.
+		$context = get_post_meta( $attachment_id, '_wpss_upload_context', true );
+		if ( $context ) {
+			// Allow if user owns any order resource.
+			$order_id = (int) get_post_meta( $attachment_id, '_wpss_order_id', true );
+			if ( $order_id && $this->user_owns_resource( $order_id, 'order' ) ) {
+				return true;
+			}
+		}
+
+		return new WP_Error( 'rest_forbidden', __( 'You do not have access to this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
+	}
+
+	/**
 	 * Format attachment for response.
 	 *
 	 * @param int $attachment_id Attachment ID.
 	 * @return array
 	 */
 	private function format_attachment( int $attachment_id ): array {
-		$url      = wp_get_attachment_url( $attachment_id );
-		$metadata = wp_get_attachment_metadata( $attachment_id );
-		$filetype = wp_check_filetype( get_attached_file( $attachment_id ) );
+		$url       = wp_get_attachment_url( $attachment_id );
+		$metadata  = wp_get_attachment_metadata( $attachment_id );
+		$filepath  = get_attached_file( $attachment_id );
+		$filetype  = wp_check_filetype( $filepath );
+		$file_size = $filepath ? @filesize( $filepath ) : 0; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 
 		$data = array(
 			'id'        => $attachment_id,
 			'url'       => $url,
-			'filename'  => basename( get_attached_file( $attachment_id ) ),
-			'filesize'  => filesize( get_attached_file( $attachment_id ) ),
+			'filename'  => $filepath ? basename( $filepath ) : '',
+			'filesize'  => $file_size ?: 0,
 			'mime_type' => $filetype['type'],
 			'type'      => wp_ext2type( $filetype['ext'] ) ?: 'other',
 		);

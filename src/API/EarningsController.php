@@ -307,9 +307,11 @@ class EarningsController extends RestController {
 			);
 		}
 
-		// Check available balance.
+		// Check available balance using transaction to prevent race conditions.
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$wd_table     = $wpdb->prefix . 'wpss_withdrawals';
+
+		$wpdb->query( 'START TRANSACTION' );
 
 		$earned = (float) $wpdb->get_var(
 			$wpdb->prepare(
@@ -320,7 +322,7 @@ class EarningsController extends RestController {
 
 		$withdrawn_and_pending = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE user_id = %d AND status IN ('pending', 'approved', 'completed')",
+				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE user_id = %d AND status IN ('pending', 'approved', 'completed') FOR UPDATE",
 				$vendor_id
 			)
 		);
@@ -328,6 +330,7 @@ class EarningsController extends RestController {
 		$available = $earned - $withdrawn_and_pending;
 
 		if ( $amount > $available ) {
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'insufficient_balance', __( 'Insufficient available balance.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
@@ -340,6 +343,7 @@ class EarningsController extends RestController {
 		);
 
 		if ( $existing > 0 ) {
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'pending_exists', __( 'You already have a pending withdrawal request.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
@@ -359,8 +363,11 @@ class EarningsController extends RestController {
 		$withdrawal_id = $wpdb->insert_id;
 
 		if ( ! $withdrawal_id ) {
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'create_failed', __( 'Failed to create withdrawal request.', 'wp-sell-services' ), array( 'status' => 500 ) );
 		}
+
+		$wpdb->query( 'COMMIT' );
 
 		return new WP_REST_Response(
 			array(

@@ -218,12 +218,43 @@ class AuthController extends RestController {
 	}
 
 	/**
+	 * Check rate limit for an action.
+	 *
+	 * @param string $action  Action identifier (e.g. 'login', 'register').
+	 * @param int    $limit   Max attempts allowed in the window.
+	 * @param int    $window  Time window in seconds.
+	 * @return bool|WP_Error True if allowed, WP_Error if rate limited.
+	 */
+	private function check_rate_limit( string $action, int $limit = 5, int $window = 300 ) {
+		$ip        = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0' ) );
+		$cache_key = 'wpss_rate_' . $action . '_' . md5( $ip );
+		$attempts  = (int) get_transient( $cache_key );
+
+		if ( $attempts >= $limit ) {
+			return new WP_Error(
+				'rate_limit_exceeded',
+				__( 'Too many attempts. Please try again later.', 'wp-sell-services' ),
+				array( 'status' => 429 )
+			);
+		}
+
+		set_transient( $cache_key, $attempts + 1, $window );
+
+		return true;
+	}
+
+	/**
 	 * Authenticate user and return application password.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function login( WP_REST_Request $request ) {
+		$rate_check = $this->check_rate_limit( 'login', 5, 300 );
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
 		$username = sanitize_user( $request->get_param( 'username' ) );
 		$password = $request->get_param( 'password' );
 
@@ -260,6 +291,11 @@ class AuthController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function register( WP_REST_Request $request ) {
+		$rate_check = $this->check_rate_limit( 'register', 3, 600 );
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
 		if ( ! get_option( 'users_can_register' ) ) {
 			return new WP_Error( 'registration_disabled', __( 'User registration is disabled.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
@@ -369,6 +405,11 @@ class AuthController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function forgot_password( WP_REST_Request $request ) {
+		$rate_check = $this->check_rate_limit( 'forgot_password', 3, 600 );
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
 		$email = sanitize_email( $request->get_param( 'email' ) );
 		$user  = get_user_by( 'email', $email );
 

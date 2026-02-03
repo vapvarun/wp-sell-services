@@ -175,18 +175,9 @@ class MilestonesController extends RestController {
 	 */
 	public function get_items( $request ) {
 		$order_id   = (int) $request->get_param( 'order_id' );
-		$milestones = get_post_meta( 0, '', false ); // Not stored in post meta.
+		$milestones = $this->get_order_milestones( $order_id );
 
-		global $wpdb;
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-
-		$order = $wpdb->get_row(
-			$wpdb->prepare( "SELECT milestones FROM {$orders_table} WHERE id = %d", $order_id )
-		);
-
-		$milestones = json_decode( $order->milestones ?? '[]', true );
-
-		return new WP_REST_Response( is_array( $milestones ) ? $milestones : array() );
+		return new WP_REST_Response( $milestones );
 	}
 
 	/**
