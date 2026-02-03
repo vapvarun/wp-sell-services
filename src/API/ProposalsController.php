@@ -338,14 +338,13 @@ class ProposalsController extends RestController {
 	 */
 	public function withdraw( $request ) {
 		$proposal_id = (int) $request->get_param( 'id' );
-		$reason      = $request->get_param( 'reason' ) ?? '';
 
-		$result = $this->proposal_service->withdraw( $proposal_id, $reason );
+		$result = $this->proposal_service->withdraw( $proposal_id, get_current_user_id() );
 
-		if ( ! $result['success'] ) {
+		if ( ! $result ) {
 			return new WP_Error(
 				'withdraw_failed',
-				$result['message'],
+				__( 'Failed to withdraw proposal.', 'wp-sell-services' ),
 				[ 'status' => 400 ]
 			);
 		}

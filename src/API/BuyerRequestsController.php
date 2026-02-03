@@ -661,10 +661,10 @@ class BuyerRequestsController extends RestController {
 
 		$result = $this->proposal_service->reject( $proposal_id, get_current_user_id(), $reason );
 
-		if ( ! $result['success'] ) {
+		if ( ! $result ) {
 			return new WP_Error(
 				'reject_failed',
-				$result['message'],
+				__( 'Failed to reject proposal.', 'wp-sell-services' ),
 				[ 'status' => 400 ]
 			);
 		}
