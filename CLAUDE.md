@@ -132,6 +132,64 @@ Use the `WPSellServices\Services\ServiceManager` class, not direct DB queries.
 ### Template Override
 Templates can be overridden in theme: `theme/wp-sell-services/{template}.php`
 
+## REST API Development Rules
+
+**Every new feature MUST include REST API endpoints.** This plugin is mobile-app ready.
+
+### Checklist for New Features
+1. Service class method created
+2. REST API controller endpoint added in `src/API/`
+3. Permission callback defined (use base class methods)
+4. Request validation/sanitization in route args
+5. Controller registered in `API.php` controllers array
+
+### Pattern to Follow
+- Create controller in `src/API/` extending `RestController`
+- Register routes in `register_routes()` method
+- Use `check_permissions()`, `check_admin_permissions()` from base
+- Use `paginated_response()` for list endpoints
+- Use `get_pagination_args()` for page/per_page handling
+
+### No New AJAX Endpoints
+All new features must be REST-first. Existing AJAX handlers remain for backward compatibility but new features should NOT add `wp_ajax_*` handlers.
+
+### Batch Endpoint
+`POST /wpss/v1/batch` supports up to 25 sub-requests in a single HTTP call for mobile efficiency.
+
+### REST API Controllers
+
+| Controller | Base | Endpoints |
+|-----------|------|-----------|
+| ServicesController | /services | CRUD, search, featured |
+| OrdersController | /orders | CRUD, status transitions |
+| ReviewsController | /reviews | CRUD, vendor reviews |
+| VendorsController | /vendors | List, profile, stats |
+| ConversationsController | /conversations | Messages, attachments |
+| DisputesController | /disputes | Create, respond, resolve |
+| BuyerRequestsController | /buyer-requests | CRUD, proposals |
+| ProposalsController | /proposals | CRUD, accept/reject |
+| NotificationsController | /notifications | List, read, delete |
+| PortfolioController | /portfolio | CRUD, reorder |
+| EarningsController | /earnings | Summary, history, withdrawals |
+| ExtensionRequestsController | /extensions | Create, approve, reject |
+| MilestonesController | /milestones | CRUD, submit, approve |
+| TippingController | /tips | Send, list |
+| SellerLevelsController | /seller-levels | Definitions, progress |
+| ModerationController | /moderation | Approve, reject, history |
+| FavoritesController | /favorites | Add, remove, list |
+| MediaController | /media | Upload, info, delete |
+| CartController | /cart | Add, get, remove, checkout |
+| AuthController | /auth | Login, register, logout, devices |
+
+### Generic Endpoints (in API.php)
+- `GET /categories` - Service categories
+- `GET /tags` - Service tags
+- `GET /settings` - Public settings
+- `GET /me` - Current user info
+- `GET /dashboard` - Dashboard stats
+- `GET /search` - Search services/vendors
+- `POST /batch` - Batch sub-requests
+
 ## Testing
 
 ```bash

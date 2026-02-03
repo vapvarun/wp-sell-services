@@ -54,6 +54,18 @@ class API {
 			new DisputesController(),
 			new BuyerRequestsController(),
 			new ProposalsController(),
+			new NotificationsController(),
+			new PortfolioController(),
+			new EarningsController(),
+			new ExtensionRequestsController(),
+			new MilestonesController(),
+			new TippingController(),
+			new SellerLevelsController(),
+			new ModerationController(),
+			new FavoritesController(),
+			new MediaController(),
+			new CartController(),
+			new AuthController(),
 		];
 
 		/**
@@ -156,6 +168,34 @@ class API {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_dashboard' ],
 					'permission_callback' => 'is_user_logged_in',
+				],
+			]
+		);
+
+		// Batch endpoint for mobile apps.
+		register_rest_route(
+			'wpss/v1',
+			'/batch',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'handle_batch' ],
+					'permission_callback' => 'is_user_logged_in',
+					'args'                => [
+						'requests' => [
+							'description' => __( 'Array of sub-requests.', 'wp-sell-services' ),
+							'type'        => 'array',
+							'required'    => true,
+							'items'       => [
+								'type'       => 'object',
+								'properties' => [
+									'method' => [ 'type' => 'string', 'enum' => [ 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ] ],
+									'path'   => [ 'type' => 'string' ],
+									'body'   => [ 'type' => 'object' ],
+								],
+							],
+						],
+					],
 				],
 			]
 		);
@@ -512,6 +552,72 @@ class API {
 		}
 
 		return new \WP_REST_Response( $results );
+	}
+
+	/**
+	 * Handle batch requests for mobile efficiency.
+	 *
+	 * Accepts an array of sub-requests and executes them internally,
+	 * returning all responses in a single HTTP response.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function handle_batch( \WP_REST_Request $request ): \WP_REST_Response {
+		$requests  = $request->get_param( 'requests' );
+		$responses = [];
+		$server    = rest_get_server();
+
+		$max_requests = apply_filters( 'wpss_batch_max_requests', 25 );
+
+		if ( count( $requests ) > $max_requests ) {
+			return new \WP_REST_Response(
+				[
+					'code'    => 'batch_limit_exceeded',
+					'message' => sprintf(
+						/* translators: %d: maximum number of batch requests */
+						__( 'Batch requests limited to %d operations.', 'wp-sell-services' ),
+						$max_requests
+					),
+				],
+				400
+			);
+		}
+
+		foreach ( $requests as $index => $sub ) {
+			$method = strtoupper( $sub['method'] ?? 'GET' );
+			$path   = $sub['path'] ?? '';
+			$body   = $sub['body'] ?? [];
+
+			// Only allow requests within our namespace.
+			if ( ! str_starts_with( $path, '/wpss/v1/' ) ) {
+				$responses[] = [
+					'status' => 400,
+					'body'   => [ 'code' => 'invalid_path', 'message' => __( 'Path must start with /wpss/v1/', 'wp-sell-services' ) ],
+				];
+				continue;
+			}
+
+			$sub_request = new \WP_REST_Request( $method, $path );
+
+			if ( ! empty( $body ) ) {
+				foreach ( $body as $key => $value ) {
+					$sub_request->set_param( $key, $value );
+				}
+			}
+
+			// Inherit auth from parent request.
+			$sub_request->set_header( 'Authorization', $request->get_header( 'authorization' ) );
+
+			$result = $server->dispatch( $sub_request );
+
+			$responses[] = [
+				'status' => $result->get_status(),
+				'body'   => $result->get_data(),
+			];
+		}
+
+		return new \WP_REST_Response( [ 'responses' => $responses ] );
 	}
 
 	/**
