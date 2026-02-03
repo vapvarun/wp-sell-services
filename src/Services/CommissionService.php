@@ -213,7 +213,10 @@ class CommissionService {
 
 		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
 
-		// Get current balance.
+		// Lock the vendor's wallet transactions to prevent balance race conditions.
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Get current balance with row lock.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$current_balance = (float) $wpdb->get_var(
 			$wpdb->prepare(
@@ -221,7 +224,8 @@ class CommissionService {
 				FROM {$transactions_table}
 				WHERE user_id = %d
 				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
+				LIMIT 1
+				FOR UPDATE",
 				$vendor_id
 			)
 		);
@@ -251,6 +255,8 @@ class CommissionService {
 			),
 			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
+
+		$wpdb->query( 'COMMIT' );
 	}
 
 	/**

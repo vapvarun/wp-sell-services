@@ -98,8 +98,11 @@ class EarningsController extends RestController {
 							'required'    => true,
 						),
 						'details' => array(
-							'description' => __( 'Payment details.', 'wp-sell-services' ),
-							'type'        => 'object',
+							'description'       => __( 'Payment details.', 'wp-sell-services' ),
+							'type'              => 'object',
+							'sanitize_callback' => function ( $details ) {
+								return map_deep( (array) $details, 'sanitize_text_field' );
+							},
 						),
 					),
 				),
@@ -530,6 +533,12 @@ class EarningsController extends RestController {
 
 		if ( ! get_user_meta( get_current_user_id(), '_wpss_is_vendor', true ) ) {
 			return new WP_Error( 'rest_forbidden', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		}
+
+		// Prevent pending vendors from accessing earnings.
+		$vendor_status = get_user_meta( get_current_user_id(), '_wpss_vendor_status', true );
+		if ( 'pending' === $vendor_status ) {
+			return new WP_Error( 'rest_forbidden', __( 'Your vendor account is pending approval.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;

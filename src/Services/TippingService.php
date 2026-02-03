@@ -95,14 +95,18 @@ class TippingService {
 
 		$table = $wpdb->prefix . 'wpss_wallet_transactions';
 
-		// Get vendor's current balance.
+		// Lock the vendor's wallet transactions to prevent race conditions.
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Get vendor's current balance with row lock.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$current_balance = (float) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT balance_after FROM {$table}
 				WHERE user_id = %d
 				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
+				LIMIT 1
+				FOR UPDATE",
 				$order->vendor_id
 			)
 		);
@@ -140,12 +144,15 @@ class TippingService {
 		);
 
 		if ( ! $inserted ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'tip_id'  => null,
 				'message' => __( 'Failed to process tip. Please try again.', 'wp-sell-services' ),
 			);
 		}
+
+		$wpdb->query( 'COMMIT' );
 
 		$tip_id = (int) $wpdb->insert_id;
 

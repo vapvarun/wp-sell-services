@@ -252,8 +252,6 @@ class EarningsService {
 	 * @return array Result with success status.
 	 */
 	public function request_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
-		$summary = $this->get_summary( $vendor_id );
-
 		// Check minimum withdrawal.
 		$min_withdrawal = self::get_min_withdrawal_amount();
 		if ( $amount < $min_withdrawal ) {
@@ -267,16 +265,30 @@ class EarningsService {
 			);
 		}
 
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// Lock vendor's pending withdrawals to prevent double-withdrawal race conditions.
+		$wpdb->query( 'START TRANSACTION' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(amount), 0) FROM {$table} WHERE vendor_id = %d AND status = 'pending' FOR UPDATE",
+				$vendor_id
+			)
+		);
+
+		$summary = $this->get_summary( $vendor_id );
+
 		// Check available balance.
 		if ( $amount > $summary['available_balance'] ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'Insufficient balance for this withdrawal.', 'wp-sell-services' ),
 			);
 		}
-
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_withdrawals';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
@@ -293,11 +305,14 @@ class EarningsService {
 		);
 
 		if ( ! $result ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to create withdrawal request.', 'wp-sell-services' ),
 			);
 		}
+
+		$wpdb->query( 'COMMIT' );
 
 		$withdrawal_id = $wpdb->insert_id;
 

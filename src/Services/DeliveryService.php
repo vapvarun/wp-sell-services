@@ -314,7 +314,7 @@ class DeliveryService {
 			'png',
 			'gif',
 			'webp',
-			'svg',
+			// 'svg', // Removed: SVG can contain embedded JavaScript (XSS risk).
 			'pdf',
 			'doc',
 			'docx',
@@ -341,9 +341,9 @@ class DeliveryService {
 			'eps',
 			'sketch',
 			'fig',
-			'html',
-			'css',
-			'js',
+			// 'html', // Removed: HTML can contain JavaScript (XSS risk).
+			// 'css',  // Removed: CSS can contain expressions/imports.
+			// 'js',   // Removed: Executable JavaScript.
 		);
 
 		/**
