@@ -475,12 +475,17 @@ class DisputeService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$where_clause = implode( ' AND ', $where );
 
+		// Validate order_by against allowlist to prevent SQL injection.
+		$allowed_order_by = array( 'created_at', 'updated_at', 'status' );
+		$order_by_col = in_array( $args['order_by'], $allowed_order_by, true ) ? $args['order_by'] : 'created_at';
+		$order_dir    = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'DESC';
+
 		$sql = $wpdb->prepare(
 			"SELECT d.*, o.customer_id, o.vendor_id, o.service_id
 			FROM {$this->table} d
 			LEFT JOIN {$orders_table} o ON d.order_id = o.id
 			WHERE {$where_clause}
-			ORDER BY d.{$args['order_by']} {$args['order']}
+			ORDER BY d.{$order_by_col} {$order_dir}
 			LIMIT %d OFFSET %d",
 			array_merge( $values, array( $args['limit'], $args['offset'] ) )
 		);
@@ -518,6 +523,11 @@ class DisputeService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$where_clause = implode( ' AND ', $where );
 
+		// Validate order_by against allowlist to prevent SQL injection.
+		$allowed_order_by = array( 'created_at', 'updated_at', 'status' );
+		$order_by_col = in_array( $args['order_by'], $allowed_order_by, true ) ? $args['order_by'] : 'created_at';
+		$order_dir    = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'DESC';
+
 		$values[] = $args['limit'];
 		$values[] = $args['offset'];
 
@@ -526,7 +536,7 @@ class DisputeService {
 			FROM {$this->table} d
 			LEFT JOIN {$orders_table} o ON d.order_id = o.id
 			WHERE {$where_clause}
-			ORDER BY d.{$args['order_by']} {$args['order']}
+			ORDER BY d.{$order_by_col} {$order_dir}
 			LIMIT %d OFFSET %d",
 			$values
 		);

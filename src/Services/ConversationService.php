@@ -383,7 +383,7 @@ class ConversationService {
 			$wpdb->prepare(
 				"SELECT unread_counts FROM {$table}
 				WHERE participants LIKE %s AND is_closed = 0",
-				'%' . $user_id . '%'
+				'%' . $wpdb->esc_like( '"' . $user_id . '"' ) . '%'
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

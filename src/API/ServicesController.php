@@ -255,6 +255,18 @@ class ServicesController extends RestController {
 			);
 		}
 
+		// Only show published services publicly; authors and admins can see their own.
+		if ( 'publish' !== $service->post_status ) {
+			$current_user_id = get_current_user_id();
+			if ( (int) $service->post_author !== $current_user_id && ! current_user_can( 'manage_options' ) ) {
+				return new WP_Error(
+					'not_found',
+					__( 'Service not found.', 'wp-sell-services' ),
+					array( 'status' => 404 )
+				);
+			}
+		}
+
 		return $this->prepare_item_for_response( $service, $request );
 	}
 
@@ -675,7 +687,21 @@ class ServicesController extends RestController {
 	private function save_service_meta( int $service_id, WP_REST_Request $request ): void {
 		// Save packages (primary source of truth).
 		if ( $request->has_param( 'packages' ) ) {
-			$packages = $request->get_param( 'packages' );
+			$raw_packages = $request->get_param( 'packages' );
+			$packages     = array();
+			if ( is_array( $raw_packages ) ) {
+				foreach ( $raw_packages as $pkg ) {
+					$packages[] = array(
+						'id'            => sanitize_key( $pkg['id'] ?? '' ),
+						'name'          => sanitize_text_field( $pkg['name'] ?? '' ),
+						'description'   => sanitize_textarea_field( $pkg['description'] ?? '' ),
+						'price'         => (float) ( $pkg['price'] ?? 0 ),
+						'delivery_days' => absint( $pkg['delivery_days'] ?? 7 ),
+						'revisions'     => absint( $pkg['revisions'] ?? 0 ),
+						'features'      => isset( $pkg['features'] ) && is_array( $pkg['features'] ) ? array_map( 'sanitize_text_field', $pkg['features'] ) : array(),
+					);
+				}
+			}
 			update_post_meta( $service_id, '_wpss_packages', $packages );
 
 			// Compute and store derived values from packages.
@@ -691,7 +717,20 @@ class ServicesController extends RestController {
 		}
 
 		if ( $request->has_param( 'requirements' ) ) {
-			update_post_meta( $service_id, '_wpss_requirements', $request->get_param( 'requirements' ) );
+			$raw_reqs     = $request->get_param( 'requirements' );
+			$requirements = array();
+			if ( is_array( $raw_reqs ) ) {
+				foreach ( $raw_reqs as $req ) {
+					$requirements[] = array(
+						'field_type'  => sanitize_key( $req['field_type'] ?? 'text' ),
+						'label'       => sanitize_text_field( $req['label'] ?? '' ),
+						'description' => sanitize_textarea_field( $req['description'] ?? '' ),
+						'required'    => ! empty( $req['required'] ),
+						'options'     => isset( $req['options'] ) && is_array( $req['options'] ) ? array_map( 'sanitize_text_field', $req['options'] ) : array(),
+					);
+				}
+			}
+			update_post_meta( $service_id, '_wpss_requirements', $requirements );
 		}
 	}
 

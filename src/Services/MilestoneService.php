@@ -87,7 +87,7 @@ class MilestoneService {
 			'amount'       => (float) $data['amount'],
 			'due_date'     => $data['due_date'] ?? null,
 			'status'       => self::STATUS_PENDING,
-			'deliverables' => $data['deliverables'] ?? '',
+			'deliverables' => sanitize_textarea_field( $data['deliverables'] ?? '' ),
 			'created_at'   => current_time( 'mysql' ),
 			'updated_at'   => current_time( 'mysql' ),
 			'submitted_at' => null,
@@ -136,11 +136,17 @@ class MilestoneService {
 			);
 		}
 
-		// Update allowed fields.
+		// Update allowed fields with sanitization.
 		$allowed = array( 'title', 'description', 'amount', 'due_date', 'deliverables' );
 		foreach ( $allowed as $field ) {
 			if ( isset( $data[ $field ] ) ) {
-				$milestones[ $index ][ $field ] = $data[ $field ];
+				$milestones[ $index ][ $field ] = match ( $field ) {
+					'title'                        => sanitize_text_field( $data[ $field ] ),
+					'description', 'deliverables'  => sanitize_textarea_field( $data[ $field ] ),
+					'amount'                       => (float) $data[ $field ],
+					'due_date'                     => sanitize_text_field( $data[ $field ] ),
+					default                        => $data[ $field ],
+				};
 			}
 		}
 
