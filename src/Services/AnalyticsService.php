@@ -334,17 +334,18 @@ class AnalyticsService {
 		global $wpdb;
 
 		$conversations_table = $wpdb->prefix . 'wpss_conversations';
+		$orders_table        = $wpdb->prefix . 'wpss_orders';
 		$messages_table      = $wpdb->prefix . 'wpss_messages';
 
-		// Get conversations where vendor received a message.
+		// Get conversations where vendor received a message (via order relationship).
 		$total = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT c.id)
 				FROM {$conversations_table} c
+				INNER JOIN {$orders_table} o ON c.order_id = o.id
 				INNER JOIN {$messages_table} m ON c.id = m.conversation_id
-				WHERE (c.participant_1 = %d OR c.participant_2 = %d)
+				WHERE o.vendor_id = %d
 				AND m.sender_id != %d",
-				$vendor_id,
 				$vendor_id,
 				$vendor_id
 			)
@@ -359,10 +360,10 @@ class AnalyticsService {
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT c.id)
 				FROM {$conversations_table} c
+				INNER JOIN {$orders_table} o ON c.order_id = o.id
 				INNER JOIN {$messages_table} m ON c.id = m.conversation_id
-				WHERE (c.participant_1 = %d OR c.participant_2 = %d)
+				WHERE o.vendor_id = %d
 				AND m.sender_id = %d",
-				$vendor_id,
 				$vendor_id,
 				$vendor_id
 			)

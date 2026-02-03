@@ -202,7 +202,7 @@ class EarningsController extends RestController {
 		// Total withdrawn.
 		$total_withdrawn = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE user_id = %d AND status IN ('approved', 'completed')",
+				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status IN ('approved', 'completed')",
 				$vendor_id
 			)
 		);
@@ -210,7 +210,7 @@ class EarningsController extends RestController {
 		// Pending withdrawal.
 		$pending_withdrawal = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE user_id = %d AND status = 'pending'",
+				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status = 'pending'",
 				$vendor_id
 			)
 		);
@@ -250,7 +250,7 @@ class EarningsController extends RestController {
 
 		$orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, order_number, service_id, total, vendor_earnings, commission_amount, currency, completed_at, created_at
+				"SELECT id, order_number, service_id, total, vendor_earnings, platform_fee, currency, completed_at, created_at
 				FROM {$orders_table}
 				WHERE vendor_id = %d AND status = 'completed'
 				ORDER BY completed_at DESC
@@ -272,7 +272,7 @@ class EarningsController extends RestController {
 				'service_title'    => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
 				'total'            => (float) $order['total'],
 				'vendor_earnings'   => (float) $order['vendor_earnings'],
-				'commission'       => (float) $order['commission_amount'],
+				'commission'       => (float) $order['platform_fee'],
 				'currency'         => $order['currency'],
 				'completed_at'     => $order['completed_at'],
 			);
@@ -325,7 +325,7 @@ class EarningsController extends RestController {
 
 		$withdrawn_and_pending = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE user_id = %d AND status IN ('pending', 'approved', 'completed') FOR UPDATE",
+				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status IN ('pending', 'approved', 'completed') FOR UPDATE",
 				$vendor_id
 			)
 		);
@@ -340,7 +340,7 @@ class EarningsController extends RestController {
 		// Check for existing pending withdrawal.
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wd_table} WHERE user_id = %d AND status = 'pending'",
+				"SELECT COUNT(*) FROM {$wd_table} WHERE vendor_id = %d AND status = 'pending'",
 				$vendor_id
 			)
 		);
@@ -353,7 +353,7 @@ class EarningsController extends RestController {
 		$wpdb->insert(
 			$wd_table,
 			array(
-				'user_id'    => $vendor_id,
+				'vendor_id'  => $vendor_id,
 				'amount'     => $amount,
 				'method'     => $method,
 				'details'    => wp_json_encode( $details ),
@@ -398,7 +398,7 @@ class EarningsController extends RestController {
 		$is_admin   = current_user_can( 'manage_options' );
 		$user_id    = get_current_user_id();
 
-		$where = $is_admin ? '1=1' : $wpdb->prepare( 'user_id = %d', $user_id );
+		$where = $is_admin ? '1=1' : $wpdb->prepare( 'vendor_id = %d', $user_id );
 
 		$status = $request->get_param( 'status' );
 		if ( $status ) {
@@ -422,18 +422,18 @@ class EarningsController extends RestController {
 		foreach ( $items ?: array() as $item ) {
 			$wd = array(
 				'id'           => (int) $item['id'],
-				'user_id'      => (int) $item['user_id'],
+				'vendor_id'    => (int) $item['vendor_id'],
 				'amount'       => (float) $item['amount'],
 				'method'       => $item['method'],
 				'details'      => json_decode( $item['details'] ?? '{}', true ),
 				'status'       => $item['status'],
-				'notes'        => $item['notes'] ?? '',
+				'notes'        => $item['admin_note'] ?? '',
 				'processed_at' => $item['processed_at'] ?? null,
 				'created_at'   => $item['created_at'],
 			);
 
 			if ( $is_admin ) {
-				$user              = get_user_by( 'id', $item['user_id'] );
+				$user              = get_user_by( 'id', $item['vendor_id'] );
 				$wd['vendor_name'] = $user ? $user->display_name : __( 'Unknown', 'wp-sell-services' );
 			}
 
@@ -474,7 +474,7 @@ class EarningsController extends RestController {
 			$wd_table,
 			array(
 				'status'       => $new_status,
-				'notes'        => $note,
+				'admin_note'   => $note,
 				'processed_by' => get_current_user_id(),
 				'processed_at' => current_time( 'mysql', true ),
 			),

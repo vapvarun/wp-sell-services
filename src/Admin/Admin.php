@@ -1178,7 +1178,7 @@ class Admin {
 			)
 		);
 
-		$opened_by = get_userdata( $dispute->opened_by );
+		$initiated_by = get_userdata( $dispute->initiated_by );
 		$vendor    = $order ? get_userdata( $order->vendor_id ) : null;
 		$customer  = $order ? get_userdata( $order->customer_id ) : null;
 
@@ -1243,9 +1243,9 @@ class Admin {
 								<tr>
 									<th><?php esc_html_e( 'Opened By', 'wp-sell-services' ); ?></th>
 									<td>
-										<?php if ( $opened_by ) : ?>
-											<a href="<?php echo esc_url( get_edit_user_link( $opened_by->ID ) ); ?>">
-												<?php echo esc_html( $opened_by->display_name ); ?>
+										<?php if ( $initiated_by ) : ?>
+											<a href="<?php echo esc_url( get_edit_user_link( $initiated_by->ID ) ); ?>">
+												<?php echo esc_html( $initiated_by->display_name ); ?>
 											</a>
 										<?php else : ?>
 											<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
@@ -1285,7 +1285,7 @@ class Admin {
 							<?php if ( ! empty( $messages ) ) : ?>
 								<div class="wpss-dispute-messages" style="max-height: 400px; overflow-y: auto;">
 									<?php foreach ( $messages as $message ) : ?>
-										<?php $msg_user = get_userdata( $message->user_id ); ?>
+										<?php $msg_user = get_userdata( $message->sender_id ); ?>
 										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
 											<div style="margin-bottom: 5px;">
 												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
