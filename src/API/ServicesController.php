@@ -469,7 +469,7 @@ class ServicesController extends RestController {
 
 		$reviews = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE service_id = %d ORDER BY created_at DESC",
+				"SELECT * FROM {$table} WHERE service_id = %d AND status = 'approved' ORDER BY created_at DESC",
 				$service_id
 			),
 			ARRAY_A
@@ -654,7 +654,7 @@ class ServicesController extends RestController {
 		$table  = $wpdb->prefix . 'wpss_reviews';
 		$rating = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT AVG(rating) as average, COUNT(*) as count FROM {$table} WHERE service_id = %d",
+				"SELECT AVG(rating) as average, COUNT(*) as count FROM {$table} WHERE service_id = %d AND status = 'approved'",
 				$service_id
 			)
 		);

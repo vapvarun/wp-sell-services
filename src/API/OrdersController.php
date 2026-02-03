@@ -290,7 +290,14 @@ class OrdersController extends RestController {
 		$updates = array();
 		foreach ( $allowed_fields as $field ) {
 			if ( $request->has_param( $field ) ) {
-				$updates[ $field ] = $request->get_param( $field );
+				$value = $request->get_param( $field );
+
+				$updates[ $field ] = match ( $field ) {
+					'vendor_notes' => sanitize_textarea_field( $value ),
+					'status'       => sanitize_key( $value ),
+					'due_date'     => sanitize_text_field( $value ),
+					default        => sanitize_text_field( $value ),
+				};
 			}
 		}
 

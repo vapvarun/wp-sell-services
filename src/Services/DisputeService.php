@@ -209,12 +209,20 @@ class DisputeService {
 		// Get existing evidence or initialize empty array.
 		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
 
+		// Sanitize content based on evidence type.
+		$sanitized_type = sanitize_key( $type );
+		$sanitized_content = match ( $sanitized_type ) {
+			'link'          => esc_url_raw( $content ),
+			'image', 'file' => absint( $content ),
+			default         => sanitize_textarea_field( $content ),
+		};
+
 		// Add new evidence item.
 		$evidence[] = array(
 			'id'          => uniqid( 'ev_' ),
 			'user_id'     => $user_id,
-			'type'        => sanitize_key( $type ),
-			'content'     => $content,
+			'type'        => $sanitized_type,
+			'content'     => $sanitized_content,
 			'description' => sanitize_textarea_field( $description ),
 			'created_at'  => current_time( 'mysql' ),
 		);
