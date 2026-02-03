@@ -174,18 +174,18 @@ class Dispute {
 		$dispute = new self();
 
 		$dispute->id               = (int) $row->id;
-		$dispute->dispute_number   = $row->dispute_number;
+		$dispute->dispute_number   = $row->dispute_number ?? '';
 		$dispute->order_id         = (int) $row->order_id;
-		$dispute->initiator_id     = (int) $row->initiator_id;
-		$dispute->respondent_id    = (int) $row->respondent_id;
-		$dispute->assigned_to      = $row->assigned_to ? (int) $row->assigned_to : null;
+		$dispute->initiator_id     = (int) $row->initiated_by;
+		$dispute->respondent_id    = isset( $row->respondent_id ) ? (int) $row->respondent_id : 0;
+		$dispute->assigned_to      = ( $row->assigned_admin ?? null ) ? (int) $row->assigned_admin : null;
 		$dispute->reason           = $row->reason;
 		$dispute->description      = $row->description;
 		$dispute->evidence         = $row->evidence ? json_decode( $row->evidence, true ) : [];
 		$dispute->status           = $row->status ?? self::STATUS_OPEN;
-		$dispute->resolution_type  = $row->resolution_type;
+		$dispute->resolution_type  = $row->resolution ?? null;
 		$dispute->resolution_notes = $row->resolution_notes ?? '';
-		$dispute->refund_amount    = $row->refund_amount ? (float) $row->refund_amount : null;
+		$dispute->refund_amount    = ( $row->refund_amount ?? null ) ? (float) $row->refund_amount : null;
 		$dispute->resolved_by      = $row->resolved_by ? (int) $row->resolved_by : null;
 
 		// Timestamps.

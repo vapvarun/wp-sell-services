@@ -157,7 +157,7 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return string
 	 */
 	public function column_opened_by( $item ): string {
-		$user = get_userdata( $item->opened_by );
+		$user = get_userdata( $item->initiated_by );
 
 		if ( ! $user ) {
 			return '<em>' . esc_html__( 'Unknown', 'wp-sell-services' ) . '</em>';

@@ -147,7 +147,7 @@ class DisputeWorkflowManager {
 		$response_type = 'response';
 		if ( current_user_can( 'manage_options' ) ) {
 			$response_type = 'admin_response';
-		} elseif ( (int) $dispute->opened_by === $user_id ) {
+		} elseif ( (int) $dispute->initiator_id === $user_id ) {
 			$response_type = 'opener_response';
 		}
 
@@ -157,9 +157,9 @@ class DisputeWorkflowManager {
 			$this->messages_table,
 			[
 				'dispute_id'  => $dispute_id,
-				'user_id'     => $user_id,
+				'sender_id'   => $user_id,
 				'message'     => wp_kses_post( $response ),
-				'type'        => $response_type,
+				'sender_role' => $response_type,
 				'attachments' => ! empty( $attachments ) ? wp_json_encode( $attachments ) : null,
 				'created_at'  => current_time( 'mysql' ),
 			],
@@ -179,7 +179,7 @@ class DisputeWorkflowManager {
 		$this->update_response_deadline( $dispute_id, $user_id );
 
 		// Update dispute status if it was awaiting response.
-		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->opened_by !== $user_id ) {
+		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiator_id !== $user_id ) {
 			$this->dispute_service->update_status( $dispute_id, DisputeService::STATUS_PENDING );
 		}
 
@@ -213,7 +213,7 @@ class DisputeWorkflowManager {
 			$wpdb->prepare(
 				"SELECT m.*, u.display_name, u.user_email
 				FROM {$this->messages_table} m
-				LEFT JOIN {$wpdb->users} u ON m.user_id = u.ID
+				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
 				WHERE m.dispute_id = %d
 				ORDER BY m.created_at ASC",
 				$dispute_id
@@ -406,7 +406,7 @@ class DisputeWorkflowManager {
 		}
 
 		// Only opener can cancel, or admin.
-		if ( (int) $dispute->opened_by !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( (int) $dispute->initiator_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			return [
 				'success' => false,
 				'message' => __( 'You are not authorized to cancel this dispute.', 'wp-sell-services' ),
@@ -615,7 +615,7 @@ class DisputeWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$latest_message = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT user_id FROM {$this->messages_table}
+				"SELECT sender_id FROM {$this->messages_table}
 				WHERE dispute_id = %d
 				ORDER BY created_at DESC
 				LIMIT 1",
@@ -625,13 +625,13 @@ class DisputeWorkflowManager {
 
 		if ( ! $latest_message ) {
 			// No messages yet, remind the other party (not opener).
-			return (int) $dispute->opened_by === (int) $dispute->customer_id
+			return (int) $dispute->initiated_by === (int) $dispute->customer_id
 				? (int) $dispute->vendor_id
 				: (int) $dispute->customer_id;
 		}
 
 		// Remind the party who hasn't responded.
-		$last_responder = (int) $latest_message->user_id;
+		$last_responder = (int) $latest_message->sender_id;
 
 		if ( $last_responder === (int) $dispute->customer_id ) {
 			return (int) $dispute->vendor_id;
@@ -902,7 +902,7 @@ class DisputeWorkflowManager {
 		if ( $dispute ) {
 			$timeline[] = [
 				'type'       => 'dispute_opened',
-				'user_id'    => $dispute->opened_by,
+				'user_id'    => $dispute->initiator_id,
 				'content'    => $dispute->description,
 				'created_at' => $dispute->created_at,
 			];
@@ -926,7 +926,7 @@ class DisputeWorkflowManager {
 		foreach ( $messages as $message ) {
 			$timeline[] = [
 				'type'        => 'message',
-				'user_id'     => $message->user_id,
+				'user_id'     => $message->sender_id,
 				'content'     => $message->message,
 				'attachments' => $message->attachment_urls ?? [],
 				'created_at'  => $message->created_at,
