@@ -180,9 +180,8 @@ class DeliveryService {
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$deliveries_table}
-				SET status = 'revision_requested', updated_at = %s
+				SET status = 'revision_requested'
 				WHERE order_id = %d AND status = 'pending'",
-				current_time( 'mysql' ),
 				$order_id
 			)
 		);
