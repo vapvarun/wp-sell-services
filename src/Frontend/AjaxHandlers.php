@@ -1681,9 +1681,16 @@ class AjaxHandlers {
 			);
 		}
 
-		// Check file type.
+		// Verify MIME type matches extension (prevent extension spoofing).
+		$filetype = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+
+		if ( ! $filetype['ext'] || ! $filetype['type'] ) {
+			wp_send_json_error( array( 'message' => __( 'File type could not be verified.', 'wp-sell-services' ) ) );
+		}
+
+		// Check file type against allowed list.
 		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx,zip' ) );
-		$ext           = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+		$ext           = strtolower( $filetype['ext'] );
 
 		if ( ! in_array( $ext, $allowed_types, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'File type not allowed.', 'wp-sell-services' ) ) );
@@ -2974,21 +2981,25 @@ class AjaxHandlers {
 
 		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
 
-		// Verify ownership and status.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Lock the withdrawal row to prevent double-cancel race conditions.
+		$wpdb->query( 'START TRANSACTION' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$withdrawal = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$withdrawals_table} WHERE id = %d AND vendor_id = %d",
+				"SELECT * FROM {$withdrawals_table} WHERE id = %d AND vendor_id = %d FOR UPDATE",
 				$withdrawal_id,
 				$user_id
 			)
 		);
 
 		if ( ! $withdrawal ) {
+			$wpdb->query( 'ROLLBACK' );
 			wp_send_json_error( array( 'message' => __( 'Withdrawal not found.', 'wp-sell-services' ) ) );
 		}
 
 		if ( 'pending' !== $withdrawal->status ) {
+			$wpdb->query( 'ROLLBACK' );
 			wp_send_json_error( array( 'message' => __( 'Only pending withdrawals can be cancelled.', 'wp-sell-services' ) ) );
 		}
 
@@ -3005,19 +3016,19 @@ class AjaxHandlers {
 			array( '%d' )
 		);
 
-		// Restore balance to vendor.
-		$vendor_repo = new \WPSellServices\Database\Repositories\VendorProfileRepository();
-		$vendor      = $vendor_repo->find_by_user_id( $user_id );
+		// Restore balance atomically using SQL arithmetic.
+		$vendor_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$vendor_table} SET pending_balance = GREATEST(0, pending_balance - %f), available_balance = available_balance + %f WHERE user_id = %d",
+				(float) $withdrawal->amount,
+				(float) $withdrawal->amount,
+				$user_id
+			)
+		);
 
-		if ( $vendor ) {
-			$vendor_repo->update(
-				$vendor->id,
-				array(
-					'pending_balance'   => max( 0, (float) $vendor->pending_balance - (float) $withdrawal->amount ),
-					'available_balance' => (float) $vendor->available_balance + (float) $withdrawal->amount,
-				)
-			);
-		}
+		$wpdb->query( 'COMMIT' );
 
 		wp_send_json_success( array( 'message' => __( 'Withdrawal cancelled. Balance restored.', 'wp-sell-services' ) ) );
 	}

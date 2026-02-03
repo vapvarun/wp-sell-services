@@ -1076,10 +1076,10 @@ class Admin {
 									<td><?php esc_html_e( 'Order Total:', 'wp-sell-services' ); ?></td>
 									<td style="text-align: right;"><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></td>
 								</tr>
-								<?php if ( isset( $order->vendor_earning ) && $order->vendor_earning > 0 ) : ?>
+								<?php if ( isset( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) : ?>
 									<tr>
 										<td><?php esc_html_e( 'Vendor Earning:', 'wp-sell-services' ); ?></td>
-										<td style="text-align: right;"><?php echo esc_html( wpss_format_price( (float) $order->vendor_earning, $order->currency ) ); ?></td>
+										<td style="text-align: right;"><?php echo esc_html( wpss_format_price( (float) $order->vendor_earnings, $order->currency ) ); ?></td>
 									</tr>
 								<?php endif; ?>
 								<?php if ( isset( $order->platform_fee ) && $order->platform_fee > 0 ) : ?>

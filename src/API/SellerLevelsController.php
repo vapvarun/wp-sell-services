@@ -210,7 +210,7 @@ class SellerLevelsController extends RestController {
 					COUNT(*) as total_orders,
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
 					AVG(CASE WHEN status = 'completed' THEN total ELSE NULL END) as avg_order_value,
-					SUM(CASE WHEN status = 'completed' THEN vendor_earning ELSE 0 END) as total_earnings
+					SUM(CASE WHEN status = 'completed' THEN vendor_earnings ELSE 0 END) as total_earnings
 				FROM {$orders_table}
 				WHERE vendor_id = %d",
 				$vendor_id

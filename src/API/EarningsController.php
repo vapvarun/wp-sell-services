@@ -194,7 +194,7 @@ class EarningsController extends RestController {
 		// Total earned from completed orders.
 		$total_earned = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(vendor_earning), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
+				"SELECT COALESCE(SUM(vendor_earnings), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
 				$vendor_id
 			)
 		);
@@ -250,7 +250,7 @@ class EarningsController extends RestController {
 
 		$orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, order_number, service_id, total, vendor_earning, commission_amount, currency, completed_at, created_at
+				"SELECT id, order_number, service_id, total, vendor_earnings, commission_amount, currency, completed_at, created_at
 				FROM {$orders_table}
 				WHERE vendor_id = %d AND status = 'completed'
 				ORDER BY completed_at DESC
@@ -271,7 +271,7 @@ class EarningsController extends RestController {
 				'order_number'     => $order['order_number'],
 				'service_title'    => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
 				'total'            => (float) $order['total'],
-				'vendor_earning'   => (float) $order['vendor_earning'],
+				'vendor_earnings'   => (float) $order['vendor_earnings'],
 				'commission'       => (float) $order['commission_amount'],
 				'currency'         => $order['currency'],
 				'completed_at'     => $order['completed_at'],
@@ -318,7 +318,7 @@ class EarningsController extends RestController {
 
 		$earned = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(vendor_earning), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
+				"SELECT COALESCE(SUM(vendor_earnings), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
 				$vendor_id
 			)
 		);
