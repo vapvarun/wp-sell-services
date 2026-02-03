@@ -177,6 +177,62 @@ add_action('wpss_loaded', function($plugin) {
 
 See `wp-sell-services-pro/CLAUDE.md` for detailed Pro guidelines.
 
+## Documentation Website
+
+**Short ID**: `wpss`
+**Docs Location**: `docs/website/`
+**MCP Tool**: `wbcom-docs` (mandatory for publishing)
+
+### Publish Workflow
+
+```javascript
+// Publish docs (local first, then live)
+mcp__wbcom-docs__publish_product_docs({
+  product_slug: "wp-sell-services",
+  product_path: "/path/to/wp-sell-services",
+  product_type: "plugin",
+  sync_to_live: false  // verify LOCAL first, then true for LIVE
+})
+```
+
+### Structure
+
+```
+docs/website/
+├── docs_config.json          # All categories, docs, slugs (-wpss suffix)
+├── images/                   # Screenshots (added later)
+├── getting-started/          # 3 docs
+├── service-management/       # 6 docs
+├── order-management/         # 5 docs
+├── vendor-guide/             # 6 docs
+├── buyer-guide/              # 4 docs
+├── disputes-resolution/      # 3 docs
+├── admin-settings/           # 7 docs
+├── marketplace-display/      # 4 docs
+├── integrations/             # 6 docs
+├── analytics-reporting/      # 3 docs
+├── developer-guide/          # 3 docs
+└── faq/                      # 1 doc
+```
+
+### Image Naming Conventions
+
+- `admin-*` - Admin panel screenshots
+- `frontend-*` - Frontend/public-facing screenshots
+- `settings-*` - Settings page screenshots
+- `pro-*` - Pro-only feature screenshots
+- `wizard-*` - Service creation wizard screenshots
+
+### Rules
+
+1. **ALL docs (free + pro) live in the FREE plugin only** - never in pro plugin
+2. Pro features marked with `**[PRO]**` badge inline
+3. All slugs suffixed with `-wpss` (e.g., `intro-wpss`, `order-workflow-wpss`)
+4. Images referenced as `../images/filename.png`
+5. Cross-doc links use relative paths (e.g., `../category/filename.md`)
+
+---
+
 ## Basecamp Project Tracking
 
 **Project**: WP Sell Services
