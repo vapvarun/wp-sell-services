@@ -69,8 +69,8 @@ class CommissionService {
 			return false;
 		}
 
-		// Skip if commission already recorded.
-		if ( ! empty( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) {
+		// Skip if commission already recorded (handles 0 vendor earnings for 100% platform fee).
+		if ( null !== $order->vendor_earnings && '' !== $order->vendor_earnings ) {
 			return true;
 		}
 

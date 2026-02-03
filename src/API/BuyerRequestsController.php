@@ -659,7 +659,7 @@ class BuyerRequestsController extends RestController {
 		$proposal_id = (int) $request->get_param( 'proposal_id' );
 		$reason      = $request->get_param( 'reason' ) ?? '';
 
-		$result = $this->proposal_service->reject( $proposal_id, $reason );
+		$result = $this->proposal_service->reject( $proposal_id, get_current_user_id(), $reason );
 
 		if ( ! $result['success'] ) {
 			return new WP_Error(
