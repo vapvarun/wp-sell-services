@@ -293,11 +293,6 @@ final class Plugin {
 	 * @return void
 	 */
 	private function maybe_create_vendor_role(): void {
-		// Only run once per request and only if role doesn't exist.
-		if ( get_role( 'wpss_vendor' ) ) {
-			return;
-		}
-
 		// Vendor capabilities.
 		$vendor_caps = array(
 			'wpss_manage_services'     => true,
@@ -305,13 +300,23 @@ final class Plugin {
 			'wpss_view_analytics'      => true,
 			'wpss_respond_to_requests' => true,
 			'read'                     => true,
+			'upload_files'             => true,
+			'edit_posts'               => true,
 		);
 
-		add_role(
-			'wpss_vendor',
-			'Vendor',
-			$vendor_caps
-		);
+		$role = get_role( 'wpss_vendor' );
+
+		if ( ! $role ) {
+			add_role( 'wpss_vendor', 'Vendor', $vendor_caps );
+			return;
+		}
+
+		// Ensure existing role has all required capabilities.
+		foreach ( $vendor_caps as $cap => $grant ) {
+			if ( ! $role->has_cap( $cap ) ) {
+				$role->add_cap( $cap, $grant );
+			}
+		}
 	}
 
 	/**

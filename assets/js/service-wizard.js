@@ -493,7 +493,7 @@ function wpssServiceWizard(existingData = {}) {
 			this.saving = true;
 
 			try {
-				const serviceId = document.getElementById('wpss-service-wizard').dataset.serviceId || 0;
+				const serviceId = parseInt(document.getElementById('wpss-service-wizard').dataset.serviceId, 10) || 0;
 				const formData = new FormData();
 
 				formData.append('action', 'wpss_wizard_save_draft');
@@ -567,7 +567,7 @@ function wpssServiceWizard(existingData = {}) {
 			this.publishing = true;
 
 			try {
-				const serviceId = document.getElementById('wpss-service-wizard').dataset.serviceId || 0;
+				const serviceId = parseInt(document.getElementById('wpss-service-wizard').dataset.serviceId, 10) || 0;
 				const formData = new FormData();
 
 				formData.append('action', 'wpss_wizard_publish');
