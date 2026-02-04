@@ -447,6 +447,16 @@
 		});
 	}
 
+	// Clear image upload state when a new term is added via AJAX (WordPress add-tag form).
+	$(document).ajaxComplete(function(event, xhr, settings) {
+		if (settings.data && typeof settings.data === 'string' && settings.data.indexOf('action=add-tag') !== -1) {
+			// Clear all image hidden inputs and previews within the add-tag form.
+			$('#addtag').find('input[type="hidden"][id$="_image"]').val('');
+			$('#addtag').find('[id$="_image-preview"]').html('');
+			$('#addtag').find('.wpss-remove-image').hide();
+		}
+	});
+
 	// Initialize on document ready
 	$(document).ready(init);
 

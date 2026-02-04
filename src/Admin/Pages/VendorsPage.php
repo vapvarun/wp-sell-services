@@ -1029,6 +1029,8 @@ class VendorsPage {
 		);
 		?>
 		<div class="wrap wpss-vendor-detail-page">
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendor Details', 'wp-sell-services' ); ?></h1>
+			<hr class="wp-header-end">
 			<!-- Back link and action buttons -->
 			<div class="wpss-detail-header-actions">
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors' ) ); ?>" class="wpss-back-link">
@@ -1050,7 +1052,7 @@ class VendorsPage {
 			<div class="wpss-detail-header">
 				<img src="<?php echo esc_url( $avatar_url ); ?>" alt="" class="wpss-detail-avatar">
 				<div class="wpss-detail-info">
-					<h1 class="wpss-detail-name"><?php echo esc_html( $vendor->display_name ); ?></h1>
+					<h2 class="wpss-detail-name"><?php echo esc_html( $vendor->display_name ); ?></h2>
 					<p class="wpss-detail-email"><?php echo esc_html( $vendor->user_email ); ?></p>
 					<?php if ( ! empty( $vendor->tagline ) ) : ?>
 						<p class="wpss-detail-tagline"><?php echo esc_html( $vendor->tagline ); ?></p>

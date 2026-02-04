@@ -46,7 +46,9 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 				<?php
 				$service   = get_post( $conversation->service_id );
 				$order_url = wpss_get_order_url( $conversation->order_id );
-				$is_unread = $conversation->unread_count > 0;
+				$unread_data    = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
+				$my_unread      = (int) ( $unread_data[ $user_id ] ?? 0 );
+				$is_unread      = $my_unread > 0;
 				$time_ago  = human_time_diff( strtotime( $conversation->last_message_at ), current_time( 'timestamp' ) );
 				?>
 				<a href="<?php echo esc_url( $order_url ); ?>" class="wpss-conversation-card <?php echo $is_unread ? 'wpss-conversation-card--unread' : ''; ?>">
@@ -59,7 +61,7 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 							</div>
 						<?php endif; ?>
 						<?php if ( $is_unread ) : ?>
-							<span class="wpss-conversation-card__badge"><?php echo esc_html( $conversation->unread_count ); ?></span>
+							<span class="wpss-conversation-card__badge"><?php echo esc_html( $my_unread ); ?></span>
 						<?php endif; ?>
 					</div>
 					<div class="wpss-conversation-card__content">

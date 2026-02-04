@@ -937,9 +937,16 @@ class ServiceModerationPage {
 		$existing_meta_query = $meta_query_raw ? $meta_query_raw : array();
 
 		$existing_meta_query[] = array(
-			'key'     => self::META_KEY,
-			'value'   => self::STATUS_APPROVED,
-			'compare' => '=',
+			'relation' => 'OR',
+			array(
+				'key'     => self::META_KEY,
+				'value'   => self::STATUS_APPROVED,
+				'compare' => '=',
+			),
+			array(
+				'key'     => self::META_KEY,
+				'compare' => 'NOT EXISTS',
+			),
 		);
 
 		$query->set( 'meta_query', $existing_meta_query );

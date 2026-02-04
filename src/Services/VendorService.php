@@ -98,6 +98,11 @@ class VendorService {
 		// Add vendor capabilities.
 		$this->add_vendor_capabilities( $user_id );
 
+		// Determine vendor status based on verification setting.
+		$vendor_settings    = get_option( 'wpss_vendor', array() );
+		$require_verification = ! empty( $vendor_settings['require_verification'] );
+		$default_status     = $require_verification ? 'pending' : 'active';
+
 		// Create vendor profile.
 		$profile_data = array(
 			'display_name'      => $data['display_name'] ?? $user->display_name,
@@ -105,7 +110,7 @@ class VendorService {
 			'bio'               => $data['bio'] ?? '',
 			'country'           => $data['country'] ?? '',
 			'city'              => $data['city'] ?? '',
-			'status'            => $data['status'] ?? 'active',
+			'status'            => $data['status'] ?? $default_status,
 			'verification_tier' => self::TIER_BASIC,
 		);
 

@@ -32,34 +32,54 @@ $vendor     = get_userdata( $order->vendor_id );
 $customer   = get_userdata( $order->customer_id );
 $other_user = $is_vendor ? $customer : $vendor;
 
-// Get messages.
+// Get conversation for this order.
 global $wpdb;
-$messages = $wpdb->get_results(
+$conversation = $wpdb->get_row(
 	$wpdb->prepare(
-		"SELECT m.*, u.display_name as sender_name
-		FROM {$wpdb->prefix}wpss_conversations m
-		LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
-		WHERE m.order_id = %d
-		ORDER BY m.created_at ASC",
+		"SELECT * FROM {$wpdb->prefix}wpss_conversations WHERE order_id = %d LIMIT 1",
 		$order_id
 	)
 );
 
-// Mark messages as read.
-if ( ! empty( $messages ) ) {
-	$unread_ids = array();
-	foreach ( $messages as $message ) {
-		if ( (int) $message->sender_id !== $user_id && empty( $message->read_at ) ) {
-			$unread_ids[] = (int) $message->id;
+// Get messages from the messages table.
+$messages = array();
+if ( $conversation ) {
+	$messages = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT m.*, u.display_name as sender_name
+			FROM {$wpdb->prefix}wpss_messages m
+			LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
+			WHERE m.conversation_id = %d
+			ORDER BY m.created_at ASC",
+			$conversation->id
+		)
+	);
+
+	// Mark messages as read via read_by JSON field.
+	if ( ! empty( $messages ) ) {
+		$unread_ids = array();
+		foreach ( $messages as $message ) {
+			if ( (int) $message->sender_id !== $user_id ) {
+				$read_by = $message->read_by ? json_decode( $message->read_by, true ) : array();
+				if ( ! isset( $read_by[ $user_id ] ) ) {
+					$unread_ids[] = (int) $message->id;
+				}
+			}
 		}
-	}
-	if ( ! empty( $unread_ids ) ) {
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$wpdb->prefix}wpss_conversations SET read_at = %s WHERE id IN (" . implode( ',', array_fill( 0, count( $unread_ids ), '%d' ) ) . ')',
-				array_merge( array( current_time( 'mysql', true ) ), $unread_ids )
-			)
-		);
+		if ( ! empty( $unread_ids ) ) {
+			foreach ( $unread_ids as $msg_id ) {
+				$msg_row = $wpdb->get_row( $wpdb->prepare( "SELECT read_by FROM {$wpdb->prefix}wpss_messages WHERE id = %d", $msg_id ) );
+				$read_by = $msg_row && $msg_row->read_by ? json_decode( $msg_row->read_by, true ) : array();
+				$read_by[ $user_id ] = current_time( 'mysql', true );
+				$wpdb->update(
+					$wpdb->prefix . 'wpss_messages',
+					array( 'read_by' => wp_json_encode( $read_by ) ),
+					array( 'id' => $msg_id ),
+					array( '%s' ),
+					array( '%d' )
+				);
+			}
+		}
 	}
 }
 
@@ -106,7 +126,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 			foreach ( $messages as $message ) :
 				$message_date = wp_date( get_option( 'date_format' ), strtotime( $message->created_at ) );
 				$is_own       = (int) $message->sender_id === $user_id;
-				$is_system    = 'system' === ( isset( $message->type ) ? $message->type : ( isset( $message->message_type ) ? $message->message_type : 'text' ) );
+				$is_system    = 'system' === ( isset( $message->type ) ? $message->type : ( isset( $message->content_type ) ? $message->content_type : 'text' ) );
 
 				// Date separator.
 				if ( $message_date !== $current_date ) :
@@ -120,7 +140,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 				<?php if ( $is_system ) : ?>
 					<div class="wpss-messaging__system">
 						<span class="wpss-messaging__system-text">
-							<?php echo wp_kses_post( $message->message ); ?>
+							<?php echo wp_kses_post( $message->content ); ?>
 							<span class="wpss-messaging__message-time">
 								<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
 							</span>
@@ -139,7 +159,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 									<span class="wpss-messaging__sender"><?php echo esc_html( $message->sender_name ); ?></span>
 								<?php endif; ?>
 								<div class="wpss-messaging__text">
-									<?php echo wp_kses_post( nl2br( $message->message ) ); ?>
+									<?php echo wp_kses_post( nl2br( $message->content ) ); ?>
 								</div>
 								<?php if ( ! empty( $message->attachments ) ) : ?>
 									<?php $attachments = json_decode( $message->attachments, true ); ?>
@@ -176,7 +196,11 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 							</div>
 							<span class="wpss-messaging__message-time">
 								<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
-								<?php if ( $is_own && ! empty( $message->read_at ) ) : ?>
+								<?php
+							$read_by_data = $message->read_by ? json_decode( $message->read_by, true ) : array();
+							$is_read      = ! empty( array_diff_key( $read_by_data, array( $user_id => '' ) ) );
+							?>
+							<?php if ( $is_own && $is_read ) : ?>
 									<span class="wpss-messaging__message-status wpss-messaging__message-status--read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
 										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 											<polyline points="20 6 9 17 4 12"/>

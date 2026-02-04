@@ -152,6 +152,9 @@ $pending_count = count(
 						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--ghost wpss-btn--sm" target="_blank">
 							<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 						</a>
+						<button type="button" class="wpss-btn wpss-btn--danger wpss-btn--sm wpss-delete-service" data-service-id="<?php echo esc_attr( $service_id ); ?>">
+							<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
+						</button>
 					</div>
 				</div>
 			<?php endwhile; ?>

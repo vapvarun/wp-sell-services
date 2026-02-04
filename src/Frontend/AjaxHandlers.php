@@ -151,10 +151,10 @@ class AjaxHandlers {
 
 		$result = $order_service->update_status( $order_id, 'accepted' );
 
-		if ( $result['success'] ) {
+		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Order accepted successfully.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( $result );
+			wp_send_json_error( array( 'message' => __( 'Failed to accept order.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -223,12 +223,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to decline this order.', 'wp-sell-services' ) ) );
 		}
 
-		$result = $order_service->decline( $order_id, $reason );
+		$result = $order_service->update_status( $order_id, 'rejected' );
 
-		if ( $result['success'] ) {
+		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Order declined.', 'wp-sell-services' ) ) );
 		} else {
-			wp_send_json_error( $result );
+			wp_send_json_error( array( 'message' => __( 'Failed to decline order.', 'wp-sell-services' ) ) );
 		}
 	}
 

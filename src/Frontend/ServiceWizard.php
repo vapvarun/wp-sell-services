@@ -1670,7 +1670,7 @@ class ServiceWizard {
 
 			$sanitized[] = array(
 				'question' => sanitize_text_field( $faq['question'] ),
-				'answer'   => sanitize_textarea_field( $faq['answer'] ),
+				'answer'   => wp_kses_post( $faq['answer'] ),
 			);
 		}
 

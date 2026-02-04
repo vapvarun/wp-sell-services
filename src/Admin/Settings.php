@@ -841,6 +841,7 @@ class Settings {
 				array(
 					'option_name' => 'wpss_pages',
 					'field'       => $key,
+					'page_title'  => $label,
 				)
 			);
 		}
@@ -1569,13 +1570,9 @@ class Settings {
 	 * @return void
 	 */
 	public function render_page_select_field( array $args ): void {
-		$options     = get_option( $args['option_name'], array() );
-		$value       = $options[ $args['field'] ] ?? '';
-		$page_titles = array(
-			'services_page' => __( 'Services', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
-		);
+		$options    = get_option( $args['option_name'], array() );
+		$value      = $options[ $args['field'] ] ?? '';
+		$page_title = $args['page_title'] ?? '';
 
 		echo '<div class="wpss-page-select-wrap">';
 
@@ -1594,7 +1591,7 @@ class Settings {
 		printf(
 			'<button type="button" class="button wpss-create-page" data-field="%s" data-title="%s">%s</button>',
 			esc_attr( $args['field'] ),
-			esc_attr( $page_titles[ $args['field'] ] ?? '' ),
+			esc_attr( $page_title ),
 			esc_html__( 'Create Page', 'wp-sell-services' )
 		);
 

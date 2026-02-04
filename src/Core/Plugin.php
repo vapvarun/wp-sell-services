@@ -309,7 +309,7 @@ final class Plugin {
 
 		add_role(
 			'wpss_vendor',
-			__( 'Vendor', 'wp-sell-services' ),
+			'Vendor',
 			$vendor_caps
 		);
 	}

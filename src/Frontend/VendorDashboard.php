@@ -1760,7 +1760,20 @@ class VendorDashboard {
 	 */
 	private function get_dashboard_url(): string {
 		$url = wpss_get_page_url( 'dashboard' );
-		return $url ? $url : home_url();
+
+		if ( $url ) {
+			return $url;
+		}
+
+		// Fallback to WooCommerce My Account page.
+		if ( function_exists( 'wc_get_page_permalink' ) ) {
+			$wc_url = wc_get_page_permalink( 'myaccount' );
+			if ( $wc_url ) {
+				return $wc_url;
+			}
+		}
+
+		return home_url();
 	}
 
 	/**
