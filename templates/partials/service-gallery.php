@@ -13,7 +13,19 @@
 defined( 'ABSPATH' ) || exit;
 
 $service_id = get_the_ID();
-$gallery_ids = get_post_meta( $service_id, '_wpss_gallery', true ) ?: [];
+$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true ) ?: [];
+
+// ServiceWizard saves as ['images' => [...], 'video' => '...'] — extract the image IDs.
+if ( isset( $gallery_raw['images'] ) && is_array( $gallery_raw['images'] ) ) {
+	$gallery_ids = array_map( 'absint', $gallery_raw['images'] );
+	$video_url   = $gallery_raw['video'] ?? '';
+	if ( $video_url ) {
+		update_post_meta( $service_id, '_wpss_video_url', esc_url_raw( $video_url ) );
+	}
+} else {
+	$gallery_ids = is_array( $gallery_raw ) ? array_map( 'absint', $gallery_raw ) : [];
+}
+
 $has_thumbnail = has_post_thumbnail( $service_id );
 
 // Add featured image to gallery if exists.

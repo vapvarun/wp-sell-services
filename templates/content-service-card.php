@@ -25,6 +25,15 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 <article <?php post_class( 'wpss-service-card' ); ?>>
 	<a href="<?php the_permalink(); ?>" class="wpss-service-card__link">
 		<div class="wpss-service-card__media">
+			<?php
+			// Fallback to first gallery image if no featured image.
+			if ( ! has_post_thumbnail() ) {
+				$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
+				if ( is_array( $gallery_raw ) && isset( $gallery_raw['images'] ) && ! empty( $gallery_raw['images'][0] ) ) {
+					set_post_thumbnail( $service_id, absint( $gallery_raw['images'][0] ) );
+				}
+			}
+			?>
 			<?php if ( has_post_thumbnail() ) : ?>
 				<?php the_post_thumbnail( 'medium_large', array( 'class' => 'wpss-service-card__image' ) ); ?>
 			<?php else : ?>

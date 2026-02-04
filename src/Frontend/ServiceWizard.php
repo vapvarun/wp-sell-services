@@ -453,10 +453,12 @@ class ServiceWizard {
 					class="wpss-form-textarea"
 					x-model="data.description"
 					rows="8"
+					maxlength="5000"
 					placeholder="<?php esc_attr_e( 'Describe your service in detail. What makes you unique? What\'s included?', 'wp-sell-services' ); ?>"
 					required></textarea>
-				<div class="wpss-form-hint">
-					<?php esc_html_e( 'Minimum 120 characters. Be detailed and specific.', 'wp-sell-services' ); ?>
+				<div class="wpss-form-hint" style="display: flex; justify-content: space-between;">
+					<span><?php esc_html_e( 'Minimum 120 characters. Be detailed and specific.', 'wp-sell-services' ); ?></span>
+					<span x-text="(data.description || '').length + ' / 5000'" :class="{ 'wpss-text-danger': (data.description || '').length < 120 }"></span>
 				</div>
 			</div>
 
