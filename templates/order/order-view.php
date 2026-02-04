@@ -84,7 +84,7 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 			</span>
 		</div>
 
-		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements' ), true ) ) : ?>
+		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements', 'revision_requested', 'late' ), true ) ) : ?>
 			<div class="wpss-order-view__actions">
 				<?php if ( $is_vendor ) : ?>
 					<?php if ( 'pending' === $order->status ) : ?>
@@ -105,10 +105,10 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 						</button>
 					<?php endif; ?>
 
-					<?php if ( 'in_progress' === $order->status ) : ?>
+					<?php if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) : ?>
 						<button type="button" class="wpss-btn wpss-btn--success wpss-deliver-btn"
 								data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php esc_html_e( 'Deliver Work', 'wp-sell-services' ); ?>
+							<?php echo esc_html( 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ) ); ?>
 						</button>
 					<?php endif; ?>
 				<?php endif; ?>
