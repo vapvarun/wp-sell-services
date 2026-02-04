@@ -269,7 +269,7 @@ class ServiceWizard {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</div>';
 			}
 
-			if ( (int) $service->post_author !== $user_id && ! current_user_can( 'edit_others_posts' ) ) {
+			if ( (int) $service->post_author !== $user_id && ! current_user_can( 'manage_options' ) ) {
 				return '<div class="wpss-notice wpss-notice-error">' . esc_html__( 'You do not have permission to edit this service.', 'wp-sell-services' ) . '</div>';
 			}
 		}

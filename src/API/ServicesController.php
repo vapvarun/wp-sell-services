@@ -514,7 +514,7 @@ class ServicesController extends RestController {
 		}
 
 		// Check if user can create services.
-		if ( ! current_user_can( 'publish_posts' ) ) {
+		if ( ! current_user_can( 'wpss_manage_services' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to create services.', 'wp-sell-services' ),

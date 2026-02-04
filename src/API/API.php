@@ -363,7 +363,7 @@ class API {
 			'is_vendor'    => (bool) get_user_meta( $user_id, '_wpss_is_vendor', true ),
 			'is_admin'     => current_user_can( 'manage_options' ),
 			'capabilities' => [
-				'can_create_services' => current_user_can( 'publish_posts' ) && get_user_meta( $user_id, '_wpss_is_vendor', true ),
+				'can_create_services' => current_user_can( 'wpss_manage_services' ) && get_user_meta( $user_id, '_wpss_is_vendor', true ),
 				'can_manage_orders'   => current_user_can( 'manage_options' ),
 			],
 		];
