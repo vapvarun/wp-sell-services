@@ -90,7 +90,7 @@ class ServiceTagTaxonomy {
 				'manage_terms' => 'manage_categories',
 				'edit_terms'   => 'manage_categories',
 				'delete_terms' => 'manage_categories',
-				'assign_terms' => 'edit_posts',
+				'assign_terms' => 'wpss_manage_services',
 			],
 		];
 

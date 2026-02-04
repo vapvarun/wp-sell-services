@@ -301,7 +301,6 @@ final class Plugin {
 			'wpss_respond_to_requests' => true,
 			'read'                     => true,
 			'upload_files'             => true,
-			'edit_posts'               => true,
 		);
 
 		$role = get_role( 'wpss_vendor' );
@@ -316,6 +315,11 @@ final class Plugin {
 			if ( ! $role->has_cap( $cap ) ) {
 				$role->add_cap( $cap, $grant );
 			}
+		}
+
+		// Remove edit_posts if it was previously added (vendors should use wpss_manage_services instead).
+		if ( $role->has_cap( 'edit_posts' ) ) {
+			$role->remove_cap( 'edit_posts' );
 		}
 	}
 
