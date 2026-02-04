@@ -143,6 +143,12 @@
                 return;
             }
 
+            // Initialize selectedPackage from first active tab's data-package attribute.
+            var $activeTab = $packages.find('.wpss-package-tab.active');
+            if ($activeTab.length) {
+                this.state.selectedPackage = $activeTab.data('package');
+            }
+
             // Tab switching.
             $packages.on('click', '.wpss-package-tab', function(e) {
                 e.preventDefault();
@@ -478,7 +484,7 @@
             const data = {
                 action: 'wpss_add_service_to_cart',
                 service_id: wpssService.serviceId,
-                package_id: this.state.selectedPackage,
+                package_index: this.state.selectedPackage,
                 addons: this.state.extras.map(function(e) { return e.index; }),
                 nonce: wpssService.nonce
             };

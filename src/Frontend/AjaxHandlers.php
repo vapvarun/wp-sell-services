@@ -1995,7 +1995,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$service_id    = absint( $_POST['service_id'] ?? 0 );
-		$package_index = absint( $_POST['package_index'] ?? 0 );
+		$package_index = sanitize_text_field( wp_unslash( $_POST['package_index'] ?? '0' ) );
 		$quantity      = absint( $_POST['quantity'] ?? 1 );
 		$extras        = isset( $_POST['extras'] ) ? array_map( 'absint', (array) $_POST['extras'] ) : array();
 
@@ -2286,7 +2286,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_checkout_nonce', 'nonce' );
 
 		$service_id    = absint( $_POST['service_id'] ?? 0 );
-		$package_index = absint( $_POST['package_index'] ?? 0 );
+		$package_index = sanitize_text_field( wp_unslash( $_POST['package_index'] ?? '0' ) );
 		$quantity      = absint( $_POST['quantity'] ?? 1 );
 		$extras        = array_map( 'absint', (array) ( $_POST['extras'] ?? array() ) );
 

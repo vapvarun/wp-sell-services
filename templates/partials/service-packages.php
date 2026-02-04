@@ -32,7 +32,7 @@ if ( empty( $packages ) ) {
 	];
 }
 
-$active_package = 0;
+$first_package_key = array_key_first( $packages );
 ?>
 
 <div class="wpss-packages-widget">
@@ -40,7 +40,7 @@ $active_package = 0;
 		<div class="wpss-packages-tabs">
 			<?php foreach ( $packages as $index => $package ) : ?>
 				<button type="button"
-						class="wpss-package-tab <?php echo 0 === $index ? 'active' : ''; ?>"
+						class="wpss-package-tab <?php echo $first_package_key === $index ? 'active' : ''; ?>"
 						data-package="<?php echo esc_attr( $index ); ?>">
 					<?php echo esc_html( $package['name'] ?? __( 'Package', 'wp-sell-services' ) ); ?>
 				</button>
@@ -50,7 +50,7 @@ $active_package = 0;
 
 	<div class="wpss-packages-content">
 		<?php foreach ( $packages as $index => $package ) : ?>
-			<div class="wpss-package <?php echo 0 === $index ? 'active' : ''; ?>"
+			<div class="wpss-package <?php echo $first_package_key === $index ? 'active' : ''; ?>"
 				 data-package="<?php echo esc_attr( $index ); ?>">
 
 				<div class="wpss-package-header">
