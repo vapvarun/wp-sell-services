@@ -684,7 +684,11 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 						</div>
 						<?php
 						$files = maybe_unserialize( $delivery->attachments );
-						if ( ! empty( $files ) ) :
+						if ( is_string( $files ) ) {
+							$decoded = json_decode( $files, true );
+							$files   = is_array( $decoded ) ? $decoded : array();
+						}
+						if ( ! empty( $files ) && is_array( $files ) ) :
 							?>
 							<div class="wpss-delivery-item__files">
 								<?php foreach ( $files as $file_id ) : ?>
