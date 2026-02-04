@@ -254,10 +254,16 @@ class OrdersListTable extends \WP_List_Table {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
+		// Vendor filter for non-admin vendors.
+		$vendor_where = '';
+		if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
+			$vendor_where = $wpdb->prepare( ' WHERE vendor_id = %d', get_current_user_id() );
+		}
+
 		// Get status counts.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$counts = $wpdb->get_results(
-			"SELECT status, COUNT(*) as count FROM {$table} GROUP BY status",
+			"SELECT status, COUNT(*) as count FROM {$table}{$vendor_where} GROUP BY status",
 			OBJECT_K
 		);
 
@@ -353,10 +359,16 @@ class OrdersListTable extends \WP_List_Table {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Vendor filter for non-admin vendors.
+		$vendor_where = '';
+		if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
+			$vendor_where = $wpdb->prepare( ' WHERE vendor_id = %d', get_current_user_id() );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_results(
 			"SELECT DISTINCT DATE_FORMAT(created_at, '%Y-%m') as month
-			FROM {$table}
+			FROM {$table}{$vendor_where}
 			ORDER BY month DESC
 			LIMIT 24"
 		);
@@ -376,8 +388,14 @@ class OrdersListTable extends \WP_List_Table {
 		$current_page = $this->get_pagenum();
 
 		// Build query.
-		$where = '1=1';
+		$where  = '1=1';
 		$params = [];
+
+		// Vendor filter — non-admin vendors only see their own orders.
+		if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
+			$where   .= ' AND vendor_id = %d';
+			$params[] = get_current_user_id();
+		}
 
 		// Status filter.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended

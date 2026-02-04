@@ -1667,10 +1667,18 @@ class VendorDashboard {
 		}
 
 		// Check if service has any active orders.
-		$order_service = new OrderService();
-		$active_orders = $order_service->get_by_service( $service_id, array( 'status' => array( 'pending', 'in_progress', 'revision' ) ) );
+		global $wpdb;
+		$orders_table = $wpdb->prefix . 'wpss_orders';
 
-		if ( ! empty( $active_orders ) ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$active_orders = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$orders_table} WHERE service_id = %d AND status IN ('pending_payment', 'pending_requirements', 'in_progress', 'revision_requested')",
+				$service_id
+			)
+		);
+
+		if ( (int) $active_orders > 0 ) {
 			wp_send_json_error( array( 'message' => __( 'Cannot delete service with active orders.', 'wp-sell-services' ) ) );
 			return;
 		}

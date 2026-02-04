@@ -755,6 +755,9 @@ class Admin {
 			return;
 		}
 
+		// Handle bulk actions.
+		$this->process_order_bulk_actions( $action );
+
 		$list_table = new OrdersListTable();
 		$list_table->prepare_items();
 		?>
@@ -776,6 +779,88 @@ class Admin {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Process order bulk actions.
+	 *
+	 * @param string $action The bulk action.
+	 * @return void
+	 */
+	private function process_order_bulk_actions( string $action ): void {
+		$bulk_actions = array( 'mark_completed', 'mark_cancelled' );
+
+		if ( ! in_array( $action, $bulk_actions, true ) ) {
+			return;
+		}
+
+		check_admin_referer( 'bulk-orders' );
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$order_ids = isset( $_GET['order_ids'] ) ? array_map( 'absint', (array) $_GET['order_ids'] ) : array();
+
+		if ( empty( $order_ids ) ) {
+			return;
+		}
+
+		$status_map = array(
+			'mark_completed' => 'completed',
+			'mark_cancelled' => 'cancelled',
+		);
+
+		$new_status = $status_map[ $action ];
+		$updated    = 0;
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		foreach ( $order_ids as $id ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$old_status = $wpdb->get_var(
+				$wpdb->prepare( "SELECT status FROM {$table} WHERE id = %d", $id )
+			);
+
+			if ( $old_status === $new_status ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$result = $wpdb->update(
+				$table,
+				array( 'status' => $new_status ),
+				array( 'id' => $id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+
+			if ( $result ) {
+				++$updated;
+
+				/**
+				 * Fires after an order status is changed via bulk action.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param int    $id         Order ID.
+				 * @param string $new_status New status.
+				 * @param string $old_status Previous status.
+				 */
+				do_action( 'wpss_order_status_changed', $id, $new_status, $old_status );
+			}
+		}
+
+		if ( $updated > 0 ) {
+			add_action(
+				'admin_notices',
+				function () use ( $updated ) {
+					printf(
+						'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+						/* translators: %d: number of orders updated */
+						esc_html( sprintf( _n( '%d order updated.', '%d orders updated.', $updated, 'wp-sell-services' ), $updated ) )
+					);
+				}
+			);
+		}
 	}
 
 	/**
@@ -801,6 +886,12 @@ class Admin {
 
 		if ( ! $order ) {
 			echo '<div class="wrap"><div class="notice notice-error"><p>' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p></div></div>';
+			return;
+		}
+
+		// Vendor access check — vendors can only view their own orders.
+		if ( ! current_user_can( 'manage_options' ) && (int) $order->vendor_id !== get_current_user_id() ) {
+			echo '<div class="wrap"><div class="notice notice-error"><p>' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</p></div></div>';
 			return;
 		}
 
