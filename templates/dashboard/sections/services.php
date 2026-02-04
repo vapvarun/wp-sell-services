@@ -12,6 +12,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Save dashboard URL before custom query changes the global post.
+$dashboard_url = get_permalink();
+
 // Get vendor's services.
 $args = array(
 	'post_type'      => 'wpss_service',
@@ -85,7 +88,7 @@ $pending_count = count(
 			</div>
 			<h3><?php esc_html_e( 'No services yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( 'Create your first service to start selling.', 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( add_query_arg( 'section', 'create', get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary">
+			<a href="<?php echo esc_url( add_query_arg( 'section', 'create', $dashboard_url ) ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
 			</a>
 		</div>
@@ -142,7 +145,7 @@ $pending_count = count(
 									'section' => 'create',
 									'id'      => $service_id,
 								),
-								get_permalink()
+								$dashboard_url
 							)
 						);
 						?>
