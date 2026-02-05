@@ -59,6 +59,8 @@ class OrderWorkflowManager {
 		add_action( 'wpss_check_late_orders', [ $this, 'check_late_orders' ] );
 		add_action( 'wpss_auto_complete_orders', [ $this, 'auto_complete_orders' ] );
 		add_action( 'wpss_send_deadline_reminders', [ $this, 'send_deadline_reminders' ] );
+		add_action( 'wpss_send_requirements_reminders', [ $this, 'send_requirements_reminders' ] );
+		add_action( 'wpss_recalculate_seller_levels', [ $this, 'recalculate_seller_levels' ] );
 
 		// Status change hooks.
 		add_action( 'wpss_order_status_changed', [ $this, 'handle_status_change' ], 10, 3 );
@@ -86,6 +88,11 @@ class OrderWorkflowManager {
 			'display'  => __( 'Twice Daily', 'wp-sell-services' ),
 		];
 
+		$schedules['wpss_weekly'] = [
+			'interval' => WEEK_IN_SECONDS,
+			'display'  => __( 'Once Weekly', 'wp-sell-services' ),
+		];
+
 		return $schedules;
 	}
 
@@ -105,6 +112,14 @@ class OrderWorkflowManager {
 
 		if ( ! wp_next_scheduled( 'wpss_send_deadline_reminders' ) ) {
 			wp_schedule_event( time(), 'daily', 'wpss_send_deadline_reminders' );
+		}
+
+		if ( ! wp_next_scheduled( 'wpss_send_requirements_reminders' ) ) {
+			wp_schedule_event( time(), 'daily', 'wpss_send_requirements_reminders' );
+		}
+
+		if ( ! wp_next_scheduled( 'wpss_recalculate_seller_levels' ) ) {
+			wp_schedule_event( time(), 'wpss_weekly', 'wpss_recalculate_seller_levels' );
 		}
 	}
 
@@ -252,6 +267,149 @@ class OrderWorkflowManager {
 				),
 				[ 'order_id' => $order->id ]
 			);
+		}
+	}
+
+	/**
+	 * Send reminders to buyers who haven't submitted requirements.
+	 *
+	 * Sends reminders at day 1, 3, and 5 after purchase.
+	 *
+	 * @return void
+	 */
+	public function send_requirements_reminders(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// Find orders stuck in pending_requirements status.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$pending_orders = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, customer_id, vendor_id, created_at FROM {$table}
+				WHERE status = %s
+				AND created_at < DATE_SUB(%s, INTERVAL 1 DAY)",
+				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+				current_time( 'mysql' )
+			)
+		);
+
+		foreach ( $pending_orders as $order ) {
+			$days_since_order = (int) floor( ( time() - strtotime( $order->created_at ) ) / DAY_IN_SECONDS );
+			$reminder_key     = 'wpss_requirements_reminder_' . $order->id;
+			$reminders_sent   = (int) get_option( $reminder_key, 0 );
+
+			// Determine which reminder to send based on days elapsed.
+			$should_send = false;
+			$message     = '';
+			$subject     = '';
+
+			if ( $days_since_order >= 1 && $reminders_sent < 1 ) {
+				$should_send = true;
+				$subject     = __( 'Submit Your Requirements', 'wp-sell-services' );
+				$message     = __( 'Your vendor is waiting for your project requirements. Please submit them so work can begin.', 'wp-sell-services' );
+			} elseif ( $days_since_order >= 3 && $reminders_sent < 2 ) {
+				$should_send = true;
+				$subject     = __( 'Reminder: Requirements Needed', 'wp-sell-services' );
+				$message     = __( 'Your vendor is still waiting for requirements. Please submit them to avoid delays.', 'wp-sell-services' );
+			} elseif ( $days_since_order >= 5 && $reminders_sent < 3 ) {
+				$should_send = true;
+				$subject     = __( 'Final Reminder: Action Required', 'wp-sell-services' );
+				$message     = __( 'This is your final reminder. Please submit your requirements or contact the vendor if you need assistance.', 'wp-sell-services' );
+			}
+
+			if ( $should_send ) {
+				// Send notification to buyer.
+				$this->notification_service->create(
+					(int) $order->customer_id,
+					'requirements_reminder',
+					$subject,
+					$message,
+					[ 'order_id' => $order->id ]
+				);
+
+				// Update reminder count.
+				update_option( $reminder_key, $reminders_sent + 1, false );
+
+				// Also notify vendor on first reminder.
+				if ( 0 === $reminders_sent ) {
+					$this->notification_service->create(
+						(int) $order->vendor_id,
+						'requirements_pending',
+						__( 'Buyer Requirements Pending', 'wp-sell-services' ),
+						__( 'The buyer has not yet submitted requirements. We have sent them a reminder.', 'wp-sell-services' ),
+						[ 'order_id' => $order->id ]
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Recalculate seller levels for all vendors.
+	 *
+	 * Runs weekly to check if vendors qualify for level promotions.
+	 *
+	 * @return void
+	 */
+	public function recalculate_seller_levels(): void {
+		$seller_level_service = new SellerLevelService();
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_vendor_profiles';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$vendors = $wpdb->get_results(
+			"SELECT user_id, verification_tier FROM {$table}"
+		);
+
+		foreach ( $vendors as $vendor ) {
+			$user_id       = (int) $vendor->user_id;
+			$current_level = $vendor->verification_tier ?? SellerLevelService::LEVEL_NEW;
+			$new_level     = $seller_level_service->calculate_level( $user_id );
+
+			// Only update if level changed.
+			if ( $new_level !== $current_level ) {
+				$seller_level_service->update_vendor_level( $user_id, $new_level );
+
+				// Check if this is a promotion (not demotion).
+				$level_order = [
+					SellerLevelService::LEVEL_NEW,
+					SellerLevelService::LEVEL_ONE,
+					SellerLevelService::LEVEL_TWO,
+					SellerLevelService::LEVEL_TOP_RATED,
+				];
+
+				$current_index = array_search( $current_level, $level_order, true );
+				$new_index     = array_search( $new_level, $level_order, true );
+
+				if ( false !== $new_index && false !== $current_index && $new_index > $current_index ) {
+					// This is a promotion - notify vendor.
+					$level_label = SellerLevelService::get_level_label( $new_level );
+
+					$this->notification_service->create(
+						$user_id,
+						'seller_level_promotion',
+						__( 'Congratulations! Level Up!', 'wp-sell-services' ),
+						sprintf(
+							/* translators: %s: new seller level */
+							__( 'You have been promoted to %s! Keep up the great work.', 'wp-sell-services' ),
+							$level_label
+						),
+						[ 'new_level' => $new_level ]
+					);
+
+					/**
+					 * Fires when a vendor is promoted to a higher level.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param int    $user_id       Vendor user ID.
+					 * @param string $new_level     New seller level.
+					 * @param string $current_level Previous seller level.
+					 */
+					do_action( 'wpss_vendor_level_promoted', $user_id, $new_level, $current_level );
+				}
+			}
 		}
 	}
 
@@ -529,5 +687,7 @@ class OrderWorkflowManager {
 		wp_clear_scheduled_hook( 'wpss_check_late_orders' );
 		wp_clear_scheduled_hook( 'wpss_auto_complete_orders' );
 		wp_clear_scheduled_hook( 'wpss_send_deadline_reminders' );
+		wp_clear_scheduled_hook( 'wpss_send_requirements_reminders' );
+		wp_clear_scheduled_hook( 'wpss_recalculate_seller_levels' );
 	}
 }
