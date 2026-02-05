@@ -362,13 +362,13 @@ Display the "Post a Request" form for buyers.
 
 ## Dashboard Shortcodes
 
-### [wpss_buyer_dashboard]
+### [wpss_dashboard]
 
 Display the unified buyer/vendor dashboard.
 
 **Basic Usage:**
 ```
-[wpss_buyer_dashboard]
+[wpss_dashboard]
 ```
 
 **Attributes:**
@@ -381,7 +381,7 @@ Display the unified buyer/vendor dashboard.
 
 **Dashboard with Orders Tab:**
 ```
-[wpss_buyer_dashboard default_tab="orders"]
+[wpss_dashboard default_tab="orders"]
 ```
 
 **Note:** This is a complex shortcode that generates a full account interface. No additional attributes typically needed.
@@ -579,7 +579,7 @@ Post your project and receive custom offers from vendors.
 ### Dashboard Page
 
 ```
-[wpss_buyer_dashboard]
+[wpss_dashboard]
 ```
 
 ---

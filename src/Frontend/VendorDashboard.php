@@ -59,7 +59,6 @@ class VendorDashboard {
 	 * @return void
 	 */
 	public function init(): void {
-		add_shortcode( 'wpss_vendor_dashboard', array( $this, 'render_dashboard' ) );
 		add_shortcode( 'wpss_become_vendor', array( $this, 'render_registration_form' ) );
 		add_shortcode( 'wpss_vendor_registration', array( $this, 'render_registration_form' ) );
 
@@ -74,22 +73,6 @@ class VendorDashboard {
 		add_action( 'wp_ajax_wpss_delete_service', array( $this, 'ajax_delete_service' ) );
 		add_action( 'wp_ajax_wpss_vendor_registration', array( $this, 'ajax_vendor_registration' ) );
 	}
-
-	/**
-	 * Render main vendor dashboard.
-	 *
-	 * @deprecated 1.1.0 Use [wpss_dashboard] shortcode instead.
-	 * @param array $atts Shortcode attributes.
-	 * @return string Dashboard HTML.
-	 */
-	public function render_dashboard( array $atts = array() ): string {
-		// Redirect to unified dashboard.
-		$unified_dashboard = new UnifiedDashboard();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just setting default section.
-		$_GET['section'] = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'services';
-		return $unified_dashboard->render( array() );
-	}
-
 
 	/**
 	 * Render vendor registration form.

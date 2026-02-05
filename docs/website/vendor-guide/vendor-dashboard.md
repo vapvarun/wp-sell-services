@@ -4,7 +4,7 @@ Your vendor dashboard is the central hub for managing all your selling activitie
 
 ## Accessing Your Dashboard
 
-Navigate to **My Account → Vendor Dashboard** or use the shortcode `[wpss_buyer_dashboard]` which automatically displays vendor features when you're logged in as a vendor.
+Navigate to **My Account → Dashboard** or use the shortcode `[wpss_dashboard]` which automatically displays vendor features when you're logged in as a vendor.
 
 ![Vendor dashboard overview](../images/vendor-dashboard-overview.png)
 

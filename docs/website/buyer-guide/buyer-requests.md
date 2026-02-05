@@ -457,7 +457,7 @@ Displays form for buyers to post new requests.
 
 ### My Requests Dashboard
 ```
-[wpss_buyer_dashboard]
+[wpss_dashboard]
 ```
 Shows user's posted requests and proposals received.
 

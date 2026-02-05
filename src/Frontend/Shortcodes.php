@@ -45,7 +45,6 @@ class Shortcodes {
 		add_shortcode( 'wpss_post_request', array( $this, 'post_request_form' ) );
 
 		// Dashboard shortcodes.
-		add_shortcode( 'wpss_buyer_dashboard', array( $this, 'buyer_dashboard' ) );
 		add_shortcode( 'wpss_my_orders', array( $this, 'my_orders' ) );
 		add_shortcode( 'wpss_order_details', array( $this, 'order_details' ) );
 
@@ -631,21 +630,6 @@ class Shortcodes {
 		</div>
 		<?php
 		return ob_get_clean();
-	}
-
-	/**
-	 * Buyer dashboard shortcode.
-	 *
-	 * [wpss_buyer_dashboard]
-	 *
-	 * @deprecated 1.1.0 Use [wpss_dashboard] instead.
-	 * @param array $atts Shortcode attributes.
-	 * @return string
-	 */
-	public function buyer_dashboard( array $atts = array() ): string {
-		// Redirect to unified dashboard.
-		$unified_dashboard = new UnifiedDashboard();
-		return $unified_dashboard->render( array() );
 	}
 
 	/**
