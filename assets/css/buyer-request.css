@@ -838,7 +838,7 @@
    Request Sidebar
    ========================================================================== */
 
-.wpss-request-sidebar {
+.wpss-request-details-sidebar {
 	display: flex;
 	flex-direction: column;
 	gap: 1.5rem;

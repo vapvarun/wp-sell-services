@@ -319,7 +319,7 @@ do_action( 'wpss_before_single_request', $request_id );
 					<?php endif; ?>
 				</div>
 
-				<aside class="wpss-request-sidebar">
+				<aside class="wpss-request-details-sidebar">
 					<div class="wpss-request-details-card">
 						<h3><?php esc_html_e( 'Request Details', 'wp-sell-services' ); ?></h3>
 
