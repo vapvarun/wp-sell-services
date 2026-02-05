@@ -7,6 +7,18 @@
  * Override this template by copying to:
  * yourtheme/wp-sell-services/content-service-card.php
  *
+ * Available hooks:
+ * - wpss_before_service_card - Before card wrapper
+ * - wpss_service_card_image_overlay - Inside image area for badges
+ * - wpss_service_card_header - After title, before rating
+ * - wpss_service_card_meta - After vendor info, for custom metadata
+ * - wpss_service_card_footer - Before price display
+ * - wpss_after_service_card - After card wrapper
+ *
+ * Available filters:
+ * - wpss_service_card_classes - Modify card CSS classes
+ * - wpss_service_card_thumbnail_size - Change thumbnail size (default: medium_large)
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
  */
@@ -20,9 +32,25 @@ $starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', tr
 $rating_avg     = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 $rating_count   = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
 $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'names' ) );
+
+// Filter card classes.
+$card_classes = apply_filters( 'wpss_service_card_classes', array( 'wpss-service-card' ), $service_id );
 ?>
 
-<article <?php post_class( 'wpss-service-card' ); ?>>
+<?php
+/**
+ * Hook: wpss_before_service_card
+ *
+ * Fires before the service card wrapper.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_before_service_card', $service_id );
+?>
+
+<article <?php post_class( $card_classes ); ?>>
 	<a href="<?php the_permalink(); ?>" class="wpss-service-card__link">
 		<div class="wpss-service-card__media">
 			<?php
@@ -33,9 +61,12 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 					set_post_thumbnail( $service_id, absint( $gallery_raw['images'][0] ) );
 				}
 			}
+
+			// Get thumbnail size via filter.
+			$thumbnail_size = apply_filters( 'wpss_service_card_thumbnail_size', 'medium_large', $service_id );
 			?>
 			<?php if ( has_post_thumbnail() ) : ?>
-				<?php the_post_thumbnail( 'medium_large', array( 'class' => 'wpss-service-card__image' ) ); ?>
+				<?php the_post_thumbnail( $thumbnail_size, array( 'class' => 'wpss-service-card__image' ) ); ?>
 			<?php else : ?>
 				<div class="wpss-service-card__placeholder">
 					<svg class="wpss-service-card__placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -45,6 +76,19 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 					</svg>
 				</div>
 			<?php endif; ?>
+
+			<?php
+			/**
+			 * Hook: wpss_service_card_image_overlay
+			 *
+			 * Fires inside the image area, useful for badges, icons, or overlays.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int $service_id Service post ID.
+			 */
+			do_action( 'wpss_service_card_image_overlay', $service_id );
+			?>
 
 			<?php if ( ! empty( $categories ) ) : ?>
 				<span class="wpss-service-card__category"><?php echo esc_html( $categories[0] ); ?></span>
@@ -68,7 +112,33 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 				<?php endif; ?>
 			</div>
 
+			<?php
+			/**
+			 * Hook: wpss_service_card_meta
+			 *
+			 * Fires after vendor info, useful for custom metadata like ratings, badges, etc.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int $service_id Service post ID.
+			 */
+			do_action( 'wpss_service_card_meta', $service_id );
+			?>
+
 			<h3 class="wpss-service-card__title"><?php the_title(); ?></h3>
+
+			<?php
+			/**
+			 * Hook: wpss_service_card_header
+			 *
+			 * Fires after the service title, before rating display.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int $service_id Service post ID.
+			 */
+			do_action( 'wpss_service_card_header', $service_id );
+			?>
 
 			<div class="wpss-service-card__rating">
 				<?php if ( $rating_count > 0 ) : ?>
@@ -92,6 +162,19 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 		</div>
 
 		<div class="wpss-service-card__footer">
+			<?php
+			/**
+			 * Hook: wpss_service_card_footer
+			 *
+			 * Fires inside the footer area, before the price display.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int $service_id Service post ID.
+			 */
+			do_action( 'wpss_service_card_footer', $service_id );
+			?>
+
 			<span class="wpss-service-card__price-label"><?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?></span>
 			<span class="wpss-service-card__price"><?php echo esc_html( wpss_format_price( $starting_price ) ); ?></span>
 		</div>
@@ -100,6 +183,10 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 	<?php
 	/**
 	 * Hook: wpss_after_service_card
+	 *
+	 * Fires after the service card wrapper closes.
+	 *
+	 * @since 1.0.0
 	 *
 	 * @param int $service_id Service post ID.
 	 */

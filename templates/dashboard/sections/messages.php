@@ -14,6 +14,16 @@ use WPSellServices\Database\Repositories\ConversationRepository;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires before the messages dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('messages').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'messages', $user_id );
+
 $conversation_repo = new ConversationRepository();
 $conversations     = $conversation_repo->get_conversation_summary( $user_id, 20 );
 $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
@@ -92,3 +102,15 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the messages dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('messages').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'messages', $user_id );
+?>

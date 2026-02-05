@@ -8,6 +8,8 @@
  * @since   1.0.0
  *
  * @var WPSellServices\Models\Service $service Service object.
+ * @var int                            $service_id Service post ID.
+ * @var array                          $packages Service packages array.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -33,6 +35,15 @@ if ( empty( $packages ) ) {
 }
 
 $first_package_key = array_key_first( $packages );
+
+/**
+ * Fires before the service packages widget.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_before_service_packages', $service_id );
 ?>
 
 <div class="wpss-packages-widget">
@@ -50,13 +61,41 @@ $first_package_key = array_key_first( $packages );
 
 	<div class="wpss-packages-content">
 		<?php foreach ( $packages as $index => $package ) : ?>
+			<?php
+			/**
+			 * Fires before a single package tab.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $service_id   Service post ID.
+			 * @param string $package_type Package index/type.
+			 * @param array  $package      Package data.
+			 */
+			do_action( 'wpss_before_package_tab', $service_id, $index, $package );
+			?>
+
 			<div class="wpss-package <?php echo $first_package_key === $index ? 'active' : ''; ?>"
 				 data-package="<?php echo esc_attr( $index ); ?>">
 
 				<div class="wpss-package-header">
 					<h3 class="wpss-package-name"><?php echo esc_html( $package['name'] ?? '' ); ?></h3>
 					<div class="wpss-package-price">
-						<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>
+						<?php
+						$price_html = wpss_format_price( (float) ( $package['price'] ?? 0 ) );
+
+						/**
+						 * Filters the package price HTML.
+						 *
+						 * @since 1.0.0
+						 *
+						 * @param string $price_html Price HTML output.
+						 * @param array  $package    Package data.
+						 * @param int    $service_id Service post ID.
+						 */
+						$price_html = apply_filters( 'wpss_package_price_html', $price_html, $package, $service_id );
+
+						echo esc_html( $price_html );
+						?>
 					</div>
 				</div>
 
@@ -110,6 +149,19 @@ $first_package_key = array_key_first( $packages );
 								<?php echo esc_html( $feature['text'] ?? $feature ); ?>
 							</li>
 						<?php endforeach; ?>
+
+						<?php
+						/**
+						 * Fires inside the package features list.
+						 *
+						 * @since 1.0.0
+						 *
+						 * @param int    $service_id   Service post ID.
+						 * @param string $package_type Package index/type.
+						 * @param array  $package      Package data.
+						 */
+						do_action( 'wpss_package_features', $service_id, $index, $package );
+						?>
 					</ul>
 				<?php endif; ?>
 
@@ -125,17 +177,44 @@ $first_package_key = array_key_first( $packages );
 							<?php esc_html_e( 'Edit Service', 'wp-sell-services' ); ?>
 						</a>
 					<?php else : ?>
+						<?php
+						$button_text = __( 'Continue', 'wp-sell-services' );
+
+						/**
+						 * Filters the package button text.
+						 *
+						 * @since 1.0.0
+						 *
+						 * @param string $button_text  Button text.
+						 * @param string $package_type Package index/type.
+						 */
+						$button_text = apply_filters( 'wpss_package_button_text', $button_text, $index );
+						?>
+
 						<button type="button"
 								class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn"
 								data-service="<?php echo esc_attr( $service_id ); ?>"
 								data-package="<?php echo esc_attr( $index ); ?>"
 								data-price="<?php echo esc_attr( $package['price'] ?? 0 ); ?>">
-							<?php esc_html_e( 'Continue', 'wp-sell-services' ); ?>
+							<?php echo esc_html( $button_text ); ?>
 							<span class="wpss-btn-price">(<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>)</span>
 						</button>
 					<?php endif; ?>
 				</div>
 			</div>
+
+			<?php
+			/**
+			 * Fires after a single package tab.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $service_id   Service post ID.
+			 * @param string $package_type Package index/type.
+			 * @param array  $package      Package data.
+			 */
+			do_action( 'wpss_after_package_tab', $service_id, $index, $package );
+			?>
 		<?php endforeach; ?>
 	</div>
 
@@ -147,3 +226,14 @@ $first_package_key = array_key_first( $packages );
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the service packages widget.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_after_service_packages', $service_id );
+?>

@@ -7,6 +7,16 @@
  * Override this template by copying to:
  * yourtheme/wp-sell-services/content-request-card.php
  *
+ * Available hooks:
+ * - wpss_before_request_card - Before card wrapper
+ * - wpss_request_card_header - After buyer info in header
+ * - wpss_request_card_meta - After skills display
+ * - wpss_request_card_footer - Inside footer, before actions
+ * - wpss_after_request_card - After card wrapper
+ *
+ * Available filters:
+ * - wpss_request_card_classes - Modify card CSS classes
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
  */
@@ -28,6 +38,9 @@ $proposal_count     = (int) get_post_meta( $request_id, '_wpss_proposal_count', 
 $skills_raw         = get_post_meta( $request_id, '_wpss_skills_required', true );
 $skills             = $skills_raw ? $skills_raw : array();
 $categories         = wp_get_post_terms( $request_id, 'wpss_service_category', array( 'fields' => 'names' ) );
+
+// Filter card classes.
+$card_classes = apply_filters( 'wpss_request_card_classes', array( 'wpss-request-card' ), $request_id );
 
 // Format budget display.
 if ( 'range' === $budget_type && $budget_min && $budget_max ) {
@@ -62,7 +75,20 @@ if ( $expires_at ) {
 }
 ?>
 
-<article <?php post_class( 'wpss-request-card' ); ?>>
+<?php
+/**
+ * Hook: wpss_before_request_card
+ *
+ * Fires before the request card wrapper.
+ *
+ * @since 1.0.0
+ *
+ * @param int $request_id Request post ID.
+ */
+do_action( 'wpss_before_request_card', $request_id );
+?>
+
+<article <?php post_class( $card_classes ); ?>>
 	<div class="wpss-request-card__header">
 		<div class="wpss-request-card__buyer">
 			<img src="<?php echo esc_url( get_avatar_url( $buyer_id, array( 'size' => 40 ) ) ); ?>"
@@ -87,6 +113,19 @@ if ( $expires_at ) {
 		<?php if ( ! empty( $categories ) ) : ?>
 			<span class="wpss-request-card__category"><?php echo esc_html( $categories[0] ); ?></span>
 		<?php endif; ?>
+
+		<?php
+		/**
+		 * Hook: wpss_request_card_header
+		 *
+		 * Fires after buyer info in the header area.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $request_id Request post ID.
+		 */
+		do_action( 'wpss_request_card_header', $request_id );
+		?>
 	</div>
 
 	<div class="wpss-request-card__body">
@@ -116,9 +155,34 @@ if ( $expires_at ) {
 				<?php endif; ?>
 			</div>
 		<?php endif; ?>
+
+		<?php
+		/**
+		 * Hook: wpss_request_card_meta
+		 *
+		 * Fires after skills display, useful for custom metadata.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $request_id Request post ID.
+		 */
+		do_action( 'wpss_request_card_meta', $request_id );
+		?>
 	</div>
 
 	<div class="wpss-request-card__footer">
+		<?php
+		/**
+		 * Hook: wpss_request_card_footer
+		 *
+		 * Fires inside footer area, before meta items and actions.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $request_id Request post ID.
+		 */
+		do_action( 'wpss_request_card_footer', $request_id );
+		?>
 		<div class="wpss-request-card__meta">
 			<div class="wpss-request-card__meta-item">
 				<span class="wpss-request-card__meta-label"><?php esc_html_e( 'Budget', 'wp-sell-services' ); ?></span>
@@ -166,6 +230,10 @@ if ( $expires_at ) {
 	<?php
 	/**
 	 * Hook: wpss_after_request_card
+	 *
+	 * Fires after the request card wrapper closes.
+	 *
+	 * @since 1.0.0
 	 *
 	 * @param int $request_id Request post ID.
 	 */

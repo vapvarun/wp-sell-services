@@ -9,6 +9,11 @@
  * @since   1.0.0
  *
  * @var int $order_id Order ID passed from parent template.
+ *
+ * Available Hooks:
+ * - wpss_before_order_confirmation
+ * - wpss_order_confirmation_details
+ * - wpss_after_order_confirmation
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -41,6 +46,17 @@ $vendor  = get_userdata( $order->vendor_id );
 
 // Determine next action based on status.
 $needs_requirements = in_array( $order->status, array( 'pending_requirements', 'pending_payment' ), true );
+
+/**
+ * Hook: wpss_before_order_confirmation
+ *
+ * Fires before the order confirmation content is displayed.
+ *
+ * @since 1.0.0
+ *
+ * @param object $order Order object.
+ */
+do_action( 'wpss_before_order_confirmation', $order );
 ?>
 
 <div class="wpss-order-confirmation">
@@ -225,6 +241,19 @@ $needs_requirements = in_array( $order->status, array( 'pending_requirements', '
 			</dl>
 		</div>
 	</div>
+
+	<?php
+	/**
+	 * Hook: wpss_order_confirmation_details
+	 *
+	 * Fires after the order details section is displayed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object $order Order object.
+	 */
+	do_action( 'wpss_order_confirmation_details', $order );
+	?>
 
 	<div class="wpss-order-confirmation__actions">
 		<a href="<?php echo esc_url( wpss_get_order_url( $order_id ) ); ?>" class="wpss-btn wpss-btn--outline">

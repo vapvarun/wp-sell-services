@@ -12,6 +12,13 @@
  * @var object $order        Order object.
  * @var bool   $is_vendor    Whether current user is the vendor.
  * @var bool   $is_customer  Whether current user is the customer.
+ *
+ * Available Hooks:
+ * - wpss_before_conversation
+ * - wpss_conversation_header
+ * - wpss_after_message
+ * - wpss_conversation_form
+ * - wpss_after_conversation
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -85,6 +92,17 @@ if ( $conversation ) {
 
 // Can send messages?
 $can_message = in_array( $order->status, array( 'pending_requirements', 'in_progress', 'revision_requested', 'delivered' ), true );
+
+/**
+ * Hook: wpss_before_conversation
+ *
+ * Fires before the conversation interface is displayed.
+ *
+ * @since 1.0.0
+ *
+ * @param object $order Order object.
+ */
+do_action( 'wpss_before_conversation', $order );
 ?>
 
 <div class="wpss-messaging wpss-messaging--order" data-order-id="<?php echo esc_attr( $order_id ); ?>">
@@ -107,6 +125,19 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 			</span>
 		</div>
 	</div>
+
+	<?php
+	/**
+	 * Hook: wpss_conversation_header
+	 *
+	 * Fires after the conversation header is displayed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object $order Order object.
+	 */
+	do_action( 'wpss_conversation_header', $order );
+	?>
 
 	<!-- Messages Container -->
 	<div class="wpss-messaging__messages" id="wpss-messages-container">
@@ -210,6 +241,19 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 							</span>
 						</div>
 					</div>
+					<?php
+					/**
+					 * Hook: wpss_after_message
+					 *
+					 * Fires after each message is displayed.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param object $message Message object.
+					 * @param object $order   Order object.
+					 */
+					do_action( 'wpss_after_message', $message, $order );
+					?>
 				<?php endif; ?>
 			<?php endforeach; ?>
 		<?php endif; ?>
@@ -217,6 +261,18 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 
 	<!-- Message Input -->
 	<?php if ( $can_message ) : ?>
+		<?php
+		/**
+		 * Hook: wpss_conversation_form
+		 *
+		 * Fires in the message input area, before the form.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param object $order Order object.
+		 */
+		do_action( 'wpss_conversation_form', $order );
+		?>
 		<div class="wpss-messaging__composer">
 			<form id="wpss-message-form" method="post" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'wpss_send_message', 'wpss_message_nonce' ); ?>
@@ -277,6 +333,19 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Hook: wpss_after_conversation
+ *
+ * Fires after the conversation interface is displayed.
+ *
+ * @since 1.0.0
+ *
+ * @param object $order Order object.
+ */
+do_action( 'wpss_after_conversation', $order );
+?>
 
 <script>
 (function($) {

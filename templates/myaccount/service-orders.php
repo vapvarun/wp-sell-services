@@ -18,6 +18,15 @@ wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', arra
 
 $statuses       = \WPSellServices\Models\ServiceOrder::get_statuses();
 $current_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+/**
+ * Fires before the service orders content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_service_orders_before', $user_id );
 ?>
 
 <div class="wpss-orders">
@@ -156,3 +165,14 @@ $current_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the service orders content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_service_orders_after', $user_id );
+?>

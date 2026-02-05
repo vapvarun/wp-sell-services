@@ -14,6 +14,16 @@ use WPSellServices\Database\Repositories\OrderRepository;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires before the orders dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('orders').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'orders', $user_id );
+
 // Check if viewing a specific order.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display, access controlled by order ownership.
 $order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
@@ -53,6 +63,19 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
+
+	<?php
+	/**
+	 * Fires in the orders filter area.
+	 *
+	 * Allows developers to add filtering or sorting options for orders.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int $user_id Current user ID.
+	 */
+	do_action( 'wpss_orders_filters', $user_id );
+	?>
 
 	<?php if ( empty( $orders ) ) : ?>
 		<div class="wpss-empty-state">
@@ -112,3 +135,15 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the orders dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('orders').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'orders', $user_id );
+?>

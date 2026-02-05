@@ -7,6 +7,40 @@
  * Override this template by copying to:
  * yourtheme/wp-sell-services/vendor/profile.php
  *
+ * Available Hooks:
+ *
+ * - wpss_before_vendor_profile (action)
+ *   Fires before the vendor profile wrapper.
+ *   @param int $vendor_id Vendor user ID.
+ *
+ * - wpss_vendor_profile_header (action)
+ *   Cover image and avatar area.
+ *   @param int $vendor_id Vendor user ID.
+ *
+ * - wpss_vendor_profile_bio (action)
+ *   About/description area.
+ *   @param int $vendor_id Vendor user ID.
+ *
+ * - wpss_vendor_profile_stats (action)
+ *   Statistics display area.
+ *   @param int $vendor_id Vendor user ID.
+ *
+ * - wpss_vendor_profile_services (action)
+ *   Services grid area.
+ *   @param int $vendor_id Vendor user ID.
+ *
+ * - wpss_vendor_profile_reviews (action)
+ *   Reviews section area.
+ *   @param int $vendor_id Vendor user ID.
+ *
+ * - wpss_vendor_profile_sidebar (action)
+ *   Profile sidebar area - stats, skills, languages.
+ *   @param int $vendor_id Vendor user ID.
+ *
+ * - wpss_after_vendor_profile (action)
+ *   Fires after the vendor profile wrapper.
+ *   @param int $vendor_id Vendor user ID.
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
  *
@@ -92,6 +126,20 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 	<div class="wpss-container">
 		<!-- Profile Header -->
 		<div class="wpss-profile-header">
+			<?php
+			/**
+			 * Hook: wpss_vendor_profile_header
+			 *
+			 * Fires in the vendor profile header area (cover/avatar).
+			 * Use this to add custom header content or badges.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int $vendor_id Vendor user ID.
+			 */
+			do_action( 'wpss_vendor_profile_header', $vendor_id );
+			?>
+
 			<div class="wpss-profile-cover">
 				<?php
 				// Get cover image from profile database record.
@@ -187,6 +235,20 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<div class="wpss-profile-bio">
 							<?php echo wp_kses_post( wpautop( $bio ) ); ?>
 						</div>
+
+						<?php
+						/**
+						 * Hook: wpss_vendor_profile_bio
+						 *
+						 * Fires after the vendor bio/description area.
+						 * Use this to add additional profile information.
+						 *
+						 * @since 1.0.0
+						 *
+						 * @param int $vendor_id Vendor user ID.
+						 */
+						do_action( 'wpss_vendor_profile_bio', $vendor_id );
+						?>
 					</section>
 				<?php endif; ?>
 
@@ -194,6 +256,21 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				<?php if ( ! empty( $services ) ) : ?>
 					<section class="wpss-profile-section">
 						<h2><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></h2>
+
+						<?php
+						/**
+						 * Hook: wpss_vendor_profile_services
+						 *
+						 * Fires before the services grid display.
+						 * Use this to add custom service filters or sorting.
+						 *
+						 * @since 1.0.0
+						 *
+						 * @param int $vendor_id Vendor user ID.
+						 */
+						do_action( 'wpss_vendor_profile_services', $vendor_id );
+						?>
+
 						<div class="wpss-services-grid wpss-services-grid-3">
 							<?php foreach ( $services as $service_post ) : ?>
 								<?php
@@ -250,6 +327,20 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							<?php endif; ?>
 						</h2>
 
+						<?php
+						/**
+						 * Hook: wpss_vendor_profile_reviews
+						 *
+						 * Fires before the reviews list display.
+						 * Use this to add review filters or sorting options.
+						 *
+						 * @since 1.0.0
+						 *
+						 * @param int $vendor_id Vendor user ID.
+						 */
+						do_action( 'wpss_vendor_profile_reviews', $vendor_id );
+						?>
+
 						<div class="wpss-reviews-list">
 							<?php foreach ( $reviews as $review ) : ?>
 								<?php $reviewer = get_userdata( $review->customer_id ); ?>
@@ -297,6 +388,20 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 			</main>
 
 			<aside class="wpss-profile-sidebar">
+				<?php
+				/**
+				 * Hook: wpss_vendor_profile_stats
+				 *
+				 * Fires at the start of the vendor stats area.
+				 * Use this to add custom statistics or badges.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param int $vendor_id Vendor user ID.
+				 */
+				do_action( 'wpss_vendor_profile_stats', $vendor_id );
+				?>
+
 				<!-- Quick Stats -->
 				<div class="wpss-sidebar-card">
 					<ul class="wpss-quick-stats">
@@ -360,6 +465,20 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						</div>
 					</div>
 				<?php endif; ?>
+
+				<?php
+				/**
+				 * Hook: wpss_vendor_profile_sidebar
+				 *
+				 * Fires at the end of the vendor profile sidebar.
+				 * Use this to add custom sidebar widgets or cards.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param int $vendor_id Vendor user ID.
+				 */
+				do_action( 'wpss_vendor_profile_sidebar', $vendor_id );
+				?>
 			</aside>
 		</div>
 	</div>

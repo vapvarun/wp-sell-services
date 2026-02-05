@@ -4,11 +4,33 @@
  *
  * Displayed when no services match the query.
  *
+ * Available hooks:
+ * - wpss_no_services_content - After default message
+ *
+ * Available filters:
+ * - wpss_no_services_message - Modify the message text
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
+
+// Determine context-specific message.
+if ( is_search() ) {
+	$default_message = sprintf(
+		/* translators: %s: search query */
+		esc_html__( 'No services match your search for "%s". Try different keywords or browse categories.', 'wp-sell-services' ),
+		esc_html( get_search_query() )
+	);
+} elseif ( is_tax( 'wpss_service_category' ) ) {
+	$default_message = esc_html__( 'No services found in this category yet. Check back soon or browse other categories.', 'wp-sell-services' );
+} else {
+	$default_message = esc_html__( 'No services available at the moment. Check back soon!', 'wp-sell-services' );
+}
+
+// Allow filtering the message.
+$message = apply_filters( 'wpss_no_services_message', $default_message );
 ?>
 
 <div class="wpss-no-services">
@@ -22,21 +44,19 @@ defined( 'ABSPATH' ) || exit;
 
 		<h2><?php esc_html_e( 'No services found', 'wp-sell-services' ); ?></h2>
 
-		<?php if ( is_search() ) : ?>
-			<p>
-				<?php
-				printf(
-					/* translators: %s: search query */
-					esc_html__( 'No services match your search for "%s". Try different keywords or browse categories.', 'wp-sell-services' ),
-					esc_html( get_search_query() )
-				);
-				?>
-			</p>
-		<?php elseif ( is_tax( 'wpss_service_category' ) ) : ?>
-			<p><?php esc_html_e( 'No services found in this category yet. Check back soon or browse other categories.', 'wp-sell-services' ); ?></p>
-		<?php else : ?>
-			<p><?php esc_html_e( 'No services available at the moment. Check back soon!', 'wp-sell-services' ); ?></p>
-		<?php endif; ?>
+		<p><?php echo wp_kses_post( $message ); ?></p>
+
+		<?php
+		/**
+		 * Hook: wpss_no_services_content
+		 *
+		 * Fires after the default "no services" message.
+		 * Use this to add custom content, links, or CTAs.
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'wpss_no_services_content' );
+		?>
 
 		<div class="wpss-empty-actions">
 			<?php if ( is_search() || is_tax() ) : ?>

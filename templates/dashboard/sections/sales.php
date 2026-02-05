@@ -14,6 +14,16 @@ use WPSellServices\Database\Repositories\OrderRepository;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires before the sales dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('sales').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'sales', $user_id );
+
 // Check if viewing a specific order.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display, access controlled by order ownership.
 $order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
@@ -116,3 +126,15 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the sales dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('sales').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'sales', $user_id );
+?>

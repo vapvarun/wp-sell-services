@@ -14,6 +14,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires before the create request dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('create_request').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'create_request', $user_id );
+
 // Get categories for the dropdown.
 $categories = get_terms(
 	array(
@@ -256,3 +266,15 @@ $categories = get_terms(
 	});
 })(jQuery);
 </script>
+
+<?php
+/**
+ * Fires after the create request dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('create_request').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'create_request', $user_id );
+?>

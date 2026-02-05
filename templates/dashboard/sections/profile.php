@@ -14,6 +14,16 @@ defined( 'ABSPATH' ) || exit;
 
 $user           = get_userdata( $user_id );
 $vendor_profile = $is_vendor ? $vendor_service->get_profile( $user_id ) : null;
+
+/**
+ * Fires before the profile dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name  Section identifier ('profile').
+ * @param WP_User $current_user Current user object.
+ */
+do_action( 'wpss_dashboard_section_before', 'profile', $user );
 ?>
 
 <div class="wpss-section wpss-section--profile">
@@ -68,9 +78,34 @@ $vendor_profile = $is_vendor ? $vendor_service->get_profile( $user_id ) : null;
 		<?php endif; ?>
 
 		<div class="wpss-profile-form__actions">
+			<?php
+			/**
+			 * Fires in the profile form before the submit button.
+			 *
+			 * Allows developers to add custom fields to the profile form.
+			 *
+			 * @since 1.1.0
+			 *
+			 * @param int $user_id Current user ID.
+			 */
+			do_action( 'wpss_profile_form_fields', $user_id );
+			?>
+
 			<button type="submit" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Save Changes', 'wp-sell-services' ); ?>
 			</button>
 		</div>
 	</form>
 </div>
+
+<?php
+/**
+ * Fires after the profile dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name  Section identifier ('profile').
+ * @param WP_User $current_user Current user object.
+ */
+do_action( 'wpss_dashboard_section_after', 'profile', $user );
+?>

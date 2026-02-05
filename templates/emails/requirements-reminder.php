@@ -23,6 +23,16 @@ defined( 'ABSPATH' ) || exit;
 
 $base_color = $base_color ?? '#7f54b3';
 $is_final   = 3 === $reminder_num;
+
+/**
+ * Fires before the email content for the requirements reminder email.
+ *
+ * @since 1.0.0
+ *
+ * @param WPSellServices\Models\ServiceOrder $order Service order object.
+ * @param WP_User                            $recipient Recipient user object.
+ */
+do_action( 'wpss_email_content_before', 'requirements_reminder', $order, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -75,8 +85,28 @@ $is_final   = 3 === $reminder_num;
 </p>
 
 <p style="text-align: center; margin: 30px 0;">
-	<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="button" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">
-		<?php esc_html_e( 'Submit Requirements Now', 'wp-sell-services' ); ?>
+	<?php
+	/**
+	 * Filters the button URL for the requirements reminder email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string                             $button_url Default button URL.
+	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
+	 */
+	$button_url = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'requirements_reminder', $order );
+
+	/**
+	 * Filters the button text for the requirements reminder email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $button_text Default button text.
+	 */
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Submit Requirements Now', 'wp-sell-services' ), 'requirements_reminder' );
+	?>
+	<a href="<?php echo esc_url( $button_url ); ?>" class="button" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">
+		<?php echo esc_html( $button_text ); ?>
 	</a>
 </p>
 
@@ -85,3 +115,14 @@ $is_final   = 3 === $reminder_num;
 		<?php esc_html_e( 'If you have questions about what to provide, feel free to message your vendor through the order page.', 'wp-sell-services' ); ?>
 	</p>
 <?php endif; ?>
+
+<?php
+/**
+ * Fires after the email content for the requirements reminder email.
+ *
+ * @since 1.0.0
+ *
+ * @param WPSellServices\Models\ServiceOrder $order Service order object.
+ * @param WP_User                            $recipient Recipient user object.
+ */
+do_action( 'wpss_email_content_after', 'requirements_reminder', $order, $recipient );

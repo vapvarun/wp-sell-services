@@ -12,6 +12,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires before the services dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('services').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'services', $user_id );
+
 // Save dashboard URL before custom query changes the global post.
 $dashboard_url = get_permalink();
 
@@ -80,6 +90,19 @@ $pending_count = count(
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending Review', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
+
+	<?php
+	/**
+	 * Fires in the services list area for bulk actions or filters.
+	 *
+	 * Allows developers to add bulk action buttons or filtering options.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int $user_id Current user ID.
+	 */
+	do_action( 'wpss_services_list_actions', $user_id );
+	?>
 
 	<?php if ( ! $services->have_posts() ) : ?>
 		<div class="wpss-empty-state">
@@ -165,3 +188,15 @@ $pending_count = count(
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the services dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('services').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'services', $user_id );
+?>

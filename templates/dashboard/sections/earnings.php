@@ -14,6 +14,16 @@ use WPSellServices\Services\EarningsService;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires before the earnings dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('earnings').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'earnings', $user_id );
+
 $earnings_service = new EarningsService();
 $earnings         = $earnings_service->get_summary( $user_id );
 $withdrawals      = $earnings_service->get_withdrawals( $user_id, array( 'limit' => 10 ) );
@@ -53,6 +63,19 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed Orders', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
+
+	<?php
+	/**
+	 * Fires after earnings summary stats.
+	 *
+	 * Allows developers to add custom earnings widgets or displays.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int $user_id Current user ID.
+	 */
+	do_action( 'wpss_earnings_summary', $user_id );
+	?>
 
 	<!-- Withdrawal Request Form -->
 	<div class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
@@ -250,3 +273,15 @@ jQuery(function($) {
 	}
 });
 </script>
+
+<?php
+/**
+ * Fires after the earnings dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('earnings').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'earnings', $user_id );
+?>

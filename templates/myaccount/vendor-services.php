@@ -10,6 +10,15 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+/**
+ * Fires before the vendor services content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_vendor_services_before', $user_id );
 ?>
 
 <div class="wpss-vendor-services">
@@ -84,6 +93,17 @@ defined( 'ABSPATH' ) || exit;
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the vendor services content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_vendor_services_after', $user_id );
+?>
 
 <style>
 .wpss-vendor-services {

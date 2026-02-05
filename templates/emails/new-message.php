@@ -27,6 +27,16 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 
 $base_color  = $base_color ?? '#7f54b3';
 $sender_name = $sender_name ?? __( 'Someone', 'wp-sell-services' );
+
+/**
+ * Fires before the email content for the new message email.
+ *
+ * @since 1.0.0
+ *
+ * @param WPSellServices\Models\ServiceOrder $order Service order object.
+ * @param WP_User                            $recipient Recipient user object.
+ */
+do_action( 'wpss_email_content_before', 'new_message', $order, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -60,12 +70,42 @@ $sender_name = $sender_name ?? __( 'Someone', 'wp-sell-services' );
 <?php endif; ?>
 
 <p style="text-align: center; margin: 30px 0;">
-	<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
-		<?php esc_html_e( 'Reply to Message', 'wp-sell-services' ); ?>
+	<?php
+	/**
+	 * Filters the button URL for the new message email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string                             $button_url Default button URL.
+	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
+	 */
+	$button_url = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'new_message', $order );
+
+	/**
+	 * Filters the button text for the new message email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $button_text Default button text.
+	 */
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'Reply to Message', 'wp-sell-services' ), 'new_message' );
+	?>
+	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
+		<?php echo esc_html( $button_text ); ?>
 	</a>
 </p>
 
 <?php
+/**
+ * Fires after the email content for the new message email.
+ *
+ * @since 1.0.0
+ *
+ * @param WPSellServices\Models\ServiceOrder $order Service order object.
+ * @param WP_User                            $recipient Recipient user object.
+ */
+do_action( 'wpss_email_content_after', 'new_message', $order, $recipient );
+
 // WooCommerce compatibility.
 if ( isset( $email ) && function_exists( 'WC' ) ) {
 	do_action( 'woocommerce_email_footer', $email );

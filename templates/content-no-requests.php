@@ -7,11 +7,23 @@
  * Override this template by copying to:
  * yourtheme/wp-sell-services/content-no-requests.php
  *
+ * Available hooks:
+ * - wpss_no_requests_content - After default message
+ *
+ * Available filters:
+ * - wpss_no_requests_message - Modify the message text
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
+
+// Default message.
+$default_message = esc_html__( 'There are no active buyer requests at the moment. Check back later or try adjusting your filters.', 'wp-sell-services' );
+
+// Allow filtering the message.
+$message = apply_filters( 'wpss_no_requests_message', $default_message );
 ?>
 
 <div class="wpss-no-results wpss-no-requests">
@@ -26,8 +38,20 @@ defined( 'ABSPATH' ) || exit;
 	</h3>
 
 	<p class="wpss-no-results-message">
-		<?php esc_html_e( 'There are no active buyer requests at the moment. Check back later or try adjusting your filters.', 'wp-sell-services' ); ?>
+		<?php echo wp_kses_post( $message ); ?>
 	</p>
+
+	<?php
+	/**
+	 * Hook: wpss_no_requests_content
+	 *
+	 * Fires after the default "no requests" message.
+	 * Use this to add custom content, links, or CTAs.
+	 *
+	 * @since 1.0.0
+	 */
+	do_action( 'wpss_no_requests_content' );
+	?>
 
 	<?php if ( ! empty( $_GET ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 		<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_request' ) ); ?>" class="wpss-btn wpss-btn-outline">

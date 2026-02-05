@@ -9,6 +9,16 @@
  * @since   1.0.0
  *
  * @var int $order_id Order ID passed from parent template.
+ *
+ * Available Hooks:
+ * - wpss_before_order_view
+ * - wpss_order_view_header
+ * - wpss_order_view_details
+ * - wpss_order_view_actions
+ * - wpss_order_view_sidebar
+ * - wpss_after_order_view
+ * - wpss_order_status_label (filter)
+ * - wpss_order_actions (filter)
  */
 
 use WPSellServices\Services\DeliveryService;
@@ -57,6 +67,17 @@ $customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-s
 // Get deliveries via service layer.
 $delivery_service = new DeliveryService();
 $deliveries       = $delivery_service->get_order_deliveries( $order_id );
+
+/**
+ * Hook: wpss_before_order_view
+ *
+ * Fires before the order view content is displayed.
+ *
+ * @since 1.0.0
+ *
+ * @param object $order Order object.
+ */
+do_action( 'wpss_before_order_view', $order );
 ?>
 
 <div class="wpss-order-view">
@@ -83,67 +104,141 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 				);
 				?>
 			</h1>
+			<?php
+			$status_label = wpss_get_order_status_label( $order->status );
+			/**
+			 * Filter: wpss_order_status_label
+			 *
+			 * Filters the display label for the order status.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param string $status_label The status label to display.
+			 * @param string $status       The order status.
+			 * @param object $order        Order object.
+			 */
+			$status_label = apply_filters( 'wpss_order_status_label', $status_label, $order->status, $order );
+			?>
 			<span class="wpss-badge wpss-badge--lg wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
-				<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
+				<?php echo esc_html( $status_label ); ?>
 			</span>
 		</div>
 
+		<?php
+		/**
+		 * Hook: wpss_order_view_header
+		 *
+		 * Fires after the order number and status are displayed.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param object $order Order object.
+		 */
+		do_action( 'wpss_order_view_header', $order );
+		?>
+
 		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements', 'revision_requested', 'late' ), true ) ) : ?>
-			<div class="wpss-order-view__actions">
-				<?php if ( $is_vendor ) : ?>
-					<?php if ( 'pending' === $order->status ) : ?>
-						<button type="button" class="wpss-btn wpss-btn--success wpss-order-action"
-								data-action="accept" data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php esc_html_e( 'Accept Order', 'wp-sell-services' ); ?>
-						</button>
-						<button type="button" class="wpss-btn wpss-btn--danger-outline wpss-order-action"
-								data-action="reject" data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
-						</button>
-					<?php endif; ?>
+			<?php
+			// Build actions array for filtering.
+			$actions = array();
 
-					<?php if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) : ?>
-						<button type="button" class="wpss-btn wpss-btn--primary wpss-order-action"
-								data-action="start" data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php esc_html_e( 'Start Working', 'wp-sell-services' ); ?>
-						</button>
-					<?php endif; ?>
+			if ( $is_vendor ) {
+				if ( 'pending' === $order->status ) {
+					$actions['accept'] = array(
+						'label' => __( 'Accept Order', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--success wpss-order-action',
+						'attrs' => 'data-action="accept" data-order="' . esc_attr( $order_id ) . '"',
+					);
+					$actions['reject'] = array(
+						'label' => __( 'Decline', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
+						'attrs' => 'data-action="reject" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
 
-					<?php if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) : ?>
-						<button type="button" class="wpss-btn wpss-btn--success wpss-deliver-btn"
-								data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php echo esc_html( 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ) ); ?>
-						</button>
-					<?php endif; ?>
-				<?php endif; ?>
+				if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
+					$actions['start'] = array(
+						'label' => __( 'Start Working', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--primary wpss-order-action',
+						'attrs' => 'data-action="start" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
 
-				<?php if ( $is_customer ) : ?>
-					<?php if ( 'pending_approval' === $order->status ) : ?>
-						<button type="button" class="wpss-btn wpss-btn--success wpss-order-action"
-								data-action="complete" data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php esc_html_e( 'Accept & Complete', 'wp-sell-services' ); ?>
-						</button>
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-revision-btn"
-								data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php esc_html_e( 'Request Revision', 'wp-sell-services' ); ?>
-						</button>
-					<?php endif; ?>
+				if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
+					$actions['deliver'] = array(
+						'label' => 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--success wpss-deliver-btn',
+						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
+			}
 
-					<?php if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) : ?>
-						<button type="button" class="wpss-btn wpss-btn--secondary wpss-order-action"
-								data-action="cancel" data-order="<?php echo esc_attr( $order_id ); ?>">
-							<?php esc_html_e( 'Cancel Order', 'wp-sell-services' ); ?>
-						</button>
-					<?php endif; ?>
-				<?php endif; ?>
+			if ( $is_customer ) {
+				if ( 'pending_approval' === $order->status ) {
+					$actions['complete'] = array(
+						'label' => __( 'Accept & Complete', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--success wpss-order-action',
+						'attrs' => 'data-action="complete" data-order="' . esc_attr( $order_id ) . '"',
+					);
+					$actions['revision'] = array(
+						'label' => __( 'Request Revision', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--secondary wpss-revision-btn',
+						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
 
-				<?php if ( in_array( $order->status, array( 'in_progress', 'pending_approval' ), true ) ) : ?>
-					<button type="button" class="wpss-btn wpss-btn--danger-outline wpss-dispute-btn"
-							data-order="<?php echo esc_attr( $order_id ); ?>">
-						<?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?>
-					</button>
-				<?php endif; ?>
-			</div>
+				if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) {
+					$actions['cancel'] = array(
+						'label' => __( 'Cancel Order', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--secondary wpss-order-action',
+						'attrs' => 'data-action="cancel" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
+			}
+
+			if ( in_array( $order->status, array( 'in_progress', 'pending_approval' ), true ) ) {
+				$actions['dispute'] = array(
+					'label' => __( 'Open Dispute', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
+					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
+
+			/**
+			 * Filter: wpss_order_actions
+			 *
+			 * Filters the array of order action buttons.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param array  $actions Array of action button data.
+			 * @param object $order   Order object.
+			 */
+			$actions = apply_filters( 'wpss_order_actions', $actions, $order );
+			?>
+
+			<?php if ( ! empty( $actions ) ) : ?>
+				<div class="wpss-order-view__actions">
+					<?php
+					/**
+					 * Hook: wpss_order_view_actions
+					 *
+					 * Fires where action buttons are displayed.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param object $order Order object.
+					 */
+					do_action( 'wpss_order_view_actions', $order );
+
+					foreach ( $actions as $action_key => $action_data ) :
+						?>
+						<button type="button" class="<?php echo esc_attr( $action_data['class'] ); ?>" <?php echo $action_data['attrs']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+							<?php echo esc_html( $action_data['label'] ); ?>
+						</button>
+					<?php endforeach; ?>
+				</div>
+			<?php endif; ?>
 		<?php endif; ?>
 	</div>
 
@@ -184,6 +279,19 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 			</div>
 		</div>
 	</section>
+
+	<?php
+	/**
+	 * Hook: wpss_order_view_details
+	 *
+	 * Fires after the order details table is displayed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object $order Order object.
+	 */
+	do_action( 'wpss_order_view_details', $order );
+	?>
 
 	<!-- Service & Seller Section -->
 	<section class="wpss-order-section">
@@ -718,6 +826,19 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 			</div>
 		</section>
 	<?php endif; ?>
+
+	<?php
+	/**
+	 * Hook: wpss_order_view_sidebar
+	 *
+	 * Fires where sidebar content can be added.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object $order Order object.
+	 */
+	do_action( 'wpss_order_view_sidebar', $order );
+	?>
 
 	<!-- Conversation Section -->
 	<section class="wpss-order-section wpss-order-section--conversation">

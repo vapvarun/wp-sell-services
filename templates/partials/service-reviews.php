@@ -7,7 +7,11 @@
  * @package WPSellServices\Templates
  * @since   1.0.0
  *
- * @var WPSellServices\Models\Service $service Service object.
+ * @var WPSellServices\Models\Service $service      Service object.
+ * @var int                            $service_id   Service post ID.
+ * @var array                          $reviews      Array of review objects.
+ * @var float                          $rating_avg   Average rating.
+ * @var int                            $rating_count Total rating count.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -32,16 +36,36 @@ $breakdown = $wpdb->get_results(
 	OBJECT_K
 );
 
+/**
+ * Filters the number of reviews to display per page.
+ *
+ * @since 1.0.0
+ *
+ * @param int $per_page  Number of reviews per page (default: 10).
+ * @param int $service_id Service post ID.
+ */
+$reviews_per_page = apply_filters( 'wpss_reviews_per_page', 10, $service_id );
+
 // Get reviews.
 $reviews = $wpdb->get_results(
 	$wpdb->prepare(
 		"SELECT * FROM {$reviews_table}
 		WHERE service_id = %d AND status = 'approved'
 		ORDER BY created_at DESC
-		LIMIT 10",
-		$service_id
+		LIMIT %d",
+		$service_id,
+		$reviews_per_page
 	)
 );
+
+/**
+ * Fires before the service reviews section.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_before_service_reviews', $service_id );
 ?>
 
 <div class="wpss-service-reviews" id="reviews">
@@ -149,10 +173,21 @@ $reviews = $wpdb->get_results(
 						</div>
 					<?php endif; ?>
 				</div>
+
+				<?php
+				/**
+				 * Fires after a single review item.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param object $review Review object.
+				 */
+				do_action( 'wpss_after_single_review', $review );
+				?>
 			<?php endforeach; ?>
 		</div>
 
-		<?php if ( $rating_count > 10 ) : ?>
+		<?php if ( $rating_count > $reviews_per_page ) : ?>
 			<div class="wpss-reviews-pagination">
 				<button type="button"
 						class="wpss-btn wpss-btn-outline wpss-load-more-reviews"
@@ -169,3 +204,14 @@ $reviews = $wpdb->get_results(
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the service reviews section.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_after_service_reviews', $service_id );
+?>

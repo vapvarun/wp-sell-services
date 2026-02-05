@@ -9,6 +9,12 @@
  * @since   1.0.0
  *
  * @var int $order_id Order ID passed from parent template.
+ *
+ * Available Hooks:
+ * - wpss_before_requirements_form
+ * - wpss_requirements_form_fields
+ * - wpss_after_requirements_form
+ * - wpss_requirements_form_args (filter)
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -48,6 +54,17 @@ $requirements = wpss_get_service_requirements( $order->service_id );
 
 // Check if requirements already submitted.
 $submitted_requirements = wpss_get_order_requirements( $order_id );
+
+/**
+ * Hook: wpss_before_requirements_form
+ *
+ * Fires before the requirements form is displayed.
+ *
+ * @since 1.0.0
+ *
+ * @param object $order Order object.
+ */
+do_action( 'wpss_before_requirements_form', $order );
 ?>
 
 <div class="wpss-requirements-page">
@@ -88,7 +105,27 @@ $submitted_requirements = wpss_get_order_requirements( $order_id );
 			</div>
 
 			<!-- Requirements Form -->
-			<form class="wpss-requirements-form" id="wpss-requirements-form" method="post">
+			<?php
+			$form_args = array(
+				'form_id'    => 'wpss-requirements-form',
+				'form_class' => 'wpss-requirements-form',
+				'order_id'   => $order_id,
+				'order'      => $order,
+			);
+
+			/**
+			 * Filter: wpss_requirements_form_args
+			 *
+			 * Filters the requirements form arguments.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param array  $form_args Array of form arguments.
+			 * @param object $order     Order object.
+			 */
+			$form_args = apply_filters( 'wpss_requirements_form_args', $form_args, $order );
+			?>
+			<form class="<?php echo esc_attr( $form_args['form_class'] ); ?>" id="<?php echo esc_attr( $form_args['form_id'] ); ?>" method="post">
 				<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
 				<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
@@ -177,6 +214,19 @@ $submitted_requirements = wpss_get_order_requirements( $order_id );
 							<?php endif; ?>
 						</div>
 					<?php endforeach; ?>
+
+					<?php
+					/**
+					 * Hook: wpss_requirements_form_fields
+					 *
+					 * Fires after the requirement fields are displayed, allowing custom fields.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param object $order Order object.
+					 */
+					do_action( 'wpss_requirements_form_fields', $order );
+					?>
 				<?php else : ?>
 					<!-- Default requirement field if none defined -->
 					<div class="wpss-requirements-form__field">
@@ -300,8 +350,12 @@ $submitted_requirements = wpss_get_order_requirements( $order_id );
 
 <?php
 /**
- * Hook: wpss_after_order_requirements
+ * Hook: wpss_after_requirements_form
+ *
+ * Fires after the requirements form is displayed.
+ *
+ * @since 1.0.0
  *
  * @param object $order Order object.
  */
-do_action( 'wpss_after_order_requirements', $order );
+do_action( 'wpss_after_requirements_form', $order );

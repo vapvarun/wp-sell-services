@@ -31,6 +31,15 @@ $level_colors = array(
 );
 
 $badge_color = $level_colors[ $new_level ] ?? $base_color;
+
+/**
+ * Fires before the email content for the seller level promotion email.
+ *
+ * @since 1.0.0
+ *
+ * @param WP_User $recipient Recipient user object.
+ */
+do_action( 'wpss_email_content_before', 'seller_level_promotion', null, $recipient );
 ?>
 
 <div style="text-align: center; margin-bottom: 30px;">
@@ -96,11 +105,40 @@ $badge_color = $level_colors[ $new_level ] ?? $base_color;
 </ul>
 
 <p style="text-align: center; margin: 30px 0;">
-	<a href="<?php echo esc_url( wpss_get_page_url( 'dashboard' ) ); ?>" class="button" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">
-		<?php esc_html_e( 'View My Dashboard', 'wp-sell-services' ); ?>
+	<?php
+	/**
+	 * Filters the button URL for the seller level promotion email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $button_url Default button URL.
+	 */
+	$button_url = apply_filters( 'wpss_email_button_url', wpss_get_page_url( 'dashboard' ), 'seller_level_promotion', null );
+
+	/**
+	 * Filters the button text for the seller level promotion email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $button_text Default button text.
+	 */
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View My Dashboard', 'wp-sell-services' ), 'seller_level_promotion' );
+	?>
+	<a href="<?php echo esc_url( $button_url ); ?>" class="button" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 16px;">
+		<?php echo esc_html( $button_text ); ?>
 	</a>
 </p>
 
 <p style="margin: 20px 0 0 0; font-size: 14px; color: #666666; line-height: 1.6; text-align: center;">
 	<?php esc_html_e( 'Thank you for being a valued member of our marketplace!', 'wp-sell-services' ); ?>
 </p>
+
+<?php
+/**
+ * Fires after the email content for the seller level promotion email.
+ *
+ * @since 1.0.0
+ *
+ * @param WP_User $recipient Recipient user object.
+ */
+do_action( 'wpss_email_content_after', 'seller_level_promotion', null, $recipient );

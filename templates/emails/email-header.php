@@ -139,3 +139,15 @@ $text_color = $text_color ?? '#3c3c3c';
 												<?php echo esc_html( $email_heading ); ?>
 											</h1>
 										<?php endif; ?>
+										<?php
+										/**
+										 * Fires after the email header.
+										 *
+										 * Allows adding custom content after the email heading.
+										 *
+										 * @since 1.0.0
+										 *
+										 * @param string $email_heading Email heading text.
+										 */
+										do_action( 'wpss_email_header', $email_heading );
+										?>

@@ -17,6 +17,13 @@
  * @var int    $user_id     Current user ID.
  * @var bool   $is_customer Whether current user is customer.
  * @var bool   $is_vendor   Whether current user is vendor.
+ *
+ * Available Hooks:
+ * - wpss_before_dispute_view
+ * - wpss_dispute_view_header
+ * - wpss_dispute_view_evidence
+ * - wpss_dispute_view_resolution
+ * - wpss_after_dispute_view
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -36,6 +43,18 @@ $opener   = get_userdata( $dispute->opened_by );
 // Back link.
 $disputes_url = wc_get_endpoint_url( 'service-disputes', '', wc_get_page_permalink( 'myaccount' ) );
 $order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_permalink( 'myaccount' ) );
+
+/**
+ * Hook: wpss_before_dispute_view
+ *
+ * Fires before the dispute view content is displayed.
+ *
+ * @since 1.0.0
+ *
+ * @param object $dispute Dispute object.
+ * @param object $order   Order object.
+ */
+do_action( 'wpss_before_dispute_view', $dispute, $order );
 ?>
 
 <div class="wpss-dispute-view">
@@ -84,6 +103,20 @@ $order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_p
 			</span>
 		</div>
 	</div>
+
+	<?php
+	/**
+	 * Hook: wpss_dispute_view_header
+	 *
+	 * Fires after the dispute header is displayed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object $dispute Dispute object.
+	 * @param object $order   Order object.
+	 */
+	do_action( 'wpss_dispute_view_header', $dispute, $order );
+	?>
 
 	<div class="wpss-dispute-content">
 		<!-- Left Column: Dispute Details -->
@@ -189,6 +222,20 @@ $order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_p
 					<?php endif; ?>
 				</div>
 
+				<?php
+				/**
+				 * Hook: wpss_dispute_view_evidence
+				 *
+				 * Fires after the evidence list is displayed.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param object $dispute Dispute object.
+				 * @param object $order   Order object.
+				 */
+				do_action( 'wpss_dispute_view_evidence', $dispute, $order );
+				?>
+
 				<!-- Add Evidence Form -->
 				<?php if ( $can_add_evidence ) : ?>
 					<div class="wpss-add-evidence">
@@ -276,6 +323,20 @@ $order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_p
 						<?php endif; ?>
 					</div>
 				</div>
+
+				<?php
+				/**
+				 * Hook: wpss_dispute_view_resolution
+				 *
+				 * Fires in the dispute resolution area.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param object $dispute Dispute object.
+				 * @param object $order   Order object.
+				 */
+				do_action( 'wpss_dispute_view_resolution', $dispute, $order );
+				?>
 			<?php endif; ?>
 		</div>
 
@@ -362,6 +423,20 @@ $order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_p
 		</div>
 	</div>
 </div>
+
+<?php
+/**
+ * Hook: wpss_after_dispute_view
+ *
+ * Fires after the dispute view content is displayed.
+ *
+ * @since 1.0.0
+ *
+ * @param object $dispute Dispute object.
+ * @param object $order   Order object.
+ */
+do_action( 'wpss_after_dispute_view', $dispute, $order );
+?>
 
 <style>
 .wpss-dispute-view {

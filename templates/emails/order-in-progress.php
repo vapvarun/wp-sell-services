@@ -27,6 +27,16 @@ $base_color  = $base_color ?? '#7f54b3';
 $customer    = isset( $recipient ) ? $recipient : get_user_by( 'id', $order->customer_id );
 $vendor      = get_user_by( 'id', $order->vendor_id );
 $vendor_name = $vendor ? $vendor->display_name : __( 'The vendor', 'wp-sell-services' );
+
+/**
+ * Fires before the email content for the order in progress email.
+ *
+ * @since 1.0.0
+ *
+ * @param WPSellServices\Models\ServiceOrder $order Service order object.
+ * @param WP_User                            $recipient Recipient user object (buyer).
+ */
+do_action( 'wpss_email_content_before', 'order_in_progress', $order, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -75,12 +85,42 @@ $vendor_name = $vendor ? $vendor->display_name : __( 'The vendor', 'wp-sell-serv
 </p>
 
 <p style="text-align: center; margin: 30px 0;">
-	<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
-		<?php esc_html_e( 'View Order', 'wp-sell-services' ); ?>
+	<?php
+	/**
+	 * Filters the button URL for the order in progress email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string                             $button_url Default button URL.
+	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
+	 */
+	$button_url = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'order_in_progress', $order );
+
+	/**
+	 * Filters the button text for the order in progress email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $button_text Default button text.
+	 */
+	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Order', 'wp-sell-services' ), 'order_in_progress' );
+	?>
+	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
+		<?php echo esc_html( $button_text ); ?>
 	</a>
 </p>
 
 <?php
+/**
+ * Fires after the email content for the order in progress email.
+ *
+ * @since 1.0.0
+ *
+ * @param WPSellServices\Models\ServiceOrder $order Service order object.
+ * @param WP_User                            $recipient Recipient user object (buyer).
+ */
+do_action( 'wpss_email_content_after', 'order_in_progress', $order, $recipient );
+
 // WooCommerce compatibility.
 if ( isset( $email ) && function_exists( 'WC' ) ) {
 	do_action( 'woocommerce_email_footer', $email );

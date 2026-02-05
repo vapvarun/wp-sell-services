@@ -7,7 +7,11 @@
  * @package WPSellServices\Templates
  * @since   1.0.0
  *
- * @var int $vendor_id Vendor user ID.
+ * @var int    $vendor_id         Vendor user ID.
+ * @var object $vendor            Vendor WP_User object.
+ * @var float  $rating_avg        Vendor average rating.
+ * @var int    $rating_count      Vendor rating count.
+ * @var int    $completed_orders  Vendor completed orders count.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -34,6 +38,15 @@ $is_online       = get_user_meta( $vendor_id, '_wpss_last_active', true );
 
 // Check if vendor is online (active in last 5 minutes).
 $is_currently_online = $is_online && ( time() - strtotime( $is_online ) ) < 300;
+
+/**
+ * Fires before the vendor card.
+ *
+ * @since 1.0.0
+ *
+ * @param int $vendor_id Vendor user ID.
+ */
+do_action( 'wpss_before_vendor_card', $vendor_id );
 ?>
 
 <div class="wpss-vendor-card">
@@ -83,6 +96,17 @@ $is_currently_online = $is_online && ( time() - strtotime( $is_online ) ) < 300;
 				<span class="wpss-stat-value"><?php echo esc_html( $completed_orders ); ?></span>
 			</div>
 		<?php endif; ?>
+
+		<?php
+		/**
+		 * Fires inside the vendor card meta area for custom badges/icons.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $vendor_id Vendor user ID.
+		 */
+		do_action( 'wpss_vendor_card_meta', $vendor_id );
+		?>
 	</div>
 
 	<ul class="wpss-vendor-details">
@@ -124,3 +148,14 @@ $is_currently_online = $is_online && ( time() - strtotime( $is_online ) ) < 300;
 		</a>
 	</div>
 </div>
+
+<?php
+/**
+ * Fires after the vendor card.
+ *
+ * @since 1.0.0
+ *
+ * @param int $vendor_id Vendor user ID.
+ */
+do_action( 'wpss_after_vendor_card', $vendor_id );
+?>

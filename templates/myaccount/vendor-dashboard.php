@@ -16,6 +16,15 @@ defined( 'ABSPATH' ) || exit;
 
 // Enqueue vendor dashboard styles.
 wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-dashboard.css', array( 'wpss-design-system' ), WPSS_VERSION );
+
+/**
+ * Fires before the vendor dashboard content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_vendor_dashboard_before', $user_id );
 ?>
 
 <div class="wpss-dashboard">
@@ -38,6 +47,19 @@ wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-
 
 	<?php if ( $vendor ) : ?>
 		<div class="wpss-dashboard__body">
+			<?php
+			/**
+			 * Fires at the start of vendor dashboard body for custom widgets.
+			 *
+			 * Allows developers to add custom dashboard widgets or cards.
+			 *
+			 * @since 1.1.0
+			 *
+			 * @param int $user_id Current user ID.
+			 */
+			do_action( 'wpss_vendor_dashboard_widgets', $user_id );
+			?>
+
 			<!-- Vendor Profile Card -->
 			<div class="wpss-card wpss-card--profile">
 				<div class="wpss-card__body">
@@ -177,6 +199,19 @@ wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-
 					</div>
 				</a>
 			</div>
+
+			<?php
+			/**
+			 * Fires at the end of vendor dashboard body for custom actions.
+			 *
+			 * Allows developers to add custom action buttons or sections.
+			 *
+			 * @since 1.1.0
+			 *
+			 * @param int $user_id Current user ID.
+			 */
+			do_action( 'wpss_vendor_dashboard_actions', $user_id );
+			?>
 		</div>
 
 	<?php else : ?>
@@ -194,3 +229,14 @@ wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the vendor dashboard content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_vendor_dashboard_after', $user_id );
+?>

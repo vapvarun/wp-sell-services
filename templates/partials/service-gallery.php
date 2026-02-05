@@ -7,7 +7,9 @@
  * @package WPSellServices\Templates
  * @since   1.0.0
  *
- * @var WPSellServices\Models\Service $service Service object.
+ * @var WPSellServices\Models\Service $service     Service object.
+ * @var int                            $service_id  Service post ID.
+ * @var array                          $gallery_ids Array of gallery image attachment IDs.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -55,6 +57,15 @@ $gallery_ids = array_unique( array_filter( $gallery_ids ) );
 if ( empty( $gallery_ids ) ) {
 	return;
 }
+
+/**
+ * Fires before the service gallery.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_before_service_gallery', $service_id );
 ?>
 
 <div class="wpss-service-gallery">
@@ -62,6 +73,16 @@ if ( empty( $gallery_ids ) ) {
 		<?php
 		$first_image = reset( $gallery_ids ); // Use reset() instead of [0] to handle non-sequential keys.
 		$is_video = get_post_meta( $service_id, '_wpss_video_url', true );
+
+		/**
+		 * Filters the gallery image size.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $size       Image size (default: 'large').
+		 * @param int    $service_id Service post ID.
+		 */
+		$image_size = apply_filters( 'wpss_gallery_image_size', 'large', $service_id );
 		?>
 		<div class="wpss-gallery-active">
 			<?php if ( $is_video ) : ?>
@@ -73,7 +94,7 @@ if ( empty( $gallery_ids ) ) {
 					?>
 				</div>
 			<?php else : ?>
-				<img src="<?php echo esc_url( wp_get_attachment_image_url( $first_image, 'large' ) ); ?>"
+				<img src="<?php echo esc_url( wp_get_attachment_image_url( $first_image, $image_size ) ); ?>"
 					 alt="<?php echo esc_attr( get_the_title() ); ?>"
 					 class="wpss-gallery-image">
 			<?php endif; ?>
@@ -86,7 +107,7 @@ if ( empty( $gallery_ids ) ) {
 				<button type="button"
 						class="wpss-gallery-thumb <?php echo 0 === $index ? 'active' : ''; ?>"
 						data-index="<?php echo esc_attr( $index ); ?>"
-						data-src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, 'large' ) ); ?>">
+						data-src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, $image_size ) ); ?>">
 					<img src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, 'thumbnail' ) ); ?>"
 						 alt="<?php echo esc_attr( get_the_title() . ' - ' . ( $index + 1 ) ); ?>">
 				</button>
@@ -94,3 +115,14 @@ if ( empty( $gallery_ids ) ) {
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the service gallery.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_after_service_gallery', $service_id );
+?>

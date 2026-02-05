@@ -23,6 +23,15 @@ $notification_icons = array(
 	'dispute_resolved'   => '✓',
 	'deadline_warning'   => '⏰',
 );
+
+/**
+ * Fires before the notifications content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_notifications_before', $user_id );
 ?>
 
 <div class="wpss-notifications">
@@ -70,6 +79,17 @@ $notification_icons = array(
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the notifications content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_notifications_after', $user_id );
+?>
 
 <style>
 .wpss-notifications {

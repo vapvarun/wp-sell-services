@@ -26,6 +26,16 @@ $footer_text = $footer_text ?? sprintf(
 	get_bloginfo( 'name' )
 );
 ?>
+										<?php
+										/**
+										 * Fires before the email footer.
+										 *
+										 * Allows adding custom content before the email footer.
+										 *
+										 * @since 1.0.0
+										 */
+										do_action( 'wpss_email_footer' );
+										?>
 									</td>
 								</tr>
 							</table>

@@ -19,6 +19,15 @@ defined( 'ABSPATH' ) || exit;
 use WPSellServices\Services\DisputeService;
 
 $statuses = DisputeService::get_statuses();
+
+/**
+ * Fires before the service disputes content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_service_disputes_before', $user_id );
 ?>
 
 <div class="wpss-disputes-list-page">
@@ -98,6 +107,17 @@ $statuses = DisputeService::get_statuses();
 		</div>
 	<?php endif; ?>
 </div>
+
+<?php
+/**
+ * Fires after the service disputes content.
+ *
+ * @since 1.1.0
+ *
+ * @param int $user_id Current user ID.
+ */
+do_action( 'wpss_service_disputes_after', $user_id );
+?>
 
 <style>
 .wpss-disputes-list-page {

@@ -14,6 +14,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Fires before the create service dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('create').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'create', $user_id );
+
 // Check if editing existing service.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just checking for edit ID.
 $service_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
@@ -33,3 +43,13 @@ if ( $service_id ) {
 
 // Use the service wizard shortcode.
 echo do_shortcode( $service_id ? "[wpss_service_wizard id=\"{$service_id}\"]" : '[wpss_service_wizard]' );
+
+/**
+ * Fires after the create service dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('create').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'create', $user_id );

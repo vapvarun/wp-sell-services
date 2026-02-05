@@ -8,6 +8,38 @@
  * Override this template by copying to:
  * yourtheme/wp-sell-services/single-request.php
  *
+ * Available Hooks:
+ *
+ * - wpss_single_request_layout (filter)
+ *   Allows changing the layout type. Default: 'default'.
+ *   @param string $layout     Layout type ('default', 'wide', 'minimal').
+ *   @param int    $request_id Request post ID.
+ *
+ * - wpss_before_single_request (action)
+ *   Fires before the single request wrapper.
+ *   @param int $request_id Request post ID.
+ *
+ * - wpss_single_request_header (action)
+ *   Header area - breadcrumb, title, status badge.
+ *   @param int $request_id Request post ID.
+ *   @hooked wpss_request_breadcrumb - 5
+ *
+ * - wpss_single_request_content (action)
+ *   Content area - description, skills, attachments.
+ *   @param int $request_id Request post ID.
+ *
+ * - wpss_single_request_proposals (action)
+ *   Proposals section (visible to buyer only).
+ *   @param int $request_id Request post ID.
+ *
+ * - wpss_single_request_sidebar (action)
+ *   Sidebar area - request details, buyer info.
+ *   @param int $request_id Request post ID.
+ *
+ * - wpss_after_single_request (action)
+ *   Fires after the single request wrapper.
+ *   @param int $request_id Request post ID.
+ *
  * @package WPSellServices\Templates
  * @since   1.0.0
  */
@@ -67,6 +99,18 @@ if ( $expires_at && strtotime( $expires_at ) < time() ) {
 }
 
 /**
+ * Filter: wpss_single_request_layout
+ *
+ * Allows changing the layout type for single request page.
+ *
+ * @since 1.0.0
+ *
+ * @param string $layout     Layout type. Default 'default'. Accepts 'default', 'wide', 'minimal'.
+ * @param int    $request_id Request post ID.
+ */
+$layout = apply_filters( 'wpss_single_request_layout', 'default', $request_id );
+
+/**
  * Hook: wpss_before_single_request
  *
  * @param int $request_id Request post ID.
@@ -74,7 +118,7 @@ if ( $expires_at && strtotime( $expires_at ) < time() ) {
 do_action( 'wpss_before_single_request', $request_id );
 ?>
 
-<div class="wpss-single-request">
+<div class="wpss-single-request wpss-layout-<?php echo esc_attr( $layout ); ?>">
 	<div class="wpss-container">
 		<?php
 		while ( have_posts() ) :
@@ -165,6 +209,20 @@ do_action( 'wpss_before_single_request', $request_id );
 						do_action( 'wpss_single_request_content', $request_id );
 						?>
 					</div>
+
+					<?php
+					/**
+					 * Hook: wpss_single_request_proposals
+					 *
+					 * Fires in the proposals section area.
+					 * Use this to add custom proposal displays or filters.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param int $request_id Request post ID.
+					 */
+					do_action( 'wpss_single_request_proposals', $request_id );
+					?>
 
 					<?php if ( $is_buyer && ! empty( $proposals ) ) : ?>
 						<section class="wpss-request-section wpss-request-proposals">

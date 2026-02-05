@@ -7,7 +7,9 @@
  * @package WPSellServices\Templates
  * @since   1.0.0
  *
- * @var WPSellServices\Models\Service $service Service object.
+ * @var WPSellServices\Models\Service $service    Service object.
+ * @var int                            $service_id Service post ID.
+ * @var array                          $faqs       Array of FAQ items.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -18,6 +20,15 @@ $faqs       = get_post_meta( $service_id, '_wpss_faqs', true ) ?: [];
 if ( empty( $faqs ) ) {
 	return;
 }
+
+/**
+ * Fires before the service FAQs section.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_before_service_faqs', $service_id );
 ?>
 
 <div class="wpss-service-faqs">
@@ -44,3 +55,14 @@ if ( empty( $faqs ) ) {
 		<?php endforeach; ?>
 	</div>
 </div>
+
+<?php
+/**
+ * Fires after the service FAQs section.
+ *
+ * @since 1.0.0
+ *
+ * @param int $service_id Service post ID.
+ */
+do_action( 'wpss_after_service_faqs', $service_id );
+?>
