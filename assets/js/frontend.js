@@ -263,15 +263,34 @@
 			WPSS.showDeliverModal(orderId);
 		});
 
-		// Revision button.
+		// Revision button - show modal.
 		$(document).on('click', '.wpss-revision-btn', function(e) {
 			e.preventDefault();
-			const orderId = $(this).data('order');
+			WPSS.showModal('wpss-revision-modal');
+		});
 
-			const reason = prompt('What changes would you like?');
-			if (reason && reason.trim()) {
-				WPSS.requestRevision(orderId, reason);
+		// Revision form submission.
+		$(document).on('submit', '#wpss-revision-form', function(e) {
+			e.preventDefault();
+			const $form = $(this);
+			const $btn = $form.find('button[type="submit"]');
+			const originalText = $btn.html();
+			const orderId = $form.find('input[name="order_id"]').val();
+			const reason = $form.find('textarea[name="reason"]').val();
+
+			if (!reason || !reason.trim()) {
+				WPSS.showNotification('Please describe what changes you need.', 'error');
+				return;
 			}
+
+			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> Submitting...');
+
+			WPSS.requestRevision(orderId, reason);
+
+			// Reset form after submission (reload will happen in requestRevision).
+			setTimeout(function() {
+				$btn.prop('disabled', false).html(originalText);
+			}, 3000);
 		});
 	};
 
@@ -731,6 +750,7 @@
 			},
 			success: function(response) {
 				if (response.success) {
+					WPSS.hideModal();
 					WPSS.showNotification(response.data.message || 'Revision requested successfully!', 'success');
 					setTimeout(function() {
 						location.reload();

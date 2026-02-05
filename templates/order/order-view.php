@@ -900,8 +900,9 @@ do_action( 'wpss_before_order_view', $order );
 $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true );
 
 // Check if review modal should be available.
-$can_review       = 'completed' === $order->status && $is_customer && empty( $review_exists );
-$can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval' ), true );
+$can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
+$can_open_dispute      = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval' ), true );
+$can_request_revision  = $is_customer && 'pending_approval' === $order->status;
 ?>
 
 <?php if ( $can_deliver ) : ?>
@@ -1037,6 +1038,54 @@ $can_open_dispute = $is_customer && in_array( $order->status, array( 'in_progres
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Submit Review', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+<?php endif; ?>
+
+<?php if ( $can_request_revision ) : ?>
+<!-- Revision Modal -->
+<div class="wpss-modal" id="wpss-revision-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+	<div class="wpss-modal__backdrop"></div>
+	<div class="wpss-modal__dialog">
+		<div class="wpss-modal__header">
+			<h3 class="wpss-modal__title"><?php esc_html_e( 'Request Revision', 'wp-sell-services' ); ?></h3>
+			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			</button>
+		</div>
+		<form class="wpss-revision-form" id="wpss-revision-form">
+			<?php wp_nonce_field( 'wpss_order_action', 'nonce' ); ?>
+			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+
+			<div class="wpss-modal__body">
+				<div class="wpss-alert wpss-alert--info">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="10"/>
+						<line x1="12" y1="16" x2="12" y2="12"/>
+						<line x1="12" y1="8" x2="12.01" y2="8"/>
+					</svg>
+					<p><?php esc_html_e( 'Please describe the changes you need. The seller will review your request and update the delivery.', 'wp-sell-services' ); ?></p>
+				</div>
+
+				<div class="wpss-form-group">
+					<label for="revision-reason" class="wpss-label"><?php esc_html_e( 'What changes would you like?', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
+					<textarea name="reason" id="revision-reason" class="wpss-textarea" rows="4" required
+								placeholder="<?php esc_attr_e( 'Please be specific about what needs to be changed...', 'wp-sell-services' ); ?>"></textarea>
+				</div>
+			</div>
+
+			<div class="wpss-modal__footer">
+				<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">
+					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
+				</button>
+				<button type="submit" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'Submit Revision Request', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</form>
