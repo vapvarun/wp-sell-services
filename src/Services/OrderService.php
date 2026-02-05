@@ -235,6 +235,7 @@ class OrderService {
 			),
 			ServiceOrder::STATUS_REVISION_REQUESTED   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
+				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DISPUTED,
 			),

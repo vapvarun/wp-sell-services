@@ -32,6 +32,11 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 		// Note: Services are added as separate cart items (each with unique_key) rather than
 		// increasing quantity. This matches Fiverr's model where each order is distinct.
 
+		// Enforce quantity of 1 for service products.
+		add_filter( 'woocommerce_quantity_input_max', array( $this, 'filter_quantity_max' ), 10, 2 );
+		add_filter( 'woocommerce_quantity_input_args', array( $this, 'filter_quantity_args' ), 10, 2 );
+		add_filter( 'woocommerce_is_sold_individually', array( $this, 'service_sold_individually' ), 10, 2 );
+
 		// Hook thank you page redirect to requirements.
 		add_filter( 'woocommerce_get_return_url', array( $this, 'filter_thankyou_redirect' ), 10, 2 );
 		add_action( 'woocommerce_thankyou', array( $this, 'maybe_redirect_to_requirements' ), 5 );
@@ -163,6 +168,11 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 			return false;
 		}
 
+		// Early bail if WooCommerce is not fully loaded.
+		if ( ! function_exists( 'WC' ) || ! WC() ) {
+			return true;
+		}
+
 		if ( ! $this->is_service_product( $product_id ) ) {
 			return true;
 		}
@@ -187,7 +197,7 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		// Prevent duplicate services in cart.
-		if ( $this->cart_has_service( $product_id ) ) {
+		if ( WC()->cart && $this->cart_has_service( $product_id ) ) {
 			wc_add_notice( __( 'This service is already in your cart.', 'wp-sell-services' ), 'error' );
 			return false;
 		}

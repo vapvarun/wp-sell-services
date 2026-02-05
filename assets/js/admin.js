@@ -449,11 +449,27 @@
 
 	// Clear image upload state when a new term is added via AJAX (WordPress add-tag form).
 	$(document).ajaxComplete(function(event, xhr, settings) {
-		if (settings.data && typeof settings.data === 'string' && settings.data.indexOf('action=add-tag') !== -1) {
-			// Clear all image hidden inputs and previews within the add-tag form.
-			$('#addtag').find('input[type="hidden"][id$="_image"]').val('');
-			$('#addtag').find('[id$="_image-preview"]').html('');
-			$('#addtag').find('.wpss-remove-image').hide();
+		if (settings.data && typeof settings.data === 'string' &&
+			settings.data.indexOf('action=add-tag') !== -1 &&
+			xhr.responseJSON && xhr.responseJSON.success) {
+
+			// Target both standard WordPress form and any term forms.
+			var $form = $('#addtag, .term-form');
+
+			// Clear all image inputs (hidden and regular) that contain "image" in the name/id.
+			$form.find('input[name*="image"]').val('');
+			$form.find('input[id*="image"]').val('');
+
+			// Clear image previews - match any element with "image" and "preview" in the id/class.
+			$form.find('[class*="image-preview"]').html('');
+			$form.find('[id$="-preview"]').html('');
+
+			// Hide remove buttons.
+			$form.find('.wpss-remove-image').hide();
+
+			// Also clear the specific WPSS category/tag image fields directly.
+			$('#wpss_category_image, #wpss_tag_image').val('');
+			$('#wpss_category_image-preview, #wpss_tag_image-preview').html('');
 		}
 	});
 

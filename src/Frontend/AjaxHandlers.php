@@ -1462,7 +1462,7 @@ class AjaxHandlers {
 		$request_service = new BuyerRequestService();
 		$result          = $request_service->convert_to_order( $request_id, $proposal_id );
 
-		if ( $result['success'] ) {
+		if ( $result['success'] && ! empty( $result['order_id'] ) ) {
 			wp_send_json_success(
 				array(
 					'message'  => __( 'Proposal accepted. Order created!', 'wp-sell-services' ),
@@ -1471,6 +1471,9 @@ class AjaxHandlers {
 				)
 			);
 		} else {
+			if ( ! isset( $result['message'] ) ) {
+				$result['message'] = __( 'Failed to create order. Please try again.', 'wp-sell-services' );
+			}
 			wp_send_json_error( $result );
 		}
 	}
@@ -2667,7 +2670,10 @@ class AjaxHandlers {
 				break;
 
 			case 'delete':
-				wp_trash_post( $service_id );
+				$trashed = wp_trash_post( $service_id );
+				if ( ! $trashed ) {
+					wp_send_json_error( array( 'message' => __( 'Failed to delete service.', 'wp-sell-services' ) ) );
+				}
 				$message = __( 'Service deleted.', 'wp-sell-services' );
 				break;
 

@@ -12,18 +12,30 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$service_id = get_the_ID();
+$service_id  = get_the_ID();
 $gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true ) ?: [];
+$gallery_ids = [];
 
-// ServiceWizard saves as ['images' => [...], 'video' => '...'] — extract the image IDs.
+// Handle multiple gallery formats for compatibility.
 if ( isset( $gallery_raw['images'] ) && is_array( $gallery_raw['images'] ) ) {
+	// ServiceWizard format: ['images' => [...], 'video' => '...'].
 	$gallery_ids = array_map( 'absint', $gallery_raw['images'] );
 	$video_url   = $gallery_raw['video'] ?? '';
 	if ( $video_url ) {
 		update_post_meta( $service_id, '_wpss_video_url', esc_url_raw( $video_url ) );
 	}
-} else {
-	$gallery_ids = is_array( $gallery_raw ) ? array_map( 'absint', $gallery_raw ) : [];
+} elseif ( ! empty( $gallery_raw ) && is_array( $gallery_raw ) && isset( $gallery_raw[0]['type'] ) ) {
+	// GalleryService format: [['type' => 'image', 'attachment_id' => 123], ...].
+	foreach ( $gallery_raw as $item ) {
+		if ( 'image' === ( $item['type'] ?? '' ) && ! empty( $item['attachment_id'] ) ) {
+			$gallery_ids[] = absint( $item['attachment_id'] );
+		} elseif ( 'video' === ( $item['type'] ?? '' ) && ! empty( $item['url'] ) ) {
+			update_post_meta( $service_id, '_wpss_video_url', esc_url_raw( $item['url'] ) );
+		}
+	}
+} elseif ( is_array( $gallery_raw ) ) {
+	// Legacy flat array of IDs: [123, 456, ...].
+	$gallery_ids = array_map( 'absint', $gallery_raw );
 }
 
 $has_thumbnail = has_post_thumbnail( $service_id );

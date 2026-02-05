@@ -50,6 +50,10 @@ $service     = get_post( $order->service_id );
 $vendor      = get_userdata( $order->vendor_id );
 $customer    = get_userdata( $order->customer_id );
 
+// Handle deleted users gracefully.
+$vendor_name  = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
+$customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-sell-services' );
+
 // Get deliveries via service layer.
 $delivery_service = new DeliveryService();
 $deliveries       = $delivery_service->get_order_deliveries( $order_id );
@@ -218,35 +222,37 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 
 			<!-- Seller/Buyer Info -->
 			<div class="wpss-party-info">
-				<?php $other_party = $is_vendor ? $customer : $vendor; ?>
-				<?php if ( $other_party ) : ?>
-					<div class="wpss-party-info__card">
-						<img src="<?php echo esc_url( get_avatar_url( $other_party->ID, array( 'size' => 64 ) ) ); ?>"
-							alt="<?php echo esc_attr( $other_party->display_name ); ?>"
-							class="wpss-party-info__avatar">
-						<div class="wpss-party-info__details">
-							<span class="wpss-party-info__role">
-								<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
-							</span>
-							<strong class="wpss-party-info__name"><?php echo esc_html( $other_party->display_name ); ?></strong>
-							<?php if ( ! $is_vendor ) : ?>
-								<?php
-								$vendor_rating = (float) get_user_meta( $other_party->ID, '_wpss_rating_average', true );
-								$vendor_count  = (int) get_user_meta( $other_party->ID, '_wpss_rating_count', true );
-								?>
-								<?php if ( $vendor_count > 0 ) : ?>
-									<div class="wpss-party-info__rating">
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="wpss-star-icon">
-											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-										</svg>
-										<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
-										<span class="wpss-party-info__rating-count">(<?php echo esc_html( $vendor_count ); ?> <?php esc_html_e( 'reviews', 'wp-sell-services' ); ?>)</span>
-									</div>
-								<?php endif; ?>
+				<?php
+				$other_party      = $is_vendor ? $customer : $vendor;
+				$other_party_name = $is_vendor ? $customer_name : $vendor_name;
+				$other_party_id   = $is_vendor ? $order->customer_id : $order->vendor_id;
+				?>
+				<div class="wpss-party-info__card">
+					<img src="<?php echo esc_url( get_avatar_url( $other_party_id, array( 'size' => 64 ) ) ); ?>"
+						alt="<?php echo esc_attr( $other_party_name ); ?>"
+						class="wpss-party-info__avatar">
+					<div class="wpss-party-info__details">
+						<span class="wpss-party-info__role">
+							<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
+						</span>
+						<strong class="wpss-party-info__name"><?php echo esc_html( $other_party_name ); ?></strong>
+						<?php if ( ! $is_vendor && $other_party ) : ?>
+							<?php
+							$vendor_rating = (float) get_user_meta( $other_party->ID, '_wpss_rating_average', true );
+							$vendor_count  = (int) get_user_meta( $other_party->ID, '_wpss_rating_count', true );
+							?>
+							<?php if ( $vendor_count > 0 ) : ?>
+								<div class="wpss-party-info__rating">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="wpss-star-icon">
+										<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+									</svg>
+									<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
+									<span class="wpss-party-info__rating-count">(<?php echo esc_html( $vendor_count ); ?> <?php esc_html_e( 'reviews', 'wp-sell-services' ); ?>)</span>
+								</div>
 							<?php endif; ?>
-						</div>
+						<?php endif; ?>
 					</div>
-				<?php endif; ?>
+				</div>
 			</div>
 		</div>
 	</section>

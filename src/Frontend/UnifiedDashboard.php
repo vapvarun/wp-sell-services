@@ -382,7 +382,13 @@ class UnifiedDashboard {
 	 * @return string Section URL.
 	 */
 	private function get_section_url( string $section ): string {
-		$base_url = get_permalink() ?: home_url();
+		// Try to get the dashboard page URL from settings first (works in AJAX context).
+		$base_url = wpss_get_page_url( 'dashboard' );
+
+		// Fallback to get_permalink() for non-AJAX, then home_url() as last resort.
+		if ( ! $base_url ) {
+			$base_url = get_permalink() ?: home_url();
+		}
 
 		if ( 'orders' === $section ) {
 			return $base_url;

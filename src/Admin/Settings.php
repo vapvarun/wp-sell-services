@@ -1621,7 +1621,10 @@ class Settings {
 	public function sanitize_general_settings( array $input ): array {
 		$sanitized = array();
 
-		$sanitized['platform_name']      = sanitize_text_field( $input['platform_name'] ?? '' );
+		// Platform name defaults to site name if empty.
+		$platform_name              = sanitize_text_field( $input['platform_name'] ?? '' );
+		$sanitized['platform_name'] = ! empty( $platform_name ) ? $platform_name : get_bloginfo( 'name' );
+
 		$sanitized['currency']           = sanitize_text_field( $input['currency'] ?? 'USD' );
 		$sanitized['ecommerce_platform'] = sanitize_key( $input['ecommerce_platform'] ?? 'auto' );
 

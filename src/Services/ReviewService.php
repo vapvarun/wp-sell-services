@@ -383,7 +383,21 @@ class ReviewService {
 			return true;
 		}
 
-		$deadline = $order->completed_at->modify( "+{$window_days} days" );
+		// Handle case where completed_at is a string instead of DateTimeImmutable.
+		$completed_at = $order->completed_at;
+		if ( is_string( $completed_at ) ) {
+			try {
+				$completed_at = new \DateTimeImmutable( $completed_at );
+			} catch ( \Exception $e ) {
+				return false;
+			}
+		}
+
+		if ( ! $completed_at instanceof \DateTimeImmutable ) {
+			return false;
+		}
+
+		$deadline = $completed_at->modify( "+{$window_days} days" );
 		$now      = new \DateTimeImmutable();
 
 		return $now <= $deadline;

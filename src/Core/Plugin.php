@@ -220,10 +220,18 @@ final class Plugin {
 	 * @return void
 	 */
 	public function init(): void {
+		// Load text domain immediately to avoid warnings on early AJAX calls.
+		load_plugin_textdomain(
+			'wp-sell-services',
+			false,
+			dirname( \WPSS_PLUGIN_BASENAME ) . '/languages'
+		);
+
 		$this->init_updater();
 		$this->maybe_upgrade_database();
 		$this->maybe_create_vendor_role();
 		$this->set_locale();
+		$this->define_vendor_settings_filters();
 		$this->register_post_types();
 		$this->define_admin_hooks();
 		$this->define_frontend_hooks();
@@ -446,6 +454,9 @@ final class Plugin {
 	/**
 	 * Set the plugin locale for internationalization.
 	 *
+	 * Note: Text domain is loaded immediately in init() method for AJAX calls.
+	 * This hook ensures it's also loaded on 'init' for standard page loads.
+	 *
 	 * @return void
 	 */
 	private function set_locale(): void {
@@ -457,6 +468,46 @@ final class Plugin {
 					false,
 					dirname( \WPSS_PLUGIN_BASENAME ) . '/languages'
 				);
+			}
+		);
+	}
+
+	/**
+	 * Define filters to connect vendor settings to their filters.
+	 *
+	 * This connects the wpss_vendor_registration_open and wpss_auto_approve_vendors
+	 * filters to the actual admin settings values.
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	private function define_vendor_settings_filters(): void {
+		// Connect vendor registration open/closed filter to settings.
+		add_filter(
+			'wpss_vendor_registration_open',
+			function ( bool $default ): bool {
+				$vendor_settings     = get_option( 'wpss_vendor', array() );
+				$registration_mode   = $vendor_settings['vendor_registration'] ?? 'open';
+				return 'closed' !== $registration_mode;
+			}
+		);
+
+		// Connect auto-approve vendors filter to settings.
+		add_filter(
+			'wpss_auto_approve_vendors',
+			function ( bool $default ): bool {
+				$vendor_settings   = get_option( 'wpss_vendor', array() );
+				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+				return 'open' === $registration_mode;
+			}
+		);
+
+		// Connect service moderation filter to settings.
+		add_filter(
+			'wpss_require_service_moderation',
+			function ( bool $default ): bool {
+				$vendor_settings = get_option( 'wpss_vendor', array() );
+				return ! empty( $vendor_settings['require_service_moderation'] );
 			}
 		);
 	}
