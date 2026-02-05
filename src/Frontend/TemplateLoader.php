@@ -183,9 +183,11 @@ class TemplateLoader {
 			wp_die( esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ), '', array( 'response' => 403 ) );
 		}
 
-		// Set global for template use.
-		global $wpss_current_order;
+		// Set globals for template use.
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Template variable.
+		global $wpss_current_order, $order_id;
 		$wpss_current_order = $order;
+		$order_id           = $order->id;
 
 		// Determine action (requirements, delivery, review, etc.).
 		$action = get_query_var( 'wpss_order_action' );
