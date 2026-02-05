@@ -718,6 +718,7 @@
 	justify-content: center;
 	width: 44px;
 	height: 44px;
+	padding: 0 !important;
 	color: var(--wpss-white, #fff);
 	background: var(--wpss-primary, #4f46e5);
 	border: none;

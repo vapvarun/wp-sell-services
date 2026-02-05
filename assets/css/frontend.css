@@ -2469,12 +2469,12 @@
 	position: absolute;
 	top: 1rem;
 	right: 1rem;
-	background: none;
-	border: none;
-	font-size: 1.5rem;
+	background: none !important;
+	border: none !important;
+	font-size: 1.5rem !important;
 	cursor: pointer;
 	color: var(--wpss-text-light);
-	padding: 0;
+	padding: 0 !important;
 	width: 32px;
 	height: 32px;
 	display: flex;
@@ -2484,7 +2484,9 @@
 }
 
 .wpss-modal-close:hover {
+	background: none !important;
 	color: var(--wpss-text);
+	border: none !important;
 }
 
 .wpss-modal-body {
@@ -2497,6 +2499,10 @@
 	display: flex;
 	gap: 0.75rem;
 	justify-content: flex-end;
+}
+
+#wpss-order-modal .wpss-modal-footer {
+	flex-direction: column;
 }
 
 body.wpss-modal-active {
@@ -2704,23 +2710,26 @@ body.wpss-modal-active {
 	position: absolute;
 	top: 1rem;
 	right: 1rem;
-	background: none;
-	border: none;
-	font-size: 1.5rem;
+	background: none !important;
+	border: none !important;
+	font-size: 1.5rem !important;
 	cursor: pointer;
 	color: var(--wpss-text-light);
-	padding: 0;
+	padding: 0 !important;
 	width: 32px;
 	height: 32px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	line-height: 1;
+	text-indent: -99999px;
 }
 
 .wpss-modal__close:hover,
 .wpss-modal__close-btn:hover {
+	background: none;
 	color: var(--wpss-text);
+	border: none;
 }
 
 .wpss-modal__body {

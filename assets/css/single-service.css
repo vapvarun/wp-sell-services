@@ -702,10 +702,6 @@
 	border-top: 1px solid var(--wpss-border);
 }
 
-.wpss-faq-item:first-child {
-	border-top: none;
-}
-
 /* FAQ Question Button - Theme-resistant styling */
 .wpss-faq-question {
 	width: 100%;
@@ -713,7 +709,7 @@
 	justify-content: space-between;
 	align-items: center;
 	gap: 1rem;
-	padding: 1rem 0;
+	padding: 15px 20px;
 	margin: 0;
 	background: none !important;
 	background-color: transparent !important;
@@ -768,23 +764,17 @@
 	transition: transform var(--wpss-transition), color var(--wpss-transition);
 }
 
-.wpss-faq-icon::before {
-	content: "+";
-	display: block;
-}
-
 .wpss-faq-question:hover .wpss-faq-icon {
 	color: var(--wpss-primary);
 }
 
 .wpss-faq-question[aria-expanded="true"] .wpss-faq-icon {
-	transform: rotate(45deg);
 	color: var(--wpss-primary);
 }
 
 /* FAQ Answer - Theme-resistant styling */
 .wpss-faq-answer {
-	padding: 0 0 1rem;
+	padding: 15px 20px;
 	margin: 0;
 	color: var(--wpss-text-muted);
 	font-size: 0.9375rem;
@@ -1404,12 +1394,12 @@
 	position: absolute;
 	top: 1rem;
 	right: 1rem;
-	background: none;
-	border: none;
-	font-size: 1.5rem;
+	background: none !important;
+	border: none !important;
+	font-size: 1.5rem !important;
 	cursor: pointer;
 	color: var(--wpss-text-muted);
-	padding: 0;
+	padding: 0 !important;
 	width: 32px;
 	height: 32px;
 	display: flex;
@@ -1419,7 +1409,9 @@
 }
 
 .wpss-modal-close:hover {
+	background: none;
 	color: var(--wpss-text);
+	border: none;
 }
 
 .wpss-modal-header {
