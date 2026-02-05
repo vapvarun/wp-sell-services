@@ -340,7 +340,7 @@ class BuyerRequestArchiveView {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$max_budget = isset( $_GET['max_budget'] ) ? floatval( $_GET['max_budget'] ) : '';
 		?>
-		<aside class="wpss-request-sidebar" id="wpss-request-sidebar">
+		<aside class="wpss-request-sidebar" id="wpss-sidebar">
 			<div class="wpss-sidebar-header">
 				<h3><?php esc_html_e( 'Filters', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-sidebar-close wpss-btn-icon" aria-label="<?php esc_attr_e( 'Close filters', 'wp-sell-services' ); ?>">

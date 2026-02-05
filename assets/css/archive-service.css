@@ -313,17 +313,19 @@
 }
 
 .wpss-sidebar-close {
-	background: none;
-	border: none;
-	font-size: 1.5rem;
+	background: none !important;
+	border: none !important;
+	font-size: 1.5rem !important;
 	cursor: pointer;
 	color: var(--wpss-text-light);
-	padding: 0;
+	padding: 0 !important;
 	line-height: 1;
 }
 
 .wpss-sidebar-close:hover {
 	color: var(--wpss-text);
+	background: none !important;
+	border: none !important;
 }
 
 /* ==========================================================================

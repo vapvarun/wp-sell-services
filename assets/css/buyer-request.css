@@ -101,6 +101,192 @@
 	gap: 1.5rem;
 }
 
+
+/* ==========================================================================
+   Filters Bar
+   ========================================================================== */
+
+.wpss-filters-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem;
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	margin-bottom: 1.5rem;
+}
+
+.wpss-filter-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-filter-toggle .wpss-icon-filter::before {
+	content: "\2630";
+}
+
+.wpss-filters-bar-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-left: auto;
+}
+
+.wpss-category-filter,
+.wpss-sort-filter {
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-white);
+	font-size: 0.875rem;
+	cursor: pointer;
+	min-width: 160px;
+}
+
+.wpss-category-filter:focus,
+.wpss-sort-filter:focus {
+	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+
+/* ==========================================================================
+   Filter Form
+   ========================================================================== */
+
+.wpss-filter-form {
+	padding: 1.5rem;
+}
+
+.wpss-filter-section {
+	margin-bottom: 1.5rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border);
+}
+
+.wpss-filter-section:last-of-type {
+	border-bottom: none;
+}
+
+.wpss-filter-section h4 {
+	margin: 0 0 1rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--wpss-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+/* Category List */
+.wpss-category-list,
+.wpss-subcategory-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wpss-category-list > li {
+	margin-bottom: 0.5rem;
+}
+
+.wpss-category-link {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem 0;
+	color: var(--wpss-text);
+	text-decoration: none;
+	font-size: 0.938rem;
+	transition: color var(--wpss-transition);
+}
+
+.wpss-category-link:hover {
+	color: var(--wpss-primary);
+}
+
+.wpss-category-link .wpss-count {
+	color: var(--wpss-text-light);
+	font-size: 0.813rem;
+}
+
+.wpss-subcategory-list {
+	padding-left: 1rem;
+	margin-top: 0.25rem;
+}
+
+.wpss-subcategory-list li {
+	margin-bottom: 0.25rem;
+}
+
+.wpss-subcategory-list a {
+	display: flex;
+	justify-content: space-between;
+	color: var(--wpss-text-light);
+	text-decoration: none;
+	font-size: 0.875rem;
+	padding: 0.25rem 0;
+}
+
+.wpss-subcategory-list a:hover {
+	color: var(--wpss-primary);
+}
+
+/* Price Inputs */
+.wpss-price-inputs {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.wpss-price-inputs input {
+	flex: 1;
+	padding: 0.5rem;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	font-size: 0.875rem;
+	text-align: center;
+}
+
+.wpss-price-inputs input:focus {
+	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+.wpss-price-separator {
+	color: var(--wpss-text-light);
+}
+
+/* Delivery Options */
+.wpss-delivery-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.wpss-checkbox-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+	font-size: 0.875rem;
+	color: var(--wpss-text);
+}
+
+.wpss-checkbox-option input {
+	margin: 0;
+}
+
+/* Filter Actions */
+.wpss-filter-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 1.5rem;
+}
+
 /* ==========================================================================
    Theme Compatibility - Override common theme conflicts
    ========================================================================== */
@@ -113,11 +299,11 @@
 }
 
 /* Prevent themes from adding extra margins/paddings */
-.wpss-requests-archive .wpss-request-card,
+/* .wpss-requests-archive .wpss-request-card,
 .wpss-requests-archive .wpss-request-card * {
 	margin-top: 0;
 	margin-bottom: 0;
-}
+} */
 
 /* Fix button styling for all themes */
 .wpss-requests-archive .wpss-btn,
@@ -378,6 +564,7 @@
 
 .wpss-request-card__meta {
 	display: flex;
+	flex-flow: row wrap;
 	gap: 1.5rem;
 }
 
@@ -407,6 +594,7 @@
 .wpss-request-card__actions {
 	display: flex;
 	align-items: center;
+	flex-flow: row wrap;
 	gap: 1rem;
 }
 
@@ -788,7 +976,7 @@
    Archive Sidebar (Filter)
    ========================================================================== */
 
-.wpss-request-sidebar.wpss-archive-sidebar {
+.wpss-request-sidebar.wpss-request-sidebar {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -802,8 +990,52 @@
 	box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
 }
 
+.admin-bar .wpss-request-sidebar.wpss-request-sidebar {
+	top: 32px;
+}
+
+@media (max-width: 782px) {
+	.admin-bar .wpss-request-sidebar.wpss-request-sidebar {
+		top: 46px;
+	}
+}
+
 .wpss-request-sidebar.is-open {
 	transform: translateX(0);
+}
+
+
+.wpss-sidebar-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--wpss-border);
+	position: sticky;
+	top: 0;
+	background: var(--wpss-white);
+	z-index: 1;
+}
+
+.wpss-sidebar-header h3 {
+	margin: 0;
+	font-size: 1.125rem;
+}
+
+.wpss-sidebar-close {
+	background: none !important;
+	border: none !important;
+	font-size: 1.5rem !important;
+	cursor: pointer;
+	color: var(--wpss-text-light);
+	padding: 0 !important;
+	line-height: 1;
+}
+
+.wpss-sidebar-close:hover {
+	color: var(--wpss-text);
+	background: none !important;
+	border: none !important;
 }
 
 /* ==========================================================================
@@ -829,7 +1061,7 @@
 	}
 
 	/* Sidebar in left column */
-	.wpss-request-sidebar.wpss-archive-sidebar,
+	.wpss-request-sidebar.wpss-request-sidebar,
 	.wpss-request-sidebar#wpss-request-sidebar {
 		position: sticky;
 		top: var(--wpss-sticky-top, 2rem);
@@ -867,7 +1099,7 @@
 		grid-template-columns: 1fr 340px;
 	}
 
-	.wpss-request-sidebar:not(.wpss-archive-sidebar) {
+	.wpss-request-sidebar:not(.wpss-request-sidebar) {
 		position: sticky;
 		top: var(--wpss-sticky-top, 2rem);
 		height: fit-content;
@@ -900,5 +1132,26 @@
 
 	.wpss-proposal-actions {
 		flex-wrap: wrap;
+	}
+}
+
+@media (max-width: 640px) {
+	.wpss-filters-bar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-filters-bar-controls {
+		flex-direction: column;
+		margin-left: 0;
+	}
+
+	.wpss-category-filter,
+	.wpss-sort-filter {
+		width: 100%;
+	}
+
+	.wpss-services-grid {
+		grid-template-columns: 1fr;
 	}
 }
