@@ -945,6 +945,36 @@ function wpss_get_create_service_url(): string {
 }
 
 /**
+ * Get the Become a Vendor URL.
+ *
+ * Returns the URL to the vendor registration page or dashboard with become-vendor section.
+ *
+ * @since 1.1.0
+ *
+ * @return string Become vendor URL.
+ */
+function wpss_get_become_vendor_url(): string {
+	// First check for a dedicated vendor registration page.
+	$vendor_page_url = wpss_get_page_url( 'vendor_registration' );
+	if ( $vendor_page_url ) {
+		return $vendor_page_url;
+	}
+
+	// Fall back to dashboard with become-vendor section.
+	$dashboard_url = wpss_get_page_url( 'dashboard' );
+	if ( $dashboard_url ) {
+		return add_query_arg( 'section', 'become-vendor', $dashboard_url );
+	}
+
+	// Last resort: WooCommerce my-account.
+	if ( function_exists( 'wc_get_account_endpoint_url' ) ) {
+		return wc_get_account_endpoint_url( 'become-vendor' );
+	}
+
+	return home_url( '/become-vendor/' );
+}
+
+/**
  * Get order status labels array.
  *
  * Alias for wpss_get_order_statuses() for backward compatibility.
