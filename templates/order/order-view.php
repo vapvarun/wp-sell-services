@@ -196,7 +196,7 @@ do_action( 'wpss_before_order_view', $order );
 				}
 			}
 
-			if ( in_array( $order->status, array( 'in_progress', 'pending_approval' ), true ) ) {
+			if ( in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true ) ) {
 				$actions['dispute'] = array(
 					'label' => __( 'Open Dispute', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
@@ -901,7 +901,7 @@ $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 're
 
 // Check if review modal should be available.
 $can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
-$can_open_dispute      = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval' ), true );
+$can_open_dispute      = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true );
 $can_request_revision  = $is_customer && 'pending_approval' === $order->status;
 ?>
 
