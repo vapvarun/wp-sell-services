@@ -318,6 +318,8 @@ class OrderWorkflowManager {
 			}
 
 			if ( $should_send ) {
+				$reminder_num = $reminders_sent + 1;
+
 				// Send notification to buyer.
 				$this->notification_service->create(
 					(int) $order->customer_id,
@@ -326,6 +328,9 @@ class OrderWorkflowManager {
 					$message,
 					[ 'order_id' => $order->id ]
 				);
+
+				// Trigger email via EmailService.
+				do_action( 'wpss_send_requirements_reminder_email', (int) $order->id, $reminder_num, $message );
 
 				// Update reminder count.
 				update_option( $reminder_key, $reminders_sent + 1, false );

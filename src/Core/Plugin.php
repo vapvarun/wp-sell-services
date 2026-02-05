@@ -897,10 +897,12 @@ final class Plugin {
 	 */
 	private function define_cron_hooks(): void {
 		// Initialize OrderWorkflowManager for cron and status change handling.
-		new \WPSellServices\Services\OrderWorkflowManager(
-			new \WPSellServices\Services\OrderService(),
-			new \WPSellServices\Services\NotificationService()
-		);
+		$workflow_manager = new \WPSellServices\Services\OrderWorkflowManager();
+		$workflow_manager->init();
+
+		// Initialize EmailService for standalone email handling.
+		$email_service = new \WPSellServices\Services\EmailService();
+		$email_service->init();
 
 		// Auto-withdrawal processing.
 		$this->loader->add_action(
