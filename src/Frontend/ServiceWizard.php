@@ -1247,6 +1247,20 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'You must be an approved vendor to create services.', 'wp-sell-services' ) ) );
 		}
 
+		// Check vendor status - suspended or pending vendors cannot create services.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
+			if ( $vendor_profile && ! $vendor_profile->can_create_services() ) {
+				if ( $vendor_profile->is_suspended() ) {
+					wp_send_json_error( array( 'message' => __( 'Your vendor account is suspended. You cannot create services.', 'wp-sell-services' ) ) );
+				} elseif ( $vendor_profile->is_pending() ) {
+					wp_send_json_error( array( 'message' => __( 'Your vendor account is pending approval. You cannot create services yet.', 'wp-sell-services' ) ) );
+				} else {
+					wp_send_json_error( array( 'message' => __( 'You are not authorized to create services.', 'wp-sell-services' ) ) );
+				}
+			}
+		}
+
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized after decode.
 		$raw_data = isset( $_POST['data'] ) ? wp_unslash( $_POST['data'] ) : '';
@@ -1332,6 +1346,20 @@ class ServiceWizard {
 		$vendor_service = new \WPSellServices\Services\VendorService();
 		if ( ! $vendor_service->is_vendor( $user_id ) && ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'You must be an approved vendor to create services.', 'wp-sell-services' ) ) );
+		}
+
+		// Check vendor status - suspended or pending vendors cannot create services.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
+			if ( $vendor_profile && ! $vendor_profile->can_create_services() ) {
+				if ( $vendor_profile->is_suspended() ) {
+					wp_send_json_error( array( 'message' => __( 'Your vendor account is suspended. You cannot create services.', 'wp-sell-services' ) ) );
+				} elseif ( $vendor_profile->is_pending() ) {
+					wp_send_json_error( array( 'message' => __( 'Your vendor account is pending approval. You cannot create services yet.', 'wp-sell-services' ) ) );
+				} else {
+					wp_send_json_error( array( 'message' => __( 'You are not authorized to create services.', 'wp-sell-services' ) ) );
+				}
+			}
 		}
 
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
@@ -1730,10 +1758,6 @@ class ServiceWizard {
 		update_post_meta( $service_id, '_wpss_starting_price', $data['packages']['basic']['price'] ?? 0 );
 
 		// Save gallery images.
-		if ( ! empty( $data['gallery']['main']['id'] ) ) {
-			set_post_thumbnail( $service_id, $data['gallery']['main']['id'] );
-		}
-
 		$gallery_ids = array();
 		foreach ( $data['gallery']['images'] as $image ) {
 			$gallery_ids[] = $image['id'];
@@ -1744,9 +1768,17 @@ class ServiceWizard {
 			'_wpss_gallery',
 			array(
 				'images' => $gallery_ids,
-				'video'  => $data['gallery']['video'],
+				'video'  => $data['gallery']['video'] ?? '',
 			)
 		);
+
+		// Set featured image from main gallery image, or fallback to first gallery image.
+		if ( ! empty( $data['gallery']['main']['id'] ) ) {
+			set_post_thumbnail( $service_id, $data['gallery']['main']['id'] );
+		} elseif ( ! empty( $gallery_ids[0] ) ) {
+			// Fallback: use first gallery image as featured image.
+			set_post_thumbnail( $service_id, $gallery_ids[0] );
+		}
 
 		// Save requirements.
 		update_post_meta( $service_id, '_wpss_requirements', $data['requirements'] );

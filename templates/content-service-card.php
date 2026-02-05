@@ -54,19 +54,25 @@ do_action( 'wpss_before_service_card', $service_id );
 	<a href="<?php the_permalink(); ?>" class="wpss-service-card__link">
 		<div class="wpss-service-card__media">
 			<?php
-			// Fallback to first gallery image if no featured image.
-			if ( ! has_post_thumbnail() ) {
-				$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
-				if ( is_array( $gallery_raw ) && isset( $gallery_raw['images'] ) && ! empty( $gallery_raw['images'][0] ) ) {
-					set_post_thumbnail( $service_id, absint( $gallery_raw['images'][0] ) );
-				}
-			}
-
 			// Get thumbnail size via filter.
 			$thumbnail_size = apply_filters( 'wpss_service_card_thumbnail_size', 'medium_large', $service_id );
+
+			// Check for featured image first.
+			$has_image       = has_post_thumbnail();
+			$gallery_image   = null;
+
+			// Fallback to first gallery image if no featured image.
+			if ( ! $has_image ) {
+				$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
+				if ( is_array( $gallery_raw ) && isset( $gallery_raw['images'] ) && ! empty( $gallery_raw['images'][0] ) ) {
+					$gallery_image = absint( $gallery_raw['images'][0] );
+				}
+			}
 			?>
-			<?php if ( has_post_thumbnail() ) : ?>
+			<?php if ( $has_image ) : ?>
 				<?php the_post_thumbnail( $thumbnail_size, array( 'class' => 'wpss-service-card__image' ) ); ?>
+			<?php elseif ( $gallery_image ) : ?>
+				<?php echo wp_get_attachment_image( $gallery_image, $thumbnail_size, false, array( 'class' => 'wpss-service-card__image' ) ); ?>
 			<?php else : ?>
 				<div class="wpss-service-card__placeholder">
 					<svg class="wpss-service-card__placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

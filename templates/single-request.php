@@ -275,7 +275,7 @@ do_action( 'wpss_before_single_request', $request_id );
 
 											<div class="wpss-proposal-meta">
 												<div class="wpss-proposal-price">
-													<?php echo esc_html( wpss_format_price( $proposal->price ) ); ?>
+													<?php echo esc_html( wpss_format_price( $proposal->price ?? 0.0 ) ); ?>
 												</div>
 												<div class="wpss-proposal-delivery">
 													<?php

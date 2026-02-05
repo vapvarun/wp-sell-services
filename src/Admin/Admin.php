@@ -900,11 +900,15 @@ class Admin {
 		$vendor  = get_userdata( $order->vendor_id );
 		$buyer   = get_userdata( $order->customer_id );
 
-		// Get messages.
+		// Get messages via the messages table joined with conversations.
+		$messages_table = $wpdb->prefix . 'wpss_messages';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$messages = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$conversations_table} WHERE order_id = %d ORDER BY created_at ASC",
+				"SELECT m.* FROM {$messages_table} m
+				 INNER JOIN {$conversations_table} c ON m.conversation_id = c.id
+				 WHERE c.order_id = %d
+				 ORDER BY m.created_at ASC",
 				$order_id
 			)
 		);
@@ -1046,7 +1050,7 @@ class Admin {
 							<?php if ( ! empty( $messages ) ) : ?>
 								<div class="wpss-order-messages" style="max-height: 400px; overflow-y: auto;">
 									<?php foreach ( $messages as $message ) : ?>
-										<?php $msg_user = get_userdata( $message->sender_id ); ?>
+										<?php $msg_user = isset( $message->sender_id ) ? get_userdata( $message->sender_id ) : null; ?>
 										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
 											<div style="margin-bottom: 5px;">
 												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
@@ -1054,7 +1058,7 @@ class Admin {
 													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
 												</span>
 											</div>
-											<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
+											<div><?php echo wp_kses_post( wpautop( $message->content ?? '' ) ); ?></div>
 											<?php if ( ! empty( $message->attachments ) ) : ?>
 												<div style="margin-top: 10px; color: #666;">
 													<span class="dashicons dashicons-paperclip"></span>

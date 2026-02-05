@@ -491,7 +491,8 @@ class OrderWorkflowManager {
 				$admin_email = get_option( 'admin_email' );
 				wp_mail(
 					$admin_email,
-					__( '[WP Sell Services] New Dispute Opened', 'wp-sell-services' ),
+					/* translators: %s: platform name */
+					sprintf( __( '[%s] New Dispute Opened', 'wp-sell-services' ), wpss_get_platform_name() ),
 					sprintf(
 						/* translators: %d: order ID */
 						__( 'A dispute has been opened for Order #%d. Please review in the admin panel.', 'wp-sell-services' ),

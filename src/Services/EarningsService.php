@@ -322,7 +322,8 @@ class EarningsService {
 
 		wp_mail(
 			$admin_email,
-			__( '[WP Sell Services] New Withdrawal Request', 'wp-sell-services' ),
+			/* translators: %s: platform name */
+			sprintf( __( '[%s] New Withdrawal Request', 'wp-sell-services' ), wpss_get_platform_name() ),
 			sprintf(
 				/* translators: 1: vendor name, 2: amount */
 				__( 'Vendor %1$s has requested a withdrawal of %2$s. Please review in the admin panel.', 'wp-sell-services' ),
@@ -841,7 +842,8 @@ class EarningsService {
 
 		wp_mail(
 			$admin_email,
-			__( '[WP Sell Services] Auto Withdrawal Request', 'wp-sell-services' ),
+			/* translators: %s: platform name */
+			sprintf( __( '[%s] Auto Withdrawal Request', 'wp-sell-services' ), wpss_get_platform_name() ),
 			sprintf(
 				/* translators: 1: vendor name, 2: amount */
 				__( 'An automatic withdrawal of %2$s has been created for vendor %1$s. Please review in the admin panel.', 'wp-sell-services' ),

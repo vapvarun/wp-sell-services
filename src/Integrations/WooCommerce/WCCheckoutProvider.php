@@ -473,16 +473,19 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 	/**
 	 * Enforce quantity limits for services.
 	 *
-	 * @param int $max_qty    Current max quantity.
-	 * @param int $product_id Product ID.
+	 * WooCommerce's woocommerce_quantity_input_max filter passes the product object
+	 * as the second parameter, not a product ID.
+	 *
+	 * @param mixed            $max_qty Current max quantity.
+	 * @param \WC_Product|null $product Product object or null.
 	 * @return int
 	 */
-	public function filter_quantity_max( int $max_qty, int $product_id ): int {
-		if ( $this->is_service_product( $product_id ) ) {
+	public function filter_quantity_max( $max_qty, $product ): int {
+		if ( $product instanceof \WC_Product && $this->is_service_product( $product->get_id() ) ) {
 			return 1;
 		}
 
-		return $max_qty;
+		return (int) $max_qty;
 	}
 
 	/**

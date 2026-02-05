@@ -180,6 +180,13 @@ class VendorProfile {
 	public bool $is_available = true;
 
 	/**
+	 * Vendor account status (active, pending, suspended).
+	 *
+	 * @var string
+	 */
+	public string $status = 'active';
+
+	/**
 	 * Vacation mode end date.
 	 *
 	 * @var \DateTimeImmutable|null
@@ -246,6 +253,7 @@ class VendorProfile {
 		$profile->delivery_rate    = (float) ( $row->on_time_delivery_rate ?? 0 ); // DB column is 'on_time_delivery_rate'.
 		$profile->is_verified      = isset( $row->verification_tier ) && 'basic' !== $row->verification_tier;
 		$profile->is_available     = (bool) ( $row->is_available ?? true );
+		$profile->status           = $row->status ?? 'active';
 		$profile->social_links     = isset( $row->social_links ) && $row->social_links ? json_decode( $row->social_links, true ) : array();
 
 		// Vacation mode - use vacation_mode flag (no vacation_until column).
@@ -403,11 +411,51 @@ class VendorProfile {
 	}
 
 	/**
+	 * Check if vendor account is active (not pending or suspended).
+	 *
+	 * @return bool
+	 */
+	public function is_active(): bool {
+		return 'active' === $this->status;
+	}
+
+	/**
+	 * Check if vendor is suspended.
+	 *
+	 * @return bool
+	 */
+	public function is_suspended(): bool {
+		return 'suspended' === $this->status;
+	}
+
+	/**
+	 * Check if vendor is pending approval.
+	 *
+	 * @return bool
+	 */
+	public function is_pending(): bool {
+		return 'pending' === $this->status;
+	}
+
+	/**
+	 * Check if vendor can create new services.
+	 *
+	 * Vendors must have an active account to create services.
+	 *
+	 * @return bool
+	 */
+	public function can_create_services(): bool {
+		return $this->is_active();
+	}
+
+	/**
 	 * Check if vendor can accept new orders.
+	 *
+	 * Requires active status, available flag, and not on vacation.
 	 *
 	 * @return bool
 	 */
 	public function can_accept_orders(): bool {
-		return $this->is_available && ! $this->is_on_vacation();
+		return $this->is_active() && $this->is_available && ! $this->is_on_vacation();
 	}
 }
