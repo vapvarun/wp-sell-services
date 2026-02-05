@@ -381,11 +381,11 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 	/**
 	 * Get package name.
 	 *
-	 * @param int $product_id Product ID.
-	 * @param int $package_id Package ID.
+	 * @param int        $product_id    Product ID.
+	 * @param int|string $package_id    Package ID (index) or slug (basic/standard/premium).
 	 * @return string
 	 */
-	private function get_package_name( int $product_id, int $package_id ): string {
+	private function get_package_name( int $product_id, $package_id ): string {
 		$service_id = get_post_meta( $product_id, '_wpss_service_id', true );
 
 		if ( ! $service_id ) {
@@ -394,7 +394,47 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 
 		$packages = get_post_meta( (int) $service_id, '_wpss_packages', true ) ?: array();
 
-		// Convert to indexed array and match by position (package_id is the index).
+		if ( empty( $packages ) ) {
+			return '';
+		}
+
+		// Handle string slug (basic, standard, premium).
+		if ( is_string( $package_id ) && ! is_numeric( $package_id ) ) {
+			// Map common slugs to indexes.
+			$slug_map = array(
+				'basic'    => 0,
+				'standard' => 1,
+				'premium'  => 2,
+			);
+
+			$slug = strtolower( $package_id );
+
+			// First try the slug map.
+			if ( isset( $slug_map[ $slug ] ) ) {
+				$package_id = $slug_map[ $slug ];
+			} else {
+				// Search packages by slug or name.
+				foreach ( $packages as $index => $pkg ) {
+					$pkg_slug = $pkg['slug'] ?? sanitize_title( $pkg['name'] ?? '' );
+					$pkg_name = strtolower( $pkg['name'] ?? '' );
+
+					if ( $pkg_slug === $slug || $pkg_name === $slug ) {
+						$package_id = $index;
+						break;
+					}
+				}
+
+				// If still a string, it wasn't found.
+				if ( is_string( $package_id ) ) {
+					return '';
+				}
+			}
+		}
+
+		// Ensure we have a valid integer index.
+		$package_id = (int) $package_id;
+
+		// Convert to indexed array and match by position.
 		$packages = array_values( $packages );
 
 		return $packages[ $package_id ]['name'] ?? '';
