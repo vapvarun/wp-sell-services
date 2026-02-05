@@ -473,6 +473,7 @@
 .wpss-description-content {
 	color: var(--wpss-text);
 	line-height: 1.7;
+	word-break: break-word;
 }
 
 .wpss-description-content p {
