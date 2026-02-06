@@ -250,6 +250,9 @@
                         // Trigger WooCommerce checkout update.
                         $(document.body).trigger('update_checkout');
                     }
+                },
+                error: function() {
+                    console.warn('Failed to update cart item.');
                 }
             });
 
