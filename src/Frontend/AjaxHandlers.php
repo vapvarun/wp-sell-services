@@ -2444,7 +2444,12 @@ class AjaxHandlers {
 	public function get_dashboard_tab(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$tab     = sanitize_key( $_POST['tab'] ?? 'overview' );
+		$allowed_tabs = array( 'overview', 'orders', 'sales', 'services', 'requests', 'messages', 'earnings', 'profile', 'create', 'create-request' );
+		$tab          = sanitize_key( $_POST['tab'] ?? 'overview' );
+		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
+		}
+
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {
@@ -2759,7 +2764,11 @@ class AjaxHandlers {
 	public function filter_dashboard(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
+		$allowed_tabs = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
+		$tab          = sanitize_key( $_POST['tab'] ?? 'orders' );
+		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
+		}
 		$filter  = sanitize_key( $_POST['filter'] ?? 'all' );
 		$user_id = get_current_user_id();
 
@@ -2843,7 +2852,11 @@ class AjaxHandlers {
 	public function search_dashboard(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
+		$allowed_tabs = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
+		$tab          = sanitize_key( $_POST['tab'] ?? 'orders' );
+		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
+		}
 		$query   = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );
 		$user_id = get_current_user_id();
 
@@ -2872,7 +2885,11 @@ class AjaxHandlers {
 	public function paginate_dashboard(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
+		$allowed_tabs = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
+		$tab          = sanitize_key( $_POST['tab'] ?? 'orders' );
+		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
+		}
 		$page    = absint( $_POST['page'] ?? 1 );
 		$user_id = get_current_user_id();
 
@@ -2901,7 +2918,11 @@ class AjaxHandlers {
 	public function export_data(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$type    = sanitize_key( $_POST['type'] ?? 'orders' );
+		$allowed_types = array( 'orders', 'sales', 'earnings' );
+		$type          = sanitize_key( $_POST['type'] ?? 'orders' );
+		if ( ! in_array( $type, $allowed_types, true ) ) {
+			wp_die( esc_html__( 'Invalid export type.', 'wp-sell-services' ) );
+		}
 		$tab     = sanitize_key( $_POST['tab'] ?? 'orders' );
 		$range   = sanitize_key( $_POST['range'] ?? 'month' );
 		$user_id = get_current_user_id();
@@ -2924,7 +2945,7 @@ class AjaxHandlers {
 		$filename = "wpss-{$type}-export-" . gmdate( 'Y-m-d' ) . '.csv';
 
 		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename=' . $filename );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
 		header( 'Pragma: no-cache' );
 		header( 'Expires: 0' );
 

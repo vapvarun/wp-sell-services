@@ -650,7 +650,7 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
 		}
 
-		$order_id = $wpdb->insert_id;
+		$order_id = (int) $wpdb->insert_id;
 
 		// Add admin note if provided.
 		if ( $notes ) {

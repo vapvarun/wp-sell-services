@@ -377,7 +377,7 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		$review_id = $wpdb->insert_id;
+		$review_id = (int) $wpdb->insert_id;
 
 		// Update service rating cache.
 		$this->update_rating_cache( (int) $order->service_id, (int) $order->vendor_id );

@@ -49,9 +49,11 @@ $status_label     = $statuses[ $dispute->status ] ?? $dispute->status;
 $can_add_evidence = in_array( $dispute->status, array( DisputeService::STATUS_OPEN, DisputeService::STATUS_PENDING ), true );
 
 // Get participants.
-$customer = get_userdata( $order->customer_id );
-$vendor   = get_userdata( $order->vendor_id );
-$opener   = get_userdata( $dispute->opened_by );
+$customer      = get_userdata( $order->customer_id );
+$vendor        = get_userdata( $order->vendor_id );
+$opener        = get_userdata( $dispute->opened_by );
+$customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-sell-services' );
+$vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
 
 // Back link.
 $disputes_url = wc_get_endpoint_url( 'service-disputes', '', wc_get_page_permalink( 'myaccount' ) );
@@ -396,16 +398,16 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 				<h4 class="wpss-sidebar-title"><?php esc_html_e( 'Participants', 'wp-sell-services' ); ?></h4>
 				<div class="wpss-participants-list">
 					<div class="wpss-participant">
-						<?php echo get_avatar( $customer->ID, 40 ); ?>
+						<?php echo get_avatar( $customer ? $customer->ID : 0, 40 ); ?>
 						<div class="wpss-participant-info">
-							<span class="wpss-participant-name"><?php echo esc_html( $customer->display_name ); ?></span>
+							<span class="wpss-participant-name"><?php echo esc_html( $customer_name ); ?></span>
 							<span class="wpss-participant-role"><?php esc_html_e( 'Buyer', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 					<div class="wpss-participant">
-						<?php echo get_avatar( $vendor->ID, 40 ); ?>
+						<?php echo get_avatar( $vendor ? $vendor->ID : 0, 40 ); ?>
 						<div class="wpss-participant-info">
-							<span class="wpss-participant-name"><?php echo esc_html( $vendor->display_name ); ?></span>
+							<span class="wpss-participant-name"><?php echo esc_html( $vendor_name ); ?></span>
 							<span class="wpss-participant-role"><?php esc_html_e( 'Seller', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>

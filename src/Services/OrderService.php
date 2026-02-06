@@ -334,7 +334,7 @@ class OrderService {
 		$table = $wpdb->prefix . 'wpss_orders';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
+		$deadline_result = $wpdb->update(
 			$table,
 			array(
 				'delivery_deadline' => $deadline->format( 'Y-m-d H:i:s' ),
@@ -342,6 +342,11 @@ class OrderService {
 			),
 			array( 'id' => $order_id )
 		);
+
+		if ( false === $deadline_result ) {
+			wpss_log( "Failed to set deadline for order {$order_id}: " . $wpdb->last_error, 'error' );
+			return false;
+		}
 
 		return $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS );
 	}

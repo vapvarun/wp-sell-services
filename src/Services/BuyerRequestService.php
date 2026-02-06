@@ -90,6 +90,7 @@ class BuyerRequestService {
 		$post_id = wp_insert_post( $post_data, true );
 
 		if ( is_wp_error( $post_id ) ) {
+			wpss_log( 'Failed to create buyer request: ' . $post_id->get_error_message(), 'error' );
 			return false;
 		}
 
@@ -140,6 +141,7 @@ class BuyerRequestService {
 		if ( count( $post_data ) > 1 ) {
 			$result = wp_update_post( $post_data, true );
 			if ( is_wp_error( $result ) ) {
+				wpss_log( "Failed to update buyer request {$request_id}: " . $result->get_error_message(), 'error' );
 				return false;
 			}
 		}
@@ -638,7 +640,7 @@ class BuyerRequestService {
 			);
 		}
 
-		$order_id = $wpdb->insert_id;
+		$order_id = (int) $wpdb->insert_id;
 
 		// Accept the proposal.
 		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );
@@ -650,7 +652,7 @@ class BuyerRequestService {
 		$this->mark_hired( $request_id, $proposal->vendor_id, $proposal_id );
 
 		// Store request details in order meta for reference.
-		$wpdb->insert(
+		$req_result = $wpdb->insert(
 			$wpdb->prefix . 'wpss_order_requirements',
 			array(
 				'order_id'     => $order_id,
@@ -666,6 +668,10 @@ class BuyerRequestService {
 			),
 			array( '%d', '%s', '%s', '%s' )
 		);
+
+		if ( false === $req_result ) {
+			wpss_log( "Failed to save requirements for order {$order_id}: " . $wpdb->last_error, 'error' );
+		}
 
 		// Create conversation for the order.
 		$conversation_service = new ConversationService();

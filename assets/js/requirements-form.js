@@ -10,6 +10,10 @@
 (function($) {
 	'use strict';
 
+	if (typeof wpss_ajax === 'undefined') {
+		return;
+	}
+
 	/**
 	 * Initialize requirements forms.
 	 */

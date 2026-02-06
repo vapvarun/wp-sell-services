@@ -315,7 +315,8 @@
                     valid = false;
                     $field.addClass('wpss-field-invalid');
 
-                    const label = $field.closest('.wpss-form-field').find('label').text();
+                    const $wrapper = $field.closest('.wpss-form-field');
+                    const label = $wrapper.length ? $wrapper.find('label').text() : ($field.attr('name') || 'Field');
                     errors.push(label + ' is required.');
 
                     $field.after('<span class="wpss-field-error">This field is required.</span>');
@@ -488,6 +489,9 @@
                     action: 'wpss_remove_requirement_file',
                     file_id: fileId,
                     nonce: wpssCheckout.nonce
+                },
+                error: function() {
+                    console.warn('Failed to remove file from server:', fileId);
                 }
             });
 

@@ -314,7 +314,7 @@ class EarningsService {
 
 		$wpdb->query( 'COMMIT' );
 
-		$withdrawal_id = $wpdb->insert_id;
+		$withdrawal_id = (int) $wpdb->insert_id;
 
 		// Notify admin.
 		$admin_email = get_option( 'admin_email' );
@@ -820,7 +820,7 @@ class EarningsService {
 			);
 		}
 
-		$withdrawal_id = $wpdb->insert_id;
+		$withdrawal_id = (int) $wpdb->insert_id;
 
 		// Notify vendor.
 		$notification_service = new NotificationService();

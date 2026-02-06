@@ -63,6 +63,7 @@ class NotificationService {
 		);
 
 		if ( ! $result ) {
+			wpss_log( "Failed to create notification (type: {$type}) for user {$user_id}: " . $wpdb->last_error, 'error' );
 			return false;
 		}
 

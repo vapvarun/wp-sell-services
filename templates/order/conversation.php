@@ -38,6 +38,8 @@ $is_customer = $is_customer ?? ( (int) $order->customer_id === $user_id );
 $vendor     = get_userdata( $order->vendor_id );
 $customer   = get_userdata( $order->customer_id );
 $other_user = $is_vendor ? $customer : $vendor;
+$other_name = $other_user ? $other_user->display_name : __( 'Deleted User', 'wp-sell-services' );
+$other_id   = $other_user ? $other_user->ID : 0;
 
 // Get conversation for this order.
 global $wpdb;
@@ -110,10 +112,10 @@ do_action( 'wpss_before_conversation', $order );
 	<div class="wpss-messaging__header">
 		<div class="wpss-messaging__header-info">
 			<div class="wpss-messaging__header-avatar">
-				<?php echo get_avatar( $other_user->ID, 40 ); ?>
+				<?php echo get_avatar( $other_id, 40 ); ?>
 			</div>
 			<div class="wpss-messaging__header-details">
-				<span class="wpss-messaging__header-name"><?php echo esc_html( $other_user->display_name ); ?></span>
+				<span class="wpss-messaging__header-name"><?php echo esc_html( $other_name ); ?></span>
 				<span class="wpss-messaging__header-status">
 					<?php echo $is_vendor ? esc_html__( 'Buyer', 'wp-sell-services' ) : esc_html__( 'Seller', 'wp-sell-services' ); ?>
 				</span>

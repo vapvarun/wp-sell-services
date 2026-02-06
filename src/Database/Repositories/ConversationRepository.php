@@ -235,13 +235,16 @@ class ConversationRepository extends AbstractRepository {
 			$read_by                      = json_decode( $message->read_by ?: '{}', true );
 			$read_by[ (string) $user_id ] = current_time( 'mysql' );
 
-			$this->wpdb->update(
+			$result = $this->wpdb->update(
 				$messages_table,
 				array( 'read_by' => wp_json_encode( $read_by ) ),
 				array( 'id' => $message->id ),
 				array( '%s' ),
 				array( '%d' )
 			);
+			if ( false === $result ) {
+				wpss_log( "Failed to mark message {$message->id} as read: " . $this->wpdb->last_error, 'error' );
+			}
 			++$count;
 		}
 
@@ -249,13 +252,16 @@ class ConversationRepository extends AbstractRepository {
 		$unread_counts = json_decode( $conversation->unread_counts ?: '{}', true );
 		if ( isset( $unread_counts[ $user_id ] ) ) {
 			$unread_counts[ $user_id ] = 0;
-			$this->wpdb->update(
+			$result = $this->wpdb->update(
 				$this->table,
 				array( 'unread_counts' => wp_json_encode( $unread_counts ) ),
 				array( 'id' => $conversation->id ),
 				array( '%s' ),
 				array( '%d' )
 			);
+			if ( false === $result ) {
+				wpss_log( "Failed to reset unread count for conversation {$conversation->id}: " . $this->wpdb->last_error, 'error' );
+			}
 		}
 
 		return $count;
@@ -485,7 +491,7 @@ class ConversationRepository extends AbstractRepository {
 			return false;
 		}
 
-		$message_id = $this->wpdb->insert_id;
+		$message_id = (int) $this->wpdb->insert_id;
 
 		// Update conversation stats.
 		$conversation = $this->wpdb->get_row(
@@ -506,7 +512,7 @@ class ConversationRepository extends AbstractRepository {
 				}
 			}
 
-			$this->wpdb->update(
+			$stats_result = $this->wpdb->update(
 				$this->table,
 				array(
 					'message_count'   => $this->wpdb->get_var(
@@ -523,6 +529,9 @@ class ConversationRepository extends AbstractRepository {
 				array( '%d', '%s', '%s', '%s' ),
 				array( '%d' )
 			);
+			if ( false === $stats_result ) {
+				wpss_log( "Failed to update conversation {$conversation_id} stats: " . $this->wpdb->last_error, 'error' );
+			}
 		}
 
 		return $message_id;

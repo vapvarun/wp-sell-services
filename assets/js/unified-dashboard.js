@@ -10,6 +10,10 @@
 (function ($) {
 	'use strict';
 
+	if (typeof wpssUnifiedDashboard === 'undefined') {
+		return;
+	}
+
 	const UnifiedDashboard = {
 		/**
 		 * Initialize the dashboard.

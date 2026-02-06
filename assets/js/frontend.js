@@ -626,13 +626,6 @@
 			}, 5000);
 		});
 
-		// Deliver button click.
-		$(document).on('click', '.wpss-deliver-btn', function(e) {
-			e.preventDefault();
-			const orderId = $(this).data('order');
-			WPSS.showDeliverModal(orderId);
-		});
-
 		// File input preview for delivery modal.
 		$(document).on('change', '#deliver-files', function() {
 			const files = this.files;

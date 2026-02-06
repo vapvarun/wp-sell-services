@@ -122,7 +122,7 @@ class ProposalService {
 		$result = $wpdb->insert( $this->table, $proposal_data );
 
 		if ( $result ) {
-			$proposal_id = $wpdb->insert_id;
+			$proposal_id = (int) $wpdb->insert_id;
 
 			/**
 			 * Fires when a proposal is submitted.

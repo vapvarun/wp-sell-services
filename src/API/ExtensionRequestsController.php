@@ -171,7 +171,7 @@ class ExtensionRequestsController extends RestController {
 			array( '%d', '%d', '%d', '%s', '%s', '%s' )
 		);
 
-		$request_id = $wpdb->insert_id;
+		$request_id = (int) $wpdb->insert_id;
 
 		if ( ! $request_id ) {
 			return new WP_Error( 'create_failed', __( 'Failed to create extension request.', 'wp-sell-services' ), array( 'status' => 500 ) );

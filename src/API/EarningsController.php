@@ -363,7 +363,7 @@ class EarningsController extends RestController {
 			array( '%d', '%f', '%s', '%s', '%s', '%s' )
 		);
 
-		$withdrawal_id = $wpdb->insert_id;
+		$withdrawal_id = (int) $wpdb->insert_id;
 
 		if ( ! $withdrawal_id ) {
 			$wpdb->query( 'ROLLBACK' );

@@ -13,6 +13,9 @@
 defined( 'ABSPATH' ) || exit;
 
 $user           = get_userdata( $user_id );
+if ( ! $user ) {
+	return;
+}
 $vendor_profile = $is_vendor ? $vendor_service->get_profile( $user_id ) : null;
 
 /**

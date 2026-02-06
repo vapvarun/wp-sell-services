@@ -253,7 +253,7 @@ class PortfolioController extends RestController {
 			array( '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s' )
 		);
 
-		$item_id = $wpdb->insert_id;
+		$item_id = (int) $wpdb->insert_id;
 
 		if ( ! $item_id ) {
 			return new WP_Error( 'create_failed', __( 'Failed to create portfolio item.', 'wp-sell-services' ), array( 'status' => 500 ) );

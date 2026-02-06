@@ -173,7 +173,7 @@ class DisputeWorkflowManager {
 			];
 		}
 
-		$message_id = $wpdb->insert_id;
+		$message_id = (int) $wpdb->insert_id;
 
 		// Update dispute response deadline.
 		$this->update_response_deadline( $dispute_id, $user_id );

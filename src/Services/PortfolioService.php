@@ -182,7 +182,7 @@ class PortfolioService {
 			];
 		}
 
-		$item_id = $wpdb->insert_id;
+		$item_id = (int) $wpdb->insert_id;
 
 		/**
 		 * Fires when portfolio item is created.

@@ -115,7 +115,7 @@ class DisputeService {
 		$result = $wpdb->insert( $this->table, $data );
 
 		if ( $result ) {
-			$dispute_id = $wpdb->insert_id;
+			$dispute_id = (int) $wpdb->insert_id;
 
 			// Update order status.
 			$this->order_repo->update( $order_id, array( 'status' => 'disputed' ) );

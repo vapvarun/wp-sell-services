@@ -198,7 +198,7 @@ class ExtensionRequestService {
 			];
 		}
 
-		$request_id = $wpdb->insert_id;
+		$request_id = (int) $wpdb->insert_id;
 
 		// Determine who to notify.
 		$is_vendor_request = $requested_by === $order->vendor_id;
