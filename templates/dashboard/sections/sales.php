@@ -84,10 +84,16 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		<div class="wpss-orders-list">
 			<?php foreach ( $orders as $order_item ) : ?>
 				<?php
-				$service       = get_post( $order_item->service_id );
+				$service       = $order_item->service_id ? get_post( $order_item->service_id ) : null;
 				$customer      = get_userdata( $order_item->customer_id );
 				$status_class  = 'wpss-status--' . sanitize_html_class( $order_item->status );
 				$status_labels = wpss_get_order_status_labels();
+
+				// For request-based orders, use the request title.
+				if ( ! $service && 'request' === $order_item->platform && $order_item->platform_order_id ) {
+					$request_post = get_post( $order_item->platform_order_id );
+				}
+				$order_title = $service ? $service->post_title : ( ! empty( $request_post ) ? $request_post->post_title : __( 'Deleted Service', 'wp-sell-services' ) );
 				?>
 				<div class="wpss-order-card">
 					<div class="wpss-order-card__main">
@@ -98,7 +104,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 						<?php endif; ?>
 						<div class="wpss-order-card__info">
 							<h4 class="wpss-order-card__title">
-								<?php echo esc_html( $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ) ); ?>
+								<?php echo esc_html( $order_title ); ?>
 							</h4>
 							<p class="wpss-order-card__meta">
 								<?php

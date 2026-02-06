@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin\Tables;
 
+use WPSellServices\Models\Dispute;
+
 // Load WP_List_Table if not loaded.
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -177,15 +179,9 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return string
 	 */
 	public function column_reason( $item ): string {
-		$reasons = array(
-			'quality'       => __( 'Quality Issues', 'wp-sell-services' ),
-			'delivery'      => __( 'Late Delivery', 'wp-sell-services' ),
-			'communication' => __( 'Communication Issues', 'wp-sell-services' ),
-			'not_delivered' => __( 'Not Delivered', 'wp-sell-services' ),
-			'other'         => __( 'Other', 'wp-sell-services' ),
-		);
+		$reasons = Dispute::get_reasons();
 
-		return esc_html( $reasons[ $item->reason ] ?? $item->reason );
+		return esc_html( $reasons[ $item->reason ] ?? ucwords( str_replace( '_', ' ', $item->reason ) ) );
 	}
 
 	/**

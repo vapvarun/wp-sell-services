@@ -93,6 +93,7 @@ class ServiceCategoryTaxonomy {
 			'show_admin_column' => true,
 			'show_in_nav_menus' => true,
 			'show_in_rest'      => true,
+			'rest_base'         => 'service-categories',
 			'show_tagcloud'     => false,
 			'query_var'         => true,
 			'rewrite'           => array(

@@ -268,8 +268,9 @@
 	 * @param {string} message The error message.
 	 */
 	function showError(message) {
-		// Use native alert as fallback, could be replaced with custom modal.
-		alert(message);
+		if (typeof WPSS !== 'undefined' && WPSS.showNotification) {
+			WPSS.showNotification(message, 'error');
+		}
 	}
 
 	// Initialize on DOM ready.

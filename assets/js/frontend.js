@@ -237,22 +237,13 @@
 			const reasonActions = ['reject', 'cancel', 'dispute'];
 
 			if (reasonActions.includes(action)) {
-				const reason = prompt(WPSS.getActionPrompt(action));
-
-				if (reason === null) {
-					return; // Cancelled.
-				}
-
-				if (!reason.trim()) {
-					alert('Please provide a reason.');
-					return;
-				}
-
-				WPSS.performOrderAction(orderId, action, reason);
+				WPSS.showPrompt(WPSS.getActionPrompt(action), function(reason) {
+					WPSS.performOrderAction(orderId, action, reason);
+				}, { submitText: 'Submit', placeholder: 'Enter your reason...' });
 			} else {
-				if (confirm(WPSS.getActionConfirm(action))) {
+				WPSS.showConfirm(WPSS.getActionConfirm(action), function() {
 					WPSS.performOrderAction(orderId, action);
-				}
+				});
 			}
 		});
 
@@ -324,11 +315,11 @@
 					// Reload page to show updated state.
 					location.reload();
 				} else {
-					alert(response.data?.message || 'Action failed. Please try again.');
+					WPSS.showNotification(response.data?.message || 'Action failed. Please try again.', 'error');
 				}
 			},
 			error: function(xhr) {
-				alert('An error occurred. Please try again.');
+				WPSS.showNotification('An error occurred. Please try again.', 'error');
 			}
 		});
 	};
@@ -404,7 +395,7 @@
 					}
 				},
 				error: function() {
-					alert('Failed to load reviews.');
+					WPSS.showNotification('Failed to load reviews.', 'error');
 				},
 				complete: function() {
 					$btn.prop('disabled', false);
@@ -513,13 +504,9 @@
 			WPSS.showModal('wpss-deliver-modal');
 		} else {
 			// Fallback for when modal doesn't exist
-			const message = prompt('Describe your delivery:');
-
-			if (!message || !message.trim()) {
-				return;
-			}
-
-			WPSS.submitDelivery(orderId, message, []);
+			WPSS.showPrompt('Describe your delivery:', function(message) {
+				WPSS.submitDelivery(orderId, message, []);
+			}, { placeholder: 'Describe what you are delivering...' });
 		}
 	};
 
@@ -827,11 +814,11 @@
 			const $btn = $(this);
 			const proposalId = $btn.data('proposal');
 
-			if (!confirm(wpssData.i18n?.confirmAcceptProposal || 'Accept this proposal and create an order?')) {
-				return;
-			}
-
-			WPSS.handleProposalAction($btn, proposalId, 'accept');
+			WPSS.showConfirm(
+				wpssData.i18n?.confirmAcceptProposal || 'Accept this proposal and create an order?',
+				function() { WPSS.handleProposalAction($btn, proposalId, 'accept'); },
+				{ confirmText: 'Accept' }
+			);
 		});
 
 		// Reject proposal.
@@ -840,13 +827,11 @@
 
 			const $btn = $(this);
 			const proposalId = $btn.data('proposal');
-			const reason = prompt(wpssData.i18n?.rejectProposalReason || 'Please provide a reason for rejection (optional):');
-
-			if (reason === null) {
-				return; // Cancelled.
-			}
-
-			WPSS.handleProposalAction($btn, proposalId, 'reject', reason);
+			WPSS.showPrompt(
+				wpssData.i18n?.rejectProposalReason || 'Please provide a reason for rejection (optional):',
+				function(reason) { WPSS.handleProposalAction($btn, proposalId, 'reject', reason); },
+				{ required: false, submitText: 'Decline', placeholder: 'Reason (optional)...' }
+			);
 		});
 
 		// Withdraw proposal (vendor).
@@ -856,11 +841,11 @@
 			const $btn = $(this);
 			const proposalId = $btn.data('proposal');
 
-			if (!confirm(wpssData.i18n?.confirmWithdrawProposal || 'Withdraw this proposal?')) {
-				return;
-			}
-
-			WPSS.handleProposalAction($btn, proposalId, 'withdraw');
+			WPSS.showConfirm(
+				wpssData.i18n?.confirmWithdrawProposal || 'Withdraw this proposal?',
+				function() { WPSS.handleProposalAction($btn, proposalId, 'withdraw'); },
+				{ confirmText: 'Withdraw' }
+			);
 		});
 	};
 
@@ -877,17 +862,17 @@
 		const deliveryDays = parseInt($form.find('[name="delivery_days"]').val()) || 0;
 
 		if (!description || !description.trim()) {
-			alert(wpssData.i18n?.proposalDescriptionRequired || 'Please provide a proposal description.');
+			WPSS.showNotification(wpssData.i18n?.proposalDescriptionRequired || 'Please provide a proposal description.', 'warning');
 			return;
 		}
 
 		if (price <= 0) {
-			alert(wpssData.i18n?.proposalPriceRequired || 'Please enter a valid price.');
+			WPSS.showNotification(wpssData.i18n?.proposalPriceRequired || 'Please enter a valid price.', 'warning');
 			return;
 		}
 
 		if (deliveryDays <= 0) {
-			alert(wpssData.i18n?.proposalDeliveryRequired || 'Please enter delivery time in days.');
+			WPSS.showNotification(wpssData.i18n?.proposalDeliveryRequired || 'Please enter delivery time in days.', 'warning');
 			return;
 		}
 
@@ -900,14 +885,14 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal('wpss-proposal-modal');
-					alert(response.data.message || wpssData.i18n?.proposalSubmitted || 'Proposal submitted successfully!');
+					WPSS.showNotification(response.data.message || wpssData.i18n?.proposalSubmitted || 'Proposal submitted successfully!', 'success');
 					location.reload();
 				} else {
-					alert(response.data.message || wpssData.i18n?.proposalFailed || 'Failed to submit proposal.');
+					WPSS.showNotification(response.data.message || wpssData.i18n?.proposalFailed || 'Failed to submit proposal.', 'error');
 				}
 			},
 			error: function() {
-				alert(wpssData.i18n?.ajaxError || 'An error occurred. Please try again.');
+				WPSS.showNotification(wpssData.i18n?.ajaxError || 'An error occurred. Please try again.', 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -944,12 +929,12 @@
 						location.reload();
 					}
 				} else {
-					alert(response.data.message || 'Action failed.');
+					WPSS.showNotification(response.data.message || 'Action failed.', 'error');
 					$btn.prop('disabled', false).text(btnText);
 				}
 			},
 			error: function() {
-				alert(wpssData.i18n?.ajaxError || 'An error occurred. Please try again.');
+				WPSS.showNotification(wpssData.i18n?.ajaxError || 'An error occurred. Please try again.', 'error');
 				$btn.prop('disabled', false).text(btnText);
 			}
 		});
@@ -1022,6 +1007,101 @@
 				$notification.remove();
 			}, 300);
 		}, duration);
+	};
+
+	/**
+	 * Show confirm dialog (replaces browser confirm()).
+	 *
+	 * @param {string}   message   - The confirmation message.
+	 * @param {Function} onConfirm - Callback when confirmed.
+	 * @param {Object}   options   - Optional: title, confirmText, cancelText.
+	 */
+	WPSS.showConfirm = function(message, onConfirm, options) {
+		options = options || {};
+		var confirmText = options.confirmText || 'Confirm';
+		var cancelText = options.cancelText || 'Cancel';
+
+		$('#wpss-confirm-modal').remove();
+
+		var $modal = $('<div id="wpss-confirm-modal" class="wpss-modal wpss-modal-open">' +
+			'<div class="wpss-modal__backdrop"></div>' +
+			'<div class="wpss-modal__dialog wpss-modal__dialog--sm">' +
+				'<div class="wpss-modal__content">' +
+					'<div class="wpss-modal__body" style="padding:24px;text-align:center;">' +
+						'<p style="margin:0 0 20px;font-size:15px;">' + WPSS.escapeHtml(message) + '</p>' +
+						'<div style="display:flex;gap:10px;justify-content:center;">' +
+							'<button type="button" class="wpss-btn wpss-btn--outline wpss-confirm-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
+							'<button type="button" class="wpss-btn wpss-btn--primary wpss-confirm-ok">' + WPSS.escapeHtml(confirmText) + '</button>' +
+						'</div>' +
+					'</div>' +
+				'</div>' +
+			'</div>' +
+		'</div>');
+
+		$('body').append($modal).addClass('wpss-modal-active');
+
+		$modal.find('.wpss-confirm-ok').on('click', function() {
+			$modal.remove();
+			$('body').removeClass('wpss-modal-active');
+			if (onConfirm) onConfirm();
+		});
+
+		$modal.find('.wpss-confirm-cancel, .wpss-modal__backdrop').on('click', function() {
+			$modal.remove();
+			$('body').removeClass('wpss-modal-active');
+		});
+	};
+
+	/**
+	 * Show prompt dialog (replaces browser prompt()).
+	 *
+	 * @param {string}   message  - The prompt message.
+	 * @param {Function} onSubmit - Callback with the entered value.
+	 * @param {Object}   options  - Optional: placeholder, submitText, cancelText, required.
+	 */
+	WPSS.showPrompt = function(message, onSubmit, options) {
+		options = options || {};
+		var placeholder = options.placeholder || '';
+		var submitText = options.submitText || 'Submit';
+		var cancelText = options.cancelText || 'Cancel';
+		var required = options.required !== false;
+
+		$('#wpss-prompt-modal').remove();
+
+		var $modal = $('<div id="wpss-prompt-modal" class="wpss-modal wpss-modal-open">' +
+			'<div class="wpss-modal__backdrop"></div>' +
+			'<div class="wpss-modal__dialog wpss-modal__dialog--sm">' +
+				'<div class="wpss-modal__content">' +
+					'<div class="wpss-modal__body" style="padding:24px;">' +
+						'<p style="margin:0 0 12px;font-size:15px;">' + WPSS.escapeHtml(message) + '</p>' +
+						'<textarea class="wpss-prompt-input" rows="3" placeholder="' + WPSS.escapeHtml(placeholder) + '" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;resize:vertical;font-size:14px;"></textarea>' +
+						'<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">' +
+							'<button type="button" class="wpss-btn wpss-btn--outline wpss-prompt-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
+							'<button type="button" class="wpss-btn wpss-btn--primary wpss-prompt-submit">' + WPSS.escapeHtml(submitText) + '</button>' +
+						'</div>' +
+					'</div>' +
+				'</div>' +
+			'</div>' +
+		'</div>');
+
+		$('body').append($modal).addClass('wpss-modal-active');
+		$modal.find('.wpss-prompt-input').trigger('focus');
+
+		$modal.find('.wpss-prompt-submit').on('click', function() {
+			var value = $modal.find('.wpss-prompt-input').val();
+			if (required && (!value || !value.trim())) {
+				WPSS.showNotification('Please provide a response.', 'warning');
+				return;
+			}
+			$modal.remove();
+			$('body').removeClass('wpss-modal-active');
+			if (onSubmit) onSubmit(value);
+		});
+
+		$modal.find('.wpss-prompt-cancel, .wpss-modal__backdrop').on('click', function() {
+			$modal.remove();
+			$('body').removeClass('wpss-modal-active');
+		});
 	};
 
 	/**

@@ -13,6 +13,46 @@
 	'use strict';
 
 	/**
+	 * Show admin toast notification.
+	 */
+	function notify(message, type) {
+		type = type || 'info';
+		var $container = $('#wpss-admin-notification-container');
+		if (!$container.length) {
+			$container = $('<div id="wpss-admin-notification-container" style="position:fixed;top:40px;right:20px;z-index:160000;"></div>');
+			$('body').append($container);
+		}
+		var bgColors = { success: '#00a32a', error: '#d63638', warning: '#dba617', info: '#2271b1' };
+		var $toast = $('<div style="background:' + (bgColors[type] || bgColors.info) + ';color:#fff;padding:12px 20px;border-radius:6px;margin-bottom:8px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.15);max-width:360px;opacity:0;transition:opacity .3s;">' + $('<span>').text(message).html() + '</div>');
+		$container.append($toast);
+		setTimeout(function() { $toast.css('opacity', '1'); }, 10);
+		setTimeout(function() { $toast.css('opacity', '0'); setTimeout(function() { $toast.remove(); }, 300); }, 4000);
+	}
+
+	/**
+	 * Show admin confirm dialog.
+	 */
+	function adminConfirm(message, onConfirm, options) {
+		options = options || {};
+		var confirmText = options.confirmText || 'Confirm';
+		var cancelText = options.cancelText || 'Cancel';
+		$('#wpss-admin-confirm-modal').remove();
+		var $modal = $('<div id="wpss-admin-confirm-modal" style="position:fixed;inset:0;z-index:160000;display:flex;align-items:center;justify-content:center;">' +
+			'<div style="position:absolute;inset:0;background:rgba(0,0,0,.5);" class="wpss-acm-backdrop"></div>' +
+			'<div style="position:relative;background:#fff;border-radius:8px;padding:24px;max-width:400px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,.2);">' +
+				'<p style="margin:0 0 20px;font-size:14px;">' + $('<span>').text(message).html() + '</p>' +
+				'<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+					'<button type="button" class="button wpss-acm-cancel">' + $('<span>').text(cancelText).html() + '</button>' +
+					'<button type="button" class="button button-primary wpss-acm-ok">' + $('<span>').text(confirmText).html() + '</button>' +
+				'</div>' +
+			'</div>' +
+		'</div>');
+		$('body').append($modal);
+		$modal.find('.wpss-acm-ok').on('click', function() { $modal.remove(); if (onConfirm) onConfirm(); });
+		$modal.find('.wpss-acm-cancel, .wpss-acm-backdrop').on('click', function() { $modal.remove(); });
+	}
+
+	/**
 	 * Initialize admin order handlers.
 	 */
 	function init() {
@@ -49,37 +89,35 @@
 		var newStatus = $select.val();
 
 		if (!newStatus) {
-			alert(wpssOrderAdmin.i18n.error || 'Please select a status.');
+			notify(wpssOrderAdmin.i18n.error || 'Please select a status.', 'warning');
 			return;
 		}
 
-		if (!confirm(wpssOrderAdmin.i18n.confirmStatusChange)) {
-			return;
-		}
+		adminConfirm(wpssOrderAdmin.i18n.confirmStatusChange, function() {
+			$button.prop('disabled', true).text(wpssOrderAdmin.i18n.updating || 'Updating...');
 
-		$button.prop('disabled', true).text(wpssOrderAdmin.i18n.updating || 'Updating...');
-
-		$.ajax({
-			url: wpssOrderAdmin.ajaxUrl,
-			type: 'POST',
-			data: {
-				action: 'wpss_admin_update_order_status',
-				nonce: wpssOrderAdmin.nonce,
-				order_id: orderId,
-				status: newStatus
-			},
-			success: function(response) {
-				if (response.success) {
-					location.reload();
-				} else {
-					alert(response.data.message || wpssOrderAdmin.i18n.error);
+			$.ajax({
+				url: wpssOrderAdmin.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_admin_update_order_status',
+					nonce: wpssOrderAdmin.nonce,
+					order_id: orderId,
+					status: newStatus
+				},
+				success: function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						notify(response.data.message || wpssOrderAdmin.i18n.error, 'error');
+						$button.prop('disabled', false).text(wpssOrderAdmin.i18n.update || 'Update');
+					}
+				},
+				error: function() {
+					notify(wpssOrderAdmin.i18n.error, 'error');
 					$button.prop('disabled', false).text(wpssOrderAdmin.i18n.update || 'Update');
 				}
-			},
-			error: function() {
-				alert(wpssOrderAdmin.i18n.error);
-				$button.prop('disabled', false).text(wpssOrderAdmin.i18n.update || 'Update');
-			}
+			});
 		});
 	}
 
@@ -95,51 +133,49 @@
 		var orderId = $button.data('order');
 		var action = $button.data('action');
 
-		if (!confirm(wpssOrderAdmin.i18n.confirmStatusChange)) {
-			return;
-		}
+		adminConfirm(wpssOrderAdmin.i18n.confirmStatusChange, function() {
+			// Map quick actions to status changes.
+			var actionToStatus = {
+				'start': 'in_progress',
+				'complete': 'completed',
+				'cancel': 'cancelled',
+				'extend': null,
+				'revision': 'revision_requested',
+				'resolve_buyer': 'refunded',
+				'resolve_vendor': 'completed'
+			};
 
-		// Map quick actions to status changes.
-		var actionToStatus = {
-			'start': 'in_progress',
-			'complete': 'completed',
-			'cancel': 'cancelled',
-			'extend': null,
-			'revision': 'revision_requested',
-			'resolve_buyer': 'refunded',
-			'resolve_vendor': 'completed'
-		};
+			var newStatus = actionToStatus[action];
 
-		var newStatus = actionToStatus[action];
+			if (!newStatus) {
+				notify('This action is not yet implemented.', 'info');
+				return;
+			}
 
-		if (!newStatus) {
-			alert('This action is not yet implemented.');
-			return;
-		}
+			$button.prop('disabled', true);
 
-		$button.prop('disabled', true);
-
-		$.ajax({
-			url: wpssOrderAdmin.ajaxUrl,
-			type: 'POST',
-			data: {
-				action: 'wpss_admin_update_order_status',
-				nonce: wpssOrderAdmin.nonce,
-				order_id: orderId,
-				status: newStatus
-			},
-			success: function(response) {
-				if (response.success) {
-					location.reload();
-				} else {
-					alert(response.data.message || wpssOrderAdmin.i18n.error);
+			$.ajax({
+				url: wpssOrderAdmin.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_admin_update_order_status',
+					nonce: wpssOrderAdmin.nonce,
+					order_id: orderId,
+					status: newStatus
+				},
+				success: function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						notify(response.data.message || wpssOrderAdmin.i18n.error, 'error');
+						$button.prop('disabled', false);
+					}
+				},
+				error: function() {
+					notify(wpssOrderAdmin.i18n.error, 'error');
 					$button.prop('disabled', false);
 				}
-			},
-			error: function() {
-				alert(wpssOrderAdmin.i18n.error);
-				$button.prop('disabled', false);
-			}
+			});
 		});
 	}
 
@@ -157,7 +193,7 @@
 		var note = $textarea.val().trim();
 
 		if (!note) {
-			alert('Please enter a note.');
+			notify('Please enter a note.', 'warning');
 			return;
 		}
 
@@ -190,14 +226,14 @@
 					// Clear textarea.
 					$textarea.val('');
 
-					alert(wpssOrderAdmin.i18n.noteAdded);
+					notify(wpssOrderAdmin.i18n.noteAdded, 'success');
 				} else {
-					alert(response.data.message || wpssOrderAdmin.i18n.error);
+					notify(response.data.message || wpssOrderAdmin.i18n.error, 'error');
 				}
 				$button.prop('disabled', false);
 			},
 			error: function() {
-				alert(wpssOrderAdmin.i18n.error);
+				notify(wpssOrderAdmin.i18n.error, 'error');
 				$button.prop('disabled', false);
 			}
 		});
@@ -213,15 +249,13 @@
 
 		var $button = $(this);
 
-		if (!confirm('Resend notifications to buyer and vendor?')) {
-			return;
-		}
+		adminConfirm('Resend notifications to buyer and vendor?', function() {
+			$button.prop('disabled', true);
 
-		$button.prop('disabled', true);
-
-		// This would need a backend handler.
-		alert('Notification resend is not yet implemented.');
-		$button.prop('disabled', false);
+			// This would need a backend handler.
+			notify('Notification resend is not yet implemented.', 'info');
+			$button.prop('disabled', false);
+		});
 	}
 
 	/**
@@ -234,15 +268,13 @@
 
 		var $button = $(this);
 
-		if (!confirm(wpssOrderAdmin.i18n.confirmRefund)) {
-			return;
-		}
+		adminConfirm(wpssOrderAdmin.i18n.confirmRefund, function() {
+			$button.prop('disabled', true);
 
-		$button.prop('disabled', true);
-
-		// This would need a backend handler.
-		alert('Refund processing is not yet implemented.');
-		$button.prop('disabled', false);
+			// This would need a backend handler.
+			notify('Refund processing is not yet implemented.', 'info');
+			$button.prop('disabled', false);
+		});
 	}
 
 	/**

@@ -274,7 +274,7 @@ do_action( 'wpss_before_conversation', $order );
 		do_action( 'wpss_conversation_form', $order );
 		?>
 		<div class="wpss-messaging__composer">
-			<form id="wpss-message-form" method="post" enctype="multipart/form-data">
+			<form id="wpss-message-form" method="post" enctype="multipart/form-data" data-order="<?php echo esc_attr( $order_id ); ?>">
 				<?php wp_nonce_field( 'wpss_send_message', 'wpss_message_nonce' ); ?>
 				<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
@@ -411,8 +411,10 @@ do_action( 'wpss_after_conversation', $order );
 	});
 
 	// Handle form submit (Enter key).
+	// stopImmediatePropagation prevents the duplicate handler in frontend.js from also firing.
 	$messageForm.on('submit', function(e) {
 		e.preventDefault();
+		e.stopImmediatePropagation();
 		submitMessage();
 	});
 

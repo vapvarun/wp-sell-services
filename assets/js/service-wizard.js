@@ -315,9 +315,10 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {number} index - Requirement index.
 		 */
 		removeRequirement(index) {
-			if (confirm(wpssWizard.strings.confirmDelete)) {
-				this.data.requirements.splice(index, 1);
-			}
+			var self = this;
+			WPSS.showConfirm(wpssWizard.strings.confirmDelete, function() {
+				self.data.requirements.splice(index, 1);
+			}, { confirmText: 'Delete' });
 		},
 
 		/**
@@ -353,9 +354,10 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {number} index - Extra index.
 		 */
 		removeExtra(index) {
-			if (confirm(wpssWizard.strings.confirmDelete)) {
-				this.data.extras.splice(index, 1);
-			}
+			var self = this;
+			WPSS.showConfirm(wpssWizard.strings.confirmDelete, function() {
+				self.data.extras.splice(index, 1);
+			}, { confirmText: 'Delete' });
 		},
 
 		/**
@@ -389,9 +391,10 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {number} index - FAQ index.
 		 */
 		removeFaq(index) {
-			if (confirm(wpssWizard.strings.confirmDelete)) {
-				this.data.faqs.splice(index, 1);
-			}
+			var self = this;
+			WPSS.showConfirm(wpssWizard.strings.confirmDelete, function() {
+				self.data.faqs.splice(index, 1);
+			}, { confirmText: 'Delete' });
 		},
 
 		/**

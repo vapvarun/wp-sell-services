@@ -243,7 +243,7 @@ do_action( 'wpss_before_single_request', $request_id );
 									$vendor_rating = (float) get_user_meta( $proposal->vendor_id, '_wpss_vendor_rating', true );
 									$vendor_orders = (int) get_user_meta( $proposal->vendor_id, '_wpss_completed_orders', true );
 									?>
-									<div class="wpss-proposal-item" data-proposal-id="<?php echo esc_attr( $proposal->id ); ?>">
+									<div class="wpss-proposal-item" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
 										<div class="wpss-proposal-header">
 											<div class="wpss-proposal-vendor">
 												<img src="<?php echo esc_url( get_avatar_url( $proposal->vendor_id, array( 'size' => 48 ) ) ); ?>"
@@ -275,14 +275,15 @@ do_action( 'wpss_before_single_request', $request_id );
 
 											<div class="wpss-proposal-meta">
 												<div class="wpss-proposal-price">
-													<?php echo esc_html( wpss_format_price( $proposal->price ?? 0.0 ) ); ?>
+													<?php echo esc_html( wpss_format_price( (float) ( $proposal->proposed_price ?? 0.0 ) ) ); ?>
 												</div>
 												<div class="wpss-proposal-delivery">
 													<?php
+													$days = (int) ( $proposal->proposed_days ?? 0 );
 													printf(
 														/* translators: %d: number of days */
-														esc_html( _n( '%d day delivery', '%d days delivery', $proposal->delivery_days, 'wp-sell-services' ) ),
-														esc_html( $proposal->delivery_days )
+														esc_html( _n( '%d day delivery', '%d days delivery', $days, 'wp-sell-services' ) ),
+														esc_html( $days )
 													);
 													?>
 												</div>
@@ -290,15 +291,15 @@ do_action( 'wpss_before_single_request', $request_id );
 										</div>
 
 										<div class="wpss-proposal-description">
-											<?php echo wp_kses_post( nl2br( $proposal->description ) ); ?>
+											<?php echo wp_kses_post( nl2br( $proposal->cover_letter ?? '' ) ); ?>
 										</div>
 
 										<?php if ( 'pending' === $proposal->status && 'open' === $request_status ) : ?>
 											<div class="wpss-proposal-actions">
-												<button type="button" class="wpss-btn wpss-btn-primary wpss-accept-proposal" data-proposal-id="<?php echo esc_attr( $proposal->id ); ?>">
+												<button type="button" class="wpss-btn wpss-btn-primary wpss-accept-proposal" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
 													<?php esc_html_e( 'Accept Proposal', 'wp-sell-services' ); ?>
 												</button>
-												<button type="button" class="wpss-btn wpss-btn-outline wpss-reject-proposal" data-proposal-id="<?php echo esc_attr( $proposal->id ); ?>">
+												<button type="button" class="wpss-btn wpss-btn-outline wpss-reject-proposal" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
 													<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
 												</button>
 												<a href="<?php echo esc_url( wpss_get_vendor_url( $proposal->vendor_id ) ); ?>" class="wpss-btn wpss-btn-text">

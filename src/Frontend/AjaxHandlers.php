@@ -1460,7 +1460,7 @@ class AjaxHandlers {
 		}
 
 		$request_service = new BuyerRequestService();
-		$result          = $request_service->convert_to_order( $request_id, $proposal_id );
+		$result          = $request_service->convert_to_order( (int) $request_id, (int) $proposal_id );
 
 		if ( $result['success'] && ! empty( $result['order_id'] ) ) {
 			wp_send_json_success(

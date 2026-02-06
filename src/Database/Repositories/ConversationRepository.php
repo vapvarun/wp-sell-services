@@ -396,6 +396,8 @@ class ConversationRepository extends AbstractRepository {
 					c.order_id,
 					o.order_number,
 					o.service_id,
+					o.platform,
+					o.platform_order_id,
 					c.last_message_at,
 					c.message_count,
 					c.unread_counts,

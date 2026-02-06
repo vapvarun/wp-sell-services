@@ -42,7 +42,8 @@ class NotificationService {
 	 * @param array  $data     Additional data.
 	 * @return int|false Notification ID or false on failure.
 	 */
-	public function create( int $user_id, string $type, string $title, string $message, array $data = array() ) {
+	public function create( int|string $user_id, string $type, string $title, string $message, array $data = array() ) {
+		$user_id = (int) $user_id;
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_notifications';
 
@@ -708,11 +709,11 @@ class NotificationService {
 
 		// Get resolution label.
 		$resolution_labels = array(
-			'buyer_favor'  => __( 'resolved in favor of the buyer', 'wp-sell-services' ),
-			'vendor_favor' => __( 'resolved in favor of the seller', 'wp-sell-services' ),
-			'partial'      => __( 'resolved with a partial refund', 'wp-sell-services' ),
-			'mutual'       => __( 'resolved by mutual agreement', 'wp-sell-services' ),
-			'cancelled'    => __( 'cancelled', 'wp-sell-services' ),
+			'full_refund'      => __( 'resolved with a full refund', 'wp-sell-services' ),
+			'partial_refund'   => __( 'resolved with a partial refund', 'wp-sell-services' ),
+			'favor_buyer'      => __( 'resolved in favor of the buyer', 'wp-sell-services' ),
+			'favor_vendor'     => __( 'resolved in favor of the seller', 'wp-sell-services' ),
+			'mutual_agreement' => __( 'resolved by mutual agreement', 'wp-sell-services' ),
 		);
 		$resolution_label = $resolution_labels[ $resolution ] ?? __( 'resolved', 'wp-sell-services' );
 

@@ -54,12 +54,19 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 		<div class="wpss-conversations-list">
 			<?php foreach ( $conversations as $conversation ) : ?>
 				<?php
-				$service   = get_post( $conversation->service_id );
+				$service   = $conversation->service_id ? get_post( $conversation->service_id ) : null;
 				$order_url = wpss_get_order_url( $conversation->order_id );
 				$unread_data    = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
 				$my_unread      = (int) ( $unread_data[ $user_id ] ?? 0 );
 				$is_unread      = $my_unread > 0;
-				$time_ago  = human_time_diff( strtotime( $conversation->last_message_at ), current_time( 'timestamp' ) );
+				$last_message_time = ! empty( $conversation->last_message_at ) ? strtotime( $conversation->last_message_at ) : false;
+				$time_ago          = $last_message_time ? human_time_diff( $last_message_time, current_time( 'timestamp' ) ) : '';
+
+				// For request-based orders, use the request title.
+				if ( ! $service && ! empty( $conversation->platform ) && 'request' === $conversation->platform && $conversation->platform_order_id ) {
+					$request_post = get_post( $conversation->platform_order_id );
+				}
+				$conversation_title = $service ? wp_trim_words( $service->post_title, 6 ) : ( ! empty( $request_post ) ? wp_trim_words( $request_post->post_title, 6 ) : sprintf( __( 'Order #%s', 'wp-sell-services' ), $conversation->order_number ) );
 				?>
 				<a href="<?php echo esc_url( $order_url ); ?>" class="wpss-conversation-card <?php echo $is_unread ? 'wpss-conversation-card--unread' : ''; ?>">
 					<div class="wpss-conversation-card__avatar">
@@ -77,10 +84,7 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 					<div class="wpss-conversation-card__content">
 						<div class="wpss-conversation-card__header">
 							<span class="wpss-conversation-card__name">
-								<?php
-								/* translators: %s: order number */
-								echo esc_html( $service ? wp_trim_words( $service->post_title, 6 ) : sprintf( __( 'Order #%s', 'wp-sell-services' ), $conversation->order_number ) );
-								?>
+								<?php echo esc_html( $conversation_title ); ?>
 							</span>
 							<span class="wpss-conversation-card__time"><?php echo esc_html( $time_ago ); ?></span>
 						</div>

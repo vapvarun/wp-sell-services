@@ -397,7 +397,7 @@
 
             // Check file count.
             if (currentFiles + files.length > maxFiles) {
-                alert('Maximum ' + maxFiles + ' files allowed.');
+                WPSS.showNotification('Maximum ' + maxFiles + ' files allowed.', 'warning');
                 $input.val('');
                 return;
             }
@@ -406,7 +406,7 @@
             Array.from(files).forEach(function(file) {
                 // Check file size.
                 if (file.size > maxSize * 1024 * 1024) {
-                    alert(file.name + ' is too large. Maximum size is ' + maxSize + 'MB.');
+                    WPSS.showNotification(file.name + ' is too large. Maximum size is ' + maxSize + 'MB.', 'warning');
                     return;
                 }
 
@@ -463,12 +463,12 @@
                         $progress.replaceWith(html);
                     } else {
                         $progress.remove();
-                        alert(response.data.message || 'Upload failed.');
+                        WPSS.showNotification(response.data.message || 'Upload failed.', 'error');
                     }
                 },
                 error: function() {
                     $progress.remove();
-                    alert('Upload failed. Please try again.');
+                    WPSS.showNotification('Upload failed. Please try again.', 'error');
                 }
             });
         },
@@ -564,9 +564,9 @@
             // Skip for now.
             $(document).on('click', '.wpss-skip-requirements', function(e) {
                 e.preventDefault();
-                if (confirm('You can submit requirements later. Continue to checkout?')) {
-                    self.skipRequirements();
-                }
+                WPSS.showConfirm('You can submit requirements later. Continue to checkout?', function() {
+                        self.skipRequirements();
+                    }, { confirmText: 'Continue' });
             });
         },
 
@@ -661,12 +661,12 @@
                             window.location.reload();
                         }
                     } else {
-                        alert(response.data.message || 'Failed to submit requirements.');
+                        WPSS.showNotification(response.data.message || 'Failed to submit requirements.', 'error');
                         $btn.prop('disabled', false).text('Submit');
                     }
                 },
                 error: function() {
-                    alert('An error occurred. Please try again.');
+                    WPSS.showNotification('An error occurred. Please try again.', 'error');
                     $btn.prop('disabled', false).text('Submit');
                 }
             });

@@ -19,6 +19,8 @@ use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
+use WPSellServices\Models\Dispute;
+use WPSellServices\Services\DisputeService;
 
 /**
  * Handles all admin-side functionality.
@@ -246,6 +248,7 @@ class Admin {
 	private function init_ajax_handlers(): void {
 		add_action( 'wp_ajax_wpss_get_service_packages', array( $this, 'ajax_get_service_packages' ) );
 		add_action( 'admin_post_wpss_update_order', array( $this, 'handle_update_order' ) );
+		add_action( 'admin_post_wpss_resolve_dispute', array( $this, 'handle_resolve_dispute' ) );
 	}
 
 	/**
@@ -366,6 +369,51 @@ class Admin {
 				'action'   => 'view',
 				'order_id' => $order_id,
 				'updated'  => $updated ? '1' : '0',
+			),
+			admin_url( 'admin.php' )
+		);
+
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+
+	/**
+	 * Handle dispute resolution form submission.
+	 *
+	 * @return void
+	 */
+	public function handle_resolve_dispute(): void {
+		if ( ! isset( $_POST['wpss_dispute_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_dispute_nonce'] ) ), 'wpss_resolve_dispute' ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$dispute_id = isset( $_POST['dispute_id'] ) ? absint( $_POST['dispute_id'] ) : 0;
+		$status     = isset( $_POST['dispute_status'] ) ? sanitize_key( $_POST['dispute_status'] ) : '';
+		$resolution = isset( $_POST['resolution'] ) ? sanitize_key( $_POST['resolution'] ) : '';
+		$notes      = isset( $_POST['admin_notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['admin_notes'] ) ) : '';
+
+		if ( ! $dispute_id || ! $status ) {
+			wp_die( esc_html__( 'Invalid request.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$dispute_service = new DisputeService();
+
+		if ( 'resolved' === $status && $resolution ) {
+			$dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id() );
+		} else {
+			$dispute_service->update_status( $dispute_id, $status, $notes );
+		}
+
+		$redirect_url = add_query_arg(
+			array(
+				'page'       => 'wpss-disputes',
+				'action'     => 'view',
+				'dispute_id' => $dispute_id,
+				'updated'    => '1',
 			),
 			admin_url( 'admin.php' )
 		);
@@ -1285,21 +1333,9 @@ class Admin {
 			'closed'         => __( 'Closed', 'wp-sell-services' ),
 		);
 
-		$resolutions = array(
-			'full_refund'      => __( 'Full Refund to Buyer', 'wp-sell-services' ),
-			'partial_refund'   => __( 'Partial Refund', 'wp-sell-services' ),
-			'favor_vendor'     => __( 'Release Payment to Vendor', 'wp-sell-services' ),
-			'favor_buyer'      => __( 'Full Refund to Buyer', 'wp-sell-services' ),
-			'mutual_agreement' => __( 'Mutual Agreement', 'wp-sell-services' ),
-		);
+		$resolutions = DisputeService::get_resolution_types();
 
-		$reasons = array(
-			'quality'       => __( 'Quality Issues', 'wp-sell-services' ),
-			'delivery'      => __( 'Late Delivery', 'wp-sell-services' ),
-			'communication' => __( 'Communication Issues', 'wp-sell-services' ),
-			'not_delivered' => __( 'Not Delivered', 'wp-sell-services' ),
-			'other'         => __( 'Other', 'wp-sell-services' ),
-		);
+		$reasons = Dispute::get_reasons();
 		?>
 		<div class="wrap wpss-dispute-detail">
 			<h1 class="wp-heading-inline">

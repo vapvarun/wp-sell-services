@@ -407,47 +407,47 @@
                 return;
             }
 
-            // Confirmation for destructive actions.
-            if (['delete', 'unpublish'].includes(action)) {
-                if (!confirm('Are you sure you want to ' + action + ' this service?')) {
-                    return;
-                }
-            }
+            var proceed = function() {
+                $btn.prop('disabled', true).addClass('loading');
 
-            $btn.prop('disabled', true).addClass('loading');
+                $.ajax({
+                    url: wpssData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'wpss_service_action',
+                        service_action: action,
+                        service_id: serviceId,
+                        nonce: wpssData.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            self.showNotice(response.data.message, 'success');
 
-            $.ajax({
-                url: wpssData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'wpss_service_action',
-                    service_action: action,
-                    service_id: serviceId,
-                    nonce: wpssData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        self.showNotice(response.data.message, 'success');
-
-                        // Update UI based on action.
-                        if (action === 'delete') {
-                            $btn.closest('[data-service-id]').fadeOut(function() {
-                                $(this).remove();
-                            });
+                            if (action === 'delete') {
+                                $btn.closest('[data-service-id]').fadeOut(function() {
+                                    $(this).remove();
+                                });
+                            } else {
+                                self.refreshCurrentView();
+                            }
                         } else {
-                            self.refreshCurrentView();
+                            self.showNotice(response.data.message || 'Action failed', 'error');
                         }
-                    } else {
-                        self.showNotice(response.data.message || 'Action failed', 'error');
+                    },
+                    error: function() {
+                        self.showNotice('Network error. Please try again.', 'error');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).removeClass('loading');
                     }
-                },
-                error: function() {
-                    self.showNotice('Network error. Please try again.', 'error');
-                },
-                complete: function() {
-                    $btn.prop('disabled', false).removeClass('loading');
-                }
-            });
+                });
+            };
+
+            if (['delete', 'unpublish'].includes(action)) {
+                WPSS.showConfirm('Are you sure you want to ' + action + ' this service?', proceed);
+            } else {
+                proceed();
+            }
         },
 
         /**
@@ -462,39 +462,40 @@
                 return;
             }
 
-            // Some actions need confirmation.
-            if (['cancel', 'refund'].includes(action)) {
-                if (!confirm('Are you sure you want to ' + action + ' this order?')) {
-                    return;
-                }
-            }
+            var proceed = function() {
+                $btn.prop('disabled', true).addClass('loading');
 
-            $btn.prop('disabled', true).addClass('loading');
-
-            $.ajax({
-                url: wpssData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'wpss_order_action',
-                    order_action: action,
-                    order_id: orderId,
-                    nonce: wpssData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        self.showNotice(response.data.message, 'success');
-                        self.refreshCurrentView();
-                    } else {
-                        self.showNotice(response.data.message || 'Action failed', 'error');
+                $.ajax({
+                    url: wpssData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'wpss_order_action',
+                        order_action: action,
+                        order_id: orderId,
+                        nonce: wpssData.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            self.showNotice(response.data.message, 'success');
+                            self.refreshCurrentView();
+                        } else {
+                            self.showNotice(response.data.message || 'Action failed', 'error');
+                        }
+                    },
+                    error: function() {
+                        self.showNotice('Network error. Please try again.', 'error');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).removeClass('loading');
                     }
-                },
-                error: function() {
-                    self.showNotice('Network error. Please try again.', 'error');
-                },
-                complete: function() {
-                    $btn.prop('disabled', false).removeClass('loading');
-                }
-            });
+                });
+            };
+
+            if (['cancel', 'refund'].includes(action)) {
+                WPSS.showConfirm('Are you sure you want to ' + action + ' this order?', proceed);
+            } else {
+                proceed();
+            }
         },
 
         /**
@@ -543,31 +544,29 @@
                 return;
             }
 
-            if (!confirm('Apply this action to ' + selectedIds.length + ' items?')) {
-                return;
-            }
-
-            $.ajax({
-                url: wpssData.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'wpss_bulk_action',
-                    bulk_action: action,
-                    ids: selectedIds,
-                    type: this.state.currentTab,
-                    nonce: wpssData.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        self.showNotice(response.data.message, 'success');
-                        self.refreshCurrentView();
-                    } else {
-                        self.showNotice(response.data.message || 'Bulk action failed', 'error');
+            WPSS.showConfirm('Apply this action to ' + selectedIds.length + ' items?', function() {
+                $.ajax({
+                    url: wpssData.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'wpss_bulk_action',
+                        bulk_action: action,
+                        ids: selectedIds,
+                        type: self.state.currentTab,
+                        nonce: wpssData.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            self.showNotice(response.data.message, 'success');
+                            self.refreshCurrentView();
+                        } else {
+                            self.showNotice(response.data.message || 'Bulk action failed', 'error');
+                        }
+                    },
+                    error: function() {
+                        self.showNotice('Network error. Please try again.', 'error');
                     }
-                },
-                error: function() {
-                    self.showNotice('Network error. Please try again.', 'error');
-                }
+                });
             });
         },
 
@@ -1110,9 +1109,10 @@
             // Cancel withdrawal.
             $(document).on('click', '.wpss-cancel-withdrawal', function(e) {
                 e.preventDefault();
-                if (confirm('Cancel this withdrawal request?')) {
-                    self.cancelWithdrawal($(this).data('id'));
-                }
+                var withdrawalId = $(this).data('id');
+                WPSS.showConfirm('Cancel this withdrawal request?', function() {
+                    self.cancelWithdrawal(withdrawalId);
+                });
             });
         },
 

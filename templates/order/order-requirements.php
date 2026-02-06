@@ -139,8 +139,9 @@ do_action( 'wpss_before_requirements_form', $order );
 			 */
 			$form_args = apply_filters( 'wpss_requirements_form_args', $form_args, $order );
 			?>
-			<form class="<?php echo esc_attr( $form_args['form_class'] ); ?>" id="<?php echo esc_attr( $form_args['form_id'] ); ?>" method="post">
+			<form class="<?php echo esc_attr( $form_args['form_class'] ); ?>" id="<?php echo esc_attr( $form_args['form_id'] ); ?>" method="post" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
+				<input type="hidden" name="action" value="wpss_submit_requirements">
 				<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 
 				<?php if ( ! empty( $requirements ) ) : ?>

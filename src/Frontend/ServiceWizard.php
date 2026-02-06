@@ -251,7 +251,7 @@ class ServiceWizard {
 		}
 
 		// Check vendor account status - block suspended/pending vendors early.
-		$vendor_profile = $this->vendor_service->get_profile( $user_id );
+		$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
 		if ( $vendor_profile && ! $vendor_profile->can_create_services() ) {
 			return $this->render_vendor_status_notice( $vendor_profile );
 		}

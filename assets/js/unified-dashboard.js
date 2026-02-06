@@ -49,13 +49,10 @@
 			const $button = $(e.currentTarget);
 			const originalText = $button.text();
 
-			if (!confirm(wpssUnifiedDashboard.i18n.becomeVendorConfirm)) {
-				return;
-			}
-
-			$button
-				.prop('disabled', true)
-				.text(wpssUnifiedDashboard.i18n.processing);
+			WPSS.showConfirm(wpssUnifiedDashboard.i18n.becomeVendorConfirm, function () {
+				$button
+					.prop('disabled', true)
+					.text(wpssUnifiedDashboard.i18n.processing);
 
 			$.ajax({
 				url: wpssUnifiedDashboard.ajaxUrl,
@@ -73,18 +70,19 @@
 							window.location.reload();
 						}
 					} else {
-						alert(response.data.message || 'An error occurred.');
+						WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
 						$button
 							.prop('disabled', false)
 							.text(originalText);
 					}
 				},
 				error: function () {
-					alert('An error occurred. Please try again.');
+					WPSS.showNotification('An error occurred. Please try again.', 'error');
 					$button
 						.prop('disabled', false)
 						.text(originalText);
 				}
+			});
 			});
 		},
 
@@ -97,7 +95,7 @@
 			e.preventDefault();
 
 			// TODO: Open withdrawal modal
-			alert('Withdrawal feature coming soon.');
+			WPSS.showNotification('Withdrawal feature coming soon.', 'info');
 		},
 
 		/**
@@ -136,7 +134,7 @@
 							});
 						}, 3000);
 					} else {
-						alert(response.data.message || 'An error occurred.');
+						WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
 					}
 
 					$button
@@ -144,7 +142,7 @@
 						.text(originalText);
 				},
 				error: function () {
-					alert('An error occurred. Please try again.');
+					WPSS.showNotification('An error occurred. Please try again.', 'error');
 					$button
 						.prop('disabled', false)
 						.text(originalText);
@@ -194,12 +192,12 @@
 							$button.attr('title', wpssUnifiedDashboard.i18n.activate || 'Activate');
 						}
 					} else {
-						alert(response.data.message || 'An error occurred.');
+						WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
 					}
 					$button.prop('disabled', false);
 				},
 				error: function () {
-					alert('An error occurred. Please try again.');
+					WPSS.showNotification('An error occurred. Please try again.', 'error');
 					$button.prop('disabled', false);
 				}
 			});
@@ -217,35 +215,33 @@
 			const serviceId = $button.data('service-id');
 			const $card = $button.closest('.wpss-card');
 
-			if (!confirm(wpssUnifiedDashboard.i18n.confirmDelete || 'Are you sure you want to delete this service? This action cannot be undone.')) {
-				return;
-			}
+			WPSS.showConfirm(wpssUnifiedDashboard.i18n.confirmDelete || 'Are you sure you want to delete this service? This action cannot be undone.', function () {
+				$button.prop('disabled', true);
 
-			$button.prop('disabled', true);
-
-			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_delete_service',
-					nonce: wpssUnifiedDashboard.nonce,
-					service_id: serviceId
-				},
-				success: function (response) {
-					if (response.success) {
-						$card.fadeOut(300, function () {
-							$(this).remove();
-						});
-					} else {
-						alert(response.data.message || 'An error occurred.');
+				$.ajax({
+					url: wpssUnifiedDashboard.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'wpss_delete_service',
+						nonce: wpssUnifiedDashboard.nonce,
+						service_id: serviceId
+					},
+					success: function (response) {
+						if (response.success) {
+							$card.fadeOut(300, function () {
+								$(this).remove();
+							});
+						} else {
+							WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
+							$button.prop('disabled', false);
+						}
+					},
+					error: function () {
+						WPSS.showNotification('An error occurred. Please try again.', 'error');
 						$button.prop('disabled', false);
 					}
-				},
-				error: function () {
-					alert('An error occurred. Please try again.');
-					$button.prop('disabled', false);
-				}
-			});
+				});
+			}, { confirmText: 'Delete' });
 		}
 	};
 

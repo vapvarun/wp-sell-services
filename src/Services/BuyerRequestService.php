@@ -599,7 +599,7 @@ class BuyerRequestService {
 		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
 
 		// Calculate delivery deadline.
-		$delivery_days = $proposal->delivery_days ?: $request->delivery_days ?: 7;
+		$delivery_days = $proposal->proposed_days ?: $request->delivery_days ?: 7;
 		$deadline      = gmdate( 'Y-m-d H:i:s', strtotime( "+{$delivery_days} days" ) );
 
 		// Create order.
@@ -615,9 +615,9 @@ class BuyerRequestService {
 				'addons'             => wp_json_encode( array() ),
 				'platform'           => 'request',
 				'platform_order_id'  => $request_id,
-				'subtotal'           => $proposal->price,
+				'subtotal'           => $proposal->proposed_price,
 				'addons_total'       => 0,
-				'total'              => $proposal->price,
+				'total'              => $proposal->proposed_price,
 				'currency'           => get_option( 'wpss_currency', 'USD' ),
 				'status'             => 'pending_payment',
 				'delivery_deadline'  => $deadline,
@@ -658,7 +658,7 @@ class BuyerRequestService {
 					array(
 						'request_title'       => $request->title,
 						'request_description' => $request->description,
-						'proposal_cover'      => $proposal->description,
+						'proposal_cover'      => $proposal->cover_letter ?? '',
 					)
 				),
 				'attachments'  => wp_json_encode( $request->attachments ),
@@ -676,12 +676,6 @@ class BuyerRequestService {
 		$notification_service->send(
 			$proposal->vendor_id,
 			'proposal_accepted',
-			__( 'Proposal Accepted!', 'wp-sell-services' ),
-			sprintf(
-				/* translators: %s: request title */
-				__( 'Your proposal for "%s" has been accepted. Please wait for payment to start working.', 'wp-sell-services' ),
-				$request->title
-			),
 			array(
 				'order_id'   => $order_id,
 				'request_id' => $request_id,

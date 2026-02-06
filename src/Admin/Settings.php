@@ -1765,10 +1765,11 @@ class Settings {
 	/**
 	 * Sanitize notification settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_notification_settings( array $input ): array {
+	public function sanitize_notification_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$notification_keys = array(

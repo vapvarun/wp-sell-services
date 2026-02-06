@@ -114,64 +114,7 @@ class ServicePostType {
 	 * @return void
 	 */
 	public function register_taxonomies(): void {
-		$this->register_category_taxonomy();
 		$this->register_tag_taxonomy();
-	}
-
-	/**
-	 * Register service category taxonomy.
-	 *
-	 * @return void
-	 */
-	private function register_category_taxonomy(): void {
-		$labels = [
-			'name'                       => _x( 'Service Categories', 'Taxonomy general name', 'wp-sell-services' ),
-			'singular_name'              => _x( 'Service Category', 'Taxonomy singular name', 'wp-sell-services' ),
-			'search_items'               => __( 'Search Categories', 'wp-sell-services' ),
-			'popular_items'              => __( 'Popular Categories', 'wp-sell-services' ),
-			'all_items'                  => __( 'All Categories', 'wp-sell-services' ),
-			'parent_item'                => __( 'Parent Category', 'wp-sell-services' ),
-			'parent_item_colon'          => __( 'Parent Category:', 'wp-sell-services' ),
-			'edit_item'                  => __( 'Edit Category', 'wp-sell-services' ),
-			'view_item'                  => __( 'View Category', 'wp-sell-services' ),
-			'update_item'                => __( 'Update Category', 'wp-sell-services' ),
-			'add_new_item'               => __( 'Add New Category', 'wp-sell-services' ),
-			'new_item_name'              => __( 'New Category Name', 'wp-sell-services' ),
-			'separate_items_with_commas' => __( 'Separate categories with commas', 'wp-sell-services' ),
-			'add_or_remove_items'        => __( 'Add or remove categories', 'wp-sell-services' ),
-			'choose_from_most_used'      => __( 'Choose from the most used categories', 'wp-sell-services' ),
-			'not_found'                  => __( 'No categories found.', 'wp-sell-services' ),
-			'no_terms'                   => __( 'No categories', 'wp-sell-services' ),
-			'items_list_navigation'      => __( 'Categories list navigation', 'wp-sell-services' ),
-			'items_list'                 => __( 'Categories list', 'wp-sell-services' ),
-			'back_to_items'              => __( '← Back to Categories', 'wp-sell-services' ),
-		];
-
-		$args = [
-			'labels'             => $labels,
-			'hierarchical'       => true,
-			'public'             => true,
-			'show_ui'            => true,
-			'show_admin_column'  => true,
-			'show_in_nav_menus'  => true,
-			'show_tagcloud'      => false,
-			'show_in_rest'       => true,
-			'rest_base'          => 'service-categories',
-			'rewrite'            => [
-				'slug'         => 'service-category',
-				'with_front'   => false,
-				'hierarchical' => true,
-			],
-		];
-
-		/**
-		 * Filter service category taxonomy arguments.
-		 *
-		 * @param array $args Taxonomy arguments.
-		 */
-		$args = apply_filters( 'wpss_service_category_args', $args );
-
-		register_taxonomy( 'wpss_service_category', self::POST_TYPE, $args );
 	}
 
 	/**
