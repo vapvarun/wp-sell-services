@@ -180,11 +180,20 @@ do_action( 'wpss_before_order_view', $order );
 						'class' => 'wpss-btn wpss-btn--success wpss-order-action',
 						'attrs' => 'data-action="complete" data-order="' . esc_attr( $order_id ) . '"',
 					);
-					$actions['revision'] = array(
-						'label' => __( 'Request Revision', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--secondary wpss-revision-btn',
-						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
-					);
+
+					if ( $order->can_request_revision() ) {
+						$remaining = $order->get_remaining_revisions();
+						$rev_label = -1 === $remaining
+							? __( 'Request Revision', 'wp-sell-services' )
+							/* translators: %d: number of revisions remaining */
+							: sprintf( __( 'Request Revision (%d left)', 'wp-sell-services' ), $remaining );
+
+						$actions['revision'] = array(
+							'label' => $rev_label,
+							'class' => 'wpss-btn wpss-btn--secondary wpss-revision-btn',
+							'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+						);
+					}
 				}
 
 				if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) {
@@ -902,7 +911,7 @@ $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 're
 // Check if review modal should be available.
 $can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
 $can_open_dispute      = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true );
-$can_request_revision  = $is_customer && 'pending_approval' === $order->status;
+$can_request_revision  = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
 ?>
 
 <?php if ( $can_deliver ) : ?>

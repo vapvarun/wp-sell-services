@@ -98,9 +98,13 @@ class DeliveryService {
 			);
 		}
 
-		// Update order status.
-		$order_service = new OrderService();
-		$order_service->update_status( $order_id, ServiceOrder::STATUS_PENDING_APPROVAL );
+		// Update order status - must succeed for delivery to be valid.
+		$order_service  = new OrderService();
+		$status_updated = $order_service->update_status( $order_id, ServiceOrder::STATUS_PENDING_APPROVAL );
+
+		if ( ! $status_updated ) {
+			wpss_log( "Delivery created (ID: {$delivery_id}) but status update to pending_approval failed for order {$order_id}.", 'error' );
+		}
 
 		/**
 		 * Fires when a delivery is submitted.
@@ -110,7 +114,7 @@ class DeliveryService {
 		 */
 		do_action( 'wpss_delivery_submitted', $delivery_id, $order_id );
 
-		return true;
+		return $status_updated;
 	}
 
 	/**
@@ -200,9 +204,14 @@ class DeliveryService {
 			);
 		}
 
-		// Update order status.
-		$order_service = new OrderService();
-		$order_service->request_revision( $order_id, $reason );
+		// Update order status - must succeed for revision to be valid.
+		$order_service  = new OrderService();
+		$status_updated = $order_service->request_revision( $order_id, $reason );
+
+		if ( ! $status_updated ) {
+			wpss_log( "Revision request failed: status update for order {$order_id} did not succeed.", 'error' );
+			return false;
+		}
 
 		/**
 		 * Fires when revision is requested.

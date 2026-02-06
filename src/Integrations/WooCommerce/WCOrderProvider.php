@@ -179,6 +179,27 @@ class WCOrderProvider implements OrderProviderInterface {
 	}
 
 	/**
+	 * Get ALL service orders by platform order ID.
+	 *
+	 * @param int $platform_order_id Platform order ID.
+	 * @return ServiceOrder[]
+	 */
+	public function get_all_by_platform_order( int $platform_order_id ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE platform = 'woocommerce' AND platform_order_id = %d",
+				$platform_order_id
+			)
+		);
+
+		return $rows ? array_map( array( ServiceOrder::class, 'from_db' ), $rows ) : array();
+	}
+
+	/**
 	 * Sync order status with platform.
 	 *
 	 * @param ServiceOrder $order Service order.

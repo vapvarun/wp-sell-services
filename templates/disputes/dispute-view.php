@@ -28,6 +28,19 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Ensure wpss_ajax is available for inline scripts in this template.
+if ( ! wp_script_is( 'wpss-requirements-form', 'enqueued' ) ) {
+	wp_enqueue_script( 'jquery' );
+	wp_add_inline_script(
+		'jquery',
+		'var wpss_ajax = wpss_ajax || ' . wp_json_encode(
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+			)
+		) . ';'
+	);
+}
+
 use WPSellServices\Services\DisputeService;
 
 $statuses         = DisputeService::get_statuses();

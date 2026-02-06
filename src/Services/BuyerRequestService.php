@@ -623,7 +623,7 @@ class BuyerRequestService {
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
 				'payment_status'     => 'pending',
-				'revisions_included' => 0,
+				'revisions_included' => (int) apply_filters( 'wpss_proposal_order_revisions', 2, $proposal, $request ),
 				'revisions_used'     => 0,
 				'created_at'         => current_time( 'mysql' ),
 				'updated_at'         => current_time( 'mysql' ),

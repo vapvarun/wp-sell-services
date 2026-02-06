@@ -209,11 +209,11 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function handle_order_created( int $order_id ): void {
-		// Check if service order already exists.
-		$service_order = $this->order_provider->get_by_platform_order( $order_id );
+		// Check if service orders already exist.
+		$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 
-		if ( ! $service_order ) {
-			// Create service order from WC order (status will be pending_payment).
+		if ( empty( $service_orders ) ) {
+			// Create service orders from WC order (status will be pending_payment).
 			$this->order_provider->create_from_platform_order( $order_id );
 		}
 	}
@@ -225,15 +225,15 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function handle_order_paid( int $order_id ): void {
-		// Check if service order already exists.
-		$service_order = $this->order_provider->get_by_platform_order( $order_id );
+		// Ensure service orders are created.
+		$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 
-		if ( ! $service_order ) {
-			// Create service order from WC order.
-			$service_order = $this->order_provider->create_from_platform_order( $order_id );
+		if ( empty( $service_orders ) ) {
+			$this->order_provider->create_from_platform_order( $order_id );
+			$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 		}
 
-		if ( $service_order ) {
+		foreach ( $service_orders as $service_order ) {
 			$this->order_provider->sync_status( $service_order );
 		}
 	}
@@ -245,9 +245,9 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function handle_order_cancelled( int $order_id ): void {
-		$service_order = $this->order_provider->get_by_platform_order( $order_id );
+		$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 
-		if ( $service_order ) {
+		foreach ( $service_orders as $service_order ) {
 			$this->order_provider->sync_status( $service_order );
 		}
 	}
@@ -259,9 +259,9 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function handle_order_refunded( int $order_id ): void {
-		$service_order = $this->order_provider->get_by_platform_order( $order_id );
+		$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 
-		if ( $service_order ) {
+		foreach ( $service_orders as $service_order ) {
 			$this->order_provider->sync_status( $service_order );
 		}
 	}

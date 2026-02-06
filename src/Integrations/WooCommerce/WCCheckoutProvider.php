@@ -36,6 +36,8 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 		add_filter( 'woocommerce_quantity_input_max', array( $this, 'filter_quantity_max' ), 10, 2 );
 		add_filter( 'woocommerce_quantity_input_args', array( $this, 'filter_quantity_args' ), 10, 2 );
 		add_filter( 'woocommerce_is_sold_individually', array( $this, 'service_sold_individually' ), 10, 2 );
+		add_filter( 'woocommerce_update_cart_validation', array( $this, 'validate_cart_update' ), 10, 4 );
+		add_filter( 'woocommerce_cart_item_quantity', array( $this, 'filter_cart_item_quantity' ), 10, 3 );
 
 		// Hook thank you page redirect to requirements.
 		add_filter( 'woocommerce_get_return_url', array( $this, 'filter_thankyou_redirect' ), 10, 2 );
@@ -517,6 +519,48 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		return $sold_individually;
+	}
+
+	/**
+	 * Prevent quantity increases for service products in the cart.
+	 *
+	 * @param bool   $passed     Validation result.
+	 * @param string $cart_item_key Cart item key.
+	 * @param array  $values     Cart item values.
+	 * @param int    $quantity   New quantity.
+	 * @return bool
+	 */
+	public function validate_cart_update( bool $passed, string $cart_item_key, array $values, int $quantity ): bool {
+		if ( ! $passed ) {
+			return false;
+		}
+
+		$product_id = $values['product_id'] ?? 0;
+
+		if ( $product_id && $this->is_service_product( $product_id ) && $quantity > 1 ) {
+			wc_add_notice( __( 'Service items cannot have a quantity greater than 1.', 'wp-sell-services' ), 'error' );
+			return false;
+		}
+
+		return $passed;
+	}
+
+	/**
+	 * Force quantity display to 1 for service items in cart.
+	 *
+	 * @param string $product_quantity Quantity input HTML.
+	 * @param string $cart_item_key    Cart item key.
+	 * @param array  $cart_item        Cart item data.
+	 * @return string
+	 */
+	public function filter_cart_item_quantity( string $product_quantity, string $cart_item_key, array $cart_item ): string {
+		$product_id = $cart_item['product_id'] ?? 0;
+
+		if ( $product_id && $this->is_service_product( $product_id ) ) {
+			return '1';
+		}
+
+		return $product_quantity;
 	}
 
 	/**

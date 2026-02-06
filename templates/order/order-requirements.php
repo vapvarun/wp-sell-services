@@ -22,6 +22,20 @@ defined( 'ABSPATH' ) || exit;
 // Enqueue orders styles.
 wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
 
+// Enqueue requirements form script and localize wpss_ajax.
+wp_enqueue_script( 'wpss-requirements-form', WPSS_PLUGIN_URL . 'assets/js/requirements-form.js', array( 'jquery' ), WPSS_VERSION, true );
+wp_localize_script(
+	'wpss-requirements-form',
+	'wpss_ajax',
+	array(
+		'ajax_url' => admin_url( 'admin-ajax.php' ),
+		'i18n'     => array(
+			'submit_error' => __( 'Failed to submit requirements.', 'wp-sell-services' ),
+			'ajax_error'   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+		),
+	)
+);
+
 if ( empty( $order_id ) ) {
 	return;
 }

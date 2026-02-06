@@ -303,12 +303,14 @@ final class Plugin {
 	private function maybe_create_vendor_role(): void {
 		// Vendor capabilities.
 		$vendor_caps = array(
+			'wpss_vendor'              => true,
 			'wpss_manage_services'     => true,
 			'wpss_manage_orders'       => true,
 			'wpss_view_analytics'      => true,
 			'wpss_respond_to_requests' => true,
 			'read'                     => true,
 			'upload_files'             => true,
+			'edit_posts'               => true,
 		);
 
 		$role = get_role( 'wpss_vendor' );
@@ -325,10 +327,6 @@ final class Plugin {
 			}
 		}
 
-		// Remove edit_posts if it was previously added (vendors should use wpss_manage_services instead).
-		if ( $role->has_cap( 'edit_posts' ) ) {
-			$role->remove_cap( 'edit_posts' );
-		}
 	}
 
 	/**

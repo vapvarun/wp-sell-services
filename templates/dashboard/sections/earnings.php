@@ -234,7 +234,7 @@ jQuery(function($) {
 		$submitBtn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
 
 		$.ajax({
-			url: wpss_ajax.ajaxurl,
+			url: wpssUnifiedDashboard.ajaxUrl,
 			type: 'POST',
 			data: {
 				action: 'wpss_request_withdrawal',

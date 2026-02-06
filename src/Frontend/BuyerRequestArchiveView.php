@@ -355,10 +355,33 @@ class BuyerRequestArchiveView {
 						<h4><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></h4>
 						<ul class="wpss-category-list">
 							<?php foreach ( $categories as $category ) : ?>
+								<?php
+								$request_count = (int) ( new \WP_Query(
+									array(
+										'post_type'      => 'wpss_request',
+										'posts_per_page' => -1,
+										'fields'         => 'ids',
+										'no_found_rows'  => false,
+										'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+											array(
+												'taxonomy' => 'wpss_service_category',
+												'field'    => 'term_id',
+												'terms'    => $category->term_id,
+											),
+										),
+										'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+											array(
+												'key'   => '_wpss_status',
+												'value' => 'open',
+											),
+										),
+									)
+								) )->found_posts;
+								?>
 								<li>
 									<a href="<?php echo esc_url( add_query_arg( 'category', $category->term_id ) ); ?>" class="wpss-category-link">
 										<?php echo esc_html( $category->name ); ?>
-										<span class="wpss-count">(<?php echo esc_html( $category->count ); ?>)</span>
+										<span class="wpss-count">(<?php echo esc_html( (string) $request_count ); ?>)</span>
 									</a>
 								</li>
 							<?php endforeach; ?>

@@ -34,6 +34,13 @@ class ServiceCategoryTaxonomy {
 	public const POST_TYPE = 'wpss_service';
 
 	/**
+	 * All post types this taxonomy is registered for.
+	 *
+	 * @var array<string>
+	 */
+	public const POST_TYPES = array( 'wpss_service', 'wpss_request' );
+
+	/**
 	 * Initialize the taxonomy.
 	 *
 	 * @return void
@@ -109,7 +116,7 @@ class ServiceCategoryTaxonomy {
 		 */
 		$args = apply_filters( 'wpss_service_category_taxonomy_args', $args );
 
-		register_taxonomy( self::TAXONOMY, self::POST_TYPE, $args );
+		register_taxonomy( self::TAXONOMY, self::POST_TYPES, $args );
 	}
 
 	/**

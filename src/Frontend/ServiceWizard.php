@@ -250,6 +250,12 @@ class ServiceWizard {
 			return $this->render_not_vendor();
 		}
 
+		// Check vendor account status - block suspended/pending vendors early.
+		$vendor_profile = $this->vendor_service->get_profile( $user_id );
+		if ( $vendor_profile && ! $vendor_profile->can_create_services() ) {
+			return $this->render_vendor_status_notice( $vendor_profile );
+		}
+
 		$atts = shortcode_atts(
 			array(
 				'id' => 0,
@@ -1815,6 +1821,30 @@ class ServiceWizard {
 		return '<div class="wpss-notice wpss-notice-info">' .
 			esc_html__( 'You need to be a registered vendor to create services.', 'wp-sell-services' ) .
 			' <a href="' . esc_url( $registration_url ) . '">' . esc_html__( 'Become a Vendor', 'wp-sell-services' ) . '</a></div>';
+	}
+
+	/**
+	 * Render vendor status notice for non-active vendors.
+	 *
+	 * @param object $vendor_profile Vendor profile object.
+	 * @return string Notice HTML.
+	 */
+	private function render_vendor_status_notice( object $vendor_profile ): string {
+		if ( $vendor_profile->is_suspended() ) {
+			return '<div class="wpss-notice wpss-notice-error">' .
+				esc_html__( 'Your vendor account is suspended. You cannot create services at this time.', 'wp-sell-services' ) .
+				'</div>';
+		}
+
+		if ( $vendor_profile->is_pending() ) {
+			return '<div class="wpss-notice wpss-notice-warning">' .
+				esc_html__( 'Your vendor account is pending approval. You will be able to create services once approved.', 'wp-sell-services' ) .
+				'</div>';
+		}
+
+		return '<div class="wpss-notice wpss-notice-error">' .
+			esc_html__( 'You are not authorized to create services.', 'wp-sell-services' ) .
+			'</div>';
 	}
 
 	/**
