@@ -586,6 +586,7 @@
 .wpss-package-tab.active {
 	background: var(--wpss-white);
 	color: var(--wpss-primary);
+	border-radius: 0;
 }
 
 .wpss-package {

@@ -303,7 +303,13 @@ select.wpss-form-input::-ms-expand {
 	display: none;
 }
 
+.wpss-toggle.wpss-toggle--inline {
+	display: flex;
+	align-content: center;
+}
+
 .wpss-toggle__slider {
+	display: inline-block;
 	position: relative;
 	width: 44px;
 	height: 24px;
@@ -430,7 +436,7 @@ select.wpss-form-input::-ms-expand {
 	height: 40px;
 	color: var(--wpss-text-muted, #6b7280);
 	background: transparent;
-	border: none;
+	border: none !important;
 	border-radius: var(--wpss-radius, 8px);
 	cursor: pointer;
 	transition: all var(--wpss-transition, 0.2s ease);
@@ -509,9 +515,10 @@ select.wpss-form-input::-ms-expand {
 	justify-content: center;
 	width: 28px;
 	height: 28px;
+	padding: 0;
 	color: var(--wpss-white, #fff);
 	background: rgba(0, 0, 0, 0.6);
-	border: none;
+	border: none !important;
 	border-radius: var(--wpss-radius-full, 9999px);
 	cursor: pointer;
 	transition: background var(--wpss-transition, 0.2s ease);
@@ -677,6 +684,7 @@ select.wpss-form-input::-ms-expand {
 /* Service Preview Card */
 .wpss-service-preview-card {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 16px;
 	padding: 16px;
 	background: var(--wpss-white, #fff);
@@ -856,7 +864,7 @@ select.wpss-form-input::-ms-expand {
 	padding: 12px 24px;
 	font-size: 14px;
 	font-weight: 600;
-	border: none;
+	border: none !important;
 	border-radius: var(--wpss-radius, 8px);
 	cursor: pointer;
 	transition: all var(--wpss-transition, 0.2s ease);
@@ -894,11 +902,11 @@ select.wpss-form-input::-ms-expand {
 .wpss-btn--outline {
 	color: var(--wpss-text, #1f2937);
 	background: var(--wpss-white, #fff);
-	border: 1px solid var(--wpss-border, #e5e7eb);
+	border: 1px solid var(--wpss-border, #e5e7eb) !important;
 }
 
 .wpss-btn--outline:hover:not(:disabled) {
-	border-color: var(--wpss-primary, #4f46e5);
+	border-color: var(--wpss-primary, #4f46e5) !important;
 	color: var(--wpss-primary, #4f46e5);
 }
 
@@ -1052,7 +1060,7 @@ select.wpss-form-input::-ms-expand {
 	font-size: 0.9375rem;
 	font-weight: 500;
 	border-radius: var(--wpss-radius, 8px);
-	border: none;
+	border: none !important;
 	cursor: pointer;
 	text-decoration: none;
 	transition: all 0.2s ease;
@@ -1060,12 +1068,12 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-wizard__btn-prev {
 	background: transparent;
-	border: 1px solid var(--wpss-border, #e5e7eb);
+	border: 1px solid var(--wpss-border, #e5e7eb) !important;
 	color: var(--wpss-text, #1f2937);
 }
 
 .wpss-wizard__btn-prev:hover {
-	border-color: var(--wpss-primary, #4f46e5);
+	border-color: var(--wpss-primary, #4f46e5) !important;
 	color: var(--wpss-primary, #4f46e5);
 }
 

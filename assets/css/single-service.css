@@ -1027,6 +1027,7 @@
 .wpss-package-tab.active {
 	color: var(--wpss-primary);
 	border-bottom-color: var(--wpss-primary);
+	border-radius: 0;
 }
 
 .wpss-packages-content {
