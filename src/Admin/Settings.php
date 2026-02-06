@@ -766,6 +766,37 @@ class Settings {
 			)
 		);
 
+		add_settings_field(
+			'requirements_timeout_days',
+			__( 'Requirements Timeout (Days)', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'requirements_timeout_days',
+				'min'         => 0,
+				'max'         => 30,
+				'default'     => 0,
+				'description' => __( 'Days to wait for requirements before taking action. 0 to disable.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'auto_start_on_timeout',
+			__( 'Auto-Start on Timeout', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'auto_start_on_timeout',
+				'label'       => __( 'Auto-start order when requirements timeout is reached', 'wp-sell-services' ),
+				'default'     => true,
+				'description' => __( 'If enabled, the order starts without requirements. If disabled, the order is cancelled instead.', 'wp-sell-services' ),
+			)
+		);
+
 		// Notification settings.
 		register_setting(
 			'wpss_notifications',
@@ -1720,10 +1751,13 @@ class Settings {
 	public function sanitize_order_settings( array $input ): array {
 		$sanitized = array();
 
-		$sanitized['auto_complete_days']  = absint( $input['auto_complete_days'] ?? 3 );
-		$sanitized['revision_limit']      = absint( $input['revision_limit'] ?? 2 );
-		$sanitized['allow_disputes']      = ! empty( $input['allow_disputes'] );
-		$sanitized['dispute_window_days'] = absint( $input['dispute_window_days'] ?? 14 );
+		$sanitized['auto_complete_days']        = absint( $input['auto_complete_days'] ?? 3 );
+		$sanitized['revision_limit']            = absint( $input['revision_limit'] ?? 2 );
+		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
+		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
+		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );
+		$sanitized['requirements_timeout_days'] = absint( $input['requirements_timeout_days'] ?? 0 );
+		$sanitized['auto_start_on_timeout']     = ! empty( $input['auto_start_on_timeout'] );
 
 		return $sanitized;
 	}

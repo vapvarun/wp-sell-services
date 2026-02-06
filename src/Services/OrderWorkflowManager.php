@@ -60,6 +60,7 @@ class OrderWorkflowManager {
 		add_action( 'wpss_auto_complete_orders', [ $this, 'auto_complete_orders' ] );
 		add_action( 'wpss_send_deadline_reminders', [ $this, 'send_deadline_reminders' ] );
 		add_action( 'wpss_send_requirements_reminders', [ $this, 'send_requirements_reminders' ] );
+		add_action( 'wpss_check_requirements_timeout', [ $this, 'check_requirements_timeout' ] );
 		add_action( 'wpss_recalculate_seller_levels', [ $this, 'recalculate_seller_levels' ] );
 
 		// Status change hooks.
@@ -116,6 +117,10 @@ class OrderWorkflowManager {
 
 		if ( ! wp_next_scheduled( 'wpss_send_requirements_reminders' ) ) {
 			wp_schedule_event( time(), 'daily', 'wpss_send_requirements_reminders' );
+		}
+
+		if ( ! wp_next_scheduled( 'wpss_check_requirements_timeout' ) ) {
+			wp_schedule_event( time(), 'daily', 'wpss_check_requirements_timeout' );
 		}
 
 		if ( ! wp_next_scheduled( 'wpss_recalculate_seller_levels' ) ) {
@@ -346,6 +351,125 @@ class OrderWorkflowManager {
 					);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Auto-start orders when requirements timeout is reached.
+	 *
+	 * If enabled, orders stuck in pending_requirements beyond the configured
+	 * timeout will be automatically transitioned to in_progress.
+	 *
+	 * @return void
+	 */
+	public function check_requirements_timeout(): void {
+		$order_settings = get_option( 'wpss_orders', [] );
+		$timeout_days   = (int) ( $order_settings['requirements_timeout_days'] ?? 0 );
+
+		if ( $timeout_days <= 0 ) {
+			return;
+		}
+
+		$auto_start = ! empty( $order_settings['auto_start_on_timeout'] );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// Find orders stuck in pending_requirements past the timeout.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$timed_out_orders = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, customer_id, vendor_id FROM {$table}
+				WHERE status = %s
+				AND created_at < DATE_SUB(%s, INTERVAL %d DAY)",
+				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+				current_time( 'mysql' ),
+				$timeout_days
+			)
+		);
+
+		foreach ( $timed_out_orders as $order ) {
+			$order_id = (int) $order->id;
+
+			if ( $auto_start ) {
+				// Auto-start the order without requirements.
+				$this->order_service->update_status(
+					$order_id,
+					ServiceOrder::STATUS_IN_PROGRESS,
+					sprintf(
+						/* translators: %d: number of days */
+						__( 'Order auto-started after %d days without requirements submission', 'wp-sell-services' ),
+						$timeout_days
+					)
+				);
+
+				$this->notification_service->create(
+					(int) $order->vendor_id,
+					'requirements_timeout',
+					__( 'Order Auto-Started', 'wp-sell-services' ),
+					sprintf(
+						/* translators: %d: number of days */
+						__( 'The buyer did not submit requirements within %d days. The order has been auto-started. You may contact the buyer for details.', 'wp-sell-services' ),
+						$timeout_days
+					),
+					[ 'order_id' => $order_id ]
+				);
+
+				$this->notification_service->create(
+					(int) $order->customer_id,
+					'requirements_timeout',
+					__( 'Order Started Without Requirements', 'wp-sell-services' ),
+					sprintf(
+						/* translators: %d: number of days */
+						__( 'You did not submit requirements within %d days. The order has been started. Please contact the vendor with your project details.', 'wp-sell-services' ),
+						$timeout_days
+					),
+					[ 'order_id' => $order_id ]
+				);
+			} else {
+				// Cancel the order instead.
+				$this->order_service->update_status(
+					$order_id,
+					ServiceOrder::STATUS_CANCELLED,
+					sprintf(
+						/* translators: %d: number of days */
+						__( 'Order cancelled - requirements not submitted within %d days', 'wp-sell-services' ),
+						$timeout_days
+					)
+				);
+
+				$this->notification_service->create(
+					(int) $order->customer_id,
+					'requirements_timeout_cancelled',
+					__( 'Order Cancelled', 'wp-sell-services' ),
+					sprintf(
+						/* translators: %d: number of days */
+						__( 'Your order was cancelled because requirements were not submitted within %d days.', 'wp-sell-services' ),
+						$timeout_days
+					),
+					[ 'order_id' => $order_id ]
+				);
+
+				$this->notification_service->create(
+					(int) $order->vendor_id,
+					'requirements_timeout_cancelled',
+					__( 'Order Cancelled', 'wp-sell-services' ),
+					sprintf(
+						/* translators: %d: number of days */
+						__( 'An order was cancelled because the buyer did not submit requirements within %d days.', 'wp-sell-services' ),
+						$timeout_days
+					),
+					[ 'order_id' => $order_id ]
+				);
+			}
+
+			/**
+			 * Fires when a requirements timeout action is taken.
+			 *
+			 * @param int  $order_id   Order ID.
+			 * @param bool $auto_start Whether the order was auto-started (true) or cancelled (false).
+			 */
+			do_action( 'wpss_requirements_timeout', $order_id, $auto_start );
 		}
 	}
 
@@ -694,6 +818,7 @@ class OrderWorkflowManager {
 		wp_clear_scheduled_hook( 'wpss_auto_complete_orders' );
 		wp_clear_scheduled_hook( 'wpss_send_deadline_reminders' );
 		wp_clear_scheduled_hook( 'wpss_send_requirements_reminders' );
+		wp_clear_scheduled_hook( 'wpss_check_requirements_timeout' );
 		wp_clear_scheduled_hook( 'wpss_recalculate_seller_levels' );
 	}
 }
