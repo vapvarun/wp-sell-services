@@ -321,16 +321,23 @@ class ConversationService {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+		$has_failure = false;
+
 		foreach ( $unread_messages as $msg ) {
 			$read_by             = $msg->read_by ? json_decode( $msg->read_by, true ) : array();
 			$read_by[ $user_id ] = true;
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
+			$result = $wpdb->update(
 				$messages_table,
 				array( 'read_by' => wp_json_encode( $read_by ) ),
 				array( 'id' => $msg->id )
 			);
+
+			if ( false === $result ) {
+				wpss_log( "Failed to mark message {$msg->id} as read for user {$user_id}: " . $wpdb->last_error, 'error' );
+				$has_failure = true;
+			}
 		}
 
 		// Reset unread count.
@@ -338,13 +345,18 @@ class ConversationService {
 		$unread_counts[ $user_id ] = 0;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
+		$result = $wpdb->update(
 			$conversations_table,
 			array( 'unread_counts' => wp_json_encode( $unread_counts ) ),
 			array( 'id' => $conversation_id )
 		);
 
-		return true;
+		if ( false === $result ) {
+			wpss_log( "Failed to reset unread count for conversation {$conversation_id}, user {$user_id}: " . $wpdb->last_error, 'error' );
+			$has_failure = true;
+		}
+
+		return ! $has_failure;
 	}
 
 	/**

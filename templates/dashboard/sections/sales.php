@@ -33,7 +33,17 @@ if ( $order_id ) {
 	$current_order = wpss_get_order( $order_id );
 
 	if ( $current_order && ( (int) $current_order->customer_id === $user_id || (int) $current_order->vendor_id === $user_id ) ) {
-		include WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing, no data processing.
+		$order_action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
+
+		switch ( $order_action ) {
+			case 'requirements':
+				include WPSS_PLUGIN_DIR . 'templates/order/order-requirements.php';
+				break;
+			default:
+				include WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
+				break;
+		}
 		return;
 	}
 }
