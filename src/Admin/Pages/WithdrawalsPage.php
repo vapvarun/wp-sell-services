@@ -575,10 +575,6 @@ class WithdrawalsPage {
 
 		<script>
 		jQuery(function($) {
-			if (typeof wpssWithdrawals === 'undefined') {
-				return;
-			}
-
 			var $modal = $('#wpss-withdrawal-modal');
 			var $form = $('#wpss-process-withdrawal-form');
 
