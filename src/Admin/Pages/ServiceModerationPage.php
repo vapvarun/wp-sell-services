@@ -205,7 +205,7 @@ class ServiceModerationPage {
 				FROM {$wpdb->posts} p
 				LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
 				WHERE p.post_type = 'wpss_service'
-				AND p.post_status = 'publish'
+				AND p.post_status IN ('pending', 'publish')
 				AND (pm.meta_value = %s OR pm.meta_value IS NULL)",
 				self::META_KEY,
 				self::STATUS_PENDING
@@ -241,7 +241,7 @@ class ServiceModerationPage {
 
 		$args = array(
 			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
+			'post_status'    => array( 'pending', 'publish' ),
 			'posts_per_page' => absint( $per_page ),
 			'paged'          => $paged,
 			'orderby'        => 'date',
@@ -683,7 +683,7 @@ class ServiceModerationPage {
 				FROM {$wpdb->posts} p
 				LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
 				WHERE p.post_type = 'wpss_service'
-				AND p.post_status = 'publish'
+				AND p.post_status IN ('pending', 'publish')
 				GROUP BY COALESCE(pm.meta_value, %s)",
 				self::STATUS_PENDING,
 				self::META_KEY,
@@ -720,6 +720,14 @@ class ServiceModerationPage {
 
 		update_post_meta( $service_id, self::META_KEY, self::STATUS_APPROVED );
 		delete_post_meta( $service_id, self::REJECTION_REASON_KEY );
+
+		// Publish the service so it's visible on the frontend.
+		wp_update_post(
+			array(
+				'ID'          => $service_id,
+				'post_status' => 'publish',
+			)
+		);
 
 		/**
 		 * Fires when a service is approved.
@@ -803,6 +811,12 @@ class ServiceModerationPage {
 			if ( 'approve' === $bulk_action ) {
 				update_post_meta( $service_id, self::META_KEY, self::STATUS_APPROVED );
 				delete_post_meta( $service_id, self::REJECTION_REASON_KEY );
+				wp_update_post(
+					array(
+						'ID'          => $service_id,
+						'post_status' => 'publish',
+					)
+				);
 				do_action( 'wpss_service_approved', $service_id );
 				$this->notify_vendor( $service_id, 'approved' );
 			} elseif ( 'reject' === $bulk_action ) {
