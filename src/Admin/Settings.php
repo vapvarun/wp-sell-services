@@ -299,7 +299,10 @@ class Settings {
 		register_setting(
 			'wpss_general',
 			'wpss_general',
-			array( $this, 'sanitize_general_settings' )
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_general_settings' ),
+			)
 		);
 
 		add_settings_section(
@@ -1646,10 +1649,11 @@ class Settings {
 	/**
 	 * Sanitize general settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param mixed $input Raw input (may be null from register_setting).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_general_settings( array $input ): array {
+	public function sanitize_general_settings( mixed $input ): array {
+		$input     = is_array( $input ) ? $input : array();
 		$sanitized = array();
 
 		// Platform name defaults to site name if empty.

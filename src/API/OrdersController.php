@@ -602,7 +602,7 @@ class OrdersController extends RestController {
 			case 'deliver':
 				if ( ! $is_vendor && ! $is_admin ) {
 					$error = __( 'Only the vendor can deliver orders.', 'wp-sell-services' );
-				} elseif ( 'in_progress' !== $order->status ) {
+				} elseif ( ! in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
 					$error = __( 'Order cannot be delivered in current status.', 'wp-sell-services' );
 				} else {
 					$result = $order->update(
@@ -654,8 +654,8 @@ class OrdersController extends RestController {
 			case 'dispute':
 				if ( ! $is_customer && ! $is_vendor ) {
 					$error = __( 'Only order participants can open disputes.', 'wp-sell-services' );
-				} elseif ( ! in_array( $order->status, array( 'delivered', 'in_progress' ), true ) ) {
-					$error = __( 'Disputes can only be opened for orders in progress or delivered.', 'wp-sell-services' );
+				} elseif ( ! in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested', 'delivered' ), true ) ) {
+					$error = __( 'Disputes can only be opened for active orders.', 'wp-sell-services' );
 				} elseif ( empty( $reason ) ) {
 					$error = __( 'Reason is required for disputes.', 'wp-sell-services' );
 				} else {
@@ -1049,6 +1049,7 @@ class OrdersController extends RestController {
 				break;
 
 			case 'in_progress':
+			case 'late':
 				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'deliver';
 				}
@@ -1057,9 +1058,22 @@ class OrdersController extends RestController {
 				}
 				break;
 
+			case 'revision_requested':
+				if ( $is_vendor || $is_admin ) {
+					$actions[] = 'deliver';
+				}
+				if ( $is_customer || $is_vendor ) {
+					$actions[] = 'dispute';
+				}
+				break;
+
+			case 'pending_approval':
 			case 'delivered':
 				if ( $is_customer || $is_admin ) {
 					$actions[] = 'complete';
+					if ( $order->can_request_revision() ) {
+						$actions[] = 'revision';
+					}
 				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';

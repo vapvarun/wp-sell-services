@@ -414,26 +414,28 @@ class DisputeService {
 	 * @return void
 	 */
 	private function handle_resolution( object $dispute, string $resolution, float $refund_amount ): void {
+		$order_id = (int) $dispute->order_id;
+
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
 				// Update order status to refunded.
-				$this->order_repo->update( $dispute->order_id, array( 'status' => 'refunded' ) );
+				$this->order_repo->update( $order_id, array( 'status' => 'refunded' ) );
 				break;
 
 			case self::RESOLUTION_PARTIAL_REFUND:
 				// Update order status.
-				$this->order_repo->update( $dispute->order_id, array( 'status' => 'partially_refunded' ) );
+				$this->order_repo->update( $order_id, array( 'status' => 'partially_refunded' ) );
 				break;
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 				// Restore order to completed.
-				$this->order_repo->update( $dispute->order_id, array( 'status' => 'completed' ) );
+				$this->order_repo->update( $order_id, array( 'status' => 'completed' ) );
 				break;
 
 			case self::RESOLUTION_MUTUAL:
 				// Both parties agreed, mark as completed.
-				$this->order_repo->update( $dispute->order_id, array( 'status' => 'completed' ) );
+				$this->order_repo->update( $order_id, array( 'status' => 'completed' ) );
 				break;
 		}
 	}

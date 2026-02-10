@@ -30,6 +30,20 @@ use WPSellServices\Services\DisputeService;
 class AjaxHandlers {
 
 	/**
+	 * Valid dashboard tabs for the main dashboard view.
+	 *
+	 * @var array<int, string>
+	 */
+	private const VALID_DASHBOARD_TABS = array( 'overview', 'orders', 'sales', 'services', 'requests', 'messages', 'earnings', 'profile', 'create', 'create-request' );
+
+	/**
+	 * Valid dashboard tabs for filtering, searching, and pagination.
+	 *
+	 * @var array<int, string>
+	 */
+	private const VALID_FILTERABLE_TABS = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
+
+	/**
 	 * Initialize AJAX handlers.
 	 *
 	 * @return void
@@ -413,16 +427,25 @@ class AjaxHandlers {
 		$field_data = array();
 
 		// New format: requirements[index] => value.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
+		// Handles both numeric indices (custom requirements) and string keys (default/special fields).
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above, individual values sanitized in the loop below.
 		$posted_requirements = isset( $_POST['requirements'] ) ? $_POST['requirements'] : array();
 		if ( ! empty( $posted_requirements ) && is_array( $posted_requirements ) ) {
 			foreach ( $posted_requirements as $index => $value ) {
-				$index = absint( $index );
-				if ( isset( $requirements[ $index ] ) ) {
-					$question                = $requirements[ $index ]['question'] ?? "field_{$index}";
-					$field_data[ $question ] = is_array( $value )
-						? array_map( 'sanitize_textarea_field', array_map( 'wp_unslash', $value ) )
-						: sanitize_textarea_field( wp_unslash( $value ) );
+				$sanitized_value = is_array( $value )
+					? array_map( 'sanitize_textarea_field', array_map( 'wp_unslash', $value ) )
+					: sanitize_textarea_field( wp_unslash( $value ) );
+
+				if ( is_numeric( $index ) ) {
+					// Numeric index: map to requirement definition by array position.
+					$index = absint( $index );
+					if ( isset( $requirements[ $index ] ) ) {
+						$question                = $requirements[ $index ]['question'] ?? "field_{$index}";
+						$field_data[ $question ] = $sanitized_value;
+					}
+				} else {
+					// String key (e.g. 'description', 'additional_notes'): use directly.
+					$field_data[ sanitize_key( $index ) ] = $sanitized_value;
 				}
 			}
 		}
@@ -517,6 +540,7 @@ class AjaxHandlers {
 
 		// Handle file attachments.
 		$attachments_data = array();
+		$skipped_files    = array();
 		if ( ! empty( $_FILES['attachments'] ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 			require_once ABSPATH . 'wp-admin/includes/image.php';
@@ -556,22 +580,27 @@ class AjaxHandlers {
 						'size'     => $files['size'][ $i ],
 					);
 
+					$file_name = sanitize_file_name( $file['name'] );
+
 					// Validate file extension.
 					$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 					if ( ! in_array( $ext, $allowed_types, true ) ) {
-						continue; // Skip invalid file types.
+						$skipped_files[] = $file_name . ': ' . __( 'unsupported file type', 'wp-sell-services' );
+						continue;
 					}
 
 					// Validate MIME type to prevent extension spoofing.
 					$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
 					$mime_type = $file_info['type'] ?? '';
 					if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
-						continue; // Skip invalid MIME types.
+						$skipped_files[] = $file_name . ': ' . __( 'invalid MIME type', 'wp-sell-services' );
+						continue;
 					}
 
 					// Validate file size.
 					if ( $file['size'] > $max_size ) {
-						continue; // Skip files that are too large.
+						$skipped_files[] = $file_name . ': ' . __( 'file too large (max 10MB)', 'wp-sell-services' );
+						continue;
 					}
 
 					$_FILES['upload_file'] = $file;
@@ -582,8 +611,10 @@ class AjaxHandlers {
 							'id'   => $attachment_id,
 							'url'  => wp_get_attachment_url( $attachment_id ),
 							'name' => $files['name'][ $i ],
-							'type' => $files['type'][ $i ],
+							'type' => $mime_type, // Use server-verified MIME type, not client-provided.
 						);
+					} else {
+						$skipped_files[] = $file_name . ': ' . $attachment_id->get_error_message();
 					}
 				}
 			}
@@ -658,13 +689,17 @@ class AjaxHandlers {
 		<?php
 		$html = ob_get_clean();
 
-		wp_send_json_success(
-			array(
-				'message'    => __( 'Message sent.', 'wp-sell-services' ),
-				'message_id' => $message_id,
-				'html'       => $html,
-			)
+		$response = array(
+			'message'    => __( 'Message sent.', 'wp-sell-services' ),
+			'message_id' => $message_id,
+			'html'       => $html,
 		);
+
+		if ( ! empty( $skipped_files ) ) {
+			$response['warnings'] = $skipped_files;
+		}
+
+		wp_send_json_success( $response );
 	}
 
 	/**
@@ -902,7 +937,7 @@ class AjaxHandlers {
 		if ( $result ) {
 			wp_send_json_success();
 		} else {
-			wp_send_json_error();
+			wp_send_json_error( array( 'message' => __( 'Failed to mark messages as read. Please try again.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -1354,14 +1389,25 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to post a request.', 'wp-sell-services' ) ) );
 		}
 
+		$deadline = sanitize_text_field( wp_unslash( $_POST['deadline'] ?? '' ) );
+
 		$data = array(
 			'title'       => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
 			'description' => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
-			'category'    => absint( $_POST['category'] ?? 0 ),
+			'category_id' => absint( $_POST['category'] ?? 0 ),
 			'budget_min'  => floatval( $_POST['budget_min'] ?? 0 ),
 			'budget_max'  => floatval( $_POST['budget_max'] ?? 0 ),
-			'deadline'    => sanitize_text_field( wp_unslash( $_POST['deadline'] ?? '' ) ),
 		);
+
+		// Calculate delivery_days and expires_at from the deadline date.
+		if ( $deadline ) {
+			$deadline_timestamp = strtotime( $deadline );
+			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
+				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
+				$data['delivery_days'] = $days_until_deadline;
+				$data['expires_at']    = gmdate( 'Y-m-d H:i:s', $deadline_timestamp );
+			}
+		}
 
 		if ( ! $data['title'] || ! $data['description'] ) {
 			wp_send_json_error( array( 'message' => __( 'Title and description are required.', 'wp-sell-services' ) ) );
@@ -2444,9 +2490,8 @@ class AjaxHandlers {
 	public function get_dashboard_tab(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$allowed_tabs = array( 'overview', 'orders', 'sales', 'services', 'requests', 'messages', 'earnings', 'profile', 'create', 'create-request' );
-		$tab          = sanitize_key( $_POST['tab'] ?? 'overview' );
-		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+		$tab = sanitize_key( $_POST['tab'] ?? 'overview' );
+		if ( ! in_array( $tab, self::VALID_DASHBOARD_TABS, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
 		}
 
@@ -2764,9 +2809,8 @@ class AjaxHandlers {
 	public function filter_dashboard(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$allowed_tabs = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
-		$tab          = sanitize_key( $_POST['tab'] ?? 'orders' );
-		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+		$tab = sanitize_key( $_POST['tab'] ?? 'orders' );
+		if ( ! in_array( $tab, self::VALID_FILTERABLE_TABS, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
 		}
 		$filter  = sanitize_key( $_POST['filter'] ?? 'all' );
@@ -2852,9 +2896,8 @@ class AjaxHandlers {
 	public function search_dashboard(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$allowed_tabs = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
-		$tab          = sanitize_key( $_POST['tab'] ?? 'orders' );
-		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+		$tab = sanitize_key( $_POST['tab'] ?? 'orders' );
+		if ( ! in_array( $tab, self::VALID_FILTERABLE_TABS, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
 		}
 		$query   = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );
@@ -2885,9 +2928,8 @@ class AjaxHandlers {
 	public function paginate_dashboard(): void {
 		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
 
-		$allowed_tabs = array( 'orders', 'sales', 'services', 'requests', 'messages', 'earnings' );
-		$tab          = sanitize_key( $_POST['tab'] ?? 'orders' );
-		if ( ! in_array( $tab, $allowed_tabs, true ) ) {
+		$tab = sanitize_key( $_POST['tab'] ?? 'orders' );
+		if ( ! in_array( $tab, self::VALID_FILTERABLE_TABS, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid tab.', 'wp-sell-services' ) ) );
 		}
 		$page    = absint( $_POST['page'] ?? 1 );
@@ -2942,10 +2984,10 @@ class AjaxHandlers {
 			default => gmdate( 'Y-m-01 00:00:00' ),
 		};
 
-		$filename = "wpss-{$type}-export-" . gmdate( 'Y-m-d' ) . '.csv';
+		$filename = sanitize_file_name( "wpss-{$type}-export-" . gmdate( 'Y-m-d' ) . '.csv' );
 
 		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Content-Disposition: attachment; filename="' . esc_attr( $filename ) . '"' );
 		header( 'Pragma: no-cache' );
 		header( 'Expires: 0' );
 
@@ -2975,8 +3017,8 @@ class AjaxHandlers {
 					$output,
 					array(
 						$order->id,
-						$service ? $service->post_title : 'N/A',
-						$customer ? $customer->display_name : 'N/A',
+						self::sanitize_csv_cell( $service ? $service->post_title : 'N/A' ),
+						self::sanitize_csv_cell( $customer ? $customer->display_name : 'N/A' ),
 						$order->status,
 						$order->total,
 						$order->created_at,
@@ -3058,5 +3100,27 @@ class AjaxHandlers {
 		$wpdb->query( 'COMMIT' );
 
 		wp_send_json_success( array( 'message' => __( 'Withdrawal cancelled. Balance restored.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * Sanitize a CSV cell value to prevent CSV injection.
+	 *
+	 * Prefixes cells starting with dangerous characters (=, +, -, @, |, %)
+	 * with a tab character to prevent formula execution in spreadsheet applications.
+	 *
+	 * @param string $value Cell value.
+	 * @return string Sanitized cell value.
+	 */
+	private static function sanitize_csv_cell( string $value ): string {
+		if ( '' === $value ) {
+			return $value;
+		}
+
+		$dangerous_chars = array( '=', '+', '-', '@', "\t", "\r", '|', '%' );
+		if ( in_array( $value[0], $dangerous_chars, true ) ) {
+			$value = "'" . $value;
+		}
+
+		return $value;
 	}
 }

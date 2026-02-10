@@ -349,6 +349,10 @@ class WCProductProvider implements ProductProviderInterface {
 		update_post_meta( $product_id, '_wpss_service_id', $service_id );
 		update_post_meta( $product_id, '_wpss_is_service', 'yes' );
 
+		// Enforce sold individually for service products.
+		$product->set_sold_individually( true );
+		$product->save();
+
 		return true;
 	}
 

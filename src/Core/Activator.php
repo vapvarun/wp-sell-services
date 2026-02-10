@@ -87,11 +87,14 @@ class Activator {
 	private static function create_roles(): void {
 		// Vendor capabilities.
 		$vendor_caps = array(
+			'wpss_vendor'              => true,
 			'wpss_manage_services'     => true,
 			'wpss_manage_orders'       => true,
 			'wpss_view_analytics'      => true,
 			'wpss_respond_to_requests' => true,
 			'read'                     => true, // Basic WordPress capability.
+			'upload_files'             => true,
+			'edit_posts'               => true,
 		);
 
 		// Create the vendor role if it doesn't exist.

@@ -244,6 +244,7 @@ class ConversationRepository extends AbstractRepository {
 			);
 			if ( false === $result ) {
 				wpss_log( "Failed to mark message {$message->id} as read: " . $this->wpdb->last_error, 'error' );
+				continue;
 			}
 			++$count;
 		}

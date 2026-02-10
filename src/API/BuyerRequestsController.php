@@ -355,15 +355,12 @@ class BuyerRequestsController extends RestController {
 			return $permission;
 		}
 
-		$user_id = get_current_user_id();
-
-		// Check if user has vendor role or has published services.
-		$user_meta = get_user_meta( $user_id, '_wpss_is_vendor', true );
-		if ( ! $user_meta ) {
+		// Check if user is a vendor using the canonical helper.
+		if ( ! wpss_is_vendor() ) {
 			return new WP_Error(
 				'not_vendor',
 				__( 'You must be a vendor to submit proposals.', 'wp-sell-services' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 

@@ -350,7 +350,11 @@ class Admin {
 			array( '%d' )
 		);
 
-		// Fire status change hook for notifications.
+		if ( false === $updated ) {
+			wpss_log( "Failed to update order {$order_id} status: " . $wpdb->last_error, 'error' );
+		}
+
+		// Fire status change hook for notifications (only when rows actually changed).
 		if ( $updated && $old_status !== $status ) {
 			/**
 			 * Fires when order status changes via admin.
@@ -362,13 +366,21 @@ class Admin {
 			do_action( 'wpss_order_status_changed', $order_id, $status, $old_status );
 		}
 
-		// Redirect back to the order.
+		// Redirect back to the order. Distinguish DB error (false) from no-change (0).
+		if ( false === $updated ) {
+			$update_status = 'error';
+		} elseif ( 0 === $updated ) {
+			$update_status = 'unchanged';
+		} else {
+			$update_status = '1';
+		}
+
 		$redirect_url = add_query_arg(
 			array(
 				'page'     => 'wpss-orders',
 				'action'   => 'view',
 				'order_id' => $order_id,
-				'updated'  => $updated ? '1' : '0',
+				'updated'  => $update_status,
 			),
 			admin_url( 'admin.php' )
 		);
@@ -403,17 +415,19 @@ class Admin {
 		$dispute_service = new DisputeService();
 
 		if ( 'resolved' === $status && $resolution ) {
-			$dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id() );
+			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id() );
 		} else {
-			$dispute_service->update_status( $dispute_id, $status, $notes );
+			$result = $dispute_service->update_status( $dispute_id, $status, $notes );
 		}
+
+		$updated = ( false !== $result && ! is_wp_error( $result ) ) ? '1' : '0';
 
 		$redirect_url = add_query_arg(
 			array(
 				'page'       => 'wpss-disputes',
 				'action'     => 'view',
 				'dispute_id' => $dispute_id,
-				'updated'    => '1',
+				'updated'    => $updated,
 			),
 			admin_url( 'admin.php' )
 		);

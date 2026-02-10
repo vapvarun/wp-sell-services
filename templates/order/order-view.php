@@ -196,6 +196,14 @@ do_action( 'wpss_before_order_view', $order );
 					}
 				}
 
+				if ( 'revision_requested' === $order->status ) {
+					$actions['revision_notice'] = array(
+						'label' => __( 'Waiting for Revised Delivery', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+						'attrs' => 'disabled="disabled" title="' . esc_attr__( 'The vendor is working on your requested revision.', 'wp-sell-services' ) . '"',
+					);
+				}
+
 				if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) {
 					$actions['cancel'] = array(
 						'label' => __( 'Cancel Order', 'wp-sell-services' ),

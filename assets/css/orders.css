@@ -1333,6 +1333,42 @@
 	gap: 0.125rem;
 }
 
+/* Order Card Info Variant */
+.wpss-order-card--info .wpss-order-card__body p {
+	margin: 0 0 0.75rem;
+	color: var(--wpss-text-muted, #6b7280);
+	font-size: 0.875rem;
+	line-height: 1.5;
+}
+
+.wpss-order-card--info .wpss-order-card__body ul {
+	margin: 0;
+	padding-left: 1.25rem;
+}
+
+.wpss-order-card--info .wpss-order-card__body li {
+	margin-bottom: 0.375rem;
+	font-size: 0.875rem;
+	color: var(--wpss-text, #1f2937);
+}
+
+/* Order Card Definition List */
+.wpss-order-card__list dt {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	font-weight: 400;
+}
+
+.wpss-order-card__list dd {
+	margin: 0 0 0.5rem;
+	font-size: 0.875rem;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-order-card__list dd:last-child {
+	margin-bottom: 0;
+}
+
 /* ==========================================================================
    Table BEM Additions
    ========================================================================== */

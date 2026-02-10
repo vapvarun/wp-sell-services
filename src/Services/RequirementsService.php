@@ -194,9 +194,10 @@ class RequirementsService {
 		$errors = array();
 
 		foreach ( $fields as $index => $field ) {
-			// Support both 'label' and 'question' keys for field identification.
-			$field_key   = $field['label'] ?? $field['question'] ?? "field_{$index}";
-			$field_label = $field['label'] ?? $field['question'] ?? "Field {$index}";
+			// Use 'question' as the primary key since that is what the AJAX handler uses.
+			// Fall back to 'label' for backward compatibility with older field definitions.
+			$field_key   = $field['question'] ?? $field['label'] ?? "field_{$index}";
+			$field_label = $field['question'] ?? $field['label'] ?? "Field {$index}";
 			$value       = $field_data[ $field_key ] ?? '';
 			$required    = ! empty( $field['required'] );
 			$type        = $field['type'] ?? 'text';
@@ -490,13 +491,14 @@ class RequirementsService {
 		$formatted = array();
 
 		foreach ( $fields as $field ) {
-			$key   = $field['label'] ?? '';
+			// Use 'question' as the primary key, matching what the AJAX handler stores.
+			$key   = $field['question'] ?? $field['label'] ?? '';
 			$value = $requirements['field_data'][ $key ] ?? '';
 
 			$formatted[] = array(
-				'label' => $field['label'],
-				'type'  => $field['type'],
-				'value' => $this->format_value( $value, $field['type'] ),
+				'label' => $field['question'] ?? $field['label'] ?? '',
+				'type'  => $field['type'] ?? 'text',
+				'value' => $this->format_value( $value, $field['type'] ?? 'text' ),
 			);
 		}
 

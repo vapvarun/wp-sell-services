@@ -290,6 +290,10 @@ function wpss_get_vendor( int $user_id ): ?\WPSellServices\Models\VendorProfile 
 /**
  * Check if user is a vendor.
  *
+ * Checks the wpss_vendor capability first, then falls back to checking
+ * the user's role and vendor meta for backward compatibility with users
+ * registered before the wpss_vendor capability was added to the role.
+ *
  * @param int|null $user_id User ID. Defaults to current user.
  * @return bool
  */
@@ -302,13 +306,29 @@ function wpss_is_vendor( ?int $user_id = null ): bool {
 		return false;
 	}
 
+	// Primary check: wpss_vendor capability.
+	$is_vendor = user_can( $user_id, 'wpss_vendor' );
+
+	// Fallback: check if user has the wpss_vendor role directly.
+	if ( ! $is_vendor ) {
+		$user = get_userdata( $user_id );
+		if ( $user && in_array( 'wpss_vendor', (array) $user->roles, true ) ) {
+			$is_vendor = true;
+		}
+	}
+
+	// Fallback: check vendor meta for legacy vendors.
+	if ( ! $is_vendor ) {
+		$is_vendor = (bool) get_user_meta( $user_id, '_wpss_is_vendor', true );
+	}
+
 	/**
 	 * Filter whether user is a vendor.
 	 *
 	 * @param bool $is_vendor Whether user is a vendor.
 	 * @param int  $user_id   User ID.
 	 */
-	return apply_filters( 'wpss_is_vendor', user_can( $user_id, 'wpss_vendor' ), $user_id );
+	return apply_filters( 'wpss_is_vendor', $is_vendor, $user_id );
 }
 
 /**

@@ -51,7 +51,7 @@ class UserFactory {
 		$user = self::create(
 			array_merge(
 				array(
-					'role'         => 'vendor',
+					'role'         => 'wpss_vendor',
 					'display_name' => 'Test Vendor',
 				),
 				$attrs
@@ -59,9 +59,13 @@ class UserFactory {
 		);
 
 		// Add vendor capabilities.
-		$user->add_cap( 'publish_wpss_services', true );
-		$user->add_cap( 'edit_wpss_services', true );
-		$user->add_cap( 'delete_wpss_services', true );
+		$user->add_cap( 'wpss_vendor', true );
+		$user->add_cap( 'wpss_manage_services', true );
+		$user->add_cap( 'wpss_manage_orders', true );
+		$user->add_cap( 'wpss_view_analytics', true );
+		$user->add_cap( 'wpss_respond_to_requests', true );
+		$user->add_cap( 'upload_files', true );
+		$user->add_cap( 'edit_posts', true );
 
 		return $user;
 	}

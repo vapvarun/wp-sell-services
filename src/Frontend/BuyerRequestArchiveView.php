@@ -358,23 +358,37 @@ class BuyerRequestArchiveView {
 								<?php
 								$count_query   = new \WP_Query(
 									array(
-										'post_type'              => 'wpss_request',
-										'posts_per_page'         => 1,
-										'fields'                 => 'ids',
-										'no_found_rows'          => false,
+										'post_type'      => 'wpss_request',
+										'posts_per_page' => 1,
+										'fields'         => 'ids',
+										'no_found_rows'  => false,
 										'update_post_meta_cache' => false,
 										'update_post_term_cache' => false,
-										'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+										'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 											array(
 												'taxonomy' => 'wpss_service_category',
 												'field'    => 'term_id',
 												'terms'    => $category->term_id,
 											),
 										),
-										'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+										'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+											'relation' => 'AND',
 											array(
 												'key'   => '_wpss_status',
 												'value' => 'open',
+											),
+											array(
+												'relation' => 'OR',
+												array(
+													'key'  => '_wpss_expires_at',
+													'value' => current_time( 'mysql' ),
+													'compare' => '>',
+													'type' => 'DATETIME',
+												),
+												array(
+													'key' => '_wpss_expires_at',
+													'compare' => 'NOT EXISTS',
+												),
 											),
 										),
 									)

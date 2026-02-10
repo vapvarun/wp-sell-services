@@ -591,6 +591,11 @@ class EmailService {
 	 * @return bool
 	 */
 	public function send( string $to, string $subject, string $type, array $template_vars = array() ): bool {
+		// Check if this email type is disabled in admin notification settings.
+		if ( ! $this->is_email_type_enabled( $type ) ) {
+			return false;
+		}
+
 		// Merge settings into template vars.
 		$template_vars = array_merge( $this->settings, $template_vars );
 		$template_vars['site_url']  = home_url();
@@ -752,5 +757,50 @@ class EmailService {
 	private function get_vendor_name( int $vendor_id ): string {
 		$vendor = get_user_by( 'id', $vendor_id );
 		return $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+	}
+
+	/**
+	 * Check if a given email type is enabled in admin notification settings.
+	 *
+	 * Reads the `wpss_notifications` option and maps email types to their
+	 * corresponding setting keys. Returns false if the type is explicitly
+	 * disabled, true otherwise (including when the setting doesn't exist,
+	 * which preserves the default-enabled behavior).
+	 *
+	 * @since 1.2.1
+	 * @param string $type Email type constant.
+	 * @return bool True if the email type is enabled or has no setting, false if disabled.
+	 */
+	private function is_email_type_enabled( string $type ): bool {
+		$notification_settings = get_option( 'wpss_notifications', array() );
+
+		// Map EmailService type constants to admin setting keys.
+		$type_to_setting = array(
+			self::TYPE_NEW_ORDER              => 'notify_new_order',
+			self::TYPE_REQUIREMENTS_SUBMITTED => 'notify_new_order',
+			self::TYPE_ORDER_IN_PROGRESS      => 'notify_new_order',
+			self::TYPE_DELIVERY_READY         => 'notify_delivery_submitted',
+			self::TYPE_ORDER_COMPLETED        => 'notify_order_completed',
+			self::TYPE_REVISION_REQUESTED     => 'notify_revision_requested',
+			self::TYPE_NEW_MESSAGE            => 'notify_new_message',
+			self::TYPE_ORDER_CANCELLED        => 'notify_order_cancelled',
+			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
+			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
+			self::TYPE_SELLER_LEVEL_PROMOTION => 'notify_new_order',
+		);
+
+		if ( ! isset( $type_to_setting[ $type ] ) ) {
+			// Unknown type: allow sending (do not block unrecognized types).
+			return true;
+		}
+
+		$setting_key = $type_to_setting[ $type ];
+
+		// If the setting exists and is explicitly falsy, the admin disabled it.
+		if ( isset( $notification_settings[ $setting_key ] ) && ! $notification_settings[ $setting_key ] ) {
+			return false;
+		}
+
+		return true;
 	}
 }

@@ -29,6 +29,16 @@ use WPSellServices\Services\DisputeService;
 class WooCommerceAdapter implements EcommerceAdapterInterface {
 
 	/**
+	 * Flag to prevent infinite loop when syncing WC order status.
+	 *
+	 * When a WC status change triggers a service status change, which would
+	 * trigger a WC status change again, this flag breaks the cycle.
+	 *
+	 * @var bool
+	 */
+	private static bool $syncing_wc_status = false;
+
+	/**
 	 * Supported features.
 	 *
 	 * @var array<string>
@@ -176,6 +186,9 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 		add_action( 'woocommerce_order_status_cancelled', array( $this, 'handle_order_cancelled' ) );
 		add_action( 'woocommerce_order_status_refunded', array( $this, 'handle_order_refunded' ) );
 
+		// Reverse sync: Service order status -> WooCommerce order status.
+		add_action( 'wpss_order_status_changed', array( $this, 'sync_wc_order_status' ), 10, 3 );
+
 		// Hook checkout order created to create WPSS order early.
 		add_action( 'woocommerce_checkout_order_created', array( $this, 'handle_checkout_order_created' ) );
 
@@ -184,6 +197,51 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 
 		// Process refunds when disputes are resolved.
 		add_action( 'wpss_dispute_resolved', array( $this, 'handle_dispute_refund' ), 10, 4 );
+
+		// Enforce quantity=1 for service products.
+		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'enforce_service_quantity' ), 10, 3 );
+		add_filter( 'woocommerce_quantity_input_args', array( $this, 'hide_service_quantity_input' ), 10, 2 );
+	}
+
+	/**
+	 * Enforce quantity=1 for service products during add-to-cart.
+	 *
+	 * @param bool $passed     Validation result.
+	 * @param int  $product_id Product ID being added.
+	 * @param int  $quantity   Requested quantity.
+	 * @return bool
+	 */
+	public function enforce_service_quantity( bool $passed, int $product_id, int $quantity ): bool {
+		if ( ! $passed ) {
+			return $passed;
+		}
+
+		if ( $this->product_provider && $this->product_provider->is_service_product( $product_id ) && $quantity > 1 ) {
+			wc_add_notice(
+				__( 'Service products can only be purchased one at a time.', 'wp-sell-services' ),
+				'error'
+			);
+			return false;
+		}
+
+		return $passed;
+	}
+
+	/**
+	 * Set quantity input to 1 and hide quantity selector for service products.
+	 *
+	 * @param array<string, mixed> $args    Quantity input arguments.
+	 * @param \WC_Product          $product Product object.
+	 * @return array<string, mixed> Modified arguments.
+	 */
+	public function hide_service_quantity_input( array $args, $product ): array {
+		if ( $product && $this->product_provider && $this->product_provider->is_service_product( $product->get_id() ) ) {
+			$args['min_value']   = 1;
+			$args['max_value']   = 1;
+			$args['input_value'] = 1;
+		}
+
+		return $args;
 	}
 
 	/**
@@ -233,9 +291,14 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 			$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 		}
 
+		// Set flag to prevent reverse sync back to WC.
+		self::$syncing_wc_status = true;
+
 		foreach ( $service_orders as $service_order ) {
 			$this->order_provider->sync_status( $service_order );
 		}
+
+		self::$syncing_wc_status = false;
 	}
 
 	/**
@@ -247,9 +310,14 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	public function handle_order_cancelled( int $order_id ): void {
 		$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 
+		// Set flag to prevent reverse sync back to WC.
+		self::$syncing_wc_status = true;
+
 		foreach ( $service_orders as $service_order ) {
 			$this->order_provider->sync_status( $service_order );
 		}
+
+		self::$syncing_wc_status = false;
 	}
 
 	/**
@@ -261,9 +329,87 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 	public function handle_order_refunded( int $order_id ): void {
 		$service_orders = $this->order_provider->get_all_by_platform_order( $order_id );
 
+		// Set flag to prevent reverse sync back to WC.
+		self::$syncing_wc_status = true;
+
 		foreach ( $service_orders as $service_order ) {
 			$this->order_provider->sync_status( $service_order );
 		}
+
+		self::$syncing_wc_status = false;
+	}
+
+	/**
+	 * Sync WooCommerce order status when service order status changes.
+	 *
+	 * This is the reverse sync: when a service order status changes (e.g., via
+	 * the frontend dashboard), update the corresponding WooCommerce order status.
+	 *
+	 * @param int    $order_id   Service order ID.
+	 * @param string $new_status New service order status.
+	 * @param string $old_status Old service order status.
+	 * @return void
+	 */
+	public function sync_wc_order_status( int $order_id, string $new_status, string $old_status ): void {
+		// Prevent infinite loop: WC->Service->WC.
+		if ( self::$syncing_wc_status ) {
+			return;
+		}
+
+		$service_order = ServiceOrder::find( $order_id );
+
+		if ( ! $service_order ) {
+			return;
+		}
+
+		// Only sync WooCommerce platform orders.
+		if ( 'woocommerce' !== $service_order->platform || ! $service_order->platform_order_id ) {
+			return;
+		}
+
+		// Map service order statuses to WooCommerce statuses.
+		$status_map = array(
+			ServiceOrder::STATUS_COMPLETED => 'completed',
+			ServiceOrder::STATUS_CANCELLED => 'cancelled',
+		);
+
+		/**
+		 * Filter the service-to-WC status mapping for reverse sync.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array  $status_map Service status => WC status mapping.
+		 * @param string $new_status The new service order status.
+		 * @param string $old_status The old service order status.
+		 */
+		$status_map = apply_filters( 'wpss_service_to_wc_status_map', $status_map, $new_status, $old_status );
+
+		if ( ! isset( $status_map[ $new_status ] ) ) {
+			return;
+		}
+
+		$wc_order = wc_get_order( $service_order->platform_order_id );
+
+		if ( ! $wc_order ) {
+			return;
+		}
+
+		$target_wc_status = $status_map[ $new_status ];
+
+		// Skip if WC order already has the target status.
+		if ( $wc_order->get_status() === $target_wc_status ) {
+			return;
+		}
+
+		// Set flag to prevent the WC status change from syncing back to service order.
+		self::$syncing_wc_status = true;
+
+		$wc_order->update_status(
+			$target_wc_status,
+			__( 'Status synced from service order.', 'wp-sell-services' )
+		);
+
+		self::$syncing_wc_status = false;
 	}
 
 	/**
@@ -299,7 +445,7 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 
 		// Get the service order.
 		$order_repo = new OrderRepository();
-		$order_data = $order_repo->find( $dispute->order_id );
+		$order_data = $order_repo->find( (int) $dispute->order_id );
 
 		if ( ! $order_data ) {
 			return;

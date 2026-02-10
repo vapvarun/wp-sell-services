@@ -125,43 +125,43 @@ class WCEmailProvider {
 
 		switch ( $new_status ) {
 			case ServiceOrder::STATUS_PENDING_REQUIREMENTS:
-				if ( isset( $wc_emails['WPSS_Email_New_Order'] ) ) {
+				if ( $this->is_notification_enabled( 'notify_new_order' ) && isset( $wc_emails['WPSS_Email_New_Order'] ) ) {
 					$wc_emails['WPSS_Email_New_Order']->trigger( $order_id );
 				}
 				break;
 
 			case ServiceOrder::STATUS_IN_PROGRESS:
-				if ( isset( $wc_emails['WPSS_Email_Order_In_Progress'] ) ) {
+				if ( $this->is_notification_enabled( 'notify_new_order' ) && isset( $wc_emails['WPSS_Email_Order_In_Progress'] ) ) {
 					$wc_emails['WPSS_Email_Order_In_Progress']->trigger( $order_id );
 				}
 				break;
 
 			case ServiceOrder::STATUS_PENDING_APPROVAL:
-				if ( isset( $wc_emails['WPSS_Email_Delivery_Ready'] ) ) {
+				if ( $this->is_notification_enabled( 'notify_delivery_submitted' ) && isset( $wc_emails['WPSS_Email_Delivery_Ready'] ) ) {
 					$wc_emails['WPSS_Email_Delivery_Ready']->trigger( $order_id );
 				}
 				break;
 
 			case ServiceOrder::STATUS_COMPLETED:
-				if ( isset( $wc_emails['WPSS_Email_Order_Completed'] ) ) {
+				if ( $this->is_notification_enabled( 'notify_order_completed' ) && isset( $wc_emails['WPSS_Email_Order_Completed'] ) ) {
 					$wc_emails['WPSS_Email_Order_Completed']->trigger( $order_id );
 				}
 				break;
 
 			case ServiceOrder::STATUS_REVISION_REQUESTED:
-				if ( isset( $wc_emails['WPSS_Email_Revision_Requested'] ) ) {
+				if ( $this->is_notification_enabled( 'notify_revision_requested' ) && isset( $wc_emails['WPSS_Email_Revision_Requested'] ) ) {
 					$wc_emails['WPSS_Email_Revision_Requested']->trigger( $order_id );
 				}
 				break;
 
 			case ServiceOrder::STATUS_CANCELLED:
-				if ( isset( $wc_emails['WPSS_Email_Order_Cancelled'] ) ) {
+				if ( $this->is_notification_enabled( 'notify_order_cancelled' ) && isset( $wc_emails['WPSS_Email_Order_Cancelled'] ) ) {
 					$wc_emails['WPSS_Email_Order_Cancelled']->trigger( $order_id );
 				}
 				break;
 
 			case ServiceOrder::STATUS_DISPUTED:
-				if ( isset( $wc_emails['WPSS_Email_Dispute_Opened'] ) ) {
+				if ( $this->is_notification_enabled( 'notify_dispute_opened' ) && isset( $wc_emails['WPSS_Email_Dispute_Opened'] ) ) {
 					$wc_emails['WPSS_Email_Dispute_Opened']->trigger( $order_id );
 				}
 				break;
@@ -179,6 +179,11 @@ class WCEmailProvider {
 	public function trigger_requirements_email( int $order_id, array $field_data, array $attachments ): void {
 		// Suppress unused parameter warning.
 		unset( $attachments );
+
+		// Check if new order notifications are enabled (requirements are part of the order flow).
+		if ( ! $this->is_notification_enabled( 'notify_new_order' ) ) {
+			return;
+		}
 
 		// Ensure WooCommerce mailer is available.
 		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
@@ -203,6 +208,11 @@ class WCEmailProvider {
 		// Suppress unused parameter warning.
 		unset( $delivery_id );
 
+		// Check if delivery submitted notifications are enabled.
+		if ( ! $this->is_notification_enabled( 'notify_delivery_submitted' ) ) {
+			return;
+		}
+
 		// Ensure WooCommerce mailer is available.
 		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
 			return;
@@ -224,6 +234,11 @@ class WCEmailProvider {
 	 * @return void
 	 */
 	public function trigger_message_email( int $order_id, int $sender_id, string $message ): void {
+		// Check if new message notifications are enabled.
+		if ( ! $this->is_notification_enabled( 'notify_new_message' ) ) {
+			return;
+		}
+
 		// Ensure WooCommerce mailer is available.
 		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
 			return;
@@ -234,5 +249,22 @@ class WCEmailProvider {
 		if ( isset( $wc_emails['WPSS_Email_New_Message'] ) ) {
 			$wc_emails['WPSS_Email_New_Message']->trigger( $order_id, $sender_id, $message );
 		}
+	}
+
+	/**
+	 * Check if a notification type is enabled in admin settings.
+	 *
+	 * @since 1.2.1
+	 * @param string $setting_key The notification setting key (e.g. 'notify_new_order').
+	 * @return bool True if enabled or setting not found, false if explicitly disabled.
+	 */
+	private function is_notification_enabled( string $setting_key ): bool {
+		$notification_settings = get_option( 'wpss_notifications', array() );
+
+		if ( isset( $notification_settings[ $setting_key ] ) && ! $notification_settings[ $setting_key ] ) {
+			return false;
+		}
+
+		return true;
 	}
 }

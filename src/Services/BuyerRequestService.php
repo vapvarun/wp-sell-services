@@ -56,9 +56,9 @@ class BuyerRequestService {
 	 * Create a buyer request.
 	 *
 	 * @param array<string, mixed> $data Request data.
-	 * @return int|false Post ID or false on failure.
+	 * @return int|false|\WP_Error Post ID, false on validation failure, or WP_Error on insert failure.
 	 */
-	public function create( array $data ): int|false {
+	public function create( array $data ): int|false|\WP_Error {
 		$defaults = array(
 			'title'           => '',
 			'description'     => '',
@@ -91,7 +91,7 @@ class BuyerRequestService {
 
 		if ( is_wp_error( $post_id ) ) {
 			wpss_log( 'Failed to create buyer request: ' . $post_id->get_error_message(), 'error' );
-			return false;
+			return new \WP_Error( 'wpss_insert_failed', $post_id->get_error_message() );
 		}
 
 		// Save meta.
@@ -669,8 +669,11 @@ class BuyerRequestService {
 			array( '%d', '%s', '%s', '%s' )
 		);
 
+		$warnings = array();
+
 		if ( false === $req_result ) {
 			wpss_log( "Failed to save requirements for order {$order_id}: " . $wpdb->last_error, 'error' );
+			$warnings[] = __( 'Order requirements could not be saved. Please contact support.', 'wp-sell-services' );
 		}
 
 		// Create conversation for the order.
@@ -700,12 +703,18 @@ class BuyerRequestService {
 		 */
 		do_action( 'wpss_request_converted_to_order', $order_id, $request_id, $proposal_id, $request, $proposal );
 
-		return array(
+		$response = array(
 			'success'      => true,
 			'message'      => __( 'Order created successfully. Proceed to payment.', 'wp-sell-services' ),
 			'order_id'     => $order_id,
 			'order_number' => $order_number,
 		);
+
+		if ( ! empty( $warnings ) ) {
+			$response['warnings'] = $warnings;
+		}
+
+		return $response;
 	}
 
 	/**

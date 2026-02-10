@@ -299,51 +299,59 @@ do_action( 'wpss_before_requirements_form', $order );
 		<aside class="wpss-requirements-page__sidebar">
 			<!-- Order Details -->
 			<div class="wpss-order-card">
-				<h4 class="wpss-order-card__title"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h4>
-				<dl class="wpss-order-card__list">
-					<dt><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></dt>
-					<dd><?php echo esc_html( $order->order_number ); ?></dd>
+				<div class="wpss-order-card__header">
+					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h4>
+				</div>
+				<div class="wpss-order-card__body">
+					<dl class="wpss-order-card__list">
+						<dt><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></dt>
+						<dd><?php echo esc_html( $order->order_number ); ?></dd>
 
-					<dt><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></dt>
-					<dd><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></dd>
+						<dt><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></dt>
+						<dd><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></dd>
 
-					<?php if ( $order->delivery_deadline ) : ?>
-						<dt><?php esc_html_e( 'Expected Delivery', 'wp-sell-services' ); ?></dt>
-						<dd>
-							<?php
-							$deadline = $order->delivery_deadline instanceof \DateTimeImmutable
-								? $order->delivery_deadline->format( 'Y-m-d H:i:s' )
-								: $order->delivery_deadline;
-							echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) );
-							?>
-						</dd>
-					<?php endif; ?>
-				</dl>
+						<?php if ( $order->delivery_deadline ) : ?>
+							<dt><?php esc_html_e( 'Expected Delivery', 'wp-sell-services' ); ?></dt>
+							<dd>
+								<?php
+								$deadline = $order->delivery_deadline instanceof \DateTimeImmutable
+									? $order->delivery_deadline->format( 'Y-m-d H:i:s' )
+									: $order->delivery_deadline;
+								echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) );
+								?>
+							</dd>
+						<?php endif; ?>
+					</dl>
+				</div>
 			</div>
 
 			<!-- Seller Info -->
 			<?php if ( $vendor ) : ?>
 				<div class="wpss-order-card">
-					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Your Seller', 'wp-sell-services' ); ?></h4>
-					<div class="wpss-order-card__user">
-						<img src="<?php echo esc_url( get_avatar_url( $vendor->ID, array( 'size' => 60 ) ) ); ?>"
-							alt="<?php echo esc_attr( $vendor->display_name ); ?>"
-							class="wpss-order-card__avatar">
-						<div class="wpss-order-card__user-info">
-							<strong><?php echo esc_html( $vendor->display_name ); ?></strong>
-							<?php
-							$vendor_rating = (float) get_user_meta( $vendor->ID, '_wpss_rating_average', true );
-							$vendor_count  = (int) get_user_meta( $vendor->ID, '_wpss_rating_count', true );
-							?>
-							<?php if ( $vendor_count > 0 ) : ?>
-								<span class="wpss-order-card__rating">
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-										<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-									</svg>
-									<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
-									(<?php echo esc_html( $vendor_count ); ?>)
-								</span>
-							<?php endif; ?>
+					<div class="wpss-order-card__header">
+						<h4 class="wpss-order-card__title"><?php esc_html_e( 'Your Seller', 'wp-sell-services' ); ?></h4>
+					</div>
+					<div class="wpss-order-card__body">
+						<div class="wpss-order-card__user">
+							<img src="<?php echo esc_url( get_avatar_url( $vendor->ID, array( 'size' => 60 ) ) ); ?>"
+								alt="<?php echo esc_attr( $vendor->display_name ); ?>"
+								class="wpss-order-card__avatar">
+							<div class="wpss-order-card__user-info">
+								<strong><?php echo esc_html( $vendor->display_name ); ?></strong>
+								<?php
+								$vendor_rating = (float) get_user_meta( $vendor->ID, '_wpss_rating_average', true );
+								$vendor_count  = (int) get_user_meta( $vendor->ID, '_wpss_rating_count', true );
+								?>
+								<?php if ( $vendor_count > 0 ) : ?>
+									<span class="wpss-order-card__rating">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+										</svg>
+										<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
+										(<?php echo esc_html( $vendor_count ); ?>)
+									</span>
+								<?php endif; ?>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -351,13 +359,17 @@ do_action( 'wpss_before_requirements_form', $order );
 
 			<!-- Help Box -->
 			<div class="wpss-order-card wpss-order-card--info">
-				<h4 class="wpss-order-card__title"><?php esc_html_e( 'Need Help?', 'wp-sell-services' ); ?></h4>
-				<p><?php esc_html_e( 'Be as detailed as possible so the seller can deliver exactly what you need.', 'wp-sell-services' ); ?></p>
-				<ul>
-					<li><?php esc_html_e( 'Include all relevant information', 'wp-sell-services' ); ?></li>
-					<li><?php esc_html_e( 'Attach reference files if helpful', 'wp-sell-services' ); ?></li>
-					<li><?php esc_html_e( 'Mention any specific preferences', 'wp-sell-services' ); ?></li>
-				</ul>
+				<div class="wpss-order-card__header">
+					<h4 class="wpss-order-card__title"><?php esc_html_e( 'Need Help?', 'wp-sell-services' ); ?></h4>
+				</div>
+				<div class="wpss-order-card__body">
+					<p><?php esc_html_e( 'Be as detailed as possible so the seller can deliver exactly what you need.', 'wp-sell-services' ); ?></p>
+					<ul>
+						<li><?php esc_html_e( 'Include all relevant information', 'wp-sell-services' ); ?></li>
+						<li><?php esc_html_e( 'Attach reference files if helpful', 'wp-sell-services' ); ?></li>
+						<li><?php esc_html_e( 'Mention any specific preferences', 'wp-sell-services' ); ?></li>
+					</ul>
+				</div>
 			</div>
 		</aside>
 	</div>
