@@ -43,6 +43,9 @@ class WCServiceCarrier {
 		// Dynamic pricing based on service/package.
 		add_action( 'woocommerce_before_calculate_totals', array( $this, 'set_cart_item_price' ), 20 );
 
+		// Force service products to be sold individually (qty=1, no increment buttons).
+		add_filter( 'woocommerce_is_sold_individually', array( $this, 'force_service_sold_individually' ), 10, 2 );
+
 		// Display service info in cart.
 		add_filter( 'woocommerce_cart_item_name', array( $this, 'cart_item_name' ), 10, 3 );
 		add_filter( 'woocommerce_order_item_name', array( $this, 'order_item_name' ), 10, 2 );
@@ -188,6 +191,21 @@ class WCServiceCarrier {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Force service products to be sold individually (quantity = 1).
+	 *
+	 * @param bool        $sold_individually Current value.
+	 * @param \WC_Product $product          Product object.
+	 * @return bool
+	 */
+	public function force_service_sold_individually( bool $sold_individually, \WC_Product $product ): bool {
+		if ( $product->get_id() === $this->get_carrier_id() || 'yes' === $product->get_meta( '_wpss_is_service' ) ) {
+			return true;
+		}
+
+		return $sold_individually;
 	}
 
 	/**

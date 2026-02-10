@@ -56,11 +56,23 @@ class DeliveryService {
 
 		// Process uploaded files.
 		$processed_files = array();
+		$failed_files    = array();
+
 		foreach ( $files as $file ) {
 			$processed = $this->process_file( $file, $order_id );
 			if ( $processed ) {
 				$processed_files[] = $processed;
+			} else {
+				$failed_files[] = $file['name'] ?? 'unknown';
+				wpss_log( "Failed to process delivery file for order {$order_id}: " . ( $file['name'] ?? 'unknown' ), 'error' );
 			}
+		}
+
+		if ( ! empty( $failed_files ) ) {
+			wpss_log(
+				sprintf( 'Order %d delivery: %d of %d files failed to process', $order_id, count( $failed_files ), count( $files ) ),
+				'warning'
+			);
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery

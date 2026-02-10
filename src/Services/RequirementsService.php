@@ -423,6 +423,9 @@ class RequirementsService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_order_requirements';
 
+		// Use transaction to prevent data loss if insert fails after delete.
+		$wpdb->query( 'START TRANSACTION' );
+
 		// Delete existing requirements if any.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( $table, array( 'order_id' => $order_id ) );
@@ -439,6 +442,13 @@ class RequirementsService {
 			),
 			array( '%d', '%s', '%s', '%s' )
 		);
+
+		if ( false === $result ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
 
 		if ( $result ) {
 			/**

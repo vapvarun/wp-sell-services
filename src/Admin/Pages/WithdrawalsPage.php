@@ -91,20 +91,22 @@ class WithdrawalsPage {
 
 		wp_enqueue_script( 'wpss-admin' );
 
-		wp_localize_script(
+		wp_add_inline_script(
 			'wpss-admin',
-			'wpssWithdrawals',
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wpss_withdrawals_admin' ),
-				'i18n'    => array(
-					'confirmApprove'  => __( 'Are you sure you want to approve this withdrawal?', 'wp-sell-services' ),
-					'confirmReject'   => __( 'Are you sure you want to reject this withdrawal?', 'wp-sell-services' ),
-					'confirmComplete' => __( 'Are you sure you want to mark this withdrawal as completed?', 'wp-sell-services' ),
-					'loading'         => __( 'Processing...', 'wp-sell-services' ),
-					'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-				),
-			)
+			'window.wpssWithdrawals = ' . wp_json_encode(
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'wpss_withdrawals_admin' ),
+					'i18n'    => array(
+						'confirmApprove'  => __( 'Are you sure you want to approve this withdrawal?', 'wp-sell-services' ),
+						'confirmReject'   => __( 'Are you sure you want to reject this withdrawal?', 'wp-sell-services' ),
+						'confirmComplete' => __( 'Are you sure you want to mark this withdrawal as completed?', 'wp-sell-services' ),
+						'loading'         => __( 'Processing...', 'wp-sell-services' ),
+						'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					),
+				)
+			),
+			'before'
 		);
 	}
 

@@ -760,6 +760,20 @@ class EmailService {
 	}
 
 	/**
+	 * Check if a given email type is enabled (static accessor).
+	 *
+	 * Allows external callers (EarningsService, ModerationService, etc.) to
+	 * check the admin notification settings before sending direct wp_mail().
+	 *
+	 * @since 1.2.2
+	 * @param string $type Email type or setting key.
+	 * @return bool
+	 */
+	public static function is_type_enabled( string $type ): bool {
+		return ( new self() )->is_email_type_enabled( $type );
+	}
+
+	/**
 	 * Check if a given email type is enabled in admin notification settings.
 	 *
 	 * Reads the `wpss_notifications` option and maps email types to their
@@ -787,6 +801,14 @@ class EmailService {
 			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
 			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
 			self::TYPE_SELLER_LEVEL_PROMOTION => 'notify_new_order',
+			// Direct wp_mail types used by services outside EmailService.
+			'withdrawal_requested'            => 'notify_new_order',
+			'withdrawal_auto'                 => 'notify_new_order',
+			'moderation_approved'             => 'notify_new_order',
+			'moderation_rejected'             => 'notify_new_order',
+			'moderation_pending'              => 'notify_new_order',
+			'dispute_admin'                   => 'notify_dispute_opened',
+			'vendor_contact'                  => 'notify_new_message',
 		);
 
 		if ( ! isset( $type_to_setting[ $type ] ) ) {

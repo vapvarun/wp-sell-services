@@ -85,7 +85,7 @@ class WCOrderProvider implements OrderProviderInterface {
 			$delivery_days = (int) get_post_meta( $service_id, '_wpss_delivery_days', true ) ?: 7;
 			$revisions     = (int) get_post_meta( $service_id, '_wpss_revisions', true ) ?: 0;
 
-			if ( $package_id ) {
+			if ( null !== $package_id ) {
 				$package = $this->get_package_data( $service_id, $package_id );
 				if ( $package ) {
 					$delivery_days = $package['delivery_days'] ?? $delivery_days;
@@ -460,12 +460,25 @@ class WCOrderProvider implements OrderProviderInterface {
 	 * @return array|null
 	 */
 	private function get_package_data( int $service_id, int $package_id ): ?array {
-		$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
+		$packages = get_post_meta( $service_id, '_wpss_packages', true );
 
-		// Convert to indexed array and match by position (package_id is the index).
-		$packages = array_values( $packages );
+		if ( ! is_array( $packages ) || empty( $packages ) ) {
+			return null;
+		}
 
-		return $packages[ $package_id ] ?? null;
+		// Convert associative (basic/standard/premium) to indexed array.
+		$indexed = array_values( $packages );
+
+		if ( isset( $indexed[ $package_id ] ) ) {
+			return $indexed[ $package_id ];
+		}
+
+		// Fallback: for package_id 0 (basic), return first package.
+		if ( 0 === $package_id ) {
+			return reset( $packages ) ?: null;
+		}
+
+		return null;
 	}
 
 	/**

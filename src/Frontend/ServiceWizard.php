@@ -1760,6 +1760,11 @@ class ServiceWizard {
 		// Save packages.
 		update_post_meta( $service_id, '_wpss_packages', $data['packages'] );
 
+		// Save flat meta for backward compatibility (used by WCOrderProvider fallback).
+		$basic = $data['packages']['basic'] ?? reset( $data['packages'] ) ?? array();
+		update_post_meta( $service_id, '_wpss_delivery_days', (int) ( $basic['delivery_days'] ?? $basic['delivery_time'] ?? 7 ) );
+		update_post_meta( $service_id, '_wpss_revisions', (int) ( $basic['revisions'] ?? 0 ) );
+
 		// Save starting price (from basic package).
 		update_post_meta( $service_id, '_wpss_starting_price', $data['packages']['basic']['price'] ?? 0 );
 

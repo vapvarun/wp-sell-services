@@ -193,7 +193,7 @@ class BuyerRequestMetabox {
 								<?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?>
 							<?php endif; ?>
 						</td>
-						<td><?php echo esc_html( number_format( $proposal->price, 2 ) ); ?></td>
+						<td><?php echo esc_html( number_format( (float) ( $proposal->price ?? 0 ), 2 ) ); ?></td>
 						<td>
 							<?php
 							printf(

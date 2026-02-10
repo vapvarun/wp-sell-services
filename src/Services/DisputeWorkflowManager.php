@@ -729,7 +729,9 @@ class DisputeWorkflowManager {
 			$reason
 		);
 
-		wp_mail( $admin_email, $subject, $message );
+		if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
+			wp_mail( $admin_email, $subject, $message );
+		}
 	}
 
 	/**

@@ -611,18 +611,20 @@ class OrderWorkflowManager {
 				break;
 
 			case ServiceOrder::STATUS_DISPUTED:
-				// Notify admin.
-				$admin_email = get_option( 'admin_email' );
-				wp_mail(
-					$admin_email,
-					/* translators: %s: platform name */
-					sprintf( __( '[%s] New Dispute Opened', 'wp-sell-services' ), wpss_get_platform_name() ),
-					sprintf(
-						/* translators: %d: order ID */
-						__( 'A dispute has been opened for Order #%d. Please review in the admin panel.', 'wp-sell-services' ),
-						$order_id
-					)
-				);
+				// Notify admin (respects email settings).
+				if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
+					$admin_email = get_option( 'admin_email' );
+					wp_mail(
+						$admin_email,
+						/* translators: %s: platform name */
+						sprintf( __( '[%s] New Dispute Opened', 'wp-sell-services' ), wpss_get_platform_name() ),
+						sprintf(
+							/* translators: %d: order ID */
+							__( 'A dispute has been opened for Order #%d. Please review in the admin panel.', 'wp-sell-services' ),
+							$order_id
+						)
+					);
+				}
 				break;
 		}
 

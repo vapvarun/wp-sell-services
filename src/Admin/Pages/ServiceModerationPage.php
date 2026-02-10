@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin\Pages;
 
+use WPSellServices\Services\EmailService;
 use WPSellServices\Services\ModerationService;
 
 defined( 'ABSPATH' ) || exit;
@@ -885,7 +886,10 @@ class ServiceModerationPage {
 			$message .= __( 'Edit your service: ', 'wp-sell-services' ) . get_edit_post_link( $service_id, 'raw' );
 		}
 
-		wp_mail( $vendor->user_email, $subject, $message );
+		$email_type = 'approved' === $status ? 'moderation_approved' : 'moderation_rejected';
+		if ( EmailService::is_type_enabled( $email_type ) ) {
+			wp_mail( $vendor->user_email, $subject, $message );
+		}
 	}
 
 	/**
@@ -1074,6 +1078,11 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function save_moderation_status( int $post_id, \WP_Post $post ): void {
+		// Skip when moderation is disabled.
+		if ( ! ModerationService::is_enabled() ) {
+			return;
+		}
+
 		// Skip autosaves.
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;

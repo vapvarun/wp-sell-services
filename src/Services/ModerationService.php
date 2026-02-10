@@ -338,7 +338,9 @@ Thank you for being a valued seller on our platform.',
 			get_permalink( $service_id )
 		);
 
-		wp_mail( $vendor->user_email, $subject, $message );
+		if ( EmailService::is_type_enabled( 'moderation_approved' ) ) {
+			wp_mail( $vendor->user_email, $subject, $message );
+		}
 
 		// Also add platform notification.
 		if ( function_exists( 'wpss_add_notification' ) ) {
@@ -412,7 +414,9 @@ If you have any questions, please contact our support team.',
 			$edit_url
 		);
 
-		wp_mail( $vendor->user_email, $subject, $message );
+		if ( EmailService::is_type_enabled( 'moderation_rejected' ) ) {
+			wp_mail( $vendor->user_email, $subject, $message );
+		}
 
 		// Also add platform notification.
 		if ( function_exists( 'wpss_add_notification' ) ) {
@@ -477,8 +481,10 @@ Review this service: %3$s',
 			$review_url
 		);
 
-		// Send to admin email.
-		wp_mail( get_option( 'admin_email' ), $subject, $message );
+		// Send to admin email (respects email settings).
+		if ( EmailService::is_type_enabled( 'moderation_pending' ) ) {
+			wp_mail( get_option( 'admin_email' ), $subject, $message );
+		}
 	}
 
 	/**

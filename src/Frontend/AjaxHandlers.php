@@ -21,6 +21,7 @@ use WPSellServices\Services\BuyerRequestService;
 use WPSellServices\Services\ProposalService;
 use WPSellServices\Services\RequirementsService;
 use WPSellServices\Services\DisputeService;
+use WPSellServices\Services\EmailService;
 
 /**
  * Handles frontend AJAX requests.
@@ -2017,7 +2018,9 @@ class AjaxHandlers {
 			$sender->user_email
 		);
 
-		wp_mail( $vendor->user_email, $email_subject, $email_message );
+		if ( EmailService::is_type_enabled( 'vendor_contact' ) ) {
+			wp_mail( $vendor->user_email, $email_subject, $email_message );
+		}
 
 		/**
 		 * Fires after a vendor contact message is sent.
