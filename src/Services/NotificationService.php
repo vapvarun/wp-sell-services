@@ -1258,44 +1258,52 @@ class NotificationService {
 	/**
 	 * Check if WooCommerce is handling emails for this notification type.
 	 *
-	 * When WooCommerce is active and enabled, it provides styled email templates
-	 * for order-related notifications. We skip sending from NotificationService
-	 * to avoid duplicate emails.
+	 * Only returns true if the specific WPSS WC email class for this type
+	 * is actually registered in WooCommerce's mailer. If the class isn't
+	 * registered, NotificationService sends the email independently.
 	 *
 	 * @param string $type Notification type.
-	 * @return bool True if WooCommerce handles this email type.
+	 * @return bool True if a WPSS WC email class is registered for this type.
 	 */
 	private function is_wc_handling_email( string $type ): bool {
 		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
 			return false;
 		}
 
-		// Types that WCEmailProvider handles via WC email classes.
-		// When WC is active, defer to WCEmailProvider for these types to avoid duplicates.
-		$wc_handled_types = array(
-			self::TYPE_ORDER_CREATED,
-			self::TYPE_DELIVERY_SUBMITTED,
-			self::TYPE_DELIVERY_ACCEPTED,
-			self::TYPE_REVISION_REQUESTED,
-			self::TYPE_DISPUTE_OPENED,
-			self::TYPE_DISPUTE_RESOLVED,
-			self::TYPE_NEW_MESSAGE,
-			'new_order',
-			'order_created',
-			'order_confirmation',
-			'order_started',
-			'order_in_progress',
-			'delivery_received',
-			'order_completed',
-			'order_completed_vendor',
-			'order_auto_completed',
-			'order_cancelled',
-			'revision_requested',
-			'dispute_opened',
-			'dispute_response_received',
-			'dispute_resolved',
+		// Map notification types to WPSS WC email class keys.
+		$type_to_wc_class = array(
+			self::TYPE_ORDER_CREATED      => 'WPSS_Email_New_Order',
+			'new_order'                   => 'WPSS_Email_New_Order',
+			'order_created'               => 'WPSS_Email_New_Order',
+			'order_confirmation'          => 'WPSS_Email_New_Order',
+			'order_started'               => 'WPSS_Email_Order_In_Progress',
+			'order_in_progress'           => 'WPSS_Email_Order_In_Progress',
+			self::TYPE_DELIVERY_SUBMITTED => 'WPSS_Email_Delivery_Ready',
+			'delivery_received'           => 'WPSS_Email_Delivery_Ready',
+			self::TYPE_DELIVERY_ACCEPTED  => 'WPSS_Email_Order_Completed',
+			'order_completed'             => 'WPSS_Email_Order_Completed',
+			'order_completed_vendor'      => 'WPSS_Email_Order_Completed',
+			'order_auto_completed'        => 'WPSS_Email_Order_Completed',
+			'order_cancelled'             => 'WPSS_Email_Order_Cancelled',
+			self::TYPE_REVISION_REQUESTED => 'WPSS_Email_Revision_Requested',
+			'revision_requested'          => 'WPSS_Email_Revision_Requested',
+			self::TYPE_DISPUTE_OPENED     => 'WPSS_Email_Dispute_Opened',
+			'dispute_opened'              => 'WPSS_Email_Dispute_Opened',
+			self::TYPE_DISPUTE_RESOLVED   => 'WPSS_Email_Dispute_Opened',
+			'dispute_response_received'   => 'WPSS_Email_Dispute_Opened',
+			'dispute_resolved'            => 'WPSS_Email_Dispute_Opened',
+			self::TYPE_NEW_MESSAGE        => 'WPSS_Email_New_Message',
 		);
 
-		return in_array( $type, $wc_handled_types, true );
+		$class_key = $type_to_wc_class[ $type ] ?? null;
+
+		if ( ! $class_key ) {
+			return false;
+		}
+
+		// Only defer to WC if the WPSS email class is actually registered.
+		$wc_emails = WC()->mailer()->get_emails();
+
+		return isset( $wc_emails[ $class_key ] );
 	}
 }
