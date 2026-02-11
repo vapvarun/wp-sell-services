@@ -473,7 +473,7 @@ class EarningsService {
 			sprintf(
 				/* translators: 1: amount, 2: status */
 				__( 'Your withdrawal request for %1$s has been %2$s.', 'wp-sell-services' ),
-				wpss_format_price( $withdrawal->amount ),
+				wpss_format_price( (float) $withdrawal->amount ),
 				strtolower( $status_labels[ $status ] ?? $status )
 			),
 			array( 'withdrawal_id' => $withdrawal_id )
