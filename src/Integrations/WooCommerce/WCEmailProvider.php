@@ -38,6 +38,71 @@ class WCEmailProvider {
 		add_action( 'wpss_requirements_submitted', array( $this, 'trigger_requirements_email' ), 10, 3 );
 		add_action( 'wpss_delivery_submitted', array( $this, 'trigger_delivery_email' ), 10, 2 );
 		add_action( 'wpss_new_order_message', array( $this, 'trigger_message_email' ), 10, 3 );
+
+		// Suppress WooCommerce default emails for orders containing WPSS services
+		// when the corresponding WPSS notification setting is disabled.
+		$wc_email_ids = array(
+			'new_order',
+			'customer_processing_order',
+			'customer_completed_order',
+			'customer_on_hold_order',
+			'cancelled_order',
+		);
+		foreach ( $wc_email_ids as $email_id ) {
+			add_filter( 'woocommerce_email_enabled_' . $email_id, array( $this, 'maybe_suppress_wc_default_email' ), 10, 2 );
+		}
+	}
+
+	/**
+	 * Suppress WooCommerce default emails for orders containing WPSS services
+	 * when the corresponding WPSS notification setting is disabled.
+	 *
+	 * @since 1.2.3
+	 * @param bool      $enabled Whether the email is enabled.
+	 * @param \WC_Email $email   The WC_Email instance.
+	 * @return bool
+	 */
+	public function maybe_suppress_wc_default_email( bool $enabled, $email ): bool {
+		if ( ! $enabled ) {
+			return false;
+		}
+
+		// Get the WC order from the email object.
+		$order = $email->object ?? null;
+
+		if ( ! $order instanceof \WC_Order ) {
+			return $enabled;
+		}
+
+		// Check if the order contains a WPSS service item.
+		$has_wpss_service = false;
+		foreach ( $order->get_items() as $item ) {
+			if ( $item->get_meta( '_wpss_service_id' ) ) {
+				$has_wpss_service = true;
+				break;
+			}
+		}
+
+		if ( ! $has_wpss_service ) {
+			return $enabled;
+		}
+
+		// Map WC email IDs to WPSS notification setting keys.
+		$wc_to_wpss = array(
+			'new_order'                   => 'notify_new_order',
+			'customer_processing_order'   => 'notify_new_order',
+			'customer_on_hold_order'      => 'notify_new_order',
+			'customer_completed_order'    => 'notify_order_completed',
+			'cancelled_order'             => 'notify_order_cancelled',
+		);
+
+		$setting_key = $wc_to_wpss[ $email->id ] ?? null;
+
+		if ( ! $setting_key ) {
+			return $enabled;
+		}
+
+		return $this->is_notification_enabled( $setting_key );
 	}
 
 	/**

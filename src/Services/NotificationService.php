@@ -1266,9 +1266,36 @@ class NotificationService {
 	 * @return bool True if WooCommerce handles this email type.
 	 */
 	private function is_wc_handling_email( string $type ): bool {
-		// Always return false to ensure NotificationService sends emails directly.
-		// This makes the plugin truly WooCommerce-independent.
-		// WCEmailProvider emails are optional enhanced templates when WC is active.
-		return false;
+		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
+			return false;
+		}
+
+		// Types that WCEmailProvider handles via WC email classes.
+		// When WC is active, defer to WCEmailProvider for these types to avoid duplicates.
+		$wc_handled_types = array(
+			self::TYPE_ORDER_CREATED,
+			self::TYPE_DELIVERY_SUBMITTED,
+			self::TYPE_DELIVERY_ACCEPTED,
+			self::TYPE_REVISION_REQUESTED,
+			self::TYPE_DISPUTE_OPENED,
+			self::TYPE_DISPUTE_RESOLVED,
+			self::TYPE_NEW_MESSAGE,
+			'new_order',
+			'order_created',
+			'order_confirmation',
+			'order_started',
+			'order_in_progress',
+			'delivery_received',
+			'order_completed',
+			'order_completed_vendor',
+			'order_auto_completed',
+			'order_cancelled',
+			'revision_requested',
+			'dispute_opened',
+			'dispute_response_received',
+			'dispute_resolved',
+		);
+
+		return in_array( $type, $wc_handled_types, true );
 	}
 }

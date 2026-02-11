@@ -386,14 +386,6 @@ final class Plugin {
 			3
 		);
 
-		// New order notification (alternative hook - kept for backward compatibility).
-		$this->loader->add_action(
-			'wpss_order_status_pending_requirements',
-			function ( int $order_id ) use ( $notification_service ): void {
-				$notification_service->notify_order_created( $order_id );
-			}
-		);
-
 		// Message sent notification.
 		$this->loader->add_action(
 			'wpss_message_sent',
