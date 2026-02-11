@@ -822,10 +822,20 @@ do_action( 'wpss_before_order_view', $order );
 						if ( ! empty( $files ) && is_array( $files ) ) :
 							?>
 							<div class="wpss-delivery-item__files">
-								<?php foreach ( $files as $file_id ) : ?>
+								<?php foreach ( $files as $file ) : ?>
 									<?php
-									$file_url  = wp_get_attachment_url( $file_id );
-									$file_name = get_the_title( $file_id );
+									// Support both formats: array with id/name/url keys, or plain attachment ID.
+									if ( is_array( $file ) ) {
+										$att_id    = $file['id'] ?? 0;
+										$file_url  = $file['url'] ?? wp_get_attachment_url( $att_id );
+										$file_name = $file['name'] ?? get_the_title( $att_id );
+									} else {
+										$file_url  = wp_get_attachment_url( (int) $file );
+										$file_name = get_the_title( (int) $file );
+									}
+									if ( ! $file_url ) {
+										continue;
+									}
 									?>
 									<a href="<?php echo esc_url( $file_url ); ?>" class="wpss-file-link" target="_blank" download>
 										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

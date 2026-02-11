@@ -262,8 +262,26 @@ class AjaxHandlers {
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$message  = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
-		$files    = isset( $_POST['files'] ) ? array_map( 'absint', $_POST['files'] ) : array();
 		$user_id  = get_current_user_id();
+
+		// Process uploaded files from $_FILES.
+		$files = array();
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		if ( ! empty( $_FILES['files'] ) && is_array( $_FILES['files']['name'] ) ) {
+			$file_count = count( $_FILES['files']['name'] );
+			for ( $i = 0; $i < $file_count; $i++ ) {
+				if ( empty( $_FILES['files']['name'][ $i ] ) ) {
+					continue;
+				}
+				$files[] = array(
+					'name'     => sanitize_file_name( $_FILES['files']['name'][ $i ] ),
+					'type'     => sanitize_mime_type( $_FILES['files']['type'][ $i ] ),
+					'tmp_name' => $_FILES['files']['tmp_name'][ $i ], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+					'error'    => (int) $_FILES['files']['error'][ $i ],
+					'size'     => (int) $_FILES['files']['size'][ $i ],
+				);
+			}
+		}
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );

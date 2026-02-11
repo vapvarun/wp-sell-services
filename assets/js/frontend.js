@@ -505,25 +505,34 @@
 		} else {
 			// Fallback for when modal doesn't exist
 			WPSS.showPrompt('Describe your delivery:', function(message) {
-				WPSS.submitDelivery(orderId, message, []);
+				WPSS.submitDelivery(orderId, message, null);
 			}, { placeholder: 'Describe what you are delivering...' });
 		}
 	};
 
 	/**
-	 * Submit delivery via AJAX.
+	 * Submit delivery via AJAX with file uploads.
 	 */
-	WPSS.submitDelivery = function(orderId, message, files) {
+	WPSS.submitDelivery = function(orderId, message, fileInput) {
+		var formData = new FormData();
+		formData.append('action', 'wpss_deliver_order');
+		formData.append('order_id', orderId);
+		formData.append('message', message);
+		formData.append('nonce', wpssData.orderNonce || wpssData.nonce);
+
+		// Add files from file input element.
+		if (fileInput && fileInput.files) {
+			for (var i = 0; i < fileInput.files.length; i++) {
+				formData.append('files[]', fileInput.files[i]);
+			}
+		}
+
 		$.ajax({
 			url: wpssData.ajaxUrl,
 			type: 'POST',
-			data: {
-				action: 'wpss_deliver_order',
-				order_id: orderId,
-				message: message,
-				files: files || [],
-				nonce: wpssData.orderNonce || wpssData.nonce
-			},
+			data: formData,
+			processData: false,
+			contentType: false,
 			success: function(response) {
 				if (response.success) {
 					WPSS.showNotification(response.data?.message || 'Delivery submitted successfully!', 'success');
@@ -611,6 +620,7 @@
 
 			const orderId = $form.find('input[name="order_id"]').val();
 			const message = $form.find('#deliver-message').val();
+			const fileInput = $form.find('#deliver-files')[0];
 
 			if (!message || !message.trim()) {
 				WPSS.showNotification('Please provide a delivery message.', 'error');
@@ -618,7 +628,7 @@
 				return;
 			}
 
-			WPSS.submitDelivery(orderId, message, []);
+			WPSS.submitDelivery(orderId, message, fileInput);
 
 			// Re-enable button after a delay (in case page doesn't reload)
 			setTimeout(function() {
