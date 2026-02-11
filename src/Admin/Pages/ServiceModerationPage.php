@@ -567,7 +567,7 @@ class ServiceModerationPage {
 	 */
 	private function render_service_row( \WP_Post $service ): void {
 		$status           = get_post_meta( $service->ID, self::META_KEY, true );
-		$status           = $status ? $status : self::STATUS_PENDING;
+		$status           = $status ? $status : self::STATUS_APPROVED;
 		$rejection_reason = get_post_meta( $service->ID, self::REJECTION_REASON_KEY, true );
 		$vendor           = get_user_by( 'ID', $service->post_author );
 		$categories       = get_the_terms( $service->ID, 'wpss_service_category' );
@@ -999,7 +999,7 @@ class ServiceModerationPage {
 		}
 
 		$status_raw = get_post_meta( $post_id, self::META_KEY, true );
-		$status     = $status_raw ? $status_raw : self::STATUS_PENDING;
+		$status     = $status_raw ? $status_raw : self::STATUS_APPROVED;
 
 		$status_labels = array(
 			self::STATUS_PENDING  => __( 'Pending', 'wp-sell-services' ),
@@ -1170,7 +1170,7 @@ class ServiceModerationPage {
 	public function render_moderation_metabox( \WP_Post $post ): void {
 		$current_status = get_post_meta( $post->ID, self::META_KEY, true );
 		if ( ! $current_status ) {
-			$current_status = self::STATUS_PENDING;
+			$current_status = self::STATUS_APPROVED;
 		}
 
 		$statuses = array(
@@ -1343,7 +1343,7 @@ class ServiceModerationPage {
 	 */
 	public static function get_status( int $service_id ): string {
 		$status = get_post_meta( $service_id, self::META_KEY, true );
-		return $status ? $status : self::STATUS_PENDING;
+		return $status ? $status : self::STATUS_APPROVED;
 	}
 
 	/**

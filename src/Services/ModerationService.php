@@ -108,15 +108,10 @@ class ModerationService {
 			'orderby'        => 'date',
 			'order'          => 'ASC',
 			'meta_query'     => array(
-				'relation' => 'OR',
 				array(
 					'key'     => self::META_MODERATION_STATUS,
 					'value'   => self::STATUS_PENDING,
 					'compare' => '=',
-				),
-				array(
-					'key'     => self::META_MODERATION_STATUS,
-					'compare' => 'NOT EXISTS',
 				),
 			),
 		);
