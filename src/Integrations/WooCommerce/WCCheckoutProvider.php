@@ -461,7 +461,7 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 
 				if ( $service_order_id ) {
 					// Redirect to service order requirements page.
-					return home_url( '/service-order/' . $service_order_id . '/requirements/' );
+					return wpss_get_order_requirements_url( (int) $service_order_id );
 				}
 			}
 		}
