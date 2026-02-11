@@ -148,7 +148,20 @@ class EmailService {
 	 * @return bool
 	 */
 	private function is_woocommerce_handling_emails(): bool {
-		return function_exists( 'WC' ) && WC()->mailer();
+		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
+			return false;
+		}
+
+		// Only defer to WC if WPSS email classes are actually registered in WC mailer.
+		$wc_emails = WC()->mailer()->get_emails();
+
+		foreach ( $wc_emails as $key => $email ) {
+			if ( str_starts_with( $key, 'WPSS_Email_' ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

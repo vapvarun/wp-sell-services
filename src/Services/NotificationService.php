@@ -1067,6 +1067,7 @@ class NotificationService {
 		$type_to_setting = array(
 			// NotificationService constants.
 			self::TYPE_ORDER_CREATED      => 'notify_new_order',
+			self::TYPE_ORDER_STATUS       => 'notify_new_order',
 			self::TYPE_DELIVERY_SUBMITTED => 'notify_delivery_submitted',
 			self::TYPE_DELIVERY_ACCEPTED  => 'notify_order_completed',
 			self::TYPE_DISPUTE_OPENED     => 'notify_dispute_opened',
