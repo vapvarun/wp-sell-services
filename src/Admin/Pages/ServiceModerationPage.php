@@ -204,10 +204,10 @@ class ServiceModerationPage {
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT p.ID)
 				FROM {$wpdb->posts} p
-				LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
+				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
 				WHERE p.post_type = 'wpss_service'
 				AND p.post_status IN ('pending', 'publish')
-				AND (pm.meta_value = %s OR pm.meta_value IS NULL)",
+				AND pm.meta_value = %s",
 				self::META_KEY,
 				self::STATUS_PENDING
 			)
@@ -252,15 +252,10 @@ class ServiceModerationPage {
 		if ( 'all' !== $status_filter ) {
 			if ( self::STATUS_PENDING === $status_filter ) {
 				$args['meta_query'] = array(
-					'relation' => 'OR',
 					array(
 						'key'     => self::META_KEY,
 						'value'   => self::STATUS_PENDING,
 						'compare' => '=',
-					),
-					array(
-						'key'     => self::META_KEY,
-						'compare' => 'NOT EXISTS',
 					),
 				);
 			} else {
@@ -686,9 +681,9 @@ class ServiceModerationPage {
 				WHERE p.post_type = 'wpss_service'
 				AND p.post_status IN ('pending', 'publish')
 				GROUP BY COALESCE(pm.meta_value, %s)",
-				self::STATUS_PENDING,
+				self::STATUS_APPROVED,
 				self::META_KEY,
-				self::STATUS_PENDING
+				self::STATUS_APPROVED
 			)
 		);
 
