@@ -119,7 +119,7 @@ class WCOrderProvider implements OrderProviderInterface {
 					'customer_id'        => $wc_order->get_customer_id(),
 					'vendor_id'          => $vendor_id,
 					'service_id'         => $service_id,
-					'package_id'         => $package_id ?: null,
+					'package_id'         => $package_id,
 					'addons'             => wp_json_encode( $addons ),
 					'platform'           => 'woocommerce',
 					'platform_order_id'  => $wc_order_id,

@@ -97,10 +97,7 @@ class WCCheckoutProvider implements CheckoutProviderInterface {
 		// Fall back to $_REQUEST for front-end form submissions.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $cart_item_data['wpss_package_id'] ) ) {
-			$package_id = isset( $_REQUEST['wpss_package_id'] ) ? absint( $_REQUEST['wpss_package_id'] ) : 0;
-			if ( $package_id ) {
-				$cart_item_data['wpss_package_id'] = $package_id;
-			}
+			$cart_item_data['wpss_package_id'] = isset( $_REQUEST['wpss_package_id'] ) ? absint( $_REQUEST['wpss_package_id'] ) : 0;
 		}
 
 		if ( ! isset( $cart_item_data['wpss_addons'] ) ) {
