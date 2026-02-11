@@ -1099,8 +1099,10 @@ class NotificationService {
 		// Check if admin has disabled this notification type globally.
 		if ( isset( $type_to_setting[ $type ] ) ) {
 			$setting_key = $type_to_setting[ $type ];
-			if ( isset( $notification_settings[ $setting_key ] ) && ! $notification_settings[ $setting_key ] ) {
-				return false;
+			if ( is_array( $notification_settings ) && array_key_exists( $setting_key, $notification_settings ) ) {
+				if ( empty( $notification_settings[ $setting_key ] ) ) {
+					return false;
+				}
 			}
 		}
 

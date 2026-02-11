@@ -261,8 +261,12 @@ class WCEmailProvider {
 	private function is_notification_enabled( string $setting_key ): bool {
 		$notification_settings = get_option( 'wpss_notifications', array() );
 
-		if ( isset( $notification_settings[ $setting_key ] ) && ! $notification_settings[ $setting_key ] ) {
-			return false;
+		if ( ! is_array( $notification_settings ) ) {
+			return true;
+		}
+
+		if ( array_key_exists( $setting_key, $notification_settings ) ) {
+			return ! empty( $notification_settings[ $setting_key ] );
 		}
 
 		return true;

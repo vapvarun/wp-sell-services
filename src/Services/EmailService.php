@@ -818,9 +818,12 @@ class EmailService {
 
 		$setting_key = $type_to_setting[ $type ];
 
-		// If the setting exists and is explicitly falsy, the admin disabled it.
-		if ( isset( $notification_settings[ $setting_key ] ) && ! $notification_settings[ $setting_key ] ) {
-			return false;
+		if ( ! is_array( $notification_settings ) ) {
+			return true;
+		}
+
+		if ( array_key_exists( $setting_key, $notification_settings ) ) {
+			return ! empty( $notification_settings[ $setting_key ] );
 		}
 
 		return true;
