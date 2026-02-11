@@ -916,6 +916,10 @@
 	top: var(--wpss-sticky-top, 32px);
 }
 
+.wpss-requirements-page__sidebar .wpss-order-card__header {
+	width: 100%;
+}
+
 /* Order Summary Card for Requirements */
 .wpss-requirements-page__summary {
 	display: flex;
@@ -943,6 +947,7 @@
 	margin: 0;
 	color: var(--wpss-text-muted, #6b7280);
 	font-size: 0.875rem;
+	word-break: break-word;
 }
 
 @media (max-width: 900px) {
