@@ -192,6 +192,9 @@ class WooCommerceAdapter implements EcommerceAdapterInterface {
 		// Hook checkout order created to create WPSS order early.
 		add_action( 'woocommerce_checkout_order_created', array( $this, 'handle_checkout_order_created' ) );
 
+		// WooCommerce block checkout (Store API) compatibility.
+		add_action( 'woocommerce_store_api_checkout_order_processed', array( $this, 'handle_checkout_order_created' ) );
+
 		// Payment complete hook.
 		add_action( 'woocommerce_payment_complete', array( $this, 'handle_payment_complete' ) );
 
