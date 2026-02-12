@@ -326,6 +326,27 @@ function wpss_init(): void {
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\wpss_init', 10 );
 
 /**
+ * Add plugin action links (shown on Plugins page).
+ *
+ * @param array<string, string> $links Existing action links.
+ * @return array<string, string>
+ */
+function wpss_plugin_action_links( array $links ): array {
+	$settings_link = '<a href="' . esc_url( admin_url( 'admin.php?page=wpss-settings' ) ) . '">'
+		. esc_html__( 'Settings', 'wp-sell-services' ) . '</a>';
+	array_unshift( $links, $settings_link );
+
+	if ( ! defined( 'WPSS_PRO_VERSION' ) ) {
+		$links['go_pro'] = '<a href="' . esc_url( admin_url( 'admin.php?page=wpss-upgrade' ) ) . '" style="color:#1dbf73;font-weight:600;">'
+			. esc_html__( 'Go Pro', 'wp-sell-services' ) . '</a>';
+	}
+
+	return $links;
+}
+
+add_filter( 'plugin_action_links_' . WPSS_PLUGIN_BASENAME, __NAMESPACE__ . '\\wpss_plugin_action_links' );
+
+/**
  * Plugin activation hook.
  *
  * @return void

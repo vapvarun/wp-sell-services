@@ -2,7 +2,8 @@
 /**
  * Manual Order Creation Page
  *
- * Allows admins to create test orders without going through checkout.
+ * Allows admins to create orders on behalf of customers (phone orders,
+ * offline sales, migration from other systems, etc.).
  *
  * @package WPSellServices\Admin\Pages
  * @since   1.0.0
@@ -11,6 +12,10 @@
 declare(strict_types=1);
 
 namespace WPSellServices\Admin\Pages;
+
+use WPSellServices\Services\CommissionService;
+use WPSellServices\Services\ConversationService;
+use WPSellServices\Services\ServiceAddonService;
 
 /**
  * Manual Order Page Class.
@@ -28,6 +33,7 @@ class ManualOrderPage {
 		// Priority 20 to ensure parent menu is registered first (default is 10).
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
 		add_action( 'wp_ajax_wpss_create_manual_order', array( $this, 'handle_create_order' ) );
+		add_action( 'wp_ajax_wpss_get_service_addons', array( $this, 'ajax_get_service_addons' ) );
 		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 	}
@@ -38,10 +44,11 @@ class ManualOrderPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
+		// Hidden page — accessible via "Create Order" button on the Orders list page.
 		add_submenu_page(
-			'wp-sell-services',
-			__( 'Create Test Order', 'wp-sell-services' ),
-			__( 'Create Test Order', 'wp-sell-services' ),
+			null,
+			__( 'Create Order', 'wp-sell-services' ),
+			__( 'Create Order', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-create-order',
 			array( $this, 'render_page' )
@@ -49,18 +56,57 @@ class ManualOrderPage {
 	}
 
 	/**
-	 * Enqueue page scripts.
+	 * Enqueue page scripts and styles.
 	 *
 	 * @param string $hook Current admin page hook.
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'wp-sell-services_page_wpss-create-order' !== $hook ) {
+		if ( 'admin_page_wpss-create-order' !== $hook ) {
 			return;
 		}
 
 		wp_enqueue_style( 'wpss-admin' );
 		wp_enqueue_script( 'wpss-admin' );
+
+		wp_enqueue_style(
+			'wpss-admin-manual-order',
+			\WPSS_PLUGIN_URL . 'assets/css/admin-manual-order.css',
+			array( 'wpss-admin' ),
+			\WPSS_VERSION
+		);
+
+		wp_enqueue_script(
+			'wpss-admin-manual-order',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-manual-order.js',
+			array( 'jquery', 'wpss-admin' ),
+			\WPSS_VERSION,
+			true
+		);
+
+		$default_rate = CommissionService::get_global_commission_rate();
+
+		wp_localize_script(
+			'wpss-admin-manual-order',
+			'wpssManualOrder',
+			array(
+				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
+				'nonce'                 => wp_create_nonce( 'wpss_create_manual_order' ),
+				'defaultCommissionRate' => $default_rate,
+				'currencyFormat'        => wpss_get_currency_format(),
+				'i18n'                  => array(
+					'selectPackage'       => __( '-- Select Package --', 'wp-sell-services' ),
+					'loadingPackages'     => __( 'Loading packages...', 'wp-sell-services' ),
+					'loadingAddons'       => __( 'Loading addons...', 'wp-sell-services' ),
+					'noAddons'            => __( 'No addons available for this service.', 'wp-sell-services' ),
+					/* translators: 1: order number, 2: order ID */
+					'orderCreated'        => __( 'Order #%1$s has been created. Order ID: %2$d', 'wp-sell-services' ),
+					'requirementsSkipped' => __( 'Note: This service has no requirements defined. Order was set to "In Progress" automatically.', 'wp-sell-services' ),
+					'createFailed'        => __( 'Failed to create order.', 'wp-sell-services' ),
+					'createError'         => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -87,44 +133,49 @@ class ManualOrderPage {
 				'order'   => 'ASC',
 			)
 		);
-		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Create Test Order', 'wp-sell-services' ); ?></h1>
 
-			<div class="wpss-admin-notice wpss-notice-info">
-				<p>
-					<strong><?php esc_html_e( 'Testing Tool', 'wp-sell-services' ); ?></strong>
-					<?php esc_html_e( 'This page allows you to create test orders to verify the complete order workflow without going through the checkout process.', 'wp-sell-services' ); ?>
-				</p>
-			</div>
+		$default_commission = CommissionService::get_global_commission_rate();
+		$default_currency   = wpss_get_currency();
+		$order_statuses     = $this->get_initial_statuses();
+		$currencies         = $this->get_currencies();
+		?>
+		<div class="wrap wpss-manual-order-wrap">
+			<h1><?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?></h1>
 
 			<?php if ( empty( $services ) ) : ?>
-				<div class="wpss-admin-notice wpss-notice-warning">
+				<div class="wpss-no-services-notice">
 					<p>
-						<?php esc_html_e( 'No services found. Please create at least one service before creating a test order.', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'No services found. Please create at least one service before creating an order.', 'wp-sell-services' ); ?>
 						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="button">
 							<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
 						</a>
 					</p>
 				</div>
 			<?php else : ?>
-				<div class="wpss-create-order-form">
-					<form id="wpss-manual-order-form" method="post">
-						<?php wp_nonce_field( 'wpss_create_manual_order', 'wpss_manual_order_nonce' ); ?>
 
-						<table class="form-table">
-							<tbody>
-								<!-- Service Selection -->
-								<tr>
-									<th scope="row">
-										<label for="service_id"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-									</th>
-									<td>
-										<select name="service_id" id="service_id" class="regular-text" required>
+				<form id="wpss-manual-order-form" method="post">
+					<?php wp_nonce_field( 'wpss_create_manual_order', 'wpss_manual_order_nonce' ); ?>
+
+					<div class="wpss-manual-order-columns">
+						<!-- Left Column: Main Content -->
+						<div class="wpss-manual-order-main">
+
+							<!-- Section A: Order Details -->
+							<div class="postbox">
+								<h2 class="hndle"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
+								<div class="inside">
+
+									<!-- Service -->
+									<div class="wpss-form-row">
+										<label for="wpss-service-id">
+											<?php esc_html_e( 'Service', 'wp-sell-services' ); ?>
+											<span class="required">*</span>
+										</label>
+										<select name="service_id" id="wpss-service-id" required>
 											<option value=""><?php esc_html_e( '-- Select a Service --', 'wp-sell-services' ); ?></option>
 											<?php foreach ( $services as $service ) : ?>
 												<?php
-												$vendor_id = $service->post_author;
+												$vendor_id = (int) $service->post_author;
 												$vendor    = get_userdata( $vendor_id );
 												$price     = get_post_meta( $service->ID, '_wpss_starting_price', true );
 												?>
@@ -141,30 +192,33 @@ class ManualOrderPage {
 												</option>
 											<?php endforeach; ?>
 										</select>
-										<p class="description"><?php esc_html_e( 'Select the service for this order.', 'wp-sell-services' ); ?></p>
-									</td>
-								</tr>
+									</div>
 
-								<!-- Package Selection -->
-								<tr id="package-row" style="display: none;">
-									<th scope="row">
-										<label for="package_id"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></label>
-									</th>
-									<td>
-										<select name="package_id" id="package_id" class="regular-text">
+									<!-- Package -->
+									<div class="wpss-form-row" id="wpss-package-row" style="display: none;">
+										<label for="wpss-package-id"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></label>
+										<select name="package_id" id="wpss-package-id">
 											<option value=""><?php esc_html_e( '-- Select Package --', 'wp-sell-services' ); ?></option>
 										</select>
-										<p class="description"><?php esc_html_e( 'Select a pricing package (if available).', 'wp-sell-services' ); ?></p>
-									</td>
-								</tr>
+									</div>
 
-								<!-- Customer Selection -->
-								<tr>
-									<th scope="row">
-										<label for="customer_id"><?php esc_html_e( 'Customer (Buyer)', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-									</th>
-									<td>
-										<select name="customer_id" id="customer_id" class="regular-text" required>
+									<!-- Addons -->
+									<div class="wpss-form-row" id="wpss-addons-container" style="display: none;">
+										<label><?php esc_html_e( 'Addons', 'wp-sell-services' ); ?></label>
+										<div class="wpss-addons-list" id="wpss-addons-list">
+											<div class="wpss-addons-empty">
+												<?php esc_html_e( 'Select a service to see available addons.', 'wp-sell-services' ); ?>
+											</div>
+										</div>
+									</div>
+
+									<!-- Customer -->
+									<div class="wpss-form-row">
+										<label for="wpss-customer-id">
+											<?php esc_html_e( 'Customer (Buyer)', 'wp-sell-services' ); ?>
+											<span class="required">*</span>
+										</label>
+										<select name="customer_id" id="wpss-customer-id" required>
 											<option value=""><?php esc_html_e( '-- Select Customer --', 'wp-sell-services' ); ?></option>
 											<?php foreach ( $users as $user ) : ?>
 												<option value="<?php echo esc_attr( $user->ID ); ?>">
@@ -173,346 +227,262 @@ class ManualOrderPage {
 												</option>
 											<?php endforeach; ?>
 										</select>
-										<p class="description"><?php esc_html_e( 'The user who is buying this service.', 'wp-sell-services' ); ?></p>
-									</td>
-								</tr>
+									</div>
 
-								<!-- Price Override -->
-								<tr>
-									<th scope="row">
-										<label for="total"><?php esc_html_e( 'Total Amount', 'wp-sell-services' ); ?></label>
-									</th>
-									<td>
-										<input type="number"
-												name="total"
-												id="total"
-												class="regular-text"
-												step="0.01"
-												min="0"
-												placeholder="<?php esc_attr_e( 'Auto-calculated from service', 'wp-sell-services' ); ?>">
-										<p class="description"><?php esc_html_e( 'Leave empty to use the service/package price.', 'wp-sell-services' ); ?></p>
-									</td>
-								</tr>
-
-								<!-- Initial Status -->
-								<tr>
-									<th scope="row">
-										<label for="status"><?php esc_html_e( 'Initial Status', 'wp-sell-services' ); ?></label>
-									</th>
-									<td>
-										<select name="status" id="status" class="regular-text">
-											<option value="pending_payment"><?php esc_html_e( 'Pending Payment', 'wp-sell-services' ); ?></option>
-											<option value="pending_requirements" selected><?php esc_html_e( 'Pending Requirements (Payment Complete)', 'wp-sell-services' ); ?></option>
-											<option value="in_progress"><?php esc_html_e( 'In Progress (Skip requirements)', 'wp-sell-services' ); ?></option>
+									<!-- Vendor Override -->
+									<div class="wpss-form-row">
+										<label for="wpss-vendor-id"><?php esc_html_e( 'Vendor (Override)', 'wp-sell-services' ); ?></label>
+										<select name="vendor_id" id="wpss-vendor-id">
+											<option value=""><?php esc_html_e( '-- Use Service Author --', 'wp-sell-services' ); ?></option>
+											<?php foreach ( $users as $user ) : ?>
+												<option value="<?php echo esc_attr( $user->ID ); ?>">
+													<?php echo esc_html( $user->display_name ); ?>
+													(<?php echo esc_html( $user->user_email ); ?>)
+												</option>
+											<?php endforeach; ?>
 										</select>
-										<p class="description"><?php esc_html_e( 'Set the initial status. "Pending Requirements" simulates a paid order.', 'wp-sell-services' ); ?></p>
-									</td>
-								</tr>
+										<p class="description"><?php esc_html_e( 'Leave empty to use the service author as vendor.', 'wp-sell-services' ); ?></p>
+									</div>
+								</div>
+							</div>
 
-								<!-- Delivery Days -->
-								<tr>
-									<th scope="row">
-										<label for="delivery_days"><?php esc_html_e( 'Delivery Days', 'wp-sell-services' ); ?></label>
-									</th>
-									<td>
+							<!-- Section B: Pricing -->
+							<div class="postbox">
+								<h2 class="hndle"><?php esc_html_e( 'Pricing', 'wp-sell-services' ); ?></h2>
+								<div class="inside">
+									<table class="wpss-pricing-summary">
+										<tr>
+											<td><?php esc_html_e( 'Subtotal (Package)', 'wp-sell-services' ); ?></td>
+											<td id="wpss-summary-subtotal"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
+										</tr>
+										<tr id="wpss-pricing-addons-row" style="display: none;">
+											<td><?php esc_html_e( 'Addons Total', 'wp-sell-services' ); ?></td>
+											<td id="wpss-summary-addons"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
+										</tr>
+										<tr class="wpss-pricing-editable">
+											<td colspan="2">
+												<div class="wpss-override-toggle">
+													<input type="checkbox" id="wpss-override-total" value="1">
+													<label for="wpss-override-total"><?php esc_html_e( 'Override total manually', 'wp-sell-services' ); ?></label>
+												</div>
+												<input type="number"
+														name="total_override"
+														id="wpss-total-override"
+														step="0.01"
+														min="0"
+														placeholder="<?php esc_attr_e( 'Auto-calculated', 'wp-sell-services' ); ?>"
+														disabled
+														class="wpss-disabled">
+											</td>
+										</tr>
+										<tr class="wpss-pricing-total">
+											<td><?php esc_html_e( 'Order Total', 'wp-sell-services' ); ?></td>
+											<td id="wpss-summary-total"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
+										</tr>
+										<tr class="wpss-pricing-commission">
+											<td>
+												<?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?>
+												<input type="number"
+														name="commission_rate"
+														id="wpss-commission-rate"
+														class="wpss-small-input"
+														step="0.1"
+														min="0"
+														max="100"
+														value="<?php echo esc_attr( $default_commission ); ?>"
+														style="width: 70px; margin-left: 8px;">%
+											</td>
+											<td></td>
+										</tr>
+										<tr class="wpss-pricing-commission">
+											<td><?php esc_html_e( 'Platform Fee', 'wp-sell-services' ); ?></td>
+											<td id="wpss-summary-platform-fee"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
+										</tr>
+										<tr class="wpss-pricing-commission">
+											<td><?php esc_html_e( 'Vendor Earnings', 'wp-sell-services' ); ?></td>
+											<td id="wpss-summary-vendor-earnings"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
+										</tr>
+									</table>
+
+									<!-- Currency -->
+									<div class="wpss-form-row" style="margin-top: 16px;">
+										<label for="wpss-currency"><?php esc_html_e( 'Currency', 'wp-sell-services' ); ?></label>
+										<select name="currency" id="wpss-currency">
+											<?php foreach ( $currencies as $code => $label ) : ?>
+												<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $default_currency, $code ); ?>>
+													<?php echo esc_html( $label ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+
+									<!-- Hidden calculated fields -->
+									<input type="hidden" name="subtotal" id="wpss-calculated-subtotal" value="0">
+									<input type="hidden" name="addons_total" id="wpss-calculated-addons-total" value="0">
+									<input type="hidden" name="total" id="wpss-calculated-total" value="0">
+									<input type="hidden" name="platform_fee" id="wpss-calculated-platform-fee" value="0">
+									<input type="hidden" name="vendor_earnings" id="wpss-calculated-vendor-earnings" value="0">
+								</div>
+							</div>
+						</div>
+
+						<!-- Right Column: Sidebar -->
+						<div class="wpss-manual-order-sidebar">
+
+							<!-- Status & Payment -->
+							<div class="postbox">
+								<h2 class="hndle"><?php esc_html_e( 'Status & Payment', 'wp-sell-services' ); ?></h2>
+								<div class="inside">
+
+									<div class="wpss-form-row">
+										<label for="wpss-status"><?php esc_html_e( 'Order Status', 'wp-sell-services' ); ?></label>
+										<select name="status" id="wpss-status">
+											<?php foreach ( $order_statuses as $value => $label ) : ?>
+												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( 'pending_requirements', $value ); ?>>
+													<?php echo esc_html( $label ); ?>
+												</option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+
+									<div class="wpss-form-row">
+										<label for="wpss-payment-status"><?php esc_html_e( 'Payment Status', 'wp-sell-services' ); ?></label>
+										<select name="payment_status" id="wpss-payment-status">
+											<option value="pending"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></option>
+											<option value="paid" selected><?php esc_html_e( 'Paid', 'wp-sell-services' ); ?></option>
+											<option value="failed"><?php esc_html_e( 'Failed', 'wp-sell-services' ); ?></option>
+											<option value="refunded"><?php esc_html_e( 'Refunded', 'wp-sell-services' ); ?></option>
+										</select>
+									</div>
+
+									<div class="wpss-form-row">
+										<label for="wpss-payment-method"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></label>
+										<select name="payment_method" id="wpss-payment-method">
+											<option value="manual" selected><?php esc_html_e( 'Manual', 'wp-sell-services' ); ?></option>
+											<option value="bank_transfer"><?php esc_html_e( 'Bank Transfer', 'wp-sell-services' ); ?></option>
+											<option value="cash"><?php esc_html_e( 'Cash', 'wp-sell-services' ); ?></option>
+											<option value="other"><?php esc_html_e( 'Other', 'wp-sell-services' ); ?></option>
+										</select>
+									</div>
+
+									<div class="wpss-form-row">
+										<label for="wpss-transaction-id"><?php esc_html_e( 'Transaction ID', 'wp-sell-services' ); ?></label>
+										<input type="text"
+												name="transaction_id"
+												id="wpss-transaction-id"
+												placeholder="<?php esc_attr_e( 'Optional reference number', 'wp-sell-services' ); ?>">
+									</div>
+
+									<div class="wpss-form-row">
+										<label for="wpss-delivery-days"><?php esc_html_e( 'Delivery Days', 'wp-sell-services' ); ?></label>
 										<input type="number"
 												name="delivery_days"
-												id="delivery_days"
-												class="small-text"
+												id="wpss-delivery-days"
 												min="1"
-												value="7"
-												placeholder="7">
-										<p class="description"><?php esc_html_e( 'Number of days for delivery deadline from order start.', 'wp-sell-services' ); ?></p>
-									</td>
-								</tr>
+												value="7">
+										<p class="description"><?php esc_html_e( 'Auto-filled from package selection.', 'wp-sell-services' ); ?></p>
+									</div>
 
-								<!-- Notes -->
-								<tr>
-									<th scope="row">
-										<label for="notes"><?php esc_html_e( 'Admin Notes', 'wp-sell-services' ); ?></label>
-									</th>
-									<td>
+									<div class="wpss-form-row">
+										<label for="wpss-revisions"><?php esc_html_e( 'Revisions Included', 'wp-sell-services' ); ?></label>
+										<input type="number"
+												name="revisions_included"
+												id="wpss-revisions"
+												min="0"
+												value="2">
+										<p class="description"><?php esc_html_e( 'Auto-filled from package selection.', 'wp-sell-services' ); ?></p>
+									</div>
+								</div>
+							</div>
+
+							<!-- Notes -->
+							<div class="postbox">
+								<h2 class="hndle"><?php esc_html_e( 'Admin Notes', 'wp-sell-services' ); ?></h2>
+								<div class="inside">
+									<div class="wpss-form-row">
 										<textarea name="notes"
-													id="notes"
-													rows="3"
-													class="large-text"
-													placeholder="<?php esc_attr_e( 'Optional notes about this test order...', 'wp-sell-services' ); ?>"></textarea>
-									</td>
-								</tr>
-							</tbody>
-						</table>
+													id="wpss-notes"
+													rows="4"
+													placeholder="<?php esc_attr_e( 'Internal notes about this order...', 'wp-sell-services' ); ?>"></textarea>
+										<p class="description"><?php esc_html_e( 'Stored as a system message in the order conversation.', 'wp-sell-services' ); ?></p>
+									</div>
+								</div>
+							</div>
 
-						<p class="submit">
-							<button type="submit" class="button button-primary button-large" id="create-order-btn">
-								<?php esc_html_e( 'Create Test Order', 'wp-sell-services' ); ?>
-							</button>
-							<span class="spinner" style="float: none; margin-top: 0;"></span>
-						</p>
-					</form>
-
-					<div id="order-result" style="display: none;">
-						<div class="wpss-admin-notice wpss-notice-success">
-							<h3><?php esc_html_e( 'Order Created Successfully!', 'wp-sell-services' ); ?></h3>
-							<p id="order-result-message"></p>
-							<p>
-								<a href="#" id="view-order-link" class="button" target="_blank">
-									<?php esc_html_e( 'View Order', 'wp-sell-services' ); ?>
-								</a>
-								<a href="#" id="requirements-link" class="button" target="_blank">
-									<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
-								</a>
-								<button type="button" class="button" id="create-another-btn">
-									<?php esc_html_e( 'Create Another', 'wp-sell-services' ); ?>
-								</button>
-							</p>
+							<!-- Submit -->
+							<div class="postbox">
+								<div class="inside wpss-submit-section">
+									<button type="submit" class="button button-primary button-large" id="wpss-create-order-btn">
+										<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
+									</button>
+									<span class="spinner"></span>
+								</div>
+							</div>
 						</div>
+					</div>
+				</form>
+
+				<!-- Success Result -->
+				<div id="wpss-order-result" class="wpss-order-result" style="display: none;">
+					<h3><?php esc_html_e( 'Order Created Successfully!', 'wp-sell-services' ); ?></h3>
+					<p id="wpss-result-message"></p>
+					<div class="wpss-result-actions">
+						<a href="#" id="wpss-view-order-link" class="button button-primary" target="_blank">
+							<?php esc_html_e( 'View Order', 'wp-sell-services' ); ?>
+						</a>
+						<a href="#" id="wpss-requirements-link" class="button" target="_blank" style="display: none;">
+							<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
+						</a>
+						<button type="button" class="button" id="wpss-create-another-btn">
+							<?php esc_html_e( 'Create Another Order', 'wp-sell-services' ); ?>
+						</button>
 					</div>
 				</div>
 
-				<!-- Quick Test Flow Guide -->
-				<div class="wpss-test-guide">
-					<h2><?php esc_html_e( 'Testing the Order Flow', 'wp-sell-services' ); ?></h2>
-					<div class="wpss-flow-steps">
-						<div class="wpss-flow-step">
-							<span class="step-number">1</span>
-							<h4><?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?></h4>
-							<p><?php esc_html_e( 'Use the form above to create a test order.', 'wp-sell-services' ); ?></p>
-						</div>
-						<div class="wpss-flow-step">
-							<span class="step-number">2</span>
-							<h4><?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?></h4>
-							<p><?php esc_html_e( 'As the buyer, submit the order requirements.', 'wp-sell-services' ); ?></p>
-						</div>
-						<div class="wpss-flow-step">
-							<span class="step-number">3</span>
-							<h4><?php esc_html_e( 'Vendor Actions', 'wp-sell-services' ); ?></h4>
-							<p><?php esc_html_e( 'Accept order, start work, and deliver.', 'wp-sell-services' ); ?></p>
-						</div>
-						<div class="wpss-flow-step">
-							<span class="step-number">4</span>
-							<h4><?php esc_html_e( 'Complete Order', 'wp-sell-services' ); ?></h4>
-							<p><?php esc_html_e( 'Buyer accepts delivery or requests revision.', 'wp-sell-services' ); ?></p>
-						</div>
-					</div>
-				</div>
 			<?php endif; ?>
 		</div>
-
-		<style>
-			.wpss-admin-notice {
-				padding: 15px 20px;
-				border-left: 4px solid #2271b1;
-				background: #fff;
-				margin: 20px 0;
-				box-shadow: 0 1px 1px rgba(0,0,0,0.04);
-			}
-			.wpss-notice-info { border-left-color: #2271b1; }
-			.wpss-notice-success { border-left-color: #00a32a; }
-			.wpss-notice-warning { border-left-color: #dba617; }
-
-			.wpss-create-order-form {
-				background: #fff;
-				padding: 20px;
-				border: 1px solid #c3c4c7;
-				margin: 20px 0;
-			}
-			.wpss-create-order-form .required { color: #d63638; }
-
-			.wpss-test-guide {
-				background: #fff;
-				padding: 20px;
-				border: 1px solid #c3c4c7;
-				margin: 20px 0;
-			}
-			.wpss-flow-steps {
-				display: grid;
-				grid-template-columns: repeat(4, 1fr);
-				gap: 20px;
-				margin-top: 20px;
-			}
-			.wpss-flow-step {
-				padding: 20px;
-				background: #f6f7f7;
-				border-radius: 4px;
-				text-align: center;
-			}
-			.wpss-flow-step .step-number {
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				width: 40px;
-				height: 40px;
-				background: #2271b1;
-				color: #fff;
-				border-radius: 50%;
-				font-size: 18px;
-				font-weight: 600;
-				margin-bottom: 10px;
-			}
-			.wpss-flow-step h4 {
-				margin: 0 0 8px;
-			}
-			.wpss-flow-step p {
-				margin: 0;
-				color: #646970;
-				font-size: 13px;
-			}
-
-			@media (max-width: 1200px) {
-				.wpss-flow-steps {
-					grid-template-columns: repeat(2, 1fr);
-				}
-			}
-			@media (max-width: 600px) {
-				.wpss-flow-steps {
-					grid-template-columns: 1fr;
-				}
-			}
-		</style>
-
-		<script>
-		(function($) {
-			// Define wpssManualOrder immediately when script executes.
-			var wpssManualOrder = <?php echo wp_json_encode(
-				array(
-					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'wpss_create_manual_order' ),
-				)
-			); ?>;
-
-			// Also expose globally for any external needs.
-			window.wpssManualOrder = wpssManualOrder;
-
-			$(function() {
-			var $form = $('#wpss-manual-order-form');
-			var $result = $('#order-result');
-			var $submitBtn = $('#create-order-btn');
-			var $spinner = $form.find('.spinner');
-
-			// Load packages when service changes
-			$('#service_id').on('change', function() {
-				var serviceId = $(this).val();
-				var $packageRow = $('#package-row');
-				var $packageSelect = $('#package_id');
-				var $totalInput = $('#total');
-
-				if (!serviceId) {
-					$packageRow.hide();
-					$packageSelect.html('<option value=""><?php esc_html_e( '-- Select Package --', 'wp-sell-services' ); ?></option>');
-					return;
-				}
-
-				// Get packages via AJAX
-				$.ajax({
-					url: wpssManualOrder.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_get_service_packages',
-						service_id: serviceId,
-						nonce: wpssManualOrder.nonce
-					},
-					success: function(response) {
-						if (response.success && response.data.packages && response.data.packages.length > 0) {
-							var options = '<option value=""><?php esc_html_e( '-- Select Package --', 'wp-sell-services' ); ?></option>';
-							$.each(response.data.packages, function(i, pkg) {
-								options += '<option value="' + pkg.id + '" data-price="' + pkg.price + '" data-delivery="' + pkg.delivery_days + '" data-revisions="' + pkg.revisions + '">' +
-									pkg.name + ' - ' + pkg.formatted_price + ' (' + pkg.delivery_days + ' days)</option>';
-							});
-							$packageSelect.html(options);
-							$packageRow.show();
-						} else {
-							$packageRow.hide();
-							// Use starting price
-							var price = $('#service_id option:selected').data('price');
-							if (price) {
-								$totalInput.attr('placeholder', price);
-							}
-						}
-					}
-				});
-			});
-
-			// Update price and delivery days when package changes
-			$('#package_id').on('change', function() {
-				var $selected = $(this).find(':selected');
-				var price = $selected.data('price');
-				var delivery = $selected.data('delivery');
-				if (price) {
-					$('#total').attr('placeholder', price);
-				}
-				if (delivery) {
-					$('#delivery_days').val(delivery);
-				}
-			});
-
-			// Submit form
-			$form.on('submit', function(e) {
-				e.preventDefault();
-
-				$submitBtn.prop('disabled', true);
-				$spinner.addClass('is-active');
-
-				$.ajax({
-					url: wpssManualOrder.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_create_manual_order',
-						nonce: wpssManualOrder.nonce,
-						service_id: $('#service_id').val(),
-						package_id: $('#package_id').val(),
-						customer_id: $('#customer_id').val(),
-						total: $('#total').val(),
-						status: $('#status').val(),
-						delivery_days: $('#delivery_days').val(),
-						notes: $('#notes').val()
-					},
-					success: function(response) {
-						if (response.success) {
-							var message = 'Order #' + response.data.order_number + ' has been created.<br>' +
-								'Order ID: ' + response.data.order_id;
-
-							// Show notice if requirements were skipped.
-							if (response.data.requirements_skipped) {
-								message += '<br><br><strong>Note:</strong> This service has no requirements defined. Order was set to "In Progress" automatically.';
-							}
-
-							$('#order-result-message').html(message);
-							$('#view-order-link').attr('href', response.data.view_url);
-							$('#requirements-link').attr('href', response.data.requirements_url);
-
-							if (response.data.status !== 'pending_requirements' || !response.data.has_requirements) {
-								$('#requirements-link').hide();
-							} else {
-								$('#requirements-link').show();
-							}
-
-							$form.hide();
-							$result.show();
-						} else {
-							alert(response.data.message || 'Failed to create order.');
-						}
-					},
-					error: function() {
-						alert('An error occurred. Please try again.');
-					},
-					complete: function() {
-						$submitBtn.prop('disabled', false);
-						$spinner.removeClass('is-active');
-					}
-				});
-			});
-
-			// Create another
-			$('#create-another-btn').on('click', function() {
-				$form[0].reset();
-				$('#package-row').hide();
-				$result.hide();
-				$form.show();
-			});
-			});
-		})(jQuery);
-		</script>
 		<?php
+	}
+
+	/**
+	 * AJAX handler to get service addons.
+	 *
+	 * @return void
+	 */
+	public function ajax_get_service_addons(): void {
+		check_ajax_referer( 'wpss_create_manual_order', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+
+		if ( ! $service_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service ID.', 'wp-sell-services' ) ) );
+		}
+
+		$addon_service = new ServiceAddonService();
+		$addons        = $addon_service->get_service_addons( $service_id );
+
+		$formatted = array();
+		foreach ( $addons as $addon ) {
+			$formatted[] = array(
+				'id'                  => (int) $addon->id,
+				'title'               => $addon->title,
+				'description'         => $addon->description ?? '',
+				'field_type'          => $addon->field_type,
+				'price'               => $addon->price,
+				'formatted_price'     => wpss_format_price( $addon->price ),
+				'price_type'          => $addon->price_type,
+				'min_quantity'        => $addon->min_quantity,
+				'max_quantity'        => $addon->max_quantity,
+				'is_required'         => $addon->is_required,
+				'delivery_days_extra' => $addon->delivery_days_extra,
+			);
+		}
+
+		wp_send_json_success( array( 'addons' => $formatted ) );
 	}
 
 	/**
@@ -527,14 +497,30 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		$service_id    = absint( $_POST['service_id'] ?? 0 );
-		$package_id    = absint( $_POST['package_id'] ?? 0 );
-		$customer_id   = absint( $_POST['customer_id'] ?? 0 );
-		$total         = floatval( $_POST['total'] ?? 0 );
-		$status        = sanitize_key( $_POST['status'] ?? 'pending_requirements' );
-		$delivery_days = absint( $_POST['delivery_days'] ?? 7 );
-		$notes         = isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '';
+		// --- 1. Collect and sanitize inputs ---
+		$service_id      = absint( $_POST['service_id'] ?? 0 );
+		$package_id      = absint( $_POST['package_id'] ?? 0 );
+		$customer_id     = absint( $_POST['customer_id'] ?? 0 );
+		$vendor_id_input = absint( $_POST['vendor_id'] ?? 0 );
+		$status          = sanitize_key( $_POST['status'] ?? 'pending_requirements' );
+		$payment_status  = sanitize_key( $_POST['payment_status'] ?? 'paid' );
+		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
+		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
+		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );
+		$revisions_input = absint( $_POST['revisions_included'] ?? 2 );
+		$currency        = isset( $_POST['currency'] ) ? sanitize_text_field( wp_unslash( $_POST['currency'] ) ) : wpss_get_currency();
+		$commission_rate = isset( $_POST['commission_rate'] ) ? (float) $_POST['commission_rate'] : CommissionService::get_global_commission_rate();
+		$notes           = isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '';
 
+		// Pricing from JS calculations (hidden fields).
+		$subtotal_input = isset( $_POST['subtotal'] ) ? (float) $_POST['subtotal'] : 0;
+		$total_input    = isset( $_POST['total'] ) ? (float) $_POST['total'] : 0;
+
+		// Addons from form.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$addons_raw = isset( $_POST['addons'] ) ? (array) wp_unslash( $_POST['addons'] ) : array();
+
+		// --- 2. Validate required ---
 		if ( ! $service_id || ! $customer_id ) {
 			wp_send_json_error( array( 'message' => __( 'Service and Customer are required.', 'wp-sell-services' ) ) );
 		}
@@ -544,58 +530,102 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
-		$vendor_id = (int) $service->post_author;
+		// --- 3. Determine vendor ---
+		$vendor_id = $vendor_id_input ? $vendor_id_input : (int) $service->post_author;
 
-		// Prevent customer = vendor.
 		if ( $customer_id === $vendor_id ) {
 			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
-		// Get package details including revisions.
-		$revisions_included = 2; // Default fallback.
-		if ( null !== $package_id ) {
+		// --- 4. Load package data ---
+		$revisions_included = $revisions_input;
+		$subtotal           = $subtotal_input;
+
+		if ( $package_id ) {
 			$packages = get_post_meta( $service_id, '_wpss_packages', true );
 			if ( is_array( $packages ) && isset( $packages[ $package_id ] ) ) {
-				$package            = $packages[ $package_id ];
-				$revisions_included = (int) ( $package['revisions'] ?? 2 );
-				if ( ! $total ) {
-					$total         = (float) ( $package['price'] ?? 0 );
-					$delivery_days = (int) ( $package['delivery_days'] ?? 0 );
+				$package = $packages[ $package_id ];
+				if ( ! $subtotal ) {
+					$subtotal      = (float) ( $package['price'] ?? 0 );
+					$delivery_days = (int) ( $package['delivery_days'] ?? $delivery_days );
+				}
+				if ( ! $revisions_input ) {
+					$revisions_included = (int) ( $package['revisions'] ?? 2 );
 				}
 			}
 		}
 
-		// Fallback to starting price if no total specified.
-		if ( ! $total ) {
-			$total = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
+		// Fallback to starting price.
+		if ( ! $subtotal ) {
+			$subtotal = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
+		}
+
+		// --- 5. Process addons ---
+		$addon_service   = new ServiceAddonService();
+		$selected_addons = array();
+		$addons_total    = 0;
+
+		foreach ( $addons_raw as $addon_id => $addon_data ) {
+			$addon_id = absint( $addon_id );
+			if ( empty( $addon_data['selected'] ) ) {
+				continue;
+			}
+
+			$addon = $addon_service->get( $addon_id );
+			if ( ! $addon ) {
+				continue;
+			}
+
+			$quantity    = absint( $addon_data['quantity'] ?? 1 );
+			$addon_price = $addon_service->calculate_price( $addon, $subtotal, $quantity );
+
+			$selected_addons[] = array(
+				'id'       => $addon_id,
+				'title'    => $addon->title,
+				'price'    => $addon_price,
+				'quantity' => $quantity,
+			);
+
+			$addons_total += $addon_price;
+		}
+
+		// --- 6. Calculate total ---
+		$total = $total_input;
+		if ( ! $total || $total <= 0 ) {
+			$total = $subtotal + $addons_total;
 		}
 
 		if ( ! $total || $total <= 0 ) {
-			$total = 10.00; // Default for testing.
+			$total = 10.00; // Minimum fallback.
 		}
 
-		// Check if service has requirements defined.
-		$service_requirements   = get_post_meta( $service_id, '_wpss_requirements', true );
+		// --- 7. Calculate commission ---
+		$commission_rate = max( 0, min( 100, $commission_rate ) );
+		$platform_fee    = round( $total * ( $commission_rate / 100 ), 2 );
+		$vendor_earnings = round( $total - $platform_fee, 2 );
+
+		// --- 8. Smart status ---
+		$service_requirements     = get_post_meta( $service_id, '_wpss_requirements', true );
 		$service_has_requirements = ! empty( $service_requirements ) && is_array( $service_requirements );
 
-		// If setting to pending_requirements but service has no requirements, auto-upgrade to in_progress.
 		$requirements_skipped = false;
 		if ( 'pending_requirements' === $status && ! $service_has_requirements ) {
 			$status               = 'in_progress';
 			$requirements_skipped = true;
 		}
 
-		// Generate order number.
-		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
-
-		// Calculate deadline (also needed if we auto-upgraded to in_progress).
+		// --- 9. Calculate deadline ---
 		$deadline = null;
 		if ( $delivery_days && 'in_progress' === $status ) {
 			$deadline = gmdate( 'Y-m-d H:i:s', strtotime( "+{$delivery_days} days" ) );
 		}
 
-		// Insert order.
+		// Generate order number.
+		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
+
+		// --- 10. Insert order ---
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$wpdb->prefix . 'wpss_orders',
 			array(
@@ -606,43 +636,57 @@ class ManualOrderPage {
 				'package_id'         => $package_id ? $package_id : null,
 				'platform'           => 'manual',
 				'platform_order_id'  => null,
-				'subtotal'           => $total,
-				'addons_total'       => 0,
+				'transaction_id'     => $transaction_id ? $transaction_id : null,
+				'addons'             => wp_json_encode( $selected_addons ),
+				'subtotal'           => $subtotal,
+				'addons_total'       => $addons_total,
 				'total'              => $total,
-				'currency'           => wpss_get_currency(),
+				'currency'           => $currency,
 				'status'             => $status,
-				'payment_method'     => 'manual',
-				'payment_status'     => 'in_progress' === $status || 'pending_requirements' === $status ? 'paid' : 'pending',
+				'payment_method'     => $payment_method,
+				'payment_status'     => $payment_status,
+				'commission_rate'    => $commission_rate,
+				'platform_fee'       => $platform_fee,
+				'vendor_earnings'    => $vendor_earnings,
 				'revisions_included' => $revisions_included,
 				'revisions_used'     => 0,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
 				'started_at'         => 'in_progress' === $status ? current_time( 'mysql', true ) : null,
+				'paid_at'            => 'paid' === $payment_status ? current_time( 'mysql', true ) : null,
+				'completed_at'       => 'completed' === $status ? current_time( 'mysql', true ) : null,
 				'created_at'         => current_time( 'mysql', true ),
 				'updated_at'         => current_time( 'mysql', true ),
 			),
 			array(
-				'%s',
-				'%d',
-				'%d',
-				'%d',
-				'%d',
-				'%s',
-				'%d',
-				'%f',
-				'%f',
-				'%f',
-				'%s',
-				'%s',
-				'%s',
-				'%s',
-				'%d',
-				'%d',
-				'%s',
-				'%s',
-				'%s',
-				'%s',
-				'%s',
+				'%s', // order_number.
+				'%d', // customer_id.
+				'%d', // vendor_id.
+				'%d', // service_id.
+				'%d', // package_id.
+				'%s', // platform.
+				'%d', // platform_order_id.
+				'%s', // transaction_id.
+				'%s', // addons.
+				'%f', // subtotal.
+				'%f', // addons_total.
+				'%f', // total.
+				'%s', // currency.
+				'%s', // status.
+				'%s', // payment_method.
+				'%s', // payment_status.
+				'%f', // commission_rate.
+				'%f', // platform_fee.
+				'%f', // vendor_earnings.
+				'%d', // revisions_included.
+				'%d', // revisions_used.
+				'%s', // delivery_deadline.
+				'%s', // original_deadline.
+				'%s', // started_at.
+				'%s', // paid_at.
+				'%s', // completed_at.
+				'%s', // created_at.
+				'%s', // updated_at.
 			)
 		);
 
@@ -652,42 +696,88 @@ class ManualOrderPage {
 
 		$order_id = (int) $wpdb->insert_id;
 
-		// Add admin note if provided.
-		if ( $notes ) {
-			$wpdb->insert(
-				$wpdb->prefix . 'wpss_conversations',
-				array(
-					'order_id'   => $order_id,
-					'sender_id'  => get_current_user_id(),
-					'message'    => sprintf(
-						/* translators: %s: admin notes */
-						__( '[Admin Note] %s', 'wp-sell-services' ),
-						$notes
-					),
-					'type'       => 'system',
-					'created_at' => current_time( 'mysql', true ),
-				),
-				array( '%d', '%d', '%s', '%s', '%s' )
+		// --- 11. Create conversation ---
+		$conversation_service = new ConversationService();
+		$conversation         = $conversation_service->create_for_order( $order_id );
+
+		// --- 12. Add admin notes as system message ---
+		if ( $notes && $conversation ) {
+			$conversation_service->add_system_message(
+				$conversation->id,
+				sprintf(
+					/* translators: %s: admin notes */
+					__( '[Admin Note] %s', 'wp-sell-services' ),
+					$notes
+				)
 			);
 		}
 
-		// Fire order created action.
+		// --- 13. Fire hooks ---
 		do_action( 'wpss_order_created', $order_id, $status );
-
-		// Fire order status changed for WooCommerce email integration.
-		// WCEmailProvider listens to this hook to trigger email notifications.
 		do_action( 'wpss_order_status_changed', $order_id, $status, '' );
+		do_action( "wpss_order_status_{$status}", $order_id, '' );
 
-		$response = array(
-			'order_id'              => $order_id,
-			'order_number'          => $order_number,
-			'status'                => $status,
-			'view_url'              => wpss_get_order_url( $order_id ),
-			'requirements_url'      => wpss_get_order_requirements_url( $order_id ),
-			'requirements_skipped'  => $requirements_skipped,
-			'has_requirements'      => $service_has_requirements,
+		// --- 14. Send response ---
+		wp_send_json_success(
+			array(
+				'order_id'             => $order_id,
+				'order_number'         => $order_number,
+				'status'               => $status,
+				'view_url'             => wpss_get_order_url( $order_id ),
+				'requirements_url'     => wpss_get_order_requirements_url( $order_id ),
+				'requirements_skipped' => $requirements_skipped,
+				'has_requirements'     => $service_has_requirements,
+			)
 		);
+	}
 
-		wp_send_json_success( $response );
+	/**
+	 * Get initial order statuses available for manual creation.
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_initial_statuses(): array {
+		return array(
+			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
+			'pending_requirements' => __( 'Pending Requirements (Payment Complete)', 'wp-sell-services' ),
+			'in_progress'          => __( 'In Progress (Skip Requirements)', 'wp-sell-services' ),
+			'delivered'            => __( 'Delivered', 'wp-sell-services' ),
+			'completed'            => __( 'Completed', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Get supported currencies.
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_currencies(): array {
+		return array(
+			'USD' => 'USD ($)',
+			'EUR' => 'EUR (€)',
+			'GBP' => 'GBP (£)',
+			'INR' => 'INR (₹)',
+			'AUD' => 'AUD (A$)',
+			'CAD' => 'CAD (C$)',
+			'JPY' => 'JPY (¥)',
+			'CHF' => 'CHF',
+			'CNY' => 'CNY (¥)',
+			'BRL' => 'BRL (R$)',
+			'MXN' => 'MXN (MX$)',
+			'SGD' => 'SGD (S$)',
+			'HKD' => 'HKD (HK$)',
+			'NZD' => 'NZD (NZ$)',
+			'KRW' => 'KRW (₩)',
+			'TRY' => 'TRY (₺)',
+			'ZAR' => 'ZAR (R)',
+			'AED' => 'AED (د.إ)',
+			'SAR' => 'SAR (﷼)',
+			'PLN' => 'PLN (zł)',
+			'THB' => 'THB (฿)',
+			'MYR' => 'MYR (RM)',
+			'PHP' => 'PHP (₱)',
+			'IDR' => 'IDR (Rp)',
+			'VND' => 'VND (₫)',
+		);
 	}
 }

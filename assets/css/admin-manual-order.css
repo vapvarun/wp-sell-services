@@ -1,0 +1,279 @@
+/**
+ * Manual Order Creation Page Styles
+ *
+ * WordPress postbox/metabox layout for the Create Order admin page.
+ *
+ * @package WPSellServices
+ * @since   1.4.0
+ */
+
+/* Page layout - 2 column postbox */
+.wpss-manual-order-wrap {
+	max-width: 1400px;
+}
+
+.wpss-manual-order-columns {
+	display: flex;
+	gap: 20px;
+	margin-top: 20px;
+}
+
+.wpss-manual-order-main {
+	flex: 7;
+	min-width: 0;
+}
+
+.wpss-manual-order-sidebar {
+	flex: 3;
+	min-width: 280px;
+}
+
+/* Postbox overrides */
+.wpss-manual-order-wrap .postbox {
+	margin-bottom: 20px;
+}
+
+.wpss-manual-order-wrap .postbox .inside {
+	padding: 12px;
+}
+
+.wpss-manual-order-wrap .postbox h2.hndle {
+	padding: 10px 12px;
+	font-size: 14px;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+/* Form fields */
+.wpss-manual-order-wrap .wpss-form-row {
+	margin-bottom: 16px;
+}
+
+.wpss-manual-order-wrap .wpss-form-row:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-manual-order-wrap .wpss-form-row label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 6px;
+	font-size: 13px;
+}
+
+.wpss-manual-order-wrap .wpss-form-row label .required {
+	color: #d63638;
+}
+
+.wpss-manual-order-wrap .wpss-form-row .description {
+	margin-top: 4px;
+	font-size: 12px;
+	color: #646970;
+	font-style: italic;
+}
+
+.wpss-manual-order-wrap .wpss-form-row select,
+.wpss-manual-order-wrap .wpss-form-row input[type="text"],
+.wpss-manual-order-wrap .wpss-form-row input[type="number"],
+.wpss-manual-order-wrap .wpss-form-row textarea {
+	width: 100%;
+}
+
+.wpss-manual-order-wrap .wpss-form-row input[type="number"].wpss-small-input {
+	width: 100px;
+}
+
+/* Addons section */
+.wpss-addons-list {
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.wpss-addon-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.wpss-addon-item:last-child {
+	border-bottom: 0;
+}
+
+.wpss-addon-item:hover {
+	background: #f6f7f7;
+}
+
+.wpss-addon-checkbox {
+	flex-shrink: 0;
+}
+
+.wpss-addon-info {
+	flex: 1;
+	min-width: 0;
+}
+
+.wpss-addon-title {
+	font-weight: 500;
+	font-size: 13px;
+}
+
+.wpss-addon-desc {
+	font-size: 12px;
+	color: #646970;
+	margin-top: 2px;
+}
+
+.wpss-addon-price {
+	flex-shrink: 0;
+	font-weight: 600;
+	color: #1d2327;
+	white-space: nowrap;
+}
+
+.wpss-addon-qty {
+	flex-shrink: 0;
+	width: 60px;
+}
+
+.wpss-addon-qty input {
+	width: 60px !important;
+	text-align: center;
+}
+
+.wpss-addons-empty {
+	padding: 20px;
+	text-align: center;
+	color: #646970;
+	font-style: italic;
+}
+
+.wpss-addons-loading {
+	padding: 20px;
+	text-align: center;
+	color: #646970;
+}
+
+/* Pricing summary */
+.wpss-pricing-summary {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wpss-pricing-summary tr {
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.wpss-pricing-summary tr:last-child {
+	border-bottom: 0;
+}
+
+.wpss-pricing-summary td {
+	padding: 8px 4px;
+	font-size: 13px;
+}
+
+.wpss-pricing-summary td:last-child {
+	text-align: right;
+	font-weight: 500;
+}
+
+.wpss-pricing-summary .wpss-pricing-total {
+	border-top: 2px solid #1d2327;
+}
+
+.wpss-pricing-summary .wpss-pricing-total td {
+	font-weight: 700;
+	font-size: 14px;
+	padding-top: 10px;
+}
+
+.wpss-pricing-summary .wpss-pricing-editable td {
+	padding-top: 12px;
+	padding-bottom: 12px;
+}
+
+.wpss-pricing-summary .wpss-pricing-commission {
+	border-top: 1px dashed #c3c4c7;
+}
+
+.wpss-pricing-summary .wpss-pricing-commission td {
+	color: #646970;
+	font-size: 12px;
+}
+
+/* Override total toggle */
+.wpss-override-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.wpss-override-toggle label {
+	font-weight: 400 !important;
+	margin-bottom: 0 !important;
+	font-size: 12px !important;
+	cursor: pointer;
+}
+
+/* Submit section */
+.wpss-submit-section {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px;
+}
+
+.wpss-submit-section .spinner {
+	float: none;
+	margin: 0;
+}
+
+/* Success result */
+.wpss-order-result {
+	padding: 20px;
+	background: #f0f9f0;
+	border: 1px solid #00a32a;
+	border-radius: 4px;
+	margin: 20px 0;
+}
+
+.wpss-order-result h3 {
+	margin: 0 0 10px;
+	color: #00a32a;
+}
+
+.wpss-order-result .wpss-result-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 15px;
+}
+
+/* Sidebar fields */
+.wpss-manual-order-sidebar .wpss-form-row select,
+.wpss-manual-order-sidebar .wpss-form-row input[type="text"],
+.wpss-manual-order-sidebar .wpss-form-row input[type="number"] {
+	width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+	.wpss-manual-order-columns {
+		flex-direction: column;
+	}
+
+	.wpss-manual-order-sidebar {
+		min-width: 0;
+	}
+}
+
+/* No data notice */
+.wpss-no-services-notice {
+	padding: 15px 20px;
+	border-left: 4px solid #dba617;
+	background: #fff;
+	margin: 20px 0;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}

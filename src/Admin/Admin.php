@@ -17,6 +17,7 @@ use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
+use WPSellServices\Admin\Pages\UpgradePage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
@@ -65,6 +66,13 @@ class Admin {
 	private WithdrawalsPage $withdrawals_page;
 
 	/**
+	 * Upgrade page instance (only when Pro is not active).
+	 *
+	 * @var UpgradePage|null
+	 */
+	private ?UpgradePage $upgrade_page = null;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -73,6 +81,11 @@ class Admin {
 		$this->vendors_page      = new VendorsPage();
 		$this->moderation_page   = new ServiceModerationPage();
 		$this->withdrawals_page  = new WithdrawalsPage();
+
+		if ( ! $this->is_pro_active() ) {
+			$this->upgrade_page = new UpgradePage();
+		}
+
 		$this->init_metaboxes();
 		$this->init_pages();
 		$this->init_ajax_handlers();
@@ -114,13 +127,16 @@ class Admin {
 			'wpss-moderation',                                               // Service Moderation.
 			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
 			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
-			'edit.php?post_type=wpss_request',                               // All Requests.
+			'edit.php?post_type=wpss_request',                               // Buyer Requests.
 			'post-new.php?post_type=wpss_request',                           // Add New Request.
 			'wpss-orders',                                                   // Orders.
 			'wpss-vendors',                                                  // Vendors.
 			'wpss-withdrawals',                                              // Withdrawals.
 			'wpss-disputes',                                                 // Disputes.
+			'wpss-analytics',                                                // Analytics (Pro).
 			'wpss-settings',                                                 // Settings.
+			'wpss-license',                                                  // License (Pro).
+			'wpss-upgrade',                                                  // Upgrade to Pro (free only).
 		);
 
 		// Build a map of slug => menu item.
@@ -238,6 +254,10 @@ class Admin {
 		$this->vendors_page->init();
 		$this->moderation_page->init();
 		$this->withdrawals_page->init();
+
+		if ( $this->upgrade_page ) {
+			$this->upgrade_page->init();
+		}
 	}
 
 	/**
@@ -616,16 +636,26 @@ class Admin {
 	private function is_plugin_page( string $hook ): bool {
 		$plugin_pages = array(
 			'toplevel_page_wp-sell-services',
-			'wp-sell-services_page_wpss-orders',
-			'wp-sell-services_page_wpss-vendors',
-			'wp-sell-services_page_wpss-withdrawals',
-			'wp-sell-services_page_wpss-moderation',
-			'wp-sell-services_page_wpss-disputes',
-			'wp-sell-services_page_wpss-settings',
-			'wp-sell-services_page_wpss-create-order',
+			'sell-services_page_wpss-orders',
+			'sell-services_page_wpss-vendors',
+			'sell-services_page_wpss-withdrawals',
+			'sell-services_page_wpss-moderation',
+			'sell-services_page_wpss-disputes',
+			'sell-services_page_wpss-settings',
+			'admin_page_wpss-create-order',
+			'sell-services_page_wpss-upgrade',
 		);
 
 		return in_array( $hook, $plugin_pages, true );
+	}
+
+	/**
+	 * Check if the Pro plugin is active.
+	 *
+	 * @return bool
+	 */
+	private function is_pro_active(): bool {
+		return defined( 'WPSS_PRO_VERSION' );
 	}
 
 	/**
@@ -826,7 +856,7 @@ class Admin {
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h1>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-create-order' ) ); ?>" class="page-title-action">
-				<?php esc_html_e( 'Create Test Order', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
 			</a>
 			<hr class="wp-header-end">
 
