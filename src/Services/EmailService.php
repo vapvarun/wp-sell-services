@@ -76,23 +76,29 @@ class EmailService {
 	 * @return array
 	 */
 	private function get_email_settings(): array {
-		$general_settings = get_option( 'wpss_general', array() );
-		$email_settings   = get_option( 'wpss_emails', array() );
+		// Use WooCommerce mailer settings when available, otherwise fall back to WordPress defaults.
+		$from_name  = get_bloginfo( 'name' );
+		$from_email = get_option( 'admin_email' );
+
+		if ( function_exists( 'WC' ) && WC()->mailer() ) {
+			$from_name  = WC()->mailer()->get_from_name();
+			$from_email = WC()->mailer()->get_from_address();
+		}
 
 		return array(
-			'from_name'    => $email_settings['from_name'] ?? get_bloginfo( 'name' ),
-			'from_email'   => $email_settings['from_email'] ?? get_option( 'admin_email' ),
-			'header_image' => $email_settings['header_image'] ?? '',
-			'footer_text'  => $email_settings['footer_text'] ?? sprintf(
-				/* translators: %s: site name */
+			'from_name'    => $from_name,
+			'from_email'   => $from_email,
+			'header_image' => '',
+			'footer_text'  => sprintf(
+				/* translators: %1$s: year, %2$s: site name */
 				__( '© %1$s %2$s. All rights reserved.', 'wp-sell-services' ),
 				gmdate( 'Y' ),
 				get_bloginfo( 'name' )
 			),
-			'base_color'   => $email_settings['base_color'] ?? '#7f54b3',
-			'bg_color'     => $email_settings['bg_color'] ?? '#f7f7f7',
-			'body_color'   => $email_settings['body_color'] ?? '#ffffff',
-			'text_color'   => $email_settings['text_color'] ?? '#3c3c3c',
+			'base_color'   => '#7f54b3',
+			'bg_color'     => '#f7f7f7',
+			'body_color'   => '#ffffff',
+			'text_color'   => '#3c3c3c',
 		);
 	}
 
@@ -799,7 +805,7 @@ class EmailService {
 	 * @return bool True if the email type is enabled or has no setting, false if disabled.
 	 */
 	private function is_email_type_enabled( string $type ): bool {
-		$notification_settings = get_option( 'wpss_notifications', array() );
+		$notification_settings = get_option( 'wpss_notifications' );
 
 		// Map EmailService type constants to admin setting keys.
 		$type_to_setting = array(
@@ -831,14 +837,21 @@ class EmailService {
 
 		$setting_key = $type_to_setting[ $type ];
 
+		// Option never saved (fresh install) → default to enabled.
+		if ( false === $notification_settings ) {
+			return true;
+		}
+
+		// Option was saved but is corrupted or not an array.
 		if ( ! is_array( $notification_settings ) ) {
 			return true;
 		}
 
-		if ( array_key_exists( $setting_key, $notification_settings ) ) {
-			return ! empty( $notification_settings[ $setting_key ] );
+		// Option was saved — missing key means unchecked (disabled).
+		if ( ! array_key_exists( $setting_key, $notification_settings ) ) {
+			return false;
 		}
 
-		return true;
+		return ! empty( $notification_settings[ $setting_key ] );
 	}
 }

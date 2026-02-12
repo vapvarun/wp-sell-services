@@ -78,15 +78,17 @@ do_action( 'wpss_before_service_archive' );
 
 <div class="wpss-services-archive">
 	<div class="wpss-container">
-		<?php
-		/**
-		 * Hook: wpss_service_archive_header
-		 *
-		 * @hooked wpss_archive_header - 10
-		 * @hooked wpss_archive_filters - 20
-		 */
-		do_action( 'wpss_service_archive_header' );
-		?>
+		<div class="wpss-archive-header-wrap">
+			<?php
+			/**
+			 * Hook: wpss_service_archive_header
+			 *
+			 * @hooked wpss_archive_header - 10
+			 * @hooked wpss_archive_filters - 20
+			 */
+			do_action( 'wpss_service_archive_header' );
+			?>
+		</div>
 
 		<div class="wpss-services-content">
 			<?php

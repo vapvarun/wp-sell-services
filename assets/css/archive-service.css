@@ -530,16 +530,24 @@
 		z-index: auto;
 	}
 
+	.wpss-services-archive .wpss-archive-header-wrap {
+		grid-area: header;
+	}
+
+	.wpss-services-archive .wpss-archive-sidebar {
+		grid-area: sidebar;
+	}
+
+	.wpss-services-archive .wpss-services-content {
+		grid-area: content;
+	}
+
 	.wpss-filter-toggle {
 		display: none;
 	}
 
 	.wpss-sidebar-header {
 		display: none;
-	}
-
-	.wpss-services-content {
-		order: 1;
 	}
 }
 
@@ -562,16 +570,4 @@
 	.wpss-services-grid {
 		grid-template-columns: 1fr;
 	}
-}
-
-.wpss-archive-header {
-	grid-area: header;
-}
-
-.wpss-archive-sidebar {
-	grid-area: sidebar;
-}
-
-.wpss-services-content {
-	grid-area: content;
 }

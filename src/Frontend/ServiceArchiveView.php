@@ -417,6 +417,9 @@ class ServiceArchiveView {
 			return;
 		}
 
+		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
+		$query->set( 'post_status', 'publish' );
+
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 		// Category filter (dropdown in filters bar).

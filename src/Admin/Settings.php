@@ -1413,6 +1413,17 @@ class Settings {
 	 */
 	public function render_notifications_section(): void {
 		echo '<p>' . esc_html__( 'Configure which email notifications are sent.', 'wp-sell-services' ) . '</p>';
+		echo '<p class="description">';
+		echo esc_html__( 'These toggles are the master switch for each notification type. When a notification is disabled here, no email will be sent regardless of other settings.', 'wp-sell-services' );
+		if ( class_exists( 'WooCommerce' ) ) {
+			echo '<br>';
+			printf(
+				/* translators: %s: URL to WooCommerce Emails settings */
+				esc_html__( 'To customize email content, subjects, and templates, go to %s.', 'wp-sell-services' ),
+				'<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=email' ) ) . '">' . esc_html__( 'WooCommerce > Settings > Emails', 'wp-sell-services' ) . '</a>'
+			);
+		}
+		echo '</p>';
 	}
 
 	/**

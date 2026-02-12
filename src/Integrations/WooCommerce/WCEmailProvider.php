@@ -324,16 +324,23 @@ class WCEmailProvider {
 	 * @return bool True if enabled or setting not found, false if explicitly disabled.
 	 */
 	private function is_notification_enabled( string $setting_key ): bool {
-		$notification_settings = get_option( 'wpss_notifications', array() );
+		$notification_settings = get_option( 'wpss_notifications' );
 
+		// Option never saved (fresh install) → default to enabled.
+		if ( false === $notification_settings ) {
+			return true;
+		}
+
+		// Option was saved but is corrupted or not an array.
 		if ( ! is_array( $notification_settings ) ) {
 			return true;
 		}
 
-		if ( array_key_exists( $setting_key, $notification_settings ) ) {
-			return ! empty( $notification_settings[ $setting_key ] );
+		// Option was saved — missing key means unchecked (disabled).
+		if ( ! array_key_exists( $setting_key, $notification_settings ) ) {
+			return false;
 		}
 
-		return true;
+		return ! empty( $notification_settings[ $setting_key ] );
 	}
 }

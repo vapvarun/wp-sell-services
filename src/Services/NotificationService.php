@@ -1060,7 +1060,7 @@ class NotificationService {
 	 */
 	private function should_send_email( int $user_id, string $type ): bool {
 		// First check admin notification settings (global toggle).
-		$notification_settings = get_option( 'wpss_notifications', array() );
+		$notification_settings = get_option( 'wpss_notifications' );
 
 		// Map notification types to admin setting keys.
 		// Includes both constants and types used by OrderWorkflowManager.
@@ -1100,9 +1100,19 @@ class NotificationService {
 		// Check if admin has disabled this notification type globally.
 		if ( isset( $type_to_setting[ $type ] ) ) {
 			$setting_key = $type_to_setting[ $type ];
-			if ( is_array( $notification_settings ) && array_key_exists( $setting_key, $notification_settings ) ) {
-				if ( empty( $notification_settings[ $setting_key ] ) ) {
-					return false;
+
+			// Option never saved (fresh install) → allow sending (fall through to user prefs).
+			if ( false !== $notification_settings ) {
+				// Option was saved but is corrupted or not an array → allow sending.
+				if ( is_array( $notification_settings ) ) {
+					// Option was saved — missing key means unchecked (disabled).
+					if ( ! array_key_exists( $setting_key, $notification_settings ) ) {
+						return false;
+					}
+
+					if ( empty( $notification_settings[ $setting_key ] ) ) {
+						return false;
+					}
 				}
 			}
 		}
