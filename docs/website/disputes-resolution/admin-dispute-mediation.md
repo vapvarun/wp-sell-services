@@ -1,6 +1,6 @@
 # Admin Dispute Mediation
 
-Admins play a crucial role in resolving disputes fairly and maintaining marketplace integrity. This guide explains how administrators manage, investigate, and resolve disputes.
+Admins play a crucial role in resolving disputes fairly and maintaining marketplace integrity. This guide explains how administrators manage, investigate, and resolve disputes using the WP Sell Services dispute system.
 
 ## Admin Role in Disputes
 
@@ -10,723 +10,500 @@ Marketplace administrators:
 
 - **Review Disputes**: Evaluate submitted disputes objectively
 - **Investigate Claims**: Examine evidence from both parties
-- **Facilitate Communication**: Help parties communicate effectively
 - **Make Decisions**: Determine fair resolutions
 - **Implement Solutions**: Process refunds and apply resolutions
 - **Maintain Standards**: Ensure platform policies are followed
-- **Prevent Abuse**: Identify patterns of dispute abuse
 
 ### Neutral Mediation
 
 Admins must remain:
 
 - **Impartial**: No bias toward buyers or vendors
-- **Objective**: Base decisions on evidence, not assumptions
+- **Objective**: Base decisions on evidence
 - **Fair**: Apply policies consistently
 - **Professional**: Maintain courteous communication
-- **Transparent**: Explain decision rationale
 
-## Accessing the Dispute Panel
+## Accessing Disputes
 
 ### Admin Dispute Dashboard
 
 Navigate to **WordPress Admin → WP Sell Services → Disputes**.
 
-![Admin dispute dashboard](../images/admin-disputes-dashboard.png)
-
-**Dashboard Overview**:
+**Dashboard Shows:**
 - List of all disputes
-- Filter by status (Open, Under Review, Resolved)
-- Filter by date range
-- Search by order ID or user
-- Sort by priority or date
-- Quick stats (total disputes, resolution rate)
-
-### Dispute Notifications
-
-Admins receive alerts when:
-
-- New dispute opened
-- Party submits evidence
-- Response deadline approaching
-- Escalation requested
-- Resolution implemented
-
-Configure notification preferences in **WP Sell Services → Settings → Notifications**.
-
-## Reviewing Dispute Details
-
-### Dispute Information Panel
-
-Click any dispute to view complete details:
-
-**Dispute Header**:
-- Dispute ID
-- Order number (linked)
+- Current status of each
+- Order reference numbers
+- Parties involved
 - Date opened
+- Quick action buttons
+
+### Viewing Dispute Details
+
+Click any dispute to view:
+
+**Dispute Information:**
+- Dispute ID
+- Order ID and details
+- Initiating party
+- Reason and description
 - Current status
-- Priority level
-- Time in current status
+- Creation and update timestamps
 
-**Party Information**:
-- Buyer details (name, email, order history, dispute history)
-- Vendor details (name, email, rating, dispute history)
-- Link to profiles and other orders
+**Party Information:**
+- Buyer details
+- Vendor details
+- Order history for context
 
-**Order Details**:
-- Service purchased
-- Package and price
-- Add-ons selected
-- Delivery date
-- Order requirements
-- Order messages
+**Evidence:**
+- All submitted evidence (JSON stored)
+- Evidence type (text, image, file, link)
+- Submission timestamps
+- Submitter user IDs
 
-![Admin dispute details](../images/admin-dispute-detail-view.png)
+## Managing Dispute Status
 
-**Dispute Content**:
-- Initiating party (buyer or vendor)
-- Dispute reason category
-- Detailed description
-- Requested resolution
-- Submission date
+### Available Status Transitions
 
-**Evidence**:
-- Files uploaded by buyer
-- Files uploaded by vendor
-- Message history
-- Service description screenshot
-- Order timeline
+Admins can change dispute status using `update_status()`:
 
-**Communication Log**:
-- All messages between parties
-- Admin notes
-- Status change history
-- Actions taken
-
-## Investigation Process
-
-### Step 1: Initial Assessment
-
-When dispute opens:
-
-1. **Verify Legitimacy**:
-   - Is this a valid dispute reason?
-   - Does it meet platform dispute criteria?
-   - Is it within allowable dispute timeframe?
-
-2. **Check Order Status**:
-   - Order payment confirmed
-   - Requirements submitted
-   - Delivery made or deadline passed
-   - Previous revision requests
-
-3. **Review Parties**:
-   - Buyer's order history
-   - Vendor's performance record
-   - Previous disputes by either party
-   - Account standing
-
-4. **Assign Priority**:
-   - High: Large amounts, urgent issues, clear violations
-   - Medium: Standard disputes
-   - Low: Minor issues, negotiable situations
-
-![Admin investigation checklist](../images/admin-dispute-investigation-checklist.png)
-
-### Step 2: Evidence Review
-
-Examine all submitted evidence:
-
-**Buyer Evidence**:
-- [ ] Order requirements document reviewed
-- [ ] Screenshots of issues examined
-- [ ] Communication history checked
-- [ ] Service description compared to delivery
-- [ ] Claims substantiated with proof
-
-**Vendor Evidence**:
-- [ ] Deliverables reviewed for quality
-- [ ] Vendor's response to buyer concerns
-- [ ] Evidence of meeting requirements
-- [ ] Communication attempts documented
-- [ ] Any extenuating circumstances
-
-**Platform Data**:
-- [ ] Service description and packages
-- [ ] Original order details
-- [ ] Message timestamps
-- [ ] Revision history
-- [ ] Payment information
-
-### Step 3: Verification
-
-Validate claims independently:
-
-**For Quality Disputes**:
-- Compare deliverables to service description
-- Assess against industry standards
-- Check if requirements were reasonable
-- Evaluate completeness
-- Consider professional standards
-
-**For Non-Delivery Disputes**:
-- Verify delivery deadline
-- Check if requirements were submitted
-- Review vendor communication
-- Confirm no deliverables uploaded
-- Check for valid delays or extensions
-
-**For Scope Disputes**:
-- Compare original service scope
-- Review requirement changes
-- Assess additional work requests
-- Determine if changes were agreed upon
-- Check payment for scope changes
-
-### Step 4: Request Additional Information
-
-If evidence is insufficient:
-
-1. **Message Parties**:
-   - Request specific information
-   - Ask clarifying questions
-   - Set response deadline (48 hours typical)
-
-2. **What to Request**:
-   - Missing evidence
-   - Explanation of contradictions
-   - Technical details
-   - Proof of claims
-   - Specific file formats or examples
-
-![Admin request additional info](../images/admin-dispute-request-info.png)
-
-**Sample Admin Message**:
-```
-Thank you for your patience during this dispute review.
-
-To make a fair decision, I need additional information:
-
-From Buyer:
-- Please provide the specific requirements document you mention
-- Include screenshot of service description showing "unlimited revisions"
-
-From Vendor:
-- Please explain why the mobile responsive feature was not included
-- Provide any communication where buyer approved the non-responsive design
-
-Please respond within 48 hours. Thank you.
+```php
+// Update status with optional note
+$dispute_service->update_status( $dispute_id, 'pending_review', 'Reviewing evidence' );
 ```
 
-### Step 5: Analysis and Decision
+### Status Options
 
-Evaluate all information:
+| Status | Use When |
+|--------|----------|
+| `open` | Initial submission, awaiting responses |
+| `pending_review` | Evidence complete, awaiting admin action |
+| `escalated` | Needs higher-level review |
+| `resolved` | Decision made, being implemented |
+| `closed` | Finalized and complete |
 
-**Decision Factors**:
-1. **Service Description Accuracy**: Did vendor deliver what was promised?
-2. **Requirement Clarity**: Were buyer's needs clearly stated?
-3. **Quality Standards**: Does work meet reasonable quality expectations?
-4. **Communication**: Did parties attempt to resolve issues?
-5. **Platform Policies**: Were marketplace rules followed?
-6. **Reasonableness**: Are complaints objective and valid?
+### Adding Status Notes
 
-**Decision Framework**:
-```
-IF vendor delivered per description AND met requirements
-  → Favor Vendor
+Status notes help track decision process:
 
-IF vendor failed to deliver or work severely substandard
-  → Full Refund to Buyer
-
-IF partial delivery or some issues but work is partially usable
-  → Partial Refund (calculate percentage)
-
-IF both parties share fault
-  → Mutual Compromise (mediate agreement)
-
-IF issue is subjective preference
-  → Usually Favor Vendor (can't please all tastes)
+```php
+// Note is stored in evidence JSON as type 'status_note'
+$dispute_service->update_status(
+    $dispute_id,
+    'escalated',
+    'Escalating due to high order value and conflicting evidence'
+);
 ```
 
-## Making Resolution Decisions
+Notes are visible to admins and optionally to parties.
 
-### Resolution Options
+## Reviewing Evidence
 
-Select appropriate resolution type:
+### Evidence Access
 
-#### Full Refund
+Get all evidence for a dispute:
 
-**When to Use**:
+```php
+$evidence = $dispute_service->get_evidence( $dispute_id );
+```
+
+Returns array of evidence items with:
+- Unique ID
+- User ID of submitter
+- Evidence type
+- Content (text, attachment ID, or URL)
+- Description
+- Timestamp
+
+### Evidence Types
+
+**text:** Written explanations
+- Stored directly in content field
+- Searchable
+
+**image:** Image attachment
+- Content is WordPress attachment ID
+- Use `wp_get_attachment_url()` to display
+
+**file:** Document attachment
+- Content is WordPress attachment ID
+- Use `wp_get_attachment_url()` to download
+
+**link:** External URL
+- Content is sanitized URL
+- Opens in new tab
+
+### Evaluating Evidence
+
+Consider:
+1. **Relevance**: Does evidence relate to the claim?
+2. **Authenticity**: Does evidence appear legitimate?
+3. **Timing**: When was evidence created/submitted?
+4. **Consistency**: Does evidence align with other facts?
+
+## Resolution Types
+
+Admins select from 5 resolution types when resolving disputes.
+
+### Full Refund
+
+**Constant:** `DisputeService::RESOLUTION_REFUND`
+**Value:** `'full_refund'`
+
+**When to Use:**
 - Complete non-delivery by vendor
 - Work completely unusable
 - Severe quality issues
 - Vendor violated major terms
-- Fraud confirmed
 
-**How to Implement**:
-1. Change dispute status to "Resolved"
-2. Select "Full Refund" resolution type
-3. Add explanation for decision
-4. Click "Process Refund"
-5. System processes refund automatically
-6. Both parties notified
+**Order Impact:**
+- Order status → 'refunded'
+- Buyer receives full refund
+- Vendor receives nothing
 
-![Admin process refund](../images/admin-dispute-process-refund.png)
+### Partial Refund
 
-#### Partial Refund
+**Constant:** `DisputeService::RESOLUTION_PARTIAL_REFUND`
+**Value:** `'partial_refund'`
 
-**When to Use**:
+**When to Use:**
 - Some work completed but incomplete
 - Quality below promised but partially usable
-- Missing some deliverables
 - Both parties share fault
-- Buyer partially satisfied
 
-**How to Implement**:
-1. Select "Partial Refund" resolution type
-2. Enter refund amount or percentage
-3. Provide calculation explanation
-4. Review split (buyer gets X, vendor gets Y)
-5. Process refund
-6. Release remaining payment to vendor
+**Order Impact:**
+- Order status → 'partially_refunded'
+- Buyer receives partial refund
+- Vendor receives remaining amount
 
-**Percentage Guidelines**:
-- 10-25%: Minor issues, mostly complete
-- 25-50%: Moderate issues, half usable
-- 50-75%: Major issues, minimally usable
-- 75-90%: Severe issues, barely usable
+### Favor Vendor
 
-#### Favor Vendor
+**Constant:** `DisputeService::RESOLUTION_FAVOR_VENDOR`
+**Value:** `'favor_vendor'`
 
-**When to Use**:
+**When to Use:**
 - Vendor met all requirements
-- Buyer's complaint is subjective/unreasonable
+- Buyer's complaint is unreasonable
 - Work matches description
 - Evidence supports vendor
-- Buyer expectations unreasonable
 
-**How to Implement**:
-1. Select "Favor Vendor" resolution
-2. Release full payment to vendor
-3. Mark order as completed
-4. Provide explanation to buyer
-5. Close dispute
+**Order Impact:**
+- Order status → 'completed'
+- Vendor receives full payment
+- No refund to buyer
 
-#### Favor Buyer
+### Favor Buyer
 
-**When to Use**:
+**Constant:** `DisputeService::RESOLUTION_FAVOR_BUYER`
+**Value:** `'favor_buyer'`
+
+**When to Use:**
 - Vendor clearly at fault
 - Requirements not met
 - Deliverables substandard
-- Vendor unresponsive
-- Clear policy violation
 
-**How to Implement**:
-1. Select "Favor Buyer" resolution
-2. Issue appropriate refund (full or partial)
-3. Mark order accordingly
-4. Provide explanation to vendor
-5. May add vendor warning if severe
+**Order Impact:**
+- Order status → 'refunded'
+- Similar to full refund
 
-#### Require Revisions
+### Mutual Agreement
 
-**When to Use**:
-- Issues are correctable
-- Vendor willing to fix
-- Buyer agrees to give opportunity
-- Minor corrections needed
-- Relationship salvageable
+**Constant:** `DisputeService::RESOLUTION_MUTUAL`
+**Value:** `'mutual_agreement'`
 
-**How to Implement**:
-1. Select "Require Revisions" resolution
-2. List specific corrections needed
-3. Set deadline (3-7 days typical)
-4. Notify vendor of requirements
-5. Monitor compliance
-6. Re-evaluate after corrections
-
-![Admin require revisions](../images/admin-dispute-require-revisions.png)
-
-#### Facilitate Mutual Agreement
-
-**When to Use**:
-- Both parties willing to negotiate
-- Custom solution needed
+**When to Use:**
+- Both parties negotiated solution
+- Custom arrangement reached
 - Standard resolutions don't fit
-- Parties close to agreement
 
-**How to Implement**:
-1. Facilitate negotiation via messages
-2. Help parties reach agreement
-3. Document agreed terms
-4. Get confirmation from both parties
-5. Implement custom solution
-6. Mark as "Mutual Agreement" resolution
+**Order Impact:**
+- Order status → 'completed'
+- Custom payment split if needed
 
-### Writing Resolution Explanations
+## Resolving Disputes
 
-Provide clear decision rationale:
+### Resolution Method
 
-**Good Resolution Explanation**:
-```
-After reviewing all evidence and communications, I'm issuing a 50%
-partial refund.
+Use the `resolve()` method:
 
-Reasoning:
-- The logo design was delivered as promised in terms of concept
-- However, the source files and commercial license promised in the
-  Premium package were not provided
-- Vendor delivered 2 revisions (3 were included in package)
-- Communication was adequate but delivery was 3 days late
-- The logo itself is usable but buyer didn't receive full package value
-
-Resolution:
-- Buyer receives $100 refund (50%)
-- Vendor receives $100 payment (50%)
-- Order marked as completed
-- Both parties can leave reviews
-
-This decision is final. If you believe there was an error in this
-decision, you may appeal within 7 days.
+```php
+$result = $dispute_service->resolve(
+    $dispute_id,
+    DisputeService::RESOLUTION_PARTIAL_REFUND,
+    'Vendor delivered partial work. Splitting payment 50/50.',
+    get_current_user_id(), // Admin ID
+    50.00 // Refund amount
+);
 ```
 
-**Poor Resolution Explanation**:
-```
-I'm giving you 50% back because it seems fair. Case closed.
-```
+### Resolution Parameters
 
-Always explain the reasoning clearly and professionally.
+1. **$dispute_id** (int): Dispute to resolve
+2. **$resolution** (string): Resolution type constant
+3. **$notes** (string): Explanation for decision
+4. **$resolved_by** (int): Admin user ID
+5. **$refund_amount** (float): Amount to refund (if applicable)
 
-## Implementing Resolutions
+### What Happens Automatically
 
-### Processing Refunds
+When you call `resolve()`:
 
-**WooCommerce Orders**:
-1. Navigate to **WooCommerce → Orders**
-2. Find the order (linked from dispute)
-3. Click "Refund" button
-4. Enter refund amount
-5. Select refund reason: "Dispute Resolution"
-6. Add admin note referencing dispute ID
-7. Process refund
+1. ✓ Dispute status → 'resolved'
+2. ✓ Resolution type stored
+3. ✓ Resolution notes saved
+4. ✓ Resolved timestamp recorded
+5. ✓ Refund amount stored in evidence
+6. ✓ Order status updated via `handle_resolution()`
+7. ✓ Parties notified via `wpss_dispute_resolved` action
+8. ✓ Returns true on success
 
-**Direct Payments (Pro)** **[PRO]**:
-1. Use integrated refund system in dispute panel
-2. Refund processed through original payment gateway
-3. Automatic notification sent
+## Refund Processing
 
-**Wallet Refunds (Pro)** **[PRO]**:
-1. Credit buyer's wallet instantly
-2. Deduct from vendor's earnings or wallet
-3. Transaction recorded in wallet log
+### Refund Information Storage
 
-### Updating Order Status
+Refund amounts are stored in evidence JSON:
 
-After resolution:
-
-1. **Update Order**:
-   - If full refund: Change status to "Cancelled"
-   - If partial refund: Change status to "Completed"
-   - If favor vendor: Change status to "Completed"
-
-2. **Add Order Note**:
-   - Reference dispute ID
-   - Summarize resolution
-   - Note refund amount if applicable
-
-3. **Unlock Review System**:
-   - Enable reviews for both parties
-   - Set review window (14 days default)
-
-### Notifying Parties
-
-System automatically sends notifications:
-
-**To Buyer**:
-- Dispute resolved notification
-- Resolution type and amount
-- Refund processing timeline
-- Review invitation
-- Appeal option and deadline
-
-**To Vendor**:
-- Dispute resolved notification
-- Resolution outcome
-- Payment released (if applicable)
-- Performance impact
-- Appeal option and deadline
-
-**Email Template** (auto-sent):
-```
-Subject: Dispute Resolved - Order #12345
-
-Your dispute (#DISP-789) has been resolved.
-
-Resolution: Partial Refund
-Amount: $50.00 refunded to buyer, $50.00 released to vendor
-
-Admin Decision:
-[Resolution explanation here]
-
-Refund Processing: 5-10 business days to original payment method
-
-You may appeal this decision within 7 days if you believe there
-was an error. Click here to appeal: [Appeal Link]
-
-Thank you for your patience during this process.
+```json
+{
+  "id": "refund_123",
+  "type": "refund_info",
+  "refund_amount": 75.00,
+  "created_at": "2026-02-12 14:30:00"
+}
 ```
 
-## Handling Appeals
+### Actual Refund Processing
 
-### Appeal Review Process
+**Important:** The `resolve()` method does NOT process actual payment refunds. It only:
+- Updates dispute status
+- Records refund amount
+- Updates order status
 
-When party appeals:
+**You must separately:**
+- Process refund through WooCommerce
+- Or handle refund via payment gateway
+- Or credit buyer's wallet (if using Pro wallet feature)
 
-1. **Review Appeal Request**:
-   - Read appeal reasons
-   - Check for new evidence
-   - Assess validity of appeal
+### Order Status After Resolution
 
-2. **Escalate if Warranted**:
-   - Assign to senior admin or owner
-   - Flag for fresh review
-   - Consider different perspective
+The `handle_resolution()` private method updates order status:
 
-3. **Re-Evaluate Evidence**:
-   - Review original evidence again
-   - Consider new evidence submitted
-   - Look for missed details
-   - Check for policy misapplication
+```php
+switch ( $resolution ) {
+    case RESOLUTION_REFUND:
+    case RESOLUTION_FAVOR_BUYER:
+        // Order → 'refunded'
+        break;
 
-4. **Make Final Decision**:
-   - Uphold original decision, OR
-   - Modify resolution
-   - Provide detailed explanation
-   - Mark as final (no further appeals)
+    case RESOLUTION_PARTIAL_REFUND:
+        // Order → 'partially_refunded'
+        break;
 
-![Admin appeal review](../images/admin-dispute-appeal-review.png)
-
-### Appeal Outcomes
-
-| Outcome | Action |
-|---------|--------|
-| **Appeal Denied** | Original resolution stands, marked final |
-| **Appeal Granted** | New resolution implemented |
-| **Partial Appeal** | Modified resolution (adjusted refund %) |
-
-## Communication Best Practices
-
-### Messaging Parties
-
-When communicating in disputes:
-
-**Tone**:
-- Professional and neutral
-- Courteous and respectful
-- Clear and direct
-- Empathetic but firm
-
-**Content**:
-- Explain process and timelines
-- Request specific information
-- Acknowledge concerns
-- Provide updates
-- Set clear expectations
-
-**Sample Admin Messages**:
-
-**Initial Response**:
-```
-Thank you for opening this dispute. I'm [Admin Name] and I'll be
-reviewing your case.
-
-I've received your submission and will review all evidence over
-the next 2-3 business days. I may reach out with questions for
-either party.
-
-Please check this dispute page regularly for updates.
+    case RESOLUTION_FAVOR_VENDOR:
+    case RESOLUTION_MUTUAL:
+        // Order → 'completed'
+        break;
+}
 ```
 
-**Request for Information**:
-```
-I'm reviewing your dispute and need clarification on a few points
-to make a fair decision:
+## Adding Evidence as Admin
 
-[Specific questions]
+Admins can add evidence on behalf of parties or from investigation:
 
-Please respond within 48 hours. If I don't hear back, I'll make
-a decision based on available information.
-
-Thank you for your cooperation.
-```
-
-**Resolution Notice**:
-```
-I've completed my review and reached a decision.
-
-Resolution: [Type]
-[Detailed explanation]
-
-This decision is based on [summary of evidence considered].
-
-If you believe there was an error, you may appeal within 7 days.
-
-Thank you for your patience.
+```php
+$dispute_service->add_evidence(
+    $dispute_id,
+    get_current_user_id(), // Your admin ID
+    'text',
+    'Admin note: Verified with buyer via phone call.',
+    'Verbal confirmation from buyer'
+);
 ```
 
-### Managing Difficult Parties
+### Evidence Parameters
 
-When parties are:
+1. **$dispute_id** (int): Dispute ID
+2. **$user_id** (int): User ID adding evidence (use your admin ID)
+3. **$type** (string): 'text', 'image', 'file', 'link'
+4. **$content** (string): Content or attachment ID
+5. **$description** (string): Optional description
 
-**Aggressive or Threatening**:
-- Remain calm and professional
-- Do not engage with threats
-- Warn about code of conduct
-- May suspend account for severe violations
-- Focus on facts, not emotions
+### Evidence During Closed Status
 
-**Unresponsive**:
-- Send multiple reminders (2-3)
-- Set clear deadlines
-- Proceed with decision if no response
-- Note non-cooperation in decision
+Evidence cannot be added if dispute status is 'closed':
 
-**Dishonest**:
-- Document discrepancies
-- Request verification
-- Cross-reference evidence
-- Factor credibility into decision
-- May penalize dishonest party
-
-## Dispute Analytics
-
-### Tracking Metrics
-
-Monitor dispute performance:
-
-**Key Metrics**:
-- Total disputes opened
-- Disputes by category
-- Average resolution time
-- Resolution type distribution
-- Appeal rate
-- Buyer/vendor win rates
-- Repeat disputants
-
-**Dashboard View**:
-```
-This Month:
-- Total Disputes: 24
-- Resolved: 20
-- Pending: 4
-- Average Resolution Time: 6.2 days
-- Partial Refunds: 45%
-- Full Refunds: 25%
-- Favor Vendor: 20%
-- Mutual Agreement: 10%
+```php
+if ( $dispute->status === DisputeService::STATUS_CLOSED ) {
+    // add_evidence() returns false
+}
 ```
 
-![Admin dispute analytics](../images/admin-dispute-analytics.png)
+## Dispute Queries
 
-### Identifying Patterns
+### Get All Disputes
 
-Look for:
+```php
+$disputes = $dispute_service->get_all( [
+    'status'   => 'open', // Optional filter
+    'limit'    => 20,
+    'offset'   => 0,
+    'order_by' => 'created_at',
+    'order'    => 'DESC',
+] );
+```
 
-**Problematic Vendors**:
-- High dispute rate
-- Pattern of quality issues
-- Consistent non-delivery
-- Communication problems
+### Get User's Disputes
 
-**Action**: Warning, suspension, or removal
+```php
+$user_disputes = $dispute_service->get_by_user( $user_id, [
+    'status' => 'resolved',
+    'limit'  => 10,
+] );
+```
 
-**Problematic Buyers**:
-- Frequent disputes
-- Pattern of unreasonable complaints
-- Suspected scam attempts
-- Abuse of dispute system
+Returns disputes where user is:
+- Dispute initiator, OR
+- Order customer, OR
+- Order vendor
 
-**Action**: Warning, order restrictions, or suspension
+### Count by Status
 
-**Systemic Issues**:
-- Common dispute categories
-- Platform policy gaps
-- Unclear service descriptions
-- Need for better buyer education
+```php
+$counts = $dispute_service->count_by_status();
+// Returns:
+// [
+//     'open' => 5,
+//     'pending_review' => 3,
+//     'resolved' => 120,
+//     'escalated' => 1,
+//     'closed' => 98,
+// ]
+```
 
-**Action**: Update policies, improve documentation, enhance training
+## WordPress Hooks
 
-## Best Practices for Admins
+### Action: wpss_dispute_opened
+
+Fires when dispute is created:
+
+```php
+add_action( 'wpss_dispute_opened', function( $dispute_id, $order_id, $opened_by, $data ) {
+    // Send custom notifications
+    // Log to external system
+    // Trigger Slack alert
+}, 10, 4 );
+```
+
+### Action: wpss_dispute_evidence_added
+
+Fires when evidence is submitted:
+
+```php
+add_action( 'wpss_dispute_evidence_added', function( $dispute_id, $user_id ) {
+    // Notify admin of new evidence
+}, 10, 2 );
+```
+
+### Action: wpss_dispute_status_changed
+
+Fires on status updates:
+
+```php
+add_action( 'wpss_dispute_status_changed', function( $dispute_id, $status, $old_status ) {
+    // Track status transitions
+    // Update external systems
+}, 10, 3 );
+```
+
+### Action: wpss_dispute_resolved
+
+Fires when dispute is resolved:
+
+```php
+add_action( 'wpss_dispute_resolved', function( $dispute_id, $resolution, $dispute, $refund_amount ) {
+    // Process actual refund here
+    // Send resolution emails
+    // Update analytics
+}, 10, 4 );
+```
+
+## Best Practices
 
 ### Fair Mediation
 
-1. **Stay Neutral**: No favorites or biases
-2. **Gather Complete Evidence**: Don't rush to judgment
-3. **Consider Both Sides**: Each party deserves fair hearing
-4. **Apply Policies Consistently**: Same rules for all
-5. **Explain Decisions**: Transparency builds trust
-6. **Be Timely**: Delays hurt both parties
-7. **Learn from Cases**: Improve processes based on patterns
+1. **Review All Evidence**: Don't rush to judgment
+2. **Stay Neutral**: No favorites
+3. **Document Reasoning**: Always explain decisions
+4. **Be Consistent**: Apply same standards to all
+5. **Communicate Clearly**: Use professional language
 
-### Preventing Disputes
+### Investigation Process
 
-Proactive measures:
+1. **Read Order Details**: Understand what was purchased
+2. **Review Service Description**: What was promised?
+3. **Check Requirements**: What did buyer provide?
+4. **Examine Deliverables**: What did vendor deliver?
+5. **Read Messages**: Full conversation context
+6. **Evaluate Evidence**: Who has stronger case?
 
-- **Clear Service Guidelines**: Help vendors write accurate descriptions
-- **Buyer Education**: Teach buyers how to communicate requirements
-- **Vendor Vetting**: Screen vendors during approval
-- **Quality Monitoring**: Identify issues before disputes
-- **Encourage Communication**: Promote direct resolution
-- **Revision System**: Make it easy to request corrections
+### Resolution Writing
 
-### Documentation
+**Good Resolution Note:**
+```
+After reviewing evidence, I'm issuing a 50% partial refund.
 
-Maintain thorough records:
+Reasoning:
+- Logo design delivered matches service description
+- However, source files promised in Premium package not provided
+- Vendor delivered 2 of 3 included revisions
+- Delivery was 3 days late
 
-- All dispute communications
-- Evidence reviewed
-- Decision rationale
-- Actions taken
-- Timestamps of all events
-- Admin notes
+Resolution:
+- Buyer receives $50 refund (50%)
+- Vendor receives $50 payment (50%)
+- Order marked as completed
 
-Essential for appeals and pattern analysis.
+This decision is final.
+```
 
-## Advanced Dispute Features **[PRO]**
+**Poor Resolution Note:**
+```
+50% refund seems fair.
+```
 
-Pro marketplaces may offer:
+Always explain your reasoning clearly.
 
-### Automated Dispute Routing
+## Troubleshooting
 
-- AI-powered priority assignment
-- Auto-categorization of disputes
-- Suggested resolutions based on similar cases
-- Predictive resolution likelihood
+### Can't Update Status
 
-### Dispute Templates
+**Check:**
+- Dispute exists: `get( $dispute_id )` returns object?
+- Status is valid: Use STATUS_ constants
+- User has admin capability
 
-- Pre-written response templates
-- Common resolution scenarios
-- Standardized messaging
-- Faster processing
+### Resolve Method Returns False
 
-### Third-Party Arbitration
+**Common Causes:**
+- Dispute ID doesn't exist
+- Dispute already resolved
+- Invalid resolution type
+- Database error (check error logs)
 
-- External mediator option
-- For high-value or complex disputes
-- Professional arbitration service integration
-- Legally binding resolutions
+### Evidence Not Showing
 
-### Dispute Prevention Tools
+**Verify:**
+- Evidence stored as JSON in database
+- Evidence column is longtext type
+- JSON is valid and decodable
+- Call `get_evidence()` method, not direct DB query
 
-- Pre-order requirement validation
-- Automated quality checks
-- Communication prompts
-- Early warning system for at-risk orders
+## Related Documentation
 
-## Related Resources
+- [Dispute Process](dispute-process.md) - Dispute lifecycle and statuses
+- [Opening a Dispute](opening-a-dispute.md) - User perspective
+- [Order Management](../order-management/order-lifecycle.md) - Order workflow
+- [Developer Guide](../developer-guide/hooks-filters.md) - Extending disputes
 
-- [Opening a dispute (buyer perspective)](opening-a-dispute.md)
-- [Dispute process overview](dispute-process.md)
-- [Admin order management](../admin/order-management.md)
-- [Platform policies and guidelines](../admin/platform-policies.md)
+---
+
+**Key Takeaway:** Admin dispute resolution requires careful evidence review, fair judgment, and clear communication. Always document your reasoning and apply policies consistently.

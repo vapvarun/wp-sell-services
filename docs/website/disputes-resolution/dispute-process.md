@@ -7,680 +7,307 @@ Understand the complete dispute lifecycle, from initial submission through resol
 Disputes move through defined stages:
 
 ```
-Open → Pending Review → Under Investigation →
-Resolution Proposed → Resolved/Escalated → Closed
+open → pending_review → (escalated) → resolved → closed
 ```
 
 Each stage has specific actions and timeframes.
 
-## Dispute Statuses Explained
+## Dispute Statuses
 
-### Open
+WP Sell Services uses 5 dispute statuses:
 
-**What It Means**:
+### 1. Open
+
+**What It Means:**
 - Dispute just submitted by buyer or vendor
 - Initial notification sent to other party
 - Waiting for other party's response
 - Evidence can still be added
 
-**Duration**: 24-48 hours
+**Who Can View:**
+- Buyer (order customer)
+- Vendor (order vendor)
+- Site administrators
 
-**Your Actions**:
+**Duration:** 24-48 hours typical
+
+**Your Actions:**
 - Monitor for vendor/buyer response
 - Add any additional evidence
-- Wait for initial response period
+- Respond to initial claims
 
-![Dispute open status](../images/admin-dispute-status-open.png)
+### 2. Pending Review (pending_review)
 
-### Pending Review
-
-**What It Means**:
+**What It Means:**
 - Both parties have submitted their cases
 - Initial evidence collected
-- Waiting for admin to begin review
-- Queue for admin investigation
+- Waiting for admin to begin investigation
+- Queued for admin review
 
-**Duration**: 1-3 business days
+**Duration:** 1-3 business days
 
-**Your Actions**:
+**Your Actions:**
 - Ensure all evidence is uploaded
-- Respond to any questions
-- Check notifications for admin requests
+- No new evidence accepted after this stage
+- Wait for admin review to begin
+- Check notifications for admin questions
 
-### Under Investigation
+### 3. Escalated
 
-**What It Means**:
-- Admin actively reviewing dispute
-- Evidence being evaluated
-- Communication between admin and parties
-- Additional information may be requested
+**What It Means:**
+- Dispute requires higher-level admin review
+- Complex case needs additional investigation
+- Standard resolution unclear
+- Special circumstances present
 
-**Duration**: 3-7 business days
+**When This Happens:**
+- Admin manually escalates complex cases
+- High-value orders
+- Repeat dispute parties
+- Policy interpretation needed
 
-**Your Actions**:
-- Respond promptly to admin requests (within 48 hours)
-- Provide additional evidence if asked
-- Answer clarifying questions
-- Check dispute messages daily
+**Duration:** 3-7 business days
 
-![Dispute under investigation](../images/admin-dispute-investigation.png)
+**Your Actions:**
+- Respond promptly to admin requests
+- Provide additional context if asked
+- Be patient as thorough review takes time
 
-### Resolution Proposed
+### 4. Resolved
 
-**What It Means**:
-- Admin has determined appropriate resolution
-- Proposed solution shared with both parties
-- Parties can accept or appeal
-- Final decision pending approval
-
-**Duration**: 2-5 days
-
-**Your Actions**:
-- Review proposed resolution carefully
-- Accept if fair
-- Appeal if you disagree (provide valid reasons)
-- Respond within timeline
-
-### Resolved
-
-**What It Means**:
-- Final decision made and accepted
+**What It Means:**
+- Final decision made by admin
 - Resolution being implemented
 - Refunds processed if applicable
-- Order status updated
+- Order status updated accordingly
 
-**Duration**: 1-3 days for implementation
+**Resolution Types:**
 
-**Your Actions**:
-- Wait for refund/resolution implementation
+| Type | Description |
+|------|-------------|
+| `full_refund` | Complete refund to buyer, vendor receives nothing |
+| `partial_refund` | Split payment between buyer and vendor |
+| `favor_vendor` | Vendor receives full payment, no refund |
+| `favor_buyer` | Similar to full refund |
+| `mutual_agreement` | Both parties agreed to custom solution |
+
+**Duration:** 1-3 days for implementation
+
+**Your Actions:**
+- Wait for refund processing
 - Confirm receipt of resolution
-- Can now leave review (if desired)
+- Can leave review after closure
 
-### Escalated
+### 5. Closed
 
-**What It Means**:
-- Standard resolution rejected by one or both parties
-- Higher-level admin review requested
-- More thorough investigation
-- Senior staff intervention
+**What It Means:**
+- Dispute completely finalized
+- Resolution implemented
+- No further action possible
+- Order marked appropriately
 
-**Duration**: 5-10 additional business days
+**Cannot Be Reopened:** Closed disputes are final
 
-**Your Actions**:
-- Provide additional justification for appeal
-- Wait for escalated review
-- Be prepared for final decision
+**Your Actions:**
+- Leave review if you haven't
+- Learn from the experience
+- Move forward
 
-### Closed
+## Evidence Storage
 
-**What It Means**:
-- Dispute fully resolved
-- All actions implemented
-- No further appeals
-- Case archived
+Evidence is stored as JSON in the `evidence` column of the `wpss_disputes` table.
 
-**Your Actions**:
-- None required
-- Can view final resolution in dispute history
-- Order can now be reviewed
+### Evidence Types
 
-## Evidence Submission
+Supported evidence types:
 
-### What Counts as Evidence
+**text:** Written explanations and descriptions
+**image:** Attachment ID of uploaded image
+**file:** Attachment ID of uploaded document
+**link:** URL to external resource
 
-Strong evidence includes:
+### Evidence Structure
 
-**Documentation**:
-- Order requirements document
-- Service description screenshots
-- Package details and promises
-- Payment receipts
-- Terms agreed upon
+Each evidence item includes:
 
-**Communication Records**:
-- Message history with vendor/buyer
-- Email correspondence
-- Agreement confirmations
-- Revision requests and responses
-
-**Work Samples**:
-- Deliverables received
-- Screenshots of work quality issues
-- Before/after comparisons
-- Incomplete or missing elements
-
-**Technical Proof**:
-- File metadata
-- Reverse image searches (for plagiarism)
-- Expert assessments
-- Industry standard comparisons
-
-![Evidence submission interface](../images/frontend-dispute-evidence.png)
-
-### How to Submit Evidence
-
-1. **Navigate to Dispute Page**:
-   - Go to **My Account → Disputes**
-   - Click on your active dispute
-
-2. **Upload Files**:
-   - Click **Add Evidence** button
-   - Select files from your computer
-   - Add description for each file
-   - Supported formats: PDF, JPG, PNG, DOC, ZIP
-
-3. **Provide Context**:
-   - Explain what each piece of evidence shows
-   - Reference specific dispute issues
-   - Connect evidence to your claims
-
-4. **Submit**:
-   - Review all evidence
-   - Click **Submit Evidence**
-   - Admin receives notification
-
-### Evidence Best Practices
-
-**Do**:
-- Upload clear, high-quality files
-- Organize evidence logically
-- Label files descriptively
-- Provide context for each item
-- Submit as soon as possible
-
-**Don't**:
-- Upload irrelevant files
-- Submit blurry or illegible images
-- Include personal attacks or rants
-- Spam with duplicate evidence
-- Wait until deadline to submit
-
-### Evidence Deadlines
-
-Typical timelines:
-
-- **Initial Evidence**: With dispute submission
-- **Supplementary Evidence**: Within 48-72 hours of admin request
-- **Rebuttal Evidence**: 24-48 hours after other party's submission
-- **Final Evidence**: Before investigation closes
-
-**Missing Deadline**: May weaken your case or result in decision with available evidence.
-
-## Communication During Disputes
-
-### Dispute Message Thread
-
-Separate communication channel for disputes:
-
-**Participants**:
-- You (buyer or vendor)
-- Other party (vendor or buyer)
-- Admin/mediator
-- Support team (if needed)
-
-**Features**:
-- Threaded conversation
-- File attachments
-- Timestamped messages
-- Read receipts
-- Admin notes (visible to all)
-
-![Dispute messaging](../images/admin-dispute-messaging-thread.png)
-
-### Message Etiquette
-
-**Professional Communication**:
-```
-Good Example:
-"Per the admin's request, I'm providing screenshots showing
-the missing features. Images #1-3 show the incomplete blog
-section, which was included in the Premium package description.
-The service page clearly stated 'Complete blog with 5 starter
-posts' but only the blog framework was delivered without any
-content."
+```json
+{
+  "id": "ev_uniqueid",
+  "user_id": 123,
+  "type": "image",
+  "content": "456",
+  "description": "Screenshot showing the issue",
+  "created_at": "2026-02-12 10:30:00"
+}
 ```
 
-**Unprofessional Communication**:
-```
-Bad Example:
-"This vendor is a complete scam artist! They lie about everything
-and steal people's money! I demand a full refund immediately or
-I'll report them to the police!!!"
-```
+### Status Notes
 
-The professional approach is more effective.
+Status change notes are also stored in evidence:
 
-### Response Time Expectations
-
-| Party | Expected Response Time |
-|-------|------------------------|
-| **Buyer** | Within 48 hours of admin request |
-| **Vendor** | Within 48 hours of admin request |
-| **Admin** | Initial review within 2-3 business days |
-| **Admin** | Responses within 24-48 hours |
-
-### Consequences of Non-Response
-
-If a party doesn't respond:
-
-- **First Reminder**: Sent after 48 hours
-- **Second Reminder**: Sent after 72 hours
-- **Default Decision**: After 5-7 days of no response
-- **Decision Impact**: May be decided against non-responsive party
-
-Stay engaged throughout the process.
-
-## Resolution Types
-
-Admins can implement various resolutions:
-
-### Full Refund
-
-**What It Means**:
-- Buyer receives 100% of payment back
-- Order cancelled completely
-- Vendor receives nothing
-- Order marked as cancelled
-
-**When Applied**:
-- Complete non-delivery by vendor
-- Work is completely unusable
-- Vendor violated major terms
-- Fraud or scam confirmed
-
-**Processing**:
-- Refund to original payment method
-- 5-10 business days for processing
-- Buyer receives email confirmation
-- Order status: Cancelled (Refunded)
-
-![Full refund resolution](../images/admin-dispute-full-refund.png)
-
-### Partial Refund
-
-**What It Means**:
-- Buyer receives percentage of payment back (e.g., 50%)
-- Vendor receives remaining percentage
-- Order marked as completed
-- Both parties partially satisfied
-
-**When Applied**:
-- Some work completed but incomplete
-- Quality below promised but partially usable
-- Deliverables missing some elements
-- Both parties share some fault
-
-**Calculation Example**:
-```
-Order Total: $200
-Vendor Completed: ~60% of requirements
-Admin Decision: 40% refund to buyer
-
-Buyer Receives: $80 refund
-Vendor Receives: $120 payment
+```json
+{
+  "id": "note_uniqueid",
+  "type": "status_note",
+  "note": "Admin note explaining status change",
+  "status": "pending_review",
+  "created_at": "2026-02-12 11:00:00"
+}
 ```
 
-**Processing**:
-- Partial refund issued to buyer
-- Remaining amount released to vendor
-- Both parties notified of split
-
-### Favor Vendor
-
-**What It Means**:
-- Order proceeds as completed
-- Vendor receives full payment
-- Buyer keeps deliverables
-- No refund issued
-
-**When Applied**:
-- Vendor met all stated requirements
-- Buyer's complaint is subjective/unreasonable
-- Evidence supports vendor's position
-- Work matches service description
-
-**Outcome**:
-- Order status: Completed
-- Vendor payment released
-- Buyer can leave review
-- Dispute closed in vendor's favor
-
-### Favor Buyer
-
-**What It Means**:
-- Order cancelled or refunded
-- Buyer receives refund
-- Vendor does not receive payment
-- Buyer's complaint validated
-
-**When Applied**:
-- Vendor clearly at fault
-- Requirements not met
-- Deliverables substandard
-- Vendor unresponsive or unprofessional
-
-**Outcome**:
-- Refund processed to buyer
-- Order cancelled
-- May affect vendor's metrics
-- Dispute closed in buyer's favor
-
-![Favor buyer resolution](../images/admin-dispute-favor-buyer.png)
-
-### Mutual Agreement
-
-**What It Means**:
-- Custom resolution negotiated by both parties
-- Can include partial refund, revisions, or other terms
-- Both parties agree to specific terms
-- Admin facilitates but parties decide
-
-**When Applied**:
-- Both parties willing to compromise
-- Creative solution benefits both sides
-- Standard resolutions don't fit
-- Relationship can be salvaged
-
-**Examples**:
-- "30% refund + vendor completes remaining work"
-- "Full refund + buyer keeps partial deliverables"
-- "Extended deadline + reduced scope"
-- "Vendor provides future discount credit"
-
-**Process**:
-1. Parties negotiate terms
-2. Document agreement in dispute messages
-3. Both parties accept
-4. Admin implements agreed terms
-
-### Order Revision Required
-
-**What It Means**:
-- Vendor must make specific corrections
-- No refund initially
-- Deadline given for corrections
-- Re-evaluation after corrections
-
-**When Applied**:
-- Work is incomplete but fixable
-- Minor issues that can be corrected
-- Vendor willing and able to fix
-- Buyer agrees to give vendor chance
-
-**Process**:
-1. Admin specifies required corrections
-2. Vendor given deadline (3-7 days typically)
-3. Vendor submits corrected work
-4. Admin or buyer reviews
-5. If satisfactory, dispute closed
-6. If unsatisfactory, refund considered
-
-## Resolution Decision Factors
-
-### How Admins Decide
-
-Admins evaluate disputes based on:
-
-**1. Service Description Accuracy**:
-- What was promised in service listing
-- Package details and inclusions
-- Add-ons selected
-- Any written promises
-
-**2. Order Requirements**:
-- What buyer specified in requirements form
-- Clarity and reasonableness of requirements
-- Whether requirements matched service scope
-- Changes requested during order
-
-**3. Deliverables Provided**:
-- What vendor actually delivered
-- Quality of work
-- Completeness
-- Match to requirements and service description
-
-**4. Communication Record**:
-- How both parties communicated
-- Response times
-- Professionalism
-- Attempted resolutions
-
-**5. Platform Policies**:
-- Terms of service compliance
-- Marketplace rules
-- Industry standards
-- Previous dispute history
-
-**6. Evidence Quality**:
-- Documentation provided
-- Credibility of claims
-- Objective vs subjective issues
-- Third-party validation
-
-### Common Decision Outcomes
-
-Based on marketplace data:
-
-| Dispute Type | Typical Resolution |
-|--------------|-------------------|
-| **Non-Delivery** | 80-90% full refund to buyer |
-| **Quality Issues** | 40-60% partial refund (varies by severity) |
-| **Scope Dispute** | 50-50 split decisions |
-| **Communication Issues** | Often favor buyer if vendor non-responsive |
-| **Subjective Preferences** | Usually favor vendor |
-
-## Refund Processing
-
-### How Refunds Are Processed
+## Resolution Process
 
-Refund method depends on payment platform:
+### Admin Review Steps
 
-**WooCommerce Orders**:
-- Refund through WooCommerce gateway
-- Returns to original payment method
-- Credit card: 5-10 business days
-- PayPal: 3-5 business days
+1. **Assessment:** Admin reviews dispute details and evidence
+2. **Investigation:** Admin examines order history and communications
+3. **Decision:** Admin selects appropriate resolution type
+4. **Implementation:** System processes refunds/payments
+5. **Notification:** Both parties notified of outcome
 
-**Direct Payment (Pro)** **[PRO]**:
-- Stripe: Instant to 5 business days
-- PayPal: 1-3 business days
-- Razorpay: 5-7 business days
-
-**Wallet Refunds** **[PRO]**:
-- Instant to marketplace wallet
-- Can be used for future purchases
-- Can withdraw to bank account
-
-### Refund Timeline
+### Resolution Data
 
-| Stage | Timeframe |
-|-------|-----------|
-| **Decision Made** | Day 0 |
-| **Refund Initiated** | Within 24 hours |
-| **Processing** | 1-3 business days |
-| **In Your Account** | 3-10 business days total |
+When dispute is resolved, these fields are set:
 
-**Factors Affecting Speed**:
-- Payment method used
-- Bank processing times
-- Weekends/holidays
-- Payment gateway policies
+- `status` → 'resolved'
+- `resolution` → Resolution type (e.g., 'partial_refund')
+- `resolution_notes` → Admin explanation
+- `resolved_by` → Admin user ID
+- `resolved_at` → Timestamp
 
-### Partial Refund Amounts
+### Refund Information
 
-Admins calculate partial refunds based on:
+If refund is involved, refund amount is stored in evidence:
 
-- Percentage of work completed
-- Usability of deliverables
-- Value received vs promised
-- Effort required for corrections
-- Industry standards
+```json
+{
+  "id": "refund_uniqueid",
+  "type": "refund_info",
+  "refund_amount": 75.00,
+  "created_at": "2026-02-12 14:00:00"
+}
+```
 
-**Typical Partial Refund Ranges**:
-- Minor issues: 10-25% refund
-- Moderate issues: 25-50% refund
-- Major issues: 50-75% refund
-- Severe issues: 75-100% refund
+## Order Status Updates
 
-## Appealing a Decision
+Dispute resolution automatically updates order status:
 
-### When You Can Appeal
+**Full Refund or Favor Buyer:**
+- Order status → 'refunded'
 
-Appeal if you believe:
+**Partial Refund:**
+- Order status → 'partially_refunded'
 
-- Decision was based on incomplete evidence
-- Admin misunderstood key facts
-- New evidence has emerged
-- Decision is clearly unfair
-- Platform policies were misapplied
-
-### How to Appeal
+**Favor Vendor:**
+- Order status → 'completed'
 
-1. **Click Appeal Button**:
-   - Within appeal period (usually 3-7 days)
-   - On dispute resolution page
+**Mutual Agreement:**
+- Order status → 'completed'
 
-2. **Provide Appeal Reasons**:
-   - Specific reasons for disagreement
-   - New evidence (if any)
-   - Explain why decision should change
-   - Remain professional and factual
-
-3. **Submit Appeal**:
-   - Dispute escalates to senior admin
-   - Fresh review with all evidence
-   - Final decision made
+## Timeline and Response Requirements
 
-![Appeal interface](../images/admin-dispute-appeal.png)
+### Party Response Times
 
-### Appeal Limitations
+| Stage | Response Required | Deadline |
+|-------|------------------|----------|
+| Initial Claim | Other party response | 48 hours |
+| Evidence Submission | Additional evidence | Before pending_review |
+| Admin Questions | Answer clarifications | 48 hours |
+| Resolution Proposed | Accept or appeal | 7 days |
 
-- **One Appeal Only**: Cannot appeal again after escalated decision
-- **Time Limited**: Must appeal within deadline
-- **Valid Reasons**: Frivolous appeals may be rejected
-- **Final Decision**: Escalated decision is final
+### Admin Response Times
 
-### Appeal Success Factors
+- Initial review: 1-3 business days
+- Investigation: 3-7 business days
+- Resolution implementation: 1-3 days
 
-Appeals are more likely to succeed if:
+**Note:** Times may vary based on dispute complexity and admin workload.
 
-- New evidence significantly changes case
-- Clear admin error in initial review
-- Policy misinterpretation occurred
-- Decision contradicts platform guidelines
+## What You Can Do at Each Stage
 
-## Impact on Vendor and Buyer
+### As Buyer or Vendor
 
-### For Vendors
+**During Open:**
+- ✓ Add evidence (text, images, files, links)
+- ✓ View all submitted evidence
+- ✓ Communicate with other party
+- ✓ Wait for admin review
 
-Disputes affect:
+**During Pending Review:**
+- ✓ View evidence (no new submissions)
+- ✓ Wait for admin
+- ✗ Cannot add evidence
+- ✗ Cannot change claims
 
-**Metrics**:
-- Dispute rate tracked
-- Resolution outcomes recorded
-- May impact verification level
-- Affects search ranking if pattern emerges
+**During Investigation:**
+- ✓ Respond to admin questions
+- ✓ Provide additional context if requested
+- ✗ Cannot modify evidence
+- ✗ Cannot close dispute
 
-**Reputation**:
-- Dispute history visible to admins
-- Patterns of disputes are red flags
-- Successfully defended disputes show professionalism
+**After Resolution:**
+- ✓ View resolution details
+- ✓ Confirm receipt
+- ✓ Leave review
+- ✗ Cannot reopen
 
-**Financial**:
-- Payment held during dispute
-- Potential loss of earnings
-- May affect commission rates
+### As Administrator
 
-### For Buyers
+Admins can at any stage:
+- Update dispute status
+- Add evidence
+- Add status notes
+- Resolve dispute
+- Implement refunds
 
-Disputes affect:
+## Database Schema Reference
 
-**Reputation**:
-- Buyer dispute history tracked
-- Frequent disputes may raise flags
-- Frivolous disputes hurt credibility
+Disputes are stored in the `wpss_disputes` table with these key fields:
 
-**Future Orders**:
-- Vendors may check dispute history
-- Pattern of disputes may cause vendors to decline orders
-- Platform may review account if abuse suspected
+| Column | Type | Purpose |
+|--------|------|---------|
+| `id` | int | Dispute ID |
+| `order_id` | int | Associated order |
+| `initiated_by` | int | User who opened dispute |
+| `reason` | varchar | Short reason category |
+| `description` | text | Detailed explanation |
+| `status` | varchar | Current status (5 options) |
+| `evidence` | longtext | JSON array of evidence |
+| `resolution` | varchar | Resolution type when resolved |
+| `resolution_notes` | text | Admin explanation |
+| `resolved_by` | int | Admin user ID |
+| `resolved_at` | datetime | Resolution timestamp |
+| `created_at` | datetime | Dispute open time |
+| `updated_at` | datetime | Last update time |
 
-### Order Status After Resolution
+## Important Notes
 
-- **Completed**: If work accepted (full or partial payment to vendor)
-- **Cancelled**: If refunded completely
-- **Disputed (Resolved)**: Shows dispute occurred and was resolved
-- Review option enabled after resolution
+**No Time Windows:** The system does not automatically enforce dispute filing windows. Buyers and vendors can open disputes at any time after order creation.
 
-## Best Practices During Disputes
+**One Dispute Per Order:** Each order can have only one dispute. Attempting to open a second dispute returns false.
 
-### Do's
+**Both Parties Can Open:** Either buyer or vendor can initiate a dispute. The `initiated_by` field tracks who opened it.
 
-1. **Stay Professional**: Always remain courteous and factual
-2. **Respond Promptly**: Reply within 48 hours to all requests
-3. **Provide Evidence**: Strong documentation supports your case
-4. **Be Honest**: Truthfulness is essential
-5. **Focus on Facts**: Stick to objective, verifiable issues
-6. **Be Patient**: Process takes time for thorough review
-7. **Consider Compromise**: Mutual agreement often best for both parties
+**Evidence Cannot Be Deleted:** Once evidence is added, it becomes part of the permanent dispute record.
 
-### Don'ts
+**No Auto-Resolution:** Disputes never auto-resolve. Admin action is always required for resolution.
 
-1. **Don't Threaten**: Threats weaken your position
-2. **Don't Lie**: False claims result in negative outcomes
-3. **Don't Spam**: One clear case is better than multiple messages
-4. **Don't Attack**: Personal attacks hurt your credibility
-5. **Don't Go Off-Platform**: Keep all communication documented
-6. **Don't Delay**: Promptness shows good faith
-7. **Don't Ignore**: Non-response may result in unfavorable decision
+## WordPress Hooks
 
-## Dispute Statistics
+### Actions
 
-Understanding typical outcomes:
+**wpss_dispute_opened** - Fires when dispute is created
+**wpss_dispute_evidence_added** - Fires when evidence is submitted
+**wpss_dispute_status_changed** - Fires on status updates
+**wpss_dispute_resolved** - Fires when dispute is resolved
 
-| Outcome | Percentage (Approximate) |
-|---------|-------------------------|
-| **Buyer Full Refund** | 25-30% |
-| **Partial Refund** | 35-40% |
-| **Favor Vendor** | 20-25% |
-| **Mutual Agreement** | 10-15% |
-| **Escalated** | 5-10% |
+### Filters
 
-*Actual percentages vary by marketplace and case specifics*
+Use these hooks to extend dispute functionality or add notifications.
 
-## After Dispute Resolution
+## Related Documentation
 
-### Leaving Reviews
-
-After dispute closes:
-
-- Review option becomes available
-- Can review based on complete experience
-- Include dispute resolution in review (optional)
-- Be fair about how resolution was handled
-
-### Future Orders
-
-**With Same Vendor**:
-- Possible but uncommon after disputes
-- Consider resolution outcome
-- Rebuild trust gradually
-
-**On Platform**:
-- Continue using marketplace normally
-- Learn from experience
-- Better communicate in future orders
-
-### Account Standing
-
-- Single dispute typically doesn't affect standing
-- Multiple disputes may trigger account review
-- Pattern of frivolous disputes may result in restrictions
-- Successfully resolved disputes demonstrate maturity
-
-## Related Resources
-
-- [How to open a dispute](opening-a-dispute.md)
-- [Admin dispute mediation process](admin-dispute-mediation.md)
-- [Order delivery and revisions](../orders/delivery-revisions.md)
-- [Leaving reviews after disputes](../buyer-guide/reviews-ratings.md)
+- [Opening a Dispute](opening-a-dispute.md) - How to file a dispute
+- [Admin Dispute Mediation](admin-dispute-mediation.md) - Admin dispute management
+- [Order Lifecycle](../order-management/order-lifecycle.md) - Order status reference
+- [Refund Process](../payments-checkout/refund-policy.md) - How refunds work

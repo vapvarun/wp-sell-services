@@ -1,316 +1,293 @@
 # Initial Setup Guide
 
-After installing WP Sell Services, follow this step-by-step guide to configure your marketplace and get it ready for vendors and buyers.
+After installing WP Sell Services, follow this step-by-step guide to configure your marketplace and prepare it for vendors and buyers.
 
 ## Setup Checklist
 
-Use this checklist to track your progress:
+Track your progress through these essential configuration steps:
 
-- [ ] Configure required pages
-- [ ] Set commission rates
-- [ ] Enable vendor registration
-- [ ] Configure email notifications
-- [ ] Test WooCommerce payments
-- [ ] Create sample service (test)
-- [ ] Customize appearance settings
-- [ ] Set up vendor approval workflow
+- [ ] Create and assign required pages
+- [ ] Configure commission and payout settings
+- [ ] Set vendor registration preferences
+- [ ] Enable email notifications
+- [ ] Configure WooCommerce for services
+- [ ] Test the complete marketplace workflow
 
-## Step 1: Configure Required Pages
+## Step 1: Create Required Pages
 
-WP Sell Services needs several pages to function. The setup wizard creates these automatically, but you can also create them manually.
+WP Sell Services uses 3 dedicated pages to power the marketplace frontend. Each page uses a shortcode to render its content.
 
-### Create Pages
+### Pages Overview
 
-Go to **WP Sell Services → Settings → Pages** and create/select these pages:
+Navigate to **WP Sell Services → Settings → Pages** to manage these pages:
 
 | Page | Shortcode | Purpose |
 |------|-----------|---------|
-| **Services** | `[wpss_services]` | Browse all services |
-| **Dashboard** | `[wpss_dashboard]` | Unified dashboard for buyers and vendors |
-| **Become a Vendor** | `[wpss_vendor_registration]` | Vendor signup form |
-| **Buyer Requests** | `[wpss_buyer_requests]` | Browse buyer requests |
-| **Post Request** | `[wpss_post_request]` | Create buyer request |
-| **My Orders** | `[wpss_my_orders]` | Order history |
-| **Login** | `[wpss_login]` | Custom login page (optional) |
-| **Register** | `[wpss_register]` | Custom registration (optional) |
+| **Services** | `[wpss_services]` | Public service browsing and search |
+| **Dashboard** | `[wpss_dashboard]` | Unified dashboard for both buyers and vendors |
+| **Become a Vendor** | `[wpss_vendor_registration]` | Vendor registration form |
 
 ![Pages settings screen](../images/settings-pages.png)
 
-### Automatic Page Creation
+### Creating Pages
 
-Click **Create Default Pages** to automatically generate all required pages with proper shortcodes and titles.
+You have two options for each page:
 
-### Add Pages to Navigation Menu
+**Option A: Auto-Create (Recommended)**
+
+1. Go to **WP Sell Services → Settings → Pages**
+2. Click the **Create Page** button next to any unassigned page
+3. The plugin creates the page with the correct shortcode and title
+4. If a page with the matching shortcode already exists, it links to that page instead of creating a duplicate
+
+**Option B: Manual Assignment**
+
+1. Create a new WordPress page with the appropriate shortcode in its content
+2. Return to **Settings → Pages** and select the page from the dropdown
+3. Click **Save Changes**
+
+### Adding Pages to Navigation
+
+After creating pages, add them to your site menu:
 
 1. Go to **Appearance → Menus**
-2. Add these pages to your main menu:
-   - Services
-   - Become a Vendor
-   - Buyer Requests
-3. Create a user menu (for logged-in users) with:
-   - Dashboard
-   - My Orders
+2. Add the **Services** and **Become a Vendor** pages to your primary menu
+3. Add the **Dashboard** page to a secondary or user-account menu
+4. Save the menu
 
-## Step 2: Set Commission Rates
+## Step 2: Configure Commission Settings
 
-Configure how much commission you earn on each sale.
+The commission system determines how revenue is split between your platform and vendors on every completed order.
 
-### Global Commission
+Navigate to **WP Sell Services → Settings → Payments → Commission Settings**.
 
-Go to **WP Sell Services → Settings → Commission**:
+### Global Commission Rate
 
-1. **Commission Type**: Choose `Percentage` or `Flat Rate`
-2. **Commission Rate**: Enter your rate (e.g., `10` for 10% or `5.00` for $5 flat)
-3. **Tax on Commission**: Choose whether marketplace owner pays tax on commission
-4. **Apply Commission To**: Select `Order Total` or `Service Price Only` (excludes add-ons)
+| Setting | Range | Default | Description |
+|---------|-------|---------|-------------|
+| **Commission Rate (%)** | 0 - 50 | 10% | Percentage deducted from vendor earnings on all orders |
+| **Per-Vendor Rates** | On/Off | On | Allow custom commission rates per vendor |
 
-![Commission settings](../images/settings-commission.png)
+![Commission settings](../images/settings-payments-commission.png)
 
-**Example Calculation (10% percentage):**
-- Service Price: $100
-- Add-ons: $20
-- Total: $120
-- Commission (10%): $12
-- Vendor Earnings: $108
+**Example Calculation (10% commission):**
 
-### Per-Vendor Commission **[PRO]**
+```
+Service Package: $100.00
+Add-ons: $20.00
+Order Total: $120.00
+Platform Commission (10%): $12.00
+Vendor Earnings: $108.00
+```
 
-In Pro, set custom rates per vendor:
+Commission is calculated on the full order total, including add-ons. Tips are excluded from commission.
 
-1. Go to **Users → All Users**
-2. Click **Edit** on a vendor
-3. Scroll to **WP Sell Services Vendor Settings**
-4. Enable **Custom Commission Rate**
-5. Set vendor-specific rate
+### Per-Vendor Rates
 
-## Step 3: Configure Vendor Settings
+When **Per-Vendor Rates** is enabled, you can override the global rate for individual vendors through their vendor profile. This is useful for rewarding top performers or negotiating custom rates.
 
-Control how vendors join and operate on your marketplace.
+For detailed commission documentation, see [Commission System](../earnings-wallet/commission-system.md).
 
-Go to **WP Sell Services → Settings → Vendor**:
+## Step 3: Configure Payout Settings
 
-### Vendor Registration
+Still within the **Payments** tab, expand the **Payout Settings** section to configure vendor withdrawals.
 
-| Setting | Options | Recommended |
+### Withdrawal Settings
+
+| Setting | Range | Default | Description |
+|---------|-------|---------|-------------|
+| **Minimum Withdrawal** | 0 - 1,000 | $50 | Minimum balance required to request a withdrawal |
+| **Clearance Period (Days)** | 0 - 90 | 14 | Days after order completion before earnings become available |
+
+The clearance period protects the platform against disputes and refunds by holding earnings for a set number of days after an order is completed.
+
+### Automatic Withdrawals
+
+| Setting | Default | Description |
 |---------|---------|-------------|
-| **Allow Registration** | Enable/Disable | Enable |
-| **Auto Approve Vendors** | Yes/No | No (manual approval for quality) |
-| **Require Email Verification** | Yes/No | Yes |
-| **Vendor Application Form** | Enable/Disable | Enable (collect vendor info) |
+| **Enable Auto-Withdrawal** | Off | Automatically process withdrawals for qualifying vendors |
+| **Auto-Withdrawal Threshold** | $500 | Minimum available balance to trigger auto-withdrawal |
+| **Auto-Withdrawal Schedule** | Monthly | Options: Weekly (every Monday), Bi-weekly (1st and 15th), Monthly (1st of month) |
 
-![Vendor settings](../images/settings-vendor.png)
+Auto-withdrawal is optional and disabled by default. When enabled, the system creates and processes withdrawal requests automatically for vendors whose available balance meets the threshold.
+
+## Step 4: Configure Tax Settings (Optional)
+
+Expand the **Tax Settings** section within the Payments tab if you need to apply tax to service orders.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Enable Tax** | Off | Enable tax calculation on orders |
+| **Tax Label** | "Tax" | Display label (e.g., VAT, GST, Sales Tax) |
+| **Tax Rate (%)** | 0% | Default tax rate (0 - 50%, step 0.01) |
+| **Prices Include Tax** | Off | Whether service prices already include tax |
+| **Tax on Commission** | None | Options: No tax on commission, Platform collects tax on full amount, Vendor handles own tax |
+
+**Note**: If you use WooCommerce for checkout, WooCommerce may handle its own tax calculations. These settings apply when using non-WooCommerce checkout or when WooCommerce tax is not configured.
+
+## Step 5: Configure Vendor Settings
+
+Navigate to **WP Sell Services → Settings → Vendor** to control how vendors join and operate on your marketplace.
+
+### Registration Settings
+
+| Setting | Options | Default | Description |
+|---------|---------|---------|-------------|
+| **Vendor Registration** | Open / Requires Approval / Closed | Open | Controls who can become a vendor |
+| **Max Services per Vendor** | 1 - 100 | 20 | Maximum active services a vendor can create |
+| **Require Verification** | On/Off | Off | Require vendors to verify identity before selling |
+| **Service Moderation** | On/Off | Off | Require admin approval before services are published |
+
+### Registration Modes Explained
+
+**Open** -- Anyone can register as a vendor and begin selling immediately. Administrators are automatically registered as vendors on activation.
+
+**Requires Approval** -- Users submit a vendor application, but an admin must approve them before they can create services.
+
+**Closed** -- Only administrators can create vendor accounts. The vendor registration page is disabled.
 
 ### Service Moderation
 
-| Setting | Purpose |
-|---------|---------|
-| **Auto Approve Services** | Publish services immediately or require admin review |
-| **Max Active Services** | Limit services per vendor (0 = unlimited) |
-| **Allow Service Editing** | Let vendors edit published services |
-| **Require Featured Image** | Make service images mandatory |
+When enabled, newly created or edited services are held in a "pending review" status until an admin approves them. This gives you control over marketplace quality but adds administrative overhead.
 
-### Vendor Levels
+## Step 6: Configure Email Notifications
 
-Enable vendor levels (Basic, Verified, Pro):
+Navigate to **WP Sell Services → Settings → Emails** to manage which email notifications are sent.
 
-1. Check **Enable Vendor Levels**
-2. Set benefits per level:
-   - Max active services
-   - Commission rate adjustment
-   - Featured badge
-   - Priority support
+### Available Notification Types
 
-## Step 4: Configure Email Notifications
+All 8 notification types are enabled by default. Each toggle is a master switch -- when disabled, that email is never sent regardless of other settings.
 
-Set up automated emails for orders, deliveries, and disputes.
+| Notification | Default | Sent To |
+|-------------|---------|---------|
+| **New Order** | On | Vendor |
+| **Order Completed** | On | Both |
+| **Order Cancelled** | On | Both |
+| **Delivery Submitted** | On | Buyer |
+| **Revision Requested** | On | Vendor |
+| **New Message** | On | Recipient |
+| **New Review** | On | Vendor |
+| **Dispute Opened** | On | Both + Admin |
 
-Go to **WP Sell Services → Settings → Emails**:
+**WooCommerce Email Integration**: If WooCommerce is active, you can customize email content, subjects, and templates through **WooCommerce → Settings → Emails**.
 
-### Sender Settings
+### SMTP Configuration (Recommended)
 
-1. **From Name**: Your marketplace name (e.g., "ServiceMarket")
-2. **From Email**: Your email (e.g., `noreply@yoursite.com`)
-3. **Email Footer Text**: Company info, social links, etc.
+For reliable email delivery in production, install an SMTP plugin such as WP Mail SMTP or FluentSMTP. WordPress's default `wp_mail()` function may not deliver reliably on all hosting environments.
 
-### Enable/Disable Emails
+## Step 7: Configure WooCommerce for Services
 
-Check which emails to send:
+The free version uses WooCommerce for checkout and payment processing. WP Sell Services creates a virtual carrier product automatically during activation -- vendors do not manually create WooCommerce products.
 
-**Order Emails:**
-- [ ] New Order (to vendor)
-- [ ] Order Confirmation (to buyer)
-- [ ] Order Status Changed
-- [ ] Order Completed
+### Recommended WooCommerce Settings
 
-**Delivery Emails:**
-- [ ] Delivery Submitted (to buyer)
-- [ ] Revision Requested (to vendor)
+**Products** (WooCommerce → Settings → Products):
+- Uncheck **Enable product reviews** -- WP Sell Services has its own review system
 
-**Other Emails:**
-- [ ] New Message Notification
-- [ ] Review Reminder
-- [ ] Dispute Opened
-- [ ] Withdrawal Request
+**Shipping** (WooCommerce → Settings → Shipping):
+- Remove or disable all shipping zones and methods -- services are digital and do not require shipping
 
-![Email settings](../images/settings-emails.png)
+**Payments** (WooCommerce → Settings → Payments):
+- Enable at least one payment gateway (PayPal, Stripe, bank transfer, etc.)
+- Test a payment with a small amount before launching
 
-### Customize Email Templates
+**[PRO]** The Pro version supports additional e-commerce platforms (EDD, FluentCart, SureCart) and a standalone mode that does not require WooCommerce at all. See [General Settings](../platform-settings/general-settings.md) for platform selection details.
 
-Click **Customize** next to any email to edit:
-- Subject line
-- Email body (supports HTML and template tags)
-- Available variables: `{buyer_name}`, `{vendor_name}`, `{order_id}`, `{service_title}`, etc.
+## Step 8: General Platform Settings
 
-## Step 5: Configure WooCommerce for Services
+Navigate to **WP Sell Services → Settings → General** for basic platform configuration.
 
-Optimize WooCommerce settings for your service marketplace.
+### Platform Identity
 
-### Payment Methods
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Platform Name** | Your WordPress site name | Name displayed in emails, notifications, and frontend |
+| **Currency** | USD | Marketplace currency (10 supported currencies) |
+| **E-Commerce Platform** | Auto-detect | Which e-commerce system handles checkout |
 
-1. Go to **WooCommerce → Settings → Payments**
-2. Enable payment methods:
-   - **PayPal** (quick setup)
-   - **Stripe** (credit cards)
-   - **Bank Transfer** (manual payments)
-3. Test each payment method with a sample order
+The **Auto-detect** setting is recommended for e-commerce platform selection. It automatically detects WooCommerce (or other platforms with **[PRO]**) and uses the first available active platform.
 
-### Product Settings
+### Supported Currencies
 
-1. Go to **WooCommerce → Settings → Products**
-2. Disable these features (not needed for services):
-   - Product reviews (WP Sell Services has its own)
-   - Downloadable products
-   - Inventory management
-3. Enable **Digital downloads** (optional, for file deliveries)
+USD, EUR, GBP, CAD, AUD, INR, JPY, CNY, BRL, MXN.
 
-### Tax Configuration
+All services, orders, and earnings use the selected currency. Changing currency after vendors have listed services may cause pricing confusion, so it is best to set this during initial setup.
 
-1. Go to **WooCommerce → Settings → Tax**
-2. Enable taxes if required in your region
-3. Create tax rates
-4. WP Sell Services applies tax to both service price and commission
+## Step 9: Configure Order Settings
 
-## Step 6: Customize General Settings
+Navigate to **WP Sell Services → Settings → Orders** to define order workflow behavior.
 
-Fine-tune marketplace behavior.
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Auto-Complete Days** | 3 | Days after delivery before auto-completing if buyer does not respond. 0 to disable. |
+| **Default Revision Limit** | 2 | Default revisions per order. Can be overridden per service. |
+| **Allow Disputes** | On | Allow buyers to open disputes on orders |
+| **Dispute Window (Days)** | 14 | Days after completion within which disputes can be opened |
+| **Late Requirements Submission** | Off | Allow buyers to submit requirements after work has started |
+| **Requirements Timeout (Days)** | 0 | Days to wait for requirements before taking action. 0 to disable. |
+| **Auto-Start on Timeout** | On | If requirements timeout, auto-start the order (instead of cancelling) |
 
-Go to **WP Sell Services → Settings → General**:
+The **Auto-Complete** feature prevents orders from sitting indefinitely in "delivered" status. After the vendor delivers work and the buyer does not respond within the configured number of days, the order is automatically marked as completed.
 
-### Currency & Display
+## Step 10: Test Your Marketplace
 
-| Setting | Purpose |
-|---------|---------|
-| **Currency** | Uses WooCommerce currency |
-| **Price Display** | Decimal places for prices |
-| **Date Format** | How dates display (orders, deadlines) |
-| **Timezone** | For deadline calculations |
+Before inviting real vendors and buyers, test the complete workflow.
 
-### Service Defaults
+### Create a Test Vendor
 
-| Setting | Default Value | Purpose |
-|---------|---------------|---------|
-| **Default Delivery Days** | 7 | When vendors don't specify |
-| **Default Revisions** | 2 | Included revisions per package |
-| **Max Gallery Images (Free)** | 5 | Free version limit |
-| **Max Add-ons (Free)** | 3 | Free version limit |
-
-### Order Settings
-
-| Setting | Purpose |
-|---------|---------|
-| **Auto Accept Orders** | Vendors must manually accept or auto-accept |
-| **Late Order Threshold** | Hours past deadline before marking "Late" |
-| **Auto Complete After Delivery** | Days until order auto-completes if buyer doesn't respond |
-| **Review Window** | Days after completion to leave review (default: 14) |
-
-![General settings](../images/settings-general.png)
-
-## Step 7: Test Your Marketplace
-
-Before launching, test the complete workflow.
-
-### Create a Test Vendor Account
-
-1. Log out of admin
-2. Visit your **Become a Vendor** page
-3. Fill out the vendor registration form
-4. Log back in as admin
-5. Go to **Users → Vendor Applications**
-6. Approve the test vendor
+1. Open your site in an incognito/private browser window
+2. Visit the **Become a Vendor** page
+3. Complete the registration form
+4. If registration mode is "Requires Approval," log in as admin and approve the application
+5. Administrators are automatically registered as vendors, so you can also test from the admin account
 
 ### Create a Test Service
 
-1. Log in as the test vendor
-2. Go to **Vendor Dashboard → Services → Add New**
-3. Create a sample service with:
-   - Title and description
-   - 3 packages (Basic, Standard, Premium)
-   - Gallery images
-   - Add-ons
-   - FAQs
+1. Log in as a vendor (or as admin, who is auto-registered as a vendor)
+2. Go to the **Dashboard** page
+3. Create a new service through the service wizard with:
+   - A title and description
+   - At least one package with pricing
+   - A main image
 4. Publish the service
 5. Verify it appears on the **Services** page
 
 ### Place a Test Order
 
-1. Log out and create a buyer account
+1. Log in as a different user (buyer)
 2. Browse to the test service
-3. Select a package and add-ons
-4. Complete checkout with a test payment
-5. Log in as vendor and accept the order
+3. Select a package and proceed to checkout
+4. Complete payment through WooCommerce
+5. Switch to the vendor account and check the order in the dashboard
 6. Submit a delivery
-7. Log in as buyer and approve delivery
+7. Switch back to the buyer account and accept the delivery
 8. Leave a review
 
-This tests the complete order workflow.
+This tests the complete order lifecycle from purchase through completion and review.
 
-## Step 8: Advanced Configuration (Optional)
+## Advanced Settings
 
-### Enable Buyer Requests
+Navigate to **WP Sell Services → Settings → Advanced** for system-level options.
 
-Allow buyers to post project needs:
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Delete Data on Uninstall** | Off | Remove all plugin data when uninstalling. Leave off to preserve data during troubleshooting. |
+| **Debug Mode** | Off | Enable debug logging for troubleshooting. Disable in production. |
 
-1. Go to **WP Sell Services → Settings → General**
-2. Enable **Buyer Requests**
-3. Set **Max Active Requests** per buyer
-4. Set **Request Duration** (days before expiration)
+## Recommended Post-Setup Steps
 
-### Configure Dispute Settings
+After completing initial configuration:
 
-1. Go to **WP Sell Services → Settings → Orders**
-2. Set **Dispute Window**: Days after delivery when disputes can be opened
-3. Choose **Auto-Close Disputes**: Days of inactivity before auto-closing
-
-### Setup Email SMTP (Recommended)
-
-For reliable email delivery:
-
-1. Install a plugin like **WP Mail SMTP** or **FluentSMTP**
-2. Configure with your email service (Gmail, SendGrid, Mailgun)
-3. Send a test email from **WP Sell Services → Settings → Emails → Test Email**
-
-## Quick Start Checklist
-
-✅ **Required Setup:**
-1. Pages created with shortcodes
-2. Commission rate configured
-3. Vendor registration enabled
-4. Email notifications configured
-5. WooCommerce payments working
-
-✅ **Recommended Setup:**
-6. Vendor approval workflow enabled
-7. Email SMTP configured
-8. Test order completed successfully
-9. Navigation menus updated
-10. Homepage updated with service blocks
+1. **Add service categories** -- Create categories for your marketplace niche (e.g., Design, Writing, Development)
+2. **Customize your homepage** -- Use Gutenberg blocks (Service Grid, Featured Services, Categories) to showcase services
+3. **Flush permalinks** -- Go to **Settings → Permalinks** and click **Save Changes** to ensure service URLs work correctly
+4. **Test REST API** -- Verify the API is accessible at `https://yoursite.com/wp-json/wpss/v1/settings`
 
 ## Next Steps
 
-Your marketplace is now configured! Move on to:
+Your marketplace is now configured. Continue with:
 
-1. **[Creating Services](../service-management/creating-a-service.md)** - Learn the vendor workflow
-2. **[Order Management](../order-management/order-workflow.md)** - Understand the order lifecycle
-3. **[Frontend Display](../frontend/shortcodes.md)** - Customize how services display
-
-Need help? Check the **[Troubleshooting Guide](../support/troubleshooting.md)** for common issues.
+1. **[Creating Services](../service-creation/service-wizard.md)** -- Learn how vendors create service listings
+2. **[Order Management](../order-management/order-lifecycle.md)** -- Understand the full order lifecycle
+3. **[Commission System](../earnings-wallet/commission-system.md)** -- Deep dive into how earnings work
+4. **[Free vs Pro Comparison](free-vs-pro.md)** -- Understand what the Pro version adds

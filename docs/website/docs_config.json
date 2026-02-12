@@ -16,195 +16,208 @@
           "order": 1
         },
         {
-          "title": "Installation Guide",
+          "title": "Installation & Requirements",
           "slug": "installation-wpss",
           "file": "getting-started/installation.md",
           "order": 2
         },
         {
-          "title": "Initial Setup & Configuration",
+          "title": "Quick Setup Guide",
           "slug": "initial-setup-wpss",
           "file": "getting-started/initial-setup.md",
           "order": 3
+        },
+        {
+          "title": "Free vs Pro Feature Comparison",
+          "slug": "free-vs-pro-wpss",
+          "file": "getting-started/free-vs-pro.md",
+          "order": 4
         }
       ]
     },
     {
-      "name": "Service Management",
-      "slug": "service-management-wpss",
+      "name": "Service Creation",
+      "slug": "service-creation-wpss",
       "order": 2,
       "docs": [
         {
-          "title": "Creating a Service",
-          "slug": "creating-a-service-wpss",
-          "file": "service-management/creating-a-service.md",
+          "title": "Service Creation Wizard",
+          "slug": "service-wizard-wpss",
+          "file": "service-creation/service-wizard.md",
           "order": 1
         },
         {
-          "title": "Service Packages & Pricing",
-          "slug": "service-packages-wpss",
-          "file": "service-management/service-packages.md",
+          "title": "Pricing Packages (Basic/Standard/Premium)",
+          "slug": "pricing-packages-wpss",
+          "file": "service-creation/pricing-packages.md",
           "order": 2
         },
         {
           "title": "Service Add-ons & Extras",
-          "slug": "service-addons-extras-wpss",
-          "file": "service-management/service-addons-extras.md",
+          "slug": "service-addons-wpss",
+          "file": "service-creation/service-addons.md",
           "order": 3
         },
         {
-          "title": "Service Gallery & FAQs",
-          "slug": "service-gallery-faqs-wpss",
-          "file": "service-management/service-gallery-faqs.md",
+          "title": "Service Gallery & Media",
+          "slug": "service-media-wpss",
+          "file": "service-creation/service-media.md",
           "order": 4
         },
         {
-          "title": "Service Requirements",
-          "slug": "service-requirements-wpss",
-          "file": "service-management/service-requirements.md",
+          "title": "Service Requirements & FAQs",
+          "slug": "service-requirements-faqs-wpss",
+          "file": "service-creation/service-requirements-faqs.md",
           "order": 5
         },
         {
-          "title": "Managing Services",
-          "slug": "managing-services-wpss",
-          "file": "service-management/managing-services.md",
+          "title": "Publishing, Moderation & Templates",
+          "slug": "publishing-moderation-wpss",
+          "file": "service-creation/publishing-moderation.md",
           "order": 6
+        }
+      ]
+    },
+    {
+      "name": "Buyer Requests & Proposals",
+      "slug": "buyer-requests-wpss",
+      "order": 3,
+      "docs": [
+        {
+          "title": "Posting a Buyer Request",
+          "slug": "posting-request-wpss",
+          "file": "buyer-requests/posting-request.md",
+          "order": 1
+        },
+        {
+          "title": "Submitting Proposals (Vendors)",
+          "slug": "submitting-proposals-wpss",
+          "file": "buyer-requests/submitting-proposals.md",
+          "order": 2
+        },
+        {
+          "title": "Managing Requests & Converting to Orders",
+          "slug": "managing-requests-wpss",
+          "file": "buyer-requests/managing-requests.md",
+          "order": 3
         }
       ]
     },
     {
       "name": "Order Management",
       "slug": "order-management-wpss",
-      "order": 3,
+      "order": 4,
       "docs": [
         {
-          "title": "Order Workflow & Lifecycle",
-          "slug": "order-workflow-wpss",
-          "file": "order-management/order-workflow.md",
+          "title": "Order Lifecycle & 11 Statuses",
+          "slug": "order-lifecycle-wpss",
+          "file": "order-management/order-lifecycle.md",
           "order": 1
         },
         {
-          "title": "Managing Orders",
-          "slug": "managing-orders-wpss",
-          "file": "order-management/managing-orders.md",
+          "title": "Requirements Collection",
+          "slug": "requirements-collection-wpss",
+          "file": "order-management/requirements-collection.md",
           "order": 2
+        },
+        {
+          "title": "Order Messaging & File Sharing",
+          "slug": "order-messaging-wpss",
+          "file": "order-management/order-messaging.md",
+          "order": 3
         },
         {
           "title": "Deliveries & Revisions",
           "slug": "deliveries-revisions-wpss",
           "file": "order-management/deliveries-revisions.md",
-          "order": 3
-        },
-        {
-          "title": "Deadline Extensions",
-          "slug": "deadline-extensions-wpss",
-          "file": "order-management/deadline-extensions.md",
           "order": 4
         },
         {
-          "title": "Order Messaging",
-          "slug": "order-messaging-wpss",
-          "file": "order-management/order-messaging.md",
+          "title": "Milestones & Split Payments",
+          "slug": "milestones-wpss",
+          "file": "order-management/milestones.md",
           "order": 5
         },
         {
-          "title": "Tipping & Bonuses",
-          "slug": "tipping-wpss",
-          "file": "order-management/tipping.md",
+          "title": "Tipping & Deadline Extensions",
+          "slug": "tipping-extensions-wpss",
+          "file": "order-management/tipping-extensions.md",
           "order": 6
         },
         {
-          "title": "Milestones",
-          "slug": "milestones-wpss",
-          "file": "order-management/milestones.md",
+          "title": "Order Settings & Configuration",
+          "slug": "order-settings-wpss",
+          "file": "order-management/order-settings.md",
           "order": 7
-        },
-        {
-          "title": "Notifications",
-          "slug": "notifications-wpss",
-          "file": "order-management/notifications.md",
-          "order": 8
         }
       ]
     },
     {
-      "name": "Vendor Guide",
-      "slug": "vendor-guide-wpss",
-      "order": 4,
+      "name": "Vendor System",
+      "slug": "vendor-system-wpss",
+      "order": 5,
       "docs": [
         {
-          "title": "Becoming a Vendor",
+          "title": "Becoming a Vendor (Registration)",
           "slug": "becoming-a-vendor-wpss",
-          "file": "vendor-guide/becoming-a-vendor.md",
+          "file": "vendor-system/becoming-a-vendor.md",
           "order": 1
         },
         {
-          "title": "Vendor Dashboard",
+          "title": "Vendor Dashboard Overview",
           "slug": "vendor-dashboard-wpss",
-          "file": "vendor-guide/vendor-dashboard.md",
+          "file": "vendor-system/vendor-dashboard.md",
           "order": 2
         },
         {
           "title": "Vendor Profile & Portfolio",
           "slug": "vendor-profile-portfolio-wpss",
-          "file": "vendor-guide/vendor-profile-portfolio.md",
+          "file": "vendor-system/vendor-profile-portfolio.md",
           "order": 3
         },
         {
-          "title": "Vendor Verification & Levels",
-          "slug": "vendor-verification-wpss",
-          "file": "vendor-guide/vendor-verification.md",
+          "title": "Seller Levels (New/Rising/Top Rated)",
+          "slug": "seller-levels-wpss",
+          "file": "vendor-system/seller-levels.md",
           "order": 4
         },
         {
-          "title": "Vacation Mode",
+          "title": "Vacation Mode & Availability",
           "slug": "vacation-mode-wpss",
-          "file": "vendor-guide/vacation-mode.md",
+          "file": "vendor-system/vacation-mode.md",
           "order": 5
         },
         {
-          "title": "Earnings & Payouts",
-          "slug": "earnings-payouts-wpss",
-          "file": "vendor-guide/earnings-payouts.md",
+          "title": "Vendor Settings & Registration Config",
+          "slug": "vendor-settings-wpss",
+          "file": "vendor-system/vendor-settings.md",
           "order": 6
         }
       ]
     },
     {
-      "name": "Buyer Guide",
-      "slug": "buyer-guide-wpss",
-      "order": 5,
+      "name": "Reviews & Ratings",
+      "slug": "reviews-ratings-wpss",
+      "order": 6,
       "docs": [
         {
-          "title": "Browsing Services",
-          "slug": "browsing-services-wpss",
-          "file": "buyer-guide/browsing-services.md",
+          "title": "Review System & Star Ratings",
+          "slug": "review-system-wpss",
+          "file": "reviews-ratings/review-system.md",
           "order": 1
         },
         {
-          "title": "Placing an Order",
-          "slug": "placing-an-order-wpss",
-          "file": "buyer-guide/placing-an-order.md",
+          "title": "Vendor Reputation & Review Moderation",
+          "slug": "reputation-moderation-wpss",
+          "file": "reviews-ratings/reputation-moderation.md",
           "order": 2
-        },
-        {
-          "title": "Buyer Requests & Proposals",
-          "slug": "buyer-requests-wpss",
-          "file": "buyer-guide/buyer-requests.md",
-          "order": 3
-        },
-        {
-          "title": "Reviews & Ratings",
-          "slug": "reviews-ratings-wpss",
-          "file": "buyer-guide/reviews-ratings.md",
-          "order": 4
         }
       ]
     },
     {
       "name": "Disputes & Resolution",
       "slug": "disputes-resolution-wpss",
-      "order": 6,
+      "order": 7,
       "docs": [
         {
           "title": "Opening a Dispute",
@@ -213,139 +226,96 @@
           "order": 1
         },
         {
-          "title": "Dispute Process",
+          "title": "Dispute Process & Evidence",
           "slug": "dispute-process-wpss",
           "file": "disputes-resolution/dispute-process.md",
           "order": 2
         },
         {
-          "title": "Admin Dispute Mediation",
-          "slug": "admin-dispute-mediation-wpss",
+          "title": "Admin Mediation & Resolution Types",
+          "slug": "admin-mediation-wpss",
           "file": "disputes-resolution/admin-dispute-mediation.md",
           "order": 3
         }
       ]
     },
     {
-      "name": "Admin Settings",
-      "slug": "admin-settings-wpss",
-      "order": 7,
-      "docs": [
-        {
-          "title": "General Settings",
-          "slug": "general-settings-wpss",
-          "file": "admin-settings/general-settings.md",
-          "order": 1
-        },
-        {
-          "title": "Pages Setup",
-          "slug": "pages-setup-wpss",
-          "file": "admin-settings/pages-setup.md",
-          "order": 2
-        },
-        {
-          "title": "Payment & Commission Settings",
-          "slug": "payment-settings-wpss",
-          "file": "admin-settings/payment-settings.md",
-          "order": 3
-        },
-        {
-          "title": "Vendor Settings",
-          "slug": "vendor-settings-wpss",
-          "file": "admin-settings/vendor-settings.md",
-          "order": 4
-        },
-        {
-          "title": "Order Settings",
-          "slug": "order-settings-wpss",
-          "file": "admin-settings/order-settings.md",
-          "order": 5
-        },
-        {
-          "title": "Email Notifications",
-          "slug": "email-notifications-wpss",
-          "file": "admin-settings/email-notifications.md",
-          "order": 6
-        },
-        {
-          "title": "Advanced Settings",
-          "slug": "advanced-settings-wpss",
-          "file": "admin-settings/advanced-settings.md",
-          "order": 7
-        }
-      ]
-    },
-    {
-      "name": "Marketplace Display",
-      "slug": "marketplace-display-wpss",
+      "name": "Payments & Checkout",
+      "slug": "payments-checkout-wpss",
       "order": 8,
       "docs": [
         {
-          "title": "Shortcodes Reference",
-          "slug": "shortcodes-reference-wpss",
-          "file": "marketplace-display/shortcodes-reference.md",
+          "title": "WooCommerce Checkout Integration",
+          "slug": "woocommerce-checkout-wpss",
+          "file": "payments-checkout/woocommerce-checkout.md",
           "order": 1
         },
         {
-          "title": "Gutenberg Blocks",
-          "slug": "gutenberg-blocks-wpss",
-          "file": "marketplace-display/gutenberg-blocks.md",
+          "title": "EDD, FluentCart & SureCart [PRO]",
+          "slug": "alternative-platforms-wpss",
+          "file": "payments-checkout/alternative-platforms.md",
           "order": 2
         },
         {
-          "title": "Template Overrides",
-          "slug": "template-overrides-wpss",
-          "file": "marketplace-display/template-overrides.md",
+          "title": "Standalone Marketplace Mode [PRO]",
+          "slug": "standalone-mode-wpss",
+          "file": "payments-checkout/standalone-mode.md",
           "order": 3
         },
         {
-          "title": "Search & Filters",
-          "slug": "search-filters-wpss",
-          "file": "marketplace-display/search-filters.md",
+          "title": "Stripe Direct Payments [PRO]",
+          "slug": "stripe-payments-wpss",
+          "file": "payments-checkout/stripe-payments.md",
           "order": 4
+        },
+        {
+          "title": "PayPal, Razorpay & Offline Payments [PRO]",
+          "slug": "other-gateways-wpss",
+          "file": "payments-checkout/other-gateways.md",
+          "order": 5
+        },
+        {
+          "title": "Currency, Tax & Gateway Configuration",
+          "slug": "currency-tax-config-wpss",
+          "file": "payments-checkout/currency-tax-config.md",
+          "order": 6
         }
       ]
     },
     {
-      "name": "Integrations",
-      "slug": "integrations-wpss",
+      "name": "Earnings & Wallet",
+      "slug": "earnings-wallet-wpss",
       "order": 9,
       "docs": [
         {
-          "title": "WooCommerce Setup",
-          "slug": "woocommerce-setup-wpss",
-          "file": "integrations/woocommerce-setup.md",
+          "title": "Commission System (Global & Per-Vendor)",
+          "slug": "commission-system-wpss",
+          "file": "earnings-wallet/commission-system.md",
           "order": 1
         },
         {
-          "title": "Alternative E-commerce Platforms",
-          "slug": "alternative-ecommerce-wpss",
-          "file": "integrations/alternative-ecommerce.md",
+          "title": "Vendor Earnings Dashboard",
+          "slug": "earnings-dashboard-wpss",
+          "file": "earnings-wallet/earnings-dashboard.md",
           "order": 2
         },
         {
-          "title": "Payment Gateways",
-          "slug": "payment-gateways-wpss",
-          "file": "integrations/payment-gateways.md",
+          "title": "Withdrawal Requests & Methods",
+          "slug": "withdrawals-wpss",
+          "file": "earnings-wallet/withdrawals.md",
           "order": 3
         },
         {
-          "title": "Wallet Systems",
-          "slug": "wallet-systems-wpss",
-          "file": "integrations/wallet-systems.md",
+          "title": "Wallet System [PRO]",
+          "slug": "wallet-system-wpss",
+          "file": "earnings-wallet/wallet-system.md",
           "order": 4
         },
         {
-          "title": "Cloud Storage",
-          "slug": "cloud-storage-wpss",
-          "file": "integrations/cloud-storage.md",
+          "title": "Automated Payouts [PRO]",
+          "slug": "automated-payouts-wpss",
+          "file": "earnings-wallet/automated-payouts.md",
           "order": 5
-        },
-        {
-          "title": "SEO Integration",
-          "slug": "seo-integration-wpss",
-          "file": "integrations/seo-integration.md",
-          "order": 6
         }
       ]
     },
@@ -355,19 +325,19 @@
       "order": 10,
       "docs": [
         {
-          "title": "Vendor Analytics",
+          "title": "Vendor Analytics Dashboard [PRO]",
           "slug": "vendor-analytics-wpss",
           "file": "analytics-reporting/vendor-analytics.md",
           "order": 1
         },
         {
-          "title": "Admin Analytics",
+          "title": "Admin Analytics & Charts [PRO]",
           "slug": "admin-analytics-wpss",
           "file": "analytics-reporting/admin-analytics.md",
           "order": 2
         },
         {
-          "title": "Data Export",
+          "title": "Data Export (CSV/PDF) [PRO]",
           "slug": "data-export-wpss",
           "file": "analytics-reporting/data-export.md",
           "order": 3
@@ -375,34 +345,177 @@
       ]
     },
     {
-      "name": "Developer Guide",
-      "slug": "developer-guide-wpss",
+      "name": "Notifications & Emails",
+      "slug": "notifications-emails-wpss",
       "order": 11,
       "docs": [
+        {
+          "title": "11 Email Notification Types",
+          "slug": "email-types-wpss",
+          "file": "notifications-emails/email-types.md",
+          "order": 1
+        },
+        {
+          "title": "In-App Notification System",
+          "slug": "in-app-notifications-wpss",
+          "file": "notifications-emails/in-app-notifications.md",
+          "order": 2
+        },
+        {
+          "title": "Email Configuration & Customization",
+          "slug": "email-configuration-wpss",
+          "file": "notifications-emails/email-configuration.md",
+          "order": 3
+        }
+      ]
+    },
+    {
+      "name": "Cloud Storage",
+      "slug": "cloud-storage-wpss",
+      "order": 12,
+      "docs": [
+        {
+          "title": "Cloud Storage Overview [PRO]",
+          "slug": "cloud-overview-wpss",
+          "file": "cloud-storage/cloud-overview.md",
+          "order": 1
+        },
+        {
+          "title": "Setting Up S3, GCS & DigitalOcean Spaces [PRO]",
+          "slug": "cloud-setup-wpss",
+          "file": "cloud-storage/cloud-setup.md",
+          "order": 2
+        }
+      ]
+    },
+    {
+      "name": "Marketplace Display & SEO",
+      "slug": "marketplace-display-wpss",
+      "order": 13,
+      "docs": [
+        {
+          "title": "15+ Shortcodes Reference",
+          "slug": "shortcodes-reference-wpss",
+          "file": "marketplace-display/shortcodes-reference.md",
+          "order": 1
+        },
+        {
+          "title": "6 Gutenberg Blocks",
+          "slug": "gutenberg-blocks-wpss",
+          "file": "marketplace-display/gutenberg-blocks.md",
+          "order": 2
+        },
+        {
+          "title": "Service Search & Category Filters",
+          "slug": "search-filters-wpss",
+          "file": "marketplace-display/search-filters.md",
+          "order": 3
+        },
+        {
+          "title": "Template Overrides",
+          "slug": "template-overrides-wpss",
+          "file": "marketplace-display/template-overrides.md",
+          "order": 4
+        },
+        {
+          "title": "SEO & Schema Markup",
+          "slug": "seo-schema-wpss",
+          "file": "marketplace-display/seo-schema.md",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "name": "Admin Tools & Moderation",
+      "slug": "admin-tools-wpss",
+      "order": 14,
+      "docs": [
+        {
+          "title": "Service Moderation & Approval Queue",
+          "slug": "service-moderation-wpss",
+          "file": "admin-tools/service-moderation.md",
+          "order": 1
+        },
+        {
+          "title": "Vendor Management",
+          "slug": "vendor-management-wpss",
+          "file": "admin-tools/vendor-management.md",
+          "order": 2
+        },
+        {
+          "title": "Withdrawal Approvals",
+          "slug": "withdrawal-approvals-wpss",
+          "file": "admin-tools/withdrawal-approvals.md",
+          "order": 3
+        },
+        {
+          "title": "Manual Order Creation",
+          "slug": "manual-orders-wpss",
+          "file": "admin-tools/manual-orders.md",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "name": "Platform Settings",
+      "slug": "platform-settings-wpss",
+      "order": 15,
+      "docs": [
+        {
+          "title": "General Settings (Platform Name, Currency)",
+          "slug": "general-settings-wpss",
+          "file": "platform-settings/general-settings.md",
+          "order": 1
+        },
+        {
+          "title": "Pages Setup & Auto-Creation",
+          "slug": "pages-setup-wpss",
+          "file": "platform-settings/pages-setup.md",
+          "order": 2
+        },
+        {
+          "title": "Advanced Settings (Debug, API, Uninstall)",
+          "slug": "advanced-settings-wpss",
+          "file": "platform-settings/advanced-settings.md",
+          "order": 3
+        }
+      ]
+    },
+    {
+      "name": "Developer Guide",
+      "slug": "developer-guide-wpss",
+      "order": 16,
+      "docs": [
+        {
+          "title": "REST API Reference (24+ Controllers)",
+          "slug": "rest-api-wpss",
+          "file": "developer-guide/rest-api.md",
+          "order": 1
+        },
         {
           "title": "Hooks & Filters Reference",
           "slug": "hooks-filters-wpss",
           "file": "developer-guide/hooks-filters.md",
-          "order": 1
-        },
-        {
-          "title": "REST API Reference",
-          "slug": "rest-api-wpss",
-          "file": "developer-guide/rest-api.md",
           "order": 2
         },
         {
-          "title": "Custom Integrations",
+          "title": "Building Custom Integrations",
           "slug": "custom-integrations-wpss",
           "file": "developer-guide/custom-integrations.md",
           "order": 3
+        },
+        {
+          "title": "Theme Integration Guide",
+          "slug": "theme-integration-wpss",
+          "file": "developer-guide/theme-integration.md",
+          "order": 4
         }
       ]
     },
     {
       "name": "FAQ & Troubleshooting",
       "slug": "faq-wpss",
-      "order": 12,
+      "order": 17,
       "docs": [
         {
           "title": "FAQ & Troubleshooting",

@@ -1,39 +1,41 @@
 # REST API Reference
 
-WP Sell Services provides a comprehensive REST API for building custom integrations, mobile apps, and external applications. Access services, orders, vendors, and marketplace data programmatically.
+WP Sell Services provides a comprehensive REST API for building custom integrations, mobile apps, and external applications. The API follows WordPress REST API standards with 20 dedicated controllers plus generic endpoints.
 
 ## Overview
 
-The REST API follows WordPress REST API standards and provides:
+**Base URL**: `/wp-json/wpss/v1/`
 
-- **Base URL**: `/wp-json/wpss/v1/`
-- **8 Controllers**: Services, Orders, Vendors, Reviews, Conversations, Disputes, Buyer Requests, Proposals
-- **Authentication**: Cookie, Application Password, JWT
-- **Standard responses**: JSON format with error handling
-- **Pagination**: Standard WordPress pagination
-- **Permissions**: WordPress capability-based
+**Controllers**: 20 specialized controllers handling services, orders, vendors, reviews, conversations, disputes, buyer requests, proposals, notifications, portfolio, earnings, extension requests, milestones, tipping, seller levels, moderation, favorites, media, cart, and authentication.
+
+**Authentication Methods**:
+- Cookie authentication (browser-based)
+- Application Passwords (WordPress 5.6+)
+- JWT tokens **[PRO]** (via third-party plugin)
+
+**Response Format**: JSON with standard WordPress REST API structure
+
+**Pagination**: Standard WordPress pagination with `page` and `per_page` parameters
 
 ## Authentication
 
 ### Cookie Authentication
 
-Used for browser-based requests from logged-in users.
+Used for same-origin requests from logged-in WordPress users.
 
-**Prerequisites:**
-- User logged into WordPress
-- Nonce verification required
+**Requirements**:
+- User must be logged into WordPress
+- Requests must include `X-WP-Nonce` header
 
-**Example:**
+**Example**:
 ```javascript
-// Get nonce from wp_localize_script
-const nonce = wpApiSettings.nonce;
+const nonce = wpApiSettings.nonce; // From wp_localize_script
 
 fetch('/wp-json/wpss/v1/services', {
-    method: 'GET',
     credentials: 'same-origin',
     headers: {
-        'X-WP-Nonce': nonce,
-    },
+        'X-WP-Nonce': nonce
+    }
 })
 .then(response => response.json())
 .then(data => console.log(data));
@@ -41,866 +43,460 @@ fetch('/wp-json/wpss/v1/services', {
 
 ### Application Passwords
 
-Recommended for external applications and integrations.
+Recommended for external applications and integrations (WordPress 5.6+).
 
-**Setup:**
-1. Go to **WordPress Admin → Users → Profile**
-2. Scroll to **Application Passwords**
-3. Enter application name
+**Setup**:
+1. Navigate to **Users → Profile**
+2. Scroll to **Application Passwords** section
+3. Enter application name (e.g., "Mobile App")
 4. Click **Add New Application Password**
-5. Copy generated password (shown once)
+5. Copy the generated password (shown once)
 
-**Example:**
+**Example**:
 ```bash
 curl -X GET \
-  https://example.com/wp-json/wpss/v1/services \
-  -u "username:xxxx xxxx xxxx xxxx xxxx xxxx"
+  https://yoursite.com/wp-json/wpss/v1/services \
+  -u "username:xxxx xxxx xxxx xxxx"
 ```
 
 ```javascript
-const username = 'john_doe';
-const password = 'xxxx xxxx xxxx xxxx xxxx xxxx';
-const auth = btoa(`${username}:${password}`);
+const auth = btoa('username:xxxx xxxx xxxx xxxx');
 
 fetch('/wp-json/wpss/v1/services', {
     headers: {
-        'Authorization': `Basic ${auth}`,
-    },
-})
-.then(response => response.json())
-.then(data => console.log(data));
-```
-
-### JWT Authentication
-
-**[PRO]** JSON Web Token authentication for mobile apps.
-
-**Setup:**
-1. Install JWT authentication plugin
-2. Configure secret key in wp-config.php
-3. Obtain token via authentication endpoint
-
-**Example:**
-```javascript
-// Get token
-const response = await fetch('/wp-json/jwt-auth/v1/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        username: 'john_doe',
-        password: 'password123',
-    }),
-});
-
-const { token } = await response.json();
-
-// Use token
-fetch('/wp-json/wpss/v1/services', {
-    headers: {
-        'Authorization': `Bearer ${token}`,
-    },
+        'Authorization': `Basic ${auth}`
+    }
 });
 ```
 
-## Services Endpoints
+## API Controllers
 
-### GET /services
+### 1. Services (`/services`)
 
-Retrieve list of services.
+Manage service listings, packages, and metadata.
 
-**Parameters:**
+**GET /services** - List services
+**GET /services/{id}** - Get service details
+**POST /services** - Create service (vendor only)
+**PUT /services/{id}** - Update service (owner/admin)
+**DELETE /services/{id}** - Delete service (owner/admin)
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| page | int | 1 | Page number |
-| per_page | int | 10 | Items per page (max: 100) |
-| search | string | - | Search term |
-| category | int | - | Category ID |
-| vendor_id | int | - | Filter by vendor |
-| min_price | float | - | Minimum price |
-| max_price | float | - | Maximum price |
-| rating | float | - | Minimum rating |
-| orderby | string | date | Sort by: date, price, rating, popularity |
-| order | string | desc | Sort order: asc, desc |
+### 2. Orders (`/orders`)
 
-**Response:**
+Handle order lifecycle, status changes, and order management.
+
+**GET /orders** - List orders (filtered by user role)
+**GET /orders/{id}** - Get order details
+**POST /orders/{id}/accept** - Accept order (vendor)
+**POST /orders/{id}/start** - Start work (vendor)
+**POST /orders/{id}/complete** - Complete order (buyer)
+**POST /orders/{id}/cancel** - Cancel order
+
+### 3. Reviews (`/reviews`)
+
+Manage service and vendor reviews.
+
+**GET /reviews** - List reviews
+**GET /reviews/{id}** - Get review details
+**POST /reviews** - Submit review (buyer, within review window)
+**PUT /reviews/{id}** - Update review (owner)
+**DELETE /reviews/{id}** - Delete review (owner/admin)
+
+### 4. Vendors (`/vendors`)
+
+Vendor profiles, statistics, and public information.
+
+**GET /vendors** - List vendors
+**GET /vendors/{id}** - Get vendor profile
+**PUT /vendors/{id}** - Update profile (own profile)
+**GET /vendors/{id}/services** - Get vendor's services
+**GET /vendors/{id}/stats** - Get vendor statistics
+
+### 5. Conversations (`/conversations`)
+
+Order messaging and communication.
+
+**GET /conversations/{order_id}** - Get messages for order
+**POST /conversations/{order_id}/message** - Send message
+**PUT /conversations/{message_id}/read** - Mark message as read
+
+### 6. Disputes (`/disputes`)
+
+Dispute management and resolution.
+
+**GET /disputes** - List disputes
+**GET /disputes/{id}** - Get dispute details
+**POST /disputes** - Open dispute
+**POST /disputes/{id}/message** - Add evidence
+**POST /disputes/{id}/resolve** - Resolve dispute (admin)
+
+### 7. Buyer Requests (`/buyer-requests`)
+
+Job posting and proposal system.
+
+**GET /buyer-requests** - List requests
+**GET /buyer-requests/{id}** - Get request details
+**POST /buyer-requests** - Post request (buyer)
+**PUT /buyer-requests/{id}** - Update request
+**DELETE /buyer-requests/{id}** - Delete request
+
+### 8. Proposals (`/proposals`)
+
+Vendor proposals for buyer requests.
+
+**GET /proposals** - List proposals (filtered by user)
+**GET /proposals/{id}** - Get proposal details
+**POST /proposals** - Submit proposal (vendor)
+**PUT /proposals/{id}** - Update proposal
+**POST /proposals/{id}/accept** - Accept proposal (buyer)
+**DELETE /proposals/{id}** - Withdraw proposal (vendor)
+
+### 9. Notifications (`/notifications`)
+
+In-app notifications.
+
+**GET /notifications** - List notifications
+**GET /notifications/unread** - Get unread count
+**PUT /notifications/{id}/read** - Mark as read
+**POST /notifications/read-all** - Mark all as read
+**DELETE /notifications/{id}** - Delete notification
+
+### 10. Portfolio (`/portfolio`)
+
+Vendor portfolio items.
+
+**GET /portfolio** - List portfolio items
+**GET /portfolio/{id}** - Get portfolio item
+**POST /portfolio** - Add portfolio item (vendor)
+**PUT /portfolio/{id}** - Update portfolio item
+**DELETE /portfolio/{id}** - Delete portfolio item
+
+### 11. Earnings (`/earnings`)
+
+Vendor earnings and withdrawals.
+
+**GET /earnings** - Get earnings summary (vendor)
+**GET /earnings/history** - Earnings history
+**GET /earnings/withdrawals** - Withdrawal history
+**POST /earnings/withdraw** - Request withdrawal
+
+### 12. Extension Requests (`/extension-requests`)
+
+Order deadline extensions.
+
+**GET /extension-requests** - List extension requests
+**POST /extension-requests** - Request extension (vendor)
+**POST /extension-requests/{id}/approve** - Approve (buyer)
+**POST /extension-requests/{id}/reject** - Reject (buyer)
+
+### 13. Milestones (`/milestones`)
+
+Milestone-based payments **[PRO]**.
+
+**GET /milestones/{order_id}** - Get order milestones
+**POST /milestones** - Create milestone
+**POST /milestones/{id}/submit** - Submit milestone (vendor)
+**POST /milestones/{id}/approve** - Approve milestone (buyer)
+**POST /milestones/{id}/reject** - Reject milestone (buyer)
+
+### 14. Tipping (`/tips`)
+
+Optional tipping system.
+
+**POST /tips** - Send tip to vendor
+**GET /tips/sent** - Tips sent (buyer)
+**GET /tips/received** - Tips received (vendor)
+
+### 15. Seller Levels (`/seller-levels`)
+
+Vendor tier system.
+
+**GET /seller-levels** - List level definitions
+**GET /seller-levels/{id}** - Get level details
+**GET /seller-levels/progress** - Get vendor progress (own profile)
+
+### 16. Moderation (`/moderation`)
+
+Content moderation tools (admin).
+
+**GET /moderation/services** - Services pending approval
+**POST /moderation/services/{id}/approve** - Approve service
+**POST /moderation/services/{id}/reject** - Reject service
+**GET /moderation/reviews** - Reviews pending moderation
+**POST /moderation/reviews/{id}/approve** - Approve review
+
+### 17. Favorites (`/favorites`)
+
+Buyer favorites/wishlist.
+
+**GET /favorites** - List favorites (buyer)
+**POST /favorites** - Add to favorites
+**DELETE /favorites/{service_id}** - Remove from favorites
+
+### 18. Media (`/media`)
+
+File upload and management.
+
+**POST /media/upload** - Upload file
+**GET /media/{id}** - Get file info
+**DELETE /media/{id}** - Delete file
+
+### 19. Cart (`/cart`)
+
+Shopping cart management.
+
+**GET /cart** - Get cart contents
+**POST /cart/add** - Add service to cart
+**PUT /cart/update** - Update cart item
+**DELETE /cart/remove** - Remove from cart
+**POST /cart/clear** - Clear cart
+
+### 20. Auth (`/auth`)
+
+Authentication and session management **[PRO]**.
+
+**POST /auth/login** - Login user
+**POST /auth/register** - Register new user
+**POST /auth/logout** - Logout
+**GET /auth/validate** - Validate token
+**POST /auth/refresh** - Refresh token
+
+## Generic Endpoints
+
+These endpoints are registered directly in `API.php` (not controllers).
+
+### GET /categories
+
+Get service categories with hierarchy.
+
+**Parameters**:
+- `parent` (int) - Parent category ID (default: 0)
+- `hide_empty` (bool) - Hide empty categories (default: true)
+
+**Response**:
+```json
+[
+  {
+    "id": 12,
+    "name": "Web Development",
+    "slug": "web-development",
+    "description": "Website and web application development",
+    "count": 145,
+    "parent": 0,
+    "icon": "dashicons-code",
+    "image": "https://example.com/cat-image.jpg"
+  }
+]
+```
+
+### GET /tags
+
+Get service tags.
+
+**Parameters**:
+- `search` (string) - Search term
+
+**Response**:
+```json
+[
+  {
+    "id": 34,
+    "name": "WordPress",
+    "slug": "wordpress",
+    "count": 89
+  }
+]
+```
+
+### GET /settings
+
+Get public marketplace settings.
+
+**Response**:
 ```json
 {
-  "services": [
-    {
-      "id": 123,
-      "title": "WordPress Website Development",
-      "slug": "wordpress-website-development",
-      "vendor_id": 45,
-      "vendor_name": "John Doe",
-      "category_id": 12,
-      "category_name": "Web Development",
-      "description": "Professional WordPress development...",
-      "basic_price": 100.00,
-      "standard_price": 200.00,
-      "premium_price": 300.00,
-      "delivery_time": 7,
-      "revisions": 2,
-      "rating": 4.8,
-      "reviews_count": 42,
-      "orders_count": 156,
-      "featured_image": "https://example.com/image.jpg",
-      "gallery": ["url1", "url2"],
-      "created_at": "2026-01-15T10:30:00",
-      "url": "https://example.com/service/wordpress-website-development/"
-    }
-  ],
-  "total": 50,
-  "pages": 5,
-  "current_page": 1,
-  "per_page": 10
+  "currency": "USD",
+  "currency_symbol": "$",
+  "currency_position": "before",
+  "decimal_places": 2,
+  "min_order_amount": 5.00,
+  "max_order_amount": 10000.00,
+  "vendor_registration": true,
+  "service_moderation": false,
+  "review_moderation": false,
+  "max_file_size": 10485760,
+  "allowed_file_types": ["jpg", "jpeg", "png", "pdf", "zip"],
+  "pages": {
+    "services": 123,
+    "vendors": 124,
+    "dashboard": 125,
+    "checkout": 126,
+    "terms": 127
+  }
 }
 ```
 
-### GET /services/{id}
+### GET /me
 
-Get single service details.
+Get current user info and capabilities.
 
-**Response:**
-```json
-{
-  "id": 123,
-  "title": "WordPress Website Development",
-  "slug": "wordpress-website-development",
-  "vendor": {
-    "id": 45,
-    "name": "John Doe",
-    "username": "johndoe",
-    "avatar": "https://example.com/avatar.jpg",
-    "rating": 4.9,
-    "reviews": 234,
-    "member_since": "2024-01-01",
-    "response_time": "1 hour"
-  },
-  "description": "Full service description...",
-  "packages": {
-    "basic": {
-      "price": 100.00,
-      "delivery_days": 7,
-      "revisions": 2,
-      "features": ["5 pages", "Responsive design", "SEO setup"]
-    },
-    "standard": {
-      "price": 200.00,
-      "delivery_days": 10,
-      "revisions": 5,
-      "features": ["10 pages", "Responsive design", "SEO setup", "Contact form"]
-    },
-    "premium": {
-      "price": 300.00,
-      "delivery_days": 14,
-      "revisions": -1,
-      "features": ["Unlimited pages", "Responsive", "SEO", "Forms", "E-commerce"]
-    }
-  },
-  "extras": [
-    {
-      "id": 1,
-      "title": "Extra fast delivery",
-      "price": 50.00
-    }
-  ],
-  "faqs": [
-    {
-      "question": "Do you provide hosting?",
-      "answer": "No, hosting is not included."
-    }
-  ],
-  "reviews": {
-    "average": 4.8,
-    "count": 42,
-    "breakdown": {
-      "5": 35,
-      "4": 5,
-      "3": 2,
-      "2": 0,
-      "1": 0
-    }
-  },
-  "images": {
-    "featured": "url",
-    "gallery": ["url1", "url2", "url3"]
-  },
-  "created_at": "2026-01-15T10:30:00",
-  "updated_at": "2026-02-01T14:20:00"
-}
-```
+**Authentication Required**: Yes
 
-### POST /services
-
-Create new service (vendors only).
-
-**Required Capability:** `wpss_create_services`
-
-**Request Body:**
-```json
-{
-  "title": "My New Service",
-  "description": "Service description...",
-  "category_id": 12,
-  "basic_price": 100,
-  "basic_delivery": 7,
-  "basic_revisions": 2,
-  "basic_features": ["Feature 1", "Feature 2"],
-  "standard_price": 200,
-  "standard_delivery": 10,
-  "standard_revisions": 5,
-  "standard_features": ["Feature 1", "Feature 2", "Feature 3"],
-  "premium_price": 300,
-  "premium_delivery": 14,
-  "premium_revisions": -1,
-  "premium_features": ["All features", "Priority support"],
-  "featured_image_id": 456,
-  "gallery_ids": [789, 790]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "service_id": 124,
-  "status": "pending",
-  "message": "Service submitted for review"
-}
-```
-
-### PUT /services/{id}
-
-Update existing service.
-
-**Required:** Service owner or admin
-
-**Request Body:** Same as POST (partial updates supported)
-
-### DELETE /services/{id}
-
-Delete service.
-
-**Required:** Service owner or admin
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Service deleted successfully"
-}
-```
-
-### GET /services/{id}/packages
-
-Get service packages and pricing.
-
-### GET /services/{id}/faqs
-
-Get service FAQs.
-
-### GET /services/{id}/reviews
-
-Get service reviews.
-
-## Orders Endpoints
-
-### GET /orders
-
-Get orders list.
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| page | int | Page number |
-| per_page | int | Items per page |
-| status | string | Order status |
-| vendor_id | int | Filter by vendor (vendors see their orders only) |
-| buyer_id | int | Filter by buyer (buyers see their orders only) |
-
-**Response:**
-```json
-{
-  "orders": [
-    {
-      "id": 567,
-      "order_number": "WPSS-567",
-      "service_id": 123,
-      "service_title": "WordPress Website Development",
-      "package": "standard",
-      "vendor_id": 45,
-      "vendor_name": "John Doe",
-      "buyer_id": 89,
-      "buyer_name": "Jane Smith",
-      "status": "in_progress",
-      "total": 200.00,
-      "created_at": "2026-02-01T10:00:00",
-      "delivery_due": "2026-02-11T10:00:00",
-      "url": "https://example.com/order/567/"
-    }
-  ],
-  "total": 25,
-  "pages": 3
-}
-```
-
-### GET /orders/{id}
-
-Get order details.
-
-**Required:** Order buyer, vendor, or admin
-
-**Response:**
-```json
-{
-  "id": 567,
-  "order_number": "WPSS-567",
-  "status": "in_progress",
-  "service": {
-    "id": 123,
-    "title": "WordPress Website Development",
-    "package": "standard"
-  },
-  "vendor": {
-    "id": 45,
-    "name": "John Doe",
-    "avatar": "url"
-  },
-  "buyer": {
-    "id": 89,
-    "name": "Jane Smith",
-    "avatar": "url"
-  },
-  "pricing": {
-    "subtotal": 200.00,
-    "extras": 50.00,
-    "total": 250.00,
-    "commission_rate": 20,
-    "commission": 50.00,
-    "vendor_earnings": 200.00
-  },
-  "timeline": {
-    "ordered": "2026-02-01T10:00:00",
-    "accepted": "2026-02-01T11:30:00",
-    "delivery_due": "2026-02-11T10:00:00",
-    "delivered": null,
-    "completed": null
-  },
-  "requirements_submitted": true,
-  "delivery_submitted": false,
-  "revisions_used": 0,
-  "revisions_allowed": 5
-}
-```
-
-### PUT /orders/{id}
-
-Update order (limited fields based on role).
-
-### POST /orders/{id}/message
-
-Send message in order conversation.
-
-**Request Body:**
-```json
-{
-  "message": "Hi, I have a question about...",
-  "attachments": [123, 124]
-}
-```
-
-### POST /orders/{id}/requirements
-
-Submit order requirements (buyer only).
-
-**Request Body:**
-```json
-{
-  "requirements": "Here are my requirements...",
-  "files": [123, 124, 125]
-}
-```
-
-### POST /orders/{id}/delivery
-
-Submit delivery (vendor only).
-
-**Request Body:**
-```json
-{
-  "message": "Here is your completed work...",
-  "files": [456, 457, 458]
-}
-```
-
-### POST /orders/{id}/revision-request
-
-Request revision (buyer only).
-
-**Request Body:**
-```json
-{
-  "reason": "Please change the header color to blue..."
-}
-```
-
-### POST /orders/{id}/accept
-
-Accept order (vendor) or delivery (buyer).
-
-**Response:**
-```json
-{
-  "success": true,
-  "new_status": "in_progress",
-  "message": "Order accepted"
-}
-```
-
-### POST /orders/{id}/reject
-
-Reject order (vendor only).
-
-**Request Body:**
-```json
-{
-  "reason": "Cannot complete this within timeframe"
-}
-```
-
-### POST /orders/{id}/start
-
-Mark order as started (vendor only).
-
-### POST /orders/{id}/complete
-
-Mark order as complete (system, after buyer acceptance).
-
-### POST /orders/{id}/cancel
-
-Cancel order (buyer or vendor with reason).
-
-**Request Body:**
-```json
-{
-  "reason": "No longer needed",
-  "refund": true
-}
-```
-
-### POST /orders/{id}/dispute
-
-Open dispute.
-
-**Request Body:**
-```json
-{
-  "reason": "Service not as described",
-  "description": "The delivered work does not match...",
-  "evidence": [789, 790]
-}
-```
-
-## Vendors Endpoints
-
-### GET /vendors
-
-Get vendors list.
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| page | int | Page number |
-| per_page | int | Items per page |
-| search | string | Search term |
-| category | int | Filter by category |
-| min_rating | float | Minimum rating |
-| tier | string | Vendor tier level |
-| orderby | string | Sort: rating, orders, revenue, join_date |
-
-**Response:**
-```json
-{
-  "vendors": [
-    {
-      "id": 45,
-      "name": "John Doe",
-      "username": "johndoe",
-      "avatar": "url",
-      "tagline": "Expert WordPress Developer",
-      "rating": 4.9,
-      "reviews": 234,
-      "orders": 567,
-      "tier": "top_rated",
-      "member_since": "2024-01-01",
-      "response_time": "1 hour",
-      "url": "https://example.com/vendor/johndoe/"
-    }
-  ],
-  "total": 150
-}
-```
-
-### GET /vendors/{id}
-
-Get vendor profile.
-
-**Response:**
+**Response**:
 ```json
 {
   "id": 45,
-  "name": "John Doe",
-  "username": "johndoe",
-  "avatar": "url",
-  "cover_image": "url",
-  "tagline": "Expert WordPress Developer",
-  "description": "Full bio...",
-  "rating": 4.9,
-  "reviews": 234,
-  "orders": 567,
-  "completion_rate": 98.5,
-  "tier": "top_rated",
-  "member_since": "2024-01-01",
-  "response_time": "1 hour",
-  "languages": ["English", "Spanish"],
-  "skills": ["WordPress", "PHP", "JavaScript"],
-  "certifications": ["WordPress Certified Developer"],
-  "vacation_mode": false,
-  "services_count": 12,
-  "portfolio_items": 25
+  "email": "john@example.com",
+  "display_name": "John Doe",
+  "avatar": "https://example.com/avatar.jpg",
+  "is_vendor": true,
+  "is_admin": false,
+  "capabilities": {
+    "can_create_services": true,
+    "can_manage_orders": false
+  },
+  "vendor_status": "approved",
+  "rating": 4.8,
+  "review_count": 156
 }
 ```
 
-### PUT /vendors/{id}
+### GET /dashboard
 
-Update vendor profile (own profile only).
+Get dashboard statistics for current user.
 
-**Request Body:**
+**Authentication Required**: Yes
+
+**Response**:
 ```json
 {
-  "tagline": "New tagline",
-  "description": "Updated bio",
-  "languages": ["English", "Spanish", "French"],
-  "skills": ["WordPress", "PHP"]
-}
-```
-
-### GET /vendors/{id}/services
-
-Get vendor's services.
-
-### GET /vendors/{id}/portfolio
-
-Get vendor's portfolio items.
-
-## Reviews Endpoints
-
-### GET /reviews
-
-Get reviews list.
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| service_id | int | Filter by service |
-| vendor_id | int | Filter by vendor |
-| rating | int | Filter by rating (1-5) |
-| page | int | Page number |
-| per_page | int | Items per page |
-
-**Response:**
-```json
-{
-  "reviews": [
+  "user_id": 45,
+  "is_vendor": true,
+  "as_customer": {
+    "total_orders": 12,
+    "active_orders": 3,
+    "completed_orders": 9
+  },
+  "as_vendor": {
+    "services_count": 8,
+    "total_orders": 234,
+    "pending_orders": 5,
+    "active_orders": 12,
+    "completed_orders": 217,
+    "total_earnings": 45620.00,
+    "rating": 4.8,
+    "review_count": 156
+  },
+  "pending_orders": [
     {
-      "id": 789,
-      "order_id": 567,
-      "service_id": 123,
-      "vendor_id": 45,
-      "buyer": {
-        "id": 89,
-        "name": "Jane Smith",
-        "avatar": "url"
-      },
-      "rating": 5,
-      "comment": "Excellent work, highly recommended!",
-      "created_at": "2026-02-01T15:00:00",
-      "vendor_reply": "Thank you for your kind words!",
-      "reply_date": "2026-02-01T16:30:00"
-    }
-  ],
-  "total": 42
-}
-```
-
-### POST /reviews
-
-Create review (order buyers only, within review window).
-
-**Request Body:**
-```json
-{
-  "order_id": 567,
-  "rating": 5,
-  "comment": "Excellent work!",
-  "private_feedback": "Delivered early"
-}
-```
-
-### GET /reviews/{id}
-
-Get single review.
-
-## Conversations Endpoints
-
-### GET /conversations/{order_id}
-
-Get order conversation messages.
-
-**Required:** Order buyer, vendor, or admin
-
-**Response:**
-```json
-{
-  "order_id": 567,
-  "messages": [
-    {
-      "id": 123,
-      "sender_id": 89,
-      "sender_name": "Jane Smith",
-      "sender_type": "buyer",
-      "message": "Hi, I have a question...",
-      "attachments": [
-        {
-          "id": 456,
-          "filename": "reference.pdf",
-          "url": "url"
-        }
-      ],
-      "created_at": "2026-02-01T10:15:00",
-      "read": true
-    }
-  ],
-  "unread_count": 2
-}
-```
-
-### POST /conversations/{order_id}/message
-
-Send message (covered in Orders endpoints).
-
-## Disputes Endpoints
-
-### GET /disputes
-
-Get disputes list (admins see all, users see their own).
-
-**Response:**
-```json
-{
-  "disputes": [
-    {
-      "id": 234,
-      "order_id": 567,
-      "opened_by": 89,
-      "opened_by_type": "buyer",
-      "reason": "Service not as described",
-      "status": "open",
-      "opened_at": "2026-02-01T14:00:00"
+      "id": 567,
+      "order_number": "WPSS-567",
+      "service": "WordPress Website Development",
+      "total": "$200.00",
+      "created_at": "2026-02-01T10:00:00"
     }
   ]
 }
 ```
 
-### GET /disputes/{id}
+### POST /batch
 
-Get dispute details.
+Execute multiple API requests in single HTTP call (mobile efficiency).
 
-**Response:**
-```json
-{
-  "id": 234,
-  "order_id": 567,
-  "opened_by": 89,
-  "opened_by_type": "buyer",
-  "reason": "Service not as described",
-  "description": "Full description...",
-  "status": "open",
-  "evidence": [
-    {
-      "submitted_by": 89,
-      "submitted_by_type": "buyer",
-      "message": "Here is proof...",
-      "files": ["url1", "url2"],
-      "submitted_at": "2026-02-01T14:00:00"
-    }
-  ],
-  "admin_notes": [],
-  "opened_at": "2026-02-01T14:00:00",
-  "resolved_at": null,
-  "resolution": null
-}
-```
+**Authentication Required**: Yes
 
-### POST /disputes/{id}/message
+**Maximum Requests**: 25 (filtered via `wpss_batch_max_requests`)
 
-Add evidence or message to dispute.
-
-**Request Body:**
-```json
-{
-  "message": "Additional information...",
-  "files": [123, 124]
-}
-```
-
-### POST /disputes/{id}/escalate
-
-Escalate dispute to admin (vendor or buyer).
-
-### POST /disputes/{id}/resolve
-
-Resolve dispute (admins only).
-
-**Request Body:**
-```json
-{
-  "resolution": "refund_buyer",
-  "notes": "Refund issued to buyer",
-  "refund_amount": 250.00
-}
-```
-
-## Buyer Requests Endpoints
-
-### GET /buyer-requests
-
-Get buyer requests list.
-
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| category | int | Filter by category |
-| min_budget | float | Minimum budget |
-| max_budget | float | Maximum budget |
-| status | string | open, closed, in_progress |
-
-**Response:**
+**Request Body**:
 ```json
 {
   "requests": [
     {
-      "id": 345,
-      "title": "Need WordPress Plugin Development",
-      "category_id": 12,
-      "category_name": "Web Development",
-      "budget": 500.00,
-      "delivery_days": 14,
-      "description": "I need a custom plugin...",
-      "buyer": {
-        "id": 89,
-        "name": "Jane Smith"
-      },
-      "proposals_count": 12,
-      "status": "open",
-      "created_at": "2026-02-01T09:00:00",
-      "expires_at": "2026-02-08T09:00:00"
-    }
-  ]
-}
-```
-
-### POST /buyer-requests
-
-Create buyer request (buyers only).
-
-**Request Body:**
-```json
-{
-  "title": "Need WordPress Plugin",
-  "description": "Detailed description...",
-  "category_id": 12,
-  "budget": 500,
-  "delivery_days": 14,
-  "attachments": [123, 124]
-}
-```
-
-### GET /buyer-requests/{id}
-
-Get request details.
-
-### GET /buyer-requests/{id}/proposals
-
-Get proposals for request.
-
-## Proposals Endpoints
-
-### POST /proposals
-
-Submit proposal (vendors only).
-
-**Request Body:**
-```json
-{
-  "request_id": 345,
-  "message": "I can help you with this project...",
-  "price": 450,
-  "delivery_days": 12,
-  "attachments": [456]
-}
-```
-
-### PUT /proposals/{id}
-
-Update proposal (before acceptance).
-
-### POST /proposals/{id}/accept
-
-Accept proposal (buyer only, creates order).
-
-### DELETE /proposals/{id}
-
-Withdraw proposal (vendor only).
-
-## Generic Endpoints
-
-### GET /categories
-
-Get service categories.
-
-**Response:**
-```json
-{
-  "categories": [
+      "method": "GET",
+      "path": "/wpss/v1/services?per_page=5"
+    },
     {
-      "id": 12,
-      "name": "Web Development",
-      "slug": "web-development",
-      "parent_id": 0,
-      "count": 145,
-      "image": "url"
+      "method": "GET",
+      "path": "/wpss/v1/vendors?per_page=5"
+    },
+    {
+      "method": "POST",
+      "path": "/wpss/v1/favorites",
+      "body": {
+        "service_id": 123
+      }
     }
   ]
 }
 ```
+
+**Response**:
+```json
+{
+  "responses": [
+    {
+      "status": 200,
+      "body": { /* services data */ }
+    },
+    {
+      "status": 200,
+      "body": { /* vendors data */ }
+    },
+    {
+      "status": 201,
+      "body": { "success": true }
+    }
+  ]
+}
+```
+
+**Notes**:
+- All sub-requests must be within `/wpss/v1/` namespace
+- Authentication inherited from parent request
+- Each sub-request processed independently
+- Failed requests don't stop batch processing
 
 ### GET /search
 
 Global search across services and vendors.
 
-**Parameters:**
-- `q`: Search query
-- `type`: services, vendors, or both
+**Parameters**:
+- `q` (string, required) - Search query
+- `type` (string) - Search type: `all`, `services`, `vendors` (default: `all`)
+
+**Response**:
+```json
+{
+  "query": "wordpress",
+  "services": [
+    {
+      "id": 123,
+      "title": "WordPress Development",
+      "slug": "wordpress-development",
+      "thumbnail": "https://example.com/thumb.jpg",
+      "price": "$100.00",
+      "rating": 4.8,
+      "url": "https://example.com/service/wordpress-development"
+    }
+  ],
+  "vendors": [
+    {
+      "id": 45,
+      "display_name": "John Doe",
+      "avatar": "https://example.com/avatar.jpg",
+      "tagline": "Expert WordPress Developer",
+      "rating": 4.9,
+      "url": "https://example.com/vendor/johndoe"
+    }
+  ]
+}
+```
 
 ## Error Handling
 
-### Error Response Format
+### Standard Error Format
+
+All errors follow WordPress REST API error format:
 
 ```json
 {
@@ -921,45 +517,24 @@ Global search across services and vendors.
 |------|--------|-------------|
 | `rest_forbidden` | 401 | Authentication required |
 | `rest_forbidden_context` | 403 | Insufficient permissions |
-| `invalid_request` | 400 | Invalid parameters |
+| `invalid_request` | 400 | Invalid or missing parameters |
 | `not_found` | 404 | Resource not found |
 | `server_error` | 500 | Internal server error |
-
-## Rate Limiting
-
-**[PRO]** API rate limiting protects server resources:
-
-- **Authenticated users**: 300 requests/hour
-- **Application passwords**: 1000 requests/hour
-- **Admins**: Unlimited
-
-**Rate limit headers:**
-```
-X-RateLimit-Limit: 300
-X-RateLimit-Remaining: 245
-X-RateLimit-Reset: 1706785200
-```
-
-When exceeded:
-```json
-{
-  "code": "rate_limit_exceeded",
-  "message": "API rate limit exceeded",
-  "data": {
-    "status": 429,
-    "retry_after": 3600
-  }
-}
-```
+| `rate_limit_exceeded` | 429 | Too many requests **[PRO]** |
 
 ## Pagination
 
 ### Pagination Parameters
 
-- `page`: Current page (default: 1)
-- `per_page`: Items per page (default: 10, max: 100)
+All list endpoints support pagination:
+
+**Parameters**:
+- `page` (int) - Current page number (default: 1)
+- `per_page` (int) - Items per page (default: 10, max: 100)
 
 ### Pagination Headers
+
+Responses include pagination headers:
 
 ```
 X-WP-Total: 50
@@ -967,7 +542,7 @@ X-WP-TotalPages: 5
 Link: <url?page=2>; rel="next", <url?page=5>; rel="last"
 ```
 
-### Pagination Response
+### Pagination Response Body
 
 ```json
 {
@@ -979,8 +554,75 @@ Link: <url?page=2>; rel="next", <url?page=5>; rel="last"
 }
 ```
 
+## CORS Support
+
+CORS headers are automatically added for requests to `/wp-json/wpss/` namespace.
+
+**Allowed Origins**: Configurable via `wpss_api_cors_origins` filter (default: site home URL)
+
+**Allowed Methods**: GET, POST, PUT, PATCH, DELETE, OPTIONS
+
+**Allowed Headers**: Authorization, Content-Type, X-WP-Nonce
+
+**Example Filter**:
+```php
+add_filter( 'wpss_api_cors_origins', function( $origins ) {
+    $origins[] = 'https://mobile-app.example.com';
+    return $origins;
+} );
+```
+
+## Rate Limiting **[PRO]**
+
+API rate limiting protects against abuse.
+
+**Limits**:
+- Authenticated users: 300 requests/hour
+- Application passwords: 1000 requests/hour
+- Administrators: Unlimited
+
+**Rate Limit Headers**:
+```
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 245
+X-RateLimit-Reset: 1706785200
+```
+
+**Rate Limit Exceeded Response**:
+```json
+{
+  "code": "rate_limit_exceeded",
+  "message": "API rate limit exceeded. Please try again later.",
+  "data": {
+    "status": 429,
+    "retry_after": 3600
+  }
+}
+```
+
+## Extending the API
+
+### Adding Custom Endpoints
+
+Register custom controllers via `wpss_api_controllers` filter:
+
+```php
+add_filter( 'wpss_api_controllers', function( $controllers ) {
+    $controllers[] = new My_Custom_Controller();
+    return $controllers;
+} );
+```
+
+See [Custom Integrations](custom-integrations.md) for detailed examples.
+
 ## Related Documentation
 
-- [Hooks and Filters](hooks-filters.md) - Extending API functionality
+- [Hooks and Filters](hooks-filters.md) - Available action and filter hooks
 - [Custom Integrations](custom-integrations.md) - Building custom controllers
-- [Authentication Setup](../settings/security-settings.md) - Security configuration
+- [Theme Integration](theme-integration.md) - Frontend integration
+
+---
+
+**API Version**: v1
+**Last Updated**: Compatible with WP Sell Services 1.0.0+
+**WordPress Version**: Requires WordPress 6.4+ with REST API enabled

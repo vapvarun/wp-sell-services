@@ -4,7 +4,9 @@ Customize the appearance of marketplace pages by overriding plugin templates in 
 
 ## Template System Overview
 
-WP Sell Services uses a template hierarchy similar to WordPress. You can override any template by copying it to your theme.
+WP Sell Services uses a template hierarchy similar to WordPress themes. Copy any template to your theme to customize it without losing changes during plugin updates.
+
+---
 
 ## How Template Overrides Work
 
@@ -16,99 +18,48 @@ WordPress checks for templates in this order:
 2. **Parent Theme:** `theme/wp-sell-services/{template}.php`
 3. **Plugin:** `wp-sell-services/templates/{template}.php` (fallback)
 
-When you create a template in your theme, it takes priority over the plugin's default template.
+When you create a template in your theme, it takes priority over the plugin's default.
 
 ### Update-Safe Customization
 
 **Benefits:**
-- Your customizations persist through plugin updates
-- Plugin updates don't overwrite your changes
+- Changes persist through plugin updates
 - Clean separation of plugin code and custom design
-- Easy to track what you've customized
+- Easy to track customizations
+- Version control friendly
+
+---
 
 ## Available Templates
 
-### Service Templates
+### Core Templates
 
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `single-service.php` | Individual service page | `templates/single-service.php` |
-| `archive-service.php` | Service catalog/archive | `templates/archive-service.php` |
-| `content-service.php` | Service card in listings | `templates/partials/content-service.php` |
-| `service-packages.php` | Pricing packages display | `templates/partials/service-packages.php` |
-| `service-gallery.php` | Service image gallery | `templates/partials/service-gallery.php` |
-| `service-reviews.php` | Service review section | `templates/partials/service-reviews.php` |
-| `service-vendor.php` | Vendor info on service page | `templates/partials/service-vendor.php` |
+Template files available for override:
 
-### Buyer Request Templates
+**Service Templates:**
+- `single-service.php` - Individual service page
+- `archive-service.php` - Service archive/catalog
+- `content-service-card.php` - Service card in listings
 
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `single-request.php` | Individual request page | `templates/single-request.php` |
-| `archive-request.php` | Request listings | `templates/archive-request.php` |
-| `content-request.php` | Request card in listings | `templates/partials/content-request.php` |
-| `request-form.php` | Post request form | `templates/partials/request-form.php` |
+**Vendor Templates:**
+- `vendor/profile.php` - Vendor profile page
 
-### Dashboard Templates
+**Order Templates:**
+- `order/details.php` - Order details page
 
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `dashboard/overview.php` | Dashboard overview page | `templates/dashboard/overview.php` |
-| `dashboard/services.php` | Vendor service management | `templates/dashboard/services.php` |
-| `dashboard/orders.php` | Order management | `templates/dashboard/orders.php` |
-| `dashboard/earnings.php` | Vendor earnings page | `templates/dashboard/earnings.php` |
-| `dashboard/profile.php` | Profile settings | `templates/dashboard/profile.php` |
-| `dashboard/requests.php` | Buyer requests page | `templates/dashboard/requests.php` |
-| `dashboard/messages.php` | Messaging interface | `templates/dashboard/messages.php` |
-| `dashboard/nav.php` | Dashboard navigation | `templates/dashboard/nav.php` |
+### Template Location
 
-### Order Templates
+**Plugin Default:**
+```
+wp-sell-services/templates/{template}.php
+```
 
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `order/order-details.php` | Order details page | `templates/order/order-details.php` |
-| `order/order-requirements.php` | Order requirements form | `templates/order/order-requirements.php` |
-| `order/order-delivery.php` | Delivery upload form | `templates/order/order-delivery.php` |
-| `order/order-revision.php` | Revision request form | `templates/order/order-revision.php` |
-| `order/order-messages.php` | Order messaging | `templates/order/order-messages.php` |
+**Theme Override:**
+```
+your-theme/wp-sell-services/{template}.php
+```
 
-### Email Templates
-
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `emails/header.php` | Email header | `templates/emails/header.php` |
-| `emails/footer.php` | Email footer | `templates/emails/footer.php` |
-| `emails/new-order.php` | New order notification | `templates/emails/new-order.php` |
-| `emails/order-delivered.php` | Delivery notification | `templates/emails/order-delivered.php` |
-| `emails/order-completed.php` | Completion notification | `templates/emails/order-completed.php` |
-| `emails/revision-requested.php` | Revision request email | `templates/emails/revision-requested.php` |
-
-### Dispute Templates
-
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `disputes/dispute-form.php` | Open dispute form | `templates/disputes/dispute-form.php` |
-| `disputes/dispute-details.php` | Dispute details page | `templates/disputes/dispute-details.php` |
-| `disputes/dispute-messages.php` | Dispute messaging | `templates/disputes/dispute-messages.php` |
-
-### Account Templates
-
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `myaccount/login.php` | Login form | `templates/myaccount/login.php` |
-| `myaccount/register.php` | Registration form | `templates/myaccount/register.php` |
-| `myaccount/forgot-password.php` | Password reset | `templates/myaccount/forgot-password.php` |
-| `myaccount/vendor-profile.php` | Public vendor profile | `templates/myaccount/vendor-profile.php` |
-
-### Partial Templates
-
-| Template | Purpose | Location |
-|----------|---------|----------|
-| `partials/breadcrumbs.php` | Breadcrumb navigation | `templates/partials/breadcrumbs.php` |
-| `partials/pagination.php` | Pagination links | `templates/partials/pagination.php` |
-| `partials/rating-stars.php` | Star rating display | `templates/partials/rating-stars.php` |
-| `partials/price.php` | Price formatting | `templates/partials/price.php` |
-| `partials/vendor-badge.php` | Vendor verification badge | `templates/partials/vendor-badge.php` |
+---
 
 ## Creating Template Overrides
 
@@ -122,393 +73,193 @@ your-theme/
 └── wp-sell-services/
     ├── single-service.php
     ├── archive-service.php
-    ├── dashboard/
-    ├── order/
-    ├── emails/
-    └── partials/
+    ├── content-service-card.php
+    ├── vendor/
+    │   └── profile.php
+    └── order/
+        └── details.php
 ```
 
 **2. Copy Template from Plugin**
 
-Copy the template you want to customize:
+Copy the file you want to customize:
 
-**From Plugin:**
+**From:**
 ```
-wp-sell-services/templates/single-service.php
-```
-
-**To Theme:**
-```
-your-theme/wp-sell-services/single-service.php
+/wp-content/plugins/wp-sell-services/templates/single-service.php
 ```
 
-**3. Edit Template in Theme**
+**To:**
+```
+/wp-content/themes/your-theme/wp-sell-services/single-service.php
+```
+
+**3. Edit Template**
 
 Open the theme version and make your changes. Your customizations are now update-safe.
 
-**4. Test Your Changes**
+**4. Test Changes**
 
-1. Clear cache (site and browser)
+1. Clear all caches
 2. View the relevant page
-3. Verify your changes appear
+3. Verify changes appear
 4. Test on different devices
 
-### Example: Customizing Service Page
-
-**Original Plugin Template:**
-```php
-<?php
-/**
- * Single Service Template
- * Location: wp-sell-services/templates/single-service.php
- */
-
-get_header();
-
-while ( have_posts() ) : the_post();
-    wpss_get_template_part( 'content', 'single-service' );
-endwhile;
-
-get_footer();
-```
-
-**Customized Theme Template:**
-```php
-<?php
-/**
- * Custom Single Service Template
- * Location: your-theme/wp-sell-services/single-service.php
- */
-
-get_header();
-?>
-
-<div class="custom-service-wrapper">
-    <div class="custom-sidebar">
-        <?php wpss_get_template_part( 'partials/service-vendor' ); ?>
-        <?php wpss_get_template_part( 'partials/service-packages' ); ?>
-    </div>
-
-    <div class="custom-main-content">
-        <?php
-        while ( have_posts() ) : the_post();
-            ?>
-            <h1 class="custom-service-title"><?php the_title(); ?></h1>
-
-            <div class="custom-service-meta">
-                <?php wpss_service_rating(); ?>
-                <?php wpss_service_order_count(); ?>
-            </div>
-
-            <div class="custom-service-gallery">
-                <?php wpss_get_template_part( 'partials/service-gallery' ); ?>
-            </div>
-
-            <div class="custom-service-description">
-                <?php the_content(); ?>
-            </div>
-
-            <div class="custom-service-reviews">
-                <?php wpss_get_template_part( 'partials/service-reviews' ); ?>
-            </div>
-            <?php
-        endwhile;
-        ?>
-    </div>
-</div>
-
-<?php get_footer(); ?>
-```
+---
 
 ## Template Functions
 
-Use these functions within templates to display marketplace data.
+Use these functions within templates to display data.
 
-### Service Functions
+### Service Data Functions
 
 ```php
-// Get service data
+// Service information
 $service_id = get_the_ID();
-$service = wpss_get_service( $service_id );
+$price = get_post_meta( $service_id, '_wpss_starting_price', true );
+$rating = get_post_meta( $service_id, '_wpss_rating_average', true );
+$delivery = get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+$featured = get_post_meta( $service_id, '_wpss_is_featured', true );
 
-// Display service price (starting from)
-wpss_service_price();
-
-// Display service rating
-wpss_service_rating();
-
-// Display vendor information
-wpss_service_vendor();
-
-// Display order count
-wpss_service_order_count();
-
-// Display delivery time
-wpss_service_delivery_time();
-
-// Check if service is featured
-if ( wpss_is_featured_service() ) {
-    echo '<span class="featured-badge">Featured</span>';
+// Display formatted price
+if ( function_exists( 'wpss_format_currency' ) ) {
+    echo wpss_format_currency( $price );
 }
-
-// Display add to favorites button
-wpss_favorite_button();
-
-// Display share buttons
-wpss_share_buttons();
 ```
 
-### Vendor Functions
+### Vendor Data Functions
 
 ```php
-// Get vendor data
+// Get vendor information
 $vendor_id = get_the_author_meta( 'ID' );
-$vendor = wpss_get_vendor( $vendor_id );
+$vendor = get_userdata( $vendor_id );
+
+// Display avatar
+echo get_avatar( $vendor_id, 80 );
 
 // Display vendor name
-echo wpss_get_vendor_name( $vendor_id );
-
-// Display vendor avatar
-echo wpss_get_vendor_avatar( $vendor_id, 100 );
-
-// Display vendor rating
-wpss_vendor_rating( $vendor_id );
-
-// Display vendor badge
-wpss_vendor_badge( $vendor_id );
-
-// Get vendor stats
-$stats = wpss_get_vendor_stats( $vendor_id );
-echo 'Orders: ' . $stats['orders'];
-echo 'Rating: ' . $stats['rating'];
-echo 'Response Time: ' . $stats['response_time'];
+echo esc_html( $vendor->display_name );
 ```
 
-### Order Functions
+### Template Helper Functions
 
 ```php
-// Get order data
-$order_id = $_GET['order_id'];
-$order = wpss_get_order( $order_id );
+// Check if template exists
+$template = locate_template( 'wp-sell-services/single-service.php' );
 
-// Display order status
-wpss_order_status( $order_id );
-
-// Display order timeline
-wpss_order_timeline( $order_id );
-
-// Display delivery countdown
-wpss_delivery_countdown( $order_id );
-
-// Check if user can review
-if ( wpss_can_review_order( $order_id ) ) {
-    wpss_review_form( $order_id );
-}
+// Get template part
+wpss_get_template_part( 'content', 'service-card' );
 ```
 
-### Helper Functions
+---
+
+## Example: Service Card Override
+
+**Plugin Default:**
+`templates/content-service-card.php`
+
+**Theme Override:**
+`your-theme/wp-sell-services/content-service-card.php`
 
 ```php
-// Format price
-echo wpss_format_price( 150.00 ); // Outputs: $150.00
+<?php
+/**
+ * Service Card Template Override
+ */
 
-// Format date
-echo wpss_format_date( '2026-01-15' ); // Outputs: January 15, 2026
+$service_id = get_the_ID();
+$price = get_post_meta( $service_id, '_wpss_starting_price', true );
+$rating = get_post_meta( $service_id, '_wpss_rating_average', true );
+$vendor = get_userdata( get_post_field( 'post_author', $service_id ) );
+?>
 
-// Get service categories
-$categories = wpss_get_service_categories();
+<div class="custom-service-card">
+    <?php if ( has_post_thumbnail() ) : ?>
+        <a href="<?php the_permalink(); ?>" class="custom-thumbnail">
+            <?php the_post_thumbnail( 'medium' ); ?>
+        </a>
+    <?php endif; ?>
 
-// Get service tags
-$tags = wpss_get_service_tags();
+    <div class="custom-service-info">
+        <div class="custom-vendor">
+            <?php echo get_avatar( $vendor->ID, 32 ); ?>
+            <span><?php echo esc_html( $vendor->display_name ); ?></span>
+        </div>
 
-// Check user permissions
-if ( wpss_is_vendor() ) {
-    // User is a vendor
-}
+        <h3 class="custom-title">
+            <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+        </h3>
 
-if ( wpss_is_buyer() ) {
-    // User is a buyer
-}
+        <div class="custom-meta">
+            <?php if ( $rating ) : ?>
+                <span class="rating"><?php echo esc_html( number_format( (float) $rating, 1 ) ); ?> ★</span>
+            <?php endif; ?>
+
+            <?php if ( $price ) : ?>
+                <span class="price">
+                    <?php esc_html_e( 'From', 'wp-sell-services' ); ?>
+                    <?php echo esc_html( '$' . number_format( (float) $price, 2 ) ); ?>
+                </span>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
 ```
+
+---
 
 ## Template Hooks
 
-Add custom content at specific points using action hooks.
+Add custom content via action hooks without overriding entire templates.
 
-### Service Page Hooks
+### Available Hooks
 
 ```php
-// Before service content
+// Service single page hooks
 do_action( 'wpss_before_service_content' );
-
-// After service title
 do_action( 'wpss_after_service_title' );
-
-// Before service description
-do_action( 'wpss_before_service_description' );
-
-// After service description
-do_action( 'wpss_after_service_description' );
-
-// Before service packages
-do_action( 'wpss_before_service_packages' );
-
-// After service packages
-do_action( 'wpss_after_service_packages' );
-
-// Before service reviews
-do_action( 'wpss_before_service_reviews' );
-
-// After service reviews
-do_action( 'wpss_after_service_reviews' );
-
-// After service content
 do_action( 'wpss_after_service_content' );
 ```
 
 ### Example Hook Usage
 
-**Add Trust Badge After Service Title:**
+Add custom content after service title:
 
 ```php
 // In your theme's functions.php
-add_action( 'wpss_after_service_title', 'custom_add_trust_badge' );
-
-function custom_add_trust_badge() {
-    if ( wpss_is_featured_service() ) {
-        echo '<div class="trust-badge">
-                <img src="' . get_stylesheet_directory_uri() . '/images/verified.svg" alt="Verified">
-                <span>Verified Service</span>
-              </div>';
-    }
-}
+add_action( 'wpss_after_service_title', function() {
+    echo '<div class="custom-badge">Verified Service</div>';
+} );
 ```
 
-**Add Custom CTA Before Packages:**
+---
+
+## Loading Template Parts
+
+### Using locate_template()
 
 ```php
-add_action( 'wpss_before_service_packages', 'custom_add_cta' );
+// Check if template exists in theme
+$template = locate_template( 'wp-sell-services/vendor/profile.php' );
 
-function custom_add_cta() {
-    echo '<div class="custom-cta">
-            <h3>Ready to get started?</h3>
-            <p>Choose a package below that fits your needs.</p>
-          </div>';
-}
-```
-
-## Template Loading Function
-
-Load template parts programmatically.
-
-### wpss_get_template_part()
-
-```php
-/**
- * Load a template part
- *
- * @param string $slug Template slug (e.g., 'partials/service-vendor')
- * @param string $name Template variation (optional)
- * @param array  $args Variables to pass to template
- */
-wpss_get_template_part( $slug, $name = '', $args = array() );
-```
-
-**Examples:**
-
-```php
-// Load service vendor partial
-wpss_get_template_part( 'partials/service-vendor' );
-
-// Load with variation
-wpss_get_template_part( 'content', 'service-grid' );
-
-// Load with variables
-wpss_get_template_part( 'partials/service-card', '', array(
-    'service_id' => 123,
-    'show_price' => true,
-    'show_rating' => true,
-) );
-```
-
-**Accessing Variables in Template:**
-
-```php
-<?php
-// In your template file
-extract( $args ); // Extracts variables from $args array
-
-echo $service_id; // 123
-echo $show_price; // true
-?>
-```
-
-## Conditional Template Loading
-
-Load different templates based on conditions.
-
-### Context-Based Templates
-
-```php
-<?php
-// In single-service.php
-
-if ( wpss_is_digital_service() ) {
-    wpss_get_template_part( 'partials/digital-service-info' );
+if ( $template ) {
+    include $template;
 } else {
-    wpss_get_template_part( 'partials/service-info' );
+    // Use plugin default
+    include WPSS_PLUGIN_DIR . 'templates/vendor/profile.php';
 }
-
-// User-specific content
-if ( wpss_is_vendor() && wpss_is_own_service() ) {
-    wpss_get_template_part( 'partials/service-edit-link' );
-}
-?>
 ```
 
-## Template Debugging
+### Using wpss_get_template_part()
 
-Enable template debugging to see which templates are loaded.
-
-### Enable Debug Mode
-
-Add to `wp-config.php`:
+If the plugin provides this helper:
 
 ```php
-define( 'WPSS_TEMPLATE_DEBUG', true );
+// Load template part
+wpss_get_template_part( 'content', 'service-card' );
 ```
 
-**What It Shows:**
-- Which template file is being loaded
-- Template hierarchy checked
-- Override location (if customized)
-- Template variables available
-
-**Debug Output Example:**
-```
-<!-- Template: single-service.php -->
-<!-- Location: /wp-content/themes/your-theme/wp-sell-services/single-service.php -->
-<!-- Type: Override (from theme) -->
-```
-
-## Best Practices
-
-### Do's
-
-✓ **Always copy entire template** - Don't edit plugin files directly
-✓ **Keep templates updated** - Check for changes in plugin updates
-✓ **Use hooks when possible** - Less code to maintain
-✓ **Test thoroughly** - Verify on different screen sizes
-✓ **Comment your changes** - Document why you customized
-✓ **Use child themes** - Protect from theme updates too
-
-### Don'ts
-
-✗ **Don't edit plugin templates** - Updates will overwrite changes
-✗ **Don't remove essential functions** - May break functionality
-✗ **Don't hardcode values** - Use template functions instead
-✗ **Don't skip testing** - Broken templates affect user experience
-✗ **Don't ignore errors** - Check debug log for issues
+---
 
 ## Troubleshooting
 
@@ -516,53 +267,60 @@ define( 'WPSS_TEMPLATE_DEBUG', true );
 
 **Check:**
 1. File path is exactly `your-theme/wp-sell-services/{template}.php`
-2. File name matches plugin template exactly (case-sensitive)
-3. Clear all caches (site cache, browser cache, object cache)
-4. Verify file permissions (644 for files, 755 for directories)
-5. Check for PHP errors in debug log
+2. File name matches plugin template (case-sensitive)
+3. Clear all caches (object cache, page cache, browser)
+4. File permissions are correct (644 for files)
+5. No PHP errors in debug log
 
 ### Changes Not Appearing
 
 **Solutions:**
-1. Clear cache (especially if using caching plugin)
+1. Clear cache (plugin, theme, hosting, CDN)
 2. Hard refresh browser (Ctrl+Shift+R or Cmd+Shift+R)
-3. Check if correct template is being loaded (enable debug mode)
-4. Verify no inline CSS overriding changes
-5. Test in different browser/incognito mode
+3. Check correct template is loaded (add test comment)
+4. Verify no inline styles overriding changes
+5. Test in incognito/private browsing mode
 
 ### Missing Data or Errors
 
 **Verify:**
-1. You're using correct template functions
-2. Variables exist before using them (check with `isset()`)
-3. No PHP syntax errors in custom template
-4. Required plugin functions are available
-5. Check error log for specific error messages
+1. Using correct WordPress functions
+2. Variables exist before using (`isset()`, `empty()`)
+3. No PHP syntax errors
+4. Required plugin functions available
+5. Check error log for specific messages
 
-## Version Compatibility
+---
 
-### Checking for Template Changes
+## Best Practices
 
-After plugin updates, check if templates changed:
+### Do's
 
-1. Go to **WP Sell Services → System Status**
-2. View **Outdated Templates** section
-3. See list of templates with updates
-4. Compare your customized version with new version
-5. Update your template if needed
+- Always copy entire template (don't edit plugin files)
+- Keep templates updated with plugin changes
+- Use hooks when possible (less maintenance)
+- Test on different screen sizes
+- Comment your changes
+- Use child themes
 
-**Safe Update Process:**
-1. Backup your customized template
-2. Copy new template from plugin
-3. Re-apply your customizations
-4. Test thoroughly
+### Don'ts
+
+- Don't edit plugin templates directly
+- Don't remove essential functionality
+- Don't hardcode values (use functions)
+- Don't skip testing
+- Don't ignore error messages
+
+---
 
 ## Related Documentation
 
 - [Shortcodes Reference](shortcodes-reference.md) - Alternative to templates
 - [Gutenberg Blocks](gutenberg-blocks.md) - Block-based customization
-- [Advanced Settings](../admin-settings/advanced-settings.md) - Feature toggles
-- [WooCommerce Setup](../integrations/woocommerce-setup.md) - E-commerce templates
+- [SEO Schema](seo-schema.md) - Schema markup
+- [Search Filters](search-filters.md) - Search functionality
+
+---
 
 ## Next Steps
 

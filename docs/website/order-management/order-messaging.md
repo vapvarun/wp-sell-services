@@ -9,17 +9,32 @@ WP Sell Services includes an order-based messaging system that allows:
 - File attachments in messages
 - Real-time message notifications
 - Message history preservation
-- Admin message monitoring
+- Admin message monitoring (view only)
 
 **Key Features:**
 - Threaded conversations per order
 - Email notifications for new messages
 - File sharing (documents, images, references)
-- Message read status
-- Automatic polling for new messages
+- Message read status tracking
+- Unread count badges
 - Mobile-responsive interface
 
 ![Order messaging interface](../images/frontend-order-messaging.png)
+
+## Conversation Creation
+
+**Automatic:** A conversation is created automatically when an order is placed:
+
+```php
+// Triggered by OrderWorkflowManager when payment confirmed
+$conversation = ConversationService::create_for_order($order_id);
+```
+
+**Conversation Data:**
+- Subject: "Order {ORDER_NUMBER}"
+- Participants: `[customer_id, vendor_id]`
+- Order reference: Linked to order record
+- Status: Open by default, closed when order completed
 
 ## Accessing Order Messages
 
@@ -32,7 +47,7 @@ WP Sell Services includes an order-based messaging system that allows:
 4. View conversation history
 5. Type and send messages
 
-**Quick Message:**
+**Quick Message (Theme-Dependent):**
 - Some themes show **Message** button on order card
 - Click to open messaging modal
 - Send quick message without opening full order
@@ -49,8 +64,8 @@ WP Sell Services includes an order-based messaging system that allows:
 
 **Message Notifications:**
 - Notification badge on dashboard
-- Unread message count
-- Email notifications
+- Unread message count per order
+- Email notifications (configurable)
 
 ### Admin Access
 
@@ -59,15 +74,153 @@ WP Sell Services includes an order-based messaging system that allows:
 2. Open any order
 3. View **Messages** tab
 4. See all buyer-vendor communication
-5. Participate in conversation if needed
 
-**Admin Monitoring:**
-- View all messages (for quality assurance)
-- Intervene in disputes
-- Ensure professional communication
-- Provide support when needed
+**Important:** Admins can VIEW messages but cannot REPLY directly. This is by design to keep conversations between the two parties. Admin intervention should happen through dispute resolution or direct user contact.
+
+**Admin Capabilities:**
+- View all messages in any conversation
+- See message timestamps and read status
+- Download message attachments
+- Monitor for policy violations
+- Export conversation history
 
 ![Admin message monitoring](../images/admin-message-monitoring.png)
+
+## Message Types
+
+The system supports 6 message types (stored in database `type` field):
+
+### 1. Text Message
+
+**Type:** `text`
+
+**Description:** Standard text communication between parties
+
+**Sent By:** Buyer or Vendor
+
+**Example:**
+```
+"I've reviewed your requirements and will start work tomorrow."
+```
+
+**Properties:**
+- `sender_id`: User ID who sent message
+- `content`: Message text
+- `attachments`: Empty array
+- `read_by`: Array of user IDs who read it
+
+### 2. Attachment Message
+
+**Type:** `attachment`
+
+**Description:** Message with file attachments
+
+**Sent By:** Buyer or Vendor
+
+**Example:**
+```
+"Here are the reference files you requested."
++ logo.png (45 KB)
++ brand-guidelines.pdf (2.3 MB)
+```
+
+**Properties:**
+- `attachments`: Array of file objects with `id`, `name`, `url`, `type`, `size`
+- `content`: Optional text accompanying files
+
+### 3. Delivery Message
+
+**Type:** `delivery`
+
+**Description:** Vendor submits order delivery
+
+**Sent By:** System (triggered by vendor action)
+
+**Example:**
+```
+"Delivery submitted - Version 1
+Your order has been delivered. Please review and accept or request revision."
++ final-design.zip (12 MB)
+```
+
+**Properties:**
+- `sender_id`: Vendor ID
+- `content`: Delivery message from vendor
+- `attachments`: Delivery files
+- `metadata`: Delivery version, status
+
+**Note:** Created automatically when `DeliveryService::submit()` is called.
+
+### 4. Revision Request Message
+
+**Type:** `revision`
+
+**Description:** Buyer requests changes to delivery
+
+**Sent By:** System (triggered by buyer action)
+
+**Example:**
+```
+"Revision requested
+Please make the following changes:
+- Adjust the header color to match brand
+- Fix typo on page 3"
+```
+
+**Properties:**
+- `sender_id`: Buyer ID
+- `content`: Revision feedback from buyer
+- `metadata`: Revision count
+
+**Note:** Created automatically when `DeliveryService::request_revision()` is called.
+
+### 5. Status Change Message
+
+**Type:** `status_change`
+
+**Description:** Order status transition notification
+
+**Sent By:** System
+
+**Example:**
+```
+"Order status changed from In Progress to Pending Approval"
+```
+
+**Properties:**
+- `sender_id`: 0 (system)
+- `content`: Status change description
+- `metadata`: `old_status`, `new_status`
+
+**Note:** Created automatically by `OrderService::log_status_change()` on every status transition.
+
+### 6. System Message
+
+**Type:** `system`
+
+**Description:** Automated notifications and admin messages
+
+**Sent By:** System (sender_id = 0)
+
+**Examples:**
+```
+"Extension requested: 3 days. Reason: Need more time to finalize design"
+"Extension approved: Deadline extended by 3 days."
+"Order marked as late - deadline exceeded"
+"Requirements timeout: Order auto-started after 7 days"
+```
+
+**Properties:**
+- `sender_id`: 0 (indicates system message)
+- `content`: System-generated text
+- `metadata`: Context-specific data
+
+**Use Cases:**
+- Extension requests/responses
+- Deadline notifications
+- Milestone updates **[PRO]**
+- Auto-completion notices
+- Timeout actions
 
 ## Sending Messages
 
@@ -77,16 +230,104 @@ WP Sell Services includes an order-based messaging system that allows:
 2. Type message in text area
 3. (Optional) Format message:
    - Line breaks for paragraphs
-   - Bullet points with dashes
-   - Bold for emphasis (if supported)
+   - Keep it professional
 4. (Optional) Attach files
 5. Click **Send Message**
 
 ![Message composition](../images/frontend-message-compose.png)
 
-### Message Best Practices
+### File Attachments
 
-**Professional Communication:**
+**Allowed File Types:**
+```
+Images: jpg, jpeg, png, gif, webp
+Documents: pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv
+Archives: zip, rar, 7z
+Media: mp3, wav, mp4, mov, avi, webm
+Design: psd, ai, eps, sketch, fig
+Other: json, xml
+```
+
+**Removed for Security:**
+- ❌ SVG - Can contain embedded JavaScript (XSS risk)
+- ❌ HTML - Executable code risk
+- ❌ CSS - Can contain expressions/imports
+- ❌ JS - Executable JavaScript
+
+**File Size Limit:** Determined by WordPress `upload_max_filesize` setting (typically 2-10MB default, configurable up to 50MB for requirements)
+
+**Attachment Process:**
+1. File validated client-side (type, size)
+2. Uploaded via WordPress media library
+3. Attachment created with `post_status: 'private'`
+4. Stored with order reference in metadata
+5. URL and metadata returned to message system
+
+### Message Validation
+
+**Required:**
+- Message content OR attachment (cannot be empty)
+- Sender must be conversation participant
+- Conversation must not be closed
+
+**Blocked Scenarios:**
+- Admin trying to reply (can only view)
+- Non-participant trying to send
+- Conversation marked as closed
+- Order in `cancelled` status
+
+### Read Status
+
+**Tracking:**
+- `read_by` field stores user IDs who have read the message
+- Sender automatically marked as read
+- Recipients marked as read when they view conversation
+- Unread count calculated per user
+
+**Mark as Read:**
+```php
+ConversationService::mark_as_read($conversation_id, $user_id);
+```
+
+**Result:**
+- All unread messages marked as read for that user
+- Unread count for user reset to 0
+- Unread badge updated in UI
+
+## Notifications
+
+### Email Notifications
+
+**Trigger:** New message sent (excluding system messages from sender perspective)
+
+**Recipients:**
+- Other participant (not the sender)
+- Only if email notifications enabled
+
+**Email Content:**
+- Subject: "New message on Order {ORDER_NUMBER}"
+- Sender name
+- Message excerpt (first 100 characters)
+- Link to view full message in dashboard
+
+**Configuration:** Settings → Emails → New Message
+
+### In-App Notifications
+
+**Unread Count Badge:**
+- Shows on dashboard menu/icon
+- Updates in real-time (if polling enabled)
+- Persists across page loads
+
+**Notification System:**
+- Integrated with `NotificationService`
+- Creates notification record when message sent
+- Links to order messages tab
+- Marked as read when user views conversation
+
+## Best Practices
+
+### Professional Communication
 
 ✅ **Do:**
 - Use proper grammar and spelling
@@ -95,28 +336,28 @@ WP Sell Services includes an order-based messaging system that allows:
 - Stay on-topic (order-related)
 - Use paragraphs for readability
 - Thank the other party
+- Provide clear, specific feedback
 
 ❌ **Don't:**
 - Use all caps (LOOKS LIKE SHOUTING)
 - Be rude or confrontational
-- Share personal contact info (phone, email) to bypass platform
+- Share personal contact info to bypass platform
 - Discuss off-platform payments
 - Use offensive language
 - Ignore messages
+- Request work outside order scope
 
-**Message Templates:**
+### Message Templates
 
-**Vendor: Order Accepted**
+**Vendor: Order Started**
 ```
 Hi [Buyer Name],
 
-Thank you for your order! I'm excited to work on [service description].
+Thank you for your order! I've reviewed your requirements and have everything I need to get started.
 
-I've reviewed your requirements and have everything I need to get started.
-I'll deliver your completed [deliverable] by [deadline date].
+I'll deliver your [deliverable] by [deadline date]. I'll keep you updated on progress.
 
-I'll keep you updated on progress. Feel free to reach out if you have
-any questions!
+Feel free to reach out if you have any questions!
 
 Best regards,
 [Your Name]
@@ -133,10 +374,7 @@ Quick update on your order:
 🔄 In Progress: [Task 3]
 📋 Next: [Task 4]
 
-Everything is on track for delivery by [deadline]. I'll send another
-update in 2 days.
-
-Let me know if you have any questions!
+Everything is on track for delivery by [deadline].
 
 Best regards,
 [Your Name]
@@ -148,592 +386,264 @@ Hi [Vendor Name],
 
 I have a quick question about [specific aspect]:
 
-[Your question here]
+[Your question]
 
-Thanks for your help!
+Please let me know when you have a chance.
 
-Best regards,
+Thanks!
 [Your Name]
 ```
 
-**Buyer: Clarification on Requirements**
+**Buyer: Revision Request**
 ```
 Hi [Vendor Name],
 
-I wanted to clarify something about my requirements:
+Thank you for the delivery! It's looking great overall. I'd like to request a few minor revisions:
 
-Original: [What you said]
-Clarification: [What you meant]
+1. [Specific change needed]
+2. [Specific change needed]
+3. [Specific change needed]
 
-Sorry for any confusion! Let me know if you need anything else.
+Please let me know if you have any questions about these changes.
 
-Best regards,
+Thanks!
 [Your Name]
 ```
 
-### Message Length
+## Conversation Management
 
-**Recommended:**
-- Keep messages concise (under 500 words)
-- Break long messages into multiple paragraphs
-- Use bullet points for lists
-- Highlight important information
+### Closing Conversations
 
-**Too Short:**
-```
-"ok"
-"sure"
-"done"
-```
-(Not helpful, lacks context)
+**Automatic Closure:**
+- Conversation closed when order reaches `completed` status
+- Prevents further messages after order finished
+- Read-only mode for participants
 
-**Too Long:**
-```
-[10 paragraphs of rambling]
-```
-(Overwhelming, key points lost)
+**Manual Closure:**
+- Admin can manually close conversation
+- Useful for cancelled or disputed orders
+- Messages still viewable, cannot add new ones
 
-**Just Right:**
-```
-2-4 paragraphs
-Clear subject
-Specific questions/updates
-Call to action if needed
-```
+### Reopening Conversations
 
-## File Attachments
+Not supported by default. Once closed, conversations remain read-only.
 
-### Attaching Files to Messages
-
-1. Compose message
-2. Click **Attach File** button
-3. Select file(s) from computer
-4. Wait for upload confirmation
-5. Send message with attachment
-
-![File attachment interface](../images/frontend-message-attach.png)
-
-### Attachment Limits
-
-**Default Settings:**
-
-| Setting | Default | Configurable |
-|---------|---------|--------------|
-| **Max Files per Message** | 3 | Yes |
-| **Max File Size** | 10MB | Yes |
-| **Total Message Size** | 25MB | Yes |
-| **Allowed File Types** | PDF, JPG, PNG, ZIP, DOC, DOCX, XLS, XLSX | Yes |
-
-**Configuration:**
-WP Sell Services → Settings → Advanced → Message Attachments
-
-### Allowed File Types
-
-**Default Allowed:**
-- Documents: PDF, DOC, DOCX, TXT
-- Images: JPG, PNG, GIF
-- Archives: ZIP, RAR
-- Spreadsheets: XLS, XLSX, CSV
-
-**Blocked for Security:**
-- Executables: EXE, BAT, CMD
-- Scripts: JS, PHP, SH
-- Potentially dangerous: VBS, WSF
-
-**Custom File Types:**
-
-Developers can modify allowed types:
-
-```php
-add_filter( 'wpss_message_allowed_file_types', function( $types ) {
-    $types[] = 'psd';  // Add Photoshop files
-    $types[] = 'ai';   // Add Illustrator files
-    return $types;
-}, 10 );
-```
-
-### Downloading Attachments
-
-**To Download:**
-1. View message with attachment
-2. Click file name or download icon
-3. File downloads to your computer
-
-**Security:**
-- Files scanned for viruses (if scanner enabled)
-- Only order participants can download
-- Download links expire after 48 hours (regenerated on access)
-- File access logged for security
-
-![Message attachment download](../images/frontend-message-download.png)
-
-### When to Use Attachments
-
-**Appropriate Uses:**
-
-**Vendor Sending:**
-- Work-in-progress screenshots
-- Design mockups for feedback
-- Reference materials
-- Clarification documents
-- Sample files
-
-**Buyer Sending:**
-- Additional requirements
-- Brand assets (logos, fonts)
-- Reference designs
-- Content documents
-- Credentials (encrypted)
-
-**Deliverables:**
-Don't use messages for final deliverables. Use the proper **Delivery Submission** feature for trackability and revision management.
-
-## Message Notifications
-
-### Email Notifications
-
-**When Sent:**
-- New message received
-- File attached to message
-- Admin message sent
-
-**Email Content:**
-```
-Subject: New Message for Order #WPSS-202501-1234
-
-Hi [Recipient],
-
-You have a new message from [Sender] regarding your order:
-
-Order: [Service Name]
-From: [Sender Name]
-
-Message Preview:
-"[First 100 characters of message...]"
-
-[View Full Message and Reply]
-
-Best regards,
-[Marketplace Name]
-```
-
-**Email Frequency:**
-- Immediate: Individual email per message (default)
-- Digest: Bundled emails every X hours (configurable)
-- Disabled: No email notifications (not recommended)
-
-**Configuration:**
-WP Sell Services → Settings → Emails → Message Notifications
-
-![Email notification settings](../images/admin-email-message-settings.png)
-
-### Dashboard Notifications
-
-**Notification Badge:**
-- Unread message count displayed
-- Updates in real-time (if polling enabled)
-- Red badge on navigation menu
-- Number indicates unread count
-
-**Notification Bell:**
-- Shows recent notifications
-- Click to view message preview
-- Direct link to order messages
-
-### Browser Notifications
-
-**[PRO]** Enable browser push notifications:
-
-**Setup:**
-1. Buyer/Vendor enables in dashboard settings
-2. Browser requests notification permission
-3. Grant permission
-4. Receive notifications even when dashboard closed
-
-**Notification Content:**
-- New message alert
-- Sender name
-- Message preview
-- Click to open order
-
-![Browser notification](../images/frontend-browser-notification.png)
-
-## Message Features
-
-### Real-Time Polling
-
-Messages refresh automatically:
-
-**How It Works:**
-- Dashboard polls for new messages every 30 seconds (default)
-- New messages appear without page refresh
-- Typing indicator shows when other party is typing (Pro)
-- Read receipts update automatically
-
-**Configuration:**
-WP Sell Services → Settings → Advanced → Message Polling Interval
-
-### Read Status
-
-Track message read status:
-
-**Indicators:**
-- **Sent** (✓): Message sent successfully
-- **Delivered** (✓✓): Message received by server
-- **Read** (Blue ✓✓): Recipient opened message
-
-**Benefits:**
-- Know when messages are seen
-- Reduce follow-up messages
-- Transparency in communication
-
-![Message read status](../images/frontend-message-read-status.png)
+**Workaround for Admin:**
+- Update order status to allow messaging
+- Contact parties via email if needed
+- Use dispute system for post-completion issues
 
 ### Message History
 
-All messages preserved:
+**Retention:** Messages stored permanently in database
 
-**Full Conversation:**
-- Chronological message list
-- Timestamps on each message
-- Sender identification
-- Attachment history
-- Never deleted (even after order completion)
+**Deletion:** Admin can delete individual messages if needed (database access required)
 
-**Search Messages:**
-- Search within conversation
-- Find specific information quickly
-- Filter by date or sender
+**Export:** Admin can export conversation history:
+1. View conversation in admin
+2. Click **Export** button
+3. Download as CSV or PDF
 
-**Export Conversation:**
-- Export messages to PDF/TXT
-- Useful for records or disputes
-- Admin can export any conversation
+## Privacy & Security
 
-### Typing Indicator [PRO]
+### Access Control
 
-**[PRO]** See when other party is typing:
+**Who Can View:**
+- Order buyer (customer)
+- Order vendor
+- Site administrators
 
-**Display:**
-- "[Vendor Name] is typing..."
-- Updates in real-time
-- Shows user is actively responding
-- Reduces anxiety from waiting
+**Who Cannot View:**
+- Other buyers
+- Other vendors
+- Guests/non-logged-in users
 
-![Typing indicator](../images/frontend-message-typing.png)
-
-## Message Guidelines
-
-### Communication Policies
-
-**Platform Rules:**
-
-✅ **Allowed:**
-- Order-related discussions
-- Requirements clarification
-- Progress updates
-- Professional questions
-- Constructive feedback
-
-❌ **Prohibited:**
-- Sharing external contact info (to bypass platform)
-- Requesting off-platform payment
-- Spam or solicitations
-- Harassment or abuse
-- Inappropriate content
-- Sharing other buyers' info
-
-**Consequences:**
-- Warning for first violation
-- Account suspension for repeated violations
-- Permanent ban for severe violations
-
-### Professional Standards
-
-**Response Times:**
-
-**Expected Response Times:**
-- Vendors: Within 24 hours (business days)
-- Buyers: Within 48 hours
-- Admins: Within 24 hours (support requests)
-
-**Setting Expectations:**
-- Communicate your availability
-- Set away messages if unavailable
-- Provide ETA for detailed responses
-
-**Example:**
-```
-"I'm traveling this weekend. I'll respond to messages on Monday.
-If urgent, please open a support ticket."
+**Enforcement:**
+```php
+// Conversation model checks participant list
+public function can_view(int $user_id): bool {
+    return in_array($user_id, $this->participants) || user_can($user_id, 'manage_options');
+}
 ```
 
-### Dispute Prevention
+### Data Security
 
-Messages are evidence:
+**Message Storage:**
+- Stored in `wpss_messages` table
+- Content is plain text (no encryption at rest)
+- Access controlled at application level
 
-**Document Everything:**
-- Agree to scope changes in messages
-- Confirm requirements in writing
-- Acknowledge deadline changes
-- Note any agreements
+**File Attachments:**
+- Stored in WordPress uploads directory
+- Created as `private` posts
+- Direct URL access blocked for non-participants
+- Served via PHP with permission checks
 
-**Example Dispute Scenario:**
-
-**Without Messages:**
-- Buyer says vendor agreed to add pages
-- Vendor says no agreement was made
-- No evidence, hard to resolve
-
-**With Messages:**
-- Messages show buyer requested extra pages
-- Vendor agreed or quoted price
-- Clear evidence for dispute resolution
-
-**Best Practice:** Always document important agreements in the messaging system.
-
-![Message as evidence](../images/admin-message-evidence.png)
-
-## Admin Message Management
-
-### Monitoring Conversations
-
-Admins can view all messages:
-
-**Review for:**
-- Terms of service violations
-- Professional conduct
-- Dispute evidence
-- Quality assurance
-
-**Privacy Notice:**
-- Inform users that admin can view messages
-- Include in terms of service
-- Display notice in messaging interface
-
-### Participating in Conversations
-
-**When to Intervene:**
-- Dispute mediation
-- Policy violation
-- Technical support needed
-- Misunderstanding clarification
-
-**Admin Message:**
-1. Open order messages
-2. Toggle **Send as Admin**
-3. Compose message
-4. Message clearly labeled "Admin Message"
-5. Both parties notified
-
-![Admin intervention](../images/admin-message-intervention.png)
-
-### Message Moderation
-
-**Automatic Moderation:**
-- Spam detection (links, repetitive content)
-- Profanity filter (configurable)
-- Contact info detection (phone, email)
-- Warning before blocking/removing
-
-**Manual Moderation:**
-- Review flagged messages
-- Delete inappropriate messages
-- Warn or suspend users
-- Document violations
-
-**Configuration:**
-WP Sell Services → Settings → Advanced → Message Moderation
-
-## Messaging Analytics
-
-### Vendor Metrics
-
-Track communication quality:
-
-**Metrics:**
-- Average response time
-- Messages per order
-- Response rate (% of messages answered)
-- Customer satisfaction (based on reviews)
-
-**Impact on Reputation:**
-- Fast response time boosts visibility
-- High response rate increases trust
-- Poor communication hurts reviews
-
-![Vendor response time stats](../images/admin-vendor-response-stats.png)
-
-### Order Communication Stats
-
-**Per-Order Tracking:**
-- Total messages exchanged
-- Average response time (both parties)
-- Attachments shared
-- Communication quality indicator
-
-**Red Flags:**
-- Very high message count (confusion/scope issues)
-- Very low message count (lack of communication)
-- Slow response times
-- One-sided communication
-
-## Mobile Messaging
-
-### Responsive Design
-
-Messages work on all devices:
-
-**Mobile Features:**
-- Touch-friendly interface
-- Optimized for small screens
-- Easy file upload from camera
-- Voice typing support (device dependent)
-
-**Mobile Tips:**
-- Keep messages brief on mobile
-- Use shorter paragraphs
-- Minimize scrolling
-- Use voice-to-text for longer messages
-
-![Mobile messaging interface](../images/frontend-mobile-messages.png)
+**XSS Prevention:**
+- Message content escaped on output
+- HTML tags stripped from user input
+- Attachments validated for file type
 
 ## Troubleshooting
 
 ### Messages Not Sending
 
-**Common Issues:**
+**Symptoms:** Send button doesn't work or message disappears
 
-**Error: "Message too long"**
-- Reduce message length
-- Break into multiple messages
+**Causes:**
+- JavaScript error
+- Empty message (no content or file)
+- User not logged in
+- Conversation closed
 
-**Error: "File too large"**
-- Compress files
-- Split into multiple messages
-- Use delivery submission for large files
+**Solutions:**
+1. Check browser console for JavaScript errors
+2. Ensure message has content or attachment
+3. Verify user is logged in
+4. Check conversation status in database
 
-**Error: "Connection lost"**
-- Check internet connection
-- Refresh page
-- Try again
+### Email Notifications Not Working
 
-### Notifications Not Received
+**Symptoms:** Recipient not receiving email notifications
 
-**Email Notifications:**
-- Check spam folder
-- Verify email address in profile
-- Enable in notification settings
-- Check email delivery logs (admin)
+**Causes:**
+- Email notifications disabled in settings
+- Email address incorrect
+- Server email deliverability issue
+- Email in spam folder
 
-**Dashboard Notifications:**
-- Clear browser cache
-- Disable ad blockers
-- Check notification permissions
-- Verify real-time polling enabled
+**Solutions:**
+1. Check Settings → Emails: Ensure "New Message" enabled
+2. Verify user email address in profile
+3. Test WordPress email: Send test email
+4. Check spam/junk folder
+5. Configure SMTP plugin (WP Mail SMTP recommended)
 
-### Can't View Messages
+### Unread Count Not Updating
 
-**Permission Issues:**
-- Verify you're logged in
-- Confirm you're order participant
-- Check account status (not suspended)
-- Contact admin if persists
+**Symptoms:** Badge shows incorrect unread count
 
-## Integration & API
+**Causes:**
+- Cache not cleared
+- Mark as read function failed
+- Database sync issue
 
-### REST API Endpoints
+**Solutions:**
+1. Refresh page (Ctrl+F5 / Cmd+R)
+2. Clear browser cache
+3. Clear WordPress object cache
+4. Run `ConversationService::mark_as_read()` manually
 
-**[PRO]** Access messages via REST API:
+### Admin Cannot Reply
 
-**Endpoints:**
-```
-GET /wp-json/wpss/v1/orders/{order_id}/messages
-POST /wp-json/wpss/v1/orders/{order_id}/messages
-GET /wp-json/wpss/v1/messages/{message_id}
-```
+**Symptoms:** Admin sees messages but no reply box
 
-**Use Cases:**
-- Mobile app integration
-- Custom dashboard
-- External notification systems
-- Third-party integrations
+**This is expected behavior.** Admins can VIEW conversations but not participate.
 
-### Webhooks
+**Reason:** Conversations are between buyer and vendor only. Admin involvement should be through:
+- Dispute resolution system
+- Direct email contact
+- Admin notes on order
 
-**[PRO]** Trigger webhooks on message events:
+**Workaround (if absolutely needed):**
+- Temporarily change admin user ID to match vendor ID (not recommended)
+- Use system message via code: `ConversationService::add_system_message()`
 
-**Events:**
-- `message.sent`
-- `message.received`
-- `message.read`
+## Developer Reference
 
-**Webhook Payload:**
-```json
-{
-  "event": "message.sent",
-  "order_id": 1234,
-  "message_id": 5678,
-  "sender": "vendor",
-  "content": "Message text...",
-  "timestamp": "2025-01-01T10:00:00Z"
-}
+### Hooks
+
+**Actions:**
+```php
+// Fires when message is sent
+do_action('wpss_message_sent', $message, $conversation);
+
+// Fires when conversation created
+do_action('wpss_conversation_created', $conversation_id, $order_id);
 ```
 
-## Best Practices Summary
+**Filters:**
+```php
+// Modify allowed file types for message attachments
+apply_filters('wpss_delivery_allowed_file_types', $types);
+```
 
-### For Vendors
+**Note:** There is NO `wpss_message_allowed_file_types` hook. Delivery file types are used for message attachments.
 
-✅ **Responsiveness:**
-- Reply within 24 hours
-- Set expectations if delayed
-- Use auto-responder if away
+### Database Schema
 
-✅ **Clarity:**
-- Be clear and specific
-- Use formatting for readability
-- Summarize key points
-- Confirm understanding
+**Table:** `{prefix}wpss_conversations`
 
-✅ **Professionalism:**
-- Polite and courteous
-- Professional language
-- Patient with questions
-- Solution-oriented
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | bigint(20) | Primary key |
+| `order_id` | bigint(20) | Order ID (foreign key) |
+| `subject` | varchar(255) | Conversation subject |
+| `participants` | text | JSON array of user IDs |
+| `message_count` | int | Total messages |
+| `unread_counts` | text | JSON object: `{user_id: count}` |
+| `is_closed` | tinyint(1) | Closed flag |
+| `last_message_at` | datetime | Last message timestamp |
+| `created_at` | datetime | Creation timestamp |
+| `updated_at` | datetime | Last update timestamp |
 
-### For Buyers
+**Table:** `{prefix}wpss_messages`
 
-✅ **Clarity:**
-- Ask specific questions
-- Provide context
-- Reference requirements
-- Be patient for responses
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | bigint(20) | Primary key |
+| `conversation_id` | bigint(20) | Conversation ID (foreign key) |
+| `sender_id` | bigint(20) | User ID (0 for system) |
+| `type` | varchar(50) | Message type (text, attachment, delivery, revision, status_change, system) |
+| `content` | longtext | Message text |
+| `attachments` | longtext | JSON array of file data |
+| `metadata` | longtext | JSON object for type-specific data |
+| `read_by` | text | JSON object: `{user_id: true}` |
+| `is_edited` | tinyint(1) | Edit flag |
+| `created_at` | datetime | Send timestamp |
+| `updated_at` | datetime | Last update timestamp |
 
-✅ **Respect:**
-- Don't demand instant replies
-- Be understanding of delays
-- Provide constructive feedback
-- Thank vendor for updates
+### Programmatic Usage
 
-### For Admins
+**Get Conversation:**
+```php
+$conversation_service = new ConversationService();
+$conversation = $conversation_service->get_by_order($order_id);
+```
 
-✅ **Monitoring:**
-- Regular message review
-- Identify problematic patterns
-- Support when needed
-- Maintain neutrality
+**Send Message:**
+```php
+$message = $conversation_service->send_message(
+    $conversation->id,
+    $sender_user_id,
+    'Message content',
+    $attachments = [],
+    $type = Message::TYPE_TEXT
+);
+```
 
-✅ **Policies:**
-- Clear communication guidelines
-- Enforce consistently
-- Document violations
-- Educate users
+**Add System Message:**
+```php
+$conversation_service->add_system_message(
+    $conversation->id,
+    'Order deadline extended by 3 days',
+    $metadata = ['extra_days' => 3]
+);
+```
 
-## Next Steps
+**Mark as Read:**
+```php
+$conversation_service->mark_as_read($conversation->id, $user_id);
+```
 
-- **[Order Workflow](order-workflow.md)** - Complete order lifecycle
-- **[Managing Orders](managing-orders.md)** - Order management guide
-- **[Deliveries & Revisions](deliveries-revisions.md)** - Submitting work
-- **[Dispute Resolution](dispute-resolution.md)** - Handling conflicts
+**Get Unread Count:**
+```php
+$unread_count = $conversation_service->get_total_unread_count($user_id);
+```
 
-Effective communication is the foundation of successful orders!
+## Related Documentation
+
+- [Order Lifecycle](order-lifecycle.md)
+- [Requirements Collection](requirements-collection.md)
+- [Deliveries & Revisions](deliveries-revisions.md)
+- [Disputes & Resolution](../disputes-resolution/opening-disputes.md)

@@ -1,827 +1,291 @@
 # Hooks and Filters Reference
 
-WP Sell Services provides extensive hooks and filters for developers to customize and extend functionality. This reference documents all available actions and filters organized by category.
+WP Sell Services exposes action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
 
 ## Using Hooks
 
-### Actions
-
-Actions let you execute custom code at specific points:
-
 ```php
-add_action( 'wpss_service_created', 'my_custom_function', 10, 2 );
-
-function my_custom_function( $service_id, $service_data ) {
-    // Your custom code here
+// Actions execute code at specific points
+add_action( 'wpss_order_status_changed', 'my_func', 10, 3 );
+function my_func( $order_id, $new_status, $old_status ) {
+    // Your code here
 }
+
+// Filters modify data before it is used
+add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 ```
 
-### Filters
+## Plugin Lifecycle Actions
 
-Filters let you modify data before it's used:
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_loaded` | `Plugin $plugin` | `Plugin.php:261` |
+| `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `IntegrationManager.php:124` |
+| `wpss_register_field_types` | `FieldManager $manager` | `FieldManager.php:59` |
+| `wpss_woocommerce_adapter_init` | `WooCommerceAdapter $adapter` | `WooCommerceAdapter.php:162` |
+
+**`wpss_loaded`** is the primary extension hook. All Pro features register here:
 
 ```php
-add_filter( 'wpss_review_window_days', 'my_custom_filter' );
-
-function my_custom_filter( $days ) {
-    return 14; // Change review window to 14 days
-}
+add_action( 'wpss_loaded', function( $plugin ) {
+    // Plugin is ready - register extensions
+}, 10, 1 );
 ```
 
-## Plugin Lifecycle Hooks
-
-### wpss_loaded
-
-Fires after WP Sell Services is fully loaded.
-
-**Parameters:** None
-
-**Example:**
-```php
-add_action( 'wpss_loaded', function() {
-    // Plugin is ready, safe to use all functions
-    if ( class_exists( 'WPSellServices\Core\Plugin' ) ) {
-        // Your initialization code
-    }
-} );
-```
-
-**Use cases:**
-- Initialize custom integrations
-- Register custom post types or taxonomies
-- Set up third-party plugin compatibility
-
-## Service Hooks
-
-### wpss_service_created
-
-Fires when a new service is created.
-
-**Parameters:**
-- `int $service_id` - The service post ID
-- `array $service_data` - Service metadata
-
-**Example:**
-```php
-add_action( 'wpss_service_created', function( $service_id, $service_data ) {
-    // Send notification to admin
-    wp_mail(
-        get_option( 'admin_email' ),
-        'New Service Created',
-        "Service ID: $service_id"
-    );
-}, 10, 2 );
-```
-
-### wpss_service_updated
-
-Fires when a service is updated.
-
-**Parameters:**
-- `int $service_id` - The service post ID
-- `array $service_data` - Updated service metadata
-- `array $old_data` - Previous service metadata
-
-**Example:**
-```php
-add_action( 'wpss_service_updated', function( $service_id, $service_data, $old_data ) {
-    // Log price changes
-    if ( $service_data['basic_price'] !== $old_data['basic_price'] ) {
-        error_log( "Service $service_id price changed" );
-    }
-}, 10, 3 );
-```
-
-### wpss_before_service_deleted
-
-Fires before a service is deleted.
-
-**Parameters:**
-- `int $service_id` - The service post ID
-
-**Example:**
-```php
-add_action( 'wpss_before_service_deleted', function( $service_id ) {
-    // Archive service data before deletion
-    $archive = get_post_meta( $service_id );
-    update_option( "archived_service_$service_id", $archive );
-} );
-```
-
-### wpss_service_approved
-
-Fires when admin approves a pending service.
-
-**Parameters:**
-- `int $service_id` - The service post ID
-- `int $vendor_id` - The vendor user ID
-
-**Example:**
-```php
-add_action( 'wpss_service_approved', function( $service_id, $vendor_id ) {
-    // Award points for first approved service
-    $vendor = get_user_by( 'ID', $vendor_id );
-    $vendor_meta = get_user_meta( $vendor_id, 'wpss_vendor_data', true );
-
-    if ( $vendor_meta['approved_services'] === 1 ) {
-        // First service bonus
-        update_user_meta( $vendor_id, 'welcome_bonus_awarded', true );
-    }
-}, 10, 2 );
-```
-
-### wpss_service_rejected
-
-Fires when admin rejects a pending service.
-
-**Parameters:**
-- `int $service_id` - The service post ID
-- `int $vendor_id` - The vendor user ID
-- `string $reason` - Rejection reason
-
-**Example:**
-```php
-add_action( 'wpss_service_rejected', function( $service_id, $vendor_id, $reason ) {
-    // Send custom rejection email with guidelines
-    $vendor = get_user_by( 'ID', $vendor_id );
-    $subject = 'Service Submission Feedback';
-    $message = "Your service was not approved. Reason: $reason";
-
-    wp_mail( $vendor->user_email, $subject, $message );
-}, 10, 3 );
-```
-
-### wpss_service_pending_moderation
-
-Fires when a service is submitted for moderation.
-
-**Parameters:**
-- `int $service_id` - The service post ID
-- `int $vendor_id` - The vendor user ID
-
-**Example:**
-```php
-add_action( 'wpss_service_pending_moderation', function( $service_id, $vendor_id ) {
-    // Add to moderation queue
-    $queue = get_option( 'wpss_moderation_queue', [] );
-    $queue[] = [
-        'service_id' => $service_id,
-        'vendor_id' => $vendor_id,
-        'submitted' => current_time( 'timestamp' ),
-    ];
-    update_option( 'wpss_moderation_queue', $queue );
-}, 10, 2 );
-```
-
-## Order Hooks
-
-### wpss_order_status_changed
-
-Fires when any order status changes.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `string $old_status` - Previous status
-- `string $new_status` - New status
-- `object $order` - Order object
-
-**Example:**
-```php
-add_action( 'wpss_order_status_changed', function( $order_id, $old_status, $new_status, $order ) {
-    // Log all status changes
-    error_log( "Order $order_id: $old_status → $new_status" );
-}, 10, 4 );
-```
-
-### wpss_order_status_{status}
-
-Fires when order changes to specific status. Replace `{status}` with: `pending`, `accepted`, `in_progress`, `delivered`, `completed`, `cancelled`, `disputed`, `in_revision`.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `object $order` - Order object
-
-**Example:**
-```php
-add_action( 'wpss_order_status_in_progress', function( $order_id, $order ) {
-    // Start tracking time when work begins
-    update_post_meta( $order_id, '_work_started', current_time( 'timestamp' ) );
-}, 10, 2 );
-```
-
-### wpss_order_accepted
-
-Fires when vendor accepts an order.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $vendor_id` - The vendor user ID
-
-**Example:**
-```php
-add_action( 'wpss_order_accepted', function( $order_id, $vendor_id ) {
-    // Update vendor statistics
-    $stats = get_user_meta( $vendor_id, 'wpss_stats', true );
-    $stats['acceptance_rate']++;
-    update_user_meta( $vendor_id, 'wpss_stats', $stats );
-}, 10, 2 );
-```
-
-### wpss_order_rejected
-
-Fires when vendor rejects an order.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $vendor_id` - The vendor user ID
-- `string $reason` - Rejection reason
-
-**Example:**
-```php
-add_action( 'wpss_order_rejected', function( $order_id, $vendor_id, $reason ) {
-    // Track rejection reasons for analysis
-    $reasons = get_option( 'wpss_rejection_reasons', [] );
-    $reasons[] = [
-        'vendor_id' => $vendor_id,
-        'reason' => $reason,
-        'date' => current_time( 'mysql' ),
-    ];
-    update_option( 'wpss_rejection_reasons', $reasons );
-}, 10, 3 );
-```
-
-### wpss_order_started
-
-Fires when vendor starts working on order.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $vendor_id` - The vendor user ID
-
-### wpss_order_delivered
-
-Fires when vendor submits delivery.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $vendor_id` - The vendor user ID
-- `array $delivery_data` - Delivery files and message
-
-### wpss_order_completed
-
-Fires when buyer accepts delivery and order completes.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $buyer_id` - The buyer user ID
-
-**Example:**
-```php
-add_action( 'wpss_order_completed', function( $order_id, $buyer_id ) {
-    // Award loyalty points to buyer
-    $points = get_user_meta( $buyer_id, 'loyalty_points', true );
-    $order_value = get_post_meta( $order_id, '_order_total', true );
-    $points += floor( $order_value / 10 ); // 10% back in points
-    update_user_meta( $buyer_id, 'loyalty_points', $points );
-}, 10, 2 );
-```
-
-### wpss_order_cancelled
-
-Fires when order is cancelled.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $cancelled_by` - User ID who cancelled
-- `string $reason` - Cancellation reason
-
-### wpss_order_disputed
-
-Fires when order is disputed.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $dispute_id` - The dispute ID
-- `int $opened_by` - User ID who opened dispute
-
-## Financial Hooks
-
-### wpss_commission_recorded
-
-Fires when commission is recorded for an order.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `float $commission_amount` - Commission amount
-- `float $commission_rate` - Commission percentage
-- `int $vendor_id` - The vendor user ID
-
-**Example:**
-```php
-add_action( 'wpss_commission_recorded', function( $order_id, $amount, $rate, $vendor_id ) {
-    // Record in accounting system
-    my_accounting_system_add_entry( [
-        'type' => 'commission',
-        'amount' => $amount,
-        'reference' => "Order #$order_id",
-    ] );
-}, 10, 4 );
-```
-
-### wpss_withdrawal_requested
-
-Fires when vendor requests withdrawal.
-
-**Parameters:**
-- `int $withdrawal_id` - The withdrawal request ID
-- `int $vendor_id` - The vendor user ID
-- `float $amount` - Withdrawal amount
-- `string $method` - Withdrawal method
-
-**Example:**
-```php
-add_action( 'wpss_withdrawal_requested', function( $withdrawal_id, $vendor_id, $amount, $method ) {
-    // Alert accounting team
-    wp_mail(
-        'accounting@example.com',
-        'Withdrawal Request',
-        "Vendor $vendor_id requested $$amount via $method"
-    );
-}, 10, 4 );
-```
-
-## Dispute Hooks
-
-### wpss_dispute_opened
-
-Fires when a dispute is opened.
-
-**Parameters:**
-- `int $dispute_id` - The dispute ID
-- `int $order_id` - The order ID
-- `int $opened_by` - User ID who opened dispute
-
-### wpss_dispute_evidence_added
-
-Fires when evidence is added to dispute.
-
-**Parameters:**
-- `int $dispute_id` - The dispute ID
-- `array $evidence` - Evidence data (files, message)
-- `int $submitted_by` - User ID who submitted
-
-### wpss_dispute_status_changed
-
-Fires when dispute status changes.
-
-**Parameters:**
-- `int $dispute_id` - The dispute ID
-- `string $old_status` - Previous status
-- `string $new_status` - New status
-
-### wpss_dispute_resolved
-
-Fires when dispute is resolved.
-
-**Parameters:**
-- `int $dispute_id` - The dispute ID
-- `string $resolution` - Resolution outcome
-- `int $resolved_by` - Admin user ID
-
-### wpss_dispute_escalated
-
-Fires when dispute is escalated to admin.
-
-**Parameters:**
-- `int $dispute_id` - The dispute ID
-- `int $escalated_by` - User ID who escalated
-
-### wpss_dispute_cancelled
-
-Fires when dispute is cancelled/withdrawn.
-
-**Parameters:**
-- `int $dispute_id` - The dispute ID
-- `int $cancelled_by` - User ID who cancelled
-
-## Review Hooks
-
-### wpss_review_created
-
-Fires when a review is submitted.
-
-**Parameters:**
-- `int $review_id` - The review ID
-- `int $order_id` - The order ID
-- `int $reviewer_id` - Buyer user ID
-- `int $vendor_id` - Vendor user ID
-- `array $review_data` - Rating, comment, etc.
-
-**Example:**
-```php
-add_action( 'wpss_review_created', function( $review_id, $order_id, $reviewer_id, $vendor_id, $review_data ) {
-    // Update vendor average rating
-    $vendor_meta = get_user_meta( $vendor_id, 'wpss_vendor_data', true );
-    $total_reviews = $vendor_meta['total_reviews'] + 1;
-    $total_rating = $vendor_meta['total_rating'] + $review_data['rating'];
-    $avg_rating = $total_rating / $total_reviews;
-
-    $vendor_meta['total_reviews'] = $total_reviews;
-    $vendor_meta['total_rating'] = $total_rating;
-    $vendor_meta['average_rating'] = $avg_rating;
-
-    update_user_meta( $vendor_id, 'wpss_vendor_data', $vendor_meta );
-}, 10, 5 );
-```
-
-## Vendor Hooks
-
-### wpss_vendor_registered
-
-Fires when a new vendor registers.
-
-**Parameters:**
-- `int $vendor_id` - The vendor user ID
-- `array $vendor_data` - Registration data
-
-**Example:**
-```php
-add_action( 'wpss_vendor_registered', function( $vendor_id, $vendor_data ) {
-    // Send welcome email with onboarding guide
-    $vendor = get_user_by( 'ID', $vendor_id );
-    wp_mail(
-        $vendor->user_email,
-        'Welcome to Our Marketplace',
-        'Get started by creating your first service...'
-    );
-}, 10, 2 );
-```
-
-### wpss_vendor_profile_updated
-
-Fires when vendor updates their profile.
-
-**Parameters:**
-- `int $vendor_id` - The vendor user ID
-- `array $profile_data` - Updated profile data
-- `array $old_data` - Previous profile data
-
-### wpss_vendor_vacation_mode_changed
-
-Fires when vendor toggles vacation mode.
-
-**Parameters:**
-- `int $vendor_id` - The vendor user ID
-- `bool $vacation_mode` - New vacation mode state
-- `string $return_date` - Expected return date (if enabled)
-
-### wpss_vendor_tier_changed
-
-Fires when vendor tier level changes.
-
-**Parameters:**
-- `int $vendor_id` - The vendor user ID
-- `string $old_tier` - Previous tier
-- `string $new_tier` - New tier
-
-**Example:**
-```php
-add_action( 'wpss_vendor_tier_changed', function( $vendor_id, $old_tier, $new_tier ) {
-    // Award badge for tier upgrade
-    if ( $new_tier === 'top_rated' ) {
-        update_user_meta( $vendor_id, 'wpss_badge_top_rated', current_time( 'mysql' ) );
-
-        // Send congratulations email
-        $vendor = get_user_by( 'ID', $vendor_id );
-        wp_mail(
-            $vendor->user_email,
-            'Congratulations on Top Rated Status!',
-            'You are now a Top Rated seller...'
-        );
-    }
-}, 10, 3 );
-```
-
-## Buyer Request Hooks
-
-### wpss_buyer_request_created
-
-Fires when buyer posts a request.
-
-**Parameters:**
-- `int $request_id` - The buyer request post ID
-- `int $buyer_id` - The buyer user ID
-- `array $request_data` - Request details
-
-### wpss_buyer_request_status_changed
-
-Fires when buyer request status changes.
-
-**Parameters:**
-- `int $request_id` - The buyer request post ID
-- `string $old_status` - Previous status
-- `string $new_status` - New status
-
-### wpss_request_converted_to_order
-
-Fires when buyer request becomes an order (proposal accepted).
-
-**Parameters:**
-- `int $request_id` - The buyer request post ID
-- `int $proposal_id` - The accepted proposal ID
-- `int $order_id` - The new order ID
-
-**Example:**
-```php
-add_action( 'wpss_request_converted_to_order', function( $request_id, $proposal_id, $order_id ) {
-    // Close other pending proposals
-    $proposals = get_posts( [
-        'post_type' => 'wpss_proposal',
-        'meta_query' => [
-            [
-                'key' => '_request_id',
-                'value' => $request_id,
-            ],
-        ],
-    ] );
-
-    foreach ( $proposals as $proposal ) {
-        if ( $proposal->ID !== $proposal_id ) {
-            update_post_meta( $proposal->ID, '_status', 'closed' );
-        }
-    }
-}, 10, 3 );
-```
-
-## Proposal Hooks
-
-### wpss_proposal_submitted
-
-Fires when vendor submits a proposal.
-
-**Parameters:**
-- `int $proposal_id` - The proposal ID
-- `int $request_id` - The buyer request post ID
-- `int $vendor_id` - The vendor user ID
-- `array $proposal_data` - Proposal details
-
-### wpss_proposal_accepted
-
-Fires when buyer accepts a proposal.
-
-**Parameters:**
-- `int $proposal_id` - The proposal ID
-- `int $buyer_id` - The buyer user ID
-- `int $vendor_id` - The vendor user ID
-
-### wpss_proposal_rejected
-
-Fires when buyer rejects a proposal.
-
-**Parameters:**
-- `int $proposal_id` - The proposal ID
-- `int $buyer_id` - The buyer user ID
-
-### wpss_proposal_withdrawn
-
-Fires when vendor withdraws their proposal.
-
-**Parameters:**
-- `int $proposal_id` - The proposal ID
-- `int $vendor_id` - The vendor user ID
-
-## Communication Hooks
-
-### wpss_message_sent
-
-Fires when a message is sent in order conversation.
-
-**Parameters:**
-- `int $message_id` - The message ID
-- `int $order_id` - The order ID
-- `int $sender_id` - User ID who sent message
-- `string $message_content` - Message text
-
-### wpss_requirements_submitted
-
-Fires when buyer submits order requirements.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $buyer_id` - The buyer user ID
-- `array $requirements` - Requirements data and files
-
-### wpss_delivery_submitted
-
-Fires when vendor submits delivery.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $vendor_id` - The vendor user ID
-- `array $delivery_files` - Delivery files
-- `string $delivery_message` - Delivery message
-
-### wpss_delivery_accepted
-
-Fires when buyer accepts delivery.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $buyer_id` - The buyer user ID
-
-### wpss_revision_requested
-
-Fires when buyer requests revision.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `int $buyer_id` - The buyer user ID
-- `string $revision_reason` - Revision instructions
-
-### wpss_after_status_change_notification
-
-Fires after status change notification is sent.
-
-**Parameters:**
-- `int $order_id` - The order ID
-- `string $status` - New status
-- `int $recipient_id` - User who received notification
+## Service Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_service_created` | `int $post_id, array $data` | `ServiceManager.php:144` |
+| `wpss_service_updated` | `int $service_id, array $data` | `ServiceManager.php:225` |
+| `wpss_before_service_deleted` | `int $service_id` | `ServiceManager.php:259` |
+| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `ServiceMetabox.php:1052` |
+| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `ServicesController.php:321` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `ServicesController.php:386` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `ServicesController.php:431` |
+| `wpss_service_synced_to_wc_product` | `int $service_id, int $product_id` | `WCProductProvider.php:454` |
+
+## Moderation Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_service_approved` | `int $service_id, string $notes` | `ModerationService.php:181` |
+| `wpss_service_rejected` | `int $service_id, string $reason` | `ModerationService.php:233` |
+| `wpss_service_pending_moderation` | `int $service_id` | `ModerationService.php:273` |
+
+## Order Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `OrderService.php:196` |
+| `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
+| `wpss_order_created` | `int $order_id, string $status` | `ManualOrderPage.php:716` |
+| `wpss_order_accepted` | `int $order_id` | `OrdersController.php:564` |
+| `wpss_order_rejected` | `int $order_id, string $reason` | `OrdersController.php:582` |
+| `wpss_order_started` | `int $order_id` | `OrdersController.php:598` |
+| `wpss_order_delivered` | `int $order_id` | `OrdersController.php:613` |
+| `wpss_order_completed` | `int $order_id, object $order` | `OrderWorkflowManager.php:685` |
+| `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `OrderService.php:427` |
+| `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `OrdersController.php:670` |
+| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `OrdersController.php:406` |
+| `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `OrdersController.php:839` |
+| `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `OrderWorkflowManager.php:638` |
+| `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `OrderWorkflowManager.php:338` |
+| `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `OrderWorkflowManager.php:472` |
+| `wpss_after_checkout_process` | `int $order_id, array $order_data` | `WCCheckoutProvider.php:332` |
+
+## Delivery Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_delivery_submitted` | `int $delivery_id, int $order_id` | `DeliveryService.php:127` |
+| `wpss_delivery_accepted` | `int $order_id` | `DeliveryService.php:168` |
+| `wpss_revision_requested` | `int $order_id, string $reason` | `DeliveryService.php:234` |
+| `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `RequirementsService.php:461` |
+
+## Vendor Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_vendor_registered` | `int $user_id, array $profile_data` | `VendorService.php:131` |
+| `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `VendorService.php:250` |
+| `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `VendorService.php:299` |
+| `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `VendorService.php:340` |
+| `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `OrderWorkflowManager.php:539` |
+| `wpss_vendor_level_updated` | `int $user_id, string $level` | `SellerLevelService.php:299` |
+| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `VendorsPage.php:1583` |
+| `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `VendorsPage.php:1884` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `AjaxHandlers.php:2052` |
+
+## Financial Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `CommissionService.php:116` |
+| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `EarningsService.php:344` |
+| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `EarningsService.php:489` |
+| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `EarningsService.php:866` |
+| `wpss_tip_sent` | `int $tip_id, int $order_id, int $vendor_id, int $customer_id, float $amount, string $message` | `TippingService.php:171` |
+
+## Dispute Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_dispute_opened` | `int $dispute_id, int $order_id, int $opened_by, array $data` | `DisputeService.php:132` |
+| `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `DisputeService.php:248` |
+| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `DisputeService.php:334` |
+| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `DisputeService.php:400` |
+| `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `DisputeWorkflowManager.php:193` |
+| `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `DisputeWorkflowManager.php:321` |
+| `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `DisputeWorkflowManager.php:463` |
+
+## Review, Request, and Proposal Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_review_created` | `int $review_id, int $order_id` | `ReviewService.php:120` |
+| `wpss_review_reply_created` | `int $review_id` | `ReviewsController.php:542` |
+| `wpss_buyer_request_created` | `int $post_id, array $data` | `BuyerRequestService.php:112` |
+| `wpss_buyer_request_updated` | `int $request_id, array $data` | `BuyerRequestService.php:164` |
+| `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `BuyerRequestService.php:425` |
+| `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `BuyerRequestService.php:704` |
+| `wpss_proposal_submitted` | `int $proposal_id, int $request_id, int $vendor_id, array $proposal_data` | `ProposalService.php:136` |
+| `wpss_proposal_updated` | `int $proposal_id, array $update_data` | `ProposalService.php:229` |
+| `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `ProposalService.php:283` |
+| `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `ProposalService.php:331` |
+| `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `ProposalService.php:373` |
+| `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `ProposalService.php:665` |
+
+## Milestone and Extension Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_milestone_created` | `int $milestone_id, int $order_id, array $milestone` | `MilestoneService.php:111` |
+| `wpss_milestone_submitted` | `int $milestone_id, int $order_id` | `MilestoneService.php:263` |
+| `wpss_milestone_approved` | `int $milestone_id, int $order_id, float $amount` | `MilestoneService.php:311` |
+| `wpss_milestone_rejected` | `int $milestone_id, int $order_id, string $feedback` | `MilestoneService.php:360` |
+| `wpss_extension_request_created` | `int $request_id, int $order_id, array $data` | `ExtensionRequestService.php:246` |
+| `wpss_extension_request_approved` | `int $request_id, object $request` | `ExtensionRequestService.php:363` |
+| `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:447` |
+
+## Other Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_message_sent` | `object $message, object $conversation` | `ConversationService.php:223` |
+| `wpss_notification_created` | `int $notification_id, int $user_id, string $type, array $data` | `NotificationService.php:80` |
+| `wpss_portfolio_item_created` | `int $item_id, int $vendor_id, array $data` | `PortfolioService.php:194` |
+| `wpss_portfolio_item_updated` | `int $item_id, array $data` | `PortfolioService.php:289` |
+| `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `PortfolioService.php:339` |
+| `wpss_addon_created` | `int $addon_id, int $service_id, array $addon_data` | `ServiceAddonService.php:143` |
+| `wpss_addon_updated` | `int $addon_id, array $update_data` | `ServiceAddonService.php:229` |
+| `wpss_addon_deleted` | `int $addon_id, object $addon` | `ServiceAddonService.php:353` |
+| `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
+| `wpss_advanced_settings_sections` | *(none)* | `Settings.php:1317` |
 
 ## Filters
 
-Filters modify data before use. Return the modified value.
+### Provider Registration
 
-### wpss_ecommerce_adapters
+| Filter | File | Default |
+|--------|------|---------|
+| `wpss_ecommerce_adapters` | `IntegrationManager.php:67` | WooCommerce only |
+| `wpss_payment_gateways` | `Plugin.php:813` | Test gateway (debug) |
+| `wpss_wallet_providers` **[PRO]** | `Plugin.php:825` | Empty |
+| `wpss_storage_providers` **[PRO]** | `Plugin.php:837` | Empty |
+| `wpss_email_providers` **[PRO]** | `Plugin.php:849` | Empty |
+| `wpss_analytics_widgets` **[PRO]** | `Plugin.php:861` | Empty |
 
-Filter registered e-commerce platform adapters.
+### Service Wizard Limits
 
-**Parameters:**
-- `array $adapters` - Array of adapter class names
+| Filter | File | Free Default |
+|--------|------|-------------|
+| `wpss_service_max_packages` | `ServiceWizard.php:116` | 3 |
+| `wpss_service_max_gallery` | `ServiceWizard.php:126` | 4 |
+| `wpss_service_max_videos` | `ServiceWizard.php:136` | 1 |
+| `wpss_service_max_extras` | `ServiceWizard.php:146` | 3 |
+| `wpss_service_max_faq` | `ServiceWizard.php:156` | 5 |
+| `wpss_service_max_requirements` | `ServiceWizard.php:166` | 5 |
+| `wpss_service_wizard_features` | `ServiceWizard.php:175` | All false |
 
-**Example:**
-```php
-add_filter( 'wpss_ecommerce_adapters', function( $adapters ) {
-    $adapters['my_custom_platform'] = 'MyPlugin\CustomPlatformAdapter';
-    return $adapters;
-} );
-```
+### Data Filters
 
-See [Custom Integrations](custom-integrations.md) for adapter development.
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_format_price` | `$formatted, $price, $currency` | `functions.php:68` |
+| `wpss_currency` | `$currency` | `functions.php:91` |
+| `wpss_platform_name` | `$platform_name` | `functions.php:117` |
+| `wpss_is_vendor` | `$is_vendor, $user_id` | `functions.php:331` |
+| `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `functions.php:385` |
+| `wpss_dispute_number_prefix` | `$prefix` (default `'DSP-'`) | `functions.php:397` |
+| `wpss_currency_symbols` | `$symbols` | `functions.php:490` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `functions.php:517` |
+| `wpss_currencies` | `$currencies` | `functions.php:564` |
+| `wpss_order_statuses` | `$statuses` | `functions.php:620` |
+| `wpss_max_upload_size` | `$upload_max` | `functions.php:834` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `functions.php:888` |
+| `wpss_wallet_manager` | `null` | `functions.php:1029` |
 
-### wpss_payment_gateways
+### Template Filters
 
-Filter registered payment gateways.
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_get_template_part` | `$template, $slug, $name` | `functions.php:165` |
+| `wpss_get_template` | `$template, $template_name, $args` | `functions.php:211` |
+| `wpss_locate_template` | `$template, $template_name, $template_path` | `TemplateLoader.php:318` |
+| `wpss_dashboard_section_template` | `$template_path, $section` | `UnifiedDashboard.php:418` |
 
-**Parameters:**
-- `array $gateways` - Array of gateway class names
+### URL and Taxonomy Filters
 
-**Example:**
-```php
-add_filter( 'wpss_payment_gateways', function( $gateways ) {
-    $gateways['custom_gateway'] = 'MyPlugin\CustomGateway';
-    return $gateways;
-} );
-```
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_service_slug` | `$slug` (default `'service'`) | `ServicePostType.php:184` |
+| `wpss_buyer_request_slug` | `$slug` (default `'buyer-request'`) | `BuyerRequestPostType.php:112` |
+| `wpss_service_post_type_args` | `$args` | `ServicePostType.php:106` |
+| `wpss_service_tag_args` | `$args` | `ServicePostType.php:168` |
+| `wpss_service_category_taxonomy_args` | `$args` | `ServiceCategoryTaxonomy.php:118` |
+| `wpss_service_tag_taxonomy_args` | `$args` | `ServiceTagTaxonomy.php:103` |
+| `wpss_buyer_request_post_type_args` | `$args` | `BuyerRequestPostType.php:96` |
 
-### wpss_storage_providers
+### Order, Commission, and API Filters
 
-Filter registered cloud storage providers.
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_order_status_transitions` | `$transitions, $from, $to` | `OrderService.php:290` |
+| `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `CommissionService.php:163` |
+| `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `BuyerRequestService.php:628` |
+| `wpss_max_order_quantity` | `$max` | `SingleServiceView.php:743` |
+| `wpss_api_controllers` | `$controllers` | `API.php:76` |
+| `wpss_api_public_settings` | `$settings` | `API.php:346` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `API.php:571` |
+| `wpss_api_cors_origins` | `$origins` | `API.php:641` |
+| `wpss_settings_tabs` | `$tabs` | `Settings.php:161` |
+| `wpss_blocks` | `$blocks` | `BlocksManager.php:93` |
+| `wpss_rate_limits` | `$limits, $action` | `RateLimiter.php:243` |
 
-**Parameters:**
-- `array $providers` - Array of provider class names
+### Miscellaneous Filters
 
-### wpss_analytics_widgets
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_review_window_days` | `$days` | `ReviewService.php:420` |
+| `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `ReviewsController.php:350` |
+| `wpss_vendor_registration_open` | `$open` (default true) | `VendorsController.php:380` |
+| `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `VendorsController.php:390` |
+| `wpss_delivery_allowed_file_types` | `$types` | `DeliveryService.php:374` |
+| `wpss_requirements_allowed_file_types` | `$types` | `RequirementsService.php:411` |
+| `wpss_withdrawal_methods` | `$methods` | `EarningsService.php:575` |
+| `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
+| `wpss_search_suggestions` | `$suggestions, $query` | `SearchService.php:498` |
+| `wpss_related_services_args` | `$args, $service` | `SingleServiceView.php:647` |
+| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `CartController.php:378` |
+| `wpss_available_payment_methods` | `$methods` | `CartController.php:395` |
+| `wpss_seller_levels` | `$levels` | `SellerLevelsController.php:284` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `ServicesController.php:608` |
+| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `UnifiedDashboard.php:173` |
+| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `UnifiedDashboard.php:243` |
+| `wpss_dashboard_section_titles` | `$titles` | `UnifiedDashboard.php:371` |
+| `wpss_service_to_wc_status_map` | `$status_map, $new_status, $old_status` | `WooCommerceAdapter.php:388` |
 
-Filter registered analytics dashboard widgets.
+### SEO and Email Filters
 
-**Parameters:**
-- `array $widgets` - Array of widget class names
-
-### wpss_settings_tabs
-
-Filter admin settings page tabs.
-
-**Parameters:**
-- `array $tabs` - Array of tab configurations
-
-**Example:**
-```php
-add_filter( 'wpss_settings_tabs', function( $tabs ) {
-    $tabs['custom_tab'] = [
-        'label' => 'Custom Settings',
-        'callback' => 'my_custom_settings_callback',
-        'priority' => 50,
-    ];
-    return $tabs;
-} );
-```
-
-### wpss_api_controllers
-
-Filter REST API controller registrations.
-
-**Parameters:**
-- `array $controllers` - Array of controller class names
-
-### wpss_blocks
-
-Filter registered Gutenberg blocks.
-
-**Parameters:**
-- `array $blocks` - Array of block configurations
-
-### wpss_service_slug
-
-Filter the service post type slug.
-
-**Parameters:**
-- `string $slug` - Default: 'service'
-
-**Example:**
-```php
-add_filter( 'wpss_service_slug', function( $slug ) {
-    return 'gig'; // Change service URL to /gig/
-} );
-```
-
-### wpss_buyer_request_slug
-
-Filter the buyer request post type slug.
-
-**Parameters:**
-- `string $slug` - Default: 'buyer-request'
-
-### wpss_requirements_allowed_file_types
-
-Filter allowed file types for order requirements.
-
-**Parameters:**
-- `array $types` - Array of allowed MIME types
-
-**Example:**
-```php
-add_filter( 'wpss_requirements_allowed_file_types', function( $types ) {
-    $types[] = 'application/x-photoshop'; // Allow PSD files
-    return $types;
-} );
-```
-
-### wpss_delivery_allowed_file_types
-
-Filter allowed file types for delivery uploads.
-
-**Parameters:**
-- `array $types` - Array of allowed MIME types
-
-### wpss_review_window_days
-
-Filter the number of days buyers can leave reviews.
-
-**Parameters:**
-- `int $days` - Default: 7 days
-
-**Example:**
-```php
-add_filter( 'wpss_review_window_days', function( $days ) {
-    return 30; // Extend review window to 30 days
-} );
-```
-
-## Hook Priority Best Practices
-
-### Priority Guidelines
-
-- **10**: Default priority (most hooks)
-- **5**: Run before default
-- **15-20**: Run after default
-- **100+**: Run last (cleanup, logging)
-
-**Example with priorities:**
-```php
-// Run first
-add_action( 'wpss_order_completed', 'send_notification', 5 );
-
-// Run at default
-add_action( 'wpss_order_completed', 'update_statistics', 10 );
-
-// Run last
-add_action( 'wpss_order_completed', 'log_completion', 100 );
-```
-
-### Parameter Count
-
-Always specify parameter count when using multiple parameters:
-
-```php
-// ✅ Correct
-add_action( 'wpss_service_created', 'my_function', 10, 2 );
-
-// ❌ Wrong - will only receive first parameter
-add_action( 'wpss_service_created', 'my_function' );
-```
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_service_schema` | `$schema, $service_id` | `SchemaMarkup.php:183` |
+| `wpss_service_list_schema` | `$schema` | `SchemaMarkup.php:221` |
+| `wpss_category_schema` | `$schema, $term` | `SchemaMarkup.php:280` |
+| `wpss_person_schema` | `$schema, $user_id` | `SchemaMarkup.php:328` |
+| `wpss_vendor_page_schema` | `$schema, $user_id` | `SchemaMarkup.php:375` |
+| `wpss_organization_schema` | `$schema` | `SchemaMarkup.php:406` |
+| `wpss_open_graph_data` | `$data, $service_id` | `SEO.php:257` |
+| `wpss_sitemap_post_types` | `$post_types` | `SEO.php:321` |
+| `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `SEO.php:387` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `NotificationService.php:1195` |
+| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `NotificationService.php:994` |
+| `wpss_admin_vendor_notification_content` | `$content, $user` | `NotificationService.php:1049` |
+| `wpss_email_data` | `$email` | `EmailService.php:642` |
 
 ## Related Documentation
 
 - [REST API Reference](rest-api.md) - API endpoints and authentication
-- [Custom Integrations](custom-integrations.md) - Building custom adapters
-- [Template Overrides](../customization/template-overrides.md) - Customizing templates
+- [Custom Integrations](custom-integrations.md) - Building custom adapters and gateways
+- [Theme Integration](theme-integration.md) - Template overrides and styling

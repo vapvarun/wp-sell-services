@@ -1,300 +1,366 @@
 # Vendor Analytics Dashboard
 
-**[PRO]** The Vendor Analytics Dashboard gives sellers detailed insights into their performance, earnings, and service statistics. Access comprehensive metrics to optimize your services and grow your business.
+The Vendor Analytics Dashboard gives sellers insights into their performance, earnings, and service statistics. Track your marketplace success with real-time data about orders, revenue, and customer engagement.
 
 ## Overview
 
-The analytics dashboard is available to all vendors and provides real-time data about:
+Analytics are available to all vendors and provide data about:
 
 - Revenue and earnings trends
 - Order performance metrics
 - Service views and conversions
 - Review statistics and ratings
 - Response time tracking
-- Period-over-period comparisons
-
-![Vendor Analytics Dashboard](../images/pro-vendor-analytics-dashboard.png)
 
 ## Accessing Analytics
 
 1. Log in as a vendor
 2. Go to **Vendor Dashboard → Analytics**
-3. Select your preferred time period from the date range picker
-4. View charts and metrics across different tabs
+3. Select time period using date filter
+4. View metrics across dashboard
 
 ## Revenue Tracking
 
 ### Earnings Overview
 
-The revenue section displays your total earnings across different time periods:
+View your earnings over different time periods:
 
-- **Daily earnings**: Track daily sales and identify peak days
-- **Weekly earnings**: Compare week-over-week performance
-- **Monthly earnings**: Analyze monthly revenue trends
-- **Yearly earnings**: View annual performance summary
+**Available Periods:**
+- Day
+- Week
+- Month
+- Year
+- All time
 
-Each view includes:
-- Total revenue (before commission)
-- Net earnings (after commission)
-- Commission amount deducted
-- Pending clearance amount
-- Available for withdrawal
+### Revenue Data
 
-### Revenue Charts
-
-Visual charts help you understand:
-- Revenue trends over time (line chart)
-- Earnings by service (pie chart)
-- Earnings by package tier (bar chart)
-- Month-over-month growth percentage
-
-## Order Metrics
-
-### Performance Overview
-
-Track key order statistics:
+For selected period, see:
 
 | Metric | Description |
 |--------|-------------|
-| Total Orders | All orders received in selected period |
-| Completed Orders | Successfully delivered orders |
-| Active Orders | Orders in progress |
-| Cancelled Orders | Orders that were cancelled |
-| Completion Rate | Percentage of orders completed successfully |
-| Average Order Value | Mean revenue per order |
+| Order Count | Total orders received |
+| Total Revenue | Gross sales (before commission) |
+| Total Earnings | Your net earnings (after commission) |
+| Total Fees | Platform commission paid |
 
-### Order Timeline
+### Earnings Chart
 
-View order distribution by:
-- Time of day (identify peak hours)
-- Day of week (spot busy days)
-- Month of year (seasonal trends)
+**Available Charts:**
+- Week view: Daily breakdown
+- Month view: Daily breakdown
+- Year view: Monthly breakdown
 
-### Order Status Breakdown
+**Chart Data:**
+- X-axis: Time period labels
+- Y-axis: Earnings amount
+- Line graph: Earnings trend
+- Bar graph: Order count per period
 
-Pie chart showing orders by status:
-- Pending acceptance
-- In progress
-- Awaiting delivery
-- In revision
-- Completed
-- Cancelled
-- Disputed
+## Order Metrics
+
+### Performance Statistics
+
+Track order activity:
+
+**Dashboard Stats:**
+- Total orders (all time or period)
+- Completed orders
+- Active orders (in progress)
+- Response rate percentage
+- Active service count
+
+### Order Calculation
+
+Data comes from `get_vendor_dashboard_stats()`:
+
+```php
+[
+    'orders' => [
+        // From OrderRepository->get_vendor_stats()
+        'total' => 150,
+        'completed' => 120,
+        'in_progress' => 10,
+        'cancelled' => 5,
+    ],
+    'reviews' => [
+        // From ReviewRepository->get_vendor_rating_summary()
+        'average_rating' => 4.8,
+        'total_reviews' => 95,
+    ],
+    'active_services' => 12,
+    'response_rate' => 94.5,
+    'recent_activity' => [...],
+]
+```
 
 ## Service Performance
 
-### Views and Conversions
+### View Tracking
 
-Track each service's performance:
+Service views are tracked in post meta:
 
-| Service | Views | Orders | Conversion Rate | Revenue |
-|---------|-------|--------|-----------------|---------|
-| Service Name | 1,234 | 45 | 3.6% | $2,250 |
+```php
+$views = get_post_meta( $service_id, '_wpss_views', true );
+```
 
-**Conversion rate** = (Orders ÷ Views) × 100
+Each service displays:
+- Total views (all time)
+- Orders received
+- Conversion rate (orders / views × 100)
+- Revenue generated
 
-### Best Sellers
+### Top Services
 
-Identify your top-performing services:
-- Service with most orders
-- Service with highest revenue
-- Service with best conversion rate
-- Service with highest average order value
+The `get_vendor_stats()` method returns top 5 services by revenue:
 
-### Performance Insights
+```php
+[
+    'top_services' => [
+        [
+            'id' => 123,
+            'title' => 'WordPress Development',
+            'views' => 1234,
+            'orders' => 45,
+            'revenue' => 4500.00,
+        ],
+        // ... up to 5 services
+    ]
+]
+```
 
-The dashboard provides actionable insights:
-- Services with declining views (need optimization)
-- Services with low conversion (improve description/pricing)
-- Services with high views but low sales (pricing issue)
-- Underperforming packages
+Sorted by revenue descending.
 
-## Review Statistics
+## Analytics Metrics Explained
 
-### Rating Overview
+### Profile Views
 
-Monitor your reputation with detailed review metrics:
+Tracked in user meta:
 
-- **Overall Rating**: Your average rating (1-5 stars)
-- **Total Reviews**: Number of reviews received
-- **Response Rate**: Percentage of reviews you've responded to
+```php
+$profile_views = get_user_meta( $vendor_id, '_wpss_profile_views', true );
+```
 
-### Rating Breakdown
+Incremented when buyers visit vendor profile page.
 
-See distribution of ratings:
-- 5 stars: 85% (170 reviews)
-- 4 stars: 10% (20 reviews)
-- 3 stars: 3% (6 reviews)
-- 2 stars: 1% (2 reviews)
-- 1 star: 1% (2 reviews)
+### Impressions
 
-### Review Trends
+Total views across all published services:
 
-Track rating changes over time:
-- Average rating by month
-- Review volume trends
-- Rating improvement/decline indicators
-- Service-specific ratings
+```php
+$impressions = 0;
+foreach ( $services as $service_id ) {
+    $impressions += (int) get_post_meta( $service_id, '_wpss_views', true );
+}
+```
 
-### Review Response Metrics
+### Clicks
 
-Monitor your engagement:
-- Reviews awaiting response
-- Average response time
-- Response rate percentage
-- Most recent reviews
+**Note:** Clicks are not directly tracked. The analytics service estimates:
 
-## Response Time Metrics
+```php
+// Estimate: 3 clicks per order
+$clicks = $orders_received * 3;
+```
 
-### Communication Performance
+For accurate click tracking, implement JavaScript event tracking.
 
-Track how quickly you respond to:
+### Click Rate
 
-| Metric | Average Time | Target |
-|--------|--------------|--------|
-| Order Acceptance | 2 hours | < 24 hours |
-| Buyer Messages | 30 minutes | < 4 hours |
-| Requirement Clarification | 1 hour | < 8 hours |
-| Delivery Submission | 2.5 days | < delivery time |
+```php
+$click_rate = $impressions > 0 ? ($clicks / $impressions) * 100 : 0;
+```
 
-### Response Rate
+Rounded to 1 decimal place.
 
-Monitor your communication effectiveness:
-- **First Response Time**: Time to initial reply
-- **Overall Response Time**: Average time for all replies
-- **Response Rate**: Percentage of messages answered
-- **24-Hour Response Rate**: Messages answered within a day
+### Conversion Rate
 
-Fast response times improve:
-- Buyer satisfaction
-- Order conversion rates
-- Repeat customer likelihood
-- Overall vendor rating
+```php
+$conversion_rate = $clicks > 0 ? ($orders_received / $clicks) * 100 : 0;
+```
 
-## Comparison Periods
+Rounded to 1 decimal place.
 
-### Period-Over-Period Analysis
+## Response Rate Calculation
 
-Compare performance across time frames:
+Response rate shows how often you respond to customer messages:
 
-**This Month vs Last Month:**
-- Revenue change: +15% ($3,450 vs $3,000)
-- Orders change: +20% (45 vs 37)
-- Average order value: -4% ($76.67 vs $81.08)
-- Conversion rate: +0.5% (3.6% vs 3.1%)
+**Calculation:**
 
-**This Quarter vs Last Quarter:**
-- Quarterly revenue comparison
-- Order volume trends
-- Seasonal pattern identification
-- Growth rate calculation
+1. Get conversations where vendor received messages
+2. Get conversations where vendor sent messages
+3. Calculate: (conversations_responded / total_conversations) × 100
 
-**Year-Over-Year:**
-- Annual revenue growth
-- Service portfolio expansion
-- Rating improvement
-- Customer retention rate
+**Default:** 100% if no messages received.
 
-### Growth Indicators
+From `get_response_rate()` private method:
 
-Visual indicators show:
-- ↑ Green arrow: Positive growth
-- ↓ Red arrow: Decline
-- → Gray arrow: No significant change
-- Percentage change displayed
+```php
+// Counts distinct conversations where:
+// - Customer sent message (sender_id != vendor_id)
+// - Vendor responded (sender_id = vendor_id)
+$response_rate = (responded / total) * 100;
+```
+
+## Recent Activity
+
+Shows combined timeline of recent:
+- Orders received
+- Reviews received
+
+**Limit:** 10 most recent items by default.
+
+Returns mix of order and review objects with:
+- Type ('order' or 'review')
+- ID
+- Status or rating
+- Timestamp
+
+Sorted by `created_at` descending.
 
 ## Time Period Filters
 
-### Available Date Ranges
+### Period Start Dates
 
-Select from preset ranges:
-- **Last 7 days**: Recent weekly performance
-- **Last 30 days**: Monthly snapshot
-- **Last 90 days**: Quarterly overview
-- **This month**: Current month to date
-- **Last month**: Previous calendar month
-- **This year**: Year to date
-- **Last year**: Previous calendar year
-- **All time**: Complete history
-- **Custom range**: Select specific start and end dates
+Available period options:
 
-### Custom Date Range
+```php
+match ( $period ) {
+    'day'   => Today 00:00:00
+    'week'  => 7 days ago
+    'month' => 30 days ago
+    'year'  => 365 days ago
+    default => All time (no filter)
+}
+```
 
-For custom analysis:
-1. Click **Custom Range** in date picker
-2. Select start date
-3. Select end date
-4. Click **Apply**
-5. Dashboard updates with filtered data
+### Chart Grouping
 
-## Exporting Analytics Data
+Data grouped differently per period:
 
-**[PRO]** Export your analytics for external reporting:
+**Week/Month:** Daily grouping (DATE)
+**Year:** Monthly grouping (MONTH)
 
-1. Navigate to the analytics section you want to export
-2. Click **Export** button
-3. Choose format:
-   - **CSV**: Spreadsheet data for Excel/Google Sheets
-   - **PDF**: Formatted report with charts
-4. Select date range for export
-5. Click **Download**
+### Chart Date Format
 
-See [Data Export Guide](../analytics-reporting/data-export.md) for detailed export options.
+Labels formatted as:
 
-## Using Analytics to Improve Sales
+**Week/Month:** "Feb 12"
+**Year:** "Feb 2026"
 
-### Optimize Service Listings
+## Data Export
 
-Use analytics to:
-- Identify high-traffic but low-conversion services (improve pricing/description)
-- Promote best-selling services on your profile
-- Adjust package pricing based on demand
-- Add popular extras based on buyer requests
+Export earnings data for accounting:
 
-### Improve Response Times
+**Export Formats:**
+- CSV (spreadsheet compatible)
+- PDF (formatted report) **[PRO]**
 
-Monitor communication metrics:
-- Set alerts for unanswered messages
-- Schedule dedicated response times
-- Use quick replies for common questions
-- Maintain 24-hour response rate above 90%
+**Export Includes:**
+- Order ID and date
+- Service name
+- Order amount
+- Commission rate and amount
+- Net earnings
+- Payment status
 
-### Enhance Service Quality
+See [Data Export Guide](data-export.md) for details.
 
-Track completion metrics:
-- Identify services with high revision rates
-- Address common delivery issues
-- Improve requirement gathering
-- Reduce cancellation rates
+## Limitations of Free Version
 
-### Seasonal Planning
+The free version provides basic analytics:
 
-Use trend data to:
-- Prepare for busy seasons
-- Adjust pricing during high-demand periods
-- Create seasonal service offerings
-- Plan vacation mode during slow periods
+**Available:**
+- Revenue totals by period
+- Order counts and stats
+- Service views (if tracked)
+- Top 5 services
+- Response rate
+- Recent activity
 
-## Mobile Analytics Access
+**Not Available (Pro Only):**
+- Advanced filtering
+- Custom date ranges
+- Detailed trend analysis
+- Comparison charts
+- Automated reports
+- Export scheduling
+- Real-time dashboards
 
-Access analytics on mobile devices:
-- Responsive dashboard design
-- Touch-optimized charts
-- Swipeable date range selection
-- Mobile notifications for key milestones
+## Performance Considerations
 
-## Analytics Notifications
+### Caching Recommendations
 
-**[PRO]** Receive alerts for important milestones:
-- First order of the day
-- Revenue milestone reached (e.g., $1,000 earned)
-- New best-selling service
-- Rating drop alert
-- Response time falling behind target
+Analytics queries can be intensive. Consider caching:
+
+```php
+$cache_key = 'wpss_vendor_stats_' . $vendor_id . '_30days';
+$stats = get_transient( $cache_key );
+
+if ( false === $stats ) {
+    $stats = $analytics_service->get_vendor_stats( $vendor_id, 30 );
+    set_transient( $cache_key, $stats, HOUR_IN_SECONDS );
+}
+```
+
+Clear cache on order completion:
+
+```php
+add_action( 'wpss_order_completed', function( $order_id ) {
+    $order = get_order( $order_id );
+    delete_transient( 'wpss_vendor_stats_' . $order->vendor_id . '_30days' );
+} );
+```
+
+### Large Service Portfolios
+
+The `get_vendor_stats()` method limits to 100 services:
+
+```php
+'posts_per_page' => 100,
+```
+
+If you have more than 100 services, only the first 100 are analyzed.
+
+## WordPress Hooks
+
+### Tracking Service Views
+
+Views must be tracked manually. Example implementation:
+
+```php
+add_action( 'template_redirect', function() {
+    if ( is_singular( 'wpss_service' ) && ! is_admin() ) {
+        $service_id = get_the_ID();
+        $views = (int) get_post_meta( $service_id, '_wpss_views', true );
+        update_post_meta( $service_id, '_wpss_views', $views + 1 );
+    }
+} );
+```
+
+### Tracking Profile Views
+
+Profile views must also be tracked:
+
+```php
+add_action( 'wpss_vendor_profile_viewed', function( $vendor_id ) {
+    $views = (int) get_user_meta( $vendor_id, '_wpss_profile_views', true );
+    update_user_meta( $vendor_id, '_wpss_profile_views', $views + 1 );
+} );
+```
 
 ## Related Documentation
 
-- [Admin Analytics Dashboard](admin-analytics.md) - Platform-wide analytics (admins)
-- [Data Export Guide](data-export.md) - Exporting reports and data
-- [Vendor Dashboard](../vendor-features/vendor-dashboard.md) - Main dashboard overview
-- [Service Management](../vendor-features/service-management.md) - Creating and editing services
+- [Admin Analytics](admin-analytics.md) - Platform-wide analytics
+- [Data Export](data-export.md) - Exporting reports
+- [Earnings & Withdrawals](../earnings-wallet/vendor-earnings.md) - Managing earnings
+- [Vendor Dashboard](../vendor-system/vendor-dashboard.md) - Dashboard overview
+
+---
+
+**Key Points:**
+- Basic analytics included in free version
+- Revenue and order data from database queries
+- Views/clicks require manual tracking implementation
+- Top services limited to 5, total services limited to 100
+- Response rate calculated from conversation messages
+- Consider caching for performance

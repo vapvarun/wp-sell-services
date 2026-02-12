@@ -2,21 +2,24 @@
 
 This guide walks you through installing WP Sell Services and setting up the required components for your marketplace.
 
-## Requirements
+## System Requirements
 
-Before installing WP Sell Services, ensure your server meets these requirements:
+Before installing, verify your server meets these minimum requirements:
 
 | Requirement | Minimum Version |
 |-------------|----------------|
 | **WordPress** | 6.4 or higher |
 | **PHP** | 8.1 or higher |
-| **MySQL** | 5.7 or higher |
-| **WooCommerce** | 8.0 or higher (recommended for free version) |
+| **MySQL** | 5.7 or higher (or MariaDB 10.2+) |
+| **WooCommerce** | 8.0+ (optional - see notes) |
 
 **Recommended Server Settings:**
 - PHP Memory Limit: 256MB or higher
 - Max Upload Size: 64MB or higher (for service galleries and deliverables)
 - Max Execution Time: 300 seconds
+- PHP Extensions: mysqli, mbstring, json, curl
+
+**Note on WooCommerce**: The free version requires WooCommerce for checkout and payment processing. However, the marketplace functions (browsing services, vendor profiles, etc.) work without it. **[PRO]** version works standalone without WooCommerce.
 
 ## Installing WP Sell Services
 
@@ -24,12 +27,10 @@ Before installing WP Sell Services, ensure your server meets these requirements:
 
 1. Log in to your WordPress admin dashboard
 2. Navigate to **Plugins → Add New**
-3. Click **Upload Plugin** at the top of the page
-4. Click **Choose File** and select the `wp-sell-services.zip` file
+3. Click **Upload Plugin** at the top
+4. Click **Choose File** and select `wp-sell-services.zip`
 5. Click **Install Now**
-6. After installation completes, click **Activate Plugin**
-
-![Upload plugin via dashboard](../images/admin-plugin-upload.png)
+6. After installation, click **Activate Plugin**
 
 ### Method 2: FTP Upload
 
@@ -38,138 +39,312 @@ Before installing WP Sell Services, ensure your server meets these requirements:
 3. Navigate to **Plugins** in your WordPress dashboard
 4. Find **WP Sell Services** and click **Activate**
 
-## Setting Up WooCommerce
+### Method 3: WP-CLI
 
-The free version of WP Sell Services requires WooCommerce for payment processing.
+```bash
+wp plugin install wp-sell-services.zip --activate
+```
+
+## First-Time Activation
+
+When you activate WP Sell Services, the plugin automatically:
+
+### Database Setup
+Creates dedicated database tables:
+- `{prefix}wpss_orders` - Service orders
+- `{prefix}wpss_conversations` - Order messages
+- `{prefix}wpss_deliveries` - Work deliverables
+- `{prefix}wpss_reviews` - Ratings and reviews
+- `{prefix}wpss_disputes` - Dispute cases
+- `{prefix}wpss_service_packages` - Service pricing tiers
+- `{prefix}wpss_vendor_profiles` - Vendor information
+- `{prefix}wpss_buyer_requests` - Job postings
+- `{prefix}wpss_proposals` - Vendor proposals
+- `{prefix}wpss_earnings` - Commission records
+- `{prefix}wpss_withdrawals` - Payout requests
+- `{prefix}wpss_notifications` - In-app notifications
+- `{prefix}wpss_portfolio_items` - Portfolio entries
+- `{prefix}wpss_extension_requests` - Deadline extensions
+- `{prefix}wpss_milestones` **[PRO]** - Payment milestones
+- `{prefix}wpss_tips` - Tip records
+
+### Content Types
+Registers custom post types:
+- **wpss_service**: Service listings
+- **wpss_request**: Buyer requests
+
+Registers taxonomies:
+- **wpss_service_category**: Hierarchical service categories
+- **wpss_service_tag**: Service tags
+
+### User Roles
+Creates the **wpss_vendor** role with these capabilities:
+- `wpss_vendor` - Vendor status marker
+- `wpss_manage_services` - Create and manage services
+- `wpss_manage_orders` - Handle vendor orders
+- `wpss_view_analytics` - Access vendor analytics
+- `wpss_respond_to_requests` - Respond to buyer requests
+- `read` - WordPress basic capability
+- `upload_files` - Upload media
+- `edit_posts` - Edit content
+
+Administrators automatically gain all vendor capabilities plus:
+- `wpss_manage_settings` - Manage marketplace settings
+- `wpss_manage_disputes` - Handle dispute resolution
+- `wpss_manage_vendors` - Manage vendor accounts
+
+### Default Options
+Sets default configuration:
+
+**General Settings**:
+- Platform name: Your site name
+- Currency: USD
+- E-commerce platform: Auto-detect
+
+**Commission Settings**:
+- Commission rate: 10%
+- Enable per-vendor rates: Yes
+
+**Payout Settings**:
+- Minimum withdrawal: $50
+- Clearance days: 14
+- Auto-withdrawal: Disabled
+
+**Tax Settings**:
+- Tax enabled: No
+- Tax label: "Tax"
+- Tax rate: 0%
+
+**Vendor Settings**:
+- Vendor registration: Open
+- Max services per vendor: 20
+- Verification required: No
+- Service moderation: No
+
+**Order Settings**:
+- Auto-complete days: 3
+- Revision limit: 2
+- Disputes allowed: Yes
+- Dispute window: 14 days
+
+**Notification Settings**:
+- All email notifications enabled by default
+
+### Cron Events
+Schedules automated tasks:
+- **wpss_auto_complete_orders**: Hourly - Auto-complete delivered orders
+- **wpss_cleanup_expired_requests**: Daily - Clean up expired buyer requests
+- **wpss_update_vendor_stats**: Twice daily - Update vendor statistics
+- **wpss_process_auto_withdrawals**: Dynamic - Process automatic payouts
+
+## Installing WooCommerce (Free Version)
+
+The free version requires WooCommerce for checkout and payments.
 
 ### Install WooCommerce
 
 1. Go to **Plugins → Add New**
 2. Search for "WooCommerce"
-3. Click **Install Now** on the official WooCommerce plugin
+3. Click **Install Now** on WooCommerce by Automattic
 4. Click **Activate**
-
-![Install WooCommerce](../images/admin-woocommerce-install.png)
+5. Follow WooCommerce setup wizard or skip to configure later
 
 ### Configure WooCommerce for Services
 
-WP Sell Services creates virtual products in WooCommerce for each service order. Configure these settings:
+WP Sell Services creates a virtual WooCommerce product for each service order automatically. Optimize WooCommerce for digital services:
 
-1. Go to **WooCommerce → Settings → Products**
-2. Under **General**, uncheck:
-   - "Enable product reviews" (WP Sell Services has its own review system)
-3. Go to **WooCommerce → Settings → Shipping**
+1. Navigate to **WooCommerce → Settings → Products**
+2. Uncheck **Enable product reviews** (WP Sell Services has its own review system)
+3. Navigate to **WooCommerce → Settings → Shipping**
 4. Disable all shipping methods (services are digital)
-5. Go to **WooCommerce → Settings → Tax**
-6. Configure tax settings according to your location (optional)
+5. Navigate to **WooCommerce → Settings → Tax**
+6. Configure tax settings for your jurisdiction (optional)
 
-**Note:** WP Sell Services creates orders in WooCommerce automatically. Vendors don't create WooCommerce products manually.
+**Note**: Vendors don't create WooCommerce products manually. WP Sell Services creates a carrier product automatically during checkout.
 
-## First-Time Activation
+## Installing Pro Version **[PRO]**
 
-When you activate WP Sell Services for the first time:
+The Pro version extends the free version with premium features.
 
-### Automatic Setup
-
-The plugin automatically:
-- Creates 17 database tables for orders, conversations, reviews, disputes, earnings, notifications, etc.
-- Registers the `wpss_service` and `wpss_request` custom post types
-- Installs default email templates
-- Sets up default commission rates (10%)
-- Creates the `wpss_vendor` user role with service and order management capabilities
-
-### Setup Wizard
-
-After activation, you'll see the **WP Sell Services Setup Wizard**:
-
-1. **Welcome Screen**: Overview of the setup process
-2. **Pages Setup**: Automatically creates required pages (or select existing ones)
-3. **Commission Settings**: Set your default commission rate
-4. **Vendor Settings**: Choose vendor registration settings
-5. **Email Settings**: Configure sender name and email
-6. **Complete**: Finish setup and go to settings
-
-![Setup wizard welcome screen](../images/wizard-welcome.png)
-
-You can skip the wizard and configure settings manually later, but we recommend completing it for a faster setup.
-
-## Installing WP Sell Services Pro
-
-**Important:** You must install and activate the free WP Sell Services plugin before installing Pro.
+**Important**: Install and activate the **free** version first before installing Pro.
 
 ### Installation Steps
 
-1. Install and activate **WP Sell Services** (free version) first
+1. Install and activate WP Sell Services (free version)
 2. Navigate to **Plugins → Add New → Upload Plugin**
-3. Upload the `wp-sell-services-pro.zip` file
+3. Upload `wp-sell-services-pro.zip`
 4. Click **Install Now**, then **Activate Plugin**
-5. Enter your license key at **WP Sell Services → Settings → License**
+5. Navigate to **WP Sell Services → Settings → License**
+6. Enter your license key
+7. Click **Activate License**
 
-![Pro license activation](../images/admin-pro-license.png)
+### Pro Features Activation
 
-### What Pro Adds
+After activating Pro, you gain access to:
 
-After activating Pro, you'll gain access to:
-- **Payment Gateways**: Direct Stripe, PayPal, and Razorpay integration
-- **E-commerce Options**: EDD, FluentCart, SureCart, or Standalone mode
-- **Wallet System**: Buyer and vendor wallet features
-- **Cloud Storage**: S3, Google Cloud, Cloudflare R2 for deliverables
-- **Analytics**: Advanced reporting dashboard
-- **Unlimited Limits**: Remove all free version restrictions
+**E-commerce Platforms**:
+- Easy Digital Downloads (EDD) integration
+- FluentCart integration
+- SureCart integration
+- Standalone mode (no e-commerce plugin required)
+
+**Payment Gateways**:
+- Stripe Direct integration
+- PayPal Commerce Platform
+- Razorpay
+- Offline payments with proof upload
+
+**Wallet System**:
+- 4 wallet provider integrations
+- Automated payout scheduling
+
+**Cloud Storage**:
+- Amazon S3
+- Google Cloud Storage
+- DigitalOcean Spaces
+- Custom S3-compatible storage
+
+**Analytics**:
+- Vendor analytics dashboard
+- Admin analytics dashboard
+- CSV/PDF export
+
+**Extended Limits**:
+- Unlimited packages per service
+- Unlimited gallery images
+- Unlimited videos
+- Unlimited FAQs
+- Unlimited add-ons
 
 Configure Pro features at **WP Sell Services → Settings → Pro Features**.
 
-## Troubleshooting Installation Issues
+## Troubleshooting Installation
 
 ### Plugin Won't Activate
 
-**Error: "This plugin requires PHP 8.1 or higher"**
+**Error**: "This plugin requires PHP 8.1 or higher"
 
-Contact your hosting provider to upgrade PHP. Most hosts allow PHP version changes via cPanel or hosting dashboard.
+**Solution**: Contact your hosting provider to upgrade PHP. Most hosts allow PHP version changes in cPanel or the hosting dashboard.
 
-**Error: "The plugin does not have a valid header"**
+**Error**: "This plugin requires WordPress 6.4 or higher"
 
-You may have uploaded the wrong file. Ensure you're uploading the `.zip` file, not an extracted folder.
+**Solution**: Update WordPress via **Dashboard → Updates**.
+
+**Error**: "The plugin does not have a valid header"
+
+**Solution**: Ensure you're uploading the complete `.zip` file, not an extracted folder.
 
 ### Database Tables Not Created
 
-If database tables don't create automatically:
+If activation succeeds but tables aren't created:
 
-1. Deactivate the plugin
-2. Delete the plugin (your settings are stored separately)
-3. Re-upload and activate
-4. Check **WP Sell Services → Settings → Advanced → Database** to verify table status
+1. Deactivate WP Sell Services
+2. Reactivate the plugin
+3. Navigate to **WP Sell Services → Settings → Advanced → Database**
+4. Click **Verify Database Tables**
+5. If issues persist, click **Recreate Tables** (this won't delete existing data)
 
-### WooCommerce Conflicts
+### WooCommerce Integration Issues
 
-If you see WooCommerce errors after activation:
+If WooCommerce errors occur after activation:
 
 1. Update WooCommerce to the latest version
-2. Clear all caches (plugin cache, theme cache, server cache)
-3. Go to **WooCommerce → Status → Tools** and click **Clear template cache**
+2. Clear all caches (WordPress object cache, page cache, CDN cache)
+3. Navigate to **WooCommerce → Status → Tools**
+4. Click **Clear template cache**
+5. Click **Verify base database tables**
 
 ### 404 Errors on Service Pages
 
-After activation, service pages show 404 errors:
+After activation, if service pages show 404 errors:
 
-1. Go to **Settings → Permalinks**
-2. Click **Save Changes** (don't change anything, just save)
-3. This flushes rewrite rules and fixes 404 errors
+1. Navigate to **Settings → Permalinks**
+2. Click **Save Changes** (no need to change anything)
+3. This flushes WordPress rewrite rules
+4. Refresh the service page
 
 ### Upload Size Limit Issues
 
 If you can't upload the plugin (file too large):
 
-1. Use FTP upload method instead
-2. Or increase upload limits via `.htaccess` or `php.ini`
-3. Contact your host for assistance
+**Solution 1**: Use FTP upload method instead
+
+**Solution 2**: Increase upload limits in `.htaccess`:
+```apache
+php_value upload_max_filesize 64M
+php_value post_max_size 64M
+```
+
+**Solution 3**: Increase limits in `php.ini`:
+```ini
+upload_max_filesize = 64M
+post_max_size = 64M
+```
+
+**Solution 4**: Contact your hosting provider
+
+### WooCommerce Carrier Product Issues
+
+If WooCommerce carrier product wasn't created:
+
+1. Navigate to **WP Sell Services → Settings → Advanced**
+2. Scroll to **WooCommerce Integration**
+3. Click **Create Carrier Product**
+4. Verify product creation at **Products → All Products**
+
+### Vendor Role Not Created
+
+If the vendor role wasn't created:
+
+The plugin automatically recreates missing roles on activation. If issues persist:
+
+1. Deactivate WP Sell Services
+2. Reactivate the plugin
+3. Check **Users → All Users** - filter by "Vendor" role
+
+Administrators are automatically made vendors on activation.
+
+## Post-Installation Checks
+
+After successful installation, verify these items:
+
+### Database Verification
+
+Navigate to **WP Sell Services → Settings → Advanced → Database**:
+- All tables should show "✓ Exists"
+- Schema version should match plugin version
+
+### Rewrite Rules
+
+Test these URLs work (replace `yoursite.com`):
+- `https://yoursite.com/service/` (service archive)
+- `https://yoursite.com/buyer-request/` (buyer request archive)
+- `https://yoursite.com/vendor/` (vendor archive)
+
+If they show 404, flush permalinks at **Settings → Permalinks**.
+
+### API Endpoints
+
+Test the REST API:
+```bash
+curl https://yoursite.com/wp-json/wpss/v1/settings
+```
+
+Should return JSON with marketplace settings.
+
+### Cron Events
+
+Navigate to **Tools → Site Health → Info → Scheduled Events**:
+- Look for `wpss_auto_complete_orders`
+- Look for `wpss_cleanup_expired_requests`
+- Look for `wpss_update_vendor_stats`
 
 ## Next Steps
 
 Now that WP Sell Services is installed:
 
 1. **[Complete Initial Setup](initial-setup.md)** - Configure pages, commission, and settings
-2. **[Configure Admin Settings](../settings/general-settings.md)** - Customize your marketplace
-3. **[Create Your First Service](../service-management/creating-a-service.md)** - Test the vendor experience
+2. **[Compare Free vs Pro](free-vs-pro.md)** - Understand version differences
+3. **[Create Your First Service](../service-creation/service-wizard.md)** - Test the vendor experience
 
-Your marketplace is ready to go!
+Your marketplace is ready to configure!

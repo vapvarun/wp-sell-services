@@ -1,550 +1,255 @@
-# Data Export Guide
-
-**[PRO]** WP Sell Services Pro includes powerful data export capabilities for generating reports, analyzing trends, and meeting compliance requirements. Export order data, earnings reports, vendor performance metrics, and more in CSV or PDF format.
-
-## Overview
-
-Export features include:
-
-- **CSV Exports**: Spreadsheet-compatible data for Excel, Google Sheets, or custom analysis
-- **PDF Reports**: Professional formatted reports with charts and summaries
-- **Filtered Exports**: Export specific data ranges and categories
-- **Scheduled Exports**: Automate recurring reports
-- **GDPR Compliance**: Privacy-safe data exports
-
-## Exporting Orders
-
-### Order Export Options
-
-Export order data for accounting, analysis, or reporting:
-
-1. Go to **WordPress Admin → WP Sell Services → Orders**
-2. Apply filters (optional):
-   - Date range
-   - Order status
-   - Vendor
-   - Service category
-   - Payment method
-3. Click **Export** button
-4. Select format:
-   - **CSV**: Detailed order data
-   - **PDF**: Summary report with totals
-
-### Order CSV Fields
-
-CSV exports include:
-
-| Field | Description |
-|-------|-------------|
-| Order ID | Unique order identifier |
-| Order Date | Date order was placed |
-| Service Name | Name of service ordered |
-| Package | Package tier (Basic/Standard/Premium) |
-| Vendor | Vendor username |
-| Buyer | Buyer username |
-| Status | Current order status |
-| Gross Amount | Total order amount |
-| Commission | Platform commission |
-| Vendor Earnings | Amount payable to vendor |
-| Payment Method | Payment gateway used |
-| Delivery Date | Date order was delivered |
-| Completion Date | Date order was completed |
-| Rating | Buyer rating (if reviewed) |
-
-### Order PDF Report
-
-PDF order reports include:
-
-- **Summary Section**:
-  - Total orders in period
-  - Total revenue
-  - Total commission
-  - Order status breakdown
-- **Detailed Table**: All orders with key fields
-- **Charts**:
-  - Orders by status (pie chart)
-  - Revenue over time (line chart)
-  - Top services (bar chart)
-- **Footer**: Report generation date and filters applied
-
-## Exporting Earnings and Commissions
-
-### Vendor Earnings Report
-
-Export vendor-specific earnings:
-
-**For Vendors:**
-1. Go to **Vendor Dashboard → Analytics**
-2. Select date range
-3. Click **Export Earnings**
-4. Choose format (CSV or PDF)
-
-**For Admins:**
-1. Go to **WordPress Admin → WP Sell Services → Vendors**
-2. Click on a vendor
-3. Go to **Earnings** tab
-4. Click **Export**
-
-### Earnings CSV Fields
-
-| Field | Description |
-|-------|-------------|
-| Order ID | Reference order number |
-| Order Date | Date of sale |
-| Service | Service name |
-| Order Amount | Gross sale amount |
-| Commission Rate | Applied commission percentage |
-| Commission Amount | Commission deducted |
-| Net Earnings | Vendor's earnings |
-| Payment Status | Paid/Pending/Cleared |
-| Withdrawal Date | Date vendor withdrew earnings (if applicable) |
-
-### Commission Report (Admins Only)
-
-Export platform commission earnings:
-
-1. Go to **WordPress Admin → WP Sell Services → Analytics**
-2. Navigate to **Commission** section
-3. Select date range
-4. Click **Export Commission Report**
-5. Select format:
-   - **CSV**: Detailed commission data
-   - **PDF**: Monthly statement format
-
-### Commission CSV Fields
-
-| Field | Description |
-|-------|-------------|
-| Date | Transaction date |
-| Order ID | Reference order |
-| Vendor | Vendor username |
-| Category | Service category |
-| Order Amount | Gross sale |
-| Commission Rate | Rate applied |
-| Commission Earned | Platform earnings |
-| Custom Rate | If custom rate applied |
-| Notes | Additional information |
-
-### Monthly Commission Statement (PDF)
-
-**[PRO]** Generate professional monthly statements:
-
-1. Go to **Analytics → Commission**
-2. Select month
-3. Click **Generate Monthly Statement**
-4. PDF includes:
-   - Month summary
-   - Daily commission breakdown
-   - Commission by vendor
-   - Commission by category
-   - Commission rate analysis
-   - Month-over-month comparison
-   - Charts and visualizations
-
-Perfect for accounting and bookkeeping.
-
-## Exporting Vendor Performance Reports
-
-### Vendor Performance Export
-
-**[PRO]** Comprehensive vendor analytics:
-
-1. Go to **WordPress Admin → WP Sell Services → Vendors**
-2. Click **Export Vendor Report**
-3. Select export options:
-   - All vendors or specific vendor
-   - Date range
-   - Metrics to include
-4. Choose format (CSV or PDF)
-
-### Vendor Report CSV Fields
-
-| Field | Description |
-|-------|-------------|
-| Vendor ID | Unique vendor identifier |
-| Vendor Name | Display name |
-| Email | Contact email |
-| Join Date | Registration date |
-| Vendor Tier | Current tier level |
-| Active Services | Number of active services |
-| Total Orders | All-time orders |
-| Orders (Period) | Orders in selected period |
-| Revenue (Period) | Revenue in selected period |
-| Completion Rate | Percentage of completed orders |
-| Average Rating | Overall star rating |
-| Total Reviews | Number of reviews |
-| Response Time | Average response time |
-| Dispute Rate | Percentage of disputed orders |
-| Vacation Mode | Currently in vacation mode |
-
-### Vendor Performance PDF
-
-Professional reports for:
-- **Vendor Review Meetings**: Share performance with vendors
-- **Top Performer Recognition**: Generate certificates/badges
-- **Problem Vendor Identification**: Flag for review
-
-PDF includes:
-- Vendor profile summary
-- Performance scorecard
-- Revenue trends chart
-- Order completion timeline
-- Rating breakdown
-- Top services list
-- Improvement recommendations
-
-## Exporting Service Statistics
-
-### Service Report Export
-
-Analyze service performance across your marketplace:
-
-1. Go to **WordPress Admin → WP Sell Services → Services**
-2. Apply filters (optional):
-   - Category
-   - Vendor
-   - Status (active/draft)
-   - Sort by (views, orders, revenue)
-3. Click **Export Services**
-4. Select format
-
-### Service CSV Fields
-
-| Field | Description |
-|-------|-------------|
-| Service ID | Unique identifier |
-| Service Name | Title |
-| Vendor | Vendor username |
-| Category | Service category |
-| Status | Published/Draft/Pending |
-| Created Date | Publication date |
-| Total Views | All-time views |
-| Views (Period) | Views in date range |
-| Total Orders | All-time orders |
-| Orders (Period) | Orders in date range |
-| Conversion Rate | (Orders ÷ Views) × 100 |
-| Revenue (Period) | Total revenue |
-| Average Rating | Star rating |
-| Reviews | Number of reviews |
-| Basic Price | Starting price |
-| Standard Price | Mid-tier price |
-| Premium Price | Top-tier price |
-
-## Export Scheduling
-
-**[PRO]** Automate recurring exports:
-
-### Setting Up Scheduled Exports
-
-1. Go to **WordPress Admin → WP Sell Services → Settings**
-2. Navigate to **Export Schedules** tab
-3. Click **Add Schedule**
-4. Configure schedule:
-
-**Schedule Settings:**
-
-| Setting | Options |
-|---------|---------|
-| Report Type | Orders, Earnings, Commissions, Vendors, Services |
-| Frequency | Daily, Weekly, Monthly |
-| Day/Time | Specific day and time to generate |
-| Date Range | Last 7 days, Last month, Custom |
-| Format | CSV, PDF, or Both |
-| Recipients | Email addresses (comma-separated) |
-| FTP Upload | **[PRO]** Upload to FTP/SFTP server |
-| Cloud Storage | **[PRO]** Upload to cloud storage |
-
-5. Click **Save Schedule**
-
-### Example Schedules
-
-**Weekly Orders Report:**
-- Report: Orders (CSV)
-- Frequency: Weekly (Monday 9:00 AM)
-- Range: Previous 7 days
-- Recipients: accounting@example.com
-
-**Monthly Commission Statement:**
-- Report: Commission (PDF)
-- Frequency: Monthly (1st day, 10:00 AM)
-- Range: Previous month
-- Recipients: owner@example.com, bookkeeper@example.com
-
-**Daily Sales Summary:**
-- Report: Orders (CSV + PDF)
-- Frequency: Daily (6:00 PM)
-- Range: Today
-- Recipients: sales@example.com
-
-### Managing Scheduled Exports
-
-View and manage schedules:
-- **Active**: Schedule is running
-- **Paused**: Temporarily disabled
-- **Failed**: Last export had errors
-
-Actions:
-- **Edit**: Modify schedule settings
-- **Pause/Resume**: Temporarily disable
-- **Run Now**: Trigger immediate export
-- **Delete**: Remove schedule
-
-## Privacy and GDPR Compliance
-
-### GDPR-Compliant Exports
-
-WP Sell Services ensures data exports comply with privacy regulations:
-
-**Personal Data Handling:**
-- Exports include only necessary fields
-- Buyer/vendor names can be anonymized
-- Email addresses can be redacted
-- IP addresses excluded by default
-
-### User Data Export Requests
-
-Handle GDPR data export requests:
-
-1. Go to **WordPress Admin → Tools → Export Personal Data**
-2. Enter user email
+# Data Export Guide **[PRO]**
+
+**Status:** Data export features are planned for a future Pro release.
+
+## Planned Feature
+
+Comprehensive data export capabilities for generating reports, analyzing trends, and meeting compliance requirements are planned for WP Sell Services Pro.
+
+## Current Alternatives
+
+### Manual CSV Export
+
+Create custom CSV exports using PHP:
+
+```php
+// Example: Export orders to CSV
+function wpss_export_orders_to_csv() {
+    global $wpdb;
+    $orders_table = $wpdb->prefix . 'wpss_orders';
+
+    // Set headers
+    header( 'Content-Type: text/csv' );
+    header( 'Content-Disposition: attachment; filename="orders-' . date('Y-m-d') . '.csv"' );
+
+    $output = fopen( 'php://output', 'w' );
+
+    // Headers
+    fputcsv( $output, [
+        'Order ID',
+        'Order Number',
+        'Date',
+        'Customer ID',
+        'Vendor ID',
+        'Service ID',
+        'Total',
+        'Status',
+    ] );
+
+    // Data
+    $orders = $wpdb->get_results( "SELECT * FROM {$orders_table} ORDER BY created_at DESC" );
+
+    foreach ( $orders as $order ) {
+        fputcsv( $output, [
+            $order->id,
+            $order->order_number,
+            $order->created_at,
+            $order->customer_id,
+            $order->vendor_id,
+            $order->service_id,
+            $order->total,
+            $order->status,
+        ] );
+    }
+
+    fclose( $output );
+    exit;
+}
+```
+
+### WordPress Admin Export
+
+Export data using WordPress tools:
+
+**User Data Export:**
+1. Go to **Tools → Export Personal Data**
+2. Enter user email address
 3. Click **Send Request**
 4. User receives email with download link
-5. Export includes all WP Sell Services data:
-   - Profile information
-   - Orders (as buyer or vendor)
-   - Messages and conversations
-   - Reviews written/received
-   - Earnings and withdrawals
 
-### Anonymizing Exported Data
+Exports include:
+- User profile information
+- Order history (as buyer or vendor)
+- Messages and conversations
+- Reviews written/received
+- Earnings and withdrawals
 
-When exporting for analysis:
+### Database Query Results
 
-1. Enable **Anonymize Personal Data** in export settings
-2. System replaces:
-   - Names → "Buyer #123", "Vendor #456"
-   - Emails → "buyer-***@***.com"
-   - Addresses → Redacted
-   - Phone numbers → Redacted
+Export query results using phpMyAdmin or database tools:
 
-Preserves data analysis while protecting privacy.
+1. Access your database via phpMyAdmin
+2. Navigate to the relevant table
+3. Run SELECT query with filters
+4. Click **Export** tab
+5. Choose format (CSV, SQL, JSON)
+6. Download results
 
-## Cloud Storage Integration
+## Common Export Needs
 
-**[PRO]** Export directly to cloud storage:
+### Order Data
 
-### Supported Providers
+**Tables to Export:**
+- `wp_wpss_orders` - Order records
+- `wp_wpss_order_requirements` - Order requirements
+- `wp_wpss_deliveries` - Final deliverables
 
-- **Amazon S3**: AWS storage buckets
-- **Google Cloud Storage**: Google Cloud buckets
-- **Dropbox**: Business and personal accounts
-- **FTP/SFTP**: Any FTP server
-
-### Configuring Cloud Storage
-
-1. Go to **Settings → Export Schedules → Cloud Storage**
-2. Click **Add Storage Provider**
-3. Select provider type
-4. Enter credentials:
-   - **S3**: Access Key, Secret Key, Bucket, Region
-   - **Google Cloud**: Service Account JSON, Bucket
-   - **Dropbox**: OAuth connection
-   - **FTP**: Host, Port, Username, Password
-5. Test connection
-6. Save configuration
-
-### Using Cloud Storage in Schedules
-
-When creating scheduled exports:
-1. Enable **Upload to Cloud Storage**
-2. Select configured provider
-3. Specify folder path
-4. Choose file naming format:
-   - `orders-YYYY-MM-DD.csv`
-   - `commission-report-YYYY-MM.pdf`
-
-Files upload automatically after generation.
-
-## File Naming and Organization
-
-### Default File Names
-
-Exports use descriptive naming:
-
-```
-orders-export-2026-02-03.csv
-vendor-earnings-john-doe-2026-01.pdf
-commission-report-2026-01.csv
-vendor-performance-all-2026-Q1.pdf
-service-statistics-web-development-2026-02.csv
+**Useful Query:**
+```sql
+SELECT
+    o.id,
+    o.order_number,
+    o.created_at,
+    o.customer_id,
+    o.vendor_id,
+    o.total,
+    o.vendor_earnings,
+    o.platform_fee,
+    o.status
+FROM wp_wpss_orders o
+WHERE o.created_at >= '2026-01-01'
+ORDER BY o.created_at DESC
 ```
 
-### Custom Naming Templates
+### Earnings Data
 
-**[PRO]** Configure custom file names:
-
-Available variables:
-- `{type}`: Export type (orders, earnings, etc.)
-- `{date}`: Current date (YYYY-MM-DD)
-- `{month}`: Month (YYYY-MM)
-- `{year}`: Year (YYYY)
-- `{vendor}`: Vendor username (for vendor exports)
-- `{category}`: Service category
-
-Example template:
+**For Accounting:**
+```sql
+SELECT
+    vendor_id,
+    COUNT(*) as order_count,
+    SUM(total) as total_revenue,
+    SUM(vendor_earnings) as vendor_earnings,
+    SUM(platform_fee) as commission
+FROM wp_wpss_orders
+WHERE status = 'completed'
+AND created_at BETWEEN '2026-01-01' AND '2026-01-31'
+GROUP BY vendor_id
+ORDER BY vendor_earnings DESC
 ```
-{type}-{vendor}-{month}.csv
-→ earnings-john-doe-2026-02.csv
+
+### Vendor Performance
+
+```sql
+SELECT
+    o.vendor_id,
+    u.display_name,
+    COUNT(o.id) as total_orders,
+    SUM(CASE WHEN o.status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
+    AVG(r.rating) as average_rating,
+    COUNT(DISTINCT r.id) as total_reviews
+FROM wp_wpss_orders o
+LEFT JOIN wp_users u ON o.vendor_id = u.ID
+LEFT JOIN wp_wpss_reviews r ON o.vendor_id = r.vendor_id
+GROUP BY o.vendor_id
+ORDER BY total_orders DESC
 ```
 
-## Advanced Export Features
+## Planned Pro Features
 
-### Multi-Format Exports
+When data export is released, it will include:
 
-Export same data in multiple formats simultaneously:
-1. Select **CSV + PDF** in export dialog
-2. Receive both files in download or email
-3. CSV for data analysis, PDF for presentation
+### Export Formats
+- CSV (Excel/Google Sheets compatible)
+- PDF (formatted reports)
+- JSON (API integration)
 
-### Batch Exports
+### Exportable Data
+- Orders (all fields)
+- Earnings summaries
+- Vendor performance
+- Service statistics
+- Commission reports
+- User activity
 
-Export multiple reports at once:
-1. Go to **Analytics → Batch Export**
-2. Select report types:
-   - ☑ Orders
-   - ☑ Earnings
-   - ☑ Vendor Performance
-   - ☑ Service Statistics
-3. Set date range (applies to all)
-4. Click **Generate All Exports**
-5. Download as ZIP file
+### Export Options
+- Date range filtering
+- Status filtering
+- Custom field selection
+- Automated scheduling
+- Email delivery
 
-### Custom Field Exports
+### Cloud Integration
+- Direct upload to cloud storage
+- FTP/SFTP delivery
+- Webhook notifications
 
-**[PRO]** Choose which fields to include:
+## GDPR Compliance
 
-1. Click **Customize Fields** in export dialog
-2. Select/deselect columns
-3. Reorder fields by dragging
-4. Save as template for future exports
+### Data Export Requests
 
-Useful for:
-- Reducing file size
-- Removing sensitive data
-- Matching import formats
-- Compliance requirements
+Handle GDPR export requests using WordPress:
 
-## Excel and Google Sheets Integration
+1. **Tools → Export Personal Data**
+2. Enter user email
+3. WordPress generates ZIP file with:
+   - Profile data
+   - Order history
+   - Messages
+   - Reviews
+   - Attachments
 
-### Opening CSV Exports
+### Anonymizing Data
 
-**In Microsoft Excel:**
-1. Open Excel
-2. Go to **Data → From Text/CSV**
-3. Select exported CSV file
-4. Verify data preview
-5. Click **Load**
+For analytics purposes, anonymize before export:
 
-**In Google Sheets:**
-1. Open Google Sheets
-2. Go to **File → Import**
-3. Upload CSV file
-4. Select **Import location**
-5. Click **Import data**
+```php
+function wpss_anonymize_order_data( $orders ) {
+    foreach ( $orders as &$order ) {
+        $order->customer_id = 0;
+        $order->vendor_id = 0;
+        $order->customer_name = 'Buyer #' . substr( md5( $order->customer_id ), 0, 8 );
+        $order->vendor_name = 'Vendor #' . substr( md5( $order->vendor_id ), 0, 8 );
+    }
+    return $orders;
+}
+```
 
-### Formatting Exported Data
+## Third-Party Export Plugins
 
-CSV exports include:
-- Headers in first row
-- UTF-8 encoding (supports all characters)
-- Comma-separated values
-- Dates in YYYY-MM-DD format
-- Currency without symbols (numeric only)
+Consider these WordPress plugins for export functionality:
 
-## Troubleshooting Export Issues
+**WP All Export Pro:**
+- Export any custom post type or custom field
+- Advanced filtering
+- Scheduled exports
+- Cloud storage integration
 
-### Export Not Generating
+**Export WP Page to Static HTML:**
+- Export pages to HTML
+- Useful for archiving
 
-**Symptoms**: Export button does nothing or shows error
+**Advanced Database Cleaner:**
+- Database export/backup
+- Table optimization
+- Cleanup old data
 
-**Solutions**:
-1. Check PHP memory limit (increase to 256MB or higher)
-2. Verify folder permissions (wp-content/uploads writable)
-3. Check date range (very large ranges may timeout)
-4. Try smaller date range or fewer filters
-5. Check error log: **WP Admin → Tools → Site Health → Error Log**
+**Note:** These plugins work with WordPress data but require configuration for WP Sell Services custom tables.
 
-### Email Not Received
+## When Will Export Be Available?
 
-**Symptoms**: Scheduled export email doesn't arrive
+Data export is on the Pro roadmap. Priority depends on:
+- User demand and feedback
+- Development capacity
+- Feature completeness
 
-**Solutions**:
-1. Check spam/junk folder
-2. Verify recipient email in schedule settings
-3. Test WordPress email: **Settings → Export Schedules → Send Test Email**
-4. Configure SMTP plugin (recommended for reliability)
-5. Check export history: **Export Schedules → History**
-
-### CSV Opens with Garbled Text
-
-**Symptoms**: Special characters display incorrectly
-
-**Solutions**:
-1. Open CSV using import wizard (not double-click)
-2. Specify UTF-8 encoding when importing
-3. Use Google Sheets (handles UTF-8 automatically)
-4. In Excel: **Data → From Text/CSV → UTF-8**
-
-### Cloud Upload Failing
-
-**Symptoms**: Export generated but cloud upload fails
-
-**Solutions**:
-1. Verify cloud credentials are correct
-2. Check storage quota (not full)
-3. Test connection: **Cloud Storage → Test Connection**
-4. Verify folder path exists
-5. Check file size limits for provider
-
-## Best Practices
-
-### Regular Exports
-
-Maintain regular export schedules:
-- **Daily**: Order summaries for monitoring
-- **Weekly**: Vendor performance for management
-- **Monthly**: Commission statements for accounting
-- **Quarterly**: Comprehensive platform reports
-
-### Backup Exports
-
-Use exports as data backups:
-1. Schedule weekly full data exports
-2. Store in cloud storage
-3. Retain for 90 days minimum
-4. Include all report types
-5. Verify exports periodically
-
-### Data Retention
-
-Comply with regulations:
-- Export historical data before deletion
-- Retain financial records per local laws (typically 7 years)
-- Document export and retention policies
-- Securely delete old exports when no longer needed
-
-### Security
-
-Protect exported data:
-- Never share raw exports publicly
-- Anonymize before sharing with third parties
-- Use secure transfer methods (encrypted email, SFTP)
-- Password-protect sensitive PDFs
-- Limit access to export features (admin/manager roles only)
+**Want this feature?**
+- Contact support to express interest
+- Share your use case
+- Help prioritize development
 
 ## Related Documentation
 
-- [Vendor Analytics](vendor-analytics.md) - Vendor analytics dashboard
-- [Admin Analytics](admin-analytics.md) - Platform analytics dashboard
-- [Order Management](../order-workflow/managing-orders.md) - Managing orders
-- [Commission Settings](../settings/commission-settings.md) - Configure commission rates
+- [Admin Analytics](admin-analytics.md) - View analytics data
+- [Vendor Analytics](vendor-analytics.md) - Vendor reports
+- [Order Management](../order-management/order-lifecycle.md) - Understanding orders
+- [Platform Settings](../platform-settings/advanced-settings.md) - System configuration
+
+---
+
+**Key Points:**
+- No built-in export in current version
+- Use custom PHP code or database queries
+- WordPress privacy tools for user data exports
+- Third-party plugins available for enhanced functionality
+- Full export suite planned for Pro version

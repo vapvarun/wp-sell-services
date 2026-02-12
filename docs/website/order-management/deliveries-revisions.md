@@ -1,679 +1,345 @@
 # Deliveries & Revisions
 
-Learn how to submit deliveries, handle revision requests, and manage the approval process. This guide covers the complete delivery workflow from submission to acceptance.
+Learn how vendors submit deliveries, buyers request revisions, and both parties manage the approval workflow from initial submission to final acceptance.
 
 ## Delivery Workflow
 
 ```
-Work Complete → Submit Delivery → Buyer Reviews → Approve or Revise
-                                                         ↓
-                                                   Revision?
-                                                    ↓     ↓
-                                              YES ←┘     └→ NO
-                                               ↓            ↓
-                                        Resubmit      Completed
+Order Active → Vendor Submits → Buyer Reviews → Accept or Revise
+                                                        ↓
+                                                  Revision?
+                                                   ↓     ↓
+                                             YES ←┘     └→ NO
+                                              ↓            ↓
+                                       Resubmit      Completed
 ```
+
+## When Vendors Can Submit Deliveries
+
+Deliveries can only be submitted when the order is in one of these three statuses:
+
+1. **`in_progress`** - Normal delivery submission
+2. **`revision_requested`** - Resubmitting after changes
+3. **`late`** - Delivery after deadline has passed
+
+**Cannot deliver from other statuses** like pending requirements, pending approval, completed, or cancelled.
 
 ## Submitting Deliveries
 
-### When to Submit
-
-Submit delivery when:
-- All work is complete
-- All requirements fulfilled
-- Files tested and verified
-- Ready for buyer review
-
-**Don't submit if:**
-- Work is partially complete
-- Awaiting buyer clarification
-- Files not tested
-- Missing required elements
-
 ### Delivery Submission Process
 
-1. Go to **Order Details** page
-2. Ensure order status is `in_progress`
+1. Go to **Vendor Dashboard → Orders**
+2. Open order in `in_progress`, `revision_requested`, or `late` status
 3. Click **Submit Delivery** button
-4. Fill out delivery form:
-   - Upload files
-   - Write delivery message
-   - Add delivery notes
-5. Review submission
+4. Upload files (see allowed types below)
+5. Write delivery message
 6. Click **Submit**
 
-![Submit delivery button](../images/admin-delivery-submit-button.png)
+Order status immediately changes to `pending_approval`.
 
 ### Uploading Deliverable Files
 
-**File Upload Requirements:**
+Files are processed through WordPress media library and stored with order reference.
 
-| Setting | Default Value | Configurable |
-|---------|---------------|--------------|
-| **Maximum Files** | 5 per delivery | Yes (admin settings) |
-| **Max File Size** | 50MB per file | Yes (admin settings) |
-| **Total Size Limit** | 250MB per delivery | Yes (admin settings) |
+**Allowed File Types:**
 
-**Allowed File Types (Default):**
-- Archives: ZIP, RAR, 7Z
-- Documents: PDF, DOC, DOCX, XLS, XLSX
-- Images: JPG, PNG, GIF, SVG
-- Design: AI, PSD, EPS, INDD
-- Code: HTML, CSS, JS (in ZIP)
-- Media: MP4, MOV (for video services)
+```
+Images:     jpg, jpeg, png, gif, webp
+Documents:  pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv
+Archives:   zip, rar, 7z
+Audio:      mp3, wav, ogg
+Video:      mp4, mov, avi, webm
+Design:     psd, ai, eps, sketch, fig
+Data:       json, xml
+```
+
+**Explicitly NOT Allowed (Security):**
+- `svg` - XSS risk via embedded JavaScript
+- `html` - Executable scripts
+- `css` - Can contain expressions/imports
+- `js` - Executable JavaScript
 
 **Custom File Types:**
 
-Developers can modify allowed types:
+Developers can add additional types via filter:
 
 ```php
 add_filter( 'wpss_delivery_allowed_file_types', function( $types ) {
-    $types[] = 'sketch';  // Add Sketch files
-    $types[] = 'fig';     // Add Figma files
+    $types[] = 'indd';  // Add InDesign files
     return $types;
-}, 10 );
+} );
 ```
 
-![File upload interface](../images/admin-delivery-file-upload.png)
+### File Processing
 
-### Writing Delivery Messages
+Each uploaded file:
+1. Validated against allowed types
+2. Processed via `wp_handle_upload()`
+3. Created as private WordPress attachment
+4. Linked to order via `_wpss_order_id` post meta
+5. Added to delivery record in JSON format
 
-A great delivery message includes:
+**Storage:** `/wp-content/uploads/` (standard WordPress media)
 
-**1. Summary of Work:**
+### Delivery Versioning
+
+Each submission creates a new version:
+
+**Database:** `wp_wpss_deliveries` table
+- `version` field increments (1, 2, 3...)
+- All previous versions retained
+- Both parties can download any version
+
+**Status Flow:**
 ```
-Hi [Buyer Name],
-
-I've completed your WordPress website design as requested. Here's what's included:
+Submit → status = 'pending'
+Accept → status = 'accepted'
+Revise → status = 'revision_requested'
 ```
-
-**2. File Breakdown:**
-```
-📦 Deliverable Files:
-1. complete-website.zip - Full WordPress theme
-2. design-mockups.pdf - Page designs and layouts
-3. setup-guide.pdf - Installation instructions
-4. logo-files.zip - Logo in multiple formats
-```
-
-**3. Instructions:**
-```
-🚀 Installation Steps:
-1. Backup your existing site (if applicable)
-2. Upload complete-website.zip via Appearance → Themes
-3. Activate the theme
-4. Follow setup-guide.pdf for configuration
-```
-
-**4. Next Steps:**
-```
-✅ What's Next:
-- Review the design on your site
-- Test on mobile devices
-- Let me know if any adjustments are needed
-- You have 3 revisions included
-```
-
-**5. Closing:**
-```
-Thank you for your order! I'm happy to make any revisions you need.
-
-Best regards,
-[Your Name]
-```
-
-![Delivery message editor](../images/admin-delivery-message.png)
-
-### Delivery Best Practices
-
-✅ **File Organization:**
-- Name files clearly (not "file1.zip")
-- Include version numbers if multiple iterations
-- Organize files in logical folders (inside ZIP)
-- Remove unnecessary files (cache, temp files)
-
-✅ **Documentation:**
-- Always include setup/usage instructions
-- Create README files for complex deliverables
-- Include credentials (if applicable, securely)
-- List dependencies or requirements
-
-✅ **Quality Check:**
-- Test all files before uploading
-- Verify ZIP files extract properly
-- Check for viruses/malware
-- Ensure files open correctly
-
-✅ **Professional Presentation:**
-- Use proper formatting in message
-- Proofread your message
-- Be enthusiastic and helpful
-- Thank the buyer
-
-❌ **Avoid:**
-- Uploading broken/corrupt files
-- Missing critical files
-- Vague delivery messages
-- No instructions provided
-- Rushed submissions with errors
 
 ## Buyer Review Process
 
-### Buyer Receives Delivery
+### Receiving Delivery
 
-When you submit delivery:
-
+When vendor submits:
 1. Buyer receives email notification
 2. Order status → `pending_approval`
-3. Buyer goes to order page
-4. Downloads deliverable files
-5. Reviews work against requirements
+3. Buyer downloads files from order page
+4. Buyer has 3 options:
 
-![Buyer delivery notification](../images/frontend-delivery-notification.png)
+**1. Accept Delivery**
+- Click "Accept Delivery"
+- Order status → `completed`
+- Vendor receives payment
+- Delivery status → `accepted`
 
-### Buyer Options
+**2. Request Revision**
+- Click "Request Revision"
+- Provide specific feedback
+- Order status → `revision_requested`
+- Delivery status → `revision_requested`
 
-Buyers have three choices:
+**3. Open Dispute**
+- Major issues or unresponsive vendor
+- See [Dispute Resolution](../disputes-resolution/opening-disputes.md)
 
-**1. Approve Delivery** (satisfied with work)
-- Work meets requirements
-- Quality is acceptable
-- Ready to complete order
+### Auto-Completion
 
-**2. Request Revision** (needs changes)
-- Specific changes needed
-- Work doesn't meet requirements
-- Minor adjustments required
+If buyer takes no action:
 
-**3. Open Dispute** (major issues)
-- Work significantly below expectations
-- Vendor unresponsive
-- Scope not met
+**Timeline (configurable):**
+- Default: 3 days after delivery
+- Admin setting: 0-30 days
+- Setting: `wpss_orders['auto_complete_days']`
 
-### Auto-Approval
+**What Happens:**
+- Order auto-completes after X days
+- Vendor receives payment
+- Buyer can still leave review
 
-If buyer doesn't respond:
-
-**Timeline:**
-- Delivery submitted
-- Buyer has X days to review (default: 7 days)
-- Reminder sent after 48 hours
-- Auto-approved after 7 days
-
-**Configuration:** WP Sell Services → Settings → Orders → "Auto-approve deliveries after"
-
-**Benefits:**
-- Prevents indefinite pending status
-- Protects vendor from non-responsive buyers
-- Ensures timely order completion
-
-![Auto-approval countdown](../images/admin-delivery-auto-approve.png)
+**Disabled if:** Setting = 0
 
 ## Revision System
 
 ### How Revisions Work
 
-**Revision Allocation:**
+**Revision Limit:**
+- Default: 2 revisions per order
+- Configured in **Settings → Orders → Default Revision Limit**
+- Range: 0-10 revisions
+- Can be overridden per service package
 
-Revisions are included in each package:
-- Basic package: 1-2 revisions
-- Standard package: 2-4 revisions
-- Premium package: 4-unlimited revisions
+**Checking Remaining Revisions:**
 
-**Revision Counter:**
-- Tracks revisions used vs. included
-- Displays on order page
-- Warning when limit approaching
-
-**Example:**
-```
-Revisions: 2 of 3 used
-Remaining: 1 revision
-```
+Code checks: `$order->can_request_revision()`
+- Returns `true` if revisions remain OR unlimited
+- Revisions = -1 means unlimited
+- Tracks `revisions_used` vs `revisions_included`
 
 ### Requesting Revisions (Buyer)
 
-When buyer wants changes:
-
-1. View delivery on order page
-2. Click **Request Revision**
-3. Fill out revision request form:
-   - Describe changes needed
-   - Reference specific requirements
-   - Upload reference files (optional)
-4. Submit request
-
-![Revision request form](../images/frontend-revision-request-form.png)
-
-**Good Revision Requests:**
-
-✅ **Specific:**
-"Change the header background from blue to dark gray (#333333). The current blue clashes with the logo."
-
-✅ **Reasonable:**
-"Adjust the font size on the About page to match the Home page. It's currently too small."
-
-✅ **Within Scope:**
-"Fix the broken contact form submit button. It's not working on mobile devices."
-
-**Bad Revision Requests:**
-
-❌ **Vague:**
-"I don't like it. Make it better."
-
-❌ **Out of Scope:**
-"Add 5 more pages and create a membership system." (not in original requirements)
-
-❌ **Complete Redo:**
-"Actually, I want a completely different style. Start over."
-
-### Receiving Revision Requests (Vendor)
-
-When buyer requests revision:
-
-1. Email notification received
-2. Order status → `revision_requested`
-3. View revision details on order page
-4. Review buyer's feedback
-5. Make requested changes
-6. Resubmit delivery
-
-![Vendor revision notification](../images/admin-revision-received.png)
-
-### Making Revisions
+**Requirements:**
+- Order status: `pending_approval`
+- Revisions remaining > 0 OR unlimited
+- Specific feedback required
 
 **Process:**
+1. View delivery files
+2. Click "Request Revision"
+3. Describe changes needed (required field)
+4. Submit request
 
-1. Review revision feedback carefully
-2. Make requested changes
-3. Test changes thoroughly
-4. Upload revised files
-5. Write message explaining changes:
+**What Happens:**
+- Delivery status → `revision_requested`
+- Order status → `revision_requested`
+- Vendor receives notification
+- Revision counter increments
 
-**Example Revision Message:**
+### Delivering Revisions (Vendor)
+
+**Process:**
+1. Receive revision request notification
+2. Review buyer feedback
+3. Make requested changes
+4. Submit new delivery (same workflow)
+5. New version created automatically
+
+**Version Tracking:**
 ```
-Hi [Buyer Name],
-
-I've made the requested revisions:
-
-✅ Changes Made:
-1. Changed header background to dark gray (#333333)
-2. Adjusted About page font size to match Home page (16px)
-3. Fixed contact form button on mobile devices
-
-📎 Updated Files:
-- revised-website-v2.zip (complete updated theme)
-- changes-summary.pdf (visual comparison)
-
-Please review and let me know if any further adjustments are needed.
-You have 1 revision remaining.
-
-Best regards,
-[Your Name]
+Initial Delivery: Version 1
+First Revision:   Version 2
+Second Revision:  Version 3
 ```
 
-6. Submit revised delivery
+### Revision Limits Exhausted
 
-![Resubmit delivery](../images/admin-delivery-resubmit.png)
+When `can_request_revision()` returns `false`:
+- Buyer cannot request more revisions
+- Vendor can still offer goodwill revisions
+- Options:
+  - Accept work as-is
+  - Negotiate extra paid revision
+  - Vendor offers free goodwill revision
+  - Open dispute if work doesn't meet requirements
 
-### Revision Limits
+## Delivery Files Access
 
-**When Revisions Are Exhausted:**
+### Access Control
 
-Scenario: Buyer used all included revisions but wants more changes.
+**Who Can Download:**
+- Buyer: Their order deliveries
+- Vendor: Deliveries they submitted
+- Admin: All deliveries
 
-**Options:**
+**Security:**
+- Files stored as private attachments
+- Order ID verified before download
+- No public URLs
+- Login required
 
-**1. Goodwill Revision (Recommended):**
-- If changes are minor, complete as goodwill
-- Builds buyer trust
-- May result in better review
+### File Storage
 
-**2. Additional Revision Purchase:**
-- Buyer can purchase extra revisions
-- Priced via service add-ons
-- Creates new mini-order for revisions
+**Local Storage:**
+- WordPress uploads directory
+- Private attachment post type
+- Order reference in post meta
 
-**3. Decline Further Revisions:**
-- Explain revision limit reached
-- Offer paid revision option
-- May result in negative review
+**[PRO] Cloud Storage:**
+See [Cloud Storage](../cloud-storage/overview.md) for S3, GCS, Digital Ocean Spaces integration.
 
-**Best Practice:** For minor changes, offer 1-2 goodwill revisions beyond the limit. For major changes, require payment.
+## Notifications
 
-![Revision limit reached](../images/admin-revision-limit.png)
+### Email Events
 
-### What Counts as a Revision?
+**Vendor Receives:**
+- `wpss_revision_requested` - Buyer requested changes
+- Delivery accepted confirmation
+- Auto-approval reminder (if approaching)
 
-Define clearly in your service description:
+**Buyer Receives:**
+- `wpss_delivery_submitted` - Vendor submitted delivery
+- Revision delivered confirmation
+- Auto-completion countdown
 
-**Counts as ONE Revision:**
-- All changes submitted in one revision request
-- Multiple small adjustments made together
-- Fixes to previously delivered work
+**Admin Receives (optional):**
+- Late delivery flags
+- Dispute-related deliveries
 
-**Examples:**
+### Action Hooks
 
-**One Revision:**
-- "Change logo color to blue, adjust header spacing, fix footer alignment"
-- All requested in one revision request
-- You make all changes in one resubmission
+**Developers:**
+```php
+// When delivery submitted
+do_action( 'wpss_delivery_submitted', $delivery_id, $order_id );
 
-**Multiple Revisions:**
-- Request 1: "Change logo color" → You submit
-- Request 2: "Adjust header spacing" → You submit
-- Request 3: "Fix footer alignment" → You submit
+// When delivery accepted
+do_action( 'wpss_delivery_accepted', $order_id );
 
-**Not Counted as Revisions:**
-- Bug fixes (functionality not working as specified)
-- Your errors (work doesn't match requirements)
-- Technical issues (broken files, etc.)
+// When revision requested
+do_action( 'wpss_revision_requested', $order_id, $reason );
+```
 
-### Revision Timeframe
-
-**Vendor Revision Deadline:**
-
-When revision is requested, consider these timelines:
-
-**Quick Revisions (minor changes):** 1-2 days
-- Color changes
-- Text edits
-- Small layout adjustments
-
-**Moderate Revisions:** 2-4 days
-- Multiple section changes
-- Code modifications
-- Design iterations
-
-**Major Revisions:** 4-7 days
-- Significant rework
-- Multiple pages/sections
-- Complex changes
-
-**Pro Tip:** Communicate your revision timeline upfront:
-"I'll have your revisions completed within 48 hours."
-
-## Delivery Versions
-
-### Tracking Multiple Submissions
-
-Each delivery submission is tracked:
-
-**Version History:**
-- Version 1: Initial delivery
-- Version 2: After first revision
-- Version 3: After second revision
-- etc.
-
-**Access Previous Versions:**
-1. Go to order page
-2. Click **Delivery History**
-3. View all submissions
-4. Download files from any version
-
-![Delivery version history](../images/admin-delivery-versions.png)
-
-**Benefits:**
-- Buyer can compare versions
-- Revert to previous version if needed
-- Track changes over time
-- Evidence for dispute resolution
-
-## File Storage & Access
-
-### Where Files Are Stored
-
-**Server Storage:**
-- Location: `/wp-content/uploads/wpss-deliveries/`
-- Organized by: Order ID
-- Secure: Not publicly accessible
-
-**Access Control:**
-- Buyer can download their order files
-- Vendor can download their delivery files
-- Admin can access all files
-- No public access (requires login + permission)
-
-### Cloud Storage Integration [PRO]
-
-**[PRO]** Store deliveries in cloud:
-
-**Supported Providers:**
-- Amazon S3
-- Google Cloud Storage
-- Cloudflare R2
-- Custom S3-compatible storage
-
-**Benefits:**
-- Unlimited storage
-- Faster downloads
-- Reduced server load
-- Geographic distribution
-
-**Configuration:**
-WP Sell Services → Settings → Storage → Cloud Storage
-
-![Cloud storage settings](../images/admin-cloud-storage-pro.png)
-
-### Download Links
-
-**Delivery Download Links:**
-- Temporary secure links (expires after 24-48 hours)
-- Regenerates on access
-- Prevents unauthorized sharing
-
-**Long-term Access:**
-- Buyers have indefinite access to completed order files
-- Vendors have access to their deliveries
-- Configurable: Admin can set expiration (e.g., 90 days after completion)
-
-## Delivery Notifications
-
-### Email Notifications
-
-**Vendor Notifications:**
-- Revision requested
-- Delivery approved
-- Auto-approval pending (reminder)
-
-**Buyer Notifications:**
-- Delivery submitted
-- Reminder to review (after 48 hours)
-- Revision submitted
-- Auto-approval countdown (24 hours before)
-
-**Admin Notifications:**
-- Late deliveries
-- Delivery disputes
-- Auto-approvals (optional)
-
-![Delivery notification email](../images/email-delivery-submitted.png)
-
-## Handling Delivery Issues
-
-### Corrupt/Broken Files
-
-**If buyer reports broken files:**
-
-1. Verify files are not corrupt (test download yourself)
-2. Re-upload files if needed
-3. Use different compression (ZIP vs RAR)
-4. Reduce file size if too large
-5. Split into multiple smaller files
-
-**Prevention:**
-- Test ZIP files after creating
-- Use reliable compression software
-- Scan for viruses before upload
-
-### Missing Files
-
-**If buyer reports missing files:**
-
-1. Review original requirements
-2. Check what was promised
-3. If your error: submit missing files immediately (doesn't count as revision)
-4. If not promised: explain and offer as add-on
-
-### File Download Issues
-
-**Common problems:**
-
-**Download Timeout:**
-- Files too large
-- Solution: Split into smaller files or use cloud storage
-
-**Access Denied:**
-- Permission issue
-- Solution: Admin checks file permissions
-
-**Link Expired:**
-- Temporary link expired
-- Solution: Regenerate download link
-
-## Quality Assurance Checklist
-
-Before submitting delivery:
-
-### File Quality
-
-- [ ] All files included
-- [ ] Files open/extract properly
-- [ ] No corrupt or broken files
-- [ ] Proper file naming
-- [ ] Version controlled (if multiple iterations)
-
-### Functionality
-
-- [ ] Features work as specified
-- [ ] Tested on required browsers/devices
-- [ ] No broken links or errors
-- [ ] Performance optimized
-- [ ] Security checked
-
-### Documentation
-
-- [ ] Setup instructions included
-- [ ] README file (if applicable)
-- [ ] Credentials provided (securely)
-- [ ] Dependencies listed
-- [ ] Usage examples included
-
-### Presentation
-
-- [ ] Files organized logically
-- [ ] Delivery message written
-- [ ] Changes explained (if revision)
-- [ ] Professional communication
-- [ ] Thanked the buyer
-
-## Delivery Analytics
-
-### Vendor Metrics
-
-Track delivery performance:
-
-**Metrics:**
-- Average delivery time (vs. deadline)
-- First-time approval rate
-- Average revisions per order
-- Auto-approval rate (buyer didn't review)
-- Delivery-to-completion time
-
-**Performance Indicators:**
-
-**Good Performance:**
-- 80%+ first-time approval rate
-- Average 0-1 revisions per order
-- Delivery before deadline (90%+ on-time)
-
-**Needs Improvement:**
-- Below 60% first-time approval
-- 2+ revisions per order average
-- Frequent late deliveries
-
-![Delivery performance analytics](../images/admin-delivery-analytics.png)
-
-## Best Practices
+## Delivery Best Practices
 
 ### For Vendors
 
 ✅ **Before Submitting:**
-- Complete all required work
-- Test everything thoroughly
-- Organize files clearly
-- Write comprehensive delivery message
-
-✅ **During Revisions:**
-- Respond promptly (within 24 hours)
-- Make requested changes exactly
-- Communicate what you changed
-- Be professional and courteous
+- Test all files (open/extract properly)
+- Verify work meets requirements
+- Include setup/usage instructions
+- Use clear file names
 
 ✅ **Quality Standards:**
-- Exceed buyer expectations when possible
-- Include bonus files/documentation
-- Deliver before deadline
-- Offer proactive improvements
+- No corrupt or broken files
+- All promised deliverables included
+- Professional presentation
+- Delivered before deadline when possible
+
+✅ **Revision Handling:**
+- Address all feedback points
+- Communicate what changed
+- Maintain version history
+- Be professional and courteous
 
 ### For Buyers
 
 ✅ **Reviewing Deliveries:**
 - Review within 2-3 days
 - Test all functionality
-- Check against original requirements
-- Provide specific feedback if requesting revisions
+- Compare against requirements
+- Provide specific feedback
 
 ✅ **Revision Requests:**
-- Be specific about changes needed
+- Be specific about changes
 - Reference original requirements
-- Be reasonable and fair
+- Be reasonable (within scope)
 - Communicate clearly
-
-✅ **Approval:**
-- Approve promptly if satisfied
-- Leave a review
-- Acknowledge good work
 
 ## Troubleshooting
 
-### Delivery Not Received
+### Cannot Submit Delivery
 
-**Vendor says submitted, buyer says not received:**
+**Check:**
+- Order status is `in_progress`, `revision_requested`, or `late`
+- Not in `pending_requirements` or `completed`
+- You are the vendor on the order
 
-1. Check order status (should be `pending_approval`)
-2. Verify files uploaded successfully
-3. Check spam folder for notification email
-4. Admin can view delivery on backend
-5. Resend notification email
+### File Upload Failed
 
-### Can't Upload Files
-
-**Error: "File too large"**
-- Compress files more
-- Split into multiple files
-- Admin increases upload limit
+**Common Issues:**
+- File type not in allowed list → Use ZIP
+- File too large → Split into smaller files
+- Upload timeout → Increase PHP limits
 
 **Error: "File type not allowed"**
-- Check allowed file types
-- ZIP disallowed types
-- Admin adds file type to whitelist
+- Check `DeliveryService::get_allowed_file_types()`
+- SVG, HTML, CSS, JS explicitly blocked
+- Use allowed archive format (ZIP, RAR, 7Z)
 
-### Revision Disputes
+### Revision Counter Not Updating
 
-**Buyer wants changes outside scope:**
+**Verify:**
+- Revision was actually requested (not draft)
+- `revisions_used` incremented in database
+- Cache cleared
+- Page refreshed
 
-1. Review original requirements
-2. Explain what's within scope
-3. Offer out-of-scope work as new order
-4. Be professional and helpful
-5. If dispute escalates, admin mediates
+## Settings Reference
 
-## Next Steps
+**Admin: Settings → Orders**
 
-- **[Order Workflow](order-workflow.md)** - Complete order lifecycle
-- **[Deadline Extensions](deadline-extensions.md)** - Extending delivery dates
-- **[Order Messaging](order-messaging.md)** - Communication during orders
-- **[Dispute Resolution](dispute-resolution.md)** - Handling conflicts
+| Setting | Field Name | Default | Range | Description |
+|---------|-----------|---------|-------|-------------|
+| Auto-Complete Days | `auto_complete_days` | 3 | 0-30 | Days after delivery to auto-complete if no buyer action |
+| Default Revision Limit | `revision_limit` | 2 | 0-10 | Default revisions per order (overridable per service) |
 
-Great deliveries and smooth revisions lead to 5-star reviews!
+**Note:** 0 = disabled for auto-complete; 0 = no revisions for revision limit
+
+## Related Documentation
+
+- [Order Workflow](order-lifecycle.md) - Complete order lifecycle
+- [Order Messaging](order-messaging.md) - Communication during orders
+- [Tipping & Extensions](tipping-extensions.md) - Deadline extensions
+- [Dispute Resolution](../disputes-resolution/opening-disputes.md) - Handling conflicts
+
+Excellent deliveries and professional revision handling lead to 5-star reviews!

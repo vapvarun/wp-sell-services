@@ -253,23 +253,28 @@ mcp__wbcom-docs__publish_product_docs({
 })
 ```
 
-### Structure
+### Structure (16 categories, 67 docs)
 
 ```
 docs/website/
 ├── docs_config.json          # All categories, docs, slugs (-wpss suffix)
-├── images/                   # Screenshots (added later)
-├── getting-started/          # 3 docs
-├── service-management/       # 6 docs
-├── order-management/         # 5 docs
-├── vendor-guide/             # 6 docs
-├── buyer-guide/              # 4 docs
-├── disputes-resolution/      # 3 docs
-├── admin-settings/           # 7 docs
-├── marketplace-display/      # 4 docs
-├── integrations/             # 6 docs
-├── analytics-reporting/      # 3 docs
-├── developer-guide/          # 3 docs
+├── images/                   # Screenshots
+├── getting-started/          # 4 docs (intro, install, setup, free-vs-pro)
+├── service-creation/         # 6 docs (wizard, packages, addons, media, requirements, publishing)
+├── buyer-requests/           # 3 docs (posting, proposals, managing)
+├── order-management/         # 7 docs (lifecycle, requirements, messaging, deliveries, milestones, tipping, settings)
+├── vendor-system/            # 6 docs (registration, dashboard, profile, levels, vacation, settings)
+├── reviews-ratings/          # 2 docs (review system, reputation/moderation)
+├── disputes-resolution/      # 3 docs (opening, process, admin mediation)
+├── payments-checkout/        # 6 docs (woocommerce, EDD/FC/SC, standalone, stripe, paypal/razorpay, currency/tax)
+├── earnings-wallet/          # 5 docs (commission, dashboard, withdrawals, wallet, auto-payouts)
+├── analytics-reporting/      # 3 docs (vendor analytics, admin analytics, export)
+├── notifications-emails/     # 3 docs (11 email types, in-app, configuration)
+├── cloud-storage/            # 2 docs (overview, setup S3/GCS/DO)
+├── marketplace-display/      # 5 docs (shortcodes, blocks, search, templates, SEO)
+├── admin-tools/              # 4 docs (moderation, vendor mgmt, withdrawals, manual orders)
+├── platform-settings/        # 3 docs (general, pages, advanced)
+├── developer-guide/          # 4 docs (REST API, hooks, integrations, theme)
 └── faq/                      # 1 doc
 ```
 

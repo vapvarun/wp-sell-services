@@ -1,712 +1,521 @@
 # FAQ & Troubleshooting
 
-Find answers to common questions and solutions to issues you may encounter with WP Sell Services.
+Find answers to common questions and solutions to issues with WP Sell Services.
 
 ## General Questions
 
-### What e-commerce plugin do I need?
+### What is WP Sell Services?
 
-**Free Version:**
-- Requires WooCommerce (version 6.0 or higher)
-- WooCommerce handles cart, checkout, and payments
+WP Sell Services is a Fiverr-style service marketplace plugin for WordPress. It allows you to create a platform where vendors offer services and buyers purchase them.
 
-**Pro Version:**
-- Choose from multiple platforms:
-  - WooCommerce
-  - Easy Digital Downloads (EDD)
-  - FluentCRM Cart
-  - SureCart
-  - **Standalone mode** (built-in payments via Stripe/PayPal/Razorpay)
+**Key Features:**
+- Service marketplace with packages
+- Order management system
+- Buyer requests (like Fiverr requests)
+- Vendor profiles and dashboards
+- Review and rating system
+- Dispute resolution
+- Basic analytics
+- WooCommerce integration
 
-You can switch platforms anytime from **Settings → E-commerce**.
+### Do I need WooCommerce?
 
-### Does it work with my theme?
+**Free Version:** Yes, WooCommerce 6.0+ is required for cart and checkout.
 
-Yes! WP Sell Services works with any WordPress theme. The plugin:
-- Uses standard WordPress templates
-- Includes default styling
-- Supports template overrides for customization
-- Works with page builders (Elementor, Beaver Builder, etc.)
+**Pro Version (planned):** Will support alternative e-commerce platforms and standalone payment processing.
 
-If you experience styling issues, see [Template Customization](../customization/template-overrides.md).
+### What are the minimum requirements?
 
-### Can I use it without WooCommerce?
+- WordPress 6.0 or higher
+- PHP 8.0 or higher (PHP 8.1+ recommended)
+- WooCommerce 6.0 or higher
+- MySQL 5.7 or higher / MariaDB 10.2 or higher
 
-**Free version**: No, WooCommerce is required.
+### Is it multisite compatible?
 
-**Pro version**: Yes! Use standalone mode with direct payment processing:
-1. Go to **Settings → E-commerce → Platform**
-2. Select **Standalone Mode**
-3. Configure payment gateway (Stripe, PayPal, or Razorpay)
-4. Save settings
+Yes, WP Sell Services works on WordPress multisite networks. Each site in the network can run its own marketplace.
 
-No shopping cart plugin needed in standalone mode.
+## Setup Issues
 
-### How do I migrate from another marketplace plugin?
+### Services not displaying
 
-**Manual Migration:**
-1. Export data from your current plugin (if available)
-2. Install WP Sell Services
-3. Create vendors and services manually or via import
+**Check these items:**
 
-**Pro Migration Tools:**
-- Import services from CSV
-- Bulk vendor creation
-- Order history import
+1. **Permalinks:**
+   - Go to **Settings → Permalinks**
+   - Click **Save Changes**
+   - Try viewing services again
 
-Contact support for migration assistance from specific plugins.
+2. **Service Status:**
+   - Services must be published (not draft or pending)
+   - Check **Services → All Services** for status
 
-### Is it GDPR compliant?
+3. **Category Assignment:**
+   - Assign at least one category to each service
+   - Go to **Services → Categories** to manage
 
-Yes! WP Sell Services includes GDPR features:
-- User data export (WordPress privacy tools)
-- User data erasure (WordPress privacy tools)
-- Privacy policy integration
-- Cookie consent compatibility
-- Data retention settings
-- Anonymized analytics export option
+4. **Cache:**
+   - Clear site cache if using caching plugin
+   - Clear browser cache
 
-Configure in **Settings → Privacy**.
+### Vendor registration not working
 
-### What languages are supported?
+**Solutions:**
 
-**Plugin Translation:**
-- Translation-ready (all strings use gettext)
-- Includes POT file for translators
-- Works with WPML, Polylang, TranslatePress
-- RTL language support
+1. **Enable Registration:**
+   - Go to **Settings → General**
+   - Enable **Anyone can register**
+   - Go to **Settings → Vendors**
+   - Enable **Allow Vendor Registration**
 
-**Available Translations:**
-- English (default)
-- Spanish
-- French
-- German
-- **[PRO]** Community translations for 15+ languages
+2. **Check User Role:**
+   - After registration, user should have `wpss_vendor` role
+   - Admin can manually assign role: **Users → Edit User**
 
-Contribute translations at translate.wordpress.org.
+3. **Approval Mode:**
+   - If **Require Admin Approval** is enabled
+   - Admins must approve vendors: **Vendors → Pending**
 
-## Setup & Configuration
+### Pages showing 404 errors
 
-### Pages aren't displaying correctly
+**Fix:**
 
-**Symptoms:** Service listings, vendor profiles, or order pages show 404 or incorrect content.
+1. **Regenerate Permalinks:**
+   - **Settings → Permalinks → Save Changes**
 
-**Solution 1: Regenerate Permalinks**
-1. Go to **Settings → Permalinks**
-2. Click **Save Changes** (no changes needed)
-3. Visit pages again
+2. **Check Page Assignments:**
+   - **Settings → Pages**
+   - Verify all required pages are assigned
+   - If missing, create pages with proper shortcodes
 
-**Solution 2: Check Page Assignments**
-1. Go to **WP Sell Services → Settings → Pages**
-2. Verify each page is assigned:
-   - Services Archive
-   - Vendor Dashboard
-   - Buyer Dashboard
-   - Submit Service
-   - Buyer Requests
-3. If pages are missing, create them with correct shortcodes
-4. Reassign in settings
-
-**Solution 3: Theme Compatibility**
-1. Temporarily switch to Twenty Twenty-Four theme
-2. If pages work, your theme has compatibility issues
-3. Enable **Theme Compatibility Mode** in **Settings → Advanced**
-4. Or override templates in your theme (see [Template Overrides](../customization/template-overrides.md))
-
-### Shortcodes showing as text
-
-**Symptoms:** Instead of content, you see `[wpss_services]` or similar text.
-
-**Causes & Solutions:**
-
-**Cause 1: Plugin not activated**
-- Check **Plugins → Installed Plugins**
-- Activate WP Sell Services
-
-**Cause 2: Invalid shortcode**
-- Verify shortcode spelling: `[wpss_services]` not `[wp_services]`
-- Check [Shortcodes Reference](../customization/shortcodes.md) for correct syntax
-
-**Cause 3: Page builder conflict**
-- Some page builders encode shortcodes
-- Use the page builder's shortcode widget instead of text widget
-- Or add shortcode via page builder's WordPress block
-
-**Cause 4: Visual editor issue**
-- Switch to Text/Code editor
-- Paste shortcode again
-- Update page
-
-### WooCommerce cart not working with services
-
-**Symptoms:** Add to cart button doesn't work, or cart shows errors.
-
-**Solution 1: Clear WooCommerce Cache**
-```
-WooCommerce → Status → Tools → Clear transients
-```
-
-**Solution 2: Regenerate Product Links**
-1. Go to **WP Sell Services → Settings → E-commerce**
-2. Click **Regenerate Product Links**
-3. Wait for completion message
-
-**Solution 3: Check WooCommerce Version**
-- Requires WooCommerce 6.0+
-- Update WooCommerce if outdated
-
-**Solution 4: Disable Conflicting Plugins**
-- Temporarily disable other WooCommerce extensions
-- Test add to cart
-- Re-enable plugins one by one to identify conflict
-
-**Solution 5: Check Product Settings**
-- Go to **WooCommerce → Products**
-- Find service products (named like services)
-- Verify they're published and in stock
-
-### Vendor registration form not appearing
-
-**Symptoms:** Vendor signup form doesn't show on registration page.
-
-**Solution 1: Enable Vendor Registration**
-1. Go to **Settings → Vendors → Registration**
-2. Enable **Allow Vendor Registration**
-3. Save settings
-
-**Solution 2: Check WordPress Registration**
-1. Go to **Settings → General**
-2. Enable **Anyone can register**
-3. Save settings
-
-**Solution 3: Verify Shortcode**
-- Registration page should have: `[wpss_vendor_registration]`
-- Or use WordPress default registration with automatic vendor role assignment
-
-**Solution 4: Admin Approval Required**
-- If registration requires approval, users won't see vendor features until approved
-- Check **Settings → Vendors → Registration → Approval Mode**
-
-**Solution 5: Role Conflict**
-- User might already have an account
-- Users can't register as vendor if already registered
-- Admins must assign vendor role manually in **Users → Edit User**
+3. **Check Post Type Registration:**
+   - Deactivate and reactivate plugin
+   - Flush rewrite rules
 
 ## Order Issues
 
-### Order stuck in pending
+### Orders not appearing in vendor dashboard
 
-**Symptoms:** Order remains in "Pending Acceptance" status indefinitely.
+**Check:**
 
-**Causes & Solutions:**
+1. **Order Status:**
+   - Orders must have valid status in `wpss_orders` table
+   - Check database for order existence
 
-**Cause 1: Vendor hasn't accepted**
-- Vendors must manually accept orders
-- Check if vendor received notification email
-- Vendor can accept in **Vendor Dashboard → Orders → Accept**
+2. **Vendor ID:**
+   - Verify order has correct `vendor_id`
+   - Must match WordPress user ID
 
-**Cause 2: Email notifications not working**
-- Test email: **Settings → Email → Send Test Email**
-- If test fails, configure SMTP plugin (WP Mail SMTP recommended)
-- Check spam folder
-
-**Cause 3: Auto-acceptance disabled**
-- Enable in **Settings → Orders → Auto-Accept Orders**
-- Orders auto-accept after X hours
-
-**Cause 4: Payment not confirmed**
-- Check WooCommerce order status
-- Order must be "Processing" or "Completed" in WooCommerce
-- If payment pending, resolve payment issue first
-
-**Solution: Manual Status Change (Admins)**
-1. Go to **WP Sell Services → Orders**
-2. Click order
-3. Change status to "In Progress"
-4. Save
+3. **Database Connection:**
+   - Ensure database queries are working
+   - Check WordPress debug.log for errors
 
 ### Buyer can't submit requirements
 
-**Symptoms:** Requirements form doesn't appear or file upload fails.
+**Solutions:**
 
-**Solution 1: Check Order Status**
-- Requirements can only be submitted after vendor accepts
-- Order status must be "Accepted" or "In Progress"
+1. **Order Status:**
+   - Requirements can only be submitted after vendor accepts order
+   - Order must be "In Progress" status
 
-**Solution 2: File Upload Issues**
-1. Check file size (default max: 50MB)
-2. Check file type (allowed types in **Settings → Files**)
-3. Increase PHP upload limits if needed:
-   ```
-   upload_max_filesize = 100M
-   post_max_size = 100M
-   ```
+2. **Already Submitted:**
+   - Requirements can only be submitted once
+   - Check if requirements already exist for this order
 
-**Solution 3: Permissions**
-- Verify buyer is logged in
-- Buyer must be the order owner
-
-**Solution 4: Already Submitted**
-- Requirements can only be submitted once
-- If resubmission needed, buyer must contact vendor
-- Vendor can request updated requirements
-
-**Solution 5: Check Requirements Form**
-- Admin: Go to **Settings → Orders → Requirements**
-- Verify **Enable Requirements** is checked
-- Check if custom fields are configured correctly
+3. **File Upload Issues:**
+   - Check file size limits: **Settings → Media**
+   - Verify upload directory permissions: `wp-content/uploads/`
+   - Increase PHP limits if needed:
+     ```
+     upload_max_filesize = 100M
+     post_max_size = 100M
+     ```
 
 ### Delivery files not uploading
 
-**Symptoms:** Vendor can't upload delivery files, or upload fails.
+**Troubleshoot:**
 
-**Solution 1: File Size Limits**
-- Check **Settings → Files → Max File Size**
-- Increase if needed (requires PHP limit increase)
-- Default: 50MB per file
+1. **File Size:**
+   - Default max: 50MB per file
+   - Increase in **Settings → Files**
+   - Must also increase PHP limits
 
-**Solution 2: File Type Restrictions**
-- Check allowed file types: **Settings → Files → Allowed Types**
-- Add file extension if missing (e.g., `.psd`, `.ai`)
+2. **File Type:**
+   - Check allowed file types in settings
+   - Add missing extensions: **Settings → Files → Allowed Types**
 
-**Solution 3: Storage Quota**
-- **[PRO]** If using cloud storage, check storage quota
-- Switch to local uploads temporarily: **Settings → Files → Storage**
+3. **Storage:**
+   - Verify `wp-content/uploads/wpss/` directory exists
+   - Check directory permissions (755 or 775)
+   - Ensure sufficient disk space
 
-**Solution 4: Server Upload Limits**
-Add to `.htaccess` (Apache):
-```apache
-php_value upload_max_filesize 100M
-php_value post_max_size 100M
-php_value max_execution_time 300
-```
-
-Or `php.ini`:
-```ini
-upload_max_filesize = 100M
-post_max_size = 100M
-max_execution_time = 300
-max_input_time = 300
-```
-
-**Solution 5: Permissions**
-- Check WordPress uploads folder permissions: `wp-content/uploads/`
-- Should be `755` or `775`
-- Fix: `chmod -R 755 wp-content/uploads`
-
-### Auto-completion not working
-
-**Symptoms:** Orders don't auto-complete after buyer acceptance.
-
-**Solution 1: Enable Auto-Completion**
-1. Go to **Settings → Orders → Completion**
-2. Enable **Auto-Complete After Acceptance**
-3. Set delay (e.g., 24 hours)
-4. Save settings
-
-**Solution 2: Check WP-Cron**
-- Auto-completion requires WordPress cron
-- Test cron: **Tools → Site Health → Info → Cron**
-- If disabled, enable in `wp-config.php`:
-  ```php
-  define( 'DISABLE_WP_CRON', false );
-  ```
-
-**Solution 3: Setup Real Cron**
-For better reliability:
-1. Disable WP-Cron: `define( 'DISABLE_WP_CRON', true );`
-2. Add to server cron:
-   ```bash
-   */15 * * * * wget -q -O - https://example.com/wp-cron.php?doing_wp_cron >/dev/null 2>&1
+4. **PHP Configuration:**
+   ```php
+   // Add to wp-config.php for debugging
+   ini_set('upload_max_filesize', '100M');
+   ini_set('post_max_size', '100M');
+   ini_set('max_execution_time', 300);
    ```
 
-**Solution 4: Manual Completion**
-- Buyers can manually mark complete
-- Or wait for review window to expire (auto-accepts delivery)
+## Buyer Request Issues
 
-## Vendor Issues
+### Requests not expiring automatically
 
-### Can't create services
+**Solution:**
 
-**Symptoms:** Vendor can't access service creation form or submission fails.
+Expiration requires WordPress cron to be functioning.
 
-**Solution 1: Check Vendor Status**
-1. Go to **Users → All Users**
-2. Find vendor user
-3. Verify role is **Vendor** or **Administrator**
-4. Check vendor approval status
+**Check WP-Cron:**
+1. **Tools → Site Health → Info → wp-cron**
+2. Verify cron is not disabled
 
-**Solution 2: Enable Service Creation**
-1. Go to **Settings → Vendors → Capabilities**
-2. Enable **Allow Vendors to Create Services**
-3. Save settings
-
-**Solution 3: Service Limits**
-- Free version: Check service limits in **Settings → Vendors → Limits**
-- Vendor may have reached max services
-- Increase limit or upgrade plan
-
-**Solution 4: Moderation Required**
-- If moderation enabled, services go to **Pending** status
-- Admins must approve: **Services → Pending**
-- Vendor won't see service published until approved
-
-**Solution 5: Form Validation**
-- Check browser console for JavaScript errors
-- Disable conflicting plugins
-- Try different browser
-
-### Services not appearing in search
-
-**Symptoms:** Published services don't show in search results or listings.
-
-**Solution 1: Check Service Status**
-1. Go to **WP Sell Services → Services**
-2. Verify service status is **Published** (not Draft or Pending)
-3. If Pending, approve the service
-
-**Solution 2: Rebuild Search Index**
-1. Go to **Settings → Advanced → Search**
-2. Click **Rebuild Search Index**
-3. Wait for completion
-
-**Solution 3: Category Assignment**
-- Verify service has category assigned
-- Services without categories may not appear in filtered views
-- Edit service → Assign category → Update
-
-**Solution 4: Vacation Mode**
-- Check if vendor is in vacation mode
-- Services from vendors in vacation mode are hidden
-- Disable in **Vendor Dashboard → Settings → Vacation Mode**
-
-**Solution 5: Cache Issues**
-- Clear site cache (if using caching plugin)
-- Clear browser cache
-- Check if caching plugin excludes WP Sell Services pages
-
-### Earnings not showing correctly
-
-**Symptoms:** Vendor earnings display incorrect amounts or don't update.
-
-**Solution 1: Check Commission Settings**
-1. Go to **Settings → Commission**
-2. Verify commission rate
-3. Check if vendor has custom rate: **Vendors → Edit → Commission**
-
-**Solution 2: Payment Status**
-- Earnings only show for completed orders
-- Check order status: **Vendor Dashboard → Orders**
-- Orders in progress don't add to available balance
-
-**Solution 3: Withdrawal History**
-- Check if earnings were already withdrawn
-- View in **Vendor Dashboard → Earnings → History**
-
-**Solution 4: Recalculate Earnings**
-1. Go to **WP Sell Services → Settings → Advanced**
-2. Click **Recalculate All Earnings**
-3. Wait for completion (may take time for many orders)
-
-**Solution 5: Clearance Period**
-- Earnings may be in clearance period
-- Check **Settings → Payments → Clearance Period**
-- Funds available after clearance (e.g., 14 days after order completion)
-
-### Withdrawal request pending
-
-**Symptoms:** Vendor withdrawal request stuck in pending status.
-
-**Explanation:**
-- Withdrawal requests require manual admin approval (for security)
-- This is expected behavior
-
-**Admin Action Required:**
-1. Go to **WP Sell Services → Withdrawals**
-2. Review pending requests
-3. Verify vendor payment details
-4. Process payment externally (bank transfer, PayPal, etc.)
-5. Mark withdrawal as **Approved** or **Completed**
-6. Or reject with reason
-
-**Auto-Approval (Pro):**
-- **[PRO]** Enable auto-approval for trusted vendors
-- Go to **Settings → Payments → Auto-Approve Withdrawals**
-- Set minimum vendor tier or order count
-- Requires payment gateway integration
-
-## Technical Issues
-
-### PHP version compatibility
-
-**Minimum Requirements:**
-- PHP 7.4 or higher
-- Recommended: PHP 8.0+
-
-**Check PHP Version:**
-1. Go to **Tools → Site Health → Info → Server**
-2. Look for PHP version
-
-**Upgrade PHP:**
-- Contact hosting provider to upgrade
-- Most hosts allow PHP version selection in control panel
-
-**Compatibility Warnings:**
-- PHP 7.4: Basic compatibility (deprecated)
-- PHP 8.0+: Full support, better performance
-- PHP 8.2+: Recommended for Pro features
-
-### Plugin conflicts and debugging
-
-**Common Conflicts:**
-- Other marketplace plugins
-- Custom user role managers
-- Heavy page builders
-- Aggressive caching plugins
-
-**Debug Mode:**
-Enable WordPress debug mode to identify issues:
-
-Add to `wp-config.php`:
+**Enable Cron:**
 ```php
+// In wp-config.php, ensure this is false or not present
+define( 'DISABLE_WP_CRON', false );
+```
+
+**Setup Real Cron (recommended):**
+```bash
+# Add to server crontab
+*/15 * * * * wget -q -O - https://yoursite.com/wp-cron.php?doing_wp_cron >/dev/null 2>&1
+```
+
+### Can't accept proposal
+
+**Verify:**
+
+1. **Request Status:**
+   - Request must be 'open' or 'in_review'
+   - Check `_wpss_status` post meta
+
+2. **Proposal Status:**
+   - Proposal must be 'pending' in `wpss_proposals` table
+   - Not already accepted or rejected
+
+3. **Ownership:**
+   - You must be the request author
+   - Check `post_author` field
+
+4. **Not Expired:**
+   - Request must not be past `expires_at` date
+
+### Order not created after accepting proposal
+
+**Check:**
+
+1. **Database Permissions:**
+   - Ensure WordPress can insert into `wpss_orders` table
+   - Check database error logs
+
+2. **Return Value:**
+   - Check the `convert_to_order()` return value
+   - `success => false` indicates specific error in `message`
+
+3. **Debug Log:**
+   - Enable WP_DEBUG and WP_DEBUG_LOG
+   - Check `wp-content/debug.log` for errors
+
+## Dispute Issues
+
+### Can't open dispute
+
+**Requirements:**
+
+1. **Order Must Exist:**
+   - Order ID is valid in `wpss_orders` table
+
+2. **User Authorization:**
+   - Must be order customer OR order vendor
+   - Cannot open dispute if not involved in order
+
+3. **One Per Order:**
+   - Each order can only have one dispute
+   - Check if dispute already exists
+
+4. **No Status Restriction:**
+   - Disputes can be opened at any order stage
+   - No automatic time window enforcement
+
+### Evidence not showing
+
+**Verify:**
+
+1. **Evidence Stored:**
+   - Check `evidence` column in `wpss_disputes` table
+   - Should contain valid JSON
+
+2. **JSON Format:**
+   - Evidence must be valid JSON array
+   - Use `get_evidence()` method, not direct DB query
+
+3. **Evidence Types:**
+   - Supported: 'text', 'image', 'file', 'link'
+   - Check for typos in type field
+
+### Dispute resolution not processing refund
+
+**Important:** The `resolve()` method does NOT process actual payments.
+
+**You must manually:**
+1. Process refund through WooCommerce:
+   - **WooCommerce → Orders → Find Order → Refund**
+2. OR use payment gateway admin panel
+3. OR credit buyer's wallet (if Pro wallet enabled)
+
+The dispute system only:
+- Records the refund amount
+- Updates dispute and order status
+- Notifies parties
+
+## Analytics Issues
+
+### Service views not tracking
+
+**Service views require manual implementation:**
+
+```php
+// Add to functions.php or custom plugin
+add_action( 'template_redirect', function() {
+    if ( is_singular( 'wpss_service' ) && ! is_admin() ) {
+        $service_id = get_the_ID();
+        $views = (int) get_post_meta( $service_id, '_wpss_views', true );
+        update_post_meta( $service_id, '_wpss_views', $views + 1 );
+    }
+} );
+```
+
+Views are stored in `_wpss_views` post meta. Not tracked by default.
+
+### Profile views not counting
+
+**Profile views also require manual tracking:**
+
+```php
+add_action( 'wpss_vendor_profile_viewed', function( $vendor_id ) {
+    $views = (int) get_user_meta( $vendor_id, '_wpss_profile_views', true );
+    update_user_meta( $vendor_id, '_wpss_profile_views', $views + 1 );
+} );
+```
+
+Fire the `wpss_vendor_profile_viewed` action when profile is viewed.
+
+### Analytics data not updating
+
+**Performance Tip:** Cache analytics to reduce database load.
+
+**Clear Cache After Changes:**
+```php
+// Delete transients after order completion
+delete_transient( 'wpss_admin_dashboard_stats' );
+delete_transient( 'wpss_vendor_stats_' . $vendor_id . '_30days' );
+```
+
+## Email & Notification Issues
+
+### Emails not sending
+
+**Solutions:**
+
+1. **Test WordPress Email:**
+   - **Settings → Email → Send Test**
+   - If fails, email is broken at WordPress level
+
+2. **Configure SMTP:**
+   - Install **WP Mail SMTP** plugin
+   - Configure with Gmail, SendGrid, or Mailgun
+   - Improves deliverability dramatically
+
+3. **Check Spam:**
+   - Check spam/junk folders
+   - Emails from WordPress often marked as spam
+
+4. **Enable Notifications:**
+   - **Settings → Notifications**
+   - Verify enabled for each event type
+
+### Notifications going to wrong users
+
+**Check:**
+
+1. **Role Filtering:**
+   - Notifications are role-specific
+   - Admins, vendors, and buyers get different notifications
+
+2. **Email Addresses:**
+   - Verify user email addresses are correct
+   - **Users → Edit User**
+
+## Performance Issues
+
+### Slow analytics dashboard
+
+**Optimize:**
+
+1. **Add Database Indexes:**
+   ```sql
+   ALTER TABLE wp_wpss_orders ADD INDEX idx_status (status);
+   ALTER TABLE wp_wpss_orders ADD INDEX idx_vendor (vendor_id);
+   ALTER TABLE wp_wpss_orders ADD INDEX idx_created (created_at);
+   ```
+
+2. **Use Caching:**
+   - Cache analytics results in transients
+   - Cache duration: 15-60 minutes
+
+3. **Limit Results:**
+   - Use `get_recent_orders(20)` not `get_recent_orders(1000)`
+   - Paginate large result sets
+
+### Slow search results
+
+**Improve Search:**
+
+1. **Use Search Service:**
+   - Built-in `SearchService` optimizes queries
+
+2. **Limit Search Scope:**
+   - Search specific categories
+   - Limit posts_per_page to 20-50
+
+3. **Add Search Index:**
+   - Consider search plugin like Relevanssi
+   - Or ElasticSearch for large sites
+
+## File Storage Issues
+
+### Running out of disk space
+
+**Solutions:**
+
+1. **Increase Server Storage:**
+   - Upgrade hosting plan
+   - Contact hosting provider
+
+2. **Set Retention Policy:**
+   - Auto-delete old deliveries after 90 days
+   - Manually archive completed orders
+
+3. **Optimize Files:**
+   - Compress large files before upload
+   - Use efficient file formats
+   - Remove unnecessary files
+
+4. **Future: Cloud Storage:**
+   - Cloud storage is planned for Pro version
+   - Will offload files to S3/GCS/DigitalOcean
+
+### Attachments missing after period
+
+**Check:**
+
+1. **File Cleanup:**
+   - Do you have automatic cleanup enabled?
+   - Check **Settings → Files → Retention**
+
+2. **Manual Deletion:**
+   - Were files manually deleted from server?
+
+3. **Backup:**
+   - Restore from backup if available
+
+## Common Error Messages
+
+### "Dispute already exists for this order"
+
+**Meaning:** Each order can only have one dispute.
+
+**Solution:**
+- View existing dispute instead of creating new one
+- Update existing dispute with additional evidence
+
+### "Order not found"
+
+**Causes:**
+- Order ID doesn't exist in database
+- Order was deleted
+- Using wrong order ID
+
+**Fix:**
+- Verify order ID is correct
+- Check `wpss_orders` table for order
+- Use order number instead if searching
+
+### "Invalid dispute status"
+
+**Causes:**
+- Trying to set status not in the 5 valid statuses
+- Typo in status name
+
+**Valid Statuses:**
+- `open`
+- `pending_review`
+- `escalated`
+- `resolved`
+- `closed`
+
+### "Evidence cannot be added to closed dispute"
+
+**Meaning:** Disputes with status 'closed' cannot be modified.
+
+**Solution:**
+- Evidence can only be added before dispute is closed
+- Contact admin to reopen if necessary
+
+## Getting Help
+
+### Documentation Resources
+
+- **Getting Started:** [Installation Guide](../getting-started/installation.md)
+- **Settings Reference:** [Platform Settings](../platform-settings/general-settings.md)
+- **Developer Docs:** [Hooks & Filters](../developer-guide/hooks-filters.md)
+- **REST API:** [API Reference](../developer-guide/rest-api.md)
+
+### Enable Debug Mode
+
+For troubleshooting, enable WordPress debug:
+
+```php
+// Add to wp-config.php
 define( 'WP_DEBUG', true );
 define( 'WP_DEBUG_LOG', true );
 define( 'WP_DEBUG_DISPLAY', false );
 ```
 
-Check log: `wp-content/debug.log`
-
-**Conflict Testing:**
-1. Deactivate all plugins except WP Sell Services
-2. Test if issue persists
-3. Reactivate plugins one by one
-4. Identify conflicting plugin
-
-**Theme Conflict Testing:**
-1. Switch to Twenty Twenty-Four theme
-2. Test functionality
-3. If works, theme has conflict
-4. Enable **Theme Compatibility Mode** in settings
-
-### Template override not working
-
-**Symptoms:** Custom template changes don't appear on frontend.
-
-**Solution 1: Verify File Location**
-Correct structure:
-```
-your-theme/
-└── wp-sell-services/
-    ├── single-service.php
-    ├── archive-services.php
-    └── vendor-dashboard.php
-```
-
-**Solution 2: Clear Cache**
-- Clear all caches (site, server, browser)
-- Disable caching temporarily for testing
-
-**Solution 3: Check Template Hierarchy**
-- Template must match plugin template name exactly
-- Check plugin templates: `wp-sell-services/templates/`
-
-**Solution 4: Force Template Refresh**
-1. Rename template file
-2. Refresh page (should use default)
-3. Rename back to original
-4. Refresh again
-
-See [Template Override Guide](../customization/template-overrides.md) for details.
-
-### REST API returning 401
-
-**Symptoms:** API requests return "Unauthorized" error.
-
-**Solution 1: Authentication Required**
-- REST API requires authentication
-- Use cookie auth (logged in user) with nonce
-- Or use Application Password
-
-**Solution 2: Nonce Issues**
-For JavaScript requests:
-```javascript
-headers: {
-    'X-WP-Nonce': wpApiSettings.nonce
-}
-```
-
-Verify nonce is localized:
-```php
-wp_localize_script( 'my-script', 'wpApiSettings', [
-    'nonce' => wp_create_nonce( 'wp_rest' ),
-] );
-```
-
-**Solution 3: Application Password**
-1. Generate password: **Users → Profile → Application Passwords**
-2. Use in Authorization header:
-   ```
-   Authorization: Basic base64(username:password)
-   ```
-
-**Solution 4: Permalink Issues**
-- Ensure permalinks are enabled (not default `?p=123`)
-- Regenerate: **Settings → Permalinks → Save**
-
-**Solution 5: Server Configuration**
-Some servers block authorization headers. Add to `.htaccess`:
-```apache
-SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
-```
-
-### Email notifications not sending
-
-**Symptoms:** Users don't receive order notifications, messages, etc.
-
-**Solution 1: Test Email**
-1. Go to **Settings → Email**
-2. Click **Send Test Email**
-3. Check if received
-
-**Solution 2: Configure SMTP**
-WordPress mail() function is unreliable. Use SMTP:
-
-1. Install **WP Mail SMTP** plugin
-2. Configure with:
-   - Gmail SMTP
-   - SendGrid
-   - Mailgun
-   - Amazon SES
-3. Test email again
-
-**Solution 3: Check Email Settings**
-1. Go to **Settings → Email → Notifications**
-2. Verify enabled notifications:
-   - ☑ Order Created
-   - ☑ Order Status Changed
-   - ☑ New Message
-   - etc.
-3. Check recipient roles are correct
-
-**Solution 4: Spam Folder**
-- Check spam/junk folders
-- Add site email to contacts
-- Use professional SMTP (improves deliverability)
-
-**Solution 5: Server Mail Limits**
-- Some hosts limit email sending
-- Check host email logs
-- Contact host if emails are being blocked
-
-**Solution 6: Email Log**
-**[PRO]** Check email log:
-1. Go to **Settings → Email → Log**
-2. View sent emails and delivery status
-3. Identify failed emails
-
-## Common Error Messages
-
-### "Commission rate not configured"
-
-**Solution:**
-1. Go to **Settings → Commission**
-2. Set default commission rate (e.g., 20%)
-3. Save settings
-
-### "Service approval required"
-
-**Not an error** - Service submitted for admin review.
-
-**Admin action:**
-1. Go to **WP Sell Services → Services**
-2. Filter by **Pending Review**
-3. Review and approve/reject services
-
-### "Insufficient balance"
-
-**Cause:** Vendor trying to withdraw more than available balance.
-
-**Solution:**
-- Check available balance in **Vendor Dashboard → Earnings**
-- Wait for orders to complete and clear
-- Withdraw only available amount
-
-### "Order cannot be cancelled"
-
-**Causes:**
-- Order already delivered
-- Order already completed
-- Cancellation window expired
-
-**Solution:**
-- Orders in late stages can't be cancelled
-- Use dispute system instead: **Order → Open Dispute**
-
-### "File type not allowed"
-
-**Solution:**
-1. Go to **Settings → Files → Allowed File Types**
-2. Add file extension (e.g., `.psd`, `.ai`, `.zip`)
-3. Save settings
-4. Try upload again
-
-## Getting Support
-
-### Documentation
-
-Browse complete documentation:
-- [Getting Started Guide](../getting-started/installation.md)
-- [Settings Reference](../settings/general-settings.md)
-- [Developer Guide](../developer-guide/hooks-filters.md)
-
-### Support Channels
-
-**Free Version:**
-- WordPress.org support forum
-- Documentation site
-- Community forums
-
-**Pro Version:**
-- Priority email support
-- Live chat support
-- Dedicated support portal
-- Phone support (Enterprise plan)
-
-### Before Contacting Support
-
-Provide this information for faster resolution:
-
-1. **WordPress Environment:**
-   - WordPress version
-   - PHP version
-   - Active theme
-   - Active plugins
-
-2. **WP Sell Services:**
-   - Plugin version (free or pro)
-   - Settings configuration (screenshots)
-
-3. **Issue Details:**
-   - Description of problem
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Screenshots or screen recording
-   - Error messages (from debug.log)
-
-4. **What You've Tried:**
-   - Troubleshooting steps already attempted
-   - Results of each attempt
+Check logs at: `wp-content/debug.log`
 
 ### System Information
 
 Get system info for support:
-1. Go to **WP Sell Services → Settings → System Status**
-2. Click **Copy System Info**
-3. Paste in support ticket
 
-## Related Documentation
+1. **Tools → Site Health**
+2. Go to **Info** tab
+3. Review:
+   - WordPress version
+   - PHP version
+   - Active plugins
+   - Database info
+   - File permissions
 
-- [Installation Guide](../getting-started/installation.md)
-- [Settings Overview](../settings/general-settings.md)
-- [Order Workflow](../order-workflow/order-lifecycle.md)
-- [Vendor Guide](../vendor-features/vendor-dashboard.md)
+### Contact Support
+
+**Before contacting support, have ready:**
+
+1. WordPress version
+2. PHP version
+3. WP Sell Services version
+4. Active theme name
+5. List of active plugins
+6. Error messages (from debug.log)
+7. Steps to reproduce issue
+8. Screenshots if applicable
+
+**Support Channels:**
+- **Free Version:** WordPress.org support forum
+- **Pro Version:** Priority email support
+
+---
+
+**Can't find your answer?**
+
+Search the full documentation or post in the WordPress.org support forum. For Pro customers, contact priority support directly.

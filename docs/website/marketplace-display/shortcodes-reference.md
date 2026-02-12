@@ -1,12 +1,24 @@
 # Shortcodes Reference
 
-Complete reference for all WP Sell Services shortcodes. Use these to display marketplace features anywhere on your WordPress site.
+Complete reference for all WP Sell Services shortcodes. Display marketplace features anywhere on your WordPress site.
+
+## Available Shortcodes
+
+WP Sell Services includes 13 shortcodes organized into 5 categories:
+
+- **Service Display** (4 shortcodes)
+- **Vendor Display** (3 shortcodes)
+- **Buyer Requests** (2 shortcodes)
+- **Dashboard** (2 shortcodes)
+- **Authentication** (2 shortcodes)
+
+---
 
 ## Service Display Shortcodes
 
 ### [wpss_services]
 
-Display a grid of services with filtering and sorting options.
+Display a grid of services with filtering and sorting.
 
 **Basic Usage:**
 ```
@@ -17,24 +29,28 @@ Display a grid of services with filtering and sorting options.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `limit` | number | 12 | Number of services to display |
-| `columns` | number | 3 | Grid columns (1-4) |
 | `category` | string/int | - | Filter by category slug or ID |
-| `tag` | string | - | Filter by tag slug |
-| `vendor` | int | - | Show services from specific vendor ID |
-| `orderby` | string | date | Sort by: date, title, price, rating, popular |
+| `tag` | string/int | - | Filter by tag slug or ID |
+| `vendor` | int | - | Show services from specific vendor (user ID) |
+| `limit` | number | 12 | Number of services to display |
+| `columns` | number | 4 | Grid columns (1-4) |
+| `orderby` | string | date | Sort by: date, title, price, rating, sales |
 | `order` | string | DESC | Sort order: DESC or ASC |
-| `featured` | boolean | - | Show only featured services (yes/no) |
-| `min_price` | number | - | Minimum price filter |
-| `max_price` | number | - | Maximum price filter |
-| `ids` | string | - | Comma-separated service IDs |
-| `exclude` | string | - | Comma-separated IDs to exclude |
+| `featured` | string | - | Show only featured services (true/1) |
+
+**Sorting Options:**
+
+- `orderby="date"` - Publication date (newest first by default)
+- `orderby="title"` - Alphabetical by title
+- `orderby="price"` - By starting price (uses `_wpss_starting_price` meta)
+- `orderby="rating"` - By average rating (uses `_wpss_rating_average` meta)
+- `orderby="sales"` - By total sales (uses `_wpss_total_sales` meta)
 
 **Examples:**
 
 **Featured Services Grid:**
 ```
-[wpss_services featured="yes" limit="8" columns="4"]
+[wpss_services featured="true" limit="8" columns="4"]
 ```
 
 **Category-Specific Services:**
@@ -47,26 +63,16 @@ Display a grid of services with filtering and sorting options.
 [wpss_services vendor="42" orderby="rating" order="DESC"]
 ```
 
-**Popular Services:**
+**Top-Rated Services:**
 ```
-[wpss_services orderby="popular" limit="6" columns="3"]
-```
-
-**Price Range Filter:**
-```
-[wpss_services min_price="50" max_price="200"]
-```
-
-**Specific Services by ID:**
-```
-[wpss_services ids="10,25,38,42" columns="4"]
+[wpss_services orderby="rating" order="DESC" limit="6"]
 ```
 
 ---
 
 ### [wpss_service_search]
 
-Display a service search form with autocomplete.
+Display a service search form with category dropdown.
 
 **Basic Usage:**
 ```
@@ -77,11 +83,10 @@ Display a service search form with autocomplete.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `placeholder` | string | "Search services..." | Search input placeholder |
-| `show_filters` | boolean | yes | Show category/price filters |
-| `show_button` | boolean | yes | Show search button |
-| `autocomplete` | boolean | yes | Enable autocomplete suggestions |
-| `redirect` | string | - | Redirect to custom search results page |
+| `placeholder` | string | "Search services..." | Search input placeholder text |
+| `show_categories` | string | true | Show category dropdown (true/false) |
+| `button_text` | string | "Search" | Search button text |
+| `action` | string | - | Form action URL (defaults to services archive) |
 
 **Examples:**
 
@@ -90,21 +95,26 @@ Display a service search form with autocomplete.
 [wpss_service_search placeholder="What service are you looking for?"]
 ```
 
-**Search Without Filters:**
+**Search Without Category Filter:**
 ```
-[wpss_service_search show_filters="no"]
+[wpss_service_search show_categories="false"]
 ```
 
-**Search with Custom Results Page:**
+**Custom Button Text:**
 ```
-[wpss_service_search redirect="/search-results/"]
+[wpss_service_search button_text="Find Services"]
+```
+
+**Custom Results Page:**
+```
+[wpss_service_search action="/custom-search/"]
 ```
 
 ---
 
 ### [wpss_featured_services]
 
-Display featured services in a carousel slider.
+Display featured services (delegates to `wpss_services` with `featured="true"`).
 
 **Basic Usage:**
 ```
@@ -113,31 +123,34 @@ Display featured services in a carousel slider.
 
 **Attributes:**
 
+Accepts all `wpss_services` attributes. The `featured` attribute is automatically set to `true`.
+
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `limit` | number | 8 | Number of services to show |
-| `autoplay` | boolean | yes | Auto-advance carousel |
-| `autoplay_speed` | number | 3000 | Milliseconds between slides |
-| `dots` | boolean | yes | Show navigation dots |
-| `arrows` | boolean | yes | Show prev/next arrows |
+| `limit` | number | 12 | Number of featured services |
+| `columns` | number | 4 | Grid columns |
+| `category` | string/int | - | Filter by category |
+| `tag` | string/int | - | Filter by tag |
+| `orderby` | string | date | Sort order |
+| `order` | string | DESC | ASC or DESC |
 
 **Examples:**
 
-**Auto-Playing Carousel:**
+**Featured Services with Custom Layout:**
 ```
-[wpss_featured_services limit="10" autoplay="yes" autoplay_speed="5000"]
+[wpss_featured_services limit="6" columns="3"]
 ```
 
-**Manual Navigation Only:**
+**Featured Services by Category:**
 ```
-[wpss_featured_services autoplay="no" dots="yes" arrows="yes"]
+[wpss_featured_services category="web-development" limit="8"]
 ```
 
 ---
 
 ### [wpss_service_categories]
 
-Display service categories in a grid or list.
+Display service categories in a grid with icons and counts.
 
 **Basic Usage:**
 ```
@@ -148,30 +161,34 @@ Display service categories in a grid or list.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `layout` | string | grid | Display layout: grid or list |
-| `columns` | number | 4 | Grid columns (if grid layout) |
-| `show_count` | boolean | yes | Show service count per category |
-| `show_icon` | boolean | yes | Show category icon |
-| `parent` | int | 0 | Show only children of parent category ID |
-| `hide_empty` | boolean | yes | Hide categories with no services |
-| `orderby` | string | name | Sort by: name, count, id |
-| `order` | string | ASC | Sort order: ASC or DESC |
+| `parent` | int | 0 | Show only children of this parent category ID |
+| `show_count` | string | true | Show service count per category |
+| `columns` | number | 4 | Grid columns |
+| `hide_empty` | string | true | Hide categories with no services |
+| `limit` | number | 12 | Maximum categories to display |
+
+**Note:** Categories are ordered by count (descending) and limited by the `limit` attribute. The `orderby` and `order` attributes are not user-configurable.
 
 **Examples:**
 
 **Category Grid with Icons:**
 ```
-[wpss_service_categories columns="4" show_count="yes" show_icon="yes"]
+[wpss_service_categories columns="4" show_count="true"]
 ```
 
-**List Layout:**
+**Top 6 Categories:**
 ```
-[wpss_service_categories layout="list" orderby="count" order="DESC"]
+[wpss_service_categories limit="6" columns="3"]
 ```
 
-**Subcategories Only:**
+**Subcategories of Parent:**
 ```
 [wpss_service_categories parent="15" columns="3"]
+```
+
+**Show Empty Categories:**
+```
+[wpss_service_categories hide_empty="false"]
 ```
 
 ---
@@ -192,12 +209,9 @@ Display a grid of vendors with profiles and ratings.
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `limit` | number | 12 | Number of vendors to display |
-| `columns` | number | 3 | Grid columns (1-4) |
+| `columns` | number | 4 | Grid columns (1-4) |
 | `orderby` | string | rating | Sort by: rating, date, name, sales |
 | `order` | string | DESC | Sort order: DESC or ASC |
-| `featured` | boolean | - | Show only featured vendors |
-| `category` | string | - | Filter by service category |
-| `verified` | boolean | - | Show only verified vendors |
 
 **Examples:**
 
@@ -206,14 +220,14 @@ Display a grid of vendors with profiles and ratings.
 [wpss_vendors orderby="rating" order="DESC" limit="8"]
 ```
 
-**Verified Vendors Only:**
+**Newest Vendors:**
 ```
-[wpss_vendors verified="yes" columns="4"]
+[wpss_vendors orderby="date" order="DESC" columns="4"]
 ```
 
-**Category Experts:**
+**Best-Selling Vendors:**
 ```
-[wpss_vendors category="graphic-design" orderby="sales"]
+[wpss_vendors orderby="sales" limit="10"]
 ```
 
 ---
@@ -231,29 +245,28 @@ Display a specific vendor's profile page.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `id` | number | - | **Required:** Vendor user ID |
-| `show_services` | boolean | yes | Display vendor's services |
-| `show_reviews` | boolean | yes | Display vendor reviews |
-| `show_about` | boolean | yes | Display about section |
-| `show_stats` | boolean | yes | Display statistics |
+| `id` | number | (query var) | Vendor user ID (required) |
+
+**Note:** If no ID is provided, the shortcode checks for a `vendor_id` query parameter. Uses template file `vendor/profile.php` or fallback rendering.
 
 **Examples:**
 
-**Full Profile:**
+**Specific Vendor Profile:**
 ```
 [wpss_vendor_profile id="42"]
 ```
 
-**Profile Without Reviews:**
+**Auto-Detect from URL:**
 ```
-[wpss_vendor_profile id="42" show_reviews="no"]
+[wpss_vendor_profile]
 ```
+(Works when URL contains `?vendor_id=42`)
 
 ---
 
 ### [wpss_top_vendors]
 
-Display highest-rated or best-selling vendors.
+Display highest-rated vendors (delegates to `wpss_vendors` with `orderby="rating"`).
 
 **Basic Usage:**
 ```
@@ -262,22 +275,23 @@ Display highest-rated or best-selling vendors.
 
 **Attributes:**
 
+Accepts `limit` and `columns`. The `orderby` is hardcoded to `rating` and `order` to `DESC`.
+
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `limit` | number | 10 | Number of vendors |
-| `orderby` | string | rating | Sort by: rating or sales |
-| `show_stats` | boolean | yes | Show vendor statistics |
+| `limit` | number | 12 | Number of top vendors |
+| `columns` | number | 4 | Grid columns |
 
 **Examples:**
 
-**Top 5 by Rating:**
+**Top 5 Vendors:**
 ```
-[wpss_top_vendors limit="5" orderby="rating"]
+[wpss_top_vendors limit="5"]
 ```
 
-**Best Sellers:**
+**Top 10 with Custom Layout:**
 ```
-[wpss_top_vendors limit="10" orderby="sales"]
+[wpss_top_vendors limit="10" columns="5"]
 ```
 
 ---
@@ -297,28 +311,33 @@ Display a list of active buyer requests.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `limit` | number | 20 | Requests per page |
-| `category` | string | - | Filter by category |
-| `orderby` | string | date | Sort by: date, budget, offers |
-| `order` | string | DESC | Sort order |
+| `limit` | number | 10 | Requests per page |
+| `category` | string/int | - | Filter by category ID |
 | `budget_min` | number | - | Minimum budget filter |
 | `budget_max` | number | - | Maximum budget filter |
+
+**Note:** There is no `orderby` or `order` attribute. Requests are retrieved from `BuyerRequestService` in the order provided by that service.
 
 **Examples:**
 
 **Recent Requests:**
 ```
-[wpss_buyer_requests limit="15" orderby="date" order="DESC"]
+[wpss_buyer_requests limit="15"]
 ```
 
 **High-Budget Requests:**
 ```
-[wpss_buyer_requests budget_min="500" orderby="budget" order="DESC"]
+[wpss_buyer_requests budget_min="500"]
 ```
 
 **Category-Specific Requests:**
 ```
-[wpss_buyer_requests category="web-development" limit="10"]
+[wpss_buyer_requests category="5" limit="10"]
+```
+
+**Budget Range:**
+```
+[wpss_buyer_requests budget_min="100" budget_max="500"]
 ```
 
 ---
@@ -334,63 +353,29 @@ Display the "Post a Request" form for buyers.
 
 **Attributes:**
 
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `redirect` | string | - | Redirect URL after submission |
-| `show_budget` | boolean | yes | Show budget field |
-| `show_deadline` | boolean | yes | Show deadline field |
-| `show_attachments` | boolean | yes | Allow file attachments |
+This shortcode accepts no attributes. The form includes:
+- Title (required, max 100 chars)
+- Description (required, textarea)
+- Category (dropdown)
+- Budget Min/Max (number inputs)
+- Deadline (date input)
 
-**Examples:**
+**Requirements:**
+- User must be logged in (shows login prompt if not)
+- Form includes nonce for security
 
-**Full Request Form:**
+**Example:**
 ```
 [wpss_post_request]
-```
-
-**Simple Request Form:**
-```
-[wpss_post_request show_budget="no" show_deadline="no"]
-```
-
-**Custom Redirect:**
-```
-[wpss_post_request redirect="/request-submitted/"]
 ```
 
 ---
 
 ## Dashboard Shortcodes
 
-### [wpss_dashboard]
-
-Display the unified buyer/vendor dashboard.
-
-**Basic Usage:**
-```
-[wpss_dashboard]
-```
-
-**Attributes:**
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `default_tab` | string | overview | Default tab: overview, orders, services, earnings |
-
-**Examples:**
-
-**Dashboard with Orders Tab:**
-```
-[wpss_dashboard default_tab="orders"]
-```
-
-**Note:** This is a complex shortcode that generates a full account interface. No additional attributes typically needed.
-
----
-
 ### [wpss_my_orders]
 
-Display user's order list (buyers and vendors see different views).
+Display user's order list (buyer or vendor view).
 
 **Basic Usage:**
 ```
@@ -401,9 +386,14 @@ Display user's order list (buyers and vendors see different views).
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `status` | string | all | Filter by: all, active, completed, cancelled |
-| `limit` | number | 10 | Orders per page |
-| `orderby` | string | date | Sort by: date, total, status |
+| `type` | string | customer | View type: customer or vendor |
+| `status` | string | - | Filter by order status |
+| `limit` | number | 20 | Orders per page |
+
+**Note:** There is no `orderby` attribute. Orders are always sorted by `created_at DESC`.
+
+**Requirements:**
+- User must be logged in (shows login prompt if not)
 
 **Examples:**
 
@@ -412,9 +402,14 @@ Display user's order list (buyers and vendors see different views).
 [wpss_my_orders status="active"]
 ```
 
-**Completed Orders:**
+**Vendor Orders:**
 ```
-[wpss_my_orders status="completed" limit="20"]
+[wpss_my_orders type="vendor" limit="50"]
+```
+
+**Customer Completed Orders:**
+```
+[wpss_my_orders type="customer" status="completed"]
 ```
 
 ---
@@ -425,22 +420,26 @@ Display details for a specific order.
 
 **Basic Usage:**
 ```
-[wpss_order_details id="12345"]
+[wpss_order_details]
 ```
 
 **Attributes:**
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `id` | number | - | **Required:** Order ID |
+| `order_id` | number | (from URL) | Order ID to display |
+
+**Note:** If no attribute provided, checks `$_GET['order_id']` from URL. User must be the customer, vendor, or admin to view.
+
+**Requirements:**
+- User must be logged in
+- User must have permission to view order
 
 **Example:**
-
 ```
-[wpss_order_details id="12345"]
+[wpss_order_details]
 ```
-
-**Note:** Automatically detects if user is buyer or vendor and shows appropriate view.
+(Typically used on a dedicated page; order ID comes from URL parameter)
 
 ---
 
@@ -459,9 +458,9 @@ Display login form.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `redirect` | string | - | Redirect URL after login |
-| `show_register_link` | boolean | yes | Show "Register" link |
-| `show_lost_password` | boolean | yes | Show "Forgot password" link |
+| `redirect` | string | home_url() | Redirect URL after successful login |
+
+**Note:** Uses WordPress core `wp_login_form()` function. Shows "already logged in" message if user is logged in.
 
 **Examples:**
 
@@ -470,21 +469,21 @@ Display login form.
 [wpss_login]
 ```
 
-**Login with Custom Redirect:**
+**Login with Dashboard Redirect:**
 ```
 [wpss_login redirect="/dashboard/"]
 ```
 
-**Login Only (No Links):**
+**Login with Custom Redirect:**
 ```
-[wpss_login show_register_link="no" show_lost_password="no"]
+[wpss_login redirect="/my-services/"]
 ```
 
 ---
 
 ### [wpss_register]
 
-Display registration form (buyer or vendor).
+Display registration form.
 
 **Basic Usage:**
 ```
@@ -493,22 +492,19 @@ Display registration form (buyer or vendor).
 
 **Attributes:**
 
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `role` | string | buyer | User role: buyer or vendor |
-| `redirect` | string | - | Redirect URL after registration |
-| `show_login_link` | boolean | yes | Show "Already registered?" link |
+This shortcode accepts no attributes. The form includes:
+- Username (required)
+- Email (required)
+- Password (required, min 8 chars)
 
-**Examples:**
+**Requirements:**
+- User registration must be enabled in WordPress (Settings → General)
+- Shows "already logged in" message if user is logged in
+- Includes link to login page
 
-**Vendor Registration:**
+**Example:**
 ```
-[wpss_register role="vendor"]
-```
-
-**Buyer Registration with Redirect:**
-```
-[wpss_register role="buyer" redirect="/welcome/"]
+[wpss_register]
 ```
 
 ---
@@ -523,12 +519,12 @@ Display registration form (buyer or vendor).
 [wpss_service_search]
 
 ## Featured Services
-[wpss_featured_services limit="8"]
+[wpss_featured_services limit="8" columns="4"]
 
 ## Browse by Category
 [wpss_service_categories columns="4"]
 
-## Top Rated Services
+## Top Services
 [wpss_services orderby="rating" limit="6" columns="3"]
 ```
 
@@ -539,9 +535,9 @@ Display registration form (buyer or vendor).
 ```
 # Browse All Services
 
-[wpss_service_search show_filters="yes"]
+[wpss_service_search show_categories="true"]
 
-[wpss_services limit="12" columns="3" orderby="date" order="DESC"]
+[wpss_services limit="12" columns="3" orderby="date"]
 ```
 
 ---
@@ -551,12 +547,10 @@ Display registration form (buyer or vendor).
 ```
 # Our Vendors
 
-Find the perfect expert for your project.
-
 [wpss_top_vendors limit="3"]
 
 ## All Vendors
-[wpss_vendors columns="3" orderby="rating" limit="12"]
+[wpss_vendors columns="4" orderby="rating" limit="12"]
 ```
 
 ---
@@ -566,20 +560,10 @@ Find the perfect expert for your project.
 ```
 # Project Requests
 
-Post your project and receive custom offers from vendors.
-
 [wpss_post_request]
 
 ## Active Requests
 [wpss_buyer_requests limit="15"]
-```
-
----
-
-### Dashboard Page
-
-```
-[wpss_dashboard]
 ```
 
 ---
@@ -589,7 +573,7 @@ Post your project and receive custom offers from vendors.
 ```
 # My Orders
 
-[wpss_my_orders limit="10"]
+[wpss_my_orders type="customer" limit="20"]
 ```
 
 ---
@@ -605,7 +589,7 @@ All shortcodes work in widget areas:
 
 **Example: Sidebar Search**
 ```
-[wpss_service_search show_filters="no"]
+[wpss_service_search show_categories="false"]
 ```
 
 ---
@@ -616,6 +600,15 @@ Execute shortcodes in theme templates:
 
 ```php
 <?php echo do_shortcode('[wpss_services limit="6" columns="3"]'); ?>
+```
+
+Pass dynamic values:
+
+```php
+<?php
+$category_id = get_queried_object_id();
+echo do_shortcode("[wpss_services category='{$category_id}' limit='9']");
+?>
 ```
 
 ---
@@ -633,7 +626,7 @@ Multiple shortcodes work together on the same page:
 [wpss_service_categories parent="5" columns="3"]
 
 ## Featured Designers
-[wpss_vendors category="design" limit="8" columns="4"]
+[wpss_vendors orderby="rating" limit="8" columns="4"]
 
 ## Latest Services
 [wpss_services category="design" limit="9" columns="3"]
@@ -644,20 +637,28 @@ Multiple shortcodes work together on the same page:
 ## Shortcode Not Working?
 
 **Troubleshooting:**
-1. Check spelling exactly (case-sensitive)
+
+1. Check spelling (shortcodes are case-sensitive)
 2. Ensure page is published (not draft)
 3. Clear cache (site and browser)
 4. Verify plugin is active
-5. Check for JavaScript errors in browser console
+5. Check for PHP errors in debug log
 6. Test in default WordPress theme
 7. Disable other plugins temporarily
+8. Verify services/vendors exist in database
+
+**Common Issues:**
+
+- **No output:** Check if there's matching content (services, vendors, etc.)
+- **Wrong attributes:** Review exact attribute names above
+- **Styling issues:** May need custom CSS for your theme
 
 ---
 
 ## Related Documentation
 
 - [Gutenberg Blocks](gutenberg-blocks.md) - Block editor alternatives
-- [Pages Setup](../admin-settings/pages-setup.md) - Required page configuration
+- [Pages Setup](../platform-settings/pages-setup.md) - Required page configuration
 - [Template Overrides](template-overrides.md) - Custom page templates
 - [Search Filters](search-filters.md) - Advanced search options
 
