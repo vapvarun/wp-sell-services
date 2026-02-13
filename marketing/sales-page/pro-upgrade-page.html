@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WP Sell Services Pro - Unlock Your Marketplace's Full Potential</title>
+<meta name="description" content="Run your marketplace without WooCommerce. Accept direct payments via Stripe &amp; PayPal. Track performance with analytics. Remove all service creation limits.">
+<style>
+:root {
+	--green: #1dbf73;
+	--green-dark: #19a463;
+	--green-light: #e8f8f0;
+	--purple: #7c3aed;
+	--purple-dark: #6d28d9;
+	--purple-light: #f3f0ff;
+	--dark: #1a1a2e;
+	--gray-900: #222;
+	--gray-700: #555;
+	--gray-500: #888;
+	--gray-300: #ddd;
+	--gray-100: #f5f5f5;
+	--white: #fff;
+	--shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+	--shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+	--shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+	--radius: 8px;
+	--radius-lg: 12px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; color: var(--gray-900); line-height: 1.6; }
+a { color: var(--purple); text-decoration: none; }
+a:hover { color: var(--purple-dark); }
+
+.container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 80px 0; }
+.section--alt { background: var(--gray-100); }
+.section--dark { background: var(--dark); color: var(--white); }
+.section--purple { background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%); color: var(--white); }
+.section--green { background: var(--green); color: var(--white); }
+
+.text-center { text-align: center; }
+
+h1 { font-size: 2.75rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
+h2 { font-size: 2rem; font-weight: 700; line-height: 1.3; margin-bottom: 16px; }
+h3 { font-size: 1.35rem; font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
+h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+
+.subtitle { font-size: 1.2rem; color: var(--gray-700); max-width: 680px; margin: 0 auto 40px; line-height: 1.7; }
+
+.btn { display: inline-block; padding: 14px 32px; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+.btn--primary { background: var(--purple); color: var(--white); }
+.btn--primary:hover { background: var(--purple-dark); color: var(--white); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn--green { background: var(--green); color: var(--white); }
+.btn--green:hover { background: var(--green-dark); color: var(--white); }
+.btn--outline { background: transparent; color: var(--purple); border: 2px solid var(--purple); }
+.btn--outline:hover { background: var(--purple); color: var(--white); }
+.btn--white { background: var(--white); color: var(--purple); }
+.btn--white:hover { background: var(--gray-100); color: var(--purple-dark); }
+.btn--lg { padding: 18px 40px; font-size: 1.1rem; }
+.btn + .btn { margin-left: 12px; }
+
+.badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+.badge--pro { background: var(--purple-light); color: var(--purple); }
+.badge--free { background: var(--green-light); color: var(--green-dark); }
+
+/* Hero */
+.hero { padding: 100px 0 80px; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #f0f9ff 100%); }
+.hero h1 { margin-bottom: 20px; }
+.hero .subtitle { margin-bottom: 32px; color: var(--gray-700); }
+.hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* Grid */
+.grid { display: grid; gap: 24px; }
+.grid--2 { grid-template-columns: repeat(2, 1fr); }
+.grid--3 { grid-template-columns: repeat(3, 1fr); }
+.grid--4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .grid--3, .grid--4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .grid--2, .grid--3, .grid--4 { grid-template-columns: 1fr; } }
+
+/* Cards */
+.card { background: var(--white); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.06); transition: box-shadow 0.2s, transform 0.2s; }
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.card__icon { font-size: 2rem; margin-bottom: 12px; }
+.card__title { font-size: 1.15rem; font-weight: 600; margin-bottom: 8px; }
+.card__text { color: var(--gray-700); font-size: 0.95rem; line-height: 1.6; }
+
+/* Comparison table */
+.compare-table { width: 100%; border-collapse: collapse; margin-top: 24px; background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.compare-table th, .compare-table td { padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--gray-300); }
+.compare-table thead th { background: var(--dark); color: var(--white); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.compare-table thead th:nth-child(2) { background: var(--gray-700); }
+.compare-table thead th:nth-child(3) { background: var(--purple); }
+.compare-table td:first-child { font-weight: 500; }
+.compare-table td:nth-child(2) { color: var(--gray-500); }
+.compare-table td:nth-child(3) { color: var(--purple); font-weight: 500; }
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table .check { color: var(--green); font-weight: 700; }
+.compare-table .cross { color: var(--gray-300); }
+
+/* Feature block */
+.feature-block { margin-bottom: 32px; }
+.feature-block__header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.feature-block__number { width: 40px; height: 40px; background: var(--purple); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; flex-shrink: 0; }
+.feature-block__title { font-size: 1.4rem; font-weight: 700; }
+.feature-block__desc { color: var(--gray-700); margin-bottom: 20px; font-size: 1.05rem; }
+.feature-block ul { list-style: none; }
+.feature-block ul li { padding: 6px 0 6px 24px; position: relative; }
+.feature-block ul li::before { content: "\2713"; position: absolute; left: 0; color: var(--purple); font-weight: 700; }
+
+/* Platform cards */
+.platform-card { padding: 24px; border-left: 4px solid var(--purple); }
+.platform-card__name { font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
+.platform-card__desc { color: var(--gray-700); font-size: 0.95rem; margin-bottom: 8px; }
+.platform-card__when { font-size: 0.9rem; color: var(--purple); font-style: italic; }
+
+/* Gateway cards */
+.gateway-card { text-align: center; padding: 28px; }
+.gateway-card__name { font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
+.gateway-card__features { list-style: none; font-size: 0.9rem; color: var(--gray-700); }
+.gateway-card__features li { padding: 3px 0; }
+
+/* Limits table */
+.limits-table { width: 100%; border-collapse: collapse; }
+.limits-table th, .limits-table td { padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--gray-300); }
+.limits-table th { background: var(--gray-100); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; }
+.limits-table td:first-child { text-align: left; font-weight: 500; }
+.limits-table .free-val { color: var(--gray-500); }
+.limits-table .pro-val { color: var(--purple); font-weight: 600; }
+
+/* Pricing */
+.pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+@media (max-width: 900px) { .pricing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .pricing-grid { grid-template-columns: 1fr; } }
+.pricing-card { background: var(--white); border-radius: var(--radius-lg); padding: 32px 24px; text-align: center; border: 2px solid transparent; box-shadow: var(--shadow-sm); position: relative; transition: all 0.2s; }
+.pricing-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.pricing-card--featured { border-color: var(--purple); }
+.pricing-card__badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--purple); color: var(--white); padding: 4px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.pricing-card__name { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+.pricing-card__price { font-size: 2.2rem; font-weight: 800; color: var(--purple); margin: 12px 0; }
+.pricing-card__price span { font-size: 0.9rem; font-weight: 400; color: var(--gray-500); }
+.pricing-card__desc { color: var(--gray-700); font-size: 0.9rem; margin-bottom: 16px; }
+.pricing-card__features { list-style: none; text-align: left; margin-bottom: 20px; }
+.pricing-card__features li { padding: 4px 0 4px 20px; position: relative; font-size: 0.9rem; }
+.pricing-card__features li::before { content: "\2713"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+
+/* Kept features */
+.kept-list { list-style: none; columns: 2; column-gap: 32px; }
+.kept-list li { padding: 6px 0 6px 24px; position: relative; break-inside: avoid; }
+.kept-list li::before { content: "\2713"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+@media (max-width: 600px) { .kept-list { columns: 1; } }
+
+/* Upgrade steps */
+.upgrade-steps { counter-reset: ustep; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+@media (max-width: 800px) { .upgrade-steps { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .upgrade-steps { grid-template-columns: 1fr; } }
+.upgrade-step { counter-increment: ustep; text-align: center; padding: 24px; }
+.upgrade-step__num { width: 48px; height: 48px; background: var(--purple-light); color: var(--purple); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; margin-bottom: 12px; }
+.upgrade-step__num::before { content: counter(ustep); }
+.upgrade-step h4 { margin-bottom: 4px; }
+.upgrade-step p { color: var(--gray-700); font-size: 0.9rem; }
+
+/* FAQ */
+.faq { margin-bottom: 24px; }
+.faq__q { font-weight: 600; font-size: 1.05rem; margin-bottom: 6px; color: var(--gray-900); }
+.faq__a { color: var(--gray-700); line-height: 1.7; }
+
+/* CTA */
+.cta-banner { text-align: center; padding: 60px 24px; }
+.cta-banner h2 { color: var(--white); margin-bottom: 16px; }
+.cta-banner p { color: rgba(255,255,255,0.9); margin-bottom: 32px; font-size: 1.1rem; }
+
+/* Scenario cards */
+.scenario-card { padding: 28px; border-left: 4px solid var(--purple); }
+.scenario-card__title { font-weight: 600; font-size: 1.05rem; margin-bottom: 6px; }
+.scenario-card__text { color: var(--gray-700); font-size: 0.95rem; }
+
+/* Footer */
+.footer { padding: 40px 0; text-align: center; color: var(--gray-500); font-size: 0.9rem; border-top: 1px solid var(--gray-300); }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+	<div class="container text-center">
+		<span class="badge badge--pro">Pro Extension</span>
+		<h1 style="margin-top: 16px;">Unlock Your Marketplace's<br>Full Potential</h1>
+		<p class="subtitle">Run your marketplace without WooCommerce. Accept direct payments via Stripe and PayPal. Track performance with analytics. Remove all service creation limits.</p>
+		<div class="hero-buttons">
+			<a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="btn btn--primary btn--lg">Get Pro License</a>
+			<a href="#comparison" class="btn btn--outline btn--lg">See Full Comparison</a>
+		</div>
+		<p style="margin-top: 16px; color: var(--gray-500); font-size: 0.9rem;">Requires the free <a href="https://wordpress.org/plugins/wp-sell-services/" style="color: var(--green);">WP Sell Services</a> plugin</p>
+	</div>
+</section>
+
+<!-- Quick Comparison -->
+<section class="section" id="comparison">
+	<div class="container">
+		<h2 class="text-center">Free vs Pro: What Changes</h2>
+		<p class="subtitle text-center">The free version gives you a complete marketplace. Pro removes limits and adds professional features.</p>
+
+		<table class="compare-table">
+			<thead>
+				<tr><th>Feature</th><th>Free</th><th>Pro</th></tr>
+			</thead>
+			<tbody>
+				<tr><td>Core Marketplace</td><td>Complete system</td><td>Complete system</td></tr>
+				<tr><td>E-commerce Platform</td><td>WooCommerce (optional)</td><td>WooCommerce + 4 alternatives</td></tr>
+				<tr><td>Gallery Images per Service</td><td>4 images</td><td>Unlimited</td></tr>
+				<tr><td>Video Embeds per Service</td><td>1 video</td><td>3 videos</td></tr>
+				<tr><td>Service Add-ons</td><td>3 per service</td><td>Unlimited</td></tr>
+				<tr><td>FAQs per Service</td><td>5 per service</td><td>Unlimited</td></tr>
+				<tr><td>Buyer Requirements</td><td>5 per service</td><td>Unlimited</td></tr>
+				<tr><td>Payment Gateways</td><td>Via WooCommerce</td><td>Direct Stripe, PayPal, Razorpay, Offline</td></tr>
+				<tr><td>Analytics</td><td>Basic stats</td><td>Advanced dashboards with export</td></tr>
+				<tr><td>File Storage</td><td>Local server</td><td>Local + S3, Google Cloud, DigitalOcean</td></tr>
+				<tr><td>Wallet Integrations</td><td>Built-in earnings</td><td>4 wallet providers</td></tr>
+				<tr><td>REST API Controllers</td><td>20 controllers</td><td>24 controllers</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<!-- Feature 1: E-Commerce Platforms -->
+<section class="section section--alt">
+	<div class="container">
+		<div class="feature-block__header">
+			<div class="feature-block__number">1</div>
+			<div class="feature-block__title">E-Commerce Platform Flexibility</div>
+		</div>
+		<p class="feature-block__desc">Free version integrates with WooCommerce when available. Pro adds four alternatives so you choose what fits your needs &mdash; or use no e-commerce plugin at all.</p>
+
+		<div class="grid grid--4">
+			<div class="card platform-card">
+				<div class="platform-card__name">Easy Digital Downloads</div>
+				<div class="platform-card__desc">Lightweight digital commerce with variable pricing and subscriptions.</div>
+				<div class="platform-card__when">Best for: simpler e-commerce focused on digital products</div>
+			</div>
+			<div class="card platform-card">
+				<div class="platform-card__name">FluentCart</div>
+				<div class="platform-card__desc">Modern, conversion-optimized checkout with fast performance.</div>
+				<div class="platform-card__when">Best for: higher conversion rates with cleaner checkout</div>
+			</div>
+			<div class="card platform-card">
+				<div class="platform-card__name">SureCart</div>
+				<div class="platform-card__desc">Cloud-hosted checkout with built-in PCI compliance.</div>
+				<div class="platform-card__when">Best for: PCI compliance without server-side processing</div>
+			</div>
+			<div class="card platform-card">
+				<div class="platform-card__name">Standalone Mode</div>
+				<div class="platform-card__desc">No e-commerce plugin required. Built-in checkout with direct gateways.</div>
+				<div class="platform-card__when">Best for: complete control without plugin dependencies</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Feature 2: Payment Gateways -->
+<section class="section">
+	<div class="container">
+		<div class="feature-block__header">
+			<div class="feature-block__number">2</div>
+			<div class="feature-block__title">Direct Payment Gateways</div>
+		</div>
+		<p class="feature-block__desc">Accept payments directly without routing through WooCommerce. Especially useful in Standalone mode.</p>
+
+		<div class="grid grid--4">
+			<div class="card gateway-card">
+				<div class="gateway-card__name">Stripe</div>
+				<ul class="gateway-card__features">
+					<li>Credit cards</li>
+					<li>Apple Pay &amp; Google Pay</li>
+					<li>3D Secure handling</li>
+					<li>Multi-currency</li>
+					<li>Webhook verification</li>
+				</ul>
+			</div>
+			<div class="card gateway-card">
+				<div class="gateway-card__name">PayPal</div>
+				<ul class="gateway-card__features">
+					<li>PayPal balance</li>
+					<li>Credit card processing</li>
+					<li>One-click checkout</li>
+					<li>Buyer protection</li>
+					<li>Multi-currency</li>
+				</ul>
+			</div>
+			<div class="card gateway-card">
+				<div class="gateway-card__name">Razorpay</div>
+				<ul class="gateway-card__features">
+					<li>UPI payments</li>
+					<li>Cards &amp; net banking</li>
+					<li>Mobile wallets</li>
+					<li>EMI options</li>
+					<li>India &amp; SE Asia</li>
+				</ul>
+			</div>
+			<div class="card gateway-card">
+				<div class="gateway-card__name">Offline Payments</div>
+				<ul class="gateway-card__features">
+					<li>Bank transfers</li>
+					<li>Cash payments</li>
+					<li>Check payments</li>
+					<li>Proof upload</li>
+					<li>Admin verification</li>
+				</ul>
+			</div>
+		</div>
+		<p class="text-center" style="margin-top: 24px; color: var(--gray-500);">All gateways include sandbox/live toggle, transaction logging, refund support, and email receipts.</p>
+	</div>
+</section>
+
+<!-- Feature 3: Wallet -->
+<section class="section section--alt">
+	<div class="container">
+		<div class="grid grid--2" style="gap: 48px; align-items: center;">
+			<div>
+				<div class="feature-block__header">
+					<div class="feature-block__number">3</div>
+					<div class="feature-block__title">Wallet System Integrations</div>
+				</div>
+				<p class="feature-block__desc">Automate vendor payouts through wallet plugins. Earnings credit automatically on order completion.</p>
+				<ul style="list-style: none;">
+					<li style="padding: 8px 0 8px 24px; position: relative;"><span style="position: absolute; left: 0; color: var(--purple); font-weight: 700;">&#10003;</span><strong>Internal Wallet</strong> &mdash; Built-in, no external plugin needed</li>
+					<li style="padding: 8px 0 8px 24px; position: relative;"><span style="position: absolute; left: 0; color: var(--purple); font-weight: 700;">&#10003;</span><strong>TeraWallet</strong> &mdash; WooCommerce wallet integration</li>
+					<li style="padding: 8px 0 8px 24px; position: relative;"><span style="position: absolute; left: 0; color: var(--purple); font-weight: 700;">&#10003;</span><strong>WooWallet</strong> &mdash; WordPress wallet plugin</li>
+					<li style="padding: 8px 0 8px 24px; position: relative;"><span style="position: absolute; left: 0; color: var(--purple); font-weight: 700;">&#10003;</span><strong>MyCred</strong> &mdash; Points-based reward system</li>
+				</ul>
+			</div>
+			<div>
+				<div class="feature-block__header">
+					<div class="feature-block__number">4</div>
+					<div class="feature-block__title">Cloud Storage Providers</div>
+				</div>
+				<p class="feature-block__desc">Store delivery files and service images in the cloud. Offload bandwidth from your WordPress server.</p>
+				<ul style="list-style: none;">
+					<li style="padding: 8px 0 8px 24px; position: relative;"><span style="position: absolute; left: 0; color: var(--purple); font-weight: 700;">&#10003;</span><strong>Amazon S3</strong> &mdash; Signature V4 auth, unlimited scalability</li>
+					<li style="padding: 8px 0 8px 24px; position: relative;"><span style="position: absolute; left: 0; color: var(--purple); font-weight: 700;">&#10003;</span><strong>Google Cloud Storage</strong> &mdash; Service account auth</li>
+					<li style="padding: 8px 0 8px 24px; position: relative;"><span style="position: absolute; left: 0; color: var(--purple); font-weight: 700;">&#10003;</span><strong>DigitalOcean Spaces</strong> &mdash; S3-compatible with CDN</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Feature 5: Analytics -->
+<section class="section">
+	<div class="container">
+		<div class="feature-block__header">
+			<div class="feature-block__number">5</div>
+			<div class="feature-block__title">Advanced Analytics Dashboard</div>
+		</div>
+		<p class="feature-block__desc">Track marketplace performance with visual dashboards powered by Chart.js. Export reports to CSV or Excel.</p>
+
+		<div class="grid grid--3">
+			<div class="card">
+				<div class="card__title">Revenue Charts</div>
+				<div class="card__text">Interactive graphs showing trends over 7, 30, 90 days or 12 months. Filter by vendor, category, or time period. Track total revenue, platform fees, and vendor earnings.</div>
+			</div>
+			<div class="card">
+				<div class="card__title">Order Analytics</div>
+				<div class="card__text">Status distribution, completion rates, volume metrics, average delivery time, revision rates, and dispute rates across your marketplace.</div>
+			</div>
+			<div class="card">
+				<div class="card__title">Top Services Report</div>
+				<div class="card__text">Best-performing services ranked by revenue, orders, views, conversion rate, and average rating. Identify what's working.</div>
+			</div>
+			<div class="card">
+				<div class="card__title">Top Vendors Report</div>
+				<div class="card__text">Vendor leaderboards by earnings, orders completed, average rating, response rate, and on-time delivery.</div>
+			</div>
+			<div class="card">
+				<div class="card__title">Vendor Analytics</div>
+				<div class="card__text">Each vendor sees their own dashboard with revenue trends, order breakdowns, best services, and review ratings.</div>
+			</div>
+			<div class="card">
+				<div class="card__title">Data Export</div>
+				<div class="card__text">Export all reports to CSV or Excel. Filter by date range, vendor, category, or status. Schedule daily, weekly, or monthly exports.</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Feature 6: Limits -->
+<section class="section section--alt">
+	<div class="container">
+		<div class="feature-block__header">
+			<div class="feature-block__number">6</div>
+			<div class="feature-block__title">Expanded Service Creation Limits</div>
+		</div>
+		<p class="feature-block__desc">Remove free version limits for professional service listings.</p>
+
+		<div style="max-width: 700px; margin: 0 auto;">
+			<table class="limits-table">
+				<thead><tr><th style="text-align: left;">Feature</th><th>Free</th><th>Pro</th></tr></thead>
+				<tbody>
+					<tr><td>Gallery Images</td><td class="free-val">4 images</td><td class="pro-val">Unlimited</td></tr>
+					<tr><td>Video Embeds</td><td class="free-val">1 video</td><td class="pro-val">3 videos</td></tr>
+					<tr><td>Service Add-ons</td><td class="free-val">3 per service</td><td class="pro-val">Unlimited</td></tr>
+					<tr><td>FAQ Items</td><td class="free-val">5 per service</td><td class="pro-val">Unlimited</td></tr>
+					<tr><td>Buyer Requirements</td><td class="free-val">5 per service</td><td class="pro-val">Unlimited</td></tr>
+					<tr><td>Pricing Packages</td><td>3 tiers</td><td>3 tiers</td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</section>
+
+<!-- Feature 7: API + Wizard -->
+<section class="section">
+	<div class="container">
+		<div class="grid grid--2" style="gap: 48px;">
+			<div>
+				<div class="feature-block__header">
+					<div class="feature-block__number">7</div>
+					<div class="feature-block__title">4 Additional REST API Controllers</div>
+				</div>
+				<div class="card" style="margin-bottom: 12px;">
+					<div class="card__title">WalletController</div>
+					<div class="card__text"><code>/wp-json/wpss/v1/wallet</code> &mdash; Balance, transactions, withdraw, providers</div>
+				</div>
+				<div class="card" style="margin-bottom: 12px;">
+					<div class="card__title">PaymentController</div>
+					<div class="card__text"><code>/wp-json/wpss/v1/payments</code> &mdash; Stripe, PayPal, Razorpay checkout sessions</div>
+				</div>
+				<div class="card" style="margin-bottom: 12px;">
+					<div class="card__title">VendorAnalyticsController</div>
+					<div class="card__text"><code>/wp-json/wpss/v1/analytics</code> &mdash; Revenue, orders, services, export</div>
+				</div>
+				<div class="card">
+					<div class="card__title">StorageController</div>
+					<div class="card__text"><code>/wp-json/wpss/v1/storage</code> &mdash; Upload, download URL, delete, providers</div>
+				</div>
+			</div>
+			<div>
+				<h3 style="margin-bottom: 20px;">Service Wizard Enhancements</h3>
+				<div class="card" style="margin-bottom: 12px;">
+					<div class="card__title">AI Title Suggestions</div>
+					<div class="card__text">Generate title ideas based on category and keywords. Powered by OpenAI integration.</div>
+				</div>
+				<div class="card" style="margin-bottom: 12px;">
+					<div class="card__title">Service Templates</div>
+					<div class="card__text">20+ pre-filled templates for common service types. One-click to populate the wizard.</div>
+				</div>
+				<div class="card" style="margin-bottom: 12px;">
+					<div class="card__title">Bulk Image Upload</div>
+					<div class="card__text">Drag and drop up to 20 images at once instead of uploading one by one.</div>
+				</div>
+				<div class="card" style="margin-bottom: 12px;">
+					<div class="card__title">Direct Video Upload</div>
+					<div class="card__text">Upload MP4, MOV, AVI files directly. Up to 100MB per video.</div>
+				</div>
+				<div class="card">
+					<div class="card__title">Scheduled Publishing</div>
+					<div class="card__text">Set future publish dates for services instead of just draft or publish now.</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- What You Keep -->
+<section class="section section--alt">
+	<div class="container">
+		<h2 class="text-center">Everything from Free, Plus More</h2>
+		<p class="subtitle text-center">Pro is an extension, not a replacement. Everything from the free version remains.</p>
+		<div style="max-width: 800px; margin: 0 auto;">
+			<ul class="kept-list">
+				<li>Complete order workflow with 11 statuses</li>
+				<li>Requirements collection and delivery</li>
+				<li>Built-in messaging with attachments</li>
+				<li>5-star review and rating system</li>
+				<li>Dispute resolution with admin mediation</li>
+				<li>Buyer request system with proposals</li>
+				<li>Four-tier seller level system</li>
+				<li>Portfolio showcase for vendors</li>
+				<li>Vacation mode</li>
+				<li>Commission system (global + per-vendor)</li>
+				<li>Earnings tracking and withdrawals</li>
+				<li>11 email notification types</li>
+				<li>6 Gutenberg blocks</li>
+				<li>16 shortcodes</li>
+				<li>Template override system</li>
+				<li>100+ hooks and filters</li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+<!-- How to Upgrade -->
+<section class="section">
+	<div class="container">
+		<h2 class="text-center">How to Upgrade</h2>
+		<p class="subtitle text-center">Four simple steps. No data migration required.</p>
+		<div class="upgrade-steps">
+			<div class="card upgrade-step">
+				<div class="upgrade-step__num"></div>
+				<h4>Purchase License</h4>
+				<p>Buy from wbcomdesigns.com and receive your license key via email.</p>
+			</div>
+			<div class="card upgrade-step">
+				<div class="upgrade-step__num"></div>
+				<h4>Install Pro Plugin</h4>
+				<p>Upload wp-sell-services-pro.zip via Plugins &rarr; Add New &rarr; Upload Plugin.</p>
+			</div>
+			<div class="card upgrade-step">
+				<div class="upgrade-step__num"></div>
+				<h4>Activate License</h4>
+				<p>Enter your license key in WP Sell Services &rarr; Settings &rarr; License.</p>
+			</div>
+			<div class="card upgrade-step">
+				<div class="upgrade-step__num"></div>
+				<h4>Configure Features</h4>
+				<p>Choose e-commerce platform, payment gateways, wallet, and cloud storage.</p>
+			</div>
+		</div>
+		<p class="text-center" style="margin-top: 24px; color: var(--gray-500);">All existing services, orders, vendors, and settings are preserved. Pro features unlock immediately.</p>
+	</div>
+</section>
+
+<!-- Pricing -->
+<section class="section section--alt" id="pricing">
+	<div class="container">
+		<h2 class="text-center">Pricing</h2>
+		<p class="subtitle text-center">No monthly recurring fees. No transaction fees. Just annual renewal for updates and support.</p>
+		<div class="pricing-grid">
+			<div class="pricing-card">
+				<div class="pricing-card__name">Single Site</div>
+				<div class="pricing-card__price">$99<span>/year</span></div>
+				<div class="pricing-card__desc">For one WordPress site</div>
+				<ul class="pricing-card__features">
+					<li>All Pro features</li>
+					<li>1 year updates</li>
+					<li>1 year priority support</li>
+					<li>30-day money-back guarantee</li>
+				</ul>
+				<a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="btn btn--primary" style="width: 100%;">Get Started</a>
+			</div>
+			<div class="pricing-card pricing-card--featured">
+				<div class="pricing-card__badge">Most Popular</div>
+				<div class="pricing-card__name">5-Site Agency</div>
+				<div class="pricing-card__price">$249<span>/year</span></div>
+				<div class="pricing-card__desc">For agencies and freelancers</div>
+				<ul class="pricing-card__features">
+					<li>All Pro features</li>
+					<li>5 WordPress sites</li>
+					<li>1 year updates</li>
+					<li>1 year priority support</li>
+					<li>Client site deployment</li>
+				</ul>
+				<a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="btn btn--primary" style="width: 100%;">Get Started</a>
+			</div>
+			<div class="pricing-card">
+				<div class="pricing-card__name">Unlimited Sites</div>
+				<div class="pricing-card__price">$499<span>/year</span></div>
+				<div class="pricing-card__desc">For growing agencies</div>
+				<ul class="pricing-card__features">
+					<li>All Pro features</li>
+					<li>Unlimited sites</li>
+					<li>1 year updates</li>
+					<li>1 year priority support</li>
+					<li>Full agency deployment</li>
+				</ul>
+				<a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="btn btn--primary" style="width: 100%;">Get Started</a>
+			</div>
+			<div class="pricing-card">
+				<div class="pricing-card__name">Lifetime Deal</div>
+				<div class="pricing-card__price">$999<span>one-time</span></div>
+				<div class="pricing-card__desc">Best long-term value</div>
+				<ul class="pricing-card__features">
+					<li>All Pro features</li>
+					<li>Unlimited sites</li>
+					<li>Lifetime updates</li>
+					<li>Lifetime priority support</li>
+					<li>30-day money-back guarantee</li>
+				</ul>
+				<a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="btn btn--primary" style="width: 100%;">Get Started</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Who Should Upgrade -->
+<section class="section">
+	<div class="container">
+		<h2 class="text-center">Who Should Upgrade to Pro?</h2>
+		<p class="subtitle text-center">Pro makes sense when your marketplace is ready to grow</p>
+		<div class="grid grid--2">
+			<div class="card scenario-card">
+				<div class="scenario-card__title">You're Growing Fast</div>
+				<div class="scenario-card__text">You've validated your marketplace. Now you need unlimited limits, better analytics, and automated payouts.</div>
+			</div>
+			<div class="card scenario-card">
+				<div class="scenario-card__title">You Don't Use WooCommerce</div>
+				<div class="scenario-card__text">You prefer EDD, FluentCart, SureCart, or want to run completely standalone.</div>
+			</div>
+			<div class="card scenario-card">
+				<div class="scenario-card__title">You Need Direct Payment Control</div>
+				<div class="scenario-card__text">Direct Stripe/PayPal/Razorpay integration for lower per-transaction costs.</div>
+			</div>
+			<div class="card scenario-card">
+				<div class="scenario-card__title">You Want Detailed Analytics</div>
+				<div class="scenario-card__text">Track revenue trends, identify top vendors, export data for business intelligence.</div>
+			</div>
+			<div class="card scenario-card">
+				<div class="scenario-card__title">Your Vendors Need More</div>
+				<div class="scenario-card__text">Vendors hit the 4-image, 3-addon limits. They need unlimited media and extras.</div>
+			</div>
+			<div class="card scenario-card">
+				<div class="scenario-card__title">You Want Cloud Storage</div>
+				<div class="scenario-card__text">Offload files to S3, Google Cloud, or DigitalOcean Spaces.</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- FAQ -->
+<section class="section section--alt">
+	<div class="container" style="max-width: 800px;">
+		<h2 class="text-center">Frequently Asked Questions</h2>
+
+		<div class="faq">
+			<div class="faq__q">Is the free plugin required?</div>
+			<div class="faq__a">Yes. WP Sell Services Pro extends the free plugin. Both must be installed and active. Pro adds features via WordPress hooks &mdash; it never removes free functionality.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">Do I still need WooCommerce with Pro?</div>
+			<div class="faq__a">No. Pro includes Standalone mode that runs without any e-commerce plugin. You can also use Easy Digital Downloads, FluentCart, or SureCart instead of WooCommerce.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">How does licensing work?</div>
+			<div class="faq__a">After purchase, enter your license key in WP Sell Services &rarr; Settings &rarr; License to activate Pro features and automatic updates. One license per site (or multiple with agency licenses).</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">What happens if my license expires?</div>
+			<div class="faq__a">Your site continues working with all Pro features enabled. You won't receive plugin updates or support until you renew. No features are disabled.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">Can I upgrade from Free to Pro later?</div>
+			<div class="faq__a">Yes. Install Pro at any time alongside the free version. All existing services, orders, vendors, and settings are preserved. No migration required.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">Which payment gateways work best?</div>
+			<div class="faq__a"><strong>WooCommerce mode:</strong> Any WooCommerce gateway. <strong>Standalone mode:</strong> Direct Stripe, PayPal, Razorpay, or Offline. <strong>EDD/FluentCart/SureCart:</strong> Their native gateways work automatically.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">What's your refund policy?</div>
+			<div class="faq__a">30-day money-back guarantee. If Pro doesn't meet your needs, contact us within 30 days for a full refund.</div>
+		</div>
+	</div>
+</section>
+
+<!-- Not Sure -->
+<section class="section">
+	<div class="container text-center" style="max-width: 640px;">
+		<h2>Not Sure Yet?</h2>
+		<p style="color: var(--gray-700); margin-bottom: 24px; font-size: 1.05rem;">The free version is a complete, production-ready marketplace. Launch with free, validate your concept, then upgrade when you're ready for Pro features.</p>
+		<div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+			<a href="https://wordpress.org/plugins/wp-sell-services/" class="btn btn--green">Try Free First</a>
+			<a href="mailto:support@wbcomdesigns.com" class="btn btn--outline">Pre-Sales Questions</a>
+		</div>
+	</div>
+</section>
+
+<!-- CTA -->
+<section class="section--purple cta-banner">
+	<div class="container">
+		<h2>Get WP Sell Services Pro Today</h2>
+		<p>Remove service limits. Run without WooCommerce. Track performance with analytics. Accept direct payments. Store files in the cloud.</p>
+		<a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="btn btn--white btn--lg">Purchase Pro License</a>
+	</div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+	<div class="container">
+		<p>Built by <a href="https://wbcomdesigns.com" style="color: var(--gray-700);">Wbcom Designs</a> &mdash; Trusted by 50,000+ WordPress sites worldwide</p>
+	</div>
+</footer>
+
+</body>
+</html>

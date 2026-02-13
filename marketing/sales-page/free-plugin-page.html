@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WP Sell Services - Transform WordPress Into a Service Marketplace</title>
+<meta name="description" content="Create a complete Fiverr-style service marketplace on WordPress with vendor management, order workflow, and commission system. Free and open source.">
+<style>
+:root {
+	--green: #1dbf73;
+	--green-dark: #19a463;
+	--green-light: #e8f8f0;
+	--dark: #1a1a2e;
+	--gray-900: #222;
+	--gray-700: #555;
+	--gray-500: #888;
+	--gray-300: #ddd;
+	--gray-100: #f5f5f5;
+	--white: #fff;
+	--shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+	--shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+	--shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+	--radius: 8px;
+	--radius-lg: 12px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; color: var(--gray-900); line-height: 1.6; }
+a { color: var(--green); text-decoration: none; }
+a:hover { color: var(--green-dark); }
+img { max-width: 100%; height: auto; }
+
+.container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 80px 0; }
+.section--alt { background: var(--gray-100); }
+.section--dark { background: var(--dark); color: var(--white); }
+.section--green { background: var(--green); color: var(--white); }
+
+.text-center { text-align: center; }
+.text-muted { color: var(--gray-700); }
+
+h1 { font-size: 2.75rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
+h2 { font-size: 2rem; font-weight: 700; line-height: 1.3; margin-bottom: 16px; }
+h3 { font-size: 1.35rem; font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
+h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+
+.subtitle { font-size: 1.2rem; color: var(--gray-700); max-width: 680px; margin: 0 auto 40px; line-height: 1.7; }
+
+.btn { display: inline-block; padding: 14px 32px; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+.btn--primary { background: var(--green); color: var(--white); }
+.btn--primary:hover { background: var(--green-dark); color: var(--white); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn--outline { background: transparent; color: var(--green); border: 2px solid var(--green); }
+.btn--outline:hover { background: var(--green); color: var(--white); }
+.btn--white { background: var(--white); color: var(--green); }
+.btn--white:hover { background: var(--gray-100); color: var(--green-dark); }
+.btn--lg { padding: 18px 40px; font-size: 1.1rem; }
+.btn + .btn { margin-left: 12px; }
+
+.badge { display: inline-block; background: var(--green-light); color: var(--green-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+/* Hero */
+.hero { padding: 100px 0 80px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%); }
+.hero h1 { margin-bottom: 20px; }
+.hero .subtitle { margin-bottom: 32px; color: var(--gray-700); }
+.hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* Grid */
+.grid { display: grid; gap: 24px; }
+.grid--2 { grid-template-columns: repeat(2, 1fr); }
+.grid--3 { grid-template-columns: repeat(3, 1fr); }
+.grid--4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .grid--3, .grid--4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .grid--2, .grid--3, .grid--4 { grid-template-columns: 1fr; } }
+
+/* Cards */
+.card { background: var(--white); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.06); transition: box-shadow 0.2s, transform 0.2s; }
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.card__icon { font-size: 2rem; margin-bottom: 12px; }
+.card__title { font-size: 1.15rem; font-weight: 600; margin-bottom: 8px; }
+.card__text { color: var(--gray-700); font-size: 0.95rem; line-height: 1.6; }
+
+/* Steps */
+.steps { counter-reset: step; }
+.step { display: flex; gap: 24px; margin-bottom: 40px; align-items: flex-start; }
+.step__number { counter-increment: step; flex-shrink: 0; width: 48px; height: 48px; background: var(--green); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; }
+.step__number::before { content: counter(step); }
+.step__content h3 { margin-bottom: 4px; }
+.step__content p { color: var(--gray-700); }
+
+/* Feature list */
+.feature-list { list-style: none; }
+.feature-list li { padding: 10px 0; padding-left: 28px; position: relative; color: var(--gray-700); }
+.feature-list li::before { content: ""; position: absolute; left: 0; top: 16px; width: 16px; height: 16px; background: var(--green); border-radius: 50%; opacity: 0.8; }
+.feature-list li strong { color: var(--gray-900); }
+
+/* Use cases */
+.use-case { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--white); border-radius: var(--radius); border: 1px solid rgba(0,0,0,0.06); }
+.use-case__icon { font-size: 1.5rem; flex-shrink: 0; }
+.use-case__text { font-weight: 500; }
+
+/* Specs table */
+.specs-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+.specs-table th, .specs-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--gray-300); }
+.specs-table th { background: var(--gray-100); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--gray-700); }
+.specs-table td { font-size: 0.95rem; }
+
+/* Feature sections */
+.feature-section { margin-bottom: 48px; }
+.feature-section h3 { font-size: 1.3rem; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--green-light); }
+.feature-section ul { list-style: none; }
+.feature-section ul li { padding: 6px 0 6px 24px; position: relative; }
+.feature-section ul li::before { content: "\2713"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+
+/* Audience cards */
+.audience-card { text-align: center; padding: 40px 28px; }
+.audience-card__icon { font-size: 2.5rem; margin-bottom: 16px; }
+.audience-card__title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+.audience-card__text { color: var(--gray-700); font-size: 0.95rem; }
+
+/* FAQ */
+.faq { margin-bottom: 24px; }
+.faq__q { font-weight: 600; font-size: 1.05rem; margin-bottom: 6px; color: var(--gray-900); }
+.faq__a { color: var(--gray-700); line-height: 1.7; }
+
+/* CTA banner */
+.cta-banner { text-align: center; padding: 60px 24px; }
+.cta-banner h2 { color: var(--white); margin-bottom: 16px; }
+.cta-banner p { color: rgba(255,255,255,0.9); margin-bottom: 32px; font-size: 1.1rem; }
+
+/* Pricing */
+.pricing-card { text-align: center; padding: 40px 32px; position: relative; }
+.pricing-card--featured { border: 2px solid var(--green); }
+.pricing-card__badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--green); color: var(--white); padding: 4px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.pricing-card__price { font-size: 2.5rem; font-weight: 800; color: var(--green); margin: 16px 0; }
+.pricing-card__price span { font-size: 1rem; font-weight: 400; color: var(--gray-500); }
+
+/* Footer */
+.footer { padding: 40px 0; text-align: center; color: var(--gray-500); font-size: 0.9rem; border-top: 1px solid var(--gray-300); }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+	<div class="container text-center">
+		<span class="badge">Free &amp; Open Source</span>
+		<h1 style="margin-top: 16px;">Transform WordPress Into a<br>Service Marketplace</h1>
+		<p class="subtitle">Launch a Fiverr-style marketplace where vendors sell services and you earn commission on every transaction. No expensive custom development. No monthly fees.</p>
+		<div class="hero-buttons">
+			<a href="https://wordpress.org/plugins/wp-sell-services/" class="btn btn--primary btn--lg">Download Free Plugin</a>
+			<a href="#features" class="btn btn--outline btn--lg">See All Features</a>
+		</div>
+	</div>
+</section>
+
+<!-- What You Can Build -->
+<section class="section">
+	<div class="container">
+		<h2 class="text-center">What You Can Build</h2>
+		<p class="subtitle text-center">One plugin, endless marketplace possibilities</p>
+		<div class="grid grid--3">
+			<div class="use-case"><span class="use-case__icon">&#128187;</span><span class="use-case__text">Freelance Marketplace</span></div>
+			<div class="use-case"><span class="use-case__icon">&#127891;</span><span class="use-case__text">Tutoring Platform</span></div>
+			<div class="use-case"><span class="use-case__icon">&#128188;</span><span class="use-case__text">Consulting Network</span></div>
+			<div class="use-case"><span class="use-case__icon">&#127912;</span><span class="use-case__text">Creative Services</span></div>
+			<div class="use-case"><span class="use-case__icon">&#128295;</span><span class="use-case__text">Local Services Directory</span></div>
+			<div class="use-case"><span class="use-case__icon">&#9889;</span><span class="use-case__text">Micro-Job Site</span></div>
+		</div>
+	</div>
+</section>
+
+<!-- How It Works -->
+<section class="section section--alt">
+	<div class="container">
+		<h2 class="text-center">How It Works</h2>
+		<p class="subtitle text-center">From installation to earning commission in four steps</p>
+		<div style="max-width: 640px; margin: 0 auto;">
+			<div class="steps">
+				<div class="step">
+					<div class="step__number"></div>
+					<div class="step__content">
+						<h3>Vendors Create Services</h3>
+						<p>A 6-step wizard guides vendors through building detailed service pages with three pricing tiers, image galleries, videos, FAQs, and custom requirements.</p>
+					</div>
+				</div>
+				<div class="step">
+					<div class="step__number"></div>
+					<div class="step__content">
+						<h3>Buyers Browse and Order</h3>
+						<p>Buyers search by category, compare vendor ratings, select a pricing package with optional add-ons, and checkout. WooCommerce integration is optional for payment processing.</p>
+					</div>
+				</div>
+				<div class="step">
+					<div class="step__number"></div>
+					<div class="step__content">
+						<h3>Order Workflow Runs Automatically</h3>
+						<p>Requirements get collected, vendors deliver work with file attachments, buyers request revisions if needed, and orders auto-complete after approval.</p>
+					</div>
+				</div>
+				<div class="step">
+					<div class="step__number"></div>
+					<div class="step__content">
+						<h3>You Earn Commission</h3>
+						<p>Set a global commission rate (0-50%) or custom rates per vendor. When orders complete, earnings split automatically. Vendors request withdrawals through their dashboard.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Core Features -->
+<section class="section" id="features">
+	<div class="container">
+		<h2 class="text-center">Everything You Need to Run a Marketplace</h2>
+		<p class="subtitle text-center">A complete platform, not just a directory plugin</p>
+
+		<div class="grid grid--2" style="gap: 48px;">
+			<div class="feature-section">
+				<h3>Service Management</h3>
+				<ul>
+					<li><strong>Multi-step creation wizard</strong> with live preview</li>
+					<li><strong>Three pricing tiers</strong> (Basic, Standard, Premium)</li>
+					<li><strong>Service add-ons</strong> for extra revenue</li>
+					<li><strong>Image galleries</strong> up to 4 images</li>
+					<li><strong>Video embeds</strong> for demonstrations</li>
+					<li><strong>Custom FAQs</strong> per service</li>
+					<li><strong>Buyer requirements</strong> to collect project details</li>
+					<li><strong>Category and tag</strong> organization</li>
+				</ul>
+			</div>
+
+			<div class="feature-section">
+				<h3>Complete Order System</h3>
+				<ul>
+					<li><strong>11 order statuses</strong> for full lifecycle tracking</li>
+					<li><strong>Requirements collection</strong> via custom forms</li>
+					<li><strong>File delivery system</strong> with approval workflow</li>
+					<li><strong>Built-in messaging</strong> with file attachments</li>
+					<li><strong>Revision management</strong> with configurable limits</li>
+					<li><strong>Deadline extensions</strong> with approval flow</li>
+					<li><strong>Auto-completion</strong> after 3 days</li>
+					<li><strong>Dispute resolution</strong> with admin mediation</li>
+				</ul>
+			</div>
+
+			<div class="feature-section">
+				<h3>Vendor Features</h3>
+				<ul>
+					<li><strong>Unified dashboard</strong> for services, orders, earnings</li>
+					<li><strong>Four seller levels</strong> with automatic progression</li>
+					<li><strong>Portfolio showcase</strong> for past work</li>
+					<li><strong>Vacation mode</strong> to pause orders</li>
+					<li><strong>Earnings tracking</strong> with withdrawal requests</li>
+					<li><strong>Performance metrics</strong> and statistics</li>
+				</ul>
+			</div>
+
+			<div class="feature-section">
+				<h3>Buyer Features</h3>
+				<ul>
+					<li><strong>Buyer requests</strong> for vendors to bid on</li>
+					<li><strong>Unified dashboard</strong> for order tracking</li>
+					<li><strong>Favorites &amp; wishlist</strong></li>
+					<li><strong>Optional tipping</strong> for great work</li>
+					<li><strong>Review system</strong> with multi-criteria ratings</li>
+					<li><strong>Purchase history</strong></li>
+				</ul>
+			</div>
+
+			<div class="feature-section">
+				<h3>Commission &amp; Earnings</h3>
+				<ul>
+					<li><strong>Global commission rate</strong> (0-50%)</li>
+					<li><strong>Per-vendor custom rates</strong></li>
+					<li><strong>Commission-free tipping</strong></li>
+					<li><strong>Withdrawal system</strong> with admin approval</li>
+					<li><strong>Automated scheduling</strong> (weekly, bi-weekly, monthly)</li>
+					<li><strong>Minimum thresholds</strong> and clearance periods</li>
+				</ul>
+			</div>
+
+			<div class="feature-section">
+				<h3>Payment Processing</h3>
+				<ul>
+					<li><strong>WooCommerce integration</strong> (optional)</li>
+					<li><strong>All WooCommerce gateways</strong> when active</li>
+					<li><strong>HPOS compatible</strong></li>
+					<li><strong>10 currencies</strong> supported</li>
+					<li><strong>Works independently</strong> without WooCommerce</li>
+					<li><strong>Pro adds</strong> Standalone, EDD, FluentCart, SureCart</li>
+				</ul>
+			</div>
+
+			<div class="feature-section">
+				<h3>Reviews &amp; Ratings</h3>
+				<ul>
+					<li><strong>5-star rating system</strong> with written reviews</li>
+					<li><strong>Multi-criteria ratings</strong> (communication, quality, delivery)</li>
+					<li><strong>Vendor replies</strong> to reviews</li>
+					<li><strong>Review moderation</strong> queue</li>
+					<li><strong>Reputation tracking</strong> and seller levels</li>
+				</ul>
+			</div>
+
+			<div class="feature-section">
+				<h3>Notifications</h3>
+				<ul>
+					<li><strong>11 email notification types</strong></li>
+					<li><strong>In-app notification center</strong></li>
+					<li><strong>Customizable templates</strong></li>
+					<li><strong>User preferences</strong> for notification control</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Developer Ready -->
+<section class="section section--alt">
+	<div class="container">
+		<h2 class="text-center">Developer Ready</h2>
+		<p class="subtitle text-center">Built for extensibility and custom integrations</p>
+		<div class="grid grid--4">
+			<div class="card text-center">
+				<div class="card__icon">&#128268;</div>
+				<div class="card__title">20 REST API Controllers</div>
+				<div class="card__text">Full CRUD operations for services, orders, vendors, reviews, and more</div>
+			</div>
+			<div class="card text-center">
+				<div class="card__icon">&#9889;</div>
+				<div class="card__title">Batch Endpoint</div>
+				<div class="card__text">Up to 25 requests in a single HTTP call for mobile efficiency</div>
+			</div>
+			<div class="card text-center">
+				<div class="card__icon">&#128640;</div>
+				<div class="card__title">6 Gutenberg Blocks</div>
+				<div class="card__text">Service Grid, Search, Categories, Featured, Seller Card, Buyer Requests</div>
+			</div>
+			<div class="card text-center">
+				<div class="card__icon">&#128736;</div>
+				<div class="card__title">100+ Hooks</div>
+				<div class="card__text">Extensive action and filter hooks for complete customization</div>
+			</div>
+		</div>
+		<div class="grid grid--4" style="margin-top: 24px;">
+			<div class="card text-center">
+				<div class="card__title">16 Shortcodes</div>
+				<div class="card__text">Flexible page building</div>
+			</div>
+			<div class="card text-center">
+				<div class="card__title">Template Overrides</div>
+				<div class="card__text">Copy to theme to customize</div>
+			</div>
+			<div class="card text-center">
+				<div class="card__title">PSR-4 Architecture</div>
+				<div class="card__text">Modern PHP with namespaces</div>
+			</div>
+			<div class="card text-center">
+				<div class="card__title">WP-CLI Commands</div>
+				<div class="card__text">Bulk operations via CLI</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Technical Specs -->
+<section class="section">
+	<div class="container">
+		<div class="grid grid--2" style="gap: 48px; align-items: start;">
+			<div>
+				<h2>Technical Specifications</h2>
+				<table class="specs-table">
+					<tr><th>Component</th><th>Requirement</th></tr>
+					<tr><td>WordPress</td><td>6.4 or higher</td></tr>
+					<tr><td>PHP</td><td>8.1 or higher</td></tr>
+					<tr><td>MySQL</td><td>5.7 or higher</td></tr>
+					<tr><td>WooCommerce</td><td>8.0+ (optional)</td></tr>
+				</table>
+			</div>
+			<div>
+				<h2>Built for Performance &amp; Security</h2>
+				<ul class="feature-list">
+					<li><strong>17 custom database tables</strong> for optimized queries without post meta bloat</li>
+					<li><strong>HPOS compatible</strong> with WooCommerce's High Performance Order Storage</li>
+					<li><strong>Nonce verification</strong> on all forms and AJAX requests</li>
+					<li><strong>Capability checks</strong> with proper WordPress permissions</li>
+					<li><strong>Input sanitization</strong> and validation throughout</li>
+					<li><strong>File upload controls</strong> with type and size limits</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Who It's For -->
+<section class="section section--alt">
+	<div class="container">
+		<h2 class="text-center">Who It's For</h2>
+		<div class="grid grid--4">
+			<div class="card audience-card">
+				<div class="audience-card__icon">&#128200;</div>
+				<div class="audience-card__title">Marketplace Entrepreneurs</div>
+				<div class="audience-card__text">Launch your own Fiverr-style platform without expensive developers. Start earning commission from day one.</div>
+			</div>
+			<div class="card audience-card">
+				<div class="audience-card__icon">&#127970;</div>
+				<div class="audience-card__title">Agency Owners</div>
+				<div class="audience-card__text">Create a service directory for your network of freelancers and contractors. Manage projects and payments in one place.</div>
+			</div>
+			<div class="card audience-card">
+				<div class="audience-card__icon">&#129309;</div>
+				<div class="audience-card__title">Community Builders</div>
+				<div class="audience-card__text">Build a marketplace for your niche community where members can sell services to each other.</div>
+			</div>
+			<div class="card audience-card">
+				<div class="audience-card__icon">&#128640;</div>
+				<div class="audience-card__title">WordPress Consultants</div>
+				<div class="audience-card__text">Offer marketplace builds as a service. Customize and launch for clients with the template override system.</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- FAQ -->
+<section class="section">
+	<div class="container" style="max-width: 800px;">
+		<h2 class="text-center">Frequently Asked Questions</h2>
+		<p class="subtitle text-center">Common questions about WP Sell Services</p>
+
+		<div class="faq">
+			<div class="faq__q">Is WooCommerce required?</div>
+			<div class="faq__a">No. WP Sell Services works independently without WooCommerce. Your marketplace is fully functional for service listings, vendor management, order workflow, messaging, reviews, and dispute resolution. When WooCommerce is active, the plugin automatically enables checkout and payment processing with access to hundreds of payment gateways. The Pro version adds more options including Standalone mode with direct Stripe/PayPal/Razorpay integration.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">Can I run a multi-vendor marketplace?</div>
+			<div class="faq__a">Yes. Any registered WordPress user can apply to become a vendor. You control vendor approval, set commission rates (global or per-vendor), moderate services, and oversee the entire marketplace.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">How does the commission system work?</div>
+			<div class="faq__a">Set a global commission percentage (0-50%) in settings. When an order completes, commission is automatically calculated and split. Vendors see their available balance and request withdrawals. You can also set custom commission rates for individual vendors.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">What payment gateways are supported?</div>
+			<div class="faq__a">When WooCommerce is active, all WooCommerce payment gateways work automatically, including Stripe, PayPal, Square, bank transfer, and hundreds more. The Pro version adds direct integrations for Stripe, PayPal, Razorpay, and offline payments that work independently without WooCommerce.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">Can buyers post job requests?</div>
+			<div class="faq__a">Yes. Buyers can post project requests with budget range, description, and deadline. Vendors browse these requests and submit custom proposals. Buyers review proposals and accept the one they prefer.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">How are disputes handled?</div>
+			<div class="faq__a">Buyers can open a dispute on any active order. Both parties submit evidence and messages. Administrators review details and can enforce resolutions including full refund, partial refund, additional revision, or note mutual agreement.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">Does it work with my theme?</div>
+			<div class="faq__a">Yes. WP Sell Services is designed to work with any well-coded WordPress theme. All frontend templates can be overridden by copying them to your theme's wp-sell-services/ directory for customization.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">Is it mobile-app ready?</div>
+			<div class="faq__a">Yes. The complete REST API with 20 controllers makes building iOS and Android apps straightforward. The batch endpoint allows mobile apps to execute multiple requests efficiently in a single HTTP call.</div>
+		</div>
+
+		<div class="faq">
+			<div class="faq__q">How do seller levels work?</div>
+			<div class="faq__a">Four levels: New Seller (default), Level 1 (5+ orders, 4.0+ rating), Level 2 (25+ orders, 4.5+ rating), and Top Rated (100+ orders, 4.8+ rating). Levels automatically update based on vendor performance metrics.</div>
+		</div>
+	</div>
+</section>
+
+<!-- CTA -->
+<section class="section--green cta-banner">
+	<div class="container">
+		<h2>Launch Your Service Marketplace Today</h2>
+		<p>Download WP Sell Services from WordPress.org and turn your WordPress site into a thriving service marketplace.</p>
+		<div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+			<a href="https://wordpress.org/plugins/wp-sell-services/" class="btn btn--white btn--lg">Download Free Plugin</a>
+			<a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="btn btn--outline btn--lg" style="color: var(--white); border-color: var(--white);">Compare Free vs Pro</a>
+		</div>
+	</div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+	<div class="container">
+		<p>Built by <a href="https://wbcomdesigns.com">Wbcom Designs</a> &mdash; WordPress marketplace experts</p>
+	</div>
+</footer>
+
+</body>
+</html>
