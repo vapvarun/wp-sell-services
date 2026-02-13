@@ -4,7 +4,7 @@ WP Sell Services Pro supports multiple e-commerce platforms beyond WooCommerce f
 
 ## Overview
 
-While the free version requires WooCommerce, WP Sell Services Pro adds support for:
+The free version integrates with WooCommerce when available for checkout and payments. WP Sell Services Pro adds support for additional platforms:
 
 - Easy Digital Downloads (EDD)
 - FluentCart

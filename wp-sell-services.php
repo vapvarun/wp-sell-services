@@ -148,8 +148,8 @@ function wpss_wp_version_notice(): void {
 /**
  * Display admin notice when WooCommerce is not active.
  *
- * This is a warning notice (not error) since marketplace features work
- * without WooCommerce - only checkout/payment requires it in the free version.
+ * This is a warning notice (not error) since the plugin works independently.
+ * WooCommerce is optional — enables checkout and payment processing when active.
  *
  * @return void
  */
@@ -324,6 +324,16 @@ function wpss_init(): void {
 
 // Initialize on plugins_loaded to ensure all dependencies are available.
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\wpss_init', 10 );
+
+// Declare WooCommerce HPOS compatibility.
+add_action(
+	'before_woocommerce_init',
+	function () {
+		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+		}
+	}
+);
 
 /**
  * Add plugin action links (shown on Plugins page).

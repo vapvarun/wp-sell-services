@@ -19,7 +19,7 @@ Before installing, verify your server meets these minimum requirements:
 - Max Execution Time: 300 seconds
 - PHP Extensions: mysqli, mbstring, json, curl
 
-**Note on WooCommerce**: The free version requires WooCommerce for checkout and payment processing. However, the marketplace functions (browsing services, vendor profiles, etc.) work without it. **[PRO]** version works standalone without WooCommerce.
+**Note on WooCommerce**: WooCommerce is optional. WP Sell Services works independently — your marketplace is fully functional for service listings, vendor management, order workflow, messaging, reviews, and dispute resolution. When WooCommerce is active, the plugin automatically enables checkout and payment processing. **[PRO]** version adds additional e-commerce platform options and standalone payment gateways.
 
 ## Installing WP Sell Services
 
@@ -137,9 +137,9 @@ Schedules automated tasks:
 - **wpss_update_vendor_stats**: Twice daily - Update vendor statistics
 - **wpss_process_auto_withdrawals**: Dynamic - Process automatic payouts
 
-## Installing WooCommerce (Free Version)
+## Installing WooCommerce (Optional)
 
-The free version requires WooCommerce for checkout and payments.
+WooCommerce is optional but recommended for checkout and payment processing. When active, all WooCommerce payment gateways work automatically.
 
 ### Install WooCommerce
 

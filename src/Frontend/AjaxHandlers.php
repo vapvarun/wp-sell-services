@@ -2080,11 +2080,11 @@ class AjaxHandlers {
 		}
 
 		// Verify WooCommerce is available for cart operations.
-		// The free version requires WooCommerce for payment processing.
+		// The free version uses WooCommerce for payment processing when available.
 		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'WooCommerce is required for checkout. Please install and activate WooCommerce to purchase services.', 'wp-sell-services' ),
+					'message' => __( 'Checkout requires WooCommerce or the Pro version with an alternative payment platform. Please install WooCommerce to enable checkout.', 'wp-sell-services' ),
 				)
 			);
 		}

@@ -58,9 +58,9 @@ WP Sell Services is a full-featured marketplace plugin for creating service-base
 | WordPress | 6.4 or higher |
 | PHP | 8.1 or higher |
 | MySQL | 5.7 or higher |
-| WooCommerce | 8.0+ (optional - required for checkout in free version) |
+| WooCommerce | 8.0+ (optional — enables checkout and payment processing) |
 
-**Note**: WooCommerce is optional for browsing but required for checkout and payments in the free version. **[PRO]** version works standalone without WooCommerce.
+**Note**: WooCommerce is optional. The plugin works independently for all marketplace functions. When WooCommerce is active, checkout and payment processing are enabled automatically. **[PRO]** version adds additional e-commerce platforms and standalone payment gateways.
 
 ## Getting Started
 
