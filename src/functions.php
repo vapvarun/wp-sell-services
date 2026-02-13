@@ -948,6 +948,53 @@ function wpss_get_page_url( string $page_key ): string {
 }
 
 /**
+ * Get the mapped page ID for a given page key.
+ *
+ * @since 1.1.0
+ *
+ * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
+ * @return int Page ID or 0.
+ */
+function wpss_get_page_id( string $page_key ): int {
+	$pages = get_option( 'wpss_pages', array() );
+	return (int) ( $pages[ $page_key ] ?? 0 );
+}
+
+/**
+ * Check if the current page is a specific mapped page.
+ *
+ * Uses the global $post to check the page ID before any query modification,
+ * making it safe to use in pre_get_posts and template_include.
+ *
+ * @since 1.1.0
+ *
+ * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
+ * @return bool
+ */
+function wpss_is_page( string $page_key ): bool {
+	global $post;
+
+	$page_id = wpss_get_page_id( $page_key );
+
+	if ( ! $page_id ) {
+		return false;
+	}
+
+	// Check global $post first (available before query modification).
+	if ( $post instanceof \WP_Post && (int) $post->ID === $page_id ) {
+		return true;
+	}
+
+	// Fallback: check queried object.
+	$queried = get_queried_object_id();
+	if ( $queried && $queried === $page_id ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * Get the Create Service URL.
  *
  * Returns the URL to the Dashboard create section where vendors can create new services.

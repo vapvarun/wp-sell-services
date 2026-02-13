@@ -295,6 +295,18 @@
 	transform: translateX(0);
 }
 
+body.wpss-sidebar-open {
+	overflow: hidden;
+}
+
+body.wpss-sidebar-open::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 99997;
+}
+
 .wpss-sidebar-header {
 	display: flex;
 	justify-content: space-between;
@@ -547,6 +559,14 @@
 	}
 
 	.wpss-sidebar-header {
+		display: none;
+	}
+
+	body.wpss-sidebar-open {
+		overflow: auto;
+	}
+
+	body.wpss-sidebar-open::after {
 		display: none;
 	}
 }

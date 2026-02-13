@@ -309,24 +309,26 @@
 	color: var(--wpss-block-text-light);
 }
 
-.wpss-search-input {
+.wpss-search-fields .wpss-search-input {
 	width: 100%;
 	padding: 0.875rem 1rem 0.875rem 2.75rem;
 	border: none;
 	font-size: 1rem;
 	color: var(--wpss-block-text);
 	background: transparent;
+	box-shadow: none;
 }
 
-.wpss-search-input:focus {
+.wpss-search-fields .wpss-search-input:focus {
 	outline: none;
+	box-shadow: none;
 }
 
 .wpss-category-select-wrap {
 	border-left: 1px solid var(--wpss-block-border);
 }
 
-.wpss-category-select {
+.wpss-search-fields .wpss-category-select {
 	appearance: none;
 	-webkit-appearance: none;
 	-moz-appearance: none;
@@ -350,7 +352,7 @@
 	outline: none;
 }
 
-.wpss-search-button {
+.wpss-search-fields .wpss-search-button {
 	padding: 0.875rem 1.5rem;
 	background: var(--wpss-block-primary);
 	color: var(--wpss-block-white);
@@ -359,10 +361,12 @@
 	border: none;
 	cursor: pointer;
 	transition: background 0.2s ease;
+	line-height: 1.5;
 }
 
-.wpss-search-button:hover {
+.wpss-search-fields .wpss-search-button:hover {
 	background: var(--wpss-block-primary-dark);
+	color: var(--wpss-block-white);
 }
 
 /* Hero style search */
@@ -962,42 +966,98 @@
 }
 
 @container (max-width: 500px) {
-	.wpss-search-form {
+	/*
+	 * Service Search — stacked standalone fields.
+	 * Selectors scoped under .wpss-block (2-class specificity)
+	 * to beat theme resets like button[type="submit"] (0-1-1).
+	 */
+	.wpss-block .wpss-search-form {
 		max-width: none;
 	}
-	.wpss-search-fields {
+	.wpss-block .wpss-search-fields {
 		flex-direction: column;
+		border: none;
+		border-radius: 0;
+		background: transparent;
+		overflow: visible;
+		gap: 0.75rem;
 	}
-	.wpss-category-select-wrap {
-		border-left: none;
-		border-top: 1px solid var(--wpss-block-border);
+	.wpss-block .wpss-search-input-wrap {
+		border: 1px solid var(--wpss-block-border);
+		border-radius: var(--wpss-block-radius);
+		background: var(--wpss-block-white);
 	}
-	.wpss-category-select {
+	.wpss-block .wpss-search-input {
+		padding: 0.625rem 0.75rem 0.625rem 2.25rem;
+		font-size: 0.875rem;
+		border: none;
+		background: transparent;
+		line-height: 1.5;
+		box-shadow: none;
+		outline: none;
+	}
+	.wpss-block .wpss-search-icon {
+		left: 0.75rem;
+	}
+	.wpss-block .wpss-category-select-wrap {
+		border: 1px solid var(--wpss-block-border);
+		border-radius: var(--wpss-block-radius);
+		background: var(--wpss-block-white);
+	}
+	.wpss-block .wpss-category-select {
 		width: 100%;
 		min-width: unset;
+		height: auto;
+		padding: 0.625rem 2.5rem 0.625rem 0.75rem;
+		border: none;
+		font-size: 0.875rem;
+		line-height: 1.5;
 	}
-	.wpss-search-button {
+	.wpss-block .wpss-search-button {
 		width: 100%;
+		padding: 0.75rem 1rem;
+		border-radius: var(--wpss-block-radius);
+		background: var(--wpss-block-primary);
+		color: var(--wpss-block-white);
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.5;
+		text-align: center;
+		border: none;
+		display: block;
+		cursor: pointer;
+	}
+	.wpss-block .wpss-search-button:hover {
+		background: var(--wpss-block-primary-dark);
 	}
 
-	/* Force single column regardless of grid-cols setting */
-	.wpss-categories-list {
+	/*
+	 * Service Categories — single-column compact list.
+	 */
+	.wpss-block .wpss-categories-list {
 		grid-template-columns: 1fr !important;
+		gap: 0.5rem;
 	}
-	/* Switch from vertical card to horizontal row layout */
-	.wpss-categories-grid .wpss-category-card {
+	.wpss-block.wpss-categories-grid .wpss-category-card {
 		flex-direction: row;
 		text-align: left;
-		padding: 1rem;
+		padding: 0.75rem 1rem;
 	}
-	.wpss-category-icon {
-		width: 40px;
-		height: 40px;
+	.wpss-block .wpss-category-icon {
+		width: 36px;
+		height: 36px;
+		flex-shrink: 0;
 	}
-	.wpss-category-icon .dashicons {
-		font-size: 20px;
-		width: 20px;
-		height: 20px;
+	.wpss-block .wpss-category-icon .dashicons {
+		font-size: 18px;
+		width: 18px;
+		height: 18px;
+	}
+	.wpss-block .wpss-category-name {
+		font-size: 0.875rem;
+	}
+	.wpss-block .wpss-category-count {
+		font-size: 0.75rem;
 	}
 }
 

@@ -54,10 +54,6 @@ class WCServiceCarrier {
 		add_action( 'woocommerce_product_query', array( $this, 'hide_carrier_from_shop' ) );
 		add_filter( 'woocommerce_product_is_visible', array( $this, 'hide_carrier_visibility' ), 10, 2 );
 
-		// AJAX handler for adding service to cart.
-		add_action( 'wp_ajax_wpss_add_service_to_cart', array( $this, 'ajax_add_to_cart' ) );
-		add_action( 'wp_ajax_nopriv_wpss_add_service_to_cart', array( $this, 'ajax_add_to_cart_guest' ) );
-
 		// Save service data to order.
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'save_order_item_meta' ), 10, 4 );
 

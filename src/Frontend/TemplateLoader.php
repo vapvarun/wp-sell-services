@@ -134,6 +134,14 @@ class TemplateLoader {
 			}
 		}
 
+		// Mapped services page — use the archive template.
+		if ( wpss_is_page( 'services_page' ) ) {
+			$custom = $this->locate_template( 'archive-service.php' );
+			if ( $custom ) {
+				return $custom;
+			}
+		}
+
 		// Check for buyer request single.
 		if ( is_singular( 'wpss_request' ) ) {
 			$custom = $this->locate_template( 'single-request.php' );
@@ -259,17 +267,22 @@ class TemplateLoader {
 	 * @return string
 	 */
 	public function taxonomy_template( string $template ): string {
-		if ( is_tax( 'wpss_service_category' ) ) {
-			$custom = $this->locate_template( 'taxonomy-service-category.php' );
+		if ( is_tax( 'wpss_service_category' ) || is_tax( 'wpss_service_tag' ) ) {
+			// Try taxonomy-specific template first.
+			$taxonomy_template = is_tax( 'wpss_service_category' )
+				? 'taxonomy-service-category.php'
+				: 'taxonomy-service-tag.php';
+
+			$custom = $this->locate_template( $taxonomy_template );
 			if ( $custom ) {
 				return $custom;
 			}
-		}
 
-		if ( is_tax( 'wpss_service_tag' ) ) {
-			$custom = $this->locate_template( 'taxonomy-service-tag.php' );
-			if ( $custom ) {
-				return $custom;
+			// Fall back to the service archive template so taxonomy pages
+			// use the same card grid layout instead of the default post loop.
+			$archive = $this->locate_template( 'archive-service.php' );
+			if ( $archive ) {
+				return $archive;
 			}
 		}
 

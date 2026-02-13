@@ -58,7 +58,7 @@ class ServiceArchiveView {
 	 * @return void
 	 */
 	public function enqueue_assets(): void {
-		if ( ! is_post_type_archive( 'wpss_service' ) && ! is_tax( 'wpss_service_category' ) && ! is_tax( 'wpss_service_tag' ) ) {
+		if ( ! wpss_is_page( 'services_page' ) && ! is_post_type_archive( 'wpss_service' ) && ! is_tax( 'wpss_service_category' ) && ! is_tax( 'wpss_service_tag' ) ) {
 			return;
 		}
 
@@ -84,7 +84,7 @@ class ServiceArchiveView {
 			<h1 class="wpss-archive-title"><?php echo esc_html( $title ); ?></h1>
 			<?php if ( $description ) : ?>
 				<p class="wpss-archive-description"><?php echo esc_html( $description ); ?></p>
-			<?php elseif ( is_post_type_archive( 'wpss_service' ) && $platform_name ) : ?>
+			<?php elseif ( $platform_name && ( is_post_type_archive( 'wpss_service' ) || wpss_is_page( 'services_page' ) ) ) : ?>
 				<p class="wpss-archive-description">
 					<?php
 					printf(
@@ -356,7 +356,10 @@ class ServiceArchiveView {
 					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block">
 						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
 					</button>
-					<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>" class="wpss-btn wpss-btn-outline wpss-btn-block">
+					<?php
+					$clear_url = wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' );
+					?>
+					<a href="<?php echo esc_url( $clear_url ); ?>" class="wpss-btn wpss-btn-outline wpss-btn-block">
 						<?php esc_html_e( 'Clear All', 'wp-sell-services' ); ?>
 					</a>
 				</div>
@@ -395,7 +398,9 @@ class ServiceArchiveView {
 	 */
 	private function get_archive_description(): string {
 		if ( is_tax() ) {
-			return term_description();
+			// term_description() returns HTML-wrapped content; strip tags
+			// since render_header() wraps it in its own <p>.
+			return wp_strip_all_tags( term_description() );
 		}
 
 		return '';
@@ -413,8 +418,18 @@ class ServiceArchiveView {
 			return;
 		}
 
-		if ( ! $query->is_post_type_archive( 'wpss_service' ) && ! $query->is_tax( 'wpss_service_category' ) && ! $query->is_tax( 'wpss_service_tag' ) ) {
+		$is_services_page = wpss_is_page( 'services_page' );
+
+		if ( ! $is_services_page && ! $query->is_post_type_archive( 'wpss_service' ) && ! $query->is_tax( 'wpss_service_category' ) && ! $query->is_tax( 'wpss_service_tag' ) ) {
 			return;
+		}
+
+		// Convert the mapped services page query to fetch services.
+		if ( $is_services_page ) {
+			$query->set( 'post_type', 'wpss_service' );
+			$query->set( 'page_id', '' );
+			$query->set( 'pagename', '' );
+			$query->set( 'posts_per_page', apply_filters( 'wpss_services_per_page', 12 ) );
 		}
 
 		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
@@ -511,4 +526,5 @@ class ServiceArchiveView {
 
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 	}
+
 }

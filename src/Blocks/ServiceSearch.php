@@ -107,7 +107,15 @@ class ServiceSearch extends AbstractBlock {
 			'style'              => 'default',
 		];
 
-		$attributes   = wp_parse_args( $attributes, $defaults );
+		$attributes = wp_parse_args( $attributes, $defaults );
+
+		// Ensure empty strings fall back to defaults.
+		foreach ( $defaults as $key => $default ) {
+			if ( is_string( $default ) && isset( $attributes[ $key ] ) && '' === $attributes[ $key ] ) {
+				$attributes[ $key ] = $default;
+			}
+		}
+
 		$search_value = isset( $_GET['wpss_search'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_search'] ) ) : '';
 		$category     = isset( $_GET['wpss_category'] ) ? absint( $_GET['wpss_category'] ) : 0;
 
