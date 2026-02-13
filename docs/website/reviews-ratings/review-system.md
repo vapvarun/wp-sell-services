@@ -39,7 +39,7 @@ In addition to the overall rating, buyers can provide 3 optional sub-ratings (1-
 
 **Note:** The old documentation incorrectly listed 4 sub-ratings including "experience". Only these 3 exist in the code.
 
-![Review form with sub-ratings](../images/frontend-review-form.png)
+![Review display with ratings](../images/frontend-service-reviews.png)
 
 ---
 
@@ -120,7 +120,6 @@ clean and well-documented. Very satisfied with the quality for
 the price paid.
 ```
 
-**Screenshot Reference:** `../images/frontend-review-form-complete.png`
 
 ### Step 3: Submit Review
 
@@ -197,7 +196,6 @@ WordPress project. I'm glad the plugin meets your needs. Feel
 free to reach out anytime if you need future updates.
 ```
 
-![Vendor reply interface](../images/frontend-vendor-reply.png)
 
 ---
 
@@ -228,7 +226,6 @@ Admins can optionally enable review moderation.
 3. Click **Approve** or **Reject**
 4. Optional: Add admin note
 
-**Screenshot Reference:** `../images/admin-reviews-list.png`
 
 ---
 
@@ -326,7 +323,6 @@ All reviews in WP Sell Services are verified purchases by default.
 - Lowest Rated First
 - Most Helpful (if helpful votes enabled)
 
-**Screenshot Reference:** `../images/frontend-service-reviews.png`
 
 ---
 

@@ -10,6 +10,8 @@ The manual order creation tool lets administrators create service orders outside
 
 **Access Required:** `manage_options` capability (administrators only)
 
+![Manual order creation page](../images/admin-create-manual-order.png)
+
 ## When to Use Manual Orders
 
 Create manual orders for:

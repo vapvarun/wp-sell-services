@@ -20,6 +20,8 @@ Requirements collection is the process where buyers provide project-specific det
 - Ensure vendor understands requirements
 - Start with clear expectations
 
+![Requirements section on the order page](../images/frontend-order-requirements.png)
+
 ### When It Happens
 
 ```
@@ -100,7 +102,7 @@ Vendors create custom requirements forms for each service.
 3. Scroll to **Requirements Form** metabox
 4. Configure fields for that service
 
-![Requirements form builder](../images/requirements-form-builder.png)
+![Requirements form fields displayed on the order page](../images/frontend-requirements-form.png)
 
 ### Form Builder Interface
 
@@ -246,6 +248,8 @@ Attachments are created as `private` posts, making them accessible only to:
 
 ### Buyer Submission Flow
 
+![Submit requirements button and form interface](../images/frontend-submit-requirements.png)
+
 1. Buyer receives "Submit Requirements" email
 2. Clicks link to requirements form
 3. Fills out all required fields
@@ -294,6 +298,8 @@ When enabled, buyers can submit requirements even after work has started:
 ## Viewing Submitted Requirements
 
 ### Vendor View
+
+![Completed requirements view showing all submitted information](../images/frontend-requirements-completed.png)
 
 **From Order Details:**
 1. Go to **Dashboard → Orders**

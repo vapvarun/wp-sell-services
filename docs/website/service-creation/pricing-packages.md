@@ -13,6 +13,8 @@ Configure pricing tiers for your service. Services support up to 3 packages: Bas
 
 ## Package Tiers
 
+![Admin packages metabox for configuring service packages](../images/admin-service-packages.png)
+
 ### Basic Package
 
 **Always Required:**
@@ -56,6 +58,8 @@ Configure pricing tiers for your service. Services support up to 3 packages: Bas
 - Highest price, fastest delivery
 
 ## Package Fields
+
+![Package pricing setup with fields for name, price, delivery time, and features](../images/admin-package-setup.png)
 
 Each package contains these fields:
 
@@ -307,7 +311,11 @@ Shows red "!" badge if Basic package incomplete.
 
 ## Frontend Display
 
-Packages displayed as comparison table or cards:
+Packages displayed as comparison table or cards on the service detail page:
+
+![Frontend package display on the service page](../images/frontend-service-packages.png)
+
+![Package selection interface for buyers](../images/frontend-package-selection.png)
 
 **Table View:**
 | | Basic | Standard | Premium |
@@ -319,6 +327,10 @@ Packages displayed as comparison table or cards:
 
 **Card View:**
 Three cards side-by-side with feature lists and "Select" button.
+
+![Package cards comparison showing Basic, Standard, and Premium tiers](../images/frontend-package-cards.png)
+
+![Package comparison view with feature-by-feature breakdown](../images/frontend-package-comparison.png)
 
 ## WooCommerce Sync
 

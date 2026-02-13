@@ -24,7 +24,7 @@ A reverse marketplace where you describe what you need and vendors submit propos
 4. **You accept a proposal** which creates an order
 5. **Order begins** with standard workflow
 
-![Buyer requests flow](../images/frontend-buyer-requests-flow.png)
+![Post a buyer request form](../images/frontend-post-request-form.png)
 
 ---
 
@@ -42,7 +42,7 @@ Admins can place the form anywhere with:
 [wpss_post_request]
 ```
 
-![Post request button](../images/dashboard-my-requests.png)
+![Public buyer requests listing](../images/frontend-buyer-requests-listing.png)
 
 ---
 
@@ -110,7 +110,6 @@ Deliverables:
 - 30 days of bug fixes
 ```
 
-![Request description field](../images/frontend-request-form.png)
 
 ### Category (Optional)
 
@@ -194,7 +193,6 @@ Upload reference files, mockups, or documents.
 
 **Note:** Previous documentation mentioned a "tags" field. This does NOT exist on buyer requests in the code.
 
-![Request attachments](../images/frontend-request-attachments.png)
 
 ---
 
@@ -283,7 +281,6 @@ View all proposals:
 - Cover letter
 - Accept or reject actions
 
-![Received proposals](../images/frontend-proposals-list.png)
 
 ---
 

@@ -20,7 +20,7 @@ Alternatively:
 - Navigate from top menu **Earnings** link
 - Dashboard widget **Earnings Summary**
 
-![Earnings Dashboard](../images/vendor-earnings-dashboard.png)
+![Vendor earnings dashboard](../images/vendor-earnings-dashboard.png)
 
 ## Key Earnings Metrics
 
@@ -79,6 +79,8 @@ Total amount in pending withdrawal requests awaiting admin approval.
 ## Earnings History
 
 View detailed transaction history for all your completed orders.
+
+![Earnings transaction history](../images/vendor-earnings-overview.png)
 
 ### Accessing History
 

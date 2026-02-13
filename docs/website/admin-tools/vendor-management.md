@@ -10,6 +10,8 @@ The vendor management page provides administrators with a centralized view of al
 
 **Access Required:** `manage_options` capability (administrators only)
 
+![Vendors management page](../images/admin-vendors-dashboard.png)
+
 ## Accessing the Vendors Page
 
 1. Log in to WordPress admin

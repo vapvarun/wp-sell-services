@@ -6,6 +6,8 @@ Built-in SEO features and structured data (JSON-LD schema) for better search eng
 
 WP Sell Services automatically generates JSON-LD structured data for all marketplace pages. This helps search engines understand your content and display rich results.
 
+![Services catalog for marketplace display](../images/frontend-services-grid-view.png)
+
 ### What is Schema Markup?
 
 Schema markup is code that tells search engines what your content means, not just what it says. This can result in:

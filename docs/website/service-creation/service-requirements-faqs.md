@@ -15,11 +15,15 @@ Requirements are custom questions buyers must answer when placing an order. They
 
 ## Requirement Field Types
 
+![Admin requirements metabox for defining buyer requirements](../images/admin-service-requirements.png)
+
 Four field types supported by the wizard:
 
 ### 1. Text (Short Answer)
 
 Single-line text input for brief responses.
+
+![Text requirement field configuration](../images/admin-requirement-text.png)
 
 **Use Cases:**
 - Business name
@@ -59,6 +63,8 @@ Multi-line text area for detailed responses.
 
 ### 3. File Upload
 
+![File requirement field configuration](../images/admin-requirement-file.png)
+
 Allow buyers to upload files.
 
 **Use Cases:**
@@ -83,6 +89,8 @@ Allow buyers to upload files.
 ```
 
 ### 4. Select (Multiple Choice)
+
+![Select requirement field with dropdown options](../images/admin-requirement-select.png)
 
 Dropdown with predefined options.
 
@@ -274,6 +282,8 @@ Frequently Asked Questions section helps buyers make informed decisions.
 
 ## FAQ Configuration
 
+![FAQ editor for adding questions and answers](../images/admin-faq-editor.png)
+
 ### Question Field
 
 - Text input
@@ -347,6 +357,8 @@ Stored in `_wpss_faqs` post meta:
 - Revision process
 - What's included/excluded
 - Communication process
+
+![Frontend FAQ display as seen by buyers on the service page](../images/frontend-faq-display.png)
 
 **Example FAQ Structure:**
 ```

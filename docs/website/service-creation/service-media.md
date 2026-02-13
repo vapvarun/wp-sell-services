@@ -12,6 +12,8 @@ Add images and videos to showcase your work. Gallery images are stored in WordPr
 
 ## Main Image (Featured Image)
 
+![Admin gallery upload interface for adding service images](../images/admin-gallery-upload.png)
+
 Required for publishing. Set as WordPress post thumbnail.
 
 **Requirements:**

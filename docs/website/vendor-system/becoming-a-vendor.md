@@ -20,7 +20,7 @@ Navigate to the vendor registration page using the `[wpss_become_vendor]` or `[w
 
 If you already have a buyer account, log in first and visit the "Become a Vendor" page to upgrade your account.
 
-![Vendor registration form](../images/vendor-registration-form.png)
+![Vendor registration and profile editor form](../images/vendor-profile-editor.png)
 
 ### Step 2: Complete Registration Form
 

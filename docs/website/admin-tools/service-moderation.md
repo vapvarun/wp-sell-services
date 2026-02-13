@@ -27,7 +27,7 @@ Service moderation is configured on the Vendor settings tab:
 - No admin review required
 - Services go live when vendor clicks "Publish"
 
-![Vendor Settings - Service Moderation](../images/settings-vendor-moderation.png)
+![Service moderation queue](../images/admin-service-moderation.png)
 
 ## Service Moderation Workflow
 
@@ -52,7 +52,7 @@ The dedicated moderation page shows all pending services.
 
 The moderation menu item shows a badge with pending count when services await review.
 
-![Moderation Menu Badge](../images/admin-moderation-menu.png)
+![All services list](../images/admin-services-dashboard.png)
 
 ### Moderation Page Layout
 
@@ -80,7 +80,6 @@ Filter moderation queue by status:
 
 Click tabs above the table to filter view.
 
-![Moderation Queue Filters](../images/moderation-queue-tabs.png)
 
 ## Service Review Checklist
 
@@ -171,7 +170,6 @@ Vendor receives email containing:
 - Service shows "Approved" status badge
 - Vendor statistics update
 
-![Service Approval Email](../images/email-service-approved.png)
 
 ### Bulk Approval
 
@@ -217,7 +215,6 @@ Provide specific, actionable feedback so vendor knows what to fix.
 - Rejection reason visible to admins
 - Service shows "Rejected" status badge
 
-![Service Rejection Dialog](../images/moderation-reject-dialog.png)
 
 ### Writing Effective Rejection Messages
 

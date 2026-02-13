@@ -68,7 +68,7 @@ Navigate to **WP Sell Services → Settings → Payments → Commission Settings
 | **Commission Rate (%)** | 0 - 50 | 10% | Percentage deducted from vendor earnings on all orders |
 | **Per-Vendor Rates** | On/Off | On | Allow custom commission rates per vendor |
 
-![Commission settings](../images/settings-payments-commission.png)
+![Commission settings](../images/settings-commission.png)
 
 **Example Calculation (10% commission):**
 

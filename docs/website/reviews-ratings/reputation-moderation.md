@@ -55,7 +55,6 @@ Vendor Overall: (4.8×20 + 4.5×10 + 4.9×8) ÷ 38 = 4.71 stars
 - Vendor profile shows overall rating
 - Each service page shows that service's rating
 
-![Service-level ratings display](../images/frontend-service-ratings.png)
 
 ---
 
@@ -153,7 +152,6 @@ Sub-ratings = Displayed separately, not included in average
 6. If approved → Status: `approved`, visible publicly
 7. If rejected → Status: `rejected`, hidden permanently
 
-![Admin moderation workflow](../images/admin-reviews-moderation.png)
 
 ---
 
@@ -192,7 +190,6 @@ WP Admin → WP Sell Services → Reviews
 2. Select **Bulk Actions → Approve**
 3. Click **Apply**
 
-![Approving reviews in admin](../images/admin-reviews-approve.png)
 
 ### Rejecting Reviews
 
@@ -292,7 +289,6 @@ Vendors see:
 - Filter by service
 - Export review data
 
-![Vendor reputation dashboard](../images/frontend-vendor-reputation.png)
 
 ### Service-Specific Stats
 

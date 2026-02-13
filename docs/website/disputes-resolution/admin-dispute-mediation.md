@@ -14,6 +14,8 @@ Marketplace administrators:
 - **Implement Solutions**: Process refunds and apply resolutions
 - **Maintain Standards**: Ensure platform policies are followed
 
+![Disputes list](../images/admin-disputes-dashboard.png)
+
 ### Neutral Mediation
 
 Admins must remain:
@@ -131,6 +133,8 @@ Returns array of evidence items with:
 **link:** External URL
 - Content is sanitized URL
 - Opens in new tab
+
+![Dispute evidence view](../images/admin-dispute-investigation.png)
 
 ### Evaluating Evidence
 

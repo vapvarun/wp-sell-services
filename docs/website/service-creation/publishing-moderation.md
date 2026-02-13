@@ -32,6 +32,8 @@ Stored in `_wpss_moderation_status` meta:
 
 ## Publishing Workflow
 
+![Publish metabox showing service status and submission controls](../images/admin-service-publish.png)
+
 ### When Moderation is Enabled
 
 Admin setting: `wpss_vendor['require_service_moderation']`
@@ -74,6 +76,8 @@ Create Service → Submit → post_status: 'publish' (immediate)
 No moderation meta is set. Service goes live without admin review.
 
 ## Moderation Queue
+
+![Admin moderation queue showing pending services for review](../images/admin-service-moderation.png)
 
 Admins access pending services via **Admin → Services → Moderation**.
 

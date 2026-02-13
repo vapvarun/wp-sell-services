@@ -19,6 +19,8 @@ Analytics are available to all vendors and provide data about:
 3. Select time period using date filter
 4. View metrics across dashboard
 
+![Vendor analytics dashboard](../images/pro-vendor-analytics-dashboard.png)
+
 ## Revenue Tracking
 
 ### Earnings Overview

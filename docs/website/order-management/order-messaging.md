@@ -52,7 +52,7 @@ $conversation = ConversationService::create_for_order($order_id);
 - Click to open messaging modal
 - Send quick message without opening full order
 
-![Vendor message access](../images/admin-vendor-message-access.png)
+![Order message thread between buyer and vendor](../images/frontend-order-messages.png)
 
 ### Buyer Access
 
@@ -84,7 +84,7 @@ $conversation = ConversationService::create_for_order($order_id);
 - Monitor for policy violations
 - Export conversation history
 
-![Admin message monitoring](../images/admin-message-monitoring.png)
+![Active messaging conversation on the order page](../images/frontend-order-messaging.png)
 
 ## Message Types
 
@@ -234,7 +234,7 @@ Please make the following changes:
 4. (Optional) Attach files
 5. Click **Send Message**
 
-![Message composition](../images/frontend-message-compose.png)
+![Order message thread with file attachments](../images/frontend-order-messages.png)
 
 ### File Attachments
 

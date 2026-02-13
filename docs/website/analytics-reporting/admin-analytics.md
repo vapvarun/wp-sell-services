@@ -19,6 +19,8 @@ Admin analytics provides comprehensive metrics for:
 3. View platform overview dashboard
 4. Navigate to specific metric sections
 
+![Admin analytics dashboard](../images/pro-admin-analytics-dashboard.png)
+
 ## Platform Overview
 
 ### Dashboard Statistics

@@ -6,6 +6,8 @@ Learn how orders flow through WP Sell Services from payment to completion. This 
 
 Every order in WP Sell Services follows a structured lifecycle with 11 distinct statuses. Understanding this flow helps vendors manage work efficiently and helps buyers know what to expect at each stage.
 
+![Buyer orders list showing all orders with their current statuses](../images/frontend-buyer-orders.png)
+
 ### The 11 Order Statuses
 
 | Status | Description | Who Acts | Duration |
@@ -54,6 +56,8 @@ disputed → completed, cancelled
 **Important:** Direct transitions not listed above are blocked by `OrderService::can_transition()`.
 
 ## Detailed Status Workflow
+
+![Order detail page showing current status and order information](../images/frontend-buyer-order-status.png)
 
 ### 1. Pending Payment
 
@@ -374,6 +378,18 @@ All status changes trigger:
 2. `wpss_order_status_{new_status}` action for specific status
 3. System message in order conversation
 4. Email notifications (if enabled in settings)
+
+## Admin Order Management
+
+Administrators can view and manage all orders from the WP Admin panel.
+
+![Admin orders list showing all marketplace orders](../images/admin-all-orders.png)
+
+![Admin order detail view with full order information](../images/admin-order-details.png)
+
+![Admin order status actions and transition options](../images/admin-order-actions.png)
+
+![Admin order filters for searching and sorting orders](../images/admin-order-filters.png)
 
 ## Configuration Settings
 

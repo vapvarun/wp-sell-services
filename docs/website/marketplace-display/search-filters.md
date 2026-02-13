@@ -6,6 +6,10 @@ Service search functionality with category filters, keyword search, and result p
 
 WP Sell Services provides search and filtering to help buyers find services quickly.
 
+![Services grid view](../images/frontend-services-grid-view.png)
+
+![Full catalog with filters](../images/frontend-services-catalog.png)
+
 ---
 
 ## Service Search Form

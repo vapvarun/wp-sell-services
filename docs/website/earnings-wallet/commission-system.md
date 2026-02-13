@@ -52,7 +52,9 @@ Set the default commission rate that applies to all vendors.
 4. Check **Per-Vendor Rates** to allow custom rates per vendor
 5. Click **Save Commission Settings**
 
-![Commission settings](../images/settings-payments-commission.png)
+![Commission settings tab](../images/settings-commission-tab.png)
+
+![Full commission settings](../images/settings-commission.png)
 
 **Commission Rate Field**:
 - Minimum: 0%
@@ -142,6 +144,8 @@ Vendors see their earnings after commission:
 Order Total: $100.00
 Your Earnings: $90.00
 ```
+
+![Order commission breakdown](../images/admin-order-commission.png)
 
 Commission details are stored in the `wpss_orders` table with these fields:
 - `total`: Order total amount

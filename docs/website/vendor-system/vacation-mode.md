@@ -40,8 +40,6 @@ It's a manual toggle you must turn on and off yourself.
 4. Enter optional vacation message (recommended)
 5. Save changes
 
-![Vacation mode settings](../images/vendor-vacation-mode-settings.png)
-
 ### Vacation Message
 
 Write a brief, professional message to buyers:
@@ -69,8 +67,6 @@ When buyers visit your profile with vacation mode enabled:
 - **Vacation Message**: Your custom message shown
 - **Services Visible**: Listings remain viewable
 - **Messaging Available**: Buyers can still send messages
-
-![Vacation mode active view](../images/vendor-vacation-mode-active.png)
 
 ### For Your Services
 
@@ -104,8 +100,6 @@ When ready to accept orders again:
 2. Toggle **Vacation Mode** to OFF
 3. Save changes
 4. Services become available immediately
-
-![Disable vacation mode](../images/vendor-vacation-mode-disable.png)
 
 ### What Happens on Return
 

@@ -30,6 +30,8 @@ When buyers purchase a service:
 - WooCommerce 7.0+
 - PHP 8.0+
 
+![WooCommerce checkout](../images/frontend-woocommerce-checkout.png)
+
 ### Installation
 
 1. Install and activate WooCommerce from Plugins → Add New
@@ -37,6 +39,8 @@ When buyers purchase a service:
 3. Go to **WP Sell Services → Settings → General**
 4. E-Commerce Platform defaults to "Auto-detect" (finds WooCommerce automatically)
 5. Plugin creates the "Service Order" carrier product (published but hidden from shop)
+
+![WooCommerce setup settings](../images/settings-woocommerce-setup.png)
 
 ### Verify Carrier Product
 

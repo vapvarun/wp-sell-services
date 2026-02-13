@@ -78,8 +78,6 @@ Showcase your work with portfolio items stored in `wpss_portfolio_items` table.
 2. Click **Add Portfolio Item**
 3. Fill in the form
 
-![Add portfolio item form](../images/vendor-add-portfolio-item.png)
-
 ### Portfolio Item Fields
 
 | Field | Database Column | Required | Notes |
@@ -186,6 +184,8 @@ Your profile summary appears on each service:
 
 ### Vendor Profile Page
 
+![Public vendor profile page](../images/frontend-vendor-profile-full.png)
+
 Complete profile view includes:
 - Cover image and avatar
 - Display name and tagline
@@ -196,6 +196,14 @@ Complete profile view includes:
 - All services
 - Portfolio gallery
 - Reviews
+
+![Vendor profile reviews section](../images/frontend-vendor-profile-reviews.png)
+
+### Service Page Sidebar
+
+Your vendor information is also displayed in the sidebar on individual service pages, giving buyers quick access to your profile details and ratings.
+
+![Vendor sidebar on service page](../images/frontend-vendor-sidebar.png)
 
 ## Tips for a Strong Profile
 

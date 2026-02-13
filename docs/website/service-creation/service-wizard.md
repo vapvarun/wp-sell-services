@@ -14,6 +14,8 @@ All steps can be saved as draft and resumed later. The wizard uses Alpine.js for
 
 ## Accessing the Wizard
 
+![Admin new service editor](../images/admin-service-add-new.png)
+
 **Shortcode:**
 ```
 [wpss_service_wizard]              - Create new service
@@ -68,6 +70,8 @@ Optional subcategory selection. Appears only after selecting a primary category.
 - Not required for publishing
 
 ### Service Description
+
+![Service description editor in the admin](../images/admin-service-description.png)
 
 Detailed description of what you offer.
 
@@ -379,7 +383,9 @@ Stored in `_wpss_faqs` post meta.
 
 ## Step 6: Review
 
-Final review step before publishing.
+Final review step before publishing. Here is how a completed service looks on the frontend:
+
+![Frontend service detail page showing the end result](../images/frontend-service-detail-page.png)
 
 ### Review Display
 

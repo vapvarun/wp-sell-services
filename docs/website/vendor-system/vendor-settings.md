@@ -254,6 +254,8 @@ Admins can set per-vendor commission rates:
 
 Learn more: [Commission System](../earnings-wallet/commission-system-wpss.md)
 
+![Full vendor settings panel](../images/settings-vendor.png)
+
 ## Best Practices
 
 ### For Open Registration

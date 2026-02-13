@@ -6,6 +6,8 @@ Configure order policies, delivery deadlines, revisions, requirements timeout, a
 
 ## Order Settings Overview
 
+![Order settings tab in WP Sell Services settings panel](../images/settings-orders-tab.png)
+
 All order settings are stored in WordPress option: `wpss_orders`
 
 Access in Settings.php lines 695-801.

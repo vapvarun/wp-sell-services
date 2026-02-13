@@ -12,7 +12,9 @@ WP Sell Services requires three core pages to function properly:
 | Dashboard | Unified buyer and vendor dashboard | `[wpss_dashboard]` |
 | Become a Vendor | Vendor registration | `[wpss_vendor_registration]` |
 
-![Pages Setup Tab](../images/settings-pages-tab.png)
+![Pages settings tab](../images/settings-pages-tab.png)
+
+![Full pages settings](../images/settings-pages.png)
 
 ## Auto-Create Pages
 

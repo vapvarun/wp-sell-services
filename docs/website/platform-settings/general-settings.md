@@ -18,7 +18,9 @@ Set a custom name that appears throughout your marketplace:
 
 **Example:** "Creative Hub Marketplace" or "Expert Services Network"
 
-![General Settings Tab](../images/settings-general-tab.png)
+![General settings tab](../images/settings-general-tab.png)
+
+![Full general settings](../images/settings-general.png)
 
 **Where Platform Name Appears:**
 - Email subject lines and headers

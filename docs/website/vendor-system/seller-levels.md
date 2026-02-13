@@ -11,8 +11,6 @@ The marketplace features four distinct seller levels representing different stag
 3. **Level 2 Seller** (`level_2`) - Consistent excellence
 4. **Top Rated Seller** (`top_rated`) - Elite marketplace performers
 
-![Seller Level Badges](../images/seller-level-badges.png)
-
 ## Level Criteria
 
 ### New Seller

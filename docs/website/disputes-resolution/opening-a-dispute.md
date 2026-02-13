@@ -32,7 +32,6 @@ The system provides 6 predefined dispute reasons:
 
 **Note:** These are the ONLY 6 reason options available in the code. Previous documentation listed additional reasons that don't exist.
 
-![Dispute reason selection](../images/admin-dispute-reasons.png)
 
 ### When to Dispute
 
@@ -178,7 +177,7 @@ I need the missing features implemented or a refund for incomplete work.
 Vendor sucks. Work is terrible. Want refund.
 ```
 
-![Dispute form](../images/frontend-dispute-form.png)
+![Dispute status on order](../images/frontend-dispute-confirmation.png)
 
 ### Step 3: Add Evidence (Optional but Recommended)
 
@@ -403,7 +402,6 @@ When a dispute reaches admin review, they can:
 
 **Note:** Previous docs listed "revision" as a resolution type. It exists in the Model but not in the Service. The actual resolutions used are these 5.
 
-![Admin dispute resolution](../images/admin-dispute-resolution.png)
 
 ---
 

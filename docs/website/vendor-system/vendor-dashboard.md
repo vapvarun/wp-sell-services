@@ -51,8 +51,6 @@ The sidebar shows your:
 
 Click any section to switch views. The active section is highlighted.
 
-![Dashboard navigation](../images/dashboard-navigation.png)
-
 ## Orders Section (Buyer View)
 
 View services you've purchased:
@@ -96,7 +94,7 @@ Manage orders received from buyers:
 - Message buyer
 - Request extension
 
-![Vendor sales management](../images/vendor-sales-list.png)
+![Vendor sales orders list](../images/vendor-orders-list.png)
 
 ## Services Section (Vendor View)
 

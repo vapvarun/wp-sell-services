@@ -307,6 +307,8 @@ Upgrading from Free to Pro preserves all existing data. No migration is required
 3. Enter your license key in **WP Sell Services → Settings → License**
 4. Pro features become available immediately
 
+![Pro license page](../images/admin-pro-license.png)
+
 The Pro plugin extends the free plugin via WordPress hooks. Both plugins remain active simultaneously -- Pro does not replace Free.
 
 ---

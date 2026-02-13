@@ -101,6 +101,8 @@ Revise → status = 'revision_requested'
 
 ### Receiving Delivery
 
+![Delivery review interface where buyer can accept, revise, or dispute](../images/frontend-delivery-review.png)
+
 When vendor submits:
 1. Buyer receives email notification
 2. Order status → `pending_approval`
@@ -112,6 +114,8 @@ When vendor submits:
 - Order status → `completed`
 - Vendor receives payment
 - Delivery status → `accepted`
+
+![Order confirmation screen after accepting delivery](../images/frontend-order-confirmation.png)
 
 **2. Request Revision**
 - Click "Request Revision"
@@ -216,6 +220,8 @@ When `can_request_revision()` returns `false`:
 - Order ID verified before download
 - No public URLs
 - Login required
+
+![Admin view of a completed order with delivery details](../images/admin-order-completed.png)
 
 ### File Storage
 

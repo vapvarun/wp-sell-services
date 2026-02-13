@@ -12,6 +12,10 @@ The email system uses WordPress's native `wp_mail()` function to deliver notific
 2. Click the **Emails** tab
 3. Configure notification settings
 
+![Email settings tab](../images/settings-emails-tab.png)
+
+![Full email settings](../images/settings-emails.png)
+
 ## Email Notification Settings
 
 ### Notification Toggles

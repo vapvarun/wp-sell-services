@@ -12,6 +12,8 @@ open → pending_review → (escalated) → resolved → closed
 
 Each stage has specific actions and timeframes.
 
+![Dispute detail with messages](../images/admin-dispute-detail-view.png)
+
 ## Dispute Statuses
 
 WP Sell Services uses 5 dispute statuses:

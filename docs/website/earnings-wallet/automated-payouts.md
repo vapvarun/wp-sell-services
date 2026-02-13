@@ -47,7 +47,6 @@ Enable and configure automated payouts for your marketplace.
 4. Configure settings (see below)
 5. Click **Save Payout Settings**
 
-![Auto-withdrawal settings](../images/settings-auto-withdrawal.png)
 
 ### Threshold Amount
 

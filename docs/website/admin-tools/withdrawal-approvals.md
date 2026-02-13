@@ -10,6 +10,8 @@ The withdrawal approval system allows administrators to review vendor withdrawal
 
 **Access Required:** `manage_options` capability (administrators only)
 
+![Withdrawals management](../images/admin-withdrawals-dashboard.png)
+
 ## Accessing the Withdrawals Page
 
 1. Log in to WordPress admin

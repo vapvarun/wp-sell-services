@@ -18,6 +18,8 @@ WP Sell Services uses 5 request statuses:
 
 Your central hub for managing all buyer requests.
 
+![Buyer's request management](../images/frontend-buyer-requests-overview.png)
+
 ### Accessing the Dashboard
 
 1. Log in to your account
@@ -36,6 +38,8 @@ Each request displays:
 - **Delivery Days** - Target completion timeframe
 - **Expiration** - When request expires
 - **Category** - Service category assigned
+
+![My requests with proposal count](../images/frontend-my-requests-dashboard.png)
 
 ## Request Metadata
 

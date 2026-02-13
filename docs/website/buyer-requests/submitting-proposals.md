@@ -25,7 +25,6 @@ Dashboard → Buyer Requests
 - Search by keywords
 - Sort by budget/date
 
-![Buyer requests list](../images/frontend-buyer-requests-browse.png)
 
 ### Request Details
 
@@ -202,7 +201,6 @@ Your proposal will have one of these statuses:
 
 **Important:** Previous documentation listed 7+ statuses including "Submitted", "Under Review", and "Expired". Only these 4 exist in the code.
 
-![Proposal status indicator](../images/frontend-proposal-status.png)
 
 ---
 
@@ -401,7 +399,6 @@ Once accepted:
 - New to platform
 - Want testimonials
 
-![Proposal pricing strategy](../images/frontend-proposal-pricing.png)
 
 ---
 

@@ -31,7 +31,7 @@ WP Sell Services supports 10 major global currencies:
 2. Select **Currency** from the dropdown
 3. Click **Save Changes**
 
-![Currency setting](../images/settings-currency.png)
+![Commission and payment settings](../images/settings-commission.png)
 
 The selected currency applies to all service prices, order totals, vendor earnings, and withdrawal amounts throughout your marketplace.
 
@@ -71,7 +71,6 @@ Tax settings are configured in **Settings â†’ Payments** tab under the **Tax Set
    - **Vendor**: Vendor handles own tax obligations
 8. Click **Save Tax Settings**
 
-![Tax settings](../images/settings-tax.png)
 
 ### Tax Calculation Examples
 
@@ -131,7 +130,6 @@ WP Sell Services supports multiple e-commerce platforms:
    - Standalone Mode **[PRO]**
 4. Click **Save Changes**
 
-![E-commerce platform selector](../images/settings-ecommerce-platform.png)
 
 **Auto-detect** automatically uses the first active e-commerce plugin found. If WooCommerce is installed and active, it will be used by default.
 
@@ -160,8 +158,6 @@ Platform commission is separate from tax settings and configured in **Settings â
    - Enable to allow custom commission per vendor
    - Disable to use global rate for all vendors
 5. Click **Save Commission Settings**
-
-![Commission settings](../images/settings-commission.png)
 
 ### Commission Calculation
 

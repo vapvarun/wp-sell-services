@@ -79,7 +79,6 @@ See [Standalone Mode](standalone-mode.md) for full setup.
    - **Description:** "Pay securely with credit or debit card"
 6. Click **Save Changes**
 
-![Stripe settings](../images/pro-stripe-settings.png)
 
 ## Webhook Configuration
 
@@ -107,7 +106,6 @@ https://yoursite.com/wp-json/wpss/v1/stripe/webhook
 7. Paste in **WP Sell Services → Settings → Payments → Stripe → Webhook Secret**
 8. Click **Save Changes**
 
-![Stripe webhook setup](../images/pro-stripe-webhook.png)
 
 ## Testing Stripe
 

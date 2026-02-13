@@ -11,6 +11,8 @@ Service add-ons (also called extras) let buyers customize orders with additional
 
 ## Add-on Field Types
 
+![Admin addons metabox showing the list of service add-ons](../images/admin-service-addons.png)
+
 Four field types are supported by `ServiceAddonService`:
 
 ### 1. Checkbox
@@ -265,6 +267,8 @@ $applies = $addon_service->addon_applies_to_package( $addon, $package_id );
 
 ## Creating Add-ons
 
+![Creating an add-on with title, description, price, and field type](../images/admin-addon-create.png)
+
 ### Via Wizard (Simplified)
 
 The service wizard exposes basic fields:
@@ -353,6 +357,14 @@ if ( ! $validation['valid'] ) {
 - **Quantity limits:** Enforce min/max for quantity type
 - **Dropdown options:** Selected value must exist in options array
 - **Text length:** Maximum 500 characters for text type
+
+## Frontend Add-on Display
+
+Buyers interact with add-ons during the order process on the frontend:
+
+![Frontend addon selection interface where buyers choose extras](../images/frontend-addon-selection.png)
+
+![Frontend addons interface showing available service extras](../images/frontend-addons-interface.png)
 
 ## Add-on Templates
 
