@@ -487,28 +487,34 @@
       "order": 16,
       "docs": [
         {
-          "title": "REST API Reference (24+ Controllers)",
-          "slug": "rest-api-wpss",
-          "file": "developer-guide/rest-api.md",
+          "title": "REST API Overview",
+          "slug": "rest-api-overview-wpss",
+          "file": "developer-guide/rest-api-overview.md",
           "order": 1
+        },
+        {
+          "title": "REST API Controllers Reference",
+          "slug": "rest-api-controllers-wpss",
+          "file": "developer-guide/rest-api-controllers.md",
+          "order": 2
         },
         {
           "title": "Hooks & Filters Reference",
           "slug": "hooks-filters-wpss",
           "file": "developer-guide/hooks-filters.md",
-          "order": 2
+          "order": 3
         },
         {
           "title": "Building Custom Integrations",
           "slug": "custom-integrations-wpss",
           "file": "developer-guide/custom-integrations.md",
-          "order": 3
+          "order": 4
         },
         {
           "title": "Theme Integration Guide",
           "slug": "theme-integration-wpss",
           "file": "developer-guide/theme-integration.md",
-          "order": 4
+          "order": 5
         }
       ]
     },
