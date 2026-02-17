@@ -800,7 +800,17 @@ final class Plugin {
 		// Register Test Gateway (only in debug mode).
 		$this->maybe_register_test_gateway();
 
-		// Register Offline Gateway (always available in free).
+		// Register Stripe Gateway.
+		$stripe_gateway = new \WPSellServices\Integrations\Stripe\StripeGateway();
+		$stripe_gateway->init();
+		$this->payment_gateways['stripe'] = $stripe_gateway;
+
+		// Register PayPal Gateway.
+		$paypal_gateway = new \WPSellServices\Integrations\PayPal\PayPalGateway();
+		$paypal_gateway->init();
+		$this->payment_gateways['paypal'] = $paypal_gateway;
+
+		// Register Offline Gateway (always available).
 		$offline_gateway = new \WPSellServices\Integrations\Gateways\OfflineGateway();
 		$offline_gateway->init();
 		$this->payment_gateways['offline'] = $offline_gateway;
@@ -998,6 +1008,18 @@ final class Plugin {
 	 */
 	public function get_payment_gateways(): array {
 		return $this->payment_gateways;
+	}
+
+	/**
+	 * Get a single payment gateway by ID.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string $gateway_id Gateway identifier.
+	 * @return \WPSellServices\Integrations\Contracts\PaymentGatewayInterface|null
+	 */
+	public function get_payment_gateway( string $gateway_id ) {
+		return $this->payment_gateways[ $gateway_id ] ?? null;
 	}
 
 	/**

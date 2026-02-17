@@ -39,13 +39,14 @@ class Settings {
 	 * Constructor.
 	 */
 	public function __construct() {
-		// Define tabs - consolidated for better UX (7 core tabs).
+		// Define tabs - consolidated for better UX.
 		$this->tabs = array(
 			// Setup.
 			'general'  => __( 'General', 'wp-sell-services' ),
 			'pages'    => __( 'Pages', 'wp-sell-services' ),
 			// Business.
 			'payments' => __( 'Payments', 'wp-sell-services' ), // Commission + Tax + Payouts merged.
+			'gateways' => __( 'Gateways', 'wp-sell-services' ),
 			'vendor'   => __( 'Vendor', 'wp-sell-services' ),
 			// Operations.
 			'orders'   => __( 'Orders', 'wp-sell-services' ),
@@ -57,9 +58,9 @@ class Settings {
 		// Define tab groups for visual separators.
 		$this->tab_groups = array(
 			'setup'      => array( 'general', 'pages' ),
-			'business'   => array( 'payments', 'vendor' ),
+			'business'   => array( 'payments', 'gateways', 'vendor' ),
 			'operations' => array( 'orders', 'emails' ),
-			'pro'        => array(), // Pro tabs added via filter (gateways, etc.).
+			'pro'        => array(), // Pro tabs added via filter.
 			'system'     => array( 'advanced' ),
 		);
 	}
@@ -77,6 +78,7 @@ class Settings {
 			'general',
 			'pages',
 			'payments',
+			'gateways',
 			'vendor',
 			'orders',
 			'emails',
@@ -974,7 +976,7 @@ class Settings {
 
 			<?php
 			// Check if this is a Pro/extension tab (not a core tab).
-			$core_tabs = array( 'general', 'payments', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
+			$core_tabs = array( 'general', 'payments', 'gateways', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
 
 			if ( ! in_array( $active_tab, $core_tabs, true ) ) {
 				/**
@@ -989,6 +991,8 @@ class Settings {
 				// Tabs with multiple option groups render their own forms.
 				if ( 'payments' === $active_tab ) {
 					$this->render_payments_tab();
+				} elseif ( 'gateways' === $active_tab ) {
+					$this->render_gateways_tab();
 				} elseif ( 'advanced' === $active_tab ) {
 					$this->render_advanced_tab();
 				} else {
@@ -1234,6 +1238,189 @@ class Settings {
 			});
 		});
 		</script>
+		<?php
+	}
+
+	/**
+	 * Render the Gateways tab with accordion sections.
+	 *
+	 * Consolidates Stripe, PayPal, and Offline payment gateway settings.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private function render_gateways_tab(): void {
+		?>
+		<style>
+			.wpss-gateways-accordion {
+				margin-top: 20px;
+			}
+			.wpss-accordion-section {
+				border: 1px solid #e5e5e5;
+				border-radius: 4px;
+				margin-bottom: 10px;
+				background: #fff;
+			}
+			.wpss-accordion-header {
+				display: flex;
+				align-items: center;
+				padding: 15px 20px;
+				cursor: pointer;
+				background: #f9f9f9;
+				border-bottom: 1px solid transparent;
+				transition: background-color 0.2s;
+			}
+			.wpss-accordion-header:hover {
+				background: #f0f0f0;
+			}
+			.wpss-accordion-section.open .wpss-accordion-header {
+				border-bottom-color: #e5e5e5;
+			}
+			.wpss-accordion-icon {
+				margin-right: 10px;
+				transition: transform 0.2s;
+			}
+			.wpss-accordion-section.open .wpss-accordion-icon {
+				transform: rotate(90deg);
+			}
+			.wpss-accordion-header h3 {
+				margin: 0;
+				flex: 1;
+				font-size: 14px;
+			}
+			.wpss-gateway-status {
+				font-size: 12px;
+				padding: 3px 10px;
+				border-radius: 3px;
+			}
+			.wpss-gateway-enabled {
+				background: #d4edda;
+				color: #155724;
+			}
+			.wpss-gateway-disabled {
+				background: #f8d7da;
+				color: #721c24;
+			}
+			.wpss-accordion-content {
+				display: none;
+				padding: 20px;
+			}
+			.wpss-accordion-section.open .wpss-accordion-content {
+				display: block;
+			}
+			.wpss-accordion-content .form-table {
+				margin-top: 10px;
+			}
+		</style>
+
+		<div class="wpss-settings-section">
+			<h2><?php esc_html_e( 'Payment Gateways', 'wp-sell-services' ); ?></h2>
+			<p class="description">
+				<?php esc_html_e( 'Configure payment gateways for your marketplace checkout.', 'wp-sell-services' ); ?>
+			</p>
+
+			<div class="wpss-gateways-accordion">
+				<?php
+				// Test Gateway section (only in debug mode).
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					$this->render_gateway_accordion_section(
+						'test',
+						__( 'Test Gateway', 'wp-sell-services' ) . ' <span style="background:#fff3cd;color:#856404;padding:2px 6px;border-radius:3px;font-size:11px;margin-left:8px;">' . esc_html__( 'Dev Only', 'wp-sell-services' ) . '</span>',
+						__( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
+						'wpss_test_gateway_settings'
+					);
+				}
+
+				// Stripe section.
+				$this->render_gateway_accordion_section(
+					'stripe',
+					__( 'Stripe', 'wp-sell-services' ),
+					__( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
+					'wpss_stripe_settings'
+				);
+
+				// PayPal section.
+				$this->render_gateway_accordion_section(
+					'paypal',
+					__( 'PayPal', 'wp-sell-services' ),
+					__( 'Accept payments via PayPal.', 'wp-sell-services' ),
+					'wpss_paypal_settings'
+				);
+
+				/**
+				 * Fires after core gateways, before Offline.
+				 *
+				 * Pro uses this to add Razorpay and other gateways.
+				 *
+				 * @since 1.1.0
+				 */
+				do_action( 'wpss_gateway_accordion_sections', $this );
+
+				// Offline section.
+				$this->render_gateway_accordion_section(
+					'offline',
+					__( 'Offline Payment', 'wp-sell-services' ),
+					__( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
+					'wpss_offline_settings'
+				);
+				?>
+			</div>
+		</div>
+
+		<script>
+		jQuery(function($) {
+			$('.wpss-accordion-header').on('click', function() {
+				var $section = $(this).closest('.wpss-accordion-section');
+				$section.toggleClass('open');
+			});
+		});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Render a single gateway accordion section.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string $gateway_id   Gateway identifier.
+	 * @param string $title        Gateway title (may contain HTML).
+	 * @param string $description  Gateway description.
+	 * @param string $option_group Option group for settings_fields().
+	 * @return void
+	 */
+	public function render_gateway_accordion_section( string $gateway_id, string $title, string $description, string $option_group ): void {
+		$plugin  = \WPSellServices\Core\Plugin::get_instance();
+		$gateway = $plugin->get_payment_gateway( $gateway_id );
+		$enabled = $gateway && $gateway->is_enabled();
+
+		$status_class = $enabled ? 'wpss-gateway-enabled' : 'wpss-gateway-disabled';
+		$status_text  = $enabled ? __( 'Enabled', 'wp-sell-services' ) : __( 'Disabled', 'wp-sell-services' );
+		?>
+		<div class="wpss-accordion-section" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
+			<div class="wpss-accordion-header">
+				<span class="wpss-accordion-icon dashicons dashicons-arrow-right"></span>
+				<h3><?php echo wp_kses_post( $title ); ?></h3>
+				<span class="wpss-gateway-status <?php echo esc_attr( $status_class ); ?>">
+					<?php echo esc_html( $status_text ); ?>
+				</span>
+			</div>
+			<div class="wpss-accordion-content">
+				<p class="description"><?php echo esc_html( $description ); ?></p>
+				<form method="post" action="options.php">
+					<?php
+					settings_fields( $option_group );
+					/**
+					 * Hook to render gateway-specific settings fields.
+					 *
+					 * @since 1.0.0
+					 */
+					do_action( "wpss_gateway_settings_{$gateway_id}" );
+					submit_button( __( 'Save Changes', 'wp-sell-services' ) );
+					?>
+				</form>
+			</div>
+		</div>
 		<?php
 	}
 
