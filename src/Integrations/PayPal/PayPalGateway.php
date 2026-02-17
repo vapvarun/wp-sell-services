@@ -909,15 +909,20 @@ class PayPalGateway implements PaymentGatewayInterface {
 				<li><?php esc_html_e( 'After creating the webhook, copy the "Webhook ID" and paste it in the Webhook ID field above.', 'wp-sell-services' ); ?></li>
 			</ol>
 
-			<p><strong><?php esc_html_e( 'Step 3: Required App Permissions', 'wp-sell-services' ); ?></strong></p>
-			<p style="margin-bottom: 0; margin-left: 20px;">
-				<?php esc_html_e( 'In your REST API app settings, ensure these features are enabled:', 'wp-sell-services' ); ?>
+			<p><strong><?php esc_html_e( 'Step 3: Required App Features & Permissions', 'wp-sell-services' ); ?></strong></p>
+			<p style="margin-bottom: 5px; margin-left: 20px;">
+				<?php esc_html_e( 'In your REST API app settings under "App feature options", ensure these are enabled:', 'wp-sell-services' ); ?>
 			</p>
-			<ul style="margin: 5px 0 0 40px; list-style: disc;">
-				<li><?php esc_html_e( 'Accept payments (Orders v2, Payments)', 'wp-sell-services' ); ?></li>
-				<li><?php esc_html_e( 'Issue refunds (Payments)', 'wp-sell-services' ); ?></li>
-				<li><?php esc_html_e( 'Transaction search (for webhook verification)', 'wp-sell-services' ); ?></li>
+			<ul style="margin: 0 0 0 40px; list-style: disc;">
+				<li><strong><?php esc_html_e( 'Accept payments', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Creates checkout orders and captures payments (Orders v2 API)', 'wp-sell-services' ); ?></li>
+				<li><strong><?php esc_html_e( 'Auth & Capture', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Authorizes and captures payments (Payments v2 API)', 'wp-sell-services' ); ?></li>
+				<li><strong><?php esc_html_e( 'Refunds', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Issues full or partial refunds on captured payments', 'wp-sell-services' ); ?></li>
+				<li><strong><?php esc_html_e( 'Transaction search', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Retrieves capture details for partial refund calculations', 'wp-sell-services' ); ?></li>
+				<li><strong><?php esc_html_e( 'Webhooks', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Verifies webhook signatures and receives payment notifications', 'wp-sell-services' ); ?></li>
 			</ul>
+			<p style="margin: 10px 0 0 20px; color: #646970;">
+				<?php esc_html_e( 'These features are configured in the PayPal Developer Dashboard under your REST API app → App feature options. Most are enabled by default for new apps.', 'wp-sell-services' ); ?>
+			</p>
 		</div>
 		<?php
 	}

@@ -857,10 +857,19 @@ class StripeGateway implements PaymentGatewayInterface {
 				<li><?php esc_html_e( 'After creating the endpoint, copy the "Signing secret" (starts with whsec_) and paste it in the Webhook Secret field above.', 'wp-sell-services' ); ?></li>
 			</ol>
 
-			<p style="margin-bottom: 0;">
-				<strong><?php esc_html_e( 'Required Stripe permissions:', 'wp-sell-services' ); ?></strong>
-				<?php esc_html_e( 'Your API key needs access to Payment Intents (read/write), Charges (read), and Refunds (read/write).', 'wp-sell-services' ); ?>
-				<?php esc_html_e( 'Standard (unrestricted) keys have all required permissions by default.', 'wp-sell-services' ); ?>
+			<p><strong><?php esc_html_e( 'Required Permissions (for Restricted API Keys):', 'wp-sell-services' ); ?></strong></p>
+			<p style="margin-left: 20px; margin-bottom: 5px;">
+				<?php esc_html_e( 'If you use a restricted API key instead of a standard key, enable these permissions:', 'wp-sell-services' ); ?>
+			</p>
+			<ul style="margin: 0 0 0 40px; list-style: disc;">
+				<li><strong>PaymentIntents</strong> — <?php esc_html_e( 'Read & Write (create and retrieve payment intents)', 'wp-sell-services' ); ?></li>
+				<li><strong>PaymentMethods</strong> — <?php esc_html_e( 'Read (required for automatic payment methods)', 'wp-sell-services' ); ?></li>
+				<li><strong>Refunds</strong> — <?php esc_html_e( 'Write (create refunds for disputed or cancelled orders)', 'wp-sell-services' ); ?></li>
+				<li><strong>Charges</strong> — <?php esc_html_e( 'Read (used by charge.refunded webhook event)', 'wp-sell-services' ); ?></li>
+				<li><strong>Events</strong> — <?php esc_html_e( 'Read (webhook event parsing)', 'wp-sell-services' ); ?></li>
+			</ul>
+			<p style="margin: 10px 0 0 20px; color: #646970;">
+				<?php esc_html_e( 'Standard (unrestricted) API keys have all required permissions by default. Restricted keys are recommended for production for better security.', 'wp-sell-services' ); ?>
 			</p>
 		</div>
 		<?php
