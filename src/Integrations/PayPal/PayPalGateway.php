@@ -909,19 +909,45 @@ class PayPalGateway implements PaymentGatewayInterface {
 				<li><?php esc_html_e( 'After creating the webhook, copy the "Webhook ID" and paste it in the Webhook ID field above.', 'wp-sell-services' ); ?></li>
 			</ol>
 
-			<p><strong><?php esc_html_e( 'Step 3: Required App Features & Permissions', 'wp-sell-services' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Step 3: Required API Scopes', 'wp-sell-services' ); ?></strong></p>
 			<p style="margin-bottom: 5px; margin-left: 20px;">
-				<?php esc_html_e( 'In your REST API app settings under "App feature options", ensure these are enabled:', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Your REST API app needs these scopes enabled. Configure them in the PayPal Developer Dashboard under your app settings:', 'wp-sell-services' ); ?>
 			</p>
-			<ul style="margin: 0 0 0 40px; list-style: disc;">
-				<li><strong><?php esc_html_e( 'Accept payments', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Creates checkout orders and captures payments (Orders v2 API)', 'wp-sell-services' ); ?></li>
-				<li><strong><?php esc_html_e( 'Auth & Capture', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Authorizes and captures payments (Payments v2 API)', 'wp-sell-services' ); ?></li>
-				<li><strong><?php esc_html_e( 'Refunds', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Issues full or partial refunds on captured payments', 'wp-sell-services' ); ?></li>
-				<li><strong><?php esc_html_e( 'Transaction search', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Retrieves capture details for partial refund calculations', 'wp-sell-services' ); ?></li>
-				<li><strong><?php esc_html_e( 'Webhooks', 'wp-sell-services' ); ?></strong> — <?php esc_html_e( 'Verifies webhook signatures and receives payment notifications', 'wp-sell-services' ); ?></li>
-			</ul>
+			<table style="margin: 5px 0 0 20px; border-collapse: collapse; width: auto;">
+				<thead>
+					<tr>
+						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Scope', 'wp-sell-services' ); ?></th>
+						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Used For', 'wp-sell-services' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><code style="font-size: 12px;">payments/payment</code></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Create checkout orders (Orders v2 API)', 'wp-sell-services' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><code style="font-size: 12px;">payments/payment/authcapture</code></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Capture approved payments', 'wp-sell-services' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><code style="font-size: 12px;">payments/refund</code></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Issue full or partial refunds', 'wp-sell-services' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><code style="font-size: 12px;">payments</code></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Read capture details for refund calculations', 'wp-sell-services' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><code style="font-size: 12px;">webhooks</code></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Verify webhook signatures', 'wp-sell-services' ); ?></td>
+					</tr>
+				</tbody>
+			</table>
 			<p style="margin: 10px 0 0 20px; color: #646970;">
-				<?php esc_html_e( 'These features are configured in the PayPal Developer Dashboard under your REST API app → App feature options. Most are enabled by default for new apps.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Full scope URIs are prefixed with https://uri.paypal.com/services/. Most scopes are enabled by default for new apps.', 'wp-sell-services' ); ?>
+			</p>
+			<p style="margin: 5px 0 0 20px;">
+				<a href="https://docs.paypal.ai/developer/how-to/apps-scopes-credentials" target="_blank" rel="noopener"><?php esc_html_e( 'PayPal documentation: Apps & scopes &rarr;', 'wp-sell-services' ); ?></a>
 			</p>
 		</div>
 		<?php

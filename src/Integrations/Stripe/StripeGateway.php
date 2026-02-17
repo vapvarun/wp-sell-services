@@ -857,19 +857,45 @@ class StripeGateway implements PaymentGatewayInterface {
 				<li><?php esc_html_e( 'After creating the endpoint, copy the "Signing secret" (starts with whsec_) and paste it in the Webhook Secret field above.', 'wp-sell-services' ); ?></li>
 			</ol>
 
-			<p><strong><?php esc_html_e( 'Required Permissions (for Restricted API Keys):', 'wp-sell-services' ); ?></strong></p>
+			<p><strong><?php esc_html_e( 'Step 3: Required Permissions (for Restricted API Keys)', 'wp-sell-services' ); ?></strong></p>
 			<p style="margin-left: 20px; margin-bottom: 5px;">
-				<?php esc_html_e( 'If you use a restricted API key instead of a standard key, enable these permissions:', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'If you use a restricted API key instead of a standard (unrestricted) key, enable these Core resource permissions in your Stripe Dashboard:', 'wp-sell-services' ); ?>
 			</p>
-			<ul style="margin: 0 0 0 40px; list-style: disc;">
-				<li><strong>PaymentIntents</strong> — <?php esc_html_e( 'Read & Write (create and retrieve payment intents)', 'wp-sell-services' ); ?></li>
-				<li><strong>PaymentMethods</strong> — <?php esc_html_e( 'Read (required for automatic payment methods)', 'wp-sell-services' ); ?></li>
-				<li><strong>Refunds</strong> — <?php esc_html_e( 'Write (create refunds for disputed or cancelled orders)', 'wp-sell-services' ); ?></li>
-				<li><strong>Charges</strong> — <?php esc_html_e( 'Read (used by charge.refunded webhook event)', 'wp-sell-services' ); ?></li>
-				<li><strong>Events</strong> — <?php esc_html_e( 'Read (webhook event parsing)', 'wp-sell-services' ); ?></li>
-			</ul>
+			<table style="margin: 5px 0 0 20px; border-collapse: collapse; width: auto;">
+				<thead>
+					<tr>
+						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Resource', 'wp-sell-services' ); ?></th>
+						<th style="text-align: center; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Read', 'wp-sell-services' ); ?></th>
+						<th style="text-align: center; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Write', 'wp-sell-services' ); ?></th>
+						<th style="text-align: left; padding: 6px 12px; border: 1px solid #ddd; background: #f6f7f7;"><?php esc_html_e( 'Used For', 'wp-sell-services' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><strong><?php esc_html_e( 'Payment Intents', 'wp-sell-services' ); ?></strong></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Create and retrieve payment intents', 'wp-sell-services' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><strong><?php esc_html_e( 'Charges and Refunds', 'wp-sell-services' ); ?></strong></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Process charge webhooks and create refunds', 'wp-sell-services' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><strong><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></strong></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;">&#10003;</td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd; text-align: center;"></td>
+						<td style="padding: 6px 12px; border: 1px solid #ddd;"><?php esc_html_e( 'Required by automatic payment methods', 'wp-sell-services' ); ?></td>
+					</tr>
+				</tbody>
+			</table>
 			<p style="margin: 10px 0 0 20px; color: #646970;">
-				<?php esc_html_e( 'Standard (unrestricted) API keys have all required permissions by default. Restricted keys are recommended for production for better security.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Standard (unrestricted) API keys include all permissions by default. Webhook signature verification uses the Signing Secret — no additional API key permission is needed.', 'wp-sell-services' ); ?>
+			</p>
+			<p style="margin: 5px 0 0 20px;">
+				<a href="https://docs.stripe.com/keys#limit-access" target="_blank" rel="noopener"><?php esc_html_e( 'Stripe documentation: Restricted keys &rarr;', 'wp-sell-services' ); ?></a>
 			</p>
 		</div>
 		<?php
