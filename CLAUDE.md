@@ -224,9 +224,10 @@ add_action('wpss_loaded', function($plugin) {
 |------------------|-----------------|
 | Core marketplace, CPTs, database | WooCommerce adapter |
 | Standalone adapter + Offline gateway | EDD/Fluent/SureCart adapters |
-| Base admin settings UI | Direct payment gateways (Stripe, PayPal, Razorpay) |
-| Frontend dashboard framework | Cloud storage (S3, GCS) |
-| Order workflow, conversations | Advanced analytics, Wallet integrations |
+| Stripe + PayPal gateways, Gateways tab | Razorpay gateway |
+| Base admin settings UI | Cloud storage (S3, GCS) |
+| Frontend dashboard framework | Advanced analytics, Wallet integrations |
+| Order workflow, conversations | |
 
 **Rules:**
 1. Free plugin provides hooks - Pro extends via those hooks
