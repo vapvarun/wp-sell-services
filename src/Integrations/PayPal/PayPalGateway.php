@@ -882,11 +882,43 @@ class PayPalGateway implements PaymentGatewayInterface {
 			<?php endforeach; ?>
 		</table>
 
-		<h4><?php esc_html_e( 'Webhook URL', 'wp-sell-services' ); ?></h4>
-		<p class="description">
-			<?php esc_html_e( 'Add this URL to your PayPal webhook settings:', 'wp-sell-services' ); ?>
-		</p>
-		<code><?php echo esc_html( home_url( '/wpss-payment/paypal/callback/' ) ); ?></code>
+		<div class="wpss-gateway-setup-guide" style="margin-top: 20px; padding: 15px; background: #f0f6fc; border: 1px solid #c8d8e6; border-radius: 4px;">
+			<h4 style="margin-top: 0;"><?php esc_html_e( 'PayPal Setup Guide', 'wp-sell-services' ); ?></h4>
+
+			<p><strong><?php esc_html_e( 'Step 1: Create a REST API App', 'wp-sell-services' ); ?></strong></p>
+			<ol style="margin-left: 20px;">
+				<li><?php esc_html_e( 'Go to PayPal Developer Dashboard → My Apps & Credentials', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Click "Create App" under REST API apps', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Copy the Client ID and Secret from the app details', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'For testing, switch to "Sandbox" mode to get sandbox credentials', 'wp-sell-services' ); ?></li>
+			</ol>
+
+			<p><strong><?php esc_html_e( 'Step 2: Configure Webhook', 'wp-sell-services' ); ?></strong></p>
+			<ol style="margin-left: 20px;">
+				<li><?php esc_html_e( 'In your REST API app, scroll to "Webhooks" and click "Add Webhook"', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Enter this URL:', 'wp-sell-services' ); ?>
+					<br><code style="display: inline-block; margin: 5px 0; padding: 4px 8px; background: #fff;"><?php echo esc_html( home_url( '/wpss-payment/paypal/callback/' ) ); ?></code>
+				</li>
+				<li><?php esc_html_e( 'Select the following events to subscribe:', 'wp-sell-services' ); ?>
+					<ul style="margin: 5px 0 5px 20px; list-style: disc;">
+						<li><code>CHECKOUT.ORDER.APPROVED</code></li>
+						<li><code>PAYMENT.CAPTURE.COMPLETED</code></li>
+						<li><code>PAYMENT.CAPTURE.REFUNDED</code></li>
+					</ul>
+				</li>
+				<li><?php esc_html_e( 'After creating the webhook, copy the "Webhook ID" and paste it in the Webhook ID field above.', 'wp-sell-services' ); ?></li>
+			</ol>
+
+			<p><strong><?php esc_html_e( 'Step 3: Required App Permissions', 'wp-sell-services' ); ?></strong></p>
+			<p style="margin-bottom: 0; margin-left: 20px;">
+				<?php esc_html_e( 'In your REST API app settings, ensure these features are enabled:', 'wp-sell-services' ); ?>
+			</p>
+			<ul style="margin: 5px 0 0 40px; list-style: disc;">
+				<li><?php esc_html_e( 'Accept payments (Orders v2, Payments)', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Issue refunds (Payments)', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Transaction search (for webhook verification)', 'wp-sell-services' ); ?></li>
+			</ul>
+		</div>
 		<?php
 	}
 

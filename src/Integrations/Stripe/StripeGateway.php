@@ -831,11 +831,38 @@ class StripeGateway implements PaymentGatewayInterface {
 			<?php endforeach; ?>
 		</table>
 
-		<h4><?php esc_html_e( 'Webhook URL', 'wp-sell-services' ); ?></h4>
-		<p class="description">
-			<?php esc_html_e( 'Add this URL to your Stripe webhook settings:', 'wp-sell-services' ); ?>
-		</p>
-		<code><?php echo esc_html( home_url( '/wpss-payment/stripe/callback/' ) ); ?></code>
+		<div class="wpss-gateway-setup-guide" style="margin-top: 20px; padding: 15px; background: #f0f6fc; border: 1px solid #c8d8e6; border-radius: 4px;">
+			<h4 style="margin-top: 0;"><?php esc_html_e( 'Stripe Setup Guide', 'wp-sell-services' ); ?></h4>
+
+			<p><strong><?php esc_html_e( 'Step 1: Get your API keys', 'wp-sell-services' ); ?></strong></p>
+			<ol style="margin-left: 20px;">
+				<li><?php esc_html_e( 'Go to your Stripe Dashboard → Developers → API keys', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Copy your Publishable key and Secret key', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'For testing, use the Test mode keys (starting with pk_test_ and sk_test_)', 'wp-sell-services' ); ?></li>
+			</ol>
+
+			<p><strong><?php esc_html_e( 'Step 2: Configure Webhook', 'wp-sell-services' ); ?></strong></p>
+			<ol style="margin-left: 20px;">
+				<li><?php esc_html_e( 'Go to your Stripe Dashboard → Developers → Webhooks', 'wp-sell-services' ); ?></li>
+				<li><?php esc_html_e( 'Click "Add endpoint" and enter this URL:', 'wp-sell-services' ); ?>
+					<br><code style="display: inline-block; margin: 5px 0; padding: 4px 8px; background: #fff;"><?php echo esc_html( home_url( '/wpss-payment/stripe/callback/' ) ); ?></code>
+				</li>
+				<li><?php esc_html_e( 'Select the following events to listen for:', 'wp-sell-services' ); ?>
+					<ul style="margin: 5px 0 5px 20px; list-style: disc;">
+						<li><code>payment_intent.succeeded</code></li>
+						<li><code>payment_intent.payment_failed</code></li>
+						<li><code>charge.refunded</code></li>
+					</ul>
+				</li>
+				<li><?php esc_html_e( 'After creating the endpoint, copy the "Signing secret" (starts with whsec_) and paste it in the Webhook Secret field above.', 'wp-sell-services' ); ?></li>
+			</ol>
+
+			<p style="margin-bottom: 0;">
+				<strong><?php esc_html_e( 'Required Stripe permissions:', 'wp-sell-services' ); ?></strong>
+				<?php esc_html_e( 'Your API key needs access to Payment Intents (read/write), Charges (read), and Refunds (read/write).', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Standard (unrestricted) keys have all required permissions by default.', 'wp-sell-services' ); ?>
+			</p>
+		</div>
 		<?php
 	}
 
