@@ -11,18 +11,18 @@
  *
  * @wordpress-plugin
  * Plugin Name:       WP Sell Services
- * Plugin URI:        https://developer.developer/wp-sell-services
+ * Plugin URI:        https://wbcomdesigns.com/downloads/wp-sell-services/
  * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with built-in standalone checkout, order management, messaging, reviews, and more.
  * Version:           1.0.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Wbcom Designs
- * Author URI:        https://developer.developer
+ * Author URI:        https://wbcomdesigns.com
  * Text Domain:       wp-sell-services
  * Domain Path:       /languages
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Update URI:        https://developer.developer/wp-sell-services
+ * Update URI:        https://wbcomdesigns.com/downloads/wp-sell-services/
  */
 
 declare(strict_types=1);

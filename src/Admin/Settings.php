@@ -1501,6 +1501,43 @@ class Settings {
 			</div>
 		</div>
 
+		<!-- Demo Content Section -->
+		<div class="wpss-advanced-section collapsed" data-section="demo-content">
+			<div class="wpss-advanced-section-header">
+				<h3><?php esc_html_e( 'Demo Content', 'wp-sell-services' ); ?></h3>
+				<span class="wpss-advanced-section-toggle dashicons dashicons-arrow-down-alt2"></span>
+			</div>
+			<div class="wpss-advanced-section-content">
+				<p class="description"><?php esc_html_e( 'Import sample services, vendors, and categories to preview your marketplace. Demo content can be removed at any time.', 'wp-sell-services' ); ?></p>
+
+				<?php
+				$demo_imported = get_option( 'wpss_demo_content_imported', false );
+				$nonce         = wp_create_nonce( 'wpss_demo_content' );
+				?>
+
+				<div class="wpss-demo-content-actions" style="margin-top: 15px;">
+					<?php if ( $demo_imported ) : ?>
+						<p style="color: #00a32a; margin-bottom: 10px;">
+							<span class="dashicons dashicons-yes-alt" style="vertical-align: middle;"></span>
+							<?php esc_html_e( 'Demo content is currently installed.', 'wp-sell-services' ); ?>
+						</p>
+						<button type="button" class="button button-secondary wpss-delete-demo" data-nonce="<?php echo esc_attr( $nonce ); ?>">
+							<?php esc_html_e( 'Delete Demo Content', 'wp-sell-services' ); ?>
+						</button>
+					<?php else : ?>
+						<p style="margin-bottom: 10px;">
+							<?php esc_html_e( 'Creates 20 sample services across 6 categories with 4 demo vendors.', 'wp-sell-services' ); ?>
+						</p>
+						<button type="button" class="button button-primary wpss-import-demo" data-nonce="<?php echo esc_attr( $nonce ); ?>">
+							<?php esc_html_e( 'Import Demo Content', 'wp-sell-services' ); ?>
+						</button>
+					<?php endif; ?>
+
+					<span class="wpss-demo-status" style="margin-left: 10px; display: none;"></span>
+				</div>
+			</div>
+		</div>
+
 		<?php
 		// Allow Pro plugin to add sections (e.g., Analytics).
 		do_action( 'wpss_advanced_settings_sections' );
@@ -1511,6 +1548,76 @@ class Settings {
 			$('.wpss-advanced-section-header').on('click', function() {
 				var $section = $(this).closest('.wpss-advanced-section');
 				$section.toggleClass('collapsed');
+			});
+
+			// Demo content import.
+			$('.wpss-import-demo').on('click', function() {
+				var $btn = $(this);
+				var $status = $btn.siblings('.wpss-demo-status');
+
+				if (!confirm('<?php echo esc_js( __( 'Import demo content? This will create sample services, vendors, and categories.', 'wp-sell-services' ) ); ?>')) {
+					return;
+				}
+
+				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'wp-sell-services' ) ); ?>');
+				$status.show().text('<?php echo esc_js( __( 'Please wait, this may take a moment...', 'wp-sell-services' ) ); ?>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'wpss_import_demo_content',
+						nonce: $btn.data('nonce')
+					},
+					success: function(response) {
+						if (response.success) {
+							$status.css('color', '#00a32a').text(response.data.message || '<?php echo esc_js( __( 'Demo content imported successfully!', 'wp-sell-services' ) ); ?>');
+							setTimeout(function() { location.reload(); }, 1500);
+						} else {
+							$status.css('color', '#d63638').text(response.data.message || '<?php echo esc_js( __( 'Import failed.', 'wp-sell-services' ) ); ?>');
+							$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Import Demo Content', 'wp-sell-services' ) ); ?>');
+						}
+					},
+					error: function() {
+						$status.css('color', '#d63638').text('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
+						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Import Demo Content', 'wp-sell-services' ) ); ?>');
+					}
+				});
+			});
+
+			// Demo content delete.
+			$('.wpss-delete-demo').on('click', function() {
+				var $btn = $(this);
+				var $status = $btn.siblings('.wpss-demo-status');
+
+				if (!confirm('<?php echo esc_js( __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories.', 'wp-sell-services' ) ); ?>')) {
+					return;
+				}
+
+				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Deleting...', 'wp-sell-services' ) ); ?>');
+				$status.show().text('<?php echo esc_js( __( 'Removing demo content...', 'wp-sell-services' ) ); ?>');
+
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'wpss_delete_demo_content',
+						nonce: $btn.data('nonce')
+					},
+					success: function(response) {
+						if (response.success) {
+							$status.css('color', '#00a32a').text(response.data.message || '<?php echo esc_js( __( 'Demo content deleted successfully!', 'wp-sell-services' ) ); ?>');
+							setTimeout(function() { location.reload(); }, 1500);
+						} else {
+							$status.css('color', '#d63638').text(response.data.message || '<?php echo esc_js( __( 'Deletion failed.', 'wp-sell-services' ) ); ?>');
+							$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Delete Demo Content', 'wp-sell-services' ) ); ?>');
+						}
+					},
+					error: function() {
+						$status.css('color', '#d63638').text('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
+						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Delete Demo Content', 'wp-sell-services' ) ); ?>');
+					}
+				});
 			});
 		});
 		</script>

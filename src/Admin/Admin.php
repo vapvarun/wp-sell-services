@@ -267,6 +267,8 @@ class Admin {
 	 */
 	private function init_ajax_handlers(): void {
 		add_action( 'wp_ajax_wpss_get_service_packages', array( $this, 'ajax_get_service_packages' ) );
+		add_action( 'wp_ajax_wpss_import_demo_content', array( $this, 'ajax_import_demo_content' ) );
+		add_action( 'wp_ajax_wpss_delete_demo_content', array( $this, 'ajax_delete_demo_content' ) );
 		add_action( 'admin_post_wpss_update_order', array( $this, 'handle_update_order' ) );
 		add_action( 'admin_post_wpss_resolve_dispute', array( $this, 'handle_resolve_dispute' ) );
 	}
@@ -1600,5 +1602,297 @@ class Admin {
 	 */
 	public function get_settings(): Settings {
 		return $this->settings;
+	}
+
+	/**
+	 * AJAX handler to import demo content.
+	 *
+	 * Creates demo services, categories, and vendor profiles.
+	 *
+	 * @return void
+	 */
+	public function ajax_import_demo_content(): void {
+		check_ajax_referer( 'wpss_demo_content', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$cli_file = WPSS_PLUGIN_DIR . 'src/CLI/ServiceCommands.php';
+		if ( ! file_exists( $cli_file ) ) {
+			wp_send_json_error( array( 'message' => __( 'Demo content module not found.', 'wp-sell-services' ) ) );
+		}
+
+		// Use the CLI service templates directly.
+		require_once $cli_file;
+		$commands = new \WPSellServices\CLI\ServiceCommands();
+
+		// Use reflection to access the private templates and create_service method.
+		$ref_class  = new \ReflectionClass( $commands );
+		$ref_templates = $ref_class->getProperty( 'service_templates' );
+		$ref_templates->setAccessible( true );
+		$templates = $ref_templates->getValue( $commands );
+
+		$ref_create = $ref_class->getMethod( 'create_service' );
+		$ref_create->setAccessible( true );
+
+		$ref_variation = $ref_class->getMethod( 'apply_variation' );
+		$ref_variation->setAccessible( true );
+
+		// Create categories first.
+		$categories = array_unique( array_column( $templates, 'category' ) );
+		foreach ( $categories as $cat_name ) {
+			if ( ! term_exists( $cat_name, 'wpss_service_category' ) ) {
+				wp_insert_term( $cat_name, 'wpss_service_category' );
+			}
+		}
+
+		// Create 20 services (cycling through templates).
+		$count   = 20;
+		$created = 0;
+		$featured = 0;
+		$template_count = count( $templates );
+
+		for ( $i = 0; $i < $count; $i++ ) {
+			$template  = $templates[ $i % $template_count ];
+			$variation = (int) floor( $i / $template_count );
+
+			$service_data = $ref_variation->invoke( $commands, $template, $variation );
+
+			// Mark some as featured.
+			if ( $featured < 5 && ( $i % 4 === 0 || ! empty( $template['featured'] ) ) ) {
+				$service_data['featured'] = true;
+				++$featured;
+			}
+
+			$result = $ref_create->invoke( $commands, $service_data );
+			if ( ! is_wp_error( $result ) ) {
+				// Mark as demo content for easy cleanup.
+				update_post_meta( $result, '_wpss_demo_content', 1 );
+				++$created;
+			}
+		}
+
+		// Create demo vendor profiles.
+		$vendors_created = $this->create_demo_vendors();
+
+		update_option( 'wpss_demo_content_imported', true );
+
+		wp_send_json_success(
+			array(
+				'message'  => sprintf(
+					/* translators: 1: services count, 2: categories count, 3: vendors count */
+					__( 'Imported %1$d services, %2$d categories, and %3$d vendor profiles.', 'wp-sell-services' ),
+					$created,
+					count( $categories ),
+					$vendors_created
+				),
+				'services' => $created,
+				'categories' => count( $categories ),
+				'vendors'  => $vendors_created,
+			)
+		);
+	}
+
+	/**
+	 * Create demo vendor profiles.
+	 *
+	 * @return int Number of vendors created.
+	 */
+	private function create_demo_vendors(): int {
+		$vendors = array(
+			array(
+				'login'    => 'sarah_designer',
+				'email'    => 'sarah@demo.test',
+				'name'     => 'Sarah Chen',
+				'tagline'  => 'Top Rated Logo & Brand Designer',
+				'bio'      => 'Award-winning designer with 8+ years creating memorable brand identities. Specializing in minimalist logos and complete branding packages.',
+				'country'  => 'US',
+			),
+			array(
+				'login'    => 'mike_developer',
+				'email'    => 'mike@demo.test',
+				'name'     => 'Mike Rodriguez',
+				'tagline'  => 'Full-Stack WordPress Developer',
+				'bio'      => 'WordPress developer building custom themes, plugins, and e-commerce solutions. Clean code, fast delivery.',
+				'country'  => 'CA',
+			),
+			array(
+				'login'    => 'emma_writer',
+				'email'    => 'emma@demo.test',
+				'name'     => 'Emma Williams',
+				'tagline'  => 'SEO Content Writer & Strategist',
+				'bio'      => 'Published writer creating SEO-optimized content that ranks. Specializing in tech, SaaS, and marketing niches.',
+				'country'  => 'GB',
+			),
+			array(
+				'login'    => 'alex_marketer',
+				'email'    => 'alex@demo.test',
+				'name'     => 'Alex Kim',
+				'tagline'  => 'Digital Marketing Specialist',
+				'bio'      => 'Google Ads certified specialist helping businesses grow through data-driven campaigns and SEO strategies.',
+				'country'  => 'AU',
+			),
+		);
+
+		$created = 0;
+
+		foreach ( $vendors as $vendor_data ) {
+			// Skip if user exists.
+			if ( username_exists( $vendor_data['login'] ) ) {
+				continue;
+			}
+
+			$user_id = wp_insert_user(
+				array(
+					'user_login'   => $vendor_data['login'],
+					'user_email'   => $vendor_data['email'],
+					'user_pass'    => wp_generate_password(),
+					'display_name' => $vendor_data['name'],
+					'role'         => 'wpss_vendor',
+				)
+			);
+
+			if ( is_wp_error( $user_id ) ) {
+				continue;
+			}
+
+			// Mark as demo user.
+			update_user_meta( $user_id, '_wpss_demo_content', 1 );
+			update_user_meta( $user_id, '_wpss_is_vendor', true );
+
+			// Create vendor profile in DB.
+			global $wpdb;
+			$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->insert(
+				$profiles_table,
+				array(
+					'user_id'      => $user_id,
+					'display_name' => $vendor_data['name'],
+					'tagline'      => $vendor_data['tagline'],
+					'bio'          => $vendor_data['bio'],
+					'status'       => 'active',
+					'country'      => $vendor_data['country'],
+					'is_available' => 1,
+					'created_at'   => current_time( 'mysql' ),
+				),
+				array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			);
+
+			// Assign some services to this vendor.
+			$services = get_posts(
+				array(
+					'post_type'      => 'wpss_service',
+					'posts_per_page' => 3,
+					'orderby'        => 'rand',
+					'meta_key'       => '_wpss_demo_content',
+					'meta_value'     => '1',
+					'author'         => 0, // Only unassigned.
+					'fields'         => 'ids',
+				)
+			);
+
+			foreach ( $services as $service_id ) {
+				wp_update_post(
+					array(
+						'ID'          => $service_id,
+						'post_author' => $user_id,
+					)
+				);
+			}
+
+			++$created;
+		}
+
+		return $created;
+	}
+
+	/**
+	 * AJAX handler to delete demo content.
+	 *
+	 * @return void
+	 */
+	public function ajax_delete_demo_content(): void {
+		check_ajax_referer( 'wpss_demo_content', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		// Delete demo services.
+		$demo_services = get_posts(
+			array(
+				'post_type'      => 'wpss_service',
+				'posts_per_page' => -1,
+				'post_status'    => 'any',
+				'meta_key'       => '_wpss_demo_content',
+				'meta_value'     => '1',
+				'fields'         => 'ids',
+			)
+		);
+
+		$services_deleted = 0;
+		foreach ( $demo_services as $post_id ) {
+			if ( wp_delete_post( $post_id, true ) ) {
+				++$services_deleted;
+			}
+		}
+
+		// Delete demo vendor users.
+		$demo_users = get_users(
+			array(
+				'meta_key'   => '_wpss_demo_content',
+				'meta_value' => '1',
+				'fields'     => 'ids',
+			)
+		);
+
+		global $wpdb;
+		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		$vendors_deleted = 0;
+
+		foreach ( $demo_users as $user_id ) {
+			// Remove vendor profile.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->delete( $profiles_table, array( 'user_id' => $user_id ), array( '%d' ) );
+
+			if ( wp_delete_user( $user_id ) ) {
+				++$vendors_deleted;
+			}
+		}
+
+		// Clean up empty demo categories.
+		$categories = get_terms(
+			array(
+				'taxonomy'   => 'wpss_service_category',
+				'hide_empty' => false,
+				'fields'     => 'ids',
+			)
+		);
+
+		$cats_deleted = 0;
+		if ( is_array( $categories ) ) {
+			foreach ( $categories as $term_id ) {
+				$term = get_term( $term_id, 'wpss_service_category' );
+				if ( $term && 0 === $term->count ) {
+					wp_delete_term( $term_id, 'wpss_service_category' );
+					++$cats_deleted;
+				}
+			}
+		}
+
+		delete_option( 'wpss_demo_content_imported' );
+
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					/* translators: 1: services count, 2: vendors count */
+					__( 'Deleted %1$d demo services and %2$d demo vendors.', 'wp-sell-services' ),
+					$services_deleted,
+					$vendors_deleted
+				),
+			)
+		);
 	}
 }

@@ -1,6 +1,6 @@
 === WP Sell Services ===
 Contributors: wbcomdesigns
-Tags: marketplace, freelance, services, woocommerce, fiverr
+Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.7
 Requires PHP: 8.1
