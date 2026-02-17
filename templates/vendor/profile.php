@@ -468,6 +468,30 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 				<?php
 				/**
+				 * Filter additional vendor profile fields.
+				 *
+				 * Pro uses this to add PayPal payout email and other vendor fields.
+				 *
+				 * @since 1.1.0
+				 *
+				 * @param array $fields    Array of field HTML strings to render.
+				 * @param int   $vendor_id Vendor user ID.
+				 */
+				$extra_profile_fields = apply_filters( 'wpss_vendor_profile_fields', array(), $vendor_id );
+
+				if ( ! empty( $extra_profile_fields ) ) :
+					?>
+					<div class="wpss-sidebar-card">
+						<?php
+						foreach ( $extra_profile_fields as $field_html ) {
+							echo wp_kses_post( $field_html );
+						}
+						?>
+					</div>
+				<?php endif; ?>
+
+				<?php
+				/**
 				 * Hook: wpss_vendor_profile_sidebar
 				 *
 				 * Fires at the end of the vendor profile sidebar.

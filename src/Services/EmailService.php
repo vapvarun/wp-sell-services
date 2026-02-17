@@ -620,6 +620,16 @@ class EmailService {
 		$template_vars['site_url']  = home_url();
 		$template_vars['site_name'] = get_bloginfo( 'name' );
 
+		/**
+		 * Filter email header/template variables for white-labelling.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array  $template_vars Template variables including site_name, site_url, header_image, etc.
+		 * @param string $type          Email type constant.
+		 */
+		$template_vars = apply_filters( 'wpss_email_header_vars', $template_vars, $type );
+
 		// Get email content.
 		$content = $this->get_email_content( $type, $template_vars );
 
@@ -627,10 +637,19 @@ class EmailService {
 			return false;
 		}
 
+		/**
+		 * Filter the email "from" name for white-labelling.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param string $from_name The sender name.
+		 */
+		$from_name = apply_filters( 'wpss_email_from_name', $this->settings['from_name'] );
+
 		// Set headers.
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', $this->settings['from_name'], $this->settings['from_email'] ),
+			sprintf( 'From: %s <%s>', $from_name, $this->settings['from_email'] ),
 		);
 
 		/**

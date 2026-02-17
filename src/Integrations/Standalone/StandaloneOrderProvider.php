@@ -75,6 +75,20 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 		$order_id = (int) $wpdb->insert_id;
 
+		if ( $order_id ) {
+			/**
+			 * Fires after a standalone order is created.
+			 *
+			 * Pro uses this for recurring service subscription creation.
+			 *
+			 * @since 1.1.0
+			 *
+			 * @param int   $order_id   The new order ID.
+			 * @param array $order_data The order creation data.
+			 */
+			do_action( 'wpss_order_created', $order_id, $order_data );
+		}
+
 		return $order_id ? wpss_get_order( $order_id ) : null;
 	}
 

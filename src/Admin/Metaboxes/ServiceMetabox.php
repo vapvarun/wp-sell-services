@@ -140,6 +140,30 @@ class ServiceMetabox {
 				<span class="dashicons dashicons-info-outline"></span>
 				<?php esc_html_e( 'Delivery time and revisions are configured per package below.', 'wp-sell-services' ); ?>
 			</p>
+
+			<?php
+			/**
+			 * Filter additional service meta fields rendered in the metabox.
+			 *
+			 * Pro uses this to add recurring billing toggle and other options.
+			 *
+			 * @since 1.1.0
+			 *
+			 * @param array $extra_fields Array of extra field HTML strings.
+			 * @param int   $post_id      The service post ID.
+			 */
+			$extra_fields = apply_filters( 'wpss_service_meta_fields', array(), $post->ID );
+
+			if ( ! empty( $extra_fields ) ) :
+				?>
+				<div class="wpss-extra-fields" style="margin-top: 15px;">
+					<?php
+					foreach ( $extra_fields as $field_html ) {
+						echo wp_kses_post( $field_html );
+					}
+					?>
+				</div>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

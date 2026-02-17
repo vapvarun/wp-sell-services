@@ -148,21 +148,36 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return array Payment intent data.
 	 */
 	public function create_payment( float $amount, string $currency, array $metadata = array() ): array {
-		$response = $this->api_request(
-			'payment_intents',
-			array(
-				'amount'                    => $this->format_amount( $amount, $currency ),
-				'currency'                  => strtolower( $currency ),
-				'automatic_payment_methods' => array( 'enabled' => true ),
-				'metadata'                  => array_merge(
-					array(
-						'site_url' => home_url(),
-						'platform' => 'wp-sell-services',
-					),
-					$metadata
+		$order_id  = (int) ( $metadata['order_id'] ?? 0 );
+		$vendor_id = (int) ( $metadata['vendor_id'] ?? 0 );
+
+		$params = array(
+			'amount'                    => $this->format_amount( $amount, $currency ),
+			'currency'                  => strtolower( $currency ),
+			'automatic_payment_methods' => array( 'enabled' => true ),
+			'metadata'                  => array_merge(
+				array(
+					'site_url' => home_url(),
+					'platform' => 'wp-sell-services',
 				),
-			)
+				$metadata
+			),
 		);
+
+		/**
+		 * Filter Stripe PaymentIntent parameters before creation.
+		 *
+		 * Pro uses this to add transfer_data for Stripe Connect splits.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $params    PaymentIntent parameters.
+		 * @param int   $order_id  Order ID (0 if not yet created).
+		 * @param int   $vendor_id Vendor user ID (0 if unknown).
+		 */
+		$params = apply_filters( 'wpss_stripe_payment_intent_args', $params, $order_id, $vendor_id );
+
+		$response = $this->api_request( 'payment_intents', $params );
 
 		if ( isset( $response['error'] ) ) {
 			return array(
@@ -277,6 +292,19 @@ class StripeGateway implements PaymentGatewayInterface {
 	public function handle_webhook( array $payload ): array {
 		$event_type = $payload['type'] ?? '';
 		$data       = $payload['data']['object'] ?? array();
+
+		/**
+		 * Fires when a Stripe webhook event is received.
+		 *
+		 * Pro uses this for Connect account updates, subscription billing, and recurring service events.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param string $event_type Stripe event type (e.g. 'payment_intent.succeeded').
+		 * @param array  $data       Event data object.
+		 * @param array  $payload    Full webhook payload.
+		 */
+		do_action( 'wpss_stripe_webhook_received', $event_type, $data, $payload );
 
 		switch ( $event_type ) {
 			case 'payment_intent.succeeded':

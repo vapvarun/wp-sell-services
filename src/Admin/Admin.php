@@ -550,9 +550,18 @@ class Admin {
 	 * @return void
 	 */
 	public function add_admin_menu(): void {
+		/**
+		 * Filter the admin menu label for white-labelling.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param string $label The menu label.
+		 */
+		$menu_label = apply_filters( 'wpss_admin_menu_label', __( 'Sell Services', 'wp-sell-services' ) );
+
 		add_menu_page(
 			__( 'WP Sell Services', 'wp-sell-services' ),
-			__( 'Sell Services', 'wp-sell-services' ),
+			$menu_label,
 			'manage_options',
 			'wp-sell-services',
 			array( $this, 'render_dashboard_page' ),

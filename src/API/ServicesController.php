@@ -513,7 +513,25 @@ class ServicesController extends RestController {
 			return $perm_check;
 		}
 
-		// Check if user can create services.
+		// Check if user can create services (Pro may restrict by subscription plan).
+		/**
+		 * Filter whether a vendor can create a new service.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param bool $can_create Whether the vendor can create a service.
+		 * @param int  $vendor_id  The vendor user ID.
+		 */
+		$can_create = apply_filters( 'wpss_vendor_can_create_service', true, get_current_user_id() );
+
+		if ( ! $can_create ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You have reached your service limit. Please upgrade your plan.', 'wp-sell-services' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		if ( ! current_user_can( 'wpss_manage_services' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
