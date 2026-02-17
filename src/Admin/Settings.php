@@ -864,7 +864,7 @@ class Settings {
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
 			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
 			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
-			'checkout'      => __( 'Checkout', 'wp-sell-services' ),
+			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
 		);
 
 		foreach ( $pages as $key => $label ) {
