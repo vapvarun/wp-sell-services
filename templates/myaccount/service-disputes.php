@@ -65,7 +65,9 @@ do_action( 'wpss_service_disputes_before', $user_id );
 						<?php
 						$service      = get_post( $dispute->service_id );
 						$status_label = $statuses[ $dispute->status ] ?? $dispute->status;
-						$dispute_url  = wc_get_endpoint_url( 'service-disputes', $dispute->id, wc_get_page_permalink( 'myaccount' ) );
+						$dispute_url  = function_exists( 'wc_get_endpoint_url' )
+							? wc_get_endpoint_url( 'service-disputes', $dispute->id, wc_get_page_permalink( 'myaccount' ) )
+							: add_query_arg( array( 'section' => 'disputes', 'dispute_id' => $dispute->id ), wpss_get_dashboard_url() );
 						$is_customer  = (int) $dispute->customer_id === $user_id;
 						?>
 						<tr class="wpss-dispute-row wpss-dispute-status-<?php echo esc_attr( $dispute->status ); ?>">

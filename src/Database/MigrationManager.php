@@ -232,6 +232,11 @@ class MigrationManager {
 	 * @return int Number of migrated orders.
 	 */
 	private function migrate_wss_orders(): int {
+		// WooCommerce must be active for this migration.
+		if ( ! function_exists( 'wc_get_order' ) ) {
+			return 0;
+		}
+
 		$count       = 0;
 		$orders_table = $this->schema->get_table_name( 'orders' );
 

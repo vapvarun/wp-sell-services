@@ -56,8 +56,14 @@ $customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-s
 $vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
 
 // Back link.
-$disputes_url = wc_get_endpoint_url( 'service-disputes', '', wc_get_page_permalink( 'myaccount' ) );
-$order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_permalink( 'myaccount' ) );
+if ( function_exists( 'wc_get_endpoint_url' ) ) {
+	$disputes_url = wc_get_endpoint_url( 'service-disputes', '', wc_get_page_permalink( 'myaccount' ) );
+	$order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_permalink( 'myaccount' ) );
+} else {
+	$dashboard_url = wpss_get_dashboard_url();
+	$disputes_url  = add_query_arg( 'section', 'disputes', $dashboard_url );
+	$order_url     = add_query_arg( array( 'section' => 'orders', 'order_id' => $order->id ), $dashboard_url );
+}
 
 /**
  * Hook: wpss_before_dispute_view
