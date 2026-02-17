@@ -1436,15 +1436,17 @@ class ServiceWizard {
 			wp_set_object_terms( $service_id, array_slice( $tags, 0, 5 ), 'wpss_service_tag' );
 		}
 
-		// Sync to WooCommerce product.
-		if ( class_exists( 'WooCommerce' ) ) {
-			$wc_provider   = new \WPSellServices\Integrations\WooCommerce\WCProductProvider();
-			$wc_product_id = $wc_provider->sync_service_to_product( $service_id );
-
-			if ( $wc_product_id ) {
-				wpss_log( sprintf( 'Service %d synced to WC product %d', $service_id, $wc_product_id ) );
-			}
-		}
+		/**
+		 * Fires after a service is saved via the wizard.
+		 *
+		 * Pro uses this to sync to WooCommerce product when WC adapter is active.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int   $service_id Service post ID.
+		 * @param array $sanitized  Sanitized form data.
+		 */
+		do_action( 'wpss_service_wizard_saved', $service_id, $sanitized );
 
 		// Prepare success response based on post status.
 		if ( 'pending' === $post_status ) {

@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **WP Sell Services** is a Fiverr-style service marketplace platform for WordPress.
 
-- **Free Version**: Full marketplace with WooCommerce integration
-- **Pro Version**: Additional e-commerce platforms, payment gateways, analytics
+- **Free Version**: Full standalone marketplace with built-in checkout and offline payments
+- **Pro Version**: WooCommerce, EDD, FluentCart, SureCart integrations, Stripe/PayPal payments, analytics
 
 ## Build & Development Commands
 
@@ -56,7 +56,8 @@ wp-sell-services/
 │   ├── Models/             # Data models
 │   ├── Services/           # Business logic
 │   ├── Integrations/       # E-commerce adapters
-│   │   └── WooCommerce/    # WC integration (free)
+│   │   ├── Standalone/     # Built-in standalone checkout (free)
+│   │   └── Gateways/       # Payment gateways (OfflineGateway)
 │   ├── Admin/              # Admin classes
 │   ├── Frontend/           # Frontend classes
 │   ├── API/                # REST API
@@ -221,11 +222,11 @@ add_action('wpss_loaded', function($plugin) {
 
 | Free Plugin Owns | Pro Plugin Owns |
 |------------------|-----------------|
-| Core marketplace, CPTs, database | EDD/Fluent/SureCart adapters |
-| WooCommerce adapter | Direct payment gateways (Stripe, PayPal, Razorpay) |
-| Base admin settings UI | Cloud storage (S3, GCS) |
-| Frontend dashboard framework | Advanced analytics |
-| Order workflow, conversations | Wallet integrations |
+| Core marketplace, CPTs, database | WooCommerce adapter |
+| Standalone adapter + Offline gateway | EDD/Fluent/SureCart adapters |
+| Base admin settings UI | Direct payment gateways (Stripe, PayPal, Razorpay) |
+| Frontend dashboard framework | Cloud storage (S3, GCS) |
+| Order workflow, conversations | Advanced analytics, Wallet integrations |
 
 **Rules:**
 1. Free plugin provides hooks - Pro extends via those hooks

@@ -800,6 +800,11 @@ final class Plugin {
 		// Register Test Gateway (only in debug mode).
 		$this->maybe_register_test_gateway();
 
+		// Register Offline Gateway (always available in free).
+		$offline_gateway = new \WPSellServices\Integrations\Gateways\OfflineGateway();
+		$offline_gateway->init();
+		$this->payment_gateways['offline'] = $offline_gateway;
+
 		/**
 		 * Filter the registered payment gateways.
 		 *

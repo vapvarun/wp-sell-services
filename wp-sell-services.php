@@ -12,7 +12,7 @@
  * @wordpress-plugin
  * Plugin Name:       WP Sell Services
  * Plugin URI:        https://developer.developer/wp-sell-services
- * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with WooCommerce integration, order management, messaging, reviews, and more.
+ * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with built-in standalone checkout, order management, messaging, reviews, and more.
  * Version:           1.0.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
@@ -145,43 +145,6 @@ function wpss_wp_version_notice(): void {
 	<?php
 }
 
-/**
- * Display admin notice when WooCommerce is not active.
- *
- * This is a warning notice (not error) since the plugin works independently.
- * WooCommerce is optional — enables checkout and payment processing when active.
- *
- * @return void
- */
-function wpss_woocommerce_notice(): void {
-	// Only show on WP Sell Services admin pages or plugins page.
-	$screen = get_current_screen();
-	if ( ! $screen ) {
-		return;
-	}
-
-	$show_on_screens = array( 'plugins', 'wpss_service', 'edit-wpss_service' );
-	$is_wpss_page    = str_contains( $screen->id, 'wpss' ) || str_contains( $screen->id, 'wp-sell-services' );
-
-	if ( ! in_array( $screen->id, $show_on_screens, true ) && ! $is_wpss_page ) {
-		return;
-	}
-
-	?>
-	<div class="notice notice-warning is-dismissible">
-		<p>
-			<strong><?php esc_html_e( 'WP Sell Services:', 'wp-sell-services' ); ?></strong>
-			<?php
-			printf(
-				/* translators: %s: WooCommerce plugin link */
-				esc_html__( 'To enable checkout and payment processing, please install and activate %s. Your marketplace is fully functional for browsing services.', 'wp-sell-services' ),
-				'<a href="' . esc_url( admin_url( 'plugin-install.php?s=woocommerce&tab=search&type=term' ) ) . '">WooCommerce</a>'
-			);
-			?>
-		</p>
-	</div>
-	<?php
-}
 
 /**
  * Register PSR-4 autoloader for WPSellServices namespace.
@@ -316,24 +279,88 @@ function wpss_init(): void {
 	$plugin = Core\Plugin::get_instance();
 	$plugin->init();
 
-	// Show notice if WooCommerce is not active (warning, not blocking).
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		add_action( 'admin_notices', __NAMESPACE__ . '\\wpss_woocommerce_notice' );
-	}
+	// Run migration for existing WooCommerce users.
+	wpss_maybe_migrate_to_standalone();
 }
 
 // Initialize on plugins_loaded to ensure all dependencies are available.
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\wpss_init', 10 );
 
-// Declare WooCommerce HPOS compatibility.
-add_action(
-	'before_woocommerce_init',
-	function () {
-		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
-			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
-		}
+/**
+ * Migrate existing WooCommerce users to standalone.
+ *
+ * Runs once on update. If the user had WooCommerce as the platform and
+ * Pro is not active, switches to standalone and shows a notice.
+ *
+ * @return void
+ */
+function wpss_maybe_migrate_to_standalone(): void {
+	// Only run once.
+	if ( get_option( 'wpss_standalone_migrated' ) ) {
+		return;
 	}
-);
+
+	$settings = get_option( 'wpss_general', array() );
+	$platform = $settings['ecommerce_platform'] ?? 'auto';
+
+	// If user had WooCommerce or auto (which would have selected WC).
+	if ( in_array( $platform, array( 'woocommerce', 'auto' ), true ) ) {
+		// If Pro is active with WC, no action needed - Pro handles WC now.
+		if ( defined( 'WPSS_PRO_VERSION' ) && class_exists( 'WooCommerce' ) ) {
+			update_option( 'wpss_standalone_migrated', true );
+			return;
+		}
+
+		// Switch to standalone.
+		$settings['ecommerce_platform'] = 'standalone';
+		update_option( 'wpss_general', $settings );
+
+		// Show a one-time notice.
+		set_transient( 'wpss_standalone_migration_notice', true, 0 );
+	}
+
+	update_option( 'wpss_standalone_migrated', true );
+}
+
+/**
+ * Display migration notice for users switching from WooCommerce to standalone.
+ *
+ * @return void
+ */
+function wpss_standalone_migration_notice(): void {
+	if ( ! get_transient( 'wpss_standalone_migration_notice' ) ) {
+		return;
+	}
+
+	?>
+	<div class="notice notice-info is-dismissible" id="wpss-standalone-notice">
+		<p>
+			<strong><?php esc_html_e( 'WP Sell Services', 'wp-sell-services' ); ?></strong> &mdash;
+			<?php esc_html_e( 'The plugin now works standalone with built-in checkout! WooCommerce integration has moved to Pro. Your marketplace continues working with the built-in checkout system.', 'wp-sell-services' ); ?>
+		</p>
+	</div>
+	<script>
+	jQuery(document).on('click', '#wpss-standalone-notice .notice-dismiss', function() {
+		jQuery.post(ajaxurl, { action: 'wpss_dismiss_standalone_notice', _wpnonce: '<?php echo esc_js( wp_create_nonce( 'wpss_dismiss_notice' ) ); ?>' });
+	});
+	</script>
+	<?php
+}
+
+add_action( 'admin_notices', __NAMESPACE__ . '\\wpss_standalone_migration_notice' );
+
+/**
+ * Dismiss migration notice via AJAX.
+ *
+ * @return void
+ */
+function wpss_dismiss_standalone_notice(): void {
+	check_ajax_referer( 'wpss_dismiss_notice' );
+	delete_transient( 'wpss_standalone_migration_notice' );
+	wp_send_json_success();
+}
+
+add_action( 'wp_ajax_wpss_dismiss_standalone_notice', __NAMESPACE__ . '\\wpss_dismiss_standalone_notice' );
 
 /**
  * Add plugin action links (shown on Plugins page).

@@ -482,14 +482,6 @@ class VendorDashboard {
 			return $url;
 		}
 
-		// Fallback to WooCommerce My Account page.
-		if ( function_exists( 'wc_get_page_permalink' ) ) {
-			$wc_url = wc_get_page_permalink( 'myaccount' );
-			if ( $wc_url ) {
-				return $wc_url;
-			}
-		}
-
 		return home_url();
 	}
 

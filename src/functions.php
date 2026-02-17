@@ -1033,11 +1033,6 @@ function wpss_get_become_vendor_url(): string {
 		return add_query_arg( 'section', 'become-vendor', $dashboard_url );
 	}
 
-	// Last resort: WooCommerce my-account.
-	if ( function_exists( 'wc_get_account_endpoint_url' ) ) {
-		return wc_get_account_endpoint_url( 'become-vendor' );
-	}
-
 	return home_url( '/become-vendor/' );
 }
 
@@ -1116,71 +1111,25 @@ function wpss_has_wallet(): bool {
 }
 
 /**
- * Add a service to cart via WooCommerce carrier product.
+ * Get service checkout URL.
  *
- * This function handles adding a service to the WooCommerce cart
- * using the virtual carrier product system.
- *
- * @since 1.1.0
- *
- * @param int   $service_id Service CPT ID.
- * @param int   $package_id Package index (0, 1, 2 for basic/standard/premium).
- * @param array $addons     Optional addon IDs.
- * @return string|false Cart item key or false on failure.
- */
-function wpss_add_service_to_cart( int $service_id, int $package_id = 0, array $addons = array() ) {
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		return false;
-	}
-
-	// Get WooCommerce adapter.
-	$adapter = wpss_get_ecommerce_adapter( 'woocommerce' );
-
-	if ( ! $adapter ) {
-		return false;
-	}
-
-	$carrier = $adapter->get_service_carrier();
-
-	if ( ! $carrier ) {
-		return false;
-	}
-
-	return $carrier->add_to_cart( $service_id, $package_id, $addons );
-}
-
-/**
- * Get service checkout URL with WooCommerce.
- *
- * Generates a URL that adds a service to cart and redirects to checkout.
+ * Generates a URL to the checkout page with service parameters.
  *
  * @since 1.1.0
  *
  * @param int   $service_id Service CPT ID.
  * @param int   $package_id Package index (0, 1, 2).
  * @param array $addons     Optional addon IDs.
- * @return string Checkout URL with add-to-cart parameters.
+ * @return string Checkout URL with service parameters.
  */
 function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, array $addons = array() ): string {
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		return '';
-	}
+	$checkout_url = wpss_get_page_url( 'checkout' );
 
-	$adapter = wpss_get_ecommerce_adapter( 'woocommerce' );
-
-	if ( ! $adapter ) {
-		return '';
-	}
-
-	$carrier    = $adapter->get_service_carrier();
-	$carrier_id = $carrier ? $carrier->get_carrier_id() : 0;
-
-	if ( ! $carrier_id ) {
+	if ( ! $checkout_url ) {
 		return '';
 	}
 
 	$params = array(
-		'add-to-cart'     => $carrier_id,
 		'wpss_service_id' => $service_id,
 		'wpss_package_id' => $package_id,
 	);
@@ -1189,7 +1138,7 @@ function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, ar
 		$params['wpss_addons'] = $addons;
 	}
 
-	return add_query_arg( $params, wc_get_checkout_url() );
+	return add_query_arg( $params, $checkout_url );
 }
 
 /**
@@ -1236,19 +1185,13 @@ function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\Orde
 /**
  * Check if WooCommerce integration is enabled.
  *
- * Returns true if WooCommerce is the active e-commerce adapter.
+ * Returns true if WooCommerce is the active e-commerce adapter (requires Pro).
  *
  * @since 1.1.0
  *
  * @return bool True if WooCommerce integration is active.
  */
 function wpss_is_woocommerce_enabled(): bool {
-	// Check if WooCommerce is installed.
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		return false;
-	}
-
-	// Check if WooCommerce adapter is active.
 	$adapter = wpss_get_active_adapter();
 	if ( ! $adapter ) {
 		return false;

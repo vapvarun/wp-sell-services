@@ -244,7 +244,7 @@ class OrderMetabox {
 		$buyer    = get_userdata( $order->get_buyer_id() );
 		$vendor   = get_userdata( $order->get_vendor_id() );
 		$service  = get_post( $order->get_service_id() );
-		$wc_order = $order->get_wc_order_id() ? wc_get_order( $order->get_wc_order_id() ) : null;
+		$wc_order = ( $order->get_wc_order_id() && function_exists( 'wc_get_order' ) ) ? wc_get_order( $order->get_wc_order_id() ) : null;
 		?>
 		<div class="wpss-order-details-grid">
 			<div class="wpss-order-detail">

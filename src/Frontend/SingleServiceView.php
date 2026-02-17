@@ -104,9 +104,9 @@ class SingleServiceView {
 			true
 		);
 
-		// Get checkout and cart URLs with WooCommerce fallback.
-		$checkout_url = function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout/' );
-		$cart_url     = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+		// Get checkout URL from settings.
+		$checkout_url = wpss_get_page_url( 'checkout' ) ?: home_url( '/checkout/' );
+		$cart_url     = $checkout_url;
 
 		wp_localize_script(
 			'wpss-single-service',

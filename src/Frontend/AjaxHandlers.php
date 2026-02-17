@@ -2057,7 +2057,7 @@ class AjaxHandlers {
 	/**
 	 * Add service to cart.
 	 *
-	 * Handles adding a service with selected package and extras to WooCommerce cart.
+	 * Handles adding a service with selected package and extras to the standalone cart.
 	 *
 	 * @return void
 	 */
@@ -2076,17 +2076,7 @@ class AjaxHandlers {
 		// Check if e-commerce adapter is active.
 		$adapter = wpss_get_active_adapter();
 		if ( ! $adapter ) {
-			wp_send_json_error( array( 'message' => __( 'No e-commerce platform is active. Please configure WooCommerce or another supported platform.', 'wp-sell-services' ) ) );
-		}
-
-		// Verify WooCommerce is available for cart operations.
-		// The free version uses WooCommerce for payment processing when available.
-		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
-			wp_send_json_error(
-				array(
-					'message' => __( 'Checkout requires WooCommerce or the Pro version with an alternative payment platform. Please install WooCommerce to enable checkout.', 'wp-sell-services' ),
-				)
-			);
+			wp_send_json_error( array( 'message' => __( 'No e-commerce platform is active. Please check your settings.', 'wp-sell-services' ) ) );
 		}
 
 		// Get the service.
@@ -2119,127 +2109,57 @@ class AjaxHandlers {
 		$selected_package = $packages[ $package_index ];
 		$package_price    = (float) ( $selected_package['price'] ?? 0 );
 
-		// Get linked WC product or create one.
-		$product_id = $this->get_or_create_wc_product( $service_id, $selected_package, $package_price );
-
-		if ( ! $product_id ) {
-			wp_send_json_error( array( 'message' => __( 'Could not create product for checkout.', 'wp-sell-services' ) ) );
-		}
-
 		// Calculate extras price.
 		$extras_raw   = get_post_meta( $service_id, '_wpss_extras', true );
 		$all_extras   = $extras_raw ? $extras_raw : array();
 		$extras_price = 0;
 		$extras_days  = 0;
+		$selected_extras = array();
 
 		foreach ( $extras as $extra_index ) {
 			if ( isset( $all_extras[ $extra_index ] ) ) {
-				$extras_price += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
-				$extras_days  += (int) ( $all_extras[ $extra_index ]['delivery_time'] ?? 0 );
+				$extras_price    += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
+				$extras_days     += (int) ( $all_extras[ $extra_index ]['delivery_time'] ?? 0 );
+				$selected_extras[] = array(
+					'id'    => $extra_index,
+					'title' => $all_extras[ $extra_index ]['title'] ?? '',
+					'price' => (float) ( $all_extras[ $extra_index ]['price'] ?? 0 ),
+				);
 			}
 		}
 
-		// Add to cart.
-		$cart_item_key = WC()->cart->add_to_cart(
-			$product_id,
-			$quantity,
-			0,
-			array(),
-			array(
-				'wpss_service_id' => $service_id,
-				'wpss_package_id' => $package_index,
-				'wpss_addons'     => $extras,
-			)
+		$total = ( $package_price + $extras_price ) * $quantity;
+
+		// Add to standalone cart (user meta).
+		$user_id = get_current_user_id();
+		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
+
+		if ( ! is_array( $cart ) ) {
+			$cart = array();
+		}
+
+		$item_key         = md5( $service_id . '-' . $package_index . '-' . wp_json_encode( $extras ) );
+		$cart[ $item_key ] = array(
+			'service_id' => $service_id,
+			'package_id' => $package_index,
+			'package'    => $selected_package,
+			'addons'     => $selected_extras,
+			'quantity'   => $quantity,
+			'total'      => $total,
+			'added_at'   => current_time( 'mysql', true ),
 		);
 
-		if ( ! $cart_item_key ) {
-			$error_message = wc_get_notices( 'error' );
-			wc_clear_notices();
+		update_user_meta( $user_id, '_wpss_cart', $cart );
 
-			if ( ! empty( $error_message ) ) {
-				$first_error = reset( $error_message );
-				$message     = is_array( $first_error ) ? ( $first_error['notice'] ?? '' ) : $first_error;
-				wp_send_json_error( array( 'message' => wp_strip_all_tags( $message ) ) );
-			}
-
-			wp_send_json_error( array( 'message' => __( 'Could not add to cart. Please try again.', 'wp-sell-services' ) ) );
-		}
+		$checkout_url = wpss_get_page_url( 'checkout' ) ?: home_url( '/checkout/' );
 
 		wp_send_json_success(
 			array(
-				'message'    => __( 'Added to cart!', 'wp-sell-services' ),
-				'cart_count' => WC()->cart->get_cart_contents_count(),
-				'cart_url'   => wc_get_cart_url(),
+				'message'      => __( 'Added to cart!', 'wp-sell-services' ),
+				'cart_count'   => count( $cart ),
+				'checkout_url' => $checkout_url,
 			)
 		);
-	}
-
-	/**
-	 * Get or create WooCommerce product for a service.
-	 *
-	 * @param int   $service_id Service post ID.
-	 * @param array $package    Selected package data.
-	 * @param float $price      Package price.
-	 * @return int|null Product ID or null on failure.
-	 */
-	private function get_or_create_wc_product( int $service_id, array $package, float $price ): ?int {
-		// Ensure WooCommerce is available.
-		if ( ! class_exists( 'WC_Product_Simple' ) ) {
-			return null;
-		}
-
-		// Check if service already has a linked WC product.
-		$platform_ids_raw = get_post_meta( $service_id, '_wpss_platform_ids', true );
-		$platform_ids     = $platform_ids_raw ? $platform_ids_raw : array();
-		$product_id       = $platform_ids['woocommerce'] ?? 0;
-
-		if ( $product_id ) {
-			$product = wc_get_product( $product_id );
-			if ( $product ) {
-				// Update price to match selected package.
-				$product->set_regular_price( $price );
-				$product->save();
-				return $product_id;
-			}
-		}
-
-		// Create a new WC product.
-		$service = get_post( $service_id );
-		if ( ! $service ) {
-			return null;
-		}
-
-		$product = new \WC_Product_Simple();
-		$product->set_name( $service->post_title );
-		$product->set_description( $service->post_content );
-		$product->set_short_description( $service->post_excerpt );
-		$product->set_regular_price( $price );
-		$product->set_status( 'publish' );
-		$product->set_catalog_visibility( 'hidden' );
-		$product->set_virtual( true );
-		// Removed: set_sold_individually(true) - services can be purchased multiple times.
-
-		// Copy featured image.
-		$thumbnail_id = get_post_thumbnail_id( $service_id );
-		if ( $thumbnail_id ) {
-			$product->set_image_id( $thumbnail_id );
-		}
-
-		$product_id = $product->save();
-
-		if ( ! $product_id ) {
-			return null;
-		}
-
-		// Mark as service product.
-		update_post_meta( $product_id, '_wpss_is_service', 'yes' );
-		update_post_meta( $product_id, '_wpss_service_id', $service_id );
-
-		// Store the link back to service.
-		$platform_ids['woocommerce'] = $product_id;
-		update_post_meta( $service_id, '_wpss_platform_ids', $platform_ids );
-
-		return $product_id;
 	}
 
 	/**
@@ -2364,16 +2284,17 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
-		// Update WooCommerce cart if active.
-		if ( class_exists( 'WooCommerce' ) && WC()->cart ) {
-			foreach ( WC()->cart->get_cart() as $cart_key => $cart_item ) {
-				if ( isset( $cart_item['wpss_service_id'] ) && (int) $cart_item['wpss_service_id'] === $service_id ) {
-					WC()->cart->set_quantity( $cart_key, $quantity );
+		// Update standalone cart (user meta).
+		$user_id = get_current_user_id();
+		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
 
-					// Update cart item data.
-					WC()->cart->cart_contents[ $cart_key ]['wpss_package_index'] = $package_index;
-					WC()->cart->cart_contents[ $cart_key ]['wpss_extras']        = $extras;
-					WC()->cart->calculate_totals();
+		if ( is_array( $cart ) ) {
+			foreach ( $cart as $cart_key => $cart_item ) {
+				if ( isset( $cart_item['service_id'] ) && (int) $cart_item['service_id'] === $service_id ) {
+					$cart[ $cart_key ]['package_id'] = $package_index;
+					$cart[ $cart_key ]['quantity']    = $quantity;
+
+					update_user_meta( $user_id, '_wpss_cart', $cart );
 
 					wp_send_json_success( array( 'message' => __( 'Cart updated.', 'wp-sell-services' ) ) );
 				}

@@ -168,41 +168,7 @@ class CartController extends RestController {
 			}
 		}
 
-		// Use WooCommerce cart if available.
-		if ( function_exists( 'WC' ) && \WC()->cart ) {
-			$cart_item_data = array(
-				'wpss_service_id' => $service_id,
-				'wpss_package_id' => $package_id,
-				'wpss_addons'     => $selected_addons,
-			);
-
-			// Check if WC product exists for service.
-			$wc_product_id = get_post_meta( $service_id, '_wpss_wc_product_id', true );
-
-			if ( ! $wc_product_id ) {
-				return new WP_Error( 'no_product', __( 'Service product not configured for checkout.', 'wp-sell-services' ), array( 'status' => 400 ) );
-			}
-
-			$cart_item_key = \WC()->cart->add_to_cart( $wc_product_id, 1, 0, array(), $cart_item_data );
-
-			if ( ! $cart_item_key ) {
-				return new WP_Error( 'cart_error', __( 'Failed to add to cart.', 'wp-sell-services' ), array( 'status' => 500 ) );
-			}
-
-			return new WP_REST_Response(
-				array(
-					'success'      => true,
-					'cart_item_key' => $cart_item_key,
-					'service'      => $service->post_title,
-					'package'      => $package['name'] ?? '',
-					'total'        => $total,
-					'currency'     => wpss_get_currency(),
-				),
-				201
-			);
-		}
-
-		// Standalone cart (stored in user meta for non-WC).
+		// Standalone cart (stored in user meta).
 		$user_id = get_current_user_id();
 		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
 
@@ -242,41 +208,6 @@ class CartController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_cart( WP_REST_Request $request ): WP_REST_Response {
-		// WooCommerce cart.
-		if ( function_exists( 'WC' ) && \WC()->cart ) {
-			$items      = array();
-			$cart_total = 0;
-
-			foreach ( \WC()->cart->get_cart() as $key => $cart_item ) {
-				if ( empty( $cart_item['wpss_service_id'] ) ) {
-					continue;
-				}
-
-				$service = get_post( $cart_item['wpss_service_id'] );
-				$total   = (float) $cart_item['line_total'];
-
-				$items[] = array(
-					'key'        => $key,
-					'service_id' => $cart_item['wpss_service_id'],
-					'service'    => $service ? $service->post_title : '',
-					'package_id' => $cart_item['wpss_package_id'] ?? 0,
-					'addons'     => $cart_item['wpss_addons'] ?? array(),
-					'total'      => $total,
-				);
-
-				$cart_total += $total;
-			}
-
-			return new WP_REST_Response(
-				array(
-					'items'    => $items,
-					'total'    => $cart_total,
-					'currency' => wpss_get_currency(),
-					'checkout_url' => wc_get_checkout_url(),
-				)
-			);
-		}
-
 		// Standalone cart.
 		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
 		$items      = array();
@@ -317,16 +248,6 @@ class CartController extends RestController {
 	public function remove_item( WP_REST_Request $request ) {
 		$item_key = sanitize_text_field( $request->get_param( 'item_key' ) );
 
-		if ( function_exists( 'WC' ) && \WC()->cart ) {
-			$removed = \WC()->cart->remove_cart_item( $item_key );
-
-			if ( ! $removed ) {
-				return new WP_Error( 'not_found', __( 'Cart item not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-			}
-
-			return new WP_REST_Response( array( 'deleted' => true ) );
-		}
-
 		// Standalone cart.
 		$user_id = get_current_user_id();
 		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
@@ -348,16 +269,6 @@ class CartController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function checkout( WP_REST_Request $request ) {
-		// WooCommerce checkout.
-		if ( function_exists( 'WC' ) && \WC()->cart && \WC()->cart->get_cart_contents_count() > 0 ) {
-			return new WP_REST_Response(
-				array(
-					'checkout_url' => wc_get_checkout_url(),
-					'method'       => 'redirect',
-				)
-			);
-		}
-
 		// Standalone checkout - create order directly.
 		$user_id = get_current_user_id();
 		$cart    = get_user_meta( $user_id, '_wpss_cart', true );

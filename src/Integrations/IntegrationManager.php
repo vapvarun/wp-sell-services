@@ -11,8 +11,7 @@ declare(strict_types=1);
 namespace WPSellServices\Integrations;
 
 use WPSellServices\Integrations\Contracts\EcommerceAdapterInterface;
-use WPSellServices\Integrations\WooCommerce\WooCommerceAdapter;
-use WPSellServices\Integrations\WooCommerce\WCAccountProvider;
+use WPSellServices\Integrations\Standalone\StandaloneAdapter;
 
 /**
  * Manages all e-commerce and third-party integrations.
@@ -52,13 +51,13 @@ class IntegrationManager {
 	 * @return void
 	 */
 	private function register_default_adapters(): void {
-		// WooCommerce adapter (free version only includes this).
-		$this->register_adapter( 'woocommerce', new WooCommerce\WooCommerceAdapter() );
+		// Standalone adapter (free version includes this as the default).
+		$this->register_adapter( 'standalone', new StandaloneAdapter() );
 
 		/**
 		 * Filter to register additional e-commerce adapters.
 		 *
-		 * Pro version uses this to add EDD, Fluent Cart, SureCart, Standalone adapters.
+		 * Pro version uses this to add WooCommerce, EDD, Fluent Cart, SureCart adapters.
 		 *
 		 * @since 1.0.0
 		 *
@@ -124,17 +123,6 @@ class IntegrationManager {
 			do_action( 'wpss_adapter_initialized', $this->active_adapter );
 		}
 
-		// Always init WC account redirects when WooCommerce is present,
-		// even if another adapter is active. This ensures My Account menu
-		// links redirect to the standalone dashboard instead of 404.
-		if (
-			class_exists( 'WooCommerce' )
-			&& ! ( $this->active_adapter instanceof WooCommerceAdapter )
-			&& isset( $this->adapters['woocommerce'] )
-		) {
-			$wc_account = new WCAccountProvider();
-			$wc_account->init();
-		}
 	}
 
 	/**

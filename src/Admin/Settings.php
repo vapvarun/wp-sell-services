@@ -284,6 +284,7 @@ class Settings {
 			'services_page' => '[wpss_services]',
 			'dashboard'     => '[wpss_dashboard]',
 			'become_vendor' => '[wpss_vendor_registration]',
+			'checkout'      => '[wpss_checkout]',
 		);
 
 		return $shortcodes[ $field ] ?? '';
@@ -863,6 +864,7 @@ class Settings {
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
 			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
 			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
+			'checkout'      => __( 'Checkout', 'wp-sell-services' ),
 		);
 
 		foreach ( $pages as $key => $label ) {
@@ -1343,13 +1345,7 @@ class Settings {
 	 * @return void
 	 */
 	public function render_ecommerce_section(): void {
-		$wc_active = class_exists( 'WooCommerce' );
-		echo '<p>' . esc_html__( 'Configure e-commerce platform for service checkout.', 'wp-sell-services' ) . '</p>';
-		if ( ! $wc_active ) {
-			echo '<p class="description" style="color: #d63638;">';
-			echo esc_html__( 'WooCommerce is not installed or active.', 'wp-sell-services' );
-			echo '</p>';
-		}
+		echo '<p>' . esc_html__( 'Configure e-commerce platform for service checkout. Standalone checkout is included. Pro adds WooCommerce, EDD, and more.', 'wp-sell-services' ) . '</p>';
 	}
 
 	/**
@@ -1415,14 +1411,6 @@ class Settings {
 		echo '<p>' . esc_html__( 'Configure which email notifications are sent.', 'wp-sell-services' ) . '</p>';
 		echo '<p class="description">';
 		echo esc_html__( 'These toggles are the master switch for each notification type. When a notification is disabled here, no email will be sent regardless of other settings.', 'wp-sell-services' );
-		if ( class_exists( 'WooCommerce' ) ) {
-			echo '<br>';
-			printf(
-				/* translators: %s: URL to WooCommerce Emails settings */
-				esc_html__( 'To customize email content, subjects, and templates, go to %s.', 'wp-sell-services' ),
-				'<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=email' ) ) . '">' . esc_html__( 'WooCommerce > Settings > Emails', 'wp-sell-services' ) . '</a>'
-			);
-		}
 		echo '</p>';
 	}
 
@@ -1598,13 +1586,13 @@ class Settings {
 		} else {
 			printf(
 				'<p class="description" style="color: #d63638;">%s</p>',
-				esc_html__( 'No e-commerce platform detected. Please install WooCommerce or another supported platform.', 'wp-sell-services' )
+				esc_html__( 'No e-commerce platform detected. Please check your configuration.', 'wp-sell-services' )
 			);
 		}
 
 		printf(
 			'<p class="description">%s</p>',
-			esc_html__( 'Select which e-commerce platform should handle service checkouts. Pro version adds support for EDD, FluentCart, SureCart, and Standalone mode.', 'wp-sell-services' )
+			esc_html__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD, FluentCart, and SureCart.', 'wp-sell-services' )
 		);
 	}
 
@@ -1818,6 +1806,7 @@ class Settings {
 			'services_page',
 			'dashboard',
 			'become_vendor',
+			'checkout',
 		);
 
 		foreach ( $page_keys as $key ) {

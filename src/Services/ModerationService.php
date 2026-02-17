@@ -381,10 +381,10 @@ Thank you for being a valued seller on our platform.',
 
 		$edit_url = add_query_arg(
 			array(
-				'action'     => 'edit',
+				'section'    => 'edit-service',
 				'service_id' => $service_id,
 			),
-			wc_get_endpoint_url( 'vendor-services', '', wc_get_page_permalink( 'myaccount' ) )
+			wpss_get_dashboard_url()
 		);
 
 		$message = sprintf(

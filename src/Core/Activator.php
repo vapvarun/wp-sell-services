@@ -44,11 +44,7 @@ class Activator {
 	 * @return void
 	 */
 	private static function check_dependencies(): void {
-		// Check for WooCommerce (required for free version).
-		if ( ! class_exists( 'WooCommerce' ) ) {
-			// WooCommerce not required initially, but show notice.
-			set_transient( 'wpss_show_wc_notice', true, 30 );
-		}
+		// No required dependencies for standalone mode.
 	}
 
 	/**
@@ -247,17 +243,11 @@ class Activator {
 	/**
 	 * Create WooCommerce carrier product for service orders.
 	 *
+	 * @deprecated Moved to Pro plugin. Kept for backward compatibility.
 	 * @return void
 	 */
 	private static function create_wc_carrier_product(): void {
-		if ( ! class_exists( 'WooCommerce' ) ) {
-			return;
-		}
-
-		// Use WCServiceCarrier to create the product.
-		if ( class_exists( '\WPSellServices\Integrations\WooCommerce\WCServiceCarrier' ) ) {
-			\WPSellServices\Integrations\WooCommerce\WCServiceCarrier::activate();
-		}
+		// WooCommerce integration moved to Pro plugin.
 	}
 
 	/**
