@@ -9,6 +9,7 @@
 declare(strict_types=1);
 
 namespace WPSellServices\Frontend;
+use WPSellServices\Services\ModerationService;
 
 /**
  * Handles the service archive page display.
@@ -430,6 +431,17 @@ class ServiceArchiveView {
 			$query->set( 'page_id', '' );
 			$query->set( 'pagename', '' );
 			$query->set( 'posts_per_page', apply_filters( 'wpss_services_per_page', 12 ) );
+
+			if ( ModerationService::is_enabled() ) {
+				$query->set( 'meta_query', array(
+						array(
+							'key'     => '_wpss_moderation_status',
+							'value'   => 'approved',
+							'compare' => '==',
+						),
+					)
+				);
+			}
 		}
 
 		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
