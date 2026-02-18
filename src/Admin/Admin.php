@@ -130,6 +130,7 @@ class Admin {
 			'edit.php?post_type=wpss_request',                               // Buyer Requests.
 			'post-new.php?post_type=wpss_request',                           // Add New Request.
 			'wpss-orders',                                                   // Orders.
+			'wpss-subscriptions',                                            // Subscriptions (Pro).
 			'wpss-vendors',                                                  // Vendors.
 			'wpss-withdrawals',                                              // Withdrawals.
 			'wpss-disputes',                                                 // Disputes.
