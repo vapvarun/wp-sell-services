@@ -657,6 +657,147 @@ This document focuses on **user expectations** - what buyers and sellers expect 
 3. **Admin**: Service moderation (Section 15.3)
 4. **All**: Email notifications (Section 16)
 5. **Admin**: Manual order creation (Section 15.1)
+6. **Admin**: Settings pages - all tabs and accordions (Section 17)
+7. **Buyer/Vendor**: Buyer requests and proposals (Section 18)
+
+---
+
+## 17. Admin Settings Pages
+
+### 17.1 Settings Navigation & Tabs
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Navigate to Sell Services > Settings | Settings page loads with tab groups | [ ] |
+| Tab groups visible | Setup, Business, Operations, System shown | [ ] |
+| Click each tab | Tab content loads, active tab highlighted | [ ] |
+| Pro tabs in separate group | Pro separator with Pro tabs (if Pro active) | [ ] |
+| Unknown/custom tab | Rendered via `wpss_settings_tab_{id}` action | [ ] |
+
+### 17.2 General Tab
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Platform name field | Text input, saves correctly | [ ] |
+| Currency selection | Dropdown with currencies, saves | [ ] |
+| E-commerce platform | Auto-detect or manual selection | [ ] |
+| Save changes | Settings persisted on reload | [ ] |
+
+### 17.3 Pages Tab
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Page assignment dropdowns | Dropdown for each required page | [ ] |
+| "Create Page" button | Creates page via AJAX, assigns to dropdown | [ ] |
+| Page already exists | Dropdown pre-selects existing page | [ ] |
+| Created page links | Edit link appears after page creation | [ ] |
+| Save page assignments | All page IDs persisted | [ ] |
+
+### 17.4 Payments Tab (Accordion)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Tab has accordion sections | Commission, Tax, Payouts sections visible | [ ] |
+| Click section header | Section toggles open/closed | [ ] |
+| Commission section | Commission rate, type fields | [ ] |
+| Tax section | Tax settings fields | [ ] |
+| Payouts section | Payout settings fields | [ ] |
+| Save within section | Settings form saves independently | [ ] |
+| Pro sections visible (if Pro active) | Commission Rules, PayPal Payouts sections with Pro badge | [ ] |
+| `wpss_settings_sections_payments` hook fires | Pro sections rendered after free sections | [ ] |
+
+### 17.5 Gateways Tab (Accordion)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Gateway accordions shown | Stripe, PayPal, Offline listed | [ ] |
+| Each gateway has enabled/disabled badge | Status badge next to title | [ ] |
+| Enable a gateway | Toggle saves, badge updates | [ ] |
+| Configure gateway fields | API keys, settings save | [ ] |
+| Pro gateways visible (if Pro active) | Stripe Connect, Razorpay sections | [ ] |
+| `wpss_gateway_accordion_sections` fires | Legacy hook for Pro gateways | [ ] |
+| `wpss_settings_sections_gateways` fires | Unified hook also fires | [ ] |
+
+### 17.6 Vendor Tab (Accordion)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Tab has accordion format | Vendor Settings section visible | [ ] |
+| Click section header | Section toggles open/closed | [ ] |
+| Vendor registration settings | Registration toggle, approval mode | [ ] |
+| Vendor capabilities settings | Permissions and limits | [ ] |
+| Save changes | Settings persisted | [ ] |
+| Pro section visible (if Pro active) | Vendor Subscriptions section with Pro badge | [ ] |
+| `wpss_settings_sections_vendor` hook fires | Pro section rendered after free section | [ ] |
+
+### 17.7 Orders Tab (Accordion)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Tab has accordion format | Order Settings section visible | [ ] |
+| Click section header | Section toggles open/closed | [ ] |
+| Order settings fields | Deadline, auto-complete, etc. | [ ] |
+| Save changes | Settings persisted | [ ] |
+| Pro section visible (if Pro active) | Recurring Services section with Pro badge | [ ] |
+| `wpss_settings_sections_orders` hook fires | Pro section rendered after free section | [ ] |
+
+### 17.8 Emails Tab (Accordion)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Tab has accordion format | Email Notifications section visible | [ ] |
+| Click section header | Section toggles open/closed | [ ] |
+| Email template settings | Enable/disable individual emails | [ ] |
+| Save changes | Settings persisted | [ ] |
+| `wpss_settings_sections_emails` hook fires | Hook fires for extensibility | [ ] |
+
+### 17.9 Advanced Tab (Accordion)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Tab has accordion sections | System Settings, Demo Content visible | [ ] |
+| System settings | Debug, reset, system info | [ ] |
+| Demo content import | "Import Demo" button creates sample data | [ ] |
+| Demo content delete | "Delete Demo" button removes sample data | [ ] |
+| Only 2 sections (no Pro clutter) | No Pro features dumped here | [ ] |
+| `wpss_settings_sections_advanced` hook fires | Hook fires after core sections | [ ] |
+| `wpss_advanced_settings_sections` backward-compat | Legacy hook still fires for third-party | [ ] |
+
+### 17.10 Accordion UI Behavior
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Unified CSS class | All accordions use `.wpss-settings-section` | [ ] |
+| Click header to expand | Section content slides open | [ ] |
+| Click header to collapse | Section content slides closed | [ ] |
+| Multiple sections open | Can have multiple sections open simultaneously | [ ] |
+| Pro badge styling | `.wpss-pro-badge` shown on Pro sections | [ ] |
+| Collapsed by default | `collapsed` parameter respected | [ ] |
+| Form submission within section | Each section saves its own option group | [ ] |
+| Page reload | Saved values persist in correct sections | [ ] |
+
+---
+
+## 18. Buyer Requests (Job Board)
+
+### 18.1 Posting a Buyer Request
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Navigate to post request page | Request form loads | [ ] |
+| Fill title and description | Text fields accept input | [ ] |
+| Set budget range | Min/max budget fields | [ ] |
+| Select category | Category dropdown works | [ ] |
+| Set deadline | Date picker works | [ ] |
+| Attach files (optional) | File upload works | [ ] |
+| Submit request | Request created, confirmation shown | [ ] |
+| Request visible on listing page | Shows in buyer requests archive | [ ] |
+
+### 18.2 Vendor Submitting a Proposal
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| View buyer request | Request details visible | [ ] |
+| Click "Submit Proposal" | Proposal form opens | [ ] |
+| Enter proposal details | Price, delivery time, description | [ ] |
+| Submit proposal | Proposal created, buyer notified | [ ] |
+| Proposal visible to buyer | Shows in buyer's proposals list | [ ] |
+
+### 18.3 Buyer Managing Proposals
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| View proposals on request | All proposals listed | [ ] |
+| Compare proposals | Price, delivery, vendor info visible | [ ] |
+| Accept proposal | Order created from proposal | [ ] |
+| Reject proposal | Proposal marked rejected, vendor notified | [ ] |
 
 ---
 
@@ -681,3 +822,5 @@ Mark each test with:
 |------|---------|
 | 2026-02-02 | Initial creation - comprehensive user journey checklist |
 | 2026-02-02 | Added complete vendor journeys: registration (3), service creation (4), service management (5), earnings & withdrawals (13) |
+| 2026-02-18 | Added Section 17: Admin Settings Pages (unified accordion architecture, all tabs) |
+| 2026-02-18 | Added Section 18: Buyer Requests (job board, proposals) |
