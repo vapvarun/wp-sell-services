@@ -131,7 +131,27 @@ Manual QA checklists for all 6 WP Sell Services Pro features. Mark `[x]` when ve
 | Enable feature toggle | Saves | [ ] |
 | Set default interval to Monthly | Saves | [ ] |
 | Enable auto-renew | Saves | [ ] |
-| Active subscriptions table shows | Table rendered | [ ] |
+| "View All Subscriptions" link visible when enabled | Links to Subscriptions admin page | [ ] |
+| "View All Subscriptions" link hidden when disabled | Not rendered | [ ] |
+
+### Subscriptions Admin Page (Sell Services > Subscriptions)
+
+| Step | Expected | Status |
+|------|----------|--------|
+| Menu item visible when recurring enabled | "Subscriptions" submenu under Sell Services | [ ] |
+| Menu item hidden when recurring disabled | No submenu entry | [ ] |
+| Page renders with status filter links | All/Active/Past Due/Paused/Cancelled/Pending with counts | [ ] |
+| Filter by "Active" status | Only active subscriptions shown, count matches | [ ] |
+| Filter by "Cancelled" status | Only cancelled subscriptions shown | [ ] |
+| Click "All" filter | All subscriptions shown | [ ] |
+| Table columns correct | ID, Customer, Vendor, Service, Amount, Interval, Status, Next Billing, Created | [ ] |
+| Customer/Vendor display names shown | Names not just IDs | [ ] |
+| Service links to edit page | Clickable service title | [ ] |
+| Amount formatted correctly | Currency symbol and format | [ ] |
+| Interval labels correct | Weekly/Monthly/Quarterly/Yearly | [ ] |
+| Status badges color-coded | Green=Active, Yellow=Past Due, Red=Cancelled, Grey=Paused, Blue=Pending | [ ] |
+| Pagination works (>20 items) | Page navigation, correct item counts | [ ] |
+| Empty state message | "No recurring subscriptions found." when table empty | [ ] |
 
 ### Workflow
 
@@ -139,13 +159,13 @@ Manual QA checklists for all 6 WP Sell Services Pro features. Mark `[x]` when ve
 |------|----------|--------|
 | Vendor enables recurring on service (meta field) | Toggle visible in service editor | [ ] |
 | Buyer purchases recurring service | Order + subscription created | [ ] |
-| Subscription status "Active" | Shown in admin table | [ ] |
+| Subscription status "Active" | Shown in Subscriptions admin page | [ ] |
 | Renewal charge succeeds (webhook) | New order created | [ ] |
 | Renewal charge fails | Status "Past Due", no order | [ ] |
 | Customer cancels subscription | Status "Cancelled", no future charges | [ ] |
 | Vendor deletes service | Existing subscriptions continue | [ ] |
-| Recurring disabled globally | Existing subscriptions continue, new blocked | [ ] |
-| Deactivate Pro | No recurring meta fields shown, no errors | [ ] |
+| Recurring disabled globally | Existing subscriptions continue, new blocked, menu hidden | [ ] |
+| Deactivate Pro | No recurring meta fields shown, Subscriptions menu hidden, no errors | [ ] |
 
 ### REST API
 
