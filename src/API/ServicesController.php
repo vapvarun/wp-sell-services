@@ -525,9 +525,23 @@ class ServicesController extends RestController {
 		$can_create = apply_filters( 'wpss_vendor_can_create_service', true, get_current_user_id() );
 
 		if ( ! $can_create ) {
+			/**
+			 * Filter the error message shown when a vendor cannot create more services.
+			 *
+			 * Pro uses this to inject a subscription upgrade link.
+			 *
+			 * @since 1.1.0
+			 *
+			 * @param string $message Default error message.
+			 */
+			$error_message = apply_filters(
+				'wpss_service_limit_error_message',
+				__( 'You have reached your service limit. Please upgrade your plan.', 'wp-sell-services' )
+			);
+
 			return new WP_Error(
 				'rest_forbidden',
-				__( 'You have reached your service limit. Please upgrade your plan.', 'wp-sell-services' ),
+				$error_message,
 				array( 'status' => 403 )
 			);
 		}
