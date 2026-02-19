@@ -1,14 +1,14 @@
 # WP Sell Services - Transform WordPress Into a Service Marketplace
 
-**Launch a Fiverr-style marketplace where vendors sell services and you earn commission on every transaction.**
+**The only WordPress marketplace plugin with built-in Stripe + PayPal checkout, multi-criteria reviews, and 20 REST API controllers. No WooCommerce required. No theme lock-in. Free.**
 
 ---
 
 ## Build Your Own Service Marketplace in Minutes
 
-WP Sell Services gives you everything you need to run a professional service marketplace. Freelancers list their services with tiered pricing, buyers place orders through a complete workflow, and you manage the platform while earning commission.
+WP Sell Services gives you everything you need to run a professional service marketplace. Freelancers list their services with tiered pricing, buyers place orders through a complete 11-status workflow, and you manage the platform while earning commission.
 
-No expensive custom development. No complicated setup. Just install, configure, and launch.
+No WooCommerce. No specific theme required. No expensive custom development. Just install on your existing WordPress site, configure, and launch.
 
 ### What You Can Build
 
@@ -27,7 +27,7 @@ No expensive custom development. No complicated setup. Just install, configure, 
 Vendors use a 6-step wizard to build detailed service pages with three pricing tiers (Basic, Standard, Premium), image galleries, videos, FAQs, and custom requirements from buyers.
 
 ### 2. Buyers Browse and Order
-Buyers search services by category, compare vendor ratings and reviews, select a pricing package with optional add-ons, and checkout through WooCommerce.
+Buyers search services by category, compare vendor ratings and reviews, select a pricing package with optional add-ons, and checkout with Stripe, PayPal, or offline payment - all built into the plugin.
 
 ### 3. Order Workflow Runs Automatically
 Requirements get collected, vendors deliver work with file attachments, buyers request revisions if needed, and orders auto-complete after approval or 3 days.
@@ -90,11 +90,12 @@ Set a global commission rate (0-50%) or custom rates per vendor. When orders com
 - **Minimum Thresholds** - Set minimum withdrawal amounts and clearance periods
 
 ### Payment Processing
-- **WooCommerce Integration** - Seamless checkout through WooCommerce
-- **All WooCommerce Gateways** - Stripe, PayPal, Square, and hundreds more
-- **HPOS Compatible** - Works with High Performance Order Storage
+- **Built-in Standalone Checkout** - No WooCommerce or any e-commerce plugin required
+- **Stripe Direct** - Credit cards, Apple Pay, Google Pay with 3D Secure
+- **PayPal Direct** - PayPal Commerce Platform integration
+- **Offline Payments** - Bank transfer, cash, with proof upload
 - **Currency Support** - 10 currencies (USD, EUR, GBP, AUD, CAD, INR, JPY, BRL, MXN, ZAR)
-- **Tax Configuration** - Standard WooCommerce tax settings apply
+- **Tax Configuration** - Built-in tax settings
 
 ### Frontend Display
 - **Service Archive** - Category and tag filtering with search
@@ -121,6 +122,76 @@ Set a global commission rate (0-50%) or custom rates per vendor. When orders com
 
 ---
 
+## Why WP Sell Services Over Alternatives?
+
+Most WordPress marketplace solutions force compromises: require WooCommerce, lock you into a theme, charge for basic features, or lack developer tools. WP Sell Services is different.
+
+### vs Taskbot ($69)
+
+| Feature | WP Sell Services (Free) | Taskbot ($69) |
+|---------|------------------------|---------------|
+| WooCommerce required | No | Yes |
+| Order statuses | 11 | ~6 |
+| Seller levels | 4 tiers (automatic) | None |
+| Multi-criteria reviews | Yes | No |
+| REST API controllers | 20 + batch endpoint | Mobile-only |
+| Gutenberg blocks | 6 | None |
+| Requirements collection | Yes | No |
+| Per-vendor commission | Yes | No |
+
+### vs Workreap ($69)
+
+| Feature | WP Sell Services (Free) | Workreap ($69) |
+|---------|------------------------|----------------|
+| Works with any theme | Yes (plugin) | No (IS the theme) |
+| WooCommerce required | No | Yes |
+| Seller levels | 4 tiers (free) | $29 addon |
+| Multi-criteria reviews | Yes | No |
+| REST API controllers | 20 | Mobile-only |
+| Gutenberg blocks | 6 | None |
+| Vacation mode | Yes | No |
+| JSON-LD SEO | Yes | No |
+
+### vs HivePress + TaskHive ($89+)
+
+| Feature | WP Sell Services (Free) | HivePress ($89-$254) |
+|---------|------------------------|----------------------|
+| WooCommerce required | No | Yes |
+| Order statuses | 11 | ~4 |
+| Seller levels | 4 tiers | None |
+| Multi-criteria reviews | Yes | No |
+| REST API controllers | 20 + batch | Limited |
+| Milestone payments | Yes | No |
+| Dispute types | 5 | Basic |
+| JSON-LD SEO | Free | $29 addon |
+
+### vs MicrojobEngine ($89-$329)
+
+| Feature | WP Sell Services (Free) | MicrojobEngine ($89-$329) |
+|---------|------------------------|---------------------------|
+| Works with any theme | Yes (plugin) | No (IS the theme) |
+| REST API | 20 controllers | None |
+| Gutenberg blocks | 6 | None |
+| Buyer requests/bidding | Yes | No |
+| Multi-criteria reviews | Yes | No |
+| Requirements collection | Yes | No |
+| Unlimited updates | Yes (WordPress.org) | 12 months only |
+| Price | Free | $89-$329 |
+
+### What no competitor offers
+
+These features exist only in WP Sell Services:
+
+- **Multi-criteria reviews** - Separate ratings for communication, quality, and delivery
+- **20 REST API controllers + batch endpoint** - Build mobile apps or custom frontends
+- **Requirements collection** - Structured forms before work begins
+- **11 order statuses** - Most complete workflow available
+- **Plugin + no WC dependency** - Works with any theme, no WooCommerce overhead
+- **Deadline extension requests** - Vendors and buyers negotiate delivery changes
+- **Commission-free tipping** - Buyers reward exceptional work
+
+---
+
 ## Technical Specifications
 
 ### Requirements
@@ -129,11 +200,11 @@ Set a global commission rate (0-50%) or custom rates per vendor. When orders com
 | WordPress | 6.4 or higher |
 | PHP | 8.1 or higher |
 | MySQL | 5.7 or higher |
-| WooCommerce | 8.0 or higher (required for checkout) |
+| WooCommerce | Not required (optional via Pro) |
 
 ### Database Architecture
 - **17 Custom Tables** - Optimized performance without post meta bloat
-- **HPOS Compatible** - Works with WooCommerce's new order storage
+- **Purpose-Built Schema** - Not dependent on WooCommerce or custom post types for orders
 - **Indexes on Key Fields** - Fast queries even with thousands of orders
 
 ### Security
@@ -204,22 +275,23 @@ Offer marketplace builds as a service. WP Sell Services gives you the foundation
 **Free** - Download from WordPress.org
 
 Everything you need to run a professional service marketplace:
-- Complete order workflow
+- Built-in standalone checkout (Stripe, PayPal, Offline)
+- Complete order workflow with 11 statuses
 - Commission system with per-vendor rates
-- WooCommerce integration
-- 20 REST API controllers
+- 20 REST API controllers + batch endpoint
 - 6 Gutenberg blocks
 - 100+ hooks and filters
+- No WooCommerce required
 - No transaction fees from us
 
 **Pro Version Available** - Unlock advanced features:
-- Run without WooCommerce (Standalone mode)
-- Easy Digital Downloads, FluentCart, SureCart support
-- Direct Stripe, PayPal, Razorpay payment gateways
+- WooCommerce, Easy Digital Downloads, FluentCart, SureCart adapters
+- Razorpay payment gateway
 - Wallet integrations (TeraWallet, WooWallet, MyCred)
 - Advanced analytics dashboards with data export
 - Cloud storage (Amazon S3, Google Cloud, DigitalOcean Spaces)
-- Unlimited service creation limits
+- Tiered commission, vendor subscriptions, recurring services
+- White-label branding
 - Priority support
 
 [Learn About Pro Features](#)
@@ -229,7 +301,7 @@ Everything you need to run a professional service marketplace:
 ## Frequently Asked Questions
 
 ### Is WooCommerce required?
-No. WP Sell Services works independently without WooCommerce. Your marketplace is fully functional for service listings, vendor management, order workflow, messaging, reviews, and dispute resolution. When WooCommerce is active, the plugin automatically enables checkout and payment processing with access to hundreds of payment gateways. The Pro version adds more options including Standalone mode with direct Stripe/PayPal/Razorpay integration.
+No. WP Sell Services includes a complete built-in checkout system with Stripe, PayPal, and offline payment gateways. No WooCommerce or any other e-commerce plugin is needed. Your marketplace is fully functional out of the box for service listings, vendor management, order workflow, payments, messaging, reviews, and dispute resolution. The Pro version optionally adds WooCommerce, EDD, FluentCart, and SureCart adapters if you prefer to use an existing e-commerce setup.
 
 ### Can I run a multi-vendor marketplace?
 Yes. Any registered WordPress user can apply to become a vendor. You control vendor approval, set commission rates (global or per-vendor), moderate services, and oversee the entire marketplace.
@@ -238,7 +310,7 @@ Yes. Any registered WordPress user can apply to become a vendor. You control ven
 Set a global commission percentage (0-50%) in settings. When an order completes, commission is automatically calculated and split. Vendors see their available balance and request withdrawals. You can also set custom commission rates for individual vendors.
 
 ### What payment gateways are supported?
-All WooCommerce payment gateways work automatically, including Stripe, PayPal, Square, bank transfer, and hundreds more through WooCommerce extensions. The Pro version adds direct integrations for Stripe, PayPal, Razorpay, and offline payments when using Standalone mode.
+The free version includes three built-in payment gateways: Stripe (credit cards, Apple Pay, Google Pay with 3D Secure), PayPal (PayPal Commerce Platform), and Offline payments (bank transfer, cash with proof upload). The Pro version adds Razorpay and optionally connects to WooCommerce, EDD, FluentCart, or SureCart for access to their payment gateway ecosystems.
 
 ### Can buyers post job requests?
 Yes. Buyers can post project requests with budget range, description, and deadline. Vendors browse these requests and submit custom proposals with pricing and delivery time. Buyers review proposals and accept the one they prefer.
@@ -263,10 +335,10 @@ Four levels: New Seller (default), Level 1 Seller (5+ orders, 4.0+ rating), Leve
 ## Get Started
 
 ### Installation
-1. Install and activate WooCommerce
-2. Install WP Sell Services from WordPress.org
-3. Go to **WP Sell Services > Settings**
-4. Configure commission rates and create marketplace pages
+1. Install WP Sell Services from WordPress.org
+2. Go to **WP Sell Services > Settings**
+3. Configure your payment gateway (Stripe, PayPal, or Offline)
+4. Set commission rates and create marketplace pages
 5. Create service categories
 6. Enable vendor registration or manually create vendor accounts
 7. Launch your marketplace
