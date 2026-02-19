@@ -82,8 +82,12 @@ class NotificationService {
 		// Invalidate unread count cache.
 		$this->invalidate_unread_cache( $user_id );
 
-		// Send email notification if enabled and WooCommerce isn't handling it.
-		if ( $this->should_send_email( $user_id, $type ) && ! $this->is_wc_handling_email( $type ) ) {
+		// Send email notification if enabled and neither WooCommerce nor
+		// the branded EmailService is handling this type already.
+		if ( $this->should_send_email( $user_id, $type )
+			&& ! $this->is_wc_handling_email( $type )
+			&& ! $this->is_email_service_handling( $type )
+		) {
 			$this->send_email( $user_id, $title, $message, $data );
 		}
 
@@ -1316,5 +1320,72 @@ class NotificationService {
 		$wc_emails = WC()->mailer()->get_emails();
 
 		return isset( $wc_emails[ $class_key ] );
+	}
+
+	/**
+	 * Check if EmailService is handling branded emails for this notification type.
+	 *
+	 * EmailService sends branded HTML emails for order lifecycle events.
+	 * When it is active, NotificationService should only create the in-app
+	 * notification and skip its own simpler email to avoid duplicates.
+	 *
+	 * @since 1.2.2
+	 *
+	 * @param string $type Notification type.
+	 * @return bool True if EmailService covers this type.
+	 */
+	private function is_email_service_handling( string $type ): bool {
+		// EmailService hooks into wpss_order_status_changed at priority 20.
+		// If it is not hooked, it is not active — allow NotificationService emails.
+		if ( ! has_action( 'wpss_order_status_changed', array( 'WPSellServices\Services\EmailService', 'handle_status_change' ) ) ) {
+			// EmailService registers an instance method, so check by inspecting all callbacks.
+			global $wp_filter;
+
+			$is_email_service_active = false;
+
+			if ( isset( $wp_filter['wpss_order_status_changed'] ) ) {
+				foreach ( $wp_filter['wpss_order_status_changed']->callbacks as $priority => $callbacks ) {
+					foreach ( $callbacks as $callback ) {
+						if ( is_array( $callback['function'] )
+							&& is_object( $callback['function'][0] )
+							&& $callback['function'][0] instanceof EmailService
+						) {
+							$is_email_service_active = true;
+							break 2;
+						}
+					}
+				}
+			}
+
+			if ( ! $is_email_service_active ) {
+				return false;
+			}
+		}
+
+		// Notification types that EmailService covers with branded templates.
+		$covered_types = array(
+			// Order status change types (EmailService::handle_status_change).
+			self::TYPE_ORDER_CREATED,
+			'new_order',
+			'order_created',
+			'order_confirmation',
+			'order_started',
+			'order_in_progress',
+			'order_completed',
+			'order_completed_vendor',
+			'order_auto_completed',
+			'order_cancelled',
+			self::TYPE_REVISION_REQUESTED,
+			'revision_requested',
+			self::TYPE_DISPUTE_OPENED,
+			'dispute_opened',
+			// Specific event types (EmailService hooks dedicated actions).
+			'submit_requirements',
+			self::TYPE_DELIVERY_SUBMITTED,
+			'delivery_received',
+			self::TYPE_NEW_MESSAGE,
+		);
+
+		return in_array( $type, $covered_types, true );
 	}
 }

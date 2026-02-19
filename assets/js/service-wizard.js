@@ -544,6 +544,8 @@ function wpssServiceWizard(existingData = {}) {
 				return;
 			}
 
+			this.publishing = true;
+
 			// Validate all required fields
 			this.validationErrors = [];
 
@@ -564,10 +566,9 @@ function wpssServiceWizard(existingData = {}) {
 			}
 
 			if (this.validationErrors.length > 0) {
+				this.publishing = false;
 				return;
 			}
-
-			this.publishing = true;
 
 			try {
 				const serviceId = parseInt(document.getElementById('wpss-service-wizard').dataset.serviceId, 10) || 0;
