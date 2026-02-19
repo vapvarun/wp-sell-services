@@ -213,6 +213,11 @@ class Activator {
 		if ( false === get_option( 'wpss_activated_at' ) ) {
 			add_option( 'wpss_activated_at', time() );
 		}
+
+		// Redirect to setup wizard on first activation.
+		if ( false === get_option( 'wpss_setup_wizard_completed' ) ) {
+			set_transient( 'wpss_activation_redirect', true, 30 );
+		}
 	}
 
 	/**

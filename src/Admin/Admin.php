@@ -17,6 +17,7 @@ use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
+use WPSellServices\Admin\Pages\SetupWizardPage;
 use WPSellServices\Admin\Pages\UpgradePage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
@@ -66,6 +67,13 @@ class Admin {
 	private WithdrawalsPage $withdrawals_page;
 
 	/**
+	 * Setup wizard page instance.
+	 *
+	 * @var SetupWizardPage
+	 */
+	private SetupWizardPage $setup_wizard_page;
+
+	/**
 	 * Upgrade page instance (only when Pro is not active).
 	 *
 	 * @var UpgradePage|null
@@ -76,11 +84,12 @@ class Admin {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->settings          = new Settings();
-		$this->manual_order_page = new ManualOrderPage();
-		$this->vendors_page      = new VendorsPage();
-		$this->moderation_page   = new ServiceModerationPage();
-		$this->withdrawals_page  = new WithdrawalsPage();
+		$this->settings            = new Settings();
+		$this->manual_order_page   = new ManualOrderPage();
+		$this->vendors_page        = new VendorsPage();
+		$this->moderation_page     = new ServiceModerationPage();
+		$this->withdrawals_page    = new WithdrawalsPage();
+		$this->setup_wizard_page   = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
 			$this->upgrade_page = new UpgradePage();
@@ -255,6 +264,7 @@ class Admin {
 		$this->vendors_page->init();
 		$this->moderation_page->init();
 		$this->withdrawals_page->init();
+		$this->setup_wizard_page->init();
 
 		if ( $this->upgrade_page ) {
 			$this->upgrade_page->init();
@@ -655,6 +665,7 @@ class Admin {
 			'sell-services_page_wpss-disputes',
 			'sell-services_page_wpss-settings',
 			'admin_page_wpss-create-order',
+			'admin_page_wpss-setup-wizard',
 			'sell-services_page_wpss-upgrade',
 		);
 

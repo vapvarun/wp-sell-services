@@ -1388,6 +1388,13 @@ class Settings {
 					'collapsed'   => true,
 					'callback'    => array( $this, 'render_demo_content_section' ),
 				),
+				array(
+					'id'          => 'setup-wizard',
+					'title'       => __( 'Setup Wizard', 'wp-sell-services' ),
+					'description' => __( 'Re-run the setup wizard to reconfigure your marketplace settings.', 'wp-sell-services' ),
+					'collapsed'   => true,
+					'callback'    => array( $this, 'render_setup_wizard_section' ),
+				),
 			)
 		);
 
@@ -1781,6 +1788,42 @@ class Settings {
 			<?php endif; ?>
 
 			<span class="wpss-demo-status" style="margin-left: 10px; display: none;"></span>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render setup wizard re-run section.
+	 *
+	 * Used as a callback in render_advanced_tab()'s section definition.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @return void
+	 */
+	public function render_setup_wizard_section(): void {
+		$completed = get_option( 'wpss_setup_wizard_completed', false );
+		$wizard_url = admin_url( 'admin.php?page=wpss-setup-wizard' );
+		?>
+		<div style="margin-top: 15px;">
+			<?php if ( $completed ) : ?>
+				<p style="margin-bottom: 10px;">
+					<?php
+					printf(
+						/* translators: %s: completion date */
+						esc_html__( 'Setup wizard was completed on %s.', 'wp-sell-services' ),
+						esc_html( wp_date( get_option( 'date_format' ), (int) $completed ) )
+					);
+					?>
+				</p>
+			<?php else : ?>
+				<p style="margin-bottom: 10px;">
+					<?php esc_html_e( 'The setup wizard has not been completed yet.', 'wp-sell-services' ); ?>
+				</p>
+			<?php endif; ?>
+			<a href="<?php echo esc_url( $wizard_url ); ?>" class="button button-secondary">
+				<?php echo $completed ? esc_html__( 'Re-Run Setup Wizard', 'wp-sell-services' ) : esc_html__( 'Run Setup Wizard', 'wp-sell-services' ); ?>
+			</a>
 		</div>
 		<?php
 	}
