@@ -257,13 +257,13 @@
           "order": 2
         },
         {
-          "title": "Standalone Marketplace Mode [PRO]",
+          "title": "Standalone Marketplace Mode",
           "slug": "standalone-mode-wpss",
           "file": "payments-checkout/standalone-mode.md",
           "order": 3
         },
         {
-          "title": "Stripe Direct Payments [PRO]",
+          "title": "Stripe Direct Payments",
           "slug": "stripe-payments-wpss",
           "file": "payments-checkout/stripe-payments.md",
           "order": 4

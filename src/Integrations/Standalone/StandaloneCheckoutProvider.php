@@ -21,9 +21,9 @@ use WPSellServices\Models\ServiceOrder;
 class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 	/**
-	 * Session key for cart data.
+	 * User meta key for cart data.
 	 */
-	private const CART_SESSION_KEY = 'wpss_cart';
+	private const CART_META_KEY = '_wpss_cart';
 
 	/**
 	 * Add service-specific data to cart item.
@@ -406,28 +406,32 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	}
 
 	/**
-	 * Get cart data.
+	 * Get cart data from user meta.
 	 *
 	 * @return array
 	 */
 	private function get_cart(): array {
-		if ( ! session_id() ) {
-			session_start();
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return array();
 		}
 
-		return $_SESSION[ self::CART_SESSION_KEY ] ?? [];
+		$cart = get_user_meta( $user_id, self::CART_META_KEY, true );
+
+		return is_array( $cart ) ? $cart : array();
 	}
 
 	/**
-	 * Clear cart.
+	 * Clear cart from user meta.
 	 *
 	 * @return void
 	 */
 	private function clear_cart(): void {
-		if ( ! session_id() ) {
-			session_start();
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return;
 		}
 
-		unset( $_SESSION[ self::CART_SESSION_KEY ] );
+		delete_user_meta( $user_id, self::CART_META_KEY );
 	}
 }

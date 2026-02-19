@@ -20,15 +20,14 @@ WP Sell Services is a Fiverr-style service marketplace plugin for WordPress. It 
 
 ### Do I need WooCommerce?
 
-**Free Version:** Yes, WooCommerce 6.0+ is required for cart and checkout.
+**No.** The free version includes a built-in standalone checkout with Stripe, PayPal, and Offline payment gateways. No WooCommerce or any other e-commerce plugin is required.
 
-**Pro Version (planned):** Will support alternative e-commerce platforms and standalone payment processing.
+**Pro Version:** Adds WooCommerce, EDD, FluentCart, and SureCart as alternative e-commerce platform adapters.
 
 ### What are the minimum requirements?
 
 - WordPress 6.0 or higher
 - PHP 8.0 or higher (PHP 8.1+ recommended)
-- WooCommerce 6.0 or higher
 - MySQL 5.7 or higher / MariaDB 10.2 or higher
 
 ### Is it multisite compatible?

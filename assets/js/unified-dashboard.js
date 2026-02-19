@@ -40,6 +40,19 @@
 
 			// Delete service
 			$(document).on('click', '.wpss-delete-service', this.handleDeleteService.bind(this));
+
+			// Avatar upload
+			$(document).on('click', '#wpss-avatar-upload-btn', this.handleAvatarUpload.bind(this));
+			$(document).on('click', '#wpss-avatar-remove-btn', this.handleAvatarRemove.bind(this));
+
+			// Portfolio
+			$(document).on('click', '#wpss-portfolio-add-btn', this.handlePortfolioAdd.bind(this));
+			$(document).on('click', '.wpss-portfolio-edit', this.handlePortfolioEdit.bind(this));
+			$(document).on('click', '.wpss-portfolio-delete', this.handlePortfolioDelete.bind(this));
+			$(document).on('click', '.wpss-portfolio-toggle-featured', this.handlePortfolioToggleFeatured.bind(this));
+			$(document).on('submit', '#wpss-portfolio-form', this.handlePortfolioSave.bind(this));
+			$(document).on('click', '#wpss-portfolio-upload-media', this.handlePortfolioMediaUpload.bind(this));
+			$(document).on('click', '.wpss-modal__close, .wpss-modal__close-btn, .wpss-modal__overlay', this.handleModalClose.bind(this));
 		},
 
 		/**
@@ -246,6 +259,262 @@
 					}
 				});
 			}, { confirmText: 'Delete' });
+		},
+
+		/**
+		 * Handle avatar upload via WP media library.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleAvatarUpload: function (e) {
+			e.preventDefault();
+
+			if (this.avatarFrame) {
+				this.avatarFrame.open();
+				return;
+			}
+
+			this.avatarFrame = wp.media({
+				title: 'Choose Profile Photo',
+				button: { text: 'Use as Profile Photo' },
+				multiple: false,
+				library: { type: 'image' }
+			});
+
+			this.avatarFrame.on('select', function () {
+				var attachment = this.avatarFrame.state().get('selection').first().toJSON();
+				var url = attachment.sizes && attachment.sizes.thumbnail
+					? attachment.sizes.thumbnail.url
+					: attachment.url;
+
+				$('#wpss-avatar-preview').attr('src', url);
+				$('#wpss-avatar-id').val(attachment.id);
+
+				// Show remove button if not already visible.
+				if ($('#wpss-avatar-remove-btn').length === 0) {
+					$('#wpss-avatar-upload-btn').after(
+						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-avatar-remove-btn">Remove</button>'
+					);
+				}
+			}.bind(this));
+
+			this.avatarFrame.open();
+		},
+
+		/**
+		 * Handle avatar removal.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleAvatarRemove: function (e) {
+			e.preventDefault();
+
+			$('#wpss-avatar-id').val('0');
+			// Fall back to Gravatar.
+			var $img = $('#wpss-avatar-preview');
+			var gravatarUrl = $img.data('gravatar') || '';
+			if (gravatarUrl) {
+				$img.attr('src', gravatarUrl);
+			}
+			$(e.currentTarget).remove();
+		},
+
+		/**
+		 * Open portfolio modal for adding.
+		 */
+		handlePortfolioAdd: function (e) {
+			e.preventDefault();
+			this.resetPortfolioForm();
+			$('#wpss-portfolio-modal-title').text('Add Portfolio Item');
+			$('#wpss-portfolio-modal').show();
+		},
+
+		/**
+		 * Open portfolio modal for editing.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handlePortfolioEdit: function (e) {
+			e.preventDefault();
+			var $item = $(e.currentTarget).closest('.wpss-portfolio__item');
+			var itemId = $item.data('item-id');
+
+			this.resetPortfolioForm();
+			$('#wpss-portfolio-modal-title').text('Edit Portfolio Item');
+			$('#wpss-portfolio-item-id').val(itemId);
+
+			// Populate form from item data (title from DOM).
+			var title = $item.find('.wpss-portfolio__title').text();
+			var desc = $item.find('.wpss-portfolio__desc').text();
+			$('#portfolio-title').val(title);
+			$('#portfolio-description').val(desc);
+
+			$('#wpss-portfolio-modal').show();
+		},
+
+		/**
+		 * Handle portfolio delete.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handlePortfolioDelete: function (e) {
+			e.preventDefault();
+			var $btn = $(e.currentTarget);
+			var itemId = $btn.data('item-id');
+
+			if (!confirm('Are you sure you want to delete this portfolio item?')) {
+				return;
+			}
+
+			$btn.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_delete_portfolio_item',
+					portfolio_nonce: $('#wpss-portfolio-form [name="portfolio_nonce"]').val() || $('[name="portfolio_nonce"]').val(),
+					item_id: itemId
+				},
+				success: function (response) {
+					if (response.success) {
+						$btn.closest('.wpss-portfolio__item').fadeOut(300, function () {
+							$(this).remove();
+						});
+					} else {
+						WPSS.showNotification(response.data.message || 'Delete failed.', 'error');
+						$btn.prop('disabled', false);
+					}
+				},
+				error: function () {
+					WPSS.showNotification('An error occurred.', 'error');
+					$btn.prop('disabled', false);
+				}
+			});
+		},
+
+		/**
+		 * Handle portfolio toggle featured.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handlePortfolioToggleFeatured: function (e) {
+			e.preventDefault();
+			var $btn = $(e.currentTarget);
+			var itemId = $btn.data('item-id');
+
+			$btn.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_toggle_featured_portfolio',
+					portfolio_nonce: $('[name="portfolio_nonce"]').val(),
+					item_id: itemId
+				},
+				success: function (response) {
+					if (response.success) {
+						window.location.reload();
+					} else {
+						WPSS.showNotification(response.data.message || 'Failed.', 'error');
+						$btn.prop('disabled', false);
+					}
+				},
+				error: function () {
+					WPSS.showNotification('An error occurred.', 'error');
+					$btn.prop('disabled', false);
+				}
+			});
+		},
+
+		/**
+		 * Handle portfolio form save.
+		 *
+		 * @param {Event} e Submit event.
+		 */
+		handlePortfolioSave: function (e) {
+			e.preventDefault();
+			var $form = $(e.currentTarget);
+			var $btn = $form.find('button[type="submit"]');
+			var originalText = $btn.text();
+
+			$btn.prop('disabled', true).text(wpssUnifiedDashboard.i18n.processing);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.ajaxUrl,
+				type: 'POST',
+				data: $form.serialize() + '&action=wpss_add_portfolio_item',
+				success: function (response) {
+					if (response.success) {
+						$('#wpss-portfolio-modal').hide();
+						window.location.reload();
+					} else {
+						WPSS.showNotification(response.data.message || 'Save failed.', 'error');
+						$btn.prop('disabled', false).text(originalText);
+					}
+				},
+				error: function () {
+					WPSS.showNotification('An error occurred.', 'error');
+					$btn.prop('disabled', false).text(originalText);
+				}
+			});
+		},
+
+		/**
+		 * Handle portfolio media upload.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handlePortfolioMediaUpload: function (e) {
+			e.preventDefault();
+
+			if (this.portfolioMediaFrame) {
+				this.portfolioMediaFrame.open();
+				return;
+			}
+
+			this.portfolioMediaFrame = wp.media({
+				title: 'Select Portfolio Images',
+				button: { text: 'Add to Portfolio' },
+				multiple: true,
+				library: { type: 'image' }
+			});
+
+			this.portfolioMediaFrame.on('select', function () {
+				var attachments = this.portfolioMediaFrame.state().get('selection').toJSON();
+				var ids = attachments.map(function (a) { return a.id; });
+				var $preview = $('#wpss-portfolio-media-preview');
+
+				$preview.empty();
+				attachments.forEach(function (att) {
+					var url = att.sizes && att.sizes.thumbnail ? att.sizes.thumbnail.url : att.url;
+					$preview.append('<img src="' + url + '" class="wpss-portfolio-media-thumb">');
+				});
+				$('#wpss-portfolio-media').val(JSON.stringify(ids));
+			}.bind(this));
+
+			this.portfolioMediaFrame.open();
+		},
+
+		/**
+		 * Close modal.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleModalClose: function (e) {
+			e.preventDefault();
+			$(e.currentTarget).closest('.wpss-modal').hide();
+		},
+
+		/**
+		 * Reset portfolio form to defaults.
+		 */
+		resetPortfolioForm: function () {
+			$('#wpss-portfolio-form')[0].reset();
+			$('#wpss-portfolio-item-id').val('0');
+			$('#wpss-portfolio-media').val('[]');
+			$('#wpss-portfolio-media-preview').empty();
 		}
 	};
 

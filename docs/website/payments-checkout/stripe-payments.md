@@ -1,18 +1,18 @@
-# Stripe Payments **[PRO]**
+# Stripe Payments
 
 Stripe provides direct payment processing for Standalone mode marketplaces, supporting cards, Apple Pay, Google Pay, and more.
 
 ## Overview
 
-**Important:** Stripe direct integration is only available in **Standalone Mode** with WP Sell Services Pro.
+Stripe direct integration is included in the **free version** of WP Sell Services and works with the built-in standalone checkout.
 
-- For WooCommerce mode, use WooCommerce Stripe extensions
-- For EDD mode, use EDD Stripe gateway
-- For standalone mode, use this built-in integration
+- For WooCommerce mode **[PRO]**, use WooCommerce Stripe extensions
+- For EDD mode **[PRO]**, use EDD Stripe gateway
+- For standalone mode (free), use this built-in integration
 
 ## Requirements
 
-- WP Sell Services Pro
+- WP Sell Services (free version)
 - Standalone mode enabled
 - Stripe account (free to create)
 - SSL certificate (HTTPS required)

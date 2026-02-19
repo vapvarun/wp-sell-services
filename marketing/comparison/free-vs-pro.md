@@ -7,10 +7,10 @@ Complete breakdown of what's included in the free version versus Pro upgrade.
 ## Quick Summary
 
 **Free Version:**
-Complete, production-ready marketplace with service management, order workflow, vendor system, reviews, disputes, buyer requests, commission system, and WooCommerce integration. Everything needed to launch and run a professional service marketplace.
+Complete, production-ready marketplace with service management, order workflow, vendor system, reviews, disputes, buyer requests, commission system, and built-in standalone checkout with Stripe, PayPal, and Offline payment gateways. Everything needed to launch and run a professional service marketplace — **no WooCommerce required.**
 
 **Pro Version:**
-Everything in Free, plus unlimited service creation limits, four additional e-commerce platforms (EDD, Fluent Cart, SureCart, Standalone), direct payment gateways (Stripe, PayPal, Razorpay), wallet integrations, advanced analytics dashboards with data export, cloud storage providers, and REST API extensions.
+Everything in Free, plus unlimited service creation limits, four additional e-commerce platforms (WooCommerce, EDD, Fluent Cart, SureCart), Razorpay gateway, wallet integrations, advanced analytics dashboards with data export, cloud storage providers, and REST API extensions.
 
 ---
 
@@ -19,8 +19,8 @@ Everything in Free, plus unlimited service creation limits, four additional e-co
 | Feature Category | Free | Pro |
 |-----------------|------|-----|
 | **Marketplace Core** | Complete platform | Same |
-| **E-commerce Platform** | WooCommerce (optional) | +4 alternatives |
-| **Payment Processing** | Via WooCommerce (when active) | Direct gateways |
+| **E-commerce Platform** | Standalone (built-in checkout) | +4 alternatives (WC, EDD, FC, SC) |
+| **Payment Processing** | Stripe, PayPal, Offline | +Razorpay |
 | **Service Creation** | Conservative limits | Unlimited |
 | **Commission System** | Global + per-vendor | Same |
 | **Analytics** | Basic stats | Advanced dashboards |
@@ -154,29 +154,27 @@ Choose how you handle checkout and payments.
 
 | Platform | Free | Pro |
 |----------|------|-----|
-| **WooCommerce** | Included | Included |
+| **Standalone Mode** | Included (default) | Included |
+| **WooCommerce** | -- | **PRO** |
 | **Easy Digital Downloads** | -- | **PRO** |
 | **Fluent Cart** | -- | **PRO** |
 | **SureCart** | -- | **PRO** |
-| **Standalone Mode** | -- | **PRO** |
 
-### Free Version: WooCommerce Only
+### Free Version: Standalone Checkout
 
-WooCommerce handles checkout and payment processing. Service orders flow through WooCommerce cart and checkout. All WooCommerce-compatible payment gateways work automatically.
+Built-in checkout system with direct payment gateway integration. **No WooCommerce or any other e-commerce plugin required.** Service orders flow through the plugin's own cart and checkout page with Stripe, PayPal, and Offline payment support.
 
-**Advantages:** Mature e-commerce platform with hundreds of available payment gateway extensions.
+**Advantages:** Lightweight, zero external dependencies, works on any WordPress site immediately.
 
-**Requirement:** Must have WooCommerce installed and active.
+### Pro Version: Four E-Commerce Platform Alternatives
 
-### Pro Version: Four Alternatives
+**WooCommerce** - Mature e-commerce platform with hundreds of payment gateway extensions. Service orders flow through WooCommerce cart and checkout.
 
 **Easy Digital Downloads** - Lightweight digital commerce platform designed for digital products. Lower overhead than WooCommerce.
 
 **Fluent Cart** - Modern checkout experience with conversion optimization built in.
 
 **SureCart** - Cloud-hosted checkout with built-in PCI compliance.
-
-**Standalone Mode** - No external e-commerce plugin required. Built-in checkout system with direct payment gateway integration.
 
 **Platform Selection:** Choose in Settings > General > E-Commerce Platform. "Auto-detect" mode selects the first active platform automatically.
 
@@ -188,26 +186,25 @@ How money flows from buyers to platform to vendors.
 
 | Gateway | Free | Pro |
 |---------|------|-----|
-| **All WooCommerce Gateways** | Works automatically | Works automatically |
-| **Stripe Direct Integration** | Via WooCommerce | **PRO** Standalone mode |
-| **PayPal Direct Integration** | Via WooCommerce | **PRO** Standalone mode |
-| **Razorpay Direct Integration** | Via WooCommerce | **PRO** Standalone mode |
-| **Offline Payments** | Via WooCommerce | **PRO** With proof upload |
+| **Stripe Direct Integration** | Included | Included |
+| **PayPal Direct Integration** | Included | Included |
+| **Offline Payments** | Included (with proof upload) | Included |
+| **Razorpay Direct Integration** | -- | **PRO** |
+| **All WooCommerce Gateways** | -- | **PRO** (via WC adapter) |
 
 ### Free Version
 
-All payment processing happens through WooCommerce. Any WooCommerce gateway (Stripe, PayPal, Square, bank transfer) works automatically with WP Sell Services.
-
-### Pro Version
-
-Direct payment gateway classes work independently of WooCommerce, primarily useful in Standalone mode:
+Three payment gateways ship with the free plugin, working with the built-in standalone checkout:
 
 - **StripeGateway** - Direct Stripe API integration with 3D Secure support
 - **PayPalGateway** - PayPal Commerce Platform integration
-- **RazorpayGateway** - Popular in India and Southeast Asia
 - **OfflineGateway** - Bank transfer, cash, manual payments with proof upload
 
 Each gateway manages its own settings tab, sandbox/live mode, and webhook handling.
+
+### Pro Version
+
+Adds Razorpay gateway (popular in India and Southeast Asia) and access to all WooCommerce-compatible payment gateways when using the WooCommerce adapter.
 
 ---
 
@@ -438,7 +435,7 @@ Everything needed for a production marketplace:
 - Clearance period configuration
 
 **Technical:**
-- WooCommerce integration
+- Standalone checkout with Stripe, PayPal, Offline gateways
 - 6 Gutenberg blocks
 - 16 shortcodes
 - 20 REST API controllers
@@ -448,7 +445,7 @@ Everything needed for a production marketplace:
 - WP-CLI commands
 - SEO optimization
 
-**Best For:** New marketplaces, WooCommerce-based sites, projects where service creation limits (4 gallery images, 3 add-ons, 5 FAQs, 1 video) are sufficient.
+**Best For:** New marketplaces, lightweight sites that don't need WooCommerce, projects where service creation limits (4 gallery images, 3 add-ons, 5 FAQs, 1 video) are sufficient.
 
 ---
 
@@ -464,16 +461,13 @@ Premium features for growing marketplaces:
 - Unlimited requirements (free: 5)
 
 **E-commerce Flexibility:**
+- WooCommerce adapter (access hundreds of WC gateways)
 - Easy Digital Downloads adapter
 - Fluent Cart adapter
 - SureCart adapter
-- Standalone mode (no e-commerce plugin needed)
 
-**Direct Payment Gateways:**
-- Stripe direct integration
-- PayPal direct integration
-- Razorpay direct integration
-- Offline payments with proof upload
+**Additional Payment Gateways:**
+- Razorpay direct integration (popular in India and Southeast Asia)
 
 **Wallet Integrations:**
 - Internal Wallet system
@@ -508,7 +502,7 @@ Premium features for growing marketplaces:
 - VendorAnalyticsController
 - StorageController
 
-**Best For:** Growing marketplaces needing e-commerce platform flexibility, automated wallet payouts, detailed analytics, or vendors requiring unlimited service media and add-ons.
+**Best For:** Growing marketplaces needing WooCommerce/EDD/FluentCart/SureCart integration, Razorpay payments, automated wallet payouts, detailed analytics, or vendors requiring unlimited service media and add-ons.
 
 ---
 
@@ -538,8 +532,8 @@ No migration required. Both plugins run simultaneously - Pro extends Free throug
 **Can I upgrade from Free to Pro later?**
 Yes. Install Pro alongside Free at any time. All services, orders, vendors, and settings are preserved.
 
-**Do I need WooCommerce with Pro?**
-No. Pro includes Standalone mode that works without any e-commerce plugin. You can also use EDD, Fluent Cart, or SureCart instead.
+**Do I need WooCommerce?**
+No. The free version includes a built-in standalone checkout with Stripe, PayPal, and Offline gateways. WooCommerce is optional and available as a Pro adapter alongside EDD, Fluent Cart, and SureCart.
 
 **Is per-vendor commission a Pro feature?**
 No. Per-vendor commission rates are available in the free version.
@@ -556,14 +550,15 @@ Your site continues working with all Pro features. You won't receive updates or 
 
 **Choose Free If:**
 - Launching a new marketplace
-- Using WooCommerce for e-commerce
+- Want a lightweight setup without WooCommerce
+- Stripe + PayPal + Offline payments are sufficient
 - Service creation limits are sufficient
 - Basic analytics meet your needs
 - Local file storage works fine
 
 **Choose Pro If:**
-- Need e-commerce platform flexibility
-- Want direct payment gateway control
+- Need WooCommerce, EDD, FluentCart, or SureCart integration
+- Need Razorpay gateway
 - Require unlimited service media and add-ons
 - Need advanced analytics dashboards
 - Want automated wallet-based vendor payouts

@@ -1,23 +1,23 @@
-# Standalone Marketplace Mode **[PRO]**
+# Standalone Marketplace Mode
 
-Standalone mode operates WP Sell Services independently without WooCommerce, EDD, or any other e-commerce plugin.
+Standalone mode is the **default checkout system** in WP Sell Services Free. It operates independently without WooCommerce, EDD, or any other e-commerce plugin.
 
 ## Overview
 
 Standalone mode provides a complete marketplace system:
 
 - Built-in cart and checkout
-- Direct payment gateway integration
+- Direct payment gateway integration (Stripe, PayPal, Offline)
 - Native order management
 - Custom dashboard
 - No external dependencies
 
 ## Requirements
 
-- WP Sell Services Pro
+- WP Sell Services (free version)
 - WordPress 6.0+
 - PHP 8.0+
-- SSL certificate (HTTPS required)
+- SSL certificate (HTTPS required for Stripe/PayPal)
 
 ## Setup
 

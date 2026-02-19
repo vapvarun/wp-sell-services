@@ -151,13 +151,8 @@ class AnalyticsService {
 			)
 		);
 
-		// Clicks are not tracked separately, so we use orders as a proxy for engaged users.
-		// In a real implementation, clicks would be tracked via JavaScript events.
-		$clicks = $orders_received * 3; // Estimate: 3 clicks per order.
-
-		// Calculate rates.
-		$click_rate      = $impressions > 0 ? round( ( $clicks / $impressions ) * 100, 1 ) : 0;
-		$conversion_rate = $clicks > 0 ? round( ( $orders_received / $clicks ) * 100, 1 ) : 0;
+		// Conversion rate based on real data only: orders / impressions.
+		$conversion_rate = $impressions > 0 ? round( ( $orders_received / $impressions ) * 100, 1 ) : 0;
 
 		// Get top performing services.
 		$top_services = array();
@@ -201,9 +196,7 @@ class AnalyticsService {
 		return array(
 			'profile_views'   => $profile_views,
 			'impressions'     => $impressions,
-			'clicks'          => $clicks,
 			'orders_received' => $orders_received,
-			'click_rate'      => $click_rate,
 			'conversion_rate' => $conversion_rate,
 			'top_services'    => $top_services,
 		);

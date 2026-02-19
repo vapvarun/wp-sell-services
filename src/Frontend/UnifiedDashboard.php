@@ -74,6 +74,11 @@ class UnifiedDashboard {
 			return;
 		}
 
+		// Media library for profile avatar/portfolio uploads.
+		if ( is_user_logged_in() ) {
+			wp_enqueue_media();
+		}
+
 		wp_enqueue_style(
 			'wpss-unified-dashboard',
 			WPSS_PLUGIN_URL . 'assets/css/unified-dashboard.css',
@@ -155,7 +160,7 @@ class UnifiedDashboard {
 	 * @return bool True if accessible.
 	 */
 	private function can_access_section( string $section ): bool {
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'create' );
+		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
 		$user_id              = get_current_user_id();
 
 		if ( in_array( $section, $vendor_only_sections, true ) ) {
@@ -202,17 +207,21 @@ class UnifiedDashboard {
 			$sections['selling'] = array(
 				'label' => __( 'Selling', 'wp-sell-services' ),
 				'items' => array(
-					'services' => array(
+					'services'  => array(
 						'icon'  => 'briefcase',
 						'label' => __( 'My Services', 'wp-sell-services' ),
 					),
-					'sales'    => array(
+					'sales'     => array(
 						'icon'  => 'receipt',
 						'label' => __( 'Sales Orders', 'wp-sell-services' ),
 					),
-					'earnings' => array(
+					'earnings'  => array(
 						'icon'  => 'wallet',
 						'label' => __( 'Earnings', 'wp-sell-services' ),
+					),
+					'portfolio' => array(
+						'icon'  => 'folder',
+						'label' => __( 'Portfolio', 'wp-sell-services' ),
 					),
 				),
 			);
@@ -356,6 +365,7 @@ class UnifiedDashboard {
 			'earnings'       => __( 'Earnings', 'wp-sell-services' ),
 			'wallet'         => __( 'Wallet & Earnings', 'wp-sell-services' ),
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
+			'portfolio'      => __( 'Portfolio', 'wp-sell-services' ),
 			'messages'       => __( 'Messages', 'wp-sell-services' ),
 			'profile'        => __( 'Profile', 'wp-sell-services' ),
 			'create'         => __( 'Create Service', 'wp-sell-services' ),

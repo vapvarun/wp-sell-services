@@ -36,6 +36,28 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 		<div class="wpss-profile-form__section">
 			<h3><?php esc_html_e( 'Basic Information', 'wp-sell-services' ); ?></h3>
 
+			<?php
+			$avatar_id  = $is_vendor && $vendor_profile ? ( $vendor_profile->avatar_id ?? 0 ) : 0;
+			$avatar_url = $avatar_id ? wp_get_attachment_image_url( $avatar_id, 'thumbnail' ) : get_avatar_url( $user_id, array( 'size' => 150 ) );
+			?>
+			<div class="wpss-form-row wpss-avatar-upload">
+				<label><?php esc_html_e( 'Profile Photo', 'wp-sell-services' ); ?></label>
+				<div class="wpss-avatar-upload__preview">
+					<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php esc_attr_e( 'Profile photo', 'wp-sell-services' ); ?>" class="wpss-avatar-upload__image" id="wpss-avatar-preview" data-gravatar="<?php echo esc_url( get_avatar_url( $user_id, array( 'size' => 150 ) ) ); ?>">
+					<input type="hidden" name="avatar_id" id="wpss-avatar-id" value="<?php echo esc_attr( $avatar_id ); ?>">
+					<div class="wpss-avatar-upload__actions">
+						<button type="button" class="wpss-btn wpss-btn--small wpss-btn--secondary" id="wpss-avatar-upload-btn">
+							<?php esc_html_e( 'Upload Photo', 'wp-sell-services' ); ?>
+						</button>
+						<?php if ( $avatar_id ) : ?>
+							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-avatar-remove-btn">
+								<?php esc_html_e( 'Remove', 'wp-sell-services' ); ?>
+							</button>
+						<?php endif; ?>
+					</div>
+				</div>
+			</div>
+
 			<div class="wpss-form-row">
 				<label for="display_name"><?php esc_html_e( 'Display Name', 'wp-sell-services' ); ?></label>
 				<input type="text" id="display_name" name="display_name" value="<?php echo esc_attr( $user->display_name ); ?>" class="wpss-input" required>
@@ -76,6 +98,18 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				<div class="wpss-form-row">
 					<label for="website"><?php esc_html_e( 'Website', 'wp-sell-services' ); ?></label>
 					<input type="url" id="website" name="website" value="<?php echo esc_url( $vendor_profile->website ?? '' ); ?>" class="wpss-input" placeholder="https://">
+				</div>
+			</div>
+
+			<div class="wpss-profile-form__section">
+				<h3><?php esc_html_e( 'Availability', 'wp-sell-services' ); ?></h3>
+
+				<div class="wpss-form-row">
+					<label class="wpss-toggle">
+						<input type="checkbox" name="vacation_mode" value="1" <?php checked( $vendor_profile->is_on_vacation() ); ?>>
+						<span class="wpss-toggle__label"><?php esc_html_e( 'Vacation Mode', 'wp-sell-services' ); ?></span>
+					</label>
+					<p class="wpss-form-hint"><?php esc_html_e( 'When enabled, your services will be hidden from search and buyers cannot place new orders.', 'wp-sell-services' ); ?></p>
 				</div>
 			</div>
 		<?php endif; ?>

@@ -4,18 +4,18 @@ WP Sell Services Free provides a complete, production-ready marketplace platform
 
 ## Overview
 
-**Free Version**: A full marketplace solution including service listings, order management, requirements workflow, delivery system, reviews, messaging, disputes, buyer requests, vendor dashboards, buyer dashboards, 4 seller levels, 20 REST API controllers, 6 Gutenberg blocks, WooCommerce integration, and 8 email notification types.
+**Free Version**: A full marketplace solution including service listings, order management, requirements workflow, delivery system, reviews, messaging, disputes, buyer requests, vendor dashboards, buyer dashboards, 4 seller levels, 20 REST API controllers, 6 Gutenberg blocks, built-in standalone checkout with Stripe, PayPal, and Offline gateways, and 8 email notification types. **No WooCommerce required.**
 
-**Pro Version**: Everything in Free, plus unlimited service creation limits, 4 additional e-commerce platforms (EDD, FluentCart, SureCart, Standalone), direct payment gateways (Stripe, PayPal, Razorpay, Offline), 4 wallet provider integrations, advanced analytics with data export, cloud storage providers (S3, GCS, DigitalOcean Spaces), and 4 additional REST API controllers.
+**Pro Version**: Everything in Free, plus unlimited service creation limits, 4 additional e-commerce platforms (WooCommerce, EDD, FluentCart, SureCart), Razorpay gateway, 4 wallet provider integrations, advanced analytics with data export, cloud storage providers (S3, GCS, DigitalOcean Spaces), and 4 additional REST API controllers.
 
 ### Quick Comparison
 
 | Aspect | Free | Pro |
 |--------|------|-----|
 | **Core Marketplace** | Complete | Complete |
-| **E-commerce Platform** | WooCommerce only | WooCommerce + 4 alternatives |
+| **E-commerce Platform** | Standalone (built-in checkout) | +4 alternatives (WC, EDD, FC, SC) |
 | **Service Creation Limits** | Conservative limits | Unlimited |
-| **Payment Gateways** | Via WooCommerce | Direct Stripe, PayPal, Razorpay |
+| **Payment Gateways** | Stripe, PayPal, Offline | +Razorpay |
 | **Commission** | Global + per-vendor rates | Same (both versions support per-vendor) |
 | **Analytics** | Basic vendor stats | Advanced dashboards + export |
 | **File Storage** | Local server | Local + cloud providers |
@@ -63,25 +63,25 @@ Both versions support 3 pricing packages (Basic, Standard, Premium) per service.
 
 | Platform | Free | Pro |
 |----------|------|-----|
-| **WooCommerce** | Supported | Supported |
+| **Standalone Mode** | Included (default) | Included |
+| **WooCommerce** | -- | **[PRO]** |
 | **Easy Digital Downloads (EDD)** | -- | **[PRO]** |
 | **FluentCart** | -- | **[PRO]** |
 | **SureCart** | -- | **[PRO]** |
-| **Standalone Mode** | -- | **[PRO]** |
 
-### Free Version: WooCommerce
+### Free Version: Standalone Checkout
 
-The free version integrates with WooCommerce for checkout and payments. WP Sell Services creates a virtual carrier product during activation, and service orders are processed through the WooCommerce checkout flow. All WooCommerce-compatible payment gateways work automatically.
+The free version includes a built-in standalone checkout system with direct payment gateway integration. **No WooCommerce or any other e-commerce plugin is required.** Service orders are processed through the plugin's own cart and checkout page with Stripe, PayPal, and Offline payment support.
 
 ### Pro Version: 4 Additional Platforms **[PRO]**
+
+**WooCommerce** -- Mature e-commerce platform with hundreds of payment gateway extensions. Service orders flow through WooCommerce cart and checkout.
 
 **Easy Digital Downloads (EDD)** -- Lightweight alternative to WooCommerce, designed for digital products. Includes account, checkout, order, and product provider classes.
 
 **FluentCart** -- Modern, conversion-optimized checkout experience with lower overhead than WooCommerce.
 
 **SureCart** -- Cloud-hosted checkout solution with built-in PCI compliance.
-
-**Standalone Mode** -- No external e-commerce plugin required. Includes a built-in checkout system with direct payment gateway integration (Stripe, PayPal, Razorpay, Offline payments).
 
 The e-commerce platform is selected in **Settings → General → E-Commerce Platform**. The recommended "Auto-detect" setting automatically selects the first available active platform.
 
@@ -91,26 +91,25 @@ The e-commerce platform is selected in **Settings → General → E-Commerce Pla
 
 | Gateway | Free | Pro |
 |---------|------|-----|
-| **WooCommerce Gateways** | All WC gateways | All WC gateways |
-| **Stripe Direct** | Via WooCommerce | **[PRO]** Direct integration |
-| **PayPal Direct** | Via WooCommerce | **[PRO]** Direct integration |
-| **Razorpay Direct** | Via WooCommerce | **[PRO]** Direct integration |
-| **Offline Payments** | Via WooCommerce | **[PRO]** Direct with proof upload |
+| **Stripe Direct** | Included | Included |
+| **PayPal Direct** | Included | Included |
+| **Offline Payments** | Included (with proof upload) | Included |
+| **Razorpay Direct** | -- | **[PRO]** |
+| **WooCommerce Gateways** | -- | **[PRO]** (via WC adapter) |
 
 ### Free Version
 
-Payments are handled entirely through WooCommerce. Any payment gateway that works with WooCommerce (Stripe, PayPal, Square, bank transfer, etc.) works with WP Sell Services automatically.
+Three payment gateways ship with the free plugin, working with the built-in standalone checkout:
+
+- **StripeGateway** -- Direct Stripe API integration with 3D Secure support
+- **PayPalGateway** -- PayPal Commerce Platform integration
+- **OfflineGateway** -- Bank transfer, cash, and other offline methods with payment proof upload
+
+Each gateway class manages its own settings tab, sandbox/live mode, and webhook handling.
 
 ### Pro Version **[PRO]**
 
-Pro adds direct payment gateway classes that work independently of WooCommerce, primarily useful in Standalone mode:
-
-- **StripeGateway** -- Direct Stripe API integration
-- **PayPalGateway** -- PayPal Commerce Platform
-- **RazorpayGateway** -- Razorpay for India and Southeast Asia
-- **OfflineGateway** -- Bank transfer, cash, and other offline methods with payment proof upload
-
-Each gateway class manages its own settings tab, configuration, and payment processing.
+Pro adds Razorpay gateway (popular in India and Southeast Asia) and access to all WooCommerce-compatible payment gateways when using the WooCommerce adapter.
 
 ---
 
@@ -265,7 +264,7 @@ The free version is a complete, production-ready marketplace:
 - 8 configurable email notification types
 - In-app notification system
 - 10 supported currencies
-- WooCommerce integration for checkout
+- Built-in standalone checkout with Stripe, PayPal, and Offline gateways
 - 6 Gutenberg blocks
 - Template override system for theme customization
 - SEO optimization
@@ -276,7 +275,7 @@ The free version is a complete, production-ready marketplace:
 - Auto-withdrawal scheduling
 - Tax configuration
 
-**Best for**: New marketplaces, WooCommerce-based sites, smaller platforms, and projects where the service creation limits (4 gallery images, 3 extras, 5 FAQs, 1 video) are sufficient.
+**Best for**: New marketplaces, lightweight sites without WooCommerce, smaller platforms, and projects where the service creation limits (4 gallery images, 3 extras, 5 FAQs, 1 video) are sufficient.
 
 ---
 
@@ -285,8 +284,8 @@ The free version is a complete, production-ready marketplace:
 Pro extends Free with premium capabilities:
 
 - **Removed limits**: Unlimited gallery images, extras, FAQs, requirements; 3 videos
-- **E-commerce platforms**: EDD, FluentCart, SureCart, Standalone mode
-- **Direct payment gateways**: Stripe, PayPal, Razorpay, Offline
+- **E-commerce platforms**: WooCommerce, EDD, FluentCart, SureCart
+- **Additional payment gateway**: Razorpay
 - **Wallet providers**: Internal, TeraWallet, WooWallet, MyCred
 - **Analytics dashboards**: Revenue, orders, services, and vendors widgets with data export
 - **Cloud storage**: Amazon S3, Google Cloud Storage, DigitalOcean Spaces
@@ -294,7 +293,7 @@ Pro extends Free with premium capabilities:
 - **4 additional REST API controllers**: Wallet, Payment, Vendor Analytics, Storage
 - **License management**: EDD Software Licensing for updates and support
 
-**Best for**: Growing marketplaces that need e-commerce platform flexibility, automated wallet-based payouts, detailed analytics, or vendors who need unlimited service media and add-ons.
+**Best for**: Growing marketplaces that need WooCommerce/EDD/FluentCart/SureCart integration, Razorpay payments, automated wallet-based payouts, detailed analytics, or vendors who need unlimited service media and add-ons.
 
 ---
 
@@ -319,9 +318,9 @@ The Pro plugin extends the free plugin via WordPress hooks. Both plugins remain 
 
 A: Yes. Install the Pro plugin alongside the free version at any time. All existing services, orders, vendors, and settings are preserved.
 
-**Q: Do I need WooCommerce with Pro?**
+**Q: Do I need WooCommerce?**
 
-A: No. Pro includes Standalone mode that works without any e-commerce plugin. You can also use EDD, FluentCart, or SureCart instead of WooCommerce.
+A: No. The free version includes a built-in standalone checkout with Stripe, PayPal, and Offline gateways. WooCommerce is optional and available as a Pro adapter alongside EDD, FluentCart, and SureCart.
 
 **Q: Is per-vendor commission a Pro feature?**
 

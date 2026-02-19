@@ -89,19 +89,19 @@ Choose which e-commerce system powers your marketplace checkout and payments.
 
 | Platform | Free | Pro Required |
 |----------|------|--------------|
-| WooCommerce | ✓ | No |
+| Standalone Mode | ✓ (default) | No |
+| WooCommerce | | **[PRO]** |
 | Easy Digital Downloads | | **[PRO]** |
 | FluentCart | | **[PRO]** |
 | SureCart | | **[PRO]** |
-| Standalone Mode | | **[PRO]** |
 
 ### Auto-Detect (Recommended)
 
 **Default Setting:** Auto-detect
 
-The plugin automatically detects which e-commerce platform is installed and active:
-1. Checks for WooCommerce
-2. Falls back to other supported platforms (Pro)
+The plugin automatically detects which e-commerce platform is available:
+1. Uses Standalone mode by default (free — no external plugins needed)
+2. If Pro is active, checks for WooCommerce, EDD, FluentCart, SureCart
 3. Uses first available active platform
 
 **Configuration:**

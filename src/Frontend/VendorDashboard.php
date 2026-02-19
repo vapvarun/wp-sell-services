@@ -196,6 +196,10 @@ class VendorDashboard {
 
 		$result = $this->vendor_service->update_profile( $user_id, $data );
 
+		// Handle vacation mode toggle separately via VendorService::set_vacation_mode().
+		$vacation_mode = ! empty( $_POST['vacation_mode'] );
+		$this->vendor_service->set_vacation_mode( $user_id, $vacation_mode );
+
 		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Profile updated successfully.', 'wp-sell-services' ) ) );
 		} else {

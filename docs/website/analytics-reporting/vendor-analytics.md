@@ -155,32 +155,13 @@ foreach ( $services as $service_id ) {
 }
 ```
 
-### Clicks
-
-**Note:** Clicks are not directly tracked. The analytics service estimates:
-
-```php
-// Estimate: 3 clicks per order
-$clicks = $orders_received * 3;
-```
-
-For accurate click tracking, implement JavaScript event tracking.
-
-### Click Rate
-
-```php
-$click_rate = $impressions > 0 ? ($clicks / $impressions) * 100 : 0;
-```
-
-Rounded to 1 decimal place.
-
 ### Conversion Rate
 
 ```php
-$conversion_rate = $clicks > 0 ? ($orders_received / $clicks) * 100 : 0;
+$conversion_rate = $impressions > 0 ? ($orders_received / $impressions) * 100 : 0;
 ```
 
-Rounded to 1 decimal place.
+Measures the percentage of service impressions that result in orders. Rounded to 1 decimal place.
 
 ## Response Rate Calculation
 
