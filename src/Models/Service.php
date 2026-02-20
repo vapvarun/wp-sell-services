@@ -237,7 +237,7 @@ class Service {
 	 * @return string
 	 */
 	public function get_permalink(): string {
-		return get_permalink( $this->id );
+		return get_permalink( $this->id ) ?: '';
 	}
 
 	/**

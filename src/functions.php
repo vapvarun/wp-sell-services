@@ -658,7 +658,7 @@ function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
  * @return string
  */
 function wpss_get_service_url( int $service_id ): string {
-	return get_permalink( $service_id );
+	return get_permalink( $service_id ) ?: '';
 }
 
 /**

@@ -84,11 +84,12 @@ class OrderRepository extends AbstractRepository {
 	 */
 	public function get_by_customer( int $customer_id, array $args = array() ): array {
 		$defaults = array(
-			'status'  => '',
-			'orderby' => 'created_at',
-			'order'   => 'DESC',
-			'limit'   => 20,
-			'offset'  => 0,
+			'status'   => '',
+			'platform' => '',
+			'orderby'  => 'created_at',
+			'order'    => 'DESC',
+			'limit'    => 20,
+			'offset'   => 0,
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -103,6 +104,11 @@ class OrderRepository extends AbstractRepository {
 		if ( ! empty( $args['status'] ) ) {
 			$sql     .= ' AND status = %s';
 			$params[] = $args['status'];
+		}
+
+		if ( ! empty( $args['platform'] ) ) {
+			$sql     .= ' AND platform = %s';
+			$params[] = $args['platform'];
 		}
 
 		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -127,11 +133,12 @@ class OrderRepository extends AbstractRepository {
 	 */
 	public function get_by_vendor( int $vendor_id, array $args = array() ): array {
 		$defaults = array(
-			'status'  => '',
-			'orderby' => 'created_at',
-			'order'   => 'DESC',
-			'limit'   => 20,
-			'offset'  => 0,
+			'status'   => '',
+			'platform' => '',
+			'orderby'  => 'created_at',
+			'order'    => 'DESC',
+			'limit'    => 20,
+			'offset'   => 0,
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -146,6 +153,11 @@ class OrderRepository extends AbstractRepository {
 		if ( ! empty( $args['status'] ) ) {
 			$sql     .= ' AND status = %s';
 			$params[] = $args['status'];
+		}
+
+		if ( ! empty( $args['platform'] ) ) {
+			$sql     .= ' AND platform = %s';
+			$params[] = $args['platform'];
 		}
 
 		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
