@@ -225,6 +225,7 @@ class OrderService {
 				ServiceOrder::STATUS_ON_HOLD,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_LATE,
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 				'delivered',
 			),
 			ServiceOrder::STATUS_PENDING_APPROVAL     => array(
@@ -248,6 +249,11 @@ class OrderService {
 			ServiceOrder::STATUS_ON_HOLD              => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
+			),
+			ServiceOrder::STATUS_CANCELLATION_REQUESTED => array(
+				ServiceOrder::STATUS_CANCELLED,
+				ServiceOrder::STATUS_DISPUTED,
+				ServiceOrder::STATUS_IN_PROGRESS,
 			),
 			ServiceOrder::STATUS_DISPUTED             => array(
 				ServiceOrder::STATUS_COMPLETED,
@@ -425,6 +431,107 @@ class OrderService {
 		 * @param string $reason   Cancellation reason.
 		 */
 		do_action( 'wpss_order_cancelled', $order_id, $user_id, $reason );
+
+		return array( 'success' => true );
+	}
+
+	/**
+	 * Request cancellation for an in-progress order.
+	 *
+	 * Buyer can request cancellation within 24h of work starting and before any delivery.
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param int    $user_id  User ID requesting cancellation.
+	 * @param string $reason   Cancellation reason key.
+	 * @param string $note     Optional additional note.
+	 * @return array{success: bool, message?: string}
+	 */
+	public function request_cancellation( int $order_id, int $user_id, string $reason, string $note = '' ): array {
+		$order = $this->get( $order_id );
+
+		if ( ! $order ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Order not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ServiceOrder::STATUS_IN_PROGRESS !== $order->status ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Order is not in progress.', 'wp-sell-services' ),
+			);
+		}
+
+		// Check 24h window from started_at.
+		if ( ! $order->started_at ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Order has not been started yet.', 'wp-sell-services' ),
+			);
+		}
+
+		$now          = new \DateTimeImmutable( 'now', $order->started_at->getTimezone() );
+		$hours_since  = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
+
+		if ( $hours_since > 24 ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Cancellation window has expired. You can only request cancellation within 24 hours of work starting.', 'wp-sell-services' ),
+			);
+		}
+
+		// Check no delivery exists.
+		$delivery_service = new DeliveryService();
+		$deliveries       = $delivery_service->get_order_deliveries( $order_id );
+
+		if ( ! empty( $deliveries ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Cannot request cancellation after a delivery has been submitted.', 'wp-sell-services' ),
+			);
+		}
+
+		// Store reason in vendor_notes.
+		$cancel_data = wp_json_encode( array(
+			'reason'       => sanitize_key( $reason ),
+			'note'         => sanitize_textarea_field( $note ),
+			'requested_by' => $user_id,
+			'requested_at' => current_time( 'mysql' ),
+		) );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$table,
+			array( 'vendor_notes' => $cancel_data ),
+			array( 'id' => $order_id )
+		);
+
+		$updated = $this->update_status(
+			$order_id,
+			ServiceOrder::STATUS_CANCELLATION_REQUESTED,
+			$reason
+		);
+
+		if ( ! $updated ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to request cancellation.', 'wp-sell-services' ),
+			);
+		}
+
+		/**
+		 * Fires when a buyer requests order cancellation.
+		 *
+		 * @param int    $order_id Order ID.
+		 * @param int    $user_id  User who requested.
+		 * @param string $reason   Cancellation reason key.
+		 * @param string $note     Additional note.
+		 */
+		do_action( 'wpss_cancellation_requested', $order_id, $user_id, $reason, $note );
 
 		return array( 'success' => true );
 	}

@@ -46,6 +46,17 @@ wp_localize_script(
 	)
 );
 
+// Localize REST API data for inline JS.
+wp_enqueue_script( 'wp-api-fetch' );
+wp_add_inline_script(
+	'wp-api-fetch',
+	'var wpssApi = ' . wp_json_encode( array(
+		'root'  => esc_url_raw( rest_url() ),
+		'nonce' => wp_create_nonce( 'wp_rest' ),
+	) ) . ';',
+	'before'
+);
+
 $order = wpss_get_order( $order_id );
 
 if ( ! $order ) {
@@ -137,7 +148,7 @@ do_action( 'wpss_before_order_view', $order );
 		do_action( 'wpss_order_view_header', $order );
 		?>
 
-		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements', 'revision_requested', 'late' ), true ) ) : ?>
+		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements', 'pending_payment', 'revision_requested', 'late', 'cancellation_requested' ), true ) ) : ?>
 			<?php
 			// Build actions array for filtering.
 			$actions = array();
@@ -204,13 +215,51 @@ do_action( 'wpss_before_order_view', $order );
 					);
 				}
 
-				if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) {
-					$actions['cancel'] = array(
-						'label' => __( 'Cancel Order', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--secondary wpss-order-action',
-						'attrs' => 'data-action="cancel" data-order="' . esc_attr( $order_id ) . '"',
+				if ( 'cancellation_requested' === $order->status ) {
+					$actions['cancel_pending_notice'] = array(
+						'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+						'attrs' => 'disabled="disabled" title="' . esc_attr__( 'Waiting for vendor response to your cancellation request.', 'wp-sell-services' ) . '"',
 					);
 				}
+
+				// Immediate cancel for pre-work statuses.
+				$buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
+				if ( in_array( $order->status, $buyer_cancel_statuses, true ) ) {
+					$actions['cancel'] = array(
+						'label' => __( 'Cancel Order', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
+						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
+
+				// In-progress cancel (requires 24h window + no delivery).
+				if ( 'in_progress' === $order->status && $order->started_at ) {
+					$hours_since_start = ( time() - $order->started_at->getTimestamp() ) / 3600;
+					$has_deliveries    = ! empty( $deliveries );
+
+					if ( $hours_since_start <= 24 && ! $has_deliveries ) {
+						$actions['cancel'] = array(
+							'label' => __( 'Request Cancellation', 'wp-sell-services' ),
+							'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
+							'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+						);
+					}
+				}
+			}
+
+			// Vendor: accept/reject cancellation.
+			if ( $is_vendor && 'cancellation_requested' === $order->status ) {
+				$actions['accept-cancellation'] = array(
+					'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
+					'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+				);
+				$actions['reject-cancellation'] = array(
+					'label' => __( 'Dispute Cancellation', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
+					'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+				);
 			}
 
 			if ( in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true ) ) {
@@ -706,6 +755,64 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
+	<!-- Cancellation Request Banner -->
+	<?php if ( 'cancellation_requested' === $order->status ) : ?>
+		<?php
+		$cancel_data   = json_decode( $order->vendor_notes ?? '', true );
+		$cancel_reason = $cancel_data['reason'] ?? '';
+		$cancel_note   = $cancel_data['note'] ?? '';
+
+		$reason_labels = array(
+			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
+			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
+			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
+			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
+			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
+			'other'                => __( 'Other', 'wp-sell-services' ),
+		);
+		$reason_label = $reason_labels[ $cancel_reason ] ?? $cancel_reason;
+		?>
+		<section class="wpss-order-section">
+			<div class="wpss-order-section__body">
+				<div class="wpss-alert wpss-alert--warning" style="margin: 0;">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+						<line x1="12" y1="9" x2="12" y2="13"/>
+						<line x1="12" y1="17" x2="12.01" y2="17"/>
+					</svg>
+					<div>
+						<p style="margin: 0 0 8px 0; font-weight: 600;">
+							<?php
+							if ( $is_vendor ) {
+								esc_html_e( 'The buyer has requested to cancel this order.', 'wp-sell-services' );
+							} else {
+								esc_html_e( 'Your cancellation request has been submitted. Waiting for vendor response.', 'wp-sell-services' );
+							}
+							?>
+						</p>
+						<?php if ( $reason_label ) : ?>
+							<p style="margin: 0 0 4px 0;">
+								<strong><?php esc_html_e( 'Reason:', 'wp-sell-services' ); ?></strong>
+								<?php echo esc_html( $reason_label ); ?>
+							</p>
+						<?php endif; ?>
+						<?php if ( $cancel_note ) : ?>
+							<p style="margin: 0;">
+								<strong><?php esc_html_e( 'Details:', 'wp-sell-services' ); ?></strong>
+								<?php echo esc_html( $cancel_note ); ?>
+							</p>
+						<?php endif; ?>
+						<?php if ( $is_vendor ) : ?>
+							<p style="margin: 8px 0 0 0; font-size: 0.875rem; color: #92400e;">
+								<?php esc_html_e( 'You have 48 hours to respond. If no action is taken, the order will be automatically cancelled.', 'wp-sell-services' ); ?>
+							</p>
+						<?php endif; ?>
+					</div>
+				</div>
+			</div>
+		</section>
+	<?php endif; ?>
+
 	<!-- Order Timeline Section -->
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
@@ -930,6 +1037,17 @@ $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 're
 $can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
 $can_open_dispute      = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true );
 $can_request_revision  = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
+
+// Check if cancel modal should be available.
+$buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
+$can_cancel_immediate  = $is_customer && in_array( $order->status, $buyer_cancel_statuses, true );
+$can_cancel_request    = false;
+if ( $is_customer && 'in_progress' === $order->status && $order->started_at ) {
+	$hours_since_start  = ( time() - $order->started_at->getTimestamp() ) / 3600;
+	$has_any_deliveries = ! empty( $deliveries );
+	$can_cancel_request = $hours_since_start <= 24 && ! $has_any_deliveries;
+}
+$can_cancel = $can_cancel_immediate || $can_cancel_request;
 ?>
 
 <?php if ( $can_deliver ) : ?>
@@ -1174,6 +1292,80 @@ $can_request_revision  = $is_customer && 'pending_approval' === $order->status &
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--danger">
 					<?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+<?php endif; ?>
+
+<?php if ( $can_cancel ) : ?>
+<!-- Cancellation Modal -->
+<div class="wpss-modal" id="wpss-cancel-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+	<div class="wpss-modal__backdrop"></div>
+	<div class="wpss-modal__dialog">
+		<div class="wpss-modal__header">
+			<h3 class="wpss-modal__title"><?php esc_html_e( 'Cancel Order', 'wp-sell-services' ); ?></h3>
+			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			</button>
+		</div>
+		<form class="wpss-cancel-form" id="wpss-cancel-form">
+			<?php wp_nonce_field( 'wpss_order_action', 'nonce' ); ?>
+			<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
+
+			<div class="wpss-modal__body">
+				<?php if ( $can_cancel_request ) : ?>
+					<div class="wpss-alert wpss-alert--info">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10"></circle>
+							<path d="M12 16v-4"></path>
+							<path d="M12 8h.01"></path>
+						</svg>
+						<p><?php esc_html_e( 'Since work has already started, your cancellation request will be sent to the vendor for review. They have 48 hours to respond.', 'wp-sell-services' ); ?></p>
+					</div>
+				<?php endif; ?>
+
+				<div class="wpss-form-group">
+					<label for="cancel-reason" class="wpss-label">
+						<?php esc_html_e( 'Reason for Cancellation', 'wp-sell-services' ); ?>
+						<span class="wpss-required">*</span>
+					</label>
+					<select name="reason" id="cancel-reason" class="wpss-select" required>
+						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
+						<option value="changed_mind"><?php esc_html_e( 'I changed my mind', 'wp-sell-services' ); ?></option>
+						<option value="found_alternative"><?php esc_html_e( 'Found an alternative', 'wp-sell-services' ); ?></option>
+						<option value="taking_too_long"><?php esc_html_e( 'Taking too long', 'wp-sell-services' ); ?></option>
+						<option value="wrong_order"><?php esc_html_e( 'Ordered by mistake', 'wp-sell-services' ); ?></option>
+						<option value="communication_issues"><?php esc_html_e( 'Communication issues with vendor', 'wp-sell-services' ); ?></option>
+						<option value="other"><?php esc_html_e( 'Other (please specify)', 'wp-sell-services' ); ?></option>
+					</select>
+				</div>
+
+				<div class="wpss-form-group">
+					<label for="cancel-note" class="wpss-label">
+						<?php esc_html_e( 'Additional Details (optional)', 'wp-sell-services' ); ?>
+					</label>
+					<textarea name="note" id="cancel-note" class="wpss-textarea" rows="3"
+						placeholder="<?php esc_attr_e( 'Any additional details about why you want to cancel...', 'wp-sell-services' ); ?>"></textarea>
+				</div>
+			</div>
+
+			<div class="wpss-modal__footer">
+				<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">
+					<?php esc_html_e( 'Keep Order', 'wp-sell-services' ); ?>
+				</button>
+				<button type="submit" class="wpss-btn wpss-btn--danger">
+					<?php
+					if ( $can_cancel_request ) {
+						esc_html_e( 'Submit Cancellation Request', 'wp-sell-services' );
+					} else {
+						esc_html_e( 'Cancel Order', 'wp-sell-services' );
+					}
+					?>
 				</button>
 			</div>
 		</form>
@@ -1800,7 +1992,35 @@ $can_request_revision  = $is_customer && 'pending_approval' === $order->status &
 	transform: scale(1.02);
 }
 
+/* Cancellation Requested Status Badge */
+.wpss-badge--status-cancellation-requested {
+	background: rgba(245, 158, 11, 0.1);
+	color: #92400e;
+	border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
 /* Alert Styles */
+.wpss-alert--warning {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 1rem;
+	background: #fff8e1;
+	border: 1px solid rgba(245, 158, 11, 0.3);
+	border-radius: 8px;
+	color: #92400e;
+}
+
+.wpss-alert--warning svg {
+	flex-shrink: 0;
+	margin-top: 0.125rem;
+}
+
+.wpss-alert--warning p {
+	margin: 0;
+	font-size: 0.875rem;
+}
+
 .wpss-alert--info {
 	display: flex;
 	align-items: flex-start;
@@ -1915,6 +2135,62 @@ $can_request_revision  = $is_customer && 'pending_approval' === $order->status &
 			window.open(this.src, '_blank');
 		});
 	});
+
+	// Cancel button: open modal instead of direct action.
+	document.querySelectorAll('.wpss-cancel-btn').forEach(function(btn) {
+		btn.addEventListener('click', function(e) {
+			e.preventDefault();
+			var modal = document.getElementById('wpss-cancel-modal');
+			if (modal) {
+				modal.classList.add('wpss-modal--active');
+			}
+		});
+	});
+
+	// Cancel form submission.
+	var cancelForm = document.getElementById('wpss-cancel-form');
+	if (cancelForm) {
+		cancelForm.addEventListener('submit', function(e) {
+			e.preventDefault();
+
+			var orderId = cancelForm.querySelector('[name="order_id"]').value;
+			var reason  = cancelForm.querySelector('[name="reason"]').value;
+			var note    = cancelForm.querySelector('[name="note"]').value;
+			var btn     = cancelForm.querySelector('[type="submit"]');
+
+			if (!reason) {
+				return;
+			}
+
+			btn.disabled = true;
+			btn.textContent = btn.textContent.replace(/\S.+/, 'Processing...');
+
+			fetch(wpssApi.root + 'wpss/v1/orders/' + orderId + '/cancel', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': wpssApi.nonce
+				},
+				body: JSON.stringify({
+					reason: reason,
+					note: note
+				})
+			})
+			.then(function(response) { return response.json(); })
+			.then(function(data) {
+				if (data.code) {
+					alert(data.message || 'Failed to cancel order.');
+					btn.disabled = false;
+				} else {
+					window.location.reload();
+				}
+			})
+			.catch(function() {
+				alert('An error occurred. Please try again.');
+				btn.disabled = false;
+			});
+		});
+	}
 })();
 </script>
 

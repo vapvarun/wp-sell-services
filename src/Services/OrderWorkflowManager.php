@@ -62,11 +62,13 @@ class OrderWorkflowManager {
 		add_action( 'wpss_send_requirements_reminders', [ $this, 'send_requirements_reminders' ] );
 		add_action( 'wpss_check_requirements_timeout', [ $this, 'check_requirements_timeout' ] );
 		add_action( 'wpss_recalculate_seller_levels', [ $this, 'recalculate_seller_levels' ] );
+		add_action( 'wpss_process_cancellation_timeouts', [ $this, 'process_cancellation_timeouts' ] );
 
 		// Status change hooks.
 		add_action( 'wpss_order_status_changed', [ $this, 'handle_status_change' ], 10, 3 );
 		add_action( 'wpss_order_status_completed', [ $this, 'handle_order_completed' ], 10, 2 );
 		add_action( 'wpss_order_status_cancelled', [ $this, 'handle_order_cancelled' ], 10, 2 );
+		add_action( 'wpss_order_status_cancellation_requested', [ $this, 'handle_cancellation_requested' ], 10, 2 );
 
 		// Payment hooks.
 		add_action( 'wpss_order_payment_complete', [ $this, 'handle_payment_complete' ] );
@@ -125,6 +127,10 @@ class OrderWorkflowManager {
 
 		if ( ! wp_next_scheduled( 'wpss_recalculate_seller_levels' ) ) {
 			wp_schedule_event( time(), 'wpss_weekly', 'wpss_recalculate_seller_levels' );
+		}
+
+		if ( ! wp_next_scheduled( 'wpss_process_cancellation_timeouts' ) ) {
+			wp_schedule_event( time(), 'wpss_hourly', 'wpss_process_cancellation_timeouts' );
 		}
 	}
 
@@ -610,6 +616,10 @@ class OrderWorkflowManager {
 				);
 				break;
 
+			case ServiceOrder::STATUS_CANCELLATION_REQUESTED:
+				// Handled by dedicated handle_cancellation_requested() hook.
+				break;
+
 			case ServiceOrder::STATUS_DISPUTED:
 				// Notify admin (respects email settings).
 				if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
@@ -726,6 +736,113 @@ class OrderWorkflowManager {
 	}
 
 	/**
+	 * Handle cancellation requested status.
+	 *
+	 * Notifies vendor and buyer when a cancellation request is submitted.
+	 *
+	 * @param int    $order_id   Order ID.
+	 * @param string $old_status Old status.
+	 * @return void
+	 */
+	public function handle_cancellation_requested( int $order_id, string $old_status ): void {
+		$order = $this->order_service->get( $order_id );
+
+		if ( ! $order ) {
+			return;
+		}
+
+		// Parse cancellation reason from vendor_notes.
+		$cancel_data = json_decode( $order->vendor_notes ?? '', true );
+		$reason      = $cancel_data['reason'] ?? '';
+
+		$reason_labels = [
+			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
+			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
+			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
+			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
+			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
+			'other'                => __( 'Other', 'wp-sell-services' ),
+		];
+		$reason_label = $reason_labels[ $reason ] ?? $reason;
+
+		// Notify vendor.
+		$this->notification_service->create(
+			$order->vendor_id,
+			'cancellation_requested',
+			__( 'Cancellation Requested', 'wp-sell-services' ),
+			sprintf(
+				/* translators: 1: reason label */
+				__( 'The buyer has requested to cancel this order. Reason: %1$s. You have 48 hours to respond.', 'wp-sell-services' ),
+				$reason_label
+			),
+			[ 'order_id' => $order_id ]
+		);
+
+		// Notify buyer.
+		$this->notification_service->create(
+			$order->customer_id,
+			'cancellation_requested',
+			__( 'Cancellation Request Submitted', 'wp-sell-services' ),
+			__( 'Your cancellation request has been submitted. The vendor has 48 hours to respond.', 'wp-sell-services' ),
+			[ 'order_id' => $order_id ]
+		);
+	}
+
+	/**
+	 * Process cancellation request timeouts.
+	 *
+	 * Auto-cancels orders that have been in cancellation_requested status for 48+ hours.
+	 *
+	 * @return void
+	 */
+	public function process_cancellation_timeouts(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// Find orders in cancellation_requested status for over 48 hours.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$timed_out_orders = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, customer_id, vendor_id, vendor_notes FROM {$table}
+				WHERE status = %s
+				AND updated_at < DATE_SUB(%s, INTERVAL 48 HOUR)",
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
+				current_time( 'mysql' )
+			)
+		);
+
+		foreach ( $timed_out_orders as $order ) {
+			$order_id = (int) $order->id;
+
+			$this->order_service->update_status(
+				$order_id,
+				ServiceOrder::STATUS_CANCELLED,
+				__( 'Order auto-cancelled - vendor did not respond to cancellation request within 48 hours', 'wp-sell-services' )
+			);
+
+			do_action( 'wpss_order_cancelled', $order_id, 'auto_timeout', '' );
+
+			// Notify vendor.
+			$this->notification_service->create(
+				(int) $order->vendor_id,
+				'cancellation_auto_approved',
+				__( 'Order Auto-Cancelled', 'wp-sell-services' ),
+				__( 'The cancellation request was automatically approved because you did not respond within 48 hours.', 'wp-sell-services' ),
+				[ 'order_id' => $order_id ]
+			);
+
+			// Notify buyer.
+			$this->notification_service->create(
+				(int) $order->customer_id,
+				'cancellation_auto_approved',
+				__( 'Cancellation Approved', 'wp-sell-services' ),
+				__( 'Your cancellation request has been automatically approved. The vendor did not respond within 48 hours.', 'wp-sell-services' ),
+				[ 'order_id' => $order_id ]
+			);
+		}
+	}
+
+	/**
 	 * Handle payment completion.
 	 *
 	 * @param int $order_id Order ID.
@@ -822,5 +939,6 @@ class OrderWorkflowManager {
 		wp_clear_scheduled_hook( 'wpss_send_requirements_reminders' );
 		wp_clear_scheduled_hook( 'wpss_check_requirements_timeout' );
 		wp_clear_scheduled_hook( 'wpss_recalculate_seller_levels' );
+		wp_clear_scheduled_hook( 'wpss_process_cancellation_timeouts' );
 	}
 }

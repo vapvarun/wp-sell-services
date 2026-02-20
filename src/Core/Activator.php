@@ -241,6 +241,11 @@ class Activator {
 			wp_schedule_event( time(), 'twicedaily', 'wpss_update_vendor_stats' );
 		}
 
+		// Process cancellation request timeouts (48h auto-cancel).
+		if ( ! wp_next_scheduled( 'wpss_process_cancellation_timeouts' ) ) {
+			wp_schedule_event( time(), 'hourly', 'wpss_process_cancellation_timeouts' );
+		}
+
 		// Process auto-withdrawals (uses dynamic scheduling based on settings).
 		\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
 	}

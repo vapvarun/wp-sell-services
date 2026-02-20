@@ -35,7 +35,8 @@ class EmailService {
 	public const TYPE_ORDER_CANCELLED        = 'order_cancelled';
 	public const TYPE_DISPUTE_OPENED         = 'dispute_opened';
 	public const TYPE_REQUIREMENTS_REMINDER  = 'requirements_reminder';
-	public const TYPE_SELLER_LEVEL_PROMOTION = 'seller_level_promotion';
+	public const TYPE_SELLER_LEVEL_PROMOTION   = 'seller_level_promotion';
+	public const TYPE_CANCELLATION_REQUESTED  = 'cancellation_requested';
 
 	/**
 	 * Default email settings.
@@ -136,6 +137,10 @@ class EmailService {
 
 			case ServiceOrder::STATUS_REVISION_REQUESTED:
 				$this->send_revision_requested( $order );
+				break;
+
+			case ServiceOrder::STATUS_CANCELLATION_REQUESTED:
+				$this->send_cancellation_requested( $order );
 				break;
 
 			case ServiceOrder::STATUS_CANCELLED:
@@ -432,6 +437,54 @@ class EmailService {
 		);
 
 		return $this->send( $recipient->user_email, $subject, self::TYPE_NEW_MESSAGE, $template_vars );
+	}
+
+	/**
+	 * Send cancellation requested email to vendor.
+	 *
+	 * @param ServiceOrder $order Order object.
+	 * @return bool
+	 */
+	public function send_cancellation_requested( ServiceOrder $order ): bool {
+		$vendor = get_user_by( 'id', $order->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$subject = sprintf(
+			/* translators: %1$s: site name, %2$s: order number */
+			__( '[%1$s] Cancellation Requested - Order #%2$s', 'wp-sell-services' ),
+			get_bloginfo( 'name' ),
+			$order->order_number
+		);
+
+		// Parse cancellation data from vendor_notes.
+		$cancel_data = json_decode( $order->vendor_notes ?? '', true );
+		$reason_key  = $cancel_data['reason'] ?? '';
+		$note        = $cancel_data['note'] ?? '';
+
+		$reason_labels = array(
+			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
+			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
+			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
+			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
+			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
+			'other'                => __( 'Other', 'wp-sell-services' ),
+		);
+
+		$deadline = new \DateTimeImmutable( '+48 hours' );
+
+		$template_vars = array(
+			'order'         => $order,
+			'recipient'     => $vendor,
+			'email_heading' => __( 'Cancellation Requested', 'wp-sell-services' ),
+			'buyer_name'    => $this->get_customer_name( $order->customer_id ),
+			'reason'        => $reason_labels[ $reason_key ] ?? $reason_key,
+			'note'          => $note,
+			'deadline'      => wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $deadline->getTimestamp() ),
+		);
+
+		return $this->send( $vendor->user_email, $subject, self::TYPE_CANCELLATION_REQUESTED, $template_vars );
 	}
 
 	/**
@@ -769,7 +822,8 @@ class EmailService {
 			self::TYPE_ORDER_CANCELLED        => 'order-cancelled.php',
 			self::TYPE_DISPUTE_OPENED         => 'dispute-opened.php',
 			self::TYPE_REQUIREMENTS_REMINDER  => 'requirements-reminder.php',
-			self::TYPE_SELLER_LEVEL_PROMOTION => 'seller-level-promotion.php',
+			self::TYPE_SELLER_LEVEL_PROMOTION  => 'seller-level-promotion.php',
+			self::TYPE_CANCELLATION_REQUESTED => 'cancellation-requested.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';
@@ -838,7 +892,8 @@ class EmailService {
 			self::TYPE_ORDER_CANCELLED        => 'notify_order_cancelled',
 			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
 			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
-			self::TYPE_SELLER_LEVEL_PROMOTION => 'notify_new_order',
+			self::TYPE_SELLER_LEVEL_PROMOTION  => 'notify_new_order',
+			self::TYPE_CANCELLATION_REQUESTED => 'notify_order_cancelled',
 			// Direct wp_mail types used by services outside EmailService.
 			'withdrawal_requested'            => 'notify_new_order',
 			'withdrawal_auto'                 => 'notify_new_order',

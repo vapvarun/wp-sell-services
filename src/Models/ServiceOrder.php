@@ -29,8 +29,9 @@ class ServiceOrder {
 	public const STATUS_COMPLETED            = 'completed';
 	public const STATUS_CANCELLED            = 'cancelled';
 	public const STATUS_DISPUTED             = 'disputed';
-	public const STATUS_ON_HOLD              = 'on_hold';
-	public const STATUS_LATE                 = 'late';
+	public const STATUS_ON_HOLD                = 'on_hold';
+	public const STATUS_LATE                   = 'late';
+	public const STATUS_CANCELLATION_REQUESTED = 'cancellation_requested';
 
 	/**
 	 * Order ID.
@@ -377,8 +378,9 @@ class ServiceOrder {
 			self::STATUS_COMPLETED            => __( 'Completed', 'wp-sell-services' ),
 			self::STATUS_CANCELLED            => __( 'Cancelled', 'wp-sell-services' ),
 			self::STATUS_DISPUTED             => __( 'Disputed', 'wp-sell-services' ),
-			self::STATUS_ON_HOLD              => __( 'On Hold', 'wp-sell-services' ),
-			self::STATUS_LATE                 => __( 'Late', 'wp-sell-services' ),
+			self::STATUS_ON_HOLD                => __( 'On Hold', 'wp-sell-services' ),
+			self::STATUS_LATE                   => __( 'Late', 'wp-sell-services' ),
+			self::STATUS_CANCELLATION_REQUESTED => __( 'Cancellation Requested', 'wp-sell-services' ),
 		);
 	}
 

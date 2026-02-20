@@ -139,7 +139,7 @@ class OrdersController extends RestController {
 		// Order status actions.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>accept|reject|start|deliver|complete|cancel|dispute)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>accept|reject|start|deliver|complete|cancel|dispute|accept-cancellation|reject-cancellation)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -631,23 +631,98 @@ class OrdersController extends RestController {
 				break;
 
 			case 'cancel':
-				$can_cancel = $is_admin ||
-					( $is_customer && in_array( $order->status, array( 'pending', 'accepted' ), true ) ) ||
-					( $is_vendor && 'pending' === $order->status );
+				if ( $is_admin ) {
+					// Admin can always cancel.
+					if ( empty( $reason ) ) {
+						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
+					} else {
+						$result = $order->update(
+							array(
+								'status'       => 'cancelled',
+								'vendor_notes' => $reason,
+							)
+						);
+						do_action( 'wpss_order_cancelled', $order_id, 'admin', $reason );
+					}
+				} elseif ( $is_customer ) {
+					$immediate_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
 
-				if ( ! $can_cancel ) {
-					$error = __( 'You cannot cancel this order in its current status.', 'wp-sell-services' );
-				} elseif ( empty( $reason ) ) {
-					$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
+					if ( in_array( $order->status, $immediate_statuses, true ) ) {
+						// Immediate cancel — work hasn't started.
+						if ( empty( $reason ) ) {
+							$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
+						} else {
+							$result = $order->update(
+								array(
+									'status'       => 'cancelled',
+									'vendor_notes' => $reason,
+								)
+							);
+							do_action( 'wpss_order_cancelled', $order_id, 'customer', $reason );
+						}
+					} elseif ( 'in_progress' === $order->status ) {
+						// Request cancellation — vendor gets 48h to respond.
+						if ( empty( $reason ) ) {
+							$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
+						} else {
+							$order_service = new \WPSellServices\Services\OrderService();
+							$note          = sanitize_textarea_field( $request->get_param( 'note' ) ?? '' );
+							$cancel_result = $order_service->request_cancellation( $order_id, $user_id, $reason, $note );
+
+							if ( $cancel_result['success'] ) {
+								$result = true;
+							} else {
+								$error = $cancel_result['message'];
+							}
+						}
+					} else {
+						$error = __( 'You cannot cancel this order in its current status.', 'wp-sell-services' );
+					}
+				} elseif ( $is_vendor && 'pending' === $order->status ) {
+					if ( empty( $reason ) ) {
+						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
+					} else {
+						$result = $order->update(
+							array(
+								'status'       => 'cancelled',
+								'vendor_notes' => $reason,
+							)
+						);
+						do_action( 'wpss_order_cancelled', $order_id, 'vendor', $reason );
+					}
 				} else {
-					$cancelled_by = $is_vendor ? 'vendor' : 'customer';
-					$result       = $order->update(
-						array(
-							'status'       => 'cancelled',
-							'vendor_notes' => $reason,
-						)
-					);
-					do_action( 'wpss_order_cancelled', $order_id, $cancelled_by, $reason );
+					$error = __( 'You cannot cancel this order in its current status.', 'wp-sell-services' );
+				}
+				break;
+
+			case 'accept-cancellation':
+				if ( ! $is_vendor && ! $is_admin ) {
+					$error = __( 'Only the vendor can accept cancellation requests.', 'wp-sell-services' );
+				} elseif ( 'cancellation_requested' !== $order->status ) {
+					$error = __( 'No cancellation request to accept.', 'wp-sell-services' );
+				} else {
+					$result = $order->update( array( 'status' => 'cancelled' ) );
+					do_action( 'wpss_order_cancelled', $order_id, 'vendor_accepted', $reason );
+				}
+				break;
+
+			case 'reject-cancellation':
+				if ( ! $is_vendor && ! $is_admin ) {
+					$error = __( 'Only the vendor can respond to cancellation requests.', 'wp-sell-services' );
+				} elseif ( 'cancellation_requested' !== $order->status ) {
+					$error = __( 'No cancellation request to respond to.', 'wp-sell-services' );
+				} else {
+					// Vendor disputes the cancellation — escalate to dispute.
+					$dispute_service = new \WPSellServices\Services\DisputeService();
+					$dispute_reason  = ! empty( $reason ) ? $reason : __( 'Vendor disputed buyer cancellation request.', 'wp-sell-services' );
+					$dispute_id      = $dispute_service->open( $order_id, $user_id, $dispute_reason );
+
+					if ( $dispute_id ) {
+						$result = $order->update( array( 'status' => 'disputed' ) );
+						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_reason );
+					} else {
+						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
+					}
 				}
 				break;
 
@@ -1007,6 +1082,7 @@ class OrdersController extends RestController {
 			'completed'              => __( 'Completed', 'wp-sell-services' ),
 			'cancelled'              => __( 'Cancelled', 'wp-sell-services' ),
 			'disputed'               => __( 'Disputed', 'wp-sell-services' ),
+			'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
 			'refunded'               => __( 'Refunded', 'wp-sell-services' ),
 		);
 
@@ -1038,6 +1114,13 @@ class OrdersController extends RestController {
 				}
 				break;
 
+			case 'pending_payment':
+			case 'pending_requirements':
+				if ( $is_customer || $is_admin ) {
+					$actions[] = 'cancel';
+				}
+				break;
+
 			case 'accepted':
 			case 'requirements_submitted':
 				if ( $is_vendor || $is_admin ) {
@@ -1053,8 +1136,21 @@ class OrdersController extends RestController {
 				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'deliver';
 				}
+				if ( $is_customer && 'in_progress' === $order->status && $this->can_buyer_cancel_in_progress( $order ) ) {
+					$actions[] = 'cancel';
+				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';
+				}
+				break;
+
+			case 'cancellation_requested':
+				if ( $is_vendor ) {
+					$actions[] = 'accept-cancellation';
+					$actions[] = 'reject-cancellation';
+				}
+				if ( $is_admin ) {
+					$actions[] = 'cancel';
 				}
 				break;
 
@@ -1082,6 +1178,34 @@ class OrdersController extends RestController {
 		}
 
 		return $actions;
+	}
+
+	/**
+	 * Check if buyer can cancel an in-progress order.
+	 *
+	 * Buyer can cancel within 24h of work starting and before any delivery.
+	 *
+	 * @param ServiceOrder $order Order object.
+	 * @return bool
+	 */
+	private function can_buyer_cancel_in_progress( ServiceOrder $order ): bool {
+		if ( ! $order->started_at ) {
+			return false;
+		}
+
+		// Check 24h window.
+		$now         = new \DateTimeImmutable();
+		$hours_since = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
+
+		if ( $hours_since > 24 ) {
+			return false;
+		}
+
+		// Check no delivery exists.
+		$delivery_service = new DeliveryService();
+		$deliveries       = $delivery_service->get_order_deliveries( $order->id );
+
+		return empty( $deliveries );
 	}
 
 	/**
