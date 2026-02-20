@@ -1653,7 +1653,7 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function favorite_service(): void {
-		check_ajax_referer( 'wpss_favorite_nonce', 'nonce' );
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$user_id    = get_current_user_id();
@@ -1679,7 +1679,7 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function unfavorite_service(): void {
-		check_ajax_referer( 'wpss_favorite_nonce', 'nonce' );
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$user_id    = get_current_user_id();
@@ -1703,7 +1703,7 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function get_favorites(): void {
-		check_ajax_referer( 'wpss_favorite_nonce', 'nonce' );
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$user_id       = get_current_user_id();
 		$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );

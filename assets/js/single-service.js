@@ -890,7 +890,7 @@
                     url: wpssService.ajaxUrl,
                     type: 'POST',
                     data: {
-                        action: isFavorited ? 'wpss_remove_favorite' : 'wpss_add_favorite',
+                        action: isFavorited ? 'wpss_unfavorite_service' : 'wpss_favorite_service',
                         service_id: serviceId,
                         nonce: wpssService.nonce
                     },
