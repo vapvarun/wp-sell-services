@@ -2184,14 +2184,18 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			.then(function(response) { return response.json(); })
 			.then(function(data) {
 				if (data.code) {
-					alert(data.message || 'Failed to cancel order.');
+					if (typeof WPSS !== 'undefined' && WPSS.showNotification) {
+						WPSS.showNotification(data.message || 'Failed to cancel order.', 'error');
+					}
 					btn.disabled = false;
 				} else {
 					window.location.reload();
 				}
 			})
 			.catch(function() {
-				alert('An error occurred. Please try again.');
+				if (typeof WPSS !== 'undefined' && WPSS.showNotification) {
+					WPSS.showNotification('An error occurred. Please try again.', 'error');
+				}
 				btn.disabled = false;
 			});
 		});

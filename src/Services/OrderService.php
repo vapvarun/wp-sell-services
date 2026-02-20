@@ -479,7 +479,7 @@ class OrderService {
 			);
 		}
 
-		// Store reason in vendor_notes.
+		// Store reason in vendor_notes first so status-change hooks can access it.
 		$cancel_data = wp_json_encode( array(
 			'reason'       => sanitize_key( $reason ),
 			'note'         => sanitize_textarea_field( $note ),
@@ -488,7 +488,8 @@ class OrderService {
 		) );
 
 		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_orders';
+		$table          = $wpdb->prefix . 'wpss_orders';
+		$old_notes      = $order->vendor_notes;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
@@ -504,6 +505,14 @@ class OrderService {
 		);
 
 		if ( ! $updated ) {
+			// Rollback vendor_notes on status transition failure.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array( 'vendor_notes' => $old_notes ),
+				array( 'id' => $order_id )
+			);
+
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to request cancellation.', 'wp-sell-services' ),

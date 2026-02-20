@@ -520,6 +520,9 @@ class EmailService {
 
 		// Parse cancellation data from vendor_notes.
 		$cancel_data = json_decode( $order->vendor_notes ?? '', true );
+		if ( ! is_array( $cancel_data ) ) {
+			$cancel_data = array();
+		}
 		$reason_key  = $cancel_data['reason'] ?? '';
 		$note        = $cancel_data['note'] ?? '';
 
@@ -533,7 +536,12 @@ class EmailService {
 		);
 
 		$reason_label = $reason_labels[ $reason_key ] ?? $reason_key;
-		$deadline     = new \DateTimeImmutable( '+48 hours' );
+
+		// Use the stored requested_at time for deadline, not current time.
+		$requested_at = ! empty( $cancel_data['requested_at'] )
+			? new \DateTimeImmutable( $cancel_data['requested_at'] )
+			: new \DateTimeImmutable();
+		$deadline     = $requested_at->modify( '+48 hours' );
 		$deadline_str = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $deadline->getTimestamp() );
 
 		// Send to vendor.

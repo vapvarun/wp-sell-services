@@ -409,6 +409,10 @@ class AjaxHandlers {
 	public function accept_cancellation(): void {
 		check_ajax_referer( 'wpss_order_action', 'nonce' );
 
+		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'order_action' );
+		}
+
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$user_id  = get_current_user_id();
 
@@ -443,6 +447,10 @@ class AjaxHandlers {
 	 */
 	public function reject_cancellation(): void {
 		check_ajax_referer( 'wpss_order_action', 'nonce' );
+
+		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
+			RateLimiter::send_error( 'order_action' );
+		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$user_id  = get_current_user_id();

@@ -695,17 +695,31 @@ class OrderWorkflowManager {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// Find orders in cancellation_requested status for over 48 hours.
+		// Find all orders in cancellation_requested status.
+		// We check the requested_at timestamp from vendor_notes JSON for accurate 48h enforcement.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$timed_out_orders = $wpdb->get_results(
+		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, customer_id, vendor_id, vendor_notes FROM {$table}
-				WHERE status = %s
-				AND updated_at < DATE_SUB(%s, INTERVAL 48 HOUR)",
-				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
-				current_time( 'mysql' )
+				WHERE status = %s",
+				ServiceOrder::STATUS_CANCELLATION_REQUESTED
 			)
 		);
+
+		$now             = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		$timed_out_orders = array();
+
+		foreach ( $pending_orders as $order ) {
+			$cancel_data  = json_decode( $order->vendor_notes ?? '', true );
+			$requested_at = ! empty( $cancel_data['requested_at'] )
+				? strtotime( $cancel_data['requested_at'] )
+				: 0;
+
+			// Use requested_at from vendor_notes; fall back to updated_at only if missing.
+			if ( $requested_at > 0 && ( $now - $requested_at ) >= 48 * HOUR_IN_SECONDS ) {
+				$timed_out_orders[] = $order;
+			}
+		}
 
 		foreach ( $timed_out_orders as $order ) {
 			$order_id = (int) $order->id;
