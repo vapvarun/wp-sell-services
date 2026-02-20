@@ -20,6 +20,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+$buyer_name = $buyer_name ?? __( 'The buyer', 'wp-sell-services' );
+
 echo "= " . esc_html( $email_heading ) . " =\n\n";
 
 printf(

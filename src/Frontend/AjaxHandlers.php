@@ -382,6 +382,7 @@ class AjaxHandlers {
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		$order_service = new OrderService();
@@ -390,6 +391,19 @@ class AjaxHandlers {
 		// Check if user is part of the order.
 		if ( ! $order || ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to cancel this order.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Buyers cannot directly cancel orders in cancellation_requested status — vendor must respond.
+		if ( (int) $order->customer_id === $user_id && 'cancellation_requested' === $order->status ) {
+			wp_send_json_error( array( 'message' => __( 'Your cancellation request is awaiting vendor response.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Vendors can only cancel orders in pending status via AJAX — all other cancellations go through REST API.
+		if ( (int) $order->vendor_id === $user_id && 'pending' !== $order->status ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot cancel this order in its current status.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		$result = $order_service->cancel( $order_id, $user_id, $reason );

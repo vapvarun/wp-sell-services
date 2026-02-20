@@ -538,9 +538,13 @@ class EmailService {
 		$reason_label = $reason_labels[ $reason_key ] ?? $reason_key;
 
 		// Use the stored requested_at time for deadline, not current time.
-		$requested_at = ! empty( $cancel_data['requested_at'] )
-			? new \DateTimeImmutable( $cancel_data['requested_at'] )
-			: new \DateTimeImmutable();
+		try {
+			$requested_at = ! empty( $cancel_data['requested_at'] )
+				? new \DateTimeImmutable( $cancel_data['requested_at'] )
+				: new \DateTimeImmutable();
+		} catch ( \Exception $e ) {
+			$requested_at = new \DateTimeImmutable();
+		}
 		$deadline     = $requested_at->modify( '+48 hours' );
 		$deadline_str = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $deadline->getTimestamp() );
 
@@ -1006,7 +1010,7 @@ class EmailService {
 			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
 			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
 			self::TYPE_SELLER_LEVEL_PROMOTION  => 'notify_new_order',
-			self::TYPE_CANCELLATION_REQUESTED => 'notify_order_cancelled',
+			// TYPE_CANCELLATION_REQUESTED is intentionally unmapped — always enabled (critical vendor communication).
 			// Direct wp_mail types used by services outside EmailService.
 			'withdrawal_requested'            => 'notify_new_order',
 			'withdrawal_auto'                 => 'notify_new_order',

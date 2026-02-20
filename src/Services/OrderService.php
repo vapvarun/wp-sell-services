@@ -233,6 +233,7 @@ class OrderService {
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
 				ServiceOrder::STATUS_DISPUTED,
+				ServiceOrder::STATUS_CANCELLED,
 			),
 			ServiceOrder::STATUS_REVISION_REQUESTED     => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
@@ -492,11 +493,18 @@ class OrderService {
 		$old_notes      = $order->vendor_notes;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
+		$notes_written = $wpdb->update(
 			$table,
 			array( 'vendor_notes' => $cancel_data ),
 			array( 'id' => $order_id )
 		);
+
+		if ( false === $notes_written ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to save cancellation details.', 'wp-sell-services' ),
+			);
+		}
 
 		$updated = $this->update_status(
 			$order_id,

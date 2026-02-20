@@ -737,7 +737,12 @@ class OrdersController extends RestController {
 				} elseif ( 'cancellation_requested' !== $order->status ) {
 					$error = __( 'No cancellation request to accept.', 'wp-sell-services' );
 				} else {
-					$result = $order->update( array( 'status' => 'cancelled' ) );
+					$order_service = new \WPSellServices\Services\OrderService();
+					$cancel_result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+					$result        = $cancel_result['success'] ?? false;
+					if ( ! $result ) {
+						$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
+					}
 				}
 				break;
 
@@ -798,6 +803,14 @@ class OrdersController extends RestController {
 			return new WP_Error(
 				'rest_action_failed',
 				$error,
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( false === $result ) {
+			return new WP_Error(
+				'rest_action_failed',
+				__( 'Action could not be completed. The order status transition may not be allowed.', 'wp-sell-services' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -1189,7 +1202,7 @@ class OrdersController extends RestController {
 				break;
 
 			case 'cancellation_requested':
-				if ( $is_vendor ) {
+				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'accept-cancellation';
 					$actions[] = 'reject-cancellation';
 				}
@@ -1217,6 +1230,9 @@ class OrdersController extends RestController {
 				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';
+				}
+				if ( $is_admin ) {
+					$actions[] = 'cancel';
 				}
 				break;
 

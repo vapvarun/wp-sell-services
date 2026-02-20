@@ -28,6 +28,7 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 }
 
 $base_color = $base_color ?? '#7f54b3';
+$buyer_name = $buyer_name ?? __( 'The buyer', 'wp-sell-services' );
 
 /**
  * Fires before the email content for the cancellation requested email.

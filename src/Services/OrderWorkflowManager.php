@@ -724,11 +724,15 @@ class OrderWorkflowManager {
 		foreach ( $timed_out_orders as $order ) {
 			$order_id = (int) $order->id;
 
-			$this->order_service->update_status(
+			$updated = $this->order_service->update_status(
 				$order_id,
 				ServiceOrder::STATUS_CANCELLED,
 				__( 'Order auto-cancelled - vendor did not respond to cancellation request within 48 hours', 'wp-sell-services' )
 			);
+
+			if ( ! $updated ) {
+				continue;
+			}
 
 			// Notify vendor.
 			$this->notification_service->create(

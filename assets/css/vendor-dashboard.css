@@ -562,6 +562,17 @@
 	color: var(--wpss-white, #fff);
 }
 
+.wpss-btn--danger-outline {
+	background: transparent;
+	border: 1px solid var(--wpss-danger, #ef4444);
+	color: var(--wpss-danger, #ef4444);
+}
+
+.wpss-btn--danger-outline:hover {
+	background: var(--wpss-danger, #ef4444);
+	color: var(--wpss-white, #fff);
+}
+
 .wpss-btn--ghost {
 	background: transparent;
 	border: 1px solid var(--wpss-border, #e5e7eb);
