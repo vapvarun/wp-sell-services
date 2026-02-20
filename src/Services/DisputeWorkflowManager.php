@@ -80,7 +80,7 @@ class DisputeWorkflowManager {
 		// Hooks for dispute events.
 		add_action( 'wpss_dispute_opened', [ $this, 'on_dispute_opened' ], 10, 4 );
 		add_action( 'wpss_dispute_response_submitted', [ $this, 'on_response_submitted' ], 10, 3 );
-		add_action( 'wpss_dispute_evidence_added', [ $this, 'on_evidence_added' ], 10, 3 );
+		add_action( 'wpss_dispute_evidence_added', [ $this, 'on_evidence_added' ], 10, 2 );
 		add_action( 'wpss_dispute_resolved', [ $this, 'on_dispute_resolved' ], 10, 4 );
 	}
 
@@ -308,6 +308,9 @@ class DisputeWorkflowManager {
 			];
 		}
 
+		// Fire status change hook (consistent with DisputeService::update_status).
+		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_ESCALATED, $dispute->status );
+
 		// Notify admins.
 		$this->notify_admins_of_escalation( $dispute_id, $dispute, $reason );
 
@@ -449,6 +452,9 @@ class DisputeWorkflowManager {
 				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
 			];
 		}
+
+		// Fire status change hook (consistent with DisputeService::update_status).
+		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_CLOSED, $dispute->status );
 
 		// Restore order status to previous state if possible.
 		$this->restore_order_status( $dispute->order_id );
@@ -695,13 +701,22 @@ class DisputeWorkflowManager {
 		$previous_status = $meta['status_before_dispute'] ?? \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
+		$result = $wpdb->update(
 			$wpdb->prefix . 'wpss_orders',
-			[ 'status' => $previous_status ],
+			[
+				'status'     => $previous_status,
+				'updated_at' => current_time( 'mysql' ),
+			],
 			[ 'id' => $order_id ],
-			[ '%s' ],
+			[ '%s', '%s' ],
 			[ '%d' ]
 		);
+
+		// Fire status change hooks so notifications and workflows trigger.
+		if ( $result ) {
+			do_action( 'wpss_order_status_changed', $order_id, $previous_status, \WPSellServices\Models\ServiceOrder::STATUS_DISPUTED );
+			do_action( "wpss_order_status_{$previous_status}", $order_id, \WPSellServices\Models\ServiceOrder::STATUS_DISPUTED );
+		}
 	}
 
 	/**
@@ -840,14 +855,13 @@ class DisputeWorkflowManager {
 	/**
 	 * Handle evidence added event.
 	 *
-	 * @param int $evidence_id Evidence ID.
 	 * @param int $dispute_id Dispute ID.
 	 * @param int $user_id User ID.
 	 * @return void
 	 */
-	public function on_evidence_added( int $evidence_id, int $dispute_id, int $user_id ): void {
+	public function on_evidence_added( int $dispute_id, int $user_id ): void {
 		// Similar to response submitted - notify other party.
-		$this->on_response_submitted( $evidence_id, $dispute_id, $user_id );
+		$this->on_response_submitted( 0, $dispute_id, $user_id );
 	}
 
 	/**

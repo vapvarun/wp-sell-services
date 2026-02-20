@@ -680,13 +680,8 @@ class OrderWorkflowManager {
 		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 		// EmailService also sends branded emails for this status via handle_status_change().
 
-		/**
-		 * Fires when a cancellation is requested.
-		 *
-		 * @param int    $order_id   Order ID.
-		 * @param string $old_status Previous status.
-		 */
-		do_action( 'wpss_cancellation_requested', $order_id, $old_status );
+		// Note: wpss_cancellation_requested hook is fired by OrderService::request_cancellation()
+		// with full context (order_id, user_id, reason, note). Not re-fired here to avoid duplication.
 	}
 
 	/**

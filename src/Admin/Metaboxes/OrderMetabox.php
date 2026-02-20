@@ -1068,20 +1068,10 @@ class OrderMetabox {
 			wp_send_json_error( array( 'message' => __( 'Failed to save requirements.', 'wp-sell-services' ) ) );
 		}
 
-		// Transition order status if needed.
+		// Transition order status if needed (uses OrderService for hooks + timestamps).
 		$status = $order->get_status();
 		if ( 'pending_requirements' === $status ) {
-			$this->order_repo->update_status( $order_id, 'in_progress' );
-
-			// Set started_at timestamp.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$wpdb->prefix . 'wpss_orders',
-				array( 'started_at' => current_time( 'mysql' ) ),
-				array( 'id' => $order_id ),
-				array( '%s' ),
-				array( '%d' )
-			);
+			$this->order_service->update_status( $order_id, 'in_progress' );
 		}
 
 		/**

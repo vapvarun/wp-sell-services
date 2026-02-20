@@ -231,6 +231,10 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		);
 
 		if ( $result ) {
+			// Fire status change hooks so notifications and workflows trigger.
+			do_action( 'wpss_order_status_changed', $order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS, ServiceOrder::STATUS_PENDING_PAYMENT );
+			do_action( 'wpss_order_status_pending_requirements', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+
 			/**
 			 * Fires when an order is marked as paid.
 			 *

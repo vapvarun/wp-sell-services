@@ -23,6 +23,7 @@ use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Services\DisputeService;
+use WPSellServices\Services\OrderService;
 
 /**
  * Handles all admin-side functionality.
@@ -358,55 +359,17 @@ class Admin {
 			wp_die( esc_html__( 'Invalid status.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 
-		// Update the order.
-		global $wpdb;
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		// Use OrderService for transition validation, timestamps, logging, and hooks.
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
 
-		// Get current status before update.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$old_status = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT status FROM {$orders_table} WHERE id = %d",
-				$order_id
-			)
-		);
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$updated = $wpdb->update(
-			$orders_table,
-			array(
-				'status'     => $status,
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $order_id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
-
-		if ( false === $updated ) {
-			wpss_log( "Failed to update order {$order_id} status: " . $wpdb->last_error, 'error' );
-		}
-
-		// Fire status change hooks for notifications and workflow handlers.
-		if ( $updated && $old_status !== $status ) {
-			/**
-			 * Fires when order status changes via admin.
-			 *
-			 * @param int    $order_id   Order ID.
-			 * @param string $status     New status.
-			 * @param string $old_status Previous status.
-			 */
-			do_action( 'wpss_order_status_changed', $order_id, $status, $old_status );
-			do_action( "wpss_order_status_{$status}", $order_id, $old_status );
-		}
-
-		// Redirect back to the order. Distinguish DB error (false) from no-change (0).
-		if ( false === $updated ) {
+		if ( ! $order ) {
 			$update_status = 'error';
-		} elseif ( 0 === $updated ) {
+		} elseif ( $order->status === $status ) {
 			$update_status = 'unchanged';
 		} else {
-			$update_status = '1';
+			$result        = $order_service->update_status( $order_id, $status );
+			$update_status = $result ? '1' : 'error';
 		}
 
 		$redirect_url = add_query_arg(
@@ -924,45 +887,15 @@ class Admin {
 			'mark_cancelled' => 'cancelled',
 		);
 
-		$new_status = $status_map[ $action ];
-		$updated    = 0;
-
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_orders';
+		$new_status    = $status_map[ $action ];
+		$updated       = 0;
+		$order_service = new OrderService();
 
 		foreach ( $order_ids as $id ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$old_status = $wpdb->get_var(
-				$wpdb->prepare( "SELECT status FROM {$table} WHERE id = %d", $id )
-			);
-
-			if ( $old_status === $new_status ) {
-				continue;
-			}
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$result = $wpdb->update(
-				$table,
-				array( 'status' => $new_status ),
-				array( 'id' => $id ),
-				array( '%s' ),
-				array( '%d' )
-			);
+			$result = $order_service->update_status( (int) $id, $new_status );
 
 			if ( $result ) {
 				++$updated;
-
-				/**
-				 * Fires after an order status is changed via bulk action.
-				 *
-				 * @since 1.0.0
-				 *
-				 * @param int    $id         Order ID.
-				 * @param string $new_status New status.
-				 * @param string $old_status Previous status.
-				 */
-				do_action( 'wpss_order_status_changed', $id, $new_status, $old_status );
-				do_action( "wpss_order_status_{$new_status}", $id, $old_status );
 			}
 		}
 

@@ -429,7 +429,7 @@ class DisputesController extends RestController {
 
 		if ( current_user_can( 'manage_options' ) ) {
 			$disputes = $this->dispute_service->get_all( $args );
-			$total    = count( $this->dispute_service->count_by_status() );
+			$total    = array_sum( $this->dispute_service->count_by_status() );
 		} else {
 			$disputes = $this->dispute_service->get_by_user( $user_id, $args );
 			$total    = count( $disputes ); // Simplified count.
