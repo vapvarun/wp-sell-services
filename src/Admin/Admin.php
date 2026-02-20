@@ -387,7 +387,7 @@ class Admin {
 			wpss_log( "Failed to update order {$order_id} status: " . $wpdb->last_error, 'error' );
 		}
 
-		// Fire status change hook for notifications (only when rows actually changed).
+		// Fire status change hooks for notifications and workflow handlers.
 		if ( $updated && $old_status !== $status ) {
 			/**
 			 * Fires when order status changes via admin.
@@ -397,6 +397,7 @@ class Admin {
 			 * @param string $old_status Previous status.
 			 */
 			do_action( 'wpss_order_status_changed', $order_id, $status, $old_status );
+			do_action( "wpss_order_status_{$status}", $order_id, $old_status );
 		}
 
 		// Redirect back to the order. Distinguish DB error (false) from no-change (0).
@@ -961,6 +962,7 @@ class Admin {
 				 * @param string $old_status Previous status.
 				 */
 				do_action( 'wpss_order_status_changed', $id, $new_status, $old_status );
+				do_action( "wpss_order_status_{$new_status}", $id, $old_status );
 			}
 		}
 

@@ -51,7 +51,7 @@ $can_add_evidence = in_array( $dispute->status, array( DisputeService::STATUS_OP
 // Get participants.
 $customer      = get_userdata( $order->customer_id );
 $vendor        = get_userdata( $order->vendor_id );
-$opener        = get_userdata( $dispute->opened_by );
+$opener        = get_userdata( $dispute->initiator_id );
 $customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-sell-services' );
 $vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
 
@@ -310,34 +310,33 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 			</div>
 
 			<!-- Resolution Section -->
-			<?php if ( DisputeService::STATUS_RESOLVED === $dispute->status && ! empty( $dispute->meta['resolution'] ) ) : ?>
-				<?php $resolution = $dispute->meta['resolution']; ?>
+			<?php if ( DisputeService::STATUS_RESOLVED === $dispute->status && ! empty( $dispute->resolution_type ) ) : ?>
 				<div class="wpss-dispute-section wpss-resolution-section">
 					<h3 class="wpss-section-title"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h3>
 					<div class="wpss-resolution-card">
 						<div class="wpss-resolution-type">
 							<strong><?php esc_html_e( 'Decision:', 'wp-sell-services' ); ?></strong>
-							<?php echo esc_html( $resolution_types[ $resolution['type'] ] ?? $resolution['type'] ); ?>
+							<?php echo esc_html( $resolution_types[ $dispute->resolution_type ] ?? $dispute->resolution_type ); ?>
 						</div>
-						<?php if ( ! empty( $resolution['refund_amount'] ) && $resolution['refund_amount'] > 0 ) : ?>
+						<?php if ( ! empty( $dispute->refund_amount ) && $dispute->refund_amount > 0 ) : ?>
 							<div class="wpss-resolution-refund">
 								<strong><?php esc_html_e( 'Refund Amount:', 'wp-sell-services' ); ?></strong>
-								<?php echo wp_kses_post( wpss_format_price( (float) $resolution['refund_amount'] ) ); ?>
+								<?php echo wp_kses_post( wpss_format_price( (float) $dispute->refund_amount ) ); ?>
 							</div>
 						<?php endif; ?>
-						<?php if ( ! empty( $resolution['notes'] ) ) : ?>
+						<?php if ( ! empty( $dispute->resolution_notes ) ) : ?>
 							<div class="wpss-resolution-notes">
 								<strong><?php esc_html_e( 'Notes:', 'wp-sell-services' ); ?></strong>
-								<p><?php echo wp_kses_post( nl2br( $resolution['notes'] ) ); ?></p>
+								<p><?php echo wp_kses_post( nl2br( $dispute->resolution_notes ) ); ?></p>
 							</div>
 						<?php endif; ?>
-						<?php if ( ! empty( $resolution['resolved_at'] ) ) : ?>
+						<?php if ( null !== $dispute->resolved_at ) : ?>
 							<div class="wpss-resolution-date">
 								<?php
 								printf(
 									/* translators: %s: date */
 									esc_html__( 'Resolved on %s', 'wp-sell-services' ),
-									esc_html( wp_date( get_option( 'date_format' ), strtotime( $resolution['resolved_at'] ) ) )
+									esc_html( wp_date( get_option( 'date_format' ), $dispute->resolved_at->getTimestamp() ) )
 								);
 								?>
 							</div>

@@ -63,6 +63,8 @@ class OrderWorkflowManager {
 		add_action( 'wpss_check_requirements_timeout', [ $this, 'check_requirements_timeout' ] );
 		add_action( 'wpss_recalculate_seller_levels', [ $this, 'recalculate_seller_levels' ] );
 		add_action( 'wpss_process_cancellation_timeouts', [ $this, 'process_cancellation_timeouts' ] );
+		add_action( 'wpss_cleanup_expired_requests', [ $this, 'cleanup_expired_requests' ] );
+		add_action( 'wpss_update_vendor_stats', [ $this, 'update_vendor_stats' ] );
 
 		// Status change hooks.
 		add_action( 'wpss_order_status_changed', [ $this, 'handle_status_change' ], 10, 3 );
@@ -131,6 +133,14 @@ class OrderWorkflowManager {
 
 		if ( ! wp_next_scheduled( 'wpss_process_cancellation_timeouts' ) ) {
 			wp_schedule_event( time(), 'wpss_hourly', 'wpss_process_cancellation_timeouts' );
+		}
+
+		if ( ! wp_next_scheduled( 'wpss_cleanup_expired_requests' ) ) {
+			wp_schedule_event( time(), 'daily', 'wpss_cleanup_expired_requests' );
+		}
+
+		if ( ! wp_next_scheduled( 'wpss_update_vendor_stats' ) ) {
+			wp_schedule_event( time(), 'wpss_twice_daily', 'wpss_update_vendor_stats' );
 		}
 	}
 
@@ -667,7 +677,7 @@ class OrderWorkflowManager {
 		$commission_service->record( $order_id );
 
 		// Update vendor stats (basic counts only - earnings handled by CommissionService).
-		$this->update_vendor_stats( $order->vendor_id );
+		$this->update_single_vendor_stats( $order->vendor_id );
 
 		// Notify both parties.
 		$this->notification_service->create(
@@ -820,8 +830,6 @@ class OrderWorkflowManager {
 				__( 'Order auto-cancelled - vendor did not respond to cancellation request within 48 hours', 'wp-sell-services' )
 			);
 
-			do_action( 'wpss_order_cancelled', $order_id, 'auto_timeout', '' );
-
 			// Notify vendor.
 			$this->notification_service->create(
 				(int) $order->vendor_id,
@@ -839,6 +847,40 @@ class OrderWorkflowManager {
 				__( 'Your cancellation request has been automatically approved. The vendor did not respond within 48 hours.', 'wp-sell-services' ),
 				[ 'order_id' => $order_id ]
 			);
+		}
+	}
+
+	/**
+	 * Clean up expired buyer requests.
+	 *
+	 * Cron handler for wpss_cleanup_expired_requests.
+	 *
+	 * @return void
+	 */
+	public function cleanup_expired_requests(): void {
+		$service = new \WPSellServices\Services\BuyerRequestService();
+		$service->expire_old_requests();
+	}
+
+	/**
+	 * Update all vendor statistics.
+	 *
+	 * Cron handler for wpss_update_vendor_stats.
+	 *
+	 * @return void
+	 */
+	public function update_vendor_stats(): void {
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		$vendors        = get_users(
+			array(
+				'meta_key'   => '_wpss_is_vendor', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'fields'     => 'ID',
+			)
+		);
+
+		foreach ( $vendors as $vendor_id ) {
+			$vendor_service->update_stats( (int) $vendor_id );
 		}
 	}
 
@@ -890,7 +932,7 @@ class OrderWorkflowManager {
 	 * @param int $vendor_id Vendor user ID.
 	 * @return void
 	 */
-	private function update_vendor_stats( int $vendor_id ): void {
+	private function update_single_vendor_stats( int $vendor_id ): void {
 		global $wpdb;
 		$orders_table   = $wpdb->prefix . 'wpss_orders';
 		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';

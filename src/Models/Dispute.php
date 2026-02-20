@@ -117,6 +117,13 @@ class Dispute {
 	public string $status = self::STATUS_OPEN;
 
 	/**
+	 * Additional metadata (status history, notes, etc.).
+	 *
+	 * @var array<string, mixed>
+	 */
+	public array $meta = [];
+
+	/**
 	 * Resolution type.
 	 *
 	 * @var string|null
@@ -184,6 +191,7 @@ class Dispute {
 		$dispute->description      = $row->description;
 		$dispute->evidence         = $row->evidence ? json_decode( $row->evidence, true ) : [];
 		$dispute->status           = $row->status ?? self::STATUS_OPEN;
+		$dispute->meta             = ( $row->meta ?? null ) ? json_decode( $row->meta, true ) : [];
 		$dispute->resolution_type  = $row->resolution ?? null;
 		$dispute->resolution_notes = $row->resolution_notes ?? '';
 		$dispute->refund_amount    = ( $row->refund_amount ?? null ) ? (float) $row->refund_amount : null;

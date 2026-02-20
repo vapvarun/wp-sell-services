@@ -626,7 +626,6 @@ class OrdersController extends RestController {
 							'completed_at' => current_time( 'mysql' ),
 						)
 					);
-					do_action( 'wpss_order_completed', $order_id );
 				}
 				break;
 
@@ -642,7 +641,6 @@ class OrdersController extends RestController {
 								'vendor_notes' => $reason,
 							)
 						);
-						do_action( 'wpss_order_cancelled', $order_id, 'admin', $reason );
 					}
 				} elseif ( $is_customer ) {
 					$immediate_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
@@ -658,7 +656,6 @@ class OrdersController extends RestController {
 									'vendor_notes' => $reason,
 								)
 							);
-							do_action( 'wpss_order_cancelled', $order_id, 'customer', $reason );
 						}
 					} elseif ( 'in_progress' === $order->status ) {
 						// Request cancellation — vendor gets 48h to respond.
@@ -688,7 +685,6 @@ class OrdersController extends RestController {
 								'vendor_notes' => $reason,
 							)
 						);
-						do_action( 'wpss_order_cancelled', $order_id, 'vendor', $reason );
 					}
 				} else {
 					$error = __( 'You cannot cancel this order in its current status.', 'wp-sell-services' );
@@ -702,7 +698,6 @@ class OrdersController extends RestController {
 					$error = __( 'No cancellation request to accept.', 'wp-sell-services' );
 				} else {
 					$result = $order->update( array( 'status' => 'cancelled' ) );
-					do_action( 'wpss_order_cancelled', $order_id, 'vendor_accepted', $reason );
 				}
 				break;
 

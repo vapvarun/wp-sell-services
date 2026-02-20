@@ -226,27 +226,9 @@ class Activator {
 	 * @return void
 	 */
 	private static function schedule_cron_events(): void {
-		// Auto-complete orders cron.
-		if ( ! wp_next_scheduled( 'wpss_auto_complete_orders' ) ) {
-			wp_schedule_event( time(), 'hourly', 'wpss_auto_complete_orders' );
-		}
-
-		// Clean up expired buyer requests.
-		if ( ! wp_next_scheduled( 'wpss_cleanup_expired_requests' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpss_cleanup_expired_requests' );
-		}
-
-		// Update vendor stats.
-		if ( ! wp_next_scheduled( 'wpss_update_vendor_stats' ) ) {
-			wp_schedule_event( time(), 'twicedaily', 'wpss_update_vendor_stats' );
-		}
-
-		// Process cancellation request timeouts (48h auto-cancel).
-		if ( ! wp_next_scheduled( 'wpss_process_cancellation_timeouts' ) ) {
-			wp_schedule_event( time(), 'hourly', 'wpss_process_cancellation_timeouts' );
-		}
-
-		// Process auto-withdrawals (uses dynamic scheduling based on settings).
+		// Most cron events are scheduled by OrderWorkflowManager::schedule_cron_events()
+		// on every init. We only handle EarningsService here since it has its own
+		// dynamic scheduling logic based on admin settings.
 		\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
 	}
 

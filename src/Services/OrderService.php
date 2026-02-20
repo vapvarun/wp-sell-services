@@ -423,15 +423,6 @@ class OrderService {
 			);
 		}
 
-		/**
-		 * Fires when an order is cancelled.
-		 *
-		 * @param int    $order_id Order ID.
-		 * @param int    $user_id  User who cancelled.
-		 * @param string $reason   Cancellation reason.
-		 */
-		do_action( 'wpss_order_cancelled', $order_id, $user_id, $reason );
-
 		return array( 'success' => true );
 	}
 

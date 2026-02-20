@@ -470,7 +470,7 @@ do_action('wpss_order_status_in_progress', $order_id, $old_status);
 do_action('wpss_order_completed', $order_id, $order);
 
 // Fires when order is cancelled
-do_action('wpss_order_cancelled', $order_id, $user_id, $reason);
+do_action('wpss_order_cancelled', $order_id, $order);
 
 // Fires when order marked as late
 do_action('wpss_order_late', $order_id);
