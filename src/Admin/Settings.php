@@ -22,18 +22,18 @@ defined( 'ABSPATH' ) || exit;
 class Settings {
 
 	/**
-	 * Settings tabs.
+	 * Settings tabs (lazy-initialized to avoid early __() calls).
 	 *
-	 * @var array<string, string>
+	 * @var array<string, string>|null
 	 */
-	private array $tabs = array();
+	private ?array $tabs = null;
 
 	/**
-	 * Tab groups for visual organization.
+	 * Tab groups for visual organization (lazy-initialized).
 	 *
-	 * @var array<string, array>
+	 * @var array<string, array>|null
 	 */
-	private array $tab_groups = array();
+	private ?array $tab_groups = null;
 
 	/**
 	 * Whether the unified section styles have been rendered.
@@ -53,23 +53,35 @@ class Settings {
 	 * Constructor.
 	 */
 	public function __construct() {
-		// Define tabs - consolidated for better UX.
+		// Tabs and groups are lazy-initialized in init_tabs() to avoid
+		// calling __() before the 'init' action (WP 6.7+ compat).
+	}
+
+	/**
+	 * Initialize tabs and groups on first access.
+	 *
+	 * @return void
+	 */
+	private function init_tabs(): void {
+		if ( null !== $this->tabs ) {
+			return;
+		}
+
 		$this->tabs = array(
 			// Setup.
 			'general'  => __( 'General', 'wp-sell-services' ),
 			'pages'    => __( 'Pages', 'wp-sell-services' ),
 			// Business.
-			'payments' => __( 'Payments', 'wp-sell-services' ), // Commission + Tax + Payouts merged.
+			'payments' => __( 'Payments', 'wp-sell-services' ),
 			'gateways' => __( 'Gateways', 'wp-sell-services' ),
 			'vendor'   => __( 'Vendor', 'wp-sell-services' ),
 			// Operations.
 			'orders'   => __( 'Orders', 'wp-sell-services' ),
-			'emails'   => __( 'Emails', 'wp-sell-services' ), // Renamed from Notifications.
+			'emails'   => __( 'Emails', 'wp-sell-services' ),
 			// System (Pro tabs inserted before this via filter).
 			'advanced' => __( 'Advanced', 'wp-sell-services' ),
 		);
 
-		// Define tab groups for visual separators.
 		$this->tab_groups = array(
 			'setup'      => array( 'general', 'pages' ),
 			'business'   => array( 'payments', 'gateways', 'vendor' ),
@@ -88,6 +100,8 @@ class Settings {
 	 * @return array<string, array<string, string>> Grouped tabs.
 	 */
 	private function get_grouped_tabs(): array {
+		$this->init_tabs();
+
 		$core_tabs = array(
 			'general',
 			'pages',
@@ -167,6 +181,8 @@ class Settings {
 	 * @return void
 	 */
 	public function init(): void {
+		$this->init_tabs();
+
 		/**
 		 * Filter the settings tabs.
 		 *
@@ -952,6 +968,8 @@ class Settings {
 		}
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		$this->init_tabs();
 
 		if ( ! array_key_exists( $active_tab, $this->tabs ) ) {
 			$active_tab = 'general';

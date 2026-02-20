@@ -106,7 +106,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 
 				<div class="wpss-form-row">
 					<label class="wpss-toggle">
-						<input type="checkbox" name="vacation_mode" value="1" <?php checked( $vendor_profile->is_on_vacation() ); ?>>
+						<input type="checkbox" name="vacation_mode" value="1" <?php checked( ! empty( $vendor_profile->vacation_mode ) ); ?>>
 						<span class="wpss-toggle__label"><?php esc_html_e( 'Vacation Mode', 'wp-sell-services' ); ?></span>
 					</label>
 					<p class="wpss-form-hint"><?php esc_html_e( 'When enabled, your services will be hidden from search and buyers cannot place new orders.', 'wp-sell-services' ); ?></p>

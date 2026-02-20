@@ -85,27 +85,27 @@ class OrderWorkflowManager {
 	public function add_cron_schedules( array $schedules ): array {
 		$schedules['wpss_hourly'] = [
 			'interval' => HOUR_IN_SECONDS,
-			'display'  => __( 'Every Hour', 'wp-sell-services' ),
+			'display'  => 'Every Hour (WPSS)',
 		];
 
 		$schedules['wpss_twice_daily'] = [
 			'interval' => 12 * HOUR_IN_SECONDS,
-			'display'  => __( 'Twice Daily', 'wp-sell-services' ),
+			'display'  => 'Twice Daily (WPSS)',
 		];
 
 		$schedules['wpss_weekly'] = [
 			'interval' => WEEK_IN_SECONDS,
-			'display'  => __( 'Once Weekly', 'wp-sell-services' ),
+			'display'  => 'Once Weekly (WPSS)',
 		];
 
 		$schedules['weekly'] = [
 			'interval' => WEEK_IN_SECONDS,
-			'display'  => __( 'Weekly', 'wp-sell-services' ),
+			'display'  => 'Weekly',
 		];
 
 		$schedules['monthly'] = [
 			'interval' => 30 * DAY_IN_SECONDS,
-			'display'  => __( 'Monthly', 'wp-sell-services' ),
+			'display'  => 'Monthly',
 		];
 
 		return $schedules;

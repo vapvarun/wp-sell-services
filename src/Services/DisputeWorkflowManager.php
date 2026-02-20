@@ -93,7 +93,7 @@ class DisputeWorkflowManager {
 	public function add_cron_schedules( array $schedules ): array {
 		$schedules['twice_daily'] = [
 			'interval' => 12 * HOUR_IN_SECONDS,
-			'display'  => __( 'Twice Daily', 'wp-sell-services' ),
+			'display'  => 'Twice Daily',
 		];
 		return $schedules;
 	}
