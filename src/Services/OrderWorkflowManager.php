@@ -73,7 +73,7 @@ class OrderWorkflowManager {
 		add_action( 'wpss_order_status_cancellation_requested', [ $this, 'handle_cancellation_requested' ], 10, 2 );
 
 		// Payment hooks.
-		add_action( 'wpss_order_paid', [ $this, 'handle_payment_complete' ] );
+		add_action( 'wpss_order_paid', [ $this, 'handle_payment_complete' ], 10, 2 );
 	}
 
 	/**
@@ -773,10 +773,11 @@ class OrderWorkflowManager {
 	/**
 	 * Handle payment completion.
 	 *
-	 * @param int $order_id Order ID.
+	 * @param int    $order_id       Order ID.
+	 * @param string $transaction_id Transaction ID.
 	 * @return void
 	 */
-	public function handle_payment_complete( int $order_id ): void {
+	public function handle_payment_complete( int $order_id, string $transaction_id = '' ): void {
 		$order = $this->order_service->get( $order_id );
 
 		if ( ! $order ) {

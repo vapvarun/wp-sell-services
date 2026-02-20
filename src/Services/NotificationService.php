@@ -42,7 +42,7 @@ class NotificationService {
 	 * @param array  $data     Additional data.
 	 * @return int|false Notification ID or false on failure.
 	 */
-	public function create( int|string $user_id, string $type, string $title, string $message, array $data = array() ) {
+	public function create( int|string $user_id, string $type, string $title, string $message, array $data = array() ): int|false {
 		$user_id = (int) $user_id;
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_notifications';
