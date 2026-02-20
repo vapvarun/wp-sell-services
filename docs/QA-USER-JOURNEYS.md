@@ -660,6 +660,27 @@ This document focuses on **user expectations** - what buyers and sellers expect 
 6. **Admin**: Settings pages - all tabs and accordions (Section 17)
 7. **Buyer/Vendor**: Buyer requests and proposals (Section 18)
 
+### Lower Priority (but required before launch)
+1. **Admin**: Setup Wizard (Section 19)
+2. **All**: Gutenberg Blocks rendering (Section 20)
+3. **All**: Shortcodes output (Section 21)
+4. **Vendor**: Seller Levels progression (Section 22)
+5. **Buyer**: Favorites/Wishlist (Section 23)
+6. **Vendor**: Portfolio management (Section 24)
+7. **Buyer**: Tipping (Section 25)
+8. **Both**: Milestones (Section 26)
+9. **Both**: Extension Requests (Section 27)
+10. **Dev**: REST API endpoints (Section 28)
+11. **Buyer**: Cart & Standalone Checkout (Section 29)
+12. **All**: Payment Gateways (Section 30)
+13. **Dev**: WP-CLI Commands (Section 31)
+14. **Dev**: Cron Jobs (Section 32)
+15. **All**: In-App Notifications (Section 33)
+16. **All**: Media Uploads (Section 34)
+17. **Admin**: Activation & Database (Section 35)
+18. **Dev**: Template Overrides (Section 36)
+19. **All**: Search & Filtering (Section 37)
+
 ---
 
 ## 17. Admin Settings Pages
@@ -801,6 +822,555 @@ This document focuses on **user expectations** - what buyers and sellers expect 
 
 ---
 
+## 19. Setup Wizard (Post-Activation)
+
+### 19.1 Activation Redirect
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Activate plugin (first time) | Redirects to Setup Wizard page | [ ] |
+| Activate plugin (wizard already completed) | No redirect, goes to normal admin | [ ] |
+| Bulk-activate multiple plugins | No redirect (bulk activation skipped) | [ ] |
+| Non-admin user activates | No redirect (capability check) | [ ] |
+
+### 19.2 Step 1 — Platform Basics
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Marketplace Name pre-filled | Uses site name from settings | [ ] |
+| Currency dropdown | Shows all currencies, saves selection | [ ] |
+| Commission Rate field | Number input, saves percentage | [ ] |
+| Save & Continue | Saves to `wpss_general` + `wpss_commission`, advances to step 2 | [ ] |
+| Skip | Defaults remain (site name, USD, 10%), advances to step 2 | [ ] |
+
+### 19.3 Step 2 — Payment Gateway
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Radio selection (Stripe/PayPal/Offline) | Shows relevant panel | [ ] |
+| Stripe panel | Test mode toggle, API keys fields | [ ] |
+| PayPal panel | Sandbox toggle, client ID/secret fields | [ ] |
+| Offline panel | Title, description fields | [ ] |
+| Save & Continue | Saves to gateway-specific option | [ ] |
+| Skip | No gateway enabled, can configure later | [ ] |
+
+### 19.4 Step 3 — Create Pages
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| 4 page rows shown | Services, Dashboard, Vendor Registration, Checkout | [ ] |
+| "Create" button per page | Creates page via AJAX, shows success badge | [ ] |
+| "Create All Pages" button | Creates all 4 pages at once | [ ] |
+| Page already exists | Shows "Created" badge, no duplicate | [ ] |
+| Skip | No pages created | [ ] |
+
+### 19.5 Step 4 — Service Categories
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Preset category chips shown | 10 suggestions (Web Dev, Design, Writing, etc.) | [ ] |
+| Click chip to select/deselect | Visual toggle, no AJAX yet | [ ] |
+| Custom category input | "Add your own" text field works | [ ] |
+| Save & Continue | Creates selected categories via AJAX | [ ] |
+| Duplicate category | Skipped gracefully, no error | [ ] |
+| Skip | No categories created | [ ] |
+
+### 19.6 Step 5 — Vendor Settings
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Registration mode | Open / Requires Approval radio | [ ] |
+| Max services per vendor | Number input, default 20 | [ ] |
+| Require moderation checkbox | Saves correctly | [ ] |
+| Require verification checkbox | Saves correctly | [ ] |
+| Save & Continue | Saves to `wpss_vendor` | [ ] |
+| Skip | Defaults remain (open, 20, no moderation) | [ ] |
+
+### 19.7 Step 6 — Done
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Success message shown | Congratulations message | [ ] |
+| "Create Your First Service" card | Links to service creation | [ ] |
+| "Import Demo Content" card | Triggers demo import AJAX | [ ] |
+| "Go to Settings" card | Links to settings page | [ ] |
+| Wizard marked complete | `wpss_setup_wizard_completed` option set | [ ] |
+
+### 19.8 Re-Run Wizard
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Settings > Advanced > Setup Wizard | Accordion section visible | [ ] |
+| Click "Re-run Setup Wizard" | Opens wizard with current values pre-filled | [ ] |
+| Complete re-run | Settings updated, no duplicates | [ ] |
+| Completion date shown | Shows when wizard was last completed | [ ] |
+
+---
+
+## 20. Gutenberg Blocks
+
+### 20.1 Block Registration
+| Block | Expected Behavior | Test Status |
+|-------|------------------|-------------|
+| Service Grid | Registered in block inserter under "WP Sell Services" | [ ] |
+| Service Search | Registered in block inserter | [ ] |
+| Service Categories | Registered in block inserter | [ ] |
+| Featured Services | Registered in block inserter | [ ] |
+| Seller Card | Registered in block inserter | [ ] |
+| Buyer Requests | Registered in block inserter | [ ] |
+
+### 20.2 Block Editor
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Insert any block | Block renders in editor | [ ] |
+| Block options panel | Settings sidebar shows block options | [ ] |
+| Category filter (Service Grid) | Category dropdown populated | [ ] |
+| Columns setting (Service Grid) | Number input changes layout | [ ] |
+| Save page with blocks | Page saves without errors | [ ] |
+| Preview page | Blocks render on frontend | [ ] |
+
+### 20.3 Block Frontend Rendering
+| Block | Expected Behavior | Test Status |
+|-------|------------------|-------------|
+| Service Grid | Displays services in grid layout with images, prices | [ ] |
+| Service Search | Shows search form, results update | [ ] |
+| Service Categories | Shows category list/grid with counts | [ ] |
+| Featured Services | Shows only featured services | [ ] |
+| Seller Card | Shows vendor profile card | [ ] |
+| Buyer Requests | Shows buyer request listings | [ ] |
+
+---
+
+## 21. Shortcodes
+
+### 21.1 Service Shortcodes
+| Shortcode | Expected Behavior | Test Status |
+|-----------|------------------|-------------|
+| `[wpss_services]` | Displays services grid/list | [ ] |
+| `[wpss_service_search]` | Shows search form with filters | [ ] |
+| `[wpss_featured_services]` | Shows featured services only | [ ] |
+| `[wpss_service_categories]` | Displays category listing | [ ] |
+
+### 21.2 Vendor Shortcodes
+| Shortcode | Expected Behavior | Test Status |
+|-----------|------------------|-------------|
+| `[wpss_vendors]` | Lists all vendors | [ ] |
+| `[wpss_vendor_profile]` | Shows single vendor profile | [ ] |
+| `[wpss_top_vendors]` | Shows top-rated vendors | [ ] |
+
+### 21.3 Buyer Request Shortcodes
+| Shortcode | Expected Behavior | Test Status |
+|-----------|------------------|-------------|
+| `[wpss_buyer_requests]` | Lists buyer requests | [ ] |
+| `[wpss_post_request]` | Shows request submission form | [ ] |
+
+### 21.4 Dashboard/Order Shortcodes
+| Shortcode | Expected Behavior | Test Status |
+|-----------|------------------|-------------|
+| `[wpss_my_orders]` | Lists user's orders | [ ] |
+| `[wpss_order_details]` | Shows single order detail | [ ] |
+
+### 21.5 Account Shortcodes
+| Shortcode | Expected Behavior | Test Status |
+|-----------|------------------|-------------|
+| `[wpss_login]` | Shows login form | [ ] |
+| `[wpss_register]` | Shows registration form | [ ] |
+
+### 21.6 Shortcode Attributes
+| Test | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| `[wpss_services per_page="6"]` | Respects per_page attribute | [ ] |
+| `[wpss_services category="web-dev"]` | Filters by category | [ ] |
+| Invalid shortcode attribute | Graceful fallback, no error | [ ] |
+| Shortcode in widget area | Renders correctly | [ ] |
+
+---
+
+## 22. Seller Levels
+
+### 22.1 Level Definitions (Admin)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| View seller levels | Level definitions listed | [ ] |
+| Default levels exist | New Seller, Level 1, Level 2, Top Rated | [ ] |
+| Edit level requirements | Orders, rating, earnings thresholds | [ ] |
+| Level badges/icons | Visual indicator per level | [ ] |
+
+### 22.2 Level Progress (Vendor)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Vendor sees current level | Level badge in dashboard | [ ] |
+| Progress toward next level | Progress bar/metrics shown | [ ] |
+| Level promotion | Auto-promoted when thresholds met | [ ] |
+| Promotion email | Notification sent on level up | [ ] |
+| Level shown on service page | Badge visible to buyers | [ ] |
+| Level shown on vendor profile | Badge visible publicly | [ ] |
+
+### 22.3 Level Benefits
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Higher level = lower commission | Commission rate adjusted per level | [ ] |
+| Level-specific features | Unlocked based on level | [ ] |
+| Demotion (if applicable) | Level drops if metrics decline | [ ] |
+
+---
+
+## 23. Favorites / Wishlist
+
+### 23.1 Adding Favorites
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Heart/favorite icon on service card | Clickable icon visible | [ ] |
+| Click favorite (logged in) | Service added to favorites | [ ] |
+| Click favorite (logged out) | Redirect to login or prompt | [ ] |
+| Icon state changes | Filled heart when favorited | [ ] |
+| Favorite from service detail page | Works from single service page | [ ] |
+
+### 23.2 Managing Favorites
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| View favorites list | All favorited services shown | [ ] |
+| Remove from favorites | Service removed, icon updates | [ ] |
+| Favorited service deleted by vendor | Removed from list gracefully | [ ] |
+
+---
+
+## 24. Portfolio
+
+### 24.1 Creating Portfolio Items
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Navigate to portfolio section | Portfolio tab in dashboard | [ ] |
+| Click "Add Portfolio Item" | Form opens | [ ] |
+| Enter title and description | Text fields work | [ ] |
+| Upload images | Image upload works | [ ] |
+| Add project URL (optional) | URL field saves | [ ] |
+| Save portfolio item | Item created successfully | [ ] |
+
+### 24.2 Managing Portfolio
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| View all portfolio items | Grid/list of items | [ ] |
+| Edit portfolio item | All fields editable | [ ] |
+| Reorder items | Drag to reorder works | [ ] |
+| Delete portfolio item | Removed after confirmation | [ ] |
+| Portfolio visible on vendor profile | Public display works | [ ] |
+
+---
+
+## 25. Tipping
+
+### 25.1 Sending a Tip
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Tip option on completed order | "Send Tip" button visible | [ ] |
+| Enter tip amount | Amount field accepts input | [ ] |
+| Confirm tip | Payment processed | [ ] |
+| Tip recorded | Shows in order timeline | [ ] |
+| Vendor receives tip | Added to vendor earnings | [ ] |
+| Tip not available on cancelled orders | Button hidden | [ ] |
+
+### 25.2 Tip History
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Buyer sees tips sent | In order history | [ ] |
+| Vendor sees tips received | In earnings breakdown | [ ] |
+
+---
+
+## 26. Milestones
+
+### 26.1 Creating Milestones (Vendor)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| View order with milestones enabled | Milestones section visible | [ ] |
+| Add milestone | Title, description, amount fields | [ ] |
+| Set milestone order | Sequential numbering | [ ] |
+| Save milestones | Milestones created | [ ] |
+
+### 26.2 Milestone Workflow
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Vendor submits milestone | Status = submitted | [ ] |
+| Buyer reviews milestone | Details visible | [ ] |
+| Buyer approves milestone | Payment released for milestone | [ ] |
+| Buyer requests revision | Milestone sent back to vendor | [ ] |
+| All milestones complete | Order marked complete | [ ] |
+
+---
+
+## 27. Extension Requests
+
+### 27.1 Requesting Extension (Vendor)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Order near deadline | Extension request button visible | [ ] |
+| Request extension | Form with reason and new deadline | [ ] |
+| Submit request | Buyer notified | [ ] |
+
+### 27.2 Responding to Extension (Buyer)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| View extension request | Details and new deadline shown | [ ] |
+| Approve extension | Deadline updated | [ ] |
+| Reject extension | Original deadline remains | [ ] |
+
+---
+
+## 28. REST API
+
+### 28.1 Authentication
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| `POST /wpss/v1/auth/login` | Returns token on valid credentials | [ ] |
+| Login with wrong password | 401 error returned | [ ] |
+| `POST /wpss/v1/auth/register` | Creates new user account | [ ] |
+| `POST /wpss/v1/auth/logout` | Invalidates session | [ ] |
+| Unauthenticated request to protected endpoint | 401 returned | [ ] |
+| Application Password auth | Works for API requests | [ ] |
+
+### 28.2 Core Endpoints
+| Endpoint | Method | Expected | Test Status |
+|----------|--------|----------|-------------|
+| `/wpss/v1/services` | GET | List services with pagination | [ ] |
+| `/wpss/v1/services/{id}` | GET | Single service details | [ ] |
+| `/wpss/v1/orders` | GET | User's orders | [ ] |
+| `/wpss/v1/orders/{id}` | GET | Order detail | [ ] |
+| `/wpss/v1/orders` | POST | Create order | [ ] |
+| `/wpss/v1/conversations/{id}` | GET | Order messages | [ ] |
+| `/wpss/v1/conversations/{id}` | POST | Send message | [ ] |
+| `/wpss/v1/reviews` | GET | Service reviews | [ ] |
+| `/wpss/v1/reviews` | POST | Submit review | [ ] |
+| `/wpss/v1/vendors` | GET | List vendors | [ ] |
+| `/wpss/v1/me` | GET | Current user info | [ ] |
+| `/wpss/v1/dashboard` | GET | Dashboard stats | [ ] |
+| `/wpss/v1/categories` | GET | Service categories | [ ] |
+| `/wpss/v1/search` | GET | Search services/vendors | [ ] |
+
+### 28.3 Batch Endpoint
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| `POST /wpss/v1/batch` with 5 sub-requests | All 5 responses returned | [ ] |
+| Batch with 25 sub-requests | Max limit works | [ ] |
+| Batch with 26+ sub-requests | Error: exceeds limit | [ ] |
+| Mixed success/failure in batch | Each sub-request has own status | [ ] |
+
+### 28.4 Permission Checks
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Vendor accesses own orders | 200 OK | [ ] |
+| Vendor accesses other's orders | 403 forbidden | [ ] |
+| Buyer creates service | 403 forbidden | [ ] |
+| Admin accesses any resource | 200 OK | [ ] |
+| Non-vendor accesses vendor endpoints | 403 forbidden | [ ] |
+
+---
+
+## 29. Cart & Standalone Checkout
+
+### 29.1 Cart Operations
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Add service to cart | Service added, cart count updates | [ ] |
+| Add service with addons | Addons reflected in cart | [ ] |
+| View cart | Service, package, addons, total shown | [ ] |
+| Remove from cart | Item removed, total updates | [ ] |
+| Change package in cart | Price updates | [ ] |
+| Empty cart message | "Your cart is empty" shown | [ ] |
+
+### 29.2 Standalone Checkout
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Proceed to checkout | Checkout page loads | [ ] |
+| Order summary visible | Service, price, addons correct | [ ] |
+| Select payment gateway | Available gateways shown | [ ] |
+| Complete checkout | Order created | [ ] |
+| Redirect to confirmation | Order confirmation page shown | [ ] |
+| Guest checkout (if enabled) | Works without account | [ ] |
+
+---
+
+## 30. Payment Gateways
+
+### 30.1 Stripe Gateway
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Enable Stripe in Settings > Gateways | Toggle saves | [ ] |
+| Enter test API keys | Keys saved (secret masked) | [ ] |
+| Test mode toggle | Switches between test/live keys | [ ] |
+| Stripe appears at checkout | Payment form shown | [ ] |
+| Enter test card (4242...) | Payment succeeds | [ ] |
+| Declined card (4000000000000002) | Error shown to buyer | [ ] |
+| 3D Secure card | Authentication modal appears | [ ] |
+| Webhook received | Order status updated | [ ] |
+| Refund via admin | Stripe refund processed | [ ] |
+
+### 30.2 PayPal Gateway
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Enable PayPal in Settings > Gateways | Toggle saves | [ ] |
+| Enter sandbox credentials | Client ID/secret saved | [ ] |
+| Sandbox mode toggle | Switches between sandbox/live | [ ] |
+| PayPal appears at checkout | PayPal button shown | [ ] |
+| Complete PayPal payment | Redirects to PayPal, back to site | [ ] |
+| Cancel PayPal payment | Returns to checkout, order pending | [ ] |
+| IPN/webhook received | Order status updated | [ ] |
+
+### 30.3 Offline Gateway
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Enable Offline in Settings > Gateways | Toggle saves | [ ] |
+| Set custom title and instructions | Fields save | [ ] |
+| Offline appears at checkout | Instructions shown | [ ] |
+| Place offline order | Order created as `pending_payment` | [ ] |
+| Admin marks payment received | Order advances to next status | [ ] |
+
+---
+
+## 31. WP-CLI Commands
+
+### 31.1 Demo Content
+| Command | Expected Behavior | Test Status |
+|---------|------------------|-------------|
+| `wp wpss demo create` | Creates demo services | [ ] |
+| `wp wpss demo create --count=5` | Creates 5 demo services | [ ] |
+| `wp wpss demo delete --yes` | Deletes all demo services | [ ] |
+| `wp wpss service list` | Lists all services with stats | [ ] |
+
+---
+
+## 32. Cron Jobs & Background Tasks
+
+### 32.1 Scheduled Events
+| Cron Event | Expected Behavior | Test Status |
+|-----------|------------------|-------------|
+| `wpss_auto_complete_orders` (hourly) | Auto-completes orders past deadline | [ ] |
+| `wpss_cleanup_expired_requests` (daily) | Removes expired buyer requests | [ ] |
+| `wpss_update_vendor_stats` (twice daily) | Updates vendor statistics cache | [ ] |
+| Auto-withdrawal cron | Processes auto-withdrawals per schedule | [ ] |
+
+### 32.2 Cron Verification
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Check scheduled events | All 3+ events registered | [ ] |
+| Manually trigger auto-complete | Orders past deadline completed | [ ] |
+| Deactivate plugin | Cron events cleared | [ ] |
+| Reactivate plugin | Cron events re-registered | [ ] |
+
+---
+
+## 33. In-App Notifications
+
+### 33.1 Notification Delivery
+| Event | Recipient | Test Status |
+|-------|-----------|-------------|
+| New order placed | Vendor gets notification | [ ] |
+| Order delivered | Buyer gets notification | [ ] |
+| New message received | Other party notified | [ ] |
+| Revision requested | Vendor notified | [ ] |
+| Dispute opened | Admin + other party notified | [ ] |
+| Review received | Vendor notified | [ ] |
+
+### 33.2 Notification UI
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Bell icon in dashboard | Shows unread count badge | [ ] |
+| Click bell | Notification dropdown opens | [ ] |
+| Click notification | Goes to relevant page (order, message) | [ ] |
+| Mark as read | Notification marked, count decreases | [ ] |
+| Mark all read | All notifications cleared | [ ] |
+| Empty state | "No notifications" message | [ ] |
+
+---
+
+## 34. Media Uploads & Attachments
+
+### 34.1 Service Media
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Upload featured image | Image uploads via WP media library | [ ] |
+| Upload gallery images | Multiple images upload | [ ] |
+| Vendor has upload_files cap | Media library accessible | [ ] |
+| File size limit | Large files rejected with message | [ ] |
+| Allowed file types | Only images for gallery | [ ] |
+
+### 34.2 Conversation Attachments
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Attach file in conversation | File uploads and attaches | [ ] |
+| Download attachment | File downloads correctly | [ ] |
+| Multiple attachments | All files attach | [ ] |
+| File type restrictions | Non-allowed types rejected | [ ] |
+
+### 34.3 Delivery Files
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Attach delivery files | Files upload with delivery | [ ] |
+| Buyer downloads delivery | All files downloadable | [ ] |
+| Large file delivery | Handles within WP upload limits | [ ] |
+
+---
+
+## 35. Activation & Database
+
+### 35.1 Fresh Installation
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Activate plugin | No PHP errors | [ ] |
+| Database tables created | All 20 tables exist | [ ] |
+| Vendor role created | `wpss_vendor` role with correct caps | [ ] |
+| Default options set | All `wpss_*` options created | [ ] |
+| Cron events scheduled | All events registered | [ ] |
+| Rewrite rules flushed | Permalinks work | [ ] |
+
+### 35.2 Deactivation
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Deactivate plugin | No errors | [ ] |
+| Cron events removed | Scheduled events cleared | [ ] |
+| Data preserved | Options and tables intact | [ ] |
+| Reactivate | Everything works without re-setup | [ ] |
+
+### 35.3 Uninstall (Delete Data enabled)
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Enable "Delete data on uninstall" | Setting saved | [ ] |
+| Delete plugin | All tables dropped | [ ] |
+| Options removed | All `wpss_*` options deleted | [ ] |
+| Roles removed | `wpss_vendor` role deleted | [ ] |
+
+---
+
+## 36. Template Overrides
+
+### 36.1 Theme Override System
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Copy template to `theme/wp-sell-services/` | Override detected | [ ] |
+| Modified template renders | Theme version used instead of plugin | [ ] |
+| Delete theme override | Falls back to plugin template | [ ] |
+| Partial override | Only overridden templates affected | [ ] |
+
+---
+
+## 37. Search & Filtering
+
+### 37.1 Service Search
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Search by keyword | Relevant services returned | [ ] |
+| Filter by category | Only matching category shown | [ ] |
+| Filter by price range | Services within range | [ ] |
+| Filter by rating | Min rating filter works | [ ] |
+| Sort by price ascending | Correct order | [ ] |
+| Sort by price descending | Correct order | [ ] |
+| Sort by rating | Highest rated first | [ ] |
+| Sort by newest | Most recent first | [ ] |
+| No results | "No services found" message | [ ] |
+| Pagination | Multiple pages work | [ ] |
+
+### 37.2 Vendor Search
+| Step | Expected Behavior | Test Status |
+|------|------------------|-------------|
+| Search vendors by name | Matching vendors shown | [ ] |
+| Filter by category | Vendors in that category | [ ] |
+| Filter by rating | Min rating filter | [ ] |
+| Sort by rating/orders | Correct ordering | [ ] |
+
+---
+
 ## How to Use This Checklist
 
 1. **Before Release**: Complete all Critical Path tests
@@ -824,3 +1394,4 @@ Mark each test with:
 | 2026-02-02 | Added complete vendor journeys: registration (3), service creation (4), service management (5), earnings & withdrawals (13) |
 | 2026-02-18 | Added Section 17: Admin Settings Pages (unified accordion architecture, all tabs) |
 | 2026-02-18 | Added Section 18: Buyer Requests (job board, proposals) |
+| 2026-02-20 | Added Sections 19-37: Setup Wizard, Gutenberg Blocks, Shortcodes, Seller Levels, Favorites, Portfolio, Tipping, Milestones, Extension Requests, REST API, Cart & Checkout, Payment Gateways, WP-CLI, Cron Jobs, Notifications, Media, Activation, Templates, Search |
