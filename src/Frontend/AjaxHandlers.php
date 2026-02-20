@@ -88,9 +88,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_reject_proposal', array( $this, 'reject_proposal' ) );
 		add_action( 'wp_ajax_wpss_withdraw_proposal', array( $this, 'withdraw_proposal' ) );
 
-		// User registration.
-		add_action( 'wp_ajax_nopriv_wpss_register_user', array( $this, 'register_user' ) );
-
 		// Service actions.
 		add_action( 'wp_ajax_wpss_favorite_service', array( $this, 'favorite_service' ) );
 		add_action( 'wp_ajax_wpss_unfavorite_service', array( $this, 'unfavorite_service' ) );
@@ -1671,59 +1668,6 @@ class AjaxHandlers {
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to withdraw proposal.', 'wp-sell-services' ) ) );
 		}
-	}
-
-	/**
-	 * Register user.
-	 *
-	 * @return void
-	 */
-	public function register_user(): void {
-		check_ajax_referer( 'wpss_register', 'wpss_register_nonce' );
-
-		if ( ! get_option( 'users_can_register' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Registration is disabled.', 'wp-sell-services' ) ) );
-		}
-
-		$username = sanitize_user( wp_unslash( $_POST['username'] ?? '' ) );
-		$email    = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
-		$password = $_POST['password'] ?? '';
-
-		if ( ! $username || ! $email || ! $password ) {
-			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'wp-sell-services' ) ) );
-		}
-
-		if ( strlen( $password ) < 8 ) {
-			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'wp-sell-services' ) ) );
-		}
-
-		if ( username_exists( $username ) ) {
-			wp_send_json_error( array( 'message' => __( 'Username already exists.', 'wp-sell-services' ) ) );
-		}
-
-		if ( email_exists( $email ) ) {
-			wp_send_json_error( array( 'message' => __( 'Email already exists.', 'wp-sell-services' ) ) );
-		}
-
-		$user_id = wp_create_user( $username, $password, $email );
-
-		if ( is_wp_error( $user_id ) ) {
-			wp_send_json_error( array( 'message' => $user_id->get_error_message() ) );
-		}
-
-		// Send notification email.
-		wp_new_user_notification( $user_id, null, 'user' );
-
-		// Auto-login.
-		wp_set_current_user( $user_id );
-		wp_set_auth_cookie( $user_id );
-
-		wp_send_json_success(
-			array(
-				'message'  => __( 'Registration successful!', 'wp-sell-services' ),
-				'redirect' => home_url(),
-			)
-		);
 	}
 
 	/**
