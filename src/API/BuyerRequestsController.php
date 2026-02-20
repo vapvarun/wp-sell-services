@@ -77,11 +77,11 @@ class BuyerRequestsController extends RestController {
 							],
 							'budget_min' => [
 								'type'              => 'number',
-								'sanitize_callback' => 'floatval',
+								'sanitize_callback' => function ( $value ) { return (float) $value; },
 							],
 							'budget_max' => [
 								'type'              => 'number',
-								'sanitize_callback' => 'floatval',
+								'sanitize_callback' => function ( $value ) { return (float) $value; },
 							],
 							'search' => [
 								'type'              => 'string',
@@ -111,11 +111,11 @@ class BuyerRequestsController extends RestController {
 						],
 						'budget_min'  => [
 							'type'              => 'number',
-							'sanitize_callback' => 'floatval',
+							'sanitize_callback' => function ( $value ) { return (float) $value; },
 						],
 						'budget_max'  => [
 							'type'              => 'number',
-							'sanitize_callback' => 'floatval',
+							'sanitize_callback' => function ( $value ) { return (float) $value; },
 						],
 						'deadline'    => [
 							'type'              => 'string',
@@ -178,11 +178,11 @@ class BuyerRequestsController extends RestController {
 						],
 						'budget_min'  => [
 							'type'              => 'number',
-							'sanitize_callback' => 'floatval',
+							'sanitize_callback' => function ( $value ) { return (float) $value; },
 						],
 						'budget_max'  => [
 							'type'              => 'number',
-							'sanitize_callback' => 'floatval',
+							'sanitize_callback' => function ( $value ) { return (float) $value; },
 						],
 						'deadline'    => [
 							'type'              => 'string',
@@ -246,7 +246,7 @@ class BuyerRequestsController extends RestController {
 						'price'           => [
 							'required'          => true,
 							'type'              => 'number',
-							'sanitize_callback' => 'floatval',
+							'sanitize_callback' => function ( $value ) { return (float) $value; },
 						],
 						'delivery_days'   => [
 							'required'          => true,
@@ -461,29 +461,35 @@ class BuyerRequestsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		$user_id = get_current_user_id();
-
 		$data = [
 			'title'       => $request->get_param( 'title' ),
 			'description' => $request->get_param( 'description' ),
-			'category'    => $request->get_param( 'category' ),
+			'category_id' => $request->get_param( 'category' ),
 			'budget_min'  => $request->get_param( 'budget_min' ),
 			'budget_max'  => $request->get_param( 'budget_max' ),
-			'deadline'    => $request->get_param( 'deadline' ),
+			'expires_at'  => $request->get_param( 'deadline' ),
 			'attachments' => $request->get_param( 'attachments' ),
 		];
 
-		$result = $this->request_service->create( $user_id, $data );
+		$result = $this->request_service->create( $data );
 
-		if ( ! $result['success'] ) {
+		if ( is_wp_error( $result ) ) {
 			return new WP_Error(
 				'create_failed',
-				$result['message'],
+				$result->get_error_message(),
 				[ 'status' => 400 ]
 			);
 		}
 
-		$buyer_request = $this->request_service->get( $result['request_id'] );
+		if ( false === $result ) {
+			return new WP_Error(
+				'create_failed',
+				__( 'Failed to create request. Please check required fields.', 'wp-sell-services' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$buyer_request = $this->request_service->get( $result );
 
 		return new WP_REST_Response(
 			[
@@ -531,10 +537,10 @@ class BuyerRequestsController extends RestController {
 
 		$result = $this->request_service->update( $request_id, $data );
 
-		if ( ! $result['success'] ) {
+		if ( ! $result ) {
 			return new WP_Error(
 				'update_failed',
-				$result['message'],
+				__( 'Failed to update request.', 'wp-sell-services' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -558,10 +564,10 @@ class BuyerRequestsController extends RestController {
 
 		$result = $this->request_service->delete( $request_id );
 
-		if ( ! $result['success'] ) {
+		if ( ! $result ) {
 			return new WP_Error(
 				'delete_failed',
-				$result['message'],
+				__( 'Failed to delete request.', 'wp-sell-services' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -603,18 +609,18 @@ class BuyerRequestsController extends RestController {
 
 		$result = $this->proposal_service->submit( $request_id, $vendor_id, $data );
 
-		if ( ! $result['success'] ) {
+		if ( false === $result ) {
 			return new WP_Error(
 				'proposal_failed',
-				$result['message'],
+				__( 'Failed to submit proposal. The request may be closed or you already submitted one.', 'wp-sell-services' ),
 				[ 'status' => 400 ]
 			);
 		}
 
 		return new WP_REST_Response(
 			[
-				'message'     => __( 'Proposal submitted successfully.', 'wp-sell-services' ),
-				'proposal_id' => $result['proposal_id'],
+				'message'      => __( 'Proposal submitted successfully.', 'wp-sell-services' ),
+				'proposal_id'  => $result,
 			],
 			201
 		);

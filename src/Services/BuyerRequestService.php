@@ -718,6 +718,156 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * Get all buyer requests with filtering.
+	 *
+	 * @param array<string, mixed> $args Query arguments.
+	 * @return array<object> Array of requests.
+	 */
+	public function get_all( array $args = array() ): array {
+		$defaults = array(
+			'posts_per_page' => 20,
+			'paged'          => 1,
+			'limit'          => 0,
+			'offset'         => 0,
+			'status'         => self::STATUS_OPEN,
+			'category'       => 0,
+			'budget_min'     => 0,
+			'budget_max'     => 0,
+			'search'         => '',
+		);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		// Support limit/offset from REST controller.
+		if ( $args['limit'] > 0 ) {
+			$args['posts_per_page'] = $args['limit'];
+		}
+
+		if ( ! empty( $args['search'] ) ) {
+			return $this->search( $args['search'], $args );
+		}
+
+		$query_args = array(
+			'category_id' => $args['category'],
+			'budget_min'  => $args['budget_min'],
+			'budget_max'  => $args['budget_max'],
+		);
+
+		return $this->get_open( array_merge( $args, $query_args ) );
+	}
+
+	/**
+	 * Count buyer requests matching criteria.
+	 *
+	 * @param array<string, mixed> $args Query arguments.
+	 * @return int Total count.
+	 */
+	public function count( array $args = array() ): int {
+		$query_args = array(
+			'post_type'      => BuyerRequestPostType::POST_TYPE,
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'key'   => '_wpss_status',
+					'value' => $args['status'] ?? self::STATUS_OPEN,
+				),
+			),
+		);
+
+		if ( ! empty( $args['search'] ) ) {
+			$query_args['s'] = $args['search'];
+		}
+
+		if ( ! empty( $args['category'] ) ) {
+			$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
+					'taxonomy' => ServiceCategoryTaxonomy::TAXONOMY,
+					'field'    => 'term_id',
+					'terms'    => array( (int) $args['category'] ),
+				),
+			);
+		}
+
+		$query = new \WP_Query( $query_args );
+		return $query->found_posts;
+	}
+
+	/**
+	 * Get buyer requests by user.
+	 *
+	 * @param int                  $user_id User ID.
+	 * @param array<string, mixed> $args Query arguments.
+	 * @return array<object> Array of requests.
+	 */
+	public function get_by_user( int $user_id, array $args = array() ): array {
+		$defaults = array(
+			'posts_per_page' => 20,
+			'paged'          => 1,
+			'limit'          => 0,
+			'offset'         => 0,
+			'status'         => '',
+		);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		if ( $args['limit'] > 0 ) {
+			$args['posts_per_page'] = $args['limit'];
+		}
+
+		return $this->get_by_buyer( $user_id, $args );
+	}
+
+	/**
+	 * Count buyer requests by user.
+	 *
+	 * @param int $user_id User ID.
+	 * @return int Total count.
+	 */
+	public function count_by_user( int $user_id ): int {
+		$query = new \WP_Query(
+			array(
+				'post_type'      => BuyerRequestPostType::POST_TYPE,
+				'post_status'    => 'publish',
+				'author'         => $user_id,
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+			)
+		);
+
+		return $query->found_posts;
+	}
+
+	/**
+	 * Delete a buyer request.
+	 *
+	 * @param int $request_id Request post ID.
+	 * @return bool True on success.
+	 */
+	public function delete( int $request_id ): bool {
+		$request = get_post( $request_id );
+
+		if ( ! $request || $request->post_type !== BuyerRequestPostType::POST_TYPE ) {
+			return false;
+		}
+
+		$result = wp_trash_post( $request_id );
+
+		if ( $result ) {
+			/**
+			 * Fires when a buyer request is deleted.
+			 *
+			 * @since 1.0.0
+			 * @param int $request_id Request post ID.
+			 */
+			do_action( 'wpss_buyer_request_deleted', $request_id );
+		}
+
+		return (bool) $result;
+	}
+
+	/**
 	 * Get available statuses.
 	 *
 	 * @return array<string, string> Status slugs and labels.

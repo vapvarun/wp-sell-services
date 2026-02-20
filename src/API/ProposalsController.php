@@ -101,7 +101,7 @@ class ProposalsController extends RestController {
 						],
 						'price'         => [
 							'type'              => 'number',
-							'sanitize_callback' => 'floatval',
+							'sanitize_callback' => function ( $value ) { return (float) $value; },
 						],
 						'delivery_days' => [
 							'type'              => 'integer',
@@ -251,7 +251,8 @@ class ProposalsController extends RestController {
 		}
 
 		$proposals = $this->proposal_service->get_by_vendor( $vendor_id, $args );
-		$total     = $this->proposal_service->count_by_vendor( $vendor_id, $status ? [ 'status' => $status ] : [] );
+		$counts    = $this->proposal_service->count_by_vendor( $vendor_id );
+		$total     = $status ? ( $counts[ $status ] ?? 0 ) : $counts['total'];
 
 		$data = array_map( [ $this, 'prepare_proposal_for_response' ], $proposals );
 
@@ -314,10 +315,10 @@ class ProposalsController extends RestController {
 
 		$result = $this->proposal_service->update( $proposal_id, $data );
 
-		if ( ! $result['success'] ) {
+		if ( ! $result ) {
 			return new WP_Error(
 				'update_failed',
-				$result['message'],
+				__( 'Failed to update proposal.', 'wp-sell-services' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -360,7 +361,7 @@ class ProposalsController extends RestController {
 	 */
 	public function get_stats( $request ) {
 		$vendor_id = get_current_user_id();
-		$stats     = $this->proposal_service->get_vendor_stats( $vendor_id );
+		$stats     = $this->proposal_service->count_by_vendor( $vendor_id );
 
 		return new WP_REST_Response( $stats );
 	}

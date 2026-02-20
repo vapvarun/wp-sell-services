@@ -296,7 +296,9 @@
 			start: 'wpss_start_work',
 			deliver: 'wpss_deliver_order',
 			complete: 'wpss_accept_delivery',
-			cancel: 'wpss_cancel_order'
+			cancel: 'wpss_cancel_order',
+			'accept-cancellation': 'wpss_accept_cancellation',
+			'reject-cancellation': 'wpss_reject_cancellation'
 		};
 
 		const ajaxAction = actionMap[action] || 'wpss_' + action + '_order';
@@ -332,7 +334,9 @@
 			accept: 'Are you sure you want to accept this order?',
 			start: 'Are you sure you want to start working on this order?',
 			deliver: 'Are you sure you want to mark this order as delivered?',
-			complete: 'Are you sure you want to mark this order as complete?'
+			complete: 'Are you sure you want to mark this order as complete?',
+			'accept-cancellation': 'Are you sure you want to accept this cancellation request? The order will be cancelled.',
+			'reject-cancellation': 'Are you sure you want to dispute this cancellation? The order will be escalated for admin review.'
 		};
 
 		return confirms[action] || 'Are you sure?';

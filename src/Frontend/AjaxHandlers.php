@@ -58,6 +58,8 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_request_revision', array( $this, 'request_revision' ) );
 		add_action( 'wp_ajax_wpss_accept_delivery', array( $this, 'accept_delivery' ) );
 		add_action( 'wp_ajax_wpss_cancel_order', array( $this, 'cancel_order' ) );
+		add_action( 'wp_ajax_wpss_accept_cancellation', array( $this, 'accept_cancellation' ) );
+		add_action( 'wp_ajax_wpss_reject_cancellation', array( $this, 'reject_cancellation' ) );
 
 		// Requirements.
 		add_action( 'wp_ajax_wpss_submit_requirements', array( $this, 'submit_requirements' ) );
@@ -399,6 +401,83 @@ class AjaxHandlers {
 			wp_send_json_success( array( 'message' => __( 'Order cancelled.', 'wp-sell-services' ) ) );
 		} else {
 			wp_send_json_error( $result );
+		}
+	}
+
+	/**
+	 * Accept cancellation request (vendor action).
+	 *
+	 * @return void
+	 */
+	public function accept_cancellation(): void {
+		check_ajax_referer( 'wpss_order_action', 'nonce' );
+
+		$order_id = absint( $_POST['order_id'] ?? 0 );
+		$user_id  = get_current_user_id();
+
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+		}
+
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
+
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
+		}
+
+		if ( 'cancellation_requested' !== $order->status ) {
+			wp_send_json_error( array( 'message' => __( 'This order does not have a pending cancellation request.', 'wp-sell-services' ) ) );
+		}
+
+		$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+
+		if ( $result['success'] ) {
+			wp_send_json_success( array( 'message' => __( 'Cancellation accepted. Order has been cancelled.', 'wp-sell-services' ) ) );
+		} else {
+			wp_send_json_error( $result );
+		}
+	}
+
+	/**
+	 * Reject cancellation request (vendor action — escalates to dispute).
+	 *
+	 * @return void
+	 */
+	public function reject_cancellation(): void {
+		check_ajax_referer( 'wpss_order_action', 'nonce' );
+
+		$order_id = absint( $_POST['order_id'] ?? 0 );
+		$user_id  = get_current_user_id();
+
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+		}
+
+		$order_service = new OrderService();
+		$order         = $order_service->get( $order_id );
+
+		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
+		}
+
+		if ( 'cancellation_requested' !== $order->status ) {
+			wp_send_json_error( array( 'message' => __( 'This order does not have a pending cancellation request.', 'wp-sell-services' ) ) );
+		}
+
+		// Escalate to dispute.
+		$dispute_service = new DisputeService();
+		$dispute_result  = $dispute_service->open(
+			$order_id,
+			$user_id,
+			__( 'Cancellation Dispute', 'wp-sell-services' ),
+			__( 'Vendor disputed the buyer cancellation request.', 'wp-sell-services' )
+		);
+
+		if ( $dispute_result ) {
+			wp_send_json_success( array( 'message' => __( 'Cancellation disputed. The order has been escalated for admin review.', 'wp-sell-services' ) ) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to create dispute. Please try again.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -2729,6 +2808,32 @@ class AjaxHandlers {
 					$result = $order_service->update_status( $order_id, 'refunded' );
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Order cannot be refunded in its current status.', 'wp-sell-services' ) ) );
+				}
+				break;
+
+			case 'accept-cancellation':
+				if ( (int) $order->vendor_id === $user_id && 'cancellation_requested' === $order->status ) {
+					$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
+				} else {
+					wp_send_json_error( array( 'message' => __( 'Cannot accept cancellation.', 'wp-sell-services' ) ) );
+				}
+				break;
+
+			case 'reject-cancellation':
+				if ( (int) $order->vendor_id === $user_id && 'cancellation_requested' === $order->status ) {
+					$dispute_service = new DisputeService();
+					$dispute_result  = $dispute_service->open(
+						$order_id,
+						$user_id,
+						__( 'Cancellation Dispute', 'wp-sell-services' ),
+						__( 'Vendor disputed the buyer cancellation request.', 'wp-sell-services' )
+					);
+					$result = array( 'success' => (bool) $dispute_result );
+					if ( ! $dispute_result ) {
+						$result['message'] = __( 'Failed to create dispute.', 'wp-sell-services' );
+					}
+				} else {
+					wp_send_json_error( array( 'message' => __( 'Cannot dispute cancellation.', 'wp-sell-services' ) ) );
 				}
 				break;
 
