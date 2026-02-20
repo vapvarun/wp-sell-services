@@ -65,35 +65,45 @@ class ServiceWizard {
 	public function __construct() {
 		$this->vendor_service  = new VendorService();
 		$this->service_manager = new ServiceManager();
-
-		$this->steps = array(
-			'basic'        => array(
-				'title' => __( 'Basic Info', 'wp-sell-services' ),
-				'icon'  => 'dashicons-edit',
-			),
-			'pricing'      => array(
-				'title' => __( 'Pricing', 'wp-sell-services' ),
-				'icon'  => 'dashicons-tag',
-			),
-			'gallery'      => array(
-				'title' => __( 'Gallery', 'wp-sell-services' ),
-				'icon'  => 'dashicons-format-gallery',
-			),
-			'requirements' => array(
-				'title' => __( 'Requirements', 'wp-sell-services' ),
-				'icon'  => 'dashicons-list-view',
-			),
-			'extras'       => array(
-				'title' => __( 'Extras & FAQs', 'wp-sell-services' ),
-				'icon'  => 'dashicons-plus-alt',
-			),
-			'review'       => array(
-				'title' => __( 'Review', 'wp-sell-services' ),
-				'icon'  => 'dashicons-visibility',
-			),
-		);
-
 		$this->init_limits();
+	}
+
+	/**
+	 * Get wizard steps. Deferred to avoid calling __() before init.
+	 *
+	 * @return array<string, array{title: string, icon: string}>
+	 */
+	private function get_steps(): array {
+		if ( empty( $this->steps ) ) {
+			$this->steps = array(
+				'basic'        => array(
+					'title' => __( 'Basic Info', 'wp-sell-services' ),
+					'icon'  => 'dashicons-edit',
+				),
+				'pricing'      => array(
+					'title' => __( 'Pricing', 'wp-sell-services' ),
+					'icon'  => 'dashicons-tag',
+				),
+				'gallery'      => array(
+					'title' => __( 'Gallery', 'wp-sell-services' ),
+					'icon'  => 'dashicons-format-gallery',
+				),
+				'requirements' => array(
+					'title' => __( 'Requirements', 'wp-sell-services' ),
+					'icon'  => 'dashicons-list-view',
+				),
+				'extras'       => array(
+					'title' => __( 'Extras & FAQs', 'wp-sell-services' ),
+					'icon'  => 'dashicons-plus-alt',
+				),
+				'review'       => array(
+					'title' => __( 'Review', 'wp-sell-services' ),
+					'icon'  => 'dashicons-visibility',
+				),
+			);
+		}
+
+		return $this->steps;
 	}
 
 	/**
@@ -368,10 +378,11 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_progress_steps(): void {
-		$step_keys = array_keys( $this->steps );
+		$steps     = $this->get_steps();
+		$step_keys = array_keys( $steps );
 		?>
 		<ol class="wpss-wizard__progress-list">
-			<?php foreach ( $this->steps as $key => $step ) : ?>
+			<?php foreach ( $steps as $key => $step ) : ?>
 				<li class="wpss-wizard__progress-item"
 					:class="{
 						'wpss-wizard__progress-item--active': currentStep === '<?php echo esc_attr( $key ); ?>',

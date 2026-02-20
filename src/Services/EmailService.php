@@ -39,17 +39,30 @@ class EmailService {
 	public const TYPE_CANCELLATION_REQUESTED  = 'cancellation_requested';
 
 	/**
-	 * Default email settings.
+	 * Default email settings. Lazily initialized to avoid early __() calls.
 	 *
-	 * @var array
+	 * @var array|null
 	 */
-	private array $settings;
+	private ?array $settings = null;
 
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->settings = $this->get_email_settings();
+		// Settings are lazy-loaded to avoid calling __() before 'init'.
+	}
+
+	/**
+	 * Get settings, initializing lazily.
+	 *
+	 * @return array
+	 */
+	private function settings(): array {
+		if ( null === $this->settings ) {
+			$this->settings = $this->get_email_settings();
+		}
+
+		return $this->settings;
 	}
 
 	/**
@@ -760,7 +773,7 @@ class EmailService {
 		}
 
 		// Merge settings into template vars.
-		$template_vars = array_merge( $this->settings, $template_vars );
+		$template_vars = array_merge( $this->settings(), $template_vars );
 		$template_vars['site_url']  = home_url();
 		$template_vars['site_name'] = get_bloginfo( 'name' );
 
@@ -788,12 +801,12 @@ class EmailService {
 		 *
 		 * @param string $from_name The sender name.
 		 */
-		$from_name = apply_filters( 'wpss_email_from_name', $this->settings['from_name'] );
+		$from_name = apply_filters( 'wpss_email_from_name', $this->settings()['from_name'] );
 
 		// Set headers.
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', $from_name, $this->settings['from_email'] ),
+			sprintf( 'From: %s <%s>', $from_name, $this->settings()['from_email'] ),
 		);
 
 		/**

@@ -220,13 +220,6 @@ final class Plugin {
 	 * @return void
 	 */
 	public function init(): void {
-		// Load text domain immediately to avoid warnings on early AJAX calls.
-		load_plugin_textdomain(
-			'wp-sell-services',
-			false,
-			dirname( \WPSS_PLUGIN_BASENAME ) . '/languages'
-		);
-
 		$this->init_updater();
 		$this->maybe_upgrade_database();
 		$this->maybe_create_vendor_role();
