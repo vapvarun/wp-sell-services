@@ -579,6 +579,7 @@ class EmailService {
 					'order'         => $order,
 					'recipient'     => $customer,
 					'email_heading' => __( 'Cancellation Request Submitted', 'wp-sell-services' ),
+					'buyer_name'    => $this->get_customer_name( $order->customer_id ),
 					'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
 					'reason'        => $reason_label,
 					'note'          => $note,

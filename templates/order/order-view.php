@@ -2140,9 +2140,14 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	document.querySelectorAll('.wpss-cancel-btn').forEach(function(btn) {
 		btn.addEventListener('click', function(e) {
 			e.preventDefault();
-			var modal = document.getElementById('wpss-cancel-modal');
-			if (modal) {
-				modal.classList.add('wpss-modal--active');
+			if (typeof jQuery !== 'undefined' && typeof WPSS !== 'undefined' && WPSS.showModal) {
+				WPSS.showModal('wpss-cancel-modal');
+			} else {
+				var modal = document.getElementById('wpss-cancel-modal');
+				if (modal) {
+					modal.classList.add('wpss-modal-open');
+					document.body.classList.add('wpss-modal-active');
+				}
 			}
 		});
 	});

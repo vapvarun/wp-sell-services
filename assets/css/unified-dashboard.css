@@ -1127,9 +1127,13 @@ select.wpss-input option,
 	position: fixed;
 	inset: 0;
 	z-index: 100000;
-	display: flex;
+	display: none;
 	align-items: center;
 	justify-content: center;
+}
+
+.wpss-modal.wpss-modal-open {
+	display: flex;
 }
 
 .wpss-modal__overlay {

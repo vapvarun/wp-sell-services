@@ -29,11 +29,15 @@ printf(
 );
 echo "\n\n";
 
-printf(
-	/* translators: %s: buyer name */
-	esc_html__( '%s has requested to cancel the following order. Please review and respond within 48 hours.', 'wp-sell-services' ),
-	esc_html( $buyer_name )
-);
+if ( ! empty( $is_customer ) ) {
+	echo esc_html__( 'Your cancellation request has been submitted for the following order. The vendor has 48 hours to respond.', 'wp-sell-services' );
+} else {
+	printf(
+		/* translators: %s: buyer name */
+		esc_html__( '%s has requested to cancel the following order. Please review and respond within 48 hours.', 'wp-sell-services' ),
+		esc_html( $buyer_name )
+	);
+}
 echo "\n\n";
 
 echo "----------\n";

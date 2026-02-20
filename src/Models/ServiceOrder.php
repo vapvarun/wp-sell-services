@@ -464,8 +464,13 @@ class ServiceOrder {
 		}
 
 		// Update instance properties.
+		$datetime_props = array( 'delivery_deadline', 'original_deadline', 'paid_at', 'created_at', 'updated_at', 'started_at', 'completed_at' );
 		foreach ( $data as $key => $value ) {
 			if ( property_exists( $this, $key ) ) {
+				// Convert MySQL datetime strings to DateTimeImmutable for typed properties.
+				if ( in_array( $key, $datetime_props, true ) && is_string( $value ) ) {
+					$value = new \DateTimeImmutable( $value );
+				}
 				$this->$key = $value;
 			}
 		}

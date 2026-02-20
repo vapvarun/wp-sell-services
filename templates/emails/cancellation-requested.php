@@ -51,13 +51,17 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 </p>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php
-	printf(
-		/* translators: %s: buyer name */
-		esc_html__( '%s has requested to cancel the following order. Please review and respond within 48 hours.', 'wp-sell-services' ),
-		'<strong>' . esc_html( $buyer_name ) . '</strong>'
-	);
-	?>
+	<?php if ( ! empty( $is_customer ) ) : ?>
+		<?php esc_html_e( 'Your cancellation request has been submitted for the following order. The vendor has 48 hours to respond.', 'wp-sell-services' ); ?>
+	<?php else : ?>
+		<?php
+		printf(
+			/* translators: %s: buyer name */
+			esc_html__( '%s has requested to cancel the following order. Please review and respond within 48 hours.', 'wp-sell-services' ),
+			'<strong>' . esc_html( $buyer_name ) . '</strong>'
+		);
+		?>
+	<?php endif; ?>
 </p>
 
 <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #3c3c3c;">
