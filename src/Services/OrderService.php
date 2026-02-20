@@ -209,44 +209,43 @@ class OrderService {
 	public function can_transition( string $from, string $to ): bool {
 		$transitions = array(
 			// Standard workflow statuses.
-			ServiceOrder::STATUS_PENDING_PAYMENT      => array(
+			ServiceOrder::STATUS_PENDING_PAYMENT        => array(
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
 				ServiceOrder::STATUS_CANCELLED,
-				'pending', // Alternative pending status.
+				ServiceOrder::STATUS_PENDING,
 			),
-			ServiceOrder::STATUS_PENDING_REQUIREMENTS => array(
+			ServiceOrder::STATUS_PENDING_REQUIREMENTS   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_ON_HOLD,
-				'requirements_submitted',
+				ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED,
 			),
-			ServiceOrder::STATUS_IN_PROGRESS          => array(
+			ServiceOrder::STATUS_IN_PROGRESS            => array(
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_ON_HOLD,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_LATE,
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
-				'delivered',
+				ServiceOrder::STATUS_DELIVERED,
 			),
-			ServiceOrder::STATUS_PENDING_APPROVAL     => array(
+			ServiceOrder::STATUS_PENDING_APPROVAL       => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
 				ServiceOrder::STATUS_DISPUTED,
-				'completed',
 			),
-			ServiceOrder::STATUS_REVISION_REQUESTED   => array(
+			ServiceOrder::STATUS_REVISION_REQUESTED     => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DISPUTED,
 			),
-			ServiceOrder::STATUS_LATE                 => array(
+			ServiceOrder::STATUS_LATE                   => array(
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DISPUTED,
-				'delivered',
+				ServiceOrder::STATUS_DELIVERED,
 			),
-			ServiceOrder::STATUS_ON_HOLD              => array(
+			ServiceOrder::STATUS_ON_HOLD                => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_CANCELLED,
 			),
@@ -255,34 +254,30 @@ class OrderService {
 				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_IN_PROGRESS,
 			),
-			ServiceOrder::STATUS_DISPUTED             => array(
+			ServiceOrder::STATUS_DISPUTED               => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_CANCELLED,
-				'completed',
+				ServiceOrder::STATUS_REFUNDED,
+				ServiceOrder::STATUS_PARTIALLY_REFUNDED,
 			),
-			// REST API alternative status names.
-			'pending'                                 => array(
-				'accepted',
-				'rejected',
+			// REST API workflow statuses.
+			ServiceOrder::STATUS_PENDING                => array(
+				ServiceOrder::STATUS_ACCEPTED,
+				ServiceOrder::STATUS_REJECTED,
 				ServiceOrder::STATUS_CANCELLED,
 			),
-			'accepted'                                => array(
+			ServiceOrder::STATUS_ACCEPTED               => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
-				'in_progress',
-				'requirements_submitted',
+				ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED,
 				ServiceOrder::STATUS_CANCELLED,
 			),
-			'requirements_submitted'                  => array(
+			ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
-				'in_progress',
 			),
-			'delivered'                               => array(
+			ServiceOrder::STATUS_DELIVERED              => array(
 				ServiceOrder::STATUS_COMPLETED,
-				'completed',
 				ServiceOrder::STATUS_REVISION_REQUESTED,
-				'revision_requested',
 				ServiceOrder::STATUS_DISPUTED,
-				'disputed',
 			),
 		);
 

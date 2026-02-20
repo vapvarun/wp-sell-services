@@ -11,6 +11,7 @@
 namespace WPSellServices\Services;
 
 use WPSellServices\Database\Repositories\OrderRepository;
+use WPSellServices\Models\ServiceOrder;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -118,7 +119,7 @@ class DisputeService {
 			$dispute_id = (int) $wpdb->insert_id;
 
 			// Update order status.
-			$this->order_repo->update( $order_id, array( 'status' => 'disputed' ) );
+			$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_DISPUTED ) );
 
 			/**
 			 * Fires when a dispute is opened.
@@ -419,23 +420,16 @@ class DisputeService {
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
-				// Update order status to refunded.
-				$this->order_repo->update( $order_id, array( 'status' => 'refunded' ) );
+				$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_REFUNDED ) );
 				break;
 
 			case self::RESOLUTION_PARTIAL_REFUND:
-				// Update order status.
-				$this->order_repo->update( $order_id, array( 'status' => 'partially_refunded' ) );
+				$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_PARTIALLY_REFUNDED ) );
 				break;
 
 			case self::RESOLUTION_FAVOR_VENDOR:
-				// Restore order to completed.
-				$this->order_repo->update( $order_id, array( 'status' => 'completed' ) );
-				break;
-
 			case self::RESOLUTION_MUTUAL:
-				// Both parties agreed, mark as completed.
-				$this->order_repo->update( $order_id, array( 'status' => 'completed' ) );
+				$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_COMPLETED ) );
 				break;
 		}
 	}

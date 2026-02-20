@@ -816,6 +816,16 @@ class OrderMetabox {
 					</button>
 				<?php endif; ?>
 			</div>
+
+			<?php
+			/**
+			 * Fires in the admin order actions metabox for gateway-specific actions.
+			 *
+			 * @param ServiceOrder $order  The order object.
+			 * @param string       $status Current order status.
+			 */
+			do_action( 'wpss_admin_order_actions', $order, $status );
+			?>
 		</div>
 		<?php
 	}

@@ -692,7 +692,7 @@ class DisputeWorkflowManager {
 		}
 
 		$meta            = json_decode( $order->meta, true ) ?? [];
-		$previous_status = $meta['status_before_dispute'] ?? 'in_progress';
+		$previous_status = $meta['status_before_dispute'] ?? \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(

@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.3.5';
+	const DB_VERSION = '1.3.6';
 
 	/**
 	 * Option name for storing DB version.
@@ -201,6 +201,7 @@ class SchemaManager {
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			started_at datetime DEFAULT NULL,
+			vendor_notes text,
 			meta longtext,
 			completed_at datetime DEFAULT NULL,
 			PRIMARY KEY (id),
@@ -394,8 +395,10 @@ class SchemaManager {
 
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			dispute_number varchar(50) DEFAULT NULL,
 			order_id bigint(20) unsigned NOT NULL,
 			initiated_by bigint(20) unsigned NOT NULL,
+			respondent_id bigint(20) unsigned DEFAULT NULL,
 			reason varchar(100) NOT NULL,
 			description text NOT NULL,
 			evidence longtext,
@@ -404,6 +407,7 @@ class SchemaManager {
 			last_response_by bigint(20) unsigned DEFAULT NULL,
 			resolution varchar(50) DEFAULT NULL,
 			resolution_notes text,
+			refund_amount decimal(10,2) DEFAULT NULL,
 			resolved_by bigint(20) unsigned DEFAULT NULL,
 			resolved_at datetime DEFAULT NULL,
 			assigned_admin bigint(20) unsigned DEFAULT NULL,

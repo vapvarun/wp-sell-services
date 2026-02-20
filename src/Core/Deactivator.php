@@ -37,17 +37,21 @@ class Deactivator {
 	 */
 	private static function clear_cron_events(): void {
 		$cron_hooks = array(
+			'wpss_check_late_orders',
 			'wpss_auto_complete_orders',
+			'wpss_send_deadline_reminders',
+			'wpss_send_requirements_reminders',
+			'wpss_check_requirements_timeout',
+			'wpss_recalculate_seller_levels',
+			'wpss_process_cancellation_timeouts',
 			'wpss_cleanup_expired_requests',
 			'wpss_update_vendor_stats',
 			'wpss_process_auto_withdrawals',
+			'wpss_cron_daily',
 		);
 
 		foreach ( $cron_hooks as $hook ) {
-			$timestamp = wp_next_scheduled( $hook );
-			if ( $timestamp ) {
-				wp_unschedule_event( $timestamp, $hook );
-			}
+			wp_clear_scheduled_hook( $hook );
 		}
 	}
 

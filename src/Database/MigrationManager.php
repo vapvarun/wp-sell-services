@@ -387,14 +387,14 @@ class MigrationManager {
 		$map = [
 			'pending'            => 'pending_payment',
 			'processing'         => 'in_progress',
-			'requirements'       => 'waiting_requirements',
+			'requirements'       => 'pending_requirements',
 			'in-progress'        => 'in_progress',
 			'delivered'          => 'pending_approval',
 			'revision'           => 'revision_requested',
 			'completed'          => 'completed',
 			'cancelled'          => 'cancelled',
 			'refunded'           => 'cancelled',
-			'disputed'           => 'in_dispute',
+			'disputed'           => 'disputed',
 		];
 
 		return $map[ $old_status ] ?? 'pending_payment';

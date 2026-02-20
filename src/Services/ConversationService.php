@@ -221,6 +221,15 @@ class ConversationService {
 			 * @param Conversation $conversation The conversation.
 			 */
 			do_action( 'wpss_message_sent', $message, $conversation );
+
+			/**
+			 * Fires for email notification on new order message.
+			 *
+			 * @param int    $order_id  Order ID.
+			 * @param int    $sender_id Sender user ID.
+			 * @param string $content   Message content.
+			 */
+			do_action( 'wpss_new_order_message', $conversation->order_id, $message->sender_id, $message->content );
 		}
 
 		return $message;

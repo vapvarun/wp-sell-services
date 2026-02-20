@@ -909,6 +909,10 @@ final class Plugin {
 		$email_service = new \WPSellServices\Services\EmailService();
 		$email_service->init();
 
+		// Initialize DisputeWorkflowManager for dispute crons and auto-escalation.
+		$dispute_workflow = new \WPSellServices\Services\DisputeWorkflowManager();
+		$dispute_workflow->init();
+
 		// Auto-withdrawal processing.
 		$this->loader->add_action(
 			'wpss_process_auto_withdrawals',

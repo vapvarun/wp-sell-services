@@ -139,7 +139,7 @@ class OrdersController extends RestController {
 		// Order status actions.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>accept|reject|start|deliver|complete|cancel|dispute|accept-cancellation|reject-cancellation)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>accept|reject|start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -617,7 +617,7 @@ class OrdersController extends RestController {
 			case 'complete':
 				if ( ! $is_customer && ! $is_admin ) {
 					$error = __( 'Only the customer can mark orders as complete.', 'wp-sell-services' );
-				} elseif ( 'delivered' !== $order->status ) {
+				} elseif ( ! in_array( $order->status, array( 'delivered', 'pending_approval' ), true ) ) {
 					$error = __( 'Order cannot be completed in current status.', 'wp-sell-services' );
 				} else {
 					$result = $order->update(
@@ -625,6 +625,47 @@ class OrdersController extends RestController {
 							'status'       => 'completed',
 							'completed_at' => current_time( 'mysql' ),
 						)
+					);
+				}
+				break;
+
+			case 'revision':
+				if ( ! $is_customer && ! $is_admin ) {
+					$error = __( 'Only the customer can request a revision.', 'wp-sell-services' );
+				} elseif ( ! in_array( $order->status, array( 'delivered', 'pending_approval' ), true ) ) {
+					$error = __( 'Cannot request revision in current status.', 'wp-sell-services' );
+				} elseif ( ! $order->can_request_revision() ) {
+					$error = __( 'Revision limit reached for this order.', 'wp-sell-services' );
+				} else {
+					$result = $order->update(
+						array( 'status' => 'revision_requested' )
+					);
+					if ( $result ) {
+						do_action( 'wpss_revision_requested', $order_id, get_current_user_id(), $reason );
+					}
+				}
+				break;
+
+			case 'hold':
+				if ( ! $is_vendor && ! $is_admin ) {
+					$error = __( 'Only the vendor or admin can put an order on hold.', 'wp-sell-services' );
+				} elseif ( 'in_progress' !== $order->status ) {
+					$error = __( 'Only in-progress orders can be put on hold.', 'wp-sell-services' );
+				} else {
+					$result = $order->update(
+						array( 'status' => 'on_hold' )
+					);
+				}
+				break;
+
+			case 'resume':
+				if ( ! $is_vendor && ! $is_admin ) {
+					$error = __( 'Only the vendor or admin can resume an order.', 'wp-sell-services' );
+				} elseif ( 'on_hold' !== $order->status ) {
+					$error = __( 'Only on-hold orders can be resumed.', 'wp-sell-services' );
+				} else {
+					$result = $order->update(
+						array( 'status' => 'in_progress' )
 					);
 				}
 				break;
@@ -1131,6 +1172,9 @@ class OrdersController extends RestController {
 				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'deliver';
 				}
+				if ( ( $is_vendor || $is_admin ) && 'in_progress' === $order->status ) {
+					$actions[] = 'hold';
+				}
 				if ( $is_customer && 'in_progress' === $order->status && $this->can_buyer_cancel_in_progress( $order ) ) {
 					$actions[] = 'cancel';
 				}
@@ -1168,6 +1212,15 @@ class OrdersController extends RestController {
 				}
 				if ( $is_customer || $is_vendor ) {
 					$actions[] = 'dispute';
+				}
+				break;
+
+			case 'on_hold':
+				if ( $is_vendor || $is_admin ) {
+					$actions[] = 'resume';
+				}
+				if ( $is_admin ) {
+					$actions[] = 'cancel';
 				}
 				break;
 		}

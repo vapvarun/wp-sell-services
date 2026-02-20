@@ -73,7 +73,7 @@ class OrderWorkflowManager {
 		add_action( 'wpss_order_status_cancellation_requested', [ $this, 'handle_cancellation_requested' ], 10, 2 );
 
 		// Payment hooks.
-		add_action( 'wpss_order_payment_complete', [ $this, 'handle_payment_complete' ] );
+		add_action( 'wpss_order_paid', [ $this, 'handle_payment_complete' ] );
 	}
 
 	/**
@@ -96,6 +96,16 @@ class OrderWorkflowManager {
 		$schedules['wpss_weekly'] = [
 			'interval' => WEEK_IN_SECONDS,
 			'display'  => __( 'Once Weekly', 'wp-sell-services' ),
+		];
+
+		$schedules['weekly'] = [
+			'interval' => WEEK_IN_SECONDS,
+			'display'  => __( 'Weekly', 'wp-sell-services' ),
+		];
+
+		$schedules['monthly'] = [
+			'interval' => 30 * DAY_IN_SECONDS,
+			'display'  => __( 'Monthly', 'wp-sell-services' ),
 		];
 
 		return $schedules;

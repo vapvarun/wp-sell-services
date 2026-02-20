@@ -145,6 +145,20 @@ class Dispute {
 	public ?float $refund_amount;
 
 	/**
+	 * Response deadline.
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public ?\DateTimeImmutable $response_deadline;
+
+	/**
+	 * Last response by user ID.
+	 *
+	 * @var int|null
+	 */
+	public ?int $last_response_by;
+
+	/**
 	 * Resolved timestamp.
 	 *
 	 * @var \DateTimeImmutable|null
@@ -195,12 +209,14 @@ class Dispute {
 		$dispute->resolution_type  = $row->resolution ?? null;
 		$dispute->resolution_notes = $row->resolution_notes ?? '';
 		$dispute->refund_amount    = ( $row->refund_amount ?? null ) ? (float) $row->refund_amount : null;
+		$dispute->last_response_by = ( $row->last_response_by ?? null ) ? (int) $row->last_response_by : null;
 		$dispute->resolved_by      = $row->resolved_by ? (int) $row->resolved_by : null;
 
 		// Timestamps.
-		$dispute->resolved_at = $row->resolved_at ? new \DateTimeImmutable( $row->resolved_at ) : null;
-		$dispute->created_at  = $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
-		$dispute->updated_at  = $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+		$dispute->response_deadline = ( $row->response_deadline ?? null ) ? new \DateTimeImmutable( $row->response_deadline ) : null;
+		$dispute->resolved_at       = $row->resolved_at ? new \DateTimeImmutable( $row->resolved_at ) : null;
+		$dispute->created_at        = $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
+		$dispute->updated_at        = $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
 
 		return $dispute;
 	}
