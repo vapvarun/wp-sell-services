@@ -573,6 +573,13 @@
 	color: var(--wpss-white, #fff);
 }
 
+.wpss-btn--disabled,
+.wpss-btn.wpss-btn--disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
 .wpss-btn--ghost {
 	background: transparent;
 	border: 1px solid var(--wpss-border, #e5e7eb);

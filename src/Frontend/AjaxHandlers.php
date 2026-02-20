@@ -406,10 +406,24 @@ class AjaxHandlers {
 			return;
 		}
 
-		$result = $order_service->cancel( $order_id, $user_id, $reason );
+		if ( empty( $reason ) ) {
+			wp_send_json_error( array( 'message' => __( 'Reason is required for cancellation.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Buyer on in_progress orders must go through request_cancellation (24h window + delivery check).
+		if ( (int) $order->customer_id === $user_id && 'in_progress' === $order->status ) {
+			$note   = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
+			$result = $order_service->request_cancellation( $order_id, $user_id, $reason, $note );
+		} else {
+			$result = $order_service->cancel( $order_id, $user_id, $reason );
+		}
 
 		if ( $result['success'] ) {
-			wp_send_json_success( array( 'message' => __( 'Order cancelled.', 'wp-sell-services' ) ) );
+			$message = 'in_progress' === $order->status && (int) $order->customer_id === $user_id
+				? __( 'Your cancellation request has been submitted. The vendor has 48 hours to respond.', 'wp-sell-services' )
+				: __( 'Order cancelled.', 'wp-sell-services' );
+			wp_send_json_success( array( 'message' => $message ) );
 		} else {
 			wp_send_json_error( $result );
 		}
@@ -425,6 +439,7 @@ class AjaxHandlers {
 
 		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
 			RateLimiter::send_error( 'order_action' );
+			return;
 		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -432,6 +447,7 @@ class AjaxHandlers {
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		$order_service = new OrderService();
@@ -439,10 +455,12 @@ class AjaxHandlers {
 
 		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		if ( 'cancellation_requested' !== $order->status ) {
 			wp_send_json_error( array( 'message' => __( 'This order does not have a pending cancellation request.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
@@ -464,6 +482,7 @@ class AjaxHandlers {
 
 		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
 			RateLimiter::send_error( 'order_action' );
+			return;
 		}
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -471,6 +490,7 @@ class AjaxHandlers {
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		$order_service = new OrderService();
@@ -478,10 +498,12 @@ class AjaxHandlers {
 
 		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		if ( 'cancellation_requested' !== $order->status ) {
 			wp_send_json_error( array( 'message' => __( 'This order does not have a pending cancellation request.', 'wp-sell-services' ) ) );
+			return;
 		}
 
 		// Escalate to dispute.

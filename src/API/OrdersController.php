@@ -683,7 +683,7 @@ class OrdersController extends RestController {
 						);
 					}
 				} elseif ( $is_customer ) {
-					$immediate_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
+					$immediate_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted', 'requirements_submitted' );
 
 					if ( in_array( $order->status, $immediate_statuses, true ) ) {
 						// Immediate cancel — work hasn't started.

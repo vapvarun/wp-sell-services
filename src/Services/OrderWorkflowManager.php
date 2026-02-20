@@ -700,7 +700,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, customer_id, vendor_id, vendor_notes FROM {$table}
+				"SELECT id, customer_id, vendor_id, vendor_notes, updated_at FROM {$table}
 				WHERE status = %s",
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED
 			)
@@ -715,7 +715,11 @@ class OrderWorkflowManager {
 				? strtotime( $cancel_data['requested_at'] )
 				: 0;
 
-			// Use requested_at from vendor_notes; fall back to updated_at only if missing.
+			// Fall back to updated_at if vendor_notes JSON is missing or corrupt.
+			if ( $requested_at <= 0 && ! empty( $order->updated_at ) ) {
+				$requested_at = strtotime( $order->updated_at );
+			}
+
 			if ( $requested_at > 0 && ( $now - $requested_at ) >= 48 * HOUR_IN_SECONDS ) {
 				$timed_out_orders[] = $order;
 			}

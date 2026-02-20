@@ -275,6 +275,7 @@ class OrderService {
 			),
 			ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
+				ServiceOrder::STATUS_CANCELLED,
 			),
 			ServiceOrder::STATUS_DELIVERED              => array(
 				ServiceOrder::STATUS_COMPLETED,
