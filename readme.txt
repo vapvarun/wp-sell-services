@@ -84,14 +84,12 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * Automated withdrawal scheduling (weekly, bi-weekly, monthly)
 * Configurable minimum withdrawal amount and clearance period
 
-**WooCommerce Integration (Optional)**
+**Standalone Checkout**
 
-* Works independently — WooCommerce is not required
-* When WooCommerce is active, enables checkout and payment processing
-* All WooCommerce payment gateways supported automatically
-* HPOS (High Performance Order Storage) compatible
-* WooCommerce order mapping for accounting
-* Pro version adds Standalone, EDD, FluentCart, and SureCart alternatives
+* Built-in checkout system — no WooCommerce or other e-commerce plugin required
+* Offline payment gateway with admin confirmation workflow
+* Pro version adds Stripe, PayPal, Razorpay direct gateways
+* Pro version adds WooCommerce, EDD, FluentCart, and SureCart integrations
 
 **Developer Ready**
 
@@ -152,7 +150,7 @@ Comprehensive documentation included covering every feature, with guides for ven
 * WordPress 6.4 or higher
 * PHP 8.1 or higher
 * MySQL 5.7 or higher
-* WooCommerce 8.0 or higher (optional — enables checkout and payment processing)
+* No additional plugins required (standalone checkout included)
 
 = Automatic Installation =
 
@@ -160,8 +158,7 @@ Comprehensive documentation included covering every feature, with guides for ven
 2. Navigate to **Plugins > Add New**
 3. Search for "WP Sell Services"
 4. Click **Install Now** and then **Activate**
-5. Go to **WP Sell Services > Settings** to configure your marketplace
-6. Optionally install **WooCommerce** to enable checkout and payment processing
+5. Complete the **Setup Wizard** to create pages and configure your marketplace
 
 = Manual Installation =
 
@@ -169,13 +166,12 @@ Comprehensive documentation included covering every feature, with guides for ven
 2. Upload to `/wp-content/plugins/` directory
 3. Unzip the file
 4. Activate through the **Plugins** menu in WordPress
-5. Visit **WP Sell Services > Settings** for configuration
-6. Optionally install **WooCommerce** for checkout and payment capabilities
+5. Complete the **Setup Wizard** to create pages and configure your marketplace
 
 = After Activation =
 
-1. Configure general settings (currency, commission rate, policies)
-2. Create required pages (services, vendors, dashboard, buyer requests)
+1. Complete the Setup Wizard (creates pages, configures currency, and imports demo content)
+2. Configure commission rates and vendor settings under **WP Sell Services > Settings**
 3. Set up service categories
 4. Configure email notifications
 5. Enable vendor registration or manually create vendor accounts
@@ -185,7 +181,7 @@ Comprehensive documentation included covering every feature, with guides for ven
 
 = Is WooCommerce required? =
 
-No. WP Sell Services works independently without WooCommerce. Your marketplace is fully functional for service listings, vendor management, order workflow, messaging, reviews, and dispute resolution. When WooCommerce is installed and active, the plugin automatically enables checkout and payment processing with access to hundreds of WooCommerce-compatible payment gateways. The Pro version adds more alternatives including EDD, FluentCart, SureCart, and fully Standalone mode with direct Stripe/PayPal/Razorpay integration.
+No. WP Sell Services includes a built-in standalone checkout system with an offline payment gateway. Your marketplace is fully functional out of the box — service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds direct Stripe, PayPal, and Razorpay payment gateways, plus WooCommerce, EDD, FluentCart, and SureCart integrations for sites that prefer those platforms.
 
 = Does this work with my WordPress theme? =
 
@@ -205,7 +201,7 @@ Yes. Buyers can post project requests with budget range, description, and deadli
 
 = What payment gateways are supported? =
 
-When WooCommerce is active, the free version works with all WooCommerce payment gateways including Stripe, PayPal, Square, bank transfer, and hundreds more through WooCommerce extensions. The Pro version adds direct integrations for Stripe, PayPal, Razorpay, and offline payments — these work independently without WooCommerce in Standalone mode.
+The free version includes a standalone checkout with an offline payment gateway (bank transfer, manual confirmation). The Pro version adds direct Stripe, PayPal, and Razorpay gateways that work without any e-commerce plugin. Pro also supports WooCommerce (all its gateways), Easy Digital Downloads, FluentCart, and SureCart for sites already using those platforms.
 
 = How are disputes handled? =
 
@@ -251,38 +247,64 @@ Four levels: New Seller (default), Level 1 Seller (5+ orders, 4.0+ rating), Leve
 == Changelog ==
 
 = 1.0.0 =
-* Initial release
-* Service marketplace with multi-step creation wizard
-* Three-tier pricing packages with custom features
+
+**Marketplace Core**
+
+* Complete Fiverr-style service marketplace with standalone checkout
+* Multi-step service creation wizard with live preview
+* Three-tier pricing packages (Basic, Standard, Premium) with custom features
 * Service add-ons and extras for upselling
-* Complete order lifecycle with 11 statuses
-* Built-in messaging system per order with file attachments
-* Requirements collection and delivery management
-* Revision request workflow
-* Deadline extension requests
-* Review and rating system with multi-criteria ratings
-* Dispute resolution with admin mediation
-* Vendor profiles with portfolio showcase
+* Image gallery, video embeds, FAQs, and requirements per service
+* Category and tag organization with drag-and-drop ordering
+
+**Order Workflow**
+
+* Complete order lifecycle with 11 distinct statuses
+* Requirements collection before work begins
+* File delivery system with buyer approval workflow
+* Built-in messaging per order with file attachments
+* Revision request and deadline extension management
+* Buyer-initiated order cancellation with vendor response flow
+
+**Vendor System**
+
+* Vendor registration with open, approval, or closed modes
 * Four-tier seller level system with automatic progression
-* Buyer request system with vendor proposals
-* Commission system with per-vendor custom rates
-* Earnings tracking and withdrawal management
-* Automated withdrawal scheduling
-* 11 configurable email notification types
-* In-app notification system
-* Vacation mode for vendors
-* Optional tipping system
-* Favorites/wishlist functionality
-* WooCommerce integration with HPOS support
-* 6 Gutenberg blocks for page building
-* 16 shortcodes for flexible display
-* 20 REST API controllers with batch endpoint
-* Template override system for theme customization
+* Unified vendor dashboard with earnings, orders, and analytics
+* Portfolio showcase, vacation mode, and profile customization
+* Commission tracking and withdrawal requests with admin approval
+
+**Buyer Features**
+
+* Post buyer requests for vendors to bid on
+* Browse and compare vendor proposals
+* Favorites/wishlist, optional tipping, and complete purchase history
+
+**Reviews, Disputes, and Notifications**
+
+* 5-star multi-criteria rating system with moderation queue
+* Structured dispute workflow with admin mediation and multiple resolution types
+* 11 configurable email notification types with template overrides
+* In-app notification center
+
+**Payments and Earnings**
+
+* Standalone checkout with offline gateway (no WooCommerce required)
+* Global and per-vendor commission rates (0-50%)
+* Earnings dashboard with automated withdrawal scheduling
+
+**Developer Features**
+
+* 20 REST API controllers with batch endpoint for mobile apps
+* 6 Gutenberg blocks and 16 shortcodes
+* Template override system compatible with any theme
 * SEO schema markup with Yoast and RankMath integration
+* 9 extension hooks for Pro plugin integration
 * WP-CLI commands for bulk operations
-* 17 custom database tables for optimal performance
-* PSR-4 autoloaded architecture
+* 17 custom database tables with PSR-4 autoloaded architecture
 * 100+ action and filter hooks for extensibility
+* Post-activation setup wizard with demo content importer
+* WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
 
