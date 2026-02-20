@@ -12,6 +12,7 @@ namespace WPSellServices\Services;
 
 use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Services\OrderService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -62,6 +63,13 @@ class DisputeService {
 	private OrderRepository $order_repo;
 
 	/**
+	 * Order service for status changes that fire hooks.
+	 *
+	 * @var OrderService
+	 */
+	private OrderService $order_service;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -69,6 +77,7 @@ class DisputeService {
 		$this->table          = $wpdb->prefix . 'wpss_disputes';
 		$this->messages_table = $wpdb->prefix . 'wpss_dispute_messages';
 		$this->order_repo     = new OrderRepository();
+		$this->order_service  = new OrderService();
 	}
 
 	/**
@@ -102,15 +111,21 @@ class DisputeService {
 			return false;
 		}
 
+		// Determine the respondent (the other party on the order).
+		$respondent_id = ( (int) $order->customer_id === $opened_by )
+			? (int) $order->vendor_id
+			: (int) $order->customer_id;
+
 		$data = array(
-			'order_id'     => $order_id,
-			'initiated_by' => $opened_by,
-			'reason'       => sanitize_text_field( $reason ),
-			'description'  => sanitize_textarea_field( $description ),
-			'status'       => self::STATUS_OPEN,
-			'evidence'     => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
-			'created_at'   => current_time( 'mysql' ),
-			'updated_at'   => current_time( 'mysql' ),
+			'order_id'      => $order_id,
+			'initiated_by'  => $opened_by,
+			'respondent_id' => $respondent_id,
+			'reason'        => sanitize_text_field( $reason ),
+			'description'   => sanitize_textarea_field( $description ),
+			'status'        => self::STATUS_OPEN,
+			'evidence'      => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
+			'created_at'    => current_time( 'mysql' ),
+			'updated_at'    => current_time( 'mysql' ),
 		);
 
 		$result = $wpdb->insert( $this->table, $data );
@@ -118,8 +133,8 @@ class DisputeService {
 		if ( $result ) {
 			$dispute_id = (int) $wpdb->insert_id;
 
-			// Update order status.
-			$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_DISPUTED ) );
+			// Update order status via OrderService to fire hooks (notifications, emails).
+			$this->order_service->update_status( $order_id, ServiceOrder::STATUS_DISPUTED );
 
 			/**
 			 * Fires when a dispute is opened.
@@ -417,19 +432,20 @@ class DisputeService {
 	private function handle_resolution( object $dispute, string $resolution, float $refund_amount ): void {
 		$order_id = (int) $dispute->order_id;
 
+		// Use OrderService::update_status() to fire hooks (notifications, commission, emails).
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
-				$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_REFUNDED ) );
+				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_REFUNDED );
 				break;
 
 			case self::RESOLUTION_PARTIAL_REFUND:
-				$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_PARTIALLY_REFUNDED ) );
+				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
 				break;
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 			case self::RESOLUTION_MUTUAL:
-				$this->order_repo->update( $order_id, array( 'status' => ServiceOrder::STATUS_COMPLETED ) );
+				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 				break;
 		}
 	}

@@ -284,6 +284,120 @@ class ServiceOrder {
 	}
 
 	/**
+	 * Query orders with filters.
+	 *
+	 * @param array $args {
+	 *     Query arguments.
+	 *
+	 *     @type int    $limit       Number of results. Default 20.
+	 *     @type int    $offset      Offset for pagination. Default 0.
+	 *     @type int    $vendor_id   Filter by vendor.
+	 *     @type int    $customer_id Filter by customer.
+	 *     @type int    $user_id     Filter where user is vendor OR customer.
+	 *     @type string $status      Filter by status.
+	 *     @type int    $service_id  Filter by service.
+	 *     @type string $orderby     Column to sort by. Default 'created_at'.
+	 *     @type string $order       ASC or DESC. Default 'DESC'.
+	 * }
+	 * @return self[]
+	 */
+	public static function query( array $args = array() ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		$defaults = array(
+			'limit'       => 20,
+			'offset'      => 0,
+			'orderby'     => 'created_at',
+			'order'       => 'DESC',
+		);
+		$args = wp_parse_args( $args, $defaults );
+
+		list( $where, $params ) = self::build_where_clause( $args );
+
+		$allowed_orderby = array( 'id', 'created_at', 'updated_at', 'total', 'status' );
+		$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
+		$order           = 'ASC' === strtoupper( $args['order'] ) ? 'ASC' : 'DESC';
+
+		$params[] = (int) $args['limit'];
+		$params[] = (int) $args['offset'];
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$params
+			)
+		);
+
+		return array_map( array( self::class, 'from_db' ), $rows ?: array() );
+	}
+
+	/**
+	 * Count orders matching filters.
+	 *
+	 * @param array $args Same as query() but limit/offset/orderby/order are ignored.
+	 * @return int
+	 */
+	public static function count( array $args = array() ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		list( $where, $params ) = self::build_where_clause( $args );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			empty( $params )
+				? "SELECT COUNT(*) FROM {$table} {$where}" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				: $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$table} {$where}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$params
+				)
+		);
+	}
+
+	/**
+	 * Build WHERE clause from query args.
+	 *
+	 * @param array $args Query arguments.
+	 * @return array{0: string, 1: array} WHERE clause string and params array.
+	 */
+	private static function build_where_clause( array $args ): array {
+		$conditions = array();
+		$params     = array();
+
+		if ( ! empty( $args['vendor_id'] ) ) {
+			$conditions[] = 'vendor_id = %d';
+			$params[]     = (int) $args['vendor_id'];
+		}
+
+		if ( ! empty( $args['customer_id'] ) ) {
+			$conditions[] = 'customer_id = %d';
+			$params[]     = (int) $args['customer_id'];
+		}
+
+		if ( ! empty( $args['user_id'] ) ) {
+			$conditions[] = '(vendor_id = %d OR customer_id = %d)';
+			$params[]     = (int) $args['user_id'];
+			$params[]     = (int) $args['user_id'];
+		}
+
+		if ( ! empty( $args['status'] ) ) {
+			$conditions[] = 'status = %s';
+			$params[]     = $args['status'];
+		}
+
+		if ( ! empty( $args['service_id'] ) ) {
+			$conditions[] = 'service_id = %d';
+			$params[]     = (int) $args['service_id'];
+		}
+
+		$where = ! empty( $conditions ) ? 'WHERE ' . implode( ' AND ', $conditions ) : '';
+
+		return array( $where, $params );
+	}
+
+	/**
 	 * Update order fields.
 	 *
 	 * When updating status, validates the transition is allowed.

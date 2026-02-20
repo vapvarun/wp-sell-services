@@ -176,33 +176,66 @@ class EmailService {
 	}
 
 	/**
-	 * Send new order email to vendor.
+	 * Send new order emails to vendor and buyer.
 	 *
 	 * @param ServiceOrder $order Order object.
 	 * @return bool
 	 */
 	public function send_new_order( ServiceOrder $order ): bool {
-		$vendor = get_user_by( 'id', $order->vendor_id );
-		if ( ! $vendor ) {
-			return false;
+		$vendor   = get_user_by( 'id', $order->vendor_id );
+		$customer = get_user_by( 'id', $order->customer_id );
+
+		$service_title = get_the_title( $order->service_id );
+
+		// Send to vendor.
+		if ( $vendor ) {
+			$subject = sprintf(
+				/* translators: %1$s: site name, %2$s: order number */
+				__( '[%1$s] New Service Order #%2$s', 'wp-sell-services' ),
+				get_bloginfo( 'name' ),
+				$order->order_number
+			);
+
+			$this->send(
+				$vendor->user_email,
+				$subject,
+				self::TYPE_NEW_ORDER,
+				array(
+					'order'         => $order,
+					'recipient'     => $vendor,
+					'email_heading' => __( 'New Order Received!', 'wp-sell-services' ),
+					'service_title' => $service_title,
+					'customer_name' => $this->get_customer_name( $order->customer_id ),
+					'is_customer'   => false,
+				)
+			);
 		}
 
-		$subject = sprintf(
-			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] New Service Order #%2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
-			$order->order_number
-		);
+		// Send order confirmation to buyer.
+		if ( $customer ) {
+			$subject = sprintf(
+				/* translators: %1$s: site name, %2$s: order number */
+				__( '[%1$s] Order Confirmed #%2$s', 'wp-sell-services' ),
+				get_bloginfo( 'name' ),
+				$order->order_number
+			);
 
-		$template_vars = array(
-			'order'         => $order,
-			'recipient'     => $vendor,
-			'email_heading' => __( 'New Order Received!', 'wp-sell-services' ),
-			'service_title' => get_the_title( $order->service_id ),
-			'customer_name' => $this->get_customer_name( $order->customer_id ),
-		);
+			$this->send(
+				$customer->user_email,
+				$subject,
+				self::TYPE_NEW_ORDER,
+				array(
+					'order'         => $order,
+					'recipient'     => $customer,
+					'email_heading' => __( 'Order Confirmed!', 'wp-sell-services' ),
+					'service_title' => $service_title,
+					'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
+					'is_customer'   => true,
+				)
+			);
+		}
 
-		return $this->send( $vendor->user_email, $subject, self::TYPE_NEW_ORDER, $template_vars );
+		return true;
 	}
 
 	/**
@@ -247,16 +280,14 @@ class EmailService {
 	}
 
 	/**
-	 * Send order in progress email to customer.
+	 * Send order in progress emails to customer and vendor.
 	 *
 	 * @param ServiceOrder $order Order object.
 	 * @return bool
 	 */
 	public function send_order_in_progress( ServiceOrder $order ): bool {
 		$customer = get_user_by( 'id', $order->customer_id );
-		if ( ! $customer ) {
-			return false;
-		}
+		$vendor   = get_user_by( 'id', $order->vendor_id );
 
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
@@ -265,14 +296,39 @@ class EmailService {
 			$order->order_number
 		);
 
-		$template_vars = array(
-			'order'         => $order,
-			'recipient'     => $customer,
-			'email_heading' => __( 'Your Order is In Progress', 'wp-sell-services' ),
-			'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
-		);
+		// Send to customer.
+		if ( $customer ) {
+			$this->send(
+				$customer->user_email,
+				$subject,
+				self::TYPE_ORDER_IN_PROGRESS,
+				array(
+					'order'         => $order,
+					'recipient'     => $customer,
+					'email_heading' => __( 'Your Order is In Progress', 'wp-sell-services' ),
+					'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
+					'is_customer'   => true,
+				)
+			);
+		}
 
-		return $this->send( $customer->user_email, $subject, self::TYPE_ORDER_IN_PROGRESS, $template_vars );
+		// Send to vendor (requirements received, start working).
+		if ( $vendor ) {
+			$this->send(
+				$vendor->user_email,
+				$subject,
+				self::TYPE_ORDER_IN_PROGRESS,
+				array(
+					'order'         => $order,
+					'recipient'     => $vendor,
+					'email_heading' => __( 'Requirements Received - Start Working', 'wp-sell-services' ),
+					'customer_name' => $this->get_customer_name( $order->customer_id ),
+					'is_customer'   => false,
+				)
+			);
+		}
+
+		return true;
 	}
 
 	/**
@@ -440,23 +496,14 @@ class EmailService {
 	}
 
 	/**
-	 * Send cancellation requested email to vendor.
+	 * Send cancellation requested emails to vendor and buyer.
 	 *
 	 * @param ServiceOrder $order Order object.
 	 * @return bool
 	 */
 	public function send_cancellation_requested( ServiceOrder $order ): bool {
-		$vendor = get_user_by( 'id', $order->vendor_id );
-		if ( ! $vendor ) {
-			return false;
-		}
-
-		$subject = sprintf(
-			/* translators: %1$s: site name, %2$s: order number */
-			__( '[%1$s] Cancellation Requested - Order #%2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
-			$order->order_number
-		);
+		$vendor   = get_user_by( 'id', $order->vendor_id );
+		$customer = get_user_by( 'id', $order->customer_id );
 
 		// Parse cancellation data from vendor_notes.
 		$cancel_data = json_decode( $order->vendor_notes ?? '', true );
@@ -472,19 +519,63 @@ class EmailService {
 			'other'                => __( 'Other', 'wp-sell-services' ),
 		);
 
-		$deadline = new \DateTimeImmutable( '+48 hours' );
+		$reason_label = $reason_labels[ $reason_key ] ?? $reason_key;
+		$deadline     = new \DateTimeImmutable( '+48 hours' );
+		$deadline_str = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $deadline->getTimestamp() );
 
-		$template_vars = array(
-			'order'         => $order,
-			'recipient'     => $vendor,
-			'email_heading' => __( 'Cancellation Requested', 'wp-sell-services' ),
-			'buyer_name'    => $this->get_customer_name( $order->customer_id ),
-			'reason'        => $reason_labels[ $reason_key ] ?? $reason_key,
-			'note'          => $note,
-			'deadline'      => wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $deadline->getTimestamp() ),
-		);
+		// Send to vendor.
+		if ( $vendor ) {
+			$subject = sprintf(
+				/* translators: %1$s: site name, %2$s: order number */
+				__( '[%1$s] Cancellation Requested - Order #%2$s', 'wp-sell-services' ),
+				get_bloginfo( 'name' ),
+				$order->order_number
+			);
 
-		return $this->send( $vendor->user_email, $subject, self::TYPE_CANCELLATION_REQUESTED, $template_vars );
+			$this->send(
+				$vendor->user_email,
+				$subject,
+				self::TYPE_CANCELLATION_REQUESTED,
+				array(
+					'order'         => $order,
+					'recipient'     => $vendor,
+					'email_heading' => __( 'Cancellation Requested', 'wp-sell-services' ),
+					'buyer_name'    => $this->get_customer_name( $order->customer_id ),
+					'reason'        => $reason_label,
+					'note'          => $note,
+					'deadline'      => $deadline_str,
+					'is_customer'   => false,
+				)
+			);
+		}
+
+		// Send confirmation to buyer.
+		if ( $customer ) {
+			$subject = sprintf(
+				/* translators: %1$s: site name, %2$s: order number */
+				__( '[%1$s] Cancellation Request Submitted - Order #%2$s', 'wp-sell-services' ),
+				get_bloginfo( 'name' ),
+				$order->order_number
+			);
+
+			$this->send(
+				$customer->user_email,
+				$subject,
+				self::TYPE_CANCELLATION_REQUESTED,
+				array(
+					'order'         => $order,
+					'recipient'     => $customer,
+					'email_heading' => __( 'Cancellation Request Submitted', 'wp-sell-services' ),
+					'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
+					'reason'        => $reason_label,
+					'note'          => $note,
+					'deadline'      => $deadline_str,
+					'is_customer'   => true,
+				)
+			);
+		}
+
+		return true;
 	}
 
 	/**

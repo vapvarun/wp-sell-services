@@ -713,7 +713,20 @@ class ManualOrderPage {
 		}
 
 		// --- 13. Fire hooks ---
-		do_action( 'wpss_order_created', $order_id, $status );
+		$order_data = array(
+			'service_id'     => $service_id,
+			'package_id'     => $package_id,
+			'customer_id'    => $customer_id,
+			'vendor_id'      => $vendor_id,
+			'subtotal'       => $subtotal,
+			'addons_total'   => $addons_total,
+			'total'          => $total,
+			'currency'       => $currency,
+			'status'         => $status,
+			'payment_method' => $payment_method,
+			'platform'       => 'manual',
+		);
+		do_action( 'wpss_order_created', $order_id, $order_data );
 		do_action( 'wpss_order_status_changed', $order_id, $status, '' );
 		do_action( "wpss_order_status_{$status}", $order_id, '' );
 

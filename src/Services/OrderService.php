@@ -227,6 +227,7 @@ class OrderService {
 				ServiceOrder::STATUS_LATE,
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 				ServiceOrder::STATUS_DELIVERED,
+				ServiceOrder::STATUS_DISPUTED,
 			),
 			ServiceOrder::STATUS_PENDING_APPROVAL       => array(
 				ServiceOrder::STATUS_COMPLETED,

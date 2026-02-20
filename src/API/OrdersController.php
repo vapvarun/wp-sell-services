@@ -751,10 +751,11 @@ class OrdersController extends RestController {
 					// Vendor disputes the cancellation — escalate to dispute.
 					$dispute_service = new \WPSellServices\Services\DisputeService();
 					$dispute_reason  = ! empty( $reason ) ? $reason : __( 'Vendor disputed buyer cancellation request.', 'wp-sell-services' );
-					$dispute_id      = $dispute_service->open( $order_id, $user_id, $dispute_reason );
+					$dispute_id      = $dispute_service->open( $order_id, $user_id, $dispute_reason, $dispute_reason );
 
 					if ( $dispute_id ) {
-						$result = $order->update( array( 'status' => 'disputed' ) );
+						// DisputeService::open() already sets status to disputed.
+						$result = true;
 						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_reason );
 					} else {
 						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
@@ -770,14 +771,19 @@ class OrdersController extends RestController {
 				} elseif ( empty( $reason ) ) {
 					$error = __( 'Reason is required for disputes.', 'wp-sell-services' );
 				} else {
-					$opened_by = $is_vendor ? 'vendor' : 'customer';
+					$opened_by   = $is_vendor ? 'vendor' : 'customer';
+					$description = sanitize_textarea_field( $request->get_param( 'description' ) ?? '' );
+					if ( empty( $description ) ) {
+						$description = $reason;
+					}
 
 					// Create dispute using DisputeService.
 					$dispute_service = new \WPSellServices\Services\DisputeService();
-					$dispute_id      = $dispute_service->open( $order_id, $user_id, $reason );
+					$dispute_id      = $dispute_service->open( $order_id, $user_id, $reason, $description );
 
 					if ( $dispute_id ) {
-						$result = $order->update( array( 'status' => 'disputed' ) );
+						// DisputeService::open() already sets status to disputed.
+						$result = true;
 						do_action( 'wpss_order_disputed', $order_id, $opened_by, $reason );
 					} else {
 						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
@@ -942,8 +948,8 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Update order status if pending.
-		if ( in_array( $order->status, array( 'pending', 'accepted' ), true ) ) {
+		// Update order status if pending or awaiting requirements.
+		if ( in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) {
 			$order->update( array( 'status' => 'requirements_submitted' ) );
 		}
 

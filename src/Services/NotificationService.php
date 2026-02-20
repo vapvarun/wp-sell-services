@@ -430,6 +430,50 @@ class NotificationService {
 				);
 				break;
 
+			case 'cancellation_requested':
+				// Parse cancellation reason.
+				$cancel_data  = json_decode( $order->vendor_notes ?? '', true );
+				$reason       = $cancel_data['reason'] ?? '';
+				$reason_labels = array(
+					'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
+					'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
+					'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
+					'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
+					'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
+					'other'                => __( 'Other', 'wp-sell-services' ),
+				);
+				$reason_label = $reason_labels[ $reason ] ?? $reason;
+
+				// Notify vendor.
+				$this->create(
+					$order->vendor_id,
+					'cancellation_requested',
+					__( 'Cancellation Requested', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: buyer name, 2: order number, 3: service name, 4: reason */
+						__( '%1$s has requested to cancel Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><strong>Reason:</strong> %4$s<br><br>You have 48 hours to accept or dispute this cancellation request.', 'wp-sell-services' ),
+						esc_html( $buyer_name ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name ),
+						esc_html( $reason_label )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				// Notify buyer.
+				$this->create(
+					$order->customer_id,
+					'cancellation_submitted',
+					__( 'Cancellation Request Submitted', 'wp-sell-services' ),
+					sprintf(
+						/* translators: 1: order number, 2: service name */
+						__( 'Your cancellation request for Order #%1$s has been submitted.<br><br><strong>Service:</strong> %2$s<br><br>The vendor has 48 hours to respond. If they don\'t respond, the order will be automatically cancelled.', 'wp-sell-services' ),
+						esc_html( $order->order_number ),
+						esc_html( $service_name )
+					),
+					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+				);
+				break;
+
 			case 'cancelled':
 				// Notify both parties.
 				$this->create(
@@ -1099,6 +1143,10 @@ class NotificationService {
 			'dispute_response_received'   => 'notify_dispute_opened',
 			'dispute_resolved'            => 'notify_dispute_opened',
 			'dispute_reminder'            => 'notify_dispute_opened',
+			// Cancellation types.
+			'cancellation_requested'      => 'notify_order_cancelled',
+			'cancellation_submitted'      => 'notify_order_cancelled',
+			'cancellation_auto_approved'  => 'notify_order_cancelled',
 		);
 
 		// Check if admin has disabled this notification type globally.
@@ -1162,6 +1210,10 @@ class NotificationService {
 			'dispute_response_received',
 			'dispute_resolved',
 			'dispute_reminder',
+			// Cancellation types.
+			'cancellation_requested',
+			'cancellation_submitted',
+			'cancellation_auto_approved',
 		);
 
 		return in_array( $type, $important_types, true );
@@ -1379,6 +1431,8 @@ class NotificationService {
 			'revision_requested',
 			self::TYPE_DISPUTE_OPENED,
 			'dispute_opened',
+			'cancellation_requested',
+			'cancellation_submitted',
 			// Specific event types (EmailService hooks dedicated actions).
 			'submit_requirements',
 			self::TYPE_DELIVERY_SUBMITTED,

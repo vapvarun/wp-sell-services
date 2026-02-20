@@ -577,71 +577,13 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function handle_status_change( int $order_id, string $new_status, string $old_status ): void {
-		$order = $this->order_service->get( $order_id );
+		// Note: In-app notifications are handled by Plugin.php's define_notification_hooks()
+		// via NotificationService::notify_order_status(). This method only handles
+		// non-notification side effects like admin emails.
 
-		if ( ! $order ) {
-			return;
-		}
-
-		$statuses = ServiceOrder::get_statuses();
-		$status_label = $statuses[ $new_status ] ?? $new_status;
-
-		// Notify relevant party based on status.
 		switch ( $new_status ) {
-			case ServiceOrder::STATUS_PENDING_REQUIREMENTS:
-				// New order created - notify both vendor and buyer.
-				$this->notification_service->create(
-					$order->vendor_id,
-					'new_order',
-					__( 'New Order Received', 'wp-sell-services' ),
-					__( 'You have received a new order. Please wait for the buyer to submit requirements.', 'wp-sell-services' ),
-					[ 'order_id' => $order_id ]
-				);
-				$this->notification_service->create(
-					$order->customer_id,
-					'order_created',
-					__( 'Order Placed Successfully', 'wp-sell-services' ),
-					__( 'Your order has been placed. Please submit your requirements to get started.', 'wp-sell-services' ),
-					[ 'order_id' => $order_id ]
-				);
-				break;
-
-			case ServiceOrder::STATUS_IN_PROGRESS:
-				$this->notification_service->create(
-					$order->vendor_id,
-					'order_started',
-					__( 'Order Started', 'wp-sell-services' ),
-					__( 'Requirements received. You can now start working on the order.', 'wp-sell-services' ),
-					[ 'order_id' => $order_id ]
-				);
-				break;
-
-			case ServiceOrder::STATUS_PENDING_APPROVAL:
-				$this->notification_service->create(
-					$order->customer_id,
-					'delivery_received',
-					__( 'Delivery Received', 'wp-sell-services' ),
-					__( 'The vendor has submitted a delivery. Please review and accept or request revision.', 'wp-sell-services' ),
-					[ 'order_id' => $order_id ]
-				);
-				break;
-
-			case ServiceOrder::STATUS_REVISION_REQUESTED:
-				$this->notification_service->create(
-					$order->vendor_id,
-					'revision_requested',
-					__( 'Revision Requested', 'wp-sell-services' ),
-					__( 'The customer has requested a revision on your delivery.', 'wp-sell-services' ),
-					[ 'order_id' => $order_id ]
-				);
-				break;
-
-			case ServiceOrder::STATUS_CANCELLATION_REQUESTED:
-				// Handled by dedicated handle_cancellation_requested() hook.
-				break;
-
 			case ServiceOrder::STATUS_DISPUTED:
-				// Notify admin (respects email settings).
+				// Notify admin via direct email (respects email settings).
 				if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
 					$admin_email = get_option( 'admin_email' );
 					wp_mail(
@@ -659,7 +601,7 @@ class OrderWorkflowManager {
 		}
 
 		/**
-		 * Fires after status change notifications are sent.
+		 * Fires after status change processing.
 		 *
 		 * @param int    $order_id   Order ID.
 		 * @param string $new_status New status.
@@ -689,22 +631,7 @@ class OrderWorkflowManager {
 		// Update vendor stats (basic counts only - earnings handled by CommissionService).
 		$this->update_single_vendor_stats( $order->vendor_id );
 
-		// Notify both parties.
-		$this->notification_service->create(
-			$order->customer_id,
-			'order_completed',
-			__( 'Order Completed', 'wp-sell-services' ),
-			__( 'Your order has been completed. Please consider leaving a review!', 'wp-sell-services' ),
-			[ 'order_id' => $order_id ]
-		);
-
-		$this->notification_service->create(
-			$order->vendor_id,
-			'order_completed',
-			__( 'Order Completed', 'wp-sell-services' ),
-			__( 'Congratulations! Your order has been marked as complete.', 'wp-sell-services' ),
-			[ 'order_id' => $order_id ]
-		);
+		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
 		/**
 		 * Fires when order is completed.
@@ -729,22 +656,7 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		// Notify both parties.
-		$this->notification_service->create(
-			$order->customer_id,
-			'order_cancelled',
-			__( 'Order Cancelled', 'wp-sell-services' ),
-			__( 'Your order has been cancelled.', 'wp-sell-services' ),
-			[ 'order_id' => $order_id ]
-		);
-
-		$this->notification_service->create(
-			$order->vendor_id,
-			'order_cancelled',
-			__( 'Order Cancelled', 'wp-sell-services' ),
-			__( 'An order has been cancelled.', 'wp-sell-services' ),
-			[ 'order_id' => $order_id ]
-		);
+		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
 		/**
 		 * Fires when order is cancelled.
@@ -765,47 +677,16 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function handle_cancellation_requested( int $order_id, string $old_status ): void {
-		$order = $this->order_service->get( $order_id );
+		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
+		// EmailService also sends branded emails for this status via handle_status_change().
 
-		if ( ! $order ) {
-			return;
-		}
-
-		// Parse cancellation reason from vendor_notes.
-		$cancel_data = json_decode( $order->vendor_notes ?? '', true );
-		$reason      = $cancel_data['reason'] ?? '';
-
-		$reason_labels = [
-			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-			'other'                => __( 'Other', 'wp-sell-services' ),
-		];
-		$reason_label = $reason_labels[ $reason ] ?? $reason;
-
-		// Notify vendor.
-		$this->notification_service->create(
-			$order->vendor_id,
-			'cancellation_requested',
-			__( 'Cancellation Requested', 'wp-sell-services' ),
-			sprintf(
-				/* translators: 1: reason label */
-				__( 'The buyer has requested to cancel this order. Reason: %1$s. You have 48 hours to respond.', 'wp-sell-services' ),
-				$reason_label
-			),
-			[ 'order_id' => $order_id ]
-		);
-
-		// Notify buyer.
-		$this->notification_service->create(
-			$order->customer_id,
-			'cancellation_requested',
-			__( 'Cancellation Request Submitted', 'wp-sell-services' ),
-			__( 'Your cancellation request has been submitted. The vendor has 48 hours to respond.', 'wp-sell-services' ),
-			[ 'order_id' => $order_id ]
-		);
+		/**
+		 * Fires when a cancellation is requested.
+		 *
+		 * @param int    $order_id   Order ID.
+		 * @param string $old_status Previous status.
+		 */
+		do_action( 'wpss_cancellation_requested', $order_id, $old_status );
 	}
 
 	/**
@@ -908,28 +789,11 @@ class OrderWorkflowManager {
 		}
 
 		// Transition to pending requirements.
+		// This fires wpss_order_status_changed → Plugin.php handles notifications.
 		$this->order_service->update_status(
 			$order_id,
 			ServiceOrder::STATUS_PENDING_REQUIREMENTS,
 			__( 'Payment received', 'wp-sell-services' )
-		);
-
-		// Notify customer to submit requirements.
-		$this->notification_service->create(
-			$order->customer_id,
-			'submit_requirements',
-			__( 'Submit Order Requirements', 'wp-sell-services' ),
-			__( 'Payment received! Please submit your requirements so the vendor can start working.', 'wp-sell-services' ),
-			[ 'order_id' => $order_id ]
-		);
-
-		// Notify vendor of new order.
-		$this->notification_service->create(
-			$order->vendor_id,
-			'new_order',
-			__( 'New Order Received', 'wp-sell-services' ),
-			__( 'You have a new order! Waiting for customer to submit requirements.', 'wp-sell-services' ),
-			[ 'order_id' => $order_id ]
 		);
 	}
 
