@@ -1579,6 +1579,11 @@ class Admin {
 			wp_send_json_error( array( 'message' => __( 'Demo content module not found.', 'wp-sell-services' ) ) );
 		}
 
+		// Provide stub WP-CLI classes if not loaded (non-CLI context).
+		if ( ! class_exists( 'WP_CLI_Command' ) ) {
+			require_once WPSS_PLUGIN_DIR . 'src/CLI/wp-cli-stubs.php';
+		}
+
 		// Use the CLI service templates directly.
 		require_once $cli_file;
 		$commands = new \WPSellServices\CLI\ServiceCommands();

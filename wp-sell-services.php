@@ -303,8 +303,9 @@ function wpss_maybe_migrate_to_standalone(): void {
 	$settings = get_option( 'wpss_general', array() );
 	$platform = $settings['ecommerce_platform'] ?? 'auto';
 
-	// If user had WooCommerce or auto (which would have selected WC).
-	if ( in_array( $platform, array( 'woocommerce', 'auto' ), true ) ) {
+	// Only migrate users who explicitly had WooCommerce selected.
+	// 'auto' is the default for fresh installs — no migration needed.
+	if ( 'woocommerce' === $platform ) {
 		// If Pro is active with WC, no action needed - Pro handles WC now.
 		if ( defined( 'WPSS_PRO_VERSION' ) && class_exists( 'WooCommerce' ) ) {
 			update_option( 'wpss_standalone_migrated', true );

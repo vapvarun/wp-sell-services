@@ -36,19 +36,41 @@ class SetupWizardPage {
 	}
 
 	/**
-	 * Add hidden submenu page.
+	 * Add wizard submenu page.
+	 *
+	 * Shows as a visible submenu when setup is incomplete,
+	 * otherwise hides it (still accessible via direct URL).
 	 *
 	 * @return void
 	 */
 	public function add_menu_page(): void {
+		$parent = $this->should_show_in_menu() ? 'wp-sell-services' : null;
+
 		add_submenu_page(
-			null,
+			$parent,
 			__( 'Setup Wizard', 'wp-sell-services' ),
 			__( 'Setup Wizard', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-setup-wizard',
 			array( $this, 'render' )
 		);
+	}
+
+	/**
+	 * Whether to show the wizard link in the admin menu.
+	 *
+	 * Visible when wizard hasn't been completed or no services exist.
+	 *
+	 * @return bool
+	 */
+	private function should_show_in_menu(): bool {
+		if ( ! get_option( 'wpss_setup_wizard_completed' ) ) {
+			return true;
+		}
+
+		$service_count = wp_count_posts( 'wpss_service' );
+
+		return ! $service_count || 0 === (int) ( $service_count->publish ?? 0 );
 	}
 
 	/**
@@ -933,11 +955,47 @@ class SetupWizardPage {
 				});
 			});
 
-			// Create all pages.
+			// Create all pages (sequentially to avoid race condition on wpss_pages option).
 			$('#wpss-wizard-create-all-pages').on('click', function() {
-				$('.wpss-wizard-create-page:not(:disabled)').each(function() {
-					$(this).click();
-				});
+				var allBtn = $(this);
+				var buttons = $('.wpss-wizard-create-page:not(:disabled)').toArray();
+				allBtn.prop('disabled', true).text('<?php echo esc_js( __( 'Creating...', 'wp-sell-services' ) ); ?>');
+
+				function createNext(index) {
+					if (index >= buttons.length) {
+						allBtn.text('<?php echo esc_js( __( 'All Created', 'wp-sell-services' ) ); ?>');
+						return;
+					}
+					var btn = $(buttons[index]);
+					var row = btn.closest('.wpss-wizard-page-row');
+					var field = btn.data('field');
+					var title = btn.data('title');
+
+					btn.prop('disabled', true).text('<?php echo esc_js( __( 'Creating...', 'wp-sell-services' ) ); ?>');
+
+					$.post(ajaxUrl, {
+						action: 'wpss_create_page',
+						nonce: settingsNonce,
+						field: field,
+						title: title
+					}, function(response) {
+						if (response.success) {
+							btn.text('<?php echo esc_js( __( 'Done', 'wp-sell-services' ) ); ?>');
+							row.find('.wpss-wizard-badge')
+								.removeClass('wpss-badge-pending')
+								.addClass('wpss-badge-success')
+								.text('<?php echo esc_js( __( 'Created', 'wp-sell-services' ) ); ?>');
+						} else {
+							btn.prop('disabled', false).text('<?php echo esc_js( __( 'Create', 'wp-sell-services' ) ); ?>');
+						}
+						createNext(index + 1);
+					}).fail(function() {
+						btn.prop('disabled', false).text('<?php echo esc_js( __( 'Create', 'wp-sell-services' ) ); ?>');
+						createNext(index + 1);
+					});
+				}
+
+				createNext(0);
 			});
 
 			// Import demo content.

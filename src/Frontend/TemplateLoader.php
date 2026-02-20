@@ -48,8 +48,8 @@ class TemplateLoader {
 		add_filter( 'single_template', array( $this, 'single_service_template' ) );
 		add_filter( 'archive_template', array( $this, 'archive_service_template' ) );
 		add_filter( 'taxonomy_template', array( $this, 'taxonomy_template' ) );
-		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
+		// Note: rewrite rules and query vars are registered in Plugin::register_rewrite_rules()
+		// so they work in both admin and frontend contexts (required for flush).
 	}
 
 	/**

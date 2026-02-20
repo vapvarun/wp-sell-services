@@ -185,11 +185,16 @@ class VendorsController extends RestController {
 		$pagination = $this->get_pagination_args( $request );
 
 		$args = array(
-			'meta_key'   => '_wpss_is_vendor',
-			'meta_value' => '1',
+			'meta_query' => array(
+				'relation' => 'AND',
+				'vendor_clause' => array(
+					'key'   => '_wpss_is_vendor',
+					'value' => '1',
+				),
+			),
 			'number'     => $pagination['per_page'],
 			'offset'     => $pagination['offset'],
-			'orderby'    => 'meta_value_num',
+			'orderby'    => 'registered',
 			'order'      => 'DESC',
 		);
 
@@ -203,21 +208,28 @@ class VendorsController extends RestController {
 		// Filter by skill/category.
 		$skill = $request->get_param( 'skill' );
 		if ( $skill ) {
-			$args['meta_query'] = array(
-				array(
-					'key'     => '_wpss_vendor_skills',
-					'value'   => $skill,
-					'compare' => 'LIKE',
-				),
+			$args['meta_query']['skill_clause'] = array(
+				'key'     => '_wpss_vendor_skills',
+				'value'   => $skill,
+				'compare' => 'LIKE',
 			);
 		}
 
-		// Order by rating.
+		// Order by rating or orders (uses custom query modifier to LEFT JOIN).
 		$orderby = $request->get_param( 'orderby' );
-		if ( 'rating' === $orderby ) {
-			$args['meta_key'] = '_wpss_rating_average';
-		} elseif ( 'orders' === $orderby ) {
-			$args['meta_key'] = '_wpss_completed_orders';
+		if ( 'rating' === $orderby || 'orders' === $orderby ) {
+			$meta_key = 'rating' === $orderby ? '_wpss_rating_average' : '_wpss_completed_orders';
+			add_action(
+				'pre_user_query',
+				function ( $query ) use ( $meta_key ) {
+					global $wpdb;
+					$query->query_from   .= $wpdb->prepare(
+						" LEFT JOIN {$wpdb->usermeta} AS sort_meta ON ( {$wpdb->users}.ID = sort_meta.user_id AND sort_meta.meta_key = %s )",
+						$meta_key
+					);
+					$query->query_orderby = 'ORDER BY COALESCE(sort_meta.meta_value+0, 0) DESC';
+				}
+			);
 		}
 
 		$user_query = new WP_User_Query( $args );

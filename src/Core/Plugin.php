@@ -226,6 +226,7 @@ final class Plugin {
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
 		$this->register_post_types();
+		$this->register_rewrite_rules();
 		$this->define_admin_hooks();
 		$this->define_frontend_hooks();
 		$this->define_ajax_hooks();
@@ -351,6 +352,66 @@ final class Plugin {
 
 		$buyer_request_post_type = new BuyerRequestPostType();
 		$buyer_request_post_type->init();
+	}
+
+	/**
+	 * Register rewrite rules for vendor profiles and service orders.
+	 *
+	 * Must run in ALL contexts (admin + frontend) so rules
+	 * are captured when flushed from the admin permalink page.
+	 *
+	 * @return void
+	 */
+	private function register_rewrite_rules(): void {
+		add_action(
+			'init',
+			function (): void {
+				// Vendor profile: /vendor/{username}/.
+				add_rewrite_rule(
+					'^vendor/([^/]+)/?$',
+					'index.php?wpss_vendor=$matches[1]',
+					'top'
+				);
+
+				// Service order with action: /service-order/{id}/{action}/.
+				add_rewrite_rule(
+					'^service-order/([0-9]+)/([^/]+)/?$',
+					'index.php?wpss_service_order=$matches[1]&wpss_order_action=$matches[2]',
+					'top'
+				);
+
+				// Service order view: /service-order/{id}/.
+				add_rewrite_rule(
+					'^service-order/([0-9]+)/?$',
+					'index.php?wpss_service_order=$matches[1]',
+					'top'
+				);
+			},
+			5
+		);
+
+		// Register query vars in all contexts.
+		add_filter(
+			'query_vars',
+			function ( array $vars ): array {
+				$vars[] = 'wpss_vendor';
+				$vars[] = 'wpss_service_order';
+				$vars[] = 'wpss_order_action';
+				return $vars;
+			}
+		);
+
+		// Flush rewrite rules once after activation (consumes transient set by Activator).
+		add_action(
+			'init',
+			function (): void {
+				if ( get_transient( 'wpss_flush_rewrite_rules' ) ) {
+					delete_transient( 'wpss_flush_rewrite_rules' );
+					flush_rewrite_rules();
+				}
+			},
+			99
+		);
 	}
 
 	/**
