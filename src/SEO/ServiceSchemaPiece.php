@@ -87,7 +87,7 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 
 		// Add offers.
 		if ( $starting_price > 0 ) {
-			$currency = get_option( 'wpss_currency', 'USD' );
+			$currency = wpss_get_currency();
 
 			$schema['offers'] = array(
 				'@type'           => 'Offer',

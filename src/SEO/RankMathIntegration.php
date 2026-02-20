@@ -93,6 +93,10 @@ class RankMathIntegration {
 		$service_id = get_the_ID();
 		$post       = get_post( $service_id );
 
+		if ( ! $post ) {
+			return $description;
+		}
+
 		if ( $post->post_excerpt ) {
 			return wp_strip_all_tags( $post->post_excerpt );
 		}
@@ -241,7 +245,7 @@ class RankMathIntegration {
 
 		// Add offers.
 		if ( $starting_price > 0 ) {
-			$currency = get_option( 'wpss_currency', 'USD' );
+			$currency = wpss_get_currency();
 
 			$service_schema['offers'] = array(
 				'@type'           => 'Offer',

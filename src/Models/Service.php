@@ -177,8 +177,10 @@ class Service {
 		$service->updated_at   = new \DateTimeImmutable( $post->post_modified_gmt );
 
 		// Load categories and tags.
-		$service->categories = wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) ) ?: array();
-		$service->tags       = wp_get_post_terms( $post->ID, 'wpss_service_tag', array( 'fields' => 'ids' ) ) ?: array();
+		$cats                = wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) );
+		$service->categories = is_wp_error( $cats ) ? array() : $cats;
+		$tag_terms           = wp_get_post_terms( $post->ID, 'wpss_service_tag', array( 'fields' => 'ids' ) );
+		$service->tags       = is_wp_error( $tag_terms ) ? array() : $tag_terms;
 
 		// Load meta.
 		$service->gallery      = get_post_meta( $post->ID, '_wpss_gallery', true ) ?: array();

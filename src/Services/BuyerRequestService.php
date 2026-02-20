@@ -253,7 +253,7 @@ class BuyerRequestService {
 
 		// Get category.
 		$categories        = wp_get_post_terms( $post->ID, ServiceCategoryTaxonomy::TAXONOMY );
-		$request->category = ! empty( $categories ) ? $categories[0] : null;
+		$request->category = ( ! is_wp_error( $categories ) && ! empty( $categories ) ) ? $categories[0] : null;
 
 		return $request;
 	}
@@ -620,7 +620,7 @@ class BuyerRequestService {
 				'subtotal'           => $proposal->proposed_price,
 				'addons_total'       => 0,
 				'total'              => $proposal->proposed_price,
-				'currency'           => get_option( 'wpss_currency', 'USD' ),
+				'currency'           => wpss_get_currency(),
 				'status'             => 'pending_payment',
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,

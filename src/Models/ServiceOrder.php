@@ -427,10 +427,30 @@ class ServiceOrder {
 			return false;
 		}
 
-		// Fire status change hook if status changed.
+		// Fire status change hook and record history if status changed.
 		if ( isset( $data['status'] ) && $data['status'] !== $this->status ) {
 			$old_status   = $this->status;
 			$this->status = $data['status'];
+
+			// Record status change in meta for timeline.
+			$meta    = $this->meta;
+			$history = $meta['status_history'] ?? array();
+
+			$history[] = array(
+				'status'    => $data['status'],
+				'timestamp' => current_time( 'mysql' ),
+				'note'      => '',
+			);
+
+			$meta['status_history'] = $history;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array( 'meta' => wp_json_encode( $meta ) ),
+				array( 'id' => $this->id )
+			);
+			$this->meta = $meta;
 
 			/**
 			 * Fires when order status changes.
@@ -631,5 +651,227 @@ class ServiceOrder {
 	 */
 	public function get_formatted_total(): string {
 		return wpss_format_price( $this->total, $this->currency );
+	}
+
+	/**
+	 * Get order ID.
+	 *
+	 * @return int
+	 */
+	public function get_id(): int {
+		return $this->id;
+	}
+
+	/**
+	 * Get buyer (customer) ID.
+	 *
+	 * @return int
+	 */
+	public function get_buyer_id(): int {
+		return $this->customer_id;
+	}
+
+	/**
+	 * Get vendor ID.
+	 *
+	 * @return int
+	 */
+	public function get_vendor_id(): int {
+		return $this->vendor_id;
+	}
+
+	/**
+	 * Get service ID.
+	 *
+	 * @return int
+	 */
+	public function get_service_id(): int {
+		return $this->service_id;
+	}
+
+	/**
+	 * Get status.
+	 *
+	 * @return string
+	 */
+	public function get_status(): string {
+		return $this->status;
+	}
+
+	/**
+	 * Get order total.
+	 *
+	 * @return float
+	 */
+	public function get_total(): float {
+		return $this->total;
+	}
+
+	/**
+	 * Get order subtotal.
+	 *
+	 * @return float
+	 */
+	public function get_subtotal(): float {
+		return $this->subtotal;
+	}
+
+	/**
+	 * Get platform order ID (e.g. WooCommerce order ID).
+	 *
+	 * @return int|null
+	 */
+	public function get_wc_order_id(): ?int {
+		return $this->platform_order_id;
+	}
+
+	/**
+	 * Get created timestamp as string.
+	 *
+	 * @return string MySQL datetime string.
+	 */
+	public function get_created_at(): string {
+		return $this->created_at ? $this->created_at->format( 'Y-m-d H:i:s' ) : '';
+	}
+
+	/**
+	 * Get delivery deadline as string.
+	 *
+	 * @return string|null MySQL datetime string or null.
+	 */
+	public function get_due_date(): ?string {
+		return $this->delivery_deadline ? $this->delivery_deadline->format( 'Y-m-d H:i:s' ) : null;
+	}
+
+	/**
+	 * Get days until delivery deadline.
+	 *
+	 * @return int Positive = days remaining, negative = days overdue.
+	 */
+	public function get_days_until_due(): int {
+		if ( ! $this->delivery_deadline ) {
+			return 0;
+		}
+
+		$now  = new \DateTimeImmutable();
+		$diff = $now->diff( $this->delivery_deadline );
+
+		return $diff->invert ? -$diff->days : $diff->days;
+	}
+
+	/**
+	 * Get platform fee amount.
+	 *
+	 * @return float
+	 */
+	public function get_fee(): float {
+		return $this->platform_fee ?? 0.0;
+	}
+
+	/**
+	 * Get discount amount from meta.
+	 *
+	 * @return float
+	 */
+	public function get_discount(): float {
+		return (float) ( $this->meta['discount'] ?? 0.0 );
+	}
+
+	/**
+	 * Get package name.
+	 *
+	 * @return string
+	 */
+	public function get_package_name(): string {
+		if ( ! $this->package_id ) {
+			return __( 'Custom', 'wp-sell-services' );
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_service_packages';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$name = $wpdb->get_var(
+			$wpdb->prepare( "SELECT name FROM {$table} WHERE id = %d", $this->package_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		return $name ?: __( 'Package', 'wp-sell-services' );
+	}
+
+	/**
+	 * Get order line items (constructed from package + addons).
+	 *
+	 * @return array<array{name: string, description: string, quantity: int, price: float, total: float}>
+	 */
+	public function get_items(): array {
+		$items = array();
+
+		// Main package item.
+		$items[] = array(
+			'name'        => $this->get_package_name(),
+			'description' => '',
+			'quantity'    => 1,
+			'price'       => $this->subtotal,
+			'total'       => $this->subtotal,
+		);
+
+		// Add-on items.
+		if ( ! empty( $this->addons ) ) {
+			foreach ( $this->addons as $addon ) {
+				$items[] = array(
+					'name'        => $addon['name'] ?? __( 'Add-on', 'wp-sell-services' ),
+					'description' => $addon['description'] ?? '',
+					'quantity'    => $addon['quantity'] ?? 1,
+					'price'       => (float) ( $addon['price'] ?? 0 ),
+					'total'       => (float) ( $addon['total'] ?? $addon['price'] ?? 0 ),
+				);
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Get buyer requirements from the order_requirements table.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function get_requirements(): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_order_requirements';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT field_data FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$this->id
+			)
+		);
+
+		if ( ! $row || ! $row->field_data ) {
+			return array();
+		}
+
+		$data = json_decode( $row->field_data, true );
+
+		return is_array( $data ) ? $data : array();
+	}
+
+	/**
+	 * Get admin notes (stored in meta JSON).
+	 *
+	 * @return array<array{content: string, author_id: int, created_at: string}>
+	 */
+	public function get_admin_notes(): array {
+		return $this->meta['admin_notes'] ?? array();
+	}
+
+	/**
+	 * Get order status history (stored in meta JSON).
+	 *
+	 * @return array<array{status: string, timestamp: string, note: string}>
+	 */
+	public function get_status_history(): array {
+		return $this->meta['status_history'] ?? array();
 	}
 }

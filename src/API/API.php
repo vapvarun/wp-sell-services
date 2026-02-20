@@ -317,23 +317,26 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function get_public_settings(): \WP_REST_Response {
+		$vendor_settings = get_option( 'wpss_vendor', array() );
+		$pages_settings  = get_option( 'wpss_pages', array() );
+
 		$settings = [
-			'currency'           => get_option( 'wpss_currency', 'USD' ),
+			'currency'           => wpss_get_currency(),
 			'currency_symbol'    => wpss_get_currency_symbol(),
 			'currency_position'  => get_option( 'wpss_currency_position', 'before' ),
 			'decimal_places'     => (int) get_option( 'wpss_decimal_places', 2 ),
 			'min_order_amount'   => (float) get_option( 'wpss_min_order_amount', 5 ),
 			'max_order_amount'   => (float) get_option( 'wpss_max_order_amount', 10000 ),
-			'vendor_registration' => (bool) get_option( 'wpss_vendor_registration', true ),
-			'service_moderation' => (bool) get_option( 'wpss_service_moderation', false ),
+			'vendor_registration' => $vendor_settings['vendor_registration'] ?? 'open',
+			'service_moderation' => ! empty( $vendor_settings['require_service_moderation'] ),
 			'review_moderation'  => (bool) get_option( 'wpss_review_moderation', false ),
 			'max_file_size'      => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
 			'allowed_file_types' => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx,zip' ) ),
 			'pages'              => [
-				'services'    => (int) get_option( 'wpss_services_page' ),
+				'services'    => (int) ( $pages_settings['services_page'] ?? 0 ),
 				'vendors'     => (int) get_option( 'wpss_vendors_page' ),
-				'dashboard'   => (int) get_option( 'wpss_dashboard_page' ),
-				'checkout'    => (int) get_option( 'wpss_checkout_page' ),
+				'dashboard'   => (int) ( $pages_settings['dashboard'] ?? 0 ),
+				'checkout'    => (int) ( $pages_settings['checkout'] ?? 0 ),
 				'terms'       => (int) get_option( 'wpss_terms_page' ),
 			],
 		];

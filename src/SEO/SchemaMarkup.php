@@ -88,7 +88,12 @@ class SchemaMarkup {
 	 * @return array
 	 */
 	public function get_service_schema( int $service_id ): array {
-		$post       = get_post( $service_id );
+		$post = get_post( $service_id );
+
+		if ( ! $post ) {
+			return array();
+		}
+
 		$vendor_id  = (int) $post->post_author;
 		$vendor     = get_userdata( $vendor_id );
 		$categories = get_the_terms( $service_id, 'wpss_service_category' );
@@ -131,7 +136,7 @@ class SchemaMarkup {
 
 		// Add offers/pricing.
 		if ( $starting_price > 0 ) {
-			$currency = get_option( 'wpss_currency', 'USD' );
+			$currency = wpss_get_currency();
 
 			$schema['offers'] = array(
 				'@type'           => 'Offer',

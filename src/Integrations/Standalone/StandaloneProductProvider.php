@@ -193,7 +193,7 @@ class StandaloneProductProvider implements ProductProviderInterface {
 		if ( ! $service ) {
 			return array();
 		}
-		return array( $service->get_vendor_id() );
+		return array( $service->vendor_id );
 	}
 
 	/**
@@ -207,7 +207,7 @@ class StandaloneProductProvider implements ProductProviderInterface {
 		if ( ! $service ) {
 			return array();
 		}
-		return $service->get_requirements();
+		return $service->requirements;
 	}
 
 	/**
@@ -221,7 +221,12 @@ class StandaloneProductProvider implements ProductProviderInterface {
 		if ( ! $service ) {
 			return '';
 		}
-		return $service->get_delivery_time();
+		$days = $service->get_fastest_delivery();
+		if ( 0 === $days ) {
+			return '';
+		}
+		/* translators: %d: number of days */
+		return sprintf( _n( '%d day', '%d days', $days, 'wp-sell-services' ), $days );
 	}
 
 	/**

@@ -183,7 +183,7 @@ class SEO {
 		}
 
 		// Remove any query parameters for clean canonical.
-		return strtok( $canonical_url, '?' );
+		return strtok( $canonical_url, '?' ) ?: $canonical_url;
 	}
 
 	/**
@@ -242,7 +242,7 @@ class SEO {
 
 		if ( $price ) {
 			$data['product:price:amount']   = $price;
-			$data['product:price:currency'] = get_option( 'wpss_currency', 'USD' );
+			$data['product:price:currency'] = wpss_get_currency();
 		}
 
 		// Twitter cards.

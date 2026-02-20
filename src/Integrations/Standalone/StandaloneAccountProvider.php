@@ -484,7 +484,8 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				<?php foreach ( $orders as $order ) : ?>
 					<tr>
 						<td>#<?php echo esc_html( $order->order_number ); ?></td>
-						<td><?php echo esc_html( $order->get_service()->title ?? 'N/A' ); ?></td>
+						<?php $service_post = get_post( $order->service_id ); ?>
+						<td><?php echo esc_html( $service_post ? $service_post->post_title : 'N/A' ); ?></td>
 						<td>
 							<span class="wpss-status wpss-status-<?php echo esc_attr( $order->status ); ?>">
 								<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
@@ -650,8 +651,12 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				<?php foreach ( $orders as $order ) : ?>
 					<tr>
 						<td>#<?php echo esc_html( $order->order_number ); ?></td>
-						<td><?php echo esc_html( get_userdata( $order->customer_id )->display_name ?? 'N/A' ); ?></td>
-						<td><?php echo esc_html( $order->get_service()->title ?? 'N/A' ); ?></td>
+						<?php
+					$buyer_user = get_userdata( $order->customer_id );
+					$service_post = get_post( $order->service_id );
+					?>
+						<td><?php echo esc_html( $buyer_user ? $buyer_user->display_name : 'N/A' ); ?></td>
+						<td><?php echo esc_html( $service_post ? $service_post->post_title : 'N/A' ); ?></td>
 						<td>
 							<span class="wpss-status wpss-status-<?php echo esc_attr( $order->status ); ?>">
 								<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>

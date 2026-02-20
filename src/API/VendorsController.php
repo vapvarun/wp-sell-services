@@ -670,8 +670,19 @@ class VendorsController extends RestController {
 			'price'          => (float) get_post_meta( $service_id, '_wpss_starting_price', true ) ?: 0,
 			'rating_average' => (float) get_post_meta( $service_id, '_wpss_rating_average', true ) ?: 0,
 			'rating_count'   => (int) get_post_meta( $service_id, '_wpss_rating_count', true ) ?: 0,
-			'category'       => wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'names' ) )[0] ?? '',
+			'category'       => $this->get_service_category_name( $service_id ),
 		);
+	}
+
+	/**
+	 * Get the first category name for a service.
+	 *
+	 * @param int $service_id Service post ID.
+	 * @return string Category name or empty string.
+	 */
+	private function get_service_category_name( int $service_id ): string {
+		$terms = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'names' ) );
+		return ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0] : '';
 	}
 
 	/**

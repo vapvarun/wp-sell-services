@@ -302,7 +302,7 @@ class MigrationManager {
 						'status'            => $status,
 						'payment_status'    => $order->is_paid() ? 'paid' : 'pending',
 						'paid_at'           => $order->get_date_paid() ? $order->get_date_paid()->format( 'Y-m-d H:i:s' ) : null,
-						'created_at'        => $order->get_date_created()->format( 'Y-m-d H:i:s' ),
+						'created_at'        => $order->get_date_created() ? $order->get_date_created()->format( 'Y-m-d H:i:s' ) : current_time( 'mysql' ),
 					],
 					[ '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%f', '%f', '%s', '%s', '%s', '%s', '%s' ]
 				);

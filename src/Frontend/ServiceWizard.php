@@ -1078,7 +1078,9 @@ class ServiceWizard {
 		$faqs         = get_post_meta( $service_id, '_wpss_faqs', true );
 		$faqs         = ! empty( $faqs ) ? $faqs : array();
 		$categories   = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'ids' ) );
+		$categories   = is_wp_error( $categories ) ? array() : $categories;
 		$tags         = wp_get_post_terms( $service_id, 'wpss_service_tag', array( 'fields' => 'names' ) );
+		$tags         = is_wp_error( $tags ) ? array() : $tags;
 
 		return array(
 			'id'           => $service_id,

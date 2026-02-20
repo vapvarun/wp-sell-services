@@ -225,7 +225,9 @@ class OrderMetabox {
 			return null;
 		}
 
-		return $this->order_repo->find( $order_id );
+		$row = $this->order_repo->find( $order_id );
+
+		return $row ? ServiceOrder::from_db( $row ) : null;
 	}
 
 	/**
@@ -999,11 +1001,13 @@ class OrderMetabox {
 			wp_send_json_error( array( 'message' => __( 'Invalid order ID.', 'wp-sell-services' ) ) );
 		}
 
-		$order = $this->order_repo->find( $order_id );
+		$row = $this->order_repo->find( $order_id );
 
-		if ( ! $order ) {
+		if ( ! $row ) {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
+
+		$order = ServiceOrder::from_db( $row );
 
 		// Get service requirements fields.
 		$service = $order->get_service();
@@ -1108,11 +1112,13 @@ class OrderMetabox {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 
-		$order = $this->order_repo->find( $order_id );
+		$row = $this->order_repo->find( $order_id );
 
-		if ( ! $order ) {
+		if ( ! $row ) {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
+
+		$order = ServiceOrder::from_db( $row );
 
 		$notes   = $order->get_admin_notes() ?: array();
 		$notes[] = array(
@@ -1121,7 +1127,10 @@ class OrderMetabox {
 			'created_at' => current_time( 'mysql' ),
 		);
 
-		$this->order_repo->update( $order_id, array( 'admin_notes' => wp_json_encode( $notes ) ) );
+		// Store admin notes in the meta JSON column (no admin_notes column exists).
+		$meta                 = $order->meta;
+		$meta['admin_notes']  = $notes;
+		$this->order_repo->update( $order_id, array( 'meta' => wp_json_encode( $meta ) ) );
 
 		wp_send_json_success(
 			array(
