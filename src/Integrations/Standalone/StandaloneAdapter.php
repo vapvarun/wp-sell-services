@@ -143,12 +143,8 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			'top'
 		);
 
-		// Service order view.
-		add_rewrite_rule(
-			'^service-order/([0-9]+)/?$',
-			'index.php?wpss_order_view=1&wpss_order_id=$matches[1]',
-			'top'
-		);
+		// Note: /service-order/{id}/ is handled by Plugin::register_rewrite_rules()
+		// via the wpss_service_order query var → TemplateLoader → order-view.php.
 
 		// Account pages.
 		add_rewrite_rule(
@@ -174,8 +170,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	public function add_query_vars( array $vars ): array {
 		$vars[] = 'wpss_checkout';
 		$vars[] = 'wpss_service_id';
-		$vars[] = 'wpss_order_view';
-		$vars[] = 'wpss_order_id';
 		$vars[] = 'wpss_account';
 		$vars[] = 'wpss_account_page';
 		$vars[] = 'wpss_payment_callback';
@@ -197,16 +191,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 
 			if ( $service_id > 0 ) {
 				$this->render_checkout_page( $service_id, $package_id );
-				exit;
-			}
-		}
-
-		// Handle order view page.
-		if ( get_query_var( 'wpss_order_view' ) ) {
-			$order_id = (int) get_query_var( 'wpss_order_id' );
-
-			if ( $order_id > 0 ) {
-				$this->render_order_page( $order_id );
 				exit;
 			}
 		}
@@ -245,22 +229,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	}
 
 	/**
-	 * Render the order view page.
-	 *
-	 * @param int $order_id Order ID.
-	 * @return void
-	 */
-	private function render_order_page( int $order_id ): void {
-		$order = wpss_get_order( $order_id );
-		$title = $order ? sprintf( __( 'Order #%s', 'wp-sell-services' ), $order->order_number ) : __( 'Order', 'wp-sell-services' );
-
-		$this->render_standalone_page(
-			$title,
-			$this->render_order_confirmation_content( $order_id )
-		);
-	}
-
-	/**
 	 * Render a standalone page with theme wrapper.
 	 *
 	 * @param string $title   Page title.
@@ -283,61 +251,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		</main>
 		<?php
 		get_footer();
-	}
-
-	/**
-	 * Render order confirmation content.
-	 *
-	 * @param int $order_id Order ID.
-	 * @return string
-	 */
-	private function render_order_confirmation_content( int $order_id ): string {
-		$order = wpss_get_order( $order_id );
-
-		if ( ! $order ) {
-			return '<p>' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p>';
-		}
-
-		// Check permission.
-		if ( ! current_user_can( 'administrator' ) && $order->customer_id !== get_current_user_id() ) {
-			return '<p>' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</p>';
-		}
-
-		// Check if this is an offline order awaiting payment.
-		$is_offline_pending = ( 'offline' === $order->payment_method && 'pending_payment' === $order->status );
-
-		ob_start();
-		?>
-		<div class="wpss-order-confirmation">
-			<div class="wpss-success-message">
-				<span class="dashicons dashicons-yes-alt"></span>
-				<h2><?php esc_html_e( 'Order Placed Successfully!', 'wp-sell-services' ); ?></h2>
-			</div>
-
-			<div class="wpss-order-details">
-				<p><strong><?php esc_html_e( 'Order Number:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $order->order_number ); ?></p>
-				<p><strong><?php esc_html_e( 'Total:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></p>
-				<p><strong><?php esc_html_e( 'Status:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?></p>
-			</div>
-
-			<?php if ( $is_offline_pending ) : ?>
-				<?php
-				// Get offline gateway and render payment instructions.
-				$gateways = wpss()->get_payment_gateways();
-				if ( isset( $gateways['offline'] ) && method_exists( $gateways['offline'], 'render_buyer_instructions' ) ) {
-					echo $gateways['offline']->render_buyer_instructions( $order->id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				}
-				?>
-			<?php endif; ?>
-
-			<div class="wpss-order-actions">
-				<a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ); ?>" class="button">
-					<?php esc_html_e( 'View My Orders', 'wp-sell-services' ); ?>
-				</a>
-			</div>
-		</div>
-		<?php
-		return ob_get_clean();
 	}
 
 	/**
