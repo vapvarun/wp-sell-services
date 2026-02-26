@@ -156,6 +156,9 @@ class UnifiedDashboard {
 	/**
 	 * Check if user can access a section.
 	 *
+	 * Vendor-only sections require the user to be an active (approved) vendor.
+	 * Pending vendors are not granted access to selling sections.
+	 *
 	 * @param string $section Section slug.
 	 * @return bool True if accessible.
 	 */
@@ -164,7 +167,9 @@ class UnifiedDashboard {
 		$user_id              = get_current_user_id();
 
 		if ( in_array( $section, $vendor_only_sections, true ) ) {
-			return $this->vendor_service->is_vendor( $user_id );
+			// Must be an active vendor (not just registered/pending).
+			return $this->vendor_service->is_vendor( $user_id )
+				&& 'active' === $this->vendor_service->get_vendor_status( $user_id );
 		}
 
 		/**
@@ -181,11 +186,16 @@ class UnifiedDashboard {
 	/**
 	 * Get all available sections.
 	 *
+	 * The Selling section is only shown for active (approved) vendors.
+	 * Pending vendors see only Buying and Account sections.
+	 *
 	 * @return array<string, array<string, mixed>> Sections configuration.
 	 */
 	private function get_sections(): array {
-		$user_id   = get_current_user_id();
-		$is_vendor = $this->vendor_service->is_vendor( $user_id );
+		$user_id       = get_current_user_id();
+		$is_vendor     = $this->vendor_service->is_vendor( $user_id );
+		$vendor_status = $this->vendor_service->get_vendor_status( $user_id );
+		$is_active     = $is_vendor && 'active' === $vendor_status;
 
 		$sections = array(
 			'buying' => array(
@@ -203,7 +213,7 @@ class UnifiedDashboard {
 			),
 		);
 
-		if ( $is_vendor ) {
+		if ( $is_active ) {
 			$sections['selling'] = array(
 				'label' => __( 'Selling', 'wp-sell-services' ),
 				'items' => array(
@@ -247,9 +257,9 @@ class UnifiedDashboard {
 		 * @since 1.1.0
 		 * @param array $sections  Sections configuration.
 		 * @param int   $user_id   Current user ID.
-		 * @param bool  $is_vendor Whether user is a vendor.
+		 * @param bool  $is_vendor Whether user is a vendor (active).
 		 */
-		return apply_filters( 'wpss_dashboard_sections', $sections, $user_id, $is_vendor );
+		return apply_filters( 'wpss_dashboard_sections', $sections, $user_id, $is_active );
 	}
 
 	/**
@@ -282,10 +292,13 @@ class UnifiedDashboard {
 	 * @return void
 	 */
 	private function render_shell(): void {
-		$user_id      = get_current_user_id();
-		$user         = get_userdata( $user_id );
-		$is_vendor    = $this->vendor_service->is_vendor( $user_id );
-		$section_data = $this->get_section_data( $this->current_section );
+		$user_id       = get_current_user_id();
+		$user          = get_userdata( $user_id );
+		$is_vendor     = $this->vendor_service->is_vendor( $user_id );
+		$vendor_status = $this->vendor_service->get_vendor_status( $user_id );
+		$is_active     = $is_vendor && 'active' === $vendor_status;
+		$is_pending    = 'pending' === $vendor_status;
+		$section_data  = $this->get_section_data( $this->current_section );
 		?>
 		<div class="wpss-dashboard">
 			<aside class="wpss-dashboard__sidebar">
@@ -293,8 +306,10 @@ class UnifiedDashboard {
 					<?php echo get_avatar( $user_id, 48, '', '', array( 'class' => 'wpss-dashboard__avatar' ) ); ?>
 					<div class="wpss-dashboard__user-info">
 						<span class="wpss-dashboard__user-name"><?php echo esc_html( $user->display_name ); ?></span>
-						<?php if ( $is_vendor ) : ?>
+						<?php if ( $is_active ) : ?>
 							<span class="wpss-dashboard__user-badge"><?php esc_html_e( 'Seller', 'wp-sell-services' ); ?></span>
+						<?php elseif ( $is_pending ) : ?>
+							<span class="wpss-dashboard__user-badge wpss-dashboard__user-badge--pending"><?php esc_html_e( 'Pending Approval', 'wp-sell-services' ); ?></span>
 						<?php endif; ?>
 					</div>
 				</div>
@@ -318,7 +333,11 @@ class UnifiedDashboard {
 					<?php endforeach; ?>
 				</nav>
 
-				<?php if ( ! $is_vendor ) : ?>
+				<?php if ( $is_pending ) : ?>
+					<div class="wpss-dashboard__pending-notice">
+						<p><?php esc_html_e( 'Your vendor application is pending admin approval. You will be notified once your application is reviewed.', 'wp-sell-services' ); ?></p>
+					</div>
+				<?php elseif ( ! $is_vendor && ! $is_pending ) : ?>
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
 						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor">
@@ -497,15 +516,34 @@ class UnifiedDashboard {
 			wp_send_json_error( array( 'message' => __( 'You are already a seller.', 'wp-sell-services' ) ) );
 		}
 
+		// Check for existing pending application.
+		if ( $this->vendor_service->has_pending_application( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Your vendor application is already pending approval.', 'wp-sell-services' ) ) );
+		}
+
 		$result = $this->vendor_service->register( $user_id );
 
 		if ( $result ) {
-			wp_send_json_success(
-				array(
-					'message'  => __( 'Welcome! You can now create and sell services.', 'wp-sell-services' ),
-					'redirect' => $this->get_section_url( 'services' ),
-				)
-			);
+			// Check if approval is required (vendor will be in pending state).
+			$vendor_settings      = get_option( 'wpss_vendor', array() );
+			$require_verification = ! empty( $vendor_settings['require_verification'] );
+
+			if ( $require_verification ) {
+				wp_send_json_success(
+					array(
+						'message'          => __( 'Your vendor application has been submitted! It is pending admin approval.', 'wp-sell-services' ),
+						'pending_approval' => true,
+						'redirect'         => $this->get_section_url( 'orders' ),
+					)
+				);
+			} else {
+				wp_send_json_success(
+					array(
+						'message'  => __( 'Welcome! You can now create and sell services.', 'wp-sell-services' ),
+						'redirect' => $this->get_section_url( 'services' ),
+					)
+				);
+			}
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Unable to complete registration. Please try again.', 'wp-sell-services' ) ) );
 		}

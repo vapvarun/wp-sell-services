@@ -183,7 +183,7 @@ class Service {
 		$service->tags       = is_wp_error( $tag_terms ) ? array() : $tag_terms;
 
 		// Load meta.
-		$service->gallery      = get_post_meta( $post->ID, '_wpss_gallery', true ) ?: array();
+		$service->gallery      = self::normalize_gallery_ids( get_post_meta( $post->ID, '_wpss_gallery', true ) );
 		$service->requirements = get_post_meta( $post->ID, '_wpss_requirements', true ) ?: array();
 		$service->faqs         = get_post_meta( $post->ID, '_wpss_faqs', true ) ?: array();
 		$service->platform_ids = get_post_meta( $post->ID, '_wpss_platform_ids', true ) ?: array();
@@ -194,6 +194,42 @@ class Service {
 		$service->orders_completed = (int) get_post_meta( $post->ID, '_wpss_order_count', true );
 
 		return $service;
+	}
+
+	/**
+	 * Normalize gallery meta value into a flat array of attachment IDs.
+	 *
+	 * Handles multiple storage formats:
+	 * - ServiceWizard format: ['images' => [id, ...], 'video' => '...']
+	 * - GalleryService format: [['type' => 'image', 'attachment_id' => id], ...]
+	 * - Legacy flat array: [id, id, ...]
+	 *
+	 * @param mixed $raw Raw gallery meta value.
+	 * @return int[] Array of attachment IDs.
+	 */
+	private static function normalize_gallery_ids( $raw ): array {
+		if ( ! is_array( $raw ) || empty( $raw ) ) {
+			return array();
+		}
+
+		// ServiceWizard format: ['images' => [...], 'video' => '...'].
+		if ( isset( $raw['images'] ) && is_array( $raw['images'] ) ) {
+			return array_values( array_filter( array_map( 'absint', $raw['images'] ) ) );
+		}
+
+		// GalleryService format: [['type' => 'image', 'attachment_id' => 123], ...].
+		if ( isset( $raw[0]['type'] ) ) {
+			$ids = array();
+			foreach ( $raw as $item ) {
+				if ( 'image' === ( $item['type'] ?? '' ) && ! empty( $item['attachment_id'] ) ) {
+					$ids[] = absint( $item['attachment_id'] );
+				}
+			}
+			return $ids;
+		}
+
+		// Legacy flat array of IDs: [123, 456, ...].
+		return array_values( array_filter( array_map( 'absint', $raw ) ) );
 	}
 
 	/**

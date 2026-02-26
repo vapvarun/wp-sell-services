@@ -71,7 +71,20 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 	<?php else : ?>
 		<div class="wpss-portfolio__grid" id="wpss-portfolio-grid">
 			<?php foreach ( $items as $item ) : ?>
-				<div class="wpss-portfolio__item" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
+				<?php
+			$media_ids    = wp_json_encode( array_map( function ( $m ) { return $m['id']; }, $item['media'] ) );
+			$media_thumbs = wp_json_encode( array_map( function ( $m ) { return $m['thumbnail'] ?? $m['url']; }, $item['media'] ) );
+			?>
+				<div class="wpss-portfolio__item"
+					data-item-id="<?php echo esc_attr( $item['id'] ); ?>"
+					data-description="<?php echo esc_attr( $item['description'] ); ?>"
+					data-external-url="<?php echo esc_attr( $item['external_url'] ); ?>"
+					data-tags="<?php echo esc_attr( implode( ', ', $item['tags'] ) ); ?>"
+					data-service-id="<?php echo esc_attr( $item['service_id'] ?? 0 ); ?>"
+					data-is-featured="<?php echo esc_attr( $item['is_featured'] ? '1' : '0' ); ?>"
+					data-media="<?php echo esc_attr( $media_ids ); ?>"
+					data-media-thumbs="<?php echo esc_attr( $media_thumbs ); ?>"
+				>
 					<?php if ( ! empty( $item['media'] ) ) : ?>
 						<div class="wpss-portfolio__media">
 							<img src="<?php echo esc_url( $item['media'][0]['medium'] ?? $item['media'][0]['url'] ?? '' ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>">

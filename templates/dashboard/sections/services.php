@@ -128,8 +128,22 @@ $pending_count = count(
 				?>
 				<div class="wpss-service-card wpss-service-card--dashboard">
 					<div class="wpss-service-card__image">
-						<?php if ( has_post_thumbnail() ) : ?>
+						<?php
+						$has_thumb     = has_post_thumbnail();
+						$gallery_thumb = null;
+
+						// Fallback to first gallery image if no featured image.
+						if ( ! $has_thumb ) {
+							$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
+							if ( is_array( $gallery_raw ) && isset( $gallery_raw['images'] ) && ! empty( $gallery_raw['images'][0] ) ) {
+								$gallery_thumb = absint( $gallery_raw['images'][0] );
+							}
+						}
+						?>
+						<?php if ( $has_thumb ) : ?>
 							<?php the_post_thumbnail( 'medium' ); ?>
+						<?php elseif ( $gallery_thumb ) : ?>
+							<?php echo wp_get_attachment_image( $gallery_thumb, 'medium' ); ?>
 						<?php else : ?>
 							<div class="wpss-service-card__placeholder"></div>
 						<?php endif; ?>

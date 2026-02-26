@@ -119,9 +119,15 @@ class ServiceManager {
 			wp_set_post_terms( $post_id, $data['tags'], 'wpss_service_tag' );
 		}
 
-		// Save gallery.
+		// Save gallery and set featured image.
 		if ( ! empty( $data['gallery'] ) ) {
-			update_post_meta( $post_id, '_wpss_gallery', array_map( 'absint', $data['gallery'] ) );
+			$gallery_ids = array_map( 'absint', $data['gallery'] );
+			update_post_meta( $post_id, '_wpss_gallery', $gallery_ids );
+
+			// Set featured image from first gallery image if not already set.
+			if ( ! has_post_thumbnail( $post_id ) && ! empty( $gallery_ids[0] ) ) {
+				set_post_thumbnail( $post_id, $gallery_ids[0] );
+			}
 		}
 
 		// Save FAQs.
@@ -200,9 +206,15 @@ class ServiceManager {
 			wp_set_post_terms( $service_id, $data['tags'], 'wpss_service_tag' );
 		}
 
-		// Update gallery.
+		// Update gallery and set featured image.
 		if ( isset( $data['gallery'] ) ) {
-			update_post_meta( $service_id, '_wpss_gallery', array_map( 'absint', $data['gallery'] ) );
+			$gallery_ids = array_map( 'absint', $data['gallery'] );
+			update_post_meta( $service_id, '_wpss_gallery', $gallery_ids );
+
+			// Set featured image from first gallery image if not already set.
+			if ( ! has_post_thumbnail( $service_id ) && ! empty( $gallery_ids[0] ) ) {
+				set_post_thumbnail( $service_id, $gallery_ids[0] );
+			}
 		}
 
 		// Update FAQs.

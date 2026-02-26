@@ -103,6 +103,11 @@
 	width: fit-content;
 }
 
+.wpss-dashboard__user-badge--pending {
+	background: #fff3cd;
+	color: #856404;
+}
+
 /* Navigation */
 .wpss-dashboard__nav {
 	flex: 1;
@@ -176,6 +181,20 @@
 	margin: 0 0 12px;
 	font-size: 13px;
 	color: var(--wpss-gray-600);
+}
+
+/* Pending Vendor Notice */
+.wpss-dashboard__pending-notice {
+	padding: 16px 20px;
+	border-top: 1px solid var(--wpss-gray-100);
+	background: #fff3cd;
+}
+
+.wpss-dashboard__pending-notice p {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #856404;
 }
 
 /* ==========================================================================

@@ -377,13 +377,23 @@ class VendorsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function register_vendor( $request ) {
-		$user_id = get_current_user_id();
+		$user_id        = get_current_user_id();
+		$vendor_service = new \WPSellServices\Services\VendorService();
 
 		// Check if already a vendor.
-		if ( get_user_meta( $user_id, '_wpss_is_vendor', true ) ) {
+		if ( $vendor_service->is_vendor( $user_id ) ) {
 			return new WP_Error(
 				'rest_already_vendor',
 				__( 'You are already registered as a vendor.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Check for existing pending application.
+		if ( $vendor_service->has_pending_application( $user_id ) ) {
+			return new WP_Error(
+				'rest_pending_application',
+				__( 'You already have a pending vendor application. Please wait for admin approval.', 'wp-sell-services' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -398,36 +408,41 @@ class VendorsController extends RestController {
 			);
 		}
 
-		// Auto-approve or require admin approval.
-		$auto_approve = apply_filters( 'wpss_auto_approve_vendors', true );
-		$status       = $auto_approve ? 'approved' : 'pending';
+		// Build profile data from request.
+		$data = array();
 
-		// Set vendor meta.
-		update_user_meta( $user_id, '_wpss_is_vendor', 1 );
-		update_user_meta( $user_id, '_wpss_vendor_status', $status );
-		update_user_meta( $user_id, '_wpss_vendor_since', current_time( 'mysql' ) );
-
-		// Optional profile data.
 		if ( $request->has_param( 'bio' ) ) {
-			update_user_meta( $user_id, '_wpss_vendor_bio', sanitize_textarea_field( $request->get_param( 'bio' ) ) );
+			$data['bio'] = sanitize_textarea_field( $request->get_param( 'bio' ) );
 		}
 
-		if ( $request->has_param( 'skills' ) ) {
-			$skills = array_map( 'sanitize_text_field', (array) $request->get_param( 'skills' ) );
-			update_user_meta( $user_id, '_wpss_vendor_skills', $skills );
+		if ( $request->has_param( 'display_name' ) ) {
+			$data['display_name'] = sanitize_text_field( $request->get_param( 'display_name' ) );
 		}
 
-		// Add vendor role.
-		$user = get_userdata( $user_id );
-		$user->add_role( 'wpss_vendor' );
+		if ( $request->has_param( 'tagline' ) ) {
+			$data['tagline'] = sanitize_text_field( $request->get_param( 'tagline' ) );
+		}
 
-		do_action( 'wpss_vendor_registered', $user_id, $status );
+		// Register via VendorService (handles role/caps based on require_verification).
+		$result = $vendor_service->register_vendor( $user_id, $data );
+
+		if ( ! $result['success'] ) {
+			return new WP_Error(
+				'rest_registration_failed',
+				$result['message'],
+				array( 'status' => 400 )
+			);
+		}
+
+		$vendor_status = $vendor_service->get_vendor_status( $user_id );
+
+		do_action( 'wpss_vendor_registered', $user_id, $vendor_status );
 
 		return new WP_REST_Response(
 			array(
 				'success' => true,
-				'status'  => $status,
-				'message' => 'approved' === $status
+				'status'  => $vendor_status,
+				'message' => 'active' === $vendor_status
 					? __( 'You are now registered as a vendor.', 'wp-sell-services' )
 					: __( 'Your vendor application has been submitted for review.', 'wp-sell-services' ),
 			),

@@ -15,6 +15,7 @@ namespace WPSellServices\Admin\Pages;
 use WPSellServices\Database\Repositories\VendorProfileRepository;
 use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Services\CommissionService;
+use WPSellServices\Services\VendorService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -47,12 +48,20 @@ class VendorsPage {
 	private CommissionService $commission_service;
 
 	/**
+	 * Vendor service.
+	 *
+	 * @var VendorService
+	 */
+	private VendorService $vendor_service;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->vendor_repo        = new VendorProfileRepository();
 		$this->order_repo         = new OrderRepository();
 		$this->commission_service = new CommissionService();
+		$this->vendor_service     = new VendorService();
 	}
 
 	/**
@@ -1537,6 +1546,10 @@ class VendorsPage {
 	/**
 	 * AJAX handler for updating vendor status.
 	 *
+	 * When a vendor is approved (status changed to 'active'), this also grants the
+	 * vendor role, capabilities, and _wpss_is_vendor meta. When suspended or rejected,
+	 * these are revoked.
+	 *
 	 * @return void
 	 */
 	public function ajax_update_vendor_status(): void {
@@ -1572,6 +1585,13 @@ class VendorsPage {
 
 		if ( false === $result ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to update vendor status.', 'wp-sell-services' ) ) );
+		}
+
+		// Grant or revoke vendor access based on new status.
+		if ( 'active' === $status ) {
+			$this->vendor_service->grant_vendor_access( $vendor_id );
+		} elseif ( in_array( $status, array( 'suspended', 'rejected' ), true ) ) {
+			$this->vendor_service->revoke_vendor_access( $vendor_id );
 		}
 
 		/**

@@ -70,6 +70,10 @@ class VendorService {
 	/**
 	 * Register a new vendor.
 	 *
+	 * When admin approval is required (require_verification setting), the vendor profile
+	 * is created with 'pending' status but the role, capabilities, and vendor meta are NOT
+	 * granted until admin approval. This prevents pending vendors from accessing the dashboard.
+	 *
 	 * @param int                  $user_id User ID.
 	 * @param array<string, mixed> $data    Profile data.
 	 * @return bool True on success.
@@ -86,22 +90,32 @@ class VendorService {
 			return false;
 		}
 
-		// Add vendor role.
-		$user->add_role( self::ROLE );
-
-		// Verify role was actually added before proceeding.
-		if ( ! in_array( self::ROLE, $user->roles, true ) ) {
-			wpss_log( 'Failed to add vendor role to user ' . $user_id, 'error' );
+		// Check if user already has a pending application.
+		if ( $this->has_pending_application( $user_id ) ) {
 			return false;
 		}
 
-		// Add vendor capabilities.
-		$this->add_vendor_capabilities( $user_id );
-
 		// Determine vendor status based on verification setting.
-		$vendor_settings    = get_option( 'wpss_vendor', array() );
+		$vendor_settings      = get_option( 'wpss_vendor', array() );
 		$require_verification = ! empty( $vendor_settings['require_verification'] );
-		$default_status     = $require_verification ? 'pending' : 'active';
+		$default_status       = $require_verification ? 'pending' : 'active';
+
+		// Only grant role, capabilities, and vendor meta when approval is NOT required.
+		// When approval is required, these are granted later via grant_vendor_access()
+		// when the admin approves the vendor (status changed to 'active').
+		if ( ! $require_verification ) {
+			// Add vendor role.
+			$user->add_role( self::ROLE );
+
+			// Verify role was actually added before proceeding.
+			if ( ! in_array( self::ROLE, $user->roles, true ) ) {
+				wpss_log( 'Failed to add vendor role to user ' . $user_id, 'error' );
+				return false;
+			}
+
+			// Add vendor capabilities.
+			$this->add_vendor_capabilities( $user_id );
+		}
 
 		// Create vendor profile.
 		$profile_data = array(
@@ -117,8 +131,12 @@ class VendorService {
 		$profile_id = $this->profile_repo->upsert( $user_id, $profile_data );
 
 		if ( $profile_id ) {
-			// Store vendor meta.
-			update_user_meta( $user_id, '_wpss_is_vendor', true );
+			// Only store vendor meta when NOT requiring verification.
+			// For pending vendors, this meta is set when admin approves via grant_vendor_access().
+			if ( ! $require_verification ) {
+				update_user_meta( $user_id, '_wpss_is_vendor', true );
+			}
+
 			update_user_meta( $user_id, '_wpss_vendor_since', current_time( 'mysql' ) );
 
 			/**
@@ -163,9 +181,28 @@ class VendorService {
 			);
 		}
 
+		// Check if already has a pending application.
+		if ( $this->has_pending_application( $user_id ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You already have a pending vendor application. Please wait for admin approval.', 'wp-sell-services' ),
+			);
+		}
+
 		$success = $this->register( $user_id, $data );
 
 		if ( $success ) {
+			$vendor_settings      = get_option( 'wpss_vendor', array() );
+			$require_verification = ! empty( $vendor_settings['require_verification'] );
+
+			if ( $require_verification ) {
+				return array(
+					'success'          => true,
+					'pending_approval' => true,
+					'message'          => __( 'Your vendor application has been submitted successfully! It is now pending admin approval. You will be notified once your application is reviewed.', 'wp-sell-services' ),
+				);
+			}
+
 			return array(
 				'success' => true,
 				'message' => __( 'Your vendor application has been submitted successfully!', 'wp-sell-services' ),
@@ -198,6 +235,143 @@ class VendorService {
 
 		// Check meta.
 		return (bool) get_user_meta( $user_id, '_wpss_is_vendor', true );
+	}
+
+	/**
+	 * Check if a user has a pending vendor application.
+	 *
+	 * @param int $user_id User ID.
+	 * @return bool True if user has a pending application.
+	 */
+	public function has_pending_application( int $user_id ): bool {
+		$profile = $this->profile_repo->get_by_user( $user_id );
+
+		if ( ! $profile ) {
+			return false;
+		}
+
+		return 'pending' === ( $profile->status ?? '' );
+	}
+
+	/**
+	 * Get vendor profile status.
+	 *
+	 * Returns the vendor profile status from the database, or null if no profile exists.
+	 *
+	 * @param int $user_id User ID.
+	 * @return string|null Status ('active', 'pending', 'suspended', 'rejected') or null.
+	 */
+	public function get_vendor_status( int $user_id ): ?string {
+		$profile = $this->profile_repo->get_by_user( $user_id );
+
+		if ( ! $profile ) {
+			return null;
+		}
+
+		return $profile->status ?? null;
+	}
+
+	/**
+	 * Check if user is an active (approved) vendor.
+	 *
+	 * Unlike is_vendor() which only checks role/meta, this method also verifies
+	 * the vendor profile has 'active' status. Use this for access control.
+	 *
+	 * @param int $user_id User ID.
+	 * @return bool True if user is a vendor with active status.
+	 */
+	public function is_active_vendor( int $user_id ): bool {
+		if ( ! $this->is_vendor( $user_id ) ) {
+			return false;
+		}
+
+		return 'active' === $this->get_vendor_status( $user_id );
+	}
+
+	/**
+	 * Grant vendor access (role, capabilities, and meta).
+	 *
+	 * Called when an admin approves a pending vendor application.
+	 *
+	 * @param int $user_id User ID.
+	 * @return bool True on success.
+	 */
+	public function grant_vendor_access( int $user_id ): bool {
+		$user = get_userdata( $user_id );
+
+		if ( ! $user ) {
+			return false;
+		}
+
+		// Add vendor role.
+		$user->add_role( self::ROLE );
+
+		// Verify role was actually added.
+		if ( ! in_array( self::ROLE, $user->roles, true ) ) {
+			wpss_log( 'Failed to add vendor role to user ' . $user_id . ' during approval', 'error' );
+			return false;
+		}
+
+		// Add vendor capabilities.
+		$this->add_vendor_capabilities( $user_id );
+
+		// Set vendor meta.
+		update_user_meta( $user_id, '_wpss_is_vendor', true );
+
+		/**
+		 * Fires when vendor access is granted (after admin approval).
+		 *
+		 * @since 1.1.0
+		 * @param int $user_id User ID.
+		 */
+		do_action( 'wpss_vendor_access_granted', $user_id );
+
+		return true;
+	}
+
+	/**
+	 * Revoke vendor access (role, capabilities, and meta).
+	 *
+	 * Called when an admin suspends or rejects a vendor.
+	 *
+	 * @param int $user_id User ID.
+	 * @return bool True on success.
+	 */
+	public function revoke_vendor_access( int $user_id ): bool {
+		$user = get_userdata( $user_id );
+
+		if ( ! $user ) {
+			return false;
+		}
+
+		// Remove vendor role.
+		$user->remove_role( self::ROLE );
+
+		// Remove vendor capabilities.
+		$capabilities = array(
+			'wpss_vendor',
+			'wpss_manage_services',
+			'wpss_manage_orders',
+			'wpss_view_analytics',
+			'wpss_respond_to_requests',
+		);
+
+		foreach ( $capabilities as $cap ) {
+			$user->remove_cap( $cap );
+		}
+
+		// Remove vendor meta.
+		delete_user_meta( $user_id, '_wpss_is_vendor' );
+
+		/**
+		 * Fires when vendor access is revoked (suspended/rejected).
+		 *
+		 * @since 1.1.0
+		 * @param int $user_id User ID.
+		 */
+		do_action( 'wpss_vendor_access_revoked', $user_id );
+
+		return true;
 	}
 
 	/**

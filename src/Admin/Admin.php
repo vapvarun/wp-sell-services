@@ -537,7 +537,7 @@ class Admin {
 		add_menu_page(
 			__( 'WP Sell Services', 'wp-sell-services' ),
 			$menu_label,
-			'manage_options',
+			'edit_posts',
 			'wp-sell-services',
 			array( $this, 'render_dashboard_page' ),
 			'dashicons-store',
@@ -651,6 +651,10 @@ class Admin {
 	 * @return void
 	 */
 	public function render_dashboard_page(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'wp-sell-services' ) );
+		}
+
 		global $wpdb;
 
 		// Get stats.

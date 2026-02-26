@@ -326,7 +326,7 @@
 			e.preventDefault();
 			this.resetPortfolioForm();
 			$('#wpss-portfolio-modal-title').text('Add Portfolio Item');
-			$('#wpss-portfolio-modal').show();
+			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
 		},
 
 		/**
@@ -343,13 +343,42 @@
 			$('#wpss-portfolio-modal-title').text('Edit Portfolio Item');
 			$('#wpss-portfolio-item-id').val(itemId);
 
-			// Populate form from item data (title from DOM).
+			// Populate form from data attributes.
 			var title = $item.find('.wpss-portfolio__title').text();
-			var desc = $item.find('.wpss-portfolio__desc').text();
-			$('#portfolio-title').val(title);
-			$('#portfolio-description').val(desc);
+			var description = $item.attr('data-description') || '';
+			var externalUrl = $item.attr('data-external-url') || '';
+			var tags = $item.attr('data-tags') || '';
+			var serviceId = $item.attr('data-service-id') || '0';
+			var isFeatured = $item.attr('data-is-featured') === '1';
+			var mediaIds = [];
+			var mediaThumbs = [];
 
-			$('#wpss-portfolio-modal').show();
+			try {
+				mediaIds = JSON.parse($item.attr('data-media') || '[]');
+				mediaThumbs = JSON.parse($item.attr('data-media-thumbs') || '[]');
+			} catch (ex) {
+				mediaIds = [];
+				mediaThumbs = [];
+			}
+
+			$('#portfolio-title').val(title);
+			$('#portfolio-description').val(description);
+			$('#portfolio-external-url').val(externalUrl);
+			$('#portfolio-tags').val(tags);
+			$('#portfolio-service').val(serviceId);
+			$('#portfolio-featured').prop('checked', isFeatured);
+
+			// Restore media preview and hidden field.
+			if (mediaIds.length) {
+				var $preview = $('#wpss-portfolio-media-preview');
+				$preview.empty();
+				mediaThumbs.forEach(function (thumbUrl) {
+					$preview.append('<img src="' + thumbUrl + '" class="wpss-portfolio-media-thumb">');
+				});
+				$('#wpss-portfolio-media').val(JSON.stringify(mediaIds));
+			}
+
+			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
 		},
 
 		/**
@@ -447,7 +476,7 @@
 				data: $form.serialize() + '&action=wpss_add_portfolio_item',
 				success: function (response) {
 					if (response.success) {
-						$('#wpss-portfolio-modal').hide();
+						$('#wpss-portfolio-modal').removeClass('wpss-modal-open');
 						window.location.reload();
 					} else {
 						WPSS.showNotification(response.data.message || 'Save failed.', 'error');
@@ -504,7 +533,7 @@
 		 */
 		handleModalClose: function (e) {
 			e.preventDefault();
-			$(e.currentTarget).closest('.wpss-modal').hide();
+			$(e.currentTarget).closest('.wpss-modal').removeClass('wpss-modal-open');
 		},
 
 		/**

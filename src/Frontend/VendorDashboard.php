@@ -77,6 +77,9 @@ class VendorDashboard {
 	/**
 	 * Render vendor registration form.
 	 *
+	 * Shows the appropriate state: login required, pending approval notice,
+	 * already registered message, or the registration form.
+	 *
 	 * @param array $atts Shortcode attributes.
 	 * @return string Registration form HTML.
 	 */
@@ -86,6 +89,15 @@ class VendorDashboard {
 		}
 
 		$user_id = get_current_user_id();
+
+		// Check for pending vendor application BEFORE checking is_vendor().
+		// Pending vendors don't have the role/capabilities, but they do have a profile row.
+		if ( $this->vendor_service->has_pending_application( $user_id ) ) {
+			return '<div class="wpss-notice wpss-notice--warning">'
+				. '<strong>' . esc_html__( 'Application Pending', 'wp-sell-services' ) . '</strong><br>'
+				. esc_html__( 'Your vendor application is currently under review. You will be notified once an admin has approved your application. Thank you for your patience!', 'wp-sell-services' )
+				. '</div>';
+		}
 
 		if ( $this->vendor_service->is_vendor( $user_id ) ) {
 			return '<div class="wpss-notice wpss-notice--info">' . esc_html__( 'You are already a registered vendor.', 'wp-sell-services' ) . ' <a href="' . esc_url( $this->get_dashboard_url() ) . '">' . esc_html__( 'Go to Dashboard', 'wp-sell-services' ) . '</a></div>';
@@ -445,6 +457,12 @@ class VendorDashboard {
 			return; // Explicit return for defensive coding.
 		}
 
+		// Check for existing pending application.
+		if ( $this->vendor_service->has_pending_application( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'You already have a pending vendor application. Please wait for admin approval.', 'wp-sell-services' ) ) );
+			return; // Explicit return for defensive coding.
+		}
+
 		$data = array(
 			'display_name' => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
 			'tagline'      => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
@@ -461,14 +479,17 @@ class VendorDashboard {
 		$result = $this->vendor_service->register_vendor( $user_id, $data );
 
 		if ( $result['success'] ) {
-			wp_send_json_success(
-				array_merge(
-					$result,
-					array(
-						'redirect' => $this->get_dashboard_url(),
-					)
-				)
-			);
+			$response_data = $result;
+
+			// Only redirect to dashboard if vendor is immediately active (no approval required).
+			// If pending approval, redirect to the registration page so they see the pending notice.
+			if ( ! empty( $result['pending_approval'] ) ) {
+				$response_data['redirect'] = $this->get_registration_url();
+			} else {
+				$response_data['redirect'] = $this->get_dashboard_url();
+			}
+
+			wp_send_json_success( $response_data );
 		} else {
 			wp_send_json_error( $result );
 		}
