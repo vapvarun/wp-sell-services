@@ -90,7 +90,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
 					</div>
 					<div class="wpss-stat-card__content">
-						<div class="wpss-stat-card__value"><?php echo esc_html( wc_price( $stats->total_earnings ?? 0 ) ); ?></div>
+						<div class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( (float) ( $stats->total_earnings ?? 0 ) ) ); ?></div>
 						<div class="wpss-stat-card__label"><?php esc_html_e( 'Total Earnings', 'wp-sell-services' ); ?></div>
 					</div>
 				</div>

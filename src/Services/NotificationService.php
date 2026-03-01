@@ -31,6 +31,8 @@ class NotificationService {
 	public const TYPE_DISPUTE_RESOLVED   = 'dispute_resolved';
 	public const TYPE_DEADLINE_WARNING   = 'deadline_warning';
 	public const TYPE_VENDOR_REGISTERED  = 'vendor_registered';
+	public const TYPE_VENDOR_APPROVED   = 'vendor_approved';
+	public const TYPE_VENDOR_REJECTED   = 'vendor_rejected';
 
 	/**
 	 * Create notification.
@@ -1097,6 +1099,152 @@ class NotificationService {
 		$content = apply_filters( 'wpss_admin_vendor_notification_content', $content, $user );
 
 		return wp_mail( $admin_email, $subject, $content, $headers );
+	}
+
+	/**
+	 * Notify vendor that their application has been approved.
+	 *
+	 * Sends in-app notification and email to the vendor.
+	 *
+	 * @param int $user_id User ID.
+	 * @return void
+	 */
+	public function notify_vendor_approved( int $user_id ): void {
+		$user = get_user_by( 'id', $user_id );
+
+		if ( ! $user ) {
+			return;
+		}
+
+		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
+		$dashboard_url = wpss_get_dashboard_url();
+
+		// Create in-app notification.
+		$this->create(
+			$user_id,
+			self::TYPE_VENDOR_APPROVED,
+			__( 'Vendor Application Approved', 'wp-sell-services' ),
+			sprintf(
+				/* translators: %s: platform name */
+				__( 'Your vendor application on %s has been approved! You can now create services and start accepting orders.', 'wp-sell-services' ),
+				$platform_name
+			),
+			array(
+				'user_id'       => $user_id,
+				'dashboard_url' => $dashboard_url,
+			)
+		);
+
+		// Send approval email.
+		$subject = sprintf(
+			/* translators: %s: platform name */
+			__( 'Your Vendor Application Has Been Approved - %s', 'wp-sell-services' ),
+			$platform_name
+		);
+
+		$content  = '<html><body>';
+		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
+		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
+		$content .= '<p>' . sprintf(
+			/* translators: %s: user display name */
+			esc_html__( 'Hello %s,', 'wp-sell-services' ),
+			esc_html( $user->display_name )
+		) . '</p>';
+		$content .= '<p>' . esc_html__( 'Great news! Your vendor application has been approved.', 'wp-sell-services' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'You can now:', 'wp-sell-services' ) . '</p>';
+		$content .= '<ul>';
+		$content .= '<li>' . esc_html__( 'Create and publish services', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Receive and manage orders', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Communicate with customers', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'Track your earnings', 'wp-sell-services' ) . '</li>';
+		$content .= '</ul>';
+		$content .= '<p><a href="' . esc_url( $dashboard_url ) . '" style="display: inline-block; background: #0073aa; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px;">';
+		$content .= esc_html__( 'Go to Your Dashboard', 'wp-sell-services' );
+		$content .= '</a></p>';
+		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'If you have any questions, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
+		$content .= '</div>';
+		$content .= '</body></html>';
+
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+		/**
+		 * Filter vendor approval email content.
+		 *
+		 * @param string   $content  Email content.
+		 * @param \WP_User $user     User object.
+		 * @param string   $platform Platform name.
+		 */
+		$content = apply_filters( 'wpss_vendor_approved_email_content', $content, $user, $platform_name );
+
+		wp_mail( $user->user_email, $subject, $content, $headers );
+	}
+
+	/**
+	 * Notify vendor that their application has been rejected.
+	 *
+	 * Sends in-app notification and email to the vendor.
+	 *
+	 * @param int $user_id User ID.
+	 * @return void
+	 */
+	public function notify_vendor_rejected( int $user_id ): void {
+		$user = get_user_by( 'id', $user_id );
+
+		if ( ! $user ) {
+			return;
+		}
+
+		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
+
+		// Create in-app notification.
+		$this->create(
+			$user_id,
+			self::TYPE_VENDOR_REJECTED,
+			__( 'Vendor Application Update', 'wp-sell-services' ),
+			sprintf(
+				/* translators: %s: platform name */
+				__( 'Your vendor application on %s was not approved at this time.', 'wp-sell-services' ),
+				$platform_name
+			),
+			array(
+				'user_id' => $user_id,
+			)
+		);
+
+		// Send rejection email.
+		$subject = sprintf(
+			/* translators: %s: platform name */
+			__( 'Vendor Application Update - %s', 'wp-sell-services' ),
+			$platform_name
+		);
+
+		$content  = '<html><body>';
+		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
+		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
+		$content .= '<p>' . sprintf(
+			/* translators: %s: user display name */
+			esc_html__( 'Hello %s,', 'wp-sell-services' ),
+			esc_html( $user->display_name )
+		) . '</p>';
+		$content .= '<p>' . esc_html__( 'Thank you for your interest in becoming a vendor on our marketplace.', 'wp-sell-services' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'After reviewing your application, we are unable to approve it at this time.', 'wp-sell-services' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'If you have any questions or would like to reapply in the future, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
+		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'Thank you for your understanding.', 'wp-sell-services' ) . '</p>';
+		$content .= '</div>';
+		$content .= '</body></html>';
+
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+		/**
+		 * Filter vendor rejection email content.
+		 *
+		 * @param string   $content  Email content.
+		 * @param \WP_User $user     User object.
+		 * @param string   $platform Platform name.
+		 */
+		$content = apply_filters( 'wpss_vendor_rejected_email_content', $content, $user, $platform_name );
+
+		wp_mail( $user->user_email, $subject, $content, $headers );
 	}
 
 	/**

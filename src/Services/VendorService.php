@@ -70,9 +70,10 @@ class VendorService {
 	/**
 	 * Register a new vendor.
 	 *
-	 * When admin approval is required (require_verification setting), the vendor profile
+	 * When admin approval is required (vendor_registration = 'approval'), the vendor profile
 	 * is created with 'pending' status but the role, capabilities, and vendor meta are NOT
 	 * granted until admin approval. This prevents pending vendors from accessing the dashboard.
+	 * When registration is closed (vendor_registration = 'closed'), registration is rejected.
 	 *
 	 * @param int                  $user_id User ID.
 	 * @param array<string, mixed> $data    Profile data.
@@ -95,15 +96,22 @@ class VendorService {
 			return false;
 		}
 
-		// Determine vendor status based on verification setting.
-		$vendor_settings      = get_option( 'wpss_vendor', array() );
-		$require_verification = ! empty( $vendor_settings['require_verification'] );
-		$default_status       = $require_verification ? 'pending' : 'active';
+		// Determine vendor status based on registration mode setting.
+		$vendor_settings   = get_option( 'wpss_vendor', array() );
+		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+
+		// If registration is closed, reject immediately.
+		if ( 'closed' === $registration_mode ) {
+			return false;
+		}
+
+		$needs_approval = 'approval' === $registration_mode;
+		$default_status = $needs_approval ? 'pending' : 'active';
 
 		// Only grant role, capabilities, and vendor meta when approval is NOT required.
 		// When approval is required, these are granted later via grant_vendor_access()
 		// when the admin approves the vendor (status changed to 'active').
-		if ( ! $require_verification ) {
+		if ( ! $needs_approval ) {
 			// Add vendor role.
 			$user->add_role( self::ROLE );
 
@@ -131,13 +139,20 @@ class VendorService {
 		$profile_id = $this->profile_repo->upsert( $user_id, $profile_data );
 
 		if ( $profile_id ) {
-			// Only store vendor meta when NOT requiring verification.
+			// Only store vendor meta when approval is NOT required.
 			// For pending vendors, this meta is set when admin approves via grant_vendor_access().
-			if ( ! $require_verification ) {
+			if ( ! $needs_approval ) {
 				update_user_meta( $user_id, '_wpss_is_vendor', true );
 			}
 
 			update_user_meta( $user_id, '_wpss_vendor_since', current_time( 'mysql' ) );
+
+			// Save skills to user meta (not in vendor_profiles DB table).
+			if ( ! empty( $data['skills'] ) ) {
+				$skills = array_map( 'sanitize_text_field', (array) $data['skills'] );
+				$skills = array_filter( $skills );
+				update_user_meta( $user_id, '_wpss_vendor_skills', $skills );
+			}
 
 			/**
 			 * Fires when a new vendor is registered.
@@ -173,6 +188,17 @@ class VendorService {
 			);
 		}
 
+		// Check if registration is closed.
+		$vendor_settings   = get_option( 'wpss_vendor', array() );
+		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+
+		if ( 'closed' === $registration_mode ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ),
+			);
+		}
+
 		// Check if already a vendor.
 		if ( $this->is_vendor( $user_id ) ) {
 			return array(
@@ -192,10 +218,7 @@ class VendorService {
 		$success = $this->register( $user_id, $data );
 
 		if ( $success ) {
-			$vendor_settings      = get_option( 'wpss_vendor', array() );
-			$require_verification = ! empty( $vendor_settings['require_verification'] );
-
-			if ( $require_verification ) {
+			if ( 'approval' === $registration_mode ) {
 				return array(
 					'success'          => true,
 					'pending_approval' => true,

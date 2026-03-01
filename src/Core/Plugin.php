@@ -473,6 +473,21 @@ final class Plugin {
 			2
 		);
 
+		// Vendor status update notifications (approval/rejection).
+		$this->loader->add_action(
+			'wpss_vendor_status_updated',
+			function ( int $vendor_id, string $status ) use ( $notification_service ): void {
+				if ( 'active' === $status ) {
+					$notification_service->notify_vendor_approved( $vendor_id );
+				} elseif ( in_array( $status, array( 'rejected', 'suspended' ), true ) ) {
+					$notification_service->notify_vendor_rejected( $vendor_id );
+				}
+			},
+			null,
+			10,
+			2
+		);
+
 		// Review created notification.
 		$this->loader->add_action(
 			'wpss_review_created',

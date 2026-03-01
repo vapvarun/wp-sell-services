@@ -313,13 +313,10 @@ class OrderService {
 		$service       = $order->get_service();
 		$delivery_days = 7;
 
-		if ( $order->package_id && $service ) {
+		if ( $service ) {
 			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: array();
-			foreach ( $packages as $package ) {
-				if ( (int) ( $package['id'] ?? 0 ) === $order->package_id ) {
-					$delivery_days = (int) ( $package['delivery_days'] ?? 7 );
-					break;
-				}
+			if ( isset( $packages[ $order->package_id ] ) ) {
+				$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
 			}
 		}
 

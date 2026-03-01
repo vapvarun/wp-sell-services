@@ -417,7 +417,23 @@ class ServiceWizard {
 				'hide_empty' => false,
 			)
 		);
+
+		// Build categories data for JavaScript subcategory filtering.
+		$categories_data = array();
+		if ( ! is_wp_error( $categories ) ) {
+			foreach ( $categories as $cat ) {
+				$categories_data[] = array(
+					'id'     => (int) $cat->term_id,
+					'name'   => $cat->name,
+					'parent' => (int) $cat->parent,
+				);
+			}
+		}
 		?>
+		<script>
+			window.wpssCategories = <?php echo wp_json_encode( $categories_data ); ?>;
+		</script>
+
 		<div class="wpss-wizard__step-header">
 			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Basic Information', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Start by giving your service a catchy title and detailed description.', 'wp-sell-services' ); ?></p>
@@ -462,7 +478,9 @@ class ServiceWizard {
 				</label>
 				<select id="service_subcategory" class="wpss-form-select" x-model="data.subcategory" :disabled="!data.category">
 					<option value=""><?php esc_html_e( 'Select a subcategory', 'wp-sell-services' ); ?></option>
-					<!-- Populated dynamically based on category -->
+					<template x-for="sub in getSubcategories()" :key="sub.id">
+						<option :value="sub.id" x-text="sub.name" :selected="sub.id == data.subcategory"></option>
+					</template>
 				</select>
 			</div>
 
@@ -1731,6 +1749,11 @@ class ServiceWizard {
 	 * @return array Sanitized requirements.
 	 */
 	private function sanitize_requirements( array $requirements ): array {
+		$max = $this->limits['max_requirements'];
+		if ( -1 !== $max ) {
+			$requirements = array_slice( $requirements, 0, $max );
+		}
+
 		$sanitized = array();
 
 		foreach ( $requirements as $req ) {
@@ -1756,6 +1779,11 @@ class ServiceWizard {
 	 * @return array Sanitized extras.
 	 */
 	private function sanitize_extras( array $extras ): array {
+		$max = $this->limits['max_extras'];
+		if ( -1 !== $max ) {
+			$extras = array_slice( $extras, 0, $max );
+		}
+
 		$sanitized = array();
 
 		foreach ( $extras as $extra ) {
@@ -1781,6 +1809,11 @@ class ServiceWizard {
 	 * @return array Sanitized FAQs.
 	 */
 	private function sanitize_faqs( array $faqs ): array {
+		$max = $this->limits['max_faq'];
+		if ( -1 !== $max ) {
+			$faqs = array_slice( $faqs, 0, $max );
+		}
+
 		$sanitized = array();
 
 		foreach ( $faqs as $faq ) {

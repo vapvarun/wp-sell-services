@@ -423,7 +423,7 @@ class VendorsController extends RestController {
 			$data['tagline'] = sanitize_text_field( $request->get_param( 'tagline' ) );
 		}
 
-		// Register via VendorService (handles role/caps based on require_verification).
+		// Register via VendorService (handles role/caps based on vendor_registration mode).
 		$result = $vendor_service->register_vendor( $user_id, $data );
 
 		if ( ! $result['success'] ) {

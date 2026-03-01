@@ -199,16 +199,11 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 		// Calculate delivery deadline.
 		$delivery_days = 7;
-		if ( $order->package_id ) {
-			$service = $order->get_service();
-			if ( $service ) {
-				$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
-				foreach ( $packages as $package ) {
-					if ( (int) ( $package['id'] ?? 0 ) === $order->package_id ) {
-						$delivery_days = (int) ( $package['delivery_days'] ?? 7 );
-						break;
-					}
-				}
+		$service = $order->get_service();
+		if ( $service ) {
+			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
+			if ( isset( $packages[ $order->package_id ] ) ) {
+				$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
 			}
 		}
 

@@ -525,10 +525,10 @@ class UnifiedDashboard {
 
 		if ( $result ) {
 			// Check if approval is required (vendor will be in pending state).
-			$vendor_settings      = get_option( 'wpss_vendor', array() );
-			$require_verification = ! empty( $vendor_settings['require_verification'] );
+			$vendor_settings   = get_option( 'wpss_vendor', array() );
+			$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
 
-			if ( $require_verification ) {
+			if ( 'approval' === $registration_mode ) {
 				wp_send_json_success(
 					array(
 						'message'          => __( 'Your vendor application has been submitted! It is pending admin approval.', 'wp-sell-services' ),

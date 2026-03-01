@@ -112,6 +112,13 @@ function wpssServiceWizard(existingData = {}) {
 				this.markCompletedSteps();
 			}
 
+			// Clear subcategory when parent category changes.
+			this.$watch('data.category', (newVal, oldVal) => {
+				if (oldVal !== undefined && newVal !== oldVal) {
+					this.data.subcategory = '';
+				}
+			});
+
 			// Watch for changes
 			this.$watch('data', () => {
 				this.isDirty = true;
@@ -140,6 +147,25 @@ function wpssServiceWizard(existingData = {}) {
 				this.completedSteps.add('gallery');
 			}
 			// Requirements, extras, and review are optional
+		},
+
+		/**
+		 * Get subcategories for the currently selected parent category.
+		 *
+		 * Filters the pre-loaded categories data from window.wpssCategories
+		 * to return only direct children of the selected category.
+		 *
+		 * @return {Array} Array of subcategory objects { id, name, parent }.
+		 */
+		getSubcategories() {
+			const categories = window.wpssCategories || [];
+			const parentId = parseInt(this.data.category, 10);
+
+			if (!parentId) {
+				return [];
+			}
+
+			return categories.filter(cat => cat.parent === parentId);
 		},
 
 		/**

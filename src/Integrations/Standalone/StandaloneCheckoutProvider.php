@@ -196,16 +196,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
 		$selected_package = null;
 
-		foreach ( $packages as $package ) {
-			if ( (int) ( $package['id'] ?? 0 ) === $package_id ) {
-				$selected_package = $package;
-				break;
-			}
+		if ( isset( $packages[ $package_id ] ) ) {
+			$selected_package = $packages[ $package_id ];
 		}
 
 		if ( ! $selected_package && ! empty( $packages ) ) {
 			$selected_package = $packages[0];
-			$package_id = (int) ( $selected_package['id'] ?? 0 );
+			$package_id       = 0;
 		}
 
 		$price = (float) ( $selected_package['price'] ?? 0 );

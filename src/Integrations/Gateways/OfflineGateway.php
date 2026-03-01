@@ -334,11 +334,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 		$packages = wpss_get_service_packages( $service_id );
 		$price    = 0;
 
-		foreach ( $packages as $package ) {
-			if ( (int) ( $package['id'] ?? 0 ) === $package_id ) {
-				$price = (float) ( $package['price'] ?? 0 );
-				break;
-			}
+		if ( isset( $packages[ $package_id ] ) ) {
+			$price = (float) ( $packages[ $package_id ]['price'] ?? 0 );
 		}
 
 		// Fallback to base price.

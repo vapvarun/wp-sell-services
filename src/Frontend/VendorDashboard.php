@@ -192,18 +192,13 @@ class VendorDashboard {
 		}
 
 		$data = array(
-			'display_name'       => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
-			'tagline'            => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
-			'bio'                => wp_kses_post( wp_unslash( $_POST['bio'] ?? '' ) ),
-			'skills'             => array_map( 'trim', explode( ',', sanitize_text_field( wp_unslash( $_POST['skills'] ?? '' ) ) ) ),
-			'languages'          => array_map( 'trim', explode( ',', sanitize_text_field( wp_unslash( $_POST['languages'] ?? '' ) ) ) ),
-			'experience_level'   => sanitize_text_field( wp_unslash( $_POST['experience_level'] ?? '' ) ),
-			'website'            => esc_url_raw( wp_unslash( $_POST['website'] ?? '' ) ),
-			'location'           => sanitize_text_field( wp_unslash( $_POST['location'] ?? '' ) ),
-			'timezone'           => sanitize_text_field( wp_unslash( $_POST['timezone'] ?? '' ) ),
-			'available_for_work' => ! empty( $_POST['available_for_work'] ),
-			'response_time'      => absint( $_POST['response_time'] ?? 24 ),
-			'avatar_id'          => absint( $_POST['avatar_id'] ?? 0 ),
+			'display_name' => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
+			'tagline'      => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
+			'bio'          => wp_kses_post( wp_unslash( $_POST['bio'] ?? '' ) ),
+			'website'      => esc_url_raw( wp_unslash( $_POST['website'] ?? '' ) ),
+			'country'      => sanitize_text_field( wp_unslash( $_POST['country'] ?? '' ) ),
+			'city'         => sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) ),
+			'avatar_id'    => absint( $_POST['avatar_id'] ?? 0 ),
 		);
 
 		$result = $this->vendor_service->update_profile( $user_id, $data );
