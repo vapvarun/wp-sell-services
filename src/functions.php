@@ -802,20 +802,21 @@ function wpss_get_order_requirements( int $order_id ): array {
 	}
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$rows = $wpdb->get_results(
+	$row = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT field_key, field_value FROM {$table} WHERE order_id = %d",
+			"SELECT field_data FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1",
 			$order_id
 		),
 		ARRAY_A
 	);
 
-	$requirements = array();
-	foreach ( $rows as $row ) {
-		$requirements[ $row['field_key'] ] = maybe_unserialize( $row['field_value'] );
+	if ( ! $row || empty( $row['field_data'] ) ) {
+		return array();
 	}
 
-	return $requirements;
+	$decoded = json_decode( $row['field_data'], true );
+
+	return is_array( $decoded ) ? $decoded : array();
 }
 
 /**

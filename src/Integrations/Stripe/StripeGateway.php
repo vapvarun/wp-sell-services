@@ -609,7 +609,12 @@ class StripeGateway implements PaymentGatewayInterface {
 		}
 
 		$order_provider = wpss_get_order_provider();
-		$order          = $order_provider->create_order(
+
+		if ( ! $order_provider ) {
+			return array( 'success' => false, 'error' => __( 'No order provider available.', 'wp-sell-services' ) );
+		}
+
+		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => $package_id,
@@ -728,7 +733,13 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// Create order.
 		$order_provider = wpss_get_order_provider();
-		$order          = $order_provider->create_order(
+
+		if ( ! $order_provider ) {
+			wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => $package_id,
@@ -770,11 +781,14 @@ class StripeGateway implements PaymentGatewayInterface {
 		// If order was already created via AJAX, just confirm.
 		if ( ! empty( $metadata['order_id'] ) ) {
 			$order_provider = wpss_get_order_provider();
-			$order_provider->mark_as_paid(
-				(int) $metadata['order_id'],
-				$payment_intent['id'],
-				'stripe'
-			);
+
+			if ( $order_provider ) {
+				$order_provider->mark_as_paid(
+					(int) $metadata['order_id'],
+					$payment_intent['id'],
+					'stripe'
+				);
+			}
 		}
 
 		return array(

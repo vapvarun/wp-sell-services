@@ -608,7 +608,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 		}
 
 		$order_provider = wpss_get_order_provider();
-		$order          = $order_provider->create_order(
+
+		if ( ! $order_provider ) {
+			return array( 'success' => false, 'error' => __( 'No order provider available.', 'wp-sell-services' ) );
+		}
+
+		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => $package_id,
@@ -746,7 +751,18 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		// Create service order.
 		$order_provider = wpss_get_order_provider();
-		$order          = $order_provider->create_order(
+
+		if ( ! $order_provider ) {
+			if ( wp_doing_ajax() ) {
+				wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
+				return;
+			} else {
+				wp_safe_redirect( home_url( '/checkout/error/' ) );
+				exit;
+			}
+		}
+
+		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => $package_id,
@@ -815,11 +831,14 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		if ( ! empty( $metadata['order_id'] ) ) {
 			$order_provider = wpss_get_order_provider();
-			$order_provider->mark_as_paid(
-				(int) $metadata['order_id'],
-				$resource['id'],
-				'paypal'
-			);
+
+			if ( $order_provider ) {
+				$order_provider->mark_as_paid(
+					(int) $metadata['order_id'],
+					$resource['id'],
+					'paypal'
+				);
+			}
 		}
 
 		return array(
