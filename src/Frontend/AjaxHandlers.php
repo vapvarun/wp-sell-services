@@ -2107,6 +2107,29 @@ class AjaxHandlers {
 			wp_mail( $vendor->user_email, $email_subject, $email_message );
 		}
 
+		// Create a conversation so the message appears in the dashboard.
+		$conversation_service = new ConversationService();
+
+		$conv_subject = $service_title
+			? sprintf(
+				/* translators: %s: service title */
+				__( 'Inquiry about "%s"', 'wp-sell-services' ),
+				$service_title
+			)
+			: __( 'Direct Message', 'wp-sell-services' );
+
+		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject );
+
+		if ( $conversation ) {
+			$attachment_ids = array_map(
+				function ( $att ) {
+					return $att['id'];
+				},
+				$attachments
+			);
+			$conversation_service->send_message( $conversation->id, $user_id, $message, $attachment_ids );
+		}
+
 		/**
 		 * Fires after a vendor contact message is sent.
 		 *
@@ -2163,7 +2186,7 @@ class AjaxHandlers {
 				array(
 					'name'          => __( 'Standard', 'wp-sell-services' ),
 					'price'         => $starting_price,
-					'delivery_time' => (int) get_post_meta( $service_id, '_wpss_delivery_time', true ),
+					'delivery_time' => (int) get_post_meta( $service_id, '_wpss_delivery_days', true ),
 				),
 			);
 		}
@@ -2219,6 +2242,13 @@ class AjaxHandlers {
 		update_user_meta( $user_id, '_wpss_cart', $cart );
 
 		$checkout_url = wpss_get_page_url( 'checkout' ) ?: home_url( '/checkout/' );
+		$checkout_url = add_query_arg(
+			array(
+				'service_id' => $service_id,
+				'package'    => $package_index,
+			),
+			$checkout_url
+		);
 
 		wp_send_json_success(
 			array(

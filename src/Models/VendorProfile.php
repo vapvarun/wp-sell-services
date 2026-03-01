@@ -449,6 +449,64 @@ class VendorProfile {
 	}
 
 	/**
+	 * Check if vendor has reached the maximum services limit.
+	 *
+	 * Counts published and pending services against the max_services_per_vendor setting.
+	 * Draft services are not counted since they are not yet submitted.
+	 *
+	 * @return bool True if the vendor has reached or exceeded the limit.
+	 */
+	public function has_reached_service_limit(): bool {
+		$vendor_settings = get_option( 'wpss_vendor', array() );
+		$max_services    = isset( $vendor_settings['max_services_per_vendor'] )
+			? absint( $vendor_settings['max_services_per_vendor'] )
+			: 0;
+
+		// 0 means unlimited.
+		if ( 0 === $max_services ) {
+			return false;
+		}
+
+		$current_count = $this->get_service_count();
+
+		return $current_count >= $max_services;
+	}
+
+	/**
+	 * Get the number of active services for this vendor.
+	 *
+	 * Counts published and pending services (not drafts).
+	 *
+	 * @return int Number of services.
+	 */
+	public function get_service_count(): int {
+		$services = get_posts(
+			array(
+				'post_type'   => 'wpss_service',
+				'author'      => $this->user_id,
+				'post_status' => array( 'publish', 'pending' ),
+				'numberposts' => -1,
+				'fields'      => 'ids',
+			)
+		);
+
+		return count( $services );
+	}
+
+	/**
+	 * Get the maximum number of services allowed for this vendor.
+	 *
+	 * @return int Maximum services. 0 means unlimited.
+	 */
+	public function get_max_services(): int {
+		$vendor_settings = get_option( 'wpss_vendor', array() );
+
+		return isset( $vendor_settings['max_services_per_vendor'] )
+			? absint( $vendor_settings['max_services_per_vendor'] )
+			: 0;
+	}
+
+	/**
 	 * Check if vendor can accept new orders.
 	 *
 	 * Requires active status, available flag, and not on vacation.

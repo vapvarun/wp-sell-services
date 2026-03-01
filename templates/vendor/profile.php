@@ -219,9 +219,16 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				</div>
 
 				<div class="wpss-profile-actions">
-					<a href="#contact" class="wpss-btn wpss-btn-primary">
-						<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
-					</a>
+					<?php if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) : ?>
+						<a href="#" class="wpss-btn wpss-btn-primary wpss-contact-btn"
+							data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
+						</a>
+					<?php elseif ( ! is_user_logged_in() ) : ?>
+						<a href="<?php echo esc_url( wp_login_url( wpss_get_vendor_url( $vendor_id ) ) ); ?>" class="wpss-btn wpss-btn-primary">
+							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
+						</a>
+					<?php endif; ?>
 				</div>
 			</div>
 		</div>
@@ -509,6 +516,80 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 </div>
 
 <?php
+// Render contact modal for logged-in users who are not the vendor.
+if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
+	$response_time_display = $vendor_service->get_response_time( $vendor_id );
+	?>
+	<div id="wpss-contact-modal" class="wpss-modal" hidden>
+		<div class="wpss-modal-overlay"></div>
+		<div class="wpss-modal-content">
+			<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+				&times;
+			</button>
+
+			<div class="wpss-modal-header">
+				<h3><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+			</div>
+
+			<div class="wpss-modal-body">
+				<div class="wpss-contact-vendor-info">
+					<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 50 ) ) ); ?>"
+						alt="<?php echo esc_attr( $vendor->display_name ); ?>"
+						class="wpss-vendor-avatar">
+					<div class="wpss-vendor-details">
+						<strong><?php echo esc_html( $vendor->display_name ); ?></strong>
+						<?php if ( $response_time_display ) : ?>
+							<span class="wpss-response-time">
+								<?php
+								printf(
+									/* translators: %s: response time */
+									esc_html__( 'Usually responds in %s', 'wp-sell-services' ),
+									esc_html( $response_time_display )
+								);
+								?>
+							</span>
+						<?php endif; ?>
+					</div>
+				</div>
+
+				<form id="wpss-contact-form" class="wpss-contact-form">
+					<input type="hidden" name="vendor_id" value="<?php echo esc_attr( $vendor_id ); ?>">
+					<input type="hidden" name="service_id" value="0">
+
+					<div class="wpss-form-field">
+						<label for="wpss-contact-message"><?php esc_html_e( 'Your Message', 'wp-sell-services' ); ?></label>
+						<textarea id="wpss-contact-message"
+									name="message"
+									rows="5"
+									placeholder="<?php esc_attr_e( 'Tell the seller what you need...', 'wp-sell-services' ); ?>"
+									required></textarea>
+						<p class="wpss-field-hint">
+							<?php esc_html_e( 'Be specific about your requirements for better assistance.', 'wp-sell-services' ); ?>
+						</p>
+					</div>
+
+					<div class="wpss-form-field">
+						<label for="wpss-contact-attachment"><?php esc_html_e( 'Attach Files (optional)', 'wp-sell-services' ); ?></label>
+						<input type="file"
+								id="wpss-contact-attachment"
+								name="attachments[]"
+								multiple
+								accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
+						<p class="wpss-field-hint">
+							<?php esc_html_e( 'Max 5 files. Allowed: images, PDF, Word, ZIP.', 'wp-sell-services' ); ?>
+						</p>
+					</div>
+
+					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block">
+						<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	<?php
+endif;
+
 /**
  * Hook: wpss_after_vendor_profile
  *

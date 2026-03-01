@@ -590,10 +590,18 @@ function wpssServiceWizard(existingData = {}) {
 					this.isDirty = false;
 					this.showNotice(wpssWizard.strings.published, 'success');
 
-					// Redirect to service page after short delay
+					// Update service ID on the DOM so any unexpected re-trigger
+					// updates the existing post instead of creating a duplicate.
+					if (result.data.service_id) {
+						document.getElementById('wpss-service-wizard').dataset.serviceId = result.data.service_id;
+					}
+
+					// Keep publishing=true intentionally. Do NOT re-enable the button
+					// during the redirect delay — that was causing duplicate services.
 					setTimeout(() => {
 						window.location.href = result.data.redirect_url;
 					}, 1500);
+					return;
 				} else {
 					if (result.data.errors) {
 						this.validationErrors = result.data.errors;
@@ -603,9 +611,11 @@ function wpssServiceWizard(existingData = {}) {
 			} catch (error) {
 				console.error('Publish error:', error);
 				this.showNotice(wpssWizard.strings.error, 'error');
-			} finally {
-				this.publishing = false;
 			}
+
+			// Only re-enable on failure so vendor can retry.
+			// On success we return early above, keeping publishing=true until redirect.
+			this.publishing = false;
 		},
 
 		/**

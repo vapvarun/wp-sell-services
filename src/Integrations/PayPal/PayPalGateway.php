@@ -180,7 +180,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'paypal' => array(
 					'experience_context' => array(
 						'payment_method_preference' => 'IMMEDIATE_PAYMENT_REQUIRED',
-						'brand_name'                => get_bloginfo( 'name' ),
+						'brand_name'                => wpss_get_platform_name(),
 						'locale'                    => str_replace( '_', '-', get_locale() ),
 						'landing_page'              => 'LOGIN',
 						'user_action'               => 'PAY_NOW',

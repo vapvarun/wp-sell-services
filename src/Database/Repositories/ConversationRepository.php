@@ -159,15 +159,22 @@ class ConversationRepository extends AbstractRepository {
 	/**
 	 * Get unread message count for a user from unread_counts JSON field.
 	 *
+	 * Supports both participant formats:
+	 * - Flat array: [5, 3] (from ConversationService::create_for_order)
+	 * - Key-value:  {"5": true} (from ConversationRepository::create_conversation)
+	 *
 	 * @param int $user_id User ID.
 	 * @return int Unread count.
 	 */
 	public function count_unread_for_user( int $user_id ): int {
+		// Use JSON_CONTAINS for flat arrays and JSON_EXTRACT for key-value maps.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT unread_counts FROM {$this->table}
 				WHERE is_closed = 0
-				AND JSON_EXTRACT(participants, %s) IS NOT NULL",
+				AND (JSON_CONTAINS(participants, %s) OR JSON_EXTRACT(participants, %s) IS NOT NULL)",
+				wp_json_encode( $user_id ),
 				'$."' . $user_id . '"'
 			)
 		);
@@ -388,6 +395,9 @@ class ConversationRepository extends AbstractRepository {
 	/**
 	 * Get conversation summary for user dashboard.
 	 *
+	 * Returns both order-linked conversations (where user is customer/vendor)
+	 * and direct conversations (order_id = 0, where user is a participant).
+	 *
 	 * @param int $user_id User ID.
 	 * @param int $limit   Number of conversations.
 	 * @return array<object> Array of conversation summaries.
@@ -396,26 +406,49 @@ class ConversationRepository extends AbstractRepository {
 		$orders_table   = $this->schema->get_table_name( 'orders' );
 		$messages_table = $this->get_messages_table();
 
+		// Use UNION to combine order-linked and direct conversations.
+		// Order-linked: join with orders table where user is customer or vendor.
+		// Direct: order_id = 0 and user appears in participants JSON array.
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
-				"SELECT
+				"(SELECT
 					c.id as conversation_id,
 					c.order_id,
 					o.order_number,
 					o.service_id,
 					o.platform,
 					o.platform_order_id,
+					c.subject,
+					c.participants,
 					c.last_message_at,
 					c.message_count,
 					c.unread_counts,
 					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message
 				FROM {$this->table} c
 				INNER JOIN {$orders_table} o ON c.order_id = o.id
-				WHERE o.customer_id = %d OR o.vendor_id = %d
-				ORDER BY c.last_message_at DESC
+				WHERE o.customer_id = %d OR o.vendor_id = %d)
+				UNION
+				(SELECT
+					c.id as conversation_id,
+					c.order_id,
+					NULL as order_number,
+					NULL as service_id,
+					NULL as platform,
+					NULL as platform_order_id,
+					c.subject,
+					c.participants,
+					c.last_message_at,
+					c.message_count,
+					c.unread_counts,
+					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message
+				FROM {$this->table} c
+				WHERE c.order_id = 0
+				AND JSON_CONTAINS(c.participants, %s))
+				ORDER BY last_message_at DESC
 				LIMIT %d",
 				$user_id,
 				$user_id,
+				wp_json_encode( $user_id ),
 				$limit
 			)
 		);

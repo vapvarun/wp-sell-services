@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.3.6';
+	const DB_VERSION = '1.3.7';
 
 	/**
 	 * Option name for storing DB version.
@@ -102,6 +102,7 @@ class SchemaManager {
 		$charset_collate = $this->wpdb->get_charset_collate();
 
 		$tables = array(
+			$this->get_service_packages_table( $charset_collate ),
 			$this->get_service_addons_table( $charset_collate ),
 			$this->get_orders_table( $charset_collate ),
 			$this->get_order_requirements_table( $charset_collate ),
@@ -124,6 +125,35 @@ class SchemaManager {
 		foreach ( $tables as $sql ) {
 			dbDelta( $sql );
 		}
+	}
+
+	/**
+	 * Get service packages table SQL.
+	 *
+	 * Stores pricing tiers (e.g., Basic, Standard, Premium) for services.
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_service_packages_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'service_packages' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			service_id bigint(20) unsigned NOT NULL,
+			name varchar(255) NOT NULL,
+			description text,
+			price decimal(10,2) NOT NULL DEFAULT 0,
+			delivery_days int(11) NOT NULL DEFAULT 1,
+			revisions int(11) DEFAULT 0,
+			features longtext,
+			sort_order int(11) DEFAULT 0,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_service (service_id),
+			KEY idx_service_order (service_id, sort_order)
+		) {$charset_collate};";
 	}
 
 	/**
@@ -689,6 +719,7 @@ class SchemaManager {
 			'order_requirements',
 			'orders',
 			'service_addons',
+			'service_packages',
 		);
 
 		foreach ( $tables as $table ) {
@@ -706,6 +737,7 @@ class SchemaManager {
 	 */
 	public function get_tables(): array {
 		return array(
+			'service_packages'    => $this->get_table_name( 'service_packages' ),
 			'service_addons'      => $this->get_table_name( 'service_addons' ),
 			'orders'              => $this->get_table_name( 'orders' ),
 			'order_requirements'  => $this->get_table_name( 'order_requirements' ),

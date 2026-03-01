@@ -50,7 +50,7 @@ class Activator {
 	/**
 	 * Create database tables using SchemaManager.
 	 *
-	 * Creates all 20 plugin tables.
+	 * Creates all 18 plugin tables.
 	 *
 	 * @return void
 	 */

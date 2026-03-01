@@ -155,6 +155,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	public function render_checkout_shortcode( array $atts ): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$service_id = (int) ( $_GET['service_id'] ?? get_query_var( 'wpss_service_id' ) ?? 0 );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$package_id = (int) ( $_GET['package'] ?? 0 );
+
+		// If no service_id in URL, try to load from user's cart.
+		if ( ! $service_id ) {
+			$cart = $this->get_cart();
+
+			if ( ! empty( $cart ) ) {
+				// Use the most recently added cart item.
+				$cart_item  = end( $cart );
+				$service_id = (int) ( $cart_item['service_id'] ?? 0 );
+				$package_id = $package_id ?: (int) ( $cart_item['package_id'] ?? 0 );
+			}
+		}
 
 		if ( ! $service_id ) {
 			return '<p>' . esc_html__( 'No service selected.', 'wp-sell-services' ) . '</p>';
@@ -165,9 +179,6 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		if ( ! $service ) {
 			return '<p>' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$package_id = (int) ( $_GET['package'] ?? 0 );
 
 		ob_start();
 		$this->render_checkout_form( $service, $package_id );

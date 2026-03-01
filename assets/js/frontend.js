@@ -22,6 +22,7 @@
 		WPSS.initOrderActions();
 		WPSS.initReviews();
 		WPSS.initModals();
+		WPSS.initContactVendor();
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
 		WPSS.initVendorRegistration();
@@ -653,6 +654,99 @@
 					$list.append('<div class="wpss-file-item"><span>' + file.name + '</span><small>(' + size + ' MB)</small></div>');
 				}
 			}
+		});
+	};
+
+	/**
+	 * Contact Vendor (vendor profile and other non-single-service pages).
+	 *
+	 * On single service pages, single-service.js handles contact via WPSSService.
+	 * This handler covers the vendor profile page and any other page with a contact modal.
+	 */
+	WPSS.initContactVendor = function() {
+		// Skip if single-service.js is active (it has its own handler).
+		if (typeof window.WPSSService !== 'undefined') {
+			return;
+		}
+
+		var $modal = $('#wpss-contact-modal');
+
+		if (!$modal.length) {
+			return;
+		}
+
+		// Open contact modal on button click.
+		$(document).on('click', '.wpss-contact-btn', function(e) {
+			e.preventDefault();
+			$modal.prop('hidden', false).addClass('active');
+			$('body').addClass('wpss-modal-open');
+			$modal.find('textarea').focus();
+		});
+
+		// Close modal on overlay click.
+		$modal.on('click', '.wpss-modal-overlay', function() {
+			$modal.prop('hidden', true).removeClass('active');
+			$('body').removeClass('wpss-modal-open');
+		});
+
+		// Close modal on close button.
+		$modal.on('click', '.wpss-modal-close', function(e) {
+			e.preventDefault();
+			$modal.prop('hidden', true).removeClass('active');
+			$('body').removeClass('wpss-modal-open');
+		});
+
+		// Close on Escape key.
+		$(document).on('keydown', function(e) {
+			if (e.key === 'Escape' && $modal.hasClass('active')) {
+				$modal.prop('hidden', true).removeClass('active');
+				$('body').removeClass('wpss-modal-open');
+			}
+		});
+
+		// Contact form submission.
+		$modal.on('submit', '#wpss-contact-form', function(e) {
+			e.preventDefault();
+
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var btnText = $btn.text();
+
+			$btn.prop('disabled', true).text(wpssData.i18n?.submitting || 'Sending...');
+
+			var formData = new FormData($form[0]);
+			formData.append('action', 'wpss_contact_vendor');
+			formData.append('nonce', wpssData.contactNonce);
+
+			$.ajax({
+				url: wpssData.ajaxUrl,
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: function(response) {
+					if (response.success) {
+						$form.html(
+							'<div class="wpss-success-message">' +
+							'<span class="wpss-success-icon">&#10003;</span>' +
+							'<p>' + WPSS.escapeHtml(response.data.message) + '</p>' +
+							'</div>'
+						);
+
+						setTimeout(function() {
+							$modal.prop('hidden', true).removeClass('active');
+							$('body').removeClass('wpss-modal-open');
+						}, 2000);
+					} else {
+						WPSS.showNotification(response.data.message || wpssData.i18n?.error || 'Failed to send message.', 'error');
+						$btn.prop('disabled', false).text(btnText);
+					}
+				},
+				error: function() {
+					WPSS.showNotification(wpssData.i18n?.ajaxError || 'An error occurred. Please try again.', 'error');
+					$btn.prop('disabled', false).text(btnText);
+				}
+			});
 		});
 	};
 

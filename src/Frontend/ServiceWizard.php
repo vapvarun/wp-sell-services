@@ -277,6 +277,11 @@ class ServiceWizard {
 		$service_id = absint( $atts['id'] );
 		$service    = null;
 
+		// Check max services limit for NEW services only (not editing existing).
+		if ( ! $service_id && $vendor_profile && $vendor_profile->has_reached_service_limit() ) {
+			return $this->render_service_limit_notice( $vendor_profile );
+		}
+
 		// If editing, verify ownership.
 		if ( $service_id ) {
 			$service = get_post( $service_id );
@@ -1281,6 +1286,24 @@ class ServiceWizard {
 		}
 
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
+
+		// Check max services limit for NEW services only (not editing existing).
+		if ( ! $service_id && ! current_user_can( 'manage_options' ) ) {
+			$limit_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
+			if ( $limit_profile && $limit_profile->has_reached_service_limit() ) {
+				$max = $limit_profile->get_max_services();
+				wp_send_json_error(
+					array(
+						'message' => sprintf(
+							/* translators: %d: maximum number of services allowed */
+							__( 'You have reached the maximum limit of %d services. Please remove an existing service before creating a new one.', 'wp-sell-services' ),
+							$max
+						),
+					)
+				);
+			}
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized after decode.
 		$raw_data = isset( $_POST['data'] ) ? wp_unslash( $_POST['data'] ) : '';
 		$data     = ! empty( $raw_data ) ? json_decode( $raw_data, true ) : array();
@@ -1382,17 +1405,60 @@ class ServiceWizard {
 		}
 
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
+
+		// Server-side duplicate publish prevention.
+		// Uses a short-lived transient lock to prevent concurrent publish requests
+		// from the same user creating multiple services (e.g., double-click race condition).
+		$lock_key = 'wpss_publishing_' . $user_id . '_' . $service_id;
+		if ( get_transient( $lock_key ) ) {
+			wp_send_json_error( array( 'message' => __( 'Your service is already being published. Please wait.', 'wp-sell-services' ) ) );
+		}
+		set_transient( $lock_key, true, 30 );
+
+		// Check max services limit when publishing would add a new service to the count.
+		// This applies to: new services (no service_id) or drafts being published for the first time.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$is_new_to_count = false;
+			if ( ! $service_id ) {
+				$is_new_to_count = true;
+			} else {
+				$existing = get_post( $service_id );
+				if ( $existing && 'draft' === $existing->post_status ) {
+					$is_new_to_count = true;
+				}
+			}
+
+			if ( $is_new_to_count ) {
+				$limit_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
+				if ( $limit_profile && $limit_profile->has_reached_service_limit() ) {
+					$max = $limit_profile->get_max_services();
+					delete_transient( $lock_key );
+					wp_send_json_error(
+						array(
+							'message' => sprintf(
+								/* translators: %d: maximum number of services allowed */
+								__( 'You have reached the maximum limit of %d services. Please remove an existing service before creating a new one.', 'wp-sell-services' ),
+								$max
+							),
+						)
+					);
+				}
+			}
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON string sanitized after decode.
 		$raw_data = isset( $_POST['data'] ) ? wp_unslash( $_POST['data'] ) : '';
 		$data     = ! empty( $raw_data ) ? json_decode( $raw_data, true ) : array();
 
 		if ( empty( $data ) ) {
+			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => __( 'Invalid data.', 'wp-sell-services' ) ) );
 		}
 
 		// Validate required fields.
 		$errors = $this->validate_service_data( $data );
 		if ( ! empty( $errors ) ) {
+			delete_transient( $lock_key );
 			wp_send_json_error(
 				array(
 					'message' => __( 'Please complete all required fields.', 'wp-sell-services' ),
@@ -1419,6 +1485,7 @@ class ServiceWizard {
 		if ( $service_id ) {
 			$service = get_post( $service_id );
 			if ( ! $service || (int) $service->post_author !== $user_id ) {
+				delete_transient( $lock_key );
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
 			$post_data['ID'] = $service_id;
@@ -1428,6 +1495,7 @@ class ServiceWizard {
 		}
 
 		if ( is_wp_error( $result ) ) {
+			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
@@ -1864,6 +1932,29 @@ class ServiceWizard {
 
 		return '<div class="wpss-notice wpss-notice-error">' .
 			esc_html__( 'You are not authorized to create services.', 'wp-sell-services' ) .
+			'</div>';
+	}
+
+	/**
+	 * Render the service limit reached notice.
+	 *
+	 * @param \WPSellServices\Models\VendorProfile $vendor_profile Vendor profile.
+	 * @return string HTML notice.
+	 */
+	private function render_service_limit_notice( \WPSellServices\Models\VendorProfile $vendor_profile ): string {
+		$max_services  = $vendor_profile->get_max_services();
+		$services_url  = wpss_get_dashboard_url( 'services' );
+		$services_link = $services_url
+			? ' <a href="' . esc_url( $services_url ) . '">' . esc_html__( 'Manage your services', 'wp-sell-services' ) . '</a>'
+			: '';
+
+		return '<div class="wpss-notice wpss-notice-warning">' .
+			sprintf(
+				/* translators: %d: maximum number of services allowed */
+				esc_html__( 'You have reached the maximum limit of %d services. Please remove an existing service before creating a new one.', 'wp-sell-services' ),
+				$max_services
+			) .
+			$services_link .
 			'</div>';
 	}
 

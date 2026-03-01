@@ -20,7 +20,7 @@ $packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
 // If no packages, show single price.
 if ( empty( $packages ) ) {
 	$price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-	$delivery_time = get_post_meta( $service_id, '_wpss_delivery_time', true );
+	$delivery_time = get_post_meta( $service_id, '_wpss_delivery_days', true );
 
 	$packages = [
 		[
@@ -172,7 +172,21 @@ do_action( 'wpss_before_service_packages', $service_id );
 					?>
 
 					<?php if ( $is_own_service ) : ?>
-						<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $service_id . '&action=edit' ) ); ?>"
+						<?php
+						$dashboard_edit_url = wpss_get_page_url( 'dashboard' );
+						if ( $dashboard_edit_url ) {
+							$dashboard_edit_url = add_query_arg(
+								array(
+									'section' => 'create',
+									'id'      => $service_id,
+								),
+								$dashboard_edit_url
+							);
+						} else {
+							$dashboard_edit_url = admin_url( 'post.php?post=' . $service_id . '&action=edit' );
+						}
+						?>
+						<a href="<?php echo esc_url( $dashboard_edit_url ); ?>"
 						   class="wpss-btn wpss-btn-secondary wpss-btn-block">
 							<?php esc_html_e( 'Edit Service', 'wp-sell-services' ); ?>
 						</a>

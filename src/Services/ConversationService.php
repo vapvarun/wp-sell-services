@@ -98,6 +98,83 @@ class ConversationService {
 	}
 
 	/**
+	 * Create a direct conversation between two users (not tied to an order).
+	 *
+	 * Used for pre-order inquiries like "Contact Seller".
+	 *
+	 * @param int    $user_a  First participant user ID.
+	 * @param int    $user_b  Second participant user ID.
+	 * @param string $subject Conversation subject.
+	 * @return Conversation|null
+	 */
+	public function create_direct( int $user_a, int $user_b, string $subject = '' ): ?Conversation {
+		// Check if a direct conversation already exists between these two users.
+		$existing = $this->get_direct_conversation( $user_a, $user_b );
+		if ( $existing ) {
+			return $existing;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_conversations';
+
+		$participants = array( $user_a, $user_b );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$wpdb->insert(
+			$table,
+			array(
+				'order_id'      => 0,
+				'subject'       => $subject,
+				'participants'  => wp_json_encode( $participants ),
+				'message_count' => 0,
+				'unread_counts' => wp_json_encode( array() ),
+				'is_closed'     => 0,
+				'created_at'    => current_time( 'mysql' ),
+				'updated_at'    => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' )
+		);
+
+		$conversation_id = (int) $wpdb->insert_id;
+
+		return $conversation_id ? $this->get( $conversation_id ) : null;
+	}
+
+	/**
+	 * Get existing direct conversation between two users.
+	 *
+	 * Finds a conversation with order_id = 0 where both users are participants.
+	 *
+	 * @param int $user_a First user ID.
+	 * @param int $user_b Second user ID.
+	 * @return Conversation|null
+	 */
+	public function get_direct_conversation( int $user_a, int $user_b ): ?Conversation {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_conversations';
+
+		// Look for a direct conversation (order_id = 0) containing both users.
+		// Participants are stored as a JSON array of integers, e.g. [5,3].
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$table}
+				WHERE order_id = 0
+				AND is_closed = 0
+				AND JSON_CONTAINS(participants, %s)
+				AND JSON_CONTAINS(participants, %s)
+				ORDER BY updated_at DESC
+				LIMIT 1",
+				wp_json_encode( $user_a ),
+				wp_json_encode( $user_b )
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return $row ? Conversation::from_db( $row ) : null;
+	}
+
+	/**
 	 * Get messages for conversation.
 	 *
 	 * @param int   $conversation_id Conversation ID.
@@ -399,12 +476,15 @@ class ConversationService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_conversations';
 
+		// Use JSON_CONTAINS for flat arrays [5,3] and JSON_EXTRACT for key-value maps {"5":true}.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$conversations = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT unread_counts FROM {$table}
-				WHERE participants LIKE %s AND is_closed = 0",
-				'%' . $wpdb->esc_like( '"' . $user_id . '"' ) . '%'
+				WHERE (JSON_CONTAINS(participants, %s) OR JSON_EXTRACT(participants, %s) IS NOT NULL)
+				AND is_closed = 0",
+				wp_json_encode( $user_id ),
+				'$."' . $user_id . '"'
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -447,14 +527,16 @@ class ConversationService {
 
 		$args = wp_parse_args( $args, $defaults );
 
+		// Use JSON_CONTAINS for flat arrays [5,3] and JSON_EXTRACT for key-value maps {"5":true}.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$table}
-				WHERE participants LIKE %s
+				WHERE (JSON_CONTAINS(participants, %s) OR JSON_EXTRACT(participants, %s) IS NOT NULL)
 				ORDER BY COALESCE(last_message_at, created_at) DESC
 				LIMIT %d OFFSET %d",
-				'%' . $wpdb->esc_like( '"' . $user_id . '"' ) . '%',
+				wp_json_encode( $user_id ),
+				'$."' . $user_id . '"',
 				$args['limit'],
 				$args['offset']
 			)
@@ -474,12 +556,14 @@ class ConversationService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_conversations';
 
+		// Use JSON_CONTAINS for flat arrays [5,3] and JSON_EXTRACT for key-value maps {"5":true}.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$count = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$table}
-				WHERE participants LIKE %s",
-				'%' . $wpdb->esc_like( '"' . $user_id . '"' ) . '%'
+				WHERE (JSON_CONTAINS(participants, %s) OR JSON_EXTRACT(participants, %s) IS NOT NULL)",
+				wp_json_encode( $user_id ),
+				'$."' . $user_id . '"'
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

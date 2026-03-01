@@ -536,7 +536,7 @@ class ServicesController extends RestController {
 			 */
 			$error_message = apply_filters(
 				'wpss_service_limit_error_message',
-				__( 'You have reached your service limit. Please upgrade your plan.', 'wp-sell-services' )
+				__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
 			);
 
 			return new WP_Error(

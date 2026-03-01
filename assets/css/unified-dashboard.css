@@ -496,6 +496,11 @@
 	color: #92400e;
 }
 
+.wpss-service-card__status--rejected {
+	background: #f8d7da;
+	color: #721c24;
+}
+
 .wpss-service-card__body {
 	padding: 16px;
 }

@@ -90,8 +90,8 @@ class EmailService {
 	 * @return array
 	 */
 	private function get_email_settings(): array {
-		// Use WooCommerce mailer settings when available, otherwise fall back to WordPress defaults.
-		$from_name  = get_bloginfo( 'name' );
+		// Use WooCommerce mailer settings when available, otherwise fall back to platform name.
+		$from_name  = wpss_get_platform_name();
 		$from_email = get_option( 'admin_email' );
 
 		if ( function_exists( 'WC' ) && WC()->mailer() ) {
@@ -104,10 +104,10 @@ class EmailService {
 			'from_email'   => $from_email,
 			'header_image' => '',
 			'footer_text'  => sprintf(
-				/* translators: %1$s: year, %2$s: site name */
+				/* translators: %1$s: year, %2$s: platform name */
 				__( '© %1$s %2$s. All rights reserved.', 'wp-sell-services' ),
 				gmdate( 'Y' ),
-				get_bloginfo( 'name' )
+				wpss_get_platform_name()
 			),
 			'base_color'   => '#7f54b3',
 			'bg_color'     => '#f7f7f7',
@@ -205,7 +205,7 @@ class EmailService {
 			$subject = sprintf(
 				/* translators: %1$s: site name, %2$s: order number */
 				__( '[%1$s] New Service Order #%2$s', 'wp-sell-services' ),
-				get_bloginfo( 'name' ),
+				wpss_get_platform_name(),
 				$order->order_number
 			);
 
@@ -229,7 +229,7 @@ class EmailService {
 			$subject = sprintf(
 				/* translators: %1$s: site name, %2$s: order number */
 				__( '[%1$s] Order Confirmed #%2$s', 'wp-sell-services' ),
-				get_bloginfo( 'name' ),
+				wpss_get_platform_name(),
 				$order->order_number
 			);
 
@@ -277,7 +277,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] Requirements Submitted - Order #%2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -305,7 +305,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] Order #%2$s is Now In Progress', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -369,7 +369,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] Delivery Ready - Order #%2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -396,7 +396,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] Order #%2$s Completed', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -448,7 +448,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] Revision Requested - Order #%2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -493,7 +493,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] New Message - Order #%2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -553,7 +553,7 @@ class EmailService {
 			$subject = sprintf(
 				/* translators: %1$s: site name, %2$s: order number */
 				__( '[%1$s] Cancellation Requested - Order #%2$s', 'wp-sell-services' ),
-				get_bloginfo( 'name' ),
+				wpss_get_platform_name(),
 				$order->order_number
 			);
 
@@ -579,7 +579,7 @@ class EmailService {
 			$subject = sprintf(
 				/* translators: %1$s: site name, %2$s: order number */
 				__( '[%1$s] Cancellation Request Submitted - Order #%2$s', 'wp-sell-services' ),
-				get_bloginfo( 'name' ),
+				wpss_get_platform_name(),
 				$order->order_number
 			);
 
@@ -617,7 +617,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] Order #%2$s Cancelled', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -653,7 +653,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] Dispute Opened - Order #%2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -718,7 +718,7 @@ class EmailService {
 
 		$subject = sprintf(
 			$subjects[ $reminder_num ] ?? $subjects[1],
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$order->order_number
 		);
 
@@ -754,7 +754,7 @@ class EmailService {
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: new level */
 			__( '[%1$s] Congratulations! You\'ve been promoted to %2$s', 'wp-sell-services' ),
-			get_bloginfo( 'name' ),
+			wpss_get_platform_name(),
 			$level_label
 		);
 
@@ -788,7 +788,7 @@ class EmailService {
 		// Merge settings into template vars.
 		$template_vars = array_merge( $this->settings(), $template_vars );
 		$template_vars['site_url']  = home_url();
-		$template_vars['site_name'] = get_bloginfo( 'name' );
+		$template_vars['site_name'] = wpss_get_platform_name();
 
 		/**
 		 * Filter email header/template variables for white-labelling.

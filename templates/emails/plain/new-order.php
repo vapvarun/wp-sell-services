@@ -52,5 +52,5 @@ echo esc_url( wpss_get_order_url( $order->id ) );
 echo "\n\n";
 
 echo "---\n";
-echo esc_html( get_bloginfo( 'name' ) ) . "\n";
+echo esc_html( wpss_get_platform_name() ) . "\n";
 echo esc_url( home_url() );

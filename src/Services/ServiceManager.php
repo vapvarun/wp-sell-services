@@ -87,6 +87,15 @@ class ServiceManager {
 			return false;
 		}
 
+		// Check max services limit for the author (skip for admins).
+		$author_id = absint( $data['author'] );
+		if ( $author_id && ! user_can( $author_id, 'manage_options' ) ) {
+			$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $author_id );
+			if ( $vendor_profile && $vendor_profile->has_reached_service_limit() ) {
+				return false;
+			}
+		}
+
 		// Create the post.
 		$post_id = wp_insert_post(
 			array(

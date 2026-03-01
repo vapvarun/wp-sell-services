@@ -124,7 +124,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 	<?php endif; ?>
 
 	<!-- Add/Edit Portfolio Modal -->
-	<div class="wpss-modal" id="wpss-portfolio-modal" style="display: none;">
+	<div class="wpss-modal" id="wpss-portfolio-modal">
 		<div class="wpss-modal__overlay"></div>
 		<div class="wpss-modal__content">
 			<div class="wpss-modal__header">

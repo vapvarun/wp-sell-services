@@ -394,9 +394,18 @@ body.wpss-sidebar-open::after {
 	color: var(--wpss-primary);
 }
 
+.wpss-category-link.is-active {
+	color: var(--wpss-primary);
+	font-weight: 600;
+}
+
 .wpss-category-link .wpss-count {
 	color: var(--wpss-text-light);
 	font-size: 0.813rem;
+}
+
+.wpss-category-link.is-active .wpss-count {
+	color: var(--wpss-primary);
 }
 
 .wpss-subcategory-list {
@@ -415,6 +424,11 @@ body.wpss-sidebar-open::after {
 	text-decoration: none;
 	font-size: 0.875rem;
 	padding: 0.25rem 0;
+}
+
+.wpss-subcategory-list a.is-active {
+	color: var(--wpss-primary);
+	font-weight: 600;
 }
 
 .wpss-subcategory-list a:hover {

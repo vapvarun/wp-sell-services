@@ -31,7 +31,7 @@ $text_color = $text_color ?? '#3c3c3c';
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title><?php echo esc_html( get_bloginfo( 'name' ) ); ?></title>
+	<title><?php echo esc_html( $site_name ?? wpss_get_platform_name() ); ?></title>
 	<style type="text/css">
 		/* Reset styles */
 		body, table, td, p, a, li, blockquote {

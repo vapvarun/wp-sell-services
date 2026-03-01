@@ -225,6 +225,7 @@ final class Plugin {
 		$this->maybe_create_vendor_role();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
+		$this->define_avatar_filter();
 		$this->register_post_types();
 		$this->register_rewrite_rules();
 		$this->define_admin_hooks();
@@ -553,6 +554,94 @@ final class Plugin {
 				$vendor_settings = get_option( 'wpss_vendor', array() );
 				return ! empty( $vendor_settings['require_service_moderation'] );
 			}
+		);
+
+		// Enforce max services per vendor limit for REST API service creation.
+		add_filter(
+			'wpss_vendor_can_create_service',
+			function ( bool $can_create, int $vendor_id ): bool {
+				if ( ! $can_create ) {
+					return false;
+				}
+
+				$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
+				if ( $vendor_profile && $vendor_profile->has_reached_service_limit() ) {
+					return false;
+				}
+
+				return true;
+			},
+			10,
+			2
+		);
+	}
+
+	/**
+	 * Filter WordPress avatar to use vendor's uploaded profile picture.
+	 *
+	 * Hooks into 'pre_get_avatar_data' so that both get_avatar() and
+	 * get_avatar_url() return the custom image when a vendor has uploaded one.
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	private function define_avatar_filter(): void {
+		// In-memory cache to avoid repeated DB queries within a single request.
+		$cache = array();
+
+		add_filter(
+			'pre_get_avatar_data',
+			function ( array $args, $id_or_email ) use ( &$cache ): array {
+				$user_id = 0;
+
+				if ( is_numeric( $id_or_email ) ) {
+					$user_id = (int) $id_or_email;
+				} elseif ( $id_or_email instanceof \WP_User ) {
+					$user_id = $id_or_email->ID;
+				} elseif ( $id_or_email instanceof \WP_Post ) {
+					$user_id = (int) $id_or_email->post_author;
+				} elseif ( $id_or_email instanceof \WP_Comment ) {
+					$user_id = (int) $id_or_email->user_id;
+				}
+
+				if ( ! $user_id ) {
+					return $args;
+				}
+
+				// Check in-memory cache first.
+				if ( ! array_key_exists( $user_id, $cache ) ) {
+					// Look up avatar_id directly from the vendor profiles table to avoid
+					// instantiating services/repos on every avatar call.
+					global $wpdb;
+					$table = $wpdb->prefix . 'wpss_vendor_profiles';
+					$raw   = $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT avatar_id FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+							$user_id
+						)
+					);
+
+					$cache[ $user_id ] = $raw ? (int) $raw : 0;
+				}
+
+				$avatar_id = $cache[ $user_id ];
+
+				if ( ! $avatar_id ) {
+					return $args;
+				}
+
+				$url = wp_get_attachment_image_url( $avatar_id, 'thumbnail' );
+				if ( ! $url ) {
+					return $args;
+				}
+
+				$args['url']          = $url;
+				$args['found_avatar'] = true;
+
+				return $args;
+			},
+			10,
+			2
 		);
 	}
 

@@ -497,6 +497,11 @@
                     if (response.success) {
                         $btn.text(wpssService.i18n.added || 'Added to cart!');
 
+                        // Store checkout URL from response (includes service_id).
+                        if (response.data.checkout_url) {
+                            self.state.checkoutUrl = response.data.checkout_url;
+                        }
+
                         // Update cart count in header.
                         self.updateCartCount(response.data.cart_count);
 
@@ -522,15 +527,16 @@
         showCartOptions: function() {
             const $modal = $(this.config.orderModal);
             const $footer = $modal.find('.wpss-modal-footer');
+            const checkoutUrl = this.state.checkoutUrl || wpssService.checkoutUrl;
 
             $footer.html(
                 '<div class="wpss-cart-success">' +
                 '<p class="wpss-success-message">&#10003; ' + (wpssService.i18n.added || 'Added to cart!') + '</p>' +
                 '<div class="wpss-cart-actions">' +
-                '<a href="' + wpssService.cartUrl + '" class="wpss-btn wpss-btn-outline">' +
+                '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-outline">' +
                 (wpssService.i18n.viewCart || 'View Cart') +
                 '</a>' +
-                '<a href="' + wpssService.checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
+                '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
                 (wpssService.i18n.checkout || 'Checkout') +
                 '</a>' +
                 '</div>' +

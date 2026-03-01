@@ -50,17 +50,28 @@ $published_count = count(
 	)
 );
 
-$draft_count = count(
-	get_posts(
-		array(
-			'post_type'   => 'wpss_service',
-			'author'      => $user_id,
-			'post_status' => 'draft',
-			'numberposts' => -1,
-			'fields'      => 'ids',
-		)
+// Draft count excludes rejected services (which also have draft post_status).
+$all_draft_ids = get_posts(
+	array(
+		'post_type'   => 'wpss_service',
+		'author'      => $user_id,
+		'post_status' => 'draft',
+		'numberposts' => -1,
+		'fields'      => 'ids',
 	)
 );
+
+$rejected_count = 0;
+$draft_count    = 0;
+
+foreach ( $all_draft_ids as $draft_id ) {
+	$mod_status = get_post_meta( $draft_id, '_wpss_moderation_status', true );
+	if ( 'rejected' === $mod_status ) {
+		++$rejected_count;
+	} else {
+		++$draft_count;
+	}
+}
 
 $pending_count = count(
 	get_posts(
@@ -89,7 +100,33 @@ $pending_count = count(
 			<span class="wpss-stat-card__value"><?php echo esc_html( $pending_count ); ?></span>
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending Review', 'wp-sell-services' ); ?></span>
 		</div>
+		<?php if ( $rejected_count > 0 ) : ?>
+			<div class="wpss-stat-card">
+				<span class="wpss-stat-card__value"><?php echo esc_html( $rejected_count ); ?></span>
+				<span class="wpss-stat-card__label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
+			</div>
+		<?php endif; ?>
 	</div>
+
+	<?php
+	// Check service limit and display notice.
+	$vendor_profile_obj = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
+	$at_service_limit   = $vendor_profile_obj && $vendor_profile_obj->has_reached_service_limit();
+
+	if ( $at_service_limit ) :
+		$max_services_allowed = $vendor_profile_obj->get_max_services();
+		?>
+		<div class="wpss-notice wpss-notice-warning" style="margin-bottom: 16px;">
+			<?php
+			printf(
+				/* translators: %1$d: current count, %2$d: max allowed */
+				esc_html__( 'You have reached your service limit (%1$d of %2$d). Remove an existing service to create a new one.', 'wp-sell-services' ),
+				$vendor_profile_obj->get_service_count(),
+				$max_services_allowed
+			);
+			?>
+		</div>
+	<?php endif; ?>
 
 	<?php
 	/**
@@ -125,6 +162,12 @@ $pending_count = count(
 				$views       = (int) get_post_meta( $service_id, 'wpss_views', true );
 				$orders      = (int) get_post_meta( $service_id, 'wpss_orders', true );
 				$item_status = get_post_status();
+
+				// Check moderation meta for rejected services (stored as draft post_status).
+				$moderation_status = get_post_meta( $service_id, '_wpss_moderation_status', true );
+				if ( 'draft' === $item_status && 'rejected' === $moderation_status ) {
+					$item_status = 'rejected';
+				}
 				?>
 				<div class="wpss-service-card wpss-service-card--dashboard">
 					<div class="wpss-service-card__image">
@@ -149,8 +192,12 @@ $pending_count = count(
 						<?php endif; ?>
 						<span class="wpss-service-card__status wpss-service-card__status--<?php echo esc_attr( $item_status ); ?>">
 							<?php
-							$status_obj = get_post_status_object( $item_status );
-							echo esc_html( $status_obj ? $status_obj->label : ucfirst( $item_status ) );
+							if ( 'rejected' === $item_status ) {
+								esc_html_e( 'Rejected', 'wp-sell-services' );
+							} else {
+								$status_obj = get_post_status_object( $item_status );
+								echo esc_html( $status_obj ? $status_obj->label : ucfirst( $item_status ) );
+							}
 							?>
 						</span>
 					</div>

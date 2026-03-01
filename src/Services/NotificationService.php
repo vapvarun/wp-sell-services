@@ -1005,7 +1005,7 @@ class NotificationService {
 			$platform_name
 		);
 
-		$dashboard_url = home_url( '/vendor-dashboard/' );
+		$dashboard_url = wpss_get_dashboard_url();
 
 		$content  = '<html><body>';
 		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
@@ -1261,7 +1261,7 @@ class NotificationService {
 	 * @return string
 	 */
 	private function build_email_content( string $message, array $data = array() ): string {
-		$site_name = get_bloginfo( 'name' );
+		$site_name = wpss_get_platform_name();
 		$site_url  = home_url();
 
 		// Professional email template.

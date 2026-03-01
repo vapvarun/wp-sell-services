@@ -115,8 +115,24 @@ class ServiceArchiveView {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'default';
+
+		// Determine the current category from either the query param or the taxonomy archive term.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_category = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0;
+		if ( ! $current_category && is_tax( 'wpss_service_category' ) ) {
+			$current_term     = get_queried_object();
+			$current_category = $current_term instanceof \WP_Term ? $current_term->term_id : 0;
+		}
+
+		// Use the services page (or CPT archive) as the base URL for category filter links.
+		// This prevents broken URLs when navigating categories from a taxonomy archive page.
+		$base_url = wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' );
+
+		// Preserve current sort param when switching categories.
+		$base_args = array();
+		if ( 'default' !== $current_sort ) {
+			$base_args['sort'] = $current_sort;
+		}
 		?>
 		<div class="wpss-filters-bar">
 			<button type="button" class="wpss-btn wpss-btn-outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
@@ -127,11 +143,11 @@ class ServiceArchiveView {
 			<div class="wpss-filters-bar-controls">
 				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
 					<select class="wpss-category-filter wpss-url-select">
-						<option value="<?php echo esc_url( remove_query_arg( 'category' ) ); ?>">
+						<option value="<?php echo esc_url( add_query_arg( $base_args, $base_url ) ); ?>">
 							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
 						</option>
 						<?php foreach ( $categories as $category ) : ?>
-							<option value="<?php echo esc_url( add_query_arg( 'category', $category->term_id ) ); ?>"
+							<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $category->term_id ) ), $base_url ) ); ?>"
 								<?php selected( $current_category, $category->term_id ); ?>>
 								<?php echo esc_html( $category->name ); ?>
 							</option>
@@ -255,6 +271,14 @@ class ServiceArchiveView {
 		$min_rating = isset( $_GET['rating'] ) ? absint( $_GET['rating'] ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$delivery_time = isset( $_GET['delivery'] ) ? sanitize_text_field( wp_unslash( $_GET['delivery'] ) ) : '';
+
+		// Determine the active category for sidebar highlighting.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$active_category_id = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0;
+		if ( ! $active_category_id && is_tax( 'wpss_service_category' ) ) {
+			$active_term        = get_queried_object();
+			$active_category_id = $active_term instanceof \WP_Term ? $active_term->term_id : 0;
+		}
 		?>
 		<aside class="wpss-archive-sidebar" id="wpss-sidebar">
 			<div class="wpss-sidebar-header">
@@ -265,25 +289,54 @@ class ServiceArchiveView {
 			</div>
 
 			<form class="wpss-filter-form" method="get">
+				<?php
+				// Preserve category and sort params as hidden fields so the sidebar
+				// form submission does not lose them (they are not form inputs).
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				if ( isset( $_GET['category'] ) && absint( $_GET['category'] ) > 0 ) :
+					?>
+					<input type="hidden" name="category" value="<?php echo esc_attr( absint( $_GET['category'] ) ); ?>">
+				<?php endif; ?>
+				<?php
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				if ( isset( $_GET['sort'] ) && '' !== $_GET['sort'] ) :
+					?>
+					<input type="hidden" name="sort" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_GET['sort'] ) ) ); ?>">
+				<?php endif; ?>
+
 				<!-- Categories -->
 				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
 					<div class="wpss-filter-section">
 						<h4><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></h4>
 						<ul class="wpss-category-list">
 							<?php foreach ( $categories as $category ) : ?>
+								<?php
+								$is_active = ( $active_category_id === $category->term_id );
+								$children  = $children_by_parent[ $category->term_id ] ?? array();
+								// Also mark parent as active if a child category is active.
+								if ( ! $is_active && ! empty( $children ) ) {
+									foreach ( $children as $child ) {
+										if ( $active_category_id === $child->term_id ) {
+											$is_active = true;
+											break;
+										}
+									}
+								}
+								?>
 								<li>
-									<a href="<?php echo esc_url( get_term_link( $category ) ); ?>" class="wpss-category-link">
+									<a href="<?php echo esc_url( get_term_link( $category ) ); ?>"
+										class="wpss-category-link<?php echo $is_active ? ' is-active' : ''; ?>"
+										<?php echo $is_active ? ' aria-current="true"' : ''; ?>>
 										<?php echo esc_html( $category->name ); ?>
 										<span class="wpss-count">(<?php echo esc_html( $category->count ); ?>)</span>
 									</a>
-									<?php
-									$children = $children_by_parent[ $category->term_id ] ?? array();
-									if ( ! empty( $children ) ) :
-										?>
+									<?php if ( ! empty( $children ) ) : ?>
 										<ul class="wpss-subcategory-list">
 											<?php foreach ( $children as $child ) : ?>
 												<li>
-													<a href="<?php echo esc_url( get_term_link( $child ) ); ?>">
+													<a href="<?php echo esc_url( get_term_link( $child ) ); ?>"
+														class="<?php echo $active_category_id === $child->term_id ? 'is-active' : ''; ?>"
+														<?php echo $active_category_id === $child->term_id ? ' aria-current="true"' : ''; ?>>
 														<?php echo esc_html( $child->name ); ?>
 														<span class="wpss-count">(<?php echo esc_html( $child->count ); ?>)</span>
 													</a>
@@ -432,6 +485,12 @@ class ServiceArchiveView {
 			$query->set( 'pagename', '' );
 			$query->set( 'posts_per_page', apply_filters( 'wpss_services_per_page', 12 ) );
 
+			// Reset singular flags so WP_Query treats this as an archive query.
+			// Without this, WordPress singular post status logic can allow draft/pending
+			// posts to leak through for users with edit capabilities.
+			$query->is_singular = false;
+			$query->is_page     = false;
+
 			if ( ModerationService::is_enabled() ) {
 				$query->set( 'meta_query', array(
 						array(
@@ -494,7 +553,7 @@ class ServiceArchiveView {
 		// Delivery time filter.
 		if ( isset( $_GET['delivery'] ) && absint( $_GET['delivery'] ) > 0 ) {
 			$meta_query[] = array(
-				'key'     => '_wpss_delivery_time',
+				'key'     => '_wpss_delivery_days',
 				'value'   => absint( $_GET['delivery'] ),
 				'compare' => '<=',
 				'type'    => 'NUMERIC',

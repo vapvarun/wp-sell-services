@@ -151,17 +151,16 @@ class MigrationManager {
 					set_post_thumbnail( $service_id, $thumbnail_id );
 				}
 
-				// Copy relevant meta.
-				$meta_keys = [
-					'_wss_delivery_time',
-					'_wss_revision_limit',
-					'_wss_requirements',
+				// Copy relevant meta (old key => new key).
+				$meta_map = [
+					'_wss_delivery_time'  => '_wpss_delivery_days',
+					'_wss_revision_limit' => '_wpss_revision_limit',
+					'_wss_requirements'   => '_wpss_requirements',
 				];
 
-				foreach ( $meta_keys as $key ) {
-					$value = get_post_meta( $product->ID, $key, true );
+				foreach ( $meta_map as $old_key => $new_key ) {
+					$value = get_post_meta( $product->ID, $old_key, true );
 					if ( $value ) {
-						$new_key = str_replace( '_wss_', '_wpss_', $key );
 						update_post_meta( $service_id, $new_key, $value );
 					}
 				}

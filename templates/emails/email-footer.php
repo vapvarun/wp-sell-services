@@ -20,10 +20,10 @@
 defined( 'ABSPATH' ) || exit;
 
 $footer_text = $footer_text ?? sprintf(
-	/* translators: %1$s: year, %2$s: site name */
+	/* translators: %1$s: year, %2$s: platform name */
 	__( '© %1$s %2$s. All rights reserved.', 'wp-sell-services' ),
 	gmdate( 'Y' ),
-	get_bloginfo( 'name' )
+	wpss_get_platform_name()
 );
 ?>
 										<?php
