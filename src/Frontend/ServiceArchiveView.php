@@ -491,20 +491,21 @@ class ServiceArchiveView {
 			$query->is_singular = false;
 			$query->is_page     = false;
 
-			if ( ModerationService::is_enabled() ) {
-				$query->set( 'meta_query', array(
-						array(
-							'key'     => '_wpss_moderation_status',
-							'value'   => 'approved',
-							'compare' => '==',
-						),
-					)
-				);
-			}
 		}
 
 		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
 		$query->set( 'post_status', 'publish' );
+
+		// Filter out non-approved services when moderation is enabled (applies to all archive contexts).
+		if ( ModerationService::is_enabled() ) {
+			$meta_query   = $query->get( 'meta_query' ) ?: array();
+			$meta_query[] = array(
+				'key'     => '_wpss_moderation_status',
+				'value'   => 'approved',
+				'compare' => '=',
+			);
+			$query->set( 'meta_query', $meta_query );
+		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 

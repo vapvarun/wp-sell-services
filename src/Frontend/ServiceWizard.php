@@ -1538,6 +1538,8 @@ class ServiceWizard {
 			$redirect_url = get_permalink( $service_id );
 		}
 
+		delete_transient( $lock_key );
+
 		wp_send_json_success(
 			array(
 				'message'      => $message,
