@@ -154,9 +154,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 */
 	public function render_checkout_shortcode( array $atts ): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$service_id = (int) ( $_GET['service_id'] ?? get_query_var( 'wpss_service_id' ) ?? 0 );
+		$service_id = isset( $_GET['service_id'] ) ? absint( wp_unslash( $_GET['service_id'] ) ) : absint( get_query_var( 'wpss_service_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$package_id = (int) ( $_GET['package'] ?? 0 );
+		$package_id = isset( $_GET['package'] ) ? absint( wp_unslash( $_GET['package'] ) ) : 0;
 
 		// If no service_id in URL, try to load from user's cart.
 		if ( ! $service_id ) {
