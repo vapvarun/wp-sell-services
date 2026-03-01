@@ -508,53 +508,6 @@ final class Plugin {
 			10,
 			4
 		);
-
-		// Create order when a proposal is accepted.
-		$this->loader->add_action(
-			'wpss_proposal_accepted',
-			array( $this, 'create_order_from_proposal' ),
-			null,
-			10,
-			3
-		);
-	}
-
-	/**
-	 * Create an order when a buyer accepts a vendor's proposal.
-	 *
-	 * @param int    $proposal_id Proposal ID.
-	 * @param object $proposal    Proposal object.
-	 * @param object $request     Buyer request object.
-	 * @return void
-	 */
-	public function create_order_from_proposal( int $proposal_id, object $proposal, object $request ): void {
-		$order_provider = new \WPSellServices\Integrations\Standalone\StandaloneOrderProvider();
-
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $proposal->service_id ? $proposal->service_id : 0,
-				'customer_id'    => (int) $request->author_id,
-				'subtotal'       => (float) $proposal->proposed_price,
-				'delivery_days'  => (int) $proposal->proposed_days,
-				'payment_method' => 'offline',
-				'currency'       => wpss_get_currency(),
-			)
-		);
-
-		if ( $order ) {
-			// Link the order to the proposal.
-			global $wpdb;
-			$proposals_table = $wpdb->prefix . 'wpss_proposals';
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$proposals_table,
-				array( 'order_id' => $order->id ),
-				array( 'id' => $proposal_id ),
-				array( '%d' ),
-				array( '%d' )
-			);
-		}
 	}
 
 	/**

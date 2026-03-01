@@ -689,12 +689,36 @@ class OrderWorkflowManager {
 		$vendor_earnings = (float) $order->vendor_earnings;
 		$order_total     = (float) $order->total;
 		$platform_fee    = (float) ( $order->platform_fee ?? 0 );
+		$currency        = $order->currency ? $order->currency : wpss_get_currency();
 
-		// Reverse vendor profile earnings.
-		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		// Skip zero-amount reversals.
+		if ( $vendor_earnings <= 0 && $order_total <= 0 ) {
+			return;
+		}
 
+		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		$profiles_table     = $wpdb->prefix . 'wpss_vendor_profiles';
+		$orders_table       = $wpdb->prefix . 'wpss_orders';
+
+		// Idempotency: check if reversal already exists for this order.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query(
+		$existing_reversal = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$transactions_table} WHERE reference_type = 'order' AND reference_id = %d AND type = 'order_reversal'",
+				$order_id
+			)
+		);
+
+		if ( $existing_reversal > 0 ) {
+			return;
+		}
+
+		// All operations in a single transaction.
+		$wpdb->query( 'START TRANSACTION' );
+
+		// 1. Update vendor profile earnings (verify profile exists).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$profile_updated = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$profiles_table}
 				SET
@@ -711,11 +735,11 @@ class OrderWorkflowManager {
 			)
 		);
 
-		// Create reversal wallet transaction.
-		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		if ( 0 === $profile_updated ) {
+			wpss_log( "Earnings reversal: vendor profile not found for user {$vendor_id}, order {$order_id}.", 'warning' );
+		}
 
-		$wpdb->query( 'START TRANSACTION' );
-
+		// 2. Create reversal wallet transaction.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$current_balance = (float) $wpdb->get_var(
 			$wpdb->prepare(
@@ -739,7 +763,7 @@ class OrderWorkflowManager {
 				'type'           => 'order_reversal',
 				'amount'         => -$vendor_earnings,
 				'balance_after'  => $new_balance,
-				'currency'       => 'USD',
+				'currency'       => $currency,
 				'description'    => sprintf(
 					/* translators: %d: order ID */
 					__( 'Earnings reversed for cancelled order #%d', 'wp-sell-services' ),
@@ -753,11 +777,7 @@ class OrderWorkflowManager {
 			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
 
-		$wpdb->query( 'COMMIT' );
-
-		// Clear order commission fields.
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-
+		// 3. Clear order commission fields to prevent double-reversal.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			$orders_table,
@@ -768,6 +788,8 @@ class OrderWorkflowManager {
 			),
 			array( 'id' => $order_id )
 		);
+
+		$wpdb->query( 'COMMIT' );
 	}
 
 	/**

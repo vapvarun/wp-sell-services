@@ -146,6 +146,12 @@ class ExtensionRequestsController extends RestController {
 		$user_id    = get_current_user_id();
 		$table      = $wpdb->prefix . 'wpss_extension_requests';
 
+		// Only allow extensions on active orders.
+		$order = wpss_get_order( $order_id );
+		if ( $order && ! in_array( $order->status, array( 'in_progress', 'pending_approval', 'late', 'revision_requested' ), true ) ) {
+			return new WP_Error( 'invalid_order_status', __( 'Extensions can only be requested for active orders.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
 		// Check for existing pending request.
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(

@@ -203,35 +203,29 @@ class SellerLevelsController extends RestController {
 	 * @return array
 	 */
 	private function get_vendor_stats( int $vendor_id ): array {
-		global $wpdb;
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$level_service = new SellerLevelService();
+		$stats         = $level_service->get_vendor_stats( $vendor_id );
 
-		$stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT
-					COUNT(*) as total_orders,
-					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					AVG(CASE WHEN status = 'completed' THEN total ELSE NULL END) as avg_order_value,
-					SUM(CASE WHEN status = 'completed' THEN vendor_earnings ELSE 0 END) as total_earnings
-				FROM {$orders_table}
-				WHERE vendor_id = %d",
-				$vendor_id
-			)
-		);
-
-		$rating_avg   = (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ) ?: 0;
-		$rating_count = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ) ?: 0;
-
-		$completion_rate = $stats && (int) $stats->total_orders > 0
-			? round( ( (int) $stats->completed_orders / (int) $stats->total_orders ) * 100, 1 )
-			: 0;
+		if ( ! $stats ) {
+			return array(
+				'completed_orders' => 0,
+				'total_earnings'   => 0,
+				'avg_rating'       => 0,
+				'total_reviews'    => 0,
+				'response_rate'    => 0,
+				'delivery_rate'    => 0,
+				'days_active'      => 0,
+			);
+		}
 
 		return array(
-			'completed_orders' => (int) ( $stats->completed_orders ?? 0 ),
-			'total_earnings'   => round( (float) ( $stats->total_earnings ?? 0 ), 2 ),
-			'avg_rating'       => round( $rating_avg, 2 ),
-			'total_reviews'    => $rating_count,
-			'completion_rate'  => $completion_rate,
+			'completed_orders' => (int) $stats->completed_orders,
+			'total_earnings'   => 0,
+			'avg_rating'       => round( (float) $stats->avg_rating, 2 ),
+			'total_reviews'    => (int) $stats->total_reviews,
+			'response_rate'    => round( (float) $stats->response_rate, 1 ),
+			'delivery_rate'    => round( (float) $stats->delivery_rate, 1 ),
+			'days_active'      => (int) $stats->days_active,
 		);
 	}
 
@@ -241,40 +235,31 @@ class SellerLevelsController extends RestController {
 	 * @return array
 	 */
 	private function get_level_definitions(): array {
-		$levels = array(
-			'new'       => array(
-				'key'          => 'new',
-				'label'        => __( 'New Seller', 'wp-sell-services' ),
-				'requirements' => array(),
-			),
-			'level_1'   => array(
-				'key'          => 'level_1',
-				'label'        => __( 'Level 1 Seller', 'wp-sell-services' ),
-				'requirements' => array(
-					'completed_orders' => 5,
-					'avg_rating'       => 4.0,
-					'completion_rate'  => 80,
-				),
-			),
-			'level_2'   => array(
-				'key'          => 'level_2',
-				'label'        => __( 'Level 2 Seller', 'wp-sell-services' ),
-				'requirements' => array(
-					'completed_orders' => 25,
-					'avg_rating'       => 4.5,
-					'completion_rate'  => 90,
-				),
-			),
-			'top_rated' => array(
-				'key'          => 'top_rated',
-				'label'        => __( 'Top Rated Seller', 'wp-sell-services' ),
-				'requirements' => array(
-					'completed_orders' => 100,
-					'avg_rating'       => 4.8,
-					'completion_rate'  => 95,
-				),
-			),
+		$level_service  = new SellerLevelService();
+		$all_reqs       = $level_service->get_all_requirements();
+
+		$labels = array(
+			'new'       => __( 'New Seller', 'wp-sell-services' ),
+			'level_1'   => __( 'Level 1 Seller', 'wp-sell-services' ),
+			'level_2'   => __( 'Level 2 Seller', 'wp-sell-services' ),
+			'top_rated' => __( 'Top Rated Seller', 'wp-sell-services' ),
 		);
+
+		$levels = array();
+		foreach ( $all_reqs as $key => $reqs ) {
+			$levels[ $key ] = array(
+				'key'          => $key,
+				'label'        => $labels[ $key ] ?? ucfirst( str_replace( '_', ' ', $key ) ),
+				'requirements' => array(
+					'completed_orders' => $reqs['min_orders'] ?? 0,
+					'avg_rating'       => $reqs['min_rating'] ?? 0,
+					'total_reviews'    => $reqs['min_reviews'] ?? 0,
+					'response_rate'    => $reqs['min_response_rate'] ?? 0,
+					'delivery_rate'    => $reqs['min_delivery_rate'] ?? 0,
+					'days_active'      => $reqs['min_days_active'] ?? 0,
+				),
+			);
+		}
 
 		/**
 		 * Filter seller level definitions.

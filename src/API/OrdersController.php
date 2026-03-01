@@ -586,16 +586,14 @@ class OrdersController extends RestController {
 			case 'start':
 				if ( ! $is_vendor && ! $is_admin ) {
 					$error = __( 'Only the vendor can start work.', 'wp-sell-services' );
-				} elseif ( ! in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
+				} elseif ( ! in_array( $order->status, array( 'accepted', 'requirements_submitted', 'pending_requirements' ), true ) ) {
 					$error = __( 'Order cannot be started in current status.', 'wp-sell-services' );
 				} else {
-					$result = $order->update(
-						array(
-							'status'     => 'in_progress',
-							'started_at' => current_time( 'mysql' ),
-						)
-					);
-					do_action( 'wpss_order_started', $order_id );
+					$order_service = new \WPSellServices\Services\OrderService();
+					$result        = $order_service->start_work( $order_id );
+					if ( $result ) {
+						do_action( 'wpss_order_started', $order_id );
+					}
 				}
 				break;
 
