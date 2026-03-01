@@ -242,6 +242,7 @@ class OrderService {
 				ServiceOrder::STATUS_DISPUTED,
 			),
 			ServiceOrder::STATUS_LATE                   => array(
+				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_DISPUTED,

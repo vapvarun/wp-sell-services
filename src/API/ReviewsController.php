@@ -320,6 +320,22 @@ class ReviewsController extends RestController {
 			);
 		}
 
+		// Enforce review window (default 30 days after completion).
+		$order_settings  = get_option( 'wpss_orders', array() );
+		$review_window   = (int) ( $order_settings['review_window_days'] ?? 30 );
+		if ( $review_window > 0 && ! empty( $order->completed_at ) ) {
+			$completed_time = strtotime( $order->completed_at );
+			$deadline       = $completed_time + ( $review_window * DAY_IN_SECONDS );
+			if ( time() > $deadline ) {
+				return new WP_Error(
+					'rest_review_window_expired',
+					/* translators: %d: number of days */
+					sprintf( __( 'The review window of %d days has expired.', 'wp-sell-services' ), $review_window ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
 		// Check if already reviewed.
 		$reviews_table = $wpdb->prefix . 'wpss_reviews';
 		$existing      = $wpdb->get_var(
@@ -706,7 +722,9 @@ class ReviewsController extends RestController {
 			)
 		);
 
-		update_post_meta( $service_id, '_wpss_rating_count', (int) $service_stats->count );
+		$service_count = (int) $service_stats->count;
+		update_post_meta( $service_id, '_wpss_rating_count', $service_count );
+		update_post_meta( $service_id, '_wpss_review_count', $service_count );
 		update_post_meta( $service_id, '_wpss_rating_average', round( (float) $service_stats->average, 1 ) );
 
 		// Update vendor rating.

@@ -96,7 +96,7 @@ class PortfolioController extends RestController {
 							'description' => __( 'Portfolio item description.', 'wp-sell-services' ),
 							'type'        => 'string',
 						),
-						'images'      => array(
+						'media'        => array(
 							'description' => __( 'Attachment IDs.', 'wp-sell-services' ),
 							'type'        => 'array',
 							'items'       => array( 'type' => 'integer' ),
@@ -105,7 +105,7 @@ class PortfolioController extends RestController {
 							'description' => __( 'Related service ID.', 'wp-sell-services' ),
 							'type'        => 'integer',
 						),
-						'url'         => array(
+						'external_url' => array(
 							'description' => __( 'External project URL.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'format'      => 'uri',
@@ -235,20 +235,20 @@ class PortfolioController extends RestController {
 		$table = $wpdb->prefix . 'wpss_portfolio_items';
 
 		$vendor_id = get_current_user_id();
-		$images    = $request->get_param( 'images' );
+		$media     = $request->get_param( 'media' );
 
 		$wpdb->insert(
 			$table,
 			array(
-				'vendor_id'   => $vendor_id,
-				'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
-				'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?: '' ),
-				'images'      => wp_json_encode( is_array( $images ) ? array_map( 'intval', $images ) : array() ),
-				'service_id'  => (int) $request->get_param( 'service_id' ),
-				'url'         => esc_url_raw( $request->get_param( 'url' ) ?: '' ),
-				'is_featured' => 0,
-				'sort_order'  => 0,
-				'created_at'  => current_time( 'mysql', true ),
+				'vendor_id'    => $vendor_id,
+				'title'        => sanitize_text_field( $request->get_param( 'title' ) ),
+				'description'  => sanitize_textarea_field( $request->get_param( 'description' ) ?: '' ),
+				'media'        => wp_json_encode( is_array( $media ) ? array_map( 'intval', $media ) : array() ),
+				'service_id'   => (int) $request->get_param( 'service_id' ),
+				'external_url' => esc_url_raw( $request->get_param( 'external_url' ) ?: '' ),
+				'is_featured'  => 0,
+				'sort_order'   => 0,
+				'created_at'   => current_time( 'mysql', true ),
 			),
 			array( '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s' )
 		);
@@ -289,9 +289,9 @@ class PortfolioController extends RestController {
 			$format[]              = '%s';
 		}
 
-		if ( $request->has_param( 'images' ) ) {
-			$images          = $request->get_param( 'images' );
-			$update['images'] = wp_json_encode( is_array( $images ) ? array_map( 'intval', $images ) : array() );
+		if ( $request->has_param( 'media' ) ) {
+			$media           = $request->get_param( 'media' );
+			$update['media'] = wp_json_encode( is_array( $media ) ? array_map( 'intval', $media ) : array() );
 			$format[]        = '%s';
 		}
 
@@ -300,9 +300,9 @@ class PortfolioController extends RestController {
 			$format[]             = '%d';
 		}
 
-		if ( $request->has_param( 'url' ) ) {
-			$update['url'] = esc_url_raw( $request->get_param( 'url' ) );
-			$format[]      = '%s';
+		if ( $request->has_param( 'external_url' ) ) {
+			$update['external_url'] = esc_url_raw( $request->get_param( 'external_url' ) );
+			$format[]               = '%s';
 		}
 
 		if ( ! empty( $update ) ) {
@@ -455,14 +455,14 @@ class PortfolioController extends RestController {
 	 * @return array
 	 */
 	private function format_item( array $item ): array {
-		$images     = json_decode( $item['images'] ?? '[]', true );
-		$image_urls = array();
+		$media      = json_decode( $item['media'] ?? '[]', true );
+		$media_urls = array();
 
-		if ( is_array( $images ) ) {
-			foreach ( $images as $attachment_id ) {
+		if ( is_array( $media ) ) {
+			foreach ( $media as $attachment_id ) {
 				$url = wp_get_attachment_url( $attachment_id );
 				if ( $url ) {
-					$image_urls[] = array(
+					$media_urls[] = array(
 						'id'        => $attachment_id,
 						'url'       => $url,
 						'thumbnail' => wp_get_attachment_image_url( $attachment_id, 'thumbnail' ),
@@ -472,16 +472,16 @@ class PortfolioController extends RestController {
 		}
 
 		return array(
-			'id'          => (int) $item['id'],
-			'vendor_id'   => (int) $item['vendor_id'],
-			'title'       => $item['title'],
-			'description' => $item['description'] ?? '',
-			'images'      => $image_urls,
-			'service_id'  => (int) ( $item['service_id'] ?? 0 ),
-			'url'         => $item['url'] ?? '',
-			'is_featured' => (bool) ( $item['is_featured'] ?? false ),
-			'sort_order'  => (int) ( $item['sort_order'] ?? 0 ),
-			'created_at'  => $item['created_at'] ?? '',
+			'id'           => (int) $item['id'],
+			'vendor_id'    => (int) $item['vendor_id'],
+			'title'        => $item['title'],
+			'description'  => $item['description'] ?? '',
+			'media'        => $media_urls,
+			'service_id'   => (int) ( $item['service_id'] ?? 0 ),
+			'external_url' => $item['external_url'] ?? '',
+			'is_featured'  => (bool) ( $item['is_featured'] ?? false ),
+			'sort_order'   => (int) ( $item['sort_order'] ?? 0 ),
+			'created_at'   => $item['created_at'] ?? '',
 		);
 	}
 }

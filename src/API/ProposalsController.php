@@ -386,8 +386,8 @@ class ProposalsController extends RestController {
 				'name'   => $vendor ? $vendor->display_name : '',
 				'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
 			],
-			'price'         => (float) $proposal->price,
-			'delivery_days' => (int) $proposal->delivery_days,
+			'price'         => (float) $proposal->proposed_price,
+			'delivery_days' => (int) $proposal->proposed_days,
 			'status'        => $proposal->status,
 			'created_at'    => $proposal->created_at,
 		];

@@ -14,6 +14,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Services\NotificationService;
 
 /**
  * REST controller for notifications.
@@ -191,6 +192,8 @@ class NotificationsController extends RestController {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_notifications';
 
+		// Verify notification belongs to the current user.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$notification = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$table} WHERE id = %d AND user_id = %d",
@@ -207,13 +210,9 @@ class NotificationsController extends RestController {
 			);
 		}
 
-		$wpdb->update(
-			$table,
-			array( 'is_read' => 1 ),
-			array( 'id' => $notification_id ),
-			array( '%d' ),
-			array( '%d' )
-		);
+		// Use the service to mark as read (handles cache invalidation).
+		$notification_service = new NotificationService();
+		$notification_service->mark_as_read( $notification_id );
 
 		return new WP_REST_Response( array( 'success' => true ) );
 	}
@@ -225,19 +224,8 @@ class NotificationsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function mark_all_as_read( WP_REST_Request $request ): WP_REST_Response {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_notifications';
-
-		$wpdb->update(
-			$table,
-			array( 'is_read' => 1 ),
-			array(
-				'user_id' => get_current_user_id(),
-				'is_read' => 0,
-			),
-			array( '%d' ),
-			array( '%d', '%d' )
-		);
+		$notification_service = new NotificationService();
+		$notification_service->mark_all_as_read( get_current_user_id() );
 
 		return new WP_REST_Response( array( 'success' => true ) );
 	}

@@ -14,6 +14,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Services\SellerLevelService;
 
 /**
  * REST controller for seller levels and progression.
@@ -149,7 +150,8 @@ class SellerLevelsController extends RestController {
 	 * @return array
 	 */
 	private function build_vendor_level_data( int $vendor_id, bool $include_progress ): array {
-		$current_level = get_user_meta( $vendor_id, '_wpss_seller_level', true ) ?: 'new';
+		$level_service = new SellerLevelService();
+		$current_level = $level_service->get_current_level( $vendor_id );
 		$levels        = $this->get_level_definitions();
 		$label         = $levels[ $current_level ]['label'] ?? ucfirst( $current_level );
 
@@ -249,7 +251,7 @@ class SellerLevelsController extends RestController {
 				'key'          => 'level_1',
 				'label'        => __( 'Level 1 Seller', 'wp-sell-services' ),
 				'requirements' => array(
-					'completed_orders' => 10,
+					'completed_orders' => 5,
 					'avg_rating'       => 4.0,
 					'completion_rate'  => 80,
 				),
@@ -258,8 +260,7 @@ class SellerLevelsController extends RestController {
 				'key'          => 'level_2',
 				'label'        => __( 'Level 2 Seller', 'wp-sell-services' ),
 				'requirements' => array(
-					'completed_orders' => 50,
-					'total_earnings'   => 2000,
+					'completed_orders' => 25,
 					'avg_rating'       => 4.5,
 					'completion_rate'  => 90,
 				),
@@ -269,8 +270,7 @@ class SellerLevelsController extends RestController {
 				'label'        => __( 'Top Rated Seller', 'wp-sell-services' ),
 				'requirements' => array(
 					'completed_orders' => 100,
-					'total_earnings'   => 10000,
-					'avg_rating'       => 4.7,
+					'avg_rating'       => 4.8,
 					'completion_rate'  => 95,
 				),
 			),

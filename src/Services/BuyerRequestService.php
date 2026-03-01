@@ -453,7 +453,7 @@ class BuyerRequestService {
 
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$this->proposals_table} WHERE request_id = %d",
+				"SELECT COUNT(*) FROM {$this->proposals_table} WHERE request_id = %d AND status != 'withdrawn'",
 				$request_id
 			)
 		);

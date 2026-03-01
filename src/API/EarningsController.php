@@ -300,7 +300,7 @@ class EarningsController extends RestController {
 		}
 
 		// Check minimum withdrawal.
-		$min_amount = (float) get_option( 'wpss_min_withdrawal_amount', 10 );
+		$min_amount = \WPSellServices\Services\EarningsService::get_min_withdrawal_amount();
 		if ( $amount < $min_amount ) {
 			return new WP_Error(
 				'below_minimum',

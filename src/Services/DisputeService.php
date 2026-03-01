@@ -111,6 +111,19 @@ class DisputeService {
 			return false;
 		}
 
+		// Enforce dispute window (only for completed orders).
+		if ( 'completed' === $order->status && ! empty( $order->completed_at ) ) {
+			$order_settings       = get_option( 'wpss_orders', array() );
+			$dispute_window_days  = (int) ( $order_settings['dispute_window_days'] ?? 7 );
+			if ( $dispute_window_days > 0 ) {
+				$completed_time = strtotime( $order->completed_at );
+				$deadline       = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
+				if ( time() > $deadline ) {
+					return false;
+				}
+			}
+		}
+
 		// Determine the respondent (the other party on the order).
 		$respondent_id = ( (int) $order->customer_id === $opened_by )
 			? (int) $order->vendor_id

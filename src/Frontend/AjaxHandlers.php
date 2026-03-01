@@ -22,6 +22,7 @@ use WPSellServices\Services\ProposalService;
 use WPSellServices\Services\RequirementsService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\EmailService;
+use WPSellServices\Models\ServiceOrder;
 
 /**
  * Handles frontend AJAX requests.
@@ -551,7 +552,7 @@ class AjaxHandlers {
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
 
-		if ( ! $order || (int) $order->customer_id !== $user_id ) {
+		if ( ! $order || ( (int) $order->customer_id !== $user_id && ! current_user_can( 'manage_options' ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to submit requirements.', 'wp-sell-services' ) ) );
 		}
 
@@ -2452,6 +2453,11 @@ class AjaxHandlers {
 
 		// Mark requirements as skipped (can be submitted later).
 		update_post_meta( $order_id, '_wpss_requirements_skipped', true );
+
+		// Advance order to in_progress so the vendor can start working.
+		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) {
+			$order_service->start_work( $order_id );
+		}
 
 		$redirect_url = wpss_get_page_url( 'orders' );
 

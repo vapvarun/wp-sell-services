@@ -312,8 +312,10 @@ class ReviewService {
 		);
 
 		if ( $stats ) {
+			$count = (int) $stats->review_count;
 			update_post_meta( $service_id, '_wpss_rating_average', round( (float) $stats->avg_rating, 2 ) );
-			update_post_meta( $service_id, '_wpss_review_count', (int) $stats->review_count );
+			update_post_meta( $service_id, '_wpss_review_count', $count );
+			update_post_meta( $service_id, '_wpss_rating_count', $count );
 		}
 	}
 

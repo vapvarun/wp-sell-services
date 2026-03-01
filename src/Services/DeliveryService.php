@@ -157,8 +157,13 @@ class DeliveryService {
 		);
 
 		// Complete order.
-		$order_service = new OrderService();
-		$order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
+		$order_service  = new OrderService();
+		$status_updated = $order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
+
+		if ( ! $status_updated ) {
+			wpss_log( "Delivery accepted but status update to completed failed for order {$order_id}.", 'error' );
+			return false;
+		}
 
 		/**
 		 * Fires when delivery is accepted.
