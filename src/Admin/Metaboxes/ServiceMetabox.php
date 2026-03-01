@@ -583,12 +583,13 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	public function render_gallery_metabox( \WP_Post $post ): void {
-		$gallery = get_post_meta( $post->ID, '_wpss_gallery', true );
-		$gallery = ! empty( $gallery ) ? $gallery : array();
+		$gallery_raw = get_post_meta( $post->ID, '_wpss_gallery', true );
+		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 		?>
 		<div class="wpss-gallery-wrapper">
+			<input type="hidden" name="wpss_gallery_present" value="1">
 			<div id="wpss-gallery-images" class="wpss-gallery-grid">
-				<?php foreach ( $gallery as $attachment_id ) : ?>
+				<?php foreach ( $gallery_ids as $attachment_id ) : ?>
 					<?php if ( $attachment_id ) : ?>
 						<div class="wpss-gallery-item" data-id="<?php echo esc_attr( (string) $attachment_id ); ?>">
 							<?php echo wp_get_attachment_image( $attachment_id, 'thumbnail' ); ?>
@@ -1057,14 +1058,37 @@ class ServiceMetabox {
 			delete_post_meta( $post_id, '_wpss_addons' );
 		}
 
-		// Save gallery.
-		if ( isset( $_POST['wpss_gallery'] ) && is_array( $_POST['wpss_gallery'] ) ) {
-			$gallery = array_map( 'absint', $_POST['wpss_gallery'] );
-			$gallery = array_filter( $gallery );
-			update_post_meta( $post_id, '_wpss_gallery', $gallery );
-		} else {
-			delete_post_meta( $post_id, '_wpss_gallery' );
+		// Save gallery -- only process if the gallery metabox was rendered on this page.
+		// The sentinel field wpss_gallery_present indicates the gallery UI was present in the form.
+		if ( isset( $_POST['wpss_gallery_present'] ) ) {
+			if ( isset( $_POST['wpss_gallery'] ) && is_array( $_POST['wpss_gallery'] ) ) {
+				$gallery_ids = array_filter( array_map( 'absint', $_POST['wpss_gallery'] ) );
+
+				// Preserve video URL from existing gallery meta if present.
+				$existing_raw = get_post_meta( $post_id, '_wpss_gallery', true );
+				$video_url    = wpss_get_gallery_video_url( $existing_raw );
+
+				// Save in wizard-compatible structured format for consistency.
+				update_post_meta(
+					$post_id,
+					'_wpss_gallery',
+					array(
+						'images' => array_values( $gallery_ids ),
+						'video'  => $video_url,
+					)
+				);
+
+				// Set featured image from first gallery image if not already set.
+				if ( ! has_post_thumbnail( $post_id ) && ! empty( $gallery_ids ) ) {
+					set_post_thumbnail( $post_id, reset( $gallery_ids ) );
+				}
+			} else {
+				// Gallery UI was present but all images were removed.
+				delete_post_meta( $post_id, '_wpss_gallery' );
+			}
 		}
+		// If wpss_gallery_present is not set (e.g., AJAX/wizard save),
+		// leave existing gallery meta untouched to prevent accidental deletion.
 
 		/**
 		 * Fires after service meta is saved.
@@ -1385,16 +1409,17 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_media_content( \WP_Post $post ): void {
-		$gallery = get_post_meta( $post->ID, '_wpss_gallery', true );
-		$gallery = ! empty( $gallery ) ? $gallery : array();
+		$gallery_raw = get_post_meta( $post->ID, '_wpss_gallery', true );
+		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 		?>
 		<h3 class="wpss-panel-title"><?php esc_html_e( 'Gallery', 'wp-sell-services' ); ?></h3>
 
 		<p class="description"><?php esc_html_e( 'Add images to showcase your service. Drag to reorder.', 'wp-sell-services' ); ?></p>
 
 		<div class="wpss-gallery-wrapper wpss-media-panel">
+			<input type="hidden" name="wpss_gallery_present" value="1">
 			<div id="wpss-gallery-images" class="wpss-gallery-grid">
-				<?php foreach ( $gallery as $attachment_id ) : ?>
+				<?php foreach ( $gallery_ids as $attachment_id ) : ?>
 					<?php if ( $attachment_id ) : ?>
 						<div class="wpss-gallery-item" data-id="<?php echo esc_attr( (string) $attachment_id ); ?>">
 							<?php echo wp_get_attachment_image( $attachment_id, 'thumbnail' ); ?>

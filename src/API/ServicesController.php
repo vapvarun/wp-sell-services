@@ -666,21 +666,10 @@ class ServicesController extends RestController {
 		}
 
 		// Gallery images.
-		$gallery = get_post_meta( $service_id, '_wpss_gallery', true );
-		if ( is_array( $gallery ) ) {
-			// ServiceWizard saves as ['images' => [...], 'video' => '...'] — normalize.
-			$gallery_ids = array();
-			if ( isset( $gallery['images'] ) && is_array( $gallery['images'] ) ) {
-				$gallery_ids = array_map( 'absint', $gallery['images'] );
-			} else {
-				// GalleryService structured format.
-				foreach ( $gallery as $item ) {
-					if ( 'image' === ( $item['type'] ?? '' ) && ! empty( $item['attachment_id'] ) ) {
-						$gallery_ids[] = absint( $item['attachment_id'] );
-					}
-				}
-			}
+		$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
+		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 
+		if ( ! empty( $gallery_ids ) ) {
 			foreach ( $gallery_ids as $attachment_id ) {
 				if ( $attachment_id && wp_attachment_is_image( $attachment_id ) ) {
 					$images[] = array(

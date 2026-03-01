@@ -245,14 +245,15 @@ class YoastIntegration {
 			return $image_container;
 		}
 
-		$service_id = get_the_ID();
-		$gallery    = get_post_meta( $service_id, '_wpss_gallery', true );
+		$service_id  = get_the_ID();
+		$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
+		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 
-		if ( empty( $gallery ) || ! is_array( $gallery ) ) {
+		if ( empty( $gallery_ids ) ) {
 			return $image_container;
 		}
 
-		foreach ( $gallery as $image_id ) {
+		foreach ( $gallery_ids as $image_id ) {
 			$image_url = wp_get_attachment_image_url( $image_id, 'large' );
 			if ( $image_url ) {
 				$image_container->add_image_by_url( $image_url );
@@ -379,14 +380,13 @@ class YoastIntegration {
 		}
 
 		// Add gallery images.
-		$gallery = get_post_meta( $post->ID, '_wpss_gallery', true );
-		if ( is_array( $gallery ) ) {
-			foreach ( $gallery as $image_id ) {
-				$images[] = array(
-					'src'   => wp_get_attachment_image_url( $image_id, 'full' ),
-					'title' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ) ?: $post->post_title,
-				);
-			}
+		$gallery_raw = get_post_meta( $post->ID, '_wpss_gallery', true );
+		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
+		foreach ( $gallery_ids as $image_id ) {
+			$images[] = array(
+				'src'   => wp_get_attachment_image_url( $image_id, 'full' ),
+				'title' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ) ?: $post->post_title,
+			);
 		}
 
 		if ( ! empty( $images ) ) {

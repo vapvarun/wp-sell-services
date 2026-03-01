@@ -199,37 +199,14 @@ class Service {
 	/**
 	 * Normalize gallery meta value into a flat array of attachment IDs.
 	 *
-	 * Handles multiple storage formats:
-	 * - ServiceWizard format: ['images' => [id, ...], 'video' => '...']
-	 * - GalleryService format: [['type' => 'image', 'attachment_id' => id], ...]
-	 * - Legacy flat array: [id, id, ...]
+	 * Delegates to the shared wpss_get_gallery_ids() helper which handles
+	 * all storage formats (wizard, legacy flat array, GalleryService).
 	 *
 	 * @param mixed $raw Raw gallery meta value.
 	 * @return int[] Array of attachment IDs.
 	 */
 	private static function normalize_gallery_ids( $raw ): array {
-		if ( ! is_array( $raw ) || empty( $raw ) ) {
-			return array();
-		}
-
-		// ServiceWizard format: ['images' => [...], 'video' => '...'].
-		if ( isset( $raw['images'] ) && is_array( $raw['images'] ) ) {
-			return array_values( array_filter( array_map( 'absint', $raw['images'] ) ) );
-		}
-
-		// GalleryService format: [['type' => 'image', 'attachment_id' => 123], ...].
-		if ( isset( $raw[0]['type'] ) ) {
-			$ids = array();
-			foreach ( $raw as $item ) {
-				if ( 'image' === ( $item['type'] ?? '' ) && ! empty( $item['attachment_id'] ) ) {
-					$ids[] = absint( $item['attachment_id'] );
-				}
-			}
-			return $ids;
-		}
-
-		// Legacy flat array of IDs: [123, 456, ...].
-		return array_values( array_filter( array_map( 'absint', $raw ) ) );
+		return wpss_get_gallery_ids( $raw );
 	}
 
 	/**

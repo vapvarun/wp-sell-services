@@ -353,16 +353,15 @@ class RankMathIntegration {
 			);
 		}
 
-		$gallery = get_post_meta( $object->ID, '_wpss_gallery', true );
-		if ( is_array( $gallery ) ) {
-			foreach ( $gallery as $image_id ) {
-				$url = wp_get_attachment_image_url( $image_id, 'full' );
-				if ( $url ) {
-					$images[] = array(
-						'src'   => $url,
-						'title' => $object->post_title,
-					);
-				}
+		$gallery_raw = get_post_meta( $object->ID, '_wpss_gallery', true );
+		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
+		foreach ( $gallery_ids as $image_id ) {
+			$url = wp_get_attachment_image_url( $image_id, 'full' );
+			if ( $url ) {
+				$images[] = array(
+					'src'   => $url,
+					'title' => $object->post_title,
+				);
 			}
 		}
 

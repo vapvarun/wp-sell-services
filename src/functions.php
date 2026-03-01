@@ -846,6 +846,74 @@ function wpss_get_service_packages( int $service_id ): array {
 }
 
 /**
+ * Normalize gallery meta into a flat array of attachment IDs.
+ *
+ * Handles all gallery storage formats:
+ * - ServiceWizard format: ['images' => [id, ...], 'video' => '...']
+ * - Legacy flat array: [id, id, ...]
+ * - GalleryService format: [['type' => 'image', 'attachment_id' => id], ...]
+ *
+ * @since 1.1.0
+ *
+ * @param mixed $raw Raw gallery meta value (from get_post_meta).
+ * @return int[] Flat array of attachment IDs.
+ */
+function wpss_get_gallery_ids( $raw ): array {
+	if ( ! is_array( $raw ) || empty( $raw ) ) {
+		return array();
+	}
+
+	// ServiceWizard format: ['images' => [...], 'video' => '...'].
+	if ( isset( $raw['images'] ) && is_array( $raw['images'] ) ) {
+		return array_values( array_filter( array_map( 'absint', $raw['images'] ) ) );
+	}
+
+	// GalleryService format: [['type' => 'image', 'attachment_id' => 123], ...].
+	if ( isset( $raw[0] ) && is_array( $raw[0] ) && isset( $raw[0]['type'] ) ) {
+		$ids = array();
+		foreach ( $raw as $item ) {
+			if ( 'image' === ( $item['type'] ?? '' ) && ! empty( $item['attachment_id'] ) ) {
+				$ids[] = absint( $item['attachment_id'] );
+			}
+		}
+		return $ids;
+	}
+
+	// Legacy flat array of IDs: [123, 456, ...].
+	return array_values( array_filter( array_map( 'absint', $raw ) ) );
+}
+
+/**
+ * Get the video URL from gallery meta.
+ *
+ * @since 1.1.0
+ *
+ * @param mixed $raw Raw gallery meta value (from get_post_meta).
+ * @return string Video URL or empty string.
+ */
+function wpss_get_gallery_video_url( $raw ): string {
+	if ( ! is_array( $raw ) ) {
+		return '';
+	}
+
+	// ServiceWizard format: ['images' => [...], 'video' => '...'].
+	if ( isset( $raw['video'] ) && is_string( $raw['video'] ) ) {
+		return $raw['video'];
+	}
+
+	// GalleryService format: [['type' => 'video', 'url' => '...'], ...].
+	if ( isset( $raw[0] ) && is_array( $raw[0] ) ) {
+		foreach ( $raw as $item ) {
+			if ( 'video' === ( $item['type'] ?? '' ) && ! empty( $item['url'] ) ) {
+				return $item['url'];
+			}
+		}
+	}
+
+	return '';
+}
+
+/**
  * Get order confirmation URL (thank you page).
  *
  * @param int $order_id Order ID.

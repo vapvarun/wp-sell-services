@@ -131,7 +131,14 @@ class ServiceManager {
 		// Save gallery and set featured image.
 		if ( ! empty( $data['gallery'] ) ) {
 			$gallery_ids = array_map( 'absint', $data['gallery'] );
-			update_post_meta( $post_id, '_wpss_gallery', $gallery_ids );
+			update_post_meta(
+				$post_id,
+				'_wpss_gallery',
+				array(
+					'images' => array_values( array_filter( $gallery_ids ) ),
+					'video'  => '',
+				)
+			);
 
 			// Set featured image from first gallery image if not already set.
 			if ( ! has_post_thumbnail( $post_id ) && ! empty( $gallery_ids[0] ) ) {
@@ -218,7 +225,19 @@ class ServiceManager {
 		// Update gallery and set featured image.
 		if ( isset( $data['gallery'] ) ) {
 			$gallery_ids = array_map( 'absint', $data['gallery'] );
-			update_post_meta( $service_id, '_wpss_gallery', $gallery_ids );
+
+			// Preserve existing video URL if present.
+			$existing_raw = get_post_meta( $service_id, '_wpss_gallery', true );
+			$video_url    = wpss_get_gallery_video_url( $existing_raw );
+
+			update_post_meta(
+				$service_id,
+				'_wpss_gallery',
+				array(
+					'images' => array_values( array_filter( $gallery_ids ) ),
+					'video'  => $video_url,
+				)
+			);
 
 			// Set featured image from first gallery image if not already set.
 			if ( ! has_post_thumbnail( $service_id ) && ! empty( $gallery_ids[0] ) ) {

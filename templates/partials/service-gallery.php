@@ -15,29 +15,13 @@
 defined( 'ABSPATH' ) || exit;
 
 $service_id  = get_the_ID();
-$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true ) ?: [];
-$gallery_ids = [];
+$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
+$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 
-// Handle multiple gallery formats for compatibility.
-if ( isset( $gallery_raw['images'] ) && is_array( $gallery_raw['images'] ) ) {
-	// ServiceWizard format: ['images' => [...], 'video' => '...'].
-	$gallery_ids = array_map( 'absint', $gallery_raw['images'] );
-	$video_url   = $gallery_raw['video'] ?? '';
-	if ( $video_url ) {
-		update_post_meta( $service_id, '_wpss_video_url', esc_url_raw( $video_url ) );
-	}
-} elseif ( ! empty( $gallery_raw ) && is_array( $gallery_raw ) && isset( $gallery_raw[0]['type'] ) ) {
-	// GalleryService format: [['type' => 'image', 'attachment_id' => 123], ...].
-	foreach ( $gallery_raw as $item ) {
-		if ( 'image' === ( $item['type'] ?? '' ) && ! empty( $item['attachment_id'] ) ) {
-			$gallery_ids[] = absint( $item['attachment_id'] );
-		} elseif ( 'video' === ( $item['type'] ?? '' ) && ! empty( $item['url'] ) ) {
-			update_post_meta( $service_id, '_wpss_video_url', esc_url_raw( $item['url'] ) );
-		}
-	}
-} elseif ( is_array( $gallery_raw ) ) {
-	// Legacy flat array of IDs: [123, 456, ...].
-	$gallery_ids = array_map( 'absint', $gallery_raw );
+// Extract and persist video URL from gallery meta (used for video display below).
+$video_url = wpss_get_gallery_video_url( $gallery_raw );
+if ( $video_url ) {
+	update_post_meta( $service_id, '_wpss_video_url', esc_url_raw( $video_url ) );
 }
 
 $has_thumbnail = has_post_thumbnail( $service_id );

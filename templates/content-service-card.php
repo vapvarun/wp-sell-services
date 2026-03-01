@@ -64,8 +64,9 @@ do_action( 'wpss_before_service_card', $service_id );
 			// Fallback to first gallery image if no featured image.
 			if ( ! $has_image ) {
 				$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
-				if ( is_array( $gallery_raw ) && isset( $gallery_raw['images'] ) && ! empty( $gallery_raw['images'][0] ) ) {
-					$gallery_image = absint( $gallery_raw['images'][0] );
+				$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
+				if ( ! empty( $gallery_ids[0] ) ) {
+					$gallery_image = $gallery_ids[0];
 				}
 			}
 			?>

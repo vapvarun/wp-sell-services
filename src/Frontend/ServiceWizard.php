@@ -1153,7 +1153,7 @@ class ServiceWizard {
 		$result = array(
 			'main'   => null,
 			'images' => array(),
-			'video'  => $gallery['video'] ?? '',
+			'video'  => wpss_get_gallery_video_url( $gallery ),
 		);
 
 		// Get main image from featured image.
@@ -1165,16 +1165,15 @@ class ServiceWizard {
 			);
 		}
 
-		// Get additional images.
-		if ( ! empty( $gallery['images'] ) ) {
-			foreach ( $gallery['images'] as $image_id ) {
-				$url = wp_get_attachment_image_url( $image_id, 'medium' );
-				if ( $url ) {
-					$result['images'][] = array(
-						'id'  => $image_id,
-						'url' => $url,
-					);
-				}
+		// Get additional images using the shared helper to handle all formats.
+		$image_ids = wpss_get_gallery_ids( $gallery );
+		foreach ( $image_ids as $image_id ) {
+			$url = wp_get_attachment_image_url( $image_id, 'medium' );
+			if ( $url ) {
+				$result['images'][] = array(
+					'id'  => $image_id,
+					'url' => $url,
+				);
 			}
 		}
 

@@ -624,70 +624,89 @@ class ManualOrderPage {
 		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
 
 		// --- 10. Insert order ---
+		// Build data/format arrays dynamically to avoid passing null values
+		// to $wpdb->insert(), which triggers PHP 8.1+ deprecation notices
+		// in wp_slash() → addslashes() and str_replace().
 		global $wpdb;
+
+		$data   = array(
+			'order_number'       => $order_number,
+			'customer_id'        => $customer_id,
+			'vendor_id'          => $vendor_id,
+			'service_id'         => $service_id,
+			'platform'           => 'manual',
+			'addons'             => wp_json_encode( $selected_addons ),
+			'subtotal'           => $subtotal,
+			'addons_total'       => $addons_total,
+			'total'              => $total,
+			'currency'           => $currency,
+			'status'             => $status,
+			'payment_method'     => $payment_method,
+			'payment_status'     => $payment_status,
+			'commission_rate'    => $commission_rate,
+			'platform_fee'       => $platform_fee,
+			'vendor_earnings'    => $vendor_earnings,
+			'revisions_included' => $revisions_included,
+			'revisions_used'     => 0,
+			'created_at'         => current_time( 'mysql', true ),
+			'updated_at'         => current_time( 'mysql', true ),
+		);
+		$format = array(
+			'%s', // order_number.
+			'%d', // customer_id.
+			'%d', // vendor_id.
+			'%d', // service_id.
+			'%s', // platform.
+			'%s', // addons.
+			'%f', // subtotal.
+			'%f', // addons_total.
+			'%f', // total.
+			'%s', // currency.
+			'%s', // status.
+			'%s', // payment_method.
+			'%s', // payment_status.
+			'%f', // commission_rate.
+			'%f', // platform_fee.
+			'%f', // vendor_earnings.
+			'%d', // revisions_included.
+			'%d', // revisions_used.
+			'%s', // created_at.
+			'%s', // updated_at.
+		);
+
+		// Only include nullable columns when they have non-null values.
+		if ( $package_id ) {
+			$data['package_id'] = $package_id;
+			$format[]           = '%d';
+		}
+		if ( $transaction_id ) {
+			$data['transaction_id'] = $transaction_id;
+			$format[]               = '%s';
+		}
+		if ( $deadline ) {
+			$data['delivery_deadline'] = $deadline;
+			$format[]                  = '%s';
+			$data['original_deadline'] = $deadline;
+			$format[]                  = '%s';
+		}
+		if ( 'in_progress' === $status ) {
+			$data['started_at'] = current_time( 'mysql', true );
+			$format[]           = '%s';
+		}
+		if ( 'paid' === $payment_status ) {
+			$data['paid_at'] = current_time( 'mysql', true );
+			$format[]        = '%s';
+		}
+		if ( 'completed' === $status ) {
+			$data['completed_at'] = current_time( 'mysql', true );
+			$format[]             = '%s';
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$wpdb->prefix . 'wpss_orders',
-			array(
-				'order_number'       => $order_number,
-				'customer_id'        => $customer_id,
-				'vendor_id'          => $vendor_id,
-				'service_id'         => $service_id,
-				'package_id'         => $package_id ? $package_id : null,
-				'platform'           => 'manual',
-				'platform_order_id'  => null,
-				'transaction_id'     => $transaction_id ? $transaction_id : null,
-				'addons'             => wp_json_encode( $selected_addons ),
-				'subtotal'           => $subtotal,
-				'addons_total'       => $addons_total,
-				'total'              => $total,
-				'currency'           => $currency,
-				'status'             => $status,
-				'payment_method'     => $payment_method,
-				'payment_status'     => $payment_status,
-				'commission_rate'    => $commission_rate,
-				'platform_fee'       => $platform_fee,
-				'vendor_earnings'    => $vendor_earnings,
-				'revisions_included' => $revisions_included,
-				'revisions_used'     => 0,
-				'delivery_deadline'  => $deadline,
-				'original_deadline'  => $deadline,
-				'started_at'         => 'in_progress' === $status ? current_time( 'mysql', true ) : null,
-				'paid_at'            => 'paid' === $payment_status ? current_time( 'mysql', true ) : null,
-				'completed_at'       => 'completed' === $status ? current_time( 'mysql', true ) : null,
-				'created_at'         => current_time( 'mysql', true ),
-				'updated_at'         => current_time( 'mysql', true ),
-			),
-			array(
-				'%s', // order_number.
-				'%d', // customer_id.
-				'%d', // vendor_id.
-				'%d', // service_id.
-				'%d', // package_id.
-				'%s', // platform.
-				'%d', // platform_order_id.
-				'%s', // transaction_id.
-				'%s', // addons.
-				'%f', // subtotal.
-				'%f', // addons_total.
-				'%f', // total.
-				'%s', // currency.
-				'%s', // status.
-				'%s', // payment_method.
-				'%s', // payment_status.
-				'%f', // commission_rate.
-				'%f', // platform_fee.
-				'%f', // vendor_earnings.
-				'%d', // revisions_included.
-				'%d', // revisions_used.
-				'%s', // delivery_deadline.
-				'%s', // original_deadline.
-				'%s', // started_at.
-				'%s', // paid_at.
-				'%s', // completed_at.
-				'%s', // created_at.
-				'%s', // updated_at.
-			)
+			$data,
+			$format
 		);
 
 		if ( ! $result ) {

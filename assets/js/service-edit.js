@@ -149,7 +149,7 @@
 			// Skip to full editor.
 			$skipBtn.on('click', function() {
 				// Save the post to convert from auto-draft.
-				$('#publish').trigger('click');
+				self.savePost();
 			});
 		},
 
@@ -189,13 +189,43 @@
 		},
 
 		/**
+		 * Save the post using the appropriate editor API.
+		 *
+		 * Supports both the classic editor (#publish button) and the
+		 * block editor (wp.data store). After saving in the block
+		 * editor the page is reloaded so the metabox switches from
+		 * wizard mode to the normal tabbed view.
+		 */
+		savePost: function() {
+			// Classic editor: the #publish submit button exists.
+			if ($('#publish').length) {
+				$('#publish').trigger('click');
+				return;
+			}
+
+			// Block editor: use the wp.data store to save, then
+			// reload so the metabox re-renders in tabs mode.
+			if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+				var saveResult = wp.data.dispatch('core/editor').savePost();
+
+				// After the save completes, reload to switch from
+				// wizard mode to the tabbed interface.
+				if (saveResult && typeof saveResult.then === 'function') {
+					saveResult.then(function() {
+						window.location.reload();
+					});
+				}
+				return;
+			}
+		},
+
+		/**
 		 * Complete the wizard and trigger save.
 		 *
 		 * @param {jQuery} $wrap Main wrapper element.
 		 */
 		completeWizard: function($wrap) {
-			// Trigger the publish button to save the service.
-			$('#publish').trigger('click');
+			this.savePost();
 		}
 	};
 
