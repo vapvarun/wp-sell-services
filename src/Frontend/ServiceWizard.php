@@ -1886,26 +1886,48 @@ class ServiceWizard {
 		update_post_meta( $service_id, '_wpss_starting_price', $data['packages']['basic']['price'] ?? 0 );
 
 		// Save gallery images.
+		// Collect additional gallery image IDs, filtering out invalid attachments.
 		$gallery_ids = array();
 		foreach ( $data['gallery']['images'] as $image ) {
-			$gallery_ids[] = $image['id'];
+			$id = absint( $image['id'] ?? 0 );
+			if ( $id && get_post( $id ) ) {
+				$gallery_ids[] = $id;
+			}
+		}
+
+		// Determine the featured image ID (main image, or first gallery image as fallback).
+		$thumbnail_id = 0;
+		if ( ! empty( $data['gallery']['main']['id'] ) ) {
+			$main_id = absint( $data['gallery']['main']['id'] );
+			if ( $main_id && get_post( $main_id ) ) {
+				$thumbnail_id = $main_id;
+			}
+		}
+		if ( ! $thumbnail_id && ! empty( $gallery_ids[0] ) ) {
+			$thumbnail_id = $gallery_ids[0];
+		}
+
+		// Include main image in gallery IDs so templates always have at least one
+		// image to display, even if set_post_thumbnail() were to fail silently.
+		$all_gallery_ids = $gallery_ids;
+		if ( $thumbnail_id && ! in_array( $thumbnail_id, $all_gallery_ids, true ) ) {
+			array_unshift( $all_gallery_ids, $thumbnail_id );
 		}
 
 		update_post_meta(
 			$service_id,
 			'_wpss_gallery',
 			array(
-				'images' => $gallery_ids,
+				'images' => $all_gallery_ids,
 				'video'  => $data['gallery']['video'] ?? '',
 			)
 		);
 
-		// Set featured image from main gallery image, or fallback to first gallery image.
-		if ( ! empty( $data['gallery']['main']['id'] ) ) {
-			set_post_thumbnail( $service_id, $data['gallery']['main']['id'] );
-		} elseif ( ! empty( $gallery_ids[0] ) ) {
-			// Fallback: use first gallery image as featured image.
-			set_post_thumbnail( $service_id, $gallery_ids[0] );
+		// Set featured image directly via update_post_meta to avoid
+		// set_post_thumbnail()'s silent deletion when attachment metadata
+		// is incomplete (e.g., async thumbnail generation).
+		if ( $thumbnail_id ) {
+			update_post_meta( $service_id, '_thumbnail_id', $thumbnail_id );
 		}
 
 		// Save requirements.

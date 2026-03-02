@@ -732,6 +732,8 @@ class ManualOrderPage {
 		}
 
 		// --- 13. Fire hooks ---
+		// Wrap in output buffer to prevent PHP deprecation notices or stray
+		// output from notification handlers from corrupting the JSON response.
 		$order_data = array(
 			'service_id'     => $service_id,
 			'package_id'     => $package_id,
@@ -745,9 +747,11 @@ class ManualOrderPage {
 			'payment_method' => $payment_method,
 			'platform'       => 'manual',
 		);
+		ob_start();
 		do_action( 'wpss_order_created', $order_id, $order_data );
 		do_action( 'wpss_order_status_changed', $order_id, $status, '' );
 		do_action( "wpss_order_status_{$status}", $order_id, '' );
+		ob_end_clean();
 
 		// --- 14. Send response ---
 		wp_send_json_success(

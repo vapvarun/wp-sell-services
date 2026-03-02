@@ -253,14 +253,16 @@ class NotificationService {
 			return;
 		}
 
-		// Get service and user details.
+		// Get service and user details (null-safe to prevent PHP 8.1+ deprecation
+		// notices in string functions, which would corrupt AJAX JSON responses).
 		$service      = get_post( $order->service_id );
 		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
 		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
 		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
-		$amount       = wpss_format_price( $order->total );
+		$order_number = (string) ( $order->order_number ?? '' );
+		$amount       = wpss_format_price( (float) ( $order->total ?? 0 ) );
 
 		// Notify vendor with detailed message.
 		$vendor_message = sprintf(
@@ -268,7 +270,7 @@ class NotificationService {
 			__( 'Great news! %1$s has placed an order for your service.<br><br><strong>Order Details:</strong><br>Service: %2$s<br>Order Number: #%3$s<br>Amount: %4$s<br><br>The buyer will submit their requirements shortly. You\'ll be notified when they do so you can start working on the order.', 'wp-sell-services' ),
 			esc_html( $buyer_name ),
 			esc_html( $service_name ),
-			esc_html( $order->order_number ),
+			esc_html( $order_number ),
 			esc_html( $amount )
 		);
 
@@ -279,7 +281,7 @@ class NotificationService {
 			$vendor_message,
 			array(
 				'order_id'     => $order_id,
-				'order_number' => $order->order_number,
+				'order_number' => $order_number,
 				'service_name' => $service_name,
 				'amount'       => $amount,
 			)
@@ -291,7 +293,7 @@ class NotificationService {
 			__( 'Thank you for your order!<br><br><strong>Order Confirmation:</strong><br>Service: %1$s<br>Seller: %2$s<br>Order Number: #%3$s<br>Amount: %4$s<br><br><strong>Next Step:</strong> Please submit your requirements so the seller can start working on your order.', 'wp-sell-services' ),
 			esc_html( $service_name ),
 			esc_html( $vendor_name ),
-			esc_html( $order->order_number ),
+			esc_html( $order_number ),
 			esc_html( $amount )
 		);
 
@@ -302,7 +304,7 @@ class NotificationService {
 			$buyer_message,
 			array(
 				'order_id'     => $order_id,
-				'order_number' => $order->order_number,
+				'order_number' => $order_number,
 				'service_name' => $service_name,
 				'amount'       => $amount,
 			)
@@ -324,13 +326,14 @@ class NotificationService {
 			return;
 		}
 
-		// Get service and user details.
+		// Get service and user details (null-safe for PHP 8.1+ compat).
 		$service      = get_post( $order->service_id );
 		$service_name = $service ? $service->post_title : __( 'Service', 'wp-sell-services' );
 		$buyer        = get_user_by( 'id', $order->customer_id );
 		$buyer_name   = $buyer ? $buyer->display_name : __( 'Customer', 'wp-sell-services' );
 		$vendor       = get_user_by( 'id', $order->vendor_id );
 		$vendor_name  = $vendor ? $vendor->display_name : __( 'Vendor', 'wp-sell-services' );
+		$order_number = (string) ( $order->order_number ?? '' );
 
 		$statuses     = \WPSellServices\Models\ServiceOrder::get_statuses();
 		$status_label = $statuses[ $new_status ] ?? $new_status;
@@ -347,10 +350,10 @@ class NotificationService {
 						/* translators: 1: buyer name, 2: order number, 3: service name */
 						__( '%1$s has submitted the requirements for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>You can now start working on this order. Please deliver within the agreed timeframe.', 'wp-sell-services' ),
 						esc_html( $buyer_name ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				// Notify buyer that work has started.
 				$this->create(
@@ -361,10 +364,10 @@ class NotificationService {
 						/* translators: 1: vendor name, 2: order number, 3: service name */
 						__( '%1$s has received your requirements and started working on Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>You\'ll be notified when the delivery is ready for your review.', 'wp-sell-services' ),
 						esc_html( $vendor_name ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				break;
 
@@ -378,10 +381,10 @@ class NotificationService {
 						/* translators: 1: vendor name, 2: order number, 3: service name */
 						__( '%1$s has submitted the delivery for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>Please review the delivery and either accept it to complete the order, or request a revision if changes are needed.', 'wp-sell-services' ),
 						esc_html( $vendor_name ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				break;
 
@@ -394,11 +397,11 @@ class NotificationService {
 					sprintf(
 						/* translators: 1: order number, 2: service name, 3: vendor name */
 						__( 'Order #%1$s has been completed successfully!<br><br><strong>Service:</strong> %2$s<br><strong>Seller:</strong> %3$s<br><br>Thank you for your business. If you\'re satisfied with the service, please consider leaving a review to help other buyers.', 'wp-sell-services' ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name ),
 						esc_html( $vendor_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				$this->create(
 					$order->vendor_id,
@@ -408,10 +411,10 @@ class NotificationService {
 						/* translators: 1: buyer name, 2: order number, 3: service name */
 						__( 'Congratulations! %1$s has accepted the delivery for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>The payment has been released to your account. Thank you for providing excellent service!', 'wp-sell-services' ),
 						esc_html( $buyer_name ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				break;
 
@@ -425,10 +428,10 @@ class NotificationService {
 						/* translators: 1: buyer name, 2: order number, 3: service name */
 						__( '%1$s has requested a revision for Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><br>Please review their feedback and submit an updated delivery.', 'wp-sell-services' ),
 						esc_html( $buyer_name ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				break;
 
@@ -455,11 +458,11 @@ class NotificationService {
 						/* translators: 1: buyer name, 2: order number, 3: service name, 4: reason */
 						__( '%1$s has requested to cancel Order #%2$s.<br><br><strong>Service:</strong> %3$s<br><strong>Reason:</strong> %4$s<br><br>You have 48 hours to accept or dispute this cancellation request.', 'wp-sell-services' ),
 						esc_html( $buyer_name ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name ),
 						esc_html( $reason_label )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				// Notify buyer.
 				$this->create(
@@ -469,10 +472,10 @@ class NotificationService {
 					sprintf(
 						/* translators: 1: order number, 2: service name */
 						__( 'Your cancellation request for Order #%1$s has been submitted.<br><br><strong>Service:</strong> %2$s<br><br>The vendor has 48 hours to respond. If they don\'t respond, the order will be automatically cancelled.', 'wp-sell-services' ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				break;
 
@@ -485,10 +488,10 @@ class NotificationService {
 					sprintf(
 						/* translators: 1: order number, 2: service name */
 						__( 'Order #%1$s has been cancelled.<br><br><strong>Service:</strong> %2$s<br><br>If you have any questions about this cancellation, please contact support.', 'wp-sell-services' ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				$this->create(
 					$order->vendor_id,
@@ -497,11 +500,11 @@ class NotificationService {
 					sprintf(
 						/* translators: 1: order number, 2: service name, 3: buyer name */
 						__( 'Order #%1$s from %3$s has been cancelled.<br><br><strong>Service:</strong> %2$s<br><br>If you have any questions about this cancellation, please contact support.', 'wp-sell-services' ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name ),
 						esc_html( $buyer_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				break;
 
@@ -514,10 +517,10 @@ class NotificationService {
 					sprintf(
 						/* translators: 1: order number, 2: service name */
 						__( 'A dispute has been opened for Order #%1$s.<br><br><strong>Service:</strong> %2$s<br><br>Our support team will review the case and get back to you soon.', 'wp-sell-services' ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				$this->create(
 					$order->vendor_id,
@@ -526,10 +529,10 @@ class NotificationService {
 					sprintf(
 						/* translators: 1: order number, 2: service name */
 						__( 'A dispute has been opened for Order #%1$s.<br><br><strong>Service:</strong> %2$s<br><br>Our support team will review the case and get back to you soon. Please prepare any relevant information.', 'wp-sell-services' ),
-						esc_html( $order->order_number ),
+						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order->order_number )
+					array( 'order_id' => $order_id, 'order_number' => $order_number )
 				);
 				break;
 
@@ -544,11 +547,11 @@ class NotificationService {
 						sprintf(
 							/* translators: 1: order number, 2: status, 3: service name */
 							__( 'Order #%1$s status has been updated to: <strong>%2$s</strong><br><br><strong>Service:</strong> %3$s', 'wp-sell-services' ),
-							esc_html( $order->order_number ),
+							esc_html( $order_number ),
 							esc_html( $status_label ),
 							esc_html( $service_name )
 						),
-						array( 'order_id' => $order_id, 'order_number' => $order->order_number, 'new_status' => $new_status )
+						array( 'order_id' => $order_id, 'order_number' => $order_number, 'new_status' => $new_status )
 					);
 				}
 				break;
@@ -968,27 +971,48 @@ class NotificationService {
 
 		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
 		$display_name  = $profile_data['display_name'] ?? $user->display_name;
+		$is_pending    = 'pending' === ( $profile_data['status'] ?? 'active' );
 
-		// Create notification for the new vendor.
-		$this->create(
-			$user_id,
-			self::TYPE_VENDOR_REGISTERED,
-			__( 'Welcome to the Marketplace!', 'wp-sell-services' ),
-			/* translators: %s: platform name */
-			sprintf(
-				__( 'Congratulations! Your vendor account on %s has been created. You can now start creating services and accepting orders.', 'wp-sell-services' ),
-				$platform_name
-			),
-			array(
-				'user_id'      => $user_id,
-				'display_name' => $display_name,
-			)
-		);
+		if ( $is_pending ) {
+			// Pending approval: send "under review" notification and email.
+			$this->create(
+				$user_id,
+				self::TYPE_VENDOR_REGISTERED,
+				__( 'Vendor Registration Received', 'wp-sell-services' ),
+				sprintf(
+					/* translators: %s: platform name */
+					__( 'Thank you for registering as a vendor on %s. Your application has been submitted and is pending admin review. We will notify you once your application is approved.', 'wp-sell-services' ),
+					$platform_name
+				),
+				array(
+					'user_id'      => $user_id,
+					'display_name' => $display_name,
+					'status'       => 'pending',
+				)
+			);
 
-		// Send welcome email directly to vendor.
-		$this->send_vendor_welcome_email( $user, $display_name, $platform_name );
+			$this->send_vendor_pending_email( $user, $display_name, $platform_name );
+		} else {
+			// Auto-approved: send full welcome notification and email.
+			$this->create(
+				$user_id,
+				self::TYPE_VENDOR_REGISTERED,
+				__( 'Welcome to the Marketplace!', 'wp-sell-services' ),
+				sprintf(
+					/* translators: %s: platform name */
+					__( 'Congratulations! Your vendor account on %s has been created. You can now start creating services and accepting orders.', 'wp-sell-services' ),
+					$platform_name
+				),
+				array(
+					'user_id'      => $user_id,
+					'display_name' => $display_name,
+				)
+			);
 
-		// Notify admin of new vendor registration.
+			$this->send_vendor_welcome_email( $user, $display_name, $platform_name );
+		}
+
+		// Always notify admin of new vendor registration.
 		$this->send_admin_vendor_notification( $user, $display_name );
 	}
 
@@ -1042,6 +1066,55 @@ class NotificationService {
 		 * @param string   $platform Platform name.
 		 */
 		$content = apply_filters( 'wpss_vendor_welcome_email_content', $content, $user, $platform_name );
+
+		return wp_mail( $user->user_email, $subject, $content, $headers );
+	}
+
+	/**
+	 * Send pending review email to vendor awaiting approval.
+	 *
+	 * @param \WP_User $user          User object.
+	 * @param string   $display_name  Vendor display name.
+	 * @param string   $platform_name Platform name.
+	 * @return bool
+	 */
+	private function send_vendor_pending_email( \WP_User $user, string $display_name, string $platform_name ): bool {
+		$subject = sprintf(
+			/* translators: %s: platform name */
+			__( 'Vendor Registration Received - %s', 'wp-sell-services' ),
+			$platform_name
+		);
+
+		$content  = '<html><body>';
+		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
+		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
+		$content .= '<p>' . sprintf(
+			/* translators: %s: vendor display name */
+			esc_html__( 'Hello %s,', 'wp-sell-services' ),
+			esc_html( $display_name )
+		) . '</p>';
+		$content .= '<p>' . esc_html__( 'Thank you for registering as a vendor on our marketplace!', 'wp-sell-services' ) . '</p>';
+		$content .= '<p>' . esc_html__( 'Your application has been received and is currently under review by our team. We will carefully review your profile and get back to you as soon as possible.', 'wp-sell-services' ) . '</p>';
+		$content .= '<p><strong>' . esc_html__( 'What happens next?', 'wp-sell-services' ) . '</strong></p>';
+		$content .= '<ul>';
+		$content .= '<li>' . esc_html__( 'Our team will review your application', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'You will receive an email once a decision has been made', 'wp-sell-services' ) . '</li>';
+		$content .= '<li>' . esc_html__( 'If approved, you can start creating services immediately', 'wp-sell-services' ) . '</li>';
+		$content .= '</ul>';
+		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'If you have any questions in the meantime, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
+		$content .= '</div>';
+		$content .= '</body></html>';
+
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+		/**
+		 * Filter vendor pending review email content.
+		 *
+		 * @param string   $content  Email content.
+		 * @param \WP_User $user     User object.
+		 * @param string   $platform Platform name.
+		 */
+		$content = apply_filters( 'wpss_vendor_pending_email_content', $content, $user, $platform_name );
 
 		return wp_mail( $user->user_email, $subject, $content, $headers );
 	}
