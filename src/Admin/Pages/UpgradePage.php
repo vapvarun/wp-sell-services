@@ -120,7 +120,7 @@ class UpgradePage {
 			__( 'E-Commerce Integration', 'wp-sell-services' )   => array(
 				array(
 					'feature' => __( 'WooCommerce', 'wp-sell-services' ),
-					'free'    => true,
+					'free'    => false,
 					'pro'     => true,
 				),
 				array(
@@ -140,24 +140,24 @@ class UpgradePage {
 				),
 				array(
 					'feature' => __( 'Standalone (no e-commerce plugin needed)', 'wp-sell-services' ),
-					'free'    => false,
+					'free'    => true,
 					'pro'     => true,
 				),
 			),
 			__( 'Payment Gateways', 'wp-sell-services' )        => array(
 				array(
 					'feature' => __( 'WooCommerce payment gateways', 'wp-sell-services' ),
-					'free'    => true,
+					'free'    => false,
 					'pro'     => true,
 				),
 				array(
 					'feature' => __( 'Direct Stripe integration', 'wp-sell-services' ),
-					'free'    => false,
+					'free'    => true,
 					'pro'     => true,
 				),
 				array(
 					'feature' => __( 'Direct PayPal integration', 'wp-sell-services' ),
-					'free'    => false,
+					'free'    => true,
 					'pro'     => true,
 				),
 				array(
