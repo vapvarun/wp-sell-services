@@ -207,6 +207,11 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
+		// Admins can force any status transition.
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
 		$transitions = array(
 			// Standard workflow statuses.
 			ServiceOrder::STATUS_PENDING_PAYMENT        => array(

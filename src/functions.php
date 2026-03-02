@@ -719,18 +719,18 @@ function wpss_get_dashboard_url( string $section = '' ): string {
 /**
  * Get order view URL.
  *
- * @param int $order_id Order ID.
+ * @param int    $order_id Order ID.
+ * @param string $section  Dashboard section (e.g. 'sales' for vendor orders).
  * @return string
  */
-function wpss_get_order_url( int $order_id ): string {
+function wpss_get_order_url( int $order_id, string $section = '' ): string {
 	$order = wpss_get_order( $order_id );
 
 	if ( ! $order ) {
 		return '';
 	}
 
-	// Orders is the default section, so no section parameter needed.
-	$dashboard_url = wpss_get_dashboard_url();
+	$dashboard_url = wpss_get_dashboard_url( $section );
 
 	if ( $dashboard_url ) {
 		return add_query_arg( 'order_id', $order_id, $dashboard_url );

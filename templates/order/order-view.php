@@ -2170,11 +2170,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			btn.disabled = true;
 			btn.textContent = btn.textContent.replace(/\S.+/, 'Processing...');
 
-			fetch(wpssApi.root + 'wpss/v1/orders/' + orderId + '/cancel', {
+			fetch(wpssData.apiUrl + 'orders/' + orderId + '/cancel', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'X-WP-Nonce': wpssApi.nonce
+					'X-WP-Nonce': wpssData.restNonce
 				},
 				body: JSON.stringify({
 					reason: reason,

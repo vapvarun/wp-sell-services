@@ -62,7 +62,7 @@ class Frontend {
 		wp_enqueue_script(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
-			array( 'alpinejs' ),
+			array( 'jquery', 'alpinejs' ),
 			\WPSS_VERSION,
 			true
 		);

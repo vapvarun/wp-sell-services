@@ -111,7 +111,9 @@ $pending_count = count(
 	<?php
 	// Check service limit and display notice.
 	$vendor_profile_obj = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
-	$at_service_limit   = $vendor_profile_obj && $vendor_profile_obj->has_reached_service_limit();
+	$at_service_limit   = $vendor_profile_obj
+		&& ! current_user_can( 'manage_options' )
+		&& $vendor_profile_obj->has_reached_service_limit();
 
 	if ( $at_service_limit ) :
 		$max_services_allowed = $vendor_profile_obj->get_max_services();

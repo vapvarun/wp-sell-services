@@ -740,7 +740,7 @@ class SingleServiceView {
 										name="quantity"
 										value="1"
 										min="1"
-										max="<?php echo esc_attr( apply_filters( 'wpss_max_order_quantity', 1 ) ); ?>">
+										max="<?php echo esc_attr( apply_filters( 'wpss_max_order_quantity', 10 ) ); ?>">
 								<button type="button" class="wpss-quantity-btn wpss-quantity-plus">+</button>
 							</div>
 						</div>

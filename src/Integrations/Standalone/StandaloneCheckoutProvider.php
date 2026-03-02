@@ -201,8 +201,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		if ( ! $selected_package && ! empty( $packages ) ) {
-			$selected_package = $packages[0];
-			$package_id       = 0;
+			$selected_package = reset( $packages );
+			$package_id       = (int) array_key_first( $packages );
 		}
 
 		$price = (float) ( $selected_package['price'] ?? 0 );

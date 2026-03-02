@@ -133,7 +133,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 						<span class="wpss-status <?php echo esc_attr( $status_class ); ?>">
 							<?php echo esc_html( $status_labels[ $order_item->status ] ?? $order_item->status ); ?>
 						</span>
-						<a href="<?php echo esc_url( wpss_get_order_url( $order_item->id ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+						<a href="<?php echo esc_url( wpss_get_order_url( $order_item->id, 'sales' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 							<?php esc_html_e( 'Manage', 'wp-sell-services' ); ?>
 						</a>
 					</div>

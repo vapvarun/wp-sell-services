@@ -676,7 +676,7 @@ class Settings {
 			array(
 				'option_name' => 'wpss_vendor',
 				'field'       => 'max_services_per_vendor',
-				'min'         => 1,
+				'min'         => 0,
 				'max'         => 100,
 				'default'     => 20,
 				'description' => __( '0 for unlimited.', 'wp-sell-services' ),
