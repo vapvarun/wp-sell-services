@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace WPSellServices\Core;
 
 use WPSellServices\Admin\Admin;
+use WPSellServices\Admin\ProTeaser;
 use WPSellServices\Frontend\Frontend;
 use WPSellServices\Frontend\AjaxHandlers;
 use WPSellServices\Frontend\Shortcodes;
@@ -243,6 +244,7 @@ final class Plugin {
 		$this->define_auto_vendor_hooks();
 		$this->define_provider_hooks();
 		$this->define_cron_hooks();
+		$this->define_pro_teasers();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -1078,6 +1080,19 @@ final class Plugin {
 				$earnings_service->process_auto_withdrawals();
 			}
 		);
+	}
+
+	/**
+	 * Define Pro upgrade teasers.
+	 *
+	 * Shows upgrade CTAs throughout the free plugin when Pro is not active.
+	 *
+	 * @since 1.3.0
+	 * @return void
+	 */
+	private function define_pro_teasers(): void {
+		$pro_teaser = new ProTeaser();
+		$pro_teaser->init();
 	}
 
 	/**
