@@ -338,9 +338,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 			$price = (float) ( $packages[ $package_id ]['price'] ?? 0 );
 		}
 
-		// Fallback to base price.
+		// Fallback to starting price.
 		if ( $price <= 0 ) {
-			$price = (float) get_post_meta( $service_id, '_wpss_base_price', true );
+			$price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 		}
 
 		// Get order provider.

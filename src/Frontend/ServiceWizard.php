@@ -1157,7 +1157,26 @@ class ServiceWizard {
 			),
 		);
 
-		return array_merge( $defaults, $packages );
+		// If packages already have string keys (wizard format), merge directly.
+		if ( isset( $packages['basic'] ) ) {
+			return array_merge( $defaults, $packages );
+		}
+
+		// Numeric-indexed packages (from normalized save or admin): map back to wizard tiers.
+		$tiers  = array( 'basic', 'standard', 'premium' );
+		$mapped = $defaults;
+		foreach ( $packages as $index => $package ) {
+			if ( ! isset( $tiers[ $index ] ) ) {
+				break;
+			}
+			$tier = $tiers[ $index ];
+			// Normalize delivery_days → delivery_time for the wizard UI.
+			$package['delivery_time']  = $package['delivery_time'] ?? $package['delivery_days'] ?? '';
+			$mapped[ $tier ]           = array_merge( $defaults[ $tier ], $package );
+			$mapped[ $tier ]['enabled'] = true;
+		}
+
+		return $mapped;
 	}
 
 	/**
@@ -1874,16 +1893,32 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function save_service_meta( int $service_id, array $data ): void {
-		// Save packages.
-		update_post_meta( $service_id, '_wpss_packages', $data['packages'] );
+		// Convert string-keyed wizard packages ('basic','standard','premium') to
+		// numeric-indexed array so checkout, gateways, and templates all work
+		// with consistent integer indices (0, 1, 2).
+		$numeric_packages = array();
+		foreach ( $data['packages'] as $pkg ) {
+			if ( empty( $pkg['enabled'] ) ) {
+				continue;
+			}
+			$numeric_packages[] = array(
+				'name'          => $pkg['name'] ?? '',
+				'description'   => $pkg['description'] ?? '',
+				'price'         => (float) ( $pkg['price'] ?? 0 ),
+				'delivery_days' => (int) ( $pkg['delivery_days'] ?? $pkg['delivery_time'] ?? 7 ),
+				'revisions'     => (int) ( $pkg['revisions'] ?? 0 ),
+				'features'      => $pkg['features'] ?? array(),
+			);
+		}
+		update_post_meta( $service_id, '_wpss_packages', $numeric_packages );
 
 		// Save flat meta for backward compatibility (used by WCOrderProvider fallback).
-		$basic = $data['packages']['basic'] ?? reset( $data['packages'] ) ?? array();
-		update_post_meta( $service_id, '_wpss_delivery_days', (int) ( $basic['delivery_days'] ?? $basic['delivery_time'] ?? 7 ) );
+		$basic = $numeric_packages[0] ?? array();
+		update_post_meta( $service_id, '_wpss_delivery_days', (int) ( $basic['delivery_days'] ?? 7 ) );
 		update_post_meta( $service_id, '_wpss_revisions', (int) ( $basic['revisions'] ?? 0 ) );
 
-		// Save starting price (from basic package).
-		update_post_meta( $service_id, '_wpss_starting_price', $data['packages']['basic']['price'] ?? 0 );
+		// Save starting price (from first/basic package).
+		update_post_meta( $service_id, '_wpss_starting_price', $basic['price'] ?? 0 );
 
 		// Save gallery images.
 		// Collect additional gallery image IDs, filtering out invalid attachments.
