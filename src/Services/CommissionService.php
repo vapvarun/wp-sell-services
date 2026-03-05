@@ -421,17 +421,29 @@ class CommissionService {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$profiles_table,
-			array(
-				'custom_commission_rate' => $rate,
-				'updated_at'             => current_time( 'mysql' ),
-			),
-			array( 'user_id' => $vendor_id ),
-			array( '%f', '%s' ),
-			array( '%d' )
-		);
+		if ( null === $rate ) {
+			// Reset to global: set column to SQL NULL.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$result = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$profiles_table} SET custom_commission_rate = NULL, updated_at = %s WHERE user_id = %d",
+					current_time( 'mysql' ),
+					$vendor_id
+				)
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$result = $wpdb->update(
+				$profiles_table,
+				array(
+					'custom_commission_rate' => $rate,
+					'updated_at'             => current_time( 'mysql' ),
+				),
+				array( 'user_id' => $vendor_id ),
+				array( '%f', '%s' ),
+				array( '%d' )
+			);
+		}
 
 		return false !== $result;
 	}
