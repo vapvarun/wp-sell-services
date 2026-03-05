@@ -154,10 +154,10 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 	</div>
 
 	<!-- Withdrawal History -->
-	<?php if ( ! empty( $withdrawals ) ) : ?>
-		<div class="wpss-earnings__history" style="margin-top: 2rem;">
-			<h3><?php esc_html_e( 'Withdrawal History', 'wp-sell-services' ); ?></h3>
+	<div class="wpss-earnings__history" style="margin-top: 2rem;">
+		<h3><?php esc_html_e( 'Withdrawal History', 'wp-sell-services' ); ?></h3>
 
+		<?php if ( ! empty( $withdrawals ) ) : ?>
 			<div class="wpss-table-responsive">
 				<table class="wpss-table">
 					<thead>
@@ -188,8 +188,10 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 					</tbody>
 				</table>
 			</div>
-		</div>
-	<?php endif; ?>
+		<?php else : ?>
+			<p class="wpss-text-muted"><?php esc_html_e( 'No withdrawal requests yet.', 'wp-sell-services' ); ?></p>
+		<?php endif; ?>
+	</div>
 </div>
 
 <script>
