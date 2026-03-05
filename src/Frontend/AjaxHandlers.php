@@ -67,6 +67,7 @@ class AjaxHandlers {
 
 		// Messages.
 		add_action( 'wp_ajax_wpss_send_message', array( $this, 'send_message' ) );
+		add_action( 'wp_ajax_wpss_send_direct_message', array( $this, 'send_direct_message' ) );
 		add_action( 'wp_ajax_wpss_get_messages', array( $this, 'get_messages' ) );
 		add_action( 'wp_ajax_wpss_get_new_messages', array( $this, 'get_new_messages' ) );
 		add_action( 'wp_ajax_wpss_mark_messages_read', array( $this, 'mark_messages_read' ) );
@@ -840,6 +841,41 @@ class AjaxHandlers {
 		}
 
 		wp_send_json_success( $response );
+	}
+
+	/**
+	 * Send a message to a direct (non-order) conversation.
+	 *
+	 * @return void
+	 */
+	public function send_direct_message(): void {
+		check_ajax_referer( 'wpss_send_message', 'wpss_message_nonce' );
+
+		$conversation_id = absint( $_POST['conversation_id'] ?? 0 );
+		$content         = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
+		$user_id         = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $conversation_id || ! $content ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a message.', 'wp-sell-services' ) ) );
+		}
+
+		$conversation_service = new ConversationService();
+
+		if ( ! $conversation_service->user_can_access( $conversation_id, $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have access to this conversation.', 'wp-sell-services' ) ) );
+		}
+
+		$message = $conversation_service->send_message( $conversation_id, $user_id, $content );
+
+		if ( ! $message ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to send message.', 'wp-sell-services' ) ) );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Message sent.', 'wp-sell-services' ) ) );
 	}
 
 	/**
@@ -2119,7 +2155,7 @@ class AjaxHandlers {
 			)
 			: __( 'Direct Message', 'wp-sell-services' );
 
-		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject );
+		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
 
 		if ( $conversation ) {
 			$attachment_ids = array_map(
@@ -2243,13 +2279,14 @@ class AjaxHandlers {
 		update_user_meta( $user_id, '_wpss_cart', $cart );
 
 		$checkout_url = wpss_get_page_url( 'checkout' ) ?: home_url( '/checkout/' );
-		$checkout_url = add_query_arg(
-			array(
-				'service_id' => $service_id,
-				'package'    => $package_index,
-			),
-			$checkout_url
+		$checkout_url_args = array(
+			'service_id' => $service_id,
+			'package'    => $package_index,
 		);
+		if ( $quantity > 1 ) {
+			$checkout_url_args['quantity'] = $quantity;
+		}
+		$checkout_url = add_query_arg( $checkout_url_args, $checkout_url );
 
 		wp_send_json_success(
 			array(

@@ -2089,7 +2089,22 @@ class ServiceWizard {
 			return true;
 		}
 
+		$current_user_id = get_current_user_id();
+
 		// Check if current user is the attachment author.
-		return get_current_user_id() === (int) $attachment->post_author;
+		if ( $current_user_id === (int) $attachment->post_author ) {
+			return true;
+		}
+
+		// Allow attachments already attached to the user's own service
+		// (e.g., images imported/migrated with different post_author).
+		if ( $attachment->post_parent > 0 ) {
+			$parent = get_post( $attachment->post_parent );
+			if ( $parent && 'wpss_service' === $parent->post_type && $current_user_id === (int) $parent->post_author ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

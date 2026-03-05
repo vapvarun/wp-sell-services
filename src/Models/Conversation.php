@@ -32,6 +32,13 @@ class Conversation {
 	public int $order_id;
 
 	/**
+	 * Service ID (for direct conversations scoped to a service).
+	 *
+	 * @var int
+	 */
+	public int $service_id = 0;
+
+	/**
 	 * Conversation subject.
 	 *
 	 * @var string
@@ -98,6 +105,7 @@ class Conversation {
 
 		$conversation->id            = (int) $row->id;
 		$conversation->order_id      = (int) $row->order_id;
+		$conversation->service_id    = (int) ( $row->service_id ?? 0 );
 		$conversation->subject       = $row->subject ?? '';
 		$conversation->participants  = $row->participants ? json_decode( $row->participants, true ) : [];
 		$conversation->message_count = (int) $row->message_count;

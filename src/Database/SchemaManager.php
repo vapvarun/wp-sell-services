@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.3.7';
+	const DB_VERSION = '1.3.8';
 
 	/**
 	 * Option name for storing DB version.
@@ -86,11 +86,61 @@ class SchemaManager {
 			return;
 		}
 
+		$old_version = get_option( self::VERSION_OPTION, '0.0.0' );
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$this->create_tables();
 
+		// Run data migrations for specific version bumps.
+		if ( version_compare( $old_version, '1.3.8', '<' ) ) {
+			$this->backfill_delivery_days();
+		}
+
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Backfill _wpss_delivery_days meta for services missing it.
+	 *
+	 * Reads delivery_days from the first package in _wpss_packages meta.
+	 *
+	 * @return void
+	 */
+	private function backfill_delivery_days(): void {
+		$services = get_posts(
+			array(
+				'post_type'      => 'wpss_service',
+				'posts_per_page' => -1,
+				'post_status'    => 'any',
+				'fields'         => 'ids',
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					'relation' => 'OR',
+					array(
+						'key'     => '_wpss_delivery_days',
+						'compare' => 'NOT EXISTS',
+					),
+					array(
+						'key'     => '_wpss_delivery_days',
+						'value'   => '0',
+						'compare' => '=',
+					),
+				),
+			)
+		);
+
+		foreach ( $services as $service_id ) {
+			$packages = get_post_meta( $service_id, '_wpss_packages', true );
+
+			if ( ! empty( $packages ) && is_array( $packages ) ) {
+				$first         = reset( $packages );
+				$delivery_days = (int) ( $first['delivery_days'] ?? $first['delivery_time'] ?? 0 );
+
+				if ( $delivery_days > 0 ) {
+					update_post_meta( $service_id, '_wpss_delivery_days', $delivery_days );
+				}
+			}
+		}
 	}
 
 	/**
@@ -280,6 +330,7 @@ class SchemaManager {
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			order_id bigint(20) unsigned NOT NULL,
+			service_id bigint(20) unsigned DEFAULT 0,
 			subject varchar(255) DEFAULT NULL,
 			participants longtext,
 			message_count int(11) DEFAULT 0,
@@ -289,7 +340,8 @@ class SchemaManager {
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_order (order_id)
+			KEY idx_order (order_id),
+			KEY idx_service (service_id)
 		) {$charset_collate};";
 	}
 

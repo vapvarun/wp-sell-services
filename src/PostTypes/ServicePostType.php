@@ -32,6 +32,37 @@ class ServicePostType {
 		add_action( 'init', [ $this, 'register_taxonomies' ] );
 		add_filter( 'post_updated_messages', [ $this, 'filter_post_messages' ] );
 		add_filter( 'enter_title_here', [ $this, 'filter_title_placeholder' ], 10, 2 );
+		add_action( 'save_post_wpss_service', [ $this, 'sync_delivery_days_meta' ], 20, 2 );
+	}
+
+	/**
+	 * Sync _wpss_delivery_days flat meta from packages on every save.
+	 *
+	 * Ensures the delivery time filter on the archive page always has data
+	 * to filter on, even for services not created via the wizard.
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @return void
+	 */
+	public function sync_delivery_days_meta( int $post_id, \WP_Post $post ): void {
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		$packages = get_post_meta( $post_id, '_wpss_packages', true );
+
+		if ( empty( $packages ) || ! is_array( $packages ) ) {
+			return;
+		}
+
+		// Use the first enabled package's delivery_days.
+		$first        = reset( $packages );
+		$delivery_days = (int) ( $first['delivery_days'] ?? $first['delivery_time'] ?? 0 );
+
+		if ( $delivery_days > 0 ) {
+			update_post_meta( $post_id, '_wpss_delivery_days', $delivery_days );
+		}
 	}
 
 	/**

@@ -485,6 +485,7 @@
                 action: 'wpss_add_service_to_cart',
                 service_id: wpssService.serviceId,
                 package_index: this.state.selectedPackage,
+                quantity: this.state.quantity || 1,
                 addons: this.state.extras.map(function(e) { return e.index; }),
                 nonce: wpssService.nonce
             };

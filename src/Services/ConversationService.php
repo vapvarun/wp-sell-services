@@ -101,15 +101,17 @@ class ConversationService {
 	 * Create a direct conversation between two users (not tied to an order).
 	 *
 	 * Used for pre-order inquiries like "Contact Seller".
+	 * When service_id is provided, conversations are separated per service.
 	 *
-	 * @param int    $user_a  First participant user ID.
-	 * @param int    $user_b  Second participant user ID.
-	 * @param string $subject Conversation subject.
+	 * @param int    $user_a     First participant user ID.
+	 * @param int    $user_b     Second participant user ID.
+	 * @param string $subject    Conversation subject.
+	 * @param int    $service_id Service ID for context (0 for general).
 	 * @return Conversation|null
 	 */
-	public function create_direct( int $user_a, int $user_b, string $subject = '' ): ?Conversation {
-		// Check if a direct conversation already exists between these two users.
-		$existing = $this->get_direct_conversation( $user_a, $user_b );
+	public function create_direct( int $user_a, int $user_b, string $subject = '', int $service_id = 0 ): ?Conversation {
+		// Check if a direct conversation already exists for this user pair + service.
+		$existing = $this->get_direct_conversation( $user_a, $user_b, $service_id );
 		if ( $existing ) {
 			return $existing;
 		}
@@ -119,21 +121,21 @@ class ConversationService {
 
 		$participants = array( $user_a, $user_b );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$wpdb->insert(
-			$table,
-			array(
-				'order_id'      => 0,
-				'subject'       => $subject,
-				'participants'  => wp_json_encode( $participants ),
-				'message_count' => 0,
-				'unread_counts' => wp_json_encode( array() ),
-				'is_closed'     => 0,
-				'created_at'    => current_time( 'mysql' ),
-				'updated_at'    => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' )
+		$data    = array(
+			'order_id'      => 0,
+			'service_id'    => $service_id,
+			'subject'       => $subject,
+			'participants'  => wp_json_encode( $participants ),
+			'message_count' => 0,
+			'unread_counts' => wp_json_encode( array() ),
+			'is_closed'     => 0,
+			'created_at'    => current_time( 'mysql' ),
+			'updated_at'    => current_time( 'mysql' ),
 		);
+		$formats = array( '%d', '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$wpdb->insert( $table, $data, $formats );
 
 		$conversation_id = (int) $wpdb->insert_id;
 
@@ -144,27 +146,31 @@ class ConversationService {
 	 * Get existing direct conversation between two users.
 	 *
 	 * Finds a conversation with order_id = 0 where both users are participants.
+	 * When service_id is provided, only matches conversations for that service.
 	 *
-	 * @param int $user_a First user ID.
-	 * @param int $user_b Second user ID.
+	 * @param int $user_a     First user ID.
+	 * @param int $user_b     Second user ID.
+	 * @param int $service_id Service ID (0 for general).
 	 * @return Conversation|null
 	 */
-	public function get_direct_conversation( int $user_a, int $user_b ): ?Conversation {
+	public function get_direct_conversation( int $user_a, int $user_b, int $service_id = 0 ): ?Conversation {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_conversations';
 
-		// Look for a direct conversation (order_id = 0) containing both users.
-		// Participants are stored as a JSON array of integers, e.g. [5,3].
+		// Look for a direct conversation (order_id = 0) containing both users,
+		// scoped to the same service context.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$table}
 				WHERE order_id = 0
+				AND service_id = %d
 				AND is_closed = 0
 				AND JSON_CONTAINS(participants, %s)
 				AND JSON_CONTAINS(participants, %s)
 				ORDER BY updated_at DESC
 				LIMIT 1",
+				$service_id,
 				wp_json_encode( $user_a ),
 				wp_json_encode( $user_b )
 			)

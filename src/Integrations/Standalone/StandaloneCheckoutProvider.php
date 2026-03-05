@@ -157,6 +157,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$service_id = isset( $_GET['service_id'] ) ? absint( wp_unslash( $_GET['service_id'] ) ) : absint( get_query_var( 'wpss_service_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$package_id = isset( $_GET['package'] ) ? absint( wp_unslash( $_GET['package'] ) ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$quantity = isset( $_GET['quantity'] ) ? absint( wp_unslash( $_GET['quantity'] ) ) : 1;
+		$quantity = max( 1, min( $quantity, 10 ) ); // Clamp 1–10.
 
 		// If no service_id in URL, try to load from user's cart.
 		if ( ! $service_id ) {
@@ -167,6 +170,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				$cart_item  = end( $cart );
 				$service_id = (int) ( $cart_item['service_id'] ?? 0 );
 				$package_id = $package_id ?: (int) ( $cart_item['package_id'] ?? 0 );
+				$quantity   = max( 1, (int) ( $cart_item['quantity'] ?? 1 ) );
 			}
 		}
 
@@ -181,7 +185,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		ob_start();
-		$this->render_checkout_form( $service, $package_id );
+		$this->render_checkout_form( $service, $package_id, $quantity );
 		return ob_get_clean();
 	}
 
@@ -192,7 +196,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @param int                            $package_id Selected package ID.
 	 * @return void
 	 */
-	private function render_checkout_form( $service, int $package_id = 0 ): void {
+	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1 ): void {
 		$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
 		$selected_package = null;
 
@@ -205,8 +209,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$package_id       = (int) array_key_first( $packages );
 		}
 
-		$price = (float) ( $selected_package['price'] ?? 0 );
-		$currency = wpss_get_currency();
+		$unit_price = (float) ( $selected_package['price'] ?? 0 );
+		$price      = $unit_price * $quantity;
+		$currency   = wpss_get_currency();
 
 		// Get available payment gateways.
 		$gateways = wpss()->get_payment_gateways();
@@ -224,6 +229,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						<h4><?php echo esc_html( $service->title ); ?></h4>
 						<?php if ( $selected_package ) : ?>
 							<span class="wpss-package-name"><?php echo esc_html( $selected_package['name'] ?? '' ); ?></span>
+						<?php endif; ?>
+						<?php if ( $quantity > 1 ) : ?>
+							<span class="wpss-quantity-label">&times; <?php echo esc_html( $quantity ); ?></span>
 						<?php endif; ?>
 					</div>
 				</div>
@@ -253,6 +261,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<?php wp_nonce_field( 'wpss_checkout', 'wpss_checkout_nonce' ); ?>
 					<input type="hidden" name="service_id" value="<?php echo esc_attr( $service->id ); ?>">
 					<input type="hidden" name="package_id" value="<?php echo esc_attr( $package_id ); ?>">
+					<input type="hidden" name="quantity" value="<?php echo esc_attr( $quantity ); ?>">
 					<input type="hidden" name="amount" value="<?php echo esc_attr( $price ); ?>">
 					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
 

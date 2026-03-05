@@ -250,6 +250,8 @@ class TestGateway implements PaymentGatewayInterface {
 		$service_id = isset( $_POST['service_id'] ) ? (int) wp_unslash( $_POST['service_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
 		$package_id = isset( $_POST['package_id'] ) ? (int) wp_unslash( $_POST['package_id'] ) : 0;
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
+		$quantity = isset( $_POST['quantity'] ) ? max( 1, (int) wp_unslash( $_POST['quantity'] ) ) : 1;
 
 		if ( ! $service_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
@@ -277,6 +279,9 @@ class TestGateway implements PaymentGatewayInterface {
 			$price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 		}
 
+		// Apply quantity.
+		$price *= $quantity;
+
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();
 
@@ -293,6 +298,7 @@ class TestGateway implements PaymentGatewayInterface {
 			array(
 				'service_id'     => $service_id,
 				'package_id'     => $package_id,
+				'quantity'       => $quantity,
 				'customer_id'    => get_current_user_id(),
 				'subtotal'       => $price,
 				'currency'       => wpss_get_currency(),

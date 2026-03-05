@@ -208,6 +208,68 @@ class ConversationRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Mark a conversation as read by resetting the user's unread count.
+	 *
+	 * @param int $conversation_id Conversation ID.
+	 * @param int $user_id         User ID.
+	 * @return void
+	 */
+	public function mark_read( int $conversation_id, int $user_id ): void {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT unread_counts FROM {$this->table} WHERE id = %d",
+				$conversation_id
+			)
+		);
+
+		if ( ! $row ) {
+			return;
+		}
+
+		$unread_counts = json_decode( $row->unread_counts ?: '{}', true );
+		if ( isset( $unread_counts[ $user_id ] ) && (int) $unread_counts[ $user_id ] > 0 ) {
+			$unread_counts[ $user_id ] = 0;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$this->wpdb->update(
+				$this->table,
+				array( 'unread_counts' => wp_json_encode( $unread_counts ) ),
+				array( 'id' => $conversation_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
+
+		// Also mark individual messages as read.
+		$messages_table = $this->get_messages_table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$unread_messages = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT id, read_by FROM {$messages_table}
+				WHERE conversation_id = %d
+				AND sender_id != %d
+				AND (read_by IS NULL OR JSON_EXTRACT(read_by, %s) IS NULL)",
+				$conversation_id,
+				$user_id,
+				'$."' . $user_id . '"'
+			)
+		);
+
+		foreach ( $unread_messages as $message ) {
+			$read_by                      = json_decode( $message->read_by ?: '{}', true );
+			$read_by[ (string) $user_id ] = current_time( 'mysql' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$this->wpdb->update(
+				$messages_table,
+				array( 'read_by' => wp_json_encode( $read_by ) ),
+				array( 'id' => $message->id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
+	}
+
+	/**
 	 * Mark messages as read for a user in a conversation.
 	 *
 	 * Updates the read_by JSON field in messages and unread_counts in conversation.
@@ -432,7 +494,7 @@ class ConversationRepository extends AbstractRepository {
 					c.id as conversation_id,
 					c.order_id,
 					NULL as order_number,
-					NULL as service_id,
+					c.service_id,
 					NULL as platform,
 					NULL as platform_order_id,
 					c.subject,
@@ -443,12 +505,13 @@ class ConversationRepository extends AbstractRepository {
 					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message
 				FROM {$this->table} c
 				WHERE c.order_id = 0
-				AND JSON_CONTAINS(c.participants, %s))
+				AND (JSON_CONTAINS(c.participants, %s) OR JSON_EXTRACT(c.participants, CONCAT('$.', %s)) IS NOT NULL))
 				ORDER BY last_message_at DESC
 				LIMIT %d",
 				$user_id,
 				$user_id,
 				wp_json_encode( $user_id ),
+				(string) $user_id,
 				$limit
 			)
 		);

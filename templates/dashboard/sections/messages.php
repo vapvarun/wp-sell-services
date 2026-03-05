@@ -11,6 +11,7 @@
  */
 
 use WPSellServices\Database\Repositories\ConversationRepository;
+use WPSellServices\Services\ConversationService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -27,9 +28,150 @@ do_action( 'wpss_dashboard_section_before', 'messages', $user_id );
 $conversation_repo = new ConversationRepository();
 $conversations     = $conversation_repo->get_conversation_summary( $user_id, 20 );
 $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
+
+// Check if viewing a specific conversation thread.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash( $_GET['conversation_id'] ) ) : 0;
 ?>
 
 <div class="wpss-section wpss-section--messages">
+
+<?php if ( $active_conversation_id ) : ?>
+	<?php
+	$conversation_service = new ConversationService();
+	$active_conversation  = $conversation_service->get( $active_conversation_id );
+
+	if ( $active_conversation && $active_conversation->can_view( $user_id ) ) :
+		$messages        = $conversation_service->get_messages( $active_conversation_id, array( 'limit' => 100 ) );
+		$participants    = $active_conversation->participants;
+		$other_user_id   = 0;
+
+		foreach ( $participants as $pid ) {
+			if ( (int) $pid !== $user_id ) {
+				$other_user_id = (int) $pid;
+				break;
+			}
+		}
+		$other_user = $other_user_id ? get_userdata( $other_user_id ) : null;
+		$conv_title = $other_user
+			? $other_user->display_name
+			: ( $active_conversation->subject ?: __( 'Direct Message', 'wp-sell-services' ) );
+
+		// Mark conversation as read.
+		$conversation_repo->mark_read( $active_conversation_id, $user_id );
+		?>
+		<div class="wpss-conversation-thread">
+			<div class="wpss-conversation-thread__header">
+				<a href="<?php echo esc_url( add_query_arg( 'section', 'messages', wpss_get_dashboard_url() ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--outline">&larr; <?php esc_html_e( 'Back', 'wp-sell-services' ); ?></a>
+				<h3><?php echo esc_html( $conv_title ); ?></h3>
+				<?php if ( $active_conversation->subject ) : ?>
+					<span class="wpss-conversation-thread__subject"><?php echo esc_html( $active_conversation->subject ); ?></span>
+				<?php endif; ?>
+			</div>
+
+			<div class="wpss-conversation-thread__messages" id="wpss-messages-container">
+				<?php if ( empty( $messages ) ) : ?>
+					<p class="wpss-text-muted"><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+				<?php else : ?>
+					<?php foreach ( $messages as $msg ) : ?>
+						<?php
+						$is_mine    = (int) $msg->sender_id === $user_id;
+						$sender     = get_userdata( (int) $msg->sender_id );
+						$msg_class  = $is_mine ? 'wpss-message--mine' : 'wpss-message--theirs';
+						?>
+						<div class="wpss-message <?php echo esc_attr( $msg_class ); ?>">
+							<div class="wpss-message__avatar">
+								<?php echo get_avatar( (int) $msg->sender_id, 36 ); ?>
+							</div>
+							<div class="wpss-message__body">
+								<div class="wpss-message__meta">
+									<strong><?php echo esc_html( $sender ? $sender->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
+									<time><?php echo esc_html( human_time_diff( strtotime( $msg->created_at ), current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></time>
+								</div>
+								<div class="wpss-message__content"><?php echo wp_kses_post( wpautop( $msg->content ) ); ?></div>
+								<?php if ( ! empty( $msg->attachments ) ) : ?>
+									<?php $atts = is_string( $msg->attachments ) ? json_decode( $msg->attachments, true ) : $msg->attachments; ?>
+									<?php if ( ! empty( $atts ) && is_array( $atts ) ) : ?>
+										<div class="wpss-message__attachments">
+											<?php foreach ( $atts as $att_id ) : ?>
+												<?php
+												$att_id  = is_array( $att_id ) ? ( $att_id['id'] ?? 0 ) : (int) $att_id;
+												$att_url = $att_id ? wp_get_attachment_url( $att_id ) : '';
+												?>
+												<?php if ( $att_url ) : ?>
+													<a href="<?php echo esc_url( $att_url ); ?>" target="_blank" class="wpss-attachment-link"><?php echo esc_html( basename( $att_url ) ); ?></a>
+												<?php endif; ?>
+											<?php endforeach; ?>
+										</div>
+									<?php endif; ?>
+								<?php endif; ?>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+
+			<?php if ( $active_conversation->can_reply( $user_id ) ) : ?>
+				<form id="wpss-reply-form" class="wpss-conversation-thread__reply">
+					<?php wp_nonce_field( 'wpss_send_message', 'wpss_message_nonce' ); ?>
+					<input type="hidden" name="conversation_id" value="<?php echo esc_attr( $active_conversation_id ); ?>">
+					<div class="wpss-form-group">
+						<textarea name="message" class="wpss-textarea" rows="3" placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>" required></textarea>
+					</div>
+					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm"><?php esc_html_e( 'Send', 'wp-sell-services' ); ?></button>
+				</form>
+				<script>
+				jQuery(function($) {
+					$('#wpss-reply-form').on('submit', function(e) {
+						e.preventDefault();
+						var $form = $(this);
+						var $btn = $form.find('button[type="submit"]');
+						var $textarea = $form.find('textarea[name="message"]');
+
+						if (!$textarea.val().trim()) return;
+
+						$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'wp-sell-services' ) ); ?>');
+
+						$.ajax({
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+							type: 'POST',
+							data: {
+								action: 'wpss_send_direct_message',
+								conversation_id: $form.find('[name="conversation_id"]').val(),
+								message: $textarea.val(),
+								wpss_message_nonce: $form.find('[name="wpss_message_nonce"]').val()
+							},
+							success: function(response) {
+								if (response.success) {
+									location.reload();
+								} else {
+									alert(response.data.message || '<?php echo esc_js( __( 'Failed to send message.', 'wp-sell-services' ) ); ?>');
+								}
+							},
+							error: function() {
+								alert('<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>');
+							},
+							complete: function() {
+								$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send', 'wp-sell-services' ) ); ?>');
+							}
+						});
+					});
+
+					// Auto-scroll to bottom of messages.
+					var container = document.getElementById('wpss-messages-container');
+					if (container) container.scrollTop = container.scrollHeight;
+				});
+				</script>
+			<?php endif; ?>
+		</div>
+	<?php else : ?>
+		<div class="wpss-notice wpss-notice--error">
+			<p><?php esc_html_e( 'Conversation not found or you do not have permission to view it.', 'wp-sell-services' ); ?></p>
+			<a href="<?php echo esc_url( add_query_arg( 'section', 'messages', wpss_get_dashboard_url() ) ); ?>">&larr; <?php esc_html_e( 'Back to Messages', 'wp-sell-services' ); ?></a>
+		</div>
+	<?php endif; ?>
+
+<?php else : // Conversation list view. ?>
 	<?php if ( $unread_count > 0 ) : ?>
 		<div class="wpss-alert wpss-alert--info">
 			<?php
@@ -156,6 +298,8 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 			<?php endforeach; ?>
 		</div>
 	<?php endif; ?>
+
+<?php endif; // End conversation list vs detail view. ?>
 </div>
 
 <?php
