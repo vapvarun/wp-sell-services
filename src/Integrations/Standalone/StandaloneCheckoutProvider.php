@@ -132,7 +132,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @return string|null
 	 */
 	public function get_thankyou_redirect( int $order_id ): ?string {
-		return home_url( '/service-order/' . $order_id . '/requirements/' );
+		return wpss_get_order_requirements_url( $order_id );
 	}
 
 	/**

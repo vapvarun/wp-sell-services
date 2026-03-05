@@ -387,7 +387,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 			array(
 				'order_id'     => $order->id,
 				'order_number' => $order->order_number,
-				'redirect_url' => home_url( '/service-order/' . $order->id . '/' ),
+				'redirect_url' => wpss_get_order_url( $order->id ),
 				'instructions' => $this->render_buyer_instructions( $order->id ),
 			)
 		);

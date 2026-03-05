@@ -636,7 +636,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			'success'      => true,
 			'order_id'     => $order->id,
 			'order_number' => $order->order_number,
-			'redirect_url' => home_url( '/service-order/' . $order->id . '/requirements/' ),
+			'redirect_url' => wpss_get_order_requirements_url( $order->id ),
 		);
 	}
 
@@ -764,7 +764,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			array(
 				'order_id'     => $order->id,
 				'order_number' => $order->order_number,
-				'redirect_url' => home_url( '/service-order/' . $order->id . '/requirements/' ),
+				'redirect_url' => wpss_get_order_requirements_url( $order->id ),
 			)
 		);
 	}

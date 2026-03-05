@@ -635,7 +635,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 			'success'      => true,
 			'order_id'     => $order->id,
 			'order_number' => $order->order_number,
-			'redirect_url' => home_url( '/service-order/' . $order->id . '/requirements/' ),
+			'redirect_url' => wpss_get_order_requirements_url( $order->id ),
 		);
 	}
 
@@ -789,7 +789,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// Mark as paid.
 		$order_provider->mark_as_paid( $order->id, $payment['transaction_id'], 'paypal' );
 
-		$redirect_url = home_url( '/service-order/' . $order->id . '/requirements/' );
+		$redirect_url = wpss_get_order_requirements_url( $order->id );
 
 		if ( wp_doing_ajax() ) {
 			wp_send_json_success(

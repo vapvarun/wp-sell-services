@@ -350,6 +350,7 @@ do_action( 'wpss_after_conversation', $order );
 ?>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 (function($) {
 	'use strict';
 
@@ -509,4 +510,5 @@ do_action( 'wpss_after_conversation', $order );
 	}
 
 })(jQuery);
+});
 </script>

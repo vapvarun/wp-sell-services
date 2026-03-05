@@ -100,9 +100,20 @@ class TemplateLoader {
 	 * @return string
 	 */
 	public function template_include( string $template ): string {
-		// Check for service order.
+		// Redirect /service-order/{id}/ to dashboard order view.
 		$order_id = get_query_var( 'wpss_service_order' );
 		if ( $order_id ) {
+			$action = get_query_var( 'wpss_order_action' );
+			if ( 'requirements' === $action ) {
+				$redirect = wpss_get_order_requirements_url( (int) $order_id );
+			} else {
+				$redirect = wpss_get_order_url( (int) $order_id );
+			}
+			if ( $redirect ) {
+				wp_safe_redirect( $redirect );
+				exit;
+			}
+			// Fallback to template if dashboard URL unavailable.
 			return $this->load_service_order_template( (int) $order_id );
 		}
 

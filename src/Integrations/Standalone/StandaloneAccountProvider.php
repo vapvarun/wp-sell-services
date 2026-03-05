@@ -494,7 +494,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 						<td><?php echo esc_html( wpss_format_price( $order->total, $order->currency ) ); ?></td>
 						<td><?php echo esc_html( wp_date( 'M j, Y', strtotime( $order->created_at ) ) ); ?></td>
 						<td>
-							<a href="<?php echo esc_url( home_url( '/service-order/' . $order->id . '/' ) ); ?>" class="button button-small">
+							<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="button button-small">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 							</a>
 						</td>
@@ -670,7 +670,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 							<?php endif; ?>
 						</td>
 						<td>
-							<a href="<?php echo esc_url( home_url( '/service-order/' . $order->id . '/' ) ); ?>" class="button button-small">
+							<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="button button-small">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 							</a>
 						</td>

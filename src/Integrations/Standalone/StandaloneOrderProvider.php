@@ -175,7 +175,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	 * @return string
 	 */
 	public function get_order_url( ServiceOrder $order ): string {
-		return home_url( '/service-order/' . $order->id . '/' );
+		return wpss_get_order_url( $order->id );
 	}
 
 	/**

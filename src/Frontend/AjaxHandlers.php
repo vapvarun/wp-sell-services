@@ -1689,7 +1689,7 @@ class AjaxHandlers {
 				array(
 					'message'  => __( 'Proposal accepted. Order created!', 'wp-sell-services' ),
 					'order_id' => $result['order_id'],
-					'redirect' => home_url( '/my-account/service-orders/' . $result['order_id'] . '/' ),
+					'redirect' => wpss_get_order_url( $result['order_id'] ),
 				)
 			);
 		} else {
