@@ -204,5 +204,5 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
  * @param string $section_name Section identifier ('portfolio').
  * @param int    $user_id      Current user ID.
  */
-do_action( 'wpss_dashboard_section_after', 'portfolio', get_userdata( $user_id ) );
+do_action( 'wpss_dashboard_section_after', 'portfolio', $user_id );
 ?>

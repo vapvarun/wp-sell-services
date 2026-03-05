@@ -144,5 +144,5 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
  * @param string $section_name  Section identifier ('profile').
  * @param WP_User $current_user Current user object.
  */
-do_action( 'wpss_dashboard_section_after', 'profile', $user );
+do_action( 'wpss_dashboard_section_after', 'profile', $user_id );
 ?>
