@@ -78,6 +78,11 @@ class ServiceModerationPage {
 		// Save quick edit and bulk edit moderation status.
 		add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
 
+		// Hide native Status dropdown in Quick Edit when moderation is active.
+		if ( ModerationService::is_enabled() ) {
+			add_action( 'admin_head-edit.php', array( $this, 'hide_quick_edit_status' ) );
+		}
+
 		// Add metabox to service edit screen.
 		add_action( 'add_meta_boxes', array( $this, 'add_moderation_metabox' ) );
 
@@ -1066,6 +1071,23 @@ class ServiceModerationPage {
 	}
 
 	/**
+	 * Hide native Status dropdown in Quick Edit for services when moderation is active.
+	 *
+	 * @return void
+	 */
+	public function hide_quick_edit_status(): void {
+		$screen = get_current_screen();
+		if ( ! $screen || 'wpss_service' !== $screen->post_type ) {
+			return;
+		}
+		?>
+		<style>
+			.inline-edit-row .inline-edit-status { display: none !important; }
+		</style>
+		<?php
+	}
+
+	/**
 	 * Save moderation status from quick edit, bulk edit, or admin edit screen.
 	 *
 	 * @param int      $post_id Post ID.
@@ -1135,8 +1157,27 @@ class ServiceModerationPage {
 			delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
 		}
 
-		// Fire appropriate action.
+		// Sync post_status to match moderation status.
 		if ( $new_status !== $old_status ) {
+			$post_status_map = array(
+				self::STATUS_APPROVED => 'publish',
+				self::STATUS_REJECTED => 'draft',
+				self::STATUS_PENDING  => 'pending',
+			);
+
+			if ( isset( $post_status_map[ $new_status ] ) && $post->post_status !== $post_status_map[ $new_status ] ) {
+				// Remove this action to prevent infinite loop.
+				remove_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10 );
+				wp_update_post(
+					array(
+						'ID'          => $post_id,
+						'post_status' => $post_status_map[ $new_status ],
+					)
+				);
+				add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
+			}
+
+			// Fire appropriate action.
 			if ( self::STATUS_APPROVED === $new_status ) {
 				do_action( 'wpss_service_approved', $post_id );
 			} elseif ( self::STATUS_REJECTED === $new_status ) {
