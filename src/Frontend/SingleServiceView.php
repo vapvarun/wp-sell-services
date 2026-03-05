@@ -792,8 +792,8 @@ class SingleServiceView {
 		}
 		?>
 		<div id="wpss-contact-modal" class="wpss-modal" hidden>
-			<div class="wpss-modal-overlay"></div>
-			<div class="wpss-modal-content">
+			<div class="wpss-modal-backdrop wpss-modal-overlay"></div>
+			<div class="wpss-modal-dialog wpss-modal-content">
 				<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 					&times;
 				</button>

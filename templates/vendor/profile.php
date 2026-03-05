@@ -521,8 +521,8 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 	$response_time_display = $vendor_service->get_response_time( $vendor_id );
 	?>
 	<div id="wpss-contact-modal" class="wpss-modal" hidden>
-		<div class="wpss-modal-overlay"></div>
-		<div class="wpss-modal-content">
+		<div class="wpss-modal-backdrop wpss-modal-overlay"></div>
+		<div class="wpss-modal-dialog wpss-modal-content">
 			<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				&times;
 			</button>
