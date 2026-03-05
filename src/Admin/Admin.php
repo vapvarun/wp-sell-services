@@ -846,9 +846,11 @@ class Admin {
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h1>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-create-order' ) ); ?>" class="page-title-action">
-				<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
-			</a>
+			<?php if ( current_user_can( 'manage_options' ) ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-create-order' ) ); ?>" class="page-title-action">
+					<?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?>
+				</a>
+			<?php endif; ?>
 			<hr class="wp-header-end">
 
 			<?php $list_table->views(); ?>
