@@ -261,7 +261,9 @@ function wpssServiceWizard(existingData = {}) {
 					break;
 
 				case 'gallery':
-					// Gallery validation is optional for draft saves
+					if (!this.data.gallery.main) {
+						this.validationErrors.push(wpssWizard.strings.validationImage);
+					}
 					break;
 			}
 
@@ -286,7 +288,10 @@ function wpssServiceWizard(existingData = {}) {
 				return true; // Disabled packages are valid
 			}
 
-			return pkg.price > 0 && pkg.delivery_time > 0;
+			const price = parseFloat(pkg.price);
+			const deliveryTime = parseInt(pkg.delivery_time, 10);
+
+			return !isNaN(price) && price > 0 && !isNaN(deliveryTime) && deliveryTime > 0;
 		},
 
 		/**
