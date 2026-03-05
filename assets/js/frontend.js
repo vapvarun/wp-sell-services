@@ -298,6 +298,7 @@
 			deliver: 'wpss_deliver_order',
 			complete: 'wpss_accept_delivery',
 			cancel: 'wpss_cancel_order',
+			dispute: 'wpss_open_dispute',
 			'accept-cancellation': 'wpss_accept_cancellation',
 			'reject-cancellation': 'wpss_reject_cancellation'
 		};
