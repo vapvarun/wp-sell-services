@@ -368,7 +368,11 @@ class ServiceWizard {
 					<button type="button" class="wpss-btn wpss-btn--success wpss-wizard__btn-publish" x-show="currentStep === 'review'" @click="publishService()" :disabled="publishing" x-cloak>
 						<span class="dashicons dashicons-yes-alt" x-show="!publishing"></span>
 						<span class="wpss-spinner" x-show="publishing" x-cloak></span>
+						<?php if ( $service_id ) : ?>
+						<span x-text="publishing ? '<?php esc_attr_e( 'Updating...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Update Service', 'wp-sell-services' ); ?>'"></span>
+					<?php else : ?>
 						<span x-text="publishing ? '<?php esc_attr_e( 'Publishing...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Publish Service', 'wp-sell-services' ); ?>'"></span>
+					<?php endif; ?>
 					</button>
 				</div>
 			</div>
