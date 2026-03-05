@@ -496,16 +496,22 @@ class ServiceArchiveView {
 		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
 		$query->set( 'post_status', 'publish' );
 
-		// Filter out non-approved services when moderation is enabled (applies to all archive contexts).
-		if ( ModerationService::is_enabled() ) {
-			$meta_query   = $query->get( 'meta_query' ) ?: array();
-			$meta_query[] = array(
+		// Always filter out rejected/pending services regardless of moderation setting.
+		// Services without moderation meta (legacy) are allowed through.
+		$meta_query   = $query->get( 'meta_query' ) ?: array();
+		$meta_query[] = array(
+			'relation' => 'OR',
+			array(
 				'key'     => '_wpss_moderation_status',
 				'value'   => 'approved',
 				'compare' => '=',
-			);
-			$query->set( 'meta_query', $meta_query );
-		}
+			),
+			array(
+				'key'     => '_wpss_moderation_status',
+				'compare' => 'NOT EXISTS',
+			),
+		);
+		$query->set( 'meta_query', $meta_query );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
