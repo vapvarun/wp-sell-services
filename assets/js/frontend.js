@@ -679,29 +679,29 @@
 		// Open contact modal on button click.
 		$(document).on('click', '.wpss-contact-btn', function(e) {
 			e.preventDefault();
-			$modal.prop('hidden', false).addClass('active');
-			$('body').addClass('wpss-modal-open');
+			$modal.prop('hidden', false).addClass('wpss-modal-open');
+			$('body').addClass('wpss-modal-active');
 			$modal.find('textarea').focus();
 		});
 
 		// Close modal on overlay click.
 		$modal.on('click', '.wpss-modal-overlay', function() {
-			$modal.prop('hidden', true).removeClass('active');
-			$('body').removeClass('wpss-modal-open');
+			$modal.prop('hidden', true).removeClass('wpss-modal-open');
+			$('body').removeClass('wpss-modal-active');
 		});
 
 		// Close modal on close button.
 		$modal.on('click', '.wpss-modal-close', function(e) {
 			e.preventDefault();
-			$modal.prop('hidden', true).removeClass('active');
-			$('body').removeClass('wpss-modal-open');
+			$modal.prop('hidden', true).removeClass('wpss-modal-open');
+			$('body').removeClass('wpss-modal-active');
 		});
 
 		// Close on Escape key.
 		$(document).on('keydown', function(e) {
-			if (e.key === 'Escape' && $modal.hasClass('active')) {
-				$modal.prop('hidden', true).removeClass('active');
-				$('body').removeClass('wpss-modal-open');
+			if (e.key === 'Escape' && $modal.hasClass('wpss-modal-open')) {
+				$modal.prop('hidden', true).removeClass('wpss-modal-open');
+				$('body').removeClass('wpss-modal-active');
 			}
 		});
 
@@ -735,8 +735,8 @@
 						);
 
 						setTimeout(function() {
-							$modal.prop('hidden', true).removeClass('active');
-							$('body').removeClass('wpss-modal-open');
+							$modal.prop('hidden', true).removeClass('wpss-modal-open');
+							$('body').removeClass('wpss-modal-active');
 						}, 2000);
 					} else {
 						WPSS.showNotification(response.data.message || wpssData.i18n?.error || 'Failed to send message.', 'error');
