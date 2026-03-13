@@ -870,7 +870,8 @@
 }
 
 .wpss-status--pending,
-.wpss-status--pending_requirements {
+.wpss-status--pending_requirements,
+.wpss-status--pending_payment {
 	background: var(--wpss-warning-light);
 	color: #92400e;
 }
