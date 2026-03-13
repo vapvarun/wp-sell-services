@@ -86,7 +86,11 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 							<div class="wpss-message__body">
 								<div class="wpss-message__meta">
 									<strong><?php echo esc_html( $sender ? $sender->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
-									<time><?php echo esc_html( human_time_diff( strtotime( $msg->created_at ), current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></time>
+									<time>
+										<?php 
+										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at ); 
+										echo esc_html( human_time_diff( $msg_ts, current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
+									</time>
 								</div>
 								<div class="wpss-message__content"><?php echo wp_kses_post( wpautop( $msg->content ) ); ?></div>
 								<?php if ( ! empty( $msg->attachments ) ) : ?>
