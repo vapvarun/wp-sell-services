@@ -37,6 +37,8 @@ class EmailService {
 	public const TYPE_REQUIREMENTS_REMINDER  = 'requirements_reminder';
 	public const TYPE_SELLER_LEVEL_PROMOTION   = 'seller_level_promotion';
 	public const TYPE_CANCELLATION_REQUESTED  = 'cancellation_requested';
+	public const TYPE_WITHDRAWAL_REQUESTED    = 'withdrawal_requested';
+	public const TYPE_WITHDRAWAL_AUTO         = 'withdrawal_auto';
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -771,6 +773,49 @@ class EmailService {
 	}
 
 	/**
+	 * Send withdrawal request notification to admin.
+	 *
+	 * @param int   $vendor_id     Vendor user ID.
+	 * @param float $amount        Requested amount.
+	 * @param int   $withdrawal_id Withdrawal record ID.
+	 * @param bool  $is_auto       Whether this is an auto-withdrawal.
+	 * @return bool
+	 */
+	public function send_withdrawal_notification( int $vendor_id, float $amount, int $withdrawal_id, bool $is_auto = false ): bool {
+		$vendor      = get_user_by( 'id', $vendor_id );
+		$admin_email = get_option( 'admin_email' );
+		$type        = $is_auto ? self::TYPE_WITHDRAWAL_AUTO : self::TYPE_WITHDRAWAL_REQUESTED;
+
+		if ( $is_auto ) {
+			$subject = sprintf(
+				/* translators: %s: platform name */
+				__( '[%s] Auto Withdrawal Request', 'wp-sell-services' ),
+				wpss_get_platform_name()
+			);
+			$email_heading = __( 'Auto Withdrawal Request', 'wp-sell-services' );
+		} else {
+			$subject = sprintf(
+				/* translators: %s: platform name */
+				__( '[%s] New Withdrawal Request', 'wp-sell-services' ),
+				wpss_get_platform_name()
+			);
+			$email_heading = __( 'New Withdrawal Request', 'wp-sell-services' );
+		}
+
+		$template_vars = array(
+			'recipient'       => get_user_by( 'email', $admin_email ),
+			'email_heading'   => $email_heading,
+			'vendor'          => $vendor,
+			'amount'          => $amount,
+			'withdrawal_id'   => $withdrawal_id,
+			'is_auto'         => $is_auto,
+			'admin_panel_url' => admin_url( 'admin.php?page=wp-sell-services-withdrawals' ),
+		);
+
+		return $this->send( $admin_email, $subject, $type, $template_vars );
+	}
+
+	/**
 	 * Send an email using the template system.
 	 *
 	 * @param string $to            Recipient email.
@@ -941,6 +986,8 @@ class EmailService {
 			self::TYPE_REQUIREMENTS_REMINDER  => 'requirements-reminder.php',
 			self::TYPE_SELLER_LEVEL_PROMOTION  => 'seller-level-promotion.php',
 			self::TYPE_CANCELLATION_REQUESTED => 'cancellation-requested.php',
+			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawal-requested.php',
+			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawal-auto.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';
@@ -1011,9 +1058,8 @@ class EmailService {
 			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
 			self::TYPE_SELLER_LEVEL_PROMOTION  => 'notify_new_order',
 			// TYPE_CANCELLATION_REQUESTED is intentionally unmapped — always enabled (critical vendor communication).
-			// Direct wp_mail types used by services outside EmailService.
-			'withdrawal_requested'            => 'notify_new_order',
-			'withdrawal_auto'                 => 'notify_new_order',
+			self::TYPE_WITHDRAWAL_REQUESTED   => 'notify_new_order',
+			self::TYPE_WITHDRAWAL_AUTO        => 'notify_new_order',
 			'moderation_approved'             => 'notify_new_order',
 			'moderation_rejected'             => 'notify_new_order',
 			'moderation_pending'              => 'notify_new_order',

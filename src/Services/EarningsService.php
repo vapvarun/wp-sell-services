@@ -317,22 +317,7 @@ class EarningsService {
 		$withdrawal_id = (int) $wpdb->insert_id;
 
 		// Notify admin (respects email settings).
-		if ( EmailService::is_type_enabled( 'withdrawal_requested' ) ) {
-			$admin_email = get_option( 'admin_email' );
-			$vendor      = get_user_by( 'id', $vendor_id );
-
-			wp_mail(
-				$admin_email,
-				/* translators: %s: platform name */
-				sprintf( __( '[%s] New Withdrawal Request', 'wp-sell-services' ), wpss_get_platform_name() ),
-				sprintf(
-					/* translators: 1: vendor name, 2: amount */
-					__( 'Vendor %1$s has requested a withdrawal of %2$s. Please review in the admin panel.', 'wp-sell-services' ),
-					$vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
-					wpss_format_price( $amount )
-				)
-			);
-		}
+		( new EmailService() )->send_withdrawal_notification( $vendor_id, $amount, $withdrawal_id );
 
 		/**
 		 * Fires when withdrawal is requested.
@@ -839,22 +824,7 @@ class EarningsService {
 		);
 
 		// Notify admin (respects email settings).
-		if ( EmailService::is_type_enabled( 'withdrawal_auto' ) ) {
-			$admin_email = get_option( 'admin_email' );
-			$vendor      = get_user_by( 'id', $vendor_id );
-
-			wp_mail(
-				$admin_email,
-				/* translators: %s: platform name */
-				sprintf( __( '[%s] Auto Withdrawal Request', 'wp-sell-services' ), wpss_get_platform_name() ),
-				sprintf(
-					/* translators: 1: vendor name, 2: amount */
-					__( 'An automatic withdrawal of %2$s has been created for vendor %1$s. Please review in the admin panel.', 'wp-sell-services' ),
-					$vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
-					wpss_format_price( $amount )
-				)
-			);
-		}
+		( new EmailService() )->send_withdrawal_notification( $vendor_id, $amount, $withdrawal_id, true );
 
 		/**
 		 * Fires when auto withdrawal is created.
