@@ -22,49 +22,11 @@ if ( ! $delete_data ) {
 
 global $wpdb;
 
-// Define plugin directory for autoloader.
-if ( ! defined( 'WPSS_PLUGIN_DIR' ) ) {
-	define( 'WPSS_PLUGIN_DIR', __DIR__ . '/' );
-}
-
-// Register PSR-4 autoloader (works without Composer vendor directory).
-spl_autoload_register(
-	function ( string $class_name ): void {
-		$prefix   = 'WPSellServices\\';
-		$base_dir = WPSS_PLUGIN_DIR . 'src/';
-
-		$len = strlen( $prefix );
-		if ( strncmp( $prefix, $class_name, $len ) !== 0 ) {
-			return;
-		}
-
-		$relative_class = substr( $class_name, $len );
-		$file           = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
-
-		if ( file_exists( $file ) ) {
-			require $file;
-		}
-	}
-);
-
-// Try to load Composer autoloader safely (only if all files exist).
-$autoloader     = __DIR__ . '/vendor/autoload.php';
-$autoload_files = __DIR__ . '/vendor/composer/autoload_files.php';
+// Composer autoloader is required for uninstall routines.
+$autoloader = __DIR__ . '/vendor/autoload.php';
 
 if ( file_exists( $autoloader ) ) {
-	$can_load = true;
-	if ( file_exists( $autoload_files ) ) {
-		$files = require $autoload_files;
-		foreach ( $files as $file ) {
-			if ( ! file_exists( $file ) ) {
-				$can_load = false;
-				break;
-			}
-		}
-	}
-	if ( $can_load ) {
-		require_once $autoloader;
-	}
+	require_once $autoloader;
 }
 
 use WPSellServices\Database\SchemaManager;
