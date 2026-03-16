@@ -44,16 +44,16 @@ class SetupWizardPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		$parent = $this->should_show_in_menu() ? 'wp-sell-services' : null;
-
-		add_submenu_page(
-			$parent,
-			__( 'Setup Wizard', 'wp-sell-services' ),
-			__( 'Setup Wizard', 'wp-sell-services' ),
-			'manage_options',
-			'wpss-setup-wizard',
-			array( $this, 'render' )
-		);
+		if( $this->should_show_in_menu() ){
+			add_submenu_page(
+				'wp-sell-services',
+				__( 'Setup Wizard', 'wp-sell-services' ),
+				__( 'Setup Wizard', 'wp-sell-services' ),
+				'manage_options',
+				'wpss-setup-wizard',
+				array( $this, 'render' )
+			);
+		}
 	}
 
 	/**

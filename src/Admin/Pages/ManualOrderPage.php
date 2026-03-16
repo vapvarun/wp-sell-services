@@ -46,7 +46,7 @@ class ManualOrderPage {
 	public function add_menu_page(): void {
 		// Hidden page — accessible via "Create Order" button on the Orders list page.
 		add_submenu_page(
-			null,
+			'wpss-orders',
 			__( 'Create Order', 'wp-sell-services' ),
 			__( 'Create Order', 'wp-sell-services' ),
 			'manage_options',
