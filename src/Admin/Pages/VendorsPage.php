@@ -2375,7 +2375,7 @@ class VendorsPage {
 		$withdrawals = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wpss_withdrawals
-				WHERE user_id = %d
+				WHERE vendor_id = %d
 				ORDER BY created_at DESC
 				LIMIT %d OFFSET %d",
 				$vendor_id,
@@ -2386,7 +2386,7 @@ class VendorsPage {
 
 		$total_withdrawals = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_withdrawals WHERE user_id = %d",
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_withdrawals WHERE vendor_id = %d",
 				$vendor_id
 			)
 		);
