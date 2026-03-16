@@ -241,14 +241,17 @@ function wpssServiceWizard(existingData = {}) {
 		validateStep(step) {
 			this.validationErrors = [];
 
-			switch (step) {
-				case 'basic':
-					if (!this.data.title || this.data.title.length < 10) {
-						this.validationErrors.push(wpssWizard.strings.validationTitle);
-					}
-					if (!this.data.category) {
-						this.validationErrors.push(wpssWizard.strings.validationCat);
-					}
+				switch (step) {
+					case 'basic':
+						const title = (this.data.title || '').trim();
+						if (!title) {
+							this.validationErrors.push(wpssWizard.strings.validationTitle);
+						} else if (title.length < 10) {
+							this.validationErrors.push(wpssWizard.strings.validationTitleMin);
+						}
+						if (!this.data.category) {
+							this.validationErrors.push(wpssWizard.strings.validationCat);
+						}
 					if (!this.data.description || this.data.description.length < 120) {
 						this.validationErrors.push(wpssWizard.strings.validationDesc);
 					}
@@ -580,8 +583,11 @@ function wpssServiceWizard(existingData = {}) {
 			// Validate all required fields
 			this.validationErrors = [];
 
-			if (!this.data.title || this.data.title.length < 10) {
+			const title = (this.data.title || '').trim();
+			if (!title) {
 				this.validationErrors.push(wpssWizard.strings.validationTitle);
+			} else if (title.length < 10) {
+				this.validationErrors.push(wpssWizard.strings.validationTitleMin);
 			}
 			if (!this.data.category) {
 				this.validationErrors.push(wpssWizard.strings.validationCat);

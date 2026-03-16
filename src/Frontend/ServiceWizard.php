@@ -1269,6 +1269,7 @@ class ServiceWizard {
 					'unsavedChanges'    => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
 					'confirmDelete'     => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
 					'validationTitle'   => __( 'Please enter a service title', 'wp-sell-services' ),
+					'validationTitleMin' => __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' ),
 					'validationCat'     => __( 'Please select a category', 'wp-sell-services' ),
 					'validationDesc'    => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
 					'validationPrice'   => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
@@ -1862,8 +1863,11 @@ class ServiceWizard {
 	private function validate_service_data( array $data ): array {
 		$errors = array();
 
-		if ( empty( $data['title'] ) || strlen( $data['title'] ) < 10 ) {
-			$errors[] = __( 'Service title must be at least 10 characters.', 'wp-sell-services' );
+		$title = trim( (string) ( $data['title'] ?? '' ) );
+		if ( '' === $title ) {
+			$errors[] = __( 'Please enter a service title.', 'wp-sell-services' );
+		} elseif ( strlen( $title ) < 10 ) {
+			$errors[] = __( 'Please enter at least 10 characters for the service title..', 'wp-sell-services' );
 		}
 
 		if ( empty( $data['category'] ) ) {
