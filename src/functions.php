@@ -600,6 +600,8 @@ function wpss_get_order_status_label( string $status ): string {
 function wpss_get_order_statuses(): array {
 	$statuses = array(
 		'pending_payment'        => __( 'Pending Payment', 'wp-sell-services' ),
+		'pending_requirements'   => __( 'Pending Requirements', 'wp-sell-services' ),		
+		'pending_approval'   	 => __( 'Pending Approval', 'wp-sell-services' ),		
 		'pending'                => __( 'Pending', 'wp-sell-services' ),
 		'accepted'               => __( 'Accepted', 'wp-sell-services' ),
 		'rejected'               => __( 'Rejected', 'wp-sell-services' ),		

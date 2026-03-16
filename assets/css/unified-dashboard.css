@@ -876,6 +876,11 @@
 	color: #92400e;
 }
 
+.wpss-status--pending_approval {
+	background: #c6e1c6;
+	color: #5b841b;
+}
+
 .wpss-status--in_progress {
 	background: #e0e7ff;
 	color: #3730a3;
