@@ -1035,7 +1035,7 @@ $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 're
 
 // Check if review modal should be available.
 $can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
-$can_open_dispute      = $is_customer && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true );
+$can_open_dispute      = ( $is_customer || $is_vendor ) && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true );
 $can_request_revision  = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
 
 // Check if cancel modal should be available.
