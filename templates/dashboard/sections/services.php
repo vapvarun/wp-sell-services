@@ -37,6 +37,26 @@ $args = array(
 
 $services = new WP_Query( $args );
 
+// Pre-fetch order counts for all displayed services in a single query.
+$service_order_counts = array();
+if ( $services->have_posts() ) {
+	$displayed_ids = wp_list_pluck( $services->posts, 'ID' );
+	if ( ! empty( $displayed_ids ) ) {
+		global $wpdb;
+		$orders_table     = $wpdb->prefix . 'wpss_orders';
+		$placeholders     = implode( ',', array_fill( 0, count( $displayed_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$counts           = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->prepare( "SELECT service_id, COUNT(*) AS order_count FROM {$orders_table} WHERE service_id IN ({$placeholders}) GROUP BY service_id", ...$displayed_ids ),
+			OBJECT_K
+		);
+		foreach ( $displayed_ids as $sid ) {
+			$service_order_counts[ $sid ] = isset( $counts[ $sid ] ) ? (int) $counts[ $sid ]->order_count : 0;
+		}
+	}
+}
+
 // Get stats.
 $published_count = count(
 	get_posts(
@@ -161,8 +181,8 @@ $pending_count = count(
 				$services->the_post();
 				$service_id  = get_the_ID();
 				$price       = get_post_meta( $service_id, '_wpss_starting_price', true );
-				$views       = (int) get_post_meta( $service_id, 'wpss_views', true );
-				$orders      = (int) get_post_meta( $service_id, 'wpss_orders', true );
+				$views       = (int) get_post_meta( $service_id, '_wpss_views', true );				
+				$orders      = $service_order_counts[ $service_id ] ?? 0;
 				$item_status = get_post_status();
 
 				// Check moderation meta for rejected services (stored as draft post_status).
