@@ -1942,7 +1942,8 @@ class ServiceWizard {
 				$thumbnail_id = $main_id;
 			}
 		}
-		if ( ! $thumbnail_id && ! empty( $gallery_ids[0] ) ) {
+		$has_explicit_main = ! empty( $data['gallery']['main']['id'] );
+		if ( ! $has_explicit_main && ! $thumbnail_id && ! empty( $gallery_ids[0] ) ) {
 			$thumbnail_id = $gallery_ids[0];
 		}
 
@@ -2084,6 +2085,11 @@ class ServiceWizard {
 			return false;
 		}
 
+		// Only allow image attachments in the gallery.
+		if ( ! wp_attachment_is_image( $attachment_id ) ) {
+			return false;
+		}
+
 		// Admins can use any attachment.
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;
@@ -2103,6 +2109,13 @@ class ServiceWizard {
 			if ( $parent && 'wpss_service' === $parent->post_type && $current_user_id === (int) $parent->post_author ) {
 				return true;
 			}
+		}
+
+		// For wizard-selected media, allow image attachments when the user has
+		// standard upload capability (covers environments where attachment authors
+		// are rewritten by media/offload plugins).
+		if ( current_user_can( 'upload_files' ) ) {
+			return true;
 		}
 
 		return false;
