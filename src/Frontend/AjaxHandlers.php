@@ -918,7 +918,7 @@ class AjaxHandlers {
 	 *
 	 * @return void
 	 */
-	public function get_new_messages(): void {
+	public function get_new_messages(): void {		
 		check_ajax_referer( 'wpss_frontend_nonce', 'nonce' );
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -932,18 +932,18 @@ class AjaxHandlers {
 		// Verify user has access to this order.
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
-
+		
 		if ( ! $order ) {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
-
+								
 		$is_vendor   = (int) $order->vendor_id === $user_id;
 		$is_customer = (int) $order->customer_id === $user_id;
-
+									
 		if ( ! $is_vendor && ! $is_customer ) {
 			wp_send_json_error( array( 'message' => __( 'Access denied.', 'wp-sell-services' ) ) );
 		}
-
+									
 		global $wpdb;
 
 		// First get the conversation for this order.
@@ -957,11 +957,11 @@ class AjaxHandlers {
 				$order_id
 			)
 		);
-
+		
 		if ( ! $conversation ) {
 			wp_send_json_success( array( 'messages' => array() ) );
 		}
-
+								
 		// Get new messages after last_id that weren't sent by current user.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$messages = $wpdb->get_results(
@@ -1014,6 +1014,7 @@ class AjaxHandlers {
 
 		// Build HTML for each message.
 		$result = array();
+			
 		foreach ( $messages as $msg ) {
 			$is_system = 'system' === $msg->type;
 
@@ -1882,7 +1883,7 @@ class AjaxHandlers {
 			array(
 				'attachment_id' => $attachment_id,
 				'url'           => wp_get_attachment_url( $attachment_id ),
-				'filename'      => basename( get_attached_file( $attachment_id ) ),
+				'filename'      => basename( get_attached_file( $attachment_id ) ?: '' ),
 			)
 		);
 	}

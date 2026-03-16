@@ -191,7 +191,7 @@ class FileUploadField extends AbstractField {
 			}
 
 			// Check file type.
-			$file_path = get_attached_file( $attachment_id );
+			$file_path = get_attached_file( $attachment_id ) ?: '';
 			$extension = strtolower( pathinfo( $file_path, PATHINFO_EXTENSION ) );
 
 			if ( ! in_array( $extension, $field['allowed_types'], true ) ) {
@@ -203,7 +203,7 @@ class FileUploadField extends AbstractField {
 			}
 
 			// Check file size.
-			$file_size = filesize( $file_path );
+			$file_size = $file_path ? filesize( $file_path ) : 0;
 			$max_bytes = $field['max_size'] * 1024 * 1024;
 
 			if ( $file_size > $max_bytes ) {

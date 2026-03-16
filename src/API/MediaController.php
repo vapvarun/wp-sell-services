@@ -258,7 +258,7 @@ class MediaController extends RestController {
 	private function format_attachment( int $attachment_id ): array {
 		$url       = wp_get_attachment_url( $attachment_id );
 		$metadata  = wp_get_attachment_metadata( $attachment_id );
-		$filepath  = get_attached_file( $attachment_id );
+		$filepath  = get_attached_file( $attachment_id ) ?: '';
 		$filetype  = wp_check_filetype( $filepath );
 		$file_size = $filepath ? @filesize( $filepath ) : 0; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 

@@ -215,7 +215,7 @@ class GalleryService {
 					return null;
 				}
 
-				$file = get_attached_file( $attachment_id );
+				$file = get_attached_file( $attachment_id ) ?: '';
 				$ext = strtolower( pathinfo( $file, PATHINFO_EXTENSION ) );
 
 				if ( ! in_array( $ext, $this->allowed_video_types, true ) ) {

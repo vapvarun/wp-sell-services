@@ -183,7 +183,7 @@ class BuyerRequest {
 				$urls[] = [
 					'id'       => $id,
 					'url'      => $url,
-					'filename' => basename( get_attached_file( $id ) ),
+					'filename' => basename( get_attached_file( $id ) ?: '' ),
 					'type'     => get_post_mime_type( $id ),
 				];
 			}
