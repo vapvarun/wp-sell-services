@@ -809,7 +809,7 @@ class EmailService {
 			'amount'          => $amount,
 			'withdrawal_id'   => $withdrawal_id,
 			'is_auto'         => $is_auto,
-			'admin_panel_url' => admin_url( 'admin.php?page=wp-sell-services-withdrawals' ),
+			'admin_panel_url' => admin_url( 'admin.php?page=wpss-withdrawals' ),
 		);
 
 		return $this->send( $admin_email, $subject, $type, $template_vars );
