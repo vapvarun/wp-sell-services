@@ -704,7 +704,7 @@ class OrderWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$existing_reversal = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$transactions_table} WHERE reference_type = 'order' AND reference_id = %d AND type = 'order_reversal'",
+				"SELECT COUNT(*) FROM {$transactions_table} WHERE reference_type = 'order' AND reference_id = %d AND type IN ('order_reversal', 'refund')",
 				$order_id
 			)
 		);
