@@ -870,6 +870,8 @@ class Settings {
 				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
 				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
 				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+				'proposal_submitted'     => __( 'New Proposal Received', 'wp-sell-services' ),
+				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
 			)
 		);
 

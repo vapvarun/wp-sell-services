@@ -42,6 +42,8 @@ class EmailService {
 	public const TYPE_VENDOR_CONTACT          = 'vendor_contact';
 	public const TYPE_WITHDRAWAL_APPROVED    = 'withdrawal_approved';
 	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
+	public const TYPE_PROPOSAL_SUBMITTED    = 'proposal_submitted';
+	public const TYPE_PROPOSAL_ACCEPTED     = 'proposal_accepted';
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -90,6 +92,10 @@ class EmailService {
 
 		// Withdrawal processed (approved/rejected).
 		add_action( 'wpss_withdrawal_processed', array( $this, 'send_withdrawal_status' ), 10, 3 );
+
+		// Proposal notifications.
+		add_action( 'wpss_proposal_submitted', array( $this, 'send_proposal_submitted' ), 10, 4 );
+		add_action( 'wpss_proposal_accepted', array( $this, 'send_proposal_accepted' ), 10, 3 );
 	}
 
 	/**
@@ -915,6 +921,91 @@ class EmailService {
 	}
 
 	/**
+	 * Send proposal submitted email to the request owner (buyer).
+	 *
+	 * @param int   $proposal_id Proposal ID.
+	 * @param int   $request_id  Buyer request ID.
+	 * @param int   $vendor_id   Vendor who submitted.
+	 * @param array $data        Proposal data.
+	 * @return bool
+	 */
+	public function send_proposal_submitted( int $proposal_id, int $request_id, int $vendor_id, array $data ): bool {
+		$request = get_post( $request_id );
+
+		if ( ! $request ) {
+			return false;
+		}
+
+		$buyer  = get_user_by( 'id', $request->post_author );
+		$vendor = get_user_by( 'id', $vendor_id );
+
+		if ( ! $buyer || ! $vendor ) {
+			return false;
+		}
+
+		$subject = sprintf(
+			/* translators: 1: platform name, 2: vendor name */
+			__( '[%1$s] New Proposal from %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			$vendor->display_name
+		);
+
+		$template_vars = array(
+			'recipient'     => $buyer,
+			'email_heading' => __( 'New Proposal Received', 'wp-sell-services' ),
+			'content'       => sprintf(
+				/* translators: 1: vendor name, 2: request title */
+				__( '%1$s has submitted a proposal for your request "%2$s". Review it and accept if it meets your needs.', 'wp-sell-services' ),
+				$vendor->display_name,
+				$request->post_title
+			),
+			'button_url'    => get_permalink( $request_id ),
+			'button_text'   => __( 'View Proposals', 'wp-sell-services' ),
+		);
+
+		return $this->send( $buyer->user_email, $subject, self::TYPE_PROPOSAL_SUBMITTED, $template_vars );
+	}
+
+	/**
+	 * Send proposal accepted email to the vendor.
+	 *
+	 * @param int    $proposal_id Proposal ID.
+	 * @param object $proposal    Proposal data.
+	 * @param object $request     Request data (WP_Post or similar).
+	 * @return bool
+	 */
+	public function send_proposal_accepted( int $proposal_id, object $proposal, object $request ): bool {
+		$vendor = get_user_by( 'id', $proposal->vendor_id ?? 0 );
+		$buyer  = get_user_by( 'id', $request->post_author ?? 0 );
+
+		if ( ! $vendor || ! $buyer ) {
+			return false;
+		}
+
+		$subject = sprintf(
+			/* translators: 1: platform name, 2: request title */
+			__( '[%1$s] Your Proposal Was Accepted - %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			$request->post_title
+		);
+
+		$template_vars = array(
+			'recipient'     => $vendor,
+			'email_heading' => __( 'Proposal Accepted!', 'wp-sell-services' ),
+			'content'       => sprintf(
+				/* translators: 1: buyer name, 2: request title */
+				__( 'Congratulations! %1$s has accepted your proposal for "%2$s". An order will be created automatically.', 'wp-sell-services' ),
+				$buyer->display_name,
+				$request->post_title
+			),
+			'button_url'    => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'sales', wpss_get_page_url( 'dashboard' ) ) : '',
+			'button_text'   => __( 'View Orders', 'wp-sell-services' ),
+		);
+
+		return $this->send( $vendor->user_email, $subject, self::TYPE_PROPOSAL_ACCEPTED, $template_vars );
+	}
+
+	/**
 	 * Send an email using the template system.
 	 *
 	 * @param string $to            Recipient email.
@@ -1090,6 +1181,8 @@ class EmailService {
 			self::TYPE_VENDOR_CONTACT         => 'vendor-contact.php',
 			self::TYPE_WITHDRAWAL_APPROVED   => 'withdrawal-approved.php',
 			self::TYPE_WITHDRAWAL_REJECTED   => 'withdrawal-rejected.php',
+			self::TYPE_PROPOSAL_SUBMITTED   => 'generic.php',
+			self::TYPE_PROPOSAL_ACCEPTED    => 'generic.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';
