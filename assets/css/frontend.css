@@ -2578,6 +2578,7 @@
 	width: 100%;
 	height: 100%;
 	background: rgb(0 0 0 / 50%);
+	z-index: 1;
 }
 
 .wpss-modal-dialog {
@@ -2589,6 +2590,7 @@
 	max-height: 90vh;
 	overflow-y: auto;
 	box-shadow: var(--wpss-shadow-lg);
+	z-index: 2;
 }
 
 .wpss-modal-header {
