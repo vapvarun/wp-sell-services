@@ -349,7 +349,16 @@ class UnifiedDashboard {
 
 			<main class="wpss-dashboard__content">
 				<header class="wpss-dashboard__header">
-					<h1 class="wpss-dashboard__title"><?php echo esc_html( $section_data['title'] ); ?></h1>
+					<h1 class="wpss-dashboard__title">
+						<?php
+						$section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : '';
+						$id      = isset($_GET['id']) ? sanitize_text_field($_GET['id']) : '';						 
+						if ( $section && ! $id ) {
+							echo esc_html( $section_data['title'] );
+						} else {
+							esc_html_e( 'Update Service', 'wp-sell-services' );
+						}
+					 ?></h1>
 					<?php if ( $this->current_section === 'services' ) : ?>
 						<a href="<?php echo esc_url( $this->get_section_url( 'create' ) ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
