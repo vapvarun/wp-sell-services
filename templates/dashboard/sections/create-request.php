@@ -138,6 +138,18 @@ $categories = get_terms(
 				>
 				<p class="wpss-form-hint"><?php esc_html_e( 'When do you need this completed?', 'wp-sell-services' ); ?></p>
 			</div>
+
+			<div class="wpss-form-row">
+				<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
+				<input
+					type="text"
+					name="skills_required"
+					id="request_skills"
+					class="wpss-input"
+					placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>"
+				>
+				<p class="wpss-form-hint"><?php esc_html_e( 'Separate multiple skills with commas.', 'wp-sell-services' ); ?></p>
+			</div>
 		</div>
 
 		<!-- Submit Section -->
