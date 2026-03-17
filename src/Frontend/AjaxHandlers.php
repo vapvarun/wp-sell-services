@@ -89,6 +89,8 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_accept_proposal', array( $this, 'accept_proposal' ) );
 		add_action( 'wp_ajax_wpss_reject_proposal', array( $this, 'reject_proposal' ) );
 		add_action( 'wp_ajax_wpss_withdraw_proposal', array( $this, 'withdraw_proposal' ) );
+		add_action( 'wp_ajax_wpss_update_request_status', array( $this, 'update_request_status' ) );
+		add_action( 'wp_ajax_wpss_delete_request', array( $this, 'delete_request' ) );
 
 		// Service actions.
 		add_action( 'wp_ajax_wpss_favorite_service', array( $this, 'favorite_service' ) );
@@ -1606,6 +1608,69 @@ class AjaxHandlers {
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to create request.', 'wp-sell-services' ) ) );
 		}
+	}
+
+	/**
+	 * Update buyer request status (close/reopen).
+	 *
+	 * @return void
+	 */
+	public function update_request_status(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$request_id = absint( $_POST['request_id'] ?? 0 );
+		$status     = sanitize_key( $_POST['status'] ?? '' );
+		$user_id    = get_current_user_id();
+
+		if ( ! $request_id || ! $status ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$post = get_post( $request_id );
+
+		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$allowed_statuses = array( 'publish', 'draft' );
+		if ( ! in_array( $status, $allowed_statuses, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid status.', 'wp-sell-services' ) ) );
+		}
+
+		wp_update_post(
+			array(
+				'ID'          => $request_id,
+				'post_status' => $status,
+			)
+		);
+
+		wp_send_json_success( array( 'message' => __( 'Request updated.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * Delete buyer request.
+	 *
+	 * @return void
+	 */
+	public function delete_request(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$request_id = absint( $_POST['request_id'] ?? 0 );
+		$user_id    = get_current_user_id();
+
+		if ( ! $request_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$post = get_post( $request_id );
+
+		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		wp_delete_post( $request_id, true );
+
+		wp_send_json_success( array( 'message' => __( 'Request deleted.', 'wp-sell-services' ) ) );
 	}
 
 	/**

@@ -128,6 +128,17 @@ $active_count = count(
 						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 							<?php esc_html_e( 'View Offers', 'wp-sell-services' ); ?>
 						</a>
+						<?php if ( 'publish' === $item_status ) : ?>
+							<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+								<?php esc_html_e( 'Close', 'wp-sell-services' ); ?>
+							</button>
+						<?php endif; ?>
+						<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'edit-request', 'request_id' => $request_id ), get_permalink() ) ); ?>" class="wpss-btn wpss-btn--link wpss-btn--sm">
+							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
+						</a>
+						<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-btn--danger wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+							<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
+						</button>
 					</div>
 				</div>
 			<?php endwhile; ?>

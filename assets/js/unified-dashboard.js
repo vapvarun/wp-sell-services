@@ -49,6 +49,10 @@
 			$(document).on('click', '#wpss-cover-upload-btn', this.handleCoverUpload.bind(this));
 			$(document).on('click', '#wpss-cover-remove-btn', this.handleCoverRemove.bind(this));
 
+			// Buyer request management
+			$(document).on('click', '.wpss-close-request', this.handleCloseRequest.bind(this));
+			$(document).on('click', '.wpss-delete-request', this.handleDeleteRequest.bind(this));
+
 			// Portfolio
 			$(document).on('click', '#wpss-portfolio-add-btn', this.handlePortfolioAdd.bind(this));
 			$(document).on('click', '.wpss-portfolio-edit', this.handlePortfolioEdit.bind(this));
@@ -376,6 +380,69 @@
 			$('#wpss-cover-preview').hide();
 			$('#wpss-cover-placeholder').show();
 			$(e.currentTarget).remove();
+		},
+
+		/**
+		 * Handle closing a buyer request (set to draft).
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleCloseRequest: function (e) {
+			e.preventDefault();
+			var requestId = $(e.currentTarget).data('request-id');
+
+			if (!confirm('Close this request? It will no longer be visible to sellers.')) {
+				return;
+			}
+
+			$.ajax({
+				url: wpssUnifiedDashboard.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_update_request_status',
+					request_id: requestId,
+					status: 'draft',
+					nonce: wpssUnifiedDashboard.nonce
+				},
+				success: function (response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						alert(response.data.message || 'Failed to close request.');
+					}
+				}
+			});
+		},
+
+		/**
+		 * Handle deleting a buyer request.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleDeleteRequest: function (e) {
+			e.preventDefault();
+			var requestId = $(e.currentTarget).data('request-id');
+
+			if (!confirm('Delete this request permanently? This cannot be undone.')) {
+				return;
+			}
+
+			$.ajax({
+				url: wpssUnifiedDashboard.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_delete_request',
+					request_id: requestId,
+					nonce: wpssUnifiedDashboard.nonce
+				},
+				success: function (response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						alert(response.data.message || 'Failed to delete request.');
+					}
+				}
+			});
 		},
 
 		/**

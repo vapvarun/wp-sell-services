@@ -90,7 +90,7 @@ $rating_avg       = (float) ( $profile->rating_avg ?? 0 );
 $rating_count     = (int) ( $profile->rating_count ?? 0 );
 $completed_orders = (int) ( $profile->completed_orders ?? 0 );
 
-// Get services.
+// Get services (limited for display grid).
 $services = get_posts(
 	[
 		'post_type'      => 'wpss_service',
@@ -98,6 +98,19 @@ $services = get_posts(
 		'author'         => $vendor_id,
 		'posts_per_page' => 6,
 	]
+);
+
+// Total published service count (for sidebar stats and "View all" link).
+$total_services = count(
+	get_posts(
+		[
+			'post_type'      => 'wpss_service',
+			'post_status'    => 'publish',
+			'author'         => $vendor_id,
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		]
+	)
 );
 
 // Get reviews.
@@ -290,19 +303,6 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							<?php wp_reset_postdata(); ?>
 						</div>
 
-						<?php
-						$total_services = count(
-							get_posts(
-								[
-									'post_type'      => 'wpss_service',
-									'post_status'    => 'publish',
-									'author'         => $vendor_id,
-									'posts_per_page' => -1,
-									'fields'         => 'ids',
-								]
-							)
-						);
-						?>
 						<?php if ( $total_services > 6 ) : ?>
 							<p class="wpss-view-all">
 								<a href="<?php echo esc_url( add_query_arg( 'vendor', $vendor_id, get_post_type_archive_link( 'wpss_service' ) ) ); ?>">
@@ -420,7 +420,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<?php endif; ?>
 						<li>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Active Services', 'wp-sell-services' ); ?></span>
-							<span class="wpss-stat-value"><?php echo esc_html( count( $services ) ); ?></span>
+							<span class="wpss-stat-value"><?php echo esc_html( $total_services ); ?></span>
 						</li>
 						<li>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Orders Completed', 'wp-sell-services' ); ?></span>
