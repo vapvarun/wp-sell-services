@@ -868,6 +868,8 @@ class Settings {
 				'new_review'             => __( 'New Review', 'wp-sell-services' ),
 				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
 				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
+				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
+				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
 			)
 		);
 

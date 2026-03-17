@@ -136,9 +136,9 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function register_rewrite_rules(): void {
-		// Checkout page.
+		// Checkout page — uses 'service-checkout' to avoid conflict with WooCommerce's /checkout/ page.
 		add_rewrite_rule(
-			'^checkout/service/([0-9]+)/?$',
+			'^service-checkout/([0-9]+)/?$',
 			'index.php?wpss_checkout=1&wpss_service_id=$matches[1]',
 			'top'
 		);

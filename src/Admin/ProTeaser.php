@@ -48,9 +48,6 @@ class ProTeaser {
 		// Admin: Vendor settings accordion teaser.
 		add_action( 'wpss_settings_sections_vendor', array( $this, 'render_vendor_settings_teaser' ) );
 
-		// Frontend: Earnings summary teaser.
-		add_action( 'wpss_earnings_summary', array( $this, 'render_earnings_teaser' ) );
-
 		// Frontend: Service creation section teaser.
 		add_action( 'wpss_dashboard_section_after', array( $this, 'render_section_teasers' ), 10, 2 );
 	}

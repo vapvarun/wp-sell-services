@@ -40,6 +40,8 @@ class EmailService {
 	public const TYPE_WITHDRAWAL_REQUESTED    = 'withdrawal_requested';
 	public const TYPE_WITHDRAWAL_AUTO         = 'withdrawal_auto';
 	public const TYPE_VENDOR_CONTACT          = 'vendor_contact';
+	public const TYPE_WITHDRAWAL_APPROVED    = 'withdrawal_approved';
+	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -85,6 +87,9 @@ class EmailService {
 		// New email types.
 		add_action( 'wpss_send_requirements_reminder_email', array( $this, 'send_requirements_reminder' ), 10, 3 );
 		add_action( 'wpss_vendor_level_promoted', array( $this, 'send_level_promotion' ), 10, 3 );
+
+		// Withdrawal processed (approved/rejected).
+		add_action( 'wpss_withdrawal_processed', array( $this, 'send_withdrawal_status' ), 10, 3 );
 	}
 
 	/**
@@ -862,6 +867,54 @@ class EmailService {
 	}
 
 	/**
+	 * Send withdrawal status email to vendor.
+	 *
+	 * @param int    $withdrawal_id Withdrawal ID.
+	 * @param string $status        New status (approved, completed, rejected).
+	 * @param object $withdrawal    Withdrawal DB row.
+	 * @return bool
+	 */
+	public function send_withdrawal_status( int $withdrawal_id, string $status, object $withdrawal ): bool {
+		$vendor = get_user_by( 'id', $withdrawal->vendor_id );
+
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$amount = wpss_format_price( (float) $withdrawal->amount );
+
+		if ( 'rejected' === $status ) {
+			$subject = sprintf(
+				/* translators: 1: platform name, 2: amount */
+				__( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$amount
+			);
+			$type = self::TYPE_WITHDRAWAL_REJECTED;
+		} else {
+			$subject = sprintf(
+				/* translators: 1: platform name, 2: amount */
+				__( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$amount
+			);
+			$type = self::TYPE_WITHDRAWAL_APPROVED;
+		}
+
+		$template_vars = array(
+			'recipient'      => $vendor,
+			'email_heading'  => 'rejected' === $status ? __( 'Withdrawal Rejected', 'wp-sell-services' ) : __( 'Withdrawal Approved', 'wp-sell-services' ),
+			'amount'         => $amount,
+			'withdrawal_id'  => $withdrawal_id,
+			'status'         => $status,
+			'admin_note'     => $withdrawal->admin_note ?? '',
+			'dashboard_url'  => add_query_arg( 'section', 'earnings', wpss_get_dashboard_url() ),
+		);
+
+		return $this->send( $vendor->user_email, $subject, $type, $template_vars );
+	}
+
+	/**
 	 * Send an email using the template system.
 	 *
 	 * @param string $to            Recipient email.
@@ -1035,6 +1088,8 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawal-requested.php',
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawal-auto.php',
 			self::TYPE_VENDOR_CONTACT         => 'vendor-contact.php',
+			self::TYPE_WITHDRAWAL_APPROVED   => 'withdrawal-approved.php',
+			self::TYPE_WITHDRAWAL_REJECTED   => 'withdrawal-rejected.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';

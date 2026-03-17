@@ -2248,7 +2248,7 @@ class AjaxHandlers {
 
 		update_user_meta( $user_id, '_wpss_cart', $cart );
 
-		$checkout_url = wpss_get_page_url( 'checkout' ) ?: home_url( '/checkout/' );
+		$checkout_url = wpss_get_page_url( 'checkout' );
 		$checkout_url_args = array(
 			'service_id' => $service_id,
 			'package'    => $package_index,

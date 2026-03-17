@@ -1001,22 +1001,68 @@ function wpss_add_notification( int $user_id, string $type, string $message, arr
 }
 
 /**
+ * Get default page slugs for standalone mode.
+ *
+ * These are used as fallbacks when no page is mapped in Settings → Pages.
+ * Site owners can override by mapping WP pages in settings.
+ *
+ * @since 1.2.0
+ *
+ * @return array<string, string> Map of page_key => default slug.
+ */
+function wpss_get_default_page_slugs(): array {
+	/**
+	 * Filter default page slugs.
+	 *
+	 * Allows changing the default URL slugs for all WPSS pages.
+	 * These only apply when no WP page is mapped in Settings → Pages.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $slugs Default slugs keyed by page key.
+	 */
+	return apply_filters(
+		'wpss_default_page_slugs',
+		array(
+			'services_page'  => 'services',
+			'dashboard'      => 'dashboard',
+			'become_vendor'  => 'become-vendor',
+			'create_service' => 'create-service',
+			'checkout'       => 'service-checkout',
+		)
+	);
+}
+
+/**
  * Get page URL by settings key.
+ *
+ * Checks mapped WP page first (Settings → Pages), then falls back
+ * to the default slug. This ensures URLs work for translated or
+ * custom-slug sites without hardcoded paths.
  *
  * @since 1.1.0
  *
- * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
+ * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard', 'checkout').
  * @return string Page URL or empty string.
  */
 function wpss_get_page_url( string $page_key ): string {
 	$pages   = get_option( 'wpss_pages', array() );
 	$page_id = (int) ( $pages[ $page_key ] ?? 0 );
 
-	if ( ! $page_id ) {
-		return '';
+	if ( $page_id ) {
+		$url = get_permalink( $page_id );
+		if ( $url ) {
+			return $url;
+		}
 	}
 
-	return get_permalink( $page_id ) ?: '';
+	// Fallback to default slug.
+	$defaults = wpss_get_default_page_slugs();
+	if ( isset( $defaults[ $page_key ] ) ) {
+		return home_url( '/' . $defaults[ $page_key ] . '/' );
+	}
+
+	return '';
 }
 
 /**

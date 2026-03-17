@@ -191,7 +191,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 							),
 							admin_url( 'admin-ajax.php' )
 						),
-						'cancel_url'                => home_url( '/checkout/cancelled/' ),
+						'cancel_url'                => add_query_arg( 'step', 'cancelled', wpss_get_page_url( 'checkout' ) ),
 					),
 				),
 			),
@@ -712,7 +712,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 				return; // Explicit return for defensive coding.
 			} else {
-				wp_safe_redirect( home_url( '/checkout/error/' ) );
+				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
 				exit;
 			}
 		}
@@ -722,7 +722,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				wp_send_json_error( array( 'message' => __( 'Invalid PayPal order.', 'wp-sell-services' ) ) );
 				return; // Explicit return for defensive coding.
 			} else {
-				wp_safe_redirect( home_url( '/checkout/error/' ) );
+				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
 				exit;
 			}
 		}
@@ -735,7 +735,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				wp_send_json_error( array( 'message' => $payment['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ) ) );
 				return; // Explicit return for defensive coding.
 			} else {
-				wp_safe_redirect( home_url( '/checkout/error/' ) );
+				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
 				exit;
 			}
 		}
@@ -757,7 +757,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
 				return;
 			} else {
-				wp_safe_redirect( home_url( '/checkout/error/' ) );
+				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
 				exit;
 			}
 		}
@@ -781,7 +781,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
 				return; // Explicit return for defensive coding.
 			} else {
-				wp_safe_redirect( home_url( '/checkout/error/' ) );
+				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
 				exit;
 			}
 		}

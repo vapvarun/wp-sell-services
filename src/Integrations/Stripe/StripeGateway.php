@@ -548,7 +548,7 @@ class StripeGateway implements PaymentGatewayInterface {
 				'publishableKey' => $this->get_publishable_key(),
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'wpss_stripe' ),
-				'returnUrl'      => home_url( '/checkout/complete/' ),
+				'returnUrl'      => add_query_arg( 'step', 'complete', wpss_get_page_url( 'checkout' ) ),
 				'i18n'           => array(
 					'processing' => __( 'Processing...', 'wp-sell-services' ),
 					'error'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
