@@ -457,10 +457,10 @@ do_action( 'wpss_before_single_request', $request_id );
 						<div class="wpss-form-group wpss-form-col-6">
 							<label for="proposal-price" class="wpss-form-label">
 								<?php esc_html_e( 'Your Price', 'wp-sell-services' ); ?>
+								<span class="wpss-input-prefix">(<?php echo esc_html( wpss_get_currency_symbol() ); ?>)</span>
 								<span class="wpss-required">*</span>
 							</label>
 							<div class="wpss-input-group">
-								<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 								<input type="number" id="proposal-price" name="price" class="wpss-form-input" min="1" step="0.01" required
 										placeholder="<?php echo esc_attr( $budget_min ? $budget_min : '100' ); ?>">
 							</div>

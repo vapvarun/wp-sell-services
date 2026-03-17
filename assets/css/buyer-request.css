@@ -699,6 +699,7 @@
 	background: var(--wpss-white, #ffffff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
+	margin-bottom: 1rem;
 	padding: 1.5rem;
 }
 
