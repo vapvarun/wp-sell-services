@@ -525,7 +525,8 @@
 	color: #92400e;
 }
 
-.wpss-status-revision-requested {
+.wpss-status-revision-requested,
+.wpss-status-revision_requested {
 	background: #e0f2fe;
 	color: #075985;
 }
@@ -1806,9 +1807,26 @@
 	color: var(--wpss-admin-text-light);
 }
 
-.wpss-status-active { background: #d4edda; color: #155724; }
-.wpss-status-pending { background: #fff3cd; color: #856404; }
-.wpss-status-suspended { background: #f8d7da; color: #721c24; }
+.wpss-status-active,
+.wpss-status-approved {
+	background: #d4edda;
+	color: #155724;
+}
+
+.wpss-status-pending {
+	background: #fff3cd;
+	color: #856404;
+}
+
+.wpss-status-suspended {
+	background: #f8d7da;
+	color: #721c24;
+}
+
+.wpss-status-rejected {
+	background: #f8d7da;
+	color: #721c24;
+}
 
 .wpss-vendor-actions {
 	display: flex;
