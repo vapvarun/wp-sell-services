@@ -75,7 +75,12 @@ $active_count = count(
 				$request_id  = get_the_ID();
 				$budget      = get_post_meta( $request_id, '_wpss_budget', true );
 				$deadline    = get_post_meta( $request_id, '_wpss_deadline', true );
-				$offers      = (int) get_post_meta( $request_id, '_wpss_offers_count', true );
+				// Query actual proposal count from DB instead of potentially stale meta.
+				global $wpdb;
+				$offers = (int) $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_proposals WHERE request_id = %d",
+					$request_id
+				) );
 				$item_status = get_post_status();
 				?>
 				<div class="wpss-request-card">
