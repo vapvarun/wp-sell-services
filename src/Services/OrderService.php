@@ -157,6 +157,11 @@ class OrderService {
 
 		$old_status = $order->status;
 
+		// Skip if already in the target status (prevents duplicate system messages from cron re-runs).
+		if ( $old_status === $new_status ) {
+			return true;
+		}
+
 		// Validate status transition.
 		if ( ! $this->can_transition( $old_status, $new_status ) ) {
 			return false;
