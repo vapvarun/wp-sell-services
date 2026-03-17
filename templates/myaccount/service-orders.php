@@ -88,7 +88,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 						?>
 						<tr class="wpss-table__row">
 							<td class="wpss-table__col--order" data-label="<?php esc_attr_e( 'Order', 'wp-sell-services' ); ?>">
-								<a href="<?php echo esc_url( home_url( '/service-order/' . $order->id . '/' ) ); ?>" class="wpss-order-link">
+								<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="wpss-order-link">
 									#<?php echo esc_html( $order->order_number ); ?>
 								</a>
 								<span class="wpss-order-date">
@@ -148,11 +148,11 @@ do_action( 'wpss_service_orders_before', $user_id );
 							</td>
 							<td class="wpss-table__col--actions" data-label="<?php esc_attr_e( 'Actions', 'wp-sell-services' ); ?>">
 								<div class="wpss-actions">
-									<a href="<?php echo esc_url( home_url( '/service-order/' . $order->id . '/' ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--secondary">
+									<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--secondary">
 										<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 									</a>
 									<?php if ( \WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) : ?>
-										<a href="<?php echo esc_url( home_url( '/service-order/' . $order->id . '/requirements/' ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--primary">
+										<a href="<?php echo esc_url( wpss_get_order_requirements_url( $order->id ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--primary">
 											<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
 										</a>
 									<?php endif; ?>

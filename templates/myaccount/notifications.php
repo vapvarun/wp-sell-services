@@ -70,7 +70,7 @@ do_action( 'wpss_notifications_before', $user_id );
 						</div>
 					</div>
 					<?php if ( ! empty( $data['order_id'] ) ) : ?>
-						<a href="<?php echo esc_url( home_url( '/service-order/' . $data['order_id'] . '/' ) ); ?>" class="wpss-notification-link">
+						<a href="<?php echo esc_url( wpss_get_order_url( (int) $data['order_id'] ) ); ?>" class="wpss-notification-link">
 							<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
