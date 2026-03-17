@@ -348,7 +348,7 @@ class ProposalService {
 
 		$proposal = $this->get( $proposal_id );
 
-		if ( ! $proposal || $proposal->vendor_id !== $vendor_id ) {
+		if ( ! $proposal || (int) $proposal->vendor_id !== $vendor_id ) {
 			return false;
 		}
 
