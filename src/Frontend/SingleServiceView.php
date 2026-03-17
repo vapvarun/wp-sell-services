@@ -871,9 +871,14 @@ class SingleServiceView {
 								</p>
 							</div>
 
-							<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block">
-								<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
-							</button>
+							<div class="wpss-form-actions">
+								<button type="submit" class="wpss-btn wpss-btn-primary">
+									<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
+								</button>
+								<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-close">									
+									&times;
+								</button>
+							</div>
 						</form>
 					<?php endif; ?>
 				</div>
