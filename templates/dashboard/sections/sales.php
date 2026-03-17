@@ -114,7 +114,13 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 						<?php endif; ?>
 						<div class="wpss-order-card__info">
 							<h4 class="wpss-order-card__title">
-								<?php echo esc_html( $order_title ); ?>
+								<?php if ( $service ) : ?>
+									<a href="<?php echo esc_url( get_permalink( $service ) ); ?>">
+										<?php echo esc_html( $order_title ); ?>
+									</a>
+								<?php else : ?>
+									<?php echo esc_html( $order_title ); ?>
+								<?php endif; ?>
 							</h4>
 							<p class="wpss-order-card__meta">
 								<?php

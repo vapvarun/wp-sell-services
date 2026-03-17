@@ -414,7 +414,11 @@ class Admin {
 
 		$dispute_service = new DisputeService();
 
-		if ( 'resolved' === $status && $resolution ) {
+		if ( 'resolved' === $status ) {
+			if ( ! $resolution ) {
+				// If resolving, require a resolution type.
+				wp_die( esc_html__( 'Please select a resolution type when resolving a dispute.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+			}
 			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id() );
 		} else {
 			$result = $dispute_service->update_status( $dispute_id, $status, $notes );
