@@ -1,0 +1,359 @@
+/**
+ * Service Edit Screen Styles
+ *
+ * Tabbed interface and wizard mode for service editing.
+ *
+ * @package WPSellServices
+ * @since 1.0.0
+ */
+
+/* ==========================================================================
+   CSS Custom Properties
+   ========================================================================== */
+
+:root {
+	--wpss-admin-primary: #1dbf73;
+	--wpss-admin-primary-hover: #19a463;
+	--wpss-admin-border: #ddd;
+	--wpss-admin-bg-light: #f9fafb;
+	--wpss-admin-text: #1e1e1e;
+	--wpss-admin-text-muted: #50575e;
+	--wpss-admin-success: #46b450;
+	--wpss-admin-tab-width: 180px;
+}
+
+/* ==========================================================================
+   Service Data Metabox Container
+   ========================================================================== */
+
+#wpss_service_data .inside {
+	margin: 0;
+	padding: 0;
+}
+
+.wpss-service-data-wrap {
+	display: flex;
+	min-height: 500px;
+	background: #fff;
+}
+
+/* ==========================================================================
+   Vertical Tabs (WooCommerce-style)
+   ========================================================================== */
+
+.wpss-service-tabs-wrap {
+	display: flex;
+	width: 100%;
+}
+
+.wpss-service-tabs {
+	flex: 0 0 var(--wpss-admin-tab-width);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	background: var(--wpss-admin-bg-light);
+	border-left: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-service-tabs li {
+	margin: 0;
+}
+
+.wpss-service-tabs li a {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 18px;
+	text-decoration: none;
+	color: var(--wpss-admin-text-muted);
+	border-bottom: 1px solid var(--wpss-admin-border);
+	border-right: 3px solid transparent;
+	transition: all 0.15s ease;
+}
+
+.wpss-service-tabs li a:hover {
+	background: #fff;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-service-tabs li a .dashicons {
+	width: 20px;
+	height: 20px;
+	font-size: 20px;
+}
+
+.wpss-service-tabs li.active a {
+	background: #fff;
+	color: var(--wpss-admin-primary);
+	border-right-color: var(--wpss-admin-primary);
+	font-weight: 500;
+	margin-left: -1px;
+}
+
+/* ==========================================================================
+   Tab Panels
+   ========================================================================== */
+
+.wpss-service-panels {
+	flex: 1;
+	padding: 20px 24px;
+	background: #fff;
+	min-width: 0;
+}
+
+.wpss-panel {
+	display: none;
+}
+
+.wpss-panel.active {
+	display: block;
+}
+
+.wpss-panel-title {
+	font-size: 16px;
+	font-weight: 600;
+	margin: 0 0 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+	color: var(--wpss-admin-text);
+}
+
+/* ==========================================================================
+   Wizard Mode
+   ========================================================================== */
+
+.wpss-wizard-wrap {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+/* Wizard Progress Bar */
+.wpss-wizard-progress {
+	background: var(--wpss-admin-bg-light);
+	padding: 24px 32px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-wizard-steps {
+	display: flex;
+	justify-content: space-between;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	position: relative;
+}
+
+/* Progress line behind steps */
+.wpss-wizard-steps::before {
+	content: '';
+	position: absolute;
+	top: 16px;
+	right: 40px;
+	left: 40px;
+	height: 2px;
+	background: var(--wpss-admin-border);
+	z-index: 0;
+}
+
+.wpss-wizard-step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1;
+	position: relative;
+	z-index: 1;
+}
+
+.wpss-step-number {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: #fff;
+	border: 2px solid var(--wpss-admin-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--wpss-admin-text-muted);
+	transition: all 0.2s ease;
+}
+
+.wpss-step-label {
+	margin-top: 8px;
+	font-size: 12px;
+	color: var(--wpss-admin-text-muted);
+	text-align: center;
+	white-space: nowrap;
+}
+
+/* Active step */
+.wpss-wizard-step.active .wpss-step-number {
+	background: var(--wpss-admin-primary);
+	border-color: var(--wpss-admin-primary);
+	color: #fff;
+}
+
+.wpss-wizard-step.active .wpss-step-label {
+	color: var(--wpss-admin-primary);
+	font-weight: 500;
+}
+
+/* Completed step */
+.wpss-wizard-step.completed .wpss-step-number {
+	background: var(--wpss-admin-success);
+	border-color: var(--wpss-admin-success);
+	color: #fff;
+}
+
+.wpss-wizard-step.completed .wpss-step-number::after {
+	content: '\2713';
+}
+
+/* Wizard Panels */
+.wpss-wizard-panels {
+	flex: 1;
+	padding: 24px 32px;
+	overflow-y: auto;
+}
+
+/* Wizard Navigation */
+.wpss-wizard-nav {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 24px;
+	border-top: 1px solid var(--wpss-admin-border);
+	background: var(--wpss-admin-bg-light);
+}
+
+.wpss-wizard-nav .button {
+	min-width: 100px;
+}
+
+.wpss-wizard-skip {
+	color: var(--wpss-admin-text-muted) !important;
+}
+
+.wpss-wizard-skip:hover {
+	color: var(--wpss-admin-text) !important;
+}
+
+/* ==========================================================================
+   Panel Content Styles
+   ========================================================================== */
+
+/* Overview Panel - Status + Stats Grid */
+.wpss-overview-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+}
+
+.wpss-overview-section {
+	background: var(--wpss-admin-bg-light);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: 4px;
+	padding: 20px;
+}
+
+.wpss-overview-section h4 {
+	margin: 0 0 16px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--wpss-admin-text);
+}
+
+/* Media Panel - Gallery Grid */
+.wpss-media-panel .wpss-gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media screen and (max-width: 1200px) {
+	:root {
+		--wpss-admin-tab-width: 160px;
+	}
+
+	.wpss-service-tabs li a {
+		padding: 12px 14px;
+		font-size: 13px;
+	}
+}
+
+@media screen and (max-width: 960px) {
+	.wpss-service-data-wrap {
+		flex-direction: column;
+	}
+
+	.wpss-service-tabs-wrap {
+		flex-direction: column;
+	}
+
+	.wpss-service-tabs {
+		flex: none;
+		display: flex;
+		overflow-x: auto;
+		border-left: none;
+		border-bottom: 1px solid var(--wpss-admin-border);
+	}
+
+	.wpss-service-tabs li a {
+		border-bottom: none;
+		border-right: none;
+		border-bottom: 3px solid transparent;
+		white-space: nowrap;
+	}
+
+	.wpss-service-tabs li.active a {
+		border-right-color: transparent;
+		border-bottom-color: var(--wpss-admin-primary);
+		margin-left: 0;
+		margin-bottom: -1px;
+	}
+
+	/* Wizard responsive */
+	.wpss-wizard-steps {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		padding-bottom: 8px;
+	}
+
+	.wpss-wizard-steps::before {
+		display: none;
+	}
+
+	.wpss-step-label {
+		font-size: 11px;
+	}
+
+	.wpss-overview-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ==========================================================================
+   Transition Animations
+   ========================================================================== */
+
+.wpss-panel {
+	animation: wpss-fade-in 0.2s ease;
+}
+
+@keyframes wpss-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

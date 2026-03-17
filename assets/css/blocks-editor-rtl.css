@@ -1,0 +1,307 @@
+/**
+ * WP Sell Services - Gutenberg Blocks Editor Styles
+ *
+ * @package WPSellServices
+ * @since   1.0.0
+ */
+
+/* ==========================================================================
+   Block Placeholder Styles
+   ========================================================================== */
+
+.wpss-block-placeholder {
+	padding: 40px;
+	background: #f8f9fa;
+	border: 2px dashed #ddd;
+	border-radius: 4px;
+	text-align: center;
+}
+
+.wpss-block-placeholder .dashicons {
+	font-size: 48px;
+	width: 48px;
+	height: 48px;
+	color: #1dbf73;
+	margin-bottom: 16px;
+}
+
+.wpss-block-placeholder h4 {
+	margin: 0 0 8px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #1e1e1e;
+}
+
+.wpss-block-placeholder p {
+	margin: 0;
+	font-size: 13px;
+	color: #757575;
+}
+
+/* ==========================================================================
+   Block Preview Wrapper
+   ========================================================================== */
+
+.wpss-block-preview {
+	position: relative;
+	pointer-events: none;
+}
+
+.wpss-block-preview::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	bottom: 0;
+	background: transparent;
+	z-index: 10;
+}
+
+/* ==========================================================================
+   Inspector Controls
+   ========================================================================== */
+
+.wpss-inspector-section {
+	margin-bottom: 24px;
+}
+
+.wpss-inspector-section h3 {
+	margin: 0 0 12px;
+	padding-bottom: 8px;
+	font-size: 11px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #757575;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+/* ==========================================================================
+   Service Grid Block Editor
+   ========================================================================== */
+
+.wp-block-wpss-service-grid .wpss-block-placeholder {
+	background: linear-gradient(-135deg, #f8fdf9 0%, #f0f9f4 100%);
+	border-color: #1dbf73;
+}
+
+/* Grid preview in editor */
+.wp-block-wpss-service-grid .wpss-services-grid {
+	display: grid;
+	gap: 16px;
+}
+
+.wp-block-wpss-service-grid.wpss-grid-cols-2 .wpss-services-grid {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.wp-block-wpss-service-grid.wpss-grid-cols-3 .wpss-services-grid {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.wp-block-wpss-service-grid.wpss-grid-cols-4 .wpss-services-grid {
+	grid-template-columns: repeat(4, 1fr);
+}
+
+/* ==========================================================================
+   Service Search Block Editor
+   ========================================================================== */
+
+.wp-block-wpss-service-search .wpss-block-placeholder {
+	padding: 60px 40px;
+}
+
+.wp-block-wpss-service-search .wpss-search-form {
+	max-width: 700px;
+	margin: 0 auto;
+}
+
+/* ==========================================================================
+   Service Categories Block Editor
+   ========================================================================== */
+
+.wp-block-wpss-service-categories .wpss-categories-list {
+	display: grid;
+	gap: 12px;
+}
+
+.wp-block-wpss-service-categories.wpss-grid-cols-4 .wpss-categories-list {
+	grid-template-columns: repeat(4, 1fr);
+}
+
+/* ==========================================================================
+   Featured Services Block Editor
+   ========================================================================== */
+
+.wp-block-wpss-featured-services .wpss-featured-container {
+	position: relative;
+}
+
+.wp-block-wpss-featured-services .wpss-featured-slides {
+	display: grid;
+	gap: 16px;
+}
+
+/* ==========================================================================
+   Seller Card Block Editor
+   ========================================================================== */
+
+.wp-block-wpss-seller-card {
+	max-width: 380px;
+}
+
+.wp-block-wpss-seller-card .wpss-block-placeholder {
+	padding: 48px 24px;
+}
+
+/* ==========================================================================
+   Buyer Requests Block Editor
+   ========================================================================== */
+
+.wp-block-wpss-buyer-requests .wpss-requests-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* ==========================================================================
+   Block Toolbar
+   ========================================================================== */
+
+.wpss-block-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-block-toolbar .components-button {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* ==========================================================================
+   Layout Controls
+   ========================================================================== */
+
+.wpss-layout-options {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 8px;
+}
+
+.wpss-layout-option {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 12px 8px;
+	border: 2px solid #e0e0e0;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.wpss-layout-option:hover {
+	border-color: #1dbf73;
+}
+
+.wpss-layout-option.is-selected {
+	border-color: #1dbf73;
+	background: #f0f9f4;
+}
+
+.wpss-layout-option .dashicons {
+	font-size: 24px;
+	width: 24px;
+	height: 24px;
+	margin-bottom: 4px;
+	color: #757575;
+}
+
+.wpss-layout-option.is-selected .dashicons {
+	color: #1dbf73;
+}
+
+.wpss-layout-option span {
+	font-size: 11px;
+	color: #757575;
+}
+
+/* ==========================================================================
+   Column Selector
+   ========================================================================== */
+
+.wpss-columns-selector {
+	display: flex;
+	gap: 4px;
+}
+
+.wpss-columns-selector button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	color: #757575;
+	transition: all 0.2s ease;
+}
+
+.wpss-columns-selector button:hover {
+	border-color: #1dbf73;
+	color: #1dbf73;
+}
+
+.wpss-columns-selector button.is-selected {
+	border-color: #1dbf73;
+	background: #1dbf73;
+	color: #fff;
+}
+
+/* ==========================================================================
+   Preview Loading State
+   ========================================================================== */
+
+.wpss-block-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 60px;
+	background: #f8f9fa;
+	border-radius: 4px;
+}
+
+.wpss-block-loading .components-spinner {
+	margin-left: 12px;
+}
+
+/* ==========================================================================
+   Error State
+   ========================================================================== */
+
+.wpss-block-error {
+	padding: 24px;
+	background: #fcf0f1;
+	border: 1px solid #d63638;
+	border-radius: 4px;
+	text-align: center;
+}
+
+.wpss-block-error .dashicons {
+	font-size: 32px;
+	width: 32px;
+	height: 32px;
+	color: #d63638;
+	margin-bottom: 12px;
+}
+
+.wpss-block-error p {
+	margin: 0;
+	color: #8a1c21;
+}
