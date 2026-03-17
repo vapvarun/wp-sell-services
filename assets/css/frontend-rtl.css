@@ -1240,6 +1240,36 @@
 	color: var(--wpss-info);
 }
 
+.wpss-badge--primary {
+	background: var(--wpss-primary-light, #eef2ff);
+	color: var(--wpss-primary, #4f46e5);
+}
+
+.wpss-badge--success {
+	background: var(--wpss-success-light, #d1fae5);
+	color: var(--wpss-success, #10b981);
+}
+
+.wpss-badge--warning {
+	background: var(--wpss-warning-light, #fef3c7);
+	color: #b45309;
+}
+
+.wpss-badge--danger {
+	background: var(--wpss-danger-light, #fee2e2);
+	color: var(--wpss-danger, #ef4444);
+}
+
+.wpss-badge--info {
+	background: var(--wpss-info-light, #dbeafe);
+	color: var(--wpss-info, #3b82f6);
+}
+
+.wpss-badge--neutral {
+	background: var(--wpss-gray-100, #f1f5f9);
+	color: var(--wpss-gray-600, #475569);
+}
+
 /* ==========================================================================
    Order View
    ========================================================================== */

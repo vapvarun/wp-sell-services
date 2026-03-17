@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Sell Services 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wbcomdesigns.com/support/\n"
-"POT-Creation-Date: 2026-03-17 12:45:54+00:00\n"
+"POT-Creation-Date: 2026-03-17 12:53:21+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -80,7 +80,7 @@ msgid "Search type."
 msgstr ""
 
 #: src/API/API.php:480 src/API/EarningsController.php:275
-#: src/Services/EarningsService.php:180
+#: src/Services/EarningsService.php:181
 #: templates/dashboard/sections/orders.php:114
 #: templates/dashboard/sections/sales.php:106
 #: templates/order/order-view.php:388
@@ -392,7 +392,7 @@ msgstr ""
 msgid "Amount must be greater than zero."
 msgstr ""
 
-#: src/API/EarningsController.php:311 src/Services/EarningsService.php:270
+#: src/API/EarningsController.php:311 src/Services/EarningsService.php:271
 #. translators: %s: minimum withdrawal amount
 #. translators: %s: minimum amount
 msgid "Minimum withdrawal amount is %s."
@@ -406,7 +406,7 @@ msgstr ""
 msgid "You already have a pending withdrawal request."
 msgstr ""
 
-#: src/API/EarningsController.php:373 src/Services/EarningsService.php:319
+#: src/API/EarningsController.php:373 src/Services/EarningsService.php:320
 msgid "Failed to create withdrawal request."
 msgstr ""
 
@@ -438,7 +438,7 @@ msgid "Unknown"
 msgstr ""
 
 #: src/API/EarningsController.php:469 src/Frontend/AjaxHandlers.php:3227
-#: src/Services/EarningsService.php:433
+#: src/Services/EarningsService.php:434
 msgid "Withdrawal not found."
 msgstr ""
 
@@ -447,13 +447,13 @@ msgid "This withdrawal cannot be updated."
 msgstr ""
 
 #: src/API/EarningsController.php:513 src/Admin/Pages/ManualOrderPage.php:365
-#: src/Services/EarningsService.php:560
+#: src/Services/EarningsService.php:561
 msgid "Bank Transfer"
 msgstr ""
 
 #: src/API/EarningsController.php:514 src/Admin/Pages/SetupWizardPage.php:381
 #: src/Admin/Settings.php:1309 src/Integrations/PayPal/PayPalGateway.php:77
-#: src/Services/EarningsService.php:559
+#: src/Services/EarningsService.php:560
 msgid "PayPal"
 msgstr ""
 
@@ -518,7 +518,7 @@ msgstr ""
 #: src/API/ServicesController.php:256 src/API/ServicesController.php:267
 #: src/API/ServicesController.php:345 src/API/ServicesController.php:407
 #: src/Admin/Metaboxes/OrderMetabox.php:1015 src/Frontend/AjaxHandlers.php:2259
-#: src/Frontend/ServiceWizard.php:293 src/Frontend/VendorDashboard.php:368
+#: src/Frontend/ServiceWizard.php:293 src/Frontend/VendorDashboard.php:383
 #: src/Integrations/Gateways/OfflineGateway.php:334
 #: src/Integrations/Gateways/TestGateway.php:268
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:187
@@ -838,7 +838,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:239
 #: src/Admin/Pages/WithdrawalsPage.php:270 src/Models/ExtensionRequest.php:282
 #: src/Models/Proposal.php:272 src/Models/Review.php:200
-#: src/Models/ServiceOrder.php:539 src/Services/EarningsService.php:578
+#: src/Models/ServiceOrder.php:539 src/Services/EarningsService.php:579
 #: src/Services/ExtensionRequestService.php:486
 #: src/Services/MilestoneService.php:446 src/Services/ProposalService.php:680
 #: src/functions.php:605 templates/order/order-view.php:871
@@ -860,7 +860,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:253
 #: src/Admin/Pages/WithdrawalsPage.php:291 src/Models/ExtensionRequest.php:284
 #: src/Models/Proposal.php:274 src/Models/Review.php:202
-#: src/Models/ServiceOrder.php:541 src/Services/EarningsService.php:581
+#: src/Models/ServiceOrder.php:541 src/Services/EarningsService.php:582
 #: src/Services/ExtensionRequestService.php:488
 #: src/Services/ModerationService.php:494 src/Services/ProposalService.php:682
 #: src/functions.php:607 templates/dashboard/sections/services.php:126
@@ -891,7 +891,7 @@ msgstr ""
 #: src/Admin/Admin.php:1046 src/Admin/Pages/ManualOrderPage.php:784
 #: src/Admin/Pages/VendorsPage.php:2263 src/Admin/Pages/WithdrawalsPage.php:248
 #: src/Admin/Pages/WithdrawalsPage.php:284 src/Blocks/SellerCard.php:197
-#: src/Models/ServiceOrder.php:548 src/Services/EarningsService.php:580
+#: src/Models/ServiceOrder.php:548 src/Services/EarningsService.php:581
 #: src/functions.php:612 templates/dashboard/sections/orders.php:73
 #: templates/dashboard/sections/sales.php:74
 #: templates/emails/order-completed.php:76 templates/order/order-view.php:860
@@ -1136,6 +1136,7 @@ msgid "You must be logged in to create reviews."
 msgstr ""
 
 #: src/API/ReviewsController.php:775 src/API/ReviewsController.php:825
+#: src/Frontend/VendorDashboard.php:193
 msgid "You must be logged in."
 msgstr ""
 
@@ -1218,7 +1219,7 @@ msgid "Only vendors can access this endpoint."
 msgstr ""
 
 #: src/API/ServicesController.php:423 src/Frontend/AjaxHandlers.php:2854
-#: src/Frontend/VendorDashboard.php:432
+#: src/Frontend/VendorDashboard.php:447
 msgid "Failed to delete service."
 msgstr ""
 
@@ -1343,12 +1344,12 @@ msgstr ""
 msgid "You are not registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:390 src/Frontend/VendorDashboard.php:455
+#: src/API/VendorsController.php:390 src/Frontend/VendorDashboard.php:470
 #: src/Services/VendorService.php:206
 msgid "You are already registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:399 src/Frontend/VendorDashboard.php:461
+#: src/API/VendorsController.php:399 src/Frontend/VendorDashboard.php:476
 #: src/Services/VendorService.php:214
 msgid ""
 "You already have a pending vendor application. Please wait for admin "
@@ -1454,7 +1455,7 @@ msgid "Invalid request."
 msgstr ""
 
 #: src/Admin/Admin.php:362 src/Admin/Pages/VendorsPage.php:1571
-#: src/Frontend/AjaxHandlers.php:1640 src/Services/EarningsService.php:421
+#: src/Frontend/AjaxHandlers.php:1640 src/Services/EarningsService.php:422
 msgid "Invalid status."
 msgstr ""
 
@@ -1488,7 +1489,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:556 src/Admin/Admin.php:557
 #: src/Admin/Pages/SetupWizardPage.php:311 src/Admin/Settings.php:914
-#: src/Frontend/UnifiedDashboard.php:412
+#: src/Frontend/UnifiedDashboard.php:416
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:172
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:406
 msgid "Dashboard"
@@ -1584,7 +1585,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:774 src/Blocks/BuyerRequests.php:40
 #: src/Frontend/BuyerRequestArchiveView.php:196
-#: src/Frontend/UnifiedDashboard.php:210 src/Frontend/UnifiedDashboard.php:390
+#: src/Frontend/UnifiedDashboard.php:214 src/Frontend/UnifiedDashboard.php:394
 msgid "Buyer Requests"
 msgstr ""
 
@@ -1831,7 +1832,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:1163 src/Admin/Admin.php:1484
 #: src/Admin/Metaboxes/OrderMetabox.php:134
-#: src/Frontend/UnifiedDashboard.php:245 src/Frontend/UnifiedDashboard.php:397
+#: src/Frontend/UnifiedDashboard.php:249 src/Frontend/UnifiedDashboard.php:401
 #: templates/myaccount/vendor-dashboard.php:189
 msgid "Messages"
 msgstr ""
@@ -2992,7 +2993,7 @@ msgid ""
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:153
-#: src/Frontend/UnifiedDashboard.php:364 src/Frontend/UnifiedDashboard.php:399
+#: src/Frontend/UnifiedDashboard.php:368 src/Frontend/UnifiedDashboard.php:403
 #: templates/dashboard/sections/services.php:174
 msgid "Create Service"
 msgstr ""
@@ -3276,7 +3277,7 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:1219
 #: src/Admin/Pages/WithdrawalsPage.php:244
 #: src/Admin/Pages/WithdrawalsPage.php:277 src/Models/ExtensionRequest.php:283
-#: src/Models/Review.php:201 src/Services/EarningsService.php:579
+#: src/Models/Review.php:201 src/Services/EarningsService.php:580
 #: src/Services/ExtensionRequestService.php:487
 #: src/Services/MilestoneService.php:449 src/Services/ModerationService.php:493
 #: templates/emails/withdrawal-approved.php:55
@@ -4067,7 +4068,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:390 src/Admin/Pages/VendorsPage.php:422
 #: src/Admin/Pages/VendorsPage.php:932 src/Admin/Pages/VendorsPage.php:1112
 #: src/Admin/Pages/VendorsPage.php:1142 src/Admin/Pages/VendorsPage.php:1698
-#: src/Frontend/UnifiedDashboard.php:230 src/Frontend/UnifiedDashboard.php:393
+#: src/Frontend/UnifiedDashboard.php:234 src/Frontend/UnifiedDashboard.php:397
 #: templates/myaccount/vendor-dashboard.php:197
 msgid "Earnings"
 msgstr ""
@@ -4361,7 +4362,7 @@ msgstr ""
 msgid "Pending Requirements"
 msgstr ""
 
-#: src/Admin/Pages/VendorsPage.php:2262 src/Frontend/UnifiedDashboard.php:312
+#: src/Admin/Pages/VendorsPage.php:2262 src/Frontend/UnifiedDashboard.php:316
 #: src/Models/ServiceOrder.php:546 src/functions.php:604
 msgid "Pending Approval"
 msgstr ""
@@ -4640,7 +4641,7 @@ msgstr ""
 msgid "Invalid withdrawal ID."
 msgstr ""
 
-#: src/Admin/ProTeaser.php:64 src/Frontend/UnifiedDashboard.php:395
+#: src/Admin/ProTeaser.php:64 src/Frontend/UnifiedDashboard.php:399
 msgid "Analytics"
 msgstr ""
 
@@ -5461,7 +5462,7 @@ msgstr ""
 msgid "Featured"
 msgstr ""
 
-#: src/Blocks/BlocksManager.php:138 src/Frontend/UnifiedDashboard.php:310
+#: src/Blocks/BlocksManager.php:138 src/Frontend/UnifiedDashboard.php:314
 #: templates/disputes/dispute-view.php:416 templates/order/conversation.php:132
 #: templates/order/order-view.php:410
 msgid "Seller"
@@ -6583,7 +6584,7 @@ msgstr ""
 msgid "Save Draft"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:375 src/Frontend/UnifiedDashboard.php:359
+#: src/Frontend/ServiceWizard.php:375 src/Frontend/UnifiedDashboard.php:363
 msgid "Update Service"
 msgstr ""
 
@@ -7093,7 +7094,7 @@ msgstr ""
 msgid "Please log in to create a service."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1998 src/Frontend/UnifiedDashboard.php:285
+#: src/Frontend/ServiceWizard.php:1998 src/Frontend/UnifiedDashboard.php:289
 #: src/Frontend/VendorDashboard.php:179
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:252
 msgid "Log In"
@@ -7157,7 +7158,7 @@ msgstr ""
 msgid "Separate multiple skills with commas."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:542 src/Frontend/UnifiedDashboard.php:368
+#: src/Frontend/Shortcodes.php:542 src/Frontend/UnifiedDashboard.php:372
 #: templates/dashboard/sections/create-request.php:161
 msgid "Post Request"
 msgstr ""
@@ -7418,102 +7419,121 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:202
+#: src/Frontend/UnifiedDashboard.php:109
+msgid "Close this request? It will no longer be visible to sellers."
+msgstr ""
+
+#: src/Frontend/UnifiedDashboard.php:110
+msgid "Delete this request permanently? This cannot be undone."
+msgstr ""
+
+#: src/Frontend/UnifiedDashboard.php:111
+msgid "Are you sure you want to delete this portfolio item?"
+msgstr ""
+
+#: src/Frontend/UnifiedDashboard.php:112
+#: templates/dashboard/sections/portfolio.php:117
+#: templates/dashboard/sections/requests.php:140
+#: templates/dashboard/sections/services.php:266
+msgid "Delete"
+msgstr ""
+
+#: src/Frontend/UnifiedDashboard.php:206
 msgid "Buying"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:206 src/Frontend/UnifiedDashboard.php:389
+#: src/Frontend/UnifiedDashboard.php:210 src/Frontend/UnifiedDashboard.php:393
 #: templates/myaccount/service-orders.php:35
 msgid "My Orders"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:218
+#: src/Frontend/UnifiedDashboard.php:222
 msgid "Selling"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:222 src/Frontend/UnifiedDashboard.php:391
+#: src/Frontend/UnifiedDashboard.php:226 src/Frontend/UnifiedDashboard.php:395
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:196
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:700
 #: templates/myaccount/vendor-services.php:26
 msgid "My Services"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:226 src/Frontend/UnifiedDashboard.php:392
+#: src/Frontend/UnifiedDashboard.php:230 src/Frontend/UnifiedDashboard.php:396
 msgid "Sales Orders"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:234 src/Frontend/UnifiedDashboard.php:396
+#: src/Frontend/UnifiedDashboard.php:238 src/Frontend/UnifiedDashboard.php:400
 msgid "Portfolio"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:241
+#: src/Frontend/UnifiedDashboard.php:245
 msgid "Account"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:249 src/Frontend/UnifiedDashboard.php:398
+#: src/Frontend/UnifiedDashboard.php:253 src/Frontend/UnifiedDashboard.php:402
 msgid "Profile"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:282
+#: src/Frontend/UnifiedDashboard.php:286
 msgid "Access Your Dashboard"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:283
+#: src/Frontend/UnifiedDashboard.php:287
 msgid "Please log in to view your orders, messages, and manage your services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:338
+#: src/Frontend/UnifiedDashboard.php:342
 msgid ""
 "Your vendor application is pending admin approval. You will be notified "
 "once your application is reviewed."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:342
+#: src/Frontend/UnifiedDashboard.php:346
 msgid "Start selling your services"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:344
+#: src/Frontend/UnifiedDashboard.php:348
 msgid "Start Selling"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:394
+#: src/Frontend/UnifiedDashboard.php:398
 msgid "Wallet & Earnings"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:400
+#: src/Frontend/UnifiedDashboard.php:404
 #: templates/dashboard/sections/requests.php:67
 msgid "Post a Request"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:481
+#: src/Frontend/UnifiedDashboard.php:485
 msgid "Coming Soon"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:482
+#: src/Frontend/UnifiedDashboard.php:486
 msgid "This section is under development."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:519
+#: src/Frontend/UnifiedDashboard.php:523
 msgid "Please log in first."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:525
+#: src/Frontend/UnifiedDashboard.php:529
 msgid "You are already a seller."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:530
+#: src/Frontend/UnifiedDashboard.php:534
 msgid "Your vendor application is already pending approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:543
+#: src/Frontend/UnifiedDashboard.php:547
 msgid "Your vendor application has been submitted! It is pending admin approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:551
+#: src/Frontend/UnifiedDashboard.php:555
 msgid "Welcome! You can now create and sell services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:557
+#: src/Frontend/UnifiedDashboard.php:561
 msgid "Unable to complete registration. Please try again."
 msgstr ""
 
@@ -7584,48 +7604,44 @@ msgstr ""
 msgid "Please log in to access this page."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:193 src/Frontend/VendorDashboard.php:232
-#: src/Frontend/VendorDashboard.php:260 src/Frontend/VendorDashboard.php:340
-msgid "You are not authorized to perform this action."
-msgstr ""
-
-#: src/Frontend/VendorDashboard.php:215
+#: src/Frontend/VendorDashboard.php:233
 msgid "Profile updated successfully."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:217
-msgid "Failed to update profile."
+#: src/Frontend/VendorDashboard.php:247 src/Frontend/VendorDashboard.php:275
+#: src/Frontend/VendorDashboard.php:355
+msgid "You are not authorized to perform this action."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:347
+#: src/Frontend/VendorDashboard.php:362
 msgid "Portfolio reordered successfully."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:349
+#: src/Frontend/VendorDashboard.php:364
 msgid "Failed to reorder portfolio."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:388
+#: src/Frontend/VendorDashboard.php:403
 msgid "Service status updated."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:408
+#: src/Frontend/VendorDashboard.php:423
 msgid "Service not found or you do not have permission to delete it."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:425
+#: src/Frontend/VendorDashboard.php:440
 msgid "Cannot delete service with active orders."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:436
+#: src/Frontend/VendorDashboard.php:451
 msgid "Service deleted successfully."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:448
+#: src/Frontend/VendorDashboard.php:463
 msgid "You must be logged in to register as a vendor."
 msgstr ""
 
-#: src/Frontend/VendorDashboard.php:474
+#: src/Frontend/VendorDashboard.php:489
 msgid "You must agree to the terms and conditions."
 msgstr ""
 
@@ -8993,64 +9009,64 @@ msgid ""
 "Please review and resolve this dispute."
 msgstr ""
 
-#: src/Services/EarningsService.php:297
+#: src/Services/EarningsService.php:298
 msgid "Insufficient balance for this withdrawal."
 msgstr ""
 
-#: src/Services/EarningsService.php:341
+#: src/Services/EarningsService.php:342
 msgid "Withdrawal request submitted successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:454
+#: src/Services/EarningsService.php:455
 msgid "Failed to update withdrawal."
 msgstr ""
 
-#: src/Services/EarningsService.php:465
+#: src/Services/EarningsService.php:466
 msgid "Withdrawal Update"
 msgstr ""
 
-#: src/Services/EarningsService.php:468
+#: src/Services/EarningsService.php:469
 #. translators: 1: amount, 2: status
 msgid "Your withdrawal request for %1$s has been %2$s."
 msgstr ""
 
-#: src/Services/EarningsService.php:486
+#: src/Services/EarningsService.php:487
 msgid "Withdrawal updated successfully."
 msgstr ""
 
-#: src/Services/EarningsService.php:698
+#: src/Services/EarningsService.php:699
 msgid "Auto withdrawal is not enabled."
 msgstr ""
 
-#: src/Services/EarningsService.php:708
+#: src/Services/EarningsService.php:709
 msgid "No vendors eligible for auto withdrawal."
 msgstr ""
 
-#: src/Services/EarningsService.php:754
+#: src/Services/EarningsService.php:755
 #. translators: 1: processed count, 2: failed count
 msgid "Auto withdrawal completed. Processed: %1$d, Failed: %2$d."
 msgstr ""
 
-#: src/Services/EarningsService.php:792
+#: src/Services/EarningsService.php:793
 msgid "Vendor already has a pending auto withdrawal."
 msgstr ""
 
-#: src/Services/EarningsService.php:814
+#: src/Services/EarningsService.php:815
 msgid "Failed to create auto withdrawal request."
 msgstr ""
 
-#: src/Services/EarningsService.php:825
+#: src/Services/EarningsService.php:826
 msgid "Auto Withdrawal Created"
 msgstr ""
 
-#: src/Services/EarningsService.php:828
+#: src/Services/EarningsService.php:829
 #. translators: %s: amount
 msgid ""
 "An automatic withdrawal of %s has been scheduled based on your payout "
 "settings."
 msgstr ""
 
-#: src/Services/EarningsService.php:848
+#: src/Services/EarningsService.php:849
 msgid "Auto withdrawal request created successfully."
 msgstr ""
 
@@ -11035,12 +11051,6 @@ msgstr ""
 
 #: templates/dashboard/sections/portfolio.php:114
 msgid "Unfeature"
-msgstr ""
-
-#: templates/dashboard/sections/portfolio.php:117
-#: templates/dashboard/sections/requests.php:140
-#: templates/dashboard/sections/services.php:266
-msgid "Delete"
 msgstr ""
 
 #: templates/dashboard/sections/portfolio.php:149
