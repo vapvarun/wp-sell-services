@@ -555,7 +555,7 @@ class DisputeWorkflowManager {
 
 		foreach ( $disputes as $dispute ) {
 			$this->escalate(
-				$dispute->id,
+				(int) $dispute->id,
 				__( 'Auto-escalated: Dispute unresolved for extended period.', 'wp-sell-services' ),
 				0 // System action.
 			);

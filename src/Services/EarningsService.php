@@ -55,12 +55,17 @@ class EarningsService {
 			)
 		);
 
-		// Get pending earnings (orders in progress).
+		// Get pending earnings (orders in progress) — show vendor's expected share after commission.
+		$commission_rate = (float) ( get_option( 'wpss_commission_rate', 20 ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$pending = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(total), 0) FROM {$orders_table}
+				"SELECT COALESCE(SUM(
+					CASE WHEN vendor_earnings IS NOT NULL THEN vendor_earnings
+					ELSE total * (1 - %f / 100) END
+				), 0) FROM {$orders_table}
 				WHERE vendor_id = %d AND status IN (%s, %s, %s)",
+				$commission_rate,
 				$vendor_id,
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,

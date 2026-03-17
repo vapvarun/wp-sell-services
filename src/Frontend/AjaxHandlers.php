@@ -2224,6 +2224,15 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function add_service_to_cart(): void {
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error(
+				array(
+					'message'   => __( 'Please log in to add services to your cart.', 'wp-sell-services' ),
+					'login_url' => wp_login_url( wp_get_referer() ?: home_url() ),
+				)
+			);
+		}
+
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$service_id    = absint( $_POST['service_id'] ?? 0 );
