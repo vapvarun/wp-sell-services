@@ -169,8 +169,8 @@ $categories = get_terms(
 
 <style>
 /* Request Wizard Styles */
-.wpss-request-wizard {
-	max-width: 720px;
+.wpss-request-wizard .wpss-profile-form {
+	max-width: 100%;
 }
 
 .wpss-required {

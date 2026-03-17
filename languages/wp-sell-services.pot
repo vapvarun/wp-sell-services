@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Sell Services 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wbcomdesigns.com/support/\n"
-"POT-Creation-Date: 2026-03-17 11:05:50+00:00\n"
+"POT-Creation-Date: 2026-03-17 12:28:12+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -318,7 +318,7 @@ msgstr ""
 msgid "System"
 msgstr ""
 
-#: src/API/DisputesController.php:371 src/Admin/Admin.php:1368
+#: src/API/DisputesController.php:371 src/Admin/Admin.php:1372
 #: src/Frontend/AjaxHandlers.php:1433
 #: src/Services/DisputeWorkflowManager.php:121
 #: src/Services/DisputeWorkflowManager.php:288
@@ -413,9 +413,9 @@ msgstr ""
 #: src/API/EarningsController.php:440
 #: src/API/ExtensionRequestsController.php:338
 #: src/API/ModerationController.php:162 src/API/OrdersController.php:344
-#: src/Admin/Admin.php:1167 src/Admin/Admin.php:1232 src/Admin/Admin.php:1243
-#: src/Admin/Admin.php:1448 src/Admin/Admin.php:1488 src/Admin/Admin.php:1516
-#: src/Admin/Admin.php:1526 src/Admin/Metaboxes/BuyerRequestMetabox.php:193
+#: src/Admin/Admin.php:1171 src/Admin/Admin.php:1236 src/Admin/Admin.php:1247
+#: src/Admin/Admin.php:1452 src/Admin/Admin.php:1492 src/Admin/Admin.php:1520
+#: src/Admin/Admin.php:1530 src/Admin/Metaboxes/BuyerRequestMetabox.php:193
 #: src/Admin/Metaboxes/OrderMetabox.php:721
 #: src/Admin/Pages/ServiceModerationPage.php:619
 #: src/Admin/Pages/WithdrawalsPage.php:688
@@ -425,8 +425,8 @@ msgstr ""
 #: src/Services/ModerationService.php:475
 #: templates/content-service-card.php:111
 #: templates/dashboard/sections/messages.php:88
-#: templates/dashboard/sections/orders.php:132
-#: templates/dashboard/sections/sales.php:124
+#: templates/dashboard/sections/orders.php:138
+#: templates/dashboard/sections/sales.php:130
 #: templates/disputes/dispute-view.php:121
 #: templates/disputes/dispute-view.php:197
 #: templates/emails/plain/withdrawal-auto.php:30
@@ -651,7 +651,7 @@ msgstr ""
 #: src/API/OrdersController.php:259 src/API/OrdersController.php:280
 #: src/API/OrdersController.php:546 src/API/OrdersController.php:838
 #: src/API/OrdersController.php:897 src/API/ReviewsController.php:303
-#: src/Admin/Admin.php:999 src/Admin/Metaboxes/OrderMetabox.php:242
+#: src/Admin/Admin.php:1003 src/Admin/Metaboxes/OrderMetabox.php:242
 #: src/Admin/Metaboxes/OrderMetabox.php:1007
 #: src/Admin/Metaboxes/OrderMetabox.php:1118 src/Frontend/AjaxHandlers.php:676
 #: src/Frontend/AjaxHandlers.php:942 src/Frontend/AjaxHandlers.php:1441
@@ -874,21 +874,21 @@ msgstr ""
 msgid "Requirements Submitted"
 msgstr ""
 
-#: src/API/OrdersController.php:1135 src/Admin/Admin.php:706
-#: src/Admin/Admin.php:1039 src/Admin/Pages/VendorsPage.php:2261
+#: src/API/OrdersController.php:1135 src/Admin/Admin.php:710
+#: src/Admin/Admin.php:1043 src/Admin/Pages/VendorsPage.php:2261
 #: src/Models/ServiceOrder.php:544 src/Services/MilestoneService.php:447
 #: src/functions.php:609 templates/emails/order-in-progress.php:78
 msgid "In Progress"
 msgstr ""
 
-#: src/API/OrdersController.php:1136 src/Admin/Admin.php:1040
+#: src/API/OrdersController.php:1136 src/Admin/Admin.php:1044
 #: src/Admin/Pages/ManualOrderPage.php:783 src/Models/ServiceOrder.php:545
 #: src/functions.php:610 templates/order/order-view.php:851
 msgid "Delivered"
 msgstr ""
 
-#: src/API/OrdersController.php:1137 src/Admin/Admin.php:714
-#: src/Admin/Admin.php:1042 src/Admin/Pages/ManualOrderPage.php:784
+#: src/API/OrdersController.php:1137 src/Admin/Admin.php:718
+#: src/Admin/Admin.php:1046 src/Admin/Pages/ManualOrderPage.php:784
 #: src/Admin/Pages/VendorsPage.php:2263 src/Admin/Pages/WithdrawalsPage.php:248
 #: src/Admin/Pages/WithdrawalsPage.php:284 src/Blocks/SellerCard.php:197
 #: src/Models/ServiceOrder.php:548 src/Services/EarningsService.php:580
@@ -899,14 +899,14 @@ msgstr ""
 msgid "Completed"
 msgstr ""
 
-#: src/API/OrdersController.php:1138 src/Admin/Admin.php:1043
+#: src/API/OrdersController.php:1138 src/Admin/Admin.php:1047
 #: src/Admin/Pages/VendorsPage.php:2264 src/Models/ServiceOrder.php:549
 #: src/Services/BuyerRequestService.php:881 src/functions.php:613
 #: templates/emails/order-cancelled.php:66
 msgid "Cancelled"
 msgstr ""
 
-#: src/API/OrdersController.php:1139 src/Admin/Admin.php:1044
+#: src/API/OrdersController.php:1139 src/Admin/Admin.php:1048
 #: src/Models/ServiceOrder.php:550 src/functions.php:614
 #: templates/emails/dispute-opened.php:92
 msgid "Disputed"
@@ -1400,7 +1400,7 @@ msgid "Typical response time."
 msgstr ""
 
 #: src/Admin/Admin.php:300 src/Admin/Admin.php:339 src/Admin/Admin.php:403
-#: src/Admin/Admin.php:1638 src/Admin/Admin.php:1845
+#: src/Admin/Admin.php:1642 src/Admin/Admin.php:1849
 #: src/Admin/Metaboxes/OrderMetabox.php:963
 #: src/Admin/Metaboxes/OrderMetabox.php:994
 #: src/Admin/Metaboxes/OrderMetabox.php:1105
@@ -1458,23 +1458,27 @@ msgstr ""
 msgid "Invalid status."
 msgstr ""
 
-#: src/Admin/Admin.php:511
+#: src/Admin/Admin.php:420
+msgid "Please select a resolution type when resolving a dispute."
+msgstr ""
+
+#: src/Admin/Admin.php:515
 msgid "Select Image"
 msgstr ""
 
-#: src/Admin/Admin.php:512
+#: src/Admin/Admin.php:516
 msgid "Select Images"
 msgstr ""
 
-#: src/Admin/Admin.php:513
+#: src/Admin/Admin.php:517
 msgid "Use Image"
 msgstr ""
 
-#: src/Admin/Admin.php:514 src/Frontend/Frontend.php:103
+#: src/Admin/Admin.php:518 src/Frontend/Frontend.php:103
 msgid "Are you sure?"
 msgstr ""
 
-#: src/Admin/Admin.php:538
+#: src/Admin/Admin.php:542
 msgid "Sell Services"
 msgstr ""
 
@@ -1482,7 +1486,7 @@ msgstr ""
 msgid "WP Sell Services"
 msgstr ""
 
-#: src/Admin/Admin.php:552 src/Admin/Admin.php:553
+#: src/Admin/Admin.php:556 src/Admin/Admin.php:557
 #: src/Admin/Pages/SetupWizardPage.php:311 src/Admin/Settings.php:914
 #: src/Frontend/UnifiedDashboard.php:412
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:172
@@ -1490,27 +1494,27 @@ msgstr ""
 msgid "Dashboard"
 msgstr ""
 
-#: src/Admin/Admin.php:565 src/Admin/Pages/SetupWizardPage.php:493
+#: src/Admin/Admin.php:569 src/Admin/Pages/SetupWizardPage.php:493
 #: src/Blocks/ServiceCategories.php:40
 msgid "Service Categories"
 msgstr ""
 
-#: src/Admin/Admin.php:566 src/Blocks/BlocksManager.php:136
+#: src/Admin/Admin.php:570 src/Blocks/BlocksManager.php:136
 #: src/Taxonomies/ServiceCategoryTaxonomy.php:85
 msgid "Categories"
 msgstr ""
 
-#: src/Admin/Admin.php:573
+#: src/Admin/Admin.php:577
 msgid "Service Tags"
 msgstr ""
 
-#: src/Admin/Admin.php:574 src/Frontend/ServiceWizard.php:514
+#: src/Admin/Admin.php:578 src/Frontend/ServiceWizard.php:514
 #: src/Taxonomies/ServiceTagTaxonomy.php:72
 #: templates/dashboard/sections/portfolio.php:163
 msgid "Tags"
 msgstr ""
 
-#: src/Admin/Admin.php:584 src/Admin/Admin.php:585 src/Admin/Admin.php:851
+#: src/Admin/Admin.php:588 src/Admin/Admin.php:589 src/Admin/Admin.php:855
 #: src/Admin/Metaboxes/ServiceMetabox.php:633
 #: src/Admin/Metaboxes/ServiceMetabox.php:1318
 #: src/Admin/Pages/VendorsPage.php:384 src/Admin/Pages/VendorsPage.php:420
@@ -1521,24 +1525,24 @@ msgstr ""
 msgid "Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:593 src/Admin/Admin.php:594 src/Admin/Admin.php:1330
+#: src/Admin/Admin.php:597 src/Admin/Admin.php:598 src/Admin/Admin.php:1334
 msgid "Disputes"
 msgstr ""
 
-#: src/Admin/Admin.php:602 src/Admin/Admin.php:603 src/Admin/Admin.php:746
+#: src/Admin/Admin.php:606 src/Admin/Admin.php:607 src/Admin/Admin.php:750
 #: src/Admin/Pages/VendorsPage.php:1148 wp-sell-services.php:310
 msgid "Settings"
 msgstr ""
 
-#: src/Admin/Admin.php:658
+#: src/Admin/Admin.php:662
 msgid "You do not have permission to access this page."
 msgstr ""
 
-#: src/Admin/Admin.php:689
+#: src/Admin/Admin.php:693
 msgid "WP Sell Services Dashboard"
 msgstr ""
 
-#: src/Admin/Admin.php:698 src/Admin/Pages/VendorsPage.php:1690
+#: src/Admin/Admin.php:702 src/Admin/Pages/VendorsPage.php:1690
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:411
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:608
 #: templates/dashboard/sections/orders.php:65
@@ -1546,55 +1550,55 @@ msgstr ""
 msgid "Total Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:722 src/Admin/Pages/VendorsPage.php:2401
+#: src/Admin/Admin.php:726 src/Admin/Pages/VendorsPage.php:2401
 msgid "Total Revenue"
 msgstr ""
 
-#: src/Admin/Admin.php:730 src/Admin/Metaboxes/OrderMetabox.php:787
+#: src/Admin/Admin.php:734 src/Admin/Metaboxes/OrderMetabox.php:787
 msgid "Quick Actions"
 msgstr ""
 
-#: src/Admin/Admin.php:734
+#: src/Admin/Admin.php:738
 msgid "Add Service"
 msgstr ""
 
-#: src/Admin/Admin.php:738 src/Services/EmailService.php:1005
+#: src/Admin/Admin.php:742 src/Services/EmailService.php:1005
 msgid "View Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:742 templates/myaccount/vendor-dashboard.php:35
+#: src/Admin/Admin.php:746 templates/myaccount/vendor-dashboard.php:35
 msgid "Manage Services"
 msgstr ""
 
-#: src/Admin/Admin.php:753
+#: src/Admin/Admin.php:757
 msgid "Content Overview"
 msgstr ""
 
-#: src/Admin/Admin.php:758
+#: src/Admin/Admin.php:762
 msgid "Published Services"
 msgstr ""
 
-#: src/Admin/Admin.php:764
+#: src/Admin/Admin.php:768
 msgid "Draft Services"
 msgstr ""
 
-#: src/Admin/Admin.php:770 src/Blocks/BuyerRequests.php:40
+#: src/Admin/Admin.php:774 src/Blocks/BuyerRequests.php:40
 #: src/Frontend/BuyerRequestArchiveView.php:196
 #: src/Frontend/UnifiedDashboard.php:210 src/Frontend/UnifiedDashboard.php:390
 msgid "Buyer Requests"
 msgstr ""
 
-#: src/Admin/Admin.php:776
+#: src/Admin/Admin.php:780
 msgid "Pending Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:785 src/Admin/Pages/VendorsPage.php:1795
+#: src/Admin/Admin.php:789 src/Admin/Pages/VendorsPage.php:1795
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:419
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:624
 msgid "Recent Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:790 src/Admin/Admin.php:1453
+#: src/Admin/Admin.php:794 src/Admin/Admin.php:1457
 #: src/Admin/Pages/VendorsPage.php:1799 src/Admin/Pages/VendorsPage.php:2284
 #: src/Admin/Tables/DisputesListTable.php:52
 #: src/Admin/Tables/OrdersListTable.php:51 src/Blocks/BlocksManager.php:148
@@ -1609,7 +1613,7 @@ msgstr ""
 msgid "Order"
 msgstr ""
 
-#: src/Admin/Admin.php:791 src/Admin/Admin.php:1078
+#: src/Admin/Admin.php:795 src/Admin/Admin.php:1082
 #: src/Admin/Metaboxes/OrderMetabox.php:353
 #: src/Admin/Pages/ManualOrderPage.php:174
 #: src/Admin/Pages/ServiceModerationPage.php:344
@@ -1638,7 +1642,7 @@ msgstr ""
 msgid "Service"
 msgstr ""
 
-#: src/Admin/Admin.php:792 src/Admin/Admin.php:1096
+#: src/Admin/Admin.php:796 src/Admin/Admin.php:1100
 #: src/Admin/Metaboxes/OrderMetabox.php:292
 #: src/Admin/Metaboxes/OrderMetabox.php:402
 #: src/Admin/Metaboxes/OrderMetabox.php:444
@@ -1655,7 +1659,7 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: src/Admin/Admin.php:793 src/Admin/Admin.php:1070 src/Admin/Admin.php:1429
+#: src/Admin/Admin.php:797 src/Admin/Admin.php:1074 src/Admin/Admin.php:1433
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:91
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:179
 #: src/Admin/Metaboxes/OrderMetabox.php:258
@@ -1693,7 +1697,7 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/Admin/Admin.php:794 src/Admin/Metaboxes/BuyerRequestMetabox.php:180
+#: src/Admin/Admin.php:798 src/Admin/Metaboxes/BuyerRequestMetabox.php:180
 #: src/Admin/Metaboxes/ServiceMetabox.php:506
 #: src/Admin/Metaboxes/ServiceMetabox.php:557
 #: src/Admin/Metaboxes/ServiceMetabox.php:1780
@@ -1710,58 +1714,58 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: src/Admin/Admin.php:806 src/Admin/Admin.php:1085 src/Admin/Admin.php:1460
+#: src/Admin/Admin.php:810 src/Admin/Admin.php:1089 src/Admin/Admin.php:1464
 #: src/Admin/Tables/DisputesListTable.php:148
 #: src/Admin/Tables/OrdersListTable.php:141
 msgid "Deleted"
 msgstr ""
 
-#: src/Admin/Admin.php:819
+#: src/Admin/Admin.php:823
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:630
 msgid "No orders yet."
 msgstr ""
 
-#: src/Admin/Admin.php:854 src/Admin/Pages/ManualOrderPage.php:53
+#: src/Admin/Admin.php:858 src/Admin/Pages/ManualOrderPage.php:53
 #: src/Admin/Pages/ManualOrderPage.php:54
 #: src/Admin/Pages/ManualOrderPage.php:146
 #: src/Admin/Pages/ManualOrderPage.php:419
 msgid "Create Order"
 msgstr ""
 
-#: src/Admin/Admin.php:864
+#: src/Admin/Admin.php:868
 msgid "Search Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:918
+#: src/Admin/Admin.php:922
 #. translators: %d: number of orders updated
 msgid "%d order updated."
 msgid_plural "%d orders updated."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/Admin.php:970
+#: src/Admin/Admin.php:974
 #. translators: %d: number of disputes updated
 msgid "%d dispute updated."
 msgid_plural "%d disputes updated."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/Admin.php:1005 src/Frontend/Shortcodes.php:684
+#: src/Admin/Admin.php:1009 src/Frontend/Shortcodes.php:684
 #: src/Frontend/TemplateLoader.php:205
 msgid "You do not have permission to view this order."
 msgstr ""
 
-#: src/Admin/Admin.php:1037 src/Admin/Pages/ManualOrderPage.php:780
+#: src/Admin/Admin.php:1041 src/Admin/Pages/ManualOrderPage.php:780
 #: src/Admin/Pages/VendorsPage.php:2259 src/Models/ServiceOrder.php:538
 #: src/functions.php:602
 msgid "Pending Payment"
 msgstr ""
 
-#: src/Admin/Admin.php:1038 src/Models/ServiceOrder.php:542
+#: src/Admin/Admin.php:1042 src/Models/ServiceOrder.php:542
 msgid "Waiting for Requirements"
 msgstr ""
 
-#: src/Admin/Admin.php:1041 src/Admin/Settings.php:865
+#: src/Admin/Admin.php:1045 src/Admin/Settings.php:865
 #: src/Models/Notification.php:267 src/Models/ServiceOrder.php:547
 #: src/Services/EmailService.php:475 src/Services/NotificationService.php:429
 #: src/functions.php:611 src/functions.php:986
@@ -1769,9 +1773,9 @@ msgstr ""
 msgid "Revision Requested"
 msgstr ""
 
-#: src/Admin/Admin.php:1052 src/Frontend/Shortcodes.php:933
+#: src/Admin/Admin.php:1056 src/Frontend/Shortcodes.php:933
 #: templates/dashboard/sections/messages.php:254
-#: templates/dashboard/sections/messages.php:311
+#: templates/dashboard/sections/messages.php:337
 #: templates/emails/cancellation-requested.php:69
 #: templates/emails/delivery-ready.php:63
 #: templates/emails/dispute-opened.php:61 templates/emails/new-message.php:63
@@ -1786,11 +1790,11 @@ msgstr ""
 msgid "Order #%s"
 msgstr ""
 
-#: src/Admin/Admin.php:1058 templates/order/order-view.php:102
+#: src/Admin/Admin.php:1062 templates/order/order-view.php:102
 msgid "Back to Orders"
 msgstr ""
 
-#: src/Admin/Admin.php:1066 src/Admin/Metaboxes/OrderMetabox.php:98
+#: src/Admin/Admin.php:1070 src/Admin/Metaboxes/OrderMetabox.php:98
 #: src/Admin/Pages/ManualOrderPage.php:168
 #: templates/disputes/dispute-view.php:367
 #: templates/order/order-confirmation.php:196
@@ -1798,112 +1802,112 @@ msgstr ""
 msgid "Order Details"
 msgstr ""
 
-#: src/Admin/Admin.php:1091 src/Admin/Pages/ManualOrderPage.php:202
+#: src/Admin/Admin.php:1095 src/Admin/Pages/ManualOrderPage.php:202
 #: src/Models/ServiceOrder.php:806 templates/emails/new-order.php:67
 #: templates/partials/service-packages.php:56
 msgid "Package"
 msgstr ""
 
-#: src/Admin/Admin.php:1101 src/Admin/Metaboxes/OrderMetabox.php:270
+#: src/Admin/Admin.php:1105 src/Admin/Metaboxes/OrderMetabox.php:270
 #: templates/order/order-view.php:337
 msgid "Due Date"
 msgstr ""
 
-#: src/Admin/Admin.php:1111 src/Admin/Metaboxes/OrderMetabox.php:265
+#: src/Admin/Admin.php:1115 src/Admin/Metaboxes/OrderMetabox.php:265
 #: src/Admin/Pages/SetupWizardPage.php:463
 #: src/Admin/Pages/SetupWizardPage.php:949
 #: src/Admin/Pages/SetupWizardPage.php:987 src/Admin/Pages/VendorsPage.php:2139
 msgid "Created"
 msgstr ""
 
-#: src/Admin/Admin.php:1123 src/Admin/Metaboxes/OrderMetabox.php:298
+#: src/Admin/Admin.php:1127 src/Admin/Metaboxes/OrderMetabox.php:298
 msgid "WooCommerce Order"
 msgstr ""
 
-#: src/Admin/Admin.php:1138 src/Admin/Metaboxes/ServiceMetabox.php:1131
+#: src/Admin/Admin.php:1142 src/Admin/Metaboxes/ServiceMetabox.php:1131
 #: src/Frontend/ServiceWizard.php:95 src/Frontend/SingleServiceView.php:392
 msgid "Requirements"
 msgstr ""
 
-#: src/Admin/Admin.php:1159 src/Admin/Admin.php:1480
+#: src/Admin/Admin.php:1163 src/Admin/Admin.php:1484
 #: src/Admin/Metaboxes/OrderMetabox.php:134
 #: src/Frontend/UnifiedDashboard.php:245 src/Frontend/UnifiedDashboard.php:397
 #: templates/myaccount/vendor-dashboard.php:189
 msgid "Messages"
 msgstr ""
 
-#: src/Admin/Admin.php:1176
+#: src/Admin/Admin.php:1180
 msgid "Has attachments"
 msgstr ""
 
-#: src/Admin/Admin.php:1183 src/Admin/Admin.php:1498
+#: src/Admin/Admin.php:1187 src/Admin/Admin.php:1502
 #: src/Admin/Metaboxes/OrderMetabox.php:739
 #: templates/dashboard/sections/messages.php:74
 msgid "No messages yet."
 msgstr ""
 
-#: src/Admin/Admin.php:1191 src/Admin/Metaboxes/OrderMetabox.php:125
+#: src/Admin/Admin.php:1195 src/Admin/Metaboxes/OrderMetabox.php:125
 #: templates/order/order-view.php:906
 msgid "Deliveries"
 msgstr ""
 
-#: src/Admin/Admin.php:1200 src/Admin/Metaboxes/OrderMetabox.php:646
+#: src/Admin/Admin.php:1204 src/Admin/Metaboxes/OrderMetabox.php:646
 #. translators: %d: delivery number
 msgid "Delivery #%d"
 msgstr ""
 
-#: src/Admin/Admin.php:1222
+#: src/Admin/Admin.php:1226
 msgid "Parties"
 msgstr ""
 
-#: src/Admin/Admin.php:1225 src/Admin/Admin.php:1510
+#: src/Admin/Admin.php:1229 src/Admin/Admin.php:1514
 msgid "Buyer:"
 msgstr ""
 
-#: src/Admin/Admin.php:1236 src/Admin/Admin.php:1520
+#: src/Admin/Admin.php:1240 src/Admin/Admin.php:1524
 msgid "Vendor:"
 msgstr ""
 
-#: src/Admin/Admin.php:1252
+#: src/Admin/Admin.php:1256
 msgid "Update Order"
 msgstr ""
 
-#: src/Admin/Admin.php:1260
+#: src/Admin/Admin.php:1264
 msgid "Status:"
 msgstr ""
 
-#: src/Admin/Admin.php:1270
+#: src/Admin/Admin.php:1274
 msgid "Update Status"
 msgstr ""
 
-#: src/Admin/Admin.php:1278
+#: src/Admin/Admin.php:1282
 msgid "Financial Summary"
 msgstr ""
 
-#: src/Admin/Admin.php:1282
+#: src/Admin/Admin.php:1286
 msgid "Order Total:"
 msgstr ""
 
-#: src/Admin/Admin.php:1287
+#: src/Admin/Admin.php:1291
 msgid "Vendor Earning:"
 msgstr ""
 
-#: src/Admin/Admin.php:1293
+#: src/Admin/Admin.php:1297
 msgid "Commission:"
 msgstr ""
 
-#: src/Admin/Admin.php:1338
+#: src/Admin/Admin.php:1342
 msgid "Search Disputes"
 msgstr ""
 
-#: src/Admin/Admin.php:1395 src/Admin/Tables/DisputesListTable.php:199
+#: src/Admin/Admin.php:1399 src/Admin/Tables/DisputesListTable.php:199
 #: src/Admin/Tables/DisputesListTable.php:288 src/Models/BuyerRequest.php:275
 #: src/Models/Dispute.php:234 src/Services/BuyerRequestService.php:877
 #: src/Services/DisputeService.php:608
 msgid "Open"
 msgstr ""
 
-#: src/Admin/Admin.php:1396 src/Admin/Pages/ServiceModerationPage.php:1218
+#: src/Admin/Admin.php:1400 src/Admin/Pages/ServiceModerationPage.php:1218
 #: src/Admin/Tables/DisputesListTable.php:200
 #: src/Admin/Tables/DisputesListTable.php:289 src/Models/Dispute.php:235
 #: src/Services/DisputeService.php:609 src/Services/ModerationService.php:492
@@ -1911,52 +1915,52 @@ msgstr ""
 msgid "Pending Review"
 msgstr ""
 
-#: src/Admin/Admin.php:1397 src/Admin/Tables/DisputesListTable.php:201
+#: src/Admin/Admin.php:1401 src/Admin/Tables/DisputesListTable.php:201
 #: src/Admin/Tables/DisputesListTable.php:290 src/Models/Dispute.php:237
 #: src/Services/DisputeService.php:610
 msgid "Resolved"
 msgstr ""
 
-#: src/Admin/Admin.php:1398 src/Admin/Tables/DisputesListTable.php:202
+#: src/Admin/Admin.php:1402 src/Admin/Tables/DisputesListTable.php:202
 #: src/Admin/Tables/DisputesListTable.php:291 src/Models/Dispute.php:236
 #: src/Services/DisputeService.php:611
 msgid "Escalated"
 msgstr ""
 
-#: src/Admin/Admin.php:1399 src/Admin/Tables/DisputesListTable.php:203
+#: src/Admin/Admin.php:1403 src/Admin/Tables/DisputesListTable.php:203
 #: src/Admin/Tables/DisputesListTable.php:292 src/Models/BuyerRequest.php:276
 #: src/Models/Dispute.php:238 src/Services/DisputeService.php:612
 msgid "Closed"
 msgstr ""
 
-#: src/Admin/Admin.php:1411 templates/disputes/dispute-view.php:97
+#: src/Admin/Admin.php:1415 templates/disputes/dispute-view.php:97
 #. translators: %d: dispute ID
 msgid "Dispute #%d"
 msgstr ""
 
-#: src/Admin/Admin.php:1417 templates/disputes/dispute-view.php:86
+#: src/Admin/Admin.php:1421 templates/disputes/dispute-view.php:86
 msgid "Back to Disputes"
 msgstr ""
 
-#: src/Admin/Admin.php:1425
+#: src/Admin/Admin.php:1429
 msgid "Dispute Details"
 msgstr ""
 
-#: src/Admin/Admin.php:1437 src/Admin/Tables/DisputesListTable.php:54
+#: src/Admin/Admin.php:1441 src/Admin/Tables/DisputesListTable.php:54
 #: templates/myaccount/service-disputes.php:57
 #: templates/myaccount/service-disputes.php:87
 msgid "Reason"
 msgstr ""
 
-#: src/Admin/Admin.php:1441 src/Admin/Tables/DisputesListTable.php:53
+#: src/Admin/Admin.php:1445 src/Admin/Tables/DisputesListTable.php:53
 msgid "Opened By"
 msgstr ""
 
-#: src/Admin/Admin.php:1465
+#: src/Admin/Admin.php:1469
 msgid "Date Opened"
 msgstr ""
 
-#: src/Admin/Admin.php:1470 src/Admin/Metaboxes/ServiceMetabox.php:255
+#: src/Admin/Admin.php:1474 src/Admin/Metaboxes/ServiceMetabox.php:255
 #: src/Admin/Metaboxes/ServiceMetabox.php:360
 #: src/Admin/Metaboxes/ServiceMetabox.php:726
 #: src/Admin/Metaboxes/ServiceMetabox.php:838
@@ -1972,59 +1976,59 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: src/Admin/Admin.php:1507
+#: src/Admin/Admin.php:1511
 msgid "Parties Involved"
 msgstr ""
 
-#: src/Admin/Admin.php:1531
+#: src/Admin/Admin.php:1535
 msgid "Order Value:"
 msgstr ""
 
-#: src/Admin/Admin.php:1541 src/Admin/Admin.php:1582
+#: src/Admin/Admin.php:1545 src/Admin/Admin.php:1586
 #: src/Services/ServiceAddonService.php:650
 #: templates/disputes/dispute-view.php:315
 msgid "Resolution"
 msgstr ""
 
-#: src/Admin/Admin.php:1549
+#: src/Admin/Admin.php:1553
 msgid "Update Status:"
 msgstr ""
 
-#: src/Admin/Admin.php:1560 src/Admin/Admin.php:1585
+#: src/Admin/Admin.php:1564 src/Admin/Admin.php:1589
 msgid "Resolution:"
 msgstr ""
 
-#: src/Admin/Admin.php:1562
+#: src/Admin/Admin.php:1566
 msgid "— Select Resolution —"
 msgstr ""
 
-#: src/Admin/Admin.php:1572 src/Admin/Admin.php:1590
+#: src/Admin/Admin.php:1576 src/Admin/Admin.php:1594
 msgid "Admin Notes:"
 msgstr ""
 
-#: src/Admin/Admin.php:1576
+#: src/Admin/Admin.php:1580
 msgid "Update Dispute"
 msgstr ""
 
-#: src/Admin/Admin.php:1586 src/Admin/Pages/VendorsPage.php:1026
+#: src/Admin/Admin.php:1590 src/Admin/Pages/VendorsPage.php:1026
 #: src/Blocks/SellerCard.php:267
 msgid "N/A"
 msgstr ""
 
-#: src/Admin/Admin.php:1596
+#: src/Admin/Admin.php:1600
 msgid "Resolved At:"
 msgstr ""
 
-#: src/Admin/Admin.php:1643
+#: src/Admin/Admin.php:1647
 msgid "Demo content module not found."
 msgstr ""
 
-#: src/Admin/Admin.php:1710
+#: src/Admin/Admin.php:1714
 #. translators: 1: services count, 2: categories count, 3: vendors count
 msgid "Imported %1$d services, %2$d categories, and %3$d vendor profiles."
 msgstr ""
 
-#: src/Admin/Admin.php:1916
+#: src/Admin/Admin.php:1920
 #. translators: 1: services count, 2: vendors count
 msgid "Deleted %1$d demo services and %2$d demo vendors."
 msgstr ""
@@ -3358,7 +3362,7 @@ msgstr ""
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:501
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:677
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:728
-#: templates/dashboard/sections/orders.php:146
+#: templates/dashboard/sections/orders.php:152
 #: templates/dashboard/sections/services.php:263
 #: templates/myaccount/notifications.php:74
 #: templates/myaccount/service-disputes.php:102
@@ -5375,43 +5379,43 @@ msgstr ""
 msgid "— Select —"
 msgstr ""
 
-#: src/Admin/Settings.php:2357
+#: src/Admin/Settings.php:2350
 msgid "US Dollar ($)"
 msgstr ""
 
-#: src/Admin/Settings.php:2358
+#: src/Admin/Settings.php:2351
 msgid "Euro (€)"
 msgstr ""
 
-#: src/Admin/Settings.php:2359
+#: src/Admin/Settings.php:2352
 msgid "British Pound (£)"
 msgstr ""
 
-#: src/Admin/Settings.php:2360
+#: src/Admin/Settings.php:2353
 msgid "Canadian Dollar (C$)"
 msgstr ""
 
-#: src/Admin/Settings.php:2361
+#: src/Admin/Settings.php:2354
 msgid "Australian Dollar (A$)"
 msgstr ""
 
-#: src/Admin/Settings.php:2362
+#: src/Admin/Settings.php:2355
 msgid "Indian Rupee (₹)"
 msgstr ""
 
-#: src/Admin/Settings.php:2363
+#: src/Admin/Settings.php:2356
 msgid "Japanese Yen (¥)"
 msgstr ""
 
-#: src/Admin/Settings.php:2364
+#: src/Admin/Settings.php:2357
 msgid "Chinese Yuan (¥)"
 msgstr ""
 
-#: src/Admin/Settings.php:2365
+#: src/Admin/Settings.php:2358
 msgid "Brazilian Real (R$)"
 msgstr ""
 
-#: src/Admin/Settings.php:2366
+#: src/Admin/Settings.php:2359
 msgid "Mexican Peso ($)"
 msgstr ""
 
@@ -5514,7 +5518,7 @@ msgstr ""
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:562
 #: src/Models/Message.php:240 src/Models/Notification.php:229
 #: src/functions.php:580 templates/dashboard/sections/messages.php:92
-#: templates/dashboard/sections/orders.php:137
+#: templates/dashboard/sections/orders.php:143
 msgid "ago"
 msgstr ""
 
@@ -6257,7 +6261,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2194
 #: templates/dashboard/sections/messages.php:58
 #: templates/dashboard/sections/messages.php:241
-#: templates/dashboard/sections/messages.php:304
+#: templates/dashboard/sections/messages.php:330
 msgid "Direct Message"
 msgstr ""
 
@@ -10985,6 +10989,10 @@ msgstr ""
 msgid "Your conversations with buyers and sellers will appear here."
 msgstr ""
 
+#: templates/dashboard/sections/messages.php:320
+msgid "You: "
+msgstr ""
+
 #: templates/dashboard/sections/orders.php:95
 msgid "No orders yet"
 msgstr ""
@@ -10998,7 +11006,7 @@ msgstr ""
 msgid "Browse Services"
 msgstr ""
 
-#: templates/dashboard/sections/orders.php:131
+#: templates/dashboard/sections/orders.php:137
 #: templates/disputes/dispute-view.php:120
 #: templates/order/order-confirmation.php:102
 #. translators: %s: vendor name
@@ -11170,12 +11178,12 @@ msgstr ""
 msgid "View My Services"
 msgstr ""
 
-#: templates/dashboard/sections/sales.php:123
+#: templates/dashboard/sections/sales.php:129
 #. translators: %s: customer name
 msgid "Buyer: %s"
 msgstr ""
 
-#: templates/dashboard/sections/sales.php:137
+#: templates/dashboard/sections/sales.php:143
 msgid "Manage"
 msgstr ""
 
