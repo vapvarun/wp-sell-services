@@ -920,6 +920,58 @@ class Admin {
 	}
 
 	/**
+	 * Process dispute bulk actions.
+	 *
+	 * @param string $action The bulk action.
+	 * @return void
+	 */
+	private function process_disputes_bulk_actions( string $action ): void {
+		$bulk_actions = array( 'mark_pending_review', 'mark_escalated', 'mark_closed' );
+
+		if ( ! in_array( $action, $bulk_actions, true ) ) {
+			return;
+		}
+
+		check_admin_referer( 'bulk-disputes' );
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$dispute_ids = isset( $_GET['dispute_ids'] ) ? array_map( 'absint', (array) $_GET['dispute_ids'] ) : array();
+
+		if ( empty( $dispute_ids ) ) {
+			return;
+		}
+
+		$status_map = array(
+			'mark_pending_review' => DisputeService::STATUS_PENDING,
+			'mark_escalated'      => DisputeService::STATUS_ESCALATED,
+			'mark_closed'         => DisputeService::STATUS_CLOSED,
+		);
+
+		$new_status      = $status_map[ $action ];
+		$dispute_service = new DisputeService();
+		$updated         = 0;
+
+		foreach ( $dispute_ids as $dispute_id ) {
+			if ( $dispute_service->update_status( $dispute_id, $new_status ) ) {
+				++$updated;
+			}
+		}
+
+		if ( $updated > 0 ) {
+			add_action(
+				'admin_notices',
+				function () use ( $updated ) {
+					printf(
+						'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+						/* translators: %d: number of disputes updated */
+						esc_html( sprintf( _n( '%d dispute updated.', '%d disputes updated.', $updated, 'wp-sell-services' ), $updated ) )
+					);
+				}
+			);
+		}
+	}
+
+	/**
 	 * Render order detail view.
 	 *
 	 * @param int $order_id Order ID.
@@ -1265,6 +1317,9 @@ class Admin {
 			return;
 		}
 
+		// Handle bulk actions.
+		$this->process_disputes_bulk_actions( $action );
+
 		$list_table = new DisputesListTable();
 		$list_table->prepare_items();
 		?>
@@ -1512,7 +1567,7 @@ class Admin {
 
 									<p>
 										<label for="admin_notes"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
-										<textarea name="admin_notes" id="admin_notes" rows="4" style="width: 100%;"><?php echo esc_textarea( $dispute->admin_notes ?? '' ); ?></textarea>
+										<textarea name="admin_notes" id="admin_notes" rows="4" style="width: 100%;"><?php echo esc_textarea( $dispute->resolution_notes ?? '' ); ?></textarea>
 									</p>
 
 									<?php submit_button( __( 'Update Dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
@@ -1527,10 +1582,10 @@ class Admin {
 									<strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong><br>
 									<?php echo esc_html( $resolutions[ $dispute->resolution ?? '' ] ?? __( 'N/A', 'wp-sell-services' ) ); ?>
 								</p>
-								<?php if ( ! empty( $dispute->admin_notes ) ) : ?>
+								<?php if ( ! empty( $dispute->resolution_notes ) ) : ?>
 									<p>
 										<strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong><br>
-										<?php echo wp_kses_post( wpautop( $dispute->admin_notes ) ); ?>
+										<?php echo wp_kses_post( wpautop( $dispute->resolution_notes ) ); ?>
 									</p>
 								<?php endif; ?>
 								<?php if ( ! empty( $dispute->resolved_at ) ) : ?>
