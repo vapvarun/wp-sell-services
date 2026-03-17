@@ -222,7 +222,7 @@ class DisputeWorkflowManager {
 
 		foreach ( $messages as $message ) {
 			if ( $message->attachments ) {
-				$message->attachments = json_decode( $message->attachments, true );
+				$message->attachments = $this->decode_json_array( $message->attachments );
 				$message->attachment_urls = $this->get_attachment_urls( $message->attachments );
 			}
 		}
@@ -251,6 +251,21 @@ class DisputeWorkflowManager {
 			}
 		}
 		return $urls;
+	}
+
+	/**
+	 * Decode JSON into an array safely.
+	 *
+	 * @param mixed $json JSON string.
+	 * @return array
+	 */
+	private function decode_json_array( $json ): array {
+		if ( ! is_string( $json ) || '' === trim( $json ) ) {
+			return [];
+		}
+
+		$decoded = json_decode( $json, true );
+		return is_array( $decoded ) ? $decoded : [];
 	}
 
 	/**
@@ -593,8 +608,8 @@ class DisputeWorkflowManager {
 				] );
 
 				// Mark reminder as sent.
-				$meta = json_decode( $dispute->meta, true ) ?? [];
-				$meta['reminder_sent'] = current_time( 'mysql' );
+					$meta = $this->decode_json_array( $dispute->meta );
+					$meta['reminder_sent'] = current_time( 'mysql' );
 
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->update(
@@ -697,8 +712,8 @@ class DisputeWorkflowManager {
 			return;
 		}
 
-		$meta            = json_decode( $order->meta, true ) ?? [];
-		$previous_status = $meta['status_before_dispute'] ?? \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
+			$meta            = $this->decode_json_array( $order->meta );
+			$previous_status = $meta['status_before_dispute'] ?? \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
@@ -771,7 +786,7 @@ class DisputeWorkflowManager {
 		);
 
 		if ( $order ) {
-			$meta                          = json_decode( $order->meta, true ) ?? [];
+			$meta                          = $this->decode_json_array( $order->meta );
 			$meta['status_before_dispute'] = $order->status;
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
