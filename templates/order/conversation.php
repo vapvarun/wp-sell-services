@@ -88,6 +88,18 @@ if ( $conversation ) {
 					array( '%d' )
 				);
 			}
+
+			// Also reset the unread count for this user in the conversation record.
+			$unread_counts = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
+			$unread_counts[ (string) $user_id ] = 0;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_conversations',
+				array( 'unread_counts' => wp_json_encode( $unread_counts ) ),
+				array( 'id' => $conversation->id ),
+				array( '%s' ),
+				array( '%d' )
+			);
 		}
 	}
 }
