@@ -509,7 +509,8 @@
 	color: #761919;
 }
 
-.wpss-status-on-hold {
+.wpss-status-on-hold,
+.wpss-status-pending-requirements {
 	background: #f8dda7;
 	color: #94660c;
 }
@@ -522,6 +523,26 @@
 .wpss-status-pending-payment {
 	background: #f8dda7;
 	color: #92400e;
+}
+
+.wpss-status-revision-requested {
+	background: #e0f2fe;
+	color: #075985;
+}
+
+.wpss-status-delivered {
+	background: #dbeafe;
+	color: #1e40af; 
+}
+
+.wpss-status-in-progress {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.wpss-status-disputed {
+	background: #fed7aa;
+	color: #9a3412;
 }
 
 /* ==========================================================================

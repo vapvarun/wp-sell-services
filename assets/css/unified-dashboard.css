@@ -887,7 +887,8 @@
 	color: #3730a3;
 }
 
-.wpss-status--completed {
+.wpss-status--completed,
+.wpss-status--delivered {
 	background: var(--wpss-success-light);
 	color: #065f46;
 }
@@ -905,6 +906,21 @@
 .wpss-status--draft {
 	background: var(--wpss-gray-200);
 	color: var(--wpss-gray-600);
+}
+
+.wpss-status--revision_requested {
+	background: #e0f2fe;
+	color: #075985;
+}
+
+.wpss-status--delivered {
+	background: #dbeafe;
+	color: #1e40af; 
+}
+
+.wpss-status--disputed {
+	background: #fed7aa;
+	color: #9a3412;
 }
 
 /* ==========================================================================

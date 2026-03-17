@@ -839,6 +839,10 @@
 	margin-bottom: 1rem;
 }
 
+.wpss-single-request .wpss-request-header {
+	flex-direction: column;
+}
+
 .wpss-request-buyer {
 	display: flex;
 	align-items: center;

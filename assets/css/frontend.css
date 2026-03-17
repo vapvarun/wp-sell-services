@@ -1175,6 +1175,30 @@
 	text-transform: uppercase;
 }
 
+/* Pending */
+.wpss-badge--pending {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+/* Approved */
+.wpss-badge--approved {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+/* Completed */
+.wpss-badge--completed {
+	background: #bbf7d0;
+	color: #065f46;
+}
+
+/* Rejected */
+.wpss-badge--rejected {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
 .wpss-badge-vendor {
 	background: var(--wpss-primary-light);
 	color: var(--wpss-primary);
