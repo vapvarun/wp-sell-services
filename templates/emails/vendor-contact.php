@@ -63,6 +63,29 @@ $sender_name = $sender_name ?? __( 'Someone', 'wp-sell-services' );
 	<?php endif; ?>
 </p>
 
+<!-- Sender Info -->
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f9f9f9; border-radius: 4px;">
+	<tbody>
+		<tr>
+			<th style="padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 30%; font-weight: 600; font-size: 14px;"><?php esc_html_e( 'From', 'wp-sell-services' ); ?></th>
+			<td style="padding: 10px 12px; border-bottom: 1px solid #e5e5e5; font-size: 14px;"><?php echo esc_html( $sender_name ); ?></td>
+		</tr>
+		<tr>
+			<th style="padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 30%; font-weight: 600; font-size: 14px;"><?php esc_html_e( 'Email', 'wp-sell-services' ); ?></th>
+			<td style="padding: 10px 12px; border-bottom: 1px solid #e5e5e5; font-size: 14px;">
+				<a href="mailto:<?php echo esc_attr( $sender_email ?? '' ); ?>" style="color: <?php echo esc_attr( $base_color ); ?>;"><?php echo esc_html( $sender_email ?? '' ); ?></a>
+			</td>
+		</tr>
+		<?php if ( ! empty( $service_title ) ) : ?>
+		<tr>
+			<th style="padding: 10px 12px; text-align: left; width: 30%; font-weight: 600; font-size: 14px;"><?php esc_html_e( 'Regarding', 'wp-sell-services' ); ?></th>
+			<td style="padding: 10px 12px; font-size: 14px;"><?php echo esc_html( $service_title ); ?></td>
+		</tr>
+		<?php endif; ?>
+	</tbody>
+</table>
+
+<!-- Message Content -->
 <?php if ( ! empty( $message ) ) : ?>
 <div style="background: #f9f9f9; padding: 16px; border-left: 4px solid <?php echo esc_attr( $base_color ); ?>; margin: 20px 0; border-radius: 0 4px 4px 0;">
 	<?php echo wp_kses_post( wpautop( $message ) ); ?>

@@ -1057,6 +1057,12 @@ class EmailService {
 			sprintf( 'From: %s <%s>', $from_name, $this->settings()['from_email'] ),
 		);
 
+		// Add Reply-To for contact emails so vendor can reply directly to sender.
+		if ( self::TYPE_VENDOR_CONTACT === $type && ! empty( $template_vars['sender_email'] ) ) {
+			$reply_name = $template_vars['sender_name'] ?? '';
+			$headers[]  = sprintf( 'Reply-To: %s <%s>', $reply_name, $template_vars['sender_email'] );
+		}
+
 		/**
 		 * Filter email before sending.
 		 *
