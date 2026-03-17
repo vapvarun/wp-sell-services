@@ -1215,6 +1215,32 @@
 	color: var(--wpss-gray-900);
 }
 
+.wpss-btn--secondary {
+	background: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-btn--success {
+	background: var(--wpss-success, #10b981);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-btn--danger {
+	background: var(--wpss-danger, #ef4444);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-btn--danger-outline {
+	background: transparent;
+	border: 1px solid var(--wpss-danger, #ef4444);
+	color: var(--wpss-danger, #ef4444);
+}
+
+.wpss-btn--danger-outline:hover {
+	background: var(--wpss-danger, #ef4444);
+	color: var(--wpss-white, #fff);
+}
+
 .wpss-btn--sm {
 	padding: 6px 12px;
 	font-size: 13px;
@@ -1222,6 +1248,34 @@
 
 .wpss-btn--full {
 	width: 100%;
+}
+
+.wpss-btn--lg {
+	padding: 0.75rem 1.5rem;
+	font-size: 1rem;
+}
+
+.wpss-btn--disabled,
+.wpss-btn.wpss-btn--disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.wpss-btn--icon {
+	padding: 0.5rem;
+	width: 36px;
+	height: 36px;
+}
+
+.wpss-btn--block {
+	display: flex;
+	width: 100%;
+}
+
+.wpss-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
 }
 
 /* ==========================================================================

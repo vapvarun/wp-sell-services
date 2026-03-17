@@ -107,13 +107,13 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 							<?php if ( ! empty( $item['is_featured'] ) ) : ?>
 								<span class="wpss-badge wpss-badge--warning wpss-badge--small"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></span>
 							<?php endif; ?>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-portfolio-edit" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
+							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-btn--outline wpss-portfolio-edit" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 							</button>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-portfolio-toggle-featured" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
+							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-btn--outline wpss-portfolio-toggle-featured" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
 								<?php echo $item['is_featured'] ? esc_html__( 'Unfeature', 'wp-sell-services' ) : esc_html__( 'Feature', 'wp-sell-services' ); ?>
 							</button>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-btn--danger wpss-portfolio-delete" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
+							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-btn--outline wpss-btn--danger wpss-portfolio-delete" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
 								<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
 							</button>
 						</div>
