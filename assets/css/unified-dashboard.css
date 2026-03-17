@@ -642,6 +642,7 @@
 	background: var(--wpss-primary);
 	border: 2px solid #fff;
 	border-radius: 50%;
+	text-indent: -999999px;
 }
 
 .wpss-conversation-card__content {
