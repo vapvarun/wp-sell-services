@@ -26,9 +26,9 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return string
 	 */
 	public function get_account_url( string $endpoint = '' ): string {
-		$url = home_url( '/account/' );
+		$url = wpss_get_page_url( 'dashboard' );
 		if ( $endpoint ) {
-			$url = trailingslashit( $url ) . $endpoint . '/';
+			$url = add_query_arg( 'section', $endpoint, $url );
 		}
 		return $url;
 	}
@@ -119,7 +119,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return string
 	 */
 	public function get_orders_url(): string {
-		return home_url( '/account/orders/' );
+		return add_query_arg( 'section', 'orders', wpss_get_page_url( 'dashboard' ) );
 	}
 
 	/**
@@ -128,7 +128,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return string
 	 */
 	public function get_vendor_dashboard_url(): string {
-		return home_url( '/account/vendor-dashboard/' );
+		return add_query_arg( 'section', 'overview', wpss_get_page_url( 'dashboard' ) );
 	}
 
 	/**
@@ -137,7 +137,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return string
 	 */
 	public function get_vendor_services_url(): string {
-		return home_url( '/account/vendor-services/' );
+		return add_query_arg( 'section', 'services', wpss_get_page_url( 'dashboard' ) );
 	}
 
 	/**
@@ -146,7 +146,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return string
 	 */
 	public function get_notifications_url(): string {
-		return home_url( '/account/notifications/' );
+		return add_query_arg( 'section', 'notifications', wpss_get_page_url( 'dashboard' ) );
 	}
 
 	/**

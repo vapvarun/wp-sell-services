@@ -1151,7 +1151,7 @@ function wpss_get_become_vendor_url(): string {
 		return add_query_arg( 'section', 'become-vendor', $dashboard_url );
 	}
 
-	return home_url( '/become-vendor/' );
+	return wpss_get_page_url( 'become_vendor' );
 }
 
 /**
