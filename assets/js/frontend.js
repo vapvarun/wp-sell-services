@@ -914,7 +914,7 @@
 			e.preventDefault();
 
 			const $btn = $(this);
-			const proposalId = $btn.data('proposal');
+			const proposalId = $btn.data('proposal-id') || $btn.data('proposal');
 
 			WPSS.showConfirm(
 				wpssData.i18n?.confirmAcceptProposal || 'Accept this proposal and create an order?',
@@ -928,7 +928,7 @@
 			e.preventDefault();
 
 			const $btn = $(this);
-			const proposalId = $btn.data('proposal');
+			const proposalId = $btn.data('proposal-id') || $btn.data('proposal');
 			WPSS.showPrompt(
 				wpssData.i18n?.rejectProposalReason || 'Please provide a reason for rejection (optional):',
 				function(reason) { WPSS.handleProposalAction($btn, proposalId, 'reject', reason); },
@@ -941,7 +941,7 @@
 			e.preventDefault();
 
 			const $btn = $(this);
-			const proposalId = $btn.data('proposal');
+			const proposalId = $btn.data('proposal-id') || $btn.data('proposal');
 
 			WPSS.showConfirm(
 				wpssData.i18n?.confirmWithdrawProposal || 'Withdraw this proposal?',
