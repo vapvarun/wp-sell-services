@@ -1004,11 +1004,11 @@ class Admin {
 			</a>
 			<hr class="wp-header-end">
 
-			<div class="wpss-order-layout" style="display: flex; gap: 20px; margin-top: 20px;">
+			<div class="wpss-order-layout" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
 				<div class="wpss-order-main" style="flex: 2;">
 					<!-- Order Info -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<table class="form-table">
 								<tr>
@@ -1080,7 +1080,7 @@ class Admin {
 					<!-- Requirements -->
 					<?php if ( ! empty( $order->requirements ) ) : ?>
 						<div class="postbox">
-							<h2 class="hndle"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<?php
 								$requirements = maybe_unserialize( $order->requirements );
@@ -1101,7 +1101,7 @@ class Admin {
 
 					<!-- Messages -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<?php if ( ! empty( $messages ) ) : ?>
 								<div class="wpss-order-messages" style="max-height: 400px; overflow-y: auto;">
@@ -1133,7 +1133,7 @@ class Admin {
 					<!-- Deliveries -->
 					<?php if ( ! empty( $deliveries ) ) : ?>
 						<div class="postbox">
-							<h2 class="hndle"><?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<?php foreach ( $deliveries as $delivery ) : ?>
 									<div class="wpss-delivery" style="padding: 10px; margin-bottom: 10px; background: #f0f9f0; border-left: 3px solid #00a32a;">
@@ -1164,7 +1164,7 @@ class Admin {
 				<div class="wpss-order-sidebar" style="flex: 1;">
 					<!-- Parties -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Parties', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Parties', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<p>
 								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
@@ -1194,7 +1194,7 @@ class Admin {
 					<!-- Update Status -->
 					<?php if ( ! in_array( $order->status, array( 'completed', 'cancelled' ), true ) ) : ?>
 						<div class="postbox">
-							<h2 class="hndle"><?php esc_html_e( 'Update Order', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Update Order', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 									<?php wp_nonce_field( 'wpss_update_order', 'wpss_order_nonce' ); ?>
@@ -1220,7 +1220,7 @@ class Admin {
 
 					<!-- Financial Summary -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<table style="width: 100%;">
 								<tr>
@@ -1364,7 +1364,7 @@ class Admin {
 				<div class="wpss-dispute-main" style="flex: 2;">
 					<!-- Dispute Info -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Dispute Details', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Dispute Details', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<table class="form-table">
 								<tr>
@@ -1419,7 +1419,7 @@ class Admin {
 
 					<!-- Messages -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<?php if ( ! empty( $messages ) ) : ?>
 								<div class="wpss-dispute-messages" style="max-height: 400px; overflow-y: auto;">
@@ -1446,7 +1446,7 @@ class Admin {
 				<div class="wpss-dispute-sidebar" style="flex: 1;">
 					<!-- Parties -->
 					<div class="postbox">
-						<h2 class="hndle"><?php esc_html_e( 'Parties Involved', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Parties Involved', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<p>
 								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
@@ -1480,7 +1480,7 @@ class Admin {
 					<!-- Resolution Actions -->
 					<?php if ( ! in_array( $dispute->status, array( 'resolved', 'closed' ), true ) ) : ?>
 						<div class="postbox">
-							<h2 class="hndle"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 									<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
@@ -1521,7 +1521,7 @@ class Admin {
 						</div>
 					<?php else : ?>
 						<div class="postbox">
-							<h2 class="hndle"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<p>
 									<strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong><br>
