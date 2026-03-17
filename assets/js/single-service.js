@@ -529,12 +529,13 @@
             const $modal = $(this.config.orderModal);
             const $footer = $modal.find('.wpss-modal-footer');
             const checkoutUrl = this.state.checkoutUrl || wpssService.checkoutUrl;
+            const cartUrl = wpssService.cartUrl || checkoutUrl;
 
             $footer.html(
                 '<div class="wpss-cart-success">' +
                 '<p class="wpss-success-message">&#10003; ' + (wpssService.i18n.added || 'Added to cart!') + '</p>' +
                 '<div class="wpss-cart-actions">' +
-                '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-outline">' +
+                '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
                 (wpssService.i18n.viewCart || 'View Cart') +
                 '</a>' +
                 '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
