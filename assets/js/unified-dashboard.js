@@ -391,27 +391,29 @@
 			e.preventDefault();
 			var requestId = $(e.currentTarget).data('request-id');
 
-			if (!confirm('Close this request? It will no longer be visible to sellers.')) {
-				return;
-			}
-
-			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_update_request_status',
-					request_id: requestId,
-					status: 'draft',
-					nonce: wpssUnifiedDashboard.nonce
-				},
-				success: function (response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						alert(response.data.message || 'Failed to close request.');
-					}
+			WPSS.showConfirm(
+				wpssUnifiedDashboard.i18n.closeRequestConfirm || 'Close this request? It will no longer be visible to sellers.',
+				function () {
+					$.ajax({
+						url: wpssUnifiedDashboard.ajaxUrl,
+						type: 'POST',
+						data: {
+							action: 'wpss_update_request_status',
+							request_id: requestId,
+							status: 'draft',
+							nonce: wpssUnifiedDashboard.nonce
+						},
+						success: function (response) {
+							if (response.success) {
+								WPSS.showNotification(response.data.message || 'Request closed.', 'success');
+								location.reload();
+							} else {
+								WPSS.showNotification(response.data.message || 'Failed to close request.', 'error');
+							}
+						}
+					});
 				}
-			});
+			);
 		},
 
 		/**
@@ -423,26 +425,29 @@
 			e.preventDefault();
 			var requestId = $(e.currentTarget).data('request-id');
 
-			if (!confirm('Delete this request permanently? This cannot be undone.')) {
-				return;
-			}
-
-			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_delete_request',
-					request_id: requestId,
-					nonce: wpssUnifiedDashboard.nonce
+			WPSS.showConfirm(
+				wpssUnifiedDashboard.i18n.deleteRequestConfirm || 'Delete this request permanently? This cannot be undone.',
+				function () {
+					$.ajax({
+						url: wpssUnifiedDashboard.ajaxUrl,
+						type: 'POST',
+						data: {
+							action: 'wpss_delete_request',
+							request_id: requestId,
+							nonce: wpssUnifiedDashboard.nonce
+						},
+						success: function (response) {
+							if (response.success) {
+								WPSS.showNotification(response.data.message || 'Request deleted.', 'success');
+								location.reload();
+							} else {
+								WPSS.showNotification(response.data.message || 'Failed to delete request.', 'error');
+							}
+						}
+					});
 				},
-				success: function (response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						alert(response.data.message || 'Failed to delete request.');
-					}
-				}
-			});
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete' }
+			);
 		},
 
 		/**
@@ -517,35 +522,37 @@
 			var $btn = $(e.currentTarget);
 			var itemId = $btn.data('item-id');
 
-			if (!confirm('Are you sure you want to delete this portfolio item?')) {
-				return;
-			}
+			WPSS.showConfirm(
+				wpssUnifiedDashboard.i18n.deletePortfolioConfirm || 'Are you sure you want to delete this portfolio item?',
+				function () {
+					$btn.prop('disabled', true);
 
-			$btn.prop('disabled', true);
-
-			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_delete_portfolio_item',
-					portfolio_nonce: $('#wpss-portfolio-form [name="portfolio_nonce"]').val() || $('[name="portfolio_nonce"]').val(),
-					item_id: itemId
+					$.ajax({
+						url: wpssUnifiedDashboard.ajaxUrl,
+						type: 'POST',
+						data: {
+							action: 'wpss_delete_portfolio_item',
+							portfolio_nonce: $('#wpss-portfolio-form [name="portfolio_nonce"]').val() || $('[name="portfolio_nonce"]').val(),
+							item_id: itemId
+						},
+						success: function (response) {
+							if (response.success) {
+								$btn.closest('.wpss-portfolio__item').fadeOut(300, function () {
+									$(this).remove();
+								});
+							} else {
+								WPSS.showNotification(response.data.message || 'Delete failed.', 'error');
+								$btn.prop('disabled', false);
+							}
+						},
+						error: function () {
+							WPSS.showNotification('An error occurred.', 'error');
+							$btn.prop('disabled', false);
+						}
+					});
 				},
-				success: function (response) {
-					if (response.success) {
-						$btn.closest('.wpss-portfolio__item').fadeOut(300, function () {
-							$(this).remove();
-						});
-					} else {
-						WPSS.showNotification(response.data.message || 'Delete failed.', 'error');
-						$btn.prop('disabled', false);
-					}
-				},
-				error: function () {
-					WPSS.showNotification('An error occurred.', 'error');
-					$btn.prop('disabled', false);
-				}
-			});
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete' }
+			);
 		},
 
 		/**

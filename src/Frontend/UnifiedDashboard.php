@@ -101,11 +101,15 @@ class UnifiedDashboard {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_dashboard_nonce' ),
 				'i18n'    => array(
-					'becomeVendorConfirm' => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
-					'processing'          => __( 'Processing...', 'wp-sell-services' ),
-					'confirmDelete'       => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
-					'pause'               => __( 'Pause', 'wp-sell-services' ),
-					'activate'            => __( 'Activate', 'wp-sell-services' ),
+					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
+					'processing'             => __( 'Processing...', 'wp-sell-services' ),
+					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
+					'pause'                  => __( 'Pause', 'wp-sell-services' ),
+					'activate'               => __( 'Activate', 'wp-sell-services' ),
+					'closeRequestConfirm'    => __( 'Close this request? It will no longer be visible to sellers.', 'wp-sell-services' ),
+					'deleteRequestConfirm'   => __( 'Delete this request permanently? This cannot be undone.', 'wp-sell-services' ),
+					'deletePortfolioConfirm' => __( 'Are you sure you want to delete this portfolio item?', 'wp-sell-services' ),
+					'deleteConfirmBtn'       => __( 'Delete', 'wp-sell-services' ),
 				),
 			)
 		);
