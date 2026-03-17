@@ -59,7 +59,8 @@ class EarningsService {
 		);
 
 		// Get pending earnings (orders in progress) — show vendor's expected share after commission.
-		$commission_rate = (float) ( get_option( 'wpss_commission_rate', 20 ) );
+		// Use CommissionService::get_global_commission_rate() for consistency with actual commission calculation.
+		$commission_rate = CommissionService::get_global_commission_rate();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$pending = $wpdb->get_var(
 			$wpdb->prepare(
