@@ -1958,6 +1958,7 @@
 .wpss-detail-email {
 	margin: 0 0 5px;
 	color: var(--wpss-admin-text-light);
+	word-break: break-word;
 }
 
 .wpss-detail-tagline {
@@ -2274,7 +2275,6 @@
 
 	.wpss-detail-header {
 		flex-direction: column;
-		text-align: center;
 	}
 
 	.wpss-detail-status-area {
@@ -2304,5 +2304,9 @@
 
 	.wpss-earnings-summary {
 		grid-template-columns: 1fr;
+	}
+
+	.wpss-detail-tab-content {
+		overflow-x: auto;
 	}
 }
