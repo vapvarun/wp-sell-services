@@ -1568,12 +1568,15 @@ class AjaxHandlers {
 
 		$deadline = sanitize_text_field( wp_unslash( $_POST['deadline'] ?? '' ) );
 
+		$skills_raw = sanitize_text_field( wp_unslash( $_POST['skills_required'] ?? '' ) );
+
 		$data = array(
-			'title'       => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
-			'description' => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
-			'category_id' => absint( $_POST['category'] ?? 0 ),
-			'budget_min'  => floatval( $_POST['budget_min'] ?? 0 ),
-			'budget_max'  => floatval( $_POST['budget_max'] ?? 0 ),
+			'title'           => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
+			'description'     => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
+			'category_id'     => absint( $_POST['category'] ?? 0 ),
+			'budget_min'      => floatval( $_POST['budget_min'] ?? 0 ),
+			'budget_max'      => floatval( $_POST['budget_max'] ?? 0 ),
+			'skills_required' => $skills_raw ? array_map( 'trim', explode( ',', $skills_raw ) ) : array(),
 		);
 
 		// Calculate delivery_days and expires_at from the deadline date.
@@ -2789,7 +2792,12 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function order_action(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+		$nonce = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) );
+
+		// Accept nonce from both dashboard context and order detail page context.
+		if ( ! wp_verify_nonce( $nonce, 'wpss_dashboard_nonce' ) && ! wp_verify_nonce( $nonce, 'wpss_order_action' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+		}
 
 		$action   = sanitize_key( $_POST['order_action'] ?? '' );
 		$order_id = absint( $_POST['order_id'] ?? 0 );

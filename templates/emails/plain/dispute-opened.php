@@ -26,7 +26,11 @@ printf(
 );
 echo "\n\n";
 
-echo esc_html__( 'A dispute has been opened on your order. Our support team will review the case and reach out to both parties.', 'wp-sell-services' );
+if ( ! empty( $is_admin ) ) {
+	echo esc_html__( 'A dispute has been opened and requires your review. Please investigate and mediate between both parties.', 'wp-sell-services' );
+} else {
+	echo esc_html__( 'A dispute has been opened on your order. Our support team will review the case and reach out to both parties.', 'wp-sell-services' );
+}
 echo "\n\n";
 
 echo "----------\n";
@@ -34,6 +38,14 @@ printf( esc_html__( 'Order: #%s', 'wp-sell-services' ), esc_html( $order->order_
 echo "\n";
 printf( esc_html__( 'Service: %s', 'wp-sell-services' ), esc_html( get_the_title( $order->service_id ) ) );
 echo "\n";
+if ( ! empty( $is_admin ) ) {
+	$customer = get_user_by( 'id', $order->customer_id );
+	$vendor   = get_user_by( 'id', $order->vendor_id );
+	printf( esc_html__( 'Customer: %s', 'wp-sell-services' ), esc_html( $customer ? $customer->display_name : '#' . $order->customer_id ) );
+	echo "\n";
+	printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->display_name : '#' . $order->vendor_id ) );
+	echo "\n";
+}
 echo esc_html__( 'Status: Disputed', 'wp-sell-services' );
 echo "\n----------\n\n";
 

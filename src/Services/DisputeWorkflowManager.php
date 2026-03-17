@@ -518,7 +518,7 @@ class DisputeWorkflowManager {
 		foreach ( $disputes as $dispute ) {
 			// Auto-escalate if no response after deadline.
 			$this->escalate(
-				$dispute->id,
+				(int) $dispute->id,
 				__( 'Auto-escalated: No response from other party within deadline.', 'wp-sell-services' ),
 				0 // System action.
 			);

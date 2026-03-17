@@ -847,15 +847,28 @@ class Settings {
 			'wpss_notifications'
 		);
 
-		$notification_types = array(
-			'new_order'          => __( 'New Order', 'wp-sell-services' ),
-			'order_completed'    => __( 'Order Completed', 'wp-sell-services' ),
-			'order_cancelled'    => __( 'Order Cancelled', 'wp-sell-services' ),
-			'delivery_submitted' => __( 'Delivery Submitted', 'wp-sell-services' ),
-			'revision_requested' => __( 'Revision Requested', 'wp-sell-services' ),
-			'new_message'        => __( 'New Message', 'wp-sell-services' ),
-			'new_review'         => __( 'New Review', 'wp-sell-services' ),
-			'dispute_opened'     => __( 'Dispute Opened', 'wp-sell-services' ),
+		/**
+		 * Filter notification types shown in email settings.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $types Associative array of notification_key => label.
+		 */
+		$notification_types = apply_filters(
+			'wpss_notification_types',
+			array(
+				'new_order'              => __( 'New Order', 'wp-sell-services' ),
+				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
+				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
+				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
+				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
+				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
+				'new_message'            => __( 'New Message', 'wp-sell-services' ),
+				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
+				'new_review'             => __( 'New Review', 'wp-sell-services' ),
+				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
+				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
+			)
 		);
 
 		foreach ( $notification_types as $key => $label ) {

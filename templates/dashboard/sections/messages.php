@@ -259,10 +259,27 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				?>
 				<a href="<?php echo esc_url( $conv_url ); ?>" class="wpss-conversation-card <?php echo $is_unread ? 'wpss-conversation-card--unread' : ''; ?>">
 					<div class="wpss-conversation-card__avatar">
-						<?php if ( $is_direct && ! empty( $other_user_id ) ) : ?>
-							<?php echo get_avatar( $other_user_id, 48 ); ?>
-						<?php elseif ( $service && has_post_thumbnail( $service ) ) : ?>
-							<?php echo get_the_post_thumbnail( $service, 'thumbnail' ); ?>
+						<?php
+						// Always show the other participant's avatar instead of the service image.
+						$avatar_user_id = 0;
+						if ( $is_direct && ! empty( $other_user_id ) ) {
+							$avatar_user_id = $other_user_id;
+						} else {
+							// For order conversations, resolve the other party from participants.
+							$order_participants = ! empty( $conversation->participants ) ? json_decode( $conversation->participants, true ) : array();
+							if ( is_array( $order_participants ) ) {
+								foreach ( $order_participants as $p_id ) {
+									if ( (int) $p_id !== $user_id ) {
+										$avatar_user_id = (int) $p_id;
+										break;
+									}
+								}
+							}
+						}
+
+						if ( $avatar_user_id ) :
+						?>
+							<?php echo get_avatar( $avatar_user_id, 48 ); ?>
 						<?php else : ?>
 							<div class="wpss-conversation-card__placeholder">
 								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>

@@ -97,7 +97,7 @@ class Activator {
 		if ( ! get_role( 'wpss_vendor' ) ) {
 			add_role(
 				'wpss_vendor',
-				__( 'Vendor', 'wp-sell-services' ),
+				'Vendor', // Avoid __() here — runs before init, causes textdomain early-loading notice.
 				$vendor_caps
 			);
 		} else {

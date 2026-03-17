@@ -529,6 +529,12 @@ class Shortcodes {
 				<input type="date" name="deadline" id="request_deadline" min="<?php echo esc_attr( wp_date( 'Y-m-d', strtotime( '+1 day' ) ) ); ?>">
 			</div>
 
+			<div class="wpss-form-row">
+				<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
+				<input type="text" name="skills_required" id="request_skills" placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>">
+				<p class="wpss-form-hint"><?php esc_html_e( 'Separate multiple skills with commas.', 'wp-sell-services' ); ?></p>
+			</div>
+
 			<div class="wpss-form-actions">
 				<button type="submit" class="button button-primary"><?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?></button>
 			</div>

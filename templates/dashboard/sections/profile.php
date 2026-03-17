@@ -58,6 +58,38 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				</div>
 			</div>
 
+			<?php if ( $is_vendor && $vendor_profile ) : ?>
+				<?php
+				$cover_id  = $vendor_profile->cover_id ?? 0;
+				$cover_url = $cover_id ? wp_get_attachment_image_url( $cover_id, 'large' ) : '';
+				?>
+				<div class="wpss-form-row wpss-cover-upload">
+					<label><?php esc_html_e( 'Cover Image', 'wp-sell-services' ); ?></label>
+					<div class="wpss-cover-upload__preview" style="position:relative;width:100%;max-width:600px;aspect-ratio:3/1;border:2px dashed #ddd;border-radius:8px;overflow:hidden;background:#f9f9f9;">
+						<?php if ( $cover_url ) : ?>
+							<img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;">
+						<?php else : ?>
+							<div id="wpss-cover-placeholder" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#999;font-size:14px;">
+								<?php esc_html_e( 'No cover image set', 'wp-sell-services' ); ?>
+							</div>
+							<img src="" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;display:none;">
+						<?php endif; ?>
+						<input type="hidden" name="cover_id" id="wpss-cover-id" value="<?php echo esc_attr( $cover_id ); ?>">
+					</div>
+					<div class="wpss-cover-upload__actions" style="margin-top:8px;">
+						<button type="button" class="wpss-btn wpss-btn--small wpss-btn--secondary" id="wpss-cover-upload-btn">
+							<?php esc_html_e( 'Upload Cover', 'wp-sell-services' ); ?>
+						</button>
+						<?php if ( $cover_id ) : ?>
+							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-cover-remove-btn">
+								<?php esc_html_e( 'Remove', 'wp-sell-services' ); ?>
+							</button>
+						<?php endif; ?>
+					</div>
+					<p class="wpss-form-hint"><?php esc_html_e( 'Recommended: 1200x400px. Displayed on your public profile.', 'wp-sell-services' ); ?></p>
+				</div>
+			<?php endif; ?>
+
 			<div class="wpss-form-row">
 				<label for="display_name"><?php esc_html_e( 'Display Name', 'wp-sell-services' ); ?></label>
 				<input type="text" id="display_name" name="display_name" value="<?php echo esc_attr( $user->display_name ); ?>" class="wpss-input" required>

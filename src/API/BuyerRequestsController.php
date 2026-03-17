@@ -121,10 +121,18 @@ class BuyerRequestsController extends RestController {
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'attachments' => [
+						'attachments'     => [
 							'type'    => 'array',
 							'items'   => [ 'type' => 'integer' ],
 							'default' => [],
+						],
+						'skills_required' => [
+							'type'              => 'array',
+							'items'             => [ 'type' => 'string' ],
+							'default'           => [],
+							'sanitize_callback' => function ( $value ) {
+								return is_array( $value ) ? array_map( 'sanitize_text_field', $value ) : [];
+							},
 						],
 					],
 				],
@@ -462,13 +470,14 @@ class BuyerRequestsController extends RestController {
 	 */
 	public function create_item( $request ) {
 		$data = [
-			'title'       => $request->get_param( 'title' ),
-			'description' => $request->get_param( 'description' ),
-			'category_id' => $request->get_param( 'category' ),
-			'budget_min'  => $request->get_param( 'budget_min' ),
-			'budget_max'  => $request->get_param( 'budget_max' ),
-			'expires_at'  => $request->get_param( 'deadline' ),
-			'attachments' => $request->get_param( 'attachments' ),
+			'title'           => $request->get_param( 'title' ),
+			'description'     => $request->get_param( 'description' ),
+			'category_id'     => $request->get_param( 'category' ),
+			'budget_min'      => $request->get_param( 'budget_min' ),
+			'budget_max'      => $request->get_param( 'budget_max' ),
+			'expires_at'      => $request->get_param( 'deadline' ),
+			'attachments'     => $request->get_param( 'attachments' ),
+			'skills_required' => $request->get_param( 'skills_required' ),
 		];
 
 		$result = $this->request_service->create( $data );

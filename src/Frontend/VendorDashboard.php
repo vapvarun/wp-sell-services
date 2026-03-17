@@ -199,6 +199,7 @@ class VendorDashboard {
 			'country'      => sanitize_text_field( wp_unslash( $_POST['country'] ?? '' ) ),
 			'city'         => sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) ),
 			'avatar_id'    => absint( $_POST['avatar_id'] ?? 0 ),
+			'cover_image_id' => absint( $_POST['cover_id'] ?? 0 ),
 		);
 
 		$result = $this->vendor_service->update_profile( $user_id, $data );

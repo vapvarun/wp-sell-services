@@ -47,9 +47,15 @@ do_action( 'wpss_email_content_before', 'dispute_opened', $order, $recipient );
 	?>
 </p>
 
+<?php if ( ! empty( $is_admin ) ) : ?>
+<p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
+	<?php esc_html_e( 'A dispute has been opened and requires your review. Please investigate and mediate between both parties.', 'wp-sell-services' ); ?>
+</p>
+<?php else : ?>
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php esc_html_e( 'A dispute has been opened on your order. Our support team will review the case and reach out to both parties.', 'wp-sell-services' ); ?>
 </p>
+<?php endif; ?>
 
 <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #3c3c3c;">
 	<?php printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ) ); ?>
@@ -61,6 +67,26 @@ do_action( 'wpss_email_content_before', 'dispute_opened', $order, $recipient );
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
 		</tr>
+		<?php if ( ! empty( $is_admin ) ) : ?>
+		<tr>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
+				<?php
+				$customer = get_user_by( 'id', $order->customer_id );
+				echo esc_html( $customer ? $customer->display_name : '#' . $order->customer_id );
+				?>
+			</td>
+		</tr>
+		<tr>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
+			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
+				<?php
+				$vendor = get_user_by( 'id', $order->vendor_id );
+				echo esc_html( $vendor ? $vendor->display_name : '#' . $order->vendor_id );
+				?>
+			</td>
+		</tr>
+		<?php endif; ?>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; font-weight: 600; color: #dc3545;"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></td>
@@ -89,7 +115,10 @@ do_action( 'wpss_email_content_before', 'dispute_opened', $order, $recipient );
 	 * @param string                             $button_url Default button URL.
 	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
 	 */
-	$button_url = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'dispute_opened', $order );
+	$default_url = ! empty( $is_admin )
+		? admin_url( 'admin.php?page=wpss-orders&order_id=' . $order->id )
+		: wpss_get_order_url( $order->id );
+	$button_url  = apply_filters( 'wpss_email_button_url', $default_url, 'dispute_opened', $order );
 
 	/**
 	 * Filters the button text for the dispute opened email.

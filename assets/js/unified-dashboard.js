@@ -45,6 +45,10 @@
 			$(document).on('click', '#wpss-avatar-upload-btn', this.handleAvatarUpload.bind(this));
 			$(document).on('click', '#wpss-avatar-remove-btn', this.handleAvatarRemove.bind(this));
 
+			// Cover image upload
+			$(document).on('click', '#wpss-cover-upload-btn', this.handleCoverUpload.bind(this));
+			$(document).on('click', '#wpss-cover-remove-btn', this.handleCoverRemove.bind(this));
+
 			// Portfolio
 			$(document).on('click', '#wpss-portfolio-add-btn', this.handlePortfolioAdd.bind(this));
 			$(document).on('click', '.wpss-portfolio-edit', this.handlePortfolioEdit.bind(this));
@@ -316,6 +320,61 @@
 			if (gravatarUrl) {
 				$img.attr('src', gravatarUrl);
 			}
+			$(e.currentTarget).remove();
+		},
+
+		/**
+		 * Handle cover image upload via WP media library.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleCoverUpload: function (e) {
+			e.preventDefault();
+
+			if (this.coverFrame) {
+				this.coverFrame.open();
+				return;
+			}
+
+			this.coverFrame = wp.media({
+				title: 'Select Cover Image',
+				button: { text: 'Set Cover Image' },
+				multiple: false,
+				library: { type: 'image' }
+			});
+
+			this.coverFrame.on('select', function () {
+				var attachment = this.coverFrame.state().get('selection').first().toJSON();
+				var url = attachment.sizes && attachment.sizes.large
+					? attachment.sizes.large.url
+					: attachment.url;
+
+				$('#wpss-cover-preview').attr('src', url).show();
+				$('#wpss-cover-placeholder').hide();
+				$('#wpss-cover-id').val(attachment.id);
+
+				// Show remove button if not already visible.
+				if ($('#wpss-cover-remove-btn').length === 0) {
+					$('#wpss-cover-upload-btn').after(
+						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-cover-remove-btn">Remove</button>'
+					);
+				}
+			}.bind(this));
+
+			this.coverFrame.open();
+		},
+
+		/**
+		 * Handle cover image removal.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleCoverRemove: function (e) {
+			e.preventDefault();
+
+			$('#wpss-cover-id').val('0');
+			$('#wpss-cover-preview').hide();
+			$('#wpss-cover-placeholder').show();
 			$(e.currentTarget).remove();
 		},
 
