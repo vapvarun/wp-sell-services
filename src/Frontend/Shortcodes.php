@@ -873,7 +873,11 @@ class Shortcodes {
 				</div>
 				<span class="wpss-request-date"><?php echo esc_html( human_time_diff( strtotime( $request->created_at ?? $request->post_date ), current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
 			</div>
-			<h3 class="wpss-request-title"><?php echo esc_html( $request->title ?? $request->post_title ); ?></h3>
+			<h3 class="wpss-request-title">
+				<a href="<?php echo esc_url( get_permalink( $request->ID ?? $request->id ?? 0 ) ); ?>">
+					<?php echo esc_html( $request->title ?? $request->post_title ); ?>
+				</a>
+			</h3>
 			<p class="wpss-request-excerpt"><?php echo esc_html( wp_trim_words( $request->description ?? $request->post_content, 30 ) ); ?></p>
 			<div class="wpss-request-meta">
 				<span class="wpss-request-budget">
