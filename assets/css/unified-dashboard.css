@@ -1088,8 +1088,7 @@
 	color: #3730a3;
 }
 
-.wpss-status--completed,
-.wpss-status--delivered {
+.wpss-status--completed {
 	background: var(--wpss-success-light);
 	color: #065f46;
 }
@@ -1122,6 +1121,11 @@
 .wpss-status--disputed {
 	background: #fed7aa;
 	color: #9a3412;
+}
+
+.wpss-status--refunded {
+	background: #f3e8ff;
+	color: #6b21a8;
 }
 
 /* ==========================================================================
