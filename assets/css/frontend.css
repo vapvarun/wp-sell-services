@@ -2555,6 +2555,7 @@
 	align-items: center;
 	justify-content: center;
 	line-height: 1;
+	z-index: 1;
 }
 
 .wpss-modal-close:hover {
