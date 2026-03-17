@@ -189,33 +189,48 @@ class VendorDashboard {
 
 		$user_id = get_current_user_id();
 
-		if ( ! $this->vendor_service->is_vendor( $user_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'You are not authorized to perform this action.', 'wp-sell-services' ) ) );
-			return; // Explicit return for defensive coding.
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in.', 'wp-sell-services' ) ) );
+			return;
 		}
 
-		$data = array(
-			'display_name' => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
-			'tagline'      => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
-			'bio'          => wp_kses_post( wp_unslash( $_POST['bio'] ?? '' ) ),
-			'website'      => esc_url_raw( wp_unslash( $_POST['website'] ?? '' ) ),
-			'country'      => sanitize_text_field( wp_unslash( $_POST['country'] ?? '' ) ),
-			'city'         => sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) ),
-			'avatar_id'    => absint( $_POST['avatar_id'] ?? 0 ),
-			'cover_image_id' => absint( $_POST['cover_id'] ?? 0 ),
-		);
+		$is_vendor = $this->vendor_service->is_vendor( $user_id );
 
-		$result = $this->vendor_service->update_profile( $user_id, $data );
+		// Basic fields — all logged-in users can update.
+		$display_name = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );
+		$avatar_id    = absint( $_POST['avatar_id'] ?? 0 );
 
-		// Handle vacation mode toggle separately via VendorService::set_vacation_mode().
-		$vacation_mode = ! empty( $_POST['vacation_mode'] );
-		$this->vendor_service->set_vacation_mode( $user_id, $vacation_mode );
-
-		if ( $result ) {
-			wp_send_json_success( array( 'message' => __( 'Profile updated successfully.', 'wp-sell-services' ) ) );
-		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to update profile.', 'wp-sell-services' ) ) );
+		// Update WordPress display name for all users.
+		if ( $display_name ) {
+			wp_update_user(
+				array(
+					'ID'           => $user_id,
+					'display_name' => $display_name,
+				)
+			);
 		}
+
+		// Vendor-specific fields — only for vendors.
+		if ( $is_vendor ) {
+			$data = array(
+				'display_name'   => $display_name,
+				'tagline'        => sanitize_text_field( wp_unslash( $_POST['tagline'] ?? '' ) ),
+				'bio'            => wp_kses_post( wp_unslash( $_POST['bio'] ?? '' ) ),
+				'website'        => esc_url_raw( wp_unslash( $_POST['website'] ?? '' ) ),
+				'country'        => sanitize_text_field( wp_unslash( $_POST['country'] ?? '' ) ),
+				'city'           => sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) ),
+				'avatar_id'      => $avatar_id,
+				'cover_image_id' => absint( $_POST['cover_id'] ?? 0 ),
+			);
+
+			$this->vendor_service->update_profile( $user_id, $data );
+
+			// Handle vacation mode toggle separately.
+			$vacation_mode = ! empty( $_POST['vacation_mode'] );
+			$this->vendor_service->set_vacation_mode( $user_id, $vacation_mode );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Profile updated successfully.', 'wp-sell-services' ) ) );
 	}
 
 	/**
