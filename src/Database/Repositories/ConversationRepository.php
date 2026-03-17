@@ -167,15 +167,15 @@ class ConversationRepository extends AbstractRepository {
 	 * @return int Unread count.
 	 */
 	public function count_unread_for_user( int $user_id ): int {
-		// Use JSON_CONTAINS for flat arrays and JSON_EXTRACT for key-value maps.
+		// Check if user is a participant using JSON_CONTAINS on the array.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT unread_counts FROM {$this->table}
 				WHERE is_closed = 0
-				AND (JSON_CONTAINS(participants, %s) OR JSON_EXTRACT(participants, %s) IS NOT NULL)",
-				wp_json_encode( $user_id ),
-				'$."' . $user_id . '"'
+				AND participants IS NOT NULL
+				AND JSON_CONTAINS(participants, %s)",
+				wp_json_encode( $user_id )
 			)
 		);
 
@@ -505,13 +505,13 @@ class ConversationRepository extends AbstractRepository {
 					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message
 				FROM {$this->table} c
 				WHERE c.order_id = 0
-				AND (JSON_CONTAINS(c.participants, %s) OR JSON_EXTRACT(c.participants, CONCAT('$.', %s)) IS NOT NULL))
+				AND c.participants IS NOT NULL
+				AND JSON_CONTAINS(c.participants, %s))
 				ORDER BY last_message_at DESC
 				LIMIT %d",
 				$user_id,
 				$user_id,
 				wp_json_encode( $user_id ),
-				(string) $user_id,
 				$limit
 			)
 		);

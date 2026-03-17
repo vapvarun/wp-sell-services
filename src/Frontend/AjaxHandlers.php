@@ -2891,8 +2891,8 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
 
-		// Verify user is part of order.
-		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id ) {
+		// Verify user is part of order or is admin.
+		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
