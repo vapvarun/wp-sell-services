@@ -267,12 +267,26 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 						} else {
 							// For order conversations, resolve the other party from participants.
 							$order_participants = ! empty( $conversation->participants ) ? json_decode( $conversation->participants, true ) : array();
-							if ( is_array( $order_participants ) ) {
+							if ( is_array( $order_participants ) && ! empty( $order_participants ) ) {
 								foreach ( $order_participants as $p_id ) {
 									if ( (int) $p_id !== $user_id ) {
 										$avatar_user_id = (int) $p_id;
 										break;
 									}
+								}
+							}
+
+							// Fallback: if participants is NULL, get the other party from the order record.
+							if ( ! $avatar_user_id && ! empty( $conversation->order_id ) ) {
+								global $wpdb;
+								$order_row = $wpdb->get_row( $wpdb->prepare(
+									"SELECT customer_id, vendor_id FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
+									$conversation->order_id
+								) );
+								if ( $order_row ) {
+									$avatar_user_id = ( (int) $order_row->vendor_id !== $user_id )
+										? (int) $order_row->vendor_id
+										: (int) $order_row->customer_id;
 								}
 							}
 						}
@@ -297,7 +311,19 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 							<span class="wpss-conversation-card__time"><?php echo esc_html( $time_ago ); ?></span>
 						</div>
 						<p class="wpss-conversation-card__preview">
-							<?php echo esc_html( wp_trim_words( $conversation->last_message ?? '', 15 ) ); ?>
+							<?php
+							$last_msg_text = $conversation->last_message ?? '';
+							if ( $last_msg_text ) {
+								$sender_prefix = '';
+								$last_sender   = (int) ( $conversation->last_message_sender_id ?? 0 );
+								if ( $last_sender === $user_id ) {
+									$sender_prefix = __( 'You: ', 'wp-sell-services' );
+								} elseif ( 0 === $last_sender ) {
+									$sender_prefix = ''; // System message — no prefix.
+								}
+								echo esc_html( $sender_prefix . wp_trim_words( $last_msg_text, 15 ) );
+							}
+							?>
 						</p>
 						<?php if ( $is_direct ) : ?>
 							<span class="wpss-conversation-card__label">

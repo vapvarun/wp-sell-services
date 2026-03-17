@@ -485,7 +485,8 @@ class ConversationRepository extends AbstractRepository {
 					c.last_message_at,
 					c.message_count,
 					c.unread_counts,
-					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message
+					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+					(SELECT sender_id FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_sender_id
 				FROM {$this->table} c
 				INNER JOIN {$orders_table} o ON c.order_id = o.id
 				WHERE o.customer_id = %d OR o.vendor_id = %d)
@@ -502,7 +503,8 @@ class ConversationRepository extends AbstractRepository {
 					c.last_message_at,
 					c.message_count,
 					c.unread_counts,
-					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message
+					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+					(SELECT sender_id FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_sender_id
 				FROM {$this->table} c
 				WHERE c.order_id = 0
 				AND c.participants IS NOT NULL

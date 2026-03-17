@@ -2291,18 +2291,11 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$notification_keys = array(
-			'notify_new_order',
-			'notify_order_completed',
-			'notify_order_cancelled',
-			'notify_delivery_submitted',
-			'notify_revision_requested',
-			'notify_new_message',
-			'notify_new_review',
-			'notify_dispute_opened',
-		);
+		// Build keys dynamically from the same filter used to render the UI.
+		$notification_types = apply_filters( 'wpss_notification_types', array() );
 
-		foreach ( $notification_keys as $key ) {
+		foreach ( array_keys( $notification_types ) as $type_key ) {
+			$key               = 'notify_' . $type_key;
 			$sanitized[ $key ] = ! empty( $input[ $key ] );
 		}
 
