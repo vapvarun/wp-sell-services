@@ -2107,43 +2107,9 @@ class AjaxHandlers {
 			$notification_data
 		);
 
-		// Send email to vendor.
-		$email_subject = $notification_title;
-		$email_message = sprintf(
-			/* translators: 1: vendor name, 2: sender name */
-			__(
-				"Hi %1\$s,\n\n%2\$s has sent you a message:",
-				'wp-sell-services'
-			),
-			$vendor->display_name,
-			$sender->display_name
-		);
-		$email_message .= "\n\n" . $message;
-
-		if ( $service_title ) {
-			$email_message .= "\n\n" . sprintf(
-				/* translators: %s: service title */
-				__( 'Regarding: %s', 'wp-sell-services' ),
-				$service_title
-			);
-		}
-
-		if ( ! empty( $attachments ) ) {
-			$email_message .= "\n\n" . __( 'Attachments:', 'wp-sell-services' );
-			foreach ( $attachments as $attachment ) {
-				$email_message .= "\n- " . $attachment['name'] . ': ' . $attachment['url'];
-			}
-		}
-
-		$email_message .= "\n\n" . sprintf(
-			/* translators: %s: reply email */
-			__( 'You can reply to this email or contact the sender at: %s', 'wp-sell-services' ),
-			$sender->user_email
-		);
-
-		if ( EmailService::is_type_enabled( 'vendor_contact' ) ) {
-			wp_mail( $vendor->user_email, $email_subject, $email_message );
-		}
+		// Send HTML email to vendor using the branded template.
+		$email_service = new EmailService();
+		$email_service->send_vendor_contact( $vendor, $sender, $message, $service_title, $attachments );
 
 		// Create a conversation so the message appears in the dashboard.
 		$conversation_service = new ConversationService();

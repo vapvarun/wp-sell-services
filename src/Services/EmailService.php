@@ -39,6 +39,7 @@ class EmailService {
 	public const TYPE_CANCELLATION_REQUESTED  = 'cancellation_requested';
 	public const TYPE_WITHDRAWAL_REQUESTED    = 'withdrawal_requested';
 	public const TYPE_WITHDRAWAL_AUTO         = 'withdrawal_auto';
+	public const TYPE_VENDOR_CONTACT          = 'vendor_contact';
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -816,6 +817,51 @@ class EmailService {
 	}
 
 	/**
+	 * Send vendor contact email.
+	 *
+	 * Sent when a customer uses the "Contact Me" button on a vendor profile.
+	 *
+	 * @param \WP_User $vendor        Vendor user object.
+	 * @param \WP_User $sender        Sender (customer) user object.
+	 * @param string   $message       Message content.
+	 * @param string   $service_title Service title (optional).
+	 * @param array    $attachments   Attachment data (optional).
+	 * @return bool
+	 */
+	public function send_vendor_contact( \WP_User $vendor, \WP_User $sender, string $message, string $service_title = '', array $attachments = array() ): bool {
+		$subject = $service_title
+			? sprintf(
+				/* translators: 1: platform name, 2: sender name, 3: service title */
+				__( '[%1$s] New message from %2$s about "%3$s"', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$sender->display_name,
+				$service_title
+			)
+			: sprintf(
+				/* translators: 1: platform name, 2: sender name */
+				__( '[%1$s] New message from %2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$sender->display_name
+			);
+
+		$dashboard_url = add_query_arg( 'section', 'messages', wpss_get_dashboard_url() );
+
+		$template_vars = array(
+			'recipient'     => $vendor,
+			'email_heading' => __( 'New Message Received', 'wp-sell-services' ),
+			'sender'        => $sender,
+			'sender_name'   => $sender->display_name,
+			'sender_email'  => $sender->user_email,
+			'message'       => $message,
+			'service_title' => $service_title,
+			'attachments'   => $attachments,
+			'dashboard_url' => $dashboard_url,
+		);
+
+		return $this->send( $vendor->user_email, $subject, self::TYPE_VENDOR_CONTACT, $template_vars );
+	}
+
+	/**
 	 * Send an email using the template system.
 	 *
 	 * @param string $to            Recipient email.
@@ -988,6 +1034,7 @@ class EmailService {
 			self::TYPE_CANCELLATION_REQUESTED => 'cancellation-requested.php',
 			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawal-requested.php',
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawal-auto.php',
+			self::TYPE_VENDOR_CONTACT         => 'vendor-contact.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';
@@ -1064,7 +1111,7 @@ class EmailService {
 			'moderation_rejected'             => 'notify_new_order',
 			'moderation_pending'              => 'notify_new_order',
 			'dispute_admin'                   => 'notify_dispute_opened',
-			'vendor_contact'                  => 'notify_new_message',
+			self::TYPE_VENDOR_CONTACT         => 'notify_new_message',
 		);
 
 		if ( ! isset( $type_to_setting[ $type ] ) ) {
