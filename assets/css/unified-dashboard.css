@@ -1314,6 +1314,10 @@ select.wpss-input option,
 		align-items: flex-start;
 	}
 
+	.wpss-order-card__title {
+		white-space: normal;
+	}
+
 	.wpss-order-card__actions {
 		width: 100%;
 		justify-content: space-between;

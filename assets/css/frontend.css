@@ -1199,6 +1199,37 @@
 	color: #991b1b;
 }
 
+/* Order Status Badges */
+.wpss-badge--status-pending {
+	background: var(--wpss-status-pending-bg, #fef3c7);
+	color: var(--wpss-status-pending-text, #92400e);
+}
+
+.wpss-badge--status-in-progress {
+	background: var(--wpss-status-in-progress-bg, #e0e7ff);
+	color: var(--wpss-status-in-progress-text, #3730a3);
+}
+
+.wpss-badge--status-completed {
+	background: var(--wpss-status-completed-bg, #d1fae5);
+	color: var(--wpss-status-completed-text, #065f46);
+}
+
+.wpss-badge--status-delivered {
+	background: var(--wpss-status-delivered-bg, #dbeafe);
+	color: var(--wpss-status-delivered-text, #1e40af);
+}
+
+.wpss-badge--status-disputed {
+	background: var(--wpss-status-disputed-bg, #fee2e2);
+	color: var(--wpss-status-disputed-text, #991b1b);
+}
+
+.wpss-badge--status-cancelled {
+	background: var(--wpss-status-cancelled-bg, #f1f5f9);
+	color: var(--wpss-status-cancelled-text, #475569);
+}
+
 .wpss-badge-vendor {
 	background: var(--wpss-primary-light);
 	color: var(--wpss-primary);
@@ -2487,25 +2518,33 @@
 	margin-bottom: 20px;
 }
 
-.wpss-notice-error {
+.wpss-notice p {
+	margin: 0;
+}
+
+.wpss-notice-error,
+.wpss-notice--error {
 	background: #f8d7da;
 	color: #721c24;
 	border: 1px solid #f5c6cb;
 }
 
-.wpss-notice-success {
+.wpss-notice-success,
+.wpss-notice--success {
 	background: var(--wpss-primary-light);
 	color: var(--wpss-primary-dark);
 	border: 1px solid var(--wpss-primary);
 }
 
-.wpss-notice-info {
+.wpss-notice-info,
+.wpss-notice--info {
 	background: #e8f4fd;
 	color: #0c5460;
 	border: 1px solid #b8daff;
 }
 
-.wpss-notice-warning {
+.wpss-notice-warning,
+.wpss-notice--warning {
 	background: #fff3cd;
 	color: #856404;
 	border: 1px solid #ffeeba;
