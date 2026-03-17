@@ -16,14 +16,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$service_id   = get_the_ID();
-$rating_avg   = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
-$rating_count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
-
+$service_id    = get_the_ID();
 global $wpdb;
 $reviews_table = $wpdb->prefix . 'wpss_reviews';
 
-// Get rating breakdown.
+// Get rating breakdown from actual DB data.
 $breakdown = $wpdb->get_results(
 	$wpdb->prepare(
 		"SELECT rating, COUNT(*) as count
@@ -35,6 +32,15 @@ $breakdown = $wpdb->get_results(
 	),
 	OBJECT_K
 );
+
+// Derive count and average from actual DB data so they stay in sync with the breakdown.
+$rating_count = 0;
+$rating_sum   = 0;
+foreach ( $breakdown as $star => $row ) {
+	$rating_count += (int) $row->count;
+	$rating_sum   += (int) $star * (int) $row->count;
+}
+$rating_avg = $rating_count > 0 ? round( $rating_sum / $rating_count, 1 ) : 0.0;
 
 /**
  * Filters the number of reviews to display per page.

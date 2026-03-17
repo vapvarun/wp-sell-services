@@ -1017,6 +1017,63 @@ $demo_services = array(
 );
 
 /**
+ * Sample review texts used when seeding demo reviews.
+ *
+ * @var string[]
+ */
+$demo_review_texts = array(
+	'Excellent work! Delivered exactly what I needed and the quality was outstanding.',
+	'Very professional and communicative. Would definitely hire again.',
+	'Great service, fast delivery, and the results exceeded my expectations.',
+	'Top-notch quality. The attention to detail was impressive.',
+	'Super fast turnaround and the work was exactly as described.',
+	'Amazing quality! I have used this service multiple times and am always satisfied.',
+	'Delivered on time with great results. Highly recommended!',
+	'Fantastic experience from start to finish. The work is incredible.',
+	'Outstanding quality and very responsive. Could not be happier.',
+	'Very pleased with the final result. Professional and talented.',
+	'Exactly what I was looking for! Will order again for sure.',
+	'Great communication and delivered a top-quality product.',
+	'Absolutely love the work done. Very creative and professional.',
+	'The quality is top-tier and the communication was excellent throughout.',
+	'Really impressed with the level of detail and professionalism.',
+	'Wonderful experience. The results are beyond what I expected.',
+	'Very skilled and talented. The work speaks for itself.',
+	'Highly recommend this service. Delivered everything promised and more.',
+	'Perfect execution. I am very happy with the results.',
+	'Great value for the price. The quality far exceeded my expectations.',
+);
+
+/**
+ * Generate a distribution of individual rating values that average to the target.
+ *
+ * Works for averages in the 4.0–5.0 range by distributing leftover points as
+ * 4-star ratings (all non-5-star reviews are treated as 4-star).
+ *
+ * @param float $target_avg Target average (e.g. 4.9).
+ * @param int   $count      Total number of reviews.
+ * @return int[] Array of individual rating integers.
+ */
+function wpss_generate_rating_distribution( float $target_avg, int $count ): array {
+	if ( $count <= 0 ) {
+		return array();
+	}
+
+	$total_needed = (int) round( $target_avg * $count );
+	$fives        = $total_needed - ( 4 * $count ); // derive from: 5x + 4(n-x) = total.
+	$fives        = max( 0, min( $count, $fives ) );
+	$fours        = $count - $fives;
+
+	$ratings = array_merge(
+		array_fill( 0, $fives, 5 ),
+		array_fill( 0, $fours, 4 )
+	);
+
+	shuffle( $ratings );
+	return $ratings;
+}
+
+/**
  * Get category ID by name.
  *
  * @param string $name Category name.
@@ -1097,6 +1154,42 @@ function wpss_create_demo_service( $data ) {
 		update_post_meta( $post_id, '_wpss_rating_average', $data['stats']['rating'] );
 		update_post_meta( $post_id, '_wpss_rating_count', $data['stats']['reviews'] );
 		update_post_meta( $post_id, '_wpss_review_count', $data['stats']['reviews'] );
+	}
+
+	// Insert actual review rows so the reviews table stays in sync with post meta.
+	if ( ! empty( $data['stats'] ) && $data['stats']['reviews'] > 0 ) {
+		global $wpdb, $demo_review_texts;
+
+		$reviews_table = $wpdb->prefix . 'wpss_reviews';
+		$ratings       = wpss_generate_rating_distribution(
+			(float) $data['stats']['rating'],
+			(int) $data['stats']['reviews']
+		);
+		$vendor_id     = (int) get_post_field( 'post_author', $post_id );
+		$total         = count( $ratings );
+
+		foreach ( $ratings as $i => $rating ) {
+			// Spread reviews evenly over the past year.
+			$days_ago   = (int) round( ( $i / $total ) * 365 );
+			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days_ago} days" ) );
+
+			$wpdb->insert(
+				$reviews_table,
+				array(
+					'order_id'    => 0,
+					'reviewer_id' => 1,
+					'reviewee_id' => $vendor_id,
+					'service_id'  => $post_id,
+					'customer_id' => 1,
+					'vendor_id'   => $vendor_id,
+					'rating'      => $rating,
+					'review'      => $demo_review_texts[ $i % count( $demo_review_texts ) ],
+					'status'      => 'approved',
+					'created_at'  => $created_at,
+				),
+				array( '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s' )
+			);
+		}
 	}
 
 	// Set featured.

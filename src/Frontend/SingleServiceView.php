@@ -251,8 +251,8 @@ class SingleServiceView {
 		$service_id   = $service->id;
 		$vendor_id    = $service->vendor_id;
 		$vendor       = get_userdata( $vendor_id );
-		$rating_avg   = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$rating_count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
+		$rating_avg   = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$order_count  = (int) get_post_meta( $service_id, '_wpss_order_count', true );
 		?>
 		<div class="wpss-service-meta">

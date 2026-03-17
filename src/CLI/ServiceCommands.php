@@ -412,6 +412,16 @@ class ServiceCommands extends WP_CLI_Command {
 			update_post_meta( $post_id, '_wpss_rating_average', $data['stats']['rating'] );
 			update_post_meta( $post_id, '_wpss_rating_count', $data['stats']['reviews'] );
 			update_post_meta( $post_id, '_wpss_review_count', $data['stats']['reviews'] );
+
+			// Insert actual rows into wpss_reviews so the table matches post meta.
+			if ( $data['stats']['reviews'] > 0 ) {
+				$this->insert_demo_reviews(
+					$post_id,
+					(int) get_post_field( 'post_author', $post_id ),
+					(float) $data['stats']['rating'],
+					(int) $data['stats']['reviews']
+				);
+			}
 		}
 
 		// Set featured.
@@ -420,6 +430,100 @@ class ServiceCommands extends WP_CLI_Command {
 		}
 
 		return $post_id;
+	}
+
+	/**
+	 * Insert demo review rows into the wpss_reviews table.
+	 *
+	 * Generates a rating distribution that matches the target average and spreads
+	 * the reviews over the past year so the timestamps look realistic.
+	 *
+	 * @param int   $service_id Service post ID.
+	 * @param int   $vendor_id  Vendor (post author) user ID.
+	 * @param float $target_avg Target average rating (e.g. 4.9).
+	 * @param int   $count      Number of reviews to insert.
+	 * @return void
+	 */
+	private function insert_demo_reviews( int $service_id, int $vendor_id, float $target_avg, int $count ): void {
+		global $wpdb;
+
+		$reviews_table = $wpdb->prefix . 'wpss_reviews';
+		$ratings       = $this->generate_rating_distribution( $target_avg, $count );
+		$review_texts  = array(
+			'Excellent work! Delivered exactly what I needed and the quality was outstanding.',
+			'Very professional and communicative. Would definitely hire again.',
+			'Great service, fast delivery, and the results exceeded my expectations.',
+			'Top-notch quality. The attention to detail was impressive.',
+			'Super fast turnaround and the work was exactly as described.',
+			'Amazing quality! I have used this service multiple times and am always satisfied.',
+			'Delivered on time with great results. Highly recommended!',
+			'Fantastic experience from start to finish. The work is incredible.',
+			'Outstanding quality and very responsive. Could not be happier.',
+			'Very pleased with the final result. Professional and talented.',
+			'Exactly what I was looking for! Will order again for sure.',
+			'Great communication and delivered a top-quality product.',
+			'Absolutely love the work done. Very creative and professional.',
+			'Really impressed with the level of detail and professionalism.',
+			'Wonderful experience. The results are beyond what I expected.',
+			'Very skilled and talented. The work speaks for itself.',
+			'Highly recommend this service. Delivered everything promised and more.',
+			'Perfect execution. I am very happy with the results.',
+			'Great value for the price. The quality far exceeded my expectations.',
+			'Could not be more satisfied. Will definitely be back for more.',
+		);
+
+		$total = count( $ratings );
+
+		foreach ( $ratings as $i => $rating ) {
+			$days_ago   = (int) round( ( $i / $total ) * 365 );
+			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days_ago} days" ) );
+
+			$wpdb->insert(
+				$reviews_table,
+				array(
+					'order_id'    => 0,
+					'reviewer_id' => 1,
+					'reviewee_id' => $vendor_id,
+					'service_id'  => $service_id,
+					'customer_id' => 1,
+					'vendor_id'   => $vendor_id,
+					'rating'      => $rating,
+					'review'      => $review_texts[ $i % count( $review_texts ) ],
+					'status'      => 'approved',
+					'created_at'  => $created_at,
+				),
+				array( '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s' )
+			);
+		}
+	}
+
+	/**
+	 * Generate individual rating values whose average equals the target.
+	 *
+	 * Works for averages in the 4.0–5.0 range. All non-5-star reviews are
+	 * treated as 4-star reviews for simplicity.
+	 *
+	 * @param float $target_avg Target average rating.
+	 * @param int   $count      Total number of ratings.
+	 * @return int[] Array of individual rating integers.
+	 */
+	private function generate_rating_distribution( float $target_avg, int $count ): array {
+		if ( $count <= 0 ) {
+			return array();
+		}
+
+		$total_needed = (int) round( $target_avg * $count );
+		$fives        = $total_needed - ( 4 * $count ); // from: 5x + 4(n-x) = total.
+		$fives        = max( 0, min( $count, $fives ) );
+		$fours        = $count - $fives;
+
+		$ratings = array_merge(
+			array_fill( 0, $fives, 5 ),
+			array_fill( 0, $fours, 4 )
+		);
+
+		shuffle( $ratings );
+		return $ratings;
 	}
 
 	/**
