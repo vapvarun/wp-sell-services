@@ -228,18 +228,18 @@ class EDD_SL_Plugin_Updater {
 
 		printf(
 			/* translators: the plugin name. */
-			esc_html__( 'There is a new version of %1$s available.', 'wp-sell-services-pro' ),
+			esc_html__( 'There is a new version of %1$s available.', 'wp-sell-services' ),
 			esc_html( $plugin['Name'] )
 		);
 
 		if ( ! current_user_can( 'update_plugins' ) ) {
 			echo ' ';
-			esc_html_e( 'Contact your network administrator to install the update.', 'wp-sell-services-pro' );
+			esc_html_e( 'Contact your network administrator to install the update.', 'wp-sell-services' );
 		} elseif ( empty( $update_cache->response[ $this->name ]->package ) && ! empty( $changelog_link ) ) {
 			echo ' ';
 			printf(
 				/* translators: 1. opening anchor tag, do not translate 2. the new plugin version 3. closing anchor tag, do not translate. */
-				__( '%1$sView version %2$s details%3$s.', 'wp-sell-services-pro' ),
+				__( '%1$sView version %2$s details%3$s.', 'wp-sell-services' ),
 				'<a target="_blank" class="thickbox open-plugin-details-modal" href="' . esc_url( $changelog_link ) . '">',
 				esc_html( $update_cache->response[ $this->name ]->new_version ),
 				'</a>'
@@ -247,7 +247,7 @@ class EDD_SL_Plugin_Updater {
 		} elseif ( ! empty( $changelog_link ) ) {
 			echo ' ';
 			printf(
-				__( '%1$sView version %2$s details%3$s or %4$supdate now%5$s.', 'wp-sell-services-pro' ),
+				__( '%1$sView version %2$s details%3$s or %4$supdate now%5$s.', 'wp-sell-services' ),
 				'<a target="_blank" class="thickbox open-plugin-details-modal" href="' . esc_url( $changelog_link ) . '">',
 				esc_html( $update_cache->response[ $this->name ]->new_version ),
 				'</a>',
@@ -258,7 +258,7 @@ class EDD_SL_Plugin_Updater {
 			printf(
 				' %1$s%2$s%3$s',
 				'<a target="_blank" class="update-link" href="' . esc_url( wp_nonce_url( $update_link, 'upgrade-plugin_' . $file ) ) . '">',
-				esc_html__( 'Update now.', 'wp-sell-services-pro' ),
+				esc_html__( 'Update now.', 'wp-sell-services' ),
 				'</a>'
 			);
 		}
@@ -490,7 +490,7 @@ class EDD_SL_Plugin_Updater {
 		}
 
 		if ( ! current_user_can( 'update_plugins' ) ) {
-			wp_die( esc_html__( 'You do not have permission to install plugin updates', 'wp-sell-services-pro' ), esc_html__( 'Error', 'wp-sell-services-pro' ), array( 'response' => 403 ) );
+			wp_die( esc_html__( 'You do not have permission to install plugin updates', 'wp-sell-services' ), esc_html__( 'Error', 'wp-sell-services' ), array( 'response' => 403 ) );
 		}
 
 		$version_info = $this->get_repo_api_data();
