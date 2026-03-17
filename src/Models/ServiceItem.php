@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Models;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Represents a service item in an order.

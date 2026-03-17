@@ -11,7 +11,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Core;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Manages plugin updates via EDD Software Licensing.

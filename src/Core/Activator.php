@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Core;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Database\SchemaManager;
 use WPSellServices\Database\MigrationManager;

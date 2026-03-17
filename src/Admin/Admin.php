@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Admin;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Admin\Metaboxes\ServiceMetabox;
 use WPSellServices\Admin\Metaboxes\BuyerRequestMetabox;

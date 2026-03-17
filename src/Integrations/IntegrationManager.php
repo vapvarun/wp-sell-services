@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Integrations;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\EcommerceAdapterInterface;
 use WPSellServices\Integrations\Standalone\StandaloneAdapter;

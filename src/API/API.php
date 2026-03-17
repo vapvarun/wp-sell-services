@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\API;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Registers and manages all REST API endpoints.

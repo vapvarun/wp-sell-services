@@ -10,7 +10,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Blocks;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * BuyerRequests class.

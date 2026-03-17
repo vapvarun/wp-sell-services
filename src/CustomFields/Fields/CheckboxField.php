@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\CustomFields\Fields;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Checkbox field (single or multiple).

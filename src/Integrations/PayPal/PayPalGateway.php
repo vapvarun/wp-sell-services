@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Integrations\PayPal;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
 

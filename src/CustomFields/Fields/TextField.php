@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\CustomFields\Fields;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Single-line text input field.

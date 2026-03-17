@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\SEO;
+
+defined( 'ABSPATH' ) || exit;
 
 use Yoast\WP\SEO\Generators\Schema\Abstract_Schema_Piece;
 

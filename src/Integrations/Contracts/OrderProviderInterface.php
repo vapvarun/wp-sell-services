@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Integrations\Contracts;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\ServiceItem;

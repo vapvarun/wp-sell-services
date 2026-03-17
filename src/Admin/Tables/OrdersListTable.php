@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Admin\Tables;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\ServiceOrder;
 

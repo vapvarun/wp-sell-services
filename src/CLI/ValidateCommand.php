@@ -10,7 +10,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\CLI;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Core\SchemaValidator;
 use WP_CLI;

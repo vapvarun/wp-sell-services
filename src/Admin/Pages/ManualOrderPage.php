@@ -11,7 +11,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Admin\Pages;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;

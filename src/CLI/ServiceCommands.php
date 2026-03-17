@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\CLI;
+
+defined( 'ABSPATH' ) || exit;
 
 use WP_CLI;
 use WP_CLI_Command;

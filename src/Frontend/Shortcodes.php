@@ -10,7 +10,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Frontend;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Services\SearchService;
 use WPSellServices\Services\VendorService;

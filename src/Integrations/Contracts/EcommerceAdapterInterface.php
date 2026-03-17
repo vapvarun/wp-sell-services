@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Integrations\Contracts;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Interface for e-commerce platform adapters.

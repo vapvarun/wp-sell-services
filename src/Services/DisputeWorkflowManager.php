@@ -10,7 +10,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Services;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Manages dispute workflows, escalation, and automated actions.

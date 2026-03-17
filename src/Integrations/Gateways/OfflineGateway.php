@@ -10,7 +10,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Integrations\Gateways;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
 

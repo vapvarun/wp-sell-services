@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\API;
+
+defined( 'ABSPATH' ) || exit;
 
 use WP_REST_Server;
 use WP_REST_Request;

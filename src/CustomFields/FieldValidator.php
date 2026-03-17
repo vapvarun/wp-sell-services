@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\CustomFields;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Validates and sanitizes custom field submissions.

@@ -11,7 +11,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Services;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Manages seller level calculations and tier promotions.

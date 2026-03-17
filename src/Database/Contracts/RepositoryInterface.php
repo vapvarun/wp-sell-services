@@ -10,7 +10,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Database\Contracts;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Repository Interface.

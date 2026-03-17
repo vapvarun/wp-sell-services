@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Frontend;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Handles all frontend functionality.

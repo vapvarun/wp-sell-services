@@ -11,7 +11,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Services;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Manages service addons with 4 basic field types.

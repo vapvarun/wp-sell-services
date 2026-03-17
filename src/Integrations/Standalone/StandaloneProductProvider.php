@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Integrations\Standalone;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\ProductProviderInterface;
 use WPSellServices\Models\Service;

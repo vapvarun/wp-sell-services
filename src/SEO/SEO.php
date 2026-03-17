@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\SEO;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Handles SEO functionality for the plugin.

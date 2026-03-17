@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\Database\Repositories;
+
+defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\ExtensionRequest;
 

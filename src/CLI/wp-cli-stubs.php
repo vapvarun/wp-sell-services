@@ -1,4 +1,5 @@
 <?php
+defined( 'ABSPATH' ) || exit;
 /**
  * WP-CLI stub classes for non-CLI contexts.
  *

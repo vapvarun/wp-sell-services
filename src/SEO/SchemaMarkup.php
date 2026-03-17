@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\SEO;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Generates JSON-LD structured data for services.

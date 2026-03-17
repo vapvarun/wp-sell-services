@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
+
 namespace WPSellServices\PostTypes;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Handles registration and configuration of the Buyer Request custom post type.
