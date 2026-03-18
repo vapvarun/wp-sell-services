@@ -677,7 +677,7 @@
 /* Composer Input Area */
 .wpss-messaging__composer-input-area {
 	display: flex;
-	align-items: flex-end;
+	align-items: center;
 	gap: 12px;
 }
 
@@ -781,6 +781,7 @@
 	justify-content: center;
 	width: 20px;
 	height: 20px;
+	padding: 0;
 	color: var(--wpss-text-muted, #6b7280);
 	background: var(--wpss-white, #fff);
 	border: none;
@@ -790,6 +791,8 @@
 
 .wpss-messaging__composer-attachment-remove:hover {
 	color: var(--wpss-danger, #ef4444);
+	background: var(--wpss-white, #fff);
+	border: none;
 }
 
 /* ==========================================================================
