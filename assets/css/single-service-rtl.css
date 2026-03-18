@@ -1111,7 +1111,7 @@
 	font-weight: 500;
 }
 
-.wpss-package-features {
+.wpss-package .wpss-package-features {
 	list-style: none;
 	margin: 0 0 1.5rem;
 	padding: 1rem 0;
@@ -1121,11 +1121,12 @@
 	gap: 0.5rem;
 }
 
-.wpss-package-features li {
+.wpss-package .wpss-package-features li {
 	display: flex;
 	align-items: flex-start;
 	gap: 0.5rem;
 	font-size: 0.875rem;
+	padding: 0;
 }
 
 .wpss-feature-icon {
