@@ -210,6 +210,14 @@ class VendorDashboard {
 			);
 		}
 
+		// Save avatar for all users (customers and vendors).
+		if ( $avatar_id ) {
+			update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
+		} elseif ( isset( $_POST['avatar_id'] ) ) {
+			// Explicitly set to 0 means remove avatar.
+			delete_user_meta( $user_id, '_wpss_avatar_id' );
+		}
+
 		// Vendor-specific fields — only for vendors.
 		if ( $is_vendor ) {
 			$data = array(

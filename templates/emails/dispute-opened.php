@@ -51,9 +51,25 @@ do_action( 'wpss_email_content_before', 'dispute_opened', $order, $recipient );
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php esc_html_e( 'A dispute has been opened and requires your review. Please investigate and mediate between both parties.', 'wp-sell-services' ); ?>
 </p>
+<?php elseif ( ! empty( $is_customer ) ) : ?>
+<p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
+	<?php
+	printf(
+		/* translators: %s: vendor name */
+		esc_html__( 'Your dispute regarding the order with %s has been submitted. Our support team will review the case and reach out to both parties.', 'wp-sell-services' ),
+		esc_html( $vendor_name ?? __( 'the vendor', 'wp-sell-services' ) )
+	);
+	?>
+</p>
 <?php else : ?>
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php esc_html_e( 'A dispute has been opened on your order. Our support team will review the case and reach out to both parties.', 'wp-sell-services' ); ?>
+	<?php
+	printf(
+		/* translators: %s: customer name */
+		esc_html__( 'A dispute has been opened on your order by %s. Please review the details and respond through the order page. Our support team will mediate if needed.', 'wp-sell-services' ),
+		esc_html( $customer_name ?? __( 'the buyer', 'wp-sell-services' ) )
+	);
+	?>
 </p>
 <?php endif; ?>
 

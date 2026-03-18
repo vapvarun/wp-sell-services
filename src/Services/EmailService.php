@@ -674,29 +674,49 @@ class EmailService {
 			$order->order_number
 		);
 
-		$template_vars = array(
+		$base_vars = array(
 			'order'         => $order,
 			'email_heading' => __( 'Dispute Opened', 'wp-sell-services' ),
 		);
 
-		// Send to both parties.
+		// Send to customer with customer-specific context.
 		if ( $customer ) {
-			$template_vars['recipient'] = $customer;
-			$this->send( $customer->user_email, $subject, self::TYPE_DISPUTE_OPENED, $template_vars );
+			$this->send(
+				$customer->user_email,
+				$subject,
+				self::TYPE_DISPUTE_OPENED,
+				array_merge( $base_vars, array(
+					'recipient'   => $customer,
+					'is_customer' => true,
+					'vendor_name' => $this->get_vendor_name( $order->vendor_id ),
+				) )
+			);
 		}
 
+		// Send to vendor with vendor-specific context.
 		if ( $vendor ) {
-			$template_vars['recipient'] = $vendor;
-			$this->send( $vendor->user_email, $subject, self::TYPE_DISPUTE_OPENED, $template_vars );
+			$this->send(
+				$vendor->user_email,
+				$subject,
+				self::TYPE_DISPUTE_OPENED,
+				array_merge( $base_vars, array(
+					'recipient'     => $vendor,
+					'is_customer'   => false,
+					'customer_name' => $this->get_customer_name( $order->customer_id ),
+				) )
+			);
 		}
 
-		// Also notify admin.
+		// Also notify admin with full details.
 		$admin_email = get_option( 'admin_email' );
 		$this->send(
 			$admin_email,
 			$subject,
 			self::TYPE_DISPUTE_OPENED,
-			array_merge( $template_vars, array( 'is_admin' => true ) )
+			array_merge( $base_vars, array(
+				'recipient' => get_user_by( 'email', $admin_email ) ?: $customer,
+				'is_admin'  => true,
+			) )
 		);
 
 		return true;

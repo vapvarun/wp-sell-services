@@ -523,8 +523,12 @@ class StripeGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Only on checkout pages.
-		if ( ! is_page() && ! get_query_var( 'wpss_checkout' ) ) {
+		// Only on checkout page or single service page (for order modal).
+		$checkout_page_id = (int) ( get_option( 'wpss_pages', array() )['checkout'] ?? 0 );
+		$is_checkout      = ( $checkout_page_id && is_page( $checkout_page_id ) ) || get_query_var( 'wpss_checkout' );
+		$is_service       = is_singular( 'wpss_service' );
+
+		if ( ! $is_checkout && ! $is_service ) {
 			return;
 		}
 

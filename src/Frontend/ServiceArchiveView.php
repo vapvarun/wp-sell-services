@@ -445,6 +445,28 @@ class ServiceArchiveView {
 			return sprintf( __( 'Search results for: %s', 'wp-sell-services' ), get_search_query() );
 		}
 
+		// Show vendor name when filtering by vendor.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['vendor'] ) && absint( $_GET['vendor'] ) > 0 ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$vendor = get_userdata( absint( $_GET['vendor'] ) );
+			if ( $vendor ) {
+				/* translators: %s: vendor name */
+				return sprintf( __( 'Services by %s', 'wp-sell-services' ), $vendor->display_name );
+			}
+		}
+
+		// Use the mapped services page title if available.
+		if ( wpss_is_page( 'services_page' ) ) {
+			$page_id = wpss_get_page_id( 'services_page' );
+			if ( $page_id ) {
+				$page_title = get_the_title( $page_id );
+				if ( $page_title ) {
+					return $page_title;
+				}
+			}
+		}
+
 		return __( 'All Services', 'wp-sell-services' );
 	}
 
@@ -499,6 +521,18 @@ class ServiceArchiveView {
 		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
 		$query->set( 'post_status', 'publish' );
 
+		// Exclude services from vendors who are on vacation mode.
+		global $wpdb;
+		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$vacation_vendors = $wpdb->get_col(
+			"SELECT user_id FROM {$profiles_table} WHERE vacation_mode = 1"
+		);
+		if ( ! empty( $vacation_vendors ) ) {
+			$existing_excludes = $query->get( 'author__not_in' ) ?: array();
+			$query->set( 'author__not_in', array_merge( $existing_excludes, array_map( 'intval', $vacation_vendors ) ) );
+		}
+
 		// Always filter out rejected/pending services regardless of moderation setting.
 		// Services without moderation meta (legacy) are allowed through.
 		$meta_query   = $query->get( 'meta_query' ) ?: array();
@@ -517,6 +551,11 @@ class ServiceArchiveView {
 		$query->set( 'meta_query', $meta_query );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
+		// Vendor filter (from "View all services" link on vendor profile).
+		if ( isset( $_GET['vendor'] ) && absint( $_GET['vendor'] ) > 0 ) {
+			$query->set( 'author', absint( $_GET['vendor'] ) );
+		}
 
 		// Category filter (dropdown in filters bar).
 		if ( isset( $_GET['category'] ) && absint( $_GET['category'] ) > 0 ) {

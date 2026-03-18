@@ -149,9 +149,10 @@ class BuyerRequestService {
 		// Update meta.
 		$this->save_meta( $request_id, $data );
 
-		// Update category.
-		if ( isset( $data['category_id'] ) ) {
-			wp_set_object_terms( $request_id, array( (int) $data['category_id'] ), ServiceCategoryTaxonomy::TAXONOMY );
+		// Update category. Accept both 'category_id' and 'category' keys.
+		$category_id = $data['category_id'] ?? ( $data['category'] ?? null );
+		if ( null !== $category_id && (int) $category_id > 0 ) {
+			wp_set_object_terms( $request_id, array( (int) $category_id ), ServiceCategoryTaxonomy::TAXONOMY );
 		}
 
 		/**

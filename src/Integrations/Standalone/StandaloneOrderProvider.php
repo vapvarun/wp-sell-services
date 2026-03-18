@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 use WPSellServices\Integrations\Contracts\OrderProviderInterface;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\ServiceItem;
+use WPSellServices\Services\CommissionService;
 
 /**
  * Order provider for standalone mode.
@@ -76,6 +77,25 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$delivery_days = (int) ( $order_data['delivery_days'] ?? 7 );
 		$revisions = (int) ( $order_data['revisions'] ?? 0 );
 
+		// Pre-calculate commission rate so order details can display expected earnings.
+		$commission_rate = CommissionService::get_global_commission_rate();
+
+		// Check for vendor-specific commission rate.
+		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$vendor_rate = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT custom_commission_rate FROM {$profiles_table} WHERE user_id = %d",
+				$service->vendor_id
+			)
+		);
+		if ( null !== $vendor_rate && '' !== $vendor_rate ) {
+			$commission_rate = (float) $vendor_rate;
+		}
+
+		$platform_fee    = round( $total * ( $commission_rate / 100 ), 2 );
+		$vendor_earnings = round( $total - $platform_fee, 2 );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
 			$table,
@@ -97,6 +117,9 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'payment_method'      => $order_data['payment_method'] ?? null,
 				'payment_status'      => 'pending',
 				'revisions_included'  => $revisions,
+				'commission_rate'     => $commission_rate,
+				'platform_fee'        => $platform_fee,
+				'vendor_earnings'     => $vendor_earnings,
 				'created_at'          => current_time( 'mysql' ),
 				'updated_at'          => current_time( 'mysql' ),
 				'meta'                => wp_json_encode( [
@@ -104,7 +127,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 					'tax_amount' => round( $tax_amount, 2 ),
 				] ),
 			],
-			[ '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' ]
+			[ '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s' ]
 		);
 
 		$order_id = (int) $wpdb->insert_id;

@@ -547,6 +547,11 @@ class BuyerRequestsController extends RestController {
 			$data['status'] = $request->get_param( 'status' );
 		}
 
+		// Normalize 'category' to 'category_id' for BuyerRequestService::update().
+		if ( $request->get_param( 'category' ) !== null ) {
+			$data['category_id'] = (int) $request->get_param( 'category' );
+		}
+
 		$result = $this->request_service->update( $request_id, $data );
 
 		if ( ! $result ) {

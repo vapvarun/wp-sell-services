@@ -106,13 +106,17 @@ do_action( 'wpss_before_service_packages', $service_id );
 				<?php endif; ?>
 
 				<ul class="wpss-package-details">
-					<?php if ( ! empty( $package['delivery_time'] ) ) : ?>
+					<?php
+					// Support both 'delivery_days' (saved by wizard) and 'delivery_time' (legacy).
+					$delivery_days_value = $package['delivery_days'] ?? ( $package['delivery_time'] ?? 0 );
+					?>
+					<?php if ( ! empty( $delivery_days_value ) ) : ?>
 						<li>
 							<span class="wpss-detail-icon wpss-icon-clock"></span>
 							<span class="wpss-detail-label"><?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?></span>
 							<span class="wpss-detail-value">
 								<?php
-								$days = (int) $package['delivery_time'];
+								$days = (int) $delivery_days_value;
 								printf(
 									/* translators: %d: number of days */
 									esc_html( _n( '%d Day', '%d Days', $days, 'wp-sell-services' ) ),
@@ -146,9 +150,14 @@ do_action( 'wpss_before_service_packages', $service_id );
 				<?php if ( ! empty( $package['features'] ) ) : ?>
 					<ul class="wpss-package-features">
 						<?php foreach ( $package['features'] as $feature ) : ?>
-							<li class="<?php echo ! empty( $feature['included'] ) ? 'included' : 'not-included'; ?>">
+							<?php
+							// Features saved as plain strings are always included.
+							// Features saved as arrays use the 'included' key.
+							$is_included = is_string( $feature ) || ! empty( $feature['included'] );
+							?>
+							<li class="<?php echo $is_included ? 'included' : 'not-included'; ?>">
 								<span class="wpss-feature-icon"></span>
-								<?php echo esc_html( $feature['text'] ?? $feature ); ?>
+								<?php echo esc_html( is_string( $feature ) ? $feature : ( $feature['text'] ?? '' ) ); ?>
 							</li>
 						<?php endforeach; ?>
 

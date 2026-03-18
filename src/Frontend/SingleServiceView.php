@@ -738,12 +738,29 @@ class SingleServiceView {
 							<label for="wpss-quantity"><?php esc_html_e( 'Quantity', 'wp-sell-services' ); ?></label>
 							<div class="wpss-quantity-input">
 								<button type="button" class="wpss-quantity-btn wpss-quantity-minus">-</button>
+								<?php
+								// Get per-service max quantity from post meta, falling back to global filter.
+								$service_max_quantity = (int) get_post_meta( $service_id, '_wpss_max_quantity', true );
+								if ( $service_max_quantity <= 0 ) {
+									$service_max_quantity = 10;
+								}
+
+								/**
+								 * Filters the maximum order quantity.
+								 *
+								 * @since 1.0.0
+								 *
+								 * @param int $max_quantity Maximum quantity.
+								 * @param int $service_id   Service post ID.
+								 */
+								$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', $service_max_quantity, $service_id );
+								?>
 								<input type="number"
 										id="wpss-quantity"
 										name="quantity"
 										value="1"
 										min="1"
-										max="<?php echo esc_attr( apply_filters( 'wpss_max_order_quantity', 10 ) ); ?>">
+										max="<?php echo esc_attr( $max_quantity ); ?>">
 								<button type="button" class="wpss-quantity-btn wpss-quantity-plus">+</button>
 							</div>
 						</div>
