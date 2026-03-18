@@ -1280,13 +1280,17 @@ class EmailService {
 			self::TYPE_ORDER_CANCELLED        => 'notify_order_cancelled',
 			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
 			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
-			self::TYPE_SELLER_LEVEL_PROMOTION  => 'notify_new_order',
 			// TYPE_CANCELLATION_REQUESTED is intentionally unmapped — always enabled (critical vendor communication).
-			self::TYPE_WITHDRAWAL_REQUESTED   => 'notify_new_order',
-			self::TYPE_WITHDRAWAL_AUTO        => 'notify_new_order',
-			'moderation_approved'             => 'notify_new_order',
-			'moderation_rejected'             => 'notify_new_order',
-			'moderation_pending'              => 'notify_new_order',
+			// TYPE_SELLER_LEVEL_PROMOTION is unmapped — always enabled (important vendor milestone).
+			// TYPE_WITHDRAWAL_REQUESTED is unmapped — always enabled (financial notification to admin).
+			// TYPE_WITHDRAWAL_AUTO is unmapped — always enabled (financial notification to admin).
+			// TYPE_WITHDRAWAL_APPROVED is unmapped — always enabled (financial notification to vendor).
+			// TYPE_WITHDRAWAL_REJECTED is unmapped — always enabled (financial notification to vendor).
+			// TYPE_PROPOSAL_SUBMITTED is unmapped — always enabled (buyer request workflow).
+			// TYPE_PROPOSAL_ACCEPTED is unmapped — always enabled (buyer request workflow).
+			'moderation_approved'             => 'notify_moderation',
+			'moderation_rejected'             => 'notify_moderation',
+			'moderation_pending'              => 'notify_moderation',
 			'dispute_admin'                   => 'notify_dispute_opened',
 			self::TYPE_VENDOR_CONTACT         => 'notify_new_message',
 		);

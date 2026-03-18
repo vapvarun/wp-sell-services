@@ -308,6 +308,7 @@ class VendorProfileRepository extends AbstractRepository {
 				"SELECT * FROM {$this->table}
 				WHERE (display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s)
 				AND is_available = 1
+				AND vacation_mode = 0
 				ORDER BY avg_rating DESC
 				LIMIT %d OFFSET %d",
 				$search_like,

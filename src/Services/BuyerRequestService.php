@@ -652,6 +652,20 @@ class BuyerRequestService {
 		// Mark request as hired.
 		$this->mark_hired( $request_id, $proposal->vendor_id, $proposal_id );
 
+		// Fire proposal accepted hook so the email notification is sent.
+		// ProposalService::accept() fires this, but convert_to_order() bypasses accept().
+		$wp_request = get_post( $request_id );
+		if ( $wp_request ) {
+			/**
+			 * Fires when a proposal is accepted via order conversion.
+			 *
+			 * @param int    $proposal_id Proposal ID.
+			 * @param object $proposal    Proposal object.
+			 * @param object $wp_request  Request post object.
+			 */
+			do_action( 'wpss_proposal_accepted', $proposal_id, $proposal, $wp_request );
+		}
+
 		// Store request details in order meta for reference.
 		$req_result = $wpdb->insert(
 			$wpdb->prefix . 'wpss_order_requirements',

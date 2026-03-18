@@ -427,10 +427,14 @@ class SingleServiceView {
 			return;
 		}
 
-		$bio              = get_user_meta( $vendor_id, 'description', true );
-		$languages        = get_user_meta( $vendor_id, '_wpss_vendor_languages', true );
-		$skills           = get_user_meta( $vendor_id, '_wpss_vendor_skills', true );
-		$completed_orders = (int) get_user_meta( $vendor_id, '_wpss_completed_orders', true );
+		// Read vendor profile data from the wpss_vendor_profiles DB table (canonical source).
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		$profile        = $vendor_service->get_profile( $vendor_id );
+
+		$bio              = $profile->bio ?? get_user_meta( $vendor_id, 'description', true );
+		$languages        = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : get_user_meta( $vendor_id, '_wpss_vendor_languages', true );
+		$skills           = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : get_user_meta( $vendor_id, '_wpss_vendor_skills', true );
+		$completed_orders = (int) ( $profile->completed_orders ?? get_user_meta( $vendor_id, '_wpss_completed_orders', true ) );
 		?>
 		<div class="wpss-about-vendor">
 			<h2><?php esc_html_e( 'About The Seller', 'wp-sell-services' ); ?></h2>
@@ -447,7 +451,7 @@ class SingleServiceView {
 							</a>
 						</h3>
 						<?php
-						$tagline = get_user_meta( $vendor_id, '_wpss_vendor_tagline', true );
+						$tagline = $profile->tagline ?? get_user_meta( $vendor_id, '_wpss_vendor_tagline', true );
 						if ( $tagline ) :
 							?>
 							<p class="wpss-vendor-tagline"><?php echo esc_html( $tagline ); ?></p>
@@ -455,8 +459,8 @@ class SingleServiceView {
 
 						<div class="wpss-vendor-quick-stats">
 							<?php
-							$rating_avg   = (float) get_user_meta( $vendor_id, '_wpss_rating_average', true );
-							$rating_count = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true );
+							$rating_avg   = (float) ( $profile->avg_rating ?? get_user_meta( $vendor_id, '_wpss_rating_average', true ) );
+							$rating_count = (int) ( $profile->total_reviews ?? get_user_meta( $vendor_id, '_wpss_rating_count', true ) );
 							if ( $rating_count > 0 ) :
 								?>
 								<span class="wpss-quick-stat">
@@ -494,7 +498,7 @@ class SingleServiceView {
 
 				<div class="wpss-vendor-meta-grid">
 					<?php
-					$country = get_user_meta( $vendor_id, '_wpss_vendor_country', true );
+					$country = $profile->country ?? get_user_meta( $vendor_id, '_wpss_vendor_country', true );
 					if ( $country ) :
 						?>
 						<div class="wpss-vendor-meta-item">
@@ -509,7 +513,7 @@ class SingleServiceView {
 					</div>
 
 					<?php
-					$response_time = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
+					$response_time = $profile->response_time ?? get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
 					if ( $response_time ) :
 						?>
 						<div class="wpss-vendor-meta-item">

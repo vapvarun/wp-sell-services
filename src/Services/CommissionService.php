@@ -72,8 +72,18 @@ class CommissionService {
 			return false;
 		}
 
-		// Skip if commission already recorded (handles 0 vendor earnings for 100% platform fee).
-		if ( null !== $order->vendor_earnings && '' !== $order->vendor_earnings ) {
+		// Skip if commission already recorded (check for existing wallet transaction).
+		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$transactions_table} WHERE reference_id = %d AND reference_type = 'order' AND type = 'order_earning'",
+				$order_id
+			)
+		);
+
+		if ( $existing ) {
 			return true;
 		}
 

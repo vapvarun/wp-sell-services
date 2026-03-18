@@ -221,6 +221,19 @@ class SearchService {
 				break;
 		}
 
+		// Exclude services from vendors on vacation mode.
+		global $wpdb;
+		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$vacation_vendors = $wpdb->get_col(
+			"SELECT user_id FROM {$profiles_table} WHERE vacation_mode = 1"
+		);
+
+		if ( ! empty( $vacation_vendors ) ) {
+			$query_args['author__not_in'] = array_map( 'intval', $vacation_vendors );
+		}
+
 		$wp_query = new \WP_Query( $query_args );
 
 		return $wp_query->posts;
@@ -293,7 +306,7 @@ class SearchService {
 
 		$vendor_profiles = $wpdb->prefix . 'wpss_vendor_profiles';
 
-		$where = 'display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s';
+		$where = '(display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s) AND is_available = 1 AND vacation_mode = 0';
 		$like  = '%' . $wpdb->esc_like( $query ) . '%';
 
 		$values = array( $like, $like, $like );
