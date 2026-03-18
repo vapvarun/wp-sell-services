@@ -77,6 +77,9 @@ class OrderWorkflowManager {
 
 		// Payment hooks.
 		add_action( 'wpss_order_paid', [ $this, 'handle_payment_complete' ], 10, 2 );
+
+		// Set delivery deadline when requirements are submitted (real clock start).
+		add_action( 'wpss_requirements_submitted', [ $this->order_service, 'set_deadline_on_requirements' ], 10, 3 );
 	}
 
 	/**

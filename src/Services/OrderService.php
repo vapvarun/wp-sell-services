@@ -313,6 +313,10 @@ class OrderService {
 	/**
 	 * Start order work.
 	 *
+	 * The delivery deadline is NOT reset here — it was already set when
+	 * requirements were submitted (the real clock start). This method
+	 * only transitions the status to in_progress and records started_at.
+	 *
 	 * @param int $order_id Order ID.
 	 * @return bool
 	 */
@@ -323,7 +327,39 @@ class OrderService {
 			return false;
 		}
 
-		// Calculate delivery deadline from now.
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// Record when work actually started.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$table,
+			array( 'started_at' => current_time( 'mysql' ) ),
+			array( 'id' => $order_id )
+		);
+
+		return $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS );
+	}
+
+	/**
+	 * Set the delivery deadline when requirements are submitted.
+	 *
+	 * This is where the real delivery clock starts — vendors cannot begin
+	 * work until they have requirements, so the deadline runs from here.
+	 * The deadline set at mark_as_paid() is only a placeholder.
+	 *
+	 * @param int   $order_id   Order ID.
+	 * @param array $field_data Submitted requirements data.
+	 * @param array $attachments Uploaded attachments.
+	 * @return void
+	 */
+	public function set_deadline_on_requirements( int $order_id, array $field_data, array $attachments ): void {
+		$order = $this->get( $order_id );
+
+		if ( ! $order ) {
+			return;
+		}
+
 		$service       = $order->get_service();
 		$delivery_days = 7;
 
@@ -339,7 +375,6 @@ class OrderService {
 			foreach ( $order->addons as $addon ) {
 				$delivery_days += (int) ( $addon['delivery_days_extra'] ?? 0 );
 			}
-			// Ensure delivery days doesn't go below 1.
 			$delivery_days = max( 1, $delivery_days );
 		}
 
@@ -349,7 +384,7 @@ class OrderService {
 		$table = $wpdb->prefix . 'wpss_orders';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$deadline_result = $wpdb->update(
+		$wpdb->update(
 			$table,
 			array(
 				'delivery_deadline' => $deadline->format( 'Y-m-d H:i:s' ),
@@ -357,13 +392,6 @@ class OrderService {
 			),
 			array( 'id' => $order_id )
 		);
-
-		if ( false === $deadline_result ) {
-			wpss_log( "Failed to set deadline for order {$order_id}: " . $wpdb->last_error, 'error' );
-			return false;
-		}
-
-		return $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS );
 	}
 
 	/**

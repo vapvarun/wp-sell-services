@@ -190,7 +190,14 @@ class VendorProfile {
 	public string $status = 'active';
 
 	/**
-	 * Vacation mode end date.
+	 * Whether vendor has vacation mode enabled (manual toggle, no auto-expiry).
+	 *
+	 * @var bool
+	 */
+	public bool $vacation_mode = false;
+
+	/**
+	 * Vacation mode end date (reserved for future auto-expiry via hooks).
 	 *
 	 * @var \DateTimeImmutable|null
 	 */
@@ -259,12 +266,9 @@ class VendorProfile {
 		$profile->status           = $row->status ?? 'active';
 		$profile->social_links     = isset( $row->social_links ) && $row->social_links ? json_decode( $row->social_links, true ) : array();
 
-		// Vacation mode - use vacation_mode flag (no vacation_until column).
-		if ( ! empty( $row->vacation_mode ) ) {
-			$profile->vacation_until = new \DateTimeImmutable( '+30 days' ); // Placeholder for "on vacation".
-		} else {
-			$profile->vacation_until = null;
-		}
+		// Vacation mode is manual-only (vendor toggles on/off, no auto-expiry).
+		$profile->vacation_mode  = ! empty( $row->vacation_mode );
+		$profile->vacation_until = null;
 
 		// Timestamps.
 		$profile->member_since = isset( $row->created_at ) && $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
@@ -380,11 +384,9 @@ class VendorProfile {
 	 * @return bool
 	 */
 	public function is_on_vacation(): bool {
-		if ( ! $this->vacation_until ) {
-			return false;
-		}
-
-		return $this->vacation_until > new \DateTimeImmutable();
+		// Manual toggle — no date-based expiry.
+		// Filter allows Pro or custom code to add auto-expiry logic later.
+		return (bool) apply_filters( 'wpss_vendor_is_on_vacation', $this->vacation_mode, $this );
 	}
 
 	/**
