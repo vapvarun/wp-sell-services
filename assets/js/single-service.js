@@ -72,8 +72,12 @@
                 $gallery.find('.wpss-gallery-thumb').removeClass('active');
                 $thumb.addClass('active');
 
-                // Update main image.
-                $active.find('img').attr('src', src);
+                // If main area has a video, replace it with an image element.
+                if ($active.find('.wpss-gallery-video').length) {
+                    $active.html('<img src="' + src + '" alt="" class="wpss-gallery-image">');
+                } else {
+                    $active.find('img').attr('src', src);
+                }
             });
 
             // Lightbox for main image.

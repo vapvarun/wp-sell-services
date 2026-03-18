@@ -959,7 +959,7 @@ class OrderMetabox {
 	public function ajax_update_status(): void {
 		check_ajax_referer( 'wpss_order_admin', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'wpss_manage_orders' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
@@ -968,6 +968,14 @@ class OrderMetabox {
 
 		if ( ! $order_id || ! $status ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		// Non-admin users must be the vendor on the order.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$order_check = $this->order_service->get( $order_id );
+			if ( ! $order_check || (int) $order_check->vendor_id !== get_current_user_id() ) {
+				wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+			}
 		}
 
 		// Use OrderService instead of repository to ensure hooks fire.

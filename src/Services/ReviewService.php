@@ -98,21 +98,9 @@ class ReviewService {
 		$this->update_service_rating( $order->service_id );
 		$this->update_vendor_rating( $order->vendor_id );
 
-		// Notify vendor.
-		$notification_service = new NotificationService();
-		$notification_service->create(
-			$order->vendor_id,
-			NotificationService::TYPE_REVIEW_RECEIVED,
-			__( 'New Review Received', 'wp-sell-services' ),
-			/* translators: %d: star rating */
-			sprintf( __( 'You received a %d-star review', 'wp-sell-services' ), $rating ),
-			array(
-				'review_id'  => $review_id,
-				'order_id'   => $order_id,
-				'service_id' => $order->service_id,
-				'rating'     => $rating,
-			)
-		);
+		// Note: Vendor notification is handled by the wpss_review_created hook
+		// in Plugin.php which calls NotificationService::notify_review_received().
+		// Do NOT create a notification here to avoid duplicate emails.
 
 		/**
 		 * Fires when review is created.

@@ -93,6 +93,7 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_accept_proposal', array( $this, 'accept_proposal' ) );
 		add_action( 'wp_ajax_wpss_reject_proposal', array( $this, 'reject_proposal' ) );
 		add_action( 'wp_ajax_wpss_withdraw_proposal', array( $this, 'withdraw_proposal' ) );
+		add_action( 'wp_ajax_wpss_update_request', array( $this, 'update_request' ) );
 		add_action( 'wp_ajax_wpss_update_request_status', array( $this, 'update_request_status' ) );
 		add_action( 'wp_ajax_wpss_delete_request', array( $this, 'delete_request' ) );
 
@@ -1620,6 +1621,82 @@ class AjaxHandlers {
 			);
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to create request.', 'wp-sell-services' ) ) );
+		}
+	}
+
+	/**
+	 * Update buyer request content.
+	 *
+	 * @return void
+	 */
+	public function update_request(): void {
+		check_ajax_referer( 'wpss_edit_request', 'wpss_request_nonce' );
+
+		$user_id    = get_current_user_id();
+		$request_id = absint( $_POST['request_id'] ?? 0 );
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You must be logged in.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $request_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify ownership.
+		$post = get_post( $request_id );
+		if ( ! $post || 'wpss_request' !== $post->post_type || (int) $post->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$deadline   = sanitize_text_field( wp_unslash( $_POST['deadline'] ?? '' ) );
+		$skills_raw = sanitize_text_field( wp_unslash( $_POST['skills_required'] ?? '' ) );
+
+		$data = array(
+			'title'           => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
+			'description'     => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
+			'category_id'     => absint( $_POST['category'] ?? 0 ),
+			'budget_min'      => floatval( $_POST['budget_min'] ?? 0 ),
+			'budget_max'      => floatval( $_POST['budget_max'] ?? 0 ),
+			'skills_required' => $skills_raw ? array_map( 'trim', explode( ',', $skills_raw ) ) : array(),
+		);
+
+		if ( $deadline ) {
+			$deadline_timestamp = strtotime( $deadline );
+			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
+				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
+				$data['delivery_days'] = $days_until_deadline;
+				$data['expires_at']    = gmdate( 'Y-m-d H:i:s', $deadline_timestamp );
+			}
+		}
+
+		if ( ! $data['title'] || ! $data['description'] ) {
+			wp_send_json_error( array( 'message' => __( 'Title and description are required.', 'wp-sell-services' ) ) );
+		}
+
+		// Update the request post status if provided.
+		$new_status = sanitize_key( $_POST['post_status'] ?? '' );
+		if ( $new_status && in_array( $new_status, array( 'publish', 'draft' ), true ) ) {
+			wp_update_post(
+				array(
+					'ID'          => $request_id,
+					'post_status' => $new_status,
+				)
+			);
+		}
+
+		$request_service = new BuyerRequestService();
+		$result          = $request_service->update( $request_id, $data );
+
+		if ( $result ) {
+			wp_send_json_success(
+				array(
+					'message'    => __( 'Request updated successfully.', 'wp-sell-services' ),
+					'request_id' => $request_id,
+				)
+			);
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to update request.', 'wp-sell-services' ) ) );
 		}
 	}
 

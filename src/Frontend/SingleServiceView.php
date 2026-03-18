@@ -109,7 +109,7 @@ class SingleServiceView {
 
 		// Get checkout URL from settings.
 		$checkout_url = wpss_get_page_url( 'checkout' );
-		$cart_url     = wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'orders', wpss_get_page_url( 'dashboard' ) ) : $checkout_url;
+		$cart_url     = $checkout_url;
 
 		wp_localize_script(
 			'wpss-single-service',

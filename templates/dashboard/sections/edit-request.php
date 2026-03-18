@@ -1,0 +1,283 @@
+<?php
+/**
+ * Dashboard Section: Edit Buyer Request
+ *
+ * Allows users to edit their existing buyer requests.
+ *
+ * @package WPSellServices\Templates
+ * @since   1.1.0
+ *
+ * @var int            $user_id        Current user ID.
+ * @var VendorService  $vendor_service Vendor service instance.
+ * @var bool           $is_vendor      Whether user is a vendor.
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+// Get request ID from query string.
+$request_id = absint( $_GET['request_id'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+if ( ! $request_id ) {
+	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'Request not found.', 'wp-sell-services' ) . '</h3>';
+	echo '<a href="' . esc_url( add_query_arg( 'section', 'requests', get_permalink() ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
+	return;
+}
+
+// Verify the request exists and belongs to the current user.
+$request = get_post( $request_id );
+
+if ( ! $request || 'wpss_request' !== $request->post_type || (int) $request->post_author !== $user_id ) {
+	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'You do not have permission to edit this request.', 'wp-sell-services' ) . '</h3>';
+	echo '<a href="' . esc_url( add_query_arg( 'section', 'requests', get_permalink() ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
+	return;
+}
+
+// Load existing data.
+$budget_min      = get_post_meta( $request_id, '_wpss_budget_min', true );
+$budget_max      = get_post_meta( $request_id, '_wpss_budget_max', true );
+// Support both the old single _wpss_budget key and the new min/max keys.
+if ( ! $budget_min && ! $budget_max ) {
+	$budget_single = get_post_meta( $request_id, '_wpss_budget', true );
+	if ( $budget_single ) {
+		$budget_max = $budget_single;
+	}
+}
+$deadline        = get_post_meta( $request_id, '_wpss_deadline', true );
+$skills_required = get_post_meta( $request_id, '_wpss_skills_required', true );
+$skills_string   = is_array( $skills_required ) ? implode( ', ', $skills_required ) : ( $skills_required ?: '' );
+$current_status  = get_post_status( $request_id );
+
+// Get categories for the dropdown.
+$categories = get_terms(
+	array(
+		'taxonomy'   => 'wpss_service_category',
+		'hide_empty' => false,
+	)
+);
+
+$current_categories = wp_get_object_terms( $request_id, 'wpss_service_category', array( 'fields' => 'ids' ) );
+$current_cat_id     = ! empty( $current_categories ) ? $current_categories[0] : 0;
+
+/**
+ * Fires before the edit request dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('edit_request').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
+?>
+
+<div class="wpss-request-wizard">
+	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+		<h2 style="margin: 0;"><?php esc_html_e( 'Edit Request', 'wp-sell-services' ); ?></h2>
+		<a href="<?php echo esc_url( add_query_arg( 'section', 'requests', get_permalink() ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+			<?php esc_html_e( 'Back to Requests', 'wp-sell-services' ); ?>
+		</a>
+	</div>
+
+	<form id="wpss-edit-request-form" class="wpss-profile-form" data-ajax-form="edit-request">
+		<?php wp_nonce_field( 'wpss_edit_request', 'wpss_request_nonce' ); ?>
+		<input type="hidden" name="request_id" value="<?php echo esc_attr( $request_id ); ?>">
+
+		<!-- Request Details Section -->
+		<div class="wpss-profile-form__section">
+			<h3><?php esc_html_e( 'Request Details', 'wp-sell-services' ); ?></h3>
+
+			<div class="wpss-form-row">
+				<label for="request_title">
+					<?php esc_html_e( 'Title', 'wp-sell-services' ); ?>
+					<span class="wpss-required">*</span>
+				</label>
+				<input
+					type="text"
+					name="title"
+					id="request_title"
+					class="wpss-input"
+					required
+					maxlength="100"
+					value="<?php echo esc_attr( $request->post_title ); ?>"
+				>
+			</div>
+
+			<div class="wpss-form-row">
+				<label for="request_description">
+					<?php esc_html_e( 'Description', 'wp-sell-services' ); ?>
+					<span class="wpss-required">*</span>
+				</label>
+				<textarea
+					name="description"
+					id="request_description"
+					class="wpss-textarea"
+					rows="6"
+					required
+				><?php echo esc_textarea( $request->post_content ); ?></textarea>
+			</div>
+
+			<div class="wpss-form-row">
+				<label for="request_category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></label>
+				<select name="category" id="request_category" class="wpss-input">
+					<option value=""><?php esc_html_e( 'Select a category (optional)', 'wp-sell-services' ); ?></option>
+					<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+						<?php foreach ( $categories as $category ) : ?>
+							<option value="<?php echo esc_attr( $category->term_id ); ?>" <?php selected( $current_cat_id, $category->term_id ); ?>>
+								<?php echo esc_html( $category->name ); ?>
+							</option>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</select>
+			</div>
+
+			<div class="wpss-form-row">
+				<label for="request_post_status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
+				<select name="post_status" id="request_post_status" class="wpss-input">
+					<option value="publish" <?php selected( $current_status, 'publish' ); ?>><?php esc_html_e( 'Published', 'wp-sell-services' ); ?></option>
+					<option value="draft" <?php selected( $current_status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'wp-sell-services' ); ?></option>
+				</select>
+			</div>
+		</div>
+
+		<!-- Budget & Timeline Section -->
+		<div class="wpss-profile-form__section">
+			<h3><?php esc_html_e( 'Budget & Timeline', 'wp-sell-services' ); ?></h3>
+
+			<div class="wpss-form-row wpss-form-row--half">
+				<div>
+					<label for="request_budget_min"><?php esc_html_e( 'Minimum Budget', 'wp-sell-services' ); ?></label>
+					<div class="wpss-input-group">
+						<span class="wpss-input-group__prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+						<input
+							type="number"
+							name="budget_min"
+							id="request_budget_min"
+							class="wpss-input"
+							min="0"
+							step="1"
+							value="<?php echo esc_attr( $budget_min ); ?>"
+						>
+					</div>
+				</div>
+				<div>
+					<label for="request_budget_max"><?php esc_html_e( 'Maximum Budget', 'wp-sell-services' ); ?></label>
+					<div class="wpss-input-group">
+						<span class="wpss-input-group__prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+						<input
+							type="number"
+							name="budget_max"
+							id="request_budget_max"
+							class="wpss-input"
+							min="0"
+							step="1"
+							value="<?php echo esc_attr( $budget_max ); ?>"
+						>
+					</div>
+				</div>
+			</div>
+
+			<div class="wpss-form-row">
+				<label for="request_deadline"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></label>
+				<input
+					type="date"
+					name="deadline"
+					id="request_deadline"
+					class="wpss-input"
+					value="<?php echo esc_attr( $deadline ); ?>"
+				>
+			</div>
+
+			<div class="wpss-form-row">
+				<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
+				<input
+					type="text"
+					name="skills_required"
+					id="request_skills"
+					class="wpss-input"
+					value="<?php echo esc_attr( $skills_string ); ?>"
+					placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>"
+				>
+			</div>
+		</div>
+
+		<!-- Submit Section -->
+		<div class="wpss-profile-form__actions">
+			<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+				</svg>
+				<?php esc_html_e( 'Update Request', 'wp-sell-services' ); ?>
+			</button>
+		</div>
+	</form>
+</div>
+
+<script>
+(function($) {
+	'use strict';
+
+	$('#wpss-edit-request-form').on('submit', function(e) {
+		e.preventDefault();
+
+		var $form = $(this);
+		var $button = $form.find('button[type="submit"]');
+		var originalHtml = $button.html();
+
+		// Validate budget.
+		var minBudget = parseFloat($('#request_budget_min').val()) || 0;
+		var maxBudget = parseFloat($('#request_budget_max').val()) || 0;
+
+		if (maxBudget > 0 && minBudget > maxBudget) {
+			alert('<?php echo esc_js( __( 'Minimum budget cannot be greater than maximum budget.', 'wp-sell-services' ) ); ?>');
+			return;
+		}
+
+		$button
+			.prop('disabled', true)
+			.html('<span class="wpss-spinner"></span> <?php echo esc_js( __( 'Updating...', 'wp-sell-services' ) ); ?>');
+
+		$.ajax({
+			url: wpssUnifiedDashboard.ajaxUrl,
+			type: 'POST',
+			data: $form.serialize() + '&action=wpss_update_request',
+			success: function(response) {
+				if (response.success) {
+					$form.html(
+						'<div class="wpss-empty-state wpss-empty-state--compact">' +
+							'<div class="wpss-empty-state__icon" style="color: var(--wpss-success);">' +
+								'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' +
+							'</div>' +
+							'<h3><?php echo esc_js( __( 'Request Updated!', 'wp-sell-services' ) ); ?></h3>' +
+							'<a href="?section=requests" class="wpss-btn wpss-btn--primary">' +
+								'<?php echo esc_js( __( 'View My Requests', 'wp-sell-services' ) ); ?>' +
+							'</a>' +
+						'</div>'
+					);
+				} else {
+					alert(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>');
+					$button
+						.prop('disabled', false)
+						.html(originalHtml);
+				}
+			},
+			error: function() {
+				alert('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
+				$button
+					.prop('disabled', false)
+					.html(originalHtml);
+			}
+		});
+	});
+})(jQuery);
+</script>
+
+<?php
+/**
+ * Fires after the edit request dashboard section content.
+ *
+ * @since 1.1.0
+ *
+ * @param string $section_name Section identifier ('edit_request').
+ * @param int    $user_id      Current user ID.
+ */
+do_action( 'wpss_dashboard_section_after', 'edit_request', $user_id );
+?>

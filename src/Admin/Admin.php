@@ -1604,6 +1604,36 @@ class Admin {
 										<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->resolved_at ) ) ); ?>
 									</p>
 								<?php endif; ?>
+								<!-- Allow admin to update resolution on already-resolved disputes -->
+								<hr style="margin: 15px 0;">
+								<details>
+									<summary style="cursor: pointer; font-weight: 600;"><?php esc_html_e( 'Update Resolution', 'wp-sell-services' ); ?></summary>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 10px;">
+										<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
+										<input type="hidden" name="action" value="wpss_resolve_dispute">
+										<input type="hidden" name="dispute_id" value="<?php echo esc_attr( $dispute_id ); ?>">
+										<input type="hidden" name="dispute_status" value="resolved">
+
+										<p>
+											<label for="resolution_update"><strong><?php esc_html_e( 'Resolution Type:', 'wp-sell-services' ); ?></strong></label><br>
+											<select name="resolution" id="resolution_update" style="width: 100%;">
+												<option value=""><?php esc_html_e( '-- Select Resolution --', 'wp-sell-services' ); ?></option>
+												<?php foreach ( $resolutions as $value => $label ) : ?>
+													<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
+														<?php echo esc_html( $label ); ?>
+													</option>
+												<?php endforeach; ?>
+											</select>
+										</p>
+
+										<p>
+											<label for="admin_notes_update"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
+											<textarea name="admin_notes" id="admin_notes_update" rows="4" style="width: 100%;"><?php echo esc_textarea( $dispute->resolution_notes ?? '' ); ?></textarea>
+										</p>
+
+										<?php submit_button( __( 'Update Resolution', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
+									</form>
+								</details>
 							</div>
 						</div>
 					<?php endif; ?>

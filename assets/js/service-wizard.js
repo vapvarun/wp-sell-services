@@ -261,6 +261,22 @@ function wpssServiceWizard(existingData = {}) {
 					if (!this.isPackageValid('basic')) {
 						this.validationErrors.push(wpssWizard.strings.validationPrice);
 					}
+					// Validate enabled packages have name and description.
+					['basic', 'standard', 'premium'].forEach((tier) => {
+						const pkg = this.data.packages[tier];
+						if (tier === 'basic' || pkg.enabled) {
+							if (!pkg.name || !pkg.name.trim()) {
+								this.validationErrors.push(
+									(wpssWizard.strings.validationPkgName || 'Package name is required for the %s package.').replace('%s', tier)
+								);
+							}
+							if (!pkg.description || !pkg.description.trim()) {
+								this.validationErrors.push(
+									(wpssWizard.strings.validationPkgDesc || 'Package description is required for the %s package.').replace('%s', tier)
+								);
+							}
+						}
+					});
 					break;
 
 				case 'gallery':
@@ -272,6 +288,13 @@ function wpssServiceWizard(existingData = {}) {
 
 			if (this.validationErrors.length > 0) {
 				this.showNotice(this.validationErrors[0], 'error');
+				// Scroll to notice for visibility.
+				this.$nextTick(() => {
+					const notice = document.querySelector('.wpss-wizard-notice');
+					if (notice) {
+						notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					}
+				});
 				return false;
 			}
 
