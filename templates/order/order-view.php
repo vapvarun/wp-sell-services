@@ -185,6 +185,20 @@ do_action( 'wpss_before_order_view', $order );
 			}
 
 			if ( $is_customer ) {
+				// Pay Now button for unpaid orders (e.g., from accepted proposals).
+				if ( 'pending_payment' === $order->status && 'pending' === $order->payment_status ) {
+					$pay_url = add_query_arg( 'pay_order', $order_id, home_url( '/service-checkout/' . $order->service_id . '/' ) );
+					$actions['pay'] = array(
+						'label' => sprintf(
+							/* translators: %s: formatted price */
+							__( 'Pay %s', 'wp-sell-services' ),
+							wpss_format_price( $order->total )
+						),
+						'class' => 'wpss-btn wpss-btn--success',
+						'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
+
 				if ( 'pending_approval' === $order->status ) {
 					$actions['complete'] = array(
 						'label' => __( 'Accept & Complete', 'wp-sell-services' ),

@@ -1846,7 +1846,7 @@ class AjaxHandlers {
 		if ( $result['success'] && ! empty( $result['order_id'] ) ) {
 			wp_send_json_success(
 				array(
-					'message'  => __( 'Proposal accepted. Order created!', 'wp-sell-services' ),
+					'message'  => __( 'Proposal accepted! Redirecting to payment...', 'wp-sell-services' ),
 					'order_id' => $result['order_id'],
 					'redirect' => wpss_get_order_url( $result['order_id'] ),
 				)
