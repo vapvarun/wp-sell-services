@@ -308,7 +308,12 @@ class OfflineGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function ajax_create_order(): void {
-		check_ajax_referer( 'wpss_offline_payment', 'nonce' );
+		// Accept both offline payment nonce and checkout nonce (for pay_order flow).
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) ), 'wpss_offline_payment' )
+			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+			return;
+		}
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );

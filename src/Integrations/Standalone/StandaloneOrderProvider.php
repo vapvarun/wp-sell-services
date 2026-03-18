@@ -254,31 +254,35 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			return false;
 		}
 
-		// Calculate delivery deadline.
-		$delivery_days = 7;
-		$service = $order->get_service();
-		if ( $service ) {
-			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
-			if ( isset( $packages[ $order->package_id ] ) ) {
-				$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
-			}
-		}
+		// Calculate delivery deadline only if not already set (e.g., by convert_to_order).
+		$update_data = [
+			'status'         => ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+			'payment_status' => 'paid',
+			'payment_method' => $payment_method,
+			'transaction_id' => $transaction_id,
+			'paid_at'        => current_time( 'mysql' ),
+			'updated_at'     => current_time( 'mysql' ),
+		];
 
-		$deadline = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
+		if ( empty( $order->delivery_deadline ) ) {
+			$delivery_days = 7;
+			$service       = $order->get_service();
+			if ( $service ) {
+				$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
+				if ( isset( $packages[ $order->package_id ] ) ) {
+					$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
+				}
+			}
+
+			$deadline                      = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
+			$update_data['delivery_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
+			$update_data['original_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$table,
-			[
-				'status'            => ServiceOrder::STATUS_PENDING_REQUIREMENTS,
-				'payment_status'    => 'paid',
-				'payment_method'    => $payment_method,
-				'transaction_id'    => $transaction_id,
-				'paid_at'           => current_time( 'mysql' ),
-				'delivery_deadline' => $deadline->format( 'Y-m-d H:i:s' ),
-				'original_deadline' => $deadline->format( 'Y-m-d H:i:s' ),
-				'updated_at'        => current_time( 'mysql' ),
-			],
+			$update_data,
 			[ 'id' => $order_id ]
 		);
 
