@@ -1275,9 +1275,10 @@ class EmailService {
 			return true;
 		}
 
-		// Option was saved — missing key means unchecked (disabled).
+		// Missing key defaults to enabled — emails should work out of the box.
+		// Only explicitly set to false (unchecked checkbox) disables an email type.
 		if ( ! array_key_exists( $setting_key, $notification_settings ) ) {
-			return false;
+			return true;
 		}
 
 		return ! empty( $notification_settings[ $setting_key ] );

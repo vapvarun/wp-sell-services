@@ -183,15 +183,24 @@ class Activator {
 				'dispute_window_days' => 14,
 			),
 			// Notification settings - matches Settings.php wpss_notifications.
+			// ALL email types enabled by default — site owner can disable individually.
 			'wpss_notifications' => array(
-				'notify_new_order'          => true,
-				'notify_order_completed'    => true,
-				'notify_order_cancelled'    => true,
-				'notify_delivery_submitted' => true,
-				'notify_revision_requested' => true,
-				'notify_new_message'        => true,
-				'notify_new_review'         => true,
-				'notify_dispute_opened'     => true,
+				'notify_new_order'              => true,
+				'notify_order_completed'        => true,
+				'notify_order_cancelled'        => true,
+				'notify_cancellation_requested' => true,
+				'notify_delivery_submitted'     => true,
+				'notify_revision_requested'     => true,
+				'notify_new_message'            => true,
+				'notify_vendor_contact'         => true,
+				'notify_new_review'             => true,
+				'notify_dispute_opened'         => true,
+				'notify_withdrawal_requested'   => true,
+				'notify_withdrawal_approved'    => true,
+				'notify_withdrawal_rejected'    => true,
+				'notify_proposal_submitted'     => true,
+				'notify_proposal_accepted'      => true,
+				'notify_moderation'             => true,
 			),
 			// Advanced settings - matches Settings.php wpss_advanced.
 			'wpss_advanced'      => array(
