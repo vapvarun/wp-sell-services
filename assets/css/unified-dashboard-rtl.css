@@ -932,7 +932,8 @@
 }
 
 /* Toggle Switch */
-.wpss-toggle {
+.wpss-toggle,
+.wpss-form-row label.wpss-toggle {
 	display: flex;
 	align-items: center;
 	gap: 10px;

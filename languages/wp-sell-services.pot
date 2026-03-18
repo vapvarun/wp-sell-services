@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Sell Services 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wbcomdesigns.com/support/\n"
-"POT-Creation-Date: 2026-03-17 13:02:18+00:00\n"
+"POT-Creation-Date: 2026-03-18 05:03:47+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -660,8 +660,8 @@ msgstr ""
 #: src/Integrations/Gateways/OfflineGateway.php:424
 #: src/Services/ExtensionRequestService.php:132
 #: src/Services/ExtensionRequestService.php:291
-#: src/Services/MilestoneService.php:75 src/Services/OrderService.php:408
-#: src/Services/OrderService.php:450 src/Services/RequirementsService.php:111
+#: src/Services/MilestoneService.php:75 src/Services/OrderService.php:413
+#: src/Services/OrderService.php:455 src/Services/RequirementsService.php:111
 #: src/Services/ReviewService.php:473 src/Services/TippingService.php:68
 #: templates/order/order-confirmation.php:31
 #: templates/order/order-requirements.php:46 templates/order/order-view.php:63
@@ -784,7 +784,7 @@ msgstr ""
 msgid "Vendor accepted cancellation request."
 msgstr ""
 
-#: src/API/OrdersController.php:745 src/Services/OrderService.php:426
+#: src/API/OrdersController.php:745 src/Services/OrderService.php:431
 msgid "Failed to cancel order."
 msgstr ""
 
@@ -1774,7 +1774,7 @@ msgstr ""
 msgid "Revision Requested"
 msgstr ""
 
-#: src/Admin/Admin.php:1056 src/Frontend/Shortcodes.php:933
+#: src/Admin/Admin.php:1056 src/Frontend/Shortcodes.php:937
 #: templates/dashboard/sections/messages.php:254
 #: templates/dashboard/sections/messages.php:337
 #: templates/emails/cancellation-requested.php:69
@@ -3349,7 +3349,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:2169
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:725
 #: templates/dashboard/sections/portfolio.php:111
-#: templates/dashboard/sections/requests.php:137
+#: templates/dashboard/sections/requests.php:142
 #: templates/dashboard/sections/services.php:260
 #: templates/myaccount/vendor-services.php:84
 msgid "Edit"
@@ -5431,7 +5431,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:321
 #: src/Frontend/SingleServiceView.php:695
 #: src/Frontend/SingleServiceView.php:800
-#: templates/dashboard/sections/requests.php:133
+#: templates/dashboard/sections/requests.php:138
 #: templates/order/order-view.php:1060 templates/order/order-view.php:1147
 #: templates/order/order-view.php:1200 templates/order/order-view.php:1248
 #: templates/order/order-view.php:1309 templates/single-request.php:439
@@ -5529,7 +5529,7 @@ msgid "Up to %s"
 msgstr ""
 
 #: src/Blocks/BuyerRequests.php:294
-#: templates/dashboard/sections/requests.php:114
+#: templates/dashboard/sections/requests.php:119
 #. translators: %d: number of offers
 msgid "%d offer"
 msgid_plural "%d offers"
@@ -6098,6 +6098,7 @@ msgid "Seller Response:"
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1261
+#: templates/partials/service-reviews.php:172
 msgid "Helpful"
 msgstr ""
 
@@ -7217,27 +7218,27 @@ msgstr ""
 msgid "From"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:886 src/Models/BuyerRequest.php:239
+#: src/Frontend/Shortcodes.php:890 src/Models/BuyerRequest.php:239
 msgid "Up to $%s"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:888 src/Models/BuyerRequest.php:242
+#: src/Frontend/Shortcodes.php:892 src/Models/BuyerRequest.php:242
 msgid "Open budget"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:892
+#: src/Frontend/Shortcodes.php:896
 msgid "proposals"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:938
+#: src/Frontend/Shortcodes.php:942
 msgid "Service:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:939 src/Frontend/SingleServiceView.php:764
+#: src/Frontend/Shortcodes.php:943 src/Frontend/SingleServiceView.php:764
 msgid "Total:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:940
+#: src/Frontend/Shortcodes.php:944
 msgid "Date:"
 msgstr ""
 
@@ -7433,7 +7434,7 @@ msgstr ""
 
 #: src/Frontend/UnifiedDashboard.php:112
 #: templates/dashboard/sections/portfolio.php:117
-#: templates/dashboard/sections/requests.php:140
+#: templates/dashboard/sections/requests.php:145
 #: templates/dashboard/sections/services.php:266
 msgid "Delete"
 msgstr ""
@@ -10028,37 +10029,37 @@ msgstr ""
 msgid "Thank you for your understanding."
 msgstr ""
 
-#: src/Services/OrderService.php:416
+#: src/Services/OrderService.php:421
 msgid "This order cannot be cancelled in its current status."
 msgstr ""
 
-#: src/Services/OrderService.php:457
+#: src/Services/OrderService.php:462
 msgid "Order is not in progress."
 msgstr ""
 
-#: src/Services/OrderService.php:465
+#: src/Services/OrderService.php:470
 msgid "Order has not been started yet."
 msgstr ""
 
-#: src/Services/OrderService.php:475
+#: src/Services/OrderService.php:480
 msgid ""
 "Cancellation window has expired. You can only request cancellation within "
 "24 hours of work starting."
 msgstr ""
 
-#: src/Services/OrderService.php:486
+#: src/Services/OrderService.php:491
 msgid "Cannot request cancellation after a delivery has been submitted."
 msgstr ""
 
-#: src/Services/OrderService.php:512
+#: src/Services/OrderService.php:517
 msgid "Failed to save cancellation details."
 msgstr ""
 
-#: src/Services/OrderService.php:533
+#: src/Services/OrderService.php:538
 msgid "Failed to request cancellation."
 msgstr ""
 
-#: src/Services/OrderService.php:601
+#: src/Services/OrderService.php:606
 #. translators: 1: old status, 2: new status
 msgid "Order status changed from %1$s to %2$s"
 msgstr ""
@@ -11156,19 +11157,19 @@ msgstr ""
 msgid "Can't find the right service? Post a request and let sellers come to you."
 msgstr ""
 
-#: templates/dashboard/sections/requests.php:91
+#: templates/dashboard/sections/requests.php:96
 #: templates/single-request.php:472
 #. translators: %s: budget amount
 #. translators: %s: budget range
 msgid "Budget: %s"
 msgstr ""
 
-#: templates/dashboard/sections/requests.php:103
+#: templates/dashboard/sections/requests.php:108
 #. translators: %s: deadline date
 msgid "Deadline: %s"
 msgstr ""
 
-#: templates/dashboard/sections/requests.php:129
+#: templates/dashboard/sections/requests.php:134
 msgid "View Offers"
 msgstr ""
 
@@ -11317,8 +11318,9 @@ msgstr ""
 
 #: templates/emails/cancellation-requested.php:48
 #: templates/emails/delivery-ready.php:46
-#: templates/emails/dispute-opened.php:44 templates/emails/new-message.php:46
-#: templates/emails/new-order.php:46 templates/emails/order-cancelled.php:44
+#: templates/emails/dispute-opened.php:44 templates/emails/generic.php:30
+#: templates/emails/new-message.php:46 templates/emails/new-order.php:46
+#: templates/emails/order-cancelled.php:44
 #: templates/emails/order-completed.php:46
 #: templates/emails/order-in-progress.php:46
 #: templates/emails/plain/cancellation-requested.php:29
@@ -11342,6 +11344,7 @@ msgstr ""
 #: templates/emails/withdrawal-rejected.php:31
 #. translators: %s: recipient name
 #. translators: %s: customer name
+#. translators: %s: recipient name
 #. translators: %s: recipient name
 #. translators: %s: recipient name
 #. translators: %s: vendor name
@@ -11372,8 +11375,9 @@ msgstr ""
 
 #: templates/emails/cancellation-requested.php:49
 #: templates/emails/delivery-ready.php:47
-#: templates/emails/dispute-opened.php:45 templates/emails/new-message.php:47
-#: templates/emails/new-order.php:47 templates/emails/order-cancelled.php:45
+#: templates/emails/dispute-opened.php:45 templates/emails/generic.php:31
+#: templates/emails/new-message.php:47 templates/emails/new-order.php:47
+#: templates/emails/order-cancelled.php:45
 #: templates/emails/order-completed.php:47
 #: templates/emails/order-in-progress.php:47
 #: templates/emails/plain/cancellation-requested.php:30
@@ -12640,18 +12644,18 @@ msgid_plural "%d reviews"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/partials/service-reviews.php:174
+#: templates/partials/service-reviews.php:180
 #. translators: %d: number of people
 msgid "%d person found this helpful"
 msgid_plural "%d people found this helpful"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/partials/service-reviews.php:202
+#: templates/partials/service-reviews.php:208
 msgid "Load More Reviews"
 msgstr ""
 
-#: templates/partials/service-reviews.php:209
+#: templates/partials/service-reviews.php:215
 msgid "No reviews yet. Be the first to review this service!"
 msgstr ""
 

@@ -27,6 +27,7 @@
 		WPSS.initProposals();
 		WPSS.initVendorRegistration();
 		WPSS.initRequirementsView();
+		WPSS.portfolioServicesOptions();
 	};
 
 	/**
@@ -1382,6 +1383,83 @@
 				}
 			});
 		});
+	};
+
+	/**
+	 * Portfolio Services Options.
+	 */
+	WPSS.portfolioServicesOptions = function() {
+		const select = document.querySelector('#portfolio-service');
+		const canvas = WPSS.textMeasureCanvas || document.createElement('canvas');
+		const context = canvas.getContext('2d');
+		const ellipsis = '...';
+
+		WPSS.textMeasureCanvas = canvas;
+
+		if (!select || !context) {
+			return;
+		}
+
+		const getTruncatedText = function(text, maxWidth) {
+			if (context.measureText(text).width <= maxWidth) {
+				return text;
+			}
+
+			let low = 0;
+			let high = text.length;
+
+			while (low < high) {
+				const mid = Math.ceil((low + high) / 2);
+				const trial = text.slice(0, mid) + ellipsis;
+
+				if (context.measureText(trial).width <= maxWidth) {
+					low = mid;
+				} else {
+					high = mid - 1;
+				}
+			}
+
+			return text.slice(0, low) + ellipsis;
+		};
+
+		const updateOptionLabels = function() {
+			const computedStyle = window.getComputedStyle(select);
+			const selectWidth = Math.max(select.offsetWidth, Math.round(select.getBoundingClientRect().width));
+			const availableWidth = Math.max(
+				80,
+				selectWidth -
+				parseFloat(computedStyle.paddingLeft) -
+				parseFloat(computedStyle.paddingRight) -
+				28
+			);
+
+			context.font = computedStyle.font;
+
+			Array.from(select.options).forEach(option => {
+				const originalText = option.dataset.fulltext || option.textContent.trim();
+
+				option.dataset.fulltext = originalText;
+				option.title = originalText;
+				option.textContent = getTruncatedText(originalText, availableWidth);
+			});
+
+			select.title = select.selectedOptions[0]?.dataset.fulltext || '';
+		};
+
+		updateOptionLabels();
+		window.requestAnimationFrame(updateOptionLabels);
+		window.setTimeout(updateOptionLabels, 150);
+
+		if (select.dataset.wpssOptionsBound === 'true') {
+			return;
+		}
+
+		select.dataset.wpssOptionsBound = 'true';
+		['change', 'focus', 'mousedown'].forEach(eventName => {
+			select.addEventListener(eventName, updateOptionLabels);
+		});
+		select.addEventListener('touchstart', updateOptionLabels, { passive: true });
+		window.addEventListener('resize', updateOptionLabels);
 	};
 
 	// Initialize on DOM ready.
