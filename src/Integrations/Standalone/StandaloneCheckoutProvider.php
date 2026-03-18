@@ -156,6 +156,14 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @return string
 	 */
 	public function render_checkout_shortcode( array $atts ): string {
+		// Check if paying for an existing order (from proposal acceptance).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$pay_order_id = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+
+		if ( $pay_order_id ) {
+			return $this->render_pay_existing_order( $pay_order_id );
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$service_id = isset( $_GET['service_id'] ) ? absint( wp_unslash( $_GET['service_id'] ) ) : absint( get_query_var( 'wpss_service_id' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -189,6 +197,158 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 		ob_start();
 		$this->render_checkout_form( $service, $package_id, $quantity );
+		return ob_get_clean();
+	}
+
+	/**
+	 * Render payment form for an existing order (e.g., from proposal acceptance).
+	 *
+	 * The order already exists in pending_payment — the buyer just needs to pay.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return string HTML content.
+	 */
+	private function render_pay_existing_order( int $order_id ): string {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p>';
+		}
+
+		// Only the customer who owns this order can pay.
+		if ( (int) $order->customer_id !== get_current_user_id() ) {
+			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'You do not have permission to pay for this order.', 'wp-sell-services' ) . '</p>';
+		}
+
+		// Only pending_payment orders can be paid.
+		if ( 'pending_payment' !== $order->status || 'pending' !== $order->payment_status ) {
+			return '<p class="wpss-alert wpss-alert-info">' . esc_html__( 'This order has already been paid.', 'wp-sell-services' ) . '</p>';
+		}
+
+		$service = $order->get_service();
+		$currency = $order->currency ?: wpss_get_currency();
+		$total = (float) $order->total;
+		$vendor = get_user_by( 'id', $order->vendor_id );
+		$vendor_name = $vendor ? $vendor->display_name : '';
+
+		// Get available payment gateways.
+		$gateways = wpss()->get_payment_gateways();
+		$enabled_gateways = array_filter( $gateways, fn( $g ) => $g->is_enabled() );
+
+		ob_start();
+		?>
+		<div class="wpss-standalone-checkout">
+			<div class="wpss-checkout-summary">
+				<h3><?php esc_html_e( 'Order Payment', 'wp-sell-services' ); ?></h3>
+
+				<div class="wpss-checkout-service">
+					<?php if ( $service && $service->thumbnail_id ) : ?>
+						<img src="<?php echo esc_url( $service->get_thumbnail_url( 'thumbnail' ) ); ?>" alt="">
+					<?php endif; ?>
+					<div class="wpss-service-info">
+						<h4><?php echo esc_html( $service ? $service->title : __( 'Custom Order', 'wp-sell-services' ) ); ?></h4>
+						<span class="wpss-vendor-name"><?php echo esc_html( $vendor_name ); ?></span>
+						<span class="wpss-order-number"><?php echo esc_html( $order->order_number ); ?></span>
+					</div>
+				</div>
+
+				<div class="wpss-checkout-total">
+					<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
+					<span class="wpss-total-amount"><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></span>
+				</div>
+			</div>
+
+			<?php if ( ! is_user_logged_in() ) : ?>
+				<div class="wpss-checkout-login">
+					<p><?php esc_html_e( 'Please log in to complete payment.', 'wp-sell-services' ); ?></p>
+				</div>
+			<?php elseif ( empty( $enabled_gateways ) ) : ?>
+				<div class="wpss-checkout-error">
+					<p><?php esc_html_e( 'No payment methods available. Please contact support.', 'wp-sell-services' ); ?></p>
+				</div>
+			<?php else : ?>
+				<form method="post" class="wpss-checkout-form" id="wpss-checkout-form">
+					<?php wp_nonce_field( 'wpss_checkout', 'wpss_checkout_nonce' ); ?>
+					<input type="hidden" name="service_id" value="<?php echo esc_attr( $order->service_id ); ?>">
+					<input type="hidden" name="pay_order" value="<?php echo esc_attr( $order_id ); ?>">
+					<input type="hidden" name="amount" value="<?php echo esc_attr( $total ); ?>">
+					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
+
+					<div class="wpss-payment-methods">
+						<h3><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></h3>
+
+						<?php foreach ( $enabled_gateways as $gateway_id => $gateway ) : ?>
+							<div class="wpss-payment-method">
+								<label>
+									<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
+									<?php echo esc_html( $gateway->get_name() ); ?>
+								</label>
+								<?php $gateway->render_payment_form( $order->service_id ); ?>
+							</div>
+						<?php endforeach; ?>
+					</div>
+
+					<button type="submit" class="button button-primary wpss-checkout-button">
+						<?php
+						printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $total, $currency ) ) );
+						?>
+					</button>
+				</form>
+
+				<script>
+				(function() {
+					var form = document.getElementById('wpss-checkout-form');
+					if (!form) return;
+
+					var submitBtn = form.querySelector('.wpss-checkout-button');
+					var originalText = submitBtn.textContent;
+
+					form.addEventListener('submit', function(e) {
+						e.preventDefault();
+
+						var formData = new FormData(form);
+						var paymentMethod = formData.get('payment_method');
+
+						if (!paymentMethod) {
+							alert('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
+							return;
+						}
+
+						submitBtn.disabled = true;
+						submitBtn.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
+
+						formData.append('action', 'wpss_' + paymentMethod + '_process_payment');
+						formData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
+						formData.append('pay_order', '<?php echo esc_js( $order_id ); ?>');
+
+						fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+							method: 'POST',
+							body: formData,
+							credentials: 'same-origin'
+						})
+						.then(function(response) { return response.json(); })
+						.then(function(data) {
+							if (data.success && data.data && data.data.redirect_url) {
+								window.location.href = data.data.redirect_url;
+							} else if (data.success && data.data && data.data.redirect) {
+								window.location.href = data.data.redirect;
+							} else {
+								var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed.', 'wp-sell-services' ) ); ?>';
+								alert(msg);
+								submitBtn.disabled = false;
+								submitBtn.textContent = originalText;
+							}
+						})
+						.catch(function() {
+							submitBtn.disabled = false;
+							submitBtn.textContent = originalText;
+						});
+					});
+				})();
+				</script>
+			<?php endif; ?>
+		</div>
+		<?php
 		return ob_get_clean();
 	}
 

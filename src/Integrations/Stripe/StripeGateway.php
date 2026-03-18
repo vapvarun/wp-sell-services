@@ -716,10 +716,11 @@ class StripeGateway implements PaymentGatewayInterface {
 		$payment_intent_id = sanitize_text_field( $_POST['payment_intent_id'] ?? '' );
 		$service_id        = (int) ( $_POST['service_id'] ?? 0 );
 		$package_id        = (int) ( $_POST['package_id'] ?? 0 );
+		$pay_order_id      = (int) ( $_POST['pay_order'] ?? 0 );
 
 		if ( ! $payment_intent_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid payment.', 'wp-sell-services' ) ) );
-			return; // Explicit return for defensive coding.
+			return;
 		}
 
 		// Verify payment succeeded.
@@ -727,18 +728,9 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		if ( ! $payment['success'] ) {
 			wp_send_json_error( array( 'message' => $payment['error'] ?? __( 'Payment verification failed.', 'wp-sell-services' ) ) );
-			return; // Explicit return for defensive coding.
+			return;
 		}
 
-		// Get service and package details.
-		$service = wpss_get_service( $service_id );
-
-		if ( ! $service ) {
-			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
-			return; // Explicit return for defensive coding.
-		}
-
-		// Create order.
 		$order_provider = wpss_get_order_provider();
 
 		if ( ! $order_provider ) {
@@ -746,25 +738,40 @@ class StripeGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => $payment['amount'],
-				'currency'       => $payment['currency'],
-				'payment_method' => 'stripe',
-			)
-		);
-
-		if ( ! $order ) {
-			// Refund if order creation fails.
-			$refund_result = $this->process_refund( $payment_intent_id );
-			if ( empty( $refund_result['success'] ) ) {
-				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+		// Pay for existing order (from proposal acceptance) or create new order.
+		if ( $pay_order_id ) {
+			$order = wpss_get_order( $pay_order_id );
+			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
+				$this->process_refund( $payment_intent_id );
+				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+				return;
 			}
-			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
-			return;
+		} else {
+			$service = wpss_get_service( $service_id );
+			if ( ! $service ) {
+				wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$order = $order_provider->create_order(
+				array(
+					'service_id'     => $service_id,
+					'package_id'     => $package_id,
+					'customer_id'    => get_current_user_id(),
+					'subtotal'       => $payment['amount'],
+					'currency'       => $payment['currency'],
+					'payment_method' => 'stripe',
+				)
+			);
+
+			if ( ! $order ) {
+				$refund_result = $this->process_refund( $payment_intent_id );
+				if ( empty( $refund_result['success'] ) ) {
+					wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+				}
+				wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
+				return;
+			}
 		}
 
 		// Update Stripe PaymentIntent metadata with order_id so webhooks can recover.

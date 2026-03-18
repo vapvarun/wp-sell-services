@@ -315,6 +315,32 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Handle payment for existing order (from proposal acceptance).
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$pay_order_id = isset( $_POST['pay_order'] ) ? (int) wp_unslash( $_POST['pay_order'] ) : 0;
+		if ( $pay_order_id ) {
+			$order = wpss_get_order( $pay_order_id );
+			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+				return;
+			}
+			if ( 'pending_payment' !== $order->status ) {
+				wp_send_json_error( array( 'message' => __( 'This order has already been paid.', 'wp-sell-services' ) ) );
+				return;
+			}
+			// For offline payments, order stays in pending_payment until admin marks it paid.
+			// Just confirm the order and redirect to instructions.
+			wp_send_json_success(
+				array(
+					'order_id'     => $order->id,
+					'order_number' => $order->order_number,
+					'redirect'     => wpss_get_order_url( $order->id ),
+					'message'      => __( 'Please complete your payment using the instructions below. Your order will be activated once payment is confirmed.', 'wp-sell-services' ),
+				)
+			);
+			return;
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
 		$service_id = isset( $_POST['service_id'] ) ? (int) wp_unslash( $_POST['service_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
