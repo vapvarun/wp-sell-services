@@ -142,10 +142,6 @@ class EmailService {
 	 * @return void
 	 */
 	public function handle_status_change( int $order_id, string $new_status, string $old_status ): void {
-		// Skip if WooCommerce is handling emails.
-		if ( $this->is_woocommerce_handling_emails() ) {
-			return;
-		}
 
 		$order = wpss_get_order( $order_id );
 		if ( ! $order ) {
@@ -183,27 +179,9 @@ class EmailService {
 		}
 	}
 
-	/**
-	 * Check if WooCommerce is handling emails.
-	 *
-	 * @return bool
-	 */
-	private function is_woocommerce_handling_emails(): bool {
-		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
-			return false;
-		}
-
-		// Only defer to WC if WPSS email classes are actually registered in WC mailer.
-		$wc_emails = WC()->mailer()->get_emails();
-
-		foreach ( $wc_emails as $key => $email ) {
-			if ( str_starts_with( $key, 'WPSS_Email_' ) ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
+	// WooCommerce email deferral removed — WPSS always sends its own emails
+	// regardless of WooCommerce state. This is a marketplace plugin with its
+	// own email system; WC emails are for WC products, not for services.
 
 	/**
 	 * Send new order emails to vendor and buyer.
@@ -277,10 +255,6 @@ class EmailService {
 	 * @return bool
 	 */
 	public function send_requirements_submitted( int $order_id, array $field_data, array $attachments ): bool {
-		if ( $this->is_woocommerce_handling_emails() ) {
-			return false;
-		}
-
 		$order = wpss_get_order( $order_id );
 		if ( ! $order ) {
 			return false;
@@ -369,9 +343,6 @@ class EmailService {
 	 * @return bool
 	 */
 	public function send_delivery_ready( int $delivery_id, int $order_id ): bool {
-		if ( $this->is_woocommerce_handling_emails() ) {
-			return false;
-		}
 
 		$order = wpss_get_order( $order_id );
 		if ( ! $order ) {
@@ -489,9 +460,6 @@ class EmailService {
 	 * @return bool
 	 */
 	public function send_new_message( int $order_id, int $sender_id, string $message ): bool {
-		if ( $this->is_woocommerce_handling_emails() ) {
-			return false;
-		}
 
 		$order = wpss_get_order( $order_id );
 		if ( ! $order ) {
