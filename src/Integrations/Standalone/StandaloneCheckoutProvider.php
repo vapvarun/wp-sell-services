@@ -283,7 +283,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
 									<?php echo esc_html( $gateway->get_name() ); ?>
 								</label>
-								<?php echo $gateway->render_payment_form( $total, $currency, $order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+								<div class="wpss-gateway-form" data-gateway="<?php echo esc_attr( $gateway_id ); ?>" style="display: none;">
+									<?php echo $gateway->render_payment_form( $total, $currency, $order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+								</div>
 							</div>
 						<?php endforeach; ?>
 					</div>
@@ -295,6 +297,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					</button>
 				</form>
 
+				<div id="wpss-checkout-notice" class="wpss-checkout-notice" style="display: none;"></div>
+
 				<script>
 				(function() {
 					var form = document.getElementById('wpss-checkout-form');
@@ -302,15 +306,40 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 					var submitBtn = form.querySelector('.wpss-checkout-button');
 					var originalText = submitBtn.textContent;
+					var noticeEl = document.getElementById('wpss-checkout-notice');
+
+					function showNotice(msg, type) {
+						noticeEl.className = 'wpss-checkout-notice wpss-checkout-notice--' + (type || 'error');
+						noticeEl.textContent = msg;
+						noticeEl.style.display = 'block';
+						noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					}
+
+					function hideNotice() {
+						noticeEl.style.display = 'none';
+					}
+
+					// Show/hide gateway forms on radio change.
+					document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
+						radio.addEventListener('change', function() {
+							hideNotice();
+							document.querySelectorAll('.wpss-gateway-form').forEach(function(gform) {
+								gform.style.display = 'none';
+							});
+							var selected = document.querySelector('.wpss-gateway-form[data-gateway="' + this.value + '"]');
+							if (selected) selected.style.display = 'block';
+						});
+					});
 
 					form.addEventListener('submit', function(e) {
 						e.preventDefault();
+						hideNotice();
 
 						var formData = new FormData(form);
 						var paymentMethod = formData.get('payment_method');
 
 						if (!paymentMethod) {
-							alert('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
+							showNotice('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
 							return;
 						}
 
@@ -333,13 +362,14 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							} else if (data.success && data.data && data.data.redirect) {
 								window.location.href = data.data.redirect;
 							} else {
-								var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed.', 'wp-sell-services' ) ); ?>';
-								alert(msg);
+								var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed. Please try again.', 'wp-sell-services' ) ); ?>';
+								showNotice(msg);
 								submitBtn.disabled = false;
 								submitBtn.textContent = originalText;
 							}
 						})
 						.catch(function() {
+							showNotice('<?php echo esc_js( __( 'Connection error. Please try again.', 'wp-sell-services' ) ); ?>');
 							submitBtn.disabled = false;
 							submitBtn.textContent = originalText;
 						});

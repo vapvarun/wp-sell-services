@@ -236,7 +236,12 @@ class TestGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function ajax_process_payment(): void {
-		check_ajax_referer( 'wpss_test_payment', 'nonce' );
+		// Accept both test payment nonce and checkout nonce (for pay_order flow).
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) ), 'wpss_test_payment' )
+			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+			return;
+		}
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
@@ -246,6 +251,34 @@ class TestGateway implements PaymentGatewayInterface {
 		// Verify debug mode.
 		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
 			wp_send_json_error( array( 'message' => __( 'Test gateway is only available in debug mode.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Handle payment for existing order (from proposal acceptance).
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$pay_order_id = isset( $_POST['pay_order'] ) ? (int) wp_unslash( $_POST['pay_order'] ) : 0;
+		if ( $pay_order_id ) {
+			$order = wpss_get_order( $pay_order_id );
+			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+				return;
+			}
+			if ( 'pending_payment' !== $order->status ) {
+				wp_send_json_error( array( 'message' => __( 'This order has already been paid.', 'wp-sell-services' ) ) );
+				return;
+			}
+			$transaction_id = 'test_' . wp_generate_uuid4();
+			$order_provider = wpss_get_order_provider();
+			if ( $order_provider ) {
+				$order_provider->mark_as_paid( $order->id, $transaction_id, 'test' );
+			}
+			wp_send_json_success(
+				array(
+					'order_id'     => $order->id,
+					'order_number' => $order->order_number,
+					'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+				)
+			);
 			return;
 		}
 
