@@ -262,7 +262,9 @@ do_action( 'wpss_before_order_view', $order );
 				);
 			}
 
-			if ( in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true ) ) {
+			$order_settings    = get_option( 'wpss_orders', array() );
+			$disputes_allowed  = ! empty( $order_settings['allow_disputes'] );
+			if ( $disputes_allowed && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true ) ) {
 				$actions['dispute'] = array(
 					'label' => __( 'Open Dispute', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
@@ -1035,7 +1037,8 @@ $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 're
 
 // Check if review modal should be available.
 $can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
-$can_open_dispute      = ( $is_customer || $is_vendor ) && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true );
+$dispute_settings      = get_option( 'wpss_orders', array() );
+$can_open_dispute      = ! empty( $dispute_settings['allow_disputes'] ) && ( $is_customer || $is_vendor ) && in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested' ), true );
 $can_request_revision  = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
 
 // Check if cancel modal should be available.

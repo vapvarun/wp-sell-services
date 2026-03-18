@@ -1373,6 +1373,12 @@ class AjaxHandlers {
 	public function open_dispute(): void {
 		check_ajax_referer( 'wpss_open_dispute', 'wpss_dispute_nonce' );
 
+		// Check if disputes are enabled in settings.
+		$order_settings = get_option( 'wpss_orders', array() );
+		if ( empty( $order_settings['allow_disputes'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Disputes are not enabled on this platform.', 'wp-sell-services' ) ) );
+		}
+
 		// Rate limiting.
 		if ( RateLimiter::check_and_track( 'dispute', get_current_user_id() ) ) {
 			RateLimiter::send_error( 'dispute' );

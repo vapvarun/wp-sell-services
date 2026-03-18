@@ -484,6 +484,16 @@ class DisputesController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
+		// Check if disputes are enabled in settings.
+		$order_settings = get_option( 'wpss_orders', array() );
+		if ( empty( $order_settings['allow_disputes'] ) ) {
+			return new WP_Error(
+				'disputes_disabled',
+				__( 'Disputes are not enabled on this platform.', 'wp-sell-services' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		$order_id    = (int) $request->get_param( 'order_id' );
 		$user_id     = get_current_user_id();
 		$reason      = $request->get_param( 'reason' );
