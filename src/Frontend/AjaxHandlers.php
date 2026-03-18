@@ -25,6 +25,7 @@ use WPSellServices\Services\ProposalService;
 use WPSellServices\Services\RequirementsService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\EmailService;
+use WPSellServices\Services\VendorService;
 use WPSellServices\Models\ServiceOrder;
 
 /**
@@ -141,6 +142,9 @@ class AjaxHandlers {
 
 		// Withdrawals.
 		add_action( 'wp_ajax_wpss_cancel_withdrawal', array( $this, 'cancel_withdrawal' ) );
+
+		// Profile.
+		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'update_vendor_profile' ) );
 	}
 
 	/**
@@ -3288,5 +3292,106 @@ class AjaxHandlers {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Update vendor/customer profile from the unified dashboard.
+	 *
+	 * Handles both vendor profiles (with vendor-specific fields like tagline, bio)
+	 * and regular customer profiles (display name only).
+	 *
+	 * @return void
+	 */
+	public function update_vendor_profile(): void {
+		check_ajax_referer( 'wpss_update_profile', 'wpss_profile_nonce' );
+
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		// Update display name (available for all users).
+		$display_name = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );
+		if ( ! empty( $display_name ) ) {
+			wp_update_user(
+				array(
+					'ID'           => $user_id,
+					'display_name' => $display_name,
+				)
+			);
+		}
+
+		// Update avatar (available for all users).
+		$avatar_id = absint( $_POST['avatar_id'] ?? 0 );
+		if ( $avatar_id > 0 ) {
+			update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
+		} else {
+			delete_user_meta( $user_id, '_wpss_avatar_id' );
+		}
+
+		// Check if user is a vendor and update vendor-specific fields.
+		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+
+		if ( $is_vendor ) {
+			$vendor_service = new VendorService();
+			$profile        = $vendor_service->get_profile( $user_id );
+
+			if ( $profile ) {
+				global $wpdb;
+				$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+
+				$update_data = array(
+					'updated_at' => current_time( 'mysql' ),
+				);
+
+				// Vendor-specific fields.
+				if ( isset( $_POST['tagline'] ) ) {
+					$update_data['tagline'] = sanitize_text_field( wp_unslash( $_POST['tagline'] ) );
+				}
+
+				if ( isset( $_POST['bio'] ) ) {
+					$update_data['bio'] = sanitize_textarea_field( wp_unslash( $_POST['bio'] ) );
+				}
+
+				if ( isset( $_POST['country'] ) ) {
+					$update_data['country'] = sanitize_text_field( wp_unslash( $_POST['country'] ) );
+				}
+
+				if ( isset( $_POST['city'] ) ) {
+					$update_data['city'] = sanitize_text_field( wp_unslash( $_POST['city'] ) );
+				}
+
+				if ( isset( $_POST['website'] ) ) {
+					$update_data['website'] = esc_url_raw( wp_unslash( $_POST['website'] ) );
+				}
+
+				// Vacation mode.
+				$update_data['vacation_mode'] = ! empty( $_POST['vacation_mode'] ) ? 1 : 0;
+
+				// Avatar and cover for vendor profile table.
+				if ( $avatar_id > 0 ) {
+					$update_data['avatar_id'] = $avatar_id;
+				} elseif ( isset( $_POST['avatar_id'] ) ) {
+					$update_data['avatar_id'] = null;
+				}
+
+				$cover_id = absint( $_POST['cover_id'] ?? 0 );
+				if ( $cover_id > 0 ) {
+					$update_data['cover_id'] = $cover_id;
+				} elseif ( isset( $_POST['cover_id'] ) ) {
+					$update_data['cover_id'] = null;
+				}
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update(
+					$profiles_table,
+					$update_data,
+					array( 'user_id' => $user_id )
+				);
+			}
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Profile updated successfully.', 'wp-sell-services' ) ) );
 	}
 }

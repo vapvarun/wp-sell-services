@@ -1174,7 +1174,10 @@ class Admin {
 												</span>
 											</div>
 											<div><?php echo wp_kses_post( wpautop( $message->content ?? '' ) ); ?></div>
-											<?php if ( ! empty( $message->attachments ) ) : ?>
+											<?php
+										$msg_attachments = $message->attachments ? json_decode( $message->attachments, true ) : array();
+										if ( ! empty( $msg_attachments ) && is_array( $msg_attachments ) ) :
+										?>
 												<div style="margin-top: 10px; color: #666;">
 													<span class="dashicons dashicons-paperclip"></span>
 													<?php esc_html_e( 'Has attachments', 'wp-sell-services' ); ?>

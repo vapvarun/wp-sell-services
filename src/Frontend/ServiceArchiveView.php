@@ -600,10 +600,19 @@ class ServiceArchiveView {
 		}
 
 		// Delivery time filter.
+		// Uses OR with NOT EXISTS so services without the flat meta key
+		// (created before the sync_delivery_days_meta hook was added) are
+		// not silently excluded from results.
 		if ( isset( $_GET['delivery'] ) && absint( $_GET['delivery'] ) > 0 ) {
+			$delivery_days = absint( $_GET['delivery'] );
+
+			// First, backfill any services missing the flat meta key.
+			// This is a lightweight query that only runs when the filter is active.
+			$this->backfill_delivery_days_meta();
+
 			$meta_query[] = array(
 				'key'     => '_wpss_delivery_days',
-				'value'   => absint( $_GET['delivery'] ),
+				'value'   => $delivery_days,
 				'compare' => '<=',
 				'type'    => 'NUMERIC',
 			);
@@ -647,4 +656,51 @@ class ServiceArchiveView {
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 	}
 
+	/**
+	 * Backfill _wpss_delivery_days meta for services missing it.
+	 *
+	 * Extracts the delivery_days value from the first package in _wpss_packages
+	 * and stores it as a flat meta key so the delivery time filter can query it.
+	 * Only processes services that don't already have the meta set.
+	 *
+	 * @return void
+	 */
+	private function backfill_delivery_days_meta(): void {
+		// Only run once per request.
+		static $done = false;
+		if ( $done ) {
+			return;
+		}
+		$done = true;
+
+		global $wpdb;
+
+		// Find published services that have packages but no _wpss_delivery_days meta.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$services = $wpdb->get_results(
+			"SELECT p.ID, pm.meta_value AS packages
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_wpss_packages'
+			LEFT JOIN {$wpdb->postmeta} dd ON dd.post_id = p.ID AND dd.meta_key = '_wpss_delivery_days'
+			WHERE p.post_type = 'wpss_service'
+			AND p.post_status = 'publish'
+			AND dd.meta_id IS NULL
+			LIMIT 100"
+		);
+
+		foreach ( $services as $service ) {
+			$packages = maybe_unserialize( $service->packages );
+
+			if ( empty( $packages ) || ! is_array( $packages ) ) {
+				continue;
+			}
+
+			$first         = reset( $packages );
+			$delivery_days = (int) ( $first['delivery_days'] ?? $first['delivery_time'] ?? 0 );
+
+			if ( $delivery_days > 0 ) {
+				update_post_meta( (int) $service->ID, '_wpss_delivery_days', $delivery_days );
+			}
+		}
+	}
 }

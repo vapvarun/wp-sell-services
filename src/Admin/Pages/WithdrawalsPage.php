@@ -774,15 +774,7 @@ class WithdrawalsPage {
 							<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
 						</button>
 					<?php else : ?>
-						<span class="wpss-withdrawal-details">
-							<?php
-							if ( $status === 'completed' ) {
-								esc_html_e( 'Payment sent', 'wp-sell-services' );
-							} elseif ( $status === 'rejected' ) {
-								esc_html_e( 'Request rejected', 'wp-sell-services' );
-							}
-							?>
-						</span>
+						<span class="wpss-withdrawal-details">&mdash;</span>
 					<?php endif; ?>
 				</div>
 			</td>

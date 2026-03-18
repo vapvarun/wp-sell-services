@@ -139,6 +139,10 @@ class SingleServiceView {
 	/**
 	 * Track service view.
 	 *
+	 * Uses JavaScript to set the cookie client-side, avoiding the
+	 * "headers already sent" PHP warning that occurred when setcookie()
+	 * was called during wp_head (after output had already started).
+	 *
 	 * @return void
 	 */
 	public function track_view(): void {
@@ -164,8 +168,17 @@ class SingleServiceView {
 		$views = (int) get_post_meta( $service_id, '_wpss_views', true );
 		update_post_meta( $service_id, '_wpss_views', $views + 1 );
 
-		// Set cookie to prevent duplicate tracking (24 hours).
-		setcookie( $viewed_key, '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN );
+		// Set cookie via JavaScript to avoid "headers already sent" warning.
+		// The wp_head hook fires after output has started, so PHP setcookie() cannot be used here.
+		$cookie_path   = defined( 'COOKIEPATH' ) ? COOKIEPATH : '/';
+		$cookie_domain = defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '';
+		$expires       = gmdate( 'D, d M Y H:i:s T', time() + DAY_IN_SECONDS );
+		printf(
+			'<script>document.cookie=%s;</script>',
+			wp_json_encode(
+				esc_js( $viewed_key ) . '=1; expires=' . $expires . '; path=' . $cookie_path . ( $cookie_domain ? '; domain=' . $cookie_domain : '' )
+			)
+		);
 	}
 
 	/**

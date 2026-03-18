@@ -613,13 +613,25 @@ class OrderService {
 	/**
 	 * Log status change.
 	 *
+	 * Tracks which status transitions have already been logged during this request
+	 * to prevent duplicate system messages when both OrderService::update_status()
+	 * and ServiceOrder::update() fire for the same order in the same request.
+	 *
 	 * @param int    $order_id   Order ID.
 	 * @param string $old_status Old status.
 	 * @param string $new_status New status.
 	 * @param string $note       Optional note.
 	 * @return void
 	 */
-	private function log_status_change( int $order_id, string $old_status, string $new_status, string $note = '' ): void {
+	public function log_status_change( int $order_id, string $old_status, string $new_status, string $note = '' ): void {
+		// Deduplicate within the same request to prevent double system messages.
+		static $logged = array();
+		$key = $order_id . ':' . $old_status . ':' . $new_status;
+		if ( isset( $logged[ $key ] ) ) {
+			return;
+		}
+		$logged[ $key ] = true;
+
 		// Create system message in conversation.
 		$conversation_service = new ConversationService();
 		$conversation         = $conversation_service->get_by_order( $order_id );

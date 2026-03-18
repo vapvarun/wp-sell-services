@@ -76,6 +76,12 @@ class OrderWorkflowManager {
 		add_action( 'wpss_order_status_cancelled', [ $this, 'handle_order_cancelled' ], 10, 2 );
 		add_action( 'wpss_order_status_cancellation_requested', [ $this, 'handle_cancellation_requested' ], 10, 2 );
 
+		// Log status changes to conversation system messages.
+		// This ensures changes made via ServiceOrder::update() (REST API path) also
+		// get logged. The static deduplication in log_status_change() prevents double
+		// messages when OrderService::update_status() already logged the change.
+		add_action( 'wpss_order_status_changed', [ $this->order_service, 'log_status_change' ], 5, 3 );
+
 		// Payment hooks.
 		add_action( 'wpss_order_paid', [ $this, 'handle_payment_complete' ], 10, 2 );
 

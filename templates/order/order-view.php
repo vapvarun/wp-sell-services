@@ -863,6 +863,32 @@ do_action( 'wpss_before_order_view', $order );
 							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->completed_at->getTimestamp() ) ); ?></span>
 						</div>
 					</div>
+				<?php elseif ( in_array( $order->status, array( 'cancelled', 'refunded', 'partially_refunded' ), true ) ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title">
+								<?php
+								if ( 'refunded' === $order->status ) {
+									esc_html_e( 'Refunded', 'wp-sell-services' );
+								} elseif ( 'partially_refunded' === $order->status ) {
+									esc_html_e( 'Partially Refunded', 'wp-sell-services' );
+								} else {
+									esc_html_e( 'Cancelled', 'wp-sell-services' );
+								}
+								?>
+							</span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
+				<?php elseif ( 'cancellation_requested' === $order->status ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Cancellation Requested', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
 				<?php else : ?>
 					<!-- Pending steps -->
 					<?php if ( ! $order->started_at && in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) : ?>

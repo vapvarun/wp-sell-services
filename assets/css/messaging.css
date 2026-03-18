@@ -423,8 +423,10 @@
 	object-fit: cover;
 }
 
-/* Hide avatar for consecutive messages */
-.wpss-messaging__message:not(:last-child) .wpss-messaging__message-avatar {
+/* Hide avatar for consecutive messages from the same sender.
+ * Only hide when the next sibling is also a non-sent (received) message,
+ * indicating consecutive messages from the other person. */
+.wpss-messaging__message:not(.wpss-messaging__message--sent) + .wpss-messaging__message:not(.wpss-messaging__message--sent) .wpss-messaging__message-avatar {
 	visibility: hidden;
 }
 
