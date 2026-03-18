@@ -42,16 +42,19 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
 	printf(
-		/* translators: %s: vendor name */
+		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
-		esc_html( $vendor ? $vendor->display_name : __( 'there', 'wp-sell-services' ) )
+		esc_html( $recipient ? $recipient->display_name : __( 'there', 'wp-sell-services' ) )
 	);
 	?>
 </p>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php esc_html_e( 'Great news! You have received a new service order.', 'wp-sell-services' ); ?>
-</p>
+	<?php if ( ! empty( $is_customer ) ) : ?>
+		<?php esc_html_e( 'Your order has been placed successfully! Here are the details.', 'wp-sell-services' ); ?>
+	<?php else : ?>
+		<?php esc_html_e( 'Great news! You have received a new service order.', 'wp-sell-services' ); ?>
+	<?php endif; ?>
 
 <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #3c3c3c;">
 	<?php printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ) ); ?>
@@ -68,8 +71,13 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( ucfirst( $order->package_type ) ); ?></td>
 		</tr>
 		<tr>
-			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $customer_name ); ?></td>
+			<?php if ( ! empty( $is_customer ) ) : ?>
+				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
+				<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $vendor_name ?? ( $vendor ? $vendor->display_name : '' ) ); ?></td>
+			<?php else : ?>
+				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Customer', 'wp-sell-services' ); ?></th>
+				<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $customer_name ); ?></td>
+			<?php endif; ?>
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; font-weight: 600;"><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
@@ -79,7 +87,11 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 </table>
 
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
-	<?php esc_html_e( 'The customer will submit their requirements shortly. You\'ll receive another notification when they do.', 'wp-sell-services' ); ?>
+	<?php if ( ! empty( $is_customer ) ) : ?>
+		<?php esc_html_e( 'Please submit your requirements so the vendor can start working on your order. Click the button below to get started.', 'wp-sell-services' ); ?>
+	<?php else : ?>
+		<?php esc_html_e( 'The customer will submit their requirements shortly. You\'ll receive another notification when they do.', 'wp-sell-services' ); ?>
+	<?php endif; ?>
 </p>
 
 <p style="text-align: center; margin: 30px 0;">
@@ -92,7 +104,23 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	 * @param string                             $button_url Default button URL.
 	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
 	 */
-	$button_url = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'new_order', $order );
+	if ( ! empty( $is_customer ) ) {
+		$default_url  = function_exists( 'wpss_get_order_requirements_url' ) ? wpss_get_order_requirements_url( $order->id ) : wpss_get_order_url( $order->id );
+		$default_text = __( 'Submit Requirements', 'wp-sell-services' );
+	} else {
+		$default_url  = wpss_get_order_url( $order->id );
+		$default_text = __( 'View Order', 'wp-sell-services' );
+	}
+
+	/**
+	 * Filters the button URL for the new order email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string                             $button_url Default button URL.
+	 * @param WPSellServices\Models\ServiceOrder $order Service order object.
+	 */
+	$button_url = apply_filters( 'wpss_email_button_url', $default_url, 'new_order', $order );
 
 	/**
 	 * Filters the button text for the new order email.
@@ -101,7 +129,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text = apply_filters( 'wpss_email_button_text', __( 'View Order', 'wp-sell-services' ), 'new_order' );
+	$button_text = apply_filters( 'wpss_email_button_text', $default_text, 'new_order' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>
