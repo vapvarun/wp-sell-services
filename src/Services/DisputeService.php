@@ -332,7 +332,7 @@ class DisputeService {
 		);
 
 		// Store status note in evidence JSON if provided.
-		if ( $note ) {
+		if ( $note && $dispute ) {
 			$evidence         = is_array( $dispute->evidence ) ? $dispute->evidence : array();
 			$evidence[]       = array(
 				'id'         => uniqid( 'note_' ),

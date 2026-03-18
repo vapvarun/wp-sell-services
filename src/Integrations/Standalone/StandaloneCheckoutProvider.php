@@ -216,6 +216,26 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$price      = $unit_price * $quantity;
 		$currency   = wpss_get_currency();
 
+		// Calculate tax.
+		$tax_settings = get_option( 'wpss_tax', [] );
+		$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
+		$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
+		$tax_included = ! empty( $tax_settings['tax_included'] );
+		$tax_label    = $tax_settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' );
+
+		/** This filter is documented in StandaloneOrderProvider::create_order() */
+		$tax_rate = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
+
+		$tax_amount = 0;
+		if ( $tax_rate > 0 ) {
+			if ( $tax_included ) {
+				$tax_amount = $price - ( $price / ( 1 + $tax_rate / 100 ) );
+			} else {
+				$tax_amount = $price * ( $tax_rate / 100 );
+			}
+		}
+		$total = $tax_included ? $price : $price + $tax_amount;
+
 		// Get available payment gateways.
 		$gateways = wpss()->get_payment_gateways();
 		$enabled_gateways = array_filter( $gateways, fn( $g ) => $g->is_enabled() );
@@ -239,9 +259,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					</div>
 				</div>
 
+				<?php if ( $tax_amount > 0 ) : ?>
+					<div class="wpss-checkout-subtotal">
+						<span><?php esc_html_e( 'Subtotal', 'wp-sell-services' ); ?></span>
+						<span><?php echo esc_html( wpss_format_price( $price, $currency ) ); ?></span>
+					</div>
+					<div class="wpss-checkout-tax">
+						<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
+						<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
+					</div>
+				<?php endif; ?>
+
 				<div class="wpss-checkout-total">
 					<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-					<span class="wpss-total-amount"><?php echo esc_html( wpss_format_price( $price, $currency ) ); ?></span>
+					<span class="wpss-total-amount"><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></span>
 				</div>
 			</div>
 
@@ -265,7 +296,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<input type="hidden" name="service_id" value="<?php echo esc_attr( $service->id ); ?>">
 					<input type="hidden" name="package_id" value="<?php echo esc_attr( $package_id ); ?>">
 					<input type="hidden" name="quantity" value="<?php echo esc_attr( $quantity ); ?>">
-					<input type="hidden" name="amount" value="<?php echo esc_attr( $price ); ?>">
+					<input type="hidden" name="amount" value="<?php echo esc_attr( $total ); ?>">
+					<input type="hidden" name="tax_amount" value="<?php echo esc_attr( round( $tax_amount, 2 ) ); ?>">
 					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
 
 					<div class="wpss-payment-methods">

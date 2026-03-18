@@ -41,9 +41,36 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		}
 
 		// Calculate totals.
-		$subtotal = (float) ( $order_data['subtotal'] ?? 0 );
+		$subtotal     = (float) ( $order_data['subtotal'] ?? 0 );
 		$addons_total = (float) ( $order_data['addons_total'] ?? 0 );
-		$total = $subtotal + $addons_total;
+		$total        = $subtotal + $addons_total;
+
+		// Apply tax.
+		$tax_settings = get_option( 'wpss_tax', [] );
+		$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
+		$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
+		$tax_included = ! empty( $tax_settings['tax_included'] );
+
+		/**
+		 * Filters the tax rate applied at checkout.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param float $tax_rate   Site-wide tax rate from settings.
+		 * @param int   $vendor_id  Vendor user ID.
+		 * @param int   $service_id Service post ID.
+		 */
+		$tax_rate   = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
+		$tax_amount = 0;
+
+		if ( $tax_rate > 0 ) {
+			if ( $tax_included ) {
+				$tax_amount = $total - ( $total / ( 1 + $tax_rate / 100 ) );
+			} else {
+				$tax_amount = $total * ( $tax_rate / 100 );
+				$total     += $tax_amount;
+			}
+		}
 
 		// Get delivery info.
 		$delivery_days = (int) ( $order_data['delivery_days'] ?? 7 );
@@ -72,8 +99,12 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'revisions_included'  => $revisions,
 				'created_at'          => current_time( 'mysql' ),
 				'updated_at'          => current_time( 'mysql' ),
+				'meta'                => wp_json_encode( [
+					'tax_rate'   => $tax_rate,
+					'tax_amount' => round( $tax_amount, 2 ),
+				] ),
 			],
-			[ '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s' ]
+			[ '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' ]
 		);
 
 		$order_id = (int) $wpdb->insert_id;
