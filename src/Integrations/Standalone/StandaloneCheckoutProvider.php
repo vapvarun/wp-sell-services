@@ -319,7 +319,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<button type="submit" class="button button-primary wpss-checkout-button">
 						<?php
 						/* translators: %s: formatted price */
-						printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $price, $currency ) ) );
+						printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $total, $currency ) ) );
 						?>
 					</button>
 				</form>
