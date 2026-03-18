@@ -104,6 +104,16 @@
 	color: var(--wpss-primary-hover);
 }
 
+.wpss-single-service a.wpss-btn-secondary {
+    background: var(--wpss-secondary);
+    color: var(--wpss-white);
+}
+
+.wpss-single-service a.wpss-btn-secondary:hover {
+    background: var(--wpss-secondary);
+    color: var(--wpss-white);
+}
+
 /* Reset theme list styles */
 .wpss-single-service ul,
 .wpss-single-service ol {
@@ -1086,6 +1096,8 @@
 
 .wpss-detail-icon {
 	width: 18px;
+	display: flex;
+	align-items: center;
 	text-align: center;
 	color: var(--wpss-text-muted);
 }

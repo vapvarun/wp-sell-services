@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Sell Services 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wbcomdesigns.com/support/\n"
-"POT-Creation-Date: 2026-03-18 06:30:29+00:00\n"
+"POT-Creation-Date: 2026-03-18 07:04:33+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2590,7 +2590,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:382
 #: src/Admin/Metaboxes/ServiceMetabox.php:1626
 #: src/Frontend/ServiceWizard.php:634
-#: templates/partials/service-packages.php:129
+#: templates/partials/service-packages.php:131
 msgid "Revisions"
 msgstr ""
 
@@ -3666,7 +3666,7 @@ msgid "Create All Pages"
 msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:486 src/Frontend/ServiceWizard.php:368
-#: templates/partials/service-packages.php:195
+#: templates/partials/service-packages.php:197
 msgid "Continue"
 msgstr ""
 
@@ -3847,7 +3847,7 @@ msgstr ""
 #: src/Admin/Pages/UpgradePage.php:75 src/Admin/Pages/UpgradePage.php:80
 #: src/Admin/Pages/UpgradePage.php:85 src/Frontend/ServiceWizard.php:641
 #: templates/order/order-confirmation.php:235
-#: templates/partials/service-packages.php:134
+#: templates/partials/service-packages.php:136
 msgid "Unlimited"
 msgstr ""
 
@@ -4127,7 +4127,7 @@ msgid "Back to Vendors"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1054 src/Blocks/SellerCard.php:213
-#: templates/partials/vendor-card.php:147 templates/single-request.php:306
+#: templates/partials/vendor-card.php:153 templates/single-request.php:306
 msgid "View Profile"
 msgstr ""
 
@@ -7320,7 +7320,7 @@ msgid "Contact Me"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:507
-#: templates/partials/vendor-card.php:123
+#: templates/partials/vendor-card.php:125
 msgid "Member since"
 msgstr ""
 
@@ -7329,7 +7329,7 @@ msgid "Avg. Response Time"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:526
-#: templates/partials/vendor-card.php:138
+#: templates/partials/vendor-card.php:144
 msgid "Last Delivery"
 msgstr ""
 
@@ -7367,7 +7367,7 @@ msgid "Continue to Checkout"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:805
-#: templates/partials/service-packages.php:238 templates/vendor/profile.php:531
+#: templates/partials/service-packages.php:240 templates/vendor/profile.php:531
 msgid "Contact Seller"
 msgstr ""
 
@@ -8652,7 +8652,7 @@ msgid "New Service"
 msgstr ""
 
 #: src/PostTypes/ServicePostType.php:85
-#: templates/partials/service-packages.php:191
+#: templates/partials/service-packages.php:193
 msgid "Edit Service"
 msgstr ""
 
@@ -12659,7 +12659,7 @@ msgstr ""
 msgid "No reviews yet. Be the first to review this service!"
 msgstr ""
 
-#: templates/partials/vendor-card.php:130
+#: templates/partials/vendor-card.php:134
 msgid "Avg. Response"
 msgstr ""
 
