@@ -221,7 +221,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		// Only pending_payment orders can be paid.
-		if ( 'pending_payment' !== $order->status || 'pending' !== $order->payment_status ) {
+		if ( 'pending_payment' !== $order->status ) {
 			return '<p class="wpss-alert wpss-alert-info">' . esc_html__( 'This order has already been paid.', 'wp-sell-services' ) . '</p>';
 		}
 
