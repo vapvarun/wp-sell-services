@@ -23,7 +23,6 @@ use WPSellServices\Frontend\TemplateLoader;
 use WPSellServices\Frontend\ServiceArchiveView;
 use WPSellServices\Frontend\BuyerRequestArchiveView;
 use WPSellServices\Frontend\ServiceWizard;
-use WPSellServices\Frontend\VendorDashboard;
 use WPSellServices\Frontend\UnifiedDashboard;
 use WPSellServices\Integrations\IntegrationManager;
 use WPSellServices\PostTypes\ServicePostType;
@@ -184,14 +183,6 @@ final class Plugin {
 	private ?ServiceWizard $service_wizard = null;
 
 	/**
-	 * Vendor dashboard instance.
-	 *
-	 * @var VendorDashboard|null
-	 * @deprecated 1.1.0 Use UnifiedDashboard instead.
-	 */
-	private ?VendorDashboard $vendor_dashboard = null;
-
-	/**
 	 * Unified dashboard instance.
 	 *
 	 * @var UnifiedDashboard|null
@@ -242,7 +233,6 @@ final class Plugin {
 		$this->define_seo_hooks();
 		$this->define_shortcode_hooks();
 		$this->define_wizard_hooks();
-		$this->define_vendor_dashboard_hooks();
 		$this->define_unified_dashboard_hooks();
 		$this->define_auto_vendor_hooks();
 		$this->define_provider_hooks();
@@ -785,20 +775,6 @@ final class Plugin {
 		$this->service_wizard = new ServiceWizard();
 
 		$this->loader->add_action( 'init', $this->service_wizard, 'init' );
-	}
-
-	/**
-	 * Define vendor dashboard hooks.
-	 *
-	 * Vendor dashboard needs AJAX handlers and shortcodes for frontend display.
-	 *
-	 * @deprecated 1.1.0 Use define_unified_dashboard_hooks instead.
-	 * @return void
-	 */
-	private function define_vendor_dashboard_hooks(): void {
-		$this->vendor_dashboard = new VendorDashboard();
-
-		$this->loader->add_action( 'init', $this->vendor_dashboard, 'init' );
 	}
 
 	/**

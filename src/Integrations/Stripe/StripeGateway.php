@@ -759,13 +759,25 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		if ( ! $order ) {
 			// Refund if order creation fails.
-			$this->process_refund( $payment_intent_id );
+			$refund_result = $this->process_refund( $payment_intent_id );
+			if ( empty( $refund_result['success'] ) ) {
+				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+			}
 			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
-			return; // Explicit return for defensive coding.
+			return;
 		}
 
+		// Update Stripe PaymentIntent metadata with order_id so webhooks can recover.
+		$this->api_request(
+			"payment_intents/{$payment_intent_id}",
+			array( 'metadata' => array( 'order_id' => $order->id ) )
+		);
+
 		// Mark as paid.
-		$order_provider->mark_as_paid( $order->id, $payment_intent_id, 'stripe' );
+		$paid = $order_provider->mark_as_paid( $order->id, $payment_intent_id, 'stripe' );
+		if ( ! $paid ) {
+			wpss_log( "Failed to mark order {$order->id} as paid for Stripe payment {$payment_intent_id}.", 'error' );
+		}
 
 		wp_send_json_success(
 			array(
@@ -783,25 +795,63 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return array
 	 */
 	private function handle_payment_succeeded( array $payment_intent ): array {
-		$metadata = $payment_intent['metadata'] ?? array();
+		$metadata       = $payment_intent['metadata'] ?? array();
+		$order_provider = wpss_get_order_provider();
 
-		// If order was already created via AJAX, just confirm.
-		if ( ! empty( $metadata['order_id'] ) ) {
-			$order_provider = wpss_get_order_provider();
-
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid(
-					(int) $metadata['order_id'],
-					$payment_intent['id'],
-					'stripe'
-				);
-			}
+		if ( ! $order_provider ) {
+			return array( 'success' => false, 'message' => 'No order provider.' );
 		}
 
-		return array(
-			'success' => true,
-			'message' => 'Payment processed.',
-		);
+		// Path 1: Order already created via AJAX — just confirm payment.
+		if ( ! empty( $metadata['order_id'] ) ) {
+			$order_provider->mark_as_paid(
+				(int) $metadata['order_id'],
+				$payment_intent['id'],
+				'stripe'
+			);
+
+			return array( 'success' => true, 'message' => 'Order confirmed.' );
+		}
+
+		// Path 2: AJAX path failed — recover by creating the order from metadata.
+		if ( ! empty( $metadata['service_id'] ) && ! empty( $metadata['customer_id'] ) ) {
+			$amount   = $this->parse_amount( (int) $payment_intent['amount'], $payment_intent['currency'] ?? 'usd' );
+			$currency = strtoupper( $payment_intent['currency'] ?? 'usd' );
+
+			$order = $order_provider->create_order(
+				array(
+					'service_id'     => (int) $metadata['service_id'],
+					'package_id'     => (int) ( $metadata['package_id'] ?? 0 ),
+					'customer_id'    => (int) $metadata['customer_id'],
+					'subtotal'       => $amount,
+					'currency'       => $currency,
+					'payment_method' => 'stripe',
+				)
+			);
+
+			if ( $order ) {
+				$order_provider->mark_as_paid( $order->id, $payment_intent['id'], 'stripe' );
+
+				// Store order_id back on PaymentIntent for future webhook deliveries.
+				$this->api_request(
+					"payment_intents/{$payment_intent['id']}",
+					array( 'metadata' => array( 'order_id' => $order->id ) )
+				);
+
+				wpss_log( "Webhook recovery: Created order {$order->id} for Stripe payment {$payment_intent['id']}.", 'info' );
+
+				return array( 'success' => true, 'message' => 'Order recovered via webhook.' );
+			}
+
+			wpss_log( "Webhook recovery FAILED: Could not create order for Stripe payment {$payment_intent['id']}.", 'error' );
+
+			return array( 'success' => false, 'message' => 'Order creation failed in webhook recovery.' );
+		}
+
+		// No metadata to work with — log and move on.
+		wpss_log( "Stripe webhook: payment_intent.succeeded with no actionable metadata. PI: {$payment_intent['id']}", 'warning' );
+
+		return array( 'success' => true, 'message' => 'Payment noted, no order action taken.' );
 	}
 
 	/**
