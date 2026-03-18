@@ -206,7 +206,7 @@ class BuyerRequestMetabox {
 						<td>
 							<?php
 							$statuses     = ProposalService::get_statuses();
-							$status_class = 'wpss-status-' . esc_attr( $proposal->status );
+							$status_class = 'wpss-status-badge wpss-status-' . esc_attr( $proposal->status );
 							printf(
 								'<span class="%s">%s</span>',
 								esc_attr( $status_class ),

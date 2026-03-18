@@ -1808,12 +1808,14 @@
 }
 
 .wpss-status-active,
-.wpss-status-approved {
+.wpss-status-approved,
+.wpss-status-accepted {
 	background: #d4edda;
 	color: #155724;
 }
 
-.wpss-status-pending {
+.wpss-status-pending,
+.wpss-status-withdrawn {
 	background: #fff3cd;
 	color: #856404;
 }
