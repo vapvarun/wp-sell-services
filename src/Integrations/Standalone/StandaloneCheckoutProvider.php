@@ -283,7 +283,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
 									<?php echo esc_html( $gateway->get_name() ); ?>
 								</label>
-								<?php $gateway->render_payment_form( $order->service_id ); ?>
+								<?php echo $gateway->render_payment_form( $total, $currency, $order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 							</div>
 						<?php endforeach; ?>
 					</div>
