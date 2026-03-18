@@ -261,7 +261,7 @@ class VendorProfile {
 		$profile->orders_completed = (int) ( $row->completed_orders ?? 0 );
 		$profile->response_time    = (float) ( $row->response_time_hours ?? 0 ); // DB column is 'response_time_hours'.
 		$profile->delivery_rate    = (float) ( $row->on_time_delivery_rate ?? 0 ); // DB column is 'on_time_delivery_rate'.
-		$profile->is_verified      = isset( $row->verification_tier ) && 'basic' !== $row->verification_tier;
+		$profile->is_verified      = isset( $row->verification_tier ) && self::TIER_PRO === $row->verification_tier;
 		$profile->is_available     = (bool) ( $row->is_available ?? true );
 		$profile->status           = $row->status ?? 'active';
 		$profile->social_links     = isset( $row->social_links ) && $row->social_links ? json_decode( $row->social_links, true ) : array();
@@ -313,7 +313,7 @@ class VendorProfile {
 	public static function get_tiers(): array {
 		return array(
 			self::TIER_NEW       => __( 'New Seller', 'wp-sell-services' ),
-			self::TIER_RISING    => __( 'Rising Talent', 'wp-sell-services' ),
+			self::TIER_RISING    => __( 'Rising Seller', 'wp-sell-services' ),
 			self::TIER_TOP_RATED => __( 'Top Rated', 'wp-sell-services' ),
 			self::TIER_PRO       => __( 'Pro Seller', 'wp-sell-services' ),
 		);

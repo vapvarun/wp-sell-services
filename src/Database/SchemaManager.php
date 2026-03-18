@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.3.8';
+	const DB_VERSION = '1.3.9';
 
 	/**
 	 * Option name for storing DB version.
@@ -97,6 +97,10 @@ class SchemaManager {
 			$this->backfill_delivery_days();
 		}
 
+		if ( version_compare( $old_version, '1.3.9', '<' ) ) {
+			$this->migrate_vendor_tiers();
+		}
+
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
 
@@ -140,6 +144,36 @@ class SchemaManager {
 					update_post_meta( $service_id, '_wpss_delivery_days', $delivery_days );
 				}
 			}
+		}
+	}
+
+	/**
+	 * Migrate vendor verification_tier values to the unified tier system.
+	 *
+	 * Maps old values: basic -> new, verified -> rising, level_1 -> rising, level_2 -> top_rated.
+	 * Values new, rising, top_rated, pro are left unchanged.
+	 *
+	 * @return void
+	 */
+	private function migrate_vendor_tiers(): void {
+		$table = $this->prefix . 'vendor_profiles';
+
+		$mappings = array(
+			'basic'    => 'new',
+			'verified' => 'rising',
+			'level_1'  => 'rising',
+			'level_2'  => 'top_rated',
+		);
+
+		foreach ( $mappings as $old_value => $new_value ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->update(
+				$table,
+				array( 'verification_tier' => $new_value ),
+				array( 'verification_tier' => $old_value ),
+				array( '%s' ),
+				array( '%s' )
+			);
 		}
 	}
 
@@ -573,7 +607,7 @@ class SchemaManager {
 			avatar_id bigint(20) unsigned DEFAULT NULL,
 			cover_image_id bigint(20) unsigned DEFAULT NULL,
 			status varchar(50) DEFAULT 'active',
-			verification_tier varchar(50) DEFAULT 'basic',
+			verification_tier varchar(50) DEFAULT 'new',
 			verified_at datetime DEFAULT NULL,
 			country varchar(100) DEFAULT NULL,
 			city varchar(100) DEFAULT NULL,

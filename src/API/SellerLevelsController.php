@@ -241,12 +241,7 @@ class SellerLevelsController extends RestController {
 		$level_service  = new SellerLevelService();
 		$all_reqs       = $level_service->get_all_requirements();
 
-		$labels = array(
-			'new'       => __( 'New Seller', 'wp-sell-services' ),
-			'level_1'   => __( 'Level 1 Seller', 'wp-sell-services' ),
-			'level_2'   => __( 'Level 2 Seller', 'wp-sell-services' ),
-			'top_rated' => __( 'Top Rated Seller', 'wp-sell-services' ),
-		);
+		$labels = SellerLevelService::get_level_labels();
 
 		$levels = array();
 		foreach ( $all_reqs as $key => $reqs ) {

@@ -899,7 +899,7 @@ final class Plugin {
 				'user_id'           => $user_id,
 				'display_name'      => $user->display_name,
 				'status'            => 'active',
-				'verification_tier' => 'basic',
+				'verification_tier' => 'new',
 				'created_at'        => current_time( 'mysql' ),
 			),
 			array( '%d', '%s', '%s', '%s', '%s' )

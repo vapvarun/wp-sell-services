@@ -88,7 +88,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 */
 	public function get_verified( array $args = array() ): array {
 		$defaults = array(
-			'tier'    => 'verified',
+			'tier'    => 'rising',
 			'orderby' => 'avg_rating',
 			'order'   => 'DESC',
 			'limit'   => 20,
@@ -274,13 +274,13 @@ class VendorProfileRepository extends AbstractRepository {
 	 * Update verification tier.
 	 *
 	 * @param int    $user_id User ID.
-	 * @param string $tier    Verification tier (basic, verified, pro).
+	 * @param string $tier    Verification tier (new, rising, top_rated, pro).
 	 * @return bool True on success.
 	 */
 	public function update_verification_tier( int $user_id, string $tier ): bool {
 		$data = array( 'verification_tier' => $tier );
 
-		if ( 'basic' !== $tier ) {
+		if ( 'new' !== $tier ) {
 			$data['verified_at'] = current_time( 'mysql' );
 		}
 
@@ -337,7 +337,7 @@ class VendorProfileRepository extends AbstractRepository {
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
-				WHERE verification_tier = 'basic' AND verified_at IS NULL
+				WHERE verification_tier = 'new' AND verified_at IS NULL
 				ORDER BY created_at ASC
 				LIMIT %d OFFSET %d",
 				$args['limit'],

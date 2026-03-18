@@ -357,7 +357,7 @@ class MigrationManager {
 					'display_name'      => $user->display_name,
 					'tagline'           => get_user_meta( $user_id, '_wss_vendor_tagline', true ) ?: null,
 					'bio'               => get_user_meta( $user_id, '_wss_vendor_bio', true ) ?: null,
-					'verification_tier' => 'basic',
+					'verification_tier' => 'new',
 					'country'           => get_user_meta( $user_id, '_wss_vendor_country', true ) ?: null,
 					'total_orders'      => (int) get_user_meta( $user_id, '_wss_total_orders', true ),
 					'completed_orders'  => (int) get_user_meta( $user_id, '_wss_completed_orders', true ),

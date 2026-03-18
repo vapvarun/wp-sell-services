@@ -2041,7 +2041,7 @@ class VendorsPage {
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Verification Tier', 'wp-sell-services' ); ?></span>
-					<span class="wpss-info-value"><?php echo esc_html( ucfirst( $profile->verification_tier ?? 'basic' ) ); ?></span>
+					<span class="wpss-info-value"><?php echo esc_html( \WPSellServices\Models\VendorProfile::get_tiers()[ $profile->verification_tier ?? 'new' ] ?? ucfirst( $profile->verification_tier ?? 'new' ) ); ?></span>
 				</div>
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Verified At', 'wp-sell-services' ); ?></span>
@@ -2758,7 +2758,7 @@ class VendorsPage {
 			<div class="wpss-settings-section">
 				<p>
 					<strong><?php esc_html_e( 'Current Tier:', 'wp-sell-services' ); ?></strong>
-					<?php echo esc_html( ucfirst( $profile->verification_tier ?? 'basic' ) ); ?>
+					<?php echo esc_html( \WPSellServices\Models\VendorProfile::get_tiers()[ $profile->verification_tier ?? 'new' ] ?? ucfirst( $profile->verification_tier ?? 'new' ) ); ?>
 				</p>
 				<?php if ( $profile->verified_at ) : ?>
 					<p>

@@ -50,6 +50,7 @@
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Services\VendorService;
+use WPSellServices\Models\VendorProfile;
 
 // Get vendor ID from global (set by TemplateLoader) or query var.
 if ( empty( $vendor_id ) ) {
@@ -82,7 +83,7 @@ $languages     = ! empty( $profile->languages ) ? json_decode( $profile->languag
 $response_time = $vendor_service->get_response_time( $vendor_id );
 $country       = $profile->country ?? '';
 $member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
-$is_verified   = ( $profile->verification_tier ?? '' ) !== VendorService::TIER_BASIC;
+$is_verified   = ( $profile->verification_tier ?? '' ) === VendorProfile::TIER_PRO;
 $social_links  = ! empty( $profile->social_links ) ? json_decode( $profile->social_links, true ) : [];
 
 // Stats from profile (cached in database).

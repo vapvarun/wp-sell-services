@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Services;
 
+use WPSellServices\Models\VendorProfile;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -24,20 +26,15 @@ defined( 'ABSPATH' ) || exit;
 class SellerLevelService {
 
 	/**
-	 * Seller level constants.
-	 */
-	public const LEVEL_NEW       = 'new';
-	public const LEVEL_ONE       = 'level_1';
-	public const LEVEL_TWO       = 'level_2';
-	public const LEVEL_TOP_RATED = 'top_rated';
-
-	/**
 	 * Level requirements.
+	 *
+	 * Levels use VendorProfile::TIER_* constants.
+	 * Pro tier is admin-granted only and never auto-assigned.
 	 *
 	 * @var array<string, array>
 	 */
 	private array $requirements = array(
-		self::LEVEL_NEW       => array(
+		'new'       => array(
 			'min_orders'        => 0,
 			'min_rating'        => 0,
 			'min_reviews'       => 0,
@@ -45,7 +42,7 @@ class SellerLevelService {
 			'min_delivery_rate' => 0,
 			'min_days_active'   => 0,
 		),
-		self::LEVEL_ONE       => array(
+		'rising'    => array(
 			'min_orders'        => 5,
 			'min_rating'        => 4.0,
 			'min_reviews'       => 3,
@@ -53,21 +50,13 @@ class SellerLevelService {
 			'min_delivery_rate' => 80,
 			'min_days_active'   => 30,
 		),
-		self::LEVEL_TWO       => array(
+		'top_rated' => array(
 			'min_orders'        => 25,
-			'min_rating'        => 4.5,
+			'min_rating'        => 4.7,
 			'min_reviews'       => 10,
 			'min_response_rate' => 90,
 			'min_delivery_rate' => 90,
 			'min_days_active'   => 90,
-		),
-		self::LEVEL_TOP_RATED => array(
-			'min_orders'        => 100,
-			'min_rating'        => 4.8,
-			'min_reviews'       => 50,
-			'min_response_rate' => 95,
-			'min_delivery_rate' => 95,
-			'min_days_active'   => 180,
 		),
 	);
 
@@ -81,14 +70,14 @@ class SellerLevelService {
 		$stats = $this->get_vendor_stats( $user_id );
 
 		if ( ! $stats ) {
-			return self::LEVEL_NEW;
+			return VendorProfile::TIER_NEW;
 		}
 
 		// Check levels from highest to lowest.
+		// Pro is never auto-assigned (admin-only).
 		$levels_to_check = array(
-			self::LEVEL_TOP_RATED,
-			self::LEVEL_TWO,
-			self::LEVEL_ONE,
+			VendorProfile::TIER_TOP_RATED,
+			VendorProfile::TIER_RISING,
 		);
 
 		foreach ( $levels_to_check as $level ) {
@@ -97,7 +86,7 @@ class SellerLevelService {
 			}
 		}
 
-		return self::LEVEL_NEW;
+		return VendorProfile::TIER_NEW;
 	}
 
 	/**
@@ -248,12 +237,7 @@ class SellerLevelService {
 	 * @return array<string, string> Level labels.
 	 */
 	public static function get_level_labels(): array {
-		return array(
-			self::LEVEL_NEW       => __( 'New Seller', 'wp-sell-services' ),
-			self::LEVEL_ONE       => __( 'Level 1 Seller', 'wp-sell-services' ),
-			self::LEVEL_TWO       => __( 'Level 2 Seller', 'wp-sell-services' ),
-			self::LEVEL_TOP_RATED => __( 'Top Rated Seller', 'wp-sell-services' ),
-		);
+		return VendorProfile::get_tiers();
 	}
 
 	/**
@@ -357,7 +341,7 @@ class SellerLevelService {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		return $level ? $level : self::LEVEL_NEW;
+		return $level ? $level : VendorProfile::TIER_NEW;
 	}
 
 	/**
@@ -371,11 +355,11 @@ class SellerLevelService {
 		$stats         = $this->get_vendor_stats( $user_id );
 
 		// Determine next level.
+		// Pro is admin-only and not part of the auto-progression path.
 		$level_order = array(
-			self::LEVEL_NEW,
-			self::LEVEL_ONE,
-			self::LEVEL_TWO,
-			self::LEVEL_TOP_RATED,
+			VendorProfile::TIER_NEW,
+			VendorProfile::TIER_RISING,
+			VendorProfile::TIER_TOP_RATED,
 		);
 
 		$current_index = array_search( $current_level, $level_order, true );
@@ -390,7 +374,7 @@ class SellerLevelService {
 				'current_level' => $current_level,
 				'next_level'    => null,
 				'progress'      => array(),
-				'is_max_level'  => self::LEVEL_TOP_RATED === $current_level,
+				'is_max_level'  => VendorProfile::TIER_TOP_RATED === $current_level || VendorProfile::TIER_PRO === $current_level,
 			);
 		}
 

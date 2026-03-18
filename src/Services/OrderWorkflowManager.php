@@ -16,6 +16,7 @@ namespace WPSellServices\Services;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Models\VendorProfile;
 
 /**
  * Manages order workflow automation.
@@ -525,8 +526,13 @@ class OrderWorkflowManager {
 
 		foreach ( $vendors as $vendor ) {
 			$user_id       = (int) $vendor->user_id;
-			$current_level = $vendor->verification_tier ?? SellerLevelService::LEVEL_NEW;
+			$current_level = $vendor->verification_tier ?? VendorProfile::TIER_NEW;
 			$new_level     = $seller_level_service->calculate_level( $user_id );
+
+			// Skip Pro vendors — their tier is admin-granted only.
+			if ( VendorProfile::TIER_PRO === $current_level ) {
+				continue;
+			}
 
 			// Only update if level changed.
 			if ( $new_level !== $current_level ) {
@@ -534,10 +540,9 @@ class OrderWorkflowManager {
 
 				// Check if this is a promotion (not demotion).
 				$level_order = [
-					SellerLevelService::LEVEL_NEW,
-					SellerLevelService::LEVEL_ONE,
-					SellerLevelService::LEVEL_TWO,
-					SellerLevelService::LEVEL_TOP_RATED,
+					VendorProfile::TIER_NEW,
+					VendorProfile::TIER_RISING,
+					VendorProfile::TIER_TOP_RATED,
 				];
 
 				$current_index = array_search( $current_level, $level_order, true );

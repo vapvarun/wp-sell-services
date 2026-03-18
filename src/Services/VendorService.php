@@ -13,6 +13,7 @@ namespace WPSellServices\Services;
 use WPSellServices\Database\Repositories\VendorProfileRepository;
 use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Database\Repositories\ReviewRepository;
+use WPSellServices\Models\VendorProfile;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -29,13 +30,6 @@ class VendorService {
 	 * @var string
 	 */
 	public const ROLE = 'wpss_vendor';
-
-	/**
-	 * Verification tiers.
-	 */
-	public const TIER_BASIC    = 'basic';
-	public const TIER_VERIFIED = 'verified';
-	public const TIER_PRO      = 'pro';
 
 	/**
 	 * Profile repository.
@@ -133,7 +127,7 @@ class VendorService {
 			'country'           => $data['country'] ?? '',
 			'city'              => $data['city'] ?? '',
 			'status'            => $data['status'] ?? $default_status,
-			'verification_tier' => self::TIER_BASIC,
+			'verification_tier' => VendorProfile::TIER_NEW,
 		);
 
 		$profile_id = $this->profile_repo->upsert( $user_id, $profile_data );
@@ -518,7 +512,7 @@ class VendorService {
 	 * @return bool True on success.
 	 */
 	public function update_verification_tier( int $user_id, string $tier ): bool {
-		$valid_tiers = array( self::TIER_BASIC, self::TIER_VERIFIED, self::TIER_PRO );
+		$valid_tiers = array_keys( VendorProfile::get_tiers() );
 
 		if ( ! in_array( $tier, $valid_tiers, true ) ) {
 			return false;
@@ -667,11 +661,7 @@ class VendorService {
 	 * @return array<string, string> Tier slugs and labels.
 	 */
 	public static function get_tiers(): array {
-		return array(
-			self::TIER_BASIC    => __( 'Basic', 'wp-sell-services' ),
-			self::TIER_VERIFIED => __( 'Verified', 'wp-sell-services' ),
-			self::TIER_PRO      => __( 'Pro', 'wp-sell-services' ),
-		);
+		return VendorProfile::get_tiers();
 	}
 
 	/**
