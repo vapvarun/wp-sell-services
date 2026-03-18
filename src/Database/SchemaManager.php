@@ -163,7 +163,6 @@ class SchemaManager {
 			$this->get_reviews_table( $charset_collate ),
 			$this->get_disputes_table( $charset_collate ),
 			$this->get_dispute_messages_table( $charset_collate ),
-			$this->get_buyer_requests_table( $charset_collate ),
 			$this->get_proposals_table( $charset_collate ),
 			$this->get_vendor_profiles_table( $charset_collate ),
 			$this->get_portfolio_items_table( $charset_collate ),
@@ -527,37 +526,6 @@ class SchemaManager {
 	}
 
 	/**
-	 * Get buyer requests table SQL.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_buyer_requests_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'buyer_requests' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			post_id bigint(20) unsigned NOT NULL,
-			buyer_id bigint(20) unsigned NOT NULL,
-			category_id bigint(20) unsigned DEFAULT NULL,
-			title varchar(255) NOT NULL,
-			description text NOT NULL,
-			budget_min decimal(10,2) DEFAULT NULL,
-			budget_max decimal(10,2) DEFAULT NULL,
-			delivery_days int(11) DEFAULT NULL,
-			attachments longtext,
-			status varchar(50) DEFAULT 'open',
-			expires_at datetime DEFAULT NULL,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_post (post_id),
-			KEY idx_buyer (buyer_id),
-			KEY idx_status (status),
-			KEY idx_category (category_id)
-		) {$charset_collate};";
-	}
-
-	/**
 	 * Get proposals table SQL.
 	 *
 	 * @param string $charset_collate Charset collation.
@@ -760,7 +728,6 @@ class SchemaManager {
 			'portfolio_items',
 			'vendor_profiles',
 			'proposals',
-			'buyer_requests',
 			'dispute_messages',
 			'disputes',
 			'reviews',
@@ -800,7 +767,6 @@ class SchemaManager {
 			'reviews'             => $this->get_table_name( 'reviews' ),
 			'disputes'            => $this->get_table_name( 'disputes' ),
 			'dispute_messages'    => $this->get_table_name( 'dispute_messages' ),
-			'buyer_requests'      => $this->get_table_name( 'buyer_requests' ),
 			'proposals'           => $this->get_table_name( 'proposals' ),
 			'vendor_profiles'     => $this->get_table_name( 'vendor_profiles' ),
 			'portfolio_items'     => $this->get_table_name( 'portfolio_items' ),
