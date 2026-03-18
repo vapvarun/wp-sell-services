@@ -482,8 +482,19 @@ class UnifiedDashboard {
 			<div class="wpss-dashboard__empty-icon">
 				<?php $this->render_icon( 'folder' ); ?>
 			</div>
-			<h3><?php esc_html_e( 'Coming Soon', 'wp-sell-services' ); ?></h3>
-			<p><?php esc_html_e( 'This section is under development.', 'wp-sell-services' ); ?></p>
+			<h3><?php esc_html_e( 'Section Not Available', 'wp-sell-services' ); ?></h3>
+			<p>
+				<?php
+				if ( 'become-vendor' === $section ) {
+					esc_html_e( 'Vendor registration is not available at this time. Please contact the site administrator.', 'wp-sell-services' );
+				} else {
+					esc_html_e( 'This section is not available for your account type.', 'wp-sell-services' );
+				}
+				?>
+			</p>
+			<a href="<?php echo esc_url( wpss_get_dashboard_url() ); ?>" class="wpss-btn wpss-btn--primary">
+				<?php esc_html_e( 'Back to Dashboard', 'wp-sell-services' ); ?>
+			</a>
 		</div>
 		<?php
 	}
