@@ -1270,13 +1270,8 @@ class EmailService {
 
 		$setting_key = $type_to_setting[ $type ];
 
-		// Option never saved (fresh install) → default to enabled.
-		if ( false === $notification_settings ) {
-			return true;
-		}
-
-		// Option was saved but is corrupted or not an array.
-		if ( ! is_array( $notification_settings ) ) {
+		// Option never saved (fresh install) or empty (broken save) → default to enabled.
+		if ( false === $notification_settings || ! is_array( $notification_settings ) || empty( $notification_settings ) ) {
 			return true;
 		}
 
