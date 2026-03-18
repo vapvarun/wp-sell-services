@@ -178,7 +178,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		if ( ! $service_id ) {
-			return '<p>' . esc_html__( 'No service selected.', 'wp-sell-services' ) . '</p>';
+			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'No service selected.', 'wp-sell-services' ) . '</p>';
 		}
 
 		$service = wpss_get_service( $service_id );
