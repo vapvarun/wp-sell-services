@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Sell Services 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wbcomdesigns.com/support/\n"
-"POT-Creation-Date: 2026-03-18 09:26:28+00:00\n"
+"POT-Creation-Date: 2026-03-18 10:04:10+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -660,8 +660,8 @@ msgstr ""
 #: src/Integrations/Gateways/OfflineGateway.php:424
 #: src/Services/ExtensionRequestService.php:132
 #: src/Services/ExtensionRequestService.php:291
-#: src/Services/MilestoneService.php:75 src/Services/OrderService.php:413
-#: src/Services/OrderService.php:455 src/Services/RequirementsService.php:111
+#: src/Services/MilestoneService.php:75 src/Services/OrderService.php:441
+#: src/Services/OrderService.php:483 src/Services/RequirementsService.php:111
 #: src/Services/ReviewService.php:473 src/Services/TippingService.php:68
 #: templates/order/order-confirmation.php:31
 #: templates/order/order-requirements.php:46 templates/order/order-view.php:63
@@ -784,7 +784,7 @@ msgstr ""
 msgid "Vendor accepted cancellation request."
 msgstr ""
 
-#: src/API/OrdersController.php:745 src/Services/OrderService.php:431
+#: src/API/OrdersController.php:745 src/Services/OrderService.php:459
 msgid "Failed to cancel order."
 msgstr ""
 
@@ -901,7 +901,7 @@ msgstr ""
 
 #: src/API/OrdersController.php:1138 src/Admin/Admin.php:1047
 #: src/Admin/Pages/VendorsPage.php:2264 src/Models/ServiceOrder.php:549
-#: src/Services/BuyerRequestService.php:882 src/functions.php:613
+#: src/Services/BuyerRequestService.php:896 src/functions.php:613
 #: templates/emails/order-cancelled.php:66
 msgid "Cancelled"
 msgstr ""
@@ -1193,7 +1193,7 @@ msgstr ""
 msgid "Level not found."
 msgstr ""
 
-#: src/API/SellerLevelsController.php:245 src/Models/VendorProfile.php:311
+#: src/API/SellerLevelsController.php:245 src/Models/VendorProfile.php:315
 #: src/Services/SellerLevelService.php:252
 #: src/Services/SellerLevelService.php:267
 msgid "New Seller"
@@ -1903,7 +1903,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:1399 src/Admin/Tables/DisputesListTable.php:199
 #: src/Admin/Tables/DisputesListTable.php:288 src/Models/BuyerRequest.php:275
-#: src/Models/Dispute.php:234 src/Services/BuyerRequestService.php:878
+#: src/Models/Dispute.php:234 src/Services/BuyerRequestService.php:892
 #: src/Services/DisputeService.php:608
 msgid "Open"
 msgstr ""
@@ -2271,7 +2271,7 @@ msgid "Item"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:400
-#: src/Frontend/SingleServiceView.php:738
+#: src/Frontend/SingleServiceView.php:742
 #: src/Services/ServiceAddonService.php:585
 msgid "Quantity"
 msgstr ""
@@ -2582,7 +2582,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:896
 #: src/Admin/Metaboxes/ServiceMetabox.php:1620
 #: src/Admin/Metaboxes/ServiceMetabox.php:1740
-#: src/Frontend/ServiceWizard.php:1043 src/Frontend/SingleServiceView.php:728
+#: src/Frontend/ServiceWizard.php:1043 src/Frontend/SingleServiceView.php:732
 #: templates/single-request.php:488
 msgid "days"
 msgstr ""
@@ -2591,7 +2591,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:382
 #: src/Admin/Metaboxes/ServiceMetabox.php:1626
 #: src/Frontend/ServiceWizard.php:634
-#: templates/partials/service-packages.php:135
+#: templates/partials/service-packages.php:137
 msgid "Revisions"
 msgstr ""
 
@@ -3667,7 +3667,7 @@ msgid "Create All Pages"
 msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:486 src/Frontend/ServiceWizard.php:368
-#: templates/partials/service-packages.php:206
+#: templates/partials/service-packages.php:208
 msgid "Continue"
 msgstr ""
 
@@ -3848,7 +3848,7 @@ msgstr ""
 #: src/Admin/Pages/UpgradePage.php:75 src/Admin/Pages/UpgradePage.php:80
 #: src/Admin/Pages/UpgradePage.php:85 src/Frontend/ServiceWizard.php:641
 #: templates/order/order-confirmation.php:235
-#: templates/partials/service-packages.php:140
+#: templates/partials/service-packages.php:142
 msgid "Unlimited"
 msgstr ""
 
@@ -4128,7 +4128,7 @@ msgid "Back to Vendors"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1054 src/Blocks/SellerCard.php:213
-#: templates/partials/vendor-card.php:153 templates/single-request.php:306
+#: templates/partials/vendor-card.php:155 templates/single-request.php:306
 msgid "View Profile"
 msgstr ""
 
@@ -5004,8 +5004,8 @@ msgstr ""
 #: src/Admin/Settings.php:862 src/Models/Notification.php:266
 #: src/Services/EmailService.php:643 src/Services/NotificationService.php:490
 #: src/Services/NotificationService.php:502
-#: src/Services/OrderWorkflowManager.php:473
-#: src/Services/OrderWorkflowManager.php:485
+#: src/Services/OrderWorkflowManager.php:476
+#: src/Services/OrderWorkflowManager.php:488
 msgid "Order Cancelled"
 msgstr ""
 
@@ -5431,8 +5431,8 @@ msgid "Escalate"
 msgstr ""
 
 #: src/Admin/Tables/DisputesListTable.php:321
-#: src/Frontend/SingleServiceView.php:695
-#: src/Frontend/SingleServiceView.php:817
+#: src/Frontend/SingleServiceView.php:699
+#: src/Frontend/SingleServiceView.php:821
 #: templates/dashboard/sections/requests.php:138
 #: templates/order/order-view.php:1060 templates/order/order-view.php:1147
 #: templates/order/order-view.php:1200 templates/order/order-view.php:1248
@@ -6524,7 +6524,7 @@ msgid "Service navigation"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:358
-#: src/Services/BuyerRequestService.php:894
+#: src/Services/BuyerRequestService.php:908
 msgid "Price Range"
 msgstr ""
 
@@ -6537,7 +6537,7 @@ msgid "& Up"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:391 src/Frontend/ServiceWizard.php:613
-#: templates/partials/service-packages.php:116 templates/single-request.php:482
+#: templates/partials/service-packages.php:118 templates/single-request.php:482
 msgid "Delivery Time"
 msgstr ""
 
@@ -7218,10 +7218,10 @@ msgstr ""
 msgid "Log in"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:820 src/Frontend/SingleServiceView.php:501
+#: src/Frontend/Shortcodes.php:820 src/Frontend/SingleServiceView.php:505
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:720
 #: templates/emails/vendor-contact.php:70
-#: templates/partials/vendor-card.php:116
+#: templates/partials/vendor-card.php:118
 msgid "From"
 msgstr ""
 
@@ -7241,7 +7241,7 @@ msgstr ""
 msgid "Service:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:943 src/Frontend/SingleServiceView.php:781
+#: src/Frontend/Shortcodes.php:943 src/Frontend/SingleServiceView.php:785
 msgid "Total:"
 msgstr ""
 
@@ -7310,108 +7310,108 @@ msgstr ""
 msgid "To get started, the seller needs:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:436
+#: src/Frontend/SingleServiceView.php:440
 msgid "About The Seller"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:474 templates/vendor/profile.php:208
+#: src/Frontend/SingleServiceView.php:478 templates/vendor/profile.php:208
 #. translators: %d: number of completed orders
 msgid "%d order completed"
 msgid_plural "%d orders completed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Frontend/SingleServiceView.php:485 templates/vendor/profile.php:238
+#: src/Frontend/SingleServiceView.php:489 templates/vendor/profile.php:238
 #: templates/vendor/profile.php:242
 msgid "Contact Me"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:507
-#: templates/partials/vendor-card.php:125
+#: src/Frontend/SingleServiceView.php:511
+#: templates/partials/vendor-card.php:127
 msgid "Member since"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:516 templates/vendor/profile.php:417
+#: src/Frontend/SingleServiceView.php:520 templates/vendor/profile.php:417
 msgid "Avg. Response Time"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:526
-#: templates/partials/vendor-card.php:144
+#: src/Frontend/SingleServiceView.php:530
+#: templates/partials/vendor-card.php:146
 msgid "Last Delivery"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:534 templates/vendor/profile.php:447
+#: src/Frontend/SingleServiceView.php:538 templates/vendor/profile.php:447
 msgid "Languages"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:550 src/Frontend/VendorDashboard.php:141
+#: src/Frontend/SingleServiceView.php:554 src/Frontend/VendorDashboard.php:141
 #: templates/vendor/profile.php:435
 msgid "Skills"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:660
+#: src/Frontend/SingleServiceView.php:664
 msgid "Related Services"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:700
+#: src/Frontend/SingleServiceView.php:704
 msgid "Order Options"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:710
+#: src/Frontend/SingleServiceView.php:714
 msgid "Add Extras"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:773
+#: src/Frontend/SingleServiceView.php:777
 msgid "Package:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:777
+#: src/Frontend/SingleServiceView.php:781
 msgid "Delivery:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:787
+#: src/Frontend/SingleServiceView.php:791
 msgid "Continue to Checkout"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:822
-#: templates/partials/service-packages.php:249 templates/vendor/profile.php:531
+#: src/Frontend/SingleServiceView.php:826
+#: templates/partials/service-packages.php:251 templates/vendor/profile.php:531
 msgid "Contact Seller"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:840 templates/vendor/profile.php:546
+#: src/Frontend/SingleServiceView.php:844 templates/vendor/profile.php:546
 #. translators: %s: response time
 msgid "Usually responds in %s"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:856
+#: src/Frontend/SingleServiceView.php:860
 #. translators: 1: login URL, 2: register URL
 msgid ""
 "Please <a href=\"%1$s\">log in</a> or <a href=\"%2$s\">register</a> to "
 "contact this seller."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:871 templates/vendor/profile.php:560
+#: src/Frontend/SingleServiceView.php:875 templates/vendor/profile.php:560
 msgid "Your Message"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:875 templates/vendor/profile.php:564
+#: src/Frontend/SingleServiceView.php:879 templates/vendor/profile.php:564
 msgid "Tell the seller what you need..."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:878 templates/vendor/profile.php:567
+#: src/Frontend/SingleServiceView.php:882 templates/vendor/profile.php:567
 msgid "Be specific about your requirements for better assistance."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:883
+#: src/Frontend/SingleServiceView.php:887
 #: templates/order/order-requirements.php:264 templates/vendor/profile.php:572
 msgid "Attach Files (optional)"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:890 templates/vendor/profile.php:579
+#: src/Frontend/SingleServiceView.php:894 templates/vendor/profile.php:579
 msgid "Max 5 files. Allowed: images, PDF, Word, ZIP."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:896 templates/vendor/profile.php:585
+#: src/Frontend/SingleServiceView.php:900 templates/vendor/profile.php:585
 msgid "Send Message"
 msgstr ""
 
@@ -8348,12 +8348,12 @@ msgstr ""
 msgid "Stripe documentation: Restricted keys &rarr;"
 msgstr ""
 
-#: src/Models/BuyerRequest.php:277 src/Services/BuyerRequestService.php:880
+#: src/Models/BuyerRequest.php:277 src/Services/BuyerRequestService.php:894
 msgid "Hired"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:278 src/Models/ExtensionRequest.php:245
-#: src/Models/ExtensionRequest.php:285 src/Services/BuyerRequestService.php:881
+#: src/Models/ExtensionRequest.php:285 src/Services/BuyerRequestService.php:895
 #: templates/content-request-card.php:73
 msgid "Expired"
 msgstr ""
@@ -8528,30 +8528,30 @@ msgid_plural "%d revisions"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Models/VendorProfile.php:312
+#: src/Models/VendorProfile.php:316
 msgid "Rising Talent"
 msgstr ""
 
-#: src/Models/VendorProfile.php:313
+#: src/Models/VendorProfile.php:317
 msgid "Top Rated"
 msgstr ""
 
-#: src/Models/VendorProfile.php:314
+#: src/Models/VendorProfile.php:318
 msgid "Pro Seller"
 msgstr ""
 
-#: src/Models/VendorProfile.php:397
+#: src/Models/VendorProfile.php:399
 msgid "Within an hour"
 msgstr ""
 
-#: src/Models/VendorProfile.php:403
+#: src/Models/VendorProfile.php:405
 #. translators: %d: number of hours
 msgid "Within %d hour"
 msgid_plural "Within %d hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Models/VendorProfile.php:411
+#: src/Models/VendorProfile.php:413
 #. translators: %d: number of days
 msgid "Within %d day"
 msgid_plural "Within %d days"
@@ -8659,7 +8659,7 @@ msgid "New Service"
 msgstr ""
 
 #: src/PostTypes/ServicePostType.php:85
-#: templates/partials/service-packages.php:202
+#: templates/partials/service-packages.php:204
 msgid "Edit Service"
 msgstr ""
 
@@ -8904,23 +8904,23 @@ msgstr ""
 msgid "This proposal has already been processed."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:677
+#: src/Services/BuyerRequestService.php:691
 msgid "Order requirements could not be saved. Please contact support."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:709
+#: src/Services/BuyerRequestService.php:723
 msgid "Order created successfully. Proceed to payment."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:879
+#: src/Services/BuyerRequestService.php:893
 msgid "In Review"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:893
+#: src/Services/BuyerRequestService.php:907
 msgid "Fixed Price"
 msgstr ""
 
-#: src/Services/CommissionService.php:249
+#: src/Services/CommissionService.php:259
 #. translators: 1: order ID, 2: order total, 3: commission rate
 msgid "Earning from order #%1$d (Total: %2$s, Commission: %3$s%%)"
 msgstr ""
@@ -9217,15 +9217,15 @@ msgstr ""
 msgid "[%1$s] Final Reminder: Action Required - Order #%2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:751 src/Services/OrderWorkflowManager.php:342
+#: src/Services/EmailService.php:751 src/Services/OrderWorkflowManager.php:345
 msgid "Submit Your Requirements"
 msgstr ""
 
-#: src/Services/EmailService.php:752 src/Services/OrderWorkflowManager.php:346
+#: src/Services/EmailService.php:752 src/Services/OrderWorkflowManager.php:349
 msgid "Reminder: Requirements Needed"
 msgstr ""
 
-#: src/Services/EmailService.php:753 src/Services/OrderWorkflowManager.php:350
+#: src/Services/EmailService.php:753 src/Services/OrderWorkflowManager.php:353
 msgid "Final Reminder: Action Required"
 msgstr ""
 
@@ -9234,7 +9234,7 @@ msgstr ""
 msgid "[%1$s] Congratulations! You've been promoted to %2$s"
 msgstr ""
 
-#: src/Services/EmailService.php:800 src/Services/OrderWorkflowManager.php:550
+#: src/Services/EmailService.php:800 src/Services/OrderWorkflowManager.php:553
 msgid "Congratulations! Level Up!"
 msgstr ""
 
@@ -10036,207 +10036,207 @@ msgstr ""
 msgid "Thank you for your understanding."
 msgstr ""
 
-#: src/Services/OrderService.php:421
+#: src/Services/OrderService.php:449
 msgid "This order cannot be cancelled in its current status."
 msgstr ""
 
-#: src/Services/OrderService.php:462
+#: src/Services/OrderService.php:490
 msgid "Order is not in progress."
 msgstr ""
 
-#: src/Services/OrderService.php:470
+#: src/Services/OrderService.php:498
 msgid "Order has not been started yet."
 msgstr ""
 
-#: src/Services/OrderService.php:480
+#: src/Services/OrderService.php:508
 msgid ""
 "Cancellation window has expired. You can only request cancellation within "
 "24 hours of work starting."
 msgstr ""
 
-#: src/Services/OrderService.php:491
+#: src/Services/OrderService.php:519
 msgid "Cannot request cancellation after a delivery has been submitted."
 msgstr ""
 
-#: src/Services/OrderService.php:517
+#: src/Services/OrderService.php:545
 msgid "Failed to save cancellation details."
 msgstr ""
 
-#: src/Services/OrderService.php:538
+#: src/Services/OrderService.php:566
 msgid "Failed to request cancellation."
 msgstr ""
 
-#: src/Services/OrderService.php:606
+#: src/Services/OrderService.php:634
 #. translators: 1: old status, 2: new status
 msgid "Order status changed from %1$s to %2$s"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:185
+#: src/Services/OrderWorkflowManager.php:188
 msgid "Order marked as late - deadline exceeded"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:192
+#: src/Services/OrderWorkflowManager.php:195
 msgid "Order Overdue"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:193
+#: src/Services/OrderWorkflowManager.php:196
 msgid ""
 "Your order is past the delivery deadline. Please deliver as soon as "
 "possible."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:201
+#: src/Services/OrderWorkflowManager.php:204
 msgid "Order Delayed"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:202
+#: src/Services/OrderWorkflowManager.php:205
 msgid "Your order is past the expected delivery date. We have notified the vendor."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:247
+#: src/Services/OrderWorkflowManager.php:250
 #. translators: %d: number of days
 msgid "Order auto-completed after %d days without response"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:256
+#: src/Services/OrderWorkflowManager.php:259
 msgid "Order Auto-Completed"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:259
+#: src/Services/OrderWorkflowManager.php:262
 #. translators: %d: number of days
 msgid ""
 "Your order has been automatically completed after %d days. You can still "
 "leave a review."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:296
+#: src/Services/OrderWorkflowManager.php:299
 msgid "Deadline Approaching"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:299
+#: src/Services/OrderWorkflowManager.php:302
 #. translators: %d: hours remaining
 msgid "Your order deadline is in %d hours. Please ensure timely delivery."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:343
+#: src/Services/OrderWorkflowManager.php:346
 msgid ""
 "Your vendor is waiting for your project requirements. Please submit them so "
 "work can begin."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:347
+#: src/Services/OrderWorkflowManager.php:350
 msgid ""
 "Your vendor is still waiting for requirements. Please submit them to avoid "
 "delays."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:351
+#: src/Services/OrderWorkflowManager.php:354
 msgid ""
 "This is your final reminder. Please submit your requirements or contact the "
 "vendor if you need assistance."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:377
+#: src/Services/OrderWorkflowManager.php:380
 msgid "Buyer Requirements Pending"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:378
+#: src/Services/OrderWorkflowManager.php:381
 msgid "The buyer has not yet submitted requirements. We have sent them a reminder."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:430
+#: src/Services/OrderWorkflowManager.php:433
 #. translators: %d: number of days
 msgid "Order auto-started after %d days without requirements submission"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:438
+#: src/Services/OrderWorkflowManager.php:441
 msgid "Order Auto-Started"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:441
+#: src/Services/OrderWorkflowManager.php:444
 #. translators: %d: number of days
 msgid ""
 "The buyer did not submit requirements within %d days. The order has been "
 "auto-started. You may contact the buyer for details."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:450
+#: src/Services/OrderWorkflowManager.php:453
 msgid "Order Started Without Requirements"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:453
+#: src/Services/OrderWorkflowManager.php:456
 #. translators: %d: number of days
 msgid ""
 "You did not submit requirements within %d days. The order has been started. "
 "Please contact the vendor with your project details."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:465
+#: src/Services/OrderWorkflowManager.php:468
 #. translators: %d: number of days
 msgid "Order cancelled - requirements not submitted within %d days"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:476
+#: src/Services/OrderWorkflowManager.php:479
 #. translators: %d: number of days
 msgid ""
 "Your order was cancelled because requirements were not submitted within %d "
 "days."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:488
+#: src/Services/OrderWorkflowManager.php:491
 #. translators: %d: number of days
 msgid ""
 "An order was cancelled because the buyer did not submit requirements within "
 "%d days."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:553
+#: src/Services/OrderWorkflowManager.php:556
 #. translators: %s: new seller level
 msgid "You have been promoted to %s! Keep up the great work."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:595
+#: src/Services/OrderWorkflowManager.php:598
 #. translators: %s: platform name
 msgid "[%s] New Dispute Opened"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:598
+#: src/Services/OrderWorkflowManager.php:601
 #. translators: %d: order ID
 msgid "A dispute has been opened for Order #%d. Please review in the admin panel."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:772
+#: src/Services/OrderWorkflowManager.php:775
 #. translators: %d: order ID
 msgid "Earnings reversed for cancelled order #%d"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:862
+#: src/Services/OrderWorkflowManager.php:865
 msgid ""
 "Order auto-cancelled - vendor did not respond to cancellation request "
 "within 48 hours"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:873
+#: src/Services/OrderWorkflowManager.php:876
 msgid "Order Auto-Cancelled"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:874
+#: src/Services/OrderWorkflowManager.php:877
 msgid ""
 "The cancellation request was automatically approved because you did not "
 "respond within 48 hours."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:882
+#: src/Services/OrderWorkflowManager.php:885
 msgid "Cancellation Approved"
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:883
+#: src/Services/OrderWorkflowManager.php:886
 msgid ""
 "Your cancellation request has been automatically approved. The vendor did "
 "not respond within 48 hours."
 msgstr ""
 
-#: src/Services/OrderWorkflowManager.php:942
+#: src/Services/OrderWorkflowManager.php:945
 msgid "Payment received"
 msgstr ""
 
@@ -10318,27 +10318,27 @@ msgid ""
 "order completion."
 msgstr ""
 
-#: src/Services/SearchService.php:601
+#: src/Services/SearchService.php:614
 msgid "Relevance"
 msgstr ""
 
-#: src/Services/SearchService.php:602
+#: src/Services/SearchService.php:615
 msgid "Newest"
 msgstr ""
 
-#: src/Services/SearchService.php:603
+#: src/Services/SearchService.php:616
 msgid "Most Popular"
 msgstr ""
 
-#: src/Services/SearchService.php:604
+#: src/Services/SearchService.php:617
 msgid "Highest Rated"
 msgstr ""
 
-#: src/Services/SearchService.php:605
+#: src/Services/SearchService.php:618
 msgid "Price: Low to High"
 msgstr ""
 
-#: src/Services/SearchService.php:606
+#: src/Services/SearchService.php:619
 msgid "Price: High to Low"
 msgstr ""
 
@@ -12655,7 +12655,7 @@ msgstr ""
 msgid "Once submitted, the seller will start working on your order."
 msgstr ""
 
-#: templates/partials/service-packages.php:122
+#: templates/partials/service-packages.php:124
 #. translators: %d: number of days
 msgid "%d Day"
 msgid_plural "%d Days"
@@ -12684,7 +12684,7 @@ msgstr ""
 msgid "No reviews yet. Be the first to review this service!"
 msgstr ""
 
-#: templates/partials/vendor-card.php:134
+#: templates/partials/vendor-card.php:136
 msgid "Avg. Response"
 msgstr ""
 

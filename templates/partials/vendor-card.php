@@ -112,7 +112,9 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 	<ul class="wpss-vendor-details">
 		<?php if ( $country ) : ?>
 			<li>
-				<span class="wpss-detail-icon wpss-icon-location"></span>
+				<span class="wpss-detail-icon wpss-icon-location">
+					<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.8995L16.9497 15.9497C19.6834 13.2161 19.6834 8.78392 16.9497 6.05025C14.2161 3.31658 9.78392 3.31658 7.05025 6.05025C4.31658 8.78392 4.31658 13.2161 7.05025 15.9497L12 20.8995ZM12 23.7279L5.63604 17.364C2.12132 13.8492 2.12132 8.15076 5.63604 4.63604C9.15076 1.12132 14.8492 1.12132 18.364 4.63604C21.8787 8.15076 21.8787 13.8492 18.364 17.364L12 23.7279ZM12 13C13.1046 13 14 12.1046 14 11C14 9.89543 13.1046 9 12 9C10.8954 9 10 9.89543 10 11C10 12.1046 10.8954 13 12 13ZM12 15C9.79086 15 8 13.2091 8 11C8 8.79086 9.79086 7 12 7C14.2091 7 16 8.79086 16 11C16 13.2091 14.2091 15 12 15Z"></path></svg>
+				</span>
 				<span class="wpss-detail-label"><?php esc_html_e( 'From', 'wp-sell-services' ); ?></span>
 				<span class="wpss-detail-value"><?php echo esc_html( $country ); ?></span>
 			</li>
@@ -120,7 +122,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 
 		<li>
 			<span class="wpss-detail-icon wpss-icon-calendar">
-				<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 1V3H15V1H17V3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H7V1H9ZM20 11H4V19H20V11ZM7 5H4V9H20V5H17V7H15V5H9V7H7V5Z"></path></svg>
+				<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 1V3H15V1H17V3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H7V1H9ZM20 11H4V19H20V11ZM7 5H4V9H20V5H17V7H15V5H9V7H7V5Z"></path></svg>
 			</span>
 			<span class="wpss-detail-label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
 			<span class="wpss-detail-value"><?php echo esc_html( wp_date( 'M Y', strtotime( $member_since ) ) ); ?></span>
