@@ -516,6 +516,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				object-fit: cover;
 				border-radius: 4px;
 			}
+			.wpss-checkout-subtotal,
+			.wpss-checkout-tax {
+				display: flex;
+				justify-content: space-between;
+				font-size: 16px;
+				padding: 8px 0;
+			}
 			.wpss-checkout-total {
 				display: flex;
 				justify-content: space-between;

@@ -1078,6 +1078,7 @@
 	line-height: 1.5;
 }
 
+.wpss-single-service .wpss-package-details,
 .wpss-package-details {
 	list-style: none;
 	margin: 0 0 1rem;
