@@ -427,12 +427,21 @@ class Admin {
 			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 
-		// Check capabilities — admins and vendors with order management capability.
-		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'wpss_manage_orders' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		// Check capabilities — admins can update any order, vendors can update their own.
+		$order_id  = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+		$has_access = current_user_can( 'manage_options' );
+
+		if ( ! $has_access && current_user_can( 'wpss_manage_orders' ) && $order_id ) {
+			// Vendors can only update orders they are the vendor on.
+			$check_order = wpss_get_order( $order_id );
+			if ( $check_order && (int) $check_order->vendor_id === get_current_user_id() ) {
+				$has_access = true;
+			}
 		}
 
-		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+		if ( ! $has_access ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
 		$status   = isset( $_POST['order_status'] ) ? sanitize_key( $_POST['order_status'] ) : '';
 
 		if ( ! $order_id || ! $status ) {
