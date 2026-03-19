@@ -51,6 +51,7 @@
 
 			// Buyer request management
 			$(document).on('click', '.wpss-close-request', this.handleCloseRequest.bind(this));
+			$(document).on('click', '.wpss-reopen-request', this.handleReopenRequest.bind(this));
 			$(document).on('click', '.wpss-delete-request', this.handleDeleteRequest.bind(this));
 
 			// Portfolio
@@ -409,6 +410,40 @@
 								location.reload();
 							} else {
 								WPSS.showNotification(response.data.message || 'Failed to close request.', 'error');
+							}
+						}
+					});
+				}
+			);
+		},
+
+		/**
+		 * Handle reopening a closed buyer request (set to publish).
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleReopenRequest: function (e) {
+			e.preventDefault();
+			var requestId = $(e.currentTarget).data('request-id');
+
+			WPSS.showConfirm(
+				wpssUnifiedDashboard.i18n.reopenRequestConfirm || 'Reopen this request? It will be visible to sellers again.',
+				function () {
+					$.ajax({
+						url: wpssUnifiedDashboard.ajaxUrl,
+						type: 'POST',
+						data: {
+							action: 'wpss_update_request_status',
+							request_id: requestId,
+							status: 'publish',
+							nonce: wpssUnifiedDashboard.nonce
+						},
+						success: function (response) {
+							if (response.success) {
+								WPSS.showNotification(response.data.message || 'Request reopened.', 'success');
+								location.reload();
+							} else {
+								WPSS.showNotification(response.data.message || 'Failed to reopen request.', 'error');
 							}
 						}
 					});

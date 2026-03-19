@@ -137,6 +137,10 @@ $active_count = count(
 							<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
 								<?php esc_html_e( 'Close', 'wp-sell-services' ); ?>
 							</button>
+						<?php elseif ( 'draft' === $item_status ) : ?>
+							<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-reopen-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+								<?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?>
+							</button>
 						<?php endif; ?>
 						<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'edit-request', 'request_id' => $request_id ), get_permalink() ) ); ?>" class="wpss-btn wpss-btn--link wpss-btn--sm">
 							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
