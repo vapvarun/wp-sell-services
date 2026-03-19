@@ -2412,7 +2412,7 @@ class AjaxHandlers {
 
 		update_user_meta( $user_id, '_wpss_cart', $cart );
 
-		$checkout_url = wpss_get_service_checkout_url( $service_id, $package_index );
+		$checkout_url = wpss_get_service_checkout_url( $service_id, (int) $package_index );
 		if ( $quantity > 1 ) {
 			$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
 		}

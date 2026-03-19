@@ -360,12 +360,11 @@ class UnifiedDashboard {
 				<header class="wpss-dashboard__header">
 					<h1 class="wpss-dashboard__title">
 						<?php
-						$section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : '';
-						$id      = isset($_GET['id']) ? sanitize_text_field($_GET['id']) : '';						 
-						if ( $section && ! $id ) {
-							echo esc_html( $section_data['title'] );
-						} else {
+						$id = isset( $_GET['id'] ) ? sanitize_text_field( $_GET['id'] ) : '';
+						if ( $id && 'create' !== $this->current_section ) {
 							esc_html_e( 'Update Service', 'wp-sell-services' );
+						} else {
+							echo esc_html( $section_data['title'] );
 						}
 					 ?></h1>
 					<?php if ( $this->current_section === 'services' ) : ?>
