@@ -353,6 +353,16 @@ class VendorsController extends RestController {
 			update_user_meta( $user_id, '_wpss_vendor_social', $sanitized );
 		}
 
+		// Update avatar.
+		if ( $request->has_param( 'avatar_id' ) ) {
+			$avatar_id = absint( $request->get_param( 'avatar_id' ) );
+			if ( $avatar_id && wp_attachment_is_image( $avatar_id ) ) {
+				update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
+			} elseif ( 0 === $avatar_id ) {
+				delete_user_meta( $user_id, '_wpss_avatar_id' );
+			}
+		}
+
 		// Update response time.
 		if ( $request->has_param( 'response_time' ) ) {
 			update_user_meta( $user_id, '_wpss_vendor_response_time', sanitize_text_field( $request->get_param( 'response_time' ) ) );
@@ -805,6 +815,11 @@ class VendorsController extends RestController {
 					'description' => __( 'Typical response time.', 'wp-sell-services' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
+				),
+				'avatar_id'     => array(
+					'description' => __( 'Avatar media attachment ID.', 'wp-sell-services' ),
+					'type'        => 'integer',
+					'context'     => array( 'edit' ),
 				),
 			),
 		);

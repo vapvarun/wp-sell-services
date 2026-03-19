@@ -114,8 +114,13 @@ class ConversationsController extends RestController {
 					'permission_callback' => array( $this, 'check_conversation_permission' ),
 					'args'                => array_merge(
 						array(
-							'id' => array(
+							'id'    => array(
 								'validate_callback' => array( $this, 'validate_id' ),
+							),
+							'since' => array(
+								'description' => __( 'Only return messages after this ISO 8601 datetime.', 'wp-sell-services' ),
+								'type'        => 'string',
+								'format'      => 'date-time',
 							),
 						),
 						$this->get_collection_params()
@@ -305,13 +310,21 @@ class ConversationsController extends RestController {
 	public function get_messages( $request ) {
 		$conversation_id = (int) $request->get_param( 'id' );
 		$pagination      = $this->get_pagination_args( $request );
+		$since           = $request->get_param( 'since' );
+
+		$query_args = array(
+			'limit'  => $pagination['per_page'],
+			'offset' => $pagination['offset'],
+		);
+
+		// Support 'since' parameter for efficient mobile polling.
+		if ( $since ) {
+			$query_args['since'] = sanitize_text_field( $since );
+		}
 
 		$messages = $this->conversation_service->get_messages(
 			$conversation_id,
-			array(
-				'limit'  => $pagination['per_page'],
-				'offset' => $pagination['offset'],
-			)
+			$query_args
 		);
 
 		$total = $this->conversation_service->count_messages( $conversation_id );
@@ -428,12 +441,12 @@ class ConversationsController extends RestController {
 			'last_message'  => $last_message ? array(
 				'content'    => wp_trim_words( wp_strip_all_tags( $last_message->content ), 10 ),
 				'sender_id'  => (int) $last_message->sender_id,
-				'created_at' => $last_message->created_at ?? null,
+				'created_at' => $this->format_datetime( $last_message->created_at ?? null ),
 			) : null,
 			'unread_count'  => $this->conversation_service->get_unread_count_for_conversation( $conversation->id, $user_id ),
 			'is_closed'     => $conversation->is_closed ?? false,
-			'created_at'    => $conversation->created_at ?? null,
-			'updated_at'    => $conversation->updated_at ?? null,
+			'created_at'    => $this->format_datetime( $conversation->created_at ?? null ),
+			'updated_at'    => $this->format_datetime( $conversation->updated_at ?? null ),
 		);
 	}
 
@@ -491,7 +504,7 @@ class ConversationsController extends RestController {
 			'attachments' => $attachments,
 			'is_read'     => $is_read,
 			'is_edited'   => $message->is_edited ?? false,
-			'created_at'  => $message->created_at ?? null,
+			'created_at'  => $this->format_datetime( $message->created_at ?? null ),
 		);
 	}
 

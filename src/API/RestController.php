@@ -48,6 +48,23 @@ abstract class RestController extends WP_REST_Controller {
 			);
 		}
 
+		// Rate limit write operations.
+		if ( in_array( $request->get_method(), array( 'POST', 'PUT', 'PATCH', 'DELETE' ), true ) ) {
+			$action = $this->get_rate_limit_action( $request );
+			if ( \WPSellServices\Core\RateLimiter::check_and_track( $action, get_current_user_id() ) ) {
+				$reset_time = \WPSellServices\Core\RateLimiter::get_reset_time( $action, get_current_user_id() );
+				return new WP_Error(
+					'rate_limited',
+					sprintf(
+						/* translators: %d: seconds until rate limit resets */
+						__( 'Too many requests. Please try again in %d seconds.', 'wp-sell-services' ),
+						$reset_time
+					),
+					array( 'status' => 429 )
+				);
+			}
+		}
+
 		return true;
 	}
 
@@ -158,6 +175,51 @@ abstract class RestController extends WP_REST_Controller {
 		}
 
 		return $id;
+	}
+
+	/**
+	 * Format a datetime value to ISO 8601.
+	 *
+	 * Accepts DateTimeInterface objects, MySQL datetime strings, or null.
+	 * Returns ISO 8601 string (e.g. '2024-01-15T10:30:00+00:00') or null.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param mixed $datetime DateTime value.
+	 * @return string|null ISO 8601 formatted string or null.
+	 */
+	protected function format_datetime( $datetime ): ?string {
+		if ( ! $datetime ) {
+			return null;
+		}
+
+		if ( $datetime instanceof \DateTimeInterface ) {
+			return $datetime->format( 'c' );
+		}
+
+		if ( is_string( $datetime ) && '' !== $datetime ) {
+			try {
+				return ( new \DateTimeImmutable( $datetime, new \DateTimeZone( 'UTC' ) ) )->format( 'c' );
+			} catch ( \Exception $e ) {
+				return null;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get the rate limit action key for a request.
+	 *
+	 * Controllers can override this to provide specific action keys.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return string Rate limit action key.
+	 */
+	protected function get_rate_limit_action( WP_REST_Request $request ): string {
+		return 'default';
 	}
 
 	/**

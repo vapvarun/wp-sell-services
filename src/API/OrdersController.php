@@ -93,6 +93,26 @@ class OrdersController extends RestController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_messages' ),
 					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'description' => __( 'Current page.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+						),
+						'per_page' => array(
+							'description' => __( 'Items per page.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 20,
+							'minimum'     => 1,
+							'maximum'     => 100,
+						),
+						'since'    => array(
+							'description' => __( 'Only return messages after this ISO 8601 datetime.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'format'      => 'date-time',
+						),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -318,7 +338,9 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_messages( $request ) {
-		$order_id = (int) $request->get_param( 'id' );
+		$order_id   = (int) $request->get_param( 'id' );
+		$pagination = $this->get_pagination_args( $request );
+		$since      = $request->get_param( 'since' );
 
 		$conversation_service = new ConversationService();
 		$conversation         = $conversation_service->get_by_order( $order_id );
@@ -329,10 +351,21 @@ class OrdersController extends RestController {
 		}
 
 		if ( ! $conversation ) {
-			return new WP_REST_Response( array() );
+			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
 		}
 
-		$messages = $conversation_service->get_messages( (int) $conversation->id );
+		$query_args = array(
+			'limit'  => $pagination['per_page'],
+			'offset' => $pagination['offset'],
+		);
+
+		// Support 'since' parameter for efficient polling.
+		if ( $since ) {
+			$query_args['since'] = sanitize_text_field( $since );
+		}
+
+		$messages = $conversation_service->get_messages( (int) $conversation->id, $query_args );
+		$total    = $conversation_service->count_messages( (int) $conversation->id );
 
 		$data = array();
 		foreach ( $messages as $message ) {
@@ -346,11 +379,11 @@ class OrdersController extends RestController {
 				'message'     => $message->content,
 				'attachments' => $message->attachments ? json_decode( $message->attachments, true ) : array(),
 				'is_system'   => 'system' === $message->type,
-				'created_at'  => $message->created_at,
+				'created_at'  => $this->format_datetime( $message->created_at ),
 			);
 		}
 
-		return new WP_REST_Response( $data );
+		return $this->paginated_response( $data, $total, $pagination['page'], $pagination['per_page'] );
 	}
 
 	/**
@@ -1109,11 +1142,11 @@ class OrdersController extends RestController {
 			'total'             => (float) $order->total,
 			'currency'          => $order->currency,
 			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),
-			'due_date'          => $order->delivery_deadline ? $order->delivery_deadline->format( 'Y-m-d H:i:s' ) : null,
-			'started_at'        => $order->started_at ? $order->started_at->format( 'Y-m-d H:i:s' ) : null,
-			'completed_at'      => $order->completed_at ? $order->completed_at->format( 'Y-m-d H:i:s' ) : null,
-			'created_at'        => $order->created_at ? $order->created_at->format( 'Y-m-d H:i:s' ) : null,
-			'updated_at'        => $order->updated_at ? $order->updated_at->format( 'Y-m-d H:i:s' ) : null,
+			'due_date'          => $this->format_datetime( $order->delivery_deadline ),
+			'started_at'        => $this->format_datetime( $order->started_at ),
+			'completed_at'      => $this->format_datetime( $order->completed_at ),
+			'created_at'        => $this->format_datetime( $order->created_at ),
+			'updated_at'        => $this->format_datetime( $order->updated_at ),
 			'available_actions' => $this->get_available_actions( $order ),
 		);
 

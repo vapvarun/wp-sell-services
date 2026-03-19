@@ -152,6 +152,103 @@ class ServicesController extends RestController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_reviews' ),
 					'permission_callback' => '__return_true',
+					'args'                => array(
+						'page'     => array(
+							'description' => __( 'Current page.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+						),
+						'per_page' => array(
+							'description' => __( 'Items per page.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 10,
+							'minimum'     => 1,
+							'maximum'     => 100,
+						),
+					),
+				),
+			)
+		);
+
+		// GET /services/{id}/addons - List addons.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/addons',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_addons' ),
+					'permission_callback' => '__return_true',
+				),
+			)
+		);
+
+		// POST /services/{id}/addons - Create addon (vendor only).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/addons',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_addon' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'title'       => array(
+							'description' => __( 'Addon title.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+						'description' => array(
+							'description' => __( 'Addon description.', 'wp-sell-services' ),
+							'type'        => 'string',
+						),
+						'price'       => array(
+							'description' => __( 'Addon price.', 'wp-sell-services' ),
+							'type'        => 'number',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
+		// PUT /services/{id}/addons/{addon_id} - Update addon.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/addons/(?P<addon_id>[\d]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_addon' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'title'       => array(
+							'description' => __( 'Addon title.', 'wp-sell-services' ),
+							'type'        => 'string',
+						),
+						'description' => array(
+							'description' => __( 'Addon description.', 'wp-sell-services' ),
+							'type'        => 'string',
+						),
+						'price'       => array(
+							'description' => __( 'Addon price.', 'wp-sell-services' ),
+							'type'        => 'number',
+						),
+					),
+				),
+			)
+		);
+
+		// DELETE /services/{id}/addons/{addon_id} - Delete addon.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/addons/(?P<addon_id>[\d]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_addon' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
 		);
@@ -223,6 +320,34 @@ class ServicesController extends RestController {
 					'type'    => 'DECIMAL',
 				);
 			}
+		}
+
+		// Max delivery days filter.
+		$max_delivery_days = $request->get_param( 'max_delivery_days' );
+		if ( $max_delivery_days ) {
+			if ( ! isset( $args['meta_query'] ) ) {
+				$args['meta_query'] = array();
+			}
+			$args['meta_query'][] = array(
+				'key'     => '_wpss_fastest_delivery',
+				'value'   => (int) $max_delivery_days,
+				'compare' => '<=',
+				'type'    => 'NUMERIC',
+			);
+		}
+
+		// Minimum rating filter.
+		$min_rating = $request->get_param( 'min_rating' );
+		if ( $min_rating ) {
+			if ( ! isset( $args['meta_query'] ) ) {
+				$args['meta_query'] = array();
+			}
+			$args['meta_query'][] = array(
+				'key'     => '_wpss_rating_average',
+				'value'   => (float) $min_rating,
+				'compare' => '>=',
+				'type'    => 'DECIMAL',
+			);
 		}
 
 		$query    = new WP_Query( $args );
@@ -478,14 +603,24 @@ class ServicesController extends RestController {
 	 */
 	public function get_reviews( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
+		$pagination = $this->get_pagination_args( $request );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE service_id = %d AND status = 'approved'",
+				$service_id
+			)
+		);
+
 		$reviews = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE service_id = %d AND status = 'approved' ORDER BY created_at DESC",
-				$service_id
+				"SELECT * FROM {$table} WHERE service_id = %d AND status = 'approved' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				$service_id,
+				$pagination['per_page'],
+				$pagination['offset']
 			),
 			ARRAY_A
 		);
@@ -494,13 +629,182 @@ class ServicesController extends RestController {
 		foreach ( $reviews as &$review ) {
 			$user               = get_user_by( 'id', $review['customer_id'] );
 			$review['reviewer'] = array(
-				'id'     => $review['customer_id'],
+				'id'     => (int) $review['customer_id'],
 				'name'   => $user ? $user->display_name : 'Anonymous',
 				'avatar' => get_avatar_url( $review['customer_id'], array( 'size' => 48 ) ),
 			);
+			$review['created_at'] = $this->format_datetime( $review['created_at'] ?? null );
 		}
 
-		return new WP_REST_Response( $reviews, 200 );
+		return $this->paginated_response( $reviews, $total, $pagination['page'], $pagination['per_page'] );
+	}
+
+	/**
+	 * Get service addons.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_addons( $request ) {
+		$service_id = (int) $request->get_param( 'id' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_service_addons';
+
+		$addons = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE service_id = %d ORDER BY id ASC",
+				$service_id
+			)
+		);
+
+		$data = array();
+		foreach ( $addons as $addon ) {
+			$data[] = array(
+				'id'          => (int) $addon->id,
+				'service_id'  => (int) $addon->service_id,
+				'title'       => $addon->title,
+				'description' => $addon->description ?? '',
+				'price'       => (float) $addon->price,
+			);
+		}
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Create a service addon.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_addon( $request ) {
+		$service_id = (int) $request->get_param( 'id' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_service_addons';
+
+		$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$table,
+			array(
+				'service_id'  => $service_id,
+				'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
+				'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
+				'price'       => (float) $request->get_param( 'price' ),
+			),
+			array( '%d', '%s', '%s', '%f' )
+		);
+
+		if ( ! $inserted ) {
+			return new WP_Error( 'addon_create_failed', __( 'Failed to create addon.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'id'          => (int) $wpdb->insert_id,
+				'service_id'  => $service_id,
+				'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
+				'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
+				'price'       => (float) $request->get_param( 'price' ),
+			),
+			201
+		);
+	}
+
+	/**
+	 * Update a service addon.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_addon( $request ) {
+		$service_id = (int) $request->get_param( 'id' );
+		$addon_id   = (int) $request->get_param( 'addon_id' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_service_addons';
+
+		// Verify addon belongs to service.
+		$addon = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id = %d AND service_id = %d",
+				$addon_id,
+				$service_id
+			)
+		);
+
+		if ( ! $addon ) {
+			return new WP_Error( 'addon_not_found', __( 'Addon not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		$updates = array();
+		$formats = array();
+
+		if ( $request->has_param( 'title' ) ) {
+			$updates['title'] = sanitize_text_field( $request->get_param( 'title' ) );
+			$formats[]        = '%s';
+		}
+
+		if ( $request->has_param( 'description' ) ) {
+			$updates['description'] = sanitize_textarea_field( $request->get_param( 'description' ) );
+			$formats[]              = '%s';
+		}
+
+		if ( $request->has_param( 'price' ) ) {
+			$updates['price'] = (float) $request->get_param( 'price' );
+			$formats[]        = '%f';
+		}
+
+		if ( ! empty( $updates ) ) {
+			$wpdb->update( $table, $updates, array( 'id' => $addon_id ), $formats, array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+
+		// Return updated addon.
+		$updated = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id = %d",
+				$addon_id
+			)
+		);
+
+		return new WP_REST_Response(
+			array(
+				'id'          => (int) $updated->id,
+				'service_id'  => (int) $updated->service_id,
+				'title'       => $updated->title,
+				'description' => $updated->description ?? '',
+				'price'       => (float) $updated->price,
+			)
+		);
+	}
+
+	/**
+	 * Delete a service addon.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_addon( $request ) {
+		$service_id = (int) $request->get_param( 'id' );
+		$addon_id   = (int) $request->get_param( 'addon_id' );
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_service_addons';
+
+		$deleted = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$table,
+			array(
+				'id'         => $addon_id,
+				'service_id' => $service_id,
+			),
+			array( '%d', '%d' )
+		);
+
+		if ( ! $deleted ) {
+			return new WP_Error( 'addon_not_found', __( 'Addon not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		return new WP_REST_Response( array( 'deleted' => true ) );
 	}
 
 	/**
@@ -629,8 +933,8 @@ class ServicesController extends RestController {
 			'categories'  => wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ),
 			'tags'        => wp_get_object_terms( $service->ID, 'wpss_service_tag', array( 'fields' => 'names' ) ),
 			'rating'      => $this->get_service_rating( $service->ID ),
-			'created_at'  => $service->post_date_gmt,
-			'updated_at'  => $service->post_modified_gmt,
+			'created_at'  => $this->format_datetime( $service->post_date_gmt ),
+			'updated_at'  => $this->format_datetime( $service->post_modified_gmt ),
 		);
 
 		/**
@@ -753,6 +1057,51 @@ class ServicesController extends RestController {
 			}
 		}
 
+		// Save gallery (array of media IDs).
+		if ( $request->has_param( 'gallery' ) ) {
+			$gallery_ids = array_map( 'absint', (array) $request->get_param( 'gallery' ) );
+			update_post_meta( $service_id, '_wpss_gallery', $gallery_ids );
+		}
+
+		// Save addons (array of addon objects).
+		if ( $request->has_param( 'addons' ) ) {
+			$raw_addons = $request->get_param( 'addons' );
+			if ( is_array( $raw_addons ) ) {
+				global $wpdb;
+				$addons_table = $wpdb->prefix . 'wpss_service_addons';
+
+				foreach ( $raw_addons as $addon_data ) {
+					$addon_insert = array(
+						'service_id'  => $service_id,
+						'title'       => sanitize_text_field( $addon_data['title'] ?? '' ),
+						'description' => sanitize_textarea_field( $addon_data['description'] ?? '' ),
+						'price'       => (float) ( $addon_data['price'] ?? 0 ),
+					);
+
+					if ( ! empty( $addon_data['id'] ) ) {
+						// Update existing addon.
+						$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+							$addons_table,
+							$addon_insert,
+							array(
+								'id'         => (int) $addon_data['id'],
+								'service_id' => $service_id,
+							),
+							array( '%d', '%s', '%s', '%f' ),
+							array( '%d', '%d' )
+						);
+					} else {
+						// Insert new addon.
+						$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+							$addons_table,
+							$addon_insert,
+							array( '%d', '%s', '%s', '%f' )
+						);
+					}
+				}
+			}
+		}
+
 		if ( $request->has_param( 'requirements' ) ) {
 			$raw_reqs     = $request->get_param( 'requirements' );
 			$requirements = array();
@@ -815,11 +1164,22 @@ class ServicesController extends RestController {
 				'enum'        => array( 'date', 'title', 'price', 'rating' ),
 				'default'     => 'date',
 			),
-			'order'     => array(
+			'order'             => array(
 				'description' => __( 'Sort order.', 'wp-sell-services' ),
 				'type'        => 'string',
 				'enum'        => array( 'ASC', 'DESC' ),
 				'default'     => 'DESC',
+			),
+			'max_delivery_days' => array(
+				'description' => __( 'Maximum delivery days filter.', 'wp-sell-services' ),
+				'type'        => 'integer',
+				'minimum'     => 1,
+			),
+			'min_rating'        => array(
+				'description' => __( 'Minimum rating filter (0-5).', 'wp-sell-services' ),
+				'type'        => 'number',
+				'minimum'     => 0,
+				'maximum'     => 5,
 			),
 		);
 	}

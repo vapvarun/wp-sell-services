@@ -69,6 +69,7 @@ class API {
 			new MediaController(),
 			new CartController(),
 			new AuthController(),
+			new PaymentController(),
 		];
 
 		/**
@@ -111,6 +112,13 @@ class API {
 							'description' => __( 'Hide empty categories.', 'wp-sell-services' ),
 							'type'        => 'boolean',
 							'default'     => true,
+						],
+						'per_page' => [
+							'description' => __( 'Maximum number of categories to return.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 100,
+							'minimum'     => 1,
+							'maximum'     => 500,
 						],
 					],
 				],
@@ -224,6 +232,13 @@ class API {
 							'default'     => 'all',
 							'enum'        => [ 'all', 'services', 'vendors' ],
 						],
+						'per_page' => [
+							'description' => __( 'Results per type.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 10,
+							'minimum'     => 1,
+							'maximum'     => 50,
+						],
 					],
 				],
 			]
@@ -239,6 +254,7 @@ class API {
 	public function get_categories( \WP_REST_Request $request ): \WP_REST_Response {
 		$parent     = (int) $request->get_param( 'parent' );
 		$hide_empty = (bool) $request->get_param( 'hide_empty' );
+		$per_page   = (int) $request->get_param( 'per_page' ) ?: 100;
 
 		$terms = get_terms(
 			[
@@ -247,6 +263,7 @@ class API {
 				'hide_empty' => $hide_empty,
 				'orderby'    => 'name',
 				'order'      => 'ASC',
+				'number'     => $per_page,
 			]
 		);
 
@@ -496,8 +513,9 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function search( \WP_REST_Request $request ): \WP_REST_Response {
-		$query = sanitize_text_field( $request->get_param( 'q' ) );
-		$type  = $request->get_param( 'type' );
+		$query    = sanitize_text_field( $request->get_param( 'q' ) );
+		$type     = $request->get_param( 'type' );
+		$per_page = (int) $request->get_param( 'per_page' ) ?: 10;
 
 		$results = [
 			'query' => $query,
@@ -510,7 +528,7 @@ class API {
 					'post_type'      => 'wpss_service',
 					'post_status'    => 'publish',
 					's'              => $query,
-					'posts_per_page' => 10,
+					'posts_per_page' => $per_page,
 				]
 			);
 
@@ -538,7 +556,7 @@ class API {
 					'meta_value'     => '1',
 					'search'         => '*' . $query . '*',
 					'search_columns' => [ 'user_login', 'display_name', 'user_nicename' ],
-					'number'         => 10,
+					'number'         => $per_page,
 				]
 			);
 

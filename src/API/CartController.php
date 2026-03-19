@@ -220,13 +220,25 @@ class CartController extends RestController {
 			foreach ( $cart as $key => $item ) {
 				$service = get_post( $item['service_id'] );
 
+				// Resolve package name from stored package data or from service meta.
+				$package_name = '';
+				if ( ! empty( $item['package']['name'] ) ) {
+					$package_name = $item['package']['name'];
+				} else {
+					$packages = get_post_meta( $item['service_id'], '_wpss_packages', true );
+					if ( is_array( $packages ) && isset( $packages[ $item['package_id'] ] ) ) {
+						$package_name = $packages[ $item['package_id'] ]['name'] ?? '';
+					}
+				}
+
 				$items[] = array(
-					'key'        => $key,
-					'service_id' => $item['service_id'],
-					'service'    => $service ? $service->post_title : '',
-					'package_id' => $item['package_id'],
-					'addons'     => $item['addons'] ?? array(),
-					'total'      => (float) $item['total'],
+					'key'          => $key,
+					'service_id'   => $item['service_id'],
+					'service'      => $service ? $service->post_title : '',
+					'package_id'   => $item['package_id'],
+					'package_name' => $package_name,
+					'addons'       => $item['addons'] ?? array(),
+					'total'        => (float) $item['total'],
 				);
 
 				$cart_total += (float) $item['total'];
