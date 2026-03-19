@@ -96,6 +96,15 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$platform_fee    = round( $total * ( $commission_rate / 100 ), 2 );
 		$vendor_earnings = round( $total - $platform_fee, 2 );
 
+		// Snapshot the package data at order creation time so it's immune to later edits.
+		$package_snapshot = null;
+		if ( $service && ! empty( $order_data['package_id'] ) ) {
+			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
+			if ( isset( $packages[ $order_data['package_id'] ] ) ) {
+				$package_snapshot = $packages[ $order_data['package_id'] ];
+			}
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
 			$table,
@@ -122,10 +131,11 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'vendor_earnings'     => $vendor_earnings,
 				'created_at'          => current_time( 'mysql' ),
 				'updated_at'          => current_time( 'mysql' ),
-				'meta'                => wp_json_encode( [
-					'tax_rate'   => $tax_rate,
-					'tax_amount' => round( $tax_amount, 2 ),
-				] ),
+				'meta'                => wp_json_encode( array_filter( [
+					'tax_rate'         => $tax_rate,
+					'tax_amount'       => round( $tax_amount, 2 ),
+					'package_snapshot' => $package_snapshot,
+				] ) ),
 			],
 			[ '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s' ]
 		);

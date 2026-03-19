@@ -558,6 +558,14 @@ class WithdrawalsPage {
 		</style>
 
 		<script>
+		function wpssAdminNotice(msg, type) {
+			type = type || 'error';
+			var cls = type === 'success' ? 'notice-success' : 'notice-error';
+			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+			jQuery('.wrap h1, .wrap h2').first().after($notice);
+			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		}
 		jQuery(function($) {
 			var wpssWithdrawals = <?php echo wp_json_encode(
 				array(
@@ -647,12 +655,12 @@ class WithdrawalsPage {
 						if (response.success) {
 							location.reload();
 						} else {
-							alert(response.data.message || wpssWithdrawals.i18n.error);
+							wpssAdminNotice(response.data.message || wpssWithdrawals.i18n.error, 'error');
 							$submit.prop('disabled', false).text(originalText);
 						}
 					},
 					error: function() {
-						alert(wpssWithdrawals.i18n.error);
+						wpssAdminNotice(wpssWithdrawals.i18n.error, 'error');
 						$submit.prop('disabled', false).text(originalText);
 					}
 				});

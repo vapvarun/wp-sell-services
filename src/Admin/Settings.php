@@ -1127,6 +1127,14 @@ class Settings {
 
 			<?php if ( 'pages' === $active_tab ) : ?>
 			<script>
+			function wpssAdminNotice(msg, type) {
+				type = type || 'error';
+				var cls = type === 'success' ? 'notice-success' : 'notice-error';
+				var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+				jQuery('.wrap h1, .wrap h2').first().after($notice);
+				$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+				setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+			}
 			jQuery(function($) {
 				var ajaxUrl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';
 				var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_settings_nonce' ) ); ?>';
@@ -1140,7 +1148,7 @@ class Settings {
 					var $viewBtn = $wrap.find('.wpss-view-page');
 
 					if (!title) {
-						alert('<?php echo esc_js( __( 'Page title not defined.', 'wp-sell-services' ) ); ?>');
+						wpssAdminNotice('<?php echo esc_js( __( 'Page title not defined.', 'wp-sell-services' ) ); ?>', 'error');
 						return;
 					}
 
@@ -1183,12 +1191,12 @@ class Settings {
 									$btn.removeClass('button-primary').text('<?php echo esc_js( __( 'Create Page', 'wp-sell-services' ) ); ?>');
 								}, 2000);
 							} else {
-								alert(response.data.message || '<?php echo esc_js( __( 'Failed to create page.', 'wp-sell-services' ) ); ?>');
+								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Failed to create page.', 'wp-sell-services' ) ); ?>', 'error');
 								$btn.removeClass('creating').text('<?php echo esc_js( __( 'Create Page', 'wp-sell-services' ) ); ?>');
 							}
 						},
 						error: function() {
-							alert('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
+							wpssAdminNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
 							$btn.removeClass('creating').text('<?php echo esc_js( __( 'Create Page', 'wp-sell-services' ) ); ?>');
 						}
 					});

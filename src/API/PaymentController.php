@@ -461,20 +461,16 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function confirm_stripe_payment( object $gateway, string $payment_id, int $service_id, int $package_id, int $pay_order ) {
-		$result = $gateway->confirm_payment(
-			array(
-				'payment_intent_id' => $payment_id,
-				'service_id'        => $service_id,
-				'package_id'        => $package_id,
-			)
-		);
-
-		if ( empty( $result['success'] ) ) {
-			return new WP_Error( 'stripe_confirm_error', $result['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Handle pay_order: mark existing order as paid instead of creating new.
+		// For existing orders (pay_order), verify the payment without creating a new
+		// WPSS order. confirm_payment() creates an order internally, so we use
+		// process_payment() for the verify-only path.
 		if ( $pay_order ) {
+			$payment = $gateway->process_payment( $payment_id );
+
+			if ( empty( $payment['success'] ) ) {
+				return new WP_Error( 'stripe_confirm_error', $payment['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+			}
+
 			$order_provider = wpss_get_order_provider();
 			if ( $order_provider ) {
 				$order_provider->mark_as_paid( $pay_order, $payment_id, 'stripe' );
@@ -489,6 +485,19 @@ class PaymentController extends RestController {
 					'status'       => 'paid',
 				)
 			);
+		}
+
+		// New order: verify + create order via gateway.
+		$result = $gateway->confirm_payment(
+			array(
+				'payment_intent_id' => $payment_id,
+				'service_id'        => $service_id,
+				'package_id'        => $package_id,
+			)
+		);
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'stripe_confirm_error', $result['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
 		return new WP_REST_Response(
@@ -512,23 +521,20 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function confirm_paypal_payment( object $gateway, string $payment_id, int $service_id, int $package_id, int $pay_order ) {
-		$result = $gateway->capture_order(
-			array(
-				'paypal_order_id' => $payment_id,
-				'service_id'      => $service_id,
-				'package_id'      => $package_id,
-			)
-		);
-
-		if ( empty( $result['success'] ) ) {
-			return new WP_Error( 'paypal_confirm_error', $result['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Handle pay_order: mark existing order as paid.
+		// For existing orders (pay_order), capture the payment directly without creating
+		// a new WPSS order. capture_order() creates an order internally, so we use
+		// process_payment() for the capture-only path.
 		if ( $pay_order ) {
+			$capture = $gateway->process_payment( $payment_id );
+
+			if ( empty( $capture['success'] ) ) {
+				return new WP_Error( 'paypal_confirm_error', $capture['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+			}
+
+			$transaction_id = $capture['transaction_id'] ?? $payment_id;
 			$order_provider = wpss_get_order_provider();
 			if ( $order_provider ) {
-				$order_provider->mark_as_paid( $pay_order, $payment_id, 'paypal' );
+				$order_provider->mark_as_paid( $pay_order, $transaction_id, 'paypal' );
 			}
 			$order = wpss_get_order( $pay_order );
 
@@ -540,6 +546,19 @@ class PaymentController extends RestController {
 					'status'       => 'paid',
 				)
 			);
+		}
+
+		// New order: capture + create order via gateway.
+		$result = $gateway->capture_order(
+			array(
+				'paypal_order_id' => $payment_id,
+				'service_id'      => $service_id,
+				'package_id'      => $package_id,
+			)
+		);
+
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'paypal_confirm_error', $result['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
 		return new WP_REST_Response(

@@ -686,6 +686,15 @@ class VendorsPage {
 		?>
 		;
 
+		function wpssAdminNotice(msg, type) {
+			type = type || 'error';
+			var cls = type === 'success' ? 'notice-success' : 'notice-error';
+			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+			jQuery('.wrap h1, .wrap h2').first().after($notice);
+			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		}
+
 		jQuery(function($) {
 			var $modal = $('#wpss-vendor-modal');
 			var $modalBody = $('#wpss-vendor-modal-body');
@@ -754,12 +763,12 @@ class VendorsPage {
 						if (response.success) {
 							location.reload();
 						} else {
-							alert(response.data.message || i18n.error);
+							wpssAdminNotice(response.data.message || i18n.error, 'error');
 							$btn.prop('disabled', false);
 						}
 					},
 					error: function() {
-						alert(i18n.error);
+						wpssAdminNotice(i18n.error, 'error');
 						$btn.prop('disabled', false);
 					}
 				});
@@ -773,7 +782,7 @@ class VendorsPage {
 				var rate = $('#wpss-vendor-commission-rate').val();
 
 				if (rate === '') {
-					alert('<?php echo esc_js( __( 'Please enter a commission rate.', 'wp-sell-services' ) ); ?>');
+					wpssAdminNotice('<?php echo esc_js( __( 'Please enter a commission rate.', 'wp-sell-services' ) ); ?>', 'error');
 					return;
 				}
 
@@ -794,12 +803,12 @@ class VendorsPage {
 							// Reload modal content to update UI
 							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
 						} else {
-							alert(response.data.message || i18n.error);
+							wpssAdminNotice(response.data.message || i18n.error, 'error');
 							$btn.prop('disabled', false);
 						}
 					},
 					error: function() {
-						alert(i18n.error);
+						wpssAdminNotice(i18n.error, 'error');
 						$btn.prop('disabled', false);
 					}
 				});
@@ -832,12 +841,12 @@ class VendorsPage {
 							// Reload modal content to update UI
 							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
 						} else {
-							alert(response.data.message || i18n.error);
+							wpssAdminNotice(response.data.message || i18n.error, 'error');
 							$btn.prop('disabled', false);
 						}
 					},
 					error: function() {
-						alert(i18n.error);
+						wpssAdminNotice(i18n.error, 'error');
 						$btn.prop('disabled', false);
 					}
 				});
@@ -1277,12 +1286,12 @@ class VendorsPage {
 								delete tabCache['settings'];
 								delete tabCache['earnings'];
 							} else {
-								alert(response.data.message || '<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>');
+								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>', 'error');
 							}
 							$btn.prop('disabled', false);
 						},
 						error: function() {
-							alert('<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>');
+							wpssAdminNotice('<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>', 'error');
 							$btn.prop('disabled', false);
 						}
 					});
@@ -1312,12 +1321,12 @@ class VendorsPage {
 								delete tabCache['earnings'];
 								loadTab('settings');
 							} else {
-								alert(response.data.message || '<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>');
+								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>', 'error');
 							}
 							$btn.prop('disabled', false);
 						},
 						error: function() {
-							alert('<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>');
+							wpssAdminNotice('<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>', 'error');
 							$btn.prop('disabled', false);
 						}
 					});
@@ -1344,7 +1353,7 @@ class VendorsPage {
 								delete tabCache['settings'];
 								delete tabCache['overview'];
 							} else {
-								alert(response.data.message || '<?php echo esc_js( __( 'Error updating vacation mode.', 'wp-sell-services' ) ); ?>');
+								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating vacation mode.', 'wp-sell-services' ) ); ?>', 'error');
 							}
 						}
 					});
@@ -1369,7 +1378,7 @@ class VendorsPage {
 								delete tabCache['settings'];
 								delete tabCache['overview'];
 							} else {
-								alert(response.data.message || '<?php echo esc_js( __( 'Error updating availability.', 'wp-sell-services' ) ); ?>');
+								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating availability.', 'wp-sell-services' ) ); ?>', 'error');
 							}
 						}
 					});
@@ -1530,11 +1539,11 @@ class VendorsPage {
 						if (response.success) {
 							location.reload();
 						} else {
-							alert(response.data.message || i18n.error);
+							wpssAdminNotice(response.data.message || i18n.error, 'error');
 						}
 					},
 					error: function() {
-						alert(i18n.error);
+						wpssAdminNotice(i18n.error, 'error');
 					}
 				});
 			});

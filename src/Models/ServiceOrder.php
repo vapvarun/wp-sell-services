@@ -786,13 +786,57 @@ class ServiceOrder {
 	}
 
 	/**
+	 * Get package snapshot stored at order creation time.
+	 *
+	 * Falls back to live package data if no snapshot exists (for legacy orders).
+	 *
+	 * @return array|null Package data array or null if not available.
+	 */
+	public function get_package_snapshot(): ?array {
+		// Try snapshot from meta first.
+		$snapshot = $this->meta['package_snapshot'] ?? null;
+		if ( is_array( $snapshot ) && ! empty( $snapshot ) ) {
+			return $snapshot;
+		}
+
+		// Try proposal snapshot for request-based orders.
+		$proposal = $this->meta['proposal_snapshot'] ?? null;
+		if ( is_array( $proposal ) && ! empty( $proposal ) ) {
+			return $proposal;
+		}
+
+		// Fall back to live data.
+		if ( ! $this->package_id ) {
+			return null;
+		}
+
+		$service = $this->get_service();
+		if ( ! $service ) {
+			return null;
+		}
+
+		$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
+
+		return $packages[ $this->package_id ] ?? null;
+	}
+
+	/**
 	 * Get package name.
+	 *
+	 * Uses the package snapshot first (frozen at order creation), then falls back to live data.
 	 *
 	 * @return string
 	 */
 	public function get_package_name(): string {
-		if ( ! $this->package_id ) {
+		if ( ! $this->package_id && empty( $this->meta['proposal_snapshot'] ) ) {
 			return __( 'Custom', 'wp-sell-services' );
+		}
+
+		// Try snapshot first.
+		$snapshot = $this->get_package_snapshot();
+		if ( $snapshot ) {
+			// Package snapshot has 'name', proposal snapshot has 'request_title'.
+			return $snapshot['name'] ?? $snapshot['request_title'] ?? __( 'Package', 'wp-sell-services' );
 		}
 
 		global $wpdb;

@@ -662,6 +662,9 @@ class OrderWorkflowManager {
 			$this->reverse_order_earnings( $order_id, $order );
 		}
 
+		// Auto-refund the buyer's original payment via the payment gateway.
+		$this->attempt_payment_refund( $order );
+
 		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
 		/**
@@ -791,6 +794,77 @@ class OrderWorkflowManager {
 		);
 
 		$wpdb->query( 'COMMIT' );
+	}
+
+	/**
+	 * Attempt to refund the buyer's original payment via the payment gateway.
+	 *
+	 * Only processes refunds for orders that have a transaction ID and a recognized
+	 * payment gateway with a process_refund() method. On success, updates the order's
+	 * payment_status to 'refunded'. On failure, logs the error for admin review.
+	 *
+	 * @param ServiceOrder $order Order object.
+	 * @return void
+	 */
+	private function attempt_payment_refund( ServiceOrder $order ): void {
+		// Skip if no payment was made (offline/pending orders, or already refunded).
+		if ( empty( $order->transaction_id ) || empty( $order->payment_method ) ) {
+			return;
+		}
+
+		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) ) {
+			return;
+		}
+
+		$gateways = apply_filters( 'wpss_payment_gateways', [] );
+		$gateway  = $gateways[ $order->payment_method ] ?? null;
+
+		if ( ! $gateway || ! method_exists( $gateway, 'process_refund' ) ) {
+			wpss_log( "Auto-refund skipped for order {$order->id}: gateway '{$order->payment_method}' not available or missing process_refund().", 'warning' );
+			return;
+		}
+
+		$refund_result = $gateway->process_refund( $order->transaction_id, (float) $order->total );
+
+		if ( ! empty( $refund_result['success'] ) ) {
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_orders',
+				array( 'payment_status' => 'refunded' ),
+				array( 'id' => $order->id )
+			);
+
+			wpss_log( "Auto-refund successful for order {$order->id}, transaction {$order->transaction_id}." );
+
+			/**
+			 * Fires when an auto-refund is processed successfully.
+			 *
+			 * @since 1.2.0
+			 *
+			 * @param int          $order_id Order ID.
+			 * @param ServiceOrder $order    Order object.
+			 * @param array        $result   Refund result from gateway.
+			 */
+			do_action( 'wpss_order_auto_refunded', $order->id, $order, $refund_result );
+		} else {
+			$error_msg = $refund_result['error'] ?? __( 'Unknown error', 'wp-sell-services' );
+			wpss_log( "Auto-refund FAILED for order {$order->id}: {$error_msg}", 'error' );
+
+			// Notify admin of failed refund so they can process manually.
+			$this->notification_service->create(
+				0, // Admin notification (user_id 0 = site admin).
+				'refund_failed',
+				__( 'Auto-Refund Failed', 'wp-sell-services' ),
+				sprintf(
+					/* translators: 1: order ID, 2: error message */
+					__( 'Automatic refund failed for order #%1$d. Error: %2$s. Please process the refund manually via the payment gateway dashboard.', 'wp-sell-services' ),
+					$order->id,
+					$error_msg
+				),
+				array( 'order_id' => $order->id )
+			);
+		}
 	}
 
 	/**

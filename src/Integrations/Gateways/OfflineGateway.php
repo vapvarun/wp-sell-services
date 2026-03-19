@@ -541,6 +541,14 @@ class OfflineGateway implements PaymentGatewayInterface {
 		</div>
 
 		<script>
+		function wpssAdminNotice(msg, type) {
+			type = type || 'error';
+			var cls = type === 'success' ? 'notice-success' : 'notice-error';
+			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+			jQuery('.wrap h1, .wrap h2').first().after($notice);
+			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		}
 		jQuery(function($) {
 			$('.wpss-mark-paid-btn').on('click', function() {
 				var $btn = $(this);
@@ -561,14 +569,14 @@ class OfflineGateway implements PaymentGatewayInterface {
 					nonce: nonce
 				}, function(response) {
 					if (response.success) {
-						alert(response.data.message);
+						// Success - page will reload to show updated state.
 						location.reload();
 					} else {
-						alert(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>');
+						wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
 						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
 					}
 				}).fail(function() {
-					alert('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>');
+					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
 					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
 				});
 			});

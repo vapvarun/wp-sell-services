@@ -801,6 +801,14 @@ class SetupWizardPage {
 	private function render_scripts(): void {
 		?>
 		<script>
+		function wpssAdminNotice(msg, type) {
+			type = type || 'error';
+			var cls = type === 'success' ? 'notice-success' : 'notice-error';
+			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+			jQuery('.wrap h1, .wrap h2').first().after($notice);
+			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		}
 		jQuery(function($) {
 			var ajaxUrl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';
 			var wizardNonce = '<?php echo esc_js( wp_create_nonce( 'wpss_wizard_nonce' ) ); ?>';
@@ -831,7 +839,7 @@ class SetupWizardPage {
 				if (step === 6) {
 					$.post(ajaxUrl, { action: 'wpss_wizard_complete', nonce: wizardNonce }, function(response) {
 						if (!response.success && response.data && response.data.message) {
-							alert(response.data.message);
+							wpssAdminNotice(response.data.message, 'error');
 							goToStep(3);
 						}
 					});

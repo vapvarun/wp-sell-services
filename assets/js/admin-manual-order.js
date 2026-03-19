@@ -9,6 +9,16 @@
 (function ($) {
 	'use strict';
 
+	// Admin notice helper - replaces alert() with WordPress-style notices.
+	function wpssAdminNotice(msg, type) {
+		type = type || 'error';
+		var cls = type === 'success' ? 'notice-success' : 'notice-error';
+		var $notice = $('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+		$('.wrap h1, .wrap h2').first().after($notice);
+		$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+		setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+	}
+
 	var state = {
 		subtotal: 0,
 		addonsTotal: 0,
@@ -469,14 +479,15 @@
 					$form.hide();
 					$result.show();
 				} else {
-					alert(
+					wpssAdminNotice(
 						response.data.message ||
-							wpssManualOrder.i18n.createFailed
+							wpssManualOrder.i18n.createFailed,
+						'error'
 					);
 				}
 			},
 			error: function () {
-				alert(wpssManualOrder.i18n.createError);
+				wpssAdminNotice(wpssManualOrder.i18n.createError, 'error');
 			},
 			complete: function () {
 				$submitBtn.prop('disabled', false);

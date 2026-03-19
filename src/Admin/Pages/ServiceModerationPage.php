@@ -448,6 +448,15 @@ class ServiceModerationPage {
 		);
 		?>
 		;
+		function wpssAdminNotice(msg, type) {
+			type = type || 'error';
+			var cls = type === 'success' ? 'notice-success' : 'notice-error';
+			var $notice = $('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+			$('.wrap h1, .wrap h2').first().after($notice);
+			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
+			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		}
+
 		jQuery(function($) {
 			var wpssModeration = window.wpssModeration;
 
@@ -471,11 +480,11 @@ class ServiceModerationPage {
 					if (response.success) {
 						location.reload();
 					} else {
-						alert(response.data.message || wpssModeration.i18n.error);
+						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
 						$btn.text('Approve');
 					}
 				}).fail(function() {
-					alert(wpssModeration.i18n.error);
+					wpssAdminNotice(wpssModeration.i18n.error, 'error');
 					$btn.text('Approve');
 				});
 			});
@@ -502,11 +511,11 @@ class ServiceModerationPage {
 					if (response.success) {
 						location.reload();
 					} else {
-						alert(response.data.message || wpssModeration.i18n.error);
+						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
 						$btn.text('Reject');
 					}
 				}).fail(function() {
-					alert(wpssModeration.i18n.error);
+					wpssAdminNotice(wpssModeration.i18n.error, 'error');
 					$btn.text('Reject');
 				});
 			});
@@ -524,7 +533,7 @@ class ServiceModerationPage {
 				});
 
 				if (serviceIds.length === 0) {
-					alert(wpssModeration.i18n.selectServices);
+					wpssAdminNotice(wpssModeration.i18n.selectServices, 'error');
 					return;
 				}
 
@@ -550,7 +559,7 @@ class ServiceModerationPage {
 					if (response.success) {
 						location.reload();
 					} else {
-						alert(response.data.message || wpssModeration.i18n.error);
+						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
 					}
 				});
 			});

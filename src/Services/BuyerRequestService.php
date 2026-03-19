@@ -605,6 +605,15 @@ class BuyerRequestService {
 		$delivery_days = $proposal->proposed_days ?: $request->delivery_days ?: 7;
 		$deadline      = gmdate( 'Y-m-d H:i:s', strtotime( "+{$delivery_days} days" ) );
 
+		// Snapshot the proposal details at order creation time.
+		$proposal_snapshot = array_filter( [
+			'proposed_price'  => $proposal->proposed_price,
+			'proposed_days'   => $proposal->proposed_days ?? null,
+			'cover_letter'    => $proposal->cover_letter ?? '',
+			'request_title'   => $request->title,
+			'request_budget'  => $request->budget ?? null,
+		] );
+
 		// Create order.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
@@ -630,8 +639,11 @@ class BuyerRequestService {
 				'revisions_used'     => 0,
 				'created_at'         => current_time( 'mysql' ),
 				'updated_at'         => current_time( 'mysql' ),
+				'meta'               => wp_json_encode( array_filter( [
+					'proposal_snapshot' => $proposal_snapshot,
+				] ) ),
 			),
-			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s' )
+			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {
