@@ -72,6 +72,26 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 				<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>">
 					<?php echo esc_html( $vendor->display_name ); ?>
 				</a>
+				<?php
+				$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
+				if ( $vendor_profile ) :
+					$tier       = $vendor_profile->tier;
+					$tier_label = $vendor_profile->get_tier_label();
+					$tier_colors = array(
+						'new'       => 'background:#f1f5f9;color:#64748b;',
+						'rising'    => 'background:#eff6ff;color:#2563eb;',
+						'top_rated' => 'background:#fefce8;color:#ca8a04;',
+						'pro'       => 'background:#faf5ff;color:#7c3aed;',
+					);
+					$tier_style = $tier_colors[ $tier ] ?? $tier_colors['new'];
+					?>
+					<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" style="display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:9999px;vertical-align:middle;margin-left:6px;<?php echo esc_attr( $tier_style ); ?>">
+						<?php if ( 'pro' === $tier ) : ?>
+							<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-1px;margin-right:2px;"><path d="M8 0l2.5 2.5H14v3.5L16 8l-2 2v3.5h-3.5L8 16l-2.5-2.5H2v-3.5L0 8l2-2V2.5h3.5L8 0zm-.5 11.5l5-5-1.5-1.5-3.5 3.5-1.5-1.5-1.5 1.5 3 3z"/></svg>
+						<?php endif; ?>
+						<?php echo esc_html( $tier_label ); ?>
+					</span>
+				<?php endif; ?>
 			</h4>
 			<?php if ( $tagline ) : ?>
 				<p class="wpss-vendor-tagline"><?php echo esc_html( $tagline ); ?></p>

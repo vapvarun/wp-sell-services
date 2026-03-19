@@ -352,6 +352,7 @@ class UnifiedDashboard {
 			</aside>
 
 			<main class="wpss-dashboard__content">
+				<?php $this->maybe_render_payout_banner( $user_id, $is_active ); ?>
 				<header class="wpss-dashboard__header">
 					<h1 class="wpss-dashboard__title">
 						<?php
@@ -494,6 +495,55 @@ class UnifiedDashboard {
 			</p>
 			<a href="<?php echo esc_url( wpss_get_dashboard_url() ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Back to Dashboard', 'wp-sell-services' ); ?>
+			</a>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Show a payout setup banner if vendor has earnings but no payout method.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param int  $user_id   Current user ID.
+	 * @param bool $is_active Whether user is an active vendor.
+	 * @return void
+	 */
+	private function maybe_render_payout_banner( int $user_id, bool $is_active ): void {
+		if ( ! $is_active ) {
+			return;
+		}
+
+		$payout_method = get_user_meta( $user_id, 'wpss_payout_method', true );
+
+		// Already configured - no banner needed.
+		if ( ! empty( $payout_method ) ) {
+			return;
+		}
+
+		// Check if vendor has any earnings.
+		$earnings_service = new \WPSellServices\Services\EarningsService();
+		$summary          = $earnings_service->get_summary( $user_id );
+		$has_earnings     = ( $summary['available_balance'] ?? 0 ) > 0 || ( $summary['pending_clearance'] ?? 0 ) > 0;
+
+		if ( ! $has_earnings ) {
+			return;
+		}
+
+		$earnings_url = $this->get_section_url( 'earnings' );
+		?>
+		<div class="wpss-dashboard__payout-banner" style="background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%); border: 1px solid #f59e0b; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+			<span style="font-size: 24px; line-height: 1;">&#128176;</span>
+			<div style="flex: 1;">
+				<strong style="display: block; margin-bottom: 2px; color: #92400e;">
+					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
+				</strong>
+				<span style="color: #a16207; font-size: 14px;">
+					<?php esc_html_e( 'Set up your payout method to start receiving payments.', 'wp-sell-services' ); ?>
+				</span>
+			</div>
+			<a href="<?php echo esc_url( $earnings_url ); ?>" class="wpss-btn wpss-btn--primary" style="white-space: nowrap;">
+				<?php esc_html_e( 'Set Up Payouts', 'wp-sell-services' ); ?>
 			</a>
 		</div>
 		<?php

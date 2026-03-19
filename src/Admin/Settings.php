@@ -194,6 +194,7 @@ class Settings {
 
 		$this->register_settings();
 		add_action( 'wp_ajax_wpss_create_page', array( $this, 'ajax_create_page' ) );
+		add_action( 'wp_ajax_wpss_send_test_email', array( $this, 'ajax_send_test_email' ) );
 	}
 
 	/**
@@ -264,6 +265,51 @@ class Settings {
 				'edit_url' => get_edit_post_link( $page_id, 'raw' ),
 			)
 		);
+	}
+
+	/**
+	 * AJAX handler to send a test email.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @return void
+	 */
+	public function ajax_send_test_email(): void {
+		check_ajax_referer( 'wpss_test_email', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$admin_email = get_option( 'admin_email' );
+		$site_name   = wpss_get_platform_name();
+
+		$result = wp_mail(
+			$admin_email,
+			/* translators: %s: site/platform name */
+			sprintf( __( '[%s] Test Email', 'wp-sell-services' ), $site_name ),
+			sprintf(
+				/* translators: %s: site/platform name */
+				__( 'This is a test email from %s. If you received this, email notifications are working correctly.', 'wp-sell-services' ),
+				$site_name
+			),
+			array( 'Content-Type: text/html; charset=UTF-8' )
+		);
+
+		if ( $result ) {
+			wp_send_json_success(
+				array(
+					/* translators: %s: admin email address */
+					'message' => sprintf( __( 'Test email sent to %s', 'wp-sell-services' ), $admin_email ),
+				)
+			);
+		} else {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Failed to send test email. Check your SMTP configuration.', 'wp-sell-services' ),
+				)
+			);
+		}
 	}
 
 	/**
@@ -1781,6 +1827,12 @@ class Settings {
 			'emails',
 			array(
 				array(
+					'id'           => 'email-test',
+					'title'        => __( 'Email Deliverability', 'wp-sell-services' ),
+					'description'  => __( 'Verify that your site can send emails. If the test fails, check your SMTP or email sending plugin configuration.', 'wp-sell-services' ),
+					'callback'     => array( $this, 'render_test_email_section' ),
+				),
+				array(
 					'id'           => 'email-notifications',
 					'title'        => __( 'Email Notifications', 'wp-sell-services' ),
 					'description'  => __( 'Configure which email notifications are sent. These toggles are the master switch for each notification type.', 'wp-sell-services' ),
@@ -1789,6 +1841,60 @@ class Settings {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Render the test email section in the Emails tab.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @return void
+	 */
+	public function render_test_email_section(): void {
+		$admin_email = get_option( 'admin_email' );
+		$nonce       = wp_create_nonce( 'wpss_test_email' );
+		?>
+		<div class="wpss-test-email-section" style="margin-top: 15px;">
+			<p>
+				<?php
+				printf(
+					/* translators: %s: admin email address */
+					esc_html__( 'Send a test email to %s to verify email delivery is working.', 'wp-sell-services' ),
+					'<strong>' . esc_html( $admin_email ) . '</strong>'
+				);
+				?>
+			</p>
+			<button type="button" class="button button-primary wpss-send-test-email" data-nonce="<?php echo esc_attr( $nonce ); ?>">
+				<?php esc_html_e( 'Send Test Email', 'wp-sell-services' ); ?>
+			</button>
+			<span class="wpss-test-email-status" style="margin-left: 10px; display: none;"></span>
+		</div>
+		<script>
+		jQuery(function($) {
+			$('.wpss-send-test-email').on('click', function() {
+				var $btn = $(this);
+				var $status = $btn.siblings('.wpss-test-email-status');
+				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'wp-sell-services' ) ); ?>');
+				$status.hide();
+				$.post(ajaxurl, {
+					action: 'wpss_send_test_email',
+					nonce: $btn.data('nonce')
+				}, function(response) {
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send Test Email', 'wp-sell-services' ) ); ?>');
+					$status.show();
+					if (response.success) {
+						$status.css('color', '#00a32a').text(response.data.message);
+					} else {
+						$status.css('color', '#d63638').text(response.data.message);
+					}
+				}).fail(function() {
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send Test Email', 'wp-sell-services' ) ); ?>');
+					$status.show().css('color', '#d63638').text('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>');
+				});
+			});
+		});
+		</script>
+		<?php
 	}
 
 	/**

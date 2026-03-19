@@ -93,7 +93,7 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 				<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
 			</div>
 			<h3><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
-			<p><?php esc_html_e( 'When you purchase a service, your orders will appear here.', 'wp-sell-services' ); ?></p>
+			<p><?php esc_html_e( 'Browse our marketplace to find the perfect service for your needs.', 'wp-sell-services' ); ?></p>
 			<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
 			</a>
