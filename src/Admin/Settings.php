@@ -900,24 +900,20 @@ class Settings {
 		 *
 		 * @param array $types Associative array of notification_key => label.
 		 */
+		// Only toggleable types shown in UI. Critical types (cancellation,
+		// withdrawal, proposal) are always-on and not shown to avoid confusion.
 		$notification_types = apply_filters(
 			'wpss_notification_types',
 			array(
-				'new_order'              => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'            => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'             => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'     => __( 'New Proposal Received', 'wp-sell-services' ),
-				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'new_order'          => __( 'New Order', 'wp-sell-services' ),
+				'order_completed'    => __( 'Order Completed', 'wp-sell-services' ),
+				'order_cancelled'    => __( 'Order Cancelled', 'wp-sell-services' ),
+				'delivery_submitted' => __( 'Delivery Submitted', 'wp-sell-services' ),
+				'revision_requested' => __( 'Revision Requested', 'wp-sell-services' ),
+				'new_message'        => __( 'New Message', 'wp-sell-services' ),
+				'vendor_contact'     => __( 'Vendor Direct Message', 'wp-sell-services' ),
+				'new_review'         => __( 'New Review', 'wp-sell-services' ),
+				'dispute_opened'     => __( 'Dispute Opened', 'wp-sell-services' ),
 			)
 		);
 
@@ -2406,24 +2402,20 @@ class Settings {
 		$sanitized = array();
 
 		// Build keys dynamically from the same filter used to render the UI.
+		// Only toggleable types shown in UI. Critical types (cancellation,
+		// withdrawal, proposal) are always-on and not shown to avoid confusion.
 		$notification_types = apply_filters(
 			'wpss_notification_types',
 			array(
-				'new_order'              => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'            => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'             => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'     => __( 'New Proposal Received', 'wp-sell-services' ),
-				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'new_order'          => __( 'New Order', 'wp-sell-services' ),
+				'order_completed'    => __( 'Order Completed', 'wp-sell-services' ),
+				'order_cancelled'    => __( 'Order Cancelled', 'wp-sell-services' ),
+				'delivery_submitted' => __( 'Delivery Submitted', 'wp-sell-services' ),
+				'revision_requested' => __( 'Revision Requested', 'wp-sell-services' ),
+				'new_message'        => __( 'New Message', 'wp-sell-services' ),
+				'vendor_contact'     => __( 'Vendor Direct Message', 'wp-sell-services' ),
+				'new_review'         => __( 'New Review', 'wp-sell-services' ),
+				'dispute_opened'     => __( 'Dispute Opened', 'wp-sell-services' ),
 			)
 		);
 
