@@ -142,7 +142,7 @@ $active_count = count(
 								<?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>
-						<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'edit-request', 'request_id' => $request_id ), wpss_get_page_url( 'dashboard' ) ?: get_permalink() ) ); ?>" class="wpss-btn wpss-btn--link wpss-btn--sm">
+						<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'edit-request', 'request_id' => $request_id ), wpss_get_page_url( 'dashboard' ) ?: get_permalink() ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 						</a>
 						<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-btn--danger wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">

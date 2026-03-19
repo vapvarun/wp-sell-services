@@ -823,6 +823,7 @@
 	background: var(--wpss-block-white);
 	border: 1px solid var(--wpss-block-border);
 	border-radius: var(--wpss-block-radius);
+	margin-bottom: 1rem;
 	padding: 1.5rem;
 	transition: all 0.2s ease;
 }

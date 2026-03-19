@@ -887,9 +887,9 @@
    Profile Form
    ========================================================================== */
 
-.wpss-profile-form {
+/* .wpss-profile-form {
 	max-width: 640px;
-}
+} */
 
 .wpss-profile-form__section {
 	background: #fff;
@@ -1127,6 +1127,26 @@
 .wpss-status--refunded {
 	background: #f3e8ff;
 	color: #6b21a8;
+}
+
+.wpss-status--cancellation_requested {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.wpss-status--partially_refunded {
+	background: #ecfeff;
+	color: #155e75;
+}
+
+.wpss-status--late {
+	background: #fef9c3;
+	color: #854d0e;
+}
+
+.wpss-status--on_hold {
+	background: #e5e7eb;
+	color: #374151;
 }
 
 /* ==========================================================================
