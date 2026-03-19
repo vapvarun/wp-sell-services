@@ -596,26 +596,10 @@ class OrderWorkflowManager {
 	public function handle_status_change( int $order_id, string $new_status, string $old_status ): void {
 		// Note: In-app notifications are handled by Plugin.php's define_notification_hooks()
 		// via NotificationService::notify_order_status(). This method only handles
-		// non-notification side effects like admin emails.
-
-		switch ( $new_status ) {
-			case ServiceOrder::STATUS_DISPUTED:
-				// Notify admin via direct email (respects email settings).
-				if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
-					$admin_email = get_option( 'admin_email' );
-					wp_mail(
-						$admin_email,
-						/* translators: %s: platform name */
-						sprintf( __( '[%s] New Dispute Opened', 'wp-sell-services' ), wpss_get_platform_name() ),
-						sprintf(
-							/* translators: %d: order ID */
-							__( 'A dispute has been opened for Order #%d. Please review in the admin panel.', 'wp-sell-services' ),
-							$order_id
-						)
-					);
-				}
-				break;
-		}
+		// non-notification side effects.
+		//
+		// Admin dispute email is handled by EmailService::send_dispute_opened() which sends
+		// branded emails to buyer, vendor, AND admin. No duplicate plain email needed here.
 
 		/**
 		 * Fires after status change processing.

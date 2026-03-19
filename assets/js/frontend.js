@@ -31,6 +31,24 @@
 	};
 
 	/**
+	 * Update mini-cart indicator with current cart count.
+	 *
+	 * @param {number} count Cart item count.
+	 */
+	WPSS.updateMiniCart = function(count) {
+		var $miniCart = $('#wpss-mini-cart');
+		var $count = $('.wpss-cart-count');
+
+		$count.text(count);
+
+		if (count > 0) {
+			$miniCart.show();
+		} else {
+			$miniCart.hide();
+		}
+	};
+
+	/**
 	 * Service Gallery.
 	 */
 	WPSS.initGallery = function() {
@@ -482,6 +500,9 @@
 				},
 				success: function(response) {
 					if (response.success) {
+						if (response.data.cart_count !== undefined) {
+							WPSS.updateMiniCart(response.data.cart_count);
+						}
 						if (response.data.redirect) {
 							window.location.href = response.data.redirect;
 						} else {

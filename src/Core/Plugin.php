@@ -686,6 +686,7 @@ final class Plugin {
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->frontend, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->frontend, 'enqueue_scripts' );
+		$this->loader->add_action( 'wp_footer', $this->frontend, 'render_mini_cart' );
 
 		// Initialize single service view.
 		$this->single_service_view = new SingleServiceView();

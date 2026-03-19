@@ -551,11 +551,16 @@
         },
 
         /**
-         * Update cart count in header.
+         * Update cart count in header and mini-cart.
          */
         updateCartCount: function(count) {
             const $cartCount = $('.wpss-cart-count, .cart-count, .woocommerce-cart-count');
             $cartCount.text(count);
+
+            // Update floating mini-cart indicator.
+            if (typeof WPSS !== 'undefined' && WPSS.updateMiniCart) {
+                WPSS.updateMiniCart(count);
+            }
 
             // Trigger WooCommerce cart fragments refresh if available.
             if (typeof wc_cart_fragments_params !== 'undefined') {
