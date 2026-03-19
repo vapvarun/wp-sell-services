@@ -1241,22 +1241,18 @@ function wpss_has_wallet(): bool {
  * @return string Checkout URL with service parameters.
  */
 function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, array $addons = array() ): string {
-	$checkout_url = wpss_get_page_url( 'checkout' );
+	// Use rewrite-based URL: /service-checkout/{service_id}/?package={id}
+	$url = home_url( '/service-checkout/' . $service_id . '/' );
 
-	if ( ! $checkout_url ) {
-		return '';
+	if ( $package_id > 0 ) {
+		$url = add_query_arg( 'package', $package_id, $url );
 	}
-
-	$params = array(
-		'wpss_service_id' => $service_id,
-		'wpss_package_id' => $package_id,
-	);
 
 	if ( ! empty( $addons ) ) {
-		$params['wpss_addons'] = $addons;
+		$url = add_query_arg( 'addons', implode( ',', $addons ), $url );
 	}
 
-	return add_query_arg( $params, $checkout_url );
+	return $url;
 }
 
 /**

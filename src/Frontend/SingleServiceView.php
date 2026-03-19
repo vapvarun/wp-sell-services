@@ -107,9 +107,9 @@ class SingleServiceView {
 			true
 		);
 
-		// Get checkout URL from settings.
-		$checkout_url = wpss_get_page_url( 'checkout' );
-		$cart_url     = $checkout_url;
+		// Checkout URL uses rewrite format: /service-checkout/{id}/
+		$checkout_url = home_url( '/service-checkout/' . get_the_ID() . '/' );
+		$cart_url     = home_url( '/service-checkout/' );
 
 		wp_localize_script(
 			'wpss-single-service',

@@ -2412,15 +2412,11 @@ class AjaxHandlers {
 
 		update_user_meta( $user_id, '_wpss_cart', $cart );
 
-		$checkout_url = wpss_get_page_url( 'checkout' );
-		$checkout_url_args = array(
-			'service_id' => $service_id,
-			'package'    => $package_index,
-		);
+		$checkout_url = home_url( '/service-checkout/' . $service_id . '/' );
+		$checkout_url = add_query_arg( 'package', $package_index, $checkout_url );
 		if ( $quantity > 1 ) {
-			$checkout_url_args['quantity'] = $quantity;
+			$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
 		}
-		$checkout_url = add_query_arg( $checkout_url_args, $checkout_url );
 
 		wp_send_json_success(
 			array(
