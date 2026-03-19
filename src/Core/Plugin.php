@@ -101,6 +101,14 @@ final class Plugin {
 	private ?SEO $seo = null;
 
 	/**
+	 * Abilities registrar instance.
+	 *
+	 * @var AbilitiesRegistrar|null
+	 * @since 1.4.0
+	 */
+	private ?AbilitiesRegistrar $abilities_registrar = null;
+
+	/**
 	 * Registered payment gateways.
 	 *
 	 * @var array
@@ -238,6 +246,7 @@ final class Plugin {
 		$this->define_provider_hooks();
 		$this->define_cron_hooks();
 		$this->define_pro_teasers();
+		$this->define_abilities_hooks();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
@@ -1073,6 +1082,25 @@ final class Plugin {
 	private function define_pro_teasers(): void {
 		$pro_teaser = new ProTeaser();
 		$pro_teaser->init();
+	}
+
+	/**
+	 * Define WordPress Abilities API hooks.
+	 *
+	 * Registers marketplace abilities for AI assistant integration.
+	 * Only activates on WordPress 6.9+ which includes the Abilities API.
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	private function define_abilities_hooks(): void {
+		// Abilities API is available in WP 6.9+.
+		if ( ! function_exists( 'wp_register_ability' ) ) {
+			return;
+		}
+
+		$this->abilities_registrar = new AbilitiesRegistrar();
+		$this->abilities_registrar->init();
 	}
 
 	/**
