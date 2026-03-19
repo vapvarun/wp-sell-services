@@ -903,6 +903,61 @@ do_action( 'wpss_before_order_view', $order );
 							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
 						</div>
 					</div>
+
+				<?php elseif ( 'disputed' === $order->status ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
+
+				<?php elseif ( 'rejected' === $order->status ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
+
+				<?php elseif ( 'revision_requested' === $order->status ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Revision Requested', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
+
+				<?php elseif ( 'late' === $order->status ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Order Late', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
+
+				<?php elseif ( 'pending_approval' === $order->status ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-info, #3b82f6);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'Awaiting Approval', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
+
+				<?php elseif ( 'on_hold' === $order->status ) : ?>
+					<div class="wpss-timeline__item wpss-timeline__item--completed">
+						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
+						<div class="wpss-timeline__content">
+							<span class="wpss-timeline__title"><?php esc_html_e( 'On Hold', 'wp-sell-services' ); ?></span>
+							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+						</div>
+					</div>
+
 				<?php else : ?>
 					<!-- Pending steps -->
 					<?php if ( ! $order->started_at && in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) : ?>

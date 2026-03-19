@@ -267,9 +267,9 @@ class ServiceArchiveView {
 
 		// Get current filter values.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$min_price = isset( $_GET['min_price'] ) ? floatval( $_GET['min_price'] ) : '';
+		$min_price = isset( $_GET['min_price'] ) && '' !== $_GET['min_price'] ? floatval( $_GET['min_price'] ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$max_price = isset( $_GET['max_price'] ) ? floatval( $_GET['max_price'] ) : '';
+		$max_price = isset( $_GET['max_price'] ) && '' !== $_GET['max_price'] ? floatval( $_GET['max_price'] ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$min_rating = isset( $_GET['rating'] ) ? absint( $_GET['rating'] ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
