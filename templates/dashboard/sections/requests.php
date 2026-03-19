@@ -63,7 +63,7 @@ $active_count = count(
 			</div>
 			<h3><?php esc_html_e( 'No requests yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( "Can't find the right service? Post a request and let sellers come to you.", 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( add_query_arg( 'section', 'create-request', get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary">
+			<a href="<?php echo esc_url( add_query_arg( 'section', 'create-request', wpss_get_page_url( 'dashboard' ) ?: get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Post a Request', 'wp-sell-services' ); ?>
 			</a>
 		</div>
@@ -142,7 +142,7 @@ $active_count = count(
 								<?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>
-						<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'edit-request', 'request_id' => $request_id ), get_permalink() ) ); ?>" class="wpss-btn wpss-btn--link wpss-btn--sm">
+						<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'edit-request', 'request_id' => $request_id ), wpss_get_page_url( 'dashboard' ) ?: get_permalink() ) ); ?>" class="wpss-btn wpss-btn--link wpss-btn--sm">
 							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 						</a>
 						<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-btn--danger wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
