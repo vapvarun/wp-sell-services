@@ -273,6 +273,99 @@ class Admin {
 		if ( $this->upgrade_page ) {
 			$this->upgrade_page->init();
 		}
+
+		// Page setup admin notice.
+		add_action( 'admin_notices', array( $this, 'check_page_setup_notice' ) );
+		add_action( 'wp_ajax_wpss_dismiss_pages_notice', array( $this, 'ajax_dismiss_pages_notice' ) );
+	}
+
+	/**
+	 * Show an admin notice when required pages are unmapped.
+	 *
+	 * Lists missing pages and links to the setup wizard or settings page.
+	 * Dismissible via user meta so it does not persist after dismissal.
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	public function check_page_setup_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Don't show if dismissed.
+		if ( get_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true ) ) {
+			return;
+		}
+
+		$required_pages = array(
+			'services_page' => __( 'Services', 'wp-sell-services' ),
+			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
+			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
+			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
+		);
+
+		$pages   = get_option( 'wpss_pages', array() );
+		$missing = array();
+
+		foreach ( $required_pages as $key => $label ) {
+			$page_id = (int) ( $pages[ $key ] ?? 0 );
+			if ( ! $page_id || ! get_post( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
+				$missing[] = $label;
+			}
+		}
+
+		if ( empty( $missing ) ) {
+			return;
+		}
+
+		$settings_url = admin_url( 'admin.php?page=wpss-settings&tab=pages' );
+		$wizard_url   = admin_url( 'admin.php?page=wpss-setup-wizard' );
+
+		printf(
+			'<div class="notice notice-warning is-dismissible wpss-pages-notice" data-nonce="%s"><p><strong>%s</strong> %s: <em>%s</em>. <a href="%s">%s</a> %s <a href="%s">%s</a>.</p></div>',
+			esc_attr( wp_create_nonce( 'wpss_dismiss_pages_notice' ) ),
+			esc_html__( 'WP Sell Services:', 'wp-sell-services' ),
+			esc_html__( 'The following pages need to be set up', 'wp-sell-services' ),
+			esc_html( implode( ', ', $missing ) ),
+			esc_url( $wizard_url ),
+			esc_html__( 'Run Setup Wizard', 'wp-sell-services' ),
+			esc_html__( 'or', 'wp-sell-services' ),
+			esc_url( $settings_url ),
+			esc_html__( 'configure pages manually', 'wp-sell-services' )
+		);
+
+		// Inline script to handle dismiss via AJAX.
+		?>
+		<script>
+		jQuery( function( $ ) {
+			$( document ).on( 'click', '.wpss-pages-notice .notice-dismiss', function() {
+				var notice = $( this ).closest( '.wpss-pages-notice' );
+				$.post( ajaxurl, {
+					action: 'wpss_dismiss_pages_notice',
+					nonce: notice.data( 'nonce' )
+				} );
+			} );
+		} );
+		</script>
+		<?php
+	}
+
+	/**
+	 * AJAX handler to dismiss the pages setup notice.
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	public function ajax_dismiss_pages_notice(): void {
+		check_ajax_referer( 'wpss_dismiss_pages_notice', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		update_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true );
+		wp_send_json_success();
 	}
 
 	/**

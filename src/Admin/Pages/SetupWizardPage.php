@@ -279,7 +279,40 @@ class SetupWizardPage {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// Validate that all required pages exist before completing.
+		$required_pages = array(
+			'services_page' => __( 'Services', 'wp-sell-services' ),
+			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
+			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
+			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
+		);
+
+		$pages   = get_option( 'wpss_pages', array() );
+		$missing = array();
+
+		foreach ( $required_pages as $key => $label ) {
+			$page_id = (int) ( $pages[ $key ] ?? 0 );
+			if ( ! $page_id || ! get_post( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
+				$missing[] = $label;
+			}
+		}
+
+		if ( ! empty( $missing ) ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: comma-separated list of missing page names */
+						__( 'Required pages are missing: %s. Please go back to Step 3 and create them.', 'wp-sell-services' ),
+						implode( ', ', $missing )
+					),
+				)
+			);
+		}
+
 		update_option( 'wpss_setup_wizard_completed', time() );
+
+		// Clear the pages notice dismissal so it doesn't linger from a previous state.
+		delete_metadata( 'user', 0, '_wpss_pages_notice_dismissed', '', true );
 
 		wp_send_json_success( array( 'message' => __( 'Setup complete!', 'wp-sell-services' ) ) );
 	}
@@ -794,9 +827,14 @@ class SetupWizardPage {
 				updateIndicator();
 				$('#wpss-wizard-wrap').scrollTop(0);
 
-				// If arriving at step 6, mark complete.
+				// If arriving at step 6, mark complete (with validation).
 				if (step === 6) {
-					$.post(ajaxUrl, { action: 'wpss_wizard_complete', nonce: wizardNonce });
+					$.post(ajaxUrl, { action: 'wpss_wizard_complete', nonce: wizardNonce }, function(response) {
+						if (!response.success && response.data && response.data.message) {
+							alert(response.data.message);
+							goToStep(3);
+						}
+					});
 				}
 			}
 

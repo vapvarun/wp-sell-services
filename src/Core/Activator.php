@@ -36,6 +36,7 @@ class Activator {
 		self::run_migrations();
 		self::create_roles();
 		self::set_default_options();
+		self::create_pages();
 		self::create_wc_carrier_product();
 		self::schedule_cron_events();
 		self::flush_rewrite_rules();
@@ -252,6 +253,79 @@ class Activator {
 	 */
 	private static function create_wc_carrier_product(): void {
 		// WooCommerce integration moved to Pro plugin.
+	}
+
+	/**
+	 * Create required pages with shortcodes on activation.
+	 *
+	 * Creates Services, Dashboard, Become a Vendor, and Service Checkout pages
+	 * if they don't already exist. Maps page IDs in the wpss_pages option.
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	private static function create_pages(): void {
+		$pages = array(
+			'services_page' => array(
+				'title'     => __( 'Services', 'wp-sell-services' ),
+				'shortcode' => '[wpss_services]',
+			),
+			'dashboard'     => array(
+				'title'     => __( 'Dashboard', 'wp-sell-services' ),
+				'shortcode' => '[wpss_dashboard]',
+			),
+			'become_vendor' => array(
+				'title'     => __( 'Become a Vendor', 'wp-sell-services' ),
+				'shortcode' => '[wpss_vendor_registration]',
+			),
+			'checkout'      => array(
+				'title'     => __( 'Service Checkout', 'wp-sell-services' ),
+				'shortcode' => '[wpss_checkout]',
+			),
+		);
+
+		$saved_pages = get_option( 'wpss_pages', array() );
+
+		foreach ( $pages as $key => $page_data ) {
+			// Skip if already mapped to a valid published page.
+			if ( ! empty( $saved_pages[ $key ] ) ) {
+				$existing = get_post( $saved_pages[ $key ] );
+				if ( $existing && 'publish' === $existing->post_status ) {
+					continue;
+				}
+			}
+
+			// Check if a page with this shortcode already exists.
+			$existing_page = get_posts(
+				array(
+					'post_type'      => 'page',
+					'post_status'    => 'publish',
+					's'              => $page_data['shortcode'],
+					'posts_per_page' => 1,
+				)
+			);
+
+			if ( ! empty( $existing_page ) ) {
+				$saved_pages[ $key ] = $existing_page[0]->ID;
+				continue;
+			}
+
+			// Create the page.
+			$page_id = wp_insert_post(
+				array(
+					'post_title'   => $page_data['title'],
+					'post_content' => $page_data['shortcode'],
+					'post_status'  => 'publish',
+					'post_type'    => 'page',
+				)
+			);
+
+			if ( $page_id && ! is_wp_error( $page_id ) ) {
+				$saved_pages[ $key ] = $page_id;
+			}
+		}
+
+		update_option( 'wpss_pages', $saved_pages );
 	}
 
 	/**
