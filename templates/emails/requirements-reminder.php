@@ -57,6 +57,12 @@ do_action( 'wpss_email_content_before', 'requirements_reminder', $order, $recipi
 	<?php esc_html_e( 'Your vendor is waiting for your project requirements to start working on your order.', 'wp-sell-services' ); ?>
 </p>
 
+<?php if ( ! empty( $message ) ) : ?>
+<div style="background: #f0f4ff; border-left: 4px solid <?php echo esc_attr( $base_color ); ?>; padding: 14px 16px; margin: 0 0 20px 0; border-radius: 0 4px 4px 0;">
+	<?php echo wp_kses_post( wpautop( $message ) ); ?>
+</div>
+<?php endif; ?>
+
 <table class="email-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f9f9f9; border-radius: 4px;">
 	<tr>
 		<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%;"><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>

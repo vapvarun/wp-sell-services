@@ -209,12 +209,14 @@ class EmailService {
 				$subject,
 				self::TYPE_NEW_ORDER,
 				array(
-					'order'         => $order,
-					'recipient'     => $vendor,
-					'email_heading' => __( 'New Order Received!', 'wp-sell-services' ),
-					'service_title' => $service_title,
-					'customer_name' => $this->get_customer_name( $order->customer_id ),
-					'is_customer'   => false,
+					'order'          => $order,
+					'recipient'      => $vendor,
+					'email_heading'  => __( 'New Order Received!', 'wp-sell-services' ),
+					'service_title'  => $service_title,
+					'customer_name'  => $this->get_customer_name( $order->customer_id ),
+					'is_customer'    => false,
+					'reply_to_email' => $customer ? $customer->user_email : '',
+					'reply_to_name'  => $customer ? $customer->display_name : '',
 				)
 			);
 		}
@@ -233,12 +235,14 @@ class EmailService {
 				$subject,
 				self::TYPE_NEW_ORDER,
 				array(
-					'order'         => $order,
-					'recipient'     => $customer,
-					'email_heading' => __( 'Order Confirmed!', 'wp-sell-services' ),
-					'service_title' => $service_title,
-					'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
-					'is_customer'   => true,
+					'order'          => $order,
+					'recipient'      => $customer,
+					'email_heading'  => __( 'Order Confirmed!', 'wp-sell-services' ),
+					'service_title'  => $service_title,
+					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
+					'is_customer'    => true,
+					'reply_to_email' => $vendor ? $vendor->user_email : '',
+					'reply_to_name'  => $vendor ? $vendor->display_name : '',
 				)
 			);
 		}
@@ -272,12 +276,16 @@ class EmailService {
 			$order->order_number
 		);
 
+		$customer = get_user_by( 'id', $order->customer_id );
+
 		$template_vars = array(
 			'order'           => $order,
 			'recipient'       => $vendor,
 			'email_heading'   => __( 'Requirements Received', 'wp-sell-services' ),
 			'field_data'      => $field_data,
 			'has_attachments' => ! empty( $attachments ),
+			'reply_to_email'  => $customer ? $customer->user_email : '',
+			'reply_to_name'   => $customer ? $customer->display_name : '',
 		);
 
 		return $this->send( $vendor->user_email, $subject, self::TYPE_REQUIREMENTS_SUBMITTED, $template_vars );
@@ -307,11 +315,14 @@ class EmailService {
 				$subject,
 				self::TYPE_ORDER_IN_PROGRESS,
 				array(
-					'order'         => $order,
-					'recipient'     => $customer,
-					'email_heading' => __( 'Your Order is In Progress', 'wp-sell-services' ),
-					'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
-					'is_customer'   => true,
+					'order'          => $order,
+					'recipient'      => $customer,
+					'email_heading'  => __( 'Your Order is In Progress', 'wp-sell-services' ),
+					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
+					'is_customer'    => true,
+					'customer_name'  => $this->get_customer_name( $order->customer_id ),
+					'reply_to_email' => $vendor ? $vendor->user_email : '',
+					'reply_to_name'  => $vendor ? $vendor->display_name : '',
 				)
 			);
 		}
@@ -361,11 +372,15 @@ class EmailService {
 			$order->order_number
 		);
 
+		$vendor = get_user_by( 'id', $order->vendor_id );
+
 		$template_vars = array(
-			'order'         => $order,
-			'recipient'     => $customer,
-			'email_heading' => __( 'Your Delivery is Ready!', 'wp-sell-services' ),
-			'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
+			'order'          => $order,
+			'recipient'      => $customer,
+			'email_heading'  => __( 'Your Delivery is Ready!', 'wp-sell-services' ),
+			'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
+			'reply_to_email' => $vendor ? $vendor->user_email : '',
+			'reply_to_name'  => $vendor ? $vendor->display_name : '',
 		);
 
 		return $this->send( $customer->user_email, $subject, self::TYPE_DELIVERY_READY, $template_vars );
@@ -395,10 +410,14 @@ class EmailService {
 				$subject,
 				self::TYPE_ORDER_COMPLETED,
 				array(
-					'order'         => $order,
-					'recipient'     => $customer,
-					'email_heading' => __( 'Order Completed!', 'wp-sell-services' ),
-					'is_customer'   => true,
+					'order'          => $order,
+					'recipient'      => $customer,
+					'email_heading'  => __( 'Order Completed!', 'wp-sell-services' ),
+					'is_customer'    => true,
+					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
+					'customer_name'  => $this->get_customer_name( $order->customer_id ),
+					'reply_to_email' => $vendor ? $vendor->user_email : '',
+					'reply_to_name'  => $vendor ? $vendor->display_name : '',
 				)
 			);
 		}
@@ -410,10 +429,14 @@ class EmailService {
 				$subject,
 				self::TYPE_ORDER_COMPLETED,
 				array(
-					'order'         => $order,
-					'recipient'     => $vendor,
-					'email_heading' => __( 'Order Completed!', 'wp-sell-services' ),
-					'is_customer'   => false,
+					'order'          => $order,
+					'recipient'      => $vendor,
+					'email_heading'  => __( 'Order Completed!', 'wp-sell-services' ),
+					'is_customer'    => false,
+					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
+					'customer_name'  => $this->get_customer_name( $order->customer_id ),
+					'reply_to_email' => $customer ? $customer->user_email : '',
+					'reply_to_name'  => $customer ? $customer->display_name : '',
 				)
 			);
 		}
@@ -440,12 +463,16 @@ class EmailService {
 			$order->order_number
 		);
 
+		$customer = get_user_by( 'id', $order->customer_id );
+
 		$template_vars = array(
 			'order'              => $order,
 			'recipient'          => $vendor,
 			'email_heading'      => __( 'Revision Requested', 'wp-sell-services' ),
 			'revisions_used'     => $order->revisions_used ?? 0,
 			'revisions_included' => $order->revisions_included ?? 0,
+			'reply_to_email'     => $customer ? $customer->user_email : '',
+			'reply_to_name'      => $customer ? $customer->display_name : '',
 		);
 
 		return $this->send( $vendor->user_email, $subject, self::TYPE_REVISION_REQUESTED, $template_vars );
@@ -483,11 +510,15 @@ class EmailService {
 		);
 
 		$template_vars = array(
-			'order'         => $order,
-			'recipient'     => $recipient,
-			'sender'        => $sender,
-			'email_heading' => __( 'New Message Received', 'wp-sell-services' ),
-			'message'       => $message,
+			'order'           => $order,
+			'recipient'       => $recipient,
+			'sender'          => $sender,
+			'email_heading'   => __( 'New Message Received', 'wp-sell-services' ),
+			'message_content' => $message,
+			'sender_name'     => $sender->display_name,
+			'sender_email'    => $sender->user_email,
+			'reply_to_email'  => $sender->user_email,
+			'reply_to_name'   => $sender->display_name,
 		);
 
 		return $this->send( $recipient->user_email, $subject, self::TYPE_NEW_MESSAGE, $template_vars );
@@ -547,14 +578,16 @@ class EmailService {
 				$subject,
 				self::TYPE_CANCELLATION_REQUESTED,
 				array(
-					'order'         => $order,
-					'recipient'     => $vendor,
-					'email_heading' => __( 'Cancellation Requested', 'wp-sell-services' ),
-					'buyer_name'    => $this->get_customer_name( $order->customer_id ),
-					'reason'        => $reason_label,
-					'note'          => $note,
-					'deadline'      => $deadline_str,
-					'is_customer'   => false,
+					'order'          => $order,
+					'recipient'      => $vendor,
+					'email_heading'  => __( 'Cancellation Requested', 'wp-sell-services' ),
+					'buyer_name'     => $this->get_customer_name( $order->customer_id ),
+					'reason'         => $reason_label,
+					'note'           => $note,
+					'deadline'       => $deadline_str,
+					'is_customer'    => false,
+					'reply_to_email' => $customer ? $customer->user_email : '',
+					'reply_to_name'  => $customer ? $customer->display_name : '',
 				)
 			);
 		}
@@ -573,15 +606,17 @@ class EmailService {
 				$subject,
 				self::TYPE_CANCELLATION_REQUESTED,
 				array(
-					'order'         => $order,
-					'recipient'     => $customer,
-					'email_heading' => __( 'Cancellation Request Submitted', 'wp-sell-services' ),
-					'buyer_name'    => $this->get_customer_name( $order->customer_id ),
-					'vendor_name'   => $this->get_vendor_name( $order->vendor_id ),
-					'reason'        => $reason_label,
-					'note'          => $note,
-					'deadline'      => $deadline_str,
-					'is_customer'   => true,
+					'order'          => $order,
+					'recipient'      => $customer,
+					'email_heading'  => __( 'Cancellation Request Submitted', 'wp-sell-services' ),
+					'buyer_name'     => $this->get_customer_name( $order->customer_id ),
+					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
+					'reason'         => $reason_label,
+					'note'           => $note,
+					'deadline'       => $deadline_str,
+					'is_customer'    => true,
+					'reply_to_email' => $vendor ? $vendor->user_email : '',
+					'reply_to_name'  => $vendor ? $vendor->display_name : '',
 				)
 			);
 		}
@@ -849,15 +884,17 @@ class EmailService {
 		$dashboard_url = add_query_arg( 'section', 'messages', wpss_get_dashboard_url() );
 
 		$template_vars = array(
-			'recipient'     => $vendor,
-			'email_heading' => __( 'New Message Received', 'wp-sell-services' ),
-			'sender'        => $sender,
-			'sender_name'   => $sender->display_name,
-			'sender_email'  => $sender->user_email,
-			'message'       => $message,
-			'service_title' => $service_title,
-			'attachments'   => $attachments,
-			'dashboard_url' => $dashboard_url,
+			'recipient'      => $vendor,
+			'email_heading'  => __( 'New Message Received', 'wp-sell-services' ),
+			'sender'         => $sender,
+			'sender_name'    => $sender->display_name,
+			'sender_email'   => $sender->user_email,
+			'message'        => $message,
+			'service_title'  => $service_title,
+			'attachments'    => $attachments,
+			'dashboard_url'  => $dashboard_url,
+			'reply_to_email' => $sender->user_email,
+			'reply_to_name'  => $sender->display_name,
 		);
 
 		return $this->send( $vendor->user_email, $subject, self::TYPE_VENDOR_CONTACT, $template_vars );
@@ -942,16 +979,18 @@ class EmailService {
 		);
 
 		$template_vars = array(
-			'recipient'     => $buyer,
-			'email_heading' => __( 'New Proposal Received', 'wp-sell-services' ),
-			'content'       => sprintf(
+			'recipient'      => $buyer,
+			'email_heading'  => __( 'New Proposal Received', 'wp-sell-services' ),
+			'content'        => sprintf(
 				/* translators: 1: vendor name, 2: request title */
 				__( '%1$s has submitted a proposal for your request "%2$s". Review it and accept if it meets your needs.', 'wp-sell-services' ),
 				$vendor->display_name,
 				$request->post_title
 			),
-			'button_url'    => get_permalink( $request_id ),
-			'button_text'   => __( 'View Proposals', 'wp-sell-services' ),
+			'button_url'     => get_permalink( $request_id ),
+			'button_text'    => __( 'View Proposals', 'wp-sell-services' ),
+			'reply_to_email' => $vendor->user_email,
+			'reply_to_name'  => $vendor->display_name,
 		);
 
 		return $this->send( $buyer->user_email, $subject, self::TYPE_PROPOSAL_SUBMITTED, $template_vars );
@@ -981,16 +1020,18 @@ class EmailService {
 		);
 
 		$template_vars = array(
-			'recipient'     => $vendor,
-			'email_heading' => __( 'Proposal Accepted!', 'wp-sell-services' ),
-			'content'       => sprintf(
+			'recipient'      => $vendor,
+			'email_heading'  => __( 'Proposal Accepted!', 'wp-sell-services' ),
+			'content'        => sprintf(
 				/* translators: 1: buyer name, 2: request title */
 				__( 'Congratulations! %1$s has accepted your proposal for "%2$s". An order will be created automatically.', 'wp-sell-services' ),
 				$buyer->display_name,
 				$request->post_title
 			),
-			'button_url'    => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'sales', wpss_get_page_url( 'dashboard' ) ) : '',
-			'button_text'   => __( 'View Orders', 'wp-sell-services' ),
+			'button_url'     => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'sales', wpss_get_page_url( 'dashboard' ) ) : '',
+			'button_text'    => __( 'View Orders', 'wp-sell-services' ),
+			'reply_to_email' => $buyer->user_email,
+			'reply_to_name'  => $buyer->display_name,
 		);
 
 		return $this->send( $vendor->user_email, $subject, self::TYPE_PROPOSAL_ACCEPTED, $template_vars );
@@ -1048,10 +1089,10 @@ class EmailService {
 			sprintf( 'From: %s <%s>', $from_name, $this->settings()['from_email'] ),
 		);
 
-		// Add Reply-To for contact emails so vendor can reply directly to sender.
-		if ( self::TYPE_VENDOR_CONTACT === $type && ! empty( $template_vars['sender_email'] ) ) {
-			$reply_name = $template_vars['sender_name'] ?? '';
-			$headers[]  = sprintf( 'Reply-To: %s <%s>', $reply_name, $template_vars['sender_email'] );
+		// Add Reply-To header when reply_to_email is provided by the sending method.
+		if ( ! empty( $template_vars['reply_to_email'] ) ) {
+			$reply_name = $template_vars['reply_to_name'] ?? '';
+			$headers[]  = sprintf( 'Reply-To: %s <%s>', $reply_name, $template_vars['reply_to_email'] );
 		}
 
 		/**
