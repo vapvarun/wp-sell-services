@@ -150,10 +150,8 @@ class UnifiedDashboard {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
 		$section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'orders';
 
-		// Validate section access.
-		if ( ! $this->can_access_section( $section ) ) {
-			$section = 'orders';
-		}
+		// Validate section access — vendor-only sections show a fallback message
+		// instead of silently redirecting to orders (which confused users).
 
 		$this->current_section = $section;
 		$this->sections        = $this->get_sections();
@@ -466,11 +464,18 @@ class UnifiedDashboard {
 		 */
 		$template_path = apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
 
-		if ( file_exists( $template_path ) ) {
-			$user_id        = get_current_user_id();
-			$vendor_service = $this->vendor_service;
-			$is_vendor      = $vendor_service->is_vendor( $user_id );
+		$user_id        = get_current_user_id();
+		$vendor_service = $this->vendor_service;
+		$is_vendor      = $vendor_service->is_vendor( $user_id );
 
+		// Check access: vendor-only sections require vendor status.
+		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+		if ( ! $is_vendor && in_array( $section, $vendor_only_sections, true ) ) {
+			$this->render_section_fallback( $section );
+			return;
+		}
+
+		if ( file_exists( $template_path ) ) {
 			include $template_path;
 		} else {
 			$this->render_section_fallback( $section );
