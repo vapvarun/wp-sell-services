@@ -187,7 +187,7 @@ do_action( 'wpss_before_order_view', $order );
 			if ( $is_customer ) {
 				// Pay Now button for unpaid orders (e.g., from accepted proposals).
 				if ( 'pending_payment' === $order->status ) {
-					$pay_url = add_query_arg( 'pay_order', $order_id, home_url( '/service-checkout/' . $order->service_id . '/' ) );
+					$pay_url = add_query_arg( 'pay_order', $order_id, wpss_get_service_checkout_url( $order->service_id ) );
 					$actions['pay'] = array(
 						'label' => sprintf(
 							/* translators: %s: formatted price */

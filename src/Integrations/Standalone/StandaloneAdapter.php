@@ -29,6 +29,28 @@ use WPSellServices\Integrations\Contracts\AccountProviderInterface;
 class StandaloneAdapter implements EcommerceAdapterInterface {
 
 	/**
+	 * Default checkout URL slug.
+	 *
+	 * @var string
+	 */
+	private const DEFAULT_CHECKOUT_SLUG = 'service-checkout';
+
+	/**
+	 * Get the checkout slug. Filterable so site owners can customize it.
+	 *
+	 * @return string
+	 */
+	public static function get_checkout_slug(): string {
+		/**
+		 * Filter the checkout URL slug.
+		 *
+		 * @since 1.2.0
+		 * @param string $slug Default checkout slug.
+		 */
+		return apply_filters( 'wpss_checkout_slug', self::DEFAULT_CHECKOUT_SLUG );
+	}
+
+	/**
 	 * Order provider instance.
 	 *
 	 * @var StandaloneOrderProvider|null
@@ -139,9 +161,9 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function register_rewrite_rules(): void {
-		// Checkout page — uses 'service-checkout' to avoid conflict with WooCommerce's /checkout/ page.
+		$checkout_slug = self::get_checkout_slug();
 		add_rewrite_rule(
-			'^service-checkout/([0-9]+)/?$',
+			'^' . $checkout_slug . '/([0-9]+)/?$',
 			'index.php?wpss_checkout=1&wpss_service_id=$matches[1]',
 			'top'
 		);

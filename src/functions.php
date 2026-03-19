@@ -1241,18 +1241,52 @@ function wpss_has_wallet(): bool {
  * @return string Checkout URL with service parameters.
  */
 function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, array $addons = array() ): string {
-	// Use rewrite-based URL: /service-checkout/{service_id}/?package={id}
-	$url = home_url( '/service-checkout/' . $service_id . '/' );
+	// Try the active e-commerce adapter's checkout URL builder first.
+	$adapter = wpss_get_ecommerce_adapter();
+	if ( $adapter ) {
+		$checkout_provider = $adapter->get_checkout_provider();
+		if ( $checkout_provider ) {
+			return $checkout_provider->get_checkout_url( $service_id, array(
+				'package_id' => $package_id,
+				'addons'     => $addons,
+			) );
+		}
+	}
 
+	// Fallback: use mapped checkout page with query args.
+	$url = wpss_get_page_url( 'checkout' );
+	if ( ! $url ) {
+		return '';
+	}
+
+	$url = add_query_arg( 'service_id', $service_id, $url );
 	if ( $package_id > 0 ) {
 		$url = add_query_arg( 'package', $package_id, $url );
 	}
-
 	if ( ! empty( $addons ) ) {
 		$url = add_query_arg( 'addons', implode( ',', $addons ), $url );
 	}
 
 	return $url;
+}
+
+/**
+ * Get the base checkout URL (without service ID).
+ *
+ * Uses the mapped checkout page URL, or builds from the adapter's checkout slug.
+ *
+ * @since 1.2.0
+ * @return string Base checkout URL.
+ */
+function wpss_get_checkout_base_url(): string {
+	$url = wpss_get_page_url( 'checkout' );
+	if ( $url ) {
+		return $url;
+	}
+
+	// Fallback to adapter slug.
+	$slug = \WPSellServices\Integrations\Standalone\StandaloneAdapter::get_checkout_slug();
+	return home_url( '/' . $slug . '/' );
 }
 
 /**

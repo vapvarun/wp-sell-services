@@ -101,7 +101,7 @@ class Frontend {
 				'pollingInterval' => 10000,
 				'currencyFormat'  => wpss_get_currency_format(),
 				'cartCount'       => $cart_count,
-				'checkoutUrl'     => home_url( '/service-checkout/' ),
+				'checkoutUrl'     => wpss_get_checkout_base_url(),
 				'i18n'            => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
@@ -159,7 +159,7 @@ class Frontend {
 		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
 		$cart_count = is_array( $cart ) ? count( $cart ) : 0;
 		$hidden     = 0 === $cart_count ? ' style="display:none;"' : '';
-		$checkout_url = home_url( '/service-checkout/' );
+		$checkout_url = wpss_get_checkout_base_url();
 		?>
 		<div id="wpss-mini-cart" class="wpss-mini-cart"<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<a href="<?php echo esc_url( $checkout_url ); ?>" class="wpss-mini-cart-link" title="<?php esc_attr_e( 'View Cart', 'wp-sell-services' ); ?>">
