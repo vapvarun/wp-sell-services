@@ -628,18 +628,24 @@ final class Plugin {
 
 				// Check in-memory cache first.
 				if ( ! array_key_exists( $user_id, $cache ) ) {
-					// Look up avatar_id directly from the vendor profiles table to avoid
-					// instantiating services/repos on every avatar call.
-					global $wpdb;
-					$table = $wpdb->prefix . 'wpss_vendor_profiles';
-					$raw   = $wpdb->get_var(
-						$wpdb->prepare(
-							"SELECT avatar_id FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-							$user_id
-						)
-					);
+					// First check user meta (works for ALL users including customers).
+					$meta_avatar = get_user_meta( $user_id, '_wpss_avatar_id', true );
 
-					$cache[ $user_id ] = $raw ? (int) $raw : 0;
+					if ( $meta_avatar ) {
+						$cache[ $user_id ] = (int) $meta_avatar;
+					} else {
+						// Fall back to vendor profiles table for vendors.
+						global $wpdb;
+						$table = $wpdb->prefix . 'wpss_vendor_profiles';
+						$raw   = $wpdb->get_var(
+							$wpdb->prepare(
+								"SELECT avatar_id FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								$user_id
+							)
+						);
+
+						$cache[ $user_id ] = $raw ? (int) $raw : 0;
+					}
 				}
 
 				$avatar_id = $cache[ $user_id ];

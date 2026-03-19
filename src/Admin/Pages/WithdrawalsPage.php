@@ -729,11 +729,6 @@ class WithdrawalsPage {
 				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
 					<?php echo esc_html( $statuses[ $status ] ?? ucfirst( $status ) ); ?>
 				</span>
-				<?php if ( ! empty( $withdrawal->admin_note ) ) : ?>
-					<div class="wpss-withdrawal-details" title="<?php echo esc_attr( $withdrawal->admin_note ); ?>">
-						<?php echo esc_html( wp_trim_words( $withdrawal->admin_note, 5 ) ); ?>
-					</div>
-				<?php endif; ?>
 			</td>
 			<td class="column-date" data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>">
 				<?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $withdrawal->created_at ) ) ); ?>

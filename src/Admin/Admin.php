@@ -427,8 +427,8 @@ class Admin {
 			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 
-		// Check capabilities.
-		if ( ! current_user_can( 'manage_options' ) ) {
+		// Check capabilities — admins and vendors with order management capability.
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'wpss_manage_orders' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 

@@ -37,7 +37,11 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			<h3><?php esc_html_e( 'Basic Information', 'wp-sell-services' ); ?></h3>
 
 			<?php
-			$avatar_id  = $is_vendor && $vendor_profile ? ( $vendor_profile->avatar_id ?? 0 ) : 0;
+			// Check user meta first (works for all users), then vendor profile table.
+			$avatar_id = (int) get_user_meta( $user_id, '_wpss_avatar_id', true );
+			if ( ! $avatar_id && $is_vendor && $vendor_profile ) {
+				$avatar_id = (int) ( $vendor_profile->avatar_id ?? 0 );
+			}
 			$avatar_url = $avatar_id ? wp_get_attachment_image_url( $avatar_id, 'thumbnail' ) : get_avatar_url( $user_id, array( 'size' => 150 ) );
 			?>
 			<div class="wpss-form-row wpss-avatar-upload">
@@ -60,8 +64,8 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 
 			<?php if ( $is_vendor && $vendor_profile ) : ?>
 				<?php
-				$cover_id  = $vendor_profile->cover_id ?? 0;
-				$cover_url = $cover_id ? wp_get_attachment_image_url( $cover_id, 'large' ) : '';
+				$cover_id  = $vendor_profile->cover_image_id ?? 0;
+				$cover_url = $cover_id ? wp_get_attachment_image_url( (int) $cover_id, 'large' ) : '';
 				?>
 				<div class="wpss-form-row wpss-cover-upload">
 					<label><?php esc_html_e( 'Cover Image', 'wp-sell-services' ); ?></label>

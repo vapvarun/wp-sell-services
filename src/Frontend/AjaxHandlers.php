@@ -3450,9 +3450,9 @@ class AjaxHandlers {
 
 				$cover_id = absint( $_POST['cover_id'] ?? 0 );
 				if ( $cover_id > 0 ) {
-					$update_data['cover_id'] = $cover_id;
+					$update_data['cover_image_id'] = $cover_id;
 				} elseif ( isset( $_POST['cover_id'] ) ) {
-					$update_data['cover_id'] = null;
+					$update_data['cover_image_id'] = null;
 				}
 
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

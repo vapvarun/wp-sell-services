@@ -157,7 +157,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		$params = array(
 			'amount'                    => $this->format_amount( $amount, $currency ),
 			'currency'                  => strtolower( $currency ),
-			'automatic_payment_methods' => array( 'enabled' => true ),
+			'automatic_payment_methods[enabled]' => 'true',
 			'metadata'                  => array_merge(
 				array(
 					'site_url' => home_url(),

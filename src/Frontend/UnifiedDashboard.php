@@ -76,6 +76,12 @@ class UnifiedDashboard {
 
 		// Media library for profile avatar/portfolio uploads.
 		if ( is_user_logged_in() ) {
+			// Grant upload_files capability temporarily for non-vendor users on the dashboard
+			// so customers can upload profile images via the WP Media Library.
+			$user = wp_get_current_user();
+			if ( $user->exists() && ! $user->has_cap( 'upload_files' ) ) {
+				$user->add_cap( 'upload_files' );
+			}
 			wp_enqueue_media();
 		}
 
@@ -478,26 +484,55 @@ class UnifiedDashboard {
 	 * @return void
 	 */
 	private function render_section_fallback( string $section ): void {
-		?>
-		<div class="wpss-dashboard__empty">
-			<div class="wpss-dashboard__empty-icon">
-				<?php $this->render_icon( 'folder' ); ?>
+		$user_id   = get_current_user_id();
+		$is_vendor = $this->vendor_service->is_vendor( $user_id );
+
+		// Vendor-only sections: show a CTA to become a vendor.
+		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+
+		if ( 'become-vendor' === $section && ! $is_vendor ) {
+			// The become-vendor section should show the vendor onboarding prompt, not an error.
+			?>
+			<div class="wpss-dashboard__empty">
+				<div class="wpss-dashboard__empty-icon">
+					<?php $this->render_icon( 'briefcase' ); ?>
+				</div>
+				<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
+				<p><?php esc_html_e( 'Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills.', 'wp-sell-services' ); ?></p>
+				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
+					<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+				</button>
 			</div>
-			<h3><?php esc_html_e( 'Section Not Available', 'wp-sell-services' ); ?></h3>
-			<p>
-				<?php
-				if ( 'become-vendor' === $section ) {
-					esc_html_e( 'Vendor registration is not available at this time. Please contact the site administrator.', 'wp-sell-services' );
-				} else {
-					esc_html_e( 'This section is not available for your account type.', 'wp-sell-services' );
-				}
-				?>
-			</p>
-			<a href="<?php echo esc_url( wpss_get_dashboard_url() ); ?>" class="wpss-btn wpss-btn--primary">
-				<?php esc_html_e( 'Back to Dashboard', 'wp-sell-services' ); ?>
-			</a>
-		</div>
-		<?php
+			<?php
+		} elseif ( ! $is_vendor && in_array( $section, $vendor_only_sections, true ) ) {
+			// Non-vendor trying to access vendor-only sections.
+			?>
+			<div class="wpss-dashboard__empty">
+				<div class="wpss-dashboard__empty-icon">
+					<?php $this->render_icon( 'briefcase' ); ?>
+				</div>
+				<h3><?php esc_html_e( 'Vendor Access Required', 'wp-sell-services' ); ?></h3>
+				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
+				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
+					<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+			<?php
+		} else {
+			// Genuinely missing sections.
+			?>
+			<div class="wpss-dashboard__empty">
+				<div class="wpss-dashboard__empty-icon">
+					<?php $this->render_icon( 'folder' ); ?>
+				</div>
+				<h3><?php esc_html_e( 'Section Not Available', 'wp-sell-services' ); ?></h3>
+				<p><?php esc_html_e( 'This section is not available.', 'wp-sell-services' ); ?></p>
+				<a href="<?php echo esc_url( wpss_get_dashboard_url() ); ?>" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'Back to Dashboard', 'wp-sell-services' ); ?>
+				</a>
+			</div>
+			<?php
+		}
 	}
 
 	/**

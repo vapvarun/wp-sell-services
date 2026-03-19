@@ -215,8 +215,8 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
-		// Admins can force any status transition.
-		if ( current_user_can( 'manage_options' ) ) {
+		// Admins and vendors with order management capability can force any status transition.
+		if ( current_user_can( 'manage_options' ) || current_user_can( 'wpss_manage_orders' ) ) {
 			return true;
 		}
 
