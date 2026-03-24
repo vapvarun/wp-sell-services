@@ -55,6 +55,23 @@ class Settings {
 	public function __construct() {
 		// Tabs and groups are lazy-initialized in init_tabs() to avoid
 		// calling __() before the 'init' action (WP 6.7+ compat).
+
+		// Reschedule auto-withdrawal cron when payouts settings are saved.
+		add_action( 'update_option_wpss_payouts', array( $this, 'reschedule_auto_withdrawal_cron' ) );
+		add_action( 'add_option_wpss_payouts', array( $this, 'reschedule_auto_withdrawal_cron' ) );
+	}
+
+	/**
+	 * Reschedule auto-withdrawal cron when payouts settings change.
+	 *
+	 * Fired after the wpss_payouts option is updated or first added,
+	 * so that toggling the setting or changing the schedule takes
+	 * effect immediately without requiring plugin reactivation.
+	 *
+	 * @return void
+	 */
+	public function reschedule_auto_withdrawal_cron(): void {
+		\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
 	}
 
 	/**
@@ -830,6 +847,22 @@ class Settings {
 				'max'         => 90,
 				'default'     => 14,
 				'description' => __( 'Days after completion within which disputes can be opened.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'auto_dispute_late_days',
+			__( 'Auto-Dispute Late Orders (Days)', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'auto_dispute_late_days',
+				'min'         => 0,
+				'max'         => 30,
+				'default'     => 3,
+				'description' => __( 'Auto-open a dispute when an order is late for this many days. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
 
@@ -2384,6 +2417,7 @@ class Settings {
 		$sanitized['revision_limit']            = absint( $input['revision_limit'] ?? 2 );
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
 		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
+		$sanitized['auto_dispute_late_days']    = absint( $input['auto_dispute_late_days'] ?? 3 );
 		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );
 		$sanitized['requirements_timeout_days'] = absint( $input['requirements_timeout_days'] ?? 0 );
 		$sanitized['auto_start_on_timeout']     = ! empty( $input['auto_start_on_timeout'] );
