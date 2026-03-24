@@ -21,6 +21,7 @@ use WPSellServices\Models\ServiceOrder;
 use WPSellServices\CustomFields\FieldValidator;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\DeliveryService;
+use WPSellServices\Services\OrderService;
 
 /**
  * REST API controller for orders.
@@ -325,7 +326,25 @@ class OrdersController extends RestController {
 		}
 
 		if ( ! empty( $updates ) ) {
-			$order->update( $updates );
+			// Route status changes through OrderService for consistent
+			// timestamps, logging, and hook behavior across all paths.
+			if ( isset( $updates['status'] ) ) {
+				$new_status = $updates['status'];
+				unset( $updates['status'] );
+
+				// Apply any non-status fields first.
+				if ( ! empty( $updates ) ) {
+					$order->update( $updates );
+				}
+
+				$order_service = new OrderService();
+				$order_service->update_status( $order_id, $new_status );
+
+				// Refresh order to reflect all changes.
+				$order = ServiceOrder::find( $order_id );
+			} else {
+				$order->update( $updates );
+			}
 		}
 
 		return $this->prepare_item_for_response( $order, $request );
@@ -581,10 +600,11 @@ class OrdersController extends RestController {
 			);
 		}
 
-		$user_id     = get_current_user_id();
-		$is_vendor   = (int) $order->vendor_id === $user_id;
-		$is_customer = (int) $order->customer_id === $user_id;
-		$is_admin    = current_user_can( 'manage_options' );
+		$user_id       = get_current_user_id();
+		$is_vendor     = (int) $order->vendor_id === $user_id;
+		$is_customer   = (int) $order->customer_id === $user_id;
+		$is_admin      = current_user_can( 'manage_options' );
+		$order_service = new OrderService();
 
 		$result = false;
 		$error  = null;
@@ -596,8 +616,10 @@ class OrdersController extends RestController {
 				} elseif ( 'pending' !== $order->status ) {
 					$error = __( 'Order cannot be accepted in current status.', 'wp-sell-services' );
 				} else {
-					$result = $order->update( array( 'status' => 'accepted' ) );
-					do_action( 'wpss_order_accepted', $order_id );
+					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_ACCEPTED );
+					if ( $result ) {
+						do_action( 'wpss_order_accepted', $order_id );
+					}
 				}
 				break;
 
@@ -609,13 +631,11 @@ class OrdersController extends RestController {
 				} elseif ( empty( $reason ) ) {
 					$error = __( 'Reason is required for rejection.', 'wp-sell-services' );
 				} else {
-					$result = $order->update(
-						array(
-							'status'       => 'rejected',
-							'vendor_notes' => $reason,
-						)
-					);
-					do_action( 'wpss_order_rejected', $order_id, $reason );
+					$order->update( array( 'vendor_notes' => $reason ) );
+					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_REJECTED, $reason );
+					if ( $result ) {
+						do_action( 'wpss_order_rejected', $order_id, $reason );
+					}
 				}
 				break;
 
@@ -625,8 +645,7 @@ class OrdersController extends RestController {
 				} elseif ( ! in_array( $order->status, array( 'accepted', 'requirements_submitted', 'pending_requirements' ), true ) ) {
 					$error = __( 'Order cannot be started in current status.', 'wp-sell-services' );
 				} else {
-					$order_service = new \WPSellServices\Services\OrderService();
-					$result        = $order_service->start_work( $order_id );
+					$result = $order_service->start_work( $order_id );
 					if ( $result ) {
 						do_action( 'wpss_order_started', $order_id );
 					}
@@ -639,12 +658,10 @@ class OrdersController extends RestController {
 				} elseif ( ! in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
 					$error = __( 'Order cannot be delivered in current status.', 'wp-sell-services' );
 				} else {
-					$result = $order->update(
-						array(
-							'status' => 'delivered',
-						)
-					);
-					do_action( 'wpss_order_delivered', $order_id );
+					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_DELIVERED );
+					if ( $result ) {
+						do_action( 'wpss_order_delivered', $order_id );
+					}
 				}
 				break;
 
@@ -654,12 +671,7 @@ class OrdersController extends RestController {
 				} elseif ( ! in_array( $order->status, array( 'delivered', 'pending_approval' ), true ) ) {
 					$error = __( 'Order cannot be completed in current status.', 'wp-sell-services' );
 				} else {
-					$result = $order->update(
-						array(
-							'status'       => 'completed',
-							'completed_at' => current_time( 'mysql' ),
-						)
-					);
+					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 				}
 				break;
 
@@ -671,8 +683,7 @@ class OrdersController extends RestController {
 				} elseif ( ! $order->can_request_revision() ) {
 					$error = __( 'Revision limit reached for this order.', 'wp-sell-services' );
 				} else {
-					$order_svc = new \WPSellServices\Services\OrderService();
-					$result    = $order_svc->request_revision( $order_id, $reason );
+					$result = $order_service->request_revision( $order_id, $reason );
 					if ( $result ) {
 						do_action( 'wpss_revision_requested', $order_id, $reason );
 					}
@@ -685,9 +696,7 @@ class OrdersController extends RestController {
 				} elseif ( 'in_progress' !== $order->status ) {
 					$error = __( 'Only in-progress orders can be put on hold.', 'wp-sell-services' );
 				} else {
-					$result = $order->update(
-						array( 'status' => 'on_hold' )
-					);
+					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_ON_HOLD );
 				}
 				break;
 
@@ -697,9 +706,7 @@ class OrdersController extends RestController {
 				} elseif ( 'on_hold' !== $order->status ) {
 					$error = __( 'Only on-hold orders can be resumed.', 'wp-sell-services' );
 				} else {
-					$result = $order->update(
-						array( 'status' => 'in_progress' )
-					);
+					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS );
 				}
 				break;
 
@@ -709,12 +716,13 @@ class OrdersController extends RestController {
 					if ( empty( $reason ) ) {
 						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 					} else {
-						$result = $order->update(
-							array(
-								'status'       => 'cancelled',
-								'vendor_notes' => $reason,
-							)
-						);
+						// Store cancellation reason in vendor_notes before status change.
+						$order->update( array( 'vendor_notes' => $reason ) );
+						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
+						$result        = $cancel_result['success'] ?? false;
+						if ( ! $result ) {
+							$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
+						}
 					}
 				} elseif ( $is_customer ) {
 					$immediate_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted', 'requirements_submitted' );
@@ -724,19 +732,19 @@ class OrdersController extends RestController {
 						if ( empty( $reason ) ) {
 							$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 						} else {
-							$result = $order->update(
-								array(
-									'status'       => 'cancelled',
-									'vendor_notes' => $reason,
-								)
-							);
+							// Store cancellation reason in vendor_notes before status change.
+							$order->update( array( 'vendor_notes' => $reason ) );
+							$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
+							$result        = $cancel_result['success'] ?? false;
+							if ( ! $result ) {
+								$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
+							}
 						}
 					} elseif ( 'in_progress' === $order->status ) {
 						// Request cancellation — vendor gets 48h to respond.
 						if ( empty( $reason ) ) {
 							$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 						} else {
-							$order_service = new \WPSellServices\Services\OrderService();
 							$note          = sanitize_textarea_field( $request->get_param( 'note' ) ?? '' );
 							$cancel_result = $order_service->request_cancellation( $order_id, $user_id, $reason, $note );
 
@@ -753,12 +761,13 @@ class OrdersController extends RestController {
 					if ( empty( $reason ) ) {
 						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 					} else {
-						$result = $order->update(
-							array(
-								'status'       => 'cancelled',
-								'vendor_notes' => $reason,
-							)
-						);
+						// Store cancellation reason in vendor_notes before status change.
+						$order->update( array( 'vendor_notes' => $reason ) );
+						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
+						$result        = $cancel_result['success'] ?? false;
+						if ( ! $result ) {
+							$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
+						}
 					}
 				} else {
 					$error = __( 'You cannot cancel this order in its current status.', 'wp-sell-services' );
@@ -771,7 +780,6 @@ class OrdersController extends RestController {
 				} elseif ( 'cancellation_requested' !== $order->status ) {
 					$error = __( 'No cancellation request to accept.', 'wp-sell-services' );
 				} else {
-					$order_service = new \WPSellServices\Services\OrderService();
 					$cancel_result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 					$result        = $cancel_result['success'] ?? false;
 					if ( ! $result ) {
@@ -996,7 +1004,8 @@ class OrdersController extends RestController {
 
 		// Update order status if pending or awaiting requirements.
 		if ( in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) {
-			$order->update( array( 'status' => 'requirements_submitted' ) );
+			$req_order_service = new OrderService();
+			$req_order_service->update_status( $order_id, ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED );
 		}
 
 		do_action( 'wpss_order_requirements_submitted', $order_id, $sanitized_requirements );
