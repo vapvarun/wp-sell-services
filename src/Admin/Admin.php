@@ -524,6 +524,26 @@ class Admin {
 			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id() );
 		} else {
 			$result = $dispute_service->update_status( $dispute_id, $status, $notes );
+
+			// Also save resolution and notes if provided with a non-resolved status.
+			if ( $result && ( $resolution || $notes ) ) {
+				global $wpdb;
+				$update_data = array( 'updated_at' => current_time( 'mysql' ) );
+
+				if ( $resolution ) {
+					$update_data['resolution'] = sanitize_key( $resolution );
+				}
+				if ( $notes ) {
+					$update_data['resolution_notes'] = sanitize_textarea_field( $notes );
+				}
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update(
+					$wpdb->prefix . 'wpss_disputes',
+					$update_data,
+					array( 'id' => $dispute_id )
+				);
+			}
 		}
 
 		$updated = ( false !== $result && ! is_wp_error( $result ) ) ? '1' : '0';
@@ -1463,6 +1483,23 @@ class Admin {
 		$disputes_table = $wpdb->prefix . 'wpss_disputes';
 		$messages_table = $wpdb->prefix . 'wpss_dispute_messages';
 		$orders_table   = $wpdb->prefix . 'wpss_orders';
+
+		// Show update feedback notice.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['updated'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$notice_class = '1' === $_GET['updated'] ? 'notice-success' : 'notice-error';
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$notice_msg   = '1' === $_GET['updated']
+				? __( 'Dispute updated successfully.', 'wp-sell-services' )
+				: __( 'Failed to update dispute.', 'wp-sell-services' );
+
+			printf(
+				'<div class="notice %s is-dismissible"><p>%s</p></div>',
+				esc_attr( $notice_class ),
+				esc_html( $notice_msg )
+			);
+		}
 
 		// Get dispute.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
