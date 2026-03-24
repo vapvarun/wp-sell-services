@@ -2346,6 +2346,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
 		}
 
+		// Cannot buy own service.
+		if ( (int) $service->post_author === get_current_user_id() ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
+		}
+
 		// Get packages.
 		$packages_raw = get_post_meta( $service_id, '_wpss_packages', true );
 		$packages     = $packages_raw ? $packages_raw : array();
@@ -2546,6 +2551,12 @@ class AjaxHandlers {
 
 		if ( ! $service_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		// Cannot buy own service.
+		$service = get_post( $service_id );
+		if ( $service && (int) $service->post_author === get_current_user_id() ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
 		}
 
 		// Update standalone cart (user meta).
