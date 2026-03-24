@@ -180,8 +180,9 @@ class Activator {
 			'wpss_orders'        => array(
 				'auto_complete_days'  => 3,
 				'revision_limit'      => 2,
-				'allow_disputes'      => true,
-				'dispute_window_days' => 14,
+				'allow_disputes'           => true,
+				'dispute_window_days'      => 14,
+				'auto_dispute_late_days'   => 3,
 			),
 			// Notification settings - matches Settings.php wpss_notifications.
 			// ALL email types enabled by default — site owner can disable individually.
