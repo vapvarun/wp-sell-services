@@ -1289,14 +1289,14 @@ class EmailService {
 			self::TYPE_ORDER_CANCELLED        => 'notify_order_cancelled',
 			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
 			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
-			// TYPE_CANCELLATION_REQUESTED is intentionally unmapped — always enabled (critical vendor communication).
+			self::TYPE_CANCELLATION_REQUESTED => 'notify_cancellation_requested',
 			// TYPE_SELLER_LEVEL_PROMOTION is unmapped — always enabled (important vendor milestone).
-			// TYPE_WITHDRAWAL_REQUESTED is unmapped — always enabled (financial notification to admin).
-			// TYPE_WITHDRAWAL_AUTO is unmapped — always enabled (financial notification to admin).
-			// TYPE_WITHDRAWAL_APPROVED is unmapped — always enabled (financial notification to vendor).
-			// TYPE_WITHDRAWAL_REJECTED is unmapped — always enabled (financial notification to vendor).
-			// TYPE_PROPOSAL_SUBMITTED is unmapped — always enabled (buyer request workflow).
-			// TYPE_PROPOSAL_ACCEPTED is unmapped — always enabled (buyer request workflow).
+			self::TYPE_WITHDRAWAL_REQUESTED   => 'notify_withdrawal_requested',
+			self::TYPE_WITHDRAWAL_AUTO        => 'notify_withdrawal_requested',
+			self::TYPE_WITHDRAWAL_APPROVED    => 'notify_withdrawal_approved',
+			self::TYPE_WITHDRAWAL_REJECTED    => 'notify_withdrawal_rejected',
+			self::TYPE_PROPOSAL_SUBMITTED     => 'notify_proposal_submitted',
+			self::TYPE_PROPOSAL_ACCEPTED      => 'notify_proposal_accepted',
 			'moderation_approved'             => 'notify_moderation',
 			'moderation_rejected'             => 'notify_moderation',
 			'moderation_pending'              => 'notify_moderation',
