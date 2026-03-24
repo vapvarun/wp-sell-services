@@ -663,9 +663,12 @@ class BuyerRequestsController extends RestController {
 			);
 		}
 
+		$checkout_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
+
 		return new WP_REST_Response( [
-			'message'  => __( 'Proposal accepted. Order created.', 'wp-sell-services' ),
-			'order_id' => $result['order_id'],
+			'message'      => __( 'Proposal accepted. Order created. Proceed to payment.', 'wp-sell-services' ),
+			'order_id'     => $result['order_id'],
+			'checkout_url' => $checkout_url,
 		] );
 	}
 

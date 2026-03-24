@@ -246,6 +246,12 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 		$service = $order->get_service();
 
+		// For proposal-based orders, service_id may be 0. Build a placeholder service
+		// from the order/proposal metadata so the checkout form can still render.
+		if ( ! $service ) {
+			$service = $this->build_proposal_service_placeholder( $order );
+		}
+
 		if ( ! $service ) {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
@@ -253,6 +259,50 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		ob_start();
 		$this->render_checkout_form( $service, 0, 1, $order );
 		return ob_get_clean();
+	}
+
+	/**
+	 * Build a lightweight Service-like placeholder for proposal-based orders.
+	 *
+	 * When a buyer request is converted to an order the service_id is typically 0
+	 * because the order originated from a proposal, not a service listing. This method
+	 * extracts the request title from the order meta snapshot so the checkout template
+	 * has something meaningful to display.
+	 *
+	 * @param ServiceOrder $order Order object.
+	 * @return \WPSellServices\Models\Service|null Placeholder service or null.
+	 */
+	private function build_proposal_service_placeholder( ServiceOrder $order ): ?\WPSellServices\Models\Service {
+		// Extract request title from order meta → proposal_snapshot.
+		$title = '';
+		$meta  = $order->meta;
+
+		if ( ! empty( $meta['proposal_snapshot']['request_title'] ) ) {
+			$title = $meta['proposal_snapshot']['request_title'];
+		}
+
+		if ( ! $title ) {
+			/* translators: %s: order number */
+			$title = sprintf( __( 'Order %s', 'wp-sell-services' ), $order->order_number );
+		}
+
+		// Create a minimal WP_Post to pass to Service::from_post().
+		$now              = current_time( 'mysql', true );
+		$placeholder_post = new \WP_Post(
+			(object) array(
+				'ID'                => 0,
+				'post_title'        => $title,
+				'post_status'       => 'publish',
+				'post_type'         => 'wpss_service',
+				'post_content'      => '',
+				'post_excerpt'      => '',
+				'post_author'       => $order->vendor_id,
+				'post_date_gmt'     => $now,
+				'post_modified_gmt' => $now,
+			)
+		);
+
+		return \WPSellServices\Models\Service::from_post( $placeholder_post );
 	}
 
 	/**

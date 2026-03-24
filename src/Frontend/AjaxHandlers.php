@@ -1844,11 +1844,14 @@ class AjaxHandlers {
 		$result          = $request_service->convert_to_order( (int) $request_id, (int) $proposal_id );
 
 		if ( $result['success'] && ! empty( $result['order_id'] ) ) {
+			// Redirect to checkout page so buyer can complete payment first.
+			$checkout_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
+
 			wp_send_json_success(
 				array(
 					'message'  => __( 'Proposal accepted! Redirecting to payment...', 'wp-sell-services' ),
 					'order_id' => $result['order_id'],
-					'redirect' => wpss_get_order_url( $result['order_id'] ),
+					'redirect' => $checkout_url,
 				)
 			);
 		} else {
