@@ -245,6 +245,7 @@ final class Plugin {
 		$this->define_auto_vendor_hooks();
 		$this->define_provider_hooks();
 		$this->define_cron_hooks();
+		$this->define_cascade_hooks();
 		$this->define_pro_teasers();
 		$this->define_abilities_hooks();
 
@@ -1075,6 +1076,20 @@ final class Plugin {
 				$earnings_service->process_auto_withdrawals();
 			}
 		);
+	}
+
+	/**
+	 * Define cascade deletion hooks.
+	 *
+	 * Ensures plugin data in custom tables is cleaned up when
+	 * services, buyer requests, or users are permanently deleted.
+	 *
+	 * @since 1.5.0
+	 * @return void
+	 */
+	private function define_cascade_hooks(): void {
+		$cascade_handler = new \WPSellServices\Services\DataCascadeHandler();
+		$cascade_handler->init();
 	}
 
 	/**
