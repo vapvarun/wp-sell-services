@@ -168,7 +168,12 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$service_id = isset( $_GET['service_id'] ) ? absint( wp_unslash( $_GET['service_id'] ) ) : absint( get_query_var( 'wpss_service_id' ) );
+		$service_id = isset( $_GET['service_id'] ) ? absint( wp_unslash( $_GET['service_id'] ) ) : 0;
+		// Fallback: frontend.js WPSS.checkout() sends 'service' param.
+		if ( ! $service_id ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$service_id = isset( $_GET['service'] ) ? absint( wp_unslash( $_GET['service'] ) ) : absint( get_query_var( 'wpss_service_id' ) );
+		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$package_id = isset( $_GET['package'] ) ? absint( wp_unslash( $_GET['package'] ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -188,6 +193,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				$service_id = (int) ( $cart_item['service_id'] ?? 0 );
 				$package_id = $package_id ?: (int) ( $cart_item['package_id'] ?? 0 );
 				$quantity   = max( 1, (int) ( $cart_item['quantity'] ?? 1 ) );
+
+				// Restore addons from cart item if not provided via URL.
+				if ( ! $addon_ids_raw && ! empty( $cart_item['addons'] ) ) {
+					$addon_ids_raw = implode( ',', array_column( $cart_item['addons'], 'id' ) );
+				}
 			}
 		}
 

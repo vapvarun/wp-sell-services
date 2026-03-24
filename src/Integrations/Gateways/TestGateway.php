@@ -356,6 +356,9 @@ class TestGateway implements PaymentGatewayInterface {
 		// Immediately mark as paid.
 		$order_provider->mark_as_paid( $order->id, $transaction_id, 'test' );
 
+		// Clear cart after successful order creation.
+		delete_user_meta( get_current_user_id(), '_wpss_cart' );
+
 		wpss_log( sprintf( 'Test payment completed: Order #%d, Transaction: %s', $order->id, $transaction_id ), 'info' );
 
 		wp_send_json_success(

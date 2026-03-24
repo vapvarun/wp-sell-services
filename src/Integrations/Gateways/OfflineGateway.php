@@ -423,6 +423,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 		 */
 		do_action( 'wpss_offline_order_created', $order->id, $order );
 
+		// Clear cart after successful order creation.
+		delete_user_meta( get_current_user_id(), '_wpss_cart' );
+
 		// Return success with order view redirect (shows payment instructions).
 		wp_send_json_success(
 			array(

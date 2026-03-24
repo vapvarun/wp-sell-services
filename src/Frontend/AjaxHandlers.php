@@ -2343,7 +2343,9 @@ class AjaxHandlers {
 		$service_id    = absint( $_POST['service_id'] ?? 0 );
 		$package_index = sanitize_text_field( wp_unslash( $_POST['package_index'] ?? '0' ) );
 		$quantity      = absint( $_POST['quantity'] ?? 1 );
-		$extras        = isset( $_POST['extras'] ) ? array_map( 'absint', (array) $_POST['extras'] ) : array();
+		// Accept both 'extras' (legacy) and 'addons' (single-service.js sends this key).
+		$extras_raw    = $_POST['extras'] ?? $_POST['addons'] ?? array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$extras        = ! empty( $extras_raw ) ? array_map( 'absint', (array) $extras_raw ) : array();
 
 		if ( ! $service_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );

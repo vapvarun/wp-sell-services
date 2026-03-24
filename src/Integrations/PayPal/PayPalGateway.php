@@ -645,6 +645,9 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		$order_provider->mark_as_paid( $order->id, $payment['transaction_id'], 'paypal' );
 
+		// Clear cart after successful order creation.
+		delete_user_meta( get_current_user_id(), '_wpss_cart' );
+
 		return array(
 			'success'      => true,
 			'order_id'     => $order->id,
