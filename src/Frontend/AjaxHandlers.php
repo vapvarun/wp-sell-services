@@ -2408,7 +2408,54 @@ class AjaxHandlers {
 
 		$total = ( $package_price + $extras_price ) * $quantity;
 
-		// Add to standalone cart (user meta).
+		$cart_item = array(
+			'service_id' => $service_id,
+			'package_id' => $package_index,
+			'package'    => $selected_package,
+			'addons'     => $selected_extras,
+			'quantity'   => $quantity,
+			'total'      => $total,
+		);
+
+		/**
+		 * Filter to let e-commerce adapters handle cart addition natively.
+		 *
+		 * When a non-standalone adapter (e.g. WooCommerce) is active, it should
+		 * handle adding the service to its own cart system instead of the
+		 * standalone user-meta cart.
+		 *
+		 * Return an array with 'handled' => true to skip standalone cart logic.
+		 * Optionally include 'checkout_url' and 'cart_count' in the returned array.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param array|false                                               $result    False by default (not handled).
+		 * @param array                                                     $cart_item Cart item data.
+		 * @param \WPSellServices\Integrations\Contracts\EcommerceAdapterInterface|null $adapter   Active adapter.
+		 */
+		$adapter_result = apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter );
+
+		if ( is_array( $adapter_result ) && ! empty( $adapter_result['handled'] ) ) {
+			// Adapter handled the cart addition (e.g. WooCommerce, EDD).
+			if ( ! empty( $adapter_result['error'] ) ) {
+				wp_send_json_error( array( 'message' => $adapter_result['error'] ) );
+			}
+
+			$checkout_url = $adapter_result['checkout_url'] ?? wpss_get_service_checkout_url( $service_id, (int) $package_index );
+			if ( $quantity > 1 ) {
+				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
+			}
+
+			wp_send_json_success(
+				array(
+					'message'      => __( 'Added to cart!', 'wp-sell-services' ),
+					'cart_count'   => $adapter_result['cart_count'] ?? 1,
+					'checkout_url' => $checkout_url,
+				)
+			);
+		}
+
+		// Standalone cart: store in user meta.
 		$user_id = get_current_user_id();
 		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
 
@@ -2416,16 +2463,9 @@ class AjaxHandlers {
 			$cart = array();
 		}
 
-		$item_key         = md5( $service_id . '-' . $package_index . '-' . wp_json_encode( $extras ) );
-		$cart[ $item_key ] = array(
-			'service_id' => $service_id,
-			'package_id' => $package_index,
-			'package'    => $selected_package,
-			'addons'     => $selected_extras,
-			'quantity'   => $quantity,
-			'total'      => $total,
-			'added_at'   => current_time( 'mysql', true ),
-		);
+		$item_key                    = md5( $service_id . '-' . $package_index . '-' . wp_json_encode( $extras ) );
+		$cart_item['added_at']       = current_time( 'mysql', true );
+		$cart[ $item_key ]           = $cart_item;
 
 		update_user_meta( $user_id, '_wpss_cart', $cart );
 
