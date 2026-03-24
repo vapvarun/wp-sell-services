@@ -236,18 +236,19 @@ class OrderWorkflowManager {
 		$table = $wpdb->prefix . 'wpss_orders';
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
-		// Find orders pending approval with delivery older than X days.
+		// Find orders pending approval/delivered with delivery older than X days.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders_to_complete = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT o.id, o.customer_id, o.vendor_id
 				FROM {$table} o
 				INNER JOIN {$deliveries_table} d ON d.order_id = o.id
-				WHERE o.status = %s
+				WHERE o.status IN (%s, %s)
 				AND d.status = 'pending'
 				AND d.created_at < DATE_SUB(%s, INTERVAL %d DAY)
 				GROUP BY o.id",
 				ServiceOrder::STATUS_PENDING_APPROVAL,
+				ServiceOrder::STATUS_DELIVERED,
 				current_time( 'mysql' ),
 				$auto_complete_days
 			)
