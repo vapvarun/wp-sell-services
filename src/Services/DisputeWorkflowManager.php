@@ -71,6 +71,7 @@ class DisputeWorkflowManager {
 		add_action( 'wpss_cron_daily', [ $this, 'check_response_deadlines' ] );
 		add_action( 'wpss_cron_daily', [ $this, 'auto_escalate_disputes' ] );
 		add_action( 'wpss_cron_daily', [ $this, 'send_reminder_notifications' ] );
+		add_action( 'wpss_cron_daily', [ $this, 'auto_open_disputes_for_late_orders' ] );
 
 		// Register cron schedules.
 		add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
@@ -623,6 +624,59 @@ class DisputeWorkflowManager {
 					[ '%d' ]
 				);
 			}
+		}
+	}
+
+	/**
+	 * Auto-open disputes for orders stuck in late status.
+	 *
+	 * When an order remains in "late" status beyond a configurable number of days,
+	 * a dispute is automatically opened on behalf of the buyer.
+	 *
+	 * @return void
+	 */
+	public function auto_open_disputes_for_late_orders(): void {
+		$order_settings     = get_option( 'wpss_orders', [] );
+		$allow_disputes     = $order_settings['allow_disputes'] ?? true;
+		$auto_dispute_days  = (int) ( $order_settings['auto_dispute_late_days'] ?? 3 );
+
+		// Bail if disputes are disabled or auto-dispute is turned off (0 = disabled).
+		if ( ! $allow_disputes || $auto_dispute_days <= 0 ) {
+			return;
+		}
+
+		global $wpdb;
+		$orders_table   = $wpdb->prefix . 'wpss_orders';
+		$disputes_table = $this->disputes_table;
+
+		// Find orders in "late" status for longer than the configured threshold
+		// that do NOT already have a dispute.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$late_orders = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT o.id, o.customer_id, o.vendor_id
+				FROM {$orders_table} o
+				LEFT JOIN {$disputes_table} d ON d.order_id = o.id
+				WHERE o.status = %s
+				AND o.updated_at < DATE_SUB( %s, INTERVAL %d DAY )
+				AND d.id IS NULL",
+				\WPSellServices\Models\ServiceOrder::STATUS_LATE,
+				current_time( 'mysql' ),
+				$auto_dispute_days
+			)
+		);
+
+		foreach ( $late_orders as $order ) {
+			$this->dispute_service->open(
+				(int) $order->id,
+				(int) $order->customer_id,
+				__( 'Late delivery', 'wp-sell-services' ),
+				sprintf(
+					/* translators: %d: number of days the order has been late */
+					__( 'Dispute auto-opened: Order has been late for more than %d days without delivery.', 'wp-sell-services' ),
+					$auto_dispute_days
+				)
+			);
 		}
 	}
 
