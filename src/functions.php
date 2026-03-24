@@ -1335,6 +1335,54 @@ function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\Orde
 }
 
 /**
+ * Resolve addon data from checkout POST data.
+ *
+ * Reads addon_ids from $_POST, validates each addon belongs to the service
+ * and is active, then returns addon details and total for create_order().
+ *
+ * @since 1.1.0
+ *
+ * @param int $service_id Service post ID.
+ * @return array{addons: array, addons_total: float, delivery_days_extra: int}
+ */
+function wpss_resolve_checkout_addons( int $service_id ): array {
+	$result = array(
+		'addons'             => array(),
+		'addons_total'       => 0,
+		'delivery_days_extra' => 0,
+	);
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
+	$addon_ids_raw = isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '';
+
+	if ( ! $addon_ids_raw ) {
+		return $result;
+	}
+
+	$addon_ids     = array_map( 'absint', explode( ',', $addon_ids_raw ) );
+	$addon_ids     = array_filter( $addon_ids );
+	$addon_service = new \WPSellServices\Services\ServiceAddonService();
+
+	foreach ( $addon_ids as $addon_id ) {
+		$addon = $addon_service->get( $addon_id );
+		if ( $addon && (int) $addon->service_id === $service_id && ! empty( $addon->is_active ) ) {
+			$addon_price              = (float) $addon->price;
+			$result['addons_total']  += $addon_price;
+			$extra_days               = (int) ( $addon->delivery_days_extra ?? 0 );
+			$result['delivery_days_extra'] += $extra_days;
+			$result['addons'][]       = array(
+				'id'                  => (int) $addon->id,
+				'name'                => $addon->title ?? '',
+				'price'               => $addon_price,
+				'delivery_days_extra' => $extra_days,
+			);
+		}
+	}
+
+	return $result;
+}
+
+/**
  * Check if WooCommerce integration is enabled.
  *
  * Returns true if WooCommerce is the active e-commerce adapter (requires Pro).

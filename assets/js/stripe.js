@@ -136,6 +136,8 @@
 		 * Create payment intent via AJAX.
 		 */
 		createPaymentIntent: function(amount, currency, serviceId, packageId) {
+			var addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
+
 			return new Promise((resolve) => {
 				$.ajax({
 					url: wpssStripe.ajaxUrl,
@@ -147,6 +149,7 @@
 						currency: currency,
 						service_id: serviceId,
 						package_id: packageId,
+						addon_ids: addonIds,
 					},
 					success: resolve,
 					error: () => {
@@ -202,6 +205,7 @@
 		confirmPaymentAndCreateOrder: function(paymentIntentId) {
 			const serviceId = document.querySelector('input[name="service_id"]')?.value || 0;
 			const packageId = document.querySelector('input[name="package_id"]')?.value || 0;
+			const addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
 
 			$.ajax({
 				url: wpssStripe.ajaxUrl,
@@ -212,6 +216,7 @@
 					payment_intent_id: paymentIntentId,
 					service_id: serviceId,
 					package_id: packageId,
+					addon_ids: addonIds,
 				},
 				success: (response) => {
 					this.setLoading(false);

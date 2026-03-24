@@ -689,20 +689,26 @@ class PayPalGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		$result = $this->create_payment(
-			$amount,
-			$currency,
-			array(
-				'service_id'  => $service_id,
-				'package_id'  => $package_id,
-				'customer_id' => get_current_user_id(),
-				'description' => sprintf(
-					/* translators: %d: Service ID */
-					__( 'Service #%d', 'wp-sell-services' ),
-					$service_id
-				),
-			)
+		// Include addon prices in the payment amount.
+		$addon_data = wpss_resolve_checkout_addons( $service_id );
+		$amount    += $addon_data['addons_total'];
+
+		// Store addon IDs in PayPal metadata so they survive the redirect flow.
+		$metadata = array(
+			'service_id'  => $service_id,
+			'package_id'  => $package_id,
+			'customer_id' => get_current_user_id(),
+			'description' => sprintf(
+				/* translators: %d: Service ID */
+				__( 'Service #%d', 'wp-sell-services' ),
+				$service_id
+			),
 		);
+		if ( ! empty( $addon_data['addons'] ) ) {
+			$metadata['addon_ids'] = implode( ',', array_column( $addon_data['addons'], 'id' ) );
+		}
+
+		$result = $this->create_payment( $amount, $currency, $metadata );
 
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
@@ -759,9 +765,33 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$custom_id     = $order_details['purchase_units'][0]['custom_id'] ?? '{}';
 		$metadata      = json_decode( $custom_id, true ) ?: array();
 
-		$service_id  = (int) ( $metadata['service_id'] ?? 0 );
-		$package_id  = (int) ( $metadata['package_id'] ?? 0 );
-		$customer_id = (int) ( $metadata['customer_id'] ?? get_current_user_id() );
+		$service_id    = (int) ( $metadata['service_id'] ?? 0 );
+		$package_id    = (int) ( $metadata['package_id'] ?? 0 );
+		$customer_id   = (int) ( $metadata['customer_id'] ?? get_current_user_id() );
+		$addon_ids_csv = $metadata['addon_ids'] ?? '';
+
+		// Resolve addons from PayPal metadata (survives redirect flow).
+		$addons       = array();
+		$addons_total = 0;
+		if ( $addon_ids_csv && $service_id ) {
+			$addon_ids     = array_map( 'absint', explode( ',', $addon_ids_csv ) );
+			$addon_ids     = array_filter( $addon_ids );
+			$addon_service = new \WPSellServices\Services\ServiceAddonService();
+
+			foreach ( $addon_ids as $addon_id ) {
+				$addon = $addon_service->get( $addon_id );
+				if ( $addon && (int) $addon->service_id === $service_id && ! empty( $addon->is_active ) ) {
+					$addon_price    = (float) $addon->price;
+					$addons_total  += $addon_price;
+					$addons[]       = array(
+						'id'                  => (int) $addon->id,
+						'name'                => $addon->title ?? '',
+						'price'               => $addon_price,
+						'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? 0 ),
+					);
+				}
+			}
+		}
 
 		// Create service order.
 		$order_provider = wpss_get_order_provider();
@@ -781,7 +811,9 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'service_id'     => $service_id,
 				'package_id'     => $package_id,
 				'customer_id'    => $customer_id,
-				'subtotal'       => $payment['amount'],
+				'subtotal'       => $payment['amount'] - $addons_total,
+				'addons'         => $addons,
+				'addons_total'   => $addons_total,
 				'currency'       => $payment['currency'],
 				'payment_method' => 'paypal',
 			)

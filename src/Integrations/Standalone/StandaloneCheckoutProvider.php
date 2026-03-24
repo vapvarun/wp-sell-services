@@ -175,6 +175,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$quantity = isset( $_GET['quantity'] ) ? absint( wp_unslash( $_GET['quantity'] ) ) : 1;
 		$quantity = max( 1, min( $quantity, 10 ) ); // Clamp 1-10.
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$addon_ids_raw = isset( $_GET['addons'] ) ? sanitize_text_field( wp_unslash( $_GET['addons'] ) ) : '';
+
 		// If no service_id in URL, try to load from user's cart.
 		if ( ! $service_id ) {
 			$cart = $this->get_cart();
@@ -198,8 +201,23 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p>' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
 
+		// Resolve selected addons from URL param (comma-separated IDs).
+		$selected_addons = array();
+		if ( $addon_ids_raw ) {
+			$addon_ids     = array_map( 'absint', explode( ',', $addon_ids_raw ) );
+			$addon_ids     = array_filter( $addon_ids );
+			$addon_service = new \WPSellServices\Services\ServiceAddonService();
+
+			foreach ( $addon_ids as $addon_id ) {
+				$addon = $addon_service->get( $addon_id );
+				if ( $addon && (int) $addon->service_id === $service->id && ! empty( $addon->is_active ) ) {
+					$selected_addons[] = $addon;
+				}
+			}
+		}
+
 		ob_start();
-		$this->render_checkout_form( $service, $package_id, $quantity );
+		$this->render_checkout_form( $service, $package_id, $quantity, null, $selected_addons );
 		return ob_get_clean();
 	}
 
@@ -246,10 +264,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @param \WPSellServices\Models\Service $service    Service.
 	 * @param int                            $package_id Selected package ID (ignored when $pay_order is set).
 	 * @param int                            $quantity   Quantity (ignored when $pay_order is set).
-	 * @param \WPSellServices\Models\ServiceOrder|null $pay_order  Existing order to pay (from proposal acceptance).
+	 * @param \WPSellServices\Models\ServiceOrder|null $pay_order       Existing order to pay (from proposal acceptance).
+	 * @param array                          $selected_addons Validated addon objects from the addons table.
 	 * @return void
 	 */
-	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null ): void {
+	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null, array $selected_addons = array() ): void {
 		$is_pay_order = null !== $pay_order;
 
 		if ( $is_pay_order ) {
@@ -278,9 +297,24 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				$package_id       = (int) array_key_first( $packages );
 			}
 
-			$unit_price = (float) ( $selected_package['price'] ?? 0 );
-			$price      = $unit_price * $quantity;
-			$currency   = wpss_get_currency();
+			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
+			$price        = $unit_price * $quantity;
+			$addons_total = 0;
+			$addons_data  = array();
+
+			foreach ( $selected_addons as $addon ) {
+				$addon_price   = (float) $addon->price;
+				$addons_total += $addon_price;
+				$addons_data[] = array(
+					'id'                  => (int) $addon->id,
+					'name'                => $addon->title ?? $addon->name ?? '',
+					'price'               => $addon_price,
+					'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? $addon->extra_days ?? 0 ),
+				);
+			}
+
+			$price   += $addons_total;
+			$currency = wpss_get_currency();
 
 			// Calculate tax.
 			$tax_settings = get_option( 'wpss_tax', [] );
@@ -334,15 +368,23 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					</div>
 				</div>
 
-				<?php if ( ! $is_pay_order && $tax_amount > 0 ) : ?>
+				<?php if ( ! $is_pay_order && ( ! empty( $addons_data ) || $tax_amount > 0 ) ) : ?>
 					<div class="wpss-checkout-subtotal">
 						<span><?php esc_html_e( 'Subtotal', 'wp-sell-services' ); ?></span>
-						<span><?php echo esc_html( wpss_format_price( $price, $currency ) ); ?></span>
+						<span><?php echo esc_html( wpss_format_price( $price - $addons_total, $currency ) ); ?></span>
 					</div>
-					<div class="wpss-checkout-tax">
-						<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
-						<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
-					</div>
+					<?php foreach ( $addons_data as $addon_item ) : ?>
+						<div class="wpss-checkout-addon">
+							<span><?php echo esc_html( $addon_item['name'] ); ?></span>
+							<span><?php echo esc_html( wpss_format_price( $addon_item['price'], $currency ) ); ?></span>
+						</div>
+					<?php endforeach; ?>
+					<?php if ( $tax_amount > 0 ) : ?>
+						<div class="wpss-checkout-tax">
+							<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
+							<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
+						</div>
+					<?php endif; ?>
 				<?php endif; ?>
 
 				<div class="wpss-checkout-total">
@@ -377,6 +419,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						<input type="hidden" name="package_id" value="<?php echo esc_attr( $package_id ); ?>">
 						<input type="hidden" name="quantity" value="<?php echo esc_attr( $quantity ); ?>">
 						<input type="hidden" name="tax_amount" value="<?php echo esc_attr( round( $tax_amount, 2 ) ); ?>">
+						<?php if ( ! empty( $addons_data ) ) : ?>
+							<input type="hidden" name="addon_ids" value="<?php echo esc_attr( implode( ',', array_column( $addons_data, 'id' ) ) ); ?>">
+							<input type="hidden" name="addons_total" value="<?php echo esc_attr( round( $addons_total, 2 ) ); ?>">
+							<input type="hidden" name="addons_data" value="<?php echo esc_attr( wp_json_encode( $addons_data ) ); ?>">
+						<?php endif; ?>
 					<?php endif; ?>
 					<input type="hidden" name="amount" value="<?php echo esc_attr( $total ); ?>">
 					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
@@ -517,7 +564,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				border-radius: 4px;
 			}
 			.wpss-checkout-subtotal,
-			.wpss-checkout-tax {
+			.wpss-checkout-tax,
+			.wpss-checkout-addon {
 				display: flex;
 				justify-content: space-between;
 				font-size: 16px;

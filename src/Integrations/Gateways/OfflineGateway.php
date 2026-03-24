@@ -382,6 +382,10 @@ class OfflineGateway implements PaymentGatewayInterface {
 		// Apply quantity.
 		$price *= $quantity;
 
+		// Resolve selected addons from POST data.
+		$addon_data   = wpss_resolve_checkout_addons( $service_id );
+		$addons_total = $addon_data['addons_total'];
+
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();
 
@@ -391,6 +395,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 		}
 
 		// Create order (stays in pending_payment status).
+		// subtotal = package price only; addons_total is separate — StandaloneOrderProvider sums them.
 		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
@@ -398,6 +403,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 				'quantity'       => $quantity,
 				'customer_id'    => get_current_user_id(),
 				'subtotal'       => $price,
+				'addons'         => $addon_data['addons'],
+				'addons_total'   => $addons_total,
 				'currency'       => wpss_get_currency(),
 				'payment_method' => 'offline',
 			)
