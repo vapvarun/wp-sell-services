@@ -280,9 +280,30 @@ class ServiceWizard {
 		$service_id = absint( $atts['id'] );
 		$service    = null;
 
-		// Check max services limit for NEW services only (not editing existing).
-		if ( ! $service_id && $vendor_profile && $vendor_profile->has_reached_service_limit() ) {
-			return $this->render_service_limit_notice( $vendor_profile );
+		// Check if vendor can create a new service (not editing existing).
+		// Uses the wpss_vendor_can_create_service filter so Pro subscription limits
+		// and the free max-services-per-vendor limit are enforced consistently.
+		if ( ! $service_id ) {
+			/** This filter is documented in src/API/ServicesController.php */
+			$can_create = apply_filters( 'wpss_vendor_can_create_service', true, $user_id );
+
+			if ( ! $can_create ) {
+				/**
+				 * Filter the error message shown when a vendor cannot create more services.
+				 *
+				 * Pro uses this to inject a subscription upgrade link.
+				 *
+				 * @since 1.1.0
+				 *
+				 * @param string $message Default error message.
+				 */
+				$error_message = apply_filters(
+					'wpss_service_limit_error_message',
+					__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
+				);
+
+				return '<div class="wpss-notice wpss-notice-warning">' . wp_kses_post( $error_message ) . '</div>';
+			}
 		}
 
 		// If editing, verify ownership.
@@ -1331,20 +1352,21 @@ class ServiceWizard {
 
 		$service_id = isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0;
 
-		// Check max services limit for NEW services only (not editing existing).
+		// Check if vendor can create a new service (not editing existing).
+		// Uses the wpss_vendor_can_create_service filter so Pro subscription limits
+		// and the free max-services-per-vendor limit are enforced consistently.
 		if ( ! $service_id && ! current_user_can( 'manage_options' ) ) {
-			$limit_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
-			if ( $limit_profile && $limit_profile->has_reached_service_limit() ) {
-				$max = $limit_profile->get_max_services();
-				wp_send_json_error(
-					array(
-						'message' => sprintf(
-							/* translators: %d: maximum number of services allowed */
-							__( 'You have reached the maximum limit of %d services. Please remove an existing service before creating a new one.', 'wp-sell-services' ),
-							$max
-						),
-					)
+			/** This filter is documented in src/API/ServicesController.php */
+			$can_create = apply_filters( 'wpss_vendor_can_create_service', true, $user_id );
+
+			if ( ! $can_create ) {
+				/** This filter is documented in src/API/ServicesController.php */
+				$error_message = apply_filters(
+					'wpss_service_limit_error_message',
+					__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
 				);
+
+				wp_send_json_error( array( 'message' => wp_strip_all_tags( $error_message ) ) );
 			}
 		}
 
@@ -1459,8 +1481,10 @@ class ServiceWizard {
 		}
 		set_transient( $lock_key, true, 30 );
 
-		// Check max services limit when publishing would add a new service to the count.
+		// Check if vendor can create/publish a new service.
 		// This applies to: new services (no service_id) or drafts being published for the first time.
+		// Uses the wpss_vendor_can_create_service filter so Pro subscription limits
+		// and the free max-services-per-vendor limit are enforced consistently.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			$is_new_to_count = false;
 			if ( ! $service_id ) {
@@ -1473,19 +1497,18 @@ class ServiceWizard {
 			}
 
 			if ( $is_new_to_count ) {
-				$limit_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
-				if ( $limit_profile && $limit_profile->has_reached_service_limit() ) {
-					$max = $limit_profile->get_max_services();
-					delete_transient( $lock_key );
-					wp_send_json_error(
-						array(
-							'message' => sprintf(
-								/* translators: %d: maximum number of services allowed */
-								__( 'You have reached the maximum limit of %d services. Please remove an existing service before creating a new one.', 'wp-sell-services' ),
-								$max
-							),
-						)
+				/** This filter is documented in src/API/ServicesController.php */
+				$can_create = apply_filters( 'wpss_vendor_can_create_service', true, $user_id );
+
+				if ( ! $can_create ) {
+					/** This filter is documented in src/API/ServicesController.php */
+					$error_message = apply_filters(
+						'wpss_service_limit_error_message',
+						__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
 					);
+
+					delete_transient( $lock_key );
+					wp_send_json_error( array( 'message' => wp_strip_all_tags( $error_message ) ) );
 				}
 			}
 		}
