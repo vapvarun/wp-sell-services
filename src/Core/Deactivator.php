@@ -47,6 +47,7 @@ class Deactivator {
 			'wpss_check_requirements_timeout',
 			'wpss_recalculate_seller_levels',
 			'wpss_process_cancellation_timeouts',
+			'wpss_process_offline_auto_cancel',
 			'wpss_cleanup_expired_requests',
 			'wpss_update_vendor_stats',
 			'wpss_process_auto_withdrawals',

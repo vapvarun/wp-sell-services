@@ -67,6 +67,7 @@ class OrderWorkflowManager {
 		add_action( 'wpss_check_requirements_timeout', [ $this, 'check_requirements_timeout' ] );
 		add_action( 'wpss_recalculate_seller_levels', [ $this, 'recalculate_seller_levels' ] );
 		add_action( 'wpss_process_cancellation_timeouts', [ $this, 'process_cancellation_timeouts' ] );
+		add_action( 'wpss_process_offline_auto_cancel', [ $this, 'process_offline_auto_cancel' ] );
 		add_action( 'wpss_cleanup_expired_requests', [ $this, 'cleanup_expired_requests' ] );
 		add_action( 'wpss_update_vendor_stats', [ $this, 'update_vendor_stats' ] );
 
@@ -156,6 +157,10 @@ class OrderWorkflowManager {
 
 		if ( ! wp_next_scheduled( 'wpss_process_cancellation_timeouts' ) ) {
 			wp_schedule_event( time(), 'wpss_hourly', 'wpss_process_cancellation_timeouts' );
+		}
+
+		if ( ! wp_next_scheduled( 'wpss_process_offline_auto_cancel' ) ) {
+			wp_schedule_event( time(), 'wpss_hourly', 'wpss_process_offline_auto_cancel' );
 		}
 
 		if ( ! wp_next_scheduled( 'wpss_cleanup_expired_requests' ) ) {
@@ -959,6 +964,88 @@ class OrderWorkflowManager {
 	}
 
 	/**
+	 * Auto-cancel unpaid offline payment orders.
+	 *
+	 * Cron handler for wpss_process_offline_auto_cancel.
+	 * Checks the Offline Gateway's auto_hold_hours setting and cancels orders
+	 * that have been in pending_payment status longer than the configured threshold.
+	 *
+	 * @return void
+	 */
+	public function process_offline_auto_cancel(): void {
+		$offline_settings = get_option( 'wpss_offline_settings', [] );
+		$auto_hold_hours  = (int) ( $offline_settings['auto_hold_hours'] ?? 0 );
+
+		// Disabled if set to 0.
+		if ( $auto_hold_hours <= 0 ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// Find offline orders stuck in pending_payment beyond the threshold.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$pending_orders = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, customer_id, vendor_id, created_at FROM {$table}
+				WHERE status = %s
+				AND payment_method = %s
+				AND created_at <= %s",
+				ServiceOrder::STATUS_PENDING_PAYMENT,
+				'offline',
+				gmdate( 'Y-m-d H:i:s', time() - ( $auto_hold_hours * HOUR_IN_SECONDS ) )
+			)
+		);
+
+		foreach ( $pending_orders as $order ) {
+			$order_id = (int) $order->id;
+
+			$updated = $this->order_service->update_status(
+				$order_id,
+				ServiceOrder::STATUS_CANCELLED,
+				sprintf(
+					/* translators: %d: number of hours */
+					__( 'Order auto-cancelled - offline payment not received within %d hours', 'wp-sell-services' ),
+					$auto_hold_hours
+				)
+			);
+
+			if ( ! $updated ) {
+				continue;
+			}
+
+			// Notify buyer.
+			$this->notification_service->create(
+				(int) $order->customer_id,
+				'order_cancelled',
+				__( 'Order Cancelled - Payment Not Received', 'wp-sell-services' ),
+				sprintf(
+					/* translators: %d: number of hours */
+					__( 'Your order was automatically cancelled because offline payment was not received within %d hours.', 'wp-sell-services' ),
+					$auto_hold_hours
+				),
+				[ 'order_id' => $order_id ]
+			);
+
+			// Notify vendor.
+			if ( ! empty( $order->vendor_id ) ) {
+				$this->notification_service->create(
+					(int) $order->vendor_id,
+					'order_cancelled',
+					__( 'Order Cancelled - Payment Not Received', 'wp-sell-services' ),
+					sprintf(
+						/* translators: %d: number of hours */
+						__( 'An order was automatically cancelled because the buyer did not complete offline payment within %d hours.', 'wp-sell-services' ),
+						$auto_hold_hours
+					),
+					[ 'order_id' => $order_id ]
+				);
+			}
+		}
+	}
+
+	/**
 	 * Clean up expired buyer requests.
 	 *
 	 * Cron handler for wpss_cleanup_expired_requests.
@@ -1074,5 +1161,6 @@ class OrderWorkflowManager {
 		wp_clear_scheduled_hook( 'wpss_check_requirements_timeout' );
 		wp_clear_scheduled_hook( 'wpss_recalculate_seller_levels' );
 		wp_clear_scheduled_hook( 'wpss_process_cancellation_timeouts' );
+		wp_clear_scheduled_hook( 'wpss_process_offline_auto_cancel' );
 	}
 }
