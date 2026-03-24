@@ -475,6 +475,19 @@ class UnifiedDashboard {
 		}
 
 		if ( file_exists( $template_path ) ) {
+			/**
+			 * Fires before the dashboard section content is rendered.
+			 *
+			 * Allows Pro or third-party plugins to inject banners or notices
+			 * above the section content (e.g. subscription-required prompts).
+			 *
+			 * @since 1.2.0
+			 *
+			 * @param string $section Current section slug.
+			 * @param int    $user_id Current user ID.
+			 */
+			do_action( 'wpss_dashboard_section_before_content', $section, $user_id );
+
 			include $template_path;
 		} else {
 			$this->render_section_fallback( $section );
@@ -651,10 +664,27 @@ class UnifiedDashboard {
 					)
 				);
 			} else {
+				/**
+				 * Filter the redirect URL after a vendor successfully registers.
+				 *
+				 * Allows Pro or third-party plugins to redirect newly registered vendors
+				 * to a different page (e.g. subscription plan selection).
+				 *
+				 * @since 1.2.0
+				 *
+				 * @param string $redirect_url Default redirect URL (services section).
+				 * @param int    $user_id      The newly registered vendor's user ID.
+				 */
+				$redirect_url = apply_filters(
+					'wpss_after_become_vendor_redirect',
+					$this->get_section_url( 'services' ),
+					$user_id
+				);
+
 				wp_send_json_success(
 					array(
 						'message'  => __( 'Welcome! You can now create and sell services.', 'wp-sell-services' ),
-						'redirect' => $this->get_section_url( 'services' ),
+						'redirect' => $redirect_url,
 					)
 				);
 			}
