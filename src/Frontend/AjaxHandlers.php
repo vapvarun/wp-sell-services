@@ -1876,7 +1876,19 @@ class AjaxHandlers {
 		}
 
 		$proposal_service = new ProposalService();
-		$result           = $proposal_service->reject( $proposal_id, $user_id, $reason );
+		$proposal         = $proposal_service->get( $proposal_id );
+
+		if ( ! $proposal ) {
+			wp_send_json_error( array( 'message' => __( 'Proposal not found.', 'wp-sell-services' ) ) );
+		}
+
+		// Verify the current user owns the buyer request.
+		$request = get_post( $proposal->request_id );
+		if ( ! $request || (int) $request->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'You are not authorized to decline this proposal.', 'wp-sell-services' ) ) );
+		}
+
+		$result = $proposal_service->reject( $proposal_id, $user_id, $reason );
 
 		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Proposal declined.', 'wp-sell-services' ) ) );

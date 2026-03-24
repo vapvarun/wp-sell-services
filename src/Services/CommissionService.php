@@ -247,7 +247,7 @@ class CommissionService {
 		$new_balance = $current_balance + $commission['vendor_earnings'];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$wpdb->insert(
+		$inserted = $wpdb->insert(
 			$transactions_table,
 			array(
 				'user_id'        => $vendor_id,
@@ -269,6 +269,11 @@ class CommissionService {
 			),
 			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
+
+		if ( ! $inserted ) {
+			$wpdb->query( 'ROLLBACK' );
+			return;
+		}
 
 		$wpdb->query( 'COMMIT' );
 	}

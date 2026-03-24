@@ -168,7 +168,7 @@ function wpss_get_template_part( string $slug, string $name = '', array $args = 
 		// Extract args to make them available in template.
 		if ( ! empty( $args ) ) {
 			// phpcs:ignore WordPress.PHP.DontExtract.extract_extract
-			extract( $args );
+			extract( $args, EXTR_SKIP );
 		}
 
 		include $template;
@@ -214,7 +214,7 @@ function wpss_get_template( string $template_name, array $args = array(), string
 		// Extract args to make them available in template.
 		if ( ! empty( $args ) ) {
 			// phpcs:ignore WordPress.PHP.DontExtract.extract_extract
-			extract( $args );
+			extract( $args, EXTR_SKIP );
 		}
 
 		include $template;
