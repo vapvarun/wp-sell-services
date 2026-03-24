@@ -532,6 +532,8 @@ class Settings {
 			)
 		);
 
+		// Note: clearance_days is stored but not yet enforced by EarningsService.
+		// Reserved for future implementation — do not remove this setting.
 		add_settings_field(
 			'clearance_days',
 			__( 'Clearance Period (Days)', 'wp-sell-services' ),
@@ -679,25 +681,6 @@ class Settings {
 			)
 		);
 
-		add_settings_field(
-			'tax_on_commission',
-			__( 'Tax on Commission', 'wp-sell-services' ),
-			array( $this, 'render_select_field' ),
-			'wpss_tax',
-			'wpss_tax_section',
-			array(
-				'option_name' => 'wpss_tax',
-				'field'       => 'tax_on_commission',
-				'options'     => array(
-					'none'     => __( 'No tax on commission', 'wp-sell-services' ),
-					'platform' => __( 'Platform collects tax on full amount', 'wp-sell-services' ),
-					'vendor'   => __( 'Vendor handles own tax obligations', 'wp-sell-services' ),
-				),
-				'default'     => 'none',
-				'description' => __( 'How tax is handled relative to platform commission.', 'wp-sell-services' ),
-			)
-		);
-
 		// Vendor settings.
 		register_setting(
 			'wpss_vendor',
@@ -746,19 +729,7 @@ class Settings {
 			)
 		);
 
-		add_settings_field(
-			'require_verification',
-			__( 'Require Verification', 'wp-sell-services' ),
-			array( $this, 'render_checkbox_field' ),
-			'wpss_vendor',
-			'wpss_vendor_section',
-			array(
-				'option_name' => 'wpss_vendor',
-				'field'       => 'require_verification',
-				'label'       => __( 'Require vendors to verify identity before selling', 'wp-sell-services' ),
-				'default'     => false,
-			)
-		);
+		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 
 		add_settings_field(
 			'require_service_moderation',
@@ -804,21 +775,7 @@ class Settings {
 			)
 		);
 
-		add_settings_field(
-			'revision_limit',
-			__( 'Default Revision Limit', 'wp-sell-services' ),
-			array( $this, 'render_number_field' ),
-			'wpss_orders',
-			'wpss_orders_section',
-			array(
-				'option_name' => 'wpss_orders',
-				'field'       => 'revision_limit',
-				'min'         => 0,
-				'max'         => 10,
-				'default'     => 2,
-				'description' => __( 'Default revisions per order. Can be overridden per service.', 'wp-sell-services' ),
-			)
-		);
+		// Revision limits are defined per-package in service packages, not as a global setting.
 
 		add_settings_field(
 			'allow_disputes',
@@ -2385,13 +2342,6 @@ class Settings {
 		$sanitized['tax_label']         = sanitize_text_field( $input['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
 		$sanitized['tax_rate']          = min( 50, max( 0, (float) ( $input['tax_rate'] ?? 0 ) ) );
 		$sanitized['tax_included']      = ! empty( $input['tax_included'] );
-		$sanitized['tax_on_commission'] = sanitize_key( $input['tax_on_commission'] ?? 'none' );
-
-		// Validate tax_on_commission option.
-		$valid_options = array( 'none', 'platform', 'vendor' );
-		if ( ! in_array( $sanitized['tax_on_commission'], $valid_options, true ) ) {
-			$sanitized['tax_on_commission'] = 'none';
-		}
 
 		return $sanitized;
 	}
@@ -2407,7 +2357,7 @@ class Settings {
 
 		$sanitized['vendor_registration']        = sanitize_key( $input['vendor_registration'] ?? 'open' );
 		$sanitized['max_services_per_vendor']    = absint( $input['max_services_per_vendor'] ?? 20 );
-		$sanitized['require_verification']       = ! empty( $input['require_verification'] );
+		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 
 		return $sanitized;
@@ -2423,7 +2373,7 @@ class Settings {
 		$sanitized = array();
 
 		$sanitized['auto_complete_days']        = absint( $input['auto_complete_days'] ?? 3 );
-		$sanitized['revision_limit']            = absint( $input['revision_limit'] ?? 2 );
+		// Revision limits are defined per-package in service packages, not as a global setting.
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
 		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
 		$sanitized['auto_dispute_late_days']    = absint( $input['auto_dispute_late_days'] ?? 3 );

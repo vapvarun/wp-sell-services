@@ -14,7 +14,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 // Check if we should delete all data.
-$delete_data = get_option( 'wpss_delete_data_on_uninstall', false );
+$advanced    = get_option( 'wpss_advanced', array() );
+$delete_data = ! empty( $advanced['delete_data_on_uninstall'] );
 
 if ( ! $delete_data ) {
 	return;

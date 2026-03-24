@@ -408,7 +408,10 @@ function wpss_generate_dispute_number(): string {
  * @return void
  */
 function wpss_log( $message, string $level = 'info' ): void {
-	if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+	$advanced_settings = get_option( 'wpss_advanced', array() );
+	$plugin_debug      = ! empty( $advanced_settings['enable_debug_mode'] );
+
+	if ( ! $plugin_debug && ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) ) {
 		return;
 	}
 

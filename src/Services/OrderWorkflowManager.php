@@ -226,7 +226,8 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function auto_complete_orders(): void {
-		$auto_complete_days = (int) get_option( 'wpss_auto_complete_days', 3 );
+		$orders_settings    = get_option( 'wpss_orders', array() );
+		$auto_complete_days = (int) ( $orders_settings['auto_complete_days'] ?? 3 );
 
 		if ( $auto_complete_days <= 0 ) {
 			return;
