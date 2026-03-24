@@ -345,13 +345,19 @@ class UnifiedDashboard {
 					<div class="wpss-dashboard__pending-notice">
 						<p><?php esc_html_e( 'Your vendor application is pending admin approval. You will be notified once your application is reviewed.', 'wp-sell-services' ); ?></p>
 					</div>
-				<?php elseif ( ! $is_vendor && ! $is_pending ) : ?>
+				<?php
+				elseif ( ! $is_vendor && ! $is_pending ) :
+					$sb_vendor_settings   = get_option( 'wpss_vendor', array() );
+					$sb_registration_mode = $sb_vendor_settings['vendor_registration'] ?? 'open';
+					if ( 'closed' !== $sb_registration_mode ) :
+						?>
 					<div class="wpss-dashboard__become-vendor">
 						<p><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></p>
 						<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--full" data-action="become-vendor">
 							<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
 						</button>
 					</div>
+					<?php endif; ?>
 				<?php endif; ?>
 			</aside>
 
@@ -504,10 +510,15 @@ class UnifiedDashboard {
 		$user_id   = get_current_user_id();
 		$is_vendor = $this->vendor_service->is_vendor( $user_id );
 
+		// Check if vendor registration is open.
+		$fb_vendor_settings    = get_option( 'wpss_vendor', array() );
+		$fb_registration_mode  = $fb_vendor_settings['vendor_registration'] ?? 'open';
+		$registration_is_open  = 'closed' !== $fb_registration_mode;
+
 		// Vendor-only sections: show a CTA to become a vendor.
 		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
 
-		if ( 'become-vendor' === $section && ! $is_vendor ) {
+		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open ) {
 			// The become-vendor section should show the vendor onboarding prompt, not an error.
 			?>
 			<div class="wpss-dashboard__empty">
@@ -530,9 +541,11 @@ class UnifiedDashboard {
 				</div>
 				<h3><?php esc_html_e( 'Vendor Access Required', 'wp-sell-services' ); ?></h3>
 				<p><?php esc_html_e( 'This section is available to vendors. Become a vendor to access this feature and start selling your services.', 'wp-sell-services' ); ?></p>
+				<?php if ( $registration_is_open ) : ?>
 				<button type="button" class="wpss-btn wpss-btn--primary" data-action="become-vendor">
 					<?php esc_html_e( 'Start Selling', 'wp-sell-services' ); ?>
 				</button>
+				<?php endif; ?>
 			</div>
 			<?php
 		} else {
@@ -635,6 +648,13 @@ class UnifiedDashboard {
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in first.', 'wp-sell-services' ) ) );
+		}
+
+		// Reject if vendor registration is closed.
+		$ajax_vendor_settings   = get_option( 'wpss_vendor', array() );
+		$ajax_registration_mode = $ajax_vendor_settings['vendor_registration'] ?? 'open';
+		if ( 'closed' === $ajax_registration_mode ) {
+			wp_send_json_error( array( 'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ) ) );
 		}
 
 		$user_id = get_current_user_id();

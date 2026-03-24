@@ -2027,14 +2027,20 @@ class ServiceWizard {
 	 * @return string Not vendor message HTML.
 	 */
 	private function render_not_vendor(): string {
-		$registration_url = wpss_get_page_url( 'become_vendor' );
-		if ( ! $registration_url ) {
-			$registration_url = home_url();
+		$vendor_settings   = get_option( 'wpss_vendor', array() );
+		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+
+		$message = esc_html__( 'You need to be a registered vendor to create services.', 'wp-sell-services' );
+
+		if ( 'closed' !== $registration_mode ) {
+			$registration_url = wpss_get_page_url( 'become_vendor' );
+			if ( ! $registration_url ) {
+				$registration_url = home_url();
+			}
+			$message .= ' <a href="' . esc_url( $registration_url ) . '">' . esc_html__( 'Become a Vendor', 'wp-sell-services' ) . '</a>';
 		}
 
-		return '<div class="wpss-notice wpss-notice-info">' .
-			esc_html__( 'You need to be a registered vendor to create services.', 'wp-sell-services' ) .
-			' <a href="' . esc_url( $registration_url ) . '">' . esc_html__( 'Become a Vendor', 'wp-sell-services' ) . '</a></div>';
+		return '<div class="wpss-notice wpss-notice-info">' . $message . '</div>';
 	}
 
 	/**

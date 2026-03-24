@@ -987,9 +987,18 @@ class Settings {
 		$pages = array(
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
 			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
 			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
 		);
+
+		// Only show "Become a Vendor" page option when vendor registration is not closed.
+		$pages_vendor_settings   = get_option( 'wpss_vendor', array() );
+		$pages_registration_mode = $pages_vendor_settings['vendor_registration'] ?? 'open';
+		if ( 'closed' !== $pages_registration_mode ) {
+			// Insert after 'dashboard' to maintain original order.
+			$pages = array_slice( $pages, 0, 2, true )
+				+ array( 'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ) )
+				+ array_slice( $pages, 2, null, true );
+		}
 
 		foreach ( $pages as $key => $label ) {
 			add_settings_field(

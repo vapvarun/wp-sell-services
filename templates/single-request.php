@@ -380,10 +380,16 @@ do_action( 'wpss_before_single_request', $request_id );
 							<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">
 								<?php esc_html_e( 'Login to Submit Proposal', 'wp-sell-services' ); ?>
 							</a>
-						<?php elseif ( ! $is_vendor && ! $is_buyer ) : ?>
+						<?php
+						elseif ( ! $is_vendor && ! $is_buyer ) :
+							$tpl_vendor_settings   = get_option( 'wpss_vendor', array() );
+							$tpl_registration_mode = $tpl_vendor_settings['vendor_registration'] ?? 'open';
+							if ( 'closed' !== $tpl_registration_mode ) :
+								?>
 							<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">
 								<?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?>
 							</a>
+							<?php endif; ?>
 						<?php elseif ( ! $is_open ) : ?>
 							<div class="wpss-request-closed">
 								<p><?php esc_html_e( 'This request is no longer accepting proposals.', 'wp-sell-services' ); ?></p>
