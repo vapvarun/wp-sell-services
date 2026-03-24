@@ -683,6 +683,10 @@ class StripeGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Include addon prices in the payment amount.
+		$addon_data = wpss_resolve_checkout_addons( $service_id );
+		$amount    += $addon_data['addons_total'];
+
 		$result = $this->create_payment(
 			$amount,
 			$currency,
@@ -753,12 +757,18 @@ class StripeGateway implements PaymentGatewayInterface {
 				return;
 			}
 
+			// Resolve addon data from checkout form.
+			$addon_data   = wpss_resolve_checkout_addons( $service_id );
+			$addons_total = $addon_data['addons_total'];
+
 			$order = $order_provider->create_order(
 				array(
 					'service_id'     => $service_id,
 					'package_id'     => $package_id,
 					'customer_id'    => get_current_user_id(),
-					'subtotal'       => $payment['amount'],
+					'subtotal'       => $payment['amount'] - $addons_total,
+					'addons'         => $addon_data['addons'],
+					'addons_total'   => $addons_total,
 					'currency'       => $payment['currency'],
 					'payment_method' => 'stripe',
 				)
@@ -1138,7 +1148,37 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		return json_decode( wp_remote_retrieve_body( $response ), true ) ?: array();
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+
+		if ( is_array( $body ) && ! empty( $body ) ) {
+			// Stripe returned a JSON response — if it contains an error key the
+			// callers already handle it, so return as-is regardless of status code.
+			return $body;
+		}
+
+		// Non-2xx with no parseable JSON body — surface the HTTP error.
+		if ( $status_code < 200 || $status_code >= 300 ) {
+			$response_message = wp_remote_retrieve_response_message( $response );
+
+			return array(
+				'error' => array(
+					'message' => sprintf(
+						/* translators: 1: HTTP status code, 2: HTTP status message. */
+						__( 'Stripe API request failed (HTTP %1$d: %2$s).', 'wp-sell-services' ),
+						$status_code,
+						$response_message ? $response_message : __( 'Unknown error', 'wp-sell-services' )
+					),
+				),
+			);
+		}
+
+		// 2xx but empty/invalid body — should not happen, treat as error.
+		return array(
+			'error' => array(
+				'message' => __( 'Stripe returned an empty or invalid response.', 'wp-sell-services' ),
+			),
+		);
 	}
 
 	/**
