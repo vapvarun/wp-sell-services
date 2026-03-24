@@ -392,15 +392,26 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$webhook_id = $this->settings['webhook_id'] ?? '';
 
 		if ( ! $webhook_id ) {
-			return true;
+			return false;
+		}
+
+		// Required PayPal signature headers — reject if any are missing.
+		$auth_algo         = $_SERVER['HTTP_PAYPAL_AUTH_ALGO'] ?? '';
+		$cert_url          = $_SERVER['HTTP_PAYPAL_CERT_URL'] ?? '';
+		$transmission_id   = $_SERVER['HTTP_PAYPAL_TRANSMISSION_ID'] ?? '';
+		$transmission_sig  = $_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG'] ?? '';
+		$transmission_time = $_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] ?? '';
+
+		if ( ! $auth_algo || ! $cert_url || ! $transmission_id || ! $transmission_sig || ! $transmission_time ) {
+			return false;
 		}
 
 		$verification_data = array(
-			'auth_algo'         => $_SERVER['HTTP_PAYPAL_AUTH_ALGO'] ?? '',
-			'cert_url'          => $_SERVER['HTTP_PAYPAL_CERT_URL'] ?? '',
-			'transmission_id'   => $_SERVER['HTTP_PAYPAL_TRANSMISSION_ID'] ?? '',
-			'transmission_sig'  => $_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG'] ?? '',
-			'transmission_time' => $_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] ?? '',
+			'auth_algo'         => $auth_algo,
+			'cert_url'          => $cert_url,
+			'transmission_id'   => $transmission_id,
+			'transmission_sig'  => $transmission_sig,
+			'transmission_time' => $transmission_time,
 			'webhook_id'        => $webhook_id,
 			'webhook_event'     => json_decode( $payload, true ),
 		);
