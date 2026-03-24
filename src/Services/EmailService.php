@@ -1301,7 +1301,7 @@ class EmailService {
 			'moderation_rejected'             => 'notify_moderation',
 			'moderation_pending'              => 'notify_moderation',
 			'dispute_admin'                   => 'notify_dispute_opened',
-			self::TYPE_VENDOR_CONTACT         => 'notify_new_message',
+			self::TYPE_VENDOR_CONTACT         => 'notify_vendor_contact',
 		);
 
 		if ( ! isset( $type_to_setting[ $type ] ) ) {

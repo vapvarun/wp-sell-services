@@ -145,22 +145,30 @@ class CommissionService {
 
 		$rate = null;
 
-		// Check for vendor-specific commission rate first.
-		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		// Check if per-vendor rates are enabled in commission settings.
+		$commission_settings  = get_option( 'wpss_commission', array() );
+		$enable_vendor_rates  = ! empty( $commission_settings['enable_vendor_rates'] );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$vendor_rate = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT custom_commission_rate FROM {$profiles_table} WHERE user_id = %d",
-				$order->vendor_id
-			)
-		);
+		if ( $enable_vendor_rates ) {
+			// Check for vendor-specific commission rate.
+			$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
 
-		// Use vendor rate if set, otherwise fall back to global.
-		if ( null !== $vendor_rate && '' !== $vendor_rate ) {
-			$rate = (float) $vendor_rate;
-		} else {
-			// Fall back to global commission rate.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$vendor_rate = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT custom_commission_rate FROM {$profiles_table} WHERE user_id = %d",
+					$order->vendor_id
+				)
+			);
+
+			// Use vendor rate if set.
+			if ( null !== $vendor_rate && '' !== $vendor_rate ) {
+				$rate = (float) $vendor_rate;
+			}
+		}
+
+		// Fall back to global commission rate if no vendor rate was applied.
+		if ( null === $rate ) {
 			$rate = self::get_global_commission_rate();
 		}
 

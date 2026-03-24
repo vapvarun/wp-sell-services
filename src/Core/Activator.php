@@ -163,11 +163,10 @@ class Activator {
 			),
 			// Tax settings - matches Settings.php wpss_tax.
 			'wpss_tax'           => array(
-				'enable_tax'        => false,
-				'tax_label'         => 'Tax',
-				'tax_rate'          => 0,
-				'tax_included'      => false,
-				'tax_on_commission' => 'none',
+				'enable_tax'   => false,
+				'tax_label'    => 'Tax',
+				'tax_rate'     => 0,
+				'tax_included' => false,
 			),
 			// Vendor settings - matches Settings.php wpss_vendor.
 			'wpss_vendor'        => array(
@@ -177,9 +176,9 @@ class Activator {
 				'require_service_moderation' => false,
 			),
 			// Order settings - matches Settings.php wpss_orders.
+			// Revision limits are defined per-package in service packages, not as a global setting.
 			'wpss_orders'        => array(
-				'auto_complete_days'  => 3,
-				'revision_limit'      => 2,
+				'auto_complete_days'       => 3,
 				'allow_disputes'           => true,
 				'dispute_window_days'      => 14,
 				'auto_dispute_late_days'   => 3,

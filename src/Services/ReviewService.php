@@ -402,7 +402,7 @@ class ReviewService {
 	 * @return int Number of days. 0 = unlimited.
 	 */
 	public function get_review_window_days(): int {
-		$settings = get_option( 'wpss_general', array() );
+		$settings = get_option( 'wpss_orders', array() );
 		$days     = (int) ( $settings['review_window_days'] ?? 30 );
 
 		/**
