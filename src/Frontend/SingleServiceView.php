@@ -750,27 +750,30 @@ class SingleServiceView {
 							</div>
 						<?php endif; ?>
 
+						<?php
+						/**
+						 * Filters the maximum order quantity for a service.
+						 *
+						 * Services default to quantity 1. The quantity UI is only
+						 * shown when a filter or per-service meta allows more than 1.
+						 *
+						 * @since 1.0.0
+						 *
+						 * @param int $max_quantity Maximum quantity (default 1).
+						 * @param int $service_id   Service post ID.
+						 */
+						$service_max_quantity = (int) get_post_meta( $service_id, '_wpss_max_quantity', true );
+						if ( $service_max_quantity <= 0 ) {
+							$service_max_quantity = 1;
+						}
+						$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', $service_max_quantity, $service_id );
+
+						if ( $max_quantity > 1 ) :
+						?>
 						<div class="wpss-order-quantity">
 							<label for="wpss-quantity"><?php esc_html_e( 'Quantity', 'wp-sell-services' ); ?></label>
 							<div class="wpss-quantity-input">
 								<button type="button" class="wpss-quantity-btn wpss-quantity-minus">-</button>
-								<?php
-								// Get per-service max quantity from post meta, falling back to global filter.
-								$service_max_quantity = (int) get_post_meta( $service_id, '_wpss_max_quantity', true );
-								if ( $service_max_quantity <= 0 ) {
-									$service_max_quantity = 10;
-								}
-
-								/**
-								 * Filters the maximum order quantity.
-								 *
-								 * @since 1.0.0
-								 *
-								 * @param int $max_quantity Maximum quantity.
-								 * @param int $service_id   Service post ID.
-								 */
-								$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', $service_max_quantity, $service_id );
-								?>
 								<input type="number"
 										id="wpss-quantity"
 										name="quantity"
@@ -780,6 +783,9 @@ class SingleServiceView {
 								<button type="button" class="wpss-quantity-btn wpss-quantity-plus">+</button>
 							</div>
 						</div>
+						<?php else : ?>
+						<input type="hidden" name="quantity" value="1">
+						<?php endif; ?>
 					</form>
 				</div>
 
