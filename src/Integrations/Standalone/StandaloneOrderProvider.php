@@ -93,8 +93,10 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			$commission_rate = (float) $vendor_rate;
 		}
 
-		$platform_fee    = round( $total * ( $commission_rate / 100 ), 2 );
-		$vendor_earnings = round( $total - $platform_fee, 2 );
+		// Use pre-tax base for commission so vendors aren't charged fees on tax.
+		$commission_base = $subtotal + $addons_total;
+		$platform_fee    = round( $commission_base * ( $commission_rate / 100 ), 2 );
+		$vendor_earnings = round( $commission_base - $platform_fee, 2 );
 
 		// Snapshot the package data at order creation time so it's immune to later edits.
 		$package_snapshot = null;

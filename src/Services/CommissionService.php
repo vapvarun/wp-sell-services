@@ -42,13 +42,14 @@ class CommissionService {
 			return null;
 		}
 
-		$order_total     = (float) $order->total;
+		// Use pre-tax base (subtotal + addons) for commission calculation.
+		$commission_base = (float) $order->subtotal + (float) $order->addons_total;
 		$commission_rate = $this->get_commission_rate( $order );
-		$platform_fee    = round( $order_total * ( $commission_rate / 100 ), 2 );
-		$vendor_earnings = round( $order_total - $platform_fee, 2 );
+		$platform_fee    = round( $commission_base * ( $commission_rate / 100 ), 2 );
+		$vendor_earnings = round( $commission_base - $platform_fee, 2 );
 
 		return array(
-			'order_total'     => $order_total,
+			'order_total'     => $commission_base,
 			'commission_rate' => $commission_rate,
 			'platform_fee'    => $platform_fee,
 			'vendor_earnings' => $vendor_earnings,
@@ -286,7 +287,7 @@ class CommissionService {
 		}
 
 		return array(
-			'order_total'     => (float) $order->total,
+			'order_total'     => (float) $order->subtotal + (float) $order->addons_total,
 			'commission_rate' => (float) $order->commission_rate,
 			'platform_fee'    => (float) $order->platform_fee,
 			'vendor_earnings' => (float) $order->vendor_earnings,
