@@ -254,7 +254,7 @@ class CommissionService {
 				'type'           => 'order_earning',
 				'amount'         => $commission['vendor_earnings'],
 				'balance_after'  => $new_balance,
-				'currency'       => 'USD',
+				'currency'       => wpss_get_currency(),
 				'description'    => sprintf(
 					/* translators: 1: order ID, 2: order total, 3: commission rate */
 					__( 'Earning from order #%1$d (Total: %2$s, Commission: %3$s%%)', 'wp-sell-services' ),
