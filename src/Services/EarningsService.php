@@ -630,12 +630,12 @@ class EarningsService {
 	/**
 	 * Get auto withdrawal schedule.
 	 *
-	 * @return string Schedule (weekly or monthly).
+	 * @return string Schedule (weekly, biweekly, or monthly).
 	 */
 	public static function get_auto_withdrawal_schedule(): string {
 		$payouts_settings = get_option( 'wpss_payouts', array() );
 		$schedule         = $payouts_settings['auto_withdrawal_schedule'] ?? 'monthly';
-		return in_array( $schedule, array( 'weekly', 'monthly' ), true ) ? $schedule : 'monthly';
+		return in_array( $schedule, array( 'weekly', 'biweekly', 'monthly' ), true ) ? $schedule : 'monthly';
 	}
 
 	/**
@@ -852,11 +852,30 @@ class EarningsService {
 	}
 
 	/**
+	 * Register custom cron schedules for auto withdrawals.
+	 *
+	 * Must be called before wp_schedule_event() uses 'biweekly'.
+	 *
+	 * @param array $schedules Existing cron schedules.
+	 * @return array Modified schedules.
+	 */
+	public static function add_cron_schedules( array $schedules ): array {
+		$schedules['biweekly'] = array(
+			'interval' => 14 * DAY_IN_SECONDS,
+			'display'  => __( 'Every 14 Days (Bi-weekly)', 'wp-sell-services' ),
+		);
+		return $schedules;
+	}
+
+	/**
 	 * Schedule auto withdrawal cron job.
 	 *
 	 * @return void
 	 */
 	public static function schedule_auto_withdrawal_cron(): void {
+		// Ensure biweekly schedule is registered before scheduling.
+		add_filter( 'cron_schedules', array( self::class, 'add_cron_schedules' ) );
+
 		if ( ! self::is_auto_withdrawal_enabled() ) {
 			wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
 			return;
@@ -869,7 +888,7 @@ class EarningsService {
 
 		// Schedule based on settings.
 		if ( ! wp_next_scheduled( 'wpss_process_auto_withdrawals' ) ) {
-			// Schedule for 1st of month (monthly) or Monday (weekly) at 2 AM.
+			// Schedule for 1st of month (monthly), 1st/15th (biweekly), or Monday (weekly) at 2 AM.
 			$timestamp = self::get_next_schedule_time( $schedule );
 			wp_schedule_event( $timestamp, $schedule, 'wpss_process_auto_withdrawals' );
 		}
@@ -878,7 +897,7 @@ class EarningsService {
 	/**
 	 * Get next schedule time for auto withdrawal.
 	 *
-	 * @param string $schedule Schedule type (weekly or monthly).
+	 * @param string $schedule Schedule type (weekly, biweekly, or monthly).
 	 * @return int Unix timestamp for next run.
 	 */
 	private static function get_next_schedule_time( string $schedule ): int {
@@ -888,6 +907,14 @@ class EarningsService {
 		if ( 'monthly' === $schedule ) {
 			// First day of next month at 2 AM.
 			$next = new \DateTime( 'first day of next month 02:00:00', $timezone );
+		} elseif ( 'biweekly' === $schedule ) {
+			// Next 1st or 15th of the month at 2 AM.
+			$day = (int) $now->format( 'j' );
+			if ( $day < 15 ) {
+				$next = new \DateTime( $now->format( 'Y-m' ) . '-15 02:00:00', $timezone );
+			} else {
+				$next = new \DateTime( 'first day of next month 02:00:00', $timezone );
+			}
 		} else {
 			// Next Monday at 2 AM.
 			$next = new \DateTime( 'next monday 02:00:00', $timezone );

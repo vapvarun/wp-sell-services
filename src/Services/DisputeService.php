@@ -114,7 +114,7 @@ class DisputeService {
 		// Enforce dispute window (only for completed orders).
 		if ( 'completed' === $order->status && ! empty( $order->completed_at ) ) {
 			$order_settings       = get_option( 'wpss_orders', array() );
-			$dispute_window_days  = (int) ( $order_settings['dispute_window_days'] ?? 7 );
+			$dispute_window_days  = (int) ( $order_settings['dispute_window_days'] ?? 14 );
 			if ( $dispute_window_days > 0 ) {
 				$completed_time = strtotime( $order->completed_at );
 				$deadline       = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
