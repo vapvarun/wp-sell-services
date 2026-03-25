@@ -97,6 +97,7 @@ class SingleServiceView {
 			array( 'wpss-frontend' ),
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-single-service', 'rtl', 'replace' );
 
 		// Single service JS.
 		wp_enqueue_script(

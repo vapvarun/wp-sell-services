@@ -183,6 +183,7 @@ class OrderMetabox {
 			array(),
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-order-metabox', 'rtl', 'replace' );
 
 		wp_enqueue_script(
 			'wpss-order-metabox',

@@ -91,6 +91,7 @@ class UnifiedDashboard {
 			array(),
 			WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-unified-dashboard', 'rtl', 'replace' );
 
 		wp_enqueue_script(
 			'wpss-unified-dashboard',

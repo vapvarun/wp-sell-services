@@ -589,6 +589,7 @@ class Admin {
 			array(),
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-admin', 'rtl', 'replace' );
 
 		// Color picker for category taxonomy.
 		if ( $is_taxonomy ) {

@@ -78,6 +78,7 @@ class ManualOrderPage {
 			array( 'wpss-admin' ),
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-admin-manual-order', 'rtl', 'replace' );
 
 		wp_enqueue_script(
 			'wpss-admin-manual-order',

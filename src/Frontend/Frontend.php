@@ -33,6 +33,7 @@ class Frontend {
 			array(),
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-design-system', 'rtl', 'replace' );
 
 		wp_enqueue_style(
 			'wpss-frontend',
@@ -40,6 +41,7 @@ class Frontend {
 			array( 'wpss-design-system' ),
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-frontend', 'rtl', 'replace' );
 	}
 
 	/**

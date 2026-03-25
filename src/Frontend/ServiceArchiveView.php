@@ -72,6 +72,7 @@ class ServiceArchiveView {
 			array( 'wpss-frontend' ),
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-archive', 'rtl', 'replace' );
 	}
 
 	/**

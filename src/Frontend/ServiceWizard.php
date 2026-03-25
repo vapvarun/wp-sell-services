@@ -1260,6 +1260,7 @@ class ServiceWizard {
 			array( 'wpss-design-system' ),
 			WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-service-wizard', 'rtl', 'replace' );
 
 		// Enqueue without alpinejs dependency so it loads BEFORE Alpine.
 		// This ensures wpssServiceWizard is defined when Alpine auto-starts.

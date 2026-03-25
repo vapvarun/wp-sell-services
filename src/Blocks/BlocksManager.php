@@ -160,6 +160,7 @@ class BlocksManager {
 			[ 'wp-edit-blocks' ],
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-blocks-editor', 'rtl', 'replace' );
 	}
 
 	/**
@@ -179,6 +180,7 @@ class BlocksManager {
 			[],
 			\WPSS_VERSION
 		);
+		wp_style_add_data( 'wpss-blocks', 'rtl', 'replace' );
 
 		wp_enqueue_script(
 			'wpss-blocks',
