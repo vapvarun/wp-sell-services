@@ -1847,6 +1847,15 @@ select:invalid {
 	font-weight: 500;
 }
 
+/* Pro Profile Widget */
+.wpss-profile-sidebar .wpss-pro-profile-widget {
+	background: var(--wpss-white);
+    border: 1px solid var(--wpss-border);
+    border-radius: var(--wpss-radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
 /* Timeline */
 .wpss-timeline {
 	list-style: none;
