@@ -116,8 +116,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @return void
 	 */
 	public function process_checkout( int $order_id, array $order_data ): void {
-		// Clear cart after successful checkout.
-		$this->clear_cart();
+		// Remove only the purchased service from cart, keeping other items.
+		$service_id = (int) ( $order_data['service_id'] ?? 0 );
+		if ( $service_id ) {
+			$this->remove_from_cart( $service_id );
+		} else {
+			$this->clear_cart();
+		}
 
 		/**
 		 * Fires after standalone checkout processing.
@@ -667,6 +672,40 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				</div>
 
 			<?php else : ?>
+				<?php
+				// Multi-cart safeguard: warn if other items remain in cart.
+				if ( ! $is_pay_order ) :
+					$remaining_cart = $this->get_cart();
+					$remaining_count = 0;
+					foreach ( $remaining_cart as $cart_item ) {
+						if ( (int) ( $cart_item['service_id'] ?? 0 ) !== $service->id ) {
+							++$remaining_count;
+						}
+					}
+					if ( $remaining_count > 0 ) :
+						?>
+						<div class="wpss-notice wpss-notice--info" role="status">
+							<span>
+								<?php
+								printf(
+									/* translators: 1: number of remaining items, 2: current service title */
+									esc_html( _n(
+										'You have %1$d more item in your cart. This checkout is for %2$s only. Your other item will remain in your cart for separate checkout.',
+										'You have %1$d more items in your cart. This checkout is for %2$s only. Your other items will remain in your cart for separate checkout.',
+										$remaining_count,
+										'wp-sell-services'
+									) ),
+									$remaining_count,
+									'<strong>' . esc_html( $service->title ) . '</strong>'
+								);
+								?>
+							</span>
+						</div>
+						<?php
+					endif;
+				endif;
+				?>
+
 				<!-- Notice area -->
 				<div id="wpss-checkout-notice" class="wpss-notice wpss-notice--error" style="display:none;" role="alert"></div>
 
@@ -1112,7 +1151,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	}
 
 	/**
-	 * Clear cart from user meta.
+	 * Clear entire cart from user meta.
 	 *
 	 * @return void
 	 */
@@ -1123,5 +1162,36 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		delete_user_meta( $user_id, self::CART_META_KEY );
+	}
+
+	/**
+	 * Remove a specific service from the cart, keeping other items.
+	 *
+	 * If the cart becomes empty after removal, deletes the meta entirely.
+	 * Falls back to clearing the entire cart if the service is not found.
+	 *
+	 * @param int $service_id Service ID to remove.
+	 * @return void
+	 */
+	private function remove_from_cart( int $service_id ): void {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return;
+		}
+
+		$cart    = $this->get_cart();
+		$updated = array();
+
+		foreach ( $cart as $key => $item ) {
+			if ( (int) ( $item['service_id'] ?? 0 ) !== $service_id ) {
+				$updated[ $key ] = $item;
+			}
+		}
+
+		if ( empty( $updated ) ) {
+			delete_user_meta( $user_id, self::CART_META_KEY );
+		} else {
+			update_user_meta( $user_id, self::CART_META_KEY, $updated );
+		}
 	}
 }
