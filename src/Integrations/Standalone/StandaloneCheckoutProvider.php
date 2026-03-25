@@ -571,9 +571,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 			/* Guarantee badges */
 			.wpss-co-guarantees {
-				display: flex; flex-direction: column; gap: var(--wpss-space-3);
-				padding: var(--wpss-space-5);
-				background: var(--wpss-bg-subtle); border-radius: var(--wpss-radius-lg);
+				display: flex; flex-direction: column; gap: var(--wpss-space-4);
 			}
 			.wpss-co-guarantee {
 				display: flex; align-items: flex-start; gap: var(--wpss-space-3);
@@ -925,26 +923,30 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							<?php endif; ?>
 
 							<!-- Guarantee badges -->
-							<div class="wpss-co-guarantees" style="margin-top: var(--wpss-space-4);">
-								<div class="wpss-co-guarantee">
-									<span aria-hidden="true">&#9201;</span>
-									<div>
-										<strong><?php esc_html_e( 'On-time Delivery', 'wp-sell-services' ); ?></strong>
-										<span><?php esc_html_e( 'Or your money back', 'wp-sell-services' ); ?></span>
-									</div>
-								</div>
-								<div class="wpss-co-guarantee">
-									<span aria-hidden="true">&#128172;</span>
-									<div>
-										<strong><?php esc_html_e( 'Direct Communication', 'wp-sell-services' ); ?></strong>
-										<span><?php esc_html_e( 'Chat with your seller', 'wp-sell-services' ); ?></span>
-									</div>
-								</div>
-								<div class="wpss-co-guarantee">
-									<span aria-hidden="true">&#9989;</span>
-									<div>
-										<strong><?php esc_html_e( 'Satisfaction Guarantee', 'wp-sell-services' ); ?></strong>
-										<span><?php esc_html_e( 'Unlimited revisions in your plan', 'wp-sell-services' ); ?></span>
+							<div class="wpss-card wpss-co-guarantees-card" style="margin-top: var(--wpss-space-4);">
+								<div class="wpss-card__body">
+									<div class="wpss-co-guarantees">
+										<div class="wpss-co-guarantee">
+											<span aria-hidden="true">&#9201;</span>
+											<div>
+												<strong><?php esc_html_e( 'On-time Delivery', 'wp-sell-services' ); ?></strong>
+												<span><?php esc_html_e( 'Or your money back', 'wp-sell-services' ); ?></span>
+											</div>
+										</div>
+										<div class="wpss-co-guarantee">
+											<span aria-hidden="true">&#128172;</span>
+											<div>
+												<strong><?php esc_html_e( 'Direct Communication', 'wp-sell-services' ); ?></strong>
+												<span><?php esc_html_e( 'Chat with your seller', 'wp-sell-services' ); ?></span>
+											</div>
+										</div>
+										<div class="wpss-co-guarantee">
+											<span aria-hidden="true">&#9989;</span>
+											<div>
+												<strong><?php esc_html_e( 'Satisfaction Guarantee', 'wp-sell-services' ); ?></strong>
+												<span><?php esc_html_e( 'Unlimited revisions in your plan', 'wp-sell-services' ); ?></span>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
