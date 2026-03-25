@@ -401,74 +401,229 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		// Get available payment gateways.
 		$gateways = wpss()->get_payment_gateways();
 		$enabled_gateways = array_filter( $gateways, fn( $g ) => $g->is_enabled() );
+
+		// Vendor data for regular checkout.
+		if ( ! $is_pay_order ) {
+			$vendor            = get_userdata( $service->vendor_id );
+			$vendor_name       = $vendor ? $vendor->display_name : '';
+			$vendor_avatar_url = get_avatar_url( $service->vendor_id, array( 'size' => 48 ) );
+		} else {
+			$vendor_avatar_url = get_avatar_url( $pay_order->vendor_id, array( 'size' => 48 ) );
+		}
+
+		// Delivery and revision info from the selected package.
+		$delivery_days = $selected_package['delivery_days'] ?? 0;
+		$revisions     = $selected_package['revisions'] ?? 0;
+
+		// Review stats for the service.
+		$review_count = (int) get_post_meta( $service->id, '_wpss_review_count', true );
+		$review_avg   = (float) get_post_meta( $service->id, '_wpss_review_avg', true );
 		?>
-		<div class="wpss-standalone-checkout">
-			<div class="wpss-checkout-summary">
-				<h3><?php echo $is_pay_order ? esc_html__( 'Order Payment', 'wp-sell-services' ) : esc_html__( 'Order Summary', 'wp-sell-services' ); ?></h3>
 
-				<div class="wpss-checkout-service">
-					<?php if ( $service->thumbnail_id ) : ?>
-						<img src="<?php echo esc_url( $service->get_thumbnail_url( 'thumbnail' ) ); ?>" alt="">
-					<?php endif; ?>
-					<div class="wpss-service-info">
-						<h4><?php echo esc_html( $service->title ); ?></h4>
-						<?php if ( $is_pay_order ) : ?>
-							<?php if ( $vendor_name ) : ?>
-								<span class="wpss-vendor-name"><?php echo esc_html( $vendor_name ); ?></span>
-							<?php endif; ?>
-							<span class="wpss-order-number"><?php echo esc_html( $pay_order->order_number ); ?></span>
-						<?php else : ?>
-							<?php if ( $selected_package ) : ?>
-								<span class="wpss-package-name"><?php echo esc_html( $selected_package['name'] ?? '' ); ?></span>
-							<?php endif; ?>
-							<?php if ( $quantity > 1 ) : ?>
-								<span class="wpss-quantity-label">&times; <?php echo esc_html( $quantity ); ?></span>
-							<?php endif; ?>
-						<?php endif; ?>
-					</div>
-				</div>
+		<script>document.body.classList.add('wpss-checkout-page');</script>
+		<style>
+			/* Force full-width checkout — hide theme sidebar. */
+			body.wpss-checkout-page #secondary,
+			body.wpss-checkout-page aside.widget-area,
+			body.wpss-checkout-page .left-sidebar,
+			body.wpss-checkout-page .right-sidebar { display: none !important; }
+			body.wpss-checkout-page .site-content { display: block !important; }
+			body.wpss-checkout-page .content-area,
+			body.wpss-checkout-page #primary { width: 100% !important; max-width: 100% !important; float: none !important; flex: 1 !important; }
 
-				<?php if ( ! $is_pay_order && ( ! empty( $addons_data ) || $tax_amount > 0 ) ) : ?>
-					<div class="wpss-checkout-subtotal">
-						<span><?php esc_html_e( 'Subtotal', 'wp-sell-services' ); ?></span>
-						<span><?php echo esc_html( wpss_format_price( $price - $addons_total, $currency ) ); ?></span>
-					</div>
-					<?php foreach ( $addons_data as $addon_item ) : ?>
-						<div class="wpss-checkout-addon">
-							<span><?php echo esc_html( $addon_item['name'] ); ?></span>
-							<span><?php echo esc_html( wpss_format_price( $addon_item['price'], $currency ) ); ?></span>
-						</div>
-					<?php endforeach; ?>
-					<?php if ( $tax_amount > 0 ) : ?>
-						<div class="wpss-checkout-tax">
-							<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
-							<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
-						</div>
-					<?php endif; ?>
-				<?php endif; ?>
+			/* Header bar */
+			.wpss-co-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: var(--wpss-space-4) 0;
+				margin-bottom: var(--wpss-space-6);
+				border-bottom: 1px solid var(--wpss-border-light);
+			}
+			.wpss-co-header__back {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--wpss-space-2);
+				font-size: var(--wpss-text-base);
+				font-weight: 500;
+				color: var(--wpss-text-muted);
+				text-decoration: none;
+				transition: color var(--wpss-ease);
+			}
+			.wpss-co-header__back:hover { color: var(--wpss-primary); text-decoration: none; }
+			.wpss-co-header__secure {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--wpss-space-2);
+				font-size: var(--wpss-text-sm);
+				font-weight: 600;
+				color: var(--wpss-success);
+			}
 
-				<div class="wpss-checkout-total">
-					<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-					<span class="wpss-total-amount"><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></span>
-				</div>
+			/* Service info card */
+			.wpss-co-service { display: flex; gap: var(--wpss-space-5); align-items: flex-start; }
+			.wpss-co-service__thumb {
+				width: 120px; height: 80px; object-fit: cover;
+				border-radius: var(--wpss-radius); flex-shrink: 0;
+			}
+			.wpss-co-service__details { flex: 1; min-width: 0; }
+			.wpss-co-service__title {
+				font-size: var(--wpss-text-lg); font-weight: 600; color: var(--wpss-text);
+				margin: 0 0 var(--wpss-space-2); line-height: 1.3;
+			}
+			.wpss-co-vendor {
+				display: flex; align-items: center; gap: var(--wpss-space-2);
+				margin-bottom: var(--wpss-space-3);
+			}
+			.wpss-co-vendor__avatar {
+				width: 28px; height: 28px; border-radius: var(--wpss-radius-full); object-fit: cover;
+			}
+			.wpss-co-vendor__name { font-size: var(--wpss-text-sm); color: var(--wpss-text-secondary); font-weight: 500; }
+			.wpss-co-meta {
+				display: flex; flex-wrap: wrap; gap: var(--wpss-space-4);
+				font-size: var(--wpss-text-sm); color: var(--wpss-text-muted);
+			}
+			.wpss-co-meta__item { display: inline-flex; align-items: center; gap: var(--wpss-space-1); }
+			.wpss-co-stars { color: var(--wpss-star); letter-spacing: 1px; }
+
+			/* Payment method cards */
+			.wpss-co-methods { display: flex; flex-direction: column; gap: var(--wpss-space-3); }
+			.wpss-co-method {
+				position: relative;
+				border: 2px solid var(--wpss-border);
+				border-radius: var(--wpss-radius-lg);
+				padding: var(--wpss-space-4) var(--wpss-space-5);
+				cursor: pointer;
+				transition: border-color var(--wpss-ease), box-shadow var(--wpss-ease), background var(--wpss-ease);
+			}
+			.wpss-co-method:hover { border-color: var(--wpss-text-hint); }
+			.wpss-co-method.wpss-co-method--active {
+				border-color: var(--wpss-primary);
+				background: var(--wpss-primary-light);
+				box-shadow: 0 0 0 3px var(--wpss-primary-50);
+			}
+			.wpss-co-method__label {
+				display: flex; align-items: center; gap: var(--wpss-space-3);
+				cursor: pointer; font-size: var(--wpss-text-base); font-weight: 500; color: var(--wpss-text);
+			}
+			.wpss-co-method__label input[type="radio"] {
+				width: 18px; height: 18px; accent-color: var(--wpss-primary); cursor: pointer; margin: 0; flex-shrink: 0;
+			}
+			.wpss-co-method__form {
+				margin-top: var(--wpss-space-4);
+				padding-top: var(--wpss-space-4);
+				border-top: 1px solid var(--wpss-border-light);
+			}
+
+			/* Order summary sidebar */
+			.wpss-co-summary-line {
+				display: flex; justify-content: space-between; align-items: center;
+				padding: var(--wpss-space-2) 0;
+				font-size: var(--wpss-text-base); color: var(--wpss-text-secondary);
+			}
+			.wpss-co-summary-line--addon { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); }
+			.wpss-co-summary-line--tax { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); }
+			.wpss-co-summary-total {
+				display: flex; justify-content: space-between; align-items: center;
+				padding: var(--wpss-space-4) 0 0;
+				margin-top: var(--wpss-space-3);
+				border-top: 2px solid var(--wpss-text);
+				font-size: var(--wpss-text-xl); font-weight: 700; color: var(--wpss-text);
+			}
+
+			/* Trust indicators */
+			.wpss-co-trust {
+				display: flex; flex-direction: column; gap: var(--wpss-space-3);
+				padding: var(--wpss-space-4) 0;
+			}
+			.wpss-co-trust__item {
+				display: flex; align-items: center; gap: var(--wpss-space-3);
+				font-size: var(--wpss-text-sm); color: var(--wpss-text-muted);
+			}
+			.wpss-co-trust__icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+			/* What happens next — step indicator */
+			.wpss-co-steps { margin-top: var(--wpss-space-8); }
+			.wpss-co-steps__track {
+				display: flex; align-items: flex-start; justify-content: space-between;
+				position: relative; padding: 0;
+			}
+			.wpss-co-steps__track::before {
+				content: '';
+				position: absolute; top: 16px; left: 24px; right: 24px;
+				height: 2px; background: var(--wpss-border);
+			}
+			.wpss-co-step {
+				display: flex; flex-direction: column; align-items: center;
+				gap: var(--wpss-space-2); position: relative; flex: 1; text-align: center;
+			}
+			.wpss-co-step__dot {
+				width: 32px; height: 32px; border-radius: var(--wpss-radius-full);
+				background: var(--wpss-bg); border: 2px solid var(--wpss-border);
+				display: flex; align-items: center; justify-content: center;
+				font-size: var(--wpss-text-sm); font-weight: 600; color: var(--wpss-text-muted);
+				position: relative; z-index: 1;
+			}
+			.wpss-co-step:first-child .wpss-co-step__dot {
+				background: var(--wpss-primary); border-color: var(--wpss-primary); color: #fff;
+			}
+			.wpss-co-step__label { font-size: var(--wpss-text-xs); color: var(--wpss-text-muted); font-weight: 500; }
+
+			/* Login card */
+			.wpss-co-login { text-align: center; padding: var(--wpss-space-10) var(--wpss-space-6); }
+			.wpss-co-login__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-5); }
+
+			/* Responsive */
+			@media (max-width: 768px) {
+				.wpss-co-header { flex-direction: column; gap: var(--wpss-space-2); align-items: flex-start; }
+				.wpss-co-service { flex-direction: column; }
+				.wpss-co-service__thumb { width: 100%; height: 160px; }
+				.wpss-co-steps__track { flex-wrap: wrap; gap: var(--wpss-space-3); }
+				.wpss-co-steps__track::before { display: none; }
+				.wpss-co-step { flex-direction: row; text-align: left; }
+			}
+		</style>
+
+		<div class="wpss-checkout-page">
+			<!-- Header bar -->
+			<div class="wpss-co-header">
+				<a href="<?php echo esc_url( get_permalink( $service->id ) ); ?>" class="wpss-co-header__back">
+					<span aria-hidden="true">&larr;</span>
+					<?php esc_html_e( 'Back to service', 'wp-sell-services' ); ?>
+				</a>
+				<span class="wpss-co-header__secure">
+					<span aria-hidden="true">&#128274;</span>
+					<?php esc_html_e( 'Secure Checkout', 'wp-sell-services' ); ?>
+				</span>
 			</div>
 
 			<?php if ( ! is_user_logged_in() ) : ?>
-				<div class="wpss-checkout-login">
-					<p><?php esc_html_e( 'Please log in or create an account to continue.', 'wp-sell-services' ); ?></p>
-					<a href="<?php echo esc_url( wp_login_url( $this->get_checkout_url( $service->id, [ 'package_id' => $package_id ] ) ) ); ?>" class="button">
-						<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
-					</a>
-					<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="button">
-						<?php esc_html_e( 'Register', 'wp-sell-services' ); ?>
-					</a>
+				<!-- Login required -->
+				<div class="wpss-card wpss-co-login">
+					<div class="wpss-empty__icon" aria-hidden="true">&#128100;</div>
+					<h3 class="wpss-heading-3"><?php esc_html_e( 'Sign in to continue', 'wp-sell-services' ); ?></h3>
+					<p class="wpss-caption" style="margin-top:var(--wpss-space-2);">
+						<?php esc_html_e( 'Please log in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
+					</p>
+					<div class="wpss-co-login__actions">
+						<a href="<?php echo esc_url( wp_login_url( $this->get_checkout_url( $service->id, array( 'package_id' => $package_id ) ) ) ); ?>" class="wpss-btn wpss-btn--primary">
+							<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
+						</a>
+						<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline">
+							<?php esc_html_e( 'Register', 'wp-sell-services' ); ?>
+						</a>
+					</div>
 				</div>
+
 			<?php elseif ( empty( $enabled_gateways ) ) : ?>
-				<div class="wpss-checkout-error">
-					<p><?php esc_html_e( 'No payment methods available. Please contact support.', 'wp-sell-services' ); ?></p>
+				<!-- No gateways -->
+				<div class="wpss-notice wpss-notice--error">
+					<?php esc_html_e( 'No payment methods available. Please contact support.', 'wp-sell-services' ); ?>
 				</div>
+
 			<?php else : ?>
-				<div id="wpss-checkout-notice" class="wpss-checkout-notice" style="display:none;"></div>
+				<!-- Notice area -->
+				<div id="wpss-checkout-notice" class="wpss-notice wpss-notice--error" style="display:none;" role="alert"></div>
 
 				<form method="post" class="wpss-checkout-form" id="wpss-checkout-form">
 					<?php wp_nonce_field( 'wpss_checkout', 'wpss_checkout_nonce' ); ?>
@@ -488,32 +643,221 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<input type="hidden" name="amount" value="<?php echo esc_attr( $total ); ?>">
 					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
 
-					<div class="wpss-payment-methods">
-						<h3><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></h3>
+					<!-- Two-column layout -->
+					<div class="wpss-layout wpss-layout--sidebar-right">
 
-						<?php foreach ( $enabled_gateways as $gateway_id => $gateway ) : ?>
-							<div class="wpss-payment-method">
-								<label>
-									<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
-									<?php echo esc_html( $gateway->get_name() ); ?>
-								</label>
-								<div class="wpss-gateway-form" data-gateway="<?php echo esc_attr( $gateway_id ); ?>" style="display: none;">
-									<?php
-									$gateway_order_id = $is_pay_order ? $pay_order->id : 0;
-									echo $gateway->render_payment_form( $total, $currency, $gateway_order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-									?>
+						<!-- LEFT COLUMN: Service info + payment methods -->
+						<div class="wpss-stack wpss-stack--lg">
+
+							<!-- Service info card -->
+							<div class="wpss-card">
+								<div class="wpss-card__header">
+									<h3 class="wpss-card__title">
+										<?php echo $is_pay_order ? esc_html__( 'Order Details', 'wp-sell-services' ) : esc_html__( 'Service Details', 'wp-sell-services' ); ?>
+									</h3>
+								</div>
+								<div class="wpss-card__body">
+									<div class="wpss-co-service">
+										<?php if ( $service->thumbnail_id ) : ?>
+											<img class="wpss-co-service__thumb" src="<?php echo esc_url( $service->get_thumbnail_url( 'medium' ) ); ?>" alt="<?php echo esc_attr( $service->title ); ?>">
+										<?php endif; ?>
+
+										<div class="wpss-co-service__details">
+											<h4 class="wpss-co-service__title"><?php echo esc_html( $service->title ); ?></h4>
+
+											<?php if ( $vendor_name ) : ?>
+												<div class="wpss-co-vendor">
+													<?php if ( $vendor_avatar_url ) : ?>
+														<img class="wpss-co-vendor__avatar" src="<?php echo esc_url( $vendor_avatar_url ); ?>" alt="<?php echo esc_attr( $vendor_name ); ?>">
+													<?php endif; ?>
+													<span class="wpss-co-vendor__name"><?php echo esc_html( $vendor_name ); ?></span>
+												</div>
+											<?php endif; ?>
+
+											<div class="wpss-co-meta">
+												<?php if ( $review_count > 0 ) : ?>
+													<span class="wpss-co-meta__item">
+														<span class="wpss-co-stars" aria-hidden="true">&#9733;</span>
+														<strong><?php echo esc_html( number_format( $review_avg, 1 ) ); ?></strong>
+														<span>(<?php echo esc_html( $review_count ); ?>)</span>
+													</span>
+												<?php endif; ?>
+
+												<?php if ( $is_pay_order ) : ?>
+													<span class="wpss-co-meta__item">
+														<?php echo esc_html( $pay_order->order_number ); ?>
+													</span>
+												<?php else : ?>
+													<?php if ( $delivery_days > 0 ) : ?>
+														<span class="wpss-co-meta__item">
+															<span aria-hidden="true">&#128337;</span>
+															<?php
+															/* translators: %d: number of days */
+															printf( esc_html__( '%d-day delivery', 'wp-sell-services' ), (int) $delivery_days );
+															?>
+														</span>
+													<?php endif; ?>
+
+													<?php if ( $revisions > 0 ) : ?>
+														<span class="wpss-co-meta__item">
+															<span aria-hidden="true">&#128260;</span>
+															<?php
+															/* translators: %d: number of revisions */
+															printf( esc_html( _n( '%d revision', '%d revisions', (int) $revisions, 'wp-sell-services' ) ), (int) $revisions );
+															?>
+														</span>
+													<?php endif; ?>
+												<?php endif; ?>
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
-						<?php endforeach; ?>
-					</div>
 
-					<button type="submit" class="button button-primary wpss-checkout-button">
-						<?php
-						/* translators: %s: formatted price */
-						printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $total, $currency ) ) );
-						?>
-					</button>
+							<!-- Payment methods -->
+							<div class="wpss-card">
+								<div class="wpss-card__header">
+									<h3 class="wpss-card__title"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></h3>
+								</div>
+								<div class="wpss-card__body">
+									<div class="wpss-co-methods">
+										<?php foreach ( $enabled_gateways as $gateway_id => $gateway ) : ?>
+											<div class="wpss-co-method" data-method="<?php echo esc_attr( $gateway_id ); ?>">
+												<label class="wpss-co-method__label">
+													<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
+													<?php echo esc_html( $gateway->get_name() ); ?>
+												</label>
+												<div class="wpss-co-method__form wpss-gateway-form" data-gateway="<?php echo esc_attr( $gateway_id ); ?>" style="display: none;">
+													<?php
+													$gateway_order_id = $is_pay_order ? $pay_order->id : 0;
+													echo $gateway->render_payment_form( $total, $currency, $gateway_order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+													?>
+												</div>
+											</div>
+										<?php endforeach; ?>
+									</div>
+								</div>
+							</div>
+
+						</div><!-- /left column -->
+
+						<!-- RIGHT COLUMN: Order summary (sticky) -->
+						<div class="wpss-sticky">
+							<div class="wpss-card">
+								<div class="wpss-card__header">
+									<h3 class="wpss-card__title">
+										<?php echo $is_pay_order ? esc_html__( 'Order Payment', 'wp-sell-services' ) : esc_html__( 'Order Summary', 'wp-sell-services' ); ?>
+									</h3>
+								</div>
+								<div class="wpss-card__body">
+
+									<?php if ( $is_pay_order ) : ?>
+										<!-- Pay-order: just the total -->
+										<div class="wpss-co-summary-line">
+											<span><?php esc_html_e( 'Order Total', 'wp-sell-services' ); ?></span>
+											<span><strong><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></strong></span>
+										</div>
+									<?php else : ?>
+										<!-- Package line -->
+										<?php if ( $selected_package ) : ?>
+											<div class="wpss-co-summary-line">
+												<span>
+													<?php echo esc_html( $selected_package['name'] ?? '' ); ?>
+													<?php if ( $quantity > 1 ) : ?>
+														<span class="wpss-caption">&times; <?php echo esc_html( $quantity ); ?></span>
+													<?php endif; ?>
+												</span>
+												<span><?php echo esc_html( wpss_format_price( $price - ( $addons_total ?? 0 ), $currency ) ); ?></span>
+											</div>
+										<?php endif; ?>
+
+										<!-- Addon lines -->
+										<?php if ( ! empty( $addons_data ) ) : ?>
+											<?php foreach ( $addons_data as $addon_item ) : ?>
+												<div class="wpss-co-summary-line wpss-co-summary-line--addon">
+													<span><?php echo esc_html( $addon_item['name'] ); ?></span>
+													<span><?php echo esc_html( wpss_format_price( $addon_item['price'], $currency ) ); ?></span>
+												</div>
+											<?php endforeach; ?>
+										<?php endif; ?>
+
+										<!-- Tax line -->
+										<?php if ( $tax_amount > 0 ) : ?>
+											<div class="wpss-co-summary-line wpss-co-summary-line--tax">
+												<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
+												<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
+											</div>
+										<?php endif; ?>
+									<?php endif; ?>
+
+									<!-- Total -->
+									<div class="wpss-co-summary-total">
+										<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
+										<span><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></span>
+									</div>
+								</div>
+
+								<div class="wpss-card__footer" style="flex-direction:column;align-items:stretch;">
+									<!-- CTA button -->
+									<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-btn--full wpss-checkout-button">
+										<span class="wpss-checkout-button__text">
+											<?php
+											/* translators: %s: formatted price */
+											printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $total, $currency ) ) );
+											?>
+										</span>
+									</button>
+
+									<!-- Trust section -->
+									<div class="wpss-co-trust">
+										<div class="wpss-co-trust__item">
+											<span class="wpss-co-trust__icon" aria-hidden="true">&#128274;</span>
+											<span><?php esc_html_e( 'Secure payment', 'wp-sell-services' ); ?></span>
+										</div>
+										<div class="wpss-co-trust__item">
+											<span class="wpss-co-trust__icon" aria-hidden="true">&#128737;</span>
+											<span><?php esc_html_e( 'Order protection', 'wp-sell-services' ); ?></span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div><!-- /right column -->
+
+					</div><!-- /layout -->
 				</form>
+
+				<!-- What happens next -->
+				<div class="wpss-co-steps">
+					<div class="wpss-card">
+						<div class="wpss-card__header">
+							<h3 class="wpss-card__title"><?php esc_html_e( 'What happens next?', 'wp-sell-services' ); ?></h3>
+						</div>
+						<div class="wpss-card__body">
+							<div class="wpss-co-steps__track">
+								<div class="wpss-co-step">
+									<span class="wpss-co-step__dot">1</span>
+									<span class="wpss-co-step__label"><?php esc_html_e( 'Pay', 'wp-sell-services' ); ?></span>
+								</div>
+								<div class="wpss-co-step">
+									<span class="wpss-co-step__dot">2</span>
+									<span class="wpss-co-step__label"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></span>
+								</div>
+								<div class="wpss-co-step">
+									<span class="wpss-co-step__dot">3</span>
+									<span class="wpss-co-step__label"><?php esc_html_e( 'Seller Works', 'wp-sell-services' ); ?></span>
+								</div>
+								<div class="wpss-co-step">
+									<span class="wpss-co-step__dot">4</span>
+									<span class="wpss-co-step__label"><?php esc_html_e( 'Review', 'wp-sell-services' ); ?></span>
+								</div>
+								<div class="wpss-co-step">
+									<span class="wpss-co-step__dot">5</span>
+									<span class="wpss-co-step__label"><?php esc_html_e( 'Complete', 'wp-sell-services' ); ?></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 
 				<script>
 				(function() {
@@ -521,13 +865,14 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					if (!form) return;
 
 					var submitBtn = form.querySelector('.wpss-checkout-button');
-					var originalText = submitBtn.textContent;
+					var submitBtnText = submitBtn.querySelector('.wpss-checkout-button__text');
+					var originalText = submitBtnText.textContent;
 					var noticeEl = document.getElementById('wpss-checkout-notice');
 
 					function showNotice(msg, type) {
-						noticeEl.className = 'wpss-checkout-notice wpss-checkout-notice--' + (type || 'error');
+						noticeEl.className = 'wpss-notice wpss-notice--' + (type || 'error');
 						noticeEl.textContent = msg;
-						noticeEl.style.display = 'block';
+						noticeEl.style.display = 'flex';
 						noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 					}
 
@@ -535,15 +880,32 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						noticeEl.style.display = 'none';
 					}
 
-					// Show/hide gateway forms on radio change.
+					// Show/hide gateway forms + active state on radio change.
 					document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
 						radio.addEventListener('change', function() {
 							hideNotice();
+							document.querySelectorAll('.wpss-co-method').forEach(function(m) {
+								m.classList.remove('wpss-co-method--active');
+							});
 							document.querySelectorAll('.wpss-gateway-form').forEach(function(gform) {
 								gform.style.display = 'none';
 							});
+							var method = this.closest('.wpss-co-method');
+							if (method) method.classList.add('wpss-co-method--active');
 							var selected = document.querySelector('.wpss-gateway-form[data-gateway="' + this.value + '"]');
 							if (selected) selected.style.display = 'block';
+						});
+					});
+
+					// Click anywhere on method card to select radio.
+					document.querySelectorAll('.wpss-co-method').forEach(function(method) {
+						method.addEventListener('click', function(e) {
+							if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+							var radio = this.querySelector('input[type="radio"]');
+							if (radio && !radio.checked) {
+								radio.checked = true;
+								radio.dispatchEvent(new Event('change', { bubbles: true }));
+							}
 						});
 					});
 
@@ -559,7 +921,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						}
 
 						submitBtn.disabled = true;
-						submitBtn.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
+						submitBtnText.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
 
 						var formData = new FormData(form);
 						formData.append('action', 'wpss_' + paymentMethod.value + '_process_payment');
@@ -586,108 +948,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed. Please try again.', 'wp-sell-services' ) ); ?>';
 								showNotice(msg);
 								submitBtn.disabled = false;
-								submitBtn.textContent = originalText;
+								submitBtnText.textContent = originalText;
 							}
 						})
 						.catch(function(error) {
 							console.error('Checkout error:', error);
 							showNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
 							submitBtn.disabled = false;
-							submitBtn.textContent = originalText;
+							submitBtnText.textContent = originalText;
 						});
 					});
 				})();
 				</script>
 			<?php endif; ?>
 		</div>
-
-		<style>
-			.wpss-standalone-checkout {
-				max-width: 600px;
-				margin: 0 auto;
-			}
-			.wpss-checkout-summary {
-				background: #f8f9fa;
-				padding: 20px;
-				border-radius: 8px;
-				margin-bottom: 20px;
-			}
-			.wpss-checkout-service {
-				display: flex;
-				gap: 15px;
-				margin: 15px 0;
-			}
-			.wpss-checkout-service img {
-				width: 80px;
-				height: 80px;
-				object-fit: cover;
-				border-radius: 4px;
-			}
-			.wpss-checkout-subtotal,
-			.wpss-checkout-tax,
-			.wpss-checkout-addon {
-				display: flex;
-				justify-content: space-between;
-				font-size: 16px;
-				padding: 8px 0;
-			}
-			.wpss-checkout-total {
-				display: flex;
-				justify-content: space-between;
-				font-size: 18px;
-				font-weight: 600;
-				padding-top: 15px;
-				border-top: 1px solid #ddd;
-			}
-			.wpss-payment-methods {
-				margin: 20px 0;
-			}
-			.wpss-payment-method {
-				padding: 15px;
-				border: 1px solid #ddd;
-				border-radius: 4px;
-				margin-bottom: 10px;
-			}
-			.wpss-payment-method label {
-				display: flex;
-				align-items: center;
-				gap: 10px;
-				cursor: pointer;
-			}
-			.wpss-gateway-form {
-				margin-top: 15px;
-				padding-top: 15px;
-				border-top: 1px solid #eee;
-			}
-			.wpss-checkout-button {
-				width: 100%;
-				padding: 15px !important;
-				font-size: 16px !important;
-			}
-			.wpss-checkout-login {
-				text-align: center;
-				padding: 30px;
-			}
-			.wpss-checkout-login .button {
-				margin: 5px;
-			}
-			.wpss-checkout-notice {
-				padding: 12px 16px;
-				border-radius: 4px;
-				margin: 0 0 16px;
-				font-size: 14px;
-			}
-			.wpss-checkout-notice--error {
-				background: #fef2f2;
-				color: #dc2626;
-				border: 1px solid #fecaca;
-			}
-			.wpss-checkout-notice--success {
-				background: #f0fdf4;
-				color: #16a34a;
-				border: 1px solid #bbf7d0;
-			}
-		</style>
 		<?php
 	}
 
