@@ -542,6 +542,53 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			}
 			.wpss-co-trust__icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 
+			/* Seller stats */
+			.wpss-co-seller-stats {
+				display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+				gap: var(--wpss-space-3); text-align: center;
+			}
+			.wpss-co-seller-stat__value {
+				display: block; font-size: var(--wpss-text-xl); font-weight: 700;
+				color: var(--wpss-text); line-height: 1.3;
+			}
+			.wpss-co-seller-stat__label {
+				display: block; font-size: var(--wpss-text-xs);
+				color: var(--wpss-text-muted); margin-top: 2px;
+			}
+
+			/* Testimonial */
+			.wpss-co-testimonial {
+				margin-top: var(--wpss-space-4); padding-top: var(--wpss-space-4);
+				border-top: 1px solid var(--wpss-border-light);
+			}
+			.wpss-co-testimonial__text {
+				font-size: var(--wpss-text-sm); color: var(--wpss-text-secondary);
+				font-style: italic; line-height: 1.6; margin: 0 0 var(--wpss-space-2);
+			}
+			.wpss-co-testimonial__author {
+				font-size: var(--wpss-text-xs); color: var(--wpss-text-muted); font-weight: 500;
+			}
+
+			/* Guarantee badges */
+			.wpss-co-guarantees {
+				display: flex; flex-direction: column; gap: var(--wpss-space-3);
+				padding: var(--wpss-space-5);
+				background: var(--wpss-bg-subtle); border-radius: var(--wpss-radius-lg);
+			}
+			.wpss-co-guarantee {
+				display: flex; align-items: flex-start; gap: var(--wpss-space-3);
+			}
+			.wpss-co-guarantee > span:first-child {
+				font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px;
+			}
+			.wpss-co-guarantee strong {
+				display: block; font-size: var(--wpss-text-sm); font-weight: 600;
+				color: var(--wpss-text); margin-bottom: 1px;
+			}
+			.wpss-co-guarantee span {
+				font-size: var(--wpss-text-xs); color: var(--wpss-text-muted);
+			}
+
 			/* What happens next — step indicator */
 			.wpss-co-steps { margin-top: var(--wpss-space-8); }
 			.wpss-co-steps__track {
@@ -821,6 +868,87 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</div>
 								</div>
 							</div>
+							<?php
+							// Seller stats card.
+							$vendor_id_for_stats = $is_pay_order ? $pay_order->vendor_id : ( $service->vendor_id ?? 0 );
+							if ( $vendor_id_for_stats ) :
+								global $wpdb;
+								$orders_table      = $wpdb->prefix . 'wpss_orders';
+								$reviews_table     = $wpdb->prefix . 'wpss_reviews';
+								$vendor_orders     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								$vendor_member_obj = get_userdata( $vendor_id_for_stats );
+								$vendor_joined     = $vendor_member_obj ? wp_date( 'M Y', strtotime( $vendor_member_obj->user_registered ) ) : '';
+
+								// Get latest review for this vendor.
+								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.content, r.rating, u.display_name as reviewer_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+							?>
+							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
+								<div class="wpss-card__header">
+									<h3 class="wpss-card__title"><?php esc_html_e( 'About the Seller', 'wp-sell-services' ); ?></h3>
+								</div>
+								<div class="wpss-card__body">
+									<div class="wpss-co-seller-stats">
+										<div class="wpss-co-seller-stat">
+											<span class="wpss-co-seller-stat__value"><?php echo esc_html( $vendor_orders ); ?></span>
+											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Orders Completed', 'wp-sell-services' ); ?></span>
+										</div>
+										<?php if ( $review_count > 0 ) : ?>
+										<div class="wpss-co-seller-stat">
+											<span class="wpss-co-seller-stat__value">
+												<span style="color: var(--wpss-star);" aria-hidden="true">&#9733;</span>
+												<?php echo esc_html( number_format( $review_avg, 1 ) ); ?>
+											</span>
+											<span class="wpss-co-seller-stat__label">
+												<?php
+												/* translators: %d: number of reviews */
+												printf( esc_html( _n( '%d Review', '%d Reviews', $review_count, 'wp-sell-services' ) ), $review_count );
+												?>
+											</span>
+										</div>
+										<?php endif; ?>
+										<?php if ( $vendor_joined ) : ?>
+										<div class="wpss-co-seller-stat">
+											<span class="wpss-co-seller-stat__value"><?php echo esc_html( $vendor_joined ); ?></span>
+											<span class="wpss-co-seller-stat__label"><?php esc_html_e( 'Member Since', 'wp-sell-services' ); ?></span>
+										</div>
+										<?php endif; ?>
+									</div>
+
+									<?php if ( $latest_review ) : ?>
+									<div class="wpss-co-testimonial">
+										<p class="wpss-co-testimonial__text">&ldquo;<?php echo esc_html( wp_trim_words( $latest_review->content ?? $latest_review->review ?? '', 30 ) ); ?>&rdquo;</p>
+										<span class="wpss-co-testimonial__author">&mdash; <?php echo esc_html( $latest_review->reviewer_name ?? __( 'Verified Buyer', 'wp-sell-services' ) ); ?></span>
+									</div>
+									<?php endif; ?>
+								</div>
+							</div>
+							<?php endif; ?>
+
+							<!-- Guarantee badges -->
+							<div class="wpss-co-guarantees" style="margin-top: var(--wpss-space-4);">
+								<div class="wpss-co-guarantee">
+									<span aria-hidden="true">&#9201;</span>
+									<div>
+										<strong><?php esc_html_e( 'On-time Delivery', 'wp-sell-services' ); ?></strong>
+										<span><?php esc_html_e( 'Or your money back', 'wp-sell-services' ); ?></span>
+									</div>
+								</div>
+								<div class="wpss-co-guarantee">
+									<span aria-hidden="true">&#128172;</span>
+									<div>
+										<strong><?php esc_html_e( 'Direct Communication', 'wp-sell-services' ); ?></strong>
+										<span><?php esc_html_e( 'Chat with your seller', 'wp-sell-services' ); ?></span>
+									</div>
+								</div>
+								<div class="wpss-co-guarantee">
+									<span aria-hidden="true">&#9989;</span>
+									<div>
+										<strong><?php esc_html_e( 'Satisfaction Guarantee', 'wp-sell-services' ); ?></strong>
+										<span><?php esc_html_e( 'Unlimited revisions in your plan', 'wp-sell-services' ); ?></span>
+									</div>
+								</div>
+							</div>
+
 						</div><!-- /right column -->
 
 					</div><!-- /layout -->
