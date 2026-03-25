@@ -104,9 +104,11 @@ class UnifiedDashboard {
 			'wpss-unified-dashboard',
 			'wpssUnifiedDashboard',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wpss_dashboard_nonce' ),
-				'i18n'    => array(
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'nonce'     => wp_create_nonce( 'wpss_dashboard_nonce' ),
+				'restUrl'   => esc_url_raw( rest_url( 'wpss/v1/' ) ),
+				'restNonce' => wp_create_nonce( 'wp_rest' ),
+				'i18n'      => array(
 					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),

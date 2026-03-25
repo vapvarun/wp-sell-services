@@ -563,25 +563,20 @@
 					$btn.prop('disabled', true);
 
 					$.ajax({
-						url: wpssUnifiedDashboard.ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_delete_portfolio_item',
-							portfolio_nonce: $('#wpss-portfolio-form [name="portfolio_nonce"]').val() || $('[name="portfolio_nonce"]').val(),
-							item_id: itemId
+						url: wpssUnifiedDashboard.restUrl + 'portfolio/' + itemId,
+						type: 'DELETE',
+						beforeSend: function (xhr) {
+							xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 						},
-						success: function (response) {
-							if (response.success) {
-								$btn.closest('.wpss-portfolio__item').fadeOut(300, function () {
-									$(this).remove();
-								});
-							} else {
-								WPSS.showNotification(response.data.message || 'Delete failed.', 'error');
-								$btn.prop('disabled', false);
-							}
+						success: function () {
+							$btn.closest('.wpss-portfolio__item').fadeOut(300, function () {
+								$(this).remove();
+							});
 						},
-						error: function () {
-							WPSS.showNotification('An error occurred.', 'error');
+						error: function (xhr) {
+							var msg = 'Delete failed.';
+							try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
+							WPSS.showNotification(msg, 'error');
 							$btn.prop('disabled', false);
 						}
 					});
@@ -603,23 +598,18 @@
 			$btn.prop('disabled', true);
 
 			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
+				url: wpssUnifiedDashboard.restUrl + 'portfolio/' + itemId + '/featured',
 				type: 'POST',
-				data: {
-					action: 'wpss_toggle_featured_portfolio',
-					portfolio_nonce: $('[name="portfolio_nonce"]').val(),
-					item_id: itemId
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
-				success: function (response) {
-					if (response.success) {
-						window.location.reload();
-					} else {
-						WPSS.showNotification(response.data.message || 'Failed.', 'error');
-						$btn.prop('disabled', false);
-					}
+				success: function () {
+					window.location.reload();
 				},
-				error: function () {
-					WPSS.showNotification('An error occurred.', 'error');
+				error: function (xhr) {
+					var msg = 'Failed.';
+					try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
+					WPSS.showNotification(msg, 'error');
 					$btn.prop('disabled', false);
 				}
 			});
@@ -635,24 +625,40 @@
 			var $form = $(e.currentTarget);
 			var $btn = $form.find('button[type="submit"]');
 			var originalText = $btn.text();
+			var itemId = $form.find('[name="item_id"]').val();
+			var isEdit = itemId && itemId !== '0';
 
 			$btn.prop('disabled', true).text(wpssUnifiedDashboard.i18n.processing);
 
+			// Build REST API payload from form fields.
+			var mediaVal = $form.find('[name="media"]').val();
+			var data = {
+				title: $form.find('[name="title"]').val(),
+				description: $form.find('[name="description"]').val(),
+				external_url: $form.find('[name="external_url"]').val() || '',
+				media: mediaVal ? JSON.parse(mediaVal) : []
+			};
+			var serviceId = $form.find('[name="service_id"]').val();
+			if (serviceId) {
+				data.service_id = parseInt(serviceId, 10);
+			}
+
 			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: $form.serialize() + '&action=wpss_add_portfolio_item',
-				success: function (response) {
-					if (response.success) {
-						$('#wpss-portfolio-modal').removeClass('wpss-modal-open');
-						window.location.reload();
-					} else {
-						WPSS.showNotification(response.data.message || 'Save failed.', 'error');
-						$btn.prop('disabled', false).text(originalText);
-					}
+				url: wpssUnifiedDashboard.restUrl + 'portfolio' + (isEdit ? '/' + itemId : ''),
+				type: isEdit ? 'PUT' : 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify(data),
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
-				error: function () {
-					WPSS.showNotification('An error occurred.', 'error');
+				success: function () {
+					$('#wpss-portfolio-modal').removeClass('wpss-modal-open');
+					window.location.reload();
+				},
+				error: function (xhr) {
+					var msg = 'Save failed.';
+					try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
+					WPSS.showNotification(msg, 'error');
 					$btn.prop('disabled', false).text(originalText);
 				}
 			});

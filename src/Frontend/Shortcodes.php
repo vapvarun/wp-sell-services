@@ -1073,6 +1073,37 @@ class Shortcodes {
 				</div>
 			</div>
 		</div>
+		<script>
+		(function() {
+			var btn = document.querySelector('[data-action="become-vendor"]');
+			if ( ! btn ) return;
+			btn.addEventListener('click', function() {
+				if ( ! confirm( <?php echo wp_json_encode( __( 'Are you sure you want to register as a vendor?', 'wp-sell-services' ) ); ?> ) ) return;
+				btn.disabled = true;
+				btn.textContent = <?php echo wp_json_encode( __( 'Processing...', 'wp-sell-services' ) ); ?>;
+				var xhr = new XMLHttpRequest();
+				xhr.open('POST', <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>);
+				xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+				xhr.onload = function() {
+					try {
+						var r = JSON.parse(xhr.responseText);
+						if (r.success) {
+							window.location.href = r.data.redirect || <?php echo wp_json_encode( wpss_get_page_url( 'dashboard' ) ?: home_url() ); ?>;
+						} else {
+							alert(r.data.message || <?php echo wp_json_encode( __( 'An error occurred.', 'wp-sell-services' ) ); ?>);
+							btn.disabled = false;
+							btn.textContent = <?php echo wp_json_encode( __( 'Register as Vendor', 'wp-sell-services' ) ); ?>;
+						}
+					} catch(e) {
+						alert(<?php echo wp_json_encode( __( 'An error occurred.', 'wp-sell-services' ) ); ?>);
+						btn.disabled = false;
+						btn.textContent = <?php echo wp_json_encode( __( 'Register as Vendor', 'wp-sell-services' ) ); ?>;
+					}
+				};
+				xhr.send('action=wpss_become_vendor&nonce=' + <?php echo wp_json_encode( wp_create_nonce( 'wpss_dashboard_nonce' ) ); ?>);
+			});
+		})();
+		</script>
 		<?php
 		return ob_get_clean();
 	}
