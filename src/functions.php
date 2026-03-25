@@ -1286,6 +1286,15 @@ function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, ar
  * @return string Base checkout URL.
  */
 function wpss_get_checkout_base_url(): string {
+	// If a non-standalone adapter is active, use its checkout URL.
+	$adapter = wpss_get_ecommerce_adapter();
+	if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+		$checkout_provider = $adapter->get_checkout_provider();
+		if ( $checkout_provider ) {
+			return $checkout_provider->get_checkout_url();
+		}
+	}
+
 	$url = wpss_get_page_url( 'checkout' );
 	if ( $url ) {
 		return $url;
@@ -1294,6 +1303,26 @@ function wpss_get_checkout_base_url(): string {
 	// Fallback to adapter slug.
 	$slug = \WPSellServices\Integrations\Standalone\StandaloneAdapter::get_checkout_slug();
 	return home_url( '/' . $slug . '/' );
+}
+
+/**
+ * Get the cart page URL for the active adapter.
+ *
+ * For WooCommerce returns the WC cart page; for standalone returns the service-checkout page.
+ *
+ * @since 1.2.0
+ * @return string Cart URL.
+ */
+function wpss_get_cart_url(): string {
+	$adapter = wpss_get_ecommerce_adapter();
+
+	// WooCommerce: use WC cart page.
+	if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'wc_get_cart_url' ) ) {
+		return wc_get_cart_url();
+	}
+
+	// Standalone / fallback: same as checkout base URL.
+	return wpss_get_checkout_base_url();
 }
 
 /**

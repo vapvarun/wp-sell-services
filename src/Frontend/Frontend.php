@@ -156,6 +156,12 @@ class Frontend {
 			return;
 		}
 
+		// Hide standalone mini-cart when a non-standalone adapter (e.g. WooCommerce) is active.
+		$adapter = wpss_get_ecommerce_adapter();
+		if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+			return;
+		}
+
 		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
 		$cart_count = is_array( $cart ) ? count( $cart ) : 0;
 		$hidden     = 0 === $cart_count ? ' style="display:none;"' : '';

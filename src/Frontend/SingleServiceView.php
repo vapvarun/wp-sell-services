@@ -108,7 +108,7 @@ class SingleServiceView {
 		);
 
 		$checkout_url = wpss_get_service_checkout_url( get_the_ID() );
-		$cart_url     = wpss_get_checkout_base_url();
+		$cart_url     = wpss_get_cart_url();
 
 		wp_localize_script(
 			'wpss-single-service',
