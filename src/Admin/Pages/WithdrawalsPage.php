@@ -366,9 +366,9 @@ class WithdrawalsPage {
 		</div>
 
 		<!-- Process Withdrawal Modal -->
-		<div id="wpss-withdrawal-modal" class="wpss-modal" style="display: none;">
+		<div id="wpss-withdrawal-modal" class="wpss-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="wpss-modal-title">
 			<div class="wpss-modal-content wpss-modal-small">
-				<span class="wpss-modal-close">&times;</span>
+				<span class="wpss-modal-close" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</span>
 				<h2 id="wpss-modal-title"><?php esc_html_e( 'Process Withdrawal', 'wp-sell-services' ); ?></h2>
 				<form id="wpss-process-withdrawal-form">
 					<input type="hidden" name="withdrawal_id" id="wpss-withdrawal-id">

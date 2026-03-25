@@ -556,7 +556,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 	$response_time_display = $vendor_service->get_response_time( $vendor_id );
 	?>
-	<div id="wpss-contact-modal" class="wpss-modal" hidden>
+	<div id="wpss-contact-modal" class="wpss-modal" hidden role="dialog" aria-modal="true" aria-labelledby="wpss-contact-modal-title">
 		<div class="wpss-modal-backdrop wpss-modal-overlay"></div>
 		<div class="wpss-modal-dialog wpss-modal-content">
 			<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
@@ -564,7 +564,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 			</button>
 
 			<div class="wpss-modal-header">
-				<h3><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-contact-modal-title"><?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?></h3>
 			</div>
 
 			<div class="wpss-modal-body">

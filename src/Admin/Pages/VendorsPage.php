@@ -459,9 +459,9 @@ class VendorsPage {
 		</div>
 
 		<!-- Vendor Details Modal -->
-		<div id="wpss-vendor-modal" class="wpss-modal" style="display: none;">
+		<div id="wpss-vendor-modal" class="wpss-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="wpss-vendor-modal-heading">
 			<div class="wpss-modal-content">
-				<span class="wpss-modal-close">&times;</span>
+				<span class="wpss-modal-close" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</span>
 				<div id="wpss-vendor-modal-body">
 					<div class="wpss-modal-loading">
 						<span class="spinner is-active"></span>

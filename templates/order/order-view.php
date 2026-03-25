@@ -1150,11 +1150,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 <?php if ( $can_deliver ) : ?>
 <!-- Delivery Modal -->
-<div class="wpss-modal" id="wpss-deliver-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+<div class="wpss-modal" id="wpss-deliver-modal" data-order="<?php echo esc_attr( $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-deliver-modal-title">
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 class="wpss-modal__title"><?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-deliver-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1237,11 +1237,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 <?php if ( $can_review ) : ?>
 <!-- Review Modal -->
-<div class="wpss-modal" id="wpss-review-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+<div class="wpss-modal" id="wpss-review-modal" data-order="<?php echo esc_attr( $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-review-modal-title">
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 class="wpss-modal__title"><?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-review-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1290,11 +1290,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 <?php if ( $can_request_revision ) : ?>
 <!-- Revision Modal -->
-<div class="wpss-modal" id="wpss-revision-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+<div class="wpss-modal" id="wpss-revision-modal" data-order="<?php echo esc_attr( $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-revision-modal-title">
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 class="wpss-modal__title"><?php esc_html_e( 'Request Revision', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-revision-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Request Revision', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1338,11 +1338,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 <?php if ( $can_open_dispute ) : ?>
 <!-- Dispute Modal -->
-<div class="wpss-modal" id="wpss-dispute-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+<div class="wpss-modal" id="wpss-dispute-modal" data-order="<?php echo esc_attr( $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-dispute-modal-title">
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 class="wpss-modal__title"><?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-dispute-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1399,11 +1399,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 <?php if ( $can_cancel ) : ?>
 <!-- Cancellation Modal -->
-<div class="wpss-modal" id="wpss-cancel-modal" data-order="<?php echo esc_attr( $order_id ); ?>">
+<div class="wpss-modal" id="wpss-cancel-modal" data-order="<?php echo esc_attr( $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-cancel-modal-title">
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 class="wpss-modal__title"><?php esc_html_e( 'Cancel Order', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-cancel-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Cancel Order', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="18" y1="6" x2="6" y2="18"></line>

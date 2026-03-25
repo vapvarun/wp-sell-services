@@ -578,23 +578,83 @@
 	};
 
 	/**
-	 * Show modal utility.
+	 * Show modal utility with focus trap.
 	 */
 	WPSS.showModal = function(modalId) {
 		const $modal = $('#' + modalId);
 		if ($modal.length) {
+			WPSS._lastFocused = document.activeElement;
 			$modal.addClass('wpss-modal-open');
 			$('body').addClass('wpss-modal-active');
+
+			// Focus first focusable element.
+			var $focusable = $modal.find('button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])').filter(':visible');
+			if ($focusable.length) {
+				$focusable.first().focus();
+			}
+
+			// Focus trap.
+			$modal.off('keydown.wpss-trap').on('keydown.wpss-trap', function(e) {
+				if (e.key !== 'Tab') return;
+				var $focusables = $modal.find('button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])').filter(':visible');
+				var $first = $focusables.first();
+				var $last = $focusables.last();
+				if (e.shiftKey && document.activeElement === $first[0]) {
+					e.preventDefault();
+					$last.focus();
+				} else if (!e.shiftKey && document.activeElement === $last[0]) {
+					e.preventDefault();
+					$first.focus();
+				}
+			});
 		}
 	};
 
 	/**
-	 * Hide modal utility.
+	 * Hide modal utility and restore focus.
 	 */
 	WPSS.hideModal = function(modalId) {
 		const $modal = modalId ? $('#' + modalId) : $('.wpss-modal.wpss-modal-open');
-		$modal.removeClass('wpss-modal-open');
+		$modal.removeClass('wpss-modal-open').off('keydown.wpss-trap');
 		$('body').removeClass('wpss-modal-active');
+
+		// Restore focus.
+		if (WPSS._lastFocused) {
+			WPSS._lastFocused.focus();
+			WPSS._lastFocused = null;
+		}
+	};
+
+	/**
+	 * Show inline error notice in a container.
+	 *
+	 * @param {jQuery|string} container Selector or jQuery object.
+	 * @param {string}        message   Error message.
+	 * @param {string}        type      Notice type: error, success, info.
+	 */
+	WPSS.showNotice = function(container, message, type) {
+		type = type || 'error';
+		var $container = $(container);
+		$container.find('.wpss-notice').remove();
+		$container.prepend(
+			'<div class="wpss-notice wpss-notice--' + type + '" role="alert">' +
+				'<span>' + $('<span>').text(message).html() + '</span>' +
+			'</div>'
+		);
+	};
+
+	/**
+	 * Set button to loading state.
+	 */
+	WPSS.setButtonLoading = function($btn, loading) {
+		if (loading) {
+			$btn.data('original-text', $btn.html());
+			$btn.prop('disabled', true).addClass('wpss-btn--loading')
+				.html('<span class="wpss-spinner"></span> ' + (wpssData.i18n?.processing || 'Processing...'));
+		} else {
+			$btn.prop('disabled', false).removeClass('wpss-btn--loading')
+				.html($btn.data('original-text'));
+		}
 	};
 
 	/**

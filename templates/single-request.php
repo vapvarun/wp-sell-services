@@ -437,11 +437,11 @@ do_action( 'wpss_before_single_request', $request_id );
 
 <?php if ( $is_vendor && ! $is_buyer && $is_open && ! $has_proposed ) : ?>
 	<!-- Proposal Modal -->
-	<div class="wpss-modal" id="wpss-proposal-modal" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+	<div class="wpss-modal" id="wpss-proposal-modal" data-request-id="<?php echo esc_attr( $request_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-proposal-modal-title">
 		<div class="wpss-modal-backdrop"></div>
 		<div class="wpss-modal-dialog wpss-modal-lg">
 			<div class="wpss-modal-header">
-				<h3 class="wpss-modal-title"><?php esc_html_e( 'Submit Your Proposal', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-proposal-modal-title" class="wpss-modal-title"><?php esc_html_e( 'Submit Your Proposal', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal-close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 			<form id="wpss-proposal-form" class="wpss-proposal-form">

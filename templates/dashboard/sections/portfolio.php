@@ -124,12 +124,12 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 	<?php endif; ?>
 
 	<!-- Add/Edit Portfolio Modal -->
-	<div class="wpss-modal" id="wpss-portfolio-modal">
+	<div class="wpss-modal" id="wpss-portfolio-modal" role="dialog" aria-modal="true" aria-labelledby="wpss-portfolio-modal-title">
 		<div class="wpss-modal__overlay"></div>
 		<div class="wpss-modal__content">
 			<div class="wpss-modal__header">
 				<h3 id="wpss-portfolio-modal-title"><?php esc_html_e( 'Add Portfolio Item', 'wp-sell-services' ); ?></h3>
-				<button type="button" class="wpss-modal__close">&times;</button>
+				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
 			</div>
 			<form id="wpss-portfolio-form" method="post">
 				<?php wp_nonce_field( 'wpss_portfolio_nonce', 'portfolio_nonce' ); ?>

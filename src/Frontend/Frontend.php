@@ -171,54 +171,6 @@ class Frontend {
 				<span class="wpss-cart-count"><?php echo esc_html( (string) $cart_count ); ?></span>
 			</a>
 		</div>
-		<style>
-			.wpss-mini-cart {
-				position: fixed;
-				bottom: 24px;
-				right: 24px;
-				z-index: 9999;
-			}
-			.wpss-mini-cart-link {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				width: 56px;
-				height: 56px;
-				background: var(--wpss-color-primary, #1e40af);
-				color: #fff;
-				border-radius: 50%;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-				text-decoration: none;
-				position: relative;
-				transition: transform 0.2s ease, box-shadow 0.2s ease;
-			}
-			.wpss-mini-cart-link:hover {
-				transform: scale(1.1);
-				box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-				color: #fff;
-			}
-			.wpss-mini-cart-icon {
-				width: 24px;
-				height: 24px;
-			}
-			.wpss-cart-count {
-				position: absolute;
-				top: -4px;
-				right: -4px;
-				background: #dc2626;
-				color: #fff;
-				font-size: 12px;
-				font-weight: 700;
-				line-height: 1;
-				min-width: 20px;
-				height: 20px;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				border-radius: 10px;
-				padding: 0 5px;
-			}
-		</style>
 		<?php
 	}
 }
