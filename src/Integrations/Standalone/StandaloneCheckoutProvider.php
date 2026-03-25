@@ -420,9 +420,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$delivery_days = $selected_package['delivery_days'] ?? 0;
 		$revisions     = $selected_package['revisions'] ?? 0;
 
-		// Review stats for the service.
-		$review_count = (int) get_post_meta( $service->id, '_wpss_review_count', true );
-		$review_avg   = (float) get_post_meta( $service->id, '_wpss_review_avg', true );
+		// Review stats from actual reviews table (not post meta which may be stale).
+		$review_repo    = new \WPSellServices\Database\Repositories\ReviewRepository();
+		$rating_summary = $review_repo->get_service_rating_summary( $service->id );
+		$review_count   = (int) ( $rating_summary['total_reviews'] ?? 0 );
+		$review_avg     = round( (float) ( $rating_summary['average_rating'] ?? 0 ), 1 );
 		?>
 
 		<script>document.body.classList.add('wpss-checkout-page');</script>
@@ -574,7 +576,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				font-size: var(--wpss-text-xs); color: var(--wpss-text-muted); font-weight: 500;
 			}
 
-			/* Guarantee badges */
+			/* Guarantee badges — horizontal bar below layout */
+			.wpss-co-guarantees-bar {
+				display: flex; justify-content: space-around; gap: var(--wpss-space-6);
+				padding: var(--wpss-space-6);
+				background: var(--wpss-bg-subtle); border-radius: var(--wpss-radius-lg);
+				margin-top: var(--wpss-space-6);
+			}
 			.wpss-co-guarantees {
 				display: flex; flex-direction: column; gap: var(--wpss-space-4);
 			}
@@ -917,7 +925,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								$vendor_joined     = $vendor_member_obj ? wp_date( 'M Y', strtotime( $vendor_member_obj->user_registered ) ) : '';
 
 								// Get latest review for this vendor.
-								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.content, r.rating, u.display_name as reviewer_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, u.display_name as reviewer_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 							?>
 							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
 								<div class="wpss-card__header">
@@ -961,39 +969,36 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							</div>
 							<?php endif; ?>
 
-							<!-- Guarantee badges -->
-							<div class="wpss-card wpss-co-guarantees-card" style="margin-top: var(--wpss-space-4);">
-								<div class="wpss-card__body">
-									<div class="wpss-co-guarantees">
-										<div class="wpss-co-guarantee">
-											<span aria-hidden="true">&#9201;</span>
-											<div>
-												<strong><?php esc_html_e( 'On-time Delivery', 'wp-sell-services' ); ?></strong>
-												<span><?php esc_html_e( 'Or your money back', 'wp-sell-services' ); ?></span>
-											</div>
-										</div>
-										<div class="wpss-co-guarantee">
-											<span aria-hidden="true">&#128172;</span>
-											<div>
-												<strong><?php esc_html_e( 'Direct Communication', 'wp-sell-services' ); ?></strong>
-												<span><?php esc_html_e( 'Chat with your seller', 'wp-sell-services' ); ?></span>
-											</div>
-										</div>
-										<div class="wpss-co-guarantee">
-											<span aria-hidden="true">&#9989;</span>
-											<div>
-												<strong><?php esc_html_e( 'Satisfaction Guarantee', 'wp-sell-services' ); ?></strong>
-												<span><?php esc_html_e( 'Unlimited revisions in your plan', 'wp-sell-services' ); ?></span>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
 
 						</div><!-- /right column -->
 
 					</div><!-- /layout -->
 				</form>
+
+				<!-- Guarantee badges (horizontal) -->
+				<div class="wpss-co-guarantees-bar">
+					<div class="wpss-co-guarantee">
+						<span aria-hidden="true">&#9201;</span>
+						<div>
+							<strong><?php esc_html_e( 'On-time Delivery', 'wp-sell-services' ); ?></strong>
+							<span><?php esc_html_e( 'Or your money back', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+					<div class="wpss-co-guarantee">
+						<span aria-hidden="true">&#128172;</span>
+						<div>
+							<strong><?php esc_html_e( 'Direct Communication', 'wp-sell-services' ); ?></strong>
+							<span><?php esc_html_e( 'Chat with your seller', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+					<div class="wpss-co-guarantee">
+						<span aria-hidden="true">&#9989;</span>
+						<div>
+							<strong><?php esc_html_e( 'Satisfaction Guarantee', 'wp-sell-services' ); ?></strong>
+							<span><?php esc_html_e( 'Unlimited revisions in your plan', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+				</div>
 
 				<!-- What happens next -->
 				<div class="wpss-co-steps">
