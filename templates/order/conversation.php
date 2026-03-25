@@ -163,7 +163,15 @@ do_action( 'wpss_before_conversation', $order );
 					</svg>
 				</div>
 				<h3 class="wpss-messaging__empty-title"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
-				<p class="wpss-messaging__empty-text"><?php esc_html_e( 'Start the conversation by sending a message!', 'wp-sell-services' ); ?></p>
+				<p class="wpss-messaging__empty-text">
+					<?php
+					if ( in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ) {
+						esc_html_e( 'No messages were exchanged during this order.', 'wp-sell-services' );
+					} else {
+						esc_html_e( 'Start the conversation by sending a message!', 'wp-sell-services' );
+					}
+					?>
+				</p>
 			</div>
 		<?php else : ?>
 			<?php

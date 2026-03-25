@@ -1205,6 +1205,77 @@
 	}
 }
 
+/* Vendor Registration Shortcode */
+.wpss-vendor-registration {
+	max-width: 600px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.wpss-vendor-registration__card {
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 48px 40px;
+	text-align: center;
+}
+
+.wpss-vendor-registration__icon {
+	color: var(--wpss-primary, #4f46e5);
+	margin-bottom: 20px;
+}
+
+.wpss-vendor-registration__card h2 {
+	font-size: 24px;
+	font-weight: 700;
+	color: var(--wpss-text, #1f2937);
+	margin: 0 0 12px;
+}
+
+.wpss-vendor-registration__card > p {
+	color: var(--wpss-text-light, #6b7280);
+	font-size: 15px;
+	line-height: 1.6;
+	margin: 0 0 24px;
+}
+
+.wpss-vendor-registration__benefits {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 24px;
+	text-align: left;
+	display: inline-block;
+}
+
+.wpss-vendor-registration__benefits li {
+	padding: 6px 0 6px 28px;
+	position: relative;
+	color: var(--wpss-text, #1f2937);
+	font-size: 14px;
+}
+
+.wpss-vendor-registration__benefits li::before {
+	content: "✓";
+	position: absolute;
+	left: 0;
+	color: var(--wpss-success, #10b981);
+	font-weight: 700;
+}
+
+.wpss-vendor-registration__note {
+	background: #fef3c7;
+	color: #92400e;
+	padding: 12px 16px;
+	border-radius: var(--wpss-radius, 8px);
+	font-size: 13px;
+	margin-bottom: 24px;
+}
+
+.wpss-btn--lg {
+	padding: 14px 32px;
+	font-size: 16px;
+}
+
 /* Alerts */
 .wpss-alert {
 	padding: 12px 16px;

@@ -518,7 +518,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 								// Structured field definition (e.g. from Pro plugin).
 								$label = esc_html( $field['label'] ?? '' );
 								$value = esc_html( $field['value'] ?? '' );
-								if ( $label || $value ) {
+								if ( $label && $value ) {
 									printf(
 										'<div class="wpss-profile-field"><dt>%s</dt><dd>%s</dd></div>',
 										$label,

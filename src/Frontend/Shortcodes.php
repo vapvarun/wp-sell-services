@@ -51,6 +51,9 @@ class Shortcodes {
 		add_shortcode( 'wpss_my_orders', array( $this, 'my_orders' ) );
 		add_shortcode( 'wpss_order_details', array( $this, 'order_details' ) );
 
+		// Vendor registration.
+		add_shortcode( 'wpss_vendor_registration', array( $this, 'vendor_registration' ) );
+
 		// Account shortcodes.
 		add_shortcode( 'wpss_login', array( $this, 'login_form' ) );
 		add_shortcode( 'wpss_register', array( $this, 'register_form' ) );
@@ -945,5 +948,106 @@ class Shortcodes {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Vendor registration shortcode.
+	 *
+	 * Renders a standalone "Become a Vendor" form. If the user is already a vendor,
+	 * redirects to the dashboard. If not logged in, shows login prompt.
+	 *
+	 * @param array $atts Shortcode attributes (unused).
+	 * @return string Shortcode HTML.
+	 */
+	public function vendor_registration( $atts ): string {
+		ob_start();
+
+		if ( ! is_user_logged_in() ) {
+			$login_url = wp_login_url( get_permalink() );
+			?>
+			<div class="wpss-vendor-registration">
+				<div class="wpss-dashboard__empty">
+					<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
+					<p><?php esc_html_e( 'Please log in or create an account to register as a vendor.', 'wp-sell-services' ); ?></p>
+					<a href="<?php echo esc_url( $login_url ); ?>" class="wpss-btn wpss-btn--primary">
+						<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
+					</a>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
+		$user_id   = get_current_user_id();
+		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+
+		if ( $is_vendor ) {
+			$dashboard_url = wpss_get_page_url( 'dashboard' );
+			?>
+			<div class="wpss-vendor-registration">
+				<div class="wpss-dashboard__empty">
+					<h3><?php esc_html_e( 'You\'re Already a Vendor!', 'wp-sell-services' ); ?></h3>
+					<p><?php esc_html_e( 'You are already registered as a vendor. Visit your dashboard to manage your services.', 'wp-sell-services' ); ?></p>
+					<a href="<?php echo esc_url( $dashboard_url ); ?>" class="wpss-btn wpss-btn--primary">
+						<?php esc_html_e( 'Go to Dashboard', 'wp-sell-services' ); ?>
+					</a>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
+		// Check if registration is open.
+		$vendor_settings   = get_option( 'wpss_vendor', array() );
+		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+
+		if ( 'closed' === $registration_mode ) {
+			?>
+			<div class="wpss-vendor-registration">
+				<div class="wpss-dashboard__empty">
+					<h3><?php esc_html_e( 'Registration Closed', 'wp-sell-services' ); ?></h3>
+					<p><?php esc_html_e( 'Vendor registration is currently closed. Please check back later.', 'wp-sell-services' ); ?></p>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
+		// Render the become-vendor form.
+		$dashboard_url = wpss_get_page_url( 'dashboard' );
+		$become_url    = $dashboard_url ? add_query_arg( 'section', 'become-vendor', $dashboard_url ) : '';
+
+		$approval_required = 'approval' === $registration_mode;
+		?>
+		<div class="wpss-vendor-registration">
+			<div class="wpss-vendor-registration__card">
+				<div class="wpss-vendor-registration__icon">
+					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+						<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+					</svg>
+				</div>
+				<h2><?php esc_html_e( 'Start Selling Your Services', 'wp-sell-services' ); ?></h2>
+				<p><?php esc_html_e( 'Join our marketplace and offer your professional skills to clients around the world. Set your own rates, manage your schedule, and grow your freelance business.', 'wp-sell-services' ); ?></p>
+
+				<ul class="wpss-vendor-registration__benefits">
+					<li><?php esc_html_e( 'Create unlimited service listings', 'wp-sell-services' ); ?></li>
+					<li><?php esc_html_e( 'Set your own packages and pricing', 'wp-sell-services' ); ?></li>
+					<li><?php esc_html_e( 'Get paid securely through the platform', 'wp-sell-services' ); ?></li>
+					<li><?php esc_html_e( 'Access analytics and earnings dashboard', 'wp-sell-services' ); ?></li>
+				</ul>
+
+				<?php if ( $approval_required ) : ?>
+					<p class="wpss-vendor-registration__note">
+						<?php esc_html_e( 'Note: Vendor applications are reviewed by our team. You will be notified once approved.', 'wp-sell-services' ); ?>
+					</p>
+				<?php endif; ?>
+
+				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg" data-action="become-vendor">
+					<?php esc_html_e( 'Register as Vendor', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 }
