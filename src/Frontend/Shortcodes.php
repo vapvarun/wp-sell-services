@@ -1077,8 +1077,20 @@ class Shortcodes {
 		(function() {
 			var btn = document.querySelector('[data-action="become-vendor"]');
 			if ( ! btn ) return;
+			var dashboardUrl = <?php echo wp_json_encode( wpss_get_page_url( 'dashboard' ) ?: home_url() ); ?>;
+			var card = btn.closest('.wpss-vr__card');
+
+			function showMessage(msg, type) {
+				var el = document.createElement('div');
+				el.style.cssText = 'padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;';
+				el.style.background = type === 'error' ? '#fef2f2' : '#f0fdf4';
+				el.style.color = type === 'error' ? '#991b1b' : '#166534';
+				el.style.border = '1px solid ' + (type === 'error' ? '#fecaca' : '#bbf7d0');
+				el.textContent = msg;
+				card.insertBefore(el, card.firstChild);
+			}
+
 			btn.addEventListener('click', function() {
-				if ( ! confirm( <?php echo wp_json_encode( __( 'Are you sure you want to register as a vendor?', 'wp-sell-services' ) ); ?> ) ) return;
 				btn.disabled = true;
 				btn.textContent = <?php echo wp_json_encode( __( 'Processing...', 'wp-sell-services' ) ); ?>;
 				var xhr = new XMLHttpRequest();
@@ -1088,14 +1100,14 @@ class Shortcodes {
 					try {
 						var r = JSON.parse(xhr.responseText);
 						if (r.success) {
-							window.location.href = r.data.redirect || <?php echo wp_json_encode( wpss_get_page_url( 'dashboard' ) ?: home_url() ); ?>;
+							window.location.href = r.data.redirect || dashboardUrl;
 						} else {
-							alert(r.data.message || <?php echo wp_json_encode( __( 'An error occurred.', 'wp-sell-services' ) ); ?>);
+							showMessage(r.data.message || <?php echo wp_json_encode( __( 'An error occurred.', 'wp-sell-services' ) ); ?>, 'error');
 							btn.disabled = false;
 							btn.textContent = <?php echo wp_json_encode( __( 'Register as Vendor', 'wp-sell-services' ) ); ?>;
 						}
 					} catch(e) {
-						alert(<?php echo wp_json_encode( __( 'An error occurred.', 'wp-sell-services' ) ); ?>);
+						showMessage(<?php echo wp_json_encode( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>, 'error');
 						btn.disabled = false;
 						btn.textContent = <?php echo wp_json_encode( __( 'Register as Vendor', 'wp-sell-services' ) ); ?>;
 					}
