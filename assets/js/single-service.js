@@ -169,6 +169,11 @@
 
                 // Update state.
                 self.state.selectedPackage = packageIndex;
+
+                // If modal is already open, update it with new package info.
+                if ($(self.config.orderModal).hasClass('active')) {
+                    self.updateOrderSummary();
+                }
             });
 
             // Order button click.
@@ -896,6 +901,12 @@
         bindEvents: function() {
             $(document).on('click', '.wpss-favorite-btn', function(e) {
                 e.preventDefault();
+
+                // Guest check — redirect to login if not authenticated.
+                if (typeof wpssService !== 'undefined' && !wpssService.isLoggedIn) {
+                    window.location.href = wpssService.loginUrl || '/wp-login.php?redirect_to=' + encodeURIComponent(window.location.href);
+                    return;
+                }
 
                 const $btn = $(this);
                 const serviceId = $btn.data('service');

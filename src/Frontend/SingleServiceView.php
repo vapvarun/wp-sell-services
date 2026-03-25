@@ -120,6 +120,8 @@ class SingleServiceView {
 				'checkoutUrl' => $checkout_url,
 				'cartUrl'     => $cart_url,
 				'currencyFormat' => wpss_get_currency_symbol() . '%s',
+				'isLoggedIn'     => is_user_logged_in(),
+				'loginUrl'       => wp_login_url( get_permalink() ),
 				'i18n'        => array(
 					'addingToCart' => __( 'Adding to cart...', 'wp-sell-services' ),
 					'added'        => __( 'Added to cart!', 'wp-sell-services' ),
