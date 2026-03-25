@@ -120,8 +120,13 @@
 		handleWithdrawal: function (e) {
 			e.preventDefault();
 
-			// TODO: Open withdrawal modal
-			WPSS.showNotification('Withdrawal feature coming soon.', 'info');
+			// Withdrawal form is handled inline in the earnings/wallet template.
+			// Scroll to the withdrawal section if it exists.
+			var $section = $('#wpss-withdrawal-form, #wpss-withdraw-form');
+			if ($section.length) {
+				$('html, body').animate({ scrollTop: $section.offset().top - 100 }, 300);
+				$section.find('input[name="amount"]').focus();
+			}
 		},
 
 		/**

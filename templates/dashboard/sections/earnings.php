@@ -236,30 +236,29 @@ jQuery(function($) {
 		$submitBtn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
 
 		$.ajax({
-			url: wpssUnifiedDashboard.ajaxUrl,
+			url: wpssUnifiedDashboard.restUrl + 'withdrawals',
 			type: 'POST',
-			data: {
-				action: 'wpss_request_withdrawal',
-				wpss_withdrawal_nonce: $form.find('[name="wpss_withdrawal_nonce"]').val(),
-				amount: amount,
+			contentType: 'application/json',
+			data: JSON.stringify({
+				amount: parseFloat(amount),
 				method: method,
 				details: details
+			}),
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 			},
-			success: function(response) {
-				if (response.success) {
-					showMessage(response.data.message, 'success');
-					$form[0].reset();
-					$detailsWrapper.hide();
-					// Reload after success to update balances
-					setTimeout(function() {
-						location.reload();
-					}, 2000);
-				} else {
-					showMessage(response.data.message || '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
-				}
+			success: function() {
+				showMessage('<?php echo esc_js( __( 'Withdrawal request submitted successfully.', 'wp-sell-services' ) ); ?>', 'success');
+				$form[0].reset();
+				$detailsWrapper.hide();
+				setTimeout(function() {
+					location.reload();
+				}, 2000);
 			},
-			error: function() {
-				showMessage('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
+			error: function(xhr) {
+				var msg = '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>';
+				try { msg = JSON.parse(xhr.responseText).message || msg; } catch(ex) {}
+				showMessage(msg, 'error');
 			},
 			complete: function() {
 				$submitBtn.prop('disabled', false).text('<?php echo esc_js( __( 'Request Withdrawal', 'wp-sell-services' ) ); ?>');

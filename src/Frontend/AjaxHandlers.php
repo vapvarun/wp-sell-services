@@ -1948,7 +1948,10 @@ class AjaxHandlers {
 			update_user_meta( $user_id, '_wpss_favorite_services', $favorites );
 		}
 
-		wp_send_json_success( array( 'message' => __( 'Added to favorites.', 'wp-sell-services' ) ) );
+		wp_send_json_success( array(
+			'message' => __( 'Added to favorites.', 'wp-sell-services' ),
+			'count'   => count( $favorites ),
+		) );
 	}
 
 	/**
@@ -2669,7 +2672,7 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function skip_requirements(): void {
-		check_ajax_referer( 'wpss_checkout_nonce', 'nonce' );
+		check_ajax_referer( 'wpss_requirements_nonce', 'nonce' );
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
 		$user_id  = get_current_user_id();

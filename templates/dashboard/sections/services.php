@@ -227,9 +227,9 @@ $pending_count = count(
 					<div class="wpss-service-card__body">
 						<h4 class="wpss-service-card__title"><?php the_title(); ?></h4>
 						<div class="wpss-service-card__stats">
-							<span><?php echo esc_html( $views ); ?> <?php esc_html_e( 'views', 'wp-sell-services' ); ?></span>
+							<span><?php echo esc_html( $views ); ?> <?php echo esc_html( _n( 'view', 'views', $views, 'wp-sell-services' ) ); ?></span>
 							<span class="wpss-service-card__sep">&bull;</span>
-							<span><?php echo esc_html( $orders ); ?> <?php esc_html_e( 'orders', 'wp-sell-services' ); ?></span>
+							<span><?php echo esc_html( $orders ); ?> <?php echo esc_html( _n( 'order', 'orders', $orders, 'wp-sell-services' ) ); ?></span>
 						</div>
 						<?php if ( $price ) : ?>
 							<div class="wpss-service-card__price">

@@ -669,9 +669,41 @@ class PayPalGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$currency   = sanitize_text_field( $_POST['currency'] ?? wpss_get_currency() );
-		$service_id = (int) ( $_POST['service_id'] ?? 0 );
-		$package_id = (int) ( $_POST['package_id'] ?? 0 );
+		$currency     = sanitize_text_field( $_POST['currency'] ?? wpss_get_currency() );
+		$service_id   = (int) ( $_POST['service_id'] ?? 0 );
+		$package_id   = (int) ( $_POST['package_id'] ?? 0 );
+		$pay_order_id = (int) ( $_POST['pay_order'] ?? 0 );
+
+		// Pay-order flow: use existing order total (from proposal acceptance).
+		if ( $pay_order_id ) {
+			$pay_order = \WPSellServices\Models\ServiceOrder::find( $pay_order_id );
+			if ( ! $pay_order || (int) $pay_order->customer_id !== get_current_user_id() ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$amount   = (float) $pay_order->total;
+			$currency = $pay_order->currency ?: $currency;
+			$metadata = array(
+				'pay_order'   => $pay_order_id,
+				'service_id'  => (int) $pay_order->service_id,
+				'customer_id' => get_current_user_id(),
+				'description' => sprintf(
+					/* translators: %d: Order ID */
+					__( 'Order #%d', 'wp-sell-services' ),
+					$pay_order_id
+				),
+			);
+
+			$result = $this->create_payment( $amount, $currency, $metadata );
+
+			if ( $result['success'] ) {
+				wp_send_json_success( $result );
+			} else {
+				wp_send_json_error( array( 'message' => $result['error'] ) );
+			}
+			return;
+		}
 
 		// Verify amount server-side from package price.
 		$service = get_post( $service_id );
@@ -796,6 +828,33 @@ class PayPalGateway implements PaymentGatewayInterface {
 			}
 		}
 
+		// Check for pay_order flow (proposal acceptance).
+		$pay_order_id = (int) ( $metadata['pay_order'] ?? 0 );
+
+		if ( $pay_order_id ) {
+			$pay_order = \WPSellServices\Models\ServiceOrder::find( $pay_order_id );
+
+			if ( $pay_order && (int) $pay_order->customer_id === get_current_user_id() ) {
+				$order_provider = wpss_get_order_provider();
+				if ( $order_provider ) {
+					$order_provider->mark_as_paid( $pay_order_id, $payment['transaction_id'], 'paypal' );
+				}
+
+				$redirect_url = wpss_get_order_requirements_url( $pay_order_id );
+
+				if ( wp_doing_ajax() ) {
+					wp_send_json_success( array(
+						'order_id'     => $pay_order_id,
+						'redirect_url' => $redirect_url,
+					) );
+				} else {
+					wp_safe_redirect( $redirect_url );
+					exit;
+				}
+				return; // Explicit return for defensive coding.
+			}
+		}
+
 		// Create service order.
 		$order_provider = wpss_get_order_provider();
 
@@ -837,6 +896,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		// Mark as paid.
 		$order_provider->mark_as_paid( $order->id, $payment['transaction_id'], 'paypal' );
+
+		// Clear purchased item from cart.
+		$checkout_provider = wpss_get_ecommerce_adapter() ? wpss_get_ecommerce_adapter()->get_checkout_provider() : null;
+		if ( $checkout_provider && $service_id ) {
+			$checkout_provider->process_checkout( $order->id, array( 'service_id' => $service_id ) );
+		}
 
 		$redirect_url = wpss_get_order_requirements_url( $order->id );
 
