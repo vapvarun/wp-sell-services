@@ -513,8 +513,21 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					?>
 					<div class="wpss-sidebar-card">
 						<?php
-						foreach ( $extra_profile_fields as $field_html ) {
-							echo wp_kses_post( $field_html );
+						foreach ( $extra_profile_fields as $field ) {
+							if ( is_array( $field ) ) {
+								// Structured field definition (e.g. from Pro plugin).
+								$label = esc_html( $field['label'] ?? '' );
+								$value = esc_html( $field['value'] ?? '' );
+								if ( $label || $value ) {
+									printf(
+										'<div class="wpss-profile-field"><dt>%s</dt><dd>%s</dd></div>',
+										$label,
+										$value
+									);
+								}
+							} else {
+								echo wp_kses_post( $field );
+							}
 						}
 						?>
 					</div>

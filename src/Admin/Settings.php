@@ -2297,10 +2297,11 @@ class Settings {
 	/**
 	 * Sanitize commission settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_commission_settings( array $input ): array {
+	public function sanitize_commission_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$sanitized['commission_rate']     = min( 50, max( 0, (float) ( $input['commission_rate'] ?? 10 ) ) );
@@ -2312,10 +2313,11 @@ class Settings {
 	/**
 	 * Sanitize payouts settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_payouts_settings( array $input ): array {
+	public function sanitize_payouts_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$sanitized['min_withdrawal']            = absint( $input['min_withdrawal'] ?? 50 );
@@ -2336,10 +2338,11 @@ class Settings {
 	/**
 	 * Sanitize tax settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_tax_settings( array $input ): array {
+	public function sanitize_tax_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$sanitized['enable_tax']        = ! empty( $input['enable_tax'] );
@@ -2353,10 +2356,11 @@ class Settings {
 	/**
 	 * Sanitize vendor settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_vendor_settings( array $input ): array {
+	public function sanitize_vendor_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$sanitized['vendor_registration']        = sanitize_key( $input['vendor_registration'] ?? 'open' );
@@ -2370,10 +2374,11 @@ class Settings {
 	/**
 	 * Sanitize order settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_order_settings( array $input ): array {
+	public function sanitize_order_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$sanitized['auto_complete_days']        = absint( $input['auto_complete_days'] ?? 3 );
@@ -2431,10 +2436,11 @@ class Settings {
 	/**
 	 * Sanitize pages settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_pages_settings( array $input ): array {
+	public function sanitize_pages_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$page_keys = array(
@@ -2454,10 +2460,11 @@ class Settings {
 	/**
 	 * Sanitize advanced settings.
 	 *
-	 * @param array<string, mixed> $input Raw input.
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
-	public function sanitize_advanced_settings( array $input ): array {
+	public function sanitize_advanced_settings( ?array $input ): array {
+		$input     = $input ?? array();
 		$sanitized = array();
 
 		$sanitized['delete_data_on_uninstall'] = ! empty( $input['delete_data_on_uninstall'] );

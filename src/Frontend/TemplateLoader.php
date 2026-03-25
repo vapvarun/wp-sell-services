@@ -134,6 +134,9 @@ class TemplateLoader {
 				// Also set as query var for template access.
 				set_query_var( 'wpss_vendor', $user->ID );
 
+				// Track profile view (skip own views and duplicate sessions).
+				$this->track_profile_view( $user->ID );
+
 				$custom = $this->locate_template( 'vendor/profile.php' );
 				if ( $custom ) {
 					return $custom;
@@ -486,5 +489,49 @@ class TemplateLoader {
 		}
 
 		return $templates;
+	}
+
+	/**
+	 * Track a vendor profile view.
+	 *
+	 * Increments _wpss_profile_views user meta. Skips the vendor viewing
+	 * their own profile and uses a cookie to prevent duplicate counts
+	 * within the same session.
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return void
+	 */
+	private function track_profile_view( int $vendor_id ): void {
+		// Don't track the vendor viewing their own profile.
+		if ( is_user_logged_in() && get_current_user_id() === $vendor_id ) {
+			return;
+		}
+
+		// Check if already tracked in this session.
+		$cookie_key = 'wpss_profile_viewed_' . $vendor_id;
+		if ( isset( $_COOKIE[ $cookie_key ] ) ) {
+			return;
+		}
+
+		// Increment profile view count.
+		$views = (int) get_user_meta( $vendor_id, '_wpss_profile_views', true );
+		update_user_meta( $vendor_id, '_wpss_profile_views', $views + 1 );
+
+		// Set cookie via JavaScript (headers may already be sent at this point).
+		$cookie_path   = defined( 'COOKIEPATH' ) ? COOKIEPATH : '/';
+		$cookie_domain = defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '';
+		$expires       = gmdate( 'D, d M Y H:i:s T', time() + DAY_IN_SECONDS );
+
+		add_action(
+			'wp_head',
+			static function () use ( $cookie_key, $expires, $cookie_path, $cookie_domain ): void {
+				printf(
+					'<script>document.cookie=%s;</script>',
+					wp_json_encode(
+						esc_js( $cookie_key ) . '=1; expires=' . $expires . '; path=' . $cookie_path . ( $cookie_domain ? '; domain=' . $cookie_domain : '' )
+					)
+				);
+			}
+		);
 	}
 }
