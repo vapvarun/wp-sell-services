@@ -510,28 +510,41 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				$extra_profile_fields = apply_filters( 'wpss_vendor_profile_fields', array(), $vendor_id );
 
 				if ( ! empty( $extra_profile_fields ) ) :
-					?>
-					<div class="wpss-sidebar-card">
-						<?php
-						foreach ( $extra_profile_fields as $field ) {
-							if ( is_array( $field ) ) {
-								// Structured field definition (e.g. from Pro plugin).
-								$label = esc_html( $field['label'] ?? '' );
-								$value = esc_html( $field['value'] ?? '' );
-								if ( $label && $value ) {
-									printf(
-										'<div class="wpss-profile-field"><dt>%s</dt><dd>%s</dd></div>',
-										$label,
-										$value
-									);
-								}
-							} else {
-								echo wp_kses_post( $field );
+					ob_start();
+
+					foreach ( $extra_profile_fields as $field ) {
+						if ( is_array( $field ) ) {
+							// Structured field definition (e.g. from Pro plugin).
+							$label = trim( (string) ( $field['label'] ?? '' ) );
+							$value = trim( (string) ( $field['value'] ?? '' ) );
+
+							if ( '' !== $label && '' !== $value ) {
+								printf(
+									'<div class="wpss-profile-field"><dt>%s</dt><dd>%s</dd></div>',
+									esc_html( $label ),
+									esc_html( $value )
+								);
+							}
+						} else {
+							$sanitized_field = trim( wp_kses_post( (string) $field ) );
+
+							if ( '' !== wp_strip_all_tags( $sanitized_field ) ) {
+								echo $sanitized_field; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							}
 						}
+					}
+
+					$rendered_extra_profile_fields = trim( ob_get_clean() );
+
+					if ( '' !== $rendered_extra_profile_fields ) :
 						?>
-					</div>
-				<?php endif; ?>
+						<div class="wpss-sidebar-card">
+							<?php echo $rendered_extra_profile_fields; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						</div>
+						<?php
+					endif;
+				endif;
+				?>
 
 				<?php
 				/**
