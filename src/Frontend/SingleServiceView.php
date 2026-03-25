@@ -119,6 +119,7 @@ class SingleServiceView {
 				'nonce'       => wp_create_nonce( 'wpss_service_nonce' ),
 				'checkoutUrl' => $checkout_url,
 				'cartUrl'     => $cart_url,
+				'currencyFormat' => wpss_get_currency_symbol() . '%s',
 				'i18n'        => array(
 					'addingToCart' => __( 'Adding to cart...', 'wp-sell-services' ),
 					'added'        => __( 'Added to cart!', 'wp-sell-services' ),
