@@ -76,12 +76,15 @@ if ( $is_vendor && ! $is_buyer ) {
 	$vendor_proposal  = $has_proposed ? $proposal_service->get_vendor_proposal( $request_id, $current_user_id ) : null;
 }
 
-// Get proposals for buyer.
+// Get proposals — full data for buyer, just count for everyone else.
 $proposals = array();
-if ( $is_buyer ) {
+if ( ! isset( $proposal_service ) ) {
 	$proposal_service = new \WPSellServices\Services\ProposalService();
-	$proposals        = $proposal_service->get_by_request( $request_id );
 }
+if ( $is_buyer ) {
+	$proposals = $proposal_service->get_by_request( $request_id );
+}
+$proposal_count = $is_buyer ? count( $proposals ) : count( $proposal_service->get_by_request( $request_id, array( 'status' => 'pending' ) ) );
 
 // Format budget display.
 if ( 'range' === $budget_type && $budget_min && $budget_max ) {
@@ -356,7 +359,7 @@ do_action( 'wpss_before_single_request', $request_id );
 
 							<div class="wpss-detail-item">
 								<span class="wpss-detail-label"><?php esc_html_e( 'Proposals', 'wp-sell-services' ); ?></span>
-								<span class="wpss-detail-value"><?php echo esc_html( count( $proposals ) ); ?></span>
+								<span class="wpss-detail-value"><?php echo esc_html( $proposal_count ); ?></span>
 							</div>
 						</div>
 
