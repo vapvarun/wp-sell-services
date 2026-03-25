@@ -473,7 +473,7 @@ class ConversationRepository extends AbstractRepository {
 		// Direct: order_id = 0 and user appears in participants JSON array.
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
-				"(SELECT
+				"(SELECT DISTINCT
 					c.id as conversation_id,
 					c.order_id,
 					o.order_number,
@@ -489,7 +489,8 @@ class ConversationRepository extends AbstractRepository {
 					(SELECT sender_id FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_sender_id
 				FROM {$this->table} c
 				INNER JOIN {$orders_table} o ON c.order_id = o.id
-				WHERE o.customer_id = %d OR o.vendor_id = %d)
+				WHERE (o.customer_id = %d OR o.vendor_id = %d)
+				GROUP BY c.id)
 				UNION
 				(SELECT
 					c.id as conversation_id,

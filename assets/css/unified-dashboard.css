@@ -1153,6 +1153,59 @@
    Alerts
    ========================================================================== */
 
+/* Payout Banner */
+.wpss-dashboard__payout-banner {
+	background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%);
+	border: 1px solid #fed7aa;
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 18px 24px;
+	margin-bottom: 24px;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.wpss-payout-banner__icon {
+	font-size: 28px;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.wpss-payout-banner__content {
+	flex: 1;
+}
+
+.wpss-payout-banner__title {
+	display: block;
+	margin-bottom: 2px;
+	color: #92400e;
+	font-size: 15px;
+}
+
+.wpss-payout-banner__text {
+	color: #a16207;
+	font-size: 13px;
+}
+
+.wpss-payout-banner__btn {
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+	.wpss-dashboard__payout-banner {
+		flex-direction: column;
+		text-align: center;
+		gap: 12px;
+	}
+
+	.wpss-payout-banner__btn {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+/* Alerts */
 .wpss-alert {
 	padding: 12px 16px;
 	border-radius: var(--wpss-radius);

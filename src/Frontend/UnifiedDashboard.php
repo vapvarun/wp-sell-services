@@ -597,17 +597,17 @@ class UnifiedDashboard {
 
 		$earnings_url = $this->get_section_url( 'earnings' );
 		?>
-		<div class="wpss-dashboard__payout-banner" style="background: linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%); border: 1px solid #f59e0b; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-			<span style="font-size: 24px; line-height: 1;">&#128176;</span>
-			<div style="flex: 1;">
-				<strong style="display: block; margin-bottom: 2px; color: #92400e;">
+		<div class="wpss-dashboard__payout-banner">
+			<span class="wpss-payout-banner__icon">&#128176;</span>
+			<div class="wpss-payout-banner__content">
+				<strong class="wpss-payout-banner__title">
 					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
 				</strong>
-				<span style="color: #a16207; font-size: 14px;">
+				<span class="wpss-payout-banner__text">
 					<?php esc_html_e( 'Set up your payout method to start receiving payments.', 'wp-sell-services' ); ?>
 				</span>
 			</div>
-			<a href="<?php echo esc_url( $earnings_url ); ?>" class="wpss-btn wpss-btn--primary" style="white-space: nowrap;">
+			<a href="<?php echo esc_url( $earnings_url ); ?>" class="wpss-btn wpss-btn--primary wpss-payout-banner__btn">
 				<?php esc_html_e( 'Set Up Payouts', 'wp-sell-services' ); ?>
 			</a>
 		</div>
