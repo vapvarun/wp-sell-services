@@ -1975,7 +1975,10 @@ class AjaxHandlers {
 
 		update_user_meta( $user_id, '_wpss_favorite_services', array_values( $favorites ) );
 
-		wp_send_json_success( array( 'message' => __( 'Removed from favorites.', 'wp-sell-services' ) ) );
+		wp_send_json_success( array(
+			'message' => __( 'Removed from favorites.', 'wp-sell-services' ),
+			'count'   => count( $favorites ),
+		) );
 	}
 
 	/**
