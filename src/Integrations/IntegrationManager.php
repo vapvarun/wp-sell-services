@@ -98,12 +98,23 @@ class IntegrationManager {
 			}
 		}
 
-		// Auto-detect: Use the first active adapter.
+		// Auto-detect: prefer non-standalone adapters over standalone.
+		// Standalone always returns true for is_active(), so check it last.
+		$standalone = null;
 		foreach ( $this->adapters as $adapter ) {
+			if ( 'standalone' === $adapter->get_id() ) {
+				$standalone = $adapter;
+				continue;
+			}
 			if ( $adapter->is_active() ) {
 				$this->active_adapter = $adapter;
 				return;
 			}
+		}
+
+		// Fall back to standalone if no other adapter is active.
+		if ( null !== $standalone && $standalone->is_active() ) {
+			$this->active_adapter = $standalone;
 		}
 	}
 
