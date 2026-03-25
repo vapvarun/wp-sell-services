@@ -960,18 +960,29 @@ class Shortcodes {
 	 * @return string Shortcode HTML.
 	 */
 	public function vendor_registration( $atts ): string {
+		// Enqueue frontend styles for button classes.
+		wp_enqueue_style( 'wpss-frontend' );
+
 		ob_start();
+		$this->render_vendor_registration_styles();
 
 		if ( ! is_user_logged_in() ) {
-			$login_url = wp_login_url( get_permalink() );
+			$login_url    = wp_login_url( get_permalink() );
+			$register_url = wp_registration_url();
 			?>
-			<div class="wpss-vendor-registration">
-				<div class="wpss-dashboard__empty">
-					<h3><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h3>
-					<p><?php esc_html_e( 'Please log in or create an account to register as a vendor.', 'wp-sell-services' ); ?></p>
-					<a href="<?php echo esc_url( $login_url ); ?>" class="wpss-btn wpss-btn--primary">
-						<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
-					</a>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<div class="wpss-vr__emoji">&#128075;</div>
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'Sign in to your account to get started as a vendor on our marketplace.', 'wp-sell-services' ); ?></p>
+					<div class="wpss-vr__actions">
+						<a href="<?php echo esc_url( $login_url ); ?>" class="wpss-vr__btn wpss-vr__btn--primary">
+							<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
+						</a>
+						<a href="<?php echo esc_url( $register_url ); ?>" class="wpss-vr__btn wpss-vr__btn--outline">
+							<?php esc_html_e( 'Create Account', 'wp-sell-services' ); ?>
+						</a>
+					</div>
 				</div>
 			</div>
 			<?php
@@ -984,13 +995,16 @@ class Shortcodes {
 		if ( $is_vendor ) {
 			$dashboard_url = wpss_get_page_url( 'dashboard' );
 			?>
-			<div class="wpss-vendor-registration">
-				<div class="wpss-dashboard__empty">
-					<h3><?php esc_html_e( 'You\'re Already a Vendor!', 'wp-sell-services' ); ?></h3>
-					<p><?php esc_html_e( 'You are already registered as a vendor. Visit your dashboard to manage your services.', 'wp-sell-services' ); ?></p>
-					<a href="<?php echo esc_url( $dashboard_url ); ?>" class="wpss-btn wpss-btn--primary">
-						<?php esc_html_e( 'Go to Dashboard', 'wp-sell-services' ); ?>
-					</a>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<div class="wpss-vr__emoji">&#9989;</div>
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'You\'re already a vendor', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'Your vendor account is active. Head to your dashboard to manage services, view orders, and track earnings.', 'wp-sell-services' ); ?></p>
+					<div class="wpss-vr__actions">
+						<a href="<?php echo esc_url( $dashboard_url ); ?>" class="wpss-vr__btn wpss-vr__btn--primary">
+							<?php esc_html_e( 'Go to Dashboard', 'wp-sell-services' ); ?>
+						</a>
+					</div>
 				</div>
 			</div>
 			<?php
@@ -1003,51 +1017,139 @@ class Shortcodes {
 
 		if ( 'closed' === $registration_mode ) {
 			?>
-			<div class="wpss-vendor-registration">
-				<div class="wpss-dashboard__empty">
-					<h3><?php esc_html_e( 'Registration Closed', 'wp-sell-services' ); ?></h3>
-					<p><?php esc_html_e( 'Vendor registration is currently closed. Please check back later.', 'wp-sell-services' ); ?></p>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<div class="wpss-vr__emoji">&#128274;</div>
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
 				</div>
 			</div>
 			<?php
 			return ob_get_clean();
 		}
 
-		// Render the become-vendor form.
-		$dashboard_url = wpss_get_page_url( 'dashboard' );
-		$become_url    = $dashboard_url ? add_query_arg( 'section', 'become-vendor', $dashboard_url ) : '';
-
 		$approval_required = 'approval' === $registration_mode;
 		?>
-		<div class="wpss-vendor-registration">
-			<div class="wpss-vendor-registration__card">
-				<div class="wpss-vendor-registration__icon">
-					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-						<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-					</svg>
-				</div>
-				<h2><?php esc_html_e( 'Start Selling Your Services', 'wp-sell-services' ); ?></h2>
-				<p><?php esc_html_e( 'Join our marketplace and offer your professional skills to clients around the world. Set your own rates, manage your schedule, and grow your freelance business.', 'wp-sell-services' ); ?></p>
+		<div class="wpss-vr">
+			<div class="wpss-vr__card wpss-vr__card--wide">
+				<div class="wpss-vr__emoji">&#128640;</div>
+				<h2 class="wpss-vr__title"><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></h2>
+				<p class="wpss-vr__desc"><?php esc_html_e( 'Join our marketplace and turn your skills into income. Create listings, set your rates, and connect with clients worldwide.', 'wp-sell-services' ); ?></p>
 
-				<ul class="wpss-vendor-registration__benefits">
-					<li><?php esc_html_e( 'Create unlimited service listings', 'wp-sell-services' ); ?></li>
-					<li><?php esc_html_e( 'Set your own packages and pricing', 'wp-sell-services' ); ?></li>
-					<li><?php esc_html_e( 'Get paid securely through the platform', 'wp-sell-services' ); ?></li>
-					<li><?php esc_html_e( 'Access analytics and earnings dashboard', 'wp-sell-services' ); ?></li>
-				</ul>
+				<div class="wpss-vr__features">
+					<div class="wpss-vr__feature">
+						<span class="wpss-vr__feature-icon">&#127912;</span>
+						<div>
+							<strong><?php esc_html_e( 'Create Services', 'wp-sell-services' ); ?></strong>
+							<span><?php esc_html_e( 'Build unlimited service listings with custom packages', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+					<div class="wpss-vr__feature">
+						<span class="wpss-vr__feature-icon">&#128176;</span>
+						<div>
+							<strong><?php esc_html_e( 'Get Paid', 'wp-sell-services' ); ?></strong>
+							<span><?php esc_html_e( 'Secure payments with flexible withdrawal options', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+					<div class="wpss-vr__feature">
+						<span class="wpss-vr__feature-icon">&#128200;</span>
+						<div>
+							<strong><?php esc_html_e( 'Grow Your Business', 'wp-sell-services' ); ?></strong>
+							<span><?php esc_html_e( 'Analytics dashboard to track performance and revenue', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
+				</div>
 
 				<?php if ( $approval_required ) : ?>
-					<p class="wpss-vendor-registration__note">
-						<?php esc_html_e( 'Note: Vendor applications are reviewed by our team. You will be notified once approved.', 'wp-sell-services' ); ?>
+					<p class="wpss-vr__note">
+						<?php esc_html_e( 'Applications are reviewed by our team. You\'ll be notified once approved.', 'wp-sell-services' ); ?>
 					</p>
 				<?php endif; ?>
 
-				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg" data-action="become-vendor">
-					<?php esc_html_e( 'Register as Vendor', 'wp-sell-services' ); ?>
-				</button>
+				<div class="wpss-vr__actions">
+					<button type="button" class="wpss-vr__btn wpss-vr__btn--primary wpss-vr__btn--lg" data-action="become-vendor">
+						<?php esc_html_e( 'Register as Vendor', 'wp-sell-services' ); ?>
+					</button>
+				</div>
 			</div>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Render self-contained CSS for vendor registration shortcode.
+	 *
+	 * Uses a static flag to only output once per page.
+	 *
+	 * @return void
+	 */
+	private function render_vendor_registration_styles(): void {
+		static $rendered = false;
+		if ( $rendered ) {
+			return;
+		}
+		$rendered = true;
+		?>
+		<style>
+		.wpss-vr { max-width: 560px; margin: 40px auto; padding: 0 20px; }
+		.wpss-vr__card--wide { max-width: 640px; }
+		.wpss-vr__card {
+			background: #fff;
+			border: 1px solid #e5e7eb;
+			border-radius: 16px;
+			padding: 48px 40px;
+			text-align: center;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+		}
+		.wpss-vr__emoji { font-size: 48px; margin-bottom: 16px; line-height: 1; }
+		.wpss-vr__title {
+			font-size: 24px; font-weight: 700; color: #111827;
+			margin: 0 0 12px; line-height: 1.3;
+		}
+		.wpss-vr__desc {
+			font-size: 15px; color: #6b7280; line-height: 1.6;
+			margin: 0 0 32px; max-width: 440px; margin-left: auto; margin-right: auto;
+		}
+		.wpss-vr__features {
+			display: flex; flex-direction: column; gap: 16px;
+			text-align: left; margin-bottom: 32px;
+			background: #f9fafb; border-radius: 12px; padding: 24px;
+		}
+		.wpss-vr__feature {
+			display: flex; align-items: flex-start; gap: 14px;
+		}
+		.wpss-vr__feature-icon { font-size: 24px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+		.wpss-vr__feature strong {
+			display: block; font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 2px;
+		}
+		.wpss-vr__feature span { font-size: 13px; color: #6b7280; line-height: 1.4; }
+		.wpss-vr__note {
+			background: #fef3c7; color: #92400e; padding: 12px 16px;
+			border-radius: 8px; font-size: 13px; margin-bottom: 24px;
+		}
+		.wpss-vr__actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+		.wpss-vr__btn {
+			display: inline-flex; align-items: center; justify-content: center;
+			padding: 12px 28px; font-size: 15px; font-weight: 600;
+			border-radius: 10px; text-decoration: none; cursor: pointer;
+			transition: all 0.15s ease; border: 2px solid transparent;
+		}
+		.wpss-vr__btn--primary {
+			background: #4f46e5; color: #fff; border-color: #4f46e5;
+		}
+		.wpss-vr__btn--primary:hover { background: #4338ca; border-color: #4338ca; color: #fff; }
+		.wpss-vr__btn--outline {
+			background: transparent; color: #374151; border-color: #d1d5db;
+		}
+		.wpss-vr__btn--outline:hover { border-color: #9ca3af; color: #111827; }
+		.wpss-vr__btn--lg { padding: 14px 36px; font-size: 16px; }
+		@media (max-width: 480px) {
+			.wpss-vr__card { padding: 32px 24px; }
+			.wpss-vr__actions { flex-direction: column; }
+			.wpss-vr__btn { width: 100%; }
+		}
+		</style>
+		<?php
 	}
 }
