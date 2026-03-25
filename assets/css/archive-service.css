@@ -568,6 +568,7 @@ body.wpss-sidebar-open::after {
 		grid-area: content;
 	}
 
+	.wpss-services-archive .wpss-filter-toggle,
 	.wpss-filter-toggle {
 		display: none;
 	}
