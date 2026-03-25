@@ -493,7 +493,7 @@ class EarningsController extends RestController {
 		 * @param string $new_status    New status.
 		 * @param array  $withdrawal    Original withdrawal data.
 		 */
-		do_action( 'wpss_withdrawal_processed', $withdrawal_id, $new_status, $withdrawal );
+		do_action( 'wpss_withdrawal_processed', $withdrawal_id, $new_status, (object) $withdrawal );
 
 		$withdrawal['status']       = $new_status;
 		$withdrawal['notes']        = $note;
