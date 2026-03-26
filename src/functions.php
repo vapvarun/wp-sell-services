@@ -684,7 +684,13 @@ function wpss_get_vendor_url( int $user_id ): string {
 		return '';
 	}
 
-	$vendors_page = (int) get_option( 'wpss_vendors_page' );
+	$pages        = get_option( 'wpss_pages', array() );
+	$vendors_page = (int) ( $pages['vendors_page'] ?? 0 );
+
+	// Fallback to legacy option.
+	if ( ! $vendors_page ) {
+		$vendors_page = (int) get_option( 'wpss_vendors_page' );
+	}
 
 	if ( $vendors_page ) {
 		return add_query_arg( 'vendor', $user->user_nicename, get_permalink( $vendors_page ) );
@@ -941,6 +947,12 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 
 	if ( $confirmation_page ) {
 		return add_query_arg( 'order_id', $order_id, get_permalink( $confirmation_page ) );
+	}
+
+	// Fall back to dashboard order view.
+	$dashboard_url = wpss_get_dashboard_url();
+	if ( $dashboard_url ) {
+		return add_query_arg( 'order_id', $order_id, $dashboard_url );
 	}
 
 	return home_url( '/service-order/' . $order->order_number . '/confirmation/' );

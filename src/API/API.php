@@ -354,7 +354,7 @@ class API {
 			'allowed_file_types' => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx,zip' ) ),
 			'pages'              => [
 				'services'    => (int) ( $pages_settings['services_page'] ?? 0 ),
-				'vendors'     => (int) get_option( 'wpss_vendors_page' ),
+				'vendors'     => (int) ( $pages_settings['vendors_page'] ?? 0 ),
 				'dashboard'   => (int) ( $pages_settings['dashboard'] ?? 0 ),
 				'checkout'    => (int) ( $pages_settings['checkout'] ?? 0 ),
 				'terms'       => (int) get_option( 'wpss_terms_page' ),
