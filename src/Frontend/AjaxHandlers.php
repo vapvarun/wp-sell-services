@@ -101,6 +101,8 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_favorite_service', array( $this, 'favorite_service' ) );
 		add_action( 'wp_ajax_wpss_unfavorite_service', array( $this, 'unfavorite_service' ) );
 		add_action( 'wp_ajax_wpss_get_favorites', array( $this, 'get_favorites' ) );
+		add_action( 'wp_ajax_wpss_update_service_status', array( $this, 'update_service_status' ) );
+		add_action( 'wp_ajax_wpss_delete_service', array( $this, 'delete_service' ) );
 
 		// File upload.
 		add_action( 'wp_ajax_wpss_upload_file', array( $this, 'upload_file' ) );
@@ -1994,6 +1996,66 @@ class AjaxHandlers {
 		$favorites     = $favorites_raw ? $favorites_raw : array();
 
 		wp_send_json_success( array( 'favorites' => $favorites ) );
+	}
+
+	/**
+	 * Toggle service status between publish and draft.
+	 *
+	 * @return void
+	 */
+	public function update_service_status(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$user_id    = get_current_user_id();
+
+		if ( ! $service_id || ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$service = get_post( $service_id );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$new_status = ( 'publish' === $service->post_status ) ? 'draft' : 'publish';
+
+		wp_update_post( array(
+			'ID'          => $service_id,
+			'post_status' => $new_status,
+		) );
+
+		wp_send_json_success( array(
+			'message'    => __( 'Service status updated.', 'wp-sell-services' ),
+			'new_status' => $new_status,
+		) );
+	}
+
+	/**
+	 * Delete a service owned by the current user.
+	 *
+	 * @return void
+	 */
+	public function delete_service(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$user_id    = get_current_user_id();
+
+		if ( ! $service_id || ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		$service = get_post( $service_id );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		wp_trash_post( $service_id );
+
+		wp_send_json_success( array( 'message' => __( 'Service deleted.', 'wp-sell-services' ) ) );
 	}
 
 	/**
