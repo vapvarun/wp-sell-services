@@ -471,46 +471,51 @@ class ConversationRepository extends AbstractRepository {
 		// Use UNION to combine order-linked and direct conversations.
 		// Order-linked: join with orders table where user is customer or vendor.
 		// Direct: order_id = 0 and user appears in participants JSON array.
+		// Uses JOIN with max-message subquery instead of correlated subqueries to avoid N+1.
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
-				"(SELECT DISTINCT
-					c.id as conversation_id,
-					c.order_id,
-					o.order_number,
-					o.service_id,
-					o.platform,
-					o.platform_order_id,
-					c.subject,
-					c.participants,
-					c.last_message_at,
-					c.message_count,
-					c.unread_counts,
-					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
-					(SELECT sender_id FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_sender_id
-				FROM {$this->table} c
-				INNER JOIN {$orders_table} o ON c.order_id = o.id
-				WHERE (o.customer_id = %d OR o.vendor_id = %d)
-				GROUP BY c.id)
-				UNION
-				(SELECT
-					c.id as conversation_id,
-					c.order_id,
-					NULL as order_number,
-					c.service_id,
-					NULL as platform,
-					NULL as platform_order_id,
-					c.subject,
-					c.participants,
-					c.last_message_at,
-					c.message_count,
-					c.unread_counts,
-					(SELECT content FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
-					(SELECT sender_id FROM {$messages_table} WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_sender_id
-				FROM {$this->table} c
-				WHERE c.order_id = 0
-				AND c.participants IS NOT NULL
-				AND JSON_CONTAINS(c.participants, %s))
-				ORDER BY last_message_at DESC
+				"SELECT conversations.*, lm.content as last_message, lm.sender_id as last_message_sender_id
+				FROM (
+					(SELECT DISTINCT
+						c.id as conversation_id,
+						c.order_id,
+						o.order_number,
+						o.service_id,
+						o.platform,
+						o.platform_order_id,
+						c.subject,
+						c.participants,
+						c.last_message_at,
+						c.message_count,
+						c.unread_counts
+					FROM {$this->table} c
+					INNER JOIN {$orders_table} o ON c.order_id = o.id
+					WHERE (o.customer_id = %d OR o.vendor_id = %d)
+					GROUP BY c.id)
+					UNION
+					(SELECT
+						c.id as conversation_id,
+						c.order_id,
+						NULL as order_number,
+						c.service_id,
+						NULL as platform,
+						NULL as platform_order_id,
+						c.subject,
+						c.participants,
+						c.last_message_at,
+						c.message_count,
+						c.unread_counts
+					FROM {$this->table} c
+					WHERE c.order_id = 0
+					AND c.participants IS NOT NULL
+					AND JSON_CONTAINS(c.participants, %s))
+				) conversations
+				LEFT JOIN {$messages_table} lm ON lm.id = (
+					SELECT id FROM {$messages_table}
+					WHERE conversation_id = conversations.conversation_id
+					ORDER BY created_at DESC LIMIT 1
+				)
+				ORDER BY conversations.last_message_at DESC
 				LIMIT %d",
 				$user_id,
 				$user_id,

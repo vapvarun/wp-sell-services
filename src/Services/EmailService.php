@@ -1052,6 +1052,14 @@ class EmailService {
 			return false;
 		}
 
+		// Rate limit: max 1 email per type per recipient per 5 minutes.
+		// Prevents email flooding from rapid message spam.
+		$cooldown_key = 'wpss_email_cooldown_' . md5( $to . '_' . $type );
+		if ( get_transient( $cooldown_key ) ) {
+			return false;
+		}
+		set_transient( $cooldown_key, 1, 5 * MINUTE_IN_SECONDS );
+
 		// Merge settings into template vars.
 		$template_vars = array_merge( $this->settings(), $template_vars );
 		$template_vars['site_url']  = home_url();
