@@ -68,7 +68,7 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 		</tr>
 		<tr>
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></th>
-			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( ucfirst( $order->package_type ) ); ?></td>
+			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $order->get_package_name() ); ?></td>
 		</tr>
 		<tr>
 			<?php if ( ! empty( $is_customer ) ) : ?>
