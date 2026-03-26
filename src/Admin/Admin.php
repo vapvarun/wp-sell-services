@@ -1703,17 +1703,19 @@ class Admin {
 										</select>
 									</p>
 
-									<p>
-										<label for="resolution"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
-										<select name="resolution" id="resolution" style="width: 100%;">
-											<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
-											<?php foreach ( $resolutions as $value => $label ) : ?>
-												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
-													<?php echo esc_html( $label ); ?>
-												</option>
-											<?php endforeach; ?>
-										</select>
-									</p>
+									<div id="wpss-resolution-fields" style="<?php echo 'resolved' === $dispute->status ? '' : 'display:none;'; ?>">
+										<p>
+											<label for="resolution"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
+											<select name="resolution" id="resolution" style="width: 100%;">
+												<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
+												<?php foreach ( $resolutions as $value => $label ) : ?>
+													<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
+														<?php echo esc_html( $label ); ?>
+													</option>
+												<?php endforeach; ?>
+											</select>
+										</p>
+									</div>
 
 									<p>
 										<label for="admin_notes"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
@@ -1722,6 +1724,17 @@ class Admin {
 
 									<?php submit_button( __( 'Update Dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 								</form>
+								<script>
+								jQuery(function($) {
+									$('#dispute_status').on('change', function() {
+										if ($(this).val() === 'resolved') {
+											$('#wpss-resolution-fields').show();
+										} else {
+											$('#wpss-resolution-fields').hide();
+										}
+									});
+								});
+								</script>
 							</div>
 						</div>
 					<?php else : ?>

@@ -294,6 +294,13 @@ class TestGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Self-purchase check: vendors cannot buy their own service.
+		$service_post = get_post( $service_id );
+		if ( $service_post && (int) $service_post->post_author === get_current_user_id() ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
+			return;
+		}
+
 		// Get service and package details.
 		$service = wpss_get_service( $service_id );
 
@@ -452,6 +459,7 @@ class TestGateway implements PaymentGatewayInterface {
 	 * @return array
 	 */
 	private function get_settings(): array {
-		return get_option( self::OPTION_NAME, array() );
+		$settings = get_option( self::OPTION_NAME, array() );
+		return is_array( $settings ) ? $settings : array();
 	}
 }

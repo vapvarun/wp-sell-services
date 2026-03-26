@@ -1135,7 +1135,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return array
 	 */
 	private function get_settings(): array {
-		return get_option( self::OPTION_NAME, array() );
+		$settings = get_option( self::OPTION_NAME, array() );
+		return is_array( $settings ) ? $settings : array();
 	}
 
 	/**

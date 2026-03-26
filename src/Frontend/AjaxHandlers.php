@@ -148,6 +148,11 @@ class AjaxHandlers {
 
 		// Profile.
 		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'update_vendor_profile' ) );
+
+		// Portfolio (AJAX fallback for non-REST contexts).
+		add_action( 'wp_ajax_wpss_add_portfolio_item', array( $this, 'add_portfolio_item' ) );
+		add_action( 'wp_ajax_wpss_update_portfolio_item', array( $this, 'update_portfolio_item' ) );
+		add_action( 'wp_ajax_wpss_delete_portfolio_item', array( $this, 'delete_portfolio_item' ) );
 	}
 
 	/**
@@ -3601,5 +3606,149 @@ class AjaxHandlers {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Profile updated successfully.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * Add portfolio item via AJAX.
+	 *
+	 * @return void
+	 */
+	public function add_portfolio_item(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$data = array(
+			'title'        => sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) ),
+			'description'  => wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) ),
+			'external_url' => esc_url_raw( wp_unslash( $_POST['external_url'] ?? '' ) ),
+			'is_featured'  => ! empty( $_POST['is_featured'] ),
+			'service_id'   => isset( $_POST['service_id'] ) ? absint( $_POST['service_id'] ) : 0,
+		);
+
+		// Handle media (JSON array of attachment IDs).
+		if ( ! empty( $_POST['media'] ) ) {
+			$media_raw = sanitize_text_field( wp_unslash( $_POST['media'] ) );
+			$media     = json_decode( $media_raw, true );
+			if ( is_array( $media ) ) {
+				$data['media'] = array_map( 'absint', $media );
+			}
+		}
+
+		// Handle tags (comma-separated string).
+		if ( ! empty( $_POST['tags'] ) ) {
+			$tags_raw    = sanitize_text_field( wp_unslash( $_POST['tags'] ) );
+			$data['tags'] = array_map( 'trim', explode( ',', $tags_raw ) );
+		}
+
+		$portfolio_service = new \WPSellServices\Services\PortfolioService();
+		$result            = $portfolio_service->create( $user_id, $data );
+
+		if ( ! empty( $result['success'] ) ) {
+			wp_send_json_success( $result );
+		} else {
+			wp_send_json_error( $result );
+		}
+	}
+
+	/**
+	 * Update portfolio item via AJAX.
+	 *
+	 * @return void
+	 */
+	public function update_portfolio_item(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
+		$item_id = isset( $_POST['item_id'] ) ? absint( $_POST['item_id'] ) : 0;
+		if ( ! $item_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid portfolio item.', 'wp-sell-services' ) ) );
+		}
+
+		$portfolio_service = new \WPSellServices\Services\PortfolioService();
+
+		// Verify ownership.
+		$item = $portfolio_service->get( $item_id );
+		if ( ! $item || (int) $item['vendor_id'] !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Portfolio item not found.', 'wp-sell-services' ) ) );
+		}
+
+		$data = array();
+
+		if ( isset( $_POST['title'] ) ) {
+			$data['title'] = sanitize_text_field( wp_unslash( $_POST['title'] ) );
+		}
+		if ( isset( $_POST['description'] ) ) {
+			$data['description'] = wp_kses_post( wp_unslash( $_POST['description'] ) );
+		}
+		if ( isset( $_POST['external_url'] ) ) {
+			$data['external_url'] = esc_url_raw( wp_unslash( $_POST['external_url'] ) );
+		}
+		if ( isset( $_POST['is_featured'] ) ) {
+			$data['is_featured'] = ! empty( $_POST['is_featured'] );
+		}
+		if ( isset( $_POST['service_id'] ) ) {
+			$data['service_id'] = absint( $_POST['service_id'] );
+		}
+
+		// Handle media (JSON array of attachment IDs).
+		if ( isset( $_POST['media'] ) ) {
+			$media_raw = sanitize_text_field( wp_unslash( $_POST['media'] ) );
+			$media     = json_decode( $media_raw, true );
+			if ( is_array( $media ) ) {
+				$data['media'] = array_map( 'absint', $media );
+			}
+		}
+
+		// Handle tags (comma-separated string).
+		if ( isset( $_POST['tags'] ) ) {
+			$tags_raw     = sanitize_text_field( wp_unslash( $_POST['tags'] ) );
+			$data['tags'] = array_map( 'trim', explode( ',', $tags_raw ) );
+		}
+
+		$result = $portfolio_service->update( $item_id, $data );
+
+		if ( ! empty( $result['success'] ) ) {
+			wp_send_json_success( $result );
+		} else {
+			wp_send_json_error( $result );
+		}
+	}
+
+	/**
+	 * Delete portfolio item via AJAX.
+	 *
+	 * @return void
+	 */
+	public function delete_portfolio_item(): void {
+		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! wpss_is_vendor( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
+		$item_id = isset( $_POST['item_id'] ) ? absint( $_POST['item_id'] ) : 0;
+		if ( ! $item_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid portfolio item.', 'wp-sell-services' ) ) );
+		}
+
+		$portfolio_service = new \WPSellServices\Services\PortfolioService();
+		$result            = $portfolio_service->delete( $item_id, $user_id );
+
+		if ( ! empty( $result['success'] ) ) {
+			wp_send_json_success( $result );
+		} else {
+			wp_send_json_error( $result );
+		}
 	}
 }
