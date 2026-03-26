@@ -712,6 +712,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Cannot buy own service.
+		if ( (int) $service->post_author === get_current_user_id() ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
+			return;
+		}
+
 		$packages = get_post_meta( $service_id, '_wpss_packages', true );
 		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid package.', 'wp-sell-services' ) ) );
