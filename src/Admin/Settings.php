@@ -1044,7 +1044,7 @@ class Settings {
 			array(
 				'option_name' => 'wpss_advanced',
 				'field'       => 'allowed_file_types',
-				'default'     => 'jpg,jpeg,png,gif,pdf,doc,docx,zip',
+				'default'     => 'jpg,jpeg,png,gif,pdf,doc,docx',
 				'description' => __( 'Comma-separated list of allowed file extensions.', 'wp-sell-services' ),
 			)
 		);
@@ -2520,7 +2520,7 @@ class Settings {
 		$sanitized['enable_debug_mode']        = ! empty( $input['enable_debug_mode'] );
 
 		$sanitized['max_file_size']      = absint( $input['max_file_size'] ?? 10 );
-		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx,zip' );
+		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx' );
 		$sanitized['currency_position']  = in_array( $input['currency_position'] ?? 'before', array( 'before', 'after' ), true )
 			? $input['currency_position']
 			: 'before';

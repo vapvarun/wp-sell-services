@@ -145,7 +145,7 @@ class Activator {
 			// General settings - matches Settings.php wpss_general.
 			'wpss_general'       => array(
 				'platform_name'      => get_bloginfo( 'name' ),
-				'currency'           => 'USD',
+				'currency'           => self::detect_currency_from_locale(),
 				'ecommerce_platform' => 'auto',
 			),
 			// Commission settings - matches Settings.php wpss_commission.
@@ -155,7 +155,7 @@ class Activator {
 			),
 			// Payouts settings - matches Settings.php wpss_payouts.
 			'wpss_payouts'       => array(
-				'min_withdrawal'            => 50,
+				'min_withdrawal'            => 25,
 				'clearance_days'            => 14,
 				'auto_withdrawal_enabled'   => false,
 				'auto_withdrawal_threshold' => 500,
@@ -173,7 +173,7 @@ class Activator {
 				'vendor_registration'        => 'open',
 				'max_services_per_vendor'    => 20,
 				'require_verification'       => false,
-				'require_service_moderation' => false,
+				'require_service_moderation' => true,
 			),
 			// Order settings - matches Settings.php wpss_orders.
 			// Revision limits are defined per-package in service packages, not as a global setting.
@@ -182,6 +182,7 @@ class Activator {
 				'allow_disputes'           => true,
 				'dispute_window_days'      => 14,
 				'auto_dispute_late_days'   => 3,
+				'requirements_timeout_days' => 7,
 			),
 			// Notification settings - matches Settings.php wpss_notifications.
 			// ALL email types enabled by default — site owner can disable individually.
@@ -326,6 +327,33 @@ class Activator {
 		}
 
 		update_option( 'wpss_pages', $saved_pages );
+	}
+
+	/**
+	 * Detect currency from WordPress locale.
+	 *
+	 * @return string Currency code (ISO 4217).
+	 */
+	private static function detect_currency_from_locale(): string {
+		$locale = get_locale();
+		$map    = array(
+			'en_GB' => 'GBP',
+			'en_AU' => 'AUD',
+			'en_CA' => 'CAD',
+			'de_DE' => 'EUR',
+			'fr_FR' => 'EUR',
+			'es_ES' => 'EUR',
+			'it_IT' => 'EUR',
+			'nl_NL' => 'EUR',
+			'pt_PT' => 'EUR',
+			'pt_BR' => 'BRL',
+			'ja'    => 'JPY',
+			'zh_CN' => 'CNY',
+			'hi_IN' => 'INR',
+			'es_MX' => 'MXN',
+		);
+
+		return $map[ $locale ] ?? 'USD';
 	}
 
 	/**

@@ -2108,7 +2108,7 @@ class AjaxHandlers {
 		}
 
 		// Check file type against allowed list.
-		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx,zip' ) );
+		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) );
 		$ext           = strtolower( $filetype['ext'] );
 
 		if ( ! in_array( $ext, $allowed_types, true ) ) {

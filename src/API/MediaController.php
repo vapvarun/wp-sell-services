@@ -111,7 +111,7 @@ class MediaController extends RestController {
 		}
 
 		// Validate file type against allowed list using the verified extension.
-		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx,zip' ) );
+		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) );
 		$file_ext      = strtolower( $filetype['ext'] );
 
 		if ( ! in_array( $file_ext, $allowed_types, true ) ) {
