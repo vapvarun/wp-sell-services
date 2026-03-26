@@ -250,7 +250,7 @@
                 const serviceId = $btn.data('service');
                 const page = parseInt($btn.data('page'));
 
-                $btn.prop('disabled', true).text(wpssService.i18n.loading || 'Loading...');
+                $btn.prop('disabled', true).text((wpssService.i18n && wpssService.i18n.loading) || 'Loading...');
 
                 $.ajax({
                     url: wpssService.ajaxUrl,
@@ -266,14 +266,14 @@
                             $reviews.find('.wpss-reviews-list').append(response.data.html);
 
                             if (response.data.has_more) {
-                                $btn.data('page', page + 1).prop('disabled', false).text('Load More Reviews');
+                                $btn.data('page', page + 1).prop('disabled', false).text((wpssService.i18n && wpssService.i18n.loadMoreReviews) || 'Load More Reviews');
                             } else {
                                 $btn.remove();
                             }
                         }
                     },
                     error: function() {
-                        $btn.prop('disabled', false).text('Load More Reviews');
+                        $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.loadMoreReviews) || 'Load More Reviews');
                     }
                 });
             });
@@ -473,7 +473,7 @@
 
             // Update display.
             $modal.find('.wpss-package-name').text(packageName);
-            $modal.find('.wpss-delivery-time').text(totalDays + ' ' + (totalDays === 1 ? 'Day' : 'Days'));
+            $modal.find('.wpss-delivery-time').text(totalDays + ' ' + (totalDays === 1 ? ((wpssService.i18n && wpssService.i18n.day) || 'Day') : ((wpssService.i18n && wpssService.i18n.days) || 'Days')));
             $modal.find('.wpss-total-price').text(this.formatPrice(totalPrice));
 
             // Update hidden input.
@@ -520,13 +520,13 @@
                             self.showCartOptions();
                         }, 500);
                     } else {
-                        self.showError(response.data.message || wpssService.i18n.error);
-                        $btn.prop('disabled', false).text('Continue to Checkout');
+                        self.showError(response.data.message || (wpssService.i18n && wpssService.i18n.error) || 'Could not add to cart. Please try again.');
+                        $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.continueToCheckout) || 'Continue to Checkout');
                     }
                 },
                 error: function() {
-                    self.showError(wpssService.i18n.error || 'An error occurred.');
-                    $btn.prop('disabled', false).text('Continue to Checkout');
+                    self.showError((wpssService.i18n && wpssService.i18n.error) || (wpssService.i18n && wpssService.i18n.errorGeneric) || 'An error occurred.');
+                    $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.continueToCheckout) || 'Continue to Checkout');
                 }
             });
         },
@@ -590,7 +590,7 @@
                 const $form = $(this);
                 const $btn = $form.find('button[type="submit"]');
 
-                $btn.prop('disabled', true).text('Sending...');
+                $btn.prop('disabled', true).text((wpssService.i18n && wpssService.i18n.sending) || 'Sending...');
 
                 const formData = new FormData($form[0]);
                 formData.append('action', 'wpss_contact_vendor');
@@ -616,12 +616,12 @@
                             }, 2000);
                         } else {
                             self.showError(response.data.message);
-                            $btn.prop('disabled', false).text('Send Message');
+                            $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.sendMessage) || 'Send Message');
                         }
                     },
                     error: function() {
-                        self.showError('Failed to send message. Please try again.');
-                        $btn.prop('disabled', false).text('Send Message');
+                        self.showError((wpssService.i18n && wpssService.i18n.contactFailed) || 'Failed to send message. Please try again.');
+                        $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.sendMessage) || 'Send Message');
                     }
                 });
             });
@@ -783,7 +783,7 @@
             html += '<div class="wpss-modal-overlay"></div>';
             html += '<div class="wpss-modal-content wpss-modal-large">';
             html += '<button class="wpss-modal-close">&times;</button>';
-            html += '<h3>Compare Packages</h3>';
+            html += '<h3>' + ((wpssService.i18n && wpssService.i18n.comparePackages) || 'Compare Packages') + '</h3>';
             html += '<table class="wpss-comparison-table">';
             html += '<thead><tr><th></th>';
 
@@ -792,19 +792,19 @@
             });
 
             html += '</tr></thead><tbody>';
-            html += '<tr><td>Price</td>';
+            html += '<tr><td>' + ((wpssService.i18n && wpssService.i18n.price) || 'Price') + '</td>';
 
             packages.forEach(function(pkg) {
                 html += '<td><strong>' + WPSSService.escapeHtml(pkg.price) + '</strong></td>';
             });
 
-            html += '</tr><tr><td>Delivery</td>';
+            html += '</tr><tr><td>' + ((wpssService.i18n && wpssService.i18n.delivery) || 'Delivery') + '</td>';
 
             packages.forEach(function(pkg) {
                 html += '<td>' + WPSSService.escapeHtml(pkg.delivery) + '</td>';
             });
 
-            html += '</tr><tr><td>Revisions</td>';
+            html += '</tr><tr><td>' + ((wpssService.i18n && wpssService.i18n.revisions) || 'Revisions') + '</td>';
 
             packages.forEach(function(pkg) {
                 html += '<td>' + WPSSService.escapeHtml(pkg.revisions) + '</td>';
@@ -882,7 +882,7 @@
                 // Show copied message.
                 const $btn = $('.wpss-share-btn[data-platform="copy"]');
                 const originalText = $btn.text();
-                $btn.text('Copied!');
+                $btn.text((wpssService.i18n && wpssService.i18n.copied) || 'Copied!');
                 setTimeout(function() {
                     $btn.text(originalText);
                 }, 2000);

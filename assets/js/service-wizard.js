@@ -375,7 +375,7 @@ function wpssServiceWizard(existingData = {}) {
 			var self = this;
 			WPSS.showConfirm(wpssWizard.strings.confirmDelete, function() {
 				self.data.requirements.splice(index, 1);
-			}, { confirmText: 'Delete' });
+			}, { confirmText: (wpssWizard.strings && wpssWizard.strings.delete) || 'Delete' });
 		},
 
 		/**
@@ -414,7 +414,7 @@ function wpssServiceWizard(existingData = {}) {
 			var self = this;
 			WPSS.showConfirm(wpssWizard.strings.confirmDelete, function() {
 				self.data.extras.splice(index, 1);
-			}, { confirmText: 'Delete' });
+			}, { confirmText: (wpssWizard.strings && wpssWizard.strings.delete) || 'Delete' });
 		},
 
 		/**
@@ -451,7 +451,7 @@ function wpssServiceWizard(existingData = {}) {
 			var self = this;
 			WPSS.showConfirm(wpssWizard.strings.confirmDelete, function() {
 				self.data.faqs.splice(index, 1);
-			}, { confirmText: 'Delete' });
+			}, { confirmText: (wpssWizard.strings && wpssWizard.strings.delete) || 'Delete' });
 		},
 
 		/**
@@ -469,7 +469,7 @@ function wpssServiceWizard(existingData = {}) {
 			}
 
 			const frame = wp.media({
-				title: type === 'main' ? 'Select Main Image' : 'Add Gallery Image',
+				title: type === 'main' ? ((wpssWizard.strings && wpssWizard.strings.selectMainImage) || 'Select Main Image') : ((wpssWizard.strings && wpssWizard.strings.addGalleryImage) || 'Add Gallery Image'),
 				multiple: false,
 				library: {
 					type: 'image'

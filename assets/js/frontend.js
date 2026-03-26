@@ -201,7 +201,7 @@
 						const $container = $('#wpss-messages-container');
 						$container.scrollTop($container[0].scrollHeight);
 					} else {
-						WPSS.showNotification(response.data.message || 'Failed to send message.', 'error');
+						WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.messageFailed) || 'Failed to send message.', 'error');
 					}
 				},
 				error: function() {
@@ -232,7 +232,7 @@
 				<div class="wpss-message-content">
 					<span class="wpss-message-author">${data.user_name}</span>
 					<div class="wpss-message-text"><p>${WPSS.escapeHtml(data.message)}</p></div>
-					<span class="wpss-message-time">${data.time_ago || 'Just now'}</span>
+					<span class="wpss-message-time">${data.time_ago || ((wpssData.i18n && wpssData.i18n.justNow) || 'Just now')}</span>
 				</div>
 			</div>
 		`;
@@ -259,7 +259,7 @@
 			if (reasonActions.includes(action)) {
 				WPSS.showPrompt(WPSS.getActionPrompt(action), function(reason) {
 					WPSS.performOrderAction(orderId, action, reason);
-				}, { submitText: 'Submit', placeholder: 'Enter your reason...' });
+				}, { submitText: (wpssData.i18n && wpssData.i18n.submit) || 'Submit', placeholder: (wpssData.i18n && wpssData.i18n.enterReason) || 'Enter your reason...' });
 			} else {
 				WPSS.showConfirm(WPSS.getActionConfirm(action), function() {
 					WPSS.performOrderAction(orderId, action);
@@ -290,11 +290,11 @@
 			const reason = $form.find('textarea[name="reason"]').val();
 
 			if (!reason || !reason.trim()) {
-				WPSS.showNotification('Please describe what changes you need.', 'error');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.revisionRequired) || 'Please describe what changes you need.', 'error');
 				return;
 			}
 
-			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> Submitting...');
+			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> ' + ((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...'));
 
 			WPSS.requestRevision(orderId, reason);
 
@@ -338,11 +338,11 @@
 					// Reload page to show updated state.
 					location.reload();
 				} else {
-					WPSS.showNotification(response.data?.message || 'Action failed. Please try again.', 'error');
+					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.actionFailed) || 'Action failed. Please try again.', 'error');
 				}
 			},
 			error: function(xhr) {
-				WPSS.showNotification('An error occurred. Please try again.', 'error');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
 			}
 		});
 	};
@@ -351,29 +351,31 @@
 	 * Get action confirmation text.
 	 */
 	WPSS.getActionConfirm = function(action) {
-		const confirms = {
-			accept: 'Are you sure you want to accept this order?',
-			start: 'Are you sure you want to start working on this order?',
-			deliver: 'Are you sure you want to mark this order as delivered?',
-			complete: 'Are you sure you want to mark this order as complete?',
-			'accept-cancellation': 'Are you sure you want to accept this cancellation request? The order will be cancelled.',
-			'reject-cancellation': 'Are you sure you want to dispute this cancellation? The order will be escalated for admin review.'
+		var i18n = (wpssData && wpssData.i18n) || {};
+		var confirms = {
+			accept: i18n.confirmAcceptOrder || 'Are you sure you want to accept this order?',
+			start: i18n.confirmStartOrder || 'Are you sure you want to start working on this order?',
+			deliver: i18n.confirmDeliverOrder || 'Are you sure you want to mark this order as delivered?',
+			complete: i18n.confirmCompleteOrder || 'Are you sure you want to mark this order as complete?',
+			'accept-cancellation': i18n.confirmAcceptCancellation || 'Are you sure you want to accept this cancellation request? The order will be cancelled.',
+			'reject-cancellation': i18n.confirmRejectCancellation || 'Are you sure you want to dispute this cancellation? The order will be escalated for admin review.'
 		};
 
-		return confirms[action] || 'Are you sure?';
+		return confirms[action] || (i18n.confirmTitle || 'Are you sure?');
 	};
 
 	/**
 	 * Get action prompt text.
 	 */
 	WPSS.getActionPrompt = function(action) {
-		const prompts = {
-			reject: 'Please provide a reason for declining:',
-			cancel: 'Please provide a reason for cancellation:',
-			dispute: 'Please describe your issue:'
+		var i18n = (wpssData && wpssData.i18n) || {};
+		var prompts = {
+			reject: i18n.promptReject || 'Please provide a reason for declining:',
+			cancel: i18n.promptCancel || 'Please provide a reason for cancellation:',
+			dispute: i18n.promptDispute || 'Please describe your issue:'
 		};
 
-		return prompts[action] || 'Please provide details:';
+		return prompts[action] || (i18n.promptDefault || 'Please provide details:');
 	};
 
 	/**
@@ -389,7 +391,7 @@
 			const vendorId = $btn.data('vendor');
 			const page = parseInt($btn.data('page')) || 2;
 
-			$btn.prop('disabled', true).text('Loading...');
+			$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.loading) || 'Loading...');
 
 			let endpoint = 'reviews?';
 			if (serviceId) {
@@ -413,14 +415,14 @@
 						if (response.length < 10) {
 							$btn.hide();
 						} else {
-							$btn.data('page', page + 1).text('Load More Reviews');
+							$btn.data('page', page + 1).text((wpssData.i18n && wpssData.i18n.loadMoreReviews) || 'Load More Reviews');
 						}
 					} else {
 						$btn.hide();
 					}
 				},
 				error: function() {
-					WPSS.showNotification('Failed to load reviews.', 'error');
+					WPSS.showNotification((wpssData.i18n && wpssData.i18n.reviewsFailed) || 'Failed to load reviews.', 'error');
 				},
 				complete: function() {
 					$btn.prop('disabled', false);
@@ -450,7 +452,7 @@
 			replyHtml = `
 				<div class="wpss-review-reply">
 					<div class="wpss-reply-header">
-						<strong>Seller Response:</strong>
+						<strong>${WPSS.escapeHtml((wpssData.i18n && wpssData.i18n.sellerResponse) || 'Seller Response:')}</strong>
 					</div>
 					<p>${WPSS.escapeHtml(review.vendor_reply)}</p>
 				</div>
@@ -465,7 +467,7 @@
 						<strong class="wpss-review-author">${WPSS.escapeHtml(review.customer_name)}</strong>
 						<div class="wpss-review-rating">${starsHtml}</div>
 					</div>
-					<span class="wpss-review-date">${review.time_ago || review.created_at}</span>
+					<span class="wpss-review-date">${review.time_ago || review.created_at || ((wpssData.i18n && wpssData.i18n.justNow) || 'Just now')}</span>
 				</div>
 				<div class="wpss-review-content">
 					<p>${WPSS.escapeHtml(review.review)}</p>
@@ -506,14 +508,14 @@
 						if (response.data.redirect) {
 							window.location.href = response.data.redirect;
 						} else {
-							WPSS.showNotification('Added to cart!', 'success');
+							WPSS.showNotification((wpssData.i18n && wpssData.i18n.addedToCart) || 'Added to cart!', 'success');
 						}
 					} else {
-						WPSS.showNotification(response.data.message || 'Failed to add to cart.', 'error');
+						WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.cartFailed) || 'Failed to add to cart.', 'error');
 					}
 				},
 				error: function() {
-					WPSS.showNotification('An error occurred. Please try again.', 'error');
+					WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
 				}
 			});
 		}
@@ -532,9 +534,9 @@
 			WPSS.showModal('wpss-deliver-modal');
 		} else {
 			// Fallback for when modal doesn't exist
-			WPSS.showPrompt('Describe your delivery:', function(message) {
+			WPSS.showPrompt((wpssData.i18n && wpssData.i18n.describeDelivery) || 'Describe your delivery:', function(message) {
 				WPSS.submitDelivery(orderId, message, null);
-			}, { placeholder: 'Describe what you are delivering...' });
+			}, { placeholder: (wpssData.i18n && wpssData.i18n.deliveryPlaceholder) || 'Describe what you are delivering...' });
 		}
 	};
 
@@ -563,16 +565,16 @@
 			contentType: false,
 			success: function(response) {
 				if (response.success) {
-					WPSS.showNotification(response.data?.message || 'Delivery submitted successfully!', 'success');
+					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.deliverySubmitted) || 'Delivery submitted successfully!', 'success');
 					setTimeout(function() {
 						location.reload();
 					}, 1500);
 				} else {
-					WPSS.showNotification(response.data?.message || 'Failed to submit delivery.', 'error');
+					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.deliveryFailed) || 'Failed to submit delivery.', 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification('An error occurred. Please try again.', 'error');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
 			}
 		});
 	};
@@ -704,14 +706,14 @@
 			const originalText = $btn.html();
 
 			// Disable button
-			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> Submitting...');
+			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> ' + ((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...'));
 
 			const orderId = $form.find('input[name="order_id"]').val();
 			const message = $form.find('#deliver-message').val();
 			const fileInput = $form.find('#deliver-files')[0];
 
 			if (!message || !message.trim()) {
-				WPSS.showNotification('Please provide a delivery message.', 'error');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.deliveryRequired) || 'Please provide a delivery message.', 'error');
 				$btn.prop('disabled', false).html(originalText);
 				return;
 			}
@@ -847,7 +849,7 @@
 		const $btn = $form.find('button[type="submit"]');
 		const btnText = $btn.text();
 
-		$btn.prop('disabled', true).text('Submitting...');
+		$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...');
 
 		$.ajax({
 			url: wpssData.ajaxUrl,
@@ -856,16 +858,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					WPSS.showNotification(response.data.message || 'Review submitted successfully!', 'success');
+					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.reviewSubmitted) || 'Review submitted successfully!', 'success');
 					setTimeout(function() {
 						location.reload();
 					}, 1500);
 				} else {
-					WPSS.showNotification(response.data.message || 'Failed to submit review.', 'error');
+					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.reviewFailed) || 'Failed to submit review.', 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification('An error occurred. Please try again.', 'error');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -880,7 +882,7 @@
 		const $btn = $form.find('button[type="submit"]');
 		const btnText = $btn.text();
 
-		$btn.prop('disabled', true).text('Submitting...');
+		$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...');
 
 		$.ajax({
 			url: wpssData.ajaxUrl,
@@ -889,16 +891,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					WPSS.showNotification(response.data.message || 'Dispute opened successfully. Our team will review your case.', 'success');
+					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.disputeOpened) || 'Dispute opened successfully. Our team will review your case.', 'success');
 					setTimeout(function() {
 						location.reload();
 					}, 1500);
 				} else {
-					WPSS.showNotification(response.data.message || 'Failed to open dispute.', 'error');
+					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.disputeFailed) || 'Failed to open dispute.', 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification('An error occurred. Please try again.', 'error');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -922,16 +924,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					WPSS.showNotification(response.data.message || 'Revision requested successfully!', 'success');
+					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.revisionSubmitted) || 'Revision requested successfully!', 'success');
 					setTimeout(function() {
 						location.reload();
 					}, 1500);
 				} else {
-					WPSS.showNotification(response.data.message || 'Failed to request revision.', 'error');
+					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.revisionFailed) || 'Failed to request revision.', 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification('An error occurred. Please try again.', 'error');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
 			}
 		});
 	};
@@ -1113,7 +1115,7 @@
 						location.reload();
 					}
 				} else {
-					WPSS.showNotification(response.data.message || 'Action failed.', 'error');
+					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.actionFailed) || 'Action failed.', 'error');
 					$btn.prop('disabled', false).text(btnText);
 				}
 			},
@@ -1202,8 +1204,9 @@
 	 */
 	WPSS.showConfirm = function(message, onConfirm, options) {
 		options = options || {};
-		var confirmText = options.confirmText || 'Confirm';
-		var cancelText = options.cancelText || 'Cancel';
+		var i18n = (wpssData && wpssData.i18n) || {};
+		var confirmText = options.confirmText || i18n.confirm || 'Confirm';
+		var cancelText = options.cancelText || i18n.cancel || 'Cancel';
 
 		$('#wpss-confirm-modal').remove();
 
@@ -1245,9 +1248,10 @@
 	 */
 	WPSS.showPrompt = function(message, onSubmit, options) {
 		options = options || {};
+		var i18n = (wpssData && wpssData.i18n) || {};
 		var placeholder = options.placeholder || '';
-		var submitText = options.submitText || 'Submit';
-		var cancelText = options.cancelText || 'Cancel';
+		var submitText = options.submitText || i18n.submit || 'Submit';
+		var cancelText = options.cancelText || i18n.cancel || 'Cancel';
 		var required = options.required !== false;
 
 		$('#wpss-prompt-modal').remove();
@@ -1274,7 +1278,7 @@
 		$modal.find('.wpss-prompt-submit').on('click', function() {
 			var value = $modal.find('.wpss-prompt-input').val();
 			if (required && (!value || !value.trim())) {
-				WPSS.showNotification('Please provide a response.', 'warning');
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.promptRequired) || 'Please provide a response.', 'warning');
 				return;
 			}
 			$modal.remove();
@@ -1442,7 +1446,7 @@
 				success: function(response) {
 					if (response.success) {
 						// Show success message.
-						WPSS.showNotification(response.data.message || 'Application submitted successfully!', 'success');
+						WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.vendorRegistered) || 'Application submitted successfully!', 'success');
 
 						// Redirect if provided.
 						if (response.data.redirect) {

@@ -96,14 +96,14 @@
 							window.location.reload();
 						}
 					} else {
-						WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
+						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
 						$button
 							.prop('disabled', false)
 							.text(originalText);
 					}
 				},
 				error: function () {
-					WPSS.showNotification('An error occurred. Please try again.', 'error');
+					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
 					$button
 						.prop('disabled', false)
 						.text(originalText);
@@ -165,7 +165,7 @@
 							});
 						}, 3000);
 					} else {
-						WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
+						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
 					}
 
 					$button
@@ -173,7 +173,7 @@
 						.text(originalText);
 				},
 				error: function () {
-					WPSS.showNotification('An error occurred. Please try again.', 'error');
+					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
 					$button
 						.prop('disabled', false)
 						.text(originalText);
@@ -210,7 +210,7 @@
 
 						const $card = $button.closest('.wpss-card');
 						const $badge = $card.find('.wpss-badge');
-						const newStatusText = response.data.new_status === 'publish' ? 'Published' : 'Draft';
+						const newStatusText = response.data.new_status === 'publish' ? ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.published) || 'Published') : ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.draft) || 'Draft');
 						$badge.text(newStatusText);
 						$badge.removeClass('wpss-badge--success wpss-badge--neutral');
 						$badge.addClass(response.data.new_status === 'publish' ? 'wpss-badge--success' : 'wpss-badge--neutral');
@@ -223,12 +223,12 @@
 							$button.attr('title', wpssUnifiedDashboard.i18n.activate || 'Activate');
 						}
 					} else {
-						WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
+						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
 					}
 					$button.prop('disabled', false);
 				},
 				error: function () {
-					WPSS.showNotification('An error occurred. Please try again.', 'error');
+					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
 					$button.prop('disabled', false);
 				}
 			});
@@ -263,12 +263,12 @@
 								$(this).remove();
 							});
 						} else {
-							WPSS.showNotification(response.data.message || 'An error occurred.', 'error');
+							WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
 							$button.prop('disabled', false);
 						}
 					},
 					error: function () {
-						WPSS.showNotification('An error occurred. Please try again.', 'error');
+						WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
 						$button.prop('disabled', false);
 					}
 				});
@@ -289,8 +289,8 @@
 			}
 
 			this.avatarFrame = wp.media({
-				title: 'Choose Profile Photo',
-				button: { text: 'Use as Profile Photo' },
+				title: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.chooseProfilePhoto) || 'Choose Profile Photo',
+				button: { text: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.useAsProfilePhoto) || 'Use as Profile Photo' },
 				multiple: false,
 				library: { type: 'image' }
 			});
@@ -307,7 +307,7 @@
 				// Show remove button if not already visible.
 				if ($('#wpss-avatar-remove-btn').length === 0) {
 					$('#wpss-avatar-upload-btn').after(
-						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-avatar-remove-btn">Remove</button>'
+						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-avatar-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
 					);
 				}
 			}.bind(this));
@@ -347,8 +347,8 @@
 			}
 
 			this.coverFrame = wp.media({
-				title: 'Select Cover Image',
-				button: { text: 'Set Cover Image' },
+				title: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.selectCoverImage) || 'Select Cover Image',
+				button: { text: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.setCoverImage) || 'Set Cover Image' },
 				multiple: false,
 				library: { type: 'image' }
 			});
@@ -366,7 +366,7 @@
 				// Show remove button if not already visible.
 				if ($('#wpss-cover-remove-btn').length === 0) {
 					$('#wpss-cover-upload-btn').after(
-						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-cover-remove-btn">Remove</button>'
+						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-cover-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
 					);
 				}
 			}.bind(this));
@@ -411,10 +411,10 @@
 						},
 						success: function (response) {
 							if (response.success) {
-								WPSS.showNotification(response.data.message || 'Request closed.', 'success');
+								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestClosed) || 'Request closed.', 'success');
 								location.reload();
 							} else {
-								WPSS.showNotification(response.data.message || 'Failed to close request.', 'error');
+								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestCloseFailed) || 'Failed to close request.', 'error');
 							}
 						}
 					});
@@ -445,10 +445,10 @@
 						},
 						success: function (response) {
 							if (response.success) {
-								WPSS.showNotification(response.data.message || 'Request reopened.', 'success');
+								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestReopened) || 'Request reopened.', 'success');
 								location.reload();
 							} else {
-								WPSS.showNotification(response.data.message || 'Failed to reopen request.', 'error');
+								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestReopenFailed) || 'Failed to reopen request.', 'error');
 							}
 						}
 					});
@@ -478,10 +478,10 @@
 						},
 						success: function (response) {
 							if (response.success) {
-								WPSS.showNotification(response.data.message || 'Request deleted.', 'success');
+								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestDeleted) || 'Request deleted.', 'success');
 								location.reload();
 							} else {
-								WPSS.showNotification(response.data.message || 'Failed to delete request.', 'error');
+								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestDeleteFailed) || 'Failed to delete request.', 'error');
 							}
 						}
 					});
@@ -496,7 +496,7 @@
 		handlePortfolioAdd: function (e) {
 			e.preventDefault();
 			this.resetPortfolioForm();
-			$('#wpss-portfolio-modal-title').text('Add Portfolio Item');
+			$('#wpss-portfolio-modal-title').text((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.addPortfolioItem) || 'Add Portfolio Item');
 			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
 		},
 
@@ -511,7 +511,7 @@
 			var itemId = $item.data('item-id');
 
 			this.resetPortfolioForm();
-			$('#wpss-portfolio-modal-title').text('Edit Portfolio Item');
+			$('#wpss-portfolio-modal-title').text((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.editPortfolioItem) || 'Edit Portfolio Item');
 			$('#wpss-portfolio-item-id').val(itemId);
 
 			// Populate form from data attributes.
@@ -579,7 +579,7 @@
 							});
 						},
 						error: function (xhr) {
-							var msg = 'Delete failed.';
+							var msg = (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.deleteFailed) || 'Delete failed.';
 							try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
 							WPSS.showNotification(msg, 'error');
 							$btn.prop('disabled', false);
@@ -612,7 +612,7 @@
 					window.location.reload();
 				},
 				error: function (xhr) {
-					var msg = 'Failed.';
+					var msg = (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.failed) || 'Failed.';
 					try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
 					WPSS.showNotification(msg, 'error');
 					$btn.prop('disabled', false);
@@ -661,7 +661,7 @@
 					window.location.reload();
 				},
 				error: function (xhr) {
-					var msg = 'Save failed.';
+					var msg = (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.saveFailed) || 'Save failed.';
 					try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
 					WPSS.showNotification(msg, 'error');
 					$btn.prop('disabled', false).text(originalText);
@@ -683,8 +683,8 @@
 			}
 
 			this.portfolioMediaFrame = wp.media({
-				title: 'Select Portfolio Images',
-				button: { text: 'Add to Portfolio' },
+				title: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.selectPortfolioImages) || 'Select Portfolio Images',
+				button: { text: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.addToPortfolio) || 'Add to Portfolio' },
 				multiple: true,
 				library: { type: 'image' }
 			});

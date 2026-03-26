@@ -283,7 +283,7 @@
             });
 
             $summary.find('.wpss-summary-delivery').text(
-                totalDays + ' ' + (totalDays === 1 ? 'day' : 'days')
+                totalDays + ' ' + (totalDays === 1 ? ((wpssCheckout.i18n && wpssCheckout.i18n.day) || 'day') : ((wpssCheckout.i18n && wpssCheckout.i18n.days) || 'days'))
             );
 
             // Update quantity.
@@ -322,7 +322,7 @@
                     const label = $wrapper.length ? $wrapper.find('label').text() : ($field.attr('name') || 'Field');
                     errors.push(label + ' is required.');
 
-                    $field.after('<span class="wpss-field-error">This field is required.</span>');
+                    $field.after('<span class="wpss-field-error">' + ((wpssCheckout.i18n && wpssCheckout.i18n.fieldRequired) || 'This field is required.') + '</span>');
                 }
             });
 
@@ -350,7 +350,7 @@
                     valid = false;
                     $field.addClass('wpss-field-invalid');
 
-                    $field.after('<span class="wpss-field-error">Minimum ' + minLength + ' characters required.</span>');
+                    $field.after('<span class="wpss-field-error">' + ((wpssCheckout.i18n && wpssCheckout.i18n.minChars) || 'Minimum ' + minLength + ' characters required.') + '</span>');
                 }
             });
 
@@ -367,7 +367,7 @@
          */
         showValidationErrors: function(errors) {
             let html = '<div class="wpss-checkout-errors woocommerce-error">';
-            html += '<strong>Please complete the following:</strong><ul>';
+            html += '<strong>' + ((wpssCheckout.i18n && wpssCheckout.i18n.completeFollowing) || 'Please complete the following:') + '</strong><ul>';
 
             errors.forEach(function(error) {
                 html += '<li>' + WPSSCheckout.escapeHtml(error) + '</li>';
@@ -401,7 +401,7 @@
 
             // Check file count.
             if (currentFiles + files.length > maxFiles) {
-                WPSS.showNotification('Maximum ' + maxFiles + ' files allowed.', 'warning');
+                WPSS.showNotification(((wpssCheckout.i18n && wpssCheckout.i18n.maxFilesAllowed) || 'Maximum ' + maxFiles + ' files allowed.'), 'warning');
                 $input.val('');
                 return;
             }
@@ -410,7 +410,7 @@
             Array.from(files).forEach(function(file) {
                 // Check file size.
                 if (file.size > maxSize * 1024 * 1024) {
-                    WPSS.showNotification(file.name + ' is too large. Maximum size is ' + maxSize + 'MB.', 'warning');
+                    WPSS.showNotification(((wpssCheckout.i18n && wpssCheckout.i18n.fileTooLarge) || file.name + ' is too large. Maximum size is ' + maxSize + 'MB.'), 'warning');
                     return;
                 }
 
@@ -428,7 +428,7 @@
             const $list = $container.find('.wpss-uploaded-files');
             const $progress = $('<div class="wpss-file-uploading">' +
                 '<span class="wpss-file-name">' + this.escapeHtml(file.name) + '</span>' +
-                '<span class="wpss-file-progress">Uploading...</span>' +
+                '<span class="wpss-file-progress">' + ((wpssCheckout.i18n && wpssCheckout.i18n.uploading) || 'Uploading...') + '</span>' +
                 '</div>');
 
             $list.append($progress);
@@ -467,12 +467,12 @@
                         $progress.replaceWith(html);
                     } else {
                         $progress.remove();
-                        WPSS.showNotification(response.data.message || 'Upload failed.', 'error');
+                        WPSS.showNotification(response.data.message || ((wpssCheckout.i18n && wpssCheckout.i18n.uploadFailed) || 'Upload failed.'), 'error');
                     }
                 },
                 error: function() {
                     $progress.remove();
-                    WPSS.showNotification('Upload failed. Please try again.', 'error');
+                    WPSS.showNotification(((wpssCheckout.i18n && wpssCheckout.i18n.uploadFailed) || 'Upload failed. Please try again.'), 'error');
                 }
             });
         },
@@ -571,9 +571,9 @@
             // Skip for now.
             $(document).on('click', '.wpss-skip-requirements', function(e) {
                 e.preventDefault();
-                WPSS.showConfirm('You can submit requirements later. Continue to checkout?', function() {
+                WPSS.showConfirm(((wpssCheckout.i18n && wpssCheckout.i18n.skipRequirementsConfirm) || (wpssData && wpssData.i18n && wpssData.i18n.skipRequirementsConfirm) || 'You can submit requirements later. Continue to checkout?'), function() {
                         self.skipRequirements();
-                    }, { confirmText: 'Continue' });
+                    }, { confirmText: ((wpssCheckout.i18n && wpssCheckout.i18n.continue) || (wpssData && wpssData.i18n && wpssData.i18n.continue) || 'Continue') });
             });
         },
 
@@ -594,7 +594,7 @@
                 if (!value || !value.trim()) {
                     valid = false;
                     $field.addClass('wpss-field-invalid');
-                    $field.after('<span class="wpss-field-error">Required</span>');
+                    $field.after('<span class="wpss-field-error">' + ((wpssCheckout.i18n && wpssCheckout.i18n.required) || 'Required') + '</span>');
                 }
             });
 
@@ -638,7 +638,8 @@
             const percent = (current / total) * 100;
 
             $('.wpss-requirements-progress-bar').css('width', percent + '%');
-            $('.wpss-requirements-progress-text').text('Step ' + current + ' of ' + total);
+            var stepText = (wpssCheckout.i18n && wpssCheckout.i18n.stepXofY) || 'Step %1$s of %2$s';
+            $('.wpss-requirements-progress-text').text(stepText.replace('%1$s', current).replace('%2$s', total));
         },
 
         /**
@@ -647,7 +648,7 @@
         submitRequirements: function($form) {
             const $btn = $form.find('button[type="submit"]');
 
-            $btn.prop('disabled', true).text('Submitting...');
+            $btn.prop('disabled', true).text((wpssCheckout.i18n && wpssCheckout.i18n.submitting) || 'Submitting...');
 
             const formData = new FormData($form[0]);
             formData.append('action', 'wpss_submit_requirements');
@@ -668,13 +669,13 @@
                             window.location.reload();
                         }
                     } else {
-                        WPSS.showNotification(response.data.message || 'Failed to submit requirements.', 'error');
-                        $btn.prop('disabled', false).text('Submit');
+                        WPSS.showNotification(response.data.message || ((wpssCheckout.i18n && wpssCheckout.i18n.requirementsFailed) || 'Failed to submit requirements.'), 'error');
+                        $btn.prop('disabled', false).text((wpssCheckout.i18n && wpssCheckout.i18n.submit) || 'Submit');
                     }
                 },
                 error: function() {
-                    WPSS.showNotification('An error occurred. Please try again.', 'error');
-                    $btn.prop('disabled', false).text('Submit');
+                    WPSS.showNotification(((wpssCheckout.i18n && wpssCheckout.i18n.errorTryAgain) || 'An error occurred. Please try again.'), 'error');
+                    $btn.prop('disabled', false).text((wpssCheckout.i18n && wpssCheckout.i18n.submit) || 'Submit');
                 }
             });
         },
