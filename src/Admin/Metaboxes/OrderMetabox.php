@@ -205,6 +205,7 @@ class OrderMetabox {
 					'noteAdded'               => __( 'Note added successfully.', 'wp-sell-services' ),
 					'requirementsSaved'       => __( 'Requirements saved successfully.', 'wp-sell-services' ),
 					'error'                   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'enterNote'               => __( 'Please enter a note.', 'wp-sell-services' ),
 					'update'                  => __( 'Update', 'wp-sell-services' ),
 					'updating'                => __( 'Updating...', 'wp-sell-services' ),
 					'savingRequirements'      => __( 'Saving...', 'wp-sell-services' ),

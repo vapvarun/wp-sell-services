@@ -311,6 +311,7 @@ do_action( 'wpss_before_conversation', $order );
 					</label>
 
 					<div class="wpss-messaging__composer-input-wrapper">
+						<label for="wpss-message-input" class="screen-reader-text"><?php esc_html_e( 'Message', 'wp-sell-services' ); ?></label>
 						<textarea name="message"
 									id="wpss-message-input"
 									class="wpss-messaging__composer-input"

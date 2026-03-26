@@ -48,6 +48,16 @@
 	--wpss-sticky-top: 32px;
 }
 
+/* Z-Index Scale
+   ------------------------------------------
+   Dropdowns/tooltips:  1000
+   Sticky elements:     1010
+   Fixed navigation:    1020
+   Overlays/backdrops:  9990
+   Modals/dialogs:      9991
+   Mini-cart FAB:       9995
+   ------------------------------------------ */
+
 /* Admin bar offset adjustment */
 .admin-bar {
 	--wpss-sticky-top: 64px;
@@ -147,6 +157,141 @@
 .wpss-btn-icon {
 	padding: 8px;
 	border-radius: 50%;
+}
+
+/* Disabled & Loading States */
+.wpss-btn:disabled,
+.wpss-btn[aria-disabled="true"],
+.wpss-btn--loading {
+	opacity: 0.6;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.wpss-btn:active:not(:disabled) {
+	transform: scale(0.97);
+}
+
+/* Focus Indicators */
+.wpss-btn:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 1px;
+	border-color: var(--wpss-primary);
+}
+
+input:invalid:not(:placeholder-shown),
+textarea:invalid:not(:placeholder-shown),
+select:invalid {
+	border-color: var(--wpss-danger);
+}
+
+/* Inline Error/Success Notices */
+.wpss-notice {
+	padding: 12px 16px;
+	border-radius: var(--wpss-radius);
+	font-size: 14px;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-notice--error {
+	background: #fef2f2;
+	color: #991b1b;
+	border: 1px solid #fecaca;
+}
+
+.wpss-notice--success {
+	background: #f0fdf4;
+	color: #166534;
+	border: 1px solid #bbf7d0;
+}
+
+.wpss-notice--info {
+	background: #eff6ff;
+	color: #1e40af;
+	border: 1px solid #bfdbfe;
+}
+
+/* Loading Spinner */
+.wpss-spinner {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border: 2px solid currentColor;
+	border-left-color: transparent;
+	border-radius: 50%;
+	animation: wpss-spin 0.6s linear infinite;
+}
+
+@keyframes wpss-spin {
+	to { transform: rotate(-360deg); }
+}
+
+/* Responsive Table Wrapper */
+.wpss-table-responsive {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* Mini-Cart FAB */
+.wpss-mini-cart {
+	position: fixed;
+	bottom: 24px;
+	left: 24px;
+	z-index: 9995;
+}
+
+.wpss-mini-cart-link {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	background: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-white);
+	border-radius: 50%;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	text-decoration: none;
+	position: relative;
+	transition: transform var(--wpss-transition), box-shadow var(--wpss-transition);
+}
+
+.wpss-mini-cart-link:hover {
+	transform: scale(1.1);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+	color: var(--wpss-white);
+}
+
+.wpss-mini-cart-icon {
+	width: 24px;
+	height: 24px;
+}
+
+.wpss-cart-count {
+	position: absolute;
+	top: -4px;
+	left: -4px;
+	background: var(--wpss-danger);
+	color: var(--wpss-white);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1;
+	min-width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 10px;
+	padding: 0 5px;
 }
 
 /* ==========================================================================
@@ -1606,7 +1751,7 @@
 	right: 0;
 	left: 0;
 	bottom: 0;
-	z-index: 99999;
+	z-index: 9991;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1700,6 +1845,15 @@
 .wpss-details-list dd {
 	margin: 0 0 12px;
 	font-weight: 500;
+}
+
+/* Pro Profile Widget */
+.wpss-profile-sidebar .wpss-pro-profile-widget {
+	background: var(--wpss-white);
+    border: 1px solid var(--wpss-border);
+    border-radius: var(--wpss-radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 /* Timeline */
@@ -2604,7 +2758,7 @@
 	right: 0;
 	width: 100%;
 	height: 100%;
-	z-index: 99999;
+	z-index: 9991;
 	display: none;
 	align-items: center;
 	justify-content: center;
@@ -3185,7 +3339,7 @@ body.wpss-modal-active {
 	position: fixed;
 	top: 20px;
 	left: 20px;
-	z-index: 10000;
+	z-index: 9995;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;

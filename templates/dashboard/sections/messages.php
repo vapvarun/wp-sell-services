@@ -120,7 +120,8 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					<?php wp_nonce_field( 'wpss_send_message', 'wpss_message_nonce' ); ?>
 					<input type="hidden" name="conversation_id" value="<?php echo esc_attr( $active_conversation_id ); ?>">
 					<div class="wpss-form-group">
-						<textarea name="message" class="wpss-textarea" rows="3" placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>" required></textarea>
+						<label for="wpss-reply-message" class="screen-reader-text"><?php esc_html_e( 'Message', 'wp-sell-services' ); ?></label>
+						<textarea name="message" id="wpss-reply-message" class="wpss-textarea" rows="3" placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>" required></textarea>
 					</div>
 					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm"><?php esc_html_e( 'Send', 'wp-sell-services' ); ?></button>
 				</form>

@@ -1032,7 +1032,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 10000;
+	z-index: 9991;
 	opacity: 0;
 	visibility: hidden;
 	transition: opacity var(--wpss-transition-slow, 0.3s ease), visibility var(--wpss-transition-slow, 0.3s ease);

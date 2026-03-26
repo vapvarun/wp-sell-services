@@ -43,6 +43,11 @@ class EarningsService {
 		$orders_table      = $wpdb->prefix . 'wpss_orders';
 		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
 
+		// Get clearance_days setting — earnings from orders completed less than
+		// clearance_days ago are not yet available for withdrawal.
+		$payouts_settings = get_option( 'wpss_payouts', array() );
+		$clearance_days   = (int) ( $payouts_settings['clearance_days'] ?? 14 );
+
 		// Get completed orders earnings (uses vendor_earnings after commission).
 		// COALESCE(vendor_earnings, 0) prevents inflated earnings when vendor_earnings is NULL.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -55,6 +60,20 @@ class EarningsService {
 				WHERE vendor_id = %d AND status = %s",
 				$vendor_id,
 				ServiceOrder::STATUS_COMPLETED
+			)
+		);
+
+		// Get earnings still within the clearance window (completed less than clearance_days ago).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$in_clearance = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0)
+				FROM {$orders_table}
+				WHERE vendor_id = %d AND status = %s
+				AND completed_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
+				$vendor_id,
+				ServiceOrder::STATUS_COMPLETED,
+				$clearance_days
 			)
 		);
 
@@ -103,12 +122,13 @@ class EarningsService {
 		$total_earned       = (float) $completed->total_earned;
 		$withdrawn          = (float) $withdrawn;
 		$pending_withdrawal = (float) $pending_withdrawal;
-		$available          = $total_earned - $withdrawn - $pending_withdrawal;
+		$available          = $total_earned - $withdrawn - $pending_withdrawal - $in_clearance;
 
 		return array(
 			'total_earned'       => $total_earned,
 			'available_balance'  => max( 0, $available ),
-			'pending_clearance'  => (float) $pending,
+			'pending_clearance'  => (float) $pending + $in_clearance,
+			'in_clearance'       => $in_clearance,
 			'withdrawn'          => $withdrawn,
 			'pending_withdrawal' => $pending_withdrawal,
 			'completed_orders'   => (int) $completed->order_count,

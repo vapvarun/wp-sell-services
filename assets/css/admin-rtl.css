@@ -1850,7 +1850,7 @@
 /* Vendors Modal */
 .wpss-modal {
 	position: fixed;
-	z-index: 100000;
+	z-index: 9991;
 	right: 0;
 	top: 0;
 	width: 100%;

@@ -160,7 +160,7 @@
                         // Scroll to bottom.
                         self.scrollToBottom();
                     } else {
-                        self.showError(response.data.message || 'Failed to send message');
+                        self.showError(response.data.message || (wpssData.i18n && wpssData.i18n.messageFailed) || 'Failed to send message');
                     }
                 },
                 error: function() {

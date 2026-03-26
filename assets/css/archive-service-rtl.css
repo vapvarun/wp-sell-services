@@ -274,7 +274,7 @@
 	width: 320px;
 	height: 100%;
 	background: var(--wpss-white);
-	z-index: 99998;
+	z-index: 9991;
 	transform: translateX(100%);
 	transition: transform 0.3s ease;
 	overflow-y: auto;
@@ -304,7 +304,7 @@ body.wpss-sidebar-open::after {
 	position: fixed;
 	inset: 0;
 	background: rgba(0, 0, 0, 0.5);
-	z-index: 99997;
+	z-index: 9990;
 }
 
 .wpss-sidebar-header {
@@ -568,6 +568,7 @@ body.wpss-sidebar-open::after {
 		grid-area: content;
 	}
 
+	.wpss-services-archive .wpss-filter-toggle,
 	.wpss-filter-toggle {
 		display: none;
 	}

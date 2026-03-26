@@ -1017,6 +1017,55 @@ class Settings {
 				'default'     => false,
 			)
 		);
+
+		add_settings_field(
+			'max_file_size',
+			__( 'Max File Upload Size (MB)', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_advanced',
+			'wpss_advanced_section',
+			array(
+				'option_name' => 'wpss_advanced',
+				'field'       => 'max_file_size',
+				'default'     => 10,
+				'min'         => 1,
+				'max'         => 100,
+				'step'        => 1,
+				'description' => __( 'Maximum file size in megabytes for uploads.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'allowed_file_types',
+			__( 'Allowed File Types', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_advanced',
+			'wpss_advanced_section',
+			array(
+				'option_name' => 'wpss_advanced',
+				'field'       => 'allowed_file_types',
+				'default'     => 'jpg,jpeg,png,gif,pdf,doc,docx,zip',
+				'description' => __( 'Comma-separated list of allowed file extensions.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'currency_position',
+			__( 'Currency Symbol Position', 'wp-sell-services' ),
+			array( $this, 'render_select_field' ),
+			'wpss_advanced',
+			'wpss_advanced_section',
+			array(
+				'option_name' => 'wpss_advanced',
+				'field'       => 'currency_position',
+				'default'     => 'before',
+				'options'     => array(
+					'before' => __( 'Before amount ($99)', 'wp-sell-services' ),
+					'after'  => __( 'After amount (99$)', 'wp-sell-services' ),
+				),
+				'description' => __( 'Position of the currency symbol relative to the amount.', 'wp-sell-services' ),
+			)
+		);
 	}
 
 	/**
@@ -2469,6 +2518,18 @@ class Settings {
 
 		$sanitized['delete_data_on_uninstall'] = ! empty( $input['delete_data_on_uninstall'] );
 		$sanitized['enable_debug_mode']        = ! empty( $input['enable_debug_mode'] );
+
+		$sanitized['max_file_size']      = absint( $input['max_file_size'] ?? 10 );
+		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx,zip' );
+		$sanitized['currency_position']  = in_array( $input['currency_position'] ?? 'before', array( 'before', 'after' ), true )
+			? $input['currency_position']
+			: 'before';
+
+		// Sync to standalone options for backward compatibility with existing code
+		// that reads these via get_option('wpss_*').
+		update_option( 'wpss_max_file_size', $sanitized['max_file_size'] );
+		update_option( 'wpss_allowed_file_types', $sanitized['allowed_file_types'] );
+		update_option( 'wpss_currency_position', $sanitized['currency_position'] );
 
 		return $sanitized;
 	}

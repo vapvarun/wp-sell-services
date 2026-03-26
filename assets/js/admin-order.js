@@ -193,7 +193,7 @@
 		var note = $textarea.val().trim();
 
 		if (!note) {
-			notify('Please enter a note.', 'warning');
+			notify((wpssOrderAdmin.i18n && wpssOrderAdmin.i18n.enterNote) || 'Please enter a note.', 'warning');
 			return;
 		}
 
