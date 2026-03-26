@@ -117,6 +117,11 @@ class OrderWorkflowManager {
 			'display'  => 'Weekly',
 		];
 
+		$schedules['biweekly'] = [
+			'interval' => 14 * DAY_IN_SECONDS,
+			'display'  => 'Every 14 Days (Bi-weekly)',
+		];
+
 		$schedules['monthly'] = [
 			'interval' => 30 * DAY_IN_SECONDS,
 			'display'  => 'Monthly',

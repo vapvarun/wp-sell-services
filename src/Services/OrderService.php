@@ -624,13 +624,21 @@ class OrderService {
 	 * @return void
 	 */
 	public function log_status_change( int $order_id, string $old_status, string $new_status, string $note = '' ): void {
-		// Deduplicate within the same request to prevent double system messages.
+		// Deduplicate within the same request (static) AND across requests (transient).
+		// Prevents duplicate system messages from race conditions (concurrent cron + AJAX).
 		static $logged = array();
 		$key = $order_id . ':' . $old_status . ':' . $new_status;
 		if ( isset( $logged[ $key ] ) ) {
 			return;
 		}
 		$logged[ $key ] = true;
+
+		// Cross-request deduplication via transient (30-second window).
+		$transient_key = 'wpss_status_log_' . md5( $key );
+		if ( get_transient( $transient_key ) ) {
+			return;
+		}
+		set_transient( $transient_key, 1, 30 );
 
 		// Create system message in conversation.
 		$conversation_service = new ConversationService();
