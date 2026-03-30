@@ -136,6 +136,33 @@ class RequirementsService {
 
 		// Get service requirements.
 		$service = $order->get_service();
+
+		// For buyer request orders (platform='request'), skip service requirement validation
+		// Requirements were already collected in the proposal, so just save submitted data.
+		if ( ! $service && 'request' === $order->platform ) {
+			// Process file uploads.
+			$attachments = $this->process_uploads( $files, $order_id );
+
+			// Save requirements directly without service field validation.
+			$saved = $this->save( $order_id, $field_data, $attachments );
+
+			if ( ! $saved ) {
+				return array(
+					'success' => false,
+					'message' => __( 'Failed to save requirements. Please try again.', 'wp-sell-services' ),
+				);
+			}
+
+			// Start order work.
+			$this->order_service->start_work( $order_id );
+
+			return array(
+				'success'         => true,
+				'message'         => __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' ),
+				'late_submission' => false,
+			);
+		}
+
 		if ( ! $service ) {
 			return array(
 				'success' => false,
