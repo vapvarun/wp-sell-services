@@ -117,6 +117,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		// Admin order actions.
 		add_action( 'wpss_admin_order_actions', array( $this, 'render_admin_order_actions' ), 10, 2 );
+		
+		// Display payment instructions on order view for offline orders.
+		add_action( 'wpss_order_view_details', array( $this, 'display_order_payment_instructions' ), 10, 1 );
 	}
 
 	/**
@@ -599,6 +602,85 @@ class OfflineGateway implements PaymentGatewayInterface {
 			});
 		});
 		</script>
+		<?php
+	}
+
+	/**
+	 * Display payment instructions on order view for offline orders.
+	 *
+	 * @param object $order Order object.
+	 * @return void
+	 */
+	public function display_order_payment_instructions( $order ): void {
+		// Only show for offline orders in pending_payment status
+		if ( 'pending_payment' !== $order->status ) {
+			return;
+		}
+
+		// Check if this order was paid with offline gateway
+		if ( 'offline' !== $order->payment_method ) {
+			return;
+		}
+
+		// Only show to the customer
+		if ( (int) $order->customer_id !== get_current_user_id() ) {
+			return;
+		}
+
+		// Check if gateway is enabled and has instructions
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
+		$instructions = $this->settings['instructions'] ?? '';
+		if ( empty( $instructions ) ) {
+			return;
+		}
+
+		// Replace placeholders in instructions
+		$replacements = array(
+			'{order_number}' => $order->order_number,
+			'{order_id}'     => (string) $order->id,
+			'{total}'        => wpss_format_price( (float) $order->total, $order->currency ),
+			'{currency}'     => $order->currency,
+		);
+
+		$instructions = str_replace(
+			array_keys( $replacements ),
+			array_values( $replacements ),
+			$instructions
+		);
+
+		// Display the instructions
+		?>
+		<section class="wpss-order-section">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 11l3 3L22 4"/>
+						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+					</svg>
+					<?php esc_html_e( 'Payment Instructions', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<div class="wpss-offline-instructions" style="background: #fff3cd; border: 1px solid #ffc107; padding: 20px; border-radius: 4px; margin: 0;">
+					<div class="wpss-offline-instructions-content">
+						<?php echo wp_kses_post( wpautop( $instructions ) ); ?>
+					</div>
+					<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0c874;">
+						<p style="margin-bottom: 8px; color: #856404;">
+							<strong><?php esc_html_e( 'Order Reference:', 'wp-sell-services' ); ?></strong>
+							<?php echo esc_html( $order->order_number ); ?>
+						</p>
+						<p style="margin-bottom: 0; color: #856404;">
+							<strong><?php esc_html_e( 'Amount Due:', 'wp-sell-services' ); ?></strong>
+							<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
 		<?php
 	}
 
