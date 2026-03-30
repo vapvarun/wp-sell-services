@@ -2419,7 +2419,7 @@ class AjaxHandlers {
 		// Accept both 'extras' (legacy) and 'addons' (single-service.js sends this key).
 		$extras_raw    = $_POST['extras'] ?? $_POST['addons'] ?? array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$extras        = ! empty( $extras_raw ) ? array_map( 'absint', (array) $extras_raw ) : array();
-
+		
 		if ( ! $service_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
@@ -2485,7 +2485,7 @@ class AjaxHandlers {
 		}
 
 		$total = ( $package_price + $extras_price ) * $quantity;
-
+		
 		$cart_item = array(
 			'service_id' => $service_id,
 			'package_id' => $package_index,
@@ -2518,8 +2518,8 @@ class AjaxHandlers {
 			if ( ! empty( $adapter_result['error'] ) ) {
 				wp_send_json_error( array( 'message' => $adapter_result['error'] ) );
 			}
-
-			$checkout_url = $adapter_result['checkout_url'] ?? wpss_get_service_checkout_url( $service_id, (int) $package_index );
+			
+			$checkout_url = $adapter_result['checkout_url'] ?? wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
 			if ( $quantity > 1 ) {
 				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
 			}
@@ -2545,9 +2545,9 @@ class AjaxHandlers {
 		$cart_item['added_at']       = current_time( 'mysql', true );
 		$cart[ $item_key ]           = $cart_item;
 
-		update_user_meta( $user_id, '_wpss_cart', $cart );
-
-		$checkout_url = wpss_get_service_checkout_url( $service_id, (int) $package_index );
+		update_user_meta( $user_id, '_wpss_cart', $cart );		
+		
+		$checkout_url = wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
 		if ( $quantity > 1 ) {
 			$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
 		}

@@ -216,17 +216,21 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p>' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		// Resolve selected addons from URL param (comma-separated IDs).
+		// Resolve selected addons from URL param (comma-separated _wpss_extras indices).
 		$selected_addons = array();
 		if ( $addon_ids_raw ) {
-			$addon_ids     = array_map( 'absint', explode( ',', $addon_ids_raw ) );
-			$addon_ids     = array_filter( $addon_ids );
-			$addon_service = new \WPSellServices\Services\ServiceAddonService();
+			$addon_ids  = array_map( 'absint', explode( ',', $addon_ids_raw ) );
+			$all_extras = get_post_meta( $service->id, '_wpss_extras', true ) ?: [];
 
-			foreach ( $addon_ids as $addon_id ) {
-				$addon = $addon_service->get( $addon_id );
-				if ( $addon && (int) $addon->service_id === $service->id && ! empty( $addon->is_active ) ) {
-					$selected_addons[] = $addon;
+			foreach ( $addon_ids as $addon_index ) {
+				if ( isset( $all_extras[ $addon_index ] ) ) {
+					$extra           = $all_extras[ $addon_index ];
+					$selected_addons[] = (object) [
+						'id'                  => $addon_index,
+						'title'               => $extra['title'] ?? '',
+						'price'               => (float) ( $extra['price'] ?? 0 ),
+						'delivery_days_extra' => (int) ( $extra['delivery_time'] ?? 0 ),
+					];
 				}
 			}
 		}
