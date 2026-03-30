@@ -461,8 +461,8 @@ class PortfolioService {
 	 * @return array Formatted item.
 	 */
 	private function format_item( object $row ): array {
-		$media = json_decode( $row->media, true ) ?: [];
-		$tags = json_decode( $row->tags, true ) ?: [];
+		$media = json_decode( $row->media ?: '[]', true ) ?: [];
+		$tags  = json_decode( $row->tags ?: '[]', true ) ?: [];
 
 		// Get media URLs.
 		$media_urls = [];
