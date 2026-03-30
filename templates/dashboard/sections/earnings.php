@@ -242,7 +242,7 @@ jQuery(function($) {
 			data: JSON.stringify({
 				amount: parseFloat(amount),
 				method: method,
-				details: details
+				details: { account: details }
 			}),
 			beforeSend: function(xhr) {
 				xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);

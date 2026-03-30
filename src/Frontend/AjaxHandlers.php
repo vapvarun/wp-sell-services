@@ -3450,6 +3450,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Withdrawal not found.', 'wp-sell-services' ) ) );
 		}
 
+		if ( ! empty( $withdrawal->is_auto ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			wp_send_json_error( array( 'message' => __( 'Auto-withdrawals cannot be cancelled manually.', 'wp-sell-services' ) ) );
+		}
+
 		if ( 'pending' !== $withdrawal->status ) {
 			$wpdb->query( 'ROLLBACK' );
 			wp_send_json_error( array( 'message' => __( 'Only pending withdrawals can be cancelled.', 'wp-sell-services' ) ) );

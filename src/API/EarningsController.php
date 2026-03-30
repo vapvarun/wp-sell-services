@@ -375,6 +375,10 @@ class EarningsController extends RestController {
 
 		$wpdb->query( 'COMMIT' );
 
+		// Persist payout profile so cron can find eligible vendors.
+		update_user_meta( $vendor_id, 'wpss_payout_method', $method );
+		update_user_meta( $vendor_id, 'wpss_payout_details', $details );
+
 		return new WP_REST_Response(
 			array(
 				'id'         => $withdrawal_id,

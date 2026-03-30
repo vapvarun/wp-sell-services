@@ -893,22 +893,17 @@ class EarningsService {
 	 * @return void
 	 */
 	public static function schedule_auto_withdrawal_cron(): void {
-		// Ensure biweekly schedule is registered before scheduling.
-		add_filter( 'cron_schedules', array( self::class, 'add_cron_schedules' ) );
-
 		if ( ! self::is_auto_withdrawal_enabled() ) {
 			wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
 			return;
 		}
 
-		$schedule = self::get_auto_withdrawal_schedule();
+		$schedule         = self::get_auto_withdrawal_schedule();
+		$current_schedule = wp_get_schedule( 'wpss_process_auto_withdrawals' );
 
-		// Clear existing schedule.
-		wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
-
-		// Schedule based on settings.
-		if ( ! wp_next_scheduled( 'wpss_process_auto_withdrawals' ) ) {
-			// Schedule for 1st of month (monthly), 1st/15th (biweekly), or Monday (weekly) at 2 AM.
+		// Only reschedule if the schedule type has changed or no schedule exists.
+		if ( $current_schedule !== $schedule ) {
+			wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
 			$timestamp = self::get_next_schedule_time( $schedule );
 			wp_schedule_event( $timestamp, $schedule, 'wpss_process_auto_withdrawals' );
 		}

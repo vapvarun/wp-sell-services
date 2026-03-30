@@ -1068,6 +1068,9 @@ final class Plugin {
 		$dispute_workflow = new \WPSellServices\Services\DisputeWorkflowManager();
 		$dispute_workflow->init();
 
+		// Register EarningsService cron schedules early so they are available during activation.
+		add_filter( 'cron_schedules', array( \WPSellServices\Services\EarningsService::class, 'add_cron_schedules' ) );
+
 		// Auto-withdrawal processing.
 		$this->loader->add_action(
 			'wpss_process_auto_withdrawals',
