@@ -106,14 +106,6 @@ function wpss_can_open_dispute_for_order( $order ) {
 	$order_settings = get_option( 'wpss_orders', array() );
 	$disputes_allowed = ! empty( $order_settings['allow_disputes'] );
 
-	// DEBUG: Log values to help troubleshoot
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( 'WPSS Dispute Debug - Status: ' . $order->status );
-		error_log( 'WPSS Dispute Debug - completed_at: ' . print_r( $order->completed_at, true ) );
-		error_log( 'WPSS Dispute Debug - disputes_allowed: ' . ( $disputes_allowed ? 'yes' : 'no' ) );
-		error_log( 'WPSS Dispute Debug - window_days: ' . ( $order_settings['dispute_window_days'] ?? 14 ) );
-	}
-
 	if ( ! $disputes_allowed ) {
 		return false;
 	}
@@ -135,11 +127,7 @@ function wpss_can_open_dispute_for_order( $order ) {
 				$completed_time = strtotime( (string) $order->completed_at );
 			}
 			$deadline = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
-			$result   = time() <= $deadline;
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'WPSS Dispute Debug - deadline check: ' . ( $result ? 'within window' : 'expired' ) );
-			}
-			return $result;
+			return time() <= $deadline;
 		}
 	}
 
