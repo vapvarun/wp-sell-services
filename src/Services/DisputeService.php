@@ -183,8 +183,11 @@ class DisputeService {
 			)
 		);
 
-		if ( $dispute && ! empty( $dispute->evidence ) ) {
-			$dispute->evidence = json_decode( $dispute->evidence, true );
+		if ( $dispute ) {
+			if ( ! empty( $dispute->evidence ) ) {
+				$dispute->evidence = json_decode( $dispute->evidence, true );
+			}
+			$dispute->meta = json_decode( $dispute->meta ?: '[]', true ) ?: [];
 		}
 
 		return $dispute;
@@ -207,8 +210,11 @@ class DisputeService {
 			)
 		);
 
-		if ( $dispute && ! empty( $dispute->evidence ) ) {
-			$dispute->evidence = json_decode( $dispute->evidence, true );
+		if ( $dispute ) {
+			if ( ! empty( $dispute->evidence ) ) {
+				$dispute->evidence = json_decode( $dispute->evidence, true );
+			}
+			$dispute->meta = json_decode( $dispute->meta ?: '[]', true ) ?: [];
 		}
 
 		return $dispute;
