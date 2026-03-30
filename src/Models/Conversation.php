@@ -98,6 +98,27 @@ class Conversation {
 	public ?\DateTimeImmutable $updated_at;
 
 	/**
+	 * Last message content (populated when fetched via optimized query).
+	 *
+	 * @var string|null
+	 */
+	public ?string $last_message = null;
+
+	/**
+	 * Last message sender ID (populated when fetched via optimized query).
+	 *
+	 * @var int|null
+	 */
+	public ?int $last_message_sender_id = null;
+
+	/**
+	 * Last message created timestamp (populated when fetched via optimized query).
+	 *
+	 * @var \DateTimeImmutable|null
+	 */
+	public ?\DateTimeImmutable $last_message_created_at = null;
+
+	/**
 	 * Create from database row.
 	 *
 	 * @param object $row Database row.
@@ -119,6 +140,17 @@ class Conversation {
 		$conversation->last_message_at = $row->last_message_at ? new \DateTimeImmutable( $row->last_message_at ) : null;
 		$conversation->created_at      = $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;
 		$conversation->updated_at      = $row->updated_at ? new \DateTimeImmutable( $row->updated_at ) : null;
+
+		// Optional last message data (populated by optimized queries).
+		if ( isset( $row->last_message ) ) {
+			$conversation->last_message = $row->last_message;
+		}
+		if ( isset( $row->last_message_sender_id ) ) {
+			$conversation->last_message_sender_id = (int) $row->last_message_sender_id;
+		}
+		if ( isset( $row->last_message_created_at ) ) {
+			$conversation->last_message_created_at = $row->last_message_created_at ? new \DateTimeImmutable( $row->last_message_created_at ) : null;
+		}
 
 		return $conversation;
 	}

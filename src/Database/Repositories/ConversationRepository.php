@@ -471,10 +471,10 @@ class ConversationRepository extends AbstractRepository {
 		// Use UNION to combine order-linked and direct conversations.
 		// Order-linked: join with orders table where user is customer or vendor.
 		// Direct: order_id = 0 and user appears in participants JSON array.
-		// Uses JOIN with max-message subquery instead of correlated subqueries to avoid N+1.
+		// Uses pre-aggregated max-message subquery to fetch last message in one pass.
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
-				"SELECT conversations.*, lm.content as last_message, lm.sender_id as last_message_sender_id
+				"SELECT conversations.*, lm.content as last_message, lm.sender_id as last_message_sender_id, lm.created_at as last_message_created_at
 				FROM (
 					(SELECT DISTINCT
 						c.id as conversation_id,
@@ -510,11 +510,15 @@ class ConversationRepository extends AbstractRepository {
 					AND c.participants IS NOT NULL
 					AND JSON_CONTAINS(c.participants, %s))
 				) conversations
-				LEFT JOIN {$messages_table} lm ON lm.id = (
-					SELECT id FROM {$messages_table}
-					WHERE conversation_id = conversations.conversation_id
-					ORDER BY created_at DESC LIMIT 1
-				)
+				LEFT JOIN (
+					SELECT m1.*
+					FROM {$messages_table} m1
+					INNER JOIN (
+						SELECT conversation_id, MAX(id) as max_id
+						FROM {$messages_table}
+						GROUP BY conversation_id
+					) latest ON m1.conversation_id = latest.conversation_id AND m1.id = latest.max_id
+				) lm ON lm.conversation_id = conversations.conversation_id
 				ORDER BY conversations.last_message_at DESC
 				LIMIT %d",
 				$user_id,

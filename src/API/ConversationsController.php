@@ -425,7 +425,15 @@ class ConversationsController extends RestController {
 		$order      = $conversation->get_order();
 		$service_id = $order ? (int) $order->service_id : 0;
 
-		$last_message = $this->conversation_service->get_last_message( $conversation->id );
+		// Get last message from conversation data (already fetched by repository with optimized query).
+		$last_message = null;
+		if ( ! empty( $conversation->last_message ) ) {
+			$last_message = (object) array(
+				'content'    => $conversation->last_message,
+				'sender_id'  => $conversation->last_message_sender_id ?? 0,
+				'created_at' => $conversation->last_message_created_at ?? null,
+			);
+		}
 
 		return array(
 			'id'            => (int) $conversation->id,

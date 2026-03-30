@@ -521,14 +521,14 @@ class ConversationService {
 	/**
 	 * Get conversations for a user.
 	 *
+	 * Uses ConversationRepository with optimized query that fetches last message
+	 * data in a single query, avoiding N+1 performance issues.
+	 *
 	 * @param int   $user_id User ID.
 	 * @param array $args    Query args.
 	 * @return Conversation[]
 	 */
 	public function get_by_user( int $user_id, array $args = array() ): array {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_conversations';
-
 		$defaults = array(
 			'limit'  => 20,
 			'offset' => 0,
@@ -536,21 +536,14 @@ class ConversationService {
 
 		$args = wp_parse_args( $args, $defaults );
 
-		// Use JSON_CONTAINS for flat arrays [5,3] and JSON_EXTRACT for key-value maps {"5":true}.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table}
-				WHERE (JSON_CONTAINS(participants, %s) OR JSON_EXTRACT(participants, %s) IS NOT NULL)
-				ORDER BY COALESCE(last_message_at, created_at) DESC
-				LIMIT %d OFFSET %d",
-				wp_json_encode( $user_id ),
-				'$."' . $user_id . '"',
-				$args['limit'],
-				$args['offset']
-			)
-		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Use repository with optimized query that includes last_message data.
+		$repository = new \WPSellServices\Database\Repositories\ConversationRepository();
+		$rows       = $repository->get_conversation_summary( $user_id, $args['limit'] );
+
+		// Apply offset manually since repository doesn't support it directly.
+		if ( $args['offset'] > 0 ) {
+			$rows = array_slice( $rows, $args['offset'], $args['limit'] );
+		}
 
 		return array_map( fn( $row ) => Conversation::from_db( $row ), $rows );
 	}
