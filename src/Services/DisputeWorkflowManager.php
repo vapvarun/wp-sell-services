@@ -650,7 +650,8 @@ class DisputeWorkflowManager {
 		$disputes_table = $this->disputes_table;
 
 		// Find orders in "late" status for longer than the configured threshold
-		// that do NOT already have a dispute.
+		// that do NOT already have a dispute. Use delivery_deadline (not updated_at)
+		// to measure actual days since order became overdue, unaffected by status changes.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$late_orders = $wpdb->get_results(
 			$wpdb->prepare(
@@ -658,7 +659,7 @@ class DisputeWorkflowManager {
 				FROM {$orders_table} o
 				LEFT JOIN {$disputes_table} d ON d.order_id = o.id
 				WHERE o.status = %s
-				AND o.updated_at < DATE_SUB( %s, INTERVAL %d DAY )
+				AND o.delivery_deadline < DATE_SUB( %s, INTERVAL %d DAY )
 				AND d.id IS NULL",
 				\WPSellServices\Models\ServiceOrder::STATUS_LATE,
 				current_time( 'mysql' ),
