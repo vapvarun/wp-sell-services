@@ -538,12 +538,7 @@ class ConversationService {
 
 		// Use repository with optimized query that includes last_message data.
 		$repository = new \WPSellServices\Database\Repositories\ConversationRepository();
-		$rows       = $repository->get_conversation_summary( $user_id, $args['limit'] );
-
-		// Apply offset manually since repository doesn't support it directly.
-		if ( $args['offset'] > 0 ) {
-			$rows = array_slice( $rows, $args['offset'], $args['limit'] );
-		}
+		$rows       = $repository->get_conversation_summary( $user_id, $args['limit'], $args['offset'] );
 
 		return array_map( fn( $row ) => Conversation::from_db( $row ), $rows );
 	}

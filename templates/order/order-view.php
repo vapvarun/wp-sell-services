@@ -79,60 +79,9 @@ $customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-s
 $delivery_service = new DeliveryService();
 $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 
-/**
- * Helper function to check if order is within dispute window.
- * Replicates DisputeService::open() validation logic.
- *
- * @param object $order Order object.
- * @return bool True if dispute can be opened.
- */
-function wpss_can_open_dispute_for_order( $order ) {
-	global $wpdb;
-
-	// Check if an unresolved dispute already exists for this order
-	$disputes_table = $wpdb->prefix . 'wpss_disputes';
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$existing_dispute_status = $wpdb->get_var(
-		$wpdb->prepare(
-			"SELECT status FROM {$disputes_table} WHERE order_id = %d LIMIT 1",
-			$order->id
-		)
-	);
-	// Only allow new dispute if no dispute exists OR if previous dispute is resolved/closed
-	if ( $existing_dispute_status && ! in_array( $existing_dispute_status, array( 'resolved', 'closed' ), true ) ) {
-		return false;
-	}
-
-	$order_settings = get_option( 'wpss_orders', array() );
-	$disputes_allowed = ! empty( $order_settings['allow_disputes'] );
-
-	if ( ! $disputes_allowed ) {
-		return false;
-	}
-
-	// Allow disputes for active statuses
-	$active_statuses = array( 'in_progress', 'pending_approval', 'revision_requested' );
-	if ( in_array( $order->status, $active_statuses, true ) ) {
-		return true;
-	}
-
-	// For completed orders, check dispute window
-	if ( 'completed' === $order->status && ! empty( $order->completed_at ) ) {
-		$dispute_window_days = (int) ( $order_settings['dispute_window_days'] ?? 14 );
-		if ( $dispute_window_days > 0 ) {
-			// Handle both DateTimeImmutable objects and string dates
-			if ( is_object( $order->completed_at ) && method_exists( $order->completed_at, 'getTimestamp' ) ) {
-				$completed_time = $order->completed_at->getTimestamp();
-			} else {
-				$completed_time = strtotime( (string) $order->completed_at );
-			}
-			$deadline = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
-			return time() <= $deadline;
-		}
-	}
-
-	return false;
-}
+// Dispute eligibility check via service layer.
+$dispute_service   = new \WPSellServices\Services\DisputeService();
+$can_open_dispute  = $dispute_service->can_open_dispute( $order );
 
 /**
  * Hook: wpss_before_order_view
@@ -332,7 +281,7 @@ do_action( 'wpss_before_order_view', $order );
 			}
 
 			$order_settings    = get_option( 'wpss_orders', array() );
-			if ( wpss_can_open_dispute_for_order( $order ) && ( $is_customer || $is_vendor ) ) {
+			if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
 				$actions['dispute'] = array(
 					'label' => __( 'Open Dispute', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
@@ -1186,7 +1135,7 @@ $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 're
 
 // Check if review modal should be available.
 $can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
-$can_open_dispute      = wpss_can_open_dispute_for_order( $order ) && ( $is_customer || $is_vendor );
+$can_open_dispute      = $can_open_dispute && ( $is_customer || $is_vendor );
 $can_request_revision  = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
 
 // Check if cancel modal should be available.

@@ -81,6 +81,59 @@ class DisputeService {
 	}
 
 	/**
+	 * Check whether a dispute can be opened for a given order.
+	 *
+	 * Used by templates to decide whether to show the "Open Dispute" button.
+	 *
+	 * @param object $order Order object (ServiceOrder or raw DB row).
+	 * @return bool
+	 */
+	public function can_open_dispute( object $order ): bool {
+		global $wpdb;
+
+		$order_settings   = get_option( 'wpss_orders', array() );
+		$disputes_allowed = ! empty( $order_settings['allow_disputes'] );
+
+		if ( ! $disputes_allowed ) {
+			return false;
+		}
+
+		// Check if an unresolved dispute already exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing_status = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT status FROM {$this->table} WHERE order_id = %d LIMIT 1",
+				$order->id
+			)
+		);
+		if ( $existing_status && ! in_array( $existing_status, array( 'resolved', 'closed' ), true ) ) {
+			return false;
+		}
+
+		// Allow disputes for active order statuses.
+		$active_statuses = array( 'in_progress', 'pending_approval', 'revision_requested', 'late' );
+		if ( in_array( $order->status, $active_statuses, true ) ) {
+			return true;
+		}
+
+		// For completed orders, enforce dispute window.
+		if ( 'completed' === $order->status && ! empty( $order->completed_at ) ) {
+			$dispute_window_days = (int) ( $order_settings['dispute_window_days'] ?? 14 );
+			if ( $dispute_window_days > 0 ) {
+				if ( is_object( $order->completed_at ) && method_exists( $order->completed_at, 'getTimestamp' ) ) {
+					$completed_time = $order->completed_at->getTimestamp();
+				} else {
+					$completed_time = strtotime( (string) $order->completed_at );
+				}
+				$deadline = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
+				return time() <= $deadline;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Open a dispute.
 	 *
 	 * @param int                  $order_id Order ID.

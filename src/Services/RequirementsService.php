@@ -140,6 +140,11 @@ class RequirementsService {
 		// For buyer request orders (platform='request'), skip service requirement validation
 		// Requirements were already collected in the proposal, so just save submitted data.
 		if ( ! $service && 'request' === $order->platform ) {
+			// Sanitize field data since we skip service-field validation.
+			$field_data = array_map( function ( $value ) {
+				return is_string( $value ) ? sanitize_textarea_field( $value ) : $value;
+			}, $field_data );
+
 			// Process file uploads.
 			$attachments = $this->process_uploads( $files, $order_id );
 

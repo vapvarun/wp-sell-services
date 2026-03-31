@@ -464,7 +464,7 @@ class ConversationRepository extends AbstractRepository {
 	 * @param int $limit   Number of conversations.
 	 * @return array<object> Array of conversation summaries.
 	 */
-	public function get_conversation_summary( int $user_id, int $limit = 10 ): array {
+	public function get_conversation_summary( int $user_id, int $limit = 10, int $offset = 0 ): array {
 		$orders_table   = $this->schema->get_table_name( 'orders' );
 		$messages_table = $this->get_messages_table();
 
@@ -474,10 +474,13 @@ class ConversationRepository extends AbstractRepository {
 		// Uses pre-aggregated max-message subquery to fetch last message in one pass.
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
-				"SELECT conversations.*, lm.content as last_message, lm.sender_id as last_message_sender_id, lm.created_at as last_message_created_at
+				"SELECT conversations.*,
+					lm.content AS last_message,
+					lm.sender_id AS last_message_sender_id,
+					lm.msg_created_at AS last_message_created_at
 				FROM (
-					(SELECT DISTINCT
-						c.id as conversation_id,
+					(SELECT
+						c.id,
 						c.order_id,
 						o.order_number,
 						o.service_id,
@@ -487,44 +490,54 @@ class ConversationRepository extends AbstractRepository {
 						c.participants,
 						c.last_message_at,
 						c.message_count,
-						c.unread_counts
+						c.unread_counts,
+						c.is_closed,
+						c.created_at,
+						c.updated_at
 					FROM {$this->table} c
 					INNER JOIN {$orders_table} o ON c.order_id = o.id
 					WHERE (o.customer_id = %d OR o.vendor_id = %d)
 					GROUP BY c.id)
 					UNION
 					(SELECT
-						c.id as conversation_id,
+						c.id,
 						c.order_id,
-						NULL as order_number,
+						NULL AS order_number,
 						c.service_id,
-						NULL as platform,
-						NULL as platform_order_id,
+						NULL AS platform,
+						NULL AS platform_order_id,
 						c.subject,
 						c.participants,
 						c.last_message_at,
 						c.message_count,
-						c.unread_counts
+						c.unread_counts,
+						c.is_closed,
+						c.created_at,
+						c.updated_at
 					FROM {$this->table} c
 					WHERE c.order_id = 0
 					AND c.participants IS NOT NULL
 					AND JSON_CONTAINS(c.participants, %s))
 				) conversations
 				LEFT JOIN (
-					SELECT m1.*
+					SELECT m1.conversation_id,
+						m1.content,
+						m1.sender_id,
+						m1.created_at AS msg_created_at
 					FROM {$messages_table} m1
 					INNER JOIN (
-						SELECT conversation_id, MAX(id) as max_id
+						SELECT conversation_id, MAX(id) AS max_id
 						FROM {$messages_table}
 						GROUP BY conversation_id
 					) latest ON m1.conversation_id = latest.conversation_id AND m1.id = latest.max_id
-				) lm ON lm.conversation_id = conversations.conversation_id
+				) lm ON lm.conversation_id = conversations.id
 				ORDER BY conversations.last_message_at DESC
-				LIMIT %d",
+				LIMIT %d OFFSET %d",
 				$user_id,
 				$user_id,
 				wp_json_encode( $user_id ),
-				$limit
+				$limit,
+				$offset
 			)
 		);
 	}
