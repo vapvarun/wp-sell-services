@@ -462,6 +462,7 @@ class ConversationRepository extends AbstractRepository {
 	 *
 	 * @param int $user_id User ID.
 	 * @param int $limit   Number of conversations.
+	 * @param int $offset  Number of conversations to skip.
 	 * @return array<object> Array of conversation summaries.
 	 */
 	public function get_conversation_summary( int $user_id, int $limit = 10, int $offset = 0 ): array {
