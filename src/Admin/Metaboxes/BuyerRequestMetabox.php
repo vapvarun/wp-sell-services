@@ -318,7 +318,7 @@ class BuyerRequestMetabox {
 
 		// Save skills.
 		if ( isset( $_POST['wpss_skills'] ) ) {
-			$skills = array_filter( array_map( 'sanitize_text_field', explode( "\n", wp_unslash( $_POST['wpss_skills'] ) ) ) );
+			$skills = array_filter( array_map( 'sanitize_text_field', explode( "\n", sanitize_textarea_field( wp_unslash( $_POST['wpss_skills'] ) ) ) ) );
 			update_post_meta( $post_id, '_wpss_skills_required', $skills );
 		}
 

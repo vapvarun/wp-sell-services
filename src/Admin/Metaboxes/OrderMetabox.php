@@ -281,7 +281,7 @@ class OrderMetabox {
 							echo ' <span class="wpss-overdue">(' . esc_html__( 'Overdue', 'wp-sell-services' ) . ')</span>';
 						} elseif ( $days_left <= 2 ) {
 							/* translators: %d: days left */
-							echo ' <span class="wpss-due-soon">(' . sprintf( esc_html__( '%d days left', 'wp-sell-services' ), $days_left ) . ')</span>';
+							echo ' <span class="wpss-due-soon">(' . sprintf( esc_html__( '%d days left', 'wp-sell-services' ), absint( $days_left ) ) . ')</span>';
 						}
 					} else {
 						esc_html_e( 'Not set', 'wp-sell-services' );
@@ -645,7 +645,7 @@ class OrderMetabox {
 							<span class="wpss-delivery-number">
 								<?php
 								/* translators: %d: delivery number */
-								printf( esc_html__( 'Delivery #%d', 'wp-sell-services' ), $delivery->id );
+								printf( esc_html__( 'Delivery #%d', 'wp-sell-services' ), absint( $delivery->id ) );
 								?>
 							</span>
 							<span class="wpss-delivery-status wpss-status-<?php echo esc_attr( $delivery->status ); ?>">

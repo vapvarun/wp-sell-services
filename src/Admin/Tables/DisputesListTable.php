@@ -379,7 +379,7 @@ class DisputesListTable extends \WP_List_Table {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$params[] = absint( $_GET['s'] );
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$search   = '%' . $wpdb->esc_like( sanitize_text_field( $_GET['s'] ) ) . '%';
+			$search   = '%' . $wpdb->esc_like( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) . '%';
 			$params[] = $search;
 		}
 
@@ -394,10 +394,10 @@ class DisputesListTable extends \WP_List_Table {
 
 		// Sorting.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$orderby = isset( $_GET['orderby'] ) ? sanitize_sql_orderby( $_GET['orderby'] . ' ASC' ) : 'created_at';
+		$orderby = isset( $_GET['orderby'] ) ? sanitize_sql_orderby( sanitize_text_field( wp_unslash( $_GET['orderby'] ) ) . ' ASC' ) : 'created_at';
 		$orderby = $orderby ? explode( ' ', $orderby )[0] : 'created_at';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$order = isset( $_GET['order'] ) && 'asc' === strtolower( $_GET['order'] ) ? 'ASC' : 'DESC';
+		$order = isset( $_GET['order'] ) && 'asc' === strtolower( sanitize_text_field( wp_unslash( $_GET['order'] ) ) ) ? 'ASC' : 'DESC';
 
 		$allowed_orderby = array( 'id', 'status', 'created_at' );
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {

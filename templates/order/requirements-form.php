@@ -244,8 +244,8 @@ $form_id      = 'wpss-requirements-form-' . $order_id;
 									printf(
 										/* translators: 1: max files, 2: max size */
 										esc_html__( 'Max %1$d files, %2$dMB each', 'wp-sell-services' ),
-										$max_files,
-										$max_size
+										absint( $max_files ),
+										absint( $max_size )
 									);
 									?>
 								</span>
