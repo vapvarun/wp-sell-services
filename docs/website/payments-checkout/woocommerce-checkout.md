@@ -79,7 +79,7 @@ The cart shows:
 
 ### Multiple Vendors
 
-Buyers can purchase services from multiple vendors in one order. WooCommerce creates a single order, which the plugin splits into separate marketplace orders per vendor.
+Buyers can purchase services from multiple vendors in one order. WooCommerce creates a single order, which the plugin splits into separate marketplace orders — one per service (gig). Each service order has its own vendor, delivery deadline, requirements, conversation, and dispute lifecycle, ensuring independent fulfillment regardless of how many services were purchased together.
 
 ## Order Synchronization
 
