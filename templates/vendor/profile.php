@@ -343,6 +343,29 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					</section>
 				<?php endif; ?>
 
+				<?php
+				// Portfolio section.
+				$portfolio_service = new \WPSellServices\Services\PortfolioService();
+				$portfolio_items   = $portfolio_service->get_featured( $vendor_id, 6 );
+
+				if ( ! empty( $portfolio_items ) ) :
+				?>
+				<div class="wpss-profile-section wpss-profile-portfolio">
+					<h2 class="wpss-profile-section__title">
+						<?php esc_html_e( 'Portfolio', 'wp-sell-services' ); ?>
+					</h2>
+					<?php
+					wpss_get_template(
+						'partials/vendor-portfolio.php',
+						array(
+							'portfolio_items' => $portfolio_items,
+							'vendor_id'       => $vendor_id,
+						)
+					);
+					?>
+				</div>
+				<?php endif; ?>
+
 				<!-- Reviews -->
 				<?php if ( ! empty( $reviews ) ) : ?>
 					<section class="wpss-profile-section">

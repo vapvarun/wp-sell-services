@@ -66,6 +66,9 @@ class SingleServiceView {
 		add_action( 'wpss_single_service_sidebar', array( $this, 'render_packages' ), 10 );
 		add_action( 'wpss_single_service_sidebar', array( $this, 'render_vendor_card' ), 20 );
 
+		// Portfolio.
+		add_action( 'wpss_single_service_portfolio', array( $this, 'render_portfolio' ), 10 );
+
 		// Related services.
 		add_action( 'wpss_single_service_related', array( $this, 'render_related_services' ), 10 );
 
@@ -633,6 +636,46 @@ class SingleServiceView {
 	public function render_vendor_card( Service $service ): void {
 		$vendor_id = $service->vendor_id;
 		wpss_get_template_part( 'partials/vendor', 'card', array( 'vendor_id' => $vendor_id ) );
+	}
+
+	/**
+	 * Render vendor portfolio items related to this service.
+	 *
+	 * Shows items linked to the service first; falls back to the vendor's
+	 * featured portfolio items when no service-specific items exist.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param Service $service Service object.
+	 * @return void
+	 */
+	public function render_portfolio( Service $service ): void {
+		$portfolio_service = new \WPSellServices\Services\PortfolioService();
+
+		// First try items linked to this service, then fall back to vendor's featured items.
+		$items = $portfolio_service->get_by_service( $service->id, 6 );
+
+		if ( empty( $items ) ) {
+			$items = $portfolio_service->get_featured( $service->vendor_id, 6 );
+		}
+
+		if ( empty( $items ) ) {
+			return;
+		}
+		?>
+		<div class="wpss-service-portfolio">
+			<h2><?php esc_html_e( 'Portfolio', 'wp-sell-services' ); ?></h2>
+			<?php
+			wpss_get_template(
+				'partials/vendor-portfolio.php',
+				array(
+					'portfolio_items' => $items,
+					'vendor_id'       => $service->vendor_id,
+				)
+			);
+			?>
+		</div>
+		<?php
 	}
 
 	/**

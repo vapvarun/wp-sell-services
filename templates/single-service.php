@@ -178,6 +178,15 @@ do_action( 'wpss_before_single_service', $service );
 
 			<?php
 			/**
+			 * Hook: wpss_single_service_portfolio
+			 *
+			 * @hooked SingleServiceView::render_portfolio - 10
+			 *
+			 * @param \WPSellServices\Models\Service $service Service object.
+			 */
+			do_action( 'wpss_single_service_portfolio', $service );
+
+			/**
 			 * Hook: wpss_single_service_related
 			 *
 			 * @hooked wpss_related_services - 10
