@@ -498,7 +498,7 @@
 					action: 'wpss_add_service_to_cart',
 					service_id: options.serviceId,
 					package_id: options.packageIndex,
-					nonce: wpssData.nonce
+					nonce: wpssData.serviceNonce || wpssData.contactNonce
 				},
 				success: function(response) {
 					if (response.success) {

@@ -130,7 +130,7 @@
             formData.append('action', 'wpss_send_message');
             formData.append('conversation_id', this.state.conversationId);
             formData.append('message', message);
-            formData.append('nonce', wpssData.nonce);
+            formData.append('nonce', wpssData.sendMessageNonce || wpssData.nonce);
 
             // Add files.
             const files = $fileInput[0].files;
@@ -390,7 +390,7 @@
                     action: 'wpss_get_messages',
                     conversation_id: this.state.conversationId,
                     after_id: this.state.lastMessageId,
-                    nonce: wpssData.nonce
+                    nonce: wpssData.messageNonce || wpssData.nonce
                 },
                 success: function(response) {
                     self.state.retryCount = 0;
@@ -469,7 +469,7 @@
                     conversation_id: this.state.conversationId,
                     before_id: beforeId,
                     limit: 20,
-                    nonce: wpssData.nonce
+                    nonce: wpssData.messageNonce || wpssData.nonce
                 },
                 success: function(response) {
                     if (response.success && response.data.messages && response.data.messages.length) {
