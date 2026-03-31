@@ -1399,6 +1399,29 @@ function wpss_resolve_checkout_addons( int $service_id ): array {
 		'delivery_days_extra' => 0,
 	);
 
+	// Try pre-resolved addons_data first (sent by checkout form as JSON).
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
+	$addons_json = isset( $_POST['addons_data'] ) ? sanitize_text_field( wp_unslash( $_POST['addons_data'] ) ) : '';
+	if ( $addons_json ) {
+		$addons_array = json_decode( $addons_json, true );
+		if ( is_array( $addons_array ) ) {
+			foreach ( $addons_array as $addon ) {
+				$addon_price                    = (float) ( $addon['price'] ?? 0 );
+				$extra_days                     = (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? 0 );
+				$result['addons_total']        += $addon_price;
+				$result['delivery_days_extra'] += $extra_days;
+				$result['addons'][]             = array(
+					'id'                  => (int) ( $addon['id'] ?? 0 ),
+					'name'                => sanitize_text_field( $addon['name'] ?? $addon['title'] ?? '' ),
+					'price'               => $addon_price,
+					'delivery_days_extra' => $extra_days,
+				);
+			}
+			return $result;
+		}
+	}
+
+	// Fallback: resolve from addon_ids (indices into _wpss_extras post meta).
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
 	$addon_ids_raw = isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '';
 
@@ -1406,24 +1429,24 @@ function wpss_resolve_checkout_addons( int $service_id ): array {
 		return $result;
 	}
 
-	$addon_ids     = array_map( 'absint', explode( ',', $addon_ids_raw ) );
-	$addon_ids     = array_filter( $addon_ids );
-	$addon_service = new \WPSellServices\Services\ServiceAddonService();
+	$addon_indices = array_map( 'intval', explode( ',', $addon_ids_raw ) );
+	$all_extras    = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
 
-	foreach ( $addon_ids as $addon_id ) {
-		$addon = $addon_service->get( $addon_id );
-		if ( $addon && (int) $addon->service_id === $service_id && ! empty( $addon->is_active ) ) {
-			$addon_price                    = (float) $addon->price;
-			$result['addons_total']        += $addon_price;
-			$extra_days                     = (int) ( $addon->delivery_days_extra ?? 0 );
-			$result['delivery_days_extra'] += $extra_days;
-			$result['addons'][]             = array(
-				'id'                  => (int) $addon->id,
-				'name'                => $addon->title ?? '',
-				'price'               => $addon_price,
-				'delivery_days_extra' => $extra_days,
-			);
+	foreach ( $addon_indices as $index ) {
+		if ( $index < 0 || ! isset( $all_extras[ $index ] ) ) {
+			continue;
 		}
+		$extra                          = $all_extras[ $index ];
+		$addon_price                    = (float) ( $extra['price'] ?? 0 );
+		$extra_days                     = (int) ( $extra['delivery_time'] ?? $extra['delivery_days_extra'] ?? 0 );
+		$result['addons_total']        += $addon_price;
+		$result['delivery_days_extra'] += $extra_days;
+		$result['addons'][]             = array(
+			'id'                  => $index,
+			'name'                => sanitize_text_field( $extra['title'] ?? '' ),
+			'price'               => $addon_price,
+			'delivery_days_extra' => $extra_days,
+		);
 	}
 
 	return $result;
