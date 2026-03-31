@@ -282,6 +282,47 @@ class TestGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Multi-checkout: create orders for all cart items in one payment.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
+		$is_multi = ! empty( $_POST['is_multi_checkout'] );
+		if ( $is_multi ) {
+			$customer_id    = get_current_user_id();
+			$cart           = get_user_meta( $customer_id, '_wpss_cart', true ) ?: array();
+			$order_provider = wpss_get_order_provider();
+
+			if ( empty( $cart ) || ! $order_provider ) {
+				wp_send_json_error( array( 'message' => __( 'Cart is empty.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$transaction_id = 'test_' . wp_generate_uuid4();
+			$order_ids      = $order_provider->create_orders_from_cart( $cart, 'test', $transaction_id, $customer_id );
+
+			if ( empty( $order_ids ) ) {
+				wp_send_json_error( array( 'message' => __( 'Failed to create orders.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			// Mark all orders as paid.
+			foreach ( $order_ids as $oid ) {
+				$order_provider->mark_as_paid( $oid, $transaction_id, 'test' );
+			}
+
+			// Clear cart.
+			delete_user_meta( $customer_id, '_wpss_cart' );
+
+			$dashboard_url = wpss_get_page_url( 'dashboard' );
+			$redirect      = $dashboard_url ? add_query_arg( 'tab', 'orders', $dashboard_url ) : home_url();
+
+			wp_send_json_success(
+				array(
+					'order_ids'    => $order_ids,
+					'redirect_url' => $redirect,
+				)
+			);
+			return;
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
 		$service_id = isset( $_POST['service_id'] ) ? (int) wp_unslash( $_POST['service_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
