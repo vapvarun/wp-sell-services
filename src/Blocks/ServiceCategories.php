@@ -74,43 +74,43 @@ class ServiceCategories extends AbstractBlock {
 	 */
 	public function get_attributes(): array {
 		return [
-			'layout'       => [
+			'layout'     => [
 				'type'    => 'string',
 				'default' => 'grid',
 			],
-			'columns'      => [
+			'columns'    => [
 				'type'    => 'number',
 				'default' => 4,
 			],
-			'showCount'    => [
+			'showCount'  => [
 				'type'    => 'boolean',
 				'default' => true,
 			],
-			'showIcon'     => [
+			'showIcon'   => [
 				'type'    => 'boolean',
 				'default' => true,
 			],
-			'showImage'    => [
+			'showImage'  => [
 				'type'    => 'boolean',
 				'default' => false,
 			],
-			'hideEmpty'    => [
+			'hideEmpty'  => [
 				'type'    => 'boolean',
 				'default' => false,
 			],
-			'parentOnly'   => [
+			'parentOnly' => [
 				'type'    => 'boolean',
 				'default' => false,
 			],
-			'maxItems'     => [
+			'maxItems'   => [
 				'type'    => 'number',
 				'default' => 8,
 			],
-			'orderBy'      => [
+			'orderBy'    => [
 				'type'    => 'string',
 				'default' => 'name',
 			],
-			'order'        => [
+			'order'      => [
 				'type'    => 'string',
 				'default' => 'ASC',
 			],
@@ -158,7 +158,7 @@ class ServiceCategories extends AbstractBlock {
 
 		if ( is_wp_error( $categories ) || empty( $categories ) ) {
 			?>
-			<div <?php echo $this->get_wrapper_attributes( $attributes ); ?>>
+			<div <?php echo $this->get_wrapper_attributes( $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 				<p class="wpss-no-categories"><?php esc_html_e( 'No categories found.', 'wp-sell-services' ); ?></p>
 			</div>
 			<?php
@@ -170,7 +170,7 @@ class ServiceCategories extends AbstractBlock {
 			'wpss-grid-cols-' . $attributes['columns'],
 		];
 		?>
-		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?>>
+		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 			<div class="wpss-categories-list">
 				<?php foreach ( $categories as $category ) : ?>
 					<?php $this->render_category_card( $category, $attributes ); ?>
@@ -225,7 +225,7 @@ class ServiceCategories extends AbstractBlock {
 						printf(
 							/* translators: %d: number of services */
 							esc_html( _n( '%d service', '%d services', $category->count, 'wp-sell-services' ) ),
-							$category->count
+							absint( $category->count )
 						);
 						?>
 					</span>

@@ -224,7 +224,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 			foreach ( $addon_ids as $addon_index ) {
 				if ( isset( $all_extras[ $addon_index ] ) ) {
-					$extra           = $all_extras[ $addon_index ];
+					$extra             = $all_extras[ $addon_index ];
 					$selected_addons[] = (object) [
 						'id'                  => $addon_index,
 						'title'               => $extra['title'] ?? '',
@@ -330,11 +330,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * Used for both regular checkout and pay_order flow. When $pay_order is provided,
 	 * the order total is used directly (skipping package price and tax calculation).
 	 *
-	 * @param \WPSellServices\Models\Service $service    Service.
-	 * @param int                            $package_id Selected package ID (ignored when $pay_order is set).
-	 * @param int                            $quantity   Quantity (ignored when $pay_order is set).
+	 * @param \WPSellServices\Models\Service           $service    Service.
+	 * @param int                                      $package_id Selected package ID (ignored when $pay_order is set).
+	 * @param int                                      $quantity   Quantity (ignored when $pay_order is set).
 	 * @param \WPSellServices\Models\ServiceOrder|null $pay_order       Existing order to pay (from proposal acceptance).
-	 * @param array                          $selected_addons Validated addon objects from the addons table.
+	 * @param array                                    $selected_addons Validated addon objects from the addons table.
 	 * @return void
 	 */
 	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null, array $selected_addons = array() ): void {
@@ -354,7 +354,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$vendor_name      = $vendor ? $vendor->display_name : '';
 		} else {
 			// Regular checkout flow: calculate price from package.
-			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
+			$packages         = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
 			$selected_package = null;
 
 			if ( isset( $packages[ $package_id ] ) ) {
@@ -408,7 +408,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		// Get available payment gateways.
-		$gateways = wpss()->get_payment_gateways();
+		$gateways         = wpss()->get_payment_gateways();
 		$enabled_gateways = array_filter( $gateways, fn( $g ) => $g->is_enabled() );
 
 		// Vendor data for regular checkout.
@@ -687,7 +687,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<?php
 				// Multi-cart safeguard: warn if other items remain in cart.
 				if ( ! $is_pay_order ) :
-					$remaining_cart = $this->get_cart();
+					$remaining_cart  = $this->get_cart();
 					$remaining_count = 0;
 					foreach ( $remaining_cart as $cart_item ) {
 						if ( (int) ( $cart_item['service_id'] ?? 0 ) !== $service->id ) {
@@ -701,13 +701,15 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								<?php
 								printf(
 									/* translators: 1: number of remaining items, 2: current service title */
-									esc_html( _n(
-										'You have %1$d more item in your cart. This checkout is for %2$s only. Your other item will remain in your cart for separate checkout.',
-										'You have %1$d more items in your cart. This checkout is for %2$s only. Your other items will remain in your cart for separate checkout.',
-										$remaining_count,
-										'wp-sell-services'
-									) ),
-									$remaining_count,
+									esc_html(
+										_n(
+											'You have %1$d more item in your cart. This checkout is for %2$s only. Your other item will remain in your cart for separate checkout.',
+											'You have %1$d more items in your cart. This checkout is for %2$s only. Your other items will remain in your cart for separate checkout.',
+											$remaining_count,
+											'wp-sell-services'
+										)
+									),
+									absint( $remaining_count ),
 									'<strong>' . esc_html( $service->title ) . '</strong>'
 								);
 								?>
@@ -930,7 +932,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 								// Get latest review for this vendor.
 								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, u.display_name as reviewer_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-							?>
+								?>
 							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
 								<div class="wpss-card__header">
 									<h3 class="wpss-card__title"><?php esc_html_e( 'About the Seller', 'wp-sell-services' ); ?></h3>
@@ -950,7 +952,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											<span class="wpss-co-seller-stat__label">
 												<?php
 												/* translators: %d: number of reviews */
-												printf( esc_html( _n( '%d Review', '%d Reviews', $review_count, 'wp-sell-services' ) ), $review_count );
+												printf( esc_html( _n( '%d Review', '%d Reviews', $review_count, 'wp-sell-services' ) ), absint( $review_count ) );
 												?>
 											</span>
 										</div>

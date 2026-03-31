@@ -147,7 +147,7 @@ abstract class RestController extends WP_REST_Controller {
 	 * @return array{page: int, per_page: int, offset: int}
 	 */
 	protected function get_pagination_args( WP_REST_Request $request ): array {
-		$page = max( 1, (int) $request->get_param( 'page' ) );
+		$page     = max( 1, (int) $request->get_param( 'page' ) );
 		$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 10 ) );
 
 		return [
@@ -229,7 +229,7 @@ abstract class RestController extends WP_REST_Controller {
 	 */
 	protected function get_common_schema_properties(): array {
 		return [
-			'id' => [
+			'id'         => [
 				'description' => __( 'Unique identifier.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'context'     => [ 'view', 'edit' ],

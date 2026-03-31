@@ -65,7 +65,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 								$price = $service->get_starting_price();
 								if ( $price > 0 ) {
 									/* translators: %s: price */
-									printf( esc_html__( 'From %s', 'wp-sell-services' ), wpss_format_price( $price ) );
+									printf( esc_html__( 'From %s', 'wp-sell-services' ), wp_kses_post( wpss_format_price( $price ) ) );
 								} else {
 									esc_html_e( 'Price not set', 'wp-sell-services' );
 								}

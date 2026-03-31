@@ -167,7 +167,7 @@ class SellerLevelsController extends RestController {
 			$stats = $this->get_vendor_stats( $vendor_id );
 
 			// Determine next level.
-			$level_keys = array_keys( $levels );
+			$level_keys  = array_keys( $levels );
 			$current_idx = array_search( $current_level, $level_keys, true );
 			$next_level  = isset( $level_keys[ $current_idx + 1 ] ) ? $level_keys[ $current_idx + 1 ] : null;
 
@@ -178,7 +178,7 @@ class SellerLevelsController extends RestController {
 				$progress     = array();
 
 				foreach ( $requirements as $metric => $target ) {
-					$current_value = $stats[ $metric ] ?? 0;
+					$current_value       = $stats[ $metric ] ?? 0;
 					$progress[ $metric ] = array(
 						'current'    => $current_value,
 						'target'     => $target,
@@ -187,9 +187,9 @@ class SellerLevelsController extends RestController {
 				}
 
 				$data['next_level'] = array(
-					'key'          => $next_level,
-					'label'        => $levels[ $next_level ]['label'],
-					'progress'     => $progress,
+					'key'      => $next_level,
+					'label'    => $levels[ $next_level ]['label'],
+					'progress' => $progress,
 				);
 			} else {
 				$data['next_level'] = null;
@@ -238,8 +238,8 @@ class SellerLevelsController extends RestController {
 	 * @return array
 	 */
 	private function get_level_definitions(): array {
-		$level_service  = new SellerLevelService();
-		$all_reqs       = $level_service->get_all_requirements();
+		$level_service = new SellerLevelService();
+		$all_reqs      = $level_service->get_all_requirements();
 
 		$labels = SellerLevelService::get_level_labels();
 

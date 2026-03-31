@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$service_id    = get_the_ID();
+$service_id = get_the_ID();
 global $wpdb;
 $reviews_table = $wpdb->prefix . 'wpss_reviews';
 
@@ -96,7 +96,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 					printf(
 						/* translators: %d: number of reviews */
 						esc_html( _n( '%d review', '%d reviews', $rating_count, 'wp-sell-services' ) ),
-						$rating_count
+						absint( $rating_count )
 					);
 					?>
 				</span>
@@ -124,14 +124,14 @@ do_action( 'wpss_before_service_reviews', $service_id );
 		<div class="wpss-reviews-list">
 			<?php foreach ( $reviews as $review ) : ?>
 				<?php
-				$reviewer = get_userdata( $review->customer_id );
+				$reviewer     = get_userdata( $review->customer_id );
 				$service_post = get_post( $review->service_id );
 				?>
 				<div class="wpss-review">
 					<div class="wpss-review-header">
 						<img src="<?php echo esc_url( get_avatar_url( $review->customer_id, [ 'size' => 48 ] ) ); ?>"
-							 alt="<?php echo esc_attr( $reviewer ? $reviewer->display_name : '' ); ?>"
-							 class="wpss-review-avatar">
+							alt="<?php echo esc_attr( $reviewer ? $reviewer->display_name : '' ); ?>"
+							class="wpss-review-avatar">
 						<div class="wpss-review-info">
 							<strong class="wpss-review-author">
 								<?php echo esc_html( $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
@@ -183,7 +183,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 								printf(
 									/* translators: %d: number of people */
 									esc_html( _n( '%d person found this helpful', '%d people found this helpful', $review->helpful_count, 'wp-sell-services' ) ),
-									$review->helpful_count
+									absint( $review->helpful_count )
 								);
 								?>
 							</span>

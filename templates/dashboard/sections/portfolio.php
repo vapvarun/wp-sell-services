@@ -51,8 +51,8 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 			printf(
 				/* translators: 1: current count, 2: max items */
 				esc_html__( '%1$d of %2$d items', 'wp-sell-services' ),
-				$item_count,
-				$max_items
+				absint( $item_count ),
+				absint( $max_items )
 			);
 			?>
 		</p>
@@ -72,9 +72,23 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 		<div class="wpss-portfolio__grid" id="wpss-portfolio-grid">
 			<?php foreach ( $items as $item ) : ?>
 				<?php
-			$media_ids    = wp_json_encode( array_map( function ( $m ) { return $m['id']; }, $item['media'] ) );
-			$media_thumbs = wp_json_encode( array_map( function ( $m ) { return $m['thumbnail'] ?? $m['url']; }, $item['media'] ) );
-			?>
+				$media_ids    = wp_json_encode(
+					array_map(
+						function ( $m ) {
+							return $m['id'];
+						},
+						$item['media']
+					)
+				);
+				$media_thumbs = wp_json_encode(
+					array_map(
+						function ( $m ) {
+							return $m['thumbnail'] ?? $m['url'];
+						},
+						$item['media']
+					)
+				);
+				?>
 				<div class="wpss-portfolio__item"
 					data-item-id="<?php echo esc_attr( $item['id'] ); ?>"
 					data-description="<?php echo esc_attr( $item['description'] ); ?>"

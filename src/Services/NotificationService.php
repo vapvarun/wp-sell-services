@@ -34,8 +34,8 @@ class NotificationService {
 	public const TYPE_DISPUTE_RESOLVED   = 'dispute_resolved';
 	public const TYPE_DEADLINE_WARNING   = 'deadline_warning';
 	public const TYPE_VENDOR_REGISTERED  = 'vendor_registered';
-	public const TYPE_VENDOR_APPROVED   = 'vendor_approved';
-	public const TYPE_VENDOR_REJECTED   = 'vendor_rejected';
+	public const TYPE_VENDOR_APPROVED    = 'vendor_approved';
+	public const TYPE_VENDOR_REJECTED    = 'vendor_rejected';
 
 	/**
 	 * Create notification.
@@ -356,7 +356,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				// Notify buyer that work has started.
 				$this->create(
@@ -370,7 +373,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				break;
 
@@ -387,7 +393,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				break;
 
@@ -404,7 +413,10 @@ class NotificationService {
 						esc_html( $service_name ),
 						esc_html( $vendor_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				$this->create(
 					$order->vendor_id,
@@ -417,7 +429,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				break;
 
@@ -434,14 +449,17 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				break;
 
 			case 'cancellation_requested':
 				// Parse cancellation reason.
-				$cancel_data  = json_decode( $order->vendor_notes ?? '', true );
-				$reason       = $cancel_data['reason'] ?? '';
+				$cancel_data   = json_decode( $order->vendor_notes ?? '', true );
+				$reason        = $cancel_data['reason'] ?? '';
 				$reason_labels = array(
 					'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
 					'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
@@ -450,7 +468,7 @@ class NotificationService {
 					'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
 					'other'                => __( 'Other', 'wp-sell-services' ),
 				);
-				$reason_label = $reason_labels[ $reason ] ?? $reason;
+				$reason_label  = $reason_labels[ $reason ] ?? $reason;
 
 				// Notify vendor.
 				$this->create(
@@ -465,7 +483,10 @@ class NotificationService {
 						esc_html( $service_name ),
 						esc_html( $reason_label )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				// Notify buyer.
 				$this->create(
@@ -478,7 +499,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				break;
 
@@ -494,7 +518,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				$this->create(
 					$order->vendor_id,
@@ -507,7 +534,10 @@ class NotificationService {
 						esc_html( $service_name ),
 						esc_html( $buyer_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				break;
 
@@ -523,7 +553,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				$this->create(
 					$order->vendor_id,
@@ -535,7 +568,10 @@ class NotificationService {
 						esc_html( $order_number ),
 						esc_html( $service_name )
 					),
-					array( 'order_id' => $order_id, 'order_number' => $order_number )
+					array(
+						'order_id'     => $order_id,
+						'order_number' => $order_number,
+					)
 				);
 				break;
 
@@ -554,7 +590,11 @@ class NotificationService {
 							esc_html( $status_label ),
 							esc_html( $service_name )
 						),
-						array( 'order_id' => $order_id, 'order_number' => $order_number, 'new_status' => $new_status )
+						array(
+							'order_id'     => $order_id,
+							'order_number' => $order_number,
+							'new_status'   => $new_status,
+						)
 					);
 				}
 				break;
@@ -592,7 +632,7 @@ class NotificationService {
 		if ( $conversation ) {
 			$order_number = $conversation->order_number ?? '';
 			if ( ! empty( $conversation->service_id ) ) {
-				$service = get_post( $conversation->service_id );
+				$service      = get_post( $conversation->service_id );
 				$service_name = $service ? $service->post_title : '';
 			}
 		}
@@ -625,7 +665,7 @@ class NotificationService {
 		// Include the actual message content.
 		if ( ! empty( $message_content ) ) {
 			// Truncate long messages for email preview.
-			$preview = wp_trim_words( wp_strip_all_tags( $message_content ), 50, '...' );
+			$preview       = wp_trim_words( wp_strip_all_tags( $message_content ), 50, '...' );
 			$notification .= '<br><br>';
 			$notification .= '<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #1e3a5f; margin: 10px 0;">';
 			$notification .= '<strong>' . esc_html__( 'Message:', 'wp-sell-services' ) . '</strong><br>';
@@ -725,11 +765,11 @@ class NotificationService {
 			__( 'New Review Received', 'wp-sell-services' ),
 			$message,
 			array(
-				'review_id'    => $review_id,
-				'order_id'     => $order_id,
-				'service_id'   => (int) $review->service_id,
-				'rating'       => $rating,
-				'reviewer_id'  => (int) $review->customer_id,
+				'review_id'   => $review_id,
+				'order_id'    => $order_id,
+				'service_id'  => (int) $review->service_id,
+				'rating'      => $rating,
+				'reviewer_id' => (int) $review->customer_id,
 			)
 		);
 	}
@@ -772,7 +812,7 @@ class NotificationService {
 			'favor_vendor'     => __( 'resolved in favor of the seller', 'wp-sell-services' ),
 			'mutual_agreement' => __( 'resolved by mutual agreement', 'wp-sell-services' ),
 		);
-		$resolution_label = $resolution_labels[ $resolution ] ?? __( 'resolved', 'wp-sell-services' );
+		$resolution_label  = $resolution_labels[ $resolution ] ?? __( 'resolved', 'wp-sell-services' );
 
 		// Notify customer.
 		$customer_message = sprintf(
@@ -874,10 +914,10 @@ class NotificationService {
 
 		switch ( $type ) {
 			case 'dispute_opened':
-				$title = __( 'Dispute Opened', 'wp-sell-services' );
-				$opener = get_user_by( 'id', $data['opened_by'] ?? 0 );
+				$title       = __( 'Dispute Opened', 'wp-sell-services' );
+				$opener      = get_user_by( 'id', $data['opened_by'] ?? 0 );
 				$opener_name = $opener ? $opener->display_name : __( 'The other party', 'wp-sell-services' );
-				$message = sprintf(
+				$message     = sprintf(
 					/* translators: 1: opener name, 2: order ID */
 					__( '<strong>%1$s</strong> has opened a dispute for Order #%2$d.', 'wp-sell-services' ),
 					esc_html( $opener_name ),
@@ -903,10 +943,10 @@ class NotificationService {
 				break;
 
 			case 'dispute_response_received':
-				$title = __( 'Dispute Response Received', 'wp-sell-services' );
+				$title     = __( 'Dispute Response Received', 'wp-sell-services' );
 				$from_user = get_user_by( 'id', $data['from_user'] ?? 0 );
 				$from_name = $from_user ? $from_user->display_name : __( 'The other party', 'wp-sell-services' );
-				$message = sprintf(
+				$message   = sprintf(
 					/* translators: 1: responder name, 2: order ID */
 					__( '<strong>%1$s</strong> has responded to the dispute for Order #%2$d.', 'wp-sell-services' ),
 					esc_html( $from_name ),
@@ -926,7 +966,7 @@ class NotificationService {
 				);
 
 			case 'dispute_reminder':
-				$title = __( 'Dispute Response Reminder', 'wp-sell-services' );
+				$title   = __( 'Dispute Response Reminder', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: %d: order ID */
 					__( 'This is a reminder that you have a pending dispute for Order #%d that requires your response.', 'wp-sell-services' ),
@@ -937,7 +977,7 @@ class NotificationService {
 				break;
 
 			case 'deadline_warning':
-				$title = __( 'Order Deadline Approaching', 'wp-sell-services' );
+				$title   = __( 'Order Deadline Approaching', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: %d: order ID */
 					__( 'The delivery deadline for Order #%d is approaching.', 'wp-sell-services' ),
@@ -948,7 +988,7 @@ class NotificationService {
 				break;
 
 			default:
-				$title = __( 'Notification', 'wp-sell-services' );
+				$title   = __( 'Notification', 'wp-sell-services' );
 				$message = __( 'You have a new notification. Please check your dashboard for details.', 'wp-sell-services' );
 				break;
 		}

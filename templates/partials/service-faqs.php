@@ -46,8 +46,8 @@ do_action( 'wpss_before_service_faqs', $service_id );
 						<span class="wpss-faq-icon" aria-hidden="true"></span>
 					</button>
 					<div class="wpss-faq-answer"
-						 id="wpss-faq-<?php echo esc_attr( $index ); ?>"
-						 hidden>
+						id="wpss-faq-<?php echo esc_attr( $index ); ?>"
+						hidden>
 						<?php echo wp_kses_post( wpautop( $faq['answer'] ) ); ?>
 					</div>
 				</div>

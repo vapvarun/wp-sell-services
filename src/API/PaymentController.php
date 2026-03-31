@@ -148,10 +148,10 @@ class PaymentController extends RestController {
 			}
 
 			$methods[] = array(
-				'id'                 => $gateway->get_id(),
-				'name'               => $gateway->get_name(),
-				'description'        => $gateway->get_description(),
-				'supports_currency'  => $gateway->supports_currency( $currency ),
+				'id'                => $gateway->get_id(),
+				'name'              => $gateway->get_name(),
+				'description'       => $gateway->get_description(),
+				'supports_currency' => $gateway->supports_currency( $currency ),
 			);
 		}
 
@@ -174,10 +174,10 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_intent( WP_REST_Request $request ) {
-		$service_id  = (int) $request->get_param( 'service_id' );
-		$package_id  = (int) $request->get_param( 'package_id' );
-		$gateway_id  = sanitize_text_field( $request->get_param( 'gateway' ) );
-		$pay_order   = (int) $request->get_param( 'pay_order' );
+		$service_id = (int) $request->get_param( 'service_id' );
+		$package_id = (int) $request->get_param( 'package_id' );
+		$gateway_id = sanitize_text_field( $request->get_param( 'gateway' ) );
+		$pay_order  = (int) $request->get_param( 'pay_order' );
 
 		// Resolve amount: from existing order or from service package.
 		$amount   = 0.0;
@@ -372,9 +372,9 @@ class PaymentController extends RestController {
 
 		return new WP_REST_Response(
 			array(
-				'gateway'        => 'paypal',
+				'gateway'         => 'paypal',
 				'paypal_order_id' => $result['id'],
-				'approval_url'   => $result['approval_url'],
+				'approval_url'    => $result['approval_url'],
 			),
 			201
 		);

@@ -103,7 +103,7 @@ class API {
 					'callback'            => [ $this, 'get_categories' ],
 					'permission_callback' => '__return_true',
 					'args'                => [
-						'parent' => [
+						'parent'     => [
 							'description' => __( 'Parent category ID.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
@@ -113,7 +113,7 @@ class API {
 							'type'        => 'boolean',
 							'default'     => true,
 						],
-						'per_page' => [
+						'per_page'   => [
 							'description' => __( 'Maximum number of categories to return.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 100,
@@ -200,7 +200,10 @@ class API {
 							'items'       => [
 								'type'       => 'object',
 								'properties' => [
-									'method' => [ 'type' => 'string', 'enum' => [ 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ] ],
+									'method' => [
+										'type' => 'string',
+										'enum' => [ 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ],
+									],
 									'path'   => [ 'type' => 'string' ],
 									'body'   => [ 'type' => 'object' ],
 								],
@@ -221,12 +224,12 @@ class API {
 					'callback'            => [ $this, 'search' ],
 					'permission_callback' => '__return_true',
 					'args'                => [
-						'q' => [
+						'q'        => [
 							'description' => __( 'Search query.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						],
-						'type' => [
+						'type'     => [
 							'description' => __( 'Search type.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'default'     => 'all',
@@ -341,23 +344,23 @@ class API {
 		$pages_settings  = get_option( 'wpss_pages', array() );
 
 		$settings = [
-			'currency'           => wpss_get_currency(),
-			'currency_symbol'    => wpss_get_currency_symbol(),
-			'currency_position'  => get_option( 'wpss_currency_position', 'before' ),
-			'decimal_places'     => (int) get_option( 'wpss_decimal_places', 2 ),
-			'min_order_amount'   => (float) get_option( 'wpss_min_order_amount', 5 ),
-			'max_order_amount'   => (float) get_option( 'wpss_max_order_amount', 10000 ),
+			'currency'            => wpss_get_currency(),
+			'currency_symbol'     => wpss_get_currency_symbol(),
+			'currency_position'   => get_option( 'wpss_currency_position', 'before' ),
+			'decimal_places'      => (int) get_option( 'wpss_decimal_places', 2 ),
+			'min_order_amount'    => (float) get_option( 'wpss_min_order_amount', 5 ),
+			'max_order_amount'    => (float) get_option( 'wpss_max_order_amount', 10000 ),
 			'vendor_registration' => $vendor_settings['vendor_registration'] ?? 'open',
-			'service_moderation' => ! empty( $vendor_settings['require_service_moderation'] ),
-			'review_moderation'  => (bool) get_option( 'wpss_review_moderation', false ),
-			'max_file_size'      => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
-			'allowed_file_types' => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
-			'pages'              => [
-				'services'    => (int) ( $pages_settings['services_page'] ?? 0 ),
-				'vendors'     => (int) ( $pages_settings['vendors_page'] ?? 0 ),
-				'dashboard'   => (int) ( $pages_settings['dashboard'] ?? 0 ),
-				'checkout'    => (int) ( $pages_settings['checkout'] ?? 0 ),
-				'terms'       => (int) get_option( 'wpss_terms_page' ),
+			'service_moderation'  => ! empty( $vendor_settings['require_service_moderation'] ),
+			'review_moderation'   => (bool) get_option( 'wpss_review_moderation', false ),
+			'max_file_size'       => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
+			'allowed_file_types'  => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
+			'pages'               => [
+				'services'  => (int) ( $pages_settings['services_page'] ?? 0 ),
+				'vendors'   => (int) ( $pages_settings['vendors_page'] ?? 0 ),
+				'dashboard' => (int) ( $pages_settings['dashboard'] ?? 0 ),
+				'checkout'  => (int) ( $pages_settings['checkout'] ?? 0 ),
+				'terms'     => (int) get_option( 'wpss_terms_page' ),
 			],
 		];
 
@@ -617,7 +620,10 @@ class API {
 			if ( ! str_starts_with( $path, '/wpss/v1/' ) ) {
 				$responses[] = [
 					'status' => 400,
-					'body'   => [ 'code' => 'invalid_path', 'message' => __( 'Path must start with /wpss/v1/', 'wp-sell-services' ) ],
+					'body'   => [
+						'code'    => 'invalid_path',
+						'message' => __( 'Path must start with /wpss/v1/', 'wp-sell-services' ),
+					],
 				];
 				continue;
 			}

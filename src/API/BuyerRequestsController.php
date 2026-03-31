@@ -74,19 +74,21 @@ class BuyerRequestsController extends RestController {
 					'args'                => array_merge(
 						$this->get_collection_params(),
 						[
-							'category' => [
+							'category'   => [
 								'type'              => 'integer',
 								'sanitize_callback' => 'absint',
 							],
 							'budget_min' => [
 								'type'              => 'number',
-								'sanitize_callback' => function ( $value ) { return (float) $value; },
+								'sanitize_callback' => function ( $value ) {
+									return (float) $value; },
 							],
 							'budget_max' => [
 								'type'              => 'number',
-								'sanitize_callback' => function ( $value ) { return (float) $value; },
+								'sanitize_callback' => function ( $value ) {
+									return (float) $value; },
 							],
-							'search' => [
+							'search'     => [
 								'type'              => 'string',
 								'sanitize_callback' => 'sanitize_text_field',
 							],
@@ -98,29 +100,31 @@ class BuyerRequestsController extends RestController {
 					'callback'            => [ $this, 'create_item' ],
 					'permission_callback' => [ $this, 'check_permissions' ],
 					'args'                => [
-						'title'       => [
+						'title'           => [
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'description' => [
+						'description'     => [
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'wp_kses_post',
 						],
-						'category'    => [
+						'category'        => [
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						],
-						'budget_min'  => [
+						'budget_min'      => [
 							'type'              => 'number',
-							'sanitize_callback' => function ( $value ) { return (float) $value; },
+							'sanitize_callback' => function ( $value ) {
+								return (float) $value; },
 						],
-						'budget_max'  => [
+						'budget_max'      => [
 							'type'              => 'number',
-							'sanitize_callback' => function ( $value ) { return (float) $value; },
+							'sanitize_callback' => function ( $value ) {
+								return (float) $value; },
 						],
-						'deadline'    => [
+						'deadline'        => [
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						],
@@ -189,11 +193,13 @@ class BuyerRequestsController extends RestController {
 						],
 						'budget_min'  => [
 							'type'              => 'number',
-							'sanitize_callback' => function ( $value ) { return (float) $value; },
+							'sanitize_callback' => function ( $value ) {
+								return (float) $value; },
 						],
 						'budget_max'  => [
 							'type'              => 'number',
-							'sanitize_callback' => function ( $value ) { return (float) $value; },
+							'sanitize_callback' => function ( $value ) {
+								return (float) $value; },
 						],
 						'deadline'    => [
 							'type'              => 'string',
@@ -246,25 +252,26 @@ class BuyerRequestsController extends RestController {
 					'callback'            => [ $this, 'submit_proposal' ],
 					'permission_callback' => [ $this, 'check_vendor_permission' ],
 					'args'                => [
-						'id'              => [
+						'id'            => [
 							'validate_callback' => [ $this, 'validate_id' ],
 						],
-						'cover_letter'    => [
+						'cover_letter'  => [
 							'required'          => true,
 							'type'              => 'string',
 							'sanitize_callback' => 'wp_kses_post',
 						],
-						'price'           => [
+						'price'         => [
 							'required'          => true,
 							'type'              => 'number',
-							'sanitize_callback' => function ( $value ) { return (float) $value; },
+							'sanitize_callback' => function ( $value ) {
+								return (float) $value; },
 						],
-						'delivery_days'   => [
+						'delivery_days' => [
 							'required'          => true,
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						],
-						'service_id'      => [
+						'service_id'    => [
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						],
@@ -427,16 +434,22 @@ class BuyerRequestsController extends RestController {
 		$user_id    = get_current_user_id();
 		$pagination = $this->get_pagination_args( $request );
 
-		$requests = $this->request_service->get_by_user( $user_id, [
-			'limit'  => $pagination['per_page'],
-			'offset' => $pagination['offset'],
-		] );
+		$requests = $this->request_service->get_by_user(
+			$user_id,
+			[
+				'limit'  => $pagination['per_page'],
+				'offset' => $pagination['offset'],
+			]
+		);
 
 		$total = $this->request_service->count_by_user( $user_id );
 
-		$data = array_map( function ( $req ) {
-			return $this->prepare_request_for_response( $req, true );
-		}, $requests );
+		$data = array_map(
+			function ( $req ) {
+				return $this->prepare_request_for_response( $req, true );
+			},
+			$requests
+		);
 
 		return $this->paginated_response( $data, $total, $pagination['page'], $pagination['per_page'] );
 	}
@@ -564,10 +577,12 @@ class BuyerRequestsController extends RestController {
 
 		$buyer_request = $this->request_service->get( $request_id );
 
-		return new WP_REST_Response( [
-			'message' => __( 'Request updated successfully.', 'wp-sell-services' ),
-			'data'    => $this->prepare_request_for_response( (object) $buyer_request ),
-		] );
+		return new WP_REST_Response(
+			[
+				'message' => __( 'Request updated successfully.', 'wp-sell-services' ),
+				'data'    => $this->prepare_request_for_response( (object) $buyer_request ),
+			]
+		);
 	}
 
 	/**
@@ -636,8 +651,8 @@ class BuyerRequestsController extends RestController {
 
 		return new WP_REST_Response(
 			[
-				'message'      => __( 'Proposal submitted successfully.', 'wp-sell-services' ),
-				'proposal_id'  => $result,
+				'message'     => __( 'Proposal submitted successfully.', 'wp-sell-services' ),
+				'proposal_id' => $result,
 			],
 			201
 		);
@@ -665,11 +680,13 @@ class BuyerRequestsController extends RestController {
 
 		$checkout_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
 
-		return new WP_REST_Response( [
-			'message'      => __( 'Proposal accepted. Order created. Proceed to payment.', 'wp-sell-services' ),
-			'order_id'     => $result['order_id'],
-			'checkout_url' => $checkout_url,
-		] );
+		return new WP_REST_Response(
+			[
+				'message'      => __( 'Proposal accepted. Order created. Proceed to payment.', 'wp-sell-services' ),
+				'order_id'     => $result['order_id'],
+				'checkout_url' => $checkout_url,
+			]
+		);
 	}
 
 	/**

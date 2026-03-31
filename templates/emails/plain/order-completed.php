@@ -20,7 +20,7 @@ $customer    = isset( $recipient ) ? $recipient : get_user_by( 'id', $order->cus
 $vendor      = get_user_by( 'id', $order->vendor_id );
 $vendor_name = $vendor ? $vendor->display_name : __( 'the vendor', 'wp-sell-services' );
 
-echo "= " . esc_html( $email_heading ) . " =\n\n";
+echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
 	/* translators: %s: customer name */
@@ -39,6 +39,7 @@ printf( esc_html__( 'Service: %s', 'wp-sell-services' ), esc_html( get_the_title
 echo "\n";
 printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor_name ) );
 echo "\n";
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is a safe function.
 printf( esc_html__( 'Total: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $order->total ) ) );
 echo "\n";
 echo esc_html__( 'Status: Completed', 'wp-sell-services' );

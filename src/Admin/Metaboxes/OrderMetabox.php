@@ -200,15 +200,15 @@ class OrderMetabox {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_order_admin' ),
 				'i18n'    => array(
-					'confirmStatusChange'     => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
-					'confirmRefund'           => __( 'Are you sure you want to process a refund?', 'wp-sell-services' ),
-					'noteAdded'               => __( 'Note added successfully.', 'wp-sell-services' ),
-					'requirementsSaved'       => __( 'Requirements saved successfully.', 'wp-sell-services' ),
-					'error'                   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'enterNote'               => __( 'Please enter a note.', 'wp-sell-services' ),
-					'update'                  => __( 'Update', 'wp-sell-services' ),
-					'updating'                => __( 'Updating...', 'wp-sell-services' ),
-					'savingRequirements'      => __( 'Saving...', 'wp-sell-services' ),
+					'confirmStatusChange' => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
+					'confirmRefund'       => __( 'Are you sure you want to process a refund?', 'wp-sell-services' ),
+					'noteAdded'           => __( 'Note added successfully.', 'wp-sell-services' ),
+					'requirementsSaved'   => __( 'Requirements saved successfully.', 'wp-sell-services' ),
+					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'enterNote'           => __( 'Please enter a note.', 'wp-sell-services' ),
+					'update'              => __( 'Update', 'wp-sell-services' ),
+					'updating'            => __( 'Updating...', 'wp-sell-services' ),
+					'savingRequirements'  => __( 'Saving...', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -709,8 +709,8 @@ class OrderMetabox {
 
 				if ( ! empty( $messages ) ) :
 					foreach ( $messages as $message ) :
-						$sender  = get_userdata( $message->sender_id );
-						$is_own  = $message->sender_id === get_current_user_id();
+						$sender   = get_userdata( $message->sender_id );
+						$is_own   = $message->sender_id === get_current_user_id();
 						$is_buyer = $message->sender_id === $order->get_buyer_id();
 						?>
 						<div class="wpss-message <?php echo $is_own ? 'wpss-message-own' : ''; ?>">
@@ -764,7 +764,7 @@ class OrderMetabox {
 			return;
 		}
 
-		$status           = $order->get_status();
+		$status            = $order->get_status();
 		$available_actions = $this->get_available_actions( $status );
 		?>
 		<div class="wpss-order-actions">
@@ -805,7 +805,7 @@ class OrderMetabox {
 
 				<?php if ( $order->get_wc_order_id() ) : ?>
 					<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $order->get_wc_order_id() . '&action=edit' ) ); ?>"
-					   class="button" target="_blank">
+						class="button" target="_blank">
 						<?php esc_html_e( 'View WC Order', 'wp-sell-services' ); ?>
 					</a>
 				<?php endif; ?>
@@ -1138,8 +1138,8 @@ class OrderMetabox {
 		);
 
 		// Store admin notes in the meta JSON column (no admin_notes column exists).
-		$meta                 = $order->meta;
-		$meta['admin_notes']  = $notes;
+		$meta                = $order->meta;
+		$meta['admin_notes'] = $notes;
 		$this->order_repo->update( $order_id, array( 'meta' => wp_json_encode( $meta ) ) );
 
 		wp_send_json_success(

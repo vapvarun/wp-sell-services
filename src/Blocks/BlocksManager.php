@@ -82,7 +82,7 @@ class BlocksManager {
 
 		foreach ( $block_classes as $block_class ) {
 			if ( class_exists( $block_class ) ) {
-				$block = new $block_class();
+				$block                              = new $block_class();
 				$this->blocks[ $block->get_name() ] = $block;
 				$block->register();
 			}
@@ -108,9 +108,9 @@ class BlocksManager {
 		$version      = \WPSS_VERSION;
 
 		if ( file_exists( $asset_file ) ) {
-			$asset = include $asset_file;
+			$asset        = include $asset_file;
 			$dependencies = array_merge( $dependencies, $asset['dependencies'] ?? [] );
-			$version = $asset['version'] ?? $version;
+			$version      = $asset['version'] ?? $version;
 		}
 
 		wp_enqueue_script(
@@ -130,26 +130,26 @@ class BlocksManager {
 				'nonce'      => wp_create_nonce( 'wpss_blocks' ),
 				'categories' => $this->get_service_categories(),
 				'i18n'       => [
-					'blockTitle'       => __( 'WP Sell Services', 'wp-sell-services' ),
-					'services'         => __( 'Services', 'wp-sell-services' ),
-					'search'           => __( 'Search', 'wp-sell-services' ),
-					'categories'       => __( 'Categories', 'wp-sell-services' ),
-					'featured'         => __( 'Featured', 'wp-sell-services' ),
-					'seller'           => __( 'Seller', 'wp-sell-services' ),
-					'requests'         => __( 'Requests', 'wp-sell-services' ),
-					'columns'          => __( 'Columns', 'wp-sell-services' ),
-					'perPage'          => __( 'Services per page', 'wp-sell-services' ),
-					'showPagination'   => __( 'Show pagination', 'wp-sell-services' ),
-					'showFilters'      => __( 'Show filters', 'wp-sell-services' ),
-					'showRating'       => __( 'Show rating', 'wp-sell-services' ),
-					'showPrice'        => __( 'Show price', 'wp-sell-services' ),
-					'category'         => __( 'Category', 'wp-sell-services' ),
-					'orderBy'          => __( 'Order by', 'wp-sell-services' ),
-					'order'            => __( 'Order', 'wp-sell-services' ),
-					'allCategories'    => __( 'All Categories', 'wp-sell-services' ),
-					'placeholder'      => __( 'Search services...', 'wp-sell-services' ),
-					'searchButton'     => __( 'Search', 'wp-sell-services' ),
-					'noServicesFound'  => __( 'No services found.', 'wp-sell-services' ),
+					'blockTitle'      => __( 'WP Sell Services', 'wp-sell-services' ),
+					'services'        => __( 'Services', 'wp-sell-services' ),
+					'search'          => __( 'Search', 'wp-sell-services' ),
+					'categories'      => __( 'Categories', 'wp-sell-services' ),
+					'featured'        => __( 'Featured', 'wp-sell-services' ),
+					'seller'          => __( 'Seller', 'wp-sell-services' ),
+					'requests'        => __( 'Requests', 'wp-sell-services' ),
+					'columns'         => __( 'Columns', 'wp-sell-services' ),
+					'perPage'         => __( 'Services per page', 'wp-sell-services' ),
+					'showPagination'  => __( 'Show pagination', 'wp-sell-services' ),
+					'showFilters'     => __( 'Show filters', 'wp-sell-services' ),
+					'showRating'      => __( 'Show rating', 'wp-sell-services' ),
+					'showPrice'       => __( 'Show price', 'wp-sell-services' ),
+					'category'        => __( 'Category', 'wp-sell-services' ),
+					'orderBy'         => __( 'Order by', 'wp-sell-services' ),
+					'order'           => __( 'Order', 'wp-sell-services' ),
+					'allCategories'   => __( 'All Categories', 'wp-sell-services' ),
+					'placeholder'     => __( 'Search services...', 'wp-sell-services' ),
+					'searchButton'    => __( 'Search', 'wp-sell-services' ),
+					'noServicesFound' => __( 'No services found.', 'wp-sell-services' ),
 				],
 			]
 		);
@@ -203,7 +203,7 @@ class BlocksManager {
 	/**
 	 * Register custom block category.
 	 *
-	 * @param array                   $categories Block categories.
+	 * @param array                    $categories Block categories.
 	 * @param \WP_Block_Editor_Context $context    Block editor context.
 	 * @return array
 	 */

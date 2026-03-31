@@ -44,7 +44,7 @@ class SetupWizardPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		if( $this->should_show_in_menu() ){
+		if ( $this->should_show_in_menu() ) {
 			add_submenu_page(
 				'wp-sell-services',
 				__( 'Setup Wizard', 'wp-sell-services' ),
@@ -136,6 +136,7 @@ class SetupWizardPage {
 	 * @return void
 	 */
 	private function save_step_basics(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_save_step().
 		$general    = get_option( 'wpss_general', array() );
 		$commission = get_option( 'wpss_commission', array() );
 
@@ -153,6 +154,7 @@ class SetupWizardPage {
 		update_option( 'wpss_commission', $commission );
 
 		wp_send_json_success( array( 'message' => __( 'Settings saved.', 'wp-sell-services' ) ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -161,6 +163,7 @@ class SetupWizardPage {
 	 * @return void
 	 */
 	private function save_step_gateway(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_save_step().
 		$gateway = sanitize_key( $_POST['gateway'] ?? '' );
 
 		if ( 'stripe' === $gateway ) {
@@ -192,6 +195,7 @@ class SetupWizardPage {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Gateway configured.', 'wp-sell-services' ) ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -200,6 +204,7 @@ class SetupWizardPage {
 	 * @return void
 	 */
 	private function save_step_vendor(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_save_step().
 		$vendor = get_option( 'wpss_vendor', array() );
 
 		if ( isset( $_POST['vendor_registration'] ) ) {
@@ -217,6 +222,7 @@ class SetupWizardPage {
 		update_option( 'wpss_vendor', $vendor );
 
 		wp_send_json_success( array( 'message' => __( 'Vendor settings saved.', 'wp-sell-services' ) ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -334,10 +340,10 @@ class SetupWizardPage {
 		$currency        = $general['currency'] ?? 'USD';
 		$commission_rate = $commission['commission_rate'] ?? 10;
 
-		$vendor_registration        = $vendor['vendor_registration'] ?? 'open';
-		$max_services               = $vendor['max_services_per_vendor'] ?? 20;
-		$require_moderation         = ! empty( $vendor['require_service_moderation'] );
-		$require_verification       = ! empty( $vendor['require_verification'] );
+		$vendor_registration  = $vendor['vendor_registration'] ?? 'open';
+		$max_services         = $vendor['max_services_per_vendor'] ?? 20;
+		$require_moderation   = ! empty( $vendor['require_service_moderation'] );
+		$require_verification = ! empty( $vendor['require_verification'] );
 
 		$page_fields = array(
 			'services_page' => __( 'Services', 'wp-sell-services' ),

@@ -65,30 +65,30 @@ class BuyerRequestPostType {
 		];
 
 		$args = [
-			'labels'              => $labels,
-			'description'         => __( 'Buyer requests for services.', 'wp-sell-services' ),
-			'public'              => true,
-			'publicly_queryable'  => true,
-			'show_ui'             => true,
-			'show_in_menu'        => 'wp-sell-services', // Show under our custom admin menu.
-			'query_var'           => true,
-			'rewrite'             => [
+			'labels'             => $labels,
+			'description'        => __( 'Buyer requests for services.', 'wp-sell-services' ),
+			'public'             => true,
+			'publicly_queryable' => true,
+			'show_ui'            => true,
+			'show_in_menu'       => 'wp-sell-services', // Show under our custom admin menu.
+			'query_var'          => true,
+			'rewrite'            => [
 				'slug'       => $this->get_slug(),
 				'with_front' => false,
 			],
-			'capability_type'     => 'post',
-			'map_meta_cap'        => true,
-			'has_archive'         => true,
-			'hierarchical'        => false,
-			'menu_position'       => null,
-			'supports'            => [
+			'capability_type'    => 'post',
+			'map_meta_cap'       => true,
+			'has_archive'        => true,
+			'hierarchical'       => false,
+			'menu_position'      => null,
+			'supports'           => [
 				'title',
 				'editor',
 				'author',
 				'thumbnail',
 			],
-			'show_in_rest'        => true,
-			'rest_base'           => 'wpss-buyer-requests',
+			'show_in_rest'       => true,
+			'rest_base'          => 'wpss-buyer-requests',
 		];
 
 		/**

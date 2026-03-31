@@ -20,7 +20,7 @@ $customer    = isset( $recipient ) ? $recipient : get_user_by( 'id', $order->cus
 $vendor      = get_user_by( 'id', $order->vendor_id );
 $vendor_name = $vendor ? $vendor->display_name : __( 'The vendor', 'wp-sell-services' );
 
-echo "= " . esc_html( $email_heading ) . " =\n\n";
+echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
 	/* translators: %s: customer name */

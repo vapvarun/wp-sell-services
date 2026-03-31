@@ -56,7 +56,7 @@ do_action( 'wpss_before_service_gallery', $service_id );
 	<div class="wpss-gallery-main">
 		<?php
 		$first_image = reset( $gallery_ids ); // Use reset() instead of [0] to handle non-sequential keys.
-		$is_video = get_post_meta( $service_id, '_wpss_video_url', true );
+		$is_video    = get_post_meta( $service_id, '_wpss_video_url', true );
 
 		/**
 		 * Filters the gallery image size.
@@ -79,8 +79,8 @@ do_action( 'wpss_before_service_gallery', $service_id );
 				</div>
 			<?php else : ?>
 				<img src="<?php echo esc_url( wp_get_attachment_image_url( $first_image, $image_size ) ); ?>"
-					 alt="<?php echo esc_attr( get_the_title() ); ?>"
-					 class="wpss-gallery-image">
+					alt="<?php echo esc_attr( get_the_title() ); ?>"
+					class="wpss-gallery-image">
 			<?php endif; ?>
 		</div>
 	</div>
@@ -93,7 +93,7 @@ do_action( 'wpss_before_service_gallery', $service_id );
 						data-index="<?php echo esc_attr( $index ); ?>"
 						data-src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, $image_size ) ); ?>">
 					<img src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, 'thumbnail' ) ); ?>"
-						 alt="<?php echo esc_attr( get_the_title() . ' - ' . ( $index + 1 ) ); ?>">
+						alt="<?php echo esc_attr( get_the_title() . ' - ' . ( $index + 1 ) ); ?>">
 				</button>
 			<?php endforeach; ?>
 		</div>

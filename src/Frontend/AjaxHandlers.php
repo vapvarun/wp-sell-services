@@ -284,7 +284,7 @@ class AjaxHandlers {
 
 		// Process uploaded files from $_FILES.
 		$files = array();
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput -- $_FILES fields are individually sanitized below; tmp_name/error/size are not user-controlled.
 		if ( ! empty( $_FILES['files'] ) && is_array( $_FILES['files']['name'] ) ) {
 			$file_count = count( $_FILES['files']['name'] );
 			for ( $i = 0; $i < $file_count; $i++ ) {
@@ -294,12 +294,13 @@ class AjaxHandlers {
 				$files[] = array(
 					'name'     => sanitize_file_name( $_FILES['files']['name'][ $i ] ),
 					'type'     => sanitize_mime_type( $_FILES['files']['type'][ $i ] ),
-					'tmp_name' => $_FILES['files']['tmp_name'][ $i ], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+					'tmp_name' => $_FILES['files']['tmp_name'][ $i ],
 					'error'    => (int) $_FILES['files']['error'][ $i ],
 					'size'     => (int) $_FILES['files']['size'][ $i ],
 				);
 			}
 		}
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
@@ -935,7 +936,7 @@ class AjaxHandlers {
 	 *
 	 * @return void
 	 */
-	public function get_new_messages(): void {		
+	public function get_new_messages(): void {
 		check_ajax_referer( 'wpss_frontend_nonce', 'nonce' );
 
 		$order_id = absint( $_POST['order_id'] ?? 0 );
@@ -949,18 +950,18 @@ class AjaxHandlers {
 		// Verify user has access to this order.
 		$order_service = new OrderService();
 		$order         = $order_service->get( $order_id );
-		
+
 		if ( ! $order ) {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
-								
+
 		$is_vendor   = (int) $order->vendor_id === $user_id;
 		$is_customer = (int) $order->customer_id === $user_id;
-									
+
 		if ( ! $is_vendor && ! $is_customer ) {
 			wp_send_json_error( array( 'message' => __( 'Access denied.', 'wp-sell-services' ) ) );
 		}
-									
+
 		global $wpdb;
 
 		// First get the conversation for this order.
@@ -974,11 +975,11 @@ class AjaxHandlers {
 				$order_id
 			)
 		);
-		
+
 		if ( ! $conversation ) {
 			wp_send_json_success( array( 'messages' => array() ) );
 		}
-								
+
 		// Get new messages after last_id that weren't sent by current user.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$messages = $wpdb->get_results(
@@ -1031,7 +1032,7 @@ class AjaxHandlers {
 
 		// Build HTML for each message.
 		$result = array();
-			
+
 		foreach ( $messages as $msg ) {
 			$is_system = 'system' === $msg->type;
 
@@ -1955,10 +1956,12 @@ class AjaxHandlers {
 			update_user_meta( $user_id, '_wpss_favorite_services', $favorites );
 		}
 
-		wp_send_json_success( array(
-			'message' => __( 'Added to favorites.', 'wp-sell-services' ),
-			'count'   => count( $favorites ),
-		) );
+		wp_send_json_success(
+			array(
+				'message' => __( 'Added to favorites.', 'wp-sell-services' ),
+				'count'   => count( $favorites ),
+			)
+		);
 	}
 
 	/**
@@ -1982,10 +1985,12 @@ class AjaxHandlers {
 
 		update_user_meta( $user_id, '_wpss_favorite_services', array_values( $favorites ) );
 
-		wp_send_json_success( array(
-			'message' => __( 'Removed from favorites.', 'wp-sell-services' ),
-			'count'   => count( $favorites ),
-		) );
+		wp_send_json_success(
+			array(
+				'message' => __( 'Removed from favorites.', 'wp-sell-services' ),
+				'count'   => count( $favorites ),
+			)
+		);
 	}
 
 	/**
@@ -2026,15 +2031,19 @@ class AjaxHandlers {
 
 		$new_status = ( 'publish' === $service->post_status ) ? 'draft' : 'publish';
 
-		wp_update_post( array(
-			'ID'          => $service_id,
-			'post_status' => $new_status,
-		) );
+		wp_update_post(
+			array(
+				'ID'          => $service_id,
+				'post_status' => $new_status,
+			)
+		);
 
-		wp_send_json_success( array(
-			'message'    => __( 'Service status updated.', 'wp-sell-services' ),
-			'new_status' => $new_status,
-		) );
+		wp_send_json_success(
+			array(
+				'message'    => __( 'Service status updated.', 'wp-sell-services' ),
+				'new_status' => $new_status,
+			)
+		);
 	}
 
 	/**
@@ -2084,7 +2093,7 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'No file uploaded.', 'wp-sell-services' ) ) );
 		}
 
-		$file = $_FILES['file'];
+		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- passed directly to wp_handle_upload().
 
 		// Check file size.
 		$max_size = (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024;
@@ -2417,9 +2426,9 @@ class AjaxHandlers {
 		$package_index = sanitize_text_field( wp_unslash( $_POST['package_index'] ?? '0' ) );
 		$quantity      = absint( $_POST['quantity'] ?? 1 );
 		// Accept both 'extras' (legacy) and 'addons' (single-service.js sends this key).
-		$extras_raw    = $_POST['extras'] ?? $_POST['addons'] ?? array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$extras        = ! empty( $extras_raw ) ? array_map( 'absint', (array) $extras_raw ) : array();
-		
+		$extras_raw = wp_unslash( $_POST['extras'] ?? $_POST['addons'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- values are sanitized with absint() on the next line.
+		$extras     = ! empty( $extras_raw ) ? array_map( 'absint', (array) $extras_raw ) : array();
+
 		if ( ! $service_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
@@ -2466,16 +2475,16 @@ class AjaxHandlers {
 		$package_price    = (float) ( $selected_package['price'] ?? 0 );
 
 		// Calculate extras price.
-		$extras_raw   = get_post_meta( $service_id, '_wpss_extras', true );
-		$all_extras   = $extras_raw ? $extras_raw : array();
-		$extras_price = 0;
-		$extras_days  = 0;
+		$extras_raw      = get_post_meta( $service_id, '_wpss_extras', true );
+		$all_extras      = $extras_raw ? $extras_raw : array();
+		$extras_price    = 0;
+		$extras_days     = 0;
 		$selected_extras = array();
 
 		foreach ( $extras as $extra_index ) {
 			if ( isset( $all_extras[ $extra_index ] ) ) {
-				$extras_price    += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
-				$extras_days     += (int) ( $all_extras[ $extra_index ]['delivery_time'] ?? 0 );
+				$extras_price     += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
+				$extras_days      += (int) ( $all_extras[ $extra_index ]['delivery_time'] ?? 0 );
 				$selected_extras[] = array(
 					'id'    => $extra_index,
 					'title' => $all_extras[ $extra_index ]['title'] ?? '',
@@ -2485,7 +2494,7 @@ class AjaxHandlers {
 		}
 
 		$total = ( $package_price + $extras_price ) * $quantity;
-		
+
 		$cart_item = array(
 			'service_id' => $service_id,
 			'package_id' => $package_index,
@@ -2518,7 +2527,7 @@ class AjaxHandlers {
 			if ( ! empty( $adapter_result['error'] ) ) {
 				wp_send_json_error( array( 'message' => $adapter_result['error'] ) );
 			}
-			
+
 			$checkout_url = $adapter_result['checkout_url'] ?? wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
 			if ( $quantity > 1 ) {
 				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
@@ -2541,12 +2550,12 @@ class AjaxHandlers {
 			$cart = array();
 		}
 
-		$item_key                    = md5( $service_id . '-' . $package_index . '-' . wp_json_encode( $extras ) );
-		$cart_item['added_at']       = current_time( 'mysql', true );
-		$cart[ $item_key ]           = $cart_item;
+		$item_key              = md5( $service_id . '-' . $package_index . '-' . wp_json_encode( $extras ) );
+		$cart_item['added_at'] = current_time( 'mysql', true );
+		$cart[ $item_key ]     = $cart_item;
 
-		update_user_meta( $user_id, '_wpss_cart', $cart );		
-		
+		update_user_meta( $user_id, '_wpss_cart', $cart );
+
 		$checkout_url = wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
 		if ( $quantity > 1 ) {
 			$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
@@ -2697,7 +2706,7 @@ class AjaxHandlers {
 			foreach ( $cart as $cart_key => $cart_item ) {
 				if ( isset( $cart_item['service_id'] ) && (int) $cart_item['service_id'] === $service_id ) {
 					$cart[ $cart_key ]['package_id'] = $package_index;
-					$cart[ $cart_key ]['quantity']    = $quantity;
+					$cart[ $cart_key ]['quantity']   = $quantity;
 
 					update_user_meta( $user_id, '_wpss_cart', $cart );
 
@@ -2785,7 +2794,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_blocks_frontend', 'nonce' );
 
 		$page       = absint( $_POST['page'] ?? 1 );
-		$attributes = isset( $_POST['attributes'] ) ? json_decode( wp_unslash( $_POST['attributes'] ), true ) : array();
+		$attributes = isset( $_POST['attributes'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['attributes'] ) ), true ) : array();
 
 		$args = array(
 			'post_type'      => 'wpss_service',
@@ -3164,7 +3173,7 @@ class AjaxHandlers {
 						__( 'Cancellation Dispute', 'wp-sell-services' ),
 						__( 'Vendor disputed the buyer cancellation request.', 'wp-sell-services' )
 					);
-					$result = array( 'success' => (bool) $dispute_result );
+					$result          = array( 'success' => (bool) $dispute_result );
 					if ( ! $dispute_result ) {
 						$result['message'] = __( 'Failed to create dispute.', 'wp-sell-services' );
 					}
@@ -3645,7 +3654,7 @@ class AjaxHandlers {
 
 		// Handle tags (comma-separated string).
 		if ( ! empty( $_POST['tags'] ) ) {
-			$tags_raw    = sanitize_text_field( wp_unslash( $_POST['tags'] ) );
+			$tags_raw     = sanitize_text_field( wp_unslash( $_POST['tags'] ) );
 			$data['tags'] = array_map( 'trim', explode( ',', $tags_raw ) );
 		}
 

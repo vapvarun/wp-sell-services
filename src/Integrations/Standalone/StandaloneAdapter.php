@@ -113,10 +113,10 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	 */
 	public function supports_feature( string $feature ): bool {
 		$supported = [
-			'manual_orders'  => true,
-			'subscriptions'  => false,
+			'manual_orders'     => true,
+			'subscriptions'     => false,
 			'variable_products' => true,
-			'multi_vendor'   => true,
+			'multi_vendor'      => true,
 		];
 
 		return $supported[ $feature ] ?? false;

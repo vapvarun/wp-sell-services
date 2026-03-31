@@ -117,7 +117,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		// Admin order actions.
 		add_action( 'wpss_admin_order_actions', array( $this, 'render_admin_order_actions' ), 10, 2 );
-		
+
 		// Display payment instructions on order view for offline orders.
 		add_action( 'wpss_order_view_details', array( $this, 'display_order_payment_instructions' ), 10, 1 );
 	}

@@ -154,16 +154,16 @@ class ModerationController extends RestController {
 			$author = get_user_by( 'id', $post->post_author );
 
 			$services[] = array(
-				'id'          => $post->ID,
-				'title'       => $post->post_title,
-				'excerpt'     => wp_trim_words( $post->post_content, 30 ),
-				'vendor'      => array(
+				'id'           => $post->ID,
+				'title'        => $post->post_title,
+				'excerpt'      => wp_trim_words( $post->post_content, 30 ),
+				'vendor'       => array(
 					'id'     => (int) $post->post_author,
 					'name'   => $author ? $author->display_name : __( 'Unknown', 'wp-sell-services' ),
 					'avatar' => get_avatar_url( $post->post_author, array( 'size' => 48 ) ),
 				),
-				'categories'  => wp_get_object_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'names' ) ),
-				'price'       => (float) get_post_meta( $post->ID, '_wpss_starting_price', true ),
+				'categories'   => wp_get_object_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'names' ) ),
+				'price'        => (float) get_post_meta( $post->ID, '_wpss_starting_price', true ),
 				'submitted_at' => $post->post_date_gmt,
 			);
 		}

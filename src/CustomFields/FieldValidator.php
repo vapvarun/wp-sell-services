@@ -48,7 +48,7 @@ class FieldValidator {
 
 		foreach ( $fields as $field ) {
 			$field_id = $field['id'] ?? '';
-			$value = $submission[ $field_id ] ?? null;
+			$value    = $submission[ $field_id ] ?? null;
 
 			$result = $this->validate_field( $field, $value );
 
@@ -75,9 +75,9 @@ class FieldValidator {
 	 */
 	public function validate_field( array $field, $value ) {
 		$field_id = $field['id'] ?? 'unknown';
-		$label = $field['label'] ?? $field_id;
+		$label    = $field['label'] ?? $field_id;
 		$required = ! empty( $field['required'] );
-		$type = $field['type'] ?? 'text';
+		$type     = $field['type'] ?? 'text';
 
 		// Check required.
 		if ( $required && $this->is_empty( $value ) ) {
@@ -115,7 +115,7 @@ class FieldValidator {
 
 		foreach ( $fields as $field ) {
 			$field_id = $field['id'] ?? '';
-			$value = $submission[ $field_id ] ?? null;
+			$value    = $submission[ $field_id ] ?? null;
 
 			$sanitized[ $field_id ] = $this->sanitize_field( $field, $value );
 		}
@@ -131,7 +131,7 @@ class FieldValidator {
 	 * @return mixed Sanitized value.
 	 */
 	public function sanitize_field( array $field, $value ) {
-		$type = $field['type'] ?? 'text';
+		$type       = $field['type'] ?? 'text';
 		$field_type = $this->manager->get( $type );
 
 		if ( ! $field_type ) {

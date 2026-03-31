@@ -32,22 +32,22 @@ class Dispute {
 	/**
 	 * Dispute reasons.
 	 */
-	public const REASON_NOT_DELIVERED     = 'not_delivered';
-	public const REASON_NOT_AS_DESCRIBED  = 'not_as_described';
-	public const REASON_POOR_QUALITY      = 'poor_quality';
-	public const REASON_LATE_DELIVERY     = 'late_delivery';
-	public const REASON_COMMUNICATION     = 'communication';
-	public const REASON_OTHER             = 'other';
+	public const REASON_NOT_DELIVERED    = 'not_delivered';
+	public const REASON_NOT_AS_DESCRIBED = 'not_as_described';
+	public const REASON_POOR_QUALITY     = 'poor_quality';
+	public const REASON_LATE_DELIVERY    = 'late_delivery';
+	public const REASON_COMMUNICATION    = 'communication';
+	public const REASON_OTHER            = 'other';
 
 	/**
 	 * Resolution types.
 	 */
-	public const RESOLUTION_REFUND           = 'refund';
-	public const RESOLUTION_PARTIAL_REFUND   = 'partial_refund';
-	public const RESOLUTION_REVISION         = 'revision';
-	public const RESOLUTION_FAVOR_BUYER      = 'favor_buyer';
-	public const RESOLUTION_FAVOR_SELLER     = 'favor_seller';
-	public const RESOLUTION_MUTUAL           = 'mutual';
+	public const RESOLUTION_REFUND         = 'refund';
+	public const RESOLUTION_PARTIAL_REFUND = 'partial_refund';
+	public const RESOLUTION_REVISION       = 'revision';
+	public const RESOLUTION_FAVOR_BUYER    = 'favor_buyer';
+	public const RESOLUTION_FAVOR_SELLER   = 'favor_seller';
+	public const RESOLUTION_MUTUAL         = 'mutual';
 
 	/**
 	 * Dispute ID.

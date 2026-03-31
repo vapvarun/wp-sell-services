@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$user           = get_userdata( $user_id );
+$user = get_userdata( $user_id );
 if ( ! $user ) {
 	return;
 }

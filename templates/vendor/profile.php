@@ -216,7 +216,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 									printf(
 										/* translators: %d: review count */
 										esc_html( _n( '(%d review)', '(%d reviews)', $rating_count, 'wp-sell-services' ) ),
-										$rating_count
+										absint( $rating_count )
 									);
 									?>
 								</span>
@@ -229,7 +229,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 								printf(
 									/* translators: %d: number of completed orders */
 									esc_html( _n( '%d order completed', '%d orders completed', $completed_orders, 'wp-sell-services' ) ),
-									$completed_orders
+									absint( $completed_orders )
 								);
 								?>
 							</span>
@@ -333,7 +333,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 									printf(
 										/* translators: %d: number of services */
 										esc_html__( 'View all %d services', 'wp-sell-services' ),
-										$total_services
+										absint( $total_services )
 									);
 									?>
 									&rarr;

@@ -313,12 +313,13 @@ class DisputeRepository extends AbstractRepository {
 				"SELECT
 					DATE_FORMAT(created_at, %s) as period,
 					COUNT(*) as total,
-					SUM(CASE WHEN status LIKE 'resolved%%' THEN 1 ELSE 0 END) as resolved
+					SUM(CASE WHEN status LIKE %s THEN 1 ELSE 0 END) as resolved
 				FROM {$this->table}
 				WHERE created_at >= %s
 				GROUP BY period
 				ORDER BY period ASC",
 				$date_format,
+				$wpdb->esc_like( 'resolved' ) . '%',
 				$start_date
 			)
 		);

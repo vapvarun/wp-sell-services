@@ -19,7 +19,7 @@ $packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
 
 // If no packages, show single price.
 if ( empty( $packages ) ) {
-	$price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
+	$price         = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 	$delivery_time = get_post_meta( $service_id, '_wpss_delivery_days', true );
 
 	$packages = [
@@ -75,7 +75,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 			?>
 
 			<div class="wpss-package <?php echo $first_package_key === $index ? 'active' : ''; ?>"
-				 data-package="<?php echo esc_attr( $index ); ?>">
+				data-package="<?php echo esc_attr( $index ); ?>">
 
 				<div class="wpss-package-header">
 					<h3 class="wpss-package-name"><?php echo esc_html( $package['name'] ?? '' ); ?></h3>
@@ -122,7 +122,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 								printf(
 									/* translators: %d: number of days */
 									esc_html( _n( '%d Day', '%d Days', $days, 'wp-sell-services' ) ),
-									$days
+									absint( $days )
 								);
 								?>
 							</span>
@@ -180,7 +180,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 
 				<div class="wpss-package-action">
 					<?php
-					$vendor_id = (int) get_post_field( 'post_author', $service_id );
+					$vendor_id      = (int) get_post_field( 'post_author', $service_id );
 					$is_own_service = get_current_user_id() === $vendor_id;
 					?>
 
@@ -200,7 +200,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 						}
 						?>
 						<a href="<?php echo esc_url( $dashboard_edit_url ); ?>"
-						   class="wpss-btn wpss-btn-secondary wpss-btn-block">
+							class="wpss-btn wpss-btn-secondary wpss-btn-block">
 							<?php esc_html_e( 'Edit Service', 'wp-sell-services' ); ?>
 						</a>
 					<?php else : ?>

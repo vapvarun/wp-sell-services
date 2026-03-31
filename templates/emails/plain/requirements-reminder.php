@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 
 $is_final = 3 === $reminder_num;
 
-echo "= " . esc_html( $email_heading ) . " =\n\n";
+echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
 	/* translators: %s: recipient name */

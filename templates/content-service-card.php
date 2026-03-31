@@ -58,8 +58,8 @@ do_action( 'wpss_before_service_card', $service_id );
 			$thumbnail_size = apply_filters( 'wpss_service_card_thumbnail_size', 'medium_large', $service_id );
 
 			// Check for featured image first.
-			$has_image       = has_post_thumbnail();
-			$gallery_image   = null;
+			$has_image     = has_post_thumbnail();
+			$gallery_image = null;
 
 			// Fallback to first gallery image if no featured image.
 			if ( ! $has_image ) {
@@ -120,14 +120,14 @@ do_action( 'wpss_before_service_card', $service_id );
 				<?php
 				$card_vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
 				if ( $card_vendor_profile && \WPSellServices\Models\VendorProfile::TIER_NEW !== $card_vendor_profile->tier ) :
-					$card_tier       = $card_vendor_profile->tier;
-					$card_tier_label = $card_vendor_profile->get_tier_label();
+					$card_tier        = $card_vendor_profile->tier;
+					$card_tier_label  = $card_vendor_profile->get_tier_label();
 					$card_tier_colors = array(
 						'rising'    => 'background:#eff6ff;color:#2563eb;',
 						'top_rated' => 'background:#fefce8;color:#ca8a04;',
 						'pro'       => 'background:#faf5ff;color:#7c3aed;',
 					);
-					$card_tier_style = $card_tier_colors[ $card_tier ] ?? '';
+					$card_tier_style  = $card_tier_colors[ $card_tier ] ?? '';
 					if ( $card_tier_style ) :
 						?>
 						<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>" style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:9999px;margin-left:4px;<?php echo esc_attr( $card_tier_style ); ?>">
@@ -176,7 +176,7 @@ do_action( 'wpss_before_service_card', $service_id );
 						printf(
 							/* translators: %d: number of reviews */
 							esc_html( _n( '(%d)', '(%d)', $rating_count, 'wp-sell-services' ) ),
-							$rating_count
+							absint( $rating_count )
 						);
 						?>
 					</span>

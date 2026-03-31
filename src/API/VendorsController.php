@@ -189,7 +189,7 @@ class VendorsController extends RestController {
 
 		$args = array(
 			'meta_query' => array(
-				'relation' => 'AND',
+				'relation'      => 'AND',
 				'vendor_clause' => array(
 					'key'   => '_wpss_is_vendor',
 					'value' => '1',

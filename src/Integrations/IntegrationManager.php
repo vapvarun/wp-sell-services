@@ -136,7 +136,6 @@ class IntegrationManager {
 			 */
 			do_action( 'wpss_adapter_initialized', $this->active_adapter );
 		}
-
 	}
 
 	/**

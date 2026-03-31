@@ -174,7 +174,7 @@ class DateField extends AbstractField {
 	 */
 	public function format_value( $value, array $field ): string {
 		$field = $this->parse_field( $field );
-		$date = \DateTime::createFromFormat( 'Y-m-d', $value );
+		$date  = \DateTime::createFromFormat( 'Y-m-d', $value );
 
 		if ( ! $date ) {
 			return esc_html( $value );

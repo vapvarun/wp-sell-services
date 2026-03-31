@@ -72,15 +72,17 @@ $active_count = count(
 			<?php
 			while ( $requests->have_posts() ) :
 				$requests->the_post();
-				$request_id  = get_the_ID();
-				$budget      = get_post_meta( $request_id, '_wpss_budget', true );
-				$deadline    = get_post_meta( $request_id, '_wpss_deadline', true );
+				$request_id = get_the_ID();
+				$budget     = get_post_meta( $request_id, '_wpss_budget', true );
+				$deadline   = get_post_meta( $request_id, '_wpss_deadline', true );
 				// Query actual proposal count from DB instead of potentially stale meta.
 				global $wpdb;
-				$offers = (int) $wpdb->get_var( $wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_proposals WHERE request_id = %d",
-					$request_id
-				) );
+				$offers      = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_proposals WHERE request_id = %d",
+						$request_id
+					)
+				);
 				$item_status = get_post_status();
 				?>
 				<div class="wpss-request-card">
@@ -142,7 +144,19 @@ $active_count = count(
 								<?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>
-						<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'edit-request', 'request_id' => $request_id ), wpss_get_page_url( 'dashboard' ) ?: get_permalink() ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+						<a href="
+						<?php
+						echo esc_url(
+							add_query_arg(
+								array(
+									'section'    => 'edit-request',
+									'request_id' => $request_id,
+								),
+								wpss_get_page_url( 'dashboard' ) ?: get_permalink()
+							)
+						);
+						?>
+									" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 						</a>
 						<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-btn--danger wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">

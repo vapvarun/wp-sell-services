@@ -263,6 +263,7 @@ class VendorsPage {
 	 * @return void
 	 */
 	public function render_page(): void {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- admin list table pagination/sorting/filtering via URL params.
 		// Route to vendor detail view if action=view and vendor_id is set.
 		$action    = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
 		$vendor_id = isset( $_GET['vendor_id'] ) ? absint( $_GET['vendor_id'] ) : 0;
@@ -277,6 +278,7 @@ class VendorsPage {
 		$search       = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 		$orderby      = isset( $_GET['orderby'] ) ? sanitize_key( $_GET['orderby'] ) : 'created_at';
 		$order        = isset( $_GET['order'] ) ? sanitize_key( $_GET['order'] ) : 'DESC';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$result = $this->get_vendors(
 			array(
@@ -436,6 +438,7 @@ class VendorsPage {
 							printf(
 								/* translators: %s: number of items */
 								esc_html( _n( '%s item', '%s items', $total, 'wp-sell-services' ) ),
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
 								number_format_i18n( $total )
 							);
 							?>
@@ -2107,7 +2110,7 @@ class VendorsPage {
 	 * @return void
 	 */
 	private function render_tab_services( int $vendor_id ): void {
-		$page     = isset( $_POST['services_page'] ) ? absint( $_POST['services_page'] ) : 1;
+		$page     = isset( $_POST['services_page'] ) ? absint( $_POST['services_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
 		$per_page = 20;
 
 		$services = get_posts(
@@ -2125,7 +2128,7 @@ class VendorsPage {
 		$total_services = wp_count_posts( 'wpss_service' );
 		// Count only this vendor's services.
 		global $wpdb;
-		$total = (int) $wpdb->get_var(
+		$total       = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_author = %d AND post_type = 'wpss_service' AND post_status IN ('publish', 'draft', 'pending', 'private')",
 				$vendor_id
@@ -2194,6 +2197,7 @@ class VendorsPage {
 						printf(
 							/* translators: %s: number of items */
 							esc_html( _n( '%s service', '%s services', $total, 'wp-sell-services' ) ),
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
 							number_format_i18n( $total )
 						);
 						?>
@@ -2224,9 +2228,11 @@ class VendorsPage {
 	private function render_tab_orders( int $vendor_id ): void {
 		global $wpdb;
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
 		$page          = isset( $_POST['orders_page'] ) ? absint( $_POST['orders_page'] ) : 1;
 		$per_page      = 20;
 		$status_filter = isset( $_POST['order_status'] ) ? sanitize_key( $_POST['order_status'] ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		$offset        = ( $page - 1 ) * $per_page;
 
 		$where  = 'WHERE o.vendor_id = %d';
@@ -2328,6 +2334,7 @@ class VendorsPage {
 							printf(
 								/* translators: %s: number of items */
 								esc_html( _n( '%s order', '%s orders', $total, 'wp-sell-services' ) ),
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
 								number_format_i18n( $total )
 							);
 							?>
@@ -2377,7 +2384,7 @@ class VendorsPage {
 		);
 
 		// Get withdrawal history.
-		$withdrawals_page = isset( $_POST['withdrawals_page'] ) ? absint( $_POST['withdrawals_page'] ) : 1;
+		$withdrawals_page = isset( $_POST['withdrawals_page'] ) ? absint( $_POST['withdrawals_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
 		$per_page         = 10;
 		$offset           = ( $withdrawals_page - 1 ) * $per_page;
 
@@ -2536,7 +2543,7 @@ class VendorsPage {
 	private function render_tab_reviews( int $vendor_id ): void {
 		global $wpdb;
 
-		$page     = isset( $_POST['reviews_page'] ) ? absint( $_POST['reviews_page'] ) : 1;
+		$page     = isset( $_POST['reviews_page'] ) ? absint( $_POST['reviews_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
 		$per_page = 10;
 		$offset   = ( $page - 1 ) * $per_page;
 
@@ -2643,6 +2650,7 @@ class VendorsPage {
 								printf(
 									/* translators: %s: number of items */
 									esc_html( _n( '%s review', '%s reviews', $total, 'wp-sell-services' ) ),
+									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
 									number_format_i18n( $total )
 								);
 								?>

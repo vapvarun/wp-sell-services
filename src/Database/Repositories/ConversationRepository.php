@@ -322,7 +322,7 @@ class ConversationRepository extends AbstractRepository {
 		$unread_counts = json_decode( $conversation->unread_counts ?: '{}', true );
 		if ( isset( $unread_counts[ $user_id ] ) ) {
 			$unread_counts[ $user_id ] = 0;
-			$result = $this->wpdb->update(
+			$result                    = $this->wpdb->update(
 				$this->table,
 				array( 'unread_counts' => wp_json_encode( $unread_counts ) ),
 				array( 'id' => $conversation->id ),

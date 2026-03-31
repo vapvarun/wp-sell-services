@@ -225,7 +225,7 @@ class ExtensionRequestService {
 
 		// Log in conversation.
 		$conversation_service = new ConversationService();
-		$conversation = $conversation_service->get_by_order( $order_id );
+		$conversation         = $conversation_service->get_by_order( $order_id );
 
 		if ( $conversation ) {
 			$conversation_service->add_system_message(
@@ -246,11 +246,16 @@ class ExtensionRequestService {
 		 * @param int   $order_id   Order ID.
 		 * @param array $data       Request data.
 		 */
-		do_action( 'wpss_extension_request_created', $request_id, $order_id, [
-			'requested_by' => $requested_by,
-			'extra_days'   => $extra_days,
-			'reason'       => $reason,
-		] );
+		do_action(
+			'wpss_extension_request_created',
+			$request_id,
+			$order_id,
+			[
+				'requested_by' => $requested_by,
+				'extra_days'   => $extra_days,
+				'reason'       => $reason,
+			]
+		);
 
 		return [
 			'success'    => true,
@@ -344,7 +349,7 @@ class ExtensionRequestService {
 
 		// Log in conversation.
 		$conversation_service = new ConversationService();
-		$conversation = $conversation_service->get_by_order( $request['order_id'] );
+		$conversation         = $conversation_service->get_by_order( $request['order_id'] );
 
 		if ( $conversation ) {
 			$conversation_service->add_system_message(
@@ -431,7 +436,7 @@ class ExtensionRequestService {
 
 		// Log in conversation.
 		$conversation_service = new ConversationService();
-		$conversation = $conversation_service->get_by_order( $request['order_id'] );
+		$conversation         = $conversation_service->get_by_order( $request['order_id'] );
 
 		if ( $conversation ) {
 			$message = __( 'Extension request rejected.', 'wp-sell-services' );

@@ -324,8 +324,8 @@ class ReviewsController extends RestController {
 		}
 
 		// Enforce review window (default 30 days after completion).
-		$order_settings  = get_option( 'wpss_orders', array() );
-		$review_window   = (int) ( $order_settings['review_window_days'] ?? 30 );
+		$order_settings = get_option( 'wpss_orders', array() );
+		$review_window  = (int) ( $order_settings['review_window_days'] ?? 30 );
 		if ( $review_window > 0 && ! empty( $order->completed_at ) ) {
 			$completed_time = strtotime( $order->completed_at );
 			$deadline       = $completed_time + ( $review_window * DAY_IN_SECONDS );

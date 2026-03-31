@@ -46,11 +46,11 @@ class SchemaValidator {
 	 * @var array<string, array{table: string, mappings: array<string, string>}>
 	 */
 	private array $model_mappings = [
-		'WPSellServices\\Models\\ServiceOrder'   => [
+		'WPSellServices\\Models\\ServiceOrder'  => [
 			'table'    => 'orders',
 			'mappings' => [], // Direct mapping (property name = column name).
 		],
-		'WPSellServices\\Models\\VendorProfile'  => [
+		'WPSellServices\\Models\\VendorProfile' => [
 			'table'    => 'vendor_profiles',
 			'mappings' => [
 				// Model property => DB column (when different).
@@ -63,19 +63,19 @@ class SchemaValidator {
 				'review_count'  => 'total_reviews',
 			],
 		],
-		'WPSellServices\\Models\\Service'        => [
-			'table'    => 'services', // This is a CPT, not custom table.
-			'is_cpt'   => true,
+		'WPSellServices\\Models\\Service'       => [
+			'table'  => 'services', // This is a CPT, not custom table.
+			'is_cpt' => true,
 		],
-		'WPSellServices\\Models\\Conversation'   => [
+		'WPSellServices\\Models\\Conversation'  => [
 			'table'    => 'conversations',
 			'mappings' => [],
 		],
-		'WPSellServices\\Models\\Dispute'        => [
+		'WPSellServices\\Models\\Dispute'       => [
 			'table'    => 'disputes',
 			'mappings' => [],
 		],
-		'WPSellServices\\Models\\Review'         => [
+		'WPSellServices\\Models\\Review'        => [
 			'table'    => 'reviews',
 			'mappings' => [],
 		],

@@ -179,7 +179,7 @@ class CartController extends RestController {
 			$cart = array();
 		}
 
-		$item_key         = md5( $service_id . '-' . $package_id . '-' . wp_json_encode( $addon_ids ) );
+		$item_key          = md5( $service_id . '-' . $package_id . '-' . wp_json_encode( $addon_ids ) );
 		$cart[ $item_key ] = array(
 			'service_id' => $service_id,
 			'package_id' => $package_id,
@@ -193,12 +193,12 @@ class CartController extends RestController {
 
 		return new WP_REST_Response(
 			array(
-				'success'      => true,
+				'success'       => true,
 				'cart_item_key' => $item_key,
-				'service'      => $service->post_title,
-				'package'      => $package['name'] ?? '',
-				'total'        => $total,
-				'currency'     => wpss_get_currency(),
+				'service'       => $service->post_title,
+				'package'       => $package['name'] ?? '',
+				'total'         => $total,
+				'currency'      => wpss_get_currency(),
 			),
 			201
 		);

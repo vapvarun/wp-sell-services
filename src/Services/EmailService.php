@@ -38,15 +38,15 @@ class EmailService {
 	public const TYPE_ORDER_CANCELLED        = 'order_cancelled';
 	public const TYPE_DISPUTE_OPENED         = 'dispute_opened';
 	public const TYPE_REQUIREMENTS_REMINDER  = 'requirements_reminder';
-	public const TYPE_SELLER_LEVEL_PROMOTION   = 'seller_level_promotion';
-	public const TYPE_CANCELLATION_REQUESTED  = 'cancellation_requested';
-	public const TYPE_WITHDRAWAL_REQUESTED    = 'withdrawal_requested';
-	public const TYPE_WITHDRAWAL_AUTO         = 'withdrawal_auto';
-	public const TYPE_VENDOR_CONTACT          = 'vendor_contact';
+	public const TYPE_SELLER_LEVEL_PROMOTION = 'seller_level_promotion';
+	public const TYPE_CANCELLATION_REQUESTED = 'cancellation_requested';
+	public const TYPE_WITHDRAWAL_REQUESTED   = 'withdrawal_requested';
+	public const TYPE_WITHDRAWAL_AUTO        = 'withdrawal_auto';
+	public const TYPE_VENDOR_CONTACT         = 'vendor_contact';
 	public const TYPE_WITHDRAWAL_APPROVED    = 'withdrawal_approved';
 	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
-	public const TYPE_PROPOSAL_SUBMITTED    = 'proposal_submitted';
-	public const TYPE_PROPOSAL_ACCEPTED     = 'proposal_accepted';
+	public const TYPE_PROPOSAL_SUBMITTED     = 'proposal_submitted';
+	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -539,8 +539,8 @@ class EmailService {
 		if ( ! is_array( $cancel_data ) ) {
 			$cancel_data = array();
 		}
-		$reason_key  = $cancel_data['reason'] ?? '';
-		$note        = $cancel_data['note'] ?? '';
+		$reason_key = $cancel_data['reason'] ?? '';
+		$note       = $cancel_data['note'] ?? '';
 
 		$reason_labels = array(
 			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
@@ -688,11 +688,14 @@ class EmailService {
 				$customer->user_email,
 				$subject,
 				self::TYPE_DISPUTE_OPENED,
-				array_merge( $base_vars, array(
-					'recipient'   => $customer,
-					'is_customer' => true,
-					'vendor_name' => $this->get_vendor_name( $order->vendor_id ),
-				) )
+				array_merge(
+					$base_vars,
+					array(
+						'recipient'   => $customer,
+						'is_customer' => true,
+						'vendor_name' => $this->get_vendor_name( $order->vendor_id ),
+					)
+				)
 			);
 		}
 
@@ -702,11 +705,14 @@ class EmailService {
 				$vendor->user_email,
 				$subject,
 				self::TYPE_DISPUTE_OPENED,
-				array_merge( $base_vars, array(
-					'recipient'     => $vendor,
-					'is_customer'   => false,
-					'customer_name' => $this->get_customer_name( $order->customer_id ),
-				) )
+				array_merge(
+					$base_vars,
+					array(
+						'recipient'     => $vendor,
+						'is_customer'   => false,
+						'customer_name' => $this->get_customer_name( $order->customer_id ),
+					)
+				)
 			);
 		}
 
@@ -716,10 +722,13 @@ class EmailService {
 			$admin_email,
 			$subject,
 			self::TYPE_DISPUTE_OPENED,
-			array_merge( $base_vars, array(
-				'recipient' => get_user_by( 'email', $admin_email ) ?: $customer,
-				'is_admin'  => true,
-			) )
+			array_merge(
+				$base_vars,
+				array(
+					'recipient' => get_user_by( 'email', $admin_email ) ?: $customer,
+					'is_admin'  => true,
+				)
+			)
 		);
 
 		return true;
@@ -799,11 +808,11 @@ class EmailService {
 		);
 
 		$template_vars = array(
-			'recipient'      => $vendor,
-			'email_heading'  => __( 'Congratulations! Level Up!', 'wp-sell-services' ),
-			'new_level'      => $new_level,
+			'recipient'       => $vendor,
+			'email_heading'   => __( 'Congratulations! Level Up!', 'wp-sell-services' ),
+			'new_level'       => $new_level,
 			'new_level_label' => $level_label,
-			'old_level'      => $current_level,
+			'old_level'       => $current_level,
 			'old_level_label' => SellerLevelService::get_level_label( $current_level ),
 		);
 
@@ -936,13 +945,13 @@ class EmailService {
 		}
 
 		$template_vars = array(
-			'recipient'      => $vendor,
-			'email_heading'  => 'rejected' === $status ? __( 'Withdrawal Rejected', 'wp-sell-services' ) : __( 'Withdrawal Approved', 'wp-sell-services' ),
-			'amount'         => $amount,
-			'withdrawal_id'  => $withdrawal_id,
-			'status'         => $status,
-			'admin_note'     => $withdrawal->admin_note ?? '',
-			'dashboard_url'  => add_query_arg( 'section', 'earnings', wpss_get_dashboard_url() ),
+			'recipient'     => $vendor,
+			'email_heading' => 'rejected' === $status ? __( 'Withdrawal Rejected', 'wp-sell-services' ) : __( 'Withdrawal Approved', 'wp-sell-services' ),
+			'amount'        => $amount,
+			'withdrawal_id' => $withdrawal_id,
+			'status'        => $status,
+			'admin_note'    => $withdrawal->admin_note ?? '',
+			'dashboard_url' => add_query_arg( 'section', 'earnings', wpss_get_dashboard_url() ),
 		);
 
 		return $this->send( $vendor->user_email, $subject, $type, $template_vars );
@@ -1061,7 +1070,7 @@ class EmailService {
 		set_transient( $cooldown_key, 1, 5 * MINUTE_IN_SECONDS );
 
 		// Merge settings into template vars.
-		$template_vars = array_merge( $this->settings(), $template_vars );
+		$template_vars              = array_merge( $this->settings(), $template_vars );
 		$template_vars['site_url']  = home_url();
 		$template_vars['site_name'] = wpss_get_platform_name();
 
@@ -1220,15 +1229,15 @@ class EmailService {
 			self::TYPE_ORDER_CANCELLED        => 'order-cancelled.php',
 			self::TYPE_DISPUTE_OPENED         => 'dispute-opened.php',
 			self::TYPE_REQUIREMENTS_REMINDER  => 'requirements-reminder.php',
-			self::TYPE_SELLER_LEVEL_PROMOTION  => 'seller-level-promotion.php',
+			self::TYPE_SELLER_LEVEL_PROMOTION => 'seller-level-promotion.php',
 			self::TYPE_CANCELLATION_REQUESTED => 'cancellation-requested.php',
 			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawal-requested.php',
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawal-auto.php',
 			self::TYPE_VENDOR_CONTACT         => 'vendor-contact.php',
-			self::TYPE_WITHDRAWAL_APPROVED   => 'withdrawal-approved.php',
-			self::TYPE_WITHDRAWAL_REJECTED   => 'withdrawal-rejected.php',
-			self::TYPE_PROPOSAL_SUBMITTED   => 'generic.php',
-			self::TYPE_PROPOSAL_ACCEPTED    => 'generic.php',
+			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawal-approved.php',
+			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawal-rejected.php',
+			self::TYPE_PROPOSAL_SUBMITTED     => 'generic.php',
+			self::TYPE_PROPOSAL_ACCEPTED      => 'generic.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';

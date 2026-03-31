@@ -12,6 +12,7 @@
  *
  * - wpss_single_request_layout (filter)
  *   Allows changing the layout type. Default: 'default'.
+ *
  *   @param string $layout     Layout type ('default', 'wide', 'minimal').
  *   @param int    $request_id Request post ID.
  *
@@ -383,7 +384,7 @@ do_action( 'wpss_before_single_request', $request_id );
 							<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">
 								<?php esc_html_e( 'Login to Submit Proposal', 'wp-sell-services' ); ?>
 							</a>
-						<?php
+							<?php
 						elseif ( ! $is_vendor && ! $is_buyer ) :
 							$tpl_vendor_settings   = get_option( 'wpss_vendor', array() );
 							$tpl_registration_mode = $tpl_vendor_settings['vendor_registration'] ?? 'open';

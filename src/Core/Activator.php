@@ -178,10 +178,10 @@ class Activator {
 			// Order settings - matches Settings.php wpss_orders.
 			// Revision limits are defined per-package in service packages, not as a global setting.
 			'wpss_orders'        => array(
-				'auto_complete_days'       => 3,
-				'allow_disputes'           => true,
-				'dispute_window_days'      => 14,
-				'auto_dispute_late_days'   => 3,
+				'auto_complete_days'        => 3,
+				'allow_disputes'            => true,
+				'dispute_window_days'       => 14,
+				'auto_dispute_late_days'    => 3,
 				'requirements_timeout_days' => 7,
 			),
 			// Notification settings - matches Settings.php wpss_notifications.

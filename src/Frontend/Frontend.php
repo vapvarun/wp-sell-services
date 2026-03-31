@@ -86,7 +86,7 @@ class Frontend {
 		// Primary 'wpssData' object used by frontend.js.
 		$cart_count = 0;
 		if ( is_user_logged_in() ) {
-			$cart = get_user_meta( get_current_user_id(), '_wpss_cart', true );
+			$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
 			$cart_count = is_array( $cart ) ? count( $cart ) : 0;
 		}
 
@@ -202,9 +202,9 @@ class Frontend {
 			return;
 		}
 
-		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
-		$cart_count = is_array( $cart ) ? count( $cart ) : 0;
-		$hidden     = 0 === $cart_count ? ' style="display:none;"' : '';
+		$cart         = get_user_meta( get_current_user_id(), '_wpss_cart', true );
+		$cart_count   = is_array( $cart ) ? count( $cart ) : 0;
+		$hidden       = 0 === $cart_count ? ' style="display:none;"' : '';
 		$checkout_url = wpss_get_checkout_base_url();
 		?>
 		<div id="wpss-mini-cart" class="wpss-mini-cart"<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>

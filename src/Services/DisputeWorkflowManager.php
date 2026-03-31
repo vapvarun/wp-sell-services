@@ -226,7 +226,7 @@ class DisputeWorkflowManager {
 
 		foreach ( $messages as $message ) {
 			if ( $message->attachments ) {
-				$message->attachments = $this->decode_json_array( $message->attachments );
+				$message->attachments     = $this->decode_json_array( $message->attachments );
 				$message->attachment_urls = $this->get_attachment_urls( $message->attachments );
 			}
 		}
@@ -300,7 +300,7 @@ class DisputeWorkflowManager {
 		// Update dispute meta with escalation info.
 		global $wpdb;
 
-		$meta = $dispute->meta ?? [];
+		$meta               = $dispute->meta ?? [];
 		$meta['escalation'] = [
 			'reason'       => sanitize_textarea_field( $reason ),
 			'escalated_by' => $escalated_by,
@@ -374,7 +374,7 @@ class DisputeWorkflowManager {
 
 		global $wpdb;
 
-		$meta = $dispute->meta ?? [];
+		$meta                = $dispute->meta ?? [];
 		$meta['assigned_to'] = $admin_id;
 		$meta['assigned_at'] = current_time( 'mysql' );
 
@@ -398,10 +398,14 @@ class DisputeWorkflowManager {
 		}
 
 		// Notify assigned admin.
-		$this->notification_service->send( $admin_id, 'dispute_assigned', [
-			'dispute_id' => $dispute_id,
-			'order_id'   => $dispute->order_id,
-		] );
+		$this->notification_service->send(
+			$admin_id,
+			'dispute_assigned',
+			[
+				'dispute_id' => $dispute_id,
+				'order_id'   => $dispute->order_id,
+			]
+		);
 
 		return [
 			'success' => true,
@@ -445,7 +449,7 @@ class DisputeWorkflowManager {
 
 		global $wpdb;
 
-		$meta = $dispute->meta ?? [];
+		$meta                 = $dispute->meta ?? [];
 		$meta['cancellation'] = [
 			'reason'       => sanitize_textarea_field( $reason ),
 			'cancelled_by' => $user_id,
@@ -605,14 +609,18 @@ class DisputeWorkflowManager {
 			$remind_user = $this->get_awaiting_response_user( $dispute );
 
 			if ( $remind_user ) {
-				$this->notification_service->send( $remind_user, 'dispute_response_reminder', [
-					'dispute_id'        => $dispute->id,
-					'order_id'          => $dispute->order_id,
-					'response_deadline' => $dispute->response_deadline,
-				] );
+				$this->notification_service->send(
+					$remind_user,
+					'dispute_response_reminder',
+					[
+						'dispute_id'        => $dispute->id,
+						'order_id'          => $dispute->order_id,
+						'response_deadline' => $dispute->response_deadline,
+					]
+				);
 
 				// Mark reminder as sent.
-					$meta = $this->decode_json_array( $dispute->meta );
+					$meta                  = $this->decode_json_array( $dispute->meta );
 					$meta['reminder_sent'] = current_time( 'mysql' );
 
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -636,9 +644,9 @@ class DisputeWorkflowManager {
 	 * @return void
 	 */
 	public function auto_open_disputes_for_late_orders(): void {
-		$order_settings     = get_option( 'wpss_orders', [] );
-		$allow_disputes     = $order_settings['allow_disputes'] ?? true;
-		$auto_dispute_days  = (int) ( $order_settings['auto_dispute_late_days'] ?? 3 );
+		$order_settings    = get_option( 'wpss_orders', [] );
+		$allow_disputes    = $order_settings['allow_disputes'] ?? true;
+		$auto_dispute_days = (int) ( $order_settings['auto_dispute_late_days'] ?? 3 );
 
 		// Bail if disputes are disabled or auto-dispute is turned off (0 = disabled).
 		if ( ! $allow_disputes || $auto_dispute_days <= 0 ) {
@@ -874,13 +882,17 @@ class DisputeWorkflowManager {
 				? (int) $order->vendor_id
 				: (int) $order->customer_id;
 
-			$this->notification_service->send( $notify_user, 'dispute_opened', [
-				'dispute_id'        => $dispute_id,
-				'order_id'          => $order_id,
-				'opened_by'         => $opened_by,
-				'reason'            => $data['reason'] ?? '',
-				'response_deadline' => $deadline,
-			] );
+			$this->notification_service->send(
+				$notify_user,
+				'dispute_opened',
+				[
+					'dispute_id'        => $dispute_id,
+					'order_id'          => $order_id,
+					'opened_by'         => $opened_by,
+					'reason'            => $data['reason'] ?? '',
+					'response_deadline' => $deadline,
+				]
+			);
 		}
 	}
 
@@ -918,11 +930,15 @@ class DisputeWorkflowManager {
 			? (int) $order->vendor_id
 			: (int) $order->customer_id;
 
-		$this->notification_service->send( $notify_user, 'dispute_response_received', [
-			'dispute_id' => $dispute_id,
-			'order_id'   => $dispute->order_id,
-			'from_user'  => $user_id,
-		] );
+		$this->notification_service->send(
+			$notify_user,
+			'dispute_response_received',
+			[
+				'dispute_id' => $dispute_id,
+				'order_id'   => $dispute->order_id,
+				'from_user'  => $user_id,
+			]
+		);
 	}
 
 	/**
@@ -965,12 +981,16 @@ class DisputeWorkflowManager {
 		$users = [ (int) $order->customer_id, (int) $order->vendor_id ];
 
 		foreach ( $users as $user_id ) {
-			$this->notification_service->send( $user_id, 'dispute_resolved', [
-				'dispute_id'    => $dispute_id,
-				'order_id'      => $dispute->order_id,
-				'resolution'    => $resolution,
-				'refund_amount' => $refund_amount,
-			] );
+			$this->notification_service->send(
+				$user_id,
+				'dispute_resolved',
+				[
+					'dispute_id'    => $dispute_id,
+					'order_id'      => $dispute->order_id,
+					'resolution'    => $resolution,
+					'refund_amount' => $refund_amount,
+				]
+			);
 		}
 	}
 
@@ -1023,13 +1043,16 @@ class DisputeWorkflowManager {
 		}
 
 		// Sort by date.
-		usort( $timeline, function ( $a, $b ) {
-			return strtotime( $a['created_at'] ) - strtotime( $b['created_at'] );
-		} );
+		usort(
+			$timeline,
+			function ( $a, $b ) {
+				return strtotime( $a['created_at'] ) - strtotime( $b['created_at'] );
+			}
+		);
 
 		// Enrich with user data.
 		foreach ( $timeline as &$event ) {
-			$user = get_userdata( $event['user_id'] );
+			$user                 = get_userdata( $event['user_id'] );
 			$event['user_name']   = $user ? $user->display_name : __( 'System', 'wp-sell-services' );
 			$event['user_avatar'] = get_avatar_url( $event['user_id'], [ 'size' => 48 ] );
 		}

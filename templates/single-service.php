@@ -11,6 +11,7 @@
  *
  * - wpss_single_service_layout (filter)
  *   Allows changing the layout type. Default: 'default'.
+ *
  *   @param string $layout     Layout type ('default', 'wide', 'minimal').
  *   @param int    $service_id Service post ID.
  *
@@ -103,7 +104,10 @@ do_action( 'wpss_before_single_service', $service );
 
 <div class="wpss-single-service wpss-layout-<?php echo esc_attr( $layout ); ?>">
 	<div class="wpss-container">
-		<?php while ( have_posts() ) : the_post(); ?>
+		<?php
+		while ( have_posts() ) :
+			the_post();
+			?>
 			<div class="wpss-service-layout">
 				<div class="wpss-service-main">
 					<?php

@@ -43,10 +43,10 @@ if ( $services->have_posts() ) {
 	$displayed_ids = wp_list_pluck( $services->posts, 'ID' );
 	if ( ! empty( $displayed_ids ) ) {
 		global $wpdb;
-		$orders_table     = $wpdb->prefix . 'wpss_orders';
-		$placeholders     = implode( ',', array_fill( 0, count( $displayed_ids ), '%d' ) );
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$placeholders = implode( ',', array_fill( 0, count( $displayed_ids ), '%d' ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$counts           = $wpdb->get_results(
+		$counts = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->prepare( "SELECT service_id, COUNT(*) AS order_count FROM {$orders_table} WHERE service_id IN ({$placeholders}) GROUP BY service_id", ...$displayed_ids ),
 			OBJECT_K
@@ -143,8 +143,8 @@ $pending_count = count(
 			printf(
 				/* translators: %1$d: current count, %2$d: max allowed */
 				esc_html__( 'You have reached your service limit (%1$d of %2$d). Remove an existing service to create a new one.', 'wp-sell-services' ),
-				$vendor_profile_obj->get_service_count(),
-				$max_services_allowed
+				absint( $vendor_profile_obj->get_service_count() ),
+				absint( $max_services_allowed )
 			);
 			?>
 		</div>
@@ -181,7 +181,7 @@ $pending_count = count(
 				$services->the_post();
 				$service_id  = get_the_ID();
 				$price       = get_post_meta( $service_id, '_wpss_starting_price', true );
-				$views       = (int) get_post_meta( $service_id, '_wpss_views', true );				
+				$views       = (int) get_post_meta( $service_id, '_wpss_views', true );
 				$orders      = $service_order_counts[ $service_id ] ?? 0;
 				$item_status = get_post_status();
 

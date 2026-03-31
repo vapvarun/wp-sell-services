@@ -550,8 +550,8 @@ final class Plugin {
 		add_filter(
 			'wpss_vendor_registration_open',
 			function ( bool $default ): bool {
-				$vendor_settings     = get_option( 'wpss_vendor', array() );
-				$registration_mode   = $vendor_settings['vendor_registration'] ?? 'open';
+				$vendor_settings   = get_option( 'wpss_vendor', array() );
+				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
 				return 'closed' !== $registration_mode;
 			}
 		);

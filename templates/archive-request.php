@@ -12,6 +12,7 @@
  *
  * - wpss_archive_request_columns (filter)
  *   Controls number of columns in requests grid. Default: 2.
+ *
  *   @param int $columns Number of grid columns (1, 2, or 3).
  *
  * - wpss_requests_per_page (filter)

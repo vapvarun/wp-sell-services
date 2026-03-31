@@ -270,14 +270,14 @@ class EarningsController extends RestController {
 			$service = get_post( $order['service_id'] );
 
 			$items[] = array(
-				'order_id'         => (int) $order['id'],
-				'order_number'     => $order['order_number'],
-				'service_title'    => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
-				'total'            => (float) $order['total'],
-				'vendor_earnings'   => (float) $order['vendor_earnings'],
-				'commission'       => (float) $order['platform_fee'],
-				'currency'         => $order['currency'],
-				'completed_at'     => $order['completed_at'],
+				'order_id'        => (int) $order['id'],
+				'order_number'    => $order['order_number'],
+				'service_title'   => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+				'total'           => (float) $order['total'],
+				'vendor_earnings' => (float) $order['vendor_earnings'],
+				'commission'      => (float) $order['platform_fee'],
+				'currency'        => $order['currency'],
+				'completed_at'    => $order['completed_at'],
 			);
 		}
 

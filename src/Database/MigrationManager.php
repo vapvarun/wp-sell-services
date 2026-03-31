@@ -236,7 +236,7 @@ class MigrationManager {
 			return 0;
 		}
 
-		$count       = 0;
+		$count        = 0;
 		$orders_table = $this->schema->get_table_name( 'orders' );
 
 		// Find WC orders with service items.
@@ -384,16 +384,16 @@ class MigrationManager {
 	 */
 	private function map_wss_status( string $old_status ): string {
 		$map = [
-			'pending'            => 'pending_payment',
-			'processing'         => 'in_progress',
-			'requirements'       => 'pending_requirements',
-			'in-progress'        => 'in_progress',
-			'delivered'          => 'pending_approval',
-			'revision'           => 'revision_requested',
-			'completed'          => 'completed',
-			'cancelled'          => 'cancelled',
-			'refunded'           => 'cancelled',
-			'disputed'           => 'disputed',
+			'pending'      => 'pending_payment',
+			'processing'   => 'in_progress',
+			'requirements' => 'pending_requirements',
+			'in-progress'  => 'in_progress',
+			'delivered'    => 'pending_approval',
+			'revision'     => 'revision_requested',
+			'completed'    => 'completed',
+			'cancelled'    => 'cancelled',
+			'refunded'     => 'cancelled',
+			'disputed'     => 'disputed',
 		];
 
 		return $map[ $old_status ] ?? 'pending_payment';
@@ -406,11 +406,11 @@ class MigrationManager {
 	 */
 	public function get_migration_status(): array {
 		return [
-			'migrated'       => (bool) get_option( 'wpss_migrated_from_wss', false ),
-			'migration_date' => get_option( 'wpss_migration_date', '' ),
-			'db_version'     => get_option( SchemaManager::VERSION_OPTION, '0.0.0' ),
+			'migrated'        => (bool) get_option( 'wpss_migrated_from_wss', false ),
+			'migration_date'  => get_option( 'wpss_migration_date', '' ),
+			'db_version'      => get_option( SchemaManager::VERSION_OPTION, '0.0.0' ),
 			'current_version' => SchemaManager::DB_VERSION,
-			'needs_update'   => $this->schema->needs_update(),
+			'needs_update'    => $this->schema->needs_update(),
 		];
 	}
 

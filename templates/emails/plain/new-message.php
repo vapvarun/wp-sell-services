@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 $sender_name = $sender_name ?? __( 'Someone', 'wp-sell-services' );
 
-echo "= " . esc_html( $email_heading ) . " =\n\n";
+echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
 	/* translators: %s: recipient name */

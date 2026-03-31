@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-echo "= " . esc_html( $email_heading ) . " =\n\n";
+echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 echo esc_html__( 'Hi Admin,', 'wp-sell-services' );
 echo "\n\n";
@@ -31,6 +31,7 @@ printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor ? $ven
 echo "\n";
 printf( esc_html__( 'Email: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->user_email : '' ) );
 echo "\n";
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is a safe function.
 printf( esc_html__( 'Amount: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $amount ) ) );
 echo "\n----------\n\n";
 

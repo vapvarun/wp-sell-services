@@ -74,7 +74,7 @@ class ServiceSearch extends AbstractBlock {
 	 */
 	public function get_attributes(): array {
 		return [
-			'placeholder'       => [
+			'placeholder'        => [
 				'type'    => 'string',
 				'default' => '',
 			],
@@ -82,11 +82,11 @@ class ServiceSearch extends AbstractBlock {
 				'type'    => 'boolean',
 				'default' => true,
 			],
-			'buttonText'        => [
+			'buttonText'         => [
 				'type'    => 'string',
 				'default' => '',
 			],
-			'style'             => [
+			'style'              => [
 				'type'    => 'string',
 				'default' => 'default',
 			],
@@ -124,7 +124,7 @@ class ServiceSearch extends AbstractBlock {
 
 		$wrapper_classes = [ 'wpss-search-style-' . $attributes['style'] ];
 		?>
-		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?>>
+		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 			<form class="wpss-search-form" method="get" action="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>">
 				<div class="wpss-search-fields">
 					<div class="wpss-search-input-wrap">

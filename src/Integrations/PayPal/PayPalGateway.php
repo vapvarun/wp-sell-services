@@ -396,11 +396,11 @@ class PayPalGateway implements PaymentGatewayInterface {
 		}
 
 		// Required PayPal signature headers — reject if any are missing.
-		$auth_algo         = $_SERVER['HTTP_PAYPAL_AUTH_ALGO'] ?? '';
-		$cert_url          = $_SERVER['HTTP_PAYPAL_CERT_URL'] ?? '';
-		$transmission_id   = $_SERVER['HTTP_PAYPAL_TRANSMISSION_ID'] ?? '';
-		$transmission_sig  = $_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG'] ?? '';
-		$transmission_time = $_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] ?? '';
+		$auth_algo         = isset( $_SERVER['HTTP_PAYPAL_AUTH_ALGO'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_PAYPAL_AUTH_ALGO'] ) ) : '';
+		$cert_url          = isset( $_SERVER['HTTP_PAYPAL_CERT_URL'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_PAYPAL_CERT_URL'] ) ) : '';
+		$transmission_id   = isset( $_SERVER['HTTP_PAYPAL_TRANSMISSION_ID'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_PAYPAL_TRANSMISSION_ID'] ) ) : '';
+		$transmission_sig  = isset( $_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG'] ) ) : '';
+		$transmission_time = isset( $_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] ) ) : '';
 
 		if ( ! $auth_algo || ! $cert_url || ! $transmission_id || ! $transmission_sig || ! $transmission_time ) {
 			return false;
@@ -581,7 +581,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$currency = sanitize_text_field( $params['currency'] ?? wpss_get_currency() );
 
 		if ( $amount <= 0 ) {
-			return array( 'success' => false, 'error' => __( 'Invalid amount.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Invalid amount.', 'wp-sell-services' ),
+			);
 		}
 
 		return $this->create_payment(
@@ -612,19 +615,28 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$package_id      = (int) ( $params['package_id'] ?? 0 );
 
 		if ( ! $paypal_order_id ) {
-			return array( 'success' => false, 'error' => __( 'Invalid PayPal order.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Invalid PayPal order.', 'wp-sell-services' ),
+			);
 		}
 
 		$payment = $this->process_payment( $paypal_order_id );
 
 		if ( ! $payment['success'] ) {
-			return array( 'success' => false, 'error' => $payment['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => $payment['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ),
+			);
 		}
 
 		$order_provider = wpss_get_order_provider();
 
 		if ( ! $order_provider ) {
-			return array( 'success' => false, 'error' => __( 'No order provider available.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'No order provider available.', 'wp-sell-services' ),
+			);
 		}
 
 		$order = $order_provider->create_order(
@@ -640,7 +652,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		if ( ! $order ) {
 			$this->process_refund( $payment['transaction_id'] );
-			return array( 'success' => false, 'error' => __( 'Failed to create order.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Failed to create order.', 'wp-sell-services' ),
+			);
 		}
 
 		$order_provider->mark_as_paid( $order->id, $payment['transaction_id'], 'paypal' );
@@ -669,10 +684,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$currency     = sanitize_text_field( $_POST['currency'] ?? wpss_get_currency() );
-		$service_id   = (int) ( $_POST['service_id'] ?? 0 );
-		$package_id   = (int) ( $_POST['package_id'] ?? 0 );
-		$pay_order_id = (int) ( $_POST['pay_order'] ?? 0 );
+		$currency     = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
+		$service_id   = absint( $_POST['service_id'] ?? 0 );
+		$package_id   = absint( $_POST['package_id'] ?? 0 );
+		$pay_order_id = absint( $_POST['pay_order'] ?? 0 );
 
 		// Pay-order flow: use existing order total (from proposal acceptance).
 		if ( $pay_order_id ) {
@@ -765,8 +780,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 */
 	public function ajax_capture_order(): void {
 		// Handle both GET (return URL) and POST (AJAX).
-		$nonce           = $_REQUEST['nonce'] ?? ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$paypal_order_id = sanitize_text_field( $_REQUEST['token'] ?? $_REQUEST['paypal_order_id'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$nonce           = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$paypal_order_id = sanitize_text_field( wp_unslash( $_REQUEST['token'] ?? $_REQUEST['paypal_order_id'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( ! wp_verify_nonce( $nonce, 'wpss_paypal_capture' ) && ! wp_verify_nonce( $nonce, 'wpss_paypal' ) ) {
 			if ( wp_doing_ajax() ) {
@@ -822,9 +837,9 @@ class PayPalGateway implements PaymentGatewayInterface {
 			foreach ( $addon_ids as $addon_id ) {
 				$addon = $addon_service->get( $addon_id );
 				if ( $addon && (int) $addon->service_id === $service_id && ! empty( $addon->is_active ) ) {
-					$addon_price    = (float) $addon->price;
-					$addons_total  += $addon_price;
-					$addons[]       = array(
+					$addon_price   = (float) $addon->price;
+					$addons_total += $addon_price;
+					$addons[]      = array(
 						'id'                  => (int) $addon->id,
 						'name'                => $addon->title ?? '',
 						'price'               => $addon_price,
@@ -849,10 +864,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 				$redirect_url = wpss_get_order_requirements_url( $pay_order_id );
 
 				if ( wp_doing_ajax() ) {
-					wp_send_json_success( array(
-						'order_id'     => $pay_order_id,
-						'redirect_url' => $redirect_url,
-					) );
+					wp_send_json_success(
+						array(
+							'order_id'     => $pay_order_id,
+							'redirect_url' => $redirect_url,
+						)
+					);
 				} else {
 					wp_safe_redirect( $redirect_url );
 					exit;

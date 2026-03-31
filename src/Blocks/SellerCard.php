@@ -145,7 +145,7 @@ class SellerCard extends AbstractBlock {
 
 		$wrapper_classes = array( 'wpss-seller-layout-' . $attributes['layout'] );
 		?>
-		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?>>
+		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 			<div class="wpss-seller-card-inner">
 				<div class="wpss-seller-header">
 					<div class="wpss-seller-avatar">

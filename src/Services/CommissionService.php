@@ -146,8 +146,8 @@ class CommissionService {
 		$rate = null;
 
 		// Check if per-vendor rates are enabled in commission settings.
-		$commission_settings  = get_option( 'wpss_commission', array() );
-		$enable_vendor_rates  = ! empty( $commission_settings['enable_vendor_rates'] );
+		$commission_settings = get_option( 'wpss_commission', array() );
+		$enable_vendor_rates = ! empty( $commission_settings['enable_vendor_rates'] );
 
 		if ( $enable_vendor_rates ) {
 			// Check for vendor-specific commission rate.

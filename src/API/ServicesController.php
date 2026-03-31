@@ -627,8 +627,8 @@ class ServicesController extends RestController {
 
 		// Add reviewer info.
 		foreach ( $reviews as &$review ) {
-			$user               = get_user_by( 'id', $review['customer_id'] );
-			$review['reviewer'] = array(
+			$user                 = get_user_by( 'id', $review['customer_id'] );
+			$review['reviewer']   = array(
 				'id'     => (int) $review['customer_id'],
 				'name'   => $user ? $user->display_name : 'Anonymous',
 				'avatar' => get_avatar_url( $review['customer_id'], array( 'size' => 48 ) ),
@@ -1127,38 +1127,38 @@ class ServicesController extends RestController {
 	 */
 	public function get_collection_params(): array {
 		return array(
-			'page'      => array(
+			'page'              => array(
 				'description' => __( 'Current page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 1,
 			),
-			'per_page'  => array(
+			'per_page'          => array(
 				'description' => __( 'Items per page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 10,
 				'maximum'     => 100,
 			),
-			'category'  => array(
+			'category'          => array(
 				'description' => __( 'Filter by category ID or slug.', 'wp-sell-services' ),
 				'type'        => 'string',
 			),
-			'vendor'    => array(
+			'vendor'            => array(
 				'description' => __( 'Filter by vendor ID.', 'wp-sell-services' ),
 				'type'        => 'integer',
 			),
-			'search'    => array(
+			'search'            => array(
 				'description' => __( 'Search term.', 'wp-sell-services' ),
 				'type'        => 'string',
 			),
-			'min_price' => array(
+			'min_price'         => array(
 				'description' => __( 'Minimum price filter.', 'wp-sell-services' ),
 				'type'        => 'number',
 			),
-			'max_price' => array(
+			'max_price'         => array(
 				'description' => __( 'Maximum price filter.', 'wp-sell-services' ),
 				'type'        => 'number',
 			),
-			'orderby'   => array(
+			'orderby'           => array(
 				'description' => __( 'Order by field.', 'wp-sell-services' ),
 				'type'        => 'string',
 				'enum'        => array( 'date', 'title', 'price', 'rating' ),

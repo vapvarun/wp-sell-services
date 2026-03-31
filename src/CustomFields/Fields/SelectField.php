@@ -70,8 +70,8 @@ class SelectField extends AbstractField {
 	 * @return string HTML output.
 	 */
 	public function render( array $field, $value = null ): string {
-		$field = $this->parse_field( $field );
-		$value = $value ?? $field['default'];
+		$field   = $this->parse_field( $field );
+		$value   = $value ?? $field['default'];
 		$options = $field['options'];
 
 		ob_start();
@@ -98,7 +98,7 @@ class SelectField extends AbstractField {
 	 * @return string HTML output.
 	 */
 	protected function render_type_settings( array $field ): string {
-		$field = $this->parse_field( $field );
+		$field   = $this->parse_field( $field );
 		$options = $field['options'];
 
 		ob_start();
@@ -130,7 +130,7 @@ class SelectField extends AbstractField {
 	 * @return true|\WP_Error
 	 */
 	public function validate( $value, array $field ) {
-		$field = $this->parse_field( $field );
+		$field   = $this->parse_field( $field );
 		$options = array_keys( $field['options'] );
 
 		if ( ! in_array( $value, $options, true ) ) {

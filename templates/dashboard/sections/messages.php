@@ -42,9 +42,9 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 	$active_conversation  = $conversation_service->get( $active_conversation_id );
 
 	if ( $active_conversation && $active_conversation->can_view( $user_id ) ) :
-		$messages        = $conversation_service->get_messages( $active_conversation_id, array( 'limit' => 100 ) );
-		$participants    = $active_conversation->participants;
-		$other_user_id   = 0;
+		$messages      = $conversation_service->get_messages( $active_conversation_id, array( 'limit' => 100 ) );
+		$participants  = $active_conversation->participants;
+		$other_user_id = 0;
 
 		foreach ( $participants as $pid ) {
 			if ( (int) $pid !== $user_id ) {
@@ -75,9 +75,9 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				<?php else : ?>
 					<?php foreach ( $messages as $msg ) : ?>
 						<?php
-						$is_mine    = (int) $msg->sender_id === $user_id;
-						$sender     = get_userdata( (int) $msg->sender_id );
-						$msg_class  = $is_mine ? 'wpss-message--mine' : 'wpss-message--theirs';
+						$is_mine   = (int) $msg->sender_id === $user_id;
+						$sender    = get_userdata( (int) $msg->sender_id );
+						$msg_class = $is_mine ? 'wpss-message--mine' : 'wpss-message--theirs';
 						?>
 						<div class="wpss-message <?php echo esc_attr( $msg_class ); ?>">
 							<div class="wpss-message__avatar">
@@ -87,9 +87,11 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 								<div class="wpss-message__meta">
 									<strong><?php echo esc_html( $sender ? $sender->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
 									<time>
-										<?php 
-										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at ); 
-										echo esc_html( human_time_diff( $msg_ts, current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
+										<?php
+										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at );
+										echo esc_html( human_time_diff( $msg_ts, current_time( 'timestamp' ) ) );
+										?>
+										<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
 									</time>
 								</div>
 								<div class="wpss-message__content"><?php echo wp_kses_post( wpautop( $msg->content ) ); ?></div>
@@ -290,10 +292,12 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 							// Fallback: if participants is NULL, get the other party from the order record.
 							if ( ! $avatar_user_id && ! empty( $conversation->order_id ) ) {
 								global $wpdb;
-								$order_row = $wpdb->get_row( $wpdb->prepare(
-									"SELECT customer_id, vendor_id FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
-									$conversation->order_id
-								) );
+								$order_row = $wpdb->get_row(
+									$wpdb->prepare(
+										"SELECT customer_id, vendor_id FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
+										$conversation->order_id
+									)
+								);
 								if ( $order_row ) {
 									$avatar_user_id = ( (int) $order_row->vendor_id !== $user_id )
 										? (int) $order_row->vendor_id
@@ -303,7 +307,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 						}
 
 						if ( $avatar_user_id ) :
-						?>
+							?>
 							<?php echo get_avatar( $avatar_user_id, 48 ); ?>
 						<?php else : ?>
 							<div class="wpss-conversation-card__placeholder">

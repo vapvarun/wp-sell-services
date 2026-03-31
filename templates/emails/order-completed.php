@@ -142,7 +142,7 @@ do_action( 'wpss_email_content_before', 'order_completed', $order, $recipient );
 	$default_button_text = $is_customer
 		? __( 'View Order & Leave Review', 'wp-sell-services' )
 		: __( 'View Order', 'wp-sell-services' );
-	$button_text = apply_filters( 'wpss_email_button_text', $default_button_text, 'order_completed' );
+	$button_text         = apply_filters( 'wpss_email_button_text', $default_button_text, 'order_completed' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

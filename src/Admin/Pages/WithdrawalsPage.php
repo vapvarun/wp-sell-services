@@ -343,6 +343,7 @@ class WithdrawalsPage {
 							printf(
 								/* translators: %s: number of items */
 								esc_html( _n( '%s item', '%s items', $total, 'wp-sell-services' ) ),
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
 								number_format_i18n( $total )
 							);
 							?>
@@ -567,7 +568,9 @@ class WithdrawalsPage {
 			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
 		}
 		jQuery(function($) {
-			var wpssWithdrawals = <?php echo wp_json_encode(
+			var wpssWithdrawals = 
+			<?php
+			echo wp_json_encode(
 				array(
 					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'wpss_withdrawals_admin' ),
@@ -579,7 +582,9 @@ class WithdrawalsPage {
 						'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					),
 				)
-			); ?>;
+			);
+			?>
+			;
 
 			var $modal = $('#wpss-withdrawal-modal');
 			var $form = $('#wpss-process-withdrawal-form');

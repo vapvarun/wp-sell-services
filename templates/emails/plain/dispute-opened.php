@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-echo "= " . esc_html( $email_heading ) . " =\n\n";
+echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
 	/* translators: %s: recipient name */

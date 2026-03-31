@@ -60,7 +60,7 @@ class ServicePostType {
 		}
 
 		// Use the first enabled package's delivery_days.
-		$first        = reset( $packages );
+		$first         = reset( $packages );
 		$delivery_days = (int) ( $first['delivery_days'] ?? $first['delivery_time'] ?? 0 );
 
 		if ( $delivery_days > 0 ) {
@@ -102,24 +102,24 @@ class ServicePostType {
 		];
 
 		$args = [
-			'labels'              => $labels,
-			'description'         => __( 'Service offerings for sale.', 'wp-sell-services' ),
-			'public'              => true,
-			'publicly_queryable'  => true,
-			'show_ui'             => true,
-			'show_in_menu'        => 'wp-sell-services', // Show under our custom admin menu.
-			'query_var'           => true,
-			'rewrite'             => [
+			'labels'             => $labels,
+			'description'        => __( 'Service offerings for sale.', 'wp-sell-services' ),
+			'public'             => true,
+			'publicly_queryable' => true,
+			'show_ui'            => true,
+			'show_in_menu'       => 'wp-sell-services', // Show under our custom admin menu.
+			'query_var'          => true,
+			'rewrite'            => [
 				'slug'       => $this->get_slug(),
 				'with_front' => false,
 			],
-			'capability_type'     => 'post',
-			'map_meta_cap'        => true,
-			'has_archive'         => true,
-			'hierarchical'        => false,
-			'menu_position'       => null,
-			'menu_icon'           => 'dashicons-cart',
-			'supports'            => [
+			'capability_type'    => 'post',
+			'map_meta_cap'       => true,
+			'has_archive'        => true,
+			'hierarchical'       => false,
+			'menu_position'      => null,
+			'menu_icon'          => 'dashicons-cart',
+			'supports'           => [
 				'title',
 				'editor',
 				'author',
@@ -128,8 +128,8 @@ class ServicePostType {
 				'custom-fields',
 				'revisions',
 			],
-			'show_in_rest'        => true,
-			'rest_base'           => 'wpss-services',
+			'show_in_rest'       => true,
+			'rest_base'          => 'wpss-services',
 		];
 
 		/**
@@ -179,16 +179,16 @@ class ServicePostType {
 		];
 
 		$args = [
-			'labels'             => $labels,
-			'hierarchical'       => false,
-			'public'             => true,
-			'show_ui'            => true,
-			'show_admin_column'  => true,
-			'show_in_nav_menus'  => true,
-			'show_tagcloud'      => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'service-tags',
-			'rewrite'            => [
+			'labels'            => $labels,
+			'hierarchical'      => false,
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'show_in_nav_menus' => true,
+			'show_tagcloud'     => true,
+			'show_in_rest'      => true,
+			'rest_base'         => 'service-tags',
+			'rewrite'           => [
 				'slug'       => 'service-tag',
 				'with_front' => false,
 			],

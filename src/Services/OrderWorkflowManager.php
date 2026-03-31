@@ -239,7 +239,7 @@ class OrderWorkflowManager {
 		}
 
 		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_orders';
+		$table            = $wpdb->prefix . 'wpss_orders';
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
 		// Find orders pending approval/delivered with delivery older than X days.
@@ -309,7 +309,7 @@ class OrderWorkflowManager {
 		);
 
 		foreach ( $upcoming_orders as $order ) {
-			$deadline = new \DateTime( $order->delivery_deadline );
+			$deadline   = new \DateTime( $order->delivery_deadline );
 			$hours_left = max( 0, ( $deadline->getTimestamp() - time() ) / 3600 );
 
 			$this->notification_service->create(
@@ -918,7 +918,7 @@ class OrderWorkflowManager {
 			)
 		);
 
-		$now             = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		$now              = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 		$timed_out_orders = array();
 
 		foreach ( $pending_orders as $order ) {

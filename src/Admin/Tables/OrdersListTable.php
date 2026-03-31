@@ -334,7 +334,7 @@ class OrdersListTable extends \WP_List_Table {
 
 			if ( ! empty( $months ) ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$selected_month = isset( $_GET['m'] ) ? sanitize_text_field( $_GET['m'] ) : '';
+				$selected_month = isset( $_GET['m'] ) ? sanitize_text_field( wp_unslash( $_GET['m'] ) ) : '';
 				?>
 				<select name="m">
 					<option value=""><?php esc_html_e( 'All dates', 'wp-sell-services' ); ?></option>
@@ -413,7 +413,7 @@ class OrdersListTable extends \WP_List_Table {
 		if ( ! empty( $_GET['m'] ) ) {
 			$where .= ' AND DATE_FORMAT(created_at, "%%Y-%%m") = %s';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$params[] = sanitize_text_field( $_GET['m'] );
+			$params[] = sanitize_text_field( wp_unslash( $_GET['m'] ) );
 		}
 
 		// Search.
@@ -421,7 +421,7 @@ class OrdersListTable extends \WP_List_Table {
 		if ( ! empty( $_GET['s'] ) ) {
 			$where .= ' AND (order_number LIKE %s OR id = %d)';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$search = '%' . $wpdb->esc_like( sanitize_text_field( $_GET['s'] ) ) . '%';
+			$search   = '%' . $wpdb->esc_like( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) . '%';
 			$params[] = $search;
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$params[] = absint( $_GET['s'] );
@@ -438,10 +438,10 @@ class OrdersListTable extends \WP_List_Table {
 
 		// Sorting.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$orderby = isset( $_GET['orderby'] ) ? sanitize_sql_orderby( $_GET['orderby'] . ' ASC' ) : 'created_at';
+		$orderby = isset( $_GET['orderby'] ) ? sanitize_sql_orderby( sanitize_text_field( wp_unslash( $_GET['orderby'] ) ) . ' ASC' ) : 'created_at';
 		$orderby = $orderby ? explode( ' ', $orderby )[0] : 'created_at';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$order = isset( $_GET['order'] ) && 'asc' === strtolower( $_GET['order'] ) ? 'ASC' : 'DESC';
+		$order = isset( $_GET['order'] ) && 'asc' === strtolower( sanitize_text_field( wp_unslash( $_GET['order'] ) ) ) ? 'ASC' : 'DESC';
 
 		$allowed_orderby = [ 'id', 'order_number', 'total', 'status', 'created_at' ];
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
@@ -449,7 +449,7 @@ class OrdersListTable extends \WP_List_Table {
 		}
 
 		// Get items.
-		$offset = ( $current_page - 1 ) * $per_page;
+		$offset       = ( $current_page - 1 ) * $per_page;
 		$query_params = array_merge( $params, [ $per_page, $offset ] );
 
 		if ( ! empty( $params ) ) {

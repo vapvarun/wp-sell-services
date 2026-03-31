@@ -499,8 +499,8 @@ class OrderService {
 			);
 		}
 
-		$now          = new \DateTimeImmutable( 'now', $order->started_at->getTimezone() );
-		$hours_since  = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
+		$now         = new \DateTimeImmutable( 'now', $order->started_at->getTimezone() );
+		$hours_since = ( $now->getTimestamp() - $order->started_at->getTimestamp() ) / 3600;
 
 		if ( $hours_since > 24 ) {
 			return array(
@@ -521,16 +521,18 @@ class OrderService {
 		}
 
 		// Store reason in vendor_notes first so status-change hooks can access it.
-		$cancel_data = wp_json_encode( array(
-			'reason'       => sanitize_key( $reason ),
-			'note'         => sanitize_textarea_field( $note ),
-			'requested_by' => $user_id,
-			'requested_at' => current_time( 'mysql' ),
-		) );
+		$cancel_data = wp_json_encode(
+			array(
+				'reason'       => sanitize_key( $reason ),
+				'note'         => sanitize_textarea_field( $note ),
+				'requested_by' => $user_id,
+				'requested_at' => current_time( 'mysql' ),
+			)
+		);
 
 		global $wpdb;
-		$table          = $wpdb->prefix . 'wpss_orders';
-		$old_notes      = $order->vendor_notes;
+		$table     = $wpdb->prefix . 'wpss_orders';
+		$old_notes = $order->vendor_notes;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$notes_written = $wpdb->update(
@@ -627,7 +629,7 @@ class OrderService {
 		// Deduplicate within the same request (static) AND across requests (transient).
 		// Prevents duplicate system messages from race conditions (concurrent cron + AJAX).
 		static $logged = array();
-		$key = $order_id . ':' . $old_status . ':' . $new_status;
+		$key           = $order_id . ':' . $old_status . ':' . $new_status;
 		if ( isset( $logged[ $key ] ) ) {
 			return;
 		}

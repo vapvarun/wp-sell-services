@@ -80,8 +80,8 @@ class ServiceCommands extends WP_CLI_Command {
 	 * @param array $assoc_args Associative arguments.
 	 */
 	public function create( array $args, array $assoc_args ): void {
-		$count         = (int) ( $assoc_args['count'] ?? 20 );
-		$category_slug = $assoc_args['category'] ?? null;
+		$count          = (int) ( $assoc_args['count'] ?? 20 );
+		$category_slug  = $assoc_args['category'] ?? null;
 		$featured_count = (int) ( $assoc_args['featured'] ?? 5 );
 
 		// Filter templates by category if specified.
@@ -99,7 +99,7 @@ class ServiceCommands extends WP_CLI_Command {
 		}
 
 		// Ensure we have enough templates.
-		$templates = array_values( $templates );
+		$templates      = array_values( $templates );
 		$template_count = count( $templates );
 
 		WP_CLI::log( "Creating {$count} demo services..." );
@@ -116,21 +116,21 @@ class ServiceCommands extends WP_CLI_Command {
 			$template = $templates[ $i % $template_count ];
 
 			// Add variation to make services unique.
-			$variation = (int) floor( $i / $template_count );
+			$variation    = (int) floor( $i / $template_count );
 			$service_data = $this->apply_variation( $template, $variation );
 
 			// Mark some as featured.
 			if ( $featured < $featured_count && ( $i % 4 === 0 || $template['featured'] ?? false ) ) {
 				$service_data['featured'] = true;
-				$featured++;
+				++$featured;
 			}
 
 			$result = $this->create_service( $service_data );
 
 			if ( is_wp_error( $result ) ) {
-				$errors++;
+				++$errors;
 			} else {
-				$created++;
+				++$created;
 			}
 
 			$progress->tick();
@@ -274,14 +274,14 @@ class ServiceCommands extends WP_CLI_Command {
 			$categories = wp_get_post_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'names' ) );
 
 			$items[] = array(
-				'ID'        => $service->ID,
-				'Title'     => mb_substr( $service->post_title, 0, 50 ) . ( strlen( $service->post_title ) > 50 ? '...' : '' ),
-				'Category'  => is_array( $categories ) ? implode( ', ', $categories ) : '',
-				'Price'     => '$' . get_post_meta( $service->ID, '_wpss_starting_price', true ),
-				'Rating'    => get_post_meta( $service->ID, '_wpss_rating_average', true ) ?: '0',
-				'Orders'    => get_post_meta( $service->ID, '_wpss_order_count', true ) ?: '0',
-				'Views'     => get_post_meta( $service->ID, '_wpss_view_count', true ) ?: '0',
-				'Featured'  => get_post_meta( $service->ID, '_wpss_featured', true ) ? 'Yes' : 'No',
+				'ID'       => $service->ID,
+				'Title'    => mb_substr( $service->post_title, 0, 50 ) . ( strlen( $service->post_title ) > 50 ? '...' : '' ),
+				'Category' => is_array( $categories ) ? implode( ', ', $categories ) : '',
+				'Price'    => '$' . get_post_meta( $service->ID, '_wpss_starting_price', true ),
+				'Rating'   => get_post_meta( $service->ID, '_wpss_rating_average', true ) ?: '0',
+				'Orders'   => get_post_meta( $service->ID, '_wpss_order_count', true ) ?: '0',
+				'Views'    => get_post_meta( $service->ID, '_wpss_view_count', true ) ?: '0',
+				'Featured' => get_post_meta( $service->ID, '_wpss_featured', true ) ? 'Yes' : 'No',
 			);
 		}
 
@@ -302,7 +302,7 @@ class ServiceCommands extends WP_CLI_Command {
 	public function stats( array $args, array $assoc_args ): void {
 		global $wpdb;
 
-		$total = wp_count_posts( 'wpss_service' );
+		$total     = wp_count_posts( 'wpss_service' );
 		$published = $total->publish ?? 0;
 
 		// Get category counts.
@@ -336,9 +336,9 @@ class ServiceCommands extends WP_CLI_Command {
 		WP_CLI::log( '' );
 		WP_CLI::log( "Total Services:    {$published}" );
 		WP_CLI::log( "Featured:          {$featured}" );
-		WP_CLI::log( "Categories:        " . count( $categories ) );
-		WP_CLI::log( "Average Rating:    " . round( (float) $avg_rating, 2 ) );
-		WP_CLI::log( "Total Orders:      " . ( $total_orders ?: 0 ) );
+		WP_CLI::log( 'Categories:        ' . count( $categories ) );
+		WP_CLI::log( 'Average Rating:    ' . round( (float) $avg_rating, 2 ) );
+		WP_CLI::log( 'Total Orders:      ' . ( $total_orders ?: 0 ) );
 		WP_CLI::log( '' );
 
 		if ( ! empty( $categories ) ) {
@@ -561,15 +561,15 @@ class ServiceCommands extends WP_CLI_Command {
 		$prefix_idx = $variation % count( $prefixes );
 		$suffix_idx = $variation % count( $suffixes );
 
-		$title = $template['title'];
-		$title = preg_replace( '/^I will /', $prefixes[ $prefix_idx ] . ' ', $title );
+		$title  = $template['title'];
+		$title  = preg_replace( '/^I will /', $prefixes[ $prefix_idx ] . ' ', $title );
 		$title .= $suffixes[ $suffix_idx ];
 
 		$template['title'] = $title;
 
 		// Vary stats.
 		if ( ! empty( $template['stats'] ) ) {
-			$multiplier = 0.5 + ( $variation * 0.3 );
+			$multiplier                   = 0.5 + ( $variation * 0.3 );
 			$template['stats']['views']   = (int) ( $template['stats']['views'] * $multiplier );
 			$template['stats']['orders']  = (int) ( $template['stats']['orders'] * $multiplier );
 			$template['stats']['reviews'] = (int) ( $template['stats']['reviews'] * $multiplier );
@@ -641,7 +641,7 @@ class ServiceCommands extends WP_CLI_Command {
 					update_post_meta( $post_id, '_wpss_max_revisions', max( $revisions ) );
 				}
 
-				$updated++;
+				++$updated;
 			}
 
 			$progress->tick();
@@ -667,26 +667,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Graphics & Design',
 				'tags'         => array( 'logo design', 'minimalist', 'branding', 'business logo' ),
 				'packages'     => array(
-					array( 'name' => 'Basic', 'description' => '1 logo concept, PNG format, 3 revisions', 'price' => 25, 'delivery_days' => 3, 'revisions' => 3 ),
-					array( 'name' => 'Standard', 'description' => '3 logo concepts, all formats (AI, EPS, PDF, PNG, JPG), unlimited revisions', 'price' => 75, 'delivery_days' => 5, 'revisions' => -1 ),
-					array( 'name' => 'Premium', 'description' => '5 concepts + brand guidelines + social media kit + stationery mockups', 'price' => 150, 'delivery_days' => 7, 'revisions' => -1 ),
+					array(
+						'name'          => 'Basic',
+						'description'   => '1 logo concept, PNG format, 3 revisions',
+						'price'         => 25,
+						'delivery_days' => 3,
+						'revisions'     => 3,
+					),
+					array(
+						'name'          => 'Standard',
+						'description'   => '3 logo concepts, all formats (AI, EPS, PDF, PNG, JPG), unlimited revisions',
+						'price'         => 75,
+						'delivery_days' => 5,
+						'revisions'     => -1,
+					),
+					array(
+						'name'          => 'Premium',
+						'description'   => '5 concepts + brand guidelines + social media kit + stationery mockups',
+						'price'         => 150,
+						'delivery_days' => 7,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'What file formats will I receive?', 'answer' => 'You will receive AI, EPS, PDF, PNG (transparent), and JPG files suitable for both print and web use.' ),
-					array( 'question' => 'Can I request revisions?', 'answer' => 'Absolutely! Revisions are included based on your package. Basic includes 3 revisions, Standard and Premium include unlimited revisions.' ),
-					array( 'question' => 'How do I provide feedback?', 'answer' => 'I will share initial concepts via the order page. You can leave detailed feedback and I will revise accordingly.' ),
+					array(
+						'question' => 'What file formats will I receive?',
+						'answer'   => 'You will receive AI, EPS, PDF, PNG (transparent), and JPG files suitable for both print and web use.',
+					),
+					array(
+						'question' => 'Can I request revisions?',
+						'answer'   => 'Absolutely! Revisions are included based on your package. Basic includes 3 revisions, Standard and Premium include unlimited revisions.',
+					),
+					array(
+						'question' => 'How do I provide feedback?',
+						'answer'   => 'I will share initial concepts via the order page. You can leave detailed feedback and I will revise accordingly.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'What is your business name and industry?', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'Do you have any color preferences or brand colors?', 'type' => 'textarea', 'required' => false ),
-					array( 'question' => 'Share any reference logos or styles you like', 'type' => 'file', 'required' => false ),
+					array(
+						'question' => 'What is your business name and industry?',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'Do you have any color preferences or brand colors?',
+						'type'     => 'textarea',
+						'required' => false,
+					),
+					array(
+						'question' => 'Share any reference logos or styles you like',
+						'type'     => 'file',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Express 24-hour delivery', 'description' => 'Get your logo concepts within 24 hours', 'price' => 30, 'delivery_days_extra' => -2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Social media kit', 'description' => 'Optimized logo versions for all social platforms (FB, IG, Twitter, LinkedIn)', 'price' => 25, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Brand guidelines PDF', 'description' => 'Document with logo usage rules, colors, and typography', 'price' => 40, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Express 24-hour delivery',
+						'description'         => 'Get your logo concepts within 24 hours',
+						'price'               => 30,
+						'delivery_days_extra' => -2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Social media kit',
+						'description'         => 'Optimized logo versions for all social platforms (FB, IG, Twitter, LinkedIn)',
+						'price'               => 25,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Brand guidelines PDF',
+						'description'         => 'Document with logo usage rules, colors, and typography',
+						'price'               => 40,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 2847, 'orders' => 156, 'rating' => 4.9, 'reviews' => 89 ),
+				'stats'        => array(
+					'views'   => 2847,
+					'orders'  => 156,
+					'rating'  => 4.9,
+					'reviews' => 89,
+				),
 				'featured'     => true,
 			),
 			array(
@@ -696,24 +758,77 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Graphics & Design',
 				'tags'         => array( 'social media', 'instagram', 'facebook', 'graphics', 'posts' ),
 				'packages'     => array(
-					array( 'name' => 'Starter', 'description' => '5 custom posts for 1 platform, PNG format', 'price' => 30, 'delivery_days' => 2, 'revisions' => 2 ),
-					array( 'name' => 'Growth', 'description' => '15 posts for 2 platforms + 5 stories templates', 'price' => 80, 'delivery_days' => 4, 'revisions' => 3 ),
-					array( 'name' => 'Business', 'description' => '30 posts for all platforms + content calendar + reels covers', 'price' => 180, 'delivery_days' => 7, 'revisions' => -1 ),
+					array(
+						'name'          => 'Starter',
+						'description'   => '5 custom posts for 1 platform, PNG format',
+						'price'         => 30,
+						'delivery_days' => 2,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Growth',
+						'description'   => '15 posts for 2 platforms + 5 stories templates',
+						'price'         => 80,
+						'delivery_days' => 4,
+						'revisions'     => 3,
+					),
+					array(
+						'name'          => 'Business',
+						'description'   => '30 posts for all platforms + content calendar + reels covers',
+						'price'         => 180,
+						'delivery_days' => 7,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'Which platforms do you design for?', 'answer' => 'Instagram, Facebook, Twitter/X, LinkedIn, Pinterest, and TikTok. I optimize sizes for each platform.' ),
-					array( 'question' => 'Can I edit the files myself later?', 'answer' => 'Yes! I provide editable Canva templates or source files upon request.' ),
+					array(
+						'question' => 'Which platforms do you design for?',
+						'answer'   => 'Instagram, Facebook, Twitter/X, LinkedIn, Pinterest, and TikTok. I optimize sizes for each platform.',
+					),
+					array(
+						'question' => 'Can I edit the files myself later?',
+						'answer'   => 'Yes! I provide editable Canva templates or source files upon request.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Share your brand guidelines or logo', 'type' => 'file', 'required' => true ),
-					array( 'question' => 'What is the main goal of these posts? (awareness, sales, engagement)', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Any specific topics or themes to cover?', 'type' => 'textarea', 'required' => false ),
+					array(
+						'question' => 'Share your brand guidelines or logo',
+						'type'     => 'file',
+						'required' => true,
+					),
+					array(
+						'question' => 'What is the main goal of these posts? (awareness, sales, engagement)',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Any specific topics or themes to cover?',
+						'type'     => 'textarea',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Animated posts (GIF)', 'description' => '5 animated versions of your posts', 'price' => 35, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Hashtag research', 'description' => 'Curated hashtag sets for maximum reach', 'price' => 15, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Animated posts (GIF)',
+						'description'         => '5 animated versions of your posts',
+						'price'               => 35,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Hashtag research',
+						'description'         => 'Curated hashtag sets for maximum reach',
+						'price'               => 15,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 1523, 'orders' => 78, 'rating' => 4.8, 'reviews' => 45 ),
+				'stats'        => array(
+					'views'   => 1523,
+					'orders'  => 78,
+					'rating'  => 4.8,
+					'reviews' => 45,
+				),
 				'featured'     => false,
 			),
 			array(
@@ -723,26 +838,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Graphics & Design',
 				'tags'         => array( 'UI design', 'UX design', 'figma', 'mobile app', 'web design' ),
 				'packages'     => array(
-					array( 'name' => 'Basic', 'description' => '3 screens with components, mobile or web', 'price' => 150, 'delivery_days' => 5, 'revisions' => 2 ),
-					array( 'name' => 'Standard', 'description' => '8 screens with interactive Figma prototype', 'price' => 350, 'delivery_days' => 7, 'revisions' => 3 ),
-					array( 'name' => 'Premium', 'description' => 'Full app design (15+ screens) with design system and developer handoff', 'price' => 800, 'delivery_days' => 14, 'revisions' => -1 ),
+					array(
+						'name'          => 'Basic',
+						'description'   => '3 screens with components, mobile or web',
+						'price'         => 150,
+						'delivery_days' => 5,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Standard',
+						'description'   => '8 screens with interactive Figma prototype',
+						'price'         => 350,
+						'delivery_days' => 7,
+						'revisions'     => 3,
+					),
+					array(
+						'name'          => 'Premium',
+						'description'   => 'Full app design (15+ screens) with design system and developer handoff',
+						'price'         => 800,
+						'delivery_days' => 14,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'What tools do you use?', 'answer' => 'I design in Figma and can export to any format. I also provide Zeplin or direct Figma developer access.' ),
-					array( 'question' => 'Do you provide the source files?', 'answer' => 'Yes, you get full ownership of the Figma file with organized layers and components.' ),
-					array( 'question' => 'Can you work with my existing brand?', 'answer' => 'Absolutely! I will follow your brand guidelines or help create a visual style if you do not have one.' ),
+					array(
+						'question' => 'What tools do you use?',
+						'answer'   => 'I design in Figma and can export to any format. I also provide Zeplin or direct Figma developer access.',
+					),
+					array(
+						'question' => 'Do you provide the source files?',
+						'answer'   => 'Yes, you get full ownership of the Figma file with organized layers and components.',
+					),
+					array(
+						'question' => 'Can you work with my existing brand?',
+						'answer'   => 'Absolutely! I will follow your brand guidelines or help create a visual style if you do not have one.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Describe your app or website idea', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Who is your target audience?', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'Share any wireframes or reference designs', 'type' => 'file', 'required' => false ),
+					array(
+						'question' => 'Describe your app or website idea',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Who is your target audience?',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'Share any wireframes or reference designs',
+						'type'     => 'file',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'User flow diagrams', 'description' => 'Complete user journey mapping', 'price' => 50, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Responsive web + mobile', 'description' => 'Design for both desktop and mobile', 'price' => 100, 'delivery_days_extra' => 3, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Design system', 'description' => 'Reusable component library in Figma', 'price' => 150, 'delivery_days_extra' => 3, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'User flow diagrams',
+						'description'         => 'Complete user journey mapping',
+						'price'               => 50,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Responsive web + mobile',
+						'description'         => 'Design for both desktop and mobile',
+						'price'               => 100,
+						'delivery_days_extra' => 3,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Design system',
+						'description'         => 'Reusable component library in Figma',
+						'price'               => 150,
+						'delivery_days_extra' => 3,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 2345, 'orders' => 56, 'rating' => 4.9, 'reviews' => 34 ),
+				'stats'        => array(
+					'views'   => 2345,
+					'orders'  => 56,
+					'rating'  => 4.9,
+					'reviews' => 34,
+				),
 				'featured'     => true,
 			),
 
@@ -754,26 +931,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Digital Marketing',
 				'tags'         => array( 'SEO', 'keyword research', 'google ranking', 'organic traffic' ),
 				'packages'     => array(
-					array( 'name' => 'SEO Audit', 'description' => 'Technical SEO audit with prioritized recommendations report', 'price' => 50, 'delivery_days' => 3, 'revisions' => 1 ),
-					array( 'name' => 'Full Strategy', 'description' => 'Audit + keyword research (50 keywords) + 3-month content plan', 'price' => 150, 'delivery_days' => 5, 'revisions' => 2 ),
-					array( 'name' => 'Enterprise', 'description' => 'Complete SEO roadmap + competitor analysis + monthly consultation call', 'price' => 400, 'delivery_days' => 10, 'revisions' => -1 ),
+					array(
+						'name'          => 'SEO Audit',
+						'description'   => 'Technical SEO audit with prioritized recommendations report',
+						'price'         => 50,
+						'delivery_days' => 3,
+						'revisions'     => 1,
+					),
+					array(
+						'name'          => 'Full Strategy',
+						'description'   => 'Audit + keyword research (50 keywords) + 3-month content plan',
+						'price'         => 150,
+						'delivery_days' => 5,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Enterprise',
+						'description'   => 'Complete SEO roadmap + competitor analysis + monthly consultation call',
+						'price'         => 400,
+						'delivery_days' => 10,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'How long until I see results?', 'answer' => 'SEO is a long-term strategy. You will typically see improvements in 3-6 months, with significant results in 6-12 months.' ),
-					array( 'question' => 'Do you guarantee first page rankings?', 'answer' => 'No one can guarantee rankings as Google controls the algorithm. However, my strategies consistently improve visibility and traffic.' ),
-					array( 'question' => 'What tools do you use?', 'answer' => 'I use Ahrefs, SEMrush, Screaming Frog, Google Search Console, and Google Analytics for comprehensive analysis.' ),
+					array(
+						'question' => 'How long until I see results?',
+						'answer'   => 'SEO is a long-term strategy. You will typically see improvements in 3-6 months, with significant results in 6-12 months.',
+					),
+					array(
+						'question' => 'Do you guarantee first page rankings?',
+						'answer'   => 'No one can guarantee rankings as Google controls the algorithm. However, my strategies consistently improve visibility and traffic.',
+					),
+					array(
+						'question' => 'What tools do you use?',
+						'answer'   => 'I use Ahrefs, SEMrush, Screaming Frog, Google Search Console, and Google Analytics for comprehensive analysis.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'What is your website URL?', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'Who are your main competitors? (List 2-3 URLs)', 'type' => 'textarea', 'required' => false ),
-					array( 'question' => 'What are your target keywords or topics?', 'type' => 'textarea', 'required' => false ),
+					array(
+						'question' => 'What is your website URL?',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'Who are your main competitors? (List 2-3 URLs)',
+						'type'     => 'textarea',
+						'required' => false,
+					),
+					array(
+						'question' => 'What are your target keywords or topics?',
+						'type'     => 'textarea',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Competitor backlink analysis', 'description' => 'Deep dive into competitor link profiles with opportunities', 'price' => 75, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Local SEO optimization', 'description' => 'Google Business Profile setup and local citations', 'price' => 50, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Monthly reporting', 'description' => 'Track rankings and traffic for 3 months', 'price' => 100, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Competitor backlink analysis',
+						'description'         => 'Deep dive into competitor link profiles with opportunities',
+						'price'               => 75,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Local SEO optimization',
+						'description'         => 'Google Business Profile setup and local citations',
+						'price'               => 50,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Monthly reporting',
+						'description'         => 'Track rankings and traffic for 3 months',
+						'price'               => 100,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 3421, 'orders' => 198, 'rating' => 4.9, 'reviews' => 112 ),
+				'stats'        => array(
+					'views'   => 3421,
+					'orders'  => 198,
+					'rating'  => 4.9,
+					'reviews' => 112,
+				),
 				'featured'     => true,
 			),
 			array(
@@ -783,25 +1022,81 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Digital Marketing',
 				'tags'         => array( 'google ads', 'PPC', 'paid advertising', 'lead generation' ),
 				'packages'     => array(
-					array( 'name' => 'Setup', 'description' => 'Campaign setup with keyword research, ad groups, and conversion tracking', 'price' => 100, 'delivery_days' => 5, 'revisions' => 2 ),
-					array( 'name' => 'Monthly', 'description' => 'Full month campaign management with weekly optimization and reporting', 'price' => 300, 'delivery_days' => 30, 'revisions' => -1 ),
-					array( 'name' => 'Quarterly', 'description' => '3 months management with A/B testing, remarketing, and advanced tracking', 'price' => 800, 'delivery_days' => 90, 'revisions' => -1 ),
+					array(
+						'name'          => 'Setup',
+						'description'   => 'Campaign setup with keyword research, ad groups, and conversion tracking',
+						'price'         => 100,
+						'delivery_days' => 5,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Monthly',
+						'description'   => 'Full month campaign management with weekly optimization and reporting',
+						'price'         => 300,
+						'delivery_days' => 30,
+						'revisions'     => -1,
+					),
+					array(
+						'name'          => 'Quarterly',
+						'description'   => '3 months management with A/B testing, remarketing, and advanced tracking',
+						'price'         => 800,
+						'delivery_days' => 90,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'Is the ad spend included?', 'answer' => 'No, this covers management only. Ad spend is paid directly to Google. I recommend a minimum of $500/month ad budget.' ),
-					array( 'question' => 'What types of campaigns do you manage?', 'answer' => 'Search, Display, Shopping, YouTube, and Performance Max campaigns.' ),
-					array( 'question' => 'How often will I receive reports?', 'answer' => 'Weekly performance updates and monthly detailed reports with insights and recommendations.' ),
+					array(
+						'question' => 'Is the ad spend included?',
+						'answer'   => 'No, this covers management only. Ad spend is paid directly to Google. I recommend a minimum of $500/month ad budget.',
+					),
+					array(
+						'question' => 'What types of campaigns do you manage?',
+						'answer'   => 'Search, Display, Shopping, YouTube, and Performance Max campaigns.',
+					),
+					array(
+						'question' => 'How often will I receive reports?',
+						'answer'   => 'Weekly performance updates and monthly detailed reports with insights and recommendations.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'What is your monthly ad budget?', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'What product/service are you advertising?', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Do you have existing Google Ads account access?', 'type' => 'text', 'required' => false ),
+					array(
+						'question' => 'What is your monthly ad budget?',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'What product/service are you advertising?',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Do you have existing Google Ads account access?',
+						'type'     => 'text',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Landing page design', 'description' => 'Custom high-converting landing page for your campaign', 'price' => 150, 'delivery_days_extra' => 3, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Conversion tracking setup', 'description' => 'Google Tag Manager and Analytics 4 configuration', 'price' => 50, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Landing page design',
+						'description'         => 'Custom high-converting landing page for your campaign',
+						'price'               => 150,
+						'delivery_days_extra' => 3,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Conversion tracking setup',
+						'description'         => 'Google Tag Manager and Analytics 4 configuration',
+						'price'               => 50,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 1876, 'orders' => 67, 'rating' => 4.7, 'reviews' => 38 ),
+				'stats'        => array(
+					'views'   => 1876,
+					'orders'  => 67,
+					'rating'  => 4.7,
+					'reviews' => 38,
+				),
 				'featured'     => false,
 			),
 
@@ -813,27 +1108,93 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Programming & Tech',
 				'tags'         => array( 'wordpress', 'web development', 'responsive design', 'website' ),
 				'packages'     => array(
-					array( 'name' => 'Landing Page', 'description' => 'Single page website with contact form, mobile responsive', 'price' => 150, 'delivery_days' => 5, 'revisions' => 2 ),
-					array( 'name' => 'Business Site', 'description' => '5-page website with blog, SEO setup, and contact forms', 'price' => 400, 'delivery_days' => 10, 'revisions' => 3 ),
-					array( 'name' => 'E-commerce', 'description' => 'Full WooCommerce store with payment setup, up to 50 products', 'price' => 800, 'delivery_days' => 14, 'revisions' => -1 ),
+					array(
+						'name'          => 'Landing Page',
+						'description'   => 'Single page website with contact form, mobile responsive',
+						'price'         => 150,
+						'delivery_days' => 5,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Business Site',
+						'description'   => '5-page website with blog, SEO setup, and contact forms',
+						'price'         => 400,
+						'delivery_days' => 10,
+						'revisions'     => 3,
+					),
+					array(
+						'name'          => 'E-commerce',
+						'description'   => 'Full WooCommerce store with payment setup, up to 50 products',
+						'price'         => 800,
+						'delivery_days' => 14,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'Do I need to have hosting?', 'answer' => 'Yes, you will need hosting and a domain. I can recommend reliable options like SiteGround or Cloudways, or set it up for you.' ),
-					array( 'question' => 'Will I be able to update the site myself?', 'answer' => 'Absolutely! I provide a video tutorial and documentation. WordPress is very user-friendly.' ),
-					array( 'question' => 'Do you provide ongoing maintenance?', 'answer' => 'I offer optional maintenance packages. Otherwise, you can manage updates yourself or hire someone later.' ),
+					array(
+						'question' => 'Do I need to have hosting?',
+						'answer'   => 'Yes, you will need hosting and a domain. I can recommend reliable options like SiteGround or Cloudways, or set it up for you.',
+					),
+					array(
+						'question' => 'Will I be able to update the site myself?',
+						'answer'   => 'Absolutely! I provide a video tutorial and documentation. WordPress is very user-friendly.',
+					),
+					array(
+						'question' => 'Do you provide ongoing maintenance?',
+						'answer'   => 'I offer optional maintenance packages. Otherwise, you can manage updates yourself or hire someone later.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'What is the purpose of your website?', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Share any reference websites you like', 'type' => 'textarea', 'required' => false ),
-					array( 'question' => 'Do you have a logo and brand colors?', 'type' => 'file', 'required' => false ),
-					array( 'question' => 'Provide your hosting credentials (or let me know if you need hosting)', 'type' => 'text', 'required' => true ),
+					array(
+						'question' => 'What is the purpose of your website?',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Share any reference websites you like',
+						'type'     => 'textarea',
+						'required' => false,
+					),
+					array(
+						'question' => 'Do you have a logo and brand colors?',
+						'type'     => 'file',
+						'required' => false,
+					),
+					array(
+						'question' => 'Provide your hosting credentials (or let me know if you need hosting)',
+						'type'     => 'text',
+						'required' => true,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Premium theme license', 'description' => 'Includes a premium theme ($59 value)', 'price' => 40, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Speed optimization', 'description' => 'Advanced caching, image optimization, and performance tuning', 'price' => 50, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
-					array( 'title' => 'SSL certificate setup', 'description' => 'Secure your site with HTTPS', 'price' => 20, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Premium theme license',
+						'description'         => 'Includes a premium theme ($59 value)',
+						'price'               => 40,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Speed optimization',
+						'description'         => 'Advanced caching, image optimization, and performance tuning',
+						'price'               => 50,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'SSL certificate setup',
+						'description'         => 'Secure your site with HTTPS',
+						'price'               => 20,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 4521, 'orders' => 234, 'rating' => 4.9, 'reviews' => 156 ),
+				'stats'        => array(
+					'views'   => 4521,
+					'orders'  => 234,
+					'rating'  => 4.9,
+					'reviews' => 156,
+				),
 				'featured'     => true,
 			),
 			array(
@@ -843,25 +1204,81 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Programming & Tech',
 				'tags'         => array( 'wordpress', 'bug fix', 'troubleshooting', 'maintenance' ),
 				'packages'     => array(
-					array( 'name' => 'Quick Fix', 'description' => 'Fix 1 specific issue or bug', 'price' => 30, 'delivery_days' => 1, 'revisions' => 1 ),
-					array( 'name' => 'Full Debug', 'description' => 'Comprehensive site audit and fix up to 5 issues', 'price' => 80, 'delivery_days' => 2, 'revisions' => 2 ),
-					array( 'name' => 'Site Rescue', 'description' => 'Complete site recovery, malware removal, and optimization', 'price' => 200, 'delivery_days' => 3, 'revisions' => -1 ),
+					array(
+						'name'          => 'Quick Fix',
+						'description'   => 'Fix 1 specific issue or bug',
+						'price'         => 30,
+						'delivery_days' => 1,
+						'revisions'     => 1,
+					),
+					array(
+						'name'          => 'Full Debug',
+						'description'   => 'Comprehensive site audit and fix up to 5 issues',
+						'price'         => 80,
+						'delivery_days' => 2,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Site Rescue',
+						'description'   => 'Complete site recovery, malware removal, and optimization',
+						'price'         => 200,
+						'delivery_days' => 3,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'What if you cannot fix the issue?', 'answer' => 'Full refund if I cannot resolve your WordPress issue. I have a 99% success rate.' ),
-					array( 'question' => 'Will you need admin access?', 'answer' => 'Yes, I will need wp-admin access and usually FTP/SFTP access as well.' ),
-					array( 'question' => 'Do you take backups before making changes?', 'answer' => 'Always! I create a full backup before any work and can restore if needed.' ),
+					array(
+						'question' => 'What if you cannot fix the issue?',
+						'answer'   => 'Full refund if I cannot resolve your WordPress issue. I have a 99% success rate.',
+					),
+					array(
+						'question' => 'Will you need admin access?',
+						'answer'   => 'Yes, I will need wp-admin access and usually FTP/SFTP access as well.',
+					),
+					array(
+						'question' => 'Do you take backups before making changes?',
+						'answer'   => 'Always! I create a full backup before any work and can restore if needed.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Describe the issue you are experiencing', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Provide wp-admin login URL and credentials', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'When did the issue start? Any recent changes?', 'type' => 'textarea', 'required' => false ),
+					array(
+						'question' => 'Describe the issue you are experiencing',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Provide wp-admin login URL and credentials',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'When did the issue start? Any recent changes?',
+						'type'     => 'textarea',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Priority support (start within 1 hour)', 'description' => 'Jump to front of queue', 'price' => 25, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Security hardening', 'description' => 'Implement security best practices after fix', 'price' => 40, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Priority support (start within 1 hour)',
+						'description'         => 'Jump to front of queue',
+						'price'               => 25,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Security hardening',
+						'description'         => 'Implement security best practices after fix',
+						'price'               => 40,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 3287, 'orders' => 312, 'rating' => 4.8, 'reviews' => 198 ),
+				'stats'        => array(
+					'views'   => 3287,
+					'orders'  => 312,
+					'rating'  => 4.8,
+					'reviews' => 198,
+				),
 				'featured'     => true,
 			),
 			array(
@@ -871,26 +1288,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Programming & Tech',
 				'tags'         => array( 'react', 'nextjs', 'javascript', 'web app', 'frontend' ),
 				'packages'     => array(
-					array( 'name' => 'Component', 'description' => 'Single React component or feature with tests', 'price' => 100, 'delivery_days' => 3, 'revisions' => 2 ),
-					array( 'name' => 'Module', 'description' => 'Complete feature module with API integration and state management', 'price' => 350, 'delivery_days' => 7, 'revisions' => 3 ),
-					array( 'name' => 'Full App', 'description' => 'Complete web application with authentication, database, and deployment', 'price' => 1500, 'delivery_days' => 21, 'revisions' => -1 ),
+					array(
+						'name'          => 'Component',
+						'description'   => 'Single React component or feature with tests',
+						'price'         => 100,
+						'delivery_days' => 3,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Module',
+						'description'   => 'Complete feature module with API integration and state management',
+						'price'         => 350,
+						'delivery_days' => 7,
+						'revisions'     => 3,
+					),
+					array(
+						'name'          => 'Full App',
+						'description'   => 'Complete web application with authentication, database, and deployment',
+						'price'         => 1500,
+						'delivery_days' => 21,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'Do you provide the source code?', 'answer' => 'Yes, you receive full ownership of all source code via GitHub repository.' ),
-					array( 'question' => 'What technologies do you use?', 'answer' => 'React/Next.js, TypeScript, Tailwind CSS, Node.js, PostgreSQL/MongoDB, and modern deployment tools.' ),
-					array( 'question' => 'Can you integrate with existing backends?', 'answer' => 'Absolutely! I can work with any REST or GraphQL API.' ),
+					array(
+						'question' => 'Do you provide the source code?',
+						'answer'   => 'Yes, you receive full ownership of all source code via GitHub repository.',
+					),
+					array(
+						'question' => 'What technologies do you use?',
+						'answer'   => 'React/Next.js, TypeScript, Tailwind CSS, Node.js, PostgreSQL/MongoDB, and modern deployment tools.',
+					),
+					array(
+						'question' => 'Can you integrate with existing backends?',
+						'answer'   => 'Absolutely! I can work with any REST or GraphQL API.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Describe your project requirements in detail', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Do you have designs or wireframes?', 'type' => 'file', 'required' => false ),
-					array( 'question' => 'What is your deadline?', 'type' => 'text', 'required' => false ),
+					array(
+						'question' => 'Describe your project requirements in detail',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Do you have designs or wireframes?',
+						'type'     => 'file',
+						'required' => false,
+					),
+					array(
+						'question' => 'What is your deadline?',
+						'type'     => 'text',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'TypeScript implementation', 'description' => 'Full TypeScript with strict type safety', 'price' => 100, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Unit tests', 'description' => 'Jest/React Testing Library test coverage', 'price' => 150, 'delivery_days_extra' => 3, 'field_type' => 'checkbox' ),
-					array( 'title' => 'CI/CD setup', 'description' => 'GitHub Actions deployment pipeline', 'price' => 75, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'TypeScript implementation',
+						'description'         => 'Full TypeScript with strict type safety',
+						'price'               => 100,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Unit tests',
+						'description'         => 'Jest/React Testing Library test coverage',
+						'price'               => 150,
+						'delivery_days_extra' => 3,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'CI/CD setup',
+						'description'         => 'GitHub Actions deployment pipeline',
+						'price'               => 75,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 1654, 'orders' => 45, 'rating' => 5.0, 'reviews' => 28 ),
+				'stats'        => array(
+					'views'   => 1654,
+					'orders'  => 45,
+					'rating'  => 5.0,
+					'reviews' => 28,
+				),
 				'featured'     => false,
 			),
 
@@ -902,26 +1381,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Video & Animation',
 				'tags'         => array( 'video editing', 'youtube', 'content creator', 'post production' ),
 				'packages'     => array(
-					array( 'name' => 'Basic', 'description' => 'Basic cuts, transitions, and music, up to 10 minutes', 'price' => 50, 'delivery_days' => 3, 'revisions' => 1 ),
-					array( 'name' => 'Standard', 'description' => 'Full editing with graphics, text, and color grading, up to 20 minutes', 'price' => 120, 'delivery_days' => 5, 'revisions' => 2 ),
-					array( 'name' => 'Premium', 'description' => 'Cinematic editing + custom thumbnails + end screens, up to 30 minutes', 'price' => 250, 'delivery_days' => 7, 'revisions' => -1 ),
+					array(
+						'name'          => 'Basic',
+						'description'   => 'Basic cuts, transitions, and music, up to 10 minutes',
+						'price'         => 50,
+						'delivery_days' => 3,
+						'revisions'     => 1,
+					),
+					array(
+						'name'          => 'Standard',
+						'description'   => 'Full editing with graphics, text, and color grading, up to 20 minutes',
+						'price'         => 120,
+						'delivery_days' => 5,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Premium',
+						'description'   => 'Cinematic editing + custom thumbnails + end screens, up to 30 minutes',
+						'price'         => 250,
+						'delivery_days' => 7,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'What footage format do you accept?', 'answer' => 'I work with all common formats including MP4, MOV, AVI, MKV, and RAW files from any camera.' ),
-					array( 'question' => 'How do I send you the footage?', 'answer' => 'Google Drive, Dropbox, or WeTransfer links work best. I will provide a link if needed.' ),
-					array( 'question' => 'Can you match my channel style?', 'answer' => 'Yes! Send me examples of your previous videos and I will match your brand style.' ),
+					array(
+						'question' => 'What footage format do you accept?',
+						'answer'   => 'I work with all common formats including MP4, MOV, AVI, MKV, and RAW files from any camera.',
+					),
+					array(
+						'question' => 'How do I send you the footage?',
+						'answer'   => 'Google Drive, Dropbox, or WeTransfer links work best. I will provide a link if needed.',
+					),
+					array(
+						'question' => 'Can you match my channel style?',
+						'answer'   => 'Yes! Send me examples of your previous videos and I will match your brand style.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Share your raw footage via cloud link (Google Drive, Dropbox)', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'What type of video is this? (vlog, tutorial, review, etc.)', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'Any specific editing style or reference videos?', 'type' => 'textarea', 'required' => false ),
+					array(
+						'question' => 'Share your raw footage via cloud link (Google Drive, Dropbox)',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'What type of video is this? (vlog, tutorial, review, etc.)',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'Any specific editing style or reference videos?',
+						'type'     => 'textarea',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Custom thumbnail design', 'description' => 'Eye-catching thumbnail optimized for CTR', 'price' => 15, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Rush delivery (24 hours)', 'description' => 'Get your video back within 24 hours', 'price' => 50, 'delivery_days_extra' => -2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Subtitles/Captions', 'description' => 'Hardcoded or SRT file for accessibility', 'price' => 25, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Custom thumbnail design',
+						'description'         => 'Eye-catching thumbnail optimized for CTR',
+						'price'               => 15,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Rush delivery (24 hours)',
+						'description'         => 'Get your video back within 24 hours',
+						'price'               => 50,
+						'delivery_days_extra' => -2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Subtitles/Captions',
+						'description'         => 'Hardcoded or SRT file for accessibility',
+						'price'               => 25,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 2876, 'orders' => 178, 'rating' => 4.8, 'reviews' => 95 ),
+				'stats'        => array(
+					'views'   => 2876,
+					'orders'  => 178,
+					'rating'  => 4.8,
+					'reviews' => 95,
+				),
 				'featured'     => true,
 			),
 			array(
@@ -931,26 +1472,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Video & Animation',
 				'tags'         => array( 'animation', 'explainer video', '2D animation', 'motion graphics' ),
 				'packages'     => array(
-					array( 'name' => '30 Seconds', 'description' => '30-second animated video with professional voiceover', 'price' => 150, 'delivery_days' => 7, 'revisions' => 2 ),
-					array( 'name' => '60 Seconds', 'description' => '1-minute video with custom illustrations and music', 'price' => 280, 'delivery_days' => 10, 'revisions' => 3 ),
-					array( 'name' => '90 Seconds', 'description' => '90-second premium animation with storyboard and multiple revisions', 'price' => 450, 'delivery_days' => 14, 'revisions' => -1 ),
+					array(
+						'name'          => '30 Seconds',
+						'description'   => '30-second animated video with professional voiceover',
+						'price'         => 150,
+						'delivery_days' => 7,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => '60 Seconds',
+						'description'   => '1-minute video with custom illustrations and music',
+						'price'         => 280,
+						'delivery_days' => 10,
+						'revisions'     => 3,
+					),
+					array(
+						'name'          => '90 Seconds',
+						'description'   => '90-second premium animation with storyboard and multiple revisions',
+						'price'         => 450,
+						'delivery_days' => 14,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'Is voiceover included?', 'answer' => 'Yes, professional voiceover in English is included. Other languages available for extra cost.' ),
-					array( 'question' => 'Can I see the storyboard first?', 'answer' => 'Yes! I create a storyboard for approval before starting animation (Premium package).' ),
-					array( 'question' => 'What style of animation do you do?', 'answer' => 'Modern flat design, whiteboard, character animation, and infographic styles.' ),
+					array(
+						'question' => 'Is voiceover included?',
+						'answer'   => 'Yes, professional voiceover in English is included. Other languages available for extra cost.',
+					),
+					array(
+						'question' => 'Can I see the storyboard first?',
+						'answer'   => 'Yes! I create a storyboard for approval before starting animation (Premium package).',
+					),
+					array(
+						'question' => 'What style of animation do you do?',
+						'answer'   => 'Modern flat design, whiteboard, character animation, and infographic styles.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Provide your script or key points to cover', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Share your logo and brand colors', 'type' => 'file', 'required' => true ),
-					array( 'question' => 'Any reference videos or animation style you like?', 'type' => 'textarea', 'required' => false ),
+					array(
+						'question' => 'Provide your script or key points to cover',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Share your logo and brand colors',
+						'type'     => 'file',
+						'required' => true,
+					),
+					array(
+						'question' => 'Any reference videos or animation style you like?',
+						'type'     => 'textarea',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Script writing', 'description' => 'Professional scriptwriting based on your brief', 'price' => 50, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Additional language voiceover', 'description' => 'Add another language version', 'price' => 40, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Source files', 'description' => 'After Effects project files', 'price' => 75, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Script writing',
+						'description'         => 'Professional scriptwriting based on your brief',
+						'price'               => 50,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Additional language voiceover',
+						'description'         => 'Add another language version',
+						'price'               => 40,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Source files',
+						'description'         => 'After Effects project files',
+						'price'               => 75,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 1543, 'orders' => 67, 'rating' => 4.9, 'reviews' => 41 ),
+				'stats'        => array(
+					'views'   => 1543,
+					'orders'  => 67,
+					'rating'  => 4.9,
+					'reviews' => 41,
+				),
 				'featured'     => false,
 			),
 
@@ -962,26 +1565,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Writing & Translation',
 				'tags'         => array( 'blog writing', 'SEO content', 'copywriting', 'articles' ),
 				'packages'     => array(
-					array( 'name' => '500 Words', 'description' => '500-word SEO article with 1 target keyword and meta description', 'price' => 25, 'delivery_days' => 2, 'revisions' => 1 ),
-					array( 'name' => '1000 Words', 'description' => '1000-word article with images suggestions and internal linking', 'price' => 50, 'delivery_days' => 3, 'revisions' => 2 ),
-					array( 'name' => '2000 Words', 'description' => 'Long-form pillar content with research, sources, and FAQ schema', 'price' => 100, 'delivery_days' => 5, 'revisions' => -1 ),
+					array(
+						'name'          => '500 Words',
+						'description'   => '500-word SEO article with 1 target keyword and meta description',
+						'price'         => 25,
+						'delivery_days' => 2,
+						'revisions'     => 1,
+					),
+					array(
+						'name'          => '1000 Words',
+						'description'   => '1000-word article with images suggestions and internal linking',
+						'price'         => 50,
+						'delivery_days' => 3,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => '2000 Words',
+						'description'   => 'Long-form pillar content with research, sources, and FAQ schema',
+						'price'         => 100,
+						'delivery_days' => 5,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'Do you use AI to write?', 'answer' => 'All content is 100% human-written and original. I use AI only for research assistance.' ),
-					array( 'question' => 'Can you match my brand voice?', 'answer' => 'Yes! Share examples of your existing content and I will match your style perfectly.' ),
-					array( 'question' => 'Do you do keyword research?', 'answer' => 'I can work with your keywords or research optimal ones for an additional fee.' ),
+					array(
+						'question' => 'Do you use AI to write?',
+						'answer'   => 'All content is 100% human-written and original. I use AI only for research assistance.',
+					),
+					array(
+						'question' => 'Can you match my brand voice?',
+						'answer'   => 'Yes! Share examples of your existing content and I will match your style perfectly.',
+					),
+					array(
+						'question' => 'Do you do keyword research?',
+						'answer'   => 'I can work with your keywords or research optimal ones for an additional fee.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'What topic should I write about?', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'Target keyword(s) if you have them', 'type' => 'text', 'required' => false ),
-					array( 'question' => 'Link to your website or existing content', 'type' => 'text', 'required' => false ),
+					array(
+						'question' => 'What topic should I write about?',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'Target keyword(s) if you have them',
+						'type'     => 'text',
+						'required' => false,
+					),
+					array(
+						'question' => 'Link to your website or existing content',
+						'type'     => 'text',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Keyword research', 'description' => 'Find the best keywords for your topic', 'price' => 20, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Royalty-free images', 'description' => '3-5 relevant images included', 'price' => 10, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
-					array( 'title' => 'WordPress publishing', 'description' => 'Upload and format in your WordPress site', 'price' => 15, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Keyword research',
+						'description'         => 'Find the best keywords for your topic',
+						'price'               => 20,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Royalty-free images',
+						'description'         => '3-5 relevant images included',
+						'price'               => 10,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'WordPress publishing',
+						'description'         => 'Upload and format in your WordPress site',
+						'price'               => 15,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 3654, 'orders' => 287, 'rating' => 4.9, 'reviews' => 176 ),
+				'stats'        => array(
+					'views'   => 3654,
+					'orders'  => 287,
+					'rating'  => 4.9,
+					'reviews' => 176,
+				),
 				'featured'     => true,
 			),
 			array(
@@ -991,25 +1656,81 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Writing & Translation',
 				'tags'         => array( 'translation', 'spanish', 'localization', 'language' ),
 				'packages'     => array(
-					array( 'name' => 'Basic', 'description' => 'Up to 500 words translation with proofreading', 'price' => 20, 'delivery_days' => 1, 'revisions' => 1 ),
-					array( 'name' => 'Standard', 'description' => 'Up to 2000 words with glossary consistency', 'price' => 60, 'delivery_days' => 3, 'revisions' => 2 ),
-					array( 'name' => 'Premium', 'description' => 'Up to 5000 words + localization + formatting preserved', 'price' => 120, 'delivery_days' => 5, 'revisions' => -1 ),
+					array(
+						'name'          => 'Basic',
+						'description'   => 'Up to 500 words translation with proofreading',
+						'price'         => 20,
+						'delivery_days' => 1,
+						'revisions'     => 1,
+					),
+					array(
+						'name'          => 'Standard',
+						'description'   => 'Up to 2000 words with glossary consistency',
+						'price'         => 60,
+						'delivery_days' => 3,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Premium',
+						'description'   => 'Up to 5000 words + localization + formatting preserved',
+						'price'         => 120,
+						'delivery_days' => 5,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'Which Spanish dialect do you use?', 'answer' => 'I can adapt to Latin American (neutral) or Castilian (Spain) Spanish based on your target audience.' ),
-					array( 'question' => 'Can you translate technical content?', 'answer' => 'Yes, I specialize in marketing, legal, medical, and technical translations.' ),
-					array( 'question' => 'Do you offer certified translation?', 'answer' => 'Yes, certified translations for official documents are available as an add-on.' ),
+					array(
+						'question' => 'Which Spanish dialect do you use?',
+						'answer'   => 'I can adapt to Latin American (neutral) or Castilian (Spain) Spanish based on your target audience.',
+					),
+					array(
+						'question' => 'Can you translate technical content?',
+						'answer'   => 'Yes, I specialize in marketing, legal, medical, and technical translations.',
+					),
+					array(
+						'question' => 'Do you offer certified translation?',
+						'answer'   => 'Yes, certified translations for official documents are available as an add-on.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Upload your document or paste the text', 'type' => 'file', 'required' => true ),
-					array( 'question' => 'Target audience region (Latin America or Spain)?', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'Any specific terminology or glossary to follow?', 'type' => 'file', 'required' => false ),
+					array(
+						'question' => 'Upload your document or paste the text',
+						'type'     => 'file',
+						'required' => true,
+					),
+					array(
+						'question' => 'Target audience region (Latin America or Spain)?',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'Any specific terminology or glossary to follow?',
+						'type'     => 'file',
+						'required' => false,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Certified translation', 'description' => 'Official certification for legal/official documents', 'price' => 30, 'delivery_days_extra' => 1, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Rush delivery', 'description' => 'Same-day delivery for urgent needs', 'price' => 25, 'delivery_days_extra' => -1, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Certified translation',
+						'description'         => 'Official certification for legal/official documents',
+						'price'               => 30,
+						'delivery_days_extra' => 1,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Rush delivery',
+						'description'         => 'Same-day delivery for urgent needs',
+						'price'               => 25,
+						'delivery_days_extra' => -1,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 1234, 'orders' => 89, 'rating' => 5.0, 'reviews' => 56 ),
+				'stats'        => array(
+					'views'   => 1234,
+					'orders'  => 89,
+					'rating'  => 5.0,
+					'reviews' => 56,
+				),
 				'featured'     => false,
 			),
 
@@ -1021,25 +1742,81 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Business',
 				'tags'         => array( 'virtual assistant', 'admin support', 'data entry', 'scheduling' ),
 				'packages'     => array(
-					array( 'name' => '5 Hours', 'description' => '5 hours of VA support, task list management', 'price' => 50, 'delivery_days' => 7, 'revisions' => 0 ),
-					array( 'name' => '10 Hours', 'description' => '10 hours with priority response time', 'price' => 90, 'delivery_days' => 7, 'revisions' => 0 ),
-					array( 'name' => '20 Hours', 'description' => '20 hours + weekly progress reports + dedicated availability', 'price' => 160, 'delivery_days' => 14, 'revisions' => 0 ),
+					array(
+						'name'          => '5 Hours',
+						'description'   => '5 hours of VA support, task list management',
+						'price'         => 50,
+						'delivery_days' => 7,
+						'revisions'     => 0,
+					),
+					array(
+						'name'          => '10 Hours',
+						'description'   => '10 hours with priority response time',
+						'price'         => 90,
+						'delivery_days' => 7,
+						'revisions'     => 0,
+					),
+					array(
+						'name'          => '20 Hours',
+						'description'   => '20 hours + weekly progress reports + dedicated availability',
+						'price'         => 160,
+						'delivery_days' => 14,
+						'revisions'     => 0,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'What tools do you use?', 'answer' => 'I am proficient in Google Workspace, Microsoft Office, Asana, Trello, Slack, Notion, Calendly, and more.' ),
-					array( 'question' => 'What time zone do you work in?', 'answer' => 'I work EST hours but can adjust for overlap with your time zone.' ),
-					array( 'question' => 'Is my data secure?', 'answer' => 'Absolutely. I sign NDAs and follow strict data protection practices.' ),
+					array(
+						'question' => 'What tools do you use?',
+						'answer'   => 'I am proficient in Google Workspace, Microsoft Office, Asana, Trello, Slack, Notion, Calendly, and more.',
+					),
+					array(
+						'question' => 'What time zone do you work in?',
+						'answer'   => 'I work EST hours but can adjust for overlap with your time zone.',
+					),
+					array(
+						'question' => 'Is my data secure?',
+						'answer'   => 'Absolutely. I sign NDAs and follow strict data protection practices.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'What tasks do you need help with?', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'What tools do you currently use?', 'type' => 'text', 'required' => false ),
-					array( 'question' => 'Preferred communication method (Slack, email, etc.)?', 'type' => 'text', 'required' => true ),
+					array(
+						'question' => 'What tasks do you need help with?',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'What tools do you currently use?',
+						'type'     => 'text',
+						'required' => false,
+					),
+					array(
+						'question' => 'Preferred communication method (Slack, email, etc.)?',
+						'type'     => 'text',
+						'required' => true,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Weekend availability', 'description' => 'Work on Saturday and Sunday', 'price' => 20, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Phone/call handling', 'description' => 'Answer calls on your behalf', 'price' => 30, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Weekend availability',
+						'description'         => 'Work on Saturday and Sunday',
+						'price'               => 20,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Phone/call handling',
+						'description'         => 'Answer calls on your behalf',
+						'price'               => 30,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 2134, 'orders' => 156, 'rating' => 4.9, 'reviews' => 98 ),
+				'stats'        => array(
+					'views'   => 2134,
+					'orders'  => 156,
+					'rating'  => 4.9,
+					'reviews' => 98,
+				),
 				'featured'     => true,
 			),
 			array(
@@ -1049,26 +1826,88 @@ class ServiceCommands extends WP_CLI_Command {
 				'category'     => 'Business',
 				'tags'         => array( 'business plan', 'startup', 'investor', 'financial projections' ),
 				'packages'     => array(
-					array( 'name' => 'Lean Plan', 'description' => '10-page lean business plan with executive summary and basic financials', 'price' => 150, 'delivery_days' => 5, 'revisions' => 2 ),
-					array( 'name' => 'Standard', 'description' => '25-page detailed plan with market research, 3-year projections', 'price' => 350, 'delivery_days' => 10, 'revisions' => 3 ),
-					array( 'name' => 'Investor Ready', 'description' => '40+ page plan with pitch deck, financial model (Excel), and presentation', 'price' => 700, 'delivery_days' => 14, 'revisions' => -1 ),
+					array(
+						'name'          => 'Lean Plan',
+						'description'   => '10-page lean business plan with executive summary and basic financials',
+						'price'         => 150,
+						'delivery_days' => 5,
+						'revisions'     => 2,
+					),
+					array(
+						'name'          => 'Standard',
+						'description'   => '25-page detailed plan with market research, 3-year projections',
+						'price'         => 350,
+						'delivery_days' => 10,
+						'revisions'     => 3,
+					),
+					array(
+						'name'          => 'Investor Ready',
+						'description'   => '40+ page plan with pitch deck, financial model (Excel), and presentation',
+						'price'         => 700,
+						'delivery_days' => 14,
+						'revisions'     => -1,
+					),
 				),
 				'faqs'         => array(
-					array( 'question' => 'What information do you need from me?', 'answer' => 'Basic details about your business idea, target market, revenue model, and goals. I provide a questionnaire.' ),
-					array( 'question' => 'Will this work for bank loans?', 'answer' => 'Yes, my business plans follow SBA guidelines and are accepted by banks and investors.' ),
-					array( 'question' => 'Do you sign NDAs?', 'answer' => 'Yes, I can sign your NDA before starting. Your idea is safe with me.' ),
+					array(
+						'question' => 'What information do you need from me?',
+						'answer'   => 'Basic details about your business idea, target market, revenue model, and goals. I provide a questionnaire.',
+					),
+					array(
+						'question' => 'Will this work for bank loans?',
+						'answer'   => 'Yes, my business plans follow SBA guidelines and are accepted by banks and investors.',
+					),
+					array(
+						'question' => 'Do you sign NDAs?',
+						'answer'   => 'Yes, I can sign your NDA before starting. Your idea is safe with me.',
+					),
 				),
 				'requirements' => array(
-					array( 'question' => 'Describe your business idea and goals', 'type' => 'textarea', 'required' => true ),
-					array( 'question' => 'What industry are you in?', 'type' => 'text', 'required' => true ),
-					array( 'question' => 'What is the purpose of this plan? (investors, bank loan, internal)', 'type' => 'text', 'required' => true ),
+					array(
+						'question' => 'Describe your business idea and goals',
+						'type'     => 'textarea',
+						'required' => true,
+					),
+					array(
+						'question' => 'What industry are you in?',
+						'type'     => 'text',
+						'required' => true,
+					),
+					array(
+						'question' => 'What is the purpose of this plan? (investors, bank loan, internal)',
+						'type'     => 'text',
+						'required' => true,
+					),
 				),
 				'addons'       => array(
-					array( 'title' => 'Pitch deck design', 'description' => '10-slide investor presentation in PowerPoint', 'price' => 100, 'delivery_days_extra' => 2, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Financial model (Excel)', 'description' => 'Interactive Excel with 5-year projections', 'price' => 150, 'delivery_days_extra' => 3, 'field_type' => 'checkbox' ),
-					array( 'title' => 'Consultation call', 'description' => '30-minute strategy discussion', 'price' => 50, 'delivery_days_extra' => 0, 'field_type' => 'checkbox' ),
+					array(
+						'title'               => 'Pitch deck design',
+						'description'         => '10-slide investor presentation in PowerPoint',
+						'price'               => 100,
+						'delivery_days_extra' => 2,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Financial model (Excel)',
+						'description'         => 'Interactive Excel with 5-year projections',
+						'price'               => 150,
+						'delivery_days_extra' => 3,
+						'field_type'          => 'checkbox',
+					),
+					array(
+						'title'               => 'Consultation call',
+						'description'         => '30-minute strategy discussion',
+						'price'               => 50,
+						'delivery_days_extra' => 0,
+						'field_type'          => 'checkbox',
+					),
 				),
-				'stats'        => array( 'views' => 1456, 'orders' => 45, 'rating' => 4.7, 'reviews' => 28 ),
+				'stats'        => array(
+					'views'   => 1456,
+					'orders'  => 45,
+					'rating'  => 4.7,
+					'reviews' => 28,
+				),
 				'featured'     => false,
 			),
 		);

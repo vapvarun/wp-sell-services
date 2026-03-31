@@ -62,7 +62,13 @@ if ( function_exists( 'wc_get_endpoint_url' ) ) {
 } else {
 	$dashboard_url = wpss_get_dashboard_url();
 	$disputes_url  = add_query_arg( 'section', 'disputes', $dashboard_url );
-	$order_url     = add_query_arg( array( 'section' => 'orders', 'order_id' => $order->id ), $dashboard_url );
+	$order_url     = add_query_arg(
+		array(
+			'section'  => 'orders',
+			'order_id' => $order->id,
+		),
+		$dashboard_url
+	);
 }
 
 /**

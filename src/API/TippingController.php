@@ -132,9 +132,9 @@ class TippingController extends RestController {
 
 		// Check if this user already tipped for this order.
 		// Use boundary markers to prevent false matches (e.g. tipper_id 12 matching 123).
-		$like_pattern = '%"tipper_id":' . $wpdb->esc_like( (string) $user_id ) . ',%';
+		$like_pattern     = '%"tipper_id":' . $wpdb->esc_like( (string) $user_id ) . ',%';
 		$like_pattern_end = '%"tipper_id":' . $wpdb->esc_like( (string) $user_id ) . '}%';
-		$existing = $wpdb->get_var(
+		$existing         = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wallet_table} WHERE reference_type = 'tip' AND reference_id = %d AND (meta LIKE %s OR meta LIKE %s)",
 				$order_id,
@@ -257,8 +257,8 @@ class TippingController extends RestController {
 
 		$items = array();
 		foreach ( $tips ?: array() as $tip ) {
-			$meta    = json_decode( $tip['meta'] ?? '{}', true );
-			$tipper  = ! empty( $meta['tipper_id'] ) ? get_user_by( 'id', $meta['tipper_id'] ) : null;
+			$meta   = json_decode( $tip['meta'] ?? '{}', true );
+			$tipper = ! empty( $meta['tipper_id'] ) ? get_user_by( 'id', $meta['tipper_id'] ) : null;
 
 			$items[] = array(
 				'amount'     => (float) $tip['amount'],

@@ -65,30 +65,30 @@ class PortfolioService {
 		global $wpdb;
 
 		$defaults = [
-			'limit'       => 20,
-			'offset'      => 0,
-			'service_id'  => 0,
-			'featured'    => null,
+			'limit'      => 20,
+			'offset'     => 0,
+			'service_id' => 0,
+			'featured'   => null,
 		];
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$where = [ 'vendor_id = %d' ];
+		$where  = [ 'vendor_id = %d' ];
 		$params = [ $vendor_id ];
 
 		if ( $args['service_id'] ) {
-			$where[] = 'service_id = %d';
+			$where[]  = 'service_id = %d';
 			$params[] = $args['service_id'];
 		}
 
 		if ( null !== $args['featured'] ) {
-			$where[] = 'is_featured = %d';
+			$where[]  = 'is_featured = %d';
 			$params[] = $args['featured'] ? 1 : 0;
 		}
 
 		$where_clause = implode( ' AND ', $where );
-		$params[] = $args['limit'];
-		$params[] = $args['offset'];
+		$params[]     = $args['limit'];
+		$params[]     = $args['offset'];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$items = $wpdb->get_results(
@@ -112,10 +112,13 @@ class PortfolioService {
 	 * @return array Featured items.
 	 */
 	public function get_featured( int $vendor_id, int $limit = 6 ): array {
-		return $this->get_by_vendor( $vendor_id, [
-			'featured' => true,
-			'limit'    => $limit,
-		] );
+		return $this->get_by_vendor(
+			$vendor_id,
+			[
+				'featured' => true,
+				'limit'    => $limit,
+			]
+		);
 	}
 
 	/**
@@ -135,7 +138,7 @@ class PortfolioService {
 		}
 
 		// Check item limit.
-		$max_items = (int) get_option( 'wpss_max_portfolio_items', 50 );
+		$max_items     = (int) get_option( 'wpss_max_portfolio_items', 50 );
 		$current_count = $this->get_count( $vendor_id );
 
 		if ( $current_count >= $max_items ) {
@@ -221,41 +224,41 @@ class PortfolioService {
 		}
 
 		$update_data = [];
-		$formats = [];
+		$formats     = [];
 
 		if ( isset( $data['title'] ) ) {
 			$update_data['title'] = sanitize_text_field( $data['title'] );
-			$formats[] = '%s';
+			$formats[]            = '%s';
 		}
 
 		if ( isset( $data['description'] ) ) {
 			$update_data['description'] = wp_kses_post( $data['description'] );
-			$formats[] = '%s';
+			$formats[]                  = '%s';
 		}
 
 		if ( isset( $data['media'] ) ) {
 			$update_data['media'] = wp_json_encode( $data['media'] );
-			$formats[] = '%s';
+			$formats[]            = '%s';
 		}
 
 		if ( isset( $data['external_url'] ) ) {
 			$update_data['external_url'] = esc_url_raw( $data['external_url'] );
-			$formats[] = '%s';
+			$formats[]                   = '%s';
 		}
 
 		if ( isset( $data['tags'] ) ) {
 			$update_data['tags'] = wp_json_encode( $data['tags'] );
-			$formats[] = '%s';
+			$formats[]           = '%s';
 		}
 
 		if ( isset( $data['is_featured'] ) ) {
 			$update_data['is_featured'] = $data['is_featured'] ? 1 : 0;
-			$formats[] = '%d';
+			$formats[]                  = '%d';
 		}
 
 		if ( isset( $data['service_id'] ) ) {
 			$update_data['service_id'] = $data['service_id'] ? (int) $data['service_id'] : null;
-			$formats[] = '%d';
+			$formats[]                 = '%d';
 		}
 
 		if ( empty( $update_data ) ) {
@@ -393,8 +396,14 @@ class PortfolioService {
 
 		// Check max featured items.
 		if ( ! $item['is_featured'] ) {
-			$max_featured = (int) get_option( 'wpss_max_featured_portfolio', 6 );
-			$current_featured = $this->get_by_vendor( $vendor_id, [ 'featured' => true, 'limit' => 100 ] );
+			$max_featured     = (int) get_option( 'wpss_max_featured_portfolio', 6 );
+			$current_featured = $this->get_by_vendor(
+				$vendor_id,
+				[
+					'featured' => true,
+					'limit'    => 100,
+				]
+			);
 
 			if ( count( $current_featured ) >= $max_featured ) {
 				return [

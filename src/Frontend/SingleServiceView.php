@@ -115,36 +115,36 @@ class SingleServiceView {
 			'wpss-single-service',
 			'wpssService',
 			array(
-				'serviceId'   => get_the_ID(),
-				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
-				'nonce'       => wp_create_nonce( 'wpss_service_nonce' ),
-				'checkoutUrl' => $checkout_url,
-				'cartUrl'     => $cart_url,
+				'serviceId'      => get_the_ID(),
+				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+				'nonce'          => wp_create_nonce( 'wpss_service_nonce' ),
+				'checkoutUrl'    => $checkout_url,
+				'cartUrl'        => $cart_url,
 				'currencyFormat' => wpss_get_currency_symbol() . '%s',
 				'isLoggedIn'     => is_user_logged_in(),
 				'loginUrl'       => wp_login_url( get_permalink() ),
-				'i18n'        => array(
-					'addingToCart'    => __( 'Adding to cart...', 'wp-sell-services' ),
-					'added'          => __( 'Added to cart!', 'wp-sell-services' ),
-					'viewCart'       => __( 'View Cart', 'wp-sell-services' ),
-					'checkout'       => __( 'Checkout', 'wp-sell-services' ),
-					'error'          => __( 'Could not add to cart. Please try again.', 'wp-sell-services' ),
-					'selectExtra'    => __( 'Select extras', 'wp-sell-services' ),
-					'total'          => __( 'Total', 'wp-sell-services' ),
-					'loading'        => __( 'Loading...', 'wp-sell-services' ),
-					'loadMoreReviews' => __( 'Load More Reviews', 'wp-sell-services' ),
-					'day'            => __( 'Day', 'wp-sell-services' ),
-					'days'           => __( 'Days', 'wp-sell-services' ),
-					'sending'        => __( 'Sending...', 'wp-sell-services' ),
-					'sendMessage'    => __( 'Send Message', 'wp-sell-services' ),
-					'contactFailed'  => __( 'Failed to send message. Please try again.', 'wp-sell-services' ),
-					'comparePackages' => __( 'Compare Packages', 'wp-sell-services' ),
-					'price'          => __( 'Price', 'wp-sell-services' ),
-					'delivery'       => __( 'Delivery', 'wp-sell-services' ),
-					'revisions'      => __( 'Revisions', 'wp-sell-services' ),
-					'copied'         => __( 'Copied!', 'wp-sell-services' ),
+				'i18n'           => array(
+					'addingToCart'       => __( 'Adding to cart...', 'wp-sell-services' ),
+					'added'              => __( 'Added to cart!', 'wp-sell-services' ),
+					'viewCart'           => __( 'View Cart', 'wp-sell-services' ),
+					'checkout'           => __( 'Checkout', 'wp-sell-services' ),
+					'error'              => __( 'Could not add to cart. Please try again.', 'wp-sell-services' ),
+					'selectExtra'        => __( 'Select extras', 'wp-sell-services' ),
+					'total'              => __( 'Total', 'wp-sell-services' ),
+					'loading'            => __( 'Loading...', 'wp-sell-services' ),
+					'loadMoreReviews'    => __( 'Load More Reviews', 'wp-sell-services' ),
+					'day'                => __( 'Day', 'wp-sell-services' ),
+					'days'               => __( 'Days', 'wp-sell-services' ),
+					'sending'            => __( 'Sending...', 'wp-sell-services' ),
+					'sendMessage'        => __( 'Send Message', 'wp-sell-services' ),
+					'contactFailed'      => __( 'Failed to send message. Please try again.', 'wp-sell-services' ),
+					'comparePackages'    => __( 'Compare Packages', 'wp-sell-services' ),
+					'price'              => __( 'Price', 'wp-sell-services' ),
+					'delivery'           => __( 'Delivery', 'wp-sell-services' ),
+					'revisions'          => __( 'Revisions', 'wp-sell-services' ),
+					'copied'             => __( 'Copied!', 'wp-sell-services' ),
 					'continueToCheckout' => __( 'Continue to Checkout', 'wp-sell-services' ),
-					'errorGeneric'   => __( 'An error occurred.', 'wp-sell-services' ),
+					'errorGeneric'       => __( 'An error occurred.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -319,7 +319,7 @@ class SingleServiceView {
 						printf(
 							/* translators: %d: number of orders */
 							esc_html( _n( '%d order', '%d orders', $order_count, 'wp-sell-services' ) ),
-							$order_count
+							absint( $order_count )
 						);
 						?>
 					</span>
@@ -336,7 +336,7 @@ class SingleServiceView {
 						printf(
 							/* translators: %d: number of orders in queue */
 							esc_html( _n( '%d order in queue', '%d orders in queue', $queue_count, 'wp-sell-services' ) ),
-							$queue_count
+							absint( $queue_count )
 						);
 						?>
 					</span>
@@ -506,7 +506,7 @@ class SingleServiceView {
 									printf(
 										/* translators: %d: number of completed orders */
 										esc_html( _n( '%d order completed', '%d orders completed', $completed_orders, 'wp-sell-services' ) ),
-										$completed_orders
+										absint( $completed_orders )
 									);
 									?>
 								</span>
@@ -787,7 +787,7 @@ class SingleServiceView {
 						$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', $service_max_quantity, $service_id );
 
 						if ( $max_quantity > 1 ) :
-						?>
+							?>
 						<div class="wpss-order-quantity">
 							<label for="wpss-quantity"><?php esc_html_e( 'Quantity', 'wp-sell-services' ); ?></label>
 							<div class="wpss-quantity-input">

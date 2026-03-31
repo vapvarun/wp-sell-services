@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-echo "= " . esc_html( $email_heading ) . " =\n\n";
+echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
 	/* translators: %s: recipient name */
@@ -31,7 +31,7 @@ echo "\n\n";
 
 echo "****************************************\n";
 echo esc_html__( 'You\'ve been promoted to:', 'wp-sell-services' ) . "\n";
-echo strtoupper( esc_html( $new_level_label ) ) . "\n";
+echo esc_html( strtoupper( $new_level_label ) ) . "\n";
 printf(
 	/* translators: %s: previous level */
 	esc_html__( '(Previously: %s)', 'wp-sell-services' ),
@@ -46,19 +46,19 @@ echo esc_html__( 'What This Means For You:', 'wp-sell-services' ) . "\n";
 echo "----------\n";
 
 if ( 'level_1' === $new_level || 'level_2' === $new_level || 'top_rated' === $new_level ) {
-	echo "- " . esc_html__( 'Enhanced visibility in search results', 'wp-sell-services' ) . "\n";
-	echo "- " . esc_html__( 'Trusted seller badge on your profile', 'wp-sell-services' ) . "\n";
+	echo '- ' . esc_html__( 'Enhanced visibility in search results', 'wp-sell-services' ) . "\n";
+	echo '- ' . esc_html__( 'Trusted seller badge on your profile', 'wp-sell-services' ) . "\n";
 }
 
 if ( 'level_2' === $new_level || 'top_rated' === $new_level ) {
-	echo "- " . esc_html__( 'Priority customer support', 'wp-sell-services' ) . "\n";
-	echo "- " . esc_html__( 'Featured placement opportunities', 'wp-sell-services' ) . "\n";
+	echo '- ' . esc_html__( 'Priority customer support', 'wp-sell-services' ) . "\n";
+	echo '- ' . esc_html__( 'Featured placement opportunities', 'wp-sell-services' ) . "\n";
 }
 
 if ( 'top_rated' === $new_level ) {
-	echo "- " . esc_html__( 'Top Rated badge - highest level of trust', 'wp-sell-services' ) . "\n";
-	echo "- " . esc_html__( 'Early access to new features', 'wp-sell-services' ) . "\n";
-	echo "- " . esc_html__( 'Exclusive promotions and opportunities', 'wp-sell-services' ) . "\n";
+	echo '- ' . esc_html__( 'Top Rated badge - highest level of trust', 'wp-sell-services' ) . "\n";
+	echo '- ' . esc_html__( 'Early access to new features', 'wp-sell-services' ) . "\n";
+	echo '- ' . esc_html__( 'Exclusive promotions and opportunities', 'wp-sell-services' ) . "\n";
 }
 
 echo "\n";

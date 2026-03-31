@@ -51,7 +51,7 @@ class FieldRenderer {
 			'method' => 'post',
 		];
 
-		$attrs = wp_parse_args( $form_attrs, $defaults );
+		$attrs       = wp_parse_args( $form_attrs, $defaults );
 		$attr_string = $this->build_attributes( $attrs );
 
 		ob_start();
@@ -63,7 +63,7 @@ class FieldRenderer {
 				<?php
 				foreach ( $fields as $field ) {
 					$field_id = $field['id'] ?? '';
-					$value = $values[ $field_id ] ?? null;
+					$value    = $values[ $field_id ] ?? null;
 					echo $this->render_field( $field, $value ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				}
 				?>
@@ -87,15 +87,15 @@ class FieldRenderer {
 	 * @return string HTML output.
 	 */
 	public function render_field( array $field, $value = null ): string {
-		$type = $field['type'] ?? 'text';
+		$type       = $field['type'] ?? 'text';
 		$field_type = $this->manager->get( $type );
 
 		if ( ! $field_type ) {
 			return '';
 		}
 
-		$field_id = $field['id'] ?? 'field_' . wp_generate_uuid4();
-		$required = ! empty( $field['required'] );
+		$field_id    = $field['id'] ?? 'field_' . wp_generate_uuid4();
+		$required    = ! empty( $field['required'] );
 		$description = $field['description'] ?? '';
 
 		ob_start();
@@ -135,9 +135,9 @@ class FieldRenderer {
 		<div class="wpss-requirements-submitted">
 			<?php foreach ( $fields as $field ) : ?>
 				<?php
-				$field_id = $field['id'] ?? '';
-				$value = $values[ $field_id ] ?? '';
-				$type = $field['type'] ?? 'text';
+				$field_id   = $field['id'] ?? '';
+				$value      = $values[ $field_id ] ?? '';
+				$type       = $field['type'] ?? 'text';
 				$field_type = $this->manager->get( $type );
 
 				if ( ! $field_type || empty( $value ) ) {

@@ -227,7 +227,7 @@ class Settings {
 		}
 
 		$field = sanitize_key( $_POST['field'] ?? '' );
-		$title = sanitize_text_field( $_POST['title'] ?? '' );
+		$title = sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) );
 
 		if ( ! $field || ! $title ) {
 			wp_send_json_error( array( 'message' => __( 'Missing required data.', 'wp-sell-services' ) ) );
@@ -893,21 +893,21 @@ class Settings {
 		$notification_types = apply_filters(
 			'wpss_notification_types',
 			array(
-				'new_order'               => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'         => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'         => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested'  => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'      => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'      => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'             => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'          => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'              => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'          => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'    => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'     => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'     => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'      => __( 'Proposal Submitted', 'wp-sell-services' ),
-				'proposal_accepted'       => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'new_order'              => __( 'New Order', 'wp-sell-services' ),
+				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
+				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
+				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
+				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
+				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
+				'new_message'            => __( 'New Message', 'wp-sell-services' ),
+				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
+				'new_review'             => __( 'New Review', 'wp-sell-services' ),
+				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
+				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
+				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
+				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
+				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
 			)
 		);
 
@@ -1135,43 +1135,41 @@ class Settings {
 				 * @param string $active_tab The active tab slug.
 				 */
 				do_action( 'wpss_settings_tab_' . $active_tab );
+			} elseif ( 'payments' === $active_tab ) {
+				$this->render_payments_tab();
+			} elseif ( 'gateways' === $active_tab ) {
+				$this->render_gateways_tab();
+			} elseif ( 'advanced' === $active_tab ) {
+				$this->render_advanced_tab();
+			} elseif ( 'vendor' === $active_tab ) {
+				$this->render_vendor_tab();
+			} elseif ( 'orders' === $active_tab ) {
+				$this->render_orders_tab();
+			} elseif ( 'emails' === $active_tab ) {
+				$this->render_emails_tab();
 			} else {
-				// Tabs with multiple option groups render their own forms.
-				if ( 'payments' === $active_tab ) {
-					$this->render_payments_tab();
-				} elseif ( 'gateways' === $active_tab ) {
-					$this->render_gateways_tab();
-				} elseif ( 'advanced' === $active_tab ) {
-					$this->render_advanced_tab();
-				} elseif ( 'vendor' === $active_tab ) {
-					$this->render_vendor_tab();
-				} elseif ( 'orders' === $active_tab ) {
-					$this->render_orders_tab();
-				} elseif ( 'emails' === $active_tab ) {
-					$this->render_emails_tab();
-				} else {
-					// Standard tabs with single option group (general, pages).
-					?>
-					<form method="post" action="options.php">
-						<?php
-						switch ( $active_tab ) {
-							case 'pages':
-								settings_fields( 'wpss_pages' );
-								do_settings_sections( 'wpss_pages' );
-								break;
-
-							default:
-								settings_fields( 'wpss_general' );
-								do_settings_sections( 'wpss_general' );
-								break;
-						}
-
-						submit_button();
-						?>
-					</form>
+				// Standard tabs with single option group (general, pages).
+				?>
+				<form method="post" action="options.php">
 					<?php
-				}
-			} ?>
+					switch ( $active_tab ) {
+						case 'pages':
+							settings_fields( 'wpss_pages' );
+							do_settings_sections( 'wpss_pages' );
+							break;
+
+						default:
+							settings_fields( 'wpss_general' );
+							do_settings_sections( 'wpss_general' );
+							break;
+					}
+
+					submit_button();
+					?>
+				</form>
+				<?php
+			}
+			?>
 
 			<?php if ( 'pages' === $active_tab ) : ?>
 			<script>
@@ -1653,8 +1651,8 @@ class Settings {
 	 *
 	 * @since 1.3.0
 	 *
-	 * @param string              $tab_id   Tab identifier (e.g. 'payments', 'vendor').
-	 * @param array<int, array>   $sections Array of section definitions.
+	 * @param string            $tab_id   Tab identifier (e.g. 'payments', 'vendor').
+	 * @param array<int, array> $sections Array of section definitions.
 	 * @return void
 	 */
 	public function render_tab_sections( string $tab_id, array $sections ): void {
@@ -1883,10 +1881,10 @@ class Settings {
 			'emails',
 			array(
 				array(
-					'id'           => 'email-test',
-					'title'        => __( 'Email Deliverability', 'wp-sell-services' ),
-					'description'  => __( 'Verify that your site can send emails. If the test fails, check your SMTP or email sending plugin configuration.', 'wp-sell-services' ),
-					'callback'     => array( $this, 'render_test_email_section' ),
+					'id'          => 'email-test',
+					'title'       => __( 'Email Deliverability', 'wp-sell-services' ),
+					'description' => __( 'Verify that your site can send emails. If the test fails, check your SMTP or email sending plugin configuration.', 'wp-sell-services' ),
+					'callback'    => array( $this, 'render_test_email_section' ),
 				),
 				array(
 					'id'           => 'email-notifications',
@@ -1999,7 +1997,7 @@ class Settings {
 	 * @return void
 	 */
 	public function render_setup_wizard_section(): void {
-		$completed = get_option( 'wpss_setup_wizard_completed', false );
+		$completed  = get_option( 'wpss_setup_wizard_completed', false );
 		$wizard_url = admin_url( 'admin.php?page=wpss-setup-wizard' );
 		?>
 		<div style="margin-top: 15px;">
@@ -2289,11 +2287,11 @@ class Settings {
 
 		wp_dropdown_pages(
 			array(
-				'name'              => $args['option_name'] . '[' . $args['field'] . ']',
-				'id'                => $args['field'],
-				'show_option_none'  => __( '— Select —', 'wp-sell-services' ),
+				'name'              => esc_attr( $args['option_name'] . '[' . $args['field'] . ']' ),
+				'id'                => esc_attr( $args['field'] ),
+				'show_option_none'  => esc_html__( '— Select —', 'wp-sell-services' ),
 				'option_none_value' => '',
-				'selected'          => $value,
+				'selected'          => esc_attr( $value ),
 				'class'             => 'wpss-page-dropdown',
 			)
 		);
@@ -2394,10 +2392,10 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['enable_tax']        = ! empty( $input['enable_tax'] );
-		$sanitized['tax_label']         = sanitize_text_field( $input['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
-		$sanitized['tax_rate']          = min( 50, max( 0, (float) ( $input['tax_rate'] ?? 0 ) ) );
-		$sanitized['tax_included']      = ! empty( $input['tax_included'] );
+		$sanitized['enable_tax']   = ! empty( $input['enable_tax'] );
+		$sanitized['tax_label']    = sanitize_text_field( $input['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
+		$sanitized['tax_rate']     = min( 50, max( 0, (float) ( $input['tax_rate'] ?? 0 ) ) );
+		$sanitized['tax_included'] = ! empty( $input['tax_included'] );
 
 		return $sanitized;
 	}
@@ -2412,8 +2410,8 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['vendor_registration']        = sanitize_key( $input['vendor_registration'] ?? 'open' );
-		$sanitized['max_services_per_vendor']    = absint( $input['max_services_per_vendor'] ?? 20 );
+		$sanitized['vendor_registration']     = sanitize_key( $input['vendor_registration'] ?? 'open' );
+		$sanitized['max_services_per_vendor'] = absint( $input['max_services_per_vendor'] ?? 20 );
 		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 
@@ -2430,7 +2428,7 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['auto_complete_days']        = absint( $input['auto_complete_days'] ?? 3 );
+		$sanitized['auto_complete_days'] = absint( $input['auto_complete_days'] ?? 3 );
 		// Revision limits are defined per-package in service packages, not as a global setting.
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
 		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
@@ -2456,21 +2454,21 @@ class Settings {
 		$notification_types = apply_filters(
 			'wpss_notification_types',
 			array(
-				'new_order'               => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'         => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'         => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested'  => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'      => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'      => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'             => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'          => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'              => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'          => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'    => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'     => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'     => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'      => __( 'Proposal Submitted', 'wp-sell-services' ),
-				'proposal_accepted'       => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'new_order'              => __( 'New Order', 'wp-sell-services' ),
+				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
+				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
+				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
+				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
+				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
+				'new_message'            => __( 'New Message', 'wp-sell-services' ),
+				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
+				'new_review'             => __( 'New Review', 'wp-sell-services' ),
+				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
+				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
+				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
+				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
+				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
 			)
 		);
 

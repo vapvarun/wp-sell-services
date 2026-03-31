@@ -52,11 +52,11 @@ class AuthController extends RestController {
 					'callback'            => array( $this, 'login' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'username' => array(
+						'username'    => array(
 							'type'     => 'string',
 							'required' => true,
 						),
-						'password' => array(
+						'password'    => array(
 							'type'     => 'string',
 							'required' => true,
 						),
@@ -80,23 +80,23 @@ class AuthController extends RestController {
 					'callback'            => array( $this, 'register' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
-						'username' => array(
+						'username'     => array(
 							'type'     => 'string',
 							'required' => true,
 						),
-						'email' => array(
+						'email'        => array(
 							'type'     => 'string',
 							'format'   => 'email',
 							'required' => true,
 						),
-						'password' => array(
+						'password'     => array(
 							'type'     => 'string',
 							'required' => true,
 						),
 						'display_name' => array(
 							'type' => 'string',
 						),
-						'role' => array(
+						'role'         => array(
 							'description' => __( 'User role (customer or vendor).', 'wp-sell-services' ),
 							'type'        => 'string',
 							'enum'        => array( 'customer', 'vendor' ),
@@ -167,7 +167,7 @@ class AuthController extends RestController {
 							'type'     => 'string',
 							'required' => true,
 						),
-						'new_password' => array(
+						'new_password'     => array(
 							'type'     => 'string',
 							'required' => true,
 						),
@@ -186,12 +186,12 @@ class AuthController extends RestController {
 					'callback'            => array( $this, 'register_device' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array(
-						'token' => array(
+						'token'     => array(
 							'description' => __( 'Push notification token (FCM/APNs).', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'platform' => array(
+						'platform'  => array(
 							'type'     => 'string',
 							'enum'     => array( 'ios', 'android', 'web' ),
 							'required' => true,
@@ -525,7 +525,7 @@ class AuthController extends RestController {
 		}
 
 		// Clean up old WPSS app passwords (keep max 5 per user).
-		$existing = WP_Application_Passwords::get_user_application_passwords( $user->ID );
+		$existing       = WP_Application_Passwords::get_user_application_passwords( $user->ID );
 		$wpss_passwords = array_filter(
 			$existing,
 			function ( $p ) {

@@ -56,18 +56,18 @@ class MilestonesController extends RestController {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'check_vendor_order_access' ),
 					'args'                => array(
-						'title'        => array(
+						'title'       => array(
 							'type'     => 'string',
 							'required' => true,
 						),
-						'description'  => array(
+						'description' => array(
 							'type' => 'string',
 						),
-						'amount'       => array(
+						'amount'      => array(
 							'type'     => 'number',
 							'required' => true,
 						),
-						'due_date'     => array(
+						'due_date'    => array(
 							'type'   => 'string',
 							'format' => 'date',
 						),
@@ -289,9 +289,9 @@ class MilestonesController extends RestController {
 		}
 
 		$milestones[ $index ]['status']       = 'submitted';
-		$milestones[ $index ]['submitted_at']  = current_time( 'mysql', true );
-		$milestones[ $index ]['message']       = sanitize_textarea_field( $request->get_param( 'message' ) ?: '' );
-		$milestones[ $index ]['attachments']   = array_map( 'intval', $request->get_param( 'attachments' ) ?: array() );
+		$milestones[ $index ]['submitted_at'] = current_time( 'mysql', true );
+		$milestones[ $index ]['message']      = sanitize_textarea_field( $request->get_param( 'message' ) ?: '' );
+		$milestones[ $index ]['attachments']  = array_map( 'intval', $request->get_param( 'attachments' ) ?: array() );
 
 		$this->save_order_milestones( $order_id, $milestones );
 
@@ -322,7 +322,7 @@ class MilestonesController extends RestController {
 		}
 
 		$milestones[ $index ]['status']      = 'approved';
-		$milestones[ $index ]['approved_at']  = current_time( 'mysql', true );
+		$milestones[ $index ]['approved_at'] = current_time( 'mysql', true );
 
 		$this->save_order_milestones( $order_id, $milestones );
 
@@ -353,7 +353,7 @@ class MilestonesController extends RestController {
 		}
 
 		$milestones[ $index ]['status']   = 'rejected';
-		$milestones[ $index ]['feedback']  = sanitize_textarea_field( $request->get_param( 'feedback' ) );
+		$milestones[ $index ]['feedback'] = sanitize_textarea_field( $request->get_param( 'feedback' ) );
 
 		$this->save_order_milestones( $order_id, $milestones );
 

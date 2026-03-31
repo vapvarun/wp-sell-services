@@ -75,7 +75,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 		// Get delivery info.
 		$delivery_days = (int) ( $order_data['delivery_days'] ?? 7 );
-		$revisions = (int) ( $order_data['revisions'] ?? 0 );
+		$revisions     = (int) ( $order_data['revisions'] ?? 0 );
 
 		// Pre-calculate commission rate so order details can display expected earnings.
 		$commission_rate = CommissionService::get_global_commission_rate();
@@ -111,33 +111,37 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$wpdb->insert(
 			$table,
 			[
-				'order_number'        => wpss_generate_order_number(),
-				'customer_id'         => (int) $order_data['customer_id'],
-				'vendor_id'           => $service->vendor_id,
-				'service_id'          => $service->id,
-				'package_id'          => ! empty( $order_data['package_id'] ) ? (int) $order_data['package_id'] : null,
-				'addons'              => wp_json_encode( $order_data['addons'] ?? [] ),
-				'platform'            => 'standalone',
-				'platform_order_id'   => null,
-				'platform_item_id'    => null,
-				'subtotal'            => $subtotal,
-				'addons_total'        => $addons_total,
-				'total'               => $total,
-				'currency'            => $order_data['currency'] ?? wpss_get_currency(),
-				'status'              => ServiceOrder::STATUS_PENDING_PAYMENT,
-				'payment_method'      => $order_data['payment_method'] ?? null,
-				'payment_status'      => 'pending',
-				'revisions_included'  => $revisions,
-				'commission_rate'     => $commission_rate,
-				'platform_fee'        => $platform_fee,
-				'vendor_earnings'     => $vendor_earnings,
-				'created_at'          => current_time( 'mysql' ),
-				'updated_at'          => current_time( 'mysql' ),
-				'meta'                => wp_json_encode( array_filter( [
-					'tax_rate'         => $tax_rate,
-					'tax_amount'       => round( $tax_amount, 2 ),
-					'package_snapshot' => $package_snapshot,
-				] ) ),
+				'order_number'       => wpss_generate_order_number(),
+				'customer_id'        => (int) $order_data['customer_id'],
+				'vendor_id'          => $service->vendor_id,
+				'service_id'         => $service->id,
+				'package_id'         => ! empty( $order_data['package_id'] ) ? (int) $order_data['package_id'] : null,
+				'addons'             => wp_json_encode( $order_data['addons'] ?? [] ),
+				'platform'           => 'standalone',
+				'platform_order_id'  => null,
+				'platform_item_id'   => null,
+				'subtotal'           => $subtotal,
+				'addons_total'       => $addons_total,
+				'total'              => $total,
+				'currency'           => $order_data['currency'] ?? wpss_get_currency(),
+				'status'             => ServiceOrder::STATUS_PENDING_PAYMENT,
+				'payment_method'     => $order_data['payment_method'] ?? null,
+				'payment_status'     => 'pending',
+				'revisions_included' => $revisions,
+				'commission_rate'    => $commission_rate,
+				'platform_fee'       => $platform_fee,
+				'vendor_earnings'    => $vendor_earnings,
+				'created_at'         => current_time( 'mysql' ),
+				'updated_at'         => current_time( 'mysql' ),
+				'meta'               => wp_json_encode(
+					array_filter(
+						[
+							'tax_rate'         => $tax_rate,
+							'tax_amount'       => round( $tax_amount, 2 ),
+							'package_snapshot' => $package_snapshot,
+						]
+					)
+				),
 			],
 			[ '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s' ]
 		);
@@ -216,14 +220,14 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 		// Get the payment gateway used.
 		$gateway_id = $order->payment_method;
-		$gateways = apply_filters( 'wpss_payment_gateways', [] );
+		$gateways   = apply_filters( 'wpss_payment_gateways', [] );
 
 		if ( ! isset( $gateways[ $gateway_id ] ) ) {
 			return false;
 		}
 
 		$gateway = $gateways[ $gateway_id ];
-		$result = $gateway->process_refund( $order->transaction_id, $amount, $reason );
+		$result  = $gateway->process_refund( $order->transaction_id, $amount, $reason );
 
 		return ! empty( $result['success'] );
 	}
@@ -286,7 +290,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				}
 			}
 
-			$deadline                      = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
+			$deadline                         = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
 			$update_data['delivery_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
 			$update_data['original_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
 		}
@@ -338,7 +342,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			return null;
 		}
 
-		$item = new ServiceItem();
+		$item             = new ServiceItem();
 		$item->id         = $order->id;
 		$item->item_id    = $order->id;
 		$item->order_id   = $order->id;

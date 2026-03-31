@@ -163,7 +163,7 @@ class FeaturedServices extends AbstractBlock {
 
 		if ( ! $query->have_posts() ) {
 			?>
-			<div <?php echo $this->get_wrapper_attributes( $attributes ); ?>>
+			<div <?php echo $this->get_wrapper_attributes( $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 				<p class="wpss-no-featured"><?php esc_html_e( 'No featured services found.', 'wp-sell-services' ); ?></p>
 			</div>
 			<?php
@@ -186,7 +186,7 @@ class FeaturedServices extends AbstractBlock {
 			);
 		}
 		?>
-		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?> <?php echo $carousel_data; ?>>
+		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?> <?php echo $carousel_data; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $carousel_data is built with sprintf using hardcoded attribute names and sanitized values. ?>>
 			<?php if ( ! empty( $attributes['title'] ) ) : ?>
 				<h2 class="wpss-featured-title"><?php echo esc_html( $attributes['title'] ); ?></h2>
 			<?php endif; ?>

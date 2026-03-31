@@ -78,7 +78,7 @@ class GalleryService {
 	 * @return bool
 	 */
 	public function add_item( int $service_id, array $item ): bool {
-		$gallery = $this->get_gallery( $service_id );
+		$gallery   = $this->get_gallery( $service_id );
 		$sanitized = $this->sanitize_item( $item );
 
 		if ( ! $sanitized ) {
@@ -117,7 +117,7 @@ class GalleryService {
 	 * @return bool
 	 */
 	public function reorder( int $service_id, array $order ): bool {
-		$gallery = $this->get_gallery( $service_id );
+		$gallery   = $this->get_gallery( $service_id );
 		$reordered = [];
 
 		foreach ( $order as $index ) {
@@ -173,7 +173,7 @@ class GalleryService {
 			return null;
 		}
 
-		$first = reset( $images );
+		$first         = reset( $images );
 		$attachment_id = $first['attachment_id'] ?? 0;
 
 		if ( ! $attachment_id ) {
@@ -209,7 +209,7 @@ class GalleryService {
 					return null;
 				}
 				$sanitized['attachment_id'] = $attachment_id;
-				$sanitized['alt'] = sanitize_text_field( $item['alt'] ?? '' );
+				$sanitized['alt']           = sanitize_text_field( $item['alt'] ?? '' );
 				break;
 
 			case 'video':
@@ -219,14 +219,14 @@ class GalleryService {
 				}
 
 				$file = get_attached_file( $attachment_id ) ?: '';
-				$ext = strtolower( pathinfo( $file, PATHINFO_EXTENSION ) );
+				$ext  = strtolower( pathinfo( $file, PATHINFO_EXTENSION ) );
 
 				if ( ! in_array( $ext, $this->allowed_video_types, true ) ) {
 					return null;
 				}
 
 				$sanitized['attachment_id'] = $attachment_id;
-				$sanitized['poster_id'] = absint( $item['poster_id'] ?? 0 );
+				$sanitized['poster_id']     = absint( $item['poster_id'] ?? 0 );
 				break;
 
 			case 'embed':
@@ -234,7 +234,7 @@ class GalleryService {
 				if ( ! $url || ! $this->is_valid_embed_url( $url ) ) {
 					return null;
 				}
-				$sanitized['url'] = $url;
+				$sanitized['url']   = $url;
 				$sanitized['title'] = sanitize_text_field( $item['title'] ?? '' );
 				break;
 		}
@@ -277,7 +277,7 @@ class GalleryService {
 			'lightbox'   => true,
 		];
 
-		$args = wp_parse_args( $args, $defaults );
+		$args    = wp_parse_args( $args, $defaults );
 		$gallery = $this->get_gallery( $service_id );
 
 		if ( empty( $gallery ) ) {
@@ -328,7 +328,7 @@ class GalleryService {
 				);
 
 			case 'video':
-				$url = wp_get_attachment_url( $item['attachment_id'] );
+				$url    = wp_get_attachment_url( $item['attachment_id'] );
 				$poster = ! empty( $item['poster_id'] ) ? wp_get_attachment_url( $item['poster_id'] ) : '';
 
 				return sprintf(

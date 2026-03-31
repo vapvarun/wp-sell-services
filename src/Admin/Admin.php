@@ -88,12 +88,12 @@ class Admin {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->settings            = new Settings();
-		$this->manual_order_page   = new ManualOrderPage();
-		$this->vendors_page        = new VendorsPage();
-		$this->moderation_page     = new ServiceModerationPage();
-		$this->withdrawals_page    = new WithdrawalsPage();
-		$this->setup_wizard_page   = new SetupWizardPage();
+		$this->settings          = new Settings();
+		$this->manual_order_page = new ManualOrderPage();
+		$this->vendors_page      = new VendorsPage();
+		$this->moderation_page   = new ServiceModerationPage();
+		$this->withdrawals_page  = new WithdrawalsPage();
+		$this->setup_wizard_page = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
 			$this->upgrade_page = new UpgradePage();
@@ -428,7 +428,7 @@ class Admin {
 		}
 
 		// Check capabilities — admins can update any order, vendors can update their own.
-		$order_id  = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$has_access = current_user_can( 'manage_options' );
 
 		if ( ! $has_access && current_user_can( 'wpss_manage_orders' ) && $order_id ) {
@@ -442,7 +442,7 @@ class Admin {
 		if ( ! $has_access ) {
 			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
-		$status   = isset( $_POST['order_status'] ) ? sanitize_key( $_POST['order_status'] ) : '';
+		$status = isset( $_POST['order_status'] ) ? sanitize_key( $_POST['order_status'] ) : '';
 
 		if ( ! $order_id || ! $status ) {
 			wp_die( esc_html__( 'Invalid request.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
@@ -1226,24 +1226,28 @@ class Admin {
 								<?php if ( $order->delivery_deadline ) : ?>
 									<tr>
 										<th><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></th>
-										<td><?php
+										<td>
+										<?php
 										$deadline_timestamp = $order->delivery_deadline instanceof \DateTimeInterface
 											? $order->delivery_deadline->getTimestamp()
 											: strtotime( $order->delivery_deadline );
 										echo esc_html( wp_date( get_option( 'date_format' ), $deadline_timestamp ) );
-										?></td>
+										?>
+										</td>
 									</tr>
 								<?php endif; ?>
 								<tr>
 									<th><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></th>
-									<td><?php
+									<td>
+									<?php
 									if ( $order->created_at ) {
 										$created_timestamp = $order->created_at instanceof \DateTimeInterface
 											? $order->created_at->getTimestamp()
 											: strtotime( $order->created_at );
 										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $created_timestamp ) );
 									}
-									?></td>
+									?>
+									</td>
 								</tr>
 								<?php if ( ! empty( $order->platform_order_id ) ) : ?>
 									<tr>
@@ -1298,9 +1302,9 @@ class Admin {
 											</div>
 											<div><?php echo wp_kses_post( wpautop( $message->content ?? '' ) ); ?></div>
 											<?php
-										$msg_attachments = $message->attachments ? json_decode( $message->attachments, true ) : array();
-										if ( ! empty( $msg_attachments ) && is_array( $msg_attachments ) ) :
-										?>
+											$msg_attachments = $message->attachments ? json_decode( $message->attachments, true ) : array();
+											if ( ! empty( $msg_attachments ) && is_array( $msg_attachments ) ) :
+												?>
 												<div style="margin-top: 10px; color: #666;">
 													<span class="dashicons dashicons-paperclip"></span>
 													<?php esc_html_e( 'Has attachments', 'wp-sell-services' ); ?>
@@ -1328,7 +1332,7 @@ class Admin {
 												printf(
 													/* translators: %d: delivery number */
 													esc_html__( 'Delivery #%d', 'wp-sell-services' ),
-													$delivery->id
+													absint( $delivery->id )
 												);
 												?>
 											</strong>
@@ -1491,7 +1495,7 @@ class Admin {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$notice_class = '1' === $_GET['updated'] ? 'notice-success' : 'notice-error';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$notice_msg   = '1' === $_GET['updated']
+			$notice_msg = '1' === $_GET['updated']
 				? __( 'Dispute updated successfully.', 'wp-sell-services' )
 				: __( 'Failed to update dispute.', 'wp-sell-services' );
 
@@ -1535,8 +1539,8 @@ class Admin {
 		);
 
 		$initiated_by = get_userdata( $dispute->initiated_by );
-		$vendor    = $order ? get_userdata( $order->vendor_id ) : null;
-		$customer  = $order ? get_userdata( $order->customer_id ) : null;
+		$vendor       = $order ? get_userdata( $order->vendor_id ) : null;
+		$customer     = $order ? get_userdata( $order->customer_id ) : null;
 
 		$statuses = array(
 			'open'           => __( 'Open', 'wp-sell-services' ),
@@ -1556,7 +1560,7 @@ class Admin {
 				printf(
 					/* translators: %d: dispute ID */
 					esc_html__( 'Dispute #%d', 'wp-sell-services' ),
-					$dispute_id
+					absint( $dispute_id )
 				);
 				?>
 			</h1>
@@ -1843,7 +1847,7 @@ class Admin {
 		$commands = new \WPSellServices\CLI\ServiceCommands();
 
 		// Use reflection to access the private templates and create_service method.
-		$ref_class  = new \ReflectionClass( $commands );
+		$ref_class     = new \ReflectionClass( $commands );
 		$ref_templates = $ref_class->getProperty( 'service_templates' );
 		$ref_templates->setAccessible( true );
 		$templates = $ref_templates->getValue( $commands );
@@ -1863,9 +1867,9 @@ class Admin {
 		}
 
 		// Create 20 services (cycling through templates).
-		$count   = 20;
-		$created = 0;
-		$featured = 0;
+		$count          = 20;
+		$created        = 0;
+		$featured       = 0;
 		$template_count = count( $templates );
 
 		for ( $i = 0; $i < $count; $i++ ) {
@@ -1895,16 +1899,16 @@ class Admin {
 
 		wp_send_json_success(
 			array(
-				'message'  => sprintf(
+				'message'    => sprintf(
 					/* translators: 1: services count, 2: categories count, 3: vendors count */
 					__( 'Imported %1$d services, %2$d categories, and %3$d vendor profiles.', 'wp-sell-services' ),
 					$created,
 					count( $categories ),
 					$vendors_created
 				),
-				'services' => $created,
+				'services'   => $created,
 				'categories' => count( $categories ),
-				'vendors'  => $vendors_created,
+				'vendors'    => $vendors_created,
 			)
 		);
 	}
@@ -1917,36 +1921,36 @@ class Admin {
 	private function create_demo_vendors(): int {
 		$vendors = array(
 			array(
-				'login'    => 'sarah_designer',
-				'email'    => 'sarah@demo.test',
-				'name'     => 'Sarah Chen',
-				'tagline'  => 'Top Rated Logo & Brand Designer',
-				'bio'      => 'Award-winning designer with 8+ years creating memorable brand identities. Specializing in minimalist logos and complete branding packages.',
-				'country'  => 'US',
+				'login'   => 'sarah_designer',
+				'email'   => 'sarah@demo.test',
+				'name'    => 'Sarah Chen',
+				'tagline' => 'Top Rated Logo & Brand Designer',
+				'bio'     => 'Award-winning designer with 8+ years creating memorable brand identities. Specializing in minimalist logos and complete branding packages.',
+				'country' => 'US',
 			),
 			array(
-				'login'    => 'mike_developer',
-				'email'    => 'mike@demo.test',
-				'name'     => 'Mike Rodriguez',
-				'tagline'  => 'Full-Stack WordPress Developer',
-				'bio'      => 'WordPress developer building custom themes, plugins, and e-commerce solutions. Clean code, fast delivery.',
-				'country'  => 'CA',
+				'login'   => 'mike_developer',
+				'email'   => 'mike@demo.test',
+				'name'    => 'Mike Rodriguez',
+				'tagline' => 'Full-Stack WordPress Developer',
+				'bio'     => 'WordPress developer building custom themes, plugins, and e-commerce solutions. Clean code, fast delivery.',
+				'country' => 'CA',
 			),
 			array(
-				'login'    => 'emma_writer',
-				'email'    => 'emma@demo.test',
-				'name'     => 'Emma Williams',
-				'tagline'  => 'SEO Content Writer & Strategist',
-				'bio'      => 'Published writer creating SEO-optimized content that ranks. Specializing in tech, SaaS, and marketing niches.',
-				'country'  => 'GB',
+				'login'   => 'emma_writer',
+				'email'   => 'emma@demo.test',
+				'name'    => 'Emma Williams',
+				'tagline' => 'SEO Content Writer & Strategist',
+				'bio'     => 'Published writer creating SEO-optimized content that ranks. Specializing in tech, SaaS, and marketing niches.',
+				'country' => 'GB',
 			),
 			array(
-				'login'    => 'alex_marketer',
-				'email'    => 'alex@demo.test',
-				'name'     => 'Alex Kim',
-				'tagline'  => 'Digital Marketing Specialist',
-				'bio'      => 'Google Ads certified specialist helping businesses grow through data-driven campaigns and SEO strategies.',
-				'country'  => 'AU',
+				'login'   => 'alex_marketer',
+				'email'   => 'alex@demo.test',
+				'name'    => 'Alex Kim',
+				'tagline' => 'Digital Marketing Specialist',
+				'bio'     => 'Google Ads certified specialist helping businesses grow through data-driven campaigns and SEO strategies.',
+				'country' => 'AU',
 			),
 		);
 
@@ -2064,7 +2068,7 @@ class Admin {
 		);
 
 		global $wpdb;
-		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+		$profiles_table  = $wpdb->prefix . 'wpss_vendor_profiles';
 		$vendors_deleted = 0;
 
 		foreach ( $demo_users as $user_id ) {

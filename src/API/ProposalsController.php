@@ -104,7 +104,8 @@ class ProposalsController extends RestController {
 						],
 						'price'         => [
 							'type'              => 'number',
-							'sanitize_callback' => function ( $value ) { return (float) $value; },
+							'sanitize_callback' => function ( $value ) {
+								return (float) $value; },
 						],
 						'delivery_days' => [
 							'type'              => 'integer',
@@ -328,10 +329,12 @@ class ProposalsController extends RestController {
 
 		$updated_proposal = $this->proposal_service->get( $proposal_id );
 
-		return new WP_REST_Response( [
-			'message' => __( 'Proposal updated successfully.', 'wp-sell-services' ),
-			'data'    => $this->prepare_proposal_for_response( $updated_proposal ),
-		] );
+		return new WP_REST_Response(
+			[
+				'message' => __( 'Proposal updated successfully.', 'wp-sell-services' ),
+				'data'    => $this->prepare_proposal_for_response( $updated_proposal ),
+			]
+		);
 	}
 
 	/**
@@ -406,11 +409,11 @@ class ProposalsController extends RestController {
 			// Include request details.
 			if ( $request ) {
 				$data['request'] = [
-					'id'          => $request->ID,
-					'title'       => $request->post_title,
-					'budget_min'  => (float) get_post_meta( $request->ID, '_wpss_budget_min', true ),
-					'budget_max'  => (float) get_post_meta( $request->ID, '_wpss_budget_max', true ),
-					'deadline'    => get_post_meta( $request->ID, '_wpss_deadline', true ),
+					'id'         => $request->ID,
+					'title'      => $request->post_title,
+					'budget_min' => (float) get_post_meta( $request->ID, '_wpss_budget_min', true ),
+					'budget_max' => (float) get_post_meta( $request->ID, '_wpss_budget_max', true ),
+					'deadline'   => get_post_meta( $request->ID, '_wpss_deadline', true ),
 				];
 			}
 

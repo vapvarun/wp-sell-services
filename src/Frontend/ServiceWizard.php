@@ -1199,8 +1199,8 @@ class ServiceWizard {
 			}
 			$tier = $tiers[ $index ];
 			// Normalize delivery_days → delivery_time for the wizard UI.
-			$package['delivery_time']  = $package['delivery_time'] ?? $package['delivery_days'] ?? '';
-			$mapped[ $tier ]           = array_merge( $defaults[ $tier ], $package );
+			$package['delivery_time']   = $package['delivery_time'] ?? $package['delivery_days'] ?? '';
+			$mapped[ $tier ]            = array_merge( $defaults[ $tier ], $package );
 			$mapped[ $tier ]['enabled'] = true;
 		}
 
@@ -1286,28 +1286,28 @@ class ServiceWizard {
 				'limits'         => $this->limits,
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
-					'saving'            => __( 'Saving...', 'wp-sell-services' ),
-					'saved'             => __( 'Draft saved!', 'wp-sell-services' ),
-					'publishing'        => __( 'Publishing...', 'wp-sell-services' ),
-					'published'         => __( 'Service published!', 'wp-sell-services' ),
-					'error'             => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'unsavedChanges'    => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
-					'confirmDelete'     => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
-					'validationTitle'   => __( 'Please enter a service title', 'wp-sell-services' ),
+					'saving'             => __( 'Saving...', 'wp-sell-services' ),
+					'saved'              => __( 'Draft saved!', 'wp-sell-services' ),
+					'publishing'         => __( 'Publishing...', 'wp-sell-services' ),
+					'published'          => __( 'Service published!', 'wp-sell-services' ),
+					'error'              => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'unsavedChanges'     => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
+					'confirmDelete'      => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
+					'validationTitle'    => __( 'Please enter a service title', 'wp-sell-services' ),
 					'validationTitleMin' => __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' ),
-					'validationCat'     => __( 'Please select a category', 'wp-sell-services' ),
-					'validationDesc'    => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
-					'validationPrice'   => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
-					'validationImage'   => __( 'Please upload a main image', 'wp-sell-services' ),
-					'validationPkgName' => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
-					'validationPkgDesc' => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
-					'limitGallery'      => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
-					'limitExtras'       => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
-					'limitFaq'          => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
-					'limitRequirements' => __( 'You have reached the maximum number of requirements. Upgrade to Pro for unlimited requirements.', 'wp-sell-services' ),
-					'selectMainImage'   => __( 'Select Main Image', 'wp-sell-services' ),
-					'addGalleryImage'   => __( 'Add Gallery Image', 'wp-sell-services' ),
-					'delete'            => __( 'Delete', 'wp-sell-services' ),
+					'validationCat'      => __( 'Please select a category', 'wp-sell-services' ),
+					'validationDesc'     => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
+					'validationPrice'    => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
+					'validationImage'    => __( 'Please upload a main image', 'wp-sell-services' ),
+					'validationPkgName'  => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
+					'validationPkgDesc'  => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
+					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
+					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
+					'limitFaq'           => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
+					'limitRequirements'  => __( 'You have reached the maximum number of requirements. Upgrade to Pro for unlimited requirements.', 'wp-sell-services' ),
+					'selectMainImage'    => __( 'Select Main Image', 'wp-sell-services' ),
+					'addGalleryImage'    => __( 'Add Gallery Image', 'wp-sell-services' ),
+					'delete'             => __( 'Delete', 'wp-sell-services' ),
 				),
 			)
 		);

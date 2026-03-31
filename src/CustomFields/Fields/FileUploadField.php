@@ -72,9 +72,9 @@ class FileUploadField extends AbstractField {
 	 * @return string HTML output.
 	 */
 	public function render( array $field, $value = null ): string {
-		$field = $this->parse_field( $field );
+		$field   = $this->parse_field( $field );
 		$allowed = implode( ', ', array_map( fn( $t ) => '.' . $t, $field['allowed_types'] ) );
-		$accept = implode( ',', array_map( fn( $t ) => '.' . $t, $field['allowed_types'] ) );
+		$accept  = implode( ',', array_map( fn( $t ) => '.' . $t, $field['allowed_types'] ) );
 
 		$extra = [
 			'type'   => 'file',
@@ -251,7 +251,7 @@ class FileUploadField extends AbstractField {
 			$url = wp_get_attachment_url( $attachment_id );
 			if ( $url ) {
 				$filename = basename( $url );
-				$links[] = sprintf(
+				$links[]  = sprintf(
 					'<a href="%s" target="_blank">%s</a>',
 					esc_url( $url ),
 					esc_html( $filename )

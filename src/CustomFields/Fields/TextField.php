@@ -121,7 +121,7 @@ class TextField extends AbstractField {
 	 * @return true|\WP_Error
 	 */
 	public function validate( $value, array $field ) {
-		$field = $this->parse_field( $field );
+		$field  = $this->parse_field( $field );
 		$length = mb_strlen( (string) $value );
 
 		if ( $field['min_length'] > 0 && $length < $field['min_length'] ) {

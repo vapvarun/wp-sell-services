@@ -178,7 +178,7 @@ class ServiceGrid extends AbstractBlock {
 
 		$wrapper_classes = array( 'wpss-grid-cols-' . $attributes['columns'] );
 		?>
-		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?>>
+		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 			<?php if ( $query->have_posts() ) : ?>
 				<div class="wpss-services-grid">
 					<?php
@@ -192,12 +192,14 @@ class ServiceGrid extends AbstractBlock {
 				<?php if ( $attributes['showPagination'] && $query->max_num_pages > 1 ) : ?>
 					<div class="wpss-pagination">
 						<?php
-						echo paginate_links(
-							array(
-								'total'     => $query->max_num_pages,
-								'current'   => max( 1, get_query_var( 'paged' ) ),
-								'prev_text' => '&laquo;',
-								'next_text' => '&raquo;',
+						echo wp_kses_post(
+							paginate_links(
+								array(
+									'total'     => $query->max_num_pages,
+									'current'   => max( 1, get_query_var( 'paged' ) ),
+									'prev_text' => '&laquo;',
+									'next_text' => '&raquo;',
+								)
 							)
 						);
 						?>

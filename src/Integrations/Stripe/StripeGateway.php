@@ -205,7 +205,10 @@ class StripeGateway implements PaymentGatewayInterface {
 	 */
 	public function process_payment( string $payment_id ): array {
 		if ( ! preg_match( '/^pi_[a-zA-Z0-9_]+$/', $payment_id ) ) {
-			return array( 'success' => false, 'error' => __( 'Invalid payment ID format.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Invalid payment ID format.', 'wp-sell-services' ),
+			);
 		}
 
 		$response = $this->api_request( "payment_intents/{$payment_id}", array(), 'GET' );
@@ -334,7 +337,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 */
 	public function handle_webhook_callback(): void {
 		$payload    = file_get_contents( 'php://input' );
-		$sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
+		$sig_header = isset( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_STRIPE_SIGNATURE'] ) ) : '';
 
 		// Verify webhook signature.
 		$endpoint_secret = $this->settings['webhook_secret'] ?? '';
@@ -575,7 +578,10 @@ class StripeGateway implements PaymentGatewayInterface {
 		$currency = sanitize_text_field( $params['currency'] ?? wpss_get_currency() );
 
 		if ( $amount <= 0 ) {
-			return array( 'success' => false, 'error' => __( 'Invalid amount.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Invalid amount.', 'wp-sell-services' ),
+			);
 		}
 
 		return $this->create_payment(
@@ -601,24 +607,36 @@ class StripeGateway implements PaymentGatewayInterface {
 		$package_id        = (int) ( $params['package_id'] ?? 0 );
 
 		if ( ! $payment_intent_id ) {
-			return array( 'success' => false, 'error' => __( 'Invalid payment.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Invalid payment.', 'wp-sell-services' ),
+			);
 		}
 
 		$payment = $this->process_payment( $payment_intent_id );
 
 		if ( ! $payment['success'] ) {
-			return array( 'success' => false, 'error' => $payment['error'] ?? __( 'Payment verification failed.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => $payment['error'] ?? __( 'Payment verification failed.', 'wp-sell-services' ),
+			);
 		}
 
 		$service = wpss_get_service( $service_id );
 		if ( ! $service ) {
-			return array( 'success' => false, 'error' => __( 'Service not found.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Service not found.', 'wp-sell-services' ),
+			);
 		}
 
 		$order_provider = wpss_get_order_provider();
 
 		if ( ! $order_provider ) {
-			return array( 'success' => false, 'error' => __( 'No order provider available.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'No order provider available.', 'wp-sell-services' ),
+			);
 		}
 
 		$order = $order_provider->create_order(
@@ -634,7 +652,10 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		if ( ! $order ) {
 			$this->process_refund( $payment_intent_id );
-			return array( 'success' => false, 'error' => __( 'Failed to create order.', 'wp-sell-services' ) );
+			return array(
+				'success' => false,
+				'error'   => __( 'Failed to create order.', 'wp-sell-services' ),
+			);
 		}
 
 		$order_provider->mark_as_paid( $order->id, $payment_intent_id, 'stripe' );
@@ -663,9 +684,9 @@ class StripeGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$currency   = sanitize_text_field( $_POST['currency'] ?? wpss_get_currency() );
-		$service_id = (int) ( $_POST['service_id'] ?? 0 );
-		$package_id = (int) ( $_POST['package_id'] ?? 0 );
+		$currency   = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$package_id = absint( $_POST['package_id'] ?? 0 );
 
 		// Verify amount server-side from package price.
 		$service = get_post( $service_id );
@@ -720,10 +741,10 @@ class StripeGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$payment_intent_id = sanitize_text_field( $_POST['payment_intent_id'] ?? '' );
-		$service_id        = (int) ( $_POST['service_id'] ?? 0 );
-		$package_id        = (int) ( $_POST['package_id'] ?? 0 );
-		$pay_order_id      = (int) ( $_POST['pay_order'] ?? 0 );
+		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? '' ) );
+		$service_id        = absint( $_POST['service_id'] ?? 0 );
+		$package_id        = absint( $_POST['package_id'] ?? 0 );
+		$pay_order_id      = absint( $_POST['pay_order'] ?? 0 );
 
 		if ( ! $payment_intent_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid payment.', 'wp-sell-services' ) ) );
@@ -819,7 +840,10 @@ class StripeGateway implements PaymentGatewayInterface {
 		$order_provider = wpss_get_order_provider();
 
 		if ( ! $order_provider ) {
-			return array( 'success' => false, 'message' => 'No order provider.' );
+			return array(
+				'success' => false,
+				'message' => 'No order provider.',
+			);
 		}
 
 		// Path 1: Order already created via AJAX — just confirm payment.
@@ -830,7 +854,10 @@ class StripeGateway implements PaymentGatewayInterface {
 				'stripe'
 			);
 
-			return array( 'success' => true, 'message' => 'Order confirmed.' );
+			return array(
+				'success' => true,
+				'message' => 'Order confirmed.',
+			);
 		}
 
 		// Path 2: AJAX path failed — recover by creating the order from metadata.
@@ -860,18 +887,27 @@ class StripeGateway implements PaymentGatewayInterface {
 
 				wpss_log( "Webhook recovery: Created order {$order->id} for Stripe payment {$payment_intent['id']}.", 'info' );
 
-				return array( 'success' => true, 'message' => 'Order recovered via webhook.' );
+				return array(
+					'success' => true,
+					'message' => 'Order recovered via webhook.',
+				);
 			}
 
 			wpss_log( "Webhook recovery FAILED: Could not create order for Stripe payment {$payment_intent['id']}.", 'error' );
 
-			return array( 'success' => false, 'message' => 'Order creation failed in webhook recovery.' );
+			return array(
+				'success' => false,
+				'message' => 'Order creation failed in webhook recovery.',
+			);
 		}
 
 		// No metadata to work with — log and move on.
 		wpss_log( "Stripe webhook: payment_intent.succeeded with no actionable metadata. PI: {$payment_intent['id']}", 'warning' );
 
-		return array( 'success' => true, 'message' => 'Payment noted, no order action taken.' );
+		return array(
+			'success' => true,
+			'message' => 'Payment noted, no order action taken.',
+		);
 	}
 
 	/**

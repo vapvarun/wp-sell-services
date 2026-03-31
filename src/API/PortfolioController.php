@@ -90,12 +90,12 @@ class PortfolioController extends RestController {
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'check_vendor_permissions' ),
 					'args'                => array(
-						'title'       => array(
+						'title'        => array(
 							'description' => __( 'Portfolio item title.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'description' => array(
+						'description'  => array(
 							'description' => __( 'Portfolio item description.', 'wp-sell-services' ),
 							'type'        => 'string',
 						),
@@ -104,7 +104,7 @@ class PortfolioController extends RestController {
 							'type'        => 'array',
 							'items'       => array( 'type' => 'integer' ),
 						),
-						'service_id'  => array(
+						'service_id'   => array(
 							'description' => __( 'Related service ID.', 'wp-sell-services' ),
 							'type'        => 'integer',
 						),

@@ -169,7 +169,7 @@ class BuyerRequests extends AbstractBlock {
 
 		$wrapper_classes = [ 'wpss-requests-' . $attributes['layout'] ];
 		?>
-		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); ?>>
+		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 			<?php if ( $query->have_posts() ) : ?>
 				<div class="wpss-requests-list">
 					<?php
@@ -183,13 +183,15 @@ class BuyerRequests extends AbstractBlock {
 				<?php if ( $attributes['showPagination'] && $query->max_num_pages > 1 ) : ?>
 					<div class="wpss-pagination">
 						<?php
-						echo paginate_links(
-							[
-								'total'     => $query->max_num_pages,
-								'current'   => max( 1, get_query_var( 'paged' ) ),
-								'prev_text' => '&laquo;',
-								'next_text' => '&raquo;',
-							]
+						echo wp_kses_post(
+							paginate_links(
+								[
+									'total'     => $query->max_num_pages,
+									'current'   => max( 1, get_query_var( 'paged' ) ),
+									'prev_text' => '&laquo;',
+									'next_text' => '&raquo;',
+								]
+							)
 						);
 						?>
 					</div>
@@ -216,13 +218,13 @@ class BuyerRequests extends AbstractBlock {
 	 * @return void
 	 */
 	private function render_request_card( array $attributes ): void {
-		$request_id  = get_the_ID();
-		$buyer_id    = get_post_field( 'post_author', $request_id );
-		$budget_min  = get_post_meta( $request_id, '_wpss_budget_min', true );
-		$budget_max  = get_post_meta( $request_id, '_wpss_budget_max', true );
-		$deadline    = get_post_meta( $request_id, '_wpss_deadline', true );
+		$request_id   = get_the_ID();
+		$buyer_id     = get_post_field( 'post_author', $request_id );
+		$budget_min   = get_post_meta( $request_id, '_wpss_budget_min', true );
+		$budget_max   = get_post_meta( $request_id, '_wpss_budget_max', true );
+		$deadline     = get_post_meta( $request_id, '_wpss_deadline', true );
 		$offers_count = $this->get_offers_count( $request_id );
-		$categories  = get_the_terms( $request_id, 'wpss_service_category' );
+		$categories   = get_the_terms( $request_id, 'wpss_service_category' );
 		?>
 		<article class="wpss-request-card">
 			<div class="wpss-request-header">
@@ -292,7 +294,7 @@ class BuyerRequests extends AbstractBlock {
 							printf(
 								/* translators: %d: number of offers */
 								esc_html( _n( '%d offer', '%d offers', $offers_count, 'wp-sell-services' ) ),
-								$offers_count
+								absint( $offers_count )
 							);
 							?>
 						</span>

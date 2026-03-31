@@ -1265,10 +1265,13 @@ function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, ar
 	if ( $adapter ) {
 		$checkout_provider = $adapter->get_checkout_provider();
 		if ( $checkout_provider ) {
-			return $checkout_provider->get_checkout_url( $service_id, array(
-				'package_id' => $package_id,
-				'addons'     => $addons,
-			) );
+			return $checkout_provider->get_checkout_url(
+				$service_id,
+				array(
+					'package_id' => $package_id,
+					'addons'     => $addons,
+				)
+			);
 		}
 	}
 
@@ -1391,8 +1394,8 @@ function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\Orde
  */
 function wpss_resolve_checkout_addons( int $service_id ): array {
 	$result = array(
-		'addons'             => array(),
-		'addons_total'       => 0,
+		'addons'              => array(),
+		'addons_total'        => 0,
 		'delivery_days_extra' => 0,
 	);
 
@@ -1410,11 +1413,11 @@ function wpss_resolve_checkout_addons( int $service_id ): array {
 	foreach ( $addon_ids as $addon_id ) {
 		$addon = $addon_service->get( $addon_id );
 		if ( $addon && (int) $addon->service_id === $service_id && ! empty( $addon->is_active ) ) {
-			$addon_price              = (float) $addon->price;
-			$result['addons_total']  += $addon_price;
-			$extra_days               = (int) ( $addon->delivery_days_extra ?? 0 );
+			$addon_price                    = (float) $addon->price;
+			$result['addons_total']        += $addon_price;
+			$extra_days                     = (int) ( $addon->delivery_days_extra ?? 0 );
 			$result['delivery_days_extra'] += $extra_days;
-			$result['addons'][]       = array(
+			$result['addons'][]             = array(
 				'id'                  => (int) $addon->id,
 				'name'                => $addon->title ?? '',
 				'price'               => $addon_price,
@@ -1504,17 +1507,17 @@ function wpss_get_user_orders( int $user_id, array $args = array() ): array {
 		'offset' => 0,
 		'status' => '',
 	);
-	$args = wp_parse_args( $args, $defaults );
+	$args     = wp_parse_args( $args, $defaults );
 
-	$sql = "SELECT * FROM {$table} WHERE customer_id = %d";
+	$sql    = "SELECT * FROM {$table} WHERE customer_id = %d";
 	$params = array( $user_id );
 
 	if ( ! empty( $args['status'] ) ) {
-		$sql .= ' AND status = %s';
+		$sql     .= ' AND status = %s';
 		$params[] = $args['status'];
 	}
 
-	$sql .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+	$sql     .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
 	$params[] = $args['limit'];
 	$params[] = $args['offset'];
 
@@ -1539,16 +1542,16 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
 		'offset'      => 0,
 		'unread_only' => false,
 	);
-	$args = wp_parse_args( $args, $defaults );
+	$args     = wp_parse_args( $args, $defaults );
 
-	$sql = "SELECT * FROM {$table} WHERE user_id = %d";
+	$sql    = "SELECT * FROM {$table} WHERE user_id = %d";
 	$params = array( $user_id );
 
 	if ( $args['unread_only'] ) {
 		$sql .= ' AND is_read = 0';
 	}
 
-	$sql .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+	$sql     .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
 	$params[] = $args['limit'];
 	$params[] = $args['offset'];
 
@@ -1573,17 +1576,17 @@ function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array 
 		'offset' => 0,
 		'status' => '',
 	);
-	$args = wp_parse_args( $args, $defaults );
+	$args     = wp_parse_args( $args, $defaults );
 
-	$sql = "SELECT * FROM {$table} WHERE vendor_id = %d";
+	$sql    = "SELECT * FROM {$table} WHERE vendor_id = %d";
 	$params = array( $vendor_id );
 
 	if ( ! empty( $args['status'] ) ) {
-		$sql .= ' AND status = %s';
+		$sql     .= ' AND status = %s';
 		$params[] = $args['status'];
 	}
 
-	$sql .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+	$sql     .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
 	$params[] = $args['limit'];
 	$params[] = $args['offset'];
 
@@ -1605,7 +1608,7 @@ function wpss_get_vendor_services( int $vendor_id, array $args = array() ): arra
 		'offset' => 0,
 		'status' => 'publish',
 	);
-	$args = wp_parse_args( $args, $defaults );
+	$args     = wp_parse_args( $args, $defaults );
 
 	$query_args = array(
 		'post_type'      => 'wpss_service',

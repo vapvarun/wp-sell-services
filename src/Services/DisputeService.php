@@ -166,8 +166,8 @@ class DisputeService {
 
 		// Enforce dispute window (only for completed orders).
 		if ( 'completed' === $order->status && ! empty( $order->completed_at ) ) {
-			$order_settings       = get_option( 'wpss_orders', array() );
-			$dispute_window_days  = (int) ( $order_settings['dispute_window_days'] ?? 14 );
+			$order_settings      = get_option( 'wpss_orders', array() );
+			$dispute_window_days = (int) ( $order_settings['dispute_window_days'] ?? 14 );
 			if ( $dispute_window_days > 0 ) {
 				$completed_time = strtotime( $order->completed_at );
 				$deadline       = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
@@ -298,7 +298,7 @@ class DisputeService {
 		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
 
 		// Sanitize content based on evidence type.
-		$sanitized_type = sanitize_key( $type );
+		$sanitized_type    = sanitize_key( $type );
 		$sanitized_content = match ( $sanitized_type ) {
 			'link'          => esc_url_raw( $content ),
 			'image', 'file' => absint( $content ),
@@ -561,8 +561,8 @@ class DisputeService {
 
 		// Validate order_by against allowlist to prevent SQL injection.
 		$allowed_order_by = array( 'created_at', 'updated_at', 'status' );
-		$order_by_col = in_array( $args['order_by'], $allowed_order_by, true ) ? $args['order_by'] : 'created_at';
-		$order_dir    = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'DESC';
+		$order_by_col     = in_array( $args['order_by'], $allowed_order_by, true ) ? $args['order_by'] : 'created_at';
+		$order_dir        = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'DESC';
 
 		$sql = $wpdb->prepare(
 			"SELECT d.*, o.customer_id, o.vendor_id, o.service_id
@@ -609,8 +609,8 @@ class DisputeService {
 
 		// Validate order_by against allowlist to prevent SQL injection.
 		$allowed_order_by = array( 'created_at', 'updated_at', 'status' );
-		$order_by_col = in_array( $args['order_by'], $allowed_order_by, true ) ? $args['order_by'] : 'created_at';
-		$order_dir    = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'DESC';
+		$order_by_col     = in_array( $args['order_by'], $allowed_order_by, true ) ? $args['order_by'] : 'created_at';
+		$order_dir        = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'DESC';
 
 		$values[] = $args['limit'];
 		$values[] = $args['offset'];

@@ -53,7 +53,7 @@ class UpgradePage {
 	 */
 	private function get_features(): array {
 		return array(
-			__( 'Marketplace & Services', 'wp-sell-services' )   => array(
+			__( 'Marketplace & Services', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Service listings with packages', 'wp-sell-services' ),
 					'free'    => true,
@@ -85,7 +85,7 @@ class UpgradePage {
 					'pro'     => __( 'Unlimited', 'wp-sell-services' ),
 				),
 			),
-			__( 'Orders & Workflow', 'wp-sell-services' )        => array(
+			__( 'Orders & Workflow', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Order management', 'wp-sell-services' ),
 					'free'    => true,
@@ -117,7 +117,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'E-Commerce Integration', 'wp-sell-services' )   => array(
+			__( 'E-Commerce Integration', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'WooCommerce', 'wp-sell-services' ),
 					'free'    => false,
@@ -144,7 +144,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Payment Gateways', 'wp-sell-services' )        => array(
+			__( 'Payment Gateways', 'wp-sell-services' )  => array(
 				array(
 					'feature' => __( 'WooCommerce payment gateways', 'wp-sell-services' ),
 					'free'    => false,
@@ -166,7 +166,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Storage & Media', 'wp-sell-services' )         => array(
+			__( 'Storage & Media', 'wp-sell-services' )   => array(
 				array(
 					'feature' => __( 'Local file storage', 'wp-sell-services' ),
 					'free'    => true,
@@ -210,7 +210,7 @@ class UpgradePage {
 					'pro'     => true,
 				),
 			),
-			__( 'Support & Updates', 'wp-sell-services' )       => array(
+			__( 'Support & Updates', 'wp-sell-services' ) => array(
 				array(
 					'feature' => __( 'Community support', 'wp-sell-services' ),
 					'free'    => true,
@@ -252,7 +252,7 @@ class UpgradePage {
 	 * @return void
 	 */
 	public function render(): void {
-		$features   = $this->get_features();
+		$features    = $this->get_features();
 		$upgrade_url = 'https://wbcomdesigns.com/downloads/wp-sell-services-pro/';
 		?>
 		<div class="wrap wpss-upgrade-wrap">

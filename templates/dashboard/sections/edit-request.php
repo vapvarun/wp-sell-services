@@ -33,8 +33,8 @@ if ( ! $request || 'wpss_request' !== $request->post_type || (int) $request->pos
 }
 
 // Load existing data.
-$budget_min      = get_post_meta( $request_id, '_wpss_budget_min', true );
-$budget_max      = get_post_meta( $request_id, '_wpss_budget_max', true );
+$budget_min = get_post_meta( $request_id, '_wpss_budget_min', true );
+$budget_max = get_post_meta( $request_id, '_wpss_budget_max', true );
 // Support both the old single _wpss_budget key and the new min/max keys.
 if ( ! $budget_min && ! $budget_max ) {
 	$budget_single = get_post_meta( $request_id, '_wpss_budget', true );

@@ -82,11 +82,11 @@ class Loader {
 	 * A utility function to register the actions and hooks into a single collection.
 	 *
 	 * @param array<int, array{hook: string, component: object|null, callback: string|callable, priority: int, accepted_args: int}> $hooks The collection of hooks.
-	 * @param string          $hook          The name of the WordPress hook.
-	 * @param object|callable $component     A reference to the instance of the object or callable.
-	 * @param string|null     $callback      The name of the function/method or null if $component is callable.
-	 * @param int             $priority      The priority at which the function should be fired.
-	 * @param int             $accepted_args The number of arguments.
+	 * @param string                                                                                                                $hook          The name of the WordPress hook.
+	 * @param object|callable                                                                                                       $component     A reference to the instance of the object or callable.
+	 * @param string|null                                                                                                           $callback      The name of the function/method or null if $component is callable.
+	 * @param int                                                                                                                   $priority      The priority at which the function should be fired.
+	 * @param int                                                                                                                   $accepted_args The number of arguments.
 	 * @return array<int, array{hook: string, component: object|null, callback: string|callable, priority: int, accepted_args: int}>
 	 */
 	private function add(

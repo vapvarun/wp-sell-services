@@ -77,8 +77,8 @@ if ( $conversation ) {
 		}
 		if ( ! empty( $unread_ids ) ) {
 			foreach ( $unread_ids as $msg_id ) {
-				$msg_row = $wpdb->get_row( $wpdb->prepare( "SELECT read_by FROM {$wpdb->prefix}wpss_messages WHERE id = %d", $msg_id ) );
-				$read_by = $msg_row && $msg_row->read_by ? json_decode( $msg_row->read_by, true ) : array();
+				$msg_row             = $wpdb->get_row( $wpdb->prepare( "SELECT read_by FROM {$wpdb->prefix}wpss_messages WHERE id = %d", $msg_id ) );
+				$read_by             = $msg_row && $msg_row->read_by ? json_decode( $msg_row->read_by, true ) : array();
 				$read_by[ $user_id ] = current_time( 'mysql', true );
 				$wpdb->update(
 					$wpdb->prefix . 'wpss_messages',
@@ -90,7 +90,7 @@ if ( $conversation ) {
 			}
 
 			// Also reset the unread count for this user in the conversation record.
-			$unread_counts = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
+			$unread_counts                      = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
 			$unread_counts[ (string) $user_id ] = 0;
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
@@ -250,9 +250,9 @@ do_action( 'wpss_before_conversation', $order );
 							<span class="wpss-messaging__message-time">
 								<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
 								<?php
-							$read_by_data = $message->read_by ? json_decode( $message->read_by, true ) : array();
-							$is_read      = ! empty( array_diff_key( $read_by_data, array( $user_id => '' ) ) );
-							?>
+								$read_by_data = $message->read_by ? json_decode( $message->read_by, true ) : array();
+								$is_read      = ! empty( array_diff_key( $read_by_data, array( $user_id => '' ) ) );
+								?>
 							<?php if ( $is_own && $is_read ) : ?>
 									<span class="wpss-messaging__message-status wpss-messaging__message-status--read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
 										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

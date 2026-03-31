@@ -23,14 +23,14 @@ class ServiceOrder {
 	/**
 	 * Order statuses.
 	 */
-	public const STATUS_PENDING_PAYMENT      = 'pending_payment';
-	public const STATUS_PENDING_REQUIREMENTS = 'pending_requirements';
-	public const STATUS_IN_PROGRESS          = 'in_progress';
-	public const STATUS_PENDING_APPROVAL     = 'pending_approval';
-	public const STATUS_REVISION_REQUESTED   = 'revision_requested';
-	public const STATUS_COMPLETED            = 'completed';
-	public const STATUS_CANCELLED            = 'cancelled';
-	public const STATUS_DISPUTED             = 'disputed';
+	public const STATUS_PENDING_PAYMENT        = 'pending_payment';
+	public const STATUS_PENDING_REQUIREMENTS   = 'pending_requirements';
+	public const STATUS_IN_PROGRESS            = 'in_progress';
+	public const STATUS_PENDING_APPROVAL       = 'pending_approval';
+	public const STATUS_REVISION_REQUESTED     = 'revision_requested';
+	public const STATUS_COMPLETED              = 'completed';
+	public const STATUS_CANCELLED              = 'cancelled';
+	public const STATUS_DISPUTED               = 'disputed';
 	public const STATUS_ON_HOLD                = 'on_hold';
 	public const STATUS_LATE                   = 'late';
 	public const STATUS_CANCELLATION_REQUESTED = 'cancellation_requested';
@@ -40,9 +40,9 @@ class ServiceOrder {
 	public const STATUS_ACCEPTED               = 'accepted';
 	public const STATUS_REJECTED               = 'rejected';
 	public const STATUS_REQUIREMENTS_SUBMITTED = 'requirements_submitted';
-	public const STATUS_DELIVERED               = 'delivered';
-	public const STATUS_REFUNDED                = 'refunded';
-	public const STATUS_PARTIALLY_REFUNDED      = 'partially_refunded';
+	public const STATUS_DELIVERED              = 'delivered';
+	public const STATUS_REFUNDED               = 'refunded';
+	public const STATUS_PARTIALLY_REFUNDED     = 'partially_refunded';
 
 	/**
 	 * Order ID.
@@ -309,12 +309,12 @@ class ServiceOrder {
 		$table = $wpdb->prefix . 'wpss_orders';
 
 		$defaults = array(
-			'limit'       => 20,
-			'offset'      => 0,
-			'orderby'     => 'created_at',
-			'order'       => 'DESC',
+			'limit'   => 20,
+			'offset'  => 0,
+			'orderby' => 'created_at',
+			'order'   => 'DESC',
 		);
-		$args = wp_parse_args( $args, $defaults );
+		$args     = wp_parse_args( $args, $defaults );
 
 		list( $where, $params ) = self::build_where_clause( $args );
 
@@ -536,23 +536,23 @@ class ServiceOrder {
 	public static function get_statuses(): array {
 		return array(
 			self::STATUS_PENDING_PAYMENT        => __( 'Pending Payment', 'wp-sell-services' ),
-			self::STATUS_PENDING                 => __( 'Pending', 'wp-sell-services' ),
-			self::STATUS_ACCEPTED                => __( 'Accepted', 'wp-sell-services' ),
-			self::STATUS_REJECTED                => __( 'Rejected', 'wp-sell-services' ),
-			self::STATUS_PENDING_REQUIREMENTS    => __( 'Waiting for Requirements', 'wp-sell-services' ),
-			self::STATUS_REQUIREMENTS_SUBMITTED  => __( 'Requirements Submitted', 'wp-sell-services' ),
-			self::STATUS_IN_PROGRESS             => __( 'In Progress', 'wp-sell-services' ),
-			self::STATUS_DELIVERED               => __( 'Delivered', 'wp-sell-services' ),
-			self::STATUS_PENDING_APPROVAL        => __( 'Pending Approval', 'wp-sell-services' ),
-			self::STATUS_REVISION_REQUESTED      => __( 'Revision Requested', 'wp-sell-services' ),
-			self::STATUS_COMPLETED               => __( 'Completed', 'wp-sell-services' ),
-			self::STATUS_CANCELLED               => __( 'Cancelled', 'wp-sell-services' ),
-			self::STATUS_DISPUTED                => __( 'Disputed', 'wp-sell-services' ),
-			self::STATUS_ON_HOLD                 => __( 'On Hold', 'wp-sell-services' ),
-			self::STATUS_LATE                    => __( 'Late', 'wp-sell-services' ),
-			self::STATUS_CANCELLATION_REQUESTED  => __( 'Cancellation Requested', 'wp-sell-services' ),
-			self::STATUS_REFUNDED                => __( 'Refunded', 'wp-sell-services' ),
-			self::STATUS_PARTIALLY_REFUNDED      => __( 'Partially Refunded', 'wp-sell-services' ),
+			self::STATUS_PENDING                => __( 'Pending', 'wp-sell-services' ),
+			self::STATUS_ACCEPTED               => __( 'Accepted', 'wp-sell-services' ),
+			self::STATUS_REJECTED               => __( 'Rejected', 'wp-sell-services' ),
+			self::STATUS_PENDING_REQUIREMENTS   => __( 'Waiting for Requirements', 'wp-sell-services' ),
+			self::STATUS_REQUIREMENTS_SUBMITTED => __( 'Requirements Submitted', 'wp-sell-services' ),
+			self::STATUS_IN_PROGRESS            => __( 'In Progress', 'wp-sell-services' ),
+			self::STATUS_DELIVERED              => __( 'Delivered', 'wp-sell-services' ),
+			self::STATUS_PENDING_APPROVAL       => __( 'Pending Approval', 'wp-sell-services' ),
+			self::STATUS_REVISION_REQUESTED     => __( 'Revision Requested', 'wp-sell-services' ),
+			self::STATUS_COMPLETED              => __( 'Completed', 'wp-sell-services' ),
+			self::STATUS_CANCELLED              => __( 'Cancelled', 'wp-sell-services' ),
+			self::STATUS_DISPUTED               => __( 'Disputed', 'wp-sell-services' ),
+			self::STATUS_ON_HOLD                => __( 'On Hold', 'wp-sell-services' ),
+			self::STATUS_LATE                   => __( 'Late', 'wp-sell-services' ),
+			self::STATUS_CANCELLATION_REQUESTED => __( 'Cancellation Requested', 'wp-sell-services' ),
+			self::STATUS_REFUNDED               => __( 'Refunded', 'wp-sell-services' ),
+			self::STATUS_PARTIALLY_REFUNDED     => __( 'Partially Refunded', 'wp-sell-services' ),
 		);
 	}
 

@@ -371,7 +371,7 @@ class UnifiedDashboard {
 					<div class="wpss-dashboard__pending-notice">
 						<p><?php esc_html_e( 'Your vendor application is pending admin approval. You will be notified once your application is reviewed.', 'wp-sell-services' ); ?></p>
 					</div>
-				<?php
+					<?php
 				elseif ( ! $is_vendor && ! $is_pending ) :
 					$sb_vendor_settings   = get_option( 'wpss_vendor', array() );
 					$sb_registration_mode = $sb_vendor_settings['vendor_registration'] ?? 'open';
@@ -392,13 +392,14 @@ class UnifiedDashboard {
 				<header class="wpss-dashboard__header">
 					<h1 class="wpss-dashboard__title">
 						<?php
-						$id = isset( $_GET['id'] ) ? sanitize_text_field( $_GET['id'] ) : '';
+						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
 						if ( $id && 'create' !== $this->current_section ) {
 							esc_html_e( 'Update Service', 'wp-sell-services' );
 						} else {
 							echo esc_html( $section_data['title'] );
 						}
-					 ?></h1>
+						?>
+					</h1>
 					<?php if ( $this->current_section === 'services' ) : ?>
 						<a href="<?php echo esc_url( $this->get_section_url( 'create' ) ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
@@ -537,9 +538,9 @@ class UnifiedDashboard {
 		$is_vendor = $this->vendor_service->is_vendor( $user_id );
 
 		// Check if vendor registration is open.
-		$fb_vendor_settings    = get_option( 'wpss_vendor', array() );
-		$fb_registration_mode  = $fb_vendor_settings['vendor_registration'] ?? 'open';
-		$registration_is_open  = 'closed' !== $fb_registration_mode;
+		$fb_vendor_settings   = get_option( 'wpss_vendor', array() );
+		$fb_registration_mode = $fb_vendor_settings['vendor_registration'] ?? 'open';
+		$registration_is_open = 'closed' !== $fb_registration_mode;
 
 		// Vendor-only sections: show a CTA to become a vendor.
 		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );

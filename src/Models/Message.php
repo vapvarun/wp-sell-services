@@ -23,12 +23,12 @@ class Message {
 	/**
 	 * Message types.
 	 */
-	public const TYPE_TEXT           = 'text';
-	public const TYPE_ATTACHMENT     = 'attachment';
-	public const TYPE_DELIVERY       = 'delivery';
-	public const TYPE_REVISION       = 'revision';
-	public const TYPE_STATUS_CHANGE  = 'status_change';
-	public const TYPE_SYSTEM         = 'system';
+	public const TYPE_TEXT          = 'text';
+	public const TYPE_ATTACHMENT    = 'attachment';
+	public const TYPE_DELIVERY      = 'delivery';
+	public const TYPE_REVISION      = 'revision';
+	public const TYPE_STATUS_CHANGE = 'status_change';
+	public const TYPE_SYSTEM        = 'system';
 
 	/**
 	 * Message ID.

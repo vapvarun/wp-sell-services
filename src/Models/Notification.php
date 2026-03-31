@@ -93,31 +93,31 @@ class Notification {
 	/**
 	 * Notification types.
 	 */
-	public const TYPE_ORDER_NEW              = 'order_new';
-	public const TYPE_ORDER_ACCEPTED         = 'order_accepted';
-	public const TYPE_ORDER_IN_PROGRESS      = 'order_in_progress';
-	public const TYPE_ORDER_DELIVERED        = 'order_delivered';
-	public const TYPE_ORDER_COMPLETED        = 'order_completed';
-	public const TYPE_ORDER_CANCELLED        = 'order_cancelled';
-	public const TYPE_ORDER_REVISION         = 'order_revision';
-	public const TYPE_ORDER_LATE             = 'order_late';
-	public const TYPE_MESSAGE_NEW            = 'message_new';
-	public const TYPE_REVIEW_RECEIVED        = 'review_received';
-	public const TYPE_DISPUTE_OPENED         = 'dispute_opened';
-	public const TYPE_DISPUTE_RESPONSE       = 'dispute_response';
-	public const TYPE_DISPUTE_RESOLVED       = 'dispute_resolved';
-	public const TYPE_PROPOSAL_RECEIVED      = 'proposal_received';
-	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
-	public const TYPE_PROPOSAL_REJECTED      = 'proposal_rejected';
-	public const TYPE_EARNINGS_CLEARED       = 'earnings_cleared';
-	public const TYPE_WITHDRAWAL_APPROVED    = 'withdrawal_approved';
-	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
-	public const TYPE_SERVICE_APPROVED       = 'service_approved';
-	public const TYPE_SERVICE_REJECTED       = 'service_rejected';
-	public const TYPE_DEADLINE_REMINDER      = 'deadline_reminder';
-	public const TYPE_EXTENSION_REQUESTED    = 'extension_requested';
-	public const TYPE_EXTENSION_APPROVED     = 'extension_approved';
-	public const TYPE_EXTENSION_REJECTED     = 'extension_rejected';
+	public const TYPE_ORDER_NEW           = 'order_new';
+	public const TYPE_ORDER_ACCEPTED      = 'order_accepted';
+	public const TYPE_ORDER_IN_PROGRESS   = 'order_in_progress';
+	public const TYPE_ORDER_DELIVERED     = 'order_delivered';
+	public const TYPE_ORDER_COMPLETED     = 'order_completed';
+	public const TYPE_ORDER_CANCELLED     = 'order_cancelled';
+	public const TYPE_ORDER_REVISION      = 'order_revision';
+	public const TYPE_ORDER_LATE          = 'order_late';
+	public const TYPE_MESSAGE_NEW         = 'message_new';
+	public const TYPE_REVIEW_RECEIVED     = 'review_received';
+	public const TYPE_DISPUTE_OPENED      = 'dispute_opened';
+	public const TYPE_DISPUTE_RESPONSE    = 'dispute_response';
+	public const TYPE_DISPUTE_RESOLVED    = 'dispute_resolved';
+	public const TYPE_PROPOSAL_RECEIVED   = 'proposal_received';
+	public const TYPE_PROPOSAL_ACCEPTED   = 'proposal_accepted';
+	public const TYPE_PROPOSAL_REJECTED   = 'proposal_rejected';
+	public const TYPE_EARNINGS_CLEARED    = 'earnings_cleared';
+	public const TYPE_WITHDRAWAL_APPROVED = 'withdrawal_approved';
+	public const TYPE_WITHDRAWAL_REJECTED = 'withdrawal_rejected';
+	public const TYPE_SERVICE_APPROVED    = 'service_approved';
+	public const TYPE_SERVICE_REJECTED    = 'service_rejected';
+	public const TYPE_DEADLINE_REMINDER   = 'deadline_reminder';
+	public const TYPE_EXTENSION_REQUESTED = 'extension_requested';
+	public const TYPE_EXTENSION_APPROVED  = 'extension_approved';
+	public const TYPE_EXTENSION_REJECTED  = 'extension_rejected';
 
 	/**
 	 * Create from database row.
@@ -190,31 +190,31 @@ class Notification {
 	 */
 	public function get_icon_class(): string {
 		$icons = [
-			self::TYPE_ORDER_NEW          => 'dashicons-cart',
-			self::TYPE_ORDER_ACCEPTED     => 'dashicons-yes-alt',
-			self::TYPE_ORDER_IN_PROGRESS  => 'dashicons-update',
-			self::TYPE_ORDER_DELIVERED    => 'dashicons-yes',
-			self::TYPE_ORDER_COMPLETED    => 'dashicons-awards',
-			self::TYPE_ORDER_CANCELLED    => 'dashicons-dismiss',
-			self::TYPE_ORDER_REVISION     => 'dashicons-backup',
-			self::TYPE_ORDER_LATE         => 'dashicons-warning',
-			self::TYPE_MESSAGE_NEW        => 'dashicons-email',
-			self::TYPE_REVIEW_RECEIVED    => 'dashicons-star-filled',
-			self::TYPE_DISPUTE_OPENED     => 'dashicons-flag',
-			self::TYPE_DISPUTE_RESPONSE   => 'dashicons-format-chat',
-			self::TYPE_DISPUTE_RESOLVED   => 'dashicons-saved',
-			self::TYPE_PROPOSAL_RECEIVED  => 'dashicons-businessman',
-			self::TYPE_PROPOSAL_ACCEPTED  => 'dashicons-thumbs-up',
-			self::TYPE_PROPOSAL_REJECTED  => 'dashicons-thumbs-down',
-			self::TYPE_EARNINGS_CLEARED   => 'dashicons-money-alt',
+			self::TYPE_ORDER_NEW           => 'dashicons-cart',
+			self::TYPE_ORDER_ACCEPTED      => 'dashicons-yes-alt',
+			self::TYPE_ORDER_IN_PROGRESS   => 'dashicons-update',
+			self::TYPE_ORDER_DELIVERED     => 'dashicons-yes',
+			self::TYPE_ORDER_COMPLETED     => 'dashicons-awards',
+			self::TYPE_ORDER_CANCELLED     => 'dashicons-dismiss',
+			self::TYPE_ORDER_REVISION      => 'dashicons-backup',
+			self::TYPE_ORDER_LATE          => 'dashicons-warning',
+			self::TYPE_MESSAGE_NEW         => 'dashicons-email',
+			self::TYPE_REVIEW_RECEIVED     => 'dashicons-star-filled',
+			self::TYPE_DISPUTE_OPENED      => 'dashicons-flag',
+			self::TYPE_DISPUTE_RESPONSE    => 'dashicons-format-chat',
+			self::TYPE_DISPUTE_RESOLVED    => 'dashicons-saved',
+			self::TYPE_PROPOSAL_RECEIVED   => 'dashicons-businessman',
+			self::TYPE_PROPOSAL_ACCEPTED   => 'dashicons-thumbs-up',
+			self::TYPE_PROPOSAL_REJECTED   => 'dashicons-thumbs-down',
+			self::TYPE_EARNINGS_CLEARED    => 'dashicons-money-alt',
 			self::TYPE_WITHDRAWAL_APPROVED => 'dashicons-bank',
 			self::TYPE_WITHDRAWAL_REJECTED => 'dashicons-no-alt',
-			self::TYPE_SERVICE_APPROVED   => 'dashicons-yes-alt',
-			self::TYPE_SERVICE_REJECTED   => 'dashicons-dismiss',
-			self::TYPE_DEADLINE_REMINDER  => 'dashicons-calendar-alt',
+			self::TYPE_SERVICE_APPROVED    => 'dashicons-yes-alt',
+			self::TYPE_SERVICE_REJECTED    => 'dashicons-dismiss',
+			self::TYPE_DEADLINE_REMINDER   => 'dashicons-calendar-alt',
 			self::TYPE_EXTENSION_REQUESTED => 'dashicons-clock',
-			self::TYPE_EXTENSION_APPROVED => 'dashicons-calendar',
-			self::TYPE_EXTENSION_REJECTED => 'dashicons-no',
+			self::TYPE_EXTENSION_APPROVED  => 'dashicons-calendar',
+			self::TYPE_EXTENSION_REJECTED  => 'dashicons-no',
 		];
 
 		return $icons[ $this->type ] ?? 'dashicons-bell';

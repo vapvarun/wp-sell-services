@@ -48,7 +48,7 @@ class FAQService {
 
 		foreach ( $faqs as $faq ) {
 			$question = sanitize_text_field( $faq['question'] ?? '' );
-			$answer = wp_kses_post( $faq['answer'] ?? '' );
+			$answer   = wp_kses_post( $faq['answer'] ?? '' );
 
 			if ( $question && $answer ) {
 				$sanitized[] = [
@@ -131,7 +131,7 @@ class FAQService {
 	 * @return bool
 	 */
 	public function reorder( int $service_id, array $order ): bool {
-		$faqs = $this->get_faqs( $service_id );
+		$faqs      = $this->get_faqs( $service_id );
 		$reordered = [];
 
 		foreach ( $order as $index ) {
@@ -235,7 +235,16 @@ class FAQService {
 		</div>
 
 		<template id="wpss-faq-template">
-			<?php echo $this->render_admin_item( [ 'question' => '', 'answer' => '' ], '{{INDEX}}' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_admin_item() returns escaped HTML.
+			echo $this->render_admin_item(
+				[
+					'question' => '',
+					'answer'   => '',
+				],
+				'{{INDEX}}'
+			);
+			?>
 		</template>
 		<?php
 		return ob_get_clean();

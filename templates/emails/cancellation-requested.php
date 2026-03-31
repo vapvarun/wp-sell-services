@@ -122,7 +122,7 @@ do_action( 'wpss_email_content_before', 'cancellation_requested', $order, $recip
 
 <p style="text-align: center; margin: 30px 0;">
 	<?php
-	$button_url = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'cancellation_requested', $order );
+	$button_url  = apply_filters( 'wpss_email_button_url', wpss_get_order_url( $order->id ), 'cancellation_requested', $order );
 	$button_text = apply_filters( 'wpss_email_button_text', __( 'Respond to Request', 'wp-sell-services' ), 'cancellation_requested' );
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $base_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">

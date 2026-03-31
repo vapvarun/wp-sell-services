@@ -11,6 +11,7 @@
  *
  * - wpss_archive_service_columns (filter)
  *   Controls number of columns in services grid. Default: 3.
+ *
  *   @param int $columns Number of grid columns (2, 3, or 4).
  *
  * - wpss_services_per_page (filter)

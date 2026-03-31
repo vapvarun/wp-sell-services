@@ -50,10 +50,12 @@ wp_localize_script(
 wp_enqueue_script( 'wp-api-fetch' );
 wp_add_inline_script(
 	'wp-api-fetch',
-	'var wpssApi = ' . wp_json_encode( array(
-		'root'  => esc_url_raw( rest_url() ),
-		'nonce' => wp_create_nonce( 'wp_rest' ),
-	) ) . ';',
+	'var wpssApi = ' . wp_json_encode(
+		array(
+			'root'  => esc_url_raw( rest_url() ),
+			'nonce' => wp_create_nonce( 'wp_rest' ),
+		)
+	) . ';',
 	'before'
 );
 
@@ -72,7 +74,7 @@ $vendor      = get_userdata( $order->vendor_id );
 $customer    = get_userdata( $order->customer_id );
 
 // Handle deleted users gracefully.
-$vendor_name  = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
+$vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
 $customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-sell-services' );
 
 // Get deliveries via service layer.
@@ -80,8 +82,8 @@ $delivery_service = new DeliveryService();
 $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 
 // Dispute eligibility check via service layer.
-$dispute_service   = new \WPSellServices\Services\DisputeService();
-$can_open_dispute  = $dispute_service->can_open_dispute( $order );
+$dispute_service  = new \WPSellServices\Services\DisputeService();
+$can_open_dispute = $dispute_service->can_open_dispute( $order );
 
 /**
  * Hook: wpss_before_order_view
@@ -191,7 +193,7 @@ do_action( 'wpss_before_order_view', $order );
 			if ( $is_customer ) {
 				// Pay Now button for unpaid orders (e.g., from accepted proposals).
 				if ( 'pending_payment' === $order->status ) {
-					$pay_url = add_query_arg( 'pay_order', $order_id, wpss_get_service_checkout_url( $order->service_id ) );
+					$pay_url        = add_query_arg( 'pay_order', $order_id, wpss_get_service_checkout_url( $order->service_id ) );
 					$actions['pay'] = array(
 						'label' => sprintf(
 							/* translators: %s: formatted price */
@@ -280,7 +282,7 @@ do_action( 'wpss_before_order_view', $order );
 				);
 			}
 
-			$order_settings    = get_option( 'wpss_orders', array() );
+			$order_settings = get_option( 'wpss_orders', array() );
 			if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
 				$actions['dispute'] = array(
 					'label' => __( 'Open Dispute', 'wp-sell-services' ),
@@ -486,13 +488,13 @@ do_action( 'wpss_before_order_view', $order );
 	// 2. READ-ONLY VIEW: Requirements have been submitted (show to both vendor and customer)
 	// 3. NOT PROVIDED: Service has requirements but none submitted and order is past pending_requirements
 	// 4. NO REQUIREMENTS: Service has no requirements defined
-	$show_requirements_form     = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
-	$show_submitted_readonly    = $has_submitted_requirements && ( $is_vendor || $is_customer );
-	$show_not_provided_notice   = ! $has_submitted_requirements && $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
-	$show_no_requirements_msg   = ! $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
+	$show_requirements_form   = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
+	$show_submitted_readonly  = $has_submitted_requirements && ( $is_vendor || $is_customer );
+	$show_not_provided_notice = ! $has_submitted_requirements && $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
+	$show_no_requirements_msg = ! $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
 
 	// Allow late requirements submission if enabled in settings and order is in_progress without requirements.
-	$allow_late_submission      = apply_filters( 'wpss_allow_late_requirements_submission', false );
+	$allow_late_submission       = apply_filters( 'wpss_allow_late_requirements_submission', false );
 	$show_late_requirements_form = $allow_late_submission && 'in_progress' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
 	?>
 
@@ -789,7 +791,7 @@ do_action( 'wpss_before_order_view', $order );
 			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
 			'other'                => __( 'Other', 'wp-sell-services' ),
 		);
-		$reason_label = $reason_labels[ $cancel_reason ] ?? $cancel_reason;
+		$reason_label  = $reason_labels[ $cancel_reason ] ?? $cancel_reason;
 		?>
 		<section class="wpss-order-section">
 			<div class="wpss-order-section__body">
@@ -1134,9 +1136,9 @@ do_action( 'wpss_before_order_view', $order );
 $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true );
 
 // Check if review modal should be available.
-$can_review            = 'completed' === $order->status && $is_customer && empty( $review_exists );
-$can_open_dispute      = $can_open_dispute && ( $is_customer || $is_vendor );
-$can_request_revision  = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
+$can_review           = 'completed' === $order->status && $is_customer && empty( $review_exists );
+$can_open_dispute     = $can_open_dispute && ( $is_customer || $is_vendor );
+$can_request_revision = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
 
 // Check if cancel modal should be available.
 $buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
