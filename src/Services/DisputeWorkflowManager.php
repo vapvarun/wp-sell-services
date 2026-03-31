@@ -68,13 +68,13 @@ class DisputeWorkflowManager {
 	 */
 	public function init(): void {
 		// Cron jobs.
-		add_action( 'wpss_cron_daily', [ $this, 'check_response_deadlines' ] );
-		add_action( 'wpss_cron_daily', [ $this, 'auto_escalate_disputes' ] );
-		add_action( 'wpss_cron_daily', [ $this, 'send_reminder_notifications' ] );
-		add_action( 'wpss_cron_daily', [ $this, 'auto_open_disputes_for_late_orders' ] );
+		add_action( 'wpss_cron_daily', array( $this, 'check_response_deadlines' ) );
+		add_action( 'wpss_cron_daily', array( $this, 'auto_escalate_disputes' ) );
+		add_action( 'wpss_cron_daily', array( $this, 'send_reminder_notifications' ) );
+		add_action( 'wpss_cron_daily', array( $this, 'auto_open_disputes_for_late_orders' ) );
 
 		// Register cron schedules.
-		add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
+		add_filter( 'cron_schedules', array( $this, 'add_cron_schedules' ) );
 
 		// Schedule events on plugin activation.
 		if ( ! wp_next_scheduled( 'wpss_cron_daily' ) ) {
@@ -82,10 +82,10 @@ class DisputeWorkflowManager {
 		}
 
 		// Hooks for dispute events.
-		add_action( 'wpss_dispute_opened', [ $this, 'on_dispute_opened' ], 10, 4 );
-		add_action( 'wpss_dispute_response_submitted', [ $this, 'on_response_submitted' ], 10, 3 );
-		add_action( 'wpss_dispute_evidence_added', [ $this, 'on_evidence_added' ], 10, 2 );
-		add_action( 'wpss_dispute_resolved', [ $this, 'on_dispute_resolved' ], 10, 4 );
+		add_action( 'wpss_dispute_opened', array( $this, 'on_dispute_opened' ), 10, 4 );
+		add_action( 'wpss_dispute_response_submitted', array( $this, 'on_response_submitted' ), 10, 3 );
+		add_action( 'wpss_dispute_evidence_added', array( $this, 'on_evidence_added' ), 10, 2 );
+		add_action( 'wpss_dispute_resolved', array( $this, 'on_dispute_resolved' ), 10, 4 );
 	}
 
 	/**
@@ -95,10 +95,10 @@ class DisputeWorkflowManager {
 	 * @return array Modified schedules.
 	 */
 	public function add_cron_schedules( array $schedules ): array {
-		$schedules['twice_daily'] = [
+		$schedules['twice_daily'] = array(
 			'interval' => 12 * HOUR_IN_SECONDS,
 			'display'  => 'Twice Daily',
-		];
+		);
 		return $schedules;
 	}
 
@@ -111,25 +111,25 @@ class DisputeWorkflowManager {
 	 * @param array  $attachments Attachment IDs.
 	 * @return array Result with success status.
 	 */
-	public function submit_response( int $dispute_id, int $user_id, string $response, array $attachments = [] ): array {
+	public function submit_response( int $dispute_id, int $user_id, string $response, array $attachments = array() ): array {
 		global $wpdb;
 
 		$dispute = $this->dispute_service->get( $dispute_id );
 
 		if ( ! $dispute ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Dispute not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Check if dispute is still open for responses.
-		$closed_statuses = [ DisputeService::STATUS_RESOLVED, DisputeService::STATUS_CLOSED ];
+		$closed_statuses = array( DisputeService::STATUS_RESOLVED, DisputeService::STATUS_CLOSED );
 		if ( in_array( $dispute->status, $closed_statuses, true ) ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'This dispute is no longer accepting responses.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Check if user is part of the dispute.
@@ -141,10 +141,10 @@ class DisputeWorkflowManager {
 		);
 
 		if ( ! $order || ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'You are not authorized to respond to this dispute.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Determine response type.
@@ -159,22 +159,22 @@ class DisputeWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$this->messages_table,
-			[
+			array(
 				'dispute_id'  => $dispute_id,
 				'sender_id'   => $user_id,
 				'message'     => wp_kses_post( $response ),
 				'sender_role' => $response_type,
 				'attachments' => ! empty( $attachments ) ? wp_json_encode( $attachments ) : null,
 				'created_at'  => current_time( 'mysql' ),
-			],
-			[ '%d', '%d', '%s', '%s', '%s', '%s' ]
+			),
+			array( '%d', '%d', '%s', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to submit response.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		$message_id = (int) $wpdb->insert_id;
@@ -196,11 +196,11 @@ class DisputeWorkflowManager {
 		 */
 		do_action( 'wpss_dispute_response_submitted', $message_id, $dispute_id, $user_id );
 
-		return [
+		return array(
 			'success'    => true,
 			'message'    => __( 'Response submitted successfully.', 'wp-sell-services' ),
 			'message_id' => $message_id,
-		];
+		);
 	}
 
 	/**
@@ -241,17 +241,17 @@ class DisputeWorkflowManager {
 	 * @return array Attachment URLs with metadata.
 	 */
 	private function get_attachment_urls( array $attachment_ids ): array {
-		$urls = [];
+		$urls = array();
 		foreach ( $attachment_ids as $id ) {
 			$url = wp_get_attachment_url( $id );
 			if ( $url ) {
-				$urls[] = [
+				$urls[] = array(
 					'id'        => $id,
 					'url'       => $url,
 					'filename'  => basename( get_attached_file( $id ) ?: '' ),
 					'type'      => get_post_mime_type( $id ),
 					'thumbnail' => wp_get_attachment_image_url( $id, 'thumbnail' ),
-				];
+				);
 			}
 		}
 		return $urls;
@@ -265,11 +265,11 @@ class DisputeWorkflowManager {
 	 */
 	private function decode_json_array( $json ): array {
 		if ( ! is_string( $json ) || '' === trim( $json ) ) {
-			return [];
+			return array();
 		}
 
 		$decoded = json_decode( $json, true );
-		return is_array( $decoded ) ? $decoded : [];
+		return is_array( $decoded ) ? $decoded : array();
 	}
 
 	/**
@@ -284,47 +284,47 @@ class DisputeWorkflowManager {
 		$dispute = $this->dispute_service->get( $dispute_id );
 
 		if ( ! $dispute ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Dispute not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		if ( DisputeService::STATUS_ESCALATED === $dispute->status ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'This dispute is already escalated.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Update dispute meta with escalation info.
 		global $wpdb;
 
-		$meta               = $dispute->meta ?? [];
-		$meta['escalation'] = [
+		$meta               = $dispute->meta ?? array();
+		$meta['escalation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'escalated_by' => $escalated_by,
 			'escalated_at' => current_time( 'mysql' ),
-		];
+		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->disputes_table,
-			[
+			array(
 				'status'     => DisputeService::STATUS_ESCALATED,
 				'meta'       => wp_json_encode( $meta ),
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $dispute_id ],
-			[ '%s', '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $dispute_id ),
+			array( '%s', '%s', '%s' ),
+			array( '%d' )
 		);
 
 		if ( false === $result ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to escalate dispute.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Fire status change hook (consistent with DisputeService::update_status).
@@ -342,10 +342,10 @@ class DisputeWorkflowManager {
 		 */
 		do_action( 'wpss_dispute_escalated', $dispute_id, $reason, $escalated_by );
 
-		return [
+		return array(
 			'success' => true,
 			'message' => __( 'Dispute has been escalated to support.', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -357,60 +357,60 @@ class DisputeWorkflowManager {
 	 */
 	public function assign_to_admin( int $dispute_id, int $admin_id ): array {
 		if ( ! user_can( $admin_id, 'manage_options' ) ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Invalid admin user.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		$dispute = $this->dispute_service->get( $dispute_id );
 
 		if ( ! $dispute ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Dispute not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		global $wpdb;
 
-		$meta                = $dispute->meta ?? [];
+		$meta                = $dispute->meta ?? array();
 		$meta['assigned_to'] = $admin_id;
 		$meta['assigned_at'] = current_time( 'mysql' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->disputes_table,
-			[
+			array(
 				'meta'       => wp_json_encode( $meta ),
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $dispute_id ],
-			[ '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $dispute_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
 		);
 
 		if ( false === $result ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to assign dispute.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Notify assigned admin.
 		$this->notification_service->send(
 			$admin_id,
 			'dispute_assigned',
-			[
+			array(
 				'dispute_id' => $dispute_id,
 				'order_id'   => $dispute->order_id,
-			]
+			)
 		);
 
-		return [
+		return array(
 			'success' => true,
 			'message' => __( 'Dispute assigned successfully.', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -425,55 +425,55 @@ class DisputeWorkflowManager {
 		$dispute = $this->dispute_service->get( $dispute_id );
 
 		if ( ! $dispute ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Dispute not found.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Only opener can cancel, or admin.
 		if ( (int) $dispute->initiated_by !== $user_id && ! current_user_can( 'manage_options' ) ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'You are not authorized to cancel this dispute.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Can't cancel resolved disputes.
 		if ( DisputeService::STATUS_RESOLVED === $dispute->status ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Resolved disputes cannot be cancelled.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		global $wpdb;
 
-		$meta                 = $dispute->meta ?? [];
-		$meta['cancellation'] = [
+		$meta                 = $dispute->meta ?? array();
+		$meta['cancellation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'cancelled_by' => $user_id,
 			'cancelled_at' => current_time( 'mysql' ),
-		];
+		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->disputes_table,
-			[
+			array(
 				'status'     => DisputeService::STATUS_CLOSED,
 				'meta'       => wp_json_encode( $meta ),
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $dispute_id ],
-			[ '%s', '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $dispute_id ),
+			array( '%s', '%s', '%s' ),
+			array( '%d' )
 		);
 
 		if ( false === $result ) {
-			return [
+			return array(
 				'success' => false,
 				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
-			];
+			);
 		}
 
 		// Fire status change hook (consistent with DisputeService::update_status).
@@ -491,10 +491,10 @@ class DisputeWorkflowManager {
 		 */
 		do_action( 'wpss_dispute_cancelled', $dispute_id, $user_id, $reason );
 
-		return [
+		return array(
 			'success' => true,
 			'message' => __( 'Dispute cancelled successfully.', 'wp-sell-services' ),
-		];
+		);
 	}
 
 	/**
@@ -612,11 +612,11 @@ class DisputeWorkflowManager {
 				$this->notification_service->send(
 					$remind_user,
 					'dispute_response_reminder',
-					[
+					array(
 						'dispute_id'        => $dispute->id,
 						'order_id'          => $dispute->order_id,
 						'response_deadline' => $dispute->response_deadline,
-					]
+					)
 				);
 
 				// Mark reminder as sent.
@@ -626,10 +626,10 @@ class DisputeWorkflowManager {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->update(
 					$this->disputes_table,
-					[ 'meta' => wp_json_encode( $meta ) ],
-					[ 'id' => $dispute->id ],
-					[ '%s' ],
-					[ '%d' ]
+					array( 'meta' => wp_json_encode( $meta ) ),
+					array( 'id' => $dispute->id ),
+					array( '%s' ),
+					array( '%d' )
 				);
 			}
 		}
@@ -644,7 +644,7 @@ class DisputeWorkflowManager {
 	 * @return void
 	 */
 	public function auto_open_disputes_for_late_orders(): void {
-		$order_settings    = get_option( 'wpss_orders', [] );
+		$order_settings    = get_option( 'wpss_orders', array() );
 		$allow_disputes    = $order_settings['allow_disputes'] ?? true;
 		$auto_dispute_days = (int) ( $order_settings['auto_dispute_late_days'] ?? 3 );
 
@@ -745,14 +745,14 @@ class DisputeWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			$this->disputes_table,
-			[
+			array(
 				'response_deadline' => $new_deadline,
 				'last_response_by'  => $responder_id,
 				'updated_at'        => current_time( 'mysql' ),
-			],
-			[ 'id' => $dispute_id ],
-			[ '%s', '%d', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $dispute_id ),
+			array( '%s', '%d', '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -784,13 +784,13 @@ class DisputeWorkflowManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$wpdb->prefix . 'wpss_orders',
-			[
+			array(
 				'status'     => $previous_status,
 				'updated_at' => current_time( 'mysql' ),
-			],
-			[ 'id' => $order_id ],
-			[ '%s', '%s' ],
-			[ '%d' ]
+			),
+			array( 'id' => $order_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
 		);
 
 		// Fire status change hooks so notifications and workflows trigger.
@@ -826,7 +826,17 @@ class DisputeWorkflowManager {
 		);
 
 		if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
-			wp_mail( $admin_email, $subject, $message );
+			( new EmailService() )->send(
+				$admin_email,
+				$subject,
+				EmailService::TYPE_DISPUTE_ESCALATED,
+				array(
+					'recipient'  => get_user_by( 'email', $admin_email ),
+					'dispute_id' => $dispute_id,
+					'order_id'   => $dispute->order_id,
+					'reason'     => $reason,
+				)
+			);
 		}
 	}
 
@@ -858,10 +868,10 @@ class DisputeWorkflowManager {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$wpdb->prefix . 'wpss_orders',
-				[ 'meta' => wp_json_encode( $meta ) ],
-				[ 'id' => $order_id ],
-				[ '%s' ],
-				[ '%d' ]
+				array( 'meta' => wp_json_encode( $meta ) ),
+				array( 'id' => $order_id ),
+				array( '%s' ),
+				array( '%d' )
 			);
 
 			// Set initial response deadline.
@@ -871,10 +881,10 @@ class DisputeWorkflowManager {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$this->disputes_table,
-				[ 'response_deadline' => $deadline ],
-				[ 'id' => $dispute_id ],
-				[ '%s' ],
-				[ '%d' ]
+				array( 'response_deadline' => $deadline ),
+				array( 'id' => $dispute_id ),
+				array( '%s' ),
+				array( '%d' )
 			);
 
 			// Notify the other party.
@@ -885,13 +895,13 @@ class DisputeWorkflowManager {
 			$this->notification_service->send(
 				$notify_user,
 				'dispute_opened',
-				[
+				array(
 					'dispute_id'        => $dispute_id,
 					'order_id'          => $order_id,
 					'opened_by'         => $opened_by,
 					'reason'            => $data['reason'] ?? '',
 					'response_deadline' => $deadline,
-				]
+				)
 			);
 		}
 	}
@@ -933,11 +943,11 @@ class DisputeWorkflowManager {
 		$this->notification_service->send(
 			$notify_user,
 			'dispute_response_received',
-			[
+			array(
 				'dispute_id' => $dispute_id,
 				'order_id'   => $dispute->order_id,
 				'from_user'  => $user_id,
-			]
+			)
 		);
 	}
 
@@ -978,18 +988,18 @@ class DisputeWorkflowManager {
 		}
 
 		// Notify both parties.
-		$users = [ (int) $order->customer_id, (int) $order->vendor_id ];
+		$users = array( (int) $order->customer_id, (int) $order->vendor_id );
 
 		foreach ( $users as $user_id ) {
 			$this->notification_service->send(
 				$user_id,
 				'dispute_resolved',
-				[
+				array(
 					'dispute_id'    => $dispute_id,
 					'order_id'      => $dispute->order_id,
 					'resolution'    => $resolution,
 					'refund_amount' => $refund_amount,
-				]
+				)
 			);
 		}
 	}
@@ -1005,41 +1015,41 @@ class DisputeWorkflowManager {
 		$evidence = $this->dispute_service->get_evidence( $dispute_id );
 		$messages = $this->get_messages( $dispute_id );
 
-		$timeline = [];
+		$timeline = array();
 
 		// Add dispute creation.
 		if ( $dispute ) {
-			$timeline[] = [
+			$timeline[] = array(
 				'type'       => 'dispute_opened',
 				'user_id'    => $dispute->initiated_by,
 				'content'    => $dispute->description,
 				'created_at' => $dispute->created_at,
-			];
+			);
 		}
 
 		// Add evidence items.
 		foreach ( $evidence as $item ) {
-			$timeline[] = [
+			$timeline[] = array(
 				'type'       => 'evidence',
 				'user_id'    => $item->user_id,
 				'content'    => $item->description,
-				'data'       => [
+				'data'       => array(
 					'evidence_type' => $item->type,
 					'content'       => $item->content,
-				],
+				),
 				'created_at' => $item->created_at,
-			];
+			);
 		}
 
 		// Add messages.
 		foreach ( $messages as $message ) {
-			$timeline[] = [
+			$timeline[] = array(
 				'type'        => 'message',
 				'user_id'     => $message->sender_id,
 				'content'     => $message->message,
-				'attachments' => $message->attachment_urls ?? [],
+				'attachments' => $message->attachment_urls ?? array(),
 				'created_at'  => $message->created_at,
-			];
+			);
 		}
 
 		// Sort by date.
@@ -1054,7 +1064,7 @@ class DisputeWorkflowManager {
 		foreach ( $timeline as &$event ) {
 			$user                 = get_userdata( $event['user_id'] );
 			$event['user_name']   = $user ? $user->display_name : __( 'System', 'wp-sell-services' );
-			$event['user_avatar'] = get_avatar_url( $event['user_id'], [ 'size' => 48 ] );
+			$event['user_avatar'] = get_avatar_url( $event['user_id'], array( 'size' => 48 ) );
 		}
 
 		return $timeline;

@@ -47,6 +47,12 @@ class EmailService {
 	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
 	public const TYPE_PROPOSAL_SUBMITTED     = 'proposal_submitted';
 	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
+	public const TYPE_DISPUTE_ESCALATED      = 'dispute_escalated';
+	public const TYPE_MODERATION_APPROVED    = 'moderation_approved';
+	public const TYPE_MODERATION_REJECTED    = 'moderation_rejected';
+	public const TYPE_MODERATION_PENDING     = 'moderation_pending';
+	public const TYPE_MODERATION_RESPONSE    = 'moderation_response';
+	public const TYPE_TEST_EMAIL             = 'test_email';
 
 	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
@@ -1238,6 +1244,12 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawal-rejected.php',
 			self::TYPE_PROPOSAL_SUBMITTED     => 'generic.php',
 			self::TYPE_PROPOSAL_ACCEPTED      => 'generic.php',
+			self::TYPE_DISPUTE_ESCALATED      => 'dispute-escalated.php',
+			self::TYPE_MODERATION_APPROVED    => 'moderation-approved.php',
+			self::TYPE_MODERATION_REJECTED    => 'moderation-rejected.php',
+			self::TYPE_MODERATION_PENDING     => 'moderation-pending.php',
+			self::TYPE_MODERATION_RESPONSE    => 'moderation-response.php',
+			self::TYPE_TEST_EMAIL             => 'test-email.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';

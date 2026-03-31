@@ -334,7 +334,16 @@ Thank you for being a valued seller on our platform.',
 		);
 
 		if ( EmailService::is_type_enabled( 'moderation_approved' ) ) {
-			wp_mail( $vendor->user_email, $subject, $message );
+			( new EmailService() )->send(
+				$vendor->user_email,
+				$subject,
+				EmailService::TYPE_MODERATION_APPROVED,
+				array(
+					'recipient'     => $vendor,
+					'service_title' => $post->post_title,
+					'service_url'   => get_permalink( $service_id ),
+				)
+			);
 		}
 
 		// Also add platform notification.
@@ -410,7 +419,17 @@ If you have any questions, please contact our support team.',
 		);
 
 		if ( EmailService::is_type_enabled( 'moderation_rejected' ) ) {
-			wp_mail( $vendor->user_email, $subject, $message );
+			( new EmailService() )->send(
+				$vendor->user_email,
+				$subject,
+				EmailService::TYPE_MODERATION_REJECTED,
+				array(
+					'recipient'        => $vendor,
+					'service_title'    => $post->post_title,
+					'rejection_reason' => $reason,
+					'edit_url'         => $edit_url,
+				)
+			);
 		}
 
 		// Also add platform notification.
@@ -478,7 +497,18 @@ Review this service: %3$s',
 
 		// Send to admin email (respects email settings).
 		if ( EmailService::is_type_enabled( 'moderation_pending' ) ) {
-			wp_mail( get_option( 'admin_email' ), $subject, $message );
+			$admin_email = get_option( 'admin_email' );
+			( new EmailService() )->send(
+				$admin_email,
+				$subject,
+				EmailService::TYPE_MODERATION_PENDING,
+				array(
+					'recipient'     => get_user_by( 'email', $admin_email ),
+					'service_title' => $post->post_title,
+					'vendor_name'   => $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ),
+					'review_url'    => $review_url,
+				)
+			);
 		}
 	}
 

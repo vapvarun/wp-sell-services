@@ -872,32 +872,29 @@ class ServiceModerationPage {
 			? __( 'Your service has been approved', 'wp-sell-services' )
 			: __( 'Your service was not approved', 'wp-sell-services' );
 
-		$message = sprintf(
-			/* translators: %s: service title */
-			__( 'Hello, your service "%s" has been reviewed.', 'wp-sell-services' ),
-			$service->post_title
+		$edit_url = add_query_arg(
+			array(
+				'section'    => 'edit-service',
+				'service_id' => $service_id,
+			),
+			wpss_get_dashboard_url()
 		);
-		$message .= "\n\n";
-
-		if ( 'approved' === $status ) {
-			$message .= __( 'Your service has been approved and is now live on the marketplace.', 'wp-sell-services' );
-			$message .= "\n\n";
-			$message .= __( 'View your service: ', 'wp-sell-services' ) . get_permalink( $service_id );
-		} else {
-			$message .= __( 'Unfortunately, your service was not approved.', 'wp-sell-services' );
-			if ( $reason ) {
-				$message .= "\n\n";
-				$message .= __( 'Reason: ', 'wp-sell-services' ) . $reason;
-			}
-			$message .= "\n\n";
-			$message .= __( 'Please review and update your service, then resubmit for approval.', 'wp-sell-services' );
-			$message .= "\n";
-			$message .= __( 'Edit your service: ', 'wp-sell-services' ) . get_edit_post_link( $service_id, 'raw' );
-		}
 
 		$email_type = 'approved' === $status ? 'moderation_approved' : 'moderation_rejected';
 		if ( EmailService::is_type_enabled( $email_type ) ) {
-			wp_mail( $vendor->user_email, $subject, $message );
+			( new EmailService() )->send(
+				$vendor->user_email,
+				$subject,
+				EmailService::TYPE_MODERATION_RESPONSE,
+				array(
+					'recipient'     => $vendor,
+					'service_title' => $service->post_title,
+					'status'        => $status,
+					'message'       => $reason,
+					'service_url'   => get_permalink( $service_id ),
+					'edit_url'      => $edit_url,
+				)
+			);
 		}
 	}
 

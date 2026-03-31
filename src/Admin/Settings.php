@@ -301,16 +301,16 @@ class Settings {
 		$admin_email = get_option( 'admin_email' );
 		$site_name   = wpss_get_platform_name();
 
-		$result = wp_mail(
+		$email_service = new \WPSellServices\Services\EmailService();
+		$result        = $email_service->send(
 			$admin_email,
 			/* translators: %s: site/platform name */
 			sprintf( __( '[%s] Test Email', 'wp-sell-services' ), $site_name ),
-			sprintf(
-				/* translators: %s: site/platform name */
-				__( 'This is a test email from %s. If you received this, email notifications are working correctly.', 'wp-sell-services' ),
-				$site_name
-			),
-			array( 'Content-Type: text/html; charset=UTF-8' )
+			\WPSellServices\Services\EmailService::TYPE_TEST_EMAIL,
+			array(
+				'recipient' => wp_get_current_user(),
+				'site_name' => $site_name,
+			)
 		);
 
 		if ( $result ) {
