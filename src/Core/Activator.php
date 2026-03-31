@@ -283,6 +283,10 @@ class Activator {
 				'title'     => __( 'Service Checkout', 'wp-sell-services' ),
 				'shortcode' => '[wpss_checkout]',
 			),
+			'cart'          => array(
+				'title'     => __( 'Cart', 'wp-sell-services' ),
+				'shortcode' => '[wpss_cart]',
+			),
 		);
 
 		$saved_pages = get_option( 'wpss_pages', array() );

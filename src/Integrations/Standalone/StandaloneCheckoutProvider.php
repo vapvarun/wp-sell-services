@@ -192,6 +192,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		if ( ! $service_id ) {
 			$cart = $this->get_cart();
 
+			if ( count( $cart ) > 1 ) {
+				// Multi-service checkout: render all cart items together.
+				return $this->render_multi_checkout_form( $cart );
+			}
+
 			if ( ! empty( $cart ) ) {
 				// Use the most recently added cart item.
 				$cart_item  = end( $cart );
@@ -1143,6 +1148,532 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Render a checkout form for multiple cart items.
+	 *
+	 * All items are paid in a single gateway transaction. After payment succeeds each
+	 * cart item gets its own independent service order sharing the same transaction_id.
+	 *
+	 * @param array $cart_items Cart items from user meta.
+	 * @return string HTML output.
+	 */
+	private function render_multi_checkout_form( array $cart_items ): string {
+		$currency         = wpss_get_currency();
+		$gateways         = wpss()->get_payment_gateways();
+		$enabled_gateways = array_filter( $gateways, fn( $g ) => $g->is_enabled() );
+
+		// Build enriched item list with service/package data and calculate totals.
+		$enriched_items = array();
+		$grand_total    = 0.0;
+
+		// Tax settings.
+		$tax_settings = get_option( 'wpss_tax', array() );
+		$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
+		$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
+		$tax_included = ! empty( $tax_settings['tax_included'] );
+		$tax_label    = $tax_settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' );
+		$tax_amount   = 0.0;
+
+		foreach ( $cart_items as $key => $item ) {
+			$service_id = (int) ( $item['service_id'] ?? 0 );
+			$package_id = (int) ( $item['package_id'] ?? 0 );
+			$quantity   = max( 1, (int) ( $item['quantity'] ?? 1 ) );
+
+			$service = wpss_get_service( $service_id );
+			if ( ! $service ) {
+				continue;
+			}
+
+			$packages         = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
+			$selected_package = $packages[ $package_id ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );
+
+			if ( ! $selected_package ) {
+				continue;
+			}
+
+			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
+			$line_price   = $unit_price * $quantity;
+			$addons_total = 0.0;
+			$addons_data  = array();
+
+			foreach ( $item['addons'] ?? array() as $addon ) {
+				$addon_price   = (float) ( $addon['price'] ?? 0 );
+				$addons_total += $addon_price;
+				$addons_data[] = $addon;
+			}
+
+			$line_total = $line_price + $addons_total;
+
+			// Per-item tax rate may be filtered.
+			/** This filter is documented in StandaloneOrderProvider::create_order() */
+			$item_tax_rate = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
+			$item_tax      = 0.0;
+
+			if ( $item_tax_rate > 0 ) {
+				if ( $tax_included ) {
+					$item_tax = $line_total - ( $line_total / ( 1 + $item_tax_rate / 100 ) );
+				} else {
+					$item_tax    = $line_total * ( $item_tax_rate / 100 );
+					$line_total += $item_tax;
+				}
+			}
+
+			$tax_amount += $item_tax;
+
+			$vendor        = get_userdata( $service->vendor_id );
+			$vendor_name   = $vendor ? $vendor->display_name : '';
+			$vendor_avatar = get_avatar_url( $service->vendor_id, array( 'size' => 40 ) );
+
+			$enriched_items[ $key ] = array(
+				'cart_key'      => $key,
+				'service_id'    => $service_id,
+				'package_id'    => $package_id,
+				'quantity'      => $quantity,
+				'service'       => $service,
+				'package'       => $selected_package,
+				'unit_price'    => $unit_price,
+				'line_price'    => $line_price,
+				'addons'        => $addons_data,
+				'addons_total'  => $addons_total,
+				'line_total'    => $line_total,
+				'vendor_name'   => $vendor_name,
+				'vendor_avatar' => $vendor_avatar,
+			);
+
+			$grand_total += $line_total;
+		}
+
+		if ( empty( $enriched_items ) ) {
+			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'Your cart contains no valid services.', 'wp-sell-services' ) . '</p>';
+		}
+
+		ob_start();
+		?>
+		<script>document.body.classList.add('wpss-checkout-page');</script>
+		<style>
+			/* Inherit base checkout page styles. */
+			body.wpss-checkout-page #secondary,
+			body.wpss-checkout-page aside.widget-area,
+			body.wpss-checkout-page .left-sidebar,
+			body.wpss-checkout-page .right-sidebar { display: none !important; }
+			body.wpss-checkout-page .site-content { display: block !important; }
+			body.wpss-checkout-page .content-area,
+			body.wpss-checkout-page #primary { width: 100% !important; max-width: 100% !important; float: none !important; flex: 1 !important; }
+
+			.wpss-co-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: var(--wpss-space-4) 0;
+				margin-bottom: var(--wpss-space-6);
+				border-bottom: 1px solid var(--wpss-border-light);
+			}
+			.wpss-co-header__back {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--wpss-space-2);
+				font-size: var(--wpss-text-base);
+				font-weight: 500;
+				color: var(--wpss-text-muted);
+				text-decoration: none;
+				transition: color var(--wpss-ease);
+			}
+			.wpss-co-header__back:hover { color: var(--wpss-primary); text-decoration: none; }
+			.wpss-co-header__secure {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--wpss-space-2);
+				font-size: var(--wpss-text-sm);
+				font-weight: 600;
+				color: var(--wpss-success);
+			}
+			.wpss-co-multi-item {
+				display: flex;
+				align-items: flex-start;
+				gap: var(--wpss-space-4);
+				padding: var(--wpss-space-4) 0;
+				border-bottom: 1px solid var(--wpss-border-light);
+			}
+			.wpss-co-multi-item:last-child { border-bottom: none; }
+			.wpss-co-multi-item__thumb {
+				width: 80px; height: 56px; object-fit: cover;
+				border-radius: var(--wpss-radius); flex-shrink: 0;
+			}
+			.wpss-co-multi-item__placeholder {
+				width: 80px; height: 56px;
+				background: var(--wpss-bg-subtle);
+				border-radius: var(--wpss-radius); flex-shrink: 0;
+				display: flex; align-items: center; justify-content: center;
+				font-size: 24px;
+			}
+			.wpss-co-multi-item__details { flex: 1; min-width: 0; }
+			.wpss-co-multi-item__title {
+				font-size: var(--wpss-text-base); font-weight: 600;
+				color: var(--wpss-text); margin: 0 0 var(--wpss-space-1); line-height: 1.3;
+			}
+			.wpss-co-multi-item__vendor {
+				display: flex; align-items: center; gap: var(--wpss-space-2);
+				font-size: var(--wpss-text-sm); color: var(--wpss-text-secondary);
+				margin-bottom: var(--wpss-space-1);
+			}
+			.wpss-co-multi-item__vendor img {
+				width: 20px; height: 20px;
+				border-radius: var(--wpss-radius-full); object-fit: cover;
+			}
+			.wpss-co-multi-item__package {
+				font-size: var(--wpss-text-sm); color: var(--wpss-text-muted);
+			}
+			.wpss-co-multi-item__price {
+				font-size: var(--wpss-text-base); font-weight: 700;
+				color: var(--wpss-text); white-space: nowrap; flex-shrink: 0;
+			}
+			.wpss-co-summary-line {
+				display: flex; justify-content: space-between; align-items: center;
+				padding: var(--wpss-space-2) 0;
+				font-size: var(--wpss-text-base); color: var(--wpss-text-secondary);
+			}
+			.wpss-co-summary-line--tax { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); }
+			.wpss-co-summary-total {
+				display: flex; justify-content: space-between; align-items: center;
+				padding: var(--wpss-space-4) 0 0;
+				margin-top: var(--wpss-space-3);
+				border-top: 2px solid var(--wpss-text);
+				font-size: var(--wpss-text-xl); font-weight: 700; color: var(--wpss-text);
+			}
+			.wpss-co-methods { display: flex; flex-direction: column; gap: var(--wpss-space-3); }
+			.wpss-co-method {
+				position: relative;
+				border: 2px solid var(--wpss-border);
+				border-radius: var(--wpss-radius-lg);
+				padding: var(--wpss-space-4) var(--wpss-space-5);
+				cursor: pointer;
+				transition: border-color var(--wpss-ease), box-shadow var(--wpss-ease), background var(--wpss-ease);
+			}
+			.wpss-co-method:hover { border-color: var(--wpss-text-hint); }
+			.wpss-co-method.wpss-co-method--active {
+				border-color: var(--wpss-primary);
+				background: var(--wpss-primary-light);
+				box-shadow: 0 0 0 3px var(--wpss-primary-50);
+			}
+			.wpss-co-method__label {
+				display: flex; align-items: center; gap: var(--wpss-space-3);
+				cursor: pointer; font-size: var(--wpss-text-base); font-weight: 500; color: var(--wpss-text);
+			}
+			.wpss-co-method__label input[type="radio"] {
+				width: 18px; height: 18px; accent-color: var(--wpss-primary); cursor: pointer; margin: 0; flex-shrink: 0;
+			}
+			.wpss-co-method__form {
+				margin-top: var(--wpss-space-4);
+				padding-top: var(--wpss-space-4);
+				border-top: 1px solid var(--wpss-border-light);
+			}
+			.wpss-co-trust {
+				display: flex; flex-direction: column; gap: var(--wpss-space-3);
+				padding: var(--wpss-space-4) 0;
+			}
+			.wpss-co-trust__item {
+				display: flex; align-items: center; gap: var(--wpss-space-3);
+				font-size: var(--wpss-text-sm); color: var(--wpss-text-muted);
+			}
+			.wpss-co-trust__icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+			@media (max-width: 768px) {
+				.wpss-co-header { flex-direction: column; gap: var(--wpss-space-2); align-items: flex-start; }
+			}
+		</style>
+
+		<div class="wpss-checkout-page">
+			<!-- Header bar -->
+			<div class="wpss-co-header">
+				<a href="<?php echo esc_url( wpss_get_page_url( 'dashboard' ) ); ?>" class="wpss-co-header__back">
+					<span aria-hidden="true">&larr;</span>
+					<?php esc_html_e( 'Back to cart', 'wp-sell-services' ); ?>
+				</a>
+				<span class="wpss-co-header__secure">
+					<span aria-hidden="true">&#128274;</span>
+					<?php esc_html_e( 'Secure Checkout', 'wp-sell-services' ); ?>
+				</span>
+			</div>
+
+			<?php if ( ! is_user_logged_in() ) : ?>
+				<div class="wpss-card wpss-co-login" style="text-align:center;padding:var(--wpss-space-10) var(--wpss-space-6);">
+					<div class="wpss-empty__icon" aria-hidden="true">&#128100;</div>
+					<h3 class="wpss-heading-3"><?php esc_html_e( 'Sign in to continue', 'wp-sell-services' ); ?></h3>
+					<p class="wpss-caption" style="margin-top:var(--wpss-space-2);">
+						<?php esc_html_e( 'Please log in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
+					</p>
+					<div style="display:flex;gap:var(--wpss-space-3);justify-content:center;margin-top:var(--wpss-space-5);">
+						<a href="<?php echo esc_url( wp_login_url( wpss_get_page_url( 'checkout' ) ) ); ?>" class="wpss-btn wpss-btn--primary">
+							<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
+						</a>
+						<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline">
+							<?php esc_html_e( 'Register', 'wp-sell-services' ); ?>
+						</a>
+					</div>
+				</div>
+
+			<?php elseif ( empty( $enabled_gateways ) ) : ?>
+				<div class="wpss-notice wpss-notice--error">
+					<?php esc_html_e( 'No payment methods available. Please contact support.', 'wp-sell-services' ); ?>
+				</div>
+
+			<?php else : ?>
+				<!-- Notice area -->
+				<div id="wpss-multi-checkout-notice" class="wpss-notice wpss-notice--error" style="display:none;" role="alert"></div>
+
+				<form method="post" class="wpss-checkout-form" id="wpss-multi-checkout-form">
+					<?php wp_nonce_field( 'wpss_checkout', 'wpss_checkout_nonce' ); ?>
+					<input type="hidden" name="is_multi_checkout" value="1">
+					<input type="hidden" name="amount" value="<?php echo esc_attr( round( $grand_total, 2 ) ); ?>">
+					<input type="hidden" name="currency" value="<?php echo esc_attr( $currency ); ?>">
+
+					<?php foreach ( $enriched_items as $key => $ei ) : ?>
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][service_id]" value="<?php echo esc_attr( $ei['service_id'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][package_id]" value="<?php echo esc_attr( $ei['package_id'] ); ?>">
+						<input type="hidden" name="cart_items[<?php echo esc_attr( $key ); ?>][quantity]" value="<?php echo esc_attr( $ei['quantity'] ); ?>">
+					<?php endforeach; ?>
+
+					<!-- Two-column layout -->
+					<div class="wpss-layout wpss-layout--sidebar-right">
+
+						<!-- LEFT COLUMN: Items + payment methods -->
+						<div class="wpss-stack wpss-stack--lg">
+
+							<!-- Cart items card -->
+							<div class="wpss-card">
+								<div class="wpss-card__header">
+									<h3 class="wpss-card__title">
+										<?php
+										printf(
+											/* translators: %d: number of items */
+											esc_html( _n( 'Your Order (%d Service)', 'Your Order (%d Services)', count( $enriched_items ), 'wp-sell-services' ) ),
+											absint( count( $enriched_items ) )
+										);
+										?>
+									</h3>
+								</div>
+								<div class="wpss-card__body">
+									<?php foreach ( $enriched_items as $ei ) : ?>
+										<div class="wpss-co-multi-item">
+											<?php if ( $ei['service']->thumbnail_id ) : ?>
+												<img class="wpss-co-multi-item__thumb"
+													src="<?php echo esc_url( $ei['service']->get_thumbnail_url( 'thumbnail' ) ); ?>"
+													alt="<?php echo esc_attr( $ei['service']->title ); ?>">
+											<?php else : ?>
+												<div class="wpss-co-multi-item__placeholder" aria-hidden="true">&#128230;</div>
+											<?php endif; ?>
+
+											<div class="wpss-co-multi-item__details">
+												<h4 class="wpss-co-multi-item__title"><?php echo esc_html( $ei['service']->title ); ?></h4>
+												<?php if ( $ei['vendor_name'] ) : ?>
+													<div class="wpss-co-multi-item__vendor">
+														<?php if ( $ei['vendor_avatar'] ) : ?>
+															<img src="<?php echo esc_url( $ei['vendor_avatar'] ); ?>" alt="<?php echo esc_attr( $ei['vendor_name'] ); ?>">
+														<?php endif; ?>
+														<span><?php echo esc_html( $ei['vendor_name'] ); ?></span>
+													</div>
+												<?php endif; ?>
+												<div class="wpss-co-multi-item__package">
+													<?php echo esc_html( $ei['package']['name'] ?? '' ); ?>
+													<?php if ( $ei['quantity'] > 1 ) : ?>
+														<span>&times; <?php echo esc_html( $ei['quantity'] ); ?></span>
+													<?php endif; ?>
+													<?php if ( ! empty( $ei['addons'] ) ) : ?>
+														<span> + <?php echo esc_html( count( $ei['addons'] ) ); ?> <?php esc_html_e( 'add-on(s)', 'wp-sell-services' ); ?></span>
+													<?php endif; ?>
+												</div>
+											</div>
+
+											<div class="wpss-co-multi-item__price">
+												<?php echo esc_html( wpss_format_price( $ei['line_total'], $currency ) ); ?>
+											</div>
+										</div>
+									<?php endforeach; ?>
+								</div>
+							</div>
+
+							<!-- Payment methods -->
+							<div class="wpss-card">
+								<div class="wpss-card__header">
+									<h3 class="wpss-card__title"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></h3>
+								</div>
+								<div class="wpss-card__body">
+									<div class="wpss-co-methods">
+										<?php foreach ( $enabled_gateways as $gateway_id => $gateway ) : ?>
+											<div class="wpss-co-method" data-method="<?php echo esc_attr( $gateway_id ); ?>">
+												<label class="wpss-co-method__label">
+													<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
+													<?php echo esc_html( $gateway->get_name() ); ?>
+												</label>
+												<div class="wpss-co-method__form wpss-gateway-form" data-gateway="<?php echo esc_attr( $gateway_id ); ?>" style="display: none;">
+													<?php
+													echo $gateway->render_payment_form( $grand_total, $currency, 0 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+													?>
+												</div>
+											</div>
+										<?php endforeach; ?>
+									</div>
+								</div>
+							</div>
+
+						</div><!-- /left column -->
+
+						<!-- RIGHT COLUMN: Order summary -->
+						<div class="wpss-sticky">
+							<div class="wpss-card">
+								<div class="wpss-card__header">
+									<h3 class="wpss-card__title"><?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?></h3>
+								</div>
+								<div class="wpss-card__body">
+
+									<!-- Per-item subtotals -->
+									<?php foreach ( $enriched_items as $ei ) : ?>
+										<div class="wpss-co-summary-line">
+											<span><?php echo esc_html( wp_trim_words( $ei['service']->title, 6 ) ); ?></span>
+											<span><?php echo esc_html( wpss_format_price( $ei['line_total'], $currency ) ); ?></span>
+										</div>
+									<?php endforeach; ?>
+
+									<!-- Tax line -->
+									<?php if ( $tax_amount > 0 ) : ?>
+										<div class="wpss-co-summary-line wpss-co-summary-line--tax">
+											<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
+											<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
+										</div>
+									<?php endif; ?>
+
+									<!-- Total -->
+									<div class="wpss-co-summary-total">
+										<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
+										<span><?php echo esc_html( wpss_format_price( $grand_total, $currency ) ); ?></span>
+									</div>
+								</div>
+
+								<div class="wpss-card__footer" style="flex-direction:column;align-items:stretch;">
+									<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-btn--full wpss-checkout-button">
+										<span class="wpss-checkout-button__text">
+											<?php
+											/* translators: %s: formatted price */
+											printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $grand_total, $currency ) ) );
+											?>
+										</span>
+									</button>
+
+									<div class="wpss-co-trust">
+										<div class="wpss-co-trust__item">
+											<span class="wpss-co-trust__icon" aria-hidden="true">&#128274;</span>
+											<span><?php esc_html_e( 'Secure payment', 'wp-sell-services' ); ?></span>
+										</div>
+										<div class="wpss-co-trust__item">
+											<span class="wpss-co-trust__icon" aria-hidden="true">&#128737;</span>
+											<span><?php esc_html_e( 'Order protection', 'wp-sell-services' ); ?></span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div><!-- /right column -->
+
+					</div><!-- /layout -->
+				</form>
+
+				<script>
+				(function() {
+					var form = document.getElementById('wpss-multi-checkout-form');
+					if (!form) return;
+
+					var submitBtn    = form.querySelector('.wpss-checkout-button');
+					var submitBtnTxt = submitBtn.querySelector('.wpss-checkout-button__text');
+					var originalTxt  = submitBtnTxt.textContent;
+					var noticeEl     = document.getElementById('wpss-multi-checkout-notice');
+
+					function showNotice(msg, type) {
+						noticeEl.className = 'wpss-notice wpss-notice--' + (type || 'error');
+						noticeEl.textContent = msg;
+						noticeEl.style.display = 'flex';
+						noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					}
+
+					function hideNotice() { noticeEl.style.display = 'none'; }
+
+					// Show/hide gateway forms.
+					document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
+						radio.addEventListener('change', function() {
+							hideNotice();
+							document.querySelectorAll('.wpss-co-method').forEach(function(m) { m.classList.remove('wpss-co-method--active'); });
+							document.querySelectorAll('.wpss-gateway-form').forEach(function(gf) { gf.style.display = 'none'; });
+							var method = this.closest('.wpss-co-method');
+							if (method) method.classList.add('wpss-co-method--active');
+							var sel = document.querySelector('.wpss-gateway-form[data-gateway="' + this.value + '"]');
+							if (sel) sel.style.display = 'block';
+						});
+					});
+
+					// Click on method card selects radio.
+					document.querySelectorAll('.wpss-co-method').forEach(function(method) {
+						method.addEventListener('click', function(e) {
+							if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+							var radio = this.querySelector('input[type="radio"]');
+							if (radio && !radio.checked) {
+								radio.checked = true;
+								radio.dispatchEvent(new Event('change', { bubbles: true }));
+							}
+						});
+					});
+
+					form.addEventListener('submit', function(e) {
+						e.preventDefault();
+						hideNotice();
+
+						var paymentMethod = form.querySelector('input[name="payment_method"]:checked');
+						if (!paymentMethod) {
+							showNotice('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
+							return;
+						}
+
+						submitBtn.disabled = true;
+						submitBtnTxt.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
+
+						var formData = new FormData(form);
+						formData.append('action', 'wpss_' + paymentMethod.value + '_process_payment');
+						var gatewayNonce = form.querySelector('[name="wpss_' + paymentMethod.value + '_nonce"]');
+						if (gatewayNonce) {
+							formData.append('nonce', gatewayNonce.value);
+						} else {
+							formData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
+						}
+
+						fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+							method: 'POST',
+							body: formData,
+							credentials: 'same-origin'
+						})
+						.then(function(r) { return r.json(); })
+						.then(function(data) {
+							if (data.success && data.data && data.data.redirect_url) {
+								window.location.href = data.data.redirect_url;
+							} else if (data.success && data.data && data.data.redirect) {
+								window.location.href = data.data.redirect;
+							} else {
+								var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed. Please try again.', 'wp-sell-services' ) ); ?>';
+								showNotice(msg);
+								submitBtn.disabled = false;
+								submitBtnTxt.textContent = originalTxt;
+							}
+						})
+						.catch(function(err) {
+							console.error('Multi-checkout error:', err);
+							showNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
+							submitBtn.disabled = false;
+							submitBtnTxt.textContent = originalTxt;
+						});
+					});
+				})();
+				</script>
+			<?php endif; ?>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 
 	/**

@@ -684,7 +684,34 @@ class PayPalGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$currency     = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
+		$currency = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
+
+		// Multi-service checkout: accept total directly from the form.
+		$is_multi = ! empty( $_POST['is_multi_checkout'] );
+		if ( $is_multi ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float is sanitization.
+			$amount = (float) wp_unslash( $_POST['amount'] ?? 0 );
+			if ( $amount <= 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$metadata = array(
+				'is_multi_checkout' => '1',
+				'customer_id'       => get_current_user_id(),
+				'description'       => __( 'Multi-service cart checkout', 'wp-sell-services' ),
+			);
+
+			$result = $this->create_payment( $amount, $currency, $metadata );
+
+			if ( $result['success'] ) {
+				wp_send_json_success( $result );
+			} else {
+				wp_send_json_error( array( 'message' => $result['error'] ) );
+			}
+			return;
+		}
+
 		$service_id   = absint( $_POST['service_id'] ?? 0 );
 		$package_id   = absint( $_POST['package_id'] ?? 0 );
 		$pay_order_id = absint( $_POST['pay_order'] ?? 0 );
@@ -847,6 +874,73 @@ class PayPalGateway implements PaymentGatewayInterface {
 					);
 				}
 			}
+		}
+
+		// Multi-service checkout: create one order per cart item.
+		$is_multi_checkout = ! empty( $metadata['is_multi_checkout'] );
+		if ( $is_multi_checkout ) {
+			$customer_id    = (int) ( $metadata['customer_id'] ?? get_current_user_id() );
+			$order_provider = wpss_get_order_provider();
+
+			if ( ! $order_provider ) {
+				if ( wp_doing_ajax() ) {
+					wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
+					return;
+				} else {
+					wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
+					exit;
+				}
+			}
+
+			$cart = get_user_meta( $customer_id, '_wpss_cart', true );
+			$cart = is_array( $cart ) ? $cart : array();
+
+			if ( empty( $cart ) ) {
+				$this->process_refund( $payment['transaction_id'] );
+				if ( wp_doing_ajax() ) {
+					wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
+					return;
+				} else {
+					wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
+					exit;
+				}
+			}
+
+			$order_ids = $order_provider->create_orders_from_cart( $cart, 'paypal', $payment['transaction_id'], $customer_id );
+
+			if ( empty( $order_ids ) ) {
+				$this->process_refund( $payment['transaction_id'] );
+				if ( wp_doing_ajax() ) {
+					wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please contact support.', 'wp-sell-services' ) ) );
+					return;
+				} else {
+					wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
+					exit;
+				}
+			}
+
+			// Mark all orders as paid.
+			foreach ( $order_ids as $oid ) {
+				$order_provider->mark_as_paid( $oid, $payment['transaction_id'], 'paypal' );
+			}
+
+			// Clear entire cart.
+			delete_user_meta( $customer_id, '_wpss_cart' );
+
+			$redirect_url = add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) );
+
+			if ( wp_doing_ajax() ) {
+				wp_send_json_success(
+					array(
+						'order_ids'    => $order_ids,
+						'redirect_url' => $redirect_url,
+					)
+				);
+			} else {
+				wp_safe_redirect( $redirect_url );
+				exit;
+			}
+			return; // Explicit return for defensive coding.
 		}
 
 		// Check for pay_order flow (proposal acceptance).

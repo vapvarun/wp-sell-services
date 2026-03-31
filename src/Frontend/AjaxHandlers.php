@@ -124,6 +124,7 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_mark_all_notifications_read', array( $this, 'mark_all_notifications_read' ) );
 
 		// Checkout/Cart.
+		add_action( 'wp_ajax_wpss_remove_cart_item', array( $this, 'remove_cart_item' ) );
 		add_action( 'wp_ajax_wpss_update_cart_item', array( $this, 'update_cart_item' ) );
 		add_action( 'wp_ajax_wpss_remove_requirement_file', array( $this, 'remove_requirement_file' ) );
 		add_action( 'wp_ajax_wpss_skip_requirements', array( $this, 'skip_requirements' ) );
@@ -3764,5 +3765,49 @@ class AjaxHandlers {
 		} else {
 			wp_send_json_error( $result );
 		}
+	}
+
+	/**
+	 * Remove a single item from the standalone cart (AJAX).
+	 *
+	 * Expects POST: nonce (wpss_cart_nonce), item_key (string).
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	public function remove_cart_item(): void {
+		check_ajax_referer( 'wpss_cart_nonce', 'nonce' );
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$item_key = isset( $_POST['item_key'] ) ? sanitize_text_field( wp_unslash( $_POST['item_key'] ) ) : '';
+
+		if ( ! $item_key ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid cart item.', 'wp-sell-services' ) ) );
+		}
+
+		$user_id = get_current_user_id();
+		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
+
+		if ( ! is_array( $cart ) ) {
+			$cart = array();
+		}
+
+		if ( isset( $cart[ $item_key ] ) ) {
+			unset( $cart[ $item_key ] );
+
+			if ( empty( $cart ) ) {
+				delete_user_meta( $user_id, '_wpss_cart' );
+			} else {
+				update_user_meta( $user_id, '_wpss_cart', $cart );
+			}
+		}
+
+		wp_send_json_success(
+			array(
+				'message'    => __( 'Item removed from cart.', 'wp-sell-services' ),
+				'cart_count' => count( $cart ),
+			)
+		);
 	}
 }

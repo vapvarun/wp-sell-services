@@ -57,6 +57,9 @@ class Shortcodes {
 		// Account shortcodes.
 		add_shortcode( 'wpss_login', array( $this, 'login_form' ) );
 		add_shortcode( 'wpss_register', array( $this, 'register_form' ) );
+
+		// Cart shortcode.
+		add_shortcode( 'wpss_cart', array( $this, 'cart_page' ) );
 	}
 
 	/**
@@ -1194,5 +1197,40 @@ class Shortcodes {
 		}
 		</style>
 		<?php
+	}
+
+	/**
+	 * Cart page shortcode.
+	 *
+	 * [wpss_cart]
+	 *
+	 * Renders the standalone cart page. If WooCommerce is the active adapter,
+	 * redirects to the WooCommerce cart page instead.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array $atts Shortcode attributes (unused).
+	 * @return string
+	 */
+	public function cart_page( array $atts = array() ): string {
+		// If WooCommerce adapter is active, hand off to WC cart.
+		$adapter = wpss_get_active_adapter();
+		if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'wc_get_cart_url' ) ) {
+			wp_safe_redirect( wc_get_cart_url() );
+			exit;
+		}
+
+		if ( ! is_user_logged_in() ) {
+			return '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
+		}
+
+		$cart_items = get_user_meta( get_current_user_id(), '_wpss_cart', true );
+		if ( ! is_array( $cart_items ) ) {
+			$cart_items = array();
+		}
+
+		ob_start();
+		wpss_get_template( 'cart/cart.php', array( 'cart_items' => $cart_items ) );
+		return ob_get_clean();
 	}
 }

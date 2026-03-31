@@ -349,6 +349,56 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Multi-service checkout: create one order per cart item.
+		$is_multi = ! empty( $_POST['is_multi_checkout'] );
+		if ( $is_multi ) {
+			$order_provider = wpss_get_order_provider();
+
+			if ( ! $order_provider ) {
+				wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$customer_id = get_current_user_id();
+			$cart        = get_user_meta( $customer_id, '_wpss_cart', true );
+			$cart        = is_array( $cart ) ? $cart : array();
+
+			if ( empty( $cart ) ) {
+				wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			// For offline payments there is no shared transaction ID yet — generate a placeholder.
+			$transaction_id = 'offline_multi_' . wp_generate_uuid4();
+
+			$order_ids = $order_provider->create_orders_from_cart( $cart, 'offline', $transaction_id, $customer_id );
+
+			if ( empty( $order_ids ) ) {
+				wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please try again.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			/**
+			 * Fires after multi-service offline orders are created.
+			 *
+			 * @param int[]  $order_ids   Created order IDs.
+			 * @param int    $customer_id Buyer user ID.
+			 */
+			do_action( 'wpss_offline_multi_orders_created', $order_ids, $customer_id );
+
+			// Clear entire cart.
+			delete_user_meta( $customer_id, '_wpss_cart' );
+
+			wp_send_json_success(
+				array(
+					'order_ids'    => $order_ids,
+					'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
+					'message'      => __( 'Your orders have been placed. Please complete your payment using the instructions for each order.', 'wp-sell-services' ),
+				)
+			);
+			return;
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.
 		$service_id = isset( $_POST['service_id'] ) ? (int) wp_unslash( $_POST['service_id'] ) : 0;
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to int is sanitization.

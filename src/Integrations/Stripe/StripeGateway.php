@@ -684,7 +684,35 @@ class StripeGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$currency   = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
+		$currency = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
+
+		// Multi-service checkout: accept total directly from the form.
+		$is_multi = ! empty( $_POST['is_multi_checkout'] );
+		if ( $is_multi ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float is sanitization.
+			$amount = (float) wp_unslash( $_POST['amount'] ?? 0 );
+			if ( $amount <= 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$result = $this->create_payment(
+				$amount,
+				$currency,
+				array(
+					'is_multi_checkout' => '1',
+					'customer_id'       => get_current_user_id(),
+				)
+			);
+
+			if ( $result['success'] ) {
+				wp_send_json_success( $result );
+			} else {
+				wp_send_json_error( array( 'message' => $result['error'] ) );
+			}
+			return;
+		}
+
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$package_id = absint( $_POST['package_id'] ?? 0 );
 
@@ -763,6 +791,54 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		if ( ! $order_provider ) {
 			wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		$is_multi = ! empty( $_POST['is_multi_checkout'] );
+
+		// Multi-service checkout: create one order per cart item.
+		if ( $is_multi ) {
+			$customer_id = get_current_user_id();
+			$cart        = get_user_meta( $customer_id, '_wpss_cart', true );
+			$cart        = is_array( $cart ) ? $cart : array();
+
+			if ( empty( $cart ) ) {
+				$this->process_refund( $payment_intent_id );
+				wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$order_ids = $order_provider->create_orders_from_cart( $cart, 'stripe', $payment_intent_id, $customer_id );
+
+			if ( empty( $order_ids ) ) {
+				$refund_result = $this->process_refund( $payment_intent_id );
+				if ( empty( $refund_result['success'] ) ) {
+					wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but multi-order creation AND refund both failed. Manual intervention required.", 'error' );
+				}
+				wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please contact support.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			// Mark all created orders as paid.
+			foreach ( $order_ids as $oid ) {
+				$order_provider->mark_as_paid( $oid, $payment_intent_id, 'stripe' );
+			}
+
+			// Update PaymentIntent metadata with comma-separated order IDs for webhook recovery.
+			$this->api_request(
+				"payment_intents/{$payment_intent_id}",
+				array( 'metadata' => array( 'order_ids' => implode( ',', $order_ids ) ) )
+			);
+
+			// Clear entire cart.
+			delete_user_meta( $customer_id, '_wpss_cart' );
+
+			wp_send_json_success(
+				array(
+					'order_ids'    => $order_ids,
+					'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
+				)
+			);
 			return;
 		}
 

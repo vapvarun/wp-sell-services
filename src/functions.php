@@ -1336,8 +1336,8 @@ function wpss_get_cart_url(): string {
 		return wc_get_cart_url();
 	}
 
-	// Standalone / fallback: same as checkout base URL.
-	return wpss_get_checkout_base_url();
+	// Standalone: use the dedicated cart page.
+	return wpss_get_page_url( 'cart' ) ?: wpss_get_checkout_base_url();
 }
 
 /**

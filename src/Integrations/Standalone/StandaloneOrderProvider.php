@@ -166,6 +166,70 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	}
 
 	/**
+	 * Create multiple orders from cart items after a shared payment completes.
+	 *
+	 * Each item becomes its own independent order. They all share the same
+	 * transaction_id so the payment can be reconciled if needed.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array  $cart_items      Cart items from user meta.
+	 * @param string $payment_method  Payment method used (e.g. 'stripe', 'paypal', 'offline').
+	 * @param string $transaction_id  Shared transaction / payment-intent ID.
+	 * @param int    $customer_id     Buyer user ID.
+	 * @return int[] Array of created order IDs.
+	 */
+	public function create_orders_from_cart( array $cart_items, string $payment_method, string $transaction_id, int $customer_id ): array {
+		$order_ids = array();
+
+		foreach ( $cart_items as $item ) {
+			$service_id = (int) ( $item['service_id'] ?? 0 );
+			$package_id = (int) ( $item['package_id'] ?? 0 );
+			$quantity   = max( 1, (int) ( $item['quantity'] ?? 1 ) );
+
+			if ( ! $service_id ) {
+				continue;
+			}
+
+			// Determine package price from live post meta so we never trust client-side values.
+			$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
+			$pkg      = $packages[ $package_id ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );
+
+			if ( ! $pkg ) {
+				continue;
+			}
+
+			$subtotal     = (float) ( $pkg['price'] ?? 0 ) * $quantity;
+			$addons_total = (float) array_reduce(
+				$item['addons'] ?? array(),
+				static fn( float $carry, array $addon ) => $carry + (float) ( $addon['price'] ?? 0 ),
+				0.0
+			);
+
+			$order = $this->create_order(
+				array(
+					'service_id'     => $service_id,
+					'package_id'     => $package_id,
+					'quantity'       => $quantity,
+					'customer_id'    => $customer_id,
+					'subtotal'       => $subtotal,
+					'addons'         => $item['addons'] ?? array(),
+					'addons_total'   => $addons_total,
+					'currency'       => wpss_get_currency(),
+					'payment_method' => $payment_method,
+					'transaction_id' => $transaction_id,
+				)
+			);
+
+			if ( $order ) {
+				$order_ids[] = $order->id;
+			}
+		}
+
+		return $order_ids;
+	}
+
+	/**
 	 * Create service order from platform order (not used in standalone).
 	 *
 	 * @param int $platform_order_id Platform order ID.
