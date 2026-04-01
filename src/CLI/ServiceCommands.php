@@ -1919,4 +1919,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'wpss demo', ServiceCommands::class, array( 'shortdesc' => 'Manage demo services.' ) );
 	WP_CLI::add_command( 'wpss service', ServiceCommands::class, array( 'shortdesc' => 'Manage services.' ) );
 	WP_CLI::add_command( 'wpss validate', ValidateCommand::class, array( 'shortdesc' => 'Validate models and schema.' ) );
+	WP_CLI::add_command( 'wpss preflight', PreflightCommand::class, array( 'shortdesc' => 'Run release-readiness preflight checks.' ) );
 }
