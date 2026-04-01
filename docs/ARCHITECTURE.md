@@ -44,6 +44,7 @@ wpss_pro_init($plugin)
 | `Admin\` | Admin pages, metaboxes, settings |
 | `Frontend\` | AJAX handlers, templates, dashboard, wizard |
 | `API\` | REST controllers (21 controllers with 125+ endpoints) |
+| `CLI\` | WP-CLI commands |
 | `Blocks\` | Gutenberg blocks |
 
 ### Pro Plugin (`WPSellServicesPro\`)
@@ -164,6 +165,7 @@ Admin users with `manage_options` can force any transition.
 
 | Controller | Method | Route | Purpose |
 |-----------|--------|-------|---------|
+| PaymentController | GET/POST | `/payment/*` | Gateways, process, status, webhook |
 | OrdersController | POST | `/orders/{id}/skip-requirements` | Skip requirements collection and move order to in_progress |
 | OrdersController | DELETE | `/orders/{id}/requirements/files/{index}` | Remove a specific uploaded file from order requirements |
 | ReviewsController | POST | `/reviews/{id}/helpful` | Mark a review as helpful (one vote per user) |
@@ -182,6 +184,16 @@ GitHub Actions runs on every push and PR to `main`:
 | PHPUnit | Unit tests across PHP/WP matrix | No |
 
 Branch protection: PRs required, 1 approval, all blocking checks must pass.
+
+---
+
+### WP-CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `wp wpss preflight` | 103-point release readiness check |
+| `wp wpss demo create` | Generate demo services |
+| `wp wpss validate schema` | Validate database schema |
 
 ---
 

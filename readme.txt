@@ -138,7 +138,7 @@ Unlike simple directory plugins, WP Sell Services provides a complete transactio
 
 = Mobile App Ready =
 
-The complete REST API with 20 controllers makes building iOS and Android apps straightforward. The batch endpoint allows mobile apps to execute multiple requests efficiently in a single HTTP call.
+The complete REST API with 21 controllers makes building iOS and Android apps straightforward. The batch endpoint allows mobile apps to execute multiple requests efficiently in a single HTTP call.
 
 = Documentation =
 
@@ -220,7 +220,7 @@ Yes. All plugin text uses the `wp-sell-services` text domain and can be translat
 
 = How does the REST API work? =
 
-The plugin provides 20 REST API controllers under `/wp-json/wpss/v1/` covering all marketplace functionality. Authentication works via WordPress cookies, Application Passwords, or JWT tokens. Perfect for building mobile apps or custom integrations.
+The plugin provides 21 REST API controllers under `/wp-json/wpss/v1/` covering all marketplace functionality. Authentication works via WordPress cookies, Application Passwords, or JWT tokens. Perfect for building mobile apps or custom integrations.
 
 = Can I customize the email templates? =
 

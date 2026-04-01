@@ -61,6 +61,7 @@ wp-sell-services/
 │   ├── Admin/              # Admin classes
 │   ├── Frontend/           # Frontend classes
 │   ├── API/                # REST API
+│   ├── CLI/                # WP-CLI commands
 │   └── Blocks/             # Gutenberg blocks
 ├── assets/                 # CSS, JS, images
 ├── templates/              # PHP templates (overridable)
@@ -181,6 +182,7 @@ All new features must be REST-first. Existing AJAX handlers remain for backward 
 | MediaController | /media | Upload, info, delete |
 | CartController | /cart | Add, get, remove, checkout |
 | AuthController | /auth | Login, register, logout, devices |
+| PaymentController | /payment | Gateways, process, status, webhook |
 
 ### Generic Endpoints (in API.php)
 - `GET /categories` - Service categories
