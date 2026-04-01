@@ -226,6 +226,7 @@ final class Plugin {
 		$this->init_updater();
 		$this->maybe_upgrade_database();
 		$this->maybe_create_vendor_role();
+		$this->maybe_backfill_default_settings();
 		$this->maybe_create_missing_pages();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
@@ -325,6 +326,89 @@ final class Plugin {
 		foreach ( $vendor_caps as $cap => $grant ) {
 			if ( ! $role->has_cap( $cap ) ) {
 				$role->add_cap( $cap, $grant );
+			}
+		}
+	}
+
+	/**
+	 * Backfill default settings keys added in newer versions.
+	 *
+	 * Ensures existing installs get new setting keys with sensible defaults
+	 * without overwriting any values the admin has already configured.
+	 *
+	 * @return void
+	 */
+	private function maybe_backfill_default_settings(): void {
+		$defaults = array(
+			'wpss_general'       => array(
+				'platform_name'      => get_bloginfo( 'name' ),
+				'currency'           => 'USD',
+				'ecommerce_platform' => 'auto',
+			),
+			'wpss_commission'    => array(
+				'commission_rate'     => 10,
+				'enable_vendor_rates' => true,
+			),
+			'wpss_payouts'       => array(
+				'min_withdrawal'            => 25,
+				'clearance_days'            => 14,
+				'auto_withdrawal_enabled'   => false,
+				'auto_withdrawal_threshold' => 500,
+				'auto_withdrawal_schedule'  => 'monthly',
+			),
+			'wpss_tax'           => array(
+				'enable_tax'    => false,
+				'tax_label'     => 'Tax',
+				'tax_rate'      => 0,
+				'tax_included'  => false,
+				'tax_on_commission' => false,
+			),
+			'wpss_vendor'        => array(
+				'vendor_registration'        => 'open',
+				'max_services_per_vendor'    => 20,
+				'require_verification'       => false,
+				'require_service_moderation' => true,
+			),
+			'wpss_orders'        => array(
+				'auto_complete_days'        => 3,
+				'allow_disputes'            => true,
+				'dispute_window_days'       => 14,
+				'auto_dispute_late_days'    => 3,
+				'requirements_timeout_days' => 7,
+			),
+			'wpss_notifications' => array(
+				'notify_new_order'              => true,
+				'notify_order_completed'        => true,
+				'notify_order_cancelled'        => true,
+				'notify_cancellation_requested' => true,
+				'notify_delivery_submitted'     => true,
+				'notify_revision_requested'     => true,
+				'notify_new_message'            => true,
+				'notify_vendor_contact'         => true,
+				'notify_new_review'             => true,
+				'notify_dispute_opened'         => true,
+				'notify_withdrawal_requested'   => true,
+				'notify_withdrawal_approved'    => true,
+				'notify_withdrawal_rejected'    => true,
+				'notify_proposal_submitted'     => true,
+				'notify_proposal_accepted'      => true,
+				'notify_moderation'             => true,
+			),
+			'wpss_advanced'      => array(
+				'delete_data_on_uninstall' => false,
+				'enable_debug_mode'        => false,
+			),
+		);
+
+		foreach ( $defaults as $option_name => $default_values ) {
+			$current = get_option( $option_name, array() );
+			if ( ! is_array( $current ) ) {
+				$current = array();
+			}
+
+			$merged = array_merge( $default_values, $current );
+			if ( $merged !== $current ) {
+				update_option( $option_name, $merged );
 			}
 		}
 	}
