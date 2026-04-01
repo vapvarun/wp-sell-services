@@ -209,7 +209,7 @@ class Frontend {
 		$cart         = get_user_meta( get_current_user_id(), '_wpss_cart', true );
 		$cart_count   = is_array( $cart ) ? count( $cart ) : 0;
 		$hidden       = 0 === $cart_count ? ' style="display:none;"' : '';
-		$checkout_url = wpss_get_checkout_base_url();
+		$checkout_url = wpss_get_cart_url();
 		?>
 		<div id="wpss-mini-cart" class="wpss-mini-cart"<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<a href="<?php echo esc_url( $checkout_url ); ?>" class="wpss-mini-cart-link" title="<?php esc_attr_e( 'View Cart', 'wp-sell-services' ); ?>">
