@@ -38,16 +38,22 @@ Buyers can purchase services from multiple vendors in a single checkout. Each se
 
 ## Available Payment Gateways
 
-These gateways work directly with standalone mode:
+The free plugin ships with Stripe, PayPal, and Offline (bank transfer) built in. Razorpay is available with Pro.
 
-| Gateway | What It Supports |
-|---------|-----------------|
-| **Stripe** | Credit/debit cards, Apple Pay, Google Pay |
-| **PayPal** | PayPal balance, cards, Venmo |
-| **Razorpay** **[PRO]** | UPI, cards, net banking, wallets (India) |
-| **Offline/Bank Transfer** | Manual payments you confirm yourself |
+| Gateway | Included In | What It Supports |
+|---------|-------------|-----------------|
+| **Stripe** | Free | Credit/debit cards, Apple Pay, Google Pay |
+| **PayPal** | Free | PayPal balance, cards, Venmo |
+| **Offline/Bank Transfer** | Free | Manual payments you confirm yourself |
+| **Razorpay** **[PRO]** | Pro | UPI, cards, net banking, wallets (India) |
 
-See [Stripe Payments](stripe-payments.md) and [Other Payment Gateways](other-gateways.md) for setup details.
+See [Stripe Payments](stripe-payments.md) and [Other Payment Gateways](other-gateways.md) for setup details, including sandbox and test mode instructions for each gateway.
+
+### Test Gateway (Development Only)
+
+When `WP_DEBUG` is enabled in `wp-config.php`, a **Test Gateway** option appears at checkout. It completes payments instantly with no external credentials -- useful for testing the full order lifecycle during development or QA. It is automatically hidden on production sites where `WP_DEBUG` is `false`.
+
+See [Other Payment Gateways](other-gateways.md#test-gateway-development-only) for full details.
 
 ## What the Checkout Page Includes
 

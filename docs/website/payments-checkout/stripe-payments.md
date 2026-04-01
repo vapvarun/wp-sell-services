@@ -10,6 +10,19 @@ Accept credit cards, debit cards, Apple Pay, and Google Pay on your marketplace 
 
 ## Setting Up Stripe
 
+### Sandbox vs Live Mode
+
+Always start with Stripe's **Test Mode** before processing real payments. Test mode uses separate API keys and never charges real cards.
+
+| | Test Mode | Live Mode |
+|---|-----------|-----------|
+| API keys start with | `pk_test_` / `sk_test_` | `pk_live_` / `sk_live_` |
+| Real charges | No | Yes |
+| Webhook events | Test events only | Real events |
+| Dashboard URL | Same dashboard, toggle "Test mode" | Same dashboard |
+
+**To switch:** Toggle "Test mode" in your Stripe Dashboard (top right), copy the new keys, and update them in WP Sell Services settings. Remember to update the webhook endpoint secret too -- test and live webhooks have separate secrets.
+
 ### Get Your API Keys
 
 Stripe gives you two sets of keys -- test keys for trying things out, and live keys for real payments.
@@ -108,6 +121,17 @@ For example, on a $100 service, Stripe keeps about $3.20 and you receive $96.80.
 ## Security
 
 Your site never stores or processes card data. Stripe handles all PCI compliance through their secure payment form. Card details go directly to Stripe's servers, and your site only receives a secure payment token.
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| "Payment failed" on every attempt | Check that your keys match the mode (test keys for test mode, live keys for live mode) |
+| Webhooks not received | Verify the webhook URL is exactly `https://yoursite.com/wpss-payment/stripe/callback` (no trailing parameters). Check your site uses HTTPS. |
+| 3D Secure popup not appearing | Ensure your site is not blocking iframes. Some security plugins block the Stripe verification popup. |
+| "No such payment_intent" error | You are mixing test and live keys. Ensure both publishable and secret keys are from the same mode. |
+| Webhook signature verification failed | The webhook signing secret must match the specific endpoint. Re-copy it from Stripe Dashboard > Developers > Webhooks > your endpoint > Signing secret. |
+| Apple Pay / Google Pay not showing | These require HTTPS and domain verification in Stripe Dashboard > Settings > Payment methods. |
 
 ## Related Docs
 

@@ -15,6 +15,24 @@ PayPal lets buyers pay with their PayPal balance, linked bank account, or credit
 5. Check **Enable PayPal** and paste your credentials
 6. Click **Save Changes**
 
+### Sandbox (Test) Mode
+
+PayPal provides a full sandbox environment for testing without real money.
+
+1. Go to [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
+2. Under **Sandbox**, click **Accounts** -- PayPal auto-creates a sandbox business and personal account
+3. Click **Apps & Credentials** and make sure **Sandbox** tab is selected (not Live)
+4. Create a sandbox app or use the default one
+5. Copy the **Client ID** and **Secret** from the sandbox app
+6. In WP Sell Services settings, check **Sandbox Mode** and paste the sandbox credentials
+7. Use the sandbox personal account email to test buyer checkout
+
+**Sandbox test credentials:**
+- Login: Use the sandbox personal account from Developer Dashboard
+- Any sandbox credit card will work for testing
+
+**To go live:** Switch to the **Live** tab in PayPal Developer Dashboard, create a live app, copy the live credentials, and uncheck Sandbox Mode in WP Sell Services.
+
 ### Setting Up PayPal Webhooks
 
 1. In PayPal Developer Dashboard, go to **Webhooks**
@@ -51,6 +69,22 @@ Razorpay is the go-to payment gateway for marketplaces serving buyers in India. 
 4. In WordPress, go to **WP Sell Services > Settings > Gateways > Razorpay**
 5. Check **Enable Razorpay** and enter your Key ID and Key Secret
 6. Click **Save Changes**
+
+### Test Mode
+
+Razorpay provides test mode keys for development.
+
+1. In Razorpay Dashboard, go to **Settings > API Keys**
+2. Switch to **Test Mode** using the toggle
+3. Generate test API keys -- they start with `rzp_test_`
+4. In WP Sell Services settings, check **Test Mode** and paste the test credentials
+
+**Test payment methods:**
+- UPI: Use `success@razorpay` for successful payments, `failure@razorpay` for failures
+- Cards: Use Razorpay's [test card numbers](https://razorpay.com/docs/payments/payments/test-card-details/)
+- Net Banking: Any test bank option works in test mode
+
+**To go live:** Generate live API keys (start with `rzp_live_`), complete KYC verification, and uncheck Test Mode.
 
 ### Razorpay Webhooks
 
@@ -116,6 +150,50 @@ You can enable as many gateways as you like. Buyers will see all enabled options
 | Refunds | Automatic | Automatic | Manual |
 | Best for | Global buyers | India | High-trust / manual |
 | Transaction fees | 2.9-4.4% | 0-3% | None |
+
+## Test Gateway (Development Only)
+
+WP Sell Services includes a built-in **Test Gateway** for developers. It auto-completes payments instantly -- no external accounts, API keys, or webhooks needed.
+
+### Enabling the Test Gateway
+
+The Test Gateway only appears when `WP_DEBUG` is enabled in `wp-config.php`:
+
+```php
+define( 'WP_DEBUG', true );
+```
+
+Once enabled, "Test Gateway" appears as a payment option at checkout with a "Development Mode" banner.
+
+### How It Works
+
+1. Buyer selects "Test Gateway" at checkout
+2. Clicks "Pay" -- no card details needed
+3. Payment is instantly marked as successful
+4. Order is created and moved to "Pending Requirements"
+5. A test transaction ID is generated (`test_` prefix)
+
+### When to Use It
+
+- **Plugin development** -- test the full order lifecycle without setting up Stripe/PayPal
+- **Theme development** -- test checkout page styling and flow
+- **QA testing** -- rapid order creation for testing requirements, delivery, disputes
+- **Demo sites** -- showcase the marketplace without real payment credentials
+
+**Important:** The Test Gateway is NOT available on production sites where `WP_DEBUG` is `false`. It cannot be enabled via settings -- only via `wp-config.php`.
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| PayPal button not appearing | Ensure your PayPal Client ID is correct and the app is approved. Check browser console for JavaScript errors. |
+| PayPal webhook not received | Verify webhook URL is `https://yoursite.com/wpss-payment/paypal/callback`. PayPal requires HTTPS for webhooks. |
+| Razorpay "Bad Request" error | Check that Key ID and Key Secret match the same mode (test or live). |
+| Razorpay webhook failing | Verify the Webhook Secret matches. Razorpay webhooks require the exact URL with no trailing slash changes. |
+| Offline payment order stuck at "Pending" | Admin must manually confirm payment in WP Sell Services > Orders > click "Confirm Payment". |
+| Test Gateway not showing | Enable `WP_DEBUG` in wp-config.php. The Test Gateway is hidden on production sites. |
+| Gateway not appearing at checkout | Go to Settings > Gateways and verify the gateway is checked as "Enabled". |
+| Currency not supported | Check your gateway's supported currencies. Some gateways (Razorpay) only support certain currencies. |
 
 ## Related Docs
 
