@@ -28,3 +28,7 @@ parameters:
         - '#Variable \$\w+ might not be defined#'
         # WP functions returning mixed types
         - '#Cannot access offset .* on mixed#'
+        # Build artifacts not present in CI (assets/ not built)
+        -
+            message: '#Path in include\(\).*\.asset\.php.*is not a file#'
+            reportUnmatched: false
