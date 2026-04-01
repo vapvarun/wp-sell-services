@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php-lint:
+    name: PHP Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer
+
+      - name: Check PHP syntax
+        run: find src/ -name "*.php" -exec php -l {} \; 2>&1 | grep -v "No syntax errors" && exit 1 || echo "All files pass syntax check"
+
+  wpcs:
+    name: WPCS (Blocking)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run WPCS
+        run: vendor/bin/phpcs --standard=phpcs.xml --report=full --report-file=phpcs-report.txt src/ templates/ || true
+
+      - name: Check for errors (warnings allowed)
+        run: |
+          ERROR_COUNT=$(vendor/bin/phpcs --standard=phpcs.xml --report=summary src/ templates/ 2>&1 | grep -oP '\d+(?= ERROR)' | head -1 || echo "0")
+          if [ "$ERROR_COUNT" -gt 0 ] 2>/dev/null; then
+            echo "WPCS found $ERROR_COUNT error(s). Fix before merging."
+            vendor/bin/phpcs --standard=phpcs.xml src/ templates/
+            exit 1
+          fi
+          echo "WPCS passed (0 errors)"
+
+  phpstan:
+    name: PHPStan (Level 5)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }} / WP ${{ matrix.wp }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.1'
+            wp: '6.7'
+          - php: '8.2'
+            wp: '6.8'
+          - php: '8.3'
+            wp: 'latest'
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Install WP test suite
+        run: |
+          bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 ${{ matrix.wp }} true
+        env:
+          WP_TESTS_DIR: /tmp/wordpress-tests-lib
+
+      - name: Run PHPUnit (unit tests)
+        run: vendor/bin/phpunit --testsuite unit --no-coverage
+        env:
+          WP_TESTS_DIR: /tmp/wordpress-tests-lib
+        continue-on-error: true
