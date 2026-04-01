@@ -22,7 +22,7 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 | `wpss_loaded` | `Plugin $plugin` | `Plugin.php:261` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `IntegrationManager.php:124` |
 | `wpss_register_field_types` | `FieldManager $manager` | `FieldManager.php:59` |
-| `wpss_woocommerce_adapter_init` | `WooCommerceAdapter $adapter` | `WooCommerceAdapter.php:162` |
+| `wpss_woocommerce_adapter_init` **[PRO]** | `WooCommerceAdapter $adapter` | `WooCommerceAdapter.php:162` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
 
@@ -43,7 +43,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `ServicesController.php:321` |
 | `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `ServicesController.php:386` |
 | `wpss_rest_service_deleted` | `int $service_id, bool $force` | `ServicesController.php:431` |
-| `wpss_service_synced_to_wc_product` | `int $service_id, int $product_id` | `WCProductProvider.php:454` |
+| `wpss_service_synced_to_wc_product` **[PRO]** | `int $service_id, int $product_id` | `WCProductProvider.php:454` |
 
 ## Moderation Actions
 
@@ -72,7 +72,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `OrderWorkflowManager.php:638` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `OrderWorkflowManager.php:338` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `OrderWorkflowManager.php:472` |
-| `wpss_after_checkout_process` | `int $order_id, array $order_data` | `WCCheckoutProvider.php:332` |
+| `wpss_after_checkout_process` **[PRO]** | `int $order_id, array $order_data` | `WCCheckoutProvider.php:332` |
 
 ## Delivery Actions
 
@@ -169,7 +169,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Filter | File | Default |
 |--------|------|---------|
-| `wpss_ecommerce_adapters` | `IntegrationManager.php:67` | WooCommerce only |
+| `wpss_ecommerce_adapters` | `IntegrationManager.php:67` | Standalone only (Pro adds WooCommerce, EDD, FluentCart, SureCart) |
 | `wpss_payment_gateways` | `Plugin.php:813` | Test gateway (debug) |
 | `wpss_wallet_providers` **[PRO]** | `Plugin.php:825` | Empty |
 | `wpss_storage_providers` **[PRO]** | `Plugin.php:837` | Empty |
@@ -264,7 +264,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `UnifiedDashboard.php:173` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `UnifiedDashboard.php:243` |
 | `wpss_dashboard_section_titles` | `$titles` | `UnifiedDashboard.php:371` |
-| `wpss_service_to_wc_status_map` | `$status_map, $new_status, $old_status` | `WooCommerceAdapter.php:388` |
+| `wpss_service_to_wc_status_map` **[PRO]** | `$status_map, $new_status, $old_status` | `WooCommerceAdapter.php:388` |
 
 ### SEO and Email Filters
 
@@ -283,6 +283,108 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `NotificationService.php:994` |
 | `wpss_admin_vendor_notification_content` | `$content, $user` | `NotificationService.php:1049` |
 | `wpss_email_data` | `$email` | `EmailService.php:642` |
+
+## Pro Plugin Actions **[PRO]**
+
+These hooks are fired exclusively by the Pro plugin and require an active Pro license.
+
+### WooCommerce Integration Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_woocommerce_adapter_init` | `WooCommerceAdapter $adapter` | `WooCommerceAdapter.php:162` |
+| `wpss_service_synced_to_wc_product` | `int $service_id, int $product_id` | `WCProductProvider.php:454` |
+| `wpss_after_checkout_process` | `int $order_id, array $order_data` | `WCCheckoutProvider.php:332` |
+
+### EDD Integration Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_edd_adapter_init` | `EDDAdapter $adapter` | `EDDAdapter.php:163` |
+| `wpss_edd_service_purchased` | `ServiceItem $item, int $order_id` | `EDDOrderProvider.php:355` |
+| `wpss_edd_services_processed` | `int $order_id, ServiceItem[] $items` | `EDDOrderProvider.php:370` |
+| `wpss_edd_order_record_created` | `int $record_id, ServiceItem $item, int $order_id` | `EDDOrderProvider.php:595` |
+| `wpss_edd_service_meta_saved` | `int $product_id` | `EDDProductProvider.php:232` |
+| `wpss_edd_service_checkout_processed` | `int $order_id, int $download_id, array $service_data, int $index` | `EDDCheckoutProvider.php:222` |
+
+### FluentCart Integration Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `FluentCartAdapter.php:157` |
+| `wpss_fluentcart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `FluentCartOrderProvider.php:93` |
+| `wpss_fluentcart_product_created` | `int $product_id, int $service_id` | `FluentCartProductProvider.php:96` |
+| `wpss_fluentcart_order_detail` | `object $order` | `FluentCartAccountProvider.php:384` |
+
+### SureCart Integration Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_surecart_adapter_init` | `SureCartAdapter $adapter` | `SureCartAdapter.php:152` |
+| `wpss_surecart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `SureCartOrderProvider.php:99` |
+| `wpss_surecart_product_created` | `int $product_id, int $service_id` | `SureCartProductProvider.php:174` |
+| `wpss_surecart_order_detail` | `object $order` | `SureCartAccountProvider.php:453` |
+
+### Wallet Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_wallet_credited` | `int $user_id, float $amount, string $description, string $provider_id` | `WalletManager.php:253` |
+| `wpss_wallet_debited` | `int $user_id, float $amount, string $description, string $provider_id` | `WalletManager.php:292` |
+| `wpss_vendor_payout_processed` | `int $order_id, int $vendor_id, float $amount` | `WalletManager.php:391` |
+| `wpss_terawallet_recharged` | `int $transaction_id, float $amount` | `TeraWalletProvider.php:203` |
+| `wpss_mycred_balance_changed` | `int $user_id, float $amount, string $reference` | `MyCredProvider.php:253` |
+
+### Razorpay Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `RazorpayGateway.php:876` |
+
+### Stripe Connect Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_pro_connect_payout_paid` | `string $payout_id, string $account_id, float $amount, string $currency` | `ConnectWebhookHandler.php:185` |
+| `wpss_pro_connect_payout_failed` | `string $payout_id, string $account_id, string $failure_code, string $failure_message` | `ConnectWebhookHandler.php:226` |
+| `wpss_pro_connect_transfer_created` | `string $transfer_id, string $account_id, float $amount, string $currency` | `ConnectWebhookHandler.php:267` |
+
+### Recurring Services Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_recurring_renewal_order_created` | `int $new_order_id, int $subscription_id, object $subscription` | `RecurringOrderFactory.php:119` |
+| `wpss_recurring_payment_failed` | `int $subscription_id, object $subscription` | `RecurringWebhookHandler.php:191` |
+| `wpss_recurring_subscription_cancelled` | `int $subscription_id, object $subscription` | `RecurringWebhookHandler.php:229` |
+
+### Analytics Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_analytics_init` | `AnalyticsManager $manager` | `AnalyticsManager.php:93` |
+
+### Gateway Settings Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_gateway_settings_{$gateway_id}` | *(none)* | `Pro.php:1057` |
+
+## Pro Plugin Filters **[PRO]**
+
+### EDD Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_edd_cart_item_data` | `$cart_item_data, $product_id, $variation_id` | `EDDCheckoutProvider.php:56` |
+| `wpss_edd_validate_add_to_cart` | `$valid, $product_id, $quantity` | `EDDCheckoutProvider.php:97` |
+| `wpss_edd_thankyou_redirect` | `$redirect, $order_id` | `EDDCheckoutProvider.php:249` |
+| `wpss_edd_can_access_vendor_dashboard` | `$can_access, $user_id` | `EDDAccountProvider.php:516` |
+
+### WooCommerce Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_service_to_wc_status_map` | `$status_map, $new_status, $old_status` | `WooCommerceAdapter.php:388` |
 
 ## Related Documentation
 
