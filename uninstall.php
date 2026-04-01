@@ -121,6 +121,9 @@ foreach ( $roles as $role_name ) {
 	}
 }
 
+// Remove the wpss_vendor role.
+remove_role( 'wpss_vendor' );
+
 // Clear any remaining transients.
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wpss\_%'" );
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_wpss\_%'" );
