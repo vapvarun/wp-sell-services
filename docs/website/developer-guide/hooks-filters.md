@@ -38,6 +38,13 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_service_created` | `int $post_id, array $data` | `ServiceManager.php:144` |
 | `wpss_service_updated` | `int $service_id, array $data` | `ServiceManager.php:225` |
+
+### Service Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
+| `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_before_service_deleted` | `int $service_id` | `ServiceManager.php:259` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `ServiceMetabox.php:1052` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `ServicesController.php:321` |
@@ -60,6 +67,13 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `OrderService.php:196` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
 | `wpss_order_created` | `int $order_id, string $status` | `ManualOrderPage.php:716` |
+
+### Order Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_pre_create_order` | `array $order_data` | `StandaloneOrderProvider.php` |
+| `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
 | `wpss_order_accepted` | `int $order_id` | `OrdersController.php:564` |
 | `wpss_order_rejected` | `int $order_id, string $reason` | `OrdersController.php:582` |
 | `wpss_order_started` | `int $order_id` | `OrdersController.php:598` |
@@ -76,6 +90,12 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 ## Delivery Actions
 
+### Delivery Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_pre_submit_delivery` | `array $delivery_data, int $order_id` | `DeliveryService.php` |
+
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_delivery_submitted` | `int $delivery_id, int $order_id` | `DeliveryService.php:127` |
@@ -84,6 +104,13 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `RequirementsService.php:461` |
 
 ## Vendor Actions
+
+### Vendor Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
+| `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -99,6 +126,12 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 ## Financial Actions
 
+### Financial Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_commission_base_amount` | `float $base_amount, int $order_id, int $vendor_id` | `CommissionService.php` |
+
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `CommissionService.php:116` |
@@ -108,6 +141,12 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_tip_sent` | `int $tip_id, int $order_id, int $vendor_id, int $customer_id, float $amount, string $message` | `TippingService.php:171` |
 
 ## Dispute Actions
+
+### Dispute Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_pre_open_dispute` | `array $dispute_data, int $order_id` | `DisputeService.php` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -120,6 +159,12 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `DisputeWorkflowManager.php:463` |
 
 ## Review, Request, and Proposal Actions
+
+### Review Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_pre_create_review` | `array $review_data, int $order_id` | `ReviewService.php` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -149,6 +194,17 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:447` |
 
 ## Other Actions
+
+### Other Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_pre_send_message` | `array $message_data, int $conversation_id` | `ConversationService.php` |
+| `wpss_validate_add_to_cart` | `bool $valid, int $service_id, int $package_id, int $user_id` | `CartController.php` |
+| `wpss_cart_item_data` | `array $cart_item, int $service_id, int $package_id` | `CartController.php` |
+| `wpss_email_subject` | `string $subject, string $type, string $to` | `EmailService.php` |
+| `wpss_search_query_args` | `array $query_args, string $query` | `SearchService.php` |
+| `wpss_template_args` | `array $args, string $template_name` | `functions.php` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -261,6 +317,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_available_payment_methods` | `$methods` | `CartController.php:395` |
 | `wpss_seller_levels` | `$levels` | `SellerLevelsController.php:284` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `ServicesController.php:608` |
+| `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
+| `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
+| `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `UnifiedDashboard.php:173` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `UnifiedDashboard.php:243` |
 | `wpss_dashboard_section_titles` | `$titles` | `UnifiedDashboard.php:371` |
