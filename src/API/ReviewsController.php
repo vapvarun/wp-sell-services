@@ -137,6 +137,26 @@ class ReviewsController extends RestController {
 			)
 		);
 
+		// Mark review as helpful.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/helpful',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'mark_helpful' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Unique identifier for the review.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
 		// Service reviews summary.
 		register_rest_route(
 			$this->namespace,
@@ -563,6 +583,93 @@ class ReviewsController extends RestController {
 		$updated_review = $this->get_review( $review_id );
 
 		return $this->prepare_item_for_response( $updated_review, $request );
+	}
+
+	/**
+	 * Mark a review as helpful.
+	 *
+	 * Uses atomic database operations to prevent race conditions where
+	 * concurrent requests could both pass the duplicate vote check.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function mark_helpful( $request ) {
+		global $wpdb;
+
+		$review_id = (int) $request->get_param( 'id' );
+
+		// Verify review exists.
+		$reviews_table = $wpdb->prefix . 'wpss_reviews';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$review_exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$reviews_table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
+				$review_id
+			)
+		);
+
+		if ( ! $review_exists ) {
+			return new WP_Error(
+				'rest_review_not_found',
+				__( 'Review not found.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Build unique vote identifier.
+		$user_id  = get_current_user_id();
+		$vote_key = '_wpss_vote_' . $review_id . '_u' . $user_id;
+
+		// Use atomic INSERT IGNORE to prevent race condition.
+		// If two concurrent requests try to insert the same key, only one will succeed.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
+				$vote_key,
+				time() + WEEK_IN_SECONDS,
+				'no'
+			)
+		);
+
+		// Check if our insert succeeded (rows_affected = 1) or row already existed (rows_affected = 0).
+		if ( 0 === $wpdb->rows_affected ) {
+			return new WP_Error(
+				'rest_already_voted',
+				__( 'You have already marked this review as helpful.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Increment helpful count atomically.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$reviews_table} SET helpful_count = helpful_count + 1 WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
+				$review_id
+			)
+		);
+
+		// Get updated count.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$new_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT helpful_count FROM {$reviews_table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
+				$review_id
+			)
+		);
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'count'   => $new_count,
+				'message' => __( 'Thanks for your feedback!', 'wp-sell-services' ),
+			)
+		);
 	}
 
 	/**

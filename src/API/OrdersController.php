@@ -213,6 +213,51 @@ class OrdersController extends RestController {
 				),
 			)
 		);
+
+		// Skip requirements.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/requirements/skip',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'skip_requirements' ),
+					'permission_callback' => array( $this, 'check_customer_permissions' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Order ID.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
+		// Remove requirement file.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/requirements/files/(?P<file_id>[\d]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'remove_requirement_file' ),
+					'permission_callback' => array( $this, 'check_customer_permissions' ),
+					'args'                => array(
+						'id'      => array(
+							'description' => __( 'Order ID.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'file_id' => array(
+							'description' => __( 'Attachment file ID.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -1016,6 +1061,103 @@ class OrdersController extends RestController {
 				'message'      => __( 'Requirements submitted successfully.', 'wp-sell-services' ),
 				'submitted'    => $sanitized_requirements,
 				'submitted_at' => $now,
+			)
+		);
+	}
+
+	/**
+	 * Skip requirements step.
+	 *
+	 * Marks requirements as skipped so the vendor can start working.
+	 * The buyer can still submit requirements later.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function skip_requirements( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$order    = ServiceOrder::find( $order_id );
+
+		if ( ! $order ) {
+			return new WP_Error(
+				'rest_order_not_found',
+				__( 'Order not found.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Mark requirements as skipped (can be submitted later).
+		update_post_meta( $order_id, '_wpss_requirements_skipped', true );
+
+		// Advance order to in_progress so the vendor can start working.
+		if ( ServiceOrder::STATUS_PENDING_REQUIREMENTS === $order->status ) {
+			$order_service = new OrderService();
+			$order_service->start_work( $order_id );
+		}
+
+		// Refresh order data.
+		$order = ServiceOrder::find( $order_id );
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => __( 'Requirements skipped. You can submit them later.', 'wp-sell-services' ),
+				'order'   => $this->prepare_item_for_response( $order, $request )->get_data(),
+			)
+		);
+	}
+
+	/**
+	 * Remove a requirement file attachment.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function remove_requirement_file( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$file_id  = (int) $request->get_param( 'file_id' );
+		$user_id  = get_current_user_id();
+
+		if ( ! $file_id ) {
+			return new WP_Error(
+				'rest_invalid_file_id',
+				__( 'Invalid file ID.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Verify attachment exists and user owns it.
+		$attachment = get_post( $file_id );
+
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			return new WP_Error(
+				'rest_file_not_found',
+				__( 'File not found.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( (int) $attachment->post_author !== $user_id && ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to delete this file.', 'wp-sell-services' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		// Delete attachment.
+		wp_delete_attachment( $file_id, true );
+
+		return new WP_REST_Response(
+			array(
+				'deleted'  => true,
+				'file_id'  => $file_id,
+				'order_id' => $order_id,
+				'message'  => __( 'File removed.', 'wp-sell-services' ),
 			)
 		);
 	}
