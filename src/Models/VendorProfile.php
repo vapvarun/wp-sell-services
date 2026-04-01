@@ -375,7 +375,7 @@ class VendorProfile {
 	 * @return string
 	 */
 	public function get_profile_url(): string {
-		return home_url( '/vendor/' . $this->user_id . '/' );
+		return wpss_get_vendor_url( $this->user_id );
 	}
 
 	/**

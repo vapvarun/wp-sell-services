@@ -571,7 +571,7 @@ class API {
 					'avatar'       => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
 					'tagline'      => get_user_meta( $user->ID, '_wpss_vendor_tagline', true ) ?: '',
 					'rating'       => (float) get_user_meta( $user->ID, '_wpss_rating_average', true ) ?: 0,
-					'url'          => home_url( '/vendor/' . $user->user_nicename ),
+					'url'          => wpss_get_vendor_url( $user->ID ),
 				];
 			}
 

@@ -850,7 +850,7 @@ class Shortcodes {
 			</div>
 			<div class="wpss-vendor-info">
 				<h3 class="wpss-vendor-name">
-					<a href="<?php echo esc_url( home_url( '/vendor/' . get_userdata( $vendor['id'] )->user_nicename ) ); ?>">
+					<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor['id'] ) ); ?>">
 						<?php echo esc_html( $vendor['display_name'] ); ?>
 					</a>
 				</h3>

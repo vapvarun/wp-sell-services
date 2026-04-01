@@ -1065,6 +1065,7 @@ function wpss_get_default_page_slugs(): array {
 			'become_vendor'  => 'become-vendor',
 			'create_service' => 'create-service',
 			'checkout'       => 'service-checkout',
+			'cart'           => 'service-cart',
 		)
 	);
 }
