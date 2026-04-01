@@ -713,7 +713,7 @@ function wpss_get_vendor_url( int $user_id ): string {
 		return add_query_arg( 'vendor', $user->user_nicename, get_permalink( $vendors_page ) );
 	}
 
-	$vendor_slug = apply_filters( 'wpss_vendor_slug', 'vendor' );
+	$vendor_slug = apply_filters( 'wpss_vendor_slug', 'seller' );
 	return home_url( '/' . $vendor_slug . '/' . $user->user_nicename );
 }
 
