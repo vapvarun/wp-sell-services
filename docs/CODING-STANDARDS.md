@@ -2,7 +2,7 @@
 
 > PHP/JS/CSS rules, WPCS config, security patterns.
 
-**Last Updated:** 2026-03-24
+**Last Updated:** 2026-04-01
 
 ---
 
@@ -220,6 +220,98 @@ $notice.empty().append($('<p>').text(message));
 // ALWAYS enqueue via wp_enqueue_style/script
 // NEVER use inline <style> blocks in templates
 wp_enqueue_style( 'wpss-dashboard', WPSS_PLUGIN_URL . 'assets/css/dashboard.css', [], WPSS_VERSION );
+```
+
+---
+
+## PHPStan (Static Analysis)
+
+This project uses PHPStan at **level 5** with the WordPress extension (`szepeviktor/phpstan-wordpress`).
+
+### Configuration
+
+- **Config file:** `phpstan.neon`
+- **Level:** 5
+- **Baseline:** `phpstan-baseline.neon` (tracks existing issues that predate PHPStan adoption)
+- **Bootstrap:** `phpstan-bootstrap.php` + Composer autoload
+- **Scanned paths:** `src/` (excludes `vendor/`, `node_modules/`, `includes/`, `tests/`, `src/SEO/`)
+
+### Commands
+
+```bash
+# Run full analysis
+vendor/bin/phpstan analyse --memory-limit=1G
+
+# Check specific file
+vendor/bin/phpstan analyse src/Services/OrderService.php --memory-limit=1G
+
+# Regenerate baseline (after intentionally accepting new issues)
+vendor/bin/phpstan analyse --generate-baseline --memory-limit=1G
+```
+
+### Rules
+
+- **New code must not introduce PHPStan errors.** If `phpstan analyse` fails on your changes, fix them before opening a PR.
+- **The baseline exists for pre-existing issues only.** Do not add new entries to the baseline to bypass errors in new code.
+- **PHPStan regressions block PRs.** The CI pipeline runs PHPStan on every push and PR. If it fails, the PR cannot be merged.
+- **Ignored error patterns** (defined in `phpstan.neon`):
+  - `apply_filters` / `do_action` invoked with dynamic parameter counts (WordPress hook pattern)
+  - Variables from `extract()` in templates
+  - Mixed-type offset access from WP functions returning mixed
+
+### Common Fixes
+
+| Error | Fix |
+|-------|-----|
+| `Parameter $x of method has no type hint` | Add typed parameter: `function foo(int $x)` |
+| `Method should return X but returns Y` | Fix the return type or the return value |
+| `Cannot access offset on mixed` | Add a type assertion or `@var` annotation |
+| `Variable $x might not be defined` | Initialize the variable or add an `isset()` check |
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions runs automatically on every push and PR to `main`.
+
+### Checks
+
+| Check | Tool | Blocking? | Details |
+|-------|------|-----------|---------|
+| PHP Lint | `php -l` | **Yes** | Syntax check on PHP 8.1, 8.2, 8.3, 8.4 |
+| WPCS | PHP_CodeSniffer | **Yes** | 0 errors required (warnings are allowed) |
+| PHPStan | PHPStan level 5 | **Yes** | No regressions from baseline |
+| PHPUnit | PHPUnit | No | Unit tests across PHP/WP matrix |
+
+### What "Blocking" Means
+
+- **WPCS errors block PRs.** The PR cannot be merged until `composer phpcs` reports 0 errors. Warnings are acceptable and do not block.
+- **PHPStan regressions block PRs.** Any new PHPStan error that is not in the baseline will fail the CI check and prevent merge.
+- **PHP lint failures block PRs.** Syntax errors on any supported PHP version (8.1-8.4) will fail the check.
+- **PHPUnit failures do not block** but should be investigated. Test failures indicate regressions.
+
+### Branch Protection
+
+- Direct pushes to `main` are not allowed
+- PRs require at least 1 approval
+- All blocking CI checks must pass before merge
+
+### Running CI Checks Locally
+
+Before pushing, run these to catch issues early:
+
+```bash
+# 1. WPCS (most common failure)
+composer phpcs
+
+# 2. PHPStan
+vendor/bin/phpstan analyse --memory-limit=1G
+
+# 3. PHP lint (quick syntax check)
+php -l src/Services/YourNewFile.php
+
+# 4. Tests
+composer test
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 > Code flow, services, hook registry, bridge pattern, naming conventions.
 
-**Last Updated:** 2026-03-24
+**Last Updated:** 2026-04-01
 
 ---
 
@@ -40,10 +40,10 @@ wpss_pro_init($plugin)
 | `Models\` | Data models (ServiceOrder, VendorProfile) |
 | `Services\` | Business logic (26 service classes) |
 | `Database\` | Schema, migrations, repositories |
-| `Integrations\` | E-commerce adapters, gateways |
+| `Integrations\` | Standalone adapter, gateways (Offline, Stripe, PayPal) |
 | `Admin\` | Admin pages, metaboxes, settings |
 | `Frontend\` | AJAX handlers, templates, dashboard, wizard |
-| `API\` | REST controllers (20+ controllers) |
+| `API\` | REST controllers (21 controllers with 125+ endpoints) |
 | `Blocks\` | Gutenberg blocks |
 
 ### Pro Plugin (`WPSellServicesPro\`)
@@ -156,6 +156,32 @@ Admin users with `manage_options` can force any transition.
 | `wpss_cleanup_expired_requests` | daily | Remove expired buyer requests |
 | `wpss_update_vendor_stats` | twice daily | Recalculate vendor metrics |
 | `wpss_process_auto_withdrawals` | custom | Process auto-withdrawal threshold |
+| `wpss_cron_daily` | daily | Dispute workflow daily checks |
+
+---
+
+## Recent REST Endpoint Additions (2026-04-01)
+
+| Controller | Method | Route | Purpose |
+|-----------|--------|-------|---------|
+| OrdersController | POST | `/orders/{id}/skip-requirements` | Skip requirements collection and move order to in_progress |
+| OrdersController | DELETE | `/orders/{id}/requirements/files/{index}` | Remove a specific uploaded file from order requirements |
+| ReviewsController | POST | `/reviews/{id}/helpful` | Mark a review as helpful (one vote per user) |
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions runs on every push and PR to `main`:
+
+| Check | Tool | Blocking? |
+|-------|------|-----------|
+| PHP Lint | `php -l` on 8.1, 8.2, 8.3, 8.4 | Yes |
+| WPCS | PHP_CodeSniffer (0 errors required, warnings allowed) | Yes |
+| PHPStan | Level 5 with baseline (no regressions) | Yes |
+| PHPUnit | Unit tests across PHP/WP matrix | No |
+
+Branch protection: PRs required, 1 approval, all blocking checks must pass.
 
 ---
 
