@@ -538,7 +538,7 @@ class EarningsController extends RestController {
 			return $perm_check;
 		}
 
-		if ( ! get_user_meta( get_current_user_id(), '_wpss_is_vendor', true ) ) {
+		if ( ! wpss_is_vendor( get_current_user_id() ) ) {
 			return new WP_Error( 'rest_forbidden', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
