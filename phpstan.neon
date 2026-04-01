@@ -7,11 +7,12 @@ parameters:
     paths:
         - src/
     excludePaths:
-        - vendor/
-        - node_modules/
-        - includes/
-        - tests/
-        - src/SEO/
+        analyseAndScan:
+            - vendor/ (?)
+            - node_modules/ (?)
+            - includes/ (?)
+            - tests/ (?)
+            - src/SEO/ (?)
     bootstrapFiles:
         - phpstan-bootstrap.php
         - vendor/autoload.php
