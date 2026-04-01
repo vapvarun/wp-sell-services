@@ -713,7 +713,8 @@ function wpss_get_vendor_url( int $user_id ): string {
 		return add_query_arg( 'vendor', $user->user_nicename, get_permalink( $vendors_page ) );
 	}
 
-	return home_url( '/vendor/' . $user->user_nicename );
+	$vendor_slug = apply_filters( 'wpss_vendor_slug', 'vendor' );
+	return home_url( '/' . $vendor_slug . '/' . $user->user_nicename );
 }
 
 /**
@@ -769,7 +770,8 @@ function wpss_get_order_url( int $order_id, string $section = '' ): string {
 		return add_query_arg( 'order_id', $order_id, $dashboard_url );
 	}
 
-	return home_url( '/service-order/' . $order->order_number . '/' );
+	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
+	return home_url( '/' . $order_slug . '/' . $order->order_number . '/' );
 }
 
 /**
@@ -798,7 +800,8 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 		);
 	}
 
-	return home_url( '/service-order/' . $order->order_number . '/requirements/' );
+	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
+	return home_url( '/' . $order_slug . '/' . $order->order_number . '/requirements/' );
 }
 
 /**
@@ -972,7 +975,8 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 		return add_query_arg( 'order_id', $order_id, $dashboard_url );
 	}
 
-	return home_url( '/service-order/' . $order->order_number . '/confirmation/' );
+	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
+	return home_url( '/' . $order_slug . '/' . $order->order_number . '/confirmation/' );
 }
 
 /**

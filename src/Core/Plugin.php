@@ -501,23 +501,39 @@ final class Plugin {
 		add_action(
 			'init',
 			function (): void {
+				/**
+				 * Filter the vendor profile URL slug.
+				 *
+				 * @since 1.3.0
+				 * @param string $slug Default vendor slug.
+				 */
+				$vendor_slug = apply_filters( 'wpss_vendor_slug', 'vendor' );
+
+				/**
+				 * Filter the service order URL slug.
+				 *
+				 * @since 1.3.0
+				 * @param string $slug Default service-order slug.
+				 */
+				$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
+
 				// Vendor profile: /vendor/{username}/.
 				add_rewrite_rule(
-					'^vendor/([^/]+)/?$',
+					'^' . $vendor_slug . '/([^/]+)/?$',
 					'index.php?wpss_vendor=$matches[1]',
 					'top'
 				);
 
 				// Service order with action: /service-order/{id}/{action}/.
 				add_rewrite_rule(
-					'^service-order/([0-9]+)/([^/]+)/?$',
+					'^' . $order_slug . '/([0-9]+)/([^/]+)/?$',
 					'index.php?wpss_service_order=$matches[1]&wpss_order_action=$matches[2]',
 					'top'
 				);
 
 				// Service order view: /service-order/{id}/.
 				add_rewrite_rule(
-					'^service-order/([0-9]+)/?$',
+					'^' . $order_slug . '/([0-9]+)/?$',
 					'index.php?wpss_service_order=$matches[1]',
 					'top'
 				);
