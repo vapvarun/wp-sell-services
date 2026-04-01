@@ -124,7 +124,7 @@ Order deadline extensions.
 
 ## 13. Milestones (/milestones)
 
-Milestone-based payments **[PRO]**.
+Milestone-based payments for complex projects.
 
 **GET /milestones/{order_id}** - Get order milestones
 **POST /milestones** - Create milestone

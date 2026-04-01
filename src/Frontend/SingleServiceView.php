@@ -62,9 +62,8 @@ class SingleServiceView {
 		// Reviews.
 		add_action( 'wpss_single_service_reviews', array( $this, 'render_reviews' ), 10 );
 
-		// Sidebar.
+		// Sidebar (vendor card omitted — shown in main content via render_about_vendor).
 		add_action( 'wpss_single_service_sidebar', array( $this, 'render_packages' ), 10 );
-		add_action( 'wpss_single_service_sidebar', array( $this, 'render_vendor_card' ), 20 );
 
 		// Portfolio.
 		add_action( 'wpss_single_service_portfolio', array( $this, 'render_portfolio' ), 10 );
@@ -292,18 +291,6 @@ class SingleServiceView {
 		$order_count  = (int) get_post_meta( $service_id, '_wpss_order_count', true );
 		?>
 		<div class="wpss-service-meta">
-			<div class="wpss-meta-item wpss-meta-vendor">
-				<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 32 ) ) ); ?>"
-					alt="<?php echo esc_attr( $vendor->display_name ?? '' ); ?>"
-					class="wpss-vendor-mini-avatar">
-				<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>" class="wpss-vendor-name">
-					<?php echo esc_html( $vendor->display_name ?? __( 'Unknown Vendor', 'wp-sell-services' ) ); ?>
-				</a>
-				<?php if ( get_user_meta( $vendor_id, '_wpss_vendor_verified', true ) ) : ?>
-					<span class="wpss-verified-badge" title="<?php esc_attr_e( 'Verified', 'wp-sell-services' ); ?>">✓</span>
-				<?php endif; ?>
-			</div>
-
 			<?php if ( $rating_count > 0 ) : ?>
 				<div class="wpss-meta-item wpss-meta-rating">
 					<a href="#reviews" class="wpss-rating-link">

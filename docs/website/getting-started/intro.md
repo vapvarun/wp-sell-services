@@ -39,10 +39,10 @@ Here are some real-world examples of what people are building:
 | Vendor dashboard and seller levels | Included | Included |
 | Built-in checkout (Stripe, PayPal, Offline) | Included | Included |
 | Commission system with per-vendor rates | Included | Included |
-| Gallery images per service | Up to 4 | Unlimited |
-| Service add-ons | Up to 3 | Unlimited |
-| FAQs per service | Up to 5 | Unlimited |
-| Video embeds | 1 | 3 |
+| Gallery images per service | Up to 4 | Unlimited **[PRO]** |
+| Service add-ons | Up to 3 | Unlimited **[PRO]** |
+| FAQs per service | Up to 5 | Unlimited **[PRO]** |
+| Video embeds | 1 | 3 **[PRO]** |
 | WooCommerce, EDD, FluentCart, SureCart | -- | **[PRO]** |
 | Razorpay payment gateway | -- | **[PRO]** |
 | Wallet integrations (TeraWallet, MyCred, etc.) | -- | **[PRO]** |

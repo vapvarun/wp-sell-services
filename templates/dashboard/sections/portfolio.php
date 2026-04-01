@@ -69,9 +69,21 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 			<p><?php esc_html_e( 'Showcase your best work to attract more buyers.', 'wp-sell-services' ); ?></p>
 		</div>
 	<?php else : ?>
+		<?php
+		$portfolio_index = 0;
+		$preview_items   = array();
+		?>
 		<div class="wpss-portfolio__grid" id="wpss-portfolio-grid">
 			<?php foreach ( $items as $item ) : ?>
 				<?php
+				$preview_items[] = array(
+					'title'       => $item['title'],
+					'description' => $item['description'] ?? '',
+					'image'       => ! empty( $item['media'] ) ? ( $item['media'][0]['large'] ?? $item['media'][0]['url'] ?? '' ) : '',
+					'tags'        => $item['tags'] ?? array(),
+					'external'    => $item['external_url'] ?? '',
+				);
+				?><?php
 				$media_ids    = wp_json_encode(
 					array_map(
 						function ( $m ) {
@@ -100,11 +112,11 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 					data-media-thumbs="<?php echo esc_attr( $media_thumbs ); ?>"
 				>
 					<?php if ( ! empty( $item['media'] ) ) : ?>
-						<div class="wpss-portfolio__media">
+						<div class="wpss-portfolio__media wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" role="button" tabindex="0" style="cursor:pointer;">
 							<img src="<?php echo esc_url( $item['media'][0]['medium'] ?? $item['media'][0]['url'] ?? '' ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>">
 						</div>
 					<?php else : ?>
-						<div class="wpss-portfolio__media wpss-portfolio__media--placeholder">
+						<div class="wpss-portfolio__media wpss-portfolio__media--placeholder wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" role="button" tabindex="0" style="cursor:pointer;">
 							<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
 								<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
 							</svg>
@@ -112,7 +124,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 					<?php endif; ?>
 
 					<div class="wpss-portfolio__info">
-						<h4 class="wpss-portfolio__title"><?php echo esc_html( $item['title'] ); ?></h4>
+						<h4 class="wpss-portfolio__title wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" role="button" tabindex="0" style="cursor:pointer;"><?php echo esc_html( $item['title'] ); ?></h4>
 						<?php if ( ! empty( $item['description'] ) ) : ?>
 							<p class="wpss-portfolio__desc"><?php echo esc_html( wp_trim_words( $item['description'], 15 ) ); ?></p>
 						<?php endif; ?>
@@ -133,8 +145,89 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 						</div>
 					</div>
 				</div>
+				<?php ++$portfolio_index; ?>
 			<?php endforeach; ?>
 		</div>
+
+		<!-- Portfolio Preview Lightbox -->
+		<div class="wpss-portfolio-lightbox" id="wpss-dashboard-portfolio-lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+			<div class="wpss-portfolio-lightbox__backdrop"></div>
+			<div class="wpss-portfolio-lightbox__content">
+				<button type="button" class="wpss-portfolio-lightbox__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</button>
+				<button type="button" class="wpss-portfolio-lightbox__nav wpss-portfolio-lightbox__prev" aria-label="<?php esc_attr_e( 'Previous', 'wp-sell-services' ); ?>">&#8249;</button>
+				<button type="button" class="wpss-portfolio-lightbox__nav wpss-portfolio-lightbox__next" aria-label="<?php esc_attr_e( 'Next', 'wp-sell-services' ); ?>">&#8250;</button>
+				<div class="wpss-portfolio-lightbox__image-wrap">
+					<img class="wpss-portfolio-lightbox__image" src="" alt="">
+				</div>
+				<div class="wpss-portfolio-lightbox__info">
+					<h3 class="wpss-portfolio-lightbox__title"></h3>
+					<p class="wpss-portfolio-lightbox__desc"></p>
+					<div class="wpss-portfolio-lightbox__tags"></div>
+					<a class="wpss-portfolio-lightbox__link" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">
+						<?php esc_html_e( 'View Project', 'wp-sell-services' ); ?> &rarr;
+					</a>
+				</div>
+			</div>
+		</div>
+		<style>
+		.wpss-portfolio-lightbox{display:none;position:fixed;inset:0;z-index:99999}
+		.wpss-portfolio-lightbox[aria-hidden="false"]{display:flex;align-items:center;justify-content:center}
+		.wpss-portfolio-lightbox__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.85)}
+		.wpss-portfolio-lightbox__content{position:relative;display:flex;flex-direction:column;max-width:900px;max-height:90vh;width:90vw;background:#fff;border-radius:12px;overflow:hidden;z-index:1}
+		.wpss-portfolio-lightbox__close{position:absolute;top:12px;right:12px;z-index:2;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:24px;cursor:pointer;line-height:1}
+		.wpss-portfolio-lightbox__close:hover{background:rgba(0,0,0,.8)}
+		.wpss-portfolio-lightbox__nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;background:rgba(0,0,0,.4);color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:28px;cursor:pointer;line-height:1}
+		.wpss-portfolio-lightbox__nav:hover{background:rgba(0,0,0,.7)}
+		.wpss-portfolio-lightbox__prev{left:12px}
+		.wpss-portfolio-lightbox__next{right:12px}
+		.wpss-portfolio-lightbox__image-wrap{flex:1;min-height:0;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center}
+		.wpss-portfolio-lightbox__image{max-width:100%;max-height:60vh;object-fit:contain}
+		.wpss-portfolio-lightbox__info{padding:20px 24px;border-top:1px solid #e5e7eb}
+		.wpss-portfolio-lightbox__title{font-size:18px;font-weight:600;margin:0 0 6px}
+		.wpss-portfolio-lightbox__desc{font-size:14px;color:#6b7280;margin:0 0 12px;line-height:1.6}
+		.wpss-portfolio-lightbox__tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+		.wpss-portfolio-lightbox__tags:empty{display:none}
+		.wpss-portfolio-lightbox__tags span{padding:2px 10px;background:#f3f4f6;border-radius:20px;font-size:12px;color:#374151;font-weight:500}
+		.wpss-portfolio-lightbox__link{display:inline-flex;align-items:center;gap:4px;color:#6366f1;font-size:14px;font-weight:500;text-decoration:none}
+		.wpss-portfolio-lightbox__link:hover{text-decoration:underline}
+		</style>
+		<script>
+		(function(){
+			var items=<?php echo wp_json_encode( $preview_items ); ?>;
+			if(!items.length)return;
+			var lb=document.getElementById('wpss-dashboard-portfolio-lightbox');
+			if(!lb)return;
+			var imgEl=lb.querySelector('.wpss-portfolio-lightbox__image');
+			var titleEl=lb.querySelector('.wpss-portfolio-lightbox__title');
+			var descEl=lb.querySelector('.wpss-portfolio-lightbox__desc');
+			var tagsEl=lb.querySelector('.wpss-portfolio-lightbox__tags');
+			var linkEl=lb.querySelector('.wpss-portfolio-lightbox__link');
+			var cur=0;
+			function show(i){
+				cur=i;var it=items[i];
+				imgEl.src=it.image||'';imgEl.alt=it.title;
+				titleEl.textContent=it.title;descEl.textContent=it.description;
+				while(tagsEl.firstChild)tagsEl.removeChild(tagsEl.firstChild);
+				(it.tags||[]).forEach(function(t){var s=document.createElement('span');s.textContent=t;tagsEl.appendChild(s);});
+				if(it.external){linkEl.href=it.external;linkEl.style.display='';}else{linkEl.style.display='none';}
+				lb.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+			}
+			function close(){lb.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+			document.querySelectorAll('.wpss-portfolio-preview').forEach(function(el){
+				el.addEventListener('click',function(e){e.stopPropagation();show(parseInt(this.dataset.index,10));});
+			});
+			lb.querySelector('.wpss-portfolio-lightbox__backdrop').addEventListener('click',close);
+			lb.querySelector('.wpss-portfolio-lightbox__close').addEventListener('click',close);
+			lb.querySelector('.wpss-portfolio-lightbox__prev').addEventListener('click',function(){show((cur-1+items.length)%items.length);});
+			lb.querySelector('.wpss-portfolio-lightbox__next').addEventListener('click',function(){show((cur+1)%items.length);});
+			document.addEventListener('keydown',function(e){
+				if(lb.getAttribute('aria-hidden')!=='false')return;
+				if(e.key==='Escape')close();
+				if(e.key==='ArrowLeft')show((cur-1+items.length)%items.length);
+				if(e.key==='ArrowRight')show((cur+1)%items.length);
+			});
+		})();
+		</script>
 	<?php endif; ?>
 
 	<!-- Add/Edit Portfolio Modal -->

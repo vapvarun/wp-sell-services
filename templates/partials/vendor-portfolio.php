@@ -193,7 +193,21 @@ if ( empty( $portfolio_items ) ) {
 
 <div class="wpss-portfolio-public">
 	<div class="wpss-portfolio-public__grid">
-		<?php foreach ( $portfolio_items as $item ) : ?>
+		<?php
+	// Collect all items for the lightbox.
+	$lightbox_items = array();
+	?>
+	<?php foreach ( $portfolio_items as $item ) : ?>
+		<?php
+		$lightbox_items[] = array(
+			'id'          => absint( $item['id'] ),
+			'title'       => $item['title'] ?? '',
+			'description' => $item['description'] ?? '',
+			'image'       => ! empty( $item['media'] ) ? ( $item['media'][0]['large'] ?? $item['media'][0]['url'] ?? '' ) : '',
+			'tags'        => $item['tags'] ?? array(),
+			'external'    => $item['external_url'] ?? '',
+		);
+		?>
 			<?php
 			$item_id     = absint( $item['id'] );
 			$title       = $item['title'] ?? '';

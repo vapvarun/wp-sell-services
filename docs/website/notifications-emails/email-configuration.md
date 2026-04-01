@@ -17,7 +17,7 @@ Set up how your marketplace sends email notifications, test deliverability, and 
 
 ## Notification Toggles
 
-Each of the 21 email types has its own on/off switch. When you disable a notification type, no emails of that kind are sent to any user. In-app notifications are unaffected.
+Each email notification type has its own on/off switch. When you disable a notification type, no emails of that kind are sent to any user. In-app notifications are unaffected.
 
 All toggles are enabled by default. Changes take effect immediately after saving.
 
@@ -103,5 +103,5 @@ With the Pro version, you can fully customize the email appearance to match your
 
 ## Related Guides
 
-- [Email Notification Types](email-types.md) -- Full list of all 21 email types
+- [Email Notification Types](email-types.md) -- Full list of all email notification types
 - [In-App Notifications](in-app-notifications.md) -- Dashboard notification system

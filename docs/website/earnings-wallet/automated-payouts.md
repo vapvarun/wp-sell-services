@@ -1,4 +1,6 @@
-# Automated Payouts
+# Automated Payouts **[PRO]**
+
+> **This feature requires WP Sell Services Pro.**
 
 Instead of waiting for vendors to request withdrawals manually, you can set up automatic payouts that run on a schedule -- saving time for both you and your vendors.
 

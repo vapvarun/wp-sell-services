@@ -69,7 +69,7 @@ Go to **WP Sell Services > Settings > Orders**:
 - **Dispute window** -- How many days after completion a buyer can dispute (default: 14)
 
 ### Email Notifications
-Go to **WP Sell Services > Settings > Emails** to review which emails are sent. All 8 notification types are on by default:
+Go to **WP Sell Services > Settings > Emails** to review which emails are sent. All notification types are enabled by default:
 
 - New order placed (sent to vendor)
 - Order completed, cancelled (sent to both)

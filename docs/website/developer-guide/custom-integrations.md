@@ -4,16 +4,16 @@ Extend WP Sell Services with custom e-commerce platforms, payment gateways, REST
 
 ## Extension Architecture
 
-WP Sell Services provides six contract interfaces in `src/Integrations/Contracts/` and several filter-based registration points. The free version ships with WooCommerce integration. The Pro version adds EDD, FluentCart, SureCart, and standalone adapters.
+WP Sell Services provides six contract interfaces in `src/Integrations/Contracts/` and several filter-based registration points. The free version ships with standalone checkout, Stripe, and PayPal. The Pro version adds WooCommerce, EDD, FluentCart, SureCart, and Razorpay.
 
 | Extension Type | Interface/Filter | Free | Pro |
 |---------------|-----------------|------|-----|
-| E-commerce Platform | `EcommerceAdapterInterface` | WooCommerce | EDD, FluentCart, SureCart, Standalone |
-| Payment Gateway | `PaymentGatewayInterface` | Test Gateway | Stripe, PayPal, Razorpay |
-| Storage Provider | `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces |
+| E-commerce Platform | `EcommerceAdapterInterface` | Standalone (built-in) | WooCommerce, EDD, FluentCart, SureCart **[PRO]** |
+| Payment Gateway | `PaymentGatewayInterface` | Stripe, PayPal, Offline | Razorpay **[PRO]** |
+| Storage Provider | `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces **[PRO]** |
 | Email Provider | `wpss_email_providers` | WordPress mail | SendGrid, Mailgun, SES |
-| REST API Controller | `wpss_api_controllers` | 20 controllers | Additional endpoints |
-| Analytics Widget | `wpss_analytics_widgets` | None | Revenue, conversion, vendor analytics |
+| REST API Controller | `wpss_api_controllers` | 21 controllers | Additional endpoints |
+| Analytics Widget | `wpss_analytics_widgets` | Basic stats | Revenue, conversion, vendor analytics **[PRO]** |
 
 ## E-Commerce Adapters
 
