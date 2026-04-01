@@ -371,7 +371,7 @@ class ServiceMetabox {
 						</label>
 						<div class="wpss-input-with-suffix">
 							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][delivery_days]"
-									value="<?php echo esc_attr( $package['delivery_days'] ?? '' ); ?>"
+									value="<?php echo esc_attr( ! empty( $package['delivery_days'] ) ? $package['delivery_days'] : '' ); ?>"
 									min="1" max="365" placeholder="7">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
 						</div>
@@ -383,7 +383,7 @@ class ServiceMetabox {
 						</label>
 						<div class="wpss-input-with-suffix">
 							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][revisions]"
-									value="<?php echo esc_attr( $package['revisions'] ?? '' ); ?>"
+									value="<?php echo esc_attr( ! empty( $package['revisions'] ) ? $package['revisions'] : '' ); ?>"
 									min="0" max="20" placeholder="2">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
 						</div>

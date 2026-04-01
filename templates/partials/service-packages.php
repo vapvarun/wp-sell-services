@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 $service_id = get_the_ID();
 $packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
 
-// If no packages, show single price.
+// If no packages, show single price (omit description to avoid duplicating "About This Service").
 if ( empty( $packages ) ) {
 	$price         = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 	$delivery_time = get_post_meta( $service_id, '_wpss_delivery_days', true );
@@ -25,7 +25,7 @@ if ( empty( $packages ) ) {
 	$packages = [
 		[
 			'name'          => __( 'Standard', 'wp-sell-services' ),
-			'description'   => get_the_excerpt(),
+			'description'   => '',
 			'price'         => $price,
 			'delivery_time' => $delivery_time,
 			'revisions'     => get_post_meta( $service_id, '_wpss_revisions', true ) ?: 1,

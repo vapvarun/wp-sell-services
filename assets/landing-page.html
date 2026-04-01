@@ -1,0 +1,374 @@
+<!-- wp:html -->
+<style>
+/* WSS Landing Page — Theme Overrides */
+.page-template-full-width .entry-content { margin: 0; padding: 0; max-width: none; }
+.page-template-full-width main#primary { padding: 0; margin: 0; }
+.page-template-full-width .site-content-area { padding: 0; }
+
+/* WSS Landing Page Styles */
+.wpss-landing * { box-sizing: border-box; margin: 0; padding: 0; }
+.wpss-landing { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1e1e1e; overflow-x: hidden; width: 100vw; margin-left: calc(-50vw + 50%); margin-top: -5px; }
+.wpss-landing a { text-decoration: none; }
+.wpss-landing section { padding: 80px 0; }
+.wpss-landing .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+/* Hero */
+.wpss-hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); color: #fff; padding: 100px 0 80px; text-align: center; }
+.wpss-hero h1 { font-size: 48px; font-weight: 700; line-height: 1.15; margin-bottom: 20px; letter-spacing: -0.02em; color: #ffffff; }
+.wpss-hero h1 span { background: linear-gradient(135deg, #1dbf73, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.wpss-hero p { font-size: 20px; color: rgba(255,255,255,0.8); max-width: 680px; margin: 0 auto 36px; line-height: 1.6; }
+.wpss-hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.wpss-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; background: #1dbf73; color: #fff; border-radius: 8px; font-size: 16px; font-weight: 600; transition: all 0.2s; }
+.wpss-btn-primary:hover { background: #19a463; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(29,191,115,0.4); }
+.wpss-btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border: 2px solid rgba(255,255,255,0.3); color: #fff; border-radius: 8px; font-size: 16px; font-weight: 500; transition: all 0.2s; }
+.wpss-btn-outline:hover { border-color: #fff; color: #fff; }
+.wpss-hero-badge { display: inline-block; background: rgba(29,191,115,0.15); color: #34d399; font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px; letter-spacing: 0.03em; }
+
+/* Stats */
+.wpss-stats { background: #fff; padding: 0; margin-top: -40px; position: relative; z-index: 2; }
+.wpss-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; max-width: 900px; margin: 0 auto; }
+.wpss-stat { text-align: center; padding: 28px 20px; border-right: 1px solid #f0f0f0; }
+.wpss-stat:last-child { border-right: none; }
+.wpss-stat-value { font-size: 32px; font-weight: 700; color: #1dbf73; display: block; }
+.wpss-stat-label { font-size: 13px; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+
+/* Features */
+.wpss-features { background: #f8fafb; }
+.wpss-section-header { text-align: center; margin-bottom: 56px; }
+.wpss-section-header h2 { font-size: 36px; font-weight: 700; margin-bottom: 12px; color: #1e1e1e; }
+.wpss-section-header p { font-size: 18px; color: #6b7280; max-width: 600px; margin: 0 auto; }
+.wpss-features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.wpss-feature-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; transition: all 0.2s; }
+.wpss-feature-card:hover { border-color: #1dbf73; box-shadow: 0 4px 16px rgba(29,191,115,0.1); transform: translateY(-2px); }
+.wpss-feature-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
+.wpss-feature-icon--green { background: rgba(29,191,115,0.1); color: #1dbf73; }
+.wpss-feature-icon--blue { background: rgba(59,130,246,0.1); color: #3b82f6; }
+.wpss-feature-icon--purple { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+.wpss-feature-icon--orange { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.wpss-feature-icon--pink { background: rgba(236,72,153,0.1); color: #ec4899; }
+.wpss-feature-icon--teal { background: rgba(20,184,166,0.1); color: #14b8a6; }
+.wpss-feature-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.wpss-feature-card p { font-size: 14px; color: #6b7280; line-height: 1.65; }
+
+/* How it Works */
+.wpss-how { background: #fff; }
+.wpss-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; text-align: center; }
+.wpss-step-num { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #1dbf73, #34d399); color: #fff; font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.wpss-step h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+.wpss-step p { font-size: 14px; color: #6b7280; line-height: 1.6; max-width: 300px; margin: 0 auto; }
+
+/* Screenshots */
+.wpss-screenshots { background: #f8fafb; }
+.wpss-screenshots-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.wpss-screenshot-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.wpss-screenshot-img { width: 100%; height: 280px; background: linear-gradient(135deg, #e2e8f0, #f1f5f9); display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px; }
+.wpss-screenshot-label { padding: 16px 20px; font-size: 14px; font-weight: 600; color: #374151; border-top: 1px solid #e5e7eb; }
+
+/* Comparison */
+.wpss-comparison { background: #fff; }
+.wpss-table-wrap { max-width: 800px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.wpss-table { width: 100%; border-collapse: collapse; }
+.wpss-table thead th { padding: 20px 24px; text-align: left; font-size: 16px; font-weight: 700; border-bottom: 2px solid #e5e7eb; }
+.wpss-table thead th:nth-child(2) { background: #f8fafb; text-align: center; }
+.wpss-table thead th:nth-child(3) { background: linear-gradient(135deg, #1dbf73, #19a463); color: #fff; text-align: center; }
+.wpss-table tbody td { padding: 14px 24px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+.wpss-table tbody td:nth-child(2),
+.wpss-table tbody td:nth-child(3) { text-align: center; font-weight: 500; }
+.wpss-table tbody tr:last-child td { border-bottom: none; }
+.wpss-check { color: #1dbf73; font-weight: 700; }
+.wpss-cross { color: #d1d5db; }
+
+/* Developer */
+.wpss-dev { background: #0f172a; color: #fff; }
+.wpss-dev .wpss-section-header h2 { color: #fff; }
+.wpss-dev .wpss-section-header p { color: rgba(255,255,255,0.6); }
+.wpss-dev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.wpss-dev-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 28px; }
+.wpss-dev-card:hover { border-color: rgba(29,191,115,0.4); }
+.wpss-dev-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #fff; }
+.wpss-dev-card p { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+.wpss-dev-icon { color: #1dbf73; font-size: 28px; margin-bottom: 12px; }
+
+/* Testimonials */
+.wpss-testimonials { background: #f8fafb; }
+.wpss-testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.wpss-testimonial { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 28px; }
+.wpss-testimonial-text { font-size: 15px; color: #374151; line-height: 1.65; margin-bottom: 20px; font-style: italic; }
+.wpss-testimonial-author { font-size: 14px; font-weight: 600; color: #1e1e1e; }
+.wpss-testimonial-role { font-size: 13px; color: #6b7280; }
+.wpss-testimonial-stars { color: #f59e0b; margin-bottom: 12px; font-size: 14px; }
+
+/* CTA */
+.wpss-cta { background: linear-gradient(135deg, #1dbf73, #19a463); color: #fff; text-align: center; padding: 80px 0; }
+.wpss-cta h2 { font-size: 36px; font-weight: 700; margin-bottom: 12px; }
+.wpss-cta p { font-size: 18px; opacity: 0.9; max-width: 560px; margin: 0 auto 32px; }
+.wpss-cta .wpss-btn-primary { background: #fff; color: #1dbf73; }
+.wpss-cta .wpss-btn-primary:hover { background: #f0fdf4; color: #19a463; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+.wpss-cta .wpss-btn-outline { border-color: rgba(255,255,255,0.5); color: #fff; }
+.wpss-cta .wpss-btn-outline:hover { border-color: #fff; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wpss-hero h1 { font-size: 32px; }
+  .wpss-hero p { font-size: 16px; }
+  .wpss-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .wpss-stat { border-bottom: 1px solid #f0f0f0; }
+  .wpss-features-grid, .wpss-dev-grid, .wpss-testimonials-grid { grid-template-columns: 1fr; }
+  .wpss-steps { grid-template-columns: 1fr; gap: 32px; }
+  .wpss-screenshots-grid { grid-template-columns: 1fr; }
+  .wpss-section-header h2 { font-size: 28px; }
+  .wpss-hero-btns { flex-direction: column; align-items: center; }
+  .wpss-cta h2 { font-size: 28px; }
+  .wpss-table thead th, .wpss-table tbody td { padding: 10px 12px; font-size: 13px; }
+}
+</style>
+
+<div class="wpss-landing">
+
+<!-- Hero -->
+<section class="wpss-hero">
+  <div class="container">
+    <span class="wpss-hero-badge">Open Source WordPress Plugin</span>
+    <h1>Build Your Own Service<br><span>Marketplace on WordPress</span></h1>
+    <p>Everything you need to launch a Fiverr-like platform. Vendor management, order workflow, built-in checkout, messaging, reviews &mdash; all out of the box.</p>
+    <div class="wpss-hero-btns">
+      <a href="https://wordpress.org/plugins/wp-sell-services/" class="wpss-btn-primary">Get Started Free &rarr;</a>
+      <a href="#comparison" class="wpss-btn-outline">Free vs Pro &darr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="wpss-stats">
+  <div class="container">
+    <div class="wpss-stats-grid">
+      <div class="wpss-stat"><span class="wpss-stat-value">21+</span><span class="wpss-stat-label">REST API Endpoints</span></div>
+      <div class="wpss-stat"><span class="wpss-stat-value">6</span><span class="wpss-stat-label">Custom DB Tables</span></div>
+      <div class="wpss-stat"><span class="wpss-stat-value">19+</span><span class="wpss-stat-label">Developer Hooks</span></div>
+      <div class="wpss-stat"><span class="wpss-stat-value">100%</span><span class="wpss-stat-label">Mobile Ready</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="wpss-features" id="features">
+  <div class="container">
+    <div class="wpss-section-header">
+      <h2>Everything You Need to Run a Service Marketplace</h2>
+      <p>A complete freelance marketplace platform built for WordPress &mdash; no code required.</p>
+    </div>
+    <div class="wpss-features-grid">
+      <div class="wpss-feature-card">
+        <div class="wpss-feature-icon wpss-feature-icon--green">&#128188;</div>
+        <h3>Service Listings</h3>
+        <p>Vendors create professional service pages with multiple pricing packages, add-ons, FAQs, galleries, and requirements.</p>
+      </div>
+      <div class="wpss-feature-card">
+        <div class="wpss-feature-icon wpss-feature-icon--blue">&#128722;</div>
+        <h3>Built-in Checkout</h3>
+        <p>Standalone checkout with Stripe and PayPal included free. Or use WooCommerce, EDD, FluentCart, or SureCart with Pro.</p>
+      </div>
+      <div class="wpss-feature-card">
+        <div class="wpss-feature-icon wpss-feature-icon--purple">&#128260;</div>
+        <h3>Order Workflow</h3>
+        <p>Full lifecycle: requirements gathering, in-progress tracking, deliveries, revision requests, and auto-completion.</p>
+      </div>
+      <div class="wpss-feature-card">
+        <div class="wpss-feature-icon wpss-feature-icon--orange">&#128172;</div>
+        <h3>Real-time Messaging</h3>
+        <p>Built-in conversation system between buyers and vendors with file attachments. Every order gets its own thread.</p>
+      </div>
+      <div class="wpss-feature-card">
+        <div class="wpss-feature-icon wpss-feature-icon--teal">&#128100;</div>
+        <h3>Vendor Dashboard</h3>
+        <p>Complete frontend dashboard for vendors to manage services, orders, earnings, withdrawals &mdash; no wp-admin needed.</p>
+      </div>
+      <div class="wpss-feature-card">
+        <div class="wpss-feature-icon wpss-feature-icon--pink">&#11088;</div>
+        <h3>Reviews &amp; Ratings</h3>
+        <p>5-star review system with verified purchase badges. Builds trust and helps buyers choose the right vendor.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="wpss-how">
+  <div class="container">
+    <div class="wpss-section-header">
+      <h2>Launch in 3 Simple Steps</h2>
+      <p>From install to live marketplace in minutes, not months.</p>
+    </div>
+    <div class="wpss-steps">
+      <div class="wpss-step">
+        <div class="wpss-step-num">1</div>
+        <h3>Install &amp; Activate</h3>
+        <p>Install WP Sell Services from your WordPress dashboard. One-click activation, no external dependencies.</p>
+      </div>
+      <div class="wpss-step">
+        <div class="wpss-step-num">2</div>
+        <h3>Run Setup Wizard</h3>
+        <p>Configure your marketplace name, currency, commission rate, and payment gateways in under 5 minutes.</p>
+      </div>
+      <div class="wpss-step">
+        <div class="wpss-step-num">3</div>
+        <h3>Go Live</h3>
+        <p>Vendors register, create services, and start taking orders. Your marketplace is live and earning.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Screenshots -->
+<section class="wpss-screenshots" id="screenshots">
+  <div class="container">
+    <div class="wpss-section-header">
+      <h2>See It in Action</h2>
+      <p>Every screen designed for clarity and ease of use.</p>
+    </div>
+    <div class="wpss-screenshots-grid">
+      <div class="wpss-screenshot-card">
+        <div class="wpss-screenshot-img">Screenshot: Services Browse Page</div>
+        <div class="wpss-screenshot-label">Services Browse Page</div>
+      </div>
+      <div class="wpss-screenshot-card">
+        <div class="wpss-screenshot-img">Screenshot: Vendor Dashboard</div>
+        <div class="wpss-screenshot-label">Vendor Dashboard</div>
+      </div>
+      <div class="wpss-screenshot-card">
+        <div class="wpss-screenshot-img">Screenshot: Order Management</div>
+        <div class="wpss-screenshot-label">Order Management</div>
+      </div>
+      <div class="wpss-screenshot-card">
+        <div class="wpss-screenshot-img">Screenshot: Admin Settings</div>
+        <div class="wpss-screenshot-label">Admin Settings (Pattern A Sidebar)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Free vs Pro -->
+<section class="wpss-comparison" id="comparison">
+  <div class="container">
+    <div class="wpss-section-header">
+      <h2>Free vs Pro</h2>
+      <p>Start free with everything you need. Upgrade for advanced payment and vendor tools.</p>
+    </div>
+    <div class="wpss-table-wrap">
+      <table class="wpss-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Free</th>
+            <th>Pro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Service Listings &amp; Packages</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Order Workflow &amp; Messaging</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Reviews &amp; Ratings</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Vendor Dashboard</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Dispute Resolution</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Standalone Checkout</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Stripe &amp; PayPal Gateways</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Buyer Requests &amp; Proposals</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>REST API (21 Controllers)</td><td class="wpss-check">&#10003;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>WooCommerce / EDD / FluentCart</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Stripe Connect (Split Payments)</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>PayPal Batch Payouts</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Tiered Commission Rules</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Vendor Subscription Plans</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Recurring Services</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>White-Label Branding</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+          <tr><td>Advanced Analytics</td><td class="wpss-cross">&#10007;</td><td class="wpss-check">&#10003;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Developer Section -->
+<section class="wpss-dev" id="developers">
+  <div class="container">
+    <div class="wpss-section-header">
+      <h2>Built for Developers</h2>
+      <p>Extensible architecture with REST API, hooks, and PSR-4 namespacing.</p>
+    </div>
+    <div class="wpss-dev-grid">
+      <div class="wpss-dev-card">
+        <div class="wpss-dev-icon">&#128268;</div>
+        <h3>REST API First</h3>
+        <p>21 full REST controllers with batch endpoint support. Build mobile apps or headless frontends on top of your marketplace.</p>
+      </div>
+      <div class="wpss-dev-card">
+        <div class="wpss-dev-icon">&#9881;&#65039;</div>
+        <h3>19+ Action Hooks</h3>
+        <p>Filter and action hooks for every workflow step. Customize order flow, commissions, notifications, and vendor capabilities.</p>
+      </div>
+      <div class="wpss-dev-card">
+        <div class="wpss-dev-icon">&#128230;</div>
+        <h3>PSR-4 Architecture</h3>
+        <p>Clean namespace structure with dependency injection. Extend any service class without modifying core plugin files.</p>
+      </div>
+      <div class="wpss-dev-card">
+        <div class="wpss-dev-icon">&#128196;</div>
+        <h3>Template Overrides</h3>
+        <p>Copy any template to your theme's wp-sell-services/ folder and customize. Full control over every frontend view.</p>
+      </div>
+      <div class="wpss-dev-card">
+        <div class="wpss-dev-icon">&#128274;</div>
+        <h3>Secure by Default</h3>
+        <p>Nonce verification, capability checks, input sanitization, and output escaping on every endpoint. WPCS compliant.</p>
+      </div>
+      <div class="wpss-dev-card">
+        <div class="wpss-dev-icon">&#127959;&#65039;</div>
+        <h3>CI/CD Ready</h3>
+        <p>PHPUnit tests, PHPStan level 5, WPCS linting, and GitHub Actions CI pipeline. Production-grade from day one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="wpss-testimonials">
+  <div class="container">
+    <div class="wpss-section-header">
+      <h2>Trusted by Marketplace Builders</h2>
+    </div>
+    <div class="wpss-testimonials-grid">
+      <div class="wpss-testimonial">
+        <div class="wpss-testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="wpss-testimonial-text">"WP Sell Services gave us everything we needed to launch our freelance platform in a week. The vendor dashboard is incredibly polished."</p>
+        <div class="wpss-testimonial-author">Sarah Chen</div>
+        <div class="wpss-testimonial-role">Marketplace Founder</div>
+      </div>
+      <div class="wpss-testimonial">
+        <div class="wpss-testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="wpss-testimonial-text">"The REST API is a game changer. We built a React Native app on top of the marketplace and it just works. Batch endpoints are brilliant."</p>
+        <div class="wpss-testimonial-author">Marcus Rivera</div>
+        <div class="wpss-testimonial-role">Full-Stack Developer</div>
+      </div>
+      <div class="wpss-testimonial">
+        <div class="wpss-testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="wpss-testimonial-text">"We switched from a custom solution to WP Sell Services and saved months of development. The order workflow handles edge cases we hadn't thought of."</p>
+        <div class="wpss-testimonial-author">Priya Sharma</div>
+        <div class="wpss-testimonial-role">Agency CTO</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="wpss-cta">
+  <div class="container">
+    <h2>Ready to Launch Your Marketplace?</h2>
+    <p>Join WordPress sites running service marketplaces worldwide. Start free, upgrade when you're ready.</p>
+    <div class="wpss-hero-btns">
+      <a href="https://wordpress.org/plugins/wp-sell-services/" class="wpss-btn-primary">Download Free Plugin &rarr;</a>
+      <a href="https://wbcomdesigns.com/downloads/wp-sell-services-pro/" class="wpss-btn-outline">Upgrade to Pro</a>
+    </div>
+  </div>
+</section>
+
+</div>
+<!-- /wp:html -->

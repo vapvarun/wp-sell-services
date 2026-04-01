@@ -642,8 +642,8 @@ select:invalid {
 	position: sticky;
 	top: var(--wpss-sticky-top, 32px);
 	align-self: start;
-	max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 32px);
-	overflow-y: auto;
+	max-height: none;
+	overflow-y: visible;
 	width: 350px;
 	justify-self: end;
 }

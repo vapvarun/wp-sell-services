@@ -138,11 +138,24 @@ class ServiceArchiveView {
 			$base_args['sort'] = $current_sort;
 		}
 		?>
+		<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+		<?php $current_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : ''; ?>
 		<div class="wpss-filters-bar">
 			<button type="button" class="wpss-btn wpss-btn-outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
 				<span class="wpss-icon-filter"></span>
 				<?php esc_html_e( 'Filters', 'wp-sell-services' ); ?>
 			</button>
+
+			<form class="wpss-search-form" method="get" action="<?php echo esc_url( $base_url ); ?>" role="search">
+				<?php if ( 'default' !== $current_sort ) : ?>
+					<input type="hidden" name="sort" value="<?php echo esc_attr( $current_sort ); ?>">
+				<?php endif; ?>
+				<?php if ( $current_category ) : ?>
+					<input type="hidden" name="category" value="<?php echo esc_attr( (string) $current_category ); ?>">
+				<?php endif; ?>
+				<input type="search" name="search" class="wpss-search-input" value="<?php echo esc_attr( $current_search ); ?>"
+					placeholder="<?php esc_attr_e( 'Search services...', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Search services', 'wp-sell-services' ); ?>">
+			</form>
 
 			<div class="wpss-filters-bar-controls">
 				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
@@ -552,6 +565,11 @@ class ServiceArchiveView {
 		$query->set( 'meta_query', $meta_query );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
+		// Keyword search.
+		if ( isset( $_GET['search'] ) && '' !== trim( (string) $_GET['search'] ) ) {
+			$query->set( 's', sanitize_text_field( wp_unslash( $_GET['search'] ) ) );
+		}
 
 		// Vendor filter (from "View all services" link on vendor profile).
 		if ( isset( $_GET['vendor'] ) && absint( $_GET['vendor'] ) > 0 ) {

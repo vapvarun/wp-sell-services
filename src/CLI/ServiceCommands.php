@@ -394,6 +394,7 @@ class ServiceCommands extends WP_CLI_Command {
 
 			update_post_meta( $post_id, '_wpss_starting_price', min( $prices ) );
 			update_post_meta( $post_id, '_wpss_fastest_delivery', min( $delivery ) );
+			update_post_meta( $post_id, '_wpss_delivery_days', min( $delivery ) );
 			update_post_meta( $post_id, '_wpss_max_revisions', max( $revisions ) );
 		}
 
@@ -673,6 +674,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 25,
 						'delivery_days' => 3,
 						'revisions'     => 3,
+						'features'      => array( '1 logo concept', 'PNG format', 'Source file' ),
 					),
 					array(
 						'name'          => 'Standard',
@@ -680,6 +682,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 75,
 						'delivery_days' => 5,
 						'revisions'     => -1,
+						'features'      => array( '3 logo concepts', 'All vector formats', 'Transparent PNG', 'Unlimited revisions', 'Source file' ),
 					),
 					array(
 						'name'          => 'Premium',
@@ -687,6 +690,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 150,
 						'delivery_days' => 7,
 						'revisions'     => -1,
+						'features'      => array( '5 logo concepts', 'All vector formats', 'Brand guidelines PDF', 'Social media kit', 'Stationery mockups', 'Unlimited revisions', 'Source file' ),
 					),
 				),
 				'faqs'         => array(
@@ -764,6 +768,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 30,
 						'delivery_days' => 2,
 						'revisions'     => 2,
+						'features'      => array( '5 custom posts', '1 platform', 'PNG format' ),
 					),
 					array(
 						'name'          => 'Growth',
@@ -771,6 +776,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 80,
 						'delivery_days' => 4,
 						'revisions'     => 3,
+						'features'      => array( '15 custom posts', '2 platforms', '5 story templates', 'Editable source files' ),
 					),
 					array(
 						'name'          => 'Business',
@@ -778,6 +784,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 180,
 						'delivery_days' => 7,
 						'revisions'     => -1,
+						'features'      => array( '30 custom posts', 'All platforms', 'Content calendar', 'Reels covers', 'Editable source files', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -844,6 +851,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 150,
 						'delivery_days' => 5,
 						'revisions'     => 2,
+						'features'      => array( '3 screen designs', 'Component library', 'Figma source file' ),
 					),
 					array(
 						'name'          => 'Standard',
@@ -851,6 +859,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 350,
 						'delivery_days' => 7,
 						'revisions'     => 3,
+						'features'      => array( '8 screen designs', 'Interactive prototype', 'Component library', 'Figma source file', 'Responsive layouts' ),
 					),
 					array(
 						'name'          => 'Premium',
@@ -858,6 +867,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 800,
 						'delivery_days' => 14,
 						'revisions'     => -1,
+						'features'      => array( '15+ screen designs', 'Full design system', 'Interactive prototype', 'Developer handoff', 'Responsive layouts', 'User flow diagrams', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -937,6 +947,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 50,
 						'delivery_days' => 3,
 						'revisions'     => 1,
+						'features'      => array( 'Technical SEO audit', 'Prioritized report', 'Action checklist' ),
 					),
 					array(
 						'name'          => 'Full Strategy',
@@ -944,6 +955,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 150,
 						'delivery_days' => 5,
 						'revisions'     => 2,
+						'features'      => array( 'Technical SEO audit', '50 keyword targets', '3-month content plan', 'On-page optimization', 'Action checklist' ),
 					),
 					array(
 						'name'          => 'Enterprise',
@@ -951,6 +963,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 400,
 						'delivery_days' => 10,
 						'revisions'     => -1,
+						'features'      => array( 'Full SEO roadmap', 'Competitor analysis', '100+ keyword targets', 'Content plan', 'Monthly consultation', 'Backlink strategy', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -1028,6 +1041,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 100,
 						'delivery_days' => 5,
 						'revisions'     => 2,
+						'features'      => array( 'Campaign setup', 'Keyword research', 'Ad group structure', 'Conversion tracking' ),
 					),
 					array(
 						'name'          => 'Monthly',
@@ -1035,6 +1049,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 300,
 						'delivery_days' => 30,
 						'revisions'     => -1,
+						'features'      => array( 'Campaign setup', 'Weekly optimization', 'Bid management', 'Performance reports', 'Ad copy testing' ),
 					),
 					array(
 						'name'          => 'Quarterly',
@@ -1042,6 +1057,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 800,
 						'delivery_days' => 90,
 						'revisions'     => -1,
+						'features'      => array( 'Campaign setup', '3 months management', 'A/B ad testing', 'Remarketing setup', 'Advanced tracking', 'Monthly reports', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -1114,6 +1130,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 150,
 						'delivery_days' => 5,
 						'revisions'     => 2,
+						'features'      => array( '1-page website', 'Contact form', 'Mobile responsive', 'Basic SEO setup' ),
 					),
 					array(
 						'name'          => 'Business Site',
@@ -1121,6 +1138,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 400,
 						'delivery_days' => 10,
 						'revisions'     => 3,
+						'features'      => array( '5-page website', 'Blog setup', 'SEO optimization', 'Contact forms', 'Mobile responsive', 'Speed optimization' ),
 					),
 					array(
 						'name'          => 'E-commerce',
@@ -1128,6 +1146,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 800,
 						'delivery_days' => 14,
 						'revisions'     => -1,
+						'features'      => array( 'WooCommerce store', 'Up to 50 products', 'Payment gateway setup', 'Blog setup', 'SEO optimization', 'Mobile responsive', 'Speed optimization', 'Admin training' ),
 					),
 				),
 				'faqs'         => array(
@@ -1210,6 +1229,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 30,
 						'delivery_days' => 1,
 						'revisions'     => 1,
+						'features'      => array( '1 bug fix', 'Full backup', 'Fix report' ),
 					),
 					array(
 						'name'          => 'Full Debug',
@@ -1217,6 +1237,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 80,
 						'delivery_days' => 2,
 						'revisions'     => 2,
+						'features'      => array( 'Up to 5 fixes', 'Full site audit', 'Full backup', 'Plugin conflict check', 'Fix report' ),
 					),
 					array(
 						'name'          => 'Site Rescue',
@@ -1224,6 +1245,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 200,
 						'delivery_days' => 3,
 						'revisions'     => -1,
+						'features'      => array( 'Unlimited fixes', 'Malware removal', 'Security hardening', 'Performance tuning', 'Full backup', 'Plugin conflict check', 'Detailed report' ),
 					),
 				),
 				'faqs'         => array(
@@ -1294,6 +1316,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 100,
 						'delivery_days' => 3,
 						'revisions'     => 2,
+						'features'      => array( '1 React component', 'Unit tests', 'Source code' ),
 					),
 					array(
 						'name'          => 'Module',
@@ -1301,6 +1324,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 350,
 						'delivery_days' => 7,
 						'revisions'     => 3,
+						'features'      => array( 'Full feature module', 'API integration', 'State management', 'Unit tests', 'Source code' ),
 					),
 					array(
 						'name'          => 'Full App',
@@ -1308,6 +1332,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 1500,
 						'delivery_days' => 21,
 						'revisions'     => -1,
+						'features'      => array( 'Complete web app', 'Authentication system', 'Database setup', 'API integration', 'Deployment config', 'Unit tests', 'Source code', 'Documentation' ),
 					),
 				),
 				'faqs'         => array(
@@ -1387,6 +1412,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 50,
 						'delivery_days' => 3,
 						'revisions'     => 1,
+						'features'      => array( 'Up to 10 minutes', 'Cuts and transitions', 'Background music' ),
 					),
 					array(
 						'name'          => 'Standard',
@@ -1394,6 +1420,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 120,
 						'delivery_days' => 5,
 						'revisions'     => 2,
+						'features'      => array( 'Up to 20 minutes', 'Text overlays', 'Motion graphics', 'Color grading', 'Background music' ),
 					),
 					array(
 						'name'          => 'Premium',
@@ -1401,6 +1428,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 250,
 						'delivery_days' => 7,
 						'revisions'     => -1,
+						'features'      => array( 'Up to 30 minutes', 'Cinematic editing', 'Custom thumbnail', 'End screen design', 'Color grading', 'Sound design', 'Motion graphics', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -1478,6 +1506,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 150,
 						'delivery_days' => 7,
 						'revisions'     => 2,
+						'features'      => array( '30-second video', 'Professional voiceover', 'Background music', 'HD delivery' ),
 					),
 					array(
 						'name'          => '60 Seconds',
@@ -1485,6 +1514,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 280,
 						'delivery_days' => 10,
 						'revisions'     => 3,
+						'features'      => array( '60-second video', 'Custom illustrations', 'Professional voiceover', 'Background music', 'HD delivery' ),
 					),
 					array(
 						'name'          => '90 Seconds',
@@ -1492,6 +1522,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 450,
 						'delivery_days' => 14,
 						'revisions'     => -1,
+						'features'      => array( '90-second video', 'Custom illustrations', 'Storyboard included', 'Professional voiceover', 'Background music', 'Full HD delivery', 'Source files', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -1571,6 +1602,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 25,
 						'delivery_days' => 2,
 						'revisions'     => 1,
+						'features'      => array( '500-word article', '1 target keyword', 'Meta description' ),
 					),
 					array(
 						'name'          => '1000 Words',
@@ -1578,6 +1610,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 50,
 						'delivery_days' => 3,
 						'revisions'     => 2,
+						'features'      => array( '1000-word article', 'SEO optimization', 'Image suggestions', 'Internal linking', 'Meta description' ),
 					),
 					array(
 						'name'          => '2000 Words',
@@ -1585,6 +1618,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 100,
 						'delivery_days' => 5,
 						'revisions'     => -1,
+						'features'      => array( '2000-word article', 'In-depth research', 'SEO optimization', 'FAQ schema markup', 'Image suggestions', 'Internal linking', 'Source citations', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -1662,6 +1696,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 20,
 						'delivery_days' => 1,
 						'revisions'     => 1,
+						'features'      => array( 'Up to 500 words', 'Proofreading', 'Native speaker' ),
 					),
 					array(
 						'name'          => 'Standard',
@@ -1669,6 +1704,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 60,
 						'delivery_days' => 3,
 						'revisions'     => 2,
+						'features'      => array( 'Up to 2000 words', 'Glossary consistency', 'Proofreading', 'Native speaker', 'Formatting preserved' ),
 					),
 					array(
 						'name'          => 'Premium',
@@ -1676,6 +1712,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 120,
 						'delivery_days' => 5,
 						'revisions'     => -1,
+						'features'      => array( 'Up to 5000 words', 'Full localization', 'Glossary consistency', 'Proofreading', 'Native speaker', 'Formatting preserved', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
@@ -1748,6 +1785,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 50,
 						'delivery_days' => 7,
 						'revisions'     => 0,
+						'features'      => array( '5 hours of support', 'Task list management', 'Email handling' ),
 					),
 					array(
 						'name'          => '10 Hours',
@@ -1755,6 +1793,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 90,
 						'delivery_days' => 7,
 						'revisions'     => 0,
+						'features'      => array( '10 hours of support', 'Priority response', 'Task list management', 'Email handling', 'Calendar scheduling' ),
 					),
 					array(
 						'name'          => '20 Hours',
@@ -1762,6 +1801,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 160,
 						'delivery_days' => 14,
 						'revisions'     => 0,
+						'features'      => array( '20 hours of support', 'Dedicated availability', 'Weekly progress reports', 'Task list management', 'Email handling', 'Calendar scheduling', 'Data entry' ),
 					),
 				),
 				'faqs'         => array(
@@ -1832,6 +1872,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 150,
 						'delivery_days' => 5,
 						'revisions'     => 2,
+						'features'      => array( '10-page plan', 'Executive summary', 'Basic financials' ),
 					),
 					array(
 						'name'          => 'Standard',
@@ -1839,6 +1880,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 350,
 						'delivery_days' => 10,
 						'revisions'     => 3,
+						'features'      => array( '25-page plan', 'Market research', '3-year projections', 'Competitor analysis', 'Executive summary' ),
 					),
 					array(
 						'name'          => 'Investor Ready',
@@ -1846,6 +1888,7 @@ class ServiceCommands extends WP_CLI_Command {
 						'price'         => 700,
 						'delivery_days' => 14,
 						'revisions'     => -1,
+						'features'      => array( '40+ page plan', 'Pitch deck slides', 'Financial model (Excel)', 'Market research', '5-year projections', 'Competitor analysis', 'Executive summary', 'Unlimited revisions' ),
 					),
 				),
 				'faqs'         => array(
