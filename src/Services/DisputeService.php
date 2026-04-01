@@ -221,9 +221,9 @@ class DisputeService {
 			 * @param int   $dispute_id Dispute ID.
 			 * @param int   $order_id   Order ID.
 			 * @param int   $opened_by  User ID.
-			 * @param array $data       Dispute data.
+			 * @param array $dispute_data Dispute data.
 			 */
-			do_action( 'wpss_dispute_opened', $dispute_id, $order_id, $opened_by, $data );
+			do_action( 'wpss_dispute_opened', $dispute_id, $order_id, $opened_by, $dispute_data );
 
 			return $dispute_id;
 		}

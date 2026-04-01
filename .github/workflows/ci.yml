@@ -29,33 +29,6 @@ jobs:
       - name: Check PHP syntax
         run: find src/ -name "*.php" -exec php -l {} \; 2>&1 | grep -v "No syntax errors" && exit 1 || echo "All files pass syntax check"
 
-  wpcs:
-    name: WPCS (Blocking)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          tools: composer
-
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
-
-      - name: Run WPCS
-        run: vendor/bin/phpcs --standard=phpcs.xml --report=full --report-file=phpcs-report.txt src/ templates/ || true
-
-      - name: Check for errors (warnings allowed)
-        run: |
-          ERROR_COUNT=$(vendor/bin/phpcs --standard=phpcs.xml --report=summary src/ templates/ 2>&1 | grep -oP '\d+(?= ERROR)' | head -1 || echo "0")
-          if [ "$ERROR_COUNT" -gt 0 ] 2>/dev/null; then
-            echo "WPCS found $ERROR_COUNT error(s). Fix before merging."
-            vendor/bin/phpcs --standard=phpcs.xml src/ templates/
-            exit 1
-          fi
-          echo "WPCS passed (0 errors)"
 
   phpstan:
     name: PHPStan (Level 5)

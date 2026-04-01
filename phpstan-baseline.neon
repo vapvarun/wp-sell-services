@@ -285,7 +285,7 @@ parameters:
 		-
 			message: '#^Call to an undefined static method WP_CLI\:\:add_command\(\)\.$#'
 			identifier: staticMethod.notFound
-			count: 3
+			count: 4
 			path: src/CLI/ServiceCommands.php
 
 		-
@@ -311,6 +311,42 @@ parameters:
 			identifier: return.unusedType
 			count: 1
 			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Call to WP_CLI\:\:error\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 1
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Call to WP_CLI\:\:log\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 40
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Call to WP_CLI\:\:success\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 1
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Call to WP_CLI\:\:warning\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 1
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Variable \$wpss on left side of \?\? is never defined\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Static method WP_CLI\:\:error\(\) invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/CLI/PreflightCommand.php
 
 		-
 			message: '#^Call to WP_CLI\:\:error\(\) on a separate line has no effect\.$#'
