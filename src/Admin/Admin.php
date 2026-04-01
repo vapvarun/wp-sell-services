@@ -591,6 +591,17 @@ class Admin {
 		);
 		wp_style_add_data( 'wpss-admin', 'rtl', 'replace' );
 
+		// Settings page CSS (loaded only on settings page).
+		if ( 'sell-services_page_wpss-settings' === $hook ) {
+			wp_enqueue_style(
+				'wpss-admin-settings',
+				\WPSS_PLUGIN_URL . 'assets/css/admin-settings.css',
+				array( 'wpss-admin' ),
+				\WPSS_VERSION
+			);
+			wp_style_add_data( 'wpss-admin-settings', 'rtl', 'replace' );
+		}
+
 		// Color picker for category taxonomy.
 		if ( $is_taxonomy ) {
 			wp_enqueue_style( 'wp-color-picker' );
@@ -642,6 +653,117 @@ class Admin {
 				),
 			)
 		);
+
+		// Lucide icons — all plugin admin pages.
+		wp_enqueue_script(
+			'lucide',
+			\WPSS_PLUGIN_URL . 'assets/js/vendor/lucide.min.js',
+			array(),
+			'0.460.0',
+			true
+		);
+
+		wp_enqueue_script(
+			'wpss-admin-icons',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-icons.js',
+			array( 'lucide' ),
+			\WPSS_VERSION,
+			true
+		);
+
+		// Settings page scripts.
+		if ( 'sell-services_page_wpss-settings' === $hook ) {
+			wp_enqueue_script(
+				'wpss-admin-toast',
+				\WPSS_PLUGIN_URL . 'assets/js/admin-toast.js',
+				array(),
+				\WPSS_VERSION,
+				true
+			);
+
+			wp_enqueue_script(
+				'wpss-admin-settings-nav',
+				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-nav.js',
+				array( 'wpss-admin-toast' ),
+				\WPSS_VERSION,
+				true
+			);
+
+			// Pages tab: create page AJAX.
+			wp_enqueue_script(
+				'wpss-admin-settings-pages',
+				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-pages.js',
+				array( 'jquery', 'wpss-admin-toast' ),
+				\WPSS_VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'wpss-admin-settings-pages',
+				'wpssSettingsPages',
+				array(
+					'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+					'homeUrl'        => home_url( '/' ),
+					'nonce'          => wp_create_nonce( 'wpss_settings_nonce' ),
+					'noTitle'        => __( 'Page title not defined.', 'wp-sell-services' ),
+					'confirmCreate'  => __( 'Create a new page titled', 'wp-sell-services' ),
+					'creating'       => __( 'Creating...', 'wp-sell-services' ),
+					'existingLinked' => __( 'Existing Page Linked!', 'wp-sell-services' ),
+					'pageCreated'    => __( 'Page Created!', 'wp-sell-services' ),
+					'createPage'     => __( 'Create Page', 'wp-sell-services' ),
+					'createFailed'   => __( 'Failed to create page.', 'wp-sell-services' ),
+					'ajaxError'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+				)
+			);
+
+			// Emails tab: test email AJAX.
+			wp_enqueue_script(
+				'wpss-admin-settings-emails',
+				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-emails.js',
+				array( 'jquery' ),
+				\WPSS_VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'wpss-admin-settings-emails',
+				'wpssSettingsEmails',
+				array(
+					'sending'   => __( 'Sending...', 'wp-sell-services' ),
+					'sendTest'  => __( 'Send Test Email', 'wp-sell-services' ),
+					'ajaxError' => __( 'Request failed. Please try again.', 'wp-sell-services' ),
+				)
+			);
+
+			// Advanced tab: demo content AJAX.
+			wp_enqueue_script(
+				'wpss-admin-settings-demo',
+				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-demo.js',
+				array( 'jquery' ),
+				\WPSS_VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'wpss-admin-settings-demo',
+				'wpssSettingsDemo',
+				array(
+					'confirmImport' => __( 'Import demo content? This will create sample services, vendors, and categories.', 'wp-sell-services' ),
+					'importing'     => __( 'Importing...', 'wp-sell-services' ),
+					'pleaseWait'    => __( 'Please wait, this may take a moment...', 'wp-sell-services' ),
+					'importSuccess' => __( 'Demo content imported successfully!', 'wp-sell-services' ),
+					'importFailed'  => __( 'Import failed.', 'wp-sell-services' ),
+					'importBtn'     => __( 'Import Demo Content', 'wp-sell-services' ),
+					'confirmDelete' => __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories.', 'wp-sell-services' ),
+					'deleting'      => __( 'Deleting...', 'wp-sell-services' ),
+					'removing'      => __( 'Removing demo content...', 'wp-sell-services' ),
+					'deleteSuccess' => __( 'Demo content deleted successfully!', 'wp-sell-services' ),
+					'deleteFailed'  => __( 'Deletion failed.', 'wp-sell-services' ),
+					'deleteBtn'     => __( 'Delete Demo Content', 'wp-sell-services' ),
+					'ajaxError'     => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+				)
+			);
+		}
 
 		// Color picker for category taxonomy.
 		if ( $is_taxonomy ) {

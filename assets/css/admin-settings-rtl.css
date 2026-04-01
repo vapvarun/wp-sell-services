@@ -1,0 +1,66 @@
+/**
+ * WP Sell Services - Settings Page RTL Styles
+ *
+ * @package WPSellServices
+ * @since   2.0.0
+ */
+
+/* Sidebar on right side for RTL */
+.wpss-settings-wrap {
+	direction: rtl;
+}
+
+.wpss-settings-sidebar {
+	border-right: none;
+	border-left: 1px solid var(--wpss-admin-border);
+}
+
+/* Nav item active indicator on right */
+.wpss-settings-nav-item {
+	border-left: none;
+	border-right: 3px solid transparent;
+}
+
+.wpss-settings-nav-item.is-active {
+	border-left-color: transparent;
+	border-right-color: var(--wpss-admin-primary);
+}
+
+/* Pro badge margin flip */
+.wpss-settings-nav-item .wpss-pro-badge {
+	margin-left: 0;
+	margin-right: auto;
+}
+
+/* Card head badge layout */
+.wpss-card__head--with-badge {
+	direction: rtl;
+}
+
+/* Form table label alignment */
+.wpss-card .form-table th {
+	padding: 16px 0 16px 10px;
+}
+
+/* Section footer alignment */
+.wpss-settings-section__footer {
+	text-align: left;
+}
+
+/* Responsive RTL */
+@media screen and (max-width: 782px) {
+	.wpss-settings-sidebar {
+		border-left: none;
+		border-bottom: 1px solid var(--wpss-admin-border);
+	}
+
+	.wpss-settings-nav-item {
+		border-right: none;
+		border-bottom: 3px solid transparent;
+	}
+
+	.wpss-settings-nav-item.is-active {
+		border-right-color: transparent;
+		border-bottom-color: var(--wpss-admin-primary);
+	}
+}

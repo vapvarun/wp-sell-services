@@ -35,19 +35,6 @@ class Settings {
 	 */
 	private ?array $tab_groups = null;
 
-	/**
-	 * Whether the unified section styles have been rendered.
-	 *
-	 * @var bool
-	 */
-	private static bool $sections_styles_rendered = false;
-
-	/**
-	 * Whether the unified section script has been rendered.
-	 *
-	 * @var bool
-	 */
-	private static bool $sections_script_rendered = false;
 
 	/**
 	 * Constructor.
@@ -160,36 +147,36 @@ class Settings {
 	}
 
 	/**
-	 * Render tab styles for visual grouping.
+	 * Lucide icon map for sidebar nav items.
 	 *
-	 * @return void
+	 * @return array<string, string> Tab slug => Lucide icon name.
 	 */
-	private function render_tab_styles(): void {
-		?>
-		<style>
-			.wpss-nav-tabs {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0;
-				margin-bottom: 20px;
-			}
-			.wpss-nav-tabs .nav-tab {
-				margin-left: 0;
-				margin-right: 0;
-			}
-			.wpss-tab-separator {
-				display: inline-block;
-				width: 1px;
-				height: 28px;
-				background: #c3c4c7;
-				margin: 0 8px;
-				vertical-align: bottom;
-			}
-			.wpss-nav-tabs .nav-tab:first-child {
-				margin-left: 0;
-			}
-		</style>
-		<?php
+	private function get_icon_map(): array {
+		return array(
+			'general'  => 'settings',
+			'pages'    => 'layout-template',
+			'payments' => 'credit-card',
+			'gateways' => 'wallet',
+			'vendor'   => 'store',
+			'orders'   => 'shopping-cart',
+			'emails'   => 'mail',
+			'advanced' => 'wrench',
+		);
+	}
+
+	/**
+	 * Group labels for sidebar nav.
+	 *
+	 * @return array<string, string> Group slug => Display label.
+	 */
+	private function get_group_labels(): array {
+		return array(
+			'setup'      => __( 'SETUP', 'wp-sell-services' ),
+			'business'   => __( 'BUSINESS', 'wp-sell-services' ),
+			'operations' => __( 'OPERATIONS', 'wp-sell-services' ),
+			'pro'        => __( 'EXTENSIONS', 'wp-sell-services' ),
+			'system'     => __( 'SYSTEM', 'wp-sell-services' ),
+		);
 	}
 
 	/**
@@ -1075,6 +1062,9 @@ class Settings {
 	/**
 	 * Render settings page.
 	 *
+	 * Uses Pattern A (sidebar + hash routing). All tab sections are rendered
+	 * at once; JavaScript shows/hides sections based on the URL hash.
+	 *
 	 * @return void
 	 */
 	public function render(): void {
@@ -1082,192 +1072,189 @@ class Settings {
 			return;
 		}
 
-		$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
 		$this->init_tabs();
 
-		if ( ! array_key_exists( $active_tab, $this->tabs ) ) {
-			$active_tab = 'general';
-		}
-
-		// Build grouped tabs for rendering.
-		$grouped_tabs = $this->get_grouped_tabs();
-
+		$core_tabs = array( 'general', 'payments', 'gateways', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
 		?>
-		<div class="wrap wpss-settings">
-			<h1><?php echo esc_html__( 'WP Sell Services Settings', 'wp-sell-services' ); ?></h1>
+		<div class="wrap wpss-admin">
+			<div class="wpss-page-header">
+				<div class="wpss-page-header__left">
+					<h1 class="wpss-page-header__title">
+						<i data-lucide="settings" class="wpss-icon--sm"></i>
+						<?php echo esc_html__( 'WP Sell Services Settings', 'wp-sell-services' ); ?>
+					</h1>
+					<p class="wpss-page-header__desc">
+						<?php echo esc_html__( 'Configure your service marketplace.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
+			</div>
 
-			<?php $this->render_tab_styles(); ?>
+			<div class="wpss-settings-wrap">
+				<?php $this->render_sidebar(); ?>
 
-			<nav class="nav-tab-wrapper wpss-nav-tabs">
-				<?php
-				$group_index = 0;
-				foreach ( $grouped_tabs as $group_name => $group_tabs ) :
-					if ( empty( $group_tabs ) ) {
-						continue;
+				<div class="wpss-settings-content">
+					<?php
+					foreach ( $this->tabs as $tab_key => $tab_label ) {
+						echo '<div class="wpss-settings-section" id="section-' . esc_attr( $tab_key ) . '">';
+						$this->render_tab_content( $tab_key, $core_tabs );
+						echo '</div>';
 					}
-					++$group_index;
 					?>
-					<?php if ( $group_index > 1 ) : ?>
-						<span class="wpss-tab-separator"></span>
-					<?php endif; ?>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the sidebar navigation.
+	 *
+	 * @return void
+	 */
+	private function render_sidebar(): void {
+		$grouped_tabs = $this->get_grouped_tabs();
+		$group_labels = $this->get_group_labels();
+		$icon_map     = $this->get_icon_map();
+		$core_tabs    = array( 'general', 'pages', 'payments', 'gateways', 'vendor', 'orders', 'emails', 'advanced' );
+		?>
+		<div class="wpss-settings-sidebar">
+			<div class="wpss-settings-sidebar__brand">
+				<span class="wpss-settings-sidebar__logo">
+					<i data-lucide="shopping-bag"></i>
+				</span>
+				<div>
+					<strong><?php echo esc_html( wpss_get_platform_name() ); ?></strong>
+					<span><?php esc_html_e( 'SETTINGS', 'wp-sell-services' ); ?></span>
+				</div>
+			</div>
+
+			<?php foreach ( $grouped_tabs as $group_name => $group_tabs ) : ?>
+				<?php if ( empty( $group_tabs ) ) : ?>
+					<?php continue; ?>
+				<?php endif; ?>
+				<div class="wpss-settings-nav-group">
+					<span class="wpss-settings-nav-group__label">
+						<?php echo esc_html( $group_labels[ $group_name ] ?? strtoupper( $group_name ) ); ?>
+					</span>
 					<?php foreach ( $group_tabs as $tab_key => $tab_label ) : ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings&tab=' . $tab_key ) ); ?>"
-							class="nav-tab <?php echo $active_tab === $tab_key ? 'nav-tab-active' : ''; ?>"
-							data-group="<?php echo esc_attr( $group_name ); ?>">
+						<?php
+						$icon   = $icon_map[ $tab_key ] ?? 'circle';
+						$is_pro = ! in_array( $tab_key, $core_tabs, true );
+						?>
+						<a class="wpss-settings-nav-item"
+							href="#<?php echo esc_attr( $tab_key ); ?>"
+							data-section="<?php echo esc_attr( $tab_key ); ?>">
+							<i data-lucide="<?php echo esc_attr( $icon ); ?>"></i>
 							<?php echo esc_html( $tab_label ); ?>
+							<?php if ( $is_pro ) : ?>
+								<span class="wpss-pro-badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
+							<?php endif; ?>
 						</a>
 					<?php endforeach; ?>
-				<?php endforeach; ?>
-			</nav>
+				</div>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
 
-			<?php
-			// Always output unified section styles so Pro/extension tabs have them available.
-			$this->render_tab_sections_styles();
-			?>
+	/**
+	 * Render the content for a single tab.
+	 *
+	 * @param string        $tab_key   Tab identifier.
+	 * @param array<string> $core_tabs List of core (non-Pro) tab slugs.
+	 * @return void
+	 */
+	private function render_tab_content( string $tab_key, array $core_tabs ): void {
+		if ( ! in_array( $tab_key, $core_tabs, true ) ) {
+			/**
+			 * Fires when rendering a custom settings tab added by Pro or extensions.
+			 *
+			 * @since 1.2.0
+			 *
+			 * @param string $tab_key The active tab slug.
+			 */
+			do_action( 'wpss_settings_tab_' . $tab_key );
+			return;
+		}
 
-			<?php
-			// Check if this is a Pro/extension tab (not a core tab).
-			$core_tabs = array( 'general', 'payments', 'gateways', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
-
-			if ( ! in_array( $active_tab, $core_tabs, true ) ) {
-				/**
-				 * Fires when rendering a custom settings tab added by Pro or extensions.
-				 *
-				 * @since 1.2.0
-				 *
-				 * @param string $active_tab The active tab slug.
-				 */
-				do_action( 'wpss_settings_tab_' . $active_tab );
-			} elseif ( 'payments' === $active_tab ) {
+		switch ( $tab_key ) {
+			case 'general':
+				$this->render_general_tab();
+				break;
+			case 'pages':
+				$this->render_pages_tab();
+				break;
+			case 'payments':
 				$this->render_payments_tab();
-			} elseif ( 'gateways' === $active_tab ) {
+				break;
+			case 'gateways':
 				$this->render_gateways_tab();
-			} elseif ( 'advanced' === $active_tab ) {
-				$this->render_advanced_tab();
-			} elseif ( 'vendor' === $active_tab ) {
+				break;
+			case 'vendor':
 				$this->render_vendor_tab();
-			} elseif ( 'orders' === $active_tab ) {
+				break;
+			case 'orders':
 				$this->render_orders_tab();
-			} elseif ( 'emails' === $active_tab ) {
+				break;
+			case 'emails':
 				$this->render_emails_tab();
-			} else {
-				// Standard tabs with single option group (general, pages).
-				?>
+				break;
+			case 'advanced':
+				$this->render_advanced_tab();
+				break;
+		}
+	}
+
+	/**
+	 * Render the General tab wrapped in a card.
+	 *
+	 * @return void
+	 */
+	private function render_general_tab(): void {
+		?>
+		<div class="wpss-card">
+			<div class="wpss-card__head">
+				<p class="wpss-card__title"><?php esc_html_e( 'GENERAL SETTINGS', 'wp-sell-services' ); ?></p>
+				<p class="wpss-card__desc"><?php esc_html_e( 'Configure general platform settings.', 'wp-sell-services' ); ?></p>
+			</div>
+			<div class="wpss-card__body">
 				<form method="post" action="options.php">
 					<?php
-					switch ( $active_tab ) {
-						case 'pages':
-							settings_fields( 'wpss_pages' );
-							do_settings_sections( 'wpss_pages' );
-							break;
-
-						default:
-							settings_fields( 'wpss_general' );
-							do_settings_sections( 'wpss_general' );
-							break;
-					}
-
-					submit_button();
+					settings_fields( 'wpss_general' );
+					do_settings_sections( 'wpss_general' );
 					?>
+					<div class="wpss-settings-section__footer">
+						<?php submit_button( __( 'Save General Settings', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+					</div>
 				</form>
-				<?php
-			}
-			?>
+			</div>
+		</div>
+		<?php
+	}
 
-			<?php if ( 'pages' === $active_tab ) : ?>
-			<script>
-			function wpssAdminNotice(msg, type) {
-				type = type || 'error';
-				var cls = type === 'success' ? 'notice-success' : 'notice-error';
-				var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-				jQuery('.wrap h1, .wrap h2').first().after($notice);
-				$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-				setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-			}
-			jQuery(function($) {
-				var ajaxUrl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';
-				var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_settings_nonce' ) ); ?>';
-
-				$('.wpss-create-page').on('click', function() {
-					var $btn = $(this);
-					var field = $btn.data('field');
-					var title = $btn.data('title');
-					var $wrap = $btn.closest('.wpss-page-select-wrap');
-					var $select = $wrap.find('select');
-					var $viewBtn = $wrap.find('.wpss-view-page');
-
-					if (!title) {
-						wpssAdminNotice('<?php echo esc_js( __( 'Page title not defined.', 'wp-sell-services' ) ); ?>', 'error');
-						return;
-					}
-
-					if (!confirm('<?php echo esc_js( __( 'Create a new page titled', 'wp-sell-services' ) ); ?> "' + title + '"?')) {
-						return;
-					}
-
-					$btn.addClass('creating').text('<?php echo esc_js( __( 'Creating...', 'wp-sell-services' ) ); ?>');
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_create_page',
-							nonce: nonce,
-							field: field,
-							title: title
-						},
-						success: function(response) {
-							if (response.success) {
-								// Check if existing page was linked vs new created.
-								var isExisting = response.data.existing || false;
-								var successMsg = isExisting
-									? '<?php echo esc_js( __( 'Existing Page Linked!', 'wp-sell-services' ) ); ?>'
-									: '<?php echo esc_js( __( 'Page Created!', 'wp-sell-services' ) ); ?>';
-
-								// Add new option if not already present, then select it.
-								if ($select.find('option[value="' + response.data.page_id + '"]').length === 0) {
-									$select.append('<option value="' + response.data.page_id + '">' + response.data.title + '</option>');
-								}
-								$select.val(response.data.page_id);
-
-								// Show and update view link
-								$viewBtn.attr('href', response.data.view_url).show();
-
-								// Change button to success state with appropriate message.
-								$btn.removeClass('creating').text(successMsg).addClass('button-primary');
-
-								setTimeout(function() {
-									$btn.removeClass('button-primary').text('<?php echo esc_js( __( 'Create Page', 'wp-sell-services' ) ); ?>');
-								}, 2000);
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Failed to create page.', 'wp-sell-services' ) ); ?>', 'error');
-								$btn.removeClass('creating').text('<?php echo esc_js( __( 'Create Page', 'wp-sell-services' ) ); ?>');
-							}
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.removeClass('creating').text('<?php echo esc_js( __( 'Create Page', 'wp-sell-services' ) ); ?>');
-						}
-					});
-				});
-
-				// Update view link when dropdown changes
-				$('.wpss-page-dropdown').on('change', function() {
-					var $select = $(this);
-					var pageId = $select.val();
-					var $viewBtn = $select.closest('.wpss-page-select-wrap').find('.wpss-view-page');
-
-					if (pageId) {
-						// Construct view URL - we'll just reload to get proper URL
-						$viewBtn.attr('href', '<?php echo esc_url( home_url( '/' ) ); ?>?page_id=' + pageId).show();
-					} else {
-						$viewBtn.hide();
-					}
-				});
-			});
-			</script>
-			<?php endif; ?>
+	/**
+	 * Render the Pages tab wrapped in a card.
+	 *
+	 * @return void
+	 */
+	private function render_pages_tab(): void {
+		?>
+		<div class="wpss-card">
+			<div class="wpss-card__head">
+				<p class="wpss-card__title"><?php esc_html_e( 'PAGE SETTINGS', 'wp-sell-services' ); ?></p>
+				<p class="wpss-card__desc"><?php esc_html_e( 'Assign pages for plugin functionality.', 'wp-sell-services' ); ?></p>
+			</div>
+			<div class="wpss-card__body">
+				<form method="post" action="options.php">
+					<?php
+					settings_fields( 'wpss_pages' );
+					do_settings_sections( 'wpss_pages' );
+					?>
+					<div class="wpss-settings-section__footer">
+						<?php submit_button( __( 'Save Page Settings', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+					</div>
+				</form>
+			</div>
 		</div>
 		<?php
 	}
@@ -1310,7 +1297,7 @@ class Settings {
 	}
 
 	/**
-	 * Render the Gateways tab with accordion sections.
+	 * Render the Gateways tab with card sections.
 	 *
 	 * Consolidates Stripe, PayPal, and Offline payment gateway settings.
 	 *
@@ -1318,173 +1305,90 @@ class Settings {
 	 * @return void
 	 */
 	private function render_gateways_tab(): void {
-		?>
-		<style>
-			.wpss-gateways-accordion {
-				margin-top: 20px;
-			}
-			.wpss-accordion-section {
-				border: 1px solid #e5e5e5;
-				border-radius: 4px;
-				margin-bottom: 10px;
-				background: #fff;
-			}
-			.wpss-accordion-header {
-				display: flex;
-				align-items: center;
-				padding: 15px 20px;
-				cursor: pointer;
-				background: #f9f9f9;
-				border-bottom: 1px solid transparent;
-				transition: background-color 0.2s;
-			}
-			.wpss-accordion-header:hover {
-				background: #f0f0f0;
-			}
-			.wpss-accordion-section.open .wpss-accordion-header {
-				border-bottom-color: #e5e5e5;
-			}
-			.wpss-accordion-icon {
-				margin-right: 10px;
-				transition: transform 0.2s;
-			}
-			.wpss-accordion-section.open .wpss-accordion-icon {
-				transform: rotate(90deg);
-			}
-			.wpss-accordion-header h3 {
-				margin: 0;
-				flex: 1;
-				font-size: 14px;
-			}
-			.wpss-gateway-status {
-				font-size: 12px;
-				padding: 3px 10px;
-				border-radius: 3px;
-			}
-			.wpss-gateway-enabled {
-				background: #d4edda;
-				color: #155724;
-			}
-			.wpss-gateway-disabled {
-				background: #f8d7da;
-				color: #721c24;
-			}
-			.wpss-accordion-content {
-				display: none;
-				padding: 20px;
-			}
-			.wpss-accordion-section.open .wpss-accordion-content {
-				display: block;
-			}
-			.wpss-accordion-content .form-table {
-				margin-top: 10px;
-			}
-		</style>
+		// Test Gateway section (only in debug mode).
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$this->render_gateway_card(
+				'test',
+				__( 'Test Gateway', 'wp-sell-services' ),
+				__( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
+				'wpss_test_gateway_settings'
+			);
+		}
 
-		<div class="wpss-settings-section">
-			<h2><?php esc_html_e( 'Payment Gateways', 'wp-sell-services' ); ?></h2>
-			<p class="description">
-				<?php esc_html_e( 'Configure payment gateways for your marketplace checkout.', 'wp-sell-services' ); ?>
-			</p>
+		// Stripe section.
+		$this->render_gateway_card(
+			'stripe',
+			__( 'Stripe', 'wp-sell-services' ),
+			__( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
+			'wpss_stripe_settings'
+		);
 
-			<div class="wpss-gateways-accordion">
-				<?php
-				// Test Gateway section (only in debug mode).
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					$this->render_gateway_accordion_section(
-						'test',
-						__( 'Test Gateway', 'wp-sell-services' ) . ' <span style="background:#fff3cd;color:#856404;padding:2px 6px;border-radius:3px;font-size:11px;margin-left:8px;">' . esc_html__( 'Dev Only', 'wp-sell-services' ) . '</span>',
-						__( 'Test payment gateway for development. No real charges.', 'wp-sell-services' ),
-						'wpss_test_gateway_settings'
-					);
-				}
+		// PayPal section.
+		$this->render_gateway_card(
+			'paypal',
+			__( 'PayPal', 'wp-sell-services' ),
+			__( 'Accept payments via PayPal.', 'wp-sell-services' ),
+			'wpss_paypal_settings'
+		);
 
-				// Stripe section.
-				$this->render_gateway_accordion_section(
-					'stripe',
-					__( 'Stripe', 'wp-sell-services' ),
-					__( 'Accept credit card payments via Stripe.', 'wp-sell-services' ),
-					'wpss_stripe_settings'
-				);
+		/**
+		 * Fires after core gateways, before Offline.
+		 *
+		 * Pro uses this to add Razorpay and other gateways.
+		 *
+		 * @since 1.1.0
+		 */
+		do_action( 'wpss_gateway_cards', $this );
 
-				// PayPal section.
-				$this->render_gateway_accordion_section(
-					'paypal',
-					__( 'PayPal', 'wp-sell-services' ),
-					__( 'Accept payments via PayPal.', 'wp-sell-services' ),
-					'wpss_paypal_settings'
-				);
+		/**
+		 * Unified gateway sections hook.
+		 *
+		 * Fires alongside the legacy wpss_gateway_cards hook.
+		 * Pro and extensions can use either hook to inject gateway settings.
+		 *
+		 * @since 1.3.0
+		 */
+		do_action( 'wpss_settings_sections_gateways' );
 
-				/**
-				 * Fires after core gateways, before Offline.
-				 *
-				 * Pro uses this to add Razorpay and other gateways.
-				 *
-				 * @since 1.1.0
-				 */
-				do_action( 'wpss_gateway_accordion_sections', $this );
-
-				/**
-				 * Unified gateway sections hook.
-				 *
-				 * Fires alongside the legacy wpss_gateway_accordion_sections hook.
-				 * Pro and extensions can use either hook to inject gateway settings.
-				 *
-				 * @since 1.3.0
-				 */
-				do_action( 'wpss_settings_sections_gateways' );
-
-				// Offline section.
-				$this->render_gateway_accordion_section(
-					'offline',
-					__( 'Offline Payment', 'wp-sell-services' ),
-					__( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
-					'wpss_offline_settings'
-				);
-				?>
-			</div>
-		</div>
-
-		<script>
-		jQuery(function($) {
-			$('.wpss-accordion-header').on('click', function() {
-				var $section = $(this).closest('.wpss-accordion-section');
-				$section.toggleClass('open');
-			});
-		});
-		</script>
-		<?php
+		// Offline section.
+		$this->render_gateway_card(
+			'offline',
+			__( 'Offline Payment', 'wp-sell-services' ),
+			__( 'Accept bank transfer, cash, and other manual payments.', 'wp-sell-services' ),
+			'wpss_offline_settings'
+		);
 	}
 
 	/**
-	 * Render a single gateway accordion section.
+	 * Render a single gateway as a card section.
 	 *
 	 * @since 1.1.0
 	 *
 	 * @param string $gateway_id   Gateway identifier.
-	 * @param string $title        Gateway title (may contain HTML).
+	 * @param string $title        Gateway title.
 	 * @param string $description  Gateway description.
 	 * @param string $option_group Option group for settings_fields().
 	 * @return void
 	 */
-	public function render_gateway_accordion_section( string $gateway_id, string $title, string $description, string $option_group ): void {
+	public function render_gateway_card( string $gateway_id, string $title, string $description, string $option_group ): void {
 		$plugin  = \WPSellServices\Core\Plugin::get_instance();
 		$gateway = $plugin->get_payment_gateway( $gateway_id );
 		$enabled = $gateway && $gateway->is_enabled();
 
-		$status_class = $enabled ? 'wpss-gateway-enabled' : 'wpss-gateway-disabled';
-		$status_text  = $enabled ? __( 'Enabled', 'wp-sell-services' ) : __( 'Disabled', 'wp-sell-services' );
+		$badge_class = $enabled ? 'wpss-gateway-badge--enabled' : 'wpss-gateway-badge--disabled';
+		$badge_text  = $enabled ? __( 'Enabled', 'wp-sell-services' ) : __( 'Disabled', 'wp-sell-services' );
 		?>
-		<div class="wpss-accordion-section" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
-			<div class="wpss-accordion-header">
-				<span class="wpss-accordion-icon dashicons dashicons-arrow-right"></span>
-				<h3><?php echo wp_kses_post( $title ); ?></h3>
-				<span class="wpss-gateway-status <?php echo esc_attr( $status_class ); ?>">
-					<?php echo esc_html( $status_text ); ?>
+		<div class="wpss-card" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
+			<div class="wpss-card__head wpss-card__head--with-badge">
+				<div>
+					<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
+					<p class="wpss-card__desc"><?php echo esc_html( $description ); ?></p>
+				</div>
+				<span class="wpss-gateway-badge <?php echo esc_attr( $badge_class ); ?>">
+					<?php echo esc_html( $badge_text ); ?>
 				</span>
 			</div>
-			<div class="wpss-accordion-content">
-				<p class="description"><?php echo esc_html( $description ); ?></p>
+			<div class="wpss-card__body">
 				<form method="post" action="options.php">
 					<?php
 					settings_fields( $option_group );
@@ -1494,8 +1398,21 @@ class Settings {
 					 * @since 1.0.0
 					 */
 					do_action( "wpss_gateway_settings_{$gateway_id}" );
-					submit_button( __( 'Save Changes', 'wp-sell-services' ) );
 					?>
+					<div class="wpss-settings-section__footer">
+						<?php
+						submit_button(
+							sprintf(
+								/* translators: %s: gateway name */
+								__( 'Save %s Settings', 'wp-sell-services' ),
+								$title
+							),
+							'primary',
+							'submit',
+							false
+						);
+						?>
+					</div>
 				</form>
 			</div>
 		</div>
@@ -1539,9 +1456,6 @@ class Settings {
 
 		// Backward compatibility: fire legacy hook for third-party extensions.
 		do_action( 'wpss_advanced_settings_sections' );
-
-		// Demo content inline JS.
-		$this->render_demo_content_script();
 	}
 
 	/**
@@ -1647,11 +1561,10 @@ class Settings {
 	}
 
 	/**
-	 * Render accordion sections for a settings tab.
+	 * Render card sections for a settings tab.
 	 *
-	 * Provides a unified accordion system for all tabs. Each section gets its
-	 * own collapsible panel with an optional form. Fires a hook after all
-	 * sections so Pro and extensions can inject additional panels.
+	 * Each section gets its own card with an optional form. Fires a hook after
+	 * all sections so Pro and extensions can inject additional cards.
 	 *
 	 * @since 1.3.0
 	 *
@@ -1660,8 +1573,6 @@ class Settings {
 	 * @return void
 	 */
 	public function render_tab_sections( string $tab_id, array $sections ): void {
-		$this->render_tab_sections_styles();
-
 		foreach ( $sections as $section ) {
 			$this->render_single_section( $section );
 		}
@@ -1669,7 +1580,7 @@ class Settings {
 		/**
 		 * Fires after core sections are rendered for a tab.
 		 *
-		 * Pro and extensions use this to inject additional accordion sections
+		 * Pro and extensions use this to inject additional card sections
 		 * into any settings tab.
 		 *
 		 * @since 1.3.0
@@ -1677,23 +1588,20 @@ class Settings {
 		 * @param string $tab_id The tab being rendered.
 		 */
 		do_action( "wpss_settings_sections_{$tab_id}" );
-
-		$this->render_tab_sections_script();
 	}
 
 	/**
-	 * Render a single accordion section.
+	 * Render a single card section.
 	 *
 	 * Used by render_tab_sections() and available publicly so Pro renderers
-	 * can output sections in the unified format.
+	 * can output sections in the unified card format.
 	 *
 	 * Section definition keys:
-	 *   - id           (string) Section identifier for data-section attribute.
-	 *   - title        (string) Section heading text.
+	 *   - id           (string) Section identifier.
+	 *   - title        (string) Section heading text (auto-uppercased in card head).
 	 *   - description  (string) Optional description paragraph.
 	 *   - option_group (string) Option group for settings_fields(). Omit if using callback.
 	 *   - settings_id  (string) Settings ID for do_settings_sections(). Omit if using callback.
-	 *   - collapsed    (bool)   Whether section starts collapsed. Default false.
 	 *   - callback     (callable) Optional custom render callback (replaces default form).
 	 *
 	 * @since 1.3.0
@@ -1702,20 +1610,16 @@ class Settings {
 	 * @return void
 	 */
 	public function render_single_section( array $section ): void {
-		$collapsed     = ! empty( $section['collapsed'] );
-		$section_class = 'wpss-settings-section' . ( $collapsed ? ' collapsed' : '' );
-		$section_id    = $section['id'] ?? '';
+		$title = $section['title'] ?? '';
 		?>
-		<div class="<?php echo esc_attr( $section_class ); ?>" data-section="<?php echo esc_attr( $section_id ); ?>">
-			<div class="wpss-settings-section-header">
-				<h3><?php echo wp_kses_post( $section['title'] ?? '' ); ?></h3>
-				<span class="wpss-settings-section-toggle dashicons dashicons-arrow-down-alt2"></span>
-			</div>
-			<div class="wpss-settings-section-content">
+		<div class="wpss-card" data-section="<?php echo esc_attr( $section['id'] ?? '' ); ?>">
+			<div class="wpss-card__head">
+				<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
 				<?php if ( ! empty( $section['description'] ) ) : ?>
-					<p class="description"><?php echo esc_html( $section['description'] ); ?></p>
+					<p class="wpss-card__desc"><?php echo esc_html( $section['description'] ); ?></p>
 				<?php endif; ?>
-
+			</div>
+			<div class="wpss-card__body">
 				<?php if ( ! empty( $section['callback'] ) ) : ?>
 					<?php call_user_func( $section['callback'] ); ?>
 				<?php elseif ( ! empty( $section['option_group'] ) ) : ?>
@@ -1723,14 +1627,21 @@ class Settings {
 						<?php
 						settings_fields( $section['option_group'] );
 						do_settings_sections( $section['settings_id'] ?? $section['option_group'] );
-						submit_button(
-							sprintf(
-								/* translators: %s: section title */
-								__( 'Save %s', 'wp-sell-services' ),
-								$section['title'] ?? __( 'Changes', 'wp-sell-services' )
-							)
-						);
 						?>
+						<div class="wpss-settings-section__footer">
+							<?php
+							submit_button(
+								sprintf(
+									/* translators: %s: section title */
+									__( 'Save %s', 'wp-sell-services' ),
+									$title ?: __( 'Changes', 'wp-sell-services' )
+								),
+								'primary',
+								'submit',
+								false
+							);
+							?>
+						</div>
 					</form>
 				<?php endif; ?>
 			</div>
@@ -1738,96 +1649,6 @@ class Settings {
 		<?php
 	}
 
-	/**
-	 * Output unified CSS for accordion sections. Rendered once per page load.
-	 *
-	 * Replaces the three separate CSS blocks previously used by payments,
-	 * gateways, and advanced tabs.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @return void
-	 */
-	private function render_tab_sections_styles(): void {
-		if ( self::$sections_styles_rendered ) {
-			return;
-		}
-		self::$sections_styles_rendered = true;
-		?>
-		<style>
-			.wpss-settings-section {
-				background: #fff;
-				border: 1px solid #c3c4c7;
-				margin-bottom: 15px;
-			}
-			.wpss-settings-section-header {
-				padding: 12px 15px;
-				background: #f6f7f7;
-				border-bottom: 1px solid #c3c4c7;
-				cursor: pointer;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-			.wpss-settings-section-header:hover {
-				background: #f0f0f1;
-			}
-			.wpss-settings-section-header h3 {
-				margin: 0;
-				font-size: 14px;
-				font-weight: 600;
-			}
-			.wpss-settings-section-toggle {
-				font-size: 20px;
-				color: #787c82;
-				transition: transform 0.2s;
-			}
-			.wpss-settings-section.collapsed .wpss-settings-section-toggle {
-				transform: rotate(-90deg);
-			}
-			.wpss-settings-section-content {
-				padding: 15px;
-			}
-			.wpss-settings-section.collapsed .wpss-settings-section-content {
-				display: none;
-			}
-			.wpss-settings-section .form-table th {
-				width: 200px;
-			}
-			.wpss-pro-badge {
-				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-				color: #fff;
-				font-size: 11px;
-				padding: 2px 8px;
-				border-radius: 3px;
-				font-weight: 500;
-			}
-		</style>
-		<?php
-	}
-
-	/**
-	 * Output shared accordion toggle JavaScript. Rendered once per page load.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @return void
-	 */
-	private function render_tab_sections_script(): void {
-		if ( self::$sections_script_rendered ) {
-			return;
-		}
-		self::$sections_script_rendered = true;
-		?>
-		<script>
-		jQuery(function($) {
-			$('.wpss-settings-section-header').on('click', function() {
-				$(this).closest('.wpss-settings-section').toggleClass('collapsed');
-			});
-		});
-		</script>
-		<?php
-	}
 
 	/**
 	 * Render the Vendor tab with accordion sections.
@@ -1927,31 +1748,6 @@ class Settings {
 			</button>
 			<span class="wpss-test-email-status" style="margin-left: 10px; display: none;"></span>
 		</div>
-		<script>
-		jQuery(function($) {
-			$('.wpss-send-test-email').on('click', function() {
-				var $btn = $(this);
-				var $status = $btn.siblings('.wpss-test-email-status');
-				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'wp-sell-services' ) ); ?>');
-				$status.hide();
-				$.post(ajaxurl, {
-					action: 'wpss_send_test_email',
-					nonce: $btn.data('nonce')
-				}, function(response) {
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send Test Email', 'wp-sell-services' ) ); ?>');
-					$status.show();
-					if (response.success) {
-						$status.css('color', '#00a32a').text(response.data.message);
-					} else {
-						$status.css('color', '#d63638').text(response.data.message);
-					}
-				}).fail(function() {
-					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send Test Email', 'wp-sell-services' ) ); ?>');
-					$status.show().css('color', '#d63638').text('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>');
-				});
-			});
-		});
-		</script>
 		<?php
 	}
 
@@ -2027,90 +1823,6 @@ class Settings {
 		<?php
 	}
 
-	/**
-	 * Render demo content import/delete JavaScript.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @return void
-	 */
-	private function render_demo_content_script(): void {
-		?>
-		<script>
-		jQuery(function($) {
-			// Demo content import.
-			$('.wpss-import-demo').on('click', function() {
-				var $btn = $(this);
-				var $status = $btn.siblings('.wpss-demo-status');
-
-				if (!confirm('<?php echo esc_js( __( 'Import demo content? This will create sample services, vendors, and categories.', 'wp-sell-services' ) ); ?>')) {
-					return;
-				}
-
-				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Importing...', 'wp-sell-services' ) ); ?>');
-				$status.show().text('<?php echo esc_js( __( 'Please wait, this may take a moment...', 'wp-sell-services' ) ); ?>');
-
-				$.ajax({
-					url: ajaxurl,
-					type: 'POST',
-					data: {
-						action: 'wpss_import_demo_content',
-						nonce: $btn.data('nonce')
-					},
-					success: function(response) {
-						if (response.success) {
-							$status.css('color', '#00a32a').text(response.data.message || '<?php echo esc_js( __( 'Demo content imported successfully!', 'wp-sell-services' ) ); ?>');
-							setTimeout(function() { location.reload(); }, 1500);
-						} else {
-							$status.css('color', '#d63638').text(response.data.message || '<?php echo esc_js( __( 'Import failed.', 'wp-sell-services' ) ); ?>');
-							$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Import Demo Content', 'wp-sell-services' ) ); ?>');
-						}
-					},
-					error: function() {
-						$status.css('color', '#d63638').text('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
-						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Import Demo Content', 'wp-sell-services' ) ); ?>');
-					}
-				});
-			});
-
-			// Demo content delete.
-			$('.wpss-delete-demo').on('click', function() {
-				var $btn = $(this);
-				var $status = $btn.siblings('.wpss-demo-status');
-
-				if (!confirm('<?php echo esc_js( __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories.', 'wp-sell-services' ) ); ?>')) {
-					return;
-				}
-
-				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Deleting...', 'wp-sell-services' ) ); ?>');
-				$status.show().text('<?php echo esc_js( __( 'Removing demo content...', 'wp-sell-services' ) ); ?>');
-
-				$.ajax({
-					url: ajaxurl,
-					type: 'POST',
-					data: {
-						action: 'wpss_delete_demo_content',
-						nonce: $btn.data('nonce')
-					},
-					success: function(response) {
-						if (response.success) {
-							$status.css('color', '#00a32a').text(response.data.message || '<?php echo esc_js( __( 'Demo content deleted successfully!', 'wp-sell-services' ) ); ?>');
-							setTimeout(function() { location.reload(); }, 1500);
-						} else {
-							$status.css('color', '#d63638').text(response.data.message || '<?php echo esc_js( __( 'Deletion failed.', 'wp-sell-services' ) ); ?>');
-							$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Delete Demo Content', 'wp-sell-services' ) ); ?>');
-						}
-					},
-					error: function() {
-						$status.css('color', '#d63638').text('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
-						$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Delete Demo Content', 'wp-sell-services' ) ); ?>');
-					}
-				});
-			});
-		});
-		</script>
-		<?php
-	}
 
 	/**
 	 * Render text field.

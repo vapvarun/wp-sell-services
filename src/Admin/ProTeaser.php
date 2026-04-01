@@ -143,7 +143,7 @@ class ProTeaser {
 	}
 
 	/**
-	 * Render vendor settings teaser accordion section.
+	 * Render vendor settings teaser card section.
 	 *
 	 * Appears after core vendor settings sections.
 	 *
@@ -152,17 +152,14 @@ class ProTeaser {
 	public function render_vendor_settings_teaser(): void {
 		$upgrade_url = admin_url( 'admin.php?page=wpss-upgrade' );
 		?>
-		<div class="wpss-settings-section" data-section="pro-vendor-features">
-			<div class="wpss-settings-section-header">
-				<h3>
-					<?php esc_html_e( 'Advanced Vendor Features', 'wp-sell-services' ); ?>
-					<span class="wpss-pro-teaser__badge" style="margin-left:8px;vertical-align:middle;">
-						<?php esc_html_e( 'Pro', 'wp-sell-services' ); ?>
-					</span>
-				</h3>
-				<span class="wpss-settings-section-toggle dashicons dashicons-arrow-down-alt2"></span>
+		<div class="wpss-card" data-section="pro-vendor-features">
+			<div class="wpss-card__head">
+				<p class="wpss-card__title">
+					<?php esc_html_e( 'ADVANCED VENDOR FEATURES', 'wp-sell-services' ); ?>
+					<span class="wpss-pro-badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
+				</p>
 			</div>
-			<div class="wpss-settings-section-content">
+			<div class="wpss-card__body">
 				<div class="wpss-pro-teaser" style="border-left-width:0;margin:0;">
 					<p class="wpss-pro-teaser__text" style="margin-bottom:16px;">
 						<?php esc_html_e( 'Unlock powerful vendor management tools with Pro:', 'wp-sell-services' ); ?>
