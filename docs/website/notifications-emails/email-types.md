@@ -2,6 +2,8 @@
 
 WP Sell Services sends 26 email notifications to keep buyers, vendors, and admins informed at every stage. Each email can be individually enabled or disabled from your settings.
 
+![Email Notification Settings](../images/settings-emails-tab.png)
+
 ---
 
 ## Emails Vendors Receive

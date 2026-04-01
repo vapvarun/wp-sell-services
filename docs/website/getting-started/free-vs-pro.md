@@ -2,6 +2,8 @@
 
 The free version of WP Sell Services is a complete, production-ready marketplace. The Pro version removes limits and adds advanced tools for growing platforms. Here is exactly what you get with each.
 
+![Landing Page with Free vs Pro Comparison](../images/frontend-landing-page.png)
+
 ## At a Glance
 
 | | Free | Pro |

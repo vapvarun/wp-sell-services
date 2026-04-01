@@ -2,6 +2,8 @@
 
 Need a break? Vacation mode lets you temporarily stop accepting new orders while keeping your profile, services, and seller level intact.
 
+![Vacation Mode Toggle](../images/vendor-vacation-mode.png)
+
 ## How to Turn It On
 
 1. Go to **Dashboard > Profile** (or Settings).

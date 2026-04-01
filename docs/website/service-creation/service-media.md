@@ -2,6 +2,8 @@
 
 Your service gallery is one of the first things buyers look at. Strong images and videos can be the difference between a click and a purchase. This guide covers what you can upload, the limits, and how to make your gallery work hard for you.
 
+![Service Gallery Upload](../images/admin-gallery-upload.png)
+
 ## What You Can Upload
 
 | Media Type | Free | Pro |

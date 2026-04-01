@@ -2,6 +2,8 @@
 
 After activating WP Sell Services, a quick setup gets your marketplace ready for vendors and buyers. Most of this takes under 10 minutes.
 
+![Setup Wizard](../images/admin-setup-wizard.png)
+
 ## Setup Wizard
 
 When you first activate the plugin, the Setup Wizard walks you through the essentials:

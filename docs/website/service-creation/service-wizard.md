@@ -2,6 +2,8 @@
 
 The service creation wizard walks vendors through building a professional service listing in six clear steps. It saves progress automatically, so vendors can start now and finish later.
 
+![Service Creation Wizard](../images/vendor-service-create.png)
+
 ## How It Works
 
 Vendors access the wizard from their Dashboard. The six steps are:

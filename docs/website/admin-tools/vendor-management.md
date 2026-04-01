@@ -2,6 +2,8 @@
 
 The vendor management page gives you a bird's-eye view of everyone selling on your marketplace -- their activity, earnings, ratings, and account status.
 
+![Vendor Management](../images/admin-vendors-list.png)
+
 ## Where to Find It
 
 Go to **WP Sell Services > Vendors** in your WordPress admin. You will see a dashboard with key stats at the top and a searchable list of all vendors below.

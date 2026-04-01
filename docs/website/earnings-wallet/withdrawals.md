@@ -2,6 +2,8 @@
 
 When vendors are ready to get paid, they submit a withdrawal request from their dashboard. Here is how the entire process works -- from request to payment.
 
+![Withdrawal Request](../images/vendor-wallet-withdrawal.png)
+
 ## How Withdrawals Work
 
 1. **Vendor earns money** -- orders are completed and earnings pass the clearance period

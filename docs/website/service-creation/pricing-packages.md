@@ -14,6 +14,8 @@ The Basic package is always required. Standard and Premium are optional -- vendo
 
 Both the free and Pro versions support 3 packages. This structure is the same for everyone.
 
+![Pricing Package Cards](../images/frontend-package-cards.png)
+
 ## What Each Package Includes
 
 Every package has these fields:

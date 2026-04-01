@@ -2,6 +2,8 @@
 
 When vendors request payouts, their requests land in your withdrawal queue. Here is how to review, approve, and complete them.
 
+![Withdrawal Approvals](../images/admin-withdrawals-dashboard.png)
+
 ## Where to Find Withdrawal Requests
 
 Go to **WP Sell Services > Withdrawals** in your WordPress admin. You will see summary cards at the top and a list of all withdrawal requests below.

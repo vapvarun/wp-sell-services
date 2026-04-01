@@ -2,6 +2,8 @@
 
 Keep your marketplace quality high by reviewing vendor services before they go live. When moderation is enabled, every new service submission needs your approval.
 
+![Service Moderation Queue](../images/admin-moderation.png)
+
 ## Turning On Moderation
 
 1. Go to **WP Sell Services > Settings > Vendor**

@@ -2,6 +2,8 @@
 
 Accept credit cards, debit cards, Apple Pay, and Google Pay on your marketplace using Stripe -- the most popular online payment processor.
 
+![Stripe Gateway Settings](../images/settings-gateways-tab.png)
+
 ## What You Need
 
 - A free Stripe account at [stripe.com](https://stripe.com)

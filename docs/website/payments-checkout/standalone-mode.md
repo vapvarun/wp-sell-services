@@ -2,6 +2,8 @@
 
 WP Sell Services includes its own built-in checkout system, so you can run a fully independent marketplace without WooCommerce or any other e-commerce plugin.
 
+![Standalone Checkout](../images/frontend-checkout-flow.png)
+
 ## What Is Standalone Mode?
 
 Standalone mode means your marketplace handles everything on its own -- cart, checkout, payments, and orders. No extra plugins needed. It is the default for the free version and the fastest way to get started.

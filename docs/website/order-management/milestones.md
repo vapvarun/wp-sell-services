@@ -2,6 +2,8 @@
 
 For large projects, milestones let you break the work into smaller phases. Each milestone has its own delivery, approval step, and payment -- so both the buyer and vendor stay aligned throughout the project.
 
+![Order Detail View](../images/admin-order-details.png)
+
 ## Why Use Milestones?
 
 Instead of waiting until the very end to see results, milestones give buyers visibility into progress at every stage. Vendors get paid as they complete each phase, which reduces risk on both sides.

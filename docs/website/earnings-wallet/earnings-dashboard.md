@@ -2,6 +2,8 @@
 
 The earnings dashboard gives every vendor a clear view of their income -- what they have earned, what is available to withdraw, and what is still being processed.
 
+![Vendor Earnings Dashboard](../images/vendor-earnings-dashboard.png)
+
 ## What Vendors See
 
 When a vendor goes to **Dashboard > Earnings**, they see these key numbers at a glance:
