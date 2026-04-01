@@ -95,7 +95,8 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 * 6 Gutenberg blocks (Service Grid, Search, Categories, Featured Services, Seller Card, Buyer Requests)
 * 16 shortcodes for flexible page building
-* 20 REST API controllers with full CRUD operations
+* 21 REST API controllers with 125+ endpoints and full CRUD operations
+* 100% REST coverage for all user-facing features — fully mobile-app ready
 * Batch endpoint for mobile apps (up to 25 requests in single call)
 * Template override system compatible with any theme
 * 100+ action and filter hooks
@@ -295,7 +296,8 @@ Four levels: New Seller (default), Level 1 Seller (5+ orders, 4.0+ rating), Leve
 
 **Developer Features**
 
-* 20 REST API controllers with batch endpoint for mobile apps
+* 21 REST API controllers with 125+ endpoints and batch endpoint for mobile apps
+* 100% REST coverage for all user-facing features
 * 6 Gutenberg blocks and 16 shortcodes
 * Template override system compatible with any theme
 * SEO schema markup with Yoast and RankMath integration
