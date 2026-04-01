@@ -2,18 +2,39 @@
 
 **Version:** 1.0.0
 **Last Updated:** 2026-04-01
+**Total Tests:** 416
 **Site URL:** `http://wss.local`
 **Admin Login:** `http://wss.local/?autologin=1`
 
 ---
 
+## Agent Assignment Map
+
+Phases are grouped so they can be run by **parallel agents**. Each group is independent and can run concurrently.
+
+| Agent | Phases | Focus | Tests | Type |
+|-------|--------|-------|-------|------|
+| **Agent 1: Setup & Vendor** | 1, 2 | Fresh install, wizard, vendor registration, profile, portfolio | ~65 | Backend + Browser |
+| **Agent 2: Service & Buyer** | 3, 4 | Service wizard, packages, addons, gallery, buyer checkout | ~70 | Browser (Frontend) |
+| **Agent 3: Order Lifecycle** | 5 | All 11 status transitions, requirements, messaging, delivery, cancellation | ~65 | Browser (Frontend) |
+| **Agent 4: Reviews & Disputes** | 6 | Ratings, moderation, disputes, evidence, resolution | ~40 | Browser (Frontend) |
+| **Agent 5: Earnings & Requests** | 7, 8 | Commission, withdrawals, auto-payouts, buyer requests, proposals | ~50 | Browser + DB |
+| **Agent 6: Admin Backend** | 9 | Orders, vendors, withdrawals, disputes, settings, moderation, manual orders | ~55 | Browser (Admin) |
+| **Agent 7: Frontend Display** | 10, 12 | Archives, search, vendor pages, blocks, shortcodes, responsive (390px) | ~40 | Browser (Frontend) |
+| **Agent 8: Notifications & Email** | 11 | All 21 email types, in-app notifications | ~25 | DB + Email logs |
+| **Agent 9: REST API** | 13 | All 21 controllers, CRUD, batch endpoint, auth | ~45 | API (curl/REST) |
+| **Agent 10: Edge Cases & Cleanup** | 14, 15 | Validation, permissions, deactivation, uninstall, data cleanup | ~30 | Mixed |
+
+**Prerequisite order:** Agent 1 must complete first (creates users/settings). Agents 2-10 can run in parallel after that.
+
+---
+
 ## How to Use This Checklist
 
-1. Work through each phase sequentially -- they mirror the real user journey.
+1. Work through each phase sequentially within an agent, or assign agents as shown above.
 2. Each item has a checkbox, step description, expected result, and test type.
-3. **Manual** = perform in browser. **Automated** = run via Playwright MCP browser tools.
-4. Mark items with `[x]` as you complete them. Add notes for failures.
-5. After completing all phases, file bugs for any failures with the phase and item number.
+3. Mark items with `[x]` as you complete them. Add notes for failures.
+4. After completing all phases, file bugs for any failures with the phase and item number.
 
 **Test type legend:**
 - **M** = Manual browser test
