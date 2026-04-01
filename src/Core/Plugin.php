@@ -507,7 +507,7 @@ final class Plugin {
 				 * @since 1.3.0
 				 * @param string $slug Default vendor slug.
 				 */
-				$vendor_slug = apply_filters( 'wpss_vendor_slug', 'seller' );
+				$vendor_slug = apply_filters( 'wpss_vendor_slug', 'provider' );
 
 				/**
 				 * Filter the service order URL slug.
