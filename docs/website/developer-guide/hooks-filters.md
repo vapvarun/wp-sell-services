@@ -275,6 +275,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
+| `wpss_vendor_slug` | `$slug` (default `'provider'`) | `Plugin.php`, `functions.php` |
+| `wpss_service_order_slug` | `$slug` (default `'service-order'`) | `Plugin.php`, `functions.php` |
+| `wpss_checkout_slug` | `$slug` (default `'service-checkout'`) | `StandaloneAdapter.php` |
 | `wpss_service_slug` | `$slug` (default `'service'`) | `ServicePostType.php:184` |
 | `wpss_buyer_request_slug` | `$slug` (default `'buyer-request'`) | `BuyerRequestPostType.php:112` |
 | `wpss_service_post_type_args` | `$args` | `ServicePostType.php:106` |

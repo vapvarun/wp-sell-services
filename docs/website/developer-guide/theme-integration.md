@@ -82,9 +82,9 @@ Order URLs route as: `/service-order/{id}/` (view), `/service-order/{id}/require
 
 ### Other Templates
 
-- **Vendor**: `vendor/profile.php` -- Public vendor profile page (served at `/vendor/{username}/`)
+- **Vendor**: `vendor/profile.php` -- Public vendor profile page (served at `/provider/{username}/` by default, customizable via the `wpss_vendor_slug` filter)
 - **Disputes**: `disputes/dispute-view.php` -- Dispute details view
-- **Emails**: `emails/` directory contains 13 HTML templates (new-order, order-completed, order-cancelled, order-in-progress, delivery-ready, dispute-opened, new-message, requirements-submitted, requirements-reminder, revision-requested, seller-level-promotion, email-header, email-footer) plus `emails/plain/` for plain text variants
+- **Emails**: `emails/` directory contains 19 HTML templates -- all theme-overridable at `yourtheme/wp-sell-services/emails/`. Includes: new-order, order-completed, order-cancelled, order-in-progress, delivery-ready, dispute-opened, dispute-escalated, new-message, requirements-submitted, requirements-reminder, revision-requested, seller-level-promotion, moderation-approved, moderation-rejected, moderation-pending, moderation-response, test-email, email-header, email-footer. Plus `emails/plain/` for plain text variants
 
 ## Template Functions
 
@@ -251,15 +251,16 @@ add_action( 'wp_enqueue_scripts', function() {
 
 ## URL Structure
 
-| Pattern | Template |
-|---------|----------|
-| `/vendor/{username}/` | `vendor/profile.php` |
-| `/service-order/{id}/` | `order/order-view.php` |
-| `/service-order/{id}/{action}/` | `order/order-{action}.php` |
-| `/service/` (default CPT slug) | `archive-service.php` |
-| `/buyer-request/` (default CPT slug) | `archive-request.php` |
+| Pattern | Template | Filter |
+|---------|----------|--------|
+| `/provider/{username}/` | `vendor/profile.php` | `wpss_vendor_slug` |
+| `/service-order/{id}/` | `order/order-view.php` | `wpss_service_order_slug` |
+| `/service-order/{id}/{action}/` | `order/order-{action}.php` | `wpss_service_order_slug` |
+| `/service/` (CPT slug) | `archive-service.php` | `wpss_service_slug` |
+| `/buyer-request/` (CPT slug) | `archive-request.php` | `wpss_buyer_request_slug` |
+| `/service-checkout/{id}/` | Checkout shortcode | `wpss_checkout_slug` |
 
-CPT slugs are filterable via `wpss_service_slug` and `wpss_buyer_request_slug`. After adding template overrides, flush rewrite rules by visiting **Settings > Permalinks** and clicking Save.
+All URL slugs are filterable to avoid conflicts with other plugins. After changing slugs, flush rewrite rules by visiting **Settings > Permalinks** and clicking Save.
 
 ## Related Documentation
 
