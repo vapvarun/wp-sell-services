@@ -44,6 +44,20 @@ class CommissionService {
 
 		// Use pre-tax base (subtotal + addons) for commission calculation.
 		$commission_base = (float) $order->subtotal + (float) $order->addons_total;
+
+		/**
+		 * Filters the base amount used for commission calculation.
+		 *
+		 * Allows adjusting the amount before the commission percentage is applied.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param float $commission_base Base amount (subtotal + addons, pre-tax).
+		 * @param int   $order_id        Order ID.
+		 * @param int   $vendor_id       Vendor user ID.
+		 */
+		$commission_base = (float) apply_filters( 'wpss_commission_base_amount', $commission_base, $order_id, $order->vendor_id );
+
 		$commission_rate = $this->get_commission_rate( $order );
 		$platform_fee    = round( $commission_base * ( $commission_rate / 100 ), 2 );
 		$vendor_earnings = round( $commission_base - $platform_fee, 2 );

@@ -173,14 +173,32 @@ class CartController extends RestController {
 
 		// Standalone cart (stored in user meta).
 		$user_id = get_current_user_id();
-		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
+
+		/**
+		 * Validates whether a service can be added to the cart.
+		 *
+		 * Return a WP_Error to prevent the item from being added.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param true|WP_Error $valid      True if valid, WP_Error to block.
+		 * @param int           $service_id Service post ID.
+		 * @param int           $package_id Package ID.
+		 * @param int           $user_id    Current user ID.
+		 */
+		$valid = apply_filters( 'wpss_validate_add_to_cart', true, $service_id, $package_id, $user_id );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		$cart = get_user_meta( $user_id, '_wpss_cart', true );
 
 		if ( ! is_array( $cart ) ) {
 			$cart = array();
 		}
 
-		$item_key          = md5( $service_id . '-' . $package_id . '-' . wp_json_encode( $addon_ids ) );
-		$cart[ $item_key ] = array(
+		$item_key  = md5( $service_id . '-' . $package_id . '-' . wp_json_encode( $addon_ids ) );
+		$cart_item = array(
 			'service_id' => $service_id,
 			'package_id' => $package_id,
 			'package'    => $package,
@@ -188,6 +206,21 @@ class CartController extends RestController {
 			'total'      => $total,
 			'added_at'   => current_time( 'mysql', true ),
 		);
+
+		/**
+		 * Filters cart item data before it is saved.
+		 *
+		 * Allows adding custom data to cart items or modifying existing values.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array $cart_item  Cart item data.
+		 * @param int   $service_id Service post ID.
+		 * @param int   $package_id Package ID.
+		 */
+		$cart_item = apply_filters( 'wpss_cart_item_data', $cart_item, $service_id, $package_id );
+
+		$cart[ $item_key ] = $cart_item;
 
 		update_user_meta( $user_id, '_wpss_cart', $cart );
 

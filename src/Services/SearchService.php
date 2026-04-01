@@ -234,6 +234,18 @@ class SearchService {
 			$query_args['author__not_in'] = array_map( 'intval', $vacation_vendors );
 		}
 
+		/**
+		 * Filter the WP_Query arguments for service search.
+		 *
+		 * Allows customization of the service search query, including adding
+		 * custom meta queries, taxonomy queries, or modifying sort order.
+		 *
+		 * @since 1.1.0
+		 * @param array  $query_args  WP_Query arguments.
+		 * @param string $query       Original search query string.
+		 */
+		$query_args = apply_filters( 'wpss_search_query_args', $query_args, $query );
+
 		$wp_query = new \WP_Query( $query_args );
 
 		return $wp_query->posts;

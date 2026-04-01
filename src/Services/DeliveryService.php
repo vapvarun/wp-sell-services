@@ -78,17 +78,39 @@ class DeliveryService {
 			);
 		}
 
+		$delivery_data = array(
+			'order_id'    => $order_id,
+			'vendor_id'   => $order->vendor_id,
+			'version'     => $version,
+			'message'     => $message,
+			'attachments' => $processed_files,
+			'status'      => 'pending',
+			'created_at'  => current_time( 'mysql' ),
+		);
+
+		/**
+		 * Filter delivery data before saving to the database.
+		 *
+		 * Allows modification of the delivery message, files, and other data
+		 * before the delivery record is inserted.
+		 *
+		 * @since 1.1.0
+		 * @param array $delivery_data Delivery data including message and attachments.
+		 * @param int   $order_id      Order ID.
+		 */
+		$delivery_data = apply_filters( 'wpss_pre_submit_delivery', $delivery_data, $order_id );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
 			$deliveries_table,
 			array(
-				'order_id'    => $order_id,
-				'vendor_id'   => $order->vendor_id,
-				'version'     => $version,
-				'message'     => $message,
-				'attachments' => wp_json_encode( $processed_files ),
-				'status'      => 'pending',
-				'created_at'  => current_time( 'mysql' ),
+				'order_id'    => $delivery_data['order_id'],
+				'vendor_id'   => $delivery_data['vendor_id'],
+				'version'     => $delivery_data['version'],
+				'message'     => $delivery_data['message'],
+				'attachments' => wp_json_encode( $delivery_data['attachments'] ),
+				'status'      => $delivery_data['status'],
+				'created_at'  => $delivery_data['created_at'],
 			),
 			array( '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
 		);

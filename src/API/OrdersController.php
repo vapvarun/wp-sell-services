@@ -1301,6 +1301,17 @@ class OrdersController extends RestController {
 			'available_actions' => $this->get_available_actions( $order ),
 		);
 
+		/**
+		 * Filters the order data returned in REST API responses.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array           $data    Prepared order response data.
+		 * @param ServiceOrder    $order   Order object.
+		 * @param WP_REST_Request $request REST request object.
+		 */
+		$data = apply_filters( 'wpss_rest_order_data', $data, $order, $request );
+
 		return new WP_REST_Response( $data );
 	}
 

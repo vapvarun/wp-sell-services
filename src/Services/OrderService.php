@@ -167,6 +167,24 @@ class OrderService {
 			return false;
 		}
 
+		/**
+		 * Filter whether an order status change should proceed.
+		 *
+		 * Return false to prevent the status change, or a WP_Error to prevent
+		 * and provide an error reason.
+		 *
+		 * @since 1.1.0
+		 * @param bool|WP_Error $allow      Whether to allow the status change. Default true.
+		 * @param int           $order_id   Order ID.
+		 * @param string        $new_status New status being set.
+		 * @param string        $old_status Current order status.
+		 */
+		$allow = apply_filters( 'wpss_pre_order_status_change', true, $order_id, $new_status, $old_status );
+
+		if ( false === $allow || is_wp_error( $allow ) ) {
+			return false;
+		}
+
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 

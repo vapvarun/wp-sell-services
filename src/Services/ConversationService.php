@@ -239,6 +239,25 @@ class ConversationService {
 			return null;
 		}
 
+		$message_data = array(
+			'sender_id'   => $sender_id,
+			'type'        => $type,
+			'content'     => $content,
+			'attachments' => $attachments,
+		);
+
+		/**
+		 * Filter message data before saving to the database.
+		 *
+		 * Allows modification of the message content, attachments, and type
+		 * before the message record is inserted.
+		 *
+		 * @since 1.1.0
+		 * @param array $message_data     Message data including content and attachments.
+		 * @param int   $conversation_id  Conversation ID.
+		 */
+		$message_data = apply_filters( 'wpss_pre_send_message', $message_data, $conversation_id );
+
 		global $wpdb;
 		$messages_table      = $wpdb->prefix . 'wpss_messages';
 		$conversations_table = $wpdb->prefix . 'wpss_conversations';
@@ -249,12 +268,12 @@ class ConversationService {
 			$messages_table,
 			array(
 				'conversation_id' => $conversation_id,
-				'sender_id'       => $sender_id,
-				'type'            => $type,
-				'content'         => $content,
-				'attachments'     => wp_json_encode( $attachments ),
+				'sender_id'       => $message_data['sender_id'],
+				'type'            => $message_data['type'],
+				'content'         => $message_data['content'],
+				'attachments'     => wp_json_encode( $message_data['attachments'] ),
 				'metadata'        => wp_json_encode( array() ),
-				'read_by'         => wp_json_encode( array( $sender_id => true ) ),
+				'read_by'         => wp_json_encode( array( $message_data['sender_id'] => true ) ),
 				'is_edited'       => 0,
 				'created_at'      => current_time( 'mysql' ),
 				'updated_at'      => current_time( 'mysql' ),

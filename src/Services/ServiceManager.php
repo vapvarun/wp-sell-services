@@ -96,6 +96,17 @@ class ServiceManager {
 			}
 		}
 
+		/**
+		 * Filters service data before creation.
+		 *
+		 * Allows modification of service data before the post is inserted.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array $data Service data including title, content, author, packages, etc.
+		 */
+		$data = apply_filters( 'wpss_pre_create_service', $data );
+
 		// Create the post.
 		$post_id = wp_insert_post(
 			array(
@@ -181,6 +192,18 @@ class ServiceManager {
 		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
 			return false;
 		}
+
+		/**
+		 * Filters service data before update.
+		 *
+		 * Allows modification of service data before the post is updated.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array $data       Service data to update.
+		 * @param int   $service_id Service post ID.
+		 */
+		$data = apply_filters( 'wpss_pre_update_service', $data, $service_id );
 
 		$post_data = array( 'ID' => $service_id );
 

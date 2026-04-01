@@ -689,6 +689,17 @@ class VendorsController extends RestController {
 			$data['status'] = get_user_meta( $vendor_id, '_wpss_vendor_status', true ) ?: 'approved';
 		}
 
+		/**
+		 * Filters the vendor data returned in REST API responses.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array           $data    Prepared vendor response data.
+		 * @param \WP_User        $vendor  Vendor user object.
+		 * @param WP_REST_Request $request REST request object.
+		 */
+		$data = apply_filters( 'wpss_rest_vendor_data', $data, $vendor, $request );
+
 		return new WP_REST_Response( $data );
 	}
 

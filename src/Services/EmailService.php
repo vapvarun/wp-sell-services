@@ -1075,6 +1075,17 @@ class EmailService {
 		}
 		set_transient( $cooldown_key, 1, 5 * MINUTE_IN_SECONDS );
 
+		/**
+		 * Filters the email subject line before sending.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param string $subject Email subject line.
+		 * @param string $type    Email type constant (e.g. 'new_order', 'delivery_ready').
+		 * @param string $to      Recipient email address.
+		 */
+		$subject = apply_filters( 'wpss_email_subject', $subject, $type, $to );
+
 		// Merge settings into template vars.
 		$template_vars              = array_merge( $this->settings(), $template_vars );
 		$template_vars['site_url']  = home_url();

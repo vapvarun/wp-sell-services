@@ -182,7 +182,7 @@ class DisputeService {
 			? (int) $order->vendor_id
 			: (int) $order->customer_id;
 
-		$data = array(
+		$dispute_data = array(
 			'order_id'      => $order_id,
 			'initiated_by'  => $opened_by,
 			'respondent_id' => $respondent_id,
@@ -194,7 +194,19 @@ class DisputeService {
 			'updated_at'    => current_time( 'mysql' ),
 		);
 
-		$result = $wpdb->insert( $this->table, $data );
+		/**
+		 * Filter dispute data before saving to the database.
+		 *
+		 * Allows modification of the dispute reason, description, and other data
+		 * before the dispute record is inserted.
+		 *
+		 * @since 1.1.0
+		 * @param array $dispute_data Dispute data including reason and description.
+		 * @param int   $order_id     Order ID.
+		 */
+		$dispute_data = apply_filters( 'wpss_pre_open_dispute', $dispute_data, $order_id );
+
+		$result = $wpdb->insert( $this->table, $dispute_data );
 
 		if ( $result ) {
 			$dispute_id = (int) $wpdb->insert_id;

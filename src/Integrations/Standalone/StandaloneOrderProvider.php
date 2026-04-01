@@ -107,6 +107,17 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			}
 		}
 
+		/**
+		 * Filters order data before database insertion.
+		 *
+		 * Allows modification of order data before the order is created.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array $order_data Raw order data from the checkout flow.
+		 */
+		$order_data = apply_filters( 'wpss_pre_create_order', $order_data );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
 			$table,

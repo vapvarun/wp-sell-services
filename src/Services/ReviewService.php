@@ -64,6 +64,18 @@ class ReviewService {
 			return null;
 		}
 
+		/**
+		 * Filters review data before database insertion.
+		 *
+		 * Allows modification of review data before the review is created.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array $data     Review data including rating, content, sub-ratings.
+		 * @param int   $order_id Order ID the review belongs to.
+		 */
+		$data = apply_filters( 'wpss_pre_create_review', $data, $order_id );
+
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 

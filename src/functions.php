@@ -164,6 +164,11 @@ function wpss_get_template_part( string $slug, string $name = '', array $args = 
 	 */
 	$template = apply_filters( 'wpss_get_template_part', $template, $slug, $name );
 
+	$template_name = $name ? "{$slug}-{$name}" : $slug;
+
+	/** This filter is documented in src/functions.php wpss_get_template() */
+	$args = apply_filters( 'wpss_template_args', $args, $template_name );
+
 	if ( $template ) {
 		// Extract args to make them available in template.
 		if ( ! empty( $args ) ) {
@@ -209,6 +214,18 @@ function wpss_get_template( string $template_name, array $args = array(), string
 	 * @param array  $args          Template arguments.
 	 */
 	$template = apply_filters( 'wpss_get_template', $template, $template_name, $args );
+
+	/**
+	 * Filter the template arguments before rendering.
+	 *
+	 * Allows modification or addition of variables passed to a template
+	 * before extraction and rendering.
+	 *
+	 * @since 1.1.0
+	 * @param array  $args          Template arguments.
+	 * @param string $template_name Template name being loaded.
+	 */
+	$args = apply_filters( 'wpss_template_args', $args, $template_name );
 
 	if ( file_exists( $template ) ) {
 		// Extract args to make them available in template.

@@ -130,6 +130,18 @@ class VendorService {
 			'verification_tier' => VendorProfile::TIER_NEW,
 		);
 
+		/**
+		 * Filter vendor profile data before creating the vendor profile.
+		 *
+		 * Allows modification of profile fields (display_name, tagline, bio, etc.)
+		 * before the vendor profile record is inserted during registration.
+		 *
+		 * @since 1.1.0
+		 * @param array $profile_data Profile data to be saved.
+		 * @param int   $user_id      User ID being registered as vendor.
+		 */
+		$profile_data = apply_filters( 'wpss_pre_vendor_register', $profile_data, $user_id );
+
 		$profile_id = $this->profile_repo->upsert( $user_id, $profile_data );
 
 		if ( $profile_id ) {
@@ -421,6 +433,17 @@ class VendorService {
 			'website',
 			'social_links',
 		);
+
+		/**
+		 * Filter the list of allowed vendor profile fields for update.
+		 *
+		 * Allows adding or removing fields that vendors are permitted to update
+		 * via the profile update method.
+		 *
+		 * @since 1.1.0
+		 * @param array $allowed_fields Array of allowed field name strings.
+		 */
+		$allowed_fields = apply_filters( 'wpss_vendor_profile_allowed_fields', $allowed_fields );
 
 		$filtered_data = array_intersect_key( $data, array_flip( $allowed_fields ) );
 

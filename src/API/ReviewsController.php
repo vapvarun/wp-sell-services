@@ -983,6 +983,17 @@ class ReviewsController extends RestController {
 			'updated_at'      => $review->updated_at ?? null,
 		);
 
+		/**
+		 * Filters the review data returned in REST API responses.
+		 *
+		 * @since 1.4.0
+		 *
+		 * @param array           $data    Prepared review response data.
+		 * @param object          $review  Review object.
+		 * @param WP_REST_Request $request REST request object.
+		 */
+		$data = apply_filters( 'wpss_rest_review_data', $data, $review, $request );
+
 		return new WP_REST_Response( $data );
 	}
 
