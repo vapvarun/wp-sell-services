@@ -321,7 +321,7 @@ parameters:
 		-
 			message: '#^Call to WP_CLI\:\:log\(\) on a separate line has no effect\.$#'
 			identifier: staticMethod.resultUnused
-			count: 40
+			count: 45
 			path: src/CLI/PreflightCommand.php
 
 		-
@@ -339,6 +339,12 @@ parameters:
 		-
 			message: '#^Variable \$wpss on left side of \?\? is never defined\.$#'
 			identifier: nullCoalesce.variable
+			count: 1
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Right side of \|\| is always true\.$#'
+			identifier: booleanOr.rightAlwaysTrue
 			count: 1
 			path: src/CLI/PreflightCommand.php
 
