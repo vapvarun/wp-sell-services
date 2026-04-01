@@ -122,7 +122,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 = Pro Features =
 
-Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro) for additional capabilities:
+Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) for additional capabilities:
 
 * **E-commerce Platforms**: Easy Digital Downloads, FluentCart, SureCart, or Standalone mode (no e-commerce plugin required)
 * **Direct Payment Gateways**: Stripe, PayPal, Razorpay, and Offline payments with proof upload
@@ -142,7 +142,7 @@ The complete REST API with 20 controllers makes building iOS and Android apps st
 
 = Documentation =
 
-Comprehensive documentation included covering every feature, with guides for vendors, buyers, administrators, and developers.
+Full documentation at [wbcomdesigns.com/docs/wp-sell-services](https://wbcomdesigns.com/docs/wp-sell-services/) covering every feature, with guides for vendors, buyers, administrators, and developers.
 
 == Installation ==
 
@@ -153,21 +153,19 @@ Comprehensive documentation included covering every feature, with guides for ven
 * MySQL 5.7 or higher
 * No additional plugins required (standalone checkout included)
 
-= Automatic Installation =
+= Installation =
 
-1. Log in to your WordPress dashboard
-2. Navigate to **Plugins > Add New**
-3. Search for "WP Sell Services"
-4. Click **Install Now** and then **Activate**
-5. Complete the **Setup Wizard** to create pages and configure your marketplace
+1. Download the plugin ZIP from [wbcomdesigns.com](https://wbcomdesigns.com/downloads/wp-sell-services/)
+2. Go to **Plugins > Add New > Upload Plugin** and upload the ZIP
+3. Click **Install Now** and then **Activate**
+4. Complete the **Setup Wizard** to create pages and configure your marketplace
 
 = Manual Installation =
 
-1. Download the plugin ZIP file
-2. Upload to `/wp-content/plugins/` directory
-3. Unzip the file
-4. Activate through the **Plugins** menu in WordPress
-5. Complete the **Setup Wizard** to create pages and configure your marketplace
+1. Download and extract the plugin ZIP
+2. Upload the `wp-sell-services` folder to `/wp-content/plugins/`
+3. Activate through the **Plugins** menu in WordPress
+4. Complete the **Setup Wizard** to create pages and configure your marketplace
 
 = After Activation =
 

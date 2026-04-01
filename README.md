@@ -58,9 +58,11 @@ A complete Fiverr-style service marketplace platform for WordPress. Vendors list
 
 ## Installation
 
-1. Upload the `wp-sell-services` folder to `/wp-content/plugins/`
-2. Activate through **Plugins** menu
-3. Complete the **Setup Wizard** to create pages and configure your marketplace
+1. Download the plugin ZIP from [wbcomdesigns.com](https://wbcomdesigns.com/downloads/wp-sell-services/)
+2. Go to **Plugins > Add New > Upload Plugin** and upload the ZIP
+3. Activate and complete the **Setup Wizard**
+
+Or upload the `wp-sell-services` folder to `/wp-content/plugins/` manually.
 
 ## Development
 
