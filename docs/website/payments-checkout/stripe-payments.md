@@ -23,7 +23,7 @@ Test keys start with `pk_test_` and `sk_test_`. Live keys start with `pk_live_` 
 
 ### Add Keys to Your Site
 
-1. Go to **WP Sell Services > Settings > Payments**
+1. Go to **WP Sell Services > Settings > Gateways**
 2. Click the **Stripe** tab
 3. Check **Enable Stripe**
 4. Paste your Publishable Key and Secret Key
@@ -37,11 +37,11 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 
 1. In your Stripe Dashboard, go to **Developers > Webhooks**
 2. Click **Add endpoint**
-3. Paste your webhook URL: `https://yoursite.com/wp-json/wpss/v1/stripe/webhook`
+3. Paste your webhook URL: `https://yoursite.com/wpss-payment/stripe/callback`
 4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`
 5. Click **Add endpoint**
 6. Copy the **Signing secret** that appears
-7. Paste it into **WP Sell Services > Settings > Payments > Stripe > Webhook Secret**
+7. Paste it into **WP Sell Services > Settings > Gateways > Stripe > Webhook Secret**
 8. Click **Save Changes**
 
 ## How Checkout Works with Stripe

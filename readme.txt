@@ -42,7 +42,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 **Vendor System**
 
 * Vendor registration and approval workflow
-* Four-tier seller level system (New Seller, Level 1, Level 2, Top Rated)
+* Seller level progression (New Seller, Rising Seller, Top Rated, Pro Seller)
 * Unified vendor dashboard with earnings overview
 * Portfolio showcase for work samples
 * Vacation mode for pausing new orders
@@ -88,13 +88,12 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 * Built-in checkout system — no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
-* Pro version adds Stripe, PayPal, Razorpay direct gateways
-* Pro version adds WooCommerce, EDD, FluentCart, and SureCart integrations
+* Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD, FluentCart, and SureCart checkout integrations.
 
 **Developer Ready**
 
 * 6 Gutenberg blocks (Service Grid, Search, Categories, Featured Services, Seller Card, Buyer Requests)
-* 16 shortcodes for flexible page building
+* 19 shortcodes for flexible page building
 * 21 REST API controllers with 125+ endpoints and full CRUD operations
 * 100% REST coverage for all user-facing features — fully mobile-app ready
 * Batch endpoint for mobile apps (up to 25 requests in single call)
@@ -115,7 +114,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 **Notification System**
 
-* 11 email notification types for order events
+* 26 email notification types for order events
 * In-app notification center
 * Customizable email templates
 * Email notification preferences per user
@@ -124,8 +123,14 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) for additional capabilities:
 
-* **E-commerce Platforms**: Easy Digital Downloads, FluentCart, SureCart, or Standalone mode (no e-commerce plugin required)
-* **Direct Payment Gateways**: Stripe, PayPal, Razorpay, and Offline payments with proof upload
+* **E-commerce Platforms**: WooCommerce, Easy Digital Downloads, FluentCart, SureCart
+* **Additional Payment Gateway**: Razorpay (UPI, cards, netbanking)
+* **Tiered Commission Rules**: Category, volume, and seller-level based commission rates
+* **White-Label Branding**: Rebrand the entire marketplace with custom name and styling
+* **PayPal Mass Payouts**: Automated batch vendor payouts via PayPal
+* **Stripe Connect**: Direct vendor payments with Express onboarding
+* **Vendor Subscription Plans**: Paid vendor tiers with service limits and feature gating
+* **Recurring Services**: Subscription billing for services with automated renewals
 * **Wallet Integrations**: Internal wallet, TeraWallet, WooWallet, MyCred
 * **Cloud Storage**: Amazon S3, Google Cloud Storage, DigitalOcean Spaces for file storage
 * **Advanced Analytics**: Revenue charts, order analytics, service performance, vendor statistics with CSV/Excel export
@@ -200,7 +205,7 @@ Yes. Buyers can post project requests with budget range, description, and deadli
 
 = What payment gateways are supported? =
 
-The free version includes a standalone checkout with an offline payment gateway (bank transfer, manual confirmation). The Pro version adds direct Stripe, PayPal, and Razorpay gateways that work without any e-commerce plugin. Pro also supports WooCommerce (all its gateways), Easy Digital Downloads, FluentCart, and SureCart for sites already using those platforms.
+The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways — no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, Easy Digital Downloads, FluentCart, and SureCart checkout integrations for sites already using those platforms.
 
 = How are disputes handled? =
 
@@ -224,11 +229,11 @@ The plugin provides 21 REST API controllers under `/wp-json/wpss/v1/` covering a
 
 = Can I customize the email templates? =
 
-Yes. Email templates are located in `templates/emails/` and can be overridden in your theme. The plugin includes 11 email notification types for different order events, and administrators can customize subject lines and content.
+Yes. Email templates are located in `templates/emails/` and can be overridden in your theme. The plugin includes 26 email notification types for different order events, and administrators can customize subject lines and content.
 
 = What seller levels are included? =
 
-Four levels: New Seller (default), Level 1 Seller (5+ orders, 4.0+ rating), Level 2 Seller (25+ orders, 4.5+ rating), and Top Rated Seller (100+ orders, 4.8+ rating). Levels automatically update based on vendor performance metrics.
+Three auto-calculated levels plus one admin-granted: New Seller (default), Rising Seller (5+ orders, 4.0+ rating), Top Rated (25+ orders, 4.7+ rating), and Pro Seller (admin-granted). Levels automatically update based on vendor performance metrics.
 
 == Screenshots ==
 
@@ -268,7 +273,7 @@ Four levels: New Seller (default), Level 1 Seller (5+ orders, 4.0+ rating), Leve
 **Vendor System**
 
 * Vendor registration with open, approval, or closed modes
-* Four-tier seller level system with automatic progression
+* Seller level progression with automatic and admin-granted tiers
 * Unified vendor dashboard with earnings, orders, and analytics
 * Portfolio showcase, vacation mode, and profile customization
 * Commission tracking and withdrawal requests with admin approval
@@ -283,7 +288,7 @@ Four levels: New Seller (default), Level 1 Seller (5+ orders, 4.0+ rating), Leve
 
 * 5-star multi-criteria rating system with moderation queue
 * Structured dispute workflow with admin mediation and multiple resolution types
-* 11 configurable email notification types with template overrides
+* 26 configurable email notification types with template overrides
 * In-app notification center
 
 **Payments and Earnings**
@@ -296,7 +301,7 @@ Four levels: New Seller (default), Level 1 Seller (5+ orders, 4.0+ rating), Leve
 
 * 21 REST API controllers with 125+ endpoints and batch endpoint for mobile apps
 * 100% REST coverage for all user-facing features
-* 6 Gutenberg blocks and 16 shortcodes
+* 6 Gutenberg blocks and 19 shortcodes
 * Template override system compatible with any theme
 * SEO schema markup with Yoast and RankMath integration
 * 9 extension hooks for Pro plugin integration

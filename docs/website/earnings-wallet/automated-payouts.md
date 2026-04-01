@@ -20,7 +20,7 @@ Here is the flow:
 2. Scroll to the **Automatic Withdrawals** section
 3. Check **Enable Auto-Withdrawal**
 4. Set the **Threshold Amount** -- the minimum balance that triggers an auto-payout (default: $500)
-5. Choose the **Schedule**: Weekly (every Monday) or Monthly (1st of the month)
+5. Choose the **Schedule**: Weekly (every Monday), Bi-weekly (1st and 15th), or Monthly (1st of the month)
 6. Click **Save Payout Settings**
 
 ### Threshold Amount
@@ -37,6 +37,7 @@ This is the minimum available balance a vendor must have for an auto-payout to t
 | Schedule | Runs On | Example |
 |----------|---------|---------|
 | **Weekly** | Every Monday at 2 AM | Jan 6, Jan 13, Jan 20, Jan 27 |
+| **Bi-weekly** | 1st and 15th of each month at 2 AM | Jan 1, Jan 15, Feb 1, Feb 15 |
 | **Monthly** | 1st of each month at 2 AM | Feb 1, Mar 1, Apr 1, May 1 |
 
 Processing runs automatically in the background using WordPress cron.

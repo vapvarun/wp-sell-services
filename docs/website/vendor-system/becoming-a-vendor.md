@@ -56,7 +56,7 @@ Once active, vendors have access to:
 | Portfolio | Showcase previous work to attract buyers |
 | Buyer Requests | Browse and respond to service requests posted by buyers |
 | Messages | Communicate with buyers about orders |
-| Earnings | Track income and request withdrawals **[PRO]** |
+| Earnings | Track income and request withdrawals |
 
 ## Tips for Getting Approved
 

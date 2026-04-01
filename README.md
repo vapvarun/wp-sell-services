@@ -20,7 +20,7 @@ A complete Fiverr-style service marketplace platform for WordPress. Vendors list
 
 ### Vendor System
 - Vendor registration (open, approval, or closed)
-- Four-tier seller levels (New, Level 1, Level 2, Top Rated)
+- Seller level progression (New Seller, Rising Seller, Top Rated, Pro Seller)
 - Unified dashboard with earnings, portfolio, and vacation mode
 - Commission tracking and withdrawal requests
 
@@ -43,7 +43,7 @@ A complete Fiverr-style service marketplace platform for WordPress. Vendors list
 - 21 REST API controllers with 125+ endpoints
 - 100% REST coverage for all user-facing features (mobile-app ready)
 - Batch endpoint for mobile apps (up to 25 sub-requests)
-- 6 Gutenberg blocks and 16+ shortcodes
+- 6 Gutenberg blocks and 19 shortcodes
 - Template override system
 - 17 custom database tables
 - PSR-4 autoloading, PHP 8.1+
@@ -150,8 +150,8 @@ Batch endpoint: `POST /wpss/v1/batch` (up to 25 sub-requests per call)
 
 [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) adds:
 
-- E-commerce adapters (EDD, FluentCart, SureCart)
-- Payment gateways (Stripe, PayPal, Razorpay)
+- E-commerce adapters (WooCommerce, EDD, FluentCart, SureCart)
+- Additional payment gateway (Razorpay) — Stripe, PayPal, and Offline are included free
 - Wallet integrations (Internal, TeraWallet, WooWallet, MyCred)
 - Cloud storage (S3, GCS, DigitalOcean Spaces)
 - Advanced analytics with Chart.js

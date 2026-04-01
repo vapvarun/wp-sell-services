@@ -54,7 +54,7 @@ This adds an extra quality gate -- vendors must be verified before they can list
 
 ## Require Service Moderation
 
-**Default: Disabled**
+**Default: Enabled**
 
 When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it.
 
@@ -90,7 +90,7 @@ From **WP Sell Services > Vendors**, you can manage all vendors on your marketpl
 
 **For a growing marketplace:** Switch to "Open" registration and disable service moderation to reduce friction. Use seller levels to naturally incentivize quality.
 
-**For a premium marketplace:** Keep approval required but disable service moderation for Level 2 and Top Rated vendors (the seller level system handles quality control at that point).
+**For a premium marketplace:** Keep approval required but disable service moderation for Top Rated and Pro Seller vendors (the seller level system handles quality control at that point).
 
 ## Related Documentation
 

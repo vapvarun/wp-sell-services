@@ -12,7 +12,7 @@ When vendors are ready to get paid, they submit a withdrawal request from their 
 
 ## Minimum Withdrawal Amount
 
-Vendors must have a minimum balance before they can request a withdrawal. The default minimum is $50, but you can change this in **Settings > Payments > Payout Settings**.
+Vendors must have a minimum balance before they can request a withdrawal. The default minimum is $25, but you can change this in **Settings > Payments > Payout Settings**.
 
 If a vendor's available balance is below the minimum, the withdrawal button is disabled and they see how much more they need to earn.
 

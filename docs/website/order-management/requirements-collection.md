@@ -47,6 +47,8 @@ Vendors build their requirements form when creating or editing a service. Four q
 
 Each question can be marked as required or optional, and vendors can add helpful placeholder text and instructions.
 
+**Note:** When admins create or edit services from the WordPress admin panel, additional requirement field types are available beyond these four: Number, Checkbox, Radio, Multiple File Upload, and Date. These extra types are only accessible through the admin interface, not the vendor service creation wizard.
+
 ![Requirements form fields displayed on the order page](../images/frontend-requirements-form.png)
 
 ## Skipping Requirements

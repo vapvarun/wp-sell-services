@@ -14,17 +14,6 @@ After a vendor delivers their work, the buyer has this many days to review it. I
 - Set to **5-7 days** for high-value services where buyers need more review time.
 - Set to **0** to disable auto-completion entirely -- buyers must manually accept every delivery.
 
-## Default Revision Limit
-
-**Default: 2 revisions**
-
-This is how many times a buyer can request changes on a delivery. Vendors can override this number per service package (for example, Basic gets 1 revision, Premium gets unlimited).
-
-- Set to **0** for no revisions at all.
-- Set to **1-3** for most marketplaces.
-- Set higher for services where iteration is expected (design, content writing).
-- Vendors can offer unlimited revisions on specific packages regardless of this default.
-
 ## Allow Disputes
 
 **Default: Enabled**
@@ -45,7 +34,7 @@ After an order is completed, the buyer has this many days to open a dispute. Onc
 
 ## Requirements Timeout
 
-**Default: 0 (disabled)**
+**Default: 7 days**
 
 After payment, the buyer needs to submit project requirements before work can begin. This setting controls how long to wait before taking action if the buyer never submits them.
 
@@ -68,17 +57,27 @@ This controls what happens when the requirements timeout expires:
 
 When enabled, buyers can submit their project requirements even after the order has already started (useful if auto-start on timeout moved the order forward). When disabled, requirements can only be submitted while the order is in "Pending Requirements" status.
 
+## Auto-Dispute Late Orders
+
+**Default: 3 days**
+
+When an order is overdue by this many days, the system automatically opens a dispute. This protects buyers from orders that remain undelivered well past the deadline.
+
+- Set to **0** to disable automatic dispute creation for late orders.
+- Set to **1-3 days** for strict marketplaces.
+- Set higher for marketplaces where delays are more common or tolerated.
+
 ## All Settings at a Glance
 
 | Setting | Default | Range | What It Does |
 |---------|---------|-------|--------------|
 | Auto-Complete Days | 3 | 0-30 | Days after delivery to auto-complete |
-| Default Revision Limit | 2 | 0-10 | Default revisions per order |
 | Allow Disputes | Enabled | On/Off | Enable the dispute system |
 | Dispute Window | 14 days | 1-90 | Days after completion to allow disputes |
 | Allow Late Requirements | Disabled | On/Off | Submit requirements after work started |
-| Requirements Timeout | 0 | 0-30 | Days to wait for requirements |
+| Requirements Timeout | 7 days | 0-30 | Days to wait for requirements |
 | Auto-Start on Timeout | Enabled | On/Off | Start order or cancel when timeout expires |
+| Auto-Dispute Late Orders | 3 days | 0-30 | Days overdue before auto-opening a dispute |
 
 ## Recommended Configurations
 
@@ -86,15 +85,13 @@ When enabled, buyers can submit their project requirements even after the order 
 
 For most service marketplaces, the defaults work well:
 - Auto-Complete: 3 days
-- Revisions: 2
 - Dispute Window: 14 days
-- Requirements Timeout: 3 days, auto-start enabled
+- Requirements Timeout: 7 days, auto-start enabled
 
 ### High-Value Services
 
 For expensive, complex services like web development or consulting:
 - Auto-Complete: 7 days (more review time)
-- Revisions: 3-5 or unlimited
 - Dispute Window: 30-60 days
 - Requirements Timeout: 7 days, auto-start disabled (require requirements)
 
@@ -102,7 +99,6 @@ For expensive, complex services like web development or consulting:
 
 For fast services like logo tweaks, quick edits, or social media graphics:
 - Auto-Complete: 1 day
-- Revisions: 1-2
 - Dispute Window: 7 days
 - Requirements Timeout: 1 day, auto-start enabled
 

@@ -11,14 +11,14 @@ PayPal lets buyers pay with their PayPal balance, linked bank account, or credit
 1. Create a PayPal Business account at [paypal.com/business](https://paypal.com/business) (if you do not have one)
 2. Go to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
 3. Create an app to get your **Client ID** and **Secret**
-4. In WordPress, go to **WP Sell Services > Settings > Payments > PayPal**
+4. In WordPress, go to **WP Sell Services > Settings > Gateways > PayPal**
 5. Check **Enable PayPal** and paste your credentials
 6. Click **Save Changes**
 
 ### Setting Up PayPal Webhooks
 
 1. In PayPal Developer Dashboard, go to **Webhooks**
-2. Add your endpoint: `https://yoursite.com/wp-json/wpss/v1/paypal/webhook`
+2. Add your endpoint: `https://yoursite.com/wpss-payment/paypal/callback`
 3. Select events: `PAYMENT.CAPTURE.COMPLETED` and `PAYMENT.CAPTURE.REFUNDED`
 4. Save and copy the **Webhook ID** to your WP Sell Services settings
 
@@ -48,14 +48,14 @@ Razorpay is the go-to payment gateway for marketplaces serving buyers in India. 
 1. Create a Razorpay account at [razorpay.com](https://razorpay.com)
 2. Complete the KYC process (PAN, GSTIN, bank details)
 3. Get your API keys from **Settings > API Keys** in the Razorpay Dashboard
-4. In WordPress, go to **WP Sell Services > Settings > Payments > Razorpay**
+4. In WordPress, go to **WP Sell Services > Settings > Gateways > Razorpay**
 5. Check **Enable Razorpay** and enter your Key ID and Key Secret
 6. Click **Save Changes**
 
 ### Razorpay Webhooks
 
 1. In Razorpay Dashboard, go to **Webhooks**
-2. Add endpoint: `https://yoursite.com/wp-json/wpss/v1/razorpay/webhook`
+2. Add endpoint: `https://yoursite.com/wpss-payment/razorpay/callback`
 3. Select events: `payment.authorized`, `payment.captured`, `payment.failed`, `refund.created`
 4. Copy the Webhook Secret to your WP Sell Services settings
 
@@ -81,7 +81,7 @@ Offline payments let you accept bank transfers, checks, or any manual payment me
 
 ### Setting Up Offline Payments
 
-1. Go to **WP Sell Services > Settings > Payments > Offline**
+1. Go to **WP Sell Services > Settings > Gateways > Offline**
 2. Check **Enable Offline Payments**
 3. Set a title like "Bank Transfer" or "Pay by Check"
 4. In the **Instructions** field, add your payment details (bank name, account number, routing number, etc.)

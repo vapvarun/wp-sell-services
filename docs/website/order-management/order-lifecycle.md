@@ -43,7 +43,7 @@ If the buyer does not respond within the auto-complete window (default: 3 days),
 
 ### Revision Requested
 
-The buyer has asked for changes. The vendor receives the feedback, makes updates, and submits a new delivery. The number of revisions allowed depends on the service package or your global settings.
+The buyer has asked for changes. The vendor receives the feedback, makes updates, and submits a new delivery. The number of revisions allowed depends on the service package settings.
 
 ### Completed
 
@@ -108,10 +108,9 @@ You can adjust how orders behave at **WP Admin > WP Sell Services > Settings > O
 | Setting | Default | What It Does |
 |---------|---------|--------------|
 | Auto-Complete Days | 3 | Days after delivery before auto-completing |
-| Default Revision Limit | 2 | Revisions per order (vendors can override per service) |
 | Allow Disputes | Enabled | Whether buyers can open disputes |
 | Dispute Window | 14 days | Days after completion to allow disputes |
-| Requirements Timeout | 0 (disabled) | Days before taking action on missing requirements |
+| Requirements Timeout | 7 days | Days before taking action on missing requirements |
 | Auto-Start on Timeout | Enabled | Start order vs cancel when requirements timeout |
 
 ## Tips for Success
@@ -127,6 +126,6 @@ You can adjust how orders behave at **WP Admin > WP Sell Services > Settings > O
 - [Requirements Collection](requirements-collection.md)
 - [Order Messaging](order-messaging.md)
 - [Deliveries & Revisions](deliveries-revisions.md)
-- [Milestones](milestones.md) **[PRO]**
+- [Milestones](milestones.md)
 - [Tipping & Extensions](tipping-extensions.md)
 - [Order Settings](order-settings.md)

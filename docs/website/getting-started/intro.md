@@ -27,7 +27,7 @@ Here are some real-world examples of what people are building:
 | **Buyer requests** | Buyers post what they need, vendors submit proposals -- like a job board |
 | **Mobile-ready design** | Responsive templates that look great on phones, tablets, and desktops |
 | **Vendor dashboard** | Vendors manage everything -- services, orders, earnings, messages -- from the frontend |
-| **4 seller levels** | New Seller, Level 1, Level 2, and Top Rated -- vendors level up based on performance |
+| **4 seller levels** | New Seller, Rising Seller, Top Rated, and Pro Seller -- vendors level up based on performance |
 
 ## Feature Overview: Free vs Pro
 

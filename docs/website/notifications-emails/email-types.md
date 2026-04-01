@@ -1,6 +1,6 @@
 # Email Notifications
 
-WP Sell Services sends 21 email notifications to keep buyers, vendors, and admins informed at every stage. Each email can be individually enabled or disabled from your settings.
+WP Sell Services sends 26 email notifications to keep buyers, vendors, and admins informed at every stage. Each email can be individually enabled or disabled from your settings.
 
 ---
 
@@ -23,6 +23,9 @@ These keep your sellers informed about their business activity.
 | **Level Promotion** | The vendor reaches a new seller level |
 | **Moderation Approved** | A submitted service passes admin review and goes live |
 | **Moderation Rejected** | A submitted service is declined during admin review |
+| **Auto-Withdrawal Processed** | An automatic withdrawal runs and processes a payout for the vendor |
+| **Service Pending Moderation** | The vendor submits a service for admin review |
+| **Moderation Response** | The vendor responds to moderation feedback on a submitted service |
 
 ---
 
@@ -37,6 +40,7 @@ These keep your customers updated on their purchases and activity.
 | **Order Completed** | The order is marked complete (manual or automatic) |
 | **Order Cancelled** | An order is cancelled by any party |
 | **Proposal Submitted** | A vendor submits a proposal on the buyer's request |
+| **Requirements Reminder** | The buyer has not yet submitted requirements for their order |
 
 ---
 
@@ -48,6 +52,7 @@ These alert you to actions that need your attention.
 |-------|----------------|
 | **Withdrawal Requested** | A vendor requests a payout from their earnings |
 | **Dispute Opened** | A dispute is filed on any order in the marketplace |
+| **Dispute Escalated** | A dispute is escalated to admin for further investigation |
 
 ---
 

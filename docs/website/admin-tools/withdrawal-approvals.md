@@ -93,7 +93,7 @@ Use the admin notes field to keep a record of:
 
 ## Withdrawal Limits
 
-**Minimum withdrawal amount:** Default is $50 (configurable in Settings > Payments > Payout Settings)
+**Minimum withdrawal amount:** Default is $25 (configurable in Settings > Payments > Payout Settings)
 
 **Clearance period:** Earnings must pass the clearance period (default 14 days) before they become available for withdrawal
 

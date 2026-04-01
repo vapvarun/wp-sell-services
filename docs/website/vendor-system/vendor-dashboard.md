@@ -38,7 +38,7 @@ Available actions:
 
 Browse service requests posted by buyers looking for help. Vendors can submit proposals to these requests, and buyers choose which vendor to hire. This section is available to both buyers (for posting) and vendors (for responding).
 
-### Earnings **[PRO]**
+### Earnings
 
 Your financial dashboard showing:
 - **Total Earnings** -- Lifetime gross income.
@@ -61,7 +61,7 @@ Edit your public vendor profile -- your display name, tagline, bio, avatar, cove
 The dashboard uses a sidebar with grouped navigation:
 
 - **Buying** section: My Orders, Buyer Requests
-- **Selling** section: My Services, Sales Orders, Earnings
+- **Selling** section: My Services, Sales Orders, Earnings, Portfolio
 - **Account** section: Messages, Profile
 
 Your profile avatar and name appear at the top of the sidebar, along with a "Seller" badge if you are a vendor. Click any section to switch views -- the active section is highlighted.

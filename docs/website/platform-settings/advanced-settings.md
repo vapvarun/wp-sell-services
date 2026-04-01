@@ -59,15 +59,28 @@ Enable detailed logging when you need to troubleshoot issues. When active, the p
 
 ## Max Upload Size
 
-Set the maximum file size for uploads (delivery files, attachments, requirement files). The default is 50MB. This is capped by your server's PHP settings -- if your server allows only 25MB uploads, that will be the actual limit regardless of what you set here.
+Set the maximum file size for uploads (delivery files, attachments, requirement files). The default is 10MB. This is capped by your server's PHP settings -- if your server allows only 25MB uploads, that will be the actual limit regardless of what you set here.
 
 ---
 
 ## Allowed File Types
 
-Control which file types vendors and buyers can upload. By default, common formats are allowed: images (JPG, PNG, GIF), documents (PDF, DOC, DOCX), archives (ZIP), and design files (PSD, AI).
+Control which file types vendors and buyers can upload. By default, common formats are allowed: JPG, JPEG, PNG, GIF, PDF, DOC, and DOCX.
 
 Add or remove file extensions to match your marketplace needs.
+
+---
+
+## Currency Symbol Position
+
+Choose where the currency symbol appears relative to the amount. Options include:
+
+- **Left** -- $100 (default)
+- **Right** -- 100$
+- **Left with space** -- $ 100
+- **Right with space** -- 100 $
+
+Configure this at **WP Sell Services > Settings > General**.
 
 ---
 

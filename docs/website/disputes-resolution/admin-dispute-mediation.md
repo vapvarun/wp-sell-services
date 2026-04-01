@@ -50,7 +50,7 @@ Review all evidence both parties have submitted. Consider:
 
 ![Dispute evidence view](../images/admin-dispute-investigation.png)
 
-## The Four Resolution Types
+## The Five Resolution Types
 
 When you are ready to resolve the dispute, choose one of these outcomes:
 
@@ -89,6 +89,17 @@ No refund is issued. The vendor receives the full payment.
 - The evidence clearly supports the vendor.
 
 **Order status becomes:** Completed
+
+### In Favor of Buyer
+
+The buyer receives their full payment back and the resolution explicitly sides with the buyer. Similar to a full refund, but the decision is recorded as a buyer-favored outcome for vendor tracking purposes.
+
+**Use when:**
+- The evidence clearly supports the buyer's claim.
+- The vendor failed to meet obligations despite clear requirements.
+- You want the resolution to count toward the vendor's dispute record as a buyer-favored decision.
+
+**Order status becomes:** Refunded
 
 ### Mutual Agreement
 

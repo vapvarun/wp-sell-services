@@ -6,13 +6,14 @@ WP Sell Services needs a few dedicated pages to run your marketplace. The good n
 
 ## Required Pages
 
-Your marketplace needs three core pages:
+Your marketplace needs four core pages:
 
 | Page | What It Does |
 |------|-------------|
 | **Services** | The main browsing page where visitors find and explore services |
 | **Dashboard** | The unified account area for buyers and vendors |
 | **Become a Vendor** | The registration page for users who want to sell |
+| **Service Checkout** | The checkout page for standalone mode purchases |
 
 ![Pages settings tab](../images/settings-pages-tab.png)
 
@@ -26,7 +27,7 @@ The fastest way to get started:
 
 1. Go to **WP Sell Services > Settings > Pages**
 2. Click **Auto-Create All Pages**
-3. Done -- the plugin creates and assigns all three pages automatically
+3. Done -- the plugin creates and assigns all four core pages automatically
 
 The pages are published immediately with the correct content, SEO-friendly URLs, and everything wired up and ready to go.
 
@@ -68,14 +69,23 @@ Logged-in buyers who are not yet vendors will see a "Become a Vendor" button in 
 3. Add some persuasive content above the form -- explain why someone should sell on your marketplace, highlight benefits like no listing fees and flexible pricing
 4. Publish and assign it in **Settings > Pages > Become a Vendor**
 
+### Service Checkout Page
+
+1. Create a new page titled "Checkout"
+2. Add the Service Checkout block (or the checkout page element)
+3. Publish and assign it in **Settings > Pages > Checkout**
+
+This page handles the standalone checkout flow -- billing details, order review, payment method selection, and order placement.
+
 ---
 
 ## Optional Pages You Can Add
 
-Beyond the three required pages, consider adding these for a richer marketplace:
+Beyond the four required pages, you should also add a **Cart** page. Consider adding these for a richer marketplace:
 
 | Page | What to Add |
 |------|------------|
+| **Cart** | The shopping cart page where buyers review selected services before checkout |
 | **Vendor Directory** | A grid of all marketplace vendors sorted by rating |
 | **Featured Services** | A curated showcase of your best services |
 | **Top Vendors** | Your highest-rated sellers |

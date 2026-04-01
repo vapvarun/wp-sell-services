@@ -27,8 +27,8 @@ All of these are fully available in both versions -- nothing is held back:
 - Complete order workflow (10+ statuses) with messaging and file attachments
 - Delivery management with revisions and deadline extensions
 - 5-star reviews, dispute resolution, and buyer requests with proposals
-- Vendor and buyer dashboards, 4 seller levels, portfolios, vacation mode
-- Tipping system, in-app notifications, and 8 email notification types
+- Vendor and buyer dashboards, 4 seller levels (New Seller, Rising Seller, Top Rated, Pro Seller), portfolios, vacation mode
+- Tipping system, in-app notifications, and 25 email notification types
 - 6 page-building blocks, mobile-responsive templates, and theme customization
 
 ### Service Creation Limits
@@ -107,6 +107,17 @@ The entire commission and payout system is available in both versions: global co
 | Direct video upload | -- | **[PRO]** |
 | Custom fields in packages | -- | **[PRO]** |
 | Scheduled publishing | -- | **[PRO]** |
+
+### Advanced Pro Features
+
+| Feature | Free | Pro |
+|---------|------|-----|
+| Recurring Services (subscription billing for services) | -- | **[PRO]** |
+| Vendor Subscription Plans (paid vendor tiers) | -- | **[PRO]** |
+| PayPal Mass Payouts (batch vendor payouts) | -- | **[PRO]** |
+| Stripe Connect (direct vendor payments) | -- | **[PRO]** |
+| Tiered Commission Rules (category/volume/level-based rates) | -- | **[PRO]** |
+| White-Label Branding (rebrand the marketplace) | -- | **[PRO]** |
 
 ---
 

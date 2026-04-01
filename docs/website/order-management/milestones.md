@@ -1,4 +1,4 @@
-# Project Milestones **[PRO]**
+# Project Milestones
 
 For large projects, milestones let you break the work into smaller phases. Each milestone has its own delivery, approval step, and payment -- so both the buyer and vendor stay aligned throughout the project.
 
@@ -65,7 +65,7 @@ This makes it easy to see at a glance how far along a project is.
 
 ## Milestones vs. Standard Delivery
 
-| Feature | Standard Delivery | Milestones **[PRO]** |
+| Feature | Standard Delivery | Milestones |
 |---------|-------------------|---------------------|
 | Delivery | One final delivery | Multiple deliveries per phase |
 | Payment | Full payment at end | Progressive payment per phase |

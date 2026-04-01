@@ -30,9 +30,9 @@ Ratings and review counts are key requirements for advancing through seller leve
 | Level | Minimum Rating | Minimum Reviews |
 |-------|---------------|-----------------|
 | New Seller | None | None |
-| Level 1 | 4.0 stars | 3 reviews |
-| Level 2 | 4.5 stars | 10 reviews |
-| Top Rated | 4.8 stars | 50 reviews |
+| Rising Seller | 4.0 stars | 3 reviews |
+| Top Rated | 4.7 stars | 10 reviews |
+| Pro Seller | Admin-granted | Admin-granted |
 
 ### Buyer Confidence
 

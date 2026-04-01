@@ -44,7 +44,7 @@ This protects vendors from orders that sit in limbo because a buyer never respon
 
 ## How Revisions Work
 
-Revisions let the buyer request changes to delivered work. Each service has a revision limit -- the default is 2, but vendors can set different limits per package (for example, Basic gets 1 revision, Premium gets unlimited).
+Revisions let the buyer request changes to delivered work. Each service package has its own revision limit set by the vendor (for example, Basic gets 1 revision, Premium gets unlimited).
 
 When a buyer requests a revision:
 
@@ -78,7 +78,6 @@ Go to **Settings > Orders** to configure:
 | Setting | Default | What It Does |
 |---------|---------|--------------|
 | Auto-Complete Days | 3 | Days after delivery before auto-completing if buyer does not respond. 0 to disable. |
-| Default Revision Limit | 2 | How many revisions are included per order. Vendors can override this per service. |
 
 ## Tips
 

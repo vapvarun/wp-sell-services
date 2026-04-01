@@ -104,7 +104,7 @@ Reviews can be sorted by most recent, highest rated, lowest rated, or most helpf
 
 ## Review Impact on Sellers
 
-Good reviews directly boost a vendor's visibility in search results and contribute to advancing through seller levels. Vendors need minimum ratings and review counts to reach Level 1 (4.0 stars, 3 reviews), Level 2 (4.5 stars, 10 reviews), and Top Rated (4.8 stars, 50 reviews).
+Good reviews directly boost a vendor's visibility in search results and contribute to advancing through seller levels. Vendors need minimum ratings and review counts to reach Rising Seller (4.0 stars, 3 reviews) and Top Rated (4.7 stars, 10 reviews).
 
 Consistently low ratings can reduce a vendor's search visibility and may trigger an admin review of their account.
 

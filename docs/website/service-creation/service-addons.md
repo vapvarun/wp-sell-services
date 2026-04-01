@@ -43,7 +43,7 @@ Buyers type in custom information. This can be free or carry an additional charg
 
 ### Quantity (Select How Many)
 
-Buyers choose a number, and the price multiplies accordingly. **[PRO]**
+Buyers choose a number, and the price multiplies accordingly.
 
 **Best for:** Extra revisions, additional pages, extra hours, extra items
 
@@ -64,12 +64,7 @@ A fixed price added to the order total, regardless of which package the buyer se
 
 **Example:** Source files = +$30, whether the buyer chose Basic or Premium.
 
-### Percentage of Package Price **[PRO]**
-The add-on price is calculated as a percentage of the selected package.
-
-**Example:** Commercial license = 25% of package price. If the buyer selects a $200 package, the license costs $50.
-
-### Quantity-Based **[PRO]**
+### Quantity-Based
 Price multiplied by the number the buyer selects.
 
 **Example:** Extra pages = $20 each. Buyer selects 3 = $60 total.

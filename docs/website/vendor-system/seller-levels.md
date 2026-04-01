@@ -1,14 +1,14 @@
 # Seller Levels & Badges
 
-WP Sell Services uses a four-tier level system that rewards vendors for consistent, high-quality performance. As vendors complete more orders and earn better ratings, they advance through the levels and earn visible badges.
+WP Sell Services uses a three-tier auto-calculated level system plus one admin-only tier. As vendors complete more orders and earn better ratings, they advance through the levels and earn visible badges.
 
-## The Four Levels
+## The Seller Levels
 
 ### New Seller
 
 Every vendor starts here. There are no requirements -- just register and you are in. You can create services, receive orders, and access the full vendor dashboard.
 
-### Level 1 Seller
+### Rising Seller
 
 You have proven yourself as a reliable vendor.
 
@@ -23,14 +23,14 @@ You have proven yourself as a reliable vendor.
 
 **Typical timeline:** 2-4 weeks of active selling.
 
-### Level 2 Seller
+### Top Rated
 
 You have built a strong track record of quality and consistency.
 
 | What You Need | Minimum |
 |---------------|---------|
 | Completed Orders | 25 |
-| Average Rating | 4.5 stars |
+| Average Rating | 4.7 stars |
 | Total Reviews | 10 |
 | Response Rate | 90% |
 | On-Time Delivery Rate | 90% |
@@ -38,24 +38,13 @@ You have built a strong track record of quality and consistency.
 
 **Typical timeline:** 2-4 months of active selling.
 
-### Top Rated Seller
+### Pro Seller (Admin-Granted Only)
 
-Elite status -- you are among the best on the marketplace.
-
-| What You Need | Minimum |
-|---------------|---------|
-| Completed Orders | 100 |
-| Average Rating | 4.8 stars |
-| Total Reviews | 50 |
-| Response Rate | 95% |
-| On-Time Delivery Rate | 95% |
-| Days Active | 180 |
-
-**Typical timeline:** 4-6 months of consistent excellence.
+This level cannot be earned through automatic calculation. It is granted exclusively by an admin to recognize exceptional vendors. Pro Seller status persists until the admin removes it.
 
 ## How Levels Are Calculated
 
-The system checks every vendor's stats daily and compares them against the criteria for each level. You must meet **all** requirements for a level to advance -- not just some of them.
+The system checks every vendor's stats daily and compares them against the criteria for New Seller, Rising Seller, and Top Rated. You must meet **all** requirements for a level to advance -- not just some of them. Pro Seller is not part of the automatic calculation -- it is assigned by an admin.
 
 Here is what each metric measures:
 
@@ -68,7 +57,7 @@ Here is what each metric measures:
 
 ## Automatic Upgrades
 
-You do not need to apply or request a level-up. The system runs a daily check and upgrades your level automatically when you meet all the criteria. You will receive an email notification when your level changes, and your badge updates across the entire marketplace.
+You do not need to apply or request a level-up. The system runs a daily check and upgrades your level automatically when you meet all the criteria for New Seller, Rising Seller, or Top Rated. You will receive an email notification when your level changes, and your badge updates across the entire marketplace. Pro Seller cannot be earned automatically -- only an admin can grant it.
 
 ## What Higher Levels Get You
 
@@ -81,7 +70,7 @@ As you climb the levels, you unlock real benefits:
 
 ## Tracking Your Progress
 
-Go to **Dashboard > Seller Level** to see where you stand. For each requirement, you can see:
+Your current seller level and progress are displayed on your public vendor profile. For each requirement, you can see:
 
 - Your current value
 - The target threshold
@@ -96,15 +85,13 @@ Your level is recalculated daily. If your stats drop below the requirements (for
 
 ## Tips for Advancing
 
-**To reach Level 1:** Focus on completing your first 5 orders with great quality. Respond to messages quickly and deliver on time. Ask satisfied buyers to leave reviews.
+**To reach Rising Seller:** Focus on completing your first 5 orders with great quality. Respond to messages quickly and deliver on time. Ask satisfied buyers to leave reviews.
 
-**To reach Level 2:** Scale up while maintaining quality. Check messages multiple times a day to keep your response rate above 90%. Be meticulous about deadlines.
-
-**To reach Top Rated:** This takes sustained excellence over months. Every order matters. Aim for 5-star ratings, near-instant responses, and flawless on-time delivery.
+**To reach Top Rated:** Scale up while maintaining quality. Check messages multiple times a day to keep your response rate above 90%. Be meticulous about deadlines. Aim for 5-star ratings, near-instant responses, and flawless on-time delivery.
 
 ## Admin Level Management
 
-Admins can manually adjust a vendor's seller level from **WP Admin > WP Sell Services > Vendors** if needed. Manual changes persist until the next daily automatic assessment.
+Admins can manually adjust a vendor's seller level from **WP Admin > WP Sell Services > Vendors**. This is also the only way to grant or remove Pro Seller status. For the auto-calculated levels (New Seller, Rising Seller, Top Rated), manual changes persist until the next daily automatic assessment.
 
 ## Related Resources
 

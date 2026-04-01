@@ -1,6 +1,6 @@
 # Displaying Your Marketplace
 
-WP Sell Services gives you 19 ready-made page elements to build every part of your marketplace. Add a services catalog, vendor directory, user dashboard, buyer requests board, and more -- all by placing elements on your WordPress pages.
+WP Sell Services gives you 20 ready-made page elements to build every part of your marketplace. Add a services catalog, vendor directory, user dashboard, buyer requests board, and more -- all by placing elements on your WordPress pages.
 
 ---
 
@@ -75,6 +75,22 @@ A user registration form with username, email, and password fields. Requires Wor
 ### Vendor Registration
 
 The registration form specifically for users who want to become vendors. This is different from the general registration form -- use this on your "Become a Vendor" or "Start Selling" page.
+
+### Shopping Cart
+
+Displays the shopping cart where buyers can review selected services, packages, and add-ons before proceeding to checkout. Shows item details, quantities, prices, and a total. Buyers can remove items or proceed to the checkout page.
+
+### Service Checkout
+
+The checkout flow for standalone mode. Displays billing details, order review, payment method selection, and the Place Order button. This is the page where buyers complete their purchase when using the built-in checkout system (not WooCommerce).
+
+### My Account
+
+An account management page for standalone mode. Shows the logged-in user's profile information, saved addresses, and account settings. This is separate from the vendor dashboard and focuses on personal account details.
+
+### Service Creation Wizard
+
+The multi-step service creation form available to vendors. Guides vendors through creating a new service with steps for title, description, category, pricing packages, add-ons, requirements, media uploads, and FAQs. Only visible to users with the vendor role.
 
 ---
 
