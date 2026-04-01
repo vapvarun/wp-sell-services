@@ -226,6 +226,7 @@ final class Plugin {
 		$this->init_updater();
 		$this->maybe_upgrade_database();
 		$this->maybe_create_vendor_role();
+		$this->maybe_create_missing_pages();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
 		$this->define_avatar_filter();
@@ -325,6 +326,51 @@ final class Plugin {
 			if ( ! $role->has_cap( $cap ) ) {
 				$role->add_cap( $cap, $grant );
 			}
+		}
+	}
+
+	/**
+	 * Create any missing pages that were added in newer versions.
+	 *
+	 * Runs on every init to handle upgrades from versions that didn't
+	 * include all required pages (e.g., cart page added after initial release).
+	 *
+	 * @return void
+	 */
+	private function maybe_create_missing_pages(): void {
+		$required_pages = array(
+			'services_page' => array( 'Services', '[wpss_services]' ),
+			'dashboard'     => array( 'Dashboard', '[wpss_dashboard]' ),
+			'become_vendor' => array( 'Become a Vendor', '[wpss_vendor_registration]' ),
+			'checkout'      => array( 'Service Checkout', '[wpss_checkout]' ),
+			'cart'          => array( 'Cart', '[wpss_cart]' ),
+		);
+
+		$saved = get_option( 'wpss_pages', array() );
+		$changed = false;
+
+		foreach ( $required_pages as $key => $page_data ) {
+			if ( ! empty( $saved[ $key ] ) && get_post( $saved[ $key ] ) ) {
+				continue;
+			}
+
+			$page_id = wp_insert_post(
+				array(
+					'post_title'   => $page_data[0],
+					'post_content' => $page_data[1],
+					'post_status'  => 'publish',
+					'post_type'    => 'page',
+				)
+			);
+
+			if ( $page_id && ! is_wp_error( $page_id ) ) {
+				$saved[ $key ] = $page_id;
+				$changed       = true;
+			}
+		}
+
+		if ( $changed ) {
+			update_option( 'wpss_pages', $saved );
 		}
 	}
 

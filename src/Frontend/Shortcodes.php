@@ -1251,7 +1251,10 @@ class Shortcodes {
 		$general  = get_option( 'wpss_general', array() );
 		$platform = $general['ecommerce_platform'] ?? 'standalone';
 
-		if ( 'woocommerce' === $platform || ( 'auto' === $platform && class_exists( 'WooCommerce' ) ) ) {
+		// When WooCommerce handles checkout, link to its checkout page.
+		if ( function_exists( 'wc_get_checkout_url' )
+			&& ( 'woocommerce' === $platform || ( 'auto' === $platform && class_exists( 'WooCommerce' ) ) )
+		) {
 			$checkout_url = wc_get_checkout_url();
 			return '<div class="wpss-checkout-redirect"><p>'
 				. sprintf(
@@ -1262,6 +1265,7 @@ class Shortcodes {
 				. '</p></div>';
 		}
 
+		// For any other adapter or misconfigured state.
 		return '<div class="wpss-checkout-notice"><p>'
 			. __( 'Checkout is not available. Please configure an e-commerce platform in settings.', 'wp-sell-services' )
 			. '</p></div>';
