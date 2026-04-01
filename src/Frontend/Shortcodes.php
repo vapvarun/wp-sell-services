@@ -60,6 +60,11 @@ class Shortcodes {
 
 		// Cart shortcode.
 		add_shortcode( 'wpss_cart', array( $this, 'cart_page' ) );
+
+		// Checkout fallback — only registers if no adapter has claimed it.
+		if ( ! shortcode_exists( 'wpss_checkout' ) ) {
+			add_shortcode( 'wpss_checkout', array( $this, 'checkout_fallback' ) );
+		}
 	}
 
 	/**
@@ -1232,5 +1237,33 @@ class Shortcodes {
 		ob_start();
 		wpss_get_template( 'cart/cart.php', array( 'cart_items' => $cart_items ) );
 		return ob_get_clean();
+	}
+
+	/**
+	 * Checkout fallback when the active e-commerce adapter does not register wpss_checkout.
+	 *
+	 * When WooCommerce or another adapter handles checkout, this shortcode redirects
+	 * to the adapter's checkout page instead of rendering raw shortcode text.
+	 *
+	 * @return string
+	 */
+	public function checkout_fallback(): string {
+		$general  = get_option( 'wpss_general', array() );
+		$platform = $general['ecommerce_platform'] ?? 'standalone';
+
+		if ( 'woocommerce' === $platform || ( 'auto' === $platform && class_exists( 'WooCommerce' ) ) ) {
+			$checkout_url = wc_get_checkout_url();
+			return '<div class="wpss-checkout-redirect"><p>'
+				. sprintf(
+					/* translators: %s: checkout page link */
+					__( 'Checkout is handled by WooCommerce. <a href="%s">Go to checkout</a>.', 'wp-sell-services' ),
+					esc_url( $checkout_url )
+				)
+				. '</p></div>';
+		}
+
+		return '<div class="wpss-checkout-notice"><p>'
+			. __( 'Checkout is not available. Please configure an e-commerce platform in settings.', 'wp-sell-services' )
+			. '</p></div>';
 	}
 }
