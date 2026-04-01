@@ -140,6 +140,7 @@ $cron_hooks = array(
 	'wpss_cleanup_expired_requests',
 	'wpss_update_vendor_stats',
 	'wpss_process_auto_withdrawals',
+	'wpss_process_offline_auto_cancel',
 	'wpss_cron_daily',
 );
 
