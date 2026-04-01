@@ -1,323 +1,99 @@
-# Vendor Settings
+# Vendor Settings (Admin)
 
-Configure how vendors join your marketplace and manage their service creation capabilities.
-
-## Accessing Vendor Settings
-
-Navigate to **WP Sell Services → Settings → Vendor** in the WordPress admin panel.
+These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **WP Admin > WP Sell Services > Settings > Vendor**.
 
 ![Vendor Settings Tab](../images/settings-vendor-tab.png)
 
-## Vendor Registration
+## Vendor Registration Mode
 
-Control who can become a vendor on your marketplace.
+**Default: Open**
 
-### Registration Mode
+Choose how vendors can join your marketplace:
 
-Choose from three registration modes:
-
-| Mode | Description | Use Case |
+| Mode | What Happens | Best For |
 |------|-------------|----------|
-| **Open** | Anyone can register as vendor | Growing marketplaces, open platforms |
-| **Requires Approval** | Admin must approve applications | Curated marketplaces, quality control |
-| **Closed** | Only admins create vendor accounts | Invite-only, exclusive platforms |
+| **Open** | Anyone can register and start selling immediately | Growing marketplaces, community platforms |
+| **Requires Approval** | Users submit applications; you approve or reject them | Curated marketplaces, quality control |
+| **Closed** | Only you can create vendor accounts | Invite-only platforms, soft launches |
 
-**Setting:** `vendor_registration` (default: `open`)
+### How Approval Works
 
-**Configuration:**
-1. Go to **Settings → Vendor**
-2. Select **Vendor Registration** mode
-3. Choose: Open, Requires Approval, or Closed
-4. Save changes
+When set to "Requires Approval":
 
-### Open Registration
+1. A user submits the vendor registration form.
+2. You receive a notification.
+3. Go to **WP Sell Services > Vendors** and filter by "Pending" status.
+4. Review the application and click **Approve** or **Reject**.
+5. The applicant gets an email with the result.
 
-**Behavior:**
-- Users self-register via `[wpss_vendor_registration]` or `[wpss_become_vendor]` shortcode
-- Account activated immediately (if auto-approve enabled)
-- Vendors can create services right away
+Try to respond within 24-48 hours. Slow approvals can discourage quality vendors from joining.
 
-**Best For:**
-- Community marketplaces
-- High-volume platforms
-- Quick onboarding
+### Manual Vendor Creation (Closed Mode)
 
-### Requires Approval
+When registration is closed, you create vendor accounts manually:
 
-**Behavior:**
-- Users submit registration form
-- Account status: "Pending"
-- Admin reviews and approves/rejects
-- Email notification sent to applicant
+1. Go to **Users > Add New** and create a WordPress user account.
+2. Assign the vendor role.
+3. The user can now access vendor features immediately.
 
-**Approval Process:**
-1. New vendor registers
-2. Admin receives notification
-3. Navigate to **WP Sell Services → Vendors**
-4. Filter by Status: Pending
-5. Review vendor profile
-6. Click Approve or Reject
+## Max Services Per Vendor
 
-**Best For:**
-- Quality-controlled marketplaces
-- Curated vendor lists
-- Professional services platforms
+**Default: 20**
 
-### Closed Registration
+This limits how many active services each vendor can create. Set it to 0 for unlimited.
 
-**Behavior:**
-- Registration page shows "Registration Closed" message
-- Only admins can create vendor accounts manually
-- No public registration form
+Keeping a reasonable limit encourages vendors to focus on quality over quantity. You can always increase it for top performers.
 
-**Manual Vendor Creation:**
-1. Navigate to **Users → Add New**
-2. Create WordPress user account
-3. Assign `wpss_vendor` role
-4. User gains vendor capabilities
+## Require Verification
 
-**Best For:**
-- Invite-only platforms
-- Soft launch phase
-- Exclusive marketplaces
+**Default: Disabled**
 
-## Service Limits
+When enabled, new vendors start with "Pending" status and cannot create services until you verify their identity. You review their information and manually activate their account.
 
-Control what vendors can include in their service listings.
+This adds an extra quality gate -- vendors must be verified before they can list anything on your marketplace.
 
-### Max Services Per Vendor
+## Require Service Moderation
 
-**Setting:** `max_services_per_vendor` (default: `20`)
+**Default: Disabled**
 
-Limit the total number of active services each vendor can create.
+When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it.
 
-**Configuration:**
-1. Set **Max Services Per Vendor** value
-2. Enter number (0 for unlimited)
-3. Save changes
+To review pending services, go to **WP Sell Services > Services** and filter by status.
 
-**Example:**
-- Set to 10: Vendors can create maximum 10 services
-- Set to 0: No limit (unlimited services)
+This is useful for maintaining marketplace quality, especially in the early days. As you build trust with your top vendors, you might consider disabling this to speed things up.
 
-### Gallery Images
-
-**Limit:** 4 images per service (Free version)
-
-**Setting Location:** Not directly configurable in Vendor settings (handled by service creation logic)
-
-**Pro Version:** Unlimited images
-
-**Image Requirements:**
-- Minimum: 800×600 pixels
-- Formats: JPG, PNG, GIF
-- Size limit: Set by server/WordPress config
-
-## Verification Requirements
-
-Control vendor account verification.
-
-### Require Verification
-
-**Setting:** `require_verification` (default: `false`)
-
-When enabled, new vendors start with "Pending" status until identity verified.
-
-**Configuration:**
-1. Check **Require Verification**
-2. Save changes
-
-**Effect:**
-- New vendors registered with `status = 'pending'`
-- Vendors cannot create services until verified
-- Admin manually verifies vendors
-
-**Verification Process:**
-1. Vendor registers
-2. Admin reviews submitted information
-3. Admin verifies identity (email, documents, etc.)
-4. Admin updates status to "Active"
-5. Vendor can now create services
-
-## Service Moderation
-
-Control whether services need admin approval before publishing.
-
-### Require Service Moderation
-
-**Setting:** `require_service_moderation` (default: `false`)
-
-When enabled, all new services require admin approval before going live.
-
-**Configuration:**
-1. Check **Require Service Moderation**
-2. Save changes
-
-**Workflow:**
-1. Vendor creates service
-2. Service saved as "Pending Review"
-3. Admin reviews service
-4. Admin approves/rejects
-5. If approved, service goes live
-
-**Review Location:**
-Navigate to **WP Sell Services → Services** and filter by status.
-
-## Database Options
-
-These settings are stored in WordPress options table as `wpss_vendor` option group:
-
-```php
-'wpss_vendor' => [
-    'vendor_registration' => 'open', // or 'approval', 'closed'
-    'max_services_per_vendor' => 20,
-    'require_verification' => false,
-    'require_service_moderation' => false
-]
-```
-
-## Shortcode Reference
-
-### Vendor Registration
-
-Use these shortcodes on your "Become a Vendor" page:
-
-- `[wpss_vendor_registration]` - Registration form
-- `[wpss_become_vendor]` - Alternative registration form
-
-Both shortcodes provide the same functionality.
-
-**Example Page Setup:**
-1. Create new page: "Become a Vendor"
-2. Add shortcode: `[wpss_vendor_registration]`
-3. Publish page
-4. Update page slug in **Settings → Pages → Become a Vendor**
-
-## Vendor Role Capabilities
-
-When a user becomes a vendor, they receive the `wpss_vendor` role with these capabilities:
-
-- `wpss_vendor` - Vendor marker capability
-- `wpss_manage_services` - Create and edit services
-- `wpss_manage_orders` - View and manage orders
-- `wpss_view_analytics` - Access earnings dashboard
-- `wpss_respond_to_requests` - Respond to buyer requests
-- `read` - Basic WordPress access
-- `upload_files` - Upload attachments
-- `edit_posts` - Create content
-
-These capabilities are granted automatically via `Activator::create_roles()`.
+![Full vendor settings panel](../images/settings-vendor.png)
 
 ## Registration Form Fields
 
 The vendor registration form collects:
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| **Display Name** | Yes | Public vendor name |
-| **Tagline** | Yes | Professional title |
-| **Bio** | Yes | About you section |
-| **Skills** | Yes | Comma-separated skills |
-| **Terms Agreement** | Yes | Checkbox for T&C acceptance |
-
-Additional fields may be added by extensions.
+- **Display Name** -- Their public vendor name.
+- **Tagline** -- A professional one-liner.
+- **Bio** -- Their background and experience.
+- **Skills** -- Areas of expertise.
+- **Terms Agreement** -- They must accept your marketplace terms.
 
 ## Admin Vendor Management
 
-### Viewing Vendors
+From **WP Sell Services > Vendors**, you can manage all vendors on your marketplace:
 
-Navigate to **WP Sell Services → Vendors** to see:
+- **View Profiles** -- See complete vendor information and statistics.
+- **Approve or Reject** -- For pending applications.
+- **Suspend** -- Temporarily disable a vendor's account.
+- **Delete** -- Remove a vendor account entirely.
+- **Set Custom Commission** -- Override the global commission rate for specific vendors.
 
-- Total vendors count
-- Active vendors
-- Pending approvals
-- Vendor list with statistics
+## Recommended Approaches
 
-### Vendor Actions
+**For a brand-new marketplace:** Start with "Requires Approval" and "Require Service Moderation" both enabled. This lets you control quality as you build your initial vendor base. Once you have a solid group of trusted vendors, you can relax these settings.
 
-For each vendor, admins can:
+**For a growing marketplace:** Switch to "Open" registration and disable service moderation to reduce friction. Use seller levels to naturally incentivize quality.
 
-- **View Profile**: See complete vendor information
-- **Edit**: Modify vendor settings
-- **Approve/Reject**: Change account status
-- **Suspend**: Temporarily disable vendor
-- **Delete**: Remove vendor account
-
-### Custom Commission Rates
-
-Admins can set per-vendor commission rates:
-
-1. Navigate to vendor details
-2. Set custom commission percentage
-3. Overrides global commission rate
-4. Calculated per order
-
-Learn more: [Commission System](../earnings-wallet/commission-system-wpss.md)
-
-![Full vendor settings panel](../images/settings-vendor.png)
-
-## Best Practices
-
-### For Open Registration
-
-- Enable email verification
-- Monitor new vendor registrations
-- Set reasonable service limits
-- Review vendors periodically
-
-### For Approval Mode
-
-- Respond to applications within 24-48 hours
-- Provide clear rejection reasons
-- Document approval criteria
-- Communicate with applicants
-
-### For Closed Registration
-
-- Invite quality vendors personally
-- Provide onboarding assistance
-- Set higher service limits
-- Build vendor relationships
-
-## Troubleshooting
-
-### Registration Form Not Showing
-
-**Check:**
-- Registration mode is "Open" or "Approval"
-- Page contains correct shortcode
-- Plugin is activated
-- No JavaScript errors
-
-**Solution:**
-- Verify shortcode: `[wpss_vendor_registration]`
-- Clear cache
-- Test in default WordPress theme
-
-### Vendors Can't Create Services
-
-**Verify:**
-- Account status is "Active"
-- Max services limit not reached
-- Vendor role assigned correctly
-- Service moderation settings
-
-**Solution:**
-- Check vendor status in admin
-- Increase service limit if needed
-- Verify `wpss_vendor` role exists
-
-### Service Moderation Not Working
-
-**Confirm:**
-- "Require Service Moderation" is checked
-- Settings saved successfully
-- Cache cleared
-- WordPress permissions correct
+**For a premium marketplace:** Keep approval required but disable service moderation for Level 2 and Top Rated vendors (the seller level system handles quality control at that point).
 
 ## Related Documentation
 
-- [Becoming a Vendor](becoming-a-vendor.md) - Vendor registration guide
-- [Vendor Dashboard](vendor-dashboard.md) - Vendor interface
-- [Seller Levels](seller-levels.md) - Vendor progression system
-- [Platform Settings](../platform-settings/general-settings-wpss.md) - General configuration
+- [Becoming a Vendor](becoming-a-vendor.md)
+- [Vendor Dashboard](vendor-dashboard.md)
+- [Seller Levels](seller-levels.md)

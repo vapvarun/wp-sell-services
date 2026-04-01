@@ -1,513 +1,167 @@
-# Admin Dispute Mediation
+# Resolving Disputes (Admin Guide)
 
-Admins play a crucial role in resolving disputes fairly and maintaining marketplace integrity. This guide explains how administrators manage, investigate, and resolve disputes using the WP Sell Services dispute system.
+As a marketplace admin, you are the neutral mediator when buyers and vendors cannot agree. This guide walks you through how to investigate, decide, and resolve disputes fairly.
 
-## Admin Role in Disputes
+## Your Role
 
-### Responsibilities
+When a dispute is opened, it lands on your desk. Your job is to:
 
-Marketplace administrators:
+- Review the evidence from both sides.
+- Investigate the order history and communication.
+- Make a fair, well-reasoned decision.
+- Apply the resolution (refund, payment release, etc.).
+- Communicate the outcome clearly to both parties.
 
-- **Review Disputes**: Evaluate submitted disputes objectively
-- **Investigate Claims**: Examine evidence from both parties
-- **Make Decisions**: Determine fair resolutions
-- **Implement Solutions**: Process refunds and apply resolutions
-- **Maintain Standards**: Ensure platform policies are followed
+Stay impartial. Base every decision on evidence, not assumptions. Apply your marketplace policies consistently.
 
 ![Disputes list](../images/admin-disputes-dashboard.png)
 
-### Neutral Mediation
-
-Admins must remain:
-
-- **Impartial**: No bias toward buyers or vendors
-- **Objective**: Base decisions on evidence
-- **Fair**: Apply policies consistently
-- **Professional**: Maintain courteous communication
-
 ## Accessing Disputes
 
-### Admin Dispute Dashboard
+Go to **WP Admin > WP Sell Services > Disputes** to see all disputes on your marketplace. The list shows each dispute's status, order reference, the parties involved, and the date it was opened.
 
-Navigate to **WordPress Admin → WP Sell Services → Disputes**.
+Click any dispute to view the full details: the reason, description, all submitted evidence, the message thread, and the complete order history.
 
-**Dashboard Shows:**
-- List of all disputes
-- Current status of each
-- Order reference numbers
-- Parties involved
-- Date opened
-- Quick action buttons
+## The Investigation Process
 
-### Viewing Dispute Details
+### Step 1: Read the Order Details
 
-Click any dispute to view:
+Understand what was purchased. Check the service description, the package the buyer chose, and the price paid.
 
-**Dispute Information:**
-- Dispute ID
-- Order ID and details
-- Initiating party
-- Reason and description
-- Current status
-- Creation and update timestamps
+### Step 2: Review the Requirements
 
-**Party Information:**
-- Buyer details
-- Vendor details
-- Order history for context
+Look at what the buyer submitted as project requirements. This is the agreed-upon scope of work.
 
-**Evidence:**
-- All submitted evidence (JSON stored)
-- Evidence type (text, image, file, link)
-- Submission timestamps
-- Submitter user IDs
+### Step 3: Examine the Deliverables
 
-## Managing Dispute Status
+Download and review what the vendor actually delivered. Compare it against the requirements and service description.
 
-### Available Status Transitions
+### Step 4: Read the Messages
 
-Admins can change dispute status using `update_status()`:
+Go through the full conversation between buyer and vendor. Look for evidence of communication attempts, revision requests, and any agreements or promises made.
 
-```php
-// Update status with optional note
-$dispute_service->update_status( $dispute_id, 'pending_review', 'Reviewing evidence' );
-```
+### Step 5: Evaluate the Evidence
 
-### Status Options
-
-| Status | Use When |
-|--------|----------|
-| `open` | Initial submission, awaiting responses |
-| `pending_review` | Evidence complete, awaiting admin action |
-| `escalated` | Needs higher-level review |
-| `resolved` | Decision made, being implemented |
-| `closed` | Finalized and complete |
-
-### Adding Status Notes
-
-Status notes help track decision process:
-
-```php
-// Note is stored in evidence JSON as type 'status_note'
-$dispute_service->update_status(
-    $dispute_id,
-    'escalated',
-    'Escalating due to high order value and conflicting evidence'
-);
-```
-
-Notes are visible to admins and optionally to parties.
-
-## Reviewing Evidence
-
-### Evidence Access
-
-Get all evidence for a dispute:
-
-```php
-$evidence = $dispute_service->get_evidence( $dispute_id );
-```
-
-Returns array of evidence items with:
-- Unique ID
-- User ID of submitter
-- Evidence type
-- Content (text, attachment ID, or URL)
-- Description
-- Timestamp
-
-### Evidence Types
-
-**text:** Written explanations
-- Stored directly in content field
-- Searchable
-
-**image:** Image attachment
-- Content is WordPress attachment ID
-- Use `wp_get_attachment_url()` to display
-
-**file:** Document attachment
-- Content is WordPress attachment ID
-- Use `wp_get_attachment_url()` to download
-
-**link:** External URL
-- Content is sanitized URL
-- Opens in new tab
+Review all evidence both parties have submitted. Consider:
+- Is the evidence relevant to the claim?
+- Does the timeline add up?
+- Is the evidence consistent with other facts in the order?
+- Which party has the stronger case?
 
 ![Dispute evidence view](../images/admin-dispute-investigation.png)
 
-### Evaluating Evidence
+## The Four Resolution Types
 
-Consider:
-1. **Relevance**: Does evidence relate to the claim?
-2. **Authenticity**: Does evidence appear legitimate?
-3. **Timing**: When was evidence created/submitted?
-4. **Consistency**: Does evidence align with other facts?
-
-## Resolution Types
-
-Admins select from 5 resolution types when resolving disputes.
+When you are ready to resolve the dispute, choose one of these outcomes:
 
 ### Full Refund
 
-**Constant:** `DisputeService::RESOLUTION_REFUND`
-**Value:** `'full_refund'`
+The buyer receives their full payment back. The vendor gets nothing.
 
-**When to Use:**
-- Complete non-delivery by vendor
-- Work completely unusable
-- Severe quality issues
-- Vendor violated major terms
+**Use when:**
+- The vendor never delivered.
+- The delivered work is completely unusable.
+- The vendor seriously violated the service terms.
+- The work is so far from what was described that it has no value.
 
-**Order Impact:**
-- Order status → 'refunded'
-- Buyer receives full refund
-- Vendor receives nothing
+**Order status becomes:** Refunded
 
 ### Partial Refund
 
-**Constant:** `DisputeService::RESOLUTION_PARTIAL_REFUND`
-**Value:** `'partial_refund'`
+The buyer gets back a portion of the payment, and the vendor keeps the rest.
 
-**When to Use:**
-- Some work completed but incomplete
-- Quality below promised but partially usable
-- Both parties share fault
+**Use when:**
+- Some work was completed but it is incomplete.
+- The quality is below what was promised but the work is partially usable.
+- Both parties share some fault.
+- A compromise is the fairest outcome.
 
-**Order Impact:**
-- Order status → 'partially_refunded'
-- Buyer receives partial refund
-- Vendor receives remaining amount
+**Order status becomes:** Partially Refunded
 
-### Favor Vendor
+### Complete Order (Favor Vendor)
 
-**Constant:** `DisputeService::RESOLUTION_FAVOR_VENDOR`
-**Value:** `'favor_vendor'`
+No refund is issued. The vendor receives the full payment.
 
-**When to Use:**
-- Vendor met all requirements
-- Buyer's complaint is unreasonable
-- Work matches description
-- Evidence supports vendor
+**Use when:**
+- The vendor met all requirements.
+- The buyer's complaint is unreasonable or outside the original scope.
+- The delivered work matches the service description.
+- The evidence clearly supports the vendor.
 
-**Order Impact:**
-- Order status → 'completed'
-- Vendor receives full payment
-- No refund to buyer
-
-### Favor Buyer
-
-**Constant:** `DisputeService::RESOLUTION_FAVOR_BUYER`
-**Value:** `'favor_buyer'`
-
-**When to Use:**
-- Vendor clearly at fault
-- Requirements not met
-- Deliverables substandard
-
-**Order Impact:**
-- Order status → 'refunded'
-- Similar to full refund
+**Order status becomes:** Completed
 
 ### Mutual Agreement
 
-**Constant:** `DisputeService::RESOLUTION_MUTUAL`
-**Value:** `'mutual_agreement'`
+Both parties have negotiated a solution that works for them. You formalize and enforce whatever they agreed to.
 
-**When to Use:**
-- Both parties negotiated solution
-- Custom arrangement reached
-- Standard resolutions don't fit
-
-**Order Impact:**
-- Order status → 'completed'
-- Custom payment split if needed
-
-## Resolving Disputes
-
-### Resolution Method
-
-Use the `resolve()` method:
-
-```php
-$result = $dispute_service->resolve(
-    $dispute_id,
-    DisputeService::RESOLUTION_PARTIAL_REFUND,
-    'Vendor delivered partial work. Splitting payment 50/50.',
-    get_current_user_id(), // Admin ID
-    50.00 // Refund amount
-);
-```
-
-### Resolution Parameters
-
-1. **$dispute_id** (int): Dispute to resolve
-2. **$resolution** (string): Resolution type constant
-3. **$notes** (string): Explanation for decision
-4. **$resolved_by** (int): Admin user ID
-5. **$refund_amount** (float): Amount to refund (if applicable)
+**Use when:**
+- The buyer and vendor have already worked out a compromise.
+- A custom arrangement fits better than the standard resolution types.
+- Neither full refund nor full payment is appropriate.
 
-### What Happens Automatically
-
-When you call `resolve()`:
-
-1. ✓ Dispute status → 'resolved'
-2. ✓ Resolution type stored
-3. ✓ Resolution notes saved
-4. ✓ Resolved timestamp recorded
-5. ✓ Refund amount stored in evidence
-6. ✓ Order status updated via `handle_resolution()`
-7. ✓ Parties notified via `wpss_dispute_resolved` action
-8. ✓ Returns true on success
-
-## Refund Processing
-
-### Refund Information Storage
-
-Refund amounts are stored in evidence JSON:
-
-```json
-{
-  "id": "refund_123",
-  "type": "refund_info",
-  "refund_amount": 75.00,
-  "created_at": "2026-02-12 14:30:00"
-}
-```
-
-### Actual Refund Processing
-
-**Important:** The `resolve()` method does NOT process actual payment refunds. It only:
-- Updates dispute status
-- Records refund amount
-- Updates order status
-
-**You must separately:**
-- Process refund through WooCommerce
-- Or handle refund via payment gateway
-- Or credit buyer's wallet (if using Pro wallet feature)
-
-### Order Status After Resolution
-
-The `handle_resolution()` private method updates order status:
-
-```php
-switch ( $resolution ) {
-    case RESOLUTION_REFUND:
-    case RESOLUTION_FAVOR_BUYER:
-        // Order → 'refunded'
-        break;
-
-    case RESOLUTION_PARTIAL_REFUND:
-        // Order → 'partially_refunded'
-        break;
-
-    case RESOLUTION_FAVOR_VENDOR:
-    case RESOLUTION_MUTUAL:
-        // Order → 'completed'
-        break;
-}
-```
-
-## Adding Evidence as Admin
-
-Admins can add evidence on behalf of parties or from investigation:
-
-```php
-$dispute_service->add_evidence(
-    $dispute_id,
-    get_current_user_id(), // Your admin ID
-    'text',
-    'Admin note: Verified with buyer via phone call.',
-    'Verbal confirmation from buyer'
-);
-```
-
-### Evidence Parameters
-
-1. **$dispute_id** (int): Dispute ID
-2. **$user_id** (int): User ID adding evidence (use your admin ID)
-3. **$type** (string): 'text', 'image', 'file', 'link'
-4. **$content** (string): Content or attachment ID
-5. **$description** (string): Optional description
-
-### Evidence During Closed Status
-
-Evidence cannot be added if dispute status is 'closed':
-
-```php
-if ( $dispute->status === DisputeService::STATUS_CLOSED ) {
-    // add_evidence() returns false
-}
-```
-
-## Dispute Queries
-
-### Get All Disputes
-
-```php
-$disputes = $dispute_service->get_all( [
-    'status'   => 'open', // Optional filter
-    'limit'    => 20,
-    'offset'   => 0,
-    'order_by' => 'created_at',
-    'order'    => 'DESC',
-] );
-```
-
-### Get User's Disputes
-
-```php
-$user_disputes = $dispute_service->get_by_user( $user_id, [
-    'status' => 'resolved',
-    'limit'  => 10,
-] );
-```
-
-Returns disputes where user is:
-- Dispute initiator, OR
-- Order customer, OR
-- Order vendor
-
-### Count by Status
-
-```php
-$counts = $dispute_service->count_by_status();
-// Returns:
-// [
-//     'open' => 5,
-//     'pending_review' => 3,
-//     'resolved' => 120,
-//     'escalated' => 1,
-//     'closed' => 98,
-// ]
-```
-
-## WordPress Hooks
-
-### Action: wpss_dispute_opened
-
-Fires when dispute is created:
-
-```php
-add_action( 'wpss_dispute_opened', function( $dispute_id, $order_id, $opened_by, $data ) {
-    // Send custom notifications
-    // Log to external system
-    // Trigger Slack alert
-}, 10, 4 );
-```
-
-### Action: wpss_dispute_evidence_added
-
-Fires when evidence is submitted:
-
-```php
-add_action( 'wpss_dispute_evidence_added', function( $dispute_id, $user_id ) {
-    // Notify admin of new evidence
-}, 10, 2 );
-```
-
-### Action: wpss_dispute_status_changed
-
-Fires on status updates:
-
-```php
-add_action( 'wpss_dispute_status_changed', function( $dispute_id, $status, $old_status ) {
-    // Track status transitions
-    // Update external systems
-}, 10, 3 );
-```
-
-### Action: wpss_dispute_resolved
-
-Fires when dispute is resolved:
-
-```php
-add_action( 'wpss_dispute_resolved', function( $dispute_id, $resolution, $dispute, $refund_amount ) {
-    // Process actual refund here
-    // Send resolution emails
-    // Update analytics
-}, 10, 4 );
-```
-
-## Best Practices
-
-### Fair Mediation
-
-1. **Review All Evidence**: Don't rush to judgment
-2. **Stay Neutral**: No favorites
-3. **Document Reasoning**: Always explain decisions
-4. **Be Consistent**: Apply same standards to all
-5. **Communicate Clearly**: Use professional language
-
-### Investigation Process
-
-1. **Read Order Details**: Understand what was purchased
-2. **Review Service Description**: What was promised?
-3. **Check Requirements**: What did buyer provide?
-4. **Examine Deliverables**: What did vendor deliver?
-5. **Read Messages**: Full conversation context
-6. **Evaluate Evidence**: Who has stronger case?
-
-### Resolution Writing
-
-**Good Resolution Note:**
-```
-After reviewing evidence, I'm issuing a 50% partial refund.
-
-Reasoning:
-- Logo design delivered matches service description
-- However, source files promised in Premium package not provided
-- Vendor delivered 2 of 3 included revisions
-- Delivery was 3 days late
-
-Resolution:
-- Buyer receives $50 refund (50%)
-- Vendor receives $50 payment (50%)
-- Order marked as completed
-
-This decision is final.
-```
-
-**Poor Resolution Note:**
-```
-50% refund seems fair.
-```
-
-Always explain your reasoning clearly.
-
-## Troubleshooting
-
-### Can't Update Status
-
-**Check:**
-- Dispute exists: `get( $dispute_id )` returns object?
-- Status is valid: Use STATUS_ constants
-- User has admin capability
-
-### Resolve Method Returns False
-
-**Common Causes:**
-- Dispute ID doesn't exist
-- Dispute already resolved
-- Invalid resolution type
-- Database error (check error logs)
-
-### Evidence Not Showing
-
-**Verify:**
-- Evidence stored as JSON in database
-- Evidence column is longtext type
-- JSON is valid and decodable
-- Call `get_evidence()` method, not direct DB query
+**Order status becomes:** Completed (or Refunded, depending on the agreement)
+
+## How to Resolve a Dispute
+
+1. Open the dispute from **WP Sell Services > Disputes**.
+2. Complete your investigation (steps above).
+3. Choose a resolution type.
+4. Write clear resolution notes explaining your reasoning.
+5. If a refund is involved, specify the amount.
+6. Submit the resolution.
+
+Both parties are notified of the outcome by email.
+
+**Important:** For refunds, you may also need to process the actual payment refund through your payment gateway (WooCommerce, Stripe, PayPal, etc.) separately. The dispute resolution updates the order status and records, but the money transfer may require manual action depending on your setup.
+
+## Writing Good Resolution Notes
+
+Your resolution notes should explain your reasoning so both parties understand the decision. Here is an example:
+
+> After reviewing the evidence, I am issuing a 50% partial refund.
+>
+> The logo design delivered matches the service description. However, the source files promised in the Premium package were not provided, and the delivery was 3 days late. The vendor completed 2 of 3 included revisions.
+>
+> Resolution: Buyer receives $50 refund (50%). Vendor receives $50 (50%). Order marked as completed.
+
+Compare that with a poor note like "50% refund seems fair" -- which tells neither party anything useful.
+
+## Managing Dispute Status
+
+As you work through a dispute, you can update its status:
+
+| Status | When to Use |
+|--------|-------------|
+| Open | Just submitted, waiting for the other party to respond |
+| Pending Review | Both sides have had their say, you are investigating |
+| Escalated | Complex case requiring deeper investigation |
+| Resolved | You have made your decision |
+| Closed | Everything is finalized |
+
+Add a note each time you change the status to keep a clear paper trail.
+
+## Impact on Vendors
+
+A vendor's dispute history is tracked. Here is how dispute volume typically plays out:
+
+- **1-2 disputes** -- Normal. Most come from misunderstandings.
+- **3-5 disputes** -- Worth monitoring. Consider reaching out to the vendor about patterns.
+- **5-10 disputes** -- Formal account review recommended.
+- **10+ disputes** -- Suspension should be considered.
+
+Multiple disputes that result in buyer-favored resolutions are a strong signal that a vendor may need coaching or removal.
+
+## Tips for Fair Mediation
+
+- **Review all evidence before deciding.** Do not rush to judgment.
+- **Stay neutral.** No favorites, no bias.
+- **Document everything.** Clear resolution notes protect you and your marketplace.
+- **Be consistent.** Apply the same standards to every dispute.
+- **Communicate clearly.** Both parties should understand exactly what happened and why.
+- **Respond in a timely manner.** Aim to resolve disputes within 7-14 days. Letting them linger frustrates everyone.
 
 ## Related Documentation
 
-- [Dispute Process](dispute-process.md) - Dispute lifecycle and statuses
-- [Opening a Dispute](opening-a-dispute.md) - User perspective
-- [Order Management](../order-management/order-lifecycle.md) - Order workflow
-- [Developer Guide](../developer-guide/hooks-filters.md) - Extending disputes
-
----
-
-**Key Takeaway:** Admin dispute resolution requires careful evidence review, fair judgment, and clear communication. Always document your reasoning and apply policies consistently.
+- [Opening a Dispute](opening-a-dispute.md)
+- [Dispute Process](dispute-process.md)
+- [Order Lifecycle](../order-management/order-lifecycle.md)

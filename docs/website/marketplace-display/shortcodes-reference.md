@@ -1,673 +1,135 @@
-# Shortcodes Reference
+# Displaying Your Marketplace
 
-Complete reference for all WP Sell Services shortcodes. Display marketplace features anywhere on your WordPress site.
-
-## Available Shortcodes
-
-WP Sell Services includes 13 shortcodes organized into 5 categories:
-
-- **Service Display** (4 shortcodes)
-- **Vendor Display** (3 shortcodes)
-- **Buyer Requests** (2 shortcodes)
-- **Dashboard** (2 shortcodes)
-- **Authentication** (2 shortcodes)
+WP Sell Services gives you 19 ready-made page elements to build every part of your marketplace. Add a services catalog, vendor directory, user dashboard, buyer requests board, and more -- all by placing elements on your WordPress pages.
 
 ---
 
-## Service Display Shortcodes
+## How It Works
 
-### [wpss_services]
+Each page element is a building block you can place on any page using either the block editor or a simple tag. The plugin also auto-creates the most important pages during setup, so you may already have everything in place.
 
-Display a grid of services with filtering and sorting.
-
-**Basic Usage:**
-```
-[wpss_services]
-```
-
-**Attributes:**
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `category` | string/int | - | Filter by category slug or ID |
-| `tag` | string/int | - | Filter by tag slug or ID |
-| `vendor` | int | - | Show services from specific vendor (user ID) |
-| `limit` | number | 12 | Number of services to display |
-| `columns` | number | 4 | Grid columns (1-4) |
-| `orderby` | string | date | Sort by: date, title, price, rating, sales |
-| `order` | string | DESC | Sort order: DESC or ASC |
-| `featured` | string | - | Show only featured services (true/1) |
-
-**Sorting Options:**
-
-- `orderby="date"` - Publication date (newest first by default)
-- `orderby="title"` - Alphabetical by title
-- `orderby="price"` - By starting price (uses `_wpss_starting_price` meta)
-- `orderby="rating"` - By average rating (uses `_wpss_rating_average` meta)
-- `orderby="sales"` - By total sales (uses `_wpss_total_sales` meta)
-
-**Examples:**
-
-**Featured Services Grid:**
-```
-[wpss_services featured="true" limit="8" columns="4"]
-```
-
-**Category-Specific Services:**
-```
-[wpss_services category="logo-design" limit="9" columns="3"]
-```
-
-**Vendor's Services:**
-```
-[wpss_services vendor="42" orderby="rating" order="DESC"]
-```
-
-**Top-Rated Services:**
-```
-[wpss_services orderby="rating" order="DESC" limit="6"]
-```
+You do not need to write any code. Just add the element to a page, publish, and it works.
 
 ---
 
-### [wpss_service_search]
+## Marketplace Pages
 
-Display a service search form with category dropdown.
+These elements power the public-facing browsing experience.
 
-**Basic Usage:**
-```
-[wpss_service_search]
-```
+### Services Catalog
 
-**Attributes:**
+Displays a grid of all published services with thumbnails, prices, ratings, and vendor info. This is the main browsing page of your marketplace -- the equivalent of a product catalog. Supports filtering by category, tag, or vendor, and can be sorted by date, price, rating, or sales.
 
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `placeholder` | string | "Search services..." | Search input placeholder text |
-| `show_categories` | string | true | Show category dropdown (true/false) |
-| `button_text` | string | "Search" | Search button text |
-| `action` | string | - | Form action URL (defaults to services archive) |
+### Service Search Bar
 
-**Examples:**
+A search form with a keyword field and category dropdown. Place it on your homepage or at the top of your services page so visitors can quickly find what they need.
 
-**Simple Search Box:**
-```
-[wpss_service_search placeholder="What service are you looking for?"]
-```
+### Service Categories
 
-**Search Without Category Filter:**
-```
-[wpss_service_search show_categories="false"]
-```
+Shows your service categories in a visual grid with icons and service counts. Great for your homepage or a dedicated "Browse by Category" section. Visitors click a category to see all services within it.
 
-**Custom Button Text:**
-```
-[wpss_service_search button_text="Find Services"]
-```
+### Featured Services
 
-**Custom Results Page:**
-```
-[wpss_service_search action="/custom-search/"]
-```
+Highlights services you have marked as featured. Perfect for homepage spotlights, promotional sections, or "Editor's Picks" areas. Only shows services with the featured flag enabled.
+
+### Buyer Requests Board
+
+Lists all open buyer requests so vendors can browse projects and submit proposals. You can filter by category and budget range.
+
+### Post a Request Form
+
+The form buyers use to submit a new request. Place it on a dedicated "Post a Request" page or alongside the requests board. Requires the user to be logged in.
 
 ---
 
-### [wpss_featured_services]
+## User Pages
 
-Display featured services (delegates to `wpss_services` with `featured="true"`).
+These elements power the logged-in user experience.
 
-**Basic Usage:**
-```
-[wpss_featured_services]
-```
+### Unified Dashboard
 
-**Attributes:**
+The single most important page element. It creates a full-featured dashboard that automatically adapts to the user's role:
 
-Accepts all `wpss_services` attributes. The `featured` attribute is automatically set to `true`.
+- **Buyers** see their orders, requests, messages, favorites, and profile settings
+- **Vendors** see their services, sales orders, earnings, analytics, messages, and portfolio
+- **Dual-role users** see both buyer and vendor sections
 
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `limit` | number | 12 | Number of featured services |
-| `columns` | number | 4 | Grid columns |
-| `category` | string/int | - | Filter by category |
-| `tag` | string/int | - | Filter by tag |
-| `orderby` | string | date | Sort order |
-| `order` | string | DESC | ASC or DESC |
+One page, one element, serves everyone.
 
-**Examples:**
+### My Orders
 
-**Featured Services with Custom Layout:**
-```
-[wpss_featured_services limit="6" columns="3"]
-```
+Shows the user's order list. Can be configured to show buyer orders (services purchased) or vendor orders (services sold). Includes status filtering and pagination.
 
-**Featured Services by Category:**
-```
-[wpss_featured_services category="web-development" limit="8"]
-```
+### Order Details
 
----
+Displays the full details of a specific order. Used on a dedicated page -- the order ID comes from the URL automatically. Only the buyer, vendor, or admin involved in the order can view it.
 
-### [wpss_service_categories]
+### Login Form
 
-Display service categories in a grid with icons and counts.
+A simple login form using WordPress authentication. Shows an "already logged in" message for authenticated users. You can set a custom redirect URL for after login.
 
-**Basic Usage:**
-```
-[wpss_service_categories]
-```
+### Registration Form
 
-**Attributes:**
+A user registration form with username, email, and password fields. Requires WordPress registration to be enabled in Settings > General.
 
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `parent` | int | 0 | Show only children of this parent category ID |
-| `show_count` | string | true | Show service count per category |
-| `columns` | number | 4 | Grid columns |
-| `hide_empty` | string | true | Hide categories with no services |
-| `limit` | number | 12 | Maximum categories to display |
+### Vendor Registration
 
-**Note:** Categories are ordered by count (descending) and limited by the `limit` attribute. The `orderby` and `order` attributes are not user-configurable.
-
-**Examples:**
-
-**Category Grid with Icons:**
-```
-[wpss_service_categories columns="4" show_count="true"]
-```
-
-**Top 6 Categories:**
-```
-[wpss_service_categories limit="6" columns="3"]
-```
-
-**Subcategories of Parent:**
-```
-[wpss_service_categories parent="15" columns="3"]
-```
-
-**Show Empty Categories:**
-```
-[wpss_service_categories hide_empty="false"]
-```
+The registration form specifically for users who want to become vendors. This is different from the general registration form -- use this on your "Become a Vendor" or "Start Selling" page.
 
 ---
 
-## Vendor Shortcodes
+## Widget Elements
 
-### [wpss_vendors]
+Smaller, focused elements perfect for sidebars, footers, or supplementary sections.
 
-Display a grid of vendors with profiles and ratings.
+### Vendor Directory
 
-**Basic Usage:**
-```
-[wpss_vendors]
-```
+A grid of vendor profiles showing names, avatars, ratings, and review counts. Sort by rating, join date, name, or sales volume. Use it for a dedicated "Our Vendors" page or a sidebar widget.
 
-**Attributes:**
+### Top Vendors
 
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `limit` | number | 12 | Number of vendors to display |
-| `columns` | number | 4 | Grid columns (1-4) |
-| `orderby` | string | rating | Sort by: rating, date, name, sales |
-| `order` | string | DESC | Sort order: DESC or ASC |
+Highlights the highest-rated vendors on your marketplace. Great for homepage sections like "Our Best Sellers" or sidebar widgets that showcase top talent.
 
-**Examples:**
+### Vendor Profile
 
-**Top-Rated Vendors:**
-```
-[wpss_vendors orderby="rating" order="DESC" limit="8"]
-```
+Displays a specific vendor's full profile page. Typically used on a dedicated profile page where the vendor ID comes from the URL. Can also be set to show a specific vendor by ID.
 
-**Newest Vendors:**
-```
-[wpss_vendors orderby="date" order="DESC" columns="4"]
-```
+### Buyer Request Listing
 
-**Best-Selling Vendors:**
-```
-[wpss_vendors orderby="sales" limit="10"]
-```
+A compact listing of active buyer requests with budget and category info. Useful for sidebar placements or "Latest Opportunities" sections on vendor-facing pages.
 
 ---
 
-### [wpss_vendor_profile]
+## Where to Use What
 
-Display a specific vendor's profile page.
-
-**Basic Usage:**
-```
-[wpss_vendor_profile id="42"]
-```
-
-**Attributes:**
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `id` | number | (query var) | Vendor user ID (required) |
-
-**Note:** If no ID is provided, the shortcode checks for a `vendor_id` query parameter. Uses template file `vendor/profile.php` or fallback rendering.
-
-**Examples:**
-
-**Specific Vendor Profile:**
-```
-[wpss_vendor_profile id="42"]
-```
-
-**Auto-Detect from URL:**
-```
-[wpss_vendor_profile]
-```
-(Works when URL contains `?vendor_id=42`)
+| Goal | Recommended Element |
+|------|-------------------|
+| Main marketplace browsing page | Services Catalog + Service Search Bar |
+| Homepage | Featured Services + Service Categories + Top Vendors |
+| User account area | Unified Dashboard |
+| Vendor recruitment page | Vendor Registration |
+| Buyer request marketplace | Buyer Requests Board + Post a Request Form |
+| Vendor directory page | Vendor Directory |
+| Sidebar | Service Search Bar, Top Vendors, or Buyer Request Listing |
 
 ---
 
-### [wpss_top_vendors]
+## Tips
 
-Display highest-rated vendors (delegates to `wpss_vendors` with `orderby="rating"`).
-
-**Basic Usage:**
-```
-[wpss_top_vendors]
-```
-
-**Attributes:**
-
-Accepts `limit` and `columns`. The `orderby` is hardcoded to `rating` and `order` to `DESC`.
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `limit` | number | 12 | Number of top vendors |
-| `columns` | number | 4 | Grid columns |
-
-**Examples:**
-
-**Top 5 Vendors:**
-```
-[wpss_top_vendors limit="5"]
-```
-
-**Top 10 with Custom Layout:**
-```
-[wpss_top_vendors limit="10" columns="5"]
-```
+- **Start with auto-created pages.** During setup, the plugin creates the essential pages for you. Customize from there.
+- **Combine multiple elements** on a single page for richer layouts. For example, put the search bar above the service categories, then the service grid below.
+- **All elements work in widgets too.** Add them to sidebars or footer areas for compact displays.
+- **Elements also work as Gutenberg blocks.** See [Block Editor Elements](gutenberg-blocks.md) for the drag-and-drop alternative.
 
 ---
 
-## Buyer Request Shortcodes
+## Troubleshooting
 
-### [wpss_buyer_requests]
+**Element not showing anything?**
+Make sure there is content to display -- published services, registered vendors, or open requests. An empty marketplace will show empty grids.
 
-Display a list of active buyer requests.
+**Page showing raw text instead of the element?**
+Check that the plugin is active, the page is published (not draft), and clear your site cache.
 
-**Basic Usage:**
-```
-[wpss_buyer_requests]
-```
-
-**Attributes:**
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `limit` | number | 10 | Requests per page |
-| `category` | string/int | - | Filter by category ID |
-| `budget_min` | number | - | Minimum budget filter |
-| `budget_max` | number | - | Maximum budget filter |
-
-**Note:** There is no `orderby` or `order` attribute. Requests are retrieved from `BuyerRequestService` in the order provided by that service.
-
-**Examples:**
-
-**Recent Requests:**
-```
-[wpss_buyer_requests limit="15"]
-```
-
-**High-Budget Requests:**
-```
-[wpss_buyer_requests budget_min="500"]
-```
-
-**Category-Specific Requests:**
-```
-[wpss_buyer_requests category="5" limit="10"]
-```
-
-**Budget Range:**
-```
-[wpss_buyer_requests budget_min="100" budget_max="500"]
-```
-
----
-
-### [wpss_post_request]
-
-Display the "Post a Request" form for buyers.
-
-**Basic Usage:**
-```
-[wpss_post_request]
-```
-
-**Attributes:**
-
-This shortcode accepts no attributes. The form includes:
-- Title (required, max 100 chars)
-- Description (required, textarea)
-- Category (dropdown)
-- Budget Min/Max (number inputs)
-- Deadline (date input)
-
-**Requirements:**
-- User must be logged in (shows login prompt if not)
-- Form includes nonce for security
-
-**Example:**
-```
-[wpss_post_request]
-```
-
----
-
-## Dashboard Shortcodes
-
-### [wpss_my_orders]
-
-Display user's order list (buyer or vendor view).
-
-**Basic Usage:**
-```
-[wpss_my_orders]
-```
-
-**Attributes:**
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `type` | string | customer | View type: customer or vendor |
-| `status` | string | - | Filter by order status |
-| `limit` | number | 20 | Orders per page |
-
-**Note:** There is no `orderby` attribute. Orders are always sorted by `created_at DESC`.
-
-**Requirements:**
-- User must be logged in (shows login prompt if not)
-
-**Examples:**
-
-**Active Orders Only:**
-```
-[wpss_my_orders status="active"]
-```
-
-**Vendor Orders:**
-```
-[wpss_my_orders type="vendor" limit="50"]
-```
-
-**Customer Completed Orders:**
-```
-[wpss_my_orders type="customer" status="completed"]
-```
-
----
-
-### [wpss_order_details]
-
-Display details for a specific order.
-
-**Basic Usage:**
-```
-[wpss_order_details]
-```
-
-**Attributes:**
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `order_id` | number | (from URL) | Order ID to display |
-
-**Note:** If no attribute provided, checks `$_GET['order_id']` from URL. User must be the customer, vendor, or admin to view.
-
-**Requirements:**
-- User must be logged in
-- User must have permission to view order
-
-**Example:**
-```
-[wpss_order_details]
-```
-(Typically used on a dedicated page; order ID comes from URL parameter)
-
----
-
-## Authentication Shortcodes
-
-### [wpss_login]
-
-Display login form.
-
-**Basic Usage:**
-```
-[wpss_login]
-```
-
-**Attributes:**
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `redirect` | string | home_url() | Redirect URL after successful login |
-
-**Note:** Uses WordPress core `wp_login_form()` function. Shows "already logged in" message if user is logged in.
-
-**Examples:**
-
-**Simple Login Form:**
-```
-[wpss_login]
-```
-
-**Login with Dashboard Redirect:**
-```
-[wpss_login redirect="/dashboard/"]
-```
-
-**Login with Custom Redirect:**
-```
-[wpss_login redirect="/my-services/"]
-```
-
----
-
-### [wpss_register]
-
-Display registration form.
-
-**Basic Usage:**
-```
-[wpss_register]
-```
-
-**Attributes:**
-
-This shortcode accepts no attributes. The form includes:
-- Username (required)
-- Email (required)
-- Password (required, min 8 chars)
-
-**Requirements:**
-- User registration must be enabled in WordPress (Settings → General)
-- Shows "already logged in" message if user is logged in
-- Includes link to login page
-
-**Example:**
-```
-[wpss_register]
-```
-
----
-
-## Common Page Setups
-
-### Homepage
-
-```
-# Welcome to Our Marketplace
-
-[wpss_service_search]
-
-## Featured Services
-[wpss_featured_services limit="8" columns="4"]
-
-## Browse by Category
-[wpss_service_categories columns="4"]
-
-## Top Services
-[wpss_services orderby="rating" limit="6" columns="3"]
-```
-
----
-
-### Services Catalog Page
-
-```
-# Browse All Services
-
-[wpss_service_search show_categories="true"]
-
-[wpss_services limit="12" columns="3" orderby="date"]
-```
-
----
-
-### Vendor Directory Page
-
-```
-# Our Vendors
-
-[wpss_top_vendors limit="3"]
-
-## All Vendors
-[wpss_vendors columns="4" orderby="rating" limit="12"]
-```
-
----
-
-### Buyer Requests Page
-
-```
-# Project Requests
-
-[wpss_post_request]
-
-## Active Requests
-[wpss_buyer_requests limit="15"]
-```
-
----
-
-### My Orders Page
-
-```
-# My Orders
-
-[wpss_my_orders type="customer" limit="20"]
-```
-
----
-
-## Using Shortcodes in Widgets
-
-All shortcodes work in widget areas:
-
-1. Go to **Appearance → Widgets**
-2. Add **Custom HTML** or **Shortcode** widget
-3. Paste shortcode
-4. Save widget
-
-**Example: Sidebar Search**
-```
-[wpss_service_search show_categories="false"]
-```
-
----
-
-## Using Shortcodes in PHP
-
-Execute shortcodes in theme templates:
-
-```php
-<?php echo do_shortcode('[wpss_services limit="6" columns="3"]'); ?>
-```
-
-Pass dynamic values:
-
-```php
-<?php
-$category_id = get_queried_object_id();
-echo do_shortcode("[wpss_services category='{$category_id}' limit='9']");
-?>
-```
-
----
-
-## Combining Shortcodes
-
-Multiple shortcodes work together on the same page:
-
-```
-# Design Services
-
-[wpss_service_search]
-
-## Popular Categories
-[wpss_service_categories parent="5" columns="3"]
-
-## Featured Designers
-[wpss_vendors orderby="rating" limit="8" columns="4"]
-
-## Latest Services
-[wpss_services category="design" limit="9" columns="3"]
-```
-
----
-
-## Shortcode Not Working?
-
-**Troubleshooting:**
-
-1. Check spelling (shortcodes are case-sensitive)
-2. Ensure page is published (not draft)
-3. Clear cache (site and browser)
-4. Verify plugin is active
-5. Check for PHP errors in debug log
-6. Test in default WordPress theme
-7. Disable other plugins temporarily
-8. Verify services/vendors exist in database
-
-**Common Issues:**
-
-- **No output:** Check if there's matching content (services, vendors, etc.)
-- **Wrong attributes:** Review exact attribute names above
-- **Styling issues:** May need custom CSS for your theme
-
----
-
-## Related Documentation
-
-- [Gutenberg Blocks](gutenberg-blocks.md) - Block editor alternatives
-- [Pages Setup](../platform-settings/pages-setup.md) - Required page configuration
-- [Template Overrides](template-overrides.md) - Custom page templates
-- [Search Filters](search-filters.md) - Advanced search options
-
----
-
-## Next Steps
-
-1. Create pages with shortcodes
-2. Test each shortcode functionality
-3. Customize with available attributes
-4. Style with your theme's CSS
-5. Combine shortcodes for rich layouts
+**Styling looks off?**
+Some themes may need minor CSS adjustments. Check [Customizing the Look](template-overrides.md) for details on template customization.

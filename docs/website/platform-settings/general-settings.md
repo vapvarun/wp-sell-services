@@ -1,254 +1,109 @@
 # General Settings
 
-Configure the core settings for your marketplace platform including branding, currency, and e-commerce integration.
+Configure the basics of your marketplace -- your platform name, currency, and which e-commerce system powers your checkout.
 
-## Platform Branding
+---
 
-Customize your marketplace name to match your brand identity.
+## Platform Name
 
-### Platform Name
+Give your marketplace a custom name that appears throughout the platform: in emails, page headers, notifications, and payment receipts.
 
-Set a custom name that appears throughout your marketplace:
-
-1. Go to **WP Sell Services → Settings → General**
+1. Go to **WP Sell Services > Settings > General**
 2. Enter your marketplace name in the **Platform Name** field
-3. This name appears in emails, page titles, and frontend displays
-4. Default: Your WordPress site name (`get_bloginfo('name')`)
-5. Save changes
+3. Click **Save Changes**
 
-**Example:** "Creative Hub Marketplace" or "Expert Services Network"
+**Default:** Your WordPress site name is used if no custom name is set.
+
+**Examples:** "Creative Hub Marketplace", "Expert Services Network", "DesignPro Market"
 
 ![General settings tab](../images/settings-general-tab.png)
 
 ![Full general settings](../images/settings-general.png)
 
-**Where Platform Name Appears:**
-- Email subject lines and headers
-- Notification messages
-- Payment receipts
-- Admin dashboard titles
-- Public-facing widgets
+---
 
-## Currency Configuration
+## Currency
 
-Choose from 10 supported currencies for your marketplace transactions.
+Choose the currency for all transactions on your marketplace. This affects how prices are displayed on services, how orders are totaled, and how vendor earnings are calculated.
 
-### Available Currencies
-
-WP Sell Services supports these 10 currencies:
+### Supported Currencies
 
 | Currency | Symbol | Code |
 |----------|--------|------|
 | US Dollar | $ | USD |
-| Euro | € | EUR |
-| British Pound | £ | GBP |
+| Euro | EUR | EUR |
+| British Pound | GBP | GBP |
 | Canadian Dollar | C$ | CAD |
 | Australian Dollar | A$ | AUD |
-| Indian Rupee | ₹ | INR |
-| Japanese Yen | ¥ | JPY |
-| Chinese Yuan | ¥ | CNY |
+| Indian Rupee | INR | INR |
+| Japanese Yen | JPY | JPY |
+| Chinese Yuan | CNY | CNY |
 | Brazilian Real | R$ | BRL |
-| Mexican Peso | $ | MXN |
+| Mexican Peso | MXN | MXN |
 
 ### Setting Your Currency
 
-1. Navigate to **General Settings**
-2. Select your preferred currency from the **Currency** dropdown
-3. Currency applies globally to all services, orders, and payments
-4. Click **Save Changes**
+1. Go to **General Settings**
+2. Select your currency from the dropdown
+3. Click **Save Changes**
 
 **Default:** USD (US Dollar)
 
-### Important Currency Notes
+Your entire marketplace operates in one currency. All service prices, order totals, and vendor earnings use the same currency. Payment gateways handle any conversion on their end if a buyer pays from a different region.
 
-**Single Currency Marketplace:**
-- All services must be priced in the selected currency
-- Buyers pay in the marketplace currency
-- Vendor earnings are calculated in that currency
-- Payment gateways handle currency conversion if needed
+**Tip:** Set your currency during initial setup. Changing it later can create confusion since existing service prices stay at their original numbers.
 
-**Changing Currency:**
-You can change currency at any time, but consider:
-- Existing service prices remain in old currency amounts
-- New services use new currency
-- May confuse buyers seeing mixed currencies
-- Best to set currency during initial setup
+**[PRO]** Multi-currency support is available in the Pro version -- automatic currency detection by buyer location, live exchange rates, and localized price displays.
 
-**Multi-Currency Support:**
-**[PRO]** The Pro version adds multi-currency features:
-- Automatic currency detection by buyer location
-- Live exchange rate updates
-- Display prices in buyer's preferred currency
-- Vendors still receive payouts in marketplace currency
+---
 
-## E-Commerce Platform Selection
+## E-Commerce Platform
 
-Choose which e-commerce system powers your marketplace checkout and payments.
+Choose which system handles your marketplace checkout and payments.
 
-### Available Platforms
+### Available Options
 
-| Platform | Free | Pro Required |
-|----------|------|--------------|
-| Standalone Mode | ✓ (default) | No |
-| WooCommerce | | **[PRO]** |
-| Easy Digital Downloads | | **[PRO]** |
-| FluentCart | | **[PRO]** |
-| SureCart | | **[PRO]** |
+| Platform | Availability |
+|----------|-------------|
+| **Standalone** (built-in checkout) | Free -- no extra plugins needed |
+| **WooCommerce** | **[PRO]** |
+| **Easy Digital Downloads** | **[PRO]** |
+| **FluentCart** | **[PRO]** |
+| **SureCart** | **[PRO]** |
 
 ### Auto-Detect (Recommended)
 
-**Default Setting:** Auto-detect
+The default setting automatically detects which platform is available and uses it. For most sites, this is the best choice.
 
-The plugin automatically detects which e-commerce platform is available:
-1. Uses Standalone mode by default (free — no external plugins needed)
-2. If Pro is active, checks for WooCommerce, EDD, FluentCart, SureCart
-3. Uses first available active platform
+- If only the free plugin is active, it uses the built-in Standalone checkout
+- If Pro is active and WooCommerce (or another supported platform) is installed, it uses that platform
 
-**Configuration:**
-1. Go to **Settings → General → E-Commerce Integration**
-2. Select **Auto-Detect (recommended)**
-3. Save changes
+### Standalone Mode (Free)
 
-**Current Active Platform** displays which platform is detected and in use.
+The free version includes a complete built-in checkout system with Stripe, PayPal, and Offline payment support. No WooCommerce or any other e-commerce plugin is required. This is the simplest setup -- perfect if you want a clean, lightweight marketplace.
 
-### WooCommerce (Default)
+### WooCommerce and Other Platforms **[PRO]**
 
-The free version integrates with WooCommerce for:
-- Service product management
-- Shopping cart functionality
-- Secure checkout process
-- Payment gateway options
-- Order management
-- Customer account integration
-
-**Requirements:**
-- WooCommerce 6.0 or higher installed and activated
-- Compatible with all major WooCommerce payment gateways
-- Works with WooCommerce subscriptions for recurring services
-
-**Setup:**
-1. Install WooCommerce from WordPress plugin repository
-2. Activate WooCommerce
-3. Complete WooCommerce setup wizard
-4. WP Sell Services auto-detects WooCommerce
-5. Service orders process through WooCommerce checkout
-
-### Pro E-Commerce Platforms
-
-**[PRO]** Upgrade to WP Sell Services Pro for alternative e-commerce options:
-
-**Easy Digital Downloads (EDD):**
-- Optimized for digital product sales
-- Lightweight compared to WooCommerce
-- Simple checkout process
-- Recurring payments support
-
-**FluentCart:**
-- Modern, fast checkout experience
-- Optimized for conversions
-- One-click upsells
-- Lightweight and performant
-
-**SureCart:**
-- Hosted checkout solution
-- PCI-compliant by default
-- Simple pricing and setup
-- Modern UI/UX
-
-**Standalone Mode:**
-- No external e-commerce plugin required
-- Built-in checkout system
-- Direct Stripe or PayPal integration
-- Reduced plugin conflicts
-- Simpler setup for simple marketplaces
-
-See [Payment Gateways](../payments-checkout/payment-gateways-pro.md) for platform-specific configuration.
+The Pro version lets you plug into WooCommerce, Easy Digital Downloads, FluentCart, or SureCart. This is useful if you already have an online store and want your marketplace orders to flow through the same checkout and payment system.
 
 ### Switching Platforms
 
-To change e-commerce platforms:
+You can change platforms at any time under **Settings > General > E-Commerce Integration**. Keep in mind:
 
-1. Go to **General Settings → E-Commerce Platform**
-2. Select your preferred platform
-3. Ensure that platform is installed and activated
-4. Save changes
-5. Complete platform-specific configuration
-6. Test checkout flow before going live
-
-**Warning:** Switching platforms affects how orders are processed. Test thoroughly on staging site before changing on live marketplace.
-
-**Migration Considerations:**
-- Existing orders remain in original platform
-- New orders use new platform
+- Existing orders stay with the original platform
+- New orders use the new platform
 - Payment gateway settings may need reconfiguration
-- WooCommerce-specific features (subscriptions, etc.) require WooCommerce
+- Test the checkout flow on a staging site before switching on a live marketplace
 
-## E-Commerce Integration Status
-
-The settings page displays current integration status:
-
-**Integration Status Box:**
-- **Currently Active:** Shows detected platform name
-- **Status:** Connected or Not Installed
-- **Version:** Platform version number (if available)
-
-**No Platform Detected:**
-If you see "No e-commerce platform detected":
-1. Install WooCommerce or another supported platform
-2. Activate the platform plugin
-3. Refresh settings page
-4. Verify integration status updates
-
-## Related Settings
-
-- [Pages Setup](pages-setup.md) - Configure marketplace pages
-- [Commission Settings](../earnings-wallet/commission-settings.md) - Platform earnings
-- [Vendor Settings](../vendor-system/vendor-settings.md) - Registration rules
-- [Payment Gateways](../payments-checkout/woocommerce-integration.md) - Payment configuration
-- [Advanced Settings](advanced-settings.md) - System options
+---
 
 ## Troubleshooting
 
-### Platform Name Not Updating
+**Platform name not updating everywhere?**
+Clear all caches (site, theme, hosting, CDN) after saving. Some email templates may cache the old name.
 
-**Solutions:**
-1. Clear all caches (WordPress, theme, hosting)
-2. Verify settings were saved successfully
-3. Check for hardcoded site name in email templates
-4. Flush email template cache **[PRO]**
+**Currency symbol not displaying?**
+Check that your database uses UTF-8 encoding and your theme supports special characters.
 
-### Currency Symbol Not Displaying
-
-**Check:**
-1. Theme supports UTF-8 encoding
-2. Database uses utf8mb4 charset
-3. PHP mbstring extension enabled
-4. Browser font supports currency symbols
-
-### E-Commerce Platform Not Detected
-
-**Verify:**
-1. WooCommerce (or chosen platform) is installed
-2. Platform is activated (check Plugins page)
-3. Platform version meets minimum requirements
-4. No PHP errors preventing platform initialization
-5. Refresh WP Sell Services settings page
-
-### WooCommerce Checkout Not Working
-
-**Solutions:**
-1. Verify WooCommerce setup completed
-2. Check payment gateway configuration
-3. Ensure permalinks flushed (Settings → Permalinks → Save)
-4. Test with default WooCommerce theme
-5. Check for WooCommerce/plugin conflicts
-
-## Next Steps
-
-After configuring general settings:
-
-1. [Set up required pages](pages-setup.md)
-2. [Configure commission rates](../earnings-wallet/commission-settings.md)
-3. [Define vendor registration rules](../vendor-system/vendor-settings.md)
-4. [Configure payment gateways](../payments-checkout/woocommerce-integration.md)
-5. Test marketplace with sample service and order
+**E-commerce platform not detected?**
+Make sure the platform plugin (e.g., WooCommerce) is installed and activated. Refresh the WP Sell Services settings page after activating it.

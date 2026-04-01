@@ -1,158 +1,82 @@
 # Becoming a Vendor
 
-Learn how to register as a vendor and start selling services on the marketplace.
+Anyone on your marketplace can apply to become a vendor and start selling services. How the registration process works depends on which mode you have chosen as the site owner.
 
-## Registration Methods
+## Three Registration Modes
 
-The marketplace offers three registration modes depending on the administrator's configuration:
+You control how vendors join your marketplace from **Settings > Vendor > Vendor Registration**:
 
-- **Open**: Anyone can register as a vendor directly
-- **Requires Approval**: Admin must approve new vendor applications
-- **Closed**: Only administrators can create vendor accounts
+### Open Registration
 
-Check the vendor registration page to see which mode is active.
+Anyone can sign up and start selling immediately. Their account is activated right away and they can create their first service within minutes. This is the best option for growing marketplaces where you want to attract as many sellers as possible.
 
-## How to Register
+### Requires Approval
 
-### Step 1: Access Registration
+Users can submit a vendor application, but their account stays in "Pending" status until you review and approve it. This gives you quality control over who sells on your marketplace. You will receive a notification when new applications come in.
 
-Navigate to the vendor registration page using the `[wpss_become_vendor]` or `[wpss_vendor_registration]` shortcode.
+**To review applications:** Go to **WP Admin > WP Sell Services > Vendors**, filter by "Pending" status, and approve or reject each application. The applicant receives an email letting them know the outcome.
 
-If you already have a buyer account, log in first and visit the "Become a Vendor" page to upgrade your account.
+### Closed Registration
+
+The registration form is hidden from the public. Only you (the admin) can create vendor accounts manually. This is ideal for invite-only or exclusive marketplaces.
+
+**To add a vendor manually:** Go to **Users > Add New**, create a WordPress account, and assign the vendor role.
+
+## The Registration Form
+
+When registration is open or requires approval, users see a registration form on your "Become a Vendor" page. They fill in:
+
+- **Display Name** -- Their public vendor name.
+- **Professional Tagline** -- A one-line description of what they do.
+- **About You** -- Their background and experience.
+- **Skills** -- A list of their areas of expertise.
+- **Terms Agreement** -- They must accept your marketplace terms.
+
+If a user already has a buyer account, they can upgrade to a vendor account from this page without creating a new account.
 
 ![Vendor registration and profile editor form](../images/vendor-profile-editor.png)
 
-### Step 2: Complete Registration Form
+## What Happens After Registration
 
-Fill in the required information:
+**Open mode:** The vendor can immediately access their dashboard, set up their profile, and create services.
 
-| Field | Description | Required |
-|-------|-------------|----------|
-| **Display Name** | Your public vendor name | Yes |
-| **Professional Tagline** | One-line description (100 chars max) | Yes |
-| **About You** | Your background and experience | Yes |
-| **Skills** | Comma-separated skills | Yes |
-| **Terms Agreement** | Accept marketplace terms | Yes |
+**Approval mode:** The vendor sees a "Pending Approval" message and waits for your review. Typical review time is 1-3 business days. Once approved, they receive an email and can start selling right away.
 
-### Step 3: Submit Application
+**Closed mode:** The vendor is created by you, so they are active from the start.
 
-After submitting:
+## What Vendors Can Do
 
-**Open Registration Mode:**
-- Account activated immediately
-- You can create services right away
-- Status: Active
-
-**Approval Required Mode:**
-- Account status: Pending Approval
-- Administrator will review your application
-- You'll receive email notification when approved/rejected
-- Typical review: 1-3 business days
-
-**Closed Registration Mode:**
-- Registration form is hidden
-- Contact administrator for account creation
-
-## Vendor Role and Capabilities
-
-Once approved, you receive the `wpss_vendor` role with these capabilities:
-
-- `wpss_vendor` - Vendor status marker
-- `wpss_manage_services` - Create and edit services
-- `wpss_manage_orders` - View and manage orders
-- `wpss_view_analytics` - Access earnings and stats
-- `wpss_respond_to_requests` - Respond to buyer requests
-- `read` - Standard WordPress access
-- `upload_files` - Upload attachments
-- `edit_posts` - Create content
-
-## Verification Tiers
-
-All new vendors start at the **Basic** tier. You can progress to:
-
-- **Basic**: Default starting tier
-- **Verified**: Identity/email verified
-- **Pro**: Premium verification status
-
-Learn more in [Seller Levels](seller-levels.md).
-
-## After Registration
-
-Once your vendor account is active:
-
-1. **Access Dashboard**: Navigate to the unified dashboard
-2. **Complete Profile**: Add details, photo, and portfolio
-3. **Create First Service**: List your first service offering
-4. **Configure Settings**: Set availability and preferences
-
-## What You Can Do as a Vendor
-
-Access to vendor features:
+Once active, vendors have access to:
 
 | Feature | Description |
 |---------|-------------|
-| **Vendor Dashboard** | Manage selling activities |
-| **Create Services** | List services for buyers |
-| **Receive Orders** | Accept and fulfill orders |
-| **Portfolio** | Showcase previous work |
-| **Earnings** | Track income and withdrawals **[PRO]** |
-| **Buyer Requests** | Respond to service requests |
-| **Messages** | Communicate with buyers |
+| Vendor Dashboard | Their central hub for managing everything |
+| Create Services | List services with pricing, packages, and descriptions |
+| Receive Orders | Accept and fulfill buyer orders |
+| Portfolio | Showcase previous work to attract buyers |
+| Buyer Requests | Browse and respond to service requests posted by buyers |
+| Messages | Communicate with buyers about orders |
+| Earnings | Track income and request withdrawals **[PRO]** |
 
-## Vendor Settings Location
+## Tips for Getting Approved
 
-Administrators configure vendor registration at:
+If your marketplace requires approval, here are tips for applicants:
 
-**WP Sell Services → Settings → Vendor**
+- Use a professional email address.
+- Fill in every field completely -- sparse applications get rejected more often.
+- Clearly describe the services you plan to offer.
+- List relevant skills and experience.
+- Be responsive if the admin reaches out with questions.
 
-Available settings:
-- **Vendor Registration Mode**: open/approval/closed
-- **Max Services Per Vendor**: Service creation limit (default: 20)
-- **Require Verification**: Email verification toggle
-- **Service Moderation**: Approve services before publishing
+## Next Steps After Registration
 
-## Tips for Approval
+1. [Set up your vendor profile](vendor-profile-portfolio.md) -- Add your photo, bio, and portfolio.
+2. [Explore the vendor dashboard](vendor-dashboard.md) -- Learn where everything is.
+3. [Create your first service](../service-creation/service-creation-wizard.md) -- Start selling.
+4. [Learn about seller levels](seller-levels.md) -- Understand how to advance.
 
-If your marketplace requires admin approval:
+## Related Documentation
 
-- Use a professional email address
-- Complete all profile fields thoroughly
-- Clearly describe services you'll offer
-- Add relevant skills and experience
-- Be responsive to admin inquiries
-
-## Troubleshooting
-
-### Registration Form Not Visible
-
-**Possible Causes:**
-- Closed registration mode is active
-- Page doesn't contain correct shortcode
-- Plugin not activated
-
-**Solution:**
-- Contact site administrator
-- Verify shortcode: `[wpss_vendor_registration]` or `[wpss_become_vendor]`
-
-### Application Pending Too Long
-
-- Approval time varies by marketplace
-- Check email (including spam folder) for admin response
-- Contact site support after 3 business days
-
-### Cannot Create Services After Approval
-
-**Verify:**
-- Account status is "Active" not "Pending"
-- Email verified (if required)
-- No service creation limits reached
-- Dashboard access permissions correct
-
-## Next Steps
-
-After vendor registration:
-
-1. [Complete your vendor profile](vendor-profile-portfolio.md)
-2. [Explore the vendor dashboard](vendor-dashboard.md)
-3. [Create your first service](../service-creation/service-creation-wizard.md)
-4. [Learn about seller levels](seller-levels.md)
+- [Vendor Dashboard](vendor-dashboard.md)
+- [Vendor Settings (Admin)](vendor-settings.md)
+- [Seller Levels](seller-levels.md)

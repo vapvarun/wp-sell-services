@@ -1,315 +1,121 @@
-# Dispute Process
+# The Dispute Process
 
-Understand the complete dispute lifecycle, from initial submission through resolution and closure. Learn what to expect at each stage and how to navigate the process effectively.
+Once a dispute is opened, it moves through a series of stages until the admin reaches a resolution. Here is what to expect at each step and what you can do along the way.
 
-## Dispute Lifecycle Overview
+## Dispute Stages
 
-Disputes move through defined stages:
+Every dispute follows this path:
 
 ```
-open → pending_review → (escalated) → resolved → closed
+Open > Pending Review > (Escalated) > Resolved > Closed
 ```
 
-Each stage has specific actions and timeframes.
+Not every dispute goes through escalation -- that stage is only for complex cases.
 
 ![Dispute detail with messages](../images/admin-dispute-detail-view.png)
 
-## Dispute Statuses
+### Stage 1: Open
 
-WP Sell Services uses 5 dispute statuses:
+The dispute has just been submitted. The other party (buyer or vendor) is notified and has a chance to respond. Both sides can add evidence, send messages, and make their case.
 
-### 1. Open
+**What you should do:** Make sure all your evidence is submitted. Respond to anything the other party raises. This stage typically lasts 1-3 days.
 
-**What It Means:**
-- Dispute just submitted by buyer or vendor
-- Initial notification sent to other party
-- Waiting for other party's response
-- Evidence can still be added
+### Stage 2: Pending Review
 
-**Who Can View:**
-- Buyer (order customer)
-- Vendor (order vendor)
-- Site administrators
+Both parties have had their say and the admin is now reviewing everything. The dispute is queued for investigation.
 
-**Duration:** 24-48 hours typical
+**What you should do:** Wait for the admin to begin their review. You may be asked clarifying questions -- respond to those promptly.
 
-**Your Actions:**
-- Monitor for vendor/buyer response
-- Add any additional evidence
-- Respond to initial claims
+### Stage 3: Escalated (If Needed)
 
-### 2. Pending Review (pending_review)
+Some disputes are more complex and need extra attention. The admin may escalate a dispute when:
+- The order value is high.
+- The evidence is conflicting.
+- A policy interpretation is needed.
+- Standard resolution options do not fit the situation.
 
-**What It Means:**
-- Both parties have submitted their cases
-- Initial evidence collected
-- Waiting for admin to begin investigation
-- Queued for admin review
+**What you should do:** Be patient -- thorough investigation takes time. Respond quickly if the admin asks for additional information.
 
-**Duration:** 1-3 business days
+### Stage 4: Resolved
 
-**Your Actions:**
-- Ensure all evidence is uploaded
-- No new evidence accepted after this stage
-- Wait for admin review to begin
-- Check notifications for admin questions
+The admin has made a decision. The resolution is being applied -- refunds are processed, order status is updated, and both parties are notified of the outcome.
 
-### 3. Escalated
+### Stage 5: Closed
 
-**What It Means:**
-- Dispute requires higher-level admin review
-- Complex case needs additional investigation
-- Standard resolution unclear
-- Special circumstances present
+Everything is finalized. The dispute is closed and no further action is possible. The resolution has been implemented and the order status reflects the outcome.
 
-**When This Happens:**
-- Admin manually escalates complex cases
-- High-value orders
-- Repeat dispute parties
-- Policy interpretation needed
+## Response Times
 
-**Duration:** 3-7 business days
+| Who | Action | Timeframe |
+|-----|--------|-----------|
+| Other party | Respond to initial dispute | 48 hours |
+| Both parties | Submit all evidence | Before admin review begins |
+| Admin | Begin review | 1-3 business days |
+| Admin | Complete investigation | 3-7 business days |
+| Both parties | Respond to admin questions | 48 hours |
 
-**Your Actions:**
-- Respond promptly to admin requests
-- Provide additional context if asked
-- Be patient as thorough review takes time
-
-### 4. Resolved
-
-**What It Means:**
-- Final decision made by admin
-- Resolution being implemented
-- Refunds processed if applicable
-- Order status updated accordingly
-
-**Resolution Types:**
-
-| Type | Description |
-|------|-------------|
-| `full_refund` | Complete refund to buyer, vendor receives nothing |
-| `partial_refund` | Split payment between buyer and vendor |
-| `favor_vendor` | Vendor receives full payment, no refund |
-| `favor_buyer` | Similar to full refund |
-| `mutual_agreement` | Both parties agreed to custom solution |
-
-**Duration:** 1-3 days for implementation
-
-**Your Actions:**
-- Wait for refund processing
-- Confirm receipt of resolution
-- Can leave review after closure
-
-### 5. Closed
-
-**What It Means:**
-- Dispute completely finalized
-- Resolution implemented
-- No further action possible
-- Order marked appropriately
-
-**Cannot Be Reopened:** Closed disputes are final
-
-**Your Actions:**
-- Leave review if you haven't
-- Learn from the experience
-- Move forward
-
-## Evidence Storage
-
-Evidence is stored as JSON in the `evidence` column of the `wpss_disputes` table.
-
-### Evidence Types
-
-Supported evidence types:
-
-**text:** Written explanations and descriptions
-**image:** Attachment ID of uploaded image
-**file:** Attachment ID of uploaded document
-**link:** URL to external resource
-
-### Evidence Structure
-
-Each evidence item includes:
-
-```json
-{
-  "id": "ev_uniqueid",
-  "user_id": 123,
-  "type": "image",
-  "content": "456",
-  "description": "Screenshot showing the issue",
-  "created_at": "2026-02-12 10:30:00"
-}
-```
-
-### Status Notes
-
-Status change notes are also stored in evidence:
-
-```json
-{
-  "id": "note_uniqueid",
-  "type": "status_note",
-  "note": "Admin note explaining status change",
-  "status": "pending_review",
-  "created_at": "2026-02-12 11:00:00"
-}
-```
-
-## Resolution Process
-
-### Admin Review Steps
-
-1. **Assessment:** Admin reviews dispute details and evidence
-2. **Investigation:** Admin examines order history and communications
-3. **Decision:** Admin selects appropriate resolution type
-4. **Implementation:** System processes refunds/payments
-5. **Notification:** Both parties notified of outcome
-
-### Resolution Data
-
-When dispute is resolved, these fields are set:
-
-- `status` → 'resolved'
-- `resolution` → Resolution type (e.g., 'partial_refund')
-- `resolution_notes` → Admin explanation
-- `resolved_by` → Admin user ID
-- `resolved_at` → Timestamp
-
-### Refund Information
-
-If refund is involved, refund amount is stored in evidence:
-
-```json
-{
-  "id": "refund_uniqueid",
-  "type": "refund_info",
-  "refund_amount": 75.00,
-  "created_at": "2026-02-12 14:00:00"
-}
-```
-
-## Order Status Updates
-
-Dispute resolution automatically updates order status:
-
-**Full Refund or Favor Buyer:**
-- Order status → 'refunded'
-
-**Partial Refund:**
-- Order status → 'partially_refunded'
-
-**Favor Vendor:**
-- Order status → 'completed'
-
-**Mutual Agreement:**
-- Order status → 'completed'
-
-## Timeline and Response Requirements
-
-### Party Response Times
-
-| Stage | Response Required | Deadline |
-|-------|------------------|----------|
-| Initial Claim | Other party response | 48 hours |
-| Evidence Submission | Additional evidence | Before pending_review |
-| Admin Questions | Answer clarifications | 48 hours |
-| Resolution Proposed | Accept or appeal | 7 days |
-
-### Admin Response Times
-
-- Initial review: 1-3 business days
-- Investigation: 3-7 business days
-- Resolution implementation: 1-3 days
-
-**Note:** Times may vary based on dispute complexity and admin workload.
+These are typical timelines. Complex disputes may take longer.
 
 ## What You Can Do at Each Stage
 
-### As Buyer or Vendor
+**While the dispute is Open:**
+- Add evidence (text, screenshots, links, files).
+- Send messages in the dispute thread.
+- View all evidence from both sides.
+- Respond to the other party's claims.
 
-**During Open:**
-- ✓ Add evidence (text, images, files, links)
-- ✓ View all submitted evidence
-- ✓ Communicate with other party
-- ✓ Wait for admin review
-
-**During Pending Review:**
-- ✓ View evidence (no new submissions)
-- ✓ Wait for admin
-- ✗ Cannot add evidence
-- ✗ Cannot change claims
-
-**During Investigation:**
-- ✓ Respond to admin questions
-- ✓ Provide additional context if requested
-- ✗ Cannot modify evidence
-- ✗ Cannot close dispute
+**During Pending Review and Escalation:**
+- View everything that has been submitted.
+- Respond to any questions from the admin.
+- You generally cannot add new evidence at this point.
 
 **After Resolution:**
-- ✓ View resolution details
-- ✓ Confirm receipt
-- ✓ Leave review
-- ✗ Cannot reopen
+- View the admin's decision and reasoning.
+- Confirm receipt of any refund.
+- Leave a review if you have not already.
 
-### As Administrator
+**After Closure:**
+- The dispute is final. It cannot be reopened.
 
-Admins can at any stage:
-- Update dispute status
-- Add evidence
-- Add status notes
-- Resolve dispute
-- Implement refunds
+## Communication During Disputes
 
-## Database Schema Reference
+Disputes have their own message thread, separate from the regular order messages. Both the buyer, vendor, and admin can see everything posted here.
 
-Disputes are stored in the `wpss_disputes` table with these key fields:
+**Good communication practices:**
+- Stay professional and factual.
+- Focus on the specific issue at hand.
+- Respond promptly when the admin asks questions.
+- Avoid aggressive language or personal attacks.
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `id` | int | Dispute ID |
-| `order_id` | int | Associated order |
-| `initiated_by` | int | User who opened dispute |
-| `reason` | varchar | Short reason category |
-| `description` | text | Detailed explanation |
-| `status` | varchar | Current status (5 options) |
-| `evidence` | longtext | JSON array of evidence |
-| `resolution` | varchar | Resolution type when resolved |
-| `resolution_notes` | text | Admin explanation |
-| `resolved_by` | int | Admin user ID |
-| `resolved_at` | datetime | Resolution timestamp |
-| `created_at` | datetime | Dispute open time |
-| `updated_at` | datetime | Last update time |
+## How the Order Is Updated
 
-## Important Notes
+When the admin resolves a dispute, the order status is updated automatically:
 
-**No Time Windows:** The system does not automatically enforce dispute filing windows. Buyers and vendors can open disputes at any time after order creation.
+| Resolution | Order Becomes |
+|------------|---------------|
+| Full Refund or Favor Buyer | Refunded |
+| Partial Refund | Partially Refunded |
+| Favor Vendor or Mutual Agreement | Completed |
 
-**One Dispute Per Order:** Each order can have only one dispute. Attempting to open a second dispute returns false.
+## Important Things to Know
 
-**Both Parties Can Open:** Either buyer or vendor can initiate a dispute. The `initiated_by` field tracks who opened it.
+- **One dispute per order.** You cannot open a second dispute on the same order, but you can add evidence to the existing one.
+- **Both sides can open disputes.** Either the buyer or the vendor can initiate the process.
+- **No auto-resolution.** An admin must make the final decision -- disputes never resolve on their own.
+- **Evidence is permanent.** Once evidence is added, it becomes part of the dispute record and cannot be removed.
+- **Disputes can be filed at any time** while the order is active, though filing sooner is always better.
 
-**Evidence Cannot Be Deleted:** Once evidence is added, it becomes part of the permanent dispute record.
+## What Happens After
 
-**No Auto-Resolution:** Disputes never auto-resolve. Admin action is always required for resolution.
+Once a dispute is resolved and closed:
 
-## WordPress Hooks
-
-### Actions
-
-**wpss_dispute_opened** - Fires when dispute is created
-**wpss_dispute_evidence_added** - Fires when evidence is submitted
-**wpss_dispute_status_changed** - Fires on status updates
-**wpss_dispute_resolved** - Fires when dispute is resolved
-
-### Filters
-
-Use these hooks to extend dispute functionality or add notifications.
+- Any refunds are processed (the admin may need to handle this separately through the payment system).
+- The vendor's dispute history is tracked. Multiple disputes can affect a vendor's standing on the marketplace.
+- Both parties can leave reviews (if they have not already).
+- Life goes on. Learn from the experience and move forward.
 
 ## Related Documentation
 
-- [Opening a Dispute](opening-a-dispute.md) - How to file a dispute
-- [Admin Dispute Mediation](admin-dispute-mediation.md) - Admin dispute management
-- [Order Lifecycle](../order-management/order-lifecycle.md) - Order status reference
-- [Refund Process](../payments-checkout/refund-policy.md) - How refunds work
+- [Opening a Dispute](opening-a-dispute.md)
+- [Admin Dispute Mediation](admin-dispute-mediation.md)
+- [Order Lifecycle](../order-management/order-lifecycle.md)

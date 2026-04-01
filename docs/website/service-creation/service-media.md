@@ -1,297 +1,83 @@
-# Service Gallery & Media
+# Service Gallery and Media
 
-Add images and videos to showcase your work. Gallery images are stored in WordPress media library and referenced in service meta.
+Your service gallery is one of the first things buyers look at. Strong images and videos can be the difference between a click and a purchase. This guide covers what you can upload, the limits, and how to make your gallery work hard for you.
 
-## Gallery Limits
+## What You Can Upload
 
 | Media Type | Free | Pro |
 |-----------|------|-----|
-| Main Image | 1 (required) | 1 (required) |
-| Additional Images | 4 | Unlimited (filter: `wpss_service_max_gallery` = `-1`) |
-| Videos | 1 URL | 3 URLs (filter: `wpss_service_max_videos` = `3`) |
+| Main image | 1 (required) | 1 (required) |
+| Additional images | Up to 4 | Unlimited **[PRO]** |
+| Video embeds | 1 | Up to 3 **[PRO]** |
 
-## Main Image (Featured Image)
+## Main Image
 
-![Admin gallery upload interface for adding service images](../images/admin-gallery-upload.png)
+Every service needs a main image. This is the hero image buyers see in search results, category pages, and at the top of the service page. It is required to publish your service.
 
-Required for publishing. Set as WordPress post thumbnail.
-
-**Requirements:**
-- Recommended dimensions: 800x600px
-- Allowed formats: JPG, JPEG, PNG, GIF, WebP
-- Maximum file size: 5MB
-- MIME type validation enforced
-
-**Setting Main Image:**
-```php
-set_post_thumbnail( $service_id, $attachment_id );
-```
-
-**Fallback Behavior:**
-If no main image uploaded, wizard uses first gallery image as featured image automatically.
+**Recommendations:**
+- Size: 800x600 pixels or larger
+- Format: JPG, PNG, or WebP
+- Keep it under 5MB
+- Show your best work or a clear representation of what you deliver
 
 ## Additional Gallery Images
 
-Showcase work samples beyond the main image.
+Gallery images let vendors showcase more of their work. Think of these as a portfolio within the service listing.
 
-**Limits:**
-- Free: Maximum 4 additional images
-- **[PRO]** Unlimited (filter returns `-1`)
+**What to include:**
+- Samples of completed projects
+- Before-and-after comparisons
+- Different angles or variations of your work
+- Process screenshots that show your approach
 
-**Allowed Formats:**
-- JPG, JPEG
-- PNG
-- GIF
-- **WebP** (supported, contrary to old docs)
+**Supported formats:** JPG, JPEG, PNG, GIF, WebP
 
-**File Size:**
-- Maximum 5MB per image
-- Not 2MB as mentioned in old docs
+**Maximum file size:** 5MB per image
 
-**Storage:**
-```php
-// Stored in _wpss_gallery meta as:
-[
-  'images' => [123, 456, 789], // Attachment IDs
-  'video' => 'https://youtube.com/watch?v=...'
-]
-```
+In the free version, you can add up to 4 additional images. With **[PRO]**, there is no limit.
 
 ## Video Embeds
 
-Add video URLs to showcase services.
+Videos are a powerful way to showcase work, especially for services like video editing, animation, web development, or any service that benefits from a walkthrough.
+
+**Supported platforms:**
+- YouTube
+- Vimeo
+
+Simply paste the video URL into the wizard. The video will embed automatically on your service page.
 
 **Limits:**
-- Free: 1 video URL
-- **[PRO]** 3 video URLs
+- Free: 1 video
+- **[PRO]**: Up to 3 videos
 
-**Supported Platforms:**
-- YouTube (`youtube.com`, `www.youtube.com`, `youtu.be`)
-- Vimeo (`vimeo.com`, `www.vimeo.com`)
+**Note:** Direct video file uploads (MP4, MOV, etc.) are not supported in the wizard. Use YouTube or Vimeo to host your videos and paste the link.
 
-**NOT Supported:**
-- Direct video uploads (MP4, MOV, etc.) - Only URL embeds
-- Other platforms (TikTok, Instagram, etc.)
-
-**Validation:**
-```php
-// In GalleryService::is_valid_embed_url()
-$allowed_hosts = [
-    'youtube.com',
-    'www.youtube.com',
-    'youtu.be',
-    'vimeo.com',
-    'www.vimeo.com'
-];
-```
-
-## Image Upload Process
-
-### Via Wizard
-
-1. Click "Add Image" in gallery step
-2. WordPress media uploader opens
-3. Select or upload image
-4. Wizard validates file size and type
-5. Ownership verified (must be uploaded by current user or admin)
-6. Image ID stored in `_wpss_gallery` meta
-
-### AJAX Handler
-
-```php
-// ServiceWizard::ajax_upload_gallery()
-add_action( 'wp_ajax_wpss_wizard_upload_gallery', [...] );
-
-// Validates:
-- File type (jpg, jpeg, png, gif, webp)
-- MIME type (prevents extension spoofing)
-- File size (max 5MB)
-- User ownership
-```
-
-## Gallery Service Class
-
-**Location:** `src/Services/GalleryService.php`
-
-**Key Methods:**
-```php
-$gallery_service = new GalleryService();
-
-// Get all gallery items
-$gallery = $gallery_service->get_gallery( $service_id );
-
-// Save gallery
-$gallery_service->save_gallery( $service_id, $items );
-
-// Add single item
-$gallery_service->add_item( $service_id, $item_data );
-
-// Remove item
-$gallery_service->remove_item( $service_id, $index );
-
-// Reorder items
-$gallery_service->reorder( $service_id, $new_order );
-
-// Get only images
-$images = $gallery_service->get_images( $service_id );
-
-// Get only videos
-$videos = $gallery_service->get_videos( $service_id );
-```
-
-## Gallery Item Types
-
-Three item types supported:
-
-### Image
-```php
-[
-  'type' => 'image',
-  'attachment_id' => 123,
-  'alt' => 'Alt text'
-]
-```
-
-### Video (Direct Upload)
-```php
-[
-  'type' => 'video',
-  'attachment_id' => 456, // MP4/WebM/MOV file
-  'poster_id' => 789 // Optional thumbnail
-]
-```
-
-**Allowed Video Formats:**
-- MP4
-- WebM
-- MOV
-
-### Embed (YouTube/Vimeo)
-```php
-[
-  'type' => 'embed',
-  'url' => 'https://youtube.com/watch?v=...',
-  'title' => 'Video title'
-]
-```
-
-## Frontend Display
-
-Gallery rendered via `GalleryService::render()`:
-
-```php
-$gallery_service = new GalleryService();
-echo $gallery_service->render( $service_id, [
-  'size' => 'large',
-  'thumb_size' => 'thumbnail',
-  'class' => 'wpss-gallery',
-  'lightbox' => true
-] );
-```
-
-**Output:**
-- Main image displayed large
-- Thumbnails below (if multiple images)
-- Lightbox functionality (if enabled)
-- Video embeds or HTML5 video player
-
-## Image Optimization
-
-**Automatic:**
-- Lazy loading (images load as user scrolls)
-- Responsive images (WordPress srcset)
-- Browser caching
-
-**Manual Recommendations:**
-- Compress images before upload (TinyPNG, ImageOptim)
-- Use correct format: JPEG for photos, PNG for graphics, WebP for best compression
-- Keep files under 500KB for fast loading
-- Remove EXIF metadata
-
-**[PRO]** WebP Conversion:
-- Automatically converts uploaded images to WebP
-- 25-35% smaller file sizes
-- Fallback to original for unsupported browsers
-
-## Common Issues
-
-### Image Won't Upload
-
-**Causes:**
-- File exceeds 5MB limit
-- Unsupported format
-- MIME type mismatch
-- Ownership verification failed
-
-**Fix:**
-1. Compress image to under 5MB
-2. Convert to JPG, PNG, GIF, or WebP
-3. Ensure no corrupted file headers
-4. Verify user is logged in and approved vendor
-
-### Gallery Limit Reached
-
-**Free version limited to 4 additional images.**
-
-**Fix:**
-1. Remove unused images
-2. Replace low-quality images with better ones
-3. Upgrade to **[PRO]** for unlimited images
-
-### Video Not Embedding
-
-**Causes:**
-- Unsupported platform (not YouTube/Vimeo)
-- Invalid URL format
-- Private/restricted video
-
-**Fix:**
-1. Use only YouTube or Vimeo URLs
-2. Verify URL format: `https://youtube.com/watch?v=VIDEO_ID`
-3. Ensure video is public
-4. Test URL in browser first
-
-## Data Structure
-
-**Meta Key:** `_wpss_gallery`
-
-**Structure:**
-```json
-{
-  "images": [
-    {
-      "type": "image",
-      "attachment_id": 123,
-      "alt": "Sample work"
-    }
-  ],
-  "video": "https://youtube.com/watch?v=abc123"
-}
-```
-
-**Note:** Wizard stores simplified structure. `GalleryService` supports advanced structure with multiple item types.
-
-## Best Practices
+## Tips for a Great Gallery
 
 ### Image Quality
-- Use high-resolution images (1200px+ width)
-- Show actual work samples, not stock photos
-- Maintain consistent style across gallery
-- Include before/after comparisons if applicable
+- Use high-resolution images (1200 pixels wide or more looks best)
+- Show real work samples, not stock photos -- buyers can tell the difference
+- Keep a consistent style across your gallery for a professional look
+- Compress images before uploading for faster page loads (tools like TinyPNG work well)
+
+### What to Show
+- **Lead with your strongest piece** -- The first gallery image matters most after the main image
+- **Show variety** -- Different styles, projects, or use cases demonstrate versatility
+- **Include context** -- Show work in its real-world setting (a website design on a laptop screen, a logo on a business card)
+- **Remove outdated work** -- Keep your gallery current with your best and most recent projects
 
 ### Gallery Size
-- 3-5 images optimal (balance variety with page speed)
-- First image most important (after main/featured)
-- Order by quality/relevance
-- Remove outdated work samples
+- 3-5 images is the sweet spot -- enough to show range without overwhelming the page
+- Quality always beats quantity
+- Order images by relevance and quality, with the strongest pieces first
 
-### Video Usage
-- Keep under 3 minutes
+### Video Tips
+- Keep videos under 3 minutes
+- Show the end result, not just the process
 - Add captions for accessibility
-- Avoid auto-play
-- Use as portfolio showcase, not sales pitch
+- Make sure the video is set to public on YouTube/Vimeo
 
-## Related Documentation
+## Related Guides
 
-- **[Service Wizard](./service-wizard.md)** - Gallery step in wizard
-- **[Publishing & Moderation](./publishing-moderation.md)** - Image quality requirements
+- **[Service Creation Wizard](service-wizard.md)** -- The gallery step is part of the wizard
+- **[Publishing and Moderation](publishing-moderation.md)** -- Your main image is required before publishing

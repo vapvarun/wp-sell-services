@@ -1,265 +1,113 @@
-# Seller Levels
+# Seller Levels & Badges
 
-WP Sell Services uses a four-tier seller level system that rewards vendor performance and drives marketplace quality.
+WP Sell Services uses a four-tier level system that rewards vendors for consistent, high-quality performance. As vendors complete more orders and earn better ratings, they advance through the levels and earn visible badges.
 
-## The Four Seller Levels
-
-The marketplace features four distinct seller levels representing different stages of vendor achievement:
-
-1. **New Seller** (`new`) - Starting point for all vendors
-2. **Level 1 Seller** (`level_1`) - Proven track record
-3. **Level 2 Seller** (`level_2`) - Consistent excellence
-4. **Top Rated Seller** (`top_rated`) - Elite marketplace performers
-
-## Level Criteria
+## The Four Levels
 
 ### New Seller
 
-**Entry Requirements:**
-- Newly registered vendor
-- Profile completed
-- Account in good standing
-
-**Criteria:**
-- Completed Orders: 0+
-- Minimum Rating: 0
-- Minimum Reviews: 0
-- Response Rate: 0%
-- Delivery Rate: 0%
-- Days Active: 0
-
-All vendors start at this level automatically.
+Every vendor starts here. There are no requirements -- just register and you are in. You can create services, receive orders, and access the full vendor dashboard.
 
 ### Level 1 Seller
 
-**Requirements (ALL must be met):**
+You have proven yourself as a reliable vendor.
 
-| Criterion | Threshold | How Measured |
-|-----------|-----------|--------------|
-| **Completed Orders** | 5+ | Successfully delivered orders |
-| **Average Rating** | 4.0+ stars | Average of all reviews |
-| **Total Reviews** | 3+ | Number of reviews received |
-| **Response Rate** | 80%+ | Message reply rate |
-| **Delivery Rate** | 80%+ | On-time delivery percentage |
-| **Days Active** | 30+ days | Since vendor registration |
+| What You Need | Minimum |
+|---------------|---------|
+| Completed Orders | 5 |
+| Average Rating | 4.0 stars |
+| Total Reviews | 3 |
+| Response Rate | 80% |
+| On-Time Delivery Rate | 80% |
+| Days Active | 30 |
 
-**Note:** "Cancellation Rate" is NOT a criterion for seller levels.
-
-### Level 2 Seller
-
-**Requirements (ALL must be met):**
-
-| Criterion | Threshold | How Measured |
-|-----------|-----------|--------------|
-| **Completed Orders** | 25+ | Successfully delivered orders |
-| **Average Rating** | 4.5+ stars | Average of all reviews |
-| **Total Reviews** | 10+ | Number of reviews received |
-| **Response Rate** | 90%+ | Message reply rate |
-| **Delivery Rate** | 90%+ | On-time delivery percentage |
-| **Days Active** | 90+ days | Since vendor registration |
-
-### Top Rated Seller
-
-**Requirements (ALL must be met):**
-
-| Criterion | Threshold | How Measured |
-|-----------|-----------|--------------|
-| **Completed Orders** | 100+ | Successfully delivered orders |
-| **Average Rating** | 4.8+ stars | Average of all reviews |
-| **Total Reviews** | 50+ | Number of reviews received |
-| **Response Rate** | 95%+ | Message reply rate |
-| **Delivery Rate** | 95%+ | On-time delivery percentage |
-| **Days Active** | 180+ days | Since vendor registration |
-
-## How Criteria Are Calculated
-
-### Completed Orders
-
-Orders with status `completed` counted from `wpss_orders` table.
-
-### Average Rating
-
-Average of all approved reviews from `wpss_reviews` table where `status = 'approved'`.
-
-### Total Reviews
-
-Count of approved reviews for the vendor.
-
-### Response Rate
-
-Calculated from message response patterns (tracked in vendor profile as `response_rate`). Defaults to 100 if not tracked.
-
-### Delivery Rate
-
-Percentage of orders delivered by deadline:
-```
-(on_time_orders / completed_orders) * 100
-```
-
-Calculated by comparing `completed_at` to `delivery_deadline` in orders table.
-
-### Days Active
-
-Days since vendor profile creation (`created_at` in `wpss_vendor_profiles` table).
-
-## Automatic Level Assessment
-
-The system automatically calculates vendor levels:
-
-- **Daily Check**: Runs daily to assess all vendors
-- **Real-Time Updates**: Metrics update with each order event
-- **Automatic Promotion**: Level upgrades happen automatically when criteria met
-- **Grace Period**: No immediate downgrade protection
-
-Levels are stored in `verification_tier` column of `wpss_vendor_profiles` table.
-
-## Level Benefits
-
-### New Seller
-
-- Create and publish services
-- Receive orders
-- Access vendor dashboard
-- Basic marketplace visibility
-
-### Level 1 Seller
-
-- "Level 1 Seller" badge
-- Improved search ranking
-- Increased buyer trust
-- Standard marketplace features
+**Typical timeline:** 2-4 weeks of active selling.
 
 ### Level 2 Seller
 
-- "Level 2 Seller" badge
-- Higher search placement
-- Enhanced visibility
-- Priority consideration
+You have built a strong track record of quality and consistency.
+
+| What You Need | Minimum |
+|---------------|---------|
+| Completed Orders | 25 |
+| Average Rating | 4.5 stars |
+| Total Reviews | 10 |
+| Response Rate | 90% |
+| On-Time Delivery Rate | 90% |
+| Days Active | 90 |
+
+**Typical timeline:** 2-4 months of active selling.
 
 ### Top Rated Seller
 
-- "Top Rated Seller" badge
-- Maximum search visibility
-- Premium marketplace placement
-- Elite status recognition
+Elite status -- you are among the best on the marketplace.
 
-**[PRO]** Additional benefits may include:
-- Lower commission rates
-- Priority support
-- Featured placement
-- Advanced analytics access
+| What You Need | Minimum |
+|---------------|---------|
+| Completed Orders | 100 |
+| Average Rating | 4.8 stars |
+| Total Reviews | 50 |
+| Response Rate | 95% |
+| On-Time Delivery Rate | 95% |
+| Days Active | 180 |
 
-## Progress Tracking
+**Typical timeline:** 4-6 months of consistent excellence.
 
-### Dashboard View
+## How Levels Are Calculated
 
-Access your seller level progress:
+The system checks every vendor's stats daily and compares them against the criteria for each level. You must meet **all** requirements for a level to advance -- not just some of them.
 
-1. Navigate to **Dashboard → Seller Level**
-2. View current level and criteria
-3. Track progress to next level
+Here is what each metric measures:
 
-### Progress Display
+- **Completed Orders** -- The total number of orders you have successfully delivered.
+- **Average Rating** -- The average star rating across all your approved reviews.
+- **Total Reviews** -- How many reviews buyers have left for you.
+- **Response Rate** -- How consistently you reply to buyer messages.
+- **On-Time Delivery Rate** -- The percentage of orders you delivered before the deadline.
+- **Days Active** -- How many days since you registered as a vendor.
 
-For each criterion:
-- Current value
-- Required threshold
-- Progress percentage
-- Status (Met/Not Met)
+## Automatic Upgrades
 
-**Example:**
-```
-Completed Orders: 35/100 (35%) ✗
-Average Rating: 4.85/4.80 (100%) ✓
-Total Reviews: 55/50 (100%) ✓
-Response Rate: 96%/95% (100%) ✓
-Delivery Rate: 93%/95% (98%) ✗
-Days Active: 200/180 (100%) ✓
-```
+You do not need to apply or request a level-up. The system runs a daily check and upgrades your level automatically when you meet all the criteria. You will receive an email notification when your level changes, and your badge updates across the entire marketplace.
 
-## Leveling Up
+## What Higher Levels Get You
 
-When you meet ALL criteria for the next level:
+As you climb the levels, you unlock real benefits:
 
-1. System detects criteria met (daily check)
-2. Level automatically upgraded
-3. `verification_tier` field updated
-4. Badge updates site-wide
-5. Email notification sent
+- **Visible badge** -- Your seller level badge appears on your profile, your services, and in search results. Buyers see it everywhere.
+- **Better search ranking** -- Higher-level sellers appear more prominently in search results.
+- **Increased buyer trust** -- Badges signal reliability and quality, leading to higher conversion rates.
+- **Lower commission rates** -- With the Tiered Commission feature **[PRO]**, admins can set lower platform fees for higher-level sellers.
 
-**No manual action required** - the system handles everything automatically.
+## Tracking Your Progress
 
-## Maintaining Your Level
+Go to **Dashboard > Seller Level** to see where you stand. For each requirement, you can see:
 
-To keep your current level:
+- Your current value
+- The target threshold
+- Your progress percentage
+- Whether you have met it or not
 
-- Continue meeting ALL criteria
-- Deliver quality work consistently
-- Maintain rating above threshold
-- Keep delivery rate high
-- Respond to messages promptly
+This makes it easy to identify what you need to work on to reach the next level.
 
-**Downgrade Note:** While the code calculates levels, there's no explicit downgrade protection period in the current implementation. Level changes as soon as criteria change.
+## Staying at Your Level
 
-## Tips for Advancement
+Your level is recalculated daily. If your stats drop below the requirements (for example, your rating falls below the threshold), your level may be adjusted downward. The best way to maintain your level is to keep delivering quality work, responding promptly, and meeting deadlines.
 
-### Reaching Level 1 (2-4 weeks)
+## Tips for Advancing
 
-1. **Complete 5 Orders**: Focus on quality over quantity
-2. **Earn 4.0+ Rating**: Deliver excellent work
-3. **Get 3 Reviews**: Request reviews from satisfied buyers
-4. **Respond Quickly**: 80%+ response rate
-5. **Deliver On-Time**: 80%+ on-time rate
-6. **Stay Active**: 30 days as vendor
+**To reach Level 1:** Focus on completing your first 5 orders with great quality. Respond to messages quickly and deliver on time. Ask satisfied buyers to leave reviews.
 
-### Reaching Level 2 (2-4 months)
+**To reach Level 2:** Scale up while maintaining quality. Check messages multiple times a day to keep your response rate above 90%. Be meticulous about deadlines.
 
-1. **Scale to 25 Orders**: Maintain quality at higher volume
-2. **Achieve 4.5+ Rating**: Nearly every buyer satisfied
-3. **Collect 10 Reviews**: Build review history
-4. **90% Response Rate**: Check messages multiple times daily
-5. **90% Delivery Rate**: Meet deadlines consistently
-6. **90 Days Active**: Three months of activity
-
-### Reaching Top Rated (4-6 months)
-
-1. **Complete 100 Orders**: Demonstrate sustained performance
-2. **Maintain 4.8+ Rating**: Exceptional quality every time
-3. **Earn 50 Reviews**: Substantial review base
-4. **95% Response Rate**: Nearly instant responses
-5. **95% Delivery Rate**: Reliable deadline performance
-6. **180 Days Active**: Six months proven track record
-
-## Level Labels
-
-The system displays these labels:
-
-```php
-'new' => 'New Seller'
-'level_1' => 'Level 1 Seller'
-'level_2' => 'Level 2 Seller'
-'top_rated' => 'Top Rated Seller'
-```
-
-Badges appear:
-- On vendor profile
-- Next to vendor name on services
-- In search results
-- In vendor listings
+**To reach Top Rated:** This takes sustained excellence over months. Every order matters. Aim for 5-star ratings, near-instant responses, and flawless on-time delivery.
 
 ## Admin Level Management
 
-Admins can manually set seller levels if needed:
-
-1. Edit vendor profile in admin
-2. Update `verification_tier` field
-3. Choose from: new, level_1, level_2, top_rated
-4. Save changes
-
-Manual changes persist until next automatic assessment.
+Admins can manually adjust a vendor's seller level from **WP Admin > WP Sell Services > Vendors** if needed. Manual changes persist until the next daily automatic assessment.
 
 ## Related Resources
 
-- [Vendor Profile](vendor-profile-portfolio.md) - View your stats
-- [Vendor Dashboard](vendor-dashboard.md) - Access level progress
-- [Review System](../reviews-ratings/review-system-wpss.md) - Impact on ratings
+- [Vendor Profile & Portfolio](vendor-profile-portfolio.md)
+- [Vendor Dashboard](vendor-dashboard.md)
+- [Review System](../reviews-ratings/review-system.md)

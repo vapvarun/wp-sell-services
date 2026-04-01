@@ -1,182 +1,124 @@
-# PayPal, Razorpay & Offline Payments **[PRO]**
+# PayPal, Razorpay, and Offline Payments
 
-Additional payment gateways for Standalone mode marketplaces, providing alternatives to Stripe for global payment processing.
+Beyond Stripe, WP Sell Services supports PayPal, Razorpay, and offline bank transfers so you can offer the payment methods your buyers prefer.
 
-## Overview
+## PayPal
 
-**Important:** These gateways are only available in **Standalone Mode** with WP Sell Services Pro.
+PayPal lets buyers pay with their PayPal balance, linked bank account, or credit/debit card -- even without a PayPal account.
 
-Three additional payment options:
+### Setting Up PayPal
 
-1. **PayPal** - Global payment solution with smart buttons
-2. **Razorpay** - India-focused gateway (UPI, cards, net banking, wallets)
-3. **Offline Payments** - Bank transfer, check, manual verification
+1. Create a PayPal Business account at [paypal.com/business](https://paypal.com/business) (if you do not have one)
+2. Go to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
+3. Create an app to get your **Client ID** and **Secret**
+4. In WordPress, go to **WP Sell Services > Settings > Payments > PayPal**
+5. Check **Enable PayPal** and paste your credentials
+6. Click **Save Changes**
 
-## PayPal **[PRO]**
-
-### Requirements
-
-- PayPal Business account
-- WP Sell Services Pro
-- Standalone mode enabled
-- SSL certificate
-- PHP 8.0+
-
-### Setup
-
-1. Create PayPal Business account at [paypal.com/business](https://paypal.com/business)
-2. Complete business verification
-3. Link bank account
-4. Go to [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
-5. Create app to get **Client ID** and **Secret**
-6. In WordPress, go to **WP Sell Services → Settings → Payments**
-7. Click **PayPal** tab
-8. Enable PayPal and enter credentials
-9. Click **Save Changes**
-
-### Webhook Setup
+### Setting Up PayPal Webhooks
 
 1. In PayPal Developer Dashboard, go to **Webhooks**
-2. Add endpoint: `https://yoursite.com/wp-json/wpss/v1/paypal/webhook`
-3. Select events:
-   - `PAYMENT.CAPTURE.COMPLETED`
-   - `PAYMENT.CAPTURE.REFUNDED`
-4. Save webhook
-5. Copy **Webhook ID** to WP Sell Services settings
+2. Add your endpoint: `https://yoursite.com/wp-json/wpss/v1/paypal/webhook`
+3. Select events: `PAYMENT.CAPTURE.COMPLETED` and `PAYMENT.CAPTURE.REFUNDED`
+4. Save and copy the **Webhook ID** to your WP Sell Services settings
 
-### Features
+### How Checkout Works
 
-- PayPal balance or linked cards
-- Credit/Debit cards (no PayPal account needed)
-- Venmo (US only)
-- Smart Payment Buttons
+Buyers see a PayPal button on your checkout page. They can:
 
-### Transaction Fees
+- Pay with their PayPal balance
+- Use a credit or debit card (no PayPal account needed)
+- Pay with Venmo (US buyers only)
+
+PayPal's Smart Payment Buttons automatically show the most relevant options for each buyer.
+
+### PayPal Transaction Fees
 
 | Type | Fee |
 |------|-----|
 | Domestic (US) | 2.9% + $0.30 |
-| International | 4.4% + fixed fee (varies) |
+| International | 4.4% + fixed fee (varies by country) |
 
 ## Razorpay **[PRO]**
 
-### Requirements
+Razorpay is the go-to payment gateway for marketplaces serving buyers in India. It supports UPI, cards, net banking, and mobile wallets.
 
-- Razorpay account (India)
-- Indian bank account
-- WP Sell Services Pro
-- Standalone mode enabled
-- SSL certificate
-- PHP 8.0+
+### Setting Up Razorpay
 
-### Setup
+1. Create a Razorpay account at [razorpay.com](https://razorpay.com)
+2. Complete the KYC process (PAN, GSTIN, bank details)
+3. Get your API keys from **Settings > API Keys** in the Razorpay Dashboard
+4. In WordPress, go to **WP Sell Services > Settings > Payments > Razorpay**
+5. Check **Enable Razorpay** and enter your Key ID and Key Secret
+6. Click **Save Changes**
 
-1. Sign up at [razorpay.com](https://razorpay.com)
-2. Complete KYC (PAN, GSTIN, bank details)
-3. Get API keys from **Settings → API Keys**
-4. In WordPress, go to **WP Sell Services → Settings → Payments**
-5. Click **Razorpay** tab
-6. Enable Razorpay
-7. Enter **Key ID** and **Key Secret**
-8. Click **Save Changes**
-
-### Webhook Setup
+### Razorpay Webhooks
 
 1. In Razorpay Dashboard, go to **Webhooks**
 2. Add endpoint: `https://yoursite.com/wp-json/wpss/v1/razorpay/webhook`
-3. Select events:
-   - `payment.authorized`
-   - `payment.captured`
-   - `payment.failed`
-   - `refund.created`
-4. Copy **Webhook Secret** to WP Sell Services settings
+3. Select events: `payment.authorized`, `payment.captured`, `payment.failed`, `refund.created`
+4. Copy the Webhook Secret to your WP Sell Services settings
 
-### Payment Methods
+### Payment Methods Available
 
-- **UPI** - Google Pay, PhonePe, Paytm, BHIM (free)
-- **Cards** - Visa, Mastercard, Amex, RuPay
-- **Net Banking** - 50+ Indian banks
-- **Wallets** - Paytm, PhonePe, Mobikwik
+- **UPI:** Google Pay, PhonePe, Paytm, BHIM
+- **Cards:** Visa, Mastercard, Amex, RuPay
+- **Net Banking:** 50+ Indian banks
+- **Wallets:** Paytm, PhonePe, Mobikwik
 
-### Transaction Fees
+### Razorpay Transaction Fees
 
 | Method | Fee |
 |--------|-----|
 | UPI | Free (promotional) |
-| Domestic Cards | 2% |
-| International Cards | 3% + GST |
-| Net Banking | ₹3-10 per transaction |
+| Domestic cards | 2% |
+| International cards | 3% + GST |
+| Net banking | Around 3-10 INR per transaction |
 
-### Test Cards
+## Offline / Bank Transfer Payments
 
-| Card Number | Scenario |
-|-------------|----------|
-| 4111 1111 1111 1111 | Success |
-| 4012 0000 3333 0026 | Decline |
+Offline payments let you accept bank transfers, checks, or any manual payment method. This is useful for high-trust relationships or regions where online payment adoption is low.
 
-Test UPI: `success@razorpay` (succeeds) or `failure@razorpay` (fails)
+### Setting Up Offline Payments
 
-## Offline Payments **[PRO]**
-
-### Requirements
-
-- WP Sell Services Pro
-- Standalone mode enabled
-
-### Setup
-
-1. Go to **WP Sell Services → Settings → Payments**
-2. Click **Offline** tab
-3. Enable **Offline Payments**
-4. Configure settings:
-   - **Title:** "Bank Transfer" or "Check Payment"
-   - **Instructions:** Your bank details
-5. Add payment details:
-   ```
-   Bank Name: Example Bank
-   Account Number: 1234567890
-   Routing/IFSC: EXPL0001234
-
-   Include order number in transfer reference.
-   ```
-6. Click **Save Changes**
+1. Go to **WP Sell Services > Settings > Payments > Offline**
+2. Check **Enable Offline Payments**
+3. Set a title like "Bank Transfer" or "Pay by Check"
+4. In the **Instructions** field, add your payment details (bank name, account number, routing number, etc.)
+5. Click **Save Changes**
 
 ### How It Works
 
-When buyer selects offline payment:
+1. Buyer selects offline payment at checkout
+2. Order is created with **Pending Payment** status
+3. Buyer sees your payment instructions and sends money
+4. You check your bank statement and verify the payment
+5. In the order, click **Confirm Payment**
+6. Order moves to **In Progress** and the vendor is notified to begin work
 
-1. Order created with status **Pending Payment**
-2. Buyer sees payment instructions
-3. Buyer makes transfer and enters reference number
-4. Admin receives notification
-5. Admin verifies payment in bank statement
-6. Admin clicks **Confirm Payment** in order
-7. Order status changes to **In Progress**
-8. Vendor notified to begin work
+### When to Use Offline Payments
 
-### Confirming Payments
+- Buyers who prefer direct bank transfers
+- Phone orders or special arrangements
+- Markets where online payment is less common
+- High-value orders where buyers want wire transfers
 
-1. Go to **WP Sell Services → Orders**
-2. Filter by **Pending Payment**
-3. Open order
-4. Verify bank statement shows transfer
-5. Match amount and reference
-6. Click **Confirm Payment**
-7. Order begins processing
+## Using Multiple Gateways at Once
+
+You can enable as many gateways as you like. Buyers will see all enabled options at checkout and choose the one they prefer. There is no limit on how many gateways you run simultaneously.
 
 ## Gateway Comparison
 
-| Feature | PayPal | Razorpay | Offline |
-|---------|--------|----------|---------|
-| Instant payment | ✓ | ✓ | ✗ |
-| Auto-confirmation | ✓ | ✓ | ✗ |
-| Refunds | ✓ | ✓ | Manual |
-| Best for | Global | India | High-trust buyers |
+| | PayPal | Razorpay **[PRO]** | Offline |
+|---|--------|---------|---------|
+| Instant payment | Yes | Yes | No (manual confirmation) |
+| Auto-confirmation | Yes | Yes | No |
+| Refunds | Automatic | Automatic | Manual |
+| Best for | Global buyers | India | High-trust / manual |
 | Transaction fees | 2.9-4.4% | 0-3% | None |
 
-## Related Documentation
+## Related Docs
 
-- [Standalone Mode](standalone-mode.md) **[PRO]** - Required for these gateways
-- [Stripe Payments](stripe-payments.md) **[PRO]** - Primary card gateway
-- [Alternative Platforms](alternative-platforms.md) - Other e-commerce options
-- [Currency & Tax Config](currency-tax-config.md) - Financial settings
+- [Stripe Payments](stripe-payments.md) -- Card payments with Stripe
+- [Standalone Mode](standalone-mode.md) -- Built-in checkout system
+- [Currency and Tax](currency-tax-config.md) -- Financial settings

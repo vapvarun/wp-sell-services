@@ -1,127 +1,134 @@
-# Cloud Storage Setup **[PRO]**
+# Setting Up Cloud Storage **[PRO]**
 
-**Status:** This feature is planned for a future Pro release and is not currently available.
-
-## Feature Not Yet Available
-
-Cloud storage integration with AWS S3, Google Cloud Storage, and DigitalOcean Spaces is planned for WP Sell Services Pro but not yet implemented.
-
-This documentation will be updated when the feature is released.
-
-## What to Do Now
-
-### Current File Storage Options
-
-**1. Use WordPress Uploads Directory**
-
-Files are currently stored in:
-```
-wp-content/uploads/wpss/deliveries/
-```
-
-**2. Increase Server Storage**
-
-Contact your hosting provider to:
-- Upgrade storage capacity
-- Increase bandwidth allocation
-- Enable server-level file compression
-
-**3. Configure File Limits**
-
-Set appropriate limits to manage storage:
-
-1. Go to **Settings → Files**
-2. Configure:
-   - Max file size per upload (default: 50MB)
-   - Max files per delivery (default: 10)
-   - Allowed file types
-   - Auto-delete after X days (optional)
-
-### File Size Recommendations
-
-| Marketplace Size | Recommended Limits |
-|------------------|-------------------|
-| Small (< 100 orders/month) | 50MB per file, 90-day retention |
-| Medium (100-1000 orders/month) | 100MB per file, 60-day retention |
-| Large (1000+ orders/month) | Consider dedicated file storage solution |
-
-## Preparing for Cloud Storage
-
-When the feature is released, these steps will help you migrate:
-
-### 1. Document Current Usage
-
-Track your storage needs:
-- Average delivery file size
-- Total storage used
-- Monthly growth rate
-- Geographic distribution of buyers
-
-### 2. Choose Provider
-
-Research which provider will suit your needs:
-
-**AWS S3:** Best for large marketplaces with global reach
-**Google Cloud Storage:** Good for Asia-Pacific focus
-**DigitalOcean Spaces:** Simplest for small-medium marketplaces
-
-### 3. Set Budget
-
-Estimate monthly costs:
-- Storage: $0.02-$0.023 per GB/month
-- Transfer: $0.01-$0.12 per GB downloaded
-- Calculate based on your order volume
-
-## Notification List
-
-Want to be notified when cloud storage is released?
-
-1. Go to **Settings → Updates**
-2. Enable **Feature Release Notifications**
-3. Enter your email address
-4. You'll be notified when cloud storage launches
-
-## Alternative Solutions
-
-### Third-Party Plugins
-
-Consider these WordPress plugins for file management:
-
-- **WP Offload Media**: Offload to S3/GCS/DigitalOcean
-- **Media Cloud**: Cloud media management
-- **Enable Media Replace**: Manage and replace files
-
-**Note:** These work with WordPress media library but may require custom integration with WP Sell Services.
-
-### Manual Offload Process
-
-For very large marketplaces:
-
-1. Regularly archive completed orders to external storage
-2. Move old delivery files via FTP/SSH
-3. Update database references (custom development required)
-4. Document archive locations
-
-**Warning:** This requires technical expertise and custom code.
-
-## Technical Considerations
-
-When cloud storage is implemented, it will use:
-
-**AWS S3 SDK for PHP** - For S3 and S3-compatible providers
-**Google Cloud Storage Client** - For GCS integration
-**Signed URLs** - For secure temporary download links
-**Background Uploads** - Non-blocking file transfers
-**Automatic Retry** - Handle upload failures gracefully
-
-## Related Documentation
-
-- [File Upload Settings](../platform-settings/advanced-settings.md) - Current file management
-- [Order Deliveries](../order-management/deliveries-revisions.md) - Delivery workflow
-- [Platform Settings](../platform-settings/advanced-settings.md) - System configuration
+Connect your marketplace to Amazon S3, Google Cloud Storage, or DigitalOcean Spaces for scalable, fast file delivery.
 
 ---
 
-**Last Updated:** February 2026
-**Feature Status:** Planned for future release
-**Current Version:** 1.0.0 (does not include cloud storage)
+## Before You Start
+
+You will need:
+- WP Sell Services Pro active and licensed
+- An account with your chosen cloud provider
+- Access credentials (API keys or service account) from the provider
+
+---
+
+## Amazon S3
+
+### Step 1: Create an S3 Bucket
+
+1. Sign in to the [AWS Console](https://aws.amazon.com/console/)
+2. Go to **S3** and click **Create Bucket**
+3. Choose a bucket name (e.g., "yoursite-deliveries") and region
+4. Keep the default security settings (block public access)
+5. Click **Create Bucket**
+
+### Step 2: Create Access Keys
+
+1. Go to **IAM > Users > Add User**
+2. Create a user with programmatic access
+3. Attach the **AmazonS3FullAccess** policy (or a custom policy limited to your bucket)
+4. Save the **Access Key ID** and **Secret Access Key**
+
+### Step 3: Configure in WP Sell Services
+
+1. Go to **WP Sell Services > Settings > Cloud Storage**
+2. Select **Amazon S3** as the provider
+3. Enter your Access Key ID, Secret Access Key, bucket name, and region
+4. Click **Test Connection** to verify
+5. Save Changes
+
+---
+
+## Google Cloud Storage
+
+### Step 1: Create a Storage Bucket
+
+1. Sign in to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Go to **Cloud Storage > Buckets > Create**
+3. Choose a bucket name and location
+4. Set access control to "Uniform"
+5. Click **Create**
+
+### Step 2: Create a Service Account
+
+1. Go to **IAM & Admin > Service Accounts > Create Service Account**
+2. Give it a name like "wpss-storage"
+3. Grant the **Storage Object Admin** role
+4. Create a JSON key and download it
+
+### Step 3: Configure in WP Sell Services
+
+1. Go to **WP Sell Services > Settings > Cloud Storage**
+2. Select **Google Cloud Storage** as the provider
+3. Upload or paste your service account JSON key
+4. Enter your bucket name
+5. Click **Test Connection** to verify
+6. Save Changes
+
+---
+
+## DigitalOcean Spaces
+
+### Step 1: Create a Space
+
+1. Sign in to the [DigitalOcean Control Panel](https://cloud.digitalocean.com/)
+2. Go to **Spaces** and click **Create a Space**
+3. Choose a datacenter region
+4. Give it a name (e.g., "yoursite-deliveries")
+5. Click **Create a Space**
+
+### Step 2: Generate API Keys
+
+1. Go to **API > Spaces Keys > Generate New Key**
+2. Save the **Key** and **Secret**
+
+### Step 3: Configure in WP Sell Services
+
+1. Go to **WP Sell Services > Settings > Cloud Storage**
+2. Select **DigitalOcean Spaces** as the provider
+3. Enter your Key, Secret, Space name, and region
+4. Click **Test Connection** to verify
+5. Save Changes
+
+---
+
+## After Setup
+
+Once connected, new delivery uploads are automatically sent to your cloud provider. Existing files on your server continue to work -- they are served locally until you optionally migrate them.
+
+### Test It
+
+1. Create a test order
+2. Upload a delivery file as a vendor
+3. Download it as the buyer
+4. Confirm the file downloads quickly from the cloud
+
+### Fallback Behavior
+
+If your cloud storage credentials become invalid or the service is temporarily unavailable, the plugin automatically falls back to local storage. Files upload to your server instead, and you will see a warning in the admin dashboard. Fix the credentials and new uploads will resume going to the cloud.
+
+---
+
+## Choosing a Provider
+
+| Factor | Amazon S3 | Google Cloud | DigitalOcean Spaces |
+|--------|-----------|-------------|-------------------|
+| Pricing | Pay per use | Pay per use | $5/month flat start |
+| Ease of setup | Moderate | Moderate | Simple |
+| CDN included | Extra (CloudFront) | Extra (Cloud CDN) | Included |
+| Best for | Large, global marketplaces | Asia-Pacific focus | Small to medium marketplaces |
+| S3-compatible | Yes (native) | No | Yes |
+
+---
+
+## Troubleshooting
+
+**"Connection failed" when testing?**
+Double-check your credentials (access key, secret, bucket name, region). Make sure the bucket exists and the credentials have permission to read and write to it.
+
+**Files not uploading to cloud?**
+Check that cloud storage is selected as the active provider in settings. Also verify your server can make outbound HTTPS connections (some hosting providers block them).
+
+**Slow downloads?**
+Enable the CDN option for your provider. S3 uses CloudFront, GCS uses Cloud CDN, and DigitalOcean Spaces includes a CDN by default.

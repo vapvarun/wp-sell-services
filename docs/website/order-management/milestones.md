@@ -1,431 +1,95 @@
 # Project Milestones **[PRO]**
 
-Break large orders into smaller deliverable phases with individual approval steps and payments. Milestones are stored as post meta and managed through the MilestoneService class.
+For large projects, milestones let you break the work into smaller phases. Each milestone has its own delivery, approval step, and payment -- so both the buyer and vendor stay aligned throughout the project.
 
-**Note:** This is a **[PRO]** feature available in WP Sell Services Pro.
+## Why Use Milestones?
 
-## What are Milestones?
+Instead of waiting until the very end to see results, milestones give buyers visibility into progress at every stage. Vendors get paid as they complete each phase, which reduces risk on both sides.
 
-Milestones divide big projects into manageable chunks. Each milestone has:
-- Title and description
-- Deliverables list
-- Payment amount (portion of total)
-- Due date
-- Individual approval workflow
+**Example: Website Design Project ($2,000 total)**
 
-**Storage:** Milestones are stored as post meta on the service post, not in a dedicated database table.
+| Milestone | Due | Payment |
+|-----------|-----|---------|
+| Wireframes & Mockups | Day 7 | $500 (25%) |
+| Homepage Development | Day 14 | $600 (30%) |
+| Inner Pages | Day 21 | $600 (30%) |
+| Final Launch | Day 30 | $300 (15%) |
 
-**Meta Key Format:** `wpss_milestones_{order_id}`
+Each milestone is delivered, reviewed, and paid independently.
 
-**Example: Website Design Project**
-```
-Total Order: $2,000 (30 days)
+## How Milestones Work
 
-Milestone 1: Wireframes & Mockups
-- Due: Day 7
-- Payment: $500 (25%)
-- Status: pending
+### Creating Milestones
 
-Milestone 2: Homepage Development
-- Due: Day 14
-- Payment: $600 (30%)
+The vendor sets up milestones for an order after it begins. For each milestone, they define:
 
-Milestone 3: Inner Pages
-- Due: Day 21
-- Payment: $600 (30%)
+- **Title** -- A clear name for this phase (e.g., "Homepage Design Mockup").
+- **Description** -- What will be delivered in this phase.
+- **Amount** -- The payment for this milestone (a portion of the total order).
+- **Due Date** -- When this phase should be completed.
 
-Milestone 4: Final Launch
-- Due: Day 30
-- Payment: $300 (15%)
-```
+Vendors can create, edit, or delete milestones that have not been started yet.
 
-## Milestone Statuses
+### The Milestone Workflow
 
-Milestones have 5 possible statuses:
+Each milestone follows its own mini delivery cycle:
 
-| Status | Constant | What It Means | Who Acts Next |
-|--------|----------|---------------|---------------|
-| Pending | `STATUS_PENDING` | Created, not started | Vendor (start work) |
-| In Progress | `STATUS_IN_PROGRESS` | Vendor actively working | Vendor (submit deliverable) |
-| Submitted | `STATUS_SUBMITTED` | Deliverable uploaded | Buyer (approve/reject) |
-| Approved | `STATUS_APPROVED` | Buyer accepted work | Next milestone or completion |
-| Rejected | `STATUS_REJECTED` | Needs changes | Vendor (revise and resubmit) |
+1. **Pending** -- The milestone is created and waiting to be started.
+2. **In Progress** -- The vendor is actively working on it.
+3. **Submitted** -- The vendor has delivered the work for this milestone and is waiting for the buyer to review it.
+4. **Approved** -- The buyer has accepted the work. Payment for this milestone is released to the vendor.
+5. **Rejected** -- The buyer has requested changes. The vendor revises and resubmits.
 
-## Milestone ID Format
+A rejected milestone does not count against the order's revision limit. The vendor can resubmit a milestone as many times as needed until the buyer is satisfied.
 
-Each milestone gets unique ID: `ms_` + `uniqid()`
+### Buyer Review
 
-Example: `ms_65d3f4b2a1e3c`
+When a vendor submits a milestone, the buyer receives a notification. The buyer reviews the delivered work and either:
 
-## Creating Milestones (Vendors)
+- **Approves** -- Payment is released and the vendor moves to the next milestone.
+- **Rejects with feedback** -- The vendor gets specific notes about what needs to change, then revises and resubmits.
 
-### Milestone Data Structure
+### Progressive Payment
 
-```php
-[
-    'id'           => 'ms_' . uniqid(),
-    'title'        => 'Homepage Design Mockup',
-    'description'  => 'What will be delivered',
-    'amount'       => 400.00,
-    'due_date'     => '2026-02-20',
-    'status'       => 'pending',
-    'deliverables' => 'List of specific files/outputs',
-    'created_at'   => '2026-02-12 10:30:00',
-    'updated_at'   => '2026-02-12 10:30:00',
-    'submitted_at' => null,
-    'approved_at'  => null,
-]
-```
+This is the key benefit of milestones. Instead of the vendor waiting for the entire project to be done before receiving any payment, they get paid as each milestone is approved. This keeps cash flowing and motivation high.
 
-### Required Fields
+## Tracking Progress
 
-When creating a milestone via `MilestoneService::create()`:
+Both the vendor and buyer can see an overview of milestone progress on the order page:
 
-**Required:**
-- `title` - Cannot be empty
-- `amount` - Must be > 0
-- Order must exist
+- How many milestones are completed vs. remaining.
+- Total amount released vs. pending.
+- Overall completion percentage.
 
-**Optional:**
-- `description` - Defaults to empty string
-- `due_date` - Defaults to null
-- `deliverables` - Defaults to empty string
+This makes it easy to see at a glance how far along a project is.
 
-### Creating Via API
+## Milestones vs. Standard Delivery
 
-```php
-$milestone_service = new MilestoneService();
+| Feature | Standard Delivery | Milestones **[PRO]** |
+|---------|-------------------|---------------------|
+| Delivery | One final delivery | Multiple deliveries per phase |
+| Payment | Full payment at end | Progressive payment per phase |
+| Visibility | Buyer waits until end | Buyer sees progress throughout |
+| Best for | Quick, simple projects | Large, multi-phase projects |
 
-$result = $milestone_service->create( $order_id, [
-    'title'        => 'Homepage Design',
-    'description'  => '3 design concepts in PSD format',
-    'amount'       => 500.00,
-    'due_date'     => '2026-02-20',
-    'deliverables' => 'homepage-v1.psd, homepage-v2.psd, homepage-v3.psd',
-] );
+## Tips
 
-if ( $result['success'] ) {
-    $milestone_id = $result['milestone_id'];
-}
-```
+**For Vendors:**
+- Plan your milestones before starting work. Three to five milestones works well for most projects.
+- Make each milestone independently valuable -- the buyer should see clear progress at every step.
+- Submit milestones only when they are fully complete, with all deliverables included.
 
-## Milestone Workflow
+**For Buyers:**
+- Review submitted milestones within 2-3 days to keep the project moving.
+- If rejecting a milestone, be specific about what needs to change.
+- Approve milestones promptly once you are satisfied with the work.
 
-### 1. Vendor Creates Milestone
-
-```php
-MilestoneService::create( $order_id, $data );
-```
-
-**Fires:** `wpss_milestone_created` action
-
-### 2. Vendor Starts Work
-
-Change status to `in_progress`:
-
-```php
-// Update milestone status
-$milestone_service->update( $order_id, $milestone_id, [
-    'status' => 'in_progress'
-] );
-```
-
-**Note:** Status updates should be done through proper workflow methods, not direct updates.
-
-### 3. Vendor Submits Milestone
-
-```php
-$result = $milestone_service->submit(
-    $order_id,
-    $milestone_id,
-    'Milestone completed. Please review attached files.',
-    $attachments // Array of file data
-);
-```
-
-**Requirements:**
-- Milestone status: `pending`, `in_progress`, or `rejected`
-- Cannot submit `submitted` or `approved` milestones
-
-**What Happens:**
-- Status → `submitted`
-- `submitted_at` timestamp set
-- `submit_message` stored
-- Attachments array saved
-
-**Fires:** `wpss_milestone_submitted` action
-
-### 4. Buyer Approves
-
-```php
-$result = $milestone_service->approve( $order_id, $milestone_id );
-```
-
-**Requirements:**
-- Status must be `submitted`
-
-**What Happens:**
-- Status → `approved`
-- `approved_at` timestamp set
-- Payment released to vendor
-
-**Fires:** `wpss_milestone_approved` action with milestone amount
-
-### 5. Buyer Rejects (if needed)
-
-```php
-$result = $milestone_service->reject(
-    $order_id,
-    $milestone_id,
-    'Please change header color to navy blue'
-);
-```
-
-**Requirements:**
-- Status must be `submitted`
-
-**What Happens:**
-- Status → `rejected`
-- `rejection_feedback` stored
-- Vendor can revise and resubmit
-
-**Fires:** `wpss_milestone_rejected` action
-
-## Retrieving Milestones
-
-### Get All Milestones for Order
-
-```php
-$milestones = $milestone_service->get_order_milestones( $order_id );
-```
-
-**Returns:** Array of milestone arrays
-
-**Storage Lookup:**
-1. Gets order from database
-2. Retrieves service_id from order
-3. Gets post meta: `wpss_milestones_{order_id}` from service post
-4. Returns array or empty array if none
-
-### Get Single Milestone
-
-```php
-$milestone = $milestone_service->get( $order_id, $milestone_id );
-```
-
-**Returns:** Milestone array or `null` if not found
-
-### Get Milestone Progress
-
-```php
-$progress = $milestone_service->get_progress( $order_id );
-```
-
-**Returns:**
-```php
-[
-    'total_milestones'    => 4,
-    'approved_milestones' => 2,
-    'pending_milestones'  => 2,
-    'total_amount'        => 2000.00,
-    'released_amount'     => 1100.00,
-    'pending_amount'      => 900.00,
-    'completion_percent'  => 50.0,
-]
-```
-
-## Updating Milestones
-
-### Editable Fields
-
-```php
-$result = $milestone_service->update( $order_id, $milestone_id, [
-    'title'        => 'New title',
-    'description'  => 'Updated description',
-    'amount'       => 450.00,
-    'due_date'     => '2026-02-25',
-    'deliverables' => 'Updated list',
-] );
-```
-
-**Allowed Fields:**
-- `title` - Sanitized with `sanitize_text_field()`
-- `description` - Sanitized with `sanitize_textarea_field()`
-- `amount` - Cast to float
-- `due_date` - Sanitized with `sanitize_text_field()`
-- `deliverables` - Sanitized with `sanitize_textarea_field()`
-
-**Updated Automatically:**
-- `updated_at` - Current timestamp
-
-**Cannot Update:**
-- `id` - Generated at creation
-- `status` - Use workflow methods (submit, approve, reject)
-- `created_at` - Set at creation
-- `submitted_at`, `approved_at` - Set by workflow
-
-## Deleting Milestones
-
-```php
-$result = $milestone_service->delete( $order_id, $milestone_id );
-```
-
-**Requirements:**
-- Milestone status must be `pending`
-- Cannot delete in-progress, submitted, or approved milestones
-
-**What Happens:**
-- Milestone removed from array
-- Updated array saved to post meta
-- No database table cleanup needed
-
-## Payment Release
-
-### When Milestone Approved
-
-Payment is released immediately when buyer approves milestone.
-
-**Hook Usage:**
-```php
-add_action( 'wpss_milestone_approved', function( $milestone_id, $order_id, $amount ) {
-    // Payment logic executed here
-    // $amount = milestone payment amount
-}, 10, 3 );
-```
-
-### Commission Handling
-
-Commission is typically deducted from each milestone payment, but this depends on platform configuration.
-
-## Milestone Limitations
-
-### What Can Be Revised
-
-**Milestone rejections are independent of order revisions:**
-- Rejected milestones don't count against order revision limit
-- Each milestone can be submitted multiple times
-- Status cycles: `rejected` → `in_progress` → `submitted` → `approved`
-
-### Milestone Dependencies
-
-Milestones are independent - you can work on multiple simultaneously or in any order. The system doesn't enforce sequential completion.
-
-## Status Labels
-
-Get human-readable labels:
-
-```php
-$labels = MilestoneService::get_status_labels();
-
-// Returns:
-[
-    'pending'     => 'Pending',
-    'in_progress' => 'In Progress',
-    'submitted'   => 'Awaiting Approval',
-    'approved'    => 'Approved',
-    'rejected'    => 'Needs Revision',
-]
-```
-
-## Action Hooks
-
-```php
-// Milestone created
-do_action( 'wpss_milestone_created', $milestone_id, $order_id, $milestone );
-
-// Milestone submitted for review
-do_action( 'wpss_milestone_submitted', $milestone_id, $order_id );
-
-// Milestone approved by buyer
-do_action( 'wpss_milestone_approved', $milestone_id, $order_id, $amount );
-
-// Milestone rejected by buyer
-do_action( 'wpss_milestone_rejected', $milestone_id, $order_id, $feedback );
-```
-
-## REST API Endpoints
-
-Milestones are managed through the MilestonesController:
-
-**Base:** `/wp-json/wpss/v1/milestones`
-
-**Endpoints:**
-- `GET /orders/{order_id}/milestones` - List all milestones
-- `POST /orders/{order_id}/milestones` - Create milestone
-- `GET /milestones/{milestone_id}` - Get single milestone
-- `PUT /milestones/{milestone_id}` - Update milestone
-- `DELETE /milestones/{milestone_id}` - Delete milestone
-- `POST /milestones/{milestone_id}/submit` - Submit for approval
-- `POST /milestones/{milestone_id}/approve` - Approve milestone
-- `POST /milestones/{milestone_id}/reject` - Reject milestone
-
-## Best Practices
-
-### For Vendors
-
-✅ **Planning:**
-- Create milestones before starting work
-- Make each milestone independently valuable
-- Front-load important milestones (30-35% first)
-- Use 3-5 milestones for most projects
-
-✅ **Submission:**
-- Submit when fully complete
-- Include all deliverables
-- Write clear submission message
-- Test files before submitting
-
-### For Buyers
-
-✅ **Reviewing:**
-- Review within 2-3 days
-- Check all deliverables
-- Provide specific feedback if rejecting
-- Approve promptly if satisfied
-
-✅ **Feedback:**
-- Be specific about changes needed
-- Reference milestone requirements
-- Don't request out-of-scope changes
-
-### For Admins
-
-✅ **Configuration:**
-- Set minimum order value for milestones
-- Monitor milestone approval rates
-- Step in when milestones are stuck
-- Educate users on milestone benefits
-
-## Troubleshooting
-
-### Milestone Not Saving
-
-**Check:**
-- Order exists in database
-- Service ID valid on order
-- Post meta permissions
-- Field validation (title required, amount > 0)
-
-### Cannot Submit Milestone
-
-**Verify:**
-- Status is `pending`, `in_progress`, or `rejected`
-- Not already `submitted` or `approved`
-- User has permission
-
-### Payment Not Released
-
-**Check:**
-- Milestone status is `approved`
-- `wpss_milestone_approved` hook firing
-- Payment service integration active
-- Vendor wallet accepting payments
+**For Admins:**
+- Monitor milestone approval rates. If milestones are frequently stuck, reach out to the parties involved.
+- Consider setting a minimum order value for milestone-based projects.
 
 ## Related Documentation
 
-- [Order Workflow](order-lifecycle.md) - Complete order lifecycle
-- [Deliveries & Revisions](deliveries-revisions.md) - Standard delivery workflow
-- [Earnings Dashboard](../earnings-wallet/earnings-dashboard.md) - Track milestone payments
-- [REST API Reference](../developer-guide/rest-api-endpoints.md) - Milestone endpoints
-
-Milestones make large projects manageable and fair for everyone!
+- [Order Lifecycle](order-lifecycle.md)
+- [Deliveries & Revisions](deliveries-revisions.md)
+- [Tipping & Extensions](tipping-extensions.md)

@@ -1,412 +1,126 @@
-# Gutenberg Blocks
+# Block Editor Elements
 
-WP Sell Services provides 6 custom Gutenberg blocks for building marketplace pages with the WordPress block editor.
+WP Sell Services includes 6 drag-and-drop blocks for the WordPress block editor. Build your marketplace pages visually -- no shortcode syntax needed.
+
+---
 
 ## Available Blocks
 
-| Block Name | Description | Shortcode Equivalent |
-|------------|-------------|---------------------|
-| **Service Grid** | Display services in a grid | `[wpss_services]` |
-| **Service Search** | Search form with filters | `[wpss_service_search]` |
-| **Service Categories** | Category directory | `[wpss_service_categories]` |
-| **Featured Services** | Featured services grid | `[wpss_featured_services]` |
-| **Seller Card** | Vendor profile display | `[wpss_vendor_profile]` |
-| **Buyer Requests** | Request listings | `[wpss_buyer_requests]` |
+All blocks appear under the **WP Sell Services** category in the block inserter. Click the **+** button in the editor, search for any block by name, and drop it onto your page.
 
 ---
 
-## Accessing Blocks
+### Service Grid
 
-### In Block Editor
+Display a grid of services with visual controls for layout, filtering, and sorting.
 
-1. Edit a page or post
-2. Click the **+** button to add a block
-3. Search for "WP Sell Services" or specific block name
-4. Click to insert block
-5. Configure block settings in the sidebar
+**What you can configure:**
+- Number of services to show
+- Grid columns (1 to 4)
+- Filter by category or tag
+- Sort by date, price, rating, or sales
 
-**Block Category:**
-All blocks are grouped under **WP Sell Services** category in the block inserter.
-
----
-
-## Service Grid Block
-
-Display services in a customizable grid layout.
-
-**What It Does:**
-Renders the services grid shortcode (`[wpss_services]`) with visual controls in the block editor.
-
-**Block Settings:**
-
-The block includes configuration options for:
-- Column layout
-- Number of items
-- Category filter
-- Tag filter
-- Ordering options
-
-**Equivalent Shortcode:**
-```
-[wpss_services category="5" limit="12" columns="4" orderby="rating"]
-```
-
-**Use Cases:**
-- Service showcase pages
-- Category-specific service displays
-- Vendor portfolio pages
-- Homepage service sections
+**Best for:** Service showcase pages, category-specific displays, homepage service sections.
 
 ---
 
-## Service Search Block
+### Service Search Bar
 
-Add a search form with filters and autocomplete.
+Add a search form with keyword input and category dropdown.
 
-**What It Does:**
-Renders the service search shortcode (`[wpss_service_search]`) with placeholder and button customization.
-
-**Block Settings:**
-
-Configuration options include:
+**What you can configure:**
 - Placeholder text
-- Show/hide category filter
-- Button text customization
-- Form action URL
+- Show or hide category filter
+- Button text
+- Custom results page URL
 
-**Equivalent Shortcode:**
-```
-[wpss_service_search placeholder="Find services..." show_categories="true"]
-```
-
-**Use Cases:**
-- Homepage hero search
-- Service directory pages
-- Widget areas
-- Landing pages
+**Best for:** Homepage hero sections, top of service directory pages, sidebar widgets.
 
 ---
 
-## Service Categories Block
+### Service Categories
 
-Display service categories with icons and counts.
+Show your service categories in a visual grid with icons and service counts.
 
-**What It Does:**
-Renders the category grid shortcode (`[wpss_service_categories]`) with configurable layout.
-
-**Block Settings:**
-
-Options include:
+**What you can configure:**
 - Grid columns
-- Show/hide service count
-- Parent category filter
+- Show or hide service count
+- Filter by parent category
 - Hide empty categories
-- Category limit
+- Maximum categories to display
 
-**Equivalent Shortcode:**
-```
-[wpss_service_categories columns="4" show_count="true" limit="12"]
-```
-
-**Use Cases:**
-- Category browse pages
-- Homepage category sections
-- Service navigation
-- Landing pages
+**Best for:** Homepage category sections, browse-by-category pages, landing pages.
 
 ---
 
-## Featured Services Block
+### Featured Services
 
-Display featured services in a grid.
+Highlight services you have marked as featured in a grid layout.
 
-**What It Does:**
-Renders featured services shortcode (`[wpss_featured_services]`) which delegates to the services grid with `featured="true"`.
-
-**Block Settings:**
-
-Configuration options:
-- Number of services
-- Column layout
+**What you can configure:**
+- Number of featured services
+- Grid columns
 - Category filter
-- Ordering options
+- Sort order
 
-**Equivalent Shortcode:**
-```
-[wpss_featured_services limit="8" columns="4"]
-```
-
-**Use Cases:**
-- Homepage featured sections
-- Premium service showcases
-- Promotional pages
-- Editor's picks sections
+**Best for:** Homepage spotlights, promotional sections, editor's picks.
 
 ---
 
-## Seller Card Block
+### Seller Card
 
-Display vendor profile information.
+Display a vendor's profile information -- name, avatar, rating, and bio.
 
-**What It Does:**
-Renders a vendor profile shortcode (`[wpss_vendor_profile]`) with vendor selection.
+**What you can configure:**
+- Select a specific vendor by ID
+- Or auto-detect from the page context (URL parameter)
 
-**Block Settings:**
-
-Configuration includes:
-- Vendor ID selection
-- Auto-detect from context
-
-**Equivalent Shortcode:**
-```
-[wpss_vendor_profile id="42"]
-```
-
-**Use Cases:**
-- Vendor spotlight pages
-- Team member profiles
-- Featured vendor sections
-- About pages
+**Best for:** Vendor spotlight pages, team profiles, featured vendor sections.
 
 ---
 
-## Buyer Requests Block
+### Buyer Requests
 
-Display active buyer requests with filtering.
+Show active buyer requests with filtering options.
 
-**What It Does:**
-Renders buyer requests shortcode (`[wpss_buyer_requests]`) with budget and category filters.
-
-**Block Settings:**
-
-Options include:
-- Number of requests
+**What you can configure:**
+- Number of requests to display
 - Category filter
-- Budget min/max filters
+- Budget range filters
 
-**Equivalent Shortcode:**
-```
-[wpss_buyer_requests limit="10" category="5"]
-```
-
-**Use Cases:**
-- Buyer request marketplace pages
-- Project listing pages
-- Vendor opportunity sections
-- Dashboard pages
+**Best for:** Buyer request marketplace pages, vendor opportunity sections, project listing pages.
 
 ---
 
-## Block Editor Assets
+## How to Add a Block
 
-### JavaScript Bundle
-
-**File:** `assets/js/blocks.js`
-
-**Dependencies:**
-- `wp-blocks` - Block registration
-- `wp-element` - React components
-- `wp-editor` - Editor utilities
-- `wp-components` - UI components
-- `wp-i18n` - Internationalization
-- `wp-block-editor` - Block editor API
-
-**Localized Data:**
-
-The `wpssBlocks` JavaScript object provides:
-- `pluginUrl` - Plugin directory URL
-- `ajaxUrl` - WordPress AJAX URL
-- `nonce` - Security nonce
-- `categories` - Available service categories
-- `i18n` - Translated strings
-
-### Editor Styles
-
-**File:** `assets/css/blocks-editor.css`
-
-Styles for block appearance in the editor.
-
-### Frontend Styles
-
-**File:** `assets/css/blocks.css`
-
-Styles for block appearance on the frontend. Only loaded when blocks are present on the page.
+1. Edit any page or post in the WordPress block editor
+2. Click the **+** button to open the block inserter
+3. Search for "WP Sell Services" or the specific block name (e.g., "Service Grid")
+4. Click the block to insert it
+5. Use the sidebar panel to configure settings
+6. Preview your page to see the result
 
 ---
 
-## Blocks vs Shortcodes
+## Blocks vs Page Elements
 
-### When to Use Blocks
+Blocks and the page elements described in the [shortcodes reference](shortcodes-reference.md) produce the same output. The difference is how you add them:
 
-**Advantages:**
-- Visual editing with preview
-- No shortcode syntax to remember
-- Sidebar configuration
-- Better for content creators
-- Theme integration
+- **Blocks** give you a visual editing experience with a settings panel in the sidebar. Great for content editors and non-technical users.
+- **Page element tags** are faster to type for experienced users and work in widgets, the classic editor, and template files.
 
-**Best For:**
-- Content editors
-- Marketing pages
-- Visual page building
-- Non-technical users
-
-### When to Use Shortcodes
-
-**Advantages:**
-- Faster for experienced users
-- Works in widgets
-- Works in classic editor
-- Dynamic content
-- Programmatic insertion
-
-**Best For:**
-- Developers
-- Widget areas
-- Template files
-- Legacy sites
-- PHP code
-
-**You Can Mix Both:** Use blocks in pages and shortcodes in widgets/templates.
-
----
-
-## Block Configuration in Code
-
-### Block Classes
-
-Located in `src/Blocks/`:
-- `ServiceGrid.php`
-- `ServiceSearch.php`
-- `ServiceCategories.php`
-- `FeaturedServices.php`
-- `SellerCard.php`
-- `BuyerRequests.php`
-
-Each block extends an `AbstractBlock` base class (assumed pattern).
-
-### Registration
-
-Blocks are registered in `BlocksManager.php`:
-
-```php
-$block_classes = [
-    ServiceGrid::class,
-    ServiceSearch::class,
-    ServiceCategories::class,
-    FeaturedServices::class,
-    SellerCard::class,
-    BuyerRequests::class,
-];
-```
-
-### Block Category
-
-All blocks appear under the **WP Sell Services** category:
-
-```php
-[
-    'slug'  => 'wp-sell-services',
-    'title' => __( 'WP Sell Services', 'wp-sell-services' ),
-    'icon'  => 'store',
-]
-```
-
----
-
-## Customizing Block Output
-
-### Filter Block HTML
-
-Blocks typically render shortcodes, so you can filter the shortcode output:
-
-```php
-// Filter service grid output
-add_filter( 'wpss_services_shortcode_output', function( $output, $atts ) {
-    // Modify HTML before display
-    return $output;
-}, 10, 2 );
-```
-
-### Custom Block Styles
-
-Add custom CSS targeting block classes:
-
-```css
-/* Service Grid Block */
-.wp-block-wpss-service-grid {
-    /* Custom styles */
-}
-
-/* Service Search Block */
-.wp-block-wpss-service-search {
-    /* Custom styles */
-}
-```
-
----
-
-## Block Assets Enqueueing
-
-### Editor Assets
-
-Enqueued via `enqueue_block_editor_assets` action:
-- Only loads in block editor
-- Includes localized data for categories and translations
-
-### Frontend Assets
-
-Enqueued via `enqueue_block_assets` action:
-- Only loads on frontend (not admin)
-- Only when blocks are used on page
-- Includes jQuery dependency for frontend interactions
+You can mix both on the same site -- use blocks on some pages and tags on others.
 
 ---
 
 ## Troubleshooting
 
-### Block Not Appearing in Inserter
+**Block not appearing in the inserter?**
+Make sure the plugin is active and you are using the block editor (not the Classic Editor plugin). Try clearing your browser cache and refreshing the page.
 
-**Check:**
-1. Plugin is active and up to date
-2. Gutenberg/Block editor enabled (not Classic Editor)
-3. Clear browser cache and refresh
-4. Check JavaScript console for errors
-5. Verify `assets/js/blocks.js` exists and loads
+**Block shows nothing on the frontend?**
+Check that matching content exists (published services, registered vendors, etc.) and that all block settings are filled in. Clear your site cache.
 
-### Block Not Rendering on Frontend
-
-**Verify:**
-1. Page is published (not draft)
-2. Block settings are complete
-3. Data exists (services, vendors, etc.)
-4. Cache cleared (site and browser)
-5. Frontend CSS/JS files load correctly
-
-### Block Settings Not Saving
-
-**Troubleshoot:**
-1. Update to latest plugin version
-2. Check WordPress/user permissions
-3. Disable other plugins temporarily
-4. Try default WordPress theme
-5. Check browser console for JavaScript errors
-
----
-
-## Related Documentation
-
-- [Shortcodes Reference](shortcodes-reference.md) - Shortcode alternatives
-- [Template Overrides](template-overrides.md) - Custom templates
-- [Pages Setup](../platform-settings/pages-setup.md) - Required pages
-- [Search Filters](search-filters.md) - Search functionality
-
----
-
-## Next Steps
-
-1. Explore each block in the editor
-2. Create page layouts with multiple blocks
-3. Test responsive display on mobile
-4. Customize block styles with your theme CSS
-5. Consider creating reusable blocks for repeated sections
+**Block settings not saving?**
+Update to the latest plugin version, disable other plugins temporarily to check for conflicts, and check the browser console for JavaScript errors.

@@ -1,379 +1,114 @@
 # Order Settings
 
-Configure order policies, delivery deadlines, revisions, requirements timeout, and dispute windows that govern transactions on your marketplace.
-
-**Location:** WP Admin → WP Sell Services → Settings → Orders
-
-## Order Settings Overview
+Control how orders behave on your marketplace -- from auto-completion timing to revision limits and dispute windows. All of these settings are found at **WP Admin > WP Sell Services > Settings > Orders**.
 
 ![Order settings tab in WP Sell Services settings panel](../images/settings-orders-tab.png)
 
-All order settings are stored in WordPress option: `wpss_orders`
-
-Access in Settings.php lines 695-801.
-
 ## Auto-Complete Days
 
-Automatically complete orders after delivery if buyer takes no action.
+**Default: 3 days**
 
-### Configuration
+After a vendor delivers their work, the buyer has this many days to review it. If the buyer does not respond (no accept, no revision request, no dispute), the order auto-completes and the vendor gets paid.
 
-**Field:** `auto_complete_days`
-
-| Setting | Value |
-|---------|-------|
-| **Default** | 3 days |
-| **Minimum** | 0 (disabled) |
-| **Maximum** | 30 days |
-| **Type** | Number field |
-
-**Description:** "Days after delivery to auto-complete if buyer does not respond. 0 to disable."
-
-### How It Works
-
-**When Enabled (> 0):**
-1. Vendor submits delivery
-2. Order status → `pending_approval`
-3. Buyer has X days to review
-4. If no action taken, order auto-completes
-5. Vendor receives payment
-6. Both can leave reviews
-
-**When Disabled (0):**
-- Orders remain in `pending_approval` indefinitely
-- Manual buyer action required
-- No auto-completion occurs
-
-**Example:**
-```
-auto_complete_days = 3
-
-Day 0: Vendor delivers
-Day 1-3: Buyer review window
-Day 4: Auto-complete if no action
-```
+- Set to **1-2 days** for fast-paced marketplaces with quick turnaround services.
+- Set to **5-7 days** for high-value services where buyers need more review time.
+- Set to **0** to disable auto-completion entirely -- buyers must manually accept every delivery.
 
 ## Default Revision Limit
 
-Set the default number of revisions included with orders.
+**Default: 2 revisions**
 
-### Configuration
+This is how many times a buyer can request changes on a delivery. Vendors can override this number per service package (for example, Basic gets 1 revision, Premium gets unlimited).
 
-**Field:** `revision_limit`
+- Set to **0** for no revisions at all.
+- Set to **1-3** for most marketplaces.
+- Set higher for services where iteration is expected (design, content writing).
+- Vendors can offer unlimited revisions on specific packages regardless of this default.
 
-| Setting | Value |
-|---------|-------|
-| **Default** | 2 revisions |
-| **Minimum** | 0 (no revisions) |
-| **Maximum** | 10 revisions |
-| **Type** | Number field |
+## Allow Disputes
 
-**Description:** "Default revisions per order. Can be overridden per service."
+**Default: Enabled**
 
-### How It Works
+When enabled, buyers can open formal disputes on orders. When disabled, the dispute button is hidden and buyers must resolve issues through messaging or by contacting you directly.
 
-**Checking Revisions:**
-```php
-// Code checks: $order->can_request_revision()
-// Returns true if:
-// - revisions_included = -1 (unlimited)
-// - OR remaining_revisions > 0
-```
+Keeping disputes enabled is recommended -- it protects both buyers and vendors and gives you a structured way to mediate problems.
 
-**Per-Service Override:**
-- Vendors can set custom revision counts per package
-- Service-level settings override this default
-- Example: Basic (1 revision), Standard (2), Premium (unlimited)
+## Dispute Window
 
-**Unlimited Revisions:**
-- Set `revision_limit = -1` for unlimited
-- Or configure per service package
+**Default: 14 days**
 
-## Dispute Settings
+After an order is completed, the buyer has this many days to open a dispute. Once the window closes, the order is fully finalized and cannot be disputed.
 
-### Allow Disputes
-
-**Field:** `allow_disputes`
-
-| Setting | Value |
-|---------|-------|
-| **Default** | Enabled (true) |
-| **Type** | Checkbox |
-| **Label** | "Allow buyers to open disputes on orders" |
-
-**When Disabled:**
-- Buyers cannot open disputes
-- Dispute button hidden
-- Issues must be resolved via messaging or admin
-
-### Dispute Window Days
-
-**Field:** `dispute_window_days`
-
-| Setting | Value |
-|---------|-------|
-| **Default** | 14 days |
-| **Minimum** | 1 day |
-| **Maximum** | 90 days |
-| **Type** | Number field |
-
-**Description:** "Days after completion within which disputes can be opened."
-
-**How It Works:**
-- Countdown starts when order completes
-- Buyer can open dispute within X days
-- After window expires, disputes not allowed
-- Protects vendors from very old disputes
+- Set to **7 days** if you want faster finalization.
+- Set to **30-60 days** for high-value services where issues might surface later.
+- Set to **90 days** for maximum buyer protection.
 
 ## Requirements Timeout
 
-Control what happens when buyers don't submit requirements.
+**Default: 0 (disabled)**
 
-### Late Requirements Submission
+After payment, the buyer needs to submit project requirements before work can begin. This setting controls how long to wait before taking action if the buyer never submits them.
 
-**Field:** `allow_late_requirements`
+When set to 0, the order waits indefinitely.
 
-| Setting | Value |
-|---------|-------|
-| **Default** | Disabled (false) |
-| **Type** | Checkbox |
-| **Label** | "Allow buyers to submit requirements after work has started" |
+When set to a number of days (e.g., 7), the system takes action when the timeout expires. What action it takes depends on the next setting.
 
-**Description:** "If enabled, buyers can submit requirements even if the order is already in progress without them."
+## Auto-Start on Timeout
 
-**When Enabled:**
-- Work can start without requirements
-- Buyer can add requirements later
-- Vendor notified when requirements submitted
+**Default: Enabled**
 
-**When Disabled:**
-- Order stuck in `pending_requirements` until submitted
-- Vendor cannot start without requirements
+This controls what happens when the requirements timeout expires:
 
-### Requirements Timeout Days
+- **Enabled** -- The order starts without requirements. The vendor begins work and can request details through messaging. This is useful for flexible services.
+- **Disabled** -- The order is cancelled and the buyer receives a refund. This is better for services that truly cannot begin without project details.
 
-**Field:** `requirements_timeout_days`
+## Allow Late Requirements
 
-| Setting | Value |
-|---------|-------|
-| **Default** | 0 (disabled) |
-| **Minimum** | 0 |
-| **Maximum** | 30 days |
-| **Type** | Number field |
+**Default: Disabled**
 
-**Description:** "Days to wait for requirements before taking action. 0 to disable."
+When enabled, buyers can submit their project requirements even after the order has already started (useful if auto-start on timeout moved the order forward). When disabled, requirements can only be submitted while the order is in "Pending Requirements" status.
 
-**How It Works:**
+## All Settings at a Glance
 
-**When Enabled (> 0):**
-1. Order placed
-2. Buyer has X days to submit requirements
-3. Reminders sent
-4. After timeout, automatic action taken (see below)
+| Setting | Default | Range | What It Does |
+|---------|---------|-------|--------------|
+| Auto-Complete Days | 3 | 0-30 | Days after delivery to auto-complete |
+| Default Revision Limit | 2 | 0-10 | Default revisions per order |
+| Allow Disputes | Enabled | On/Off | Enable the dispute system |
+| Dispute Window | 14 days | 1-90 | Days after completion to allow disputes |
+| Allow Late Requirements | Disabled | On/Off | Submit requirements after work started |
+| Requirements Timeout | 0 | 0-30 | Days to wait for requirements |
+| Auto-Start on Timeout | Enabled | On/Off | Start order or cancel when timeout expires |
 
-**When Disabled (0):**
-- No timeout enforcement
-- Order waits indefinitely for requirements
+## Recommended Configurations
 
-### Auto-Start on Timeout
+### Standard Marketplace
 
-**Field:** `auto_start_on_timeout`
+For most service marketplaces, the defaults work well:
+- Auto-Complete: 3 days
+- Revisions: 2
+- Dispute Window: 14 days
+- Requirements Timeout: 3 days, auto-start enabled
 
-| Setting | Value |
-|---------|-------|
-| **Default** | Enabled (true) |
-| **Type** | Checkbox |
-| **Label** | "Auto-start order when requirements timeout is reached" |
+### High-Value Services
 
-**Description:** "If enabled, the order starts without requirements. If disabled, the order is cancelled instead."
-
-**When Enabled:**
-- Timeout reached → Order status `in_progress`
-- Vendor starts work without requirements
-- Buyer can still submit requirements if `allow_late_requirements` enabled
-
-**When Disabled:**
-- Timeout reached → Order cancelled
-- Buyer refunded
-- Order doesn't count against vendor metrics
-
-## Complete Settings Table
-
-| Setting | Field Name | Default | Min | Max | Type | Description |
-|---------|-----------|---------|-----|-----|------|-------------|
-| Auto-Complete Days | `auto_complete_days` | 3 | 0 | 30 | Number | Days after delivery to auto-complete |
-| Default Revision Limit | `revision_limit` | 2 | 0 | 10 | Number | Default revisions per order |
-| Allow Disputes | `allow_disputes` | true | - | - | Checkbox | Enable dispute system |
-| Dispute Window | `dispute_window_days` | 14 | 1 | 90 | Number | Days after completion to open dispute |
-| Late Requirements | `allow_late_requirements` | false | - | - | Checkbox | Submit requirements after start |
-| Requirements Timeout | `requirements_timeout_days` | 0 | 0 | 30 | Number | Days to wait for requirements |
-| Auto-Start on Timeout | `auto_start_on_timeout` | true | - | - | Checkbox | Start order or cancel on timeout |
-
-## Accessing Settings
-
-### In PHP Code
-
-```php
-// Get all order settings
-$order_settings = get_option( 'wpss_orders', [] );
-
-// Get specific setting with default fallback
-$auto_complete_days = $order_settings['auto_complete_days'] ?? 3;
-$revision_limit = $order_settings['revision_limit'] ?? 2;
-$dispute_window = $order_settings['dispute_window_days'] ?? 14;
-$timeout_days = $order_settings['requirements_timeout_days'] ?? 0;
-$auto_start = $order_settings['auto_start_on_timeout'] ?? true;
-```
-
-### Via REST API
-
-Settings are exposed through public settings endpoint for logged-in users.
-
-## Configuration Examples
-
-### Conservative Marketplace
-
-```
-Auto-Complete Days: 7
-Revision Limit: 1
-Allow Disputes: Yes
-Dispute Window: 30 days
-Requirements Timeout: 3 days
-Auto-Start on Timeout: No (cancel instead)
-```
-
-**Effect:** Longer review periods, fewer revisions, longer dispute window, strict requirements.
-
-### Fast-Paced Marketplace
-
-```
-Auto-Complete Days: 1
-Revision Limit: 5
-Allow Disputes: Yes
-Dispute Window: 7 days
-Requirements Timeout: 1 day
-Auto-Start on Timeout: Yes
-```
-
-**Effect:** Quick turnaround, generous revisions, shorter dispute window, flexible requirements.
-
-### Quality-Focused Marketplace
-
-```
-Auto-Complete Days: 0 (disabled)
-Revision Limit: -1 (unlimited)
-Allow Disputes: Yes
-Dispute Window: 60 days
-Requirements Timeout: 7 days
-Auto-Start on Timeout: No
-```
-
-**Effect:** Manual approval required, unlimited revisions, extended buyer protection, strict requirements.
-
-## Workflow Impact
-
-### Requirements Timeout Workflow
-
-```
-Order Placed
-    ↓
-Pending Requirements Status
-    ↓
-Timer Starts (requirements_timeout_days)
-    ↓
-Buyer Has X Days
-    ↓
-    ├─→ Requirements Submitted → In Progress
-    │
-    └─→ Timeout Reached
-           ↓
-           ├─→ auto_start_on_timeout = true → In Progress
-           └─→ auto_start_on_timeout = false → Cancelled
-```
-
-### Auto-Complete Workflow
-
-```
-Delivery Submitted
-    ↓
-Pending Approval Status
-    ↓
-Timer Starts (auto_complete_days)
-    ↓
-Buyer Has X Days
-    ↓
-    ├─→ Buyer Accepts → Completed
-    ├─→ Buyer Requests Revision → Revision Requested
-    └─→ No Action (timeout) → Auto-Complete → Completed
-```
-
-## Best Practices
-
-### For Most Marketplaces
-
-✅ **Recommended Settings:**
-- Auto-Complete: 3-5 days
-- Revisions: 2-3 default
-- Dispute Window: 14-30 days
-- Requirements Timeout: 2-3 days
-- Auto-Start: Enabled
-
-### For High-Value Services
-
-✅ **Recommended Settings:**
-- Auto-Complete: 5-7 days
+For expensive, complex services like web development or consulting:
+- Auto-Complete: 7 days (more review time)
 - Revisions: 3-5 or unlimited
 - Dispute Window: 30-60 days
-- Requirements Timeout: 5-7 days
-- Auto-Start: Disabled (require requirements)
+- Requirements Timeout: 7 days, auto-start disabled (require requirements)
 
-### For Quick Turnaround
+### Quick Turnaround
 
-✅ **Recommended Settings:**
-- Auto-Complete: 1-2 days
+For fast services like logo tweaks, quick edits, or social media graphics:
+- Auto-Complete: 1 day
 - Revisions: 1-2
-- Dispute Window: 7-14 days
-- Requirements Timeout: 1 day
-- Auto-Start: Enabled
-
-## Troubleshooting
-
-### Orders Not Auto-Completing
-
-**Check:**
-1. `auto_complete_days` > 0
-2. Order actually delivered (status `pending_approval`)
-3. WP Cron running properly
-4. Correct number of days passed
-5. Check debug log for cron errors
-
-**Test WP Cron:**
-```bash
-wp cron event list
-wp cron test
-```
-
-### Requirements Not Timing Out
-
-**Check:**
-1. `requirements_timeout_days` > 0
-2. Order in `pending_requirements` status
-3. WP Cron running
-4. Timeout period actually elapsed
-
-### Disputes Not Available
-
-**Check:**
-1. `allow_disputes` enabled
-2. Order status `completed`
-3. Within `dispute_window_days` period
-4. User is buyer (not vendor)
+- Dispute Window: 7 days
+- Requirements Timeout: 1 day, auto-start enabled
 
 ## Related Documentation
 
-- [Order Workflow](order-lifecycle.md) - Complete order statuses
-- [Deliveries & Revisions](deliveries-revisions.md) - How settings affect delivery workflow
-- [Requirements Submission](order-requirements.md) - Requirements timeout details
-- [Dispute Resolution](../disputes-resolution/opening-disputes.md) - Dispute window usage
-
-Configure settings to match your marketplace's pace and quality standards!
+- [Order Lifecycle](order-lifecycle.md)
+- [Deliveries & Revisions](deliveries-revisions.md)
+- [Requirements Collection](requirements-collection.md)
+- [Opening a Dispute](../disputes-resolution/opening-a-dispute.md)

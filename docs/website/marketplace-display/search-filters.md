@@ -1,10 +1,6 @@
-# Search and Filters
+# Search and Filtering
 
-Service search functionality with category filters, keyword search, and result pagination.
-
-## Search Overview
-
-WP Sell Services provides search and filtering to help buyers find services quickly.
+WP Sell Services includes built-in search and filtering so your visitors can quickly find the right service. No extra plugins or configuration needed.
 
 ![Services grid view](../images/frontend-services-grid-view.png)
 
@@ -12,199 +8,75 @@ WP Sell Services provides search and filtering to help buyers find services quic
 
 ---
 
-## Service Search Form
+## Search Bar
 
-### Using the Search Shortcode
+The search bar lets visitors type keywords to find services by title or description. It can be placed on any page and includes an optional category dropdown for more targeted results.
 
-```
-[wpss_service_search]
-```
+**What it searches:**
+- Service titles
+- Service descriptions
+- Service excerpts
 
-**Features:**
-- Keyword search input
-- Category dropdown filter
-- Submits to service archive page
-- Clean, accessible HTML
-
-### Search Form Attributes
-
-| Attribute | Default | Description |
-|-----------|---------|-------------|
-| `placeholder` | "Search services..." | Input placeholder text |
-| `show_categories` | true | Show category dropdown |
-| `button_text` | "Search" | Submit button text |
-| `action` | (services archive) | Form submission URL |
+You can customize the placeholder text, button label, and whether the category dropdown appears.
 
 ---
 
-## Search Form Components
+## Category Filtering
 
-### Keyword Search Input
+Visitors can filter services by category using the dropdown in the search bar or by clicking a category on the category grid. Only categories that contain published services are shown.
 
-**What Gets Searched:**
-- Service title
-- Service content
-- Service excerpt
-
-Uses WordPress core search (`?s=query&post_type=wpss_service`).
-
-### Category Filter
-
-**Dropdown Options:**
-- "All Categories" (default)
-- Top-level categories only (parent = 0)
-- Only shows categories with services (hide_empty = true)
-
-Submits as `?service_category=slug` parameter.
-
-### Search Button
-
-Submits the form to the archive page with search parameters.
+Category archives have their own pages, so when a visitor selects "Logo Design," they land on a dedicated page showing only logo design services.
 
 ---
 
-## Search Implementation
+## Sort Options
 
-### Form Structure
+On the services catalog page, visitors can sort results by:
 
-```html
-<form class="wpss-search-form" action="https://example.com/services/" method="get">
-    <input type="text" name="s" value="" placeholder="Search services...">
-    <input type="hidden" name="post_type" value="wpss_service">
-    <select name="service_category">
-        <option value="">All Categories</option>
-        <!-- Categories populated from taxonomy -->
-    </select>
-    <button type="submit">Search</button>
-</form>
-```
-
-### URL Parameters
-
-**Keyword Search:**
-```
-/services/?s=logo&post_type=wpss_service
-```
-
-**Category Filter:**
-```
-/services/?service_category=graphic-design
-```
-
-**Combined:**
-```
-/services/?s=logo&post_type=wpss_service&service_category=graphic-design
-```
-
----
-
-## Service Archive Filtering
-
-WordPress handles filtering via:
-- `is_search()` for keyword queries
-- `is_tax('wpss_service_category')` for category archives
-- Standard WP_Query parameters
-
-### Archive Query Arguments
-
-Services are queried with:
-- `post_type` = `wpss_service`
-- `post_status` = `publish`
-- `posts_per_page` = from settings or default (12)
-- Taxonomy queries for categories/tags
+| Sort Option | What It Does |
+|-------------|--------------|
+| Newest | Most recently published services first |
+| Price (low to high) | Starting from the most affordable |
+| Price (high to low) | Starting from the premium options |
+| Top Rated | Highest average rating first |
+| Most Popular | Most sales first |
 
 ---
 
 ## Pagination
 
-WordPress core pagination on archive pages.
-
-**URL Structure:**
-```
-/services/page/2/
-/services/?s=logo&paged=2
-```
-
-**Display:**
-- Previous/Next links
-- Page numbers
-- Respects permalink structure
+When there are more services than fit on one page, pagination appears automatically. Visitors can click through pages of results, and the current search and filter selections are preserved as they navigate.
 
 ---
 
-## Custom Search Results
+## Where to Place Search
 
-### Redirect to Custom Page
+The search bar works well in several locations:
 
-```
-[wpss_service_search action="/custom-search-results/"]
-```
+- **Homepage** -- As a prominent hero search so visitors can start browsing immediately
+- **Services catalog page** -- At the top, above the service grid
+- **Sidebar** -- A compact search in your sidebar widget area
+- **Header or navigation** -- Some themes support widget areas in the header
 
-On custom page, create your own WP_Query:
-
-```php
-$args = array(
-    'post_type' => 'wpss_service',
-    's' => get_query_var('s'),
-    'posts_per_page' => 12,
-);
-
-$query = new WP_Query($args);
-```
+To add search to a sidebar widget area, go to **Appearance > Widgets**, add a Custom HTML or Shortcode widget, and place the search element there.
 
 ---
 
-## Search Widget
+## Tips
 
-The `[wpss_service_search]` shortcode works in widgets.
-
-**Setup:**
-1. Go to **Appearance → Widgets**
-2. Add **Custom HTML** widget
-3. Paste `[wpss_service_search show_categories="false"]`
-4. Save
+- **Put search front and center.** The easier it is to find services, the more likely visitors are to browse and buy.
+- **Keep categories organized.** Well-structured categories make filtering more useful. Avoid too many top-level categories -- use subcategories for specificity.
+- **Combine search with category grids.** A homepage with a search bar followed by a category grid gives visitors two ways to start browsing.
 
 ---
 
-## Customizing Search
+## Troubleshooting
 
-### Filter Search Form
+**Search returns no results?**
+Make sure services are published (not drafts) and that the search term matches words in the title or description. Clear your site cache if results seem stale.
 
-```php
-// Modify search form HTML before output
-add_filter( 'wpss_search_form_html', function( $html ) {
-    // Customize HTML
-    return $html;
-} );
-```
+**Category dropdown is empty?**
+Categories only appear if they contain at least one published service. Create categories under **Services > Categories** and assign them to your services.
 
-### Modify Search Query
-
-```php
-// Adjust service search query
-add_action( 'pre_get_posts', function( $query ) {
-    if ( !is_admin() && $query->is_search() && $query->get('post_type') === 'wpss_service' ) {
-        // Modify query
-        $query->set( 'posts_per_page', 24 );
-    }
-} );
-```
-
----
-
-## Related Documentation
-
-- [Shortcodes Reference](shortcodes-reference.md) - Search shortcode details
-- [Gutenberg Blocks](gutenberg-blocks.md) - Search block
-- [SEO Schema](seo-schema.md) - Search result SEO
-- [Template Overrides](template-overrides.md) - Custom search templates
-
----
-
-## Next Steps
-
-1. Add search form to your homepage
-2. Test keyword and category searches
-3. Customize search results per page
-4. Style search form with your theme CSS
-5. Consider adding search to header/navigation
+**Results page looks wrong?**
+The search form submits to your services archive page by default. If you changed your permalink structure, go to **Settings > Permalinks** and click Save to refresh.

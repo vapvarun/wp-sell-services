@@ -1,221 +1,96 @@
-# Standalone Marketplace Mode
+# Standalone Checkout Mode
 
-Standalone mode is the **default checkout system** in WP Sell Services Free. It operates independently without WooCommerce, EDD, or any other e-commerce plugin.
+WP Sell Services includes its own built-in checkout system, so you can run a fully independent marketplace without WooCommerce or any other e-commerce plugin.
 
-## Overview
+## What Is Standalone Mode?
 
-Standalone mode provides a complete marketplace system:
+Standalone mode means your marketplace handles everything on its own -- cart, checkout, payments, and orders. No extra plugins needed. It is the default for the free version and the fastest way to get started.
 
-- Built-in cart and checkout
-- Direct payment gateway integration (Stripe, PayPal, Offline)
-- Native order management
-- Custom dashboard
-- No external dependencies
+## When Should You Use Standalone Mode?
 
-## Requirements
+Choose standalone mode if:
 
-- WP Sell Services (free version)
-- WordPress 6.0+
-- PHP 8.0+
-- SSL certificate (HTTPS required for Stripe/PayPal)
+- You only sell services (no physical products)
+- You want a lightweight, fast checkout experience
+- You do not need WooCommerce extensions
+- You want fewer plugins on your site
 
-## Setup
+Choose WooCommerce mode if you need access to 100+ payment gateways, WooCommerce extensions like Subscriptions or Bookings, or already run a WooCommerce store.
 
-### Step 1: Enable Standalone Mode
+## How It Works for Buyers
 
-1. Go to **WP Sell Services → Settings → General**
-2. Select **E-commerce Platform:** Standalone Mode
+1. Buyer browses services and clicks **Add to Cart**
+2. Cart page shows selected services, packages, and add-ons
+3. Buyer proceeds to checkout and enters billing details
+4. Buyer picks a payment method (Stripe, PayPal, bank transfer, etc.)
+5. Buyer clicks **Place Order** and receives an order confirmation
+6. Vendor is notified and work begins
+
+Buyers can purchase services from multiple vendors in a single checkout. Each service becomes its own separate order with independent delivery tracking.
+
+## Setting Up Standalone Mode
+
+1. Go to **WP Sell Services > Settings > General**
+2. Under **E-commerce Platform**, select **Standalone Mode**
 3. Click **Save Changes**
-
-### Step 2: Configure Currency
-
-1. On same page, select **Currency** (USD, EUR, GBP, etc.)
-2. Click **Save Changes**
-
-See [Currency & Tax Configuration](currency-tax-config.md) for tax settings.
-
-### Step 3: Configure Payment Gateway
-
-Configure at least one gateway in **Settings → Payments**:
-
-1. **Stripe** - Card payments (recommended)
-2. **PayPal** - PayPal balance and cards
-3. **Razorpay** - India payments (UPI, cards, banking)
-4. **Offline** - Bank transfer/check
-
-See:
-- [Stripe Payments](stripe-payments.md)
-- [Other Payment Gateways](other-gateways.md)
-
-### Step 4: Test Checkout
-
-1. Add a service to cart
-2. Visit checkout page
-3. Enter billing details
-4. Select payment method
-5. Complete test purchase
-6. Verify order created successfully
-
-## How It Works
-
-### Transaction Flow
-
-```
-Service → Cart → Checkout → Payment Gateway → Order → Vendor Notified
-```
-
-All processing happens within WP Sell Services tables. No external order systems.
-
-### Differences from WooCommerce Mode
-
-| Feature | WooCommerce | Standalone |
-|---------|-------------|------------|
-| Dependencies | Requires WooCommerce | None |
-| Database | WC + WPSS tables | WPSS only |
-| Payment Gateways | 100+ via WC | 4 direct |
-| Admin UI | WC Orders | WPSS Orders |
-| Cart | WC Cart | Native WPSS |
-| Performance | Good | Excellent |
+4. Go to **Settings > Payments** and enable at least one payment gateway
+5. Test the full checkout with a sample service
 
 ## Available Payment Gateways
 
-Only these 4 gateways work with Standalone mode:
+These gateways work directly with standalone mode:
 
-1. **Stripe** **[PRO]** - Cards, Apple Pay, Google Pay
-2. **PayPal** **[PRO]** - PayPal, Venmo, cards
-3. **Razorpay** **[PRO]** - UPI, cards, net banking (India)
-4. **Offline** **[PRO]** - Bank transfer, check
+| Gateway | What It Supports |
+|---------|-----------------|
+| **Stripe** | Credit/debit cards, Apple Pay, Google Pay |
+| **PayPal** | PayPal balance, cards, Venmo |
+| **Razorpay** **[PRO]** | UPI, cards, net banking, wallets (India) |
+| **Offline/Bank Transfer** | Manual payments you confirm yourself |
 
-Configure in **Settings → Payments → [Gateway]**.
+See [Stripe Payments](stripe-payments.md) and [Other Payment Gateways](other-gateways.md) for setup details.
 
-## Cart & Checkout
+## What the Checkout Page Includes
 
-### Cart System
+- **Billing details** -- name, email, address
+- **Order review** -- services, prices, and totals
+- **Payment method selector** -- choose from your enabled gateways
+- **Terms and conditions** checkbox (optional)
+- **Place Order** button
 
-- Session-based storage
-- Persists across page loads
-- Multiple services from different vendors
-- Add-ons support
+## Standalone vs WooCommerce: Quick Comparison
 
-### Checkout Page
+| | Standalone | WooCommerce **[PRO]** |
+|--|-----------|----------------------|
+| Extra plugins needed | None | WooCommerce required |
+| Payment gateways | 4 built-in | 100+ via WooCommerce extensions |
+| Checkout speed | Fastest | Good |
+| Physical products | No | Yes |
+| Best for | Pure service marketplaces | Stores that also sell products |
 
-Standalone checkout includes:
+## Switching Between Modes
 
-1. **Billing Details** - Name, email, address
-2. **Order Review** - Services, prices, totals
-3. **Payment Methods** - Available gateway selection
-4. **Terms & Conditions** - Agreement checkbox
-5. **Place Order** - Submit button
+You can switch at any time from **Settings > General**. A few things to keep in mind:
 
-## Vendor Dashboard
+- **Finish active orders first.** Existing orders stay in the system they were created in.
+- **Reconfigure payment gateways** after switching, since each mode uses its own gateways.
+- **Test checkout** thoroughly after any switch.
 
-Standalone mode includes dedicated dashboard:
+## What Buyers and Vendors See
 
-### Vendor Features
+**Vendors get a dashboard with:**
+- Incoming orders and delivery management
+- Service listings and editing
+- Earnings tracking and withdrawal requests
+- Messaging with buyers
 
-- Orders management
-- Service listings
-- Earnings tracking
-- Withdrawal requests
-- Message buyers
-- Profile settings
+**Buyers get:**
+- Order history and active order tracking
+- Messaging with vendors
+- Profile and account settings
 
-### Buyer Features
+## Related Docs
 
-- Order history
-- Active orders
-- Message vendors
-- Profile settings
-
-## Limitations
-
-### Not Available in Standalone
-
-These features require WooCommerce:
-
-- WooCommerce extensions (Subscriptions, Bookings, etc.)
-- Physical product support
-- WooCommerce-specific integrations
-- WC mobile apps
-- 100+ WC payment gateways
-
-### Standalone Advantages
-
-- Faster performance (30-40% faster checkout)
-- Simpler database structure
-- Lower resource usage
-- Service-optimized UI
-- No bloat from unused e-commerce features
-
-## Switching Platforms
-
-### From WooCommerce to Standalone
-
-1. Complete all active WC orders
-2. Backup database
-3. Go to **Settings → General**
-4. Change to **Standalone Mode**
-5. Configure payment gateways
-6. Test checkout thoroughly
-
-**Note:** Existing WC orders remain in WC tables. New orders use standalone system.
-
-### From Standalone to WooCommerce
-
-1. Install and activate WooCommerce
-2. Go to **Settings → General**
-3. Change to **WooCommerce**
-4. Configure WC payment gateways
-5. Test checkout
-
-Historical standalone orders remain accessible in admin.
-
-## Troubleshooting
-
-### Checkout Not Loading
-
-1. Verify checkout page exists with `[wpss_checkout]` shortcode
-2. Check for JavaScript errors (F12 console)
-3. Increase PHP memory: `define('WP_MEMORY_LIMIT', '256M');`
-
-### Payment Gateway Not Working
-
-1. Verify API credentials are correct
-2. Check webhook is configured in gateway dashboard
-3. Enable debug: `define('WPSS_GATEWAY_DEBUG', true);`
-4. Check logs: `wp-content/uploads/wpss-logs/`
-
-### Orders Not Creating
-
-1. Enable debug: `define('WP_DEBUG', true);`
-2. Go to **WP Sell Services → Status**
-3. Click **Check Database Tables**
-4. Recreate missing tables if needed
-
-## Security
-
-### SSL Requirement
-
-HTTPS required for checkout. Add to wp-config.php:
-
-```php
-define('WPSS_FORCE_SSL_CHECKOUT', true);
-```
-
-### PCI Compliance
-
-Payment gateways handle PCI compliance:
-
-- Stripe.js handles card data (never touches your server)
-- PayPal redirects or uses hosted buttons
-- Razorpay Checkout.js manages security
-
-Your site never stores raw card data.
-
-## Related Documentation
-
-- [Stripe Payments](stripe-payments.md) **[PRO]** - Primary card gateway
-- [Other Payment Gateways](other-gateways.md) **[PRO]** - PayPal, Razorpay, offline
-- [Alternative Platforms](alternative-platforms.md) - EDD, FluentCart, SureCart
-- [Currency & Tax Config](currency-tax-config.md) - Financial settings
-- [Commission System](../earnings-wallet/commission-system.md) - Vendor earnings
+- [Stripe Payments](stripe-payments.md) -- Card payments setup
+- [Other Payment Gateways](other-gateways.md) -- PayPal, Razorpay, offline
+- [WooCommerce Checkout](woocommerce-checkout.md) **[PRO]** -- WooCommerce integration
+- [Currency and Tax](currency-tax-config.md) -- Financial settings

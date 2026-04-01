@@ -1,261 +1,108 @@
 # Vendor Profile & Portfolio
 
-Your vendor profile is your marketplace identity. A complete, professional profile attracts buyers and builds trust.
+Your vendor profile is your marketplace identity. A complete, professional profile builds trust with buyers and helps you stand out. The portfolio section lets you showcase your best work.
 
-## Accessing Profile Settings
+## Setting Up Your Profile
 
-1. Log in to your vendor account
-2. Navigate to **Dashboard → Profile**
-3. Edit your vendor information
+Go to **Dashboard > Profile** to edit your information.
 
 ![Vendor profile editor](../images/vendor-profile-editor.png)
 
-## Profile Fields
+### What to Fill In
 
-### Basic Information
+- **Display Name** -- Your public vendor name. This appears on your services, in search results, and on your profile page.
+- **Tagline** -- A one-line description of what you do (e.g., "WordPress Developer & Theme Customizer").
+- **Bio** -- Tell buyers about your background, experience, and what makes you great at what you do.
+- **Avatar** -- Your profile photo. Use a high-quality image (400x400px minimum).
+- **Cover Image** -- A banner image that appears at the top of your profile page.
+- **Country and City** -- Helps buyers find local vendors and understand your timezone.
+- **Timezone** -- Lets buyers know your working hours.
+- **Website** -- Link to your portfolio site or business website.
+- **Social Links** -- Add your LinkedIn, Twitter, GitHub, or other professional profiles.
 
-Complete these essential fields stored in the `wpss_vendor_profiles` table:
+### Your Stats (Automatic)
 
-| Field | Database Column | Description |
-|-------|-----------------|-------------|
-| **Display Name** | `display_name` | Your public vendor name |
-| **Tagline** | `tagline` | One-line description |
-| **Bio** | `bio` | About you section (text) |
-| **Avatar** | `avatar_id` | Profile photo (attachment ID) |
-| **Cover Image** | `cover_image_id` | Banner background (attachment ID) |
-| **Country** | `country` | Your country |
-| **City** | `city` | Your city |
-| **Timezone** | `timezone` | Your timezone |
-| **Website** | `website` | Portfolio or business website URL |
-| **Social Links** | `social_links` | JSON-encoded social profiles |
+These numbers appear on your profile and update automatically as you complete orders:
 
-### Social Links Format
+- Total orders received
+- Successfully completed orders
+- Average star rating
+- Number of reviews
+- Average response time
+- On-time delivery rate
+- Verification tier (Basic, Verified, or Pro)
 
-Social links are stored as JSON:
+## Building Your Portfolio
 
-```json
-{
-  "website": "https://example.com",
-  "linkedin": "https://linkedin.com/in/username",
-  "twitter": "https://twitter.com/username",
-  "github": "https://github.com/username"
-}
-```
-
-Add any social platform URLs relevant to your services.
-
-### Location Information
-
-The profile includes location fields:
-
-- **Country**: Required for vendor directory filtering
-- **City**: Optional, helps buyers find local vendors
-- **Timezone**: Helps buyers understand your working hours
-
-### Profile Statistics
-
-These metrics display automatically (read-only):
-
-| Stat | Database Column | Description |
-|------|-----------------|-------------|
-| **Total Orders** | `total_orders` | All orders received |
-| **Completed Orders** | `completed_orders` | Successfully delivered |
-| **Average Rating** | `avg_rating` | Overall star rating (0-5) |
-| **Total Reviews** | `total_reviews` | Number of reviews received |
-| **Response Time** | `response_time_hours` | Average message reply time |
-| **On-Time Delivery** | `on_time_delivery_rate` | Percentage delivered on time |
-| **Verification Tier** | `verification_tier` | basic/verified/pro |
-
-Statistics update automatically as you complete orders.
-
-## Portfolio Section
-
-Showcase your work with portfolio items stored in `wpss_portfolio_items` table.
+Your portfolio showcases previous work to potential buyers. Think of it as your visual resume.
 
 ### Adding Portfolio Items
 
-1. Navigate to **Dashboard → Portfolio**
-2. Click **Add Portfolio Item**
-3. Fill in the form
+1. Go to **Dashboard > Portfolio**.
+2. Click **Add Portfolio Item**.
+3. Fill in the details:
+   - **Title** -- The project name.
+   - **Description** -- What you did and why it matters.
+   - **Images/Media** -- Upload screenshots, photos, or samples of the work.
+   - **External URL** -- Link to the live project (if applicable).
+   - **Tags** -- Keywords describing the work.
+   - **Related Service** -- Optionally link this item to one of your services.
 
-### Portfolio Item Fields
-
-| Field | Database Column | Required | Notes |
-|-------|-----------------|----------|-------|
-| **Title** | `title` | Yes | Project name (varchar 255) |
-| **Description** | `description` | No | Project details (text) |
-| **Media** | `media` | No | JSON array of attachment IDs |
-| **External URL** | `external_url` | No | Live project link (varchar 255) |
-| **Tags** | `tags` | No | JSON array of keywords |
-| **Service ID** | `service_id` | No | Link to related service |
-| **Featured** | `is_featured` | No | Highlight best work |
-| **Sort Order** | `sort_order` | No | Display order (int) |
-
-**Note:** Category, Completion Date, and Client fields do NOT exist in the database schema.
+4. Toggle **Featured** to highlight your best pieces.
+5. Save the item.
 
 ### Portfolio Limits
 
-- **Maximum Items**: 50 (configurable via `wpss_max_portfolio_items` option)
-- **Maximum Featured**: 6 (configurable via `wpss_max_featured_portfolio` option)
+- You can have up to **50 portfolio items** (your admin may have set a different limit).
+- Up to **6 items** can be marked as featured. Featured items appear first and are shown prominently on your profile.
 
-Attempting to exceed these limits will display an error message.
+### Organizing Your Work
 
-### Media Format
+Drag and drop to reorder your portfolio items. Put your strongest work first -- featured items are displayed prominently on your vendor profile and in vendor cards across the marketplace.
 
-Portfolio media is stored as JSON array of attachment IDs:
+## How Buyers See Your Profile
 
-```json
-[123, 456, 789]
-```
-
-The system automatically generates URLs and thumbnails when displaying items.
-
-### Featured Items
-
-Mark your best work as featured:
-
-- Maximum 6 featured items (default)
-- Featured items display first in portfolio
-- Prominently shown on vendor profile
-- Used in vendor cards and previews
-
-Toggle featured status via the portfolio management interface.
-
-### Organizing Portfolio
-
-- **Drag and Drop**: Reorder items by changing `sort_order`
-- **Edit Items**: Update details anytime
-- **Delete Items**: Remove old work
-- **Filter by Service**: Link items to specific services
-
-## Verification Status
-
-Your verification tier shows on your profile:
-
-- **Basic**: Default starting tier (all new vendors)
-- **Verified**: Email or identity verified
-- **Pro**: Premium verification status
-
-Verification tier is stored in `verification_tier` column and affects:
-- Badge display on profile and services
-- Search ranking
-- Buyer trust signals
-
-Learn more: [Seller Levels](seller-levels.md)
-
-## Vacation Mode
-
-Control your availability with vacation mode fields:
-
-| Field | Database Column | Type | Description |
-|-------|-----------------|------|-------------|
-| **Vacation Mode** | `vacation_mode` | Boolean | On/off toggle |
-| **Vacation Message** | `vacation_message` | Text | Message shown to buyers |
-
-**Important:** There are NO start date, end date, or auto-return fields. Vacation mode is a simple on/off toggle with an optional message.
-
-When vacation mode is enabled:
-- Services cannot be ordered
-- Profile shows vacation message
-- You must manually turn it off to resume
-
-Learn more: [Vacation Mode](vacation-mode.md)
-
-## Profile Visibility
-
-Your profile displays in several locations:
-
-### Vendor Listing Pages
-
-Your profile card shows:
-- Avatar and display name
-- Tagline
-- Average rating and review count
-- Verification badge
-- Featured portfolio items
-
-### Service Pages
-
-Your profile summary appears on each service:
-- Avatar and name
-- Rating
-- Response time
-- Link to full profile
+Your profile appears in several places:
 
 ### Vendor Profile Page
 
-![Public vendor profile page](../images/frontend-vendor-profile-full.png)
+This is your full public page, showing your cover image, avatar, bio, location, social links, all your services, portfolio gallery, reviews, and statistics.
 
-Complete profile view includes:
-- Cover image and avatar
-- Display name and tagline
-- Full bio
-- Location (country, city, timezone)
-- Website and social links
-- Statistics (orders, rating, response time)
-- All services
-- Portfolio gallery
-- Reviews
+![Public vendor profile page](../images/frontend-vendor-profile-full.png)
 
 ![Vendor profile reviews section](../images/frontend-vendor-profile-reviews.png)
 
-### Service Page Sidebar
+### Service Pages
 
-Your vendor information is also displayed in the sidebar on individual service pages, giving buyers quick access to your profile details and ratings.
+A summary of your profile appears in the sidebar of each service page -- your avatar, name, rating, response time, and a link to your full profile.
 
 ![Vendor sidebar on service page](../images/frontend-vendor-sidebar.png)
 
+### Search Results
+
+Your avatar, name, tagline, rating, and review count appear on vendor cards in marketplace search results and listing pages.
+
+## Verification Status
+
+Your verification tier is displayed as a badge on your profile and services:
+
+- **Basic** -- All new vendors start here.
+- **Verified** -- Your email or identity has been verified.
+- **Pro** -- Premium verification status.
+
+Higher verification tiers help build buyer confidence. See [Seller Levels](seller-levels.md) for details on how to advance.
+
 ## Tips for a Strong Profile
 
-1. **Professional Photos**: Use high-quality avatar (400x400px minimum)
-2. **Compelling Bio**: Highlight expertise and experience
-3. **Complete Location**: Helps buyers find local vendors
-4. **Active Portfolio**: Showcase 5-10 best projects
-5. **Accurate Timezone**: Manage buyer expectations
-6. **Professional Links**: Link active social profiles
-7. **Regular Updates**: Keep portfolio current
-
-## Troubleshooting
-
-### Profile Changes Not Saving
-
-**Check:**
-- Required fields completed
-- Images meet size requirements (check server limits)
-- Valid timezone format
-- JSON format for social links
-- No PHP errors in debug log
-
-### Portfolio Images Not Uploading
-
-**Verify:**
-- File size within WordPress limits
-- Supported formats (JPG, PNG, GIF)
-- Server upload permissions
-- `upload_files` capability granted to vendor role
-
-### Cannot Add More Portfolio Items
-
-**Reason:**
-- Maximum limit reached (50 items default)
-- Check admin settings: `wpss_max_portfolio_items` option
-
-**Solution:**
-- Delete old items
-- Contact admin to increase limit
-
-### Featured Items Limit Reached
-
-**Reason:**
-- Maximum 6 featured items (default)
-- Check `wpss_max_featured_portfolio` option
-
-**Solution:**
-- Unfeature existing items before adding new ones
-- Contact admin to adjust limit
+1. **Use a professional photo** -- A clear, friendly headshot works best.
+2. **Write a compelling bio** -- Focus on your expertise and what buyers can expect.
+3. **Fill in your location** -- Many buyers prefer working with vendors in specific regions or timezones.
+4. **Showcase 5-10 portfolio items** -- Quality over quantity. Feature your very best work.
+5. **Keep it updated** -- Add new portfolio pieces as you complete projects. Remove outdated work.
+6. **Link your professional profiles** -- Active social links add credibility.
 
 ## Related Resources
 
-- [Seller Levels](seller-levels.md) - Verification tiers explained
-- [Vacation Mode](vacation-mode.md) - Manage availability
-- [Vendor Dashboard](vendor-dashboard.md) - Access your profile settings
+- [Seller Levels](seller-levels.md)
+- [Vacation Mode](vacation-mode.md)
+- [Vendor Dashboard](vendor-dashboard.md)

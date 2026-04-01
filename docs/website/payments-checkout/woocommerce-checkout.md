@@ -1,223 +1,90 @@
-# WooCommerce Checkout Integration
+# WooCommerce Checkout Integration **[PRO]**
 
-WP Sell Services uses WooCommerce as its default checkout platform, providing seamless integration that leverages WooCommerce's robust payment ecosystem while maintaining service marketplace functionality.
+If you already use WooCommerce, WP Sell Services Pro can plug right into it -- giving your marketplace access to WooCommerce's payment gateways, checkout, and order system.
 
 ## How It Works
 
-When buyers purchase a service:
+When a buyer purchases a service, here is what happens behind the scenes:
 
-1. Service details are stored in WooCommerce cart using a hidden virtual carrier product named "Service Order"
-2. Service data (ID, package, add-ons, vendor) is stored in cart item meta
-3. Buyer completes standard WooCommerce checkout
-4. Plugin creates linked service orders for each vendor
-5. Order statuses sync between WooCommerce and the marketplace
+1. The service is added to the WooCommerce cart (using a special hidden product)
+2. Buyer completes the standard WooCommerce checkout you are already familiar with
+3. The plugin automatically creates separate marketplace orders -- one per service/vendor
+4. Order statuses stay in sync between WooCommerce and the marketplace
 
-### Key Benefits
+You get the best of both worlds: WooCommerce's mature payment ecosystem and WP Sell Services' purpose-built order management.
 
-| Feature | Benefit |
+## Why Use WooCommerce Mode?
+
+| Benefit | Details |
 |---------|---------|
-| Payment Gateways | Access 100+ WooCommerce payment gateways |
-| Mature Platform | Leverage battle-tested WooCommerce infrastructure |
-| Extension Ecosystem | Compatible with thousands of WooCommerce extensions |
-| Account Integration | Service orders appear in WooCommerce My Account |
-| Admin Familiarity | Use familiar WooCommerce order management |
+| 100+ payment gateways | Use any WooCommerce payment extension |
+| Familiar admin experience | Manage service orders alongside product orders |
+| Extension ecosystem | Compatible with WooCommerce Subscriptions, Bookings, and more |
+| HPOS compatible | Works with WooCommerce's High-Performance Order Storage |
 
-## Setup
+## Setting It Up
 
-### Prerequisites
+1. Install and activate WooCommerce (if you have not already)
+2. Complete the WooCommerce setup wizard
+3. Go to **WP Sell Services > Settings > General**
+4. The plugin auto-detects WooCommerce -- no manual selection needed
+5. A hidden "Service Order" product is created automatically (this powers the checkout)
 
-- WordPress 6.0+
-- WooCommerce 7.0+
-- PHP 8.0+
+That is it. Services are now purchasable through WooCommerce checkout.
 
-![WooCommerce checkout](../images/frontend-woocommerce-checkout.png)
+**Important:** Do not delete the "Service Order" product from your Products list. If it disappears, just save your WP Sell Services settings again to recreate it.
 
-### Installation
+## Cart and Checkout Experience
 
-1. Install and activate WooCommerce from Plugins → Add New
-2. Complete WooCommerce setup wizard
-3. Go to **WP Sell Services → Settings → General**
-4. E-Commerce Platform defaults to "Auto-detect" (finds WooCommerce automatically)
-5. Plugin creates the "Service Order" carrier product (published but hidden from shop)
+When buyers add services to their cart:
 
-![WooCommerce setup settings](../images/settings-woocommerce-setup.png)
+- The cart shows the **service title**, **package name** (Basic, Standard, or Premium), **vendor name**, and **selected add-ons**
+- Pricing is calculated dynamically from the service data
+- Buyers can purchase services from **multiple vendors** in a single checkout
+- After payment, the plugin splits the WooCommerce order into separate marketplace orders -- one per service, each with its own vendor, deadline, and conversation
 
-### Verify Carrier Product
+## Order Sync Between Systems
 
-Go to **Products → All Products** and look for "Service Order" product. This is a virtual, hidden product that powers service checkout.
+Orders stay connected between WooCommerce and your marketplace:
 
-**Do not delete this product.** If accidentally deleted:
+**WooCommerce to Marketplace:** When a WooCommerce order status changes (e.g., payment received, cancelled, refunded), the linked marketplace orders update automatically.
 
-1. Go to **WP Sell Services → Settings → General**
-2. Save settings to trigger carrier product recreation
+**Marketplace to WooCommerce:** When a service order is marked as completed or cancelled in the marketplace, the WooCommerce order updates too.
 
-## Cart Integration
+This means you can manage orders from either place and they stay consistent.
 
-### Cart Item Data Structure
+## What Buyers and Vendors See
 
-When a service is added to cart, these meta keys are stored:
+**Buyers** see their service orders in:
+- The WooCommerce **My Account > Orders** tab (WooCommerce orders)
+- A dedicated **Service Orders** tab with delivery tracking, messaging, and file downloads
 
-```php
-array(
-    'wpss_service_id' => 123,        // Service CPT ID
-    'wpss_package_id' => 0,          // Package index (0, 1, or 2)
-    'wpss_addons'     => [10, 15],   // Array of addon IDs
-    'wpss_vendor_id'  => 5,          // Vendor user ID
-    'unique_key'      => 'md5_hash', // Prevents duplicate cart items
-)
-```
+**Vendors** see their dashboard with:
+- Incoming orders and delivery management
+- Earnings overview and withdrawal requests
+- Service listings and messaging
 
-### Cart Display
+## Multi-Vendor Cart Support
 
-The cart shows:
+Buyers can add services from different vendors into one cart. After checkout, each service becomes its own independent order with:
 
-- Service title (replaces carrier product name)
-- Package name (Basic, Standard, Premium)
-- Vendor name
-- Add-ons as meta data
-- Dynamic pricing calculated from service data
+- Its own vendor assignment
+- Separate delivery deadline
+- Independent requirements gathering
+- Private conversation between buyer and vendor
+- Individual dispute handling if needed
 
-### Multiple Vendors
+## When to Choose WooCommerce vs Standalone
 
-Buyers can purchase services from multiple vendors in one order. WooCommerce creates a single order, which the plugin splits into separate marketplace orders — one per service (gig). Each service order has its own vendor, delivery deadline, requirements, conversation, and dispute lifecycle, ensuring independent fulfillment regardless of how many services were purchased together.
+| Choose WooCommerce if you... | Choose Standalone if you... |
+|----|-----|
+| Already run a WooCommerce store | Want a lightweight setup with no extra plugins |
+| Need a specific WooCommerce payment gateway | Only need Stripe, PayPal, or bank transfer |
+| Want to sell physical products alongside services | Run a pure service marketplace |
+| Use WooCommerce extensions (Subscriptions, etc.) | Want the fastest possible checkout |
 
-## Order Synchronization
+## Related Docs
 
-### Order Creation Flow
-
-1. Buyer completes WooCommerce checkout
-2. WooCommerce creates order (WC #1001)
-3. Plugin creates marketplace orders split by vendor:
-   - WPSS Order #234 → Vendor A → linked to WC #1001
-   - WPSS Order #235 → Vendor B → linked to WC #1001
-4. Order meta stored in both systems
-
-### Order Meta
-
-**WooCommerce Order:**
-```php
-_wpss_marketplace_order_ids = [234, 235] // Linked WPSS order IDs
-```
-
-**Service Order:**
-```php
-_wc_order_id = 1001      // WooCommerce order ID
-_payment_method = 'stripe'
-_transaction_id = 'ch_abc123'
-```
-
-### Status Synchronization
-
-**Forward Sync (WooCommerce → Marketplace):**
-
-All WooCommerce status changes sync to marketplace orders:
-
-| WooCommerce | Marketplace | When |
-|-------------|-------------|------|
-| Pending | Pending Payment | Order created, awaiting payment |
-| On Hold | On Hold | Payment verification needed |
-| Processing | In Progress | Payment received |
-| Completed | Completed | All services delivered |
-| Cancelled | Cancelled | Order cancelled |
-| Refunded | Refunded | Refund issued |
-| Failed | Failed | Payment failed |
-
-**Reverse Sync (Marketplace → WooCommerce):**
-
-Only 2 marketplace statuses sync back to WooCommerce:
-
-| Marketplace | WooCommerce | When |
-|-------------|-------------|------|
-| Completed | Completed | Service delivered and accepted |
-| Cancelled | Cancelled | Service cancelled |
-
-All other marketplace status changes (Delivered, In Progress, etc.) do not affect the WooCommerce order status.
-
-## My Account Integration
-
-Service orders integrate with WooCommerce My Account pages.
-
-### For Buyers
-
-- **Orders** tab shows WooCommerce orders
-- **Service Orders** tab shows marketplace order details
-- **Messages** tab for vendor communication
-
-### For Vendors
-
-- **Dashboard** for earnings overview
-- **Services** to manage listings
-- **Orders** for incoming service orders
-- **Earnings** for wallet and withdrawals
-- **Messages** for buyer communication
-
-### Order Details
-
-When viewing a service order in My Account, buyers see:
-
-- Vendor profile link
-- Delivery countdown
-- Message vendor button
-- Requirements form (if needed)
-- Delivery files
-- Accept/Request Revision buttons
-
-## Advanced Hooks
-
-### Modify Cart Item Data
-
-```php
-add_filter( 'wpss_wc_cart_item_data', function( $data, $service_id, $package_id ) {
-    $data['custom_meta'] = 'value';
-    return $data;
-}, 10, 3 );
-```
-
-### Change Carrier Product Name
-
-```php
-add_filter( 'wpss_wc_carrier_product_name', function( $name ) {
-    return 'Custom Service Product';
-} );
-```
-
-### Redirect to Checkout After Add to Cart
-
-```php
-add_filter( 'wpss_wc_add_to_cart_redirect', function( $url ) {
-    return wc_get_checkout_url();
-} );
-```
-
-## Troubleshooting
-
-### Service Not Adding to Cart
-
-1. Verify carrier product exists at **Products → All Products**
-2. Check browser console for JavaScript errors
-3. Ensure service is published and vendor is active
-4. Clear WooCommerce cart sessions
-
-### Orders Not Syncing
-
-1. Verify order contains service items (check for `_wpss_service_id` meta on line items)
-2. Enable debug logging in wp-config.php:
-   ```php
-   define( 'WP_DEBUG', true );
-   define( 'WP_DEBUG_LOG', true );
-   ```
-3. Check wp-content/debug.log for errors
-4. Manually trigger sync from WooCommerce order edit page
-
-### Status Not Updating
-
-1. Remember only Completed and Cancelled sync from marketplace to WooCommerce
-2. Check WooCommerce → Status → Logs for gateway errors
-3. Verify no plugin conflicts by testing with default theme and minimal plugins
-
-## Next Steps
-
-- [Alternative Platforms](alternative-platforms.md) - Learn about EDD, FluentCart, SureCart
-- [Standalone Mode](standalone-mode.md) **[PRO]** - Direct payment without e-commerce plugins
-- [Order Lifecycle](../order-management/order-lifecycle.md) - Understand order workflow
-- [Payment Gateways](other-gateways.md) **[PRO]** - Configure Stripe, PayPal, Razorpay
+- [Standalone Mode](standalone-mode.md) -- Built-in checkout without WooCommerce
+- [Alternative Platforms](alternative-platforms.md) **[PRO]** -- EDD, FluentCart, SureCart
+- [Currency and Tax](currency-tax-config.md) -- Financial settings

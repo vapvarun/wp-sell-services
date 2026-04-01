@@ -1,550 +1,107 @@
-# Withdrawal Approvals
+# Processing Withdrawals
 
-Process vendor withdrawal requests through the admin panel, managing payouts with approval, rejection, and completion tracking.
+When vendors request payouts, their requests land in your withdrawal queue. Here is how to review, approve, and complete them.
 
-## Overview
+## Where to Find Withdrawal Requests
 
-The withdrawal approval system allows administrators to review vendor withdrawal requests and process payments. Admins can approve, reject, or mark withdrawals as completed once payment is sent.
+Go to **WP Sell Services > Withdrawals** in your WordPress admin. You will see summary cards at the top and a list of all withdrawal requests below.
 
-**Page Location:** WordPress Admin → WP Sell Services → Withdrawals
+### Summary Cards
 
-**Access Required:** `manage_options` capability (administrators only)
+| Card | What It Shows |
+|------|-------------|
+| **Pending** | Requests waiting for your review, with total amount |
+| **Approved** | Requests you have approved but not yet marked complete |
+| **Completed** | Successfully paid out, with total amount |
+| **Rejected** | Requests you denied |
 
-![Withdrawals management](../images/admin-withdrawals-dashboard.png)
+## The Withdrawal Queue
 
-## Accessing the Withdrawals Page
+Each request in the list shows:
 
-1. Log in to WordPress admin
-2. Go to **WP Sell Services → Withdrawals** (submenu of WP Sell Services)
-3. Page slug: `wpss-withdrawals`
+- **Vendor name and email** -- who is requesting the payout
+- **Amount** -- how much they want to withdraw
+- **Method** -- bank transfer or PayPal, plus their account details
+- **Status** -- pending, approved, completed, or rejected
+- **Date** -- when the request was submitted (and processed date, if applicable)
+- **Action buttons** -- approve, reject, or mark complete depending on current status
 
-## Dashboard Statistics
+### Filtering
 
-The withdrawals page displays 4 status cards showing:
+Click the status tabs above the table to view only pending, approved, completed, or rejected requests. This makes it easy to focus on what needs your attention.
 
-### Pending
+## The Approval Workflow
 
-- Count of pending withdrawal requests
-- Total amount in pending withdrawals
-- Color: Yellow/Warning (#dba617)
+### Step 1: Review the Request
 
-### Approved
+Click **Approve** on a pending withdrawal. A confirmation popup shows the vendor name, amount, and payment method. You can add an optional admin note.
 
-- Count of approved (not yet completed) withdrawals
-- Color: Blue (#2271b1)
+Before approving, verify:
+- The vendor has sufficient available balance
+- Payment details look complete and correct
+- There are no unresolved disputes on recent orders
 
-### Completed
+### Step 2: Approve
 
-- Count of completed withdrawals
-- Total amount successfully paid out
-- Color: Green (#00a32a)
+Click **Confirm** in the popup. The request status changes to **Approved** and the vendor receives a notification.
 
-### Rejected
+### Step 3: Send Payment
 
-- Count of rejected withdrawal requests
-- Color: Red (#d63638)
+Process the payment outside of WordPress -- send the bank transfer or PayPal payment using the vendor's account details shown in the request.
 
-Statistics calculated from `wpss_withdrawals` table using SQL aggregation.
+### Step 4: Mark as Completed
 
-## Withdrawal List Table
+After you have sent the payment, return to the withdrawal request and click **Mark Completed**. Add a note with the transaction reference (e.g., PayPal transaction ID or bank transfer reference). The vendor receives a completion notification.
 
-The withdrawals table shows all requests with the following columns:
+## Rejecting a Withdrawal
 
-### Columns
+Click **Reject** on any pending or approved request. Enter a reason explaining why (e.g., "Payment details are incomplete -- please update your bank account number and resubmit").
 
-| Column | Data Source | Description |
-|--------|-------------|-------------|
-| ID | `w.id` | Withdrawal request ID |
-| Vendor | `u.display_name`, `u.user_email` | Vendor name, email, avatar |
-| Amount | `w.amount` | Withdrawal amount (formatted price) |
-| Method | `w.method` | Payment method label |
-| Status | `w.status` | Current status badge |
-| Date | `w.created_at` | Request date, processed date if applicable |
-| Actions | - | Action buttons based on status |
+When rejected:
+- The funds return to the vendor's available balance (nothing is lost)
+- The vendor receives a notification with your reason
+- The vendor can fix the issue and submit a new request
 
-### Vendor Column Details
+## Bulk Processing
 
-Shows:
-- Avatar (32x32px, rounded)
-- Display name (linked to user edit page)
-- Email address (smaller text)
+For marketplaces with many vendors, the typical weekly workflow looks like this:
 
-### Method Column Details
+1. Filter by **Pending** to see all new requests
+2. Review and **Approve** each valid request
+3. Process all approved payments in one batch (via PayPal or bank)
+4. Return and **Mark Completed** for each one, noting the transaction reference
 
-Shows payment method label plus account details:
+## Auto-Withdrawal Requests
 
-**PayPal:**
-- Shows email from `details` JSON
+If you have [automated payouts](../earnings-wallet/automated-payouts.md) enabled, system-generated withdrawal requests appear in the same queue with an "Auto" badge. Process them the same way as manual requests.
 
-**Bank Transfer:**
-- Shows bank name
-- Last 4 digits of account number (masked: `***1234`)
+## Admin Notes
 
-### Status Column Details
-
-Status displayed as badge with color coding:
-
-| Status | Badge Color | Background | Text Color |
-|--------|-------------|------------|-----------|
-| `pending` | Yellow | `#fff3cd` | `#856404` |
-| `approved` | Blue | `#d1e7f3` | `#0a4b78` |
-| `completed` | Green | `#d4edda` | `#155724` |
-| `rejected` | Red | `#f8d7da` | `#721c24` |
-
-Also shows truncated admin note (5 words) with full note in tooltip if present.
-
-### Date Column Details
-
-Shows:
-- Request date (formatted with WordPress date/time format)
-- Processed date below if `processed_at` is not null (labeled "Processed: [date]")
-
-### Actions Column
-
-Actions shown based on current status:
-
-**For Pending Status:**
-- **Approve** button (primary blue button)
-- **Reject** button (standard button)
-
-**For Approved Status:**
-- **Mark Completed** button (primary blue button)
-- **Reject** button (standard button)
-
-**For Completed/Rejected:**
-- Status message only ("Payment sent" or "Request rejected")
-
-## Filtering Withdrawals
-
-Use the status filter tabs above the table:
-
-### Filter Tabs
-
-- **All** - Shows all withdrawals
-- **Pending** - Shows only `status = 'pending'`
-- **Approved** - Shows only `status = 'approved'`
-- **Completed** - Shows only `status = 'completed'`
-- **Rejected** - Shows only `status = 'rejected'`
-
-Each tab shows count in parentheses from statistics.
-
-## Processing Withdrawals
-
-### Modal Interface
-
-When you click an action button (Approve, Reject, Mark Completed), a modal opens:
-
-**Modal Title:** Changes based on action:
-- "Approve Withdrawal"
-- "Mark as Completed"
-- "Reject Withdrawal"
-
-**Modal Content:**
-- Confirmation message with amount and vendor name
-- Optional admin note textarea
-- Cancel and Confirm buttons
-
-### Approving a Withdrawal
-
-1. Click **Approve** button on pending withdrawal
-2. Modal opens with confirmation: "Approve this withdrawal request for [amount] from [vendor]?"
-3. Optionally add admin note
-4. Click **Confirm**
-5. AJAX request to `wpss_process_withdrawal` with:
-   - `withdrawal_id` - Request ID
-   - `action_type` - `approve`
-   - `admin_note` - Optional note
-6. Status updates to `approved`
-7. Page reloads to show updated status
-
-**What Happens:**
-- Database: `status` → `'approved'`
-- Database: `processed_at` → current timestamp
-- Database: `processed_by` → current admin user ID
-- Database: `admin_note` → saved if provided
-- Vendor receives notification: "Your withdrawal request for [amount] has been approved."
-
-### Marking as Completed
-
-1. Click **Mark Completed** button on approved withdrawal
-2. Modal opens: "Mark this withdrawal as completed. This means payment has been sent to [vendor]."
-3. Optionally add admin note (e.g., transaction reference)
-4. Click **Confirm**
-5. Status updates to `completed`
-
-**What Happens:**
-- Database: `status` → `'completed'`
-- Database: `processed_at` → current timestamp
-- Database: `processed_by` → current admin user ID
-- Vendor receives notification: "Your withdrawal request for [amount] has been completed."
-
-### Rejecting a Withdrawal
-
-1. Click **Reject** button (available for pending or approved)
-2. Modal opens: "Reject this withdrawal request from [vendor]? The funds will be returned to their available balance."
-3. Add admin note explaining rejection reason
-4. Click **Confirm**
-5. Status updates to `rejected`
-
-**What Happens:**
-- Database: `status` → `'rejected'`
-- Database: `processed_at` → current timestamp
-- Database: `processed_by` → current admin user ID
-- Funds remain in vendor's available balance (not deducted)
-- Vendor receives notification: "Your withdrawal request for [amount] has been rejected."
-
-## Withdrawal Statuses
-
-The system uses 4 statuses defined in `EarningsService`:
-
-```php
-public const WITHDRAWAL_PENDING   = 'pending';
-public const WITHDRAWAL_APPROVED  = 'approved';
-public const WITHDRAWAL_COMPLETED = 'completed';
-public const WITHDRAWAL_REJECTED  = 'rejected';
-```
-
-### Status Flow
-
-**Normal Flow:**
-`pending` → `approved` → `completed`
-
-**Rejection Flow:**
-`pending` → `rejected`
-OR
-`approved` → `rejected`
-
-**Status Meanings:**
-
-- **Pending:** Newly submitted, awaiting admin review
-- **Approved:** Admin approved, payment needs to be sent
-- **Completed:** Payment sent, withdrawal finished
-- **Rejected:** Request denied, funds returned to vendor balance
-
-## Payment Methods
-
-Supported withdrawal methods (from `EarningsService::get_withdrawal_methods()`):
-
-```php
-'paypal'        => 'PayPal',
-'bank_transfer' => 'Bank Transfer',
-```
-
-Additional methods can be added via filter:
-
-```php
-apply_filters( 'wpss_withdrawal_methods', $methods );
-```
-
-### Method Details Storage
-
-Payment account details stored as JSON in `details` column:
-
-**PayPal:**
-```json
-{
-  "email": "vendor@example.com"
-}
-```
-
-**Bank Transfer:**
-```json
-{
-  "bank_name": "Chase Bank",
-  "account_number": "1234567890",
-  "routing_number": "021000021",
-  "account_holder": "John Smith"
-}
-```
-
-## Vendor Withdrawal Limits
-
-### Minimum Withdrawal Amount
-
-Default: $50.00
-
-Retrieved from settings via `EarningsService::get_min_withdrawal_amount()`:
-
-1. Checks `wpss_payouts['min_withdrawal']`
-2. Falls back to `wpss_vendor['min_payout_amount']`
-3. Default: 50.0
-
-Vendors cannot request withdrawal below this amount.
-
-### Available Balance Calculation
-
-Before allowing withdrawal, system calculates:
-
-```php
-$total_earned       = // Sum of vendor_earnings from completed orders
-$withdrawn          = // Sum of completed withdrawals
-$pending_withdrawal = // Sum of pending + approved withdrawals
-$available          = $total_earned - $withdrawn - $pending_withdrawal
-```
-
-Withdrawal amount cannot exceed available balance.
-
-## Auto-Withdrawal System **[PRO]**
-
-**Note:** Auto-withdrawal features are part of the Pro version.
-
-### Checking if Enabled
-
-```php
-EarningsService::is_auto_withdrawal_enabled()
-// Returns bool from wpss_payouts['auto_withdrawal_enabled']
-```
-
-### Auto-Withdrawal Settings
-
-Retrieved from `wpss_payouts` option:
-
-- `auto_withdrawal_threshold` - Minimum balance to trigger (default: 500)
-- `auto_withdrawal_schedule` - Frequency: 'weekly' or 'monthly' (default: 'monthly')
-
-### Eligible Vendors
-
-Auto-withdrawal processes vendors who meet ALL criteria:
-
-1. Available balance ≥ threshold
-2. Payout method configured (`wpss_payout_method` user meta)
-3. Payout details complete (`wpss_payout_details` user meta)
-
-### Processing Auto-Withdrawals
-
-Triggered via WordPress cron: `wpss_process_auto_withdrawals`
-
-**Schedule:**
-- Weekly: Next Monday at 2:00 AM
-- Monthly: 1st day of next month at 2:00 AM
-
-**Process:**
-1. Get eligible vendors via `get_eligible_vendors_for_auto_withdrawal()`
-2. Create withdrawal request for each with `is_auto = 1`
-3. Notify admin via email (if `withdrawal_auto` email type enabled)
-4. Notify vendor via in-app notification
-5. Log results in `wpss_last_auto_withdrawal_run` option
-
-## Database Query Details
-
-### Getting Withdrawals
-
-Main query in `get_withdrawals()`:
-
-```sql
-SELECT w.*, u.display_name as vendor_name, u.user_email as vendor_email
-FROM {$wpdb->prefix}wpss_withdrawals w
-LEFT JOIN {$wpdb->users} u ON w.vendor_id = u.ID
-WHERE [status filter]
-ORDER BY w.created_at DESC
-LIMIT [per_page] OFFSET [offset]
-```
-
-Supports:
-- Pagination (20 per page default)
-- Status filtering
-- Sorting by created_at DESC
-
-### Getting Statistics
-
-Statistics query:
-
-```sql
-SELECT
-    COUNT(*) as total,
-    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-    SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
-    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-    SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
-    SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as pending_amount,
-    SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as completed_amount
-FROM {$wpdb->prefix}wpss_withdrawals
-```
-
-## WordPress Hooks
-
-### Action: Withdrawal Processed
-
-Fires when withdrawal status is updated:
-
-```php
-/**
- * Fires when withdrawal is processed.
- *
- * @param int    $withdrawal_id Withdrawal ID.
- * @param string $status        New status (approved/completed/rejected).
- * @param object $withdrawal    Withdrawal data object.
- */
-do_action( 'wpss_withdrawal_processed', $withdrawal_id, $status, $withdrawal );
-```
-
-### Action: Withdrawal Requested
-
-Fires when vendor creates withdrawal request:
-
-```php
-/**
- * Fires when withdrawal is requested.
- *
- * @param int   $withdrawal_id Withdrawal ID.
- * @param int   $vendor_id     Vendor user ID.
- * @param float $amount        Withdrawal amount.
- */
-do_action( 'wpss_withdrawal_requested', $withdrawal_id, $vendor_id, $amount );
-```
-
-### Action: Auto-Withdrawal Created **[PRO]**
-
-Fires when auto-withdrawal is created:
-
-```php
-/**
- * Fires when auto withdrawal is created.
- *
- * @param int   $withdrawal_id Withdrawal ID.
- * @param int   $vendor_id     Vendor user ID.
- * @param float $amount        Withdrawal amount.
- */
-do_action( 'wpss_auto_withdrawal_created', $withdrawal_id, $vendor_id, $amount );
-```
-
-## AJAX Implementation
-
-### Action: `wpss_process_withdrawal`
-
-**Nonce:** `wpss_withdrawals_admin`
-
-**Parameters:**
-- `withdrawal_id` (int) - Withdrawal request ID
-- `action_type` (string) - `approve`, `complete`, or `reject`
-- `admin_note` (string) - Optional admin note
-
-**Process:**
-1. Verify nonce and admin capability
-2. Validate withdrawal ID exists
-3. Map action_type to status constant
-4. Call `EarningsService::process_withdrawal()`
-5. Return JSON success/error
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Withdrawal updated successfully."
-  }
-}
-```
-
-## Email Notifications
-
-### To Vendor
-
-Notification created via `NotificationService::create()` when withdrawal is processed:
-
-**Title:** "Withdrawal Update"
-
-**Message:** "Your withdrawal request for [amount] has been [status]."
-
-**Data:** `{ withdrawal_id: [id] }`
-
-### To Admin **[PRO]**
-
-When vendor requests withdrawal (if `withdrawal_requested` email type enabled):
-
-**To:** `admin_email` from WordPress settings
-
-**Subject:** "[Platform Name] New Withdrawal Request"
-
-**Message:** "Vendor [name] has requested a withdrawal of [amount]. Please review in the admin panel."
-
-## Technical Details
-
-**Page Hook:** `sell-services_page_wpss-withdrawals`
-
-**AJAX URL:** `admin_url('admin-ajax.php')`
-
-**Database Table:** `{$wpdb->prefix}wpss_withdrawals`
-
-**Table Columns:**
-- `id` - Auto-increment primary key
-- `vendor_id` - Foreign key to wp_users
-- `amount` - DECIMAL withdrawal amount
-- `method` - VARCHAR payment method
-- `details` - TEXT JSON payment details
-- `status` - VARCHAR (pending/approved/completed/rejected)
-- `admin_note` - TEXT optional admin note
-- `processed_at` - DATETIME processing timestamp
-- `processed_by` - INT admin user ID
-- `is_auto` - TINYINT auto-withdrawal flag **[PRO]**
-- `created_at` - DATETIME request timestamp
-
-## Pagination
-
-The withdrawals list supports pagination:
-
-- Default: 20 items per page
-- URL parameter: `paged`
-- Total pages calculated: `ceil(total / per_page)`
-- Uses WordPress `paginate_links()` for pagination display
-
-## Styling
-
-Custom CSS included inline in page:
-
-- Grid layout for statistics cards (4 columns)
-- Status badges with color coding
-- Responsive table design
-- Modal overlay with centered content
-- Vendor info flex layout with avatar
-
-## Common Workflows
-
-### Process Pending Withdrawal
-
-1. Vendor submits withdrawal request
-2. Admin clicks **Pending** filter tab
-3. Reviews request details and vendor balance
-4. Clicks **Approve**
-5. Adds note: "Approved - will process via PayPal"
-6. Confirms approval
-7. Processes payment externally via PayPal
-8. Returns to withdrawals page
-9. Clicks **Mark Completed**
-10. Adds note: "PayPal Transaction ID: [txn_id]"
-11. Confirms completion
-
-### Reject Invalid Request
-
-1. Admin reviews pending withdrawal
-2. Notices vendor's available balance is insufficient
-3. Clicks **Reject**
-4. Adds note: "Insufficient available balance. Please verify earnings."
-5. Confirms rejection
-6. Vendor receives notification and can review balance
+Use the admin notes field to keep a record of:
+- Payment transaction IDs or reference numbers
+- Special circumstances or exceptions
+- Rejection reasons (visible to the vendor)
+- Internal notes for your team
 
 ## Best Practices
 
-**Before Approving:**
-- Verify vendor has sufficient available balance
-- Check payment account details are complete
-- Review vendor's withdrawal history
-- Ensure no disputes or issues with recent orders
+- **Process withdrawals promptly** -- aim for 1-3 business days after submission
+- **Always add transaction references** when marking complete -- this protects both you and the vendor
+- **Check for disputes** before approving -- if a vendor has active disputes, consider waiting until they are resolved
+- **Keep rejection reasons clear** -- tell the vendor exactly what to fix so they can resubmit successfully
+- **Review withdrawal history** for patterns -- unusually frequent or large requests may warrant a closer look
 
-**Adding Admin Notes:**
-- Document payment reference numbers
-- Note payment method/platform used
-- Record any special circumstances
-- Provide clear rejection reasons
+## Withdrawal Limits
 
-**Payment Processing:**
-- Process approved withdrawals within 3-5 business days
-- Keep external payment records (PayPal transactions, bank transfers)
-- Mark completed only after payment is sent
-- Respond to vendor questions about delays
+**Minimum withdrawal amount:** Default is $50 (configurable in Settings > Payments > Payout Settings)
 
-## Next Steps
+**Clearance period:** Earnings must pass the clearance period (default 14 days) before they become available for withdrawal
 
-- **[Vendor Management](vendor-management.md)** - Managing vendor accounts
-- **[Commission System](../earnings-wallet/commission-system.md)** - Understanding earnings calculation
-- **[Vendor Dashboard](../vendor-system/vendor-dashboard.md)** - Vendor earnings view
+Vendors cannot request more than their available balance, and they cannot have multiple pending requests at the same time.
+
+## Related Docs
+
+- [Vendor Management](vendor-management.md) -- Managing vendor accounts
+- [Commission System](../earnings-wallet/commission-system.md) -- How earnings are calculated
+- [Withdrawals](../earnings-wallet/withdrawals.md) -- The vendor-side withdrawal experience
+- [Automated Payouts](../earnings-wallet/automated-payouts.md) -- Scheduled auto-withdrawals

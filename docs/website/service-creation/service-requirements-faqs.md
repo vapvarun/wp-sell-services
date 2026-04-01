@@ -1,464 +1,108 @@
-# Service Requirements & FAQs
+# Requirements and FAQs
 
-Define what information you need from buyers before starting work, and answer common questions.
+Requirements collect the information vendors need from buyers before starting work. FAQs answer common buyer questions right on the service page. Together, they smooth out the order process and reduce back-and-forth messages.
 
-## Requirements Overview
+## Requirements: Collecting Buyer Information
 
-Requirements are custom questions buyers must answer when placing an order. They ensure you get all necessary information upfront.
+### Why Requirements Matter
 
-### Requirements Limits
+After a buyer places an order, the vendor needs specific information to get started. Requirements are custom questions the buyer answers before the vendor begins work. Good requirements mean fewer delays, fewer misunderstandings, and smoother orders.
 
-| Version | Maximum Requirements |
-|---------|---------------------|
-| Free | 5 requirements |
-| **[PRO]** | Unlimited (filter: `wpss_service_max_requirements` = `-1`) |
+### How Requirements Work in the Order Flow
 
-## Requirement Field Types
+1. Buyer purchases the service
+2. Order status becomes "Pending Requirements"
+3. Buyer sees a form with the vendor's questions and fills it out
+4. Once submitted, the order status moves to "In Progress"
+5. The vendor receives a notification and starts working
 
-![Admin requirements metabox for defining buyer requirements](../images/admin-service-requirements.png)
+If the buyer does not submit requirements, the vendor cannot begin. This protects both parties by ensuring the vendor has what they need upfront.
 
-Four field types supported by the wizard:
+### Requirement Types
 
-### 1. Text (Short Answer)
+You can choose from four answer types for each question:
 
-Single-line text input for brief responses.
+| Type | What Buyers See | Best For |
+|------|----------------|----------|
+| **Short text** | A single-line text field | Business name, website URL, email address |
+| **Long text** | A multi-line text area | Project description, detailed preferences, content briefs |
+| **File upload** | A file upload button | Logo files, brand guidelines, reference images, documents |
+| **Dropdown** | A list of predefined options | Style preferences, industry type, color scheme |
 
-![Text requirement field configuration](../images/admin-requirement-text.png)
+### Setting Up Requirements
 
-**Use Cases:**
-- Business name
-- Domain name
-- Social media handle
-- Contact email
+For each requirement, vendors provide:
 
-**Example:**
-```json
-{
-  "question": "What is your business name?",
-  "type": "text",
-  "required": true,
-  "options": ""
-}
-```
+- **The question** -- Clear, specific questions get better answers. "What is your brand's primary color?" is better than "Tell me about your brand."
+- **Answer type** -- Choose from the four types above
+- **Required or optional** -- Mark truly essential information as required; keep nice-to-have questions optional
+- **Dropdown options** -- If using the dropdown type, provide comma-separated choices (e.g., "Modern, Classic, Minimalist, Vintage")
 
-### 2. Textarea (Long Answer)
+### Limits
 
-Multi-line text area for detailed responses.
+| | Free | Pro |
+|-|------|-----|
+| Requirements per service | 5 | Unlimited **[PRO]** |
 
-**Use Cases:**
-- Project description
-- Design preferences
-- Content requirements
-- Target audience details
+### File Upload Details
 
-**Example:**
-```json
-{
-  "question": "Describe your project in detail",
-  "type": "textarea",
-  "required": true,
-  "options": ""
-}
-```
+When a requirement uses the file upload type, buyers can upload a wide range of file formats:
 
-### 3. File Upload
+- **Images:** JPG, PNG, GIF, WebP
+- **Documents:** PDF, DOC, DOCX, TXT, RTF, CSV
+- **Spreadsheets:** XLS, XLSX
+- **Presentations:** PPT, PPTX
+- **Archives:** ZIP, RAR, 7Z
+- **Audio:** MP3, WAV
+- **Video:** MP4, MOV, AVI
+- **Design files:** PSD, AI, EPS, SVG
 
-![File requirement field configuration](../images/admin-requirement-file.png)
+Maximum file size: 50MB per file. All uploaded files are private and only accessible to the buyer, vendor, and admin.
 
-Allow buyers to upload files.
+### Tips for Writing Good Requirements
 
-**Use Cases:**
-- Logo files
-- Brand guidelines
-- Reference images
-- Content documents
+- **Ask only what you need** -- Too many questions reduce the chance buyers complete them
+- **Be specific** -- "What three colors represent your brand?" beats "Tell me about your style"
+- **Give examples** -- Add helpful context to your question text
+- **Put the most important questions first** -- If a buyer stops partway through, you still get the essentials
+- **Keep optional questions at the end** -- Required information first, nice-to-haves second
 
-**File Upload Limits:**
-- **24 allowed extensions** (not 6 as in old docs)
-- Maximum file size: **50MB** (not 10MB)
-- Extensions: jpg, jpeg, png, gif, webp, pdf, doc, docx, xls, xlsx, ppt, pptx, txt, rtf, csv, zip, rar, 7z, mp3, wav, mp4, mov, avi, psd, ai, eps, svg
+---
 
-**Example:**
-```json
-{
-  "question": "Upload your company logo",
-  "type": "file",
-  "required": false,
-  "options": ""
-}
-```
+## FAQs: Answering Common Questions
 
-### 4. Select (Multiple Choice)
+### Why FAQs Matter
 
-![Select requirement field with dropdown options](../images/admin-requirement-select.png)
+FAQs appear on the service page and help buyers make a decision without needing to message the vendor. They reduce the number of pre-purchase questions and increase buyer confidence.
 
-Dropdown with predefined options.
+### Limits
 
-**Use Cases:**
-- Style preference
-- Color scheme
-- Target platform
-- Industry type
-
-**Example:**
-```json
-{
-  "question": "Choose your preferred style",
-  "type": "select",
-  "required": true,
-  "options": "Modern, Classic, Minimalist, Vintage"
-}
-```
+| | Free | Pro |
+|-|------|-----|
+| FAQs per service | 5 | Unlimited **[PRO]** |
 
-**Options Format:** Comma-separated values
-
-## Field Types NOT Available
+### What to Include in Your FAQs
 
-The wizard does NOT support:
+Cover the questions buyers ask most often:
 
-- **Radio buttons** - Not exposed in wizard UI
-- **Multi-select checkboxes** - Not implemented
-- **Date picker** - Not available
-- **Number input** - Use text field instead
+- **What do you need from me to start?** -- Summarize your requirements
+- **How many revisions are included?** -- Explain per package
+- **What if I need changes after delivery?** -- Set expectations on post-delivery edits
+- **Do you offer rush delivery?** -- Point buyers to the add-on if available
+- **What is your refund policy?** -- Be upfront about when refunds are or are not available
+- **How will we communicate?** -- Explain the built-in messaging system
 
-Only the 4 types listed above are available in the wizard.
+### Tips for Great FAQs
 
-## Requirement Configuration
+- **Keep answers to 2-3 sentences** -- Buyers scan, they do not read essays
+- **Use plain language** -- Write like you are talking to a friend
+- **Update based on real questions** -- When buyers keep asking the same thing, add it as a FAQ
+- **Address objections** -- If buyers hesitate for a specific reason, answer it proactively
 
-### Question Field
+---
 
-- Text input
-- The question buyers will see
-- Required field
-- Used as field key when storing responses
+## Related Guides
 
-### Type Dropdown
-
-Four options:
-- Text
-- Textarea
-- File
-- Select
-
-### Required Checkbox
-
-- Toggle for mandatory vs optional
-- If checked, buyers must answer before submitting requirements
-- Validation enforced in `RequirementsService::validate()`
-
-### Options Field
-
-- Text input
-- Only shown when type is "Select"
-- Comma-separated list
-- Example: `Option 1, Option 2, Option 3`
-
-## Requirements Data Structure
-
-Stored in `_wpss_requirements` post meta:
-
-```json
-[
-  {
-    "question": "What is your business name?",
-    "type": "text",
-    "required": true,
-    "options": ""
-  },
-  {
-    "question": "Choose industry",
-    "type": "select",
-    "required": false,
-    "options": "Tech, Healthcare, Finance, Retail"
-  },
-  {
-    "question": "Upload brand guidelines",
-    "type": "file",
-    "required": false,
-    "options": ""
-  }
-]
-```
-
-## Buyer Submission Process
-
-### Order Requirements Submission
-
-After purchasing, buyer fills requirement form:
-
-1. Order created with status `pending_requirements`
-2. Buyer accesses requirements form
-3. Buyer answers all required questions
-4. Buyer uploads any required files
-5. Submits requirements
-6. Order status changes to `in_progress`
-7. Vendor receives notification to start work
-
-### Late Submission
-
-If setting enabled (`wpss_allow_late_requirements_submission`):
-
-- Buyers can submit requirements after order starts
-- Only if no requirements submitted yet
-- Vendor gets notification of late submission
-- Order continues with new information
-
-### File Uploads
-
-Files uploaded via requirements are:
-
-- Validated against 24 allowed extensions
-- Limited to 50MB per file
-- Set to `post_status='private'` for security
-- Accessible only to buyer and vendor
-- Stored in WordPress media library
-
-## Requirements Service Class
-
-**Location:** `src/Services/RequirementsService.php`
-
-**Key Methods:**
-```php
-$req_service = new RequirementsService();
-
-// Get service requirement fields
-$fields = $req_service->get_service_fields( $service_id );
-
-// Submit requirements for order
-$result = $req_service->submit( $order_id, $field_data, $files );
-
-// Check if order has requirements
-$has_reqs = $req_service->has_requirements( $order_id );
-
-// Get formatted requirements for display
-$formatted = $req_service->get_formatted( $order_id );
-
-// Validate requirements
-$validation = $req_service->validate( $fields, $field_data, $files );
-```
-
-## Validation
-
-Requirements validated in `RequirementsService::validate()`:
-
-**Required Field Check:**
-```php
-if ( $required && empty( $value ) ) {
-    $errors[ $field_key ] = sprintf( '%s is required.', $field_label );
-}
-```
-
-**Select Type Validation:**
-```php
-$choices = explode( ',', trim( $field['options'] ) );
-if ( ! in_array( $value, $choices, true ) ) {
-    $errors[ $field_key ] = 'Invalid selection.';
-}
-```
-
-**File Upload Validation:**
-```php
-// Check file extension
-if ( ! in_array( $ext, $allowed_types, true ) ) {
-    continue; // Skip invalid file
-}
-
-// Check file size (50MB max)
-if ( $file['size'] > 50 * 1024 * 1024 ) {
-    continue;
-}
-```
-
-## FAQs Overview
-
-Frequently Asked Questions section helps buyers make informed decisions.
-
-### FAQ Limits
-
-| Version | Maximum FAQs |
-|---------|--------------|
-| Free | 5 FAQs |
-| **[PRO]** | Unlimited (filter: `wpss_service_max_faq` = `-1`) |
-
-## FAQ Configuration
-
-![FAQ editor for adding questions and answers](../images/admin-faq-editor.png)
-
-### Question Field
-
-- Text input
-- The FAQ question
-- Required
-
-### Answer Field
-
-- Textarea
-- The answer to the question
-- Supports HTML via `wp_kses_post()`
-- Required
-
-## FAQ Data Structure
-
-Stored in `_wpss_faqs` post meta:
-
-```json
-[
-  {
-    "question": "Do you offer refunds?",
-    "answer": "Yes, we offer full refunds within 14 days if you're not satisfied."
-  },
-  {
-    "question": "How long will it take?",
-    "answer": "Standard delivery is 5 days. Express options available."
-  }
-]
-```
-
-## Best Practices
-
-### Requirements
-
-**Ask Only What You Need:**
-- Too many questions reduce conversion
-- Focus on essential information
-- Combine related questions
-
-**Be Specific:**
-- "What colors do you prefer?" vs "Tell me about your project"
-- Give examples in question text
-- Explain why you need the information
-
-**Use Correct Field Types:**
-- Text for short answers (name, email)
-- Textarea for descriptions
-- Select for predefined choices
-- File for reference materials
-
-**Order Logically:**
-- Most important questions first
-- Group related questions
-- Optional questions at end
-
-### FAQs
-
-**Answer Common Questions:**
-- Review buyer messages for patterns
-- Address concerns proactively
-- Update based on questions received
-
-**Keep Answers Concise:**
-- 2-3 sentences per answer
-- Use bullet points for clarity
-- Link to detailed info if needed
-
-**Cover These Topics:**
-- Refund policy
-- Delivery timeframes
-- Revision process
-- What's included/excluded
-- Communication process
-
-![Frontend FAQ display as seen by buyers on the service page](../images/frontend-faq-display.png)
-
-**Example FAQ Structure:**
-```
-Q: What do you need from me to start?
-A: After ordering, you'll fill a simple form with your business name,
-preferred colors, and any reference examples. Takes about 5 minutes.
-
-Q: How many revisions are included?
-A: Basic package includes 2 revisions, Standard includes 3,
-and Premium includes unlimited revisions.
-
-Q: Do you offer rush delivery?
-A: Yes! Add the Express Delivery option for 24-hour turnaround
-at checkout for an additional $25.
-```
-
-## Common Issues
-
-### Requirements Not Saving
-
-**Causes:**
-- Limit of 5 requirements reached (free version)
-- Missing question text
-- Invalid field type
-
-**Fix:**
-1. Remove unused requirements
-2. Ensure all questions have text
-3. Select valid field type
-4. Upgrade to Pro for unlimited
-
-### File Upload Failing
-
-**Causes:**
-- File exceeds 50MB
-- Unsupported file type (not in 24 allowed extensions)
-- Upload directory permissions
-
-**Fix:**
-1. Compress files under 50MB
-2. Use supported file types
-3. Check `/wp-content/uploads/` permissions
-4. Try different file format
-
-### Buyer Can't Submit Requirements
-
-**Causes:**
-- Required fields not filled
-- Invalid file upload
-- Order status not `pending_requirements`
-- Validation errors
-
-**Fix:**
-1. Check all required fields completed
-2. Verify file uploads successful
-3. Confirm order status correct
-4. Review browser console for errors
-
-## Technical Details
-
-### Requirements Storage
-
-**Service Requirements:** `_wpss_requirements` post meta (array of fields)
-
-**Order Requirements:** `wpss_order_requirements` custom table
-
-**Table Structure:**
-```sql
-CREATE TABLE wpss_order_requirements (
-  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  order_id BIGINT UNSIGNED NOT NULL,
-  field_data TEXT, -- JSON of answers
-  attachments TEXT, -- JSON of uploaded files
-  submitted_at DATETIME NOT NULL
-)
-```
-
-### Allowed File Types
-
-Complete list of 24 allowed extensions:
-
-```php
-$types = array(
-    'jpg', 'jpeg', 'png', 'gif', 'webp',  // Images
-    'pdf',                                 // PDF
-    'doc', 'docx',                        // Word
-    'xls', 'xlsx',                        // Excel
-    'ppt', 'pptx',                        // PowerPoint
-    'txt', 'rtf', 'csv',                  // Text
-    'zip', 'rar', '7z',                   // Archives
-    'mp3', 'wav',                         // Audio
-    'mp4', 'mov', 'avi',                  // Video
-    'psd', 'ai', 'eps', 'svg'             // Design
-);
-```
-
-Filter available: `wpss_requirements_allowed_file_types`
-
-## Related Documentation
-
-- **[Service Wizard](./service-wizard.md)** - Requirements step in wizard
-- **[Order Management](../order-management/order-workflow.md)** - Requirements submission workflow
-- **[Publishing & Moderation](./publishing-moderation.md)** - Service approval
+- **[Service Creation Wizard](service-wizard.md)** -- Requirements are Step 4, FAQs are Step 5
+- **[Service Add-ons](service-addons.md)** -- Extras buyers can add to their order
+- **[Publishing and Moderation](publishing-moderation.md)** -- What happens after completing the wizard

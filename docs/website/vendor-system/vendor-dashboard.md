@@ -1,282 +1,92 @@
-# Vendor Dashboard
+# The Vendor Dashboard
 
-The unified dashboard provides access to all vendor selling activities and buyer purchasing activities in one interface.
-
-## Accessing the Dashboard
-
-The dashboard uses the `[wpss_dashboard]` shortcode and automatically shows appropriate sections based on your role:
-
-- **Buyers**: Order management and buyer requests
-- **Vendors**: All buying features plus selling tools
-- **Both**: Unified view of all activities
-
-Navigate to the dashboard page (typically at `/dashboard/` or via My Account).
+The dashboard is where vendors and buyers manage everything -- orders, services, messages, earnings, and profile settings. It adapts based on your role, showing buying features to everyone and selling features to vendors.
 
 ![Vendor dashboard overview](../images/vendor-dashboard-overview.png)
 
 ## Dashboard Sections
 
-The unified dashboard organizes features into three groups:
+### My Orders (Buyer View)
 
-### Buying Section
+Track the services you have purchased. You can see each order's status, the vendor, the total amount, and the date. Filter by active, completed, or cancelled to find what you need quickly.
 
-Available to all users:
+### Sales Orders (Vendor View)
 
-- **Orders** (My Orders): Track purchases you've made
-- **Requests** (Buyer Requests): Post and manage service requests
+This is where vendors manage incoming orders from buyers. Each entry shows the order number, buyer name, service purchased, your earnings, delivery deadline, and current status.
 
-### Selling Section
-
-Available to vendors only:
-
-- **Services** (My Services): Manage your service listings
-- **Sales** (Sales Orders): Orders received from buyers
-- **Earnings**: Financial dashboard and withdrawals **[PRO]**
-
-### Account Section
-
-Available to all users:
-
-- **Messages**: Order conversations with buyers/vendors
-- **Profile**: Edit your vendor or buyer profile
-
-## Dashboard Navigation
-
-The sidebar shows your:
-
-- Profile avatar and name
-- "Seller" badge (if vendor)
-- Grouped navigation sections
-- "Start Selling" button (if not yet a vendor)
-
-Click any section to switch views. The active section is highlighted.
-
-## Orders Section (Buyer View)
-
-View services you've purchased:
-
-**Order List Shows:**
-- Order number and status
-- Service name and vendor
-- Order total and date
-- Quick actions (View, Message Vendor)
-
-**Available Filters:**
-- All orders
-- Active orders
-- Completed orders
-- Cancelled orders
-
-## Sales Section (Vendor View)
-
-Manage orders received from buyers:
-
-**Sales List Shows:**
-- Order number and buyer name
-- Service purchased
-- Order total and your earnings
-- Delivery deadline
-- Order status and actions
-
-**Order Statuses:**
-- Pending Payment
-- Pending Requirements
-- In Progress
-- Revision Requested
-- Delivered
-- Completed
-- Cancelled
-- Disputed
-
-**Quick Actions:**
+From here you can:
 - View order details
-- Upload delivery
-- Message buyer
-- Request extension
+- Submit a delivery
+- Message the buyer
+- Request a deadline extension
 
 ![Vendor sales orders list](../images/vendor-orders-list.png)
 
-## Services Section (Vendor View)
+### My Services (Vendor View)
 
-Create and manage your service listings:
+Create and manage your service listings. You can see each service's title, status (Published, Draft, or Paused), price range, total orders, average rating, and active order count.
 
-**Available Actions:**
-- **Create Service**: Click button in header
-- **Edit Service**: Update pricing and details
-- **Pause/Activate**: Toggle service availability
-- **Delete Service**: Remove listing (if no active orders)
-- **View Analytics**: Service performance stats
-
-**Service Information Displayed:**
-- Service title and thumbnail
-- Status (Published, Draft, Paused)
-- Price range
-- Total orders received
-- Average rating
-- Active orders count
+Available actions:
+- **Create a new service** using the button in the header.
+- **Edit** an existing service to update pricing or details.
+- **Pause or activate** a service to control its availability.
+- **Delete** a service (only if there are no active orders).
 
 ![Service management interface](../images/vendor-services-management.png)
 
-## Messages Section
+### Buyer Requests
 
-Communicate about orders:
+Browse service requests posted by buyers looking for help. Vendors can submit proposals to these requests, and buyers choose which vendor to hire. This section is available to both buyers (for posting) and vendors (for responding).
 
-**Features:**
-- Order-based conversation threads
-- File attachments
-- Read/unread indicators
-- Real-time updates (when available)
+### Earnings **[PRO]**
 
-**Best Practices:**
-- Respond within 24 hours
-- Keep communication professional
-- Document requirements clearly
-- Use platform messaging only
+Your financial dashboard showing:
+- **Total Earnings** -- Lifetime gross income.
+- **Pending Earnings** -- Income still in the clearance period.
+- **Available for Withdrawal** -- What you can withdraw right now.
+- **Withdrawn Amount** -- What you have already taken out.
 
-## Earnings Section **[PRO]**
+Each completed order shows the buyer's total, the platform commission deducted, and your net earnings.
 
-Track income and request withdrawals:
+### Messages
 
-**Overview Shows:**
-- Total Earnings (lifetime gross)
-- Pending Earnings (clearing period)
-- Available for Withdrawal
-- Withdrawn Amount
+All order conversations in one place. You can see which messages are unread, switch between conversations, and send replies with file attachments. Messages are organized by order, so everything stays in context.
 
-**Commission Display:**
-Each order shows:
-- Order total (buyer paid)
-- Platform commission deducted
-- Your net earnings
+### Profile
 
-**Withdrawal Process:**
-1. Navigate to Earnings → Withdraw
-2. Enter amount (minimum applies)
-3. Select payment method
-4. Submit request
-5. Admin processes withdrawal
+Edit your public vendor profile -- your display name, tagline, bio, avatar, cover image, location, website, and social links. Buyers see this information on your public profile and service pages.
 
-Learn more: [Earnings Dashboard](../earnings-wallet/earnings-dashboard-wpss.md)
+## How to Navigate
 
-## Profile Section
+The dashboard uses a sidebar with grouped navigation:
 
-Edit your vendor profile:
+- **Buying** section: My Orders, Buyer Requests
+- **Selling** section: My Services, Sales Orders, Earnings
+- **Account** section: Messages, Profile
 
-**For Vendors:**
-- Display name and tagline
-- Professional bio
-- Avatar and cover image
-- Country, city, timezone
-- Website URL
-- Social links (JSON format)
-- Skills and languages (future feature)
-
-**For Buyers:**
-- Basic profile information
-- Avatar
-- Contact preferences
-
-Learn more: [Vendor Profile & Portfolio](vendor-profile-portfolio.md)
-
-## Create Section
-
-Quick access to:
-
-- **Create Service**: Service creation wizard
-- **Create Request** (if buyer): Post a service request
-
-Only vendors see the Create Service option.
-
-## Dashboard Statistics
-
-The overview section displays:
-
-| Metric | Description |
-|--------|-------------|
-| **Active Orders** | Orders in progress (buyer view) |
-| **Active Sales** | Orders to fulfill (vendor view) |
-| **Total Revenue** | Lifetime earnings (vendors) |
-| **Average Rating** | Overall rating (vendors) |
-| **This Month** | Current month activity |
-
-## Responsive Design
-
-The dashboard works on:
-
-- Desktop computers (full sidebar navigation)
-- Tablets (collapsible sidebar)
-- Mobile phones (hamburger menu)
-
-Access your dashboard anywhere to stay connected.
-
-## Section URLs
-
-Each section has a unique URL parameter:
-
-- `/dashboard/` - Default (Orders)
-- `/dashboard/?section=sales` - Sales Orders
-- `/dashboard/?section=services` - My Services
-- `/dashboard/?section=requests` - Buyer Requests
-- `/dashboard/?section=messages` - Messages
-- `/dashboard/?section=earnings` - Earnings **[PRO]**
-- `/dashboard/?section=profile` - Profile
-- `/dashboard/?section=create` - Create Service
-- `/dashboard/?section=create-request` - Post Request
-
-Bookmark specific sections for quick access.
+Your profile avatar and name appear at the top of the sidebar, along with a "Seller" badge if you are a vendor. Click any section to switch views -- the active section is highlighted.
 
 ## Start Selling Button
 
-Non-vendors see a "Start Selling" button in the sidebar:
+If you are logged in but not yet a vendor, you will see a "Start Selling" button in the sidebar. Clicking it registers you as a vendor (subject to the registration mode your admin has set), and the vendor sections appear immediately.
 
-**Clicking It:**
-1. Confirms intent via modal
-2. Registers user as vendor
-3. Redirects to Services section
-4. Shows success message
+## Works on Every Device
 
-Vendor sections appear immediately after registration.
+The dashboard is fully responsive:
+- **Desktop** -- Full sidebar navigation with all sections visible.
+- **Tablet** -- Collapsible sidebar that slides in and out.
+- **Mobile** -- Hamburger menu for compact navigation.
 
-## Dashboard Tips
+## Quick Tips
 
-1. **Check Daily**: Review new orders and messages
-2. **Enable Notifications**: Get alerts for important events
-3. **Use Filters**: Organize orders efficiently
-4. **Mobile App**: Access dashboard on the go
-5. **Quick Actions**: Use row actions for efficiency
-6. **Keyboard Shortcuts**: Navigate faster (when available)
-
-## Troubleshooting
-
-### Dashboard Not Loading
-
-- Clear browser cache and cookies
-- Disable browser extensions
-- Try incognito/private mode
-- Check JavaScript console for errors
-
-### Missing Sections
-
-**Vendor sections not visible:**
-- Verify vendor role assigned
-- Check account status is "Active"
-- Confirm vendor features enabled
-
-**Earnings section missing:**
-- Requires Pro plugin
-- Check Pro plugin activation
-
-### Orders Not Displaying
-
-- Verify correct section (Orders vs Sales)
-- Check status filters
-- Ensure orders exist
-- Refresh page
-- Contact support if data missing
+- Check your dashboard daily to stay on top of new orders and messages.
+- Use the status filters in Orders and Sales to find what you need quickly.
+- Bookmark specific sections (each one has its own URL) for fast access.
+- Enable email notifications so you never miss an important update.
 
 ## Related Resources
 
 - [Vendor Profile & Portfolio](vendor-profile-portfolio.md)
 - [Seller Levels](seller-levels.md)
-- [Order Management](../order-management/order-lifecycle-wpss.md)
+- [Order Lifecycle](../order-management/order-lifecycle.md)
 - [Earnings & Withdrawals](../earnings-wallet/earnings-dashboard-wpss.md)

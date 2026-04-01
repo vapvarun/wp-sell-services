@@ -1,416 +1,101 @@
-# Manual Order Creation
+# Creating Orders Manually
 
-Create orders manually through the WordPress admin panel for phone orders, offline sales, system migrations, or special customer requests.
-
-## Overview
-
-The manual order creation tool lets administrators create service orders outside the normal checkout flow. This is useful for processing phone orders, importing legacy data, handling offline payments, or accommodating special customer situations.
-
-**Page Location:** WordPress Admin → WP Sell Services → Orders → Create Order
-
-**Access Required:** `manage_options` capability (administrators only)
-
-![Manual order creation page](../images/admin-create-manual-order.png)
+Sometimes orders happen outside the normal checkout flow -- a phone call, a special arrangement, or a migration from another system. The manual order tool lets you create orders directly from the admin panel.
 
 ## When to Use Manual Orders
 
-Create manual orders for:
+- **Phone orders** -- a buyer calls and wants to place an order
+- **Offline payments** -- you received a bank transfer or cash payment
+- **Special pricing** -- a negotiated deal that does not fit standard packages
+- **Data migration** -- importing orders from a previous system
+- **VIP arrangements** -- custom terms for specific buyers
 
-- **Phone Orders:** Customer places order over the phone
-- **Offline Payments:** Payment received via bank transfer, cash, or check
-- **Data Migration:** Importing orders from another system
-- **Special Arrangements:** Custom pricing or package arrangements
-- **Testing:** Creating test orders for development
+Manual orders work exactly like regular orders once created. Vendors and buyers can track them, message each other, and complete delivery through the normal workflow.
 
-Manual orders function identically to regular orders once created.
+## How to Create a Manual Order
 
-## Accessing the Create Order Page
+Go to **WP Sell Services > Orders** and click **Create Order**. The form walks you through each step:
 
-1. Go to **WP Sell Services → Orders** in WordPress admin
-2. Click **Create Order** button
-3. Manual order form opens (page slug: `wpss-create-order`)
+### 1. Pick the Service and Package
 
-**Note:** This is a hidden submenu page - not visible in the WordPress admin menu. Only accessible via the Create Order button.
+Select a published service from the dropdown. It shows the service title, vendor name, and starting price. After selecting a service, choose a package (Basic, Standard, or Premium). The price, delivery time, and revisions auto-fill from the package details.
 
-## Creating a Manual Order
+If the service has add-ons, they appear automatically. Check the ones you want to include -- prices update in real time.
 
-### Step 1: Select Service and Package
+### 2. Select Buyer and Vendor
 
-**Service Selection:**
+**Buyer (required):** Choose any registered user as the buyer.
 
-- Choose from all published services
-- Dropdown shows: Service Title (Vendor Name) - Starting Price
-- Service must have `publish` post status
+**Vendor (optional):** Defaults to the service author. You can override this to assign the order to a different vendor if needed. The buyer and vendor cannot be the same person.
 
-**Package Selection:**
+### 3. Review and Adjust Pricing
 
-- After selecting service, available packages load
-- Packages auto-fill:
-  - Price (subtotal)
-  - Delivery days
-  - Revisions included
-- Leave empty to use service starting price
+The pricing summary shows:
 
-### Step 2: Select Addons
+- **Subtotal** -- base package price
+- **Add-ons total** -- sum of selected add-ons
+- **Order total** -- subtotal plus add-ons
+- **Commission** -- platform fee based on your commission rate
+- **Vendor earnings** -- what the vendor receives after commission
 
-**Loading Addons:**
+**Need custom pricing?** Check "Override total manually" to enter a specific amount. You can also adjust the commission rate for this particular order.
 
-Addons load automatically when you select a service via AJAX action: `wpss_get_service_addons`
+### 4. Set Status and Payment Details
 
-**Addon Information Shown:**
+**Order status options:**
 
-- Title and description
-- Price and price type
-- Min/max quantity
-- Delivery days added
-- Required status
+| Status | When to Use |
+|--------|------------|
+| Pending Payment | Payment has not been received yet |
+| Pending Requirements | Payment received, waiting for buyer to submit requirements |
+| In Progress | Skip requirements, vendor starts right away |
+| Delivered | Order with delivery already submitted |
+| Completed | Historical order that is already finished |
 
-**Addon Selection:**
+If you select "Pending Requirements" but the service has no requirements, the order automatically moves to "In Progress" instead.
 
-- Check addon to include
-- Set quantity (for quantity-based addons)
-- Price calculates automatically
+**Payment details:**
 
-### Step 3: Select Customer and Vendor
+- **Payment status:** Pending, Paid, Failed, or Refunded
+- **Payment method:** Manual (default), Bank Transfer, Cash, or Other
+- **Transaction ID:** Optional reference number from the external payment
 
-**Customer (Buyer):**
+**Delivery settings:**
 
-- Required field
-- Select from all WordPress users
-- Shows display name and email
+- **Delivery days:** auto-filled from the package, but you can adjust
+- **Revisions included:** auto-filled from the package, adjustable
 
-**Vendor Override:**
+### 5. Add Admin Notes
 
-- Optional field
-- Defaults to service author if left empty
-- Useful for reassigning orders to different vendors
-- Cannot be same as customer
+Add any internal notes about the order. These are only visible to admins, not to buyers or vendors. Good for recording context like "Phone order from client on April 1" or "Custom pricing approved by management."
 
-### Step 4: Configure Pricing
+### 6. Submit
 
-**Pricing Summary Table:**
+Click **Create Order**. The system generates an order number, creates the order record, and sets up the conversation thread between buyer and vendor.
 
-- **Subtotal:** Package base price
-- **Addons Total:** Sum of selected addon prices
-- **Order Total:** Subtotal + Addons Total (or manual override)
-- **Commission Rate:** Platform fee percentage (default from global settings)
-- **Platform Fee:** Calculated from total × commission rate
-- **Vendor Earnings:** Total - Platform Fee
+After creation, you see:
+- The order number and a link to view it
+- A **Submit Requirements** button (if the service has requirements and the order is in "Pending Requirements" status)
+- A **Create Another Order** button to start a new one
 
-**Manual Total Override:**
+## What Happens After Creation
 
-- Check "Override total manually" to set custom total
-- Input field enables when checked
-- Useful for discounts or custom pricing
+The order follows the same workflow as any checkout-created order:
 
-**Commission Rate:**
+- If status is **Pending Requirements**, the buyer (or you) fills in requirements, then the vendor starts work
+- If status is **In Progress**, the vendor is notified and the delivery deadline starts
+- If status is **Completed**, no further action is needed
 
-- Defaults to global commission rate from `CommissionService::get_global_commission_rate()`
-- Can be adjusted per-order (0-100%)
-- Affects platform fee and vendor earnings calculations
+## Things to Keep in Mind
 
-**Currency:**
+- Manual orders are created one at a time (no bulk creation)
+- You cannot edit an order after creation from this page -- use the order detail page for changes
+- Buyer notifications are not sent automatically for manual orders -- let the buyer know directly if needed
+- If the calculated total is zero or negative, it defaults to $10.00 as a minimum
 
-- Select from 25 supported currencies
-- Defaults to global currency from `wpss_get_currency()`
-- Includes: USD, EUR, GBP, INR, AUD, CAD, JPY, and 18 more
+## Related Docs
 
-### Step 5: Set Status and Payment Details
-
-**Order Status:**
-
-Available initial statuses:
-
-| Status | Description |
-|--------|-------------|
-| `pending_payment` | Payment not yet received |
-| `pending_requirements` | Payment complete, awaiting buyer requirements |
-| `in_progress` | Skip requirements, vendor starts immediately |
-| `delivered` | Create order with delivery already submitted |
-| `completed` | Create already-completed order |
-
-**Smart Status Logic:**
-
-If you select `pending_requirements` but the service has no requirements defined, the order automatically transitions to `in_progress` status. You'll see a notification: "Note: This service has no requirements defined. Order was set to 'In Progress' automatically."
-
-**Payment Status:**
-
-| Status | Description |
-|--------|-------------|
-| `pending` | Payment not received |
-| `paid` | Payment received (default) |
-| `failed` | Payment failed |
-| `refunded` | Payment refunded |
-
-**Payment Method:**
-
-| Method | Use For |
-|--------|---------|
-| `manual` | Default for admin-created orders |
-| `bank_transfer` | Bank transfer payments |
-| `cash` | Cash payments |
-| `other` | Other payment methods |
-
-**Transaction ID:**
-
-- Optional reference number
-- Enter external payment reference (e.g., bank transaction ID)
-- Stored in `transaction_id` field
-
-**Delivery Days:**
-
-- Number of days until delivery deadline
-- Auto-fills from selected package
-- Can be manually adjusted
-- Used to calculate `delivery_deadline` if order status is `in_progress`
-
-**Revisions Included:**
-
-- Number of revisions buyer can request
-- Auto-fills from selected package
-- Can be manually adjusted
-- Default: 2 revisions
-
-### Step 6: Add Admin Notes
-
-**Internal Notes:**
-
-- Textarea for internal notes about the order
-- Not visible to customer or vendor
-- Stored as system message in order conversation
-- Format: `[Admin Note] Your note text here`
-- Uses `ConversationService::add_system_message()`
-
-**Example Notes:**
-
-- "Phone order from customer on 2024-01-15"
-- "Migrated from old system - Order #OLD-123"
-- "Custom pricing approved by manager"
-- "Special rush delivery requested"
-
-## Order Creation Process
-
-When you click **Create Order**, the following happens:
-
-### 1. Data Validation
-
-- Service ID and Customer ID required
-- Service must exist and be type `wpss_service`
-- Customer cannot be same as vendor
-- Amount must be greater than zero (minimum $10.00 fallback)
-
-### 2. Addon Processing
-
-- Selected addons validated via `ServiceAddonService::get()`
-- Addon prices calculated using `ServiceAddonService::calculate_price()`
-- Addon delivery days added to total delivery time
-
-### 3. Commission Calculation
-
-- Commission rate validated (0-100%)
-- Platform fee = Total × (Commission Rate / 100)
-- Vendor earnings = Total - Platform Fee
-
-### 4. Deadline Calculation
-
-- If status is `in_progress` and delivery_days > 0:
-  - `delivery_deadline` = current time + delivery_days
-  - `original_deadline` = same as delivery_deadline
-- Otherwise, deadline fields remain null
-
-### 5. Order Number Generation
-
-- Format: `WPSS-` + 8 random uppercase characters
-- Example: `WPSS-A7K9M2X4`
-- Generated using `wp_generate_password(8, false)`
-
-### 6. Database Insert
-
-Order record inserted into `wpss_orders` table with fields:
-
-```php
-array(
-    'order_number'       => 'WPSS-A7K9M2X4',
-    'customer_id'        => (int),
-    'vendor_id'          => (int),
-    'service_id'         => (int),
-    'package_id'         => (int|null),
-    'platform'           => 'manual',
-    'platform_order_id'  => null,
-    'transaction_id'     => (string|null),
-    'addons'             => JSON,
-    'subtotal'           => (float),
-    'addons_total'       => (float),
-    'total'              => (float),
-    'currency'           => (string),
-    'status'             => (string),
-    'payment_method'     => (string),
-    'payment_status'     => (string),
-    'commission_rate'    => (float),
-    'platform_fee'       => (float),
-    'vendor_earnings'    => (float),
-    'revisions_included' => (int),
-    'revisions_used'     => 0,
-    'delivery_deadline'  => (datetime|null),
-    'original_deadline'  => (datetime|null),
-    'started_at'         => (datetime|null),
-    'paid_at'            => (datetime|null),
-    'completed_at'       => (datetime|null),
-    'created_at'         => (datetime),
-    'updated_at'         => (datetime),
-)
-```
-
-### 7. Conversation Creation
-
-- Order conversation created via `ConversationService::create_for_order()`
-- Admin notes added as system message if provided
-
-### 8. WordPress Hooks Fired
-
-```php
-do_action( 'wpss_order_created', $order_id, $status );
-do_action( 'wpss_order_status_changed', $order_id, $status, '' );
-do_action( "wpss_order_status_{$status}", $order_id, '' );
-```
-
-### 9. Success Response
-
-Returns JSON with:
-
-- `order_id` - Database ID of created order
-- `order_number` - Generated order number
-- `status` - Order status
-- `view_url` - URL to view order (via `wpss_get_order_url()`)
-- `requirements_url` - URL to requirements form
-- `requirements_skipped` - Boolean if requirements auto-skipped
-- `has_requirements` - Boolean if service has requirements
-
-## After Order Creation
-
-**Success Screen Shows:**
-
-- Order created confirmation message
-- Order number and ID
-- **View Order** button - Opens order detail page
-- **Submit Requirements** button - Shows if service has requirements and status is `pending_requirements`
-- **Create Another Order** button - Resets form
-
-**Next Steps:**
-
-1. If status is `pending_requirements`:
-   - Customer or admin submits requirements
-   - Order transitions to `in_progress`
-
-2. If status is `in_progress`:
-   - Vendor receives notification
-   - Delivery deadline starts counting
-   - Vendor works on order
-
-3. If status is `delivered` or `completed`:
-   - Order already in final stage
-   - No further action required
-
-## Manual Order Fields Reference
-
-### Required Fields
-
-- Service
-- Customer (Buyer)
-
-### Auto-Calculated Fields
-
-- Order Number (generated)
-- Subtotal (from package or service)
-- Platform Fee (from commission rate)
-- Vendor Earnings (total - platform fee)
-- Delivery Deadline (from delivery days if in_progress)
-
-### Optional Override Fields
-
-- Vendor (defaults to service author)
-- Total (calculated unless manually overridden)
-- Commission Rate (defaults to global rate)
-- Currency (defaults to global currency)
-- Payment Method (defaults to 'manual')
-- Transaction ID
-- Delivery Days (defaults from package)
-- Revisions (defaults from package)
-- Admin Notes
-
-## Common Use Cases
-
-### Phone Order
-
-1. Customer calls with order request
-2. Admin creates manual order
-3. Status: `pending_payment` or `paid` depending on payment
-4. Payment Method: Bank transfer or other
-5. Add admin note: "Phone order from [customer name] on [date]"
-
-### Offline Payment
-
-1. Payment received outside platform (bank transfer, cash)
-2. Create order with status: `paid`
-3. Payment Status: `paid`
-4. Transaction ID: Bank reference number
-5. Admin note: Payment method details
-
-### Data Migration
-
-1. Import orders from old system
-2. Create multiple manual orders
-3. Status: `completed` for historical orders
-4. Admin notes: "Migrated from [old system] - Original order ID: [old_id]"
-
-### Custom Pricing
-
-1. Negotiate special price with customer
-2. Create order with package
-3. Enable "Override total manually"
-4. Set custom total
-5. Adjust commission rate if needed
-6. Admin note: "Custom pricing approved by [manager name]"
-
-## Limitations
-
-- Cannot bulk create orders (one at a time)
-- No draft/save functionality (must complete creation)
-- Cannot edit orders after creation (use order edit page)
-- No customer notification sent automatically (manual orders are platform='manual')
-
-## Technical Details
-
-**AJAX Actions:**
-
-- `wpss_create_manual_order` - Creates the order
-- `wpss_get_service_addons` - Loads addons for selected service
-
-**JavaScript Object:**
-
-`wpssManualOrder` localized with:
-- `ajaxUrl` - AJAX endpoint
-- `nonce` - Security nonce
-- `defaultCommissionRate` - Global commission rate
-- `currencyFormat` - Currency display format
-- `i18n` - Translated strings
-
-**Nonce Action:**
-
-- Action: `wpss_create_manual_order`
-- Verified with `check_ajax_referer()`
-
-**Database Tables:**
-
-- `wpss_orders` - Order record
-- `wpss_conversations` - Order conversation
-
-**Minimum Order Total:**
-
-If calculated total is 0 or negative, falls back to $10.00 minimum.
-
-## Next Steps
-
-- **[Order Management](../order-management/order-lifecycle.md)** - Managing orders after creation
-- **[Vendor Management](vendor-management.md)** - Managing vendor accounts
-- **[Commission System](../earnings-wallet/commission-system.md)** - Understanding platform fees
+- [Service Moderation](service-moderation.md) -- Reviewing vendor services
+- [Vendor Management](vendor-management.md) -- Managing vendor accounts
+- [Withdrawal Approvals](withdrawal-approvals.md) -- Processing vendor payouts
+- [Commission System](../earnings-wallet/commission-system.md) -- How platform fees work

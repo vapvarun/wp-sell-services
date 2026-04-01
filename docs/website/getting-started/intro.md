@@ -1,138 +1,80 @@
-# Introduction to WP Sell Services
+# Welcome to WP Sell Services
 
-WP Sell Services transforms your WordPress site into a complete Fiverr-style service marketplace. Vendors sell digital services, buyers browse and purchase services, and you earn commission on every transaction.
+WP Sell Services turns your WordPress site into a fully functional service marketplace -- think Fiverr or Upwork, but on your own website, under your brand, and with you earning commission on every sale.
 
-## What is WP Sell Services?
+## Who Is This For?
 
-WP Sell Services is a full-featured marketplace plugin for creating service-based platforms. Freelancers and agencies can offer their expertise while you manage the marketplace and earn revenue through commissions.
+Whether you are an entrepreneur launching a niche marketplace, an agency expanding into a platform model, or someone who sees an opportunity to connect service providers with clients -- WP Sell Services is built for you.
 
-**Perfect for building:**
-- Freelance marketplaces
-- Gig platforms
-- Service directories
-- Agency networks
-- Micro-job sites
+Here are some real-world examples of what people are building:
 
-## Key Features
+- **Freelancer marketplace** -- Connect designers, writers, and developers with clients
+- **Tutoring platform** -- Let tutors list subjects and pricing, students book sessions
+- **Consulting directory** -- Business consultants offer packages, clients purchase directly
+- **Coaching site** -- Life coaches, fitness coaches, and mentors sell structured programs
+- **Agency network** -- Multiple agencies list services under one marketplace umbrella
+- **Creative services hub** -- Photographers, videographers, and musicians offer gig-based work
 
-### Service Management
-- **Service Listings**: Vendors create detailed service pages with descriptions, pricing, and media
-- **Package Tiers**: Offer Basic, Standard, and Premium packages with different pricing and deliverables
-- **Service Add-ons**: Extra services buyers can purchase (rush delivery, extra revisions)
-- **Custom Requirements**: Collect buyer information before work starts via custom forms
+## Why WP Sell Services?
 
-### Order System
-- **Complete Workflow**: 10+ order statuses track every stage from payment to completion
-- **Delivery Management**: Vendors submit deliverables, buyers request revisions
-- **Deadline Extensions**: Request and approve delivery date changes
-- **Order Messaging**: Built-in chat system for buyer-vendor communication
-- **Milestones** **[PRO]**: Split payments for large projects
+| Highlight | What It Means for You |
+|-----------|----------------------|
+| **No WooCommerce required** | Your marketplace works out of the box with built-in Stripe, PayPal, and offline payments |
+| **3-tier pricing packages** | Vendors offer Basic, Standard, and Premium options so buyers can choose what fits |
+| **Built-in order system** | Full workflow from payment to delivery, with messaging, revisions, and deadlines |
+| **Reviews and ratings** | 5-star review system builds trust and helps buyers find top vendors |
+| **Dispute resolution** | Structured process with admin mediation when things go wrong |
+| **Buyer requests** | Buyers post what they need, vendors submit proposals -- like a job board |
+| **Mobile-ready design** | Responsive templates that look great on phones, tablets, and desktops |
+| **Vendor dashboard** | Vendors manage everything -- services, orders, earnings, messages -- from the frontend |
+| **4 seller levels** | New Seller, Level 1, Level 2, and Top Rated -- vendors level up based on performance |
 
-### Marketplace Features
-- **Buyer Requests**: Buyers post project needs, vendors submit proposals
-- **Reviews & Ratings**: 5-star rating system with written reviews
-- **Dispute Resolution**: Structured dispute system with admin mediation
-- **Commission System**: Earn percentage or flat-rate commission on sales
+## Feature Overview: Free vs Pro
 
-### Vendor Profiles
-- **Seller Levels**: Basic, Verified, and Pro vendor tiers
-- **Portfolio Showcase**: Display past work and achievements
-- **Vendor Dashboard**: Manage services, orders, earnings, and statistics
-- **Vacation Mode**: Temporarily pause accepting new orders
+| Feature | Free | Pro |
+|---------|------|-----|
+| Service listings and categories | Included | Included |
+| Order management and messaging | Included | Included |
+| Reviews, disputes, and buyer requests | Included | Included |
+| Vendor dashboard and seller levels | Included | Included |
+| Built-in checkout (Stripe, PayPal, Offline) | Included | Included |
+| Commission system with per-vendor rates | Included | Included |
+| Gallery images per service | Up to 4 | Unlimited |
+| Service add-ons | Up to 3 | Unlimited |
+| FAQs per service | Up to 5 | Unlimited |
+| Video embeds | 1 | 3 |
+| WooCommerce, EDD, FluentCart, SureCart | -- | **[PRO]** |
+| Razorpay payment gateway | -- | **[PRO]** |
+| Wallet integrations (TeraWallet, MyCred, etc.) | -- | **[PRO]** |
+| Analytics dashboards with export | -- | **[PRO]** |
+| Cloud storage (Amazon S3, Google Cloud, DO) | -- | **[PRO]** |
+| AI title suggestions, service templates | -- | **[PRO]** |
+| Scheduled publishing | -- | **[PRO]** |
 
-### Frontend Tools
-- **6 Gutenberg Blocks**: Service Grid, Search, Featured Services, Categories, Seller Cards, Buyer Requests
-- **Shortcodes**: Display services, vendor profiles, dashboards anywhere
-- **Responsive Design**: Mobile-friendly templates for all pages
+## What You Can Build
 
-### Developer Features
-- **20 REST API Controllers**: Complete API for mobile apps and custom integrations
-- **Batch Endpoint**: Execute up to 25 API requests in single HTTP call
-- **100+ Hooks & Filters**: Extensive customization via WordPress hooks
-- **Template Override System**: Customize appearance without modifying plugin files
+1. **A Fiverr-style gig marketplace** -- Vendors create service listings with packages, buyers browse and purchase, you earn a percentage on every order
+2. **A tutoring platform** -- Teachers list subjects with hourly rates, students pick a package and submit their learning goals
+3. **A home services directory** -- Plumbers, electricians, and cleaners offer fixed-price packages with clear delivery timelines
+4. **A content creation marketplace** -- Writers, designers, and video editors sell creative services with revision options
+5. **A professional consulting hub** -- Business advisors offer strategy sessions with tiered pricing (basic review, full audit, ongoing retainer)
 
-## Requirements
+## How It Works
 
-| Component | Minimum Version |
-|-----------|----------------|
-| WordPress | 6.4 or higher |
-| PHP | 8.1 or higher |
-| MySQL | 5.7 or higher |
-| WooCommerce | 8.0+ (optional — enables checkout and payment processing) |
+The workflow is simple:
 
-**Note**: WooCommerce is optional. The plugin works independently for all marketplace functions. When WooCommerce is active, checkout and payment processing are enabled automatically. **[PRO]** version adds additional e-commerce platforms and standalone payment gateways.
+1. **You set up the marketplace** -- Install the plugin, choose your commission rate, and configure how vendors join
+2. **Vendors create services** -- They use a guided wizard to build professional listings with pricing packages, images, and FAQs
+3. **Buyers browse and purchase** -- They find services, pick a package, and pay securely through the built-in checkout
+4. **Orders flow automatically** -- The system handles requirements collection, messaging, delivery, revisions, and reviews
+5. **Everyone gets paid** -- You earn your commission, vendors receive their earnings after a configurable clearance period
 
 ## Getting Started
 
-Ready to build your marketplace? Follow these guides:
+Ready to build your marketplace? Here is the path:
 
-1. **[Installation Guide](installation.md)** - Install the plugin and dependencies
-2. **[Initial Setup](initial-setup.md)** - Configure marketplace settings
-3. **[Free vs Pro Comparison](free-vs-pro.md)** - Understand version differences
+1. **[Install the plugin](installation.md)** -- Takes about 2 minutes
+2. **[Run initial setup](initial-setup.md)** -- Configure your marketplace name, currency, and commission
+3. **[Compare Free vs Pro](free-vs-pro.md)** -- See everything both versions offer
 
-## Architecture
-
-### Database Tables
-
-WP Sell Services creates dedicated database tables for optimal performance:
-
-- **Orders**: Service orders and transactions
-- **Conversations**: Order messaging
-- **Deliveries**: Final work submissions
-- **Reviews**: Ratings and feedback
-- **Disputes**: Dispute management
-- **Vendor Profiles**: Vendor information
-- **Service Packages**: Pricing tiers
-- **Buyer Requests**: Project postings
-- **Proposals**: Vendor bids
-- **Earnings**: Commission tracking
-- **Withdrawals**: Payout requests
-- **Notifications**: In-app alerts
-- **Portfolio Items**: Vendor showcases
-- **Extension Requests**: Deadline changes
-- **Milestones** **[PRO]**: Payment milestones
-- **Tips**: Optional tipping
-
-### Custom Post Types
-
-- **wpss_service**: Service listings
-- **wpss_request**: Buyer requests
-
-### Taxonomies
-
-- **wpss_service_category**: Hierarchical service categories
-- **wpss_service_tag**: Service tags for filtering
-
-### User Roles
-
-- **wpss_vendor**: Vendor role with service management capabilities
-- Administrator capabilities extended with marketplace management
-
-## Integration Options
-
-### Free Version
-- **WooCommerce**: Full integration with WooCommerce for checkout and payments
-- All WooCommerce payment gateways supported
-
-### Pro Version **[PRO]**
-- **EDD (Easy Digital Downloads)**: Lightweight digital products platform
-- **FluentCart**: Modern, conversion-optimized checkout
-- **SureCart**: Cloud-hosted checkout solution
-- **Standalone Mode**: No e-commerce plugin required
-- **Direct Payment Gateways**: Stripe, PayPal, Razorpay integration
-
-## Support & Documentation
-
-- **REST API**: `/wp-json/wpss/v1/` with 20 controllers
-- **Developer Hooks**: [Hooks & Filters Reference](../developer-guide/hooks-filters.md)
-- **Template System**: Override templates in your theme
-- **Custom Integrations**: Build e-commerce adapters, payment gateways, storage providers
-
-## Next Steps
-
-1. **Install** the plugin following the [Installation Guide](installation.md)
-2. **Configure** your marketplace in [Initial Setup](initial-setup.md)
-3. **Compare** free and pro features in [Free vs Pro](free-vs-pro.md)
-4. **Explore** developer documentation in the [Developer Guide](../developer-guide/)
-
-Transform your WordPress site into a thriving service marketplace with WP Sell Services.
+Your marketplace can be live today.

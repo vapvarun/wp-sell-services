@@ -1,305 +1,96 @@
-# Commission System
+# How Commissions Work
 
-The commission system determines how revenue is split between the platform and vendors for each completed order.
+The commission system controls how revenue is split between your platform and your vendors on every completed order.
 
-## Overview
+## The Basic Idea
 
-When a buyer purchases a service, the order total is divided between the platform commission and vendor earnings. The platform takes a percentage commission, and the vendor receives the remainder.
+When a buyer pays for a service, you (the platform owner) keep a percentage as commission, and the vendor receives the rest. For example, with a 10% commission rate on a $100 order:
 
-### How Commission Works
+- **Platform keeps:** $10.00 (10%)
+- **Vendor earns:** $90.00 (90%)
 
-1. **Order Created**: Buyer completes purchase
-2. **Total Calculated**: Package price + add-ons
-3. **Commission Applied**: Platform percentage deducted
-4. **Vendor Earnings**: Remaining amount credited to vendor
-5. **Payment Released**: Funds available after clearing period
+This happens automatically when an order is marked as completed. You do not need to calculate anything manually.
 
-### Key Components
+## Setting Your Global Commission Rate
 
-| Component | Description |
-|-----------|-------------|
-| **Order Total** | Full price paid by buyer |
-| **Commission Rate** | Platform percentage (default 10%) |
-| **Platform Fee** | Dollar amount taken by platform |
-| **Vendor Earnings** | Amount vendor receives after commission |
+1. Go to **WP Sell Services > Settings > Payments**
+2. Find the **Commission Settings** section
+3. Enter your **Commission Rate (%)** -- this can be anything from 0% to 50%
+4. Click **Save Commission Settings**
 
-## Default Commission Settings
+The default rate is 10%. This applies to all vendors unless you set a custom rate for specific vendors.
 
-The plugin comes with these default commission settings:
+## Per-Vendor Custom Rates
 
-**Global Commission Rate**: 10%
-**Per-Vendor Rates**: Enabled (vendors can have custom rates)
+Want to reward your top performers or offer promotional rates to new vendors? You can override the global rate for individual vendors.
 
-### Commission Calculation
-
-```
-Order Total: $100.00
-Commission (10%): $10.00
-Vendor Earnings: $90.00
-```
-
-The commission is stored in the `platform_fee` field and vendor earnings in `vendor_earnings` when an order is marked as completed.
-
-## Configuring Global Commission
-
-Set the default commission rate that applies to all vendors.
-
-### Admin Configuration
-
-1. Go to **WP Sell Services → Settings → Payments**
-2. Find **Commission Settings** section
-3. Enter **Commission Rate (%)**: Value between 0-50
-4. Check **Per-Vendor Rates** to allow custom rates per vendor
-5. Click **Save Commission Settings**
-
-![Commission settings tab](../images/settings-commission-tab.png)
-
-![Full commission settings](../images/settings-commission.png)
-
-**Commission Rate Field**:
-- Minimum: 0%
-- Maximum: 50%
-- Step: 0.1%
-- Default: 10%
-- Description: "Default percentage deducted from vendor earnings for all orders"
-
-### Commission on Add-ons
-
-Commission is calculated on the full order total, including add-ons. Tips are excluded from commission calculations.
-
-## Per-Vendor Commission Rates
-
-When **Enable Vendor Rates** is checked, you can set custom commission rates for individual vendors.
-
-### Setting Custom Vendor Rates
-
-**Via Vendor Profile:**
-
-1. Go to **WP Sell Services → Vendors**
-2. Click on vendor name
-3. Find **Commission Settings** section
-4. Enter custom commission rate
+1. Go to **WP Sell Services > Vendors**
+2. Click on a vendor's name
+3. Find **Commission Settings**
+4. Enter a custom commission rate
 5. Click **Update**
 
-The custom rate overrides the global rate for that vendor's orders.
+**Use cases for custom rates:**
+- Lower commission for high-performing vendors (loyalty reward)
+- Promotional rates for new vendors (to attract talent)
+- Higher rates for vendors who get extra platform support
+- Special rates for partnership agreements
 
-**Use Cases:**
-- Reward top performers with lower commission
-- Promotional rates for new vendors
-- Premium vendors with higher commission
-- Special partnership agreements
+When a vendor has a custom rate, it always takes priority over the global rate.
 
-### Commission Priority
+## When Is Commission Calculated?
 
-When calculating commission, the system uses:
+Commission is only calculated when an order reaches **Completed** status. Here is the typical flow:
 
-1. **Per-Vendor Rate** (if set) - highest priority
-2. **Global Rate** (default) - fallback
+1. Buyer places order and pays
+2. Vendor delivers the work
+3. Buyer reviews and accepts the delivery
+4. Order status changes to **Completed**
+5. Commission is calculated and vendor earnings are credited
 
-## When Commission is Calculated
+Until the order is completed, no money changes hands between the platform and vendor.
 
-Commission is calculated when the order is marked as **completed**.
+## Commission on Add-ons and Tips
 
-### Order Completion Flow
+**Add-ons:** Commission applies to the full order total, including any add-ons the buyer selected.
 
-```
-Order In Progress → Delivered → Buyer Accepts → Order Completed
-                                                  ↓
-                                         Commission Calculated
-                                         Vendor Earnings Credited
-```
+**Tips:** Tips are commission-free. 100% of any tip goes directly to the vendor. For example:
 
-**Database Fields Updated:**
-- `commission_rate`: The percentage applied
-- `platform_fee`: Dollar amount of commission
-- `vendor_earnings`: Net amount to vendor
+- Order total: $100.00
+- Tip: $10.00
+- Commission (10% of $100): $10.00
+- **Vendor receives: $90.00 + $10.00 tip = $100.00**
 
-### Example Timeline
+## Tiered Commission Rules **[PRO]**
 
-**Day 1**: Order placed for $100
-**Day 3**: Vendor delivers work
-**Day 5**: Buyer accepts delivery
-**Day 5**: Order status changes to "completed"
-  - Commission calculated: $10 (10%)
-  - Vendor earnings: $90
-  - Funds added to vendor balance
+With WP Sell Services Pro, you can set up tiered commission rules that automatically adjust rates based on criteria like order volume, vendor level, or category. This lets you create more sophisticated commission structures without manually setting rates for each vendor.
 
-## Commission in Order Details
+## What You See in Order Details
 
-### Admin Order View
+When you open any completed order in the admin panel, you will see a clear financial breakdown:
 
-Admins see complete financial breakdown:
+- **Order Total:** Full amount the buyer paid
+- **Commission Rate:** Percentage applied
+- **Platform Fee:** Your commission in dollars
+- **Vendor Earnings:** Net amount the vendor receives
 
-```
-Order Total: $100.00
-Commission (10%): $10.00
-Vendor Earnings: $90.00
-```
-
-### Vendor Order View
-
-Vendors see their earnings after commission:
-
-```
-Order Total: $100.00
-Your Earnings: $90.00
-```
-
-![Order commission breakdown](../images/admin-order-commission.png)
-
-Commission details are stored in the `wpss_orders` table with these fields:
-- `total`: Order total amount
-- `commission_rate`: Percentage applied
-- `platform_fee`: Commission amount
-- `vendor_earnings`: Vendor's net earnings
-
-## Tips and Commission
-
-Tips are commission-free. 100% of tip amounts go directly to the vendor.
-
-**Example with Tip:**
-
-```
-Order Total: $100.00
-Tip: $10.00
-
-Commission (10% of $100): $10.00
-Vendor Earnings: $90.00 + $10.00 tip = $100.00
-```
-
-Tips are tracked separately and not included in commission calculations.
-
-## REST API Endpoints
-
-The Earnings Controller provides API access to commission and earnings data.
-
-### GET /wpss/v1/earnings/summary
-
-Retrieve vendor earnings summary including commission paid.
-
-**Response:**
-```json
-{
-  "total_earned": 12450.00,
-  "available_balance": 2670.00,
-  "pending_clearance": 1280.00,
-  "withdrawn": 8500.00,
-  "pending_withdrawal": 0.00,
-  "completed_orders": 124
-}
-```
-
-### GET /wpss/v1/earnings/history
-
-Get detailed earnings history with commission breakdown per order.
-
-**Parameters:**
-- `page`: Page number (default: 1)
-- `per_page`: Results per page (default: 20, max: 100)
-
-**Response includes:**
-- Order number and service
-- Total amount
-- Vendor earnings after commission
-- Commission rate applied
-- Platform fee amount
+Vendors see a simplified view showing the order total and their earnings.
 
 ## Refunds and Commission
 
-When an order is refunded, commission is reversed.
+When an order is refunded, commission reverses automatically:
 
-### Full Refund
+**Full refund:** Both the platform fee and vendor earnings are reversed completely.
 
-```
-Original Order: $100.00
-Commission Collected: $10.00
-Vendor Earned: $90.00
+**Partial refund:** Commission reverses proportionally. For example, a 50% refund on a $100 order reverses $5 of a $10 commission.
 
-→ Full Refund Issued
-→ Commission reversed: -$10.00 (returned to buyer)
-→ Vendor earnings deducted: -$90.00
-```
+## Clearance Period
 
-### Partial Refund
+After an order is completed, vendor earnings do not become available for withdrawal immediately. There is a clearance period (default: 14 days) to allow time for disputes or issues. You can adjust this in **Settings > Payments > Payout Settings**.
 
-Commission is reversed proportionally:
+## Related Docs
 
-```
-Original Order: $100.00
-Commission: $10.00
-Partial Refund: $50.00
-
-→ Commission reversed: $5.00
-→ Vendor earnings deducted: $45.00
-```
-
-## Troubleshooting
-
-### Commission Not Calculated
-
-**Check:**
-1. Order status is "completed"
-2. Global commission rate is set in Settings
-3. Vendor earnings field populated
-4. No database errors in debug log
-
-**Debug:**
-
-Enable debug mode in **Settings → Advanced** to log commission calculations.
-
-### Wrong Commission Amount
-
-**Verify:**
-1. Correct commission rate applied (global or per-vendor)
-2. Order total is accurate
-3. No manual adjustments made
-4. Commission calculation happened on completion
-
-**Solution:**
-
-Check the order's `commission_rate`, `platform_fee`, and `vendor_earnings` fields in the database.
-
-## Developer Hooks
-
-### Filters
-
-**`wpss_commission_rate`**
-
-Modify commission rate before calculation:
-
-```php
-add_filter( 'wpss_commission_rate', function( $rate, $vendor_id, $order ) {
-    // Custom logic to modify commission rate
-    return $rate;
-}, 10, 3 );
-```
-
-**`wpss_vendor_earnings`**
-
-Adjust vendor earnings after commission:
-
-```php
-add_filter( 'wpss_vendor_earnings', function( $earnings, $order_total, $commission ) {
-    // Custom adjustment logic
-    return $earnings;
-}, 10, 3 );
-```
-
-### Actions
-
-**`wpss_commission_calculated`**
-
-Fires after commission is calculated:
-
-```php
-add_action( 'wpss_commission_calculated', function( $order_id, $commission_amount ) {
-    // Log or process commission
-}, 10, 2 );
-```
-
-## Next Steps
-
-- **Configure Withdrawals**: Set up [withdrawal system](withdrawals.md) for vendor payouts
-- **View Earnings Dashboard**: Understand the [earnings dashboard](earnings-dashboard.md)
-- **Set Up Automated Payouts**: Enable [automated payouts](automated-payouts.md) **[PRO]**
-- **Review Order Workflow**: Learn about [order lifecycle](../order-management/order-lifecycle.md)
+- [Earnings Dashboard](earnings-dashboard.md) -- How vendors track their income
+- [Withdrawals](withdrawals.md) -- How vendors get paid
+- [Automated Payouts](automated-payouts.md) -- Schedule automatic vendor payments
+- [Currency and Tax](../payments-checkout/currency-tax-config.md) -- Financial settings
