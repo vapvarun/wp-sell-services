@@ -483,7 +483,7 @@ class Settings {
 				'max'         => 50,
 				'step'        => 0.1,
 				'default'     => 10,
-				'description' => __( 'Default percentage deducted from vendor earnings for all orders.', 'wp-sell-services' ),
+				'description' => __( 'Platform commission deducted from each order. Example: 20% on a $100 order = you keep $20, vendor gets $80.', 'wp-sell-services' ),
 			)
 		);
 
@@ -498,6 +498,7 @@ class Settings {
 				'field'       => 'enable_vendor_rates',
 				'label'       => __( 'Allow custom commission rates per vendor (configured in vendor profile)', 'wp-sell-services' ),
 				'default'     => true,
+				'description' => __( 'Allow setting custom commission rates per vendor in their admin profile. Per-vendor rates override the default above.', 'wp-sell-services' ),
 			)
 		);
 
@@ -528,7 +529,7 @@ class Settings {
 				'max'         => 1000,
 				'step'        => 1,
 				'default'     => 50,
-				'description' => __( 'Minimum amount vendors must have before requesting withdrawal.', 'wp-sell-services' ),
+				'description' => __( 'Vendors must earn at least this amount before they can request a withdrawal. Recommended: $50-$100 for most marketplaces.', 'wp-sell-services' ),
 			)
 		);
 
@@ -547,7 +548,7 @@ class Settings {
 				'max'         => 90,
 				'step'        => 1,
 				'default'     => 14,
-				'description' => __( 'Days after order completion before earnings become available for withdrawal.', 'wp-sell-services' ),
+				'description' => __( 'Hold period after order completion before earnings can be withdrawn. Protects against chargebacks. Example: 14 days.', 'wp-sell-services' ),
 			)
 		);
 
@@ -585,7 +586,7 @@ class Settings {
 				'max'         => 10000,
 				'step'        => 50,
 				'default'     => 500,
-				'description' => __( 'Minimum available balance to trigger automatic withdrawal.', 'wp-sell-services' ),
+				'description' => __( 'Vendors with available balance above this amount are automatically paid on the schedule below. Set to 0 to disable auto-withdrawals.', 'wp-sell-services' ),
 			)
 		);
 
@@ -604,7 +605,7 @@ class Settings {
 					'monthly'  => __( 'Monthly (1st of month)', 'wp-sell-services' ),
 				),
 				'default'     => 'monthly',
-				'description' => __( 'When automatic withdrawals are processed.', 'wp-sell-services' ),
+				'description' => __( 'How often automatic withdrawals are processed for eligible vendors.', 'wp-sell-services' ),
 			)
 		);
 
@@ -633,6 +634,7 @@ class Settings {
 				'field'       => 'enable_tax',
 				'label'       => __( 'Enable tax calculation on service orders', 'wp-sell-services' ),
 				'default'     => false,
+				'description' => __( 'Add tax to service orders at checkout. Only applies to standalone checkout — WooCommerce uses its own tax settings.', 'wp-sell-services' ),
 			)
 		);
 
@@ -646,7 +648,7 @@ class Settings {
 				'option_name' => 'wpss_tax',
 				'field'       => 'tax_label',
 				'default'     => __( 'Tax', 'wp-sell-services' ),
-				'description' => __( 'Label displayed to customers (e.g., VAT, GST, Sales Tax).', 'wp-sell-services' ),
+				'description' => __( 'Label shown to buyers at checkout and in emails (e.g., VAT, GST, Sales Tax).', 'wp-sell-services' ),
 			)
 		);
 
@@ -678,6 +680,7 @@ class Settings {
 				'field'       => 'tax_included',
 				'label'       => __( 'Service prices already include tax (display tax as part of price)', 'wp-sell-services' ),
 				'default'     => false,
+				'description' => __( 'When enabled, displayed prices already include tax. When disabled, tax is added on top at checkout.', 'wp-sell-services' ),
 			)
 		);
 
@@ -725,7 +728,7 @@ class Settings {
 				'min'         => 0,
 				'max'         => 100,
 				'default'     => 20,
-				'description' => __( '0 for unlimited.', 'wp-sell-services' ),
+				'description' => __( 'Maximum services each vendor can publish. Set to 0 for unlimited. Vendors see an error when they reach the limit.', 'wp-sell-services' ),
 			)
 		);
 
@@ -742,6 +745,7 @@ class Settings {
 				'field'       => 'require_service_moderation',
 				'label'       => __( 'Require admin approval before services are published', 'wp-sell-services' ),
 				'default'     => false,
+				'description' => __( 'New services require admin approval before becoming visible to buyers. Manage pending services in the Moderation page.', 'wp-sell-services' ),
 			)
 		);
 
@@ -771,7 +775,7 @@ class Settings {
 				'min'         => 0,
 				'max'         => 30,
 				'default'     => 3,
-				'description' => __( 'Days after delivery to auto-complete if buyer does not respond. 0 to disable.', 'wp-sell-services' ),
+				'description' => __( 'Days after vendor submits delivery before the order auto-completes if buyer does not respond. Set to 0 to require buyer action.', 'wp-sell-services' ),
 			)
 		);
 
@@ -803,7 +807,7 @@ class Settings {
 				'min'         => 1,
 				'max'         => 90,
 				'default'     => 14,
-				'description' => __( 'Days after completion within which disputes can be opened.', 'wp-sell-services' ),
+				'description' => __( 'Days after order completion during which buyers can open a dispute. After this window, disputes are locked.', 'wp-sell-services' ),
 			)
 		);
 
@@ -819,7 +823,7 @@ class Settings {
 				'min'         => 0,
 				'max'         => 30,
 				'default'     => 3,
-				'description' => __( 'Auto-open a dispute when an order is late for this many days. Set to 0 to disable.', 'wp-sell-services' ),
+				'description' => __( 'Automatically open a dispute if delivery is overdue by this many days past the deadline. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
 
@@ -850,7 +854,7 @@ class Settings {
 				'min'         => 0,
 				'max'         => 30,
 				'default'     => 0,
-				'description' => __( 'Days to wait for requirements before taking action. 0 to disable.', 'wp-sell-services' ),
+				'description' => __( 'Days to wait for buyer to submit requirements before the order auto-starts or auto-cancels (see next setting). Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
 
