@@ -1,0 +1,29 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - src/
+    excludePaths:
+        - vendor/
+        - node_modules/
+        - includes/
+        - tests/
+        - src/SEO/
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+        - vendor/autoload.php
+    scanFiles:
+        - src/functions.php
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # WordPress dynamic hook parameter counts
+        - '#Function apply_filters invoked with#'
+        - '#Function do_action invoked with#'
+        # Template variables passed via extract()
+        - '#Variable \$\w+ might not be defined#'
+        # WP functions returning mixed types
+        - '#Cannot access offset .* on mixed#'

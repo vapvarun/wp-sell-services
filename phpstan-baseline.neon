@@ -1,0 +1,985 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#1 \$headers of method WP_REST_Server\:\:send_headers\(\) expects array, WP_REST_Response given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/API/API.php
+
+		-
+			message: '#^Offset ''created'' on array\{uuid\: string, app_id\: string, name\: non\-falsy\-string, password\: string, created\: int, last_used\: int\|null, last_ip\: string\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/API/AuthController.php
+
+		-
+			message: '#^Expected 4 @param tags, found 3\.$#'
+			identifier: paramTag.count
+			count: 1
+			path: src/API/CartController.php
+
+		-
+			message: '#^@param array \$withdrawal does not accept actual type of parameter\: stdClass\.$#'
+			identifier: parameter.phpDocType
+			count: 1
+			path: src/API/EarningsController.php
+
+		-
+			message: '#^Parameter \#2 \$user_id of function get_the_author_meta expects int\|false, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/API/FavoritesController.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, array\<array\<string, int\|string\>\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/API/OrdersController.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/API/PaymentController.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:mark_as_paid\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/API/PaymentController.php
+
+		-
+			message: '#^Parameter \#2 \$value of method WP_HTTP_Response\:\:header\(\) expects string, float given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/API/RestController.php
+
+		-
+			message: '#^Parameter \#2 \$value of method WP_HTTP_Response\:\:header\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/API/RestController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between '''' and non\-falsy\-string will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/API/RestController.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<array\{id\: mixed, name\: mixed, description\: mixed, price\: float, delivery_days\: mixed, revisions\: mixed, features\: array\}\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/API/ServicesController.php
+
+		-
+			message: '#^Parameter \#2 \$user_id of function get_the_author_meta expects int\|false, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/API/ServicesController.php
+
+		-
+			message: '#^Call to function is_wp_error\(\) with true will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/Admin/Admin.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Admin/Admin.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''resolved'' and mixed~\(''closed''\|''resolved''\) will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Admin/Admin.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Database\\Repositories\\ConversationRepository\:\:get_messages\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Admin/Metaboxes/OrderMetabox.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Database\\Repositories\\DeliveryRepository\:\:find_by_order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Admin/Metaboxes/OrderMetabox.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 7
+			path: src/Admin/Metaboxes/OrderMetabox.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Admin/Metaboxes/OrderMetabox.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 7
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, float given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Admin/Pages/ManualOrderPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Admin/Pages/ManualOrderPage.php
+
+		-
+			message: '#^Offset ''approved''\|''pending''\|''rejected'' on array\{approved\: ''publish'', rejected\: ''draft'', pending\: ''pending''\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, \(float\|int\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\UpgradePage\:\:get_features\(\) should return array\<string, array\<string, mixed\>\> but returns array\<string, list\<array\<string, bool\|string\>\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Admin/Pages/UpgradePage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, \(float\|int\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 5
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<min, \-1\>\|int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, float given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int given\.$#'
+			identifier: argument.type
+			count: 5
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int\<1, 5\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Property WPSellServices\\Admin\\Pages\\VendorsPage\:\:\$order_repo is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Expected 0 @param tags, found 1\.$#'
+			identifier: paramTag.count
+			count: 2
+			path: src/Admin/Settings.php
+
+		-
+			message: '#^Parameter \#1 \$args of method WP_List_Table\:\:set_pagination_args\(\) expects array\{total_items\?\: int, total_pages\?\: int, per_page\?\: int\}, array\{total_items\: int, per_page\: 20, total_pages\: float\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Admin/Tables/DisputesListTable.php
+
+		-
+			message: '#^Parameter \#1 \$args of method WP_List_Table\:\:set_pagination_args\(\) expects array\{total_items\?\: int, total_pages\?\: int, per_page\?\: int\}, array\{total_items\: int, per_page\: 20, total_pages\: float\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Admin/Tables/OrdersListTable.php
+
+		-
+			message: '#^Path in include\(\) "/Users/varundubey/Local Sites/wss/app/public/wp\-content/plugins/wp\-sell\-services/assets/js/blocks\.asset\.php" is not a file or it does not exist\.$#'
+			identifier: include.fileNotFound
+			count: 1
+			path: src/Blocks/BlocksManager.php
+
+		-
+			message: '#^Parameter \#3 \$number of function _n expects int, float given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Blocks/SellerCard.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Blocks/ServiceSearch.php
+
+		-
+			message: '#^Call to WP_CLI\:\:confirm\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Call to WP_CLI\:\:error\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Call to WP_CLI\:\:log\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 18
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Call to WP_CLI\:\:success\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 4
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Call to WP_CLI\:\:warning\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Call to an undefined static method WP_CLI\:\:add_command\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Function WP_CLI\\Utils\\format_items not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Function WP_CLI\\Utils\\make_progress_bar not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:create_service\(\) never returns WP_Error so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Call to WP_CLI\:\:error\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 3
+			path: src/CLI/ValidateCommand.php
+
+		-
+			message: '#^Call to WP_CLI\:\:success\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 2
+			path: src/CLI/ValidateCommand.php
+
+		-
+			message: '#^Call to WP_CLI\:\:warning\(\) on a separate line has no effect\.$#'
+			identifier: staticMethod.resultUnused
+			count: 2
+			path: src/CLI/ValidateCommand.php
+
+		-
+			message: '#^Call to an undefined static method WP_CLI\:\:colorize\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 10
+			path: src/CLI/ValidateCommand.php
+
+		-
+			message: '#^Call to an undefined static method WP_CLI\:\:line\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 22
+			path: src/CLI/ValidateCommand.php
+
+		-
+			message: '#^Static method WP_CLI\:\:error\(\) invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: src/CLI/ValidateCommand.php
+
+		-
+			message: '#^Constant DB_NAME not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: src/Core/SchemaValidator.php
+
+		-
+			message: '#^Property WPSellServices\\Core\\SchemaValidator\:\:\$model_mappings \(array\<string, array\{table\: string, mappings\: array\<string, string\>\}\>\) does not accept default value of type array\{WPSellServices\\Models\\ServiceOrder\: array\{table\: ''orders'', mappings\: array\{\}\}, WPSellServices\\Models\\VendorProfile\: array\{table\: ''vendor_profiles'', mappings\: array\{title\: ''tagline'', cover_id\: ''cover_image_id'', response_time\: ''response_time_hours'', delivery_rate\: ''on_time_delivery…'', tier\: ''verification_tier'', rating\: ''avg_rating'', review_count\: ''total_reviews''\}\}, WPSellServices\\Models\\Service\: array\{table\: ''services'', is_cpt\: true\}, WPSellServices\\Models\\Conversation\: array\{table\: ''conversations'', mappings\: array\{\}\}, WPSellServices\\Models\\Dispute\: array\{table\: ''disputes'', mappings\: array\{\}\}, WPSellServices\\Models\\Review\: array\{table\: ''reviews'', mappings\: array\{\}\}\}\.$#'
+			identifier: property.defaultValue
+			count: 1
+			path: src/Core/SchemaValidator.php
+
+		-
+			message: '#^Property WPSellServices\\Core\\SchemaValidator\:\:\$schema is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Core/SchemaValidator.php
+
+		-
+			message: '#^Instantiated class EDD_SL_Plugin_Updater not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Core/Updater.php
+
+		-
+			message: '#^Function wc_get_order_item_meta not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: src/Database/MigrationManager.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:find_by_id\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Database/Repositories/DisputeRepository.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:find_by_id\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Database/Repositories/ExtensionRequestRepository.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Frontend/AjaxHandlers.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Frontend/AjaxHandlers.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Frontend/AjaxHandlers.php
+
+		-
+			message: '#^Result of function wpss_get_template_part \(void\) is used\.$#'
+			identifier: function.void
+			count: 1
+			path: src/Frontend/AjaxHandlers.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 11
+			path: src/Frontend/AjaxHandlers.php
+
+		-
+			message: '#^Call to function is_wp_error\(\) with list will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/Frontend/ServiceArchiveView.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<1, 4\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Frontend/ServiceArchiveView.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Frontend/ServiceArchiveView.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Frontend/ServiceArchiveView.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:render_service_limit_notice\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<0, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Property WPSellServices\\Frontend\\ServiceWizard\:\:\$service_manager is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Services\\VendorService\:\:get_all\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Services\\VendorService\:\:get_vendor_profile\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Frontend/SingleServiceView.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<2, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Frontend/SingleServiceView.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Frontend/SingleServiceView.php
+
+		-
+			message: '#^Property WPSellServices\\Frontend\\SingleServiceView\:\:\$service \(WPSellServices\\Models\\Service\|null\) is never assigned WPSellServices\\Models\\Service so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Frontend/SingleServiceView.php
+
+		-
+			message: '#^Property WPSellServices\\Frontend\\SingleServiceView\:\:\$service is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Frontend/SingleServiceView.php
+
+		-
+			message: '#^Call to function is_array\(\) with non\-empty\-array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
+			message: '#^Anonymous function has an unused use \$user\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: src/Frontend/UnifiedDashboard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\UnifiedDashboard\:\:can_access_section\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Frontend/UnifiedDashboard.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Frontend/UnifiedDashboard.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_orders_from_cart\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:mark_as_paid\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 20
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_orders_from_cart\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:mark_as_paid\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 14
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_order\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_orders_from_cart\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:mark_as_paid\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 19
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Access to an undefined property WP_Post\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Access to an undefined property WP_Post\:\:\$thumbnail_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Access to an undefined property WP_Post\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Models\\VendorProfile\:\:get_stats\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Call to an undefined method WP_Post\:\:get_starting_price\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Call to an undefined method WP_Post\:\:get_thumbnail_url\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Parameter \#2 \$args of function wpss_get_user_orders expects array, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Parameter \#2 \$args of function wpss_get_vendor_orders expects array, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:build_proposal_service_placeholder\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, float given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 6
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, float given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, float\|int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_html expects string, int\<2, max\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Variable \$addons_total on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneOrderProvider.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_order\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_orders_from_cart\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:mark_as_paid\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 16
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Offset ''price'' on array\{id\: int, name\: string, price\: float\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Models/ServiceItem.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/SEO/SchemaMarkup.php
+
+		-
+			message: '#^While loop condition is always true\.$#'
+			identifier: while.alwaysTrue
+			count: 1
+			path: src/SEO/SchemaMarkup.php
+
+		-
+			message: '#^Access to an undefined property WPSellServices\\SEO\\ServiceSchemaPiece\:\:\$context\.$#'
+			identifier: property.notFound
+			count: 7
+			path: src/SEO/ServiceSchemaPiece.php
+
+		-
+			message: '#^Class WPSellServices\\SEO\\ServiceSchemaPiece does not have a constructor and must be instantiated without any parameters\.$#'
+			identifier: new.noConstructor
+			count: 1
+			path: src/SEO/YoastIntegration.php
+
+		-
+			message: '#^@param array \$proposal does not accept actual type of parameter\: object\.$#'
+			identifier: parameter.phpDocType
+			count: 1
+			path: src/Services/BuyerRequestService.php
+
+		-
+			message: '#^Property WPSellServices\\Services\\DisputeService\:\:\$messages_table is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Services/DisputeService.php
+
+		-
+			message: '#^Cannot access property \$content on array\<string, mixed\>\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Cannot access property \$created_at on array\<string, mixed\>\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Cannot access property \$description on array\<string, mixed\>\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Cannot access property \$type on array\<string, mixed\>\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Cannot access property \$user_id on array\<string, mixed\>\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Parameter \#1 \$array of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Action callback returns bool but should not return anything\.$#'
+			identifier: return.void
+			count: 8
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Property WPSellServices\\Models\\ServiceOrder\:\:\$revisions_included \(int\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Property WPSellServices\\Models\\ServiceOrder\:\:\$revisions_used \(int\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:send\(\) invoked with 5 parameters, 2\-3 required\.$#'
+			identifier: arguments.count
+			count: 3
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Parameter \#3 \$data of method WPSellServices\\Services\\NotificationService\:\:send\(\) expects array, string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Services/FAQService.php
+
+		-
+			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Property WPSellServices\\Services\\GalleryService\:\:\$allowed_image_types is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Match arm comparison between ''due_date'' and ''due_date'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: src/Services/MilestoneService.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''dispute_opened'' \(self\:\:TYPE_DISPUTE_OPENED, ''dispute_opened''\)\.$#'
+			identifier: array.duplicateKey
+			count: 2
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''dispute_resolved'' \(self\:\:TYPE_DISPUTE_RESOLVED, ''dispute_resolved''\)\.$#'
+			identifier: array.duplicateKey
+			count: 2
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''order_created'' \(self\:\:TYPE_ORDER_CREATED, ''order_created''\)\.$#'
+			identifier: array.duplicateKey
+			count: 2
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''revision_requested'' \(self\:\:TYPE_REVISION_REQUESTED, ''revision_requested''\)\.$#'
+			identifier: array.duplicateKey
+			count: 2
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:send\(\) should return int\|false but returns null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Result of method WPSellServices\\Services\\NotificationService\:\:notify_dispute_resolved\(\) \(void\) is used\.$#'
+			identifier: method.void
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between '''' and float will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/Services/OrderWorkflowManager.php
+
+		-
+			message: '#^Property WPSellServices\\Services\\RequirementsService\:\:\$validator is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Call to function is_string\(\) with DateTimeImmutable will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/Services/ReviewService.php
+
+		-
+			message: '#^Dead catch \- Exception is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 1
+			path: src/Services/ReviewService.php
+
+		-
+			message: '#^Instanceof between DateTimeImmutable and DateTimeImmutable will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Services/ReviewService.php
+
+		-
+			message: '#^Parameter \#3 \$number of function _n expects int, float given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Services/VendorService.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 2
+			path: src/functions.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\CheckoutProviderInterface\:\:get_checkout_url\(\) invoked with 0 parameters, 1\-2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$tab$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Parameter \#1 \$search of function str_replace expects array\<string\>\|string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/functions.php

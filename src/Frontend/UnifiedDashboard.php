@@ -78,9 +78,16 @@ class UnifiedDashboard {
 		if ( is_user_logged_in() ) {
 			// Grant upload_files capability temporarily for non-vendor users on the dashboard
 			// so customers can upload profile images via the WP Media Library.
+			// Uses a filter instead of $user->add_cap() to avoid persisting to the database.
 			$user = wp_get_current_user();
 			if ( $user->exists() && ! $user->has_cap( 'upload_files' ) ) {
-				$user->add_cap( 'upload_files' );
+				add_filter(
+					'user_has_cap',
+					static function ( array $allcaps ) use ( $user ): array {
+						$allcaps['upload_files'] = true;
+						return $allcaps;
+					}
+				);
 			}
 			wp_enqueue_media();
 		}
