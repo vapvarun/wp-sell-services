@@ -340,7 +340,16 @@ class AuthController extends RestController {
 			update_user_meta( $user_id, '_wpss_vendor_status', 'pending' );
 		}
 
-		$user     = get_user_by( 'ID', $user_id );
+		$user = get_user_by( 'ID', $user_id );
+
+		if ( ! $user ) {
+			return new \WP_Error(
+				'user_lookup_failed',
+				__( 'Account created but user lookup failed. Please log in.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
 		$app_pass = $this->create_app_password( $user, 'WPSS Mobile App' );
 
 		if ( is_wp_error( $app_pass ) ) {

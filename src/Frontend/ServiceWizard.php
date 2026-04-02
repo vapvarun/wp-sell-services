@@ -68,7 +68,6 @@ class ServiceWizard {
 	public function __construct() {
 		$this->vendor_service  = new VendorService();
 		$this->service_manager = new ServiceManager();
-		$this->init_limits();
 	}
 
 	/**
@@ -205,6 +204,9 @@ class ServiceWizard {
 	 * @return array Limits array.
 	 */
 	public function get_limits(): array {
+		if ( empty( $this->limits ) ) {
+			$this->init_limits();
+		}
 		return $this->limits;
 	}
 
@@ -215,6 +217,9 @@ class ServiceWizard {
 	 * @return mixed Limit value or null if not found.
 	 */
 	public function get_limit( string $key ) {
+		if ( empty( $this->limits ) ) {
+			$this->init_limits();
+		}
 		return $this->limits[ $key ] ?? null;
 	}
 
@@ -225,6 +230,9 @@ class ServiceWizard {
 	 * @return bool Whether feature is enabled.
 	 */
 	public function is_feature_enabled( string $feature ): bool {
+		if ( empty( $this->limits ) ) {
+			$this->init_limits();
+		}
 		return ! empty( $this->limits['features'][ $feature ] );
 	}
 
@@ -1283,7 +1291,7 @@ class ServiceWizard {
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
 				'currencySymbol' => wpss_get_currency_symbol(),
-				'limits'         => $this->limits,
+				'limits'         => $this->get_limits(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
 					'saving'             => __( 'Saving...', 'wp-sell-services' ),
@@ -1805,7 +1813,7 @@ class ServiceWizard {
 	 * @return array Sanitized requirements.
 	 */
 	private function sanitize_requirements( array $requirements ): array {
-		$max = $this->limits['max_requirements'];
+		$max = $this->get_limit( 'max_requirements' );
 		if ( -1 !== $max ) {
 			$requirements = array_slice( $requirements, 0, $max );
 		}
@@ -1835,7 +1843,7 @@ class ServiceWizard {
 	 * @return array Sanitized extras.
 	 */
 	private function sanitize_extras( array $extras ): array {
-		$max = $this->limits['max_extras'];
+		$max = $this->get_limit( 'max_extras' );
 		if ( -1 !== $max ) {
 			$extras = array_slice( $extras, 0, $max );
 		}
@@ -1865,7 +1873,7 @@ class ServiceWizard {
 	 * @return array Sanitized FAQs.
 	 */
 	private function sanitize_faqs( array $faqs ): array {
-		$max = $this->limits['max_faq'];
+		$max = $this->get_limit( 'max_faq' );
 		if ( -1 !== $max ) {
 			$faqs = array_slice( $faqs, 0, $max );
 		}

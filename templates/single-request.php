@@ -414,11 +414,13 @@ do_action( 'wpss_before_single_request', $request_id );
 								</span>
 								<span class="wpss-buyer-member-since">
 									<?php
-									printf(
-										/* translators: %s: date when user registered */
-										esc_html__( 'Member since %s', 'wp-sell-services' ),
-										esc_html( date_i18n( 'M Y', strtotime( $buyer->user_registered ) ) )
-									);
+									if ( $buyer ) :
+										printf(
+											/* translators: %s: date when user registered */
+											esc_html__( 'Member since %s', 'wp-sell-services' ),
+											esc_html( date_i18n( 'M Y', strtotime( $buyer->user_registered ) ) )
+										);
+									endif;
 									?>
 								</span>
 							</div>
