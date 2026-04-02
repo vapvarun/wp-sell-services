@@ -253,16 +253,20 @@ class UpgradePage {
 	 */
 	public function render(): void {
 		$features    = $this->get_features();
-		$upgrade_url = 'https://wbcomdesigns.com/downloads/wp-sell-services-pro/';
+		$upgrade_url = 'https://store.wbcomdesigns.com/wp-sell-services-pro/';
+		$docs_url    = 'https://store.wbcomdesigns.com/wp-sell-services/docs/';
 		?>
 		<div class="wrap wpss-upgrade-wrap">
 			<div class="wpss-upgrade-header">
 				<h1><?php esc_html_e( 'Upgrade to WP Sell Services Pro', 'wp-sell-services' ); ?></h1>
 				<p class="wpss-upgrade-tagline">
-					<?php esc_html_e( 'Unlock additional e-commerce platforms, direct payment gateways, cloud storage, advanced analytics, and priority support.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Unlock WooCommerce checkout, vendor analytics, cloud storage, automated payouts, and more.', 'wp-sell-services' ); ?>
 				</p>
 				<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Get Pro Now', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
+				</a>
+				<a href="<?php echo esc_url( $docs_url ); ?>" style="display:inline-block;margin-top:10px;color:#646970;font-size:13px;text-decoration:underline;" target="_blank" rel="noopener noreferrer">
+					<?php esc_html_e( 'Read the Documentation', 'wp-sell-services' ); ?>
 				</a>
 			</div>
 
@@ -292,10 +296,10 @@ class UpgradePage {
 
 			<div class="wpss-upgrade-footer">
 				<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Get Pro Now', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
 				</a>
 				<p class="wpss-upgrade-guarantee">
-					<?php esc_html_e( '14-day money-back guarantee. Cancel anytime.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
 				</p>
 			</div>
 		</div>

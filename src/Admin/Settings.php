@@ -1153,6 +1153,19 @@ class Settings {
 					<?php endforeach; ?>
 				</div>
 			<?php endforeach; ?>
+
+			<div class="wpss-settings-nav-group" style="margin-top:auto;padding-top:12px;border-top:1px solid var(--wpss-admin-border);">
+				<a class="wpss-settings-nav-item" href="https://store.wbcomdesigns.com/wp-sell-services/docs/" target="_blank" rel="noopener noreferrer" style="color:var(--wpss-admin-text-light);">
+					<i data-lucide="book-open"></i>
+					<?php esc_html_e( 'Documentation', 'wp-sell-services' ); ?>
+				</a>
+				<?php if ( ! defined( 'WPSS_PRO_VERSION' ) ) : ?>
+					<a class="wpss-settings-nav-item" href="https://store.wbcomdesigns.com/wp-sell-services-pro/" target="_blank" rel="noopener noreferrer" style="color:#EA580C;font-weight:600;">
+						<i data-lucide="zap"></i>
+						<?php esc_html_e( 'Get Pro', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+			</div>
 		</div>
 		<?php
 	}
