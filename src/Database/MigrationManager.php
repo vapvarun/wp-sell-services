@@ -66,18 +66,26 @@ class MigrationManager {
 	 * @return bool True if migration needed.
 	 */
 	public function should_migrate_from_wss(): bool {
-		// Check if old plugin data exists.
-		$old_conversations = $this->wpdb->get_var(
-			"SELECT COUNT(*) FROM {$this->wpdb->prefix}wss_conversations"
-		);
-
-		if ( null !== $old_conversations && (int) $old_conversations > 0 ) {
-			// Check if already migrated.
-			$migrated = get_option( 'wpss_migrated_from_wss', false );
-			return ! $migrated;
+		// Already migrated — skip entirely.
+		if ( get_option( 'wpss_migrated_from_wss', false ) ) {
+			return false;
 		}
 
-		return false;
+		// Check if the old woo-sell-services table exists before querying it.
+		$old_table = $this->wpdb->prefix . 'wss_conversations';
+		$table_exists = $this->wpdb->get_var(
+			$this->wpdb->prepare( 'SHOW TABLES LIKE %s', $old_table )
+		);
+
+		if ( ! $table_exists ) {
+			return false;
+		}
+
+		$old_count = (int) $this->wpdb->get_var(
+			"SELECT COUNT(*) FROM {$old_table}" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is safe.
+		);
+
+		return $old_count > 0;
 	}
 
 	/**

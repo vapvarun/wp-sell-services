@@ -14,7 +14,6 @@ namespace WPSellServices\Core;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Database\SchemaManager;
-use WPSellServices\Database\MigrationManager;
 
 /**
  * Fired during plugin activation.
@@ -26,20 +25,35 @@ use WPSellServices\Database\MigrationManager;
 class Activator {
 
 	/**
-	 * Run activation tasks.
+	 * Run activation tasks (called from register_activation_hook).
 	 *
 	 * @return void
 	 */
 	public static function activate(): void {
 		self::check_dependencies();
-		self::create_tables();
-		self::run_migrations();
-		self::create_roles();
-		self::set_default_options();
+		self::install();
 		self::create_pages();
-		self::create_wc_carrier_product();
 		self::schedule_cron_events();
 		self::flush_rewrite_rules();
+	}
+
+	/**
+	 * Run install/upgrade tasks safe for plugins_loaded.
+	 *
+	 * Handles DB schema, migrations, roles, and default options.
+	 * Does NOT call create_pages() — that requires $wp_rewrite (available on init).
+	 * Does NOT flush rewrite rules — that also requires init.
+	 *
+	 * Called from Plugin::maybe_run_install() on version change, and
+	 * from activate() on first activation.
+	 *
+	 * @since 1.3.0
+	 * @return void
+	 */
+	public static function install(): void {
+		self::create_tables();
+		self::create_roles();
+		self::set_default_options();
 	}
 
 	/**
@@ -61,22 +75,6 @@ class Activator {
 	private static function create_tables(): void {
 		$schema = new SchemaManager();
 		$schema->install();
-	}
-
-	/**
-	 * Run database migrations.
-	 *
-	 * Handles migration from woo-sell-services if needed.
-	 *
-	 * @return void
-	 */
-	private static function run_migrations(): void {
-		$schema    = new SchemaManager();
-		$migration = new MigrationManager( $schema );
-
-		if ( $migration->should_migrate_from_wss() ) {
-			$migration->run_migrations();
-		}
 	}
 
 	/**
@@ -211,9 +209,17 @@ class Activator {
 			),
 		);
 
-		foreach ( $defaults as $option_name => $option_value ) {
-			if ( false === get_option( $option_name ) ) {
-				add_option( $option_name, $option_value );
+		foreach ( $defaults as $option_name => $default_values ) {
+			$current = get_option( $option_name, false );
+			if ( false === $current ) {
+				// Fresh install — set all defaults.
+				add_option( $option_name, $default_values );
+			} elseif ( is_array( $current ) ) {
+				// Upgrade — backfill any new keys without overwriting existing values.
+				$merged = array_merge( $default_values, $current );
+				if ( $merged !== $current ) {
+					update_option( $option_name, $merged );
+				}
 			}
 		}
 
@@ -265,7 +271,7 @@ class Activator {
 	 * @since 1.5.0
 	 * @return void
 	 */
-	private static function create_pages(): void {
+	public static function create_pages(): void {
 		$pages = array(
 			'services_page' => array(
 				'title'     => __( 'Services', 'wp-sell-services' ),

@@ -224,10 +224,7 @@ final class Plugin {
 	 */
 	public function init(): void {
 		$this->init_updater();
-		$this->maybe_upgrade_database();
-		$this->maybe_create_vendor_role();
-		$this->maybe_backfill_default_settings();
-		$this->maybe_create_missing_pages();
+		$this->maybe_run_install();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
 		$this->define_avatar_filter();
@@ -278,183 +275,48 @@ final class Plugin {
 	}
 
 	/**
-	 * Check and upgrade database if needed.
+	 * Run install/upgrade routine when plugin version changes.
 	 *
-	 * This ensures database tables are updated when the plugin is updated
-	 * without deactivation/reactivation (e.g., via zip upload).
+	 * Compares the stored plugin version against the code version (WPSS_VERSION).
+	 * When they differ — fresh install, zip-upload update, or git pull — runs
+	 * the Activator which handles DB schema, roles, and default settings.
 	 *
-	 * @since 1.2.0
+	 * Page creation and rewrite flush are deferred to the `init` action because
+	 * they require $wp_rewrite which is not available on plugins_loaded.
+	 *
+	 * Follows the WooCommerce check_version() / install() pattern: heavy setup
+	 * work runs only on version change, not on every request.
+	 *
+	 * @since 1.3.0
 	 * @return void
 	 */
-	private function maybe_upgrade_database(): void {
-		$schema = new SchemaManager();
-		if ( $schema->needs_update() ) {
-			$schema->install();
-		}
-	}
+	private function maybe_run_install(): void {
+		$installed_version = get_option( 'wpss_version', '' );
 
-	/**
-	 * Ensure the vendor role exists.
-	 *
-	 * This handles existing installations where the role was never created
-	 * during activation (bug fix for vendor registration errors).
-	 *
-	 * @since 1.2.0
-	 * @return void
-	 */
-	private function maybe_create_vendor_role(): void {
-		// Vendor capabilities.
-		$vendor_caps = array(
-			'wpss_vendor'              => true,
-			'wpss_manage_services'     => true,
-			'wpss_manage_orders'       => true,
-			'wpss_view_analytics'      => true,
-			'wpss_respond_to_requests' => true,
-			'read'                     => true,
-			'upload_files'             => true,
-			'edit_posts'               => true,
-		);
+		if ( version_compare( $installed_version, WPSS_VERSION, '<' ) ) {
+			// DB, roles, settings — safe on plugins_loaded.
+			Activator::install();
 
-		$role = get_role( 'wpss_vendor' );
+			// Page creation needs $wp_rewrite — defer to init.
+			add_action(
+				'init',
+				static function () use ( $installed_version ): void {
+					Activator::create_pages();
+					flush_rewrite_rules();
 
-		if ( ! $role ) {
-			add_role( 'wpss_vendor', 'Vendor', $vendor_caps );
-			return;
-		}
-
-		// Ensure existing role has all required capabilities.
-		foreach ( $vendor_caps as $cap => $grant ) {
-			if ( ! $role->has_cap( $cap ) ) {
-				$role->add_cap( $cap, $grant );
-			}
-		}
-	}
-
-	/**
-	 * Backfill default settings keys added in newer versions.
-	 *
-	 * Ensures existing installs get new setting keys with sensible defaults
-	 * without overwriting any values the admin has already configured.
-	 *
-	 * @return void
-	 */
-	private function maybe_backfill_default_settings(): void {
-		$defaults = array(
-			'wpss_general'       => array(
-				'platform_name'      => get_bloginfo( 'name' ),
-				'currency'           => 'USD',
-				'ecommerce_platform' => 'auto',
-			),
-			'wpss_commission'    => array(
-				'commission_rate'     => 10,
-				'enable_vendor_rates' => true,
-			),
-			'wpss_payouts'       => array(
-				'min_withdrawal'            => 25,
-				'clearance_days'            => 14,
-				'auto_withdrawal_enabled'   => false,
-				'auto_withdrawal_threshold' => 500,
-				'auto_withdrawal_schedule'  => 'monthly',
-			),
-			'wpss_tax'           => array(
-				'enable_tax'    => false,
-				'tax_label'     => 'Tax',
-				'tax_rate'      => 0,
-				'tax_included'  => false,
-				'tax_on_commission' => false,
-			),
-			'wpss_vendor'        => array(
-				'vendor_registration'        => 'open',
-				'max_services_per_vendor'    => 20,
-				'require_verification'       => false,
-				'require_service_moderation' => true,
-			),
-			'wpss_orders'        => array(
-				'auto_complete_days'        => 3,
-				'allow_disputes'            => true,
-				'dispute_window_days'       => 14,
-				'auto_dispute_late_days'    => 3,
-				'requirements_timeout_days' => 7,
-			),
-			'wpss_notifications' => array(
-				'notify_new_order'              => true,
-				'notify_order_completed'        => true,
-				'notify_order_cancelled'        => true,
-				'notify_cancellation_requested' => true,
-				'notify_delivery_submitted'     => true,
-				'notify_revision_requested'     => true,
-				'notify_new_message'            => true,
-				'notify_vendor_contact'         => true,
-				'notify_new_review'             => true,
-				'notify_dispute_opened'         => true,
-				'notify_withdrawal_requested'   => true,
-				'notify_withdrawal_approved'    => true,
-				'notify_withdrawal_rejected'    => true,
-				'notify_proposal_submitted'     => true,
-				'notify_proposal_accepted'      => true,
-				'notify_moderation'             => true,
-			),
-			'wpss_advanced'      => array(
-				'delete_data_on_uninstall' => false,
-				'enable_debug_mode'        => false,
-			),
-		);
-
-		foreach ( $defaults as $option_name => $default_values ) {
-			$current = get_option( $option_name, array() );
-			if ( ! is_array( $current ) ) {
-				$current = array();
-			}
-
-			$merged = array_merge( $default_values, $current );
-			if ( $merged !== $current ) {
-				update_option( $option_name, $merged );
-			}
-		}
-	}
-
-	/**
-	 * Create any missing pages that were added in newer versions.
-	 *
-	 * Runs on every init to handle upgrades from versions that didn't
-	 * include all required pages (e.g., cart page added after initial release).
-	 *
-	 * @return void
-	 */
-	private function maybe_create_missing_pages(): void {
-		$required_pages = array(
-			'services_page' => array( 'Services', '[wpss_services]' ),
-			'dashboard'     => array( 'Dashboard', '[wpss_dashboard]' ),
-			'become_vendor' => array( 'Become a Vendor', '[wpss_vendor_registration]' ),
-			'checkout'      => array( 'Service Checkout', '[wpss_checkout]' ),
-			'cart'          => array( 'Cart', '[wpss_cart]' ),
-		);
-
-		$saved = get_option( 'wpss_pages', array() );
-		$changed = false;
-
-		foreach ( $required_pages as $key => $page_data ) {
-			if ( ! empty( $saved[ $key ] ) && get_post( $saved[ $key ] ) ) {
-				continue;
-			}
-
-			$page_id = wp_insert_post(
-				array(
-					'post_title'   => $page_data[0],
-					'post_content' => $page_data[1],
-					'post_status'  => 'publish',
-					'post_type'    => 'page',
-				)
+					/**
+					 * Fires after the plugin has been installed or upgraded.
+					 *
+					 * @since 1.3.0
+					 * @param string $installed_version Previous version (empty on fresh install).
+					 * @param string $new_version       Current code version.
+					 */
+					do_action( 'wpss_updated', $installed_version, WPSS_VERSION );
+				},
+				5
 			);
 
-			if ( $page_id && ! is_wp_error( $page_id ) ) {
-				$saved[ $key ] = $page_id;
-				$changed       = true;
-			}
-		}
-
-		if ( $changed ) {
-			update_option( 'wpss_pages', $saved );
+			update_option( 'wpss_version', WPSS_VERSION );
 		}
 	}
 
