@@ -119,7 +119,7 @@ The transition from buyer request to active order is seamless. When you accept a
 - A conversation thread is created so you and the vendor can communicate
 - The standard order workflow takes over from there
 
-For details on what happens next, see the [Order Workflow](../order-management/order-workflow.md) guide.
+For details on what happens next, see the [Order Workflow](../order-management/order-lifecycle.md) guide.
 
 ---
 

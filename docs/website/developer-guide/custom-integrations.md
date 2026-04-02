@@ -253,5 +253,5 @@ The `wpss_vendor` role includes: `wpss_vendor`, `wpss_manage_services`, `wpss_ma
 ## Related Documentation
 
 - [Hooks and Filters](hooks-filters.md) - Complete hooks reference with file locations
-- [REST API](rest-api.md) - API endpoints and authentication
+- [REST API](rest-api-overview.md) - API endpoints and authentication
 - [Theme Integration](theme-integration.md) - Template overrides and styling

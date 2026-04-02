@@ -325,4 +325,4 @@ All URL slugs are filterable to avoid conflicts with other plugins. After changi
 
 - [Hooks and Filters](hooks-filters.md) - Complete hooks reference with parameters
 - [Custom Integrations](custom-integrations.md) - Building adapters and extending the API
-- [REST API](rest-api.md) - API endpoints for frontend integration
+- [REST API](rest-api-overview.md) - API endpoints for frontend integration

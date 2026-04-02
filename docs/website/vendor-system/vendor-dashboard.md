@@ -89,4 +89,4 @@ The dashboard is fully responsive:
 - [Vendor Profile & Portfolio](vendor-profile-portfolio.md)
 - [Seller Levels](seller-levels.md)
 - [Order Lifecycle](../order-management/order-lifecycle.md)
-- [Earnings & Withdrawals](../earnings-wallet/earnings-dashboard-wpss.md)
+- [Earnings & Withdrawals](../earnings-wallet/earnings-dashboard.md)

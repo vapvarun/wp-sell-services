@@ -72,7 +72,7 @@ If your marketplace requires approval, here are tips for applicants:
 
 1. [Set up your vendor profile](vendor-profile-portfolio.md) -- Add your photo, bio, and portfolio.
 2. [Explore the vendor dashboard](vendor-dashboard.md) -- Learn where everything is.
-3. [Create your first service](../service-creation/service-creation-wizard.md) -- Start selling.
+3. [Create your first service](../service-creation/service-wizard.md) -- Start selling.
 4. [Learn about seller levels](seller-levels.md) -- Understand how to advance.
 
 ## Related Documentation

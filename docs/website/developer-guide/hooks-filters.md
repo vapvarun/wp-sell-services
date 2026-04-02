@@ -650,6 +650,6 @@ These hooks are fired exclusively by the Pro plugin and require an active Pro li
 
 ## Related Documentation
 
-- [REST API Reference](rest-api.md) - API endpoints and authentication
+- [REST API Reference](rest-api-overview.md) - API endpoints and authentication
 - [Custom Integrations](custom-integrations.md) - Building custom adapters and gateways
 - [Theme Integration](theme-integration.md) - Template overrides and styling
