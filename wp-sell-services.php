@@ -372,12 +372,13 @@ add_action(
 	function ( $registry ) {
 		$registry->register(
 			array(
-				'id'      => 'wp-sell-services',
-				'url'     => 'https://wbcomdesigns.com',
-				'item_id' => 1660955,
-				'version' => WPSS_VERSION,
-				'file'    => WPSS_PLUGIN_FILE,
-				'license' => 'wbcomfree3c8a1f7e5d2b9a4c6e0f1d8b7a2c9e66',
+				'id'          => 'wp-sell-services',
+				'url'         => 'https://wbcomdesigns.com',
+				'item_id'     => 1660955,
+				'version'     => WPSS_VERSION,
+				'file'        => WPSS_PLUGIN_FILE,
+				'license'     => 'wbcomfree3c8a1f7e5d2b9a4c6e0f1d8b7a2c9e66',
+				'option_name' => 'wpss_license_key',
 			)
 		);
 	}
