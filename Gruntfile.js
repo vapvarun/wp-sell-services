@@ -140,6 +140,10 @@ module.exports = function ( grunt ) {
 							'!CLAUDE.md',
 							'!REST_API_MAPPING.md',
 							'!SCOPE.md',
+							'!phpstan.neon',
+							'!phpstan-baseline.neon',
+							'!phpstan-bootstrap.php',
+							'!plans/**',
 
 							// Exclude dev vendor packages.
 							'!vendor/bin/**',
@@ -155,6 +159,9 @@ module.exports = function ( grunt ) {
 							'!vendor/nikic/**',
 							'!vendor/phar-io/**',
 							'!vendor/theseer/**',
+							'!vendor/phpstan/**',
+							'!vendor/szepeviktor/**',
+							'!vendor/php-stubs/**',
 
 							// Exclude OS files.
 							'!.DS_Store',
