@@ -250,7 +250,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
-= 1.0.0 =
+= 1.0.0 - 2026-04-02 =
 
 **Marketplace Core**
 
