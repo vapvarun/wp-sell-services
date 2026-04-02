@@ -36,9 +36,46 @@
       ]
     },
     {
+      "name": "Buyer Guide",
+      "slug": "buyer-guide-wpss",
+      "order": 2,
+      "docs": [
+        {
+          "title": "How to Find and Purchase a Service",
+          "slug": "browsing-and-purchasing-wpss",
+          "file": "buyer-guide/browsing-and-purchasing.md",
+          "order": 1
+        },
+        {
+          "title": "Choosing the Right Package",
+          "slug": "choosing-the-right-package-wpss",
+          "file": "buyer-guide/choosing-the-right-package.md",
+          "order": 2
+        },
+        {
+          "title": "Buyer Dashboard",
+          "slug": "buyer-dashboard-wpss",
+          "file": "buyer-guide/buyer-dashboard.md",
+          "order": 3
+        },
+        {
+          "title": "Order Tracking for Buyers",
+          "slug": "buyer-order-tracking-wpss",
+          "file": "buyer-guide/buyer-order-tracking.md",
+          "order": 4
+        },
+        {
+          "title": "Tips for Getting Great Results",
+          "slug": "buyer-tips-best-practices-wpss",
+          "file": "buyer-guide/buyer-tips-best-practices.md",
+          "order": 5
+        }
+      ]
+    },
+    {
       "name": "Service Creation",
       "slug": "service-creation-wpss",
-      "order": 2,
+      "order": 3,
       "docs": [
         {
           "title": "Service Creation Wizard",
@@ -75,13 +112,19 @@
           "slug": "publishing-moderation-wpss",
           "file": "service-creation/publishing-moderation.md",
           "order": 6
+        },
+        {
+          "title": "Managing Services: Edit, Pause & Delete",
+          "slug": "editing-pausing-services-wpss",
+          "file": "service-creation/editing-pausing-services.md",
+          "order": 7
         }
       ]
     },
     {
       "name": "Buyer Requests & Proposals",
       "slug": "buyer-requests-wpss",
-      "order": 3,
+      "order": 4,
       "docs": [
         {
           "title": "Posting a Buyer Request",
@@ -106,7 +149,7 @@
     {
       "name": "Order Management",
       "slug": "order-management-wpss",
-      "order": 4,
+      "order": 5,
       "docs": [
         {
           "title": "Order Lifecycle & 11 Statuses",
@@ -155,7 +198,7 @@
     {
       "name": "Vendor System",
       "slug": "vendor-system-wpss",
-      "order": 5,
+      "order": 6,
       "docs": [
         {
           "title": "Becoming a Vendor (Registration)",
@@ -198,7 +241,7 @@
     {
       "name": "Reviews & Ratings",
       "slug": "reviews-ratings-wpss",
-      "order": 6,
+      "order": 7,
       "docs": [
         {
           "title": "Review System & Star Ratings",
@@ -217,7 +260,7 @@
     {
       "name": "Disputes & Resolution",
       "slug": "disputes-resolution-wpss",
-      "order": 7,
+      "order": 8,
       "docs": [
         {
           "title": "Opening a Dispute",
@@ -242,7 +285,7 @@
     {
       "name": "Payments & Checkout",
       "slug": "payments-checkout-wpss",
-      "order": 8,
+      "order": 9,
       "docs": [
         {
           "title": "WooCommerce Checkout Integration",
@@ -285,7 +328,7 @@
     {
       "name": "Earnings & Wallet",
       "slug": "earnings-wallet-wpss",
-      "order": 9,
+      "order": 10,
       "docs": [
         {
           "title": "Commission System (Global & Per-Vendor)",
@@ -322,7 +365,7 @@
     {
       "name": "Analytics & Reporting",
       "slug": "analytics-reporting-wpss",
-      "order": 10,
+      "order": 11,
       "docs": [
         {
           "title": "Vendor Analytics Dashboard [PRO]",
@@ -347,7 +390,7 @@
     {
       "name": "Notifications & Emails",
       "slug": "notifications-emails-wpss",
-      "order": 11,
+      "order": 12,
       "docs": [
         {
           "title": "11 Email Notification Types",
@@ -372,7 +415,7 @@
     {
       "name": "Cloud Storage",
       "slug": "cloud-storage-wpss",
-      "order": 12,
+      "order": 13,
       "docs": [
         {
           "title": "Cloud Storage Overview [PRO]",
@@ -391,7 +434,7 @@
     {
       "name": "Marketplace Display & SEO",
       "slug": "marketplace-display-wpss",
-      "order": 13,
+      "order": 14,
       "docs": [
         {
           "title": "15+ Shortcodes Reference",
@@ -428,7 +471,7 @@
     {
       "name": "Admin Tools & Moderation",
       "slug": "admin-tools-wpss",
-      "order": 14,
+      "order": 15,
       "docs": [
         {
           "title": "Service Moderation & Approval Queue",
@@ -459,7 +502,7 @@
     {
       "name": "Platform Settings",
       "slug": "platform-settings-wpss",
-      "order": 15,
+      "order": 16,
       "docs": [
         {
           "title": "General Settings (Platform Name, Currency)",
@@ -484,7 +527,7 @@
     {
       "name": "Developer Guide",
       "slug": "developer-guide-wpss",
-      "order": 16,
+      "order": 17,
       "docs": [
         {
           "title": "REST API Overview",
@@ -521,7 +564,7 @@
     {
       "name": "FAQ & Troubleshooting",
       "slug": "faq-wpss",
-      "order": 17,
+      "order": 18,
       "docs": [
         {
           "title": "FAQ & Troubleshooting",

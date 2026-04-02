@@ -78,3 +78,19 @@ Ready to build your marketplace? Here is the path:
 3. **[Compare Free vs Pro](free-vs-pro.md)** -- See everything both versions offer
 
 Your marketplace can be live today.
+
+## Guides by Role
+
+### For Buyers
+- **[How to Find and Purchase a Service](../buyer-guide/browsing-and-purchasing.md)** -- Browse, compare, and buy
+- **[Choosing the Right Package](../buyer-guide/choosing-the-right-package.md)** -- Understand Basic, Standard, and Premium tiers
+- **[Buyer Dashboard](../buyer-guide/buyer-dashboard.md)** -- Manage orders, messages, and requests
+- **[Order Tracking](../buyer-guide/buyer-order-tracking.md)** -- Follow your order from payment to completion
+- **[Tips for Great Results](../buyer-guide/buyer-tips-best-practices.md)** -- Get the most from your orders
+
+### For Vendors
+- **[Becoming a Vendor](../vendor-system/becoming-a-vendor.md)** -- Register and get started
+- **[Create your first service](../service-creation/service-wizard.md)** -- The 6-step service wizard
+- **[Managing Services](../service-creation/editing-pausing-services.md)** -- Edit, pause, and delete services
+- **[Order management](../order-management/order-lifecycle.md)** -- Handle orders from start to finish
+- **[Earnings & Withdrawals](../earnings-wallet/earnings-dashboard.md)** -- Track income and get paid
