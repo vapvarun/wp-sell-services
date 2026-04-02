@@ -25,7 +25,6 @@
 		WPSS.initContactVendor();
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
-		WPSS.initVendorRegistration();
 		WPSS.initRequirementsView();
 		WPSS.portfolioServicesOptions();
 	};
@@ -317,7 +316,6 @@
 			deliver: 'wpss_deliver_order',
 			complete: 'wpss_accept_delivery',
 			cancel: 'wpss_cancel_order',
-			dispute: 'wpss_open_dispute',
 			'accept-cancellation': 'wpss_accept_cancellation',
 			'reject-cancellation': 'wpss_reject_cancellation'
 		};
@@ -1096,7 +1094,7 @@
 		const data = {
 			action: 'wpss_' + action + '_proposal',
 			proposal_id: proposalId,
-			nonce: wpssData.nonce
+			nonce: wpssData.proposalNonce || wpssData.nonce
 		};
 
 		if (reason) {
@@ -1418,56 +1416,6 @@
 		}
 
 		document.body.removeChild(textarea);
-	};
-
-	/**
-	 * Vendor Registration Form.
-	 */
-	WPSS.initVendorRegistration = function() {
-		const $form = $('#wpss-vendor-registration-form');
-
-		if (!$form.length) {
-			return;
-		}
-
-		$form.on('submit', function(e) {
-			e.preventDefault();
-
-			const $btn = $form.find('button[type="submit"]');
-			const originalText = $btn.text();
-
-			// Disable button and show loading.
-			$btn.prop('disabled', true).text(wpssData.i18n?.submitting || 'Submitting...');
-
-			$.ajax({
-				url: wpssData.ajaxUrl,
-				type: 'POST',
-				data: $form.serialize() + '&action=wpss_vendor_registration',
-				success: function(response) {
-					if (response.success) {
-						// Show success message.
-						WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.vendorRegistered) || 'Application submitted successfully!', 'success');
-
-						// Redirect if provided.
-						if (response.data.redirect) {
-							setTimeout(function() {
-								window.location.href = response.data.redirect;
-							}, 1500);
-						} else {
-							// Re-enable button.
-							$btn.prop('disabled', false).text(originalText);
-						}
-					} else {
-						WPSS.showNotification(response.data.message || wpssData.i18n?.error || 'An error occurred.', 'error');
-						$btn.prop('disabled', false).text(originalText);
-					}
-				},
-				error: function() {
-					WPSS.showNotification(wpssData.i18n?.error || 'An error occurred. Please try again.', 'error');
-					$btn.prop('disabled', false).text(originalText);
-				}
-			});
-		});
 	};
 
 	/**

@@ -1233,6 +1233,7 @@ final class Plugin {
 			'wpss_withdrawal_processed'          => array( 'send_withdrawal_status', 10, 3 ),
 			'wpss_proposal_submitted'            => array( 'send_proposal_submitted', 10, 4 ),
 			'wpss_proposal_accepted'             => array( 'send_proposal_accepted', 10, 3 ),
+			'wpss_proposal_rejected'             => array( 'send_proposal_rejected', 10, 3 ),
 		);
 
 		foreach ( $email_hooks as $hook => $config ) {

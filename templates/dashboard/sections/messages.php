@@ -221,7 +221,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					$conv_url = add_query_arg(
 						array(
 							'section'         => 'messages',
-							'conversation_id' => $conversation->conversation_id,
+							'conversation_id' => $conversation->id,
 						),
 						wpss_get_dashboard_url()
 					);

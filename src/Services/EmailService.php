@@ -47,6 +47,7 @@ class EmailService {
 	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
 	public const TYPE_PROPOSAL_SUBMITTED     = 'proposal_submitted';
 	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
+	public const TYPE_PROPOSAL_REJECTED      = 'proposal_rejected';
 	public const TYPE_DISPUTE_ESCALATED      = 'dispute_escalated';
 	public const TYPE_MODERATION_APPROVED    = 'moderation_approved';
 	public const TYPE_MODERATION_REJECTED    = 'moderation_rejected';
@@ -105,6 +106,7 @@ class EmailService {
 		// Proposal notifications.
 		add_action( 'wpss_proposal_submitted', array( $this, 'send_proposal_submitted' ), 10, 4 );
 		add_action( 'wpss_proposal_accepted', array( $this, 'send_proposal_accepted' ), 10, 3 );
+		add_action( 'wpss_proposal_rejected', array( $this, 'send_proposal_rejected' ), 10, 3 );
 	}
 
 	/**
@@ -1050,6 +1052,72 @@ class EmailService {
 		);
 
 		return $this->send( $vendor->user_email, $subject, self::TYPE_PROPOSAL_ACCEPTED, $template_vars );
+	}
+
+	/**
+	 * Send proposal rejected email to the vendor.
+	 *
+	 * @param int    $proposal_id Proposal ID.
+	 * @param object $proposal    Proposal data.
+	 * @param string $reason      Rejection reason.
+	 * @return bool
+	 */
+	public function send_proposal_rejected( int $proposal_id, object $proposal, string $reason = '' ): bool {
+		$vendor = get_user_by( 'id', $proposal->vendor_id ?? 0 );
+
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		// Fetch the buyer request to get the title and buyer info.
+		$request_service = new BuyerRequestService();
+		$request         = $request_service->get( (int) $proposal->request_id );
+
+		if ( ! $request ) {
+			return false;
+		}
+
+		$buyer = get_user_by( 'id', $request->author_id ?? 0 );
+
+		$request_title = $request->title ?? __( 'Buyer Request', 'wp-sell-services' );
+
+		$subject = sprintf(
+			/* translators: 1: platform name, 2: request title */
+			__( '[%1$s] Your Proposal Was Not Accepted - %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			$request_title
+		);
+
+		$content = sprintf(
+			/* translators: %s: request title */
+			__( 'Unfortunately, your proposal for "%s" was not accepted by the buyer.', 'wp-sell-services' ),
+			$request_title
+		);
+
+		if ( ! empty( $reason ) ) {
+			$content .= ' ' . sprintf(
+				/* translators: %s: rejection reason */
+				__( 'Reason: %s', 'wp-sell-services' ),
+				$reason
+			);
+		}
+
+		$content .= ' ' . __( 'Don\'t worry — keep submitting proposals to find the right match!', 'wp-sell-services' );
+
+		$template_vars = array(
+			'recipient'     => $vendor,
+			'email_heading' => __( 'Proposal Not Accepted', 'wp-sell-services' ),
+			'content'       => $content,
+			'button_url'    => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'proposals', wpss_get_page_url( 'dashboard' ) ) : '',
+			'button_text'   => __( 'View Proposals', 'wp-sell-services' ),
+		);
+
+		if ( $buyer ) {
+			$template_vars['reply_to_email'] = $buyer->user_email;
+			$template_vars['reply_to_name']  = $buyer->display_name;
+		}
+
+		return $this->send( $vendor->user_email, $subject, self::TYPE_PROPOSAL_REJECTED, $template_vars );
 	}
 
 	/**
