@@ -46,7 +46,7 @@ class DisputeRepository extends AbstractRepository {
 	 * @return string
 	 */
 	protected function get_table_name(): string {
-		return $this->schema->get_table_name( 'disputes' );
+		return $this->table_name( 'disputes' );
 	}
 
 	/**
@@ -94,7 +94,7 @@ class DisputeRepository extends AbstractRepository {
 	public function find_by_user( int $user_id, string $status = '', int $limit = 20, int $offset = 0 ): array {
 		global $wpdb;
 
-		$orders_table = $this->schema->get_table_name( 'orders' );
+		$orders_table = $this->table_name( 'orders' );
 
 		$status_clause = '';
 		if ( $status ) {

@@ -45,7 +45,7 @@ class OrderRepository extends AbstractRepository {
 	 * @return string Table name.
 	 */
 	protected function get_table_name(): string {
-		return $this->schema->get_table_name( 'orders' );
+		return $this->table_name( 'orders' );
 	}
 
 	/**

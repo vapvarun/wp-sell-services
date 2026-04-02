@@ -1,6 +1,12 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Static method WPSellServices\\Core\\Activator\:\:create_wc_carrier_product\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Core/Activator.php
+
+		-
 			message: '#^Parameter \#1 \$headers of method WP_REST_Server\:\:send_headers\(\) expects array, WP_REST_Response given\.$#'
 			identifier: argument.type
 			count: 1

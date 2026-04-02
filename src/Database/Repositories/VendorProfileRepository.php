@@ -48,7 +48,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return string Table name.
 	 */
 	protected function get_table_name(): string {
-		return $this->schema->get_table_name( 'vendor_profiles' );
+		return $this->table_name( 'vendor_profiles' );
 	}
 
 	/**
@@ -173,8 +173,8 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return bool True on success.
 	 */
 	public function update_stats( int $user_id ): bool {
-		$orders_table  = $this->schema->get_table_name( 'orders' );
-		$reviews_table = $this->schema->get_table_name( 'reviews' );
+		$orders_table  = $this->table_name( 'orders' );
+		$reviews_table = $this->table_name( 'reviews' );
 
 		// Calculate order stats.
 		$order_stats = $this->wpdb->get_row(

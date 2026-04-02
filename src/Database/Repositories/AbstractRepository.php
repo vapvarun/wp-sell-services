@@ -10,8 +10,6 @@
 
 namespace WPSellServices\Database\Repositories;
 
-use WPSellServices\Database\SchemaManager;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -27,13 +25,6 @@ abstract class AbstractRepository {
 	 * @var \wpdb
 	 */
 	protected \wpdb $wpdb;
-
-	/**
-	 * Schema manager instance.
-	 *
-	 * @var SchemaManager
-	 */
-	protected SchemaManager $schema;
 
 	/**
 	 * Table name.
@@ -69,9 +60,18 @@ abstract class AbstractRepository {
 	 */
 	public function __construct() {
 		global $wpdb;
-		$this->wpdb   = $wpdb;
-		$this->schema = new SchemaManager();
-		$this->table  = $this->get_table_name();
+		$this->wpdb  = $wpdb;
+		$this->table = $this->get_table_name();
+	}
+
+	/**
+	 * Get a prefixed WPSS table name.
+	 *
+	 * @param string $name Table name without prefix (e.g. 'orders').
+	 * @return string Full table name with wpdb prefix.
+	 */
+	protected function table_name( string $name ): string {
+		return $this->wpdb->prefix . 'wpss_' . $name;
 	}
 
 	/**

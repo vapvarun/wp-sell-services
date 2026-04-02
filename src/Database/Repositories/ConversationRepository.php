@@ -44,7 +44,7 @@ class ConversationRepository extends AbstractRepository {
 	 * @return string Table name.
 	 */
 	protected function get_table_name(): string {
-		return $this->schema->get_table_name( 'conversations' );
+		return $this->table_name( 'conversations' );
 	}
 
 	/**
@@ -53,7 +53,7 @@ class ConversationRepository extends AbstractRepository {
 	 * @return string Messages table name.
 	 */
 	protected function get_messages_table(): string {
-		return $this->schema->get_table_name( 'messages' );
+		return $this->table_name( 'messages' );
 	}
 
 	/**
@@ -466,7 +466,7 @@ class ConversationRepository extends AbstractRepository {
 	 * @return array<object> Array of conversation summaries.
 	 */
 	public function get_conversation_summary( int $user_id, int $limit = 10, int $offset = 0 ): array {
-		$orders_table   = $this->schema->get_table_name( 'orders' );
+		$orders_table   = $this->table_name( 'orders' );
 		$messages_table = $this->get_messages_table();
 
 		// Use UNION to combine order-linked and direct conversations.

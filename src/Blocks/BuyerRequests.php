@@ -121,6 +121,8 @@ class BuyerRequests extends AbstractBlock {
 	 * @return string
 	 */
 	public function render( array $attributes, string $content = '' ): string {
+		wpss_enqueue_frontend_assets();
+
 		$this->start_render();
 
 		$defaults = [

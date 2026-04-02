@@ -44,7 +44,7 @@ class ReviewRepository extends AbstractRepository {
 	 * @return string Table name.
 	 */
 	protected function get_table_name(): string {
-		return $this->schema->get_table_name( 'reviews' );
+		return $this->table_name( 'reviews' );
 	}
 
 	/**

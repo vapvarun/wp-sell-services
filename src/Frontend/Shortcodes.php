@@ -76,6 +76,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function services_grid( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts = shortcode_atts(
 			array(
 				'category' => '',
@@ -176,6 +178,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function service_search( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts = shortcode_atts(
 			array(
 				'placeholder'     => __( 'Search services...', 'wp-sell-services' ),
@@ -235,6 +239,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function featured_services( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts['featured'] = 'true';
 		return $this->services_grid( $atts );
 	}
@@ -248,6 +254,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function service_categories( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts = shortcode_atts(
 			array(
 				'parent'     => 0,
@@ -321,6 +329,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function vendors_grid( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts = shortcode_atts(
 			array(
 				'limit'   => 12,
@@ -367,6 +377,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function top_vendors( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts['orderby'] = 'rating';
 		$atts['order']   = 'DESC';
 		return $this->vendors_grid( $atts );
@@ -381,6 +393,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function vendor_profile( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts = shortcode_atts(
 			array(
 				'id' => get_query_var( 'vendor_id', 0 ),
@@ -425,6 +439,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function buyer_requests( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		$atts = shortcode_atts(
 			array(
 				'limit'      => 10,
@@ -481,6 +497,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function post_request_form( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
@@ -566,6 +584,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function my_orders( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
@@ -661,6 +681,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function order_details( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		if ( ! is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . sprintf(
 				/* translators: %s: login URL */
@@ -718,6 +740,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function login_form( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		if ( is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . esc_html__( 'You are already logged in.', 'wp-sell-services' ) . '</div>';
 		}
@@ -749,6 +773,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function register_form( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		if ( is_user_logged_in() ) {
 			return '<div class="wpss-notice">' . esc_html__( 'You are already logged in.', 'wp-sell-services' ) . '</div>';
 		}
@@ -968,8 +994,7 @@ class Shortcodes {
 	 * @return string Shortcode HTML.
 	 */
 	public function vendor_registration( $atts ): string {
-		// Enqueue frontend styles for button classes.
-		wp_enqueue_style( 'wpss-frontend' );
+		wpss_enqueue_frontend_assets();
 
 		ob_start();
 		$this->render_vendor_registration_styles();
@@ -1218,6 +1243,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function cart_page( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
 		// If WooCommerce adapter is active, hand off to WC cart.
 		$adapter = wpss_get_active_adapter();
 		if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'wc_get_cart_url' ) ) {
@@ -1248,6 +1275,8 @@ class Shortcodes {
 	 * @return string
 	 */
 	public function checkout_fallback(): string {
+		wpss_enqueue_frontend_assets();
+
 		$general  = get_option( 'wpss_general', array() );
 		$platform = $general['ecommerce_platform'] ?? 'standalone';
 

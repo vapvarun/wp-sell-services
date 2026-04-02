@@ -845,17 +845,21 @@ final class Plugin {
 	/**
 	 * Maybe make admin user a vendor automatically.
 	 *
+	 * Uses a user meta flag to skip the expensive VendorService check
+	 * on subsequent admin page loads after the initial vendor setup.
+	 *
 	 * @since 1.1.0
 	 * @return void
 	 */
 	private function maybe_auto_vendor_admin(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		$user_id = get_current_user_id();
-
-		if ( ! $user_id ) {
+		// Fast path: already checked and confirmed for this user.
+		if ( get_user_meta( $user_id, '_wpss_vendor_checked', true ) ) {
 			return;
 		}
 
@@ -868,6 +872,7 @@ final class Plugin {
 
 		// If both meta is set AND profile exists, we're done.
 		if ( $has_vendor_meta && $profile_exists ) {
+			update_user_meta( $user_id, '_wpss_vendor_checked', '1' );
 			return;
 		}
 
@@ -882,6 +887,8 @@ final class Plugin {
 		if ( ! $has_vendor_meta ) {
 			update_user_meta( $user_id, '_wpss_is_vendor', true );
 		}
+
+		update_user_meta( $user_id, '_wpss_vendor_checked', '1' );
 	}
 
 	/**
@@ -1064,17 +1071,237 @@ final class Plugin {
 	 * @return void
 	 */
 	private function define_cron_hooks(): void {
-		// Initialize OrderWorkflowManager for cron and status change handling.
-		$workflow_manager = new \WPSellServices\Services\OrderWorkflowManager();
-		$workflow_manager->init();
+		// --- OrderWorkflowManager: lazy-init on first hook fire ---
+		// Singleton factory shared across all closures.
+		$get_order_workflow = static function (): \WPSellServices\Services\OrderWorkflowManager {
+			static $instance;
+			if ( null === $instance ) {
+				$instance = new \WPSellServices\Services\OrderWorkflowManager();
+			}
+			return $instance;
+		};
 
-		// Initialize EmailService for standalone email handling.
-		$email_service = new \WPSellServices\Services\EmailService();
-		$email_service->init();
+		// Cron schedule registration (lightweight, no object needed).
+		add_filter(
+			'cron_schedules',
+			static function ( array $schedules ): array {
+				$schedules['wpss_hourly']      = array(
+					'interval' => HOUR_IN_SECONDS,
+					'display'  => 'Every Hour (WPSS)',
+				);
+				$schedules['wpss_twice_daily'] = array(
+					'interval' => 12 * HOUR_IN_SECONDS,
+					'display'  => 'Twice Daily (WPSS)',
+				);
+				$schedules['wpss_weekly']      = array(
+					'interval' => WEEK_IN_SECONDS,
+					'display'  => 'Once Weekly (WPSS)',
+				);
+				$schedules['weekly']           = array(
+					'interval' => WEEK_IN_SECONDS,
+					'display'  => 'Weekly',
+				);
+				$schedules['biweekly']         = array(
+					'interval' => 14 * DAY_IN_SECONDS,
+					'display'  => 'Every 14 Days (Bi-weekly)',
+				);
+				$schedules['monthly']          = array(
+					'interval' => 30 * DAY_IN_SECONDS,
+					'display'  => 'Monthly',
+				);
+				return $schedules;
+			}
+		);
 
-		// Initialize DisputeWorkflowManager for dispute crons and auto-escalation.
-		$dispute_workflow = new \WPSellServices\Services\DisputeWorkflowManager();
-		$dispute_workflow->init();
+		// Cron event scheduling (lightweight, no object needed).
+		add_action(
+			'init',
+			static function (): void {
+				$events = array(
+					'wpss_check_late_orders'            => 'wpss_hourly',
+					'wpss_auto_complete_orders'         => 'wpss_twice_daily',
+					'wpss_send_deadline_reminders'      => 'daily',
+					'wpss_send_requirements_reminders'  => 'daily',
+					'wpss_check_requirements_timeout'   => 'daily',
+					'wpss_recalculate_seller_levels'    => 'wpss_weekly',
+					'wpss_process_cancellation_timeouts' => 'wpss_hourly',
+					'wpss_process_offline_auto_cancel'  => 'wpss_hourly',
+					'wpss_cleanup_expired_requests'     => 'daily',
+					'wpss_update_vendor_stats'          => 'wpss_twice_daily',
+				);
+
+				foreach ( $events as $hook => $recurrence ) {
+					if ( ! wp_next_scheduled( $hook ) ) {
+						wp_schedule_event( time(), $recurrence, $hook );
+					}
+				}
+			}
+		);
+
+		// Cron handlers — object created only when cron actually fires.
+		$cron_hooks = array(
+			'wpss_check_late_orders',
+			'wpss_auto_complete_orders',
+			'wpss_send_deadline_reminders',
+			'wpss_send_requirements_reminders',
+			'wpss_check_requirements_timeout',
+			'wpss_recalculate_seller_levels',
+			'wpss_process_cancellation_timeouts',
+			'wpss_process_offline_auto_cancel',
+			'wpss_cleanup_expired_requests',
+			'wpss_update_vendor_stats',
+		);
+
+		foreach ( $cron_hooks as $hook ) {
+			$method = str_replace( 'wpss_', '', $hook );
+			add_action(
+				$hook,
+				static function () use ( $get_order_workflow, $method ): void {
+					$get_order_workflow()->$method();
+				}
+			);
+		}
+
+		// Status change hooks.
+		$status_hooks = array(
+			'wpss_order_status_changed'                => array( 'handle_status_change', 10, 3 ),
+			'wpss_order_status_completed'              => array( 'handle_order_completed', 10, 2 ),
+			'wpss_order_status_cancelled'              => array( 'handle_order_cancelled', 10, 2 ),
+			'wpss_order_status_cancellation_requested' => array( 'handle_cancellation_requested', 10, 2 ),
+		);
+
+		foreach ( $status_hooks as $hook => $config ) {
+			add_action(
+				$hook,
+				static function ( ...$args ) use ( $get_order_workflow, $config ): void {
+					$get_order_workflow()->{$config[0]}( ...$args );
+				},
+				$config[1],
+				$config[2]
+			);
+		}
+
+		// Log status changes to conversation system messages.
+		add_action(
+			'wpss_order_status_changed',
+			static function ( int $order_id, string $old_status, string $new_status ): void {
+				$order_service = new \WPSellServices\Services\OrderService();
+				$order_service->log_status_change( $order_id, $old_status, $new_status );
+			},
+			5,
+			3
+		);
+
+		// Payment hooks.
+		add_action(
+			'wpss_order_paid',
+			static function ( int $order_id, string $transaction_id = '' ) use ( $get_order_workflow ): void {
+				$get_order_workflow()->handle_payment_complete( $order_id, $transaction_id );
+			},
+			10,
+			2
+		);
+
+		// Set delivery deadline when requirements are submitted.
+		add_action(
+			'wpss_requirements_submitted',
+			static function ( int $order_id, array $field_data, array $attachments ): void {
+				$order_service = new \WPSellServices\Services\OrderService();
+				$order_service->set_deadline_on_requirements( $order_id, $field_data, $attachments );
+			},
+			10,
+			3
+		);
+
+		// --- EmailService: lazy-init on first hook fire ---
+		$get_email_service = static function (): \WPSellServices\Services\EmailService {
+			static $instance;
+			if ( null === $instance ) {
+				$instance = new \WPSellServices\Services\EmailService();
+			}
+			return $instance;
+		};
+
+		// Email hook map: hook => [ method, priority, accepted_args ].
+		$email_hooks = array(
+			'wpss_order_status_changed'          => array( 'handle_status_change', 20, 3 ),
+			'wpss_requirements_submitted'        => array( 'send_requirements_submitted', 20, 3 ),
+			'wpss_delivery_submitted'            => array( 'send_delivery_ready', 20, 2 ),
+			'wpss_new_order_message'             => array( 'send_new_message', 20, 3 ),
+			'wpss_send_requirements_reminder_email' => array( 'send_requirements_reminder', 10, 3 ),
+			'wpss_vendor_level_promoted'         => array( 'send_level_promotion', 10, 3 ),
+			'wpss_withdrawal_processed'          => array( 'send_withdrawal_status', 10, 3 ),
+			'wpss_proposal_submitted'            => array( 'send_proposal_submitted', 10, 4 ),
+			'wpss_proposal_accepted'             => array( 'send_proposal_accepted', 10, 3 ),
+		);
+
+		foreach ( $email_hooks as $hook => $config ) {
+			add_action(
+				$hook,
+				static function ( ...$args ) use ( $get_email_service, $config ): void {
+					$get_email_service()->{$config[0]}( ...$args );
+				},
+				$config[1],
+				$config[2]
+			);
+		}
+
+		// --- DisputeWorkflowManager: lazy-init on first hook fire ---
+		$get_dispute_workflow = static function (): \WPSellServices\Services\DisputeWorkflowManager {
+			static $instance;
+			if ( null === $instance ) {
+				$instance = new \WPSellServices\Services\DisputeWorkflowManager();
+			}
+			return $instance;
+		};
+
+		// Dispute cron schedule registration.
+		add_filter(
+			'cron_schedules',
+			static function ( array $schedules ): array {
+				$schedules['twice_daily'] = array(
+					'interval' => 12 * HOUR_IN_SECONDS,
+					'display'  => 'Twice Daily',
+				);
+				return $schedules;
+			}
+		);
+
+		// Schedule the daily dispute cron event.
+		if ( ! wp_next_scheduled( 'wpss_cron_daily' ) ) {
+			wp_schedule_event( time(), 'daily', 'wpss_cron_daily' );
+		}
+
+		// Dispute cron handlers.
+		add_action(
+			'wpss_cron_daily',
+			static function () use ( $get_dispute_workflow ): void {
+				$manager = $get_dispute_workflow();
+				$manager->check_response_deadlines();
+				$manager->auto_escalate_disputes();
+				$manager->send_reminder_notifications();
+				$manager->auto_open_disputes_for_late_orders();
+			}
+		);
+
+		// Dispute event hooks.
+		$dispute_event_hooks = array(
+			'wpss_dispute_opened'              => array( 'on_dispute_opened', 10, 4 ),
+			'wpss_dispute_response_submitted'  => array( 'on_response_submitted', 10, 3 ),
+			'wpss_dispute_evidence_added'      => array( 'on_evidence_added', 10, 2 ),
+			'wpss_dispute_resolved'            => array( 'on_dispute_resolved', 10, 4 ),
+		);
+
+		foreach ( $dispute_event_hooks as $hook => $config ) {
+			add_action(
+				$hook,
+				static function ( ...$args ) use ( $get_dispute_workflow, $config ): void {
+					$get_dispute_workflow()->{$config[0]}( ...$args );
+				},
+				$config[1],
+				$config[2]
+			);
+		}
 
 		// Register EarningsService cron schedules early so they are available during activation.
 		add_filter( 'cron_schedules', array( \WPSellServices\Services\EarningsService::class, 'add_cron_schedules' ) );
@@ -1099,8 +1326,31 @@ final class Plugin {
 	 * @return void
 	 */
 	private function define_cascade_hooks(): void {
-		$cascade_handler = new \WPSellServices\Services\DataCascadeHandler();
-		$cascade_handler->init();
+		// Lazy-init: DataCascadeHandler only created when a post or user is deleted.
+		$get_cascade_handler = static function (): \WPSellServices\Services\DataCascadeHandler {
+			static $instance;
+			if ( null === $instance ) {
+				$instance = new \WPSellServices\Services\DataCascadeHandler();
+			}
+			return $instance;
+		};
+
+		add_action(
+			'before_delete_post',
+			static function ( int $post_id ) use ( $get_cascade_handler ): void {
+				$get_cascade_handler()->on_post_deleted( $post_id );
+			},
+			10,
+			1
+		);
+		add_action(
+			'delete_user',
+			static function ( int $user_id ) use ( $get_cascade_handler ): void {
+				$get_cascade_handler()->on_user_deleted( $user_id );
+			},
+			10,
+			1
+		);
 	}
 
 	/**

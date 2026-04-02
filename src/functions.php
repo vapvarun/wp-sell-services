@@ -1708,3 +1708,17 @@ function wpss_pagination( \WP_Query $query, array $args = array() ): void {
 		echo '</nav>';
 	}
 }
+
+/**
+ * Enqueue WPSS frontend assets.
+ *
+ * Call this from any shortcode, block, or template that needs WPSS frontend styles and scripts.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function wpss_enqueue_frontend_assets(): void {
+	wp_enqueue_style( 'wpss-design-system' );
+	wp_enqueue_style( 'wpss-frontend' );
+	wp_enqueue_script( 'wpss-frontend' );
+}

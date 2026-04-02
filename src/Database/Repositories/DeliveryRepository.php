@@ -25,7 +25,7 @@ class DeliveryRepository extends AbstractRepository {
 	 * @return string Table name.
 	 */
 	protected function get_table_name(): string {
-		return $this->schema->get_table_name( 'deliveries' );
+		return $this->table_name( 'deliveries' );
 	}
 
 	/**
@@ -167,7 +167,7 @@ class DeliveryRepository extends AbstractRepository {
 	 * @return array<object> Array of pending deliveries with order info.
 	 */
 	public function get_pending_for_customer( int $customer_id ): array {
-		$orders_table = $this->schema->get_table_name( 'orders' );
+		$orders_table = $this->table_name( 'orders' );
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(

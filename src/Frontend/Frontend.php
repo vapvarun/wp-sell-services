@@ -21,13 +21,16 @@ defined( 'ABSPATH' ) || exit;
 class Frontend {
 
 	/**
-	 * Enqueue frontend styles.
+	 * Register frontend styles.
+	 *
+	 * Styles are registered globally but only enqueued on-demand
+	 * when a shortcode, block, or view calls wpss_enqueue_frontend_assets().
 	 *
 	 * @return void
 	 */
 	public function enqueue_styles(): void {
 		// Design system tokens (must load first).
-		wp_enqueue_style(
+		wp_register_style(
 			'wpss-design-system',
 			\WPSS_PLUGIN_URL . 'assets/css/design-system.css',
 			array(),
@@ -35,7 +38,7 @@ class Frontend {
 		);
 		wp_style_add_data( 'wpss-design-system', 'rtl', 'replace' );
 
-		wp_enqueue_style(
+		wp_register_style(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/css/frontend.css',
 			array( 'wpss-design-system' ),
@@ -45,7 +48,11 @@ class Frontend {
 	}
 
 	/**
-	 * Enqueue frontend scripts.
+	 * Register frontend scripts.
+	 *
+	 * Scripts are registered globally but only enqueued on-demand
+	 * when a shortcode, block, or view calls wpss_enqueue_frontend_assets().
+	 * Localization data is attached lazily in maybe_localize_scripts().
 	 *
 	 * @return void
 	 */
@@ -62,15 +69,27 @@ class Frontend {
 		// Add defer attribute to Alpine.js so it waits for DOM and other scripts.
 		add_filter( 'script_loader_tag', array( $this, 'add_defer_attribute' ), 10, 2 );
 
-		wp_enqueue_script( 'alpinejs' );
-
-		wp_enqueue_script(
+		wp_register_script(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
 			array( 'jquery', 'alpinejs' ),
 			\WPSS_VERSION,
 			true
 		);
+
+		// Localize only when the script is actually enqueued.
+		add_action( 'wp_footer', array( $this, 'maybe_localize_scripts' ), 1 );
+	}
+
+	/**
+	 * Localize frontend scripts only when they are enqueued.
+	 *
+	 * @return void
+	 */
+	public function maybe_localize_scripts(): void {
+		if ( ! wp_script_is( 'wpss-frontend', 'enqueued' ) ) {
+			return;
+		}
 
 		// Legacy 'wpss' for backward compatibility.
 		wp_localize_script(
@@ -94,21 +113,21 @@ class Frontend {
 			'wpss-frontend',
 			'wpssData',
 			array(
-				'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-				'apiUrl'          => rest_url( 'wpss/v1/' ),
-				'nonce'           => wp_create_nonce( 'wpss_proposal_action' ),
-				'orderNonce'      => wp_create_nonce( 'wpss_order_action' ),
-				'contactNonce'    => wp_create_nonce( 'wpss_service_nonce' ),
-				'serviceNonce'    => wp_create_nonce( 'wpss_service_nonce' ),
-				'messageNonce'    => wp_create_nonce( 'wpss_message_nonce' ),
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'apiUrl'           => rest_url( 'wpss/v1/' ),
+				'nonce'            => wp_create_nonce( 'wpss_proposal_action' ),
+				'orderNonce'       => wp_create_nonce( 'wpss_order_action' ),
+				'contactNonce'     => wp_create_nonce( 'wpss_service_nonce' ),
+				'serviceNonce'     => wp_create_nonce( 'wpss_service_nonce' ),
+				'messageNonce'     => wp_create_nonce( 'wpss_message_nonce' ),
 				'sendMessageNonce' => wp_create_nonce( 'wpss_send_message' ),
-				'restNonce'       => wp_create_nonce( 'wp_rest' ),
-				'pollingInterval' => 10000,
-				'currencyFormat'  => wpss_get_currency_format(),
-				'cartCount'       => $cart_count,
-				'checkoutUrl'     => wpss_get_checkout_base_url(),
-				'cartNonce'       => wp_create_nonce( 'wpss_cart_nonce' ),
-				'i18n'            => array(
+				'restNonce'        => wp_create_nonce( 'wp_rest' ),
+				'pollingInterval'  => 10000,
+				'currencyFormat'   => wpss_get_currency_format(),
+				'cartCount'        => $cart_count,
+				'checkoutUrl'      => wpss_get_checkout_base_url(),
+				'cartNonce'        => wp_create_nonce( 'wpss_cart_nonce' ),
+				'i18n'             => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'ajaxError'                   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
@@ -208,6 +227,11 @@ class Frontend {
 
 		$cart         = get_user_meta( get_current_user_id(), '_wpss_cart', true );
 		$cart_count   = is_array( $cart ) ? count( $cart ) : 0;
+
+		if ( $cart_count > 0 ) {
+			wpss_enqueue_frontend_assets();
+		}
+
 		$hidden       = 0 === $cart_count ? ' style="display:none;"' : '';
 		$checkout_url = wpss_get_cart_url();
 		?>
