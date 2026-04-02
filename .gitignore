@@ -1,5 +1,6 @@
 # Dependencies
-/vendor/
+/vendor/*
+!/vendor/easy-digital-downloads/
 /node_modules/
 
 # Build artifacts

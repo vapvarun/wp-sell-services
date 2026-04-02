@@ -365,3 +365,60 @@ function wpss_deactivate(): void {
 }
 
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\wpss_deactivate' );
+
+// EDD Software Licensing SDK — free plugin auto-updates with preset key.
+add_action(
+	'edd_sl_sdk_registry',
+	function ( $registry ) {
+		$registry->register(
+			array(
+				'id'      => 'wp-sell-services',
+				'url'     => 'https://wbcomdesigns.com',
+				'item_id' => 1660955,
+				'version' => WPSS_VERSION,
+				'file'    => WPSS_PLUGIN_FILE,
+				'license' => 'wbcomfree3c8a1f7e5d2b9a4c6e0f1d8b7a2c9e66',
+			)
+		);
+	}
+);
+
+if ( file_exists( WPSS_PLUGIN_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+	require_once WPSS_PLUGIN_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
+}
+
+// Auto-activate the preset license key on first load so updates work.
+add_action(
+	'admin_init',
+	function () {
+		$preset_key = 'wbcomfree3c8a1f7e5d2b9a4c6e0f1d8b7a2c9e66';
+		$option     = 'wpss_license_key';
+		$activated  = 'wpss_preset_activated';
+
+		if ( get_option( $activated ) ) {
+			return;
+		}
+
+		update_option( $option, $preset_key, false );
+
+		$response = wp_remote_post(
+			'https://wbcomdesigns.com',
+			array(
+				'timeout' => 15,
+				'body'    => array(
+					'edd_action' => 'activate_license',
+					'license'    => $preset_key,
+					'item_id'    => 1660955,
+					'url'        => home_url(),
+				),
+			)
+		);
+
+		if ( ! is_wp_error( $response ) ) {
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( 'valid' === ( $body['license'] ?? '' ) ) {
+				update_option( $activated, 1, false );
+			}
+		}
+	}
+);
