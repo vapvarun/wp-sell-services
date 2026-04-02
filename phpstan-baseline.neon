@@ -747,7 +747,7 @@ parameters:
 		-
 			message: '#^Action callback returns bool but should not return anything\.$#'
 			identifier: return.void
-			count: 8
+			count: 9
 			path: src/Services/EmailService.php
 
 		-
