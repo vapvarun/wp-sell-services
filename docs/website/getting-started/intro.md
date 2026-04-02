@@ -59,15 +59,39 @@ Here are some real-world examples of what people are building:
 4. **A content creation marketplace** -- Writers, designers, and video editors sell creative services with revision options
 5. **A professional consulting hub** -- Business advisors offer strategy sessions with tiered pricing (basic review, full audit, ongoing retainer)
 
-## How It Works
+## Two Ways to Buy: Browse or Request
 
-The workflow is simple:
+Your marketplace supports two complete buying modes -- both included in the free version.
 
-1. **You set up the marketplace** -- Install the plugin, choose your commission rate, and configure how vendors join
-2. **Vendors create services** -- They use a guided wizard to build professional listings with pricing packages, images, and FAQs
-3. **Buyers browse and purchase** -- They find services, pick a package, and pay securely through the built-in checkout
-4. **Orders flow automatically** -- The system handles requirements collection, messaging, delivery, revisions, and reviews
-5. **Everyone gets paid** -- You earn your commission, vendors receive their earnings after a configurable clearance period
+### Mode 1: Browse and Buy (Fiverr-style)
+
+The classic marketplace flow. Vendors list services, buyers browse and purchase.
+
+1. **Vendors create services** -- They use a guided wizard to build professional listings with pricing packages, images, and FAQs
+2. **Buyers browse and purchase** -- They find services, pick a package (Basic, Standard, or Premium), add optional extras, and pay
+3. **Orders flow automatically** -- The system handles requirements collection, messaging, delivery, revisions, and reviews
+4. **Everyone gets paid** -- You earn your commission, vendors receive their earnings after a clearance period
+
+### Mode 2: Post a Request and Get Quotes (Upwork-style)
+
+The reverse marketplace flow. Buyers describe what they need, vendors compete with proposals.
+
+1. **Buyer posts a request** -- They describe their project, set a budget range, pick a category, and upload reference files
+2. **Vendors submit proposals** -- Qualified sellers see the request and pitch their services with a price, timeline, and cover letter
+3. **Buyer compares and accepts** -- They review all proposals side by side, check vendor ratings and portfolios, and accept the best fit
+4. **Order is created and payment collected** -- Accepting a proposal creates an order automatically, the buyer pays at checkout, and work begins
+5. **Same order workflow from here** -- Requirements, messaging, delivery, revisions, and reviews all work identically to Mode 1
+
+This is not a light add-on -- it is a fully built-out feature with its own CPT (`wpss_request`), proposal management, status tracking (Open, In Review, Hired, Expired), automatic expiry after 30 days, email notifications for new proposals, and a dedicated dashboard section for both buyers and vendors.
+
+### Why Both Modes Matter
+
+| Mode | Best For | Example |
+|------|----------|---------|
+| **Browse and Buy** | Standardized services with clear deliverables | "I need a logo -- here are the packages" |
+| **Post a Request** | Custom projects where scope needs discussion | "I need a website redesign -- what can you do for $2,000?" |
+
+Most successful marketplaces use both. Some buyers know exactly what they want (Mode 1). Others need to describe their project and let experts propose solutions (Mode 2). Supporting both means you never lose a potential transaction.
 
 ## Getting Started
 
@@ -84,6 +108,7 @@ Your marketplace can be live today.
 ### For Buyers
 - **[How to Find and Purchase a Service](../buyer-guide/browsing-and-purchasing.md)** -- Browse, compare, and buy
 - **[Choosing the Right Package](../buyer-guide/choosing-the-right-package.md)** -- Understand Basic, Standard, and Premium tiers
+- **[Post a Request and Get Quotes](../buyer-requests/posting-request.md)** -- Describe your project, receive proposals
 - **[Buyer Dashboard](../buyer-guide/buyer-dashboard.md)** -- Manage orders, messages, and requests
 - **[Order Tracking](../buyer-guide/buyer-order-tracking.md)** -- Follow your order from payment to completion
 - **[Tips for Great Results](../buyer-guide/buyer-tips-best-practices.md)** -- Get the most from your orders
@@ -91,6 +116,7 @@ Your marketplace can be live today.
 ### For Vendors
 - **[Becoming a Vendor](../vendor-system/becoming-a-vendor.md)** -- Register and get started
 - **[Create your first service](../service-creation/service-wizard.md)** -- The 6-step service wizard
+- **[Submit Proposals on Buyer Requests](../buyer-requests/submitting-proposals.md)** -- Win work from buyer job posts
 - **[Managing Services](../service-creation/editing-pausing-services.md)** -- Edit, pause, and delete services
 - **[Order management](../order-management/order-lifecycle.md)** -- Handle orders from start to finish
 - **[Earnings & Withdrawals](../earnings-wallet/earnings-dashboard.md)** -- Track income and get paid
