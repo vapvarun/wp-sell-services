@@ -94,4 +94,16 @@
 
 	// Activate from hash on page load.
 	activate( location.hash.replace( '#', '' ) || '' );
+
+	// Gateway card collapse/expand toggle.
+	document.querySelectorAll( '.wpss-card[data-gateway] .wpss-card__head' ).forEach( function( head ) {
+		head.addEventListener( 'click', function( e ) {
+			// Don't toggle if clicking inside a form control.
+			if ( e.target.closest( 'input, select, textarea, button:not(.wpss-card__toggle)' ) ) {
+				return;
+			}
+			var card = head.closest( '.wpss-card[data-gateway]' );
+			card.classList.toggle( 'is-collapsed' );
+		} );
+	} );
 } )();

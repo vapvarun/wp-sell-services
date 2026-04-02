@@ -1377,8 +1377,9 @@ class Settings {
 
 		$badge_class = $enabled ? 'wpss-gateway-badge--enabled' : 'wpss-gateway-badge--disabled';
 		$badge_text  = $enabled ? __( 'Enabled', 'wp-sell-services' ) : __( 'Disabled', 'wp-sell-services' );
+		$collapsed   = $enabled ? '' : ' is-collapsed';
 		?>
-		<div class="wpss-card" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
+		<div class="wpss-card<?php echo esc_attr( $collapsed ); ?>" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
 			<div class="wpss-card__head wpss-card__head--with-badge">
 				<div>
 					<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
@@ -1387,6 +1388,9 @@ class Settings {
 				<span class="wpss-gateway-badge <?php echo esc_attr( $badge_class ); ?>">
 					<?php echo esc_html( $badge_text ); ?>
 				</span>
+				<button type="button" class="wpss-card__toggle" aria-label="<?php esc_attr_e( 'Toggle', 'wp-sell-services' ); ?>">
+					<i data-lucide="chevron-down"></i>
+				</button>
 			</div>
 			<div class="wpss-card__body">
 				<form method="post" action="options.php">

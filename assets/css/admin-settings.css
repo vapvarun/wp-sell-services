@@ -184,6 +184,56 @@
 	margin-top: 5px;
 }
 
+/* Gateway card — collapsible */
+.wpss-card[data-gateway] .wpss-card__head {
+	cursor: pointer;
+	user-select: none;
+	transition: background 0.15s ease;
+}
+
+.wpss-card[data-gateway] .wpss-card__head:hover {
+	background: #f0f0f1;
+}
+
+.wpss-card[data-gateway] .wpss-card__body {
+	transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+	overflow: hidden;
+}
+
+.wpss-card[data-gateway].is-collapsed .wpss-card__body {
+	max-height: 0;
+	opacity: 0;
+	padding-top: 0;
+	padding-bottom: 0;
+	border-top: none;
+}
+
+.wpss-card[data-gateway]:not(.is-collapsed) .wpss-card__body {
+	max-height: 2000px;
+	opacity: 1;
+}
+
+/* Toggle chevron */
+.wpss-card__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--wpss-admin-text-light);
+	transition: transform 0.25s ease;
+	font-size: 18px;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+.wpss-card[data-gateway].is-collapsed .wpss-card__toggle {
+	transform: rotate(-90deg);
+}
+
 /* Gateway status badge in card head */
 .wpss-gateway-badge {
 	font-size: 12px;
@@ -200,6 +250,17 @@
 .wpss-gateway-badge--disabled {
 	background: rgba(224, 62, 62, 0.08);
 	color: #991b1b;
+}
+
+/* Card head layout with badge + toggle */
+.wpss-card__head--with-badge {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.wpss-card__head--with-badge > div:first-child {
+	flex: 1;
 }
 
 /* ==========================================================================
