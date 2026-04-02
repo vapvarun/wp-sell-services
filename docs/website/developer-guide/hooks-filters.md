@@ -1,6 +1,6 @@
 # Hooks and Filters Reference
 
-WP Sell Services exposes action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
+WP Sell Services exposes 179 action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
 
 ## Using Hooks
 
@@ -102,6 +102,102 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_accepted` | `int $order_id` | `DeliveryService.php:168` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `DeliveryService.php:234` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `RequirementsService.php:461` |
+| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `OrderService.php:598` |
+| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `OrderWorkflowManager.php:861` |
+| `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `ConversationService.php:337` |
+
+## Payment and Gateway Actions
+
+These hooks fire during payment processing, gateway interactions, and checkout flow.
+
+### Standalone Adapter
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_standalone_adapter_init` | `StandaloneAdapter $adapter` | `StandaloneAdapter.php:155` |
+| `wpss_standalone_checkout_processed` | `int $order_id, array $order_data` | `StandaloneCheckoutProvider.php:133` |
+| `wpss_standalone_order_complete` | `object $order` | `StandaloneOrderProvider.php:688` |
+| `wpss_order_paid` | `int $order_id, string $transaction_id` | `StandaloneOrderProvider.php:391` |
+| `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `StandaloneOrderProvider.php:383` |
+| `wpss_payment_callback` | `string $gateway_id` | `StandaloneAdapter.php:232` |
+
+### Offline Gateway
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `OfflineGateway.php:387` |
+| `wpss_offline_order_created` | `int $order_id, object $order` | `OfflineGateway.php:484` |
+| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `OfflineGateway.php:561` |
+
+### Stripe Gateway
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `StripeGateway.php:313` |
+| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `StripeGateway.php:1023` |
+
+### PayPal Gateway
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_paypal_refund_processed` | `string $url, array $resource` | `PayPalGateway.php:1094` |
+
+### Payment REST API
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_rest_offline_order_created` | `int $order_id, object $order, string $gateway_id` | `PaymentController.php:440` |
+
+### Payment Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `StripeGateway.php:181` |
+| `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `PaymentController.php:254` |
+| `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `PaymentController.php:303` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `StandaloneCheckoutProvider.php:401` |
+
+**`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
+
+```php
+add_filter( 'wpss_stripe_payment_intent_args', function( $params, $order_id, $vendor_id ) {
+    $params['metadata']['custom_field'] = 'value';
+    return $params;
+}, 10, 3 );
+```
+
+**`wpss_checkout_tax_rate`** lets you apply different tax rates per vendor or service:
+
+```php
+add_filter( 'wpss_checkout_tax_rate', function( $rate, $vendor_id, $service_id ) {
+    // Apply 15% tax for services in a specific category
+    if ( has_term( 'consulting', 'wpss_service_category', $service_id ) ) {
+        return 15.0;
+    }
+    return $rate;
+}, 10, 3 );
+```
+
+## Data Cascade Actions
+
+These hooks fire when services, requests, or users are deleted and related data is cleaned up. Use them for custom cleanup logic.
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_before_cascade_delete_service` | `int $service_id` | `DataCascadeHandler.php:101` |
+| `wpss_after_cascade_delete_service` | `int $service_id` | `DataCascadeHandler.php:139` |
+| `wpss_before_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:155` |
+| `wpss_after_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:166` |
+| `wpss_before_cascade_delete_user` | `int $user_id` | `DataCascadeHandler.php:182` |
+| `wpss_after_cascade_delete_user` | `int $user_id` | `DataCascadeHandler.php:226` |
+
+```php
+// Clean up custom data when a service is deleted
+add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
+    global $wpdb;
+    $wpdb->delete( $wpdb->prefix . 'my_custom_table', [ 'service_id' => $service_id ] );
+} );
+```
 
 ## Vendor Actions
 
@@ -123,6 +219,8 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `VendorsPage.php:1583` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `VendorsPage.php:1884` |
 | `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `AjaxHandlers.php:2052` |
+| `wpss_vendor_access_granted` | `int $user_id` | `VendorService.php:356` |
+| `wpss_vendor_access_revoked` | `int $user_id` | `VendorService.php:401` |
 
 ## Financial Actions
 
@@ -180,6 +278,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `ProposalService.php:331` |
 | `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `ProposalService.php:373` |
 | `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `ProposalService.php:665` |
+| `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `ProposalService.php:418` |
+| `wpss_buyer_request_deleted` | `int $request_id` | `BuyerRequestService.php:897` |
+| `wpss_buyer_request_meta_saved` | `int $post_id, WP_Post $post` | `BuyerRequestMetabox.php:341` |
 
 ## Milestone and Extension Actions
 
@@ -192,6 +293,105 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_extension_request_created` | `int $request_id, int $order_id, array $data` | `ExtensionRequestService.php:246` |
 | `wpss_extension_request_approved` | `int $request_id, object $request` | `ExtensionRequestService.php:363` |
 | `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:447` |
+| `wpss_extension_requested` | `int $request_id, int $order_id, int $user_id` | `ExtensionRequestsController.php:196` |
+| `wpss_extension_approved` | `int $ext_id, int $order_id, int $extra_days` | `ExtensionRequestsController.php:291` |
+
+## Admin and Settings Actions
+
+These hooks fire in the WordPress admin area for order management, service meta, and settings pages.
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_admin_order_actions` | `object $order, string $status` | `OrderMetabox.php:831` |
+| `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `OrderMetabox.php:1097` |
+| `wpss_gateway_cards` | `Settings $settings` | `Settings.php:1341` |
+
+### Admin Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_service_meta_fields` | `array $fields, int $post_id` | `ServiceMetabox.php:155` |
+
+```php
+// Add custom fields to the service meta box in wp-admin
+add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
+    $fields['custom_field'] = [
+        'label' => 'Custom Field',
+        'type'  => 'text',
+        'value' => get_post_meta( $post_id, '_wpss_custom_field', true ),
+    ];
+    return $fields;
+}, 10, 2 );
+```
+
+## Service Wizard Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `ServiceWizard.php:1603` |
+
+### Service Wizard Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `ServiceWizard.php:288` |
+| `wpss_services_per_page` | `int $per_page` (default 12) | `ServiceArchiveView.php:525` |
+
+```php
+// Prevent unverified vendors from creating services
+add_filter( 'wpss_vendor_can_create_service', function( $allowed, $user_id ) {
+    if ( ! get_user_meta( $user_id, '_wpss_identity_verified', true ) ) {
+        return false;
+    }
+    return $allowed;
+}, 10, 2 );
+```
+
+## Dashboard Actions
+
+| Hook | Parameters | File |
+|------|-----------|------|
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `UnifiedDashboard.php:529` |
+
+```php
+// Add a notice at the top of the earnings dashboard section
+add_action( 'wpss_dashboard_section_before_content', function( $section, $user_id ) {
+    if ( 'earnings' === $section ) {
+        echo '<div class="wpss-notice">Minimum withdrawal is $50.</div>';
+    }
+}, 10, 2 );
+```
+
+## Cart and Checkout Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `AjaxHandlers.php:2524` |
+
+## Email Filters
+
+These filters let you customize outgoing email content without modifying templates.
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_email_from_name` | `string $from_name` | `EmailService.php:1118` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `EmailService.php:1102` |
+| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `NotificationService.php:1160` |
+| `wpss_vendor_approved_email_content` | `string $content, object $user, string $platform_name` | `NotificationService.php:1293` |
+| `wpss_vendor_rejected_email_content` | `string $content, object $user, string $platform_name` | `NotificationService.php:1361` |
+
+```php
+// Change the "From" name on all marketplace emails
+add_filter( 'wpss_email_from_name', function( $name ) {
+    return 'DesignHub Marketplace';
+} );
+
+// Customize the vendor approval email content
+add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $platform ) {
+    $content .= '<p>Welcome aboard! Here are some tips to get started...</p>';
+    return $content;
+}, 10, 3 );
+```
 
 ## Other Actions
 

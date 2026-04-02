@@ -1,6 +1,6 @@
 # Email Notifications
 
-WP Sell Services sends 26 email notifications to keep buyers, vendors, and admins informed at every stage. Each email can be individually enabled or disabled from your settings.
+WP Sell Services sends 27 email notifications to keep buyers, vendors, and admins informed at every stage. Each email can be individually enabled or disabled from your settings. Every email has both an HTML and a plain text version.
 
 ![Email Notification Settings](../images/settings-emails-tab.png)
 
@@ -43,6 +43,7 @@ These keep your customers updated on their purchases and activity.
 | **Order Cancelled** | An order is cancelled by any party |
 | **Proposal Submitted** | A vendor submits a proposal on the buyer's request |
 | **Requirements Reminder** | The buyer has not yet submitted requirements for their order |
+| **Cancellation Requested** | A cancellation request has been filed on the buyer's order |
 
 ---
 
@@ -95,7 +96,29 @@ If you are not using an SMTP plugin, emails are sent via your server's default m
 
 ---
 
+## Email Templates
+
+Every email is rendered from an HTML template file in `templates/emails/`. Each template is theme-overridable -- copy it to `yourtheme/wp-sell-services/emails/` to customize the design.
+
+There are also plain text variants in `templates/emails/plain/` for email clients that do not support HTML.
+
+All emails share a common header (`email-header.php`) and footer (`email-footer.php`) that you can override to match your brand.
+
+---
+
+## Customizing Email Content
+
+For developers who want to modify email content, sender details, or headers without overriding template files, see the [Email Customization Guide](../developer-guide/email-customization.md). It covers:
+
+- Changing the "From" name and email address
+- Filtering email content for specific notification types
+- Customizing the email header variables and branding
+- Using plain text vs HTML variants
+
+---
+
 ## Related Guides
 
 - [In-App Notifications](in-app-notifications.md) -- Dashboard notification bell and alerts
 - [Email Configuration](email-configuration.md) -- SMTP setup and email settings
+- [Email Customization (Developer)](../developer-guide/email-customization.md) -- Template overrides and content filters

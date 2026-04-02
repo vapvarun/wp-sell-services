@@ -558,6 +558,12 @@
           "slug": "theme-integration-wpss",
           "file": "developer-guide/theme-integration.md",
           "order": 5
+        },
+        {
+          "title": "Email Customization for Developers",
+          "slug": "email-customization-wpss",
+          "file": "developer-guide/email-customization.md",
+          "order": 6
         }
       ]
     },

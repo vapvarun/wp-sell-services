@@ -43,6 +43,7 @@ Only copy templates you need to change. Uncopied templates continue using plugin
 | `partials/service-reviews.php` | Reviews section on single service page |
 | `partials/service-faqs.php` | FAQ accordion on single service page |
 | `partials/vendor-card.php` | Vendor info card on service page sidebar |
+| `partials/vendor-portfolio.php` | Public vendor portfolio lightbox and grid |
 
 ### Order Templates (`templates/order/`)
 
@@ -69,6 +70,7 @@ Order URLs route as: `/service-order/{id}/` (view), `/service-order/{id}/require
 | `dashboard/sections/requests.php` | Buyer requests |
 | `dashboard/sections/create.php` | Service creation |
 | `dashboard/sections/create-request.php` | Buyer request creation |
+| `dashboard/sections/edit-request.php` | Edit an existing buyer request |
 
 ### WooCommerce Account Templates (`templates/myaccount/`)
 
@@ -80,11 +82,68 @@ Order URLs route as: `/service-order/{id}/` (view), `/service-order/{id}/require
 | `myaccount/service-disputes.php` | Disputes tab |
 | `myaccount/notifications.php` | Notifications tab |
 
+### Cart Templates (`templates/cart/`)
+
+| Template | Purpose |
+|----------|---------|
+| `cart/cart.php` | Shopping cart page for standalone checkout mode |
+
 ### Other Templates
 
 - **Vendor**: `vendor/profile.php` -- Public vendor profile page (served at `/provider/{username}/` by default, customizable via the `wpss_vendor_slug` filter)
 - **Disputes**: `disputes/dispute-view.php` -- Dispute details view
-- **Emails**: `emails/` directory contains 19 HTML templates -- all theme-overridable at `yourtheme/wp-sell-services/emails/`. Includes: new-order, order-completed, order-cancelled, order-in-progress, delivery-ready, dispute-opened, dispute-escalated, new-message, requirements-submitted, requirements-reminder, revision-requested, seller-level-promotion, moderation-approved, moderation-rejected, moderation-pending, moderation-response, test-email, email-header, email-footer. Plus `emails/plain/` for plain text variants
+
+### Email Templates (`templates/emails/`)
+
+All email templates are theme-overridable at `yourtheme/wp-sell-services/emails/`.
+
+**26 HTML templates:**
+
+| Template | Purpose |
+|----------|---------|
+| `emails/new-order.php` | New order notification |
+| `emails/order-in-progress.php` | Vendor started work |
+| `emails/delivery-ready.php` | Delivery submitted for review |
+| `emails/order-completed.php` | Order completed |
+| `emails/order-cancelled.php` | Order cancelled |
+| `emails/requirements-submitted.php` | Buyer submitted requirements |
+| `emails/requirements-reminder.php` | Reminder to submit requirements |
+| `emails/revision-requested.php` | Buyer requested revision |
+| `emails/cancellation-requested.php` | Cancellation request filed |
+| `emails/new-message.php` | New order message |
+| `emails/dispute-opened.php` | Dispute opened |
+| `emails/dispute-escalated.php` | Dispute escalated to admin |
+| `emails/seller-level-promotion.php` | Vendor promoted to new seller level |
+| `emails/moderation-pending.php` | Service submitted for moderation |
+| `emails/moderation-approved.php` | Service approved |
+| `emails/moderation-rejected.php` | Service rejected |
+| `emails/moderation-response.php` | Vendor responded to moderation feedback |
+| `emails/vendor-contact.php` | Vendor contact form submission |
+| `emails/withdrawal-requested.php` | Vendor requested withdrawal |
+| `emails/withdrawal-approved.php` | Withdrawal approved |
+| `emails/withdrawal-rejected.php` | Withdrawal rejected |
+| `emails/withdrawal-auto.php` | Automatic withdrawal processed |
+| `emails/generic.php` | Generic notification template |
+| `emails/test-email.php` | Test email (from settings) |
+| `emails/email-header.php` | Shared email header with logo and branding |
+| `emails/email-footer.php` | Shared email footer |
+
+**10 plain text variants** at `emails/plain/`:
+
+| Template | Purpose |
+|----------|---------|
+| `emails/plain/new-order.php` | Plain text new order |
+| `emails/plain/order-in-progress.php` | Plain text order started |
+| `emails/plain/order-completed.php` | Plain text order completed |
+| `emails/plain/order-cancelled.php` | Plain text order cancelled |
+| `emails/plain/delivery-ready.php` | Plain text delivery submitted |
+| `emails/plain/requirements-submitted.php` | Plain text requirements submitted |
+| `emails/plain/requirements-reminder.php` | Plain text requirements reminder |
+| `emails/plain/revision-requested.php` | Plain text revision requested |
+| `emails/plain/new-message.php` | Plain text new message |
+| `emails/plain/dispute-opened.php` | Plain text dispute opened |
+
+See [Email Customization](email-customization.md) for how to override email content, headers, footers, and sender details using filters.
 
 ## Template Functions
 
