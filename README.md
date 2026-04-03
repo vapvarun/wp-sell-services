@@ -4,6 +4,8 @@ A complete Fiverr-style service marketplace platform for WordPress. Vendors list
 
 **No WooCommerce required** — includes a built-in standalone checkout with offline payments out of the box.
 
+[Try Live Demo](https://app.instawp.io/launch?s=wp-sell-services&d=v2) | [Product Page](https://store.wbcomdesigns.com/wp-sell-services/) | [Documentation](https://store.wbcomdesigns.com/wp-sell-services/docs/)
+
 ## Features
 
 ### Marketplace Core
