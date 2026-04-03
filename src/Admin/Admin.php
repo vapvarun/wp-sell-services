@@ -575,7 +575,7 @@ class Admin {
 		$is_taxonomy    = $current_screen && in_array( $current_screen->taxonomy, array( 'wpss_service_category', 'wpss_service_tag' ), true );
 
 		// Load on plugin pages, CPT edit screens, or taxonomy screens.
-		$load_assets = str_contains( $hook, 'wpss' )
+		$load_assets = $this->is_plugin_page( $hook )
 			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) )
 			|| $is_taxonomy;
 
@@ -592,7 +592,7 @@ class Admin {
 		wp_style_add_data( 'wpss-admin', 'rtl', 'replace' );
 
 		// Settings page CSS (loaded only on settings page).
-		if ( str_contains( $hook, 'wpss-settings' ) ) {
+		if ( $this->is_settings_page( $hook ) ) {
 			wp_enqueue_style(
 				'wpss-admin-settings',
 				\WPSS_PLUGIN_URL . 'assets/css/admin-settings.css',
@@ -621,7 +621,7 @@ class Admin {
 		$is_taxonomy    = $current_screen && in_array( $current_screen->taxonomy, array( 'wpss_service_category', 'wpss_service_tag' ), true );
 
 		// Load on plugin pages, CPT edit screens, or taxonomy screens.
-		$load_assets = str_contains( $hook, 'wpss' )
+		$load_assets = $this->is_plugin_page( $hook )
 			|| ( $post_type && in_array( $post_type, array( 'wpss_service', 'wpss_request' ), true ) )
 			|| $is_taxonomy;
 
@@ -672,7 +672,7 @@ class Admin {
 		);
 
 		// Settings page scripts.
-		if ( str_contains( $hook, 'wpss-settings' ) ) {
+		if ( $this->is_settings_page( $hook ) ) {
 			wp_enqueue_script(
 				'wpss-admin-toast',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-toast.js',
@@ -885,7 +885,22 @@ class Admin {
 			'sell-services_page_wpss-upgrade',
 		);
 
-		return in_array( $hook, $plugin_pages, true );
+		if ( in_array( $hook, $plugin_pages, true ) ) {
+			return true;
+		}
+
+		// Support white-labeled menu slugs (e.g., my-marketplace_page_wpss-settings).
+		return str_contains( $hook, 'wpss' );
+	}
+
+	/**
+	 * Check if the current page is a settings page.
+	 *
+	 * @param string $hook The current admin page hook.
+	 * @return bool
+	 */
+	private function is_settings_page( string $hook ): bool {
+		return str_contains( $hook, 'wpss-settings' );
 	}
 
 	/**
