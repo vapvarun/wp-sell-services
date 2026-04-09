@@ -30,6 +30,20 @@ if ( empty( $order_id ) || empty( $order ) ) {
 // Enqueue messaging styles.
 wp_enqueue_style( 'wpss-messaging', WPSS_PLUGIN_URL . 'assets/css/messaging.css', array( 'wpss-design-system' ), WPSS_VERSION );
 
+// Enqueue frontend script to get wpss object localized.
+wp_enqueue_script( 'wpss-frontend', WPSS_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), WPSS_VERSION, true );
+
+// Localize wpss object for AJAX calls.
+wp_localize_script(
+	'wpss-frontend',
+	'wpss',
+	array(
+		'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+		'restUrl' => rest_url( 'wpss/v1/' ),
+		'nonce'   => wp_create_nonce( 'wpss_frontend_nonce' ),
+	)
+);
+
 $user_id     = get_current_user_id();
 $is_vendor   = $is_vendor ?? ( (int) $order->vendor_id === $user_id );
 $is_customer = $is_customer ?? ( (int) $order->customer_id === $user_id );
