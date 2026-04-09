@@ -161,6 +161,7 @@ class TemplateLoader {
 
 		// Check for buyer request single.
 		if ( is_singular( 'wpss_request' ) ) {
+			wpss_enqueue_frontend_assets();
 			$custom = $this->locate_template( 'single-request.php' );
 			if ( $custom ) {
 				return $custom;
