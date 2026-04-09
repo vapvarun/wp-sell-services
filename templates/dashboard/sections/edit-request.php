@@ -42,7 +42,13 @@ if ( ! $budget_min && ! $budget_max ) {
 		$budget_max = $budget_single;
 	}
 }
-$deadline        = get_post_meta( $request_id, '_wpss_deadline', true );
+// Get deadline from expires_at meta field and format for HTML date input
+$expires_at      = get_post_meta( $request_id, '_wpss_expires_at', true );
+$deadline        = '';
+if ( $expires_at ) {
+	$deadline_date = new DateTime( $expires_at );
+	$deadline      = $deadline_date->format( 'Y-m-d' );
+}
 $skills_required = get_post_meta( $request_id, '_wpss_skills_required', true );
 $skills_string   = is_array( $skills_required ) ? implode( ', ', $skills_required ) : ( $skills_required ?: '' );
 $current_status  = get_post_status( $request_id );

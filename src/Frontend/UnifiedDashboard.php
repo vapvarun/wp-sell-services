@@ -92,6 +92,9 @@ class UnifiedDashboard {
 			wp_enqueue_media();
 		}
 
+		// Enqueue frontend assets to ensure wpssData is available for WPSS functions
+		wpss_enqueue_frontend_assets();
+
 		wp_enqueue_style(
 			'wpss-unified-dashboard',
 			WPSS_PLUGIN_URL . 'assets/css/unified-dashboard.css',

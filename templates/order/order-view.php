@@ -32,6 +32,9 @@ if ( empty( $order_id ) ) {
 // Enqueue orders styles.
 wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
 
+// Enqueue frontend assets to ensure wpssData is available.
+wpss_enqueue_frontend_assets();
+
 // Enqueue requirements form script.
 wp_enqueue_script( 'wpss-requirements-form', WPSS_PLUGIN_URL . 'assets/js/requirements-form.js', array( 'jquery' ), WPSS_VERSION, true );
 wp_localize_script(
@@ -193,7 +196,13 @@ do_action( 'wpss_before_order_view', $order );
 			if ( $is_customer ) {
 				// Pay Now button for unpaid orders (e.g., from accepted proposals).
 				if ( 'pending_payment' === $order->status ) {
-					$pay_url        = add_query_arg( 'pay_order', $order_id, wpss_get_service_checkout_url( $order->service_id ) );
+					// Use base checkout URL when service_id is 0 to avoid service-checkout/0/ URLs
+					if ( $order->service_id > 0 ) {
+						$checkout_url = wpss_get_service_checkout_url( $order->service_id );
+					} else {
+						$checkout_url = wpss_get_checkout_base_url();
+					}
+					$pay_url        = add_query_arg( 'pay_order', $order_id, $checkout_url );
 					$actions['pay'] = array(
 						'label' => sprintf(
 							/* translators: %s: formatted price */
