@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.3.9';
+	const DB_VERSION = '1.4.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -119,11 +119,48 @@ class SchemaManager {
 			$this->get_notifications_table( $charset_collate ),
 			$this->get_wallet_transactions_table( $charset_collate ),
 			$this->get_withdrawals_table( $charset_collate ),
+			$this->get_audit_log_table( $charset_collate ),
 		);
 
 		foreach ( $tables as $sql ) {
 			dbDelta( $sql );
 		}
+	}
+
+	/**
+	 * Get audit log table SQL.
+	 *
+	 * Cross-cutting audit trail for sensitive state changes (order status
+	 * transitions, cancellations, refunds, future: proposal/dispute/commission
+	 * actions). Writes are initiated by the {@see \WPSellServices\Services\AuditLogService}
+	 * at every touch point. Indexes support both "show me everything that
+	 * happened to object X" and "show me everything actor Y did" queries.
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_audit_log_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'audit_log' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			actor_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			actor_role varchar(50) DEFAULT NULL,
+			event_type varchar(64) NOT NULL,
+			object_type varchar(32) NOT NULL,
+			object_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			action varchar(32) DEFAULT NULL,
+			from_value text DEFAULT NULL,
+			to_value text DEFAULT NULL,
+			is_forced tinyint(1) NOT NULL DEFAULT 0,
+			context longtext DEFAULT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_object (object_type, object_id, created_at),
+			KEY idx_actor (actor_id, created_at),
+			KEY idx_event (event_type, created_at),
+			KEY idx_forced (is_forced, created_at)
+		) {$charset_collate};";
 	}
 
 	/**
