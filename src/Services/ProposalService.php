@@ -237,12 +237,25 @@ class ProposalService {
 	/**
 	 * Accept a proposal.
 	 *
+	 * @deprecated 1.0.1 Use {@see BuyerRequestService::convert_to_order()} instead.
+	 *
+	 * The live accept flow creates a pending_payment order via
+	 * BuyerRequestService::convert_to_order(), which is what the REST API
+	 * (BuyerRequestsController::accept_proposal) calls. This method previously
+	 * only updated the proposal status without creating an order, leaving the
+	 * buyer-request flow incomplete. It is retained as a thin delegate so any
+	 * external code (Pro plugin hooks, custom integrations) continues to work.
+	 *
 	 * @param int $proposal_id Proposal ID.
-	 * @param int $buyer_id Buyer user ID (must own the request).
+	 * @param int $buyer_id    Buyer user ID (must own the request).
 	 * @return bool True on success.
 	 */
 	public function accept( int $proposal_id, int $buyer_id ): bool {
-		global $wpdb;
+		_deprecated_function(
+			__METHOD__,
+			'1.0.1',
+			'BuyerRequestService::convert_to_order()'
+		);
 
 		$proposal = $this->get( $proposal_id );
 
@@ -250,42 +263,17 @@ class ProposalService {
 			return false;
 		}
 
-		// Verify buyer owns the request.
+		// Verify buyer owns the request before delegating.
 		$request_service = new BuyerRequestService();
 		$request         = $request_service->get( $proposal->request_id );
 
-		if ( ! $request || $request->author_id !== $buyer_id ) {
+		if ( ! $request || (int) $request->author_id !== $buyer_id ) {
 			return false;
 		}
 
-		// Update proposal status.
-		$result = $wpdb->update(
-			$this->table,
-			array( 'status' => self::STATUS_ACCEPTED ),
-			array( 'id' => $proposal_id )
-		);
+		$result = $request_service->convert_to_order( (int) $proposal->request_id, $proposal_id );
 
-		if ( $result !== false ) {
-			// Mark request as hired.
-			$request_service->mark_hired( $proposal->request_id, $proposal->vendor_id, $proposal_id );
-
-			// Reject other proposals for this request.
-			$this->reject_other_proposals( $proposal->request_id, $proposal_id );
-
-			/**
-			 * Fires when a proposal is accepted.
-			 *
-			 * @since 1.0.0
-			 * @param int    $proposal_id Proposal ID.
-			 * @param object $proposal    Proposal object.
-			 * @param object $request     Request object.
-			 */
-			do_action( 'wpss_proposal_accepted', $proposal_id, $proposal, $request );
-
-			return true;
-		}
-
-		return false;
+		return ! empty( $result['success'] );
 	}
 
 	/**
