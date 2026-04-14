@@ -671,7 +671,16 @@ class OrderWorkflowManager {
 
 		// Reverse earnings if commission was already recorded for this order.
 		if ( null !== $order->vendor_earnings && '' !== $order->vendor_earnings ) {
-			$this->reverse_order_earnings( $order_id, $order );
+			$reversed = $this->reverse_order_earnings( $order_id, $order );
+			if ( ! $reversed ) {
+				wpss_log(
+					sprintf(
+						'Order %d cancelled but earnings reversal failed — vendor profile and wallet may be out of sync. Manual adjustment required.',
+						$order_id
+					),
+					'error'
+				);
+			}
 		}
 
 		// Auto-refund the buyer's original payment via the payment gateway.
@@ -692,13 +701,14 @@ class OrderWorkflowManager {
 	 * Reverse earnings for a cancelled order.
 	 *
 	 * Subtracts the vendor earnings from the vendor profile totals and creates
-	 * a reversal wallet transaction.
+	 * a reversal wallet transaction. All writes are wrapped in a DB transaction
+	 * and rolled back on any failure so partial state cannot be committed.
 	 *
 	 * @param int          $order_id Order ID.
 	 * @param ServiceOrder $order    Order object.
-	 * @return void
+	 * @return bool True on success, false on failure (rolled back).
 	 */
-	private function reverse_order_earnings( int $order_id, ServiceOrder $order ): void {
+	private function reverse_order_earnings( int $order_id, ServiceOrder $order ): bool {
 		global $wpdb;
 
 		$vendor_id       = $order->vendor_id;
@@ -709,7 +719,7 @@ class OrderWorkflowManager {
 
 		// Skip zero-amount reversals.
 		if ( $vendor_earnings <= 0 && $order_total <= 0 ) {
-			return;
+			return true;
 		}
 
 		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
@@ -726,86 +736,119 @@ class OrderWorkflowManager {
 		);
 
 		if ( $existing_reversal > 0 ) {
-			return;
+			return true;
 		}
 
 		// All operations in a single transaction.
 		$wpdb->query( 'START TRANSACTION' );
 
-		// 1. Update vendor profile earnings (verify profile exists).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$profile_updated = $wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$profiles_table}
-				SET
-					total_earnings = GREATEST(0, total_earnings - %f),
-					net_earnings = GREATEST(0, net_earnings - %f),
-					total_commission = GREATEST(0, total_commission - %f),
-					updated_at = %s
-				WHERE user_id = %d",
-				$order_total,
-				$vendor_earnings,
-				$platform_fee,
-				current_time( 'mysql' ),
-				$vendor_id
-			)
-		);
+		try {
+			// 1. Update vendor profile earnings (verify profile exists).
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$profile_updated = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$profiles_table}
+					SET
+						total_earnings = GREATEST(0, total_earnings - %f),
+						net_earnings = GREATEST(0, net_earnings - %f),
+						total_commission = GREATEST(0, total_commission - %f),
+						updated_at = %s
+					WHERE user_id = %d",
+					$order_total,
+					$vendor_earnings,
+					$platform_fee,
+					current_time( 'mysql' ),
+					$vendor_id
+				)
+			);
 
-		if ( 0 === $profile_updated ) {
-			wpss_log( "Earnings reversal: vendor profile not found for user {$vendor_id}, order {$order_id}.", 'warning' );
-		}
+			if ( false === $profile_updated ) {
+				throw new \RuntimeException(
+					sprintf( 'UPDATE vendor_profiles failed: %s', $wpdb->last_error )
+				);
+			}
 
-		// 2. Create reversal wallet transaction.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$current_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$transactions_table}
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1
-				FOR UPDATE",
-				$vendor_id
-			)
-		);
+			if ( 0 === $profile_updated ) {
+				wpss_log( "Earnings reversal: vendor profile not found for user {$vendor_id}, order {$order_id}.", 'warning' );
+			}
 
-		$new_balance = max( 0, $current_balance - $vendor_earnings );
+			// 2. Look up current wallet balance for the reversal transaction row.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$current_balance = (float) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COALESCE(balance_after, 0)
+					FROM {$transactions_table}
+					WHERE user_id = %d
+					ORDER BY created_at DESC, id DESC
+					LIMIT 1
+					FOR UPDATE",
+					$vendor_id
+				)
+			);
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$wpdb->insert(
-			$transactions_table,
-			array(
-				'user_id'        => $vendor_id,
-				'type'           => 'order_reversal',
-				'amount'         => -$vendor_earnings,
-				'balance_after'  => $new_balance,
-				'currency'       => $currency,
-				'description'    => sprintf(
-					/* translators: %d: order ID */
-					__( 'Earnings reversed for cancelled order #%d', 'wp-sell-services' ),
-					$order_id
+			$new_balance = max( 0, $current_balance - $vendor_earnings );
+
+			// 3. Create reversal wallet transaction.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$insert_result = $wpdb->insert(
+				$transactions_table,
+				array(
+					'user_id'        => $vendor_id,
+					'type'           => 'order_reversal',
+					'amount'         => -$vendor_earnings,
+					'balance_after'  => $new_balance,
+					'currency'       => $currency,
+					'description'    => sprintf(
+						/* translators: %d: order ID */
+						__( 'Earnings reversed for cancelled order #%d', 'wp-sell-services' ),
+						$order_id
+					),
+					'reference_type' => 'order',
+					'reference_id'   => $order_id,
+					'status'         => 'completed',
+					'created_at'     => current_time( 'mysql' ),
 				),
-				'reference_type' => 'order',
-				'reference_id'   => $order_id,
-				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
-		);
+				array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
+			);
 
-		// 3. Clear order commission fields to prevent double-reversal.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
-			$orders_table,
-			array(
-				'vendor_earnings' => null,
-				'platform_fee'    => null,
-				'commission_rate' => null,
-			),
-			array( 'id' => $order_id )
-		);
+			if ( false === $insert_result ) {
+				throw new \RuntimeException(
+					sprintf( 'INSERT wallet_transactions failed: %s', $wpdb->last_error )
+				);
+			}
 
-		$wpdb->query( 'COMMIT' );
+			// 4. Clear order commission fields to prevent double-reversal.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$update_result = $wpdb->update(
+				$orders_table,
+				array(
+					'vendor_earnings' => null,
+					'platform_fee'    => null,
+					'commission_rate' => null,
+				),
+				array( 'id' => $order_id )
+			);
+
+			if ( false === $update_result ) {
+				throw new \RuntimeException(
+					sprintf( 'UPDATE orders commission fields failed: %s', $wpdb->last_error )
+				);
+			}
+
+			$wpdb->query( 'COMMIT' );
+			return true;
+		} catch ( \Throwable $e ) {
+			$wpdb->query( 'ROLLBACK' );
+			wpss_log(
+				sprintf(
+					'Earnings reversal failed for order %d, transaction rolled back: %s',
+					$order_id,
+					$e->getMessage()
+				),
+				'error'
+			);
+			return false;
+		}
 	}
 
 	/**
