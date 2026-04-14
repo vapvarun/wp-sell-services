@@ -250,6 +250,13 @@ class Activator {
 		// on every init. We only handle EarningsService here since it has its own
 		// dynamic scheduling logic based on admin settings.
 		\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
+
+		// Daily audit log retention cleanup. The callback is a no-op unless
+		// the site operator sets wpss_audit_log_retention_days to a positive
+		// value, so scheduling it unconditionally is safe.
+		if ( ! wp_next_scheduled( \WPSellServices\Services\AuditLogService::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\AuditLogService::CLEANUP_HOOK );
+		}
 	}
 
 	/**

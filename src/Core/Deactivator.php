@@ -52,6 +52,7 @@ class Deactivator {
 			'wpss_update_vendor_stats',
 			'wpss_process_auto_withdrawals',
 			'wpss_cron_daily',
+			\WPSellServices\Services\AuditLogService::CLEANUP_HOOK,
 		);
 
 		foreach ( $cron_hooks as $hook ) {

@@ -366,6 +366,17 @@ function wpss_deactivate(): void {
 
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\wpss_deactivate' );
 
+// Daily audit log retention cleanup. No-op unless the
+// wpss_audit_log_retention_days option is set to a positive value.
+add_action(
+	'wpss_audit_log_cleanup',
+	static function (): void {
+		if ( class_exists( Services\AuditLogService::class ) ) {
+			( new Services\AuditLogService() )->cleanup_expired();
+		}
+	}
+);
+
 // EDD Software Licensing SDK — free plugin auto-updates with preset key.
 add_action(
 	'edd_sl_sdk_registry',

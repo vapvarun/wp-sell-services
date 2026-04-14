@@ -70,6 +70,7 @@ class API {
 			new CartController(),
 			new AuthController(),
 			new PaymentController(),
+			new AuditLogController(),
 		];
 
 		/**
