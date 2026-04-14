@@ -669,6 +669,29 @@ class OrderWorkflowManager {
 			return;
 		}
 
+		// Audit-trail the cancellation itself. Status-change audit rows are
+		// written by OrderService::log_status_change(); this row captures the
+		// richer cancellation context (what earnings/payment state was being
+		// unwound) so downstream forensics has the full picture.
+		$audit = new AuditLogService();
+		$audit->log(
+			'order.cancel',
+			'order',
+			$order_id,
+			array(
+				'action'     => 'cancel',
+				'from_value' => $old_status,
+				'to_value'   => ServiceOrder::STATUS_CANCELLED,
+				'context'    => array(
+					'vendor_id'       => (int) $order->vendor_id,
+					'customer_id'     => (int) $order->customer_id,
+					'vendor_earnings' => null === $order->vendor_earnings ? null : (float) $order->vendor_earnings,
+					'order_total'    => (float) $order->total,
+					'payment_status' => (string) $order->payment_status,
+				),
+			)
+		);
+
 		// Reverse earnings if commission was already recorded for this order.
 		if ( null !== $order->vendor_earnings && '' !== $order->vendor_earnings ) {
 			$reversed = $this->reverse_order_earnings( $order_id, $order );
@@ -679,6 +702,18 @@ class OrderWorkflowManager {
 						$order_id
 					),
 					'error'
+				);
+				$audit->log(
+					'order.earnings_reversal_failed',
+					'order',
+					$order_id,
+					array(
+						'action'  => 'rollback',
+						'context' => array(
+							'vendor_id' => (int) $order->vendor_id,
+							'amount'    => (float) $order->vendor_earnings,
+						),
+					)
 				);
 			}
 		}
@@ -881,6 +916,8 @@ class OrderWorkflowManager {
 
 		$refund_result = $gateway->process_refund( $order->transaction_id, (float) $order->total );
 
+		$audit = new AuditLogService();
+
 		if ( ! empty( $refund_result['success'] ) ) {
 			global $wpdb;
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -891,6 +928,22 @@ class OrderWorkflowManager {
 			);
 
 			wpss_log( "Auto-refund successful for order {$order->id}, transaction {$order->transaction_id}." );
+
+			$audit->log(
+				'order.refund',
+				'order',
+				(int) $order->id,
+				array(
+					'action'     => 'refund',
+					'from_value' => (string) $order->payment_status,
+					'to_value'   => 'refunded',
+					'context'    => array(
+						'gateway'        => (string) $order->payment_method,
+						'transaction_id' => (string) $order->transaction_id,
+						'amount'         => (float) $order->total,
+					),
+				)
+			);
 
 			/**
 			 * Fires when an auto-refund is processed successfully.
@@ -905,6 +958,21 @@ class OrderWorkflowManager {
 		} else {
 			$error_msg = $refund_result['error'] ?? __( 'Unknown error', 'wp-sell-services' );
 			wpss_log( "Auto-refund FAILED for order {$order->id}: {$error_msg}", 'error' );
+
+			$audit->log(
+				'order.refund_failed',
+				'order',
+				(int) $order->id,
+				array(
+					'action'  => 'refund',
+					'context' => array(
+						'gateway'        => (string) $order->payment_method,
+						'transaction_id' => (string) $order->transaction_id,
+						'amount'         => (float) $order->total,
+						'error'          => (string) $error_msg,
+					),
+				)
+			);
 
 			// Notify admin of failed refund so they can process manually.
 			$this->notification_service->create(

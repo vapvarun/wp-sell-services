@@ -209,8 +209,15 @@ class OrderService {
 			return false;
 		}
 
-		// Log status change.
-		$this->log_status_change( $order_id, $old_status, $new_status, $note );
+		// Determine whether the transition bypassed the natural state machine.
+		// can_transition() above already approved it, so false from
+		// can_transition_naturally() here means the admin/manage_orders cap
+		// short-circuit at L237 accepted something the map would have rejected.
+		$is_forced = ! $this->can_transition_naturally( $old_status, $new_status );
+		$actor_id  = (int) get_current_user_id();
+
+		// Log status change to the conversation system message trail.
+		$this->log_status_change( $order_id, $old_status, $new_status, $note, $actor_id, $is_forced );
 
 		/**
 		 * Fires when order status changes.
@@ -233,11 +240,47 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
-		// Admins and vendors with order management capability can force any status transition.
+		// Admins and vendors with order management capability can force any
+		// status transition. The forcing is audited downstream via
+		// can_transition_naturally() → log_status_change()/AuditLogService so
+		// forensics can tell a natural transition from a cap-bypass.
 		if ( current_user_can( 'manage_options' ) || current_user_can( 'wpss_manage_orders' ) ) {
 			return true;
 		}
 
+		return $this->can_transition_naturally( $from, $to );
+	}
+
+	/**
+	 * Check whether a transition is permitted by the natural state machine,
+	 * without honoring the admin/manage_orders capability bypass.
+	 *
+	 * Public so callers (update_status, audit log) can distinguish between a
+	 * transition that the workflow rules actually allow and a transition that
+	 * only succeeded because an admin was on the request.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string $from Current status.
+	 * @param string $to   Target status.
+	 * @return bool True if the transition is in the rule map.
+	 */
+	public function can_transition_naturally( string $from, string $to ): bool {
+		$transitions = $this->get_natural_transitions( $from, $to );
+
+		return isset( $transitions[ $from ] ) && in_array( $to, $transitions[ $from ], true );
+	}
+
+	/**
+	 * Get the natural order-status transition map.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string $from Current status (passed to the filter for context).
+	 * @param string $to   Target status (passed to the filter for context).
+	 * @return array<string, array<int, string>>
+	 */
+	private function get_natural_transitions( string $from = '', string $to = '' ): array {
 		$transitions = array(
 			// Standard workflow statuses.
 			ServiceOrder::STATUS_PENDING_PAYMENT        => array(
@@ -323,9 +366,7 @@ class OrderService {
 		 * @param string $from        Current status.
 		 * @param string $to          Target status.
 		 */
-		$transitions = apply_filters( 'wpss_order_status_transitions', $transitions, $from, $to );
-
-		return isset( $transitions[ $from ] ) && in_array( $to, $transitions[ $from ], true );
+		return apply_filters( 'wpss_order_status_transitions', $transitions, $from, $to );
 	}
 
 	/**
@@ -641,9 +682,11 @@ class OrderService {
 	 * @param string $old_status Old status.
 	 * @param string $new_status New status.
 	 * @param string $note       Optional note.
+	 * @param int    $actor_id   Optional actor user ID. Falls back to current user when 0.
+	 * @param bool   $is_forced  Optional. Whether this transition bypassed the natural state machine.
 	 * @return void
 	 */
-	public function log_status_change( int $order_id, string $old_status, string $new_status, string $note = '' ): void {
+	public function log_status_change( int $order_id, string $old_status, string $new_status, string $note = '', int $actor_id = 0, bool $is_forced = false ): void {
 		// Deduplicate within the same request (static) AND across requests (transient).
 		// Prevents duplicate system messages from race conditions (concurrent cron + AJAX).
 		static $logged = array();
@@ -660,7 +703,29 @@ class OrderService {
 		}
 		set_transient( $transient_key, 1, 30 );
 
-		// Create system message in conversation.
+		if ( 0 === $actor_id ) {
+			$actor_id = (int) get_current_user_id();
+		}
+
+		// Write to the permanent audit log — this is the source of truth for
+		// forensic/compliance queries regardless of whether a conversation
+		// thread exists for the order.
+		( new AuditLogService() )->log(
+			'order.status_change',
+			'order',
+			$order_id,
+			array(
+				'action'     => $is_forced ? 'force' : 'update',
+				'from_value' => $old_status,
+				'to_value'   => $new_status,
+				'is_forced'  => $is_forced,
+				'context'    => array(
+					'note' => $note,
+				),
+			)
+		);
+
+		// Create system message in conversation (user-facing history).
 		$conversation_service = new ConversationService();
 		$conversation         = $conversation_service->get_by_order( $order_id );
 
@@ -676,11 +741,25 @@ class OrderService {
 				$new_label
 			);
 
+			if ( $is_forced ) {
+				$message .= ' ' . __( '(admin override)', 'wp-sell-services' );
+			}
+
 			if ( $note ) {
 				$message .= ': ' . $note;
 			}
 
-			$conversation_service->add_system_message( $conversation->id, $message );
+			$conversation_service->add_system_message(
+				$conversation->id,
+				$message,
+				array(
+					'event'     => 'status_change',
+					'actor_id'  => $actor_id,
+					'old'       => $old_status,
+					'new'       => $new_status,
+					'is_forced' => $is_forced,
+				)
+			);
 		}
 	}
 }
