@@ -1181,16 +1181,12 @@ final class Plugin {
 			);
 		}
 
-		// Log status changes to conversation system messages.
-		add_action(
-			'wpss_order_status_changed',
-			static function ( int $order_id, string $old_status, string $new_status ): void {
-				$order_service = new \WPSellServices\Services\OrderService();
-				$order_service->log_status_change( $order_id, $old_status, $new_status );
-			},
-			5,
-			3
-		);
+		// Note: wpss_order_status_changed → log_status_change wiring lives in
+		// OrderWorkflowManager::define_hooks(). Having a second listener here
+		// caused duplicate audit log rows because the wpss_order_status_changed
+		// signature is ($order_id, $new_status, $old_status) — the positional
+		// swap mismatched the log_status_change() signature and bypassed the
+		// static dedup key.
 
 		// Payment hooks.
 		add_action(

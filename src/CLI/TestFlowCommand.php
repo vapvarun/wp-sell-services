@@ -20,6 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WP_CLI;
 use WP_CLI_Command;
+use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\BuyerRequestService;
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\OrderService;
@@ -65,6 +66,7 @@ class TestFlowCommand extends WP_CLI_Command {
 		'proposals'   => array(),
 		'orders'      => array(),
 		'wallet_txns' => array(),
+		'audit_rows'  => array(),
 	);
 
 	/**
@@ -80,7 +82,7 @@ class TestFlowCommand extends WP_CLI_Command {
 	 * ## OPTIONS
 	 *
 	 * <flow>
-	 * : Flow to run. One of: all, buyer-request, service-purchase, order-cancel-rollback.
+	 * : Flow to run. One of: all, buyer-request, service-purchase, order-cancel-rollback, order-audit-trail.
 	 *
 	 * [--no-cleanup]
 	 * : Leave seeded data in the DB after the run (for manual inspection).
@@ -96,6 +98,7 @@ class TestFlowCommand extends WP_CLI_Command {
 			'buyer-request'         => 'flow_buyer_request',
 			'service-purchase'      => 'flow_service_purchase',
 			'order-cancel-rollback' => 'flow_order_cancel_rollback',
+			'order-audit-trail'     => 'flow_order_audit_trail',
 		);
 
 		$to_run = 'all' === $flow ? array_keys( $flows ) : array( $flow );
@@ -117,6 +120,7 @@ class TestFlowCommand extends WP_CLI_Command {
 				'proposals'   => array(),
 				'orders'      => array(),
 				'wallet_txns' => array(),
+				'audit_rows'  => array(),
 			);
 
 			try {
@@ -397,6 +401,141 @@ class TestFlowCommand extends WP_CLI_Command {
 	}
 
 	/**
+	 * Flow: order audit trail capture.
+	 *
+	 * Seeds an order and triggers a non-natural status transition as the
+	 * currently-running admin user (CLI is treated as admin). Asserts the
+	 * AuditLogService writes an `order.status_change` row with the correct
+	 * actor, is_forced flag, and structured context.
+	 */
+	private function flow_order_audit_trail(): void {
+		global $wpdb;
+
+		$vendor_id = $this->seed_user( 'vendor' );
+		$buyer_id  = $this->seed_user( 'buyer' );
+
+		// Seed an order directly in `in_progress` — a status the natural
+		// state machine allows to move to cancelled/on_hold/etc., but NOT
+		// directly to `pending_payment`. Jumping from `in_progress` back to
+		// `pending_payment` requires the admin bypass, which is exactly the
+		// scenario we want to audit.
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$wpdb->insert(
+			$orders_table,
+			array(
+				'order_number'    => 'TFA-' . wp_generate_password( 8, false ),
+				'customer_id'     => $buyer_id,
+				'vendor_id'       => $vendor_id,
+				'service_id'      => 0,
+				'platform'        => 'standalone',
+				'subtotal'        => 100.0,
+				'total'           => 100.0,
+				'currency'        => 'USD',
+				'status'          => ServiceOrder::STATUS_IN_PROGRESS,
+				'payment_status'  => 'paid',
+				'created_at'      => current_time( 'mysql' ),
+				'updated_at'      => current_time( 'mysql' ),
+			),
+			array( '%s', '%d', '%d', '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%s' )
+		);
+		$order_id                  = (int) $wpdb->insert_id;
+		$this->created['orders'][] = $order_id;
+
+		// Switch to an administrator context so can_transition short-circuits
+		// and log_status_change records is_forced = true.
+		$admin_id = $this->seed_admin_user();
+		wp_set_current_user( $admin_id );
+
+		// Baseline: how many audit rows exist for this order before the flow?
+		$audit_table   = $wpdb->prefix . 'wpss_audit_log';
+		$rows_before   = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$audit_table} WHERE object_type = 'order' AND object_id = %d",
+				$order_id
+			)
+		);
+
+		$service = new OrderService();
+		$ok      = $service->update_status( $order_id, ServiceOrder::STATUS_PENDING_PAYMENT, 'audit test forced transition' );
+		$this->assert_true( $ok, 'update_status returned true for forced transition' );
+
+		// Confirm the refactor: the target transition is NOT in the natural map.
+		$this->assert_true(
+			! $service->can_transition_naturally( ServiceOrder::STATUS_IN_PROGRESS, ServiceOrder::STATUS_PENDING_PAYMENT ),
+			'in_progress → pending_payment is outside the natural state machine'
+		);
+
+		// New audit row landed.
+		$rows_after = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$audit_table} WHERE object_type = 'order' AND object_id = %d",
+				$order_id
+			)
+		);
+		$this->assert_eq( $rows_before + 1, $rows_after, 'exactly one new audit row written' );
+
+		$audit_row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$audit_table} WHERE object_type = 'order' AND object_id = %d ORDER BY id DESC LIMIT 1",
+				$order_id
+			)
+		);
+		$this->assert_true( $audit_row !== null, 'latest audit row retrievable' );
+
+		if ( $audit_row ) {
+			$this->created['audit_rows'][] = (int) $audit_row->id;
+			$this->assert_eq( 'order.status_change', $audit_row->event_type, 'event_type = order.status_change' );
+			$this->assert_eq( $admin_id, (int) $audit_row->actor_id, 'actor_id captured as current admin' );
+			$this->assert_eq( 'administrator', $audit_row->actor_role, 'actor_role captured' );
+			$this->assert_eq( ServiceOrder::STATUS_IN_PROGRESS, $audit_row->from_value, 'from_value = old status' );
+			$this->assert_eq( ServiceOrder::STATUS_PENDING_PAYMENT, $audit_row->to_value, 'to_value = new status' );
+			$this->assert_eq( 1, (int) $audit_row->is_forced, 'is_forced flag set for bypass' );
+			$this->assert_eq( 'force', $audit_row->action, 'action = force' );
+
+			$context = json_decode( (string) $audit_row->context, true );
+			$this->assert_true( is_array( $context ), 'context deserializes to array' );
+			$this->assert_true( isset( $context['note'] ), 'context.note present' );
+			$this->assert_eq( 'audit test forced transition', $context['note'] ?? '', 'note round-tripped' );
+		}
+
+		// AuditLogService::query() filter sanity: by object_type/object_id.
+		$audit_service = new AuditLogService();
+		$query_result  = $audit_service->query(
+			array(
+				'object_type' => 'order',
+				'object_id'   => $order_id,
+				'is_forced'   => true,
+				'per_page'    => 10,
+			)
+		);
+		$this->assert_true( (int) $query_result['total'] >= 1, 'query() returns at least one forced row' );
+	}
+
+	/**
+	 * Create a test administrator user.
+	 *
+	 * @return int User ID.
+	 */
+	private function seed_admin_user(): int {
+		$login   = self::USER_PREFIX . 'admin_' . wp_generate_password( 6, false );
+		$user_id = wp_insert_user(
+			array(
+				'user_login' => $login,
+				'user_email' => $login . '@example.test',
+				'user_pass'  => wp_generate_password( 12 ),
+				'role'       => 'administrator',
+			)
+		);
+
+		if ( is_wp_error( $user_id ) ) {
+			WP_CLI::error( "Failed to create test admin: {$user_id->get_error_message()}" );
+		}
+
+		$this->created['users'][] = (int) $user_id;
+		return (int) $user_id;
+	}
+
+	/**
 	 * Create a test user with the test_flow_ prefix.
 	 *
 	 * @param string $role Role token for readable username (e.g. 'buyer').
@@ -511,9 +650,14 @@ class TestFlowCommand extends WP_CLI_Command {
 		foreach ( $this->created['wallet_txns'] as $id ) {
 			$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'id' => $id ) );
 		}
+		foreach ( $this->created['audit_rows'] as $id ) {
+			$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'id' => $id ) );
+		}
 		foreach ( $this->created['orders'] as $id ) {
 			$wpdb->delete( $wpdb->prefix . 'wpss_orders', array( 'id' => $id ) );
 			$wpdb->delete( $wpdb->prefix . 'wpss_order_requirements', array( 'order_id' => $id ) );
+			// Sweep any audit rows left by this order that the flow didn't explicitly track.
+			$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'object_type' => 'order', 'object_id' => $id ) );
 		}
 		foreach ( $this->created['proposals'] as $id ) {
 			$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $id ) );

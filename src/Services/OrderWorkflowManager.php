@@ -77,11 +77,21 @@ class OrderWorkflowManager {
 		add_action( 'wpss_order_status_cancelled', [ $this, 'handle_order_cancelled' ], 10, 2 );
 		add_action( 'wpss_order_status_cancellation_requested', [ $this, 'handle_cancellation_requested' ], 10, 2 );
 
-		// Log status changes to conversation system messages.
-		// This ensures changes made via ServiceOrder::update() (REST API path) also
-		// get logged. The static deduplication in log_status_change() prevents double
-		// messages when OrderService::update_status() already logged the change.
-		add_action( 'wpss_order_status_changed', [ $this->order_service, 'log_status_change' ], 5, 3 );
+		// Log status changes to conversation system messages AND audit log.
+		// This catches changes made via ServiceOrder::update() (REST API path)
+		// that bypass OrderService::update_status(). The action signature is
+		// ($order_id, $new_status, $old_status), but log_status_change() takes
+		// ($order_id, $old_status, $new_status, ...) — a closure normalizes the
+		// order so the static dedup key inside log_status_change() matches the
+		// direct call site and we don't double-log.
+		add_action(
+			'wpss_order_status_changed',
+			function ( int $order_id, string $new_status, string $old_status ): void {
+				$this->order_service->log_status_change( $order_id, $old_status, $new_status );
+			},
+			5,
+			3
+		);
 
 		// Payment hooks.
 		add_action( 'wpss_order_paid', [ $this, 'handle_payment_complete' ], 10, 2 );
