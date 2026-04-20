@@ -1722,3 +1722,131 @@ function wpss_enqueue_frontend_assets(): void {
 	wp_enqueue_style( 'wpss-frontend' );
 	wp_enqueue_script( 'wpss-frontend' );
 }
+
+/**
+ * Check whether a URL is a recognized YouTube or Vimeo video.
+ *
+ * Used as the whitelist for vendor intro videos — anything that is not a
+ * parseable YouTube / Vimeo link is rejected on save so the profile
+ * never tries to embed an arbitrary third-party iframe.
+ *
+ * @since 1.1.0
+ *
+ * @param string $url Raw URL.
+ * @return bool True if the URL is a parseable YouTube or Vimeo video link.
+ */
+function wpss_is_supported_video_url( string $url ): bool {
+	if ( '' === $url ) {
+		return false;
+	}
+
+	return null !== wpss_parse_video_embed( $url );
+}
+
+/**
+ * Parse a YouTube or Vimeo URL into embed pieces.
+ *
+ * Returns null when the URL is not a supported provider or when the video
+ * ID cannot be extracted. On success, returns:
+ *   [
+ *     'provider' => 'youtube'|'vimeo',
+ *     'id'       => string,
+ *     'embed'    => fully-qualified embed URL for an <iframe src>
+ *   ]
+ *
+ * Supported URL shapes:
+ *   - YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID,
+ *     youtube.com/shorts/ID, m.youtube.com/* variants
+ *   - Vimeo: vimeo.com/ID, player.vimeo.com/video/ID, channel paths with
+ *     a numeric ID
+ *
+ * @since 1.1.0
+ *
+ * @param string $url Raw URL.
+ * @return array{provider: string, id: string, embed: string}|null
+ */
+function wpss_parse_video_embed( string $url ): ?array {
+	$url = trim( $url );
+	if ( '' === $url ) {
+		return null;
+	}
+
+	$parts = wp_parse_url( $url );
+	$host  = isset( $parts['host'] ) ? strtolower( $parts['host'] ) : '';
+	$host  = preg_replace( '/^www\./', '', $host );
+
+	if ( 'youtu.be' === $host ) {
+		$id = ltrim( (string) ( $parts['path'] ?? '' ), '/' );
+		if ( preg_match( '/^[A-Za-z0-9_-]{6,}$/', $id ) ) {
+			return array(
+				'provider' => 'youtube',
+				'id'       => $id,
+				'embed'    => 'https://www.youtube.com/embed/' . rawurlencode( $id ),
+			);
+		}
+		return null;
+	}
+
+	if ( 'youtube.com' === $host || 'm.youtube.com' === $host ) {
+		$path = (string) ( $parts['path'] ?? '' );
+		parse_str( (string) ( $parts['query'] ?? '' ), $query );
+
+		$id = '';
+		if ( '/watch' === $path && ! empty( $query['v'] ) ) {
+			$id = (string) $query['v'];
+		} elseif ( preg_match( '#^/(embed|shorts|v)/([A-Za-z0-9_-]{6,})#', $path, $m ) ) {
+			$id = $m[2];
+		}
+
+		if ( preg_match( '/^[A-Za-z0-9_-]{6,}$/', $id ) ) {
+			return array(
+				'provider' => 'youtube',
+				'id'       => $id,
+				'embed'    => 'https://www.youtube.com/embed/' . rawurlencode( $id ),
+			);
+		}
+		return null;
+	}
+
+	if ( 'vimeo.com' === $host || 'player.vimeo.com' === $host ) {
+		$path = (string) ( $parts['path'] ?? '' );
+		if ( preg_match( '#/(\d{5,})#', $path, $m ) ) {
+			return array(
+				'provider' => 'vimeo',
+				'id'       => $m[1],
+				'embed'    => 'https://player.vimeo.com/video/' . rawurlencode( $m[1] ),
+			);
+		}
+		return null;
+	}
+
+	return null;
+}
+
+/**
+ * Render a vendor intro video as a responsive 16:9 embed.
+ *
+ * Returns '' (not an iframe fallback) when the URL is empty or not a
+ * supported provider so callers can echo unconditionally and the page
+ * simply drops the video section when there isn't one.
+ *
+ * @since 1.1.0
+ *
+ * @param string $url   Raw video URL.
+ * @param string $title Optional accessible title for the iframe.
+ * @return string HTML wrapper + iframe, or empty string.
+ */
+function wpss_render_video_embed( string $url, string $title = '' ): string {
+	$parsed = wpss_parse_video_embed( $url );
+	if ( null === $parsed ) {
+		return '';
+	}
+
+	$title = '' === $title ? __( 'Vendor intro video', 'wp-sell-services' ) : $title;
+
+	return sprintf(
+		'<div class="wpss-video-embed"><iframe src="%s" title="%s" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>',
+		esc_url( $parsed['embed'] ),
+		esc_attr( $title )
+	);
+}

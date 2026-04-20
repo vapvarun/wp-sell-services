@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.0';
+	const DB_VERSION = '1.4.1';
 
 	/**
 	 * Option name for storing DB version.
@@ -612,6 +612,7 @@ class SchemaManager {
 			city varchar(100) DEFAULT NULL,
 			timezone varchar(100) DEFAULT NULL,
 			website varchar(255) DEFAULT NULL,
+			intro_video_url varchar(500) DEFAULT NULL,
 			social_links longtext,
 			total_orders int(11) DEFAULT 0,
 			completed_orders int(11) DEFAULT 0,

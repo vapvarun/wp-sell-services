@@ -431,6 +431,7 @@ class VendorService {
 			'city',
 			'timezone',
 			'website',
+			'intro_video_url',
 			'social_links',
 		);
 

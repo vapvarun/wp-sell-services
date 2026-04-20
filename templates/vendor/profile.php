@@ -271,6 +271,18 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 		<div class="wpss-profile-layout">
 			<main class="wpss-profile-main">
+				<?php
+				$intro_video_embed = isset( $profile->intro_video_url ) && '' !== $profile->intro_video_url
+					? wpss_render_video_embed( $profile->intro_video_url, sprintf( /* translators: %s: vendor display name */ __( 'Intro video from %s', 'wp-sell-services' ), $profile->display_name ) )
+					: '';
+				?>
+				<?php if ( '' !== $intro_video_embed ) : ?>
+					<section class="wpss-profile-section wpss-profile-section--video">
+						<h2><?php esc_html_e( 'Introduction', 'wp-sell-services' ); ?></h2>
+						<?php echo $intro_video_embed; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper returns an HTML fragment with escaped attributes. ?>
+					</section>
+				<?php endif; ?>
+
 				<!-- About -->
 				<?php if ( $bio ) : ?>
 					<section class="wpss-profile-section">

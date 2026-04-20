@@ -516,6 +516,23 @@ class SingleServiceView {
 					</div>
 				<?php endif; ?>
 
+				<?php
+				// Vendor intro video — only shown when a valid YouTube/Vimeo URL
+				// was saved on the profile. The helper returns '' for anything
+				// else so this block drops out silently.
+				$intro_video = isset( $profile->intro_video_url ) ? (string) $profile->intro_video_url : '';
+				if ( '' !== $intro_video ) :
+					$intro_embed = wpss_render_video_embed( $intro_video, sprintf( /* translators: %s: vendor display name */ __( 'Intro video from %s', 'wp-sell-services' ), $vendor->display_name ) );
+					if ( '' !== $intro_embed ) :
+						?>
+						<div class="wpss-vendor-intro-video">
+							<?php echo $intro_embed; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper output uses esc_url/esc_attr internally. ?>
+						</div>
+						<?php
+					endif;
+				endif;
+				?>
+
 				<div class="wpss-vendor-meta-grid">
 					<?php
 					$country = $profile->country ?? get_user_meta( $vendor_id, '_wpss_vendor_country', true );

@@ -3594,6 +3594,15 @@ class AjaxHandlers {
 					$update_data['website'] = esc_url_raw( wp_unslash( $_POST['website'] ) );
 				}
 
+				if ( isset( $_POST['intro_video_url'] ) ) {
+					// Accept only YouTube/Vimeo origins — stored verbatim, rendered
+					// through wpss_vendor_video_embed_url() which turns a valid
+					// watch/share link into a safe embed iframe. Anything else
+					// clears the field so the UI falls back to no-video state.
+					$raw_video             = esc_url_raw( wp_unslash( $_POST['intro_video_url'] ) );
+					$update_data['intro_video_url'] = wpss_is_supported_video_url( $raw_video ) ? $raw_video : '';
+				}
+
 				// Vacation mode.
 				$update_data['vacation_mode'] = ! empty( $_POST['vacation_mode'] ) ? 1 : 0;
 

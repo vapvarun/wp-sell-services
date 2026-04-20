@@ -135,6 +135,12 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					<label for="website"><?php esc_html_e( 'Website', 'wp-sell-services' ); ?></label>
 					<input type="url" id="website" name="website" value="<?php echo esc_url( $vendor_profile->website ?? '' ); ?>" class="wpss-input" placeholder="https://">
 				</div>
+
+				<div class="wpss-form-row">
+					<label for="intro_video_url"><?php esc_html_e( 'Intro Video', 'wp-sell-services' ); ?></label>
+					<input type="url" id="intro_video_url" name="intro_video_url" value="<?php echo esc_url( $vendor_profile->intro_video_url ?? '' ); ?>" class="wpss-input" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/...">
+					<p class="wpss-form-hint"><?php esc_html_e( 'Paste a YouTube or Vimeo URL. Shown on your profile and next to your services so buyers can get a quick pitch before ordering.', 'wp-sell-services' ); ?></p>
+				</div>
 			</div>
 
 			<div class="wpss-profile-form__section">

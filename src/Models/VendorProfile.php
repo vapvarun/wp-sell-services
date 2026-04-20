@@ -204,6 +204,16 @@ class VendorProfile {
 	public ?\DateTimeImmutable $vacation_until;
 
 	/**
+	 * Intro video URL (YouTube or Vimeo link).
+	 *
+	 * Rendered as a responsive oEmbed on the vendor profile + seller card
+	 * so buyers can see a short pitch before ordering.
+	 *
+	 * @var string
+	 */
+	public string $intro_video_url = '';
+
+	/**
 	 * Social links.
 	 *
 	 * @var array<string, string>
@@ -264,6 +274,7 @@ class VendorProfile {
 		$profile->is_verified      = isset( $row->verification_tier ) && self::TIER_PRO === $row->verification_tier;
 		$profile->is_available     = (bool) ( $row->is_available ?? true );
 		$profile->status           = $row->status ?? 'active';
+		$profile->intro_video_url  = $row->intro_video_url ?? '';
 		$profile->social_links     = isset( $row->social_links ) && $row->social_links ? json_decode( $row->social_links, true ) : array();
 
 		// Vacation mode is manual-only (vendor toggles on/off, no auto-expiry).
