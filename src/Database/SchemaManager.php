@@ -67,13 +67,73 @@ class SchemaManager {
 	}
 
 	/**
+	 * Canonical list of plugin tables (without prefix).
+	 *
+	 * Used by {@see needs_update()} to detect missing tables even when the
+	 * stored DB version matches the code — protects against manual drops,
+	 * DB restores from pre-activation snapshots, and environments where
+	 * tables were never created in the first place.
+	 *
+	 * @var string[]
+	 */
+	private const CORE_TABLES = array(
+		'service_packages',
+		'service_addons',
+		'orders',
+		'order_requirements',
+		'conversations',
+		'messages',
+		'deliveries',
+		'extension_requests',
+		'reviews',
+		'disputes',
+		'dispute_messages',
+		'proposals',
+		'vendor_profiles',
+		'portfolio_items',
+		'notifications',
+		'wallet_transactions',
+		'withdrawals',
+		'audit_log',
+	);
+
+	/**
 	 * Check if schema needs update.
+	 *
+	 * Returns true when the stored DB version is older than the code
+	 * version, OR any core table is physically missing from the database.
+	 * The latter covers manual drops and partial installs where the
+	 * version option survived but tables did not.
 	 *
 	 * @return bool True if update needed.
 	 */
 	public function needs_update(): bool {
 		$installed_version = get_option( self::VERSION_OPTION, '0.0.0' );
-		return version_compare( $installed_version, self::DB_VERSION, '<' );
+
+		if ( version_compare( $installed_version, self::DB_VERSION, '<' ) ) {
+			return true;
+		}
+
+		return $this->has_missing_tables();
+	}
+
+	/**
+	 * Check whether any core table is missing from the database.
+	 *
+	 * @return bool
+	 */
+	private function has_missing_tables(): bool {
+		foreach ( self::CORE_TABLES as $table ) {
+			$full = $this->prefix . $table;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL
+			$exists = $this->wpdb->get_var(
+				$this->wpdb->prepare( 'SHOW TABLES LIKE %s', $full )
+			);
+			if ( $full !== $exists ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -96,33 +156,19 @@ class SchemaManager {
 	/**
 	 * Create all plugin tables.
 	 *
+	 * Iterates {@see self::CORE_TABLES} so the install path and the missing-table
+	 * health check share a single source of truth — adding a new table requires
+	 * one edit (append name to CORE_TABLES + add a get_{name}_table method) and
+	 * no risk of the two lists drifting out of sync.
+	 *
 	 * @return void
 	 */
 	private function create_tables(): void {
 		$charset_collate = $this->wpdb->get_charset_collate();
 
-		$tables = array(
-			$this->get_service_packages_table( $charset_collate ),
-			$this->get_service_addons_table( $charset_collate ),
-			$this->get_orders_table( $charset_collate ),
-			$this->get_order_requirements_table( $charset_collate ),
-			$this->get_conversations_table( $charset_collate ),
-			$this->get_messages_table( $charset_collate ),
-			$this->get_deliveries_table( $charset_collate ),
-			$this->get_extension_requests_table( $charset_collate ),
-			$this->get_reviews_table( $charset_collate ),
-			$this->get_disputes_table( $charset_collate ),
-			$this->get_dispute_messages_table( $charset_collate ),
-			$this->get_proposals_table( $charset_collate ),
-			$this->get_vendor_profiles_table( $charset_collate ),
-			$this->get_portfolio_items_table( $charset_collate ),
-			$this->get_notifications_table( $charset_collate ),
-			$this->get_wallet_transactions_table( $charset_collate ),
-			$this->get_withdrawals_table( $charset_collate ),
-			$this->get_audit_log_table( $charset_collate ),
-		);
-
-		foreach ( $tables as $sql ) {
+		foreach ( self::CORE_TABLES as $name ) {
+			$method = 'get_' . $name . '_table';
+			$sql    = $this->{$method}( $charset_collate );
 			dbDelta( $sql );
 		}
 	}
