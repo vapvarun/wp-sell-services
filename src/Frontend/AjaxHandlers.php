@@ -3597,6 +3597,10 @@ class AjaxHandlers {
 				// Vacation mode.
 				$update_data['vacation_mode'] = ! empty( $_POST['vacation_mode'] ) ? 1 : 0;
 
+				if ( isset( $_POST['vacation_message'] ) ) {
+					$update_data['vacation_message'] = sanitize_textarea_field( wp_unslash( $_POST['vacation_message'] ) );
+				}
+
 				// Avatar and cover for vendor profile table.
 				if ( $avatar_id > 0 ) {
 					$update_data['avatar_id'] = $avatar_id;

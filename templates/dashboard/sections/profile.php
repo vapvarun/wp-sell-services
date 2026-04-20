@@ -147,6 +147,12 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					</label>
 					<p class="wpss-form-hint"><?php esc_html_e( 'When enabled, your services will be hidden from search and buyers cannot place new orders.', 'wp-sell-services' ); ?></p>
 				</div>
+
+				<div class="wpss-form-row">
+					<label for="vacation_message"><?php esc_html_e( 'Vacation Message (optional)', 'wp-sell-services' ); ?></label>
+					<textarea id="vacation_message" name="vacation_message" rows="3" class="wpss-textarea" placeholder="<?php esc_attr_e( 'e.g., Out of office until March 15. Orders will resume then.', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $vendor_profile->vacation_message ?? '' ); ?></textarea>
+					<p class="wpss-form-hint"><?php esc_html_e( 'Shown to buyers on your profile and services while Vacation Mode is on. Leave empty for the default notice.', 'wp-sell-services' ); ?></p>
+				</div>
 			</div>
 		<?php endif; ?>
 
