@@ -66,7 +66,23 @@ class TippingService {
 	public const STATUS_REFUNDED  = 'refunded';
 
 	/**
-	 * Register the order-paid hook so a confirmed tip order credits the vendor.
+	 * Cron hook name for the abandoned-tip cleanup job.
+	 */
+	public const CLEANUP_HOOK = 'wpss_cleanup_abandoned_tips';
+
+	/**
+	 * Hours a pending-payment tip order may sit before being auto-cancelled.
+	 *
+	 * Long enough that a buyer pausing checkout for a day has no chance of
+	 * racing the cancellation, short enough that abandoned rows do not
+	 * permanently block future tips on the same parent order.
+	 */
+	public const ABANDON_AFTER_HOURS = 48;
+
+	/**
+	 * Register the order-paid hook so a confirmed tip order credits the
+	 * vendor, and bind the abandoned-tip cleanup job so the cron event
+	 * scheduled on activation has somewhere to fire.
 	 *
 	 * Called from the plugin bootstrap. Hooks into {@see wpss_order_paid} and,
 	 * when the paid order carries the {@see self::ORDER_TYPE} platform marker,
@@ -76,6 +92,39 @@ class TippingService {
 	 */
 	public function init(): void {
 		add_action( 'wpss_order_paid', array( $this, 'handle_order_paid' ), 20, 2 );
+		add_action( self::CLEANUP_HOOK, array( $this, 'cleanup_abandoned_tips' ) );
+	}
+
+	/**
+	 * Cancel tip sub-orders that have been sitting pending_payment longer
+	 * than {@see self::ABANDON_AFTER_HOURS}. Buyers who opened a checkout
+	 * and never returned would otherwise be permanently locked out of
+	 * re-tipping the same parent order because {@see self::has_tipped()}
+	 * treats a non-cancelled tip row as an in-flight tip.
+	 *
+	 * Idempotent: rows already cancelled or completed are untouched.
+	 *
+	 * @return int Number of tip orders cancelled in this run.
+	 */
+	public function cleanup_abandoned_tips(): int {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$affected = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->prefix}wpss_orders
+				SET status = 'cancelled', updated_at = %s
+				WHERE platform = %s
+				AND status = 'pending_payment'
+				AND created_at < %s",
+				current_time( 'mysql' ),
+				self::ORDER_TYPE,
+				gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) )
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		return (int) $affected;
 	}
 
 	/**
@@ -368,6 +417,22 @@ class TippingService {
 
 		$wpdb->query( 'COMMIT' );
 
+		// Mirror the regular-order contract: fire `wpss_commission_recorded`
+		// so downstream bookkeeping (Pro wallet-balance meta sync, future
+		// analytics listeners) sees tips and service orders the same way
+		// and does not need a separate tip-specific hook.
+		do_action(
+			'wpss_commission_recorded',
+			$tip_order_id,
+			array(
+				'order_total'     => $amount,
+				'commission_rate' => $commission_rate,
+				'platform_fee'    => $platform_fee,
+				'vendor_earnings' => $vendor_earnings,
+			),
+			(int) $tip_order->vendor_id
+		);
+
 		// Tip orders have no requirements / delivery phase — flip straight
 		// to completed once credited so the record does not sit in
 		// pending_requirements (the standalone provider's default post-paid
@@ -391,14 +456,20 @@ class TippingService {
 		/**
 		 * Fires after a paid tip has been credited to the vendor's wallet.
 		 *
+		 * The amount passed is the NET (vendor_earnings) since this event
+		 * represents money moving into the vendor's balance — that is the
+		 * figure any receipt / notification should feature. Downstream
+		 * handlers that also need the gross can read it from the tip order
+		 * row via the parent id.
+		 *
 		 * @since 1.0.0
 		 *
-		 * @param int    $tip_id         Wallet-transaction row ID.
-		 * @param int    $tip_order_id   Tip order ID (parent is on the order row).
-		 * @param int    $vendor_id      Vendor user ID.
-		 * @param int    $customer_id    Buyer user ID.
-		 * @param float  $amount         Tip amount.
-		 * @param string $message        Tip note (from vendor_notes).
+		 * @param int    $tip_id          Wallet-transaction row ID.
+		 * @param int    $parent_order_id Parent service order ID that was tipped against.
+		 * @param int    $vendor_id       Vendor user ID.
+		 * @param int    $customer_id     Buyer user ID.
+		 * @param float  $net_amount      Amount credited to vendor wallet (after platform commission).
+		 * @param string $message         Tip note (from vendor_notes).
 		 */
 		do_action(
 			'wpss_tip_sent',
@@ -406,7 +477,7 @@ class TippingService {
 			$parent_order_id,
 			(int) $tip_order->vendor_id,
 			(int) $tip_order->customer_id,
-			$amount,
+			$vendor_earnings,
 			$tip_order->vendor_notes ?? ''
 		);
 

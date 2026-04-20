@@ -53,6 +53,7 @@ class EmailService {
 	public const TYPE_MODERATION_REJECTED    = 'moderation_rejected';
 	public const TYPE_MODERATION_PENDING     = 'moderation_pending';
 	public const TYPE_MODERATION_RESPONSE    = 'moderation_response';
+	public const TYPE_TIP_RECEIVED           = 'tip_received';
 	public const TYPE_TEST_EMAIL             = 'test_email';
 
 	/**
@@ -153,6 +154,14 @@ class EmailService {
 
 		$order = wpss_get_order( $order_id );
 		if ( ! $order ) {
+			return;
+		}
+
+		// Tip sub-orders use a dedicated email flow (send_tip_received on
+		// wpss_tip_sent). The service-order status emails make no sense for
+		// a tip — "Your order is complete" or "New order received" would
+		// confuse both parties when the buyer was just sending a tip.
+		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
 			return;
 		}
 
@@ -392,6 +401,59 @@ class EmailService {
 		);
 
 		return $this->send( $customer->user_email, $subject, self::TYPE_DELIVERY_READY, $template_vars );
+	}
+
+	/**
+	 * Send a tip-received notification to the vendor.
+	 *
+	 * Called from NotificationService on the `wpss_tip_sent` action once a
+	 * tip order has been paid and the vendor wallet has been credited.
+	 * Renders the `tip-received.php` email template and delivers via the
+	 * shared {@see self::send()} rate-limit / template pipeline.
+	 *
+	 * @param ServiceOrder $tip_order   The tip sub-order row (platform='tip').
+	 * @param float        $gross       Amount the buyer paid.
+	 * @param float        $net_vendor  Amount credited to the vendor after platform commission.
+	 * @param string       $note        Optional buyer message (tip note).
+	 * @return bool Whether the mail was handed off to WordPress.
+	 */
+	public function send_tip_received( ServiceOrder $tip_order, float $gross, float $net_vendor, string $note = '' ): bool {
+		$vendor = get_user_by( 'id', $tip_order->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$customer     = get_user_by( 'id', $tip_order->customer_id );
+		$buyer_name   = $customer ? $customer->display_name : __( 'A buyer', 'wp-sell-services' );
+		$parent_id    = (int) ( $tip_order->platform_order_id ?? 0 );
+		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: buyer name */
+			__( '[%1$s] You received a tip from %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			$buyer_name
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_TIP_RECEIVED,
+			array(
+				'tip_order'      => $tip_order,
+				'parent_order'   => $parent_order,
+				'recipient'      => $vendor,
+				'email_heading'  => __( 'You received a tip!', 'wp-sell-services' ),
+				'vendor_name'    => $vendor->display_name,
+				'customer_name'  => $buyer_name,
+				'gross_amount'   => $gross,
+				'net_amount'     => $net_vendor,
+				'currency'       => $tip_order->currency ?? wpss_get_currency(),
+				'tip_note'       => $note,
+				'reply_to_email' => $customer ? $customer->user_email : '',
+				'reply_to_name'  => $customer ? $customer->display_name : '',
+			)
+		);
 	}
 
 	/**
@@ -1328,6 +1390,7 @@ class EmailService {
 			self::TYPE_MODERATION_REJECTED    => 'moderation-rejected.php',
 			self::TYPE_MODERATION_PENDING     => 'moderation-pending.php',
 			self::TYPE_MODERATION_RESPONSE    => 'moderation-response.php',
+			self::TYPE_TIP_RECEIVED           => 'tip-received.php',
 			self::TYPE_TEST_EMAIL             => 'test-email.php',
 		);
 
@@ -1410,6 +1473,7 @@ class EmailService {
 			'moderation_pending'              => 'notify_moderation',
 			'dispute_admin'                   => 'notify_dispute_opened',
 			self::TYPE_VENDOR_CONTACT         => 'notify_vendor_contact',
+			self::TYPE_TIP_RECEIVED           => 'notify_tip_received',
 		);
 
 		if ( ! isset( $type_to_setting[ $type ] ) ) {

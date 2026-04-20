@@ -525,6 +525,18 @@ final class Plugin {
 			10,
 			4
 		);
+
+		// Tip received notification — fires after TippingService credits the
+		// vendor wallet for a paid tip sub-order.
+		$this->loader->add_action(
+			'wpss_tip_sent',
+			function ( int $wallet_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $amount, string $message = '' ) use ( $notification_service ): void {
+				$notification_service->notify_tip_received( $wallet_txn_id, $parent_order_id, $vendor_id, $customer_id, $amount, $message );
+			},
+			null,
+			10,
+			6
+		);
 	}
 
 	/**

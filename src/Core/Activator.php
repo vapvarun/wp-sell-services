@@ -201,6 +201,7 @@ class Activator {
 				'notify_proposal_submitted'     => true,
 				'notify_proposal_accepted'      => true,
 				'notify_moderation'             => true,
+				'notify_tip_received'           => true,
 			),
 			// Advanced settings - matches Settings.php wpss_advanced.
 			'wpss_advanced'      => array(
@@ -256,6 +257,13 @@ class Activator {
 		// value, so scheduling it unconditionally is safe.
 		if ( ! wp_next_scheduled( \WPSellServices\Services\AuditLogService::CLEANUP_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\AuditLogService::CLEANUP_HOOK );
+		}
+
+		// Daily sweep of abandoned pending-payment tip sub-orders so a
+		// buyer who opened the tip checkout and never paid does not
+		// permanently block themselves from re-tipping the same order.
+		if ( ! wp_next_scheduled( \WPSellServices\Services\TippingService::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\TippingService::CLEANUP_HOOK );
 		}
 	}
 

@@ -36,6 +36,7 @@ class NotificationService {
 	public const TYPE_VENDOR_REGISTERED  = 'vendor_registered';
 	public const TYPE_VENDOR_APPROVED    = 'vendor_approved';
 	public const TYPE_VENDOR_REJECTED    = 'vendor_rejected';
+	public const TYPE_TIP_RECEIVED       = 'tip_received';
 
 	/**
 	 * Create notification.
@@ -256,6 +257,15 @@ class NotificationService {
 			return;
 		}
 
+		// Tip sub-orders have their own dedicated notification flow
+		// (notify_tip_received fired from `wpss_tip_sent`). The generic
+		// "new order received" email would be misleading here — it would
+		// tell the vendor "you have a new order to fulfill" when in reality
+		// no delivery is expected.
+		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+			return;
+		}
+
 		// Get service and user details (null-safe to prevent PHP 8.1+ deprecation
 		// notices in string functions, which would corrupt AJAX JSON responses).
 		$service      = get_post( $order->service_id );
@@ -326,6 +336,15 @@ class NotificationService {
 		$order = wpss_get_order( $order_id );
 
 		if ( ! $order ) {
+			return;
+		}
+
+		// Tip sub-orders move through pending_payment → pending_requirements →
+		// completed very quickly (all three transitions can fire inside one
+		// request). The generic service-order status emails would send the
+		// buyer a "your order is complete" notice for what they just paid as
+		// a tip — noise. Bail here; notify_tip_received owns the tip surface.
+		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
 			return;
 		}
 
@@ -772,6 +791,84 @@ class NotificationService {
 				'reviewer_id' => (int) $review->customer_id,
 			)
 		);
+	}
+
+	/**
+	 * Notify the vendor that a tip sub-order has been paid and credited.
+	 *
+	 * Bound to the `wpss_tip_sent` action (fired from
+	 * {@see \WPSellServices\Services\TippingService::credit_tip_on_payment_complete()}).
+	 * Creates an in-app notification and hands off to
+	 * {@see \WPSellServices\Services\EmailService::send_tip_received()} for the
+	 * transactional email — the standard dual-surface pattern used by every
+	 * other notification in this service.
+	 *
+	 * @param int    $wallet_txn_id   Wallet transaction row ID created by the credit.
+	 * @param int    $parent_order_id Original service order that was tipped against.
+	 * @param int    $vendor_id       Vendor user ID receiving the tip.
+	 * @param int    $customer_id     Buyer user ID who sent the tip.
+	 * @param float  $net_amount      Amount actually credited to the vendor wallet (after commission).
+	 * @param string $note            Optional buyer message attached to the tip.
+	 * @return void
+	 */
+	public function notify_tip_received( int $wallet_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount, string $note = '' ): void {
+		unset( $wallet_txn_id );
+
+		global $wpdb;
+
+		// Locate the tip sub-order — it carries the authoritative gross
+		// amount and commission breakdown. Falls back gracefully if the
+		// row has been removed (e.g. admin cleanup) by using the net
+		// amount as both gross and net for the message.
+		$tip_order_row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}wpss_orders
+				WHERE platform = %s AND platform_order_id = %d AND customer_id = %d
+				ORDER BY id DESC LIMIT 1",
+				\WPSellServices\Services\TippingService::ORDER_TYPE,
+				$parent_order_id,
+				$customer_id
+			)
+		);
+
+		$tip_order = $tip_order_row ? \WPSellServices\Models\ServiceOrder::from_db( $tip_order_row ) : null;
+		$gross     = $tip_order ? (float) $tip_order->total : $net_amount;
+		$currency  = $tip_order ? ( $tip_order->currency ?? wpss_get_currency() ) : wpss_get_currency();
+
+		$buyer      = get_user_by( 'id', $customer_id );
+		$buyer_name = $buyer ? $buyer->display_name : __( 'A buyer', 'wp-sell-services' );
+
+		$net_display = function_exists( 'wpss_format_price' )
+			? wpss_format_price( $net_amount, $currency )
+			: number_format_i18n( $net_amount, 2 ) . ' ' . $currency;
+
+		$message = sprintf(
+			/* translators: 1: buyer name, 2: net amount credited */
+			__( '<strong>%1$s</strong> just sent you a tip of <strong>%2$s</strong>. It has been added to your earnings balance.', 'wp-sell-services' ),
+			esc_html( $buyer_name ),
+			esc_html( $net_display )
+		);
+		if ( ! empty( $note ) ) {
+			$message .= '<br><br><em>' . esc_html( $note ) . '</em>';
+		}
+
+		$this->create(
+			$vendor_id,
+			self::TYPE_TIP_RECEIVED,
+			__( 'You received a tip!', 'wp-sell-services' ),
+			$message,
+			array(
+				'parent_order_id' => $parent_order_id,
+				'tip_order_id'    => $tip_order ? $tip_order->id : 0,
+				'amount'          => $net_amount,
+				'gross'           => $gross,
+				'customer_id'     => $customer_id,
+			)
+		);
+
+		if ( $tip_order ) {
+			( new EmailService() )->send_tip_received( $tip_order, $gross, $net_amount, $note );
+		}
 	}
 
 	/**

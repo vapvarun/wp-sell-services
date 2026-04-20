@@ -281,6 +281,12 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, mixed> Statistics.
 	 */
 	public function get_vendor_stats( int $vendor_id ): array {
+		// Tip sub-orders (platform='tip') are excluded: they are payment
+		// records, not service deliveries, so the order count, revenue,
+		// and completion-time average would be misleading if tips were
+		// mixed in. Tip totals are surfaced via get_vendor_tip_stats().
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
@@ -290,8 +296,9 @@ class OrderRepository extends AbstractRepository {
 					SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) as total_earnings,
 					AVG(CASE WHEN status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
 				FROM {$this->table}
-				WHERE vendor_id = %d",
-				$vendor_id
+				WHERE vendor_id = %d AND platform != %s",
+				$vendor_id,
+				$tip_platform
 			),
 			ARRAY_A
 		);
@@ -306,12 +313,52 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Get a vendor's tip-only statistics.
+	 *
+	 * Separate from {@see self::get_vendor_stats()} so analytics surfaces
+	 * can report tip revenue as its own metric without conflating it with
+	 * service-order revenue. Values are based on completed tip sub-orders
+	 * (platform='tip' AND status='completed').
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return array<string, mixed> Keys: tips_received, tips_total_gross, tips_total_net.
+	 */
+	public function get_vendor_tip_stats( int $vendor_id ): array {
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+
+		$row = $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT
+					COUNT(*) as tips_received,
+					COALESCE(SUM(total), 0) as tips_total_gross,
+					COALESCE(SUM(COALESCE(vendor_earnings, total)), 0) as tips_total_net
+				FROM {$this->table}
+				WHERE vendor_id = %d AND platform = %s AND status = 'completed'",
+				$vendor_id,
+				$tip_platform
+			),
+			ARRAY_A
+		);
+
+		return $row ?: array(
+			'tips_received'    => 0,
+			'tips_total_gross' => 0,
+			'tips_total_net'   => 0,
+		);
+	}
+
+	/**
 	 * Get customer order statistics.
 	 *
 	 * @param int $customer_id Customer user ID.
 	 * @return array<string, mixed> Statistics.
 	 */
 	public function get_customer_stats( int $customer_id ): array {
+		// Exclude tip sub-orders for the same reason as get_vendor_stats() —
+		// they are payment receipts, not orders in the "things I bought"
+		// sense. Tips are retrievable separately via the tipping service.
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
@@ -320,8 +367,9 @@ class OrderRepository extends AbstractRepository {
 					SUM(CASE WHEN status IN ('in_progress', 'pending_approval', 'pending_requirements') THEN 1 ELSE 0 END) as active_orders,
 					SUM(total) as total_spent
 				FROM {$this->table}
-				WHERE customer_id = %d",
-				$customer_id
+				WHERE customer_id = %d AND platform != %s",
+				$customer_id,
+				$tip_platform
 			),
 			ARRAY_A
 		);

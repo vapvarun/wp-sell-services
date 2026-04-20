@@ -916,6 +916,7 @@ class Settings {
 				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
 				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
 				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
 			)
 		);
 
@@ -2230,6 +2231,7 @@ class Settings {
 				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
 				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
 				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
 			)
 		);
 
