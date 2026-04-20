@@ -1138,7 +1138,142 @@ do_action( 'wpss_before_order_view', $order );
 			</section>
 		<?php endif; ?>
 	<?php endif; ?>
+
+	<!-- Tip CTA (for completed orders, buyer only, once per order) -->
+	<?php
+	if ( 'completed' === $order->status && $is_customer ) :
+		$tipping_service = new \WPSellServices\Services\TippingService();
+		$already_tipped  = $tipping_service->has_tipped( $order_id, get_current_user_id() );
+		$currency        = get_option( 'wpss_general', array() )['currency'] ?? 'USD';
+
+		// Buyer-facing receipt should show the gross amount the buyer paid
+		// (tip order total), not the net the vendor received. Fetch the
+		// related tip order by parent order ID.
+		$tip_order_row = null;
+		if ( $already_tipped ) {
+			$tip_order_row = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT total, status FROM {$wpdb->prefix}wpss_orders
+					WHERE platform = %s AND platform_order_id = %d AND customer_id = %d
+					ORDER BY id DESC LIMIT 1",
+					\WPSellServices\Services\TippingService::ORDER_TYPE,
+					$order_id,
+					get_current_user_id()
+				)
+			);
+		}
+		?>
+		<section class="wpss-order-section wpss-order-section--tip">
+			<?php if ( $already_tipped && $tip_order_row ) : ?>
+				<?php $is_paid = 'completed' === $tip_order_row->status; ?>
+				<div class="wpss-tip-receipt">
+					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<?php if ( $is_paid ) : ?>
+							<polyline points="20 6 9 17 4 12"></polyline>
+						<?php else : ?>
+							<circle cx="12" cy="12" r="10"></circle>
+							<polyline points="12 6 12 12 15 15"></polyline>
+						<?php endif; ?>
+					</svg>
+					<div>
+						<h3 class="wpss-tip-receipt__title">
+							<?php echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : __( 'Tip pending payment', 'wp-sell-services' ) ); ?>
+						</h3>
+						<p class="wpss-tip-receipt__amount">
+							<?php
+							echo esc_html(
+								function_exists( 'wpss_format_price' )
+									? wpss_format_price( (float) $tip_order_row->total, $currency )
+									: number_format_i18n( (float) $tip_order_row->total, 2 ) . ' ' . $currency
+							);
+							?>
+						</p>
+					</div>
+				</div>
+			<?php else : ?>
+				<div class="wpss-tip-cta">
+					<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="wpss-tip-cta__icon" aria-hidden="true">
+						<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+					</svg>
+					<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Say thanks with a tip', 'wp-sell-services' ); ?></h3>
+					<p class="wpss-tip-cta__text"><?php esc_html_e( 'Loved the work? A tip goes straight to the vendor on top of the order total.', 'wp-sell-services' ); ?></p>
+					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-open-tip-modal"
+							data-order="<?php echo esc_attr( (string) $order_id ); ?>">
+						<?php esc_html_e( 'Send a Tip', 'wp-sell-services' ); ?>
+					</button>
+				</div>
+			<?php endif; ?>
+		</section>
+	<?php endif; ?>
 </div>
+
+<?php if ( 'completed' === $order->status && $is_customer && empty( $already_tipped ) ) : ?>
+<!-- Tip Modal -->
+<div class="wpss-modal" id="wpss-tip-modal" data-order="<?php echo esc_attr( (string) $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-tip-modal-title">
+	<div class="wpss-modal__backdrop"></div>
+	<div class="wpss-modal__dialog">
+		<div class="wpss-modal__header">
+			<h3 id="wpss-tip-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Send a Tip', 'wp-sell-services' ); ?></h3>
+			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			</button>
+		</div>
+		<form class="wpss-tip-form" id="wpss-tip-form">
+			<div class="wpss-modal__body">
+				<p class="wpss-tip-form__lead">
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: %s: vendor display name */
+							__( 'Send a tip to %s — it goes straight to their earnings balance.', 'wp-sell-services' ),
+							$other_party ? $other_party->display_name : __( 'the vendor', 'wp-sell-services' )
+						)
+					);
+					?>
+				</p>
+
+				<div class="wpss-tip-form__amounts">
+					<?php
+					$quick_amounts = apply_filters( 'wpss_tip_quick_amounts', array( 5, 10, 20, 50 ), $order );
+					foreach ( $quick_amounts as $preset ) :
+						?>
+						<button type="button" class="wpss-tip-form__preset" data-amount="<?php echo esc_attr( (string) $preset ); ?>">
+							<?php
+							echo esc_html(
+								function_exists( 'wpss_format_price' )
+									? wpss_format_price( (float) $preset, $currency )
+									: number_format_i18n( (float) $preset, 0 ) . ' ' . $currency
+							);
+							?>
+						</button>
+					<?php endforeach; ?>
+				</div>
+
+				<div class="wpss-tip-form__field">
+					<label for="wpss-tip-amount"><?php esc_html_e( 'Custom amount', 'wp-sell-services' ); ?></label>
+					<input type="number" id="wpss-tip-amount" name="amount" class="wpss-input" min="1" step="0.01" required>
+				</div>
+
+				<div class="wpss-tip-form__field">
+					<label for="wpss-tip-message"><?php esc_html_e( 'Message (optional)', 'wp-sell-services' ); ?></label>
+					<textarea id="wpss-tip-message" name="message" class="wpss-textarea" rows="3" maxlength="500" placeholder="<?php esc_attr_e( 'Thanks for the great work!', 'wp-sell-services' ); ?>"></textarea>
+				</div>
+
+				<div class="wpss-tip-form__error" hidden></div>
+			</div>
+			<div class="wpss-modal__footer">
+				<button type="button" class="wpss-btn wpss-modal__close-btn"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+				<button type="submit" class="wpss-btn wpss-btn--primary wpss-tip-form__submit">
+					<?php esc_html_e( 'Send tip', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+<?php endif; ?>
 
 <?php
 // Check if delivery modal should be available.

@@ -434,6 +434,82 @@
 			const orderId = $(this).data('order');
 			WPSS.showReviewModal(orderId);
 		});
+
+		// Send tip — open modal.
+		$(document).on('click', '.wpss-open-tip-modal', function(e) {
+			e.preventDefault();
+			const orderId = $(this).data('order');
+			const $modal = $('#wpss-tip-modal');
+			if (!$modal.length) { return; }
+			$modal.data('order', orderId);
+			$modal.find('#wpss-tip-amount').val('');
+			$modal.find('#wpss-tip-message').val('');
+			$modal.find('.wpss-tip-form__error').prop('hidden', true).text('');
+			$modal.find('.wpss-tip-form__preset').removeClass('is-selected');
+			WPSS.showModal('wpss-tip-modal');
+		});
+
+		// Tip quick-amount presets — copy value into the amount input.
+		$(document).on('click', '.wpss-tip-form__preset', function(e) {
+			e.preventDefault();
+			const amount = $(this).data('amount');
+			$('.wpss-tip-form__preset').removeClass('is-selected');
+			$(this).addClass('is-selected');
+			$('#wpss-tip-amount').val(amount).trigger('focus');
+		});
+
+		// Tip form submit — call REST endpoint.
+		$(document).on('submit', '#wpss-tip-form', function(e) {
+			e.preventDefault();
+			const $form = $(this);
+			const $modal = $('#wpss-tip-modal');
+			const orderId = parseInt($modal.data('order'), 10);
+			const amount = parseFloat($form.find('#wpss-tip-amount').val());
+			const message = $form.find('#wpss-tip-message').val() || '';
+			const $error = $form.find('.wpss-tip-form__error');
+			const $submit = $form.find('.wpss-tip-form__submit');
+
+			$error.prop('hidden', true).text('');
+
+			if (!orderId || !isFinite(amount) || amount <= 0) {
+				$error.text((wpssData.i18n && wpssData.i18n.tipAmountRequired) || 'Enter a tip amount greater than zero.').prop('hidden', false);
+				return;
+			}
+
+			$submit.prop('disabled', true);
+
+			$.ajax({
+				url: wpssData.apiUrl + 'orders/' + orderId + '/tip',
+				method: 'POST',
+				beforeSend: function(xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
+				},
+				data: {
+					amount: amount,
+					message: message
+				},
+				success: function(response) {
+					if (response && response.success && response.checkout_url) {
+						WPSS.hideModal();
+						WPSS.showNotification(
+							(wpssData.i18n && wpssData.i18n.tipRedirecting) || 'Redirecting to payment…',
+							'info'
+						);
+						window.location.href = response.checkout_url;
+					} else {
+						$error.text((response && response.message) || (wpssData.i18n && wpssData.i18n.tipFailed) || 'Could not send tip.').prop('hidden', false);
+						$submit.prop('disabled', false);
+					}
+				},
+				error: function(xhr) {
+					const msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
+						|| (wpssData.i18n && wpssData.i18n.tipFailed)
+						|| 'Could not send tip.';
+					$error.text(msg).prop('hidden', false);
+					$submit.prop('disabled', false);
+				}
+			});
+		});
 	};
 
 	/**

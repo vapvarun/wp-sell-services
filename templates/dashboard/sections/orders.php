@@ -33,6 +33,17 @@ if ( $order_id ) {
 	$current_order = wpss_get_order( $order_id );
 
 	if ( $current_order && ( (int) $current_order->customer_id === $user_id || (int) $current_order->vendor_id === $user_id ) ) {
+		// Tip orders have no delivery workflow of their own — redirect to
+		// the parent service order's detail view where the tip receipt is
+		// rendered inline.
+		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
+			$parent_id = (int) ( $current_order->platform_order_id ?? 0 );
+			if ( $parent_id ) {
+				wp_safe_redirect( add_query_arg( 'order_id', $parent_id, remove_query_arg( 'order_id' ) ) );
+				exit;
+			}
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing, no data processing.
 		$order_action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
 

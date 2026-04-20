@@ -83,6 +83,12 @@ class OrderService {
 			$params[] = $args['status'];
 		}
 
+		// Tip orders are payment-only side transactions that belong to the
+		// parent service order's context. They must not show up as standalone
+		// entries in the buyer's order list.
+		$where[]  = 'platform != %s';
+		$params[] = \WPSellServices\Services\TippingService::ORDER_TYPE;
+
 		$where_clause = implode( ' AND ', $where );
 		$order_by     = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] ) ?: 'created_at DESC';
 
@@ -125,6 +131,11 @@ class OrderService {
 			$where[]  = 'status = %s';
 			$params[] = $args['status'];
 		}
+
+		// Tips are payment-only records with no delivery workflow — keep them
+		// out of the vendor's sales/orders listing; they surface in earnings.
+		$where[]  = 'platform != %s';
+		$params[] = \WPSellServices\Services\TippingService::ORDER_TYPE;
 
 		$where_clause = implode( ' AND ', $where );
 		$order_by     = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] ) ?: 'created_at DESC';

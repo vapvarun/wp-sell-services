@@ -489,6 +489,23 @@ class Settings {
 			)
 		);
 
+		add_settings_field(
+			'tip_commission_rate',
+			__( 'Tip Commission Rate (%)', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_commission',
+			'wpss_commission_section',
+			array(
+				'option_name' => 'wpss_commission',
+				'field'       => 'tip_commission_rate',
+				'min'         => 0,
+				'max'         => 50,
+				'step'        => 0.1,
+				'default'     => '',
+				'description' => __( 'Cut the platform keeps on tips. Leave empty to use the main commission rate (vendors receive the same net cut as on regular orders). Set to 0 to give vendors 100% of every tip.', 'wp-sell-services' ),
+			)
+		);
+
 		// Payouts settings.
 		register_setting(
 			'wpss_payouts',
@@ -2086,6 +2103,17 @@ class Settings {
 
 		$sanitized['commission_rate']     = min( 50, max( 0, (float) ( $input['commission_rate'] ?? 10 ) ) );
 		$sanitized['enable_vendor_rates'] = ! empty( $input['enable_vendor_rates'] );
+
+		// Tip commission rate is optional; empty string means "match the main
+		// commission rate at runtime" rather than a saved 0 (which means
+		// "no platform cut"). Admins can clear the field to revert to the
+		// matching-rate behavior.
+		$tip_rate_raw = $input['tip_commission_rate'] ?? '';
+		if ( '' === $tip_rate_raw || null === $tip_rate_raw ) {
+			$sanitized['tip_commission_rate'] = '';
+		} else {
+			$sanitized['tip_commission_rate'] = min( 50, max( 0, (float) $tip_rate_raw ) );
+		}
 
 		return $sanitized;
 	}

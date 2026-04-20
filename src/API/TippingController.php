@@ -100,90 +100,41 @@ class TippingController extends RestController {
 	}
 
 	/**
-	 * Send tip.
+	 * Start a tip flow.
+	 *
+	 * Creates a pending-payment tip order via {@see \WPSellServices\Services\TippingService::create_pending_tip_order()}
+	 * and returns the checkout URL the buyer should be redirected to. Vendor
+	 * wallet credit happens only after the gateway confirms payment — no
+	 * direct wallet writes here.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function send_tip( WP_REST_Request $request ) {
-		global $wpdb;
+		$parent_order_id = (int) $request->get_param( 'order_id' );
+		$amount          = (float) $request->get_param( 'amount' );
+		$message         = (string) ( $request->get_param( 'message' ) ?? '' );
+		$user_id         = get_current_user_id();
 
-		$order_id = (int) $request->get_param( 'order_id' );
-		$amount   = (float) $request->get_param( 'amount' );
-		$message  = sanitize_textarea_field( $request->get_param( 'message' ) ?: '' );
-		$user_id  = get_current_user_id();
+		$service = new \WPSellServices\Services\TippingService();
+		$result  = $service->create_pending_tip_order( $parent_order_id, $amount, $user_id, $message );
 
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-		$wallet_table = $wpdb->prefix . 'wpss_wallet_transactions';
-
-		// Verify order is completed.
-		$order = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$orders_table} WHERE id = %d", $order_id )
-		);
-
-		if ( ! $order || 'completed' !== $order->status ) {
-			return new WP_Error( 'invalid_order', __( 'Tips can only be sent for completed orders.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error(
+				'wpss_tip_create_failed',
+				$result['message'] ?? __( 'Could not start tip flow.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
 		}
-
-		// Verify current user is the customer of this order.
-		if ( (int) $order->customer_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You can only tip on your own orders.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		// Check if this user already tipped for this order.
-		// Use boundary markers to prevent false matches (e.g. tipper_id 12 matching 123).
-		$like_pattern     = '%"tipper_id":' . $wpdb->esc_like( (string) $user_id ) . ',%';
-		$like_pattern_end = '%"tipper_id":' . $wpdb->esc_like( (string) $user_id ) . '}%';
-		$existing         = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wallet_table} WHERE reference_type = 'tip' AND reference_id = %d AND (meta LIKE %s OR meta LIKE %s)",
-				$order_id,
-				$like_pattern,
-				$like_pattern_end
-			)
-		);
-
-		if ( $existing > 0 ) {
-			return new WP_Error( 'already_tipped', __( 'You have already tipped for this order.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Record tip as wallet transaction.
-		$wpdb->insert(
-			$wallet_table,
-			array(
-				'user_id'        => (int) $order->vendor_id,
-				'type'           => 'credit',
-				'amount'         => $amount,
-				'description'    => $message ?: __( 'Tip received', 'wp-sell-services' ),
-				'reference_type' => 'tip',
-				'reference_id'   => $order_id,
-				'meta'           => wp_json_encode(
-					array(
-						'tipper_id' => $user_id,
-						'message'   => $message,
-					)
-				),
-				'created_at'     => current_time( 'mysql', true ),
-			),
-			array( '%d', '%s', '%f', '%s', '%s', '%d', '%s', '%s' )
-		);
-
-		/**
-		 * Fires after a tip is sent.
-		 *
-		 * @param int   $order_id  Order ID.
-		 * @param float $amount    Tip amount.
-		 * @param int   $vendor_id Vendor ID.
-		 * @param int   $user_id   Tipper ID.
-		 */
-		do_action( 'wpss_tip_sent', $order_id, $amount, (int) $order->vendor_id, $user_id );
 
 		return new WP_REST_Response(
 			array(
-				'success'  => true,
-				'order_id' => $order_id,
-				'amount'   => $amount,
-				'message'  => $message,
+				'success'         => true,
+				'tip_order_id'    => $result['tip_order_id'],
+				'checkout_url'    => $result['checkout_url'],
+				'parent_order_id' => $parent_order_id,
+				'amount'          => $amount,
+				'message'         => $result['message'],
 			),
 			201
 		);

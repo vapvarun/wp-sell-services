@@ -248,6 +248,10 @@ final class Plugin {
 		$this->define_pro_teasers();
 		$this->define_abilities_hooks();
 
+		// Post-payment tip crediting — hooks wpss_order_paid to credit the
+		// vendor wallet when a tip-platform order is paid via the gateway.
+		( new \WPSellServices\Services\TippingService() )->init();
+
 		// Run the loader to register all hooks.
 		$this->loader->run();
 
@@ -1118,16 +1122,16 @@ final class Plugin {
 			'init',
 			static function (): void {
 				$events = array(
-					'wpss_check_late_orders'            => 'wpss_hourly',
-					'wpss_auto_complete_orders'         => 'wpss_twice_daily',
-					'wpss_send_deadline_reminders'      => 'daily',
-					'wpss_send_requirements_reminders'  => 'daily',
-					'wpss_check_requirements_timeout'   => 'daily',
-					'wpss_recalculate_seller_levels'    => 'wpss_weekly',
+					'wpss_check_late_orders'             => 'wpss_hourly',
+					'wpss_auto_complete_orders'          => 'wpss_twice_daily',
+					'wpss_send_deadline_reminders'       => 'daily',
+					'wpss_send_requirements_reminders'   => 'daily',
+					'wpss_check_requirements_timeout'    => 'daily',
+					'wpss_recalculate_seller_levels'     => 'wpss_weekly',
 					'wpss_process_cancellation_timeouts' => 'wpss_hourly',
-					'wpss_process_offline_auto_cancel'  => 'wpss_hourly',
-					'wpss_cleanup_expired_requests'     => 'daily',
-					'wpss_update_vendor_stats'          => 'wpss_twice_daily',
+					'wpss_process_offline_auto_cancel'   => 'wpss_hourly',
+					'wpss_cleanup_expired_requests'      => 'daily',
+					'wpss_update_vendor_stats'           => 'wpss_twice_daily',
 				);
 
 				foreach ( $events as $hook => $recurrence ) {
@@ -1220,16 +1224,16 @@ final class Plugin {
 
 		// Email hook map: hook => [ method, priority, accepted_args ].
 		$email_hooks = array(
-			'wpss_order_status_changed'          => array( 'handle_status_change', 20, 3 ),
-			'wpss_requirements_submitted'        => array( 'send_requirements_submitted', 20, 3 ),
-			'wpss_delivery_submitted'            => array( 'send_delivery_ready', 20, 2 ),
-			'wpss_new_order_message'             => array( 'send_new_message', 20, 3 ),
+			'wpss_order_status_changed'             => array( 'handle_status_change', 20, 3 ),
+			'wpss_requirements_submitted'           => array( 'send_requirements_submitted', 20, 3 ),
+			'wpss_delivery_submitted'               => array( 'send_delivery_ready', 20, 2 ),
+			'wpss_new_order_message'                => array( 'send_new_message', 20, 3 ),
 			'wpss_send_requirements_reminder_email' => array( 'send_requirements_reminder', 10, 3 ),
-			'wpss_vendor_level_promoted'         => array( 'send_level_promotion', 10, 3 ),
-			'wpss_withdrawal_processed'          => array( 'send_withdrawal_status', 10, 3 ),
-			'wpss_proposal_submitted'            => array( 'send_proposal_submitted', 10, 4 ),
-			'wpss_proposal_accepted'             => array( 'send_proposal_accepted', 10, 3 ),
-			'wpss_proposal_rejected'             => array( 'send_proposal_rejected', 10, 3 ),
+			'wpss_vendor_level_promoted'            => array( 'send_level_promotion', 10, 3 ),
+			'wpss_withdrawal_processed'             => array( 'send_withdrawal_status', 10, 3 ),
+			'wpss_proposal_submitted'               => array( 'send_proposal_submitted', 10, 4 ),
+			'wpss_proposal_accepted'                => array( 'send_proposal_accepted', 10, 3 ),
+			'wpss_proposal_rejected'                => array( 'send_proposal_rejected', 10, 3 ),
 		);
 
 		foreach ( $email_hooks as $hook => $config ) {
@@ -1283,10 +1287,10 @@ final class Plugin {
 
 		// Dispute event hooks.
 		$dispute_event_hooks = array(
-			'wpss_dispute_opened'              => array( 'on_dispute_opened', 10, 4 ),
-			'wpss_dispute_response_submitted'  => array( 'on_response_submitted', 10, 3 ),
-			'wpss_dispute_evidence_added'      => array( 'on_evidence_added', 10, 2 ),
-			'wpss_dispute_resolved'            => array( 'on_dispute_resolved', 10, 4 ),
+			'wpss_dispute_opened'             => array( 'on_dispute_opened', 10, 4 ),
+			'wpss_dispute_response_submitted' => array( 'on_response_submitted', 10, 3 ),
+			'wpss_dispute_evidence_added'     => array( 'on_evidence_added', 10, 2 ),
+			'wpss_dispute_resolved'           => array( 'on_dispute_resolved', 10, 4 ),
 		);
 
 		foreach ( $dispute_event_hooks as $hook => $config ) {

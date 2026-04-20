@@ -131,6 +131,9 @@ class Frontend {
 				'i18n'             => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'tipAmountRequired'           => __( 'Enter a tip amount greater than zero.', 'wp-sell-services' ),
+					'tipRedirecting'              => __( 'Redirecting to payment…', 'wp-sell-services' ),
+					'tipFailed'                   => __( 'Could not start tip flow. Please try again.', 'wp-sell-services' ),
 					'ajaxError'                   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'sendMessage'                 => __( 'Send', 'wp-sell-services' ),
 					'uploadFile'                  => __( 'Upload File', 'wp-sell-services' ),
@@ -226,8 +229,8 @@ class Frontend {
 			return;
 		}
 
-		$cart         = get_user_meta( get_current_user_id(), '_wpss_cart', true );
-		$cart_count   = is_array( $cart ) ? count( $cart ) : 0;
+		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
+		$cart_count = is_array( $cart ) ? count( $cart ) : 0;
 
 		if ( $cart_count > 0 ) {
 			wpss_enqueue_frontend_assets();
