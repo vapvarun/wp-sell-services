@@ -1877,3 +1877,146 @@ select.wpss-input option,
 		font-size: 14px;
 	}
 }
+
+/* ==========================================================================
+   Stat card highlight — force background over theme overrides so the
+   indigo accent does not get flattened by third-party themes applying a
+   gray card background (observed with BuddyX on the Earnings section).
+   ========================================================================== */
+
+.wpss-dashboard .wpss-stat-card.wpss-stat-card--highlight,
+.wpss-stat-card.wpss-stat-card--highlight {
+	background: var(--wpss-primary);
+	border-color: var(--wpss-primary);
+	color: #fff;
+}
+
+/* ==========================================================================
+   Tip receipt view — renders in place of the service-order detail panel
+   when order.platform === 'tip' (buyer or vendor looking at a tip entry).
+   ========================================================================== */
+
+.wpss-tip-view {
+	display: flex;
+	justify-content: center;
+	padding: 20px 0;
+}
+
+.wpss-tip-view__card {
+	background: #fff;
+	border: 1px solid var(--wpss-gray-100);
+	border-radius: 14px;
+	padding: 32px 28px;
+	max-width: 520px;
+	width: 100%;
+	text-align: center;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.wpss-tip-view__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	background: #fff1f2;
+	color: #e11d48;
+	margin-bottom: 16px;
+}
+
+.wpss-tip-view__title {
+	font-size: 20px;
+	font-weight: 600;
+	margin: 0 0 8px;
+}
+
+.wpss-tip-view__amount {
+	font-size: 32px;
+	font-weight: 700;
+	color: #1f2937;
+	margin: 0 0 24px;
+}
+
+.wpss-tip-view__meta {
+	margin: 0 0 24px;
+	text-align: left;
+	display: grid;
+	gap: 10px;
+}
+
+.wpss-tip-view__meta > div {
+	display: grid;
+	grid-template-columns: 120px 1fr;
+	align-items: baseline;
+	gap: 12px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--wpss-gray-100);
+}
+
+.wpss-tip-view__meta > div:last-child {
+	border-bottom: 0;
+}
+
+.wpss-tip-view__meta dt {
+	color: var(--wpss-gray-500);
+	font-size: 13px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	margin: 0;
+}
+
+.wpss-tip-view__meta dd {
+	color: var(--wpss-gray-900);
+	font-size: 14px;
+	margin: 0;
+	word-break: break-word;
+}
+
+.wpss-tip-view__message dd {
+	white-space: pre-wrap;
+}
+
+.wpss-tip-view__back {
+	margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+	.wpss-tip-view__card {
+		padding: 24px 18px;
+	}
+
+	.wpss-tip-view__meta > div {
+		grid-template-columns: 1fr;
+		gap: 2px;
+	}
+}
+
+/* Tip badge on sales/orders list cards */
+.wpss-badge--tip {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: #b91c1c;
+	background: #fee2e2;
+	border-radius: 999px;
+	margin-right: 6px;
+	vertical-align: middle;
+}
+
+.wpss-order-card--tip .wpss-order-card__tip-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: #fff1f2;
+	color: #e11d48;
+	flex: 0 0 44px;
+}

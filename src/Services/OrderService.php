@@ -132,11 +132,6 @@ class OrderService {
 			$params[] = $args['status'];
 		}
 
-		// Tips are payment-only records with no delivery workflow — keep them
-		// out of the vendor's sales/orders listing; they surface in earnings.
-		$where[]  = 'platform != %s';
-		$params[] = \WPSellServices\Services\TippingService::ORDER_TYPE;
-
 		$where_clause = implode( ' AND ', $where );
 		$order_by     = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] ) ?: 'created_at DESC';
 
