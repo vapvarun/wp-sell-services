@@ -285,6 +285,10 @@ class OrderRepository extends AbstractRepository {
 		// records, not service deliveries, so the order count, revenue,
 		// and completion-time average would be misleading if tips were
 		// mixed in. Tip totals are surfaced via get_vendor_tip_stats().
+		// Revenue uses vendor_earnings (NET, post-commission) so the number
+		// the seller sees matches what they can actually withdraw. Falls
+		// back to total for legacy rows written before vendor_earnings was
+		// populated by CommissionService.
 		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
 
 		$stats = $this->wpdb->get_row(
@@ -293,7 +297,7 @@ class OrderRepository extends AbstractRepository {
 					COUNT(*) as total_orders,
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
 					SUM(CASE WHEN status IN ('in_progress', 'pending_approval') THEN 1 ELSE 0 END) as active_orders,
-					SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) as total_earnings,
+					SUM(CASE WHEN status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
 					AVG(CASE WHEN status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
 				FROM {$this->table}
 				WHERE vendor_id = %d AND platform != %s",

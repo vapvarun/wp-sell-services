@@ -372,6 +372,33 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Total Amount', 'wp-sell-services' ); ?></span>
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
 				</div>
+				<?php
+				// Vendor-only NET earnings breakdown. Buyers see the gross "Total Amount"
+				// above (which is what they paid); vendors additionally see what they
+				// actually receive after the platform commission, so the detail view
+				// reconciles with the Revenue stat on the sales list and the wallet.
+				if ( $is_vendor ) :
+					$detail_gross = (float) $order->total;
+					$detail_net   = isset( $order->vendor_earnings ) && null !== $order->vendor_earnings
+						? (float) $order->vendor_earnings
+						: $detail_gross;
+					$detail_fee   = isset( $order->platform_fee ) && null !== $order->platform_fee
+						? (float) $order->platform_fee
+						: max( 0.0, $detail_gross - $detail_net );
+					if ( abs( $detail_gross - $detail_net ) > 0.005 ) :
+						?>
+						<div class="wpss-order-detail-item">
+							<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Platform Fee', 'wp-sell-services' ); ?></span>
+							<span class="wpss-order-detail-item__value">−<?php echo esc_html( wpss_format_price( $detail_fee, $order->currency ) ); ?></span>
+						</div>
+						<div class="wpss-order-detail-item wpss-order-detail-item--highlight">
+							<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Your Earnings', 'wp-sell-services' ); ?></span>
+							<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( $detail_net, $order->currency ) ); ?></span>
+						</div>
+						<?php
+					endif;
+				endif;
+				?>
 			</div>
 		</div>
 	</section>

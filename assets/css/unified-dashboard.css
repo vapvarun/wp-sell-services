@@ -417,6 +417,26 @@
 	color: var(--wpss-gray-300);
 }
 
+.wpss-order-card__amount {
+	font-weight: 600;
+	color: var(--wpss-gray-800);
+}
+
+.wpss-order-card__gross {
+	display: inline-block;
+	margin-left: 4px;
+	font-weight: 400;
+	font-size: 12px;
+	color: var(--wpss-gray-500);
+}
+
+@media (max-width: 640px) {
+	.wpss-order-card__gross {
+		display: block;
+		margin: 2px 0 0;
+	}
+}
+
 .wpss-order-card__actions {
 	display: flex;
 	align-items: center;
