@@ -115,11 +115,12 @@ class UnifiedDashboard {
 			'wpss-unified-dashboard',
 			'wpssUnifiedDashboard',
 			array(
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( 'wpss_dashboard_nonce' ),
-				'restUrl'   => esc_url_raw( rest_url( 'wpss/v1/' ) ),
-				'restNonce' => wp_create_nonce( 'wp_rest' ),
-				'i18n'      => array(
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'wpss_dashboard_nonce' ),
+				'serviceNonce' => wp_create_nonce( 'wpss_service_nonce' ),
+				'restUrl'      => esc_url_raw( rest_url( 'wpss/v1/' ) ),
+				'restNonce'    => wp_create_nonce( 'wp_rest' ),
+				'i18n'         => array(
 					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
@@ -143,6 +144,9 @@ class UnifiedDashboard {
 					'deleteFailed'           => __( 'Delete failed.', 'wp-sell-services' ),
 					'saveFailed'             => __( 'Save failed.', 'wp-sell-services' ),
 					'failed'                 => __( 'Failed.', 'wp-sell-services' ),
+					'favoriteCountSingular'  => __( '%d saved service', 'wp-sell-services' ),
+					'favoriteCountPlural'    => __( '%d saved services', 'wp-sell-services' ),
+					'favoriteRemoveFailed'   => __( 'Could not remove favorite. Please try again.', 'wp-sell-services' ),
 					'chooseProfilePhoto'     => __( 'Choose Profile Photo', 'wp-sell-services' ),
 					'useAsProfilePhoto'      => __( 'Use as Profile Photo', 'wp-sell-services' ),
 					'selectCoverImage'       => __( 'Select Cover Image', 'wp-sell-services' ),
@@ -245,11 +249,15 @@ class UnifiedDashboard {
 			'buying' => array(
 				'label' => __( 'Buying', 'wp-sell-services' ),
 				'items' => array(
-					'orders'   => array(
+					'orders'    => array(
 						'icon'  => 'shopping-bag',
 						'label' => __( 'My Orders', 'wp-sell-services' ),
 					),
-					'requests' => array(
+					'favorites' => array(
+						'icon'  => 'heart',
+						'label' => __( 'Favorites', 'wp-sell-services' ),
+					),
+					'requests'  => array(
 						'icon'  => 'megaphone',
 						'label' => __( 'Buyer Requests', 'wp-sell-services' ),
 					),
@@ -438,6 +446,7 @@ class UnifiedDashboard {
 	private function get_section_data( string $section ): array {
 		$titles = array(
 			'orders'         => __( 'My Orders', 'wp-sell-services' ),
+			'favorites'      => __( 'Favorites', 'wp-sell-services' ),
 			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
 			'services'       => __( 'My Services', 'wp-sell-services' ),
 			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),

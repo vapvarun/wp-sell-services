@@ -62,6 +62,63 @@
 			$(document).on('submit', '#wpss-portfolio-form', this.handlePortfolioSave.bind(this));
 			$(document).on('click', '#wpss-portfolio-upload-media', this.handlePortfolioMediaUpload.bind(this));
 			$(document).on('click', '.wpss-modal__close, .wpss-modal__close-btn, .wpss-modal__overlay', this.handleModalClose.bind(this));
+
+			// Favorites — unfavorite from the saved grid.
+			$(document).on('click', '.wpss-favorites__remove', this.handleFavoriteRemove.bind(this));
+		},
+
+		/**
+		 * Remove a service from the favorites grid and update the empty state
+		 * if the grid becomes empty.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleFavoriteRemove: function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			var $button = $(e.currentTarget);
+			var serviceId = parseInt($button.data('service-id'), 10);
+			if (!serviceId || $button.prop('disabled')) {
+				return;
+			}
+
+			var $card = $button.closest('.wpss-favorites__card');
+			$button.prop('disabled', true);
+
+			var i18n = (wpssUnifiedDashboard && wpssUnifiedDashboard.i18n) || {};
+
+			$.post(wpssUnifiedDashboard.ajaxUrl, {
+				action: 'wpss_unfavorite_service',
+				service_id: serviceId,
+				nonce: wpssUnifiedDashboard.serviceNonce
+			}).done(function (response) {
+				if (response && response.success) {
+					$card.fadeOut(180, function () {
+						$card.remove();
+						// If the last card was removed, reload to show the empty state.
+						if ($('.wpss-favorites__card').length === 0) {
+							window.location.reload();
+						} else {
+							var $count = $('.wpss-favorites__count');
+							if ($count.length && typeof response.data.count === 'number') {
+								$count.text(
+									(response.data.count === 1
+										? (i18n.favoriteCountSingular || '%d saved service')
+										: (i18n.favoriteCountPlural || '%d saved services')
+									).replace('%d', response.data.count)
+								);
+							}
+						}
+					});
+				} else {
+					$button.prop('disabled', false);
+					window.alert((response && response.data && response.data.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.');
+				}
+			}).fail(function () {
+				$button.prop('disabled', false);
+				window.alert(i18n.favoriteRemoveFailed || 'Could not remove favorite. Please try again.');
+			});
 		},
 
 		/**

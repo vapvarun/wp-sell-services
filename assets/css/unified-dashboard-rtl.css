@@ -1738,3 +1738,13 @@ select.wpss-input option,
 		grid-template-columns: 1fr;
 	}
 }
+
+/* Favorites (RTL) */
+.wpss-favorites__remove {
+	right: auto;
+	left: 10px;
+}
+
+.wpss-favorites__card-vendor {
+	letter-spacing: 0;
+}
