@@ -1720,6 +1720,11 @@ function wpss_pagination( \WP_Query $query, array $args = array() ): void {
 function wpss_enqueue_frontend_assets(): void {
 	wp_enqueue_style( 'wpss-design-system' );
 	wp_enqueue_style( 'wpss-frontend' );
+	// Packet H: load Lucide + bootstrap alongside the frontend bundle so every
+	// <i data-lucide="…"> rendered by templates on the current surface hydrates
+	// on DOMContentLoaded and on the wpss:icons:refresh CustomEvent.
+	wp_enqueue_script( 'lucide' );
+	wp_enqueue_script( 'wpss-icons' );
 	wp_enqueue_script( 'wpss-frontend' );
 }
 

@@ -69,10 +69,27 @@ class Frontend {
 		// Add defer attribute to Alpine.js so it waits for DOM and other scripts.
 		add_filter( 'script_loader_tag', array( $this, 'add_defer_attribute' ), 10, 2 );
 
+		// Register Lucide icon vendor library + bootstrap (Packet H: house-style).
+		wp_register_script(
+			'lucide',
+			\WPSS_PLUGIN_URL . 'assets/js/vendor/lucide.min.js',
+			array(),
+			'0.460.0',
+			true
+		);
+
+		wp_register_script(
+			'wpss-icons',
+			\WPSS_PLUGIN_URL . 'assets/js/wpss-icons.js',
+			array( 'lucide' ),
+			\WPSS_VERSION,
+			true
+		);
+
 		wp_register_script(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
-			array( 'jquery', 'alpinejs' ),
+			array( 'jquery', 'alpinejs', 'wpss-icons' ),
 			\WPSS_VERSION,
 			true
 		);

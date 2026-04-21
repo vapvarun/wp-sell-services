@@ -175,6 +175,52 @@
 	/* ---- Transitions ---- */
 	--wpss-ease: 0.2s ease;
 	--wpss-ease-in-out: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+	/* ---- Icon Sizing (Lucide) ----
+	   Every icon in the plugin flows through the .wpss-icon utility class
+	   which reads these tokens. Override --wpss-icon-size / --wpss-icon-stroke
+	   on a :root block to rescale every icon uniformly (theme-override proof). */
+	--wpss-icon-size-sm: 14px;
+	--wpss-icon-size: 18px;
+	--wpss-icon-size-lg: 24px;
+	--wpss-icon-stroke: 1.75;
+}
+
+/* ==========================================================================
+   1b. LUCIDE ICONS
+   ========================================================================== */
+
+/* Base utility: every <i data-lucide="..."> icon in plugin markup. */
+.wpss-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--wpss-icon-size);
+	height: var(--wpss-icon-size);
+	vertical-align: middle;
+	flex-shrink: 0;
+	color: currentColor;
+	line-height: 1;
+}
+
+/* Lucide replaces <i data-lucide="…"> with <svg>; size the resulting SVG. */
+.wpss-icon svg,
+[data-lucide] {
+	width: var(--wpss-icon-size);
+	height: var(--wpss-icon-size);
+	stroke-width: var(--wpss-icon-stroke);
+}
+
+.wpss-icon--sm,
+.wpss-icon--sm svg {
+	width: var(--wpss-icon-size-sm);
+	height: var(--wpss-icon-size-sm);
+}
+
+.wpss-icon--lg,
+.wpss-icon--lg svg {
+	width: var(--wpss-icon-size-lg);
+	height: var(--wpss-icon-size-lg);
 }
 
 /* ==========================================================================

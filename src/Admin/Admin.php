@@ -654,7 +654,7 @@ class Admin {
 			)
 		);
 
-		// Lucide icons — all plugin admin pages.
+		// Lucide icons — all plugin admin pages (Packet H house-style).
 		wp_enqueue_script(
 			'lucide',
 			\WPSS_PLUGIN_URL . 'assets/js/vendor/lucide.min.js',
@@ -663,10 +663,22 @@ class Admin {
 			true
 		);
 
+		// Unified icon bootstrap: listens for wpss:icons:refresh so dynamically
+		// injected modal / AJAX markup re-hydrates Lucide icons.
+		wp_enqueue_script(
+			'wpss-icons',
+			\WPSS_PLUGIN_URL . 'assets/js/wpss-icons.js',
+			array( 'lucide' ),
+			\WPSS_VERSION,
+			true
+		);
+
+		// Legacy admin-icons.js kept for BC (single createIcons call) but
+		// wpss-icons.js is now the canonical listener.
 		wp_enqueue_script(
 			'wpss-admin-icons',
 			\WPSS_PLUGIN_URL . 'assets/js/admin-icons.js',
-			array( 'lucide' ),
+			array( 'lucide', 'wpss-icons' ),
 			\WPSS_VERSION,
 			true
 		);
