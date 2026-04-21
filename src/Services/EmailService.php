@@ -158,14 +158,15 @@ class EmailService {
 		}
 
 		// Sub-order platforms use dedicated email flows (tip_received,
-		// extension_approved). Running the generic service-order status
-		// emails here would e-mail both parties "Your order is complete"
-		// when the buyer actually just paid an extension or a tip — the
-		// message no longer matches what happened.
+		// extension_approved, milestone_*). Running the generic service-
+		// order status emails here would tell both parties "Your order is
+		// complete" when the buyer just paid an extension, a milestone,
+		// or a tip — the message no longer matches what happened.
 		$platform = $order->platform ?? '';
 		if (
 			\WPSellServices\Services\TippingService::ORDER_TYPE === $platform
 			|| \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === $platform
+			|| \WPSellServices\Services\MilestoneService::ORDER_TYPE === $platform
 		) {
 			return;
 		}

@@ -2,8 +2,14 @@
 /**
  * Milestones REST Controller
  *
+ * Mobile-facing endpoints for the paid milestone sub-order flow.
+ * Proxies to {@see \WPSellServices\Services\MilestoneService} so the
+ * REST layer and the dashboard AJAX endpoints share one code path —
+ * any validation or state-transition rule is enforced in the service,
+ * never duplicated here.
+ *
  * @package WPSellServices\API
- * @since   1.0.0
+ * @since   1.1.0
  */
 
 declare(strict_types=1);
@@ -17,13 +23,28 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Services\MilestoneService;
 
 /**
- * REST controller for order milestones.
+ * REST controller for milestone sub-orders.
  *
- * @since 1.0.0
+ * @since 1.1.0
  */
 class MilestonesController extends RestController {
+
+	/**
+	 * Milestone service instance.
+	 *
+	 * @var MilestoneService
+	 */
+	private MilestoneService $milestones;
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		$this->milestones = new MilestoneService();
+	}
 
 	/**
 	 * Register routes.
@@ -33,494 +54,225 @@ class MilestonesController extends RestController {
 	public function register_routes(): void {
 		$base = '/orders/(?P<order_id>[\d]+)/milestones';
 
-		// GET /orders/{order_id}/milestones - List milestones.
+		// List milestones on a parent order (both buyer and vendor).
 		register_rest_route(
 			$this->namespace,
 			$base,
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_items' ),
+					'callback'            => array( $this, 'list_for_parent' ),
 					'permission_callback' => array( $this, 'check_order_access' ),
 				),
 			)
 		);
 
-		// POST /orders/{order_id}/milestones - Create milestone.
+		// Propose a new milestone on a parent order (vendor only).
 		register_rest_route(
 			$this->namespace,
 			$base,
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_item' ),
+					'callback'            => array( $this, 'propose' ),
 					'permission_callback' => array( $this, 'check_vendor_order_access' ),
 					'args'                => array(
-						'title'       => array(
-							'type'     => 'string',
-							'required' => true,
-						),
-						'description' => array(
-							'type' => 'string',
-						),
-						'amount'      => array(
-							'type'     => 'number',
-							'required' => true,
-						),
-						'due_date'    => array(
-							'type'   => 'string',
-							'format' => 'date',
-						),
+						'title'        => array( 'type' => 'string', 'required' => true ),
+						'description'  => array( 'type' => 'string' ),
+						'amount'       => array( 'type' => 'number', 'required' => true ),
+						'days'         => array( 'type' => 'integer' ),
+						'deliverables' => array( 'type' => 'string' ),
 					),
 				),
 			)
 		);
 
-		// GET /orders/{order_id}/milestones/progress - Get progress.
+		// Vendor submits a milestone as delivered.
 		register_rest_route(
 			$this->namespace,
-			$base . '/progress',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_progress' ),
-					'permission_callback' => array( $this, 'check_order_access' ),
-				),
-			)
-		);
-
-		// PUT /orders/{order_id}/milestones/{id} - Update milestone.
-		register_rest_route(
-			$this->namespace,
-			$base . '/(?P<id>[\d]+)',
+			'/milestones/(?P<id>[\d]+)/submit',
 			array(
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'check_vendor_order_access' ),
+					'callback'            => array( $this, 'submit_milestone' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'note' => array( 'type' => 'string' ),
+					),
 				),
 			)
 		);
 
-		// DELETE /orders/{order_id}/milestones/{id} - Delete milestone.
+		// Buyer approves a submitted milestone.
 		register_rest_route(
 			$this->namespace,
-			$base . '/(?P<id>[\d]+)',
+			'/milestones/(?P<id>[\d]+)/approve',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'approve_milestone' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+				),
+			)
+		);
+
+		// Buyer declines an unpaid milestone (or vendor cancels proposal).
+		register_rest_route(
+			$this->namespace,
+			'/milestones/(?P<id>[\d]+)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'check_vendor_order_access' ),
-				),
-			)
-		);
-
-		// POST /orders/{order_id}/milestones/{id}/submit - Submit for approval.
-		register_rest_route(
-			$this->namespace,
-			$base . '/(?P<id>[\d]+)/submit',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'submit' ),
-					'permission_callback' => array( $this, 'check_vendor_order_access' ),
-					'args'                => array(
-						'message'     => array(
-							'type' => 'string',
-						),
-						'attachments' => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-					),
-				),
-			)
-		);
-
-		// POST /orders/{order_id}/milestones/{id}/approve - Approve.
-		register_rest_route(
-			$this->namespace,
-			$base . '/(?P<id>[\d]+)/approve',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'approve' ),
-					'permission_callback' => array( $this, 'check_buyer_order_access' ),
-				),
-			)
-		);
-
-		// POST /orders/{order_id}/milestones/{id}/reject - Reject.
-		register_rest_route(
-			$this->namespace,
-			$base . '/(?P<id>[\d]+)/reject',
-			array(
-				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'reject' ),
-					'permission_callback' => array( $this, 'check_buyer_order_access' ),
-					'args'                => array(
-						'feedback' => array(
-							'type'     => 'string',
-							'required' => true,
-						),
-					),
+					'callback'            => array( $this, 'cancel_milestone' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
 				),
 			)
 		);
 	}
 
 	/**
-	 * Get milestones for order.
+	 * GET /orders/{order_id}/milestones
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
 	 */
-	public function get_items( $request ) {
-		$order_id   = (int) $request->get_param( 'order_id' );
-		$milestones = $this->get_order_milestones( $order_id );
-
-		return new WP_REST_Response( $milestones );
+	public function list_for_parent( WP_REST_Request $request ): WP_REST_Response {
+		$order_id = (int) $request->get_param( 'order_id' );
+		return new WP_REST_Response( $this->milestones->get_for_parent( $order_id ) );
 	}
 
 	/**
-	 * Create milestone.
+	 * POST /orders/{order_id}/milestones
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function create_item( $request ) {
-		$order_id   = (int) $request->get_param( 'order_id' );
-		$milestones = $this->get_order_milestones( $order_id );
-
-		$milestone = array(
-			'id'          => wp_generate_uuid4(),
-			'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
-			'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?: '' ),
-			'amount'      => (float) $request->get_param( 'amount' ),
-			'due_date'    => sanitize_text_field( $request->get_param( 'due_date' ) ?: '' ),
-			'status'      => 'pending',
-			'created_at'  => current_time( 'mysql', true ),
+	public function propose( WP_REST_Request $request ) {
+		$order_id = (int) $request->get_param( 'order_id' );
+		$result   = $this->milestones->propose(
+			$order_id,
+			get_current_user_id(),
+			(string) $request->get_param( 'title' ),
+			(string) ( $request->get_param( 'description' ) ?? '' ),
+			(float) $request->get_param( 'amount' ),
+			(int) ( $request->get_param( 'days' ) ?? 0 ),
+			(string) ( $request->get_param( 'deliverables' ) ?? '' )
 		);
 
-		$milestones[] = $milestone;
-		$this->save_order_milestones( $order_id, $milestones );
+		if ( ! $result['success'] ) {
+			return new WP_Error( 'wpss_milestone_failed', $result['message'], array( 'status' => 400 ) );
+		}
 
-		return new WP_REST_Response( $milestone, 201 );
+		return new WP_REST_Response( $result, 201 );
 	}
 
 	/**
-	 * Update milestone.
+	 * POST /milestones/{id}/submit
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function update_item( $request ) {
-		$order_id     = (int) $request->get_param( 'order_id' );
-		$milestone_id = $request->get_param( 'id' );
-		$milestones   = $this->get_order_milestones( $order_id );
-
-		$index = $this->find_milestone_index( $milestones, $milestone_id );
-
-		if ( false === $index ) {
-			return new WP_Error( 'not_found', __( 'Milestone not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		if ( $request->has_param( 'title' ) ) {
-			$milestones[ $index ]['title'] = sanitize_text_field( $request->get_param( 'title' ) );
-		}
-		if ( $request->has_param( 'description' ) ) {
-			$milestones[ $index ]['description'] = sanitize_textarea_field( $request->get_param( 'description' ) );
-		}
-		if ( $request->has_param( 'amount' ) ) {
-			$milestones[ $index ]['amount'] = (float) $request->get_param( 'amount' );
-		}
-		if ( $request->has_param( 'due_date' ) ) {
-			$milestones[ $index ]['due_date'] = sanitize_text_field( $request->get_param( 'due_date' ) );
-		}
-
-		$this->save_order_milestones( $order_id, $milestones );
-
-		return new WP_REST_Response( $milestones[ $index ] );
-	}
-
-	/**
-	 * Delete milestone.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function delete_item( $request ) {
-		$order_id     = (int) $request->get_param( 'order_id' );
-		$milestone_id = $request->get_param( 'id' );
-		$milestones   = $this->get_order_milestones( $order_id );
-
-		$index = $this->find_milestone_index( $milestones, $milestone_id );
-
-		if ( false === $index ) {
-			return new WP_Error( 'not_found', __( 'Milestone not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		array_splice( $milestones, $index, 1 );
-		$this->save_order_milestones( $order_id, $milestones );
-
-		return new WP_REST_Response( array( 'deleted' => true ) );
-	}
-
-	/**
-	 * Submit milestone for approval.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function submit( WP_REST_Request $request ) {
-		$order_id     = (int) $request->get_param( 'order_id' );
-		$milestone_id = $request->get_param( 'id' );
-		$milestones   = $this->get_order_milestones( $order_id );
-
-		$index = $this->find_milestone_index( $milestones, $milestone_id );
-
-		if ( false === $index ) {
-			return new WP_Error( 'not_found', __( 'Milestone not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		if ( ! in_array( $milestones[ $index ]['status'], array( 'pending', 'in_progress', 'rejected' ), true ) ) {
-			return new WP_Error( 'invalid_status', __( 'Milestone cannot be submitted in current status.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		$milestones[ $index ]['status']       = 'submitted';
-		$milestones[ $index ]['submitted_at'] = current_time( 'mysql', true );
-		$milestones[ $index ]['message']      = sanitize_textarea_field( $request->get_param( 'message' ) ?: '' );
-		$milestones[ $index ]['attachments']  = array_map( 'intval', $request->get_param( 'attachments' ) ?: array() );
-
-		$this->save_order_milestones( $order_id, $milestones );
-
-		do_action( 'wpss_milestone_submitted', $milestone_id, $order_id );
-
-		return new WP_REST_Response( $milestones[ $index ] );
-	}
-
-	/**
-	 * Approve milestone.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function approve( WP_REST_Request $request ) {
-		$order_id     = (int) $request->get_param( 'order_id' );
-		$milestone_id = $request->get_param( 'id' );
-		$milestones   = $this->get_order_milestones( $order_id );
-
-		$index = $this->find_milestone_index( $milestones, $milestone_id );
-
-		if ( false === $index ) {
-			return new WP_Error( 'not_found', __( 'Milestone not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		if ( 'submitted' !== $milestones[ $index ]['status'] ) {
-			return new WP_Error( 'invalid_status', __( 'Only submitted milestones can be approved.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		$milestones[ $index ]['status']      = 'approved';
-		$milestones[ $index ]['approved_at'] = current_time( 'mysql', true );
-
-		$this->save_order_milestones( $order_id, $milestones );
-
-		do_action( 'wpss_milestone_approved', $milestone_id, $order_id );
-
-		return new WP_REST_Response( $milestones[ $index ] );
-	}
-
-	/**
-	 * Reject milestone.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function reject( WP_REST_Request $request ) {
-		$order_id     = (int) $request->get_param( 'order_id' );
-		$milestone_id = $request->get_param( 'id' );
-		$milestones   = $this->get_order_milestones( $order_id );
-
-		$index = $this->find_milestone_index( $milestones, $milestone_id );
-
-		if ( false === $index ) {
-			return new WP_Error( 'not_found', __( 'Milestone not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-		}
-
-		if ( 'submitted' !== $milestones[ $index ]['status'] ) {
-			return new WP_Error( 'invalid_status', __( 'Only submitted milestones can be rejected.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		$milestones[ $index ]['status']   = 'rejected';
-		$milestones[ $index ]['feedback'] = sanitize_textarea_field( $request->get_param( 'feedback' ) );
-
-		$this->save_order_milestones( $order_id, $milestones );
-
-		do_action( 'wpss_milestone_rejected', $milestone_id, $order_id );
-
-		return new WP_REST_Response( $milestones[ $index ] );
-	}
-
-	/**
-	 * Get milestone progress.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response
-	 */
-	public function get_progress( WP_REST_Request $request ): WP_REST_Response {
-		$order_id   = (int) $request->get_param( 'order_id' );
-		$milestones = $this->get_order_milestones( $order_id );
-
-		$total    = count( $milestones );
-		$approved = 0;
-
-		foreach ( $milestones as $m ) {
-			if ( 'approved' === ( $m['status'] ?? '' ) ) {
-				++$approved;
-			}
-		}
-
-		return new WP_REST_Response(
-			array(
-				'total'      => $total,
-				'approved'   => $approved,
-				'percentage' => $total > 0 ? round( ( $approved / $total ) * 100, 1 ) : 0,
-			)
+	public function submit_milestone( WP_REST_Request $request ) {
+		$result = $this->milestones->submit(
+			(int) $request->get_param( 'id' ),
+			get_current_user_id(),
+			(string) ( $request->get_param( 'note' ) ?? '' )
 		);
+
+		if ( ! $result['success'] ) {
+			return new WP_Error( 'wpss_milestone_failed', $result['message'], array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response( $result );
 	}
 
 	/**
-	 * Check order access.
+	 * POST /milestones/{id}/approve
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return bool|WP_Error
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function check_order_access( WP_REST_Request $request ) {
-		$perm_check = $this->check_permissions( $request );
-		if ( is_wp_error( $perm_check ) ) {
-			return $perm_check;
+	public function approve_milestone( WP_REST_Request $request ) {
+		$result = $this->milestones->approve( (int) $request->get_param( 'id' ), get_current_user_id() );
+
+		if ( ! $result['success'] ) {
+			return new WP_Error( 'wpss_milestone_failed', $result['message'], array( 'status' => 400 ) );
 		}
 
-		$order_id = (int) $request->get_param( 'order_id' );
-		if ( ! $this->user_owns_resource( $order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have access to this order.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		return true;
+		return new WP_REST_Response( $result );
 	}
 
 	/**
-	 * Check vendor access to order.
+	 * DELETE /milestones/{id}
+	 *
+	 * Routes to decline (buyer) or delete_unpaid (vendor) depending on
+	 * the current user's relationship to the parent order. Keeps the
+	 * client surface to a single endpoint.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return bool|WP_Error
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function check_vendor_order_access( WP_REST_Request $request ) {
-		$perm_check = $this->check_order_access( $request );
-		if ( is_wp_error( $perm_check ) ) {
-			return $perm_check;
+	public function cancel_milestone( WP_REST_Request $request ) {
+		$milestone_id = (int) $request->get_param( 'id' );
+		$sub          = wpss_get_order( $milestone_id );
+
+		if ( ! $sub || MilestoneService::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
+			return new WP_Error( 'wpss_milestone_not_found', __( 'Milestone not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		$order_id = (int) $request->get_param( 'order_id' );
-		$order    = $this->get_order( $order_id );
-
-		if ( $order && (int) $order->vendor_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'Only the vendor can perform this action.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		$user_id = get_current_user_id();
+		if ( (int) $sub->customer_id === $user_id ) {
+			$result = $this->milestones->decline( $milestone_id, $user_id );
+		} elseif ( (int) $sub->vendor_id === $user_id ) {
+			$result = $this->milestones->delete_unpaid( $milestone_id, $user_id );
+		} else {
+			return new WP_Error( 'wpss_forbidden', __( 'You cannot cancel this milestone.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		return true;
+		if ( ! $result['success'] ) {
+			return new WP_Error( 'wpss_milestone_failed', $result['message'], array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response( $result );
 	}
 
 	/**
-	 * Check buyer access to order.
+	 * Access gate for the parent-order based endpoints — allows either
+	 * the buyer or the vendor of the parent order.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return bool|WP_Error
+	 * @return bool
 	 */
-	public function check_buyer_order_access( WP_REST_Request $request ) {
-		$perm_check = $this->check_order_access( $request );
-		if ( is_wp_error( $perm_check ) ) {
-			return $perm_check;
+	public function check_order_access( WP_REST_Request $request ): bool {
+		if ( ! is_user_logged_in() ) {
+			return false;
 		}
 
-		$order_id = (int) $request->get_param( 'order_id' );
-		$order    = $this->get_order( $order_id );
-
-		if ( $order && (int) $order->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'Only the buyer can perform this action.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		return true;
-	}
-
-	/**
-	 * Get order from DB.
-	 *
-	 * @param int $order_id Order ID.
-	 * @return object|null
-	 */
-	private function get_order( int $order_id ): ?object {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_orders';
-
-		return $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $order_id )
-		);
-	}
-
-	/**
-	 * Get milestones for order.
-	 *
-	 * @param int $order_id Order ID.
-	 * @return array
-	 */
-	private function get_order_milestones( int $order_id ): array {
-		$order = $this->get_order( $order_id );
-
+		$order = wpss_get_order( (int) $request->get_param( 'order_id' ) );
 		if ( ! $order ) {
-			return array();
+			return false;
 		}
 
-		$milestones = json_decode( $order->milestones ?? '[]', true );
-
-		return is_array( $milestones ) ? $milestones : array();
+		$user_id = get_current_user_id();
+		return $user_id === (int) $order->customer_id || $user_id === (int) $order->vendor_id;
 	}
 
 	/**
-	 * Save milestones for order.
+	 * Vendor-only gate for proposing a new milestone on a parent order.
 	 *
-	 * @param int   $order_id   Order ID.
-	 * @param array $milestones Milestones data.
-	 * @return void
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool
 	 */
-	private function save_order_milestones( int $order_id, array $milestones ): void {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_orders';
-
-		$wpdb->update(
-			$table,
-			array( 'milestones' => wp_json_encode( $milestones ) ),
-			array( 'id' => $order_id ),
-			array( '%s' ),
-			array( '%d' )
-		);
-	}
-
-	/**
-	 * Find milestone index by ID.
-	 *
-	 * @param array  $milestones  Milestones array.
-	 * @param string $milestone_id Milestone ID (UUID or numeric).
-	 * @return int|false
-	 */
-	private function find_milestone_index( array $milestones, string $milestone_id ) {
-		foreach ( $milestones as $index => $milestone ) {
-			if ( ( $milestone['id'] ?? '' ) === $milestone_id ) {
-				return $index;
-			}
+	public function check_vendor_order_access( WP_REST_Request $request ): bool {
+		if ( ! is_user_logged_in() ) {
+			return false;
 		}
 
-		return false;
+		$order = wpss_get_order( (int) $request->get_param( 'order_id' ) );
+		if ( ! $order ) {
+			return false;
+		}
+
+		return get_current_user_id() === (int) $order->vendor_id;
 	}
 }

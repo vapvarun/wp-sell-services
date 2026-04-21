@@ -2069,6 +2069,164 @@ select.wpss-input option,
 	flex: 0 0 44px;
 }
 
+/* Milestone badge / icon on list rows. Teal so it reads as distinct from
+   the pink Tip and amber Extension badges. */
+.wpss-badge--milestone {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: #115e59;
+	background: #ccfbf1;
+	border-radius: 999px;
+	margin-right: 6px;
+	vertical-align: middle;
+}
+
+.wpss-order-card--milestone .wpss-order-card__milestone-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: #ccfbf1;
+	color: #0f766e;
+	flex: 0 0 44px;
+}
+
+/* Milestone receipt view — same shape as tip/extension, teal-tinted icon. */
+.wpss-milestone-view .wpss-tip-view__icon {
+	background: #ccfbf1;
+	color: #0f766e;
+}
+
+.wpss-milestone-view__phase-title {
+	margin: -4px 0 8px;
+	font-size: 15px;
+	font-weight: 600;
+	color: #0f766e;
+	text-align: center;
+}
+
+/* Milestone timeline on the parent order. */
+.wpss-order-section--milestones .wpss-order-section__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.wpss-milestone-empty {
+	margin: 4px 0 0;
+	color: var(--wpss-gray-500, #6b7280);
+	font-size: 13px;
+}
+
+.wpss-milestone-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.wpss-milestone-item {
+	padding: 14px 16px;
+	border-radius: 10px;
+	border: 1px solid #e5e7eb;
+	background: #fff;
+}
+
+.wpss-milestone-item.wpss-ms-state--pending_payment  { border-left: 4px solid #fcd34d; }
+.wpss-milestone-item.wpss-ms-state--in_progress      { border-left: 4px solid #2563eb; }
+.wpss-milestone-item.wpss-ms-state--pending_approval { border-left: 4px solid #0f766e; }
+.wpss-milestone-item.wpss-ms-state--completed        { border-left: 4px solid #22c55e; background: #f0fdf4; }
+.wpss-milestone-item.wpss-ms-state--cancelled        { border-left: 4px solid #9ca3af; opacity: 0.75; }
+
+.wpss-milestone-item__head {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.wpss-milestone-item__num {
+	font-weight: 700;
+	color: #0f766e;
+	min-width: 20px;
+}
+
+.wpss-milestone-item__title {
+	font-weight: 600;
+	font-size: 15px;
+	flex: 1;
+}
+
+.wpss-milestone-item__amount {
+	font-weight: 600;
+	color: var(--wpss-gray-800, #1f2937);
+	font-variant-numeric: tabular-nums;
+}
+
+.wpss-milestone-item__gross {
+	display: inline-block;
+	margin-left: 4px;
+	font-weight: 400;
+	font-size: 12px;
+	color: var(--wpss-gray-500, #6b7280);
+}
+
+.wpss-milestone-item__description,
+.wpss-milestone-item__deliverables {
+	margin: 8px 0 0;
+	font-size: 13px;
+	color: var(--wpss-gray-600, #4b5563);
+	line-height: 1.5;
+}
+
+.wpss-milestone-item__deliverables strong {
+	color: var(--wpss-gray-800, #1f2937);
+	font-weight: 600;
+	margin-right: 4px;
+}
+
+.wpss-milestone-item__meta {
+	margin-top: 10px;
+	font-size: 12px;
+	color: var(--wpss-gray-500, #6b7280);
+}
+
+.wpss-milestone-item__state {
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.wpss-milestone-item__actions {
+	margin-top: 12px;
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+	.wpss-milestone-item__head {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+	.wpss-milestone-item__actions .wpss-btn {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+}
+
 /* Extension receipt / awaiting-payment view — reuses .wpss-tip-view layout
    and only re-tones the icon so the two sub-orders stay visually distinct. */
 .wpss-extension-view .wpss-tip-view__icon {

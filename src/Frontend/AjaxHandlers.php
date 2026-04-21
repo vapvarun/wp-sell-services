@@ -59,6 +59,13 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_request_extension', array( $this, 'ajax_request_extension' ) );
 		add_action( 'wp_ajax_wpss_decline_extension', array( $this, 'ajax_decline_extension' ) );
 
+		// Milestones — pay-first phases with delivery + approval step.
+		add_action( 'wp_ajax_wpss_propose_milestone', array( $this, 'ajax_propose_milestone' ) );
+		add_action( 'wp_ajax_wpss_submit_milestone', array( $this, 'ajax_submit_milestone' ) );
+		add_action( 'wp_ajax_wpss_approve_milestone', array( $this, 'ajax_approve_milestone' ) );
+		add_action( 'wp_ajax_wpss_decline_milestone', array( $this, 'ajax_decline_milestone' ) );
+		add_action( 'wp_ajax_wpss_delete_milestone', array( $this, 'ajax_delete_milestone' ) );
+
 		// Order actions.
 		add_action( 'wp_ajax_wpss_accept_order', array( $this, 'accept_order' ) );
 		add_action( 'wp_ajax_wpss_decline_order', array( $this, 'decline_order' ) );
@@ -3900,6 +3907,138 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => $result['message'] ) );
 		}
 
+		wp_send_json_success( array( 'message' => $result['message'] ) );
+	}
+
+	/**
+	 * AJAX: Vendor proposes a milestone on an active order.
+	 *
+	 * @return void
+	 */
+	public function ajax_propose_milestone(): void {
+		check_ajax_referer( 'wpss_propose_milestone' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$order_id      = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
+		$title         = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
+		$description   = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
+		$deliverables  = isset( $_POST['deliverables'] ) ? sanitize_textarea_field( wp_unslash( $_POST['deliverables'] ) ) : '';
+		$amount        = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : 0.0;
+		$days          = isset( $_POST['days'] ) ? absint( wp_unslash( $_POST['days'] ) ) : 0;
+
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Missing order.', 'wp-sell-services' ) ) );
+		}
+
+		$service = new \WPSellServices\Services\MilestoneService();
+		$result  = $service->propose( $order_id, get_current_user_id(), $title, $description, $amount, $days, $deliverables );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'      => $result['message'],
+				'milestone_id' => $result['milestone_id'],
+				'checkout_url' => $result['checkout_url'],
+			)
+		);
+	}
+
+	/**
+	 * AJAX: Vendor submits a milestone as delivered.
+	 *
+	 * @return void
+	 */
+	public function ajax_submit_milestone(): void {
+		check_ajax_referer( 'wpss_milestone_action' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
+		$note         = isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '';
+
+		$service = new \WPSellServices\Services\MilestoneService();
+		$result  = $service->submit( $milestone_id, get_current_user_id(), $note );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+		wp_send_json_success( array( 'message' => $result['message'] ) );
+	}
+
+	/**
+	 * AJAX: Buyer approves a submitted milestone.
+	 *
+	 * @return void
+	 */
+	public function ajax_approve_milestone(): void {
+		check_ajax_referer( 'wpss_milestone_action' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
+
+		$service = new \WPSellServices\Services\MilestoneService();
+		$result  = $service->approve( $milestone_id, get_current_user_id() );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+		wp_send_json_success( array( 'message' => $result['message'] ) );
+	}
+
+	/**
+	 * AJAX: Buyer declines an unpaid milestone.
+	 *
+	 * @return void
+	 */
+	public function ajax_decline_milestone(): void {
+		check_ajax_referer( 'wpss_milestone_action' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
+
+		$service = new \WPSellServices\Services\MilestoneService();
+		$result  = $service->decline( $milestone_id, get_current_user_id() );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+		wp_send_json_success( array( 'message' => $result['message'] ) );
+	}
+
+	/**
+	 * AJAX: Vendor deletes an unpaid milestone they proposed.
+	 *
+	 * @return void
+	 */
+	public function ajax_delete_milestone(): void {
+		check_ajax_referer( 'wpss_milestone_action' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
+
+		$service = new \WPSellServices\Services\MilestoneService();
+		$result  = $service->delete_unpaid( $milestone_id, get_current_user_id() );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
 		wp_send_json_success( array( 'message' => $result['message'] ) );
 	}
 }

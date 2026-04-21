@@ -295,26 +295,31 @@ class OrderRepository extends AbstractRepository {
 		// vendor_earnings.
 		$tip_platform       = \WPSellServices\Services\TippingService::ORDER_TYPE;
 		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
+		$milestone_platform = \WPSellServices\Services\MilestoneService::ORDER_TYPE;
 
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
-					SUM(CASE WHEN platform NOT IN (%s, %s) THEN 1 ELSE 0 END) as total_orders,
-					SUM(CASE WHEN platform NOT IN (%s, %s) AND status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN platform NOT IN (%s, %s) AND status IN ('in_progress', 'pending_approval') THEN 1 ELSE 0 END) as active_orders,
+					SUM(CASE WHEN platform NOT IN (%s, %s, %s) THEN 1 ELSE 0 END) as total_orders,
+					SUM(CASE WHEN platform NOT IN (%s, %s, %s) AND status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
+					SUM(CASE WHEN platform NOT IN (%s, %s, %s) AND status IN ('in_progress', 'pending_approval') THEN 1 ELSE 0 END) as active_orders,
 					SUM(CASE WHEN platform != %s AND status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
-					AVG(CASE WHEN platform NOT IN (%s, %s) AND status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
+					AVG(CASE WHEN platform NOT IN (%s, %s, %s) AND status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
 				FROM {$this->table}
 				WHERE vendor_id = %d",
 				$tip_platform,
 				$extension_platform,
+				$milestone_platform,
 				$tip_platform,
 				$extension_platform,
+				$milestone_platform,
 				$tip_platform,
 				$extension_platform,
+				$milestone_platform,
 				$tip_platform,
 				$tip_platform,
 				$extension_platform,
+				$milestone_platform,
 				$vendor_id
 			),
 			ARRAY_A

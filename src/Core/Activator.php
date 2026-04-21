@@ -272,6 +272,13 @@ class Activator {
 		if ( ! wp_next_scheduled( \WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK );
 		}
+
+		// Milestones cleanup — same 48h abandon contract so a proposed
+		// phase the buyer never paid does not permanently clutter the
+		// vendor's timeline.
+		if ( ! wp_next_scheduled( \WPSellServices\Services\MilestoneService::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\MilestoneService::CLEANUP_HOOK );
+		}
 	}
 
 	/**

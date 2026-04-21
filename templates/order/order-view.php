@@ -523,11 +523,16 @@ do_action( 'wpss_before_order_view', $order );
 	// 1. FORM: Status is pending_requirements + user is customer + service has requirements + not yet submitted
 	// 2. READ-ONLY VIEW: Requirements have been submitted (show to both vendor and customer)
 	// 3. NOT PROVIDED: Service has requirements but none submitted and order is past pending_requirements
-	// 4. NO REQUIREMENTS: Service has no requirements defined
+	// Requirements are defined at the service level. If the seller never
+	// configured any, the whole section is hidden — an order-level "no
+	// requirements" notice just reads like missing data to the buyer /
+	// seller looking at a completed order. When the service DOES define
+	// requirements, the section is always shown so both parties can see
+	// the form, the submitted answers, or the 'not yet provided' notice.
 	$show_requirements_form   = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
 	$show_submitted_readonly  = $has_submitted_requirements && ( $is_vendor || $is_customer );
 	$show_not_provided_notice = ! $has_submitted_requirements && $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
-	$show_no_requirements_msg = ! $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
+	$show_no_requirements_msg = false;
 
 	// Allow late requirements submission if enabled in settings and order is in_progress without requirements.
 	$allow_late_submission       = apply_filters( 'wpss_allow_late_requirements_submission', false );
@@ -1164,6 +1169,309 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 			</section>
 		<?php endif; ?>
+	<?php endif; ?>
+
+	<!-- Milestones timeline (parent order only) -->
+	<?php
+	$milestone_service   = new \WPSellServices\Services\MilestoneService();
+	$milestones          = $milestone_service->get_for_parent( (int) $order_id );
+	$milestone_active_statuses = array(
+		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
+		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
+		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
+		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
+	);
+	$can_propose_milestone = $is_vendor && in_array( $order->status, $milestone_active_statuses, true );
+	$show_milestone_section = ! empty( $milestones ) || $can_propose_milestone;
+	$milestone_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+
+	if ( $show_milestone_section ) :
+		?>
+		<section class="wpss-order-section wpss-order-section--milestones">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<path d="M4 4v16"/>
+						<path d="M4 4h13l-3 5 3 5H4"/>
+					</svg>
+					<?php
+					printf(
+						/* translators: %d: milestone count */
+						esc_html__( 'Milestones (%d)', 'wp-sell-services' ),
+						count( $milestones )
+					);
+					?>
+				</h2>
+				<?php if ( $can_propose_milestone ) : ?>
+					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-open-milestone-modal" data-order="<?php echo esc_attr( (int) $order_id ); ?>">
+						<?php esc_html_e( '+ Propose Milestone', 'wp-sell-services' ); ?>
+					</button>
+				<?php endif; ?>
+			</div>
+			<div class="wpss-order-section__body">
+				<?php if ( empty( $milestones ) ) : ?>
+					<p class="wpss-milestone-empty">
+						<?php
+						if ( $is_vendor ) {
+							esc_html_e( 'Break this order into paid phases. The buyer pays each milestone up front; you deliver and they approve.', 'wp-sell-services' );
+						} else {
+							esc_html_e( 'Your seller has not proposed any milestones yet.', 'wp-sell-services' );
+						}
+						?>
+					</p>
+				<?php else : ?>
+					<ol class="wpss-milestone-list">
+						<?php
+						foreach ( $milestones as $index => $m ) :
+							$ms_status     = $m['status'];
+							$ms_sub_id     = (int) $m['id'];
+							$ms_sub_url    = add_query_arg( 'order_id', $ms_sub_id, remove_query_arg( 'order_id' ) );
+							$ms_pay_url    = add_query_arg( 'pay_order', $ms_sub_id, wpss_get_checkout_base_url() );
+							$ms_state_label = '';
+							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
+
+							switch ( $ms_status ) {
+								case 'pending_payment':
+									$ms_state_label = $is_buyer ? __( 'Awaiting your payment', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
+									break;
+								case 'in_progress':
+									$ms_state_label = $is_vendor ? __( 'Paid · ready for delivery', 'wp-sell-services' ) : __( 'Paid · seller working', 'wp-sell-services' );
+									break;
+								case 'pending_approval':
+									$ms_state_label = $is_buyer ? __( 'Delivered · awaiting your approval', 'wp-sell-services' ) : __( 'Submitted · awaiting buyer', 'wp-sell-services' );
+									break;
+								case 'completed':
+									$ms_state_label = __( 'Approved · completed', 'wp-sell-services' );
+									break;
+								case 'cancelled':
+									$ms_state_label = __( 'Cancelled', 'wp-sell-services' );
+									break;
+							}
+
+							$ms_show_amount = $is_vendor && in_array( $ms_status, array( 'in_progress', 'pending_approval', 'completed' ), true ) && null !== $m['vendor_earnings']
+								? (float) $m['vendor_earnings']
+								: (float) $m['amount'];
+							?>
+							<li class="wpss-milestone-item <?php echo esc_attr( $ms_state_class ); ?>">
+								<div class="wpss-milestone-item__head">
+									<span class="wpss-milestone-item__num"><?php echo esc_html( (string) ( $index + 1 ) ); ?>.</span>
+									<span class="wpss-milestone-item__title"><?php echo esc_html( '' !== $m['title'] ? $m['title'] : __( 'Untitled milestone', 'wp-sell-services' ) ); ?></span>
+									<span class="wpss-milestone-item__amount">
+										<?php echo esc_html( wpss_format_price( $ms_show_amount, $milestone_currency ) ); ?>
+										<?php if ( $is_vendor && in_array( $ms_status, array( 'in_progress', 'pending_approval', 'completed' ), true ) && null !== $m['vendor_earnings'] && abs( (float) $m['amount'] - (float) $m['vendor_earnings'] ) > 0.005 ) : ?>
+											<small class="wpss-milestone-item__gross">
+												<?php
+												printf(
+													/* translators: %s: buyer-paid amount */
+													esc_html__( '(buyer paid %s)', 'wp-sell-services' ),
+													esc_html( wpss_format_price( (float) $m['amount'], $milestone_currency ) )
+												);
+												?>
+											</small>
+										<?php endif; ?>
+									</span>
+								</div>
+								<?php if ( '' !== $m['description'] ) : ?>
+									<p class="wpss-milestone-item__description"><?php echo esc_html( $m['description'] ); ?></p>
+								<?php endif; ?>
+								<?php if ( '' !== $m['deliverables'] && $is_buyer && 'pending_payment' === $ms_status ) : ?>
+									<p class="wpss-milestone-item__deliverables">
+										<strong><?php esc_html_e( 'Deliverables:', 'wp-sell-services' ); ?></strong>
+										<?php echo esc_html( $m['deliverables'] ); ?>
+									</p>
+								<?php endif; ?>
+								<div class="wpss-milestone-item__meta">
+									<span class="wpss-milestone-item__state"><?php echo esc_html( $ms_state_label ); ?></span>
+								</div>
+								<div class="wpss-milestone-item__actions">
+									<?php if ( $is_buyer && 'pending_payment' === $ms_status ) : ?>
+										<a href="<?php echo esc_url( $ms_pay_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
+											<?php
+											printf(
+												/* translators: %s: amount */
+												esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+												esc_html( wpss_format_price( (float) $m['amount'], $milestone_currency ) )
+											);
+											?>
+										</a>
+										<button type="button" class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-milestone-decline-btn" data-milestone="<?php echo esc_attr( $ms_sub_id ); ?>">
+											<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
+										</button>
+									<?php endif; ?>
+									<?php if ( $is_vendor && 'pending_payment' === $ms_status ) : ?>
+										<button type="button" class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-milestone-delete-btn" data-milestone="<?php echo esc_attr( $ms_sub_id ); ?>">
+											<?php esc_html_e( 'Cancel proposal', 'wp-sell-services' ); ?>
+										</button>
+									<?php endif; ?>
+									<?php if ( $is_vendor && in_array( $ms_status, array( 'in_progress', 'pending_approval' ), true ) ) : ?>
+										<a href="<?php echo esc_url( $ms_sub_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
+											<?php echo esc_html( 'pending_approval' === $ms_status ? __( 'View · Resubmit', 'wp-sell-services' ) : __( 'Submit delivery', 'wp-sell-services' ) ); ?>
+										</a>
+									<?php endif; ?>
+									<?php if ( $is_buyer && 'pending_approval' === $ms_status ) : ?>
+										<a href="<?php echo esc_url( $ms_sub_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
+											<?php esc_html_e( 'Review & approve', 'wp-sell-services' ); ?>
+										</a>
+									<?php endif; ?>
+									<a href="<?php echo esc_url( $ms_sub_url ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+										<?php esc_html_e( 'View milestone', 'wp-sell-services' ); ?>
+									</a>
+								</div>
+							</li>
+						<?php endforeach; ?>
+					</ol>
+				<?php endif; ?>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<?php if ( $can_propose_milestone ) : ?>
+		<!-- Propose Milestone Modal (vendor only) -->
+		<div class="wpss-modal wpss-extension-modal" id="wpss-milestone-modal" data-order="<?php echo esc_attr( (int) $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-ms-modal-title" hidden>
+			<div class="wpss-modal__backdrop"></div>
+			<div class="wpss-modal__dialog">
+				<div class="wpss-modal__header">
+					<h3 id="wpss-ms-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Propose a Milestone', 'wp-sell-services' ); ?></h3>
+					<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+				</div>
+				<div class="wpss-modal__body">
+					<p class="wpss-modal__intro"><?php esc_html_e( 'Break the work into a named phase the buyer can pay for up front. Once paid, you can start work and submit delivery here when done.', 'wp-sell-services' ); ?></p>
+					<form class="wpss-milestone-form" data-order="<?php echo esc_attr( (int) $order_id ); ?>">
+						<?php wp_nonce_field( 'wpss_propose_milestone', 'wpss_milestone_nonce' ); ?>
+						<div class="wpss-form-row">
+							<label for="wpss-ms-title"><?php esc_html_e( 'Phase title', 'wp-sell-services' ); ?></label>
+							<input type="text" id="wpss-ms-title" name="title" required maxlength="120" class="wpss-input" placeholder="<?php esc_attr_e( 'e.g. Phase 1 — Concepts & Wireframes', 'wp-sell-services' ); ?>">
+						</div>
+						<div class="wpss-form-row">
+							<label for="wpss-ms-description"><?php esc_html_e( 'Description (buyer sees this)', 'wp-sell-services' ); ?></label>
+							<textarea id="wpss-ms-description" name="description" rows="3" class="wpss-textarea" placeholder="<?php esc_attr_e( 'What the buyer is paying for in this phase.', 'wp-sell-services' ); ?>"></textarea>
+						</div>
+						<div class="wpss-field-row">
+							<div class="wpss-form-row">
+								<label for="wpss-ms-amount"><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></label>
+								<input type="number" step="0.01" min="1" id="wpss-ms-amount" name="amount" required class="wpss-input" placeholder="50.00">
+							</div>
+							<div class="wpss-form-row">
+								<label for="wpss-ms-days"><?php esc_html_e( 'Days to deliver', 'wp-sell-services' ); ?></label>
+								<input type="number" min="0" id="wpss-ms-days" name="days" class="wpss-input" placeholder="3">
+							</div>
+						</div>
+						<div class="wpss-form-row">
+							<label for="wpss-ms-deliverables"><?php esc_html_e( 'Deliverables (optional)', 'wp-sell-services' ); ?></label>
+							<textarea id="wpss-ms-deliverables" name="deliverables" rows="3" class="wpss-textarea" placeholder="<?php esc_attr_e( 'e.g. Low-fi sketches + 2 direction options + Figma file', 'wp-sell-services' ); ?>"></textarea>
+						</div>
+						<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
+						<div class="wpss-modal__footer">
+							<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+							<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send to Buyer', 'wp-sell-services' ); ?></button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<script>
+		(function () {
+			var modal = document.getElementById('wpss-milestone-modal');
+			if (!modal) return;
+			var form = modal.querySelector('.wpss-milestone-form');
+			var feedback = modal.querySelector('.wpss-modal__feedback');
+
+			// Dashboard CSS gates .wpss-modal visibility on the
+			// .wpss-modal-open class, not the [hidden] attribute — toggling
+			// .hidden alone leaves 'display: none' winning from the default
+			// rule, which is why the Propose button appeared to do nothing.
+			document.querySelectorAll('.wpss-open-milestone-modal').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = false; modal.classList.add('wpss-modal-open'); }); });
+			modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = true; modal.classList.remove('wpss-modal-open'); }); });
+
+			form.addEventListener('submit', function (e) {
+				e.preventDefault();
+				var data = new FormData(form);
+				data.append('action', 'wpss_propose_milestone');
+				data.append('order_id', form.dataset.order);
+				data.append('_ajax_nonce', data.get('wpss_milestone_nonce'));
+				var submitBtn = form.querySelector('button[type=submit]');
+				submitBtn.disabled = true;
+				fetch(window.ajaxurl || '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>', { method: 'POST', credentials: 'include', body: data })
+					.then(function (r) { return r.json(); })
+					.then(function (res) {
+						submitBtn.disabled = false;
+						if (res && res.success) {
+							feedback.hidden = false;
+							feedback.className = 'wpss-modal__feedback wpss-modal__feedback--success';
+							feedback.textContent = (res.data && res.data.message) || '<?php echo esc_js( __( 'Sent.', 'wp-sell-services' ) ); ?>';
+							setTimeout(function () { window.location.reload(); }, 700);
+						} else {
+							feedback.hidden = false;
+							feedback.className = 'wpss-modal__feedback wpss-modal__feedback--error';
+							feedback.textContent = (res && res.data && res.data.message) || '<?php echo esc_js( __( 'Error', 'wp-sell-services' ) ); ?>';
+						}
+					})
+					.catch(function () {
+						submitBtn.disabled = false;
+						feedback.hidden = false;
+						feedback.className = 'wpss-modal__feedback wpss-modal__feedback--error';
+						feedback.textContent = '<?php echo esc_js( __( 'Network error.', 'wp-sell-services' ) ); ?>';
+					});
+			});
+		}());
+		</script>
+	<?php endif; ?>
+
+	<?php if ( ! empty( $milestones ) && $is_buyer ) : ?>
+		<script>
+		(function () {
+			var ajaxurl = window.ajaxurl || '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
+			document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					if (!confirm('<?php echo esc_js( __( "Decline this milestone? The seller can propose a revised one.", 'wp-sell-services' ) ); ?>')) return;
+					btn.disabled = true;
+					var data = new FormData();
+					data.append('action', 'wpss_decline_milestone');
+					data.append('milestone_id', btn.dataset.milestone);
+					data.append('_ajax_nonce', nonce);
+					fetch(ajaxurl, { method: 'POST', credentials: 'include', body: data })
+						.then(function (r) { return r.json(); })
+						.then(function (res) {
+							if (res && res.success) window.location.reload();
+							else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
+						});
+				});
+			});
+		}());
+		</script>
+	<?php endif; ?>
+
+	<?php if ( ! empty( $milestones ) && $is_vendor ) : ?>
+		<script>
+		(function () {
+			var ajaxurl = window.ajaxurl || '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
+			document.querySelectorAll('.wpss-milestone-delete-btn').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					if (!confirm('<?php echo esc_js( __( "Cancel this milestone proposal?", 'wp-sell-services' ) ); ?>')) return;
+					btn.disabled = true;
+					var data = new FormData();
+					data.append('action', 'wpss_delete_milestone');
+					data.append('milestone_id', btn.dataset.milestone);
+					data.append('_ajax_nonce', nonce);
+					fetch(ajaxurl, { method: 'POST', credentials: 'include', body: data })
+						.then(function (r) { return r.json(); })
+						.then(function (res) {
+							if (res && res.success) window.location.reload();
+							else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
+						});
+				});
+			});
+		}());
+		</script>
 	<?php endif; ?>
 
 	<!-- Extension Request (active order only) -->
@@ -2646,8 +2954,12 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		var form = modal.querySelector('.wpss-extension-form');
 		var feedback = modal.querySelector('.wpss-modal__feedback');
 
-		function show() { modal.hidden = false; document.body.classList.add('wpss-modal-open'); }
-		function hide() { modal.hidden = true; document.body.classList.remove('wpss-modal-open'); if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } }
+		// Same class-based visibility gate the milestone modal uses: the
+		// dashboard CSS default is display:none and the .wpss-modal-open
+		// class is what flips it to flex. Toggling .hidden alone silently
+		// no-ops because display:none wins specificity.
+		function show() { modal.hidden = false; modal.classList.add('wpss-modal-open'); }
+		function hide() { modal.hidden = true; modal.classList.remove('wpss-modal-open'); if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } }
 
 		openBtns.forEach(function (btn) { btn.addEventListener('click', show); });
 		closeBtns.forEach(function (btn) { btn.addEventListener('click', hide); });

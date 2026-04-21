@@ -256,6 +256,11 @@ final class Plugin {
 		// a cleared payment on platform='extension' and extends the parent.
 		( new \WPSellServices\Services\ExtensionOrderService() )->init();
 
+		// Milestones: per-phase sub-orders on platform='milestone'. Credits
+		// the vendor at payment time and flips the milestone to in_progress
+		// so the vendor can submit delivery.
+		( new \WPSellServices\Services\MilestoneService() )->init();
+
 		// Run the loader to register all hooks.
 		$this->loader->run();
 
@@ -605,6 +610,91 @@ final class Plugin {
 					array(
 						'order_id'      => $parent_order_id,
 						'response_note' => $response_note,
+					)
+				);
+			},
+			null,
+			10,
+			4
+		);
+
+		// Milestone proposed — vendor created a pending_payment phase.
+		// Buyer needs to Accept & Pay.
+		$this->loader->add_action(
+			'wpss_milestone_proposed',
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id ) use ( $notification_service ): void {
+				unset( $vendor_id );
+				$parent = wpss_get_order( $parent_order_id );
+				if ( ! $parent ) {
+					return;
+				}
+				$notification_service->send(
+					(int) $parent->customer_id,
+					'milestone_proposed',
+					array(
+						'order_id'     => $parent_order_id,
+						'milestone_id' => $milestone_id,
+					)
+				);
+			},
+			null,
+			10,
+			3
+		);
+
+		// Milestone paid — buyer's payment cleared, vendor credited,
+		// milestone is in_progress. Notify vendor to start work.
+		$this->loader->add_action(
+			'wpss_milestone_paid',
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount ) use ( $notification_service ): void {
+				unset( $customer_id );
+				$notification_service->send(
+					$vendor_id,
+					'milestone_paid',
+					array(
+						'order_id'     => $parent_order_id,
+						'milestone_id' => $milestone_id,
+						'net_amount'   => $net_amount,
+					)
+				);
+			},
+			null,
+			10,
+			5
+		);
+
+		// Milestone submitted — vendor marked the phase as delivered.
+		// Buyer needs to approve or request revision in chat.
+		$this->loader->add_action(
+			'wpss_milestone_submitted',
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service ): void {
+				unset( $vendor_id );
+				$notification_service->send(
+					$customer_id,
+					'milestone_submitted',
+					array(
+						'order_id'     => $parent_order_id,
+						'milestone_id' => $milestone_id,
+					)
+				);
+			},
+			null,
+			10,
+			4
+		);
+
+		// Milestone approved — buyer accepted the delivery.
+		// Notify the vendor (money already landed at payment time).
+		$this->loader->add_action(
+			'wpss_milestone_approved',
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service ): void {
+				unset( $customer_id );
+				$notification_service->send(
+					$vendor_id,
+					'milestone_approved',
+					array(
+						'order_id'     => $parent_order_id,
+						'milestone_id' => $milestone_id,
 					)
 				);
 			},

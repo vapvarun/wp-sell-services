@@ -48,6 +48,14 @@ if ( $order_id ) {
 			return;
 		}
 
+		// Milestone sub-orders route to the phase receipt view; buyers see
+		// Accept & Pay / Approve, vendors see Submit Delivery, depending on
+		// the phase's current state.
+		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
+			include WPSS_PLUGIN_DIR . 'templates/order/milestone-view.php';
+			return;
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing, no data processing.
 		$order_action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
 
@@ -120,7 +128,8 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 				$order_platform = $order_item->platform ?? '';
 				$is_tip         = \WPSellServices\Services\TippingService::ORDER_TYPE === $order_platform;
 				$is_extension   = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === $order_platform;
-				$is_sub_order   = $is_tip || $is_extension;
+				$is_milestone   = \WPSellServices\Services\MilestoneService::ORDER_TYPE === $order_platform;
+				$is_sub_order   = $is_tip || $is_extension || $is_milestone;
 				$service        = $order_item->service_id ? get_post( $order_item->service_id ) : null;
 				$vendor         = get_userdata( $order_item->vendor_id );
 				$status_class   = 'wpss-status--' . sanitize_html_class( $order_item->status );
@@ -133,8 +142,7 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 
 				if ( $is_sub_order ) {
 					// Sub-orders label relative to the parent service the buyer
-					// actually ordered — "Tip for X" or "Extension for X" so the
-					// list doesn't look like a duplicate order.
+					// actually ordered.
 					$parent_order = $order_item->platform_order_id ? wpss_get_order( (int) $order_item->platform_order_id ) : null;
 					$parent_title = '';
 					if ( $parent_order ) {
@@ -145,16 +153,28 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 						$order_title = $parent_title
 							? sprintf( /* translators: %s: original service / order title */ __( 'Tip for %s', 'wp-sell-services' ), $parent_title )
 							: __( 'Tip', 'wp-sell-services' );
-					} else {
+					} elseif ( $is_extension ) {
 						$order_title = $parent_title
 							? sprintf( /* translators: %s: original service / order title */ __( 'Extension for %s', 'wp-sell-services' ), $parent_title )
 							: __( 'Extension', 'wp-sell-services' );
+					} else {
+						$ms_meta        = is_string( $order_item->meta ?? '' ) && '' !== $order_item->meta ? json_decode( $order_item->meta, true ) : array();
+						$ms_phase_title = is_array( $ms_meta ) && ! empty( $ms_meta['title'] ) ? (string) $ms_meta['title'] : '';
+						if ( '' !== $ms_phase_title && '' !== $parent_title ) {
+							$order_title = sprintf( /* translators: 1: milestone phase title, 2: parent service title */ __( 'Milestone: %1$s (for %2$s)', 'wp-sell-services' ), $ms_phase_title, $parent_title );
+						} elseif ( '' !== $ms_phase_title ) {
+							$order_title = sprintf( /* translators: %s: milestone phase title */ __( 'Milestone: %s', 'wp-sell-services' ), $ms_phase_title );
+						} elseif ( '' !== $parent_title ) {
+							$order_title = sprintf( /* translators: %s: parent service title */ __( 'Milestone for %s', 'wp-sell-services' ), $parent_title );
+						} else {
+							$order_title = __( 'Milestone', 'wp-sell-services' );
+						}
 					}
 				} else {
 					$order_title = $service ? $service->post_title : ( ! empty( $request_post ) ? $request_post->post_title : __( 'Deleted Service', 'wp-sell-services' ) );
 				}
 				?>
-				<div class="wpss-order-card<?php echo $is_tip ? ' wpss-order-card--tip' : ''; ?><?php echo $is_extension ? ' wpss-order-card--extension' : ''; ?>">
+				<div class="wpss-order-card<?php echo $is_tip ? ' wpss-order-card--tip' : ''; ?><?php echo $is_extension ? ' wpss-order-card--extension' : ''; ?><?php echo $is_milestone ? ' wpss-order-card--milestone' : ''; ?>">
 					<div class="wpss-order-card__main">
 						<?php if ( ! $is_sub_order && $service && has_post_thumbnail( $service ) ) : ?>
 							<div class="wpss-order-card__image">
@@ -173,6 +193,13 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 									<polyline points="12 6 12 12 16 14"/>
 								</svg>
 							</div>
+						<?php elseif ( $is_milestone ) : ?>
+							<div class="wpss-order-card__tip-icon wpss-order-card__milestone-icon" aria-hidden="true">
+								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M4 4v16"/>
+									<path d="M4 4h12l-2 4 2 4H4"/>
+								</svg>
+							</div>
 						<?php endif; ?>
 						<div class="wpss-order-card__info">
 							<h4 class="wpss-order-card__title">
@@ -181,6 +208,9 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 									<?php echo esc_html( $order_title ); ?>
 								<?php elseif ( $is_extension ) : ?>
 									<span class="wpss-badge wpss-badge--extension"><?php esc_html_e( 'Extension', 'wp-sell-services' ); ?></span>
+									<?php echo esc_html( $order_title ); ?>
+								<?php elseif ( $is_milestone ) : ?>
+									<span class="wpss-badge wpss-badge--milestone"><?php esc_html_e( 'Milestone', 'wp-sell-services' ); ?></span>
 									<?php echo esc_html( $order_title ); ?>
 								<?php elseif ( $service ) : ?>
 									<a href="<?php echo esc_url( get_permalink( $service ) ); ?>">
