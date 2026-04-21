@@ -300,7 +300,7 @@ do_action( 'wpss_before_single_request', $request_id );
 														<?php
 														printf(
 															/* translators: %d: phase count */
-															esc_html( _n( '%d phase milestone plan', '%d phase milestone plan', count( $proposal_milestones ), 'wp-sell-services' ) ),
+															esc_html( _n( '%d-phase plan', '%d-phase plan', count( $proposal_milestones ), 'wp-sell-services' ) ),
 															count( $proposal_milestones )
 														);
 														?>
@@ -319,7 +319,7 @@ do_action( 'wpss_before_single_request', $request_id );
 
 										<?php if ( 'milestone' === $proposal_contract && ! empty( $proposal_milestones ) ) : ?>
 											<details class="wpss-proposal-milestone-breakdown">
-												<summary><?php esc_html_e( 'View milestone breakdown', 'wp-sell-services' ); ?></summary>
+												<summary><?php esc_html_e( 'View phase breakdown', 'wp-sell-services' ); ?></summary>
 												<ol class="wpss-proposal-milestone-list">
 													<?php foreach ( $proposal_milestones as $idx => $ms ) : ?>
 														<li class="wpss-proposal-milestone-list__item">
@@ -531,7 +531,7 @@ do_action( 'wpss_before_single_request', $request_id );
 						</label>
 						<label class="wpss-radio">
 							<input type="radio" name="contract_type" value="milestone" data-contract-toggle="milestone">
-							<span><strong><?php esc_html_e( 'Milestone-based', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'phased plan — buyer pays each phase up front before you start it, and approves your delivery at the end of the phase.', 'wp-sell-services' ); ?></span>
+							<span><strong><?php esc_html_e( 'Phased project', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'split the work into paid phases the buyer funds one at a time. Each phase is paid up front, delivered, then approved before the next unlocks.', 'wp-sell-services' ); ?></span>
 						</label>
 					</fieldset>
 

@@ -40,7 +40,7 @@ $format = static function ( float $amt ) use ( $currency ): string {
 	<?php
 	printf(
 		/* translators: 1: vendor name, 2: phase title */
-		esc_html__( '%1$s has proposed a new milestone on your project: %2$s.', 'wp-sell-services' ),
+		esc_html__( '%1$s has proposed a new phase on your project: %2$s.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $vendor_name ) . '</strong>',
 		'<strong>' . esc_html( $phase_title ) . '</strong>'
 	);

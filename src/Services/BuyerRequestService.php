@@ -694,7 +694,7 @@ class BuyerRequestService {
 				$wpdb->query( 'ROLLBACK' );
 				return array(
 					'success' => false,
-					'message' => __( 'Milestone proposal has no milestones defined.', 'wp-sell-services' ),
+					'message' => __( 'This phased proposal has no phases defined.', 'wp-sell-services' ),
 				);
 			}
 
@@ -725,7 +725,7 @@ class BuyerRequestService {
 						'success' => false,
 						'message' => sprintf(
 							/* translators: 1: phase title, 2: error message */
-							__( 'Could not create milestone "%1$s": %2$s', 'wp-sell-services' ),
+							__( 'Could not create phase "%1$s": %2$s', 'wp-sell-services' ),
 							$row['title'] ?? '',
 							$ms_result['message']
 						),

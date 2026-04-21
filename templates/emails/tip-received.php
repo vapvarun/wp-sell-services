@@ -41,7 +41,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );
 $dashboard    = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
-$earnings_url = add_query_arg( 'section', 'earnings', $dashboard );
+$earnings_url = add_query_arg( 'section', 'wallet', $dashboard );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -58,7 +58,7 @@ $earnings_url = add_query_arg( 'section', 'earnings', $dashboard );
 	<?php
 	printf(
 		/* translators: 1: buyer name, 2: net tip amount */
-		esc_html__( 'Great news — %1$s just sent you a tip of %2$s. It has been added to your earnings balance.', 'wp-sell-services' ),
+		esc_html__( 'Great news — %1$s just sent you a tip of %2$s. It has been credited to your wallet.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $customer_name ) . '</strong>',
 		'<strong>' . esc_html( $format( $net_amount ) ) . '</strong>'
 	);
@@ -85,7 +85,7 @@ $earnings_url = add_query_arg( 'section', 'earnings', $dashboard );
 				</div>
 			<?php endif; ?>
 			<div>
-				<strong><?php esc_html_e( 'Credited to your balance:', 'wp-sell-services' ); ?></strong>
+				<strong><?php esc_html_e( 'Credited to your wallet:', 'wp-sell-services' ); ?></strong>
 				<?php echo esc_html( $format( $net_amount ) ); ?>
 			</div>
 		</td>
@@ -104,7 +104,7 @@ $earnings_url = add_query_arg( 'section', 'earnings', $dashboard );
 <p style="margin: 0 0 24px 0; text-align: center;">
 	<a href="<?php echo esc_url( $earnings_url ); ?>"
 		style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">
-		<?php esc_html_e( 'View your earnings', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'Open your wallet', 'wp-sell-services' ); ?>
 	</a>
 </p>
 

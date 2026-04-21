@@ -41,7 +41,7 @@ $order_url    = add_query_arg( array( 'section' => 'sales', 'order_id' => (int) 
 	<?php
 	printf(
 		/* translators: 1: buyer, 2: phase title, 3: net amount */
-		esc_html__( '%1$s paid the milestone %2$s. %3$s has been credited to your wallet — you can start work.', 'wp-sell-services' ),
+		esc_html__( '%1$s paid the phase %2$s. %3$s has been credited to your wallet — you can start work.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $buyer_name ) . '</strong>',
 		'<strong>' . esc_html( $phase_title ) . '</strong>',
 		'<strong>' . esc_html( $format( $net_amount ) ) . '</strong>'
@@ -63,10 +63,10 @@ $order_url    = add_query_arg( array( 'section' => 'sales', 'order_id' => (int) 
 
 <p style="margin: 0 0 24px 0; text-align: center;">
 	<a href="<?php echo esc_url( $order_url ); ?>" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">
-		<?php esc_html_e( 'Start work on this phase', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'Open this phase', 'wp-sell-services' ); ?>
 	</a>
 </p>
 
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
-	<?php esc_html_e( 'When you are done, use Submit Delivery on this phase so the buyer can review and approve.', 'wp-sell-services' ); ?>
+	<?php esc_html_e( 'When you are done, use Submit delivery on this phase so the buyer can review and approve.', 'wp-sell-services' ); ?>
 </p>

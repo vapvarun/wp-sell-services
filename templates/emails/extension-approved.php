@@ -55,7 +55,7 @@ $order_url    = $parent_id ? add_query_arg( array( 'section' => 'sales', 'order_
 			<?php if ( $platform_fee > 0 ) : ?>
 				<div style="margin-bottom: 8px; color: #666;"><strong><?php esc_html_e( 'Platform fee:', 'wp-sell-services' ); ?></strong> &minus;<?php echo esc_html( $format( $platform_fee ) ); ?></div>
 			<?php endif; ?>
-			<div style="margin-bottom: 8px;"><strong><?php esc_html_e( 'Credited to wallet:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $format( $net_amount ) ); ?></div>
+			<div style="margin-bottom: 8px;"><strong><?php esc_html_e( 'Credited to your wallet:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $format( $net_amount ) ); ?></div>
 			<?php if ( $extra_days > 0 ) : ?>
 				<div><strong><?php esc_html_e( 'Extra delivery time:', 'wp-sell-services' ); ?></strong> <?php printf( esc_html( _n( '+%d day', '+%d days', $extra_days, 'wp-sell-services' ) ), (int) $extra_days ); ?></div>
 			<?php endif; ?>

@@ -48,7 +48,7 @@ defined( 'ABSPATH' ) || exit;
 
 <p style="margin: 0 0 24px 0; text-align: center;">
 	<a href="<?php echo esc_url( $review_url ); ?>" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">
-		<?php esc_html_e( 'Review &amp; Approve', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'Review & approve', 'wp-sell-services' ); ?>
 	</a>
 </p>
 

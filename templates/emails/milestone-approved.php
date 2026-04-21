@@ -27,7 +27,7 @@ $format = static function ( float $amt ) use ( $currency ): string {
 };
 
 $dashboard = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
-$sales_url = add_query_arg( 'section', 'sales', $dashboard );
+$sales_url = add_query_arg( array( 'section' => 'sales', 'order_id' => (int) $milestone->id ), $dashboard );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -38,7 +38,7 @@ $sales_url = add_query_arg( 'section', 'sales', $dashboard );
 	<?php
 	printf(
 		/* translators: 1: buyer, 2: phase title */
-		esc_html__( 'Nice work — %1$s has approved the milestone %2$s. The phase is complete and the payment is already in your wallet.', 'wp-sell-services' ),
+		esc_html__( 'Nice work — %1$s approved the phase %2$s. The phase is complete and the payment is already in your wallet.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $buyer_name ) . '</strong>',
 		'<strong>' . esc_html( $phase_title ) . '</strong>'
 	);
@@ -55,6 +55,6 @@ $sales_url = add_query_arg( 'section', 'sales', $dashboard );
 
 <p style="margin: 0 0 24px 0; text-align: center;">
 	<a href="<?php echo esc_url( $sales_url ); ?>" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">
-		<?php esc_html_e( 'View your sales', 'wp-sell-services' ); ?>
+		<?php esc_html_e( 'Open this phase', 'wp-sell-services' ); ?>
 	</a>
 </p>

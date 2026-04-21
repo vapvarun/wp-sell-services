@@ -738,7 +738,7 @@ class EmailService {
 
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] Extension paid — continue working', 'wp-sell-services' ),
+			__( '[%s] Extra work paid — continue working', 'wp-sell-services' ),
 			wpss_get_platform_name()
 		);
 
@@ -749,7 +749,7 @@ class EmailService {
 			array(
 				'extension'     => $extension,
 				'recipient'     => $vendor,
-				'email_heading' => __( 'Extension paid', 'wp-sell-services' ),
+				'email_heading' => __( 'Extra work paid', 'wp-sell-services' ),
 				'vendor_name'   => $vendor->display_name,
 				'buyer_name'    => $buyer_name,
 				'gross_amount'  => (float) $extension->total,
@@ -793,7 +793,7 @@ class EmailService {
 			array(
 				'extension'     => $extension,
 				'recipient'     => $vendor,
-				'email_heading' => __( 'Extension declined', 'wp-sell-services' ),
+				'email_heading' => __( 'Quote declined', 'wp-sell-services' ),
 				'vendor_name'   => $vendor->display_name,
 				'buyer_name'    => $buyer_name,
 				'note'          => $note,

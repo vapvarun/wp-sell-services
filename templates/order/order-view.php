@@ -1172,7 +1172,7 @@ do_action( 'wpss_before_order_view', $order );
 						if ( $is_vendor ) {
 							esc_html_e( 'This is a custom project — break it into paid phases so the buyer can approve each stage as you deliver.', 'wp-sell-services' );
 						} else {
-							esc_html_e( 'Your seller will propose the first milestone. You pay each phase up front; they deliver and you approve.', 'wp-sell-services' );
+							esc_html_e( 'Your seller will propose the first phase. You pay each phase up front; they deliver and you approve.', 'wp-sell-services' );
 						}
 						?>
 					</p>

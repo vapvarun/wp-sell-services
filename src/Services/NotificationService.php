@@ -1105,10 +1105,10 @@ class NotificationService {
 				break;
 
 			case 'extension_approved':
-				$title   = __( 'Extra work approved', 'wp-sell-services' );
+				$title   = __( 'Extra work paid', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: 1: net amount, 2: extra days, 3: parent order ID */
-					__( 'Buyer approved your quote. %1$s credited, deadline on Order #%3$d extended by %2$d days.', 'wp-sell-services' ),
+					__( 'Buyer approved your quote. %1$s credited to your wallet, deadline on Order #%3$d extended by %2$d days.', 'wp-sell-services' ),
 					esc_html( function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ) ),
 					(int) ( $data['extra_days'] ?? 0 ),
 					(int) ( $data['order_id'] ?? 0 )
@@ -1119,7 +1119,7 @@ class NotificationService {
 				$title   = __( 'Milestone proposed', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: %d: parent order ID */
-					__( 'Your seller proposed a new milestone on Order #%d. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
+					__( 'Your seller proposed a new phase on Order #%d. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
 					(int) ( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1128,7 +1128,7 @@ class NotificationService {
 				$title   = __( 'Milestone paid — start work', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: 1: net amount, 2: parent order ID */
-					__( 'Buyer paid the milestone on Order #%2$d. %1$s credited — you can start work and submit when delivered.', 'wp-sell-services' ),
+					__( 'Buyer paid the phase on Order #%2$d. %1$s credited to your wallet — you can start work and submit when delivered.', 'wp-sell-services' ),
 					esc_html( function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ) ),
 					(int) ( $data['order_id'] ?? 0 )
 				);
@@ -1138,7 +1138,7 @@ class NotificationService {
 				$title   = __( 'Milestone delivered', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: %d: parent order ID */
-					__( 'Your seller submitted a milestone on Order #%d. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
+					__( 'Your seller submitted a phase delivery on Order #%d. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
 					(int) ( $data['order_id'] ?? 0 )
 				);
 				break;
@@ -1147,7 +1147,7 @@ class NotificationService {
 				$title   = __( 'Milestone approved', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: %d: parent order ID */
-					__( 'Buyer approved your milestone on Order #%d.', 'wp-sell-services' ),
+					__( 'Buyer approved your phase on Order #%d.', 'wp-sell-services' ),
 					(int) ( $data['order_id'] ?? 0 )
 				);
 				break;

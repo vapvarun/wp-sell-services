@@ -143,11 +143,11 @@ class MilestoneService {
 
 		$title = sanitize_text_field( $title );
 		if ( '' === $title ) {
-			return $fail( __( 'Milestone title is required.', 'wp-sell-services' ) );
+			return $fail( __( 'Phase title is required.', 'wp-sell-services' ) );
 		}
 
 		if ( $amount <= 0 ) {
-			return $fail( __( 'Milestone amount must be greater than zero.', 'wp-sell-services' ) );
+			return $fail( __( 'Phase amount must be greater than zero.', 'wp-sell-services' ) );
 		}
 
 		if ( $days_to_deliver < 0 ) {
@@ -231,7 +231,7 @@ class MilestoneService {
 		);
 
 		if ( ! $inserted ) {
-			return $fail( __( 'Could not create milestone. Please try again.', 'wp-sell-services' ) );
+			return $fail( __( 'Could not create phase. Please try again.', 'wp-sell-services' ) );
 		}
 
 		$milestone_id = (int) $wpdb->insert_id;
@@ -256,7 +256,7 @@ class MilestoneService {
 			'success'      => true,
 			'milestone_id' => $milestone_id,
 			'checkout_url' => $checkout_url,
-			'message'      => __( 'Milestone sent to buyer.', 'wp-sell-services' ),
+			'message'      => __( 'Phase sent to buyer.', 'wp-sell-services' ),
 		);
 	}
 
@@ -437,11 +437,11 @@ class MilestoneService {
 
 		$sub = wpss_get_order( $milestone_id );
 		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
-			return array( 'success' => false, 'message' => __( 'Milestone not found.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Phase not found.', 'wp-sell-services' ) );
 		}
 
 		if ( $vendor_id !== (int) $sub->vendor_id ) {
-			return array( 'success' => false, 'message' => __( 'Only the seller can submit this milestone.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Only the seller can submit this phase.', 'wp-sell-services' ) );
 		}
 
 		$allowed_submit_from = array(
@@ -450,7 +450,7 @@ class MilestoneService {
 			ServiceOrder::STATUS_REVISION_REQUESTED,
 		);
 		if ( ! in_array( $sub->status, $allowed_submit_from, true ) ) {
-			return array( 'success' => false, 'message' => __( 'This milestone cannot be submitted in its current state.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'This phase cannot be submitted in its current state.', 'wp-sell-services' ) );
 		}
 
 		// Persist the note on the sub-order's meta so the buyer's receipt
@@ -472,7 +472,7 @@ class MilestoneService {
 
 		do_action( 'wpss_milestone_submitted', $milestone_id, (int) $sub->platform_order_id, $vendor_id, (int) $sub->customer_id );
 
-		return array( 'success' => true, 'message' => __( 'Milestone submitted. Buyer has been notified.', 'wp-sell-services' ) );
+		return array( 'success' => true, 'message' => __( 'Phase delivery submitted. Buyer has been notified.', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -489,15 +489,15 @@ class MilestoneService {
 
 		$sub = wpss_get_order( $milestone_id );
 		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
-			return array( 'success' => false, 'message' => __( 'Milestone not found.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Phase not found.', 'wp-sell-services' ) );
 		}
 
 		if ( $customer_id !== (int) $sub->customer_id ) {
-			return array( 'success' => false, 'message' => __( 'Only the buyer can approve this milestone.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Only the buyer can approve this phase.', 'wp-sell-services' ) );
 		}
 
 		if ( ServiceOrder::STATUS_PENDING_APPROVAL !== $sub->status ) {
-			return array( 'success' => false, 'message' => __( 'Only submitted milestones can be approved.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Only submitted phases can be approved.', 'wp-sell-services' ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -513,7 +513,7 @@ class MilestoneService {
 
 		do_action( 'wpss_milestone_approved', $milestone_id, (int) $sub->platform_order_id, (int) $sub->vendor_id, $customer_id );
 
-		return array( 'success' => true, 'message' => __( 'Milestone approved.', 'wp-sell-services' ) );
+		return array( 'success' => true, 'message' => __( 'Phase approved.', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -530,15 +530,15 @@ class MilestoneService {
 
 		$sub = wpss_get_order( $milestone_id );
 		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
-			return array( 'success' => false, 'message' => __( 'Milestone not found.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Phase not found.', 'wp-sell-services' ) );
 		}
 
 		if ( $customer_id !== (int) $sub->customer_id ) {
-			return array( 'success' => false, 'message' => __( 'Only the buyer can decline this milestone.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Only the buyer can decline this phase.', 'wp-sell-services' ) );
 		}
 
 		if ( 'pending_payment' !== $sub->status ) {
-			return array( 'success' => false, 'message' => __( 'This milestone has already been paid and cannot be declined here. Open a dispute if there is a problem.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'This phase has already been paid and cannot be declined here. Open a dispute if there is a problem.', 'wp-sell-services' ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -556,7 +556,7 @@ class MilestoneService {
 
 		do_action( 'wpss_milestone_declined', $milestone_id, (int) $sub->platform_order_id, $customer_id );
 
-		return array( 'success' => true, 'message' => __( 'Milestone declined.', 'wp-sell-services' ) );
+		return array( 'success' => true, 'message' => __( 'Phase declined.', 'wp-sell-services' ) );
 	}
 
 	/**
@@ -572,15 +572,15 @@ class MilestoneService {
 
 		$sub = wpss_get_order( $milestone_id );
 		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
-			return array( 'success' => false, 'message' => __( 'Milestone not found.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Phase not found.', 'wp-sell-services' ) );
 		}
 
 		if ( $vendor_id !== (int) $sub->vendor_id ) {
-			return array( 'success' => false, 'message' => __( 'Only the seller can remove this milestone.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Only the seller can cancel this phase.', 'wp-sell-services' ) );
 		}
 
 		if ( 'pending_payment' !== $sub->status ) {
-			return array( 'success' => false, 'message' => __( 'Only unpaid milestones can be removed.', 'wp-sell-services' ) );
+			return array( 'success' => false, 'message' => __( 'Only unpaid phases can be cancelled.', 'wp-sell-services' ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -596,7 +596,7 @@ class MilestoneService {
 			)
 		);
 
-		return array( 'success' => true, 'message' => __( 'Milestone removed.', 'wp-sell-services' ) );
+		return array( 'success' => true, 'message' => __( 'Phase proposal cancelled.', 'wp-sell-services' ) );
 	}
 
 	/**

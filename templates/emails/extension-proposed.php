@@ -37,7 +37,7 @@ $format = static function ( float $amt ) use ( $currency ): string {
 	<?php
 	printf(
 		/* translators: %s: vendor name */
-		esc_html__( '%s sent a quote for the extra work you discussed. Review the details and accept to pay, or decline to keep the original scope.', 'wp-sell-services' ),
+		esc_html__( '%s sent a quote for some extra work on this order. Review the details and accept to pay, or decline to keep the original scope. If the quote looks off, discuss in chat first.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $vendor_name ) . '</strong>'
 	);
 	?>
