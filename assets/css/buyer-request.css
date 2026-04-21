@@ -651,24 +651,24 @@
 }
 
 .wpss-request-status-badge.wpss-status-open {
-	background: #dcfce7;
-	color: #166534;
+	background: var(--wpss-success-light, #dcfce7);
+	color: var(--wpss-success-dark, #166534);
 }
 
 .wpss-request-status-badge.wpss-status-in_review {
-	background: #fef3c7;
-	color: #92400e;
+	background: var(--wpss-warning-light, #fef3c7);
+	color: var(--wpss-warning-dark, #92400e);
 }
 
 .wpss-request-status-badge.wpss-status-hired {
-	background: #dbeafe;
-	color: #1e40af;
+	background: var(--wpss-status-delivered-bg, #dbeafe);
+	color: var(--wpss-status-delivered-fg, #1e40af);
 }
 
 .wpss-request-status-badge.wpss-status-expired,
 .wpss-request-status-badge.wpss-status-cancelled {
-	background: #fee2e2;
-	color: #991b1b;
+	background: var(--wpss-danger-light, #fee2e2);
+	color: var(--wpss-danger-dark, #991b1b);
 }
 
 .wpss-request-header .wpss-request-title {
@@ -893,20 +893,20 @@
 .wpss-proposal-submitted {
 	text-align: center;
 	padding: 1rem;
-	background: #dcfce7;
+	background: var(--wpss-success-light, #dcfce7);
 	border-radius: var(--wpss-radius, 8px);
 	margin-bottom: 1rem;
 }
 
 .wpss-proposal-submitted-icon {
 	font-size: 2rem;
-	color: #166534;
+	color: var(--wpss-success-dark, #166534);
 	margin-bottom: 0.5rem;
 }
 
 .wpss-proposal-submitted p {
 	margin: 0 0 1rem;
-	color: #166534;
+	color: var(--wpss-success-dark, #166534);
 	font-size: 0.875rem;
 }
 
@@ -1165,7 +1165,7 @@
    ========================================================================== */
 
 .wpss-contract-type-group {
-	border: 1px solid #e5e7eb;
+	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 8px;
 	padding: 12px 14px;
 	margin-bottom: 18px;
@@ -1175,7 +1175,7 @@
 	font-size: 13px;
 	font-weight: 600;
 	padding: 0 4px;
-	color: #374151;
+	color: var(--wpss-text-secondary, #374151);
 }
 
 .wpss-contract-type-group .wpss-radio {
@@ -1192,11 +1192,11 @@
 }
 
 .wpss-milestones-builder {
-	border: 1px solid #e5e7eb;
+	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 8px;
 	padding: 14px;
 	margin-bottom: 14px;
-	background: #fafafa;
+	background: var(--wpss-bg-subtle, #fafafa);
 }
 
 .wpss-milestone-rows {
@@ -1207,8 +1207,8 @@
 }
 
 .wpss-milestone-row {
-	background: #fff;
-	border: 1px solid #e5e7eb;
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
 	padding: 12px;
 	display: flex;
@@ -1224,7 +1224,7 @@
 
 .wpss-milestone-row__num {
 	font-weight: 700;
-	color: #0f766e;
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
 	min-width: 22px;
 }
 
@@ -1237,13 +1237,13 @@
 	border: 0;
 	font-size: 22px;
 	line-height: 1;
-	color: #9ca3af;
+	color: var(--wpss-text-hint, #9ca3af);
 	cursor: pointer;
 	padding: 0 6px;
 }
 
 .wpss-milestone-row__remove:hover {
-	color: #dc2626;
+	color: var(--wpss-danger, #dc2626);
 }
 
 .wpss-milestone-row__meta {
@@ -1257,7 +1257,7 @@
 	flex-direction: column;
 	gap: 4px;
 	font-size: 12px;
-	color: #6b7280;
+	color: var(--wpss-text-muted, #6b7280);
 	font-weight: 600;
 }
 
@@ -1265,18 +1265,49 @@
 	display: flex;
 	gap: 16px;
 	padding-top: 12px;
-	border-top: 1px solid #e5e7eb;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
 	font-size: 13px;
-	color: #374151;
+	color: var(--wpss-text-secondary, #374151);
 }
 
 @media (max-width: 640px) {
+	.wpss-milestones-builder {
+		padding: var(--wpss-space-3, 12px);
+	}
+	.wpss-milestone-row {
+		padding: var(--wpss-space-3, 12px);
+	}
 	.wpss-milestone-row__meta {
 		grid-template-columns: 1fr;
 	}
+	.wpss-milestones-builder [data-add-milestone] {
+		width: 100%;
+		justify-content: center;
+	}
 	.wpss-milestones-summary {
 		flex-direction: column;
-		gap: 6px;
+		gap: var(--wpss-space-2, 8px);
+		flex-wrap: wrap;
+	}
+}
+
+@media (max-width: 390px) {
+	.wpss-milestones-builder {
+		padding: var(--wpss-space-2, 8px);
+	}
+	.wpss-milestone-row__head {
+		flex-wrap: wrap;
+	}
+	.wpss-milestone-row__title {
+		flex: 1 1 100%;
+		order: 2;
+	}
+	.wpss-milestone-row__num {
+		order: 1;
+	}
+	.wpss-milestone-row__remove {
+		order: 1;
+		margin-left: auto;
 	}
 }
 
@@ -1293,27 +1324,27 @@
 }
 
 .wpss-proposal-contract-badge--fixed {
-	background: #e0e7ff;
-	color: #3730a3;
+	background: var(--wpss-status-in-progress-bg, #e0e7ff);
+	color: var(--wpss-status-in-progress-fg, #3730a3);
 }
 
 .wpss-proposal-contract-badge--milestone {
-	background: #ccfbf1;
-	color: #115e59;
+	background: var(--wpss-badge-milestone-bg, #ccfbf1);
+	color: var(--wpss-badge-milestone-fg, #115e59);
 }
 
 .wpss-proposal-milestone-breakdown {
 	margin: 12px 0 0;
 	padding: 10px 12px;
-	background: #f9fafb;
-	border: 1px solid #e5e7eb;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
 }
 
 .wpss-proposal-milestone-breakdown summary {
 	cursor: pointer;
 	font-weight: 600;
-	color: #0f766e;
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
 	font-size: 13px;
 }
 
@@ -1327,8 +1358,8 @@
 }
 
 .wpss-proposal-milestone-list__item {
-	background: #fff;
-	border: 1px solid #e5e7eb;
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
 	padding: 10px 12px;
 }
@@ -1345,13 +1376,35 @@
 .wpss-proposal-milestone-list__delivs {
 	margin: 4px 0 0;
 	font-size: 12px;
-	color: #4b5563;
+	color: var(--wpss-gray-600, #4b5563);
 	line-height: 1.5;
 }
 
 .wpss-proposal-milestone-list__total {
 	margin: 12px 0 0;
 	font-size: 13px;
-	color: #111827;
+	color: var(--wpss-gray-900, #111827);
 	text-align: right;
+}
+
+@media (max-width: 640px) {
+	.wpss-proposal-milestone-breakdown {
+		padding: var(--wpss-space-2, 8px) var(--wpss-space-3, 12px);
+	}
+	.wpss-proposal-milestone-list__head {
+		flex-wrap: wrap;
+		align-items: baseline;
+	}
+	.wpss-proposal-milestone-list__head > :first-child {
+		flex: 1 1 100%;
+		min-width: 0;
+		word-break: break-word;
+	}
+	.wpss-proposal-milestone-list__head > :last-child {
+		flex: 0 0 auto;
+		font-weight: 600;
+	}
+	.wpss-proposal-milestone-list__total {
+		text-align: left;
+	}
 }
