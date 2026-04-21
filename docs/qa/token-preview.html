@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WP Sell Services — Token Preview (white-label verification)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../assets/css/design-system.css">
+<link rel="stylesheet" href="../../assets/css/unified-dashboard.css">
+<link rel="stylesheet" href="../../assets/css/buyer-request.css">
+<style>
+	/* ------------------------------------------------------------------
+	   WHITE-LABEL OVERRIDE — retint the plugin palette by only changing
+	   these CSS variables. Everything else (buttons, pills, milestone
+	   timeline, proposal repeater, ledger summary, tip / extension /
+	   milestone badges) should follow automatically because the tokens
+	   are consumed with var() fallbacks inside each component.
+	   ------------------------------------------------------------------ */
+	.themed :root,
+	.themed {
+		/* Brand swap: indigo → hot pink */
+		--wpss-primary: #ec4899;
+		--wpss-primary-hover: #db2777;
+		--wpss-primary-dark: #db2777;
+		--wpss-primary-light: #fce7f3;
+
+		/* Success swap: green → orange */
+		--wpss-success: #f97316;
+		--wpss-success-light: #fff7ed;
+		--wpss-success-dark: #9a3412;
+		--wpss-success-border: #fed7aa;
+
+		/* Warning swap: amber → blue */
+		--wpss-warning: #3b82f6;
+		--wpss-warning-light: #dbeafe;
+		--wpss-warning-dark: #1e40af;
+		--wpss-warning-border: #bfdbfe;
+
+		/* Danger stays red but darker */
+		--wpss-danger: #b91c1c;
+		--wpss-danger-light: #fee2e2;
+		--wpss-danger-dark: #7f1d1d;
+
+		/* Badge retints */
+		--wpss-badge-tip-bg: #ede9fe;
+		--wpss-badge-tip-fg: #6d28d9;
+		--wpss-badge-tip-icon-bg: #f5f3ff;
+		--wpss-badge-tip-icon-fg: #7c3aed;
+
+		--wpss-badge-extension-bg: #fef9c3;
+		--wpss-badge-extension-fg: #713f12;
+		--wpss-badge-extension-icon-bg: #fef9c3;
+		--wpss-badge-extension-icon-fg: #854d0e;
+
+		--wpss-badge-milestone-bg: #fae8ff;
+		--wpss-badge-milestone-fg: #86198f;
+		--wpss-badge-milestone-icon-bg: #fae8ff;
+		--wpss-badge-milestone-icon-fg: #a21caf;
+	}
+
+	body {
+		margin: 0;
+		font-family: var(--wpss-font-sans);
+		color: var(--wpss-text);
+		background: var(--wpss-bg-subtle);
+	}
+
+	.wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+	.wrap h1 { font-size: 28px; margin: 0 0 8px; }
+	.wrap .sub { color: var(--wpss-text-muted); margin: 0 0 32px; }
+
+	.pane {
+		background: var(--wpss-bg);
+		border: 1px solid var(--wpss-border);
+		border-radius: 14px;
+		padding: 24px;
+		margin-bottom: 32px;
+	}
+
+	.pane h2 {
+		font-size: 20px;
+		margin: 0 0 4px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.pane .kicker {
+		display: inline-flex;
+		align-items: center;
+		padding: 4px 10px;
+		border-radius: 999px;
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.pane--themed .kicker { background: var(--wpss-primary-light); color: var(--wpss-primary); }
+	.pane--default .kicker { background: #f3f4f6; color: #374151; }
+
+	.pane > p { color: var(--wpss-text-muted); margin: 0 0 20px; font-size: 13px; }
+
+	.snippet { margin-bottom: 28px; }
+	.snippet__label {
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--wpss-text-muted);
+		font-weight: 600;
+		margin-bottom: 10px;
+	}
+
+	.badge-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+	.ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+	.ledger-table th, .ledger-table td {
+		text-align: left;
+		padding: 10px 12px;
+		border-bottom: 1px solid var(--wpss-border-light);
+	}
+	.ledger-table th {
+		font-size: 11px;
+		text-transform: uppercase;
+		color: var(--wpss-text-muted);
+		letter-spacing: 0.5px;
+	}
+
+	.phase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+	@media (max-width: 768px) { .phase-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<h1>Token preview — white-label retint</h1>
+	<p class="sub">
+		Left column: tokens overridden (hot pink primary, orange success, blue warning,
+		purple-ish badge palette). Right column: stock tokens from
+		<code>design-system.css</code>. If any component on the left still looks like
+		the right, that component still has a hardcoded hex.
+	</p>
+
+	<div class="phase-grid">
+
+		<!-- ==================== THEMED COLUMN ==================== -->
+		<div class="themed">
+			<div class="pane pane--themed">
+				<h2>
+					<span class="kicker">Themed</span>
+					Milestone timeline
+				</h2>
+				<p>Shows lock-step state, completed phase, locked phase, and wrap banner.</p>
+
+				<!-- Wrap banner -->
+				<div class="wpss-milestone-wrap" style="margin-bottom: 16px;">
+					<div class="wpss-milestone-wrap__icon">✓</div>
+					<div>
+						<p class="wpss-milestone-wrap__title">Project complete</p>
+						<p class="wpss-milestone-wrap__body">All 3 phases approved. Final wrap-up in progress.</p>
+					</div>
+				</div>
+
+				<!-- Milestone list -->
+				<ul class="wpss-milestone-list">
+					<li class="wpss-milestone-item wpss-ms-state--completed">
+						<div class="wpss-milestone-item__head">
+							<span class="wpss-milestone-item__num">1.</span>
+							<span class="wpss-milestone-item__title">Discovery & wireframes</span>
+							<span class="wpss-milestone-item__amount">$800.00</span>
+						</div>
+						<p class="wpss-milestone-item__meta"><span class="wpss-milestone-item__state">Completed</span> · Approved 2 days ago</p>
+					</li>
+					<li class="wpss-milestone-item wpss-ms-state--in_progress">
+						<div class="wpss-milestone-item__head">
+							<span class="wpss-milestone-item__num">2.</span>
+							<span class="wpss-milestone-item__title">Homepage build</span>
+							<span class="wpss-milestone-item__amount">$1,200.00</span>
+						</div>
+						<p class="wpss-milestone-item__meta"><span class="wpss-milestone-item__state">In progress</span></p>
+					</li>
+					<li class="wpss-milestone-item wpss-ms-state--pending_payment wpss-ms-state--locked">
+						<div class="wpss-milestone-item__head">
+							<span class="wpss-milestone-item__num">3.</span>
+							<span class="wpss-milestone-item__title">Inner pages + QA</span>
+							<span class="wpss-milestone-item__amount">$1,000.00</span>
+						</div>
+						<p class="wpss-milestone-item__meta"><span class="wpss-milestone-item__state">Locked</span> · Pay phase 2 first</p>
+						<div class="wpss-milestone-item__actions">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--locked">
+								<span class="wpss-btn__lock-icon">🔒</span>
+								Locked
+							</button>
+						</div>
+					</li>
+				</ul>
+			</div>
+
+			<div class="pane pane--themed">
+				<h2><span class="kicker">Themed</span> Proposal modal — milestone repeater</h2>
+				<div class="wpss-milestones-builder">
+					<div class="wpss-milestone-rows">
+						<div class="wpss-milestone-row">
+							<div class="wpss-milestone-row__head">
+								<span class="wpss-milestone-row__num">1</span>
+								<input class="wpss-milestone-row__title" value="Discovery & wireframes">
+								<button class="wpss-milestone-row__remove">&times;</button>
+							</div>
+							<div class="wpss-milestone-row__meta">
+								<label>Amount<input value="800"></label>
+								<label>Days<input value="5"></label>
+							</div>
+						</div>
+						<div class="wpss-milestone-row">
+							<div class="wpss-milestone-row__head">
+								<span class="wpss-milestone-row__num">2</span>
+								<input class="wpss-milestone-row__title" value="Homepage build">
+								<button class="wpss-milestone-row__remove">&times;</button>
+							</div>
+							<div class="wpss-milestone-row__meta">
+								<label>Amount<input value="1200"></label>
+								<label>Days<input value="10"></label>
+							</div>
+						</div>
+					</div>
+					<div class="wpss-milestones-summary">
+						<span>Total: <strong>$2,000.00</strong></span>
+						<span>Phases: <strong>2</strong></span>
+					</div>
+				</div>
+				<div style="margin-top: 12px;">
+					<span class="wpss-proposal-contract-badge wpss-proposal-contract-badge--milestone">Milestone</span>
+					<span class="wpss-proposal-contract-badge wpss-proposal-contract-badge--fixed" style="margin-left: 8px;">Fixed</span>
+				</div>
+			</div>
+
+			<div class="pane pane--themed">
+				<h2><span class="kicker">Themed</span> Wallet ledger</h2>
+				<div class="wpss-ledger-summary" style="margin-bottom: 12px;">
+					<div class="wpss-ledger-summary__item">
+						<span class="wpss-ledger-summary__label">Credits</span>
+						<span class="wpss-ledger-summary__value wpss-ledger-summary__value--credit">+$2,540.00</span>
+					</div>
+					<div class="wpss-ledger-summary__item">
+						<span class="wpss-ledger-summary__label">Debits</span>
+						<span class="wpss-ledger-summary__value wpss-ledger-summary__value--debit">-$320.00</span>
+					</div>
+					<div class="wpss-ledger-summary__item">
+						<span class="wpss-ledger-summary__label">Net</span>
+						<span class="wpss-ledger-summary__value">$2,220.00</span>
+					</div>
+				</div>
+				<table class="ledger-table">
+					<thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Order</th></tr></thead>
+					<tbody>
+						<tr><td>Apr 20</td><td><span class="wpss-badge--milestone">Milestone</span></td><td style="color: var(--wpss-success);">+$800.00</td><td>#4821</td></tr>
+						<tr><td>Apr 18</td><td><span class="wpss-badge--tip">Tip</span></td><td style="color: var(--wpss-success);">+$25.00</td><td>#4816</td></tr>
+						<tr><td>Apr 15</td><td><span class="wpss-badge--extension">Extension</span></td><td style="color: var(--wpss-success);">+$150.00</td><td>#4805</td></tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="pane pane--themed">
+				<h2><span class="kicker">Themed</span> Sub-order badges</h2>
+				<div class="badge-row">
+					<span class="wpss-badge--tip">Tip</span>
+					<span class="wpss-badge--extension">Extension</span>
+					<span class="wpss-badge--milestone">Milestone</span>
+					<span class="wpss-badge wpss-badge--success">Success</span>
+					<span class="wpss-badge wpss-badge--warning">Warning</span>
+					<span class="wpss-badge wpss-badge--danger">Danger</span>
+					<span class="wpss-badge wpss-badge--info">Info</span>
+				</div>
+
+				<div class="snippet" style="margin-top: 20px;">
+					<div class="snippet__label">Buttons</div>
+					<div class="badge-row">
+						<button class="wpss-btn wpss-btn--primary">Accept &amp; Pay</button>
+						<button class="wpss-btn wpss-btn--secondary">Decline</button>
+						<button class="wpss-btn wpss-btn--success">Approve phase</button>
+						<button class="wpss-btn wpss-btn--danger">Cancel</button>
+						<button class="wpss-btn wpss-btn--sm wpss-btn--locked">🔒 Locked</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ==================== DEFAULT COLUMN ==================== -->
+		<div>
+			<div class="pane pane--default">
+				<h2><span class="kicker">Default</span> Milestone timeline</h2>
+				<div class="wpss-milestone-wrap" style="margin-bottom: 16px;">
+					<div class="wpss-milestone-wrap__icon">✓</div>
+					<div>
+						<p class="wpss-milestone-wrap__title">Project complete</p>
+						<p class="wpss-milestone-wrap__body">All 3 phases approved. Final wrap-up in progress.</p>
+					</div>
+				</div>
+				<ul class="wpss-milestone-list">
+					<li class="wpss-milestone-item wpss-ms-state--completed">
+						<div class="wpss-milestone-item__head">
+							<span class="wpss-milestone-item__num">1.</span>
+							<span class="wpss-milestone-item__title">Discovery & wireframes</span>
+							<span class="wpss-milestone-item__amount">$800.00</span>
+						</div>
+						<p class="wpss-milestone-item__meta"><span class="wpss-milestone-item__state">Completed</span> · Approved 2 days ago</p>
+					</li>
+					<li class="wpss-milestone-item wpss-ms-state--in_progress">
+						<div class="wpss-milestone-item__head">
+							<span class="wpss-milestone-item__num">2.</span>
+							<span class="wpss-milestone-item__title">Homepage build</span>
+							<span class="wpss-milestone-item__amount">$1,200.00</span>
+						</div>
+						<p class="wpss-milestone-item__meta"><span class="wpss-milestone-item__state">In progress</span></p>
+					</li>
+					<li class="wpss-milestone-item wpss-ms-state--pending_payment wpss-ms-state--locked">
+						<div class="wpss-milestone-item__head">
+							<span class="wpss-milestone-item__num">3.</span>
+							<span class="wpss-milestone-item__title">Inner pages + QA</span>
+							<span class="wpss-milestone-item__amount">$1,000.00</span>
+						</div>
+						<p class="wpss-milestone-item__meta"><span class="wpss-milestone-item__state">Locked</span> · Pay phase 2 first</p>
+						<div class="wpss-milestone-item__actions">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--locked">
+								<span class="wpss-btn__lock-icon">🔒</span>
+								Locked
+							</button>
+						</div>
+					</li>
+				</ul>
+			</div>
+
+			<div class="pane pane--default">
+				<h2><span class="kicker">Default</span> Proposal modal — milestone repeater</h2>
+				<div class="wpss-milestones-builder">
+					<div class="wpss-milestone-rows">
+						<div class="wpss-milestone-row">
+							<div class="wpss-milestone-row__head">
+								<span class="wpss-milestone-row__num">1</span>
+								<input class="wpss-milestone-row__title" value="Discovery & wireframes">
+								<button class="wpss-milestone-row__remove">&times;</button>
+							</div>
+							<div class="wpss-milestone-row__meta">
+								<label>Amount<input value="800"></label>
+								<label>Days<input value="5"></label>
+							</div>
+						</div>
+						<div class="wpss-milestone-row">
+							<div class="wpss-milestone-row__head">
+								<span class="wpss-milestone-row__num">2</span>
+								<input class="wpss-milestone-row__title" value="Homepage build">
+								<button class="wpss-milestone-row__remove">&times;</button>
+							</div>
+							<div class="wpss-milestone-row__meta">
+								<label>Amount<input value="1200"></label>
+								<label>Days<input value="10"></label>
+							</div>
+						</div>
+					</div>
+					<div class="wpss-milestones-summary">
+						<span>Total: <strong>$2,000.00</strong></span>
+						<span>Phases: <strong>2</strong></span>
+					</div>
+				</div>
+				<div style="margin-top: 12px;">
+					<span class="wpss-proposal-contract-badge wpss-proposal-contract-badge--milestone">Milestone</span>
+					<span class="wpss-proposal-contract-badge wpss-proposal-contract-badge--fixed" style="margin-left: 8px;">Fixed</span>
+				</div>
+			</div>
+
+			<div class="pane pane--default">
+				<h2><span class="kicker">Default</span> Wallet ledger</h2>
+				<div class="wpss-ledger-summary" style="margin-bottom: 12px;">
+					<div class="wpss-ledger-summary__item">
+						<span class="wpss-ledger-summary__label">Credits</span>
+						<span class="wpss-ledger-summary__value wpss-ledger-summary__value--credit">+$2,540.00</span>
+					</div>
+					<div class="wpss-ledger-summary__item">
+						<span class="wpss-ledger-summary__label">Debits</span>
+						<span class="wpss-ledger-summary__value wpss-ledger-summary__value--debit">-$320.00</span>
+					</div>
+					<div class="wpss-ledger-summary__item">
+						<span class="wpss-ledger-summary__label">Net</span>
+						<span class="wpss-ledger-summary__value">$2,220.00</span>
+					</div>
+				</div>
+				<table class="ledger-table">
+					<thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Order</th></tr></thead>
+					<tbody>
+						<tr><td>Apr 20</td><td><span class="wpss-badge--milestone">Milestone</span></td><td style="color: var(--wpss-success);">+$800.00</td><td>#4821</td></tr>
+						<tr><td>Apr 18</td><td><span class="wpss-badge--tip">Tip</span></td><td style="color: var(--wpss-success);">+$25.00</td><td>#4816</td></tr>
+						<tr><td>Apr 15</td><td><span class="wpss-badge--extension">Extension</span></td><td style="color: var(--wpss-success);">+$150.00</td><td>#4805</td></tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="pane pane--default">
+				<h2><span class="kicker">Default</span> Sub-order badges</h2>
+				<div class="badge-row">
+					<span class="wpss-badge--tip">Tip</span>
+					<span class="wpss-badge--extension">Extension</span>
+					<span class="wpss-badge--milestone">Milestone</span>
+					<span class="wpss-badge wpss-badge--success">Success</span>
+					<span class="wpss-badge wpss-badge--warning">Warning</span>
+					<span class="wpss-badge wpss-badge--danger">Danger</span>
+					<span class="wpss-badge wpss-badge--info">Info</span>
+				</div>
+
+				<div class="snippet" style="margin-top: 20px;">
+					<div class="snippet__label">Buttons</div>
+					<div class="badge-row">
+						<button class="wpss-btn wpss-btn--primary">Accept &amp; Pay</button>
+						<button class="wpss-btn wpss-btn--secondary">Decline</button>
+						<button class="wpss-btn wpss-btn--success">Approve phase</button>
+						<button class="wpss-btn wpss-btn--danger">Cancel</button>
+						<button class="wpss-btn wpss-btn--sm wpss-btn--locked">🔒 Locked</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</div>
+</body>
+</html>

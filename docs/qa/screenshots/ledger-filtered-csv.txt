@@ -1,0 +1,24 @@
+"# Earnings Ledger Export"
+"# Vendor","Sarah Chen"
+"# Period","All Time"
+"# Type filter",Milestone
+"# Generated","2026-04-21 08:47:41"
+"# Total Credits",792.00
+"# Total Debits",0.00
+"# Net",792.00
+"# Tips Received",0.00
+"# Total Withdrawn",0.00
+
+Date,Type,Description,Reference,Currency,Amount,"Balance After"
+"2026-04-21 04:35:04",Milestone,"Milestone payment: Phase 1 — Concepts & Wireframes (MS-DT2CQWB5)",order#8,USD,45.00,171.00
+"2026-04-21 07:18:23",Milestone,"Milestone payment: Phase 3 — Final Polish (MS-EOGAYIXR)",order#12,USD,54.00,225.00
+"2026-04-21 07:21:15",Milestone,"Milestone payment: Phase 4 — Final Test (MS-LWLDCXJQ)",order#13,USD,22.50,247.50
+"2026-04-21 07:23:12",Milestone,"Milestone payment: Phase 5 — Email Smoke (MS-HKVAPELK)",order#14,USD,27.00,274.50
+"2026-04-21 07:24:22",Milestone,"Milestone payment: Phase 6 — Smoke v2 (MS-DWLWSCOV)",order#15,USD,31.50,306.00
+"2026-04-21 07:24:45",Milestone,"Milestone payment: Phase 7 — Final smoke (MS-VKPZWJZO)",order#16,USD,36.00,342.00
+"2026-04-21 07:25:19",Milestone,"Milestone payment: Phase 8 — Confirm (MS-Z58HNUFD)",order#17,USD,45.00,387.00
+"2026-04-21 07:29:48",Milestone,"Milestone payment: Phase X — Final (MS-KIUEX5UL)",order#18,USD,54.00,441.00
+"2026-04-21 07:55:19",Milestone,"Milestone payment: Phase 1 — Discovery (MS-2ZEYVKPX)",order#21,USD,90.00,553.50
+"2026-04-21 07:55:37",Milestone,"Milestone payment: Phase 2 — Design (MS-P8XSKGOB)",order#22,USD,225.00,778.50
+"2026-04-21 07:55:37",Milestone,"Milestone payment: Phase 3 — Brand Pack (MS-QUUXVKBH)",order#23,USD,135.00,913.50
+"2026-04-21 08:33:35",Milestone,"Milestone payment: PostFix1 (MS-H9RWHNHZ)",order#24,USD,27.00,940.50
