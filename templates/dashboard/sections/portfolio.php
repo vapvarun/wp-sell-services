@@ -117,9 +117,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 						</div>
 					<?php else : ?>
 						<div class="wpss-portfolio__media wpss-portfolio__media--placeholder wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" role="button" tabindex="0" style="cursor:pointer;">
-							<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
-								<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-							</svg>
+							<i data-lucide="image" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						</div>
 					<?php endif; ?>
 

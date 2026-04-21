@@ -105,7 +105,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 	<?php if ( empty( $orders ) ) : ?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
-				<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
+				<i data-lucide="banknote" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
 			<h3><?php esc_html_e( 'No sales yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( 'When someone orders your service, it will appear here.', 'wp-sell-services' ); ?></p>
@@ -177,23 +177,15 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 							</div>
 						<?php elseif ( $is_tip ) : ?>
 							<div class="wpss-order-card__tip-icon" aria-hidden="true">
-								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-								</svg>
+								<i data-lucide="heart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 							</div>
 						<?php elseif ( $is_extension ) : ?>
 							<div class="wpss-order-card__tip-icon wpss-order-card__extension-icon" aria-hidden="true">
-								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<circle cx="12" cy="12" r="10"/>
-									<polyline points="12 6 12 12 16 14"/>
-								</svg>
+								<i data-lucide="clock" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 							</div>
 						<?php elseif ( $is_milestone ) : ?>
 							<div class="wpss-order-card__tip-icon wpss-order-card__milestone-icon" aria-hidden="true">
-								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M4 4v16"/>
-									<path d="M4 4h12l-2 4 2 4H4"/>
-								</svg>
+								<i data-lucide="flag" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 							</div>
 						<?php endif; ?>
 						<div class="wpss-order-card__info">

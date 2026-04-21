@@ -170,9 +170,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						 alt="<?php echo esc_attr( $vendor->display_name ); ?>">
 					<?php if ( $is_verified ) : ?>
 						<span class="wpss-verified-badge" title="<?php esc_attr_e( 'Verified Vendor', 'wp-sell-services' ); ?>">
-							<svg viewBox="0 0 16 16" width="24" height="24">
-								<path fill="currentColor" d="M8 0l2.5 2.5H14v3.5L16 8l-2 2v3.5h-3.5L8 16l-2.5-2.5H2v-3.5L0 8l2-2V2.5h3.5L8 0zm-.5 11.5l5-5-1.5-1.5-3.5 3.5-1.5-1.5-1.5 1.5 3 3z"/>
-							</svg>
+							<i data-lucide="badge-check" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						</span>
 					<?php endif; ?>
 				</div>
@@ -195,7 +193,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							?>
 							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" style="display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:9999px;vertical-align:middle;margin-left:8px;<?php echo esc_attr( $tier_style ); ?>">
 								<?php if ( 'pro' === $tier ) : ?>
-									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:3px;"><path d="M8 0l2.5 2.5H14v3.5L16 8l-2 2v3.5h-3.5L8 16l-2.5-2.5H2v-3.5L0 8l2-2V2.5h3.5L8 0zm-.5 11.5l5-5-1.5-1.5-3.5 3.5-1.5-1.5-1.5 1.5 3 3z"/></svg>
+									<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true" style="vertical-align:-2px;margin-right:3px;"></i>
 								<?php endif; ?>
 								<?php echo esc_html( $tier_label ); ?>
 							</span>
@@ -278,7 +276,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				?>
 				<?php if ( '' !== $intro_video_embed ) : ?>
 					<section class="wpss-profile-section wpss-profile-section--video">
-						<h2><?php esc_html_e( 'Introduction', 'wp-sell-services' ); ?></h2>
+						<h2><?php esc_html_e( 'Video introduction', 'wp-sell-services' ); ?></h2>
 						<?php echo $intro_video_embed; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper returns an HTML fragment with escaped attributes. ?>
 					</section>
 				<?php endif; ?>

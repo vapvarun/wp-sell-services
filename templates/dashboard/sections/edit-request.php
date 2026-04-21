@@ -208,9 +208,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 		<!-- Submit Section -->
 		<div class="wpss-profile-form__actions">
 			<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg">
-				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-				</svg>
+				<i data-lucide="save" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Update Request', 'wp-sell-services' ); ?>
 			</button>
 		</div>
@@ -260,7 +258,7 @@ function wpssShowNotice(msg, type) {
 					$form.html(
 						'<div class="wpss-empty-state wpss-empty-state--compact">' +
 							'<div class="wpss-empty-state__icon" style="color: var(--wpss-success);">' +
-								'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' +
+								'<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>' +
 							'</div>' +
 							'<h3><?php echo esc_js( __( 'Request Updated!', 'wp-sell-services' ) ); ?></h3>' +
 							'<a href="?section=requests" class="wpss-btn wpss-btn--primary">' +

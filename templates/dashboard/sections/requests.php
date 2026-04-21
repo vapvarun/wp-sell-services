@@ -59,7 +59,7 @@ $active_count = count(
 	<?php if ( ! $requests->have_posts() ) : ?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
-				<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+				<i data-lucide="megaphone" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
 			<h3><?php esc_html_e( 'No requests yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( "Can't find the right service? Post a request and let sellers come to you.", 'wp-sell-services' ); ?></p>

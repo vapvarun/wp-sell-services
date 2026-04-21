@@ -204,7 +204,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 	<?php if ( empty( $conversations ) ) : ?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
-				<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>
+				<i data-lucide="messages-square" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
 			<h3><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( 'Your conversations with buyers and sellers will appear here.', 'wp-sell-services' ); ?></p>
@@ -311,7 +311,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 							<?php echo get_avatar( $avatar_user_id, 48 ); ?>
 						<?php else : ?>
 							<div class="wpss-conversation-card__placeholder">
-								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
+								<i data-lucide="layout-grid" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 							</div>
 						<?php endif; ?>
 						<?php if ( $is_unread ) : ?>
