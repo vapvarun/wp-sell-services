@@ -4,10 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**WP Sell Services** is a Fiverr-style service marketplace platform for WordPress.
+**WP Sell Services** is a Fiverr-style service marketplace platform for WordPress with optional Upwork-style milestone contracts on buyer-request projects.
 
-- **Free Version**: Full standalone marketplace with built-in checkout and offline payments
-- **Pro Version**: WooCommerce, EDD, FluentCart, SureCart integrations, Stripe/PayPal payments, analytics
+- **Free Version**: Full standalone marketplace with built-in checkout, offline payments, milestone contracts, paid extensions, tipping, and vendor intro videos.
+- **Pro Version**: WooCommerce, EDD, FluentCart, SureCart integrations, Stripe/PayPal/Razorpay payments, advanced analytics, wallet integrations, earnings ledger + CSV export.
+
+## Recent Changes
+
+| Date | Version | Summary |
+|---|---|---|
+| 2026-04-21 | 1.1.0 | Upwork-style milestone contracts (lock-step phase payments, auto-complete parent on final approval, cascade-cancel pending phases), paid extensions (catalog-order add-ons with deadline push), vendor intro video on profile, NET earnings ledger with period selector and CSV export, money-flow integrity fixes (tip idempotency, deferred-hook transaction, rate-limit scoping, mark_as_paid sub-order skip, Pro double-credit guard). New sub-order pattern documented in `docs/architecture/SUB_ORDER_PATTERN.md`. 7 new email templates (4 milestone + 3 extension). |
+| 2026-04-02 | 1.0.0 | Initial release — marketplace core, 11-status order lifecycle, standalone checkout + offline gateway, Stripe/PayPal gateways, 26 email notification types, 21 REST controllers, 6 Gutenberg blocks, 19 shortcodes, seller levels, disputes, reviews, commissions, withdrawals. |
+
+## Key Features (1.1.0)
+
+Marketplace fundamentals (from 1.0.0): service wizard, tiered packages, buyer requests, proposals, order workflow with 11 statuses, requirements collection, deliveries + revisions, reviews, disputes, commissions, withdrawals, seller levels, vacation mode, 26 email notifications.
+
+Added in 1.1.0:
+
+- **Milestone contracts** on buyer-request orders — vendor picks contract type at proposal time; milestone plans are pre-created on acceptance; lock-step payment (phase N only payable once phase N-1 is approved); auto-complete parent when every phase is terminal; cascade-cancel unpaid phases on parent cancellation; paid-but-open phases route through dispute on parent cancel.
+- **Paid extensions** on catalog orders only — vendor quotes extra work + days; buyer accepts or declines; commission split at payment; parent deadline pushes out by the quoted days.
+- **Mutual exclusion** — a single order surfaces milestones OR extensions, never both (guarded server-side: `MilestoneService::propose()` refuses non-request orders; `ExtensionOrderService::create_extension_request()` refuses request orders).
+- **Vendor intro video** — short MP4/YouTube on the public profile, with matching Introduction section on the vendor's profile edit screen.
+- **Earnings ledger + CSV export** (Pro) — wallet page surfaces a dated ledger with period selector (30 days / this month / last month / this year / all time) and a CSV export carrying the same rows + a summary block.
+- **Sub-order pattern** generalised across tips / extensions / milestones (shared `platform` marker, shared `wpss_order_paid` credit handler, shared abandon-cron contract with carve-out for contract milestones). See `docs/architecture/SUB_ORDER_PATTERN.md`.
+- **Money-flow integrity fixes** — tip idempotency key migration to sub-order ID, deferred-hook transaction in `BuyerRequestService::convert_to_order`, rate-limit allow-list so milestone/extension/tip emails are never silently dropped, `mark_as_paid` skips the pending_requirements transition on sub-orders, Pro double-credit guard.
 
 ## Build & Development Commands
 

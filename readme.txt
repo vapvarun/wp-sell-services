@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -52,11 +52,20 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 **Buyer Features**
 
 * Post buyer requests for vendors to bid on
-* Browse and compare vendor proposals
+* Browse and compare vendor proposals (Fixed vs Milestone contract types)
+* Accept multi-phase milestone contracts with lock-step payments
 * Buyer dashboard for order tracking
 * Add services to favorites/wishlist
 * Optional tipping for exceptional work
 * Complete purchase history
+
+**Milestone Contracts & Paid Extensions (1.1.0)**
+
+* Upwork-style milestone contracts on buyer-request orders with lock-step phase payments
+* Paid extensions on catalog orders for mid-order add-ons
+* Mutual exclusion: a single order surfaces milestones OR extensions, never both
+* Ad-hoc milestone additions when scope grows mid-contract
+* Auto-complete parent order when every phase is approved
 
 **Reviews and Ratings**
 
@@ -250,6 +259,61 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
+= 1.1.0 - 2026-04-21 =
+
+**Milestone Contracts (Upwork-style)**
+
+* Vendors choose Fixed or Milestone contract type when submitting a proposal
+* Milestone proposals carry a phase repeater: title, description, amount, days
+* Buyers compare proposals with a phase-count badge and see the full breakdown before accepting
+* Acceptance pre-creates every phase on the order timeline — no upfront parent checkout
+* Lock-step payment enforced on the server: phase N only unlocks after every earlier phase is approved or cancelled
+* Ad-hoc milestones can still be proposed during a contract for legitimate scope changes
+* Parent order auto-completes when every phase is terminal — standard completion email and review prompt fire
+* Cancellation rules: paid phases stand, unpaid phases auto-cancel, paid-but-open phases route through dispute
+
+**Paid Extensions (catalog orders)**
+
+* Vendors on in-progress catalog orders can quote extra work with a price and extra days
+* Buyers accept and pay, or decline with one click
+* Commission is split at payment time; vendor wallet credited immediately
+* Parent order deadline extends by the quoted days on acceptance
+* Extensions are mutually exclusive with milestone contracts — a single order only ever shows one flow
+
+**Vendor Intro Video**
+
+* Vendors can add an Introduction section with a short intro video to their public profile
+* Supported sources: MP4 upload or YouTube embed
+* Renders above the vendor's tagline and bio on the profile page
+
+**Earnings Ledger & CSV Export (Pro)**
+
+* Wallet dashboard surfaces a dated ledger of every transaction — Earning, Tip, Extension, Milestone, Withdrawal, Credit, Debit, Dispute Refund
+* Period selector: Last 30 Days, This Month, Last Month, This Year, All Time
+* CSV export streams the same rows plus a summary block (Total Credits, Total Debits, Net, Tips, Total Withdrawn)
+* Row columns: Date, Type, Description, Reference (linkable), Currency, Amount (signed), Balance After
+* Compatible with QuickBooks, Xero, Wave, and spreadsheet tools
+
+**Money-Flow Integrity**
+
+* Tip idempotency key standardised to the tip sub-order ID so repeated tips on the same parent credit correctly
+* Milestone-contract parent auto-completion now routes through `OrderService::update_status()` so vendor stats, review prompt, and the full completion hook chain fire
+* Buyer-request conversion wraps the bulk milestone insert in a transaction and defers `wpss_milestone_proposed` hooks until after commit — partial failures no longer leak emails
+* Email rate-limit scoped to spam-prone types only; milestone / extension / tip / proposal events are never silently dropped
+* `mark_as_paid` skips the `pending_requirements` transition on tip / extension / milestone sub-orders so buyers don't receive "Complete your requirements" emails on a tip they just sent
+* Pro wallet provider no longer double-credits on `wpss_order_paid` retries
+
+**Architecture**
+
+* Sub-order pattern generalised across tips, extensions, and milestones (shared `platform` marker, shared `wpss_order_paid` credit handler, shared 48-hour abandon-cron contract with carve-out for contract milestones) — full write-up in `docs/architecture/SUB_ORDER_PATTERN.md`
+* 7 new email templates: 4 milestone (proposed / paid / submitted / approved) + 3 extension (proposed / approved / declined), each with plain-text fallback
+* New REST endpoints for milestones, extensions, and proposal contract type — full mobile-app parity
+
+**Documentation**
+
+* New: Milestone Contracts, Paid Extensions, Proposal Contracts (Fixed vs Milestone), Earnings Ledger & CSV Export
+* New developer doc: Sub-Order Pattern (explains the shared architecture for contributors)
+
 = 1.0.0 - 2026-04-02 =
 
 **Marketplace Core**
@@ -312,6 +376,9 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds Upwork-style milestone contracts on buyer-request orders, paid extensions on catalog orders, vendor intro video, and (Pro) an Earnings Ledger with CSV export. Includes money-flow integrity fixes — safe to upgrade.
 
 = 1.0.0 =
 Initial release of WP Sell Services. Transform your WordPress site into a complete service marketplace with vendor management, order workflow, and commission system.
