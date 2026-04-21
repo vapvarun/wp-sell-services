@@ -663,6 +663,14 @@
 			$modal.addClass('wpss-modal-open');
 			$('body').addClass('wpss-modal-active');
 
+			// Packet H: rehydrate any <i data-lucide="…"> inside the modal. The
+			// modal body may have been rendered hidden (display:none) at load
+			// time; some browsers skip icon rendering for offscreen nodes, and
+			// AJAX-injected modal bodies need this unconditionally.
+			try {
+				document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) );
+			} catch ( e ) {}
+
 			// Focus first focusable element.
 			var $focusable = $modal.find('button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])').filter(':visible');
 			if ($focusable.length) {
@@ -839,6 +847,8 @@
 			e.preventDefault();
 			$modal.prop('hidden', false).addClass('wpss-modal-open');
 			$('body').addClass('wpss-modal-active');
+			// Packet H: rehydrate Lucide icons inside the just-revealed modal.
+			try { document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) ); } catch ( e2 ) {}
 			$modal.find('textarea').focus();
 		});
 

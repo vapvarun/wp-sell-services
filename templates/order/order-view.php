@@ -104,10 +104,7 @@ do_action( 'wpss_before_order_view', $order );
 	<!-- Header with Back Button -->
 	<div class="wpss-order-view__header">
 		<a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ); ?>" class="wpss-order-view__back">
-			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<line x1="19" y1="12" x2="5" y2="12"></line>
-				<polyline points="12 19 5 12 12 5"></polyline>
-			</svg>
+			<i data-lucide="arrow-left" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Back to Orders', 'wp-sell-services' ); ?>
 		</a>
 	</div>
@@ -342,13 +339,7 @@ do_action( 'wpss_before_order_view', $order );
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-					<polyline points="14 2 14 8 20 8"></polyline>
-					<line x1="16" y1="13" x2="8" y2="13"></line>
-					<line x1="16" y1="17" x2="8" y2="17"></line>
-					<polyline points="10 9 9 9 8 9"></polyline>
-				</svg>
+				<i data-lucide="file-text" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
@@ -420,11 +411,7 @@ do_action( 'wpss_before_order_view', $order );
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-					<circle cx="8.5" cy="8.5" r="1.5"></circle>
-					<polyline points="21 15 16 10 5 21"></polyline>
-				</svg>
+				<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Service Details', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
@@ -474,9 +461,7 @@ do_action( 'wpss_before_order_view', $order );
 							?>
 							<?php if ( $vendor_count > 0 ) : ?>
 								<div class="wpss-party-info__rating">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="wpss-star-icon">
-										<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-									</svg>
+									<i data-lucide="star" class="wpss-icon wpss-star-icon" aria-hidden="true"></i>
 									<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
 									<span class="wpss-party-info__rating-count">(<?php echo esc_html( $vendor_count ); ?> <?php esc_html_e( 'reviews', 'wp-sell-services' ); ?>)</span>
 								</div>
@@ -544,30 +529,19 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section wpss-order-section--requirements">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M9 11l3 3L22 4"/>
-						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-					</svg>
+					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
 				<?php if ( $show_late_requirements_form ) : ?>
 					<div class="wpss-alert wpss-alert--warning" style="margin-bottom: 1.5rem;">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-							<line x1="12" y1="9" x2="12" y2="13"/>
-							<line x1="12" y1="17" x2="12.01" y2="17"/>
-						</svg>
+						<i data-lucide="triangle-alert" class="wpss-icon" aria-hidden="true"></i>
 						<p><?php esc_html_e( 'Work has already started, but you can still submit requirements to help the seller complete your order.', 'wp-sell-services' ); ?></p>
 					</div>
 				<?php else : ?>
 					<div class="wpss-alert wpss-alert--info" style="margin-bottom: 1.5rem;">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="10"/>
-							<line x1="12" y1="16" x2="12" y2="12"/>
-							<line x1="12" y1="8" x2="12.01" y2="8"/>
-						</svg>
+						<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 						<p><?php esc_html_e( 'Please provide the following information so the seller can start working on your order.', 'wp-sell-services' ); ?></p>
 					</div>
 				<?php endif; ?>
@@ -604,11 +578,7 @@ do_action( 'wpss_before_order_view', $order );
 											class="wpss-file-input wpss-requirements-form__upload-input"
 											<?php echo $is_required ? 'required' : ''; ?>>
 									<label for="<?php echo esc_attr( $field_id ); ?>" class="wpss-file-upload__label wpss-requirements-form__upload-label">
-										<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-											<polyline points="17 8 12 3 7 8"/>
-											<line x1="12" y1="3" x2="12" y2="15"/>
-										</svg>
+										<i data-lucide="upload" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 										<span class="wpss-file-upload__text"><?php esc_html_e( 'Choose a file or drag it here', 'wp-sell-services' ); ?></span>
 									</label>
 									<div class="wpss-requirements-form__file-list"></div>
@@ -632,17 +602,11 @@ do_action( 'wpss_before_order_view', $order );
 					<div class="wpss-form-actions">
 						<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-requirements-form__submit-btn">
 							<span class="wpss-requirements-form__submit-text">
-								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<polyline points="9 11 12 14 22 4"/>
-									<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-								</svg>
+								<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
 							</span>
 							<span class="wpss-requirements-form__submit-loading" style="display: none;">
-								<svg width="20" height="20" viewBox="0 0 24 24" class="wpss-spinner">
-									<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
-									<path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
-								</svg>
+								<i data-lucide="loader-2" class="wpss-icon wpss-spinner" aria-hidden="true"></i>
 								<?php esc_html_e( 'Submitting...', 'wp-sell-services' ); ?>
 							</span>
 						</button>
@@ -657,10 +621,7 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section wpss-order-section--requirements-view">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M9 11l3 3L22 4"/>
-						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-					</svg>
+					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
 				</h2>
 				<?php if ( $submitted_at ) : ?>
@@ -711,11 +672,7 @@ do_action( 'wpss_before_order_view', $order );
 									</div>
 								<?php endif; ?>
 								<a href="<?php echo esc_url( $field_attachment['url'] ); ?>" class="wpss-file-link" target="_blank" download>
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-										<polyline points="7 10 12 15 17 10"/>
-										<line x1="12" y1="15" x2="12" y2="3"/>
-									</svg>
+									<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
 									<?php echo esc_html( $field_attachment['name'] ); ?>
 								</a>
 							<?php elseif ( $response_value ) : ?>
@@ -726,16 +683,11 @@ do_action( 'wpss_before_order_view', $order );
 									<button type="button" class="wpss-requirement-view__expand-btn" aria-expanded="false">
 										<span class="wpss-expand-text"><?php esc_html_e( 'Show more', 'wp-sell-services' ); ?></span>
 										<span class="wpss-collapse-text" style="display:none;"><?php esc_html_e( 'Show less', 'wp-sell-services' ); ?></span>
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="wpss-expand-icon">
-											<polyline points="6 9 12 15 18 9"></polyline>
-										</svg>
+										<i data-lucide="chevron-down" class="wpss-icon wpss-expand-icon" aria-hidden="true"></i>
 									</button>
 								<?php endif; ?>
 								<button type="button" class="wpss-requirement-view__copy-btn" data-copy-text="<?php echo esc_attr( $response_value ); ?>" title="<?php esc_attr_e( 'Copy to clipboard', 'wp-sell-services' ); ?>">
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-									</svg>
+									<i data-lucide="copy" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								</button>
 							<?php else : ?>
 								<span class="wpss-text-muted"><?php esc_html_e( 'No response provided', 'wp-sell-services' ); ?></span>
@@ -752,10 +704,7 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section wpss-order-section--requirements-view">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M9 11l3 3L22 4"/>
-						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-					</svg>
+					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
 				</h2>
 			</div>
@@ -795,21 +744,14 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section wpss-order-section--requirements-view">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M9 11l3 3L22 4"/>
-						<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-					</svg>
+					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
 				<div class="wpss-notice wpss-notice--info" style="padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
 					<p style="margin: 0; color: #1e3a5f;">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
-							<circle cx="12" cy="12" r="10"/>
-							<line x1="12" y1="16" x2="12" y2="12"/>
-							<line x1="12" y1="8" x2="12.01" y2="8"/>
-						</svg>
+						<i data-lucide="info" class="wpss-icon" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;"></i>
 						<?php esc_html_e( 'This service does not require any specific information from the buyer.', 'wp-sell-services' ); ?>
 					</p>
 				</div>
@@ -837,11 +779,7 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section">
 			<div class="wpss-order-section__body">
 				<div class="wpss-alert wpss-alert--warning" style="margin: 0;">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-						<line x1="12" y1="9" x2="12" y2="13"/>
-						<line x1="12" y1="17" x2="12.01" y2="17"/>
-					</svg>
+					<i data-lucide="triangle-alert" class="wpss-icon" aria-hidden="true"></i>
 					<div>
 						<p style="margin: 0 0 8px 0; font-weight: 600;">
 							<?php
@@ -879,10 +817,7 @@ do_action( 'wpss_before_order_view', $order );
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="12" cy="12" r="10"></circle>
-					<polyline points="12 6 12 12 16 14"></polyline>
-				</svg>
+				<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Order Timeline', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
@@ -1041,11 +976,7 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-						<polyline points="17 8 12 3 7 8"/>
-						<line x1="12" y1="3" x2="12" y2="15"/>
-					</svg>
+					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
 				</h2>
 			</div>
@@ -1088,11 +1019,7 @@ do_action( 'wpss_before_order_view', $order );
 									}
 									?>
 									<a href="<?php echo esc_url( $file_url ); ?>" class="wpss-file-link" target="_blank" download>
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-											<polyline points="7 10 12 15 17 10"/>
-											<line x1="12" y1="15" x2="12" y2="3"/>
-										</svg>
+										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
 										<?php echo esc_html( $file_name ); ?>
 									</a>
 								<?php endforeach; ?>
@@ -1121,9 +1048,7 @@ do_action( 'wpss_before_order_view', $order );
 	<section class="wpss-order-section wpss-order-section--conversation">
 		<div class="wpss-order-section__header">
 			<h2 class="wpss-order-section__title">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-				</svg>
+				<i data-lucide="message-square" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Conversation', 'wp-sell-services' ); ?>
 			</h2>
 		</div>
@@ -1157,9 +1082,7 @@ do_action( 'wpss_before_order_view', $order );
 		<?php if ( ! $review_exists ) : ?>
 			<section class="wpss-order-section wpss-order-section--review">
 				<div class="wpss-review-cta">
-					<svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" class="wpss-review-cta__icon">
-						<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-					</svg>
+					<i data-lucide="star" class="wpss-icon wpss-icon--lg wpss-review-cta__icon" aria-hidden="true"></i>
 					<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-review-cta__text"><?php esc_html_e( 'How was your experience with this order? Your feedback helps other buyers.', 'wp-sell-services' ); ?></p>
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-write-review-btn"
@@ -1206,10 +1129,7 @@ do_action( 'wpss_before_order_view', $order );
 			<section class="wpss-order-section wpss-order-section--milestone-wrap">
 				<div class="wpss-milestone-wrap">
 					<div class="wpss-milestone-wrap__icon" aria-hidden="true">
-						<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-							<polyline points="22 4 12 14.01 9 11.01"/>
-						</svg>
+						<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div>
 						<h3 class="wpss-milestone-wrap__title"><?php esc_html_e( 'Project complete', 'wp-sell-services' ); ?></h3>
@@ -1230,10 +1150,7 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section wpss-order-section--milestones">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-						<path d="M4 4v16"/>
-						<path d="M4 4h13l-3 5 3 5H4"/>
-					</svg>
+					<i data-lucide="flag" class="wpss-icon" aria-hidden="true"></i>
 					<?php
 					printf(
 						/* translators: %d: milestone count */
@@ -1244,7 +1161,7 @@ do_action( 'wpss_before_order_view', $order );
 				</h2>
 				<?php if ( $can_propose_milestone ) : ?>
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-open-milestone-modal" data-order="<?php echo esc_attr( (int) $order_id ); ?>">
-						<?php esc_html_e( '+ Propose Milestone', 'wp-sell-services' ); ?>
+						<?php esc_html_e( '+ Propose a phase', 'wp-sell-services' ); ?>
 					</button>
 				<?php endif; ?>
 			</div>
@@ -1302,7 +1219,7 @@ do_action( 'wpss_before_order_view', $order );
 							<li class="wpss-milestone-item <?php echo esc_attr( $ms_state_class ); ?>">
 								<div class="wpss-milestone-item__head">
 									<span class="wpss-milestone-item__num"><?php echo esc_html( (string) ( $index + 1 ) ); ?>.</span>
-									<span class="wpss-milestone-item__title"><?php echo esc_html( '' !== $m['title'] ? $m['title'] : __( 'Untitled milestone', 'wp-sell-services' ) ); ?></span>
+									<span class="wpss-milestone-item__title"><?php echo esc_html( '' !== $m['title'] ? $m['title'] : __( 'Untitled phase', 'wp-sell-services' ) ); ?></span>
 									<span class="wpss-milestone-item__amount">
 										<?php echo esc_html( wpss_format_price( $ms_show_amount, $milestone_currency ) ); ?>
 										<?php if ( $is_vendor && in_array( $ms_status, array( 'in_progress', 'pending_approval', 'completed' ), true ) && null !== $m['vendor_earnings'] && abs( (float) $m['amount'] - (float) $m['vendor_earnings'] ) > 0.005 ) : ?>
@@ -1343,10 +1260,7 @@ do_action( 'wpss_before_order_view', $order );
 											?>
 											<span class="wpss-btn wpss-btn--locked wpss-btn--sm" aria-disabled="true" title="<?php esc_attr_e( 'This phase unlocks once the earlier phase is approved or cancelled.', 'wp-sell-services' ); ?>">
 												<span class="wpss-btn__lock-icon" aria-hidden="true">
-													<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-														<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-														<path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-													</svg>
+													<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 												</span>
 												<?php esc_html_e( 'Locked — finish the earlier phase first', 'wp-sell-services' ); ?>
 											</span>
@@ -1372,7 +1286,7 @@ do_action( 'wpss_before_order_view', $order );
 									<?php endif; ?>
 									<?php if ( $is_vendor && in_array( $ms_status, array( 'in_progress', 'pending_approval' ), true ) ) : ?>
 										<a href="<?php echo esc_url( $ms_sub_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
-											<?php echo esc_html( 'pending_approval' === $ms_status ? __( 'View · Resubmit', 'wp-sell-services' ) : __( 'Submit delivery', 'wp-sell-services' ) ); ?>
+											<?php echo esc_html( 'pending_approval' === $ms_status ? __( 'View / resubmit', 'wp-sell-services' ) : __( 'Submit delivery', 'wp-sell-services' ) ); ?>
 										</a>
 									<?php endif; ?>
 									<?php if ( $is_buyer && 'pending_approval' === $ms_status ) : ?>
@@ -1381,7 +1295,7 @@ do_action( 'wpss_before_order_view', $order );
 										</a>
 									<?php endif; ?>
 									<a href="<?php echo esc_url( $ms_sub_url ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
-										<?php esc_html_e( 'View milestone', 'wp-sell-services' ); ?>
+										<?php esc_html_e( 'View phase', 'wp-sell-services' ); ?>
 									</a>
 								</div>
 							</li>
@@ -1398,12 +1312,9 @@ do_action( 'wpss_before_order_view', $order );
 			<div class="wpss-modal__backdrop"></div>
 			<div class="wpss-modal__dialog">
 				<div class="wpss-modal__header">
-					<h3 id="wpss-ms-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Propose a Milestone', 'wp-sell-services' ); ?></h3>
+					<h3 id="wpss-ms-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Propose a phase', 'wp-sell-services' ); ?></h3>
 					<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<line x1="18" y1="6" x2="6" y2="18"></line>
-							<line x1="6" y1="6" x2="18" y2="18"></line>
-						</svg>
+						<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				</div>
 				<div class="wpss-modal__body">
@@ -1435,7 +1346,7 @@ do_action( 'wpss_before_order_view', $order );
 						<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 						<div class="wpss-modal__footer">
 							<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
-							<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send to Buyer', 'wp-sell-services' ); ?></button>
+							<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send to buyer', 'wp-sell-services' ); ?></button>
 						</div>
 					</form>
 				</div>
@@ -1453,7 +1364,7 @@ do_action( 'wpss_before_order_view', $order );
 			// .wpss-modal-open class, not the [hidden] attribute — toggling
 			// .hidden alone leaves 'display: none' winning from the default
 			// rule, which is why the Propose button appeared to do nothing.
-			document.querySelectorAll('.wpss-open-milestone-modal').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = false; modal.classList.add('wpss-modal-open'); }); });
+			document.querySelectorAll('.wpss-open-milestone-modal').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = false; modal.classList.add('wpss-modal-open'); try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(_e){} }); });
 			modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (b) { b.addEventListener('click', function () { modal.hidden = true; modal.classList.remove('wpss-modal-open'); }); });
 
 			form.addEventListener('submit', function (e) {
@@ -1497,7 +1408,7 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( "Decline this milestone? The seller can propose a revised one.", 'wp-sell-services' ) ); ?>')) return;
+					if (!confirm('<?php echo esc_js( __( "Decline this phase? Your seller can propose a revised one.", 'wp-sell-services' ) ); ?>')) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_decline_milestone');
@@ -1522,7 +1433,7 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-delete-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( "Cancel this milestone proposal?", 'wp-sell-services' ) ); ?>')) return;
+					if (!confirm('<?php echo esc_js( __( "Cancel this phase proposal?", 'wp-sell-services' ) ); ?>')) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_delete_milestone');
@@ -1568,10 +1479,7 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section">
 			<div class="wpss-extension-pending-card">
 				<h3 class="wpss-extension-pending-card__title">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-						<circle cx="12" cy="12" r="10"/>
-						<polyline points="12 6 12 12 16 14"/>
-					</svg>
+					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Quote for extra work', 'wp-sell-services' ); ?>
 				</h3>
 				<p class="wpss-extension-pending-card__body">
@@ -1623,11 +1531,8 @@ do_action( 'wpss_before_order_view', $order );
 		<section class="wpss-order-section">
 			<div class="wpss-extension-pending-card">
 				<h3 class="wpss-extension-pending-card__title">
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-						<circle cx="12" cy="12" r="10"/>
-						<polyline points="12 6 12 12 16 14"/>
-					</svg>
-					<?php esc_html_e( 'Extension awaiting buyer', 'wp-sell-services' ); ?>
+					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Extra work awaiting buyer payment', 'wp-sell-services' ); ?>
 				</h3>
 				<p class="wpss-extension-pending-card__body">
 					<?php
@@ -1647,15 +1552,12 @@ do_action( 'wpss_before_order_view', $order );
 	<?php if ( $can_request_extension ) : ?>
 		<section class="wpss-order-section wpss-order-section--extension-cta">
 			<div class="wpss-tip-cta">
-				<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="wpss-tip-cta__icon" aria-hidden="true">
-					<circle cx="12" cy="12" r="10"/>
-					<polyline points="12 6 12 12 16 14"/>
-				</svg>
-				<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Buyer asked for extra work?', 'wp-sell-services' ); ?></h3>
+				<i data-lucide="clock" class="wpss-icon wpss-icon--lg wpss-tip-cta__icon" aria-hidden="true"></i>
+				<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Need to quote extra work?', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-tip-cta__text"><?php esc_html_e( 'Fixed-price order, buyer already paid the base. For small add-ons on top, quote the extra amount and time here. Once they pay, keep going on the expanded scope.', 'wp-sell-services' ); ?></p>
 				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-open-extension-modal"
 					data-order="<?php echo esc_attr( (int) $order_id ); ?>">
-					<?php esc_html_e( 'Send Quote to Buyer', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Send quote to buyer', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 		</section>
@@ -1689,17 +1591,10 @@ do_action( 'wpss_before_order_view', $order );
 			<?php if ( $already_tipped && $tip_order_row ) : ?>
 				<?php $is_paid = 'completed' === $tip_order_row->status; ?>
 				<div class="wpss-tip-receipt">
-					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-						<?php if ( $is_paid ) : ?>
-							<polyline points="20 6 9 17 4 12"></polyline>
-						<?php else : ?>
-							<circle cx="12" cy="12" r="10"></circle>
-							<polyline points="12 6 12 12 15 15"></polyline>
-						<?php endif; ?>
-					</svg>
+					<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					<div>
 						<h3 class="wpss-tip-receipt__title">
-							<?php echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : __( 'Tip pending payment', 'wp-sell-services' ) ); ?>
+							<?php echo esc_html( $is_paid ? __( 'Tip sent', 'wp-sell-services' ) : __( "Tip not sent yet — payment didn't complete", 'wp-sell-services' ) ); ?>
 						</h3>
 						<p class="wpss-tip-receipt__amount">
 							<?php
@@ -1714,14 +1609,12 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 			<?php else : ?>
 				<div class="wpss-tip-cta">
-					<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="wpss-tip-cta__icon" aria-hidden="true">
-						<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-					</svg>
+					<i data-lucide="heart" class="wpss-icon wpss-icon--lg wpss-tip-cta__icon" aria-hidden="true"></i>
 					<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Say thanks with a tip', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-tip-cta__text"><?php esc_html_e( 'Loved the work? A tip goes straight to the vendor on top of the order total.', 'wp-sell-services' ); ?></p>
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-open-tip-modal"
 							data-order="<?php echo esc_attr( (string) $order_id ); ?>">
-						<?php esc_html_e( 'Send a Tip', 'wp-sell-services' ); ?>
+						<?php esc_html_e( 'Send a tip', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 			<?php endif; ?>
@@ -1735,12 +1628,9 @@ do_action( 'wpss_before_order_view', $order );
 	<div class="wpss-modal__backdrop"></div>
 	<div class="wpss-modal__dialog">
 		<div class="wpss-modal__header">
-			<h3 id="wpss-tip-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Send a Tip', 'wp-sell-services' ); ?></h3>
+			<h3 id="wpss-tip-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Send a tip', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
+				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
 		<form class="wpss-tip-form" id="wpss-tip-form">
@@ -1750,7 +1640,7 @@ do_action( 'wpss_before_order_view', $order );
 					echo esc_html(
 						sprintf(
 							/* translators: %s: vendor display name */
-							__( 'Send a tip to %s — it goes straight to their earnings balance.', 'wp-sell-services' ),
+							__( 'Send a tip to %s — it is credited to their wallet after the platform fee.', 'wp-sell-services' ),
 							$other_party ? $other_party->display_name : __( 'the vendor', 'wp-sell-services' )
 						)
 					);
@@ -1826,10 +1716,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		<div class="wpss-modal__header">
 			<h3 id="wpss-deliver-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
+				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
 		<form class="wpss-deliver-form" id="wpss-deliver-form">
@@ -1839,11 +1726,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 			<div class="wpss-modal__body">
 				<div class="wpss-alert wpss-alert--info">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10"></circle>
-						<path d="M12 16v-4"></path>
-						<path d="M12 8h.01"></path>
-					</svg>
+					<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 					<p><?php esc_html_e( 'Describe what you are delivering. The buyer will review and can accept or request revisions.', 'wp-sell-services' ); ?></p>
 				</div>
 
@@ -1876,11 +1759,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 							accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.rar"
 						>
 						<label for="deliver-files" class="wpss-file-label">
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-								<polyline points="17 8 12 3 7 8"/>
-								<line x1="12" y1="3" x2="12" y2="15"/>
-							</svg>
+							<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Choose files or drag and drop', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-file-list" id="deliver-file-list"></div>
@@ -1894,9 +1773,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
 				</button>
 				<button type="submit" class="wpss-btn wpss-btn--success">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<polyline points="20 6 9 17 4 12"/>
-					</svg>
+					<i data-lucide="check" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?>
 				</button>
 			</div>
@@ -1913,10 +1790,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		<div class="wpss-modal__header">
 			<h3 id="wpss-review-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
+				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
 		<form class="wpss-review-form" id="wpss-review-form">
@@ -1930,9 +1804,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 						<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
 							<input type="radio" name="rating" id="star-<?php echo esc_attr( $i ); ?>" value="<?php echo esc_attr( $i ); ?>" required>
 							<label for="star-<?php echo esc_attr( $i ); ?>" title="<?php echo esc_attr( $i ); ?> <?php esc_attr_e( 'stars', 'wp-sell-services' ); ?>">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-									<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-								</svg>
+								<i data-lucide="star" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 							</label>
 						<?php endfor; ?>
 					</div>
@@ -1966,10 +1838,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		<div class="wpss-modal__header">
 			<h3 id="wpss-revision-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Request Revision', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
+				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
 		<form class="wpss-revision-form" id="wpss-revision-form">
@@ -1978,11 +1847,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 			<div class="wpss-modal__body">
 				<div class="wpss-alert wpss-alert--info">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10"/>
-						<line x1="12" y1="16" x2="12" y2="12"/>
-						<line x1="12" y1="8" x2="12.01" y2="8"/>
-					</svg>
+					<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 					<p><?php esc_html_e( 'Please describe the changes you need. The seller will review your request and update the delivery.', 'wp-sell-services' ); ?></p>
 				</div>
 
@@ -2014,10 +1879,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		<div class="wpss-modal__header">
 			<h3 id="wpss-dispute-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Open Dispute', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
+				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
 		<form class="wpss-dispute-form" id="wpss-dispute-form">
@@ -2026,11 +1888,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 			<div class="wpss-modal__body">
 				<div class="wpss-alert wpss-alert--warning">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-						<line x1="12" y1="9" x2="12" y2="13"/>
-						<line x1="12" y1="17" x2="12.01" y2="17"/>
-					</svg>
+					<i data-lucide="triangle-alert" class="wpss-icon" aria-hidden="true"></i>
 					<p><?php esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first.', 'wp-sell-services' ); ?></p>
 				</div>
 
@@ -2075,10 +1933,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		<div class="wpss-modal__header">
 			<h3 id="wpss-cancel-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Cancel Order', 'wp-sell-services' ); ?></h3>
 			<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
+				<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 			</button>
 		</div>
 		<form class="wpss-cancel-form" id="wpss-cancel-form">
@@ -2088,11 +1943,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			<div class="wpss-modal__body">
 				<?php if ( $can_cancel_request ) : ?>
 					<div class="wpss-alert wpss-alert--info">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="10"></circle>
-							<path d="M12 16v-4"></path>
-							<path d="M12 8h.01"></path>
-						</svg>
+						<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 						<p><?php esc_html_e( 'Since work has already started, your cancellation request will be sent to the vendor for review. They have 48 hours to respond.', 'wp-sell-services' ); ?></p>
 					</div>
 				<?php endif; ?>
@@ -2979,10 +2830,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			<div class="wpss-modal__header">
 				<h3 id="wpss-extension-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Quote Extra Work', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<line x1="18" y1="6" x2="6" y2="18"></line>
-						<line x1="6" y1="6" x2="18" y2="18"></line>
-					</svg>
+					<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 			</div>
 			<div class="wpss-modal__body">
@@ -3028,7 +2876,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		// dashboard CSS default is display:none and the .wpss-modal-open
 		// class is what flips it to flex. Toggling .hidden alone silently
 		// no-ops because display:none wins specificity.
-		function show() { modal.hidden = false; modal.classList.add('wpss-modal-open'); }
+		function show() { modal.hidden = false; modal.classList.add('wpss-modal-open'); try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(_e){} }
 		function hide() { modal.hidden = true; modal.classList.remove('wpss-modal-open'); if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } }
 
 		openBtns.forEach(function (btn) { btn.addEventListener('click', show); });
@@ -3052,12 +2900,12 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				if (res && res.success) {
 					feedback.hidden = false;
 					feedback.className = 'wpss-modal__feedback wpss-modal__feedback--success';
-					feedback.textContent = (res.data && res.data.message) || '<?php echo esc_js( __( 'Extension sent.', 'wp-sell-services' ) ); ?>';
+					feedback.textContent = (res.data && res.data.message) || '<?php echo esc_js( __( 'Quote sent.', 'wp-sell-services' ) ); ?>';
 					setTimeout(function () { window.location.reload(); }, 800);
 				} else {
 					feedback.hidden = false;
 					feedback.className = 'wpss-modal__feedback wpss-modal__feedback--error';
-					feedback.textContent = (res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not send extension.', 'wp-sell-services' ) ); ?>';
+					feedback.textContent = (res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not send quote.', 'wp-sell-services' ) ); ?>';
 				}
 			}).catch(function () {
 				submitBtn.disabled = false;
@@ -3077,7 +2925,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		if (!buttons.length) return;
 		buttons.forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				if (!confirm('<?php echo esc_js( __( 'Decline this extension request?', 'wp-sell-services' ) ); ?>')) return;
+				if (!confirm('<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>')) return;
 				btn.disabled = true;
 				var data = new FormData();
 				data.append('action', 'wpss_decline_extension');

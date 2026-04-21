@@ -52,17 +52,14 @@ $format = static function ( float $amount ) use ( $currency ): string {
 <div class="wpss-tip-view wpss-extension-view">
 	<div class="wpss-tip-view__card">
 		<div class="wpss-tip-view__icon wpss-extension-view__icon" aria-hidden="true">
-			<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-				<circle cx="12" cy="12" r="10"/>
-				<polyline points="12 6 12 12 16 14"/>
-			</svg>
+			<i data-lucide="clock-alert" class="wpss-icon wpss-icon--lg"></i>
 		</div>
 
 		<h2 class="wpss-tip-view__title">
 			<?php
 			if ( $is_vendor ) {
 				if ( $is_paid ) {
-					esc_html_e( 'Extra work approved', 'wp-sell-services' );
+					esc_html_e( 'Extra work paid', 'wp-sell-services' );
 				} elseif ( $is_pending ) {
 					esc_html_e( 'Quote sent — awaiting buyer payment', 'wp-sell-services' );
 				} else {
@@ -113,13 +110,13 @@ $format = static function ( float $amount ) use ( $currency ): string {
 			<?php endif; ?>
 
 			<div>
-				<dt><?php esc_html_e( 'Reference', 'wp-sell-services' ); ?></dt>
+				<dt><?php esc_html_e( 'Extension order #', 'wp-sell-services' ); ?></dt>
 				<dd><?php echo esc_html( $current_order->order_number ); ?></dd>
 			</div>
 
 			<?php if ( $is_vendor && $is_paid && $platform_f > 0 ) : ?>
 				<div>
-					<dt><?php esc_html_e( 'Gross', 'wp-sell-services' ); ?></dt>
+					<dt><?php esc_html_e( 'Buyer paid', 'wp-sell-services' ); ?></dt>
 					<dd><?php echo esc_html( $format( $gross ) ); ?></dd>
 				</div>
 				<div>

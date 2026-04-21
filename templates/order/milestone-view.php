@@ -62,17 +62,14 @@ $format = static function ( float $amount ) use ( $currency ): string {
 <div class="wpss-tip-view wpss-milestone-view">
 	<div class="wpss-tip-view__card">
 		<div class="wpss-tip-view__icon wpss-milestone-view__icon" aria-hidden="true">
-			<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-				<path d="M4 4v16"/>
-				<path d="M4 4h13l-3 5 3 5H4"/>
-			</svg>
+			<i data-lucide="flag" class="wpss-icon wpss-icon--lg"></i>
 		</div>
 
 		<h2 class="wpss-tip-view__title">
 			<?php
 			if ( $is_vendor ) {
 				if ( $is_completed ) {
-					esc_html_e( 'Milestone approved', 'wp-sell-services' );
+					esc_html_e( 'Phase approved', 'wp-sell-services' );
 				} elseif ( $is_submitted ) {
 					esc_html_e( 'Delivery submitted — awaiting buyer', 'wp-sell-services' );
 				} elseif ( $is_working ) {
@@ -83,22 +80,22 @@ $format = static function ( float $amount ) use ( $currency ): string {
 					// Cancelled reason differs by actor — you can re-propose after a buyer-decline
 					// but not after an admin/system cancellation, so hinting the path here removes
 					// the "what now?" uncertainty.
-					esc_html_e( 'Milestone cancelled — you can propose a revised one any time', 'wp-sell-services' );
+					esc_html_e( 'Phase cancelled by seller — you can propose a revised phase any time', 'wp-sell-services' );
 				}
 			} elseif ( $is_buyer ) {
 				if ( $is_completed ) {
-					esc_html_e( 'Milestone approved', 'wp-sell-services' );
+					esc_html_e( 'Phase approved', 'wp-sell-services' );
 				} elseif ( $is_submitted ) {
 					esc_html_e( 'Delivery ready for your review', 'wp-sell-services' );
 				} elseif ( $is_working ) {
 					esc_html_e( 'Paid — seller working', 'wp-sell-services' );
 				} elseif ( $is_unpaid ) {
-					esc_html_e( 'Milestone from seller', 'wp-sell-services' );
+					esc_html_e( 'New phase from your seller', 'wp-sell-services' );
 				} elseif ( $is_cancelled ) {
-					esc_html_e( 'Milestone cancelled — seller can send a revised one', 'wp-sell-services' );
+					esc_html_e( 'Phase cancelled — your seller can send a revised one', 'wp-sell-services' );
 				}
 			} else {
-				esc_html_e( 'Milestone', 'wp-sell-services' );
+				esc_html_e( 'Phase', 'wp-sell-services' );
 			}
 			?>
 		</h2>
@@ -126,13 +123,13 @@ $format = static function ( float $amount ) use ( $currency ): string {
 			<?php endif; ?>
 
 			<div>
-				<dt><?php esc_html_e( 'Reference', 'wp-sell-services' ); ?></dt>
+				<dt><?php esc_html_e( 'Phase order #', 'wp-sell-services' ); ?></dt>
 				<dd><?php echo esc_html( $current_order->order_number ); ?></dd>
 			</div>
 
 			<?php if ( $is_vendor && $platform_f > 0 && ( $is_completed || $is_submitted || $is_working ) ) : ?>
 				<div>
-					<dt><?php esc_html_e( 'Gross', 'wp-sell-services' ); ?></dt>
+					<dt><?php esc_html_e( 'Buyer paid', 'wp-sell-services' ); ?></dt>
 					<dd><?php echo esc_html( $format( $gross ) ); ?></dd>
 				</div>
 				<div>
@@ -190,7 +187,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 			<?php if ( $is_vendor && ( $is_working || $is_submitted ) ) : ?>
 				<button type="button" class="wpss-btn wpss-btn--primary wpss-milestone-submit-btn"
 					data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
-					<?php echo esc_html( $is_submitted ? __( 'Resubmit delivery', 'wp-sell-services' ) : __( 'Submit Delivery', 'wp-sell-services' ) ); ?>
+					<?php echo esc_html( $is_submitted ? __( 'Resubmit delivery', 'wp-sell-services' ) : __( 'Submit delivery', 'wp-sell-services' ) ); ?>
 				</button>
 			<?php endif; ?>
 
@@ -236,12 +233,9 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		<div class="wpss-modal__backdrop"></div>
 		<div class="wpss-modal__dialog">
 			<div class="wpss-modal__header">
-				<h3 id="wpss-ms-submit-title" class="wpss-modal__title"><?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?></h3>
+				<h3 id="wpss-ms-submit-title" class="wpss-modal__title"><?php esc_html_e( 'Submit delivery', 'wp-sell-services' ); ?></h3>
 				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<line x1="18" y1="6" x2="6" y2="18"></line>
-						<line x1="6" y1="6" x2="18" y2="18"></line>
-					</svg>
+					<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 			</div>
 			<div class="wpss-modal__body">
@@ -254,7 +248,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
 					<div class="wpss-modal__footer">
 						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
-						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Submit Delivery', 'wp-sell-services' ); ?></button>
+						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Submit delivery', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
 			</div>
