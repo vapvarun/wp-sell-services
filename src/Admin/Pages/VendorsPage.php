@@ -194,23 +194,64 @@ class VendorsPage {
 
 		// Get vendors with stats.
 		$orderby_map = array(
-			'created_at'   => 'vp.created_at',
-			'display_name' => 'u.display_name',
-			'rating'       => 'vp.avg_rating',
-			'total_orders' => 'vp.total_orders',
-			'total_earned' => 'vp.total_earnings',
+			'created_at'     => 'vp.created_at',
+			'display_name'   => 'u.display_name',
+			'rating'         => 'vp.avg_rating',
+			'total_orders'   => 'vp.total_orders',
+			'total_earned'   => 'vp.total_earnings',
+			'milestone_count' => 'milestone_count',
 		);
 
 		$orderby = $orderby_map[ $args['orderby'] ] ?? 'vp.created_at';
 		$order   = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 
+		// Contract-type breakdown columns.
+		//
+		// Fixed    = completed non-sub-order rows belonging to this vendor.
+		// Milestone = completed request-orders (parents) that have at least
+		//             one milestone child row; correlated sub-query keeps the
+		//             read-only audit trail intact and avoids joining the
+		//             orders table twice.
+		$tip_platform       = \WPSellServices\Services\TippingService::ORDER_TYPE;
+		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
+		$milestone_platform = \WPSellServices\Services\MilestoneService::ORDER_TYPE;
+		$orders_table       = $wpdb->prefix . 'wpss_orders';
+
+		$fixed_count_sql = $wpdb->prepare(
+			"(SELECT COUNT(*) FROM {$orders_table} o
+			WHERE o.vendor_id = vp.user_id
+			AND o.status = 'completed'
+			AND o.platform NOT IN (%s, %s, %s, %s))",
+			$tip_platform,
+			$extension_platform,
+			$milestone_platform,
+			'request'
+		);
+
+		$milestone_count_sql = $wpdb->prepare(
+			"(SELECT COUNT(*) FROM {$orders_table} o
+			WHERE o.vendor_id = vp.user_id
+			AND o.status = 'completed'
+			AND o.platform = %s
+			AND EXISTS (
+				SELECT 1 FROM {$orders_table} c
+				WHERE c.platform = %s
+				AND c.platform_order_id = o.id
+			))",
+			'request',
+			$milestone_platform
+		);
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed/milestone SQL fragments are pre-prepared above.
 		$query = $wpdb->prepare(
 			"SELECT
 				vp.*,
 				u.display_name,
 				u.user_email,
 				u.user_registered,
-				(SELECT COUNT(*) FROM {$wpdb->posts} p WHERE p.post_author = vp.user_id AND p.post_type = 'wpss_service' AND p.post_status = 'publish') as services_count
+				(SELECT COUNT(*) FROM {$wpdb->posts} p WHERE p.post_author = vp.user_id AND p.post_type = 'wpss_service' AND p.post_status = 'publish') as services_count,
+				{$fixed_count_sql} as fixed_count,
+				{$milestone_count_sql} as milestone_count
 			FROM {$wpdb->prefix}wpss_vendor_profiles vp
 			LEFT JOIN {$wpdb->users} u ON vp.user_id = u.ID
 			WHERE {$where_clause}
@@ -219,6 +260,7 @@ class VendorsPage {
 			array_merge( $values, array( $args['per_page'], $offset ) )
 		);
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- query pre-prepared, table names from $wpdb->prefix are safe.
 		$vendors = $wpdb->get_results( $query );
 
 		return array(
@@ -385,6 +427,9 @@ class VendorsPage {
 						<th scope="col" class="column-orders">
 							<?php $this->sortable_column_header( 'total_orders', __( 'Orders', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
+						<th scope="col" class="column-contract-types">
+							<?php $this->sortable_column_header( 'milestone_count', __( 'Contract Types', 'wp-sell-services' ), $orderby, $order ); ?>
+						</th>
 						<th scope="col" class="column-rating">
 							<?php $this->sortable_column_header( 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
@@ -405,7 +450,7 @@ class VendorsPage {
 				<tbody>
 					<?php if ( empty( $vendors ) ) : ?>
 						<tr>
-							<td colspan="8" class="wpss-no-items">
+							<td colspan="9" class="wpss-no-items">
 								<?php esc_html_e( 'No vendors found.', 'wp-sell-services' ); ?>
 							</td>
 						</tr>
@@ -420,6 +465,7 @@ class VendorsPage {
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-services"><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-orders"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></th>
+						<th scope="col" class="column-contract-types"><?php esc_html_e( 'Contract Types', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-rating"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-earnings"><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
@@ -518,14 +564,23 @@ class VendorsPage {
 				gap: 5px;
 			}
 
-			.wpss-vendors-table .column-vendor { width: 20%; }
-			.wpss-vendors-table .column-services { width: 8%; text-align: center; }
-			.wpss-vendors-table .column-orders { width: 8%; text-align: center; }
-			.wpss-vendors-table .column-rating { width: 10%; text-align: center; }
-			.wpss-vendors-table .column-earnings { width: 12%; text-align: right; }
-			.wpss-vendors-table .column-status { width: 10%; }
-			.wpss-vendors-table .column-joined { width: 12%; }
+			.wpss-vendors-table .column-vendor { width: 18%; }
+			.wpss-vendors-table .column-services { width: 7%; text-align: center; }
+			.wpss-vendors-table .column-orders { width: 7%; text-align: center; }
+			.wpss-vendors-table .column-contract-types { width: 12%; text-align: center; white-space: nowrap; }
+			.wpss-vendors-table .column-rating { width: 9%; text-align: center; }
+			.wpss-vendors-table .column-earnings { width: 10%; text-align: right; }
+			.wpss-vendors-table .column-status { width: 9%; }
+			.wpss-vendors-table .column-joined { width: 11%; }
 			.wpss-vendors-table .column-actions { width: 15%; }
+
+			@media (max-width: 1024px) {
+				.wpss-vendors-table .column-contract-types { white-space: normal; }
+			}
+
+			@media (max-width: 782px) {
+				.wpss-vendors-table .column-contract-types { text-align: left; }
+			}
 
 			.wpss-vendor-info {
 				display: flex;
@@ -928,6 +983,18 @@ class VendorsPage {
 			</td>
 			<td class="column-orders" data-colname="<?php esc_attr_e( 'Orders', 'wp-sell-services' ); ?>">
 				<?php echo esc_html( number_format_i18n( (int) ( $vendor->total_orders ?? 0 ) ) ); ?>
+			</td>
+			<td class="column-contract-types" data-colname="<?php esc_attr_e( 'Contract Types', 'wp-sell-services' ); ?>">
+				<?php
+				$fixed_count     = (int) ( $vendor->fixed_count ?? 0 );
+				$milestone_count = (int) ( $vendor->milestone_count ?? 0 );
+				printf(
+					/* translators: 1: fixed-price contract count, 2: milestone contract count */
+					esc_html__( '%1$dx Fixed · %2$dx Milestone', 'wp-sell-services' ),
+					$fixed_count,
+					$milestone_count
+				);
+				?>
 			</td>
 			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<?php if ( $reviews > 0 ) : ?>
