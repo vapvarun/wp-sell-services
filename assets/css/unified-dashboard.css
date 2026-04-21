@@ -2143,11 +2143,95 @@ select.wpss-input option,
 	background: #fff;
 }
 
-.wpss-milestone-item.wpss-ms-state--pending_payment  { border-left: 4px solid #fcd34d; }
-.wpss-milestone-item.wpss-ms-state--in_progress      { border-left: 4px solid #2563eb; }
-.wpss-milestone-item.wpss-ms-state--pending_approval { border-left: 4px solid #0f766e; }
-.wpss-milestone-item.wpss-ms-state--completed        { border-left: 4px solid #22c55e; background: #f0fdf4; }
-.wpss-milestone-item.wpss-ms-state--cancelled        { border-left: 4px solid #9ca3af; opacity: 0.75; }
+/* Milestone item state pills use design-system tokens so white-label /
+   theme colour-scheme overrides can retint them by changing the token
+   value, not the component. A custom --wpss-warning on the theme
+   filters through to the pending_payment + locked rows automatically. */
+.wpss-milestone-item.wpss-ms-state--pending_payment  { border-left: 4px solid var(--wpss-warning, #f59e0b); }
+.wpss-milestone-item.wpss-ms-state--in_progress      { border-left: 4px solid var(--wpss-primary, #4f46e5); }
+.wpss-milestone-item.wpss-ms-state--pending_approval { border-left: 4px solid var(--wpss-info, #0f766e); }
+.wpss-milestone-item.wpss-ms-state--completed        { border-left: 4px solid var(--wpss-success, #22c55e); background: var(--wpss-success-light, #f0fdf4); }
+.wpss-milestone-item.wpss-ms-state--cancelled        { border-left: 4px solid var(--wpss-gray-400, #9ca3af); opacity: 0.75; }
+
+/* Locked phase: muted left bar + a dashed pattern at the top so it reads
+   as clearly inactive even without the button. Stacks additively on top
+   of wpss-ms-state--pending_payment (same element). */
+.wpss-milestone-item.wpss-ms-state--locked {
+	border-left-color: var(--wpss-gray-300, #d1d5db);
+	background: var(--wpss-gray-50, #f9fafb);
+}
+.wpss-milestone-item.wpss-ms-state--locked .wpss-milestone-item__title,
+.wpss-milestone-item.wpss-ms-state--locked .wpss-milestone-item__amount {
+	opacity: 0.7;
+}
+
+/* Locked button placeholder — same shape as wpss-btn--sm but greyed out
+   and with a lock icon so there is no ambiguity about why it's disabled. */
+.wpss-btn--locked {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	background: var(--wpss-gray-100, #f3f4f6);
+	color: var(--wpss-text-muted, #6b7280);
+	border: 1px dashed var(--wpss-gray-300, #d1d5db);
+	cursor: not-allowed;
+	font-weight: 500;
+}
+
+.wpss-btn--locked:hover {
+	background: var(--wpss-gray-100, #f3f4f6);
+}
+
+.wpss-btn__lock-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Project-complete wrap banner — rendered above the milestone list when
+   every phase is approved. Uses success tokens so a theme's custom
+   success palette flows through automatically. */
+.wpss-milestone-wrap {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-4, 16px);
+	padding: var(--wpss-space-4, 16px) var(--wpss-space-5, 20px);
+	background: var(--wpss-success-light, #f0fdf4);
+	border: 1px solid var(--wpss-success, #22c55e);
+	border-radius: var(--wpss-radius-lg, 10px);
+}
+
+.wpss-milestone-wrap__icon {
+	flex: 0 0 44px;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: #fff;
+	color: var(--wpss-success, #22c55e);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.wpss-milestone-wrap__title {
+	margin: 0 0 4px;
+	color: var(--wpss-success, #22c55e);
+	font-size: var(--wpss-text-lg, 1.125rem);
+	font-weight: 700;
+}
+
+.wpss-milestone-wrap__body {
+	margin: 0;
+	color: var(--wpss-text, #1f2937);
+	font-size: var(--wpss-text-sm, 0.875rem);
+}
+
+@media (max-width: 640px) {
+	.wpss-milestone-wrap {
+		flex-direction: column;
+		align-items: flex-start;
+		text-align: left;
+	}
+}
 
 .wpss-milestone-item__head {
 	display: flex;

@@ -1099,7 +1099,7 @@ class NotificationService {
 				$title   = __( 'Quote for extra work', 'wp-sell-services' );
 				$message = sprintf(
 					/* translators: %d: parent order ID */
-					__( 'Your seller sent a quote for the extra work you asked about on Order #%d. Open the order to review and Accept & Pay, or Decline to keep the current scope.', 'wp-sell-services' ),
+					__( 'Your seller sent a quote for additional work on Order #%d. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is.', 'wp-sell-services' ),
 					(int) ( $data['order_id'] ?? 0 )
 				);
 				break;

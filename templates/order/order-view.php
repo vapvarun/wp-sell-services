@@ -1192,7 +1192,41 @@ do_action( 'wpss_before_order_view', $order );
 	$milestone_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
 
 	if ( $show_milestone_section ) :
+		$ms_approved_count  = 0;
+		$ms_total_paid      = 0.0;
+		foreach ( $milestones as $_m ) {
+			if ( 'completed' === $_m['status'] ) {
+				++$ms_approved_count;
+				$ms_total_paid += (float) $_m['amount'];
+			}
+		}
+		$ms_all_done_banner = ! empty( $milestones ) && $ms_approved_count === count( $milestones ) && 'completed' === $order->status;
 		?>
+		<?php if ( $ms_all_done_banner ) : ?>
+			<section class="wpss-order-section wpss-order-section--milestone-wrap">
+				<div class="wpss-milestone-wrap">
+					<div class="wpss-milestone-wrap__icon" aria-hidden="true">
+						<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+							<polyline points="22 4 12 14.01 9 11.01"/>
+						</svg>
+					</div>
+					<div>
+						<h3 class="wpss-milestone-wrap__title"><?php esc_html_e( 'Project complete', 'wp-sell-services' ); ?></h3>
+						<p class="wpss-milestone-wrap__body">
+							<?php
+							printf(
+								/* translators: 1: approved phase count, 2: total paid */
+								esc_html__( 'All %1$d phases approved. Total paid: %2$s.', 'wp-sell-services' ),
+								(int) $ms_approved_count,
+								esc_html( wpss_format_price( $ms_total_paid, $milestone_currency ) )
+							);
+							?>
+						</p>
+					</div>
+				</div>
+			</section>
+		<?php endif; ?>
 		<section class="wpss-order-section wpss-order-section--milestones">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
@@ -1238,7 +1272,14 @@ do_action( 'wpss_before_order_view', $order );
 
 							switch ( $ms_status ) {
 								case 'pending_payment':
-									$ms_state_label = $is_buyer ? __( 'Awaiting your payment', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
+									if ( ! empty( $m['is_locked'] ) ) {
+										$ms_state_label = $is_buyer
+											? __( 'Locked — finish the earlier phase first', 'wp-sell-services' )
+											: __( 'Locked behind earlier phase', 'wp-sell-services' );
+										$ms_state_class .= ' wpss-ms-state--locked';
+									} else {
+										$ms_state_label = $is_buyer ? __( 'Ready to pay', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
+									}
 									break;
 								case 'in_progress':
 									$ms_state_label = $is_vendor ? __( 'Paid · ready for delivery', 'wp-sell-services' ) : __( 'Paid · seller working', 'wp-sell-services' );
@@ -1291,18 +1332,38 @@ do_action( 'wpss_before_order_view', $order );
 								</div>
 								<div class="wpss-milestone-item__actions">
 									<?php if ( $is_buyer && 'pending_payment' === $ms_status ) : ?>
-										<a href="<?php echo esc_url( $ms_pay_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
+										<?php if ( ! empty( $m['is_locked'] ) ) : ?>
 											<?php
-											printf(
-												/* translators: %s: amount */
-												esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
-												esc_html( wpss_format_price( (float) $m['amount'], $milestone_currency ) )
-											);
+											// Phase is locked until earlier phases finish. Show a
+											// disabled-looking pill + locked icon + explicit copy
+											// so the buyer understands why the Pay button is not
+											// available — the server-side backstop in
+											// StandaloneCheckoutProvider would otherwise throw a
+											// generic error if they tried to hand-craft the URL.
 											?>
-										</a>
-										<button type="button" class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-milestone-decline-btn" data-milestone="<?php echo esc_attr( $ms_sub_id ); ?>">
-											<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
-										</button>
+											<span class="wpss-btn wpss-btn--locked wpss-btn--sm" aria-disabled="true" title="<?php esc_attr_e( 'This phase unlocks once the earlier phase is approved or cancelled.', 'wp-sell-services' ); ?>">
+												<span class="wpss-btn__lock-icon" aria-hidden="true">
+													<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+														<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+														<path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+													</svg>
+												</span>
+												<?php esc_html_e( 'Locked — finish the earlier phase first', 'wp-sell-services' ); ?>
+											</span>
+										<?php else : ?>
+											<a href="<?php echo esc_url( $ms_pay_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
+												<?php
+												printf(
+													/* translators: %s: amount */
+													esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+													esc_html( wpss_format_price( (float) $m['amount'], $milestone_currency ) )
+												);
+												?>
+											</a>
+											<button type="button" class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-milestone-decline-btn" data-milestone="<?php echo esc_attr( $ms_sub_id ); ?>">
+												<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
+											</button>
+										<?php endif; ?>
 									<?php endif; ?>
 									<?php if ( $is_vendor && 'pending_payment' === $ms_status ) : ?>
 										<button type="button" class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-milestone-delete-btn" data-milestone="<?php echo esc_attr( $ms_sub_id ); ?>">
@@ -1514,7 +1575,7 @@ do_action( 'wpss_before_order_view', $order );
 					<?php esc_html_e( 'Quote for extra work', 'wp-sell-services' ); ?>
 				</h3>
 				<p class="wpss-extension-pending-card__body">
-					<?php esc_html_e( 'Your seller sent a quote for the extra work you asked about. Pay to approve — they will continue on the extended scope. If the quote is off, decline and discuss in chat first.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Your seller sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat.', 'wp-sell-services' ); ?>
 				</p>
 				<div class="wpss-extension-pending-card__meta">
 					<div>

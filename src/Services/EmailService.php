@@ -1544,9 +1544,27 @@ class EmailService {
 			return false;
 		}
 
-		// Rate limit: max 1 email per type per recipient per 5 minutes.
-		// Prevents email flooding from rapid message spam.
-		$cooldown_key = 'wpss_email_cooldown_' . md5( $to . '_' . $type );
+		// Rate limit — originally "one per type per recipient per 5 minutes"
+		// to throttle noisy things like chat-message notifications. That
+		// window silently dropped legitimate transaction-critical emails
+		// when a buyer paid two milestones back-to-back (second email was
+		// swallowed). The cooldown now keys on the sub-order id when the
+		// caller passed one in $template_vars, so each milestone / tip /
+		// extension gets its own mail even if they fire in quick succession,
+		// while chat / new-message type emails still rate-limit on
+		// recipient+type as before.
+		$cooldown_scope = $to . '|' . $type;
+		$sub_order_id   = 0;
+		foreach ( array( 'milestone', 'extension', 'tip_order' ) as $sub_key ) {
+			if ( isset( $template_vars[ $sub_key ] ) && is_object( $template_vars[ $sub_key ] ) ) {
+				$sub_order_id = (int) ( $template_vars[ $sub_key ]->id ?? 0 );
+				if ( $sub_order_id ) {
+					$cooldown_scope .= '|' . $sub_order_id;
+					break;
+				}
+			}
+		}
+		$cooldown_key = 'wpss_email_cooldown_' . md5( $cooldown_scope );
 		if ( get_transient( $cooldown_key ) ) {
 			return false;
 		}

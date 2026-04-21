@@ -1101,10 +1101,29 @@
 			const $btn = $(this);
 			const proposalId = $btn.data('proposal-id') || $btn.data('proposal');
 
+			// Build a contract-aware confirm so the buyer knows what they
+			// are about to commit to. Phase count + total + lock-step rule
+			// are read off data- attributes the proposal card already
+			// renders server-side — keeps the JS dumb and the PHP
+			// translatable.
+			const contract = $btn.data('contract-type') || 'fixed';
+			const phases   = parseInt($btn.data('phase-count') || 0, 10);
+			const total    = $btn.data('total-formatted') || '';
+			let message;
+
+			if (contract === 'milestone' && phases > 0) {
+				const base = (wpssData.i18n?.confirmAcceptMilestoneProposal || 'Accept this {phases}-phase milestone plan ({total} total)?');
+				message = base.replace('{phases}', phases).replace('{total}', total) +
+					'\n\n' +
+					(wpssData.i18n?.milestoneLockstepNote || 'You pay each phase as the seller finishes the one before it. No parent payment — every phase is its own payment.');
+			} else {
+				message = (wpssData.i18n?.confirmAcceptFixedProposal || 'Accept this fixed-price proposal ({total})?').replace('{total}', total);
+			}
+
 			WPSS.showConfirm(
-				wpssData.i18n?.confirmAcceptProposal || 'Accept this proposal and create an order?',
+				message,
 				function() { WPSS.handleProposalAction($btn, proposalId, 'accept'); },
-				{ confirmText: 'Accept' }
+				{ confirmText: (wpssData.i18n?.accept || 'Accept') }
 			);
 		});
 

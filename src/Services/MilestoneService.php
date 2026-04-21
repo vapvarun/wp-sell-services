@@ -122,9 +122,14 @@ class MilestoneService {
 	 * @param bool   $is_contract     True when this milestone is part of a predefined contract
 	 *                                (Upwork-style proposal acceptance). Stored in meta so the
 	 *                                abandon-cleanup cron knows to leave it alone.
+	 * @param bool   $fire_hooks      When false, suppresses the `wpss_milestone_proposed`
+	 *                                action so the caller can defer dispatch until after a
+	 *                                surrounding DB transaction commits — avoids phantom
+	 *                                emails landing in the buyer's inbox if the enclosing
+	 *                                transaction rolls back.
 	 * @return array{success: bool, milestone_id: int|null, checkout_url: string|null, message: string}
 	 */
-	public function propose( int $parent_order_id, int $vendor_id, string $title, string $description, float $amount, int $days_to_deliver, string $deliverables = '', bool $is_contract = false ): array {
+	public function propose( int $parent_order_id, int $vendor_id, string $title, string $description, float $amount, int $days_to_deliver, string $deliverables = '', bool $is_contract = false, bool $fire_hooks = true ): array {
 		global $wpdb;
 
 		$fail = static function ( string $message ): array {
@@ -243,7 +248,9 @@ class MilestoneService {
 		 * @param int $parent_order_id Parent service order ID.
 		 * @param int $vendor_id       Vendor who proposed it.
 		 */
-		do_action( 'wpss_milestone_proposed', $milestone_id, $parent_order_id, $vendor_id );
+		if ( $fire_hooks ) {
+			do_action( 'wpss_milestone_proposed', $milestone_id, $parent_order_id, $vendor_id );
+		}
 
 		return array(
 			'success'      => true,

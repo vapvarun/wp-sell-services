@@ -414,6 +414,26 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 	scrollToBottom();
 
+	// Milestone "Request revision in chat" hand-off: when the buyer
+	// clicks the revision link on a milestone receipt, we stash the
+	// phase title in sessionStorage and navigate here. Read it once,
+	// prefill the composer with a referenced template, focus the
+	// field, and clear the stash so reload doesn't re-prefill.
+	try {
+		var prefillPhase = sessionStorage.getItem('wpss_revision_prefill');
+		if (prefillPhase && $messageInput.length) {
+			var template = 'Re: "' + prefillPhase + '" — ';
+			if (!$messageInput.val()) {
+				$messageInput.val(template).trigger('input');
+				$messageInput.focus();
+				// Move caret to end.
+				var el = $messageInput[0];
+				el.setSelectionRange(el.value.length, el.value.length);
+			}
+			sessionStorage.removeItem('wpss_revision_prefill');
+		}
+	} catch (e) { /* storage disabled */ }
+
 	// Auto-resize textarea.
 	$messageInput.on('input', function() {
 		this.style.height = 'auto';

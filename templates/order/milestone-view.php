@@ -80,7 +80,10 @@ $format = static function ( float $amount ) use ( $currency ): string {
 				} elseif ( $is_unpaid ) {
 					esc_html_e( 'Proposal sent — awaiting buyer payment', 'wp-sell-services' );
 				} elseif ( $is_cancelled ) {
-					esc_html_e( 'Milestone cancelled', 'wp-sell-services' );
+					// Cancelled reason differs by actor — you can re-propose after a buyer-decline
+					// but not after an admin/system cancellation, so hinting the path here removes
+					// the "what now?" uncertainty.
+					esc_html_e( 'Milestone cancelled — you can propose a revised one any time', 'wp-sell-services' );
 				}
 			} elseif ( $is_buyer ) {
 				if ( $is_completed ) {
@@ -92,7 +95,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 				} elseif ( $is_unpaid ) {
 					esc_html_e( 'Milestone from seller', 'wp-sell-services' );
 				} elseif ( $is_cancelled ) {
-					esc_html_e( 'Milestone cancelled', 'wp-sell-services' );
+					esc_html_e( 'Milestone cancelled — seller can send a revised one', 'wp-sell-services' );
 				}
 			} else {
 				esc_html_e( 'Milestone', 'wp-sell-services' );
@@ -196,6 +199,26 @@ $format = static function ( float $amount ) use ( $currency ): string {
 					data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
 					<?php esc_html_e( 'Approve delivery', 'wp-sell-services' ); ?>
 				</button>
+				<?php
+				// Revision request is a chat thread interaction by design —
+				// per the product decision, milestones don't have a separate
+				// reject status. This button routes the buyer back to the
+				// parent order's conversation panel with the phase title
+				// pre-loaded via a hash + localStorage hand-off, so the
+				// seller can see exactly which phase is being discussed
+				// without the buyer having to hunt for the chat.
+				// Anchor to the composer textarea so the browser scrolls
+				// straight to where the buyer needs to type. #wpss-message-input
+				// is rendered by conversation.php inside the parent order view.
+				$revision_url = $parent_url ? $parent_url . '#wpss-message-input' : '';
+				if ( $revision_url ) :
+					?>
+					<a href="<?php echo esc_url( $revision_url ); ?>"
+						class="wpss-btn wpss-btn--outline wpss-milestone-revision-link"
+						data-phase-title="<?php echo esc_attr( $phase_title ); ?>">
+						<?php esc_html_e( 'Request revision in chat', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
 			<?php endif; ?>
 
 			<?php if ( $parent_url ) : ?>
@@ -251,6 +274,17 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		Object.keys(payload).forEach(function (k) { data.append(k, payload[k]); });
 		return fetch(ajaxurl, { method: 'POST', credentials: 'include', body: data }).then(function (r) { return r.json(); });
 	}
+
+	// Stash the phase title so the parent order-view can prefill the
+	// chat box when the buyer lands on it — keeps the reference crisp
+	// without cluttering the URL with long query strings.
+	document.querySelectorAll('.wpss-milestone-revision-link').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			try {
+				sessionStorage.setItem('wpss_revision_prefill', btn.dataset.phaseTitle || '');
+			} catch (e) { /* storage disabled — silently continue, link still navigates */ }
+		});
+	});
 
 	document.querySelectorAll('.wpss-milestone-approve-btn').forEach(function (btn) {
 		btn.addEventListener('click', function () {

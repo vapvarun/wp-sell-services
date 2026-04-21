@@ -756,6 +756,13 @@ final class Plugin {
 		// approval. Same listener fires on milestone cancellation too —
 		// a contract that ends after only 2 of 3 phases (because phase 3
 		// was abandoned) still rolls up to a completed parent.
+		//
+		// Routes through OrderService::update_status so the full completion
+		// pipeline runs: wpss_order_status_changed / wpss_order_status_completed
+		// hooks fire → OrderWorkflowManager::handle_order_completed logs audit,
+		// updates vendor stats, fires wpss_order_completed — same treatment
+		// a regular catalog order would get when the vendor clicks Deliver.
+		// A raw $wpdb->update would silently bypass all of that.
 		$auto_complete_parent = static function ( int $milestone_id, int $parent_order_id ): void {
 			unset( $milestone_id );
 			$parent = wpss_get_order( $parent_order_id );
@@ -774,16 +781,10 @@ final class Plugin {
 					return;
 				}
 			}
-			global $wpdb;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$wpdb->prefix . 'wpss_orders',
-				array(
-					'status'       => 'completed',
-					'completed_at' => current_time( 'mysql' ),
-					'updated_at'   => current_time( 'mysql' ),
-				),
-				array( 'id' => $parent_order_id )
+			( new \WPSellServices\Services\OrderService() )->update_status(
+				$parent_order_id,
+				\WPSellServices\Models\ServiceOrder::STATUS_COMPLETED,
+				__( 'All milestones on this custom-project order are complete.', 'wp-sell-services' )
 			);
 		};
 		$this->loader->add_action( 'wpss_milestone_approved', $auto_complete_parent, null, 20, 2 );
@@ -791,12 +792,18 @@ final class Plugin {
 
 		// Cascade-cancel: when a parent order is cancelled, every still-
 		// pending_payment milestone under it is cancelled immediately.
-		// Without this they would linger until the abandon cron and
-		// confuse vendor + buyer about whether the project is really over.
+		// Paid-but-in-progress and paid-but-submitted phases are left
+		// alone — money has already moved to the vendor's wallet, and the
+		// fair resolution for that work-in-flight is the dispute flow,
+		// not a silent refund. When that situation is detected, we notify
+		// both parties so they know to open a dispute if either party
+		// thinks the paid phase shouldn't stand.
 		$this->loader->add_action(
 			'wpss_order_cancelled',
-			static function ( int $order_id ): void {
+			static function ( int $order_id ) use ( $notification_service ): void {
 				global $wpdb;
+
+				// Cancel pending_payment milestones immediately.
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->query(
 					$wpdb->prepare(
@@ -809,6 +816,38 @@ final class Plugin {
 						'pending_payment'
 					)
 				);
+
+				// Identify paid-but-open phases (in_progress / pending_approval).
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$open_paid = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT id FROM {$wpdb->prefix}wpss_orders
+						WHERE platform = %s AND platform_order_id = %d
+						AND status IN ('in_progress', 'pending_approval')",
+						\WPSellServices\Services\MilestoneService::ORDER_TYPE,
+						$order_id
+					)
+				);
+
+				if ( empty( $open_paid ) ) {
+					return;
+				}
+
+				$parent = wpss_get_order( $order_id );
+				if ( ! $parent ) {
+					return;
+				}
+
+				// Warn both parties so nobody assumes the paid phase auto-refunded.
+				$body = sprintf(
+					/* translators: %d: count of paid phases */
+					esc_html__( 'Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted.', 'wp-sell-services' ),
+					count( $open_paid )
+				);
+				$data = array( 'order_id' => $order_id );
+
+				$notification_service->create( (int) $parent->customer_id, 'milestone_cancel_warning', __( 'Paid milestone not delivered', 'wp-sell-services' ), $body, $data );
+				$notification_service->create( (int) $parent->vendor_id,   'milestone_cancel_warning', __( 'Paid milestone on cancelled project', 'wp-sell-services' ), $body, $data );
 			},
 			null,
 			10,

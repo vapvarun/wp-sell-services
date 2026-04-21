@@ -307,16 +307,20 @@ class TippingService {
 		$txn_table       = $wpdb->prefix . 'wpss_wallet_transactions';
 		$parent_order_id = (int) ( $tip_order->platform_order_id ?? 0 );
 
-		// Idempotency: bail if we already credited any tip for this parent
-		// order (covers the case where the hook fires twice for the same
-		// wpss_order_paid event).
+		// Idempotency: bail if we already credited THIS tip sub-order.
+		// Keyed on the tip sub-order id (not the parent) so the convention
+		// matches milestone + extension — each sub-order is its own unique
+		// wallet reference. Using parent_order_id here would have broken
+		// any future feature where the same parent can receive multiple
+		// tips (gift tips, team tips, repeat thank-you payments) because
+		// the second would be silently skipped.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM {$txn_table} WHERE type = %s AND reference_type = %s AND reference_id = %d LIMIT 1",
 				self::TYPE_TIP,
 				'order',
-				$parent_order_id
+				$tip_order_id
 			)
 		);
 		if ( $existing ) {
@@ -403,7 +407,10 @@ class TippingService {
 				'currency'       => $tip_order->currency ?? 'USD',
 				'description'    => $description,
 				'reference_type' => 'order',
-				'reference_id'   => $parent_order_id,
+				// Reference the tip sub-order id (not parent) so the wallet
+				// row can be matched back to the exact payment that created
+				// it — matches milestone + extension idempotency convention.
+				'reference_id'   => $tip_order_id,
 				'status'         => self::STATUS_COMPLETED,
 				'created_at'     => current_time( 'mysql' ),
 			),
@@ -525,18 +532,22 @@ class TippingService {
 			return true;
 		}
 
+		// Check for a completed tip sub-order on this parent. Post-idempotency
+		// refactor, wallet rows now reference the tip sub-order id directly,
+		// so the cheapest check is "does a completed tip sub-order exist
+		// for this parent + this buyer?"
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$exists = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM {$table}
-				WHERE type = %s
-				AND reference_type = 'order'
-				AND reference_id = %d
-				AND user_id = %d
+				"SELECT id FROM {$orders_table}
+				WHERE platform = %s
+				AND platform_order_id = %d
+				AND customer_id = %d
+				AND status = 'completed'
 				LIMIT 1",
-				self::TYPE_TIP,
+				self::ORDER_TYPE,
 				$order_id,
-				$order->vendor_id
+				$customer_id
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

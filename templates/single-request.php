@@ -354,7 +354,11 @@ do_action( 'wpss_before_single_request', $request_id );
 
 										<?php if ( 'pending' === $proposal->status && 'open' === $request_status ) : ?>
 											<div class="wpss-proposal-actions">
-												<button type="button" class="wpss-btn wpss-btn-primary wpss-accept-proposal" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
+												<button type="button" class="wpss-btn wpss-btn-primary wpss-accept-proposal"
+													data-proposal="<?php echo esc_attr( $proposal->id ); ?>"
+													data-contract-type="<?php echo esc_attr( $proposal_contract ); ?>"
+													data-phase-count="<?php echo esc_attr( count( $proposal_milestones ) ); ?>"
+													data-total-formatted="<?php echo esc_attr( wpss_format_price( (float) ( $proposal->proposed_price ?? 0 ) ) ); ?>">
 													<?php esc_html_e( 'Accept Proposal', 'wp-sell-services' ); ?>
 												</button>
 												<button type="button" class="wpss-btn wpss-btn-outline wpss-reject-proposal" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
@@ -527,7 +531,7 @@ do_action( 'wpss_before_single_request', $request_id );
 						</label>
 						<label class="wpss-radio">
 							<input type="radio" name="contract_type" value="milestone" data-contract-toggle="milestone">
-							<span><strong><?php esc_html_e( 'Milestone-based', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'phased plan, buyer pays each phase as you deliver.', 'wp-sell-services' ); ?></span>
+							<span><strong><?php esc_html_e( 'Milestone-based', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'phased plan — buyer pays each phase up front before you start it, and approves your delivery at the end of the phase.', 'wp-sell-services' ); ?></span>
 						</label>
 					</fieldset>
 

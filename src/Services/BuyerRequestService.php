@@ -699,6 +699,14 @@ class BuyerRequestService {
 			}
 
 			$milestone_service = new MilestoneService();
+			// Collect the created milestone IDs so we can fire the
+			// `wpss_milestone_proposed` hook (and thus the buyer's
+			// notification + email) ONLY after the outer transaction
+			// commits. If we fire inside the transaction and a later
+			// milestone fails the rollback would leave the buyer with
+			// phantom emails containing Pay Now links for rows that no
+			// longer exist.
+			$created_milestone_ids = array();
 			foreach ( $milestones as $row ) {
 				$ms_result = $milestone_service->propose(
 					$order_id,
@@ -708,7 +716,8 @@ class BuyerRequestService {
 					(float) ( $row['amount'] ?? 0 ),
 					(int) ( $row['days'] ?? 0 ),
 					(string) ( $row['deliverables'] ?? '' ),
-					true // mark as contract milestone — abandon-cron will skip these.
+					true, // mark as contract milestone — abandon-cron will skip these.
+					false // defer wpss_milestone_proposed until after COMMIT.
 				);
 				if ( ! $ms_result['success'] ) {
 					$wpdb->query( 'ROLLBACK' );
@@ -722,10 +731,20 @@ class BuyerRequestService {
 						),
 					);
 				}
+				$created_milestone_ids[] = (int) $ms_result['milestone_id'];
 			}
 		}
 
 		$wpdb->query( 'COMMIT' );
+
+		// Transaction has committed — now fire the deferred hooks for each
+		// predefined milestone so notifications and emails go out with
+		// confidence that the underlying rows exist.
+		if ( ! empty( $created_milestone_ids ?? array() ) ) {
+			foreach ( $created_milestone_ids as $ms_id ) {
+				do_action( 'wpss_milestone_proposed', $ms_id, $order_id, (int) $proposal->vendor_id );
+			}
+		}
 
 		// Accept the proposal.
 		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );

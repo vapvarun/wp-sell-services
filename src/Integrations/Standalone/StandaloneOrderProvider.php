@@ -345,42 +345,73 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			return false;
 		}
 
-		// Calculate delivery deadline only if not already set (e.g., by convert_to_order).
-		$update_data = [
-			'status'         => ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+		// Sub-order platforms (tip, extension, milestone) do NOT go through
+		// the requirements workflow — they have their own service handler
+		// wired to `wpss_order_paid` which credits the vendor wallet and
+		// flips the sub-order straight to its correct terminal / in_progress
+		// state. Running them through the generic pending_requirements
+		// transition here caused two problems:
+		//   1. A brief pending_requirements status flicker fired the wrong
+		//      "new order received" email to buyer + vendor.
+		//   2. The sub-order's final status update (e.g. completed for tips)
+		//      then had to re-fire status-change hooks for a status the
+		//      subscriber thought had already been reached.
+		// Treating sub-orders as paid-only (no status transition here) keeps
+		// the money + notification path clean — the service handler for
+		// each platform is the authority on what state the sub-order ends
+		// up in.
+		$is_sub_order = in_array(
+			$order->platform ?? '',
+			array(
+				\WPSellServices\Services\TippingService::ORDER_TYPE,
+				\WPSellServices\Services\ExtensionOrderService::ORDER_TYPE,
+				\WPSellServices\Services\MilestoneService::ORDER_TYPE,
+			),
+			true
+		);
+
+		$update_data = array(
 			'payment_status' => 'paid',
 			'payment_method' => $payment_method,
 			'transaction_id' => $transaction_id,
 			'paid_at'        => current_time( 'mysql' ),
 			'updated_at'     => current_time( 'mysql' ),
-		];
+		);
 
-		if ( empty( $order->delivery_deadline ) ) {
-			$delivery_days = 7;
-			$service       = $order->get_service();
-			if ( $service ) {
-				$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
-				if ( isset( $packages[ $order->package_id ] ) ) {
-					$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
+		if ( ! $is_sub_order ) {
+			$update_data['status'] = ServiceOrder::STATUS_PENDING_REQUIREMENTS;
+
+			// Calculate delivery deadline only if not already set (e.g., by convert_to_order).
+			if ( empty( $order->delivery_deadline ) ) {
+				$delivery_days = 7;
+				$service       = $order->get_service();
+				if ( $service ) {
+					$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: array();
+					if ( isset( $packages[ $order->package_id ] ) ) {
+						$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
+					}
 				}
-			}
 
-			$deadline                         = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
-			$update_data['delivery_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
-			$update_data['original_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
+				$deadline                         = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
+				$update_data['delivery_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
+				$update_data['original_deadline'] = $deadline->format( 'Y-m-d H:i:s' );
+			}
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$table,
 			$update_data,
-			[ 'id' => $order_id ]
+			array( 'id' => $order_id )
 		);
 
 		if ( $result ) {
-			// Fire status change hooks so notifications and workflows trigger.
-			do_action( 'wpss_order_status_changed', $order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS, ServiceOrder::STATUS_PENDING_PAYMENT );
-			do_action( 'wpss_order_status_pending_requirements', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+			// Fire status-change hooks only for real service orders. Sub-orders
+			// manage their own lifecycle via their service handler on wpss_order_paid.
+			if ( ! $is_sub_order ) {
+				do_action( 'wpss_order_status_changed', $order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS, ServiceOrder::STATUS_PENDING_PAYMENT );
+				do_action( 'wpss_order_status_pending_requirements', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+			}
 
 			/**
 			 * Fires when an order is marked as paid.
