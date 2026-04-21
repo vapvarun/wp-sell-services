@@ -234,6 +234,43 @@ class OrdersController extends RestController {
 			)
 		);
 
+		// List sub-orders (milestones + extensions + tips) for a parent.
+		// Single normalised view mobile clients can use to render the
+		// "related activity" column without making three separate calls.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/sub-orders',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_sub_orders' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'type' => array(
+							'description' => __( 'Filter by sub-order type: milestone, extension, or tip.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'enum'        => array( 'milestone', 'extension', 'tip' ),
+						),
+					),
+				),
+			)
+		);
+
+		// Trigger payment on an existing order (primarily used for
+		// milestone sub-orders where the lock-step rule must be enforced
+		// server-side so a crafted URL can't leapfrog phases).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/pay',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'trigger_pay_order' ),
+					'permission_callback' => array( $this, 'check_customer_permissions' ),
+				),
+			)
+		);
+
 		// Remove requirement file.
 		register_rest_route(
 			$this->namespace,
@@ -1159,6 +1196,178 @@ class OrdersController extends RestController {
 				'order_id' => $order_id,
 				'message'  => __( 'File removed.', 'wp-sell-services' ),
 			)
+		);
+	}
+
+	/**
+	 * GET /orders/{id}/sub-orders
+	 *
+	 * Returns a normalised listing of the milestone / extension / tip
+	 * sub-orders attached to a parent order, so the mobile client can
+	 * render the parent's receipt the same way the dashboard template
+	 * does. Each row carries the platform marker, the wallet commission
+	 * breakdown (when settled), and — for milestones — the computed
+	 * `is_locked` value so the client doesn't have to re-derive the
+	 * lock-step state on its own.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_sub_orders( $request ) {
+		global $wpdb;
+
+		$order_id = (int) $request->get_param( 'id' );
+		$type     = $request->get_param( 'type' );
+		$parent   = ServiceOrder::find( $order_id );
+
+		if ( ! $parent ) {
+			return new WP_Error(
+				'rest_order_not_found',
+				__( 'Order not found.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$platforms = array( 'milestone', 'extension', 'tip' );
+		if ( $type && in_array( $type, $platforms, true ) ) {
+			$platforms = array( $type );
+		}
+
+		$table        = $wpdb->prefix . 'wpss_orders';
+		$placeholders = implode( ',', array_fill( 0, count( $platforms ), '%s' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table}
+				WHERE platform_order_id = %d AND platform IN ({$placeholders})
+				ORDER BY created_at ASC, id ASC",
+				array_merge( array( $order_id ), $platforms )
+			)
+		);
+		// phpcs:enable
+
+		// Pre-fetch milestone lock state in one pass so we don't re-scan
+		// per row. Tip and extension sub-orders never lock.
+		$milestone_locks = array();
+		if ( in_array( 'milestone', $platforms, true ) && $rows ) {
+			$milestone_service = new \WPSellServices\Services\MilestoneService();
+			foreach ( $milestone_service->get_for_parent( $order_id ) as $ms ) {
+				$milestone_locks[ (int) $ms['id'] ] = (bool) $ms['is_locked'];
+			}
+		}
+
+		$data = array();
+		foreach ( $rows ?: array() as $row ) {
+			$meta = is_string( $row->meta ?? '' ) && '' !== $row->meta ? json_decode( $row->meta, true ) : array();
+
+			$item = array(
+				'id'              => (int) $row->id,
+				'parent_order_id' => $order_id,
+				'type'            => (string) $row->platform,
+				'order_number'    => (string) $row->order_number,
+				'status'          => (string) $row->status,
+				'payment_status'  => (string) $row->payment_status,
+				'amount'          => (float) $row->total,
+				'currency'        => (string) $row->currency,
+				'vendor_earnings' => isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null,
+				'platform_fee'    => isset( $row->platform_fee ) ? (float) $row->platform_fee : null,
+				'title'           => (string) ( $meta['title'] ?? '' ),
+				'description'     => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
+				'created_at'      => $this->format_datetime( $row->created_at ?? null ),
+				'completed_at'    => $this->format_datetime( $row->completed_at ?? null ),
+			);
+
+			if ( 'milestone' === $row->platform ) {
+				$item['is_locked']             = $milestone_locks[ (int) $row->id ] ?? false;
+				$item['is_contract_milestone'] = ! empty( $meta['is_contract_milestone'] );
+				$item['deliverables']          = (string) ( $meta['deliverables'] ?? '' );
+				$item['sort_order']            = (int) ( $meta['sort_order'] ?? 0 );
+			}
+
+			if ( 'extension' === $row->platform ) {
+				$item['extra_days'] = (int) ( $meta['extra_days'] ?? 0 );
+				$item['reason']     = (string) ( $meta['reason'] ?? '' );
+			}
+
+			if ( 'tip' === $row->platform ) {
+				$item['message'] = (string) ( $meta['message'] ?? '' );
+			}
+
+			$data[] = $item;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'parent_order_id' => $order_id,
+				'sub_orders'      => $data,
+				'count'           => count( $data ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * POST /orders/{id}/pay
+	 *
+	 * Buyer-side endpoint that yields a checkout URL for a pending-payment
+	 * order. Enforces the milestone lock-step guard so a crafted REST
+	 * call can't let a buyer skip ahead to a later phase — mirrors the
+	 * server-side guard inside
+	 * {@see StandaloneCheckoutProvider::render_pay_order_checkout()}.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function trigger_pay_order( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$order    = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return new WP_Error(
+				'wpss_order_not_found',
+				__( 'Order not found.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( 'pending_payment' !== ( $order->status ?? '' ) ) {
+			return new WP_Error(
+				'wpss_order_not_payable',
+				__( 'This order is not awaiting payment.', 'wp-sell-services' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		// Lock-step guard on milestone sub-orders — HTTP 409 with the same
+		// error code the UI surfaces, so the mobile client shows the
+		// "previous phase first" hint identically to the website.
+		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+			$milestone_service = new \WPSellServices\Services\MilestoneService();
+			if ( $milestone_service->is_locked( $order_id ) ) {
+				return new WP_Error(
+					'wpss_milestone_locked',
+					__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
+					array( 'status' => 409 )
+				);
+			}
+		}
+
+		$base_url     = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
+		$checkout_url = add_query_arg( 'pay_order', $order_id, $base_url );
+
+		return new WP_REST_Response(
+			array(
+				'success'      => true,
+				'order_id'     => $order_id,
+				'checkout_url' => $checkout_url,
+				'platform'     => (string) ( $order->platform ?? '' ),
+			),
+			200
 		);
 	}
 

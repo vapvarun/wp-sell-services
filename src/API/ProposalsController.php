@@ -53,7 +53,7 @@ class ProposalsController extends RestController {
 	 * @return void
 	 */
 	public function register_routes(): void {
-		// Get vendor's proposals.
+		// Get vendor's proposals / submit a new one (milestone-aware).
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -71,6 +71,45 @@ class ProposalsController extends RestController {
 							],
 						]
 					),
+				],
+				[
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_item' ],
+					'permission_callback' => [ $this, 'check_vendor_can_submit' ],
+					'args'                => [
+						'request_id'    => [
+							'type'     => 'integer',
+							'required' => true,
+						],
+						'cover_letter'  => [
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'contract_type' => [
+							'type'    => 'string',
+							'enum'    => array( ProposalService::CONTRACT_TYPE_FIXED, ProposalService::CONTRACT_TYPE_MILESTONE ),
+							'default' => ProposalService::CONTRACT_TYPE_FIXED,
+						],
+						'price'         => [
+							'type' => 'number',
+						],
+						'delivery_days' => [
+							'type' => 'integer',
+						],
+						'service_id'    => [
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						],
+						'milestones'    => [
+							'type'  => 'array',
+							'items' => array( 'type' => 'object' ),
+						],
+						'attachments'   => [
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						],
+					],
 				],
 			]
 		);
@@ -110,6 +149,14 @@ class ProposalsController extends RestController {
 						'delivery_days' => [
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
+						],
+						'contract_type' => [
+							'type' => 'string',
+							'enum' => array( ProposalService::CONTRACT_TYPE_FIXED, ProposalService::CONTRACT_TYPE_MILESTONE ),
+						],
+						'milestones'    => [
+							'type'  => 'array',
+							'items' => array( 'type' => 'object' ),
 						],
 					],
 				],
@@ -235,6 +282,112 @@ class ProposalsController extends RestController {
 	}
 
 	/**
+	 * Gate for submitting a proposal — must be logged in AND have the
+	 * vendor capability. Owning the request is irrelevant (vendors can't
+	 * submit proposals against their own requests anyway, but that's a
+	 * service-layer rule).
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function check_vendor_can_submit( WP_REST_Request $request ) {
+		$perm = $this->check_permissions( $request );
+		if ( is_wp_error( $perm ) ) {
+			return $perm;
+		}
+
+		if ( ! function_exists( 'wpss_is_vendor' ) || ! wpss_is_vendor() ) {
+			return $this->error( 'wpss_not_vendor', __( 'You must be a vendor to submit proposals.', 'wp-sell-services' ), 403 );
+		}
+
+		return true;
+	}
+
+	/**
+	 * POST /proposals
+	 *
+	 * Milestone-aware proposal submission. Runs unchanged through
+	 * {@see ProposalService::submit()} — no client-side price summing,
+	 * server is the authority on proposed_price + proposed_days for
+	 * milestone contracts.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function create_item( $request ) {
+		$request_id   = (int) $request->get_param( 'request_id' );
+		$vendor_id    = get_current_user_id();
+
+		$buyer_request = get_post( $request_id );
+		if ( ! $buyer_request || 'wpss_request' !== $buyer_request->post_type ) {
+			return $this->error( 'wpss_request_not_found', __( 'Buyer request not found.', 'wp-sell-services' ), 404 );
+		}
+
+		$data = array(
+			'description'   => $request->get_param( 'cover_letter' ),
+			'contract_type' => $request->get_param( 'contract_type' ) ?: ProposalService::CONTRACT_TYPE_FIXED,
+			'price'         => $request->get_param( 'price' ),
+			'delivery_days' => $request->get_param( 'delivery_days' ),
+			'service_id'    => $request->get_param( 'service_id' ),
+		);
+
+		$milestones = $request->get_param( 'milestones' );
+		if ( is_array( $milestones ) ) {
+			$data['milestones'] = $milestones;
+		}
+
+		$attachments = $request->get_param( 'attachments' );
+		if ( is_array( $attachments ) ) {
+			$data['attachments'] = array_map( 'absint', $attachments );
+		}
+
+		// Validation sanity check — submit() returns false for a wide set of
+		// reasons (closed request, already proposed, missing fields, invalid
+		// milestones). Surface what we can to the client.
+		if ( ProposalService::CONTRACT_TYPE_MILESTONE === $data['contract_type'] ) {
+			if ( ! is_array( $milestones ) || empty( $milestones ) ) {
+				return $this->error(
+					'wpss_proposal_no_milestones',
+					__( 'Milestone proposals must include at least one milestone.', 'wp-sell-services' ),
+					400
+				);
+			}
+		} elseif ( empty( $data['price'] ) ) {
+			return $this->error(
+				'wpss_proposal_price_required',
+				__( 'Fixed-price proposals must include a price.', 'wp-sell-services' ),
+				400
+			);
+		}
+
+		$result = $this->proposal_service->submit( $request_id, $vendor_id, $data );
+
+		if ( false === $result ) {
+			return $this->error(
+				'wpss_proposal_submit_failed',
+				__( 'Failed to submit proposal. The request may be closed, you may already have submitted one, or the milestone breakdown is invalid.', 'wp-sell-services' ),
+				400
+			);
+		}
+
+		$proposal = $this->proposal_service->get( $result );
+
+		return new WP_REST_Response(
+			array(
+				'success'     => true,
+				'message'     => __( 'Proposal submitted successfully.', 'wp-sell-services' ),
+				'proposal_id' => $result,
+				'data'        => $proposal ? $this->prepare_proposal_for_response( $proposal, true ) : null,
+			),
+			201
+		);
+	}
+
+	/**
 	 * Get vendor's proposals.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -279,6 +432,12 @@ class ProposalsController extends RestController {
 	/**
 	 * Update proposal.
 	 *
+	 * Accepts the same contract-type / milestones payload as the submit
+	 * endpoint so the Upwork-style editing flow works over REST.
+	 * Price + delivery_days for milestone contracts are derived from the
+	 * milestone breakdown by the service layer — the client must not set
+	 * them directly when switching to milestone mode.
+	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
@@ -288,43 +447,45 @@ class ProposalsController extends RestController {
 
 		// Can only update pending proposals.
 		if ( 'pending' !== $proposal->status ) {
-			return new WP_Error(
-				'cannot_update',
+			return $this->error(
+				'wpss_proposal_not_pending',
 				__( 'You can only update pending proposals.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
+				409
 			);
 		}
 
 		$data = [];
 
 		if ( $request->get_param( 'cover_letter' ) !== null ) {
-			$data['cover_letter'] = $request->get_param( 'cover_letter' );
+			// ProposalService::update() reads 'description' (matches submit()).
+			$data['description'] = $request->get_param( 'cover_letter' );
 		}
 
 		if ( $request->get_param( 'price' ) !== null ) {
-			$data['price'] = $request->get_param( 'price' );
+			$data['price'] = (float) $request->get_param( 'price' );
 		}
 
 		if ( $request->get_param( 'delivery_days' ) !== null ) {
-			$data['delivery_days'] = $request->get_param( 'delivery_days' );
+			$data['delivery_days'] = (int) $request->get_param( 'delivery_days' );
+		}
+
+		if ( $request->get_param( 'contract_type' ) !== null ) {
+			$data['contract_type'] = (string) $request->get_param( 'contract_type' );
+		}
+
+		$milestones = $request->get_param( 'milestones' );
+		if ( is_array( $milestones ) ) {
+			$data['milestones'] = $milestones;
 		}
 
 		if ( empty( $data ) ) {
-			return new WP_Error(
-				'no_data',
-				__( 'No data to update.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
-			);
+			return $this->error( 'wpss_proposal_no_data', __( 'No data to update.', 'wp-sell-services' ), 400 );
 		}
 
 		$result = $this->proposal_service->update( $proposal_id, $data );
 
 		if ( ! $result ) {
-			return new WP_Error(
-				'update_failed',
-				__( 'Failed to update proposal.', 'wp-sell-services' ),
-				[ 'status' => 400 ]
-			);
+			return $this->error( 'wpss_proposal_update_failed', __( 'Failed to update proposal. Milestone proposals must include at least one valid milestone.', 'wp-sell-services' ), 400 );
 		}
 
 		$updated_proposal = $this->proposal_service->get( $proposal_id );
@@ -332,8 +493,9 @@ class ProposalsController extends RestController {
 		return new WP_REST_Response(
 			[
 				'message' => __( 'Proposal updated successfully.', 'wp-sell-services' ),
-				'data'    => $this->prepare_proposal_for_response( $updated_proposal ),
-			]
+				'data'    => $this->prepare_proposal_for_response( $updated_proposal, true ),
+			],
+			200
 		);
 	}
 
@@ -375,6 +537,10 @@ class ProposalsController extends RestController {
 	/**
 	 * Prepare proposal for response.
 	 *
+	 * The `milestones` field is always returned as a decoded array — never
+	 * as the raw JSON string stored in the DB — so the mobile client never
+	 * has to decode twice.
+	 *
 	 * @param object $proposal Proposal object.
 	 * @param bool   $detailed Include full details.
 	 * @return array
@@ -382,6 +548,15 @@ class ProposalsController extends RestController {
 	private function prepare_proposal_for_response( object $proposal, bool $detailed = false ): array {
 		$vendor  = get_userdata( $proposal->vendor_id );
 		$request = get_post( $proposal->request_id );
+
+		// ProposalService::format_proposal() normalises milestones to an
+		// array already; guard against older in-flight payloads that might
+		// still carry the raw JSON string.
+		$milestones = $proposal->milestones ?? array();
+		if ( is_string( $milestones ) ) {
+			$decoded    = json_decode( $milestones, true );
+			$milestones = is_array( $decoded ) ? $decoded : array();
+		}
 
 		$data = [
 			'id'            => (int) $proposal->id,
@@ -394,6 +569,8 @@ class ProposalsController extends RestController {
 			],
 			'price'         => (float) $proposal->proposed_price,
 			'delivery_days' => (int) $proposal->proposed_days,
+			'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
+			'milestones'    => $milestones,
 			'status'        => $proposal->status,
 			'created_at'    => $proposal->created_at,
 		];

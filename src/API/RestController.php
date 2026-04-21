@@ -223,6 +223,86 @@ abstract class RestController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Build a standardised error response for sub-order flows.
+	 *
+	 * Keeps the plugin's convention consistent across Milestones, Extensions,
+	 * Tipping, and Proposals: a machine-readable code, a user-facing message,
+	 * and an explicit HTTP status on `data.status` so clients don't have to
+	 * read headers and payload separately.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string $code    Error code (e.g. `wpss_milestone_locked`).
+	 * @param string $message Human-readable message, already translated.
+	 * @param int    $status  HTTP status (400, 401, 403, 404, 409, 500).
+	 * @param array  $extra   Optional extra fields merged into the `data` bag.
+	 * @return WP_Error
+	 */
+	protected function error( string $code, string $message, int $status, array $extra = array() ): WP_Error {
+		$data = array_merge( array( 'status' => $status ), $extra );
+		return new WP_Error( $code, $message, $data );
+	}
+
+	/**
+	 * Require the current request to come from an authenticated user.
+	 *
+	 * Shared gate used by write endpoints that don't need an ownership check
+	 * before validating the body — returns the canonical 401 error.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @return true|WP_Error
+	 */
+	protected function require_login() {
+		if ( ! is_user_logged_in() ) {
+			return $this->error(
+				'wpss_not_logged_in',
+				__( 'You must be logged in to access this endpoint.', 'wp-sell-services' ),
+				401
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Load a parent order and confirm the current user is either its buyer
+	 * or its vendor. Returns either the order row or a WP_Error with the
+	 * correct HTTP status (401 / 403 / 404).
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int $order_id Order ID to load.
+	 * @return object|WP_Error
+	 */
+	protected function get_order_for_participant( int $order_id ) {
+		$login = $this->require_login();
+		if ( is_wp_error( $login ) ) {
+			return $login;
+		}
+
+		$order = function_exists( 'wpss_get_order' ) ? wpss_get_order( $order_id ) : null;
+		if ( ! $order ) {
+			return $this->error(
+				'wpss_order_not_found',
+				__( 'Order not found.', 'wp-sell-services' ),
+				404
+			);
+		}
+
+		$user_id = get_current_user_id();
+		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+			return $this->error(
+				'wpss_forbidden',
+				__( 'You do not have access to this order.', 'wp-sell-services' ),
+				403
+			);
+		}
+
+		return $order;
+	}
+
+	/**
 	 * Get common schema properties.
 	 *
 	 * @return array

@@ -2,6 +2,21 @@
 /**
  * Extension Requests REST Controller
  *
+ * Paid-extension sub-order flow. Vendor raises a quote (extra money + extra
+ * days), buyer accepts by paying via the same checkout pattern tips and
+ * milestones use.
+ *
+ * Proxies to {@see \WPSellServices\Services\ExtensionOrderService} so the
+ * REST surface and the dashboard AJAX handlers (ajax_request_extension /
+ * ajax_decline_extension) share one code path. HTTP statuses:
+ *   200  list / read
+ *   201  create (sub-order + request row)
+ *   400  validation error from the service
+ *   401  not logged in
+ *   403  wrong role for the action
+ *   404  order / request not found
+ *   409  state conflict (already answered, wrong parent status)
+ *
  * @package WPSellServices\API
  * @since   1.0.0
  */
@@ -17,13 +32,29 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Services\ExtensionOrderService;
+use WPSellServices\Services\ExtensionRequestService;
 
 /**
- * REST controller for order deadline extension requests.
+ * REST controller for paid extension sub-orders.
  *
  * @since 1.0.0
  */
 class ExtensionRequestsController extends RestController {
+
+	/**
+	 * Extension sub-order service.
+	 *
+	 * @var ExtensionOrderService
+	 */
+	private ExtensionOrderService $extensions;
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		$this->extensions = new ExtensionOrderService();
+	}
 
 	/**
 	 * Register routes.
@@ -31,7 +62,7 @@ class ExtensionRequestsController extends RestController {
 	 * @return void
 	 */
 	public function register_routes(): void {
-		// GET /orders/{order_id}/extensions - Get extension requests.
+		// GET /orders/{order_id}/extensions — list.
 		register_rest_route(
 			$this->namespace,
 			'/orders/(?P<order_id>[\d]+)/extensions',
@@ -44,16 +75,23 @@ class ExtensionRequestsController extends RestController {
 			)
 		);
 
-		// POST /orders/{order_id}/extensions - Create extension request.
+		// POST /orders/{order_id}/extension — vendor creates the quote
+		// (singular path mirrors the verb the mobile app is calling).
 		register_rest_route(
 			$this->namespace,
-			'/orders/(?P<order_id>[\d]+)/extensions',
+			'/orders/(?P<order_id>[\d]+)/extension',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'check_order_access' ),
+					'permission_callback' => array( $this, 'check_vendor_order_access' ),
 					'args'                => array(
+						'amount'     => array(
+							'description' => __( 'Additional amount the buyer will pay.', 'wp-sell-services' ),
+							'type'        => 'number',
+							'required'    => true,
+							'minimum'     => 0.01,
+						),
 						'extra_days' => array(
 							'description' => __( 'Number of additional days requested.', 'wp-sell-services' ),
 							'type'        => 'integer',
@@ -61,7 +99,7 @@ class ExtensionRequestsController extends RestController {
 							'minimum'     => 1,
 						),
 						'reason'     => array(
-							'description' => __( 'Reason for the extension.', 'wp-sell-services' ),
+							'description' => __( 'Reason shown to the buyer.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
@@ -70,38 +108,49 @@ class ExtensionRequestsController extends RestController {
 			)
 		);
 
-		// POST /orders/{order_id}/extensions/{id}/approve - Approve.
+		// Keep the legacy plural POST /orders/{id}/extensions alias so
+		// older mobile clients don't break while they roll forward.
 		register_rest_route(
 			$this->namespace,
-			'/orders/(?P<order_id>[\d]+)/extensions/(?P<id>[\d]+)/approve',
+			'/orders/(?P<order_id>[\d]+)/extensions',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'approve' ),
-					'permission_callback' => array( $this, 'check_order_access' ),
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'check_vendor_order_access' ),
 					'args'                => array(
-						'response_message' => array(
-							'description' => __( 'Response message.', 'wp-sell-services' ),
-							'type'        => 'string',
+						'amount'     => array(
+							'type'     => 'number',
+							'required' => true,
+							'minimum'  => 0.01,
+						),
+						'extra_days' => array(
+							'type'     => 'integer',
+							'required' => true,
+							'minimum'  => 1,
+						),
+						'reason'     => array(
+							'type'     => 'string',
+							'required' => true,
 						),
 					),
 				),
 			)
 		);
 
-		// POST /orders/{order_id}/extensions/{id}/reject - Reject.
+		// POST /extensions/{id}/decline — buyer declines the quote.
 		register_rest_route(
 			$this->namespace,
-			'/orders/(?P<order_id>[\d]+)/extensions/(?P<id>[\d]+)/reject',
+			'/extensions/(?P<id>[\d]+)/decline',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'reject' ),
-					'permission_callback' => array( $this, 'check_order_access' ),
+					'callback'            => array( $this, 'decline_item' ),
+					'permission_callback' => array( $this, 'check_buyer_extension_access' ),
 					'args'                => array(
-						'response_message' => array(
-							'description' => __( 'Reason for rejection.', 'wp-sell-services' ),
-							'type'        => 'string',
+						'note' => array(
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_textarea_field',
 						),
 					),
 				),
@@ -110,7 +159,10 @@ class ExtensionRequestsController extends RestController {
 	}
 
 	/**
-	 * Get extension requests for order.
+	 * GET /orders/{order_id}/extensions
+	 *
+	 * Signature matches WP_REST_Controller::get_items — no type declaration
+	 * on the parameter, to stay compatible with the parent class.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
@@ -121,6 +173,7 @@ class ExtensionRequestsController extends RestController {
 		$order_id = (int) $request->get_param( 'order_id' );
 		$table    = $wpdb->prefix . 'wpss_extension_requests';
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$table} WHERE order_id = %d ORDER BY created_at DESC",
@@ -129,226 +182,196 @@ class ExtensionRequestsController extends RestController {
 			ARRAY_A
 		);
 
-		$extensions = array_map( array( $this, 'format_item' ), $items ?: array() );
-
-		return new WP_REST_Response( $extensions );
+		return new WP_REST_Response( array_map( array( $this, 'format_item' ), $items ?: array() ), 200 );
 	}
 
 	/**
-	 * Create extension request.
+	 * POST /orders/{order_id}/extension
+	 *
+	 * Vendor asks the buyer for more money + more time. Returns the new
+	 * sub-order ID and checkout URL so the client can direct the buyer to
+	 * pay.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		global $wpdb;
-
 		$order_id   = (int) $request->get_param( 'order_id' );
+		$amount     = (float) $request->get_param( 'amount' );
 		$extra_days = (int) $request->get_param( 'extra_days' );
-		$reason     = sanitize_textarea_field( $request->get_param( 'reason' ) );
-		$user_id    = get_current_user_id();
-		$table      = $wpdb->prefix . 'wpss_extension_requests';
+		$reason     = (string) $request->get_param( 'reason' );
 
-		// Only allow extensions on active orders.
-		$order = wpss_get_order( $order_id );
-		if ( $order && ! in_array( $order->status, array( 'in_progress', 'pending_approval', 'late', 'revision_requested' ), true ) ) {
-			return new WP_Error( 'invalid_order_status', __( 'Extensions can only be requested for active orders.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Check for existing pending request.
-		$existing = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE order_id = %d AND status = 'pending'",
-				$order_id
-			)
+		$result = $this->extensions->create_extension_request(
+			$order_id,
+			$amount,
+			$extra_days,
+			get_current_user_id(),
+			$reason
 		);
 
-		if ( $existing > 0 ) {
-			return new WP_Error( 'pending_exists', __( 'There is already a pending extension request for this order.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		if ( ! $result['success'] ) {
+			return $this->error( 'wpss_extension_create_failed', $result['message'], 400 );
 		}
 
-		$wpdb->insert(
-			$table,
+		return new WP_REST_Response(
 			array(
-				'order_id'     => $order_id,
-				'requested_by' => $user_id,
-				'extra_days'   => $extra_days,
-				'reason'       => $reason,
-				'status'       => 'pending',
-				'created_at'   => current_time( 'mysql', true ),
+				'success'      => true,
+				'request_id'   => (int) $result['request_id'],
+				'pay_order_id' => (int) $result['pay_order_id'],
+				'checkout_url' => $result['checkout_url'],
+				'message'      => $result['message'],
 			),
-			array( '%d', '%d', '%d', '%s', '%s', '%s' )
+			201
 		);
-
-		$request_id = (int) $wpdb->insert_id;
-
-		if ( ! $request_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create extension request.', 'wp-sell-services' ), array( 'status' => 500 ) );
-		}
-
-		/**
-		 * Fires after an extension request is created.
-		 *
-		 * @param int $request_id Extension request ID.
-		 * @param int $order_id   Order ID.
-		 * @param int $user_id    User who requested.
-		 */
-		do_action( 'wpss_extension_requested', $request_id, $order_id, $user_id );
-
-		$item = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $request_id ),
-			ARRAY_A
-		);
-
-		return new WP_REST_Response( $this->format_item( $item ), 201 );
 	}
 
 	/**
-	 * Approve extension request.
+	 * POST /extensions/{id}/decline
+	 *
+	 * Buyer declines an unpaid extension request. Cancels the pending
+	 * sub-order and marks the history row rejected.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function approve( WP_REST_Request $request ) {
-		return $this->respond_to_request( $request, 'approved' );
-	}
+	public function decline_item( WP_REST_Request $request ) {
+		$request_id = (int) $request->get_param( 'id' );
+		$note       = (string) ( $request->get_param( 'note' ) ?? '' );
 
-	/**
-	 * Reject extension request.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function reject( WP_REST_Request $request ) {
-		return $this->respond_to_request( $request, 'rejected' );
-	}
+		$result = $this->extensions->decline( $request_id, get_current_user_id(), $note );
 
-	/**
-	 * Respond to extension request.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @param string          $status  New status.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	private function respond_to_request( WP_REST_Request $request, string $status ) {
-		global $wpdb;
-
-		$ext_id           = (int) $request->get_param( 'id' );
-		$order_id         = (int) $request->get_param( 'order_id' );
-		$response_message = sanitize_textarea_field( $request->get_param( 'response_message' ) ?: '' );
-		$table            = $wpdb->prefix . 'wpss_extension_requests';
-
-		$ext_request = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d AND order_id = %d", $ext_id, $order_id ),
-			ARRAY_A
-		);
-
-		if ( ! $ext_request ) {
-			return new WP_Error( 'not_found', __( 'Extension request not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		if ( ! $result['success'] ) {
+			// Service layer returns "already answered" as a soft failure;
+			// translate to 409 so the client can decide whether to refresh.
+			$status = str_contains( $result['message'], 'already' ) ? 409 : 400;
+			return $this->error( 'wpss_extension_decline_failed', $result['message'], $status );
 		}
 
-		if ( 'pending' !== $ext_request['status'] ) {
-			return new WP_Error( 'invalid_status', __( 'This request has already been responded to.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Requester cannot approve/reject own request.
-		if ( (int) $ext_request['requested_by'] === get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You cannot respond to your own request.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		$wpdb->update(
-			$table,
+		return new WP_REST_Response(
 			array(
-				'status'           => $status,
-				'responded_by'     => get_current_user_id(),
-				'response_message' => $response_message,
-				'responded_at'     => current_time( 'mysql', true ),
+				'success' => true,
+				'message' => $result['message'],
 			),
-			array( 'id' => $ext_id ),
-			array( '%s', '%d', '%s', '%s' ),
-			array( '%d' )
+			200
 		);
-
-		// If approved, extend the order due date.
-		if ( 'approved' === $status ) {
-			$orders_table = $wpdb->prefix . 'wpss_orders';
-
-			$wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$orders_table} SET due_date = DATE_ADD(due_date, INTERVAL %d DAY) WHERE id = %d",
-					(int) $ext_request['extra_days'],
-					$order_id
-				)
-			);
-
-			/**
-			 * Fires after an extension is approved and due date updated.
-			 *
-			 * @param int $ext_id    Extension request ID.
-			 * @param int $order_id  Order ID.
-			 * @param int $extra_days Days added.
-			 */
-			do_action( 'wpss_extension_approved', $ext_id, $order_id, (int) $ext_request['extra_days'] );
-		}
-
-		$updated = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $ext_id ),
-			ARRAY_A
-		);
-
-		return new WP_REST_Response( $this->format_item( $updated ) );
 	}
 
+	// ---------------------------------------------------------------------
+	// Permission gates.
+	// ---------------------------------------------------------------------
+
 	/**
-	 * Check order access.
+	 * Buyer or vendor of the parent order can list.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return bool|WP_Error
+	 * @return true|WP_Error
 	 */
 	public function check_order_access( WP_REST_Request $request ) {
-		$perm_check = $this->check_permissions( $request );
-		if ( is_wp_error( $perm_check ) ) {
-			return $perm_check;
+		$perm = $this->check_permissions( $request );
+		if ( is_wp_error( $perm ) ) {
+			return $perm;
+		}
+
+		$order = $this->get_order_for_participant( (int) $request->get_param( 'order_id' ) );
+		return is_wp_error( $order ) ? $order : true;
+	}
+
+	/**
+	 * Vendor-only gate for creating an extension quote.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function check_vendor_order_access( WP_REST_Request $request ) {
+		$perm = $this->check_permissions( $request );
+		if ( is_wp_error( $perm ) ) {
+			return $perm;
 		}
 
 		$order_id = (int) $request->get_param( 'order_id' );
+		$order    = wpss_get_order( $order_id );
 
-		if ( ! $this->user_owns_resource( $order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have access to this order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		if ( ! $order ) {
+			return $this->error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), 404 );
+		}
+
+		if ( (int) $order->vendor_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+			return $this->error( 'wpss_forbidden', __( 'Only the seller can request an extension on this order.', 'wp-sell-services' ), 403 );
 		}
 
 		return true;
 	}
 
 	/**
-	 * Format item for response.
+	 * Buyer-only gate for declining an extension quote.
 	 *
-	 * @param array $item Raw data.
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function check_buyer_extension_access( WP_REST_Request $request ) {
+		$perm = $this->check_permissions( $request );
+		if ( is_wp_error( $perm ) ) {
+			return $perm;
+		}
+
+		global $wpdb;
+		$table      = $wpdb->prefix . 'wpss_extension_requests';
+		$request_id = (int) $request->get_param( 'id' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $request_id )
+		);
+
+		if ( ! $row ) {
+			return $this->error( 'wpss_extension_not_found', __( 'Extension request not found.', 'wp-sell-services' ), 404 );
+		}
+
+		$parent = wpss_get_order( (int) $row->order_id );
+		if ( ! $parent ) {
+			return $this->error( 'wpss_order_not_found', __( 'Parent order not found.', 'wp-sell-services' ), 404 );
+		}
+
+		if ( (int) $parent->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+			return $this->error( 'wpss_forbidden', __( 'Only the buyer can decline this request.', 'wp-sell-services' ), 403 );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Format a raw extension-request row for the REST response.
+	 *
+	 * @param array $item Raw DB row.
 	 * @return array
 	 */
 	private function format_item( array $item ): array {
-		$requester = get_user_by( 'id', $item['requested_by'] );
-		$responder = ! empty( $item['responded_by'] ) ? get_user_by( 'id', $item['responded_by'] ) : null;
+		$requester = get_user_by( 'id', (int) $item['requested_by'] );
+		$responder = ! empty( $item['responded_by'] ) ? get_user_by( 'id', (int) $item['responded_by'] ) : null;
 
 		return array(
-			'id'               => (int) $item['id'],
-			'order_id'         => (int) $item['order_id'],
-			'requested_by'     => array(
+			'id'                => (int) $item['id'],
+			'order_id'          => (int) $item['order_id'],
+			'pay_order_id'      => isset( $item['pay_order_id'] ) ? (int) $item['pay_order_id'] : null,
+			'requested_by'      => array(
 				'id'   => (int) $item['requested_by'],
 				'name' => $requester ? $requester->display_name : __( 'Unknown', 'wp-sell-services' ),
 			),
-			'extra_days'       => (int) $item['extra_days'],
-			'reason'           => $item['reason'],
-			'status'           => $item['status'],
-			'responded_by'     => $responder
+			'extra_days'        => (int) $item['extra_days'],
+			'amount'            => isset( $item['amount'] ) ? (float) $item['amount'] : null,
+			'reason'            => $item['reason'] ?? '',
+			'status'            => $item['status'],
+			'responded_by'      => $responder
 				? array(
 					'id'   => (int) $item['responded_by'],
 					'name' => $responder->display_name,
 				)
 				: null,
-			'response_message' => $item['response_message'] ?? '',
-			'responded_at'     => $item['responded_at'] ?? null,
-			'created_at'       => $item['created_at'],
+			'response_message'  => $item['response_message'] ?? '',
+			'responded_at'      => $item['responded_at'] ?? null,
+			'original_due_date' => $item['original_due_date'] ?? null,
+			'new_due_date'      => $item['new_due_date'] ?? null,
+			'created_at'        => $item['created_at'],
 		);
 	}
 }

@@ -120,17 +120,17 @@ class TippingController extends RestController {
 		$result  = $service->create_pending_tip_order( $parent_order_id, $amount, $user_id, $message );
 
 		if ( empty( $result['success'] ) ) {
-			return new WP_Error(
+			return $this->error(
 				'wpss_tip_create_failed',
 				$result['message'] ?? __( 'Could not start tip flow.', 'wp-sell-services' ),
-				array( 'status' => 400 )
+				400
 			);
 		}
 
 		return new WP_REST_Response(
 			array(
 				'success'         => true,
-				'tip_order_id'    => $result['tip_order_id'],
+				'tip_order_id'    => (int) $result['tip_order_id'],
 				'checkout_url'    => $result['checkout_url'],
 				'parent_order_id' => $parent_order_id,
 				'amount'          => $amount,
@@ -276,14 +276,15 @@ class TippingController extends RestController {
 			return $perm_check;
 		}
 
-		global $wpdb;
 		$order_id = (int) $request->get_param( 'order_id' );
-		$order    = $wpdb->get_row(
-			$wpdb->prepare( "SELECT customer_id FROM {$wpdb->prefix}wpss_orders WHERE id = %d", $order_id )
-		);
+		$order    = wpss_get_order( $order_id );
 
-		if ( ! $order || ( (int) $order->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'Only the buyer can send tips.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		if ( ! $order ) {
+			return $this->error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), 404 );
+		}
+
+		if ( (int) $order->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+			return $this->error( 'wpss_forbidden', __( 'Only the buyer can send tips.', 'wp-sell-services' ), 403 );
 		}
 
 		return true;
@@ -301,12 +302,8 @@ class TippingController extends RestController {
 			return $perm_check;
 		}
 
-		$order_id = (int) $request->get_param( 'order_id' );
-		if ( ! $this->user_owns_resource( $order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have access to this order.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		return true;
+		$order = $this->get_order_for_participant( (int) $request->get_param( 'order_id' ) );
+		return is_wp_error( $order ) ? $order : true;
 	}
 
 	/**
@@ -324,7 +321,7 @@ class TippingController extends RestController {
 		$vendor_id = (int) $request->get_param( 'vendor_id' );
 
 		if ( $vendor_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You can only view your own tips.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return $this->error( 'wpss_forbidden', __( 'You can only view your own tips.', 'wp-sell-services' ), 403 );
 		}
 
 		return true;
