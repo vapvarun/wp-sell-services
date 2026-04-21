@@ -158,6 +158,14 @@ class MilestoneService {
 			return $fail( __( 'Only the seller can propose milestones on this order.', 'wp-sell-services' ) );
 		}
 
+		// Milestones are the payment model for custom, buyer-posted projects
+		// (platform='request'). Fixed-price catalog orders top up via
+		// Extensions instead, so there is one payment story per order and
+		// the seller never has to choose between two overlapping tools.
+		if ( 'request' !== ( $parent->platform ?? '' ) ) {
+			return $fail( __( 'Milestones are available on custom-project orders only. For fixed-price service orders, use Extensions for extra work.', 'wp-sell-services' ) );
+		}
+
 		// Allowed while the parent is still being planned or actively
 		// worked on. Cancelled or disputed parents cannot take new phases.
 		$allowed_parent_statuses = array(

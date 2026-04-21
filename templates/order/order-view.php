@@ -1171,10 +1171,15 @@ do_action( 'wpss_before_order_view', $order );
 		<?php endif; ?>
 	<?php endif; ?>
 
-	<!-- Milestones timeline (parent order only) -->
+	<!-- Milestones timeline (parent order only — request-mode orders) -->
 	<?php
-	$milestone_service   = new \WPSellServices\Services\MilestoneService();
-	$milestones          = $milestone_service->get_for_parent( (int) $order_id );
+	// Milestones are reserved for custom buyer-posted projects. Fixed-
+	// price catalog orders use Extensions; the server-side guards back
+	// this up, this just keeps the CTA from appearing where it doesn't
+	// apply so the seller never has to ask 'which one do I use?'.
+	$is_request_order          = 'request' === ( $order->platform ?? '' );
+	$milestone_service         = new \WPSellServices\Services\MilestoneService();
+	$milestones                = $is_request_order ? $milestone_service->get_for_parent( (int) $order_id ) : array();
 	$milestone_active_statuses = array(
 		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS,
 		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
@@ -1182,8 +1187,8 @@ do_action( 'wpss_before_order_view', $order );
 		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
 		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
 	);
-	$can_propose_milestone = $is_vendor && in_array( $order->status, $milestone_active_statuses, true );
-	$show_milestone_section = ! empty( $milestones ) || $can_propose_milestone;
+	$can_propose_milestone  = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
+	$show_milestone_section = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
 	$milestone_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
 
 	if ( $show_milestone_section ) :
@@ -1214,9 +1219,9 @@ do_action( 'wpss_before_order_view', $order );
 					<p class="wpss-milestone-empty">
 						<?php
 						if ( $is_vendor ) {
-							esc_html_e( 'Break this order into paid phases. The buyer pays each milestone up front; you deliver and they approve.', 'wp-sell-services' );
+							esc_html_e( 'This is a custom project — break it into paid phases so the buyer can approve each stage as you deliver.', 'wp-sell-services' );
 						} else {
-							esc_html_e( 'Your seller has not proposed any milestones yet.', 'wp-sell-services' );
+							esc_html_e( 'Your seller will propose the first milestone. You pay each phase up front; they deliver and you approve.', 'wp-sell-services' );
 						}
 						?>
 					</p>
@@ -1484,10 +1489,14 @@ do_action( 'wpss_before_order_view', $order );
 		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
 		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
 	);
+	// Extensions are for fixed-price catalog orders only. Request-mode
+	// orders run on the milestone payment model instead, so the two CTAs
+	// never appear on the same order.
 	$can_request_extension = $is_vendor
+		&& ! $is_request_order
 		&& null === $pending_extension
 		&& in_array( $order->status, $extension_active_statuses, true );
-	$buyer_sees_pending_extension = $is_customer && null !== $pending_extension;
+	$buyer_sees_pending_extension = $is_customer && ! $is_request_order && null !== $pending_extension;
 
 	if ( $buyer_sees_pending_extension ) :
 		$ext_pay_url = $pending_extension->pay_order_id
@@ -1582,7 +1591,7 @@ do_action( 'wpss_before_order_view', $order );
 					<polyline points="12 6 12 12 16 14"/>
 				</svg>
 				<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Buyer asked for extra work?', 'wp-sell-services' ); ?></h3>
-				<p class="wpss-tip-cta__text"><?php esc_html_e( 'Quote the additional amount and time you need. We send the buyer a payment link — once they pay, you can continue working on the extended scope.', 'wp-sell-services' ); ?></p>
+				<p class="wpss-tip-cta__text"><?php esc_html_e( 'Fixed-price order, buyer already paid the base. For small add-ons on top, quote the extra amount and time here. Once they pay, keep going on the expanded scope.', 'wp-sell-services' ); ?></p>
 				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-open-extension-modal"
 					data-order="<?php echo esc_attr( (int) $order_id ); ?>">
 					<?php esc_html_e( 'Send Quote to Buyer', 'wp-sell-services' ); ?>

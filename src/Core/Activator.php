@@ -202,6 +202,13 @@ class Activator {
 				'notify_proposal_accepted'      => true,
 				'notify_moderation'             => true,
 				'notify_tip_received'           => true,
+				'notify_milestone_proposed'     => true,
+				'notify_milestone_paid'         => true,
+				'notify_milestone_submitted'    => true,
+				'notify_milestone_approved'     => true,
+				'notify_extension_proposed'     => true,
+				'notify_extension_approved'     => true,
+				'notify_extension_declined'     => true,
 			),
 			// Advanced settings - matches Settings.php wpss_advanced.
 			'wpss_advanced'      => array(

@@ -54,6 +54,13 @@ class EmailService {
 	public const TYPE_MODERATION_PENDING     = 'moderation_pending';
 	public const TYPE_MODERATION_RESPONSE    = 'moderation_response';
 	public const TYPE_TIP_RECEIVED           = 'tip_received';
+	public const TYPE_MILESTONE_PROPOSED     = 'milestone_proposed';
+	public const TYPE_MILESTONE_PAID         = 'milestone_paid';
+	public const TYPE_MILESTONE_SUBMITTED    = 'milestone_submitted';
+	public const TYPE_MILESTONE_APPROVED     = 'milestone_approved';
+	public const TYPE_EXTENSION_PROPOSED     = 'extension_proposed';
+	public const TYPE_EXTENSION_APPROVED     = 'extension_approved';
+	public const TYPE_EXTENSION_DECLINED     = 'extension_declined';
 	public const TYPE_TEST_EMAIL             = 'test_email';
 
 	/**
@@ -458,6 +465,340 @@ class EmailService {
 				'tip_note'       => $note,
 				'reply_to_email' => $customer ? $customer->user_email : '',
 				'reply_to_name'  => $customer ? $customer->display_name : '',
+			)
+		);
+	}
+
+	/**
+	 * Send a milestone-proposed email to the buyer.
+	 *
+	 * Called from {@see \WPSellServices\Core\Plugin::define_notification_hooks()}
+	 * on `wpss_milestone_proposed`. Includes the phase title + deliverables
+	 * + an Accept & Pay deep link so the buyer can move forward in one click.
+	 *
+	 * @param ServiceOrder $milestone Milestone sub-order row.
+	 * @return bool
+	 */
+	public function send_milestone_proposed( ServiceOrder $milestone ): bool {
+		$buyer = get_user_by( 'id', $milestone->customer_id );
+		if ( ! $buyer ) {
+			return false;
+		}
+
+		$vendor       = get_user_by( 'id', $milestone->vendor_id );
+		$vendor_name  = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$parent_id    = (int) ( $milestone->platform_order_id ?? 0 );
+		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
+		$meta         = $this->decode_order_meta( $milestone );
+
+		$base_url  = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
+		$pay_url   = add_query_arg( 'pay_order', (int) $milestone->id, $base_url );
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: phase title */
+			__( '[%1$s] Milestone proposed: %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			(string) ( $meta['title'] ?? __( 'New phase', 'wp-sell-services' ) )
+		);
+
+		return $this->send(
+			$buyer->user_email,
+			$subject,
+			self::TYPE_MILESTONE_PROPOSED,
+			array(
+				'milestone'      => $milestone,
+				'parent_order'   => $parent_order,
+				'recipient'      => $buyer,
+				'email_heading'  => __( 'Milestone proposed', 'wp-sell-services' ),
+				'buyer_name'     => $buyer->display_name,
+				'vendor_name'    => $vendor_name,
+				'phase_title'    => (string) ( $meta['title'] ?? '' ),
+				'description'    => (string) ( $meta['description'] ?? ( $milestone->vendor_notes ?? '' ) ),
+				'deliverables'   => (string) ( $meta['deliverables'] ?? '' ),
+				'amount'         => (float) $milestone->total,
+				'currency'       => $milestone->currency ?? wpss_get_currency(),
+				'pay_url'        => $pay_url,
+			)
+		);
+	}
+
+	/**
+	 * Send a milestone-paid email to the vendor.
+	 *
+	 * Fired once the buyer's payment has cleared. Tells the vendor the
+	 * milestone is in their wallet (net of commission) and that they can
+	 * now start work and submit the delivery.
+	 *
+	 * @param ServiceOrder $milestone Milestone sub-order row.
+	 * @param float        $gross     Amount the buyer paid.
+	 * @param float        $net       Amount credited to vendor (post-commission).
+	 * @return bool
+	 */
+	public function send_milestone_paid( ServiceOrder $milestone, float $gross, float $net ): bool {
+		$vendor = get_user_by( 'id', $milestone->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$buyer      = get_user_by( 'id', $milestone->customer_id );
+		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$meta       = $this->decode_order_meta( $milestone );
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: phase title */
+			__( '[%1$s] Milestone paid — start work: %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			(string) ( $meta['title'] ?? __( 'your phase', 'wp-sell-services' ) )
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_MILESTONE_PAID,
+			array(
+				'milestone'     => $milestone,
+				'recipient'     => $vendor,
+				'email_heading' => __( 'Milestone paid', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer_name,
+				'phase_title'   => (string) ( $meta['title'] ?? '' ),
+				'description'   => (string) ( $meta['description'] ?? '' ),
+				'gross_amount'  => $gross,
+				'net_amount'    => $net,
+				'currency'      => $milestone->currency ?? wpss_get_currency(),
+			)
+		);
+	}
+
+	/**
+	 * Send a milestone-submitted email to the buyer.
+	 *
+	 * Vendor has marked the phase as delivered. Buyer should review and
+	 * approve, or reply in chat to request revisions.
+	 *
+	 * @param ServiceOrder $milestone Milestone sub-order row.
+	 * @return bool
+	 */
+	public function send_milestone_submitted( ServiceOrder $milestone ): bool {
+		$buyer = get_user_by( 'id', $milestone->customer_id );
+		if ( ! $buyer ) {
+			return false;
+		}
+
+		$vendor      = get_user_by( 'id', $milestone->vendor_id );
+		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$meta        = $this->decode_order_meta( $milestone );
+
+		$parent_id     = (int) ( $milestone->platform_order_id ?? 0 );
+		$dashboard_url = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
+		$review_url    = add_query_arg(
+			array(
+				'section'  => $parent_id ? 'orders' : 'orders',
+				'order_id' => (int) $milestone->id,
+			),
+			$dashboard_url
+		);
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: phase title */
+			__( '[%1$s] Milestone delivered: %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			(string) ( $meta['title'] ?? __( 'your phase', 'wp-sell-services' ) )
+		);
+
+		return $this->send(
+			$buyer->user_email,
+			$subject,
+			self::TYPE_MILESTONE_SUBMITTED,
+			array(
+				'milestone'     => $milestone,
+				'recipient'     => $buyer,
+				'email_heading' => __( 'Milestone delivered', 'wp-sell-services' ),
+				'buyer_name'    => $buyer->display_name,
+				'vendor_name'   => $vendor_name,
+				'phase_title'   => (string) ( $meta['title'] ?? '' ),
+				'description'   => (string) ( $meta['description'] ?? '' ),
+				'submit_note'   => (string) ( $meta['submit_note'] ?? '' ),
+				'review_url'    => $review_url,
+			)
+		);
+	}
+
+	/**
+	 * Send a milestone-approved email to the vendor.
+	 *
+	 * Terminal state for a phase — buyer has signed off. No money moves
+	 * (commission settled at payment), this is the delivery confirmation.
+	 *
+	 * @param ServiceOrder $milestone Milestone sub-order row.
+	 * @return bool
+	 */
+	public function send_milestone_approved( ServiceOrder $milestone ): bool {
+		$vendor = get_user_by( 'id', $milestone->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$buyer      = get_user_by( 'id', $milestone->customer_id );
+		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+		$meta       = $this->decode_order_meta( $milestone );
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: phase title */
+			__( '[%1$s] Milestone approved: %2$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			(string) ( $meta['title'] ?? __( 'your phase', 'wp-sell-services' ) )
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_MILESTONE_APPROVED,
+			array(
+				'milestone'     => $milestone,
+				'recipient'     => $vendor,
+				'email_heading' => __( 'Milestone approved', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer_name,
+				'phase_title'   => (string) ( $meta['title'] ?? '' ),
+				'net_amount'    => (float) ( $milestone->vendor_earnings ?? $milestone->total ),
+				'currency'      => $milestone->currency ?? wpss_get_currency(),
+			)
+		);
+	}
+
+	/**
+	 * Send an extension-proposed email to the buyer.
+	 *
+	 * Vendor quoted extra work on a fixed-price order; buyer can Accept &
+	 * Pay from the link in the email.
+	 *
+	 * @param ServiceOrder $extension Extension sub-order row.
+	 * @param int          $extra_days Days the quote would push the deadline.
+	 * @return bool
+	 */
+	public function send_extension_proposed( ServiceOrder $extension, int $extra_days ): bool {
+		$buyer = get_user_by( 'id', $extension->customer_id );
+		if ( ! $buyer ) {
+			return false;
+		}
+
+		$vendor      = get_user_by( 'id', $extension->vendor_id );
+		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
+		$reason      = (string) ( $extension->vendor_notes ?? '' );
+
+		$base_url = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
+		$pay_url  = add_query_arg( 'pay_order', (int) $extension->id, $base_url );
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( '[%s] Quote for extra work from your seller', 'wp-sell-services' ),
+			wpss_get_platform_name()
+		);
+
+		return $this->send(
+			$buyer->user_email,
+			$subject,
+			self::TYPE_EXTENSION_PROPOSED,
+			array(
+				'extension'     => $extension,
+				'recipient'     => $buyer,
+				'email_heading' => __( 'Quote for extra work', 'wp-sell-services' ),
+				'buyer_name'    => $buyer->display_name,
+				'vendor_name'   => $vendor_name,
+				'reason'        => $reason,
+				'amount'        => (float) $extension->total,
+				'extra_days'    => $extra_days,
+				'currency'      => $extension->currency ?? wpss_get_currency(),
+				'pay_url'       => $pay_url,
+			)
+		);
+	}
+
+	/**
+	 * Send an extension-approved email to the vendor.
+	 *
+	 * Buyer paid the quote; the parent order's deadline has been pushed
+	 * by the days included in the quote and the NET amount is in the
+	 * vendor's wallet.
+	 *
+	 * @param ServiceOrder $extension   Extension sub-order row.
+	 * @param float        $net         Amount credited (post-commission).
+	 * @param int          $extra_days  Days added to the parent deadline.
+	 * @return bool
+	 */
+	public function send_extension_approved( ServiceOrder $extension, float $net, int $extra_days ): bool {
+		$vendor = get_user_by( 'id', $extension->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$buyer      = get_user_by( 'id', $extension->customer_id );
+		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( '[%s] Extension paid — continue working', 'wp-sell-services' ),
+			wpss_get_platform_name()
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_EXTENSION_APPROVED,
+			array(
+				'extension'     => $extension,
+				'recipient'     => $vendor,
+				'email_heading' => __( 'Extension paid', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer_name,
+				'gross_amount'  => (float) $extension->total,
+				'net_amount'    => $net,
+				'extra_days'    => $extra_days,
+				'currency'      => $extension->currency ?? wpss_get_currency(),
+			)
+		);
+	}
+
+	/**
+	 * Send an extension-declined email to the vendor.
+	 *
+	 * Buyer rejected the quote. Vendor may send a revised one; the email
+	 * surfaces the buyer's note (if any) so the vendor knows what to
+	 * change.
+	 *
+	 * @param ServiceOrder $extension Extension sub-order row.
+	 * @param string       $note      Buyer's decline note, if provided.
+	 * @return bool
+	 */
+	public function send_extension_declined( ServiceOrder $extension, string $note = '' ): bool {
+		$vendor = get_user_by( 'id', $extension->vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$buyer      = get_user_by( 'id', $extension->customer_id );
+		$buyer_name = $buyer ? $buyer->display_name : __( 'The buyer', 'wp-sell-services' );
+
+		$subject = sprintf(
+			/* translators: %s: site name */
+			__( '[%s] Extension declined', 'wp-sell-services' ),
+			wpss_get_platform_name()
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_EXTENSION_DECLINED,
+			array(
+				'extension'     => $extension,
+				'recipient'     => $vendor,
+				'email_heading' => __( 'Extension declined', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer_name,
+				'note'          => $note,
+				'amount'        => (float) $extension->total,
+				'currency'      => $extension->currency ?? wpss_get_currency(),
 			)
 		);
 	}
@@ -1397,10 +1738,41 @@ class EmailService {
 			self::TYPE_MODERATION_PENDING     => 'moderation-pending.php',
 			self::TYPE_MODERATION_RESPONSE    => 'moderation-response.php',
 			self::TYPE_TIP_RECEIVED           => 'tip-received.php',
+			self::TYPE_MILESTONE_PROPOSED     => 'milestone-proposed.php',
+			self::TYPE_MILESTONE_PAID         => 'milestone-paid.php',
+			self::TYPE_MILESTONE_SUBMITTED    => 'milestone-submitted.php',
+			self::TYPE_MILESTONE_APPROVED     => 'milestone-approved.php',
+			self::TYPE_EXTENSION_PROPOSED     => 'extension-proposed.php',
+			self::TYPE_EXTENSION_APPROVED     => 'extension-approved.php',
+			self::TYPE_EXTENSION_DECLINED     => 'extension-declined.php',
 			self::TYPE_TEST_EMAIL             => 'test-email.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';
+	}
+
+	/**
+	 * Decode a sub-order's meta column safely.
+	 *
+	 * The {@see ServiceOrder} model already casts the `meta` column to an
+	 * array on load, but raw rows pulled directly via wpdb hold the JSON
+	 * string. This helper handles both shapes so callers (especially the
+	 * send_milestone_* / send_extension_* dispatchers) get a consistent
+	 * associative array regardless of which loader the order came through.
+	 *
+	 * @param object $order Order object (model or raw row).
+	 * @return array<string, mixed>
+	 */
+	private function decode_order_meta( object $order ): array {
+		$raw = $order->meta ?? null;
+		if ( is_array( $raw ) ) {
+			return $raw;
+		}
+		if ( ! is_string( $raw ) || '' === $raw ) {
+			return array();
+		}
+		$decoded = json_decode( $raw, true );
+		return is_array( $decoded ) ? $decoded : array();
 	}
 
 	/**
@@ -1480,6 +1852,13 @@ class EmailService {
 			'dispute_admin'                   => 'notify_dispute_opened',
 			self::TYPE_VENDOR_CONTACT         => 'notify_vendor_contact',
 			self::TYPE_TIP_RECEIVED           => 'notify_tip_received',
+			self::TYPE_MILESTONE_PROPOSED     => 'notify_milestone_proposed',
+			self::TYPE_MILESTONE_PAID         => 'notify_milestone_paid',
+			self::TYPE_MILESTONE_SUBMITTED    => 'notify_milestone_submitted',
+			self::TYPE_MILESTONE_APPROVED     => 'notify_milestone_approved',
+			self::TYPE_EXTENSION_PROPOSED     => 'notify_extension_proposed',
+			self::TYPE_EXTENSION_APPROVED     => 'notify_extension_approved',
+			self::TYPE_EXTENSION_DECLINED     => 'notify_extension_declined',
 		);
 
 		if ( ! isset( $type_to_setting[ $type ] ) ) {

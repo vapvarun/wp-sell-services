@@ -917,6 +917,13 @@ class Settings {
 				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
 				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
 				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
+				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
+				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
+				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
+				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
+				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
+				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
+				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
 			)
 		);
 
@@ -2232,6 +2239,13 @@ class Settings {
 				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
 				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
 				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
+				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
+				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
+				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
+				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
+				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
+				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
+				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
 			)
 		);
 

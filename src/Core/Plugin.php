@@ -447,6 +447,10 @@ final class Plugin {
 	 */
 	private function define_notification_hooks(): void {
 		$notification_service = new NotificationService();
+		// Sub-order email dispatcher shared by every milestone / extension /
+		// tip listener below — declared up front so closures further down
+		// can capture it via use().
+		$email_service        = new \WPSellServices\Services\EmailService();
 
 		// Order status change notifications.
 		$this->loader->add_action(
@@ -548,11 +552,12 @@ final class Plugin {
 		);
 
 		// Extension requested — vendor fires a paid extension sub-order that
-		// is now awaiting the buyer's payment. Notifies the buyer with the
-		// pay URL the ExtensionOrderService already attached to the sub-order.
+		// is now awaiting the buyer's payment. Buyer gets in-app + email
+		// with an Accept & Pay deep link so they can move without hunting
+		// through the dashboard.
 		$this->loader->add_action(
 			'wpss_extension_request_created',
-			function ( int $request_id, int $pay_order_id, int $parent_order_id, int $vendor_id ) use ( $notification_service ): void {
+			function ( int $request_id, int $pay_order_id, int $parent_order_id, int $vendor_id ) use ( $notification_service, $email_service ): void {
 				$parent = wpss_get_order( $parent_order_id );
 				if ( ! $parent ) {
 					return;
@@ -567,6 +572,13 @@ final class Plugin {
 						'vendor_id'    => $vendor_id,
 					)
 				);
+				$sub = wpss_get_order( $pay_order_id );
+				if ( ! $sub ) {
+					return;
+				}
+				$meta       = is_string( $sub->meta ?? '' ) ? json_decode( $sub->meta, true ) : array();
+				$extra_days = is_array( $meta ) ? (int) ( $meta['extra_days'] ?? 0 ) : 0;
+				$email_service->send_extension_proposed( $sub, $extra_days );
 			},
 			null,
 			10,
@@ -574,11 +586,11 @@ final class Plugin {
 		);
 
 		// Extension approved — buyer's payment cleared, vendor was credited,
-		// parent deadline was pushed. Notify the vendor.
+		// parent deadline was pushed. Email vendor with breakdown.
 		$this->loader->add_action(
 			'wpss_extension_approved',
-			function ( int $pay_order_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount, int $extra_days, int $request_id ) use ( $notification_service ): void {
-				unset( $pay_order_id, $customer_id, $request_id );
+			function ( int $pay_order_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount, int $extra_days, int $request_id ) use ( $notification_service, $email_service ): void {
+				unset( $customer_id, $request_id );
 				$notification_service->send(
 					$vendor_id,
 					'extension_approved',
@@ -588,6 +600,10 @@ final class Plugin {
 						'extra_days' => $extra_days,
 					)
 				);
+				$sub = wpss_get_order( $pay_order_id );
+				if ( $sub ) {
+					$email_service->send_extension_approved( $sub, $net_amount, $extra_days );
+				}
 			},
 			null,
 			10,
@@ -595,11 +611,11 @@ final class Plugin {
 		);
 
 		// Extension declined — buyer rejected the request. Notify the vendor
-		// so they can raise a revised one or continue as-is.
+		// via in-app + email so they can raise a revised quote or move on.
 		$this->loader->add_action(
 			'wpss_extension_rejected',
-			function ( int $request_id, int $parent_order_id, int $customer_id, string $response_note ) use ( $notification_service ): void {
-				unset( $request_id, $customer_id );
+			function ( int $request_id, int $parent_order_id, int $customer_id, string $response_note ) use ( $notification_service, $email_service ): void {
+				unset( $customer_id );
 				$parent = wpss_get_order( $parent_order_id );
 				if ( ! $parent ) {
 					return;
@@ -612,6 +628,20 @@ final class Plugin {
 						'response_note' => $response_note,
 					)
 				);
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$pay_order_id = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT pay_order_id FROM {$wpdb->prefix}wpss_extension_requests WHERE id = %d",
+						$request_id
+					)
+				);
+				if ( $pay_order_id ) {
+					$sub = wpss_get_order( $pay_order_id );
+					if ( $sub ) {
+						$email_service->send_extension_declined( $sub, $response_note );
+					}
+				}
 			},
 			null,
 			10,
@@ -619,10 +649,10 @@ final class Plugin {
 		);
 
 		// Milestone proposed — vendor created a pending_payment phase.
-		// Buyer needs to Accept & Pay.
+		// Buyer gets in-app notification AND email with Accept & Pay link.
 		$this->loader->add_action(
 			'wpss_milestone_proposed',
-			function ( int $milestone_id, int $parent_order_id, int $vendor_id ) use ( $notification_service ): void {
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id ) use ( $notification_service, $email_service ): void {
 				unset( $vendor_id );
 				$parent = wpss_get_order( $parent_order_id );
 				if ( ! $parent ) {
@@ -636,6 +666,10 @@ final class Plugin {
 						'milestone_id' => $milestone_id,
 					)
 				);
+				$milestone = wpss_get_order( $milestone_id );
+				if ( $milestone ) {
+					$email_service->send_milestone_proposed( $milestone );
+				}
 			},
 			null,
 			10,
@@ -646,7 +680,7 @@ final class Plugin {
 		// milestone is in_progress. Notify vendor to start work.
 		$this->loader->add_action(
 			'wpss_milestone_paid',
-			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount ) use ( $notification_service ): void {
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount ) use ( $notification_service, $email_service ): void {
 				unset( $customer_id );
 				$notification_service->send(
 					$vendor_id,
@@ -657,6 +691,10 @@ final class Plugin {
 						'net_amount'   => $net_amount,
 					)
 				);
+				$milestone = wpss_get_order( $milestone_id );
+				if ( $milestone ) {
+					$email_service->send_milestone_paid( $milestone, (float) $milestone->total, $net_amount );
+				}
 			},
 			null,
 			10,
@@ -667,7 +705,7 @@ final class Plugin {
 		// Buyer needs to approve or request revision in chat.
 		$this->loader->add_action(
 			'wpss_milestone_submitted',
-			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service ): void {
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service, $email_service ): void {
 				unset( $vendor_id );
 				$notification_service->send(
 					$customer_id,
@@ -677,6 +715,10 @@ final class Plugin {
 						'milestone_id' => $milestone_id,
 					)
 				);
+				$milestone = wpss_get_order( $milestone_id );
+				if ( $milestone ) {
+					$email_service->send_milestone_submitted( $milestone );
+				}
 			},
 			null,
 			10,
@@ -687,7 +729,7 @@ final class Plugin {
 		// Notify the vendor (money already landed at payment time).
 		$this->loader->add_action(
 			'wpss_milestone_approved',
-			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service ): void {
+			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service, $email_service ): void {
 				unset( $customer_id );
 				$notification_service->send(
 					$vendor_id,
@@ -697,6 +739,10 @@ final class Plugin {
 						'milestone_id' => $milestone_id,
 					)
 				);
+				$milestone = wpss_get_order( $milestone_id );
+				if ( $milestone ) {
+					$email_service->send_milestone_approved( $milestone );
+				}
 			},
 			null,
 			10,

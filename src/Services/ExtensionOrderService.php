@@ -149,6 +149,15 @@ class ExtensionOrderService {
 			return $fail( __( 'Only the vendor can request an extension on this order.', 'wp-sell-services' ) );
 		}
 
+		// Extensions are for small ad-hoc top-ups on fixed-price catalog
+		// orders where the buyer already paid the full price. Custom
+		// buyer-request projects use Milestones for their phased payment
+		// model instead, so the seller never has two overlapping tools
+		// available on the same order.
+		if ( 'request' === ( $parent->platform ?? '' ) ) {
+			return $fail( __( 'Extensions are for fixed-price service orders. For custom-project orders, propose a Milestone instead.', 'wp-sell-services' ) );
+		}
+
 		// Only ongoing orders can be extended. Completed / cancelled / disputed
 		// orders go through refunds or reviews, not extensions.
 		$allowed_parent_statuses = array(
