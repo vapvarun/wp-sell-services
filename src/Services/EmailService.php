@@ -157,11 +157,16 @@ class EmailService {
 			return;
 		}
 
-		// Tip sub-orders use a dedicated email flow (send_tip_received on
-		// wpss_tip_sent). The service-order status emails make no sense for
-		// a tip — "Your order is complete" or "New order received" would
-		// confuse both parties when the buyer was just sending a tip.
-		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+		// Sub-order platforms use dedicated email flows (tip_received,
+		// extension_approved). Running the generic service-order status
+		// emails here would e-mail both parties "Your order is complete"
+		// when the buyer actually just paid an extension or a tip — the
+		// message no longer matches what happened.
+		$platform = $order->platform ?? '';
+		if (
+			\WPSellServices\Services\TippingService::ORDER_TYPE === $platform
+			|| \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === $platform
+		) {
 			return;
 		}
 

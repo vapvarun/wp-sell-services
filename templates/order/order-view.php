@@ -1166,6 +1166,123 @@ do_action( 'wpss_before_order_view', $order );
 		<?php endif; ?>
 	<?php endif; ?>
 
+	<!-- Extension Request (active order only) -->
+	<?php
+	$extension_service = new \WPSellServices\Services\ExtensionOrderService();
+	$pending_extension = $extension_service->get_pending_request( (int) $order_id );
+	$extension_active_statuses = array(
+		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
+		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
+		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
+		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
+	);
+	$can_request_extension = $is_vendor
+		&& null === $pending_extension
+		&& in_array( $order->status, $extension_active_statuses, true );
+	$buyer_sees_pending_extension = $is_customer && null !== $pending_extension;
+
+	if ( $buyer_sees_pending_extension ) :
+		$ext_pay_url = $pending_extension->pay_order_id
+			? add_query_arg( 'pay_order', (int) $pending_extension->pay_order_id, wpss_get_checkout_base_url() )
+			: '';
+		$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+		?>
+		<section class="wpss-order-section">
+			<div class="wpss-extension-pending-card">
+				<h3 class="wpss-extension-pending-card__title">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<circle cx="12" cy="12" r="10"/>
+						<polyline points="12 6 12 12 16 14"/>
+					</svg>
+					<?php esc_html_e( 'Quote for extra work', 'wp-sell-services' ); ?>
+				</h3>
+				<p class="wpss-extension-pending-card__body">
+					<?php esc_html_e( 'Your seller sent a quote for the extra work you asked about. Pay to approve — they will continue on the extended scope. If the quote is off, decline and discuss in chat first.', 'wp-sell-services' ); ?>
+				</p>
+				<div class="wpss-extension-pending-card__meta">
+					<div>
+						<strong><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></strong>
+						<?php echo esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) ); ?>
+					</div>
+					<div>
+						<strong><?php esc_html_e( 'Extra days', 'wp-sell-services' ); ?></strong>
+						<?php
+						printf(
+							/* translators: %d: extra days */
+							esc_html( _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ) ),
+							absint( $pending_extension->extra_days )
+						);
+						?>
+					</div>
+					<?php if ( ! empty( $pending_extension->reason ) ) : ?>
+						<div style="grid-column:1/-1;">
+							<strong><?php esc_html_e( 'Reason', 'wp-sell-services' ); ?></strong>
+							<?php echo esc_html( $pending_extension->reason ); ?>
+						</div>
+					<?php endif; ?>
+				</div>
+				<div class="wpss-extension-pending-card__actions">
+					<?php if ( $ext_pay_url ) : ?>
+						<a href="<?php echo esc_url( $ext_pay_url ); ?>" class="wpss-btn wpss-btn--primary">
+							<?php
+							printf(
+								/* translators: %s: formatted amount */
+								esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
+								esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) )
+							);
+							?>
+						</a>
+					<?php endif; ?>
+					<button type="button" class="wpss-btn wpss-btn--secondary wpss-extension-decline-btn"
+						data-request="<?php echo esc_attr( (int) $pending_extension->id ); ?>"
+						data-order="<?php echo esc_attr( (int) $order_id ); ?>">
+						<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
+					</button>
+				</div>
+			</div>
+		</section>
+	<?php elseif ( $is_vendor && null !== $pending_extension ) : ?>
+		<section class="wpss-order-section">
+			<div class="wpss-extension-pending-card">
+				<h3 class="wpss-extension-pending-card__title">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<circle cx="12" cy="12" r="10"/>
+						<polyline points="12 6 12 12 16 14"/>
+					</svg>
+					<?php esc_html_e( 'Extension awaiting buyer', 'wp-sell-services' ); ?>
+				</h3>
+				<p class="wpss-extension-pending-card__body">
+					<?php
+					$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+					printf(
+						/* translators: 1: amount, 2: days */
+						esc_html__( 'You requested %1$s / %2$s. Buyer has not responded yet.', 'wp-sell-services' ),
+						esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) ),
+						esc_html( sprintf( _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ), absint( $pending_extension->extra_days ) ) )
+					);
+					?>
+				</p>
+			</div>
+		</section>
+	<?php endif; ?>
+
+	<?php if ( $can_request_extension ) : ?>
+		<section class="wpss-order-section wpss-order-section--extension-cta">
+			<div class="wpss-tip-cta">
+				<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="wpss-tip-cta__icon" aria-hidden="true">
+					<circle cx="12" cy="12" r="10"/>
+					<polyline points="12 6 12 12 16 14"/>
+				</svg>
+				<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Buyer asked for extra work?', 'wp-sell-services' ); ?></h3>
+				<p class="wpss-tip-cta__text"><?php esc_html_e( 'Quote the additional amount and time you need. We send the buyer a payment link — once they pay, you can continue working on the extended scope.', 'wp-sell-services' ); ?></p>
+				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-open-extension-modal"
+					data-order="<?php echo esc_attr( (int) $order_id ); ?>">
+					<?php esc_html_e( 'Send Quote to Buyer', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</section>
+	<?php endif; ?>
+
 	<!-- Tip CTA (for completed orders, buyer only, once per order) -->
 	<?php
 	if ( 'completed' === $order->status && $is_customer ) :
@@ -2475,6 +2592,135 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	}
 })();
 </script>
+
+<?php if ( $is_vendor && in_array( $order->status, $extension_active_statuses, true ) ) : ?>
+	<!-- Request Extension Modal -->
+	<div class="wpss-modal wpss-extension-modal" id="wpss-extension-modal" data-order="<?php echo esc_attr( (int) $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-extension-modal-title" hidden>
+		<div class="wpss-modal__backdrop"></div>
+		<div class="wpss-modal__dialog">
+			<div class="wpss-modal__header">
+				<h3 id="wpss-extension-modal-title" class="wpss-modal__title"><?php esc_html_e( 'Quote Extra Work', 'wp-sell-services' ); ?></h3>
+				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<line x1="18" y1="6" x2="6" y2="18"></line>
+						<line x1="6" y1="6" x2="18" y2="18"></line>
+					</svg>
+				</button>
+			</div>
+			<div class="wpss-modal__body">
+				<p class="wpss-modal__intro">
+					<?php esc_html_e( 'The buyer requested extra work on top of the original scope. Quote how much and how many more days you need — they pay through the same checkout, and once payment clears you can continue on the extended scope.', 'wp-sell-services' ); ?>
+				</p>
+				<form class="wpss-extension-form" data-order="<?php echo esc_attr( (int) $order_id ); ?>">
+					<?php wp_nonce_field( 'wpss_request_extension', 'wpss_extension_nonce' ); ?>
+					<div class="wpss-field-row">
+						<div class="wpss-form-row">
+							<label for="wpss-ext-amount"><?php esc_html_e( 'Extra amount', 'wp-sell-services' ); ?></label>
+							<input type="number" step="0.01" min="1" id="wpss-ext-amount" name="amount" required class="wpss-input" placeholder="50.00">
+						</div>
+						<div class="wpss-form-row">
+							<label for="wpss-ext-days"><?php esc_html_e( 'Extra days', 'wp-sell-services' ); ?></label>
+							<input type="number" min="1" max="<?php echo esc_attr( (int) get_option( 'wpss_max_extension_days', 14 ) ); ?>" id="wpss-ext-days" name="extra_days" required class="wpss-input" placeholder="3">
+						</div>
+					</div>
+					<div class="wpss-form-row">
+						<label for="wpss-ext-reason"><?php esc_html_e( 'Describe the extra work (buyer sees this)', 'wp-sell-services' ); ?></label>
+						<textarea id="wpss-ext-reason" name="reason" rows="4" required minlength="10" class="wpss-textarea" placeholder="<?php esc_attr_e( 'e.g. Added a second logo variation and source files, per your message on Mar 12.', 'wp-sell-services' ); ?>"></textarea>
+					</div>
+					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
+					<div class="wpss-modal__footer">
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send Payment Link', 'wp-sell-services' ); ?></button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	(function () {
+		var modal = document.getElementById('wpss-extension-modal');
+		if (!modal) return;
+		var openBtns = document.querySelectorAll('.wpss-open-extension-modal');
+		var closeBtns = modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop');
+		var form = modal.querySelector('.wpss-extension-form');
+		var feedback = modal.querySelector('.wpss-modal__feedback');
+
+		function show() { modal.hidden = false; document.body.classList.add('wpss-modal-open'); }
+		function hide() { modal.hidden = true; document.body.classList.remove('wpss-modal-open'); if (feedback) { feedback.hidden = true; feedback.textContent = ''; feedback.className = 'wpss-modal__feedback'; } }
+
+		openBtns.forEach(function (btn) { btn.addEventListener('click', show); });
+		closeBtns.forEach(function (btn) { btn.addEventListener('click', hide); });
+
+		form.addEventListener('submit', function (e) {
+			e.preventDefault();
+			var data = new FormData(form);
+			data.append('action', 'wpss_request_extension');
+			data.append('order_id', modal.dataset.order);
+			data.append('_ajax_nonce', data.get('wpss_extension_nonce'));
+			var submitBtn = form.querySelector('button[type=submit]');
+			submitBtn.disabled = true;
+
+			fetch(window.ajaxurl || '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>', {
+				method: 'POST',
+				credentials: 'include',
+				body: data
+			}).then(function (r) { return r.json(); }).then(function (res) {
+				submitBtn.disabled = false;
+				if (res && res.success) {
+					feedback.hidden = false;
+					feedback.className = 'wpss-modal__feedback wpss-modal__feedback--success';
+					feedback.textContent = (res.data && res.data.message) || '<?php echo esc_js( __( 'Extension sent.', 'wp-sell-services' ) ); ?>';
+					setTimeout(function () { window.location.reload(); }, 800);
+				} else {
+					feedback.hidden = false;
+					feedback.className = 'wpss-modal__feedback wpss-modal__feedback--error';
+					feedback.textContent = (res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not send extension.', 'wp-sell-services' ) ); ?>';
+				}
+			}).catch(function () {
+				submitBtn.disabled = false;
+				feedback.hidden = false;
+				feedback.className = 'wpss-modal__feedback wpss-modal__feedback--error';
+				feedback.textContent = '<?php echo esc_js( __( 'Network error. Try again.', 'wp-sell-services' ) ); ?>';
+			});
+		});
+	}());
+	</script>
+<?php endif; ?>
+
+<?php if ( $is_customer && null !== ( $pending_extension ?? null ) ) : ?>
+	<script>
+	(function () {
+		var buttons = document.querySelectorAll('.wpss-extension-decline-btn');
+		if (!buttons.length) return;
+		buttons.forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				if (!confirm('<?php echo esc_js( __( 'Decline this extension request?', 'wp-sell-services' ) ); ?>')) return;
+				btn.disabled = true;
+				var data = new FormData();
+				data.append('action', 'wpss_decline_extension');
+				data.append('request_id', btn.dataset.request || '');
+				data.append('_ajax_nonce', '<?php echo esc_js( wp_create_nonce( 'wpss_decline_extension' ) ); ?>');
+				fetch(window.ajaxurl || '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>', {
+					method: 'POST',
+					credentials: 'include',
+					body: data
+				}).then(function (r) { return r.json(); }).then(function (res) {
+					if (res && res.success) {
+						window.location.reload();
+					} else {
+						btn.disabled = false;
+						alert((res && res.data && res.data.message) || '<?php echo esc_js( __( 'Could not decline.', 'wp-sell-services' ) ); ?>');
+					}
+				}).catch(function () {
+					btn.disabled = false;
+					alert('<?php echo esc_js( __( 'Network error.', 'wp-sell-services' ) ); ?>');
+				});
+			});
+		});
+	}());
+	</script>
+<?php endif; ?>
 
 <?php
 /**

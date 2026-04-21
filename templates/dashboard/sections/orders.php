@@ -40,6 +40,14 @@ if ( $order_id ) {
 			return;
 		}
 
+		// Extension sub-orders: same pattern — they are payment records on a
+		// parent order, not a separate delivery, so buyers see the accept /
+		// decline UI, not the requirements/delivery workflow.
+		if ( \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === ( $current_order->platform ?? '' ) ) {
+			include WPSS_PLUGIN_DIR . 'templates/order/extension-view.php';
+			return;
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing, no data processing.
 		$order_action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
 
@@ -109,27 +117,72 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 		<div class="wpss-orders-list">
 			<?php foreach ( $orders as $order_item ) : ?>
 				<?php
-				$service       = $order_item->service_id ? get_post( $order_item->service_id ) : null;
-				$vendor        = get_userdata( $order_item->vendor_id );
-				$status_class  = 'wpss-status--' . sanitize_html_class( $order_item->status );
-				$status_labels = wpss_get_order_status_labels();
+				$order_platform = $order_item->platform ?? '';
+				$is_tip         = \WPSellServices\Services\TippingService::ORDER_TYPE === $order_platform;
+				$is_extension   = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === $order_platform;
+				$is_sub_order   = $is_tip || $is_extension;
+				$service        = $order_item->service_id ? get_post( $order_item->service_id ) : null;
+				$vendor         = get_userdata( $order_item->vendor_id );
+				$status_class   = 'wpss-status--' . sanitize_html_class( $order_item->status );
+				$status_labels  = wpss_get_order_status_labels();
 
 				// For request-based orders, use the request title.
-				if ( ! $service && 'request' === $order_item->platform && $order_item->platform_order_id ) {
+				if ( ! $service && 'request' === $order_platform && $order_item->platform_order_id ) {
 					$request_post = get_post( $order_item->platform_order_id );
 				}
-				$order_title = $service ? $service->post_title : ( ! empty( $request_post ) ? $request_post->post_title : __( 'Deleted Service', 'wp-sell-services' ) );
+
+				if ( $is_sub_order ) {
+					// Sub-orders label relative to the parent service the buyer
+					// actually ordered — "Tip for X" or "Extension for X" so the
+					// list doesn't look like a duplicate order.
+					$parent_order = $order_item->platform_order_id ? wpss_get_order( (int) $order_item->platform_order_id ) : null;
+					$parent_title = '';
+					if ( $parent_order ) {
+						$parent_service = $parent_order->service_id ? get_post( $parent_order->service_id ) : null;
+						$parent_title   = $parent_service ? $parent_service->post_title : $parent_order->order_number;
+					}
+					if ( $is_tip ) {
+						$order_title = $parent_title
+							? sprintf( /* translators: %s: original service / order title */ __( 'Tip for %s', 'wp-sell-services' ), $parent_title )
+							: __( 'Tip', 'wp-sell-services' );
+					} else {
+						$order_title = $parent_title
+							? sprintf( /* translators: %s: original service / order title */ __( 'Extension for %s', 'wp-sell-services' ), $parent_title )
+							: __( 'Extension', 'wp-sell-services' );
+					}
+				} else {
+					$order_title = $service ? $service->post_title : ( ! empty( $request_post ) ? $request_post->post_title : __( 'Deleted Service', 'wp-sell-services' ) );
+				}
 				?>
-				<div class="wpss-order-card">
+				<div class="wpss-order-card<?php echo $is_tip ? ' wpss-order-card--tip' : ''; ?><?php echo $is_extension ? ' wpss-order-card--extension' : ''; ?>">
 					<div class="wpss-order-card__main">
-						<?php if ( $service && has_post_thumbnail( $service ) ) : ?>
+						<?php if ( ! $is_sub_order && $service && has_post_thumbnail( $service ) ) : ?>
 							<div class="wpss-order-card__image">
 								<?php echo get_the_post_thumbnail( $service, 'thumbnail' ); ?>
+							</div>
+						<?php elseif ( $is_tip ) : ?>
+							<div class="wpss-order-card__tip-icon" aria-hidden="true">
+								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+								</svg>
+							</div>
+						<?php elseif ( $is_extension ) : ?>
+							<div class="wpss-order-card__tip-icon wpss-order-card__extension-icon" aria-hidden="true">
+								<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<circle cx="12" cy="12" r="10"/>
+									<polyline points="12 6 12 12 16 14"/>
+								</svg>
 							</div>
 						<?php endif; ?>
 						<div class="wpss-order-card__info">
 							<h4 class="wpss-order-card__title">
-								<?php if ( $service ) : ?>
+								<?php if ( $is_tip ) : ?>
+									<span class="wpss-badge wpss-badge--tip"><?php esc_html_e( 'Tip', 'wp-sell-services' ); ?></span>
+									<?php echo esc_html( $order_title ); ?>
+								<?php elseif ( $is_extension ) : ?>
+									<span class="wpss-badge wpss-badge--extension"><?php esc_html_e( 'Extension', 'wp-sell-services' ); ?></span>
+									<?php echo esc_html( $order_title ); ?>
+								<?php elseif ( $service ) : ?>
 									<a href="<?php echo esc_url( get_permalink( $service ) ); ?>">
 										<?php echo esc_html( $order_title ); ?>
 									</a>

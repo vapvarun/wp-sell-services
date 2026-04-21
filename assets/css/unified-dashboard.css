@@ -2040,3 +2040,120 @@ select.wpss-input option,
 	color: #e11d48;
 	flex: 0 0 44px;
 }
+
+/* Extension badge / icon — reuse tip-icon size for list visual parity. */
+.wpss-badge--extension {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: #92400e;
+	background: #fef3c7;
+	border-radius: 999px;
+	margin-right: 6px;
+	vertical-align: middle;
+}
+
+.wpss-order-card--extension .wpss-order-card__extension-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: #fef3c7;
+	color: #b45309;
+	flex: 0 0 44px;
+}
+
+/* Extension receipt / awaiting-payment view — reuses .wpss-tip-view layout
+   and only re-tones the icon so the two sub-orders stay visually distinct. */
+.wpss-extension-view .wpss-tip-view__icon {
+	background: #fef3c7;
+	color: #b45309;
+}
+
+.wpss-extension-view__days {
+	margin: 4px 0 16px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #b45309;
+}
+
+.wpss-tip-view__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+}
+
+/* Request Extension modal (vendor on order page). */
+.wpss-extension-modal .wpss-form-row {
+	margin-bottom: 14px;
+}
+
+.wpss-extension-modal .wpss-field-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+@media (max-width: 640px) {
+	.wpss-extension-modal .wpss-field-row {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Extension-requested card shown to the buyer on the parent order view. */
+.wpss-extension-pending-card {
+	margin: 16px 0;
+	padding: 16px 20px;
+	border-radius: 10px;
+	background: #fffbeb;
+	border: 1px solid #fcd34d;
+	color: #78350f;
+}
+
+.wpss-extension-pending-card__title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 700;
+	margin: 0 0 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.wpss-extension-pending-card__body {
+	margin: 0 0 12px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.wpss-extension-pending-card__meta {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 8px 16px;
+	margin-bottom: 14px;
+	font-size: 13px;
+}
+
+.wpss-extension-pending-card__meta strong {
+	display: block;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #92400e;
+	margin-bottom: 2px;
+	font-weight: 700;
+}
+
+.wpss-extension-pending-card__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}

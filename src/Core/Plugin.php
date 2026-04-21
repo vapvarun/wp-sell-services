@@ -252,6 +252,10 @@ final class Plugin {
 		// vendor wallet when a tip-platform order is paid via the gateway.
 		( new \WPSellServices\Services\TippingService() )->init();
 
+		// Same post-payment pattern for paid extension sub-orders: listens for
+		// a cleared payment on platform='extension' and extends the parent.
+		( new \WPSellServices\Services\ExtensionOrderService() )->init();
+
 		// Run the loader to register all hooks.
 		$this->loader->run();
 
@@ -536,6 +540,77 @@ final class Plugin {
 			null,
 			10,
 			6
+		);
+
+		// Extension requested — vendor fires a paid extension sub-order that
+		// is now awaiting the buyer's payment. Notifies the buyer with the
+		// pay URL the ExtensionOrderService already attached to the sub-order.
+		$this->loader->add_action(
+			'wpss_extension_request_created',
+			function ( int $request_id, int $pay_order_id, int $parent_order_id, int $vendor_id ) use ( $notification_service ): void {
+				$parent = wpss_get_order( $parent_order_id );
+				if ( ! $parent ) {
+					return;
+				}
+				$notification_service->send(
+					(int) $parent->customer_id,
+					'extension_requested',
+					array(
+						'order_id'     => $parent_order_id,
+						'request_id'   => $request_id,
+						'pay_order_id' => $pay_order_id,
+						'vendor_id'    => $vendor_id,
+					)
+				);
+			},
+			null,
+			10,
+			4
+		);
+
+		// Extension approved — buyer's payment cleared, vendor was credited,
+		// parent deadline was pushed. Notify the vendor.
+		$this->loader->add_action(
+			'wpss_extension_approved',
+			function ( int $pay_order_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount, int $extra_days, int $request_id ) use ( $notification_service ): void {
+				unset( $pay_order_id, $customer_id, $request_id );
+				$notification_service->send(
+					$vendor_id,
+					'extension_approved',
+					array(
+						'order_id'   => $parent_order_id,
+						'net_amount' => $net_amount,
+						'extra_days' => $extra_days,
+					)
+				);
+			},
+			null,
+			10,
+			7
+		);
+
+		// Extension declined — buyer rejected the request. Notify the vendor
+		// so they can raise a revised one or continue as-is.
+		$this->loader->add_action(
+			'wpss_extension_rejected',
+			function ( int $request_id, int $parent_order_id, int $customer_id, string $response_note ) use ( $notification_service ): void {
+				unset( $request_id, $customer_id );
+				$parent = wpss_get_order( $parent_order_id );
+				if ( ! $parent ) {
+					return;
+				}
+				$notification_service->send(
+					(int) $parent->vendor_id,
+					'extension_rejected',
+					array(
+						'order_id'      => $parent_order_id,
+						'response_note' => $response_note,
+					)
+				);
+			},
+			null,
+			10,
+			4
 		);
 	}
 

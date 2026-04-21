@@ -257,12 +257,16 @@ class NotificationService {
 			return;
 		}
 
-		// Tip sub-orders have their own dedicated notification flow
-		// (notify_tip_received fired from `wpss_tip_sent`). The generic
-		// "new order received" email would be misleading here — it would
-		// tell the vendor "you have a new order to fulfill" when in reality
-		// no delivery is expected.
-		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+		// Sub-order platforms (tip, extension) use dedicated notification
+		// flows. The generic "new order received" notification would be
+		// misleading here — it would tell the vendor "you have a new order
+		// to fulfill" when the buyer actually just paid a tip or an
+		// extension top-up on an existing in-progress order.
+		$platform = $order->platform ?? '';
+		if (
+			\WPSellServices\Services\TippingService::ORDER_TYPE === $platform
+			|| \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === $platform
+		) {
 			return;
 		}
 
@@ -339,12 +343,17 @@ class NotificationService {
 			return;
 		}
 
-		// Tip sub-orders move through pending_payment → pending_requirements →
-		// completed very quickly (all three transitions can fire inside one
-		// request). The generic service-order status emails would send the
-		// buyer a "your order is complete" notice for what they just paid as
-		// a tip — noise. Bail here; notify_tip_received owns the tip surface.
-		if ( \WPSellServices\Services\TippingService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+		// Sub-order platforms (tip, extension) move through
+		// pending_payment → completed very quickly and have their own
+		// targeted notifications. The generic status emails would send
+		// the buyer a "your order is complete" notice for what they just
+		// paid as a tip or an extension — noise. Bail here; the feature-
+		// specific notify_* methods own those surfaces.
+		$platform = $order->platform ?? '';
+		if (
+			\WPSellServices\Services\TippingService::ORDER_TYPE === $platform
+			|| \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === $platform
+		) {
 			return;
 		}
 
@@ -1082,6 +1091,43 @@ class NotificationService {
 				);
 				$message .= '<br><br>';
 				$message .= __( 'Please ensure you deliver the order on time to maintain your seller rating.', 'wp-sell-services' );
+				break;
+
+			case 'extension_requested':
+				$title   = __( 'Quote for extra work', 'wp-sell-services' );
+				$message = sprintf(
+					/* translators: %d: parent order ID */
+					__( 'Your seller sent a quote for the extra work you asked about on Order #%d. Open the order to review and Accept & Pay, or Decline to keep the current scope.', 'wp-sell-services' ),
+					(int) ( $data['order_id'] ?? 0 )
+				);
+				break;
+
+			case 'extension_approved':
+				$title   = __( 'Extra work approved', 'wp-sell-services' );
+				$message = sprintf(
+					/* translators: 1: net amount, 2: extra days, 3: parent order ID */
+					__( 'Buyer approved your quote. %1$s credited, deadline on Order #%3$d extended by %2$d days.', 'wp-sell-services' ),
+					esc_html( function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ) ),
+					(int) ( $data['extra_days'] ?? 0 ),
+					(int) ( $data['order_id'] ?? 0 )
+				);
+				break;
+
+			case 'extension_rejected':
+				$title = __( 'Quote declined', 'wp-sell-services' );
+				$note  = (string) ( $data['response_note'] ?? '' );
+				$message = '' !== trim( $note )
+					? sprintf(
+						/* translators: 1: order ID, 2: buyer's note */
+						__( 'Buyer declined your quote on Order #%1$d. Their note: %2$s', 'wp-sell-services' ),
+						(int) ( $data['order_id'] ?? 0 ),
+						esc_html( $note )
+					)
+					: sprintf(
+						/* translators: %d: order ID */
+						__( 'Buyer declined your quote on Order #%d.', 'wp-sell-services' ),
+						(int) ( $data['order_id'] ?? 0 )
+					);
 				break;
 
 			default:

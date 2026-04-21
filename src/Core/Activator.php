@@ -265,6 +265,13 @@ class Activator {
 		if ( ! wp_next_scheduled( \WPSellServices\Services\TippingService::CLEANUP_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\TippingService::CLEANUP_HOOK );
 		}
+
+		// Same contract for paid extension sub-orders — an unpaid extension
+		// request must not permanently block the vendor from raising a new
+		// one on the same order.
+		if ( ! wp_next_scheduled( \WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK );
+		}
 	}
 
 	/**

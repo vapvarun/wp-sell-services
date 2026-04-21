@@ -55,6 +55,10 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function init(): void {
+		// Extension request (vendor -> buyer, paid sub-order flow).
+		add_action( 'wp_ajax_wpss_request_extension', array( $this, 'ajax_request_extension' ) );
+		add_action( 'wp_ajax_wpss_decline_extension', array( $this, 'ajax_decline_extension' ) );
+
 		// Order actions.
 		add_action( 'wp_ajax_wpss_accept_order', array( $this, 'accept_order' ) );
 		add_action( 'wp_ajax_wpss_decline_order', array( $this, 'decline_order' ) );
@@ -3822,5 +3826,80 @@ class AjaxHandlers {
 				'cart_count' => count( $cart ),
 			)
 		);
+	}
+
+	/**
+	 * AJAX: Vendor submits a paid extension request.
+	 *
+	 * Creates the wpss_extension_requests row and a pending_payment
+	 * sub-order on wpss_orders via ExtensionOrderService, then returns the
+	 * checkout URL so the buyer can be linked to payment. The sub-order
+	 * carries the money; the extension_requests row carries the history.
+	 *
+	 * @return void
+	 */
+	public function ajax_request_extension(): void {
+		check_ajax_referer( 'wpss_request_extension' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$order_id   = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
+		$amount     = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : 0.0;
+		$extra_days = isset( $_POST['extra_days'] ) ? absint( wp_unslash( $_POST['extra_days'] ) ) : 0;
+		$reason     = isset( $_POST['reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['reason'] ) ) : '';
+
+		if ( ! $order_id ) {
+			wp_send_json_error( array( 'message' => __( 'Missing order.', 'wp-sell-services' ) ) );
+		}
+
+		$service = new \WPSellServices\Services\ExtensionOrderService();
+		$result  = $service->create_extension_request( $order_id, $amount, $extra_days, get_current_user_id(), $reason );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'      => $result['message'],
+				'request_id'   => $result['request_id'],
+				'pay_order_id' => $result['pay_order_id'],
+				'checkout_url' => $result['checkout_url'],
+			)
+		);
+	}
+
+	/**
+	 * AJAX: Buyer declines a pending extension request.
+	 *
+	 * Cancels the pending sub-order (so buyer isn't charged and the vendor
+	 * can raise a revised one) and marks the extension_requests row rejected.
+	 *
+	 * @return void
+	 */
+	public function ajax_decline_extension(): void {
+		check_ajax_referer( 'wpss_decline_extension' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$request_id = isset( $_POST['request_id'] ) ? absint( wp_unslash( $_POST['request_id'] ) ) : 0;
+		$note       = isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '';
+
+		if ( ! $request_id ) {
+			wp_send_json_error( array( 'message' => __( 'Missing request.', 'wp-sell-services' ) ) );
+		}
+
+		$service = new \WPSellServices\Services\ExtensionOrderService();
+		$result  = $service->decline( $request_id, get_current_user_id(), $note );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+
+		wp_send_json_success( array( 'message' => $result['message'] ) );
 	}
 }

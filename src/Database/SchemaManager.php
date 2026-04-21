@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.1';
+	const DB_VERSION = '1.4.2';
 
 	/**
 	 * Option name for storing DB version.
@@ -445,6 +445,8 @@ class SchemaManager {
 			order_id bigint(20) unsigned NOT NULL,
 			requested_by bigint(20) unsigned NOT NULL,
 			extra_days int(11) NOT NULL,
+			amount decimal(10,2) DEFAULT 0,
+			pay_order_id bigint(20) unsigned DEFAULT NULL,
 			reason text NOT NULL,
 			status varchar(50) DEFAULT 'pending',
 			responded_by bigint(20) unsigned DEFAULT NULL,
@@ -454,7 +456,9 @@ class SchemaManager {
 			responded_at datetime DEFAULT NULL,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_order (order_id)
+			KEY idx_order (order_id),
+			KEY idx_pay_order (pay_order_id),
+			KEY idx_status (status)
 		) {$charset_collate};";
 	}
 

@@ -281,28 +281,41 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, mixed> Statistics.
 	 */
 	public function get_vendor_stats( int $vendor_id ): array {
-		// Tip sub-orders (platform='tip') are excluded: they are payment
-		// records, not service deliveries, so the order count, revenue,
-		// and completion-time average would be misleading if tips were
-		// mixed in. Tip totals are surfaced via get_vendor_tip_stats().
+		// Sub-order platforms are counted differently from the row they
+		// represent:
+		//   * Tips never count towards service stats — they live in
+		//     get_vendor_tip_stats() so analytics can surface them separately.
+		//   * Extensions are NOT separate orders (they top up an existing
+		//     service order) but the extra money the vendor earned IS real
+		//     revenue, so they are excluded from the counts but summed into
+		//     total_earnings.
 		// Revenue uses vendor_earnings (NET, post-commission) so the number
-		// the seller sees matches what they can actually withdraw. Falls
-		// back to total for legacy rows written before vendor_earnings was
-		// populated by CommissionService.
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+		// the seller sees matches what they can actually withdraw. Falls back
+		// to total for legacy rows written before CommissionService populated
+		// vendor_earnings.
+		$tip_platform       = \WPSellServices\Services\TippingService::ORDER_TYPE;
+		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
 
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
-					COUNT(*) as total_orders,
-					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN status IN ('in_progress', 'pending_approval') THEN 1 ELSE 0 END) as active_orders,
-					SUM(CASE WHEN status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
-					AVG(CASE WHEN status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
+					SUM(CASE WHEN platform NOT IN (%s, %s) THEN 1 ELSE 0 END) as total_orders,
+					SUM(CASE WHEN platform NOT IN (%s, %s) AND status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
+					SUM(CASE WHEN platform NOT IN (%s, %s) AND status IN ('in_progress', 'pending_approval') THEN 1 ELSE 0 END) as active_orders,
+					SUM(CASE WHEN platform != %s AND status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
+					AVG(CASE WHEN platform NOT IN (%s, %s) AND status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
 				FROM {$this->table}
-				WHERE vendor_id = %d AND platform != %s",
-				$vendor_id,
-				$tip_platform
+				WHERE vendor_id = %d",
+				$tip_platform,
+				$extension_platform,
+				$tip_platform,
+				$extension_platform,
+				$tip_platform,
+				$extension_platform,
+				$tip_platform,
+				$tip_platform,
+				$extension_platform,
+				$vendor_id
 			),
 			ARRAY_A
 		);
