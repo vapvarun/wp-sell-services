@@ -748,6 +748,72 @@ final class Plugin {
 			10,
 			4
 		);
+
+		// Auto-complete the parent order once every milestone on it is
+		// terminal (completed or cancelled) AND no pending_payment phases
+		// remain. Closes the journey cleanly without forcing the vendor
+		// to click an extra "mark project done" button after the last
+		// approval. Same listener fires on milestone cancellation too —
+		// a contract that ends after only 2 of 3 phases (because phase 3
+		// was abandoned) still rolls up to a completed parent.
+		$auto_complete_parent = static function ( int $milestone_id, int $parent_order_id ): void {
+			unset( $milestone_id );
+			$parent = wpss_get_order( $parent_order_id );
+			if ( ! $parent || 'request' !== ( $parent->platform ?? '' ) ) {
+				return;
+			}
+			if ( 'completed' === $parent->status || 'cancelled' === $parent->status ) {
+				return;
+			}
+			$ms_list = ( new \WPSellServices\Services\MilestoneService() )->get_for_parent( $parent_order_id );
+			if ( empty( $ms_list ) ) {
+				return;
+			}
+			foreach ( $ms_list as $ms ) {
+				if ( ! in_array( $ms['status'], array( 'completed', 'cancelled' ), true ) ) {
+					return;
+				}
+			}
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_orders',
+				array(
+					'status'       => 'completed',
+					'completed_at' => current_time( 'mysql' ),
+					'updated_at'   => current_time( 'mysql' ),
+				),
+				array( 'id' => $parent_order_id )
+			);
+		};
+		$this->loader->add_action( 'wpss_milestone_approved', $auto_complete_parent, null, 20, 2 );
+		$this->loader->add_action( 'wpss_milestone_declined',  $auto_complete_parent, null, 20, 2 );
+
+		// Cascade-cancel: when a parent order is cancelled, every still-
+		// pending_payment milestone under it is cancelled immediately.
+		// Without this they would linger until the abandon cron and
+		// confuse vendor + buyer about whether the project is really over.
+		$this->loader->add_action(
+			'wpss_order_cancelled',
+			static function ( int $order_id ): void {
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$wpdb->prefix}wpss_orders
+						SET status = 'cancelled', updated_at = %s
+						WHERE platform = %s AND platform_order_id = %d AND status = %s",
+						current_time( 'mysql' ),
+						\WPSellServices\Services\MilestoneService::ORDER_TYPE,
+						$order_id,
+						'pending_payment'
+					)
+				);
+			},
+			null,
+			10,
+			1
+		);
 	}
 
 	/**

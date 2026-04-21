@@ -119,9 +119,12 @@ class MilestoneService {
 	 * @param float  $amount          Phase price in parent's currency.
 	 * @param int    $days_to_deliver Delivery window in days (0 allowed; stored on due_date).
 	 * @param string $deliverables    Optional itemised deliverables list (text).
+	 * @param bool   $is_contract     True when this milestone is part of a predefined contract
+	 *                                (Upwork-style proposal acceptance). Stored in meta so the
+	 *                                abandon-cleanup cron knows to leave it alone.
 	 * @return array{success: bool, milestone_id: int|null, checkout_url: string|null, message: string}
 	 */
-	public function propose( int $parent_order_id, int $vendor_id, string $title, string $description, float $amount, int $days_to_deliver, string $deliverables = '' ): array {
+	public function propose( int $parent_order_id, int $vendor_id, string $title, string $description, float $amount, int $days_to_deliver, string $deliverables = '', bool $is_contract = false ): array {
 		global $wpdb;
 
 		$fail = static function ( string $message ): array {
@@ -208,12 +211,13 @@ class MilestoneService {
 				'vendor_notes'      => $description,
 				'meta'              => wp_json_encode(
 					array(
-						'milestone'       => true,
-						'parent_order_id' => $parent_order_id,
-						'title'           => $title,
-						'description'     => $description,
-						'deliverables'    => $deliverables,
-						'sort_order'      => $sort_order,
+						'milestone'             => true,
+						'parent_order_id'       => $parent_order_id,
+						'title'                 => $title,
+						'description'           => $description,
+						'deliverables'          => $deliverables,
+						'sort_order'            => $sort_order,
+						'is_contract_milestone' => $is_contract,
 					)
 				),
 				'created_at'        => current_time( 'mysql' ),
@@ -600,15 +604,27 @@ class MilestoneService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$threshold    = gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) );
 
+		// Contract milestones (predefined at proposal acceptance) are NOT
+		// auto-cancelled — long projects may legitimately sit between
+		// phases for weeks while the vendor produces deliverables. Only
+		// ad-hoc milestones the vendor proposed mid-flight without buyer
+		// commitment go to the abandon-cron. The marker is stored in the
+		// sub-order's meta JSON; we filter on the JSON text so the
+		// cleanup stays a single SQL statement.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$count = (int) $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$orders_table} SET status = 'cancelled', updated_at = %s
-				WHERE platform = %s AND status = %s AND created_at < %s",
+				"UPDATE {$orders_table}
+				SET status = 'cancelled', updated_at = %s
+				WHERE platform = %s
+				AND status = %s
+				AND created_at < %s
+				AND ( meta IS NULL OR meta NOT LIKE %s )",
 				current_time( 'mysql' ),
 				self::ORDER_TYPE,
 				'pending_payment',
-				$threshold
+				$threshold,
+				'%"is_contract_milestone":true%'
 			)
 		);
 
@@ -648,22 +664,24 @@ class MilestoneService {
 		foreach ( $rows as $row ) {
 			$meta        = is_string( $row->meta ?? '' ) && '' !== $row->meta ? json_decode( $row->meta, true ) : array();
 			$decorated[] = array(
-				'id'                 => (int) $row->id,
-				'order_number'       => (string) $row->order_number,
-				'status'             => (string) $row->status,
-				'payment_status'     => (string) $row->payment_status,
-				'amount'             => (float) $row->total,
-				'vendor_earnings'    => isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null,
-				'platform_fee'       => isset( $row->platform_fee ) ? (float) $row->platform_fee : null,
-				'currency'           => (string) $row->currency,
-				'title'              => (string) ( $meta['title'] ?? '' ),
-				'description'        => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
-				'deliverables'       => (string) ( $meta['deliverables'] ?? '' ),
-				'sort_order'         => (int) ( $meta['sort_order'] ?? 0 ),
-				'submit_note'        => (string) ( $meta['submit_note'] ?? '' ),
-				'delivery_deadline'  => $row->delivery_deadline ?? null,
-				'created_at'         => (string) $row->created_at,
-				'completed_at'       => $row->completed_at ?? null,
+				'id'                    => (int) $row->id,
+				'order_number'          => (string) $row->order_number,
+				'status'                => (string) $row->status,
+				'payment_status'        => (string) $row->payment_status,
+				'amount'                => (float) $row->total,
+				'vendor_earnings'       => isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null,
+				'platform_fee'          => isset( $row->platform_fee ) ? (float) $row->platform_fee : null,
+				'currency'              => (string) $row->currency,
+				'title'                 => (string) ( $meta['title'] ?? '' ),
+				'description'           => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
+				'deliverables'          => (string) ( $meta['deliverables'] ?? '' ),
+				'sort_order'            => (int) ( $meta['sort_order'] ?? 0 ),
+				'submit_note'           => (string) ( $meta['submit_note'] ?? '' ),
+				'is_contract_milestone' => ! empty( $meta['is_contract_milestone'] ),
+				'delivery_deadline'     => $row->delivery_deadline ?? null,
+				'created_at'            => (string) $row->created_at,
+				'completed_at'          => $row->completed_at ?? null,
+				'is_locked'             => false, // overwritten in the lock-step pass below.
 			);
 		}
 
@@ -677,7 +695,51 @@ class MilestoneService {
 			}
 		);
 
+		// Lock-step gating: a pending_payment milestone is "locked" when any
+		// earlier milestone (by sort_order) is still active. Buyer must close
+		// out the prior phase (pay it, complete it, or cancel it) before the
+		// next one becomes payable. Server-side guard in the checkout handler
+		// enforces the same rule against URL tampering.
+		$earlier_blocking = false;
+		foreach ( $decorated as &$ms ) {
+			if ( 'pending_payment' === $ms['status'] && $earlier_blocking ) {
+				$ms['is_locked'] = true;
+			}
+			if ( ! in_array( $ms['status'], array( 'completed', 'cancelled' ), true ) ) {
+				$earlier_blocking = true;
+			}
+		}
+		unset( $ms );
+
 		return $decorated;
+	}
+
+	/**
+	 * Whether a specific milestone is currently locked from buyer payment by
+	 * an earlier milestone in the same parent's lock-step sequence.
+	 *
+	 * Used by the checkout handler to reject `?pay_order=` URLs against
+	 * out-of-order milestones — the visible UI hides those Pay buttons but
+	 * a buyer could craft the URL by hand without a server-side check.
+	 *
+	 * @param int $milestone_id Sub-order ID.
+	 * @return bool True if locked, false if either terminal or eligible to pay.
+	 */
+	public function is_locked( int $milestone_id ): bool {
+		$sub = wpss_get_order( $milestone_id );
+		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
+			return false;
+		}
+		$parent_id = (int) ( $sub->platform_order_id ?? 0 );
+		if ( ! $parent_id ) {
+			return false;
+		}
+		foreach ( $this->get_for_parent( $parent_id ) as $row ) {
+			if ( (int) $row['id'] === $milestone_id ) {
+				return (bool) $row['is_locked'];
+			}
+		}
+		return false;
 	}
 
 	/**

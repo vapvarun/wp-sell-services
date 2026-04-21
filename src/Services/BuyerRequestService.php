@@ -610,13 +610,32 @@ class BuyerRequestService {
 			[
 				'proposed_price' => $proposal->proposed_price,
 				'proposed_days'  => $proposal->proposed_days ?? null,
+				'contract_type'  => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
 				'cover_letter'   => $proposal->cover_letter ?? '',
 				'request_title'  => $request->title,
 				'request_budget' => $request->budget ?? null,
 			]
 		);
 
-		// Create order.
+		// Milestone-contract proposals create a $0 parent in_progress on
+		// acceptance — the buyer never sees a parent checkout, money flows
+		// entirely through the milestone sub-orders. Fixed-price proposals
+		// keep the existing pending_payment behaviour so the buyer goes
+		// through the standard pay_order checkout.
+		$is_milestone_contract = isset( $proposal->contract_type ) && ProposalService::CONTRACT_TYPE_MILESTONE === $proposal->contract_type;
+
+		$parent_total          = $is_milestone_contract ? 0.0 : (float) $proposal->proposed_price;
+		$parent_status         = $is_milestone_contract ? 'in_progress' : 'pending_payment';
+		$parent_payment_status = $is_milestone_contract ? 'paid' : 'pending';
+		$parent_paid_at        = $is_milestone_contract ? current_time( 'mysql' ) : null;
+		$parent_started_at     = $is_milestone_contract ? current_time( 'mysql' ) : null;
+
+		// Wrap the parent insert + (optional) milestone bulk-create in a
+		// single transaction so a partial failure does not leave the order
+		// half-built — buyers and sellers cannot be allowed to see a
+		// project that is missing some of its predefined phases.
+		$wpdb->query( 'START TRANSACTION' );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$orders_table,
@@ -629,14 +648,16 @@ class BuyerRequestService {
 				'addons'             => wp_json_encode( array() ),
 				'platform'           => 'request',
 				'platform_order_id'  => $request_id,
-				'subtotal'           => $proposal->proposed_price,
+				'subtotal'           => $parent_total,
 				'addons_total'       => 0,
-				'total'              => $proposal->proposed_price,
+				'total'              => $parent_total,
 				'currency'           => wpss_get_currency(),
-				'status'             => 'pending_payment',
+				'status'             => $parent_status,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
-				'payment_status'     => 'pending',
+				'payment_status'     => $parent_payment_status,
+				'paid_at'            => $parent_paid_at,
+				'started_at'         => $parent_started_at,
 				'revisions_included' => (int) apply_filters( 'wpss_proposal_order_revisions', 2, $proposal, $request ),
 				'revisions_used'     => 0,
 				'created_at'         => current_time( 'mysql' ),
@@ -645,14 +666,16 @@ class BuyerRequestService {
 					array_filter(
 						[
 							'proposal_snapshot' => $proposal_snapshot,
+							'contract_type'     => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
 						]
 					)
 				),
 			),
-			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
+			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to create order. Please try again.', 'wp-sell-services' ),
@@ -660,6 +683,49 @@ class BuyerRequestService {
 		}
 
 		$order_id = (int) $wpdb->insert_id;
+
+		// For milestone contracts, pre-create every predefined phase as a
+		// pending_payment sub-order. Each row carries an `is_contract_milestone`
+		// flag so the abandon-cleanup cron skips them — long projects must not
+		// lose phases because the buyer is slow on phase 4.
+		if ( $is_milestone_contract ) {
+			$milestones = is_array( $proposal->milestones ?? null ) ? $proposal->milestones : array();
+			if ( empty( $milestones ) ) {
+				$wpdb->query( 'ROLLBACK' );
+				return array(
+					'success' => false,
+					'message' => __( 'Milestone proposal has no milestones defined.', 'wp-sell-services' ),
+				);
+			}
+
+			$milestone_service = new MilestoneService();
+			foreach ( $milestones as $row ) {
+				$ms_result = $milestone_service->propose(
+					$order_id,
+					(int) $proposal->vendor_id,
+					(string) ( $row['title'] ?? '' ),
+					(string) ( $row['description'] ?? '' ),
+					(float) ( $row['amount'] ?? 0 ),
+					(int) ( $row['days'] ?? 0 ),
+					(string) ( $row['deliverables'] ?? '' ),
+					true // mark as contract milestone — abandon-cron will skip these.
+				);
+				if ( ! $ms_result['success'] ) {
+					$wpdb->query( 'ROLLBACK' );
+					return array(
+						'success' => false,
+						'message' => sprintf(
+							/* translators: 1: phase title, 2: error message */
+							__( 'Could not create milestone "%1$s": %2$s', 'wp-sell-services' ),
+							$row['title'] ?? '',
+							$ms_result['message']
+						),
+					);
+				}
+			}
+		}
+
+		$wpdb->query( 'COMMIT' );
 
 		// Accept the proposal.
 		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );

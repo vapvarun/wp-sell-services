@@ -1157,3 +1157,201 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* ==========================================================================
+   Proposal contract type — radio + milestone repeater inside the proposal
+   submission modal, plus the per-proposal contract badge + breakdown shown
+   to the buyer on the proposals list.
+   ========================================================================== */
+
+.wpss-contract-type-group {
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 12px 14px;
+	margin-bottom: 18px;
+}
+
+.wpss-contract-type-group legend {
+	font-size: 13px;
+	font-weight: 600;
+	padding: 0 4px;
+	color: #374151;
+}
+
+.wpss-contract-type-group .wpss-radio {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	padding: 8px 4px;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.wpss-contract-type-group .wpss-radio input {
+	margin-top: 4px;
+}
+
+.wpss-milestones-builder {
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 14px;
+	margin-bottom: 14px;
+	background: #fafafa;
+}
+
+.wpss-milestone-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.wpss-milestone-row {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.wpss-milestone-row__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-milestone-row__num {
+	font-weight: 700;
+	color: #0f766e;
+	min-width: 22px;
+}
+
+.wpss-milestone-row__title {
+	flex: 1;
+}
+
+.wpss-milestone-row__remove {
+	background: transparent;
+	border: 0;
+	font-size: 22px;
+	line-height: 1;
+	color: #9ca3af;
+	cursor: pointer;
+	padding: 0 6px;
+}
+
+.wpss-milestone-row__remove:hover {
+	color: #dc2626;
+}
+
+.wpss-milestone-row__meta {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.wpss-milestone-row__meta label {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+	color: #6b7280;
+	font-weight: 600;
+}
+
+.wpss-milestones-summary {
+	display: flex;
+	gap: 16px;
+	padding-top: 12px;
+	border-top: 1px solid #e5e7eb;
+	font-size: 13px;
+	color: #374151;
+}
+
+@media (max-width: 640px) {
+	.wpss-milestone-row__meta {
+		grid-template-columns: 1fr;
+	}
+	.wpss-milestones-summary {
+		flex-direction: column;
+		gap: 6px;
+	}
+}
+
+/* Contract badge on each proposal in the buyer's review list. */
+.wpss-proposal-contract-badge {
+	display: inline-block;
+	margin-top: 6px;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border-radius: 999px;
+}
+
+.wpss-proposal-contract-badge--fixed {
+	background: #e0e7ff;
+	color: #3730a3;
+}
+
+.wpss-proposal-contract-badge--milestone {
+	background: #ccfbf1;
+	color: #115e59;
+}
+
+.wpss-proposal-milestone-breakdown {
+	margin: 12px 0 0;
+	padding: 10px 12px;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+}
+
+.wpss-proposal-milestone-breakdown summary {
+	cursor: pointer;
+	font-weight: 600;
+	color: #0f766e;
+	font-size: 13px;
+}
+
+.wpss-proposal-milestone-list {
+	list-style: none;
+	margin: 10px 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.wpss-proposal-milestone-list__item {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	padding: 10px 12px;
+}
+
+.wpss-proposal-milestone-list__head {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	font-size: 13px;
+	margin-bottom: 4px;
+}
+
+.wpss-proposal-milestone-list__desc,
+.wpss-proposal-milestone-list__delivs {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: #4b5563;
+	line-height: 1.5;
+}
+
+.wpss-proposal-milestone-list__total {
+	margin: 12px 0 0;
+	font-size: 13px;
+	color: #111827;
+	text-align: right;
+}

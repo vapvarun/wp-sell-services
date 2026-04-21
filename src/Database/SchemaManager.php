@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.2';
+	const DB_VERSION = '1.4.3';
 
 	/**
 	 * Option name for storing DB version.
@@ -579,6 +579,8 @@ class SchemaManager {
 			cover_letter text NOT NULL,
 			proposed_price decimal(10,2) NOT NULL,
 			proposed_days int(11) NOT NULL,
+			contract_type varchar(20) DEFAULT 'fixed',
+			milestones longtext,
 			attachments longtext,
 			status varchar(50) DEFAULT 'pending',
 			rejection_reason text,
@@ -588,7 +590,8 @@ class SchemaManager {
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_request (request_id),
-			KEY idx_vendor (vendor_id)
+			KEY idx_vendor (vendor_id),
+			KEY idx_contract_type (contract_type)
 		) {$charset_collate};";
 	}
 

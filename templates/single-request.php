@@ -291,12 +291,66 @@ do_action( 'wpss_before_single_request', $request_id );
 													);
 													?>
 												</div>
+												<?php
+												$proposal_contract  = $proposal->contract_type ?? 'fixed';
+												$proposal_milestones = is_array( $proposal->milestones ?? null ) ? $proposal->milestones : array();
+												if ( 'milestone' === $proposal_contract && ! empty( $proposal_milestones ) ) :
+													?>
+													<div class="wpss-proposal-contract-badge wpss-proposal-contract-badge--milestone">
+														<?php
+														printf(
+															/* translators: %d: phase count */
+															esc_html( _n( '%d phase milestone plan', '%d phase milestone plan', count( $proposal_milestones ), 'wp-sell-services' ) ),
+															count( $proposal_milestones )
+														);
+														?>
+													</div>
+												<?php else : ?>
+													<div class="wpss-proposal-contract-badge wpss-proposal-contract-badge--fixed">
+														<?php esc_html_e( 'Fixed price', 'wp-sell-services' ); ?>
+													</div>
+												<?php endif; ?>
 											</div>
 										</div>
 
 										<div class="wpss-proposal-description">
 											<?php echo wp_kses_post( nl2br( $proposal->cover_letter ?? '' ) ); ?>
 										</div>
+
+										<?php if ( 'milestone' === $proposal_contract && ! empty( $proposal_milestones ) ) : ?>
+											<details class="wpss-proposal-milestone-breakdown">
+												<summary><?php esc_html_e( 'View milestone breakdown', 'wp-sell-services' ); ?></summary>
+												<ol class="wpss-proposal-milestone-list">
+													<?php foreach ( $proposal_milestones as $idx => $ms ) : ?>
+														<li class="wpss-proposal-milestone-list__item">
+															<div class="wpss-proposal-milestone-list__head">
+																<strong><?php echo esc_html( (string) ( $ms['title'] ?? '' ) ); ?></strong>
+																<span><?php echo esc_html( wpss_format_price( (float) ( $ms['amount'] ?? 0 ) ) ); ?> &middot;
+																	<?php
+																	$row_days = (int) ( $ms['days'] ?? 0 );
+																	printf(
+																		/* translators: %d days */
+																		esc_html( _n( '%d day', '%d days', $row_days, 'wp-sell-services' ) ),
+																		$row_days
+																	);
+																	?>
+																</span>
+															</div>
+															<?php if ( ! empty( $ms['description'] ) ) : ?>
+																<p class="wpss-proposal-milestone-list__desc"><?php echo esc_html( (string) $ms['description'] ); ?></p>
+															<?php endif; ?>
+															<?php if ( ! empty( $ms['deliverables'] ) ) : ?>
+																<p class="wpss-proposal-milestone-list__delivs"><strong><?php esc_html_e( 'Deliverables:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( (string) $ms['deliverables'] ); ?></p>
+															<?php endif; ?>
+														</li>
+													<?php endforeach; ?>
+												</ol>
+												<p class="wpss-proposal-milestone-list__total">
+													<?php esc_html_e( 'Project total:', 'wp-sell-services' ); ?>
+													<strong><?php echo esc_html( wpss_format_price( (float) ( $proposal->proposed_price ?? 0 ) ) ); ?></strong>
+												</p>
+											</details>
+										<?php endif; ?>
 
 										<?php if ( 'pending' === $proposal->status && 'open' === $request_status ) : ?>
 											<div class="wpss-proposal-actions">
@@ -465,7 +519,19 @@ do_action( 'wpss_before_single_request', $request_id );
 						<p class="wpss-form-help"><?php esc_html_e( 'Explain your relevant experience and how you would approach this project.', 'wp-sell-services' ); ?></p>
 					</div>
 
-					<div class="wpss-form-row">
+					<fieldset class="wpss-form-group wpss-contract-type-group">
+						<legend class="wpss-form-label"><?php esc_html_e( 'Contract type', 'wp-sell-services' ); ?></legend>
+						<label class="wpss-radio">
+							<input type="radio" name="contract_type" value="fixed" checked data-contract-toggle="fixed">
+							<span><strong><?php esc_html_e( 'Fixed price', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'one payment, one delivery.', 'wp-sell-services' ); ?></span>
+						</label>
+						<label class="wpss-radio">
+							<input type="radio" name="contract_type" value="milestone" data-contract-toggle="milestone">
+							<span><strong><?php esc_html_e( 'Milestone-based', 'wp-sell-services' ); ?></strong> &mdash; <?php esc_html_e( 'phased plan, buyer pays each phase as you deliver.', 'wp-sell-services' ); ?></span>
+						</label>
+					</fieldset>
+
+					<div class="wpss-form-row" data-contract-pane="fixed">
 						<div class="wpss-form-group wpss-form-col-6">
 							<label for="proposal-price" class="wpss-form-label">
 								<?php esc_html_e( 'Your Price', 'wp-sell-services' ); ?>
@@ -473,7 +539,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								<span class="wpss-required">*</span>
 							</label>
 							<div class="wpss-input-group">
-								<input type="number" id="proposal-price" name="price" class="wpss-form-input" min="1" step="0.01" required
+								<input type="number" id="proposal-price" name="price" class="wpss-form-input" min="1" step="0.01"
 										placeholder="<?php echo esc_attr( $budget_min ? $budget_min : '100' ); ?>">
 							</div>
 							<?php if ( $budget_min || $budget_max ) : ?>
@@ -495,13 +561,51 @@ do_action( 'wpss_before_single_request', $request_id );
 								<span class="wpss-required">*</span>
 							</label>
 							<div class="wpss-input-group">
-								<input type="number" id="proposal-delivery" name="delivery_days" class="wpss-form-input" min="1" required
+								<input type="number" id="proposal-delivery" name="delivery_days" class="wpss-form-input" min="1"
 										value="<?php echo esc_attr( $delivery_days ? $delivery_days : 7 ); ?>">
 								<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
 							</div>
 						</div>
 					</div>
+
+					<div class="wpss-milestones-builder" data-contract-pane="milestone" hidden>
+						<p class="wpss-form-help">
+							<?php esc_html_e( 'Plan the project as paid phases. Each phase is a separate payment the buyer makes when ready. You can add more phases later if scope grows.', 'wp-sell-services' ); ?>
+						</p>
+						<div class="wpss-milestone-rows" data-milestone-rows>
+							<!-- rows injected by JS -->
+						</div>
+						<button type="button" class="wpss-btn wpss-btn-outline wpss-btn--sm" data-add-milestone>
+							<?php esc_html_e( '+ Add another phase', 'wp-sell-services' ); ?>
+						</button>
+						<div class="wpss-milestones-summary">
+							<span><?php esc_html_e( 'Project total:', 'wp-sell-services' ); ?> <strong data-milestones-total><?php echo esc_html( wpss_format_price( 0 ) ); ?></strong></span>
+							<span><?php esc_html_e( 'Total time:', 'wp-sell-services' ); ?> <strong data-milestones-days>0</strong> <?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
+						</div>
+					</div>
 				</div>
+
+				<template data-milestone-row-template>
+					<div class="wpss-milestone-row" data-milestone-row>
+						<div class="wpss-milestone-row__head">
+							<span class="wpss-milestone-row__num" data-milestone-num>1.</span>
+							<input type="text" class="wpss-form-input wpss-milestone-row__title" name="milestones[__INDEX__][title]" placeholder="<?php esc_attr_e( 'Phase title (e.g. Wireframes)', 'wp-sell-services' ); ?>" required>
+							<button type="button" class="wpss-milestone-row__remove" data-remove-milestone aria-label="<?php esc_attr_e( 'Remove phase', 'wp-sell-services' ); ?>">&times;</button>
+						</div>
+						<textarea class="wpss-form-textarea wpss-milestone-row__desc" rows="2" name="milestones[__INDEX__][description]" placeholder="<?php esc_attr_e( 'What the buyer is paying for in this phase', 'wp-sell-services' ); ?>"></textarea>
+						<div class="wpss-milestone-row__meta">
+							<label>
+								<span><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></span>
+								<input type="number" min="1" step="0.01" name="milestones[__INDEX__][amount]" class="wpss-form-input" data-milestone-amount placeholder="100.00">
+							</label>
+							<label>
+								<span><?php esc_html_e( 'Days', 'wp-sell-services' ); ?></span>
+								<input type="number" min="0" step="1" name="milestones[__INDEX__][days]" class="wpss-form-input" data-milestone-days placeholder="3">
+							</label>
+						</div>
+						<input type="text" class="wpss-form-input wpss-milestone-row__deliverables" name="milestones[__INDEX__][deliverables]" placeholder="<?php esc_attr_e( 'Deliverables (optional, e.g. Figma file + 2 mockups)', 'wp-sell-services' ); ?>">
+					</div>
+				</template>
 
 				<div class="wpss-modal-footer">
 					<button type="button" class="wpss-btn wpss-btn-outline wpss-modal-close-btn">

@@ -210,13 +210,54 @@ N+1 unlocks) or float (buyer can pay any pending phase any time)?
 Recommend lock-step for v1.1 — closer to Upwork mental model. Easy upgrade
 from existing code (one extra check on the Pay button).
 
-### Build order for v1.1
+### v1.1 decisions (signed off 2026-04-21)
 
-1. Schema add `contract_type` + `milestones` columns on `wp_wpss_proposals`
-2. Proposal form: radio + repeater UI
-3. Proposal accept handler: iterate milestones → MilestoneService::propose
-4. Order page lock-step gating (if locked-step decision)
-5. Email template additions (1–2 new ones if proposal-accepted email needs
-   to surface the milestone count)
-6. Browser verify the full flow with multiple proposals from different
-   vendors with different contract types
+| Question | Answer |
+|---|---|
+| Lock-step vs float | Lock-step. Milestone N's "Accept & Pay" only enables when every milestone with a lower `sort_order` is `completed` or `cancelled`. |
+| Buyer comparing proposals | Total + small badge: "Fixed $500" / "5 phases · $600". Full breakdown on the proposal detail. |
+| Auto-approve window | 7 days, configurable via existing `auto_complete_days` setting. |
+| Dispute granularity | v1: parent-level dispute. Per-milestone dispute deferred to a later release. |
+| Project completion | Auto-flip parent to `completed` when all milestones are terminal AND no `pending_payment` remain. |
+| Mid-contract cancellation | Cancellation routes the in-progress phase through dispute; pending phases auto-cancel. |
+
+### Money flow (audited)
+
+**Parent order on a milestone contract:** `total = 0`, `status = in_progress`,
+`payment_status = paid` (synthetic), `paid_at = now`. Buyer never sees a
+parent checkout — they go straight to the order page where the milestone
+timeline is the entire payment surface.
+
+**Each milestone sub-order:** identical lifecycle to the existing milestone
+flow — pay through `?pay_order=N` checkout, commission split at payment time,
+vendor wallet credited at pay time, `type='milestone'` ledger row.
+
+**No double-billing:** parent is $0 forever; all money flows through
+sub-orders. Sum of milestones = vendor's total contract earnings.
+
+### 7 guards the implementation must enforce
+
+| Guard | Risk if missing | Fix in code |
+|---|---|---|
+| Skip 48h cleanup on contract milestones | Long projects could lose phases to abandon-cron if buyer is slow | Add `is_contract_milestone=true` to milestone meta; cleanup cron skips those rows |
+| Validate milestones JSON on proposal submit | Vendor could submit empty/zero phases | Each row: `title` non-empty, `amount > 0`, `days >= 0`; reject otherwise |
+| Transactional bulk milestone insert | Partial state if 3 of 5 inserts fail | Wrap acceptance handler's milestone loop in `START TRANSACTION` / rollback on any failure |
+| Server-side lock-step on pay_order | Buyer crafts URL for a locked milestone | StandaloneCheckoutProvider's pay_order handler rejects when milestone has earlier non-terminal siblings |
+| Auto-complete parent on final approval | Parent stuck `in_progress` after last phase done | Hook `wpss_milestone_approved` → if all milestones terminal, set parent to `completed` |
+| Cascade cancel on parent cancellation | Parent cancelled but stale milestones linger | Hook `wpss_order_cancelled` (or analogous) → mark all linked `pending_payment` milestones cancelled immediately |
+| Lock proposal edits after acceptance | Vendor changes terms after buyer agreed | Already enforced by existing `update()` status check; document so future maintainers don't loosen it |
+
+### Build order for v1.1 (incorporating audit)
+
+1. Schema: `contract_type` + `milestones` on `wp_wpss_proposals` ✅ done
+2. ProposalService — submit/update/format accept and validate `milestones[]` shape
+3. `BuyerRequestService::convert_to_order` — branch on `contract_type`; wrap milestone bulk-insert in DB transaction; set parent `total=0`, `status=in_progress`, `payment_status=paid` for milestone contracts
+4. MilestoneService::get_for_parent — add `is_locked` computed field
+5. MilestoneService::propose — accept and persist `is_contract_milestone` flag
+6. StandaloneCheckoutProvider — server-side lock-step rejection on pay_order
+7. MilestoneService::cleanup_abandoned_milestones — skip contract milestones
+8. Plugin.php listeners — auto-complete parent on final approval; cascade cancel on parent cancel
+9. Vendor proposal form template — radio + repeater + live total
+10. Buyer proposal review template — breakdown + Accept confirm dialog
+11. Order-view milestone timeline — render `is_locked` styling + "Pay phase N first" message
+12. Browser verify the full flow end-to-end

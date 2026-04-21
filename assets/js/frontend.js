@@ -1059,6 +1059,33 @@
 		$(document).on('click', '.wpss-submit-proposal-btn', function(e) {
 			e.preventDefault();
 			WPSS.showModal('wpss-proposal-modal');
+			// Seed the milestone repeater with one empty row the first
+			// time the modal opens so the vendor sees the layout immediately
+			// when they switch to the Milestone-based contract type.
+			WPSS.initContractToggle();
+		});
+
+		// Contract type toggle inside the proposal modal.
+		$(document).on('change', 'input[name="contract_type"]', function() {
+			WPSS.applyContractToggle($(this).val());
+		});
+
+		// Add a phase row in the milestone builder.
+		$(document).on('click', '[data-add-milestone]', function(e) {
+			e.preventDefault();
+			WPSS.addMilestoneRow();
+		});
+
+		// Remove a phase row.
+		$(document).on('click', '[data-remove-milestone]', function(e) {
+			e.preventDefault();
+			$(this).closest('[data-milestone-row]').remove();
+			WPSS.recalcMilestoneTotals();
+		});
+
+		// Live recalculation of project total + total days.
+		$(document).on('input', '[data-milestone-amount], [data-milestone-days]', function() {
+			WPSS.recalcMilestoneTotals();
 		});
 
 		// Proposal form submission.
@@ -1118,22 +1145,43 @@
 
 		// Validate fields.
 		const description = $form.find('[name="description"]').val();
-		const price = parseFloat($form.find('[name="price"]').val()) || 0;
-		const deliveryDays = parseInt($form.find('[name="delivery_days"]').val()) || 0;
+		const contractType = $form.find('input[name="contract_type"]:checked').val() || 'fixed';
 
 		if (!description || !description.trim()) {
 			WPSS.showNotification(wpssData.i18n?.proposalDescriptionRequired || 'Please provide a proposal description.', 'warning');
 			return;
 		}
 
-		if (price <= 0) {
-			WPSS.showNotification(wpssData.i18n?.proposalPriceRequired || 'Please enter a valid price.', 'warning');
-			return;
-		}
-
-		if (deliveryDays <= 0) {
-			WPSS.showNotification(wpssData.i18n?.proposalDeliveryRequired || 'Please enter delivery time in days.', 'warning');
-			return;
+		if (contractType === 'milestone') {
+			// Each milestone row: title + amount > 0 required. Days optional.
+			const $rows = $form.find('[data-milestone-row]');
+			if (!$rows.length) {
+				WPSS.showNotification('Add at least one milestone phase.', 'warning');
+				return;
+			}
+			let invalid = false;
+			$rows.each(function() {
+				const t = $(this).find('input[name$="[title]"]').val();
+				const a = parseFloat($(this).find('[data-milestone-amount]').val()) || 0;
+				if (!t || !t.trim() || a <= 0) {
+					invalid = true;
+				}
+			});
+			if (invalid) {
+				WPSS.showNotification('Each phase needs a title and an amount greater than zero.', 'warning');
+				return;
+			}
+		} else {
+			const price = parseFloat($form.find('[name="price"]').val()) || 0;
+			const deliveryDays = parseInt($form.find('[name="delivery_days"]').val()) || 0;
+			if (price <= 0) {
+				WPSS.showNotification(wpssData.i18n?.proposalPriceRequired || 'Please enter a valid price.', 'warning');
+				return;
+			}
+			if (deliveryDays <= 0) {
+				WPSS.showNotification(wpssData.i18n?.proposalDeliveryRequired || 'Please enter delivery time in days.', 'warning');
+				return;
+			}
 		}
 
 		$btn.prop('disabled', true).text(wpssData.i18n?.submitting || 'Submitting...');
@@ -1158,6 +1206,86 @@
 				$btn.prop('disabled', false).text(btnText);
 			}
 		});
+	};
+
+	/**
+	 * One-time setup of the contract toggle when the proposal modal opens.
+	 * Defaults to fixed and seeds the milestone repeater with one empty
+	 * row so vendors immediately see what the alternative looks like
+	 * after they switch.
+	 */
+	WPSS.initContractToggle = function() {
+		const $modal = $('#wpss-proposal-modal');
+		if (!$modal.length || $modal.data('contract-init')) return;
+		$modal.data('contract-init', true);
+		WPSS.applyContractToggle($modal.find('input[name="contract_type"]:checked').val() || 'fixed');
+		// Seed a single empty milestone row up front.
+		if (!$modal.find('[data-milestone-row]').length) {
+			WPSS.addMilestoneRow();
+		}
+	};
+
+	/**
+	 * Hide / show the right pane and toggle `required` on the inputs in
+	 * the inactive pane so the browser does not fail validation on
+	 * fields that should not apply.
+	 */
+	WPSS.applyContractToggle = function(value) {
+		const $modal = $('#wpss-proposal-modal');
+		const isMilestone = value === 'milestone';
+		$modal.find('[data-contract-pane="fixed"]').attr('hidden', isMilestone);
+		$modal.find('[data-contract-pane="milestone"]').attr('hidden', !isMilestone);
+		// Toggle native `required` so HTML5 validation matches the visible pane.
+		$modal.find('[data-contract-pane="fixed"] input').each(function() {
+			if (this.name === 'price' || this.name === 'delivery_days') {
+				this.required = !isMilestone;
+			}
+		});
+		$modal.find('[data-contract-pane="milestone"] input').each(function() {
+			if (this.name && this.name.indexOf('milestones[') === 0) {
+				const isTitle = this.name.endsWith('[title]');
+				this.required = isMilestone && isTitle;
+			}
+		});
+	};
+
+	/**
+	 * Append a new milestone row using the inline <template>. Re-numbers
+	 * the visible 1./2./3. labels and the name="milestones[N][...]" indices
+	 * so the server receives a clean indexed array on submit.
+	 */
+	WPSS.addMilestoneRow = function() {
+		const $rows = $('#wpss-proposal-modal [data-milestone-rows]');
+		const $tpl  = $('#wpss-proposal-modal template[data-milestone-row-template]');
+		if (!$rows.length || !$tpl.length) return;
+		const html = $tpl.html();
+		$rows.append(html);
+		WPSS.renumberMilestoneRows();
+	};
+
+	WPSS.renumberMilestoneRows = function() {
+		$('#wpss-proposal-modal [data-milestone-row]').each(function(idx) {
+			const n = idx + 1;
+			$(this).find('[data-milestone-num]').text(n + '.');
+			$(this).find('input, textarea').each(function() {
+				if (this.name) {
+					this.name = this.name.replace(/milestones\[(__INDEX__|\d+)\]/, 'milestones[' + idx + ']');
+				}
+			});
+		});
+		WPSS.recalcMilestoneTotals();
+	};
+
+	WPSS.recalcMilestoneTotals = function() {
+		let total = 0;
+		let days  = 0;
+		$('#wpss-proposal-modal [data-milestone-row]').each(function() {
+			total += parseFloat($(this).find('[data-milestone-amount]').val()) || 0;
+			days  += parseInt($(this).find('[data-milestone-days]').val(), 10) || 0;
+		});
+		const symbol = (wpssData && wpssData.currencySymbol) || '$';
+		$('#wpss-proposal-modal [data-milestones-total]').text(symbol + total.toFixed(2));
+		$('#wpss-proposal-modal [data-milestones-days]').text(days);
 	};
 
 	/**

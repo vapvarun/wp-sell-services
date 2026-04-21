@@ -28,6 +28,16 @@ class ProposalService {
 	public const STATUS_WITHDRAWN = 'withdrawn';
 
 	/**
+	 * Contract types — vendor picks at proposal time.
+	 *
+	 * 'fixed'     = single payment, single delivery (existing flow).
+	 * 'milestone' = phased plan; on acceptance the milestones are pre-created
+	 *               as pending_payment sub-orders the buyer pays in lock-step.
+	 */
+	public const CONTRACT_TYPE_FIXED     = 'fixed';
+	public const CONTRACT_TYPE_MILESTONE = 'milestone';
+
+	/**
 	 * Database table name.
 	 *
 	 * @var string
@@ -104,16 +114,45 @@ class ProposalService {
 		}
 
 		// Validate required fields.
-		if ( empty( $data['description'] ) || empty( $data['price'] ) ) {
+		if ( empty( $data['description'] ) ) {
 			return false;
+		}
+
+		// Contract type defaults to 'fixed'. Milestone proposals derive their
+		// total price + total days from the milestone breakdown server-side
+		// so the client cannot lie about the sum.
+		$contract_type = isset( $data['contract_type'] ) && self::CONTRACT_TYPE_MILESTONE === $data['contract_type']
+			? self::CONTRACT_TYPE_MILESTONE
+			: self::CONTRACT_TYPE_FIXED;
+
+		$milestones_json = null;
+		$proposed_price  = 0.0;
+		$proposed_days   = 0;
+
+		if ( self::CONTRACT_TYPE_MILESTONE === $contract_type ) {
+			$milestones = $this->normalize_milestones( $data['milestones'] ?? array() );
+			if ( empty( $milestones ) ) {
+				return false;
+			}
+			$milestones_json = wp_json_encode( $milestones );
+			$proposed_price  = (float) array_sum( array_column( $milestones, 'amount' ) );
+			$proposed_days   = (int) array_sum( array_column( $milestones, 'days' ) );
+		} else {
+			if ( empty( $data['price'] ) ) {
+				return false;
+			}
+			$proposed_price = (float) $data['price'];
+			$proposed_days  = (int) ( $data['delivery_days'] ?? $request->delivery_days );
 		}
 
 		$proposal_data = array(
 			'request_id'     => $request_id,
 			'vendor_id'      => $vendor_id,
 			'cover_letter'   => sanitize_textarea_field( $data['description'] ),
-			'proposed_price' => (float) $data['price'],
-			'proposed_days'  => (int) ( $data['delivery_days'] ?? $request->delivery_days ),
+			'proposed_price' => $proposed_price,
+			'proposed_days'  => $proposed_days,
+			'contract_type'  => $contract_type,
+			'milestones'     => $milestones_json,
 			'status'         => self::STATUS_PENDING,
 			'attachments'    => isset( $data['attachments'] ) ? wp_json_encode( $data['attachments'] ) : null,
 			'created_at'     => current_time( 'mysql' ),
@@ -175,7 +214,61 @@ class ProposalService {
 		$proposal->proposed_days  = (int) $proposal->proposed_days;
 		$proposal->attachments    = $proposal->attachments ? json_decode( $proposal->attachments, true ) : array();
 
+		// Normalize new contract fields so callers can rely on a stable shape.
+		$proposal->contract_type = $proposal->contract_type ?? self::CONTRACT_TYPE_FIXED;
+		if ( self::CONTRACT_TYPE_MILESTONE !== $proposal->contract_type ) {
+			$proposal->contract_type = self::CONTRACT_TYPE_FIXED;
+		}
+		$proposal->milestones = ! empty( $proposal->milestones ) && is_string( $proposal->milestones )
+			? ( json_decode( $proposal->milestones, true ) ?: array() )
+			: ( is_array( $proposal->milestones ?? null ) ? $proposal->milestones : array() );
+
 		return $proposal;
+	}
+
+	/**
+	 * Validate + normalize a vendor-submitted milestone breakdown.
+	 *
+	 * Rejects rows missing a title or with a non-positive amount — the buyer
+	 * needs to see a real plan, not zero-amount placeholders. Returns a
+	 * clean indexed array of associative entries:
+	 *   [
+	 *     [ 'title' => string, 'description' => string, 'deliverables' => string,
+	 *       'amount' => float, 'days' => int ],
+	 *     ...
+	 *   ]
+	 *
+	 * Empty input → empty output. Caller decides whether to reject.
+	 *
+	 * @param mixed $raw Whatever the form / REST handler passed in.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function normalize_milestones( $raw ): array {
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$title = isset( $row['title'] ) ? sanitize_text_field( (string) $row['title'] ) : '';
+			$amount = isset( $row['amount'] ) ? (float) $row['amount'] : 0.0;
+			if ( '' === $title || $amount <= 0 ) {
+				continue;
+			}
+			$days = isset( $row['days'] ) ? max( 0, (int) $row['days'] ) : 0;
+			$out[] = array(
+				'title'        => $title,
+				'description'  => isset( $row['description'] ) ? sanitize_textarea_field( (string) $row['description'] ) : '',
+				'deliverables' => isset( $row['deliverables'] ) ? sanitize_textarea_field( (string) $row['deliverables'] ) : '',
+				'amount'       => $amount,
+				'days'         => $days,
+			);
+		}
+
+		return $out;
 	}
 
 	/**
@@ -200,12 +293,39 @@ class ProposalService {
 			$update_data['cover_letter'] = sanitize_textarea_field( $data['description'] );
 		}
 
-		if ( isset( $data['price'] ) ) {
-			$update_data['proposed_price'] = (float) $data['price'];
+		// Contract type can be flipped while still pending. Switching from
+		// milestone -> fixed clears the milestones JSON and uses the
+		// supplied price / days; the reverse derives them from the new
+		// breakdown the same way submit() does.
+		if ( isset( $data['contract_type'] ) ) {
+			$update_data['contract_type'] = self::CONTRACT_TYPE_MILESTONE === $data['contract_type']
+				? self::CONTRACT_TYPE_MILESTONE
+				: self::CONTRACT_TYPE_FIXED;
 		}
 
-		if ( isset( $data['delivery_days'] ) ) {
-			$update_data['proposed_days'] = (int) $data['delivery_days'];
+		$effective_contract = $update_data['contract_type'] ?? $proposal->contract_type ?? self::CONTRACT_TYPE_FIXED;
+
+		if ( self::CONTRACT_TYPE_MILESTONE === $effective_contract ) {
+			if ( isset( $data['milestones'] ) ) {
+				$milestones = $this->normalize_milestones( $data['milestones'] );
+				if ( empty( $milestones ) ) {
+					return false;
+				}
+				$update_data['milestones']     = wp_json_encode( $milestones );
+				$update_data['proposed_price'] = (float) array_sum( array_column( $milestones, 'amount' ) );
+				$update_data['proposed_days']  = (int) array_sum( array_column( $milestones, 'days' ) );
+			}
+		} else {
+			// Fixed: clear any previous milestones and accept manual price / days.
+			if ( isset( $data['contract_type'] ) ) {
+				$update_data['milestones'] = null;
+			}
+			if ( isset( $data['price'] ) ) {
+				$update_data['proposed_price'] = (float) $data['price'];
+			}
+			if ( isset( $data['delivery_days'] ) ) {
+				$update_data['proposed_days'] = (int) $data['delivery_days'];
+			}
 		}
 
 		if ( isset( $data['attachments'] ) ) {

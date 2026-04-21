@@ -271,6 +271,16 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p class="wpss-alert wpss-alert-info">' . esc_html__( 'This order has already been paid.', 'wp-sell-services' ) . '</p>';
 		}
 
+		// Lock-step backstop on milestone sub-orders: even though the on-page
+		// timeline hides the Pay button on locked phases, a buyer could craft
+		// the URL by hand to skip ahead. The server is the only authority.
+		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+			$milestones = new \WPSellServices\Services\MilestoneService();
+			if ( $milestones->is_locked( $order_id ) ) {
+				return '<p class="wpss-alert wpss-alert-info">' . esc_html__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ) . '</p>';
+			}
+		}
+
 		$service = $order->get_service();
 
 		// For proposal-based orders, service_id may be 0. Build a placeholder service
