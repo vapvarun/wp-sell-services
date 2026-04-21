@@ -238,9 +238,9 @@ class UpgradePage {
 	 */
 	private function render_feature_value( $value ): void {
 		if ( true === $value ) {
-			echo '<span class="wpss-feature-yes dashicons dashicons-yes-alt"></span>';
+			echo '<i data-lucide="check-circle-2" class="wpss-icon wpss-feature-yes" aria-hidden="true"></i>';
 		} elseif ( false === $value ) {
-			echo '<span class="wpss-feature-no dashicons dashicons-minus"></span>';
+			echo '<i data-lucide="minus" class="wpss-icon wpss-feature-no" aria-hidden="true"></i>';
 		} else {
 			echo '<span class="wpss-feature-text">' . esc_html( (string) $value ) . '</span>';
 		}

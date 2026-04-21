@@ -1809,7 +1809,7 @@ class Settings {
 		<div class="wpss-demo-content-actions" style="margin-top: 15px;">
 			<?php if ( $demo_imported ) : ?>
 				<p style="color: #00a32a; margin-bottom: 10px;">
-					<span class="dashicons dashicons-yes-alt" style="vertical-align: middle;"></span>
+					<i data-lucide="check-circle-2" class="wpss-icon" style="vertical-align: middle;" aria-hidden="true"></i>
 					<?php esc_html_e( 'Demo content is currently installed.', 'wp-sell-services' ); ?>
 				</p>
 				<button type="button" class="button button-secondary wpss-delete-demo" data-nonce="<?php echo esc_attr( $nonce ); ?>">

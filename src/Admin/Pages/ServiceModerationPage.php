@@ -596,7 +596,7 @@ class ServiceModerationPage {
 				<?php if ( $thumbnail ) : ?>
 					<img src="<?php echo esc_url( $thumbnail ); ?>" alt="" class="service-thumb">
 				<?php else : ?>
-					<span class="dashicons dashicons-format-image" style="font-size: 40px; color: #ccc;"></span>
+					<i data-lucide="image" class="wpss-icon" style="font-size: 40px; color: #ccc;" aria-hidden="true"></i>
 				<?php endif; ?>
 			</td>
 			<td class="column-title">

@@ -356,7 +356,7 @@ class SetupWizardPage {
 			<!-- Header -->
 			<div class="wpss-wizard-header">
 				<div class="wpss-wizard-logo">
-					<span class="dashicons dashicons-store"></span>
+					<i data-lucide="store" class="wpss-icon" aria-hidden="true"></i>
 					<span><?php esc_html_e( 'WP Sell Services', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-wizard-steps-indicator" id="wpss-steps-indicator"></div>
@@ -555,7 +555,7 @@ class SetupWizardPage {
 							<?php echo $exists ? 'disabled' : ''; ?>>
 							<?php echo esc_html( $preset ); ?>
 							<?php if ( $exists ) : ?>
-								<span class="dashicons dashicons-yes-alt"></span>
+								<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 							<?php endif; ?>
 						</button>
 					<?php endforeach; ?>
@@ -628,24 +628,24 @@ class SetupWizardPage {
 			<!-- Step 6: Done -->
 			<div class="wpss-wizard-step" data-step="6">
 				<div class="wpss-wizard-done">
-					<span class="dashicons dashicons-yes-alt"></span>
+					<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 					<h2><?php esc_html_e( 'Your Marketplace is Ready!', 'wp-sell-services' ); ?></h2>
 					<p><?php esc_html_e( 'You\'ve completed the initial setup. Here\'s what to do next:', 'wp-sell-services' ); ?></p>
 				</div>
 
 				<div class="wpss-wizard-cards">
 					<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="wpss-wizard-card">
-						<span class="dashicons dashicons-plus-alt"></span>
+						<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 						<strong><?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Add a service listing to your marketplace.', 'wp-sell-services' ); ?></span>
 					</a>
 					<a href="#" class="wpss-wizard-card" id="wpss-wizard-import-demo">
-						<span class="dashicons dashicons-download"></span>
+						<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
 						<strong><?php esc_html_e( 'Import Demo Content', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Get started with sample services and vendors.', 'wp-sell-services' ); ?></span>
 					</a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings' ) ); ?>" class="wpss-wizard-card">
-						<span class="dashicons dashicons-admin-generic"></span>
+						<i data-lucide="settings" class="wpss-icon" aria-hidden="true"></i>
 						<strong><?php esc_html_e( 'Go to Settings', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Fine-tune your marketplace configuration.', 'wp-sell-services' ); ?></span>
 					</a>

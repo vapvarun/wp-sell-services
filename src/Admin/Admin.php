@@ -798,13 +798,20 @@ class Admin {
 		 */
 		$menu_label = apply_filters( 'wpss_admin_menu_label', __( 'Sell Services', 'wp-sell-services' ) );
 
+		// Packet H: use a data-URL Lucide `store` glyph (instead of a legacy
+		// dashicon class) so the admin-menu entry carries the house-style
+		// icon consistently with the rest of the plugin.
+		$menu_icon = 'data:image/svg+xml;base64,' . base64_encode(
+			'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>'
+		);
+
 		add_menu_page(
 			__( 'WP Sell Services', 'wp-sell-services' ),
 			$menu_label,
 			'edit_posts',
 			'wp-sell-services',
 			array( $this, 'render_dashboard_page' ),
-			'dashicons-store',
+			$menu_icon,
 			30
 		);
 
@@ -968,7 +975,7 @@ class Admin {
 				<!-- Stats Cards -->
 				<div class="wpss-stats-row">
 					<div class="wpss-stat-card">
-						<span class="wpss-stat-icon dashicons dashicons-cart"></span>
+						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->total ?? 0 ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
@@ -976,7 +983,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<span class="wpss-stat-icon dashicons dashicons-clock" style="color: #dba617;"></span>
+						<i data-lucide="clock" class="wpss-icon wpss-stat-icon" style="color: #dba617;" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->in_progress ?? 0 ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
@@ -984,7 +991,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<span class="wpss-stat-icon dashicons dashicons-yes-alt" style="color: #00a32a;"></span>
+						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon" style="color: #00a32a;" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->completed ?? 0 ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
@@ -992,7 +999,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<span class="wpss-stat-icon dashicons dashicons-money-alt" style="color: #1dbf73;"></span>
+						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon" style="color: #1dbf73;" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $revenue ?? 0 ) ) ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Revenue', 'wp-sell-services' ); ?></span>
@@ -1006,19 +1013,19 @@ class Admin {
 						<h2><?php esc_html_e( 'Quick Actions', 'wp-sell-services' ); ?></h2>
 						<div class="wpss-quick-actions">
 							<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="wpss-action-btn">
-								<span class="dashicons dashicons-plus-alt"></span>
+								<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Add Service', 'wp-sell-services' ); ?>
 							</a>
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders' ) ); ?>" class="wpss-action-btn">
-								<span class="dashicons dashicons-list-view"></span>
+								<i data-lucide="list" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'View Orders', 'wp-sell-services' ); ?>
 							</a>
 							<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>" class="wpss-action-btn">
-								<span class="dashicons dashicons-admin-tools"></span>
+								<i data-lucide="wrench" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?>
 							</a>
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings' ) ); ?>" class="wpss-action-btn">
-								<span class="dashicons dashicons-admin-generic"></span>
+								<i data-lucide="settings" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Settings', 'wp-sell-services' ); ?>
 							</a>
 						</div>
@@ -1455,7 +1462,7 @@ class Admin {
 											if ( ! empty( $msg_attachments ) && is_array( $msg_attachments ) ) :
 												?>
 												<div style="margin-top: 10px; color: #666;">
-													<span class="dashicons dashicons-paperclip"></span>
+													<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
 													<?php esc_html_e( 'Has attachments', 'wp-sell-services' ); ?>
 												</div>
 											<?php endif; ?>

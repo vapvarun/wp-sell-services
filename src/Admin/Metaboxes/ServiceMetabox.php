@@ -121,7 +121,7 @@ class ServiceMetabox {
 			<div class="wpss-details-grid">
 				<div class="wpss-detail-card">
 					<div class="wpss-detail-icon">
-						<span class="dashicons dashicons-visibility"></span>
+						<i data-lucide="eye" class="wpss-icon" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-detail-content">
 						<label for="wpss_status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
@@ -137,7 +137,7 @@ class ServiceMetabox {
 				</div>
 			</div>
 			<p class="wpss-details-note">
-				<span class="dashicons dashicons-info-outline"></span>
+				<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Delivery time and revisions are configured per package below.', 'wp-sell-services' ); ?>
 			</p>
 
@@ -209,7 +209,7 @@ class ServiceMetabox {
 
 			<button type="button" class="button button-secondary" id="wpss-add-package"
 					<?php echo $package_count >= 3 ? 'style="display:none;"' : ''; ?>>
-				<span class="dashicons dashicons-plus-alt2"></span>
+				<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add Package', 'wp-sell-services' ); ?>
 			</button>
 		</div>
@@ -217,15 +217,15 @@ class ServiceMetabox {
 		<script type="text/html" id="tmpl-wpss-package-item">
 			<div class="wpss-package-item collapsed" data-index="{{data.index}}">
 				<div class="wpss-package-header">
-					<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+					<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 					<span class="wpss-package-title"><?php esc_html_e( 'New Package', 'wp-sell-services' ); ?></span>
 					<span class="wpss-package-price-display"></span>
 					<div class="wpss-package-actions">
 						<button type="button" class="wpss-package-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-arrow-down-alt2"></span>
+							<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 						<button type="button" class="wpss-remove-package" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-trash"></span>
+							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
 				</div>
@@ -239,7 +239,7 @@ class ServiceMetabox {
 						</div>
 						<div class="wpss-package-field">
 							<label>
-								<span class="dashicons dashicons-money-alt"></span>
+								<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 							</label>
 							<div class="wpss-input-with-prefix">
@@ -261,7 +261,7 @@ class ServiceMetabox {
 					<div class="wpss-package-row wpss-package-row-grid">
 						<div class="wpss-package-field">
 							<label>
-								<span class="dashicons dashicons-clock"></span>
+								<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
 							</label>
 							<div class="wpss-input-with-suffix">
@@ -272,7 +272,7 @@ class ServiceMetabox {
 						</div>
 						<div class="wpss-package-field">
 							<label>
-								<span class="dashicons dashicons-update"></span>
+								<i data-lucide="refresh-cw" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
 							</label>
 							<div class="wpss-input-with-suffix">
@@ -285,7 +285,7 @@ class ServiceMetabox {
 					<div class="wpss-package-row">
 						<div class="wpss-package-field wpss-package-field-full">
 							<label>
-								<span class="dashicons dashicons-yes-alt"></span>
+								<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
 							</label>
 							<textarea name="wpss_packages[{{data.index}}][features]"
@@ -314,7 +314,7 @@ class ServiceMetabox {
 		?>
 		<div class="wpss-package-item" data-index="<?php echo esc_attr( $index ); ?>">
 			<div class="wpss-package-header">
-				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<span class="wpss-package-title"><?php echo esc_html( $package_name ); ?></span>
 				<span class="wpss-package-price-display">
 					<?php if ( $price > 0 ) : ?>
@@ -323,11 +323,11 @@ class ServiceMetabox {
 				</span>
 				<div class="wpss-package-actions">
 					<button type="button" class="wpss-package-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-arrow-down-alt2"></span>
+						<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 					<?php if ( ! $is_first ) : ?>
 						<button type="button" class="wpss-remove-package" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-trash"></span>
+							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					<?php endif; ?>
 				</div>
@@ -343,7 +343,7 @@ class ServiceMetabox {
 					</div>
 					<div class="wpss-package-field">
 						<label>
-							<span class="dashicons dashicons-money-alt"></span>
+							<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-prefix">
@@ -366,7 +366,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row wpss-package-row-grid">
 					<div class="wpss-package-field">
 						<label>
-							<span class="dashicons dashicons-clock"></span>
+							<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
@@ -378,7 +378,7 @@ class ServiceMetabox {
 					</div>
 					<div class="wpss-package-field">
 						<label>
-							<span class="dashicons dashicons-update"></span>
+							<i data-lucide="refresh-cw" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
@@ -392,7 +392,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-full">
 						<label>
-							<span class="dashicons dashicons-yes-alt"></span>
+							<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
 						</label>
 						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][features]"
@@ -422,12 +422,12 @@ class ServiceMetabox {
 				<?php foreach ( $faqs as $index => $faq ) : ?>
 					<div class="wpss-faq-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
 						<div class="wpss-faq-header">
-							<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+							<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 							<input type="text" name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][question]"
 									value="<?php echo esc_attr( $faq['question'] ?? '' ); ?>"
 									placeholder="<?php esc_attr_e( 'Enter question...', 'wp-sell-services' ); ?>" class="widefat">
 							<button type="button" class="wpss-remove-faq" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-								<span class="dashicons dashicons-trash"></span>
+								<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
 						<textarea name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][answer]"
@@ -437,7 +437,7 @@ class ServiceMetabox {
 				<?php endforeach; ?>
 			</div>
 			<button type="button" class="button button-secondary" id="wpss-add-faq">
-				<span class="dashicons dashicons-plus-alt2"></span>
+				<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add FAQ', 'wp-sell-services' ); ?>
 			</button>
 		</div>
@@ -445,11 +445,11 @@ class ServiceMetabox {
 		<script type="text/html" id="tmpl-wpss-faq-item">
 			<div class="wpss-faq-item" data-index="{{data.index}}">
 				<div class="wpss-faq-header">
-					<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+					<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 					<input type="text" name="wpss_faqs[{{data.index}}][question]"
 							placeholder="<?php esc_attr_e( 'Enter question...', 'wp-sell-services' ); ?>" class="widefat">
 					<button type="button" class="wpss-remove-faq" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-trash"></span>
+						<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				</div>
 				<textarea name="wpss_faqs[{{data.index}}][answer]"
@@ -479,7 +479,7 @@ class ServiceMetabox {
 				<?php endforeach; ?>
 			</div>
 			<button type="button" class="button button-secondary" id="wpss-add-requirement">
-				<span class="dashicons dashicons-plus-alt2"></span>
+				<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add Requirement', 'wp-sell-services' ); ?>
 			</button>
 		</div>
@@ -487,7 +487,7 @@ class ServiceMetabox {
 		<script type="text/html" id="tmpl-wpss-requirement-item">
 			<div class="wpss-requirement-item" data-index="{{data.index}}">
 				<div class="wpss-requirement-row">
-					<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+					<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 					<div class="wpss-requirement-fields">
 						<div class="wpss-requirement-main">
 							<input type="text" name="wpss_requirements[{{data.index}}][question]"
@@ -510,7 +510,7 @@ class ServiceMetabox {
 								<?php esc_html_e( 'Required', 'wp-sell-services' ); ?>
 							</label>
 							<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-								<span class="dashicons dashicons-trash"></span>
+								<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
 						<div class="wpss-requirement-choices" style="display:none;">
@@ -537,7 +537,7 @@ class ServiceMetabox {
 		?>
 		<div class="wpss-requirement-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
 			<div class="wpss-requirement-row">
-				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<div class="wpss-requirement-fields">
 					<div class="wpss-requirement-main">
 						<input type="text" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][question]"
@@ -562,7 +562,7 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Required', 'wp-sell-services' ); ?>
 						</label>
 						<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-trash"></span>
+							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
 					<div class="wpss-requirement-choices" <?php echo $show_choices ? '' : 'style="display:none;"'; ?>>
@@ -600,7 +600,7 @@ class ServiceMetabox {
 				<?php endforeach; ?>
 			</div>
 			<button type="button" class="button button-secondary" id="wpss-add-gallery-images">
-				<span class="dashicons dashicons-format-gallery"></span>
+				<i data-lucide="images" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add Images', 'wp-sell-services' ); ?>
 			</button>
 			<p class="description"><?php esc_html_e( 'Drag to reorder images.', 'wp-sell-services' ); ?></p>
@@ -627,28 +627,28 @@ class ServiceMetabox {
 		<div class="wpss-stats-wrapper">
 			<div class="wpss-stats-grid">
 				<div class="wpss-stat-item">
-					<span class="wpss-stat-icon dashicons dashicons-cart"></span>
+					<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
 						<span class="wpss-stat-value"><?php echo esc_html( (string) $order_count ); ?></span>
 						<span class="wpss-stat-label"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></span>
 					</div>
 				</div>
 				<div class="wpss-stat-item">
-					<span class="wpss-stat-icon dashicons dashicons-star-filled" style="color: #f5a623;"></span>
+					<i data-lucide="star" class="wpss-icon wpss-stat-icon" style="color: #f5a623;" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
 						<span class="wpss-stat-value"><?php echo esc_html( number_format( (float) $average_rating, 1 ) ); ?></span>
 						<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
 					</div>
 				</div>
 				<div class="wpss-stat-item">
-					<span class="wpss-stat-icon dashicons dashicons-testimonial"></span>
+					<i data-lucide="quote" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
 						<span class="wpss-stat-value"><?php echo esc_html( (string) $review_count ); ?></span>
 						<span class="wpss-stat-label"><?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?></span>
 					</div>
 				</div>
 				<div class="wpss-stat-item">
-					<span class="wpss-stat-icon dashicons dashicons-visibility"></span>
+					<i data-lucide="eye" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
 						<span class="wpss-stat-value"><?php echo esc_html( (string) $view_count ); ?></span>
 						<span class="wpss-stat-label"><?php esc_html_e( 'Views', 'wp-sell-services' ); ?></span>
@@ -694,7 +694,7 @@ class ServiceMetabox {
 			</div>
 
 			<button type="button" class="button button-secondary" id="wpss-add-addon">
-				<span class="dashicons dashicons-plus-alt2"></span>
+				<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add Add-on', 'wp-sell-services' ); ?>
 			</button>
 		</div>
@@ -702,14 +702,14 @@ class ServiceMetabox {
 		<script type="text/html" id="tmpl-wpss-addon-item">
 			<div class="wpss-addon-item" data-index="{{data.index}}">
 				<div class="wpss-addon-header">
-					<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+					<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 					<span class="wpss-addon-title"><?php esc_html_e( 'New Add-on', 'wp-sell-services' ); ?></span>
 					<div class="wpss-addon-actions">
 						<button type="button" class="wpss-addon-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-arrow-down-alt2"></span>
+							<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 						<button type="button" class="wpss-remove-addon" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-trash"></span>
+							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
 				</div>
@@ -813,14 +813,14 @@ class ServiceMetabox {
 		?>
 		<div class="wpss-addon-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
 			<div class="wpss-addon-header">
-				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<span class="wpss-addon-title"><?php echo esc_html( $title ); ?></span>
 				<div class="wpss-addon-actions">
 					<button type="button" class="wpss-addon-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-arrow-down-alt2"></span>
+						<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 					<button type="button" class="wpss-remove-addon" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-trash"></span>
+						<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				</div>
 			</div>
@@ -1106,35 +1106,38 @@ class ServiceMetabox {
 	 * @return array Tab configuration.
 	 */
 	private function get_service_data_tabs(): array {
+		// Packet H: tab icons are now Lucide names (no `dashicons-` prefix).
+		// The render_tabs_mode() template reads this key verbatim into a
+		// <i data-lucide="…"> tag.
 		return array(
 			'overview'     => array(
 				'label'    => __( 'Overview', 'wp-sell-services' ),
-				'icon'     => 'dashicons-info',
+				'icon'     => 'info',
 				'priority' => 10,
 			),
 			'pricing'      => array(
 				'label'    => __( 'Pricing', 'wp-sell-services' ),
-				'icon'     => 'dashicons-money-alt',
+				'icon'     => 'banknote',
 				'priority' => 20,
 			),
 			'media'        => array(
 				'label'    => __( 'Media', 'wp-sell-services' ),
-				'icon'     => 'dashicons-format-gallery',
+				'icon'     => 'images',
 				'priority' => 30,
 			),
 			'addons'       => array(
 				'label'    => __( 'Add-ons', 'wp-sell-services' ),
-				'icon'     => 'dashicons-plus-alt',
+				'icon'     => 'plus-circle',
 				'priority' => 40,
 			),
 			'requirements' => array(
 				'label'    => __( 'Requirements', 'wp-sell-services' ),
-				'icon'     => 'dashicons-list-view',
+				'icon'     => 'list',
 				'priority' => 50,
 			),
 			'faq'          => array(
 				'label'    => __( 'FAQ', 'wp-sell-services' ),
-				'icon'     => 'dashicons-editor-help',
+				'icon'     => 'help-circle',
 				'priority' => 60,
 			),
 		);
@@ -1186,7 +1189,7 @@ class ServiceMetabox {
 				<?php foreach ( $tabs as $key => $tab ) : ?>
 					<li data-tab="<?php echo esc_attr( $key ); ?>">
 						<a href="#wpss_<?php echo esc_attr( $key ); ?>_panel">
-							<span class="dashicons <?php echo esc_attr( $tab['icon'] ); ?>"></span>
+							<i data-lucide="<?php echo esc_attr( $tab['icon'] ); ?>" class="wpss-icon" aria-hidden="true"></i>
 							<?php echo esc_html( $tab['label'] ); ?>
 						</a>
 					</li>
@@ -1291,7 +1294,7 @@ class ServiceMetabox {
 				<div class="wpss-details-grid">
 					<div class="wpss-detail-card">
 						<div class="wpss-detail-icon">
-							<span class="dashicons dashicons-visibility"></span>
+							<i data-lucide="eye" class="wpss-icon" aria-hidden="true"></i>
 						</div>
 						<div class="wpss-detail-content">
 							<label for="wpss_status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
@@ -1312,28 +1315,28 @@ class ServiceMetabox {
 				<h4><?php esc_html_e( 'Statistics', 'wp-sell-services' ); ?></h4>
 				<div class="wpss-stats-grid">
 					<div class="wpss-stat-item">
-						<span class="wpss-stat-icon dashicons dashicons-cart"></span>
+						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-data">
 							<span class="wpss-stat-value"><?php echo esc_html( (string) $order_count ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 					<div class="wpss-stat-item">
-						<span class="wpss-stat-icon dashicons dashicons-star-filled" style="color: #f5a623;"></span>
+						<i data-lucide="star" class="wpss-icon wpss-stat-icon" style="color: #f5a623;" aria-hidden="true"></i>
 						<div class="wpss-stat-data">
 							<span class="wpss-stat-value"><?php echo esc_html( number_format( $average_rating, 1 ) ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 					<div class="wpss-stat-item">
-						<span class="wpss-stat-icon dashicons dashicons-testimonial"></span>
+						<i data-lucide="quote" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-data">
 							<span class="wpss-stat-value"><?php echo esc_html( (string) $review_count ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 					<div class="wpss-stat-item">
-						<span class="wpss-stat-icon dashicons dashicons-visibility"></span>
+						<i data-lucide="eye" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-data">
 							<span class="wpss-stat-value"><?php echo esc_html( (string) $view_count ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Views', 'wp-sell-services' ); ?></span>
@@ -1344,7 +1347,7 @@ class ServiceMetabox {
 		</div>
 
 		<p class="wpss-details-note">
-			<span class="dashicons dashicons-info-outline"></span>
+			<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Delivery time and revisions are configured per package in the Pricing tab.', 'wp-sell-services' ); ?>
 		</p>
 		<?php
@@ -1392,7 +1395,7 @@ class ServiceMetabox {
 
 		<button type="button" class="button button-secondary" id="wpss-add-package"
 				<?php echo $package_count >= 3 ? 'style="display:none;"' : ''; ?>>
-			<span class="dashicons dashicons-plus-alt2"></span>
+			<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Add Package', 'wp-sell-services' ); ?>
 		</button>
 
@@ -1430,7 +1433,7 @@ class ServiceMetabox {
 				<?php endforeach; ?>
 			</div>
 			<button type="button" class="button button-secondary" id="wpss-add-gallery-images">
-				<span class="dashicons dashicons-format-gallery"></span>
+				<i data-lucide="images" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add Images', 'wp-sell-services' ); ?>
 			</button>
 		</div>
@@ -1473,7 +1476,7 @@ class ServiceMetabox {
 		</div>
 
 		<button type="button" class="button button-secondary" id="wpss-add-addon">
-			<span class="dashicons dashicons-plus-alt2"></span>
+			<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Add Add-on', 'wp-sell-services' ); ?>
 		</button>
 
@@ -1504,7 +1507,7 @@ class ServiceMetabox {
 		</div>
 
 		<button type="button" class="button button-secondary" id="wpss-add-requirement">
-			<span class="dashicons dashicons-plus-alt2"></span>
+			<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Add Requirement', 'wp-sell-services' ); ?>
 		</button>
 
@@ -1532,12 +1535,12 @@ class ServiceMetabox {
 			<?php foreach ( $faqs as $index => $faq ) : ?>
 				<div class="wpss-faq-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
 					<div class="wpss-faq-header">
-						<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+						<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 						<input type="text" name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][question]"
 								value="<?php echo esc_attr( $faq['question'] ?? '' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter question...', 'wp-sell-services' ); ?>" class="widefat">
 						<button type="button" class="wpss-remove-faq" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-trash"></span>
+							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
 					<textarea name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][answer]"
@@ -1548,7 +1551,7 @@ class ServiceMetabox {
 		</div>
 
 		<button type="button" class="button button-secondary" id="wpss-add-faq">
-			<span class="dashicons dashicons-plus-alt2"></span>
+			<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Add FAQ', 'wp-sell-services' ); ?>
 		</button>
 
@@ -1567,15 +1570,15 @@ class ServiceMetabox {
 		?>
 		<div class="wpss-package-item collapsed" data-index="{{data.index}}">
 			<div class="wpss-package-header">
-				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<span class="wpss-package-title"><?php esc_html_e( 'New Package', 'wp-sell-services' ); ?></span>
 				<span class="wpss-package-price-display"></span>
 				<div class="wpss-package-actions">
 					<button type="button" class="wpss-package-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-arrow-down-alt2"></span>
+						<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 					<button type="button" class="wpss-remove-package" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-trash"></span>
+						<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				</div>
 			</div>
@@ -1589,7 +1592,7 @@ class ServiceMetabox {
 					</div>
 					<div class="wpss-package-field">
 						<label>
-							<span class="dashicons dashicons-money-alt"></span>
+							<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-prefix">
@@ -1611,7 +1614,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row wpss-package-row-grid">
 					<div class="wpss-package-field">
 						<label>
-							<span class="dashicons dashicons-clock"></span>
+							<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
@@ -1622,7 +1625,7 @@ class ServiceMetabox {
 					</div>
 					<div class="wpss-package-field">
 						<label>
-							<span class="dashicons dashicons-update"></span>
+							<i data-lucide="refresh-cw" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
@@ -1635,7 +1638,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-full">
 						<label>
-							<span class="dashicons dashicons-yes-alt"></span>
+							<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
 						</label>
 						<textarea name="wpss_packages[{{data.index}}][features]"
@@ -1660,14 +1663,14 @@ class ServiceMetabox {
 		?>
 		<div class="wpss-addon-item" data-index="{{data.index}}">
 			<div class="wpss-addon-header">
-				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<span class="wpss-addon-title"><?php esc_html_e( 'New Add-on', 'wp-sell-services' ); ?></span>
 				<div class="wpss-addon-actions">
 					<button type="button" class="wpss-addon-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-arrow-down-alt2"></span>
+						<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 					<button type="button" class="wpss-remove-addon" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-trash"></span>
+						<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				</div>
 			</div>
@@ -1761,7 +1764,7 @@ class ServiceMetabox {
 		?>
 		<div class="wpss-requirement-item" data-index="{{data.index}}">
 			<div class="wpss-requirement-row">
-				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<div class="wpss-requirement-fields">
 					<div class="wpss-requirement-main">
 						<input type="text" name="wpss_requirements[{{data.index}}][question]"
@@ -1784,7 +1787,7 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Required', 'wp-sell-services' ); ?>
 						</label>
 						<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-							<span class="dashicons dashicons-trash"></span>
+							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
 					<div class="wpss-requirement-choices" style="display:none;">
@@ -1806,11 +1809,11 @@ class ServiceMetabox {
 		?>
 		<div class="wpss-faq-item" data-index="{{data.index}}">
 			<div class="wpss-faq-header">
-				<span class="dashicons dashicons-menu wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>"></span>
+				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<input type="text" name="wpss_faqs[{{data.index}}][question]"
 						placeholder="<?php esc_attr_e( 'Enter question...', 'wp-sell-services' ); ?>" class="widefat">
 				<button type="button" class="wpss-remove-faq" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-					<span class="dashicons dashicons-trash"></span>
+					<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 			</div>
 			<textarea name="wpss_faqs[{{data.index}}][answer]"
