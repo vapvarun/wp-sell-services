@@ -308,6 +308,11 @@ class OrderService {
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 				ServiceOrder::STATUS_DELIVERED,
 				ServiceOrder::STATUS_DISPUTED,
+				// Milestone-contract parents skip pending_approval because every
+				// phase has its own submit + approve cycle; when the last phase
+				// closes, the parent auto-flips straight from in_progress to
+				// completed via the `wpss_milestone_approved` handler.
+				ServiceOrder::STATUS_COMPLETED,
 			),
 			ServiceOrder::STATUS_PENDING_APPROVAL       => array(
 				ServiceOrder::STATUS_COMPLETED,

@@ -1790,9 +1790,26 @@ class AjaxHandlers {
 		$description   = sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) );
 		$price         = floatval( $_POST['price'] ?? 0 );
 		$delivery_days = absint( $_POST['delivery_days'] ?? 0 );
+		$contract_type = sanitize_key( (string) ( $_POST['contract_type'] ?? 'fixed' ) );
+		$is_milestone  = ProposalService::CONTRACT_TYPE_MILESTONE === $contract_type;
 
-		if ( ! $request_id || ! $description || ! $price || ! $delivery_days ) {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- raw array normalised by ProposalService::normalize_milestones()
+		$milestones_raw = isset( $_POST['milestones'] ) && is_array( $_POST['milestones'] ) ? wp_unslash( $_POST['milestones'] ) : array();
+
+		if ( ! $request_id || ! $description ) {
 			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'wp-sell-services' ) ) );
+		}
+
+		// Fixed contracts need an explicit price + delivery days from the form.
+		// Milestone contracts derive price + days from the phase list server-side,
+		// so skipping those checks here is intentional — the service layer still
+		// rejects an empty milestone array.
+		if ( ! $is_milestone && ( ! $price || ! $delivery_days ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'wp-sell-services' ) ) );
+		}
+
+		if ( $is_milestone && empty( $milestones_raw ) ) {
+			wp_send_json_error( array( 'message' => __( 'Add at least one milestone phase.', 'wp-sell-services' ) ) );
 		}
 
 		// Check if user is a vendor.
@@ -1808,6 +1825,8 @@ class AjaxHandlers {
 				'description'   => $description,
 				'price'         => $price,
 				'delivery_days' => $delivery_days,
+				'contract_type' => $contract_type,
+				'milestones'    => $milestones_raw,
 			)
 		);
 
@@ -1858,14 +1877,25 @@ class AjaxHandlers {
 		$result          = $request_service->convert_to_order( (int) $request_id, (int) $proposal_id );
 
 		if ( $result['success'] && ! empty( $result['order_id'] ) ) {
-			// Redirect to checkout page so buyer can complete payment first.
-			$checkout_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
+			// Milestone contracts have a $0 parent (already "paid") and per-phase
+			// payments. Sending the buyer through /service-checkout?pay_order=N
+			// would show them a dead-end "This order has already been paid."
+			// notice. Route straight to the order view instead, where the phase
+			// timeline + Pay-phase-1 button live.
+			$is_milestone_contract = ProposalService::CONTRACT_TYPE_MILESTONE === ( $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED );
+			if ( $is_milestone_contract ) {
+				$redirect_url = add_query_arg( 'order_id', $result['order_id'], wpss_get_dashboard_url() );
+				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
+			} else {
+				$redirect_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
+				$message      = __( 'Proposal accepted! Redirecting to payment…', 'wp-sell-services' );
+			}
 
 			wp_send_json_success(
 				array(
-					'message'  => __( 'Proposal accepted! Redirecting to payment...', 'wp-sell-services' ),
+					'message'  => $message,
 					'order_id' => $result['order_id'],
-					'redirect' => $checkout_url,
+					'redirect' => $redirect_url,
 				)
 			);
 		} else {
