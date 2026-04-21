@@ -266,9 +266,17 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'You do not have permission to pay for this order.', 'wp-sell-services' ) . '</p>';
 		}
 
+		$parent_order_id = ! empty( $order->platform_order_id ) ? (int) $order->platform_order_id : (int) $order->id;
+		$back_to_order   = add_query_arg( 'order_id', $parent_order_id, wpss_get_dashboard_url() );
+
 		// Only pending_payment orders can be paid.
 		if ( 'pending_payment' !== $order->status ) {
-			return '<p class="wpss-alert wpss-alert-info">' . esc_html__( 'This order has already been paid.', 'wp-sell-services' ) . '</p>';
+			return sprintf(
+				'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
+				esc_html__( 'This order has already been paid.', 'wp-sell-services' ),
+				esc_url( $back_to_order ),
+				esc_html__( 'Back to order', 'wp-sell-services' )
+			);
 		}
 
 		// Lock-step backstop on milestone sub-orders: even though the on-page
@@ -277,9 +285,26 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
 			$milestones = new \WPSellServices\Services\MilestoneService();
 			if ( $milestones->is_locked( $order_id ) ) {
-				return '<p class="wpss-alert wpss-alert-info">' . esc_html__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ) . '</p>';
+				return sprintf(
+					'<p class="wpss-alert wpss-alert-info">%s</p><p><a class="wpss-btn wpss-btn--secondary" href="%s">%s</a></p>',
+					esc_html__( 'This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock.', 'wp-sell-services' ),
+					esc_url( $back_to_order ),
+					esc_html__( 'Back to order', 'wp-sell-services' )
+				);
 			}
 		}
+
+		// Sub-orders (tip, extension, milestone) are one-shot credits or
+		// top-ups on an existing project. They don't have the "Requirements
+		// → Seller Works → Review → Complete" lifecycle, so the general
+		// 5-step "What happens next?" stepper misleads buyers. Detect once
+		// here and the template block below swaps in a 2-step flow.
+		$sub_order_platforms = array(
+			\WPSellServices\Services\TippingService::ORDER_TYPE,
+			\WPSellServices\Services\ExtensionOrderService::ORDER_TYPE,
+			\WPSellServices\Services\MilestoneService::ORDER_TYPE,
+		);
+		$is_sub_order        = in_array( (string) ( $order->platform ?? '' ), $sub_order_platforms, true );
 
 		$service = $order->get_service();
 
@@ -357,6 +382,19 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 */
 	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null, array $selected_addons = array() ): void {
 		$is_pay_order = null !== $pay_order;
+
+		// Sub-orders (tip, extension, milestone) skip the 5-step "Pay →
+		// Requirements → Seller Works → Review → Complete" stepper — those
+		// lifecycle steps don't apply to a one-shot credit or top-up.
+		$is_sub_order = false;
+		if ( $is_pay_order ) {
+			$sub_order_platforms = array(
+				\WPSellServices\Services\TippingService::ORDER_TYPE,
+				\WPSellServices\Services\ExtensionOrderService::ORDER_TYPE,
+				\WPSellServices\Services\MilestoneService::ORDER_TYPE,
+			);
+			$is_sub_order        = in_array( (string) ( $pay_order->platform ?? '' ), $sub_order_platforms, true );
+		}
 
 		if ( $is_pay_order ) {
 			// Pay-order flow: use the order total directly (tax already included).
@@ -1031,28 +1069,58 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							<h3 class="wpss-card__title"><?php esc_html_e( 'What happens next?', 'wp-sell-services' ); ?></h3>
 						</div>
 						<div class="wpss-card__body">
-							<div class="wpss-co-steps__track">
-								<div class="wpss-co-step">
-									<span class="wpss-co-step__dot">1</span>
-									<span class="wpss-co-step__label"><?php esc_html_e( 'Pay', 'wp-sell-services' ); ?></span>
+							<?php if ( $is_sub_order ) : ?>
+								<div class="wpss-co-steps__track">
+									<div class="wpss-co-step">
+										<span class="wpss-co-step__dot">1</span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Pay', 'wp-sell-services' ); ?></span>
+									</div>
+									<div class="wpss-co-step">
+										<span class="wpss-co-step__dot">2</span>
+										<span class="wpss-co-step__label">
+											<?php
+											switch ( (string) ( $pay_order->platform ?? '' ) ) {
+												case \WPSellServices\Services\TippingService::ORDER_TYPE:
+													esc_html_e( 'Seller credited', 'wp-sell-services' );
+													break;
+												case \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE:
+													esc_html_e( 'Work continues on extended scope', 'wp-sell-services' );
+													break;
+												case \WPSellServices\Services\MilestoneService::ORDER_TYPE:
+													esc_html_e( 'Seller works on this phase', 'wp-sell-services' );
+													break;
+												default:
+													esc_html_e( 'Seller credited', 'wp-sell-services' );
+													break;
+											}
+											?>
+										</span>
+									</div>
 								</div>
-								<div class="wpss-co-step">
-									<span class="wpss-co-step__dot">2</span>
-									<span class="wpss-co-step__label"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></span>
+							<?php else : ?>
+								<div class="wpss-co-steps__track">
+									<div class="wpss-co-step">
+										<span class="wpss-co-step__dot">1</span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Pay', 'wp-sell-services' ); ?></span>
+									</div>
+									<div class="wpss-co-step">
+										<span class="wpss-co-step__dot">2</span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></span>
+									</div>
+									<div class="wpss-co-step">
+										<span class="wpss-co-step__dot">3</span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Seller Works', 'wp-sell-services' ); ?></span>
+									</div>
+									<div class="wpss-co-step">
+										<span class="wpss-co-step__dot">4</span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Review', 'wp-sell-services' ); ?></span>
+									</div>
+									<div class="wpss-co-step">
+										<span class="wpss-co-step__dot">5</span>
+										<span class="wpss-co-step__label"><?php esc_html_e( 'Complete', 'wp-sell-services' ); ?></span>
+									</div>
 								</div>
-								<div class="wpss-co-step">
-									<span class="wpss-co-step__dot">3</span>
-									<span class="wpss-co-step__label"><?php esc_html_e( 'Seller Works', 'wp-sell-services' ); ?></span>
-								</div>
-								<div class="wpss-co-step">
-									<span class="wpss-co-step__dot">4</span>
-									<span class="wpss-co-step__label"><?php esc_html_e( 'Review', 'wp-sell-services' ); ?></span>
-								</div>
-								<div class="wpss-co-step">
-									<span class="wpss-co-step__dot">5</span>
-									<span class="wpss-co-step__label"><?php esc_html_e( 'Complete', 'wp-sell-services' ); ?></span>
-								</div>
-							</div>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
