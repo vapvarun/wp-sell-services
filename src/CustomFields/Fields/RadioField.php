@@ -44,7 +44,7 @@ class RadioField extends AbstractField {
 	 * @return string
 	 */
 	public function get_icon(): string {
-		return 'dashicons-marker';
+		return 'circle';
 	}
 
 	/**

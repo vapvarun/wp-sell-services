@@ -44,7 +44,7 @@ class CheckboxField extends AbstractField {
 	 * @return string
 	 */
 	public function get_icon(): string {
-		return 'dashicons-yes';
+		return 'check';
 	}
 
 	/**

@@ -169,7 +169,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 						<?php if ( is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id() ) : ?>
 							<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>" style="background:none;border:1px solid #ddd;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:13px;color:#666;display:inline-flex;align-items:center;gap:4px;">
 								<span class="wpss-helpful-icon">
-									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+									<i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								</span>
 								<span class="wpss-helpful-text"><?php esc_html_e( 'Helpful', 'wp-sell-services' ); ?></span>
 								<?php if ( isset( $review->helpful_count ) && $review->helpful_count > 0 ) : ?>

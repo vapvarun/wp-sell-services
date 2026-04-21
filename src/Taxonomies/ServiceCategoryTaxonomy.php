@@ -131,7 +131,7 @@ class ServiceCategoryTaxonomy {
 		<div class="form-field term-icon-wrap">
 			<label for="wpss-category-icon"><?php esc_html_e( 'Icon', 'wp-sell-services' ); ?></label>
 			<input type="text" name="wpss_category_icon" id="wpss-category-icon" value="" class="regular-text">
-			<p class="description"><?php esc_html_e( 'Enter a Dashicons class (e.g., dashicons-admin-tools) or custom icon class.', 'wp-sell-services' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Enter a Lucide icon name (e.g., briefcase, wrench, book-open) — see lucide.dev/icons.', 'wp-sell-services' ); ?></p>
 		</div>
 
 		<div class="form-field term-image-wrap">
@@ -176,7 +176,7 @@ class ServiceCategoryTaxonomy {
 			<th scope="row"><label for="wpss-category-icon"><?php esc_html_e( 'Icon', 'wp-sell-services' ); ?></label></th>
 			<td>
 				<input type="text" name="wpss_category_icon" id="wpss-category-icon" value="<?php echo esc_attr( $icon ); ?>" class="regular-text">
-				<p class="description"><?php esc_html_e( 'Enter a Dashicons class (e.g., dashicons-admin-tools) or custom icon class.', 'wp-sell-services' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Enter a Lucide icon name (e.g., briefcase, wrench, book-open) — see lucide.dev/icons.', 'wp-sell-services' ); ?></p>
 			</td>
 		</tr>
 
@@ -295,7 +295,7 @@ class ServiceCategoryTaxonomy {
 
 			case 'wpss_featured':
 				$featured = get_term_meta( $term_id, '_wpss_featured', true );
-				$content  = $featured ? '<span class="dashicons dashicons-star-filled" style="color:#f59e0b;"></span>' : '—';
+				$content  = $featured ? '<i data-lucide="star" class="wpss-icon" style="color:#f59e0b;" aria-hidden="true"></i>' : '—';
 				break;
 		}
 

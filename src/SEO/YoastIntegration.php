@@ -518,9 +518,9 @@ class YoastIntegration {
 		echo '<ul class="wpss-seo-hints">';
 		foreach ( $hints as $hint ) {
 			$icon_class = array(
-				'error'   => 'dashicons-warning',
-				'warning' => 'dashicons-info',
-				'good'    => 'dashicons-yes-alt',
+				'error'   => 'triangle-alert',
+				'warning' => 'info',
+				'good'    => 'check-circle-2',
 			);
 			$color      = array(
 				'error'   => '#dc3232',
@@ -529,7 +529,7 @@ class YoastIntegration {
 			);
 
 			printf(
-				'<li style="color: %s; margin-bottom: 8px;"><span class="dashicons %s"></span> %s</li>',
+				'<li style="color: %s; margin-bottom: 8px;"><i data-lucide="%s" class="wpss-icon" aria-hidden="true"></i> %s</li>',
 				esc_attr( $color[ $hint['type'] ] ),
 				esc_attr( $icon_class[ $hint['type'] ] ),
 				esc_html( $hint['message'] )

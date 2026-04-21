@@ -44,7 +44,7 @@ class DateField extends AbstractField {
 	 * @return string
 	 */
 	public function get_icon(): string {
-		return 'dashicons-calendar-alt';
+		return 'calendar-clock';
 	}
 
 	/**

@@ -130,7 +130,7 @@ class ServiceSearch extends AbstractBlock {
 			<form class="wpss-search-form" method="get" action="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>">
 				<div class="wpss-search-fields">
 					<div class="wpss-search-input-wrap">
-						<span class="wpss-search-icon dashicons dashicons-search"></span>
+						<i data-lucide="search" class="wpss-icon wpss-search-icon" aria-hidden="true"></i>
 						<input
 							type="text"
 							name="wpss_search"

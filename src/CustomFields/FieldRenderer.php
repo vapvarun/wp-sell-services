@@ -171,7 +171,7 @@ class FieldRenderer {
 			<div class="wpss-field-types">
 				<?php foreach ( $types as $type => $field ) : ?>
 					<button type="button" class="wpss-field-type-btn" data-type="<?php echo esc_attr( $type ); ?>">
-						<span class="dashicons <?php echo esc_attr( $field->get_icon() ); ?>"></span>
+						<i data-lucide="<?php echo esc_attr( $field->get_icon() ); ?>" class="wpss-icon" aria-hidden="true"></i>
 						<span class="wpss-field-type-label"><?php echo esc_html( $field->get_label() ); ?></span>
 					</button>
 				<?php endforeach; ?>

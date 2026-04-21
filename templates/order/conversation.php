@@ -172,9 +172,7 @@ do_action( 'wpss_before_conversation', $order );
 		<?php if ( empty( $messages ) ) : ?>
 			<div class="wpss-messaging__empty">
 				<div class="wpss-messaging__empty-icon">
-					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-					</svg>
+					<i data-lucide="message-square" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
 				<h3 class="wpss-messaging__empty-title"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-messaging__empty-text">
@@ -246,10 +244,7 @@ do_action( 'wpss_before_conversation', $order );
 												<?php else : ?>
 													<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
 														<span class="wpss-messaging__attachment-icon">
-															<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-																<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-																<polyline points="14 2 14 8 20 8"/>
-															</svg>
+															<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
 														</span>
 														<span class="wpss-messaging__attachment-info">
 															<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
@@ -269,9 +264,7 @@ do_action( 'wpss_before_conversation', $order );
 								?>
 							<?php if ( $is_own && $is_read ) : ?>
 									<span class="wpss-messaging__message-status wpss-messaging__message-status--read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<polyline points="20 6 9 17 4 12"/>
-										</svg>
+										<i data-lucide="check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 									</span>
 								<?php endif; ?>
 							</span>
@@ -318,9 +311,7 @@ do_action( 'wpss_before_conversation', $order );
 
 				<div class="wpss-messaging__composer-input-area">
 					<label for="wpss-file-input" class="wpss-messaging__composer-btn" title="<?php esc_attr_e( 'Attach files', 'wp-sell-services' ); ?>">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-						</svg>
+						<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
 						<input type="file" id="wpss-file-input" name="attachments[]" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display: none;">
 					</label>
 
@@ -336,10 +327,7 @@ do_action( 'wpss_before_conversation', $order );
 					</div>
 
 					<button type="button" class="wpss-messaging__send-btn" id="wpss-send-btn" title="<?php esc_attr_e( 'Send message', 'wp-sell-services' ); ?>">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<line x1="22" y1="2" x2="11" y2="13"/>
-							<polygon points="22 2 15 22 11 13 2 9 22 2"/>
-						</svg>
+						<i data-lucide="send" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				</div>
 
@@ -350,10 +338,7 @@ do_action( 'wpss_before_conversation', $order );
 		</div>
 	<?php else : ?>
 		<div class="wpss-messaging__closed">
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-				<path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-			</svg>
+			<i data-lucide="lock" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			<p>
 				<?php
 				if ( 'completed' === $order->status ) {
@@ -460,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		selectedFiles.forEach(function(file, index) {
 			var $preview = $('<div class="wpss-messaging__composer-attachment">')
 				.append('<span class="wpss-messaging__composer-attachment-name">' + file.name + '</span>')
-				.append('<button type="button" class="wpss-messaging__composer-attachment-remove" data-index="' + index + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>');
+				.append('<button type="button" class="wpss-messaging__composer-attachment-remove" data-index="' + index + '"><i data-lucide="x" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></button>');
 			$attachmentsPreview.append($preview);
 		});
 	}

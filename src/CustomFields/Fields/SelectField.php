@@ -44,7 +44,7 @@ class SelectField extends AbstractField {
 	 * @return string
 	 */
 	public function get_icon(): string {
-		return 'dashicons-arrow-down-alt2';
+		return 'chevron-down';
 	}
 
 	/**

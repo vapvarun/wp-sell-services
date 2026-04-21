@@ -201,7 +201,7 @@ class BuyerRequests extends AbstractBlock {
 
 			<?php else : ?>
 				<div class="wpss-no-requests">
-					<span class="dashicons dashicons-megaphone"></span>
+					<i data-lucide="megaphone" class="wpss-icon" aria-hidden="true"></i>
 					<p><?php esc_html_e( 'No buyer requests found.', 'wp-sell-services' ); ?></p>
 				</div>
 			<?php endif; ?>
@@ -261,7 +261,7 @@ class BuyerRequests extends AbstractBlock {
 				<div class="wpss-request-meta">
 					<?php if ( $attributes['showBudget'] && ( $budget_min || $budget_max ) ) : ?>
 						<span class="wpss-request-budget">
-							<span class="dashicons dashicons-money-alt"></span>
+							<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
 							<?php
 							if ( $budget_min && $budget_max ) {
 								printf(
@@ -284,14 +284,14 @@ class BuyerRequests extends AbstractBlock {
 
 					<?php if ( $attributes['showDeadline'] && $deadline ) : ?>
 						<span class="wpss-request-deadline">
-							<span class="dashicons dashicons-calendar-alt"></span>
+							<i data-lucide="calendar-clock" class="wpss-icon" aria-hidden="true"></i>
 							<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) ); ?>
 						</span>
 					<?php endif; ?>
 
 					<?php if ( $attributes['showOffers'] ) : ?>
 						<span class="wpss-request-offers">
-							<span class="dashicons dashicons-format-chat"></span>
+							<i data-lucide="message-square" class="wpss-icon" aria-hidden="true"></i>
 							<?php
 							printf(
 								/* translators: %d: number of offers */

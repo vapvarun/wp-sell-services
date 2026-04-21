@@ -88,7 +88,7 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 	<!-- Breadcrumb -->
 	<div class="wpss-dispute-breadcrumb">
 		<a href="<?php echo esc_url( $disputes_url ); ?>">
-			<span class="dashicons dashicons-arrow-left-alt2"></span>
+			<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Back to Disputes', 'wp-sell-services' ); ?>
 		</a>
 	</div>
@@ -223,7 +223,7 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 										<?php elseif ( 'file' === $item->type && ! empty( $item->content ) ) : ?>
 											<div class="wpss-evidence-file">
 												<a href="<?php echo esc_url( $item->content ); ?>" target="_blank" class="wpss-file-link">
-													<span class="dashicons dashicons-media-default"></span>
+													<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
 													<span><?php echo esc_html( basename( $item->content ) ); ?></span>
 												</a>
 											</div>
@@ -275,7 +275,7 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 
 								<div class="wpss-evidence-input-row">
 									<label for="wpss-evidence-file-input" class="wpss-attach-btn" title="<?php esc_attr_e( 'Attach files', 'wp-sell-services' ); ?>">
-										<span class="dashicons dashicons-paperclip"></span>
+										<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
 										<input type="file" id="wpss-evidence-file-input" name="evidence_file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display: none;">
 									</label>
 
@@ -287,7 +287,7 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 												maxlength="5000"></textarea>
 
 									<button type="submit" class="wpss-submit-evidence-btn" id="wpss-submit-evidence-btn">
-										<span class="dashicons dashicons-arrow-right-alt"></span>
+										<i data-lucide="arrow-right" class="wpss-icon" aria-hidden="true"></i>
 										<span class="wpss-btn-text"><?php esc_html_e( 'Submit', 'wp-sell-services' ); ?></span>
 									</button>
 								</div>
@@ -399,7 +399,7 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 					</div>
 					<a href="<?php echo esc_url( $order_url ); ?>" class="wpss-view-order-link">
 						<?php esc_html_e( 'View Order', 'wp-sell-services' ); ?>
-						<span class="dashicons dashicons-arrow-right-alt2"></span>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
 					</a>
 				</div>
 			</div>
@@ -1090,7 +1090,7 @@ function wpssShowNotice(msg, type) {
 		if (selectedFile) {
 			var $preview = $('<div class="wpss-attachment-preview">')
 				.append('<span class="wpss-attachment-name">' + selectedFile.name + '</span>')
-				.append('<span class="wpss-remove-attachment dashicons dashicons-no-alt"></span>');
+				.append('<i data-lucide="x-circle" class="wpss-icon wpss-remove-attachment" aria-hidden="true"></i>');
 			$attachmentsPreview.append($preview);
 		}
 	}

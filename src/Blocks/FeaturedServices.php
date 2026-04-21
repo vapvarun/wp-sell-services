@@ -196,7 +196,7 @@ class FeaturedServices extends AbstractBlock {
 			<div class="wpss-featured-container">
 				<?php if ( 'carousel' === $attributes['layout'] && $attributes['showArrows'] ) : ?>
 					<button type="button" class="wpss-carousel-arrow wpss-carousel-prev" aria-label="<?php esc_attr_e( 'Previous', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-arrow-left-alt2"></span>
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				<?php endif; ?>
 
@@ -213,7 +213,7 @@ class FeaturedServices extends AbstractBlock {
 
 				<?php if ( 'carousel' === $attributes['layout'] && $attributes['showArrows'] ) : ?>
 					<button type="button" class="wpss-carousel-arrow wpss-carousel-next" aria-label="<?php esc_attr_e( 'Next', 'wp-sell-services' ); ?>">
-						<span class="dashicons dashicons-arrow-right-alt2"></span>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 				<?php endif; ?>
 			</div>
@@ -252,7 +252,7 @@ class FeaturedServices extends AbstractBlock {
 							<img src="<?php echo esc_url( $thumbnail ); ?>" alt="<?php the_title_attribute(); ?>" loading="lazy">
 						<?php else : ?>
 							<div class="wpss-thumbnail-placeholder">
-								<span class="dashicons dashicons-format-image"></span>
+								<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
 							</div>
 						<?php endif; ?>
 					</div>

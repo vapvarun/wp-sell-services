@@ -242,11 +242,7 @@ if ( empty( $portfolio_items ) ) {
 					>
 				<?php else : ?>
 					<div class="wpss-portfolio-public__placeholder" aria-hidden="true">
-						<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
-							<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-							<circle cx="8.5" cy="8.5" r="1.5"/>
-							<polyline points="21 15 16 10 5 21"/>
-						</svg>
+						<i data-lucide="image" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 				<?php endif; ?>
 
@@ -285,11 +281,7 @@ if ( empty( $portfolio_items ) ) {
 							rel="noopener noreferrer"
 							tabindex="-1"
 						>
-							<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M7 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9"/>
-								<path d="M10 2h4v4"/>
-								<line x1="13" y1="3" x2="7" y2="9"/>
-							</svg>
+							<i data-lucide="external-link" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 							<?php esc_html_e( 'View Project', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>

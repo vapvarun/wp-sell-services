@@ -28,9 +28,7 @@ $message = apply_filters( 'wpss_no_requests_message', $default_message );
 
 <div class="wpss-no-results wpss-no-requests">
 	<div class="wpss-no-results-icon">
-		<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
-			<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-		</svg>
+		<i data-lucide="clipboard-check" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 	</div>
 
 	<h3 class="wpss-no-results-title">

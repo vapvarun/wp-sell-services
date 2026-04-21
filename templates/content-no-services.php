@@ -36,10 +36,7 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 <div class="wpss-no-services">
 	<div class="wpss-empty-state">
 		<span class="wpss-empty-icon" aria-hidden="true">
-			<svg viewBox="0 0 64 64" width="64" height="64">
-				<circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-				<path d="M20 25 L44 25 M20 32 L38 32 M20 39 L30 39" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-			</svg>
+			<i data-lucide="text-align-left" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 		</span>
 
 		<h2><?php esc_html_e( 'No services found', 'wp-sell-services' ); ?></h2>

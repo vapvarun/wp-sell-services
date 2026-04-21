@@ -242,7 +242,7 @@ class ServiceGrid extends AbstractBlock {
 						<img src="<?php echo esc_url( $thumbnail ); ?>" alt="<?php the_title_attribute(); ?>" loading="lazy">
 					<?php else : ?>
 						<div class="wpss-service-thumbnail-placeholder">
-							<span class="dashicons dashicons-format-image"></span>
+							<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
 						</div>
 					<?php endif; ?>
 				</div>

@@ -118,7 +118,10 @@ class ServicePostType {
 			'has_archive'        => true,
 			'hierarchical'       => false,
 			'menu_position'      => null,
-			'menu_icon'          => 'dashicons-cart',
+			// Packet H: data-URL Lucide `shopping-cart` glyph (house-style icons).
+			// `menu_icon` requires an SVG URL or dashicon class; we inline the
+			// Lucide shopping-cart SVG so WordPress renders it in the admin menu.
+			'menu_icon'          => 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>' ),
 			'supports'           => [
 				'title',
 				'editor',

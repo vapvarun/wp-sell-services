@@ -51,12 +51,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 		<div class="wpss-orders__empty">
 			<div class="wpss-empty-state">
 				<div class="wpss-empty-state__icon">
-					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-						<polyline points="14 2 14 8 20 8"/>
-						<line x1="16" y1="13" x2="8" y2="13"/>
-						<line x1="16" y1="17" x2="8" y2="17"/>
-					</svg>
+					<i data-lucide="file-text" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
 				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No Orders Yet', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-empty-state__text"><?php esc_html_e( 'You haven\'t placed any service orders yet. Browse our marketplace to find services.', 'wp-sell-services' ); ?></p>

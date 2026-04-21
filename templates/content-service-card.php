@@ -76,11 +76,7 @@ do_action( 'wpss_before_service_card', $service_id );
 				<?php echo wp_get_attachment_image( $gallery_image, $thumbnail_size, false, array( 'class' => 'wpss-service-card__image' ) ); ?>
 			<?php else : ?>
 				<div class="wpss-service-card__placeholder">
-					<svg class="wpss-service-card__placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-						<circle cx="8.5" cy="8.5" r="1.5"/>
-						<polyline points="21 15 16 10 5 21"/>
-					</svg>
+					<i data-lucide="image" class="wpss-icon wpss-service-card__placeholder-icon" aria-hidden="true"></i>
 				</div>
 			<?php endif; ?>
 
@@ -112,9 +108,7 @@ do_action( 'wpss_before_service_card', $service_id );
 				</span>
 				<?php if ( get_user_meta( $vendor_id, '_wpss_vendor_verified', true ) ) : ?>
 					<span class="wpss-service-card__verified" title="<?php esc_attr_e( 'Verified Vendor', 'wp-sell-services' ); ?>">
-						<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-							<path d="M8 0l2.5 2.5H14v3.5L16 8l-2 2v3.5h-3.5L8 16l-2.5-2.5H2v-3.5L0 8l2-2V2.5h3.5L8 0zm-.5 11.5l5-5-1.5-1.5-3.5 3.5-1.5-1.5-1.5 1.5 3 3z"/>
-						</svg>
+						<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 					</span>
 				<?php endif; ?>
 				<?php
@@ -167,9 +161,7 @@ do_action( 'wpss_before_service_card', $service_id );
 
 			<div class="wpss-service-card__rating">
 				<?php if ( $rating_count > 0 ) : ?>
-					<svg class="wpss-service-card__star" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-						<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-					</svg>
+					<i data-lucide="star" class="wpss-icon wpss-icon--sm wpss-service-card__star" aria-hidden="true"></i>
 					<span class="wpss-service-card__rating-value"><?php echo esc_html( number_format( $rating_avg, 1 ) ); ?></span>
 					<span class="wpss-service-card__rating-count">
 						<?php

@@ -77,11 +77,7 @@ $form_id      = 'wpss-requirements-form-' . $order_id;
 					multiple
 					accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt,.psd,.ai,.eps">
 				<div class="wpss-requirements-form__upload-placeholder">
-					<svg class="wpss-requirements-form__upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-						<polyline points="17 8 12 3 7 8"/>
-						<line x1="12" y1="3" x2="12" y2="15"/>
-					</svg>
+					<i data-lucide="upload" class="wpss-icon wpss-requirements-form__upload-icon" aria-hidden="true"></i>
 					<p class="wpss-requirements-form__upload-text"><?php esc_html_e( 'Drag files here or click to upload', 'wp-sell-services' ); ?></p>
 					<span class="wpss-requirements-form__upload-hint">
 						<?php esc_html_e( 'Max 10 files, 25MB each', 'wp-sell-services' ); ?>
@@ -233,11 +229,7 @@ $form_id      = 'wpss-requirements-form-' . $order_id;
 								accept="<?php echo esc_attr( $accept ); ?>"
 								<?php echo $is_required ? 'required' : ''; ?>>
 							<div class="wpss-requirements-form__upload-placeholder">
-								<svg class="wpss-requirements-form__upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-									<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-									<polyline points="17 8 12 3 7 8"/>
-									<line x1="12" y1="3" x2="12" y2="15"/>
-								</svg>
+								<i data-lucide="upload" class="wpss-icon wpss-requirements-form__upload-icon" aria-hidden="true"></i>
 								<p class="wpss-requirements-form__upload-text"><?php esc_html_e( 'Drag files here or click to upload', 'wp-sell-services' ); ?></p>
 								<span class="wpss-requirements-form__upload-hint">
 									<?php

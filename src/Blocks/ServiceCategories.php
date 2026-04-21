@@ -213,7 +213,7 @@ class ServiceCategories extends AbstractBlock {
 					<?php if ( $icon ) : ?>
 						<span class="dashicons <?php echo esc_attr( $icon ); ?>"></span>
 					<?php else : ?>
-						<span class="dashicons dashicons-category"></span>
+						<i data-lucide="folder" class="wpss-icon" aria-hidden="true"></i>
 					<?php endif; ?>
 				</div>
 			<?php endif; ?>

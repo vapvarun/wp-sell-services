@@ -62,10 +62,7 @@ do_action( 'wpss_before_order_confirmation', $order );
 <div class="wpss-order-confirmation">
 	<div class="wpss-order-confirmation__header">
 		<div class="wpss-order-confirmation__icon">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-				<polyline points="22 4 12 14.01 9 11.01"></polyline>
-			</svg>
+			<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 		</div>
 
 		<h1 class="wpss-order-confirmation__title"><?php esc_html_e( 'Order Placed Successfully!', 'wp-sell-services' ); ?></h1>
@@ -163,9 +160,7 @@ do_action( 'wpss_before_order_confirmation', $order );
 			<?php else : ?>
 				<div class="wpss-order-confirmation__step wpss-order-confirmation__step--completed">
 					<span class="wpss-order-confirmation__step-number">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-							<polyline points="20 6 9 17 4 12"></polyline>
-						</svg>
+						<i data-lucide="check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 					</span>
 					<div class="wpss-order-confirmation__step-content">
 						<h4><?php esc_html_e( 'Order Placed', 'wp-sell-services' ); ?></h4>

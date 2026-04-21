@@ -213,10 +213,7 @@ do_action( 'wpss_before_request_card', $request_id );
 		<div class="wpss-request-card__actions">
 			<?php if ( $time_remaining && 'Expired' !== $time_remaining ) : ?>
 				<span class="wpss-request-card__expires">
-					<svg class="wpss-request-card__expires-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10"/>
-						<polyline points="12 6 12 12 16 14"/>
-					</svg>
+					<i data-lucide="clock" class="wpss-icon wpss-icon--sm wpss-request-card__expires-icon" aria-hidden="true"></i>
 					<?php echo esc_html( $time_remaining ); ?>
 				</span>
 			<?php endif; ?>

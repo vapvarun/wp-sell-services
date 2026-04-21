@@ -77,30 +77,32 @@ class ServiceWizard {
 	 */
 	private function get_steps(): array {
 		if ( empty( $this->steps ) ) {
+			// Packet H: wizard step icons as Lucide names (no dashicons-*).
+			// The render template reads ['icon'] into an <i data-lucide="…">.
 			$this->steps = array(
 				'basic'        => array(
 					'title' => __( 'Basic Info', 'wp-sell-services' ),
-					'icon'  => 'dashicons-edit',
+					'icon'  => 'pencil',
 				),
 				'pricing'      => array(
 					'title' => __( 'Pricing', 'wp-sell-services' ),
-					'icon'  => 'dashicons-tag',
+					'icon'  => 'tag',
 				),
 				'gallery'      => array(
 					'title' => __( 'Gallery', 'wp-sell-services' ),
-					'icon'  => 'dashicons-format-gallery',
+					'icon'  => 'images',
 				),
 				'requirements' => array(
 					'title' => __( 'Requirements', 'wp-sell-services' ),
-					'icon'  => 'dashicons-list-view',
+					'icon'  => 'list',
 				),
 				'extras'       => array(
 					'title' => __( 'Extras & FAQs', 'wp-sell-services' ),
-					'icon'  => 'dashicons-plus-alt',
+					'icon'  => 'plus-circle',
 				),
 				'review'       => array(
 					'title' => __( 'Review', 'wp-sell-services' ),
-					'icon'  => 'dashicons-visibility',
+					'icon'  => 'eye',
 				),
 			);
 		}
@@ -381,13 +383,13 @@ class ServiceWizard {
 			<div class="wpss-wizard__nav">
 				<div class="wpss-wizard__nav-left">
 					<button type="button" class="wpss-btn wpss-btn--outline wpss-wizard__btn-prev" x-show="currentStep !== 'basic'" @click="prevStep()" x-cloak>
-						<span class="dashicons dashicons-arrow-left-alt2"></span>
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
 						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
 					</button>
 				</div>
 				<div class="wpss-wizard__nav-center">
 					<button type="button" class="wpss-btn wpss-btn--ghost wpss-wizard__btn-save" @click="saveDraft()" :disabled="saving">
-						<span class="dashicons dashicons-cloud" x-show="!saving"></span>
+						<i data-lucide="upload-cloud" class="wpss-icon" x-show="!saving" aria-hidden="true"></i>
 						<span class="wpss-spinner" x-show="saving" x-cloak></span>
 						<span x-text="saving ? '<?php esc_attr_e( 'Saving...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Save Draft', 'wp-sell-services' ); ?>'"></span>
 					</button>
@@ -395,10 +397,10 @@ class ServiceWizard {
 				<div class="wpss-wizard__nav-right">
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-wizard__btn-next" x-show="currentStep !== 'review'" @click="nextStep()" x-cloak>
 						<?php esc_html_e( 'Continue', 'wp-sell-services' ); ?>
-						<span class="dashicons dashicons-arrow-right-alt2"></span>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
 					</button>
 					<button type="button" class="wpss-btn wpss-btn--success wpss-wizard__btn-publish" x-show="currentStep === 'review'" @click="publishService()" :disabled="publishing" x-cloak>
-						<span class="dashicons dashicons-yes-alt" x-show="!publishing"></span>
+						<i data-lucide="check-circle-2" class="wpss-icon" x-show="!publishing" aria-hidden="true"></i>
 						<span class="wpss-spinner" x-show="publishing" x-cloak></span>
 						<?php if ( $service_id ) : ?>
 						<span x-text="publishing ? '<?php esc_attr_e( 'Updating...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Update Service', 'wp-sell-services' ); ?>'"></span>
@@ -431,7 +433,7 @@ class ServiceWizard {
 					}"
 					@click="goToStep('<?php echo esc_attr( $key ); ?>')">
 					<span class="wpss-wizard__progress-icon">
-						<span class="dashicons <?php echo esc_attr( $step['icon'] ); ?>"></span>
+						<i data-lucide="<?php echo esc_attr( $step['icon'] ); ?>" class="wpss-icon" aria-hidden="true"></i>
 					</span>
 					<span class="wpss-wizard__progress-label"><?php echo esc_html( $step['title'] ); ?></span>
 				</li>
@@ -683,12 +685,12 @@ class ServiceWizard {
 											x-model="data.packages.<?php echo esc_attr( $tier ); ?>.features[index]"
 											placeholder="<?php esc_attr_e( 'Feature description', 'wp-sell-services' ); ?>">
 										<button type="button" class="wpss-btn--icon" @click="removeFeature('<?php echo esc_attr( $tier ); ?>', index)">
-											<span class="dashicons dashicons-no-alt"></span>
+											<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 										</button>
 									</div>
 								</template>
 								<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm" @click="addFeature('<?php echo esc_attr( $tier ); ?>')">
-									<span class="dashicons dashicons-plus-alt2"></span>
+									<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 									<?php esc_html_e( 'Add Feature', 'wp-sell-services' ); ?>
 								</button>
 							</div>
@@ -725,13 +727,13 @@ class ServiceWizard {
 						<div class="wpss-gallery-preview">
 							<img :src="data.gallery.main.url" alt="">
 							<button type="button" class="wpss-gallery-remove" @click.stop="removeGalleryItem('main')">
-								<span class="dashicons dashicons-no-alt"></span>
+								<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
 					</template>
 					<template x-if="!data.gallery.main">
 						<div class="wpss-gallery-placeholder">
-							<span class="dashicons dashicons-format-image"></span>
+							<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
 							<span><?php esc_html_e( 'Click to upload main image', 'wp-sell-services' ); ?></span>
 							<span class="wpss-gallery-hint"><?php esc_html_e( 'Recommended: 800x600px', 'wp-sell-services' ); ?></span>
 						</div>
@@ -747,12 +749,12 @@ class ServiceWizard {
 						<div class="wpss-gallery-item">
 							<img :src="image.url" alt="">
 							<button type="button" class="wpss-gallery-remove" @click="removeGalleryItem('images', index)">
-								<span class="dashicons dashicons-no-alt"></span>
+								<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
 					</template>
 					<div class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()">
-						<span class="dashicons dashicons-plus-alt2"></span>
+						<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 						<span><?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?></span>
 					</div>
 				</div>
@@ -794,7 +796,7 @@ class ServiceWizard {
 						<div class="wpss-requirement-header">
 							<span class="wpss-requirement-number" x-text="index + 1"></span>
 							<button type="button" class="wpss-btn--icon" @click="removeRequirement(index)">
-								<span class="dashicons dashicons-trash"></span>
+								<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
 						<div class="wpss-requirement-fields">
@@ -838,7 +840,7 @@ class ServiceWizard {
 			</div>
 
 			<button type="button" class="wpss-btn wpss-btn--outline" @click="addRequirement()" x-show="canAddRequirement()">
-				<span class="dashicons dashicons-plus-alt2"></span>
+				<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add Requirement', 'wp-sell-services' ); ?>
 			</button>
 
@@ -884,7 +886,7 @@ class ServiceWizard {
 							<div class="wpss-extra-header">
 								<span class="wpss-extra-title" x-text="extra.title || '<?php esc_attr_e( 'New Extra', 'wp-sell-services' ); ?>'"></span>
 								<button type="button" class="wpss-btn--icon" @click="removeExtra(index)">
-									<span class="dashicons dashicons-trash"></span>
+									<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 								</button>
 							</div>
 							<div class="wpss-extra-fields">
@@ -929,7 +931,7 @@ class ServiceWizard {
 				</div>
 
 				<button type="button" class="wpss-btn wpss-btn--outline" @click="addExtra()" x-show="canAddExtra()">
-					<span class="dashicons dashicons-plus-alt2"></span>
+					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Add Extra', 'wp-sell-services' ); ?>
 				</button>
 
@@ -954,7 +956,7 @@ class ServiceWizard {
 							<div class="wpss-faq-header">
 								<span class="wpss-faq-number" x-text="'Q' + (index + 1)"></span>
 								<button type="button" class="wpss-btn--icon" @click="removeFaq(index)">
-									<span class="dashicons dashicons-trash"></span>
+									<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 								</button>
 							</div>
 							<div class="wpss-faq-fields">
@@ -978,7 +980,7 @@ class ServiceWizard {
 				</div>
 
 				<button type="button" class="wpss-btn wpss-btn--outline" @click="addFaq()" x-show="canAddFaq()">
-					<span class="dashicons dashicons-plus-alt2"></span>
+					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Add FAQ', 'wp-sell-services' ); ?>
 				</button>
 
@@ -1020,7 +1022,7 @@ class ServiceWizard {
 							</template>
 							<template x-if="!data.gallery.main">
 								<div class="wpss-service-preview-placeholder">
-									<span class="dashicons dashicons-format-image"></span>
+									<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
 								</div>
 							</template>
 						</div>
@@ -1037,25 +1039,31 @@ class ServiceWizard {
 				<!-- Checklist -->
 				<div class="wpss-review-section">
 					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Completion Checklist', 'wp-sell-services' ); ?></h4>
-					<ul class="wpss-review-checklist">
+					<?php
+					// Packet H: Alpine checklist uses :data-lucide binding. Lucide
+					// replaces the <i> on each createIcons() call; after a :data-lucide
+					// flips, x-effect dispatches wpss:icons:refresh to re-render.
+					?>
+					<ul class="wpss-review-checklist"
+						x-effect="data.title || data.category || data.description || data.gallery || isPackageValid; $nextTick(() => { try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(e){} })">
 						<li :class="{ 'completed': data.title?.length >= 10 }">
-							<span class="dashicons" :class="data.title?.length >= 10 ? 'dashicons-yes-alt' : 'dashicons-marker'"></span>
+							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.title?.length >= 10 ? 'check-circle-2' : 'circle'"></i>
 							<?php esc_html_e( 'Service title (10+ characters)', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.category }">
-							<span class="dashicons" :class="data.category ? 'dashicons-yes-alt' : 'dashicons-marker'"></span>
+							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.category ? 'check-circle-2' : 'circle'"></i>
 							<?php esc_html_e( 'Category selected', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.description?.length >= 120 }">
-							<span class="dashicons" :class="data.description?.length >= 120 ? 'dashicons-yes-alt' : 'dashicons-marker'"></span>
+							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.description?.length >= 120 ? 'check-circle-2' : 'circle'"></i>
 							<?php esc_html_e( 'Description (120+ characters)', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': isPackageValid('basic') }">
-							<span class="dashicons" :class="isPackageValid('basic') ? 'dashicons-yes-alt' : 'dashicons-marker'"></span>
+							<i class="wpss-icon" aria-hidden="true" :data-lucide="isPackageValid('basic') ? 'check-circle-2' : 'circle'"></i>
 							<?php esc_html_e( 'Basic package pricing complete', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.gallery.main }">
-							<span class="dashicons" :class="data.gallery.main ? 'dashicons-yes-alt' : 'dashicons-marker'"></span>
+							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.gallery.main ? 'check-circle-2' : 'circle'"></i>
 							<?php esc_html_e( 'Main image uploaded', 'wp-sell-services' ); ?>
 						</li>
 					</ul>

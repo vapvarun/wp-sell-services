@@ -184,40 +184,43 @@ class Notification {
 	}
 
 	/**
-	 * Get notification icon class.
+	 * Get notification Lucide icon name.
+	 *
+	 * Packet H (1.1.0): returns a Lucide icon name (no `dashicons-` prefix).
+	 * Consumers render it via <i data-lucide="…" class="wpss-icon">.
 	 *
 	 * @return string
 	 */
 	public function get_icon_class(): string {
 		$icons = [
-			self::TYPE_ORDER_NEW           => 'dashicons-cart',
-			self::TYPE_ORDER_ACCEPTED      => 'dashicons-yes-alt',
-			self::TYPE_ORDER_IN_PROGRESS   => 'dashicons-update',
-			self::TYPE_ORDER_DELIVERED     => 'dashicons-yes',
-			self::TYPE_ORDER_COMPLETED     => 'dashicons-awards',
-			self::TYPE_ORDER_CANCELLED     => 'dashicons-dismiss',
-			self::TYPE_ORDER_REVISION      => 'dashicons-backup',
-			self::TYPE_ORDER_LATE          => 'dashicons-warning',
-			self::TYPE_MESSAGE_NEW         => 'dashicons-email',
-			self::TYPE_REVIEW_RECEIVED     => 'dashicons-star-filled',
-			self::TYPE_DISPUTE_OPENED      => 'dashicons-flag',
-			self::TYPE_DISPUTE_RESPONSE    => 'dashicons-format-chat',
-			self::TYPE_DISPUTE_RESOLVED    => 'dashicons-saved',
-			self::TYPE_PROPOSAL_RECEIVED   => 'dashicons-businessman',
-			self::TYPE_PROPOSAL_ACCEPTED   => 'dashicons-thumbs-up',
-			self::TYPE_PROPOSAL_REJECTED   => 'dashicons-thumbs-down',
-			self::TYPE_EARNINGS_CLEARED    => 'dashicons-money-alt',
-			self::TYPE_WITHDRAWAL_APPROVED => 'dashicons-bank',
-			self::TYPE_WITHDRAWAL_REJECTED => 'dashicons-no-alt',
-			self::TYPE_SERVICE_APPROVED    => 'dashicons-yes-alt',
-			self::TYPE_SERVICE_REJECTED    => 'dashicons-dismiss',
-			self::TYPE_DEADLINE_REMINDER   => 'dashicons-calendar-alt',
-			self::TYPE_EXTENSION_REQUESTED => 'dashicons-clock',
-			self::TYPE_EXTENSION_APPROVED  => 'dashicons-calendar',
-			self::TYPE_EXTENSION_REJECTED  => 'dashicons-no',
+			self::TYPE_ORDER_NEW           => 'shopping-cart',
+			self::TYPE_ORDER_ACCEPTED      => 'check-circle-2',
+			self::TYPE_ORDER_IN_PROGRESS   => 'refresh-cw',
+			self::TYPE_ORDER_DELIVERED     => 'check',
+			self::TYPE_ORDER_COMPLETED     => 'party-popper',
+			self::TYPE_ORDER_CANCELLED     => 'x-circle',
+			self::TYPE_ORDER_REVISION      => 'undo',
+			self::TYPE_ORDER_LATE          => 'triangle-alert',
+			self::TYPE_MESSAGE_NEW         => 'mail',
+			self::TYPE_REVIEW_RECEIVED     => 'star',
+			self::TYPE_DISPUTE_OPENED      => 'flag',
+			self::TYPE_DISPUTE_RESPONSE    => 'message-square',
+			self::TYPE_DISPUTE_RESOLVED    => 'check',
+			self::TYPE_PROPOSAL_RECEIVED   => 'briefcase',
+			self::TYPE_PROPOSAL_ACCEPTED   => 'thumbs-up',
+			self::TYPE_PROPOSAL_REJECTED   => 'thumbs-down',
+			self::TYPE_EARNINGS_CLEARED    => 'banknote',
+			self::TYPE_WITHDRAWAL_APPROVED => 'landmark',
+			self::TYPE_WITHDRAWAL_REJECTED => 'x-circle',
+			self::TYPE_SERVICE_APPROVED    => 'check-circle-2',
+			self::TYPE_SERVICE_REJECTED    => 'x-circle',
+			self::TYPE_DEADLINE_REMINDER   => 'calendar-clock',
+			self::TYPE_EXTENSION_REQUESTED => 'clock-alert',
+			self::TYPE_EXTENSION_APPROVED  => 'calendar',
+			self::TYPE_EXTENSION_REJECTED  => 'x',
 		];
 
-		return $icons[ $this->type ] ?? 'dashicons-bell';
+		return $icons[ $this->type ] ?? 'bell';
 	}
 
 	/**

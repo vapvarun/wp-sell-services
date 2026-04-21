@@ -73,7 +73,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 								</span>
 								<?php if ( $vendor->is_verified ) : ?>
 									<span class="wpss-badge wpss-badge--verified">
-										<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+										<i data-lucide="check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 										<?php esc_html_e( 'Verified', 'wp-sell-services' ); ?>
 									</span>
 								<?php endif; ?>
@@ -87,7 +87,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 			<div class="wpss-stats-grid">
 				<div class="wpss-stat-card">
 					<div class="wpss-stat-card__icon wpss-stat-card__icon--earnings">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+						<i data-lucide="dollar-sign" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( (float) ( $stats->total_earnings ?? 0 ) ) ); ?></div>
@@ -97,7 +97,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 				<div class="wpss-stat-card">
 					<div class="wpss-stat-card__icon wpss-stat-card__icon--completed">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+						<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( $stats->completed_orders ?? 0 ); ?></div>
@@ -107,7 +107,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 				<div class="wpss-stat-card">
 					<div class="wpss-stat-card__icon wpss-stat-card__icon--active">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+						<i data-lucide="clock" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( $stats->active_orders ?? 0 ); ?></div>
@@ -117,7 +117,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 				<div class="wpss-stat-card">
 					<div class="wpss-stat-card__icon wpss-stat-card__icon--rating">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+						<i data-lucide="star" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 					</div>
 					<div class="wpss-stat-card__content">
 						<div class="wpss-stat-card__value"><?php echo esc_html( number_format( $vendor->rating, 1 ) ); ?></div>
@@ -177,7 +177,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 			<div class="wpss-card-grid wpss-card-grid--3col">
 				<a href="<?php echo esc_url( home_url( '/my-account/service-orders/' ) ); ?>" class="wpss-card wpss-card--link">
 					<div class="wpss-card__body">
-						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--wpss-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+						<i data-lucide="file-text" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						<h4><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h4>
 						<p><?php esc_html_e( 'View and manage your orders', 'wp-sell-services' ); ?></p>
 					</div>
@@ -185,7 +185,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 				<a href="<?php echo esc_url( home_url( '/my-account/conversations/' ) ); ?>" class="wpss-card wpss-card--link">
 					<div class="wpss-card__body">
-						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--wpss-primary)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+						<i data-lucide="message-square" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						<h4><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h4>
 						<p><?php esc_html_e( 'Chat with your buyers', 'wp-sell-services' ); ?></p>
 					</div>
@@ -193,7 +193,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 
 				<a href="<?php echo esc_url( home_url( '/my-account/earnings/' ) ); ?>" class="wpss-card wpss-card--link">
 					<div class="wpss-card__body">
-						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--wpss-primary)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+						<i data-lucide="dollar-sign" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						<h4><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></h4>
 						<p><?php esc_html_e( 'Track your revenue', 'wp-sell-services' ); ?></p>
 					</div>
@@ -218,7 +218,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 		<div class="wpss-dashboard__body">
 			<div class="wpss-empty-state">
 				<div class="wpss-empty-state__icon">
-					<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+					<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
 				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'Set Up Your Vendor Profile', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-empty-state__text"><?php esc_html_e( 'Complete your profile to start selling services on our marketplace.', 'wp-sell-services' ); ?></p>

@@ -838,10 +838,7 @@ class AjaxHandlers {
 								<?php else : ?>
 									<a href="<?php echo esc_url( $attachment['url'] ); ?>" target="_blank" class="wpss-messaging__attachment-file">
 										<span class="wpss-messaging__attachment-icon">
-											<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-												<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-												<polyline points="14 2 14 8 20 8"/>
-											</svg>
+											<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
 										</span>
 										<span class="wpss-messaging__attachment-info">
 											<span class="wpss-messaging__attachment-name"><?php echo esc_html( $attachment['name'] ); ?></span>
@@ -1090,10 +1087,7 @@ class AjaxHandlers {
 											<?php else : ?>
 												<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
 													<span class="wpss-messaging__attachment-icon">
-														<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-															<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-															<polyline points="14 2 14 8 20 8"/>
-														</svg>
+														<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
 													</span>
 													<span class="wpss-messaging__attachment-info">
 														<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
@@ -1565,7 +1559,7 @@ class AjaxHandlers {
 					<?php elseif ( $evidence_type === 'file' && ! empty( $evidence_content ) ) : ?>
 						<div class="wpss-evidence-file">
 							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
-								<span class="dashicons dashicons-media-default"></span>
+								<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
 								<span><?php echo esc_html( basename( $evidence_content ) ); ?></span>
 							</a>
 						</div>

@@ -179,7 +179,7 @@ class FAQService {
 					<div class="wpss-faq-item" data-index="<?php echo esc_attr( $index ); ?>">
 						<div class="wpss-faq-question" role="button" aria-expanded="false">
 							<span class="wpss-faq-question-text"><?php echo esc_html( $faq['question'] ); ?></span>
-							<span class="wpss-faq-toggle dashicons dashicons-arrow-down-alt2"></span>
+							<i data-lucide="chevron-down" class="wpss-icon wpss-faq-toggle" aria-hidden="true"></i>
 						</div>
 						<div class="wpss-faq-answer" aria-hidden="true">
 							<?php echo wp_kses_post( $faq['answer'] ); ?>
@@ -227,7 +227,7 @@ class FAQService {
 			</div>
 
 			<button type="button" class="button wpss-add-faq" id="wpss-add-faq">
-				<span class="dashicons dashicons-plus-alt"></span>
+				<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 				<?php esc_html_e( 'Add FAQ', 'wp-sell-services' ); ?>
 			</button>
 
@@ -262,10 +262,10 @@ class FAQService {
 		?>
 		<div class="wpss-faq-admin-item" data-index="<?php echo esc_attr( $index ); ?>">
 			<div class="wpss-faq-header">
-				<span class="wpss-faq-drag dashicons dashicons-move"></span>
+				<i data-lucide="move" class="wpss-icon wpss-faq-drag" aria-hidden="true"></i>
 				<span class="wpss-faq-number"><?php echo esc_html( is_numeric( $index ) ? $index + 1 : '#' ); ?></span>
 				<button type="button" class="wpss-faq-remove" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-					<span class="dashicons dashicons-no-alt"></span>
+					<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 			</div>
 			<div class="wpss-faq-fields">

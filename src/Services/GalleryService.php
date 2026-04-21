@@ -367,10 +367,10 @@ class GalleryService {
 				if ( ! empty( $item['poster_id'] ) ) {
 					return wp_get_attachment_image( $item['poster_id'], $size );
 				}
-				return '<span class="wpss-video-thumb dashicons dashicons-video-alt3"></span>';
+				return '<i data-lucide="video" class="wpss-icon wpss-video-thumb" aria-hidden="true"></i>';
 
 			case 'embed':
-				return '<span class="wpss-embed-thumb dashicons dashicons-format-video"></span>';
+				return '<i data-lucide="video" class="wpss-icon wpss-embed-thumb" aria-hidden="true"></i>';
 
 			default:
 				return '';
@@ -397,15 +397,15 @@ class GalleryService {
 
 			<div class="wpss-gallery-actions">
 				<button type="button" class="button wpss-add-image" data-type="image">
-					<span class="dashicons dashicons-format-image"></span>
+					<i data-lucide="image" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?>
 				</button>
 				<button type="button" class="button wpss-add-video" data-type="video">
-					<span class="dashicons dashicons-video-alt3"></span>
+					<i data-lucide="video" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Add Video', 'wp-sell-services' ); ?>
 				</button>
 				<button type="button" class="button wpss-add-embed" data-type="embed">
-					<span class="dashicons dashicons-admin-site"></span>
+					<i data-lucide="globe" class="wpss-icon" aria-hidden="true"></i>
 					<?php esc_html_e( 'Add YouTube/Vimeo', 'wp-sell-services' ); ?>
 				</button>
 			</div>
@@ -434,10 +434,10 @@ class GalleryService {
 			</div>
 			<div class="wpss-gallery-item-actions">
 				<button type="button" class="wpss-gallery-move" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>">
-					<span class="dashicons dashicons-move"></span>
+					<i data-lucide="move" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 				<button type="button" class="wpss-gallery-remove" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-					<span class="dashicons dashicons-no-alt"></span>
+					<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 			</div>
 			<span class="wpss-gallery-type-badge"><?php echo esc_html( ucfirst( $type ) ); ?></span>

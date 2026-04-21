@@ -171,17 +171,17 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 			'dashboard'     => array(
 				'label' => __( 'Dashboard', 'wp-sell-services' ),
 				'url'   => $this->get_account_url(),
-				'icon'  => 'dashicons-dashboard',
+				'icon'  => 'layout-dashboard',
 			),
 			'orders'        => array(
 				'label' => __( 'Service Orders', 'wp-sell-services' ),
 				'url'   => $this->get_orders_url(),
-				'icon'  => 'dashicons-list-view',
+				'icon'  => 'list',
 			),
 			'notifications' => array(
 				'label' => __( 'Notifications', 'wp-sell-services' ),
 				'url'   => $this->get_notifications_url(),
-				'icon'  => 'dashicons-bell',
+				'icon'  => 'bell',
 			),
 		);
 
@@ -190,12 +190,12 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 			$items['vendor-dashboard'] = array(
 				'label' => __( 'Vendor Dashboard', 'wp-sell-services' ),
 				'url'   => $this->get_vendor_dashboard_url(),
-				'icon'  => 'dashicons-store',
+				'icon'  => 'store',
 			);
 			$items['vendor-services']  = array(
 				'label' => __( 'My Services', 'wp-sell-services' ),
 				'url'   => $this->get_vendor_services_url(),
-				'icon'  => 'dashicons-admin-tools',
+				'icon'  => 'wrench',
 			);
 		}
 
@@ -284,14 +284,14 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 					<?php foreach ( $menu_items as $key => $item ) : ?>
 						<li class="<?php echo esc_attr( $page === $key ? 'active' : '' ); ?>">
 							<a href="<?php echo esc_url( $item['url'] ); ?>">
-								<span class="dashicons <?php echo esc_attr( $item['icon'] ); ?>"></span>
+								<i data-lucide="<?php echo esc_attr( $item['icon'] ); ?>" class="wpss-icon" aria-hidden="true"></i>
 								<?php echo esc_html( $item['label'] ); ?>
 							</a>
 						</li>
 					<?php endforeach; ?>
 					<li>
 						<a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>">
-							<span class="dashicons dashicons-exit"></span>
+							<i data-lucide="log-out" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Logout', 'wp-sell-services' ); ?>
 						</a>
 					</li>

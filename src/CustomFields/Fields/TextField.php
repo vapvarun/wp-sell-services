@@ -44,7 +44,7 @@ class TextField extends AbstractField {
 	 * @return string
 	 */
 	public function get_icon(): string {
-		return 'dashicons-editor-textcolor';
+		return 'type';
 	}
 
 	/**

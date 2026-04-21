@@ -44,7 +44,7 @@ class FileUploadField extends AbstractField {
 	 * @return string
 	 */
 	public function get_icon(): string {
-		return 'dashicons-upload';
+		return 'upload';
 	}
 
 	/**
