@@ -398,7 +398,7 @@
 
 .wpss-badge--warning {
 	background: var(--wpss-warning-light, #fef3c7);
-	color: #b45309;
+	color: var(--wpss-badge-extension-icon-fg, #b45309);
 }
 
 .wpss-badge--danger {
@@ -687,7 +687,7 @@ select.wpss-input {
 	background-repeat: no-repeat;
 	background-position: right 12px center;
 	background-size: 16px;
-	background-color: #fff;
+	background-color: var(--wpss-white, #fff);
 	cursor: pointer;
 }
 
@@ -923,23 +923,23 @@ select.wpss-input::-ms-expand {
    ========================================================================== */
 
 .wpss-stat-card__icon--active {
-	background: #fef3c7;
-	color: #d97706;
+	background: var(--wpss-warning-light, #fef3c7);
+	color: var(--wpss-warning-dark, #d97706);
 }
 
 .wpss-stat-card__icon--completed {
-	background: #d1fae5;
-	color: #059669;
+	background: var(--wpss-success-light, #d1fae5);
+	color: var(--wpss-success, #059669);
 }
 
 .wpss-stat-card__icon--earnings {
-	background: #dbeafe;
-	color: #2563eb;
+	background: var(--wpss-status-delivered-bg, #dbeafe);
+	color: var(--wpss-info, #2563eb);
 }
 
 .wpss-stat-card__icon--rating {
-	background: #fef9c3;
-	color: #ca8a04;
+	background: var(--wpss-status-late-bg, #fef9c3);
+	color: var(--wpss-warning-dark, #ca8a04);
 }
 
 /* ==========================================================================
@@ -959,13 +959,13 @@ select.wpss-input::-ms-expand {
 	border-radius: var(--wpss-radius, 8px);
 	font-size: 0.813rem;
 	font-weight: 500;
-	background: #d1fae5;
-	color: #059669;
+	background: var(--wpss-success-light, #d1fae5);
+	color: var(--wpss-success, #059669);
 }
 
 .wpss-deadline__remaining--urgent {
-	background: #fee2e2;
-	color: #dc2626;
+	background: var(--wpss-badge-tip-bg, #fee2e2);
+	color: var(--wpss-danger, #dc2626);
 }
 
 /* ==========================================================================

@@ -1101,5 +1101,5 @@ select.wpss-form-input::-ms-expand {
 }
 
 .wpss-wizard__btn-publish:hover {
-	background: #059669;
+	background: var(--wpss-success, #059669);
 }

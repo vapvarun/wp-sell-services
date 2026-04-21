@@ -40,7 +40,7 @@
 .wpss-manual-order-wrap .postbox h2.hndle {
 	padding: 10px 12px;
 	font-size: 14px;
-	border-bottom: 1px solid #c3c4c7;
+	border-bottom: 1px solid var(--wpss-gray-300, #c3c4c7);
 }
 
 /* Form fields */
@@ -60,13 +60,13 @@
 }
 
 .wpss-manual-order-wrap .wpss-form-row label .required {
-	color: #d63638;
+	color: var(--wpss-danger, #d63638);
 }
 
 .wpss-manual-order-wrap .wpss-form-row .description {
 	margin-top: 4px;
 	font-size: 12px;
-	color: #646970;
+	color: var(--wpss-text-muted, #646970);
 	font-style: italic;
 }
 
@@ -83,7 +83,7 @@
 
 /* Addons section */
 .wpss-addons-list {
-	border: 1px solid #c3c4c7;
+	border: 1px solid var(--wpss-gray-300, #c3c4c7);
 	border-radius: 4px;
 	max-height: 300px;
 	overflow-y: auto;
@@ -94,7 +94,7 @@
 	align-items: center;
 	gap: 12px;
 	padding: 10px 12px;
-	border-bottom: 1px solid #f0f0f1;
+	border-bottom: 1px solid var(--wpss-border-light, #f0f0f1);
 }
 
 .wpss-addon-item:last-child {
@@ -102,7 +102,7 @@
 }
 
 .wpss-addon-item:hover {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 }
 
 .wpss-addon-checkbox {
@@ -121,14 +121,14 @@
 
 .wpss-addon-desc {
 	font-size: 12px;
-	color: #646970;
+	color: var(--wpss-text-muted, #646970);
 	margin-top: 2px;
 }
 
 .wpss-addon-price {
 	flex-shrink: 0;
 	font-weight: 600;
-	color: #1d2327;
+	color: var(--wpss-text, #1d2327);
 	white-space: nowrap;
 }
 
@@ -145,14 +145,14 @@
 .wpss-addons-empty {
 	padding: 20px;
 	text-align: center;
-	color: #646970;
+	color: var(--wpss-text-muted, #646970);
 	font-style: italic;
 }
 
 .wpss-addons-loading {
 	padding: 20px;
 	text-align: center;
-	color: #646970;
+	color: var(--wpss-text-muted, #646970);
 }
 
 /* Pricing summary */
@@ -162,7 +162,7 @@
 }
 
 .wpss-pricing-summary tr {
-	border-bottom: 1px solid #f0f0f1;
+	border-bottom: 1px solid var(--wpss-border-light, #f0f0f1);
 }
 
 .wpss-pricing-summary tr:last-child {
@@ -180,7 +180,7 @@
 }
 
 .wpss-pricing-summary .wpss-pricing-total {
-	border-top: 2px solid #1d2327;
+	border-top: 2px solid var(--wpss-text, #1d2327);
 }
 
 .wpss-pricing-summary .wpss-pricing-total td {
@@ -195,11 +195,11 @@
 }
 
 .wpss-pricing-summary .wpss-pricing-commission {
-	border-top: 1px dashed #c3c4c7;
+	border-top: 1px dashed var(--wpss-gray-300, #c3c4c7);
 }
 
 .wpss-pricing-summary .wpss-pricing-commission td {
-	color: #646970;
+	color: var(--wpss-text-muted, #646970);
 	font-size: 12px;
 }
 
@@ -234,15 +234,15 @@
 /* Success result */
 .wpss-order-result {
 	padding: 20px;
-	background: #f0f9f0;
-	border: 1px solid #00a32a;
+	background: var(--wpss-success-light, #f0f9f0);
+	border: 1px solid var(--wpss-success, #00a32a);
 	border-radius: 4px;
 	margin: 20px 0;
 }
 
 .wpss-order-result h3 {
 	margin: 0 0 10px;
-	color: #00a32a;
+	color: var(--wpss-success, #00a32a);
 }
 
 .wpss-order-result .wpss-result-actions {
@@ -272,8 +272,8 @@
 /* No data notice */
 .wpss-no-services-notice {
 	padding: 15px 20px;
-	border-left: 4px solid #dba617;
-	background: #fff;
+	border-left: 4px solid var(--wpss-warning, #dba617);
+	background: var(--wpss-white, #fff);
 	margin: 20px 0;
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }

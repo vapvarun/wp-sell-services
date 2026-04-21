@@ -1033,7 +1033,7 @@
 	background-repeat: no-repeat;
 	background-position: left 12px center;
 	background-size: 16px;
-	background-color: #fff;
+	background-color: var(--wpss-white, #fff);
 	cursor: pointer;
 }
 
@@ -1465,7 +1465,7 @@
 	justify-content: center;
 	text-align: center;
 	padding: 2rem;
-	background: linear-gradient(-135deg, #fef9c3 0%, #fef3c7 100%);
+	background: linear-gradient(-135deg, var(--wpss-status-late-bg, #fef9c3) 0%, var(--wpss-warning-light, #fef3c7) 100%);
 	border: 1px solid var(--wpss-warning-border, #fcd34d);
 	border-radius: var(--wpss-radius-lg, 12px);
 	gap: 1rem;
@@ -1595,8 +1595,8 @@ button.wpss-write-review-btn:focus,
 .wpss-admin-requirements-form .description {
 	margin-bottom: 15px;
 	padding: 10px;
-	background: #f0f6fc;
-	border-right: 4px solid #2271b1;
+	background: var(--wpss-info-light, #f0f6fc);
+	border-right: 4px solid var(--wpss-info, #2271b1);
 	font-style: italic;
 }
 
@@ -1608,11 +1608,11 @@ button.wpss-write-review-btn:focus,
 	display: block;
 	font-weight: 600;
 	margin-bottom: 5px;
-	color: #1e1e1e;
+	color: var(--wpss-text, #1e1e1e);
 }
 
 .wpss-admin-requirements-form .wpss-form-field label .required {
-	color: #d63638;
+	color: var(--wpss-danger, #d63638);
 	margin-right: 2px;
 }
 
@@ -1656,7 +1656,7 @@ button.wpss-write-review-btn:focus,
 	gap: 10px;
 	margin-top: 20px;
 	padding-top: 15px;
-	border-top: 1px solid #dcdcde;
+	border-top: 1px solid var(--wpss-border, #dcdcde);
 }
 
 .wpss-admin-requirements-form .wpss-form-actions .spinner {
@@ -1667,9 +1667,9 @@ button.wpss-write-review-btn:focus,
 .wpss-admin-requirements-form .wpss-form-errors {
 	margin-top: 15px;
 	padding: 12px;
-	background: #fcf0f1;
-	border-right: 4px solid #d63638;
-	color: #8a1f23;
+	background: var(--wpss-danger-light, #fcf0f1);
+	border-right: 4px solid var(--wpss-danger, #d63638);
+	color: var(--wpss-danger-dark, #8a1f23);
 }
 
 .wpss-admin-requirements-form .wpss-form-errors p {

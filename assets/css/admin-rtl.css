@@ -87,10 +87,10 @@
 	background: var(--wpss-admin-white); color: var(--wpss-admin-text);
 	cursor: pointer; text-decoration: none; transition: all 0.12s ease; line-height: 1;
 }
-.wpss-btn:hover { background: #f6f7f7; color: var(--wpss-admin-text); text-decoration: none; }
+.wpss-btn:hover { background: var(--wpss-bg-subtle, #f6f7f7); color: var(--wpss-admin-text); text-decoration: none; }
 .wpss-btn:active { transform: scale(0.97); }
-.wpss-btn--primary { background: var(--wpss-admin-accent); color: #fff; border-color: var(--wpss-admin-accent); }
-.wpss-btn--primary:hover { background: var(--wpss-admin-accent-hover); color: #fff; }
+.wpss-btn--primary { background: var(--wpss-admin-accent); color: var(--wpss-white, #fff); border-color: var(--wpss-admin-accent); }
+.wpss-btn--primary:hover { background: var(--wpss-admin-accent-hover); color: var(--wpss-white, #fff); }
 .wpss-btn--danger { color: var(--wpss-admin-danger); border-color: var(--wpss-admin-danger); }
 .wpss-btn--sm { height: 28px; font-size: 12px; padding: 0 10px; }
 
@@ -104,7 +104,7 @@
 	margin-bottom: 16px; overflow: hidden;
 }
 .wpss-card__head {
-	padding: 14px 20px 12px; border-bottom: 1px solid var(--wpss-admin-border); background: #fafafa;
+	padding: 14px 20px 12px; border-bottom: 1px solid var(--wpss-admin-border); background: var(--wpss-bg-subtle, #fafafa);
 }
 .wpss-card__title {
 	font-size: 13px; font-weight: 600; text-transform: uppercase;
@@ -119,14 +119,14 @@
    ========================================================================== */
 
 .wpss-badge { display: inline-flex; align-items: center; padding: 2px 8px; font-size: 11px; font-weight: 600; border-radius: var(--wpss-admin-radius-sm); white-space: nowrap; }
-.wpss-badge--success { background: rgba(46, 164, 79, 0.1); color: #1a7c3b; }
-.wpss-badge--warn { background: rgba(217, 119, 6, 0.1); color: #92400e; }
-.wpss-badge--default { background: #f0f0f1; color: #50575e; }
-.wpss-badge--danger { background: rgba(224, 62, 62, 0.1); color: #991b1b; }
-.wpss-badge--muted { background: #f0f0f1; color: #9ca3af; }
+.wpss-badge--success { background: rgba(46, 164, 79, 0.1); color: var(--wpss-success-dark, #1a7c3b); }
+.wpss-badge--warn { background: rgba(217, 119, 6, 0.1); color: var(--wpss-warning-dark, #92400e); }
+.wpss-badge--default { background: var(--wpss-border-light, #f0f0f1); color: var(--wpss-text-secondary, #50575e); }
+.wpss-badge--danger { background: rgba(224, 62, 62, 0.1); color: var(--wpss-danger-dark, #991b1b); }
+.wpss-badge--muted { background: var(--wpss-border-light, #f0f0f1); color: var(--wpss-gray-400, #9ca3af); }
 
 .wpss-pro-badge {
-	background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+	background: linear-gradient(135deg, var(--wpss-primary, #6366f1), var(--wpss-primary, #8b5cf6)); color: var(--wpss-white, #fff);
 	font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px;
 	text-transform: uppercase; letter-spacing: 0.04em;
 	margin-right: auto;
@@ -141,7 +141,7 @@
 	display: flex; flex-direction: column-reverse; gap: 8px;
 }
 .wpss-toast {
-	padding: 12px 20px; border-radius: var(--wpss-admin-radius-md); font-size: 13px; color: #fff;
+	padding: 12px 20px; border-radius: var(--wpss-admin-radius-md); font-size: 13px; color: var(--wpss-white, #fff);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); max-width: 360px;
 	opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s;
 }
@@ -167,7 +167,7 @@
 	gap: 15px;
 	margin-bottom: 15px;
 	padding-bottom: 15px;
-	border-bottom: 1px solid #f0f0f1;
+	border-bottom: 1px solid var(--wpss-border-light, #f0f0f1);
 }
 
 .wpss-metabox-row:last-child {
@@ -206,7 +206,7 @@
 }
 
 .wpss-package-item {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 4px;
 	padding: 15px;
@@ -257,7 +257,7 @@
 }
 
 .wpss-faq-item {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 4px;
 	padding: 15px;
@@ -490,29 +490,29 @@
 }
 
 .wpss-order-status.pending {
-	background: #fff8e5;
-	color: #996800;
+	background: var(--wpss-warning-light, #fff8e5);
+	color: var(--wpss-warning-dark, #996800);
 }
 
 .wpss-order-status.processing,
 .wpss-order-status.in-progress {
-	background: #e5f5fa;
-	color: #006b9c;
+	background: var(--wpss-info-light, #e5f5fa);
+	color: var(--wpss-info-dark, #006b9c);
 }
 
 .wpss-order-status.completed {
-	background: #edfaef;
-	color: #006b1d;
+	background: var(--wpss-success-light, #edfaef);
+	color: var(--wpss-success-dark, #006b1d);
 }
 
 .wpss-order-status.cancelled {
-	background: #fcf0f1;
-	color: #8a1c21;
+	background: var(--wpss-danger-light, #fcf0f1);
+	color: var(--wpss-danger-dark, #8a1c21);
 }
 
 .wpss-order-status.disputed {
-	background: #fef8ee;
-	color: #9e5e00;
+	background: var(--wpss-warning-light, #fef8ee);
+	color: var(--wpss-warning-dark, #9e5e00);
 }
 
 /* Status Badges for List Tables */
@@ -526,60 +526,60 @@
 }
 
 .wpss-status-pending {
-	background: #f0f0f1;
-	color: #50575e;
+	background: var(--wpss-border-light, #f0f0f1);
+	color: var(--wpss-text-secondary, #50575e);
 }
 
 .wpss-status-processing {
-	background: #c6e1c6;
-	color: #5b841b;
+	background: var(--wpss-status-pending-approval-bg, #c6e1c6);
+	color: var(--wpss-status-pending-approval-fg, #5b841b);
 }
 
 .wpss-status-completed {
-	background: #c8d7e1;
-	color: #2e4453;
+	background: var(--wpss-gray-200, #c8d7e1);
+	color: var(--wpss-gray-700, #2e4453);
 }
 
 .wpss-status-cancelled {
-	background: #eba3a3;
-	color: #761919;
+	background: var(--wpss-danger-border, #eba3a3);
+	color: var(--wpss-danger-dark, #761919);
 }
 
 .wpss-status-on-hold,
 .wpss-status-pending-requirements {
-	background: #f8dda7;
-	color: #94660c;
+	background: var(--wpss-warning-border, #f8dda7);
+	color: var(--wpss-warning-dark, #94660c);
 }
 
 .wpss-status-failed {
-	background: #eba3a3;
-	color: #761919;
+	background: var(--wpss-danger-border, #eba3a3);
+	color: var(--wpss-danger-dark, #761919);
 }
 
 .wpss-status-pending-payment {
-	background: #f8dda7;
-	color: #92400e;
+	background: var(--wpss-warning-border, #f8dda7);
+	color: var(--wpss-warning-dark, #92400e);
 }
 
 .wpss-status-revision-requested,
 .wpss-status-revision_requested {
-	background: #e0f2fe;
-	color: #075985;
+	background: var(--wpss-status-revision-bg, #e0f2fe);
+	color: var(--wpss-status-revision-fg, #075985);
 }
 
 .wpss-status-delivered {
-	background: #dbeafe;
-	color: #1e40af; 
+	background: var(--wpss-status-delivered-bg, #dbeafe);
+	color: var(--wpss-info-dark, #1e40af); 
 }
 
 .wpss-status-in-progress {
-    background: #e0e7ff;
-    color: #3730a3;
+    background: var(--wpss-status-in-progress-bg, #e0e7ff);
+    color: var(--wpss-status-in-progress-fg, #3730a3);
 }
 
 .wpss-status-disputed {
-	background: #fed7aa;
-	color: #9a3412;
+	background: var(--wpss-warning-border, #fed7aa);
+	color: var(--wpss-status-disputed-fg, #9a3412);
 }
 
 /* ==========================================================================
@@ -643,14 +643,14 @@
 	border-radius: 4px;
 	padding: 20px;
 	text-align: center;
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 .wpss-gallery-upload:hover {
 	border-color: var(--wpss-admin-primary);
-	background: #f0fff7;
+	background: var(--wpss-success-light, #f0fff7);
 }
 
 .wpss-gallery-upload .dashicons {
@@ -798,10 +798,10 @@
 .wpss-details-note {
 	margin: 15px 0 0;
 	padding: 10px 12px;
-	background: #f0f6fc;
+	background: var(--wpss-info-light, #f0f6fc);
 	border-right: 3px solid var(--wpss-admin-primary, #1dbf73);
 	border-radius: 4px 0 0 4px;
-	color: #555;
+	color: var(--wpss-text-secondary, #555);
 	font-size: 13px;
 	display: flex;
 	align-items: center;
@@ -823,7 +823,7 @@
 }
 
 .wpss-detail-card {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 20px;
@@ -833,7 +833,7 @@
 }
 
 .wpss-detail-card:hover {
-	border-color: #b4b9be;
+	border-color: var(--wpss-gray-400, #b4b9be);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
@@ -841,7 +841,7 @@
 	flex-shrink: 0;
 	width: 40px;
 	height: 40px;
-	background: linear-gradient(-135deg, var(--wpss-admin-primary), #19a463);
+	background: linear-gradient(-135deg, var(--wpss-admin-primary), var(--wpss-success-dark, #19a463));
 	border-radius: 8px;
 	display: flex;
 	align-items: center;
@@ -849,7 +849,7 @@
 }
 
 .wpss-detail-icon .dashicons {
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	font-size: 20px;
 	width: 20px;
 	height: 20px;
@@ -921,7 +921,7 @@
 
 /* Package Card Item */
 .wpss-package-item {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	overflow: hidden;
@@ -942,7 +942,7 @@
 	align-items: center;
 	gap: 10px;
 	padding: 12px 15px;
-	background: #f9fafb;
+	background: var(--wpss-gray-50, #f9fafb);
 	border-bottom: 1px solid var(--wpss-admin-border);
 	cursor: pointer;
 }
@@ -953,7 +953,7 @@
 
 .wpss-package-header .wpss-sortable-handle {
 	cursor: grab;
-	color: #999;
+	color: var(--wpss-text-muted, #999);
 }
 
 .wpss-package-header .wpss-sortable-handle:hover {
@@ -984,14 +984,14 @@
 	border: none;
 	padding: 5px;
 	cursor: pointer;
-	color: #999;
+	color: var(--wpss-text-muted, #999);
 	border-radius: 4px;
 	transition: all 0.2s ease;
 }
 
 .wpss-package-actions button:hover {
-	background: #f0f0f0;
-	color: #333;
+	background: var(--wpss-border-light, #f0f0f0);
+	color: var(--wpss-text, #333);
 }
 
 .wpss-package-toggle .dashicons {
@@ -1004,7 +1004,7 @@
 
 .wpss-remove-package:hover {
 	color: var(--wpss-admin-danger) !important;
-	background: #fee !important;
+	background: var(--wpss-danger-light, #fee) !important;
 }
 
 /* Package Body */
@@ -1131,15 +1131,15 @@
 }
 
 .wpss-input-with-prefix {
-	border: 1px solid #8c8f94;
+	border: 1px solid var(--wpss-text-muted, #8c8f94);
 	border-radius: 4px;
 	overflow: hidden;
 }
 
 .wpss-input-with-prefix .wpss-input-prefix {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	padding: 6px 10px;
-	border-left: 1px solid #8c8f94;
+	border-left: 1px solid var(--wpss-text-muted, #8c8f94);
 	color: var(--wpss-admin-text-light);
 	font-size: 14px;
 }
@@ -1181,7 +1181,7 @@
 }
 
 #wpss-faqs-list .wpss-faq-item {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 15px;
@@ -1191,7 +1191,7 @@
 }
 
 #wpss-faqs-list .wpss-faq-item:hover {
-	border-color: #b4b9be;
+	border-color: var(--wpss-gray-400, #b4b9be);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -1208,7 +1208,7 @@
 
 #wpss-faqs-list .wpss-faq-header .wpss-sortable-handle {
 	cursor: move;
-	color: #c3c4c7;
+	color: var(--wpss-gray-300, #c3c4c7);
 	transition: color 0.2s ease;
 }
 
@@ -1224,7 +1224,7 @@
 #wpss-faqs-list .wpss-faq-header .wpss-remove-faq {
 	background: none;
 	border: none;
-	color: #c3c4c7;
+	color: var(--wpss-gray-300, #c3c4c7);
 	padding: 5px;
 	cursor: pointer;
 	transition: color 0.2s ease;
@@ -1259,7 +1259,7 @@
 }
 
 #wpss-requirements-list .wpss-requirement-item {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 15px;
@@ -1269,7 +1269,7 @@
 }
 
 #wpss-requirements-list .wpss-requirement-item:hover {
-	border-color: #b4b9be;
+	border-color: var(--wpss-gray-400, #b4b9be);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -1285,7 +1285,7 @@
 
 .wpss-requirement-row .wpss-sortable-handle {
 	cursor: move;
-	color: #c3c4c7;
+	color: var(--wpss-gray-300, #c3c4c7);
 	margin-top: 8px;
 	transition: color 0.2s ease;
 }
@@ -1333,7 +1333,7 @@
 .wpss-remove-requirement {
 	background: none;
 	border: none;
-	color: #c3c4c7;
+	color: var(--wpss-gray-300, #c3c4c7);
 	padding: 5px;
 	cursor: pointer;
 	transition: color 0.2s ease;
@@ -1351,15 +1351,15 @@
 }
 
 .wpss-requirement-choices {
-	background: #f8f9fa;
+	background: var(--wpss-bg-subtle, #f8f9fa);
 	padding: 12px;
 	border-radius: 6px;
-	border: 1px solid #e2e4e7;
+	border: 1px solid var(--wpss-border, #e2e4e7);
 }
 
 .wpss-requirement-choices input {
 	width: 100%;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 }
 
 /* ==========================================================================
@@ -1434,7 +1434,7 @@
 }
 
 .wpss-stats-wrapper .wpss-stat-item {
-	background: #f8f9fa;
+	background: var(--wpss-bg-subtle, #f8f9fa);
 	border-radius: 8px;
 	padding: 12px;
 	display: flex;
@@ -1479,7 +1479,7 @@
 }
 
 .wpss-sortable-placeholder {
-	background: #e8f5e9;
+	background: var(--wpss-success-light, #e8f5e9);
 	border: 2px dashed var(--wpss-admin-primary);
 	border-radius: 8px;
 	margin-bottom: 12px;
@@ -1515,7 +1515,7 @@
 }
 
 .wpss-addon-item {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	margin-bottom: 12px;
@@ -1525,7 +1525,7 @@
 }
 
 .wpss-addon-item:hover {
-	border-color: #b4b9be;
+	border-color: var(--wpss-gray-400, #b4b9be);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -1538,14 +1538,14 @@
 	align-items: center;
 	gap: 12px;
 	padding: 12px 15px;
-	background: #f8f9fa;
+	background: var(--wpss-bg-subtle, #f8f9fa);
 	border-bottom: 1px solid var(--wpss-admin-border);
 	cursor: pointer;
 }
 
 .wpss-addon-header .wpss-sortable-handle {
 	cursor: move;
-	color: #c3c4c7;
+	color: var(--wpss-gray-300, #c3c4c7);
 	transition: color 0.2s ease;
 }
 
@@ -1569,7 +1569,7 @@
 .wpss-remove-addon {
 	background: none;
 	border: none;
-	color: #c3c4c7;
+	color: var(--wpss-gray-300, #c3c4c7);
 	padding: 5px;
 	cursor: pointer;
 	transition: color 0.2s ease;
@@ -1824,7 +1824,7 @@
 }
 
 .wpss-rating-stars {
-	color: #ffb900;
+	color: var(--wpss-warning, #ffb900);
 }
 
 .wpss-rating-count {
@@ -1835,24 +1835,24 @@
 .wpss-status-active,
 .wpss-status-approved,
 .wpss-status-accepted {
-	background: #d4edda;
-	color: #155724;
+	background: var(--wpss-success-light, #d4edda);
+	color: var(--wpss-success-dark, #155724);
 }
 
 .wpss-status-pending,
 .wpss-status-withdrawn {
-	background: #fff3cd;
-	color: #856404;
+	background: var(--wpss-warning-light, #fff3cd);
+	color: var(--wpss-warning-dark, #856404);
 }
 
 .wpss-status-suspended {
-	background: #f8d7da;
-	color: #721c24;
+	background: var(--wpss-status-rejected-bg, #f8d7da);
+	color: var(--wpss-status-rejected-fg, #721c24);
 }
 
 .wpss-status-rejected {
-	background: #f8d7da;
-	color: #721c24;
+	background: var(--wpss-status-rejected-bg, #f8d7da);
+	color: var(--wpss-status-rejected-fg, #721c24);
 }
 
 .wpss-vendor-actions {
@@ -1949,7 +1949,7 @@
 }
 
 .wpss-vendor-stat {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	padding: 15px;
 	border-radius: 4px;
 	text-align: center;
@@ -1980,11 +1980,11 @@
 .wpss-back-link {
 	text-decoration: none;
 	font-size: 14px;
-	color: #2271b1;
+	color: var(--wpss-info, #2271b1);
 }
 
 .wpss-back-link:hover {
-	color: #135e96;
+	color: var(--wpss-info-dark, #135e96);
 }
 
 .wpss-detail-buttons {
@@ -2030,7 +2030,7 @@
 .wpss-detail-tagline {
 	margin: 0;
 	font-style: italic;
-	color: #50575e;
+	color: var(--wpss-text-secondary, #50575e);
 }
 
 .wpss-detail-status-area {
@@ -2100,19 +2100,19 @@
 	padding: 15px 24px;
 	cursor: pointer;
 	font-size: 14px;
-	color: #50575e;
+	color: var(--wpss-text-secondary, #50575e);
 	border-bottom: 3px solid transparent;
 	transition: all 0.2s ease;
 }
 
 .wpss-detail-tab:hover {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	color: var(--wpss-admin-text);
 }
 
 .wpss-detail-tab.active {
-	color: #2271b1;
-	border-bottom-color: #2271b1;
+	color: var(--wpss-info, #2271b1);
+	border-bottom-color: var(--wpss-info, #2271b1);
 	font-weight: 500;
 }
 
@@ -2188,15 +2188,15 @@
 	display: inline-flex;
 	align-items: center;
 	padding: 5px 12px;
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	border-radius: 3px;
 	text-decoration: none;
-	color: #2271b1;
+	color: var(--wpss-info, #2271b1);
 	font-size: 13px;
 }
 
 .wpss-social-link:hover {
-	background: #e7e8ea;
+	background: var(--wpss-gray-200, #e7e8ea);
 }
 
 /* Tables in tabs */
@@ -2217,7 +2217,7 @@
 }
 
 .wpss-earnings-card {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	padding: 15px;
 	border-radius: 4px;
 	text-align: center;
@@ -2231,7 +2231,7 @@
 
 /* Commission Form */
 .wpss-commission-form {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	padding: 20px;
 	border-radius: 4px;
 	margin-bottom: 20px;
@@ -2257,7 +2257,7 @@
 
 /* Settings Section */
 .wpss-settings-section {
-	background: #f6f7f7;
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	padding: 20px;
 	border-radius: 4px;
 	margin-bottom: 20px;
@@ -2301,7 +2301,7 @@
 }
 
 .wpss-review-rating {
-	color: #ffb900;
+	color: var(--wpss-warning, #ffb900);
 }
 
 .wpss-review-meta {

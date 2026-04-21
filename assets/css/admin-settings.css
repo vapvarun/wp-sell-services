@@ -30,7 +30,7 @@
 .wpss-settings-sidebar {
 	width: 240px;
 	flex-shrink: 0;
-	background: #f8f9fa;
+	background: var(--wpss-bg-subtle, #f8f9fa);
 	border-right: 1px solid var(--wpss-admin-border);
 	padding: 0;
 	overflow-y: auto;
@@ -53,14 +53,14 @@
 	height: 36px;
 	border-radius: var(--wpss-admin-radius-md);
 	background: var(--wpss-admin-primary);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	flex-shrink: 0;
 }
 
 .wpss-settings-sidebar__logo [data-lucide] {
 	width: 20px;
 	height: 20px;
-	stroke: #fff;
+	stroke: var(--wpss-white, #fff);
 }
 
 .wpss-settings-sidebar__brand strong {
@@ -192,7 +192,7 @@
 }
 
 .wpss-card[data-gateway] .wpss-card__head:hover {
-	background: #f0f0f1;
+	background: var(--wpss-border-light, #f0f0f1);
 }
 
 .wpss-card[data-gateway] .wpss-card__body {
@@ -244,12 +244,12 @@
 
 .wpss-gateway-badge--enabled {
 	background: rgba(46, 164, 79, 0.1);
-	color: #1a7c3b;
+	color: var(--wpss-success-dark, #1a7c3b);
 }
 
 .wpss-gateway-badge--disabled {
 	background: rgba(224, 62, 62, 0.08);
-	color: #991b1b;
+	color: var(--wpss-danger-dark, #991b1b);
 }
 
 /* Card head layout with badge + toggle */

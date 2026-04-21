@@ -11,8 +11,8 @@
 
 .wpss-block-placeholder {
 	padding: 40px;
-	background: #f8f9fa;
-	border: 2px dashed #ddd;
+	background: var(--wpss-bg-subtle, #f8f9fa);
+	border: 2px dashed var(--wpss-gray-300, #ddd);
 	border-radius: 4px;
 	text-align: center;
 }
@@ -21,7 +21,7 @@
 	font-size: 48px;
 	width: 48px;
 	height: 48px;
-	color: #1dbf73;
+	color: var(--wpss-success, #1dbf73);
 	margin-bottom: 16px;
 }
 
@@ -29,13 +29,13 @@
 	margin: 0 0 8px;
 	font-size: 16px;
 	font-weight: 600;
-	color: #1e1e1e;
+	color: var(--wpss-text, #1e1e1e);
 }
 
 .wpss-block-placeholder p {
 	margin: 0;
 	font-size: 13px;
-	color: #757575;
+	color: var(--wpss-text-muted, #757575);
 }
 
 /* ==========================================================================
@@ -73,8 +73,8 @@
 	font-weight: 500;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
-	color: #757575;
-	border-bottom: 1px solid #e0e0e0;
+	color: var(--wpss-text-muted, #757575);
+	border-bottom: 1px solid var(--wpss-border, #e0e0e0);
 }
 
 /* ==========================================================================
@@ -82,8 +82,8 @@
    ========================================================================== */
 
 .wp-block-wpss-service-grid .wpss-block-placeholder {
-	background: linear-gradient(135deg, #f8fdf9 0%, #f0f9f4 100%);
-	border-color: #1dbf73;
+	background: linear-gradient(135deg, #f8fdf9 0%, var(--wpss-success-light, #f0f9f4) 100%);
+	border-color: var(--wpss-success, #1dbf73);
 }
 
 /* Grid preview in editor */
@@ -196,19 +196,19 @@
 	flex-direction: column;
 	align-items: center;
 	padding: 12px 8px;
-	border: 2px solid #e0e0e0;
+	border: 2px solid var(--wpss-border, #e0e0e0);
 	border-radius: 4px;
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 .wpss-layout-option:hover {
-	border-color: #1dbf73;
+	border-color: var(--wpss-success, #1dbf73);
 }
 
 .wpss-layout-option.is-selected {
-	border-color: #1dbf73;
-	background: #f0f9f4;
+	border-color: var(--wpss-success, #1dbf73);
+	background: var(--wpss-success-light, #f0f9f4);
 }
 
 .wpss-layout-option .dashicons {
@@ -216,16 +216,16 @@
 	width: 24px;
 	height: 24px;
 	margin-bottom: 4px;
-	color: #757575;
+	color: var(--wpss-text-muted, #757575);
 }
 
 .wpss-layout-option.is-selected .dashicons {
-	color: #1dbf73;
+	color: var(--wpss-success, #1dbf73);
 }
 
 .wpss-layout-option span {
 	font-size: 11px;
-	color: #757575;
+	color: var(--wpss-text-muted, #757575);
 }
 
 /* ==========================================================================
@@ -243,25 +243,25 @@
 	justify-content: center;
 	width: 36px;
 	height: 36px;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--wpss-border, #e0e0e0);
 	border-radius: 4px;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	cursor: pointer;
 	font-size: 14px;
 	font-weight: 500;
-	color: #757575;
+	color: var(--wpss-text-muted, #757575);
 	transition: all 0.2s ease;
 }
 
 .wpss-columns-selector button:hover {
-	border-color: #1dbf73;
-	color: #1dbf73;
+	border-color: var(--wpss-success, #1dbf73);
+	color: var(--wpss-success, #1dbf73);
 }
 
 .wpss-columns-selector button.is-selected {
-	border-color: #1dbf73;
-	background: #1dbf73;
-	color: #fff;
+	border-color: var(--wpss-success, #1dbf73);
+	background: var(--wpss-success, #1dbf73);
+	color: var(--wpss-white, #fff);
 }
 
 /* ==========================================================================
@@ -273,7 +273,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: 60px;
-	background: #f8f9fa;
+	background: var(--wpss-bg-subtle, #f8f9fa);
 	border-radius: 4px;
 }
 
@@ -287,8 +287,8 @@
 
 .wpss-block-error {
 	padding: 24px;
-	background: #fcf0f1;
-	border: 1px solid #d63638;
+	background: var(--wpss-danger-light, #fcf0f1);
+	border: 1px solid var(--wpss-danger, #d63638);
 	border-radius: 4px;
 	text-align: center;
 }
@@ -297,11 +297,11 @@
 	font-size: 32px;
 	width: 32px;
 	height: 32px;
-	color: #d63638;
+	color: var(--wpss-danger, #d63638);
 	margin-bottom: 12px;
 }
 
 .wpss-block-error p {
 	margin: 0;
-	color: #8a1c21;
+	color: var(--wpss-danger-dark, #8a1c21);
 }

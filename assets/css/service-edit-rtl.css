@@ -34,7 +34,7 @@
 .wpss-service-data-wrap {
 	display: flex;
 	min-height: 500px;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 }
 
 /* ==========================================================================
@@ -72,7 +72,7 @@
 }
 
 .wpss-service-tabs li a:hover {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	color: var(--wpss-admin-text);
 }
 
@@ -83,7 +83,7 @@
 }
 
 .wpss-service-tabs li.active a {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	color: var(--wpss-admin-primary);
 	border-right-color: var(--wpss-admin-primary);
 	font-weight: 500;
@@ -97,7 +97,7 @@
 .wpss-service-panels {
 	flex: 1;
 	padding: 20px 24px;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	min-width: 0;
 }
 
@@ -169,7 +169,7 @@
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 2px solid var(--wpss-admin-border);
 	display: flex;
 	align-items: center;
@@ -192,7 +192,7 @@
 .wpss-wizard-step.active .wpss-step-number {
 	background: var(--wpss-admin-primary);
 	border-color: var(--wpss-admin-primary);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 .wpss-wizard-step.active .wpss-step-label {
@@ -204,7 +204,7 @@
 .wpss-wizard-step.completed .wpss-step-number {
 	background: var(--wpss-admin-success);
 	border-color: var(--wpss-admin-success);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 .wpss-wizard-step.completed .wpss-step-number::after {

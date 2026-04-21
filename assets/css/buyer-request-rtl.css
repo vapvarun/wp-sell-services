@@ -651,24 +651,24 @@
 }
 
 .wpss-request-status-badge.wpss-status-open {
-	background: #dcfce7;
-	color: #166534;
+	background: var(--wpss-success-light, #dcfce7);
+	color: var(--wpss-success-dark, #166534);
 }
 
 .wpss-request-status-badge.wpss-status-in_review {
-	background: #fef3c7;
-	color: #92400e;
+	background: var(--wpss-warning-light, #fef3c7);
+	color: var(--wpss-warning-dark, #92400e);
 }
 
 .wpss-request-status-badge.wpss-status-hired {
-	background: #dbeafe;
-	color: #1e40af;
+	background: var(--wpss-status-delivered-bg, #dbeafe);
+	color: var(--wpss-info-dark, #1e40af);
 }
 
 .wpss-request-status-badge.wpss-status-expired,
 .wpss-request-status-badge.wpss-status-cancelled {
-	background: #fee2e2;
-	color: #991b1b;
+	background: var(--wpss-badge-tip-bg, #fee2e2);
+	color: var(--wpss-danger-dark, #991b1b);
 }
 
 .wpss-request-header .wpss-request-title {
@@ -893,20 +893,20 @@
 .wpss-proposal-submitted {
 	text-align: center;
 	padding: 1rem;
-	background: #dcfce7;
+	background: var(--wpss-success-light, #dcfce7);
 	border-radius: var(--wpss-radius, 8px);
 	margin-bottom: 1rem;
 }
 
 .wpss-proposal-submitted-icon {
 	font-size: 2rem;
-	color: #166534;
+	color: var(--wpss-success-dark, #166534);
 	margin-bottom: 0.5rem;
 }
 
 .wpss-proposal-submitted p {
 	margin: 0 0 1rem;
-	color: #166534;
+	color: var(--wpss-success-dark, #166534);
 	font-size: 0.875rem;
 }
 
