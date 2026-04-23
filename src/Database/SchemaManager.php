@@ -762,25 +762,10 @@ class SchemaManager {
 	 * @return void
 	 */
 	public function uninstall(): void {
-		$tables = array(
-			'withdrawals',
-			'wallet_transactions',
-			'notifications',
-			'portfolio_items',
-			'vendor_profiles',
-			'proposals',
-			'dispute_messages',
-			'disputes',
-			'reviews',
-			'extension_requests',
-			'deliveries',
-			'messages',
-			'conversations',
-			'order_requirements',
-			'orders',
-			'service_addons',
-			'service_packages',
-		);
+		// Drop order mirrors CORE_TABLES reverse so FK-free drops succeed on
+		// engines that care, and so adding a table requires a single edit in
+		// CORE_TABLES rather than two drifting lists.
+		$tables = array_reverse( self::CORE_TABLES );
 
 		foreach ( $tables as $table ) {
 			$table_name = $this->get_table_name( $table );
@@ -796,24 +781,10 @@ class SchemaManager {
 	 * @return array<string, string> Table names keyed by short name.
 	 */
 	public function get_tables(): array {
-		return array(
-			'service_packages'    => $this->get_table_name( 'service_packages' ),
-			'service_addons'      => $this->get_table_name( 'service_addons' ),
-			'orders'              => $this->get_table_name( 'orders' ),
-			'order_requirements'  => $this->get_table_name( 'order_requirements' ),
-			'conversations'       => $this->get_table_name( 'conversations' ),
-			'messages'            => $this->get_table_name( 'messages' ),
-			'deliveries'          => $this->get_table_name( 'deliveries' ),
-			'extension_requests'  => $this->get_table_name( 'extension_requests' ),
-			'reviews'             => $this->get_table_name( 'reviews' ),
-			'disputes'            => $this->get_table_name( 'disputes' ),
-			'dispute_messages'    => $this->get_table_name( 'dispute_messages' ),
-			'proposals'           => $this->get_table_name( 'proposals' ),
-			'vendor_profiles'     => $this->get_table_name( 'vendor_profiles' ),
-			'portfolio_items'     => $this->get_table_name( 'portfolio_items' ),
-			'notifications'       => $this->get_table_name( 'notifications' ),
-			'wallet_transactions' => $this->get_table_name( 'wallet_transactions' ),
-			'withdrawals'         => $this->get_table_name( 'withdrawals' ),
-		);
+		$out = array();
+		foreach ( self::CORE_TABLES as $name ) {
+			$out[ $name ] = $this->get_table_name( $name );
+		}
+		return $out;
 	}
 }
