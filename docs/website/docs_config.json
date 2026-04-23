@@ -32,6 +32,12 @@
           "slug": "free-vs-pro-wpss",
           "file": "getting-started/free-vs-pro.md",
           "order": 4
+        },
+        {
+          "title": "Dashboard Tour (Buyer & Seller)",
+          "slug": "dashboard-tour-wpss",
+          "file": "getting-started/dashboard-tour.md",
+          "order": 5
         }
       ]
     },
@@ -514,6 +520,12 @@
           "slug": "manual-orders-wpss",
           "file": "admin-tools/manual-orders.md",
           "order": 4
+        },
+        {
+          "title": "Guided Admin Tour",
+          "slug": "admin-guided-tour-wpss",
+          "file": "admin-tools/guided-tour.md",
+          "order": 5
         }
       ]
     },
@@ -582,6 +594,12 @@
           "slug": "email-customization-wpss",
           "file": "developer-guide/email-customization.md",
           "order": 6
+        },
+        {
+          "title": "Action Scheduler Integration",
+          "slug": "action-scheduler-wpss",
+          "file": "developer-guide/action-scheduler.md",
+          "order": 7
         }
       ]
     },

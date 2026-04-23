@@ -41,6 +41,21 @@ A complete Fiverr-style service marketplace platform for WordPress. Vendors list
 - Global and per-vendor commission rates (0-50%)
 - Automated withdrawal scheduling (weekly, bi-weekly, monthly)
 
+### Admin Experience
+- Unified listing UX across Vendors, Withdrawals, and Moderation — one wrapper, shared stats strip, consistent status-color palette
+- First-time admin tour — 8-step Shepherd.js walkthrough of the dashboard, sidebar, and sub-screens, with a "Replay tour" trigger on the dashboard
+- Designed empty-states — zero-data screens render an icon + body + CTA instead of bare "No X found." messages
+- Contextual Help tabs on Orders and Disputes screens
+
+### Buyer & Seller Dashboard
+- Role-aware frontend tour on the `[wpss_dashboard]` shortcode — sellers walk Orders → Requests → Services → Sales → Earnings → Messages, buyers see a shorter flow with a "Want to sell too?" CTA highlight
+- "Replay tour" trigger in the dashboard header
+
+### Operations
+- Recurring jobs run on [Action Scheduler](https://actionscheduler.org/) — durable retry, admin-visible action history (Tools → Scheduled Actions), and no more cron-starved sites
+- Automatic upgrade path scrubs legacy WP-Cron entries on first load after upgrade
+- All free-plugin actions tagged with the `wpss` group so they can be swept in a single call
+
 ### Developer Features
 - 21 REST API controllers with 125+ endpoints
 - 100% REST coverage for all user-facing features (mobile-app ready)
