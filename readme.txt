@@ -268,11 +268,12 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Stats cards use a unified responsive grid (`auto-fit` minmax 150px) that collapses from 5-up on desktop to 2-up at 390px without page-specific media queries
 * Shared status-color palette — green for active/approved/completed, amber for pending, red for suspended/rejected
 
-**First-Time Admin Guide**
+**First-Time Guide (Admin + Frontend)**
 
-* Shepherd.js-powered 8-step walkthrough auto-opens on the WP Sell Services dashboard the first time an admin lands there — welcome → dashboard cards → quick actions → services → vendors → orders → settings → finish
-* "Replay guide" button next to the dashboard title lets admins re-run the tour on demand
-* Completion persisted per-user via `wpss_tour_completed` meta so the walkthrough never re-interrupts
+* Shepherd.js-powered 8-step admin walkthrough auto-opens on the WP Sell Services dashboard the first time an admin lands there — welcome → dashboard cards → quick actions → services → vendors → orders → settings → finish
+* Role-aware frontend tour on the `[wpss_dashboard]` shortcode — active sellers see a 9-step walkthrough covering Orders, Requests, Services, Sales, Earnings, Messages, and a sign-off; buyers-only see a shorter flow with a "Want to sell too?" CTA highlight pointing at the Start Selling button
+* "Replay tour" trigger on both the admin dashboard header and the frontend dashboard header so users can re-run the walkthrough on demand
+* Completion persisted per-user via `wpss_tour_completed` meta — once finished or skipped, the tour never re-interrupts
 * REST endpoint `POST /wpss/v1/tour/complete` for completion persistence
 * `wpss_tour_steps` filter so Pro (and other extensions) can append custom steps
 

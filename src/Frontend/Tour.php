@@ -460,15 +460,160 @@ final class Tour {
 	/**
 	 * Frontend tour steps for the `[wpss_dashboard]` shortcode.
 	 *
-	 * Stub — the scaffold is ready for a vendor/buyer walkthrough on the
-	 * unified dashboard, but authoring that flow is out of scope for 1.1.0.
-	 *
-	 * @todo populate with vendor + buyer dashboard onboarding steps.
+	 * Role-aware: an active seller gets the selling + earnings steps, a buyer
+	 * with no vendor role gets the "start selling" CTA highlight instead.
+	 * Selectors match the DOM rendered by {@see UnifiedDashboard::render_shell()}.
 	 *
 	 * @since 1.1.0
 	 * @return array<int, array<string,mixed>>
 	 */
 	public function get_frontend_tour_steps(): array {
-		return array();
+		$user_id = get_current_user_id();
+
+		// Logged-out visitors see the login prompt instead of the dashboard
+		// shell, so there's nothing meaningful to walk.
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		$is_vendor      = $vendor_service->is_vendor( $user_id );
+		$is_active      = $is_vendor && 'active' === $vendor_service->get_vendor_status( $user_id );
+
+		$back_btn = array(
+			'text'    => __( 'Back', 'wp-sell-services' ),
+			'action'  => 'back',
+			'classes' => 'shepherd-button-secondary',
+		);
+		$next_btn = array(
+			'text'    => __( 'Next', 'wp-sell-services' ),
+			'action'  => 'next',
+			'classes' => 'shepherd-button-primary',
+		);
+
+		$steps = array(
+			array(
+				'id'      => 'welcome',
+				'title'   => __( 'Welcome to your dashboard', 'wp-sell-services' ),
+				'text'    => __( '<i data-lucide="sparkles"></i> A quick tour so you know where your orders, messages, and (if you sell) earnings live.', 'wp-sell-services' ),
+				'buttons' => array(
+					array(
+						'text'    => __( 'Skip', 'wp-sell-services' ),
+						'action'  => 'cancel',
+						'classes' => 'shepherd-button-secondary',
+					),
+					array(
+						'text'    => __( 'Start tour', 'wp-sell-services' ),
+						'action'  => 'next',
+						'classes' => 'shepherd-button-primary',
+					),
+				),
+			),
+			array(
+				'id'       => 'sidebar',
+				'title'    => __( 'Your dashboard', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="layout-dashboard"></i> Everything you do on this marketplace — buying, selling, conversations — routes through this sidebar. The current section is highlighted.', 'wp-sell-services' ),
+				'attachTo' => array(
+					'element' => '.wpss-dashboard__sidebar',
+					'on'      => 'right',
+				),
+				'buttons'  => array( $back_btn, $next_btn ),
+			),
+			array(
+				'id'       => 'orders',
+				'title'    => __( 'My Orders', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="shopping-bag"></i> Every service you buy lives here — current orders in progress, completed history, and any open disputes. Click an order to open the conversation, requirements, and deliveries.', 'wp-sell-services' ),
+				'attachTo' => array(
+					'element' => '.wpss-dashboard__nav-item[href$="/dashboard/"], .wpss-dashboard__nav-group:first-child .wpss-dashboard__nav-item:first-child',
+					'on'      => 'right',
+				),
+				'buttons'  => array( $back_btn, $next_btn ),
+			),
+			array(
+				'id'       => 'requests',
+				'title'    => __( 'Buyer Requests', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="megaphone"></i> Need something custom? Post a request with your budget and deadline — vendors reply with proposals you can compare side by side.', 'wp-sell-services' ),
+				'attachTo' => array(
+					'element' => '.wpss-dashboard__nav-item[href*="section=requests"]',
+					'on'      => 'right',
+				),
+				'buttons'  => array( $back_btn, $next_btn ),
+			),
+		);
+
+		if ( $is_active ) {
+			// Active vendor — show selling-side tools.
+			$steps[] = array(
+				'id'       => 'services',
+				'title'    => __( 'My Services', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="briefcase"></i> Your service listings. Create new ones, edit pricing tiers, toggle availability, or pause a service with vacation mode.', 'wp-sell-services' ),
+				'attachTo' => array(
+					'element' => '.wpss-dashboard__nav-item[href*="section=services"]',
+					'on'      => 'right',
+				),
+				'buttons'  => array( $back_btn, $next_btn ),
+			);
+			$steps[] = array(
+				'id'       => 'sales',
+				'title'    => __( 'Sales Orders', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="receipt"></i> Orders buyers have placed with you — deliver, request revisions, propose milestones or extensions, and track every status from pending requirements to completion.', 'wp-sell-services' ),
+				'attachTo' => array(
+					'element' => '.wpss-dashboard__nav-item[href*="section=sales"]',
+					'on'      => 'right',
+				),
+				'buttons'  => array( $back_btn, $next_btn ),
+			);
+			$steps[] = array(
+				'id'       => 'earnings',
+				'title'    => __( 'Earnings & Wallet', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="wallet"></i> Your NET earnings, wallet balance, and withdrawal controls. The ledger surfaces every transaction — earning, tip, milestone, extension, withdrawal — with a CSV export for your bookkeeping.', 'wp-sell-services' ),
+				'attachTo' => array(
+					'element' => '.wpss-dashboard__nav-item[href*="section=earnings"]',
+					'on'      => 'right',
+				),
+				'buttons'  => array( $back_btn, $next_btn ),
+			);
+		} elseif ( ! $is_vendor ) {
+			// Buyer who hasn't started selling yet — highlight the CTA.
+			$steps[] = array(
+				'id'       => 'become-vendor',
+				'title'    => __( 'Want to sell too?', 'wp-sell-services' ),
+				'text'     => __( '<i data-lucide="rocket"></i> Flip this switch to open a seller profile. You can list services, receive orders, and build up earnings without leaving this dashboard.', 'wp-sell-services' ),
+				'attachTo' => array(
+					'element' => '.wpss-dashboard__become-vendor',
+					'on'      => 'right',
+				),
+				'buttons'  => array( $back_btn, $next_btn ),
+			);
+		}
+
+		$steps[] = array(
+			'id'       => 'messages',
+			'title'    => __( 'Messages', 'wp-sell-services' ),
+			'text'     => __( '<i data-lucide="message-square"></i> All your order conversations in one inbox. Attachments, delivery files, and dispute threads all surface here.', 'wp-sell-services' ),
+			'attachTo' => array(
+				'element' => '.wpss-dashboard__nav-item[href*="section=messages"]',
+				'on'      => 'right',
+			),
+			'buttons'  => array( $back_btn, $next_btn ),
+		);
+
+		$steps[] = array(
+			'id'      => 'finish',
+			'title'   => __( 'You\'re set', 'wp-sell-services' ),
+			'text'    => $is_active
+				? __( '<i data-lucide="check-circle-2"></i> That\'s the full dashboard. Your Profile link is in the bottom group — keep it up to date so buyers trust your services.', 'wp-sell-services' )
+				: __( '<i data-lucide="check-circle-2"></i> That\'s the whole dashboard. Browse services, post a request, or open a conversation whenever you need.', 'wp-sell-services' ),
+			'buttons' => array(
+				$back_btn,
+				array(
+					'text'    => __( 'Finish', 'wp-sell-services' ),
+					'action'  => 'complete',
+					'classes' => 'shepherd-button-primary',
+				),
+			),
+		);
+
+		return $steps;
 	}
 }

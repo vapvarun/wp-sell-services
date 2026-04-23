@@ -177,3 +177,30 @@
 		max-width: 360px;
 	}
 }
+
+/* Frontend dashboard "Replay tour" trigger — sits next to the primary
+   CTAs in the header without competing for attention. */
+.wpss-dashboard__tour-replay {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	margin-left: auto;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	color: var( --wpss-muted, #6b7280 );
+	font-size: 13px;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.wpss-dashboard__tour-replay:hover,
+.wpss-dashboard__tour-replay:focus {
+	background: var( --wpss-surface-hover, #f3f4f6 );
+	color: var( --wpss-text, #111827 );
+	border-color: var( --wpss-border, #e5e7eb );
+}
+.wpss-dashboard__tour-replay .wpss-icon {
+	width: 16px;
+	height: 16px;
+}

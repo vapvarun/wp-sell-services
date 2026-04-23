@@ -427,6 +427,10 @@ class UnifiedDashboard {
 							<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
+					<button type="button" class="wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+						<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
+						<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
+					</button>
 				</header>
 
 				<div class="wpss-dashboard__body">
