@@ -87,13 +87,51 @@ class VendorsPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Vendors', 'wp-sell-services' ),
 			__( 'Vendors', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-vendors',
 			array( $this, 'render_page' )
+		);
+
+		if ( $hook ) {
+			add_action( 'load-' . $hook, array( $this, 'add_help_tabs' ) );
+		}
+	}
+
+	/**
+	 * Register screen help tabs.
+	 *
+	 * @return void
+	 */
+	public function add_help_tabs(): void {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-overview',
+				'title'   => __( 'Overview', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Vendors are the site users who can list and sell services on your marketplace. This screen shows every vendor with their active services, lifetime orders, supported contract types (catalog vs. buyer-request milestones), average rating, and total earnings. Use the status filters to focus on active, pending, or suspended vendors.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-actions',
+				'title'   => __( 'Available actions', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Click any vendor to open their detail drawer with tabs for services, orders, earnings, reviews, and settings. From there you can approve or suspend the account, adjust the per-vendor commission override, toggle vacation mode, and audit their full order history. New vendors usually arrive via the front-end /become-a-vendor registration page.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->set_help_sidebar(
+			'<p><strong>' . esc_html__( 'For more information:', 'wp-sell-services' ) . '</strong></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/" target="_blank" rel="noopener">' . esc_html__( 'Plugin docs', 'wp-sell-services' ) . '</a></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/vendor-registration-wpss" target="_blank" rel="noopener">' . esc_html__( 'Vendor registration guide', 'wp-sell-services' ) . '</a></p>'
 		);
 	}
 
@@ -337,12 +375,12 @@ class VendorsPage {
 		$total_pages = $result['pages'];
 		$stats       = $this->get_vendor_stats();
 		?>
-		<div class="wrap wpss-vendors-page">
+		<div class="wrap wpss-listing-page wpss-vendors-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendors', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<!-- Stats Cards -->
-			<div class="wpss-vendor-stats">
+			<div class="wpss-listing-stats wpss-vendor-stats">
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
@@ -365,55 +403,70 @@ class VendorsPage {
 				</div>
 			</div>
 
-			<!-- Filters -->
-			<div class="wpss-vendors-filters">
-				<ul class="subsubsub">
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors' ) ); ?>"
-							class="<?php echo $status === '' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['total'] ); ?>)</span>
-						</a> |
-					</li>
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=active' ) ); ?>"
-							class="<?php echo $status === 'active' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'Active', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['active'] ); ?>)</span>
-						</a> |
-					</li>
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=pending' ) ); ?>"
-							class="<?php echo $status === 'pending' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['pending'] ); ?>)</span>
-						</a> |
-					</li>
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=suspended' ) ); ?>"
-							class="<?php echo $status === 'suspended' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'Suspended', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['suspended'] ); ?>)</span>
-						</a>
-					</li>
-				</ul>
+			<!-- Filter + content unified card -->
+			<div class="wpss-list-card">
+				<div class="wpss-list-card__filters wpss-vendors-filters">
+					<ul class="subsubsub">
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors' ) ); ?>"
+								class="<?php echo $status === '' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['total'] ); ?>)</span>
+							</a> |
+						</li>
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=active' ) ); ?>"
+								class="<?php echo $status === 'active' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'Active', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['active'] ); ?>)</span>
+							</a> |
+						</li>
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=pending' ) ); ?>"
+								class="<?php echo $status === 'pending' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['pending'] ); ?>)</span>
+							</a> |
+						</li>
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=suspended' ) ); ?>"
+								class="<?php echo $status === 'suspended' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'Suspended', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['suspended'] ); ?>)</span>
+							</a>
+						</li>
+					</ul>
 
-				<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="search-box">
-					<input type="hidden" name="page" value="wpss-vendors">
-					<?php if ( $status ) : ?>
-						<input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>">
-					<?php endif; ?>
-					<label class="screen-reader-text" for="vendor-search-input">
-						<?php esc_html_e( 'Search vendors', 'wp-sell-services' ); ?>
-					</label>
-					<input type="search" id="vendor-search-input" name="s"
-							value="<?php echo esc_attr( $search ); ?>"
-							placeholder="<?php esc_attr_e( 'Search vendors...', 'wp-sell-services' ); ?>">
-					<input type="submit" id="search-submit" class="button"
-							value="<?php esc_attr_e( 'Search', 'wp-sell-services' ); ?>">
-				</form>
-			</div>
+					<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="search-box">
+						<input type="hidden" name="page" value="wpss-vendors">
+						<?php if ( $status ) : ?>
+							<input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>">
+						<?php endif; ?>
+						<label class="screen-reader-text" for="vendor-search-input">
+							<?php esc_html_e( 'Search vendors', 'wp-sell-services' ); ?>
+						</label>
+						<input type="search" id="vendor-search-input" name="s"
+								value="<?php echo esc_attr( $search ); ?>"
+								placeholder="<?php esc_attr_e( 'Search vendors...', 'wp-sell-services' ); ?>">
+						<input type="submit" id="search-submit" class="button"
+								value="<?php esc_attr_e( 'Search', 'wp-sell-services' ); ?>">
+					</form>
+				</div>
 
+				<div class="wpss-list-card__body">
+			<?php if ( empty( $vendors ) ) : ?>
+				<div class="wpss-empty-state">
+					<div class="wpss-empty-state__icon">
+						<?php echo \WPSellServices\Services\Icon::render( 'users' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</div>
+					<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No vendors yet', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-empty-state__body"><?php esc_html_e( 'Invite site users to register as vendors, or let them self-register via the /become-a-vendor page.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-empty-state__actions">
+						<a href="<?php echo esc_url( home_url( '/become-a-vendor/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Open vendor registration', 'wp-sell-services' ); ?></a>
+						<a href="https://wbcomdesigns.com/docs/wp-sell-services/vendor-registration-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
+					</p>
+				</div>
+			<?php else : ?>
 			<!-- Vendors Table -->
 			<table class="wp-list-table widefat fixed striped wpss-vendors-table">
 				<thead>
@@ -448,17 +501,9 @@ class VendorsPage {
 					</tr>
 				</thead>
 				<tbody>
-					<?php if ( empty( $vendors ) ) : ?>
-						<tr>
-							<td colspan="9" class="wpss-no-items">
-								<?php esc_html_e( 'No vendors found.', 'wp-sell-services' ); ?>
-							</td>
-						</tr>
-					<?php else : ?>
-						<?php foreach ( $vendors as $vendor ) : ?>
-							<?php $this->render_vendor_row( $vendor ); ?>
-						<?php endforeach; ?>
-					<?php endif; ?>
+					<?php foreach ( $vendors as $vendor ) : ?>
+						<?php $this->render_vendor_row( $vendor ); ?>
+					<?php endforeach; ?>
 				</tbody>
 				<tfoot>
 					<tr>
@@ -505,6 +550,9 @@ class VendorsPage {
 					</div>
 				</div>
 			<?php endif; ?>
+			<?php endif; // vendors empty check. ?>
+				</div><!-- .wpss-list-card__body -->
+			</div><!-- .wpss-list-card -->
 		</div>
 
 		<!-- Vendor Details Modal -->
@@ -521,48 +569,10 @@ class VendorsPage {
 		</div>
 
 		<style>
-			.wpss-vendor-stats {
-				display: grid;
-				grid-template-columns: repeat(5, 1fr);
-				gap: 15px;
-				margin: 20px 0;
-			}
-			.wpss-stat-card {
-				background: #fff;
-				border: 1px solid #c3c4c7;
-				border-radius: 4px;
-				padding: 20px;
-				text-align: center;
-			}
-			.wpss-stat-number {
-				display: block;
-				font-size: 28px;
-				font-weight: 600;
-				color: #1d2327;
-			}
-			.wpss-stat-label {
-				display: block;
-				font-size: 13px;
-				color: #646970;
-				margin-top: 5px;
-			}
-			.wpss-stat-active .wpss-stat-number { color: #00a32a; }
-			.wpss-stat-pending .wpss-stat-number { color: #dba617; }
-			.wpss-stat-suspended .wpss-stat-number { color: #d63638; }
-
-			.wpss-vendors-filters {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin: 15px 0;
-			}
-			.wpss-vendors-filters .subsubsub {
-				margin: 0;
-			}
-			.wpss-vendors-filters .search-box {
-				display: flex;
-				gap: 5px;
-			}
+			/* Stat-card, stat-number, stat-label, filter-row, and status
+			   colors now live in assets/css/admin.css via the shared
+			   `.wpss-listing-stats` rules. Keep only vendor-page specific
+			   utilities below. */
 
 			.wpss-vendors-table .column-vendor { width: 18%; }
 			.wpss-vendors-table .column-services { width: 7%; text-align: center; }
@@ -713,17 +723,6 @@ class VendorsPage {
 				margin-bottom: 5px;
 			}
 
-			@media (max-width: 1200px) {
-				.wpss-vendor-stats { grid-template-columns: repeat(3, 1fr); }
-			}
-			@media (max-width: 782px) {
-				.wpss-vendor-stats { grid-template-columns: repeat(2, 1fr); }
-				.wpss-vendors-filters {
-					flex-direction: column;
-					align-items: flex-start;
-					gap: 10px;
-				}
-			}
 		</style>
 
 		<script>

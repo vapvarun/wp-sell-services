@@ -55,13 +55,51 @@ class WithdrawalsPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Withdrawals', 'wp-sell-services' ),
 			__( 'Withdrawals', 'wp-sell-services' ),
 			'manage_options',
 			'wpss-withdrawals',
 			array( $this, 'render_page' )
+		);
+
+		if ( $hook ) {
+			add_action( 'load-' . $hook, array( $this, 'add_help_tabs' ) );
+		}
+	}
+
+	/**
+	 * Register screen help tabs.
+	 *
+	 * @return void
+	 */
+	public function add_help_tabs(): void {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-overview',
+				'title'   => __( 'Overview', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Withdrawals are vendor payout requests submitted from their dashboard. Each request carries an amount, a payout method (PayPal, bank transfer, or custom), and a status — pending, approved, completed, or rejected. Use the filter bar to focus on one status at a time and reconcile against your external payout system.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-actions',
+				'title'   => __( 'Available actions', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'From each row you can approve, reject, or mark a withdrawal as completed after the external transfer clears. Configure the minimum withdrawal threshold, supported payout methods, and hold period in Settings > Payouts. Rejected and completed rows stay in the history for audit.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->set_help_sidebar(
+			'<p><strong>' . esc_html__( 'For more information:', 'wp-sell-services' ) . '</strong></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/" target="_blank" rel="noopener">' . esc_html__( 'Plugin docs', 'wp-sell-services' ) . '</a></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/withdrawals-wpss" target="_blank" rel="noopener">' . esc_html__( 'Withdrawals guide', 'wp-sell-services' ) . '</a></p>'
 		);
 	}
 
@@ -228,12 +266,12 @@ class WithdrawalsPage {
 		$statuses    = EarningsService::get_withdrawal_statuses();
 		$methods     = EarningsService::get_withdrawal_methods();
 		?>
-		<div class="wrap wpss-withdrawals-page">
+		<div class="wrap wpss-listing-page wpss-withdrawals-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Withdrawals', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<!-- Stats Cards -->
-			<div class="wpss-withdrawal-stats">
+			<div class="wpss-listing-stats wpss-withdrawal-stats">
 				<div class="wpss-stat-card wpss-stat-pending">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['pending'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
@@ -254,47 +292,62 @@ class WithdrawalsPage {
 				</div>
 			</div>
 
-			<!-- Filters -->
-			<div class="wpss-withdrawals-filters">
-				<ul class="subsubsub">
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ); ?>"
-							class="<?php echo $status === '' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['total'] ); ?>)</span>
-						</a> |
-					</li>
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=pending' ) ); ?>"
-							class="<?php echo $status === 'pending' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['pending'] ); ?>)</span>
-						</a> |
-					</li>
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=approved' ) ); ?>"
-							class="<?php echo $status === 'approved' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'Approved', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['approved'] ); ?>)</span>
-						</a> |
-					</li>
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=completed' ) ); ?>"
-							class="<?php echo $status === 'completed' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'Completed', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['completed'] ); ?>)</span>
-						</a> |
-					</li>
-					<li>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=rejected' ) ); ?>"
-							class="<?php echo $status === 'rejected' ? 'current' : ''; ?>">
-							<?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?>
-							<span class="count">(<?php echo esc_html( $stats['rejected'] ); ?>)</span>
-						</a>
-					</li>
-				</ul>
-			</div>
+			<!-- Filter + content unified card -->
+			<div class="wpss-list-card">
+				<div class="wpss-list-card__filters wpss-withdrawals-filters">
+					<ul class="subsubsub">
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ); ?>"
+								class="<?php echo $status === '' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['total'] ); ?>)</span>
+							</a> |
+						</li>
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=pending' ) ); ?>"
+								class="<?php echo $status === 'pending' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['pending'] ); ?>)</span>
+							</a> |
+						</li>
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=approved' ) ); ?>"
+								class="<?php echo $status === 'approved' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'Approved', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['approved'] ); ?>)</span>
+							</a> |
+						</li>
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=completed' ) ); ?>"
+								class="<?php echo $status === 'completed' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'Completed', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['completed'] ); ?>)</span>
+							</a> |
+						</li>
+						<li>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=rejected' ) ); ?>"
+								class="<?php echo $status === 'rejected' ? 'current' : ''; ?>">
+								<?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?>
+								<span class="count">(<?php echo esc_html( $stats['rejected'] ); ?>)</span>
+							</a>
+						</li>
+					</ul>
+				</div>
 
+				<div class="wpss-list-card__body">
+			<?php if ( empty( $withdrawals ) ) : ?>
+				<div class="wpss-empty-state">
+					<div class="wpss-empty-state__icon">
+						<?php echo \WPSellServices\Services\Icon::render( 'banknote' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</div>
+					<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No withdrawals yet', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-empty-state__body"><?php esc_html_e( 'When vendors request a payout, their withdrawal requests appear here for approval.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-empty-state__actions">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#payouts' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Payout settings', 'wp-sell-services' ); ?></a>
+						<a href="https://wbcomdesigns.com/docs/wp-sell-services/withdrawals-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
+					</p>
+				</div>
+			<?php else : ?>
 			<!-- Withdrawals Table -->
 			<table class="wp-list-table widefat fixed striped wpss-withdrawals-table">
 				<thead>
@@ -309,17 +362,9 @@ class WithdrawalsPage {
 					</tr>
 				</thead>
 				<tbody>
-					<?php if ( empty( $withdrawals ) ) : ?>
-						<tr>
-							<td colspan="7" class="wpss-no-items">
-								<?php esc_html_e( 'No withdrawals found.', 'wp-sell-services' ); ?>
-							</td>
-						</tr>
-					<?php else : ?>
-						<?php foreach ( $withdrawals as $withdrawal ) : ?>
-							<?php $this->render_withdrawal_row( $withdrawal, $statuses, $methods ); ?>
-						<?php endforeach; ?>
-					<?php endif; ?>
+					<?php foreach ( $withdrawals as $withdrawal ) : ?>
+						<?php $this->render_withdrawal_row( $withdrawal, $statuses, $methods ); ?>
+					<?php endforeach; ?>
 				</tbody>
 				<tfoot>
 					<tr>
@@ -364,6 +409,9 @@ class WithdrawalsPage {
 					</div>
 				</div>
 			<?php endif; ?>
+			<?php endif; // withdrawals empty check. ?>
+				</div><!-- .wpss-list-card__body -->
+			</div><!-- .wpss-list-card -->
 		</div>
 
 		<!-- Process Withdrawal Modal -->
@@ -393,49 +441,10 @@ class WithdrawalsPage {
 		</div>
 
 		<style>
-			.wpss-withdrawal-stats {
-				display: grid;
-				grid-template-columns: repeat(4, 1fr);
-				gap: 15px;
-				margin: 20px 0;
-			}
-			.wpss-stat-card {
-				background: #fff;
-				border: 1px solid #c3c4c7;
-				border-radius: 4px;
-				padding: 20px;
-				text-align: center;
-			}
-			.wpss-stat-number {
-				display: block;
-				font-size: 28px;
-				font-weight: 600;
-				color: #1d2327;
-			}
-			.wpss-stat-label {
-				display: block;
-				font-size: 13px;
-				color: #646970;
-				margin-top: 5px;
-			}
-			.wpss-stat-amount {
-				display: block;
-				font-size: 14px;
-				color: #646970;
-				margin-top: 5px;
-				font-weight: 500;
-			}
-			.wpss-stat-pending .wpss-stat-number { color: #dba617; }
-			.wpss-stat-approved .wpss-stat-number { color: #2271b1; }
-			.wpss-stat-completed .wpss-stat-number { color: #00a32a; }
-			.wpss-stat-rejected .wpss-stat-number { color: #d63638; }
-
-			.wpss-withdrawals-filters {
-				margin: 15px 0;
-			}
-			.wpss-withdrawals-filters .subsubsub {
-				margin: 0;
-			}
+			/* Stat-card, stat-number, stat-label, stat-amount, filter-row,
+			   and status colors now live in assets/css/admin.css via the
+			   shared `.wpss-listing-stats` rules. Keep only withdrawal-page
+			   specific utilities below. */
 
 			.wpss-withdrawals-table .column-id { width: 6%; }
 			.wpss-withdrawals-table .column-vendor { width: 20%; }
@@ -553,9 +562,6 @@ class WithdrawalsPage {
 				margin-top: 20px;
 			}
 
-			@media (max-width: 782px) {
-				.wpss-withdrawal-stats { grid-template-columns: repeat(2, 1fr); }
-			}
 		</style>
 
 		<script>

@@ -126,6 +126,45 @@ class ServiceModerationPage {
 
 		// Add screen options.
 		add_action( "load-{$hook}", array( $this, 'add_screen_options' ) );
+
+		// Register contextual help tabs.
+		if ( $hook ) {
+			add_action( 'load-' . $hook, array( $this, 'add_help_tabs' ) );
+		}
+	}
+
+	/**
+	 * Register screen help tabs.
+	 *
+	 * @return void
+	 */
+	public function add_help_tabs(): void {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-overview',
+				'title'   => __( 'Overview', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Service moderation gives you a final review step before vendor-submitted services go live. When moderation is enabled, new services from vendors land in the pending queue and stay hidden from the marketplace until an admin approves them. Switch the status tabs to browse pending, approved, and rejected submissions.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-actions',
+				'title'   => __( 'Available actions', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Approve a service to publish it immediately, or reject it with an optional reason emailed to the vendor. Bulk actions let you approve or reject multiple queue entries at once. Moderation is toggled from Sell Services > Settings > Vendor — turn it off if you trust vendor submissions to auto-publish.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->set_help_sidebar(
+			'<p><strong>' . esc_html__( 'For more information:', 'wp-sell-services' ) . '</strong></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/" target="_blank" rel="noopener">' . esc_html__( 'Plugin docs', 'wp-sell-services' ) . '</a></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/moderation-wpss" target="_blank" rel="noopener">' . esc_html__( 'Moderation guide', 'wp-sell-services' ) . '</a></p>'
+		);
 	}
 
 	/**
@@ -280,60 +319,100 @@ class ServiceModerationPage {
 		// Get counts for tabs.
 		$counts = $this->get_status_counts();
 		?>
-		<div class="wrap wpss-moderation-wrap">
-			<h1><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
+		<div class="wrap wpss-listing-page wpss-moderation-page">
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
-			<!-- Status Tabs -->
-			<ul class="subsubsub">
-				<li>
-					<a href="<?php echo esc_url( add_query_arg( 'status', 'all' ) ); ?>"
-						class="<?php echo 'all' === $status_filter ? 'current' : ''; ?>">
-						<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
-						<span class="count">(<?php echo esc_html( array_sum( $counts ) ); ?>)</span>
-					</a> |
-				</li>
-				<li>
-					<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_PENDING ) ); ?>"
-						class="<?php echo self::STATUS_PENDING === $status_filter ? 'current' : ''; ?>">
-						<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
-						<span class="count">(<?php echo esc_html( $counts[ self::STATUS_PENDING ] ?? 0 ); ?>)</span>
-					</a> |
-				</li>
-				<li>
-					<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_APPROVED ) ); ?>"
-						class="<?php echo self::STATUS_APPROVED === $status_filter ? 'current' : ''; ?>">
-						<?php esc_html_e( 'Approved', 'wp-sell-services' ); ?>
-						<span class="count">(<?php echo esc_html( $counts[ self::STATUS_APPROVED ] ?? 0 ); ?>)</span>
-					</a> |
-				</li>
-				<li>
-					<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_REJECTED ) ); ?>"
-						class="<?php echo self::STATUS_REJECTED === $status_filter ? 'current' : ''; ?>">
-						<?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?>
-						<span class="count">(<?php echo esc_html( $counts[ self::STATUS_REJECTED ] ?? 0 ); ?>)</span>
-					</a>
-				</li>
-			</ul>
-			<div class="clear"></div>
+			<!-- Stats Cards -->
+			<?php
+			$moderation_total    = array_sum( $counts );
+			$moderation_pending  = $counts[ self::STATUS_PENDING ] ?? 0;
+			$moderation_approved = $counts[ self::STATUS_APPROVED ] ?? 0;
+			$moderation_rejected = $counts[ self::STATUS_REJECTED ] ?? 0;
+			?>
+			<div class="wpss-listing-stats wpss-moderation-stats">
+				<div class="wpss-stat-card">
+					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_total ) ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Total Services', 'wp-sell-services' ); ?></span>
+				</div>
+				<div class="wpss-stat-card wpss-stat-pending">
+					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_pending ) ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
+				</div>
+				<div class="wpss-stat-card wpss-stat-approved">
+					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_approved ) ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
+				</div>
+				<div class="wpss-stat-card wpss-stat-rejected">
+					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $moderation_rejected ) ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
+				</div>
+			</div>
 
-			<!-- Bulk Actions -->
+			<!-- Filter + content unified card -->
 			<form method="post" id="wpss-moderation-form">
 				<?php wp_nonce_field( 'wpss_moderation_bulk', 'wpss_moderation_nonce' ); ?>
 
-				<div class="tablenav top">
-					<div class="alignleft actions bulkactions">
-						<select name="bulk_action" id="bulk-action-selector">
-							<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
-							<option value="approve"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></option>
-							<option value="reject"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></option>
-						</select>
-						<button type="button" class="button wpss-bulk-action-btn" id="doaction">
-							<?php esc_html_e( 'Apply', 'wp-sell-services' ); ?>
-						</button>
-					</div>
-				</div>
+				<div class="wpss-list-card">
+					<div class="wpss-list-card__filters">
+						<ul class="subsubsub">
+							<li>
+								<a href="<?php echo esc_url( add_query_arg( 'status', 'all' ) ); ?>"
+									class="<?php echo 'all' === $status_filter ? 'current' : ''; ?>">
+									<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
+									<span class="count">(<?php echo esc_html( array_sum( $counts ) ); ?>)</span>
+								</a> |
+							</li>
+							<li>
+								<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_PENDING ) ); ?>"
+									class="<?php echo self::STATUS_PENDING === $status_filter ? 'current' : ''; ?>">
+									<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
+									<span class="count">(<?php echo esc_html( $counts[ self::STATUS_PENDING ] ?? 0 ); ?>)</span>
+								</a> |
+							</li>
+							<li>
+								<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_APPROVED ) ); ?>"
+									class="<?php echo self::STATUS_APPROVED === $status_filter ? 'current' : ''; ?>">
+									<?php esc_html_e( 'Approved', 'wp-sell-services' ); ?>
+									<span class="count">(<?php echo esc_html( $counts[ self::STATUS_APPROVED ] ?? 0 ); ?>)</span>
+								</a> |
+							</li>
+							<li>
+								<a href="<?php echo esc_url( add_query_arg( 'status', self::STATUS_REJECTED ) ); ?>"
+									class="<?php echo self::STATUS_REJECTED === $status_filter ? 'current' : ''; ?>">
+									<?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?>
+									<span class="count">(<?php echo esc_html( $counts[ self::STATUS_REJECTED ] ?? 0 ); ?>)</span>
+								</a>
+							</li>
+						</ul>
 
+						<!-- Bulk actions sit alongside filter tabs in the filter row -->
+						<div class="alignleft actions bulkactions">
+							<select name="bulk_action" id="bulk-action-selector">
+								<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
+								<option value="approve"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></option>
+								<option value="reject"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></option>
+							</select>
+							<button type="button" class="button wpss-bulk-action-btn" id="doaction">
+								<?php esc_html_e( 'Apply', 'wp-sell-services' ); ?>
+							</button>
+						</div>
+					</div>
+
+					<div class="wpss-list-card__body">
+				<?php if ( empty( $services ) ) : ?>
+					<div class="wpss-empty-state">
+						<div class="wpss-empty-state__icon">
+							<?php echo \WPSellServices\Services\Icon::render( 'check-circle' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						</div>
+						<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No services awaiting moderation', 'wp-sell-services' ); ?></h2>
+						<p class="wpss-empty-state__body"><?php esc_html_e( 'New vendor-submitted services queue here for review before going live. Toggle moderation in Settings > Vendor.', 'wp-sell-services' ); ?></p>
+						<p class="wpss-empty-state__actions">
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#vendor' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Moderation settings', 'wp-sell-services' ); ?></a>
+							<a href="https://wbcomdesigns.com/docs/wp-sell-services/moderation-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
+						</p>
+					</div>
+				<?php else : ?>
 				<table class="wp-list-table widefat fixed striped wpss-moderation-table">
 					<thead>
 						<tr>
@@ -351,17 +430,9 @@ class ServiceModerationPage {
 						</tr>
 					</thead>
 					<tbody>
-						<?php if ( empty( $services ) ) : ?>
-							<tr>
-								<td colspan="9">
-									<?php esc_html_e( 'No services found.', 'wp-sell-services' ); ?>
-								</td>
-							</tr>
-						<?php else : ?>
-							<?php foreach ( $services as $service ) : ?>
-								<?php $this->render_service_row( $service ); ?>
-							<?php endforeach; ?>
-						<?php endif; ?>
+						<?php foreach ( $services as $service ) : ?>
+							<?php $this->render_service_row( $service ); ?>
+						<?php endforeach; ?>
 					</tbody>
 					<tfoot>
 						<tr>
@@ -400,6 +471,9 @@ class ServiceModerationPage {
 						</div>
 					</div>
 				<?php endif; ?>
+				<?php endif; // services empty check. ?>
+					</div><!-- .wpss-list-card__body -->
+				</div><!-- .wpss-list-card -->
 			</form>
 		</div>
 
@@ -1269,7 +1343,7 @@ class ServiceModerationPage {
 	private function render_disabled_notice(): void {
 		$settings_url = admin_url( 'admin.php?page=wpss-settings&tab=vendor' );
 		?>
-		<div class="wrap wpss-moderation-wrap">
+		<div class="wrap wpss-listing-page wpss-moderation-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>
 
 			<div class="notice notice-info inline" style="margin-top: 20px;">

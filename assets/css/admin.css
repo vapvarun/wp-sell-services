@@ -1883,57 +1883,62 @@
 }
 
 /* ==========================================================================
-   Vendors Page
+   Unified Listing Pages (Vendors, Withdrawals, Moderation, etc.)
    ========================================================================== */
 
-.wpss-vendors-page {
+.wpss-listing-page {
 	max-width: 1400px;
 }
 
-.wpss-vendor-stats {
+.wpss-listing-stats {
 	display: grid;
-	grid-template-columns: repeat(5, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	gap: 15px;
 	margin: 20px 0;
 }
 
-.wpss-vendor-stats .wpss-stat-card {
-	text-align: center;
+.wpss-listing-stats .wpss-stat-card {
 	display: block;
+	text-align: center;
 }
 
-.wpss-vendor-stats .wpss-stat-number {
+.wpss-listing-stats .wpss-stat-number {
 	display: block;
 	font-size: 28px;
 	font-weight: 600;
 	color: var(--wpss-admin-text);
 }
 
-.wpss-vendor-stats .wpss-stat-label {
+.wpss-listing-stats .wpss-stat-label {
 	display: block;
 	font-size: 13px;
 	color: var(--wpss-admin-text-light);
 	margin-top: 5px;
 }
 
-.wpss-stat-active .wpss-stat-number { color: var(--wpss-admin-success); }
-.wpss-stat-pending .wpss-stat-number { color: var(--wpss-admin-warning); }
-.wpss-stat-suspended .wpss-stat-number { color: var(--wpss-admin-danger); }
+.wpss-listing-stats .wpss-stat-amount {
+	display: block;
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+	margin-top: 3px;
+}
 
-.wpss-vendors-filters {
+/* Shared status color accents for listing stat cards. */
+.wpss-listing-stats .wpss-stat-active .wpss-stat-number    { color: var(--wpss-admin-success); }
+.wpss-listing-stats .wpss-stat-approved .wpss-stat-number  { color: var(--wpss-admin-primary); }
+.wpss-listing-stats .wpss-stat-completed .wpss-stat-number { color: var(--wpss-admin-success); }
+.wpss-listing-stats .wpss-stat-pending .wpss-stat-number   { color: var(--wpss-admin-warning); }
+.wpss-listing-stats .wpss-stat-suspended .wpss-stat-number,
+.wpss-listing-stats .wpss-stat-rejected .wpss-stat-number  { color: var(--wpss-admin-danger); }
+
+/* Keep bulk-actions block inline with the filter row (canonical filter
+   layout lives further down under `.wpss-list-card__filters`). */
+.wpss-list-card__filters .bulkactions {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	margin: 15px 0;
-}
-
-.wpss-vendors-filters .subsubsub {
+	gap: 6px;
+	float: none;
 	margin: 0;
-}
-
-.wpss-vendors-filters .search-box {
-	display: flex;
-	gap: 5px;
 }
 
 .wpss-vendors-table .column-vendor { width: 20%; }
@@ -2456,12 +2461,9 @@
 	margin: 0;
 }
 
-/* Vendor Page Responsive */
+/* Vendor Page Responsive (stats grid handled by shared .wpss-listing-stats
+   auto-fit; filter-row stacking handled by shared .wpss-list-card__filters). */
 @media (max-width: 1200px) {
-	.wpss-vendor-stats {
-		grid-template-columns: repeat(3, 1fr);
-	}
-
 	.wpss-detail-stats-row {
 		grid-template-columns: repeat(3, 1fr);
 	}
@@ -2472,16 +2474,6 @@
 }
 
 @media (max-width: 782px) {
-	.wpss-vendor-stats {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.wpss-vendors-filters {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 10px;
-	}
-
 	.wpss-detail-header {
 		flex-direction: column;
 	}
@@ -2517,5 +2509,198 @@
 
 	.wpss-detail-tab-content {
 		overflow-x: auto;
+	}
+}
+
+/* ==========================================================================
+   Shared empty-state block for admin list screens
+   Used on Orders, Disputes, Vendors, Withdrawals, and Moderation pages when
+   the list is empty. Replaces the bare "No X found." message with an icon,
+   headline, supporting copy, and primary/docs CTAs.
+   ========================================================================== */
+/* ==========================================================================
+   List card — Pattern B unified content wrapper
+   One white card contains filter tabs, search bar, AND table/empty-state.
+   Used by Orders, Disputes, Vendors, Withdrawals, Moderation.
+   ========================================================================== */
+
+.wpss-list-card {
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-lg);
+	box-shadow: var(--wpss-admin-shadow-sm);
+	margin: 16px 0;
+	overflow: hidden;
+}
+
+.wpss-list-card__filters {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding: 12px 20px;
+	background: var(--wpss-bg-subtle, #fafafa);
+	border-bottom: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-list-card__filters .subsubsub {
+	margin: 0;
+	padding: 0;
+	font-size: 13px;
+}
+
+.wpss-list-card__filters .search-box {
+	display: flex;
+	gap: 6px;
+	float: none;
+	margin: 0;
+}
+
+.wpss-list-card__filters .search-box input[type="search"] {
+	height: 30px;
+	min-width: 200px;
+}
+
+/* List card body: shared space for table OR empty-state. Empty state renders
+   with flush edges (its own card shell is turned off inside the wrapper). */
+.wpss-list-card__body {
+	padding: 0;
+}
+
+.wpss-list-card__body .wpss-empty-state {
+	border: 0;
+	box-shadow: none;
+	border-radius: 0;
+	margin: 0;
+	padding: 56px 24px 48px;
+}
+
+/* Native WP list tables render flush inside the card — kill their outer
+   margins + radii so they sit cleanly under the filter row. */
+.wpss-list-card__body .wp-list-table {
+	border: 0;
+	box-shadow: none;
+	margin: 0;
+}
+
+.wpss-list-card__body .tablenav {
+	margin: 0;
+	padding: 12px 20px;
+	background: var(--wpss-bg-subtle, #fafafa);
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+@media ( max-width: 640px ) {
+	.wpss-list-card__filters {
+		padding: 12px 16px;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-list-card__filters .search-box input[type="search"] {
+		min-width: 0;
+		width: 100%;
+	}
+}
+
+/* ==========================================================================
+   Empty state — Pattern B zero-data card
+   Matches .wpss-card aesthetic (shadow, border, radius) + centered layout.
+   Standalone usage (outside .wpss-list-card) keeps its own shell.
+   ========================================================================== */
+
+.wpss-empty-state {
+	text-align: center;
+	padding: 56px 24px 48px;
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-lg);
+	box-shadow: var(--wpss-admin-shadow-sm);
+	margin: 16px 0;
+}
+
+.wpss-empty-state__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	margin: 0 auto 20px;
+	border-radius: 50%;
+	background: rgba(29, 191, 115, 0.08);
+	color: var(--wpss-admin-primary);
+}
+
+.wpss-empty-state__icon [data-lucide] {
+	width: 36px;
+	height: 36px;
+	stroke-width: 1.5;
+}
+
+.wpss-empty-state__title {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 0 0 8px;
+	color: var(--wpss-admin-text);
+	line-height: 1.3;
+}
+
+.wpss-empty-state__body {
+	color: var(--wpss-admin-text-light);
+	max-width: 480px;
+	margin: 0 auto 24px;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.wpss-empty-state__actions {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+	margin: 0;
+}
+
+/* "Learn more" — styled as subtle link-button rather than full button */
+.wpss-empty-state__actions .wpss-empty-state__learn {
+	color: var(--wpss-admin-text-light);
+	font-size: 13px;
+	text-decoration: none;
+	padding: 6px 10px;
+	border-radius: var(--wpss-admin-radius-sm);
+	transition: color 0.12s ease, background 0.12s ease;
+}
+
+.wpss-empty-state__actions .wpss-empty-state__learn:hover {
+	color: var(--wpss-admin-accent);
+	background: var(--wpss-admin-bg);
+	text-decoration: none;
+}
+
+@media ( max-width: 640px ) {
+	.wpss-empty-state {
+		padding: 40px 16px 32px;
+	}
+
+	.wpss-empty-state__icon {
+		width: 64px;
+		height: 64px;
+	}
+
+	.wpss-empty-state__icon [data-lucide] {
+		width: 32px;
+		height: 32px;
+	}
+
+	.wpss-empty-state__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-empty-state__actions .wpss-btn {
+		width: 100%;
+		justify-content: center;
 	}
 }
