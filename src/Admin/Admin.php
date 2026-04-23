@@ -969,7 +969,11 @@ class Admin {
 		);
 		?>
 		<div class="wrap wpss-dashboard-wrap">
-			<h1><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
+			<button type="button" class="page-title-action wpss-tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+				<?php esc_html_e( 'Replay guide', 'wp-sell-services' ); ?>
+			</button>
+			<hr class="wp-header-end">
 
 			<div class="wpss-dashboard-grid">
 				<!-- Stats Cards -->

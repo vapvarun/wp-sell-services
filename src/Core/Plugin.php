@@ -23,6 +23,7 @@ use WPSellServices\Frontend\TemplateLoader;
 use WPSellServices\Frontend\ServiceArchiveView;
 use WPSellServices\Frontend\BuyerRequestArchiveView;
 use WPSellServices\Frontend\ServiceWizard;
+use WPSellServices\Frontend\Tour;
 use WPSellServices\Frontend\UnifiedDashboard;
 use WPSellServices\Integrations\IntegrationManager;
 use WPSellServices\PostTypes\ServicePostType;
@@ -260,6 +261,10 @@ final class Plugin {
 		// the vendor at payment time and flips the milestone to in_progress
 		// so the vendor can submit delivery.
 		( new \WPSellServices\Services\MilestoneService() )->init();
+
+		// Guided onboarding tour — registers its own admin/front hooks and
+		// the REST completion endpoint internally.
+		( new Tour() )->init();
 
 		// Run the loader to register all hooks.
 		$this->loader->run();
