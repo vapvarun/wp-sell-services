@@ -259,7 +259,42 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
-= 1.1.0 - 2026-04-21 =
+= 1.1.0 - 2026-04-23 =
+
+**Admin UX Consistency**
+
+* Vendors, Withdrawals, and Moderation admin pages now share the same shell — wrapper, heading, stats strip, and filter row — so operators see a consistent surface regardless of which list they open
+* Moderation gains a 4-card stats strip (Total / Pending / Approved / Rejected) matching the other two listing pages
+* Stats cards use a unified responsive grid (`auto-fit` minmax 150px) that collapses from 5-up on desktop to 2-up at 390px without page-specific media queries
+* Shared status-color palette — green for active/approved/completed, amber for pending, red for suspended/rejected
+
+**First-Time Admin Guide**
+
+* Shepherd.js-powered 8-step walkthrough auto-opens on the WP Sell Services dashboard the first time an admin lands there — welcome → dashboard cards → quick actions → services → vendors → orders → settings → finish
+* "Replay guide" button next to the dashboard title lets admins re-run the tour on demand
+* Completion persisted per-user via `wpss_tour_completed` meta so the walkthrough never re-interrupts
+* REST endpoint `POST /wpss/v1/tour/complete` for completion persistence
+* `wpss_tour_steps` filter so Pro (and other extensions) can append custom steps
+
+**Action Scheduler Migration**
+
+* All recurring jobs (order lifecycle sweeps, dispute deadlines, audit-log retention, sub-order cleanups, auto-withdrawal, vendor-stat refresh, seller-level recalc) now run on Action Scheduler instead of WP-Cron
+* Durable retry, admin-visible action history (Tools → Scheduled Actions), and no more dispute cron blocking page loads
+* `Services\Scheduler` facade wraps AS so every scheduling call routes through one entry point — tests can stub it, and the `wpss` / `wpss-pro` group convention lets the deactivator sweep everything in one call
+* Upgrade path: installs upgrading from pre-1.1.0 automatically scrub their legacy WP-Cron entries once, then re-schedule against AS
+* `composer.json` pins `woocommerce/action-scheduler ^3.8`
+
+**Empty-State Polish**
+
+* New `Services\Icon::render()` helper emits Lucide icon placeholders (safe-to-echo, attrs escaped, name slug-sanitized) — pairs with the `lucide` vendor library already loaded by the tour
+* Shared `.wpss-empty-state` BEM block on both admin and frontend — icon + title + body + CTA, collapses to full-width CTA stack below 640px
+* Orders + Disputes admin wrap the WP_List_Table in the shared `.wpss-list-card` shell so filters and body match the Vendors / Withdrawals / Moderation layout
+* `OrdersListTable::no_items()`, `DisputesListTable::no_items()`, `[wpss_dashboard]` buyer-orders tab, and the vendor-profile services section all emit the designed empty-state instead of bare "No X found." sentences
+* Help tabs added to Orders + Disputes admin screens linking to the plugin docs and workflow guides
+
+**Database Refactor**
+
+* `SchemaManager::get_tables()` and `::uninstall()` now iterate `self::CORE_TABLES` — adding a plugin table is one edit instead of three, and uninstall drops in FK-safe reverse dependency order
 
 **Milestone Contracts (Upwork-style)**
 
@@ -378,7 +413,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 == Upgrade Notice ==
 
 = 1.1.0 =
-Adds Upwork-style milestone contracts on buyer-request orders, paid extensions on catalog orders, vendor intro video, and (Pro) an Earnings Ledger with CSV export. Includes money-flow integrity fixes — safe to upgrade.
+Adds Upwork-style milestone contracts on buyer-request orders, paid extensions on catalog orders, vendor intro video, (Pro) Earnings Ledger with CSV export, a unified admin listing UX, a first-time admin guided tour, and migrates all recurring jobs from WP-Cron to Action Scheduler for durable retry. Includes money-flow integrity fixes — safe to upgrade; on first page load after upgrade the plugin scrubs its legacy WP-Cron entries and re-schedules everything against Action Scheduler.
 
 = 1.0.0 =
 Initial release of WP Sell Services. Transform your WordPress site into a complete service marketplace with vendor management, order workflow, and commission system.

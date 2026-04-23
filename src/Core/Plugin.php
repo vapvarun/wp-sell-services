@@ -630,8 +630,10 @@ final class Plugin {
 				if ( ! $sub ) {
 					return;
 				}
-				$meta       = is_string( $sub->meta ?? '' ) ? json_decode( $sub->meta, true ) : array();
-				$extra_days = is_array( $meta ) ? (int) ( $meta['extra_days'] ?? 0 ) : 0;
+				// ServiceOrder::from_row() already json_decodes `meta`, so
+				// it arrives here as an array — no nullable / string guards
+				// needed.
+				$extra_days = (int) ( $sub->meta['extra_days'] ?? 0 );
 				$email_service->send_extension_proposed( $sub, $extra_days );
 			},
 			null,
@@ -820,7 +822,7 @@ final class Plugin {
 		$auto_complete_parent = static function ( int $milestone_id, int $parent_order_id ): void {
 			unset( $milestone_id );
 			$parent = wpss_get_order( $parent_order_id );
-			if ( ! $parent || 'request' !== ( $parent->platform ?? '' ) ) {
+			if ( ! $parent || 'request' !== $parent->platform ) {
 				return;
 			}
 			if ( 'completed' === $parent->status || 'cancelled' === $parent->status ) {
