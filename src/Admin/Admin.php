@@ -847,7 +847,7 @@ class Admin {
 		// Note: Buyer Requests CPT menus are automatically added
 		// since show_in_menu is set to 'wp-sell-services' in BuyerRequestPostType.
 
-		add_submenu_page(
+		$orders_hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Orders', 'wp-sell-services' ),
 			__( 'Orders', 'wp-sell-services' ),
@@ -856,7 +856,11 @@ class Admin {
 			array( $this, 'render_orders_page' )
 		);
 
-		add_submenu_page(
+		if ( $orders_hook ) {
+			add_action( 'load-' . $orders_hook, array( $this, 'add_orders_help_tabs' ) );
+		}
+
+		$disputes_hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Disputes', 'wp-sell-services' ),
 			__( 'Disputes', 'wp-sell-services' ),
@@ -864,6 +868,10 @@ class Admin {
 			'wpss-disputes',
 			array( $this, 'render_disputes_page' )
 		);
+
+		if ( $disputes_hook ) {
+			add_action( 'load-' . $disputes_hook, array( $this, 'add_disputes_help_tabs' ) );
+		}
 
 		add_submenu_page(
 			'wp-sell-services',
@@ -1133,6 +1141,7 @@ class Admin {
 
 		$list_table = new OrdersListTable();
 		$list_table->prepare_items();
+		$has_items = ! empty( $list_table->items );
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h1>
@@ -1143,14 +1152,25 @@ class Admin {
 			<?php endif; ?>
 			<hr class="wp-header-end">
 
-			<?php $list_table->views(); ?>
-
 			<form method="get">
 				<input type="hidden" name="page" value="wpss-orders">
-				<?php
-				$list_table->search_box( __( 'Search Orders', 'wp-sell-services' ), 'order' );
-				$list_table->display();
-				?>
+				<div class="wpss-list-card">
+					<div class="wpss-list-card__filters">
+						<?php
+						$list_table->views();
+						$list_table->search_box( __( 'Search Orders', 'wp-sell-services' ), 'order' );
+						?>
+					</div>
+					<div class="wpss-list-card__body">
+						<?php
+						if ( $has_items ) {
+							$list_table->display();
+						} else {
+							$list_table->no_items();
+						}
+						?>
+					</div>
+				</div>
 			</form>
 		</div>
 		<?php
@@ -1619,22 +1639,102 @@ class Admin {
 
 		$list_table = new DisputesListTable();
 		$list_table->prepare_items();
+		$has_items = ! empty( $list_table->items );
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Disputes', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
-			<?php $list_table->views(); ?>
-
 			<form method="get">
 				<input type="hidden" name="page" value="wpss-disputes">
-				<?php
-				$list_table->search_box( __( 'Search Disputes', 'wp-sell-services' ), 'dispute' );
-				$list_table->display();
-				?>
+				<div class="wpss-list-card">
+					<div class="wpss-list-card__filters">
+						<?php
+						$list_table->views();
+						$list_table->search_box( __( 'Search Disputes', 'wp-sell-services' ), 'dispute' );
+						?>
+					</div>
+					<div class="wpss-list-card__body">
+						<?php
+						if ( $has_items ) {
+							$list_table->display();
+						} else {
+							$list_table->no_items();
+						}
+						?>
+					</div>
+				</div>
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Register Orders screen help tabs.
+	 *
+	 * @return void
+	 */
+	public function add_orders_help_tabs(): void {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-overview',
+				'title'   => __( 'Overview', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Orders represent every service purchase on your marketplace. Each order carries an 11-step lifecycle: pending payment, pending requirements, in progress, delivered, revision requested, completed, cancelled, disputed, and more. Use the filters above the table to focus on a single status, and click any order to open its detail view with messages, requirements, and delivery history.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-actions',
+				'title'   => __( 'Available actions', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Bulk-select orders to mark them completed or cancelled. Click an order to manually update its status, issue a refund note, or open a dispute on the buyer or vendor behalf. Administrators can also create an order manually from Sell Services > Create Order when a buyer pays offline.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->set_help_sidebar(
+			'<p><strong>' . esc_html__( 'For more information:', 'wp-sell-services' ) . '</strong></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/" target="_blank" rel="noopener">' . esc_html__( 'Plugin docs', 'wp-sell-services' ) . '</a></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/order-workflow-wpss" target="_blank" rel="noopener">' . esc_html__( 'Order workflow guide', 'wp-sell-services' ) . '</a></p>'
+		);
+	}
+
+	/**
+	 * Register Disputes screen help tabs.
+	 *
+	 * @return void
+	 */
+	public function add_disputes_help_tabs(): void {
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-overview',
+				'title'   => __( 'Overview', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'A dispute opens when a buyer and vendor cannot agree on an order outcome. This screen surfaces every dispute case, its status, the order it relates to, and the most recent activity. Disputes are escalated from order detail pages when either party opens one.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->add_help_tab(
+			array(
+				'id'      => 'wpss-actions',
+				'title'   => __( 'Available actions', 'wp-sell-services' ),
+				'content' => '<p>' . esc_html__( 'Click a dispute to review the full conversation, both parties evidence, and post an admin mediation note. From the detail screen you can resolve in favour of the buyer (refund) or the vendor (release), escalate, or close without action. Bulk actions can mark multiple disputes as pending review, escalated, or closed.', 'wp-sell-services' ) . '</p>',
+			)
+		);
+
+		$screen->set_help_sidebar(
+			'<p><strong>' . esc_html__( 'For more information:', 'wp-sell-services' ) . '</strong></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/" target="_blank" rel="noopener">' . esc_html__( 'Plugin docs', 'wp-sell-services' ) . '</a></p>' .
+			'<p><a href="https://wbcomdesigns.com/docs/wp-sell-services/dispute-admin-mediation-wpss" target="_blank" rel="noopener">' . esc_html__( 'Dispute mediation guide', 'wp-sell-services' ) . '</a></p>'
+		);
 	}
 
 	/**

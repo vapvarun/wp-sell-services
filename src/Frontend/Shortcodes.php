@@ -665,7 +665,14 @@ class Shortcodes {
 					</tbody>
 				</table>
 			<?php else : ?>
-				<p class="wpss-no-results"><?php esc_html_e( 'No orders found.', 'wp-sell-services' ); ?></p>
+				<div class="wpss-empty-state">
+					<div class="wpss-empty-state__icon">
+						<?php echo \WPSellServices\Services\Icon::render( 'shopping-bag', array( 'width' => '48', 'height' => '48' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</div>
+					<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
+					<p class="wpss-empty-state__body"><?php esc_html_e( 'Your orders will show here once you purchase a service.', 'wp-sell-services' ); ?></p>
+					<a href="<?php echo esc_url( home_url( '/services/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
+				</div>
 			<?php endif; ?>
 		</div>
 		<?php

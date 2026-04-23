@@ -3621,3 +3621,36 @@ body.wpss-modal-active {
 		padding: 20px 16px;
 	}
 }
+
+/* ==========================================================================
+   Empty State (BEM - Shared Frontend Pattern)
+   ========================================================================== */
+
+.wpss-empty-state {
+	text-align: center;
+	padding: 48px 24px;
+	background: var( --wpss-surface, #fff );
+	border: 1px solid var( --wpss-border, #e5e7eb );
+	border-radius: 12px;
+	margin: 24px 0;
+}
+.wpss-empty-state__icon {
+	color: var( --wpss-muted, #6b7280 );
+	margin-bottom: 16px;
+}
+.wpss-empty-state__icon i { display: inline-block; }
+.wpss-empty-state__title {
+	font-size: 20px;
+	margin: 0 0 8px;
+	color: var( --wpss-text, #111827 );
+}
+.wpss-empty-state__body {
+	color: var( --wpss-muted, #6b7280 );
+	max-width: 480px;
+	margin: 0 auto 24px;
+	line-height: 1.6;
+}
+@media ( max-width: 640px ) {
+	.wpss-empty-state { padding: 32px 16px; }
+	.wpss-empty-state .wpss-btn { width: 100%; }
+}

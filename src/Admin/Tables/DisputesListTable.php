@@ -450,6 +450,18 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return void
 	 */
 	public function no_items(): void {
-		esc_html_e( 'No disputes found.', 'wp-sell-services' );
+		?>
+		<div class="wpss-empty-state">
+			<div class="wpss-empty-state__icon">
+				<?php echo \WPSellServices\Services\Icon::render( 'shield-alert' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			</div>
+			<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No disputes', 'wp-sell-services' ); ?></h2>
+			<p class="wpss-empty-state__body"><?php esc_html_e( "If a buyer and vendor can't resolve an issue, a dispute opens here for admin mediation.", 'wp-sell-services' ); ?></p>
+			<p class="wpss-empty-state__actions">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#orders' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Dispute settings', 'wp-sell-services' ); ?></a>
+				<a href="https://wbcomdesigns.com/docs/wp-sell-services/dispute-admin-mediation-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
+			</p>
+		</div>
+		<?php
 	}
 }

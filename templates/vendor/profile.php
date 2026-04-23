@@ -306,24 +306,24 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				<?php endif; ?>
 
 				<!-- Services -->
-				<?php if ( ! empty( $services ) ) : ?>
-					<section class="wpss-profile-section">
-						<h2><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></h2>
+				<section class="wpss-profile-section">
+					<h2><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></h2>
 
-						<?php
-						/**
-						 * Hook: wpss_vendor_profile_services
-						 *
-						 * Fires before the services grid display.
-						 * Use this to add custom service filters or sorting.
-						 *
-						 * @since 1.0.0
-						 *
-						 * @param int $vendor_id Vendor user ID.
-						 */
-						do_action( 'wpss_vendor_profile_services', $vendor_id );
-						?>
+					<?php
+					/**
+					 * Hook: wpss_vendor_profile_services
+					 *
+					 * Fires before the services grid display.
+					 * Use this to add custom service filters or sorting.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param int $vendor_id Vendor user ID.
+					 */
+					do_action( 'wpss_vendor_profile_services', $vendor_id );
+					?>
 
+					<?php if ( ! empty( $services ) ) : ?>
 						<div class="wpss-services-grid wpss-services-grid-3">
 							<?php foreach ( $services as $service_post ) : ?>
 								<?php
@@ -350,8 +350,17 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 								</a>
 							</p>
 						<?php endif; ?>
-					</section>
-				<?php endif; ?>
+					<?php else : ?>
+						<div class="wpss-empty-state">
+							<div class="wpss-empty-state__icon">
+								<?php echo \WPSellServices\Services\Icon::render( 'briefcase', array( 'width' => '48', 'height' => '48' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							</div>
+							<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No services yet', 'wp-sell-services' ); ?></h3>
+							<p class="wpss-empty-state__body"><?php esc_html_e( 'This vendor hasn\'t published any services. Check back soon or browse other vendors.', 'wp-sell-services' ); ?></p>
+							<a href="<?php echo esc_url( home_url( '/services/' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Browse services', 'wp-sell-services' ); ?></a>
+						</div>
+					<?php endif; ?>
+				</section>
 
 				<?php
 				// Portfolio section.
@@ -377,33 +386,33 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				<?php endif; ?>
 
 				<!-- Reviews -->
-				<?php if ( ! empty( $reviews ) ) : ?>
-					<section class="wpss-profile-section">
-						<h2>
-							<?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?>
-							<?php if ( $rating_count > 0 ) : ?>
-								<span class="wpss-section-meta">
-									<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
-									<span class="wpss-star">★</span>
-									(<?php echo esc_html( $rating_count ); ?>)
-								</span>
-							<?php endif; ?>
-						</h2>
+				<section class="wpss-profile-section">
+					<h2>
+						<?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?>
+						<?php if ( $rating_count > 0 ) : ?>
+							<span class="wpss-section-meta">
+								<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
+								<span class="wpss-star">★</span>
+								(<?php echo esc_html( $rating_count ); ?>)
+							</span>
+						<?php endif; ?>
+					</h2>
 
-						<?php
-						/**
-						 * Hook: wpss_vendor_profile_reviews
-						 *
-						 * Fires before the reviews list display.
-						 * Use this to add review filters or sorting options.
-						 *
-						 * @since 1.0.0
-						 *
-						 * @param int $vendor_id Vendor user ID.
-						 */
-						do_action( 'wpss_vendor_profile_reviews', $vendor_id );
-						?>
+					<?php
+					/**
+					 * Hook: wpss_vendor_profile_reviews
+					 *
+					 * Fires before the reviews list display.
+					 * Use this to add review filters or sorting options.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param int $vendor_id Vendor user ID.
+					 */
+					do_action( 'wpss_vendor_profile_reviews', $vendor_id );
+					?>
 
+					<?php if ( ! empty( $reviews ) ) : ?>
 						<div class="wpss-reviews-list">
 							<?php foreach ( $reviews as $review ) : ?>
 								<?php $reviewer = get_userdata( $review->customer_id ); ?>
@@ -446,8 +455,16 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 								</a>
 							</p>
 						<?php endif; ?>
-					</section>
-				<?php endif; ?>
+					<?php else : ?>
+						<div class="wpss-empty-state">
+							<div class="wpss-empty-state__icon">
+								<?php echo \WPSellServices\Services\Icon::render( 'star', array( 'width' => '48', 'height' => '48' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							</div>
+							<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No reviews yet', 'wp-sell-services' ); ?></h3>
+							<p class="wpss-empty-state__body"><?php esc_html_e( 'Be the first to buy and review this vendor\'s work.', 'wp-sell-services' ); ?></p>
+						</div>
+					<?php endif; ?>
+				</section>
 			</main>
 
 			<aside class="wpss-profile-sidebar">

@@ -494,6 +494,18 @@ class OrdersListTable extends \WP_List_Table {
 	 * @return void
 	 */
 	public function no_items(): void {
-		esc_html_e( 'No orders found.', 'wp-sell-services' );
+		?>
+		<div class="wpss-empty-state">
+			<div class="wpss-empty-state__icon">
+				<?php echo \WPSellServices\Services\Icon::render( 'shopping-bag', array( 'width' => '48', 'height' => '48' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			</div>
+			<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h2>
+			<p class="wpss-empty-state__body"><?php esc_html_e( 'When customers purchase services, their orders appear here with full lifecycle tracking.', 'wp-sell-services' ); ?></p>
+			<p class="wpss-empty-state__actions">
+				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?></a>
+				<a href="https://wbcomdesigns.com/docs/wp-sell-services/order-workflow-wpss" class="button button-link" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
+			</p>
+		</div>
+		<?php
 	}
 }
