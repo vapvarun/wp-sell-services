@@ -315,11 +315,23 @@ final class Plugin {
 			// DB, roles, settings — safe on plugins_loaded.
 			Activator::install();
 
+			// One-time WP-Cron → Action Scheduler migration for installs
+			// upgrading from pre-1.1.0. Clears the legacy WP-Cron entries
+			// so they don't fire alongside the new AS recurring actions
+			// (which Activator::schedule_cron_events() registers below).
+			if ( $installed_version && version_compare( $installed_version, '1.1.0', '<' ) ) {
+				self::clear_legacy_wpcron_hooks();
+			}
+
 			// Page creation needs $wp_rewrite — defer to init.
 			add_action(
 				'init',
 				static function () use ( $installed_version ): void {
 					Activator::create_pages();
+					// Re-run cron scheduling so new hooks shipped in this
+					// version get registered without a deactivate / reactivate.
+					// Idempotent — Scheduler::has_pending() gates every insert.
+					Activator::schedule_cron_events();
 					flush_rewrite_rules();
 
 					/**
@@ -335,6 +347,43 @@ final class Plugin {
 			);
 
 			update_option( 'wpss_version', WPSS_VERSION );
+		}
+	}
+
+	/**
+	 * Clear legacy WP-Cron entries for hooks that now run on Action Scheduler.
+	 *
+	 * Fires once per site, when upgrading from a pre-1.1.0 install. Skips
+	 * the sister call in Activator::schedule_cron_events() because AS's
+	 * has_pending() gate would still double-fire against an existing
+	 * WP-Cron entry for the same hook name.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	private static function clear_legacy_wpcron_hooks(): void {
+		$legacy = array(
+			'wpss_check_late_orders',
+			'wpss_auto_complete_orders',
+			'wpss_send_deadline_reminders',
+			'wpss_send_requirements_reminders',
+			'wpss_check_requirements_timeout',
+			'wpss_recalculate_seller_levels',
+			'wpss_process_cancellation_timeouts',
+			'wpss_process_offline_auto_cancel',
+			'wpss_cleanup_expired_requests',
+			'wpss_update_vendor_stats',
+			'wpss_process_auto_withdrawals',
+			'wpss_cron_daily',
+			'wpss_audit_log_cleanup',
+			'wpss_cleanup_abandoned_tips',
+			'wpss_cleanup_abandoned_extensions',
+			'wpss_cleanup_abandoned_milestones',
+			'wpss_pro_cleanup_exports',
+		);
+
+		foreach ( $legacy as $hook ) {
+			wp_clear_scheduled_hook( $hook );
 		}
 	}
 
@@ -455,7 +504,7 @@ final class Plugin {
 		// Sub-order email dispatcher shared by every milestone / extension /
 		// tip listener below — declared up front so closures further down
 		// can capture it via use().
-		$email_service        = new \WPSellServices\Services\EmailService();
+		$email_service = new \WPSellServices\Services\EmailService();
 
 		// Order status change notifications.
 		$this->loader->add_action(
@@ -793,7 +842,7 @@ final class Plugin {
 			);
 		};
 		$this->loader->add_action( 'wpss_milestone_approved', $auto_complete_parent, null, 20, 2 );
-		$this->loader->add_action( 'wpss_milestone_declined',  $auto_complete_parent, null, 20, 2 );
+		$this->loader->add_action( 'wpss_milestone_declined', $auto_complete_parent, null, 20, 2 );
 
 		// Cascade-cancel: when a parent order is cancelled, every still-
 		// pending_payment milestone under it is cancelled immediately.
@@ -852,7 +901,7 @@ final class Plugin {
 				$data = array( 'order_id' => $order_id );
 
 				$notification_service->create( (int) $parent->customer_id, 'milestone_cancel_warning', __( 'Paid milestone not delivered', 'wp-sell-services' ), $body, $data );
-				$notification_service->create( (int) $parent->vendor_id,   'milestone_cancel_warning', __( 'Paid milestone on cancelled project', 'wp-sell-services' ), $body, $data );
+				$notification_service->create( (int) $parent->vendor_id, 'milestone_cancel_warning', __( 'Paid milestone on cancelled project', 'wp-sell-services' ), $body, $data );
 			},
 			null,
 			10,
@@ -1450,30 +1499,11 @@ final class Plugin {
 			}
 		);
 
-		// Cron event scheduling (lightweight, no object needed).
-		add_action(
-			'init',
-			static function (): void {
-				$events = array(
-					'wpss_check_late_orders'             => 'wpss_hourly',
-					'wpss_auto_complete_orders'          => 'wpss_twice_daily',
-					'wpss_send_deadline_reminders'       => 'daily',
-					'wpss_send_requirements_reminders'   => 'daily',
-					'wpss_check_requirements_timeout'    => 'daily',
-					'wpss_recalculate_seller_levels'     => 'wpss_weekly',
-					'wpss_process_cancellation_timeouts' => 'wpss_hourly',
-					'wpss_process_offline_auto_cancel'   => 'wpss_hourly',
-					'wpss_cleanup_expired_requests'      => 'daily',
-					'wpss_update_vendor_stats'           => 'wpss_twice_daily',
-				);
-
-				foreach ( $events as $hook => $recurrence ) {
-					if ( ! wp_next_scheduled( $hook ) ) {
-						wp_schedule_event( time(), $recurrence, $hook );
-					}
-				}
-			}
-		);
+		// Scheduling itself lives in Activator::schedule_cron_events() and runs
+		// once at activation and again on version bump via Plugin::maybe_run_install().
+		// The handlers below are wired to the same hook names so Action Scheduler
+		// firing them (via do_action()) reaches the same callbacks as the old
+		// WP-Cron path — no behavioral change.
 
 		// Cron handlers — object created only when cron actually fires.
 		$cron_hooks = array(
@@ -1589,22 +1619,9 @@ final class Plugin {
 			return $instance;
 		};
 
-		// Dispute cron schedule registration.
-		add_filter(
-			'cron_schedules',
-			static function ( array $schedules ): array {
-				$schedules['twice_daily'] = array(
-					'interval' => 12 * HOUR_IN_SECONDS,
-					'display'  => 'Twice Daily',
-				);
-				return $schedules;
-			}
-		);
-
-		// Schedule the daily dispute cron event.
-		if ( ! wp_next_scheduled( 'wpss_cron_daily' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpss_cron_daily' );
-		}
+		// wpss_cron_daily scheduling lives in Activator::schedule_cron_events()
+		// (AS recurring). The handler below remains here; it will fire when
+		// Action Scheduler calls do_action( 'wpss_cron_daily' ).
 
 		// Dispute cron handlers.
 		add_action(

@@ -70,6 +70,27 @@ define( 'WPSS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'WPSS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 /**
+ * Load Action Scheduler at file-load time.
+ *
+ * Action Scheduler bootstraps its own internals on `plugins_loaded` at
+ * priority 1 — registering the `every_minute` cron interval used by its
+ * queue runner. If we require it from a later hook (e.g. plugins_loaded:10
+ * inside our own init) AS's bootstrap never runs, its queue runner can't
+ * reschedule itself, and WordPress logs:
+ *   Cron reschedule event error for hook: action_scheduler_run_queue,
+ *   Error code: invalid_schedule
+ *
+ * The require has to happen while WordPress is loading our plugin file
+ * (before any `plugins_loaded` hook fires) so AS's own hook registration
+ * beats its bootstrap hook. Keep this above every other include.
+ */
+$wpss_action_scheduler = __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+if ( file_exists( $wpss_action_scheduler ) ) {
+	require_once $wpss_action_scheduler;
+}
+unset( $wpss_action_scheduler );
+
+/**
  * Minimum PHP version required.
  *
  * @var string
@@ -165,6 +186,12 @@ function wpss_load_composer_autoloader(): bool {
 	}
 
 	require_once $autoloader;
+
+	// Note: Action Scheduler itself is required at the top of this plugin
+	// file (outside any hook) so its plugins_loaded:1 bootstrap fires — see
+	// the require_once block near the WPSS_* constants. Loading AS from
+	// here would be too late.
+
 	$loaded = true;
 	return true;
 }

@@ -18,6 +18,7 @@ parameters:
         - vendor/autoload.php
     scanFiles:
         - src/functions.php
+        - tests/stubs/action-scheduler-stubs.php
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:

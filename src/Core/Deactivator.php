@@ -13,6 +13,8 @@ namespace WPSellServices\Core;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Services\Scheduler;
+
 /**
  * Fired during plugin deactivation.
  *
@@ -39,7 +41,15 @@ class Deactivator {
 	 * @return void
 	 */
 	private static function clear_cron_events(): void {
-		$cron_hooks = array(
+		// One-shot sweep of every Action Scheduler job the plugin owns.
+		// Everything scheduled by the free plugin runs under the `wpss`
+		// group — no need to enumerate hook names here.
+		Scheduler::unschedule_all_for_group( Scheduler::GROUP_FREE );
+
+		// Belt-and-suspenders: pre-1.1.0 installs may still have WP-Cron
+		// entries for the legacy hook names. Clear them so a deactivate
+		// after a partial upgrade leaves nothing behind.
+		$legacy_hooks = array(
 			'wpss_check_late_orders',
 			'wpss_auto_complete_orders',
 			'wpss_send_deadline_reminders',
@@ -53,9 +63,12 @@ class Deactivator {
 			'wpss_process_auto_withdrawals',
 			'wpss_cron_daily',
 			\WPSellServices\Services\AuditLogService::CLEANUP_HOOK,
+			\WPSellServices\Services\TippingService::CLEANUP_HOOK,
+			\WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK,
+			\WPSellServices\Services\MilestoneService::CLEANUP_HOOK,
 		);
 
-		foreach ( $cron_hooks as $hook ) {
+		foreach ( $legacy_hooks as $hook ) {
 			wp_clear_scheduled_hook( $hook );
 		}
 	}

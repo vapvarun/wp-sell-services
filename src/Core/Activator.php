@@ -14,6 +14,7 @@ namespace WPSellServices\Core;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Database\SchemaManager;
+use WPSellServices\Services\Scheduler;
 
 /**
  * Fired during plugin activation.
@@ -251,41 +252,53 @@ class Activator {
 	/**
 	 * Schedule cron events.
 	 *
+	 * Public so {@see Plugin::maybe_run_install()} can call it on version
+	 * change — otherwise new hooks added in an upgrade (e.g. the 1.1.0
+	 * tipping / extension / milestone cleanup crons) only get scheduled
+	 * on a full deactivate → reactivate cycle.
+	 *
 	 * @return void
 	 */
-	private static function schedule_cron_events(): void {
-		// Most cron events are scheduled by OrderWorkflowManager::schedule_cron_events()
-		// on every init. We only handle EarningsService here since it has its own
-		// dynamic scheduling logic based on admin settings.
+	public static function schedule_cron_events(): void {
+		// Single source of truth for every recurring Action Scheduler job the
+		// free plugin owns. All hooks run under the `wpss` group so the
+		// deactivator can sweep them in one call via
+		// Scheduler::unschedule_all_for_group().
+		//
+		// Intervals kept close to the legacy WP-Cron values to preserve
+		// existing timing guarantees — anything that changes cadence would
+		// deserve its own changelog entry.
+		$recurring = array(
+			// Order lifecycle sweeps (previously scheduled at init).
+			'wpss_check_late_orders'             => HOUR_IN_SECONDS,
+			'wpss_auto_complete_orders'          => 12 * HOUR_IN_SECONDS,
+			'wpss_send_deadline_reminders'       => DAY_IN_SECONDS,
+			'wpss_send_requirements_reminders'   => DAY_IN_SECONDS,
+			'wpss_check_requirements_timeout'    => DAY_IN_SECONDS,
+			'wpss_process_cancellation_timeouts' => HOUR_IN_SECONDS,
+			'wpss_process_offline_auto_cancel'   => HOUR_IN_SECONDS,
+			'wpss_cleanup_expired_requests'      => DAY_IN_SECONDS,
+			'wpss_update_vendor_stats'           => 12 * HOUR_IN_SECONDS,
+			'wpss_recalculate_seller_levels'     => WEEK_IN_SECONDS,
+
+			// Dispute response deadline check.
+			'wpss_cron_daily'                    => DAY_IN_SECONDS,
+
+			// Abandoned sub-order cleanups (tips, extensions, milestones) and
+			// audit log retention.
+			\WPSellServices\Services\AuditLogService::CLEANUP_HOOK => DAY_IN_SECONDS,
+			\WPSellServices\Services\TippingService::CLEANUP_HOOK => DAY_IN_SECONDS,
+			\WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK => DAY_IN_SECONDS,
+			\WPSellServices\Services\MilestoneService::CLEANUP_HOOK => DAY_IN_SECONDS,
+		);
+
+		foreach ( $recurring as $hook => $interval ) {
+			Scheduler::schedule_recurring( $hook, $interval );
+		}
+
+		// Auto-withdrawal has its own admin-driven schedule (weekly / biweekly /
+		// monthly on specific dates) so it stays encapsulated in EarningsService.
 		\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
-
-		// Daily audit log retention cleanup. The callback is a no-op unless
-		// the site operator sets wpss_audit_log_retention_days to a positive
-		// value, so scheduling it unconditionally is safe.
-		if ( ! wp_next_scheduled( \WPSellServices\Services\AuditLogService::CLEANUP_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\AuditLogService::CLEANUP_HOOK );
-		}
-
-		// Daily sweep of abandoned pending-payment tip sub-orders so a
-		// buyer who opened the tip checkout and never paid does not
-		// permanently block themselves from re-tipping the same order.
-		if ( ! wp_next_scheduled( \WPSellServices\Services\TippingService::CLEANUP_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\TippingService::CLEANUP_HOOK );
-		}
-
-		// Same contract for paid extension sub-orders — an unpaid extension
-		// request must not permanently block the vendor from raising a new
-		// one on the same order.
-		if ( ! wp_next_scheduled( \WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK );
-		}
-
-		// Milestones cleanup — same 48h abandon contract so a proposed
-		// phase the buyer never paid does not permanently clutter the
-		// vendor's timeline.
-		if ( ! wp_next_scheduled( \WPSellServices\Services\MilestoneService::CLEANUP_HOOK ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', \WPSellServices\Services\MilestoneService::CLEANUP_HOOK );
-		}
 	}
 
 	/**

@@ -67,19 +67,12 @@ class DisputeWorkflowManager {
 	 * @return void
 	 */
 	public function init(): void {
-		// Cron jobs.
+		// Cron jobs. Scheduling lives in Activator::schedule_cron_events()
+		// (Action Scheduler recurring) so this class only wires handlers.
 		add_action( 'wpss_cron_daily', array( $this, 'check_response_deadlines' ) );
 		add_action( 'wpss_cron_daily', array( $this, 'auto_escalate_disputes' ) );
 		add_action( 'wpss_cron_daily', array( $this, 'send_reminder_notifications' ) );
 		add_action( 'wpss_cron_daily', array( $this, 'auto_open_disputes_for_late_orders' ) );
-
-		// Register cron schedules.
-		add_filter( 'cron_schedules', array( $this, 'add_cron_schedules' ) );
-
-		// Schedule events on plugin activation.
-		if ( ! wp_next_scheduled( 'wpss_cron_daily' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpss_cron_daily' );
-		}
 
 		// Hooks for dispute events.
 		add_action( 'wpss_dispute_opened', array( $this, 'on_dispute_opened' ), 10, 4 );

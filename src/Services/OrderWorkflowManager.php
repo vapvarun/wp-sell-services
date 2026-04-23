@@ -53,13 +53,15 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function init(): void {
-		// Register cron schedules.
+		// Cron interval registration kept for third-party code that may still
+		// reference these names via wp_schedule_event(). The plugin itself no
+		// longer uses them — all our recurring work runs on Action Scheduler
+		// (see Activator::schedule_cron_events() and Services\Scheduler).
 		add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
 
-		// Schedule cron events.
-		add_action( 'init', [ $this, 'schedule_cron_events' ] );
-
-		// Cron handlers.
+		// Cron handlers. Scheduling lives in Activator::schedule_cron_events()
+		// (Action Scheduler recurring under the `wpss` group). AS fires these
+		// hooks via do_action(), so the same callbacks handle them.
 		add_action( 'wpss_check_late_orders', [ $this, 'check_late_orders' ] );
 		add_action( 'wpss_auto_complete_orders', [ $this, 'auto_complete_orders' ] );
 		add_action( 'wpss_send_deadline_reminders', [ $this, 'send_deadline_reminders' ] );
@@ -141,50 +143,16 @@ class OrderWorkflowManager {
 	}
 
 	/**
-	 * Schedule cron events.
+	 * Deprecated: scheduling moved to Activator::schedule_cron_events().
 	 *
+	 * Kept as a no-op so external code calling this method doesn't fatal.
+	 * The plugin's own init path no longer invokes it.
+	 *
+	 * @deprecated 1.1.0 Use Activator::schedule_cron_events() instead.
 	 * @return void
 	 */
 	public function schedule_cron_events(): void {
-		if ( ! wp_next_scheduled( 'wpss_check_late_orders' ) ) {
-			wp_schedule_event( time(), 'wpss_hourly', 'wpss_check_late_orders' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_auto_complete_orders' ) ) {
-			wp_schedule_event( time(), 'wpss_twice_daily', 'wpss_auto_complete_orders' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_send_deadline_reminders' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpss_send_deadline_reminders' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_send_requirements_reminders' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpss_send_requirements_reminders' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_check_requirements_timeout' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpss_check_requirements_timeout' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_recalculate_seller_levels' ) ) {
-			wp_schedule_event( time(), 'wpss_weekly', 'wpss_recalculate_seller_levels' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_process_cancellation_timeouts' ) ) {
-			wp_schedule_event( time(), 'wpss_hourly', 'wpss_process_cancellation_timeouts' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_process_offline_auto_cancel' ) ) {
-			wp_schedule_event( time(), 'wpss_hourly', 'wpss_process_offline_auto_cancel' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_cleanup_expired_requests' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpss_cleanup_expired_requests' );
-		}
-
-		if ( ! wp_next_scheduled( 'wpss_update_vendor_stats' ) ) {
-			wp_schedule_event( time(), 'wpss_twice_daily', 'wpss_update_vendor_stats' );
-		}
+		// No-op. Action Scheduler now owns all recurring scheduling.
 	}
 
 	/**
@@ -696,8 +664,8 @@ class OrderWorkflowManager {
 					'vendor_id'       => (int) $order->vendor_id,
 					'customer_id'     => (int) $order->customer_id,
 					'vendor_earnings' => null === $order->vendor_earnings ? null : (float) $order->vendor_earnings,
-					'order_total'    => (float) $order->total,
-					'payment_status' => (string) $order->payment_status,
+					'order_total'     => (float) $order->total,
+					'payment_status'  => (string) $order->payment_status,
 				),
 			)
 		);
@@ -1277,18 +1245,13 @@ class OrderWorkflowManager {
 	}
 
 	/**
-	 * Clear scheduled cron events on deactivation.
+	 * Deprecated: cleanup moved to Deactivator::clear_cron_events() which
+	 * sweeps the whole `wpss` Action Scheduler group in a single call.
 	 *
+	 * @deprecated 1.1.0 Use Deactivator::clear_cron_events() instead.
 	 * @return void
 	 */
 	public static function clear_scheduled_events(): void {
-		wp_clear_scheduled_hook( 'wpss_check_late_orders' );
-		wp_clear_scheduled_hook( 'wpss_auto_complete_orders' );
-		wp_clear_scheduled_hook( 'wpss_send_deadline_reminders' );
-		wp_clear_scheduled_hook( 'wpss_send_requirements_reminders' );
-		wp_clear_scheduled_hook( 'wpss_check_requirements_timeout' );
-		wp_clear_scheduled_hook( 'wpss_recalculate_seller_levels' );
-		wp_clear_scheduled_hook( 'wpss_process_cancellation_timeouts' );
-		wp_clear_scheduled_hook( 'wpss_process_offline_auto_cancel' );
+		// No-op.
 	}
 }

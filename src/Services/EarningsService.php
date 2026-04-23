@@ -893,20 +893,47 @@ class EarningsService {
 	 * @return void
 	 */
 	public static function schedule_auto_withdrawal_cron(): void {
+		$hook = 'wpss_process_auto_withdrawals';
+
 		if ( ! self::is_auto_withdrawal_enabled() ) {
-			wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
+			Scheduler::unschedule_all( $hook );
 			return;
 		}
 
 		$schedule         = self::get_auto_withdrawal_schedule();
-		$current_schedule = wp_get_schedule( 'wpss_process_auto_withdrawals' );
+		$desired_interval = self::schedule_interval( $schedule );
+		$stored_schedule  = (string) get_option( 'wpss_auto_withdrawal_schedule_type', '' );
 
-		// Only reschedule if the schedule type has changed or no schedule exists.
-		if ( $current_schedule !== $schedule ) {
-			wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
-			$timestamp = self::get_next_schedule_time( $schedule );
-			wp_schedule_event( $timestamp, $schedule, 'wpss_process_auto_withdrawals' );
+		// Reschedule only when the admin-selected schedule changes — AS
+		// recurring actions persist across requests so we don't want to
+		// cancel-and-reinsert on every bootstrap.
+		if ( $stored_schedule === $schedule && Scheduler::has_pending( $hook ) ) {
+			return;
 		}
+
+		Scheduler::unschedule_all( $hook );
+		\as_schedule_recurring_action(
+			self::get_next_schedule_time( $schedule ),
+			$desired_interval,
+			$hook,
+			array(),
+			Scheduler::GROUP_FREE
+		);
+		update_option( 'wpss_auto_withdrawal_schedule_type', $schedule, false );
+	}
+
+	/**
+	 * Map the admin-selected cadence to the AS interval in seconds.
+	 *
+	 * @param string $schedule Cadence identifier: weekly | biweekly | monthly.
+	 * @return int Interval seconds.
+	 */
+	private static function schedule_interval( string $schedule ): int {
+		return match ( $schedule ) {
+			'monthly'  => 30 * DAY_IN_SECONDS,
+			'biweekly' => 14 * DAY_IN_SECONDS,
+			default    => WEEK_IN_SECONDS,
+		};
 	}
 
 	/**
@@ -944,6 +971,9 @@ class EarningsService {
 	 * @return void
 	 */
 	public static function unschedule_auto_withdrawal_cron(): void {
+		Scheduler::unschedule_all( 'wpss_process_auto_withdrawals' );
+		delete_option( 'wpss_auto_withdrawal_schedule_type' );
+		// Also clear any WP-Cron residue from pre-1.1.0.
 		wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
 	}
 }
