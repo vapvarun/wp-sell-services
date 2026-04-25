@@ -20,7 +20,10 @@
  *  10. Modals
  *  11. Layout Utilities
  *  12. Loading States
- *  13. Responsive
+ *  14. Form Error (UX primitive)
+ *  15. Autosave Indicator (UX primitive)
+ *  16. App Shell (UX primitive)
+ *  17. Responsive
  */
 
 /* ==========================================================================
@@ -426,7 +429,96 @@
 @keyframes wpss-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 /* ==========================================================================
-   13. RESPONSIVE
+   14. FORM ERROR (UX PRIMITIVE)
+   ----------------------------------------------------------------------------
+   Inline error message attached to a single field OR rendered above a form.
+   Use with role="alert" + aria-live="polite" (set via JS helper) so screen
+   readers announce the error without stealing focus.
+
+   Mark-up:
+     <div class="wpss-field">
+       <label for="title">Title *</label>
+       <input id="title" aria-invalid="true" aria-describedby="title-error" />
+       <p id="title-error" class="wpss-form-error" role="alert">Title is required.</p>
+     </div>
+   ========================================================================== */
+
+.wpss-form-error { color: var(--wpss-danger); font-size: var(--wpss-text-sm); margin: var(--wpss-space-1) 0 0; line-height: 1.4; display: flex; align-items: flex-start; gap: var(--wpss-space-1); }
+.wpss-form-error::before { content: "⚠"; flex: 0 0 auto; font-size: var(--wpss-text-base); line-height: 1; }
+.wpss-form-error[hidden] { display: none; }
+
+/* Form-level error summary, rendered above the first field. */
+.wpss-form-error-summary { background: var(--wpss-danger-light, #fef2f2); border: 1px solid var(--wpss-danger); border-radius: var(--wpss-radius); padding: var(--wpss-space-3) var(--wpss-space-4); margin: 0 0 var(--wpss-space-4); color: var(--wpss-danger); font-size: var(--wpss-text-sm); }
+.wpss-form-error-summary__title { font-weight: 600; margin: 0 0 var(--wpss-space-1); display: flex; align-items: center; gap: var(--wpss-space-2); }
+.wpss-form-error-summary__list { margin: 0; padding-left: var(--wpss-space-5); }
+.wpss-form-error-summary__list li { margin: var(--wpss-space-1) 0; }
+
+/* Invalid input outline (matches the form-error colour). */
+input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--wpss-danger) !important; box-shadow: 0 0 0 1px var(--wpss-danger) !important; }
+
+/* ==========================================================================
+   15. AUTOSAVE INDICATOR (UX PRIMITIVE)
+   ----------------------------------------------------------------------------
+   Tiny status pill that lives near the form heading or save button. Tells
+   the vendor their work is safe. Four mutually-exclusive states driven by a
+   single data-state attribute:
+     idle    — never saved yet (hidden by default)
+     saving  — request in flight
+     saved   — last save succeeded (auto-fades after 2s)
+     error   — last save failed; user should retry
+
+   Mark-up:
+     <span class="wpss-autosave" data-state="idle" role="status" aria-live="polite">
+       <span class="wpss-autosave__icon" aria-hidden="true"></span>
+       <span class="wpss-autosave__label"></span>
+     </span>
+   ========================================================================== */
+
+.wpss-autosave { display: inline-flex; align-items: center; gap: var(--wpss-space-2); padding: var(--wpss-space-1) var(--wpss-space-3); border-radius: 9999px; font-size: var(--wpss-text-xs); font-weight: 500; line-height: 1; transition: opacity 0.3s ease, background-color 0.2s ease, color 0.2s ease; opacity: 1; }
+.wpss-autosave[data-state="idle"] { opacity: 0; pointer-events: none; }
+.wpss-autosave[data-state="saving"] { background: var(--wpss-bg-muted); color: var(--wpss-text-muted); }
+.wpss-autosave[data-state="saved"] { background: rgba(16, 185, 129, 0.1); color: var(--wpss-success, #10b981); }
+.wpss-autosave[data-state="saved"].wpss-autosave--fading { opacity: 0.4; }
+.wpss-autosave[data-state="error"] { background: var(--wpss-danger-light, #fef2f2); color: var(--wpss-danger); }
+
+.wpss-autosave__icon { display: inline-block; width: 12px; height: 12px; flex: 0 0 auto; }
+.wpss-autosave[data-state="saving"] .wpss-autosave__icon { border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: wpss-spin 0.6s linear infinite; }
+.wpss-autosave[data-state="saved"] .wpss-autosave__icon::before { content: "✓"; font-size: 14px; line-height: 12px; }
+.wpss-autosave[data-state="error"] .wpss-autosave__icon::before { content: "⚠"; font-size: 14px; line-height: 12px; }
+
+/* ==========================================================================
+   16. APP SHELL (UX PRIMITIVE)
+   ----------------------------------------------------------------------------
+   Standardised wrapper for every plugin frontend section (dashboard, wizard,
+   profile, single service, archives). Replaces ad-hoc .wpss-page wrappers
+   that suffered from sticky-header positioning conflicts with host themes.
+
+   Mark-up:
+     <div class="wpss-app-shell">
+       <div class="wpss-app-shell__container">
+         ... section content ...
+       </div>
+     </div>
+
+   Critical CSS rules:
+   - position: relative + isolation: isolate creates a new stacking context
+     so sticky/fixed elements inside the host theme can NOT bleed into our UI
+   - max-width + margin auto centers consistently regardless of theme width
+   - contain: layout isolates layout calculations from the page
+
+   This single class fixes the duplicate-header rendering bug seen across all
+   wizard / dashboard screens (B2 in baseline-2026-04-25.md).
+   ========================================================================== */
+
+.wpss-app-shell { position: relative; isolation: isolate; contain: layout; width: 100%; max-width: 100%; }
+.wpss-app-shell__container { max-width: var(--wpss-container-max, 1200px); margin: 0 auto; padding: var(--wpss-space-6) var(--wpss-space-4); }
+
+@media (max-width: 768px) {
+	.wpss-app-shell__container { padding: var(--wpss-space-4) var(--wpss-space-3); }
+}
+
+/* ==========================================================================
+   17. RESPONSIVE
    ========================================================================== */
 
 @media (max-width: 768px) {
