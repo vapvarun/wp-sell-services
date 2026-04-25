@@ -2023,8 +2023,11 @@ select.wpss-input option,
    ========================================================================== */
 
 .wpss-tip-view {
+	/* Column layout so the optional sub-order breadcrumb stacks above the card
+	   instead of sitting beside it. (CB6 fix from plans/ORDER-FLOW-AUDIT.md.) */
 	display: flex;
-	justify-content: center;
+	flex-direction: column;
+	align-items: center;
 	padding: 20px 0;
 }
 
