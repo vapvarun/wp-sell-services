@@ -389,10 +389,23 @@ class ServiceWizard {
 				</div>
 				<div class="wpss-wizard__nav-center">
 					<button type="button" class="wpss-btn wpss-btn--ghost wpss-wizard__btn-save" @click="saveDraft()" :disabled="saving">
-						<i data-lucide="upload-cloud" class="wpss-icon" x-show="!saving" aria-hidden="true"></i>
-						<span class="wpss-spinner" x-show="saving" x-cloak></span>
-						<span x-text="saving ? '<?php esc_attr_e( 'Saving...', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Save Draft', 'wp-sell-services' ); ?>'"></span>
+						<i data-lucide="upload-cloud" class="wpss-icon" aria-hidden="true"></i>
+						<span><?php esc_html_e( 'Save Draft', 'wp-sell-services' ); ?></span>
 					</button>
+					<?php
+					// Autosave indicator pill — driven by the WpssAutosave primitive in
+					// service-wizard.js. Replaces the in-button "Saving..." state so
+					// vendors can see persistent confirmation without the button text
+					// flipping on every keystroke (F5 from baseline-2026-04-25.md).
+					?>
+					<span id="wpss-wizard-autosave"
+						class="wpss-autosave"
+						data-state="idle"
+						role="status"
+						aria-live="polite">
+						<span class="wpss-autosave__icon" aria-hidden="true"></span>
+						<span class="wpss-autosave__label"></span>
+					</span>
 				</div>
 				<div class="wpss-wizard__nav-right">
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-wizard__btn-next" x-show="currentStep !== 'review'" @click="nextStep()" x-cloak>
@@ -478,6 +491,12 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
+			<?php /* Form-level error summary, populated by WpssFormError.summary() on validate failure. */ ?>
+			<div class="wpss-form-error-summary" hidden>
+				<p class="wpss-form-error-summary__title"><?php esc_html_e( 'Please fix the following:', 'wp-sell-services' ); ?></p>
+				<ul class="wpss-form-error-summary__list"></ul>
+			</div>
+
 			<div class="wpss-form-group">
 				<label for="service_title" class="wpss-form-label">
 					<?php esc_html_e( 'Service Title', 'wp-sell-services' ); ?>
@@ -487,12 +506,14 @@ class ServiceWizard {
 					id="service_title"
 					class="wpss-form-input"
 					x-model="data.title"
+					aria-describedby="service_title-error"
 					placeholder="<?php esc_attr_e( 'I will...', 'wp-sell-services' ); ?>"
 					maxlength="80"
 					required>
 				<div class="wpss-form-hint">
 					<span x-text="data.title?.length || 0"></span>/80 <?php esc_html_e( 'characters', 'wp-sell-services' ); ?>
 				</div>
+				<p id="service_title-error" class="wpss-form-error" hidden></p>
 			</div>
 
 			<div class="wpss-form-group">
@@ -500,7 +521,11 @@ class ServiceWizard {
 					<?php esc_html_e( 'Category', 'wp-sell-services' ); ?>
 					<span class="wpss-required">*</span>
 				</label>
-				<select id="service_category" class="wpss-form-select" x-model="data.category" required>
+				<select id="service_category"
+					class="wpss-form-select"
+					x-model="data.category"
+					aria-describedby="service_category-error"
+					required>
 					<option value=""><?php esc_html_e( 'Select a category', 'wp-sell-services' ); ?></option>
 					<?php
 					if ( ! is_wp_error( $categories ) ) :
@@ -508,6 +533,7 @@ class ServiceWizard {
 					endif;
 					?>
 				</select>
+				<p id="service_category-error" class="wpss-form-error" hidden></p>
 			</div>
 
 			<div class="wpss-form-group">
@@ -532,12 +558,14 @@ class ServiceWizard {
 					x-model="data.description"
 					rows="8"
 					maxlength="5000"
+					aria-describedby="service_description-error"
 					placeholder="<?php esc_attr_e( 'Describe your service in detail. What makes you unique? What\'s included?', 'wp-sell-services' ); ?>"
 					required></textarea>
 				<div class="wpss-form-hint" style="display: flex; justify-content: space-between;">
 					<span><?php esc_html_e( 'Minimum 120 characters. Be detailed and specific.', 'wp-sell-services' ); ?></span>
 					<span x-text="(data.description || '').length + ' / 5000'" :class="{ 'wpss-text-danger': (data.description || '').length < 120 }"></span>
 				</div>
+				<p id="service_description-error" class="wpss-form-error" hidden></p>
 			</div>
 
 			<div class="wpss-form-group">
@@ -564,70 +592,116 @@ class ServiceWizard {
 	private function render_step_pricing( ?\WP_Post $_service ): void {
 		?>
 		<div class="wpss-wizard__step-header">
-			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Pricing Packages', 'wp-sell-services' ); ?></h2>
-			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Create up to 3 pricing tiers to offer buyers different options.', 'wp-sell-services' ); ?></p>
+			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Pricing', 'wp-sell-services' ); ?></h2>
+			<p class="wpss-wizard__step-desc"><?php esc_html_e( 'Set your starting price. You can offer Standard and Premium tiers for buyers who need more — but they are optional.', 'wp-sell-services' ); ?></p>
 		</div>
 
 		<div class="wpss-wizard__step-body">
-			<div class="wpss-pricing-tabs">
-				<button type="button" class="wpss-pricing-tab" :class="{ 'active': activePackage === 'basic' }" @click="activePackage = 'basic'">
+			<?php /* Form-level error summary, populated by WpssFormError.summary() on validate failure. */ ?>
+			<div class="wpss-form-error-summary" hidden>
+				<p class="wpss-form-error-summary__title"><?php esc_html_e( 'Please fix the following:', 'wp-sell-services' ); ?></p>
+				<ul class="wpss-form-error-summary__list"></ul>
+			</div>
+
+			<?php
+			/* Tab strip — Basic always visible; Standard / Premium only when enabled. */
+			?>
+			<div class="wpss-pricing-tabs" role="tablist">
+				<button type="button"
+					role="tab"
+					class="wpss-pricing-tab"
+					:class="{ 'active': activePackage === 'basic' }"
+					:aria-selected="activePackage === 'basic'"
+					@click="activePackage = 'basic'">
 					<?php esc_html_e( 'Basic', 'wp-sell-services' ); ?>
 					<span class="wpss-required-badge" x-show="!isPackageValid('basic')" x-cloak>!</span>
 				</button>
-				<button type="button" class="wpss-pricing-tab" :class="{ 'active': activePackage === 'standard' }" @click="activePackage = 'standard'">
+				<button type="button"
+					role="tab"
+					class="wpss-pricing-tab"
+					x-show="data.packages.standard.enabled"
+					:class="{ 'active': activePackage === 'standard' }"
+					:aria-selected="activePackage === 'standard'"
+					@click="activePackage = 'standard'"
+					x-cloak>
 					<?php esc_html_e( 'Standard', 'wp-sell-services' ); ?>
 				</button>
-				<button type="button" class="wpss-pricing-tab" :class="{ 'active': activePackage === 'premium' }" @click="activePackage = 'premium'">
+				<button type="button"
+					role="tab"
+					class="wpss-pricing-tab"
+					x-show="data.packages.premium.enabled"
+					:class="{ 'active': activePackage === 'premium' }"
+					:aria-selected="activePackage === 'premium'"
+					@click="activePackage = 'premium'"
+					x-cloak>
 					<?php esc_html_e( 'Premium', 'wp-sell-services' ); ?>
 				</button>
 			</div>
 
+			<?php
+			// "+ Add tier" buttons — visible only when the corresponding tier is disabled.
+			// Replaces the old toggle-inside-tab pattern that confused vendors into
+			// thinking all 3 tiers were required.
+			?>
+			<div class="wpss-pricing-add-tier-row"
+				x-show="!data.packages.standard.enabled || !data.packages.premium.enabled"
+				x-cloak>
+				<button type="button"
+					class="wpss-pricing-add-tier"
+					x-show="!data.packages.standard.enabled"
+					@click="addTier('standard')">
+					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Add Standard tier', 'wp-sell-services' ); ?>
+				</button>
+				<button type="button"
+					class="wpss-pricing-add-tier"
+					x-show="!data.packages.premium.enabled"
+					@click="addTier('premium')">
+					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Add Premium tier', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+
 			<?php foreach ( array( 'basic', 'standard', 'premium' ) as $tier ) : ?>
-				<div class="wpss-pricing-panel" x-show="activePackage === '<?php echo esc_attr( $tier ); ?>'" x-cloak>
+				<?php
+				/* Tier panel — for Basic always; for Standard/Premium only when enabled. */
+				$show_attr = 'basic' === $tier
+					? "activePackage === '{$tier}'"
+					: "activePackage === '{$tier}' && data.packages.{$tier}.enabled";
+				?>
+				<div class="wpss-pricing-panel" x-show="<?php echo esc_attr( $show_attr ); ?>" x-cloak>
 					<?php if ( 'basic' !== $tier ) : ?>
-						<div class="wpss-form-group wpss-form-group--toggle">
-							<label class="wpss-toggle">
-								<input type="checkbox" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.enabled">
-								<span class="wpss-toggle__slider"></span>
-								<span class="wpss-toggle__label"><?php esc_html_e( 'Enable this package', 'wp-sell-services' ); ?></span>
-							</label>
+						<div class="wpss-pricing-tier-actions">
+							<button type="button"
+								class="wpss-pricing-tier-remove"
+								@click="removeTier('<?php echo esc_attr( $tier ); ?>')">
+								<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
+								<?php
+								/* translators: %s: tier name (Standard or Premium) */
+								echo esc_html( sprintf( __( 'Remove %s tier', 'wp-sell-services' ), ucfirst( $tier ) ) );
+								?>
+							</button>
 						</div>
 					<?php endif; ?>
 
-					<div class="wpss-pricing-fields" <?php echo 'basic' !== $tier ? ':class="{ \'disabled\': !data.packages.' . esc_attr( $tier ) . '.enabled }"' : ''; ?>>
+					<div class="wpss-pricing-fields">
 						<div class="wpss-form-group">
 							<label class="wpss-form-label">
-								<?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?>
-								<?php if ( 'basic' === $tier ) : ?>
-									<span class="wpss-required">*</span>
-								<?php endif; ?>
+								<?php esc_html_e( 'Tier title', 'wp-sell-services' ); ?>
+								<span class="wpss-required">*</span>
 							</label>
 							<input type="text"
 								class="wpss-form-input"
 								x-model="data.packages.<?php echo esc_attr( $tier ); ?>.name"
 								placeholder="<?php echo esc_attr( ucfirst( $tier ) ); ?>">
-						</div>
-
-						<div class="wpss-form-group">
-							<label class="wpss-form-label">
-								<?php esc_html_e( 'Package Description', 'wp-sell-services' ); ?>
-								<?php if ( 'basic' === $tier ) : ?>
-									<span class="wpss-required">*</span>
-								<?php endif; ?>
-							</label>
-							<textarea class="wpss-form-textarea"
-								x-model="data.packages.<?php echo esc_attr( $tier ); ?>.description"
-								rows="3"
-								placeholder="<?php esc_attr_e( 'What\'s included in this package?', 'wp-sell-services' ); ?>"></textarea>
+							<div class="wpss-form-hint"><?php esc_html_e( 'Short label buyers see on the package card (e.g. "Logo + 3 revisions").', 'wp-sell-services' ); ?></div>
 						</div>
 
 						<div class="wpss-form-row wpss-form-row--2col">
 							<div class="wpss-form-group">
 								<label class="wpss-form-label">
 									<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
-									<?php if ( 'basic' === $tier ) : ?>
-										<span class="wpss-required">*</span>
-									<?php endif; ?>
+									<span class="wpss-required">*</span>
 								</label>
 								<div class="wpss-input-group">
 									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
@@ -642,9 +716,7 @@ class ServiceWizard {
 							<div class="wpss-form-group">
 								<label class="wpss-form-label">
 									<?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?>
-									<?php if ( 'basic' === $tier ) : ?>
-										<span class="wpss-required">*</span>
-									<?php endif; ?>
+									<span class="wpss-required">*</span>
 								</label>
 								<select class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.delivery_time">
 									<option value=""><?php esc_html_e( 'Select', 'wp-sell-services' ); ?></option>
@@ -674,16 +746,17 @@ class ServiceWizard {
 							</div>
 						</div>
 
-						<!-- Custom Features -->
+						<?php /* Features list — vendors describe what's included via bullets, not prose. */ ?>
 						<div class="wpss-form-group">
-							<label class="wpss-form-label"><?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?></label>
+							<label class="wpss-form-label"><?php esc_html_e( "What's included", 'wp-sell-services' ); ?></label>
+							<div class="wpss-form-hint wpss-form-hint--top"><?php esc_html_e( 'List the deliverables for this tier. One bullet per line.', 'wp-sell-services' ); ?></div>
 							<div class="wpss-features-list">
 								<template x-for="(feature, index) in data.packages.<?php echo esc_attr( $tier ); ?>.features" :key="index">
 									<div class="wpss-feature-item">
 										<input type="text"
 											class="wpss-form-input"
 											x-model="data.packages.<?php echo esc_attr( $tier ); ?>.features[index]"
-											placeholder="<?php esc_attr_e( 'Feature description', 'wp-sell-services' ); ?>">
+											placeholder="<?php esc_attr_e( 'e.g. 3 logo concepts', 'wp-sell-services' ); ?>">
 										<button type="button" class="wpss-btn--icon" @click="removeFeature('<?php echo esc_attr( $tier ); ?>', index)">
 											<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 										</button>
@@ -691,7 +764,7 @@ class ServiceWizard {
 								</template>
 								<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm" @click="addFeature('<?php echo esc_attr( $tier ); ?>')">
 									<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-									<?php esc_html_e( 'Add Feature', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Add a deliverable', 'wp-sell-services' ); ?>
 								</button>
 							</div>
 						</div>
@@ -716,13 +789,26 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
-			<!-- Main Image -->
+			<?php /* Form-level error summary, populated by WpssFormError.summary() on validate failure. */ ?>
+			<div class="wpss-form-error-summary" hidden>
+				<p class="wpss-form-error-summary__title"><?php esc_html_e( 'Please fix the following:', 'wp-sell-services' ); ?></p>
+				<ul class="wpss-form-error-summary__list"></ul>
+			</div>
+
+			<?php /* Main image — the only required field on this step. */ ?>
 			<div class="wpss-form-group">
-				<label class="wpss-form-label">
+				<label class="wpss-form-label" for="wpss-wizard-main-image">
 					<?php esc_html_e( 'Main Image', 'wp-sell-services' ); ?>
 					<span class="wpss-required">*</span>
 				</label>
-				<div class="wpss-gallery-upload wpss-gallery-upload--main" @click="openMediaUploader('main')">
+				<div id="wpss-wizard-main-image"
+					class="wpss-gallery-upload wpss-gallery-upload--main"
+					tabindex="0"
+					role="button"
+					aria-describedby="wpss-wizard-main-image-error"
+					@click="openMediaUploader('main')"
+					@keydown.enter.prevent="openMediaUploader('main')"
+					@keydown.space.prevent="openMediaUploader('main')">
 					<template x-if="data.gallery.main">
 						<div class="wpss-gallery-preview">
 							<img :src="data.gallery.main.url" alt="">
@@ -739,39 +825,52 @@ class ServiceWizard {
 						</div>
 					</template>
 				</div>
+				<p id="wpss-wizard-main-image-error" class="wpss-form-error" hidden></p>
 			</div>
 
-			<!-- Additional Images -->
-			<div class="wpss-form-group">
-				<label class="wpss-form-label"><?php esc_html_e( 'Additional Images', 'wp-sell-services' ); ?></label>
-				<div class="wpss-gallery-grid">
-					<template x-for="(image, index) in data.gallery.images" :key="image.id">
-						<div class="wpss-gallery-item">
-							<img :src="image.url" alt="">
-							<button type="button" class="wpss-gallery-remove" @click="removeGalleryItem('images', index)">
-								<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
-							</button>
+			<?php
+			// Optional media — collapsed by default so vendors aren't visually
+			// pressured to add things they don't have. Replaces the previous
+			// always-visible Additional Images + Video sections (F3).
+			?>
+			<details class="wpss-form-disclosure">
+				<summary class="wpss-form-disclosure__summary">
+					<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Add more media (optional)', 'wp-sell-services' ); ?>
+				</summary>
+
+				<div class="wpss-form-disclosure__body">
+					<div class="wpss-form-group">
+						<label class="wpss-form-label"><?php esc_html_e( 'Additional Images', 'wp-sell-services' ); ?></label>
+						<div class="wpss-gallery-grid">
+							<template x-for="(image, index) in data.gallery.images" :key="image.id">
+								<div class="wpss-gallery-item">
+									<img :src="image.url" alt="">
+									<button type="button" class="wpss-gallery-remove" @click="removeGalleryItem('images', index)">
+										<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
+									</button>
+								</div>
+							</template>
+							<div class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()">
+								<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
+								<span><?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?></span>
+							</div>
 						</div>
-					</template>
-					<div class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()">
-						<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-						<span><?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?></span>
+						<div class="wpss-form-hint">
+							<span x-text="limits.max_gallery === -1 ? '<?php esc_attr_e( 'Unlimited additional images', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Up to', 'wp-sell-services' ); ?> ' + limits.max_gallery + ' <?php esc_attr_e( 'additional images', 'wp-sell-services' ); ?>'"></span>
+						</div>
+					</div>
+
+					<div class="wpss-form-group">
+						<label class="wpss-form-label"><?php esc_html_e( 'Showcase video', 'wp-sell-services' ); ?></label>
+						<div class="wpss-form-hint wpss-form-hint--top"><?php esc_html_e( 'YouTube or Vimeo URL.', 'wp-sell-services' ); ?></div>
+						<input type="url"
+							class="wpss-form-input"
+							x-model="data.gallery.video"
+							placeholder="<?php esc_attr_e( 'https://www.youtube.com/watch?v=...', 'wp-sell-services' ); ?>">
 					</div>
 				</div>
-				<div class="wpss-form-hint">
-					<span x-text="limits.max_gallery === -1 ? '<?php esc_attr_e( 'Unlimited additional images', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Up to', 'wp-sell-services' ); ?> ' + limits.max_gallery + ' <?php esc_attr_e( 'additional images', 'wp-sell-services' ); ?>'"></span>
-				</div>
-			</div>
-
-			<!-- Video -->
-			<div class="wpss-form-group">
-				<label class="wpss-form-label"><?php esc_html_e( 'Video (Optional)', 'wp-sell-services' ); ?></label>
-				<div class="wpss-form-hint wpss-form-hint--top"><?php esc_html_e( 'Add a YouTube or Vimeo URL to showcase your service.', 'wp-sell-services' ); ?></div>
-				<input type="url"
-					class="wpss-form-input"
-					x-model="data.gallery.video"
-					placeholder="<?php esc_attr_e( 'https://www.youtube.com/watch?v=...', 'wp-sell-services' ); ?>">
-			</div>
+			</details>
 		</div>
 		<?php
 	}

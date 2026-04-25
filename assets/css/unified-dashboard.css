@@ -1225,6 +1225,92 @@
 	}
 }
 
+/* Profile Completion Banner (F7 part a from baseline-2026-04-25.md) */
+.wpss-dashboard__profile-banner {
+	background: linear-gradient(135deg, var(--wpss-primary-light, #eef2ff) 0%, var(--wpss-primary-50, rgba(79, 70, 229, 0.05)) 100%);
+	border: 1px solid var(--wpss-primary, #4f46e5);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 16px 20px;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	position: relative;
+}
+
+.wpss-profile-banner__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-profile-banner__icon .wpss-icon {
+	width: 20px;
+	height: 20px;
+}
+
+.wpss-profile-banner__content {
+	flex: 1;
+}
+
+.wpss-profile-banner__title {
+	display: block;
+	margin-bottom: 2px;
+	color: var(--wpss-primary-dark, #4338ca);
+	font-size: 15px;
+}
+
+.wpss-profile-banner__text {
+	color: var(--wpss-text, #1f2937);
+	font-size: 13px;
+}
+
+.wpss-profile-banner__btn {
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.wpss-profile-banner__dismiss {
+	background: transparent;
+	border: 0;
+	color: var(--wpss-text-muted, #6b7280);
+	cursor: pointer;
+	font-size: 22px;
+	line-height: 1;
+	padding: 0 8px;
+	flex-shrink: 0;
+	transition: color 0.2s ease;
+}
+
+.wpss-profile-banner__dismiss:hover {
+	color: var(--wpss-text, #1f2937);
+}
+
+@media (max-width: 600px) {
+	.wpss-dashboard__profile-banner {
+		flex-direction: column;
+		text-align: center;
+		gap: 12px;
+	}
+
+	.wpss-profile-banner__btn {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.wpss-profile-banner__dismiss {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+	}
+}
+
 /* Vendor Registration Shortcode */
 .wpss-vendor-registration {
 	max-width: 600px;

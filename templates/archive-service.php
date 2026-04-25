@@ -77,6 +77,8 @@ $per_page = apply_filters( 'wpss_services_per_page', 12 );
 do_action( 'wpss_before_service_archive' );
 ?>
 
+<div class="wpss-app-shell">
+<div class="wpss-app-shell__container">
 <div class="wpss-services-archive">
 	<div class="wpss-container">
 		<div class="wpss-archive-header-wrap">
@@ -134,6 +136,8 @@ do_action( 'wpss_before_service_archive' );
 		do_action( 'wpss_service_archive_sidebar' );
 		?>
 	</div>
+</div>
+</div>
 </div>
 
 <?php

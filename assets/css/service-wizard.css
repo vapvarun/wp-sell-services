@@ -56,11 +56,26 @@
 	align-items: center;
 	position: relative;
 	z-index: 1;
-	cursor: pointer;
+	/* Default: no pointer — only completed/active steps are clickable for jump-back.
+	   Fixes B4 (misleading affordance) from baseline-2026-04-25.md. */
+	cursor: default;
 	transition: opacity var(--wpss-transition, 0.2s ease);
 }
 
-.wpss-wizard__progress-item:hover {
+/* Active step is the current screen — clicking does nothing useful, but pointer
+   is fine to indicate it's interactive. */
+.wpss-wizard__progress-item--active {
+	cursor: pointer;
+}
+
+/* Completed steps support jump-back via goToStep(). */
+.wpss-wizard__progress-item--completed {
+	cursor: pointer;
+}
+
+/* Only show the hover hint on items the vendor can actually click. */
+.wpss-wizard__progress-item--active:hover,
+.wpss-wizard__progress-item--completed:hover {
 	opacity: 0.8;
 }
 
@@ -1102,4 +1117,100 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-wizard__btn-publish:hover {
 	background: var(--wpss-success, #059669);
+}
+
+/* ==========================================================================
+   Pricing — opt-in tier buttons (F1 from baseline-2026-04-25.md)
+   ----------------------------------------------------------------------------
+   Replaces the previous "all 3 tabs visible from start" pattern with explicit
+   "+ Add Standard tier" / "+ Add Premium tier" buttons. New vendors see ONE
+   tier (Basic) and add more only when they need them.
+   ========================================================================== */
+
+.wpss-pricing-add-tier-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-3, 12px);
+	margin: var(--wpss-space-4, 16px) 0 var(--wpss-space-6, 24px);
+}
+
+.wpss-pricing-add-tier {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	padding: var(--wpss-space-2, 8px) var(--wpss-space-4, 16px);
+	background: transparent;
+	color: var(--wpss-primary, #4f46e5);
+	border: 1px dashed var(--wpss-primary, #4f46e5);
+	border-radius: var(--wpss-radius, 8px);
+	font-size: var(--wpss-text-sm, 14px);
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.wpss-pricing-add-tier:hover {
+	background: var(--wpss-primary-light, #eef2ff);
+	color: var(--wpss-primary-dark, #4338ca);
+}
+
+.wpss-pricing-tier-actions {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: var(--wpss-space-3, 12px);
+}
+
+.wpss-pricing-tier-remove {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-1, 4px);
+	padding: var(--wpss-space-1, 4px) var(--wpss-space-3, 12px);
+	background: transparent;
+	color: var(--wpss-text-muted, #6b7280);
+	border: 0;
+	font-size: var(--wpss-text-xs, 12px);
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.wpss-pricing-tier-remove:hover {
+	color: var(--wpss-danger, #ef4444);
+}
+
+/* ==========================================================================
+   Form disclosure (F3 from baseline-2026-04-25.md)
+   ----------------------------------------------------------------------------
+   Native <details>/<summary> styling for "+ Add more (optional)" sections.
+   Used on the Gallery step to collapse Additional Images + Video URL by
+   default — most vendors don't need either, so don't take their visual space.
+   ========================================================================== */
+
+.wpss-form-disclosure {
+	margin-top: var(--wpss-space-6, 24px);
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+	padding-top: var(--wpss-space-4, 16px);
+}
+
+.wpss-form-disclosure__summary {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	color: var(--wpss-primary, #4f46e5);
+	cursor: pointer;
+	font-weight: 500;
+	font-size: var(--wpss-text-sm, 14px);
+	padding: var(--wpss-space-2, 8px) 0;
+	list-style: none;
+}
+
+.wpss-form-disclosure__summary::-webkit-details-marker {
+	display: none;
+}
+
+.wpss-form-disclosure__summary:hover {
+	color: var(--wpss-primary-dark, #4338ca);
+}
+
+.wpss-form-disclosure__body {
+	margin-top: var(--wpss-space-4, 16px);
 }

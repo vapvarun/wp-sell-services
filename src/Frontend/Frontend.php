@@ -86,10 +86,20 @@ class Frontend {
 			true
 		);
 
+		// UX primitives (form errors, autosave indicator) — dependency-free
+		// helpers used by the wizard, profile editor, and any future form UI.
+		wp_register_script(
+			'wpss-ux-primitives',
+			\WPSS_PLUGIN_URL . 'assets/js/components/wpss-ux-primitives.js',
+			array(),
+			\WPSS_VERSION,
+			true
+		);
+
 		wp_register_script(
 			'wpss-frontend',
 			\WPSS_PLUGIN_URL . 'assets/js/frontend.js',
-			array( 'jquery', 'alpinejs', 'wpss-icons' ),
+			array( 'jquery', 'alpinejs', 'wpss-icons', 'wpss-ux-primitives' ),
 			\WPSS_VERSION,
 			true
 		);
@@ -203,6 +213,12 @@ class Frontend {
 					'skipRequirementsConfirm'     => __( 'You can submit requirements later. Continue to checkout?', 'wp-sell-services' ),
 					'continue'                    => __( 'Continue', 'wp-sell-services' ),
 					'enterReason'                 => __( 'Enter your reason...', 'wp-sell-services' ),
+					// UX primitives — autosave indicator labels.
+					'autosaveSaving'              => __( 'Saving…', 'wp-sell-services' ),
+					'autosaveSaved'               => __( 'Saved', 'wp-sell-services' ),
+					'autosaveError'               => __( 'Save failed', 'wp-sell-services' ),
+					// UX primitives — form-level error summary heading.
+					'formErrorSummaryTitle'       => __( 'Please fix the following:', 'wp-sell-services' ),
 				),
 			)
 		);
