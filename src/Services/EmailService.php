@@ -54,6 +54,7 @@ class EmailService {
 	public const TYPE_MODERATION_PENDING     = 'moderation_pending';
 	public const TYPE_MODERATION_RESPONSE    = 'moderation_response';
 	public const TYPE_TIP_RECEIVED           = 'tip_received';
+	public const TYPE_REVIEW_RECEIVED        = 'review_received';
 	public const TYPE_MILESTONE_PROPOSED     = 'milestone_proposed';
 	public const TYPE_MILESTONE_PAID         = 'milestone_paid';
 	public const TYPE_MILESTONE_SUBMITTED    = 'milestone_submitted';
@@ -430,6 +431,60 @@ class EmailService {
 	 * @param string       $note        Optional buyer message (tip note).
 	 * @return bool Whether the mail was handed off to WordPress.
 	 */
+	/**
+	 * Send a "You received a review" email to the vendor.
+	 *
+	 * Fired by Plugin.php on the wpss_review_created action. Surfaces the
+	 * star rating, written review, and a deep link to the public review on
+	 * the service page so the vendor can read + reply.
+	 *
+	 * CB4 from plans/ORDER-FLOW-AUDIT.md.
+	 *
+	 * @since 1.1.0
+	 * @param int    $review_id Review row id from wp_wpss_reviews.
+	 * @param int    $vendor_id Vendor user id (recipient).
+	 * @param int    $rating    Star rating 1-5.
+	 * @param string $comment   Buyer's written review (may be empty).
+	 * @param string $buyer_name Buyer's display name.
+	 * @param int    $service_id Linked service post id (for deep link).
+	 * @return bool
+	 */
+	public function send_review_received( int $review_id, int $vendor_id, int $rating, string $comment, string $buyer_name, int $service_id ): bool {
+		unset( $review_id ); // currently unused but kept in signature for future deep-link routing.
+		$vendor = get_user_by( 'id', $vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$service        = $service_id ? get_post( $service_id ) : null;
+		$service_title  = $service ? $service->post_title : __( 'your service', 'wp-sell-services' );
+		$service_url    = $service ? get_permalink( $service ) : '';
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: stars, 3: buyer name */
+			__( '[%1$s] %2$s review from %3$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			str_repeat( '★', max( 1, min( 5, $rating ) ) ),
+			$buyer_name
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_REVIEW_RECEIVED,
+			array(
+				'recipient'     => $vendor,
+				'email_heading' => __( 'You received a new review', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer_name,
+				'rating'        => $rating,
+				'comment'       => $comment,
+				'service_title' => $service_title,
+				'service_url'   => $service_url,
+			)
+		);
+	}
+
 	public function send_tip_received( ServiceOrder $tip_order, float $gross, float $net_vendor, string $note = '' ): bool {
 		$vendor = get_user_by( 'id', $tip_order->vendor_id );
 		if ( ! $vendor ) {
@@ -1776,6 +1831,7 @@ class EmailService {
 			self::TYPE_MODERATION_PENDING     => 'moderation-pending.php',
 			self::TYPE_MODERATION_RESPONSE    => 'moderation-response.php',
 			self::TYPE_TIP_RECEIVED           => 'tip-received.php',
+			self::TYPE_REVIEW_RECEIVED        => 'review-received.php',
 			self::TYPE_MILESTONE_PROPOSED     => 'milestone-proposed.php',
 			self::TYPE_MILESTONE_PAID         => 'milestone-paid.php',
 			self::TYPE_MILESTONE_SUBMITTED    => 'milestone-submitted.php',
@@ -1891,6 +1947,7 @@ class EmailService {
 			self::TYPE_CANCELLATION_REQUESTED => 'cancellation',
 			self::TYPE_DISPUTE_OPENED         => 'disputes',
 			self::TYPE_TIP_RECEIVED           => 'tips',
+			self::TYPE_REVIEW_RECEIVED        => 'completion',
 			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawals',
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawals',
 			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawals',
