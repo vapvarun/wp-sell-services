@@ -32,7 +32,7 @@ Target release: `1.1.0-rc3` (single ZIP, all 22 fixed before Shashank QA)
 
 | ID | Severity | Issue | File |
 |---|---|---|---|
-| **VS1** | 🔴 | 14-day earnings clearance — vendor cash locked 2 weeks post-completion, no early-unlock | `EarningsService::get_summary():68-78` |
+| **VS1** | 🔴 | ~~14-day earnings clearance hard-coded~~ — re-evaluated during implementation: clearance_days is ALREADY configurable via the `wpss_payouts.clearance_days` admin setting (Settings.php:543) AND ALREADY enforced by `EarningsService::get_summary()` (line 49). Default is 14 days, admins can lower it. Stale code comment claiming "not yet enforced" was misleading; corrected. Closed as already-implemented. | `EarningsService::get_summary():49`, `Settings.php:543` |
 | **VS2** | 🔴 | Sub-order type (milestone/extension) opaque — no badge on order detail explaining payment structure | `templates/order/order-view.php` |
 | **VS3** | 🔴 | Revisions unbounded — buyer can demand infinite revisions, no max-limit | `Frontend/AjaxHandlers.php` (no revision_count field) |
 | VS4 | 🟠 | Requirements form silently blank if service post meta corrupted | `RequirementsService::get_service_fields()` |
