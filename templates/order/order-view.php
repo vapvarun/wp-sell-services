@@ -139,6 +139,51 @@ do_action( 'wpss_before_order_view', $order );
 			<span class="wpss-badge wpss-badge--lg wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
 				<?php echo esc_html( $status_label ); ?>
 			</span>
+
+			<?php
+			// CB3 + VS3 (plans/ORDER-FLOW-AUDIT.md): persistent revision count
+			// badge shown to both buyer and vendor on every order status. Buyer
+			// sees how many revisions they have left to use; vendor sees the
+			// scope they're committed to. Hidden only for completed/cancelled
+			// orders where revisions no longer matter.
+			$show_revision_badge = ! in_array( $order->status, array( 'cancelled', 'refunded' ), true )
+				&& ( (int) $order->revisions_included > 0 || -1 === (int) $order->revisions_included );
+			if ( $show_revision_badge ) :
+				$rev_used      = (int) $order->revisions_used;
+				$rev_included  = (int) $order->revisions_included;
+				$rev_unlimited = -1 === $rev_included;
+				$rev_remaining = $rev_unlimited ? -1 : max( 0, $rev_included - $rev_used );
+				$rev_class     = 'wpss-revision-badge';
+				if ( ! $rev_unlimited ) {
+					if ( 0 === $rev_remaining ) {
+						$rev_class .= ' wpss-revision-badge--exhausted';
+					} elseif ( 1 === $rev_remaining ) {
+						$rev_class .= ' wpss-revision-badge--last';
+					}
+				}
+				?>
+				<span class="<?php echo esc_attr( $rev_class ); ?>" title="<?php esc_attr_e( 'Revision policy for this order', 'wp-sell-services' ); ?>">
+					<i data-lucide="repeat" class="wpss-icon" aria-hidden="true"></i>
+					<?php
+					if ( $rev_unlimited ) {
+						esc_html_e( 'Unlimited revisions', 'wp-sell-services' );
+					} elseif ( 0 === $rev_remaining ) {
+						printf(
+							/* translators: %d: total revisions used */
+							esc_html__( 'All %d revisions used', 'wp-sell-services' ),
+							$rev_used
+						);
+					} else {
+						printf(
+							/* translators: 1: revisions remaining, 2: total included */
+							esc_html__( '%1$d of %2$d revisions left', 'wp-sell-services' ),
+							$rev_remaining,
+							$rev_included
+						);
+					}
+					?>
+				</span>
+			<?php endif; ?>
 		</div>
 
 		<?php
@@ -2026,6 +2071,39 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	padding-bottom: 1.5rem;
 	margin-bottom: 1.5rem;
 	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+/* Persistent revision count badge (CB3 + VS3 from plans/ORDER-FLOW-AUDIT.md) */
+.wpss-revision-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: 8px;
+	padding: 4px 10px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #4b5563;
+	background: #f3f4f6;
+	border: 1px solid #e5e7eb;
+	border-radius: 9999px;
+	vertical-align: middle;
+}
+
+.wpss-revision-badge .wpss-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.wpss-revision-badge--last {
+	color: #b45309;
+	background: #fffbeb;
+	border-color: #fde68a;
+}
+
+.wpss-revision-badge--exhausted {
+	color: #b91c1c;
+	background: #fef2f2;
+	border-color: #fecaca;
 }
 
 .wpss-order-view__title-info {
