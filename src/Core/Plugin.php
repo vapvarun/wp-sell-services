@@ -23,6 +23,7 @@ use WPSellServices\Frontend\TemplateLoader;
 use WPSellServices\Frontend\ServiceArchiveView;
 use WPSellServices\Frontend\BuyerRequestArchiveView;
 use WPSellServices\Frontend\ServiceWizard;
+use WPSellServices\Frontend\PublicSignup;
 use WPSellServices\Frontend\Tour;
 use WPSellServices\Frontend\UnifiedDashboard;
 use WPSellServices\Integrations\IntegrationManager;
@@ -1202,6 +1203,10 @@ final class Plugin {
 		$this->unified_dashboard = new UnifiedDashboard();
 
 		$this->loader->add_action( 'init', $this->unified_dashboard, 'init' );
+
+		// Public signup AJAX handler — registered on init so it's available to
+		// both logged-in (re-promote) and logged-out (new signup) requests.
+		( new PublicSignup() )->init();
 	}
 
 	/**

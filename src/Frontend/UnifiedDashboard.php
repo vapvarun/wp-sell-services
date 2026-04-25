@@ -707,7 +707,9 @@ class UnifiedDashboard {
 		$missing_str = implode( ', ', $missing );
 		?>
 		<div class="wpss-dashboard__profile-banner" data-wpss-profile-banner role="status">
-			<span class="wpss-profile-banner__icon" aria-hidden="true">&#128100;</span>
+			<span class="wpss-profile-banner__icon" aria-hidden="true">
+				<i data-lucide="user-circle" class="wpss-icon" aria-hidden="true"></i>
+			</span>
 			<div class="wpss-profile-banner__content">
 				<strong class="wpss-profile-banner__title">
 					<?php esc_html_e( 'Complete your profile to attract more buyers', 'wp-sell-services' ); ?>

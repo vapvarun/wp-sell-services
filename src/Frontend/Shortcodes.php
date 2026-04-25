@@ -1007,22 +1007,53 @@ class Shortcodes {
 		$this->render_vendor_registration_styles();
 
 		if ( ! is_user_logged_in() ) {
-			$login_url    = wp_login_url( get_permalink() );
-			$register_url = wp_registration_url();
 			?>
 			<div class="wpss-vr">
-				<div class="wpss-vr__card">
-					<div class="wpss-vr__emoji">&#128075;</div>
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?></h2>
-					<p class="wpss-vr__desc"><?php esc_html_e( 'Sign in to your account to get started as a vendor on our marketplace.', 'wp-sell-services' ); ?></p>
-					<div class="wpss-vr__actions">
-						<a href="<?php echo esc_url( $login_url ); ?>" class="wpss-vr__btn wpss-vr__btn--primary">
-							<?php esc_html_e( 'Log In', 'wp-sell-services' ); ?>
-						</a>
-						<a href="<?php echo esc_url( $register_url ); ?>" class="wpss-vr__btn wpss-vr__btn--outline">
-							<?php esc_html_e( 'Create Account', 'wp-sell-services' ); ?>
-						</a>
+				<div class="wpss-vr__card wpss-vr__card--wide">
+					<div class="wpss-vr__hero-icon">
+						<i data-lucide="rocket" class="wpss-icon" aria-hidden="true"></i>
 					</div>
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'Create your vendor account in seconds. No credit card required.', 'wp-sell-services' ); ?></p>
+
+					<div class="wpss-vr__features">
+						<div class="wpss-vr__feature">
+							<span class="wpss-vr__feature-icon">
+								<i data-lucide="palette" class="wpss-icon" aria-hidden="true"></i>
+							</span>
+							<div>
+								<strong><?php esc_html_e( 'Create Services', 'wp-sell-services' ); ?></strong>
+								<span><?php esc_html_e( 'Build unlimited service listings with custom packages', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+						<div class="wpss-vr__feature">
+							<span class="wpss-vr__feature-icon">
+								<i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i>
+							</span>
+							<div>
+								<strong><?php esc_html_e( 'Get Paid', 'wp-sell-services' ); ?></strong>
+								<span><?php esc_html_e( 'Secure payments with flexible withdrawal options', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+						<div class="wpss-vr__feature">
+							<span class="wpss-vr__feature-icon">
+								<i data-lucide="trending-up" class="wpss-icon" aria-hidden="true"></i>
+							</span>
+							<div>
+								<strong><?php esc_html_e( 'Grow Your Business', 'wp-sell-services' ); ?></strong>
+								<span><?php esc_html_e( 'Analytics dashboard to track performance and revenue', 'wp-sell-services' ); ?></span>
+							</div>
+						</div>
+					</div>
+
+					<?php
+					// B1 (baseline-2026-04-25.md): inline signup form replaces the
+					// previous "Log In / Create Account" buttons that punted visitors
+					// to the bare wp-login.php screen. Brand-new visitors can now
+					// become vendors in one form, on one page, without leaving the
+					// marketplace experience.
+					( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'vendor' );
+					?>
 				</div>
 			</div>
 			<?php
@@ -1037,7 +1068,9 @@ class Shortcodes {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
-					<div class="wpss-vr__emoji">&#9989;</div>
+					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--success">
+						<i data-lucide="badge-check" class="wpss-icon" aria-hidden="true"></i>
+					</div>
 					<h2 class="wpss-vr__title"><?php esc_html_e( 'You\'re already a vendor', 'wp-sell-services' ); ?></h2>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'Your vendor account is active. Head to your dashboard to manage services, view orders, and track earnings.', 'wp-sell-services' ); ?></p>
 					<div class="wpss-vr__actions">
@@ -1059,7 +1092,9 @@ class Shortcodes {
 			?>
 			<div class="wpss-vr">
 				<div class="wpss-vr__card">
-					<div class="wpss-vr__emoji">&#128274;</div>
+					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--muted">
+						<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
+					</div>
 					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
 				</div>
@@ -1072,27 +1107,35 @@ class Shortcodes {
 		?>
 		<div class="wpss-vr">
 			<div class="wpss-vr__card wpss-vr__card--wide">
-				<div class="wpss-vr__emoji">&#128640;</div>
+				<div class="wpss-vr__hero-icon">
+					<i data-lucide="rocket" class="wpss-icon" aria-hidden="true"></i>
+				</div>
 				<h2 class="wpss-vr__title"><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-vr__desc"><?php esc_html_e( 'Join our marketplace and turn your skills into income. Create listings, set your rates, and connect with clients worldwide.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-vr__features">
 					<div class="wpss-vr__feature">
-						<span class="wpss-vr__feature-icon">&#127912;</span>
+						<span class="wpss-vr__feature-icon">
+							<i data-lucide="palette" class="wpss-icon" aria-hidden="true"></i>
+						</span>
 						<div>
 							<strong><?php esc_html_e( 'Create Services', 'wp-sell-services' ); ?></strong>
 							<span><?php esc_html_e( 'Build unlimited service listings with custom packages', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 					<div class="wpss-vr__feature">
-						<span class="wpss-vr__feature-icon">&#128176;</span>
+						<span class="wpss-vr__feature-icon">
+							<i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i>
+						</span>
 						<div>
 							<strong><?php esc_html_e( 'Get Paid', 'wp-sell-services' ); ?></strong>
 							<span><?php esc_html_e( 'Secure payments with flexible withdrawal options', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
 					<div class="wpss-vr__feature">
-						<span class="wpss-vr__feature-icon">&#128200;</span>
+						<span class="wpss-vr__feature-icon">
+							<i data-lucide="trending-up" class="wpss-icon" aria-hidden="true"></i>
+						</span>
 						<div>
 							<strong><?php esc_html_e( 'Grow Your Business', 'wp-sell-services' ); ?></strong>
 							<span><?php esc_html_e( 'Analytics dashboard to track performance and revenue', 'wp-sell-services' ); ?></span>
@@ -1185,7 +1228,18 @@ class Shortcodes {
 			text-align: center;
 			box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 		}
-		.wpss-vr__emoji { font-size: 48px; margin-bottom: 16px; line-height: 1; }
+		/* Hero icon container — Lucide via <i data-lucide> at 48x48. */
+		.wpss-vr__hero-icon {
+			display: inline-flex; align-items: center; justify-content: center;
+			width: 64px; height: 64px;
+			margin: 0 auto 16px;
+			border-radius: 16px;
+			background: #eef2ff;
+			color: #4f46e5;
+		}
+		.wpss-vr__hero-icon .wpss-icon { width: 32px; height: 32px; }
+		.wpss-vr__hero-icon--success { background: #dcfce7; color: #16a34a; }
+		.wpss-vr__hero-icon--muted { background: #f3f4f6; color: #6b7280; }
 		.wpss-vr__title {
 			font-size: 24px; font-weight: 700; color: #111827;
 			margin: 0 0 12px; line-height: 1.3;
@@ -1202,7 +1256,15 @@ class Shortcodes {
 		.wpss-vr__feature {
 			display: flex; align-items: flex-start; gap: 14px;
 		}
-		.wpss-vr__feature-icon { font-size: 24px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+		.wpss-vr__feature-icon {
+			display: inline-flex; align-items: center; justify-content: center;
+			width: 32px; height: 32px;
+			flex-shrink: 0; margin-top: 2px;
+			border-radius: 8px;
+			background: #eef2ff;
+			color: #4f46e5;
+		}
+		.wpss-vr__feature-icon .wpss-icon { width: 18px; height: 18px; }
 		.wpss-vr__feature strong {
 			display: block; font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 2px;
 		}
@@ -1227,6 +1289,41 @@ class Shortcodes {
 		}
 		.wpss-vr__btn--outline:hover { border-color: #9ca3af; color: #111827; }
 		.wpss-vr__btn--lg { padding: 14px 36px; font-size: 16px; }
+
+		/* Inline public signup form (B1 from baseline-2026-04-25.md). */
+		.wpss-signup-form { text-align: left; max-width: 440px; margin: 0 auto; }
+		.wpss-signup-form .wpss-form-group { margin-bottom: 16px; }
+		.wpss-signup-form .wpss-form-label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+		.wpss-signup-form .wpss-form-input {
+			width: 100%; padding: 10px 14px; font-size: 14px;
+			border: 1px solid #d1d5db; border-radius: 8px;
+			background: #fff; color: #111827;
+			transition: border-color 0.15s ease, box-shadow 0.15s ease;
+			box-sizing: border-box;
+		}
+		.wpss-signup-form .wpss-form-input:focus {
+			outline: none; border-color: #4f46e5;
+			box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+		}
+		.wpss-signup-form .wpss-form-hint { font-size: 12px; color: #6b7280; margin: 4px 0 0; }
+		.wpss-signup-form .wpss-required { color: #ef4444; }
+		.wpss-signup-form__submit {
+			display: block; width: 100%; padding: 14px 24px;
+			font-size: 15px; font-weight: 600;
+			background: #4f46e5; color: #fff;
+			border: 0; border-radius: 10px; cursor: pointer;
+			transition: background-color 0.15s ease;
+			margin-top: 8px;
+		}
+		.wpss-signup-form__submit:hover:not(:disabled) { background: #4338ca; }
+		.wpss-signup-form__submit:disabled { opacity: 0.6; cursor: not-allowed; }
+		.wpss-signup-form__signin {
+			text-align: center; font-size: 13px; color: #6b7280;
+			margin: 16px 0 0; padding-top: 16px; border-top: 1px solid #e5e7eb;
+		}
+		.wpss-signup-form__signin a { color: #4f46e5; font-weight: 600; text-decoration: none; }
+		.wpss-signup-form__signin a:hover { text-decoration: underline; }
+
 		@media (max-width: 480px) {
 			.wpss-vr__card { padding: 32px 24px; }
 			.wpss-vr__actions { flex-direction: column; }
