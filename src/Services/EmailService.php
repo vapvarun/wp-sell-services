@@ -727,7 +727,7 @@ class EmailService {
 	 * @param int          $extra_days  Days added to the parent deadline.
 	 * @return bool
 	 */
-	public function send_extension_approved( ServiceOrder $extension, float $net, int $extra_days ): bool {
+	public function send_extension_approved( ServiceOrder $extension, float $net, int $extra_days, ?string $new_deadline = null ): bool {
 		$vendor = get_user_by( 'id', $extension->vendor_id );
 		if ( ! $vendor ) {
 			return false;
@@ -742,6 +742,16 @@ class EmailService {
 			wpss_get_platform_name()
 		);
 
+		// VS5 (plans/ORDER-FLOW-AUDIT.md): vendor needs to see both old and new
+		// deadlines side-by-side. Derive old from new - extra_days when caller
+		// supplies the new deadline; otherwise leave both empty so the template
+		// gracefully falls back to the pre-1.1.0-rc3 layout.
+		$old_deadline = '';
+		if ( $new_deadline && $extra_days > 0 ) {
+			$old_ts       = strtotime( $new_deadline ) - ( $extra_days * DAY_IN_SECONDS );
+			$old_deadline = $old_ts ? gmdate( 'Y-m-d H:i:s', $old_ts ) : '';
+		}
+
 		return $this->send(
 			$vendor->user_email,
 			$subject,
@@ -755,6 +765,8 @@ class EmailService {
 				'gross_amount'  => (float) $extension->total,
 				'net_amount'    => $net,
 				'extra_days'    => $extra_days,
+				'old_deadline'  => $old_deadline,
+				'new_deadline'  => $new_deadline ?? '',
 				'currency'      => $extension->currency ?? wpss_get_currency(),
 			)
 		);

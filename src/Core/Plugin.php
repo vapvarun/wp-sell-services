@@ -659,7 +659,15 @@ final class Plugin {
 				);
 				$sub = wpss_get_order( $pay_order_id );
 				if ( $sub ) {
-					$email_service->send_extension_approved( $sub, $net_amount, $extra_days );
+					// VS5 (plans/ORDER-FLOW-AUDIT.md): pass the parent order's
+					// new deadline so the vendor email shows old + new dates
+					// side-by-side instead of a silent push.
+					$parent       = wpss_get_order( $parent_order_id );
+					$new_deadline = null;
+					if ( $parent && $parent->delivery_deadline instanceof \DateTimeImmutable ) {
+						$new_deadline = $parent->delivery_deadline->format( 'Y-m-d H:i:s' );
+					}
+					$email_service->send_extension_approved( $sub, $net_amount, $extra_days, $new_deadline );
 				}
 			},
 			null,
