@@ -820,6 +820,42 @@ do_action( 'wpss_before_order_view', $order );
 			'other'                => __( 'Other', 'wp-sell-services' ),
 		);
 		$reason_label  = $reason_labels[ $cancel_reason ] ?? $cancel_reason;
+
+		// CB5 + VS7 (plans/ORDER-FLOW-AUDIT.md): visible auto-cancel countdown.
+		// Both buyer and vendor see exactly when the cancellation_requested
+		// state will auto-resolve via the existing 48h cron. Computed from the
+		// requested_at timestamp baked into vendor_notes JSON.
+		$requested_at_iso = $cancel_data['requested_at'] ?? '';
+		$cancellation_deadline_ts = 0;
+		$time_remaining_label     = '';
+		if ( $requested_at_iso ) {
+			$requested_ts             = strtotime( $requested_at_iso );
+			$cancellation_deadline_ts = $requested_ts + ( 48 * HOUR_IN_SECONDS );
+			$seconds_left             = $cancellation_deadline_ts - current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+			if ( $seconds_left > 0 ) {
+				$hours_left   = floor( $seconds_left / HOUR_IN_SECONDS );
+				$minutes_left = floor( ( $seconds_left % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+				if ( $hours_left >= 24 ) {
+					$days_left            = floor( $hours_left / 24 );
+					$leftover_hours       = $hours_left % 24;
+					$time_remaining_label = sprintf(
+						/* translators: 1: days, 2: hours */
+						__( 'Auto-cancels in %1$dd %2$dh if no response', 'wp-sell-services' ),
+						$days_left,
+						$leftover_hours
+					);
+				} else {
+					$time_remaining_label = sprintf(
+						/* translators: 1: hours, 2: minutes */
+						__( 'Auto-cancels in %1$dh %2$dm if no response', 'wp-sell-services' ),
+						$hours_left,
+						$minutes_left
+					);
+				}
+			} else {
+				$time_remaining_label = __( 'Auto-cancellation pending — will process within the hour.', 'wp-sell-services' );
+			}
+		}
 		?>
 		<section class="wpss-order-section">
 			<div class="wpss-order-section__body">
@@ -847,9 +883,10 @@ do_action( 'wpss_before_order_view', $order );
 								<?php echo esc_html( $cancel_note ); ?>
 							</p>
 						<?php endif; ?>
-						<?php if ( $is_vendor ) : ?>
-							<p style="margin: 8px 0 0 0; font-size: 0.875rem; color: #92400e;">
-								<?php esc_html_e( 'You have 48 hours to respond. If no action is taken, the order will be automatically cancelled.', 'wp-sell-services' ); ?>
+						<?php if ( $time_remaining_label ) : ?>
+							<p style="margin: 12px 0 0 0; font-size: 0.875rem; color: #92400e; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255, 255, 255, 0.6); border-radius: 9999px;">
+								<i data-lucide="clock" class="wpss-icon" aria-hidden="true" style="width:14px;height:14px;"></i>
+								<?php echo esc_html( $time_remaining_label ); ?>
 							</p>
 						<?php endif; ?>
 					</div>
