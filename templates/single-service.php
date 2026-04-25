@@ -102,6 +102,8 @@ $layout = apply_filters( 'wpss_single_service_layout', 'default', $service_id );
 do_action( 'wpss_before_single_service', $service );
 ?>
 
+<div class="wpss-app-shell">
+<div class="wpss-app-shell__container">
 <div class="wpss-single-service wpss-layout-<?php echo esc_attr( $layout ); ?>">
 	<div class="wpss-container">
 		<?php
@@ -195,6 +197,8 @@ do_action( 'wpss_before_single_service', $service );
 			?>
 		<?php endwhile; ?>
 	</div>
+</div>
+</div>
 </div>
 
 <?php

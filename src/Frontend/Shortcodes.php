@@ -473,6 +473,7 @@ class Shortcodes {
 
 		ob_start();
 		?>
+		<div class="wpss-app-shell"><div class="wpss-app-shell__container">
 		<div class="wpss-buyer-requests">
 			<?php
 			if ( ! empty( $requests ) ) :
@@ -484,6 +485,7 @@ class Shortcodes {
 				<p class="wpss-no-results"><?php esc_html_e( 'No buyer requests found.', 'wp-sell-services' ); ?></p>
 			<?php endif; ?>
 		</div>
+		</div></div>
 		<?php
 		return ob_get_clean();
 	}
@@ -952,6 +954,7 @@ class Shortcodes {
 	 */
 	private function render_vendor_profile_fallback( array $profile, int $vendor_id ): void {
 		?>
+		<div class="wpss-app-shell"><div class="wpss-app-shell__container">
 		<div class="wpss-vendor-profile">
 			<div class="wpss-vendor-header">
 				<?php echo get_avatar( $vendor_id, 120 ); ?>
@@ -964,6 +967,7 @@ class Shortcodes {
 				<div class="wpss-vendor-bio"><?php echo wp_kses_post( $profile['bio'] ); ?></div>
 			<?php endif; ?>
 		</div>
+		</div></div>
 		<?php
 	}
 
@@ -1218,7 +1222,12 @@ class Shortcodes {
 		$rendered = true;
 		?>
 		<style>
-		.wpss-vr { max-width: 560px; margin: 40px auto; padding: 0 20px; }
+		/* B2 (baseline-2026-04-25.md): position:relative + isolation:isolate
+		   + contain:layout creates a stacking context so any sticky/fixed
+		   elements from the host theme cannot bleed into the card. Same
+		   fix the wpss-app-shell primitive applies on bigger frontend
+		   surfaces (dashboard, single service, archive). */
+		.wpss-vr { max-width: 560px; margin: 40px auto; padding: 0 20px; position: relative; isolation: isolate; contain: layout; }
 		.wpss-vr__card--wide { max-width: 640px; }
 		.wpss-vr__card {
 			background: #fff;

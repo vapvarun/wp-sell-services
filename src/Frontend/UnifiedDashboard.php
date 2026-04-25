@@ -352,8 +352,10 @@ class UnifiedDashboard {
 		$is_pending    = 'pending' === $vendor_status;
 		$section_data  = $this->get_section_data( $this->current_section );
 		?>
-		<div class="wpss-dashboard">
-			<aside class="wpss-dashboard__sidebar">
+		<div class="wpss-app-shell">
+			<div class="wpss-app-shell__container">
+				<div class="wpss-dashboard">
+					<aside class="wpss-dashboard__sidebar">
 				<div class="wpss-dashboard__user">
 					<?php echo get_avatar( $user_id, 48, '', '', array( 'class' => 'wpss-dashboard__avatar' ) ); ?>
 					<div class="wpss-dashboard__user-info">
@@ -446,6 +448,8 @@ class UnifiedDashboard {
 					<?php $this->render_section( $this->current_section ); ?>
 				</div>
 			</main>
+				</div>
+			</div>
 		</div>
 		<?php
 	}
