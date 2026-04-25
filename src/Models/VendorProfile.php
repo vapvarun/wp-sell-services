@@ -465,6 +465,28 @@ class VendorProfile {
 	}
 
 	/**
+	 * Check if the vendor profile is "complete enough" for the marketplace
+	 * to surface them confidently to buyers.
+	 *
+	 * A profile counts as complete when it has the three pieces of information
+	 * a prospective buyer wants to see before hiring: a tagline (what they do),
+	 * a bio (who they are), and a country (where they are). Avatar is checked
+	 * separately because the WP default avatar always exists.
+	 *
+	 * Used by the "New seller" badge on service cards (F7b from
+	 * baseline-2026-04-25.md): TIER_NEW vendors with incomplete profiles get
+	 * the badge so buyers know to ask more questions before ordering.
+	 *
+	 * @since 1.1.0
+	 * @return bool True when tagline + bio + country are all set.
+	 */
+	public function is_profile_complete(): bool {
+		return '' !== trim( (string) $this->title )
+			&& '' !== trim( (string) $this->bio )
+			&& '' !== trim( (string) $this->country );
+	}
+
+	/**
 	 * Check if vendor has reached the maximum services limit.
 	 *
 	 * Counts published and pending services against the max_services_per_vendor setting.

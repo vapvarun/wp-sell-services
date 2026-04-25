@@ -113,22 +113,37 @@ do_action( 'wpss_before_service_card', $service_id );
 				<?php endif; ?>
 				<?php
 				$card_vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
-				if ( $card_vendor_profile && \WPSellServices\Models\VendorProfile::TIER_NEW !== $card_vendor_profile->tier ) :
-					$card_tier        = $card_vendor_profile->tier;
-					$card_tier_label  = $card_vendor_profile->get_tier_label();
-					$card_tier_colors = array(
-						'rising'    => 'background:#eff6ff;color:#2563eb;',
-						'top_rated' => 'background:#fefce8;color:#ca8a04;',
-						'pro'       => 'background:#faf5ff;color:#7c3aed;',
-					);
-					$card_tier_style  = $card_tier_colors[ $card_tier ] ?? '';
-					if ( $card_tier_style ) :
+				if ( $card_vendor_profile ) :
+					$card_tier = $card_vendor_profile->tier;
+
+					if ( \WPSellServices\Models\VendorProfile::TIER_NEW !== $card_tier ) {
+						// Earned-tier badge — Rising / Top Rated / Pro.
+						$card_tier_label  = $card_vendor_profile->get_tier_label();
+						$card_tier_colors = array(
+							'rising'    => 'background:#eff6ff;color:#2563eb;',
+							'top_rated' => 'background:#fefce8;color:#ca8a04;',
+							'pro'       => 'background:#faf5ff;color:#7c3aed;',
+						);
+						$card_tier_style  = $card_tier_colors[ $card_tier ] ?? '';
+						if ( $card_tier_style ) {
+							?>
+							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>" style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:9999px;margin-left:4px;<?php echo esc_attr( $card_tier_style ); ?>">
+								<?php echo esc_html( $card_tier_label ); ?>
+							</span>
+							<?php
+						}
+					} elseif ( ! $card_vendor_profile->is_profile_complete() ) {
+						// F7b (baseline-2026-04-25.md): "New seller" badge for
+						// TIER_NEW vendors who haven't filled tagline / bio /
+						// country. Soft signal — vendor is still listed; buyer
+						// just sees the badge as a "ask more questions" hint.
 						?>
-						<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>" style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:9999px;margin-left:4px;<?php echo esc_attr( $card_tier_style ); ?>">
-							<?php echo esc_html( $card_tier_label ); ?>
+						<span class="wpss-seller-badge wpss-seller-badge--new" style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:9999px;margin-left:4px;background:#f3f4f6;color:#6b7280;">
+							<?php esc_html_e( 'New seller', 'wp-sell-services' ); ?>
 						</span>
-					<?php endif; ?>
-				<?php endif; ?>
+						<?php
+					}
+				endif; ?>
 			</div>
 
 			<?php
