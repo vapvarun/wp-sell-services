@@ -132,6 +132,67 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 	</div>
 
 	<?php
+	// VS6 (plans/ORDER-FLOW-AUDIT.md): inline explainer card per status so
+	// neither buyer nor vendor wonders what 'escalated' / 'pending review'
+	// means or what happens next. Each status gets a short title + body
+	// + (optionally) a "what happens next" line.
+	$status_explainers = array(
+		DisputeService::STATUS_OPEN      => array(
+			'icon'  => 'message-square',
+			'tone'  => 'info',
+			'title' => __( 'You and the other party can still resolve this between yourselves', 'wp-sell-services' ),
+			'body'  => __( 'Add evidence and discuss the issue. Most disputes are resolved here without needing admin involvement.', 'wp-sell-services' ),
+			'next'  => __( 'If no resolution is reached within 7 days, this dispute can be escalated for admin review.', 'wp-sell-services' ),
+		),
+		DisputeService::STATUS_PENDING   => array(
+			'icon'  => 'clock',
+			'tone'  => 'info',
+			'title' => __( 'Awaiting the other party\'s response', 'wp-sell-services' ),
+			'body'  => __( 'You\'ve added your side. The other party has been notified and can add their own evidence and response.', 'wp-sell-services' ),
+			'next'  => __( 'You\'ll get an email when they reply, or when an admin intervenes if escalation happens.', 'wp-sell-services' ),
+		),
+		DisputeService::STATUS_ESCALATED => array(
+			'icon'  => 'alert-triangle',
+			'tone'  => 'warning',
+			'title' => __( 'Escalated to admin review', 'wp-sell-services' ),
+			'body'  => __( 'A platform admin will review all the evidence from both sides and decide the outcome. You can still add evidence or comments while review is ongoing.', 'wp-sell-services' ),
+			'next'  => __( 'Admin decisions are final and typically arrive within 3 to 7 business days. Both parties will be emailed the resolution.', 'wp-sell-services' ),
+		),
+		DisputeService::STATUS_RESOLVED  => array(
+			'icon'  => 'check-circle',
+			'tone'  => 'success',
+			'title' => __( 'Dispute resolved', 'wp-sell-services' ),
+			'body'  => __( 'The resolution is documented below. Any refund or commission adjustment has been processed.', 'wp-sell-services' ),
+			'next'  => '',
+		),
+		DisputeService::STATUS_CLOSED    => array(
+			'icon'  => 'archive',
+			'tone'  => 'muted',
+			'title' => __( 'Dispute closed', 'wp-sell-services' ),
+			'body'  => __( 'This dispute is no longer active. Records remain available for reference.', 'wp-sell-services' ),
+			'next'  => '',
+		),
+	);
+	$current_explainer = $status_explainers[ $dispute->status ] ?? null;
+	if ( $current_explainer ) :
+		?>
+		<div class="wpss-dispute-explainer wpss-dispute-explainer--<?php echo esc_attr( $current_explainer['tone'] ); ?>">
+			<i data-lucide="<?php echo esc_attr( $current_explainer['icon'] ); ?>" class="wpss-icon" aria-hidden="true"></i>
+			<div class="wpss-dispute-explainer__body">
+				<strong><?php echo esc_html( $current_explainer['title'] ); ?></strong>
+				<p><?php echo esc_html( $current_explainer['body'] ); ?></p>
+				<?php if ( '' !== $current_explainer['next'] ) : ?>
+					<p class="wpss-dispute-explainer__next">
+						<em><?php echo esc_html( $current_explainer['next'] ); ?></em>
+					</p>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	endif;
+	?>
+
+	<?php
 	/**
 	 * Hook: wpss_dispute_view_header
 	 *
@@ -1047,6 +1108,73 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 		padding: 12px;
 		border-radius: 50%;
 	}
+}
+
+/* Status explainer card (VS6 from plans/ORDER-FLOW-AUDIT.md) */
+.wpss-dispute-explainer {
+	display: flex;
+	gap: 14px;
+	padding: 16px 18px;
+	border-radius: 8px;
+	margin-bottom: 24px;
+	border: 1px solid;
+}
+
+.wpss-dispute-explainer .wpss-icon {
+	width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
+.wpss-dispute-explainer__body {
+	flex: 1;
+}
+
+.wpss-dispute-explainer__body strong {
+	display: block;
+	font-size: 14px;
+	margin-bottom: 4px;
+}
+
+.wpss-dispute-explainer__body p {
+	margin: 0 0 8px;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.wpss-dispute-explainer__body p:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-dispute-explainer__next em {
+	font-style: normal;
+	color: #4b5563;
+	font-size: 12px;
+}
+
+.wpss-dispute-explainer--info {
+	background: #eff6ff;
+	border-color: #bfdbfe;
+	color: #1e40af;
+}
+
+.wpss-dispute-explainer--warning {
+	background: #fffbeb;
+	border-color: #fde68a;
+	color: #92400e;
+}
+
+.wpss-dispute-explainer--success {
+	background: #f0fdf4;
+	border-color: #bbf7d0;
+	color: #166534;
+}
+
+.wpss-dispute-explainer--muted {
+	background: #f9fafb;
+	border-color: #e5e7eb;
+	color: #374151;
 }
 </style>
 
