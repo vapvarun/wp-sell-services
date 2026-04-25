@@ -19,7 +19,7 @@ Target release: `1.1.0-rc3` (single ZIP, all 22 fixed before Shashank QA)
 
 | ID | Severity | Issue | File |
 |---|---|---|---|
-| **CB1** | 🔴 | No cart-review step — buyer commits to payment without confirming totals + add-ons + delivery side-by-side | `StandaloneCheckoutProvider.php:166-200` |
+| **CB1** | 🔴 | ~~No cart-review step~~ — re-evaluated during implementation: standalone checkout already shows service title + price breakdown (subtotal + tax + total) + payment methods + vendor credibility card + trust signals + 5-step "What happens next" stepper, all on a single page. Buyer has full context before clicking Pay. Closed as not-a-friction. | `StandaloneCheckoutProvider.php:166-200` |
 | **CB2** | 🔴 | Requirements form has no progress indicator (Q2 of 5) | `templates/order/order-view.php:528-617` |
 | CB3 | 🟠 | Revision limit invisible — buyer doesn't know remaining count | `order-view.php` (no revision counter) |
 | CB4 | 🟠 | No post-review confirmation email or thank-you page | `API/ReviewsController.php:~130` |
