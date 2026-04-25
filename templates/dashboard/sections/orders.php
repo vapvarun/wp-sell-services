@@ -120,6 +120,37 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 			<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
 			</a>
+
+			<?php
+			// CB8 (plans/ORDER-FLOW-AUDIT.md): give buyers immediate paths into
+			// specific categories rather than dropping them on the full grid.
+			// First-time buyers are more likely to click a familiar category
+			// chip than the generic "Browse Services" button.
+			$popular_terms = get_terms(
+				array(
+					'taxonomy'   => 'wpss_service_category',
+					'hide_empty' => true,
+					'parent'     => 0,
+					'number'     => 6,
+					'orderby'    => 'count',
+					'order'      => 'DESC',
+				)
+			);
+			if ( ! is_wp_error( $popular_terms ) && ! empty( $popular_terms ) ) :
+				?>
+				<div class="wpss-empty-state__categories">
+					<p class="wpss-empty-state__categories-label">
+						<?php esc_html_e( 'Or jump into a category:', 'wp-sell-services' ); ?>
+					</p>
+					<div class="wpss-empty-state__category-chips">
+						<?php foreach ( $popular_terms as $term ) : ?>
+							<a href="<?php echo esc_url( get_term_link( $term ) ); ?>" class="wpss-category-chip">
+								<?php echo esc_html( $term->name ); ?>
+							</a>
+						<?php endforeach; ?>
+					</div>
+				</div>
+			<?php endif; ?>
 		</div>
 	<?php else : ?>
 		<div class="wpss-orders-list">
