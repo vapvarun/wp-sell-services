@@ -143,7 +143,8 @@ do_action( 'wpss_before_service_card', $service_id );
 						</span>
 						<?php
 					}
-				endif; ?>
+				endif;
+				?>
 			</div>
 
 			<?php
