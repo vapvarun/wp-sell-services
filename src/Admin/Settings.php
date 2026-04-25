@@ -537,8 +537,9 @@ class Settings {
 			)
 		);
 
-		// Note: clearance_days is stored but not yet enforced by EarningsService.
-		// Reserved for future implementation — do not remove this setting.
+		// clearance_days is stored AND enforced by EarningsService::get_summary()
+		// — reads from wpss_payouts.clearance_days, defaults to 14, used in the
+		// in_clearance bucket query. (VS1 from plans/ORDER-FLOW-AUDIT.md.)
 		add_settings_field(
 			'clearance_days',
 			__( 'Clearance Period (Days)', 'wp-sell-services' ),

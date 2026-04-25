@@ -139,6 +139,51 @@ do_action( 'wpss_before_order_view', $order );
 			<span class="wpss-badge wpss-badge--lg wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
 				<?php echo esc_html( $status_label ); ?>
 			</span>
+
+			<?php
+			// CB3 + VS3 (plans/ORDER-FLOW-AUDIT.md): persistent revision count
+			// badge shown to both buyer and vendor on every order status. Buyer
+			// sees how many revisions they have left to use; vendor sees the
+			// scope they're committed to. Hidden only for completed/cancelled
+			// orders where revisions no longer matter.
+			$show_revision_badge = ! in_array( $order->status, array( 'cancelled', 'refunded' ), true )
+				&& ( (int) $order->revisions_included > 0 || -1 === (int) $order->revisions_included );
+			if ( $show_revision_badge ) :
+				$rev_used      = (int) $order->revisions_used;
+				$rev_included  = (int) $order->revisions_included;
+				$rev_unlimited = -1 === $rev_included;
+				$rev_remaining = $rev_unlimited ? -1 : max( 0, $rev_included - $rev_used );
+				$rev_class     = 'wpss-revision-badge';
+				if ( ! $rev_unlimited ) {
+					if ( 0 === $rev_remaining ) {
+						$rev_class .= ' wpss-revision-badge--exhausted';
+					} elseif ( 1 === $rev_remaining ) {
+						$rev_class .= ' wpss-revision-badge--last';
+					}
+				}
+				?>
+				<span class="<?php echo esc_attr( $rev_class ); ?>" title="<?php esc_attr_e( 'Revision policy for this order', 'wp-sell-services' ); ?>">
+					<i data-lucide="repeat" class="wpss-icon" aria-hidden="true"></i>
+					<?php
+					if ( $rev_unlimited ) {
+						esc_html_e( 'Unlimited revisions', 'wp-sell-services' );
+					} elseif ( 0 === $rev_remaining ) {
+						printf(
+							/* translators: %d: total revisions used */
+							esc_html__( 'All %d revisions used', 'wp-sell-services' ),
+							$rev_used
+						);
+					} else {
+						printf(
+							/* translators: 1: revisions remaining, 2: total included */
+							esc_html__( '%1$d of %2$d revisions left', 'wp-sell-services' ),
+							$rev_remaining,
+							$rev_included
+						);
+					}
+					?>
+				</span>
+			<?php endif; ?>
 		</div>
 
 		<?php
@@ -546,12 +591,45 @@ do_action( 'wpss_before_order_view', $order );
 					</div>
 				<?php endif; ?>
 
-				<form id="wpss-requirements-form" class="wpss-requirements-form" enctype="multipart/form-data">
+				<?php
+				// CB2 (plans/ORDER-FLOW-AUDIT.md): count required fields once for the
+				// progress bar. The bar updates live as the buyer fills the form.
+				$req_required_count = 0;
+				foreach ( $service_requirements as $req_check ) {
+					if ( ! empty( $req_check['required'] ) ) {
+						++$req_required_count;
+					}
+				}
+				?>
+				<form id="wpss-requirements-form"
+						class="wpss-requirements-form"
+						enctype="multipart/form-data"
+						data-required-count="<?php echo esc_attr( (string) $req_required_count ); ?>">
 					<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
 					<input type="hidden" name="action" value="wpss_submit_requirements">
 					<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 					<?php if ( $show_late_requirements_form ) : ?>
 						<input type="hidden" name="late_submission" value="1">
+					<?php endif; ?>
+
+					<?php if ( $req_required_count > 0 ) : ?>
+						<div class="wpss-requirements-form__progress" data-wpss-req-progress>
+							<div class="wpss-requirements-form__progress-text">
+								<span data-wpss-req-progress-label>
+									<?php
+									printf(
+										/* translators: 1: filled count, 2: total required */
+										esc_html__( '%1$d of %2$d required answered', 'wp-sell-services' ),
+										0,
+										(int) $req_required_count
+									);
+									?>
+								</span>
+							</div>
+							<div class="wpss-requirements-form__progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo esc_attr( (string) $req_required_count ); ?>" aria-valuenow="0">
+								<div class="wpss-requirements-form__progress-fill" data-wpss-req-progress-fill style="width: 0%;"></div>
+							</div>
+						</div>
 					<?php endif; ?>
 
 					<?php foreach ( $service_requirements as $index => $requirement ) : ?>
@@ -775,6 +853,42 @@ do_action( 'wpss_before_order_view', $order );
 			'other'                => __( 'Other', 'wp-sell-services' ),
 		);
 		$reason_label  = $reason_labels[ $cancel_reason ] ?? $cancel_reason;
+
+		// CB5 + VS7 (plans/ORDER-FLOW-AUDIT.md): visible auto-cancel countdown.
+		// Both buyer and vendor see exactly when the cancellation_requested
+		// state will auto-resolve via the existing 48h cron. Computed from the
+		// requested_at timestamp baked into vendor_notes JSON.
+		$requested_at_iso = $cancel_data['requested_at'] ?? '';
+		$cancellation_deadline_ts = 0;
+		$time_remaining_label     = '';
+		if ( $requested_at_iso ) {
+			$requested_ts             = strtotime( $requested_at_iso );
+			$cancellation_deadline_ts = $requested_ts + ( 48 * HOUR_IN_SECONDS );
+			$seconds_left             = $cancellation_deadline_ts - current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+			if ( $seconds_left > 0 ) {
+				$hours_left   = floor( $seconds_left / HOUR_IN_SECONDS );
+				$minutes_left = floor( ( $seconds_left % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+				if ( $hours_left >= 24 ) {
+					$days_left            = floor( $hours_left / 24 );
+					$leftover_hours       = $hours_left % 24;
+					$time_remaining_label = sprintf(
+						/* translators: 1: days, 2: hours */
+						__( 'Auto-cancels in %1$dd %2$dh if no response', 'wp-sell-services' ),
+						$days_left,
+						$leftover_hours
+					);
+				} else {
+					$time_remaining_label = sprintf(
+						/* translators: 1: hours, 2: minutes */
+						__( 'Auto-cancels in %1$dh %2$dm if no response', 'wp-sell-services' ),
+						$hours_left,
+						$minutes_left
+					);
+				}
+			} else {
+				$time_remaining_label = __( 'Auto-cancellation pending — will process within the hour.', 'wp-sell-services' );
+			}
+		}
 		?>
 		<section class="wpss-order-section">
 			<div class="wpss-order-section__body">
@@ -802,9 +916,10 @@ do_action( 'wpss_before_order_view', $order );
 								<?php echo esc_html( $cancel_note ); ?>
 							</p>
 						<?php endif; ?>
-						<?php if ( $is_vendor ) : ?>
-							<p style="margin: 8px 0 0 0; font-size: 0.875rem; color: #92400e;">
-								<?php esc_html_e( 'You have 48 hours to respond. If no action is taken, the order will be automatically cancelled.', 'wp-sell-services' ); ?>
+						<?php if ( $time_remaining_label ) : ?>
+							<p style="margin: 12px 0 0 0; font-size: 0.875rem; color: #92400e; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255, 255, 255, 0.6); border-radius: 9999px;">
+								<i data-lucide="clock" class="wpss-icon" aria-hidden="true" style="width:14px;height:14px;"></i>
+								<?php echo esc_html( $time_remaining_label ); ?>
 							</p>
 						<?php endif; ?>
 					</div>
@@ -2028,6 +2143,39 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
 }
 
+/* Persistent revision count badge (CB3 + VS3 from plans/ORDER-FLOW-AUDIT.md) */
+.wpss-revision-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: 8px;
+	padding: 4px 10px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #4b5563;
+	background: #f3f4f6;
+	border: 1px solid #e5e7eb;
+	border-radius: 9999px;
+	vertical-align: middle;
+}
+
+.wpss-revision-badge .wpss-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.wpss-revision-badge--last {
+	color: #b45309;
+	background: #fffbeb;
+	border-color: #fde68a;
+}
+
+.wpss-revision-badge--exhausted {
+	color: #b91c1c;
+	background: #fef2f2;
+	border-color: #fecaca;
+}
+
 .wpss-order-view__title-info {
 	display: flex;
 	flex-wrap: wrap;
@@ -2685,9 +2833,81 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		height: 160px;
 	}
 }
+
+/* CB2 (plans/ORDER-FLOW-AUDIT.md) requirements progress bar */
+.wpss-requirements-form__progress {
+	margin-bottom: 24px;
+	padding: 12px 16px;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+}
+.wpss-requirements-form__progress-text {
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+	margin-bottom: 8px;
+}
+.wpss-requirements-form__progress-bar {
+	width: 100%;
+	height: 6px;
+	background: #e5e7eb;
+	border-radius: 9999px;
+	overflow: hidden;
+}
+.wpss-requirements-form__progress-fill {
+	height: 100%;
+	background: linear-gradient( 90deg, #4f46e5, #7c3aed );
+	border-radius: 9999px;
+	transition: width 0.3s ease;
+}
+.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-fill {
+	background: linear-gradient( 90deg, #10b981, #059669 );
+}
+.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
+	color: #047857;
+}
 </style>
 
 <script>
+(function() {
+	// CB2 (plans/ORDER-FLOW-AUDIT.md): live progress bar for the requirements
+	// form so the buyer always knows how many required questions remain.
+	var reqForm = document.getElementById( 'wpss-requirements-form' );
+	if ( reqForm && parseInt( reqForm.dataset.requiredCount || '0', 10 ) > 0 ) {
+		var totalReq = parseInt( reqForm.dataset.requiredCount, 10 );
+		var label    = reqForm.querySelector( '[data-wpss-req-progress-label]' );
+		var fill     = reqForm.querySelector( '[data-wpss-req-progress-fill]' );
+		var bar      = reqForm.querySelector( '.wpss-requirements-form__progress-bar' );
+		var wrap     = reqForm.querySelector( '[data-wpss-req-progress]' );
+		var labelTpl = '%1$d of %2$d required answered';
+		function reqUpdate() {
+			var fields = reqForm.querySelectorAll( '[required]' );
+			var seen   = {};
+			var filled = 0;
+			fields.forEach( function ( f ) {
+				if ( f.type === 'checkbox' || f.type === 'radio' ) {
+					if ( seen[ f.name ] ) { return; }
+					seen[ f.name ] = true;
+					if ( reqForm.querySelectorAll( 'input[name="' + f.name + '"]:checked' ).length > 0 ) { filled++; }
+				} else if ( f.type === 'file' ) {
+					if ( f.files && f.files.length > 0 ) { filled++; }
+				} else if ( ( f.value || '' ).trim() !== '' ) {
+					filled++;
+				}
+			} );
+			var capped = Math.min( filled, totalReq );
+			fill.style.width = Math.round( ( capped / totalReq ) * 100 ) + '%';
+			label.textContent = labelTpl.replace( '%1$d', String( capped ) ).replace( '%2$d', String( totalReq ) );
+			bar.setAttribute( 'aria-valuenow', String( capped ) );
+			wrap.classList.toggle( 'wpss-requirements-form__progress--complete', capped >= totalReq );
+		}
+		reqForm.addEventListener( 'input', reqUpdate );
+		reqForm.addEventListener( 'change', reqUpdate );
+		reqUpdate();
+	}
+})();
+
 (function() {
 	'use strict';
 

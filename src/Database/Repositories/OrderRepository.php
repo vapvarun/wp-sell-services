@@ -133,12 +133,13 @@ class OrderRepository extends AbstractRepository {
 	 */
 	public function get_by_vendor( int $vendor_id, array $args = array() ): array {
 		$defaults = array(
-			'status'   => '',
-			'platform' => '',
-			'orderby'  => 'created_at',
-			'order'    => 'DESC',
-			'limit'    => 20,
-			'offset'   => 0,
+			'status'    => '',
+			'platform'  => '',
+			'date_from' => '', // Y-m-d H:i:s — orders created at or after this timestamp (VS10 from plans/ORDER-FLOW-AUDIT.md).
+			'orderby'   => 'created_at',
+			'order'     => 'DESC',
+			'limit'     => 20,
+			'offset'    => 0,
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -160,6 +161,11 @@ class OrderRepository extends AbstractRepository {
 			$params[] = $args['platform'];
 		}
 
+		if ( ! empty( $args['date_from'] ) ) {
+			$sql     .= ' AND created_at >= %s';
+			$params[] = $args['date_from'];
+		}
+
 		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $args['limit'] > 0 ) {
@@ -169,6 +175,50 @@ class OrderRepository extends AbstractRepository {
 		}
 
 		return $this->wpdb->get_results(
+			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		);
+	}
+
+	/**
+	 * Count orders for a vendor matching optional filters.
+	 *
+	 * Counterpart to get_by_vendor() — used by paginated dashboard views to
+	 * compute total page count without re-running the SELECT for full rows.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int                  $vendor_id Vendor user ID.
+	 * @param array<string, mixed> $args      Filter arguments (status, platform, date_from).
+	 * @return int Total matching row count.
+	 */
+	public function count_by_vendor( int $vendor_id, array $args = array() ): int {
+		$defaults = array(
+			'status'    => '',
+			'platform'  => '',
+			'date_from' => '',
+		);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$sql    = "SELECT COUNT(*) FROM {$this->table} WHERE vendor_id = %d";
+		$params = array( $vendor_id );
+
+		if ( ! empty( $args['status'] ) ) {
+			$sql     .= ' AND status = %s';
+			$params[] = $args['status'];
+		}
+
+		if ( ! empty( $args['platform'] ) ) {
+			$sql     .= ' AND platform = %s';
+			$params[] = $args['platform'];
+		}
+
+		if ( ! empty( $args['date_from'] ) ) {
+			$sql     .= ' AND created_at >= %s';
+			$params[] = $args['date_from'];
+		}
+
+		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
 	}

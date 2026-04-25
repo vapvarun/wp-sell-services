@@ -572,11 +572,36 @@ final class Plugin {
 			2
 		);
 
-		// Review created notification.
+		// Review created notification + email.
 		$this->loader->add_action(
 			'wpss_review_created',
-			function ( int $review_id, int $order_id ) use ( $notification_service ): void {
+			function ( int $review_id, int $order_id ) use ( $notification_service, $email_service ): void {
 				$notification_service->notify_review_received( $review_id, $order_id );
+
+				// CB4 (plans/ORDER-FLOW-AUDIT.md): also email the vendor with
+				// the review excerpt + deep link. Pulls the saved review row
+				// to fetch rating + comment.
+				global $wpdb;
+				$review = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->prepare(
+						"SELECT * FROM {$wpdb->prefix}wpss_reviews WHERE id = %d",
+						$review_id
+					)
+				);
+				if ( ! $review ) {
+					return;
+				}
+				$buyer      = get_user_by( 'id', (int) $review->customer_id );
+				$buyer_name = $buyer ? $buyer->display_name : __( 'A buyer', 'wp-sell-services' );
+
+				$email_service->send_review_received(
+					$review_id,
+					(int) $review->vendor_id,
+					(int) $review->rating,
+					(string) ( $review->comment ?? '' ),
+					$buyer_name,
+					(int) $review->service_id
+				);
 			},
 			null,
 			10,
@@ -659,7 +684,15 @@ final class Plugin {
 				);
 				$sub = wpss_get_order( $pay_order_id );
 				if ( $sub ) {
-					$email_service->send_extension_approved( $sub, $net_amount, $extra_days );
+					// VS5 (plans/ORDER-FLOW-AUDIT.md): pass the parent order's
+					// new deadline so the vendor email shows old + new dates
+					// side-by-side instead of a silent push.
+					$parent       = wpss_get_order( $parent_order_id );
+					$new_deadline = null;
+					if ( $parent && $parent->delivery_deadline instanceof \DateTimeImmutable ) {
+						$new_deadline = $parent->delivery_deadline->format( 'Y-m-d H:i:s' );
+					}
+					$email_service->send_extension_approved( $sub, $net_amount, $extra_days, $new_deadline );
 				}
 			},
 			null,

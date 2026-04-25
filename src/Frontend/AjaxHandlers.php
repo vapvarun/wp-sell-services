@@ -161,6 +161,9 @@ class AjaxHandlers {
 		// Profile.
 		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'update_vendor_profile' ) );
 
+		// Per-vendor email preferences (VS11 from plans/ORDER-FLOW-AUDIT.md).
+		add_action( 'wp_ajax_wpss_save_email_preferences', array( $this, 'save_email_preferences' ) );
+
 		// Portfolio (AJAX fallback for non-REST contexts).
 		add_action( 'wp_ajax_wpss_add_portfolio_item', array( $this, 'add_portfolio_item' ) );
 		add_action( 'wp_ajax_wpss_update_portfolio_item', array( $this, 'update_portfolio_item' ) );
@@ -3565,6 +3568,44 @@ class AjaxHandlers {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Save per-vendor email preferences.
+	 *
+	 * Stores a key=>bool array in user meta `wpss_email_preferences`. Missing
+	 * key OR true means "send"; explicit false means "mute". Categories map
+	 * to email types in EmailService::is_email_type_enabled().
+	 *
+	 * VS11 from plans/ORDER-FLOW-AUDIT.md.
+	 *
+	 * @since 1.1.0
+	 * @return void
+	 */
+	public function save_email_preferences(): void {
+		check_ajax_referer( 'wpss_save_email_prefs', 'wpss_email_prefs_nonce' );
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
+		}
+
+		$valid_keys   = array( 'orders', 'messages', 'completion', 'cancellation', 'disputes', 'tips', 'withdrawals', 'proposals' );
+		$submitted    = isset( $_POST['prefs'] ) && is_array( $_POST['prefs'] ) ? wp_unslash( $_POST['prefs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted booleans below.
+		$preferences  = array();
+		foreach ( $valid_keys as $key ) {
+			// Checkbox is present only if checked. Absence = explicit false (muted).
+			$preferences[ $key ] = isset( $submitted[ $key ] );
+		}
+
+		update_user_meta( $user_id, 'wpss_email_preferences', $preferences );
+
+		wp_send_json_success(
+			array(
+				'message'     => __( 'Preferences saved.', 'wp-sell-services' ),
+				'preferences' => $preferences,
+			)
+		);
+	}
+
 	public function update_vendor_profile(): void {
 		check_ajax_referer( 'wpss_update_profile', 'wpss_profile_nonce' );
 

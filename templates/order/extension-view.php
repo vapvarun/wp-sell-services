@@ -50,6 +50,26 @@ $format = static function ( float $amount ) use ( $currency ): string {
 ?>
 
 <div class="wpss-tip-view wpss-extension-view">
+	<?php
+	// CB6 (plans/ORDER-FLOW-AUDIT.md): top breadcrumb to parent service order.
+	if ( $parent_id ) :
+		$parent_order = \WPSellServices\Models\ServiceOrder::find( $parent_id );
+		if ( $parent_order ) :
+			?>
+			<div class="wpss-suborder-crumb">
+				<i data-lucide="corner-down-right" class="wpss-icon" aria-hidden="true"></i>
+				<?php
+				printf(
+					/* translators: %s: parent order number link */
+					esc_html__( 'Extension on order %s', 'wp-sell-services' ),
+					'<a href="' . esc_url( $parent_url ) . '">#' . esc_html( $parent_order->order_number ) . '</a>' // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- URL + label escaped above.
+				);
+				?>
+			</div>
+			<?php
+		endif;
+	endif;
+	?>
 	<div class="wpss-tip-view__card">
 		<div class="wpss-tip-view__icon wpss-extension-view__icon" aria-hidden="true">
 			<i data-lucide="clock-alert" class="wpss-icon wpss-icon--lg"></i>

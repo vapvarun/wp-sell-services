@@ -54,6 +54,7 @@ class EmailService {
 	public const TYPE_MODERATION_PENDING     = 'moderation_pending';
 	public const TYPE_MODERATION_RESPONSE    = 'moderation_response';
 	public const TYPE_TIP_RECEIVED           = 'tip_received';
+	public const TYPE_REVIEW_RECEIVED        = 'review_received';
 	public const TYPE_MILESTONE_PROPOSED     = 'milestone_proposed';
 	public const TYPE_MILESTONE_PAID         = 'milestone_paid';
 	public const TYPE_MILESTONE_SUBMITTED    = 'milestone_submitted';
@@ -430,6 +431,60 @@ class EmailService {
 	 * @param string       $note        Optional buyer message (tip note).
 	 * @return bool Whether the mail was handed off to WordPress.
 	 */
+	/**
+	 * Send a "You received a review" email to the vendor.
+	 *
+	 * Fired by Plugin.php on the wpss_review_created action. Surfaces the
+	 * star rating, written review, and a deep link to the public review on
+	 * the service page so the vendor can read + reply.
+	 *
+	 * CB4 from plans/ORDER-FLOW-AUDIT.md.
+	 *
+	 * @since 1.1.0
+	 * @param int    $review_id Review row id from wp_wpss_reviews.
+	 * @param int    $vendor_id Vendor user id (recipient).
+	 * @param int    $rating    Star rating 1-5.
+	 * @param string $comment   Buyer's written review (may be empty).
+	 * @param string $buyer_name Buyer's display name.
+	 * @param int    $service_id Linked service post id (for deep link).
+	 * @return bool
+	 */
+	public function send_review_received( int $review_id, int $vendor_id, int $rating, string $comment, string $buyer_name, int $service_id ): bool {
+		unset( $review_id ); // currently unused but kept in signature for future deep-link routing.
+		$vendor = get_user_by( 'id', $vendor_id );
+		if ( ! $vendor ) {
+			return false;
+		}
+
+		$service        = $service_id ? get_post( $service_id ) : null;
+		$service_title  = $service ? $service->post_title : __( 'your service', 'wp-sell-services' );
+		$service_url    = $service ? get_permalink( $service ) : '';
+
+		$subject = sprintf(
+			/* translators: 1: site name, 2: stars, 3: buyer name */
+			__( '[%1$s] %2$s review from %3$s', 'wp-sell-services' ),
+			wpss_get_platform_name(),
+			str_repeat( '★', max( 1, min( 5, $rating ) ) ),
+			$buyer_name
+		);
+
+		return $this->send(
+			$vendor->user_email,
+			$subject,
+			self::TYPE_REVIEW_RECEIVED,
+			array(
+				'recipient'     => $vendor,
+				'email_heading' => __( 'You received a new review', 'wp-sell-services' ),
+				'vendor_name'   => $vendor->display_name,
+				'buyer_name'    => $buyer_name,
+				'rating'        => $rating,
+				'comment'       => $comment,
+				'service_title' => $service_title,
+				'service_url'   => $service_url,
+			)
+		);
+	}
+
 	public function send_tip_received( ServiceOrder $tip_order, float $gross, float $net_vendor, string $note = '' ): bool {
 		$vendor = get_user_by( 'id', $tip_order->vendor_id );
 		if ( ! $vendor ) {
@@ -727,7 +782,7 @@ class EmailService {
 	 * @param int          $extra_days  Days added to the parent deadline.
 	 * @return bool
 	 */
-	public function send_extension_approved( ServiceOrder $extension, float $net, int $extra_days ): bool {
+	public function send_extension_approved( ServiceOrder $extension, float $net, int $extra_days, ?string $new_deadline = null ): bool {
 		$vendor = get_user_by( 'id', $extension->vendor_id );
 		if ( ! $vendor ) {
 			return false;
@@ -742,6 +797,16 @@ class EmailService {
 			wpss_get_platform_name()
 		);
 
+		// VS5 (plans/ORDER-FLOW-AUDIT.md): vendor needs to see both old and new
+		// deadlines side-by-side. Derive old from new - extra_days when caller
+		// supplies the new deadline; otherwise leave both empty so the template
+		// gracefully falls back to the pre-1.1.0-rc3 layout.
+		$old_deadline = '';
+		if ( $new_deadline && $extra_days > 0 ) {
+			$old_ts       = strtotime( $new_deadline ) - ( $extra_days * DAY_IN_SECONDS );
+			$old_deadline = $old_ts ? gmdate( 'Y-m-d H:i:s', $old_ts ) : '';
+		}
+
 		return $this->send(
 			$vendor->user_email,
 			$subject,
@@ -755,6 +820,8 @@ class EmailService {
 				'gross_amount'  => (float) $extension->total,
 				'net_amount'    => $net,
 				'extra_days'    => $extra_days,
+				'old_deadline'  => $old_deadline,
+				'new_deadline'  => $new_deadline ?? '',
 				'currency'      => $extension->currency ?? wpss_get_currency(),
 			)
 		);
@@ -1544,6 +1611,14 @@ class EmailService {
 			return false;
 		}
 
+		// VS11 (plans/ORDER-FLOW-AUDIT.md): per-vendor mute. If the recipient
+		// has explicitly opted out of this category in their dashboard, skip
+		// the send. Admin-level setting still wins above (a globally-disabled
+		// type can't be re-enabled by the recipient).
+		if ( $this->recipient_muted_type( $to, $type ) ) {
+			return false;
+		}
+
 		// Rate limit — originally "one per type per recipient per 5 minutes"
 		// to throttle noisy things like chat-message notifications. That
 		// window silently dropped legitimate transaction-critical emails
@@ -1756,6 +1831,7 @@ class EmailService {
 			self::TYPE_MODERATION_PENDING     => 'moderation-pending.php',
 			self::TYPE_MODERATION_RESPONSE    => 'moderation-response.php',
 			self::TYPE_TIP_RECEIVED           => 'tip-received.php',
+			self::TYPE_REVIEW_RECEIVED        => 'review-received.php',
 			self::TYPE_MILESTONE_PROPOSED     => 'milestone-proposed.php',
 			self::TYPE_MILESTONE_PAID         => 'milestone-paid.php',
 			self::TYPE_MILESTONE_SUBMITTED    => 'milestone-submitted.php',
@@ -1841,6 +1917,86 @@ class EmailService {
 	 * @param string $type Email type constant.
 	 * @return bool True if the email type is enabled or has no setting, false if disabled.
 	 */
+	/**
+	 * Map EmailService type constants to per-vendor preference category keys.
+	 *
+	 * VS11 (plans/ORDER-FLOW-AUDIT.md): vendors set high-level categories in
+	 * their dashboard (orders / messages / completion / cancellation / disputes
+	 * / tips / withdrawals / proposals). This array fans out each category to
+	 * the underlying email types so a single "Mute new orders" toggle silences
+	 * new_order + requirements_submitted + order_in_progress at once.
+	 *
+	 * Returns null if the type isn't owned by any user-controllable category
+	 * (e.g. seller-level promotion is always sent).
+	 *
+	 * @since 1.1.0
+	 * @param string $type EmailService type constant.
+	 * @return string|null Preference category key, or null if not user-controllable.
+	 */
+	private function get_user_pref_category( string $type ): ?string {
+		$type_to_category = array(
+			self::TYPE_NEW_ORDER              => 'orders',
+			self::TYPE_REQUIREMENTS_SUBMITTED => 'orders',
+			self::TYPE_ORDER_IN_PROGRESS      => 'orders',
+			self::TYPE_REQUIREMENTS_REMINDER  => 'orders',
+			self::TYPE_DELIVERY_READY         => 'orders',
+			self::TYPE_NEW_MESSAGE            => 'messages',
+			self::TYPE_ORDER_COMPLETED        => 'completion',
+			self::TYPE_REVISION_REQUESTED     => 'completion',
+			self::TYPE_ORDER_CANCELLED        => 'cancellation',
+			self::TYPE_CANCELLATION_REQUESTED => 'cancellation',
+			self::TYPE_DISPUTE_OPENED         => 'disputes',
+			self::TYPE_TIP_RECEIVED           => 'tips',
+			self::TYPE_REVIEW_RECEIVED        => 'completion',
+			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawals',
+			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawals',
+			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawals',
+			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawals',
+			self::TYPE_PROPOSAL_SUBMITTED     => 'proposals',
+			self::TYPE_PROPOSAL_ACCEPTED      => 'proposals',
+			self::TYPE_MILESTONE_PROPOSED     => 'proposals',
+			self::TYPE_MILESTONE_PAID         => 'proposals',
+			self::TYPE_MILESTONE_SUBMITTED    => 'proposals',
+			self::TYPE_MILESTONE_APPROVED     => 'proposals',
+			self::TYPE_EXTENSION_PROPOSED     => 'proposals',
+			self::TYPE_EXTENSION_APPROVED     => 'proposals',
+			self::TYPE_EXTENSION_DECLINED     => 'proposals',
+		);
+		return $type_to_category[ $type ] ?? null;
+	}
+
+	/**
+	 * Check whether a specific user has muted a category in their preferences.
+	 *
+	 * Returns true if the user has explicitly set the category to false.
+	 * Returns false if the user hasn't saved prefs yet OR the category is enabled.
+	 *
+	 * Used by send() to skip email sending when the recipient has opted out.
+	 *
+	 * @since 1.1.0
+	 * @param string $recipient_email Recipient's email address.
+	 * @param string $type            EmailService type constant.
+	 * @return bool True if the user opted out, false otherwise.
+	 */
+	private function recipient_muted_type( string $recipient_email, string $type ): bool {
+		$category = $this->get_user_pref_category( $type );
+		if ( null === $category ) {
+			return false; // Not a user-controllable type — admin global setting still wins.
+		}
+
+		$user = get_user_by( 'email', $recipient_email );
+		if ( ! $user ) {
+			return false; // Anonymous recipient — no preferences to check.
+		}
+
+		$prefs = get_user_meta( $user->ID, 'wpss_email_preferences', true );
+		if ( ! is_array( $prefs ) || ! array_key_exists( $category, $prefs ) ) {
+			return false; // Default = enabled.
+		}
+
+		return false === $prefs[ $category ] || 0 === $prefs[ $category ] || '' === $prefs[ $category ];
+	}
+
 	private function is_email_type_enabled( string $type ): bool {
 		$notification_settings = get_option( 'wpss_notifications' );
 

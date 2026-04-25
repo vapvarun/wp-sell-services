@@ -16,15 +16,31 @@
  * @var float  $gross_amount
  * @var float  $net_amount
  * @var int    $extra_days
+ * @var string $old_deadline   Y-m-d H:i:s — parent's deadline before the extension. May be empty.
+ * @var string $new_deadline   Y-m-d H:i:s — parent's deadline after the extension. May be empty.
  * @var string $currency
  */
 
 defined( 'ABSPATH' ) || exit;
 
+$old_deadline = $old_deadline ?? '';
+$new_deadline = $new_deadline ?? '';
+
 $format = static function ( float $amt ) use ( $currency ): string {
 	return function_exists( 'wpss_format_price' )
 		? wpss_format_price( $amt, $currency )
 		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
+};
+
+$format_date = static function ( string $iso ): string {
+	if ( '' === $iso ) {
+		return '';
+	}
+	$ts = strtotime( $iso );
+	if ( ! $ts ) {
+		return '';
+	}
+	return wp_date( get_option( 'date_format', 'F j, Y' ), $ts );
 };
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );
@@ -62,6 +78,34 @@ $order_url    = $parent_id ? add_query_arg( array( 'section' => 'sales', 'order_
 		</td>
 	</tr>
 </table>
+
+<?php
+// VS5 (plans/ORDER-FLOW-AUDIT.md): old deadline → new deadline panel so the
+// vendor sees exactly how the extension changed their delivery date.
+if ( '' !== $old_deadline && '' !== $new_deadline ) :
+	?>
+	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0; border-collapse: collapse;">
+		<tr>
+			<td style="padding: 16px 20px; background: #eef2ff; border-radius: 6px; border-left: 3px solid #4f46e5; font-size: 14px; color: #3c3c3c; line-height: 1.6;">
+				<div style="font-weight: 600; margin-bottom: 8px; color: #4338ca;">
+					<?php esc_html_e( 'Updated delivery deadline', 'wp-sell-services' ); ?>
+				</div>
+				<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+					<tr>
+						<td style="padding: 4px 0; color: #6b7280; font-size: 13px; width: 50%;">
+							<?php esc_html_e( 'Was:', 'wp-sell-services' ); ?>
+							<span style="text-decoration: line-through;"><?php echo esc_html( $format_date( $old_deadline ) ); ?></span>
+						</td>
+						<td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 600; width: 50%; text-align: right;">
+							<?php esc_html_e( 'Now:', 'wp-sell-services' ); ?>
+							<?php echo esc_html( $format_date( $new_deadline ) ); ?>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+<?php endif; ?>
 
 <p style="margin: 0 0 24px 0; text-align: center;">
 	<a href="<?php echo esc_url( $order_url ); ?>" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">
