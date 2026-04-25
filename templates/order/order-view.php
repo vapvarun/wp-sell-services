@@ -591,12 +591,45 @@ do_action( 'wpss_before_order_view', $order );
 					</div>
 				<?php endif; ?>
 
-				<form id="wpss-requirements-form" class="wpss-requirements-form" enctype="multipart/form-data">
+				<?php
+				// CB2 (plans/ORDER-FLOW-AUDIT.md): count required fields once for the
+				// progress bar. The bar updates live as the buyer fills the form.
+				$req_required_count = 0;
+				foreach ( $service_requirements as $req_check ) {
+					if ( ! empty( $req_check['required'] ) ) {
+						++$req_required_count;
+					}
+				}
+				?>
+				<form id="wpss-requirements-form"
+						class="wpss-requirements-form"
+						enctype="multipart/form-data"
+						data-required-count="<?php echo esc_attr( (string) $req_required_count ); ?>">
 					<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
 					<input type="hidden" name="action" value="wpss_submit_requirements">
 					<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
 					<?php if ( $show_late_requirements_form ) : ?>
 						<input type="hidden" name="late_submission" value="1">
+					<?php endif; ?>
+
+					<?php if ( $req_required_count > 0 ) : ?>
+						<div class="wpss-requirements-form__progress" data-wpss-req-progress>
+							<div class="wpss-requirements-form__progress-text">
+								<span data-wpss-req-progress-label>
+									<?php
+									printf(
+										/* translators: 1: filled count, 2: total required */
+										esc_html__( '%1$d of %2$d required answered', 'wp-sell-services' ),
+										0,
+										(int) $req_required_count
+									);
+									?>
+								</span>
+							</div>
+							<div class="wpss-requirements-form__progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo esc_attr( (string) $req_required_count ); ?>" aria-valuenow="0">
+								<div class="wpss-requirements-form__progress-fill" data-wpss-req-progress-fill style="width: 0%;"></div>
+							</div>
+						</div>
 					<?php endif; ?>
 
 					<?php foreach ( $service_requirements as $index => $requirement ) : ?>
@@ -2800,9 +2833,81 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		height: 160px;
 	}
 }
+
+/* CB2 (plans/ORDER-FLOW-AUDIT.md) requirements progress bar */
+.wpss-requirements-form__progress {
+	margin-bottom: 24px;
+	padding: 12px 16px;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+}
+.wpss-requirements-form__progress-text {
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+	margin-bottom: 8px;
+}
+.wpss-requirements-form__progress-bar {
+	width: 100%;
+	height: 6px;
+	background: #e5e7eb;
+	border-radius: 9999px;
+	overflow: hidden;
+}
+.wpss-requirements-form__progress-fill {
+	height: 100%;
+	background: linear-gradient( 90deg, #4f46e5, #7c3aed );
+	border-radius: 9999px;
+	transition: width 0.3s ease;
+}
+.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-fill {
+	background: linear-gradient( 90deg, #10b981, #059669 );
+}
+.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
+	color: #047857;
+}
 </style>
 
 <script>
+(function() {
+	// CB2 (plans/ORDER-FLOW-AUDIT.md): live progress bar for the requirements
+	// form so the buyer always knows how many required questions remain.
+	var reqForm = document.getElementById( 'wpss-requirements-form' );
+	if ( reqForm && parseInt( reqForm.dataset.requiredCount || '0', 10 ) > 0 ) {
+		var totalReq = parseInt( reqForm.dataset.requiredCount, 10 );
+		var label    = reqForm.querySelector( '[data-wpss-req-progress-label]' );
+		var fill     = reqForm.querySelector( '[data-wpss-req-progress-fill]' );
+		var bar      = reqForm.querySelector( '.wpss-requirements-form__progress-bar' );
+		var wrap     = reqForm.querySelector( '[data-wpss-req-progress]' );
+		var labelTpl = '%1$d of %2$d required answered';
+		function reqUpdate() {
+			var fields = reqForm.querySelectorAll( '[required]' );
+			var seen   = {};
+			var filled = 0;
+			fields.forEach( function ( f ) {
+				if ( f.type === 'checkbox' || f.type === 'radio' ) {
+					if ( seen[ f.name ] ) { return; }
+					seen[ f.name ] = true;
+					if ( reqForm.querySelectorAll( 'input[name="' + f.name + '"]:checked' ).length > 0 ) { filled++; }
+				} else if ( f.type === 'file' ) {
+					if ( f.files && f.files.length > 0 ) { filled++; }
+				} else if ( ( f.value || '' ).trim() !== '' ) {
+					filled++;
+				}
+			} );
+			var capped = Math.min( filled, totalReq );
+			fill.style.width = Math.round( ( capped / totalReq ) * 100 ) + '%';
+			label.textContent = labelTpl.replace( '%1$d', String( capped ) ).replace( '%2$d', String( totalReq ) );
+			bar.setAttribute( 'aria-valuenow', String( capped ) );
+			wrap.classList.toggle( 'wpss-requirements-form__progress--complete', capped >= totalReq );
+		}
+		reqForm.addEventListener( 'input', reqUpdate );
+		reqForm.addEventListener( 'change', reqUpdate );
+		reqUpdate();
+	}
+})();
+
 (function() {
 	'use strict';
 
