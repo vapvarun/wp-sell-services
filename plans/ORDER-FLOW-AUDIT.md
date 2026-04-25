@@ -40,7 +40,7 @@ Target release: `1.1.0-rc3` (single ZIP, all 22 fixed before Shashank QA)
 | VS6 | 🟠 | Dispute escalation criteria unclear in vendor UI | `DisputesController` |
 | VS7 | 🟡 | Cancellation request hangs forever if buyer doesn't respond | `OrderWorkflowManager` (no timeout job) |
 | VS8 | 🟡 | ~~Rate-limited emails dropped silently~~ — re-evaluated during implementation: in-app notification (NotificationService) fires independently and is unaffected by email cooldown, so the vendor IS notified. Closed as not-a-friction. | `EmailService::send_new_message()` |
-| VS9 | 🟡 | Sub-vendor split earnings not shown on dashboard | (not implemented in 1.1.0) |
+| VS9 | 🟡 | ~~Sub-vendor split earnings not shown on dashboard~~ — re-verified during implementation: no sub-vendor / referral / split-commission architecture exists in 1.1.0 (zero grep matches for `sub_vendor`, `referral_split`, `affiliate_split` across `src/`). VS9 is speculative for a future feature; closed as not-applicable for this release. Will revisit when sub-vendor commission logic is actually built (likely 1.2.0+ alongside `plans/1.2.0-COMMERCIAL-AUDIT.md`). | (n/a in 1.1.0) |
 | VS10 | 🟢 | Sales dashboard hard-capped at 20 orders, no date filter | `dashboard/sections/sales.php:75` |
 | VS11 | 🟢 | No granular email preferences (digest mode, quiet hours) | `EmailService::get_email_settings():125` |
 
