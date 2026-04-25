@@ -406,7 +406,10 @@ class UnifiedDashboard {
 			</aside>
 
 			<main class="wpss-dashboard__content">
-				<?php $this->maybe_render_payout_banner( $user_id, $is_active ); ?>
+				<?php
+				$this->maybe_render_payout_banner( $user_id, $is_active );
+				$this->maybe_render_profile_banner( $user_id, $is_active );
+				?>
 				<header class="wpss-dashboard__header">
 					<h1 class="wpss-dashboard__title">
 						<?php
@@ -418,11 +421,17 @@ class UnifiedDashboard {
 						}
 						?>
 					</h1>
-					<?php if ( $this->current_section === 'services' ) : ?>
+					<?php
+					// F4 (baseline-2026-04-25.md): show the top "Create Service" button
+					// only when the vendor already has at least one service. On the empty
+					// state, the in-card "Create Your First Service" CTA stands alone so
+					// vendors aren't presented with two competing entry points.
+					if ( 'services' === $this->current_section && $this->vendor_has_any_services( $user_id ) ) :
+						?>
 						<a href="<?php echo esc_url( $this->get_section_url( 'create' ) ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Create Service', 'wp-sell-services' ); ?>
 						</a>
-					<?php elseif ( $this->current_section === 'requests' ) : ?>
+					<?php elseif ( 'requests' === $this->current_section ) : ?>
 						<a href="<?php echo esc_url( $this->get_section_url( 'create-request' ) ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
 						</a>
@@ -624,6 +633,126 @@ class UnifiedDashboard {
 	 * @param bool $is_active Whether user is an active vendor.
 	 * @return void
 	 */
+	/**
+	 * Whether the vendor has any services in any status (publish/draft/pending).
+	 *
+	 * Used to decide whether to show the top "+ Create Service" button (vendors
+	 * with services) or rely on the in-card empty-state CTA (vendors with none).
+	 * Cached per request to avoid repeating the count query in the template.
+	 *
+	 * @param int $user_id Vendor user ID.
+	 * @return bool True if at least one service exists, false otherwise.
+	 */
+	private function vendor_has_any_services( int $user_id ): bool {
+		static $cache = array();
+		if ( isset( $cache[ $user_id ] ) ) {
+			return $cache[ $user_id ];
+		}
+
+		$count = (int) ( new \WP_Query(
+			array(
+				'post_type'      => 'wpss_service',
+				'author'         => $user_id,
+				'post_status'    => array( 'publish', 'draft', 'pending' ),
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => false,
+			)
+		) )->found_posts;
+
+		$cache[ $user_id ] = $count > 0;
+		return $cache[ $user_id ];
+	}
+
+	/**
+	 * Show a soft "Complete your profile" banner when the vendor's profile
+	 * is missing key fields (tagline, bio, country).
+	 *
+	 * Soft signal — vendors can publish services without it, but a complete
+	 * profile attracts more buyers. Banner is dismissible per-session via
+	 * sessionStorage; it returns next session until the profile is complete.
+	 *
+	 * F7 part a from baseline-2026-04-25.md.
+	 *
+	 * @param int  $user_id   Current user ID.
+	 * @param bool $is_active Whether the user is an active vendor.
+	 * @return void
+	 */
+	private function maybe_render_profile_banner( int $user_id, bool $is_active ): void {
+		if ( ! $is_active ) {
+			return;
+		}
+
+		$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
+		if ( ! $profile ) {
+			return;
+		}
+
+		$missing = array();
+		if ( empty( trim( (string) $profile->title ) ) ) {
+			$missing[] = __( 'tagline', 'wp-sell-services' );
+		}
+		if ( empty( trim( (string) $profile->bio ) ) ) {
+			$missing[] = __( 'bio', 'wp-sell-services' );
+		}
+		if ( empty( trim( (string) $profile->country ) ) ) {
+			$missing[] = __( 'country', 'wp-sell-services' );
+		}
+
+		if ( empty( $missing ) ) {
+			return;
+		}
+
+		$profile_url = $this->get_section_url( 'profile' );
+		$missing_str = implode( ', ', $missing );
+		?>
+		<div class="wpss-dashboard__profile-banner" data-wpss-profile-banner role="status">
+			<span class="wpss-profile-banner__icon" aria-hidden="true">&#128100;</span>
+			<div class="wpss-profile-banner__content">
+				<strong class="wpss-profile-banner__title">
+					<?php esc_html_e( 'Complete your profile to attract more buyers', 'wp-sell-services' ); ?>
+				</strong>
+				<span class="wpss-profile-banner__text">
+					<?php
+					printf(
+						/* translators: %s: comma-separated list of missing profile fields (e.g. "tagline, bio, country") */
+						esc_html__( 'Buyers want to know who they are working with. Add your %s to your profile.', 'wp-sell-services' ),
+						esc_html( $missing_str )
+					);
+					?>
+				</span>
+			</div>
+			<a href="<?php echo esc_url( $profile_url ); ?>" class="wpss-btn wpss-btn--primary wpss-profile-banner__btn">
+				<?php esc_html_e( 'Complete profile', 'wp-sell-services' ); ?>
+			</a>
+			<button type="button"
+				class="wpss-profile-banner__dismiss"
+				data-wpss-profile-banner-dismiss
+				aria-label="<?php esc_attr_e( 'Dismiss for this session', 'wp-sell-services' ); ?>">
+				&times;
+			</button>
+		</div>
+		<script>
+			(function () {
+				if ( typeof sessionStorage === 'undefined' ) { return; }
+				var banner = document.querySelector( '[data-wpss-profile-banner]' );
+				if ( ! banner ) { return; }
+				if ( sessionStorage.getItem( 'wpss_profile_banner_dismissed' ) === '1' ) {
+					banner.style.display = 'none';
+					return;
+				}
+				var dismissBtn = banner.querySelector( '[data-wpss-profile-banner-dismiss]' );
+				if ( dismissBtn ) {
+					dismissBtn.addEventListener( 'click', function () {
+						sessionStorage.setItem( 'wpss_profile_banner_dismissed', '1' );
+						banner.style.display = 'none';
+					} );
+				}
+			})();
+		</script>
+		<?php
+	}
+
 	private function maybe_render_payout_banner( int $user_id, bool $is_active ): void {
 		if ( ! $is_active ) {
 			return;
