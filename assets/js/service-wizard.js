@@ -241,19 +241,27 @@ function wpssServiceWizard(existingData = {}) {
 		validateStep(step) {
 			this.validationErrors = [];
 
+			// Field-level error tracking — used by the WpssFormError primitive.
+			// Maps field id to error message so we can render inline AND in the summary.
+			const fieldErrors = {};
+
 				switch (step) {
 					case 'basic':
 						const title = (this.data.title || '').trim();
 						if (!title) {
 							this.validationErrors.push(wpssWizard.strings.validationTitle);
+							fieldErrors['service_title'] = wpssWizard.strings.validationTitle;
 						} else if (title.length < 10) {
 							this.validationErrors.push(wpssWizard.strings.validationTitleMin);
+							fieldErrors['service_title'] = wpssWizard.strings.validationTitleMin;
 						}
 						if (!this.data.category) {
 							this.validationErrors.push(wpssWizard.strings.validationCat);
+							fieldErrors['service_category'] = wpssWizard.strings.validationCat;
 						}
 					if (!this.data.description || this.data.description.length < 120) {
 						this.validationErrors.push(wpssWizard.strings.validationDesc);
+						fieldErrors['service_description'] = wpssWizard.strings.validationDesc;
 					}
 					break;
 
@@ -261,18 +269,15 @@ function wpssServiceWizard(existingData = {}) {
 					if (!this.isPackageValid('basic')) {
 						this.validationErrors.push(wpssWizard.strings.validationPrice);
 					}
-					// Validate enabled packages have name and description.
+					// Validate enabled packages have a name. Description is no longer
+					// required — vendors describe their tier via the Features list
+					// (bullets sell better than prose, matching Fiverr's pattern).
 					['basic', 'standard', 'premium'].forEach((tier) => {
 						const pkg = this.data.packages[tier];
 						if (tier === 'basic' || pkg.enabled) {
 							if (!pkg.name || !pkg.name.trim()) {
 								this.validationErrors.push(
 									(wpssWizard.strings.validationPkgName || 'Package name is required for the %s package.').replace('%s', tier)
-								);
-							}
-							if (!pkg.description || !pkg.description.trim()) {
-								this.validationErrors.push(
-									(wpssWizard.strings.validationPkgDesc || 'Package description is required for the %s package.').replace('%s', tier)
 								);
 							}
 						}
@@ -282,17 +287,42 @@ function wpssServiceWizard(existingData = {}) {
 				case 'gallery':
 					if (!this.data.gallery.main) {
 						this.validationErrors.push(wpssWizard.strings.validationImage);
+						fieldErrors['wpss-wizard-main-image'] = wpssWizard.strings.validationImage;
 					}
 					break;
 			}
 
+			// Apply errors via the wpss-form-error primitive — inline on each field
+			// PLUS a summary at the top of the step body. Falls back gracefully if
+			// the primitive script hasn't loaded yet (older builds, dev cache).
+			if (typeof window.WpssFormError !== 'undefined') {
+				// Clear all known fields first so we don't leave stale errors behind.
+				['service_title', 'service_category', 'service_description', 'wpss-wizard-main-image'].forEach((id) => {
+					window.WpssFormError.clear(id);
+				});
+
+				// Apply current errors.
+				Object.keys(fieldErrors).forEach((id) => {
+					window.WpssFormError.show(id, fieldErrors[id]);
+				});
+
+				// Render or hide the form-level summary.
+				const stepBody = document.querySelector('.wpss-wizard__step[data-step="' + step + '"]');
+				window.WpssFormError.summary(stepBody, this.validationErrors);
+			}
+
 			if (this.validationErrors.length > 0) {
-				this.showNotice(this.validationErrors[0], 'error');
-				// Scroll to notice for visibility.
+				// Scroll to first invalid field (or summary if none) so vendor sees
+				// what to fix without hunting.
 				this.$nextTick(() => {
-					const notice = document.querySelector('.wpss-wizard-notice');
-					if (notice) {
-						notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					const stepBody = document.querySelector('.wpss-wizard__step[data-step="' + step + '"]');
+					if (typeof window.WpssFormError !== 'undefined' && stepBody) {
+						window.WpssFormError.scrollToFirst(stepBody);
+					}
+					// Fallback for environments without the primitive: scroll to summary.
+					const summary = document.querySelector('.wpss-form-error-summary:not([hidden])');
+					if (summary && (typeof window.WpssFormError === 'undefined' || !stepBody.querySelector('[aria-invalid="true"]'))) {
+						summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
 					}
 				});
 				return false;
@@ -318,6 +348,42 @@ function wpssServiceWizard(existingData = {}) {
 			const deliveryTime = parseInt(pkg.delivery_time, 10);
 
 			return !isNaN(price) && price > 0 && !isNaN(deliveryTime) && deliveryTime > 0;
+		},
+
+		/**
+		 * Enable an optional pricing tier (Standard or Premium) and switch to it.
+		 *
+		 * Replaces the previous "all 3 tabs visible from start" UX where vendors
+		 * felt they had to fill all three. Now Basic is the default; Standard
+		 * and Premium are opt-in via explicit "+ Add tier" buttons.
+		 *
+		 * @param {string} tier - Package tier ('standard' or 'premium').
+		 */
+		addTier(tier) {
+			if (tier !== 'standard' && tier !== 'premium') {
+				return;
+			}
+			this.data.packages[tier].enabled = true;
+			this.activePackage = tier;
+		},
+
+		/**
+		 * Disable an optional pricing tier and switch focus back to Basic.
+		 *
+		 * Existing field values are preserved on the data object so the vendor
+		 * can re-enable without losing their work, but server-side serialisation
+		 * of disabled tiers is filtered out by isPackageValid.
+		 *
+		 * @param {string} tier - Package tier ('standard' or 'premium').
+		 */
+		removeTier(tier) {
+			if (tier !== 'standard' && tier !== 'premium') {
+				return;
+			}
+			this.data.packages[tier].enabled = false;
+			if (this.activePackage === tier) {
+				this.activePackage = 'basic';
+			}
 		},
 
 		/**
@@ -552,6 +618,13 @@ function wpssServiceWizard(existingData = {}) {
 			}
 			this.saving = true;
 
+			// Drive the autosave indicator pill via the WpssAutosave primitive.
+			// Vendor sees: "Saving…" (grey) → "Saved" (green, auto-fades) or "Save failed" (red).
+			const autosaveSelector = '#wpss-wizard-autosave';
+			if (typeof window.WpssAutosave !== 'undefined') {
+				window.WpssAutosave.set(autosaveSelector, 'saving');
+			}
+
 			try {
 				const serviceId = parseInt(document.getElementById('wpss-service-wizard').dataset.serviceId, 10) || 0;
 				const formData = new FormData();
@@ -581,12 +654,22 @@ function wpssServiceWizard(existingData = {}) {
 						window.history.replaceState({}, '', url);
 					}
 
-					this.showNotice(wpssWizard.strings.saved, 'success');
+					if (typeof window.WpssAutosave !== 'undefined') {
+						window.WpssAutosave.set(autosaveSelector, 'saved');
+					}
 				} else {
+					if (typeof window.WpssAutosave !== 'undefined') {
+						window.WpssAutosave.set(autosaveSelector, 'error');
+					}
+					// Surface the actual error reason to the user via the toast (server
+					// errors are different from autosave-pill state — they need text).
 					this.showNotice(result.data.message || wpssWizard.strings.error, 'error');
 				}
 			} catch (error) {
 				console.error('Save draft error:', error);
+				if (typeof window.WpssAutosave !== 'undefined') {
+					window.WpssAutosave.set(autosaveSelector, 'error');
+				}
 				this.showNotice(wpssWizard.strings.error, 'error');
 			} finally {
 				this.saving = false;
