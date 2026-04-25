@@ -1556,6 +1556,14 @@ class EmailService {
 			return false;
 		}
 
+		// VS11 (plans/ORDER-FLOW-AUDIT.md): per-vendor mute. If the recipient
+		// has explicitly opted out of this category in their dashboard, skip
+		// the send. Admin-level setting still wins above (a globally-disabled
+		// type can't be re-enabled by the recipient).
+		if ( $this->recipient_muted_type( $to, $type ) ) {
+			return false;
+		}
+
 		// Rate limit — originally "one per type per recipient per 5 minutes"
 		// to throttle noisy things like chat-message notifications. That
 		// window silently dropped legitimate transaction-critical emails
@@ -1853,6 +1861,85 @@ class EmailService {
 	 * @param string $type Email type constant.
 	 * @return bool True if the email type is enabled or has no setting, false if disabled.
 	 */
+	/**
+	 * Map EmailService type constants to per-vendor preference category keys.
+	 *
+	 * VS11 (plans/ORDER-FLOW-AUDIT.md): vendors set high-level categories in
+	 * their dashboard (orders / messages / completion / cancellation / disputes
+	 * / tips / withdrawals / proposals). This array fans out each category to
+	 * the underlying email types so a single "Mute new orders" toggle silences
+	 * new_order + requirements_submitted + order_in_progress at once.
+	 *
+	 * Returns null if the type isn't owned by any user-controllable category
+	 * (e.g. seller-level promotion is always sent).
+	 *
+	 * @since 1.1.0
+	 * @param string $type EmailService type constant.
+	 * @return string|null Preference category key, or null if not user-controllable.
+	 */
+	private function get_user_pref_category( string $type ): ?string {
+		$type_to_category = array(
+			self::TYPE_NEW_ORDER              => 'orders',
+			self::TYPE_REQUIREMENTS_SUBMITTED => 'orders',
+			self::TYPE_ORDER_IN_PROGRESS      => 'orders',
+			self::TYPE_REQUIREMENTS_REMINDER  => 'orders',
+			self::TYPE_DELIVERY_READY         => 'orders',
+			self::TYPE_NEW_MESSAGE            => 'messages',
+			self::TYPE_ORDER_COMPLETED        => 'completion',
+			self::TYPE_REVISION_REQUESTED     => 'completion',
+			self::TYPE_ORDER_CANCELLED        => 'cancellation',
+			self::TYPE_CANCELLATION_REQUESTED => 'cancellation',
+			self::TYPE_DISPUTE_OPENED         => 'disputes',
+			self::TYPE_TIP_RECEIVED           => 'tips',
+			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawals',
+			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawals',
+			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawals',
+			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawals',
+			self::TYPE_PROPOSAL_SUBMITTED     => 'proposals',
+			self::TYPE_PROPOSAL_ACCEPTED      => 'proposals',
+			self::TYPE_MILESTONE_PROPOSED     => 'proposals',
+			self::TYPE_MILESTONE_PAID         => 'proposals',
+			self::TYPE_MILESTONE_SUBMITTED    => 'proposals',
+			self::TYPE_MILESTONE_APPROVED     => 'proposals',
+			self::TYPE_EXTENSION_PROPOSED     => 'proposals',
+			self::TYPE_EXTENSION_APPROVED     => 'proposals',
+			self::TYPE_EXTENSION_DECLINED     => 'proposals',
+		);
+		return $type_to_category[ $type ] ?? null;
+	}
+
+	/**
+	 * Check whether a specific user has muted a category in their preferences.
+	 *
+	 * Returns true if the user has explicitly set the category to false.
+	 * Returns false if the user hasn't saved prefs yet OR the category is enabled.
+	 *
+	 * Used by send() to skip email sending when the recipient has opted out.
+	 *
+	 * @since 1.1.0
+	 * @param string $recipient_email Recipient's email address.
+	 * @param string $type            EmailService type constant.
+	 * @return bool True if the user opted out, false otherwise.
+	 */
+	private function recipient_muted_type( string $recipient_email, string $type ): bool {
+		$category = $this->get_user_pref_category( $type );
+		if ( null === $category ) {
+			return false; // Not a user-controllable type — admin global setting still wins.
+		}
+
+		$user = get_user_by( 'email', $recipient_email );
+		if ( ! $user ) {
+			return false; // Anonymous recipient — no preferences to check.
+		}
+
+		$prefs = get_user_meta( $user->ID, 'wpss_email_preferences', true );
+		if ( ! is_array( $prefs ) || ! array_key_exists( $category, $prefs ) ) {
+			return false; // Default = enabled.
+		}
+
+		return false === $prefs[ $category ] || 0 === $prefs[ $category ] || '' === $prefs[ $category ];
+	}
+
 	private function is_email_type_enabled( string $type ): bool {
 		$notification_settings = get_option( 'wpss_notifications' );
 

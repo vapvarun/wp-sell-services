@@ -181,6 +181,114 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			</button>
 		</div>
 	</form>
+
+	<?php
+	// VS11 (plans/ORDER-FLOW-AUDIT.md): per-vendor email preferences. Lets each
+	// vendor mute specific notification categories without affecting others on
+	// the platform. Stored in user meta wpss_email_preferences as a key=>bool
+	// array. Missing key OR true = receive; explicit false = mute.
+	$user_prefs = get_user_meta( $user_id, 'wpss_email_preferences', true );
+	if ( ! is_array( $user_prefs ) ) {
+		$user_prefs = array();
+	}
+	$pref_categories = array(
+		'orders'      => array(
+			'label' => __( 'New orders', 'wp-sell-services' ),
+			'desc'  => __( 'When a buyer places a new order on one of your services.', 'wp-sell-services' ),
+		),
+		'messages'    => array(
+			'label' => __( 'New messages', 'wp-sell-services' ),
+			'desc'  => __( 'When a buyer sends a message on an active order.', 'wp-sell-services' ),
+		),
+		'completion'  => array(
+			'label' => __( 'Order completion + reviews', 'wp-sell-services' ),
+			'desc'  => __( 'When a buyer approves a delivery or leaves a review.', 'wp-sell-services' ),
+		),
+		'cancellation'=> array(
+			'label' => __( 'Cancellation requests', 'wp-sell-services' ),
+			'desc'  => __( 'When a buyer requests to cancel an active order.', 'wp-sell-services' ),
+		),
+		'disputes'    => array(
+			'label' => __( 'Disputes', 'wp-sell-services' ),
+			'desc'  => __( 'Always recommended — disputes need a quick response to avoid escalation.', 'wp-sell-services' ),
+		),
+		'tips'        => array(
+			'label' => __( 'Tips received', 'wp-sell-services' ),
+			'desc'  => __( 'When a buyer sends you a tip on a completed order.', 'wp-sell-services' ),
+		),
+		'withdrawals' => array(
+			'label' => __( 'Withdrawal status updates', 'wp-sell-services' ),
+			'desc'  => __( 'When your withdrawal request is approved, paid out, or rejected.', 'wp-sell-services' ),
+		),
+		'proposals'   => array(
+			'label' => __( 'Proposals + milestones + extensions', 'wp-sell-services' ),
+			'desc'  => __( 'When a proposal is accepted or a milestone / extension is paid.', 'wp-sell-services' ),
+		),
+	);
+	?>
+	<div class="wpss-email-preferences" id="wpss-email-preferences">
+		<h3><?php esc_html_e( 'Email preferences', 'wp-sell-services' ); ?></h3>
+		<p class="wpss-email-preferences__intro">
+			<?php esc_html_e( 'Choose which emails you want to receive. In-app notifications still appear regardless of these settings.', 'wp-sell-services' ); ?>
+		</p>
+
+		<form id="wpss-email-prefs-form">
+			<?php wp_nonce_field( 'wpss_save_email_prefs', 'wpss_email_prefs_nonce' ); ?>
+
+			<div class="wpss-email-pref-list">
+				<?php foreach ( $pref_categories as $key => $category ) : ?>
+					<?php $is_enabled = ! array_key_exists( $key, $user_prefs ) || ! empty( $user_prefs[ $key ] ); ?>
+					<label class="wpss-email-pref">
+						<input type="checkbox" name="prefs[<?php echo esc_attr( $key ); ?>]" value="1" <?php checked( $is_enabled ); ?>>
+						<span class="wpss-email-pref__body">
+							<strong><?php echo esc_html( $category['label'] ); ?></strong>
+							<small><?php echo esc_html( $category['desc'] ); ?></small>
+						</span>
+					</label>
+				<?php endforeach; ?>
+			</div>
+
+			<button type="submit" class="wpss-btn wpss-btn--primary wpss-email-prefs__save">
+				<?php esc_html_e( 'Save email preferences', 'wp-sell-services' ); ?>
+			</button>
+			<span class="wpss-email-prefs__status" data-wpss-prefs-status aria-live="polite"></span>
+		</form>
+	</div>
+
+	<script>
+		(function () {
+			var form = document.getElementById( 'wpss-email-prefs-form' );
+			if ( ! form ) { return; }
+			var statusEl = form.querySelector( '[data-wpss-prefs-status]' );
+			form.addEventListener( 'submit', function ( e ) {
+				e.preventDefault();
+				statusEl.textContent = <?php echo wp_json_encode( __( 'Saving…', 'wp-sell-services' ) ); ?>;
+				statusEl.style.color = '#6b7280';
+
+				var fd = new FormData( form );
+				fd.append( 'action', 'wpss_save_email_preferences' );
+
+				fetch( <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, {
+					method: 'POST',
+					body: fd,
+					credentials: 'same-origin'
+				} ).then( function ( r ) { return r.json(); } )
+				  .then( function ( res ) {
+					if ( res && res.success ) {
+						statusEl.textContent = <?php echo wp_json_encode( __( '✓ Preferences saved', 'wp-sell-services' ) ); ?>;
+						statusEl.style.color = '#16a34a';
+						window.setTimeout( function () { statusEl.textContent = ''; }, 3000 );
+					} else {
+						statusEl.textContent = ( res && res.data && res.data.message ) || <?php echo wp_json_encode( __( 'Could not save. Try again.', 'wp-sell-services' ) ); ?>;
+						statusEl.style.color = '#dc2626';
+					}
+				} ).catch( function () {
+					statusEl.textContent = <?php echo wp_json_encode( __( 'Network error. Try again.', 'wp-sell-services' ) ); ?>;
+					statusEl.style.color = '#dc2626';
+				} );
+			} );
+		})();
+	</script>
 </div>
 
 <?php
