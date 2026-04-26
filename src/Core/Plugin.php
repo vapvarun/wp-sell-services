@@ -225,6 +225,11 @@ final class Plugin {
 	 * @return void
 	 */
 	public function init(): void {
+		// Asset min-swap filters fire on every request (admin + frontend),
+		// so register them before any enqueue hooks bind. Skipped entirely
+		// in SCRIPT_DEBUG mode by Assets::init() itself.
+		\WPSellServices\Frontend\Assets::init();
+
 		$this->init_updater();
 		$this->maybe_run_install();
 		$this->set_locale();

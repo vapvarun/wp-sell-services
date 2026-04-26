@@ -198,15 +198,68 @@ module.exports = function ( grunt ) {
 	grunt.loadNpmTasks( 'grunt-rtlcss' );
 
 	// i18n: Generate .pot file.
-	grunt.registerTask( 'i18n', [ 'checktextdomain', 'makepot' ] );
+	//
+	// Modern path runs `wp i18n make-pot` (the WP-CLI built-in extractor) —
+	// faster, supports JS strings, and the legacy grunt-wp-i18n package
+	// fails on PHP 8.1+ in some environments. Falls back to the grunt
+	// `makepot` task only if WP-CLI is not installed.
+	grunt.registerTask( 'makepot:wpcli', 'Generate POT via WP-CLI', function () {
+		const done = this.async();
+		const { spawn } = require( 'child_process' );
+		const args = [
+			'i18n',
+			'make-pot',
+			'.',
+			'languages/wp-sell-services.pot',
+			'--slug=wp-sell-services',
+			'--domain=wp-sell-services',
+			'--exclude=node_modules,vendor,tests,dist,scripts,plans,docs,marketing,bin',
+			'--headers={"Report-Msgid-Bugs-To":"https://wbcomdesigns.com/support/","Last-Translator":"Wbcom Designs <admin@wbcomdesigns.com>","Language-Team":"Wbcom Designs <admin@wbcomdesigns.com>"}',
+		];
+		const child = spawn( 'wp', args, { stdio: 'inherit' } );
+		child.on( 'error', ( err ) => {
+			grunt.log.warn( 'WP-CLI not available (' + err.message + '), falling back to grunt-wp-i18n.' );
+			grunt.task.run( 'makepot' );
+			done();
+		} );
+		child.on( 'close', ( code ) => {
+			if ( code !== 0 ) {
+				grunt.fail.warn( 'wp i18n make-pot exited with code ' + code );
+			}
+			done();
+		} );
+	} );
+
+	grunt.registerTask( 'i18n', [ 'checktextdomain', 'makepot:wpcli' ] );
 
 	// RTL: Generate RTL stylesheets.
 	grunt.registerTask( 'rtl', [ 'rtlcss' ] );
 
-	// Release: Full build + i18n + RTL + dist + zip.
+	// Min: Generate `.min.css` + `.min.js` siblings via scripts/build-min.js.
+	// Runs AFTER `rtl` so the freshly-generated `*-rtl.css` files also get
+	// minified into `*-rtl.min.css` siblings. Both source and minified
+	// files ship together in the dist ZIP — `Frontend\Assets` swaps in the
+	// `.min` variant at runtime when SCRIPT_DEBUG is false.
+	grunt.registerTask( 'min', 'Minify plugin CSS + JS into .min siblings', function () {
+		const done = this.async();
+		const { spawn } = require( 'child_process' );
+		const child = spawn( 'node', [ 'scripts/build-min.js' ], { stdio: 'inherit' } );
+		child.on( 'error', ( err ) => grunt.fail.warn( 'min build failed: ' + err.message ) );
+		child.on( 'close', ( code ) => {
+			if ( code !== 0 ) {
+				grunt.fail.warn( 'min build exited with code ' + code );
+			}
+			done();
+		} );
+	} );
+
+	// Release: Full build → POT regen → RTL CSS → minify → copy → zip.
+	// Order matters: rtl produces `*-rtl.css`, min then catches both
+	// LTR and RTL on the same pass.
 	grunt.registerTask( 'release', [
 		'i18n',
 		'rtl',
+		'min',
 		'clean:dist',
 		'copy:dist',
 		'compress:dist',
@@ -214,6 +267,7 @@ module.exports = function ( grunt ) {
 
 	// Dist: Quick dist without i18n/RTL (for dev).
 	grunt.registerTask( 'dist', [
+		'min',
 		'clean:dist',
 		'copy:dist',
 		'compress:dist',
