@@ -448,19 +448,27 @@
 			data: $form.serialize() + '&action=wpss_create_manual_order&nonce=' + wpssManualOrder.nonce,
 			success: function (response) {
 				if (response.success) {
-					var message =
+					// Build the success message via safe DOM construction —
+					// `order_number` and `order_id` come from the server response
+					// and would normally be safe, but rendering them via `.text()`
+					// rather than `.html()` keeps this hardened against any future
+					// breach where a malicious order_number could land here. The
+					// "<br><br><strong>…</strong>" structural HTML is added via
+					// jQuery element creation, not string concatenation.
+					var $msg = $('#wpss-result-message').empty();
+					$msg.text(
 						wpssManualOrder.i18n.orderCreated
 							.replace('%1$s', response.data.order_number)
-							.replace('%2$d', response.data.order_id);
+							.replace('%2$d', response.data.order_id)
+					);
 
 					if (response.data.requirements_skipped) {
-						message +=
-							'<br><br><strong>' +
-							wpssManualOrder.i18n.requirementsSkipped +
-							'</strong>';
+						$msg.append('<br><br>').append(
+							$('<strong/>').text(
+								wpssManualOrder.i18n.requirementsSkipped
+							)
+						);
 					}
-
-					$('#wpss-result-message').html(message);
 					$('#wpss-view-order-link').attr(
 						'href',
 						response.data.view_url

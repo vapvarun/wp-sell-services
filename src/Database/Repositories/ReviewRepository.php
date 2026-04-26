@@ -334,6 +334,39 @@ class ReviewRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Sweep expired guest "marked review helpful" idempotency rows from
+	 * `wp_options`.
+	 *
+	 * `AjaxHandlers::mark_review_helpful()` writes a row per (review × user/IP)
+	 * with the `option_value` set to `time() + WEEK_IN_SECONDS` so a guest
+	 * can't double-vote within a week. The rows are stored as `autoload=no`
+	 * options (so they don't bloat the autoloaded set), but without a sweep
+	 * they accumulate forever — over time on a busy marketplace this turns
+	 * into millions of dead rows.
+	 *
+	 * Hooked to the daily `wpss_cleanup_review_votes` Action Scheduler job.
+	 * Returns the deleted row count for log/test inspection.
+	 *
+	 * @return int Number of expired vote rows deleted.
+	 */
+	public function cleanup_expired_helpful_votes(): int {
+		$now = time();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Targeted cleanup of plugin-owned option rows; option_value is a stored unix timestamp set by mark_review_helpful().
+		$deleted = (int) $this->wpdb->query(
+			$this->wpdb->prepare(
+				"DELETE FROM {$this->wpdb->options}
+				 WHERE option_name LIKE %s
+				 AND CAST(option_value AS UNSIGNED) < %d",
+				$this->wpdb->esc_like( '_wpss_vote_' ) . '%',
+				$now
+			)
+		);
+
+		return $deleted;
+	}
+
+	/**
 	 * Clear rating summary cache for a service and/or vendor.
 	 *
 	 * @param int|null $service_id Service ID to clear cache for.

@@ -94,6 +94,16 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_mark_review_helpful', array( $this, 'mark_review_helpful' ) );
 		add_action( 'wp_ajax_nopriv_wpss_mark_review_helpful', array( $this, 'mark_review_helpful' ) );
 
+		// Daily Action Scheduler sweep of expired guest helpful-vote rows
+		// (kept here next to mark_review_helpful so the producer + consumer
+		// for the `_wpss_vote_*` option_name pattern live in the same file).
+		add_action(
+			'wpss_cleanup_review_votes',
+			static function (): void {
+				( new \WPSellServices\Database\Repositories\ReviewRepository() )->cleanup_expired_helpful_votes();
+			}
+		);
+
 		// Disputes.
 		add_action( 'wp_ajax_wpss_open_dispute', array( $this, 'open_dispute' ) );
 		add_action( 'wp_ajax_wpss_add_dispute_evidence', array( $this, 'add_dispute_evidence' ) );
@@ -2200,6 +2210,15 @@ class AjaxHandlers {
 		// Verify nonce for logged-in users, skip for guests (public search).
 		if ( is_user_logged_in() ) {
 			check_ajax_referer( 'wpss_search_nonce', 'nonce' );
+		}
+
+		// Rate-limit guests by IP (logged-in users by user ID). Live search is
+		// `nopriv`-exposed, so without an IP-scoped limit a single guest can
+		// hammer this endpoint and walk the wpss_service post type at speed.
+		$current_user_id = get_current_user_id();
+		$rate_limit_user = $current_user_id > 0 ? $current_user_id : null;
+		if ( RateLimiter::check_and_track( 'live_search', $rate_limit_user ) ) {
+			RateLimiter::send_error( 'live_search' );
 		}
 
 		$query = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );

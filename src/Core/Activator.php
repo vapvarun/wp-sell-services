@@ -290,6 +290,9 @@ class Activator {
 			\WPSellServices\Services\TippingService::CLEANUP_HOOK => DAY_IN_SECONDS,
 			\WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK => DAY_IN_SECONDS,
 			\WPSellServices\Services\MilestoneService::CLEANUP_HOOK => DAY_IN_SECONDS,
+
+			// Expired guest "marked review helpful" idempotency rows in wp_options.
+			'wpss_cleanup_review_votes'          => DAY_IN_SECONDS,
 		);
 
 		foreach ( $recurring as $hook => $interval ) {

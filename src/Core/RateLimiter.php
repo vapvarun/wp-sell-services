@@ -58,6 +58,10 @@ class RateLimiter {
 			'requests' => 20,
 			'window'   => 60,
 		), // 20 votes per minute.
+		'live_search'     => array(
+			'requests' => 30,
+			'window'   => 60,
+		), // 30 live-search queries per minute (per IP for guests, per user for logged-in).
 		'contact'         => array(
 			'requests' => 5,
 			'window'   => 300,
