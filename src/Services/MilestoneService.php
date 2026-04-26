@@ -86,7 +86,14 @@ class MilestoneService {
 	 */
 	public function init(): void {
 		add_action( 'wpss_order_paid', array( $this, 'handle_order_paid' ), 20, 1 );
-		add_action( self::CLEANUP_HOOK, array( $this, 'cleanup_abandoned_milestones' ) );
+		// Cleanup returns the count of cancelled rows for logging/tests; the
+		// action discards it.
+		add_action(
+			self::CLEANUP_HOOK,
+			function (): void {
+				$this->cleanup_abandoned_milestones();
+			}
+		);
 	}
 
 	/**

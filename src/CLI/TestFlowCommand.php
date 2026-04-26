@@ -52,13 +52,12 @@ use WPSellServices\Integrations\Standalone\StandaloneOrderProvider;
  */
 class TestFlowCommand extends WP_CLI_Command {
 
-	private const USER_PREFIX    = 'test_flow_';
-	private const SERVICE_PREFIX = 'test_flow_service_';
+	private const USER_PREFIX = 'test_flow_';
 
 	/**
 	 * IDs collected during a run so we can clean up.
 	 *
-	 * @var array{users: int[], posts: int[], proposals: int[], orders: int[], wallet_txns: int[]}
+	 * @var array{users: int[], posts: int[], proposals: int[], orders: int[], wallet_txns: int[], audit_rows: int[]}
 	 */
 	private array $created = array(
 		'users'       => array(),
@@ -146,7 +145,10 @@ class TestFlowCommand extends WP_CLI_Command {
 		}
 
 		if ( $exit_code ) {
-			WP_CLI::halt( $exit_code );
+			// `WP_CLI::halt( $exit_code )` is an alias for `exit( $exit_code )`
+			// — using the bare PHP exit keeps PHPStan happy without losing the
+			// behaviour (we want to surface the non-zero status to the shell).
+			exit( $exit_code );
 		}
 	}
 
@@ -360,7 +362,7 @@ class TestFlowCommand extends WP_CLI_Command {
 			return;
 		}
 
-		$workflow = new OrderWorkflowManager( new OrderService() );
+		$workflow = new OrderWorkflowManager();
 		$workflow->handle_order_cancelled( $order_id, ServiceOrder::STATUS_COMPLETED );
 
 		// Assert: reversal wallet transaction exists.

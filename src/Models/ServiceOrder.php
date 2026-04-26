@@ -96,9 +96,13 @@ class ServiceOrder {
 	/**
 	 * Platform identifier.
 	 *
-	 * @var string
+	 * Nullable because the `platform` column in `wp_wpss_orders` is `NULL`
+	 * with a default of `standalone` — a row that pre-dates the column
+	 * default or is mid-insert can surface as null on the model.
+	 *
+	 * @var string|null
 	 */
-	public string $platform = 'standalone';
+	public ?string $platform = 'standalone';
 
 	/**
 	 * Platform order ID.
@@ -138,9 +142,13 @@ class ServiceOrder {
 	/**
 	 * Currency code.
 	 *
-	 * @var string
+	 * Nullable because the `currency` column in `wp_wpss_orders` is `NULL`
+	 * with a `USD` default — pre-default rows or mid-insert reads can
+	 * surface as null on the model.
+	 *
+	 * @var string|null
 	 */
-	public string $currency = 'USD';
+	public ?string $currency = 'USD';
 
 	/**
 	 * Commission rate applied to this order.
@@ -166,9 +174,13 @@ class ServiceOrder {
 	/**
 	 * Order status.
 	 *
-	 * @var string
+	 * Nullable because the `status` column in `wp_wpss_orders` is `NULL`
+	 * with a `pending_payment` default; existing call sites already use
+	 * `?? STATUS_PENDING_PAYMENT` defensively.
+	 *
+	 * @var string|null
 	 */
-	public string $status = self::STATUS_PENDING_PAYMENT;
+	public ?string $status = self::STATUS_PENDING_PAYMENT;
 
 	/**
 	 * Delivery deadline.
@@ -194,9 +206,13 @@ class ServiceOrder {
 	/**
 	 * Payment status.
 	 *
-	 * @var string
+	 * Nullable because the `payment_status` column in `wp_wpss_orders`
+	 * is `NULL` with a `pending` default; existing call sites use
+	 * `?? 'pending'` defensively.
+	 *
+	 * @var string|null
 	 */
-	public string $payment_status = 'pending';
+	public ?string $payment_status = 'pending';
 
 	/**
 	 * Transaction ID.

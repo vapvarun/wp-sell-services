@@ -71,7 +71,14 @@ class ExtensionOrderService {
 		// paid sub-order (e.g. accounting/audit) fire before we extend the
 		// parent and flip the sub-order to completed.
 		add_action( 'wpss_order_paid', array( $this, 'handle_order_paid' ), 20, 1 );
-		add_action( self::CLEANUP_HOOK, array( $this, 'cleanup_abandoned_extensions' ) );
+		// Cleanup returns the count of cancelled rows for logging/tests; the
+		// action discards it.
+		add_action(
+			self::CLEANUP_HOOK,
+			function (): void {
+				$this->cleanup_abandoned_extensions();
+			}
+		);
 	}
 
 	/**

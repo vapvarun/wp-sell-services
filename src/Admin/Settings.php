@@ -2118,7 +2118,7 @@ class Settings {
 		// "no platform cut"). Admins can clear the field to revert to the
 		// matching-rate behavior.
 		$tip_rate_raw = $input['tip_commission_rate'] ?? '';
-		if ( '' === $tip_rate_raw || null === $tip_rate_raw ) {
+		if ( '' === $tip_rate_raw ) {
 			$sanitized['tip_commission_rate'] = '';
 		} else {
 			$sanitized['tip_commission_rate'] = min( 50, max( 0, (float) $tip_rate_raw ) );

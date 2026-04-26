@@ -131,7 +131,10 @@ class PublicSignup {
 				'display_name'         => $display_name,
 				'first_name'           => $display_name,
 				'role'                 => 'subscriber',
-				'show_admin_bar_front' => false,
+				// `show_admin_bar_front` is stored as a string ('true'/'false') in
+				// usermeta — wp_insert_user passes the value through unchanged so
+				// we set the canonical string form here.
+				'show_admin_bar_front' => 'false',
 			)
 		);
 
@@ -170,14 +173,16 @@ class PublicSignup {
 			$vendor_service = new VendorService();
 			$result         = $vendor_service->register( (int) $user_id );
 
-			if ( is_wp_error( $result ) ) {
+			if ( false === $result ) {
 				// User is created + signed in even if vendor promotion failed —
 				// they can retry from the logged-in dashboard. Surface a friendly
-				// notice but still redirect.
+				// notice but still redirect. `register()` returns bool (not
+				// WP_Error), so we send a generic message; specific failure
+				// reasons are logged inside VendorService::register().
 				wp_send_json_success(
 					array(
 						'redirect' => $redirect_url,
-						'message'  => $result->get_error_message(),
+						'message'  => __( 'Account created, but vendor promotion failed. Try again from the dashboard.', 'wp-sell-services' ),
 						'warning'  => true,
 					)
 				);

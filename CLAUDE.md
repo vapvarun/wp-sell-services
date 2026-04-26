@@ -95,6 +95,14 @@ wp-sell-services/
 └── docs/                   # Documentation
 ```
 
+## Browser audits / QA browser walks
+
+**Always use the Sonnet model for browser-driven audits and persona-based QA walks** (e.g. the `1.1.0-COMPLETENESS-AUDIT.md` 25-feature × 5-persona matrix, ad-hoc dashboard regression sweeps, any task that involves driving Playwright through many flows in sequence).
+
+Why: browser-walk work is high-volume, highly parallel, and rarely needs deep reasoning per step. Sonnet is the right cost/throughput trade-off for this kind of repetitive UI verification.
+
+When to override (use Opus): if an audit step turns into a deep debugging session (e.g. tracing a money-flow bug through multiple services), escalate that specific subtask to Opus, then return to Sonnet for the rest of the matrix.
+
 ## Coding Standards
 
 This project follows **WordPress Coding Standards (WPCS)** strictly.

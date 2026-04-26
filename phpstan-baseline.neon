@@ -267,7 +267,7 @@ parameters:
 		-
 			message: '#^Call to WP_CLI\:\:add_command\(\) on a separate line has no effect\.$#'
 			identifier: staticMethod.resultUnused
-			count: 4
+			count: 5
 			path: src/CLI/ServiceCommands.php
 
 		-
