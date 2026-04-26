@@ -1441,6 +1441,38 @@ select:invalid {
 	margin-bottom: 20px;
 }
 
+/* Sub-order parent breadcrumb (CB6 from plans/ORDER-FLOW-AUDIT.md) — gives
+   buyer / vendor immediate context that a tip / extension / milestone
+   sub-order is tied to a parent service order, with a one-click link back. */
+.wpss-suborder-crumb {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	color: #6b7280;
+	margin: 0 auto 16px;
+	padding: 6px 12px;
+	background: #f9fafb;
+	border-radius: 9999px;
+	max-width: max-content;
+}
+
+.wpss-suborder-crumb .wpss-icon {
+	width: 14px;
+	height: 14px;
+	color: #9ca3af;
+}
+
+.wpss-suborder-crumb a {
+	color: #4f46e5;
+	font-weight: 500;
+	text-decoration: none;
+}
+
+.wpss-suborder-crumb a:hover {
+	text-decoration: underline;
+}
+
 .wpss-back-link {
 	display: inline-block;
 	margin-bottom: 15px;
@@ -2110,6 +2142,37 @@ select:invalid {
 
 .wpss-profile-section {
 	margin-bottom: 40px;
+}
+
+.wpss-video-embed {
+	position: relative;
+	width: 100%;
+	height: 0;
+	padding-bottom: 56.25%; /* 16:9 */
+	background: var(--wpss-black, #000);
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.wpss-video-embed iframe {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.wpss-seller-card .wpss-video-embed {
+	margin-top: 16px;
+	border-radius: 8px;
+}
+
+@media (max-width: 640px) {
+	.wpss-video-embed {
+		border-radius: 6px;
+	}
 }
 
 .wpss-profile-section h2 {
@@ -3451,4 +3514,175 @@ body.wpss-modal-active {
 		min-width: 0;
 		max-width: none;
 	}
+}
+
+/* ==========================================================================
+   Tip UI — order-view CTA + modal (Tipping feature)
+   ========================================================================== */
+
+.wpss-order-section--tip {
+	margin-top: 16px;
+}
+
+.wpss-tip-cta {
+	background: linear-gradient(-135deg, var(--wpss-warning-light, #fff7ed) 0%, var(--wpss-warning-light, #fffbeb) 100%);
+	border: 1px solid var(--wpss-warning-border, #fde68a);
+	border-radius: 12px;
+	padding: 28px;
+	text-align: center;
+}
+
+.wpss-tip-cta__icon {
+	color: var(--wpss-danger, #dc2626);
+	margin-bottom: 8px;
+}
+
+.wpss-tip-cta__title {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 0 0 6px;
+	color: var(--wpss-gray-800, #1f2937);
+}
+
+.wpss-tip-cta__text {
+	color: var(--wpss-gray-600, #4b5563);
+	font-size: 14px;
+	margin: 0 0 16px;
+}
+
+.wpss-tip-receipt {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	background: var(--wpss-success-light, #ecfdf5);
+	border: 1px solid var(--wpss-success-border, #a7f3d0);
+	border-radius: 10px;
+	padding: 16px 20px;
+	color: var(--wpss-success-dark, #065f46);
+}
+
+.wpss-tip-receipt svg {
+	flex: 0 0 28px;
+	color: var(--wpss-success, #059669);
+}
+
+.wpss-tip-receipt__title {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0;
+}
+
+.wpss-tip-receipt__amount {
+	font-size: 14px;
+	margin: 2px 0 0;
+	color: var(--wpss-success-dark, #047857);
+}
+
+/* Tip modal form */
+.wpss-tip-form__lead {
+	color: var(--wpss-gray-600, #4b5563);
+	font-size: 14px;
+	margin: 0 0 16px;
+}
+
+.wpss-tip-form__amounts {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.wpss-tip-form__preset {
+	padding: 10px 8px;
+	background: var(--wpss-gray-50, #f9fafb);
+	border: 1px solid var(--wpss-gray-200, #e5e7eb);
+	border-radius: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.wpss-tip-form__preset:hover,
+.wpss-tip-form__preset:focus-visible {
+	border-color: var(--wpss-gray-300, #d1d5db);
+	background: var(--wpss-white, #fff);
+	outline: none;
+}
+
+.wpss-tip-form__preset.is-selected {
+	border-color: var(--wpss-info, #2563eb);
+	background: var(--wpss-info-light, #eff6ff);
+	color: var(--wpss-info-dark, #1d4ed8);
+}
+
+.wpss-tip-form__field {
+	margin-bottom: 14px;
+}
+
+.wpss-tip-form__field label {
+	display: block;
+	font-size: 13px;
+	font-weight: 500;
+	margin-bottom: 6px;
+	color: var(--wpss-gray-700, #374151);
+}
+
+.wpss-tip-form__field .wpss-input,
+.wpss-tip-form__field .wpss-textarea {
+	width: 100%;
+}
+
+.wpss-tip-form__error {
+	color: var(--wpss-badge-tip-fg, #b91c1c);
+	font-size: 13px;
+	margin-top: 8px;
+}
+
+.wpss-tip-form__submit:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+
+@media (max-width: 640px) {
+	.wpss-tip-form__amounts {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-tip-cta {
+		padding: 20px 16px;
+	}
+}
+
+/* ==========================================================================
+   Empty State (BEM - Shared Frontend Pattern)
+   ========================================================================== */
+
+.wpss-empty-state {
+	text-align: center;
+	padding: 48px 24px;
+	background: var( --wpss-surface, #fff );
+	border: 1px solid var( --wpss-border, #e5e7eb );
+	border-radius: 12px;
+	margin: 24px 0;
+}
+.wpss-empty-state__icon {
+	color: var( --wpss-muted, #6b7280 );
+	margin-bottom: 16px;
+}
+.wpss-empty-state__icon i { display: inline-block; }
+.wpss-empty-state__title {
+	font-size: 20px;
+	margin: 0 0 8px;
+	color: var( --wpss-text, #111827 );
+}
+.wpss-empty-state__body {
+	color: var( --wpss-muted, #6b7280 );
+	max-width: 480px;
+	margin: 0 auto 24px;
+	line-height: 1.6;
+}
+@media ( max-width: 640px ) {
+	.wpss-empty-state { padding: 32px 16px; }
+	.wpss-empty-state .wpss-btn { width: 100%; }
 }

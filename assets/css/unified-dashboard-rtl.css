@@ -211,7 +211,7 @@
 .wpss-dashboard__header {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 12px;
 	padding: 20px 24px;
 	background: var(--wpss-white, #fff);
 	border-bottom: 1px solid var(--wpss-gray-200);
@@ -219,9 +219,22 @@
 
 .wpss-dashboard__title {
 	margin: 0;
+	margin-left: auto;
 	font-size: 20px;
 	font-weight: 600;
 	color: var(--wpss-gray-900);
+}
+
+@media (max-width: 640px) {
+	.wpss-dashboard__header {
+		flex-wrap: wrap;
+		padding: 16px;
+	}
+
+	.wpss-dashboard__title {
+		flex-basis: 100%;
+		margin-left: 0;
+	}
 }
 
 .wpss-dashboard__body {
@@ -415,6 +428,26 @@
 .wpss-order-card__sep {
 	margin: 0 6px;
 	color: var(--wpss-gray-300);
+}
+
+.wpss-order-card__amount {
+	font-weight: 600;
+	color: var(--wpss-gray-800);
+}
+
+.wpss-order-card__gross {
+	display: inline-block;
+	margin-right: 4px;
+	font-weight: 400;
+	font-size: 12px;
+	color: var(--wpss-gray-500);
+}
+
+@media (max-width: 640px) {
+	.wpss-order-card__gross {
+		display: block;
+		margin: 2px 0 0;
+	}
 }
 
 .wpss-order-card__actions {
@@ -619,7 +652,7 @@
 }
 
 .wpss-conversation-card--unread:hover {
-	background: var(--wpss-status-in-progress-bg, #e0e7ff);
+	background: var(--wpss-primary-light, #e0e7ff);
 }
 
 .wpss-conversation-card__avatar {
@@ -1116,11 +1149,11 @@
 
 .wpss-status--delivered {
 	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-info-dark, #1e40af); 
+	color: var(--wpss-status-delivered-fg, #1e40af);
 }
 
 .wpss-status--disputed {
-	background: var(--wpss-warning-border, #fed7aa);
+	background: var(--wpss-status-disputed-bg, #fed7aa);
 	color: var(--wpss-status-disputed-fg, #9a3412);
 }
 
@@ -1130,7 +1163,7 @@
 }
 
 .wpss-status--cancellation_requested {
-	background: var(--wpss-badge-tip-bg, #fee2e2);
+	background: var(--wpss-danger-light, #fee2e2);
 	color: var(--wpss-danger-dark, #991b1b);
 }
 
@@ -1145,8 +1178,8 @@
 }
 
 .wpss-status--on_hold {
-	background: var(--wpss-gray-200, #e5e7eb);
-	color: var(--wpss-gray-700, #374151);
+	background: var(--wpss-status-on-hold-bg, #e5e7eb);
+	color: var(--wpss-status-on-hold-fg, #374151);
 }
 
 /* ==========================================================================
@@ -1202,6 +1235,92 @@
 	.wpss-payout-banner__btn {
 		width: 100%;
 		justify-content: center;
+	}
+}
+
+/* Profile Completion Banner (F7 part a from baseline-2026-04-25.md) */
+.wpss-dashboard__profile-banner {
+	background: linear-gradient(-135deg, var(--wpss-primary-light, #eef2ff) 0%, var(--wpss-primary-50, rgba(79, 70, 229, 0.05)) 100%);
+	border: 1px solid var(--wpss-primary, #4f46e5);
+	border-radius: var(--wpss-radius-lg, 12px);
+	padding: 16px 20px;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	position: relative;
+}
+
+.wpss-profile-banner__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-profile-banner__icon .wpss-icon {
+	width: 20px;
+	height: 20px;
+}
+
+.wpss-profile-banner__content {
+	flex: 1;
+}
+
+.wpss-profile-banner__title {
+	display: block;
+	margin-bottom: 2px;
+	color: var(--wpss-primary-dark, #4338ca);
+	font-size: 15px;
+}
+
+.wpss-profile-banner__text {
+	color: var(--wpss-text, #1f2937);
+	font-size: 13px;
+}
+
+.wpss-profile-banner__btn {
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.wpss-profile-banner__dismiss {
+	background: transparent;
+	border: 0;
+	color: var(--wpss-text-muted, #6b7280);
+	cursor: pointer;
+	font-size: 22px;
+	line-height: 1;
+	padding: 0 8px;
+	flex-shrink: 0;
+	transition: color 0.2s ease;
+}
+
+.wpss-profile-banner__dismiss:hover {
+	color: var(--wpss-text, #1f2937);
+}
+
+@media (max-width: 600px) {
+	.wpss-dashboard__profile-banner {
+		flex-direction: column;
+		text-align: center;
+		gap: 12px;
+	}
+
+	.wpss-profile-banner__btn {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.wpss-profile-banner__dismiss {
+		position: absolute;
+		top: 8px;
+		left: 8px;
 	}
 }
 
@@ -1759,12 +1878,903 @@ select.wpss-input option,
 	}
 }
 
-/* Favorites (RTL) */
-.wpss-favorites__remove {
-	right: auto;
-	left: 10px;
+/* ==========================================================================
+   Favorites section (Dashboard → Buying → Favorites)
+   ========================================================================== */
+
+.wpss-favorites__count {
+	color: var(--wpss-gray-600);
+	font-size: 14px;
+	margin: 0 0 16px;
+}
+
+.wpss-favorites__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 20px;
+}
+
+.wpss-favorites__card {
+	background: var(--wpss-white);
+	border: 1px solid var(--wpss-gray-100);
+	border-radius: 10px;
+	overflow: hidden;
+	position: relative;
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wpss-favorites__card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.wpss-favorites__card-link {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+}
+
+.wpss-favorites__card-link:focus-visible {
+	outline: 2px solid var(--wpss-primary, #2271b1);
+	outline-offset: -2px;
+}
+
+.wpss-favorites__card-media {
+	aspect-ratio: 16 / 10;
+	background: var(--wpss-gray-100);
+	position: relative;
+}
+
+.wpss-favorites__card-media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.wpss-favorites__card-media-placeholder {
+	width: 100%;
+	height: 100%;
+	background:
+		linear-gradient(-135deg, var(--wpss-gray-100) 0%, var(--wpss-gray-50) 100%);
+}
+
+.wpss-favorites__card-body {
+	padding: 14px 16px 16px;
 }
 
 .wpss-favorites__card-vendor {
-	letter-spacing: 0;
+	color: var(--wpss-gray-600);
+	font-size: 12px;
+	margin: 0 0 4px;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.wpss-favorites__card-title {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0 0 8px;
+	line-height: 1.35;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.wpss-favorites__card-price {
+	color: var(--wpss-gray-800);
+	font-size: 14px;
+	font-weight: 500;
+	margin: 0;
+}
+
+.wpss-favorites__remove {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	width: 30px;
+	height: 30px;
+	border: 0;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.95);
+	color: var(--wpss-gray-800);
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.wpss-favorites__remove:hover,
+.wpss-favorites__remove:focus-visible {
+	background: var(--wpss-badge-tip-icon-fg, #e11d48);
+	color: var(--wpss-white, #fff);
+	transform: scale(1.05);
+	outline: none;
+}
+
+.wpss-favorites__remove:disabled {
+	opacity: 0.5;
+	cursor: wait;
+}
+
+@media (max-width: 640px) {
+	.wpss-favorites__grid {
+		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+		gap: 12px;
+	}
+
+	.wpss-favorites__card-body {
+		padding: 10px 12px 12px;
+	}
+
+	.wpss-favorites__card-title {
+		font-size: 14px;
+	}
+}
+
+/* ==========================================================================
+   Stat card highlight — force background over theme overrides so the
+   indigo accent does not get flattened by third-party themes applying a
+   gray card background (observed with BuddyX on the Earnings section).
+   ========================================================================== */
+
+.wpss-dashboard .wpss-stat-card.wpss-stat-card--highlight,
+.wpss-stat-card.wpss-stat-card--highlight {
+	background: var(--wpss-primary);
+	border-color: var(--wpss-primary);
+	color: var(--wpss-white, #fff);
+}
+
+/* ==========================================================================
+   Tip receipt view — renders in place of the service-order detail panel
+   when order.platform === 'tip' (buyer or vendor looking at a tip entry).
+   ========================================================================== */
+
+.wpss-tip-view {
+	/* Column layout so the optional sub-order breadcrumb stacks above the card
+	   instead of sitting beside it. (CB6 fix from plans/ORDER-FLOW-AUDIT.md.) */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 20px 0;
+}
+
+/* Per-vendor email preferences (VS11 from plans/ORDER-FLOW-AUDIT.md) — vendors
+   mute high-level notification categories from their profile dashboard. */
+.wpss-email-preferences {
+	margin-top: 32px;
+	padding-top: 32px;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-email-preferences h3 {
+	margin: 0 0 6px;
+	font-size: 18px;
+}
+
+.wpss-email-preferences__intro {
+	margin: 0 0 20px;
+	font-size: 13px;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-email-pref-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.wpss-email-pref {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 12px 14px;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 8px;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.wpss-email-pref:hover {
+	background: var(--wpss-bg-muted, #f3f4f6);
+}
+
+.wpss-email-pref input[type="checkbox"] {
+	margin: 3px 0 0;
+	flex-shrink: 0;
+}
+
+.wpss-email-pref__body strong {
+	display: block;
+	font-size: 14px;
+	color: var(--wpss-text, #1f2937);
+	margin-bottom: 2px;
+}
+
+.wpss-email-pref__body small {
+	font-size: 12px;
+	color: var(--wpss-text-muted, #6b7280);
+	line-height: 1.4;
+}
+
+.wpss-email-prefs__status {
+	margin-right: 12px;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+/* Sales date-range filter + pagination (VS10 from plans/ORDER-FLOW-AUDIT.md) —
+   vendors can scope their order list to last 30/90/365 days or all time, then
+   page through history rather than seeing only the 20 most recent. */
+.wpss-sales-filter {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding: 12px 16px;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-radius: 8px;
+	margin-bottom: 16px;
+}
+
+.wpss-sales-filter__form {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-sales-filter__label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 0;
+}
+
+.wpss-sales-filter__form .wpss-form-select {
+	padding: 6px 10px 6px 28px;
+	font-size: 13px;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 6px;
+	background-color: #fff;
+}
+
+.wpss-sales-filter__count {
+	font-size: 13px;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 0;
+}
+
+.wpss-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-pagination__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 12px;
+	background: #fff;
+	color: var(--wpss-text, #1f2937);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 6px;
+	font-size: 13px;
+	text-decoration: none;
+	transition: background-color 0.15s ease;
+}
+
+.wpss-pagination__link:hover {
+	background: var(--wpss-bg-muted, #f3f4f6);
+}
+
+.wpss-pagination__link .wpss-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.wpss-pagination__current {
+	font-size: 13px;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+@media (max-width: 600px) {
+	.wpss-sales-filter {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.wpss-sales-filter__count {
+		text-align: center;
+	}
+}
+
+/* Empty-state category chips (CB8 from plans/ORDER-FLOW-AUDIT.md) — give first-
+   time buyers immediate per-category paths in addition to the generic "Browse
+   Services" CTA. Chips are softer than buttons so the primary CTA stays clear. */
+.wpss-empty-state__categories {
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+	width: 100%;
+	max-width: 480px;
+}
+
+.wpss-empty-state__categories-label {
+	font-size: 13px;
+	color: var(--wpss-text-muted, #6b7280);
+	margin: 0 0 12px;
+}
+
+.wpss-empty-state__category-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+}
+
+.wpss-category-chip {
+	display: inline-block;
+	padding: 6px 14px;
+	background: var(--wpss-bg-muted, #f3f4f6);
+	color: var(--wpss-text, #1f2937);
+	border-radius: 9999px;
+	font-size: 13px;
+	font-weight: 500;
+	text-decoration: none;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.wpss-category-chip:hover {
+	background: var(--wpss-primary-light, #eef2ff);
+	color: var(--wpss-primary, #4f46e5);
+}
+
+.wpss-tip-view__card {
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-gray-100);
+	border-radius: 14px;
+	padding: 32px 28px;
+	max-width: 520px;
+	width: 100%;
+	text-align: center;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.wpss-tip-view__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	background: var(--wpss-badge-tip-icon-bg, #fff1f2);
+	color: var(--wpss-badge-tip-icon-fg, #e11d48);
+	margin-bottom: 16px;
+}
+
+.wpss-tip-view__title {
+	font-size: 20px;
+	font-weight: 600;
+	margin: 0 0 8px;
+}
+
+.wpss-tip-view__amount {
+	font-size: 32px;
+	font-weight: 700;
+	color: var(--wpss-gray-800, #1f2937);
+	margin: 0 0 24px;
+}
+
+.wpss-tip-view__meta {
+	margin: 0 0 24px;
+	text-align: right;
+	display: grid;
+	gap: 10px;
+}
+
+.wpss-tip-view__meta > div {
+	display: grid;
+	grid-template-columns: 120px 1fr;
+	align-items: baseline;
+	gap: 12px;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--wpss-gray-100);
+}
+
+.wpss-tip-view__meta > div:last-child {
+	border-bottom: 0;
+}
+
+.wpss-tip-view__meta dt {
+	color: var(--wpss-gray-500);
+	font-size: 13px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	margin: 0;
+}
+
+.wpss-tip-view__meta dd {
+	color: var(--wpss-gray-900);
+	font-size: 14px;
+	margin: 0;
+	word-break: break-word;
+}
+
+.wpss-tip-view__message dd {
+	white-space: pre-wrap;
+}
+
+.wpss-tip-view__back {
+	margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+	.wpss-tip-view {
+		padding: var(--wpss-space-3, 12px) 0;
+	}
+
+	.wpss-tip-view__card {
+		padding: var(--wpss-space-5, 20px) var(--wpss-space-4, 16px);
+		border-radius: var(--wpss-radius-lg, 12px);
+	}
+
+	.wpss-tip-view__meta > div {
+		grid-template-columns: 1fr;
+		gap: 2px;
+	}
+
+	.wpss-tip-view__actions {
+		flex-direction: column;
+		align-items: stretch;
+		gap: var(--wpss-space-2, 8px);
+	}
+
+	.wpss-tip-view__actions .wpss-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+@media (max-width: 390px) {
+	.wpss-tip-view__card {
+		padding: var(--wpss-space-4, 16px) var(--wpss-space-3, 12px);
+	}
+
+	.wpss-tip-view__title {
+		font-size: var(--wpss-text-xl, 18px);
+	}
+
+	.wpss-tip-view__amount {
+		font-size: var(--wpss-text-3xl, 24px);
+	}
+}
+
+/* Tip badge on sales/orders list cards */
+.wpss-badge--tip {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--wpss-badge-tip-fg, #b91c1c);
+	background: var(--wpss-badge-tip-bg, #fee2e2);
+	border-radius: 999px;
+	margin-left: 6px;
+	vertical-align: middle;
+}
+
+.wpss-order-card--tip .wpss-order-card__tip-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--wpss-badge-tip-icon-bg, #fff1f2);
+	color: var(--wpss-badge-tip-icon-fg, #e11d48);
+	flex: 0 0 44px;
+}
+
+/* Extension badge / icon — reuse tip-icon size for list visual parity. */
+.wpss-badge--extension {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--wpss-badge-extension-fg, #92400e);
+	background: var(--wpss-badge-extension-bg, #fef3c7);
+	border-radius: 999px;
+	margin-left: 6px;
+	vertical-align: middle;
+}
+
+.wpss-order-card--extension .wpss-order-card__extension-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--wpss-badge-extension-icon-bg, #fef3c7);
+	color: var(--wpss-badge-extension-icon-fg, #b45309);
+	flex: 0 0 44px;
+}
+
+/* Milestone badge / icon on list rows. Teal so it reads as distinct from
+   the pink Tip and amber Extension badges. */
+.wpss-badge--milestone {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--wpss-badge-milestone-fg, #115e59);
+	background: var(--wpss-badge-milestone-bg, #ccfbf1);
+	border-radius: 999px;
+	margin-left: 6px;
+	vertical-align: middle;
+}
+
+.wpss-order-card--milestone .wpss-order-card__milestone-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--wpss-badge-milestone-icon-bg, #ccfbf1);
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
+	flex: 0 0 44px;
+}
+
+/* Milestone receipt view — same shape as tip/extension, teal-tinted icon. */
+.wpss-milestone-view .wpss-tip-view__icon {
+	background: var(--wpss-badge-milestone-icon-bg, #ccfbf1);
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
+}
+
+.wpss-milestone-view__phase-title {
+	margin: -4px 0 8px;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
+	text-align: center;
+}
+
+/* Milestone timeline on the parent order. */
+.wpss-order-section--milestones .wpss-order-section__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.wpss-milestone-empty {
+	margin: 4px 0 0;
+	color: var(--wpss-gray-500, #6b7280);
+	font-size: 13px;
+}
+
+.wpss-milestone-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.wpss-milestone-item {
+	padding: 14px 16px;
+	border-radius: 10px;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	background: var(--wpss-white, #fff);
+}
+
+/* Milestone item state pills use design-system tokens so white-label /
+   theme colour-scheme overrides can retint them by changing the token
+   value, not the component. A custom --wpss-warning on the theme
+   filters through to the pending_payment + locked rows automatically. */
+.wpss-milestone-item.wpss-ms-state--pending_payment  { border-right: 4px solid var(--wpss-warning, #f59e0b); }
+.wpss-milestone-item.wpss-ms-state--in_progress      { border-right: 4px solid var(--wpss-primary, #4f46e5); }
+.wpss-milestone-item.wpss-ms-state--pending_approval { border-right: 4px solid var(--wpss-info, #0f766e); }
+.wpss-milestone-item.wpss-ms-state--completed        { border-right: 4px solid var(--wpss-success, #22c55e); background: var(--wpss-success-light, #f0fdf4); }
+.wpss-milestone-item.wpss-ms-state--cancelled        { border-right: 4px solid var(--wpss-gray-400, #9ca3af); opacity: 0.75; }
+
+/* Locked phase: muted left bar + a dashed pattern at the top so it reads
+   as clearly inactive even without the button. Stacks additively on top
+   of wpss-ms-state--pending_payment (same element). */
+.wpss-milestone-item.wpss-ms-state--locked {
+	border-right-color: var(--wpss-gray-300, #d1d5db);
+	background: var(--wpss-gray-50, #f9fafb);
+}
+.wpss-milestone-item.wpss-ms-state--locked .wpss-milestone-item__title,
+.wpss-milestone-item.wpss-ms-state--locked .wpss-milestone-item__amount {
+	opacity: 0.7;
+}
+
+/* Locked button placeholder — same shape as wpss-btn--sm but greyed out
+   and with a lock icon so there is no ambiguity about why it's disabled. */
+.wpss-btn--locked {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	background: var(--wpss-gray-100, #f3f4f6);
+	color: var(--wpss-text-muted, #6b7280);
+	border: 1px dashed var(--wpss-gray-300, #d1d5db);
+	cursor: not-allowed;
+	font-weight: 500;
+}
+
+.wpss-btn--locked:hover {
+	background: var(--wpss-gray-100, #f3f4f6);
+}
+
+.wpss-btn__lock-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Project-complete wrap banner — rendered above the milestone list when
+   every phase is approved. Uses success tokens so a theme's custom
+   success palette flows through automatically. */
+.wpss-milestone-wrap {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-4, 16px);
+	padding: var(--wpss-space-4, 16px) var(--wpss-space-5, 20px);
+	background: var(--wpss-success-light, #f0fdf4);
+	border: 1px solid var(--wpss-success, #22c55e);
+	border-radius: var(--wpss-radius-lg, 10px);
+}
+
+.wpss-milestone-wrap__icon {
+	flex: 0 0 44px;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--wpss-white, #fff);
+	color: var(--wpss-success, #22c55e);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.wpss-milestone-wrap__title {
+	margin: 0 0 4px;
+	color: var(--wpss-success, #22c55e);
+	font-size: var(--wpss-text-lg, 1.125rem);
+	font-weight: 700;
+}
+
+.wpss-milestone-wrap__body {
+	margin: 0;
+	color: var(--wpss-text, #1f2937);
+	font-size: var(--wpss-text-sm, 0.875rem);
+}
+
+@media (max-width: 640px) {
+	.wpss-milestone-wrap {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--wpss-space-3, 12px);
+		padding: var(--wpss-space-4, 16px);
+		text-align: right;
+	}
+}
+
+@media (max-width: 390px) {
+	.wpss-milestone-wrap {
+		align-items: center;
+		text-align: center;
+	}
+
+	.wpss-milestone-wrap__icon {
+		margin: 0 auto;
+	}
+}
+
+.wpss-milestone-item__head {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.wpss-milestone-item__num {
+	font-weight: 700;
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
+	min-width: 20px;
+}
+
+.wpss-milestone-item__title {
+	font-weight: 600;
+	font-size: 15px;
+	flex: 1;
+}
+
+.wpss-milestone-item__amount {
+	font-weight: 600;
+	color: var(--wpss-gray-800, #1f2937);
+	font-variant-numeric: tabular-nums;
+}
+
+.wpss-milestone-item__gross {
+	display: inline-block;
+	margin-right: 4px;
+	font-weight: 400;
+	font-size: 12px;
+	color: var(--wpss-gray-500, #6b7280);
+}
+
+.wpss-milestone-item__description,
+.wpss-milestone-item__deliverables {
+	margin: 8px 0 0;
+	font-size: 13px;
+	color: var(--wpss-gray-600, #4b5563);
+	line-height: 1.5;
+}
+
+.wpss-milestone-item__deliverables strong {
+	color: var(--wpss-gray-800, #1f2937);
+	font-weight: 600;
+	margin-left: 4px;
+}
+
+.wpss-milestone-item__meta {
+	margin-top: 10px;
+	font-size: 12px;
+	color: var(--wpss-gray-500, #6b7280);
+}
+
+.wpss-milestone-item__state {
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.wpss-milestone-item__actions {
+	margin-top: 12px;
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+	.wpss-milestone-item {
+		padding: var(--wpss-space-3, 12px) var(--wpss-space-4, 16px);
+	}
+	.wpss-milestone-item__head {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--wpss-space-1, 4px);
+	}
+	.wpss-milestone-item__amount {
+		font-size: var(--wpss-text-base, 14px);
+	}
+	.wpss-milestone-item__actions {
+		flex-direction: column;
+		align-items: stretch;
+		gap: var(--wpss-space-2, 8px);
+	}
+	.wpss-milestone-item__actions .wpss-btn {
+		width: 100%;
+		flex: 1 1 auto;
+		min-width: 0;
+		justify-content: center;
+	}
+	.wpss-btn--locked {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+/* Extension receipt / awaiting-payment view — reuses .wpss-tip-view layout
+   and only re-tones the icon so the two sub-orders stay visually distinct. */
+.wpss-extension-view .wpss-tip-view__icon {
+	background: var(--wpss-badge-extension-icon-bg, #fef3c7);
+	color: var(--wpss-badge-extension-icon-fg, #b45309);
+}
+
+.wpss-extension-view__days {
+	margin: 4px 0 16px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--wpss-badge-extension-icon-fg, #b45309);
+}
+
+.wpss-tip-view__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+}
+
+/* Request Extension modal (vendor on order page). */
+.wpss-extension-modal .wpss-form-row {
+	margin-bottom: 14px;
+}
+
+.wpss-extension-modal .wpss-field-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+@media (max-width: 640px) {
+	.wpss-extension-modal .wpss-field-row {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Extension-requested card shown to the buyer on the parent order view. */
+.wpss-extension-pending-card {
+	margin: 16px 0;
+	padding: 16px 20px;
+	border-radius: 10px;
+	background: var(--wpss-warning-light, #fffbeb);
+	border: 1px solid var(--wpss-warning-border, #fcd34d);
+	color: var(--wpss-warning-dark, #78350f);
+}
+
+.wpss-extension-pending-card__title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 700;
+	margin: 0 0 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.wpss-extension-pending-card__body {
+	margin: 0 0 12px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.wpss-extension-pending-card__meta {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 8px 16px;
+	margin-bottom: 14px;
+	font-size: 13px;
+}
+
+.wpss-extension-pending-card__meta strong {
+	display: block;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--wpss-warning-dark, #92400e);
+	margin-bottom: 2px;
+	font-weight: 700;
+}
+
+.wpss-extension-pending-card__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
 }

@@ -662,12 +662,12 @@
 
 .wpss-request-status-badge.wpss-status-hired {
 	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-info-dark, #1e40af);
+	color: var(--wpss-status-delivered-fg, #1e40af);
 }
 
 .wpss-request-status-badge.wpss-status-expired,
 .wpss-request-status-badge.wpss-status-cancelled {
-	background: var(--wpss-badge-tip-bg, #fee2e2);
+	background: var(--wpss-danger-light, #fee2e2);
 	color: var(--wpss-danger-dark, #991b1b);
 }
 
@@ -1155,5 +1155,256 @@
 
 	.wpss-services-grid {
 		grid-template-columns: 1fr;
+	}
+}
+
+/* ==========================================================================
+   Proposal contract type — radio + milestone repeater inside the proposal
+   submission modal, plus the per-proposal contract badge + breakdown shown
+   to the buyer on the proposals list.
+   ========================================================================== */
+
+.wpss-contract-type-group {
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 8px;
+	padding: 12px 14px;
+	margin-bottom: 18px;
+}
+
+.wpss-contract-type-group legend {
+	font-size: 13px;
+	font-weight: 600;
+	padding: 0 4px;
+	color: var(--wpss-text-secondary, #374151);
+}
+
+.wpss-contract-type-group .wpss-radio {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	padding: 8px 4px;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.wpss-contract-type-group .wpss-radio input {
+	margin-top: 4px;
+}
+
+.wpss-milestones-builder {
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 8px;
+	padding: 14px;
+	margin-bottom: 14px;
+	background: var(--wpss-bg-subtle, #fafafa);
+}
+
+.wpss-milestone-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.wpss-milestone-row {
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 6px;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.wpss-milestone-row__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-milestone-row__num {
+	font-weight: 700;
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
+	min-width: 22px;
+}
+
+.wpss-milestone-row__title {
+	flex: 1;
+}
+
+.wpss-milestone-row__remove {
+	background: transparent;
+	border: 0;
+	font-size: 22px;
+	line-height: 1;
+	color: var(--wpss-text-hint, #9ca3af);
+	cursor: pointer;
+	padding: 0 6px;
+}
+
+.wpss-milestone-row__remove:hover {
+	color: var(--wpss-danger, #dc2626);
+}
+
+.wpss-milestone-row__meta {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.wpss-milestone-row__meta label {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+	color: var(--wpss-text-muted, #6b7280);
+	font-weight: 600;
+}
+
+.wpss-milestones-summary {
+	display: flex;
+	gap: 16px;
+	padding-top: 12px;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+	font-size: 13px;
+	color: var(--wpss-text-secondary, #374151);
+}
+
+@media (max-width: 640px) {
+	.wpss-milestones-builder {
+		padding: var(--wpss-space-3, 12px);
+	}
+	.wpss-milestone-row {
+		padding: var(--wpss-space-3, 12px);
+	}
+	.wpss-milestone-row__meta {
+		grid-template-columns: 1fr;
+	}
+	.wpss-milestones-builder [data-add-milestone] {
+		width: 100%;
+		justify-content: center;
+	}
+	.wpss-milestones-summary {
+		flex-direction: column;
+		gap: var(--wpss-space-2, 8px);
+		flex-wrap: wrap;
+	}
+}
+
+@media (max-width: 390px) {
+	.wpss-milestones-builder {
+		padding: var(--wpss-space-2, 8px);
+	}
+	.wpss-milestone-row__head {
+		flex-wrap: wrap;
+	}
+	.wpss-milestone-row__title {
+		flex: 1 1 100%;
+		order: 2;
+	}
+	.wpss-milestone-row__num {
+		order: 1;
+	}
+	.wpss-milestone-row__remove {
+		order: 1;
+		margin-right: auto;
+	}
+}
+
+/* Contract badge on each proposal in the buyer's review list. */
+.wpss-proposal-contract-badge {
+	display: inline-block;
+	margin-top: 6px;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border-radius: 999px;
+}
+
+.wpss-proposal-contract-badge--fixed {
+	background: var(--wpss-status-in-progress-bg, #e0e7ff);
+	color: var(--wpss-status-in-progress-fg, #3730a3);
+}
+
+.wpss-proposal-contract-badge--milestone {
+	background: var(--wpss-badge-milestone-bg, #ccfbf1);
+	color: var(--wpss-badge-milestone-fg, #115e59);
+}
+
+.wpss-proposal-milestone-breakdown {
+	margin: 12px 0 0;
+	padding: 10px 12px;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 6px;
+}
+
+.wpss-proposal-milestone-breakdown summary {
+	cursor: pointer;
+	font-weight: 600;
+	color: var(--wpss-badge-milestone-icon-fg, #0f766e);
+	font-size: 13px;
+}
+
+.wpss-proposal-milestone-list {
+	list-style: none;
+	margin: 10px 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.wpss-proposal-milestone-list__item {
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 6px;
+	padding: 10px 12px;
+}
+
+.wpss-proposal-milestone-list__head {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	font-size: 13px;
+	margin-bottom: 4px;
+}
+
+.wpss-proposal-milestone-list__desc,
+.wpss-proposal-milestone-list__delivs {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var(--wpss-gray-600, #4b5563);
+	line-height: 1.5;
+}
+
+.wpss-proposal-milestone-list__total {
+	margin: 12px 0 0;
+	font-size: 13px;
+	color: var(--wpss-gray-900, #111827);
+	text-align: left;
+}
+
+@media (max-width: 640px) {
+	.wpss-proposal-milestone-breakdown {
+		padding: var(--wpss-space-2, 8px) var(--wpss-space-3, 12px);
+	}
+	.wpss-proposal-milestone-list__head {
+		flex-wrap: wrap;
+		align-items: baseline;
+	}
+	.wpss-proposal-milestone-list__head > :first-child {
+		flex: 1 1 100%;
+		min-width: 0;
+		word-break: break-word;
+	}
+	.wpss-proposal-milestone-list__head > :last-child {
+		flex: 0 0 auto;
+		font-weight: 600;
+	}
+	.wpss-proposal-milestone-list__total {
+		text-align: right;
 	}
 }

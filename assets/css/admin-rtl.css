@@ -45,9 +45,20 @@
 	stroke-width: 1.75;
 }
 
-.wpss-icon--sm { width: 14px; height: 14px; }
-.wpss-icon--lg { width: 24px; height: 24px; }
-.wpss-icon--xl { width: 32px; height: 32px; }
+.wpss-icon--sm {
+	width: 14px;
+	height: 14px;
+}
+
+.wpss-icon--lg {
+	width: 24px;
+	height: 24px;
+}
+
+.wpss-icon--xl {
+	width: 32px;
+	height: 32px;
+}
 
 /* ==========================================================================
    Page Header
@@ -71,87 +82,219 @@
 	line-height: 1.3;
 }
 
-.wpss-page-header__title [data-lucide] { color: var(--wpss-admin-primary); }
-.wpss-page-header__desc { font-size: 13px; color: var(--wpss-admin-text-light); margin: 0; }
-.wpss-page-header__actions { display: flex; gap: 8px; align-items: center; }
+.wpss-page-header__title [data-lucide] {
+	color: var(--wpss-admin-primary);
+}
+
+.wpss-page-header__desc {
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+	margin: 0;
+}
+
+.wpss-page-header__actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
 
 /* ==========================================================================
    Buttons
    ========================================================================== */
 
 .wpss-btn {
-	display: inline-flex; align-items: center; gap: 6px; height: 32px;
-	padding: 0 14px; font-size: 13px; font-weight: 500;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 32px;
+	padding: 0 14px;
+	font-size: 13px;
+	font-weight: 500;
 	border-radius: var(--wpss-admin-radius-md);
 	border: 1px solid var(--wpss-admin-border);
-	background: var(--wpss-admin-white); color: var(--wpss-admin-text);
-	cursor: pointer; text-decoration: none; transition: all 0.12s ease; line-height: 1;
+	background: var(--wpss-admin-white);
+	color: var(--wpss-admin-text);
+	cursor: pointer;
+	text-decoration: none;
+	transition: all 0.12s ease;
+	line-height: 1;
 }
-.wpss-btn:hover { background: var(--wpss-bg-subtle, #f6f7f7); color: var(--wpss-admin-text); text-decoration: none; }
-.wpss-btn:active { transform: scale(0.97); }
-.wpss-btn--primary { background: var(--wpss-admin-accent); color: var(--wpss-white, #fff); border-color: var(--wpss-admin-accent); }
-.wpss-btn--primary:hover { background: var(--wpss-admin-accent-hover); color: var(--wpss-white, #fff); }
-.wpss-btn--danger { color: var(--wpss-admin-danger); border-color: var(--wpss-admin-danger); }
-.wpss-btn--sm { height: 28px; font-size: 12px; padding: 0 10px; }
+
+.wpss-btn:hover {
+	background: var(--wpss-bg-subtle, #f6f7f7);
+	color: var(--wpss-admin-text);
+	text-decoration: none;
+}
+
+.wpss-btn:active {
+	transform: scale(0.97);
+}
+
+.wpss-btn--primary {
+	background: var(--wpss-admin-accent);
+	color: var(--wpss-white, #fff);
+	border-color: var(--wpss-admin-accent);
+}
+
+.wpss-btn--primary:hover {
+	background: var(--wpss-admin-accent-hover);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-btn--danger {
+	color: var(--wpss-admin-danger);
+	border-color: var(--wpss-admin-danger);
+}
+
+.wpss-btn--sm {
+	height: 28px;
+	font-size: 12px;
+	padding: 0 10px;
+}
 
 /* ==========================================================================
    Cards
    ========================================================================== */
 
 .wpss-card {
-	background: var(--wpss-admin-white); border: 1px solid var(--wpss-admin-border);
-	border-radius: var(--wpss-admin-radius-lg); box-shadow: var(--wpss-admin-shadow-sm);
-	margin-bottom: 16px; overflow: hidden;
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-lg);
+	box-shadow: var(--wpss-admin-shadow-sm);
+	margin-bottom: 16px;
+	overflow: hidden;
 }
+
 .wpss-card__head {
-	padding: 14px 20px 12px; border-bottom: 1px solid var(--wpss-admin-border); background: var(--wpss-bg-subtle, #fafafa);
+	padding: 14px 20px 12px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+	background: var(--wpss-bg-subtle, #fafafa);
 }
+
 .wpss-card__title {
-	font-size: 13px; font-weight: 600; text-transform: uppercase;
-	letter-spacing: 0.04em; color: var(--wpss-admin-text); margin: 0 0 2px;
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--wpss-admin-text);
+	margin: 0 0 2px;
 }
-.wpss-card__desc { font-size: 13px; color: var(--wpss-admin-text-light); margin: 0; }
-.wpss-card__body { padding: 20px; }
-.wpss-card__head--with-badge { display: flex; align-items: center; justify-content: space-between; }
+
+.wpss-card__desc {
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+	margin: 0;
+}
+
+.wpss-card__body {
+	padding: 20px;
+}
+
+.wpss-card__head--with-badge {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
 
 /* ==========================================================================
    Badges
    ========================================================================== */
 
-.wpss-badge { display: inline-flex; align-items: center; padding: 2px 8px; font-size: 11px; font-weight: 600; border-radius: var(--wpss-admin-radius-sm); white-space: nowrap; }
-.wpss-badge--success { background: rgba(46, 164, 79, 0.1); color: var(--wpss-success-dark, #1a7c3b); }
-.wpss-badge--warn { background: rgba(217, 119, 6, 0.1); color: var(--wpss-warning-dark, #92400e); }
-.wpss-badge--default { background: var(--wpss-border-light, #f0f0f1); color: var(--wpss-text-secondary, #50575e); }
-.wpss-badge--danger { background: rgba(224, 62, 62, 0.1); color: var(--wpss-danger-dark, #991b1b); }
-.wpss-badge--muted { background: var(--wpss-border-light, #f0f0f1); color: var(--wpss-gray-400, #9ca3af); }
+.wpss-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 600;
+	border-radius: var(--wpss-admin-radius-sm);
+	white-space: nowrap;
+}
+
+.wpss-badge--success {
+	background: rgba(46, 164, 79, 0.1);
+	color: var(--wpss-success-dark, #1a7c3b);
+}
+
+.wpss-badge--warn {
+	background: rgba(217, 119, 6, 0.1);
+	color: var(--wpss-warning-dark, #92400e);
+}
+
+.wpss-badge--default {
+	background: var(--wpss-border-light, #f0f0f1);
+	color: var(--wpss-text-secondary, #50575e);
+}
+
+.wpss-badge--danger {
+	background: rgba(224, 62, 62, 0.1);
+	color: var(--wpss-danger-dark, #991b1b);
+}
+
+.wpss-badge--muted {
+	background: var(--wpss-border-light, #f0f0f1);
+	color: var(--wpss-gray-400, #9ca3af);
+}
 
 .wpss-pro-badge {
-	background: linear-gradient(135deg, var(--wpss-primary, #6366f1), var(--wpss-primary, #8b5cf6)); color: var(--wpss-white, #fff);
-	font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px;
-	text-transform: uppercase; letter-spacing: 0.04em;
+	background: linear-gradient(-135deg, var(--wpss-primary, #6366f1), var(--wpss-primary, #8b5cf6));
+	color: var(--wpss-white, #fff);
+	font-size: 9px;
+	font-weight: 700;
+	padding: 1px 6px;
+	border-radius: 3px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 	margin-right: auto;
 }
 
 /* ==========================================================================
-   Toast Notifications (RTL: left side)
+   Toast Notifications
    ========================================================================== */
 
 .wpss-toast-container {
-	position: fixed; bottom: 20px; left: 20px; z-index: 160000;
-	display: flex; flex-direction: column-reverse; gap: 8px;
+	position: fixed;
+	bottom: 20px;
+	left: 20px;
+	z-index: 160000;
+	display: flex;
+	flex-direction: column-reverse;
+	gap: 8px;
 }
-.wpss-toast {
-	padding: 12px 20px; border-radius: var(--wpss-admin-radius-md); font-size: 13px; color: var(--wpss-white, #fff);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); max-width: 360px;
-	opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s;
-}
-.wpss-toast.is-visible { opacity: 1; transform: translateY(0); }
-.wpss-toast--success { background: var(--wpss-admin-success); }
-.wpss-toast--error { background: var(--wpss-admin-danger); }
-.wpss-toast--warning { background: var(--wpss-admin-warning); }
-.wpss-toast--info { background: var(--wpss-admin-accent); }
 
-/* Settings page styles are in admin-settings-rtl.css (loaded only on settings page). */
+.wpss-toast {
+	padding: 12px 20px;
+	border-radius: var(--wpss-admin-radius-md);
+	font-size: 13px;
+	color: var(--wpss-white, #fff);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	max-width: 360px;
+	opacity: 0;
+	transform: translateY(8px);
+	transition: opacity 0.3s, transform 0.3s;
+}
+
+.wpss-toast.is-visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.wpss-toast--success {
+	background: var(--wpss-admin-success);
+}
+
+.wpss-toast--error {
+	background: var(--wpss-admin-danger);
+}
+
+.wpss-toast--warning {
+	background: var(--wpss-admin-warning);
+}
+
+.wpss-toast--info {
+	background: var(--wpss-admin-accent);
+}
+
+/* Settings page styles are in admin-settings.css (loaded only on settings page). */
 
 /* ==========================================================================
    Metaboxes
@@ -304,10 +447,31 @@
 }
 
 /* Stats Row */
+.wpss-stats-heading {
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--wpss-admin-text-light, #646970);
+	margin: 8px 0 4px;
+}
+
 .wpss-stats-row {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
 	gap: 20px;
+}
+
+@media (max-width: 1024px) {
+	.wpss-stats-row {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 640px) {
+	.wpss-stats-row {
+		grid-template-columns: 1fr;
+	}
 }
 
 .wpss-stat-card {
@@ -318,6 +482,30 @@
 	display: flex;
 	align-items: center;
 	gap: 15px;
+}
+
+/* Action-item tile variant. Highlight when there's something to do (.is-active),
+   dim out when count is 0 (.is-empty) so the row keeps its shape but the admin
+   can confirm "nothing on my plate" at a glance. */
+.wpss-stat-card--action {
+	text-decoration: none;
+	color: inherit;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.wpss-stat-card--action:hover,
+.wpss-stat-card--action:focus {
+	border-color: var(--wpss-admin-primary, #2271b1);
+	background: #f6f7f7;
+	color: inherit;
+}
+
+.wpss-stat-card--action.is-active {
+	border-right: 3px solid var(--wpss-admin-primary, #2271b1);
+}
+
+.wpss-stat-card--action.is-empty {
+	opacity: 0.55;
 }
 
 .wpss-stat-icon {
@@ -1740,57 +1928,62 @@
 }
 
 /* ==========================================================================
-   Vendors Page
+   Unified Listing Pages (Vendors, Withdrawals, Moderation, etc.)
    ========================================================================== */
 
-.wpss-vendors-page {
+.wpss-listing-page {
 	max-width: 1400px;
 }
 
-.wpss-vendor-stats {
+.wpss-listing-stats {
 	display: grid;
-	grid-template-columns: repeat(5, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	gap: 15px;
 	margin: 20px 0;
 }
 
-.wpss-vendor-stats .wpss-stat-card {
-	text-align: center;
+.wpss-listing-stats .wpss-stat-card {
 	display: block;
+	text-align: center;
 }
 
-.wpss-vendor-stats .wpss-stat-number {
+.wpss-listing-stats .wpss-stat-number {
 	display: block;
 	font-size: 28px;
 	font-weight: 600;
 	color: var(--wpss-admin-text);
 }
 
-.wpss-vendor-stats .wpss-stat-label {
+.wpss-listing-stats .wpss-stat-label {
 	display: block;
 	font-size: 13px;
 	color: var(--wpss-admin-text-light);
 	margin-top: 5px;
 }
 
-.wpss-stat-active .wpss-stat-number { color: var(--wpss-admin-success); }
-.wpss-stat-pending .wpss-stat-number { color: var(--wpss-admin-warning); }
-.wpss-stat-suspended .wpss-stat-number { color: var(--wpss-admin-danger); }
+.wpss-listing-stats .wpss-stat-amount {
+	display: block;
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+	margin-top: 3px;
+}
 
-.wpss-vendors-filters {
+/* Shared status color accents for listing stat cards. */
+.wpss-listing-stats .wpss-stat-active .wpss-stat-number    { color: var(--wpss-admin-success); }
+.wpss-listing-stats .wpss-stat-approved .wpss-stat-number  { color: var(--wpss-admin-primary); }
+.wpss-listing-stats .wpss-stat-completed .wpss-stat-number { color: var(--wpss-admin-success); }
+.wpss-listing-stats .wpss-stat-pending .wpss-stat-number   { color: var(--wpss-admin-warning); }
+.wpss-listing-stats .wpss-stat-suspended .wpss-stat-number,
+.wpss-listing-stats .wpss-stat-rejected .wpss-stat-number  { color: var(--wpss-admin-danger); }
+
+/* Keep bulk-actions block inline with the filter row (canonical filter
+   layout lives further down under `.wpss-list-card__filters`). */
+.wpss-list-card__filters .bulkactions {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	margin: 15px 0;
-}
-
-.wpss-vendors-filters .subsubsub {
+	gap: 6px;
+	float: none;
 	margin: 0;
-}
-
-.wpss-vendors-filters .search-box {
-	display: flex;
-	gap: 5px;
 }
 
 .wpss-vendors-table .column-vendor { width: 20%; }
@@ -2313,12 +2506,9 @@
 	margin: 0;
 }
 
-/* Vendor Page Responsive */
+/* Vendor Page Responsive (stats grid handled by shared .wpss-listing-stats
+   auto-fit; filter-row stacking handled by shared .wpss-list-card__filters). */
 @media (max-width: 1200px) {
-	.wpss-vendor-stats {
-		grid-template-columns: repeat(3, 1fr);
-	}
-
 	.wpss-detail-stats-row {
 		grid-template-columns: repeat(3, 1fr);
 	}
@@ -2329,16 +2519,6 @@
 }
 
 @media (max-width: 782px) {
-	.wpss-vendor-stats {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.wpss-vendors-filters {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 10px;
-	}
-
 	.wpss-detail-header {
 		flex-direction: column;
 	}
@@ -2374,5 +2554,198 @@
 
 	.wpss-detail-tab-content {
 		overflow-x: auto;
+	}
+}
+
+/* ==========================================================================
+   Shared empty-state block for admin list screens
+   Used on Orders, Disputes, Vendors, Withdrawals, and Moderation pages when
+   the list is empty. Replaces the bare "No X found." message with an icon,
+   headline, supporting copy, and primary/docs CTAs.
+   ========================================================================== */
+/* ==========================================================================
+   List card — Pattern B unified content wrapper
+   One white card contains filter tabs, search bar, AND table/empty-state.
+   Used by Orders, Disputes, Vendors, Withdrawals, Moderation.
+   ========================================================================== */
+
+.wpss-list-card {
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-lg);
+	box-shadow: var(--wpss-admin-shadow-sm);
+	margin: 16px 0;
+	overflow: hidden;
+}
+
+.wpss-list-card__filters {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding: 12px 20px;
+	background: var(--wpss-bg-subtle, #fafafa);
+	border-bottom: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-list-card__filters .subsubsub {
+	margin: 0;
+	padding: 0;
+	font-size: 13px;
+}
+
+.wpss-list-card__filters .search-box {
+	display: flex;
+	gap: 6px;
+	float: none;
+	margin: 0;
+}
+
+.wpss-list-card__filters .search-box input[type="search"] {
+	height: 30px;
+	min-width: 200px;
+}
+
+/* List card body: shared space for table OR empty-state. Empty state renders
+   with flush edges (its own card shell is turned off inside the wrapper). */
+.wpss-list-card__body {
+	padding: 0;
+}
+
+.wpss-list-card__body .wpss-empty-state {
+	border: 0;
+	box-shadow: none;
+	border-radius: 0;
+	margin: 0;
+	padding: 56px 24px 48px;
+}
+
+/* Native WP list tables render flush inside the card — kill their outer
+   margins + radii so they sit cleanly under the filter row. */
+.wpss-list-card__body .wp-list-table {
+	border: 0;
+	box-shadow: none;
+	margin: 0;
+}
+
+.wpss-list-card__body .tablenav {
+	margin: 0;
+	padding: 12px 20px;
+	background: var(--wpss-bg-subtle, #fafafa);
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+@media ( max-width: 640px ) {
+	.wpss-list-card__filters {
+		padding: 12px 16px;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-list-card__filters .search-box input[type="search"] {
+		min-width: 0;
+		width: 100%;
+	}
+}
+
+/* ==========================================================================
+   Empty state — Pattern B zero-data card
+   Matches .wpss-card aesthetic (shadow, border, radius) + centered layout.
+   Standalone usage (outside .wpss-list-card) keeps its own shell.
+   ========================================================================== */
+
+.wpss-empty-state {
+	text-align: center;
+	padding: 56px 24px 48px;
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-lg);
+	box-shadow: var(--wpss-admin-shadow-sm);
+	margin: 16px 0;
+}
+
+.wpss-empty-state__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	margin: 0 auto 20px;
+	border-radius: 50%;
+	background: rgba(29, 191, 115, 0.08);
+	color: var(--wpss-admin-primary);
+}
+
+.wpss-empty-state__icon [data-lucide] {
+	width: 36px;
+	height: 36px;
+	stroke-width: 1.5;
+}
+
+.wpss-empty-state__title {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 0 0 8px;
+	color: var(--wpss-admin-text);
+	line-height: 1.3;
+}
+
+.wpss-empty-state__body {
+	color: var(--wpss-admin-text-light);
+	max-width: 480px;
+	margin: 0 auto 24px;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.wpss-empty-state__actions {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+	margin: 0;
+}
+
+/* "Learn more" — styled as subtle link-button rather than full button */
+.wpss-empty-state__actions .wpss-empty-state__learn {
+	color: var(--wpss-admin-text-light);
+	font-size: 13px;
+	text-decoration: none;
+	padding: 6px 10px;
+	border-radius: var(--wpss-admin-radius-sm);
+	transition: color 0.12s ease, background 0.12s ease;
+}
+
+.wpss-empty-state__actions .wpss-empty-state__learn:hover {
+	color: var(--wpss-admin-accent);
+	background: var(--wpss-admin-bg);
+	text-decoration: none;
+}
+
+@media ( max-width: 640px ) {
+	.wpss-empty-state {
+		padding: 40px 16px 32px;
+	}
+
+	.wpss-empty-state__icon {
+		width: 64px;
+		height: 64px;
+	}
+
+	.wpss-empty-state__icon [data-lucide] {
+		width: 32px;
+		height: 32px;
+	}
+
+	.wpss-empty-state__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-empty-state__actions .wpss-btn {
+		width: 100%;
+		justify-content: center;
 	}
 }
