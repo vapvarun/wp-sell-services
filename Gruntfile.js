@@ -163,6 +163,25 @@ module.exports = function ( grunt ) {
 							'!vendor/szepeviktor/**',
 							'!vendor/php-stubs/**',
 
+							// Exclude dev / build artifacts that ship inside bundled vendor
+							// packages (e.g. EDD SL SDK includes its own composer.json,
+							// phpunit.xml, webpack.config.js, etc. — none of which the
+							// runtime plugin needs).
+							'!**/composer.json',
+							'!**/composer.lock',
+							'!**/package.json',
+							'!**/package-lock.json',
+							'!**/phpunit.xml',
+							'!**/phpunit.xml.dist',
+							'!**/webpack.config.js',
+							'!**/postcss.config.js',
+							'!**/tailwind.config.js',
+							'!**/.eslintrc*',
+							'!**/.stylelintrc*',
+							'!**/.editorconfig',
+							'!**/.gitignore',
+							'!**/.gitattributes',
+
 							// Exclude OS files.
 							'!.DS_Store',
 							'!Thumbs.db',
