@@ -311,11 +311,11 @@ defined( 'ABSPATH' ) || exit;
 				$subtotal = 0.0;
 
 				foreach ( $cart_items as $item_key => $item ) :
-					$service_id  = absint( $item['service_id'] ?? 0 );
-					$package     = is_array( $item['package'] ?? null ) ? $item['package'] : array();
-					$addons      = is_array( $item['addons'] ?? null ) ? $item['addons'] : array();
-					$item_total  = (float) ( $item['total'] ?? 0 );
-					$subtotal   += $item_total;
+					$service_id = absint( $item['service_id'] ?? 0 );
+					$package    = is_array( $item['package'] ?? null ) ? $item['package'] : array();
+					$addons     = is_array( $item['addons'] ?? null ) ? $item['addons'] : array();
+					$item_total = (float) ( $item['total'] ?? 0 );
+					$subtotal  += $item_total;
 
 					$service_title = $service_id ? get_the_title( $service_id ) : __( 'Service', 'wp-sell-services' );
 					$service_url   = $service_id ? get_permalink( $service_id ) : '';

@@ -253,12 +253,12 @@ class ProposalService {
 			if ( ! is_array( $row ) ) {
 				continue;
 			}
-			$title = isset( $row['title'] ) ? sanitize_text_field( (string) $row['title'] ) : '';
+			$title  = isset( $row['title'] ) ? sanitize_text_field( (string) $row['title'] ) : '';
 			$amount = isset( $row['amount'] ) ? (float) $row['amount'] : 0.0;
 			if ( '' === $title || $amount <= 0 ) {
 				continue;
 			}
-			$days = isset( $row['days'] ) ? max( 0, (int) $row['days'] ) : 0;
+			$days  = isset( $row['days'] ) ? max( 0, (int) $row['days'] ) : 0;
 			$out[] = array(
 				'title'        => $title,
 				'description'  => isset( $row['description'] ) ? sanitize_textarea_field( (string) $row['description'] ) : '',

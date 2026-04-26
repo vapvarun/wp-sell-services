@@ -30,7 +30,13 @@ $format = static function ( float $amt ) use ( $currency ): string {
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );
 $dashboard    = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
-$order_url    = add_query_arg( array( 'section' => 'sales', 'order_id' => (int) $milestone->id ), $dashboard );
+$order_url    = add_query_arg(
+	array(
+		'section'  => 'sales',
+		'order_id' => (int) $milestone->id,
+	),
+	$dashboard
+);
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">

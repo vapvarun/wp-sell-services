@@ -72,7 +72,7 @@ class MigrationManager {
 		}
 
 		// Check if the old woo-sell-services table exists before querying it.
-		$old_table = $this->wpdb->prefix . 'wss_conversations';
+		$old_table    = $this->wpdb->prefix . 'wss_conversations';
 		$table_exists = $this->wpdb->get_var(
 			$this->wpdb->prepare( 'SHOW TABLES LIKE %s', $old_table )
 		);

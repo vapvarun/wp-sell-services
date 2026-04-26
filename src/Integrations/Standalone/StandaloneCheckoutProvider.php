@@ -166,7 +166,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	public function render_checkout_shortcode( array $atts ): string {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
-		
+
 		// Check if paying for an existing order (from proposal acceptance).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$pay_order_id = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;

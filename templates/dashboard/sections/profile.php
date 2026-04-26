@@ -192,35 +192,35 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 		$user_prefs = array();
 	}
 	$pref_categories = array(
-		'orders'      => array(
+		'orders'       => array(
 			'label' => __( 'New orders', 'wp-sell-services' ),
 			'desc'  => __( 'When a buyer places a new order on one of your services.', 'wp-sell-services' ),
 		),
-		'messages'    => array(
+		'messages'     => array(
 			'label' => __( 'New messages', 'wp-sell-services' ),
 			'desc'  => __( 'When a buyer sends a message on an active order.', 'wp-sell-services' ),
 		),
-		'completion'  => array(
+		'completion'   => array(
 			'label' => __( 'Order completion + reviews', 'wp-sell-services' ),
 			'desc'  => __( 'When a buyer approves a delivery or leaves a review.', 'wp-sell-services' ),
 		),
-		'cancellation'=> array(
+		'cancellation' => array(
 			'label' => __( 'Cancellation requests', 'wp-sell-services' ),
 			'desc'  => __( 'When a buyer requests to cancel an active order.', 'wp-sell-services' ),
 		),
-		'disputes'    => array(
+		'disputes'     => array(
 			'label' => __( 'Disputes', 'wp-sell-services' ),
 			'desc'  => __( 'Always recommended — disputes need a quick response to avoid escalation.', 'wp-sell-services' ),
 		),
-		'tips'        => array(
+		'tips'         => array(
 			'label' => __( 'Tips received', 'wp-sell-services' ),
 			'desc'  => __( 'When a buyer sends you a tip on a completed order.', 'wp-sell-services' ),
 		),
-		'withdrawals' => array(
+		'withdrawals'  => array(
 			'label' => __( 'Withdrawal status updates', 'wp-sell-services' ),
 			'desc'  => __( 'When your withdrawal request is approved, paid out, or rejected.', 'wp-sell-services' ),
 		),
-		'proposals'   => array(
+		'proposals'    => array(
 			'label' => __( 'Proposals + milestones + extensions', 'wp-sell-services' ),
 			'desc'  => __( 'When a proposal is accepted or a milestone / extension is paid.', 'wp-sell-services' ),
 		),
@@ -273,7 +273,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					body: fd,
 					credentials: 'same-origin'
 				} ).then( function ( r ) { return r.json(); } )
-				  .then( function ( res ) {
+					.then( function ( res ) {
 					if ( res && res.success ) {
 						statusEl.textContent = <?php echo wp_json_encode( __( '✓ Preferences saved', 'wp-sell-services' ) ); ?>;
 						statusEl.style.color = '#16a34a';

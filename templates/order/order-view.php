@@ -858,7 +858,7 @@ do_action( 'wpss_before_order_view', $order );
 		// Both buyer and vendor see exactly when the cancellation_requested
 		// state will auto-resolve via the existing 48h cron. Computed from the
 		// requested_at timestamp baked into vendor_notes JSON.
-		$requested_at_iso = $cancel_data['requested_at'] ?? '';
+		$requested_at_iso         = $cancel_data['requested_at'] ?? '';
 		$cancellation_deadline_ts = 0;
 		$time_remaining_label     = '';
 		if ( $requested_at_iso ) {
@@ -1225,13 +1225,13 @@ do_action( 'wpss_before_order_view', $order );
 		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
 		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
 	);
-	$can_propose_milestone  = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
-	$show_milestone_section = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
-	$milestone_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+	$can_propose_milestone     = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
+	$show_milestone_section    = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
+	$milestone_currency        = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
 
 	if ( $show_milestone_section ) :
-		$ms_approved_count  = 0;
-		$ms_total_paid      = 0.0;
+		$ms_approved_count = 0;
+		$ms_total_paid     = 0.0;
 		foreach ( $milestones as $_m ) {
 			if ( 'completed' === $_m['status'] ) {
 				++$ms_approved_count;
@@ -1295,17 +1295,17 @@ do_action( 'wpss_before_order_view', $order );
 					<ol class="wpss-milestone-list">
 						<?php
 						foreach ( $milestones as $index => $m ) :
-							$ms_status     = $m['status'];
-							$ms_sub_id     = (int) $m['id'];
-							$ms_sub_url    = add_query_arg( 'order_id', $ms_sub_id, remove_query_arg( 'order_id' ) );
-							$ms_pay_url    = add_query_arg( 'pay_order', $ms_sub_id, wpss_get_checkout_base_url() );
+							$ms_status      = $m['status'];
+							$ms_sub_id      = (int) $m['id'];
+							$ms_sub_url     = add_query_arg( 'order_id', $ms_sub_id, remove_query_arg( 'order_id' ) );
+							$ms_pay_url     = add_query_arg( 'pay_order', $ms_sub_id, wpss_get_checkout_base_url() );
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
 
 							switch ( $ms_status ) {
 								case 'pending_payment':
 									if ( ! empty( $m['is_locked'] ) ) {
-										$ms_state_label = $is_buyer
+										$ms_state_label  = $is_buyer
 											? __( 'Locked — finish the earlier phase first', 'wp-sell-services' )
 											: __( 'Locked behind earlier phase', 'wp-sell-services' );
 										$ms_state_class .= ' wpss-ms-state--locked';
@@ -1523,7 +1523,7 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( "Decline this phase? Your seller can propose a revised one.", 'wp-sell-services' ) ); ?>')) return;
+					if (!confirm('<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>')) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_decline_milestone');
@@ -1548,7 +1548,7 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-delete-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( "Cancel this phase proposal?", 'wp-sell-services' ) ); ?>')) return;
+					if (!confirm('<?php echo esc_js( __( 'Cancel this phase proposal?', 'wp-sell-services' ) ); ?>')) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_delete_milestone');
@@ -1568,8 +1568,8 @@ do_action( 'wpss_before_order_view', $order );
 
 	<!-- Extension Request (active order only) -->
 	<?php
-	$extension_service = new \WPSellServices\Services\ExtensionOrderService();
-	$pending_extension = $extension_service->get_pending_request( (int) $order_id );
+	$extension_service         = new \WPSellServices\Services\ExtensionOrderService();
+	$pending_extension         = $extension_service->get_pending_request( (int) $order_id );
 	$extension_active_statuses = array(
 		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
 		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
@@ -1579,14 +1579,14 @@ do_action( 'wpss_before_order_view', $order );
 	// Extensions are for fixed-price catalog orders only. Request-mode
 	// orders run on the milestone payment model instead, so the two CTAs
 	// never appear on the same order.
-	$can_request_extension = $is_vendor
+	$can_request_extension        = $is_vendor
 		&& ! $is_request_order
 		&& null === $pending_extension
 		&& in_array( $order->status, $extension_active_statuses, true );
 	$buyer_sees_pending_extension = $is_customer && ! $is_request_order && null !== $pending_extension;
 
 	if ( $buyer_sees_pending_extension ) :
-		$ext_pay_url = $pending_extension->pay_order_id
+		$ext_pay_url  = $pending_extension->pay_order_id
 			? add_query_arg( 'pay_order', (int) $pending_extension->pay_order_id, wpss_get_checkout_base_url() )
 			: '';
 		$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );

@@ -194,9 +194,9 @@ if ( empty( $portfolio_items ) ) {
 <div class="wpss-portfolio-public">
 	<div class="wpss-portfolio-public__grid">
 		<?php
-	// Collect all items for the lightbox.
-	$lightbox_items = array();
-	?>
+		// Collect all items for the lightbox.
+		$lightbox_items = array();
+		?>
 	<?php foreach ( $portfolio_items as $item ) : ?>
 		<?php
 		$lightbox_items[] = array(

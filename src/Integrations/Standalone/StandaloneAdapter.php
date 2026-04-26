@@ -263,7 +263,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	private function render_standalone_page( string $title, string $content ): void {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
-		
+
 		// Use get_header/get_footer for theme integration.
 		get_header();
 		?>

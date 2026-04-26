@@ -351,11 +351,11 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		// flips the sub-order straight to its correct terminal / in_progress
 		// state. Running them through the generic pending_requirements
 		// transition here caused two problems:
-		//   1. A brief pending_requirements status flicker fired the wrong
-		//      "new order received" email to buyer + vendor.
-		//   2. The sub-order's final status update (e.g. completed for tips)
-		//      then had to re-fire status-change hooks for a status the
-		//      subscriber thought had already been reached.
+		// 1. A brief pending_requirements status flicker fired the wrong
+		// "new order received" email to buyer + vendor.
+		// 2. The sub-order's final status update (e.g. completed for tips)
+		// then had to re-fire status-change hooks for a status the
+		// subscriber thought had already been reached.
 		// Treating sub-orders as paid-only (no status transition here) keeps
 		// the money + notification path clean — the service handler for
 		// each platform is the authority on what state the sub-order ends

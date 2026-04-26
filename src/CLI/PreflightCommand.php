@@ -134,7 +134,7 @@ class PreflightCommand {
 	 * @return void
 	 */
 	private function record( string $area, string $test, string $status, string $detail = '' ): void {
-		$this->results[ $status ]++;
+		++$this->results[ $status ];
 		$this->results['details'][] = array(
 			'area'   => $area,
 			'test'   => $test,
@@ -332,7 +332,12 @@ class PreflightCommand {
 		$this->record( 'REST', 'Total routes registered', 'pass', count( $wpss ) . ' routes' );
 
 		// Public endpoints.
-		$public = array( '/wpss/v1/services' => 200, '/wpss/v1/categories' => 200, '/wpss/v1/vendors' => 200, '/wpss/v1/settings' => 200 );
+		$public = array(
+			'/wpss/v1/services'   => 200,
+			'/wpss/v1/categories' => 200,
+			'/wpss/v1/vendors'    => 200,
+			'/wpss/v1/settings'   => 200,
+		);
 		wp_set_current_user( 0 );
 		foreach ( $public as $ep => $expected ) {
 			$res = rest_do_request( new WP_REST_Request( 'GET', $ep ) );
@@ -340,7 +345,11 @@ class PreflightCommand {
 		}
 
 		// Auth-blocked endpoints.
-		$blocked = array( '/wpss/v1/orders' => 401, '/wpss/v1/notifications' => 401, '/wpss/v1/me' => 401 );
+		$blocked = array(
+			'/wpss/v1/orders'        => 401,
+			'/wpss/v1/notifications' => 401,
+			'/wpss/v1/me'            => 401,
+		);
 		wp_set_current_user( 0 );
 		foreach ( $blocked as $ep => $expected ) {
 			$res = rest_do_request( new WP_REST_Request( 'GET', $ep ) );
@@ -359,7 +368,18 @@ class PreflightCommand {
 
 		// Batch.
 		$batch = new WP_REST_Request( 'POST', '/wpss/v1/batch' );
-		$batch->set_body( wp_json_encode( array( 'requests' => array( array( 'method' => 'GET', 'path' => '/wpss/v1/services' ) ) ) ) );
+		$batch->set_body(
+			wp_json_encode(
+				array(
+					'requests' => array(
+						array(
+							'method' => 'GET',
+							'path'   => '/wpss/v1/services',
+						),
+					),
+				)
+			)
+		);
 		$batch->set_header( 'Content-Type', 'application/json' );
 		$batch_res = rest_do_request( $batch );
 		$this->record( 'REST', 'POST /batch', $batch_res->get_status() === 200 ? 'pass' : 'fail', 'HTTP ' . $batch_res->get_status() );
@@ -377,12 +397,12 @@ class PreflightCommand {
 
 		$dir      = WPSS_PLUGIN_DIR . 'templates/';
 		$required = array(
-			'archive-service.php'             => 'Service archive',
-			'content-service-card.php'        => 'Service card',
-			'single-service.php'              => 'Single service',
-			'myaccount/vendor-dashboard.php'  => 'Dashboard',
-			'emails/new-order.php'            => 'New order email',
-			'emails/order-completed.php'      => 'Order completed email',
+			'archive-service.php'            => 'Service archive',
+			'content-service-card.php'       => 'Service card',
+			'single-service.php'             => 'Single service',
+			'myaccount/vendor-dashboard.php' => 'Dashboard',
+			'emails/new-order.php'           => 'New order email',
+			'emails/order-completed.php'     => 'Order completed email',
 		);
 
 		foreach ( $required as $file => $desc ) {
@@ -390,15 +410,15 @@ class PreflightCommand {
 		}
 
 		// PHP syntax check on all templates.
-		$all_files    = array_merge( glob( $dir . '*.php' ) ?: array(), glob( $dir . '**/*.php' ) ?: array(), glob( $dir . '**/**/*.php' ) ?: array() );
-		$syntax_errs  = 0;
+		$all_files   = array_merge( glob( $dir . '*.php' ) ?: array(), glob( $dir . '**/*.php' ) ?: array(), glob( $dir . '**/**/*.php' ) ?: array() );
+		$syntax_errs = 0;
 
 		foreach ( $all_files as $file ) {
 			$output = array();
 			$code   = 0;
 			exec( 'php -l ' . escapeshellarg( $file ) . ' 2>&1', $output, $code ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_exec
 			if ( 0 !== $code ) {
-				$syntax_errs++;
+				++$syntax_errs;
 				$this->record( 'Templates', basename( $file ), 'fail', implode( ' ', $output ) );
 			}
 		}
@@ -481,7 +501,7 @@ class PreflightCommand {
 
 		$content = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$checks  = array(
-			"remove_role( 'wpss_vendor' )"    => 'Vendor role removal',
+			"remove_role( 'wpss_vendor' )"     => 'Vendor role removal',
 			'WP_UNINSTALL_PLUGIN'              => 'WP_UNINSTALL_PLUGIN guard',
 			'delete_data_on_uninstall'         => 'Respects delete_data setting',
 			'->uninstall()'                    => 'Drops all tables',
@@ -551,16 +571,19 @@ class PreflightCommand {
 		$this->record( 'Pro', 'Pro settings defaults', empty( $missing ) ? 'pass' : 'fail', empty( $missing ) ? count( $pro_opts ) . ' set' : 'Missing: ' . implode( ', ', $missing ) );
 
 		// Pro routes.
-		$routes      = rest_get_server()->get_routes();
+		$routes       = rest_get_server()->get_routes();
 		$pro_prefixes = array( '/wpss/v1/wallet', '/wpss/v1/analytics', '/wpss/v1/commission-rules', '/wpss/v1/stripe-connect', '/wpss/v1/paypal-payouts', '/wpss/v1/subscription-plans', '/wpss/v1/recurring-services', '/wpss/v1/storage', '/wpss/v1/white-label' );
-		$missing_rt   = array_filter( $pro_prefixes, function ( $prefix ) use ( $routes ) {
-			foreach ( $routes as $route => $h ) {
-				if ( strpos( $route, $prefix ) === 0 ) {
-					return false;
+		$missing_rt   = array_filter(
+			$pro_prefixes,
+			function ( $prefix ) use ( $routes ) {
+				foreach ( $routes as $route => $h ) {
+					if ( strpos( $route, $prefix ) === 0 ) {
+						return false;
+					}
 				}
+				return true;
 			}
-			return true;
-		} );
+		);
 		$this->record( 'Pro', 'Pro REST routes', empty( $missing_rt ) ? 'pass' : 'fail', empty( $missing_rt ) ? count( $pro_prefixes ) . ' route groups' : 'Missing: ' . implode( ', ', $missing_rt ) );
 
 		// Filters.
@@ -585,18 +608,18 @@ class PreflightCommand {
 
 		// Core features.
 		$features = array(
-			'Service packages'        => 'wpss_service_packages',
-			'Service add-ons'         => 'wpss_service_addons',
-			'Order workflow'          => 'wpss_orders',
-			'Messaging'               => 'wpss_conversations',
-			'File delivery'           => 'wpss_deliveries',
-			'Reviews & ratings'       => 'wpss_reviews',
-			'Dispute resolution'      => 'wpss_disputes',
-			'Buyer requests'          => 'wpss_proposals',
-			'Vendor portfolios'       => 'wpss_portfolio_items',
-			'Notifications'           => 'wpss_notifications',
-			'Earnings & withdrawals'  => 'wpss_withdrawals',
-			'Deadline extensions'     => 'wpss_extension_requests',
+			'Service packages'       => 'wpss_service_packages',
+			'Service add-ons'        => 'wpss_service_addons',
+			'Order workflow'         => 'wpss_orders',
+			'Messaging'              => 'wpss_conversations',
+			'File delivery'          => 'wpss_deliveries',
+			'Reviews & ratings'      => 'wpss_reviews',
+			'Dispute resolution'     => 'wpss_disputes',
+			'Buyer requests'         => 'wpss_proposals',
+			'Vendor portfolios'      => 'wpss_portfolio_items',
+			'Notifications'          => 'wpss_notifications',
+			'Earnings & withdrawals' => 'wpss_withdrawals',
+			'Deadline extensions'    => 'wpss_extension_requests',
 		);
 
 		foreach ( $features as $name => $table ) {
@@ -604,7 +627,7 @@ class PreflightCommand {
 		}
 
 		// Key shortcodes.
-		$sc = array( 'wpss_services', 'wpss_dashboard', 'wpss_vendor_registration', 'wpss_cart', 'wpss_service_wizard', 'wpss_buyer_requests', 'wpss_service_search', 'wpss_login', 'wpss_register' );
+		$sc         = array( 'wpss_services', 'wpss_dashboard', 'wpss_vendor_registration', 'wpss_cart', 'wpss_service_wizard', 'wpss_buyer_requests', 'wpss_service_search', 'wpss_login', 'wpss_register' );
 		$missing_sc = array_filter( $sc, fn( $s ) => ! shortcode_exists( $s ) );
 		$this->record( 'Market', 'Shortcodes', empty( $missing_sc ) ? 'pass' : 'fail', empty( $missing_sc ) ? count( $sc ) . ' registered' : 'Missing: ' . implode( ', ', $missing_sc ) );
 
@@ -643,7 +666,12 @@ class PreflightCommand {
 	 * @return int
 	 */
 	private function get_admin_user_id(): int {
-		$admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
+		$admins = get_users(
+			array(
+				'role'   => 'administrator',
+				'number' => 1,
+			)
+		);
 		return ! empty( $admins ) ? $admins[0]->ID : 1;
 	}
 

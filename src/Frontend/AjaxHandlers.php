@@ -3596,9 +3596,9 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
 		}
 
-		$valid_keys   = array( 'orders', 'messages', 'completion', 'cancellation', 'disputes', 'tips', 'withdrawals', 'proposals' );
-		$submitted    = isset( $_POST['prefs'] ) && is_array( $_POST['prefs'] ) ? wp_unslash( $_POST['prefs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted booleans below.
-		$preferences  = array();
+		$valid_keys  = array( 'orders', 'messages', 'completion', 'cancellation', 'disputes', 'tips', 'withdrawals', 'proposals' );
+		$submitted   = isset( $_POST['prefs'] ) && is_array( $_POST['prefs'] ) ? wp_unslash( $_POST['prefs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted booleans below.
+		$preferences = array();
 		foreach ( $valid_keys as $key ) {
 			// Checkbox is present only if checked. Absence = explicit false (muted).
 			$preferences[ $key ] = isset( $submitted[ $key ] );
@@ -3683,7 +3683,7 @@ class AjaxHandlers {
 					// through wpss_vendor_video_embed_url() which turns a valid
 					// watch/share link into a safe embed iframe. Anything else
 					// clears the field so the UI falls back to no-video state.
-					$raw_video             = esc_url_raw( wp_unslash( $_POST['intro_video_url'] ) );
+					$raw_video                      = esc_url_raw( wp_unslash( $_POST['intro_video_url'] ) );
 					$update_data['intro_video_url'] = wpss_is_supported_video_url( $raw_video ) ? $raw_video : '';
 				}
 
@@ -3995,12 +3995,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
 		}
 
-		$order_id      = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
-		$title         = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
-		$description   = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
-		$deliverables  = isset( $_POST['deliverables'] ) ? sanitize_textarea_field( wp_unslash( $_POST['deliverables'] ) ) : '';
-		$amount        = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : 0.0;
-		$days          = isset( $_POST['days'] ) ? absint( wp_unslash( $_POST['days'] ) ) : 0;
+		$order_id     = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
+		$title        = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
+		$description  = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
+		$deliverables = isset( $_POST['deliverables'] ) ? sanitize_textarea_field( wp_unslash( $_POST['deliverables'] ) ) : '';
+		$amount       = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : 0.0;
+		$days         = isset( $_POST['days'] ) ? absint( wp_unslash( $_POST['days'] ) ) : 0;
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Missing order.', 'wp-sell-services' ) ) );

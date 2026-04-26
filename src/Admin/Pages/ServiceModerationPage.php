@@ -452,7 +452,7 @@ class ServiceModerationPage {
 				</table>
 
 				<!-- Pagination -->
-				<?php if ( $query->max_num_pages > 1 ) : ?>
+					<?php if ( $query->max_num_pages > 1 ) : ?>
 					<div class="tablenav bottom">
 						<div class="tablenav-pages">
 							<?php

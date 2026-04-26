@@ -128,11 +128,13 @@ class ExtensionOrderService {
 
 		$max_extension_days = (int) get_option( 'wpss_max_extension_days', 14 );
 		if ( $extra_days > $max_extension_days ) {
-			return $fail( sprintf(
+			return $fail(
+				sprintf(
 				/* translators: %d: max extension days */
-				__( 'Extension cannot exceed %d days.', 'wp-sell-services' ),
-				$max_extension_days
-			) );
+					__( 'Extension cannot exceed %d days.', 'wp-sell-services' ),
+					$max_extension_days
+				)
+			);
 		}
 
 		$reason = sanitize_textarea_field( $reason );

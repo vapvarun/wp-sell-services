@@ -669,7 +669,15 @@ class Shortcodes {
 			<?php else : ?>
 				<div class="wpss-empty-state">
 					<div class="wpss-empty-state__icon">
-						<?php echo \WPSellServices\Services\Icon::render( 'shopping-bag', array( 'width' => '48', 'height' => '48' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php
+						echo \WPSellServices\Services\Icon::render(
+							'shopping-bag',
+							array(
+								'width'  => '48',
+								'height' => '48',
+							)
+						); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped 
+						?>
 					</div>
 					<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-empty-state__body"><?php esc_html_e( 'Your orders will show here once you purchase a service.', 'wp-sell-services' ); ?></p>
@@ -1223,10 +1231,10 @@ class Shortcodes {
 		?>
 		<style>
 		/* B2 (baseline-2026-04-25.md): position:relative + isolation:isolate
-		   + contain:layout creates a stacking context so any sticky/fixed
-		   elements from the host theme cannot bleed into the card. Same
-		   fix the wpss-app-shell primitive applies on bigger frontend
-		   surfaces (dashboard, single service, archive). */
+			+ contain:layout creates a stacking context so any sticky/fixed
+			elements from the host theme cannot bleed into the card. Same
+			fix the wpss-app-shell primitive applies on bigger frontend
+			surfaces (dashboard, single service, archive). */
 		.wpss-vr { max-width: 560px; margin: 40px auto; padding: 0 20px; position: relative; isolation: isolate; contain: layout; }
 		.wpss-vr__card--wide { max-width: 640px; }
 		.wpss-vr__card {

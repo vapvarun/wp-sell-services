@@ -212,17 +212,17 @@ do_action( 'wpss_before_conversation', $order );
 				return wp_date( get_option( 'date_format', 'F j, Y' ), $message_ts );
 			};
 
-			foreach ( $messages as $message ) :
-				$message_ts   = strtotime( $message->created_at );
-				$divider_key  = wp_date( 'Y-m-d', $message_ts );
-				$divider_text = $format_divider( $message_ts );
-				$is_own       = (int) $message->sender_id === $user_id;
-				$is_system    = 'system' === ( isset( $message->type ) ? $message->type : ( isset( $message->content_type ) ? $message->content_type : 'text' ) );
+	foreach ( $messages as $message ) :
+		$message_ts   = strtotime( $message->created_at );
+		$divider_key  = wp_date( 'Y-m-d', $message_ts );
+		$divider_text = $format_divider( $message_ts );
+		$is_own       = (int) $message->sender_id === $user_id;
+		$is_system    = 'system' === ( isset( $message->type ) ? $message->type : ( isset( $message->content_type ) ? $message->content_type : 'text' ) );
 
-				// Date separator changes only when the calendar day changes.
-				if ( $divider_key !== $current_date_key ) :
-					$current_date_key = $divider_key;
-					?>
+		// Date separator changes only when the calendar day changes.
+		if ( $divider_key !== $current_date_key ) :
+			$current_date_key = $divider_key;
+			?>
 					<div class="wpss-messaging__date-divider">
 						<span class="wpss-messaging__date-text"><?php echo esc_html( $divider_text ); ?></span>
 					</div>

@@ -77,8 +77,8 @@ if ( $order_id ) {
 $order_repo = new OrderRepository();
 
 // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only display filters.
-$sales_period  = isset( $_GET['sales_period'] ) ? sanitize_key( wp_unslash( $_GET['sales_period'] ) ) : 'all';
-$sales_page    = isset( $_GET['sales_page'] ) ? max( 1, absint( wp_unslash( $_GET['sales_page'] ) ) ) : 1;
+$sales_period = isset( $_GET['sales_period'] ) ? sanitize_key( wp_unslash( $_GET['sales_period'] ) ) : 'all';
+$sales_page   = isset( $_GET['sales_page'] ) ? max( 1, absint( wp_unslash( $_GET['sales_page'] ) ) ) : 1;
 // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 $valid_periods = array(
@@ -90,11 +90,11 @@ $valid_periods = array(
 		'label' => __( 'Last 90 days', 'wp-sell-services' ),
 		'days'  => 90,
 	),
-	'1year' => array(
+	'1year'  => array(
 		'label' => __( 'Last 12 months', 'wp-sell-services' ),
 		'days'  => 365,
 	),
-	'all'   => array(
+	'all'    => array(
 		'label' => __( 'All time', 'wp-sell-services' ),
 		'days'  => 0,
 	),
@@ -115,12 +115,12 @@ $query_args = array(
 	'date_from' => $date_from,
 );
 
-$orders            = $order_repo->get_by_vendor( $user_id, $query_args );
-$total_in_period   = $order_repo->count_by_vendor(
+$orders          = $order_repo->get_by_vendor( $user_id, $query_args );
+$total_in_period = $order_repo->count_by_vendor(
 	$user_id,
 	array( 'date_from' => $date_from )
 );
-$total_pages       = max( 1, (int) ceil( $total_in_period / $per_page ) );
+$total_pages     = max( 1, (int) ceil( $total_in_period / $per_page ) );
 
 // Get order stats from vendor stats (lifetime totals — not affected by date filter).
 $stats           = $order_repo->get_vendor_stats( $user_id );
@@ -220,7 +220,19 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 					<?php esc_html_e( 'View My Services', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>
-				<a href="<?php echo esc_url( add_query_arg( array( 'section' => 'sales', 'sales_period' => 'all' ), get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary">
+				<a href="
+				<?php
+				echo esc_url(
+					add_query_arg(
+						array(
+							'section'      => 'sales',
+							'sales_period' => 'all',
+						),
+						get_permalink()
+					)
+				);
+				?>
+							" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Show all orders', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
@@ -341,10 +353,12 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 								<span class="wpss-order-card__amount" title="<?php echo esc_attr( sprintf( /* translators: %s: gross amount the buyer paid */ __( 'Buyer paid %s (gross). You earn the net amount after platform fee.', 'wp-sell-services' ), wpss_format_price( $row_gross ) ) ); ?>">
 									<?php echo esc_html( wpss_format_price( $row_net_amount ) ); ?>
 									<?php if ( abs( $row_gross - $row_net_amount ) > 0.005 ) : ?>
-										<small class="wpss-order-card__gross"><?php
+										<small class="wpss-order-card__gross">
+										<?php
 										/* translators: %s: buyer-paid amount before platform fee */
 										printf( esc_html__( '(buyer paid %s)', 'wp-sell-services' ), esc_html( wpss_format_price( $row_gross ) ) );
-										?></small>
+										?>
+										</small>
 									<?php endif; ?>
 								</span>
 							</p>
@@ -376,7 +390,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 					}
 					return add_query_arg( $args, get_permalink() );
 				};
-				?>
+	?>
 				<?php if ( $sales_page > 1 ) : ?>
 					<a href="<?php echo esc_url( $page_url( $sales_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
 						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>

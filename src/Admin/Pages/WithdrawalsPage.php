@@ -380,7 +380,7 @@ class WithdrawalsPage {
 			</table>
 
 			<!-- Pagination -->
-			<?php if ( $total_pages > 1 ) : ?>
+				<?php if ( $total_pages > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
 						<span class="displaying-num">
@@ -442,9 +442,9 @@ class WithdrawalsPage {
 
 		<style>
 			/* Stat-card, stat-number, stat-label, stat-amount, filter-row,
-			   and status colors now live in assets/css/admin.css via the
-			   shared `.wpss-listing-stats` rules. Keep only withdrawal-page
-			   specific utilities below. */
+				and status colors now live in assets/css/admin.css via the
+				shared `.wpss-listing-stats` rules. Keep only withdrawal-page
+				specific utilities below. */
 
 			.wpss-withdrawals-table .column-id { width: 6%; }
 			.wpss-withdrawals-table .column-vendor { width: 20%; }

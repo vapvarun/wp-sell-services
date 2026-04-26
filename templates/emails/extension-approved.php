@@ -46,7 +46,13 @@ $format_date = static function ( string $iso ): string {
 $platform_fee = max( 0.0, $gross_amount - $net_amount );
 $dashboard    = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
 $parent_id    = (int) ( $extension->platform_order_id ?? 0 );
-$order_url    = $parent_id ? add_query_arg( array( 'section' => 'sales', 'order_id' => $parent_id ), $dashboard ) : $dashboard;
+$order_url    = $parent_id ? add_query_arg(
+	array(
+		'section'  => 'sales',
+		'order_id' => $parent_id,
+	),
+	$dashboard
+) : $dashboard;
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">

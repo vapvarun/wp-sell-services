@@ -115,8 +115,8 @@ do_action( 'wpss_email_content_before', 'moderation_response', $service_title, $
 	 *
 	 * @param string $button_text Default button text.
 	 */
-	$button_text      = apply_filters( 'wpss_email_button_text', $default_cta_text, 'moderation_response' );
-	$button_color     = $is_approved ? '#28a745' : $base_color;
+	$button_text  = apply_filters( 'wpss_email_button_text', $default_cta_text, 'moderation_response' );
+	$button_color = $is_approved ? '#28a745' : $base_color;
 	?>
 	<a href="<?php echo esc_url( $button_url ); ?>" style="display: inline-block; background-color: <?php echo esc_attr( $button_color ); ?>; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: 600;">
 		<?php echo esc_html( $button_text ); ?>

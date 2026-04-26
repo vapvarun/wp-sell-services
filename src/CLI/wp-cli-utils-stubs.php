@@ -29,7 +29,7 @@ if ( ! function_exists( 'WP_CLI\Utils\make_progress_bar' ) ) {
 	 * @return object
 	 */
 	function make_progress_bar( $message, $count ) { // phpcs:ignore
-		return new class {
+		return new class() {
 			/** @return void */
 			public function tick(): void {}
 			/** @return void */

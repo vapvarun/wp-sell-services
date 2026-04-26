@@ -76,10 +76,10 @@ class AuditLogService {
 	 *
 	 * @since 1.1.0
 	 *
-	 * @param string                      $event_type  Dot-separated identifier, e.g. `order.status_change`.
-	 * @param string                      $object_type Object slug, e.g. `order`, `proposal`, `dispute`.
-	 * @param int                         $object_id   Primary key of the subject object.
-	 * @param array<string, mixed>        $data        {
+	 * @param string               $event_type  Dot-separated identifier, e.g. `order.status_change`.
+	 * @param string               $object_type Object slug, e.g. `order`, `proposal`, `dispute`.
+	 * @param int                  $object_id   Primary key of the subject object.
+	 * @param array<string, mixed> $data        {
 	 *     Optional. Event-specific payload.
 	 *
 	 *     @type string              $action     Verb describing the event, e.g. `update`, `force`, `cancel`.

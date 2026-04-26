@@ -1153,8 +1153,8 @@ class NotificationService {
 				break;
 
 			case 'extension_rejected':
-				$title = __( 'Quote declined', 'wp-sell-services' );
-				$note  = (string) ( $data['response_note'] ?? '' );
+				$title   = __( 'Quote declined', 'wp-sell-services' );
+				$note    = (string) ( $data['response_note'] ?? '' );
 				$message = '' !== trim( $note )
 					? sprintf(
 						/* translators: 1: order ID, 2: buyer's note */

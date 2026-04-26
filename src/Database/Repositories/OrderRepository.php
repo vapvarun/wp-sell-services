@@ -333,12 +333,12 @@ class OrderRepository extends AbstractRepository {
 	public function get_vendor_stats( int $vendor_id ): array {
 		// Sub-order platforms are counted differently from the row they
 		// represent:
-		//   * Tips never count towards service stats — they live in
-		//     get_vendor_tip_stats() so analytics can surface them separately.
-		//   * Extensions are NOT separate orders (they top up an existing
-		//     service order) but the extra money the vendor earned IS real
-		//     revenue, so they are excluded from the counts but summed into
-		//     total_earnings.
+		// * Tips never count towards service stats — they live in
+		// get_vendor_tip_stats() so analytics can surface them separately.
+		// * Extensions are NOT separate orders (they top up an existing
+		// service order) but the extra money the vendor earned IS real
+		// revenue, so they are excluded from the counts but summed into
+		// total_earnings.
 		// Revenue uses vendor_earnings (NET, post-commission) so the number
 		// the seller sees matches what they can actually withdraw. Falls back
 		// to total for legacy rows written before CommissionService populated

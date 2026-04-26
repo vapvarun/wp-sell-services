@@ -23,7 +23,8 @@ if ( ! class_exists( 'WP_CLI' ) ) {
 	/**
 	 * Stub WP_CLI for non-CLI usage.
 	 */
-	class WP_CLI { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound
+	class WP_CLI {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound
 
 		/**
 		 * Log a message.

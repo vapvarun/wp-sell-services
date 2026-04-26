@@ -456,9 +456,9 @@ class EmailService {
 			return false;
 		}
 
-		$service        = $service_id ? get_post( $service_id ) : null;
-		$service_title  = $service ? $service->post_title : __( 'your service', 'wp-sell-services' );
-		$service_url    = $service ? get_permalink( $service ) : '';
+		$service       = $service_id ? get_post( $service_id ) : null;
+		$service_title = $service ? $service->post_title : __( 'your service', 'wp-sell-services' );
+		$service_url   = $service ? get_permalink( $service ) : '';
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: stars, 3: buyer name */
@@ -546,8 +546,8 @@ class EmailService {
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
 
-		$base_url  = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		$pay_url   = add_query_arg( 'pay_order', (int) $milestone->id, $base_url );
+		$base_url = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
+		$pay_url  = add_query_arg( 'pay_order', (int) $milestone->id, $base_url );
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: phase title */
@@ -561,18 +561,18 @@ class EmailService {
 			$subject,
 			self::TYPE_MILESTONE_PROPOSED,
 			array(
-				'milestone'      => $milestone,
-				'parent_order'   => $parent_order,
-				'recipient'      => $buyer,
-				'email_heading'  => __( 'Milestone proposed', 'wp-sell-services' ),
-				'buyer_name'     => $buyer->display_name,
-				'vendor_name'    => $vendor_name,
-				'phase_title'    => (string) ( $meta['title'] ?? '' ),
-				'description'    => (string) ( $meta['description'] ?? ( $milestone->vendor_notes ?? '' ) ),
-				'deliverables'   => (string) ( $meta['deliverables'] ?? '' ),
-				'amount'         => (float) $milestone->total,
-				'currency'       => $milestone->currency ?? wpss_get_currency(),
-				'pay_url'        => $pay_url,
+				'milestone'     => $milestone,
+				'parent_order'  => $parent_order,
+				'recipient'     => $buyer,
+				'email_heading' => __( 'Milestone proposed', 'wp-sell-services' ),
+				'buyer_name'    => $buyer->display_name,
+				'vendor_name'   => $vendor_name,
+				'phase_title'   => (string) ( $meta['title'] ?? '' ),
+				'description'   => (string) ( $meta['description'] ?? ( $milestone->vendor_notes ?? '' ) ),
+				'deliverables'  => (string) ( $meta['deliverables'] ?? '' ),
+				'amount'        => (float) $milestone->total,
+				'currency'      => $milestone->currency ?? wpss_get_currency(),
+				'pay_url'       => $pay_url,
 			)
 		);
 	}

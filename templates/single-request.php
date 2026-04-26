@@ -292,7 +292,7 @@ do_action( 'wpss_before_single_request', $request_id );
 													?>
 												</div>
 												<?php
-												$proposal_contract  = $proposal->contract_type ?? 'fixed';
+												$proposal_contract   = $proposal->contract_type ?? 'fixed';
 												$proposal_milestones = is_array( $proposal->milestones ?? null ) ? $proposal->milestones : array();
 												if ( 'milestone' === $proposal_contract && ! empty( $proposal_milestones ) ) :
 													?>

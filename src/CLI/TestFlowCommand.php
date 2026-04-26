@@ -178,8 +178,8 @@ class TestFlowCommand extends WP_CLI_Command {
 			'cart persisted in user meta'
 		);
 
-		$provider   = new StandaloneOrderProvider();
-		$order_ids  = $provider->create_orders_from_cart(
+		$provider  = new StandaloneOrderProvider();
+		$order_ids = $provider->create_orders_from_cart(
 			array( $cart_item ),
 			'test',
 			'test_txn_' . wp_generate_password( 8, false ),
@@ -191,7 +191,7 @@ class TestFlowCommand extends WP_CLI_Command {
 			return;
 		}
 
-		$order_id              = (int) $order_ids[0];
+		$order_id                  = (int) $order_ids[0];
 		$this->created['orders'][] = $order_id;
 
 		$order = wpss_get_order( $order_id );
@@ -230,10 +230,10 @@ class TestFlowCommand extends WP_CLI_Command {
 				'post_status'  => 'publish',
 				'post_author'  => $buyer_id,
 				'meta_input'   => array(
-					'_wpss_request_budget_min'   => 100,
-					'_wpss_request_budget_max'   => 500,
+					'_wpss_request_budget_min'    => 100,
+					'_wpss_request_budget_max'    => 500,
 					'_wpss_request_delivery_days' => 7,
-					'_wpss_request_status'       => BuyerRequestService::STATUS_OPEN,
+					'_wpss_request_status'        => BuyerRequestService::STATUS_OPEN,
 				),
 			)
 		);
@@ -423,18 +423,18 @@ class TestFlowCommand extends WP_CLI_Command {
 		$wpdb->insert(
 			$orders_table,
 			array(
-				'order_number'    => 'TFA-' . wp_generate_password( 8, false ),
-				'customer_id'     => $buyer_id,
-				'vendor_id'       => $vendor_id,
-				'service_id'      => 0,
-				'platform'        => 'standalone',
-				'subtotal'        => 100.0,
-				'total'           => 100.0,
-				'currency'        => 'USD',
-				'status'          => ServiceOrder::STATUS_IN_PROGRESS,
-				'payment_status'  => 'paid',
-				'created_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'order_number'   => 'TFA-' . wp_generate_password( 8, false ),
+				'customer_id'    => $buyer_id,
+				'vendor_id'      => $vendor_id,
+				'service_id'     => 0,
+				'platform'       => 'standalone',
+				'subtotal'       => 100.0,
+				'total'          => 100.0,
+				'currency'       => 'USD',
+				'status'         => ServiceOrder::STATUS_IN_PROGRESS,
+				'payment_status' => 'paid',
+				'created_at'     => current_time( 'mysql' ),
+				'updated_at'     => current_time( 'mysql' ),
 			),
 			array( '%s', '%d', '%d', '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%s' )
 		);
@@ -447,8 +447,8 @@ class TestFlowCommand extends WP_CLI_Command {
 		wp_set_current_user( $admin_id );
 
 		// Baseline: how many audit rows exist for this order before the flow?
-		$audit_table   = $wpdb->prefix . 'wpss_audit_log';
-		$rows_before   = (int) $wpdb->get_var(
+		$audit_table = $wpdb->prefix . 'wpss_audit_log';
+		$rows_before = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$audit_table} WHERE object_type = 'order' AND object_id = %d",
 				$order_id
@@ -542,7 +542,7 @@ class TestFlowCommand extends WP_CLI_Command {
 	 * @return int User ID.
 	 */
 	private function seed_user( string $role ): int {
-		$login = self::USER_PREFIX . $role . '_' . wp_generate_password( 6, false );
+		$login   = self::USER_PREFIX . $role . '_' . wp_generate_password( 6, false );
 		$user_id = wp_insert_user(
 			array(
 				'user_login' => $login,
@@ -657,7 +657,13 @@ class TestFlowCommand extends WP_CLI_Command {
 			$wpdb->delete( $wpdb->prefix . 'wpss_orders', array( 'id' => $id ) );
 			$wpdb->delete( $wpdb->prefix . 'wpss_order_requirements', array( 'order_id' => $id ) );
 			// Sweep any audit rows left by this order that the flow didn't explicitly track.
-			$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'object_type' => 'order', 'object_id' => $id ) );
+			$wpdb->delete(
+				$wpdb->prefix . 'wpss_audit_log',
+				array(
+					'object_type' => 'order',
+					'object_id'   => $id,
+				)
+			);
 		}
 		foreach ( $this->created['proposals'] as $id ) {
 			$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $id ) );

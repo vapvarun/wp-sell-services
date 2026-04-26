@@ -17,12 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 $demo_services = array(
 	// Graphics & Design.
 	array(
-		'title'       => 'I will design a stunning minimalist logo for your brand',
-		'content'     => 'Get a professional, modern logo that captures your brand essence. I specialize in minimalist designs that are memorable, scalable, and perfect for all platforms. With 8+ years of experience, I\'ve helped 500+ businesses establish their visual identity.',
-		'excerpt'     => 'Professional minimalist logo design with unlimited revisions and full ownership rights.',
-		'category'    => 'Graphics & Design',
-		'tags'        => array( 'logo design', 'minimalist', 'branding', 'business logo' ),
-		'packages'    => array(
+		'title'        => 'I will design a stunning minimalist logo for your brand',
+		'content'      => 'Get a professional, modern logo that captures your brand essence. I specialize in minimalist designs that are memorable, scalable, and perfect for all platforms. With 8+ years of experience, I\'ve helped 500+ businesses establish their visual identity.',
+		'excerpt'      => 'Professional minimalist logo design with unlimited revisions and full ownership rights.',
+		'category'     => 'Graphics & Design',
+		'tags'         => array( 'logo design', 'minimalist', 'branding', 'business logo' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Basic',
 				'description'   => '1 logo concept, PNG format, 3 revisions',
@@ -45,7 +45,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'What file formats will I receive?',
 				'answer'   => 'You\'ll receive AI, EPS, PDF, PNG, and JPG files suitable for print and web.',
@@ -57,42 +57,47 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'What is your business name and industry?',
-				'type'        => 'text',
-				'required'    => true,
+				'question' => 'What is your business name and industry?',
+				'type'     => 'text',
+				'required' => true,
 			),
 			array(
-				'question'    => 'Do you have any color preferences?',
-				'type'        => 'textarea',
-				'required'    => false,
+				'question' => 'Do you have any color preferences?',
+				'type'     => 'textarea',
+				'required' => false,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Express 24-hour delivery',
-				'description'       => 'Get your logo within 24 hours',
-				'price'             => 30,
+				'title'               => 'Express 24-hour delivery',
+				'description'         => 'Get your logo within 24 hours',
+				'price'               => 30,
 				'delivery_days_extra' => -2,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 			array(
-				'title'             => 'Social media kit',
-				'description'       => 'Optimized versions for all social platforms',
-				'price'             => 25,
+				'title'               => 'Social media kit',
+				'description'         => 'Optimized versions for all social platforms',
+				'price'               => 25,
 				'delivery_days_extra' => 1,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 2847, 'orders' => 156, 'rating' => 4.9, 'reviews' => 89 ),
-		'featured'    => true,
+		'stats'        => array(
+			'views'   => 2847,
+			'orders'  => 156,
+			'rating'  => 4.9,
+			'reviews' => 89,
+		),
+		'featured'     => true,
 	),
 	array(
-		'title'       => 'I will create eye-catching social media graphics and posts',
-		'content'     => 'Stand out on social media with scroll-stopping graphics! I create custom designs for Instagram, Facebook, LinkedIn, Twitter, and Pinterest that match your brand and engage your audience.',
-		'excerpt'     => 'Custom social media graphics that boost engagement and grow your following.',
-		'category'    => 'Graphics & Design',
-		'tags'        => array( 'social media', 'instagram', 'facebook', 'graphics' ),
-		'packages'    => array(
+		'title'        => 'I will create eye-catching social media graphics and posts',
+		'content'      => 'Stand out on social media with scroll-stopping graphics! I create custom designs for Instagram, Facebook, LinkedIn, Twitter, and Pinterest that match your brand and engage your audience.',
+		'excerpt'      => 'Custom social media graphics that boost engagement and grow your following.',
+		'category'     => 'Graphics & Design',
+		'tags'         => array( 'social media', 'instagram', 'facebook', 'graphics' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Starter',
 				'description'   => '5 custom posts for 1 platform',
@@ -115,7 +120,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'Which platforms do you design for?',
 				'answer'   => 'Instagram, Facebook, Twitter, LinkedIn, Pinterest, and TikTok.',
@@ -123,22 +128,27 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'Share your brand guidelines or colors',
-				'type'        => 'file',
-				'required'    => false,
+				'question' => 'Share your brand guidelines or colors',
+				'type'     => 'file',
+				'required' => false,
 			),
 		),
-		'addons'      => array(),
-		'stats'       => array( 'views' => 1523, 'orders' => 78, 'rating' => 4.8, 'reviews' => 45 ),
-		'featured'    => false,
+		'addons'       => array(),
+		'stats'        => array(
+			'views'   => 1523,
+			'orders'  => 78,
+			'rating'  => 4.8,
+			'reviews' => 45,
+		),
+		'featured'     => false,
 	),
 	array(
-		'title'       => 'I will design professional business cards and stationery',
-		'content'     => 'Make a lasting first impression with professionally designed business cards and stationery. I create cohesive brand materials including letterheads, envelopes, and complete stationery sets.',
-		'excerpt'     => 'Professional business card and stationery design for your brand identity.',
-		'category'    => 'Graphics & Design',
-		'tags'        => array( 'business cards', 'stationery', 'print design', 'corporate' ),
-		'packages'    => array(
+		'title'        => 'I will design professional business cards and stationery',
+		'content'      => 'Make a lasting first impression with professionally designed business cards and stationery. I create cohesive brand materials including letterheads, envelopes, and complete stationery sets.',
+		'excerpt'      => 'Professional business card and stationery design for your brand identity.',
+		'category'     => 'Graphics & Design',
+		'tags'         => array( 'business cards', 'stationery', 'print design', 'corporate' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Basic',
 				'description'   => 'Double-sided business card design',
@@ -161,35 +171,40 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(),
+		'faqs'         => array(),
 		'requirements' => array(
 			array(
-				'question'    => 'Provide your logo and contact information',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'Provide your logo and contact information',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Print-ready files with bleed',
-				'description'       => 'Files ready for professional printing',
-				'price'             => 10,
+				'title'               => 'Print-ready files with bleed',
+				'description'         => 'Files ready for professional printing',
+				'price'               => 10,
 				'delivery_days_extra' => 0,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 892, 'orders' => 34, 'rating' => 5.0, 'reviews' => 21 ),
-		'featured'    => false,
+		'stats'        => array(
+			'views'   => 892,
+			'orders'  => 34,
+			'rating'  => 5.0,
+			'reviews' => 21,
+		),
+		'featured'     => false,
 	),
 
 	// Digital Marketing.
 	array(
-		'title'       => 'I will create a complete SEO strategy to boost your rankings',
-		'content'     => 'Dominate search results with a data-driven SEO strategy. I provide comprehensive keyword research, competitor analysis, on-page optimization, and a detailed action plan to improve your organic visibility.',
-		'excerpt'     => 'Complete SEO audit and strategy to improve your Google rankings.',
-		'category'    => 'Digital Marketing',
-		'tags'        => array( 'SEO', 'keyword research', 'google ranking', 'organic traffic' ),
-		'packages'    => array(
+		'title'        => 'I will create a complete SEO strategy to boost your rankings',
+		'content'      => 'Dominate search results with a data-driven SEO strategy. I provide comprehensive keyword research, competitor analysis, on-page optimization, and a detailed action plan to improve your organic visibility.',
+		'excerpt'      => 'Complete SEO audit and strategy to improve your Google rankings.',
+		'category'     => 'Digital Marketing',
+		'tags'         => array( 'SEO', 'keyword research', 'google ranking', 'organic traffic' ),
+		'packages'     => array(
 			array(
 				'name'          => 'SEO Audit',
 				'description'   => 'Technical SEO audit with recommendations',
@@ -212,7 +227,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'How long until I see results?',
 				'answer'   => 'SEO is a long-term strategy. You\'ll typically see improvements in 3-6 months.',
@@ -224,35 +239,40 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'What is your website URL?',
-				'type'        => 'text',
-				'required'    => true,
+				'question' => 'What is your website URL?',
+				'type'     => 'text',
+				'required' => true,
 			),
 			array(
-				'question'    => 'Who are your main competitors?',
-				'type'        => 'textarea',
-				'required'    => false,
+				'question' => 'Who are your main competitors?',
+				'type'     => 'textarea',
+				'required' => false,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Competitor backlink analysis',
-				'description'       => 'Deep dive into competitor link profiles',
-				'price'             => 75,
+				'title'               => 'Competitor backlink analysis',
+				'description'         => 'Deep dive into competitor link profiles',
+				'price'               => 75,
 				'delivery_days_extra' => 2,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 3421, 'orders' => 198, 'rating' => 4.9, 'reviews' => 112 ),
-		'featured'    => true,
+		'stats'        => array(
+			'views'   => 3421,
+			'orders'  => 198,
+			'rating'  => 4.9,
+			'reviews' => 112,
+		),
+		'featured'     => true,
 	),
 	array(
-		'title'       => 'I will manage your Google Ads campaigns for maximum ROI',
-		'content'     => 'Get more leads and sales with expertly managed Google Ads campaigns. I handle everything from keyword research to ad copy, bidding optimization, and conversion tracking.',
-		'excerpt'     => 'Expert Google Ads management to maximize your advertising ROI.',
-		'category'    => 'Digital Marketing',
-		'tags'        => array( 'google ads', 'PPC', 'paid advertising', 'lead generation' ),
-		'packages'    => array(
+		'title'        => 'I will manage your Google Ads campaigns for maximum ROI',
+		'content'      => 'Get more leads and sales with expertly managed Google Ads campaigns. I handle everything from keyword research to ad copy, bidding optimization, and conversion tracking.',
+		'excerpt'      => 'Expert Google Ads management to maximize your advertising ROI.',
+		'category'     => 'Digital Marketing',
+		'tags'         => array( 'google ads', 'PPC', 'paid advertising', 'lead generation' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Setup',
 				'description'   => 'Campaign setup and initial optimization',
@@ -275,7 +295,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'Is the ad spend included?',
 				'answer'   => 'No, this covers management only. Ad spend is paid directly to Google.',
@@ -283,30 +303,35 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'What is your monthly ad budget?',
-				'type'        => 'text',
-				'required'    => true,
+				'question' => 'What is your monthly ad budget?',
+				'type'     => 'text',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Landing page design',
-				'description'       => 'Custom landing page for your campaign',
-				'price'             => 150,
+				'title'               => 'Landing page design',
+				'description'         => 'Custom landing page for your campaign',
+				'price'               => 150,
 				'delivery_days_extra' => 3,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 1876, 'orders' => 67, 'rating' => 4.7, 'reviews' => 38 ),
-		'featured'    => false,
+		'stats'        => array(
+			'views'   => 1876,
+			'orders'  => 67,
+			'rating'  => 4.7,
+			'reviews' => 38,
+		),
+		'featured'     => false,
 	),
 	array(
-		'title'       => 'I will grow your Instagram following organically',
-		'content'     => 'Build a genuine Instagram community with proven organic growth strategies. No bots, no fake followers - just real engagement and sustainable growth through content strategy and community building.',
-		'excerpt'     => 'Organic Instagram growth through strategic content and engagement.',
-		'category'    => 'Digital Marketing',
-		'tags'        => array( 'instagram', 'social media growth', 'followers', 'engagement' ),
-		'packages'    => array(
+		'title'        => 'I will grow your Instagram following organically',
+		'content'      => 'Build a genuine Instagram community with proven organic growth strategies. No bots, no fake followers - just real engagement and sustainable growth through content strategy and community building.',
+		'excerpt'      => 'Organic Instagram growth through strategic content and engagement.',
+		'category'     => 'Digital Marketing',
+		'tags'         => array( 'instagram', 'social media growth', 'followers', 'engagement' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Starter',
 				'description'   => 'Growth strategy + 2 weeks engagement',
@@ -329,7 +354,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'How many followers can I expect?',
 				'answer'   => 'Results vary, but clients typically see 500-2000 new followers monthly.',
@@ -337,24 +362,29 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'What is your Instagram handle?',
-				'type'        => 'text',
-				'required'    => true,
+				'question' => 'What is your Instagram handle?',
+				'type'     => 'text',
+				'required' => true,
 			),
 		),
-		'addons'      => array(),
-		'stats'       => array( 'views' => 2134, 'orders' => 89, 'rating' => 4.6, 'reviews' => 52 ),
-		'featured'    => false,
+		'addons'       => array(),
+		'stats'        => array(
+			'views'   => 2134,
+			'orders'  => 89,
+			'rating'  => 4.6,
+			'reviews' => 52,
+		),
+		'featured'     => false,
 	),
 
 	// Programming & Tech.
 	array(
-		'title'       => 'I will build a modern responsive WordPress website',
-		'content'     => 'Get a professional, fast-loading WordPress website that looks amazing on all devices. I use the latest themes and plugins to create secure, SEO-friendly sites that convert visitors into customers.',
-		'excerpt'     => 'Custom WordPress website design and development with responsive design.',
-		'category'    => 'Programming & Tech',
-		'tags'        => array( 'wordpress', 'web development', 'responsive design', 'website' ),
-		'packages'    => array(
+		'title'        => 'I will build a modern responsive WordPress website',
+		'content'      => 'Get a professional, fast-loading WordPress website that looks amazing on all devices. I use the latest themes and plugins to create secure, SEO-friendly sites that convert visitors into customers.',
+		'excerpt'      => 'Custom WordPress website design and development with responsive design.',
+		'category'     => 'Programming & Tech',
+		'tags'         => array( 'wordpress', 'web development', 'responsive design', 'website' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Landing Page',
 				'description'   => 'Single page website with contact form',
@@ -377,7 +407,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'Do I need to have hosting?',
 				'answer'   => 'Yes, you\'ll need hosting and a domain. I can recommend reliable options.',
@@ -389,42 +419,47 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'What is the purpose of your website?',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'What is the purpose of your website?',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 			array(
-				'question'    => 'Share any reference websites you like',
-				'type'        => 'textarea',
-				'required'    => false,
+				'question' => 'Share any reference websites you like',
+				'type'     => 'textarea',
+				'required' => false,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Premium theme license',
-				'description'       => 'Includes a premium theme ($59 value)',
-				'price'             => 40,
+				'title'               => 'Premium theme license',
+				'description'         => 'Includes a premium theme ($59 value)',
+				'price'               => 40,
 				'delivery_days_extra' => 0,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 			array(
-				'title'             => 'Speed optimization',
-				'description'       => 'Advanced caching and performance tuning',
-				'price'             => 50,
+				'title'               => 'Speed optimization',
+				'description'         => 'Advanced caching and performance tuning',
+				'price'               => 50,
 				'delivery_days_extra' => 1,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 4521, 'orders' => 234, 'rating' => 4.9, 'reviews' => 156 ),
-		'featured'    => true,
+		'stats'        => array(
+			'views'   => 4521,
+			'orders'  => 234,
+			'rating'  => 4.9,
+			'reviews' => 156,
+		),
+		'featured'     => true,
 	),
 	array(
-		'title'       => 'I will develop a custom React or Next.js web application',
-		'content'     => 'Build powerful, scalable web applications with React or Next.js. From dashboards to SaaS platforms, I deliver clean, maintainable code with modern best practices.',
-		'excerpt'     => 'Custom React/Next.js development for modern web applications.',
-		'category'    => 'Programming & Tech',
-		'tags'        => array( 'react', 'nextjs', 'javascript', 'web app' ),
-		'packages'    => array(
+		'title'        => 'I will develop a custom React or Next.js web application',
+		'content'      => 'Build powerful, scalable web applications with React or Next.js. From dashboards to SaaS platforms, I deliver clean, maintainable code with modern best practices.',
+		'excerpt'      => 'Custom React/Next.js development for modern web applications.',
+		'category'     => 'Programming & Tech',
+		'tags'         => array( 'react', 'nextjs', 'javascript', 'web app' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Component',
 				'description'   => 'Single React component or feature',
@@ -447,7 +482,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'Do you provide the source code?',
 				'answer'   => 'Yes, you receive full ownership of all source code.',
@@ -455,30 +490,35 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'Describe your project requirements',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'Describe your project requirements',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'TypeScript implementation',
-				'description'       => 'Full TypeScript with type safety',
-				'price'             => 100,
+				'title'               => 'TypeScript implementation',
+				'description'         => 'Full TypeScript with type safety',
+				'price'               => 100,
 				'delivery_days_extra' => 2,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 1654, 'orders' => 45, 'rating' => 5.0, 'reviews' => 28 ),
-		'featured'    => false,
+		'stats'        => array(
+			'views'   => 1654,
+			'orders'  => 45,
+			'rating'  => 5.0,
+			'reviews' => 28,
+		),
+		'featured'     => false,
 	),
 	array(
-		'title'       => 'I will fix bugs and issues in your WordPress website',
-		'content'     => 'Having WordPress problems? I\'ll diagnose and fix any issues - from white screen of death to plugin conflicts, slow loading, security issues, and more. Fast turnaround guaranteed.',
-		'excerpt'     => 'Expert WordPress troubleshooting and bug fixing service.',
-		'category'    => 'Programming & Tech',
-		'tags'        => array( 'wordpress', 'bug fix', 'troubleshooting', 'maintenance' ),
-		'packages'    => array(
+		'title'        => 'I will fix bugs and issues in your WordPress website',
+		'content'      => 'Having WordPress problems? I\'ll diagnose and fix any issues - from white screen of death to plugin conflicts, slow loading, security issues, and more. Fast turnaround guaranteed.',
+		'excerpt'      => 'Expert WordPress troubleshooting and bug fixing service.',
+		'category'     => 'Programming & Tech',
+		'tags'         => array( 'wordpress', 'bug fix', 'troubleshooting', 'maintenance' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Quick Fix',
 				'description'   => 'Fix 1 specific issue or bug',
@@ -501,7 +541,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'What if you can\'t fix the issue?',
 				'answer'   => 'Full refund if I cannot resolve your WordPress issue.',
@@ -509,35 +549,40 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'Describe the issue you\'re experiencing',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'Describe the issue you\'re experiencing',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 			array(
-				'question'    => 'Provide wp-admin access',
-				'type'        => 'text',
-				'required'    => true,
+				'question' => 'Provide wp-admin access',
+				'type'     => 'text',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Priority support',
-				'description'       => 'Start working within 1 hour',
-				'price'             => 25,
+				'title'               => 'Priority support',
+				'description'         => 'Start working within 1 hour',
+				'price'               => 25,
 				'delivery_days_extra' => 0,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 3287, 'orders' => 312, 'rating' => 4.8, 'reviews' => 198 ),
-		'featured'    => true,
+		'stats'        => array(
+			'views'   => 3287,
+			'orders'  => 312,
+			'rating'  => 4.8,
+			'reviews' => 198,
+		),
+		'featured'     => true,
 	),
 	array(
-		'title'       => 'I will create a custom REST API for your application',
-		'content'     => 'Need a robust backend API? I design and develop RESTful APIs using Node.js, Python, or PHP with proper authentication, documentation, and best practices.',
-		'excerpt'     => 'Custom REST API development with documentation and testing.',
-		'category'    => 'Programming & Tech',
-		'tags'        => array( 'API', 'backend', 'nodejs', 'REST' ),
-		'packages'    => array(
+		'title'        => 'I will create a custom REST API for your application',
+		'content'      => 'Need a robust backend API? I design and develop RESTful APIs using Node.js, Python, or PHP with proper authentication, documentation, and best practices.',
+		'excerpt'      => 'Custom REST API development with documentation and testing.',
+		'category'     => 'Programming & Tech',
+		'tags'         => array( 'API', 'backend', 'nodejs', 'REST' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Basic',
 				'description'   => 'Simple CRUD API with 5 endpoints',
@@ -560,35 +605,40 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(),
+		'faqs'         => array(),
 		'requirements' => array(
 			array(
-				'question'    => 'What data will the API handle?',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'What data will the API handle?',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Swagger documentation',
-				'description'       => 'Interactive API documentation',
-				'price'             => 75,
+				'title'               => 'Swagger documentation',
+				'description'         => 'Interactive API documentation',
+				'price'               => 75,
 				'delivery_days_extra' => 1,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 987, 'orders' => 23, 'rating' => 4.9, 'reviews' => 15 ),
-		'featured'    => false,
+		'stats'        => array(
+			'views'   => 987,
+			'orders'  => 23,
+			'rating'  => 4.9,
+			'reviews' => 15,
+		),
+		'featured'     => false,
 	),
 
 	// Video & Animation.
 	array(
-		'title'       => 'I will edit your YouTube videos professionally',
-		'content'     => 'Make your YouTube videos stand out with professional editing. I add engaging intros, transitions, graphics, color grading, and sound design to keep viewers watching.',
-		'excerpt'     => 'Professional YouTube video editing with effects and optimization.',
-		'category'    => 'Video & Animation',
-		'tags'        => array( 'video editing', 'youtube', 'content creator', 'post production' ),
-		'packages'    => array(
+		'title'        => 'I will edit your YouTube videos professionally',
+		'content'      => 'Make your YouTube videos stand out with professional editing. I add engaging intros, transitions, graphics, color grading, and sound design to keep viewers watching.',
+		'excerpt'      => 'Professional YouTube video editing with effects and optimization.',
+		'category'     => 'Video & Animation',
+		'tags'         => array( 'video editing', 'youtube', 'content creator', 'post production' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Basic',
 				'description'   => 'Basic cuts and transitions, up to 10 min',
@@ -611,7 +661,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'What footage format do you accept?',
 				'answer'   => 'I work with all common formats including MP4, MOV, AVI, and RAW files.',
@@ -619,37 +669,42 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'Share your raw footage via cloud link',
-				'type'        => 'text',
-				'required'    => true,
+				'question' => 'Share your raw footage via cloud link',
+				'type'     => 'text',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Custom thumbnail design',
-				'description'       => 'Eye-catching thumbnail for your video',
-				'price'             => 15,
+				'title'               => 'Custom thumbnail design',
+				'description'         => 'Eye-catching thumbnail for your video',
+				'price'               => 15,
 				'delivery_days_extra' => 0,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 			array(
-				'title'             => 'Rush delivery',
-				'description'       => 'Get your video in 24 hours',
-				'price'             => 50,
+				'title'               => 'Rush delivery',
+				'description'         => 'Get your video in 24 hours',
+				'price'               => 50,
 				'delivery_days_extra' => -2,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 2876, 'orders' => 178, 'rating' => 4.8, 'reviews' => 95 ),
-		'featured'    => true,
+		'stats'        => array(
+			'views'   => 2876,
+			'orders'  => 178,
+			'rating'  => 4.8,
+			'reviews' => 95,
+		),
+		'featured'     => true,
 	),
 	array(
-		'title'       => 'I will create a 2D animated explainer video',
-		'content'     => 'Explain your product or service with an engaging animated video. I create custom 2D animations that simplify complex ideas and capture attention.',
-		'excerpt'     => 'Custom 2D animated explainer videos for your business.',
-		'category'    => 'Video & Animation',
-		'tags'        => array( 'animation', 'explainer video', '2D animation', 'motion graphics' ),
-		'packages'    => array(
+		'title'        => 'I will create a 2D animated explainer video',
+		'content'      => 'Explain your product or service with an engaging animated video. I create custom 2D animations that simplify complex ideas and capture attention.',
+		'excerpt'      => 'Custom 2D animated explainer videos for your business.',
+		'category'     => 'Video & Animation',
+		'tags'         => array( 'animation', 'explainer video', '2D animation', 'motion graphics' ),
+		'packages'     => array(
 			array(
 				'name'          => '30 Seconds',
 				'description'   => '30-second animated video with voiceover',
@@ -672,7 +727,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'Is voiceover included?',
 				'answer'   => 'Yes, professional voiceover is included in all packages.',
@@ -680,30 +735,35 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'Provide your script or key points',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'Provide your script or key points',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Script writing',
-				'description'       => 'Professional scriptwriting service',
-				'price'             => 50,
+				'title'               => 'Script writing',
+				'description'         => 'Professional scriptwriting service',
+				'price'               => 50,
 				'delivery_days_extra' => 2,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 1543, 'orders' => 67, 'rating' => 4.9, 'reviews' => 41 ),
-		'featured'    => false,
+		'stats'        => array(
+			'views'   => 1543,
+			'orders'  => 67,
+			'rating'  => 4.9,
+			'reviews' => 41,
+		),
+		'featured'     => false,
 	),
 	array(
-		'title'       => 'I will create stunning motion graphics for your brand',
-		'content'     => 'Elevate your brand with custom motion graphics. From logo animations to promotional videos, I create eye-catching visuals that make your content memorable.',
-		'excerpt'     => 'Custom motion graphics and logo animations for brands.',
-		'category'    => 'Video & Animation',
-		'tags'        => array( 'motion graphics', 'logo animation', 'after effects', 'promo video' ),
-		'packages'    => array(
+		'title'        => 'I will create stunning motion graphics for your brand',
+		'content'      => 'Elevate your brand with custom motion graphics. From logo animations to promotional videos, I create eye-catching visuals that make your content memorable.',
+		'excerpt'      => 'Custom motion graphics and logo animations for brands.',
+		'category'     => 'Video & Animation',
+		'tags'         => array( 'motion graphics', 'logo animation', 'after effects', 'promo video' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Logo Reveal',
 				'description'   => 'Animated logo intro/outro',
@@ -726,27 +786,32 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(),
+		'faqs'         => array(),
 		'requirements' => array(
 			array(
-				'question'    => 'Share your logo file (AI/EPS preferred)',
-				'type'        => 'file',
-				'required'    => true,
+				'question' => 'Share your logo file (AI/EPS preferred)',
+				'type'     => 'file',
+				'required' => true,
 			),
 		),
-		'addons'      => array(),
-		'stats'       => array( 'views' => 876, 'orders' => 34, 'rating' => 5.0, 'reviews' => 22 ),
-		'featured'    => false,
+		'addons'       => array(),
+		'stats'        => array(
+			'views'   => 876,
+			'orders'  => 34,
+			'rating'  => 5.0,
+			'reviews' => 22,
+		),
+		'featured'     => false,
 	),
 
 	// Writing & Translation.
 	array(
-		'title'       => 'I will write SEO-optimized blog articles that rank',
-		'content'     => 'Get high-quality, researched blog content that drives organic traffic. I write engaging articles optimized for search engines with proper headings, keywords, and internal linking.',
-		'excerpt'     => 'SEO-optimized blog articles and content writing service.',
-		'category'    => 'Writing & Translation',
-		'tags'        => array( 'blog writing', 'SEO content', 'copywriting', 'articles' ),
-		'packages'    => array(
+		'title'        => 'I will write SEO-optimized blog articles that rank',
+		'content'      => 'Get high-quality, researched blog content that drives organic traffic. I write engaging articles optimized for search engines with proper headings, keywords, and internal linking.',
+		'excerpt'      => 'SEO-optimized blog articles and content writing service.',
+		'category'     => 'Writing & Translation',
+		'tags'         => array( 'blog writing', 'SEO content', 'copywriting', 'articles' ),
+		'packages'     => array(
 			array(
 				'name'          => '500 Words',
 				'description'   => '500-word SEO article with 1 keyword',
@@ -769,7 +834,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'Do you use AI to write?',
 				'answer'   => 'All content is 100% human-written and original.',
@@ -781,35 +846,40 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'What topic should I write about?',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'What topic should I write about?',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 			array(
-				'question'    => 'Target keywords (if any)',
-				'type'        => 'text',
-				'required'    => false,
+				'question' => 'Target keywords (if any)',
+				'type'     => 'text',
+				'required' => false,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Royalty-free images',
-				'description'       => '3 relevant images included',
-				'price'             => 10,
+				'title'               => 'Royalty-free images',
+				'description'         => '3 relevant images included',
+				'price'               => 10,
 				'delivery_days_extra' => 0,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 3654, 'orders' => 287, 'rating' => 4.9, 'reviews' => 176 ),
-		'featured'    => true,
+		'stats'        => array(
+			'views'   => 3654,
+			'orders'  => 287,
+			'rating'  => 4.9,
+			'reviews' => 176,
+		),
+		'featured'     => true,
 	),
 	array(
-		'title'       => 'I will translate your content from English to Spanish',
-		'content'     => 'Professional English to Spanish translation by a native speaker. I deliver accurate, culturally-adapted translations for websites, documents, marketing materials, and more.',
-		'excerpt'     => 'Native Spanish translation services for all content types.',
-		'category'    => 'Writing & Translation',
-		'tags'        => array( 'translation', 'spanish', 'localization', 'language' ),
-		'packages'    => array(
+		'title'        => 'I will translate your content from English to Spanish',
+		'content'      => 'Professional English to Spanish translation by a native speaker. I deliver accurate, culturally-adapted translations for websites, documents, marketing materials, and more.',
+		'excerpt'      => 'Native Spanish translation services for all content types.',
+		'category'     => 'Writing & Translation',
+		'tags'         => array( 'translation', 'spanish', 'localization', 'language' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Basic',
 				'description'   => 'Up to 500 words translation',
@@ -832,7 +902,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'Which Spanish dialect do you use?',
 				'answer'   => 'I can adapt to Latin American or Castilian Spanish based on your needs.',
@@ -840,30 +910,35 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'Upload your document or paste the text',
-				'type'        => 'file',
-				'required'    => true,
+				'question' => 'Upload your document or paste the text',
+				'type'     => 'file',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Certified translation',
-				'description'       => 'Official certification for legal documents',
-				'price'             => 30,
+				'title'               => 'Certified translation',
+				'description'         => 'Official certification for legal documents',
+				'price'               => 30,
 				'delivery_days_extra' => 1,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 1234, 'orders' => 89, 'rating' => 5.0, 'reviews' => 56 ),
-		'featured'    => false,
+		'stats'        => array(
+			'views'   => 1234,
+			'orders'  => 89,
+			'rating'  => 5.0,
+			'reviews' => 56,
+		),
+		'featured'     => false,
 	),
 	array(
-		'title'       => 'I will proofread and edit your document professionally',
-		'content'     => 'Polish your writing to perfection. I provide thorough proofreading and editing for grammar, spelling, punctuation, clarity, and flow. Academic and business documents welcome.',
-		'excerpt'     => 'Professional proofreading and editing for all document types.',
-		'category'    => 'Writing & Translation',
-		'tags'        => array( 'proofreading', 'editing', 'grammar', 'academic' ),
-		'packages'    => array(
+		'title'        => 'I will proofread and edit your document professionally',
+		'content'      => 'Polish your writing to perfection. I provide thorough proofreading and editing for grammar, spelling, punctuation, clarity, and flow. Academic and business documents welcome.',
+		'excerpt'      => 'Professional proofreading and editing for all document types.',
+		'category'     => 'Writing & Translation',
+		'tags'         => array( 'proofreading', 'editing', 'grammar', 'academic' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Proofreading',
 				'description'   => 'Grammar and spelling check, up to 2000 words',
@@ -886,33 +961,38 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(),
+		'faqs'         => array(),
 		'requirements' => array(
 			array(
-				'question'    => 'Upload your document',
-				'type'        => 'file',
-				'required'    => true,
+				'question' => 'Upload your document',
+				'type'     => 'file',
+				'required' => true,
 			),
 			array(
-				'question'    => 'What type of document is this?',
-				'type'        => 'select',
-				'choices'     => 'Academic,Business,Creative,Technical',
-				'required'    => true,
+				'question' => 'What type of document is this?',
+				'type'     => 'select',
+				'choices'  => 'Academic,Business,Creative,Technical',
+				'required' => true,
 			),
 		),
-		'addons'      => array(),
-		'stats'       => array( 'views' => 876, 'orders' => 67, 'rating' => 4.8, 'reviews' => 43 ),
-		'featured'    => false,
+		'addons'       => array(),
+		'stats'        => array(
+			'views'   => 876,
+			'orders'  => 67,
+			'rating'  => 4.8,
+			'reviews' => 43,
+		),
+		'featured'     => false,
 	),
 
 	// Business.
 	array(
-		'title'       => 'I will be your dedicated virtual assistant',
-		'content'     => 'Free up your time with a reliable virtual assistant. I handle email management, calendar scheduling, data entry, research, travel booking, and administrative tasks efficiently.',
-		'excerpt'     => 'Professional virtual assistant for all your admin needs.',
-		'category'    => 'Business',
-		'tags'        => array( 'virtual assistant', 'admin support', 'data entry', 'scheduling' ),
-		'packages'    => array(
+		'title'        => 'I will be your dedicated virtual assistant',
+		'content'      => 'Free up your time with a reliable virtual assistant. I handle email management, calendar scheduling, data entry, research, travel booking, and administrative tasks efficiently.',
+		'excerpt'      => 'Professional virtual assistant for all your admin needs.',
+		'category'     => 'Business',
+		'tags'         => array( 'virtual assistant', 'admin support', 'data entry', 'scheduling' ),
+		'packages'     => array(
 			array(
 				'name'          => '5 Hours',
 				'description'   => '5 hours of VA support',
@@ -935,7 +1015,7 @@ $demo_services = array(
 				'revisions'     => 0,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'What tools do you use?',
 				'answer'   => 'I\'m proficient in Google Workspace, Microsoft Office, Asana, Trello, Slack, and more.',
@@ -943,30 +1023,35 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'What tasks do you need help with?',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'What tasks do you need help with?',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Weekend availability',
-				'description'       => 'Work on Saturday and Sunday',
-				'price'             => 20,
+				'title'               => 'Weekend availability',
+				'description'         => 'Work on Saturday and Sunday',
+				'price'               => 20,
 				'delivery_days_extra' => 0,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 2134, 'orders' => 156, 'rating' => 4.9, 'reviews' => 98 ),
-		'featured'    => true,
+		'stats'        => array(
+			'views'   => 2134,
+			'orders'  => 156,
+			'rating'  => 4.9,
+			'reviews' => 98,
+		),
+		'featured'     => true,
 	),
 	array(
-		'title'       => 'I will create a professional business plan',
-		'content'     => 'Get a comprehensive business plan for investors, banks, or internal use. I create detailed plans with market analysis, financial projections, and actionable strategies.',
-		'excerpt'     => 'Professional business plan writing for startups and SMEs.',
-		'category'    => 'Business',
-		'tags'        => array( 'business plan', 'startup', 'investor', 'financial projections' ),
-		'packages'    => array(
+		'title'        => 'I will create a professional business plan',
+		'content'      => 'Get a comprehensive business plan for investors, banks, or internal use. I create detailed plans with market analysis, financial projections, and actionable strategies.',
+		'excerpt'      => 'Professional business plan writing for startups and SMEs.',
+		'category'     => 'Business',
+		'tags'         => array( 'business plan', 'startup', 'investor', 'financial projections' ),
+		'packages'     => array(
 			array(
 				'name'          => 'Lean Plan',
 				'description'   => '10-page lean business plan',
@@ -989,7 +1074,7 @@ $demo_services = array(
 				'revisions'     => -1,
 			),
 		),
-		'faqs'        => array(
+		'faqs'         => array(
 			array(
 				'question' => 'What information do you need from me?',
 				'answer'   => 'Basic details about your business idea, target market, and goals.',
@@ -997,22 +1082,27 @@ $demo_services = array(
 		),
 		'requirements' => array(
 			array(
-				'question'    => 'Describe your business idea',
-				'type'        => 'textarea',
-				'required'    => true,
+				'question' => 'Describe your business idea',
+				'type'     => 'textarea',
+				'required' => true,
 			),
 		),
-		'addons'      => array(
+		'addons'       => array(
 			array(
-				'title'             => 'Pitch deck design',
-				'description'       => '10-slide investor presentation',
-				'price'             => 100,
+				'title'               => 'Pitch deck design',
+				'description'         => '10-slide investor presentation',
+				'price'               => 100,
 				'delivery_days_extra' => 2,
-				'field_type'        => 'checkbox',
+				'field_type'          => 'checkbox',
 			),
 		),
-		'stats'       => array( 'views' => 1456, 'orders' => 45, 'rating' => 4.7, 'reviews' => 28 ),
-		'featured'    => false,
+		'stats'        => array(
+			'views'   => 1456,
+			'orders'  => 45,
+			'rating'  => 4.7,
+			'reviews' => 28,
+		),
+		'featured'     => false,
 	),
 );
 
@@ -1212,10 +1302,10 @@ foreach ( $demo_services as $service ) {
 
 	if ( is_wp_error( $result ) ) {
 		WP_CLI::warning( 'Failed: ' . $service['title'] . ' - ' . $result->get_error_message() );
-		$errors++;
+		++$errors;
 	} else {
 		WP_CLI::success( 'Created: ' . $service['title'] . ' (ID: ' . $result . ')' );
-		$created++;
+		++$created;
 	}
 }
 

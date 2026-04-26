@@ -319,8 +319,8 @@ class ProposalsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		$request_id   = (int) $request->get_param( 'request_id' );
-		$vendor_id    = get_current_user_id();
+		$request_id = (int) $request->get_param( 'request_id' );
+		$vendor_id  = get_current_user_id();
 
 		$buyer_request = get_post( $request_id );
 		if ( ! $buyer_request || 'wpss_request' !== $buyer_request->post_type ) {

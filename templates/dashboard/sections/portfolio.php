@@ -83,7 +83,8 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 					'tags'        => $item['tags'] ?? array(),
 					'external'    => $item['external_url'] ?? '',
 				);
-				?><?php
+				?>
+				<?php
 				$media_ids    = wp_json_encode(
 					array_map(
 						function ( $m ) {

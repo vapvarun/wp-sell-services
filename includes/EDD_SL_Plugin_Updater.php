@@ -67,7 +67,6 @@ class EDD_SL_Plugin_Updater {
 
 		// Set up hooks.
 		$this->init();
-
 	}
 
 	/**
@@ -83,7 +82,6 @@ class EDD_SL_Plugin_Updater {
 		add_filter( 'plugins_api', array( $this, 'plugins_api_filter' ), 10, 3 );
 		add_action( 'after_plugin_row', array( $this, 'show_update_notification' ), 10, 2 );
 		add_action( 'admin_init', array( $this, 'show_changelog' ) );
-
 	}
 
 	/**
@@ -401,7 +399,6 @@ class EDD_SL_Plugin_Updater {
 			$args['sslverify'] = $this->verify_ssl();
 		}
 		return $args;
-
 	}
 
 	/**
@@ -604,7 +601,6 @@ class EDD_SL_Plugin_Updater {
 		}
 
 		return $cache['value'];
-
 	}
 
 	/**
@@ -651,5 +647,4 @@ class EDD_SL_Plugin_Updater {
 
 		return 'edd_sl_' . md5( serialize( $string ) );
 	}
-
 }

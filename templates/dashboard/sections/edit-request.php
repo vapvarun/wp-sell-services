@@ -43,8 +43,8 @@ if ( ! $budget_min && ! $budget_max ) {
 	}
 }
 // Get deadline from expires_at meta field and format for HTML date input
-$expires_at      = get_post_meta( $request_id, '_wpss_expires_at', true );
-$deadline        = '';
+$expires_at = get_post_meta( $request_id, '_wpss_expires_at', true );
+$deadline   = '';
 if ( $expires_at ) {
 	$deadline_date = new DateTime( $expires_at );
 	$deadline      = $deadline_date->format( 'Y-m-d' );

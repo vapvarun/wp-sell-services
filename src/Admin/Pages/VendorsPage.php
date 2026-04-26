@@ -232,11 +232,11 @@ class VendorsPage {
 
 		// Get vendors with stats.
 		$orderby_map = array(
-			'created_at'     => 'vp.created_at',
-			'display_name'   => 'u.display_name',
-			'rating'         => 'vp.avg_rating',
-			'total_orders'   => 'vp.total_orders',
-			'total_earned'   => 'vp.total_earnings',
+			'created_at'      => 'vp.created_at',
+			'display_name'    => 'u.display_name',
+			'rating'          => 'vp.avg_rating',
+			'total_orders'    => 'vp.total_orders',
+			'total_earned'    => 'vp.total_earnings',
 			'milestone_count' => 'milestone_count',
 		);
 
@@ -247,9 +247,9 @@ class VendorsPage {
 		//
 		// Fixed    = completed non-sub-order rows belonging to this vendor.
 		// Milestone = completed request-orders (parents) that have at least
-		//             one milestone child row; correlated sub-query keeps the
-		//             read-only audit trail intact and avoids joining the
-		//             orders table twice.
+		// one milestone child row; correlated sub-query keeps the
+		// read-only audit trail intact and avoids joining the
+		// orders table twice.
 		$tip_platform       = \WPSellServices\Services\TippingService::ORDER_TYPE;
 		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
 		$milestone_platform = \WPSellServices\Services\MilestoneService::ORDER_TYPE;
@@ -521,7 +521,7 @@ class VendorsPage {
 			</table>
 
 			<!-- Pagination -->
-			<?php if ( $total_pages > 1 ) : ?>
+				<?php if ( $total_pages > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
 						<span class="displaying-num">
@@ -570,9 +570,9 @@ class VendorsPage {
 
 		<style>
 			/* Stat-card, stat-number, stat-label, filter-row, and status
-			   colors now live in assets/css/admin.css via the shared
-			   `.wpss-listing-stats` rules. Keep only vendor-page specific
-			   utilities below. */
+				colors now live in assets/css/admin.css via the shared
+				`.wpss-listing-stats` rules. Keep only vendor-page specific
+				utilities below. */
 
 			.wpss-vendors-table .column-vendor { width: 18%; }
 			.wpss-vendors-table .column-services { width: 7%; text-align: center; }
@@ -2299,7 +2299,7 @@ class VendorsPage {
 		$per_page      = 20;
 		$status_filter = isset( $_POST['order_status'] ) ? sanitize_key( $_POST['order_status'] ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
-		$offset        = ( $page - 1 ) * $per_page;
+		$offset = ( $page - 1 ) * $per_page;
 
 		$where  = 'WHERE o.vendor_id = %d';
 		$params = array( $vendor_id );

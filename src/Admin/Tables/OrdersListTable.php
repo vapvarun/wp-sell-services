@@ -497,7 +497,15 @@ class OrdersListTable extends \WP_List_Table {
 		?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
-				<?php echo \WPSellServices\Services\Icon::render( 'shopping-bag', array( 'width' => '48', 'height' => '48' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php
+				echo \WPSellServices\Services\Icon::render(
+					'shopping-bag',
+					array(
+						'width'  => '48',
+						'height' => '48',
+					)
+				); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped 
+				?>
 			</div>
 			<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-empty-state__body"><?php esc_html_e( 'When customers purchase services, their orders appear here with full lifecycle tracking.', 'wp-sell-services' ); ?></p>

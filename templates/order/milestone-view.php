@@ -302,7 +302,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 
 	document.querySelectorAll('.wpss-milestone-approve-btn').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			if (!confirm('<?php echo esc_js( __( "Approve delivery of this phase? This marks it as complete and cannot be undone.", 'wp-sell-services' ) ); ?>')) return;
+			if (!confirm('<?php echo esc_js( __( 'Approve delivery of this phase? This marks it as complete and cannot be undone.', 'wp-sell-services' ) ); ?>')) return;
 			btn.disabled = true;
 			post('wpss_approve_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
 				if (res && res.success) window.location.reload();
@@ -313,7 +313,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 
 	document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			if (!confirm('<?php echo esc_js( __( "Decline this phase? Your seller can propose a revised one.", 'wp-sell-services' ) ); ?>')) return;
+			if (!confirm('<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>')) return;
 			btn.disabled = true;
 			post('wpss_decline_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
 				if (res && res.success) window.location.reload();
@@ -324,7 +324,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 
 	document.querySelectorAll('.wpss-milestone-delete-btn').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			if (!confirm('<?php echo esc_js( __( "Cancel this phase proposal? This removes it and cannot be undone.", 'wp-sell-services' ) ); ?>')) return;
+			if (!confirm('<?php echo esc_js( __( 'Cancel this phase proposal? This removes it and cannot be undone.', 'wp-sell-services' ) ); ?>')) return;
 			btn.disabled = true;
 			post('wpss_delete_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
 				if (res && res.success) window.location.reload();
