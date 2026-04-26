@@ -148,7 +148,8 @@ class TestFlowCommand extends WP_CLI_Command {
 			// `WP_CLI::halt( $exit_code )` is an alias for `exit( $exit_code )`
 			// — using the bare PHP exit keeps PHPStan happy without losing the
 			// behaviour (we want to surface the non-zero status to the shell).
-			exit( $exit_code );
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $exit_code is an int used as a process exit code, not output.
+			exit( (int) $exit_code );
 		}
 	}
 

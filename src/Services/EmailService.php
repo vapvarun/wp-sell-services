@@ -485,6 +485,20 @@ class EmailService {
 		);
 	}
 
+	/**
+	 * Notify the vendor that a tip sub-order has been paid.
+	 *
+	 * Sends a single email summarising the gross amount paid by the buyer,
+	 * the net amount credited to the vendor wallet (after platform fee), and
+	 * the optional buyer note. Used by the tipping flow once `wpss_order_paid`
+	 * fires for a `tip` platform sub-order.
+	 *
+	 * @param ServiceOrder $tip_order  The paid tip sub-order.
+	 * @param float        $gross      Amount the buyer paid (display).
+	 * @param float        $net_vendor Amount credited to the vendor wallet.
+	 * @param string       $note       Optional buyer note shown to the vendor.
+	 * @return bool True if the email was queued, false on missing vendor.
+	 */
 	public function send_tip_received( ServiceOrder $tip_order, float $gross, float $net_vendor, string $note = '' ): bool {
 		$vendor = get_user_by( 'id', $tip_order->vendor_id );
 		if ( ! $vendor ) {
@@ -1997,6 +2011,17 @@ class EmailService {
 		return false === $prefs[ $category ] || 0 === $prefs[ $category ] || '' === $prefs[ $category ];
 	}
 
+	/**
+	 * Check whether an email-type constant is enabled in the global
+	 * `wpss_notifications` admin setting.
+	 *
+	 * Maps internal `TYPE_*` constants onto the admin checkbox keys and
+	 * returns the boolean. Unknown types default to enabled so newly-added
+	 * email types ship live until an admin toggles them off.
+	 *
+	 * @param string $type One of the EmailService::TYPE_* constants.
+	 * @return bool True when the type is enabled, false when disabled.
+	 */
 	private function is_email_type_enabled( string $type ): bool {
 		$notification_settings = get_option( 'wpss_notifications' );
 

@@ -987,11 +987,13 @@ class VendorsPage {
 				<?php
 				$fixed_count     = (int) ( $vendor->fixed_count ?? 0 );
 				$milestone_count = (int) ( $vendor->milestone_count ?? 0 );
-				printf(
-					/* translators: 1: fixed-price contract count, 2: milestone contract count */
-					esc_html__( '%1$dx Fixed · %2$dx Milestone', 'wp-sell-services' ),
-					$fixed_count,
-					$milestone_count
+				echo esc_html(
+					sprintf(
+						/* translators: 1: fixed-price contract count, 2: milestone contract count */
+						__( '%1$dx Fixed · %2$dx Milestone', 'wp-sell-services' ),
+						$fixed_count,
+						$milestone_count
+					)
 				);
 				?>
 			</td>

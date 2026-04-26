@@ -567,8 +567,11 @@ class ServiceArchiveView {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 		// Keyword search.
-		if ( isset( $_GET['search'] ) && '' !== trim( (string) $_GET['search'] ) ) {
-			$query->set( 's', sanitize_text_field( wp_unslash( $_GET['search'] ) ) );
+		if ( isset( $_GET['search'] ) ) {
+			$search_term = sanitize_text_field( wp_unslash( $_GET['search'] ) );
+			if ( '' !== $search_term ) {
+				$query->set( 's', $search_term );
+			}
 		}
 
 		// Vendor filter (from "View all services" link on vendor profile).

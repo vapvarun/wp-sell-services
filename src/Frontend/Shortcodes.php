@@ -670,13 +670,14 @@ class Shortcodes {
 				<div class="wpss-empty-state">
 					<div class="wpss-empty-state__icon">
 						<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
 						echo \WPSellServices\Services\Icon::render(
 							'shopping-bag',
 							array(
 								'width'  => '48',
 								'height' => '48',
 							)
-						); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped 
+						);
 						?>
 					</div>
 					<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>

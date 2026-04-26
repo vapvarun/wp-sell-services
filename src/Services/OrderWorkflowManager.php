@@ -720,6 +720,9 @@ class OrderWorkflowManager {
 	 * @param int          $order_id Order ID.
 	 * @param ServiceOrder $order    Order object.
 	 * @return bool True on success, false on failure (rolled back).
+	 * @throws \RuntimeException When DB writes fail (caught internally — the
+	 *                            transaction is rolled back and false is
+	 *                            returned to the caller).
 	 */
 	private function reverse_order_earnings( int $order_id, ServiceOrder $order ): bool {
 		global $wpdb;

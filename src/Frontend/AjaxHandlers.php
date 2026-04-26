@@ -692,8 +692,13 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
 		}
 
+		// We only inspect the structure of $_FILES['attachments']['name'] (count
+		// of non-empty entries) — the names themselves are sanitized inside the
+		// upload loop further down. WPCS still flags the structural read, so
+		// the suppression is intentional and scoped to this single check.
 		$has_attachments = ! empty( $_FILES['attachments']['name'] )
 			&& is_array( $_FILES['attachments']['name'] )
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Counting entries; values sanitized in the upload loop below.
 			&& count( array_filter( (array) $_FILES['attachments']['name'] ) ) > 0;
 
 		if ( ! $content && ! $has_attachments ) {
@@ -2264,8 +2269,13 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid vendor.', 'wp-sell-services' ) ) );
 		}
 
+		// We only inspect the structure of $_FILES['attachments']['name'] (count
+		// of non-empty entries) — the names themselves are sanitized inside the
+		// upload loop further down. WPCS still flags the structural read, so
+		// the suppression is intentional and scoped to this single check.
 		$has_attachments = ! empty( $_FILES['attachments']['name'] )
 			&& is_array( $_FILES['attachments']['name'] )
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Counting entries; values sanitized in the upload loop below.
 			&& count( array_filter( (array) $_FILES['attachments']['name'] ) ) > 0;
 
 		if ( ! $message && ! $has_attachments ) {
@@ -3614,6 +3624,18 @@ class AjaxHandlers {
 		);
 	}
 
+	/**
+	 * AJAX handler for the dashboard profile editor.
+	 *
+	 * Receives `multipart/form-data` from the profile section, applies updates
+	 * to the WordPress user (display name, avatar via custom upload) and to
+	 * the vendor profile model (tagline, bio, country, intro video, vacation
+	 * mode). Validation, sanitization, and capability checks happen here
+	 * because the form mixes core-user fields and vendor-specific fields in
+	 * one submission. Responds with `wp_send_json_*`.
+	 *
+	 * @return void
+	 */
 	public function update_vendor_profile(): void {
 		check_ajax_referer( 'wpss_update_profile', 'wpss_profile_nonce' );
 
@@ -3926,7 +3948,7 @@ class AjaxHandlers {
 		}
 
 		$order_id   = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
-		$amount     = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : 0.0;
+		$amount     = isset( $_POST['amount'] ) ? (float) sanitize_text_field( wp_unslash( $_POST['amount'] ) ) : 0.0;
 		$extra_days = isset( $_POST['extra_days'] ) ? absint( wp_unslash( $_POST['extra_days'] ) ) : 0;
 		$reason     = isset( $_POST['reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['reason'] ) ) : '';
 
@@ -3999,7 +4021,7 @@ class AjaxHandlers {
 		$title        = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
 		$description  = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
 		$deliverables = isset( $_POST['deliverables'] ) ? sanitize_textarea_field( wp_unslash( $_POST['deliverables'] ) ) : '';
-		$amount       = isset( $_POST['amount'] ) ? (float) wp_unslash( $_POST['amount'] ) : 0.0;
+		$amount       = isset( $_POST['amount'] ) ? (float) sanitize_text_field( wp_unslash( $_POST['amount'] ) ) : 0.0;
 		$days         = isset( $_POST['days'] ) ? absint( wp_unslash( $_POST['days'] ) ) : 0;
 
 		if ( ! $order_id ) {

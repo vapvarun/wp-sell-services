@@ -759,6 +759,18 @@ class UnifiedDashboard {
 		<?php
 	}
 
+	/**
+	 * Render the "configure your payout method" banner for active vendors who
+	 * have earnings but haven't set up a payout destination yet.
+	 *
+	 * Silently no-ops when the vendor is inactive, has already configured a
+	 * payout method, or has no earnings to withdraw — banner only shows when
+	 * the vendor would actually be blocked by the missing config.
+	 *
+	 * @param int  $user_id   The current dashboard user.
+	 * @param bool $is_active Whether the user is an active vendor.
+	 * @return void
+	 */
 	private function maybe_render_payout_banner( int $user_id, bool $is_active ): void {
 		if ( ! $is_active ) {
 			return;

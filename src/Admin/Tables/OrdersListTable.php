@@ -498,13 +498,14 @@ class OrdersListTable extends \WP_List_Table {
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
 				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG markup; attribute values are escaped inside the renderer.
 				echo \WPSellServices\Services\Icon::render(
 					'shopping-bag',
 					array(
 						'width'  => '48',
 						'height' => '48',
 					)
-				); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped 
+				);
 				?>
 			</div>
 			<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h2>
