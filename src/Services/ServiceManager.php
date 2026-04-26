@@ -485,6 +485,15 @@ class ServiceManager {
 			update_post_meta( $service_id, '_wpss_starting_price', $starting_price );
 		}
 
+		// Mirror to `_wpss_packages` post meta. The Wizard, ServiceMetabox,
+		// and CLI all write packages directly to post meta and the bulk of
+		// the codebase (single-service template, archive view, checkout,
+		// AJAX handlers, ServiceOrder model — 15+ callsites) reads from
+		// there. Without this mirror, services created via this manager
+		// path would render at $0.00 because the canonical read path stays
+		// empty even though the DB table has rows.
+		update_post_meta( $service_id, '_wpss_packages', array_values( $packages ) );
+
 		return $result;
 	}
 

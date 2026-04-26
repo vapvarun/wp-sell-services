@@ -47,6 +47,7 @@ class WithdrawalsPage {
 		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 		add_action( 'wp_ajax_wpss_process_withdrawal', array( $this, 'ajax_process_withdrawal' ) );
+		add_action( 'wp_ajax_wpss_bulk_process_withdrawals', array( $this, 'ajax_bulk_process_withdrawals' ) );
 	}
 
 	/**
@@ -348,10 +349,28 @@ class WithdrawalsPage {
 					</p>
 				</div>
 			<?php else : ?>
+			<!-- Bulk actions row (mirrors the Service Moderation pattern). -->
+			<div class="tablenav top">
+				<div class="alignleft actions bulkactions">
+					<?php wp_nonce_field( 'wpss_withdrawals_bulk', 'wpss_withdrawals_bulk_nonce' ); ?>
+					<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'wp-sell-services' ); ?></label>
+					<select name="bulk_action" id="bulk-action-selector-top" class="wpss-withdrawals-bulk-select">
+						<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
+						<option value="approve"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></option>
+						<option value="complete"><?php esc_html_e( 'Mark as completed', 'wp-sell-services' ); ?></option>
+						<option value="reject"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></option>
+					</select>
+					<button type="button" class="button wpss-withdrawals-bulk-apply"><?php esc_html_e( 'Apply', 'wp-sell-services' ); ?></button>
+				</div>
+			</div>
+
 			<!-- Withdrawals Table -->
 			<table class="wp-list-table widefat fixed striped wpss-withdrawals-table">
 				<thead>
 					<tr>
+						<td class="manage-column column-cb check-column">
+							<input type="checkbox" id="cb-select-all-1" aria-label="<?php esc_attr_e( 'Select all withdrawals', 'wp-sell-services' ); ?>">
+						</td>
 						<th scope="col" class="column-id"><?php esc_html_e( 'ID', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-amount"><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
@@ -368,6 +387,9 @@ class WithdrawalsPage {
 				</tbody>
 				<tfoot>
 					<tr>
+						<td class="manage-column column-cb check-column">
+							<input type="checkbox" id="cb-select-all-2" aria-label="<?php esc_attr_e( 'Select all withdrawals', 'wp-sell-services' ); ?>">
+						</td>
 						<th scope="col" class="column-id"><?php esc_html_e( 'ID', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-amount"><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
@@ -643,6 +665,59 @@ class WithdrawalsPage {
 				}
 			});
 
+			// Bulk actions: select-all + apply.
+			$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
+				$('input[name="withdrawal_ids[]"]').prop('checked', $(this).prop('checked'));
+			});
+
+			$('.wpss-withdrawals-bulk-apply').on('click', function(e) {
+				e.preventDefault();
+				var bulkAction = $('.wpss-withdrawals-bulk-select').val();
+				if ( ! bulkAction ) {
+					return;
+				}
+				var ids = $('input[name="withdrawal_ids[]"]:checked').map(function() { return this.value; }).get();
+				if ( ids.length === 0 ) {
+					wpssAdminNotice('<?php echo esc_js( __( 'Select at least one withdrawal first.', 'wp-sell-services' ) ); ?>', 'error');
+					return;
+				}
+				var labels = {
+					'approve':  '<?php echo esc_js( __( 'Approve', 'wp-sell-services' ) ); ?>',
+					'complete': '<?php echo esc_js( __( 'Mark as completed', 'wp-sell-services' ) ); ?>',
+					'reject':   '<?php echo esc_js( __( 'Reject', 'wp-sell-services' ) ); ?>'
+				};
+				/* translators: 1: action label, 2: count */
+				var confirmMsg = '<?php echo esc_js( __( '%1$s %2$d withdrawal(s)? This applies to every selected row.', 'wp-sell-services' ) ); ?>';
+				confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
+				if ( ! confirm( confirmMsg ) ) {
+					return;
+				}
+				var $btn = $(this);
+				$btn.prop('disabled', true);
+				$.ajax({
+					url: wpssWithdrawals.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'wpss_bulk_process_withdrawals',
+						bulk_action: bulkAction,
+						withdrawal_ids: ids,
+						nonce: $('input[name="wpss_withdrawals_bulk_nonce"]').val()
+					},
+					success: function(response) {
+						if ( response.success ) {
+							location.reload();
+						} else {
+							wpssAdminNotice( response.data && response.data.message ? response.data.message : wpssWithdrawals.i18n.error, 'error' );
+							$btn.prop('disabled', false);
+						}
+					},
+					error: function() {
+						wpssAdminNotice( wpssWithdrawals.i18n.error, 'error' );
+						$btn.prop('disabled', false);
+					}
+				});
+			});
+
 			// Submit form
 			$form.on('submit', function(e) {
 				e.preventDefault();
@@ -695,6 +770,10 @@ class WithdrawalsPage {
 		$status  = $withdrawal->status ?? 'pending';
 		?>
 		<tr data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>">
+			<th scope="row" class="check-column">
+				<label class="screen-reader-text" for="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>"><?php esc_html_e( 'Select withdrawal', 'wp-sell-services' ); ?></label>
+				<input type="checkbox" id="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>" name="withdrawal_ids[]" value="<?php echo esc_attr( $withdrawal->id ); ?>">
+			</th>
 			<td class="column-id">
 				<strong>#<?php echo esc_html( $withdrawal->id ); ?></strong>
 			</td>
@@ -838,5 +917,79 @@ class WithdrawalsPage {
 		} else {
 			wp_send_json_error( array( 'message' => $result['message'] ) );
 		}
+	}
+
+	/**
+	 * AJAX handler for bulk-processing withdrawals.
+	 *
+	 * Loops the selected IDs and routes each through the same
+	 * `EarningsService::process_withdrawal()` path the per-row Approve /
+	 * Reject / Mark-as-completed buttons use, so per-row side-effects
+	 * (wallet ledger, audit log, vendor notification, idempotency) stay
+	 * identical. Reports the per-id success/failure counts back to the UI.
+	 *
+	 * @return void
+	 */
+	public function ajax_bulk_process_withdrawals(): void {
+		check_ajax_referer( 'wpss_withdrawals_bulk', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ), 403 );
+		}
+
+		$bulk_action = sanitize_key( $_POST['bulk_action'] ?? '' );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- IDs cast to int below.
+		$ids_raw = isset( $_POST['withdrawal_ids'] ) ? (array) $_POST['withdrawal_ids'] : array();
+		$ids     = array_values( array_filter( array_map( 'absint', $ids_raw ) ) );
+
+		$status_map = array(
+			'approve'  => EarningsService::WITHDRAWAL_APPROVED,
+			'complete' => EarningsService::WITHDRAWAL_COMPLETED,
+			'reject'   => EarningsService::WITHDRAWAL_REJECTED,
+		);
+
+		if ( ! isset( $status_map[ $bulk_action ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid bulk action.', 'wp-sell-services' ) ) );
+		}
+
+		if ( empty( $ids ) ) {
+			wp_send_json_error( array( 'message' => __( 'No withdrawals selected.', 'wp-sell-services' ) ) );
+		}
+
+		$success = 0;
+		$failed  = array();
+		foreach ( $ids as $withdrawal_id ) {
+			$result = $this->earnings_service->process_withdrawal(
+				$withdrawal_id,
+				$status_map[ $bulk_action ],
+				''
+			);
+			if ( ! empty( $result['success'] ) ) {
+				++$success;
+			} else {
+				$failed[] = sprintf( '#%d (%s)', $withdrawal_id, (string) ( $result['message'] ?? __( 'failed', 'wp-sell-services' ) ) );
+			}
+		}
+
+		$message = sprintf(
+			/* translators: 1: number of successful withdrawals, 2: total selected */
+			_n(
+				'Processed %1$d of %2$d withdrawal.',
+				'Processed %1$d of %2$d withdrawals.',
+				count( $ids ),
+				'wp-sell-services'
+			),
+			$success,
+			count( $ids )
+		);
+		if ( ! empty( $failed ) ) {
+			$message .= ' ' . sprintf(
+				/* translators: %s: comma-separated list of failed IDs and reasons */
+				__( 'Failed: %s', 'wp-sell-services' ),
+				implode( ', ', $failed )
+			);
+		}
+
+		wp_send_json_success( array( 'message' => $message ) );
 	}
 }

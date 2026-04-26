@@ -447,10 +447,31 @@
 }
 
 /* Stats Row */
+.wpss-stats-heading {
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--wpss-admin-text-light, #646970);
+	margin: 8px 0 4px;
+}
+
 .wpss-stats-row {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
 	gap: 20px;
+}
+
+@media (max-width: 1024px) {
+	.wpss-stats-row {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 640px) {
+	.wpss-stats-row {
+		grid-template-columns: 1fr;
+	}
 }
 
 .wpss-stat-card {
@@ -461,6 +482,30 @@
 	display: flex;
 	align-items: center;
 	gap: 15px;
+}
+
+/* Action-item tile variant. Highlight when there's something to do (.is-active),
+   dim out when count is 0 (.is-empty) so the row keeps its shape but the admin
+   can confirm "nothing on my plate" at a glance. */
+.wpss-stat-card--action {
+	text-decoration: none;
+	color: inherit;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.wpss-stat-card--action:hover,
+.wpss-stat-card--action:focus {
+	border-color: var(--wpss-admin-primary, #2271b1);
+	background: #f6f7f7;
+	color: inherit;
+}
+
+.wpss-stat-card--action.is-active {
+	border-left: 3px solid var(--wpss-admin-primary, #2271b1);
+}
+
+.wpss-stat-card--action.is-empty {
+	opacity: 0.55;
 }
 
 .wpss-stat-icon {

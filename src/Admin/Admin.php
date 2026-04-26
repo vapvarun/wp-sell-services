@@ -975,6 +975,32 @@ class Admin {
 		$recent_orders = $wpdb->get_results(
 			"SELECT * FROM {$orders_table} ORDER BY created_at DESC LIMIT 5"
 		);
+
+		// Daily-cadence action items: things that need admin attention today.
+		// Each tile links to the page where the work happens, so the
+		// dashboard answers "what's on my plate?" before "how big is the
+		// marketplace?" (see plans/1.1.0-ADMIN-OVERWHELM-AUDIT.md finding #4).
+		$disputes_table     = $wpdb->prefix . 'wpss_disputes';
+		$withdrawals_table  = $wpdb->prefix . 'wpss_withdrawals';
+		$vendor_profiles    = $wpdb->prefix . 'wpss_vendor_profiles';
+		$vendor_settings    = get_option( 'wpss_vendor', array() );
+		$is_approval_mode   = isset( $vendor_settings['vendor_registration'] ) && 'approval' === $vendor_settings['vendor_registration'];
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$open_disputes = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$disputes_table} WHERE status IN ('open', 'in_review', 'evidence_pending')"
+		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$pending_withdrawals = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$withdrawals_table} WHERE status = 'pending'"
+		);
+		$pending_vendors = 0;
+		if ( $is_approval_mode ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$pending_vendors = (int) $wpdb->get_var(
+				"SELECT COUNT(*) FROM {$vendor_profiles} WHERE status = 'pending'"
+			);
+		}
 		?>
 		<div class="wrap wpss-dashboard-wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
@@ -984,7 +1010,48 @@ class Admin {
 			<hr class="wp-header-end">
 
 			<div class="wpss-dashboard-grid">
-				<!-- Stats Cards -->
+				<!-- Daily action items — counts >0 are highlighted, =0 dim out
+					 so admin can confirm "nothing on my plate today" at a glance. -->
+				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Action items', 'wp-sell-services' ); ?></h2>
+				<div class="wpss-stats-row wpss-stats-row--action">
+					<a class="wpss-stat-card wpss-stat-card--action <?php echo $open_disputes > 0 ? 'is-active' : 'is-empty'; ?>"
+						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ); ?>">
+						<i data-lucide="shield-alert" class="wpss-icon wpss-stat-icon" style="color: <?php echo $open_disputes > 0 ? '#d63638' : '#a7aaad'; ?>;" aria-hidden="true"></i>
+						<div class="wpss-stat-info">
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $open_disputes ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Open disputes', 'wp-sell-services' ); ?></span>
+						</div>
+					</a>
+					<a class="wpss-stat-card wpss-stat-card--action <?php echo $pending_withdrawals > 0 ? 'is-active' : 'is-empty'; ?>"
+						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=pending' ) ); ?>">
+						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon" style="color: <?php echo $pending_withdrawals > 0 ? '#dba617' : '#a7aaad'; ?>;" aria-hidden="true"></i>
+						<div class="wpss-stat-info">
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $pending_withdrawals ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Pending withdrawals', 'wp-sell-services' ); ?></span>
+						</div>
+					</a>
+					<?php if ( $is_approval_mode ) : ?>
+					<a class="wpss-stat-card wpss-stat-card--action <?php echo $pending_vendors > 0 ? 'is-active' : 'is-empty'; ?>"
+						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=pending' ) ); ?>">
+						<i data-lucide="user-check" class="wpss-icon wpss-stat-icon" style="color: <?php echo $pending_vendors > 0 ? '#2271b1' : '#a7aaad'; ?>;" aria-hidden="true"></i>
+						<div class="wpss-stat-info">
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $pending_vendors ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Pending vendor approvals', 'wp-sell-services' ); ?></span>
+						</div>
+					</a>
+					<?php endif; ?>
+					<a class="wpss-stat-card wpss-stat-card--action <?php echo ( $order_stats->pending ?? 0 ) > 0 ? 'is-active' : 'is-empty'; ?>"
+						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&status=pending_payment' ) ); ?>">
+						<i data-lucide="clock" class="wpss-icon wpss-stat-icon" style="color: <?php echo ( $order_stats->pending ?? 0 ) > 0 ? '#dba617' : '#a7aaad'; ?>;" aria-hidden="true"></i>
+						<div class="wpss-stat-info">
+							<span class="wpss-stat-number"><?php echo esc_html( (string) ( $order_stats->pending ?? 0 ) ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Pending orders', 'wp-sell-services' ); ?></span>
+						</div>
+					</a>
+				</div>
+
+				<!-- Marketplace health (rolling totals — read-only at-a-glance). -->
+				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Marketplace health', 'wp-sell-services' ); ?></h2>
 				<div class="wpss-stats-row">
 					<div class="wpss-stat-card">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>

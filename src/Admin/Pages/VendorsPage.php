@@ -74,6 +74,7 @@ class VendorsPage {
 		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 		add_action( 'wp_ajax_wpss_update_vendor_status', array( $this, 'ajax_update_vendor_status' ) );
+		add_action( 'wp_ajax_wpss_bulk_update_vendor_status', array( $this, 'ajax_bulk_update_vendor_status' ) );
 		add_action( 'wp_ajax_wpss_get_vendor_details', array( $this, 'ajax_get_vendor_details' ) );
 		add_action( 'wp_ajax_wpss_update_vendor_commission', array( $this, 'ajax_update_vendor_commission' ) );
 		add_action( 'wp_ajax_wpss_vendor_tab_content', array( $this, 'ajax_get_tab_content' ) );
@@ -467,10 +468,28 @@ class VendorsPage {
 					</p>
 				</div>
 			<?php else : ?>
+			<!-- Bulk actions row (mirrors the Service Moderation pattern). -->
+			<div class="tablenav top">
+				<div class="alignleft actions bulkactions">
+					<?php wp_nonce_field( 'wpss_vendors_bulk', 'wpss_vendors_bulk_nonce' ); ?>
+					<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'wp-sell-services' ); ?></label>
+					<select name="bulk_action" id="bulk-action-selector-top" class="wpss-vendors-bulk-select">
+						<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
+						<option value="approve"><?php esc_html_e( 'Approve (set Active)', 'wp-sell-services' ); ?></option>
+						<option value="suspend"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></option>
+						<option value="reactivate"><?php esc_html_e( 'Reactivate', 'wp-sell-services' ); ?></option>
+					</select>
+					<button type="button" class="button wpss-vendors-bulk-apply"><?php esc_html_e( 'Apply', 'wp-sell-services' ); ?></button>
+				</div>
+			</div>
+
 			<!-- Vendors Table -->
 			<table class="wp-list-table widefat fixed striped wpss-vendors-table">
 				<thead>
 					<tr>
+						<td class="manage-column column-cb check-column">
+							<input type="checkbox" id="cb-select-all-1" aria-label="<?php esc_attr_e( 'Select all vendors', 'wp-sell-services' ); ?>">
+						</td>
 						<th scope="col" class="column-vendor">
 							<?php $this->sortable_column_header( 'display_name', __( 'Vendor', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
@@ -507,6 +526,9 @@ class VendorsPage {
 				</tbody>
 				<tfoot>
 					<tr>
+						<td class="manage-column column-cb check-column">
+							<input type="checkbox" id="cb-select-all-2" aria-label="<?php esc_attr_e( 'Select all vendors', 'wp-sell-services' ); ?>">
+						</td>
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-services"><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-orders"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></th>
@@ -756,6 +778,59 @@ class VendorsPage {
 			var $modal = $('#wpss-vendor-modal');
 			var $modalBody = $('#wpss-vendor-modal-body');
 
+			// Bulk actions: select-all + apply.
+			$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
+				$('input[name="vendor_ids[]"]').prop('checked', $(this).prop('checked'));
+			});
+
+			$('.wpss-vendors-bulk-apply').on('click', function(e) {
+				e.preventDefault();
+				var bulkAction = $('.wpss-vendors-bulk-select').val();
+				if ( ! bulkAction ) {
+					return;
+				}
+				var ids = $('input[name="vendor_ids[]"]:checked').map(function() { return this.value; }).get();
+				if ( ids.length === 0 ) {
+					wpssAdminNotice('<?php echo esc_js( __( 'Select at least one vendor first.', 'wp-sell-services' ) ); ?>', 'error');
+					return;
+				}
+				var labels = {
+					'approve':    '<?php echo esc_js( __( 'Approve', 'wp-sell-services' ) ); ?>',
+					'suspend':    '<?php echo esc_js( __( 'Suspend', 'wp-sell-services' ) ); ?>',
+					'reactivate': '<?php echo esc_js( __( 'Reactivate', 'wp-sell-services' ) ); ?>'
+				};
+				/* translators: 1: action label, 2: count */
+				var confirmMsg = '<?php echo esc_js( __( '%1$s %2$d vendor(s)? This applies to every selected row.', 'wp-sell-services' ) ); ?>';
+				confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
+				if ( ! confirm( confirmMsg ) ) {
+					return;
+				}
+				var $btn = $(this);
+				$btn.prop('disabled', true);
+				$.ajax({
+					url: wpssVendors.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'wpss_bulk_update_vendor_status',
+						bulk_action: bulkAction,
+						vendor_ids: ids,
+						nonce: $('input[name="wpss_vendors_bulk_nonce"]').val()
+					},
+					success: function(response) {
+						if ( response.success ) {
+							location.reload();
+						} else {
+							wpssAdminNotice( response.data && response.data.message ? response.data.message : i18n.error, 'error' );
+							$btn.prop('disabled', false);
+						}
+					},
+					error: function() {
+						wpssAdminNotice( i18n.error, 'error' );
+						$btn.prop('disabled', false);
+					}
+				});
+			});
+
 			// View vendor details
 			$('.wpss-view-vendor').on('click', function(e) {
 				e.preventDefault();
@@ -957,6 +1032,10 @@ class VendorsPage {
 		$status  = $vendor->status ?? 'active';
 		?>
 		<tr data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>">
+			<th scope="row" class="check-column">
+				<label class="screen-reader-text" for="wpss-cb-vendor-<?php echo esc_attr( $vendor->user_id ); ?>"><?php esc_html_e( 'Select vendor', 'wp-sell-services' ); ?></label>
+				<input type="checkbox" id="wpss-cb-vendor-<?php echo esc_attr( $vendor->user_id ); ?>" name="vendor_ids[]" value="<?php echo esc_attr( $vendor->user_id ); ?>">
+			</th>
 			<td class="column-vendor">
 				<div class="wpss-vendor-info">
 					<img src="<?php echo esc_url( $avatar ); ?>" alt="" class="wpss-vendor-avatar">
@@ -1683,6 +1762,96 @@ class VendorsPage {
 		do_action( 'wpss_vendor_status_updated', $vendor_id, $status );
 
 		wp_send_json_success( array( 'message' => __( 'Vendor status updated successfully.', 'wp-sell-services' ) ) );
+	}
+
+	/**
+	 * AJAX handler for bulk vendor status updates.
+	 *
+	 * Admin actions: `approve` (sets pending → active and grants vendor
+	 * access), `suspend` (active → suspended and revokes access),
+	 * `reactivate` (suspended → active and re-grants access). Routes each
+	 * id through the same DB write + grant/revoke + `wpss_vendor_status_updated`
+	 * action used by the per-row handler above so side-effects stay
+	 * identical. Reports per-id success/failure counts back.
+	 *
+	 * @return void
+	 */
+	public function ajax_bulk_update_vendor_status(): void {
+		check_ajax_referer( 'wpss_vendors_bulk', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ), 403 );
+		}
+
+		$bulk_action = sanitize_key( $_POST['bulk_action'] ?? '' );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- IDs cast to int below.
+		$ids_raw = isset( $_POST['vendor_ids'] ) ? (array) $_POST['vendor_ids'] : array();
+		$ids     = array_values( array_filter( array_map( 'absint', $ids_raw ) ) );
+
+		$status_map = array(
+			'approve'    => 'active',
+			'reactivate' => 'active',
+			'suspend'    => 'suspended',
+		);
+
+		if ( ! isset( $status_map[ $bulk_action ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid bulk action.', 'wp-sell-services' ) ) );
+		}
+
+		if ( empty( $ids ) ) {
+			wp_send_json_error( array( 'message' => __( 'No vendors selected.', 'wp-sell-services' ) ) );
+		}
+
+		$status  = $status_map[ $bulk_action ];
+		$success = 0;
+		$failed  = array();
+
+		global $wpdb;
+		foreach ( $ids as $vendor_id ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Vendor profile mutations bypass the object cache by design; mirrors ajax_update_vendor_status().
+			$result = $wpdb->update(
+				$wpdb->prefix . 'wpss_vendor_profiles',
+				array(
+					'status'     => $status,
+					'updated_at' => current_time( 'mysql', true ),
+				),
+				array( 'user_id' => $vendor_id ),
+				array( '%s', '%s' ),
+				array( '%d' )
+			);
+			if ( false === $result ) {
+				$failed[] = sprintf( '#%d', $vendor_id );
+				continue;
+			}
+			if ( 'active' === $status ) {
+				$this->vendor_service->grant_vendor_access( $vendor_id );
+			} elseif ( 'suspended' === $status ) {
+				$this->vendor_service->revoke_vendor_access( $vendor_id );
+			}
+			do_action( 'wpss_vendor_status_updated', $vendor_id, $status );
+			++$success;
+		}
+
+		$message = sprintf(
+			/* translators: 1: number of vendors successfully updated, 2: total selected */
+			_n(
+				'Updated %1$d of %2$d vendor.',
+				'Updated %1$d of %2$d vendors.',
+				count( $ids ),
+				'wp-sell-services'
+			),
+			$success,
+			count( $ids )
+		);
+		if ( ! empty( $failed ) ) {
+			$message .= ' ' . sprintf(
+				/* translators: %s: comma-separated list of failed vendor IDs */
+				__( 'Failed: %s', 'wp-sell-services' ),
+				implode( ', ', $failed )
+			);
+		}
+
+		wp_send_json_success( array( 'message' => $message ) );
 	}
 
 	/**
