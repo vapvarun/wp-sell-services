@@ -692,8 +692,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
 		}
 
-		if ( ! $content ) {
-			wp_send_json_error( array( 'message' => __( 'Please enter a message.', 'wp-sell-services' ) ) );
+		$has_attachments = ! empty( $_FILES['attachments']['name'] )
+			&& is_array( $_FILES['attachments']['name'] )
+			&& count( array_filter( (array) $_FILES['attachments']['name'] ) ) > 0;
+
+		if ( ! $content && ! $has_attachments ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a message or attach a file.', 'wp-sell-services' ) ) );
 		}
 
 		// Get order and verify access.
@@ -2260,8 +2264,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid vendor.', 'wp-sell-services' ) ) );
 		}
 
-		if ( ! $message ) {
-			wp_send_json_error( array( 'message' => __( 'Please enter a message.', 'wp-sell-services' ) ) );
+		$has_attachments = ! empty( $_FILES['attachments']['name'] )
+			&& is_array( $_FILES['attachments']['name'] )
+			&& count( array_filter( (array) $_FILES['attachments']['name'] ) ) > 0;
+
+		if ( ! $message && ! $has_attachments ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a message or attach a file.', 'wp-sell-services' ) ) );
 		}
 
 		// Prevent contacting yourself.
