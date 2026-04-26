@@ -211,7 +211,7 @@
 .wpss-dashboard__header {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 12px;
 	padding: 20px 24px;
 	background: var(--wpss-white, #fff);
 	border-bottom: 1px solid var(--wpss-gray-200);
@@ -219,9 +219,22 @@
 
 .wpss-dashboard__title {
 	margin: 0;
+	margin-right: auto;
 	font-size: 20px;
 	font-weight: 600;
 	color: var(--wpss-gray-900);
+}
+
+@media (max-width: 640px) {
+	.wpss-dashboard__header {
+		flex-wrap: wrap;
+		padding: 16px;
+	}
+
+	.wpss-dashboard__title {
+		flex-basis: 100%;
+		margin-right: 0;
+	}
 }
 
 .wpss-dashboard__body {
