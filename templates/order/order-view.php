@@ -1305,19 +1305,19 @@ do_action( 'wpss_before_order_view', $order );
 							switch ( $ms_status ) {
 								case 'pending_payment':
 									if ( ! empty( $m['is_locked'] ) ) {
-										$ms_state_label  = $is_buyer
+										$ms_state_label  = $is_customer
 											? __( 'Locked — finish the earlier phase first', 'wp-sell-services' )
 											: __( 'Locked behind earlier phase', 'wp-sell-services' );
 										$ms_state_class .= ' wpss-ms-state--locked';
 									} else {
-										$ms_state_label = $is_buyer ? __( 'Ready to pay', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
+										$ms_state_label = $is_customer ? __( 'Ready to pay', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
 									}
 									break;
 								case 'in_progress':
 									$ms_state_label = $is_vendor ? __( 'Paid · ready for delivery', 'wp-sell-services' ) : __( 'Paid · seller working', 'wp-sell-services' );
 									break;
 								case 'pending_approval':
-									$ms_state_label = $is_buyer ? __( 'Delivered · awaiting your approval', 'wp-sell-services' ) : __( 'Submitted · awaiting buyer', 'wp-sell-services' );
+									$ms_state_label = $is_customer ? __( 'Delivered · awaiting your approval', 'wp-sell-services' ) : __( 'Submitted · awaiting buyer', 'wp-sell-services' );
 									break;
 								case 'completed':
 									$ms_state_label = __( 'Approved · completed', 'wp-sell-services' );
@@ -1353,7 +1353,7 @@ do_action( 'wpss_before_order_view', $order );
 								<?php if ( '' !== $m['description'] ) : ?>
 									<p class="wpss-milestone-item__description"><?php echo esc_html( $m['description'] ); ?></p>
 								<?php endif; ?>
-								<?php if ( '' !== $m['deliverables'] && $is_buyer && 'pending_payment' === $ms_status ) : ?>
+								<?php if ( '' !== $m['deliverables'] && $is_customer && 'pending_payment' === $ms_status ) : ?>
 									<p class="wpss-milestone-item__deliverables">
 										<strong><?php esc_html_e( 'Deliverables:', 'wp-sell-services' ); ?></strong>
 										<?php echo esc_html( $m['deliverables'] ); ?>
@@ -1363,7 +1363,7 @@ do_action( 'wpss_before_order_view', $order );
 									<span class="wpss-milestone-item__state"><?php echo esc_html( $ms_state_label ); ?></span>
 								</div>
 								<div class="wpss-milestone-item__actions">
-									<?php if ( $is_buyer && 'pending_payment' === $ms_status ) : ?>
+									<?php if ( $is_customer && 'pending_payment' === $ms_status ) : ?>
 										<?php if ( ! empty( $m['is_locked'] ) ) : ?>
 											<?php
 											// Phase is locked until earlier phases finish. Show a
@@ -1404,7 +1404,7 @@ do_action( 'wpss_before_order_view', $order );
 											<?php echo esc_html( 'pending_approval' === $ms_status ? __( 'View / resubmit', 'wp-sell-services' ) : __( 'Submit delivery', 'wp-sell-services' ) ); ?>
 										</a>
 									<?php endif; ?>
-									<?php if ( $is_buyer && 'pending_approval' === $ms_status ) : ?>
+									<?php if ( $is_customer && 'pending_approval' === $ms_status ) : ?>
 										<a href="<?php echo esc_url( $ms_sub_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
 											<?php esc_html_e( 'Review & approve', 'wp-sell-services' ); ?>
 										</a>
@@ -1516,7 +1516,7 @@ do_action( 'wpss_before_order_view', $order );
 		</script>
 	<?php endif; ?>
 
-	<?php if ( ! empty( $milestones ) && $is_buyer ) : ?>
+	<?php if ( ! empty( $milestones ) && $is_customer ) : ?>
 		<script>
 		(function () {
 			var ajaxurl = window.ajaxurl || '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
