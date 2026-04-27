@@ -272,16 +272,125 @@ module.exports = function ( grunt ) {
 		} );
 	} );
 
-	// Release: Full build → POT regen → RTL CSS → minify → copy → zip.
-	// Order matters: rtl produces `*-rtl.css`, min then catches both
-	// LTR and RTL on the same pass.
+	// composer:nodev — strip dev packages from working-tree vendor/ and
+	// regenerate the autoloader so it only references runtime classes.
+	//
+	// CRITICAL: copy:dist excludes vendor/myclabs, vendor/phpunit, etc. via
+	// the `!vendor/<dev>/**` patterns, but the *autoloader* (autoload_real.php
+	// + autoload_static.php + autoload_files.php) is generated against
+	// whatever packages are present at `composer install` time. If we copy
+	// the dev autoloader into dist, it eagerly `require`s `myclabs/deep-copy/
+	// src/DeepCopy/deep_copy.php` on plugin activation — files that were
+	// excluded from the ZIP — producing a fatal on activation.
+	//
+	// We run --no-dev BEFORE copy:dist so the autoloader the dist captures
+	// is already prod-only. composer:dev restores the dev tree afterwards
+	// for local development.
+	grunt.registerTask( 'composer:nodev', 'Strip dev deps + regenerate prod autoloader', function () {
+		const done = this.async();
+		const { spawn } = require( 'child_process' );
+		const child = spawn( 'composer', [
+			'install',
+			'--no-dev',
+			'--optimize-autoloader',
+			'--no-interaction',
+			'--no-scripts',
+			'--no-progress',
+		], { stdio: 'inherit' } );
+		child.on( 'error', ( err ) => grunt.fail.warn( 'composer:nodev failed: ' + err.message ) );
+		child.on( 'close', ( code ) => {
+			if ( code !== 0 ) {
+				grunt.fail.warn( 'composer:nodev exited with code ' + code );
+			}
+			done();
+		} );
+	} );
+
+	grunt.registerTask( 'composer:dev', 'Restore dev deps for local development', function () {
+		const done = this.async();
+		const { spawn } = require( 'child_process' );
+		const child = spawn( 'composer', [
+			'install',
+			'--optimize-autoloader',
+			'--no-interaction',
+			'--no-progress',
+		], { stdio: 'inherit' } );
+		child.on( 'error', ( err ) => grunt.log.warn( 'composer:dev restore failed: ' + err.message ) );
+		child.on( 'close', ( code ) => {
+			if ( code !== 0 ) {
+				// Don't fail the build — release artefact is already built.
+				// Log loudly so the dev knows to run `composer install`
+				// manually before resuming local work.
+				grunt.log.warn( 'composer:dev restore exited with code ' + code + ' — run `composer install` to restore dev deps.' );
+			}
+			done();
+		} );
+	} );
+
+	// verify:dist-autoloader — gate that fails the release if any dev-only
+	// package paths leaked into dist/<plugin>/vendor/composer/. If this trips,
+	// composer:nodev did not run (or did not complete) before copy:dist —
+	// ship-blocker per Basecamp #9828326478.
+	grunt.registerTask( 'verify:dist-autoloader', 'Assert no dev refs in dist autoloader', function () {
+		const fs = require( 'fs' );
+		const path = require( 'path' );
+		const distAutoloader = path.join(
+			'dist', pkg.name, 'vendor', 'composer', 'autoload_static.php'
+		);
+		if ( ! fs.existsSync( distAutoloader ) ) {
+			grunt.fail.warn( 'verify:dist-autoloader — missing ' + distAutoloader );
+			return;
+		}
+		const contents = fs.readFileSync( distAutoloader, 'utf8' );
+		const banned = [
+			'/myclabs/',
+			'/phpunit/',
+			'/phpstan/',
+			'/sebastian/',
+			'/squizlabs/',
+			'/wp-coding-standards/',
+			'/phpcompatibility/',
+			'/phpcsstandards/',
+			'/dealerdirect/',
+			'/yoast/phpunit-polyfills',
+			'/nikic/',
+			'/phar-io/',
+			'/theseer/',
+			'/szepeviktor/',
+			'/php-stubs/',
+		];
+		const hits = banned.filter( ( needle ) => contents.includes( needle ) );
+		if ( hits.length ) {
+			grunt.fail.warn(
+				'verify:dist-autoloader — dist autoloader still references dev packages:\n  ' +
+				hits.join( '\n  ' ) +
+				'\n\nThis would cause a fatal error on plugin activation.\n' +
+				'Ensure composer:nodev ran before copy:dist.'
+			);
+			return;
+		}
+		grunt.log.ok( 'dist autoloader contains no dev-package references.' );
+	} );
+
+	// Release: Full build → POT regen → RTL CSS → minify → strip dev deps
+	// → copy → verify autoloader → zip → restore dev deps.
+	//
+	// Order matters:
+	// - composer:nodev MUST run before clean:dist/copy:dist so the prod
+	//   autoloader is what gets copied (see Basecamp #9828326478).
+	// - verify:dist-autoloader runs after copy:dist but before compress:dist
+	//   so a regression fails the build BEFORE we publish a broken ZIP.
+	// - composer:dev runs last to leave the working tree in a usable state.
 	grunt.registerTask( 'release', [
 		'i18n',
 		'rtl',
 		'min',
+		'composer:nodev',
 		'clean:dist',
 		'copy:dist',
+		'verify:dist-autoloader',
 		'compress:dist',
+		'composer:dev',
 	] );
 
 	// Dist: Quick dist without i18n/RTL (for dev).

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-04-26T06:04:43+00:00\n"
+"POT-Creation-Date: 2026-04-27T08:40:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -20,7 +20,7 @@ msgstr ""
 #: src/Admin/Pages/SetupWizardPage.php:360
 #: src/Blocks/BlocksManager.php:133
 #: src/Blocks/BlocksManager.php:215
-#: wp-sell-services.php:302
+#: wp-sell-services.php:364
 msgid "WP Sell Services"
 msgstr ""
 
@@ -460,7 +460,7 @@ msgstr ""
 #: src/Admin/Admin.php:1108
 #: src/Admin/Pages/VendorsPage.php:1307
 #: src/Frontend/Tour.php:436
-#: wp-sell-services.php:337
+#: wp-sell-services.php:399
 msgid "Settings"
 msgstr ""
 
@@ -17189,20 +17189,38 @@ msgstr ""
 msgid "WP Sell Services requires WordPress version %1$s or higher. Your current WordPress version is %2$s. Please upgrade WordPress to use this plugin."
 msgstr ""
 
-#: wp-sell-services.php:303
+#: wp-sell-services.php:178
+#: wp-sell-services.php:196
+msgid "WP Sell Services failed to load."
+msgstr ""
+
+#: wp-sell-services.php:179
+msgid "The plugin's Composer autoloader is missing. Re-download the plugin ZIP from the official release page or run `composer install` from the plugin directory if installing from source."
+msgstr ""
+
+#: wp-sell-services.php:197
+msgid "The plugin's Composer autoloader references files that are not present in this build. This usually means a release ZIP was packaged with development dependencies still referenced in the autoloader. Re-download the latest plugin ZIP from the official release page."
+msgstr ""
+
+#: wp-sell-services.php:365
 msgid "The plugin now works standalone with built-in checkout! WooCommerce integration has moved to Pro. Your marketplace continues working with the built-in checkout system."
 msgstr ""
 
-#: wp-sell-services.php:342
+#: wp-sell-services.php:404
 msgid "Go Pro"
 msgstr ""
 
-#: wp-sell-services.php:360
+#: wp-sell-services.php:422
 msgid "WP Sell Services requires PHP 8.1+ and WordPress 6.4+."
 msgstr ""
 
-#: wp-sell-services.php:361
+#: wp-sell-services.php:423
+#: wp-sell-services.php:435
 msgid "Plugin Activation Error"
+msgstr ""
+
+#: wp-sell-services.php:434
+msgid "WP Sell Services could not be activated: its Composer autoloader is missing or corrupt. Please re-download the plugin ZIP from the official release page."
 msgstr ""
 
 #: assets/js/blocks.js:44

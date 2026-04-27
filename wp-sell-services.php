@@ -167,7 +167,49 @@ function wpss_wp_version_notice(): void {
 }
 
 /**
+ * Display admin notice when vendor/autoload.php is missing entirely.
+ *
+ * @return void
+ */
+function wpss_vendor_missing_notice(): void {
+	?>
+	<div class="notice notice-error">
+		<p>
+			<strong><?php esc_html_e( 'WP Sell Services failed to load.', 'wp-sell-services' ); ?></strong>
+			<?php esc_html_e( 'The plugin\'s Composer autoloader is missing. Re-download the plugin ZIP from the official release page or run `composer install` from the plugin directory if installing from source.', 'wp-sell-services' ); ?>
+		</p>
+	</div>
+	<?php
+}
+
+/**
+ * Display admin notice when vendor/autoload.php references files that
+ * don't exist (corrupt/dev autoloader shipped without the dev packages —
+ * Basecamp #9828326478).
+ *
+ * @return void
+ */
+function wpss_vendor_corrupt_notice(): void {
+	?>
+	<div class="notice notice-error">
+		<p>
+			<strong><?php esc_html_e( 'WP Sell Services failed to load.', 'wp-sell-services' ); ?></strong>
+			<?php esc_html_e( 'The plugin\'s Composer autoloader references files that are not present in this build. This usually means a release ZIP was packaged with development dependencies still referenced in the autoloader. Re-download the latest plugin ZIP from the official release page.', 'wp-sell-services' ); ?>
+		</p>
+	</div>
+	<?php
+}
+
+/**
  * Load Composer autoloader safely.
+ *
+ * Belt-and-braces guard: if the bundled autoloader is missing OR if it
+ * references files that aren't on disk (e.g. a release ZIP that shipped
+ * the dev autoloader without the dev vendor packages — see Basecamp
+ * #9828326478), we surface an admin notice instead of fataling out on
+ * `register_activation_hook`. The release pipeline is the real fix
+ * (Gruntfile composer:nodev + verify:dist-autoloader); this guard just
+ * keeps a corrupt install from white-screening the site.
  *
  * @return bool Whether the autoloader was loaded successfully.
  */
@@ -181,8 +223,28 @@ function wpss_load_composer_autoloader(): bool {
 	$autoloader = WPSS_PLUGIN_DIR . 'vendor/autoload.php';
 
 	if ( ! file_exists( $autoloader ) ) {
+		add_action( 'admin_notices', __NAMESPACE__ . '\\wpss_vendor_missing_notice' );
 		$loaded = false;
 		return false;
+	}
+
+	// Pre-flight check: the generated autoloader eagerly `require`s every
+	// file in $files (PHP polyfills, helpers, etc.). If the ZIP was built
+	// without `composer install --no-dev` regenerating the autoloader,
+	// $files will reference dev-only paths that don't exist — fatal on
+	// the first `require`. Validate them before triggering the autoloader.
+	$autoload_files = WPSS_PLUGIN_DIR . 'vendor/composer/autoload_files.php';
+	if ( file_exists( $autoload_files ) ) {
+		$files = include $autoload_files;
+		if ( is_array( $files ) ) {
+			foreach ( $files as $file ) {
+				if ( ! is_string( $file ) || ! file_exists( $file ) ) {
+					add_action( 'admin_notices', __NAMESPACE__ . '\\wpss_vendor_corrupt_notice' );
+					$loaded = false;
+					return false;
+				}
+			}
+		}
 	}
 
 	require_once $autoloader;
@@ -363,7 +425,17 @@ function wpss_activate(): void {
 		);
 	}
 
-	wpss_load_composer_autoloader();
+	// If the autoloader is missing or corrupt, abort activation cleanly
+	// rather than continuing on and fataling inside Activator::activate()
+	// when it tries to resolve a namespaced class. See Basecamp #9828326478.
+	if ( ! wpss_load_composer_autoloader() ) {
+		deactivate_plugins( plugin_basename( __FILE__ ) );
+		wp_die(
+			esc_html__( 'WP Sell Services could not be activated: its Composer autoloader is missing or corrupt. Please re-download the plugin ZIP from the official release page.', 'wp-sell-services' ),
+			esc_html__( 'Plugin Activation Error', 'wp-sell-services' ),
+			array( 'back_link' => true )
+		);
+	}
 
 	// Run activator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Activator.php';
