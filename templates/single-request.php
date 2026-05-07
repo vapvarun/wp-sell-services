@@ -331,7 +331,7 @@ do_action( 'wpss_before_single_request', $request_id );
 																	printf(
 																		/* translators: %d days */
 																		esc_html( _n( '%d day', '%d days', $row_days, 'wp-sell-services' ) ),
-																		$row_days
+																		(int) $row_days
 																	);
 																	?>
 																</span>
