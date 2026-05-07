@@ -118,7 +118,7 @@ do_action( 'wpss_notifications_after', $user_id );
 	align-items: flex-start;
 	gap: 15px;
 	padding: 15px;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid #e5e5e5;
 	border-radius: 8px;
 	transition: background 0.2s;

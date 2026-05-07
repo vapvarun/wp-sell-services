@@ -131,7 +131,7 @@ do_action( 'wpss_vendor_services_after', $user_id );
 	border: 1px solid #e5e5e5;
 	border-radius: 8px;
 	overflow: hidden;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 }
 
 .wpss-service-image {
@@ -162,12 +162,12 @@ do_action( 'wpss_vendor_services_after', $user_id );
 	border-radius: 4px;
 	font-size: 11px;
 	font-weight: 500;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 }
 
-.wpss-status-publish { background: #00b894; color: #fff; }
+.wpss-status-publish { background: #00b894; color: var(--wpss-white, #fff); }
 .wpss-status-pending { background: #fdcb6e; color: #333; }
-.wpss-status-draft { background: #636e72; color: #fff; }
+.wpss-status-draft { background: #636e72; color: var(--wpss-white, #fff); }
 
 .wpss-service-info {
 	padding: 15px;
