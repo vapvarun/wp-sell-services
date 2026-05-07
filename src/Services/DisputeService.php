@@ -576,6 +576,7 @@ class DisputeService {
 		$order_by_col     = in_array( $args['order_by'], $allowed_order_by, true ) ? $args['order_by'] : 'created_at';
 		$order_dir        = in_array( strtoupper( $args['order'] ), array( 'ASC', 'DESC' ), true ) ? strtoupper( $args['order'] ) : 'DESC';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_clause uses %s/%d placeholders; $order_by_col + $order_dir validated against allowlist above (lines 575-577).
 		$sql = $wpdb->prepare(
 			"SELECT d.*, o.customer_id, o.vendor_id, o.service_id
 			FROM {$this->table} d
@@ -586,6 +587,7 @@ class DisputeService {
 			array_merge( $values, array( $args['limit'], $args['offset'] ) )
 		);
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
 		return $wpdb->get_results( $sql );
 	}
 
@@ -627,6 +629,7 @@ class DisputeService {
 		$values[] = $args['limit'];
 		$values[] = $args['offset'];
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_clause uses %s/%d placeholders; $order_by_col + $order_dir validated against allowlist above (lines 575-577).
 		$sql = $wpdb->prepare(
 			"SELECT d.*, o.customer_id, o.vendor_id, o.service_id
 			FROM {$this->table} d
@@ -637,6 +640,7 @@ class DisputeService {
 			$values
 		);
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
 		return $wpdb->get_results( $sql );
 	}
 

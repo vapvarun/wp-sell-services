@@ -21,6 +21,7 @@ global $wpdb;
 $reviews_table = $wpdb->prefix . 'wpss_reviews';
 
 // Get rating breakdown from actual DB data.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $reviews_table from $wpdb->prefix; service_id user input via %d.
 $breakdown = $wpdb->get_results(
 	$wpdb->prepare(
 		"SELECT rating, COUNT(*) as count

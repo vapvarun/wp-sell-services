@@ -162,12 +162,14 @@ class WithdrawalsPage {
 		$where_clause = implode( ' AND ', $where );
 
 		// Count total.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_clause is built from hardcoded fragments with %s/%d placeholders only; user values pass through prepare() below.
 		$count_query = "SELECT COUNT(*) FROM {$table} w WHERE {$where_clause}";
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $count_query has hardcoded fragments only.
 		$total = $values
 			? (int) $wpdb->get_var( $wpdb->prepare( $count_query, ...$values ) )
-			: (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			: (int) $wpdb->get_var( $count_query );
+		// phpcs:enable
 
 		// Get withdrawals.
 		$query_values   = $values;

@@ -1566,6 +1566,7 @@ function wpss_get_user_orders( int $user_id, array $args = array() ): array {
 	$params[] = $args['limit'];
 	$params[] = $args['offset'];
 
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
 	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
 }
 
@@ -1600,6 +1601,7 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
 	$params[] = $args['limit'];
 	$params[] = $args['offset'];
 
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
 	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
 }
 
@@ -1635,6 +1637,7 @@ function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array 
 	$params[] = $args['limit'];
 	$params[] = $args['offset'];
 
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
 	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
 }
 

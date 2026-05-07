@@ -220,6 +220,7 @@ class VendorsPage {
 		$where_clause = implode( ' AND ', $where );
 
 		// Count total.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_clause is built from hardcoded fragments with %s placeholders only; user values pass through prepare() below.
 		$count_query = "
 			SELECT COUNT(DISTINCT vp.user_id)
 			FROM {$wpdb->prefix}wpss_vendor_profiles vp
@@ -227,9 +228,11 @@ class VendorsPage {
 			WHERE {$where_clause}
 		";
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $count_query has hardcoded fragments only.
 		$total = $values
 			? (int) $wpdb->get_var( $wpdb->prepare( $count_query, ...$values ) )
 			: (int) $wpdb->get_var( $count_query );
+		// phpcs:enable
 
 		// Get vendors with stats.
 		$orderby_map = array(
