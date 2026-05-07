@@ -1,0 +1,216 @@
+{
+  "$schema": "https://wpmediaverse.com/schemas/wp-plugin-manifest-v2.json",
+  "plugin": {
+    "slug": "wp-sell-services",
+    "name": "WP Sell Services",
+    "version": "1.1.0",
+    "namespace": "WPSellServices",
+    "main_file": "wp-sell-services.php",
+    "text_domain": "wp-sell-services",
+    "extends": null,
+    "extension_hook_consumed": null,
+    "extension_hook_fired": "wpss_loaded"
+  },
+  "rest": {
+    "namespace": "wpss/v1",
+    "endpoint_count": 138,
+    "controllers": [
+      { "class": "API", "file": "src/API/API.php", "purpose": "Generic endpoints — categories, tags, settings, /me, /dashboard, /search, /batch" },
+      { "class": "AuditLogController", "file": "src/API/AuditLogController.php", "purpose": "Audit log access" },
+      { "class": "AuthController", "file": "src/API/AuthController.php", "purpose": "Login, register, logout, devices" },
+      { "class": "BuyerRequestsController", "file": "src/API/BuyerRequestsController.php", "purpose": "CRUD buyer requests, proposals" },
+      { "class": "CartController", "file": "src/API/CartController.php", "purpose": "Cart add/get/remove/checkout" },
+      { "class": "ConversationsController", "file": "src/API/ConversationsController.php", "purpose": "Order messages + attachments" },
+      { "class": "DisputesController", "file": "src/API/DisputesController.php", "purpose": "Dispute open/respond/resolve" },
+      { "class": "EarningsController", "file": "src/API/EarningsController.php", "purpose": "Vendor earnings summary, history, withdrawals" },
+      { "class": "ExtensionRequestsController", "file": "src/API/ExtensionRequestsController.php", "purpose": "Extension order requests (catalog orders)" },
+      { "class": "FavoritesController", "file": "src/API/FavoritesController.php", "purpose": "Favorites add/remove/list" },
+      { "class": "MediaController", "file": "src/API/MediaController.php", "purpose": "Upload, info, delete" },
+      { "class": "MilestonesController", "file": "src/API/MilestonesController.php", "purpose": "Milestone CRUD, submit, approve" },
+      { "class": "ModerationController", "file": "src/API/ModerationController.php", "purpose": "Approve, reject, moderation history" },
+      { "class": "NotificationsController", "file": "src/API/NotificationsController.php", "purpose": "Notifications list/read/delete" },
+      { "class": "OrdersController", "file": "src/API/OrdersController.php", "purpose": "Order CRUD + status transitions" },
+      { "class": "PaymentController", "file": "src/API/PaymentController.php", "purpose": "Gateways list, process, status, webhook" },
+      { "class": "PortfolioController", "file": "src/API/PortfolioController.php", "purpose": "Portfolio CRUD, reorder" },
+      { "class": "ProposalsController", "file": "src/API/ProposalsController.php", "purpose": "Proposals CRUD, accept, reject, withdraw" },
+      { "class": "RestController", "file": "src/API/RestController.php", "purpose": "Base controller — permissions, pagination helpers" },
+      { "class": "ReviewsController", "file": "src/API/ReviewsController.php", "purpose": "Reviews CRUD, vendor reviews" },
+      { "class": "SellerLevelsController", "file": "src/API/SellerLevelsController.php", "purpose": "Seller-level definitions, vendor progress" },
+      { "class": "ServicesController", "file": "src/API/ServicesController.php", "purpose": "Services CRUD, search, featured" },
+      { "class": "TippingController", "file": "src/API/TippingController.php", "purpose": "Tip send, list" },
+      { "class": "VendorsController", "file": "src/API/VendorsController.php", "purpose": "Vendor list, profile, stats" }
+    ],
+    "endpoints_detail_at": "Refresh manifest with --rebuild to enumerate all 138 endpoints individually."
+  },
+  "ajax": {
+    "handler_count": 106,
+    "handlers_file": "src/Frontend/AjaxHandlers.php (4158 lines, ~106 unique wp_ajax_wpss_* actions)",
+    "_note": "Per-handler enumeration deferred to refresh-with-rebuild. Audit conclusions: nonces present on all (verified). Capability/ownership checks via three patterns: inline current_user_can, service-class delegation, WHERE clause user_id scoping. See audit/wppqa-baseline-2026-05-08/SUMMARY.md for findings (13 nonce-no-cap warnings — most are valid object-ownership patterns the regex doesn't credit; 3-5 in Admin.php / ServiceModerationPage.php may be real gaps)."
+  },
+  "admin_pages": {
+    "count": 25,
+    "registered_in": ["src/Admin/Admin.php"],
+    "main_pages": [
+      { "title": "WPSS Dashboard", "slug": "wp-sell-services" },
+      { "title": "All Services", "slug": "edit.php?post_type=wpss_service" },
+      { "title": "All Requests", "slug": "edit.php?post_type=wpss_request" },
+      { "title": "Orders", "slug": "wpss-orders" },
+      { "title": "Vendors", "slug": "wpss-vendors" },
+      { "title": "Withdrawals", "slug": "wpss-withdrawals" },
+      { "title": "Disputes", "slug": "wpss-disputes" },
+      { "title": "Moderation", "slug": "wpss-moderation" },
+      { "title": "Analytics", "slug": "wpss-analytics" },
+      { "title": "Settings", "slug": "wpss-settings" }
+    ]
+  },
+  "settings": {
+    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced."
+  },
+  "shortcodes": {
+    "count": 19,
+    "examples": ["wpss_dashboard", "wpss_services", "wpss_service_search", "wpss_buyer_requests", "wpss_become_vendor", "wpss_vendor_profile"],
+    "registered_in": "src/Frontend/Shortcodes.php"
+  },
+  "blocks": [
+    { "name": "wpss/buyer-requests", "class": "BuyerRequests", "file": "src/Blocks/BuyerRequests.php", "interactivity": false, "layout_owning": false },
+    { "name": "wpss/featured-services", "class": "FeaturedServices", "file": "src/Blocks/FeaturedServices.php", "interactivity": false, "layout_owning": false },
+    { "name": "wpss/seller-card", "class": "SellerCard", "file": "src/Blocks/SellerCard.php", "interactivity": false, "layout_owning": false },
+    { "name": "wpss/service-categories", "class": "ServiceCategories", "file": "src/Blocks/ServiceCategories.php", "interactivity": false, "layout_owning": false },
+    { "name": "wpss/service-grid", "class": "ServiceGrid", "file": "src/Blocks/ServiceGrid.php", "interactivity": false, "layout_owning": false },
+    { "name": "wpss/service-search", "class": "ServiceSearch", "file": "src/Blocks/ServiceSearch.php", "interactivity": false, "layout_owning": false }
+  ],
+  "post_types": [
+    { "name": "wpss_service", "purpose": "Service offering (vendor-created)" },
+    { "name": "wpss_request", "purpose": "Buyer request (job post)" }
+  ],
+  "taxonomies": [
+    { "name": "wpss_service_category", "post_type": "wpss_service", "hierarchical": true },
+    { "name": "wpss_service_tag", "post_type": "wpss_service", "hierarchical": false }
+  ],
+  "tables": [
+    { "name": "{prefix}wpss_service_packages", "purpose": "Service pricing tiers" },
+    { "name": "{prefix}wpss_service_addons", "purpose": "Add-on items per service" },
+    { "name": "{prefix}wpss_orders", "purpose": "Service orders (parent + sub-orders for tip/extension/milestone)" },
+    { "name": "{prefix}wpss_order_requirements", "purpose": "Buyer-submitted order requirements per question" },
+    { "name": "{prefix}wpss_conversations", "purpose": "Order messages metadata" },
+    { "name": "{prefix}wpss_messages", "purpose": "Conversation messages content" },
+    { "name": "{prefix}wpss_deliveries", "purpose": "Final order deliveries" },
+    { "name": "{prefix}wpss_extension_requests", "purpose": "Extension order requests on catalog orders" },
+    { "name": "{prefix}wpss_reviews", "purpose": "Order ratings + reviews" },
+    { "name": "{prefix}wpss_disputes", "purpose": "Dispute cases" },
+    { "name": "{prefix}wpss_dispute_messages", "purpose": "Dispute conversation thread" },
+    { "name": "{prefix}wpss_proposals", "purpose": "Vendor proposals on buyer requests" },
+    { "name": "{prefix}wpss_vendor_profiles", "purpose": "Vendor profile data (level, intro, settings)" },
+    { "name": "{prefix}wpss_portfolio_items", "purpose": "Vendor portfolio gallery" },
+    { "name": "{prefix}wpss_notifications", "purpose": "In-app notifications" },
+    { "name": "{prefix}wpss_wallet_transactions", "purpose": "Wallet ledger entries" },
+    { "name": "{prefix}wpss_withdrawals", "purpose": "Vendor withdrawal requests" },
+    { "name": "{prefix}wpss_audit_log", "purpose": "Privileged-action audit trail" }
+  ],
+  "capabilities": {
+    "_note": "Plugin uses standard WP capabilities (edit_posts, manage_options) plus role-based ownership. No custom capability slugs registered. Vendor role created via add_role on activation."
+  },
+  "services": {
+    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, AnalyticsService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon."
+  },
+  "hooks_fired": {
+    "do_action_count": 118,
+    "apply_filters_count": 114,
+    "key_extension_hooks": [
+      { "name": "wpss_loaded", "type": "action", "purpose": "Pro plugin entry point — Pro hooks here" },
+      { "name": "wpss_ecommerce_adapters", "type": "filter", "purpose": "Register ecommerce platform adapters" },
+      { "name": "wpss_payment_gateways", "type": "filter", "purpose": "Register payment gateways" },
+      { "name": "wpss_storage_providers", "type": "filter", "purpose": "Register storage providers" },
+      { "name": "wpss_analytics_widgets", "type": "filter", "purpose": "Add analytics dashboard widgets" },
+      { "name": "wpss_dashboard_sections", "type": "filter", "purpose": "Customize dashboard sections" },
+      { "name": "wpss_can_access_dashboard_section", "type": "filter", "purpose": "Section access gate" },
+      { "name": "wpss_buyer_request_created", "type": "action", "purpose": "Fired after buyer request post insert" },
+      { "name": "wpss_proposal_submitted", "type": "action", "purpose": "Fired after proposal DB insert" },
+      { "name": "wpss_order_paid", "type": "action", "purpose": "Fired when order payment is confirmed (sub-order credit handler)" }
+    ],
+    "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 232 hook firings."
+  },
+  "frontend_assets": {
+    "js_count_unminified": 23,
+    "css_count_unminified": 16,
+    "key_handles": ["wpss-frontend", "wpss-icons", "wpss-ux-primitives", "wpss-tour", "wpss-blocks-editor", "wpss-blocks", "wpss-service-wizard"],
+    "i18n_registered": true,
+    "i18n_method": "wp_set_script_translations() on every wpss-* handle (commit 4c74224)"
+  },
+  "cron": {
+    "count": 4,
+    "via": "Action Scheduler (woocommerce/action-scheduler), group 'wpss'",
+    "facade": "WPSellServices\\Services\\Scheduler",
+    "notes": "All recurring jobs migrated from WP-Cron to Action Scheduler in 1.1.0. Legacy WP-Cron sweep on version bump."
+  },
+  "wp_cli": {
+    "count": 5,
+    "registered_in": "src/CLI/",
+    "_note": "WP-CLI commands available when WP_CLI is defined."
+  },
+  "storage_drivers": [],
+  "security": {
+    "uploads_gate": "Standard WP media handling via media_handle_upload (src/Frontend/ServiceWizard.php, AjaxHandlers.php)",
+    "signing_entry_points": [],
+    "always_sign_filter": null,
+    "rate_limit_middleware": "WPSellServices\\Services\\RateLimiter (used in 8 AJAX handlers)",
+    "csrf": "Nonces via check_ajax_referer in 67/67 logged-in AJAX handlers",
+    "auth": "Mostly via current_user_can or object-ownership comparisons (see wppqa-baseline-2026-05-08/SUMMARY.md)",
+    "wppqa_baseline_path": "audit/wppqa-baseline-2026-05-08/SUMMARY.md",
+    "pcp_status": "0 escape/SQL ERRORs in our code (commits 3d4c332 + a585044 + 7ed1055). 4 OutputNotEscaped in vendored EDD_SL_Plugin_Updater.php suppressed via phpcs:ignoreFile."
+  },
+  "ci_guards": {
+    "phpcs": "phpcs.xml.dist (WordPress ruleset, PHP 8.1+)",
+    "phpstan": "phpstan.neon level 5 with WordPress stubs",
+    "phpunit": ".github/workflows/ci.yml — PHP 8.1/8.2/8.3/8.4 × WP 6.7/6.8/latest"
+  },
+  "build_commands": {
+    "release": "grunt release (runs i18n → rtl → min → composer:nodev → clean:dist → copy:dist → verify:dist-autoloader → compress:dist → composer:dev)",
+    "dev": "npm run dev (watch CSS/JS)",
+    "test": "composer test"
+  },
+  "category_sources": {
+    "rest": ["src/API/**/*.php"],
+    "ajax": ["src/Frontend/AjaxHandlers.php", "src/Admin/Admin.php"],
+    "admin_pages": ["src/Admin/**/*.php"],
+    "settings": ["src/Admin/Settings.php"],
+    "shortcodes": ["src/Frontend/Shortcodes.php"],
+    "blocks": ["src/Blocks/**/*.php"],
+    "post_types": ["src/PostTypes/**/*.php"],
+    "taxonomies": ["src/Taxonomies/**/*.php"],
+    "tables": ["src/Database/**/*.php"],
+    "services": ["src/Services/**/*.php"],
+    "hooks_fired": ["src/**/*.php", "templates/**/*.php"],
+    "frontend_assets": ["assets/**/*.{js,css}"],
+    "cron": ["src/Services/Scheduler.php", "src/Core/Activator.php", "src/Core/Deactivator.php"],
+    "wp_cli": ["src/CLI/**/*.php"]
+  },
+  "static_analysis": {
+    "_note": "Streamlined onboarding mode — full Phase 2.5 sub-checks (1-14) deferred. Findings to date:",
+    "wppqa_2026_05_08": {
+      "rest_js_contract_pass": 32,
+      "rest_js_contract_fail": 0,
+      "wiring_completeness": "n/a (skipped)",
+      "plugin_dev_rules_fail": 86,
+      "high_severity_count": 21,
+      "low_severity_count": 65,
+      "report": "audit/wppqa-baseline-2026-05-08/SUMMARY.md"
+    },
+    "pcp_2026_05_07_to_05_08": {
+      "escape_errors_in_our_code": 0,
+      "sql_injection_errors_in_our_code": 0,
+      "register_setting_missing_callback": 0,
+      "remaining_errors": "Vendored EDD_SL_Plugin_Updater.php (suppressed via phpcs:ignoreFile) + WP-org submission heuristics (plugin_updater_detected — irrelevant since FREE distributes via Wbcom store, not wp.org)"
+    }
+  },
+  "generated": {
+    "at": "2026-05-08T00:00:00Z",
+    "from": "wp-plugin-onboard skill (streamlined mode)",
+    "branch": "1.1.0",
+    "schema_version": "v2.2-streamlined",
+    "scan_scope": "distignore",
+    "scan_path": ".",
+    "php_file_count": 266,
+    "_note": "Streamlined mode — produces summary-level manifest sufficient for CLAUDE.md auto-load context. Full enumeration of 138 REST endpoints, 106 AJAX handlers, 232 hooks deferred to a future refresh+rebuild pass. Coverage gates per sub-category not enforced. wppqa baseline + PCP scan results captured. graph.html, local-CI scaffold, scale benchmark, paired-plugin contract artefacts deferred."
+  }
+}
