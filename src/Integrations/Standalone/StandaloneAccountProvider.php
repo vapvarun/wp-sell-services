@@ -436,7 +436,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				display: block;
 				font-size: 32px;
 				font-weight: 700;
-				color: #1e3a5f;
+				color: var(--wpss-secondary, #1e3a5f);
 			}
 			.wpss-stat-label {
 				color: var(--wpss-text-muted, #666);
@@ -529,10 +529,10 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				font-weight: 500;
 			}
 			.wpss-status-pending_payment { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-			.wpss-status-pending_requirements { background: #cce5ff; color: #004085; }
+			.wpss-status-pending_requirements { background: var(--wpss-info-border, #cce5ff); color: var(--wpss-info-dark, #004085); }
 			.wpss-status-in_progress { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
 			.wpss-status-delivered { background: var(--wpss-alert-info-bg, #d1ecf1); color: var(--wpss-alert-info-fg, #0c5460); }
-			.wpss-status-completed { background: #c3e6cb; color: var(--wpss-alert-success-fg, #155724); }
+			.wpss-status-completed { background: var(--wpss-success-border, #c3e6cb); color: var(--wpss-alert-success-fg, #155724); }
 			.wpss-status-cancelled { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 		</style>
 		<?php
@@ -575,8 +575,8 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				margin-bottom: 10px;
 			}
 			.wpss-notification.unread {
-				background: #f8f9ff;
-				border-color: #cce5ff;
+				background: var(--wpss-primary-light, #f8f9ff);
+				border-color: var(--wpss-info-border, #cce5ff);
 			}
 			.wpss-notification-time {
 				font-size: 12px;
@@ -759,7 +759,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				font-size: 16px;
 			}
 			.wpss-service-price {
-				color: #1e3a5f;
+				color: var(--wpss-secondary, #1e3a5f);
 				font-weight: 600;
 			}
 			.wpss-service-actions {

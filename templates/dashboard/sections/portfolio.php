@@ -187,7 +187,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 		.wpss-portfolio-lightbox__tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 		.wpss-portfolio-lightbox__tags:empty{display:none}
 		.wpss-portfolio-lightbox__tags span{padding:2px 10px;background:var(--wpss-bg-muted, #f3f4f6);border-radius:20px;font-size:12px;color:var(--wpss-text-secondary, #374151);font-weight:500}
-		.wpss-portfolio-lightbox__link{display:inline-flex;align-items:center;gap:4px;color:#6366f1;font-size:14px;font-weight:500;text-decoration:none}
+		.wpss-portfolio-lightbox__link{display:inline-flex;align-items:center;gap:4px;color:var(--wpss-primary, #6366f1);font-size:14px;font-weight:500;text-decoration:none}
 		.wpss-portfolio-lightbox__link:hover{text-decoration:underline}
 		</style>
 		<script>

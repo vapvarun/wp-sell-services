@@ -125,8 +125,8 @@ do_action( 'wpss_notifications_after', $user_id );
 }
 
 .wpss-notification.wpss-unread {
-	background: #f0f8ff;
-	border-color: #74b9ff;
+	background: var(--wpss-info-light, #f0f8ff);
+	border-color: var(--wpss-info, #74b9ff);
 }
 
 .wpss-notification-icon {
@@ -144,7 +144,7 @@ do_action( 'wpss_notifications_after', $user_id );
 }
 
 .wpss-notification-message {
-	color: #636e72;
+	color: var(--wpss-gray-600, #636e72);
 	font-size: 14px;
 	margin-bottom: 4px;
 }
@@ -171,7 +171,7 @@ do_action( 'wpss_notifications_after', $user_id );
 .wpss-no-notifications {
 	text-align: center;
 	padding: 40px 20px;
-	color: #636e72;
+	color: var(--wpss-gray-600, #636e72);
 }
 </style>
 

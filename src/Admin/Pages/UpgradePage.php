@@ -361,19 +361,19 @@ class UpgradePage {
 				text-align: center;
 			}
 			.wpss-plan-pro {
-				background: #f0faf5;
+				background: var(--wpss-success-light, #f0faf5);
 			}
 			.wpss-feature-yes {
-				color: #00a32a;
+				color: var(--wpss-success, #00a32a);
 				font-size: 20px;
 			}
 			.wpss-feature-no {
-				color: #cc1818;
+				color: var(--wpss-danger-dark, #cc1818);
 				font-size: 20px;
 			}
 			.wpss-feature-text {
 				font-size: 13px;
-				color: #996800;
+				color: var(--wpss-warning-dark, #996800);
 				font-weight: 500;
 			}
 			.wpss-upgrade-footer {

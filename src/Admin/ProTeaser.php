@@ -253,16 +253,16 @@ class ProTeaser {
 		?>
 		<style>
 			.wpss-pro-teaser {
-				border: 1px solid #e0d4f5;
+				border: 1px solid var(--wpss-primary-light, #e0d4f5);
 				border-left: 4px solid var(--wpss-primary, #7c3aed);
-				background: linear-gradient(135deg, #faf5ff 0%, #f0f7ff 100%);
+				background: linear-gradient(135deg, var(--wpss-primary-light, #faf5ff) 0%, var(--wpss-info-light, #f0f7ff) 100%);
 				border-radius: 6px;
 				padding: 16px 20px;
 				margin: 16px 0;
 			}
 			.wpss-pro-teaser__badge {
 				display: inline-block;
-				background: linear-gradient(135deg, var(--wpss-primary, #7c3aed), #6366f1);
+				background: linear-gradient(135deg, var(--wpss-primary, #7c3aed), var(--wpss-primary, #6366f1));
 				color: var(--wpss-white, #fff);
 				font-size: 10px;
 				font-weight: 700;
@@ -275,7 +275,7 @@ class ProTeaser {
 				margin: 8px 0 4px;
 				font-size: 14px;
 				font-weight: 600;
-				color: #1e1e1e;
+				color: var(--wpss-gray-800, #1e1e1e);
 			}
 			.wpss-pro-teaser__text {
 				color: var(--wpss-wp-admin-text-secondary, #646970);
@@ -296,7 +296,7 @@ class ProTeaser {
 			}
 			.wpss-pro-teaser__cta:hover,
 			.wpss-pro-teaser__cta:focus {
-				background: #6d28d9;
+				background: var(--wpss-primary-dark, #6d28d9);
 				color: var(--wpss-white, #fff) !important;
 			}
 		</style>

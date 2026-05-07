@@ -2165,13 +2165,13 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 }
 
 .wpss-revision-badge--last {
-	color: #b45309;
+	color: var(--wpss-warning-dark, #b45309);
 	background: var(--wpss-warning-light, #fffbeb);
 	border-color: var(--wpss-warning-border, #fde68a);
 }
 
 .wpss-revision-badge--exhausted {
-	color: #b91c1c;
+	color: var(--wpss-danger-dark, #b91c1c);
 	background: var(--wpss-danger-light, #fef2f2);
 	border-color: var(--wpss-danger-border, #fecaca);
 }
@@ -2772,7 +2772,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	align-items: flex-start;
 	gap: 0.75rem;
 	padding: 1rem;
-	background: #fff8e1;
+	background: var(--wpss-warning-light, #fff8e1);
 	border: 1px solid rgba(245, 158, 11, 0.3);
 	border-radius: 8px;
 	color: var(--wpss-warning-dark, #92400e);
@@ -2865,7 +2865,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	background: linear-gradient( 90deg, var(--wpss-success, #10b981), var(--wpss-success, #059669) );
 }
 .wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
-	color: #047857;
+	color: var(--wpss-success-dark, #047857);
 }
 </style>
 

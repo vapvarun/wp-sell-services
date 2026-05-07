@@ -636,7 +636,7 @@ class VendorsPage {
 			}
 
 			.wpss-rating-stars {
-				color: #ffb900;
+				color: var(--wpss-warning, #ffb900);
 			}
 			.wpss-rating-count {
 				font-size: 12px;

@@ -115,7 +115,7 @@
 .wpss-shepherd .shepherd-button.shepherd-button-secondary:hover,
 .wpss-shepherd .shepherd-button.shepherd-button-secondary:focus {
 	background: var(--wpss-wp-admin-bg, #f0f0f1);
-	border-color: #8c8f94;
+	border-color: var(--wpss-text-hint, #8c8f94);
 	color: var(--wpss-wp-admin-text, #1d2327);
 }
 

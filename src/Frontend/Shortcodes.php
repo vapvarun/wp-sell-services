@@ -1256,7 +1256,7 @@ class Shortcodes {
 			color: var(--wpss-primary, #4f46e5);
 		}
 		.wpss-vr__hero-icon .wpss-icon { width: 32px; height: 32px; }
-		.wpss-vr__hero-icon--success { background: #dcfce7; color: #16a34a; }
+		.wpss-vr__hero-icon--success { background: var(--wpss-success-border, #dcfce7); color: var(--wpss-success, #16a34a); }
 		.wpss-vr__hero-icon--muted { background: var(--wpss-bg-muted, #f3f4f6); color: var(--wpss-text-muted, #6b7280); }
 		.wpss-vr__title {
 			font-size: 24px; font-weight: 700; color: var(--wpss-text, #111827);

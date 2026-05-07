@@ -494,8 +494,8 @@ class ServiceModerationPage {
 			.wpss-moderation-table .wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 			.wpss-moderation-table .row-actions { padding-top: 5px; }
 			.wpss-moderation-table .row-actions a { margin-right: 10px; }
-			.wpss-moderation-table .approve-action { color: #46b450; }
-			.wpss-moderation-table .reject-action { color: #dc3232; }
+			.wpss-moderation-table .approve-action { color: var(--wpss-success, #46b450); }
+			.wpss-moderation-table .reject-action { color: var(--wpss-danger, #dc3232); }
 			.wpss-rejection-reason { color: var(--wpss-text-muted, #666); font-size: 12px; font-style: italic; margin-top: 5px; }
 		</style>
 

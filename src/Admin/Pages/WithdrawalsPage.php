@@ -505,7 +505,7 @@ class WithdrawalsPage {
 				font-weight: 500;
 			}
 			.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-			.wpss-status-approved { background: #d1e7f3; color: #0a4b78; }
+			.wpss-status-approved { background: var(--wpss-info-light, #d1e7f3); color: var(--wpss-secondary, #0a4b78); }
 			.wpss-status-completed { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
 			.wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 

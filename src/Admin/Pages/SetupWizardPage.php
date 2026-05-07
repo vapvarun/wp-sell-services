@@ -680,7 +680,7 @@ class SetupWizardPage {
 				display: flex; align-items: center; justify-content: space-between;
 				padding: 16px 32px; background: var(--wpss-white, #fff); border-bottom: 1px solid var(--wpss-gray-300, #ddd);
 			}
-			.wpss-wizard-logo { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: #1e1e1e; }
+			.wpss-wizard-logo { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--wpss-gray-800, #1e1e1e); }
 			.wpss-wizard-logo .dashicons { font-size: 24px; width: 24px; height: 24px; color: var(--wpss-vendor-green, #1dbf73); }
 			.wpss-wizard-exit { text-decoration: none; color: var(--wpss-wp-admin-text-secondary, #646970); font-size: 13px; }
 			.wpss-wizard-exit:hover { color: var(--wpss-wp-admin-red, #d63638); }
@@ -720,7 +720,7 @@ class SetupWizardPage {
 			}
 			.wpss-wizard-radio-card:hover { border-color: var(--wpss-vendor-green, #1dbf73); }
 			.wpss-wizard-radio-card input:checked ~ .wpss-wizard-radio-content { /* sibling highlight */ }
-			.wpss-wizard-radio-card:has(input:checked) { border-color: var(--wpss-vendor-green, #1dbf73); background: #f0faf5; }
+			.wpss-wizard-radio-card:has(input:checked) { border-color: var(--wpss-vendor-green, #1dbf73); background: var(--wpss-success-light, #f0faf5); }
 			.wpss-wizard-radio-content strong { display: block; font-size: 14px; }
 			.wpss-wizard-radio-content span { color: var(--wpss-wp-admin-text-secondary, #646970); font-size: 12px; }
 
@@ -761,7 +761,7 @@ class SetupWizardPage {
 				display: inline-flex; align-items: center; gap: 4px;
 			}
 			.wpss-wizard-chip:hover:not(.disabled) { border-color: var(--wpss-vendor-green, #1dbf73); }
-			.wpss-wizard-chip.active { border-color: var(--wpss-vendor-green, #1dbf73); background: #f0faf5; color: var(--wpss-alert-success-fg, #155724); }
+			.wpss-wizard-chip.active { border-color: var(--wpss-vendor-green, #1dbf73); background: var(--wpss-success-light, #f0faf5); color: var(--wpss-alert-success-fg, #155724); }
 			.wpss-wizard-chip.disabled { opacity: 0.6; cursor: default; }
 			.wpss-wizard-chip .dashicons { font-size: 16px; width: 16px; height: 16px; color: var(--wpss-vendor-green, #1dbf73); }
 
@@ -778,7 +778,7 @@ class SetupWizardPage {
 			.wpss-wizard-card {
 				display: flex; flex-direction: column; align-items: center; text-align: center;
 				padding: 24px 16px; border: 1px solid var(--wpss-gray-300, #ddd); border-radius: 8px;
-				text-decoration: none; color: #1e1e1e; transition: all 0.2s; gap: 8px;
+				text-decoration: none; color: var(--wpss-gray-800, #1e1e1e); transition: all 0.2s; gap: 8px;
 			}
 			.wpss-wizard-card:hover { border-color: var(--wpss-vendor-green, #1dbf73); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 			.wpss-wizard-card .dashicons { font-size: 32px; width: 32px; height: 32px; color: var(--wpss-vendor-green, #1dbf73); }

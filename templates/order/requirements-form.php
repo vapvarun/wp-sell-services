@@ -440,7 +440,7 @@ if ( ! empty( $requirements ) && is_array( $requirements ) ) {
 		background: linear-gradient( 90deg, var(--wpss-success, #10b981), var(--wpss-success, #059669) );
 	}
 	.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
-		color: #047857;
+		color: var(--wpss-success-dark, #047857);
 	}
 	.wpss-requirements-form__notice--warning {
 		display: flex;

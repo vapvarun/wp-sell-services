@@ -576,23 +576,23 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 }
 
 .wpss-status-open {
-	background: #fcf0e3;
-	color: #9a6700;
+	background: var(--wpss-warning-light, #fcf0e3);
+	color: var(--wpss-warning-dark, #9a6700);
 }
 
 .wpss-status-pending_review {
-	background: #e8f4fd;
-	color: #0a4b78;
+	background: var(--wpss-info-light, #e8f4fd);
+	color: var(--wpss-secondary, #0a4b78);
 }
 
 .wpss-status-escalated {
-	background: #fce4e4;
-	color: #8a1f1f;
+	background: var(--wpss-danger-light, #fce4e4);
+	color: var(--wpss-danger-dark, #8a1f1f);
 }
 
 .wpss-status-resolved {
-	background: #e6f4ea;
-	color: #1e4620;
+	background: var(--wpss-success-light, #e6f4ea);
+	color: var(--wpss-success-dark, #1e4620);
 }
 
 .wpss-status-closed {
@@ -895,8 +895,8 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 
 /* Resolution section */
 .wpss-resolution-section {
-	background: #e6f4ea;
-	border-color: #c8e6c9;
+	background: var(--wpss-success-light, #e6f4ea);
+	border-color: var(--wpss-success-border, #c8e6c9);
 }
 
 .wpss-resolution-card {
@@ -1166,9 +1166,9 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 }
 
 .wpss-dispute-explainer--success {
-	background: #f0fdf4;
-	border-color: #bbf7d0;
-	color: #166534;
+	background: var(--wpss-success-light, #f0fdf4);
+	border-color: var(--wpss-success-border, #bbf7d0);
+	color: var(--wpss-success-dark, #166534);
 }
 
 .wpss-dispute-explainer--muted {
