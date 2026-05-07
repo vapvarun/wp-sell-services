@@ -16,7 +16,7 @@
 	--wpss-block-text-light: #74767e;
 	--wpss-block-border: #e4e5e7;
 	--wpss-block-bg: #f5f5f5;
-	--wpss-block-white: #ffffff;
+	--wpss-block-white: var(--wpss-white, #ffffff);
 	--wpss-block-star: #ffb33e;
 	--wpss-block-radius: 4px;
 	--wpss-block-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

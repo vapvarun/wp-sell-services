@@ -14,7 +14,7 @@
  */
 
 .wpss-shepherd.shepherd-element {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid #c3c4c7;
 	border-radius: 6px;
 	box-shadow: 0 8px 24px rgba( 0, 0, 0, 0.12 );
@@ -71,7 +71,7 @@
 }
 
 .wpss-shepherd .shepherd-footer {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border-top: 1px solid #f0f0f1;
 	border-radius: 0 0 6px 6px;
 	display: flex;
@@ -84,7 +84,7 @@
 	background: #2271b1;
 	border: 1px solid #2271b1;
 	border-radius: 3px;
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	cursor: pointer;
 	font-size: 13px;
 	font-weight: 500;
@@ -98,12 +98,12 @@
 .wpss-shepherd .shepherd-button:focus {
 	background: #135e96;
 	border-color: #135e96;
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	outline: none;
 }
 
 .wpss-shepherd .shepherd-button:focus-visible {
-	box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
+	box-shadow: 0 0 0 2px var(--wpss-white, #fff), 0 0 0 4px #2271b1;
 }
 
 .wpss-shepherd .shepherd-button.shepherd-button-secondary {
@@ -120,7 +120,7 @@
 }
 
 .wpss-shepherd .shepherd-arrow::before {
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	border: 1px solid #c3c4c7;
 }
 
