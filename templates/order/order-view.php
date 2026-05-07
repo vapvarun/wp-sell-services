@@ -2857,12 +2857,12 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 }
 .wpss-requirements-form__progress-fill {
 	height: 100%;
-	background: linear-gradient( 90deg, var(--wpss-primary, #4f46e5), #7c3aed );
+	background: linear-gradient( 90deg, var(--wpss-primary, #4f46e5), var(--wpss-primary, #7c3aed) );
 	border-radius: 9999px;
 	transition: width 0.3s ease;
 }
 .wpss-requirements-form__progress--complete .wpss-requirements-form__progress-fill {
-	background: linear-gradient( 90deg, var(--wpss-success, #10b981), #059669 );
+	background: linear-gradient( 90deg, var(--wpss-success, #10b981), var(--wpss-success, #059669) );
 }
 .wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
 	color: #047857;

@@ -223,8 +223,8 @@ do_action( 'wpss_service_disputes_after', $user_id );
 }
 
 .wpss-status-closed {
-	background: #f0f0f1;
-	color: #50575e;
+	background: var(--wpss-wp-admin-bg, #f0f0f1);
+	color: var(--wpss-wp-admin-text-muted, #50575e);
 }
 
 .wpss-btn-sm {

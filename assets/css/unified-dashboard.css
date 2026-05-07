@@ -16,11 +16,11 @@
 	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
 	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
 	--wpss-success: var(--wpss-success, #10b981);
-	--wpss-success-light: #d1fae5;
+	--wpss-success-light: var(--wpss-success-light, #d1fae5);
 	--wpss-warning: var(--wpss-warning, #f59e0b);
-	--wpss-warning-light: #fef3c7;
+	--wpss-warning-light: var(--wpss-badge-extension-bg, #fef3c7);
 	--wpss-danger: var(--wpss-danger, #ef4444);
-	--wpss-danger-light: #fee2e2;
+	--wpss-danger-light: var(--wpss-badge-tip-bg, #fee2e2);
 	--wpss-gray-50: var(--wpss-bg-subtle, #f9fafb);
 	--wpss-gray-100: var(--wpss-bg-muted, #f3f4f6);
 	--wpss-gray-200: var(--wpss-border, #e5e7eb);

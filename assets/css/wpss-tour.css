@@ -15,7 +15,7 @@
 
 .wpss-shepherd.shepherd-element {
 	background: var(--wpss-white, #fff);
-	border: 1px solid #c3c4c7;
+	border: 1px solid var(--wpss-wp-admin-border, #c3c4c7);
 	border-radius: 6px;
 	box-shadow: 0 8px 24px rgba( 0, 0, 0, 0.12 );
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
@@ -23,33 +23,33 @@
 }
 
 .wpss-shepherd .shepherd-header {
-	background: #f0f0f1;
-	border-bottom: 1px solid #dcdcde;
+	background: var(--wpss-wp-admin-bg, #f0f0f1);
+	border-bottom: 1px solid var(--wpss-wp-admin-border-light, #dcdcde);
 	border-radius: 6px 6px 0 0;
 	padding: 0.75rem 1rem;
 }
 
 .wpss-shepherd .shepherd-title {
-	color: #1d2327;
+	color: var(--wpss-wp-admin-text, #1d2327);
 	font-size: 15px;
 	font-weight: 600;
 	line-height: 1.3;
 }
 
 .wpss-shepherd .shepherd-cancel-icon {
-	color: #50575e;
+	color: var(--wpss-wp-admin-text-muted, #50575e);
 	font-size: 1.25rem;
 	transition: color 0.15s ease;
 }
 
 .wpss-shepherd .shepherd-cancel-icon:hover,
 .wpss-shepherd .shepherd-cancel-icon:focus {
-	color: #d63638;
+	color: var(--wpss-wp-admin-red, #d63638);
 	outline: none;
 }
 
 .wpss-shepherd .shepherd-text {
-	color: #2c3338;
+	color: var(--wpss-wp-admin-text-subtle, #2c3338);
 	font-size: 14px;
 	line-height: 1.5;
 	padding: 1rem;
@@ -72,7 +72,7 @@
 
 .wpss-shepherd .shepherd-footer {
 	background: var(--wpss-white, #fff);
-	border-top: 1px solid #f0f0f1;
+	border-top: 1px solid var(--wpss-wp-admin-bg, #f0f0f1);
 	border-radius: 0 0 6px 6px;
 	display: flex;
 	gap: 0.5rem;
@@ -81,8 +81,8 @@
 }
 
 .wpss-shepherd .shepherd-button {
-	background: #2271b1;
-	border: 1px solid #2271b1;
+	background: var(--wpss-wp-admin-blue, #2271b1);
+	border: 1px solid var(--wpss-wp-admin-blue, #2271b1);
 	border-radius: 3px;
 	color: var(--wpss-white, #fff);
 	cursor: pointer;
@@ -96,32 +96,32 @@
 
 .wpss-shepherd .shepherd-button:hover,
 .wpss-shepherd .shepherd-button:focus {
-	background: #135e96;
-	border-color: #135e96;
+	background: var(--wpss-wp-admin-blue-hover, #135e96);
+	border-color: var(--wpss-wp-admin-blue-hover, #135e96);
 	color: var(--wpss-white, #fff);
 	outline: none;
 }
 
 .wpss-shepherd .shepherd-button:focus-visible {
-	box-shadow: 0 0 0 2px var(--wpss-white, #fff), 0 0 0 4px #2271b1;
+	box-shadow: 0 0 0 2px var(--wpss-white, #fff), 0 0 0 4px var(--wpss-wp-admin-blue, #2271b1);
 }
 
 .wpss-shepherd .shepherd-button.shepherd-button-secondary {
-	background: #f6f7f7;
-	border-color: #c3c4c7;
-	color: #2c3338;
+	background: var(--wpss-wp-admin-bg-alt, #f6f7f7);
+	border-color: var(--wpss-wp-admin-border, #c3c4c7);
+	color: var(--wpss-wp-admin-text-subtle, #2c3338);
 }
 
 .wpss-shepherd .shepherd-button.shepherd-button-secondary:hover,
 .wpss-shepherd .shepherd-button.shepherd-button-secondary:focus {
-	background: #f0f0f1;
+	background: var(--wpss-wp-admin-bg, #f0f0f1);
 	border-color: #8c8f94;
-	color: #1d2327;
+	color: var(--wpss-wp-admin-text, #1d2327);
 }
 
 .wpss-shepherd .shepherd-arrow::before {
 	background: var(--wpss-white, #fff);
-	border: 1px solid #c3c4c7;
+	border: 1px solid var(--wpss-wp-admin-border, #c3c4c7);
 }
 
 .wpss-shepherd[data-popper-placement^="top"] .shepherd-arrow::before {

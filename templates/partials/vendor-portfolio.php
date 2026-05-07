@@ -74,7 +74,7 @@ if ( empty( $portfolio_items ) ) {
 	right: 0;
 	padding: var( --wpss-space-3, 12px ) var( --wpss-space-4, 16px );
 	background: linear-gradient( to top, rgba(0,0,0,.65) 0%, transparent 100% );
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 .wpss-portfolio-public__title {
@@ -95,7 +95,7 @@ if ( empty( $portfolio_items ) ) {
 	padding: 2px var( --wpss-space-2, 8px );
 	border-radius: var( --wpss-radius-full, 9999px );
 	background: var( --wpss-warning, #f59e0b );
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	font-size: var( --wpss-text-xs, 12px );
 	font-weight: 600;
 	line-height: 1.6;
@@ -113,7 +113,7 @@ if ( empty( $portfolio_items ) ) {
 	padding: var( --wpss-space-4, 16px );
 	opacity: 0;
 	transition: opacity 0.25s ease;
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 .wpss-portfolio-public__card:hover .wpss-portfolio-public__overlay,
@@ -174,7 +174,7 @@ if ( empty( $portfolio_items ) ) {
 
 .wpss-portfolio-public__ext-link:hover {
 	background: rgba(255,255,255,.18);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 /* Responsive */

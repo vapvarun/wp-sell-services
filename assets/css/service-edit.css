@@ -12,12 +12,12 @@
    ========================================================================== */
 
 :root {
-	--wpss-admin-primary: #1dbf73;
-	--wpss-admin-primary-hover: #19a463;
-	--wpss-admin-border: #ddd;
+	--wpss-admin-primary: var(--wpss-vendor-green, #1dbf73);
+	--wpss-admin-primary-hover: var(--wpss-vendor-green-dark, #19a463);
+	--wpss-admin-border: var(--wpss-gray-300, #ddd);
 	--wpss-admin-bg-light: var(--wpss-bg-subtle, #f9fafb);
 	--wpss-admin-text: #1e1e1e;
-	--wpss-admin-text-muted: #50575e;
+	--wpss-admin-text-muted: var(--wpss-wp-admin-text-muted, #50575e);
 	--wpss-admin-success: #46b450;
 	--wpss-admin-tab-width: 180px;
 }

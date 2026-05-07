@@ -119,7 +119,7 @@ do_action( 'wpss_notifications_after', $user_id );
 	gap: 15px;
 	padding: 15px;
 	background: var(--wpss-white, #fff);
-	border: 1px solid #e5e5e5;
+	border: 1px solid var(--wpss-border, #e5e5e5);
 	border-radius: 8px;
 	transition: background 0.2s;
 }
@@ -151,21 +151,21 @@ do_action( 'wpss_notifications_after', $user_id );
 
 .wpss-notification-time {
 	font-size: 12px;
-	color: #999;
+	color: var(--wpss-text-hint, #999);
 }
 
 .wpss-notification-link {
 	display: inline-block;
 	padding: 6px 12px;
-	background: #f5f5f5;
+	background: var(--wpss-bg-subtle, #f5f5f5);
 	border-radius: 4px;
 	text-decoration: none;
 	font-size: 13px;
-	color: #333;
+	color: var(--wpss-gray-800, #333);
 }
 
 .wpss-notification-link:hover {
-	background: #e5e5e5;
+	background: var(--wpss-border, #e5e5e5);
 }
 
 .wpss-no-notifications {
