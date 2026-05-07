@@ -171,14 +171,14 @@ do_action( 'wpss_before_order_view', $order );
 						printf(
 							/* translators: %d: total revisions used */
 							esc_html__( 'All %d revisions used', 'wp-sell-services' ),
-							$rev_used
+							(int) $rev_used
 						);
 					} else {
 						printf(
 							/* translators: 1: revisions remaining, 2: total included */
 							esc_html__( '%1$d of %2$d revisions left', 'wp-sell-services' ),
-							$rev_remaining,
-							$rev_included
+							(int) $rev_remaining,
+							(int) $rev_included
 						);
 					}
 					?>
@@ -2110,8 +2110,8 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 <style>
 /* Single Column Order View Styles */
 .wpss-order-view {
-	max-width: 800px;
-	margin: 0 auto;
+	max-width: 100%;
+	margin: 0;
 }
 
 .wpss-order-view__header {
