@@ -1386,6 +1386,7 @@ class ServiceWizard {
 			WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( 'wpss-service-wizard', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		// Make sure Alpine loads after service-wizard.
 		wp_enqueue_script( 'alpinejs' );

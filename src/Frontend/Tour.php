@@ -154,6 +154,7 @@ final class Tour {
 			\WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( self::HANDLE_TOUR, 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		if ( ! $this->should_enqueue() ) {
 			return;

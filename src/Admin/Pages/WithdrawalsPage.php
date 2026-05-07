@@ -126,6 +126,7 @@ class WithdrawalsPage {
 				\WPSS_VERSION,
 				true
 			);
+			wp_set_script_translations( 'wpss-admin', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 		}
 
 		wp_enqueue_script( 'wpss-admin' );
