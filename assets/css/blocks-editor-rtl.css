@@ -82,7 +82,7 @@
    ========================================================================== */
 
 .wp-block-wpss-service-grid .wpss-block-placeholder {
-	background: linear-gradient(-135deg, #f8fdf9 0%, var(--wpss-success-light, #f0f9f4) 100%);
+	background: linear-gradient(-135deg, var(--wpss-success-light, #f8fdf9) 0%, var(--wpss-success-light, #f0f9f4) 100%);
 	border-color: var(--wpss-success, #1dbf73);
 }
 

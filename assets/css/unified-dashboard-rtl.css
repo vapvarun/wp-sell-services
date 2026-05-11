@@ -12,25 +12,25 @@
    ========================================================================== */
 
 :root {
-	--wpss-primary: #4f46e5;
-	--wpss-primary-dark: #4338ca;
-	--wpss-primary-light: #eef2ff;
-	--wpss-success: #10b981;
-	--wpss-success-light: #d1fae5;
-	--wpss-warning: #f59e0b;
-	--wpss-warning-light: #fef3c7;
-	--wpss-danger: #ef4444;
-	--wpss-danger-light: #fee2e2;
-	--wpss-gray-50: #f9fafb;
-	--wpss-gray-100: #f3f4f6;
-	--wpss-gray-200: #e5e7eb;
-	--wpss-gray-300: #d1d5db;
-	--wpss-gray-400: #9ca3af;
-	--wpss-gray-500: #6b7280;
-	--wpss-gray-600: #4b5563;
-	--wpss-gray-700: #374151;
-	--wpss-gray-800: #1f2937;
-	--wpss-gray-900: #111827;
+	--wpss-primary: var(--wpss-primary, #4f46e5);
+	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
+	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
+	--wpss-success: var(--wpss-success, #10b981);
+	--wpss-success-light: var(--wpss-success-light, #d1fae5);
+	--wpss-warning: var(--wpss-warning, #f59e0b);
+	--wpss-warning-light: var(--wpss-badge-extension-bg, #fef3c7);
+	--wpss-danger: var(--wpss-danger, #ef4444);
+	--wpss-danger-light: var(--wpss-badge-tip-bg, #fee2e2);
+	--wpss-gray-50: var(--wpss-bg-subtle, #f9fafb);
+	--wpss-gray-100: var(--wpss-bg-muted, #f3f4f6);
+	--wpss-gray-200: var(--wpss-border, #e5e7eb);
+	--wpss-gray-300: var(--wpss-gray-300, #d1d5db);
+	--wpss-gray-400: var(--wpss-text-hint, #9ca3af);
+	--wpss-gray-500: var(--wpss-text-muted, #6b7280);
+	--wpss-gray-600: var(--wpss-gray-600, #4b5563);
+	--wpss-gray-700: var(--wpss-text-secondary, #374151);
+	--wpss-gray-800: var(--wpss-gray-800, #1f2937);
+	--wpss-gray-900: var(--wpss-text, #111827);
 	--wpss-sidebar-width: 260px;
 	--wpss-radius: 8px;
 	--wpss-radius-lg: 12px;
@@ -2143,7 +2143,7 @@ select.wpss-input option,
 	font-size: 13px;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
-	background-color: #fff;
+	background-color: var(--wpss-white, #fff);
 }
 
 .wpss-sales-filter__count {
@@ -2167,7 +2167,7 @@ select.wpss-input option,
 	align-items: center;
 	gap: 4px;
 	padding: 6px 12px;
-	background: #fff;
+	background: var(--wpss-white, #fff);
 	color: var(--wpss-text, #1f2937);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;

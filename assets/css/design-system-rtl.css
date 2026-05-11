@@ -187,6 +187,47 @@
 	--wpss-icon-size: 18px;
 	--wpss-icon-size-lg: 24px;
 	--wpss-icon-stroke: 1.75;
+
+	/* ---- WordPress Admin Chrome ----
+	   Mirrors the WP admin theme so plugin admin pages blend with WP's UI.
+	   These follow WP core's exact admin palette (do not change to brand
+	   colors — admin chrome must match WP). */
+	--wpss-wp-admin-blue: #2271b1;
+	--wpss-wp-admin-blue-hover: #135e96;
+	--wpss-wp-admin-red: #d63638;
+	--wpss-wp-admin-bg: #f0f0f1;
+	--wpss-wp-admin-bg-alt: #f6f7f7;
+	--wpss-wp-admin-border: #c3c4c7;
+	--wpss-wp-admin-border-light: #dcdcde;
+	--wpss-wp-admin-text: #1d2327;
+	--wpss-wp-admin-text-muted: #50575e;
+	--wpss-wp-admin-text-secondary: #646970;
+	--wpss-wp-admin-text-subtle: #2c3338;
+
+	/* ---- Vendor Marketplace Green ----
+	   The "Fiverr-green" highlight used for vendor-positive UI moments
+	   (verified badges, earnings, available balance). Distinct from
+	   --wpss-success which is general semantic green. */
+	--wpss-vendor-green: #1dbf73;
+	--wpss-vendor-green-dark: #19a463;
+
+	/* ---- Bootstrap-style Alert Palette ----
+	   Used by older alert / status-pill components. Each pair is tinted
+	   bg + tinted fg so labels remain WCAG AA on the bg. */
+	--wpss-alert-success-bg: #d4edda;
+	--wpss-alert-success-fg: #155724;
+	--wpss-alert-danger-bg: #f8d7da;
+	--wpss-alert-danger-fg: #721c24;
+	--wpss-alert-warning-bg: #fff3cd;
+	--wpss-alert-warning-fg: #856404;
+	--wpss-alert-info-bg: #d1ecf1;
+	--wpss-alert-info-fg: #0c5460;
+
+	/* ---- Misc neutral grays in the wild ----
+	   Short-hex variants used throughout legacy CSS. Mapped to existing
+	   semantic tokens where the visual difference is &lt; 5% (imperceptible). */
+	--wpss-shadow-tint: rgba(0, 0, 0, 0.1);
+	--wpss-overlay: rgba(0, 0, 0, 0.5);
 }
 
 /* ==========================================================================
