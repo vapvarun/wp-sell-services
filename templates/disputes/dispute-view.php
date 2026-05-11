@@ -576,28 +576,28 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 }
 
 .wpss-status-open {
-	background: #fcf0e3;
-	color: #9a6700;
+	background: var(--wpss-warning-light, #fcf0e3);
+	color: var(--wpss-warning-dark, #9a6700);
 }
 
 .wpss-status-pending_review {
-	background: #e8f4fd;
-	color: #0a4b78;
+	background: var(--wpss-info-light, #e8f4fd);
+	color: var(--wpss-secondary, #0a4b78);
 }
 
 .wpss-status-escalated {
-	background: #fce4e4;
-	color: #8a1f1f;
+	background: var(--wpss-danger-light, #fce4e4);
+	color: var(--wpss-danger-dark, #8a1f1f);
 }
 
 .wpss-status-resolved {
-	background: #e6f4ea;
-	color: #1e4620;
+	background: var(--wpss-success-light, #e6f4ea);
+	color: var(--wpss-success-dark, #1e4620);
 }
 
 .wpss-status-closed {
-	background: #f0f0f1;
-	color: #50575e;
+	background: var(--wpss-wp-admin-bg, #f0f0f1);
+	color: var(--wpss-wp-admin-text-muted, #50575e);
 }
 
 .wpss-dispute-meta {
@@ -713,7 +713,7 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 
 .wpss-evidence-own .wpss-evidence-bubble {
 	background: var(--wpss-primary-color, #2271b1);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 .wpss-evidence-sender {
@@ -729,7 +729,7 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 .wpss-admin-badge {
 	padding: 2px 6px;
 	background: var(--wpss-primary-color, #2271b1);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	font-size: 10px;
 	border-radius: 4px;
 	text-transform: uppercase;
@@ -839,7 +839,7 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 	gap: 5px;
 	padding: 12px 20px;
 	background: var(--wpss-primary-color, #2271b1);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	border: none;
 	border-radius: 22px;
 	cursor: pointer;
@@ -895,8 +895,8 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 
 /* Resolution section */
 .wpss-resolution-section {
-	background: #e6f4ea;
-	border-color: #c8e6c9;
+	background: var(--wpss-success-light, #e6f4ea);
+	border-color: var(--wpss-success-border, #c8e6c9);
 }
 
 .wpss-resolution-card {
@@ -1149,32 +1149,32 @@ do_action( 'wpss_after_dispute_view', $dispute, $order );
 
 .wpss-dispute-explainer__next em {
 	font-style: normal;
-	color: #4b5563;
+	color: var(--wpss-gray-600, #4b5563);
 	font-size: 12px;
 }
 
 .wpss-dispute-explainer--info {
-	background: #eff6ff;
-	border-color: #bfdbfe;
-	color: #1e40af;
+	background: var(--wpss-info-light, #eff6ff);
+	border-color: var(--wpss-info-border, #bfdbfe);
+	color: var(--wpss-info-dark, #1e40af);
 }
 
 .wpss-dispute-explainer--warning {
-	background: #fffbeb;
-	border-color: #fde68a;
-	color: #92400e;
+	background: var(--wpss-warning-light, #fffbeb);
+	border-color: var(--wpss-warning-border, #fde68a);
+	color: var(--wpss-warning-dark, #92400e);
 }
 
 .wpss-dispute-explainer--success {
-	background: #f0fdf4;
-	border-color: #bbf7d0;
-	color: #166534;
+	background: var(--wpss-success-light, #f0fdf4);
+	border-color: var(--wpss-success-border, #bbf7d0);
+	color: var(--wpss-success-dark, #166534);
 }
 
 .wpss-dispute-explainer--muted {
-	background: #f9fafb;
-	border-color: #e5e7eb;
-	color: #374151;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-color: var(--wpss-border, #e5e7eb);
+	color: var(--wpss-text-secondary, #374151);
 }
 </style>
 

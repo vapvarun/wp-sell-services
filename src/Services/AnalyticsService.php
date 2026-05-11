@@ -224,6 +224,7 @@ class AnalyticsService {
 			$values[] = $date_from;
 		}
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where uses %s placeholders only; $orders_table from $wpdb->prefix.
 		$sql = $wpdb->prepare(
 			"SELECT
 				COUNT(*) as order_count,
@@ -235,6 +236,7 @@ class AnalyticsService {
 			$values
 		);
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above.
 		$result = $wpdb->get_row( $sql );
 
 		return array(
@@ -262,6 +264,7 @@ class AnalyticsService {
 		$group_by    = $this->get_chart_group_by( $period );
 		$date_format = $this->get_chart_date_format( $period );
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $orders_table from $wpdb->prefix; $group_by is from get_chart_group_by() which returns hardcoded SQL fragments (DATE/WEEK/MONTH).
 		$sql = $wpdb->prepare(
 			"SELECT
 				DATE_FORMAT(created_at, %s) as period,
@@ -277,6 +280,7 @@ class AnalyticsService {
 			$date_from
 		);
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above.
 		$results = $wpdb->get_results( $sql );
 
 		$labels   = array();

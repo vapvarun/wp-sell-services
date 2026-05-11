@@ -85,6 +85,7 @@ class Frontend {
 			\WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( 'wpss-icons', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		// UX primitives (form errors, autosave indicator) — dependency-free
 		// helpers used by the wizard, profile editor, and any future form UI.
@@ -95,6 +96,7 @@ class Frontend {
 			\WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( 'wpss-ux-primitives', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		wp_register_script(
 			'wpss-frontend',
@@ -103,6 +105,7 @@ class Frontend {
 			\WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( 'wpss-frontend', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		// Localize only when the script is actually enqueued.
 		add_action( 'wp_footer', array( $this, 'maybe_localize_scripts' ), 1 );

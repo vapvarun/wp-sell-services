@@ -247,8 +247,8 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				max-width: 400px;
 				margin: 40px auto;
 				padding: 30px;
-				background: #fff;
-				border: 1px solid #e5e5e5;
+				background: var(--wpss-white, #fff);
+				border: 1px solid var(--wpss-border, #e5e5e5);
 				border-radius: 8px;
 			}
 			.wpss-account-login h2 {
@@ -312,15 +312,15 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				margin: 0 auto;
 			}
 			.wpss-account-nav {
-				background: #fff;
-				border: 1px solid #e5e5e5;
+				background: var(--wpss-white, #fff);
+				border: 1px solid var(--wpss-border, #e5e5e5);
 				border-radius: 8px;
 				padding: 20px;
 			}
 			.wpss-account-user {
 				text-align: center;
 				padding-bottom: 20px;
-				border-bottom: 1px solid #eee;
+				border-bottom: 1px solid var(--wpss-bg-muted, #eee);
 				margin-bottom: 20px;
 			}
 			.wpss-account-user img {
@@ -346,15 +346,15 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				padding: 10px 15px;
 				border-radius: 4px;
 				text-decoration: none;
-				color: #333;
+				color: var(--wpss-gray-800, #333);
 			}
 			.wpss-account-menu a:hover,
 			.wpss-account-menu li.active a {
-				background: #f0f0f0;
+				background: var(--wpss-bg-muted, #f0f0f0);
 			}
 			.wpss-account-content {
-				background: #fff;
-				border: 1px solid #e5e5e5;
+				background: var(--wpss-white, #fff);
+				border: 1px solid var(--wpss-border, #e5e5e5);
 				border-radius: 8px;
 				padding: 30px;
 			}
@@ -427,7 +427,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				margin: 20px 0;
 			}
 			.wpss-stat-card {
-				background: #f8f9fa;
+				background: var(--wpss-bg-subtle, #f8f9fa);
 				padding: 20px;
 				border-radius: 8px;
 				text-align: center;
@@ -436,10 +436,10 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				display: block;
 				font-size: 32px;
 				font-weight: 700;
-				color: #1e3a5f;
+				color: var(--wpss-secondary, #1e3a5f);
 			}
 			.wpss-stat-label {
-				color: #666;
+				color: var(--wpss-text-muted, #666);
 				font-size: 14px;
 			}
 		</style>
@@ -515,11 +515,11 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 			.wpss-orders-table td {
 				padding: 12px;
 				text-align: left;
-				border-bottom: 1px solid #eee;
+				border-bottom: 1px solid var(--wpss-bg-muted, #eee);
 			}
 			.wpss-orders-table th {
 				font-weight: 600;
-				background: #f8f9fa;
+				background: var(--wpss-bg-subtle, #f8f9fa);
 			}
 			.wpss-status {
 				display: inline-block;
@@ -528,12 +528,12 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				font-size: 12px;
 				font-weight: 500;
 			}
-			.wpss-status-pending_payment { background: #fff3cd; color: #856404; }
-			.wpss-status-pending_requirements { background: #cce5ff; color: #004085; }
-			.wpss-status-in_progress { background: #d4edda; color: #155724; }
-			.wpss-status-delivered { background: #d1ecf1; color: #0c5460; }
-			.wpss-status-completed { background: #c3e6cb; color: #155724; }
-			.wpss-status-cancelled { background: #f8d7da; color: #721c24; }
+			.wpss-status-pending_payment { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
+			.wpss-status-pending_requirements { background: var(--wpss-info-border, #cce5ff); color: var(--wpss-info-dark, #004085); }
+			.wpss-status-in_progress { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
+			.wpss-status-delivered { background: var(--wpss-alert-info-bg, #d1ecf1); color: var(--wpss-alert-info-fg, #0c5460); }
+			.wpss-status-completed { background: var(--wpss-success-border, #c3e6cb); color: var(--wpss-alert-success-fg, #155724); }
+			.wpss-status-cancelled { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 		</style>
 		<?php
 	}
@@ -570,17 +570,17 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 		<style>
 			.wpss-notification {
 				padding: 15px;
-				border: 1px solid #eee;
+				border: 1px solid var(--wpss-bg-muted, #eee);
 				border-radius: 4px;
 				margin-bottom: 10px;
 			}
 			.wpss-notification.unread {
-				background: #f8f9ff;
-				border-color: #cce5ff;
+				background: var(--wpss-primary-light, #f8f9ff);
+				border-color: var(--wpss-info-border, #cce5ff);
 			}
 			.wpss-notification-time {
 				font-size: 12px;
-				color: #999;
+				color: var(--wpss-text-hint, #999);
 			}
 		</style>
 		<?php
@@ -742,7 +742,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				margin-top: 20px;
 			}
 			.wpss-service-card {
-				border: 1px solid #eee;
+				border: 1px solid var(--wpss-bg-muted, #eee);
 				border-radius: 8px;
 				overflow: hidden;
 			}
@@ -759,7 +759,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				font-size: 16px;
 			}
 			.wpss-service-price {
-				color: #1e3a5f;
+				color: var(--wpss-secondary, #1e3a5f);
 				font-weight: 600;
 			}
 			.wpss-service-actions {

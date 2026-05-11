@@ -318,7 +318,7 @@ class UpgradePage {
 			}
 			.wpss-upgrade-tagline {
 				font-size: 15px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 				max-width: 600px;
 				margin: 0 auto 20px;
 			}
@@ -326,13 +326,13 @@ class UpgradePage {
 				font-size: 16px !important;
 				padding: 8px 32px !important;
 				height: auto !important;
-				background: #1dbf73 !important;
-				border-color: #1dbf73 !important;
+				background: var(--wpss-vendor-green, #1dbf73) !important;
+				border-color: var(--wpss-vendor-green, #1dbf73) !important;
 			}
 			.wpss-upgrade-cta:hover,
 			.wpss-upgrade-cta:focus {
-				background: #19a463 !important;
-				border-color: #19a463 !important;
+				background: var(--wpss-vendor-green-dark, #19a463) !important;
+				border-color: var(--wpss-vendor-green-dark, #19a463) !important;
 			}
 			.wpss-comparison-section {
 				margin-bottom: 30px;
@@ -351,7 +351,7 @@ class UpgradePage {
 			}
 			.wpss-comparison-table thead th {
 				font-weight: 600;
-				background: #f0f0f1;
+				background: var(--wpss-wp-admin-bg, #f0f0f1);
 			}
 			.wpss-feature-col {
 				width: 60%;
@@ -361,19 +361,19 @@ class UpgradePage {
 				text-align: center;
 			}
 			.wpss-plan-pro {
-				background: #f0faf5;
+				background: var(--wpss-success-light, #f0faf5);
 			}
 			.wpss-feature-yes {
-				color: #00a32a;
+				color: var(--wpss-success, #00a32a);
 				font-size: 20px;
 			}
 			.wpss-feature-no {
-				color: #cc1818;
+				color: var(--wpss-danger-dark, #cc1818);
 				font-size: 20px;
 			}
 			.wpss-feature-text {
 				font-size: 13px;
-				color: #996800;
+				color: var(--wpss-warning-dark, #996800);
 				font-weight: 500;
 			}
 			.wpss-upgrade-footer {
@@ -382,7 +382,7 @@ class UpgradePage {
 			}
 			.wpss-upgrade-guarantee {
 				margin-top: 10px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 				font-size: 13px;
 			}
 		</style>

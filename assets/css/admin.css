@@ -10,23 +10,23 @@
    ========================================================================== */
 
 :root {
-	--wpss-admin-primary: #1dbf73;
-	--wpss-admin-primary-dark: #19a463;
-	--wpss-admin-secondary: #404145;
-	--wpss-admin-text: #1e1e1e;
-	--wpss-admin-text-light: #757575;
-	--wpss-admin-text-tertiary: #9ca3af;
-	--wpss-admin-border: #e2e8f0;
+	--wpss-admin-primary: var(--wpss-vendor-green, #1dbf73);
+	--wpss-admin-primary-dark: var(--wpss-vendor-green-dark, #19a463);
+	--wpss-admin-secondary: var(--wpss-gray-700, #404145);
+	--wpss-admin-text: var(--wpss-gray-800, #1e1e1e);
+	--wpss-admin-text-light: var(--wpss-text-muted, #757575);
+	--wpss-admin-text-tertiary: var(--wpss-text-hint, #9ca3af);
+	--wpss-admin-border: var(--wpss-border, #e2e8f0);
 	--wpss-admin-border-heavy: rgba(0, 0, 0, 0.12);
-	--wpss-admin-bg: #f0f0f1;
-	--wpss-admin-bg-secondary: #f7f7f5;
-	--wpss-admin-white: #ffffff;
-	--wpss-admin-success: #00a32a;
-	--wpss-admin-warning: #dba617;
-	--wpss-admin-danger: #d63638;
-	--wpss-admin-info: #72aee6;
-	--wpss-admin-accent: #2271b1;
-	--wpss-admin-accent-hover: #135e96;
+	--wpss-admin-bg: var(--wpss-wp-admin-bg, #f0f0f1);
+	--wpss-admin-bg-secondary: var(--wpss-bg-subtle, #f7f7f5);
+	--wpss-admin-white: var(--wpss-white, #ffffff);
+	--wpss-admin-success: var(--wpss-success, #00a32a);
+	--wpss-admin-warning: var(--wpss-warning-dark, #dba617);
+	--wpss-admin-danger: var(--wpss-wp-admin-red, #d63638);
+	--wpss-admin-info: var(--wpss-info, #72aee6);
+	--wpss-admin-accent: var(--wpss-wp-admin-blue, #2271b1);
+	--wpss-admin-accent-hover: var(--wpss-wp-admin-blue-hover, #135e96);
 	--wpss-admin-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
 	--wpss-admin-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
 	--wpss-admin-radius-sm: 4px;
@@ -496,7 +496,7 @@
 .wpss-stat-card--action:hover,
 .wpss-stat-card--action:focus {
 	border-color: var(--wpss-admin-primary, #2271b1);
-	background: #f6f7f7;
+	background: var(--wpss-wp-admin-bg-alt, #f6f7f7);
 	color: inherit;
 }
 

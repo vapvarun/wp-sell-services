@@ -171,14 +171,14 @@ do_action( 'wpss_before_order_view', $order );
 						printf(
 							/* translators: %d: total revisions used */
 							esc_html__( 'All %d revisions used', 'wp-sell-services' ),
-							$rev_used
+							(int) $rev_used
 						);
 					} else {
 						printf(
 							/* translators: 1: revisions remaining, 2: total included */
 							esc_html__( '%1$d of %2$d revisions left', 'wp-sell-services' ),
-							$rev_remaining,
-							$rev_included
+							(int) $rev_remaining,
+							(int) $rev_included
 						);
 					}
 					?>
@@ -2110,8 +2110,8 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 <style>
 /* Single Column Order View Styles */
 .wpss-order-view {
-	max-width: 800px;
-	margin: 0 auto;
+	max-width: 100%;
+	margin: 0;
 }
 
 .wpss-order-view__header {
@@ -2152,9 +2152,9 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	padding: 4px 10px;
 	font-size: 12px;
 	font-weight: 600;
-	color: #4b5563;
-	background: #f3f4f6;
-	border: 1px solid #e5e7eb;
+	color: var(--wpss-gray-600, #4b5563);
+	background: var(--wpss-bg-muted, #f3f4f6);
+	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 9999px;
 	vertical-align: middle;
 }
@@ -2165,15 +2165,15 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 }
 
 .wpss-revision-badge--last {
-	color: #b45309;
-	background: #fffbeb;
-	border-color: #fde68a;
+	color: var(--wpss-warning-dark, #b45309);
+	background: var(--wpss-warning-light, #fffbeb);
+	border-color: var(--wpss-warning-border, #fde68a);
 }
 
 .wpss-revision-badge--exhausted {
-	color: #b91c1c;
-	background: #fef2f2;
-	border-color: #fecaca;
+	color: var(--wpss-danger-dark, #b91c1c);
+	background: var(--wpss-danger-light, #fef2f2);
+	border-color: var(--wpss-danger-border, #fecaca);
 }
 
 .wpss-order-view__title-info {
@@ -2477,7 +2477,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 .wpss-file-link:hover {
 	background: var(--wpss-primary, #3b82f6);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 	border-color: var(--wpss-primary, #3b82f6);
 }
 
@@ -2732,13 +2732,13 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 .wpss-requirement-view__copy-btn:hover {
 	background: var(--wpss-primary, #3b82f6);
 	border-color: var(--wpss-primary, #3b82f6);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 .wpss-requirement-view__copy-btn.wpss-copied {
 	background: var(--wpss-success, #10b981);
 	border-color: var(--wpss-success, #10b981);
-	color: #fff;
+	color: var(--wpss-white, #fff);
 }
 
 .wpss-requirement-view__image-preview {
@@ -2762,7 +2762,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 /* Cancellation Requested Status Badge */
 .wpss-badge--status-cancellation-requested {
 	background: rgba(245, 158, 11, 0.1);
-	color: #92400e;
+	color: var(--wpss-warning-dark, #92400e);
 	border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
@@ -2772,10 +2772,10 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	align-items: flex-start;
 	gap: 0.75rem;
 	padding: 1rem;
-	background: #fff8e1;
+	background: var(--wpss-warning-light, #fff8e1);
 	border: 1px solid rgba(245, 158, 11, 0.3);
 	border-radius: 8px;
-	color: #92400e;
+	color: var(--wpss-warning-dark, #92400e);
 }
 
 .wpss-alert--warning svg {
@@ -2838,34 +2838,34 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 .wpss-requirements-form__progress {
 	margin-bottom: 24px;
 	padding: 12px 16px;
-	background: #f9fafb;
-	border: 1px solid #e5e7eb;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 8px;
 }
 .wpss-requirements-form__progress-text {
 	font-size: 13px;
 	font-weight: 600;
-	color: #374151;
+	color: var(--wpss-text-secondary, #374151);
 	margin-bottom: 8px;
 }
 .wpss-requirements-form__progress-bar {
 	width: 100%;
 	height: 6px;
-	background: #e5e7eb;
+	background: var(--wpss-border, #e5e7eb);
 	border-radius: 9999px;
 	overflow: hidden;
 }
 .wpss-requirements-form__progress-fill {
 	height: 100%;
-	background: linear-gradient( 90deg, #4f46e5, #7c3aed );
+	background: linear-gradient( 90deg, var(--wpss-primary, #4f46e5), var(--wpss-primary, #7c3aed) );
 	border-radius: 9999px;
 	transition: width 0.3s ease;
 }
 .wpss-requirements-form__progress--complete .wpss-requirements-form__progress-fill {
-	background: linear-gradient( 90deg, #10b981, #059669 );
+	background: linear-gradient( 90deg, var(--wpss-success, #10b981), var(--wpss-success, #059669) );
 }
 .wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
-	color: #047857;
+	color: var(--wpss-success-dark, #047857);
 }
 </style>
 

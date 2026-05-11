@@ -598,10 +598,11 @@ class ProposalService {
 			"SELECT * FROM {$this->table}
 			WHERE {$where_clause}
 			ORDER BY {$order_by} {$order}
-			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$values
 		);
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
 		$proposals = $wpdb->get_results( $sql );
 
 		return array_map( array( $this, 'format_proposal' ), $proposals );
@@ -647,10 +648,11 @@ class ProposalService {
 			"SELECT * FROM {$this->table}
 			WHERE {$where_clause}
 			ORDER BY {$order_by} {$order}
-			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$values
 		);
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
 		$proposals = $wpdb->get_results( $sql );
 
 		return array_map( array( $this, 'format_proposal' ), $proposals );

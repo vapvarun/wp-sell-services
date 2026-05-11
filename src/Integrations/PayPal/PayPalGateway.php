@@ -1105,7 +1105,70 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function register_settings(): void {
-		register_setting( 'wpss_paypal_settings', self::OPTION_NAME );
+		register_setting(
+			'wpss_paypal_settings',
+			self::OPTION_NAME,
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_settings' ),
+				'default'           => array(),
+			)
+		);
+	}
+
+	/**
+	 * Sanitize the settings array before persisting.
+	 *
+	 * Type-driven: checkbox→'1'/'', text/password/email/url/textarea→
+	 * sanitize_text_field, number→clamp to min/max, select→whitelist
+	 * against options. Unknown keys dropped to defeat hidden-field
+	 * tampering.
+	 *
+	 * @param mixed $value Raw input from the options form.
+	 * @return array<string, mixed>
+	 */
+	public function sanitize_settings( $value ): array {
+		$value = is_array( $value ) ? $value : array();
+		$out   = array();
+
+		foreach ( $this->get_settings_fields() as $key => $field ) {
+			$raw = $value[ $key ] ?? '';
+			switch ( $field['type'] ?? 'text' ) {
+				case 'checkbox':
+					$out[ $key ] = '1' === (string) $raw ? '1' : '';
+					break;
+				case 'select':
+					$opts        = is_array( $field['options'] ?? null ) ? array_keys( $field['options'] ) : array();
+					$raw         = sanitize_text_field( wp_unslash( (string) $raw ) );
+					$out[ $key ] = $opts && ! in_array( $raw, $opts, true ) ? ( $field['default'] ?? '' ) : $raw;
+					break;
+				case 'textarea':
+					$out[ $key ] = sanitize_textarea_field( wp_unslash( (string) $raw ) );
+					break;
+				case 'email':
+					$out[ $key ] = sanitize_email( wp_unslash( (string) $raw ) );
+					break;
+				case 'url':
+					$out[ $key ] = esc_url_raw( wp_unslash( (string) $raw ) );
+					break;
+				case 'number':
+					$num = '' === $raw ? 0.0 : (float) $raw;
+					if ( isset( $field['min'] ) && $num < (float) $field['min'] ) {
+						$num = (float) $field['min'];
+					}
+					if ( isset( $field['max'] ) && $num > (float) $field['max'] ) {
+						$num = (float) $field['max'];
+					}
+					$out[ $key ] = (string) $num;
+					break;
+				case 'password':
+				case 'text':
+				default:
+					$out[ $key ] = sanitize_text_field( wp_unslash( (string) $raw ) );
+			}
+		}
+
+		return $out;
 	}
 
 	/**

@@ -1,4 +1,6 @@
-# CLAUDE.md
+# CLAUDE.md — WP Sell Services
+
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 138 REST endpoints (24 controllers), 106 AJAX handlers, 18 custom DB tables, 6 Gutenberg blocks, 19 shortcodes, 5 WP-CLI commands, 4 cron jobs, 232 hook firings, 25 admin pages. Use this before grepping. See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md), [`audit/CODE_FLOWS.md`](audit/CODE_FLOWS.md), [`audit/ROLE_MATRIX.md`](audit/ROLE_MATRIX.md), [`audit/wppqa-baseline-2026-05-08/SUMMARY.md`](audit/wppqa-baseline-2026-05-08/SUMMARY.md). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

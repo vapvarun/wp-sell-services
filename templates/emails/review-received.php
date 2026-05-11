@@ -50,7 +50,7 @@ $stars   = str_repeat( '★', $rating ) . str_repeat( '☆', 5 - $rating );
 					printf(
 						/* translators: %d: rating out of 5 */
 						esc_html__( '%d / 5', 'wp-sell-services' ),
-						$rating
+						(int) $rating
 					);
 					?>
 				</span>

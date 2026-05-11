@@ -172,22 +172,22 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 		.wpss-portfolio-lightbox{display:none;position:fixed;inset:0;z-index:99999}
 		.wpss-portfolio-lightbox[aria-hidden="false"]{display:flex;align-items:center;justify-content:center}
 		.wpss-portfolio-lightbox__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.85)}
-		.wpss-portfolio-lightbox__content{position:relative;display:flex;flex-direction:column;max-width:900px;max-height:90vh;width:90vw;background:#fff;border-radius:12px;overflow:hidden;z-index:1}
-		.wpss-portfolio-lightbox__close{position:absolute;top:12px;right:12px;z-index:2;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:24px;cursor:pointer;line-height:1}
+		.wpss-portfolio-lightbox__content{position:relative;display:flex;flex-direction:column;max-width:900px;max-height:90vh;width:90vw;background:var(--wpss-white, #fff);border-radius:12px;overflow:hidden;z-index:1}
+		.wpss-portfolio-lightbox__close{position:absolute;top:12px;right:12px;z-index:2;background:rgba(0,0,0,.5);color:var(--wpss-white, #fff);border:none;border-radius:50%;width:36px;height:36px;font-size:24px;cursor:pointer;line-height:1}
 		.wpss-portfolio-lightbox__close:hover{background:rgba(0,0,0,.8)}
-		.wpss-portfolio-lightbox__nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;background:rgba(0,0,0,.4);color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:28px;cursor:pointer;line-height:1}
+		.wpss-portfolio-lightbox__nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;background:rgba(0,0,0,.4);color:var(--wpss-white, #fff);border:none;width:40px;height:40px;border-radius:50%;font-size:28px;cursor:pointer;line-height:1}
 		.wpss-portfolio-lightbox__nav:hover{background:rgba(0,0,0,.7)}
 		.wpss-portfolio-lightbox__prev{left:12px}
 		.wpss-portfolio-lightbox__next{right:12px}
-		.wpss-portfolio-lightbox__image-wrap{flex:1;min-height:0;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center}
+		.wpss-portfolio-lightbox__image-wrap{flex:1;min-height:0;overflow:hidden;background:var(--wpss-bg-muted, #f3f4f6);display:flex;align-items:center;justify-content:center}
 		.wpss-portfolio-lightbox__image{max-width:100%;max-height:60vh;object-fit:contain}
-		.wpss-portfolio-lightbox__info{padding:20px 24px;border-top:1px solid #e5e7eb}
+		.wpss-portfolio-lightbox__info{padding:20px 24px;border-top:1px solid var(--wpss-border, #e5e7eb)}
 		.wpss-portfolio-lightbox__title{font-size:18px;font-weight:600;margin:0 0 6px}
-		.wpss-portfolio-lightbox__desc{font-size:14px;color:#6b7280;margin:0 0 12px;line-height:1.6}
+		.wpss-portfolio-lightbox__desc{font-size:14px;color:var(--wpss-text-muted, #6b7280);margin:0 0 12px;line-height:1.6}
 		.wpss-portfolio-lightbox__tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 		.wpss-portfolio-lightbox__tags:empty{display:none}
-		.wpss-portfolio-lightbox__tags span{padding:2px 10px;background:#f3f4f6;border-radius:20px;font-size:12px;color:#374151;font-weight:500}
-		.wpss-portfolio-lightbox__link{display:inline-flex;align-items:center;gap:4px;color:#6366f1;font-size:14px;font-weight:500;text-decoration:none}
+		.wpss-portfolio-lightbox__tags span{padding:2px 10px;background:var(--wpss-bg-muted, #f3f4f6);border-radius:20px;font-size:12px;color:var(--wpss-text-secondary, #374151);font-weight:500}
+		.wpss-portfolio-lightbox__link{display:inline-flex;align-items:center;gap:4px;color:var(--wpss-primary, #6366f1);font-size:14px;font-weight:500;text-decoration:none}
 		.wpss-portfolio-lightbox__link:hover{text-decoration:underline}
 		</style>
 		<script>

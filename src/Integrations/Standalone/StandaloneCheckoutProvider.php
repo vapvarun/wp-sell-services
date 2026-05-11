@@ -683,7 +683,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				position: relative; z-index: 1;
 			}
 			.wpss-co-step:first-child .wpss-co-step__dot {
-				background: var(--wpss-primary); border-color: var(--wpss-primary); color: #fff;
+				background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-white, #fff);
 			}
 			.wpss-co-step__label { font-size: var(--wpss-text-xs); color: var(--wpss-text-muted); font-weight: 500; }
 

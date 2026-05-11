@@ -11,27 +11,27 @@
 
 :root {
 	/* Primary - Indigo */
-	--wpss-primary: #4f46e5;
-	--wpss-primary-dark: #4338ca;
-	--wpss-primary-light: #eef2ff;
+	--wpss-primary: var(--wpss-primary, #4f46e5);
+	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
+	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
 
 	/* Secondary & Text */
-	--wpss-secondary: #1e293b;
-	--wpss-text: #1f2937;
-	--wpss-text-light: #6b7280;
+	--wpss-secondary: var(--wpss-secondary, #1e293b);
+	--wpss-text: var(--wpss-gray-800, #1f2937);
+	--wpss-text-light: var(--wpss-text-muted, #6b7280);
 
 	/* UI Colors */
-	--wpss-border: #e5e7eb;
-	--wpss-background: #f9fafb;
-	--wpss-white: #fff;
-	--wpss-black: #111827;
+	--wpss-border: var(--wpss-border, #e5e7eb);
+	--wpss-background: var(--wpss-bg-subtle, #f9fafb);
+	--wpss-white: var(--wpss-white, #fff);
+	--wpss-black: var(--wpss-text, #111827);
 
 	/* Semantic Colors */
-	--wpss-success: #10b981;
-	--wpss-warning: #f59e0b;
-	--wpss-danger: #ef4444;
-	--wpss-info: #3b82f6;
-	--wpss-star: #fbbf24;
+	--wpss-success: var(--wpss-success, #10b981);
+	--wpss-warning: var(--wpss-warning, #f59e0b);
+	--wpss-danger: var(--wpss-danger, #ef4444);
+	--wpss-info: var(--wpss-info, #3b82f6);
+	--wpss-star: var(--wpss-star, #fbbf24);
 
 	/* Border Radius */
 	--wpss-radius: 8px;
@@ -1449,10 +1449,10 @@ select:invalid {
 	align-items: center;
 	gap: 6px;
 	font-size: 13px;
-	color: #6b7280;
+	color: var(--wpss-text-muted, #6b7280);
 	margin: 0 auto 16px;
 	padding: 6px 12px;
-	background: #f9fafb;
+	background: var(--wpss-bg-subtle, #f9fafb);
 	border-radius: 9999px;
 	max-width: max-content;
 }
@@ -1460,11 +1460,11 @@ select:invalid {
 .wpss-suborder-crumb .wpss-icon {
 	width: 14px;
 	height: 14px;
-	color: #9ca3af;
+	color: var(--wpss-text-hint, #9ca3af);
 }
 
 .wpss-suborder-crumb a {
-	color: #4f46e5;
+	color: var(--wpss-primary, #4f46e5);
 	font-weight: 500;
 	text-decoration: none;
 }

@@ -11,28 +11,28 @@
 
 :root {
 	/* Primary - Indigo */
-	--wpss-primary: #4f46e5;
-	--wpss-primary-hover: #4338ca;
-	--wpss-primary-dark: #4338ca;
-	--wpss-primary-light: #eef2ff;
+	--wpss-primary: var(--wpss-primary, #4f46e5);
+	--wpss-primary-hover: var(--wpss-primary-dark, #4338ca);
+	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
+	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
 
 	/* Secondary */
-	--wpss-secondary: #10b981;
+	--wpss-secondary: var(--wpss-success, #10b981);
 
 	/* Text */
-	--wpss-text: #1f2937;
-	--wpss-text-muted: #6b7280;
+	--wpss-text: var(--wpss-gray-800, #1f2937);
+	--wpss-text-muted: var(--wpss-text-muted, #6b7280);
 
 	/* UI Colors */
-	--wpss-border: #e5e7eb;
-	--wpss-bg: #f9fafb;
-	--wpss-white: #fff;
+	--wpss-border: var(--wpss-border, #e5e7eb);
+	--wpss-bg: var(--wpss-bg-subtle, #f9fafb);
+	--wpss-white: var(--wpss-white, #fff);
 
 	/* Semantic */
-	--wpss-star: #fbbf24;
-	--wpss-success: #10b981;
-	--wpss-error: #ef4444;
-	--wpss-warning: #f59e0b;
+	--wpss-star: var(--wpss-star, #fbbf24);
+	--wpss-success: var(--wpss-success, #10b981);
+	--wpss-error: var(--wpss-danger, #ef4444);
+	--wpss-warning: var(--wpss-warning, #f59e0b);
 
 	/* Shadows */
 	--wpss-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);

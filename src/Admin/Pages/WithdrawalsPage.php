@@ -126,6 +126,7 @@ class WithdrawalsPage {
 				\WPSS_VERSION,
 				true
 			);
+			wp_set_script_translations( 'wpss-admin', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 		}
 
 		wp_enqueue_script( 'wpss-admin' );
@@ -162,12 +163,14 @@ class WithdrawalsPage {
 		$where_clause = implode( ' AND ', $where );
 
 		// Count total.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_clause is built from hardcoded fragments with %s/%d placeholders only; user values pass through prepare() below.
 		$count_query = "SELECT COUNT(*) FROM {$table} w WHERE {$where_clause}";
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $count_query has hardcoded fragments only.
 		$total = $values
 			? (int) $wpdb->get_var( $wpdb->prepare( $count_query, ...$values ) )
-			: (int) $wpdb->get_var( $count_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			: (int) $wpdb->get_var( $count_query );
+		// phpcs:enable
 
 		// Get withdrawals.
 		$query_values   = $values;
@@ -491,7 +494,7 @@ class WithdrawalsPage {
 			}
 			.wpss-vendor-email {
 				font-size: 12px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 			}
 
 			.wpss-status-badge {
@@ -501,10 +504,10 @@ class WithdrawalsPage {
 				font-size: 12px;
 				font-weight: 500;
 			}
-			.wpss-status-pending { background: #fff3cd; color: #856404; }
-			.wpss-status-approved { background: #d1e7f3; color: #0a4b78; }
-			.wpss-status-completed { background: #d4edda; color: #155724; }
-			.wpss-status-rejected { background: #f8d7da; color: #721c24; }
+			.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
+			.wpss-status-approved { background: var(--wpss-info-light, #d1e7f3); color: var(--wpss-secondary, #0a4b78); }
+			.wpss-status-completed { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
+			.wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 
 			.wpss-withdrawal-actions {
 				display: flex;
@@ -519,18 +522,18 @@ class WithdrawalsPage {
 			.wpss-withdrawal-details {
 				margin-top: 5px;
 				font-size: 12px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 			}
 			.wpss-withdrawal-details code {
 				font-size: 11px;
-				background: #f0f0f1;
+				background: var(--wpss-wp-admin-bg, #f0f0f1);
 				padding: 1px 4px;
 			}
 
 			.wpss-no-items {
 				text-align: center;
 				padding: 40px 20px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 			}
 
 			/* Modal */
@@ -544,7 +547,7 @@ class WithdrawalsPage {
 				background-color: rgba(0, 0, 0, 0.6);
 			}
 			.wpss-modal-content {
-				background-color: #fff;
+				background-color: var(--wpss-white, #fff);
 				margin: 10% auto;
 				padding: 20px;
 				border-radius: 4px;
@@ -562,9 +565,9 @@ class WithdrawalsPage {
 				font-size: 28px;
 				font-weight: bold;
 				cursor: pointer;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 			}
-			.wpss-modal-close:hover { color: #1d2327; }
+			.wpss-modal-close:hover { color: var(--wpss-wp-admin-text, #1d2327); }
 			.wpss-modal h2 {
 				margin-top: 0;
 				padding-right: 30px;

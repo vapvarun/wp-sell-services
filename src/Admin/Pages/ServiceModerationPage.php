@@ -489,14 +489,14 @@ class ServiceModerationPage {
 			.wpss-moderation-table .column-actions { width: 15%; }
 			.wpss-moderation-table .service-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
 			.wpss-moderation-table .wpss-status-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-			.wpss-moderation-table .wpss-status-pending { background: #fff3cd; color: #856404; }
-			.wpss-moderation-table .wpss-status-approved { background: #d4edda; color: #155724; }
-			.wpss-moderation-table .wpss-status-rejected { background: #f8d7da; color: #721c24; }
+			.wpss-moderation-table .wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
+			.wpss-moderation-table .wpss-status-approved { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
+			.wpss-moderation-table .wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 			.wpss-moderation-table .row-actions { padding-top: 5px; }
 			.wpss-moderation-table .row-actions a { margin-right: 10px; }
-			.wpss-moderation-table .approve-action { color: #46b450; }
-			.wpss-moderation-table .reject-action { color: #dc3232; }
-			.wpss-rejection-reason { color: #666; font-size: 12px; font-style: italic; margin-top: 5px; }
+			.wpss-moderation-table .approve-action { color: var(--wpss-success, #46b450); }
+			.wpss-moderation-table .reject-action { color: var(--wpss-danger, #dc3232); }
+			.wpss-rejection-reason { color: var(--wpss-text-muted, #666); font-size: 12px; font-style: italic; margin-top: 5px; }
 		</style>
 
 		<script>
@@ -1104,9 +1104,9 @@ class ServiceModerationPage {
 		static $styles_added = false;
 		if ( ! $styles_added ) {
 			echo '<style>
-				.wpss-status-pending { background: #fff3cd; color: #856404; }
-				.wpss-status-approved { background: #d4edda; color: #155724; }
-				.wpss-status-rejected { background: #f8d7da; color: #721c24; }
+				.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
+				.wpss-status-approved { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
+				.wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 			</style>';
 			$styles_added = true;
 		}

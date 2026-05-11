@@ -120,6 +120,7 @@ class BlocksManager {
 			$version,
 			true
 		);
+		wp_set_script_translations( 'wpss-blocks-editor', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		wp_localize_script(
 			'wpss-blocks-editor',
@@ -189,6 +190,7 @@ class BlocksManager {
 			\WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( 'wpss-blocks', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		wp_localize_script(
 			'wpss-blocks',

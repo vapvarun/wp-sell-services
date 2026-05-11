@@ -638,6 +638,7 @@ class Admin {
 			\WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( 'wpss-admin', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		wp_localize_script(
 			'wpss-admin',
@@ -682,6 +683,7 @@ class Admin {
 			\WPSS_VERSION,
 			true
 		);
+		wp_set_script_translations( 'wpss-admin-icons', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		// Settings page scripts.
 		if ( $this->is_settings_page( $hook ) ) {
@@ -692,6 +694,7 @@ class Admin {
 				\WPSS_VERSION,
 				true
 			);
+			wp_set_script_translations( 'wpss-admin-toast', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 			wp_enqueue_script(
 				'wpss-admin-settings-nav',
@@ -700,6 +703,7 @@ class Admin {
 				\WPSS_VERSION,
 				true
 			);
+			wp_set_script_translations( 'wpss-admin-settings-nav', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 			// Pages tab: create page AJAX.
 			wp_enqueue_script(
@@ -709,6 +713,7 @@ class Admin {
 				\WPSS_VERSION,
 				true
 			);
+			wp_set_script_translations( 'wpss-admin-settings-pages', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 			wp_localize_script(
 				'wpss-admin-settings-pages',
@@ -736,6 +741,7 @@ class Admin {
 				\WPSS_VERSION,
 				true
 			);
+			wp_set_script_translations( 'wpss-admin-settings-emails', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 			wp_localize_script(
 				'wpss-admin-settings-emails',
@@ -755,6 +761,7 @@ class Admin {
 				\WPSS_VERSION,
 				true
 			);
+			wp_set_script_translations( 'wpss-admin-settings-demo', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 			wp_localize_script(
 				'wpss-admin-settings-demo',

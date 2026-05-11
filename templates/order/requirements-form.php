@@ -413,44 +413,44 @@ if ( ! empty( $requirements ) && is_array( $requirements ) ) {
 	.wpss-requirements-form__progress {
 		margin-bottom: 24px;
 		padding: 12px 16px;
-		background: #f9fafb;
-		border: 1px solid #e5e7eb;
+		background: var(--wpss-bg-subtle, #f9fafb);
+		border: 1px solid var(--wpss-border, #e5e7eb);
 		border-radius: 8px;
 	}
 	.wpss-requirements-form__progress-text {
 		font-size: 13px;
 		font-weight: 600;
-		color: #374151;
+		color: var(--wpss-text-secondary, #374151);
 		margin-bottom: 8px;
 	}
 	.wpss-requirements-form__progress-bar {
 		width: 100%;
 		height: 6px;
-		background: #e5e7eb;
+		background: var(--wpss-border, #e5e7eb);
 		border-radius: 9999px;
 		overflow: hidden;
 	}
 	.wpss-requirements-form__progress-fill {
 		height: 100%;
-		background: linear-gradient( 90deg, #4f46e5, #7c3aed );
+		background: linear-gradient( 90deg, var(--wpss-primary, #4f46e5), var(--wpss-primary, #7c3aed) );
 		border-radius: 9999px;
 		transition: width 0.3s ease;
 	}
 	.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-fill {
-		background: linear-gradient( 90deg, #10b981, #059669 );
+		background: linear-gradient( 90deg, var(--wpss-success, #10b981), var(--wpss-success, #059669) );
 	}
 	.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
-		color: #047857;
+		color: var(--wpss-success-dark, #047857);
 	}
 	.wpss-requirements-form__notice--warning {
 		display: flex;
 		gap: 12px;
 		padding: 12px 16px;
-		background: #fffbeb;
-		border: 1px solid #fde68a;
+		background: var(--wpss-warning-light, #fffbeb);
+		border: 1px solid var(--wpss-warning-border, #fde68a);
 		border-radius: 8px;
 		margin-bottom: 16px;
-		color: #92400e;
+		color: var(--wpss-warning-dark, #92400e);
 	}
 	.wpss-requirements-form__notice--warning .wpss-icon {
 		flex-shrink: 0;

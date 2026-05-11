@@ -220,6 +220,7 @@ class VendorsPage {
 		$where_clause = implode( ' AND ', $where );
 
 		// Count total.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_clause is built from hardcoded fragments with %s placeholders only; user values pass through prepare() below.
 		$count_query = "
 			SELECT COUNT(DISTINCT vp.user_id)
 			FROM {$wpdb->prefix}wpss_vendor_profiles vp
@@ -227,9 +228,11 @@ class VendorsPage {
 			WHERE {$where_clause}
 		";
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $count_query has hardcoded fragments only.
 		$total = $values
 			? (int) $wpdb->get_var( $wpdb->prepare( $count_query, ...$values ) )
 			: (int) $wpdb->get_var( $count_query );
+		// phpcs:enable
 
 		// Get vendors with stats.
 		$orderby_map = array(
@@ -629,15 +632,15 @@ class VendorsPage {
 			}
 			.wpss-vendor-email {
 				font-size: 12px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 			}
 
 			.wpss-rating-stars {
-				color: #ffb900;
+				color: var(--wpss-warning, #ffb900);
 			}
 			.wpss-rating-count {
 				font-size: 12px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 			}
 
 			.wpss-status-badge {
@@ -647,9 +650,9 @@ class VendorsPage {
 				font-size: 12px;
 				font-weight: 500;
 			}
-			.wpss-status-active { background: #d4edda; color: #155724; }
-			.wpss-status-pending { background: #fff3cd; color: #856404; }
-			.wpss-status-suspended { background: #f8d7da; color: #721c24; }
+			.wpss-status-active { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
+			.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
+			.wpss-status-suspended { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
 
 			.wpss-vendor-actions {
 				display: flex;
@@ -664,7 +667,7 @@ class VendorsPage {
 			.wpss-no-items {
 				text-align: center;
 				padding: 40px 20px;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 			}
 
 			/* Modal */
@@ -678,7 +681,7 @@ class VendorsPage {
 				background-color: rgba(0, 0, 0, 0.6);
 			}
 			.wpss-modal-content {
-				background-color: #fff;
+				background-color: var(--wpss-white, #fff);
 				margin: 5% auto;
 				padding: 0;
 				border-radius: 4px;
@@ -695,10 +698,10 @@ class VendorsPage {
 				font-size: 28px;
 				font-weight: bold;
 				cursor: pointer;
-				color: #646970;
+				color: var(--wpss-wp-admin-text-secondary, #646970);
 				z-index: 1;
 			}
-			.wpss-modal-close:hover { color: #1d2327; }
+			.wpss-modal-close:hover { color: var(--wpss-wp-admin-text, #1d2327); }
 			.wpss-modal-loading {
 				padding: 60px;
 				text-align: center;
@@ -716,7 +719,7 @@ class VendorsPage {
 				align-items: center;
 				gap: 20px;
 				padding-bottom: 20px;
-				border-bottom: 1px solid #dcdcde;
+				border-bottom: 1px solid var(--wpss-wp-admin-border-light, #dcdcde);
 				margin-bottom: 20px;
 			}
 			.wpss-vendor-header img {
@@ -734,7 +737,7 @@ class VendorsPage {
 				margin-bottom: 20px;
 			}
 			.wpss-vendor-stat {
-				background: #f6f7f7;
+				background: var(--wpss-wp-admin-bg-alt, #f6f7f7);
 				padding: 15px;
 				border-radius: 4px;
 				text-align: center;

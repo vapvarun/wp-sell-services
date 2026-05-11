@@ -118,15 +118,15 @@ do_action( 'wpss_notifications_after', $user_id );
 	align-items: flex-start;
 	gap: 15px;
 	padding: 15px;
-	background: #fff;
-	border: 1px solid #e5e5e5;
+	background: var(--wpss-white, #fff);
+	border: 1px solid var(--wpss-border, #e5e5e5);
 	border-radius: 8px;
 	transition: background 0.2s;
 }
 
 .wpss-notification.wpss-unread {
-	background: #f0f8ff;
-	border-color: #74b9ff;
+	background: var(--wpss-info-light, #f0f8ff);
+	border-color: var(--wpss-info, #74b9ff);
 }
 
 .wpss-notification-icon {
@@ -144,34 +144,34 @@ do_action( 'wpss_notifications_after', $user_id );
 }
 
 .wpss-notification-message {
-	color: #636e72;
+	color: var(--wpss-gray-600, #636e72);
 	font-size: 14px;
 	margin-bottom: 4px;
 }
 
 .wpss-notification-time {
 	font-size: 12px;
-	color: #999;
+	color: var(--wpss-text-hint, #999);
 }
 
 .wpss-notification-link {
 	display: inline-block;
 	padding: 6px 12px;
-	background: #f5f5f5;
+	background: var(--wpss-bg-subtle, #f5f5f5);
 	border-radius: 4px;
 	text-decoration: none;
 	font-size: 13px;
-	color: #333;
+	color: var(--wpss-gray-800, #333);
 }
 
 .wpss-notification-link:hover {
-	background: #e5e5e5;
+	background: var(--wpss-border, #e5e5e5);
 }
 
 .wpss-no-notifications {
 	text-align: center;
 	padding: 40px 20px;
-	color: #636e72;
+	color: var(--wpss-gray-600, #636e72);
 }
 </style>
 
