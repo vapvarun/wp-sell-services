@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -258,6 +258,13 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.1.1 - 2026-05-22 =
+
+**Packaging & Build**
+
+* The release package now bundles the Composer autoloader and the Action Scheduler runtime library, so the plugin loads with zero `composer install` — both the source repository and the distributed ZIP are complete on their own
+* Excluded the bundled EDD Software Licensing SDK (which ships with its own text domain) from the text-domain check so the standard release build runs clean
 
 = 1.1.0 - 2026-04-23 =
 
