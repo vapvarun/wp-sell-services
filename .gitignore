@@ -1,5 +1,16 @@
-# Dependencies
+# Dependencies.
+# RULE: everything required to RUN the product ships in the repo AND the zip —
+# no developer or customer ever runs `composer install` to use the plugin.
+# So the prod Composer autoloader and every runtime library are TRACKED:
+#   - autoload.php + composer/   → the autoloader infrastructure
+#   - woocommerce/action-scheduler → runtime `require` (scheduled jobs)
+#   - easy-digital-downloads     → directly-bundled SDK (not in composer.json)
+# Dev-only tooling (phpunit, phpstan, wpcs, polyfills, …) stays ignored and is
+# restored locally via `composer install`.
 /vendor/*
+!/vendor/autoload.php
+!/vendor/composer/
+!/vendor/woocommerce/
 !/vendor/easy-digital-downloads/
 /node_modules/
 
