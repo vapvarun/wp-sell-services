@@ -68,6 +68,10 @@ module.exports = function ( grunt ) {
 					'!tests/**',
 					'!dist/**',
 					'!scripts/**',
+					// Bundled third-party SDK — ships with its own
+					// "easy-digital-downloads" text domain; not ours to
+					// translate or re-domain.
+					'!includes/EDD_SL_Plugin_Updater.php',
 				],
 				expand: true,
 			},
