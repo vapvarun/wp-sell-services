@@ -37,6 +37,16 @@ Added in 1.1.0:
 - **Action Scheduler migration** — every recurring job (order lifecycle sweeps, dispute deadlines, audit-log retention, sub-order cleanups, auto-withdrawal, vendor-stat refresh, seller-level recalc) runs on AS. Facade at `Services\Scheduler` (`schedule_recurring`, `has_pending`, `unschedule_all_for_group`, `on_ready`). Every free-plugin hook uses group `wpss`; Pro uses `wpss-pro`. Upgrade-path `clear_legacy_wpcron_hooks()` runs once per site on version bump. `composer.json` pins `woocommerce/action-scheduler ^3.8`.
 - **Empty-state pattern** — shared `.wpss-empty-state` BEM block (admin + frontend). Lucide icons via `Services\Icon::render()`. Orders + Disputes admin wrap their WP_List_Tables in `.wpss-list-card`; when empty they render the designed card instead of a bare sentence. Same treatment on the `[wpss_dashboard]` buyer-orders tab and the vendor-profile services section.
 
+## Dependency & Release Rule — Ship Everything, Never Require `composer install`
+
+**Everything required to USE the product ships in BOTH the git repo and the distributed zip.** No developer and no customer should ever have to run `composer install` to make the plugin work. QA testers and customers must never get stuck on a missing autoloader or missing class.
+
+- **Runtime `vendor/` is committed and shipped.** Only true dev-only tooling (phpunit, phpstan, wpcs, polyfills) may be excluded — and excluding it must NEVER delete `vendor/autoload.php` or any class loaded at runtime.
+- **Verify before any release/commit that touches `vendor/`, `.distignore`, or autoloading:** a fresh clone AND the dist zip must both load with zero `composer install`. (Regression to avoid: an "untrack dev vendor files" change once removed the autoloader and white-screened the site until `composer install` was re-run.)
+- **Pro reuses Free's libraries.** Free is a hard dependency of Pro, so any library already shipped in Free is reused by Pro via Free's autoloader — Pro must not bundle or load its own second copy. See `wp-sell-services-pro/CLAUDE.md`.
+
+> The `composer install` below is a **developer convenience for the dev toolchain only** — it is NOT a prerequisite for the plugin to run.
+
 ## Build & Development Commands
 
 ```bash
