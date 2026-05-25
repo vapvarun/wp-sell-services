@@ -259,12 +259,12 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
-= 1.1.1 - 2026-05-22 =
+= 1.1.1 =
 
-**Packaging & Build**
+**Install & reliability**
 
-* The release package now bundles the Composer autoloader and the Action Scheduler runtime library, so the plugin loads with zero `composer install` — both the source repository and the distributed ZIP are complete on their own
-* Excluded the bundled EDD Software Licensing SDK (which ships with its own text domain) from the text-domain check so the standard release build runs clean
+* Fix: The plugin now activates cleanly from the downloaded zip on every install. Previously, on some hosts the plugin could fatal-error on activation if the install was missing a runtime dependency. The release zip now bundles everything the plugin needs to run.
+* Improvement: The release zip and the source repository are now both complete and self-contained — no extra setup step is required after install.
 
 = 1.1.0 - 2026-04-23 =
 
@@ -272,37 +272,30 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 * Vendors, Withdrawals, and Moderation admin pages now share the same shell — wrapper, heading, stats strip, and filter row — so operators see a consistent surface regardless of which list they open
 * Moderation gains a 4-card stats strip (Total / Pending / Approved / Rejected) matching the other two listing pages
-* Stats cards use a unified responsive grid (`auto-fit` minmax 150px) that collapses from 5-up on desktop to 2-up at 390px without page-specific media queries
+* Stats cards now use a single responsive grid that collapses from 5-up on desktop to 2-up on small phones, with no per-page styling required
 * Shared status-color palette — green for active/approved/completed, amber for pending, red for suspended/rejected
 
 **First-Time Guide (Admin + Frontend)**
 
-* Shepherd.js-powered 8-step admin walkthrough auto-opens on the WP Sell Services dashboard the first time an admin lands there — welcome → dashboard cards → quick actions → services → vendors → orders → settings → finish
-* Role-aware frontend tour on the `[wpss_dashboard]` shortcode — active sellers see a 9-step walkthrough covering Orders, Requests, Services, Sales, Earnings, Messages, and a sign-off; buyers-only see a shorter flow with a "Want to sell too?" CTA highlight pointing at the Start Selling button
-* "Replay tour" trigger on both the admin dashboard header and the frontend dashboard header so users can re-run the walkthrough on demand
-* Completion persisted per-user via `wpss_tour_completed` meta — once finished or skipped, the tour never re-interrupts
-* REST endpoint `POST /wpss/v1/tour/complete` for completion persistence
-* `wpss_tour_steps` filter so Pro (and other extensions) can append custom steps
+* New: An 8-step admin walkthrough auto-opens on the WP Sell Services dashboard the first time an administrator lands there, covering the dashboard cards, services, vendors, orders, and settings.
+* New: A role-aware frontend walkthrough on the `[wpss_dashboard]` shortcode. Active sellers get a 9-step tour covering Orders, Requests, Services, Sales, Earnings, and Messages. Buyers-only see a shorter flow with a "Want to sell too?" prompt highlighting the Start Selling button.
+* New: A "Replay tour" button on both the admin and frontend dashboard headers so anyone can re-run the walkthrough on demand. Once finished or skipped, the tour never auto-opens again for that user.
+* For developers: New `wpss_tour_steps` filter and `POST /wpss/v1/tour/complete` REST endpoint let Pro (and other extensions) append custom steps and integrate with the completion flag.
 
-**Action Scheduler Migration**
+**Reliable background jobs**
 
-* All recurring jobs (order lifecycle sweeps, dispute deadlines, audit-log retention, sub-order cleanups, auto-withdrawal, vendor-stat refresh, seller-level recalc) now run on Action Scheduler instead of WP-Cron
-* Durable retry, admin-visible action history (Tools → Scheduled Actions), and no more dispute cron blocking page loads
-* `Services\Scheduler` facade wraps AS so every scheduling call routes through one entry point — tests can stub it, and the `wpss` / `wpss-pro` group convention lets the deactivator sweep everything in one call
-* Upgrade path: installs upgrading from pre-1.1.0 automatically scrub their legacy WP-Cron entries once, then re-schedule against AS
-* `composer.json` pins `woocommerce/action-scheduler ^3.8`
+* Improvement: Every recurring job the plugin runs (order lifecycle sweeps, dispute deadlines, sub-order cleanups, auto-withdrawal, vendor-stat refresh, seller-level recalc) is now powered by the more reliable Action Scheduler library. You can review and replay any background job from Tools &gt; Scheduled Actions. Page loads are no longer slowed down when the dispute cron is due.
+* Upgrade path: on the first admin page load after upgrading from a pre-1.1.0 install, the plugin migrates its old scheduled jobs to the new system automatically — no action required from you.
 
-**Empty-State Polish**
+**Empty-state polish**
 
-* New `Services\Icon::render()` helper emits Lucide icon placeholders (safe-to-echo, attrs escaped, name slug-sanitized) — pairs with the `lucide` vendor library already loaded by the tour
-* Shared `.wpss-empty-state` BEM block on both admin and frontend — icon + title + body + CTA, collapses to full-width CTA stack below 640px
-* Orders + Disputes admin wrap the WP_List_Table in the shared `.wpss-list-card` shell so filters and body match the Vendors / Withdrawals / Moderation layout
-* `OrdersListTable::no_items()`, `DisputesListTable::no_items()`, `[wpss_dashboard]` buyer-orders tab, and the vendor-profile services section all emit the designed empty-state instead of bare "No X found." sentences
-* Help tabs added to Orders + Disputes admin screens linking to the plugin docs and workflow guides
+* Improvement: Empty lists (Orders, Disputes, the buyer-orders tab on the frontend dashboard, and the vendor profile services section) now show a designed empty state with an icon, a one-line explanation, and a call-to-action button — instead of a bare "No X found." sentence.
+* Improvement: Orders and Disputes admin screens now use the same card-shell layout as Vendors, Withdrawals, and Moderation, so all six listing screens look and behave consistently.
+* New: Help tabs added to the Orders and Disputes admin screens, linking to the plugin docs and workflow guides.
 
-**Database Refactor**
+**Database housekeeping**
 
-* `SchemaManager::get_tables()` and `::uninstall()` now iterate `self::CORE_TABLES` — adding a plugin table is one edit instead of three, and uninstall drops in FK-safe reverse dependency order
+* Improvement: The plugin's database setup / teardown code is now refactored so that adding or removing a plugin table is a single-line change. Uninstall removes tables in the correct dependency order — no more orphaned data after deactivation + delete.
 
 **Milestone Contracts (Upwork-style)**
 
@@ -337,25 +330,25 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Row columns: Date, Type, Description, Reference (linkable), Currency, Amount (signed), Balance After
 * Compatible with QuickBooks, Xero, Wave, and spreadsheet tools
 
-**Money-Flow Integrity**
+**Money-flow integrity**
 
-* Tip idempotency key standardised to the tip sub-order ID so repeated tips on the same parent credit correctly
-* Milestone-contract parent auto-completion now routes through `OrderService::update_status()` so vendor stats, review prompt, and the full completion hook chain fire
-* Buyer-request conversion wraps the bulk milestone insert in a transaction and defers `wpss_milestone_proposed` hooks until after commit — partial failures no longer leak emails
-* Email rate-limit scoped to spam-prone types only; milestone / extension / tip / proposal events are never silently dropped
-* `mark_as_paid` skips the `pending_requirements` transition on tip / extension / milestone sub-orders so buyers don't receive "Complete your requirements" emails on a tip they just sent
-* Pro wallet provider no longer double-credits on `wpss_order_paid` retries
+* Fix: Sending more than one tip on the same order now credits each one correctly.
+* Fix: When the final milestone of a contract is approved, the parent order now completes end-to-end — vendor stats update, the review prompt appears, and the completion email is sent.
+* Fix: Converting a buyer request into a milestone contract is now an all-or-nothing operation. Partial conversions no longer leak premature notification emails to vendors.
+* Fix: Buyers no longer receive a "Complete your requirements" email when they send a tip, request a paid extension, or pay a milestone. That email is only sent on the original order.
+* Improvement: Email rate-limiting now applies only to high-volume notification types. Milestone, extension, tip, and proposal events are never silently dropped.
+* Fix: Vendor wallets no longer get credited twice if a payment gateway retries the "order paid" event.
 
 **Architecture**
 
-* Sub-order pattern generalised across tips, extensions, and milestones (shared `platform` marker, shared `wpss_order_paid` credit handler, shared 48-hour abandon-cron contract with carve-out for contract milestones) — full write-up in `docs/architecture/SUB_ORDER_PATTERN.md`
-* 7 new email templates: 4 milestone (proposed / paid / submitted / approved) + 3 extension (proposed / approved / declined), each with plain-text fallback
-* New REST endpoints for milestones, extensions, and proposal contract type — full mobile-app parity
+* Improvement: Tips, paid extensions, and milestone payments now share a common credit / cleanup flow under the hood. Vendor wallets are credited consistently, and abandoned-payment cleanup behaves the same across all three.
+* New: Seven new email templates for the milestone (proposed / paid / submitted / approved) and extension (proposed / approved / declined) flows. Every template ships with a plain-text fallback for clients that don't render HTML.
+* For developers: New REST endpoints for milestones, extensions, and the Fixed vs Milestone proposal contract type — mobile app developers get full parity with the web frontend.
 
 **Documentation**
 
-* New: Milestone Contracts, Paid Extensions, Proposal Contracts (Fixed vs Milestone), Earnings Ledger & CSV Export
-* New developer doc: Sub-Order Pattern (explains the shared architecture for contributors)
+* New: Guides for Milestone Contracts, Paid Extensions, Proposal Contracts (Fixed vs Milestone), and the Earnings Ledger & CSV Export on the docs site.
+* For developers: New architecture write-up explaining how tips, extensions, and milestones share a common backend pattern (useful for extension authors).
 
 = 1.0.0 - 2026-04-02 =
 
@@ -420,8 +413,11 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Upgrade Notice ==
 
+= 1.1.1 =
+Fixes an install-side fatal error that could occur on some hosts where a runtime dependency was missing from the previous release zip. The 1.1.1 zip now bundles everything the plugin needs to run, so the plugin activates cleanly out of the box. Safe to upgrade — no settings changes required.
+
 = 1.1.0 =
-Adds Upwork-style milestone contracts on buyer-request orders, paid extensions on catalog orders, vendor intro video, (Pro) Earnings Ledger with CSV export, a unified admin listing UX, a first-time admin guided tour, and migrates all recurring jobs from WP-Cron to Action Scheduler for durable retry. Includes money-flow integrity fixes — safe to upgrade; on first page load after upgrade the plugin scrubs its legacy WP-Cron entries and re-schedules everything against Action Scheduler.
+Adds Upwork-style milestone contracts on buyer-request orders, paid extensions on catalog orders, vendor intro video, (Pro) Earnings Ledger with CSV export, a unified admin listing UX, a first-time admin guided tour, and moves all recurring background jobs onto a more reliable scheduler with replay support. Includes money-flow integrity fixes — safe to upgrade; on the first admin page load after upgrade the plugin migrates its existing scheduled jobs to the new system automatically.
 
 = 1.0.0 =
 Initial release of WP Sell Services. Transform your WordPress site into a complete service marketplace with vendor management, order workflow, and commission system.

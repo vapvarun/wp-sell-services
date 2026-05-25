@@ -187,6 +187,8 @@ module.exports = function ( grunt ) {
 							'!**/.editorconfig',
 							'!**/.gitignore',
 							'!**/.gitattributes',
+							'!**/*.md',
+							'!**/*.map',
 
 							// Exclude OS files.
 							'!.DS_Store',
