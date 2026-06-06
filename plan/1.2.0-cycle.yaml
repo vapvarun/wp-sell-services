@@ -82,7 +82,12 @@ goal: >
   plugin consumes stays byte-for-byte compatible (additive DB indexes
   allowed). Contract db_schema checks must query the live DB with SHOW
   TABLES via wp db query (NOT wp db tables, which lists only
-  core-registered tables).
+  core-registered tables). Contract shortcode checks must verify against the
+  live registry (wp eval 'global $shortcode_tags; ...') or grep add_shortcode
+  in src/Frontend/Shortcodes.php - all 19 wpss_* shortcodes are registered
+  unconditionally; a "removed" verdict for any of them is a verification
+  error, re-check before reporting. Contract hook checks grep for
+  do_action/apply_filters in THIS plugin's src/ and templates/ only.
 
 contracts:
   rest_routes:
@@ -120,8 +125,9 @@ contracts:
         - "/tour/complete"
   hooks:
     actions:
+      # NOTE: wpss_pro_loaded is fired by PRO (wp-sell-services-pro.php:230),
+      # not by Free - it lives in Pro's contract, never here.
       - "wpss_loaded"
-      - "wpss_pro_loaded"
       - "wpss_order_created"
       - "wpss_order_paid"
       - "wpss_order_status_changed"
