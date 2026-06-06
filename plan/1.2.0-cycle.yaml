@@ -245,6 +245,12 @@ migrations:
   - kind: url_shape
     name: dashboard-section-permalinks
     reason: "Basecamp 9826303369 - dashboard sections move from ?section=<x> query strings to /dashboard/<x>/ rewrite endpoints for usability parity with WooCommerce/Dokan; old ?section=<x> URLs 301-redirect to the pretty form; no option, hook, or REST change"
+  - kind: cli_commands
+    name: wpss-scale-command
+    reason: "Owner-directed 100k-site scale wave adds the ADDITIVE `wpss scale` WP-CLI command (seed/bench/teardown). No existing command changes or is removed."
+  - kind: db_schema
+    name: additive-hot-path-indexes
+    reason: "Scale wave may ADD indexes to existing wpss_* tables for hot-path query budgets. Columns and tables themselves never change or get removed."
 
 standards:
   build_skills:  [wp-plugin-development, ux-foundation]
