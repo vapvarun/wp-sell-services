@@ -9,29 +9,45 @@
    CSS Variables
    ========================================================================== */
 
+/* Token fallbacks.
+   design-system.css is the canonical token source and always loads first
+   (wpss-frontend depends on wpss-design-system). These declarations only
+   provide concrete fallbacks for the handful of legacy aliases this file
+   consumes, so a theme that fails to load design-system.css — or one (like
+   Reign 8.0.0) that re-declares neutral vars — can never resolve a frontend
+   token to an empty string and blow out card colours/borders.
+
+   Note: these are NOT self-referential (the old `var(--wpss-x, #fff)` form
+   resolved to itself and silently inherited a theme value of the same name).
+   Each alias now points at its design-system source with a hard hex fallback. */
 :root {
 	/* Primary - Indigo */
-	--wpss-primary: var(--wpss-primary, #4f46e5);
-	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
-	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
+	--wpss-primary: #4f46e5;
+	--wpss-primary-dark: #4338ca;
+	--wpss-primary-hover: #4338ca;
+	--wpss-primary-light: #eef2ff;
 
 	/* Secondary & Text */
-	--wpss-secondary: var(--wpss-secondary, #1e293b);
-	--wpss-text: var(--wpss-gray-800, #1f2937);
-	--wpss-text-light: var(--wpss-text-muted, #6b7280);
+	--wpss-secondary: #1e293b;
+	--wpss-text: #1f2937;
+	--wpss-text-light: #6b7280;
+	--wpss-text-muted: #6b7280;
 
 	/* UI Colors */
-	--wpss-border: var(--wpss-border, #e5e7eb);
-	--wpss-background: var(--wpss-bg-subtle, #f9fafb);
-	--wpss-white: var(--wpss-white, #fff);
-	--wpss-black: var(--wpss-text, #111827);
+	--wpss-border: #e5e7eb;
+	--wpss-bg: #ffffff;
+	--wpss-background: #f9fafb;
+	--wpss-white: #ffffff;
+	--wpss-black: #111827;
+	--wpss-gray-100: #f3f4f6;
+	--wpss-gray-400: #9ca3af;
 
 	/* Semantic Colors */
-	--wpss-success: var(--wpss-success, #10b981);
-	--wpss-warning: var(--wpss-warning, #f59e0b);
-	--wpss-danger: var(--wpss-danger, #ef4444);
-	--wpss-info: var(--wpss-info, #3b82f6);
-	--wpss-star: var(--wpss-star, #fbbf24);
+	--wpss-success: #10b981;
+	--wpss-warning: #f59e0b;
+	--wpss-danger: #ef4444;
+	--wpss-info: #3b82f6;
+	--wpss-star: #fbbf24;
 
 	/* Border Radius */
 	--wpss-radius: 8px;
@@ -321,17 +337,41 @@ select:invalid {
 	}
 }
 
-.wpss-service-card {
-	background: var(--wpss-white);
+/* The card renders as <article class="wpss-service-card post-N hentry">, so
+   the host theme's generic article / .hentry rules land on it. Reign 8.0.0
+   ships `article { background: 0 0 !important; padding: 0 0 30px; margin: 30px 0;
+   border-bottom: 1px solid ... }` plus `.hentry { background; border-color }`,
+   which strips our card surface, removes the border on three sides, and adds a
+   stray bottom rule. We re-assert every box property on the article selector
+   (and override the theme's !important background) so the card looks identical
+   on any theme. */
+.wpss-services-grid .wpss-service-card,
+article.wpss-service-card {
+	margin: 0;
+	padding: 0;
+	background: var(--wpss-white) !important;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
 	transition: all var(--wpss-transition);
 }
 
-.wpss-service-card:hover {
+.wpss-services-grid .wpss-service-card:hover,
+article.wpss-service-card:hover {
+	border-color: var(--wpss-primary);
 	box-shadow: var(--wpss-shadow-lg);
 	transform: translateY(-2px);
+}
+
+/* Reset the host theme's link colour bleed onto card text.
+   Reign sets `a { color: var(--reign-site-link-color) }` (and #fff in its dark
+   skin), which would otherwise recolour the whole card via the wrapping
+   <a class="wpss-service-card__link">. Inherit so child rules win. */
+.wpss-service-card .wpss-service-card__link,
+.wpss-service-card .wpss-service-card__link:hover,
+.wpss-service-card .wpss-service-card__link:focus,
+.wpss-service-card .wpss-service-card__link:visited {
+	color: var(--wpss-text);
 }
 
 .wpss-card-link {
@@ -502,17 +542,28 @@ select:invalid {
 	color: var(--wpss-gray-400);
 }
 
+/* Category overlay sits on top of the service image, so it needs its own
+   solid surface + dark text + a soft shadow to stay legible over any photo or
+   gradient. A semi-transparent white made the label wash out on light images
+   (BC 9958056390); a fully opaque chip with a drop shadow reads on everything. */
 .wpss-service-card__category {
 	position: absolute;
 	top: 10px;
 	left: 10px;
+	max-width: calc(100% - 20px);
 	padding: 4px 10px;
 	background: var(--wpss-white);
 	border-radius: var(--wpss-radius);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 	font-size: 11px;
 	font-weight: 600;
+	line-height: 1.4;
 	text-transform: uppercase;
-	color: var(--wpss-text);
+	letter-spacing: 0.02em;
+	color: var(--wpss-secondary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .wpss-service-card__body {
