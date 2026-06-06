@@ -387,10 +387,14 @@ waves:
   # Reign 8.0.0 at 390px + 1280px. Verify root cause: some findings may be
   # Reign-theme interaction, not plugin CSS - if so, fix via plugin-side
   # theme-compat CSS, never by editing the theme.
+  # Journeys: ONLY buyer-browse-services here. The favorites + popup steps in
+  # buyer-single-service / buyer-favorites-archive verify work that lands in
+  # wave-2b - gating them here tests the next wave's directions (learned the
+  # hard way: first wave-2 gate run failed on the not-yet-built favorites UI).
   - id: wave-2-customer-ui
     depends_on: [wave-1-homepage-data]
     functional_gates: [browser-smoke, qa-suite]
-    journeys: [buyer-browse-services, buyer-single-service, buyer-favorites-archive]
+    journeys: [buyer-browse-services]
     directions:
       - id: "2.1"
         title: "Services archive + single UI repair (BC 9958056390/9959210393): card borders, button background colors, category-label overlay readability, hover/selected states, sidebar filter restyle, colour/transparency fixes - reproduce on Reign 8.0.0 first"
