@@ -1265,6 +1265,12 @@ class Admin {
 
 		check_admin_referer( 'bulk-orders' );
 
+		// Bulk status changes act on arbitrary order IDs (not ownership-scoped),
+		// so require admin-level access in addition to the nonce.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$order_ids = isset( $_GET['order_ids'] ) ? array_map( 'absint', (array) $_GET['order_ids'] ) : array();
 
@@ -1317,6 +1323,12 @@ class Admin {
 		}
 
 		check_admin_referer( 'bulk-disputes' );
+
+		// Bulk status changes act on arbitrary dispute IDs (not ownership-scoped),
+		// so require admin-level access in addition to the nonce.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$dispute_ids = isset( $_GET['dispute_ids'] ) ? array_map( 'absint', (array) $_GET['dispute_ids'] ) : array();
