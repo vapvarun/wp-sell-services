@@ -500,6 +500,52 @@ class ServiceArchiveView {
 	}
 
 	/**
+	 * Determine whether a query targets the mapped services page.
+	 *
+	 * Safe to call from pre_get_posts, where the queried object is not yet
+	 * resolved and the global $post is unset (so wpss_is_page() cannot be
+	 * trusted). Detection is based on the query's own page_id / pagename vars,
+	 * both of which WordPress has already populated by pre_get_posts time —
+	 * including when the services page is the static front page.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param \WP_Query $query The WP_Query instance.
+	 * @return bool True when the query resolves to the mapped services page.
+	 */
+	private function query_targets_services_page( \WP_Query $query ): bool {
+		$services_page_id = wpss_get_page_id( 'services_page' );
+
+		if ( ! $services_page_id ) {
+			return false;
+		}
+
+		// Static front page: WordPress sets page_id to the front page ID.
+		$page_id = (int) $query->get( 'page_id' );
+		if ( $page_id && $page_id === $services_page_id ) {
+			return true;
+		}
+
+		// Pretty-permalink page request: WordPress sets the pagename var.
+		$pagename = (string) $query->get( 'pagename' );
+		if ( '' !== $pagename ) {
+			$services_page = get_post( $services_page_id );
+			if ( $services_page instanceof \WP_Post && $pagename === $services_page->post_name ) {
+				return true;
+			}
+		}
+
+		// Fallback for contexts where the queried object is already resolved
+		// (e.g. some custom main-query setups) — harmless during pre_get_posts
+		// because it returns 0 there.
+		if ( $query->is_page() && (int) $query->get_queried_object_id() === $services_page_id ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Modify the archive query to apply filters.
 	 *
 	 * @param \WP_Query $query The WP_Query instance.
@@ -511,7 +557,15 @@ class ServiceArchiveView {
 			return;
 		}
 
-		$is_services_page = wpss_is_page( 'services_page' );
+		// Detect the mapped services page from the query itself rather than
+		// wpss_is_page(). During pre_get_posts the queried object is not yet
+		// resolved (get_queried_object_id() returns 0) and the global $post is
+		// unset, so wpss_is_page() always returns false here. That made the
+		// conversion below silently skip whenever the services page was the
+		// static front page (or accessed by page_id/pagename), leaving the main
+		// query as a singular page lookup that returns only the page itself
+		// (found_posts = 1) instead of all published services. See BC 9966680633.
+		$is_services_page = $this->query_targets_services_page( $query );
 
 		if ( ! $is_services_page && ! $query->is_post_type_archive( 'wpss_service' ) && ! $query->is_tax( 'wpss_service_category' ) && ! $query->is_tax( 'wpss_service_tag' ) ) {
 			return;
