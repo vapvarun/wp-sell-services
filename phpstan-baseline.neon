@@ -1,16 +1,16 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Static method WPSellServices\\Core\\Activator\:\:create_wc_carrier_product\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Core/Activator.php
-
-		-
 			message: '#^Parameter \#1 \$headers of method WP_REST_Server\:\:send_headers\(\) expects array, WP_REST_Response given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/API/API.php
+
+		-
+			message: '#^Method WPSellServices\\API\\AuthController\:\:format_user\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/AuthController.php
 
 		-
 			message: '#^Offset ''created'' on array\{uuid\: string, app_id\: string, name\: non\-falsy\-string, password\: string, created\: int, last_used\: int\|null, last_ip\: string\|null\} on left side of \?\? always exists and is not nullable\.$#'
@@ -19,10 +19,76 @@ parameters:
 			path: src/API/AuthController.php
 
 		-
+			message: '#^Method WPSellServices\\API\\BuyerRequestsController\:\:get_attachment_urls\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/BuyerRequestsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\BuyerRequestsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/BuyerRequestsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\BuyerRequestsController\:\:prepare_proposal_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/BuyerRequestsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\BuyerRequestsController\:\:prepare_request_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/BuyerRequestsController.php
+
+		-
 			message: '#^Expected 4 @param tags, found 3\.$#'
 			identifier: paramTag.count
 			count: 1
 			path: src/API/CartController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ConversationsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ConversationsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ConversationsController\:\:prepare_conversation_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ConversationsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ConversationsController\:\:prepare_message_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ConversationsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\DisputesController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/DisputesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\DisputesController\:\:prepare_dispute_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/DisputesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\DisputesController\:\:prepare_evidence_for_response\(\) has parameter \$evidence with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/DisputesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\DisputesController\:\:prepare_evidence_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/DisputesController.php
 
 		-
 			message: '#^@param array \$withdrawal does not accept actual type of parameter\: stdClass\.$#'
@@ -31,10 +97,64 @@ parameters:
 			path: src/API/EarningsController.php
 
 		-
+			message: '#^Method WPSellServices\\API\\ExtensionRequestsController\:\:format_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ExtensionRequestsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ExtensionRequestsController\:\:format_item\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ExtensionRequestsController.php
+
+		-
 			message: '#^Parameter \#2 \$user_id of function get_the_author_meta expects int\|false, string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/API/FavoritesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\MediaController\:\:format_attachment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/MediaController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\NotificationsController\:\:format_notification\(\) has parameter \$notification with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/NotificationsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\NotificationsController\:\:format_notification\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/NotificationsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\NotificationsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/NotificationsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\OrdersController\:\:get_available_actions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/OrdersController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\OrdersController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/OrdersController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\OrdersController\:\:get_item_schema\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/OrdersController.php
 
 		-
 			message: '#^Parameter \#1 \$json of function json_decode expects string, array\<array\<string, int\|string\>\> given\.$#'
@@ -55,6 +175,54 @@ parameters:
 			path: src/API/PaymentController.php
 
 		-
+			message: '#^Method WPSellServices\\API\\PortfolioController\:\:format_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/PortfolioController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\PortfolioController\:\:format_item\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/PortfolioController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\PortfolioController\:\:get_portfolio_item\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/PortfolioController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ProposalsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ProposalsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ProposalsController\:\:prepare_proposal_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ProposalsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\RestController\:\:error\(\) has parameter \$extra with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/RestController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\RestController\:\:get_common_schema_properties\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/RestController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\RestController\:\:paginated_response\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/RestController.php
+
+		-
 			message: '#^Parameter \#2 \$value of method WP_HTTP_Response\:\:header\(\) expects string, float given\.$#'
 			identifier: argument.type
 			count: 1
@@ -73,8 +241,62 @@ parameters:
 			path: src/API/RestController.php
 
 		-
+			message: '#^Method WPSellServices\\API\\ReviewsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ReviewsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ReviewsController\:\:get_item_schema\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ReviewsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\SellerLevelsController\:\:build_vendor_level_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/SellerLevelsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\SellerLevelsController\:\:get_level_definitions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/SellerLevelsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\SellerLevelsController\:\:get_vendor_stats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/SellerLevelsController.php
+
+		-
 			message: '#^Call to function is_array\(\) with list\<array\{id\: mixed, name\: mixed, description\: mixed, price\: float, delivery_days\: mixed, revisions\: mixed, features\: array\}\> will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/API/ServicesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ServicesController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ServicesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ServicesController\:\:get_item_schema\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ServicesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ServicesController\:\:get_service_images\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/ServicesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\ServicesController\:\:get_service_rating\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/API/ServicesController.php
 
@@ -83,6 +305,24 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/API/ServicesController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\VendorsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/VendorsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\VendorsController\:\:get_item_schema\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/VendorsController.php
+
+		-
+			message: '#^Method WPSellServices\\API\\VendorsController\:\:prepare_service_for_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/API/VendorsController.php
 
 		-
 			message: '#^Call to function is_wp_error\(\) with true will always evaluate to false\.$#'
@@ -115,6 +355,12 @@ parameters:
 			path: src/Admin/Metaboxes/OrderMetabox.php
 
 		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\OrderMetabox\:\:get_available_actions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/OrderMetabox.php
+
+		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
 			identifier: argument.type
 			count: 7
@@ -125,6 +371,66 @@ parameters:
 			identifier: argument.type
 			count: 2
 			path: src/Admin/Metaboxes/OrderMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:get_service_data_tabs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_addon_item\(\) has parameter \$addon with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_addon_item\(\) has parameter \$field_types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_addon_item\(\) has parameter \$price_types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_addon_template\(\) has parameter \$field_types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_addon_template\(\) has parameter \$price_types with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_package_item\(\) has parameter \$package with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_requirement_item\(\) has parameter \$req with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_tabs_mode\(\) has parameter \$tabs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Metaboxes\\ServiceMetabox\:\:render_wizard_mode\(\) has parameter \$tabs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Metaboxes/ServiceMetabox.php
 
 		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
@@ -143,6 +449,54 @@ parameters:
 			identifier: argument.type
 			count: 2
 			path: src/Admin/Pages/ManualOrderPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:add_moderation_column\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:add_moderation_column\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:get_status_counts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:intercept_publish\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:intercept_publish\(\) has parameter \$postarr with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:intercept_publish\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:sortable_columns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\ServiceModerationPage\:\:sortable_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/ServiceModerationPage.php
 
 		-
 			message: '#^Offset ''approved''\|''pending''\|''rejected'' on array\{approved\: ''publish'', rejected\: ''draft'', pending\: ''pending''\} in isset\(\) always exists and is not nullable\.$#'
@@ -173,6 +527,24 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: src/Admin/Pages/UpgradePage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\VendorsPage\:\:get_vendor_stats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\VendorsPage\:\:get_vendors\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/VendorsPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\VendorsPage\:\:get_vendors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/VendorsPage.php
 
 		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, \(float\|int\) given\.$#'
@@ -223,10 +595,88 @@ parameters:
 			path: src/Admin/Pages/VendorsPage.php
 
 		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\WithdrawalsPage\:\:get_stats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/WithdrawalsPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\WithdrawalsPage\:\:get_withdrawals\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/WithdrawalsPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\WithdrawalsPage\:\:get_withdrawals\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/WithdrawalsPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\WithdrawalsPage\:\:render_withdrawal_row\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/WithdrawalsPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Pages\\WithdrawalsPage\:\:render_withdrawal_row\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Pages/WithdrawalsPage.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\ProTeaser\:\:add_analytics_tab\(\) has parameter \$tabs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/ProTeaser.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\ProTeaser\:\:add_analytics_tab\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/ProTeaser.php
+
+		-
 			message: '#^Expected 0 @param tags, found 1\.$#'
 			identifier: paramTag.count
 			count: 2
 			path: src/Admin/Settings.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Settings\:\:render_tab_sections\(\) has parameter \$sections with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Settings.php
+
+		-
+			message: '#^Property WPSellServices\\Admin\\Settings\:\:\$tab_groups type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Settings.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\DisputesListTable\:\:get_bulk_actions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/DisputesListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\DisputesListTable\:\:get_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/DisputesListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\DisputesListTable\:\:get_sortable_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/DisputesListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\DisputesListTable\:\:get_views\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/DisputesListTable.php
 
 		-
 			message: '#^Parameter \#1 \$args of method WP_List_Table\:\:set_pagination_args\(\) expects array\{total_items\?\: int, total_pages\?\: int, per_page\?\: int\}, array\{total_items\: int, per_page\: 20, total_pages\: float\} given\.$#'
@@ -235,10 +685,166 @@ parameters:
 			path: src/Admin/Tables/DisputesListTable.php
 
 		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\OrdersListTable\:\:get_bulk_actions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/OrdersListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\OrdersListTable\:\:get_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/OrdersListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\OrdersListTable\:\:get_order_months\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/OrdersListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\OrdersListTable\:\:get_sortable_columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/OrdersListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Admin\\Tables\\OrdersListTable\:\:get_views\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Admin/Tables/OrdersListTable.php
+
+		-
 			message: '#^Parameter \#1 \$args of method WP_List_Table\:\:set_pagination_args\(\) expects array\{total_items\?\: int, total_pages\?\: int, per_page\?\: int\}, array\{total_items\: int, per_page\: 20, total_pages\: float\} given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Admin/Tables/OrdersListTable.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\AbstractBlock\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/AbstractBlock.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\AbstractBlock\:\:get_keywords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/AbstractBlock.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\AbstractBlock\:\:get_supports\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/AbstractBlock.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\AbstractBlock\:\:get_wrapper_attributes\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/AbstractBlock.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\AbstractBlock\:\:get_wrapper_attributes\(\) has parameter \$extra with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/AbstractBlock.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\AbstractBlock\:\:render\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/AbstractBlock.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\BlocksManager\:\:get_service_categories\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/BlocksManager.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\BlocksManager\:\:register_block_category\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/BlocksManager.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\BlocksManager\:\:register_block_category\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/BlocksManager.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\BuyerRequests\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/BuyerRequests.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\BuyerRequests\:\:get_keywords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/BuyerRequests.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\BuyerRequests\:\:render\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/BuyerRequests.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\BuyerRequests\:\:render_request_card\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/BuyerRequests.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\FeaturedServices\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/FeaturedServices.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\FeaturedServices\:\:get_keywords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/FeaturedServices.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\FeaturedServices\:\:render\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/FeaturedServices.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\FeaturedServices\:\:render_featured_card\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/FeaturedServices.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\SellerCard\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/SellerCard.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\SellerCard\:\:get_keywords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/SellerCard.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\SellerCard\:\:get_seller_stats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/SellerCard.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\SellerCard\:\:render\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/SellerCard.php
 
 		-
 			message: '#^Parameter \#3 \$number of function _n expects int, float given\.$#'
@@ -247,10 +853,94 @@ parameters:
 			path: src/Blocks/SellerCard.php
 
 		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceCategories\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceCategories.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceCategories\:\:get_keywords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceCategories.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceCategories\:\:render\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceCategories.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceCategories\:\:render_category_card\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceCategories.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceGrid\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceGrid.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceGrid\:\:get_keywords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceGrid.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceGrid\:\:render\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceGrid.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceGrid\:\:render_service_card\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceGrid.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceSearch\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceSearch.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceSearch\:\:get_keywords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceSearch.php
+
+		-
+			message: '#^Method WPSellServices\\Blocks\\ServiceSearch\:\:render\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Blocks/ServiceSearch.php
+
+		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Blocks/ServiceSearch.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\PreflightCommand\:\:__invoke\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\PreflightCommand\:\:__invoke\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/PreflightCommand.php
+
+		-
+			message: '#^Property WPSellServices\\CLI\\PreflightCommand\:\:\$results type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/PreflightCommand.php
 
 		-
 			message: '#^Right side of \|\| is always true\.$#'
@@ -277,10 +967,334 @@ parameters:
 			path: src/CLI/ServiceCommands.php
 
 		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:apply_variation\(\) has parameter \$template with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:apply_variation\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:create\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:create\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:create_service\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
 			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:create_service\(\) never returns WP_Error so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
 			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:delete\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:delete\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:get_service_templates\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:list_services\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:list_services\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:regenerate_meta\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:regenerate_meta\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:stats\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WPSellServices\\CLI\\ServiceCommands\:\:stats\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Property WPSellServices\\CLI\\ServiceCommands\:\:\$service_templates type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/ServiceCommands.php
+
+		-
+			message: '#^Method WP_CLI\:\:add_command\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/wp-cli-stubs.php
+
+		-
+			message: '#^Method WP_CLI\:\:add_command\(\) has parameter \$handler with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/wp-cli-stubs.php
+
+		-
+			message: '#^Method WP_CLI\:\:confirm\(\) has parameter \$assoc_args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/wp-cli-stubs.php
+
+		-
+			message: '#^Method WP_CLI\:\:runcommand\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CLI/wp-cli-stubs.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_browse_services\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_browse_services\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_create_service\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_create_service\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_leave_review\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_leave_review\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_manage_favorites\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_manage_favorites\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_manage_orders\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_manage_orders\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_post_buyer_request\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_post_buyer_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_request_withdrawal\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_request_withdrawal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_send_message\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_send_message\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_submit_proposal\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_submit_proposal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_view_earnings\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_view_earnings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_view_notifications\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_view_notifications\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_view_service\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\AbilitiesRegistrar\:\:execute_view_service\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/AbilitiesRegistrar.php
+
+		-
+			message: '#^Static method WPSellServices\\Core\\Activator\:\:create_wc_carrier_product\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Core/Activator.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\Plugin\:\:get_analytics_widgets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\Plugin\:\:get_email_providers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\Plugin\:\:get_payment_gateways\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\Plugin\:\:get_storage_providers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Method WPSellServices\\Core\\Plugin\:\:get_wallet_providers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Property WPSellServices\\Core\\Plugin\:\:\$analytics_widgets type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Property WPSellServices\\Core\\Plugin\:\:\$email_providers type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Property WPSellServices\\Core\\Plugin\:\:\$payment_gateways type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Property WPSellServices\\Core\\Plugin\:\:\$storage_providers type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
+
+		-
+			message: '#^Property WPSellServices\\Core\\Plugin\:\:\$wallet_providers type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Core/Plugin.php
 
 		-
 			message: '#^Constant DB_NAME not found\.$#'
@@ -307,10 +1321,508 @@ parameters:
 			path: src/Core/Updater.php
 
 		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldInterface\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldInterface.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldInterface\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldInterface.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldInterface\:\:render_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldInterface.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldInterface\:\:sanitize\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldInterface.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldInterface\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldInterface.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldRenderer\:\:build_attributes\(\) has parameter \$attrs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldRenderer.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldRenderer\:\:render_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldRenderer.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldRenderer\:\:render_form\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldRenderer.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldRenderer\:\:render_form\(\) has parameter \$form_attrs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldRenderer.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldRenderer\:\:render_form\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldRenderer.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldRenderer\:\:render_submitted\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldRenderer.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldRenderer\:\:render_submitted\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldRenderer.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldValidator\:\:sanitize_all\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldValidator.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldValidator\:\:sanitize_all\(\) has parameter \$submission with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldValidator.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldValidator\:\:sanitize_all\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldValidator.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldValidator\:\:sanitize_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldValidator.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldValidator\:\:validate_all\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldValidator.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldValidator\:\:validate_all\(\) has parameter \$submission with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldValidator.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\FieldValidator\:\:validate_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/FieldValidator.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:build_attributes\(\) has parameter \$extra with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:build_attributes\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:parse_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:parse_field\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:render_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:sanitize\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\AbstractField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/AbstractField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\CheckboxField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/CheckboxField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\CheckboxField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/CheckboxField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\CheckboxField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/CheckboxField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\CheckboxField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/CheckboxField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\CheckboxField\:\:sanitize\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/CheckboxField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\CheckboxField\:\:sanitize\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/CheckboxField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\CheckboxField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/CheckboxField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\DateField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/DateField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\DateField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/DateField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\DateField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/DateField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\DateField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/DateField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\DateField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/DateField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\FileUploadField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/FileUploadField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\FileUploadField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/FileUploadField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\FileUploadField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/FileUploadField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\FileUploadField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/FileUploadField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\FileUploadField\:\:sanitize\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/FileUploadField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\FileUploadField\:\:sanitize\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/FileUploadField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\FileUploadField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/FileUploadField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\MultiSelectField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/MultiSelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\MultiSelectField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/MultiSelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\MultiSelectField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/MultiSelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\MultiSelectField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/MultiSelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\MultiSelectField\:\:sanitize\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/MultiSelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\MultiSelectField\:\:sanitize\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/MultiSelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\MultiSelectField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/MultiSelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\NumberField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/NumberField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\NumberField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/NumberField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\NumberField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/NumberField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\NumberField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/NumberField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\NumberField\:\:sanitize\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/NumberField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\NumberField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/NumberField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\RadioField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/RadioField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\RadioField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/RadioField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\RadioField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/RadioField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\RadioField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/RadioField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\RadioField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/RadioField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\SelectField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/SelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\SelectField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/SelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\SelectField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/SelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\SelectField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/SelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\SelectField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/SelectField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextareaField\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextareaField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextareaField\:\:get_default_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextareaField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextareaField\:\:render\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextareaField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextareaField\:\:render_type_settings\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextareaField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextareaField\:\:sanitize\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextareaField.php
+
+		-
+			message: '#^Method WPSellServices\\CustomFields\\Fields\\TextareaField\:\:validate\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CustomFields/Fields/TextareaField.php
+
+		-
 			message: '#^Function wc_get_order_item_meta not found\.$#'
 			identifier: function.notFound
 			count: 3
 			path: src/Database/MigrationManager.php
+
+		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\ConversationRepository\:\:add_message\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Database/Repositories/ConversationRepository.php
+
+		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\ConversationRepository\:\:create_conversation\(\) has parameter \$participants with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Database/Repositories/ConversationRepository.php
 
 		-
 			message: '#^Call to an undefined method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:find_by_id\(\)\.$#'
@@ -319,8 +1831,44 @@ parameters:
 			path: src/Database/Repositories/DisputeRepository.php
 
 		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:count_by_status\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Database/Repositories/DisputeRepository.php
+
+		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Database/Repositories/DisputeRepository.php
+
+		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:get_statistics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Database/Repositories/DisputeRepository.php
+
+		-
 			message: '#^Call to an undefined method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:find_by_id\(\)\.$#'
 			identifier: method.notFound
+			count: 1
+			path: src/Database/Repositories/ExtensionRequestRepository.php
+
+		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:count_by_status\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Database/Repositories/ExtensionRequestRepository.php
+
+		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Database/Repositories/ExtensionRequestRepository.php
+
+		-
+			message: '#^Method WPSellServices\\Database\\Repositories\\ExtensionRequestRepository\:\:get_statistics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Database/Repositories/ExtensionRequestRepository.php
 
@@ -379,8 +1927,146 @@ parameters:
 			path: src/Frontend/ServiceArchiveView.php
 
 		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:get_limits\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:get_service_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:normalize_gallery\(\) has parameter \$gallery with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:normalize_gallery\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:normalize_packages\(\) has parameter \$packages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:normalize_packages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:render_category_options\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
 			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:render_service_limit_notice\(\) is unused\.$#'
 			identifier: method.unused
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:render_wizard\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_extras\(\) has parameter \$extras with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_extras\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_faqs\(\) has parameter \$faqs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_faqs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_gallery\(\) has parameter \$gallery with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_gallery\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_packages\(\) has parameter \$packages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_packages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_requirements\(\) has parameter \$requirements with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_requirements\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_service_data\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:sanitize_service_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:save_service_meta\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:validate_service_data\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\ServiceWizard\:\:validate_service_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Frontend/ServiceWizard.php
 
@@ -391,8 +2077,20 @@ parameters:
 			path: src/Frontend/ServiceWizard.php
 
 		-
+			message: '#^Property WPSellServices\\Frontend\\ServiceWizard\:\:\$limits type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
 			message: '#^Property WPSellServices\\Frontend\\ServiceWizard\:\:\$service_manager is never read, only written\.$#'
 			identifier: property.onlyWritten
+			count: 1
+			path: src/Frontend/ServiceWizard.php
+
+		-
+			message: '#^Property WPSellServices\\Frontend\\ServiceWizard\:\:\$steps type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Frontend/ServiceWizard.php
 
@@ -405,6 +2103,108 @@ parameters:
 		-
 			message: '#^Call to an undefined method WPSellServices\\Services\\VendorService\:\:get_vendor_profile\(\)\.$#'
 			identifier: method.notFound
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:buyer_requests\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:cart_page\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:featured_services\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:login_form\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:my_orders\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:order_details\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:post_request_form\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:register_form\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:render_vendor_card\(\) has parameter \$vendor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:render_vendor_profile_fallback\(\) has parameter \$profile with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:service_categories\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:service_search\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:services_grid\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:top_vendors\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:vendor_profile\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:vendor_registration\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/Shortcodes.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:vendors_grid\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Frontend/Shortcodes.php
 
@@ -451,6 +2251,48 @@ parameters:
 			path: src/Frontend/TemplateLoader.php
 
 		-
+			message: '#^Method WPSellServices\\Frontend\\TemplateLoader\:\:add_query_vars\(\) has parameter \$vars with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\TemplateLoader\:\:add_query_vars\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\TemplateLoader\:\:get_available_templates\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\TemplateLoader\:\:get_template_html\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\TemplateLoader\:\:get_template_part\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\TemplateLoader\:\:include_template\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
+			message: '#^Method WPSellServices\\Frontend\\TemplateLoader\:\:load_template\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Frontend/TemplateLoader.php
+
+		-
 			message: '#^Anonymous function has an unused use \$user\.$#'
 			identifier: closure.unusedUse
 			count: 1
@@ -469,6 +2311,120 @@ parameters:
 			path: src/Frontend/UnifiedDashboard.php
 
 		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\AccountProviderInterface\:\:add_menu_items\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/AccountProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\AccountProviderInterface\:\:add_menu_items\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/AccountProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\CheckoutProviderInterface\:\:add_cart_item_data\(\) has parameter \$cart_item_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/CheckoutProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\CheckoutProviderInterface\:\:add_cart_item_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/CheckoutProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\CheckoutProviderInterface\:\:get_cart_services\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/CheckoutProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\CheckoutProviderInterface\:\:get_checkout_url\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/CheckoutProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\CheckoutProviderInterface\:\:process_checkout\(\) has parameter \$order_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/CheckoutProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:get_customer_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/OrderProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:get_vendor_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/OrderProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\PaymentGatewayInterface\:\:create_payment\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/PaymentGatewayInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\PaymentGatewayInterface\:\:create_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/PaymentGatewayInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\PaymentGatewayInterface\:\:get_settings_fields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/PaymentGatewayInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\PaymentGatewayInterface\:\:handle_webhook\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/PaymentGatewayInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\PaymentGatewayInterface\:\:handle_webhook\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/PaymentGatewayInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\PaymentGatewayInterface\:\:process_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/PaymentGatewayInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\PaymentGatewayInterface\:\:process_refund\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/PaymentGatewayInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\ProductProviderInterface\:\:add_service_type_option\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/ProductProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\ProductProviderInterface\:\:add_service_type_option\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/ProductProviderInterface.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Contracts\\ProductProviderInterface\:\:get_requirements\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Contracts/ProductProviderInterface.php
+
+		-
 			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_order\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -483,6 +2439,84 @@ parameters:
 		-
 			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:mark_as_paid\(\)\.$#'
 			identifier: method.notFound
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:create_payment\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:create_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:get_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:get_settings_fields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:handle_webhook\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:handle_webhook\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:process_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:process_refund\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:render_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:sanitize_settings\(\) has parameter \$input with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:sanitize_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Property WPSellServices\\Integrations\\Gateways\\OfflineGateway\:\:\$settings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/OfflineGateway.php
+
+		-
+			message: '#^Unable to resolve the template type T in call to function array_values$#'
+			identifier: argument.templateType
 			count: 1
 			path: src/Integrations/Gateways/OfflineGateway.php
 
@@ -511,6 +2545,66 @@ parameters:
 			path: src/Integrations/Gateways/TestGateway.php
 
 		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:create_payment\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:create_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:get_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:get_settings_fields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:handle_webhook\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:handle_webhook\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:process_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:process_refund\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Gateways\\TestGateway\:\:render_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
+			message: '#^Property WPSellServices\\Integrations\\Gateways\\TestGateway\:\:\$settings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Gateways/TestGateway.php
+
+		-
 			message: '#^Unreachable statement \- code above always terminates\.$#'
 			identifier: deadCode.unreachable
 			count: 14
@@ -532,6 +2626,138 @@ parameters:
 			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:mark_as_paid\(\)\.$#'
 			identifier: method.notFound
 			count: 5
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:api_request\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:api_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:capture_order\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:capture_order\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:create_order\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:create_order\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:create_payment\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:create_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:get_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:get_settings_fields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_capture_completed\(\) has parameter \$resource with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_capture_completed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_order_approved\(\) has parameter \$resource with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_order_approved\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_refund_completed\(\) has parameter \$resource with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_refund_completed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_webhook\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_webhook\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:process_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:process_refund\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:render_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/PayPal/PayPalGateway.php
+
+		-
+			message: '#^Property WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:\$settings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
 			path: src/Integrations/PayPal/PayPalGateway.php
 
 		-
@@ -577,6 +2803,36 @@ parameters:
 			path: src/Integrations/Standalone/StandaloneAccountProvider.php
 
 		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneAccountProvider\:\:add_menu_items\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneAccountProvider\:\:add_menu_items\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneAccountProvider\:\:get_menu_items\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneAccountProvider\:\:render_account_shortcode\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneAccountProvider\:\:render_vendor_orders_table\(\) has parameter \$orders with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAccountProvider.php
+
+		-
 			message: '#^Parameter \#1 \$text of function esc_html expects string, int given\.$#'
 			identifier: argument.type
 			count: 2
@@ -595,8 +2851,74 @@ parameters:
 			path: src/Integrations/Standalone/StandaloneAccountProvider.php
 
 		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneAdapter\:\:add_query_vars\(\) has parameter \$vars with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAdapter.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneAdapter\:\:add_query_vars\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneAdapter.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:add_cart_item_data\(\) has parameter \$cart_item_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:add_cart_item_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
 			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:build_proposal_service_placeholder\(\) never returns null so it can be removed from the return type\.$#'
 			identifier: return.unusedType
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:get_cart\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:get_cart_services\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:get_checkout_url\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:process_checkout\(\) has parameter \$order_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:render_checkout_form\(\) has parameter \$selected_addons with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:render_checkout_shortcode\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:render_multi_checkout_form\(\) has parameter \$cart_items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
 
@@ -661,6 +2983,48 @@ parameters:
 			path: src/Integrations/Standalone/StandaloneOrderProvider.php
 
 		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneOrderProvider\:\:create_order\(\) has parameter \$order_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneOrderProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneOrderProvider\:\:create_orders_from_cart\(\) has parameter \$cart_items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneOrderProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneOrderProvider\:\:get_customer_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneOrderProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneOrderProvider\:\:get_vendor_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneOrderProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneProductProvider\:\:add_service_type_option\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneProductProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneProductProvider\:\:add_service_type_option\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneProductProvider.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneProductProvider\:\:get_requirements\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Standalone/StandaloneProductProvider.php
+
+		-
 			message: '#^Call to an undefined method WPSellServices\\Integrations\\Contracts\\OrderProviderInterface\:\:create_order\(\)\.$#'
 			identifier: method.notFound
 			count: 3
@@ -679,10 +3043,238 @@ parameters:
 			path: src/Integrations/Stripe/StripeGateway.php
 
 		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:api_request\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:api_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:build_request_body\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:confirm_payment\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:confirm_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:create_payment\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:create_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:create_payment_intent\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:create_payment_intent\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:get_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:get_settings_fields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_payment_failed\(\) has parameter \$payment_intent with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_payment_failed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_payment_succeeded\(\) has parameter \$payment_intent with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_payment_succeeded\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_refund\(\) has parameter \$charge with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_refund\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_webhook\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:handle_webhook\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:process_payment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:process_refund\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:render_field\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Property WPSellServices\\Integrations\\Stripe\\StripeGateway\:\:\$settings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
 			message: '#^Unreachable statement \- code above always terminates\.$#'
 			identifier: deadCode.unreachable
 			count: 16
 			path: src/Integrations/Stripe/StripeGateway.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\BuyerRequest\:\:get_attachment_urls\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/BuyerRequest.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\BuyerRequest\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/BuyerRequest.php
+
+		-
+			message: '#^Property WPSellServices\\Models\\BuyerRequest\:\:\$attachments type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/BuyerRequest.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ExtensionRequest\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ExtensionRequest.php
+
+		-
+			message: '#^Property WPSellServices\\Models\\Message\:\:\$metadata type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/Message.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\Notification\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/Notification.php
+
+		-
+			message: '#^Property WPSellServices\\Models\\Notification\:\:\$data type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/Notification.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\Proposal\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/Proposal.php
+
+		-
+			message: '#^Property WPSellServices\\Models\\Service\:\:\$requirements type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/Service.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceAddon\:\:from_array\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceAddon.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceAddon\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceAddon.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceItem\:\:__construct\(\) has parameter \$addons with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceItem.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceItem\:\:__construct\(\) has parameter \$meta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceItem.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceItem\:\:from_array\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceItem.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceItem\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceItem.php
 
 		-
 			message: '#^Offset ''price'' on array\{id\: int, name\: string, price\: float\} on left side of \?\? always exists and is not nullable\.$#'
@@ -691,10 +3283,160 @@ parameters:
 			path: src/Models/ServiceItem.php
 
 		-
+			message: '#^Method WPSellServices\\Models\\ServiceOrder\:\:build_where_clause\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceOrder.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceOrder\:\:build_where_clause\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceOrder.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceOrder\:\:count\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceOrder.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceOrder\:\:get_package_snapshot\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceOrder.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceOrder\:\:query\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceOrder.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServiceOrder\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServiceOrder.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServicePackage\:\:from_array\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServicePackage.php
+
+		-
+			message: '#^Method WPSellServices\\Models\\ServicePackage\:\:to_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Models/ServicePackage.php
+
+		-
+			message: '#^Method WPSellServices\\PostTypes\\BuyerRequestPostType\:\:filter_post_messages\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/PostTypes/BuyerRequestPostType.php
+
+		-
+			message: '#^Method WPSellServices\\PostTypes\\BuyerRequestPostType\:\:filter_post_messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/PostTypes/BuyerRequestPostType.php
+
+		-
+			message: '#^Method WPSellServices\\PostTypes\\ServicePostType\:\:filter_post_messages\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/PostTypes/ServicePostType.php
+
+		-
+			message: '#^Method WPSellServices\\PostTypes\\ServicePostType\:\:filter_post_messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/PostTypes/ServicePostType.php
+
+		-
 			message: '#^@param array \$proposal does not accept actual type of parameter\: object\.$#'
 			identifier: parameter.phpDocType
 			count: 1
 			path: src/Services/BuyerRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\BuyerRequestService\:\:convert_to_order\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/BuyerRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\CommissionService\:\:create_earnings_transaction\(\) has parameter \$commission with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/CommissionService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\CommissionService\:\:get_order_commission\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/CommissionService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\CommissionService\:\:update_vendor_earnings\(\) has parameter \$commission with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/CommissionService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ConversationService\:\:add_system_message\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ConversationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ConversationService\:\:get_by_user\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ConversationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ConversationService\:\:get_messages\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ConversationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ConversationService\:\:send_message\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ConversationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DeliveryService\:\:get_allowed_file_types\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DeliveryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DeliveryService\:\:get_order_deliveries\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DeliveryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DeliveryService\:\:process_file\(\) has parameter \$file with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DeliveryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DeliveryService\:\:process_file\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DeliveryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DeliveryService\:\:submit\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DeliveryService.php
 
 		-
 			message: '#^Property WPSellServices\\Services\\DisputeService\:\:\$messages_table is never read, only written\.$#'
@@ -733,6 +3475,84 @@ parameters:
 			path: src/Services/DisputeWorkflowManager.php
 
 		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:add_cron_schedules\(\) has parameter \$schedules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:add_cron_schedules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:assign_to_admin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:cancel\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:decode_json_array\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:escalate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:get_attachment_urls\(\) has parameter \$attachment_ids with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:get_attachment_urls\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:get_messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:get_timeline\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:on_dispute_opened\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:submit_response\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\DisputeWorkflowManager\:\:submit_response\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/DisputeWorkflowManager.php
+
+		-
 			message: '#^Parameter \#1 \$array of function usort contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 1
@@ -745,9 +3565,177 @@ parameters:
 			path: src/Services/DisputeWorkflowManager.php
 
 		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:add_cron_schedules\(\) has parameter \$schedules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:add_cron_schedules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:create_auto_withdrawal\(\) has parameter \$details with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:create_auto_withdrawal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_all_withdrawals\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_all_withdrawals\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_by_period\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_eligible_vendors_for_auto_withdrawal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_history\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_history\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_summary\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_withdrawal_methods\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_withdrawal_statuses\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_withdrawals\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:get_withdrawals\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:process_auto_withdrawals\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:process_withdrawal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:request_withdrawal\(\) has parameter \$details with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EarningsService\:\:request_withdrawal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EarningsService.php
+
+		-
 			message: '#^Action callback returns bool but should not return anything\.$#'
 			identifier: return.void
 			count: 9
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:get_email_content\(\) has parameter \$template_vars with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:get_email_settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:get_template_part\(\) has parameter \$template_vars with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:send\(\) has parameter \$template_vars with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:send_proposal_submitted\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:send_requirements_submitted\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:send_requirements_submitted\(\) has parameter \$field_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:send_vendor_contact\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\EmailService\:\:settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
 			path: src/Services/EmailService.php
 
 		-
@@ -763,6 +3751,60 @@ parameters:
 			path: src/Services/EmailService.php
 
 		-
+			message: '#^Property WPSellServices\\Services\\EmailService\:\:\$settings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/EmailService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:approve\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:create\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:format_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get_by_order\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get_pending\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:get_statuses\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ExtensionRequestService\:\:reject\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ExtensionRequestService.php
+
+		-
 			message: '#^Method WPSellServices\\Services\\NotificationService\:\:send\(\) invoked with 5 parameters, 2\-3 required\.$#'
 			identifier: arguments.count
 			count: 3
@@ -775,10 +3817,118 @@ parameters:
 			path: src/Services/ExtensionRequestService.php
 
 		-
+			message: '#^Method WPSellServices\\Services\\FAQService\:\:get_faqs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/FAQService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\FAQService\:\:get_schema\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/FAQService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\FAQService\:\:render\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/FAQService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\FAQService\:\:render_admin_item\(\) has parameter \$faq with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/FAQService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\FAQService\:\:reorder\(\) has parameter \$order with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/FAQService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\FAQService\:\:save_faqs\(\) has parameter \$faqs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/FAQService.php
+
+		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Services/FAQService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:add_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:get_gallery\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:get_images\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:get_videos\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:render\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:render_admin_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:render_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:render_thumbnail\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:reorder\(\) has parameter \$order with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:sanitize_item\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:sanitize_item\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\GalleryService\:\:save_gallery\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
 
 		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
@@ -793,10 +3943,40 @@ parameters:
 			path: src/Services/GalleryService.php
 
 		-
-			message: '#^Match arm comparison between ''due_date'' and ''due_date'' is always true\.$#'
-			identifier: match.alwaysTrue
+			message: '#^Property WPSellServices\\Services\\GalleryService\:\:\$allowed_image_types type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
-			path: src/Services/MilestoneService.php
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Property WPSellServices\\Services\\GalleryService\:\:\$allowed_video_types type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/GalleryService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ModerationService\:\:get_moderation_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ModerationService\:\:get_pending_services\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ModerationService\:\:get_pending_services\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ModerationService\:\:get_statuses\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
 
 		-
 			message: '#^Array has 2 duplicate keys with value ''dispute_opened'' \(self\:\:TYPE_DISPUTE_OPENED, ''dispute_opened''\)\.$#'
@@ -823,8 +4003,50 @@ parameters:
 			path: src/Services/NotificationService.php
 
 		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:build_email_content\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:get_user_notifications\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:get_user_notifications\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:notify_vendor_registered\(\) has parameter \$profile_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:send\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
 			message: '#^Method WPSellServices\\Services\\NotificationService\:\:send\(\) should return int\|false but returns null\.$#'
 			identifier: return.type
+			count: 1
+			path: src/Services/NotificationService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\NotificationService\:\:send_email\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/Services/NotificationService.php
 
@@ -835,10 +4057,226 @@ parameters:
 			path: src/Services/NotificationService.php
 
 		-
+			message: '#^Method WPSellServices\\Services\\OrderService\:\:get_customer_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OrderService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\OrderService\:\:get_vendor_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OrderService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\OrderService\:\:set_deadline_on_requirements\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OrderService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\OrderService\:\:set_deadline_on_requirements\(\) has parameter \$field_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OrderService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\OrderWorkflowManager\:\:add_cron_schedules\(\) has parameter \$schedules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OrderWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\OrderWorkflowManager\:\:add_cron_schedules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OrderWorkflowManager.php
+
+		-
 			message: '#^Strict comparison using \!\=\= between '''' and float will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Services/OrderWorkflowManager.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:create\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:delete\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:format_item\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:get\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:get_by_service\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:get_by_vendor\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:get_by_vendor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:get_featured\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:reorder\(\) has parameter \$order with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:toggle_featured\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\PortfolioService\:\:update\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/PortfolioService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:get\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:get_allowed_file_types\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:get_formatted\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:get_service_fields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:parse_choices\(\) has parameter \$choices with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:parse_choices\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:process_uploads\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:process_uploads\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:save\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:save\(\) has parameter \$field_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:submit\(\) has parameter \$field_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:submit\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:submit\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:validate\(\) has parameter \$field_data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:validate\(\) has parameter \$fields with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:validate\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:validate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RequirementsService.php
 
 		-
 			message: '#^Property WPSellServices\\Services\\RequirementsService\:\:\$validator is never read, only written\.$#'
@@ -865,10 +4303,202 @@ parameters:
 			path: src/Services/ReviewService.php
 
 		-
+			message: '#^Method WPSellServices\\Services\\ReviewService\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ReviewService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ReviewService\:\:get_service_reviews\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ReviewService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ReviewService\:\:get_vendor_reviews\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ReviewService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\SellerLevelService\:\:get_all_requirements\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/SellerLevelService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\SellerLevelService\:\:get_level_requirements\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/SellerLevelService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\SellerLevelService\:\:get_progress_to_next_level\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/SellerLevelService.php
+
+		-
+			message: '#^Property WPSellServices\\Services\\SellerLevelService\:\:\$requirements type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/SellerLevelService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ServiceAddonService\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ServiceAddonService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ServiceAddonService\:\:get_addon_templates\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ServiceAddonService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ServiceAddonService\:\:get_service_addons\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ServiceAddonService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ServiceAddonService\:\:get_service_addons\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ServiceAddonService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\ServiceAddonService\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ServiceAddonService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\TippingService\:\:get_vendor_tips\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/TippingService.php
+
+		-
+			message: '#^Method WPSellServices\\Services\\TippingService\:\:get_vendor_tips\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/TippingService.php
+
+		-
 			message: '#^Parameter \#3 \$number of function _n expects int, float given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Services/VendorService.php
+
+		-
+			message: '#^Function wpss_add_notification\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_currencies\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_order_requirements\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_order_statuses\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_service_checkout_url\(\) has parameter \$addons with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_service_packages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_service_requirements\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_template\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_template_part\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_user_notifications\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_user_notifications\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_user_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_user_orders\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_vendor_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_vendor_orders\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_get_vendor_services\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_pagination\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
+
+		-
+			message: '#^Function wpss_resolve_checkout_addons\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/functions.php
 
 		-
 			message: '#^If condition is always true\.$#'
