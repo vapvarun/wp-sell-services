@@ -413,6 +413,19 @@ class UnifiedDashboard {
 				$this->maybe_render_profile_banner( $user_id, $is_active );
 				?>
 				<header class="wpss-dashboard__header">
+					<?php
+					/**
+					 * Fires at the start of the unified dashboard header.
+					 *
+					 * Pro's WhiteLabel DashboardBrandingService listens here (priority 5)
+					 * to render a branded logo or brand name before the section title.
+					 * Free shipped without firing this action, leaving that listener
+					 * dead; added in 1.2.0 to complete the contract.
+					 *
+					 * @since 1.2.0
+					 */
+					do_action( 'wpss_dashboard_header' );
+					?>
 					<h1 class="wpss-dashboard__title">
 						<?php
 						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.

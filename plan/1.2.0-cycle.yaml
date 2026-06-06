@@ -251,6 +251,9 @@ migrations:
   - kind: db_schema
     name: additive-hot-path-indexes
     reason: "Scale wave may ADD indexes to existing wpss_* tables for hot-path query budgets. Columns and tables themselves never change or get removed."
+  - kind: hook
+    name: wpss_dashboard_header
+    reason: "Pre-existing Free/Pro drift surfaced by the wave-1 contract gate: Pro's WhiteLabel DashboardBrandingService has listened on wpss_dashboard_header since Pro 1.3.0 but Free NEVER fired it (dead listener; branded dashboard header never rendered). Free now fires do_action('wpss_dashboard_header') at the start of the unified dashboard header (UnifiedDashboard.php, additive, owner-committed). The hook stays in contracts: it is now a real fired hook."
 
 standards:
   build_skills:  [wp-plugin-development, ux-foundation]
