@@ -38,14 +38,17 @@
 	color: var(--wpss-text);
 }
 
-/* Reset theme link styles */
-.wpss-services-archive a {
+/* Reset theme link styles.
+   Scoped to plain links inside the archive chrome (header, results bar). The
+   service-card link is deliberately excluded — its colour is owned by the card
+   component (frontend.css) so card text never turns link-blue / Reign-white. */
+.wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *) {
 	color: var(--wpss-primary);
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
 
-.wpss-services-archive a:hover {
+.wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *):hover {
 	color: var(--wpss-primary-hover);
 }
 
@@ -102,9 +105,29 @@
 
 .wpss-services-archive .wpss-btn-outline:hover,
 .wpss-services-archive .wpss-btn-outline:focus {
-	background-color: var(--wpss-bg);
+	background-color: var(--wpss-bg-subtle);
 	color: var(--wpss-text);
-	border-color: var(--wpss-border);
+	border-color: var(--wpss-secondary);
+}
+
+/* Filter actions (submit <button> + clear <a>). Reign restyles bare form
+   <button>/<input type=submit> with its own bg/colour; re-assert ours with the
+   submit-element selector so the Apply button keeps its brand fill and the
+   Clear link keeps its outline treatment regardless of theme. */
+.wpss-services-archive button.wpss-btn-primary,
+.wpss-services-archive input[type="submit"].wpss-btn-primary {
+	background-color: var(--wpss-primary);
+	color: var(--wpss-white);
+	border-color: var(--wpss-primary);
+}
+
+.wpss-services-archive button.wpss-btn-primary:hover,
+.wpss-services-archive button.wpss-btn-primary:focus,
+.wpss-services-archive input[type="submit"].wpss-btn-primary:hover,
+.wpss-services-archive input[type="submit"].wpss-btn-primary:focus {
+	background-color: var(--wpss-primary-hover);
+	color: var(--wpss-white);
+	border-color: var(--wpss-primary-hover);
 }
 
 /* ==========================================================================
@@ -412,19 +435,26 @@ body.wpss-sidebar-open::after {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 0.5rem 0;
+	gap: 0.5rem;
+	padding: 0.5rem 0.625rem;
+	margin: 0 -0.625rem;
+	border-radius: var(--wpss-radius);
 	color: var(--wpss-text);
 	text-decoration: none;
 	font-size: 0.938rem;
-	transition: color var(--wpss-transition);
+	transition: color var(--wpss-transition), background-color var(--wpss-transition);
 }
 
+/* A colour-only hover was invisible against Reign's section background; add a
+   tinted row so the hovered / selected category is unmistakable. */
 .wpss-category-link:hover {
 	color: var(--wpss-primary);
+	background: var(--wpss-primary-light);
 }
 
 .wpss-category-link.is-active {
 	color: var(--wpss-primary);
+	background: var(--wpss-primary-light);
 	font-weight: 600;
 }
 
