@@ -31,6 +31,51 @@ use WPSellServices\Models\ServiceOrder;
 /**
  * Handles frontend AJAX requests.
  *
+ * Authorization model (object-ownership, not role capabilities)
+ * -------------------------------------------------------------
+ * These are marketplace endpoints for logged-in buyers and vendors, not admin
+ * screens. The right authorization question is almost never "does this user
+ * hold capability X?" but "does this user *own* the object they are acting on?"
+ * (their order, their service, their proposal, their conversation, their cart).
+ * A nonce check alone proves the request is intentional; it does not prove
+ * ownership. Every mutating handler therefore enforces ownership through ONE of
+ * the four accepted patterns below. A security scan that flags "nonce verified
+ * but no current_user_can()" on a handler matching one of these patterns is a
+ * false positive for this class — capability checks are the wrong tool here.
+ *
+ * Pattern A — inline object-ownership guard.
+ *   The handler loads the object and compares its owner column to
+ *   get_current_user_id() before mutating, e.g.
+ *     `if ( ! $order || (int) $order->vendor_id !== $user_id ) { reject; }`
+ *   or for CPTs `(int) $post->post_author !== $user_id`. Used by the order,
+ *   service, request, proposal-accept/reject and portfolio-edit handlers.
+ *
+ * Pattern B — service-layer ownership enforcement.
+ *   The handler forwards get_current_user_id() to a service method that rejects
+ *   when the caller does not own the row (e.g. ProposalService::withdraw(),
+ *   MilestoneService::submit()/approve()/decline()/delete_unpaid(),
+ *   ExtensionOrderService::decline(), ConversationService::mark_as_read() /
+ *   user_can_access()). The guard lives once in the service so every caller
+ *   (AJAX + REST + CLI) shares it. The handler must pass the *current* user id,
+ *   never a client-supplied id.
+ *
+ * Pattern C — self-scoped data only.
+ *   The handler reads or writes data keyed to the current user and can never
+ *   touch another user's data: own user-meta cart/favorites/email-prefs/profile,
+ *   notifications and dashboard stats filtered by `user_id = %d` /
+ *   `vendor_id = %d`, or a `wpss_user_id` query var pinned to
+ *   get_current_user_id(). No object id from the client widens the scope.
+ *
+ * Pattern D — intentionally public.
+ *   Read-only, non-sensitive, `nopriv`-exposed endpoints (live_search,
+ *   load_reviews, load_services) and the guest helpful-vote (mark_review_helpful,
+ *   deduped per user/IP). These have no ownership concept by design and are
+ *   rate-limited instead.
+ *
+ * Admin-only / cross-user actions are the exception: those DO require an
+ * explicit current_user_can( 'manage_options' ) check (see order_action,
+ * submit_requirements, add_dispute_evidence) in addition to the nonce.
+ *
  * @since 1.0.0
  */
 class AjaxHandlers {
