@@ -228,8 +228,8 @@ class ServiceCommands extends WP_CLI_Command {
 	 *
 	 * @subcommand marketplace
 	 *
-	 * @param array $args       Positional arguments.
-	 * @param array $assoc_args Associative arguments.
+	 * @param array<int, string>    $args       Positional arguments.
+	 * @param array<string, string> $assoc_args Associative arguments.
 	 */
 	public function marketplace( array $args, array $assoc_args ): void {
 		$min_orders = (int) ( $assoc_args['orders'] ?? 55 );
