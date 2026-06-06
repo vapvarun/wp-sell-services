@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WP_CLI;
 use WP_CLI_Command;
+use WPSellServices\Demo\MarketplaceSeeder;
 
 /**
  * Manage WP Sell Services from the command line.
@@ -196,6 +197,66 @@ class ServiceCommands extends WP_CLI_Command {
 		$progress->finish();
 
 		WP_CLI::success( "Deleted {$count} services." );
+	}
+
+	/**
+	 * Seed a full demo marketplace.
+	 *
+	 * Creates vendors (with profiles + portfolios), buyers, services, orders
+	 * spanning every order status, reviews, buyer requests + proposals,
+	 * conversations + messages, favorites, and withdrawals - everything a
+	 * realistic marketplace needs for demos and QA. Delegates all logic to
+	 * {@see \WPSellServices\Demo\MarketplaceSeeder} so the same seeding can be
+	 * driven from REST or a unit test.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--orders=<number>]
+	 * : Minimum number of orders to create (every order status is always
+	 * represented at least twice).
+	 * ---
+	 * default: 55
+	 * ---
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Seed the default marketplace
+	 *     $ wp wpss demo marketplace
+	 *
+	 *     # Seed a larger marketplace
+	 *     $ wp wpss demo marketplace --orders=100
+	 *
+	 * @subcommand marketplace
+	 *
+	 * @param array $args       Positional arguments.
+	 * @param array $assoc_args Associative arguments.
+	 */
+	public function marketplace( array $args, array $assoc_args ): void {
+		$min_orders = (int) ( $assoc_args['orders'] ?? 55 );
+
+		WP_CLI::log( 'Seeding demo marketplace...' );
+		WP_CLI::log( '' );
+
+		$seeder = new MarketplaceSeeder(
+			static function ( string $message ): void {
+				WP_CLI::log( '  ' . $message );
+			}
+		);
+
+		$summary = $seeder->seed( array( 'orders' => $min_orders ) );
+
+		WP_CLI::log( '' );
+		WP_CLI::success( 'Demo marketplace seeded.' );
+
+		$rows = array();
+		foreach ( $summary as $entity => $count ) {
+			$rows[] = array(
+				'Entity' => ucfirst( str_replace( '_', ' ', $entity ) ),
+				'Count'  => $count,
+			);
+		}
+
+		WP_CLI\Utils\format_items( 'table', $rows, array( 'Entity', 'Count' ) );
 	}
 
 	/**
