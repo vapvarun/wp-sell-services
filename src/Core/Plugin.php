@@ -338,7 +338,6 @@ final class Plugin {
 					// version get registered without a deactivate / reactivate.
 					// Idempotent — Scheduler::has_pending() gates every insert.
 					Activator::schedule_cron_events();
-					flush_rewrite_rules();
 
 					/**
 					 * Fires after the plugin has been installed or upgraded.
@@ -351,6 +350,14 @@ final class Plugin {
 				},
 				5
 			);
+
+			// Flush rewrite rules at init:99 — AFTER register_rewrite_rules()
+			// registers the dashboard section endpoint and the vendor/order
+			// rules at init:5. Flushing earlier (same closure at init:5, which
+			// runs before endpoint registration because maybe_run_install() is
+			// called before register_rewrite_rules() in boot order) would drop
+			// the new /{dashboard}/{section}/ pretty permalink rule on upgrade.
+			add_action( 'init', 'flush_rewrite_rules', 99 );
 
 			update_option( 'wpss_version', WPSS_VERSION );
 		}
@@ -472,6 +479,13 @@ final class Plugin {
 					'index.php?wpss_service_order=$matches[1]',
 					'top'
 				);
+
+				// Dashboard section endpoint: /{dashboard-page}/{section}/.
+				// EP_PAGES attaches the endpoint to the dashboard WP page so a
+				// pretty section URL (e.g. /dashboard/services/) resolves to the
+				// page with `wpss_section=services` as a query var. The query-arg
+				// form (?section=services) keeps working as a fallback.
+				add_rewrite_endpoint( 'wpss_section', EP_PAGES );
 			},
 			5
 		);
@@ -483,9 +497,14 @@ final class Plugin {
 				$vars[] = 'wpss_vendor';
 				$vars[] = 'wpss_service_order';
 				$vars[] = 'wpss_order_action';
+				$vars[] = 'wpss_section';
 				return $vars;
 			}
 		);
+
+		// 301-redirect legacy ?section= URLs to the pretty endpoint when
+		// permalinks are pretty, so old links and bookmarks resolve cleanly.
+		add_action( 'template_redirect', array( $this, 'redirect_legacy_section_url' ) );
 
 		// Flush rewrite rules once after activation (consumes transient set by Activator).
 		add_action(
@@ -498,6 +517,65 @@ final class Plugin {
 			},
 			99
 		);
+	}
+
+	/**
+	 * Redirect legacy `?section=` dashboard URLs to the pretty endpoint.
+	 *
+	 * Only fires on the dashboard page when permalinks are pretty (a permalink
+	 * structure is set) and a `section` query arg is present without the pretty
+	 * endpoint already being matched. Issues a 301 to the canonical pretty URL,
+	 * preserving every other query arg (order_id, action, conversation_id, etc.).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	public function redirect_legacy_section_url(): void {
+		// Pretty permalinks must be active; on "plain" permalinks the
+		// query-arg form is the canonical URL, so do nothing.
+		if ( ! get_option( 'permalink_structure' ) ) {
+			return;
+		}
+
+		if ( ! function_exists( 'wpss_is_page' ) || ! wpss_is_page( 'dashboard' ) ) {
+			return;
+		}
+
+		// Already on the pretty endpoint — nothing to redirect.
+		if ( '' !== (string) get_query_var( 'wpss_section', '' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+		if ( ! isset( $_GET['section'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+		$section = sanitize_key( wp_unslash( $_GET['section'] ) );
+		if ( '' === $section ) {
+			return;
+		}
+
+		if ( ! function_exists( 'wpss_get_dashboard_url' ) ) {
+			return;
+		}
+
+		$target = wpss_get_dashboard_url( $section );
+		if ( '' === $target ) {
+			return;
+		}
+
+		// Carry over any sibling query args (order_id, action, etc.), minus `section`.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+		$extra = array_diff_key( wp_unslash( $_GET ), array( 'section' => '' ) );
+		if ( ! empty( $extra ) ) {
+			$target = add_query_arg( array_map( 'sanitize_text_field', $extra ), $target );
+		}
+
+		wp_safe_redirect( $target, 301 );
+		exit;
 	}
 
 	/**

@@ -216,7 +216,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 				?>
 			</p>
 			<?php if ( 'all' === $sales_period ) : ?>
-				<a href="<?php echo esc_url( add_query_arg( 'section', 'services', get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary">
+				<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'services' ) ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'View My Services', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>

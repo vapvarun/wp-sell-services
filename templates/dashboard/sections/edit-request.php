@@ -19,7 +19,7 @@ $request_id = absint( $_GET['request_id'] ?? 0 ); // phpcs:ignore WordPress.Secu
 
 if ( ! $request_id ) {
 	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'Request not found.', 'wp-sell-services' ) . '</h3>';
-	echo '<a href="' . esc_url( add_query_arg( 'section', 'requests', get_permalink() ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
+	echo '<a href="' . esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
 	return;
 }
 
@@ -28,7 +28,7 @@ $request = get_post( $request_id );
 
 if ( ! $request || 'wpss_request' !== $request->post_type || (int) $request->post_author !== $user_id ) {
 	echo '<div class="wpss-empty-state"><h3>' . esc_html__( 'You do not have permission to edit this request.', 'wp-sell-services' ) . '</h3>';
-	echo '<a href="' . esc_url( add_query_arg( 'section', 'requests', get_permalink() ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
+	echo '<a href="' . esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ) . '" class="wpss-btn wpss-btn--primary">' . esc_html__( 'Back to Requests', 'wp-sell-services' ) . '</a></div>';
 	return;
 }
 
@@ -78,7 +78,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 <div class="wpss-request-wizard">
 	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
 		<h2 style="margin: 0;"><?php esc_html_e( 'Edit Request', 'wp-sell-services' ); ?></h2>
-		<a href="<?php echo esc_url( add_query_arg( 'section', 'requests', get_permalink() ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+		<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 			<?php esc_html_e( 'Back to Requests', 'wp-sell-services' ); ?>
 		</a>
 	</div>
