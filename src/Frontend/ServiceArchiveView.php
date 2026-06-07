@@ -584,6 +584,14 @@ class ServiceArchiveView {
 			$query->is_singular = false;
 			$query->is_page     = false;
 
+			// Declare the converted query as a wpss_service post-type archive.
+			// Clearing the singular flags without setting these leaves the main
+			// query context-less: body_class() emits no page/archive classes and
+			// themes cannot classify the request (Reign, for one, falls through
+			// to its unconditional sub-header branch, so the Customizer
+			// sub-header toggle has no effect on the services page).
+			$query->is_archive           = true;
+			$query->is_post_type_archive = true;
 		}
 
 		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
