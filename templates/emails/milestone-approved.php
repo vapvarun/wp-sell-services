@@ -34,6 +34,8 @@ $sales_url = add_query_arg(
 	),
 	$dashboard
 );
+
+do_action( 'wpss_email_content_before', 'milestone_approved', $milestone, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -64,3 +66,6 @@ $sales_url = add_query_arg(
 		<?php esc_html_e( 'Open this phase', 'wp-sell-services' ); ?>
 	</a>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'milestone_approved', $milestone, $recipient );

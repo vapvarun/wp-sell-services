@@ -57,6 +57,15 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		? wpss_format_price( $amount, $currency )
 		: number_format_i18n( $amount, 2 ) . ' ' . $currency;
 };
+
+/**
+ * Fires before the milestone sub-order view content.
+ *
+ * @since 1.1.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $current_order Milestone sub-order row.
+ */
+do_action( 'wpss_before_milestone_view', $current_order );
 ?>
 
 <div class="wpss-tip-view wpss-milestone-view">
@@ -275,6 +284,17 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		</div>
 	</div>
 <?php endif; ?>
+
+<?php
+/**
+ * Fires after the milestone sub-order view content.
+ *
+ * @since 1.1.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $current_order Milestone sub-order row.
+ */
+do_action( 'wpss_after_milestone_view', $current_order );
+?>
 
 <script>
 (function () {

@@ -30,6 +30,8 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 
 $base_color  = $base_color ?? '#7f54b3';
 $sender_name = $sender_name ?? __( 'Someone', 'wp-sell-services' );
+
+do_action( 'wpss_email_content_before', 'vendor_contact', $recipient, $sender );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">

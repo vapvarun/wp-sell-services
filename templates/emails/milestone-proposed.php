@@ -30,6 +30,8 @@ $format = static function ( float $amt ) use ( $currency ): string {
 		? wpss_format_price( $amt, $currency )
 		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
 };
+
+do_action( 'wpss_email_content_before', 'milestone_proposed', $milestone, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -76,3 +78,6 @@ $format = static function ( float $amt ) use ( $currency ): string {
 		?>
 	</a>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'milestone_proposed', $milestone, $recipient );

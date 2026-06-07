@@ -27,6 +27,8 @@ $format = static function ( float $amt ) use ( $currency ): string {
 		? wpss_format_price( $amt, $currency )
 		: number_format_i18n( $amt, 2 ) . ' ' . $currency;
 };
+
+do_action( 'wpss_email_content_before', 'extension_proposed', $extension, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -72,3 +74,6 @@ $format = static function ( float $amt ) use ( $currency ): string {
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
 	<?php esc_html_e( 'Not sure? Open the order and discuss in chat first — the seller can send a revised quote.', 'wp-sell-services' ); ?>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'extension_proposed', $extension, $recipient );

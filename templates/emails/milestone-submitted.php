@@ -20,6 +20,8 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+do_action( 'wpss_email_content_before', 'milestone_submitted', $milestone, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -55,3 +57,6 @@ defined( 'ABSPATH' ) || exit;
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
 	<?php esc_html_e( 'If something is not right, head to the order page and use the conversation thread to ask for changes — the seller can resubmit when ready.', 'wp-sell-services' ); ?>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'milestone_submitted', $milestone, $recipient );
