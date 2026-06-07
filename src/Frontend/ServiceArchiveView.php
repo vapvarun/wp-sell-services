@@ -147,7 +147,8 @@ class ServiceArchiveView {
 
 		// Use the services page (or CPT archive) as the base URL for category filter links.
 		// This prevents broken URLs when navigating categories from a taxonomy archive page.
-		$base_url = wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' );
+		$services_page_url = wpss_get_page_url( 'services_page' );
+		$base_url          = $services_page_url ? $services_page_url : get_post_type_archive_link( 'wpss_service' );
 
 		// Preserve current sort param when switching categories.
 		$base_args = array();
@@ -459,7 +460,8 @@ class ServiceArchiveView {
 						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
 					</button>
 					<?php
-					$clear_url = wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' );
+					$services_page_url = wpss_get_page_url( 'services_page' );
+					$clear_url         = $services_page_url ? $services_page_url : get_post_type_archive_link( 'wpss_service' );
 					?>
 					<a href="<?php echo esc_url( $clear_url ); ?>" class="wpss-btn wpss-btn-outline wpss-btn-block">
 						<?php esc_html_e( 'Clear All', 'wp-sell-services' ); ?>
@@ -631,18 +633,23 @@ class ServiceArchiveView {
 		// Exclude services from vendors who are on vacation mode.
 		global $wpdb;
 		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$vacation_vendors = $wpdb->get_col(
-			"SELECT user_id FROM {$profiles_table} WHERE vacation_mode = 1"
+			$wpdb->prepare(
+				'SELECT user_id FROM %i WHERE vacation_mode = 1',
+				$profiles_table
+			)
 		);
 		if ( ! empty( $vacation_vendors ) ) {
-			$existing_excludes = $query->get( 'author__not_in' ) ?: array();
+			$existing_excludes = $query->get( 'author__not_in' );
+			$existing_excludes = $existing_excludes ? $existing_excludes : array();
 			$query->set( 'author__not_in', array_merge( $existing_excludes, array_map( 'intval', $vacation_vendors ) ) );
 		}
 
 		// Always filter out rejected/pending services regardless of moderation setting.
 		// Services without moderation meta (legacy) are allowed through.
-		$meta_query   = $query->get( 'meta_query' ) ?: array();
+		$meta_query   = $query->get( 'meta_query' );
+		$meta_query   = $meta_query ? $meta_query : array();
 		$meta_query[] = array(
 			'relation' => 'OR',
 			array(
@@ -674,7 +681,8 @@ class ServiceArchiveView {
 
 		// Category filter (dropdown in filters bar).
 		if ( isset( $_GET['category'] ) && absint( $_GET['category'] ) > 0 ) {
-			$tax_query   = $query->get( 'tax_query' ) ?: array();
+			$tax_query   = $query->get( 'tax_query' );
+			$tax_query   = $tax_query ? $tax_query : array();
 			$tax_query[] = array(
 				'taxonomy' => 'wpss_service_category',
 				'field'    => 'term_id',
@@ -684,7 +692,8 @@ class ServiceArchiveView {
 		}
 
 		// Price range filters.
-		$meta_query = $query->get( 'meta_query' ) ?: array();
+		$meta_query = $query->get( 'meta_query' );
+		$meta_query = $meta_query ? $meta_query : array();
 
 		if ( isset( $_GET['min_price'] ) && '' !== $_GET['min_price'] ) {
 			$meta_query[] = array(
