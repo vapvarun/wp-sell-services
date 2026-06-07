@@ -604,12 +604,13 @@ waves:
     journeys: [admin-metabox-save, vendor-dashboard-ajax]
     directions:
       - id: "4.1"
-        title: "Refactor metabox superglobal iteration to explicit-key reads (BuyerRequestMetabox.php:327, ServiceMetabox.php:1065)"
+        title: "Metabox hardening + a11y: refactor superglobal iteration to explicit-key reads (BuyerRequestMetabox.php:327, ServiceMetabox.php:1065) AND fix the wppqa a11y baseline in these files - every form input gets an associated label (or aria-label), enum values read from the canonical Models constants (no inline string lists)"
         journey: improve
         scope:
           - "src/Admin/Metaboxes/BuyerRequestMetabox.php"
           - "src/Admin/Metaboxes/ServiceMetabox.php"
-        skills: [wp-plugin-development, wp-security-review]
+          - "src/Admin/Metaboxes/OrderMetabox.php"
+        skills: [wp-plugin-development, wp-security-review, ux-foundation]
         static_gates: [php-lint, wpcs, phpstan]
         depends_on: []
       - id: "4.2"
@@ -618,6 +619,17 @@ waves:
         scope:
           - "src/Frontend/AjaxHandlers.php"
         skills: [wp-plugin-development, wp-security-review]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "4.3"
+        title: "Enum-consistency fix (wppqa baseline: 7 high-severity drifts on status, period, action, orderby, type, new_status, sort): single canonical source per enum (Models class constants), every API controller / service / demo seeder reads from it, REST args validated against the canonical list - response values byte-identical (no contract change)"
+        journey: improve
+        scope:
+          - "src/API/**"
+          - "src/Services/**"
+          - "src/Demo/**"
+          - "src/Models/**"
+        skills: [wp-plugin-development]
         static_gates: [php-lint, wpcs, phpstan]
         depends_on: []
 
@@ -638,7 +650,7 @@ waves:
         static_gates: [php-lint, wpcs, ux-audit, wiring]
         depends_on: []
       - id: "5.2"
-        title: "Tap-target (>=40px) + breakpoint consolidation in ADMIN CSS (frontend CSS already uplifted in wave 2.5; sources are non-rtl non-min files; rebuild artefacts with grunt after editing)"
+        title: "Tap-target (>=40px) + breakpoint consolidation + focus-visible remediation in ADMIN CSS (every outline:none gets a :focus-visible ring per ux-foundation; frontend CSS already uplifted in wave 2.5; sources are non-rtl non-min files; rebuild artefacts with grunt after editing)"
         journey: improve
         scope:
           - "assets/css/admin.css"
@@ -666,6 +678,58 @@ waves:
         static_gates: [php-lint, wpcs, phpstan]
         depends_on: []
 
+  # ══ Wave 6.2 — TEMPLATE EXTENSIBILITY HOOKS (wppqa advisory, owner: fix now) ══
+  # The 31 missing do_action hooks in email/order templates flagged by
+  # wppqa_check_templates. Additive extension points only (sanctioned by the
+  # wpss-shell-compat-filters migration pattern): each template gets the
+  # standard before/after action pairs so themes and Pro can inject content
+  # without overriding whole templates. No markup or behaviour change.
+  - id: wave-6-2-template-hooks
+    depends_on: [wave-6-pretty-urls]
+    functional_gates: [qa-suite]
+    journeys: [buyer-single-service]
+    directions:
+      - id: "6.2.1"
+        title: "Add the standard before/after do_action extension hooks to email + order templates (the 31 wppqa template-check advisories): wpss_email_* and wpss_order_* hook pairs, additive only, zero markup/behaviour change, wppqa_check_templates passes clean after"
+        journey: improve
+        scope:
+          - "templates/emails/**"
+          - "templates/order/**"
+          - "templates/partials/**"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs]
+        depends_on: []
+
+  # ══ Wave 6.3 — FRONTEND AJAX -> REST MIGRATION (owner: no deferral, fix now) ══
+  # The plugin carries two transport layers: 106 admin-ajax handlers + 138
+  # REST endpoints, with duplicated flows (favorites, dashboard actions).
+  # admin-ajax boots full admin context per hit and bypasses caching - the
+  # known 100k-site hotspot. Migrate NOW, contract-safe:
+  #   1. Every frontend JS call routes to the existing wpss/v1 REST
+  #      controllers (apiFetch/X-WP-Nonce).
+  #   2. Every wp_ajax_* handler becomes a thin delegate to the SAME service
+  #      the REST controller uses - action names, request params, and
+  #      response shapes stay byte-compatible (frozen contract honored;
+  #      third-party callers unaffected).
+  #   3. No new REST endpoints unless a flow has no controller - then it is
+  #      added under the existing namespace and sanctioned below.
+  - id: wave-6-3-ajax-rest
+    depends_on: [wave-6-2-template-hooks]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [vendor-dashboard-ajax, buyer-single-service, buyer-favorites-archive, buyer-browse-services]
+    directions:
+      - id: "6.3.1"
+        title: "Migrate ALL frontend JS from admin-ajax.php to the existing wpss/v1 REST controllers (apiFetch + X-WP-Nonce); convert every wp_ajax_* handler in AjaxHandlers.php to a thin delegate calling the same service as its REST twin - action names, params, and response shapes byte-compatible; document the mapping in audit/ajax-rest-map.json; browser-verify every dashboard/favorites/messaging/wizard flow at 1280px+390px"
+        journey: improve
+        scope:
+          - "assets/js/**"
+          - "src/Frontend/AjaxHandlers.php"
+          - "src/API/**"
+          - "audit/ajax-rest-map.json"
+        skills: [wp-plugin-development, action-audit]
+        static_gates: [php-lint, wpcs, phpstan, wiring]
+        depends_on: []
+
   # ══ Wave 6.5 — 100K-SITE SCALE READINESS ══
   # OWNER DIRECTIVE: 100k sites will run this plugin. Theory is not enough -
   # measure. Hot paths: services archive query, single-service load,
@@ -677,7 +741,7 @@ waves:
   # cache). No schema changes to the 18 contract tables without a
   # migrations: entry - indexes are additive and allowed.
   - id: wave-6-5-scale
-    depends_on: [wave-6-pretty-urls]
+    depends_on: [wave-6-3-ajax-rest]
     functional_gates: [qa-suite]
     journeys: [buyer-browse-services, vendor-dashboard-ajax]
     directions:
@@ -694,10 +758,10 @@ waves:
 
   # ══ Wave 7 — AUDIT: shippability verdict ══
   - id: wave-7-audit
-    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-2-6-css-cleanup, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-5-scale]
+    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-2-6-css-cleanup, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-2-template-hooks, wave-6-3-ajax-rest, wave-6-5-scale]
     directions:
       - id: "7.1"
-        title: "Product-readiness audit verdict for the 1.2.0 cycle (customer bugs + UX uplift + hardening + scale + polish): shippable for a 100k-site install base? Include per-Basecamp-card fix status (9966680633, 9958056390, 9959210393, 9826303369) so the owner can wrap the cards"
+        title: "Product-readiness audit verdict for the 1.2.0 cycle: shippable for a 100k-site install base with ZERO known bugs remaining? Verify every wppqa baseline finding (a11y labels, focus-visible, enum drift, template hooks) is resolved, the ajax-rest map is complete, and include per-Basecamp-card fix status (9966680633, 9958056390, 9959210393, 9826303369) so the owner can wrap the cards. Anything still open is a BLOCKED verdict, not a follow-up"
         journey: audit
         scope: ["**"]
         depends_on: []
