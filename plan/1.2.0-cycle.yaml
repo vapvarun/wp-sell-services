@@ -487,12 +487,14 @@ waves:
         static_gates: [php-lint, wpcs, ux-audit]
         depends_on: []
       - id: "2.5.2"
-        title: "Usability uplift - browse surfaces: services archive, single service, vendor profile/listing (cards, filters, badges, CTAs, empty states, focus rings, tap targets, a11y, hover/focus/visited on every <a> button)"
+        title: "Usability uplift - browse surfaces: services archive, single service, vendor profile/listing (cards, filters, badges, CTAs, empty states, focus rings, tap targets, a11y, hover/focus/visited on every <a> button) + fix F6 from plan/ux-uplift-findings.md: Apply Filters form must carry the active category (hidden inputs) so combined category+price filtering works"
         journey: improve
         scope:
           - "assets/css/frontend.css"
           - "assets/css/archive-service.css"
           - "assets/css/single-service.css"
+          - "src/Frontend/ServiceArchiveView.php"
+          - "assets/js/frontend.js"
           - "templates/archive-service.php"
           - "templates/single-service.php"
           - "templates/content-service-card.php"

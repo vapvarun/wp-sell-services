@@ -252,6 +252,16 @@ class MarketplaceSeeder {
 			'withdrawals'   => 0,
 		);
 
+		// Model-site shape: the marketplace IS the site, so the mapped
+		// services page becomes the static front page (matches how customers
+		// run marketplace homepages and keeps browse journeys reproducible).
+		$services_page_id = (int) wpss_get_page_id( 'services_page' );
+		if ( $services_page_id ) {
+			update_option( 'show_on_front', 'page' );
+			update_option( 'page_on_front', $services_page_id );
+			$this->log( 'Front page set to the mapped services page (#' . $services_page_id . ').' );
+		}
+
 		$category_ids          = $this->ensure_categories();
 		$summary['categories'] = count( $category_ids );
 		$this->log( 'Categories ready: ' . count( $category_ids ) );

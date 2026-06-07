@@ -69,6 +69,18 @@ the shell-unification direction should make this systematic: the app shell
 owns ONE top-spacing token used by every surface, instead of each surface
 adding its own.
 
+## F6 - Apply Filters form drops the selected category (wiring gap)
+
+Wave-0 gate evidence (2026-06-07): on /services/, sidebar taxonomy LINKS
+filter correctly, and the toolbar category combobox navigates on change -
+but the "Apply Filters" form submits only min_price/max_price/delivery.
+The selected category is not carried into the submission URL, so applying
+filters silently resets the category (count stays 32). Pre-existing
+(ServiceArchiveView.php form markup + frontend.js). Fix: the filter form
+must include the active category (and any other active filters) as hidden
+inputs so combined filtering works; verify category + price together
+narrows results.
+
 ## Verification bar (each finding)
 
 - Same header component, same x-alignment, same width on /services/,
