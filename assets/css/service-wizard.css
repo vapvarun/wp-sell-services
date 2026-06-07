@@ -220,9 +220,15 @@
 .wpss-form-input:focus,
 .wpss-form-select:focus,
 .wpss-form-textarea:focus {
-	outline: none;
 	border-color: var(--wpss-primary, #4f46e5);
 	box-shadow: 0 0 0 3px var(--wpss-primary-light, #eef2ff);
+}
+
+.wpss-form-input:focus-visible,
+.wpss-form-select:focus-visible,
+.wpss-form-textarea:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 1px;
 }
 
 .wpss-form-input::placeholder,
