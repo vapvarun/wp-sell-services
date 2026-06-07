@@ -611,6 +611,23 @@ class ServiceArchiveView {
 			$query->set( 'pagename', '' );
 			$query->set( 'posts_per_page', apply_filters( 'wpss_services_per_page', 12 ) );
 
+			// Translate singular sub-page paging into archive paging. When the
+			// services page is the static front page (or any page) and is
+			// requested at /page/N/, WordPress stores N in the singular `page`
+			// query var (intended for <!--nextpage--> within one post), NOT in
+			// `paged`. Converting to an archive without this translation leaves
+			// `paged` at 0 (so page 2+ re-queries page 1's services) while the
+			// leftover `page` var makes WordPress treat the request as a missing
+			// singular sub-page and return a 404. Move the value to `paged` and
+			// clear `page` so archive pagination resolves correctly. See BC
+			// 9966680633 (pagination follow-up to the front-page scoping fix).
+			$paged = (int) $query->get( 'paged' );
+			$page  = (int) $query->get( 'page' );
+			if ( ! $paged && $page > 1 ) {
+				$query->set( 'paged', $page );
+			}
+			$query->set( 'page', '' );
+
 			// Reset singular flags so WP_Query treats this as an archive query.
 			// Without this, WordPress singular post status logic can allow draft/pending
 			// posts to leak through for users with edit capabilities.
