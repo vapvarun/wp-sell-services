@@ -730,6 +730,81 @@ waves:
         static_gates: [php-lint, wpcs, phpstan, wiring]
         depends_on: []
 
+  # ══ Wave 6.4a — FLOW COMPLETION: user-facing (owner: fold all 14 findings) ══
+  # plan/flow-completeness-findings.md P1 items. Three-entry-point rule:
+  # every feature reachable via frontend UX + admin UI + REST or documented
+  # as an intentional exception.
+  - id: wave-6-4a-flows-user
+    depends_on: [wave-6-3-ajax-rest]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services, vendor-dashboard-ajax]
+    directions:
+      - id: "6.4a.1"
+        title: "Buyer request posting flow (findings #1): wire the [wpss_post_request] form to POST /buyer-requests end-to-end (template + frontend.js + validation + success state) - buyers can post a request from the frontend; vendors already browse/propose. No new endpoints"
+        journey: improve
+        scope:
+          - "src/Frontend/Shortcodes.php"
+          - "templates/content-request-card.php"
+          - "templates/archive-request.php"
+          - "assets/js/frontend.js"
+        skills: [wp-plugin-development, ux-foundation]
+        static_gates: [php-lint, wpcs, phpstan, wiring]
+        depends_on: []
+      - id: "6.4a.2"
+        title: "Wallet transactions API + vacation REST (findings #2, #11): ADDITIVE GET /wallet/transactions (paginated, own data) reading wpss_wallet_transactions, plus PATCH /vendors/me/vacation - sanctioned additive routes; admin vendor drawer gains a read-only Wallet tab (VendorsPage)"
+        journey: develop
+        scope:
+          - "src/API/**"
+          - "src/Admin/Pages/VendorsPage.php"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "6.4a.3"
+        title: "Vendor approval/rejection emails (findings #13): two templates + wiring on wpss_vendor_registered status changes - vendors learn their application outcome without checking back manually"
+        journey: improve
+        scope:
+          - "templates/emails/**"
+          - "src/Services/VendorService.php"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 6.4b — FLOW COMPLETION: dashboards + admin management ══
+  - id: wave-6-4b-flows-admin
+    depends_on: [wave-6-4a-flows-user]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [vendor-dashboard-ajax, admin-moderation-actions]
+    directions:
+      - id: "6.4b.1"
+        title: "Vendor-facing money + moderation UX (findings #2, #3): dashboard Wallet/Transactions section reading GET /wallet/transactions; explicit 'Resubmit for review' CTA + helper text on rejected services (re-queue on republish already works, make it visible)"
+        journey: improve
+        scope:
+          - "templates/dashboard/**"
+          - "assets/js/unified-dashboard.js"
+          - "assets/css/unified-dashboard.css"
+        skills: [wp-plugin-development, ux-foundation]
+        static_gates: [php-lint, wpcs, ux-audit, wiring]
+        depends_on: []
+      - id: "6.4b.2"
+        title: "Requirements auto-transition (findings #4, bug-class): verify and wire pending_requirements -> in_progress when the buyer submits requirements; order timeline reflects it; vendor notified"
+        journey: fix
+        scope:
+          - "src/Services/RequirementsService.php"
+          - "src/Services/OrderService.php"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "6.4b.3"
+        title: "Admin management completeness (findings #5,6,7,8,10,11,14): audit-log viewer page (reads existing REST), review moderation queue (ServiceModerationPage pattern), seller-level override control, suborder filters+row actions (tips/milestones/extensions) on OrdersListTable, portfolio moderation actions in vendor drawer, admin vacation override, gateway settings consolidated into the Payments tab with safe webhook-secret UX. Notifications admin view: implement read-only viewer OR document as intentional user-private exception in the manifest"
+        journey: develop
+        scope:
+          - "src/Admin/**"
+          - "assets/css/admin.css"
+          - "assets/js/admin-settings.js"
+        skills: [wp-plugin-development, ux-foundation]
+        static_gates: [php-lint, wpcs, phpstan, ux-audit]
+        depends_on: []
+
   # ══ Wave 6.5 — 100K-SITE SCALE READINESS ══
   # OWNER DIRECTIVE: 100k sites will run this plugin. Theory is not enough -
   # measure. Hot paths: services archive query, single-service load,
@@ -741,7 +816,7 @@ waves:
   # cache). No schema changes to the 18 contract tables without a
   # migrations: entry - indexes are additive and allowed.
   - id: wave-6-5-scale
-    depends_on: [wave-6-3-ajax-rest]
+    depends_on: [wave-6-4b-flows-admin]
     functional_gates: [qa-suite]
     journeys: [buyer-browse-services, vendor-dashboard-ajax]
     directions:
@@ -758,10 +833,10 @@ waves:
 
   # ══ Wave 7 — AUDIT: shippability verdict ══
   - id: wave-7-audit
-    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-2-6-css-cleanup, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-2-template-hooks, wave-6-3-ajax-rest, wave-6-5-scale]
+    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-2-6-css-cleanup, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-2-template-hooks, wave-6-3-ajax-rest, wave-6-4a-flows-user, wave-6-4b-flows-admin, wave-6-5-scale]
     directions:
       - id: "7.1"
-        title: "Product-readiness audit verdict for the 1.2.0 cycle: shippable for a 100k-site install base with ZERO known bugs remaining? Verify every wppqa baseline finding (a11y labels, focus-visible, enum drift, template hooks) is resolved, the ajax-rest map is complete, and include per-Basecamp-card fix status (9966680633, 9958056390, 9959210393, 9826303369) so the owner can wrap the cards. Anything still open is a BLOCKED verdict, not a follow-up"
+        title: "Product-readiness audit verdict for the 1.2.0 cycle: shippable for a 100k-site install base with ZERO known bugs remaining? Verify every wppqa baseline finding (a11y labels, focus-visible, enum drift, template hooks) is resolved, the ajax-rest map is complete, all 14 flow-completeness findings (plan/flow-completeness-findings.md) are closed or documented as intentional exceptions, and include per-Basecamp-card fix status (9966680633, 9958056390, 9959210393, 9826303369) so the owner can wrap the cards. Anything still open is a BLOCKED verdict, not a follow-up"
         journey: audit
         scope: ["**"]
         depends_on: []
