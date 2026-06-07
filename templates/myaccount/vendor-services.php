@@ -38,9 +38,9 @@ do_action( 'wpss_vendor_services_before', $user_id );
 		</div>
 	<?php else : ?>
 		<div class="wpss-services-grid">
-			<?php foreach ( $services as $post ) : ?>
+			<?php foreach ( $services as $service_post ) : ?>
 				<?php
-				$service = \WPSellServices\Models\Service::from_post( $post );
+				$service = \WPSellServices\Models\Service::from_post( $service_post );
 				?>
 				<div class="wpss-service-card">
 					<div class="wpss-service-image">
@@ -104,113 +104,3 @@ do_action( 'wpss_vendor_services_before', $user_id );
  */
 do_action( 'wpss_vendor_services_after', $user_id );
 ?>
-
-<style>
-.wpss-vendor-services {
-	padding: 20px 0;
-}
-
-.wpss-services-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 20px;
-}
-
-.wpss-services-header h2 {
-	margin: 0;
-}
-
-.wpss-services-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 20px;
-}
-
-.wpss-service-card {
-	border: 1px solid var(--wpss-border, #e5e5e5);
-	border-radius: 8px;
-	overflow: hidden;
-	background: var(--wpss-white, #fff);
-}
-
-.wpss-service-image {
-	position: relative;
-	height: 160px;
-	background: var(--wpss-bg-subtle, #f5f5f5);
-}
-
-.wpss-service-image img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-
-.wpss-no-image {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 100%;
-	color: var(--wpss-text-hint, #999);
-}
-
-.wpss-service-status {
-	position: absolute;
-	top: 10px;
-	left: 10px;
-	padding: 4px 8px;
-	border-radius: 4px;
-	font-size: 11px;
-	font-weight: 500;
-	background: var(--wpss-white, #fff);
-}
-
-.wpss-status-publish { background: var(--wpss-success, #00b894); color: var(--wpss-white, #fff); }
-.wpss-status-pending { background: var(--wpss-warning, #fdcb6e); color: var(--wpss-gray-800, #333); }
-.wpss-status-draft { background: var(--wpss-gray-600, #636e72); color: var(--wpss-white, #fff); }
-
-.wpss-service-info {
-	padding: 15px;
-}
-
-.wpss-service-title {
-	margin: 0 0 10px;
-	font-size: 16px;
-}
-
-.wpss-service-title a {
-	color: inherit;
-	text-decoration: none;
-}
-
-.wpss-service-meta {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 15px;
-	font-size: 13px;
-}
-
-.wpss-service-price {
-	font-weight: 600;
-	color: var(--wpss-success, #00b894);
-}
-
-.wpss-service-stats {
-	color: var(--wpss-gray-600, #636e72);
-}
-
-.wpss-rating {
-	color: var(--wpss-warning, #f39c12);
-}
-
-.wpss-service-actions {
-	display: flex;
-	gap: 8px;
-}
-
-.wpss-no-services {
-	text-align: center;
-	padding: 40px 20px;
-}
-</style>

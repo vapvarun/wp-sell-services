@@ -165,56 +165,6 @@ $categories = get_terms(
 	</form>
 </div>
 
-<style>
-/* Request Wizard Styles */
-.wpss-request-wizard .wpss-profile-form {
-	max-width: 100%;
-}
-
-.wpss-required {
-	color: var(--wpss-danger);
-}
-
-.wpss-input-group {
-	display: flex;
-	align-items: stretch;
-}
-
-.wpss-input-group__prefix {
-	display: flex;
-	align-items: center;
-	padding: 0 12px;
-	background: var(--wpss-gray-100);
-	border: 1px solid var(--wpss-gray-300);
-	border-right: none;
-	border-radius: var(--wpss-radius) 0 0 var(--wpss-radius);
-	font-size: 14px;
-	color: var(--wpss-gray-500);
-}
-
-.wpss-input-group .wpss-input {
-	border-radius: 0 var(--wpss-radius) var(--wpss-radius) 0;
-	flex: 1;
-}
-
-.wpss-btn--lg {
-	padding: 12px 24px;
-	font-size: 15px;
-}
-
-.wpss-btn svg {
-	flex-shrink: 0;
-}
-
-.wpss-profile-form__actions {
-	text-align: center;
-}
-
-.wpss-form-hint--center {
-	text-align: center;
-	margin-top: 12px;
-}
-</style>
 
 <script>
 function wpssShowNotice(msg, type) {
