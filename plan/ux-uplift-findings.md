@@ -81,7 +81,40 @@ must include the active category (and any other active filters) as hidden
 inputs so combined filtering works; verify category + price together
 narrows results.
 
-## Verification bar (each finding)
+## F7 - Naked sections: shared components styled in surface-scoped CSS
+
+Owner screenshot 2026-06-07: "Related Services" on the single service page
+renders bare cards (no border, no background, floating text). Full audit of
+every shared-component render vs. the CSS each surface actually enqueues:
+
+| Component | Rendered by | Styled in | Loaded there? |
+|---|---|---|---|
+| content-service-card.php | templates/archive-service.php | archive-service.css | YES (ServiceArchiveView guard) |
+| content-service-card.php | SingleServiceView render_related_services() | archive-service.css | **NO - naked (the screenshot)** |
+| content-service-card.php | templates/vendor/profile.php | archive-service.css | **NO - naked** |
+| content-service-card.php | AjaxHandlers.php (cards injected via AJAX) | archive-service.css | **NO on non-archive pages - naked** |
+| .wpss-service-card--dashboard | templates/dashboard/sections/services.php | own duplicate definitions in unified-dashboard.css | partial - duplicate implementation |
+| .wpss-favorites__card | templates/dashboard/sections/favorites.php | third custom card implementation | duplicate implementation |
+| content-request-card.php | templates/archive-request.php | buyer-request.css | YES (BuyerRequestArchiveView guard incl. is_singular wpss_request) |
+
+Two root causes, one fix:
+1. **Shared components live in surface-scoped files.** archive-service.css is
+   enqueued only on archive/tax/services-page requests, but the service card
+   renders on single, vendor profile, and via AJAX into arbitrary pages.
+2. **Three parallel card implementations** (archive card, dashboard card,
+   favorites card) - the duplicate-component drift ux-audit exists to kill.
+
+Decision to implement (wave-2.4 shell + wave-2.5 surfaces): a **shared
+component layer** - card, grid, badge, price, avatar-row styles move into the
+design-system/components layer that the app shell loads on EVERY plugin
+surface. Surface CSS files keep only surface-specific layout. The dashboard
+and favorites cards become modifiers of the one card component
+(.wpss-service-card--dashboard etc.), not re-implementations. AJAX-injected
+markup is automatically styled because the component layer is always present.
+
+Verification: service cards render identically (border, bg, hover, badge,
+price row) on archive, single related-services, vendor profile, dashboard
+services, dashboard favorites, and after any AJAX refresh - at 1280px + 390px.
 
 - Same header component, same x-alignment, same width on /services/,
   /service/<slug>/, /dashboard/ (and its sections), at 1280px and 390px
