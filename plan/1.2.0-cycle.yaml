@@ -434,6 +434,32 @@ waves:
         static_gates: [php-lint, wpcs, ux-audit, wiring]
         depends_on: []
 
+  # ══ Wave 2.4 — FRONTEND SHELL UNIFICATION (architecture, owner-directed) ══
+  # Implements plan/ux-uplift-findings.md F1-F5: ONE page-header system
+  # owned by the plugin app shell on every surface, ONE container system
+  # (tokens, no nesting double-gutters, defer to theme width), theme
+  # entry-title suppressed on plugin-shell pages via a theme-agnostic compat
+  # layer, banner CTA token contrast. This is the structural fix for the
+  # "services and dashboard headers look disconnected" report - per-surface
+  # uplift directions in wave 2.5 build ON this, never around it.
+  - id: wave-2-4-shell
+    depends_on: [wave-2b-customer-ui]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services, buyer-single-service, vendor-dashboard-ajax]
+    directions:
+      - id: "2.4.1"
+        title: "Unify the frontend shell per plan/ux-uplift-findings.md: single wpss-page-header component rendered by the app shell on ALL plugin surfaces (archive, single, dashboard, account); suppress theme entry-title on plugin-shell pages via documented theme-agnostic filter (Reign verified, no theme-specific CSS hacks); single .wpss-container source in design-system.css (delete frontend.css duplicate); nested wpss containers collapse to fluid width (no double gutters, defer to theme width); banner CTA contrast via token pairs (F4); one shell top-spacing token (F5). Verify same header alignment/width on /services/, /service/<slug>/, /dashboard/ at 1280px+390px on Reign AND twentytwentyfive"
+        journey: improve
+        scope:
+          - "src/Frontend/**"
+          - "templates/**"
+          - "assets/css/design-system.css"
+          - "assets/css/frontend.css"
+          - "assets/css/unified-dashboard.css"
+        skills: [wp-plugin-development, ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, phpstan, ux-audit]
+        depends_on: []
+
   # ══ Wave 2.5 — FRONTEND USABILITY UPLIFT (ux-foundation compliance) ══
   # OWNER DIRECTIVE: this plugin predates the current wp-plugin-development +
   # ux-foundation guidelines. Bring EVERY frontend surface up to the design
@@ -446,7 +472,7 @@ waves:
   # design-system.css so it runs first, the rest serialize after it.
   # Every direction: browser-verified on Reign 8.0.0 at 390px + 1280px.
   - id: wave-2-5-ux-uplift
-    depends_on: [wave-2-customer-ui, wave-2b-customer-ui]
+    depends_on: [wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell]
     functional_gates: [browser-smoke, qa-suite]
     journeys: [buyer-browse-services, buyer-single-service, vendor-dashboard-ajax]
     directions:
@@ -631,7 +657,7 @@ waves:
 
   # ══ Wave 7 — AUDIT: shippability verdict ══
   - id: wave-7-audit
-    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-5-ux-uplift, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-5-scale]
+    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-5-scale]
     directions:
       - id: "7.1"
         title: "Product-readiness audit verdict for the 1.2.0 cycle (customer bugs + UX uplift + hardening + scale + polish): shippable for a 100k-site install base? Include per-Basecamp-card fix status (9966680633, 9958056390, 9959210393, 9826303369) so the owner can wrap the cards"
