@@ -26,6 +26,7 @@
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
 		WPSS.initRequirementsView();
+		WPSS.initFavorites();
 		WPSS.portfolioServicesOptions();
 	};
 
@@ -1355,6 +1356,100 @@
 				$btn.prop('disabled', false).text(btnText);
 			}
 		});
+	};
+
+	/**
+	 * Favorites toggle.
+	 *
+	 * Wires the heart toggle rendered on archive service cards and on the single
+	 * service page. Reads/writes the canonical `_wpss_favorites` user-meta through
+	 * the existing REST favorites controller (no AJAX, no new endpoints):
+	 *   POST   /wpss/v1/favorites/{id}  -> add
+	 *   DELETE /wpss/v1/favorites/{id}  -> remove
+	 * The initial favorited state is rendered server-side on each button, so the
+	 * toggle paints correctly on first load. Guests are redirected to log in.
+	 */
+	WPSS.initFavorites = function() {
+		// Delegated so dynamically loaded cards (load-more / filters) also work.
+		$(document).on('click', '.wpss-fav-toggle', function(e) {
+			// The toggle lives inside the card's <a> wrapper on archives — stop
+			// the click from navigating to the service page.
+			e.preventDefault();
+			e.stopPropagation();
+
+			var $btn = $(this);
+
+			if ($btn.prop('disabled') || $btn.hasClass('is-loading')) {
+				return;
+			}
+
+			// Guest gate — send to login, then back to the current page.
+			var isLoggedIn = $btn.data('logged-in') === 1 || $btn.data('logged-in') === '1';
+			if (!isLoggedIn) {
+				var loginUrl = (window.wpssData && wpssData.loginUrl) ? wpssData.loginUrl : '/wp-login.php';
+				var sep = loginUrl.indexOf('?') === -1 ? '?' : '&';
+				window.location.href = loginUrl + sep + 'redirect_to=' + encodeURIComponent(window.location.href);
+				return;
+			}
+
+			var serviceId = parseInt($btn.data('service-id'), 10);
+			if (!serviceId) {
+				return;
+			}
+
+			var willFavorite = !$btn.hasClass('is-favorited');
+
+			$btn.prop('disabled', true).addClass('is-loading');
+
+			$.ajax({
+				url: wpssData.apiUrl + 'favorites/' + serviceId,
+				method: willFavorite ? 'POST' : 'DELETE',
+				beforeSend: function(xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
+				}
+			}).done(function(response) {
+				// Controller echoes the resulting state; trust it, fall back to intent.
+				var favorited = (response && typeof response.favorited !== 'undefined') ? !!response.favorited : willFavorite;
+				WPSS.setFavoriteState($btn, favorited);
+
+				var savedMsg = (wpssData.i18n && wpssData.i18n.favoriteSaved) || 'Saved to favorites.';
+				var removedMsg = (wpssData.i18n && wpssData.i18n.favoriteRemoved) || 'Removed from favorites.';
+				WPSS.showNotification(favorited ? savedMsg : removedMsg, 'success');
+			}).fail(function(xhr) {
+				var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
+					|| (wpssData.i18n && wpssData.i18n.favoriteFailed)
+					|| (wpssData.i18n && wpssData.i18n.ajaxError)
+					|| 'Could not update favorites. Please try again.';
+				WPSS.showNotification(msg, 'error');
+			}).always(function() {
+				$btn.prop('disabled', false).removeClass('is-loading');
+			});
+		});
+	};
+
+	/**
+	 * Sync a favorite toggle's visual + a11y state.
+	 *
+	 * @param {jQuery}  $btn      The toggle button.
+	 * @param {boolean} favorited Whether the service is now favorited.
+	 */
+	WPSS.setFavoriteState = function($btn, favorited) {
+		$btn.toggleClass('is-favorited', favorited);
+		$btn.attr('aria-pressed', favorited ? 'true' : 'false');
+
+		var isInline = $btn.hasClass('wpss-fav-toggle--inline');
+		var label;
+		if (isInline) {
+			label = favorited
+				? ((wpssData.i18n && wpssData.i18n.favoriteSavedLabel) || 'Saved to favorites')
+				: ((wpssData.i18n && wpssData.i18n.favoriteSaveLabel) || 'Save to favorites');
+		} else {
+			label = favorited
+				? ((wpssData.i18n && wpssData.i18n.favoriteRemoveLabel) || 'Remove from favorites')
+				: ((wpssData.i18n && wpssData.i18n.favoriteAddLabel) || 'Add to favorites');
+			$btn.attr('aria-label', label).attr('title', label);
+		}
+		$btn.find('.wpss-fav-toggle__label').text(label);
 	};
 
 	/**

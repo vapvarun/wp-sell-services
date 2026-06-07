@@ -35,6 +35,16 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 
 // Filter card classes.
 $card_classes = apply_filters( 'wpss_service_card_classes', array( 'wpss-service-card' ), $service_id );
+
+// Favorite state — resolved server-side so the toggle renders in the correct
+// state on first paint (no flash). The toggle reads/writes the canonical
+// `_wpss_favorites` user-meta via the REST favorites controller (frontend.js).
+$wpss_card_is_logged_in = is_user_logged_in();
+$wpss_card_favorited    = false;
+if ( $wpss_card_is_logged_in ) {
+	$wpss_card_favs      = get_user_meta( get_current_user_id(), '_wpss_favorites', true );
+	$wpss_card_favorited = is_array( $wpss_card_favs ) && in_array( $service_id, array_map( 'intval', $wpss_card_favs ), true );
+}
 ?>
 
 <?php
@@ -92,6 +102,24 @@ do_action( 'wpss_before_service_card', $service_id );
 			 */
 			do_action( 'wpss_service_card_image_overlay', $service_id );
 			?>
+
+			<?php
+			$wpss_card_fav_label = $wpss_card_favorited
+				? __( 'Remove from favorites', 'wp-sell-services' )
+				: __( 'Add to favorites', 'wp-sell-services' );
+			?>
+			<button
+				type="button"
+				class="wpss-fav-toggle wpss-service-card__fav<?php echo $wpss_card_favorited ? ' is-favorited' : ''; ?>"
+				data-service-id="<?php echo esc_attr( (string) $service_id ); ?>"
+				data-logged-in="<?php echo $wpss_card_is_logged_in ? '1' : '0'; ?>"
+				aria-pressed="<?php echo $wpss_card_favorited ? 'true' : 'false'; ?>"
+				aria-label="<?php echo esc_attr( $wpss_card_fav_label ); ?>"
+				title="<?php echo esc_attr( $wpss_card_fav_label ); ?>"
+			>
+				<i data-lucide="heart" class="wpss-icon wpss-icon--sm wpss-fav-toggle__icon" aria-hidden="true"></i>
+				<span class="screen-reader-text wpss-fav-toggle__label"><?php echo esc_html( $wpss_card_fav_label ); ?></span>
+			</button>
 
 			<?php if ( ! empty( $categories ) ) : ?>
 				<span class="wpss-service-card__category"><?php echo esc_html( $categories[0] ); ?></span>
