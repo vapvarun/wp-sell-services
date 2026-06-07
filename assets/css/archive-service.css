@@ -135,10 +135,11 @@
    ========================================================================== */
 
 .wpss-services-archive {
-	/* Top kept light: most themes (Reign: .site-content padding-top 40px)
-	   already pad the content area; 2rem here doubled up into a large
-	   empty band above the archive header. */
-	padding: 0.75rem 0 2rem;
+	/* F5: one shell top-spacing token, owned by the design system, instead of
+	   each surface inventing its own top padding. The theme's .site-content
+	   already pads the content area, so the surface only adds the small shared
+	   shell-top rhythm plus a comfortable bottom band. */
+	padding: var(--wpss-shell-top) 0 var(--wpss-space-8);
 }
 
 .wpss-services-content {
@@ -149,6 +150,12 @@
 
 /* ==========================================================================
    Archive Header
+   ----------------------------------------------------------------------------
+   F1: the heading is now the shared .wpss-page-header component (title +
+   subtitle), so the bespoke .wpss-archive-title / .wpss-archive-description
+   rules were removed. This wrapper keeps only the divider below the header.
+   The shared component already supplies its own bottom margin, so this wrapper
+   contributes the rule, not the spacing.
    ========================================================================== */
 
 .wpss-archive-header {
@@ -157,16 +164,10 @@
 	border-bottom: 1px solid var(--wpss-border);
 }
 
-.wpss-archive-title {
-	margin: 0 0 0.5rem;
-	font-size: 1.75rem;
-	color: var(--wpss-black);
-}
-
-.wpss-archive-description {
-	margin: 0;
-	color: var(--wpss-text);
-	font-size: 1rem;
+/* The shared page header carries its own bottom margin; inside the archive
+   header wrapper the divider owns the gap, so zero the component margin. */
+.wpss-archive-header .wpss-page-header {
+	margin-bottom: 0;
 }
 
 /* ==========================================================================
@@ -263,13 +264,11 @@
 
 /* ==========================================================================
    Services Grid
+   ----------------------------------------------------------------------------
+   F7: the base .wpss-services-grid now lives in design-system.css (loaded on
+   every surface), so the archive no longer owns the grid. Nothing remains
+   here — the archive consumes the shared grid component unchanged.
    ========================================================================== */
-
-.wpss-services-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 1.5rem;
-}
 
 /* ==========================================================================
    Pagination
@@ -671,9 +670,5 @@ body.wpss-sidebar-open::after {
 	.wpss-category-filter,
 	.wpss-sort-filter {
 		width: 100%;
-	}
-
-	.wpss-services-grid {
-		grid-template-columns: 1fr;
 	}
 }

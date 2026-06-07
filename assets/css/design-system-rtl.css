@@ -178,6 +178,24 @@
 	/* ---- Transitions ---- */
 	--wpss-ease: 0.2s ease;
 	--wpss-ease-in-out: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	/* Legacy alias consumed by archive/single CSS; points at the canonical ease. */
+	--wpss-transition: 0.2s ease;
+
+	/* ---- Layout (F2/F3: single container source of truth) ----
+	   Every wpss container caps at --wpss-container-max and gutters at
+	   --wpss-container-pad. The app shell defers to the active theme's content
+	   width when the theme constrains it, so we set a generous cap that the
+	   theme box (e.g. Reign 1170px) naturally wins inside. Override either
+	   token on a :root block to retune every container at once. */
+	--wpss-container-max: 1200px;
+	--wpss-container-pad: var(--wpss-space-5);
+
+	/* ---- Shell vertical rhythm (F5: one top-spacing token) ----
+	   The single top-spacing every plugin surface uses below the (suppressed)
+	   theme title. Kept small because the theme's own .site-content already
+	   contributes top padding; surfaces must NOT add their own ad-hoc top
+	   padding on top of this. */
+	--wpss-shell-top: var(--wpss-space-3);
 
 	/* ---- Icon Sizing (Lucide) ----
 	   Every icon in the plugin flows through the .wpss-icon utility class
@@ -431,10 +449,25 @@
    11. LAYOUT UTILITIES
    ========================================================================== */
 
-.wpss-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--wpss-space-5); }
+/* Single source of truth for the plugin content container (F3). The old
+   second definition in frontend.css (max-width 1400px, raw 20px padding) was
+   deleted in favour of this token-driven block. */
+.wpss-container { max-width: var(--wpss-container-max); margin: 0 auto; padding: 0 var(--wpss-container-pad); }
 .wpss-container--sm { max-width: 640px; }
 .wpss-container--md { max-width: 800px; }
 .wpss-container--lg { max-width: 1000px; }
+
+/* Nested-container collapse (F2): once a wpss container sits inside the app
+   shell (or inside another wpss container) the outer box already owns the
+   max-width + gutters, so the inner one must go fluid with zero horizontal
+   padding. Without this the archive page stacked three max-widths + three
+   gutter layers, shifting the H1 x-position page-to-page. */
+.wpss-app-shell__container .wpss-container,
+.wpss-container .wpss-container {
+	max-width: none;
+	padding-right: 0;
+	padding-left: 0;
+}
 
 .wpss-grid { display: grid; gap: var(--wpss-space-6); }
 .wpss-grid--2 { grid-template-columns: repeat(2, 1fr); }
@@ -552,10 +585,102 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
    ========================================================================== */
 
 .wpss-app-shell { position: relative; isolation: isolate; contain: layout; width: 100%; max-width: 100%; }
-.wpss-app-shell__container { max-width: var(--wpss-container-max, 1200px); margin: 0 auto; padding: var(--wpss-space-6) var(--wpss-space-4); }
+
+/* F5: the shell owns ONE top-spacing token used by every surface. Bottom
+   padding stays comfortable; horizontal gutters use the shared container pad
+   so the shell aligns pixel-for-pixel with .wpss-container. */
+.wpss-app-shell__container {
+	max-width: var(--wpss-container-max);
+	margin: 0 auto;
+	padding: var(--wpss-shell-top) var(--wpss-container-pad) var(--wpss-space-6);
+}
 
 @media (max-width: 768px) {
-	.wpss-app-shell__container { padding: var(--wpss-space-4) var(--wpss-space-3); }
+	.wpss-app-shell__container { padding-right: var(--wpss-space-3); padding-left: var(--wpss-space-3); }
+}
+
+/* ==========================================================================
+   16b. PAGE HEADER (UX PRIMITIVE — F1)
+   ----------------------------------------------------------------------------
+   The single page-header component the app shell renders on EVERY plugin
+   surface (archive, single, dashboard, vendor, requests, cart/order). The
+   theme's own entry-title is suppressed on plugin-shell pages via the
+   theme-agnostic compat filter (WPSellServices\Frontend\ShellHeader) so there
+   is exactly ONE header, in the plugin's design language, with identical
+   alignment + width to .wpss-container / .wpss-app-shell__container.
+
+   Mark-up (emitted by ShellHeader::render()):
+     <header class="wpss-page-header">
+       <div class="wpss-page-header__main">
+         <h1 class="wpss-page-header__title">Title</h1>
+         <p class="wpss-page-header__subtitle">Optional subtitle</p>
+       </div>
+       <div class="wpss-page-header__actions"> ...optional... </div>
+     </header>
+   ========================================================================== */
+
+.wpss-page-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-4);
+	margin: 0 0 var(--wpss-space-6);
+}
+.wpss-page-header__main { min-width: 0; flex: 1 1 auto; }
+.wpss-page-header__title {
+	font-size: var(--wpss-text-4xl);
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: -0.02em;
+	color: var(--wpss-text);
+	margin: 0;
+}
+.wpss-page-header__subtitle {
+	font-size: var(--wpss-text-md);
+	color: var(--wpss-text-muted);
+	line-height: 1.5;
+	margin: var(--wpss-space-2) 0 0;
+}
+.wpss-page-header__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3);
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   16c. SHARED SERVICE-CARD COMPONENT LAYER (F7)
+   ----------------------------------------------------------------------------
+   The services grid lives here, in the design-system layer the app shell
+   loads on EVERY surface, so cards lay out identically on archive, single
+   (Related Services), vendor profile, dashboard, favorites, and after any
+   AJAX refresh. Surface CSS keeps only surface-specific layout; it no longer
+   owns the grid. The card SURFACE (border/bg/hover/badge/price) is asserted
+   in frontend.css (also loaded everywhere via the wpss-frontend handle).
+
+   Dashboard and favorites cards are MODIFIERS of this grid, not parallel
+   re-implementations. */
+
+.wpss-services-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: var(--wpss-space-6);
+}
+.wpss-services-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wpss-services-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wpss-services-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 1024px) {
+	.wpss-services-grid--3,
+	.wpss-services-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+	.wpss-services-grid,
+	.wpss-services-grid--2,
+	.wpss-services-grid--3,
+	.wpss-services-grid--4 { grid-template-columns: 1fr; }
 }
 
 /* ==========================================================================

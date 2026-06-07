@@ -134,6 +134,14 @@ class TemplateLoader {
 				// Also set as query var for template access.
 				set_query_var( 'wpss_vendor', $user->ID );
 
+				// F7: the /vendor/{slug}/ rewrite route renders the service-card
+				// grid (Related/owned services). Unlike the [wpss_vendor_profile]
+				// shortcode, this rewrite path never pulled in the frontend
+				// bundle, so the cards rendered naked (no design-system / card
+				// surface / grid layout). Enqueue the shared component layer here
+				// so the cards match every other surface.
+				wpss_enqueue_frontend_assets();
+
 				// Track profile view (skip own views and duplicate sessions).
 				$this->track_profile_view( $user->ID );
 

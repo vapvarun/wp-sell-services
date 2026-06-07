@@ -426,7 +426,7 @@ class UnifiedDashboard {
 					 */
 					do_action( 'wpss_dashboard_header' );
 					?>
-					<h1 class="wpss-dashboard__title">
+					<h1 class="wpss-dashboard__title wpss-page-header__title">
 						<?php
 						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
 						if ( $id && 'create' !== $this->current_section ) {
