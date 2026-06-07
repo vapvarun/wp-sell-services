@@ -195,6 +195,11 @@
 	content: "\2630";
 }
 
+.wpss-filter-toggle:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+}
+
 /* Search form */
 .wpss-search-form {
 	flex: 1;
@@ -406,6 +411,11 @@ body.wpss-sidebar-open::after {
 	border: none !important;
 }
 
+.wpss-sidebar-close:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+}
+
 /* ==========================================================================
    Filter Form
    ========================================================================== */
@@ -505,6 +515,13 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-subcategory-list a:hover {
+	color: var(--wpss-primary);
+}
+
+.wpss-category-link:focus-visible,
+.wpss-subcategory-list a:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 	color: var(--wpss-primary);
 }
 
