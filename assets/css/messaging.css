@@ -982,6 +982,23 @@ body.wpss-modal-open {
 }
 
 /* ==========================================================================
+   Accessibility - keyboard focus rings (WCAG 2.1 AA)
+   Visible :focus-visible ring for every interactive element on the messaging
+   / conversation surface (conversation list, composer, attachments, actions).
+   Keyboard-only so it never appears on mouse click.
+   ========================================================================== */
+
+.wpss-messaging a:focus-visible,
+.wpss-messaging button:focus-visible,
+.wpss-messaging input:focus-visible,
+.wpss-messaging select:focus-visible,
+.wpss-messaging textarea:focus-visible,
+.wpss-messaging [tabindex]:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
+}
+
+/* ==========================================================================
    Mobile Responsive
    ========================================================================== */
 
