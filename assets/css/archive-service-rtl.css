@@ -189,7 +189,15 @@
 .wpss-filter-toggle {
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: 0.5rem;
+	/* 40px tap-target floor (Rule 13). */
+	min-height: 40px;
+}
+
+.wpss-filter-toggle:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 }
 
 .wpss-filter-toggle .wpss-icon-filter::before {
@@ -205,13 +213,15 @@
 
 .wpss-search-input {
 	width: 100%;
-	padding: 0.6rem 1rem;
+	/* 40px tap-target floor (0.625rem * 2 + line-height ~= 40px) per the
+	   responsive contract; the bare 0.6rem padding fell just under it. */
+	min-height: 40px;
+	padding: 0.625rem 1rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	background: var(--wpss-bg);
 	font-size: 0.875rem;
 	color: var(--wpss-text);
-	outline: none;
 	transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -219,25 +229,29 @@
 	color: var(--wpss-text-muted);
 }
 
-.wpss-search-input:focus {
+.wpss-search-input:focus-visible {
 	border-color: var(--wpss-primary);
 	/* Ring must track the brand primary (indigo), not a hard-coded green that
 	   pre-dated the indigo palette switch. color-mix() tints the primary; the
 	   hex fallback covers browsers without color-mix support. */
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
+	outline: none;
 }
 
 .wpss-filters-bar-controls {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 1rem;
-	margin-right: auto;
+	/* Logical property so the controls cluster flips correctly in RTL. */
+	margin-inline-start: auto;
 	flex-shrink: 0;
 }
 
 .wpss-category-filter,
 .wpss-sort-filter {
+	/* 40px tap-target floor for the filter selects (Rule 13). */
+	min-height: 40px;
 	padding: 0.5rem 1rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
@@ -247,9 +261,12 @@
 	min-width: 160px;
 }
 
-.wpss-category-filter:focus,
-.wpss-sort-filter:focus {
-	outline: none;
+/* Rule 14: keyboard focus must show a visible ring, never a bare outline:none.
+   :focus-visible keeps the ring off mouse clicks but on for keyboard users. */
+.wpss-category-filter:focus-visible,
+.wpss-sort-filter:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 	border-color: var(--wpss-primary);
 }
 
@@ -328,7 +345,9 @@
 .wpss-archive-sidebar {
 	position: fixed;
 	top: 0;
-	right: 0;
+	/* Logical inset so the off-canvas drawer anchors to the start edge and slides
+	   in from the correct side in both LTR and RTL. */
+	inset-inline-start: 0;
 	width: 320px;
 	height: 100%;
 	background: var(--wpss-white);
@@ -383,6 +402,12 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-sidebar-close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	/* 40px tap target for the close affordance (Rule 13). */
+	width: 40px;
+	height: 40px;
 	background: none !important;
 	border: none !important;
 	font-size: 1.5rem !important;
@@ -390,12 +415,18 @@ body.wpss-sidebar-open::after {
 	color: var(--wpss-text-light);
 	padding: 0 !important;
 	line-height: 1;
+	border-radius: var(--wpss-radius);
 }
 
 .wpss-sidebar-close:hover {
 	color: var(--wpss-text);
-	background: none !important;
+	background: var(--wpss-bg-subtle) !important;
 	border: none !important;
+}
+
+.wpss-sidebar-close:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 }
 
 /* ==========================================================================
@@ -458,6 +489,13 @@ body.wpss-sidebar-open::after {
 	background: var(--wpss-primary-light);
 }
 
+.wpss-category-link:focus-visible,
+.wpss-subcategory-list a:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+	color: var(--wpss-primary);
+}
+
 .wpss-category-link.is-active {
 	color: var(--wpss-primary);
 	background: var(--wpss-primary-light);
@@ -474,7 +512,7 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-subcategory-list {
-	padding-right: 1rem;
+	padding-inline-start: 1rem;
 	margin-top: 0.25rem;
 }
 
@@ -510,6 +548,7 @@ body.wpss-sidebar-open::after {
 .wpss-price-inputs input {
 	width: 100%;
 	flex: 1;
+	min-height: 40px;
 	padding: 0.5rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
@@ -517,8 +556,9 @@ body.wpss-sidebar-open::after {
 	text-align: center;
 }
 
-.wpss-price-inputs input:focus {
-	outline: none;
+.wpss-price-inputs input:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 	border-color: var(--wpss-primary);
 }
 
@@ -610,7 +650,7 @@ body.wpss-sidebar-open::after {
 	.wpss-archive-sidebar {
 		position: sticky;
 		top: 2rem;
-		right: auto;
+		inset-inline-start: auto;
 		width: 100%;
 		height: auto;
 		max-height: none;
@@ -664,7 +704,7 @@ body.wpss-sidebar-open::after {
 
 	.wpss-filters-bar-controls {
 		flex-direction: column;
-		margin-right: 0;
+		margin-inline-start: 0;
 	}
 
 	.wpss-category-filter,
