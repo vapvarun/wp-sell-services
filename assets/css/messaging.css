@@ -863,6 +863,125 @@
 }
 
 /* ==========================================================================
+   Message / Inquiry Popups (single source of truth)
+   --------------------------------------------------------------------------
+   The "Contact seller" inquiry popup and the order popup share these styles.
+   Every load-bearing property carries a hard fallback (and !important where a
+   host theme is known to override) so the popup stays solid and readable on
+   any theme - including Reign 8.0.0, which leaves --wpss-* tokens undefined
+   and paints its own transparent backgrounds onto generic content wrappers.
+   Keep ALL popup styling here; do not re-introduce it in other stylesheets.
+   ========================================================================== */
+
+.wpss-modal {
+	position: fixed;
+	inset: 0;
+	z-index: var(--wpss-z-modal, 100000);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+}
+
+.wpss-modal[hidden],
+.wpss-modal:not(.active) {
+	display: none;
+}
+
+.wpss-modal-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.55) !important;
+}
+
+.wpss-modal-content {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	max-width: 480px;
+	max-height: 90vh;
+	overflow-y: auto;
+	/* Solid surface - hard fallback first, !important to survive theme resets. */
+	background-color: #fff !important;
+	background-color: var(--wpss-white, #fff) !important;
+	color: var(--wpss-text, #1f2937) !important;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+}
+
+.wpss-modal-large {
+	max-width: 800px;
+}
+
+.wpss-modal-close {
+	position: absolute;
+	top: 12px;
+	inset-inline-end: 12px;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	font-size: 24px;
+	line-height: 1;
+	color: var(--wpss-text-muted, #6b7280);
+	cursor: pointer;
+	background: transparent;
+	border: none;
+	border-radius: var(--wpss-radius, 8px);
+}
+
+.wpss-modal-close:hover,
+.wpss-modal-close:focus-visible {
+	color: var(--wpss-text, #1f2937);
+	background: var(--wpss-gray-50, #f8fafc);
+}
+
+.wpss-modal-close:focus-visible {
+	outline: 2px solid var(--wpss-primary, #2563eb);
+	outline-offset: 2px;
+}
+
+.wpss-modal-header {
+	padding: 20px 20px 16px;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-modal-header h3 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-modal-body {
+	padding: 20px;
+	color: var(--wpss-text, #1f2937);
+}
+
+.wpss-modal-footer {
+	padding: 16px 20px 20px;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-modal-error {
+	margin-bottom: 16px;
+	padding: 12px 16px;
+	font-size: 14px;
+	color: var(--wpss-error, #b91c1c);
+	background: var(--wpss-danger-light, #fef2f2);
+	border: 1px solid var(--wpss-danger-border, #fecaca);
+	border-radius: var(--wpss-radius, 8px);
+}
+
+body.wpss-modal-open {
+	overflow: hidden;
+}
+
+/* ==========================================================================
    Mobile Responsive
    ========================================================================== */
 
@@ -871,6 +990,17 @@
 	.wpss-messaging {
 		grid-template-columns: 1fr;
 		height: calc(100vh - var(--wpss-sticky-top, 32px) - 60px);
+	}
+
+	/* Popup: more room on tablet/phone, keep the surface solid + readable. */
+	.wpss-modal {
+		padding: 12px;
+		align-items: flex-end;
+	}
+
+	.wpss-modal-content {
+		max-width: none;
+		max-height: 85vh;
 	}
 
 	/* Mobile: Show sidebar as overlay when active */
@@ -1161,5 +1291,23 @@
 
 	.wpss-messaging--order .wpss-messaging__bubble {
 		max-width: 85%;
+	}
+
+	/* Popup: full-width sheet on small phones; tighten padding for legibility. */
+	.wpss-modal-content {
+		max-height: 92vh;
+		border-radius: var(--wpss-radius-lg, 12px) var(--wpss-radius-lg, 12px) 0 0;
+	}
+
+	.wpss-modal-header {
+		padding: 16px 16px 12px;
+	}
+
+	.wpss-modal-body {
+		padding: 16px;
+	}
+
+	.wpss-modal-footer {
+		padding: 12px 16px 16px;
 	}
 }
