@@ -113,11 +113,11 @@
 					});
 				} else {
 					$button.prop('disabled', false);
-					window.alert((response && response.data && response.data.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.');
+					WPSS.showNotification((response && response.data && response.data.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.', 'error');
 				}
 			}).fail(function () {
 				$button.prop('disabled', false);
-				window.alert(i18n.favoriteRemoveFailed || 'Could not remove favorite. Please try again.');
+				WPSS.showNotification(i18n.favoriteRemoveFailed || 'Could not remove favorite. Please try again.', 'error');
 			});
 		},
 
