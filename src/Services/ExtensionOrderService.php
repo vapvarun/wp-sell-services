@@ -37,8 +37,11 @@ class ExtensionOrderService {
 	 * Checked by checkout, stats filters, and notification gating to treat
 	 * extension sub-orders as parent-of-parent payment records instead of
 	 * standalone service orders.
+	 *
+	 * Aliases the canonical sub-order type on the ServiceOrder model so the
+	 * value has a single source of truth.
 	 */
-	public const ORDER_TYPE = 'extension';
+	public const ORDER_TYPE = ServiceOrder::SUB_ORDER_TYPE_EXTENSION;
 
 	/**
 	 * Wallet transaction type for extension earnings.

@@ -239,7 +239,7 @@ class ReviewsController extends RestController {
 		$order   = $request->get_param( 'order' ) ?: 'DESC';
 
 		$allowed_orderby = array( 'created_at', 'rating', 'helpful_count' );
-		$allowed_order   = array( 'ASC', 'DESC' );
+		$allowed_order   = self::sort_directions();
 
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
 			$orderby = 'created_at';
@@ -471,7 +471,7 @@ class ReviewsController extends RestController {
 		// Admins can update status.
 		if ( current_user_can( 'manage_options' ) && $request->has_param( 'status' ) ) {
 			$status = $request->get_param( 'status' );
-			if ( in_array( $status, array( 'pending', 'approved', 'rejected' ), true ) ) {
+			if ( in_array( $status, array_keys( \WPSellServices\Models\Review::get_statuses() ), true ) ) {
 				$updates['status'] = $status;
 			}
 		}
@@ -1040,8 +1040,8 @@ class ReviewsController extends RestController {
 			'order'      => array(
 				'description' => __( 'Order direction.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'default'     => 'DESC',
-				'enum'        => array( 'ASC', 'DESC' ),
+				'default'     => self::SORT_DESC,
+				'enum'        => self::sort_directions(),
 			),
 		);
 	}
@@ -1091,7 +1091,7 @@ class ReviewsController extends RestController {
 					'description' => __( 'Review status.', 'wp-sell-services' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
-					'enum'        => array( 'pending', 'approved', 'rejected' ),
+					'enum'        => array_keys( \WPSellServices\Models\Review::get_statuses() ),
 				),
 				'vendor_reply' => array(
 					'description' => __( 'Vendor reply.', 'wp-sell-services' ),

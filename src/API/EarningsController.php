@@ -73,7 +73,7 @@ class EarningsController extends RestController {
 						'period'   => array(
 							'description' => __( 'Group by period.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'enum'        => array( 'day', 'week', 'month', 'year' ),
+							'enum'        => array_keys( \WPSellServices\Services\EarningsService::get_periods() ),
 						),
 					),
 				),
@@ -134,7 +134,7 @@ class EarningsController extends RestController {
 						'status'   => array(
 							'description' => __( 'Filter by status.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'enum'        => array( 'pending', 'approved', 'rejected', 'completed' ),
+							'enum'        => array_keys( \WPSellServices\Services\EarningsService::get_withdrawal_statuses() ),
 						),
 					),
 				),
@@ -155,7 +155,7 @@ class EarningsController extends RestController {
 							'description' => __( 'New status.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
-							'enum'        => array( 'approved', 'rejected', 'completed' ),
+							'enum'        => \WPSellServices\Services\EarningsService::get_processable_withdrawal_statuses(),
 						),
 						'note'   => array(
 							'description' => __( 'Admin note.', 'wp-sell-services' ),
