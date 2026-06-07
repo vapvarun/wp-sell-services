@@ -105,9 +105,10 @@
 .wpss-btn {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 6px;
-	height: 32px;
-	padding: 0 14px;
+	min-height: 40px;
+	padding: 0 16px;
 	font-size: 13px;
 	font-weight: 500;
 	border-radius: var(--wpss-admin-radius-md);
@@ -147,9 +148,23 @@
 }
 
 .wpss-btn--sm {
-	height: 28px;
+	min-height: 34px;
 	font-size: 12px;
-	padding: 0 10px;
+	padding: 0 12px;
+}
+
+/* Keyboard focus ring for every plugin-owned interactive element.
+   Uses :focus-visible so the ring only shows for keyboard users, never on
+   mouse click (ux-foundation Rule 14). */
+.wpss-btn:focus-visible,
+.wpss-action-btn:focus-visible,
+.wpss-stat-card--action:focus-visible,
+.wpss-package-toggle:focus-visible,
+.wpss-package-nav-btn:focus-visible,
+.wpss-detail-tab:focus-visible,
+.wpss-package-actions button:focus-visible {
+	outline: 2px solid var(--wpss-admin-accent, #2271b1);
+	outline-offset: 2px;
 }
 
 /* ==========================================================================
@@ -460,18 +475,6 @@
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
 	gap: 20px;
-}
-
-@media (max-width: 1024px) {
-	.wpss-stats-row {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
-
-@media (max-width: 640px) {
-	.wpss-stats-row {
-		grid-template-columns: 1fr;
-	}
 }
 
 .wpss-stat-card {
@@ -893,55 +896,6 @@
    Responsive
    ========================================================================== */
 
-@media screen and (max-width: 1200px) {
-	.wpss-stats-row {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
-
-@media screen and (max-width: 782px) {
-	.wpss-metabox-row {
-		flex-direction: column;
-		gap: 5px;
-	}
-
-	.wpss-metabox-label {
-		flex: none;
-	}
-
-	.wpss-package-body {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-stats-row {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-dashboard-columns {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-quick-actions {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-dashboard-stats {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.wpss-stat-item {
-		border-bottom: 1px solid var(--wpss-admin-border);
-	}
-
-	.wpss-stat-item:nth-child(2n) {
-		border-left: none;
-	}
-
-	.wpss-stat-item:nth-last-child(-n+2) {
-		border-bottom: none;
-	}
-}
-
 /* ==========================================================================
    Service Metabox Styles
    ========================================================================== */
@@ -1339,8 +1293,15 @@
 }
 
 .wpss-input-with-prefix input:focus {
-	outline: none;
+	outline: none; /* replacement ring below — see :focus-visible rule */
 	box-shadow: none;
+}
+
+/* Replacement focus ring (ux-foundation Rule 14). */
+.wpss-input-with-prefix input:focus-visible,
+.wpss-input-with-prefix:focus-within {
+	outline: 2px solid var(--wpss-admin-accent, #2271b1);
+	outline-offset: 1px;
 }
 
 .wpss-input-with-suffix {
@@ -1678,12 +1639,6 @@
    Responsive Metaboxes
    ========================================================================== */
 
-@media screen and (max-width: 1200px) {
-	.wpss-details-grid {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
-
 /* ==========================================================================
    Service Addons Metabox
    ========================================================================== */
@@ -1853,78 +1808,6 @@
 	width: 16px;
 	height: 16px;
 	margin-top: 2px;
-}
-
-@media screen and (max-width: 782px) {
-	.wpss-addon-row-grid {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-addon-field-checkbox {
-		padding-top: 0;
-	}
-}
-
-/* ==========================================================================
-   Responsive Styles
-   ========================================================================== */
-
-@media screen and (max-width: 782px) {
-	.wpss-details-grid {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-detail-card {
-		padding: 15px;
-	}
-
-	.wpss-packages-nav {
-		flex-direction: column;
-		border-radius: 8px;
-		border-bottom: 1px solid var(--wpss-admin-border);
-	}
-
-	.wpss-package-nav-btn {
-		border-left: none;
-		border-bottom: 1px solid var(--wpss-admin-border);
-		justify-content: flex-start;
-		padding: 12px 15px;
-	}
-
-	.wpss-package-nav-btn:last-child {
-		border-bottom: none;
-	}
-
-	.wpss-package-nav-btn.active {
-		box-shadow: inset -3px 0 0 var(--wpss-admin-primary);
-	}
-
-	.wpss-packages-content {
-		border-radius: 0 0 8px 8px;
-		padding: 15px;
-	}
-
-	.wpss-field-row {
-		flex-direction: column;
-	}
-
-	.wpss-field-third,
-	.wpss-field-quarter {
-		max-width: none;
-	}
-
-	.wpss-requirement-options {
-		flex-direction: column;
-		align-items: flex-start;
-	}
-
-	.wpss-remove-requirement {
-		margin-right: 0;
-	}
-
-	.wpss-stats-grid {
-		grid-template-columns: 1fr;
-	}
 }
 
 /* ==========================================================================
@@ -2508,54 +2391,6 @@
 
 /* Vendor Page Responsive (stats grid handled by shared .wpss-listing-stats
    auto-fit; filter-row stacking handled by shared .wpss-list-card__filters). */
-@media (max-width: 1200px) {
-	.wpss-detail-stats-row {
-		grid-template-columns: repeat(3, 1fr);
-	}
-
-	.wpss-earnings-summary {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
-
-@media (max-width: 782px) {
-	.wpss-detail-header {
-		flex-direction: column;
-	}
-
-	.wpss-detail-status-area {
-		text-align: center;
-	}
-
-	.wpss-detail-status-row {
-		justify-content: center;
-	}
-
-	.wpss-detail-stats-row {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.wpss-detail-tabs {
-		flex-wrap: wrap;
-	}
-
-	.wpss-detail-tab {
-		flex: 1 1 auto;
-		text-align: center;
-	}
-
-	.wpss-info-grid {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-earnings-summary {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-detail-tab-content {
-		overflow-x: auto;
-	}
-}
 
 /* ==========================================================================
    Shared empty-state block for admin list screens
@@ -2636,18 +2471,6 @@
 	border-top: 1px solid var(--wpss-admin-border);
 }
 
-@media ( max-width: 640px ) {
-	.wpss-list-card__filters {
-		padding: 12px 16px;
-		flex-direction: column;
-		align-items: stretch;
-	}
-
-	.wpss-list-card__filters .search-box input[type="search"] {
-		min-width: 0;
-		width: 100%;
-	}
-}
 
 /* ==========================================================================
    Empty state — Pattern B zero-data card
@@ -2724,7 +2547,185 @@
 	text-decoration: none;
 }
 
-@media ( max-width: 640px ) {
+/* ==========================================================================
+   Responsive — exactly two breakpoints, anchored at the bottom of the file
+   (ux-foundation responsive contract: max-width 1024px tablet, 640px mobile).
+   Every override that used the legacy 1200px / 782px WP-admin breakpoints has
+   been folded into this scale (1200 -> 1024, 782 -> 640).
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+	.wpss-stats-row {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-details-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-detail-stats-row {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.wpss-earnings-summary {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 640px) {
+	.wpss-metabox-row {
+		flex-direction: column;
+		gap: 5px;
+	}
+
+	.wpss-metabox-label {
+		flex: none;
+	}
+
+	.wpss-package-body {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-stats-row {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-dashboard-columns {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-quick-actions {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-dashboard-stats {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-stat-item {
+		border-bottom: 1px solid var(--wpss-admin-border);
+	}
+
+	.wpss-stat-item:nth-child(2n) {
+		border-left: none;
+	}
+
+	.wpss-stat-item:nth-last-child(-n+2) {
+		border-bottom: none;
+	}
+
+	.wpss-addon-row-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-addon-field-checkbox {
+		padding-top: 0;
+	}
+
+	.wpss-details-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-detail-card {
+		padding: 15px;
+	}
+
+	.wpss-packages-nav {
+		flex-direction: column;
+		border-radius: 8px;
+		border-bottom: 1px solid var(--wpss-admin-border);
+	}
+
+	.wpss-package-nav-btn {
+		border-left: none;
+		border-bottom: 1px solid var(--wpss-admin-border);
+		justify-content: flex-start;
+		padding: 12px 15px;
+	}
+
+	.wpss-package-nav-btn:last-child {
+		border-bottom: none;
+	}
+
+	.wpss-package-nav-btn.active {
+		box-shadow: inset -3px 0 0 var(--wpss-admin-primary);
+	}
+
+	.wpss-packages-content {
+		border-radius: 0 0 8px 8px;
+		padding: 15px;
+	}
+
+	.wpss-field-row {
+		flex-direction: column;
+	}
+
+	.wpss-field-third,
+	.wpss-field-quarter {
+		max-width: none;
+	}
+
+	.wpss-requirement-options {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.wpss-remove-requirement {
+		margin-right: 0;
+	}
+
+	.wpss-stats-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-detail-header {
+		flex-direction: column;
+	}
+
+	.wpss-detail-status-area {
+		text-align: center;
+	}
+
+	.wpss-detail-status-row {
+		justify-content: center;
+	}
+
+	.wpss-detail-stats-row {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-detail-tabs {
+		flex-wrap: wrap;
+	}
+
+	.wpss-detail-tab {
+		flex: 1 1 auto;
+		text-align: center;
+	}
+
+	.wpss-info-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-earnings-summary {
+		grid-template-columns: 1fr;
+	}
+
+	.wpss-detail-tab-content {
+		overflow-x: auto;
+	}
+
+	.wpss-list-card__filters {
+		padding: 12px 16px;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-list-card__filters .search-box input[type="search"] {
+		min-width: 0;
+		width: 100%;
+	}
+
 	.wpss-empty-state {
 		padding: 40px 16px 32px;
 	}
