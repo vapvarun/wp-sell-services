@@ -38,6 +38,12 @@
           "slug": "dashboard-tour-wpss",
           "file": "getting-started/dashboard-tour.md",
           "order": 5
+        },
+        {
+          "title": "License Activation & Updates [PRO]",
+          "slug": "pro-license-wpss",
+          "file": "getting-started/pro-license.md",
+          "order": 6
         }
       ]
     },
@@ -75,6 +81,12 @@
           "slug": "buyer-tips-best-practices-wpss",
           "file": "buyer-guide/buyer-tips-best-practices.md",
           "order": 5
+        },
+        {
+          "title": "Favorites: Save Services for Later",
+          "slug": "favorites-wpss",
+          "file": "buyer-guide/favorites-saved-services.md",
+          "order": 6
         }
       ]
     },
@@ -210,6 +222,12 @@
           "slug": "order-settings-wpss",
           "file": "order-management/order-settings.md",
           "order": 8
+        },
+        {
+          "title": "Recurring Services & Subscriptions [PRO]",
+          "slug": "recurring-services-wpss",
+          "file": "order-management/recurring-services.md",
+          "order": 9
         }
       ]
     },
@@ -253,6 +271,12 @@
           "slug": "vendor-settings-wpss",
           "file": "vendor-system/vendor-settings.md",
           "order": 6
+        },
+        {
+          "title": "Vendor Subscription Plans [PRO]",
+          "slug": "vendor-subscription-plans-wpss",
+          "file": "vendor-system/vendor-subscription-plans.md",
+          "order": 7
         }
       ]
     },
@@ -340,6 +364,12 @@
           "slug": "currency-tax-config-wpss",
           "file": "payments-checkout/currency-tax-config.md",
           "order": 6
+        },
+        {
+          "title": "Stripe Connect Split Payments [PRO]",
+          "slug": "stripe-connect-wpss",
+          "file": "payments-checkout/stripe-connect.md",
+          "order": 7
         }
       ]
     },
@@ -383,6 +413,12 @@
           "slug": "ledger-csv-wpss",
           "file": "earnings-wallet/ledger-csv-wpss.md",
           "order": 6
+        },
+        {
+          "title": "Tiered Commission Rules [PRO]",
+          "slug": "tiered-commission-wpss",
+          "file": "earnings-wallet/tiered-commission.md",
+          "order": 7
         }
       ]
     },
@@ -551,6 +587,12 @@
           "slug": "advanced-settings-wpss",
           "file": "platform-settings/advanced-settings.md",
           "order": 3
+        },
+        {
+          "title": "White Label Branding [PRO]",
+          "slug": "white-label-wpss",
+          "file": "platform-settings/white-label.md",
+          "order": 4
         }
       ]
     },
@@ -600,6 +642,12 @@
           "slug": "action-scheduler-wpss",
           "file": "developer-guide/action-scheduler.md",
           "order": 7
+        },
+        {
+          "title": "WP-CLI Commands",
+          "slug": "wp-cli-commands-wpss",
+          "file": "developer-guide/wp-cli-commands.md",
+          "order": 8
         }
       ]
     },

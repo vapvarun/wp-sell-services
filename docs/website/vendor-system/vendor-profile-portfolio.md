@@ -32,6 +32,12 @@ These numbers appear on your profile and update automatically as you complete or
 - On-time delivery rate
 - Verification tier (Basic, Verified, or Pro)
 
+### Intro Video
+
+Add a YouTube or Vimeo link to your profile and buyers see your introduction right on your profile page. A 60-90 second video of you explaining what you do converts far better than text alone: buyers meet the person before they buy.
+
+Paste the video URL in the **Intro video** field of your profile settings. The player embeds automatically; no upload or hosting needed.
+
 ## Building Your Portfolio
 
 Your portfolio showcases previous work to potential buyers. Think of it as your visual resume.
