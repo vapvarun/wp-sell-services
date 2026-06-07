@@ -531,6 +531,39 @@ waves:
         static_gates: [php-lint, wpcs, ux-audit]
         depends_on: ["2.5.1"]
 
+  # ══ Wave 2.6 — CSS INVENTORY + DEAD-FILE CLEANUP (owner-directed) ══
+  # Runs AFTER shell unification + all surface uplifts so the inventory
+  # reflects the final state. Cleanup-framework discipline applies: evidence
+  # before deletion, never guess.
+  #   1. Build the enqueue map: every assets/css/*.css (non -rtl, non .min)
+  #      traced to its wp_register_style/wp_enqueue_style handle and the
+  #      surfaces that load it (src/Frontend/Assets.php + all enqueue sites).
+  #   2. A file is DEAD only if: zero enqueue/register references, zero
+  #      @import references, zero handle deps, and its -rtl/.min siblings are
+  #      equally unreferenced. Write the evidence to
+  #      audit/cleanup/css-inventory.json BEFORE removing anything.
+  #   3. Delete dead sources + their -rtl/.min artefacts + their Gruntfile
+  #      entries; rebuild artefacts; every journey still green.
+  #   4. Duplicate component definitions across surviving files (same
+  #      selector styled in 2+ files) get consolidated into the owning file -
+  #      design-system.css for primitives, surface CSS for surface-specifics.
+  - id: wave-2-6-css-cleanup
+    depends_on: [wave-2-5-ux-uplift]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services, buyer-single-service, vendor-dashboard-ajax]
+    directions:
+      - id: "2.6.1"
+        title: "CSS inventory + dead-file cleanup: build the enqueue map (every assets/css source -> handle -> surfaces) into audit/cleanup/css-inventory.json, delete only evidenced-dead files (zero enqueue/@import/dep references incl. -rtl/.min siblings) plus their Gruntfile entries, consolidate duplicate selector definitions into their owning file, rebuild artefacts with grunt - evidence before deletion, journeys green after"
+        journey: improve
+        scope:
+          - "assets/css/**"
+          - "src/Frontend/Assets.php"
+          - "Gruntfile.js"
+          - "audit/cleanup/**"
+        skills: [ux-audit, ux-foundation, wp-plugin-development]
+        static_gates: ["php-lint", "wpcs", "ux-audit"]
+        depends_on: []
+
   # ══ Wave 3 — SECURITY (ALREADY IMPLEMENTED - verify only) ══
   # Commits e3f2d21 (1.1) + 9f640cb (1.2) are merged on the integration
   # branch from the prior run. Builders: check out the existing branches,
@@ -538,7 +571,7 @@ waves:
   # re-implement. The functional + contract gates for this work have never
   # run - that is what this wave completes.
   - id: wave-3-security
-    depends_on: [wave-2-5-ux-uplift]
+    depends_on: [wave-2-6-css-cleanup]
     functional_gates: [qa-suite, browser-smoke]
     journeys: [admin-moderation-actions, vendor-dashboard-ajax, pro-pair-still-loads]
     directions:
@@ -657,7 +690,7 @@ waves:
 
   # ══ Wave 7 — AUDIT: shippability verdict ══
   - id: wave-7-audit
-    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-5-scale]
+    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-2-6-css-cleanup, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-5-scale]
     directions:
       - id: "7.1"
         title: "Product-readiness audit verdict for the 1.2.0 cycle (customer bugs + UX uplift + hardening + scale + polish): shippable for a 100k-site install base? Include per-Basecamp-card fix status (9966680633, 9958056390, 9959210393, 9826303369) so the owner can wrap the cards"
