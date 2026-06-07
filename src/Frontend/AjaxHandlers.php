@@ -679,33 +679,49 @@ class AjaxHandlers {
 			}
 		}
 
-		// Legacy format: field_* keys.
-		foreach ( $_POST as $key => $value ) {
-			if ( strpos( $key, 'field_' ) === 0 ) {
-				$field_id                = str_replace( 'field_', '', $key );
-				$field_data[ $field_id ] = is_array( $value )
-					? array_map( 'sanitize_text_field', $value )
-					: sanitize_text_field( wp_unslash( $value ) );
+		// Legacy format: field_{index} keys.
+		// Read each known requirement index explicitly instead of iterating the
+		// entire $_POST superglobal — only the indices that exist in the service
+		// requirement definitions are ever valid legacy keys.
+		foreach ( array_keys( $requirements ) as $req_index ) {
+			$legacy_key = 'field_' . $req_index;
+			if ( ! isset( $_POST[ $legacy_key ] ) ) {
+				continue;
 			}
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above, value sanitized on the next line.
+			$legacy_value             = wp_unslash( $_POST[ $legacy_key ] );
+			$field_data[ $req_index ] = is_array( $legacy_value )
+				? array_map( 'sanitize_text_field', $legacy_value )
+				: sanitize_text_field( $legacy_value );
 		}
 
 		// Handle file uploads.
+		// Read explicit, known file input keys rather than iterating the whole
+		// $_FILES superglobal.
 		$files = array();
-		if ( ! empty( $_FILES ) ) {
-			foreach ( $_FILES as $key => $file ) {
-				// Support requirements[index] format.
-				if ( strpos( $key, 'requirements' ) === 0 ) {
-					preg_match( '/requirements\[(\d+)\]/', $key, $matches );
-					if ( ! empty( $matches[1] ) ) {
-						$index = absint( $matches[1] );
-						if ( isset( $requirements[ $index ] ) ) {
-							$question           = $requirements[ $index ]['question'] ?? "field_{$index}";
-							$files[ $question ] = $file;
-						}
-					}
-				} else {
-					$files[ $key ] = $file;
-				}
+
+		// Per-requirement file inputs in the requirements[index] format.
+		foreach ( array_keys( $requirements ) as $req_index ) {
+			$file_key = 'requirements[' . $req_index . ']';
+			if ( ! isset( $_FILES[ $file_key ] ) ) {
+				continue;
+			}
+			$question = $requirements[ $req_index ]['question'] ?? "field_{$req_index}";
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entry is validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
+			$files[ $question ] = $_FILES[ $file_key ];
+		}
+
+		// Named file inputs used by the requirements templates.
+		$named_file_inputs = apply_filters(
+			'wpss_requirements_file_inputs',
+			array( 'requirement_files', 'requirements_files', 'requirements' ),
+			$order_id
+		);
+		foreach ( $named_file_inputs as $file_key ) {
+			$file_key = sanitize_key( $file_key );
+			if ( isset( $_FILES[ $file_key ] ) ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entry is validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
+				$files[ $file_key ] = $_FILES[ $file_key ];
 			}
 		}
 
