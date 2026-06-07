@@ -1673,9 +1673,16 @@ body.wpss-modal-open {
 }
 
 .wpss-form-field textarea:focus,
-.wpss-form-field input:focus {
+.wpss-form-field input:focus,
+.wpss-form-field textarea:focus-visible,
+.wpss-form-field input:focus-visible {
 	outline: none;
 	border-color: var(--wpss-primary);
+	/* Add a visible focus ring so keyboard focus on the contact-form fields is
+	   unmistakable, not just a subtle border-colour shift (WCAG 2.4.7). Hex
+	   fallback first, color-mix() progressive enhancement second. */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 .wpss-field-hint {

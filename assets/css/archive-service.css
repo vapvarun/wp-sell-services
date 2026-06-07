@@ -204,6 +204,11 @@
 	content: "\2630";
 }
 
+.wpss-filter-toggle:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+}
+
 /* Search form */
 .wpss-search-form {
 	flex: 1;
@@ -268,6 +273,11 @@
 	outline: 2px solid var(--wpss-primary);
 	outline-offset: 2px;
 	border-color: var(--wpss-primary);
+	/* Visible keyboard focus ring tracking the brand primary; hex fallback
+	   covers browsers without color-mix(). Replaces the bare outline:none so a
+	   keyboard user always sees where focus is (WCAG 2.4.7). */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 /* ==========================================================================
@@ -538,6 +548,13 @@ body.wpss-sidebar-open::after {
 	color: var(--wpss-primary);
 }
 
+.wpss-category-link:focus-visible,
+.wpss-subcategory-list a:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+	color: var(--wpss-primary);
+}
+
 /* Price Inputs */
 .wpss-price-inputs {
 	display: flex;
@@ -560,6 +577,10 @@ body.wpss-sidebar-open::after {
 	outline: 2px solid var(--wpss-primary);
 	outline-offset: 2px;
 	border-color: var(--wpss-primary);
+	/* Match the search/filter focus ring so keyboard focus is unmistakable on
+	   the price-range fields too (WCAG 2.4.7). */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 .wpss-price-separator {
