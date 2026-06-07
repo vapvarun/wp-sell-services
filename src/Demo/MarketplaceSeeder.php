@@ -923,9 +923,8 @@ class MarketplaceSeeder {
 	/**
 	 * Seed buyer favorites (wishlist) as user meta.
 	 *
-	 * Writes both meta keys the plugin reads from (REST controller uses
-	 * `_wpss_favorites`, AJAX handler uses `_wpss_favorite_services`) so the
-	 * wishlist is consistent across every surface.
+	 * Writes the canonical favorites meta (FavoritesService::META_KEY) - every
+	 * surface reads and writes through FavoritesService since 1.2.0.
 	 *
 	 * @param array<int, int>                                                                                       $buyers   Buyer IDs.
 	 * @param array<int, array{id: int, vendor_id: int, starting_price: float, delivery_days: int, revisions: int}> $services Services.
@@ -951,8 +950,7 @@ class MarketplaceSeeder {
 				}
 			}
 
-			update_user_meta( $buyer, '_wpss_favorites', $favorites );
-			update_user_meta( $buyer, '_wpss_favorite_services', $favorites );
+			update_user_meta( $buyer, \WPSellServices\Services\FavoritesService::META_KEY, $favorites );
 			$created += count( $favorites );
 		}
 

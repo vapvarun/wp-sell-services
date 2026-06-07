@@ -24,8 +24,7 @@ defined( 'ABSPATH' ) || exit;
  */
 do_action( 'wpss_dashboard_section_before', 'favorites', $user_id );
 
-$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );
-$favorite_ids  = array_filter( array_map( 'intval', is_array( $favorites_raw ) ? $favorites_raw : array() ) );
+$favorite_ids = \WPSellServices\Services\FavoritesService::get_ids( $user_id );
 
 $services = array();
 if ( ! empty( $favorite_ids ) ) {

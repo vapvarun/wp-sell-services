@@ -2051,13 +2051,7 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 
-		$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );
-		$favorites     = $favorites_raw ? $favorites_raw : array();
-
-		if ( ! in_array( $service_id, $favorites, true ) ) {
-			$favorites[] = $service_id;
-			update_user_meta( $user_id, '_wpss_favorite_services', $favorites );
-		}
+		$favorites = \WPSellServices\Services\FavoritesService::add( $user_id, $service_id );
 
 		wp_send_json_success(
 			array(
@@ -2082,11 +2076,7 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 
-		$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );
-		$favorites     = $favorites_raw ? $favorites_raw : array();
-		$favorites     = array_diff( $favorites, array( $service_id ) );
-
-		update_user_meta( $user_id, '_wpss_favorite_services', array_values( $favorites ) );
+		$favorites = \WPSellServices\Services\FavoritesService::remove( $user_id, $service_id );
 
 		wp_send_json_success(
 			array(
@@ -2104,9 +2094,8 @@ class AjaxHandlers {
 	public function get_favorites(): void {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
-		$user_id       = get_current_user_id();
-		$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );
-		$favorites     = $favorites_raw ? $favorites_raw : array();
+		$user_id   = get_current_user_id();
+		$favorites = \WPSellServices\Services\FavoritesService::get_ids( $user_id );
 
 		wp_send_json_success( array( 'favorites' => $favorites ) );
 	}

@@ -38,11 +38,11 @@ $card_classes = apply_filters( 'wpss_service_card_classes', array( 'wpss-service
 
 // Favorite state — resolved server-side so the toggle renders in the correct
 // state on first paint (no flash). The toggle reads/writes the canonical
-// `_wpss_favorites` user-meta via the REST favorites controller (frontend.js).
+// the canonical favorites store via the REST favorites controller (frontend.js).
 $wpss_card_is_logged_in = is_user_logged_in();
 $wpss_card_favorited    = false;
 if ( $wpss_card_is_logged_in ) {
-	$wpss_card_favs      = get_user_meta( get_current_user_id(), '_wpss_favorites', true );
+	$wpss_card_favs = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
 	$wpss_card_favorited = is_array( $wpss_card_favs ) && in_array( $service_id, array_map( 'intval', $wpss_card_favs ), true );
 }
 ?>

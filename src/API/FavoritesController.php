@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WPSellServices\API;
 
+use WPSellServices\Services\FavoritesService;
 defined( 'ABSPATH' ) || exit;
 
 use WP_REST_Server;
@@ -111,9 +112,9 @@ class FavoritesController extends RestController {
 	public function get_items( $request ) {
 		$user_id    = get_current_user_id();
 		$pagination = $this->get_pagination_args( $request );
-		$favorites  = get_user_meta( $user_id, '_wpss_favorites', true );
+		$favorites  = FavoritesService::get_ids( $user_id );
 
-		if ( ! is_array( $favorites ) || empty( $favorites ) ) {
+		if ( empty( $favorites ) ) {
 			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
 		}
 
@@ -173,15 +174,7 @@ class FavoritesController extends RestController {
 			return new WP_Error( 'not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		$favorites = get_user_meta( $user_id, '_wpss_favorites', true );
-		if ( ! is_array( $favorites ) ) {
-			$favorites = array();
-		}
-
-		if ( ! in_array( $service_id, $favorites, true ) ) {
-			$favorites[] = $service_id;
-			update_user_meta( $user_id, '_wpss_favorites', $favorites );
-		}
+		FavoritesService::add( $user_id, $service_id );
 
 		return new WP_REST_Response(
 			array(
@@ -202,12 +195,7 @@ class FavoritesController extends RestController {
 	public function remove_favorite( WP_REST_Request $request ): WP_REST_Response {
 		$service_id = (int) $request->get_param( 'service_id' );
 		$user_id    = get_current_user_id();
-		$favorites  = get_user_meta( $user_id, '_wpss_favorites', true );
-
-		if ( is_array( $favorites ) ) {
-			$favorites = array_values( array_diff( $favorites, array( $service_id ) ) );
-			update_user_meta( $user_id, '_wpss_favorites', $favorites );
-		}
+		FavoritesService::remove( $user_id, $service_id );
 
 		return new WP_REST_Response(
 			array(
@@ -227,9 +215,7 @@ class FavoritesController extends RestController {
 	public function check_favorited( WP_REST_Request $request ): WP_REST_Response {
 		$service_id = (int) $request->get_param( 'service_id' );
 		$user_id    = get_current_user_id();
-		$favorites  = get_user_meta( $user_id, '_wpss_favorites', true );
-
-		$is_favorited = is_array( $favorites ) && in_array( $service_id, $favorites, true );
+		$is_favorited = FavoritesService::is_favorited( $user_id, $service_id );
 
 		return new WP_REST_Response( array( 'favorited' => $is_favorited ) );
 	}

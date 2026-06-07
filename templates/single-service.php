@@ -95,13 +95,13 @@ if ( ! $service ) {
 $layout = apply_filters( 'wpss_single_service_layout', 'default', $service_id );
 
 // Favorite state — resolved server-side so the toggle paints in the correct
-// state immediately. Reads the canonical `_wpss_favorites` user-meta that the
+// state immediately. Reads the canonical favorites store (FavoritesService) that the
 // REST favorites controller and the buyer dashboard both use (frontend.js
 // drives the toggle through POST/DELETE /wpss/v1/favorites/{id}).
 $wpss_single_is_logged_in = is_user_logged_in();
 $wpss_single_favorited    = false;
 if ( $wpss_single_is_logged_in ) {
-	$wpss_single_favs      = get_user_meta( get_current_user_id(), '_wpss_favorites', true );
+	$wpss_single_favs = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
 	$wpss_single_favorited = is_array( $wpss_single_favs ) && in_array( (int) $service_id, array_map( 'intval', $wpss_single_favs ), true );
 }
 
