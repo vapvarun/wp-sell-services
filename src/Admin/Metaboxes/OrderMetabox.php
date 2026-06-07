@@ -868,7 +868,7 @@ class OrderMetabox {
 			<?php endif; ?>
 
 			<div class="wpss-add-note">
-				<textarea id="wpss-new-note" rows="3" placeholder="<?php esc_attr_e( 'Add a note...', 'wp-sell-services' ); ?>"></textarea>
+				<textarea id="wpss-new-note" rows="3" aria-label="<?php esc_attr_e( 'Order note', 'wp-sell-services' ); ?>" placeholder="<?php esc_attr_e( 'Add a note...', 'wp-sell-services' ); ?>"></textarea>
 				<button type="button" class="button wpss-add-note-btn" data-order="<?php echo esc_attr( $order->get_id() ); ?>">
 					<?php esc_html_e( 'Add Note', 'wp-sell-services' ); ?>
 				</button>
