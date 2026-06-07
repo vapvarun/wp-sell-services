@@ -247,9 +247,16 @@
 }
 
 .wpss-category-filter:focus,
-.wpss-sort-filter:focus {
+.wpss-sort-filter:focus,
+.wpss-category-filter:focus-visible,
+.wpss-sort-filter:focus-visible {
 	outline: none;
 	border-color: var(--wpss-primary);
+	/* Visible keyboard focus ring tracking the brand primary; hex fallback
+	   covers browsers without color-mix(). Replaces the bare outline:none so a
+	   keyboard user always sees where focus is (WCAG 2.4.7). */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 /* ==========================================================================
@@ -518,9 +525,14 @@ body.wpss-sidebar-open::after {
 	text-align: center;
 }
 
-.wpss-price-inputs input:focus {
+.wpss-price-inputs input:focus,
+.wpss-price-inputs input:focus-visible {
 	outline: none;
 	border-color: var(--wpss-primary);
+	/* Match the search/filter focus ring so keyboard focus is unmistakable on
+	   the price-range fields too (WCAG 2.4.7). */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 .wpss-price-separator {
