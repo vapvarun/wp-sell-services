@@ -135,7 +135,10 @@
    ========================================================================== */
 
 .wpss-services-archive {
-	padding: 2rem 0;
+	/* Top kept light: most themes (Reign: .site-content padding-top 40px)
+	   already pad the content area; 2rem here doubled up into a large
+	   empty band above the archive header. */
+	padding: 0.75rem 0 2rem;
 }
 
 .wpss-services-content {
