@@ -314,10 +314,51 @@
         },
 
         /**
+         * Ensure the popup stylesheet is present on the page.
+         *
+         * The single-service page only enqueues single-service.css, but all
+         * message/inquiry popup styling now lives in messaging.css (the single
+         * source of truth). When that stylesheet is not already loaded, derive
+         * its URL from the single-service stylesheet link and inject it once so
+         * the popup renders with a solid, readable surface on every theme.
+         *
+         * @return {void}
+         */
+        ensurePopupStyles: function() {
+            // Already loaded (e.g. dashboard messaging view) - nothing to do.
+            if (document.querySelector('link[href*="messaging.css"], link[href*="messaging.min.css"]')) {
+                return;
+            }
+
+            // Find the single-service stylesheet to borrow its directory + version.
+            const links = document.querySelectorAll('link[rel="stylesheet"][href*="single-service"]');
+
+            if (!links.length) {
+                return;
+            }
+
+            const ref = links[0].getAttribute('href');
+            // Swap the filename, preserve any ?ver= query string and .min variant.
+            const href = ref.replace(/single-service(-rtl)?(\.min)?\.css/, 'messaging$2.css');
+
+            if (href === ref) {
+                return;
+            }
+
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            document.head.appendChild(link);
+        },
+
+        /**
          * Initialize modals.
          */
         initModals: function() {
             const self = this;
+
+            // Make sure the popup surface styles are available on this page.
+            this.ensurePopupStyles();
 
             // Close on overlay click.
             $(document).on('click', '.wpss-modal-overlay', function() {
