@@ -576,11 +576,29 @@ final class Plugin {
 		$segments  = array_map( 'preg_quote', explode( '/', $page_path ) );
 		$path_re   = implode( '/', $segments );
 
+		$rule_regex = '^' . $path_re . '/([^/]+)/?$';
+
 		add_rewrite_rule(
-			'^' . $path_re . '/([^/]+)/?$',
+			$rule_regex,
 			'index.php?page_id=' . $dashboard_id . '&wpss_section=$matches[1]',
 			'top'
 		);
+
+		// Self-healing flush: a registered rule is invisible to WordPress
+		// until the rules option is regenerated. The upgrade-path flush only
+		// fires on a version change, which misses same-version deploys (and
+		// any plugin/user action that rebuilt the option without our rule -
+		// the rule itself re-registers on every request, so a flush here is
+		// always safe). Flush once whenever the live option lacks our rule.
+		$live_rules = get_option( 'rewrite_rules' );
+		if ( is_array( $live_rules ) && ! isset( $live_rules[ $rule_regex ] ) ) {
+			add_action(
+				'wp_loaded',
+				static function (): void {
+					flush_rewrite_rules( false );
+				}
+			);
+		}
 	}
 
 	/**
