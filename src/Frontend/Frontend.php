@@ -21,6 +21,21 @@ defined( 'ABSPATH' ) || exit;
 class Frontend {
 
 	/**
+	 * Constructor.
+	 *
+	 * Boots the shared shell layer (page-header component + theme-agnostic
+	 * entry-title suppression) on front-end requests. Constructed from
+	 * Plugin::define_frontend_hooks() during `init`, which is early enough for
+	 * the `the_title` / `body_class` suppression filters to be in place before
+	 * the main query renders.
+	 *
+	 * @since 1.2.0
+	 */
+	public function __construct() {
+		ShellHeader::init();
+	}
+
+	/**
 	 * Register frontend styles.
 	 *
 	 * Styles are registered globally but only enqueued on-demand

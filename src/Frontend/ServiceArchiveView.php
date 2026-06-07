@@ -92,22 +92,31 @@ class ServiceArchiveView {
 		$title         = $this->get_archive_title();
 		$description   = $this->get_archive_description();
 		$platform_name = wpss_get_platform_name();
+
+		$subtitle = $description;
+		if ( '' === (string) $subtitle && $platform_name && ( is_post_type_archive( 'wpss_service' ) || wpss_is_page( 'services_page' ) ) ) {
+			$subtitle = sprintf(
+				/* translators: %s: platform name */
+				__( 'Browse professional services on %s', 'wp-sell-services' ),
+				$platform_name
+			);
+		}
+
+		// F1: one wpss-page-header component on every plugin surface, rendered
+		// by the app shell. Replaces the bespoke .wpss-archive-header so the
+		// archive H1 aligns and sizes identically to the dashboard + single
+		// surfaces. Kept inside a .wpss-archive-header wrapper for the filter
+		// bar that follows, but the heading itself is the shared component.
 		?>
 		<header class="wpss-archive-header">
-			<h1 class="wpss-archive-title"><?php echo esc_html( $title ); ?></h1>
-			<?php if ( $description ) : ?>
-				<p class="wpss-archive-description"><?php echo esc_html( $description ); ?></p>
-			<?php elseif ( $platform_name && ( is_post_type_archive( 'wpss_service' ) || wpss_is_page( 'services_page' ) ) ) : ?>
-				<p class="wpss-archive-description">
-					<?php
-					printf(
-						/* translators: %s: platform name */
-						esc_html__( 'Browse professional services on %s', 'wp-sell-services' ),
-						esc_html( $platform_name )
-					);
-					?>
-				</p>
-			<?php endif; ?>
+			<?php
+			ShellHeader::render(
+				array(
+					'title'    => $title,
+					'subtitle' => $subtitle,
+				)
+			);
+			?>
 		</header>
 		<?php
 	}

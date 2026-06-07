@@ -102,11 +102,11 @@
    Base Styles
    ========================================================================== */
 
-.wpss-container {
-	max-width: 1400px;
-	margin: 0 auto;
-	padding: 0 20px;
-}
+/* F3: the .wpss-container definition that lived here (max-width 1400px,
+   raw 20px padding) was deleted. The single source of truth is now
+   design-system.css, which is loaded before frontend.css on every surface,
+   so the token-driven .wpss-container there is the one definition. Nested
+   containers collapse to fluid width via the rule in design-system.css. */
 
 /* ==========================================================================
    Buttons
@@ -327,24 +327,22 @@ select:invalid {
    Service Cards
    ========================================================================== */
 
-.wpss-services-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 24px;
-}
-
+/* F7: the base .wpss-services-grid (and the --2/--3/--4 modifiers) now live in
+   design-system.css so the grid lays out on EVERY surface, not just where
+   frontend.css happened to load. Only the legacy single-hyphen alias used by
+   templates/vendor/profile.php is kept here, mapped onto the shared 3-up
+   modifier so it stays a modifier of the one grid, not a re-implementation. */
 .wpss-services-grid-3 {
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
 	.wpss-services-grid-3 {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
 
-@media (max-width: 576px) {
-	.wpss-services-grid,
+@media (max-width: 600px) {
 	.wpss-services-grid-3 {
 		grid-template-columns: 1fr;
 	}
