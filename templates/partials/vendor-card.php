@@ -32,7 +32,8 @@ $rating_count     = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true 
 $completed_orders = (int) get_user_meta( $vendor_id, '_wpss_completed_orders', true );
 $response_time    = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
 $country          = get_user_meta( $vendor_id, '_wpss_vendor_country', true );
-$member_since     = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
+$member_since     = get_user_meta( $vendor_id, '_wpss_vendor_since', true );
+$member_since     = $member_since ? $member_since : $vendor->user_registered;
 $is_verified      = get_user_meta( $vendor_id, '_wpss_vendor_verified', true );
 $is_online        = get_user_meta( $vendor_id, '_wpss_last_active', true );
 
@@ -52,7 +53,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 <div class="wpss-vendor-card">
 	<div class="wpss-vendor-header">
 		<div class="wpss-vendor-avatar-wrapper">
-			<img src="<?php echo esc_url( get_avatar_url( $vendor_id, [ 'size' => 80 ] ) ); ?>"
+			<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 80 ) ) ); ?>"
 				alt="<?php echo esc_attr( $vendor->display_name ); ?>"
 				class="wpss-vendor-avatar">
 			<?php if ( $is_currently_online ) : ?>
