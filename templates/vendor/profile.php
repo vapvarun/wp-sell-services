@@ -183,17 +183,12 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						if ( $vendor_profile_obj ) :
 							$tier       = $vendor_profile_obj->tier;
 							$tier_label = $vendor_profile_obj->get_tier_label();
-							$tier_colors = array(
-								'new'       => 'background:#f1f5f9;color:#64748b;',
-								'rising'    => 'background:#eff6ff;color:#2563eb;',
-								'top_rated' => 'background:#fefce8;color:#ca8a04;',
-								'pro'       => 'background:#faf5ff;color:#7c3aed;',
-							);
-							$tier_style = $tier_colors[ $tier ] ?? $tier_colors['new'];
+							// Colour comes from the .wpss-seller-badge--{tier} modifier in
+							// frontend.css (token-driven), not an inline style attribute.
 							?>
-							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" style="display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:9999px;vertical-align:middle;margin-left:8px;<?php echo esc_attr( $tier_style ); ?>">
+							<span class="wpss-seller-badge wpss-seller-badge--lg wpss-seller-badge--<?php echo esc_attr( $tier ); ?>">
 								<?php if ( 'pro' === $tier ) : ?>
-									<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true" style="vertical-align:-2px;margin-right:3px;"></i>
+									<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								<?php endif; ?>
 								<?php echo esc_html( $tier_label ); ?>
 							</span>
