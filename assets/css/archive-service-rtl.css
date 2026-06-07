@@ -220,7 +220,11 @@
 
 .wpss-search-input:focus {
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.1);
+	/* Ring must track the brand primary (indigo), not a hard-coded green that
+	   pre-dated the indigo palette switch. color-mix() tints the primary; the
+	   hex fallback covers browsers without color-mix support. */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 .wpss-filters-bar-controls {

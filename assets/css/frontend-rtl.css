@@ -49,6 +49,19 @@
 	--wpss-info: #3b82f6;
 	--wpss-star: #fbbf24;
 
+	/* Seller-tier badge palette.
+	   Tiers were previously coloured via inline style="" with raw hex in three
+	   templates (service card, vendor card, vendor profile). Tokenised here so a
+	   single edit re-skins every surface and the templates stay markup-only. */
+	--wpss-tier-new-bg: #f1f5f9;
+	--wpss-tier-new-text: #64748b;
+	--wpss-tier-rising-bg: #eff6ff;
+	--wpss-tier-rising-text: #2563eb;
+	--wpss-tier-top-rated-bg: #fefce8;
+	--wpss-tier-top-rated-text: #ca8a04;
+	--wpss-tier-pro-bg: #faf5ff;
+	--wpss-tier-pro-text: #7c3aed;
+
 	/* Border Radius */
 	--wpss-radius: 8px;
 	--wpss-radius-lg: 12px;
@@ -653,6 +666,66 @@ article.wpss-service-card:hover {
 	font-size: 16px;
 	font-weight: 700;
 	color: var(--wpss-secondary);
+}
+
+/* ==========================================================================
+   Seller-tier badge
+   --------------------------------------------------------------------------
+   Shared pill rendered next to the vendor name on the service card, vendor
+   card, and vendor profile. Colour comes from the tier modifier (token-driven)
+   rather than an inline style="" so every surface stays consistent and the
+   templates carry no presentation. Size modifiers cover the three contexts.
+   ========================================================================== */
+
+.wpss-seller-badge {
+	display: inline-block;
+	vertical-align: middle;
+	margin-inline-start: 4px;
+	padding: 1px 6px;
+	border-radius: var(--wpss-radius-full, 9999px);
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 1.6;
+	white-space: nowrap;
+	background: var(--wpss-tier-new-bg);
+	color: var(--wpss-tier-new-text);
+}
+
+.wpss-seller-badge--md {
+	margin-inline-start: 6px;
+	padding: 2px 8px;
+	font-size: 11px;
+}
+
+.wpss-seller-badge--lg {
+	margin-inline-start: 8px;
+	padding: 3px 10px;
+	font-size: 13px;
+}
+
+.wpss-seller-badge--new {
+	background: var(--wpss-tier-new-bg);
+	color: var(--wpss-tier-new-text);
+}
+
+.wpss-seller-badge--rising {
+	background: var(--wpss-tier-rising-bg);
+	color: var(--wpss-tier-rising-text);
+}
+
+.wpss-seller-badge--top_rated {
+	background: var(--wpss-tier-top-rated-bg);
+	color: var(--wpss-tier-top-rated-text);
+}
+
+.wpss-seller-badge--pro {
+	background: var(--wpss-tier-pro-bg);
+	color: var(--wpss-tier-pro-text);
+}
+
+.wpss-seller-badge .wpss-icon {
+	vertical-align: -1px;
+	margin-inline-end: 2px;
 }
 
 /* ==========================================================================
