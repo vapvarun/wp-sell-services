@@ -480,12 +480,20 @@ final class Plugin {
 					'top'
 				);
 
-				// Dashboard section endpoint: /{dashboard-page}/{section}/.
-				// EP_PAGES attaches the endpoint to the dashboard WP page so a
-				// pretty section URL (e.g. /dashboard/services/) resolves to the
-				// page with `wpss_section=services` as a query var. The query-arg
-				// form (?section=services) keeps working as a fallback.
-				add_rewrite_endpoint( 'wpss_section', EP_PAGES );
+				// Dashboard section: /{dashboard-page-path}/{section}/.
+				//
+				// add_rewrite_endpoint() is deliberately NOT used here: it
+				// produces /{dashboard}/wpss_section/{section}/ (the endpoint
+				// name leaks into the path), which 404s every section because
+				// internal links emit the clean /{dashboard}/{section}/ shape.
+				//
+				// Instead, anchor an explicit rule to the live dashboard page
+				// path so the clean URL resolves to the dashboard page with
+				// `wpss_section` populated as a query var. Reading the path from
+				// the live page slug keeps the rule correct when the dashboard
+				// page slug (or its parent) changes. The query-arg form
+				// (?section=services) keeps working as a 301 fallback.
+				$this->register_dashboard_section_rule();
 			},
 			5
 		);
@@ -516,6 +524,62 @@ final class Plugin {
 				}
 			},
 			99
+		);
+	}
+
+	/**
+	 * Register the dashboard section rewrite rule, anchored to the live page path.
+	 *
+	 * Resolves the dashboard WP page's path (relative to home, accounting for
+	 * any parent-page nesting) and registers a rule of the form
+	 * `^{path}/([^/]+)/?$` → `index.php?page_id={id}&wpss_section=$matches[1]`.
+	 *
+	 * Routing by `page_id` (not `pagename`) sidesteps the front-page slug
+	 * collision: when the dashboard is the front page, WordPress canonical-
+	 * redirects `/dashboard/...` to `/`, but a `page_id` query var resolves the
+	 * page directly without triggering that redirect.
+	 *
+	 * Bails when no dashboard page is mapped yet (e.g. before activation seeds
+	 * the pages) — the `?section=` query-arg form remains the canonical URL
+	 * until a page exists.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	private function register_dashboard_section_rule(): void {
+		if ( ! function_exists( 'wpss_get_page_id' ) ) {
+			return;
+		}
+
+		$dashboard_id = wpss_get_page_id( 'dashboard' );
+
+		// Legacy fallback so sites mapped via the older single option still work.
+		if ( ! $dashboard_id ) {
+			$dashboard_id = (int) get_option( 'wpss_dashboard_page' );
+		}
+
+		if ( ! $dashboard_id ) {
+			return;
+		}
+
+		// get_page_uri() returns the full nested slug path (parent/child/...)
+		// without a leading or trailing slash, e.g. "account/dashboard".
+		$page_path = get_page_uri( $dashboard_id );
+		if ( ! is_string( $page_path ) || '' === $page_path ) {
+			return;
+		}
+
+		// Trim slashes and escape regex metacharacters in the path segments
+		// (slashes between segments are intentional and must NOT be escaped).
+		$page_path = trim( $page_path, '/' );
+		$segments  = array_map( 'preg_quote', explode( '/', $page_path ) );
+		$path_re   = implode( '/', $segments );
+
+		add_rewrite_rule(
+			'^' . $path_re . '/([^/]+)/?$',
+			'index.php?page_id=' . $dashboard_id . '&wpss_section=$matches[1]',
+			'top'
 		);
 	}
 
