@@ -148,7 +148,13 @@
 
 .wpss-category-filter:focus,
 .wpss-sort-filter:focus {
-	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+.wpss-category-filter:focus-visible,
+.wpss-sort-filter:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
 	border-color: var(--wpss-primary);
 }
 
@@ -252,7 +258,12 @@
 }
 
 .wpss-price-inputs input:focus {
-	outline: none;
+	border-color: var(--wpss-primary);
+}
+
+.wpss-price-inputs input:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
 	border-color: var(--wpss-primary);
 }
 
@@ -994,6 +1005,29 @@
 
 .admin-bar .wpss-request-sidebar.wpss-request-sidebar {
 	top: 32px;
+}
+
+/* ==========================================================================
+   Accessibility - keyboard focus rings (WCAG 2.1 AA)
+   Visible :focus-visible ring for every interactive element on the buyer
+   request + proposal surfaces (archive filters, single request, proposal
+   forms). Keyboard-only so it never appears on mouse click.
+   ========================================================================== */
+
+.wpss-requests-archive a:focus-visible,
+.wpss-requests-archive button:focus-visible,
+.wpss-requests-archive input:focus-visible,
+.wpss-requests-archive select:focus-visible,
+.wpss-requests-archive textarea:focus-visible,
+.wpss-requests-archive [tabindex]:focus-visible,
+.wpss-single-request a:focus-visible,
+.wpss-single-request button:focus-visible,
+.wpss-single-request input:focus-visible,
+.wpss-single-request select:focus-visible,
+.wpss-single-request textarea:focus-visible,
+.wpss-single-request [tabindex]:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
 }
 
 @media (max-width: 782px) {
