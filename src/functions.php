@@ -720,7 +720,7 @@ function wpss_get_vendor_url( int $user_id ): string {
 /**
  * Get dashboard URL.
  *
- * @param string $tab Optional tab/section.
+ * @param string $section Optional dashboard section slug.
  * @return string
  */
 function wpss_get_dashboard_url( string $section = '' ): string {
@@ -743,11 +743,62 @@ function wpss_get_dashboard_url( string $section = '' ): string {
 		return '';
 	}
 
-	if ( $section ) {
-		$url = add_query_arg( 'section', $section, $url );
+	if ( '' !== $section ) {
+		$url = wpss_append_dashboard_section( $url, $section );
 	}
 
 	return $url;
+}
+
+/**
+ * Append a dashboard section to a base dashboard URL.
+ *
+ * Emits a pretty endpoint path (e.g. /dashboard/services/) when permalinks
+ * are pretty, falling back to the `?section=` query arg on plain permalinks.
+ * Centralizing this keeps every internal link, breadcrumb, and redirect on
+ * the same URL shape, and means a single behavior change toggles them all.
+ *
+ * The default `orders` section maps to the bare dashboard URL (no segment)
+ * to keep the canonical dashboard landing URL clean.
+ *
+ * @since 1.2.0
+ *
+ * @param string $base_url Base dashboard page permalink (may already carry query args).
+ * @param string $section  Section slug (e.g. 'services', 'earnings').
+ * @return string Section URL.
+ */
+function wpss_append_dashboard_section( string $base_url, string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section || 'orders' === $section ) {
+		return $base_url;
+	}
+
+	// Plain permalinks: keep the query-arg form.
+	if ( ! get_option( 'permalink_structure' ) ) {
+		return add_query_arg( 'section', $section, $base_url );
+	}
+
+	// Split off any query string / fragment so the endpoint segment is
+	// inserted into the path, not appended after the query args.
+	$query    = '';
+	$fragment = '';
+
+	$hash_pos = strpos( $base_url, '#' );
+	if ( false !== $hash_pos ) {
+		$fragment = substr( $base_url, $hash_pos );
+		$base_url = substr( $base_url, 0, $hash_pos );
+	}
+
+	$query_pos = strpos( $base_url, '?' );
+	if ( false !== $query_pos ) {
+		$query    = substr( $base_url, $query_pos );
+		$base_url = substr( $base_url, 0, $query_pos );
+	}
+
+	$path = trailingslashit( $base_url ) . $section . '/';
+
+	return $path . $query . $fragment;
 }
 
 /**
@@ -1167,7 +1218,7 @@ function wpss_get_create_service_url(): string {
 	if ( ! $dashboard_url ) {
 		return '';
 	}
-	return add_query_arg( 'section', 'create', $dashboard_url );
+	return wpss_append_dashboard_section( $dashboard_url, 'create' );
 }
 
 /**
@@ -1189,7 +1240,7 @@ function wpss_get_become_vendor_url(): string {
 	// Fall back to dashboard with become-vendor section.
 	$dashboard_url = wpss_get_page_url( 'dashboard' );
 	if ( $dashboard_url ) {
-		return add_query_arg( 'section', 'become-vendor', $dashboard_url );
+		return wpss_append_dashboard_section( $dashboard_url, 'become-vendor' );
 	}
 
 	return wpss_get_page_url( 'become_vendor' );

@@ -187,18 +187,37 @@ class UnifiedDashboard {
 			return $this->render_login_prompt();
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
-		$section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'orders';
-
-		// Validate section access — vendor-only sections show a fallback message
-		// instead of silently redirecting to orders (which confused users).
-
-		$this->current_section = $section;
+		$this->current_section = $this->resolve_current_section();
 		$this->sections        = $this->get_sections();
 
 		ob_start();
 		$this->render_shell();
 		return ob_get_clean();
+	}
+
+	/**
+	 * Resolve the current dashboard section from request state.
+	 *
+	 * Prefers the pretty-permalink endpoint query var (`wpss_section`, populated
+	 * by the /{dashboard}/{section}/ rewrite). Falls back to the legacy
+	 * `?section=` query arg so plain-permalink sites and old links keep working.
+	 * Defaults to `orders` (the dashboard landing section).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string Sanitized section slug.
+	 */
+	private function resolve_current_section(): string {
+		$section = (string) get_query_var( 'wpss_section', '' );
+
+		if ( '' === $section ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
+			$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
+		}
+
+		$section = sanitize_key( $section );
+
+		return '' === $section ? 'orders' : $section;
 	}
 
 	/**
@@ -518,11 +537,9 @@ class UnifiedDashboard {
 			$base_url = get_permalink() ?: home_url();
 		}
 
-		if ( 'orders' === $section ) {
-			return $base_url;
-		}
-
-		return add_query_arg( 'section', $section, $base_url );
+		// Centralized builder emits the pretty endpoint (/dashboard/{section}/)
+		// when permalinks are pretty and falls back to ?section= otherwise.
+		return wpss_append_dashboard_section( $base_url, $section );
 	}
 
 	/**

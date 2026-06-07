@@ -170,7 +170,7 @@ $pending_count = count(
 			</div>
 			<h3><?php esc_html_e( 'No services yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( 'Create your first service to start receiving orders from buyers.', 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( add_query_arg( 'section', 'create', $dashboard_url ) ); ?>" class="wpss-btn wpss-btn--primary">
+			<a href="<?php echo esc_url( wpss_append_dashboard_section( $dashboard_url, 'create' ) ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?>
 			</a>
 		</div>

@@ -62,7 +62,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 		?>
 		<div class="wpss-conversation-thread">
 			<div class="wpss-conversation-thread__header">
-				<a href="<?php echo esc_url( add_query_arg( 'section', 'messages', wpss_get_dashboard_url() ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--outline">&larr; <?php esc_html_e( 'Back', 'wp-sell-services' ); ?></a>
+				<a href="<?php echo esc_url( wpss_get_dashboard_url( 'messages' ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--outline">&larr; <?php esc_html_e( 'Back', 'wp-sell-services' ); ?></a>
 				<h3><?php echo esc_html( $conv_title ); ?></h3>
 				<?php if ( $active_conversation->subject ) : ?>
 					<span class="wpss-conversation-thread__subject"><?php echo esc_html( $active_conversation->subject ); ?></span>
@@ -184,7 +184,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 	<?php else : ?>
 		<div class="wpss-notice wpss-notice--error">
 			<p><?php esc_html_e( 'Conversation not found or you do not have permission to view it.', 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( add_query_arg( 'section', 'messages', wpss_get_dashboard_url() ) ); ?>">&larr; <?php esc_html_e( 'Back to Messages', 'wp-sell-services' ); ?></a>
+			<a href="<?php echo esc_url( wpss_get_dashboard_url( 'messages' ) ); ?>">&larr; <?php esc_html_e( 'Back to Messages', 'wp-sell-services' ); ?></a>
 		</div>
 	<?php endif; ?>
 

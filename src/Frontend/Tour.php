@@ -535,7 +535,7 @@ final class Tour {
 				'title'    => __( 'Buyer Requests', 'wp-sell-services' ),
 				'text'     => __( '<i data-lucide="megaphone"></i> Need something custom? Post a request with your budget and deadline — vendors reply with proposals you can compare side by side.', 'wp-sell-services' ),
 				'attachTo' => array(
-					'element' => '.wpss-dashboard__nav-item[href*="section=requests"]',
+					'element' => '.wpss-dashboard__nav-item[href*="section=requests"], .wpss-dashboard__nav-item[href*="/requests/"]',
 					'on'      => 'right',
 				),
 				'buttons'  => array( $back_btn, $next_btn ),
@@ -549,7 +549,7 @@ final class Tour {
 				'title'    => __( 'My Services', 'wp-sell-services' ),
 				'text'     => __( '<i data-lucide="briefcase"></i> Your service listings. Create new ones, edit pricing tiers, toggle availability, or pause a service with vacation mode.', 'wp-sell-services' ),
 				'attachTo' => array(
-					'element' => '.wpss-dashboard__nav-item[href*="section=services"]',
+					'element' => '.wpss-dashboard__nav-item[href*="section=services"], .wpss-dashboard__nav-item[href*="/services/"]',
 					'on'      => 'right',
 				),
 				'buttons'  => array( $back_btn, $next_btn ),
@@ -559,7 +559,7 @@ final class Tour {
 				'title'    => __( 'Sales Orders', 'wp-sell-services' ),
 				'text'     => __( '<i data-lucide="receipt"></i> Orders buyers have placed with you — deliver, request revisions, propose milestones or extensions, and track every status from pending requirements to completion.', 'wp-sell-services' ),
 				'attachTo' => array(
-					'element' => '.wpss-dashboard__nav-item[href*="section=sales"]',
+					'element' => '.wpss-dashboard__nav-item[href*="section=sales"], .wpss-dashboard__nav-item[href*="/sales/"]',
 					'on'      => 'right',
 				),
 				'buttons'  => array( $back_btn, $next_btn ),
@@ -569,7 +569,7 @@ final class Tour {
 				'title'    => __( 'Earnings & Wallet', 'wp-sell-services' ),
 				'text'     => __( '<i data-lucide="wallet"></i> Your NET earnings, wallet balance, and withdrawal controls. The ledger surfaces every transaction — earning, tip, milestone, extension, withdrawal — with a CSV export for your bookkeeping.', 'wp-sell-services' ),
 				'attachTo' => array(
-					'element' => '.wpss-dashboard__nav-item[href*="section=earnings"]',
+					'element' => '.wpss-dashboard__nav-item[href*="section=earnings"], .wpss-dashboard__nav-item[href*="/earnings/"]',
 					'on'      => 'right',
 				),
 				'buttons'  => array( $back_btn, $next_btn ),
@@ -593,7 +593,7 @@ final class Tour {
 			'title'    => __( 'Messages', 'wp-sell-services' ),
 			'text'     => __( '<i data-lucide="message-square"></i> All your order conversations in one inbox. Attachments, delivery files, and dispute threads all surface here.', 'wp-sell-services' ),
 			'attachTo' => array(
-				'element' => '.wpss-dashboard__nav-item[href*="section=messages"]',
+				'element' => '.wpss-dashboard__nav-item[href*="section=messages"], .wpss-dashboard__nav-item[href*="/messages/"]',
 				'on'      => 'right',
 			),
 			'buttons'  => array( $back_btn, $next_btn ),
