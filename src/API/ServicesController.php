@@ -1167,8 +1167,8 @@ class ServicesController extends RestController {
 			'order'             => array(
 				'description' => __( 'Sort order.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'enum'        => array( 'ASC', 'DESC' ),
-				'default'     => 'DESC',
+				'enum'        => self::sort_directions(),
+				'default'     => self::SORT_DESC,
 			),
 			'max_delivery_days' => array(
 				'description' => __( 'Maximum delivery days filter.', 'wp-sell-services' ),

@@ -278,4 +278,21 @@ class BuyerRequest {
 			self::STATUS_EXPIRED => __( 'Expired', 'wp-sell-services' ),
 		];
 	}
+
+	/**
+	 * Statuses a client may filter buyer requests by.
+	 *
+	 * Excludes STATUS_EXPIRED, which is a cron-derived terminal state rather
+	 * than a user-selectable filter. Canonical source for the REST `status`
+	 * filter enum.
+	 *
+	 * @return array<int, string> Status keys.
+	 */
+	public static function get_filterable_statuses(): array {
+		return [
+			self::STATUS_OPEN,
+			self::STATUS_CLOSED,
+			self::STATUS_HIRED,
+		];
+	}
 }

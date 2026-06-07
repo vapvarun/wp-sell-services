@@ -249,7 +249,7 @@ class OrdersController extends RestController {
 						'type' => array(
 							'description' => __( 'Filter by sub-order type: milestone, extension, or tip.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'enum'        => array( 'milestone', 'extension', 'tip' ),
+							'enum'        => array_keys( ServiceOrder::get_sub_order_types() ),
 						),
 					),
 				),

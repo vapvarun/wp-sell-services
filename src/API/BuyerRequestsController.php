@@ -17,6 +17,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Models\BuyerRequest;
 use WPSellServices\Services\BuyerRequestService;
 use WPSellServices\Services\ProposalService;
 
@@ -207,7 +208,7 @@ class BuyerRequestsController extends RestController {
 						],
 						'status'      => [
 							'type' => 'string',
-							'enum' => [ 'open', 'closed', 'hired' ],
+							'enum' => BuyerRequest::get_filterable_statuses(),
 						],
 					],
 				],

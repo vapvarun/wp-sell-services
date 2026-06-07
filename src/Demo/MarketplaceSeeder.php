@@ -22,10 +22,12 @@ namespace WPSellServices\Demo;
 
 use WPSellServices\Models\BuyerRequest;
 use WPSellServices\Models\Proposal;
+use WPSellServices\Models\Review;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\VendorProfile;
 use WPSellServices\PostTypes\BuyerRequestPostType;
 use WPSellServices\Services\ConversationService;
+use WPSellServices\Services\EarningsService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -735,7 +737,7 @@ class MarketplaceSeeder {
 					'vendor_id'   => $order['vendor_id'],
 					'rating'      => $rating,
 					'review'      => $this->review_bodies[ $index % count( $this->review_bodies ) ],
-					'status'      => 'approved',
+					'status'      => Review::STATUS_APPROVED,
 					'is_public'   => 1,
 					'created_at'  => $created_at,
 				)
@@ -967,7 +969,7 @@ class MarketplaceSeeder {
 		global $wpdb;
 
 		$table    = $wpdb->prefix . 'wpss_withdrawals';
-		$statuses = array( 'pending', 'approved', 'completed', 'rejected' );
+		$statuses = array_keys( EarningsService::get_withdrawal_statuses() );
 		$methods  = array( 'paypal', 'bank_transfer', 'paypal', 'stripe' );
 		$created  = 0;
 
@@ -981,7 +983,7 @@ class MarketplaceSeeder {
 			$method     = $methods[ $index % count( $methods ) ];
 			$amount     = 150.0 + ( $index * 75 );
 			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $index * 7 + 5 ) . ' days' ) );
-			$processed  = in_array( $status, array( 'approved', 'completed', 'rejected' ), true );
+			$processed  = in_array( $status, EarningsService::get_processable_withdrawal_statuses(), true );
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$inserted = $wpdb->insert(
@@ -993,7 +995,7 @@ class MarketplaceSeeder {
 					'details'      => wp_json_encode( array( 'account' => 'demo@' . sanitize_title( $vendor['blueprint']['name'] ) . '.test' ) ),
 					'status'       => $status,
 					'is_auto'      => 0,
-					'admin_note'   => 'rejected' === $status ? 'Insufficient available balance at time of request.' : '',
+					'admin_note'   => EarningsService::WITHDRAWAL_REJECTED === $status ? 'Insufficient available balance at time of request.' : '',
 					'processed_at' => $processed ? gmdate( 'Y-m-d H:i:s', strtotime( $created_at . ' +2 days' ) ) : null,
 					'created_at'   => $created_at,
 				)
@@ -1025,7 +1027,7 @@ class MarketplaceSeeder {
 				$wpdb->prepare(
 					"SELECT COUNT(*) AS total, AVG(rating) AS avg_rating FROM {$reviews_table} WHERE vendor_id = %d AND status = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					$vendor['user_id'],
-					'approved'
+					Review::STATUS_APPROVED
 				)
 			);
 
