@@ -322,20 +322,34 @@ class ServiceArchiveView {
 				</button>
 			</div>
 
-			<form class="wpss-filter-form" method="get">
+			<form class="wpss-filter-form" method="get" action="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' ) ); ?>">
 				<?php
-				// Preserve category and sort params as hidden fields so the sidebar
-				// form submission does not lose them (they are not form inputs).
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				if ( isset( $_GET['category'] ) && absint( $_GET['category'] ) > 0 ) :
+				// F6: Apply Filters must carry the active category so combined category +
+				// price (+ rating / delivery) filtering works. $active_category_id is
+				// resolved above from EITHER the ?category query param OR the
+				// taxonomy-archive term, so submitting the price filter from inside a
+				// /service-category/<slug>/ archive keeps the category scope instead of
+				// widening to all services. The form also posts to the canonical archive
+				// URL so a GET submit from a taxonomy archive does not lose context.
+				if ( $active_category_id > 0 ) :
 					?>
-					<input type="hidden" name="category" value="<?php echo esc_attr( absint( $_GET['category'] ) ); ?>">
+					<input type="hidden" name="category" value="<?php echo esc_attr( (string) $active_category_id ); ?>">
 				<?php endif; ?>
 				<?php
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				if ( isset( $_GET['sort'] ) && '' !== $_GET['sort'] ) :
+				$preserved_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : '';
+				if ( '' !== $preserved_sort ) :
 					?>
-					<input type="hidden" name="sort" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_GET['sort'] ) ) ); ?>">
+					<input type="hidden" name="sort" value="<?php echo esc_attr( $preserved_sort ); ?>">
+				<?php endif; ?>
+				<?php
+				// Preserve an active keyword search so price/rating/delivery filtering
+				// does not silently drop the buyer's search term.
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$preserved_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
+				if ( '' !== $preserved_search ) :
+					?>
+					<input type="hidden" name="search" value="<?php echo esc_attr( $preserved_search ); ?>">
 				<?php endif; ?>
 
 				<!-- Categories -->
