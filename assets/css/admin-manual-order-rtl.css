@@ -258,7 +258,19 @@
 	width: 100%;
 }
 
-/* Responsive */
+/* No data notice */
+.wpss-no-services-notice {
+	padding: 15px 20px;
+	border-right: 4px solid var(--wpss-warning, #dba617);
+	background: var(--wpss-white, #fff);
+	margin: 20px 0;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+/* ==========================================================================
+   Responsive — single breakpoint anchored at the bottom of the file
+   (ux-foundation responsive contract).
+   ========================================================================== */
 @media (max-width: 1024px) {
 	.wpss-manual-order-columns {
 		flex-direction: column;
@@ -267,13 +279,4 @@
 	.wpss-manual-order-sidebar {
 		min-width: 0;
 	}
-}
-
-/* No data notice */
-.wpss-no-services-notice {
-	padding: 15px 20px;
-	border-right: 4px solid var(--wpss-warning, #dba617);
-	background: var(--wpss-white, #fff);
-	margin: 20px 0;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
