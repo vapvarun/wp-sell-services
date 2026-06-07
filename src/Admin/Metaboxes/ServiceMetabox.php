@@ -52,6 +52,65 @@ class ServiceMetabox {
 	}
 
 	/**
+	 * Canonical requirement field types (value => label).
+	 *
+	 * Single source of truth for the requirement-type enum: consumed by both the
+	 * render templates and the save validator so the allowed values can never drift
+	 * between the form and the sanitiser.
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_requirement_types(): array {
+		return array(
+			'text'           => __( 'Short Text', 'wp-sell-services' ),
+			'textarea'       => __( 'Long Text', 'wp-sell-services' ),
+			'number'         => __( 'Number', 'wp-sell-services' ),
+			'checkbox'       => __( 'Yes/No', 'wp-sell-services' ),
+			'select'         => __( 'Dropdown', 'wp-sell-services' ),
+			'radio'          => __( 'Multiple Choice', 'wp-sell-services' ),
+			'file'           => __( 'File Upload', 'wp-sell-services' ),
+			'multiple_files' => __( 'Multiple Files', 'wp-sell-services' ),
+			'date'           => __( 'Date', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Requirement types that expose a choices field (dropdown / multiple choice).
+	 *
+	 * @return array<int, string>
+	 */
+	private function get_choice_requirement_types(): array {
+		return array( 'select', 'radio' );
+	}
+
+	/**
+	 * Canonical add-on field types (value => label).
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_addon_field_types(): array {
+		return array(
+			'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
+			'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
+			'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
+			'text'     => __( 'Text Input', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Canonical add-on price types (value => label).
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_addon_price_types(): array {
+		return array(
+			'flat'           => __( 'Flat Price', 'wp-sell-services' ),
+			'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
+			'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
+		);
+	}
+
+	/**
 	 * Enqueue metabox assets.
 	 *
 	 * @param string $hook Current admin page.
@@ -491,30 +550,27 @@ class ServiceMetabox {
 					<div class="wpss-requirement-fields">
 						<div class="wpss-requirement-main">
 							<input type="text" name="wpss_requirements[{{data.index}}][question]"
+									aria-label="<?php esc_attr_e( 'Requirement question', 'wp-sell-services' ); ?>"
 									placeholder="<?php esc_attr_e( 'Enter your question...', 'wp-sell-services' ); ?>" class="widefat">
 						</div>
 						<div class="wpss-requirement-options">
-							<select name="wpss_requirements[{{data.index}}][type]" class="wpss-requirement-type">
-								<option value="text"><?php esc_html_e( 'Short Text', 'wp-sell-services' ); ?></option>
-								<option value="textarea"><?php esc_html_e( 'Long Text', 'wp-sell-services' ); ?></option>
-								<option value="number"><?php esc_html_e( 'Number', 'wp-sell-services' ); ?></option>
-								<option value="checkbox"><?php esc_html_e( 'Yes/No', 'wp-sell-services' ); ?></option>
-								<option value="select"><?php esc_html_e( 'Dropdown', 'wp-sell-services' ); ?></option>
-								<option value="radio"><?php esc_html_e( 'Multiple Choice', 'wp-sell-services' ); ?></option>
-								<option value="file"><?php esc_html_e( 'File Upload', 'wp-sell-services' ); ?></option>
-								<option value="multiple_files"><?php esc_html_e( 'Multiple Files', 'wp-sell-services' ); ?></option>
-								<option value="date"><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></option>
+							<select name="wpss_requirements[{{data.index}}][type]" class="wpss-requirement-type"
+									aria-label="<?php esc_attr_e( 'Requirement field type', 'wp-sell-services' ); ?>">
+								<?php foreach ( $this->get_requirement_types() as $req_type_value => $req_type_label ) : ?>
+									<option value="<?php echo esc_attr( $req_type_value ); ?>"><?php echo esc_html( $req_type_label ); ?></option>
+								<?php endforeach; ?>
 							</select>
 							<label class="wpss-requirement-required">
 								<input type="checkbox" name="wpss_requirements[{{data.index}}][required]" value="1">
 								<?php esc_html_e( 'Required', 'wp-sell-services' ); ?>
 							</label>
-							<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
+							<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Remove requirement', 'wp-sell-services' ); ?>">
 								<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
 						<div class="wpss-requirement-choices" style="display:none;">
 							<input type="text" name="wpss_requirements[{{data.index}}][choices]"
+									aria-label="<?php esc_attr_e( 'Requirement choices', 'wp-sell-services' ); ?>"
 									placeholder="<?php esc_attr_e( 'Enter choices separated by comma (e.g., Option 1, Option 2, Option 3)', 'wp-sell-services' ); ?>" class="widefat">
 						</div>
 					</div>
@@ -533,7 +589,7 @@ class ServiceMetabox {
 	 */
 	private function render_requirement_item( int $index, array $req ): void {
 		$type         = $req['type'] ?? 'text';
-		$show_choices = in_array( $type, array( 'select', 'radio' ), true );
+		$show_choices = in_array( $type, $this->get_choice_requirement_types(), true );
 		?>
 		<div class="wpss-requirement-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
 			<div class="wpss-requirement-row">
@@ -542,32 +598,29 @@ class ServiceMetabox {
 					<div class="wpss-requirement-main">
 						<input type="text" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][question]"
 								value="<?php echo esc_attr( $req['question'] ?? '' ); ?>"
+								aria-label="<?php esc_attr_e( 'Requirement question', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter your question...', 'wp-sell-services' ); ?>" class="widefat">
 					</div>
 					<div class="wpss-requirement-options">
-						<select name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][type]" class="wpss-requirement-type">
-							<option value="text" <?php selected( $type, 'text' ); ?>><?php esc_html_e( 'Short Text', 'wp-sell-services' ); ?></option>
-							<option value="textarea" <?php selected( $type, 'textarea' ); ?>><?php esc_html_e( 'Long Text', 'wp-sell-services' ); ?></option>
-							<option value="number" <?php selected( $type, 'number' ); ?>><?php esc_html_e( 'Number', 'wp-sell-services' ); ?></option>
-							<option value="checkbox" <?php selected( $type, 'checkbox' ); ?>><?php esc_html_e( 'Yes/No', 'wp-sell-services' ); ?></option>
-							<option value="select" <?php selected( $type, 'select' ); ?>><?php esc_html_e( 'Dropdown', 'wp-sell-services' ); ?></option>
-							<option value="radio" <?php selected( $type, 'radio' ); ?>><?php esc_html_e( 'Multiple Choice', 'wp-sell-services' ); ?></option>
-							<option value="file" <?php selected( $type, 'file' ); ?>><?php esc_html_e( 'File Upload', 'wp-sell-services' ); ?></option>
-							<option value="multiple_files" <?php selected( $type, 'multiple_files' ); ?>><?php esc_html_e( 'Multiple Files', 'wp-sell-services' ); ?></option>
-							<option value="date" <?php selected( $type, 'date' ); ?>><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></option>
+						<select name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][type]" class="wpss-requirement-type"
+								aria-label="<?php esc_attr_e( 'Requirement field type', 'wp-sell-services' ); ?>">
+							<?php foreach ( $this->get_requirement_types() as $req_type_value => $req_type_label ) : ?>
+								<option value="<?php echo esc_attr( $req_type_value ); ?>" <?php selected( $type, $req_type_value ); ?>><?php echo esc_html( $req_type_label ); ?></option>
+							<?php endforeach; ?>
 						</select>
 						<label class="wpss-requirement-required">
 							<input type="checkbox" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][required]"
 									value="1" <?php checked( ! empty( $req['required'] ) ); ?>>
 							<?php esc_html_e( 'Required', 'wp-sell-services' ); ?>
 						</label>
-						<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
+						<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Remove requirement', 'wp-sell-services' ); ?>">
 							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
 					<div class="wpss-requirement-choices" <?php echo $show_choices ? '' : 'style="display:none;"'; ?>>
 						<input type="text" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][choices]"
 								value="<?php echo esc_attr( $req['choices'] ?? '' ); ?>"
+								aria-label="<?php esc_attr_e( 'Requirement choices', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter choices separated by comma (e.g., Option 1, Option 2, Option 3)', 'wp-sell-services' ); ?>" class="widefat">
 					</div>
 				</div>
@@ -671,18 +724,8 @@ class ServiceMetabox {
 			$addons = array();
 		}
 
-		$field_types = array(
-			'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
-			'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
-			'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
-			'text'     => __( 'Text Input', 'wp-sell-services' ),
-		);
-
-		$price_types = array(
-			'flat'           => __( 'Flat Price', 'wp-sell-services' ),
-			'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
-			'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
-		);
+		$field_types = $this->get_addon_field_types();
+		$price_types = $this->get_addon_price_types();
 		?>
 		<div class="wpss-addons-wrapper">
 			<p class="description"><?php esc_html_e( 'Add extra services buyers can purchase with this service.', 'wp-sell-services' ); ?></p>
@@ -827,41 +870,41 @@ class ServiceMetabox {
 			<div class="wpss-addon-body">
 				<div class="wpss-addon-row">
 					<div class="wpss-addon-field wpss-addon-field-full">
-						<label><?php esc_html_e( 'Title', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][title]"
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_title"><?php esc_html_e( 'Title', 'wp-sell-services' ); ?></label>
+						<input type="text" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_title" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][title]"
 								value="<?php echo esc_attr( $addon['title'] ?? '' ); ?>"
 								placeholder="<?php esc_attr_e( 'e.g., Extra Fast Delivery', 'wp-sell-services' ); ?>" class="widefat wpss-addon-title-input">
 					</div>
 				</div>
 				<div class="wpss-addon-row">
 					<div class="wpss-addon-field wpss-addon-field-full">
-						<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
-						<textarea name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][description]" rows="2" class="widefat"
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_description"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
+						<textarea id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_description" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][description]" rows="2" class="widefat"
 									placeholder="<?php esc_attr_e( 'Brief description of this add-on...', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $addon['description'] ?? '' ); ?></textarea>
 					</div>
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Field Type', 'wp-sell-services' ); ?></label>
-						<select name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][field_type]" class="wpss-addon-field-type">
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_field_type"><?php esc_html_e( 'Field Type', 'wp-sell-services' ); ?></label>
+						<select id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_field_type" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][field_type]" class="wpss-addon-field-type">
 							<?php foreach ( $field_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $field_type, $value ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</div>
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Price Type', 'wp-sell-services' ); ?></label>
-						<select name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][price_type]" class="wpss-addon-price-type">
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price_type"><?php esc_html_e( 'Price Type', 'wp-sell-services' ); ?></label>
+						<select id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price_type" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][price_type]" class="wpss-addon-price-type">
 							<?php foreach ( $price_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $price_type, $value ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</div>
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-prefix">
 							<span class="wpss-input-prefix">$</span>
-							<input type="number" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][price]"
+							<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][price]"
 									value="<?php echo esc_attr( $addon['price'] ?? '' ); ?>"
 									min="0" step="0.01" placeholder="0.00">
 						</div>
@@ -869,29 +912,29 @@ class ServiceMetabox {
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid wpss-addon-quantity-fields" <?php echo $show_quantity ? '' : 'style="display: none;"'; ?>>
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Min Quantity', 'wp-sell-services' ); ?></label>
-						<input type="number" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][min_quantity]"
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_min_quantity"><?php esc_html_e( 'Min Quantity', 'wp-sell-services' ); ?></label>
+						<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_min_quantity" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][min_quantity]"
 								value="<?php echo esc_attr( $addon['min_quantity'] ?? '1' ); ?>" min="1" max="100">
 					</div>
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Max Quantity', 'wp-sell-services' ); ?></label>
-						<input type="number" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][max_quantity]"
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_max_quantity"><?php esc_html_e( 'Max Quantity', 'wp-sell-services' ); ?></label>
+						<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_max_quantity" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][max_quantity]"
 								value="<?php echo esc_attr( $addon['max_quantity'] ?? '10' ); ?>" min="1" max="100">
 					</div>
 				</div>
 				<div class="wpss-addon-row wpss-addon-dropdown-fields" <?php echo $show_dropdown ? '' : 'style="display: none;"'; ?>>
 					<div class="wpss-addon-field wpss-addon-field-full">
-						<label><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][options]" class="widefat"
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_options"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
+						<input type="text" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_options" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][options]" class="widefat"
 								value="<?php echo esc_attr( $addon['options'] ?? '' ); ?>"
 								placeholder="<?php esc_attr_e( 'Option 1, Option 2, Option 3 (comma separated)', 'wp-sell-services' ); ?>">
 					</div>
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Extra Delivery Days', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_delivery_days_extra"><?php esc_html_e( 'Extra Delivery Days', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][delivery_days_extra]"
+							<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_delivery_days_extra" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][delivery_days_extra]"
 									value="<?php echo esc_attr( $addon['delivery_days_extra'] ?? '0' ); ?>" min="0" max="30">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
 						</div>
@@ -997,7 +1040,7 @@ class ServiceMetabox {
 		$requirements_data = isset( $_POST['wpss_requirements'] ) ? wp_unslash( $_POST['wpss_requirements'] ) : array();
 		if ( is_array( $requirements_data ) && ! empty( $requirements_data ) ) {
 			$requirements = array();
-			$valid_types  = array( 'text', 'textarea', 'number', 'checkbox', 'select', 'radio', 'file', 'multiple_files', 'date' );
+			$valid_types  = array_keys( $this->get_requirement_types() );
 			foreach ( $requirements_data as $req ) {
 				if ( ! empty( $req['question'] ) ) {
 					$type = sanitize_key( $req['type'] ?? 'text' );
@@ -1010,7 +1053,7 @@ class ServiceMetabox {
 						'required' => ! empty( $req['required'] ),
 					);
 					// Save choices for select and radio types.
-					if ( in_array( $type, array( 'select', 'radio' ), true ) && ! empty( $req['choices'] ) ) {
+					if ( in_array( $type, $this->get_choice_requirement_types(), true ) && ! empty( $req['choices'] ) ) {
 						$requirement['choices'] = sanitize_text_field( $req['choices'] );
 					}
 					$requirements[] = $requirement;
@@ -1024,8 +1067,8 @@ class ServiceMetabox {
 		$addons_data = isset( $_POST['wpss_addons'] ) ? wp_unslash( $_POST['wpss_addons'] ) : array();
 		if ( is_array( $addons_data ) && ! empty( $addons_data ) ) {
 			$addons      = array();
-			$valid_types = array( 'checkbox', 'quantity', 'dropdown', 'text' );
-			$valid_price = array( 'flat', 'percentage', 'quantity_based' );
+			$valid_types = array_keys( $this->get_addon_field_types() );
+			$valid_price = array_keys( $this->get_addon_price_types() );
 
 			foreach ( $addons_data as $addon ) {
 				if ( ! empty( $addon['title'] ) ) {
@@ -1061,8 +1104,11 @@ class ServiceMetabox {
 		// Save gallery -- only process if the gallery metabox was rendered on this page.
 		// The sentinel field wpss_gallery_present indicates the gallery UI was present in the form.
 		if ( isset( $_POST['wpss_gallery_present'] ) ) {
-			if ( isset( $_POST['wpss_gallery'] ) && is_array( $_POST['wpss_gallery'] ) ) {
-				$gallery_ids = array_filter( array_map( 'absint', $_POST['wpss_gallery'] ) );
+			// Read the explicit key into a local before iterating (no direct superglobal iteration);
+			// values are attachment IDs, so unslash + absint fully sanitises each entry.
+			$gallery_raw = isset( $_POST['wpss_gallery'] ) ? wp_unslash( $_POST['wpss_gallery'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via absint below.
+			if ( is_array( $gallery_raw ) ) {
+				$gallery_ids = array_filter( array_map( 'absint', $gallery_raw ) );
 
 				// Preserve video URL from existing gallery meta if present.
 				$existing_raw = get_post_meta( $post_id, '_wpss_gallery', true );
@@ -1452,18 +1498,8 @@ class ServiceMetabox {
 			$addons = array();
 		}
 
-		$field_types = array(
-			'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
-			'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
-			'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
-			'text'     => __( 'Text Input', 'wp-sell-services' ),
-		);
-
-		$price_types = array(
-			'flat'           => __( 'Flat Price', 'wp-sell-services' ),
-			'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
-			'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
-		);
+		$field_types = $this->get_addon_field_types();
+		$price_types = $this->get_addon_price_types();
 		?>
 		<h3 class="wpss-panel-title"><?php esc_html_e( 'Service Add-ons', 'wp-sell-services' ); ?></h3>
 
@@ -1677,68 +1713,68 @@ class ServiceMetabox {
 			<div class="wpss-addon-body">
 				<div class="wpss-addon-row">
 					<div class="wpss-addon-field wpss-addon-field-full">
-						<label><?php esc_html_e( 'Title', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_addons[{{data.index}}][title]"
+						<label for="wpss_addon_{{data.index}}_title"><?php esc_html_e( 'Title', 'wp-sell-services' ); ?></label>
+						<input type="text" id="wpss_addon_{{data.index}}_title" name="wpss_addons[{{data.index}}][title]"
 								placeholder="<?php esc_attr_e( 'e.g., Extra Fast Delivery', 'wp-sell-services' ); ?>" class="widefat wpss-addon-title-input">
 					</div>
 				</div>
 				<div class="wpss-addon-row">
 					<div class="wpss-addon-field wpss-addon-field-full">
-						<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
-						<textarea name="wpss_addons[{{data.index}}][description]" rows="2" class="widefat"
+						<label for="wpss_addon_{{data.index}}_description"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
+						<textarea id="wpss_addon_{{data.index}}_description" name="wpss_addons[{{data.index}}][description]" rows="2" class="widefat"
 									placeholder="<?php esc_attr_e( 'Brief description of this add-on...', 'wp-sell-services' ); ?>"></textarea>
 					</div>
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Field Type', 'wp-sell-services' ); ?></label>
-						<select name="wpss_addons[{{data.index}}][field_type]" class="wpss-addon-field-type">
+						<label for="wpss_addon_{{data.index}}_field_type"><?php esc_html_e( 'Field Type', 'wp-sell-services' ); ?></label>
+						<select id="wpss_addon_{{data.index}}_field_type" name="wpss_addons[{{data.index}}][field_type]" class="wpss-addon-field-type">
 							<?php foreach ( $field_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</div>
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Price Type', 'wp-sell-services' ); ?></label>
-						<select name="wpss_addons[{{data.index}}][price_type]" class="wpss-addon-price-type">
+						<label for="wpss_addon_{{data.index}}_price_type"><?php esc_html_e( 'Price Type', 'wp-sell-services' ); ?></label>
+						<select id="wpss_addon_{{data.index}}_price_type" name="wpss_addons[{{data.index}}][price_type]" class="wpss-addon-price-type">
 							<?php foreach ( $price_types as $value => $label ) : ?>
 								<option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</div>
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_{{data.index}}_price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-prefix">
 							<span class="wpss-input-prefix">$</span>
-							<input type="number" name="wpss_addons[{{data.index}}][price]"
+							<input type="number" id="wpss_addon_{{data.index}}_price" name="wpss_addons[{{data.index}}][price]"
 									min="0" step="0.01" placeholder="0.00">
 						</div>
 					</div>
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid wpss-addon-quantity-fields" style="display: none;">
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Min Quantity', 'wp-sell-services' ); ?></label>
-						<input type="number" name="wpss_addons[{{data.index}}][min_quantity]"
+						<label for="wpss_addon_{{data.index}}_min_quantity"><?php esc_html_e( 'Min Quantity', 'wp-sell-services' ); ?></label>
+						<input type="number" id="wpss_addon_{{data.index}}_min_quantity" name="wpss_addons[{{data.index}}][min_quantity]"
 								value="1" min="1" max="100">
 					</div>
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Max Quantity', 'wp-sell-services' ); ?></label>
-						<input type="number" name="wpss_addons[{{data.index}}][max_quantity]"
+						<label for="wpss_addon_{{data.index}}_max_quantity"><?php esc_html_e( 'Max Quantity', 'wp-sell-services' ); ?></label>
+						<input type="number" id="wpss_addon_{{data.index}}_max_quantity" name="wpss_addons[{{data.index}}][max_quantity]"
 								value="10" min="1" max="100">
 					</div>
 				</div>
 				<div class="wpss-addon-row wpss-addon-dropdown-fields" style="display: none;">
 					<div class="wpss-addon-field wpss-addon-field-full">
-						<label><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_addons[{{data.index}}][options]" class="widefat"
+						<label for="wpss_addon_{{data.index}}_options"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
+						<input type="text" id="wpss_addon_{{data.index}}_options" name="wpss_addons[{{data.index}}][options]" class="widefat"
 								placeholder="<?php esc_attr_e( 'Option 1, Option 2, Option 3 (comma separated)', 'wp-sell-services' ); ?>">
 					</div>
 				</div>
 				<div class="wpss-addon-row wpss-addon-row-grid">
 					<div class="wpss-addon-field">
-						<label><?php esc_html_e( 'Extra Delivery Days', 'wp-sell-services' ); ?></label>
+						<label for="wpss_addon_{{data.index}}_delivery_days_extra"><?php esc_html_e( 'Extra Delivery Days', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_addons[{{data.index}}][delivery_days_extra]"
+							<input type="number" id="wpss_addon_{{data.index}}_delivery_days_extra" name="wpss_addons[{{data.index}}][delivery_days_extra]"
 									value="0" min="0" max="30">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
 						</div>
@@ -1768,30 +1804,27 @@ class ServiceMetabox {
 				<div class="wpss-requirement-fields">
 					<div class="wpss-requirement-main">
 						<input type="text" name="wpss_requirements[{{data.index}}][question]"
+								aria-label="<?php esc_attr_e( 'Requirement question', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter your question...', 'wp-sell-services' ); ?>" class="widefat">
 					</div>
 					<div class="wpss-requirement-options">
-						<select name="wpss_requirements[{{data.index}}][type]" class="wpss-requirement-type">
-							<option value="text"><?php esc_html_e( 'Short Text', 'wp-sell-services' ); ?></option>
-							<option value="textarea"><?php esc_html_e( 'Long Text', 'wp-sell-services' ); ?></option>
-							<option value="number"><?php esc_html_e( 'Number', 'wp-sell-services' ); ?></option>
-							<option value="checkbox"><?php esc_html_e( 'Yes/No', 'wp-sell-services' ); ?></option>
-							<option value="select"><?php esc_html_e( 'Dropdown', 'wp-sell-services' ); ?></option>
-							<option value="radio"><?php esc_html_e( 'Multiple Choice', 'wp-sell-services' ); ?></option>
-							<option value="file"><?php esc_html_e( 'File Upload', 'wp-sell-services' ); ?></option>
-							<option value="multiple_files"><?php esc_html_e( 'Multiple Files', 'wp-sell-services' ); ?></option>
-							<option value="date"><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></option>
+						<select name="wpss_requirements[{{data.index}}][type]" class="wpss-requirement-type"
+								aria-label="<?php esc_attr_e( 'Requirement field type', 'wp-sell-services' ); ?>">
+							<?php foreach ( $this->get_requirement_types() as $req_type_value => $req_type_label ) : ?>
+								<option value="<?php echo esc_attr( $req_type_value ); ?>"><?php echo esc_html( $req_type_label ); ?></option>
+							<?php endforeach; ?>
 						</select>
 						<label class="wpss-requirement-required">
 							<input type="checkbox" name="wpss_requirements[{{data.index}}][required]" value="1">
 							<?php esc_html_e( 'Required', 'wp-sell-services' ); ?>
 						</label>
-						<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
+						<button type="button" class="wpss-remove-requirement" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>" aria-label="<?php esc_attr_e( 'Remove requirement', 'wp-sell-services' ); ?>">
 							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
 					<div class="wpss-requirement-choices" style="display:none;">
 						<input type="text" name="wpss_requirements[{{data.index}}][choices]"
+								aria-label="<?php esc_attr_e( 'Requirement choices', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter choices separated by comma (e.g., Option 1, Option 2, Option 3)', 'wp-sell-services' ); ?>" class="widefat">
 					</div>
 				</div>

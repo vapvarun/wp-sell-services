@@ -112,17 +112,17 @@ class BuyerRequestMetabox {
 				</td>
 			</tr>
 			<tr>
-				<th><label><?php esc_html_e( 'Budget Amount', 'wp-sell-services' ); ?></label></th>
+				<th><span class="wpss-field-group-label"><?php esc_html_e( 'Budget Amount', 'wp-sell-services' ); ?></span></th>
 				<td>
-					<label>
+					<label for="wpss_budget_min">
 						<?php esc_html_e( 'Min:', 'wp-sell-services' ); ?>
-						<input type="number" name="wpss_budget_min"
+						<input type="number" id="wpss_budget_min" name="wpss_budget_min"
 								value="<?php echo esc_attr( $budget_min ); ?>"
 								min="0" step="0.01" class="small-text">
 					</label>
-					<label style="margin-left: 10px;">
+					<label for="wpss_budget_max" style="margin-left: 10px;">
 						<?php esc_html_e( 'Max:', 'wp-sell-services' ); ?>
-						<input type="number" name="wpss_budget_max"
+						<input type="number" id="wpss_budget_max" name="wpss_budget_max"
 								value="<?php echo esc_attr( $budget_max ); ?>"
 								min="0" step="0.01" class="small-text">
 					</label>
@@ -323,9 +323,11 @@ class BuyerRequestMetabox {
 		}
 
 		// Save attachments.
-		if ( isset( $_POST['wpss_attachments'] ) && is_array( $_POST['wpss_attachments'] ) ) {
-			$attachments = array_map( 'absint', $_POST['wpss_attachments'] );
-			$attachments = array_filter( $attachments );
+		// Read the explicit key into a local before iterating (no direct superglobal iteration);
+		// values are attachment IDs, so unslash + absint fully sanitises each entry.
+		$attachments_raw = isset( $_POST['wpss_attachments'] ) ? wp_unslash( $_POST['wpss_attachments'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via absint below.
+		if ( is_array( $attachments_raw ) ) {
+			$attachments = array_filter( array_map( 'absint', $attachments_raw ) );
 			update_post_meta( $post_id, '_wpss_attachments', $attachments );
 		} else {
 			delete_post_meta( $post_id, '_wpss_attachments' );
