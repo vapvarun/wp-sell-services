@@ -668,7 +668,7 @@ waves:
     journeys: [dashboard-pretty-urls, vendor-dashboard-ajax]
     directions:
       - id: "6.1"
-        title: "Dashboard pretty permalinks (BC 9826303369): add_rewrite_endpoint per section, get_section_url() + current_section from query vars, rules flush on activation, 301 fallback for ?section= URLs, update every internal link/breadcrumb/redirect, test plain + post-name permalinks"
+        title: "Dashboard pretty permalinks (BC 9826303369) - REWORK per gate evidence: add_rewrite_endpoint produces /dashboard/wpss_section/x URLs (wrong shape; first attempt 404'd every section). Use add_rewrite_rule anchored to the dashboard page path: '^{dashboard-page-path}/([^/]+)/?$' -> index.php?page_id={wpss_get_page_id(dashboard)}&wpss_section=\$matches[1], registered on init from the live page slug (works when page slug or parent changes), register wpss_section as a query var, keep get_section_url() + 301 ?section= fallback + all internal links (already correct from first attempt). Beware the front-page slug collision (/dashboard/services/ canonical-redirecting to /). Rules flush handled by the 1.2.0 version bump (owner commit) - also flush on activation. Test plain AND post-name permalinks at 1280px+390px"
         journey: improve
         scope:
           - "src/Frontend/**"
