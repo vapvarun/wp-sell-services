@@ -113,16 +113,18 @@ contracts:
         - "/earnings"
         - "/extensions"
         - "/milestones"
-        - "/tips"
+        # (tips have no top-level base: they live under /orders/{id}/tip and
+        #  /vendors/{id}/tips - covered by those bases)
         - "/seller-levels"
         - "/moderation"
         - "/favorites"
         - "/media"
         - "/cart"
         - "/auth"
-        - "/payment"
+        - "/payments"
+        - "/withdrawals"
         - "/audit-log"
-        - "/tour/complete"
+        - "/tour"
   hooks:
     actions:
       # NOTE: wpss_pro_loaded is fired by PRO (wp-sell-services-pro.php:230),
