@@ -47,6 +47,15 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		? wpss_format_price( $amount, $currency )
 		: number_format_i18n( $amount, 2 ) . ' ' . $currency;
 };
+
+/**
+ * Fires before the extension sub-order view content.
+ *
+ * @since 1.1.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $current_order Extension sub-order row.
+ */
+do_action( 'wpss_before_extension_view', $current_order );
 ?>
 
 <div class="wpss-tip-view wpss-extension-view">
@@ -179,3 +188,13 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		</div>
 	</div>
 </div>
+
+<?php
+/**
+ * Fires after the extension sub-order view content.
+ *
+ * @since 1.1.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $current_order Extension sub-order row.
+ */
+do_action( 'wpss_after_extension_view', $current_order );

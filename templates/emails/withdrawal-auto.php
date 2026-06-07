@@ -20,6 +20,8 @@
 defined( 'ABSPATH' ) || exit;
 
 $base_color = $base_color ?? '#7f54b3';
+
+do_action( 'wpss_email_content_before', 'withdrawal_auto', $vendor, $withdrawal_id );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -52,3 +54,6 @@ $base_color = $base_color ?? '#7f54b3';
 		<?php esc_html_e( 'Review Withdrawal', 'wp-sell-services' ); ?>
 	</a>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'withdrawal_auto', $vendor, $withdrawal_id );

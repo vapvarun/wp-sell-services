@@ -37,6 +37,8 @@ $order_url    = add_query_arg(
 	),
 	$dashboard
 );
+
+do_action( 'wpss_email_content_before', 'milestone_paid', $milestone, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -76,3 +78,6 @@ $order_url    = add_query_arg(
 <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
 	<?php esc_html_e( 'When you are done, use Submit delivery on this phase so the buyer can review and approve.', 'wp-sell-services' ); ?>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'milestone_paid', $milestone, $recipient );
