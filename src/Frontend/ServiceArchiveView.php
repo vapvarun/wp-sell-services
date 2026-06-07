@@ -66,6 +66,14 @@ class ServiceArchiveView {
 			return;
 		}
 
+		// The archive surface owns its full asset set. Since the converted
+		// services-page query became a true post-type archive (template
+		// hierarchy serves the archive template, not page.php), the shortcode
+		// render path that used to pull in the frontend bundle never runs -
+		// without this, WPSS (frontend.js) is undefined on the archive and the
+		// mobile filter-sidebar toggle + Apply Filters handlers are dead.
+		wpss_enqueue_frontend_assets();
+
 		wp_enqueue_style(
 			'wpss-archive',
 			\WPSS_PLUGIN_URL . 'assets/css/archive-service.css',
