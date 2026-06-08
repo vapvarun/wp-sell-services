@@ -309,39 +309,41 @@
 	 * Perform order action via AJAX.
 	 */
 	WPSS.performOrderAction = function(orderId, action, reason) {
-		// Map frontend actions to AJAX action names.
-		const actionMap = {
-			accept: 'wpss_accept_order',
-			reject: 'wpss_decline_order',
-			start: 'wpss_start_work',
-			deliver: 'wpss_deliver_order',
-			complete: 'wpss_accept_delivery',
-			cancel: 'wpss_cancel_order',
-			'accept-cancellation': 'wpss_accept_cancellation',
-			'reject-cancellation': 'wpss_reject_cancellation'
+		// Map frontend action keys to the wpss/v1 order-lifecycle REST action
+		// segments (POST /orders/{id}/{action}). The legacy admin-ajax handlers
+		// (wpss_accept_order, wpss_start_work, ...) remain registered as thin
+		// delegates for backward compatibility; the frontend now drives the
+		// REST twin, which routes through the same OrderService transitions.
+		const restActionMap = {
+			accept: 'accept',
+			reject: 'reject',
+			start: 'start',
+			deliver: 'deliver',
+			complete: 'complete',
+			cancel: 'cancel',
+			'accept-cancellation': 'accept-cancellation',
+			'reject-cancellation': 'reject-cancellation'
 		};
 
-		const ajaxAction = actionMap[action] || 'wpss_' + action + '_order';
+		const restAction = restActionMap[action] || action;
 
 		$.ajax({
-			url: wpssData.ajaxUrl,
+			url: wpssData.apiUrl + 'orders/' + orderId + '/' + restAction,
 			type: 'POST',
-			data: {
-				action: ajaxAction,
-				order_id: orderId,
-				reason: reason || '',
-				nonce: wpssData.orderNonce || wpssData.nonce
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
 			},
-			success: function(response) {
-				if (response.success) {
-					// Reload page to show updated state.
-					location.reload();
-				} else {
-					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.actionFailed) || 'Action failed. Please try again.', 'error');
-				}
+			data: { reason: reason || '' },
+			success: function() {
+				// Reload page to show updated state (consumer ignores body).
+				location.reload();
 			},
 			error: function(xhr) {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+				var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
+					|| (wpssData.i18n && wpssData.i18n.actionFailed)
+					|| (wpssData.i18n && wpssData.i18n.error)
+					|| 'Action failed. Please try again.';
+				WPSS.showNotification(msg, 'error');
 			}
 		});
 	};

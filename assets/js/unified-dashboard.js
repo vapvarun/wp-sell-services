@@ -88,10 +88,14 @@
 
 			var i18n = (wpssUnifiedDashboard && wpssUnifiedDashboard.i18n) || {};
 
-			$.post(wpssUnifiedDashboard.ajaxUrl, {
-				action: 'wpss_unfavorite_service',
-				service_id: serviceId,
-				nonce: wpssUnifiedDashboard.serviceNonce
+			// Migrated from admin-ajax to the wpss/v1 favorites REST twin:
+			// DELETE /favorites/{id}.
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'favorites/' + serviceId,
+				type: 'DELETE',
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				}
 			}).done(function (response) {
 				if (response && response.success) {
 					$card.fadeOut(180, function () {
@@ -101,19 +105,19 @@
 							window.location.reload();
 						} else {
 							var $count = $('.wpss-favorites__count');
-							if ($count.length && typeof response.data.count === 'number') {
+							if ($count.length && typeof response.count === 'number') {
 								$count.text(
-									(response.data.count === 1
+									(response.count === 1
 										? (i18n.favoriteCountSingular || '%d saved service')
 										: (i18n.favoriteCountPlural || '%d saved services')
-									).replace('%d', response.data.count)
+									).replace('%d', response.count)
 								);
 							}
 						}
 					});
 				} else {
 					$button.prop('disabled', false);
-					WPSS.showNotification((response && response.data && response.data.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.', 'error');
+					WPSS.showNotification((response && response.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.', 'error');
 				}
 			}).fail(function () {
 				$button.prop('disabled', false);
@@ -249,30 +253,34 @@
 			const $button = $(e.currentTarget);
 			const serviceId = $button.data('service-id');
 			const currentStatus = $button.data('current-status');
+			// The REST twin takes an explicit target state, so flip here
+			// (the legacy AJAX handler flipped server-side).
+			const targetStatus = currentStatus === 'publish' ? 'draft' : 'publish';
 
 			$button.prop('disabled', true);
 
+			// Migrated from admin-ajax wpss_update_service_status to the REST
+			// twin PUT /services/{id} with the status param (6.0b).
 			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_update_service_status',
-					nonce: wpssUnifiedDashboard.nonce,
-					service_id: serviceId,
-					status: currentStatus
+				url: wpssUnifiedDashboard.restUrl + 'services/' + serviceId,
+				type: 'PUT',
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
+				data: { status: targetStatus },
 				success: function (response) {
-					if (response.success) {
-						$button.data('current-status', response.data.new_status);
+					var newStatus = response && response.status;
+					if (newStatus) {
+						$button.data('current-status', newStatus);
 
 						const $card = $button.closest('.wpss-card');
 						const $badge = $card.find('.wpss-badge');
-						const newStatusText = response.data.new_status === 'publish' ? ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.published) || 'Published') : ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.draft) || 'Draft');
+						const newStatusText = newStatus === 'publish' ? ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.published) || 'Published') : ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.draft) || 'Draft');
 						$badge.text(newStatusText);
 						$badge.removeClass('wpss-badge--success wpss-badge--neutral');
-						$badge.addClass(response.data.new_status === 'publish' ? 'wpss-badge--success' : 'wpss-badge--neutral');
+						$badge.addClass(newStatus === 'publish' ? 'wpss-badge--success' : 'wpss-badge--neutral');
 
-						if (response.data.new_status === 'publish') {
+						if (newStatus === 'publish') {
 							$button.html('<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>');
 							$button.attr('title', wpssUnifiedDashboard.i18n.pause || 'Pause');
 						} else {
@@ -280,12 +288,13 @@
 							$button.attr('title', wpssUnifiedDashboard.i18n.activate || 'Activate');
 						}
 					} else {
-						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
+						WPSS.showNotification((response && response.message) || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
 					}
 					$button.prop('disabled', false);
 				},
-				error: function () {
-					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
+				error: function (xhr) {
+					var msg = (xhr.responseJSON && xhr.responseJSON.message) || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.';
+					WPSS.showNotification(msg, 'error');
 					$button.prop('disabled', false);
 				}
 			});
