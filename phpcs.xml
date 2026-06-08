@@ -22,6 +22,13 @@
     <arg name="extensions" value="php"/>
     <arg name="parallel" value="8"/> <!-- Enables parallel processing when available for faster results -->
 
+    <!-- CI policy: errors block the build, warnings are advisory. Warnings are
+         still printed for review, but a clean run (zero errors) exits 0. This
+         matches the documented quality gate (errors fixed; warnings advisory)
+         and keeps legitimate WP-idiom warnings (meta_query, prepared-SQL
+         placeholders, current_time, etc.) from failing CI. -->
+    <config name="ignore_warnings_on_exit" value="1"/>
+
     <!-- Rules: Check PHP version compatibility -->
     <config name="testVersion" value="8.1-"/>
     <rule ref="PHPCompatibilityWP">

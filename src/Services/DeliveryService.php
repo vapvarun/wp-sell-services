@@ -358,13 +358,15 @@ class DeliveryService {
 	 * @return array
 	 */
 	private function get_allowed_file_types(): array {
+		// Security note: svg, html, css, and js are intentionally NOT allowed -
+		// each can carry executable content (script tags, expressions, imports)
+		// and is an XSS risk when served back to other users.
 		$types = array(
 			'jpg',
 			'jpeg',
 			'png',
 			'gif',
 			'webp',
-			// 'svg', // Removed: SVG can contain embedded JavaScript (XSS risk).
 			'pdf',
 			'doc',
 			'docx',
@@ -391,9 +393,6 @@ class DeliveryService {
 			'eps',
 			'sketch',
 			'fig',
-			// 'html', // Removed: HTML can contain JavaScript (XSS risk).
-			// 'css',  // Removed: CSS can contain expressions/imports.
-			// 'js',   // Removed: Executable JavaScript.
 		);
 
 		/**

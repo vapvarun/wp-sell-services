@@ -413,7 +413,8 @@
 .wpss-btn:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
 .wpss-btn:disabled, .wpss-btn[aria-disabled="true"], .wpss-btn--loading { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
-.wpss-btn--primary { background: var(--wpss-primary); color: var(--wpss-white, #fff); border-color: var(--wpss-primary); }
+/* .wpss-btn--primary base declarations live in the theme-proof block below
+   (a./button./.wpss-btn--primary) to avoid a duplicate same-body rule. */
 .wpss-btn--primary:hover { background: var(--wpss-primary-hover); border-color: var(--wpss-primary-hover); color: var(--wpss-white, #fff); }
 .wpss-btn--secondary { background: var(--wpss-bg-muted); color: var(--wpss-text-secondary); }
 .wpss-btn--secondary:hover { background: var(--wpss-border); color: var(--wpss-text); }
@@ -421,7 +422,7 @@
 .wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
 .wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
-.wpss-btn--danger { background: var(--wpss-danger); color: var(--wpss-white, #fff); border-color: var(--wpss-danger); }
+/* .wpss-btn--danger base declarations live in the theme-proof block below. */
 .wpss-btn--danger:hover { background: var(--wpss-danger-dark, #b91c1c); border-color: var(--wpss-danger-dark, #b91c1c); color: var(--wpss-white, #fff); }
 .wpss-btn--success { background: var(--wpss-success); color: var(--wpss-white, #fff); border-color: var(--wpss-success); }
 

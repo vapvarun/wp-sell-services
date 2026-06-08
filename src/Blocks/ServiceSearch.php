@@ -121,8 +121,12 @@ class ServiceSearch extends AbstractBlock {
 			}
 		}
 
+		// Read-only, bookmarkable search/archive filters from the query string -
+		// no state change, so nonce verification does not apply. Values sanitized inline.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$search_value = isset( $_GET['wpss_search'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_search'] ) ) : '';
 		$category     = isset( $_GET['wpss_category'] ) ? absint( $_GET['wpss_category'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$wrapper_classes = [ 'wpss-search-style-' . $attributes['style'] ];
 		?>
