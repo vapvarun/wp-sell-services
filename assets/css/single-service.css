@@ -9,43 +9,23 @@
    Variables
    ========================================================================== */
 
+/* Primary/text/border/background/radius/shadow-lg/transition/star tokens are
+   owned by design-system.css (the base layer this page loads first). They were
+   previously re-declared here as `var(--wpss-x, #fallback)` self-references,
+   which CSS treats as invalid-at-computed-value (a custom property cannot
+   reference itself) — that poisoned --wpss-primary and rendered the primary
+   CTA background transparent (invisible) on the single-service page and any
+   body-appended modal. Removed so the canonical design-system tokens flow
+   through unchanged. Only page-local tokens that design-system does NOT define,
+   plus the two intentional cross-token remaps (which point at a different
+   canonical token, never at themselves), are kept below. */
 :root {
-	/* Primary - Indigo */
-	--wpss-primary: var(--wpss-primary, #4f46e5);
-	--wpss-primary-hover: var(--wpss-primary-dark, #4338ca);
-	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
-	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
-
-	/* Secondary */
+	/* Page-local remaps — point at a different canonical token (not self). */
 	--wpss-secondary: var(--wpss-success, #10b981);
-
-	/* Text */
-	--wpss-text: var(--wpss-gray-800, #1f2937);
-	--wpss-text-muted: var(--wpss-text-muted, #6b7280);
-
-	/* UI Colors */
-	--wpss-border: var(--wpss-border, #e5e7eb);
-	--wpss-bg: var(--wpss-bg-subtle, #f9fafb);
-	--wpss-white: var(--wpss-white, #fff);
-
-	/* Semantic */
-	--wpss-star: var(--wpss-star, #fbbf24);
-	--wpss-success: var(--wpss-success, #10b981);
 	--wpss-error: var(--wpss-danger, #ef4444);
-	--wpss-warning: var(--wpss-warning, #f59e0b);
 
-	/* Shadows */
+	/* Page-local tokens with no design-system equivalent. */
 	--wpss-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
-	--wpss-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
-
-	/* Border Radius */
-	--wpss-radius: 8px;
-	--wpss-radius-lg: 12px;
-
-	/* Transitions */
-	--wpss-transition: 0.2s ease;
-
-	/* Layout */
 	--wpss-sticky-top: 32px;
 }
 

@@ -11,32 +11,23 @@
    CSS Variables
    ========================================================================== */
 
+/* The primary/semantic/gray-scale/radius/shadow-lg colour tokens are owned by
+   design-system.css, which the dashboard loads first (design-system ->
+   frontend -> unified-dashboard). They were previously re-declared here as
+   `var(--wpss-x, #fallback)` self-references — a custom property that
+   references itself is invalid-at-computed-value per the CSS spec, so the
+   fallback is NOT used and the token resolves to nothing. This poisoned
+   --wpss-primary at :root, making `.wpss-btn--primary { background:
+   var(--wpss-primary); }` compute to a transparent background (the invisible
+   primary CTA) on the dashboard and on any modal appended to <body> (which
+   inherits the poisoned :root). Removed so the canonical design-system tokens
+   flow through unchanged. Only tokens with no design-system equivalent, or a
+   genuinely different value, are kept below. */
 :root {
-	--wpss-primary: var(--wpss-primary, #4f46e5);
-	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
-	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
-	--wpss-success: var(--wpss-success, #10b981);
-	--wpss-success-light: var(--wpss-success-light, #d1fae5);
-	--wpss-warning: var(--wpss-warning, #f59e0b);
-	--wpss-warning-light: var(--wpss-badge-extension-bg, #fef3c7);
-	--wpss-danger: var(--wpss-danger, #ef4444);
-	--wpss-danger-light: var(--wpss-badge-tip-bg, #fee2e2);
-	--wpss-gray-50: var(--wpss-bg-subtle, #f9fafb);
-	--wpss-gray-100: var(--wpss-bg-muted, #f3f4f6);
-	--wpss-gray-200: var(--wpss-border, #e5e7eb);
-	--wpss-gray-300: var(--wpss-gray-300, #d1d5db);
-	--wpss-gray-400: var(--wpss-text-hint, #9ca3af);
-	--wpss-gray-500: var(--wpss-text-muted, #6b7280);
-	--wpss-gray-600: var(--wpss-gray-600, #4b5563);
-	--wpss-gray-700: var(--wpss-text-secondary, #374151);
-	--wpss-gray-800: var(--wpss-gray-800, #1f2937);
-	--wpss-gray-900: var(--wpss-text, #111827);
+	/* Page-local tokens (no design-system equivalent / different value). */
 	--wpss-sidebar-width: 260px;
-	--wpss-radius: 8px;
-	--wpss-radius-lg: 12px;
 	--wpss-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
 	--wpss-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-	--wpss-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* ==========================================================================
