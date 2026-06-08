@@ -225,7 +225,7 @@ $show_payout_banner = empty( $payout_method )
 	?>
 
 	<!-- Wallet Transactions Ledger -->
-	<div class="wpss-earnings__wallet wpss-wallet" style="margin-top: 2rem;">
+	<div class="wpss-earnings__wallet wpss-wallet wpss-card" style="margin-top: 2rem;">
 		<div class="wpss-wallet__header">
 			<div>
 				<h3><?php esc_html_e( 'Wallet Transactions', 'wp-sell-services' ); ?></h3>
@@ -267,7 +267,7 @@ $show_payout_banner = empty( $payout_method )
 	</div>
 
 	<!-- Withdrawal History -->
-	<div class="wpss-earnings__history" style="margin-top: 2rem;">
+	<div class="wpss-earnings__history wpss-card" style="margin-top: 2rem;">
 		<h3><?php esc_html_e( 'Withdrawal History', 'wp-sell-services' ); ?></h3>
 
 		<?php if ( ! empty( $withdrawals ) ) : ?>
