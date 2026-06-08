@@ -153,6 +153,31 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 		<?php endif; ?>
 	</div>
 
+	<!-- Wallet Transactions Ledger -->
+	<div class="wpss-earnings__wallet wpss-wallet" style="margin-top: 2rem;">
+		<h3><?php esc_html_e( 'Wallet Transactions', 'wp-sell-services' ); ?></h3>
+		<p class="wpss-form-hint"><?php esc_html_e( 'Every credit and debit on your wallet, newest first.', 'wp-sell-services' ); ?></p>
+
+		<div id="wpss-wallet-transactions"
+			class="wpss-wallet__list"
+			data-rest-path="wallet/transactions"
+			data-per-page="10"
+			aria-live="polite"
+			aria-busy="true">
+			<div class="wpss-wallet__loading">
+				<span class="wpss-spinner" aria-hidden="true"></span>
+				<?php esc_html_e( 'Loading transactions…', 'wp-sell-services' ); ?>
+			</div>
+		</div>
+
+		<button type="button"
+			id="wpss-wallet-load-more"
+			class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-wallet__more"
+			style="display: none; margin-top: 1rem;">
+			<?php esc_html_e( 'Load more', 'wp-sell-services' ); ?>
+		</button>
+	</div>
+
 	<!-- Withdrawal History -->
 	<div class="wpss-earnings__history" style="margin-top: 2rem;">
 		<h3><?php esc_html_e( 'Withdrawal History', 'wp-sell-services' ); ?></h3>

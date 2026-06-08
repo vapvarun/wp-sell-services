@@ -187,11 +187,19 @@ $pending_count = count(
 
 				// Check moderation meta for rejected services (stored as draft post_status).
 				$moderation_status = get_post_meta( $service_id, '_wpss_moderation_status', true );
+				$is_rejected       = false;
+				$rejection_reason  = '';
 				if ( 'draft' === $item_status && 'rejected' === $moderation_status ) {
 					$item_status = 'rejected';
+					$is_rejected = true;
+					// Surface the reviewer's reason so the vendor knows what to fix.
+					$rejection_reason = (string) get_post_meta( $service_id, '_wpss_rejection_reason', true );
+					if ( '' === $rejection_reason ) {
+						$rejection_reason = (string) get_post_meta( $service_id, '_wpss_moderation_notes', true );
+					}
 				}
 				?>
-				<div class="wpss-service-card wpss-service-card--dashboard">
+				<div class="wpss-service-card wpss-service-card--dashboard<?php echo $is_rejected ? ' wpss-service-card--rejected' : ''; ?>">
 					<div class="wpss-service-card__image">
 						<?php
 						$has_thumb     = has_post_thumbnail();
@@ -242,23 +250,45 @@ $pending_count = count(
 								?>
 							</div>
 						<?php endif; ?>
+
+						<?php if ( $is_rejected ) : ?>
+							<div class="wpss-service-card__rejection wpss-notice wpss-notice--error" role="status">
+								<p class="wpss-service-card__rejection-title">
+									<i data-lucide="alert-triangle" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+									<?php esc_html_e( 'This service was not approved.', 'wp-sell-services' ); ?>
+								</p>
+								<?php if ( '' !== $rejection_reason ) : ?>
+									<p class="wpss-service-card__rejection-reason">
+										<strong><?php esc_html_e( 'Reviewer feedback:', 'wp-sell-services' ); ?></strong>
+										<?php echo esc_html( $rejection_reason ); ?>
+									</p>
+								<?php endif; ?>
+								<p class="wpss-service-card__rejection-help">
+									<?php esc_html_e( 'Edit your service to address the feedback, then resubmit it for review. A reviewer will check it again before it goes live.', 'wp-sell-services' ); ?>
+								</p>
+							</div>
+						<?php endif; ?>
 					</div>
 					<div class="wpss-service-card__actions">
-						<a href="
 						<?php
-						echo esc_url(
-							add_query_arg(
-								array(
-									'section' => 'create',
-									'id'      => $service_id,
-								),
-								$dashboard_url
-							)
+						$wpss_edit_url = add_query_arg(
+							array(
+								'section' => 'create',
+								'id'      => $service_id,
+							),
+							$dashboard_url
 						);
 						?>
-									" class="wpss-btn wpss-btn--outline wpss-btn--sm">
-							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
-						</a>
+						<?php if ( $is_rejected ) : ?>
+							<a href="<?php echo esc_url( $wpss_edit_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-service-card__resubmit">
+								<i data-lucide="refresh-cw" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+								<?php esc_html_e( 'Resubmit for review', 'wp-sell-services' ); ?>
+							</a>
+						<?php else : ?>
+							<a href="<?php echo esc_url( $wpss_edit_url ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
+								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
+							</a>
+						<?php endif; ?>
 						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--ghost wpss-btn--sm" target="_blank">
 							<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 						</a>

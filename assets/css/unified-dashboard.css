@@ -1099,6 +1099,94 @@
 }
 
 /* ==========================================================================
+   Wallet Transactions Ledger
+   ========================================================================== */
+
+.wpss-wallet__loading {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 16px;
+	color: var(--wpss-gray-500);
+	font-size: 14px;
+}
+
+.wpss-wallet__more {
+	min-height: 40px;
+}
+
+.wpss-wallet__amount-col {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.wpss-wallet__amount {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.wpss-wallet__row--credit .wpss-wallet__amount {
+	color: var(--wpss-success);
+}
+
+.wpss-wallet__row--debit .wpss-wallet__amount {
+	color: var(--wpss-danger);
+}
+
+@media (max-width: 640px) {
+	.wpss-wallet__table th,
+	.wpss-wallet__table td {
+		padding: 10px 8px;
+		font-size: 13px;
+	}
+}
+
+/* ==========================================================================
+   Rejected Service Card
+   ========================================================================== */
+
+.wpss-service-card--rejected {
+	border: 1px solid var(--wpss-danger-light);
+}
+
+.wpss-service-card__rejection {
+	margin-top: 12px;
+	padding: 12px;
+	border-radius: var(--wpss-radius);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.wpss-service-card__rejection-title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 6px;
+	font-weight: 600;
+}
+
+.wpss-service-card__rejection-reason,
+.wpss-service-card__rejection-help {
+	margin: 0 0 6px;
+}
+
+.wpss-service-card__rejection-help {
+	margin-bottom: 0;
+	color: var(--wpss-gray-600);
+}
+
+.wpss-service-card__resubmit {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wpss-service-card__resubmit .wpss-icon {
+	width: 14px;
+	height: 14px;
+}
+
+/* ==========================================================================
    Status Badges
    ========================================================================== */
 
