@@ -251,7 +251,16 @@ $pending_count = count(
 							</div>
 						<?php endif; ?>
 
-						<?php if ( $is_rejected ) : ?>
+						<?php
+						if ( $is_rejected ) :
+							$wpss_resubmit_url = add_query_arg(
+								array(
+									'section' => 'create',
+									'id'      => $service_id,
+								),
+								$dashboard_url
+							);
+							?>
 							<div class="wpss-service-card__rejection wpss-notice wpss-notice--error" role="status">
 								<p class="wpss-service-card__rejection-title">
 									<i data-lucide="alert-triangle" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
@@ -266,6 +275,10 @@ $pending_count = count(
 								<p class="wpss-service-card__rejection-help">
 									<?php esc_html_e( 'Edit your service to address the feedback, then resubmit it for review. A reviewer will check it again before it goes live.', 'wp-sell-services' ); ?>
 								</p>
+								<a href="<?php echo esc_url( $wpss_resubmit_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-service-card__resubmit">
+									<i data-lucide="refresh-cw" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+									<?php esc_html_e( 'Resubmit for review', 'wp-sell-services' ); ?>
+								</a>
 							</div>
 						<?php endif; ?>
 					</div>
@@ -279,12 +292,7 @@ $pending_count = count(
 							$dashboard_url
 						);
 						?>
-						<?php if ( $is_rejected ) : ?>
-							<a href="<?php echo esc_url( $wpss_edit_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-service-card__resubmit">
-								<i data-lucide="refresh-cw" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-								<?php esc_html_e( 'Resubmit for review', 'wp-sell-services' ); ?>
-							</a>
-						<?php else : ?>
+						<?php if ( ! $is_rejected ) : ?>
 							<a href="<?php echo esc_url( $wpss_edit_url ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 							</a>
