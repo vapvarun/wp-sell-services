@@ -1359,7 +1359,7 @@ class AjaxHandlers {
 
 				<div class="wpss-review-actions">
 					<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
-						<span class="wpss-helpful-icon">👍</span>
+						<span class="wpss-helpful-icon"><i data-lucide="thumbs-up" class="wpss-icon" aria-hidden="true"></i></span>
 						<span class="wpss-helpful-text"><?php esc_html_e( 'Helpful', 'wp-sell-services' ); ?></span>
 						<?php if ( $review->helpful_count > 0 ) : ?>
 							<span class="wpss-helpful-count">(<?php echo esc_html( $review->helpful_count ); ?>)</span>

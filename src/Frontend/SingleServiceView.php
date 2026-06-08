@@ -303,7 +303,7 @@ class SingleServiceView {
 
 			<?php if ( $order_count > 0 ) : ?>
 				<div class="wpss-meta-item wpss-meta-orders">
-					<span class="wpss-orders-icon">📦</span>
+					<span class="wpss-orders-icon"><i data-lucide="package" class="wpss-icon" aria-hidden="true"></i></span>
 					<span class="wpss-orders-count">
 						<?php
 						printf(
@@ -385,7 +385,7 @@ class SingleServiceView {
 				<?php foreach ( $highlights as $highlight ) : ?>
 					<?php if ( ! empty( $highlight ) ) : ?>
 						<li class="wpss-highlight-item">
-							<span class="wpss-highlight-icon">✓</span>
+							<span class="wpss-highlight-icon"><i data-lucide="check" class="wpss-icon" aria-hidden="true"></i></span>
 							<?php echo esc_html( $highlight ); ?>
 						</li>
 					<?php endif; ?>

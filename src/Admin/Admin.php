@@ -21,6 +21,8 @@ use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
 use WPSellServices\Admin\Pages\AuditLogPage;
+use WPSellServices\Admin\Pages\ReviewModerationPage;
+use WPSellServices\Admin\Pages\NotificationsPage;
 use WPSellServices\Admin\Pages\SetupWizardPage;
 use WPSellServices\Admin\Pages\UpgradePage;
 use WPSellServices\Admin\Tables\OrdersListTable;
@@ -79,6 +81,20 @@ class Admin {
 	private AuditLogPage $audit_log_page;
 
 	/**
+	 * Review moderation page.
+	 *
+	 * @var ReviewModerationPage
+	 */
+	private ReviewModerationPage $review_moderation_page;
+
+	/**
+	 * Notifications admin page.
+	 *
+	 * @var NotificationsPage
+	 */
+	private NotificationsPage $notifications_page;
+
+	/**
 	 * Setup wizard page instance.
 	 *
 	 * @var SetupWizardPage
@@ -102,6 +118,8 @@ class Admin {
 		$this->moderation_page   = new ServiceModerationPage();
 		$this->withdrawals_page  = new WithdrawalsPage();
 		$this->audit_log_page    = new AuditLogPage();
+		$this->review_moderation_page = new ReviewModerationPage();
+		$this->notifications_page     = new NotificationsPage();
 		$this->setup_wizard_page = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
@@ -279,6 +297,8 @@ class Admin {
 		$this->moderation_page->init();
 		$this->withdrawals_page->init();
 		$this->audit_log_page->init();
+		$this->review_moderation_page->init();
+		$this->notifications_page->init();
 		$this->setup_wizard_page->init();
 
 		if ( $this->upgrade_page ) {
