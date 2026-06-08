@@ -812,6 +812,14 @@ class UnifiedDashboard {
 			return;
 		}
 
+		// This banner's only job is to drive the vendor TO the Earnings & Payouts
+		// section. On that section itself it is redundant (the section shows its
+		// own payout prompt + the actual setup UI), so suppress it there to avoid
+		// the duplicate banner.
+		if ( in_array( $this->current_section, array( 'earnings', 'wallet' ), true ) ) {
+			return;
+		}
+
 		$payout_method = get_user_meta( $user_id, 'wpss_payout_method', true );
 
 		// Already configured - no banner needed.
