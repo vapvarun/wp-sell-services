@@ -174,13 +174,14 @@ class FavoritesController extends RestController {
 			return new WP_Error( 'not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		FavoritesService::add( $user_id, $service_id );
+		$favorites = FavoritesService::add( $user_id, $service_id );
 
 		return new WP_REST_Response(
 			array(
 				'success'    => true,
 				'favorited'  => true,
 				'service_id' => $service_id,
+				'count'      => count( $favorites ),
 			),
 			201
 		);
@@ -195,13 +196,14 @@ class FavoritesController extends RestController {
 	public function remove_favorite( WP_REST_Request $request ): WP_REST_Response {
 		$service_id = (int) $request->get_param( 'service_id' );
 		$user_id    = get_current_user_id();
-		FavoritesService::remove( $user_id, $service_id );
+		$favorites  = FavoritesService::remove( $user_id, $service_id );
 
 		return new WP_REST_Response(
 			array(
 				'success'    => true,
 				'favorited'  => false,
 				'service_id' => $service_id,
+				'count'      => count( $favorites ),
 			)
 		);
 	}
@@ -213,8 +215,8 @@ class FavoritesController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function check_favorited( WP_REST_Request $request ): WP_REST_Response {
-		$service_id = (int) $request->get_param( 'service_id' );
-		$user_id    = get_current_user_id();
+		$service_id   = (int) $request->get_param( 'service_id' );
+		$user_id      = get_current_user_id();
 		$is_favorited = FavoritesService::is_favorited( $user_id, $service_id );
 
 		return new WP_REST_Response( array( 'favorited' => $is_favorited ) );
