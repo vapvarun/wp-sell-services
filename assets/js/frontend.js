@@ -1709,10 +1709,15 @@
 	WPSS.showConfirm = function(message, onConfirm, options) {
 		options = options || {};
 		var i18n = (wpssData && wpssData.i18n) || {};
-		var confirmText = options.confirmText || i18n.confirm || 'Confirm';
+		var isDanger = 'danger' === options.tone;
+		// Default the action label to a danger verb when this is a destructive
+		// confirm so the Delete button reads correctly even if the caller does
+		// not pass an explicit confirmText.
+		var defaultConfirm = isDanger ? (i18n.delete || 'Delete') : (i18n.confirm || 'Confirm');
+		var confirmText = options.confirmText || defaultConfirm;
 		var cancelText = options.cancelText || i18n.cancel || 'Cancel';
 		var title = options.title || '';
-		var confirmVariant = 'danger' === options.tone ? 'wpss-btn--danger' : 'wpss-btn--primary';
+		var confirmVariant = isDanger ? 'wpss-btn--danger' : 'wpss-btn--primary';
 
 		$('#wpss-confirm-modal').remove();
 
