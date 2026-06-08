@@ -44,7 +44,12 @@ if ( ! empty( $favorite_ids ) ) {
 <div class="wpss-favorites" data-wpss-favorites>
 	<?php if ( empty( $services ) ) : ?>
 		<div class="wpss-empty-state">
-			<div class="wpss-empty-state__icon" aria-hidden="true">♡</div>
+			<div class="wpss-empty-state__icon" aria-hidden="true">
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
+				echo \WPSellServices\Services\Icon::render( 'heart', array( 'class' => 'wpss-icon--lg' ) );
+				?>
+			</div>
 			<h3 class="wpss-empty-state__title"><?php esc_html_e( 'No favorites yet', 'wp-sell-services' ); ?></h3>
 			<p class="wpss-empty-state__text">
 				<?php esc_html_e( 'Tap the heart on any service to save it here for later.', 'wp-sell-services' ); ?>

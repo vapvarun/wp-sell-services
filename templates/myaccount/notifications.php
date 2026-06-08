@@ -11,17 +11,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Services\Icon;
+
+/**
+ * Lucide icon slug per notification type. Rendered via {@see Icon::render()}
+ * so the markup matches the plugin's icon system (no UI emoji).
+ */
 $notification_icons = array(
-	'order_created'      => '📦',
-	'order_status'       => '🔄',
-	'new_message'        => '💬',
-	'delivery_submitted' => '📤',
-	'delivery_accepted'  => '✅',
-	'revision_requested' => '🔁',
-	'review_received'    => '⭐',
-	'dispute_opened'     => '⚠️',
-	'dispute_resolved'   => '✓',
-	'deadline_warning'   => '⏰',
+	'order_created'      => 'package',
+	'order_status'       => 'refresh-cw',
+	'new_message'        => 'message-circle',
+	'delivery_submitted' => 'upload',
+	'delivery_accepted'  => 'check-circle',
+	'revision_requested' => 'rotate-ccw',
+	'review_received'    => 'star',
+	'dispute_opened'     => 'alert-triangle',
+	'dispute_resolved'   => 'check',
+	'deadline_warning'   => 'alarm-clock',
 );
 
 /**
@@ -53,12 +59,12 @@ do_action( 'wpss_notifications_before', $user_id );
 			<?php foreach ( $notifications as $notification ) : ?>
 				<?php
 				$data      = $notification->data ? json_decode( $notification->data, true ) : array();
-				$icon      = $notification_icons[ $notification->type ] ?? '📣';
+				$icon_slug = $notification_icons[ $notification->type ] ?? 'megaphone';
 				$is_unread = ! $notification->is_read;
 				$created   = new \DateTimeImmutable( $notification->created_at );
 				?>
 				<div class="wpss-notification <?php echo $is_unread ? 'wpss-unread' : ''; ?>" data-id="<?php echo esc_attr( $notification->id ); ?>">
-					<div class="wpss-notification-icon"><?php echo esc_html( $icon ); ?></div>
+					<div class="wpss-notification-icon"><?php echo Icon::render( $icon_slug ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns pre-escaped markup. ?></div>
 					<div class="wpss-notification-content">
 						<div class="wpss-notification-title"><?php echo esc_html( $notification->title ); ?></div>
 						<div class="wpss-notification-message"><?php echo esc_html( $notification->message ); ?></div>
