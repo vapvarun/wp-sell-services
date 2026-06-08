@@ -1720,6 +1720,16 @@ class ServiceWizard {
 
 		// Prepare success response based on post status.
 		if ( 'pending' === $post_status ) {
+			// Re-queue for moderation: the post_status is pending, but the
+			// admin queue filters on _wpss_moderation_status. A resubmitted
+			// (previously rejected) service must flip its moderation meta to
+			// 'pending' and shed its stale rejection reason, or it stays
+			// invisible to reviewers. Fire the pending hook so notifications +
+			// audit log run, matching ModerationService::set_pending().
+			update_post_meta( $service_id, \WPSellServices\Services\ModerationService::META_MODERATION_STATUS, \WPSellServices\Services\ModerationService::STATUS_PENDING );
+			delete_post_meta( $service_id, \WPSellServices\Services\ModerationService::META_REJECTION_REASON );
+			do_action( 'wpss_service_pending_moderation', $service_id );
+
 			$message      = __( 'Service submitted for review. You will be notified once it is approved.', 'wp-sell-services' );
 			$redirect_url = wpss_get_dashboard_url( 'services' );
 		} else {
