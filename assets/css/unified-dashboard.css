@@ -147,7 +147,12 @@
 .wpss-dashboard__nav-item--active {
 	color: var(--wpss-primary);
 	background: var(--wpss-primary-light);
-	border-right: 3px solid var(--wpss-primary);
+	/* Active accent is an inset left bar via box-shadow, NOT a border-right.
+	   The old border-right landed exactly on the sidebar/content seam and
+	   collided with .wpss-dashboard__sidebar's own border-right, leaving a
+	   stray indigo tick bleeding into the content panel. inset shadow keeps
+	   the indicator inside the sidebar and off the seam. */
+	box-shadow: inset 3px 0 0 0 var(--wpss-primary);
 }
 
 .wpss-dashboard__nav-item--active:hover {
