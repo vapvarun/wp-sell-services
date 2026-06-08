@@ -549,7 +549,13 @@ class UnifiedDashboard {
 	 * @return void
 	 */
 	private function render_section( string $section ): void {
-		$template_path = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$section}.php";
+		// `wallet` and `earnings` are one screen ("Wallet & Earnings"):
+		// earnings.php renders both the earnings summary and the wallet ledger
+		// (#wpss-wallet-transactions). The wallet slug is kept as a friendly
+		// URL/nav entry but resolves to the single earnings template - no
+		// duplicate template, one source of truth.
+		$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
+		$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
 
 		/**
 		 * Filter the template path for a dashboard section.

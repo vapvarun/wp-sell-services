@@ -851,6 +851,21 @@ class ServiceModerationPage {
 			update_post_meta( $service_id, self::REJECTION_REASON_KEY, $reason );
 		}
 
+		// Take the service offline. Approve sets post_status=publish; reject
+		// must symmetrically set draft, both so the rejected service stops
+		// showing in the marketplace AND so the vendor dashboard can detect
+		// the rejected state (it keys on draft + rejected-meta) and render the
+		// "Resubmit for review" CTA. Without this the service stayed published
+		// and the resubmit affordance never appeared.
+		if ( 'draft' !== get_post_status( $service_id ) ) {
+			wp_update_post(
+				array(
+					'ID'          => $service_id,
+					'post_status' => 'draft',
+				)
+			);
+		}
+
 		/**
 		 * Fires when a service is rejected.
 		 *
