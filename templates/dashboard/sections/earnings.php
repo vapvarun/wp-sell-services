@@ -29,9 +29,37 @@ $earnings         = $earnings_service->get_summary( $user_id );
 $withdrawals      = $earnings_service->get_withdrawals( $user_id, array( 'limit' => 10 ) );
 $methods          = EarningsService::get_withdrawal_methods();
 $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
+
+// F9 payout banner: surface when the vendor has cleared earnings but has not
+// yet configured a payout method, so the section opens with a single, designed
+// call-to-action rather than a bare notice. Consumes the existing
+// .wpss-payout-banner primitive (design-system.css / unified-dashboard.css) —
+// info notice token surface, solid icon chip, primary-token CTA.
+$payout_method      = get_user_meta( $user_id, 'wpss_payout_method', true );
+$show_payout_banner = empty( $payout_method )
+	&& ( (float) $earnings['available_balance'] > 0 || (float) $earnings['pending_clearance'] > 0 );
 ?>
 
 <div class="wpss-section wpss-section--earnings">
+	<?php if ( $show_payout_banner ) : ?>
+		<div class="wpss-dashboard__payout-banner" role="status">
+			<span class="wpss-payout-banner__icon">
+				<i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i>
+			</span>
+			<div class="wpss-payout-banner__content">
+				<strong class="wpss-payout-banner__title">
+					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
+				</strong>
+				<span class="wpss-payout-banner__text">
+					<?php esc_html_e( 'Set up your payout method below to start receiving payments.', 'wp-sell-services' ); ?>
+				</span>
+			</div>
+			<a href="#wpss-withdrawal" class="wpss-btn wpss-btn--primary wpss-payout-banner__btn">
+				<?php esc_html_e( 'Set Up Payouts', 'wp-sell-services' ); ?>
+			</a>
+		</div>
+	<?php endif; ?>
+
 	<!-- Earnings Summary Cards -->
 	<div class="wpss-stats-grid wpss-stats-grid--4">
 		<div class="wpss-stat-card wpss-stat-card--highlight">
@@ -78,7 +106,7 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 	?>
 
 	<!-- Withdrawal Request Form -->
-	<div class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
+	<div id="wpss-withdrawal" class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
 		<h3><?php esc_html_e( 'Request Withdrawal', 'wp-sell-services' ); ?></h3>
 
 		<?php if ( $earnings['available_balance'] >= $min_withdrawal ) : ?>
