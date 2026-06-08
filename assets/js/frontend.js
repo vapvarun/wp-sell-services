@@ -25,6 +25,7 @@
 		WPSS.initContactVendor();
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
+		WPSS.initPostRequest();
 		WPSS.initRequirementsView();
 		WPSS.initFavorites();
 		WPSS.portfolioServicesOptions();
@@ -1165,6 +1166,174 @@
 				function() { WPSS.handleProposalAction($btn, proposalId, 'withdraw'); },
 				{ confirmText: 'Withdraw' }
 			);
+		});
+	};
+
+	/**
+	 * Buyer request posting form ([wpss_post_request]).
+	 *
+	 * Wires #wpss-post-request-form to POST /wpss/v1/buyer-requests. Performs
+	 * client-side validation, sends the REST request with the wp_rest nonce,
+	 * renders per-field server errors, and swaps the form for a success state.
+	 */
+	WPSS.initPostRequest = function() {
+		$(document).on('submit', '#wpss-post-request-form', function(e) {
+			e.preventDefault();
+			WPSS.submitPostRequest($(this));
+		});
+	};
+
+	/**
+	 * Clear all error messaging on the post-request form.
+	 *
+	 * @param {jQuery} $form The post-request form.
+	 */
+	WPSS.clearRequestErrors = function($form) {
+		const $wrapper = $form.closest('[data-wpss-post-request]');
+		$wrapper.find('[data-request-form-error]').prop('hidden', true).text('');
+		$form.find('[data-field-error]').prop('hidden', true).text('');
+		$form.find('[data-field]').removeClass('wpss-input--invalid').removeAttr('aria-invalid');
+	};
+
+	/**
+	 * Display a per-field error on the post-request form.
+	 *
+	 * @param {jQuery} $form   The post-request form.
+	 * @param {string} field   The field key (matches data-field).
+	 * @param {string} message The error message.
+	 */
+	WPSS.showRequestFieldError = function($form, field, message) {
+		const $error = $form.find('[data-field-error="' + field + '"]');
+		const $input = $form.find('[data-field="' + field + '"]');
+
+		$input.addClass('wpss-input--invalid').attr('aria-invalid', 'true');
+
+		if ($error.length) {
+			$error.text(message).prop('hidden', false);
+		} else {
+			// No dedicated slot for this field — fall back to the form-level banner.
+			$form.closest('[data-wpss-post-request]')
+				.find('[data-request-form-error]')
+				.text(message)
+				.prop('hidden', false);
+		}
+	};
+
+	/**
+	 * Submit the buyer request via the REST API.
+	 *
+	 * @param {jQuery} $form The post-request form.
+	 */
+	WPSS.submitPostRequest = function($form) {
+		const i18n     = (wpssData && wpssData.i18n) || {};
+		const $wrapper = $form.closest('[data-wpss-post-request]');
+		const $btn     = $form.find('[data-request-submit]');
+		const btnText  = $btn.text();
+
+		WPSS.clearRequestErrors($form);
+
+		// Client-side validation — title + description are required.
+		const title       = ($form.find('[data-field="title"]').val() || '').trim();
+		const description = ($form.find('[data-field="description"]').val() || '').trim();
+		let hasError = false;
+
+		if (!title) {
+			WPSS.showRequestFieldError($form, 'title', i18n.requestTitleRequired || 'Please enter a title for your request.');
+			hasError = true;
+		}
+
+		if (!description) {
+			WPSS.showRequestFieldError($form, 'description', i18n.requestDescriptionRequired || 'Please describe what you need.');
+			hasError = true;
+		}
+
+		// Budget sanity — when both supplied, max must be >= min.
+		const budgetMin = parseFloat($form.find('[data-field="budget_min"]').val());
+		const budgetMax = parseFloat($form.find('[data-field="budget_max"]').val());
+		if (!isNaN(budgetMin) && !isNaN(budgetMax) && budgetMax < budgetMin) {
+			WPSS.showRequestFieldError($form, 'budget_max', i18n.requestBudgetRange || 'Maximum budget must be greater than or equal to the minimum.');
+			hasError = true;
+		}
+
+		if (hasError) {
+			return;
+		}
+
+		// Skills: comma-separated string -> trimmed array, drop empties.
+		const skills = ($form.find('[data-field="skills_required"]').val() || '')
+			.split(',')
+			.map(function(s) { return s.trim(); })
+			.filter(function(s) { return s.length > 0; });
+
+		const payload = {
+			title: title,
+			description: description,
+			category: parseInt($form.find('[data-field="category"]').val(), 10) || 0,
+			budget_min: isNaN(budgetMin) ? 0 : budgetMin,
+			budget_max: isNaN(budgetMax) ? 0 : budgetMax,
+			deadline: $form.find('[data-field="deadline"]').val() || '',
+			skills_required: skills
+		};
+
+		$btn.prop('disabled', true).text(i18n.submitting || 'Submitting...');
+
+		$.ajax({
+			url: wpssData.apiUrl + 'buyer-requests',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(payload),
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
+			},
+			success: function(response) {
+				const message = (response && response.message) || i18n.requestPosted || 'Request posted successfully.';
+				WPSS.showNotification(message, 'success');
+
+				// Swap the form for the success state.
+				const redirect = $form.data('success-redirect') || '';
+				const $success = $wrapper.find('[data-request-success]');
+				const $link    = $success.find('[data-request-success-link]');
+
+				if (redirect) {
+					$link.attr('href', redirect);
+				} else {
+					$link.prop('hidden', true);
+				}
+
+				$form.prop('hidden', true);
+				$success.prop('hidden', false);
+
+				// Refresh Lucide icons if available.
+				if (window.lucide && typeof window.lucide.createIcons === 'function') {
+					window.lucide.createIcons();
+				}
+			},
+			error: function(xhr) {
+				$btn.prop('disabled', false).text(btnText);
+
+				const res = (xhr && xhr.responseJSON) || {};
+
+				// Per-field validation errors (WP_Error data.errors / data.params).
+				const fieldErrors = (res.data && (res.data.errors || res.data.params)) || null;
+				if (fieldErrors && typeof fieldErrors === 'object') {
+					let shown = false;
+					Object.keys(fieldErrors).forEach(function(field) {
+						const val = fieldErrors[field];
+						const msg = Array.isArray(val) ? val[0] : val;
+						if (msg) {
+							WPSS.showRequestFieldError($form, field, msg);
+							shown = true;
+						}
+					});
+					if (shown) {
+						return;
+					}
+				}
+
+				const message = res.message || i18n.requestFailed || i18n.error || 'Failed to post request. Please try again.';
+				$wrapper.find('[data-request-form-error]').text(message).prop('hidden', false);
+				WPSS.showNotification(message, 'error');
+			}
 		});
 	};
 
