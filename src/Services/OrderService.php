@@ -387,8 +387,14 @@ class OrderService {
 	 * requirements were submitted (the real clock start). This method
 	 * only transitions the status to in_progress and records started_at.
 	 *
+	 * The status transition is the source of truth: `started_at` is only
+	 * written when the transition to in_progress actually succeeds, so a
+	 * rejected transition never leaves an order with a started_at timestamp
+	 * but a stale status. Returning the transition result lets callers
+	 * surface a silent stuck order instead of reporting false success.
+	 *
 	 * @param int $order_id Order ID.
-	 * @return bool
+	 * @return bool True when the order is in_progress after this call.
 	 */
 	public function start_work( int $order_id ): bool {
 		$order = $this->get( $order_id );
@@ -397,18 +403,37 @@ class OrderService {
 			return false;
 		}
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_orders';
+		// Already in progress — idempotent success (e.g. late requirements
+		// submission, or a duplicate AJAX/REST request). Nothing to transition.
+		if ( ServiceOrder::STATUS_IN_PROGRESS === $order->status ) {
+			return true;
+		}
 
-		// Record when work actually started.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
-			$table,
-			array( 'started_at' => current_time( 'mysql' ) ),
-			array( 'id' => $order_id )
-		);
+		// Perform the status transition first. update_status() validates the
+		// transition and records started_at itself (only when it is empty), so
+		// a rejected transition leaves the order untouched.
+		$transitioned = $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS );
 
-		return $this->update_status( $order_id, ServiceOrder::STATUS_IN_PROGRESS );
+		if ( ! $transitioned ) {
+			return false;
+		}
+
+		// Backfill started_at for the rare case where update_status() did not
+		// set it (e.g. the order already carried a started_at from an earlier
+		// state). The transition above is what makes the order "started".
+		if ( ! $order->started_at ) {
+			global $wpdb;
+			$table = $wpdb->prefix . 'wpss_orders';
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array( 'started_at' => current_time( 'mysql' ) ),
+				array( 'id' => $order_id )
+			);
+		}
+
+		return true;
 	}
 
 	/**
