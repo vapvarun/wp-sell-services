@@ -139,16 +139,30 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 				<div id="wpss-withdrawal-message" class="wpss-notice" style="display: none;"></div>
 			</form>
 		<?php else : ?>
-			<div class="wpss-notice wpss-notice--info">
-				<p>
-					<?php
-					printf(
-						/* translators: %s: minimum withdrawal amount */
-						esc_html__( 'You need at least %s in available balance to request a withdrawal.', 'wp-sell-services' ),
-						esc_html( wpss_format_price( $min_withdrawal ) )
-					);
-					?>
-				</p>
+			<?php
+			$wpss_earn_more_url = wpss_append_dashboard_section( get_permalink(), 'services' );
+			?>
+			<div class="wpss-banner wpss-banner--warning wpss-earnings__payout-banner" role="status">
+				<i data-lucide="piggy-bank" class="wpss-icon wpss-icon--lg wpss-banner__icon" aria-hidden="true"></i>
+				<div class="wpss-banner__content">
+					<span class="wpss-banner__title">
+						<?php esc_html_e( 'Not enough to cash out yet', 'wp-sell-services' ); ?>
+					</span>
+					<span class="wpss-banner__text">
+						<?php
+						printf(
+							/* translators: 1: current available balance, 2: minimum withdrawal amount */
+							esc_html__( 'You have %1$s available. Earn at least %2$s before you can request a withdrawal.', 'wp-sell-services' ),
+							esc_html( wpss_format_price( $earnings['available_balance'] ) ),
+							esc_html( wpss_format_price( $min_withdrawal ) )
+						);
+						?>
+					</span>
+				</div>
+				<a href="<?php echo esc_url( $wpss_earn_more_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-banner__action">
+					<i data-lucide="briefcase" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+					<?php esc_html_e( 'Manage your services', 'wp-sell-services' ); ?>
+				</a>
 			</div>
 		<?php endif; ?>
 	</div>
