@@ -1303,6 +1303,9 @@ class VendorsPage {
 				<button type="button" class="wpss-detail-tab" data-tab="earnings">
 					<?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?>
 				</button>
+				<button type="button" class="wpss-detail-tab" data-tab="wallet">
+					<?php esc_html_e( 'Wallet', 'wp-sell-services' ); ?>
+				</button>
 				<button type="button" class="wpss-detail-tab" data-tab="reviews">
 					<?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?>
 				</button>
@@ -2198,6 +2201,9 @@ class VendorsPage {
 			case 'earnings':
 				$this->render_tab_earnings( $vendor_id );
 				break;
+			case 'wallet':
+				$this->render_tab_wallet( $vendor_id );
+				break;
 			case 'reviews':
 				$this->render_tab_reviews( $vendor_id );
 				break;
@@ -2769,6 +2775,118 @@ class VendorsPage {
 						</div>
 					</div>
 				<?php endif; ?>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render Wallet tab content (read-only).
+	 *
+	 * Surfaces the vendor's `wpss_wallet_transactions` ledger inside the admin
+	 * detail drawer. Read-only: admins audit balance movements here; mutations
+	 * stay in their owning flows (orders, tips, withdrawals).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return void
+	 */
+	private function render_tab_wallet( int $vendor_id ): void {
+		global $wpdb;
+
+		$limit = 50;
+
+		// Current balance = balance_after on the latest transaction.
+		$wallet_balance = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(balance_after, 0)
+				FROM {$wpdb->prefix}wpss_wallet_transactions
+				WHERE user_id = %d
+				ORDER BY created_at DESC, id DESC
+				LIMIT 1",
+				$vendor_id
+			)
+		);
+
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_wallet_transactions WHERE user_id = %d",
+				$vendor_id
+			)
+		);
+
+		// Most recent transactions (read-only audit view).
+		$transactions = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, type, amount, balance_after, currency, description, reference_type, reference_id, status, created_at
+				FROM {$wpdb->prefix}wpss_wallet_transactions
+				WHERE user_id = %d
+				ORDER BY created_at DESC, id DESC
+				LIMIT %d",
+				$vendor_id,
+				$limit
+			)
+		);
+		?>
+		<div class="wpss-tab-section">
+			<h3><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></h3>
+			<div class="wpss-earnings-summary">
+				<div class="wpss-earnings-card">
+					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
+					<?php esc_html_e( 'Current Balance', 'wp-sell-services' ); ?>
+				</div>
+				<div class="wpss-earnings-card">
+					<strong><?php echo esc_html( number_format_i18n( $total ) ); ?></strong>
+					<?php esc_html_e( 'Total Transactions', 'wp-sell-services' ); ?>
+				</div>
+			</div>
+		</div>
+
+		<div class="wpss-tab-section">
+			<h3><?php esc_html_e( 'Transaction History', 'wp-sell-services' ); ?></h3>
+			<?php if ( $total > $limit ) : ?>
+				<p class="description">
+					<?php
+					printf(
+						/* translators: %d: number of transactions shown */
+						esc_html__( 'Showing the %d most recent transactions.', 'wp-sell-services' ),
+						(int) $limit
+					);
+					?>
+				</p>
+			<?php endif; ?>
+			<?php if ( empty( $transactions ) ) : ?>
+				<p><?php esc_html_e( 'No wallet transactions yet.', 'wp-sell-services' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Balance', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $transactions as $txn ) : ?>
+							<tr>
+								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $txn->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
+								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
+								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
+								<td><?php echo esc_html( wpss_format_price( (float) $txn->balance_after ) ); ?></td>
+								<td>
+									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $txn->status ); ?>">
+										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>
+									</span>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
 			<?php endif; ?>
 		</div>
 		<?php
