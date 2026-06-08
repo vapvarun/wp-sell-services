@@ -122,3 +122,48 @@ services, dashboard favorites, and after any AJAX refresh - at 1280px + 390px.
 - Banner CTA passes WCAG 2.1 AA contrast
 - Behaviour identical on Reign 8.0.0 and twentytwentyfive (theme-agnostic
   check: the compat layer degrades gracefully)
+
+## Interactive-component polish (owner screenshots 2026-06-08)
+
+The CSS-only uplift (wave 2.5) made static surfaces premium but missed
+JS-rendered + structurally-broken interactive components. "Premium UX
+uniformly" means these too. THREE findings, likely ONE shared root cause
+(primary-button background not rendering -> white text on transparent =
+invisible CTA). Must be diagnosed via LIVE computed styles, not grep.
+
+### F8 - Delete confirmation modal: confirm button invisible + double-box
+WPSS.showConfirm (frontend.js:1702) renders BOTH .wpss-confirm-cancel and
+.wpss-confirm-ok, yet the screenshot shows only "Cancel" - the .wpss-btn--primary
+confirm button is present in the DOM but renders invisible (white text, no
+background). A delete you cannot confirm. Also the modal shows a broken
+double-card (outer gradient/shadow box + inner white box) instead of one clean
+surface. Fix: one premium modal surface (single card, title + message + a proper
+action row with a visible danger/primary confirm + outline cancel), focus trap,
+ESC-to-close, design-system tokens. Diagnose why .wpss-btn--primary background
+is empty here via computed styles and fix at the root so EVERY primary button
+renders.
+
+### F9 - Payout/earnings banner: odd colors, invisible CTA, emoji
+The "earnings ready for withdrawal" banner is yellow with brown text and a
+"Set Up Payouts" button whose white text sits on no background (invisible -
+same root cause as F8). Uses a raw money-bag emoji (violates no-emoji rule).
+Fix: design-system notice/banner tokens (proper bg + AA-contrast text), a
+visible token-styled CTA, a Lucide icon instead of emoji, correct internal
+spacing.
+
+### F10 - Rejected-service notice: broken 3-column text layout
+The "This service was not approved / Reviewer feedback / Edit your service..."
+notice renders as three awkward vertical text columns (flex children each
+wrapping into narrow ribbons). Should be one readable block: warning icon +
+heading + reviewer-feedback paragraph + the resubmit guidance, stacked, with
+the Resubmit CTA. Pink box should use the design-system danger-soft notice
+token, not an ad-hoc pink.
+
+### Verification bar
+- Every .wpss-btn--primary CTA renders with a visible background + readable
+  label on EVERY surface incl. body-appended modals and banners (computed
+  background-color is non-transparent)
+- Confirm modal: single surface, visible danger confirm + cancel, focus trap,
+  ESC closes, verified by actually completing a delete at 390px + 1280px
+- Payout banner + rejected notice: token colors, AA contrast, Lucide icons
+  (no emoji), correct spacing, verified at both viewports
