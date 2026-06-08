@@ -428,8 +428,10 @@ class UnifiedDashboard {
 
 			<main class="wpss-dashboard__content">
 				<?php
-				$this->maybe_render_payout_banner( $user_id, $is_active );
-				$this->maybe_render_profile_banner( $user_id, $is_active );
+				// Contextual prompts live in their own sections (the payout prompt
+				// in Earnings & Payouts, profile completeness in the Profile
+				// section) - they are NOT rendered globally here, which previously
+				// leaked the same banner onto every dashboard tab.
 				?>
 				<header class="wpss-dashboard__header">
 					<?php
@@ -702,157 +704,6 @@ class UnifiedDashboard {
 
 		$cache[ $user_id ] = $count > 0;
 		return $cache[ $user_id ];
-	}
-
-	/**
-	 * Show a soft "Complete your profile" banner when the vendor's profile
-	 * is missing key fields (tagline, bio, country).
-	 *
-	 * Soft signal — vendors can publish services without it, but a complete
-	 * profile attracts more buyers. Banner is dismissible per-session via
-	 * sessionStorage; it returns next session until the profile is complete.
-	 *
-	 * F7 part a from baseline-2026-04-25.md.
-	 *
-	 * @param int  $user_id   Current user ID.
-	 * @param bool $is_active Whether the user is an active vendor.
-	 * @return void
-	 */
-	private function maybe_render_profile_banner( int $user_id, bool $is_active ): void {
-		if ( ! $is_active ) {
-			return;
-		}
-
-		$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
-		if ( ! $profile ) {
-			return;
-		}
-
-		$missing = array();
-		if ( empty( trim( (string) $profile->title ) ) ) {
-			$missing[] = __( 'tagline', 'wp-sell-services' );
-		}
-		if ( empty( trim( (string) $profile->bio ) ) ) {
-			$missing[] = __( 'bio', 'wp-sell-services' );
-		}
-		if ( empty( trim( (string) $profile->country ) ) ) {
-			$missing[] = __( 'country', 'wp-sell-services' );
-		}
-
-		if ( empty( $missing ) ) {
-			return;
-		}
-
-		$profile_url = $this->get_section_url( 'profile' );
-		$missing_str = implode( ', ', $missing );
-		?>
-		<div class="wpss-dashboard__profile-banner" data-wpss-profile-banner role="status">
-			<span class="wpss-profile-banner__icon" aria-hidden="true">
-				<i data-lucide="user-circle" class="wpss-icon" aria-hidden="true"></i>
-			</span>
-			<div class="wpss-profile-banner__content">
-				<strong class="wpss-profile-banner__title">
-					<?php esc_html_e( 'Complete your profile to attract more buyers', 'wp-sell-services' ); ?>
-				</strong>
-				<span class="wpss-profile-banner__text">
-					<?php
-					printf(
-						/* translators: %s: comma-separated list of missing profile fields (e.g. "tagline, bio, country") */
-						esc_html__( 'Buyers want to know who they are working with. Add your %s to your profile.', 'wp-sell-services' ),
-						esc_html( $missing_str )
-					);
-					?>
-				</span>
-			</div>
-			<a href="<?php echo esc_url( $profile_url ); ?>" class="wpss-btn wpss-btn--primary wpss-profile-banner__btn">
-				<?php esc_html_e( 'Complete profile', 'wp-sell-services' ); ?>
-			</a>
-			<button type="button"
-				class="wpss-profile-banner__dismiss"
-				data-wpss-profile-banner-dismiss
-				aria-label="<?php esc_attr_e( 'Dismiss for this session', 'wp-sell-services' ); ?>">
-				&times;
-			</button>
-		</div>
-		<script>
-			(function () {
-				if ( typeof sessionStorage === 'undefined' ) { return; }
-				var banner = document.querySelector( '[data-wpss-profile-banner]' );
-				if ( ! banner ) { return; }
-				if ( sessionStorage.getItem( 'wpss_profile_banner_dismissed' ) === '1' ) {
-					banner.style.display = 'none';
-					return;
-				}
-				var dismissBtn = banner.querySelector( '[data-wpss-profile-banner-dismiss]' );
-				if ( dismissBtn ) {
-					dismissBtn.addEventListener( 'click', function () {
-						sessionStorage.setItem( 'wpss_profile_banner_dismissed', '1' );
-						banner.style.display = 'none';
-					} );
-				}
-			})();
-		</script>
-		<?php
-	}
-
-	/**
-	 * Render the "configure your payout method" banner for active vendors who
-	 * have earnings but haven't set up a payout destination yet.
-	 *
-	 * Silently no-ops when the vendor is inactive, has already configured a
-	 * payout method, or has no earnings to withdraw — banner only shows when
-	 * the vendor would actually be blocked by the missing config.
-	 *
-	 * @param int  $user_id   The current dashboard user.
-	 * @param bool $is_active Whether the user is an active vendor.
-	 * @return void
-	 */
-	private function maybe_render_payout_banner( int $user_id, bool $is_active ): void {
-		if ( ! $is_active ) {
-			return;
-		}
-
-		// This banner's only job is to drive the vendor TO the Earnings & Payouts
-		// section. On that section itself it is redundant (the section shows its
-		// own payout prompt + the actual setup UI), so suppress it there to avoid
-		// the duplicate banner.
-		if ( in_array( $this->current_section, array( 'earnings', 'wallet' ), true ) ) {
-			return;
-		}
-
-		$payout_method = get_user_meta( $user_id, 'wpss_payout_method', true );
-
-		// Already configured - no banner needed.
-		if ( ! empty( $payout_method ) ) {
-			return;
-		}
-
-		// Check if vendor has any earnings.
-		$earnings_service = new \WPSellServices\Services\EarningsService();
-		$summary          = $earnings_service->get_summary( $user_id );
-		$has_earnings     = ( $summary['available_balance'] ?? 0 ) > 0 || ( $summary['pending_clearance'] ?? 0 ) > 0;
-
-		if ( ! $has_earnings ) {
-			return;
-		}
-
-		$earnings_url = $this->get_section_url( 'earnings' );
-		?>
-		<div class="wpss-dashboard__payout-banner">
-			<span class="wpss-payout-banner__icon"><i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i></span>
-			<div class="wpss-payout-banner__content">
-				<strong class="wpss-payout-banner__title">
-					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
-				</strong>
-				<span class="wpss-payout-banner__text">
-					<?php esc_html_e( 'Set up your payout method to start receiving payments.', 'wp-sell-services' ); ?>
-				</span>
-			</div>
-			<a href="<?php echo esc_url( $earnings_url ); ?>" class="wpss-btn wpss-btn--primary wpss-payout-banner__btn">
-				<?php esc_html_e( 'Set Up Payouts', 'wp-sell-services' ); ?>
-			</a>
-		</div>
-		<?php
 	}
 
 	/**
