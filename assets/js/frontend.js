@@ -1695,45 +1695,89 @@
 	/**
 	 * Show confirm dialog (replaces browser confirm()).
 	 *
+	 * Renders ONE clean modal surface — overlay + single dialog card with an
+	 * optional title, a message, and an action row (visible primary/danger
+	 * confirm + outline cancel). Focus is trapped inside the dialog, Escape
+	 * closes it, and focus is restored to the element that opened it. All
+	 * styling lives in design-system.css (.wpss-confirm); no inline styles.
+	 *
 	 * @param {string}   message   - The confirmation message.
 	 * @param {Function} onConfirm - Callback when confirmed.
-	 * @param {Object}   options   - Optional: title, confirmText, cancelText.
+	 * @param {Object}   options   - Optional: title, confirmText, cancelText,
+	 *                               tone ('danger' renders a danger confirm).
 	 */
 	WPSS.showConfirm = function(message, onConfirm, options) {
 		options = options || {};
 		var i18n = (wpssData && wpssData.i18n) || {};
 		var confirmText = options.confirmText || i18n.confirm || 'Confirm';
 		var cancelText = options.cancelText || i18n.cancel || 'Cancel';
+		var title = options.title || '';
+		var confirmVariant = 'danger' === options.tone ? 'wpss-btn--danger' : 'wpss-btn--primary';
 
 		$('#wpss-confirm-modal').remove();
 
-		var $modal = $('<div id="wpss-confirm-modal" class="wpss-modal wpss-modal-open">' +
-			'<div class="wpss-modal__backdrop"></div>' +
-			'<div class="wpss-modal__dialog wpss-modal__dialog--sm">' +
-				'<div class="wpss-modal__content">' +
-					'<div class="wpss-modal__body" style="padding:24px;text-align:center;">' +
-						'<p style="margin:0 0 20px;font-size:15px;">' + WPSS.escapeHtml(message) + '</p>' +
-						'<div style="display:flex;gap:10px;justify-content:center;">' +
-							'<button type="button" class="wpss-btn wpss-btn--outline wpss-confirm-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
-							'<button type="button" class="wpss-btn wpss-btn--primary wpss-confirm-ok">' + WPSS.escapeHtml(confirmText) + '</button>' +
-						'</div>' +
-					'</div>' +
+		// Remember the opener so focus can return to it on close.
+		var opener = document.activeElement;
+
+		var titleId = 'wpss-confirm-title';
+		var msgId = 'wpss-confirm-message';
+		var labelledBy = title ? titleId : msgId;
+
+		var $modal = $('<div id="wpss-confirm-modal" class="wpss-modal wpss-modal-open" role="dialog" aria-modal="true" aria-labelledby="' + labelledBy + '">' +
+			'<div class="wpss-modal__overlay"></div>' +
+			'<div class="wpss-modal__dialog wpss-confirm" role="document">' +
+				(title ? '<h2 id="' + titleId + '" class="wpss-confirm__title">' + WPSS.escapeHtml(title) + '</h2>' : '') +
+				'<p id="' + msgId + '" class="wpss-confirm__message">' + WPSS.escapeHtml(message) + '</p>' +
+				'<div class="wpss-confirm__actions">' +
+					'<button type="button" class="wpss-btn wpss-btn--outline wpss-confirm-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
+					'<button type="button" class="wpss-btn ' + confirmVariant + ' wpss-confirm-ok">' + WPSS.escapeHtml(confirmText) + '</button>' +
 				'</div>' +
 			'</div>' +
 		'</div>');
 
 		$('body').append($modal).addClass('wpss-modal-active');
 
-		$modal.find('.wpss-confirm-ok').on('click', function() {
+		var close = function() {
+			$modal.off('keydown.wpss-confirm');
 			$modal.remove();
 			$('body').removeClass('wpss-modal-active');
+			if (opener && typeof opener.focus === 'function') {
+				opener.focus();
+			}
+		};
+
+		$modal.find('.wpss-confirm-ok').on('click', function() {
+			close();
 			if (onConfirm) onConfirm();
 		});
 
-		$modal.find('.wpss-confirm-cancel, .wpss-modal__backdrop').on('click', function() {
-			$modal.remove();
-			$('body').removeClass('wpss-modal-active');
+		$modal.find('.wpss-confirm-cancel, .wpss-modal__overlay').on('click', function() {
+			close();
 		});
+
+		// Keyboard: Escape closes; Tab is trapped between the two buttons.
+		var $focusable = $modal.find('button');
+		$modal.on('keydown.wpss-confirm', function(e) {
+			if ('Escape' === e.key) {
+				e.preventDefault();
+				close();
+				return;
+			}
+			if ('Tab' === e.key && $focusable.length) {
+				var first = $focusable.get(0);
+				var last = $focusable.get($focusable.length - 1);
+				if (e.shiftKey && document.activeElement === first) {
+					e.preventDefault();
+					last.focus();
+				} else if (!e.shiftKey && document.activeElement === last) {
+					e.preventDefault();
+					first.focus();
+				}
+			}
+		});
+
+		// Move focus into the dialog (cancel first — the safe default).
+		$modal.find('.wpss-confirm-cancel').trigger('focus');
 	};
 
 	/**

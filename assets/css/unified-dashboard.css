@@ -1137,15 +1137,25 @@
    ========================================================================== */
 
 .wpss-service-card--rejected {
-	border: 1px solid var(--wpss-danger-light);
+	border: 1px solid var(--wpss-danger-border, #fecaca);
 }
 
-.wpss-service-card__rejection {
+/* One readable stacked block: warning heading + reviewer feedback + resubmit
+   guidance. The shared .wpss-notice base sets display:flex (icon + content
+   row), which here turned the three <p> children into three narrow text
+   columns. Force a single column so the block reads top-to-bottom. The
+   danger-soft (danger-light) token gives the calm pink surface. */
+.wpss-service-card__rejection.wpss-notice {
+	display: block;
 	margin-top: 12px;
-	padding: 12px;
+	margin-bottom: 0;
+	padding: var(--wpss-space-4);
 	border-radius: var(--wpss-radius);
 	font-size: 13px;
 	line-height: 1.5;
+	background: var(--wpss-danger-light, #fef2f2);
+	color: var(--wpss-danger-dark, #991b1b);
+	border: 1px solid var(--wpss-danger-border, #fecaca);
 }
 
 .wpss-service-card__rejection-title {
@@ -1154,16 +1164,21 @@
 	gap: 6px;
 	margin: 0 0 6px;
 	font-weight: 600;
+	color: var(--wpss-danger-dark, #991b1b);
 }
 
-.wpss-service-card__rejection-reason,
-.wpss-service-card__rejection-help {
+.wpss-service-card__rejection-title .wpss-icon {
+	flex-shrink: 0;
+}
+
+.wpss-service-card__rejection-reason {
 	margin: 0 0 6px;
 }
 
 .wpss-service-card__rejection-help {
-	margin-bottom: 0;
-	color: var(--wpss-gray-600);
+	margin: 0;
+	color: var(--wpss-danger-dark, #991b1b);
+	opacity: 0.85;
 }
 
 .wpss-service-card__resubmit {
@@ -1272,12 +1287,15 @@
    Alerts
    ========================================================================== */
 
-/* Payout Banner */
+/* Payout Banner — uses the info notice token surface (AA-contrast text on a
+   calm tinted background) instead of the old yellow-on-brown gradient. The
+   icon sits in a solid token chip so it reads as a designed badge rather than
+   a loose glyph, and the CTA is pinned to the primary token pair below. */
 .wpss-dashboard__payout-banner {
-	background: linear-gradient(135deg, var(--wpss-warning-light, #fff7ed) 0%, var(--wpss-warning-light, #fffbeb) 100%);
-	border: 1px solid var(--wpss-warning-border, #fed7aa);
+	background: var(--wpss-info-light, #eff6ff);
+	border: 1px solid var(--wpss-info-border, #bfdbfe);
 	border-radius: var(--wpss-radius-lg, 12px);
-	padding: 18px 24px;
+	padding: 16px 20px;
 	margin-bottom: 24px;
 	display: flex;
 	align-items: center;
@@ -1285,24 +1303,39 @@
 }
 
 .wpss-payout-banner__icon {
-	font-size: 28px;
-	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
 	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--wpss-info, #2563eb);
+	color: var(--wpss-white, #fff);
+	font-size: 20px;
+	line-height: 1;
+}
+
+.wpss-payout-banner__icon .wpss-icon {
+	width: 20px;
+	height: 20px;
 }
 
 .wpss-payout-banner__content {
 	flex: 1;
+	min-width: 0;
 }
 
 .wpss-payout-banner__title {
 	display: block;
 	margin-bottom: 2px;
-	color: var(--wpss-warning-dark, #92400e);
+	color: var(--wpss-info-dark, #1e40af);
 	font-size: 15px;
+	font-weight: 600;
 }
 
 .wpss-payout-banner__text {
-	color: var(--wpss-warning-dark, #a16207);
+	color: var(--wpss-text-secondary, #374151);
 	font-size: 13px;
 }
 
