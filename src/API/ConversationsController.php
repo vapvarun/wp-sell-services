@@ -103,6 +103,34 @@ class ConversationsController extends RestController {
 			)
 		);
 
+		// Send a message to an order's conversation (creating the conversation
+		// if it does not exist yet). This is the order-thread composer's REST
+		// twin of the legacy wpss_send_message admin-ajax action - it keeps the
+		// "create the conversation on first message" behaviour the order page
+		// relies on, which the conversation-id-scoped route cannot provide.
+		register_rest_route(
+			$this->namespace,
+			'/orders/(?P<order_id>[\d]+)/conversation/messages',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_order_message' ),
+					'permission_callback' => array( $this, 'check_order_permission' ),
+					'args'                => array(
+						'order_id' => array(
+							'validate_callback' => array( $this, 'validate_id' ),
+						),
+						'content'  => array(
+							'required'          => false,
+							'type'              => 'string',
+							'default'           => '',
+							'sanitize_callback' => 'wp_kses_post',
+						),
+					),
+				),
+			)
+		);
+
 		// Get messages in a conversation.
 		register_rest_route(
 			$this->namespace,
@@ -114,13 +142,19 @@ class ConversationsController extends RestController {
 					'permission_callback' => array( $this, 'check_conversation_permission' ),
 					'args'                => array_merge(
 						array(
-							'id'    => array(
+							'id'       => array(
 								'validate_callback' => array( $this, 'validate_id' ),
 							),
-							'since' => array(
+							'since'    => array(
 								'description' => __( 'Only return messages after this ISO 8601 datetime.', 'wp-sell-services' ),
 								'type'        => 'string',
 								'format'      => 'date-time',
+							),
+							'after_id' => array(
+								'description'       => __( 'Only return messages with an ID greater than this (incremental polling).', 'wp-sell-services' ),
+								'type'              => 'integer',
+								'default'           => 0,
+								'sanitize_callback' => 'absint',
 							),
 						),
 						$this->get_collection_params()
@@ -134,9 +168,13 @@ class ConversationsController extends RestController {
 						'id'          => array(
 							'validate_callback' => array( $this, 'validate_id' ),
 						),
+						// Not required at the schema level: a message may be
+						// attachments-only. The callback enforces "content OR
+						// at least one attachment".
 						'content'     => array(
-							'required'          => true,
+							'required'          => false,
 							'type'              => 'string',
+							'default'           => '',
 							'sanitize_callback' => 'wp_kses_post',
 						),
 						'attachments' => array(
@@ -311,11 +349,17 @@ class ConversationsController extends RestController {
 		$conversation_id = (int) $request->get_param( 'id' );
 		$pagination      = $this->get_pagination_args( $request );
 		$since           = $request->get_param( 'since' );
+		$after_id        = (int) $request->get_param( 'after_id' );
 
 		$query_args = array(
 			'limit'  => $pagination['per_page'],
 			'offset' => $pagination['offset'],
 		);
+
+		// Incremental polling by message ID (only messages newer than after_id).
+		if ( $after_id > 0 ) {
+			$query_args['after_id'] = $after_id;
+		}
 
 		// Support 'since' parameter for efficient mobile polling.
 		if ( $since ) {
@@ -341,10 +385,70 @@ class ConversationsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function send_message( $request ) {
-		$conversation_id = (int) $request->get_param( 'id' );
-		$user_id         = get_current_user_id();
-		$content         = $request->get_param( 'content' );
-		$attachments     = $request->get_param( 'attachments' );
+		return $this->do_send_message( (int) $request->get_param( 'id' ), $request );
+	}
+
+	/**
+	 * Send a message to an order's conversation, creating it if needed.
+	 *
+	 * Order-thread composer twin of the legacy wpss_send_message action.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function send_order_message( $request ) {
+		$order_id = (int) $request->get_param( 'order_id' );
+
+		$conversation = $this->conversation_service->get_by_order( $order_id );
+		if ( ! $conversation ) {
+			$conversation = $this->conversation_service->create_for_order( $order_id );
+		}
+
+		if ( ! $conversation ) {
+			return new WP_Error(
+				'conversation_unavailable',
+				__( 'Failed to start the conversation for this order.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return $this->do_send_message( (int) $conversation->id, $request );
+	}
+
+	/**
+	 * Shared message-send routine for both the conversation-scoped and
+	 * order-scoped send endpoints.
+	 *
+	 * @param int             $conversation_id Conversation ID.
+	 * @param WP_REST_Request $request         Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function do_send_message( int $conversation_id, $request ) {
+		$user_id     = get_current_user_id();
+		$content     = (string) $request->get_param( 'content' );
+		$attachments = (array) $request->get_param( 'attachments' );
+
+		// Multipart file uploads (the order/dashboard composer posts raw files
+		// as attachments[]). Validate + ingest them through the shared helper so
+		// the allow-list/MIME/size rules match the legacy admin-ajax path. The
+		// resulting attachment objects are merged with any integer attachment
+		// IDs passed in the JSON body.
+		$skipped     = array();
+		$file_params = $request->get_file_params();
+		if ( ! empty( $file_params['attachments'] ) ) {
+			$uploaded    = wpss_handle_message_attachments( (array) $file_params['attachments'] );
+			$attachments = array_merge( $attachments, $uploaded['attachments'] );
+			$skipped     = $uploaded['skipped'];
+		}
+
+		// A message must carry text or at least one attachment.
+		if ( '' === trim( $content ) && empty( $attachments ) ) {
+			return new WP_Error(
+				'message_empty',
+				__( 'Please enter a message or attach a file.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
 
 		$message = $this->conversation_service->send_message( $conversation_id, $user_id, $content, $attachments );
 
@@ -356,13 +460,24 @@ class ConversationsController extends RestController {
 			);
 		}
 
-		return new WP_REST_Response(
-			array(
-				'message' => __( 'Message sent successfully.', 'wp-sell-services' ),
-				'data'    => $this->prepare_message_for_response( $message ),
-			),
-			201
+		$data = $this->prepare_message_for_response( $message );
+
+		$response = array(
+			'message'         => __( 'Message sent successfully.', 'wp-sell-services' ),
+			'data'            => $data,
+			// Top-level rendered row so the (server-rendered) thread UIs can
+			// append markup identical to first paint without re-rendering.
+			'html'            => $data['html'] ?? '',
+			// Echo the resolved conversation so an order composer that created
+			// the conversation on this first send can begin polling it.
+			'conversation_id' => $conversation_id,
 		);
+
+		if ( ! empty( $skipped ) ) {
+			$response['warnings'] = $skipped;
+		}
+
+		return new WP_REST_Response( $response, 201 );
 	}
 
 	/**
@@ -513,6 +628,10 @@ class ConversationsController extends RestController {
 			'is_read'     => $is_read,
 			'is_edited'   => $message->is_edited ?? false,
 			'created_at'  => $this->format_datetime( $message->created_at ?? null ),
+			// Additive: server-rendered message row so the (server-rendered)
+			// thread UIs append byte-identical markup. Mirrors the reviews
+			// pattern; structured fields above remain the canonical contract.
+			'html'        => wpss_render_message_row( $message, $user_id ),
 		);
 	}
 

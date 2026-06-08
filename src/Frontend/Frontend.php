@@ -141,9 +141,10 @@ class Frontend {
 			'wpss-frontend',
 			'wpss',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'restUrl' => rest_url( 'wpss/v1/' ),
-				'nonce'   => wp_create_nonce( 'wpss_frontend_nonce' ),
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'restUrl'   => rest_url( 'wpss/v1/' ),
+				'nonce'     => wp_create_nonce( 'wpss_frontend_nonce' ),
+				'restNonce' => wp_create_nonce( 'wp_rest' ),
 			)
 		);
 

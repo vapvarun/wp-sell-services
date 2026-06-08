@@ -149,24 +149,22 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 
 						$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'wp-sell-services' ) ); ?>');
 
+						// REST: POST /conversations/{id}/messages (text-only here).
+						var convId = $form.find('[name="conversation_id"]').val();
 						$.ajax({
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-							type: 'POST',
-							data: {
-								action: 'wpss_send_direct_message',
-								conversation_id: $form.find('[name="conversation_id"]').val(),
-								message: $textarea.val(),
-								wpss_message_nonce: $form.find('[name="wpss_message_nonce"]').val()
+							url: '<?php echo esc_url_raw( rest_url( 'wpss/v1/conversations/' ) ); ?>' + convId + '/messages',
+							method: 'POST',
+							data: { content: $textarea.val() },
+							beforeSend: function(xhr) {
+								xhr.setRequestHeader('X-WP-Nonce', '<?php echo esc_js( wp_create_nonce( 'wp_rest' ) ); ?>');
 							},
-							success: function(response) {
-								if (response.success) {
-									location.reload();
-								} else {
-									wpssShowNotice(response.data.message || '<?php echo esc_js( __( 'Failed to send message.', 'wp-sell-services' ) ); ?>', 'error');
-								}
+							success: function() {
+								location.reload();
 							},
-							error: function() {
-								wpssShowNotice('<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
+							error: function(xhr) {
+								var msg = (xhr.responseJSON && xhr.responseJSON.message)
+									|| '<?php echo esc_js( __( 'Failed to send message.', 'wp-sell-services' ) ); ?>';
+								wpssShowNotice(msg, 'error');
 							},
 							complete: function() {
 								$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send', 'wp-sell-services' ) ); ?>');

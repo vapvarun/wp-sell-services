@@ -195,23 +195,38 @@ class ConversationService {
 		$table = $wpdb->prefix . 'wpss_messages';
 
 		$defaults = array(
-			'limit'  => 50,
-			'offset' => 0,
-			'order'  => 'ASC',
+			'limit'    => 50,
+			'offset'   => 0,
+			'order'    => 'ASC',
+			'after_id' => 0,
 		);
 
-		$args  = wp_parse_args( $args, $defaults );
-		$order = 'ASC' === strtoupper( $args['order'] ) ? 'ASC' : 'DESC';
+		$args     = wp_parse_args( $args, $defaults );
+		$order    = 'ASC' === strtoupper( $args['order'] ) ? 'ASC' : 'DESC';
+		$after_id = (int) $args['after_id'];
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE conversation_id = %d ORDER BY created_at {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$conversation_id,
-				$args['limit'],
-				$args['offset']
-			)
-		);
+		// Optional incremental fetch (polling): only messages with id > after_id.
+		if ( $after_id > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$table} WHERE conversation_id = %d AND id > %d ORDER BY created_at {$order} LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$conversation_id,
+					$after_id,
+					$args['limit']
+				)
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$table} WHERE conversation_id = %d ORDER BY created_at {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$conversation_id,
+					$args['limit'],
+					$args['offset']
+				)
+			);
+		}
 
 		return array_map( fn( $row ) => Message::from_db( $row ), $rows );
 	}

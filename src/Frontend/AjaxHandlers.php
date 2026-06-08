@@ -792,86 +792,16 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to send messages in this order.', 'wp-sell-services' ) ) );
 		}
 
-		// Handle file attachments.
+		// Handle file attachments via the shared validator/uploader (same
+		// allow-list, MIME re-check, size cap, and upload behaviour as the REST
+		// ConversationsController::send_message path).
 		$attachments_data = array();
 		$skipped_files    = array();
 		if ( ! empty( $_FILES['attachments'] ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-			require_once ABSPATH . 'wp-admin/includes/media.php';
-
-			// Allowed file types for conversation attachments.
-			$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
-			$allowed_mimes = array(
-				'image/jpeg',
-				'image/png',
-				'image/gif',
-				'image/webp',
-				'application/pdf',
-				'application/msword',
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-				'application/zip',
-				'text/plain',
-			);
-			$max_size      = 10 * 1024 * 1024; // 10MB per file.
-
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$files = $_FILES['attachments'];
-
-			// Handle multiple files.
-			if ( is_array( $files['name'] ) ) {
-				$file_count = count( $files['name'] );
-				for ( $i = 0; $i < $file_count; $i++ ) {
-					if ( empty( $files['name'][ $i ] ) ) {
-						continue;
-					}
-
-					$file = array(
-						'name'     => $files['name'][ $i ],
-						'type'     => $files['type'][ $i ],
-						'tmp_name' => $files['tmp_name'][ $i ],
-						'error'    => $files['error'][ $i ],
-						'size'     => $files['size'][ $i ],
-					);
-
-					$file_name = sanitize_file_name( $file['name'] );
-
-					// Validate file extension.
-					$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-					if ( ! in_array( $ext, $allowed_types, true ) ) {
-						$skipped_files[] = $file_name . ': ' . __( 'unsupported file type', 'wp-sell-services' );
-						continue;
-					}
-
-					// Validate MIME type to prevent extension spoofing.
-					$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-					$mime_type = $file_info['type'] ?? '';
-					if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
-						$skipped_files[] = $file_name . ': ' . __( 'invalid MIME type', 'wp-sell-services' );
-						continue;
-					}
-
-					// Validate file size.
-					if ( $file['size'] > $max_size ) {
-						$skipped_files[] = $file_name . ': ' . __( 'file too large (max 10MB)', 'wp-sell-services' );
-						continue;
-					}
-
-					$_FILES['upload_file'] = $file;
-					$attachment_id         = media_handle_upload( 'upload_file', 0 );
-
-					if ( ! is_wp_error( $attachment_id ) ) {
-						$attachments_data[] = array(
-							'id'   => $attachment_id,
-							'url'  => wp_get_attachment_url( $attachment_id ),
-							'name' => $files['name'][ $i ],
-							'type' => $mime_type, // Use server-verified MIME type, not client-provided.
-						);
-					} else {
-						$skipped_files[] = $file_name . ': ' . $attachment_id->get_error_message();
-					}
-				}
-			}
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
+			$uploaded         = wpss_handle_message_attachments( (array) $_FILES['attachments'] );
+			$attachments_data = $uploaded['attachments'];
+			$skipped_files    = $uploaded['skipped'];
 		}
 
 		// Get or create conversation for this order.
@@ -899,46 +829,10 @@ class AjaxHandlers {
 		}
 
 		$message_id = $message->id;
-		$user       = get_userdata( $user_id );
 
-		// Generate HTML for the new message.
-		ob_start();
-		?>
-		<div class="wpss-messaging__message wpss-messaging__message--sent" data-message-id="<?php echo esc_attr( $message_id ); ?>">
-			<div class="wpss-messaging__message-content">
-				<div class="wpss-messaging__bubble">
-					<div class="wpss-messaging__text">
-						<?php echo wp_kses_post( nl2br( $content ) ); ?>
-					</div>
-					<?php if ( ! empty( $attachments_data ) ) : ?>
-						<div class="wpss-messaging__attachments">
-							<?php foreach ( $attachments_data as $attachment ) : ?>
-								<?php $is_image = strpos( $attachment['type'], 'image/' ) === 0; ?>
-								<?php if ( $is_image ) : ?>
-									<a href="<?php echo esc_url( $attachment['url'] ); ?>" target="_blank" class="wpss-messaging__attachment-image">
-										<img src="<?php echo esc_url( $attachment['url'] ); ?>" alt="<?php echo esc_attr( $attachment['name'] ); ?>">
-									</a>
-								<?php else : ?>
-									<a href="<?php echo esc_url( $attachment['url'] ); ?>" target="_blank" class="wpss-messaging__attachment-file">
-										<span class="wpss-messaging__attachment-icon">
-											<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-										</span>
-										<span class="wpss-messaging__attachment-info">
-											<span class="wpss-messaging__attachment-name"><?php echo esc_html( $attachment['name'] ); ?></span>
-										</span>
-									</a>
-								<?php endif; ?>
-							<?php endforeach; ?>
-						</div>
-					<?php endif; ?>
-				</div>
-				<span class="wpss-messaging__message-time">
-					<?php echo esc_html( wp_date( get_option( 'time_format' ) ) ); ?>
-				</span>
-			</div>
-		</div>
-		<?php
-		$html = ob_get_clean();
+		// Render the new row through the shared renderer so the markup matches
+		// the initial server render + the REST message response exactly.
+		$html = wpss_render_message_row( $message, $user_id );
 
 		$response = array(
 			'message'    => __( 'Message sent.', 'wp-sell-services' ),
@@ -1122,78 +1016,16 @@ class AjaxHandlers {
 			}
 		}
 
-		// Build HTML for each message.
+		// Build HTML for each message via the shared renderer (same markup as
+		// the initial server render + the REST message response). These are all
+		// other-party messages (the query excludes the current user), so they
+		// render with avatar + sender name.
 		$result = array();
 
 		foreach ( $messages as $msg ) {
-			$is_system = 'system' === $msg->type;
-
-			ob_start();
-			if ( $is_system ) :
-				?>
-				<div class="wpss-messaging__system">
-					<span class="wpss-messaging__system-text">
-						<?php echo wp_kses_post( $msg->content ); ?>
-						<span class="wpss-messaging__message-time">
-							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $msg->created_at ) ) ); ?>
-						</span>
-					</span>
-				</div>
-				<?php
-			else :
-				?>
-				<div class="wpss-messaging__message" data-message-id="<?php echo esc_attr( $msg->id ); ?>">
-					<div class="wpss-messaging__message-avatar">
-						<?php echo get_avatar( $msg->sender_id, 32 ); ?>
-					</div>
-					<div class="wpss-messaging__message-content">
-						<div class="wpss-messaging__bubble">
-							<span class="wpss-messaging__sender"><?php echo esc_html( $msg->sender_name ); ?></span>
-							<div class="wpss-messaging__text">
-								<?php echo wp_kses_post( nl2br( $msg->content ) ); ?>
-							</div>
-							<?php if ( ! empty( $msg->attachments ) ) : ?>
-								<?php $attachments = json_decode( $msg->attachments, true ); ?>
-								<?php if ( ! empty( $attachments ) ) : ?>
-									<div class="wpss-messaging__attachments">
-										<?php foreach ( $attachments as $attachment ) : ?>
-											<?php
-											$file_url  = $attachment['url'] ?? '';
-											$file_name = $attachment['name'] ?? basename( $file_url );
-											$file_type = $attachment['type'] ?? '';
-											$is_image  = strpos( $file_type, 'image/' ) === 0;
-											?>
-											<?php if ( $is_image && $file_url ) : ?>
-												<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-image">
-													<img src="<?php echo esc_url( $file_url ); ?>" alt="<?php echo esc_attr( $file_name ); ?>">
-												</a>
-											<?php else : ?>
-												<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
-													<span class="wpss-messaging__attachment-icon">
-														<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-													</span>
-													<span class="wpss-messaging__attachment-info">
-														<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
-													</span>
-												</a>
-											<?php endif; ?>
-										<?php endforeach; ?>
-									</div>
-								<?php endif; ?>
-							<?php endif; ?>
-						</div>
-						<span class="wpss-messaging__message-time">
-							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $msg->created_at ) ) ); ?>
-						</span>
-					</div>
-				</div>
-				<?php
-			endif;
-			$html = ob_get_clean();
-
 			$result[] = array(
 				'id'   => (int) $msg->id,
-				'html' => $html,
+				'html' => wpss_render_message_row( $msg, $user_id ),
 			);
 		}
 

@@ -2000,3 +2000,225 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 		'pages'      => (int) $query->max_num_pages,
 	);
 }
+
+/**
+ * Validate + upload conversation message file attachments.
+ *
+ * Single source of truth for message attachment handling. Used by both the
+ * REST ConversationsController::send_message and the legacy admin-ajax
+ * AjaxHandlers::send_message so the allow-list, MIME re-check, size cap, and
+ * upload behaviour are identical across transports.
+ *
+ * @since 1.2.0
+ *
+ * @param array $files A single $_FILES['attachments'] entry (PHP's grouped
+ *                     multi-file shape: name[], type[], tmp_name[], etc.).
+ * @return array{attachments: array<int, array{id:int,url:string,name:string,type:string}>, skipped: array<int,string>}
+ */
+function wpss_handle_message_attachments( array $files ): array {
+	$attachments = array();
+	$skipped     = array();
+
+	if ( empty( $files['name'] ) || ! is_array( $files['name'] ) ) {
+		return array(
+			'attachments' => $attachments,
+			'skipped'     => $skipped,
+		);
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+
+	$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
+	$allowed_mimes = array(
+		'image/jpeg',
+		'image/png',
+		'image/gif',
+		'image/webp',
+		'application/pdf',
+		'application/msword',
+		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'application/zip',
+		'text/plain',
+	);
+	$max_size      = 10 * 1024 * 1024; // 10MB per file.
+
+	$file_count = count( $files['name'] );
+	for ( $i = 0; $i < $file_count; $i++ ) {
+		if ( empty( $files['name'][ $i ] ) ) {
+			continue;
+		}
+
+		$file = array(
+			'name'     => $files['name'][ $i ],
+			'type'     => $files['type'][ $i ],
+			'tmp_name' => $files['tmp_name'][ $i ],
+			'error'    => $files['error'][ $i ],
+			'size'     => $files['size'][ $i ],
+		);
+
+		$file_name = sanitize_file_name( $file['name'] );
+
+		$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+		if ( ! in_array( $ext, $allowed_types, true ) ) {
+			$skipped[] = $file_name . ': ' . __( 'unsupported file type', 'wp-sell-services' );
+			continue;
+		}
+
+		$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+		$mime_type = $file_info['type'] ?? '';
+		if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
+			$skipped[] = $file_name . ': ' . __( 'invalid MIME type', 'wp-sell-services' );
+			continue;
+		}
+
+		if ( $file['size'] > $max_size ) {
+			$skipped[] = $file_name . ': ' . __( 'file too large (max 10MB)', 'wp-sell-services' );
+			continue;
+		}
+
+		$_FILES['upload_file'] = $file;
+		$attachment_id         = media_handle_upload( 'upload_file', 0 );
+
+		if ( ! is_wp_error( $attachment_id ) ) {
+			$attachments[] = array(
+				'id'   => $attachment_id,
+				'url'  => wp_get_attachment_url( $attachment_id ),
+				'name' => $files['name'][ $i ],
+				'type' => $mime_type, // Server-verified MIME, not client-provided.
+			);
+		} else {
+			$skipped[] = $file_name . ': ' . $attachment_id->get_error_message();
+		}
+	}
+
+	return array(
+		'attachments' => $attachments,
+		'skipped'     => $skipped,
+	);
+}
+
+/**
+ * Render one conversation message row (the canonical messaging markup).
+ *
+ * Single source of truth for a message bubble in the order/dashboard thread.
+ * Used by the initial server render (templates/order/conversation.php), the
+ * REST message response (additive `html` field), the REST/AJAX send response,
+ * and the AJAX poll - so every transport appends byte-identical markup.
+ *
+ * Accepts either a Message model (attachments/read_by as arrays, created_at as
+ * DateTimeImmutable) or a raw $wpdb row (JSON strings, string created_at, with
+ * an optional sender_name from a JOIN); the shape is normalised internally.
+ *
+ * @since 1.2.0
+ *
+ * @param object $message         Message model or raw DB row.
+ * @param int    $current_user_id Viewer user ID (controls sent/received styling).
+ * @return string Message row HTML.
+ */
+function wpss_render_message_row( object $message, int $current_user_id ): string {
+	$sender_id = (int) ( $message->sender_id ?? 0 );
+	$content   = (string) ( $message->content ?? '' );
+	$type      = $message->type ?? ( $message->content_type ?? 'text' );
+	$is_own    = $sender_id === $current_user_id;
+	$is_system = 'system' === $type;
+
+	// Normalise created_at to a timestamp.
+	$created = $message->created_at ?? null;
+	if ( $created instanceof \DateTimeInterface ) {
+		$created_ts = $created->getTimestamp();
+	} else {
+		$created_ts = $created ? strtotime( (string) $created ) : time();
+	}
+	$time_text = wp_date( get_option( 'time_format' ), $created_ts );
+
+	// Normalise attachments + read_by to arrays.
+	$attachments = $message->attachments ?? array();
+	if ( is_string( $attachments ) ) {
+		$attachments = json_decode( $attachments, true ) ?: array();
+	}
+	$read_by = $message->read_by ?? array();
+	if ( is_string( $read_by ) ) {
+		$read_by = json_decode( $read_by, true ) ?: array();
+	}
+
+	// Sender display name (prefer a JOIN-supplied value, else look it up).
+	$sender_name = $message->sender_name ?? '';
+	if ( '' === $sender_name && $sender_id ) {
+		$sender      = get_userdata( $sender_id );
+		$sender_name = $sender ? $sender->display_name : '';
+	}
+
+	ob_start();
+
+	if ( $is_system ) :
+		?>
+		<div class="wpss-messaging__system">
+			<span class="wpss-messaging__system-text">
+				<?php echo wp_kses_post( $content ); ?>
+				<span class="wpss-messaging__message-time">
+					<?php echo esc_html( $time_text ); ?>
+				</span>
+			</span>
+		</div>
+		<?php
+	else :
+		?>
+		<div class="wpss-messaging__message <?php echo $is_own ? 'wpss-messaging__message--sent' : ''; ?>" data-message-id="<?php echo esc_attr( (string) ( $message->id ?? 0 ) ); ?>">
+			<?php if ( ! $is_own ) : ?>
+				<div class="wpss-messaging__message-avatar">
+					<?php echo get_avatar( $sender_id, 32 ); ?>
+				</div>
+			<?php endif; ?>
+			<div class="wpss-messaging__message-content">
+				<div class="wpss-messaging__bubble">
+					<?php if ( ! $is_own ) : ?>
+						<span class="wpss-messaging__sender"><?php echo esc_html( $sender_name ); ?></span>
+					<?php endif; ?>
+					<div class="wpss-messaging__text">
+						<?php echo wp_kses_post( nl2br( $content ) ); ?>
+					</div>
+					<?php if ( ! empty( $attachments ) ) : ?>
+						<div class="wpss-messaging__attachments">
+							<?php foreach ( $attachments as $attachment ) : ?>
+								<?php
+								$file_url  = $attachment['url'] ?? '';
+								$file_name = $attachment['name'] ?? ( $attachment['filename'] ?? basename( (string) $file_url ) );
+								$file_type = $attachment['type'] ?? '';
+								$is_image  = 0 === strpos( (string) $file_type, 'image/' );
+								?>
+								<?php if ( $is_image && $file_url ) : ?>
+									<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-image">
+										<img src="<?php echo esc_url( $file_url ); ?>" alt="<?php echo esc_attr( $file_name ); ?>">
+									</a>
+								<?php else : ?>
+									<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
+										<span class="wpss-messaging__attachment-icon">
+											<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
+										</span>
+										<span class="wpss-messaging__attachment-info">
+											<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
+										</span>
+									</a>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+				<span class="wpss-messaging__message-time">
+					<?php echo esc_html( $time_text ); ?>
+					<?php $is_read = ! empty( array_diff_key( (array) $read_by, array( $current_user_id => '' ) ) ); ?>
+					<?php if ( $is_own && $is_read ) : ?>
+						<span class="wpss-messaging__message-status wpss-messaging__message-status--read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
+							<i data-lucide="check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+						</span>
+					<?php endif; ?>
+				</span>
+			</div>
+		</div>
+		<?php
+	endif;
+
+	return (string) ob_get_clean();
+}
