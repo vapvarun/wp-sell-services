@@ -1591,16 +1591,7 @@
 	white-space: nowrap;
 }
 
-.wpss-btn--primary {
-	background: var(--wpss-primary);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--primary:hover {
-	background: var(--wpss-primary-dark);
-	color: var(--wpss-white, #fff);
-}
-
+/* .wpss-btn--primary: see design-system.css (single owner) */
 .wpss-btn--outline {
 	background: var(--wpss-white, #fff);
 	color: var(--wpss-gray-700);

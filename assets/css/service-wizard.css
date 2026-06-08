@@ -902,15 +902,7 @@ select.wpss-form-input::-ms-expand {
 	cursor: not-allowed;
 }
 
-.wpss-btn--primary {
-	color: var(--wpss-white, #fff);
-	background: var(--wpss-primary, #4f46e5);
-}
-
-.wpss-btn--primary:hover:not(:disabled) {
-	background: var(--wpss-primary-dark, #4338ca);
-}
-
+/* .wpss-btn--primary: see design-system.css (single owner) */
 .wpss-btn--success {
 	color: var(--wpss-white, #fff);
 	background: var(--wpss-success, #10b981);

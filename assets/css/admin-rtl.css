@@ -2548,6 +2548,111 @@
 }
 
 /* ==========================================================================
+   Audit Log viewer (read-only forensic trail). Composes the shared listing
+   shell (.wpss-listing-page / .wpss-list-card / .wpss-empty-state); only the
+   page-specific filter row, table cells, and the "forced" badge live here.
+   ========================================================================== */
+
+.wpss-audit-intro {
+	margin: 4px 0 16px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-audit-stats {
+	margin-bottom: 16px;
+}
+
+.wpss-audit-stats .wpss-stat-forced .wpss-stat-number {
+	color: var(--wpss-admin-danger);
+}
+
+.wpss-audit-filters form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-audit-filter {
+	min-height: 40px;
+	border-radius: var(--wpss-admin-radius-sm);
+	border: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-audit-filter--num {
+	width: 110px;
+}
+
+.wpss-audit-forced-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 40px;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-audit-filters .button {
+	min-height: 40px;
+}
+
+.wpss-audit-filters .button:focus-visible,
+.wpss-audit-filter:focus-visible,
+.wpss-audit-forced-toggle input:focus-visible {
+	outline: 2px solid var(--wpss-admin-accent);
+	outline-offset: 2px;
+}
+
+.wpss-audit-table .column-forced {
+	width: 90px;
+}
+
+.wpss-audit-actor-name {
+	display: block;
+	font-weight: 600;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-audit-actor-role {
+	display: block;
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-audit-system {
+	font-style: italic;
+	font-weight: 400;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-audit-event {
+	font-size: 12px;
+	background: var(--wpss-admin-bg-secondary);
+	color: var(--wpss-admin-secondary);
+	padding: 2px 6px;
+	border-radius: var(--wpss-admin-radius-sm);
+}
+
+.wpss-audit-change {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.wpss-audit-arrow {
+	color: var(--wpss-admin-text-tertiary);
+}
+
+.wpss-audit-natural {
+	color: var(--wpss-admin-text-tertiary);
+}
+
+.wpss-status-badge--danger {
+	background: var(--wpss-danger-border, #eba3a3);
+	color: var(--wpss-danger-dark, #761919);
+}
+
+/* ==========================================================================
    Responsive — exactly two breakpoints, anchored at the bottom of the file
    (ux-foundation responsive contract: max-width 1024px tablet, 640px mobile).
    Every override that used the legacy 1200px / 782px WP-admin breakpoints has
@@ -2723,6 +2828,17 @@
 
 	.wpss-list-card__filters .search-box input[type="search"] {
 		min-width: 0;
+		width: 100%;
+	}
+
+	.wpss-audit-filters form {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-audit-filter,
+	.wpss-audit-filter--num,
+	.wpss-audit-filters .button {
 		width: 100%;
 	}
 

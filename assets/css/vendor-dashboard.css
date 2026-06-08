@@ -538,15 +538,7 @@
 	transition: all var(--wpss-transition, 0.2s ease);
 }
 
-.wpss-btn--primary {
-	background: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--primary:hover {
-	background: var(--wpss-primary-dark, #4338ca);
-}
-
+/* .wpss-btn--primary: see design-system.css (single owner) */
 .wpss-btn--secondary {
 	background: var(--wpss-secondary, #1e293b);
 	color: var(--wpss-white, #fff);
