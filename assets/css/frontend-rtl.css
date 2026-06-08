@@ -1533,15 +1533,16 @@ article.wpss-service-card:hover {
 	color: var(--wpss-text-secondary, #383d41);
 }
 
-/* Badges */
-.wpss-badge {
-	display: inline-flex;
-	padding: 2px 6px;
-	font-size: 10px;
-	font-weight: 600;
-	border-radius: var(--wpss-radius);
-	text-transform: uppercase;
-}
+/* Badges
+   2.7.1a dedup: the bare .wpss-badge BASE block was removed here. The badge
+   primitive is owned by design-system.css (inline-flex, align-items center,
+   padding 3px var(--wpss-space-3), font-size var(--wpss-text-xs), font-weight
+   600, border-radius var(--wpss-radius-full), text-transform uppercase), which
+   loads first on every frontend cascade (wpss-design-system then wpss-frontend).
+   The status MODIFIERS below are genuine frontend-only surface variants
+   (pending, approved, completed, rejected, and order-status colours) that
+   design-system does not own, so they stay and now compose on the single
+   canonical base. */
 
 /* Pending */
 .wpss-badge--pending {
