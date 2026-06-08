@@ -445,6 +445,8 @@ class VendorService {
 			'website',
 			'intro_video_url',
 			'social_links',
+			'vacation_mode',
+			'vacation_message',
 		);
 
 		/**

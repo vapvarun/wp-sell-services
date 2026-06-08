@@ -3538,75 +3538,26 @@ class AjaxHandlers {
 		// Check if user is a vendor and update vendor-specific fields.
 		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
 
+		// Check if user is a vendor (canonical capability/role check - role-based
+		// vendors do not always carry the _wpss_is_vendor meta).
+		$is_vendor = wpss_is_vendor( $user_id );
+
 		if ( $is_vendor ) {
-			$vendor_service = new VendorService();
-			$profile        = $vendor_service->get_profile( $user_id );
+			// Build the field set from the posted form, then persist through the
+			// canonical VendorService::update_profile() (writes the
+			// wpss_vendor_profiles table) - the same path the REST twin uses, so
+			// both transports stay byte-identical and write to one store.
+			$cover_id  = absint( $_POST['cover_id'] ?? 0 );
+			$post_data = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce checked at top; each field sanitized individually inside wpss_build_vendor_profile_update().
 
-			if ( $profile ) {
-				global $wpdb;
-				$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+			// The composer posts the whole form, so an absent vacation_mode
+			// checkbox means "off" - make that explicit so the builder writes 0.
+			$post_data['vacation_mode'] = empty( $post_data['vacation_mode'] ) ? 0 : 1;
 
-				$update_data = array(
-					'updated_at' => current_time( 'mysql' ),
-				);
+			$profile_data = wpss_build_vendor_profile_update( $post_data, $avatar_id, $cover_id );
 
-				// Vendor-specific fields.
-				if ( isset( $_POST['tagline'] ) ) {
-					$update_data['tagline'] = sanitize_text_field( wp_unslash( $_POST['tagline'] ) );
-				}
-
-				if ( isset( $_POST['bio'] ) ) {
-					$update_data['bio'] = sanitize_textarea_field( wp_unslash( $_POST['bio'] ) );
-				}
-
-				if ( isset( $_POST['country'] ) ) {
-					$update_data['country'] = sanitize_text_field( wp_unslash( $_POST['country'] ) );
-				}
-
-				if ( isset( $_POST['city'] ) ) {
-					$update_data['city'] = sanitize_text_field( wp_unslash( $_POST['city'] ) );
-				}
-
-				if ( isset( $_POST['website'] ) ) {
-					$update_data['website'] = esc_url_raw( wp_unslash( $_POST['website'] ) );
-				}
-
-				if ( isset( $_POST['intro_video_url'] ) ) {
-					// Accept only YouTube/Vimeo origins — stored verbatim, rendered
-					// through wpss_vendor_video_embed_url() which turns a valid
-					// watch/share link into a safe embed iframe. Anything else
-					// clears the field so the UI falls back to no-video state.
-					$raw_video                      = esc_url_raw( wp_unslash( $_POST['intro_video_url'] ) );
-					$update_data['intro_video_url'] = wpss_is_supported_video_url( $raw_video ) ? $raw_video : '';
-				}
-
-				// Vacation mode.
-				$update_data['vacation_mode'] = ! empty( $_POST['vacation_mode'] ) ? 1 : 0;
-
-				if ( isset( $_POST['vacation_message'] ) ) {
-					$update_data['vacation_message'] = sanitize_textarea_field( wp_unslash( $_POST['vacation_message'] ) );
-				}
-
-				// Avatar and cover for vendor profile table.
-				if ( $avatar_id > 0 ) {
-					$update_data['avatar_id'] = $avatar_id;
-				} elseif ( isset( $_POST['avatar_id'] ) ) {
-					$update_data['avatar_id'] = null;
-				}
-
-				$cover_id = absint( $_POST['cover_id'] ?? 0 );
-				if ( $cover_id > 0 ) {
-					$update_data['cover_image_id'] = $cover_id;
-				} elseif ( isset( $_POST['cover_id'] ) ) {
-					$update_data['cover_image_id'] = null;
-				}
-
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->update(
-					$profiles_table,
-					$update_data,
-					array( 'user_id' => $user_id )
-				);
+			if ( ! empty( $profile_data ) ) {
+				( new VendorService() )->update_profile( $user_id, $profile_data );
 			}
 		}
 

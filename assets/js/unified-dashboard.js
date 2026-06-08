@@ -388,35 +388,49 @@
 				.prop('disabled', true)
 				.text(wpssUnifiedDashboard.i18n.processing);
 
-			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: $form.serialize() + '&action=wpss_update_vendor_profile',
-				success: function (response) {
-					if (response.success) {
-						// Show success message
-						$form.prepend(
-							'<div class="wpss-alert wpss-alert--success" style="margin-bottom: 16px;">' +
-							response.data.message +
-							'</div>'
-						);
+			// Build the field set from the form. The whole form is submitted, so
+			// force vacation_mode to an explicit 0/1 - an unchecked checkbox is
+			// absent from serialize() and would otherwise leave vacation on.
+			const data = {};
+			$form.serializeArray().forEach(function (f) { data[f.name] = f.value; });
+			const $vac = $form.find('[name="vacation_mode"]');
+			if ($vac.length && $vac.is(':checkbox')) {
+				data.vacation_mode = $vac.is(':checked') ? 1 : 0;
+			}
 
-						// Remove after 3 seconds
-						setTimeout(function () {
-							$form.find('.wpss-alert--success').fadeOut(function () {
-								$(this).remove();
-							});
-						}, 3000);
-					} else {
-						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
-					}
+			// REST: PUT /vendors/me (via POST + method override for host
+			// compatibility). Writes the wpss_vendor_profiles table - the single
+			// canonical store - so intro video, country, city, website, vacation,
+			// and cover all persist (the old AJAX twin split storage / dropped them).
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'vendors/me',
+				method: 'PUT',
+				data: data,
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				},
+				success: function () {
+					$form.prepend(
+						'<div class="wpss-alert wpss-alert--success" style="margin-bottom: 16px;">' +
+						((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.profileSaved) || 'Profile updated successfully.') +
+						'</div>'
+					);
+
+					setTimeout(function () {
+						$form.find('.wpss-alert--success').fadeOut(function () {
+							$(this).remove();
+						});
+					}, 3000);
 
 					$button
 						.prop('disabled', false)
 						.text(originalText);
 				},
-				error: function () {
-					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
+				error: function (xhr) {
+					const msg = (xhr.responseJSON && xhr.responseJSON.message)
+						|| (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain)
+						|| 'An error occurred. Please try again.';
+					WPSS.showNotification(msg, 'error');
 					$button
 						.prop('disabled', false)
 						.text(originalText);

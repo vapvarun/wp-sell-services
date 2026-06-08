@@ -89,7 +89,21 @@ class VendorsController extends RestController {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_current_vendor' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+					// Schema-derived args plus the profile-form fields that map to
+					// wpss_vendor_profiles columns (handler sanitizes each).
+					'args'                => array_merge(
+						$this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+						array(
+							'country'          => array( 'type' => 'string' ),
+							'city'             => array( 'type' => 'string' ),
+							'website'          => array( 'type' => 'string' ),
+							'intro_video_url'  => array( 'type' => 'string' ),
+							'vacation_mode'    => array( 'type' => 'boolean' ),
+							'vacation_message' => array( 'type' => 'string' ),
+							'cover_image_id'   => array( 'type' => 'integer' ),
+							'cover_id'         => array( 'type' => 'integer' ),
+						)
+					),
 				),
 			)
 		);
@@ -338,7 +352,11 @@ class VendorsController extends RestController {
 	public function update_current_vendor( $request ) {
 		$user_id = get_current_user_id();
 
-		if ( ! get_user_meta( $user_id, '_wpss_is_vendor', true ) ) {
+		// Canonical vendor check (capability/role), not the raw _wpss_is_vendor
+		// meta - role-based vendors (seeded or granted via role) do not always
+		// carry that meta, which previously rejected legitimate vendors here and
+		// silently skipped the vendor block in the AJAX twin.
+		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
@@ -346,41 +364,19 @@ class VendorsController extends RestController {
 			);
 		}
 
-		// Update bio.
-		if ( $request->has_param( 'bio' ) ) {
-			update_user_meta( $user_id, '_wpss_vendor_bio', sanitize_textarea_field( $request->get_param( 'bio' ) ) );
+		// Resolve avatar/cover attachment ids (accept both cover_image_id and
+		// the form's legacy cover_id name).
+		$avatar_id = $request->has_param( 'avatar_id' ) ? absint( $request->get_param( 'avatar_id' ) ) : 0;
+		$cover_id  = 0;
+		if ( $request->has_param( 'cover_image_id' ) ) {
+			$cover_id = absint( $request->get_param( 'cover_image_id' ) );
+		} elseif ( $request->has_param( 'cover_id' ) ) {
+			$cover_id = absint( $request->get_param( 'cover_id' ) );
 		}
 
-		// Update tagline.
-		if ( $request->has_param( 'tagline' ) ) {
-			update_user_meta( $user_id, '_wpss_vendor_tagline', sanitize_text_field( $request->get_param( 'tagline' ) ) );
-		}
-
-		// Update skills.
-		if ( $request->has_param( 'skills' ) ) {
-			$skills = array_map( 'sanitize_text_field', (array) $request->get_param( 'skills' ) );
-			update_user_meta( $user_id, '_wpss_vendor_skills', $skills );
-		}
-
-		// Update languages.
-		if ( $request->has_param( 'languages' ) ) {
-			$languages = array_map( 'sanitize_text_field', (array) $request->get_param( 'languages' ) );
-			update_user_meta( $user_id, '_wpss_vendor_languages', $languages );
-		}
-
-		// Update social links.
-		if ( $request->has_param( 'social_links' ) ) {
-			$social    = $request->get_param( 'social_links' );
-			$sanitized = array();
-			foreach ( $social as $platform => $url ) {
-				$sanitized[ sanitize_key( $platform ) ] = esc_url_raw( $url );
-			}
-			update_user_meta( $user_id, '_wpss_vendor_social', $sanitized );
-		}
-
-		// Update avatar.
+		// Global avatar user-meta (the source get_avatar_url reads). Mirrors the
+		// legacy form/AJAX path; the table avatar_id is set via the builder below.
 		if ( $request->has_param( 'avatar_id' ) ) {
-			$avatar_id = absint( $request->get_param( 'avatar_id' ) );
 			if ( $avatar_id && wp_attachment_is_image( $avatar_id ) ) {
 				update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
 			} elseif ( 0 === $avatar_id ) {
@@ -388,12 +384,54 @@ class VendorsController extends RestController {
 			}
 		}
 
-		// Update response time.
+		// Build the table-backed field set from the request (only present
+		// params), then persist through the canonical VendorService::update_profile()
+		// - the SAME path the form/AJAX uses. Previously these wrote to user_meta,
+		// which split storage and dropped intro_video/country/city/website/
+		// vacation/cover entirely (KG-5 data-loss). Now one store: the
+		// wpss_vendor_profiles table.
+		$src = array();
+		foreach ( array( 'tagline', 'bio', 'country', 'city', 'website', 'intro_video_url', 'vacation_mode', 'vacation_message' ) as $key ) {
+			if ( $request->has_param( $key ) ) {
+				$src[ $key ] = $request->get_param( $key );
+			}
+		}
+		if ( $request->has_param( 'avatar_id' ) ) {
+			$src['avatar_id'] = $avatar_id;
+		}
+		if ( $request->has_param( 'cover_image_id' ) || $request->has_param( 'cover_id' ) ) {
+			$src['cover_id'] = $cover_id;
+		}
+
+		$profile_data = wpss_build_vendor_profile_update( $src, $avatar_id, $cover_id );
+
+		// social_links has a table column too - route it through the canonical
+		// writer so it lives with the rest of the profile, not in user_meta.
+		if ( $request->has_param( 'social_links' ) ) {
+			$social = array();
+			foreach ( (array) $request->get_param( 'social_links' ) as $platform => $url ) {
+				$social[ sanitize_key( $platform ) ] = esc_url_raw( $url );
+			}
+			$profile_data['social_links'] = $social;
+		}
+
+		if ( ! empty( $profile_data ) ) {
+			( new \WPSellServices\Services\VendorService() )->update_profile( $user_id, $profile_data );
+		}
+
+		// Fields without a wpss_vendor_profiles column stay in user_meta
+		// (API-only; not part of the profile form). Additive, no regression.
+		if ( $request->has_param( 'skills' ) ) {
+			update_user_meta( $user_id, '_wpss_vendor_skills', array_map( 'sanitize_text_field', (array) $request->get_param( 'skills' ) ) );
+		}
+		if ( $request->has_param( 'languages' ) ) {
+			update_user_meta( $user_id, '_wpss_vendor_languages', array_map( 'sanitize_text_field', (array) $request->get_param( 'languages' ) ) );
+		}
 		if ( $request->has_param( 'response_time' ) ) {
 			update_user_meta( $user_id, '_wpss_vendor_response_time', sanitize_text_field( $request->get_param( 'response_time' ) ) );
 		}
 
-		// Update display name.
+		// Display name (WordPress user record).
 		if ( $request->has_param( 'display_name' ) ) {
 			wp_update_user(
 				array(

@@ -2100,6 +2100,73 @@ function wpss_handle_message_attachments( array $files ): array {
 }
 
 /**
+ * Build a sanitized vendor-profile update payload from a posted field set.
+ *
+ * Single source of truth for the vendor-profile form fields, shared by the
+ * REST VendorsController::update_current_vendor and the legacy admin-ajax
+ * AjaxHandlers::update_vendor_profile so both transports sanitize identically
+ * and write the SAME wpss_vendor_profiles columns (via
+ * VendorService::update_profile()). Only keys present in $src are included, so
+ * partial updates leave untouched fields alone.
+ *
+ * @since 1.2.0
+ *
+ * @param array $src       Unslashed field set (tagline, bio, country, city,
+ *                         website, intro_video_url, vacation_mode,
+ *                         vacation_message; avatar_id/cover_id keys signal an
+ *                         intent to clear when the id is 0).
+ * @param int   $avatar_id Resolved avatar attachment id (0 = none/clear).
+ * @param int   $cover_id  Resolved cover attachment id (0 = none/clear).
+ * @return array<string, mixed> Sanitized data for VendorService::update_profile().
+ */
+function wpss_build_vendor_profile_update( array $src, int $avatar_id, int $cover_id ): array {
+	$data = array();
+
+	if ( array_key_exists( 'tagline', $src ) ) {
+		$data['tagline'] = sanitize_text_field( (string) $src['tagline'] );
+	}
+	if ( array_key_exists( 'bio', $src ) ) {
+		$data['bio'] = sanitize_textarea_field( (string) $src['bio'] );
+	}
+	if ( array_key_exists( 'country', $src ) ) {
+		$data['country'] = sanitize_text_field( (string) $src['country'] );
+	}
+	if ( array_key_exists( 'city', $src ) ) {
+		$data['city'] = sanitize_text_field( (string) $src['city'] );
+	}
+	if ( array_key_exists( 'website', $src ) ) {
+		$data['website'] = esc_url_raw( (string) $src['website'] );
+	}
+	if ( array_key_exists( 'intro_video_url', $src ) ) {
+		// Accept only YouTube/Vimeo origins - stored verbatim, rendered through
+		// the safe embed helper. Anything else clears the field so the UI falls
+		// back to the no-video state.
+		$raw_video               = esc_url_raw( (string) $src['intro_video_url'] );
+		$data['intro_video_url'] = wpss_is_supported_video_url( $raw_video ) ? $raw_video : '';
+	}
+	if ( array_key_exists( 'vacation_mode', $src ) ) {
+		$data['vacation_mode'] = empty( $src['vacation_mode'] ) ? 0 : 1;
+	}
+	if ( array_key_exists( 'vacation_message', $src ) ) {
+		$data['vacation_message'] = sanitize_textarea_field( (string) $src['vacation_message'] );
+	}
+
+	if ( $avatar_id > 0 ) {
+		$data['avatar_id'] = $avatar_id;
+	} elseif ( array_key_exists( 'avatar_id', $src ) ) {
+		$data['avatar_id'] = null;
+	}
+
+	if ( $cover_id > 0 ) {
+		$data['cover_image_id'] = $cover_id;
+	} elseif ( array_key_exists( 'cover_id', $src ) ) {
+		$data['cover_image_id'] = null;
+	}
+
+	return $data;
+}
+
+/**
  * Render one conversation message row (the canonical messaging markup).
  *
  * Single source of truth for a message bubble in the order/dashboard thread.
