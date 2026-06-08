@@ -262,6 +262,24 @@ $pending_count = count(
 						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--ghost wpss-btn--sm" target="_blank">
 							<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 						</a>
+						<?php
+						// Pause/Publish toggle - only for the two vendor-controllable
+						// states. Pending + rejected services route through moderation
+						// (use the Resubmit flow), so no direct toggle for those.
+						$wpss_real_status = get_post_status( $service_id );
+						if ( in_array( $wpss_real_status, array( 'publish', 'draft' ), true ) && 'rejected' !== $item_status ) :
+							?>
+							<button type="button"
+								class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-toggle-status"
+								data-service-id="<?php echo esc_attr( $service_id ); ?>"
+								data-current-status="<?php echo esc_attr( $wpss_real_status ); ?>">
+								<?php
+								echo 'publish' === $wpss_real_status
+									? esc_html__( 'Pause', 'wp-sell-services' )
+									: esc_html__( 'Publish', 'wp-sell-services' );
+								?>
+							</button>
+						<?php endif; ?>
 						<button type="button" class="wpss-btn wpss-btn--danger wpss-btn--sm wpss-delete-service" data-service-id="<?php echo esc_attr( $service_id ); ?>">
 							<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
 						</button>
