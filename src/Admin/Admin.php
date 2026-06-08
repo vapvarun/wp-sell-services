@@ -19,7 +19,9 @@ use WPSellServices\Admin\Metaboxes\OrderMetabox;
 use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
+use WPSellServices\Admin\Pages\ReviewModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
+use WPSellServices\Admin\Pages\NotificationsPage;
 use WPSellServices\Admin\Pages\AuditLogPage;
 use WPSellServices\Admin\Pages\SetupWizardPage;
 use WPSellServices\Admin\Pages\UpgradePage;
@@ -65,11 +67,25 @@ class Admin {
 	private ServiceModerationPage $moderation_page;
 
 	/**
+	 * Review moderation page instance.
+	 *
+	 * @var ReviewModerationPage
+	 */
+	private ReviewModerationPage $review_moderation_page;
+
+	/**
 	 * Withdrawals page instance.
 	 *
 	 * @var WithdrawalsPage
 	 */
 	private WithdrawalsPage $withdrawals_page;
+
+	/**
+	 * Notifications viewer page instance.
+	 *
+	 * @var NotificationsPage
+	 */
+	private NotificationsPage $notifications_page;
 
 	/**
 	 * Audit log viewer page instance.
@@ -96,13 +112,15 @@ class Admin {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->settings          = new Settings();
-		$this->manual_order_page = new ManualOrderPage();
-		$this->vendors_page      = new VendorsPage();
-		$this->moderation_page   = new ServiceModerationPage();
-		$this->withdrawals_page  = new WithdrawalsPage();
-		$this->audit_log_page    = new AuditLogPage();
-		$this->setup_wizard_page = new SetupWizardPage();
+		$this->settings               = new Settings();
+		$this->manual_order_page      = new ManualOrderPage();
+		$this->vendors_page           = new VendorsPage();
+		$this->moderation_page        = new ServiceModerationPage();
+		$this->review_moderation_page = new ReviewModerationPage();
+		$this->withdrawals_page       = new WithdrawalsPage();
+		$this->notifications_page     = new NotificationsPage();
+		$this->audit_log_page         = new AuditLogPage();
+		$this->setup_wizard_page      = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
 			$this->upgrade_page = new UpgradePage();
@@ -147,6 +165,7 @@ class Admin {
 			'edit.php?post_type=wpss_service',                               // All Services.
 			'post-new.php?post_type=wpss_service',                           // Add New Service.
 			'wpss-moderation',                                               // Service Moderation.
+			'wpss-review-moderation',                                        // Review Moderation.
 			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
 			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
 			'edit.php?post_type=wpss_request',                               // Buyer Requests.
@@ -158,6 +177,7 @@ class Admin {
 			'wpss-disputes',                                                 // Disputes.
 			'wpss-analytics',                                                // Analytics (Pro).
 			'wpss-settings',                                                 // Settings.
+			'wpss-notifications',                                             // My Notifications (read-only viewer).
 			'wpss-audit-log',                                                // Audit Log (forensic trail).
 			'wpss-license',                                                  // License (Pro).
 			'wpss-upgrade',                                                  // Upgrade to Pro (free only).
@@ -277,7 +297,9 @@ class Admin {
 		$this->manual_order_page->init();
 		$this->vendors_page->init();
 		$this->moderation_page->init();
+		$this->review_moderation_page->init();
 		$this->withdrawals_page->init();
+		$this->notifications_page->init();
 		$this->audit_log_page->init();
 		$this->setup_wizard_page->init();
 
@@ -923,8 +945,10 @@ class Admin {
 			'sell-services_page_wpss-vendors',
 			'sell-services_page_wpss-withdrawals',
 			'sell-services_page_wpss-moderation',
+			'sell-services_page_wpss-review-moderation',
 			'sell-services_page_wpss-disputes',
 			'sell-services_page_wpss-settings',
+			'sell-services_page_wpss-notifications',
 			'sell-services_page_wpss-audit-log',
 			'admin_page_wpss-create-order',
 			'admin_page_wpss-setup-wizard',
