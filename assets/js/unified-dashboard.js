@@ -273,20 +273,19 @@
 					if (newStatus) {
 						$button.data('current-status', newStatus);
 
-						const $card = $button.closest('.wpss-card');
-						const $badge = $card.find('.wpss-badge');
+						// Match the actual card markup in
+						// templates/dashboard/sections/services.php:
+						// .wpss-service-card wrapper + .wpss-service-card__status badge.
+						const $card = $button.closest('.wpss-service-card');
+						const $badge = $card.find('.wpss-service-card__status');
 						const newStatusText = newStatus === 'publish' ? ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.published) || 'Published') : ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.draft) || 'Draft');
 						$badge.text(newStatusText);
-						$badge.removeClass('wpss-badge--success wpss-badge--neutral');
-						$badge.addClass(newStatus === 'publish' ? 'wpss-badge--success' : 'wpss-badge--neutral');
+						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--draft');
+						$badge.addClass(newStatus === 'publish' ? 'wpss-service-card__status--publish' : 'wpss-service-card__status--draft');
 
-						if (newStatus === 'publish') {
-							$button.html('<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>');
-							$button.attr('title', wpssUnifiedDashboard.i18n.pause || 'Pause');
-						} else {
-							$button.html('<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>');
-							$button.attr('title', wpssUnifiedDashboard.i18n.activate || 'Activate');
-						}
+						// Button label is plain text ("Pause" / "Publish"),
+						// matching how the template renders it.
+						$button.text(newStatus === 'publish' ? (wpssUnifiedDashboard.i18n.pause || 'Pause') : (wpssUnifiedDashboard.i18n.publish || 'Publish'));
 					} else {
 						WPSS.showNotification((response && response.message) || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
 					}
