@@ -195,10 +195,56 @@ $show_payout_banner = empty( $payout_method )
 		<?php endif; ?>
 	</div>
 
+	<?php
+	/**
+	 * Fires in the Payouts section's payout-methods area.
+	 *
+	 * The single place where payout-method rails render their vendor-facing UI,
+	 * so every method lives in ONE vendor section instead of separate nav items.
+	 * Manual withdrawal (above) is the universal baseline; add-ons (Pro PayPal
+	 * Payouts, Stripe Connect) hook here to render their setup/status when the
+	 * site owner has enabled that rail. Guarded with has_action() so a manual-
+	 * only site shows no empty block.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int    $user_id       Current vendor user ID.
+	 * @param string $payout_method The vendor's saved payout-method meta, if any.
+	 */
+	if ( has_action( 'wpss_payout_methods' ) ) :
+		?>
+		<div class="wpss-earnings__payout-methods wpss-payout-methods" style="margin-top: 2rem;">
+			<h3><?php esc_html_e( 'Payout Methods', 'wp-sell-services' ); ?></h3>
+			<p class="wpss-payout-methods__intro">
+				<?php esc_html_e( 'Set up how you would like to get paid. Your site can pay you manually using the withdrawal request above, or through one of the connected methods below.', 'wp-sell-services' ); ?>
+			</p>
+			<?php do_action( 'wpss_payout_methods', $user_id, $payout_method ); ?>
+		</div>
+		<?php
+	endif;
+	?>
+
 	<!-- Wallet Transactions Ledger -->
 	<div class="wpss-earnings__wallet wpss-wallet" style="margin-top: 2rem;">
-		<h3><?php esc_html_e( 'Wallet Transactions', 'wp-sell-services' ); ?></h3>
-		<p class="wpss-form-hint"><?php esc_html_e( 'Every credit and debit on your wallet, newest first.', 'wp-sell-services' ); ?></p>
+		<div class="wpss-wallet__header">
+			<div>
+				<h3><?php esc_html_e( 'Wallet Transactions', 'wp-sell-services' ); ?></h3>
+				<p class="wpss-form-hint"><?php esc_html_e( 'Every credit and debit on your wallet, newest first.', 'wp-sell-services' ); ?></p>
+			</div>
+			<?php
+			/**
+			 * Fires in the wallet ledger header, for ledger controls.
+			 *
+			 * Add-ons (Pro) hook here to add a period selector + CSV export for
+			 * the ledger, so those controls live in the one Earnings & Payouts
+			 * section rather than a duplicate template.
+			 *
+			 * @since 1.2.0
+			 * @param int $user_id Current vendor user ID.
+			 */
+			do_action( 'wpss_earnings_ledger_actions', $user_id );
+			?>
+		</div>
 
 		<div id="wpss-wallet-transactions"
 			class="wpss-wallet__list"

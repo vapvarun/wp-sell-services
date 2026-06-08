@@ -298,7 +298,7 @@ class UnifiedDashboard {
 					),
 					'earnings'  => array(
 						'icon'  => 'wallet',
-						'label' => __( 'Earnings', 'wp-sell-services' ),
+						'label' => __( 'Earnings & Payouts', 'wp-sell-services' ),
 					),
 					'portfolio' => array(
 						'icon'  => 'folder',
@@ -499,8 +499,8 @@ class UnifiedDashboard {
 			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
 			'services'       => __( 'My Services', 'wp-sell-services' ),
 			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),
-			'earnings'       => __( 'Earnings', 'wp-sell-services' ),
-			'wallet'         => __( 'Wallet & Earnings', 'wp-sell-services' ),
+			'earnings'       => __( 'Earnings & Payouts', 'wp-sell-services' ),
+			'wallet'         => __( 'Earnings & Payouts', 'wp-sell-services' ),
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
 			'portfolio'      => __( 'Portfolio', 'wp-sell-services' ),
 			'messages'       => __( 'Messages', 'wp-sell-services' ),
