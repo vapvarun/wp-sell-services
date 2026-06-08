@@ -422,7 +422,25 @@
 .wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 .wpss-btn--danger { background: var(--wpss-danger); color: var(--wpss-white, #fff); border-color: var(--wpss-danger); }
+.wpss-btn--danger:hover { background: var(--wpss-danger-dark, #b91c1c); border-color: var(--wpss-danger-dark, #b91c1c); color: var(--wpss-white, #fff); }
 .wpss-btn--success { background: var(--wpss-success); color: var(--wpss-white, #fff); border-color: var(--wpss-success); }
+
+/* Theme-proof filled CTAs — when a .wpss-btn renders OUTSIDE the .wpss-app
+   scope (e.g. a confirm modal appended straight to <body>), the host theme's
+   generic `a` / `button` rules can override the fill and leave white text on
+   a transparent button (an invisible "Confirm" / "Delete"). Pinning the
+   token pair on link/visited states here — at a specificity theme link rules
+   cannot beat — guarantees every filled CTA reads correctly on every surface,
+   in every theme. Mirrors the banner-CTA fix from 2.7.1. */
+a.wpss-btn--primary, a.wpss-btn--primary:link, a.wpss-btn--primary:visited,
+button.wpss-btn--primary,
+.wpss-btn--primary { background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-white, #fff); }
+a.wpss-btn--danger, a.wpss-btn--danger:link, a.wpss-btn--danger:visited,
+button.wpss-btn--danger,
+.wpss-btn--danger { background: var(--wpss-danger); border-color: var(--wpss-danger); color: var(--wpss-white, #fff); }
+a.wpss-btn--success, a.wpss-btn--success:link, a.wpss-btn--success:visited,
+button.wpss-btn--success,
+.wpss-btn--success { background: var(--wpss-success); border-color: var(--wpss-success); color: var(--wpss-white, #fff); }
 
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 .wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }
@@ -547,6 +565,16 @@
 .wpss-modal__close:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
 .wpss-modal__title { font-size: var(--wpss-text-2xl); font-weight: 600; color: var(--wpss-text); margin: 0 0 var(--wpss-space-6); padding-inline-end: var(--wpss-space-10); }
 .wpss-modal__actions { display: flex; gap: var(--wpss-space-3); justify-content: flex-end; margin-top: var(--wpss-space-6); }
+
+/* Confirm dialog (WPSS.showConfirm) — ONE clean surface: title + message +
+   action row. The dialog card is the only box; there is no nested
+   content/body wrapper, so the modal never reads as a double-card. */
+.wpss-modal__dialog.wpss-confirm { padding: var(--wpss-space-8); max-width: 420px; }
+.wpss-confirm { display: flex; flex-direction: column; gap: var(--wpss-space-4); text-align: center; }
+.wpss-confirm__title { margin: 0; font-size: var(--wpss-text-xl); font-weight: 600; color: var(--wpss-text); }
+.wpss-confirm__message { margin: 0; font-size: var(--wpss-text-base); line-height: 1.55; color: var(--wpss-text-secondary); }
+.wpss-confirm__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-2); }
+.wpss-confirm__actions .wpss-btn { min-width: 110px; }
 
 /* ==========================================================================
    11. LAYOUT UTILITIES

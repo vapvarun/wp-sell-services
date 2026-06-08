@@ -519,7 +519,7 @@
 						$button.prop('disabled', false);
 					}
 				});
-			}, { confirmText: 'Delete' });
+			}, { confirmText: 'Delete', tone: 'danger' });
 		},
 
 		/**
@@ -733,7 +733,7 @@
 						}
 					});
 				},
-				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete' }
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete', tone: 'danger' }
 			);
 		},
 
@@ -833,7 +833,7 @@
 						}
 					});
 				},
-				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete' }
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete', tone: 'danger' }
 			);
 		},
 
