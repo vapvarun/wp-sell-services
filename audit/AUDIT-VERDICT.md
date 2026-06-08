@@ -7,19 +7,39 @@
 
 ---
 
-## Shippable? YES / WITH DOCUMENTED EXCEPTIONS
+## Shippable? YES — ZERO OPEN FINDINGS
 
-All blockers from the previous audit verdict (AdminPage wiring, emoji in templates) have been resolved. The plugin is shippable for 1.2.0 with seven AJAX/REST known gaps documented in `audit/ajax-rest-map.json`. Those known gaps are not new bugs — the legacy handlers remain registered and byte-compatible. One remaining item (readme.txt stable tag mismatch) must be bumped before a WordPress.org submission tag but does not affect functionality.
+All blockers and all seven AJAX/REST known gaps are resolved in the 1.2.0 final stretch (see "1.2.0 Final Stretch" below). The readme stable tag is bumped to 1.2.0 with an action-prefix changelog. `composer phpcs` exits 0 (errors block, warnings advisory per the documented gate).
 
-**Zero blocking bugs remain.** Every wppqa baseline finding is resolved. All 14 flow-completeness findings are either fully implemented or documented as intentional exceptions (KG-5 only).
+**Zero blocking bugs and zero deferred gaps remain.** Every wppqa baseline finding, all 14 flow-completeness findings, and all KG-1..7 AJAX→REST migrations are implemented and browser-verified. The MAJOR/MINOR findings in the table below are kept as the historical record; each is marked RESOLVED.
 
 ---
 
-## Sellable? YES / WITH POLISH
+## Sellable? YES
 
-The 1.2.0 build is premium-grade on every customer-facing surface: token-driven design system, Lucide icons throughout (no emoji), confirm modal with proper danger-tone, resubmit CTA, payout banner with Lucide wallet icon, AA-contrast notices. Admin management pages are complete and reachable. A paying customer using any feature would find a professional, consistent experience.
+The 1.2.0 build is premium-grade on every customer-facing surface: token-driven design system, Lucide icons throughout (no emoji), confirm modal with proper danger-tone, resubmit CTA, payout banner with Lucide wallet icon, AA-contrast notices. Admin management pages are complete and reachable. Every frontend feature now reads/writes through the REST API (no admin-ajax on the migrated hot paths), so the build is mobile-app-ready as well as web-premium.
 
-The seven AJAX/REST known gaps (KG-1 through KG-7) mean selected hot paths still use admin-ajax.php rather than the REST API — this is a performance and architecture concern for a 1.3.0 sprint, not a customer-visible quality defect.
+---
+
+## 1.2.0 Final Stretch — All KG migrations + polish complete (2026-06-08)
+
+Per the owner directive (zero known issues, fix everything in 1.2.0, no deferral), every AJAX/REST known gap was migrated and browser-verified, not deferred:
+
+| KG | Flow | Resolution | Verified |
+|----|------|-----------|----------|
+| KG-1 | reviews load-more (single service) | `GET /reviews` + client renderer with markup parity; additive presentation fields on ReviewsController | service 16 (198 reviews) |
+| KG-2 | review "helpful" | `POST /reviews/{id}/helpful` | with KG-1 |
+| KG-3 | services grid load/pagination | `GET /services/grid` (shared `wpss_render_services_grid`, card hooks preserved); fixed REST-context fatal in `wpss_pagination` | page 2 of 30 |
+| KG-4 | conversation send + poll | `POST /orders/{id}/conversation/messages` (multipart) + `GET /conversations/{id}/messages?after_id=`; shared `wpss_render_message_row`; dead `conversation.js` removed | text + image + live poll, order 49 |
+| KG-5 | vendor profile (flow #12) | one canonical store via `VendorService::update_profile()` for REST + AJAX; fixed `wpss_is_vendor()` guard bug on both transports | PUT 200, persisted, read-back, video embed |
+| KG-6 | single-service favorites | dead `.wpss-favorite-btn` handler removed (live toggle already REST) | favorite POST 201 |
+| KG-7 | delivery multipart upload | `POST /orders/{id}/deliverables` ingests raw `$_FILES` (the prior integer-ID arg never attached files); shared `wpss_normalize_uploaded_files` | order 49: 201, attachment stored |
+
+**Real bugs found and fixed during verification** (not in the original audit): (1) `wpss_pagination()` fataled in REST context because its `$defaults` ran `get_pagenum_link(999999999)` eagerly — guarded to a string + explicit base. (2) The vendor-profile guard read raw `_wpss_is_vendor` meta, which role-based/seeded vendors do not carry — both REST and AJAX rejected legitimate vendors; switched to `wpss_is_vendor()`.
+
+**Polish:** `composer phpcs` exits 0 (1 real error fixed; warnings advisory); duplicate `.wpss-btn--primary`/`--danger` base rules removed from design-system.css; CLI `file_get_contents`/`var_export` and read-only search-param reads given documented `phpcs:ignore`.
+
+All legacy `wp_ajax_*` handlers remain registered as backward-compatible delegates (frozen public surface — nothing removed).
 
 ---
 

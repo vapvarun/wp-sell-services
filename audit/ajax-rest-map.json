@@ -3,7 +3,8 @@
   "title": "WP Sell Services - admin-ajax to wpss/v1 REST migration map",
   "direction": "6.3.1",
   "generated": "2026-06-08",
-  "summary": "Maps every frontend admin-ajax action named in direction 6.3.1 to its wpss/v1 REST twin, records which call sites this wave migrated, and documents the flows that cannot be migrated byte-compatibly in this pass (HTML-rendering AJAX responses with no equivalent REST shape, and a profile-update twin with divergent field coverage + storage backend). All legacy wp_ajax_* handlers remain registered as backward-compatible delegates - nothing was removed.",
+  "summary": "Maps every frontend admin-ajax action to its wpss/v1 REST twin. As of 1.2.0 ALL flows (KG-1 through KG-7) are migrated and browser-verified - the HTML-rendering flows now use shared server-side renderers (wpss_render_services_grid, wpss_render_message_row) exposed over REST, and the vendor-profile twin was brought to full field+table parity (one canonical store). All legacy wp_ajax_* handlers remain registered as backward-compatible delegates - nothing was removed. former_blocker fields are retained as the historical record of what was resolved.",
+  "resolved_1_2_0": "KG-1 reviews load-more, KG-2 review helpful, KG-3 services grid, KG-4 conversation send+poll (incl. multipart attachments), KG-5 vendor profile parity (intro video + table storage; also fixed the _wpss_is_vendor vs wpss_is_vendor() guard bug shared by both transports), KG-6 single-service favorites (dead handler removed; live toggle already REST), KG-7 delivery multipart upload.",
   "conventions": {
     "rest_namespace": "wpss/v1",
     "auth_header": "X-WP-Nonce (wp_rest nonce)",
@@ -19,8 +20,9 @@
       "rest_controller": "WPSellServices\\API\\FavoritesController",
       "shared_service": "WPSellServices\\Services\\FavoritesService::add / ::remove",
       "js_call_site": "assets/js/single-service.js (WPSSFavorite.bindEvents)",
-      "migrated": false,
-      "blocker": "Migration requires localizing apiUrl + restNonce onto the wpssService object, which lives in src/Frontend/SingleServiceView.php::enqueue_assets() - that file is OUTSIDE this direction's scope (scope allows only src/Frontend/AjaxHandlers.php under src/Frontend/). The dependent single-service.js change was reverted to avoid calling an undefined wpssService.apiUrl (which would break favorites). FavoritesController add_favorite/remove_favorite were still given an additive `count` field (in-scope, src/API/**) so the migration is a one-line localization away once SingleServiceView.php is in scope.",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "Migration requires localizing apiUrl + restNonce onto the wpssService object, which lives in src/Frontend/SingleServiceView.php::enqueue_assets() - that file is OUTSIDE this direction's scope (scope allows only src/Frontend/AjaxHandlers.php under src/Frontend/). The dependent single-service.js change was reverted to avoid calling an undefined wpssService.apiUrl (which would break favorites). FavoritesController add_favorite/remove_favorite were still given an additive `count` field (in-scope, src/API/**) so the migration is a one-line localization away once SingleServiceView.php is in scope.",
       "follow_up": "KG-6"
     },
     {
@@ -76,8 +78,9 @@
       "rest_controller": "WPSellServices\\API\\ReviewsController::get_items",
       "shared_service": "WPSellServices\\Services\\ReviewService",
       "js_call_site": "assets/js/single-service.js (WPSSReviews load-more)",
-      "migrated": false,
-      "blocker": "NOT byte-compatible. load_reviews returns ob_get_clean() server-rendered review HTML ({html, has_more}); the JS appends response.data.html directly. The REST GET /reviews returns a structured JSON list envelope, not HTML. Migrating requires client-side review rendering (a behavior/markup change) which violates direction 6.3.1's 'byte-compatible response shapes; nothing removed' constraint. frontend.js's reviews-load was migrated separately with bespoke client rendering; replicating that for single-service.js is a markup-parity rewrite that must be browser-verified, out of safe scope for this static pass.",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "NOT byte-compatible. load_reviews returns ob_get_clean() server-rendered review HTML ({html, has_more}); the JS appends response.data.html directly. The REST GET /reviews returns a structured JSON list envelope, not HTML. Migrating requires client-side review rendering (a behavior/markup change) which violates direction 6.3.1's 'byte-compatible response shapes; nothing removed' constraint. frontend.js's reviews-load was migrated separately with bespoke client rendering; replicating that for single-service.js is a markup-parity rewrite that must be browser-verified, out of safe scope for this static pass.",
       "follow_up": "KG-1"
     },
     {
@@ -87,8 +90,9 @@
       "rest_twin": ["POST /wpss/v1/reviews/{id}/helpful (ReviewsController CREATABLE helpful route)"],
       "rest_controller": "WPSellServices\\API\\ReviewsController",
       "js_call_site": "assets/js/single-service.js (helpful button)",
-      "migrated": false,
-      "blocker": "Adjacent to reviews-load; deferred with it to keep the single-service reviews block migrated as one verified unit rather than half-converted. Response shape ({count}) is compatible, but it shares the reviews block and should be browser-verified together.",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "Adjacent to reviews-load; deferred with it to keep the single-service reviews block migrated as one verified unit rather than half-converted. Response shape ({count}) is compatible, but it shares the reviews block and should be browser-verified together.",
       "follow_up": "KG-2"
     },
     {
@@ -99,8 +103,9 @@
       "rest_controller": "WPSellServices\\API\\ServicesController",
       "shared_service": "WP_Query via ServicesController",
       "js_call_site": "assets/js/blocks-frontend.js (load services)",
-      "migrated": false,
-      "blocker": "NOT byte-compatible. load_services returns ob_get_clean() server-rendered cards HTML ({html, pagination}); the JS appends it to the grid. GET /services returns structured JSON. Same HTML-vs-JSON mismatch as reviews-load. Migrating requires a client-side card renderer with markup parity, browser-verified - out of safe scope for this static pass.",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "NOT byte-compatible. load_services returns ob_get_clean() server-rendered cards HTML ({html, pagination}); the JS appends it to the grid. GET /services returns structured JSON. Same HTML-vs-JSON mismatch as reviews-load. Migrating requires a client-side card renderer with markup parity, browser-verified - out of safe scope for this static pass.",
       "follow_up": "KG-3"
     },
     {
@@ -111,8 +116,9 @@
       "rest_controller": "WPSellServices\\API\\ConversationsController",
       "shared_service": "WPSellServices\\Services\\ConversationService::send_message",
       "js_call_site": "assets/js/conversation.js (sendMessage)",
-      "migrated": false,
-      "blocker": "Pre-existing JS<->PHP contract inconsistency must be resolved before a safe migration. The AJAX send_message returns {message: 'Message sent.' (string), message_id, html (rendered)}, but conversation.js reads response.data.message as a structured object (message.id, message.attachments) and re-renders it client-side - so the current consumer/handler contract is already inconsistent. The REST twin returns prepare_message_for_response (a structured object), which actually matches the JS consumer's expectation, but switching to it changes the response shape vs the (inconsistent) AJAX shape and must be browser-verified on a live thread (text + image attachment) before shipping. Per the stability mandate (never fix blindly; browser-verify every messaging flow), deferred from this static pass.",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "Pre-existing JS<->PHP contract inconsistency must be resolved before a safe migration. The AJAX send_message returns {message: 'Message sent.' (string), message_id, html (rendered)}, but conversation.js reads response.data.message as a structured object (message.id, message.attachments) and re-renders it client-side - so the current consumer/handler contract is already inconsistent. The REST twin returns prepare_message_for_response (a structured object), which actually matches the JS consumer's expectation, but switching to it changes the response shape vs the (inconsistent) AJAX shape and must be browser-verified on a live thread (text + image attachment) before shipping. Per the stability mandate (never fix blindly; browser-verify every messaging flow), deferred from this static pass.",
       "follow_up": "KG-4"
     },
     {
@@ -122,21 +128,22 @@
       "rest_twin": ["PUT /wpss/v1/vendors/me (VendorsController::update_current_vendor)"],
       "rest_controller": "WPSellServices\\API\\VendorsController",
       "js_call_site": "assets/js/unified-dashboard.js (profile form submit)",
-      "migrated": false,
-      "blocker": "The REST twin is NOT a faithful twin. (1) Field coverage diverges: the AJAX handler writes tagline, bio, country, city, website, intro_video_url (validated via wpss_is_supported_video_url), vacation_mode, vacation_message, avatar_id, cover_image_id; VendorsController::update_current_vendor handles only bio, tagline, skills, languages, social_links, avatar_id, response_time, display_name - it does NOT handle intro_video_url (the flow #12 field), country, city, website, vacation_*, or cover. (2) Storage backend diverges: AJAX writes to the {prefix}wpss_vendor_profiles custom table; the REST twin writes to user_meta. Migrating as-is would silently DROP the intro video + several profile fields and split storage - a guaranteed data-loss regression that violates 'byte-compatible; nothing removed'. A correct migration requires bringing update_current_vendor to full field + custom-table parity AND a profile read/write round-trip browser-verified for the intro-video embed - a larger piece of work than a static JS swap.",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "The REST twin is NOT a faithful twin. (1) Field coverage diverges: the AJAX handler writes tagline, bio, country, city, website, intro_video_url (validated via wpss_is_supported_video_url), vacation_mode, vacation_message, avatar_id, cover_image_id; VendorsController::update_current_vendor handles only bio, tagline, skills, languages, social_links, avatar_id, response_time, display_name - it does NOT handle intro_video_url (the flow #12 field), country, city, website, vacation_*, or cover. (2) Storage backend diverges: AJAX writes to the {prefix}wpss_vendor_profiles custom table; the REST twin writes to user_meta. Migrating as-is would silently DROP the intro video + several profile fields and split storage - a guaranteed data-loss regression that violates 'byte-compatible; nothing removed'. A correct migration requires bringing update_current_vendor to full field + custom-table parity AND a profile read/write round-trip browser-verified for the intro-video embed - a larger piece of work than a static JS swap.",
       "follow_up": "KG-5"
     }
   ],
-  "migrated_count": 4,
-  "deferred_count": 6,
+  "migrated_count": 10,
+  "deferred_count": 0,
   "removed_handlers": [],
-  "known_gaps": [
-    "KG-1: single-service.js reviews load-more (wpss_load_reviews) cannot migrate byte-compatibly - AJAX returns server-rendered HTML, REST returns JSON; needs a client-side review renderer with markup parity + browser verification.",
-    "KG-2: single-service.js review 'helpful' (wpss_mark_review_helpful) deferred with KG-1 so the reviews block migrates as one browser-verified unit.",
-    "KG-3: blocks-frontend.js services load/pagination (wpss_load_services) - same HTML-vs-JSON shape mismatch as KG-1; needs a client-side card renderer + browser verification.",
-    "KG-4: conversation.js send_message - pre-existing JS<->PHP contract inconsistency (handler returns a string message + html; JS expects a structured message object). REST twin matches the JS expectation but the swap changes the shape vs the legacy AJAX and must be browser-verified (text + image attachment) before shipping.",
-    "KG-5: unified-dashboard.js profile update incl. intro video (flow #12) - REST twin VendorsController::update_current_vendor lacks intro_video_url/country/city/website/vacation/cover handling and writes to user_meta not the wpss_vendor_profiles table; migrating as-is is a data-loss regression. Needs REST field+storage parity then browser verification of the intro-video round-trip.",
-    "KG-6: single-service.js favorites toggle migration blocked by scope - needs apiUrl+restNonce localized onto wpssService in src/Frontend/SingleServiceView.php, which is outside this direction's scope (only src/Frontend/AjaxHandlers.php is in scope under src/Frontend/). FavoritesController already returns the additive `count` field needed; the JS swap is a one-line localization away.",
-    "KG-7: frontend.js WPSS.submitDelivery (wpss_deliver_order with multipart file uploads) is a separate deliver-order path from the migrated button-driven performOrderAction. Its REST twin is POST /orders/{id}/deliverables (file-upload semantics, deliverable-object response), not the /orders/{id}/deliver status action; migrating multipart uploads must be browser-verified, deferred from this static pass."
+  "resolved_gaps": [
+    "KG-1: single-service.js reviews load-more now GETs /wpss/v1/reviews and renders each item client-side via renderReviewItem() with markup parity; ReviewsController gained additive presentation fields (created_human, review_html, vendor_reply_html/_human). Browser-verified on service 16 (198 reviews).",
+    "KG-2: review 'helpful' now POSTs /wpss/v1/reviews/{id}/helpful, reads {count}. Verified with KG-1 as one unit.",
+    "KG-3: services grid now GETs /wpss/v1/services/grid (server-rendered cards+pagination via shared wpss_render_services_grid; the service-card template + its extension hooks preserved). Fixed a REST-context fatal in wpss_pagination (get_pagenum_link guard + explicit base). Verified page 2 of 30.",
+    "KG-4: order + dashboard messaging migrated to REST (POST /orders/{id}/conversation/messages creates-on-first-send + multipart attachments; poll via GET /conversations/{id}/messages?after_id=). Shared wpss_render_message_row + wpss_handle_message_attachments. Dead conversation.js removed. Browser-verified text + image + live poll on order 49 / conversation 9.",
+    "KG-5: vendor-profile now writes ONE canonical store (wpss_vendor_profiles) via VendorService::update_profile() for both REST PUT /vendors/me and the legacy AJAX; intro_video_url/country/city/website/vacation/cover all persist. Also fixed the vendor guard (wpss_is_vendor() vs raw _wpss_is_vendor meta) that rejected role-based vendors on both transports. Browser-verified: PUT 200, DB persisted, read-back, intro-video embed renders.",
+    "KG-6: the live single-service favorite (.wpss-fav-toggle) was already REST via frontend.js; the dead .wpss-favorite-btn handler in single-service.js was removed. apiUrl+restNonce localized.",
+    "KG-7: delivery submission now POSTs /orders/{id}/deliverables with multipart files[] (create_deliverable ingests raw $_FILES via shared wpss_normalize_uploaded_files; the prior integer-ID files arg never actually attached files). Browser-verified on order 49: 201, attachment stored, order -> pending_approval."
   ]
 }
