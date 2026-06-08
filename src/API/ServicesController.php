@@ -99,7 +99,16 @@ class ServicesController extends RestController {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+					'args'                => array_merge(
+						$this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+						array(
+							'status' => array(
+								'description' => __( 'Vendor-controllable publish state.', 'wp-sell-services' ),
+								'type'        => 'string',
+								'enum'        => array( 'publish', 'draft' ),
+							),
+						)
+					),
 				),
 			)
 		);
@@ -484,6 +493,23 @@ class ServicesController extends RestController {
 
 		if ( $request->has_param( 'excerpt' ) ) {
 			$update_data['post_excerpt'] = sanitize_textarea_field( $request->get_param( 'excerpt' ) );
+		}
+
+		// Status toggle (publish <-> draft) - the REST twin of the legacy
+		// wpss_update_service_status AJAX handler the dashboard "pause/publish"
+		// control used. Restricted to the two vendor-controllable states; any
+		// other value is rejected so the route cannot be used to force a
+		// rejected/pending service live.
+		if ( $request->has_param( 'status' ) ) {
+			$requested_status = sanitize_key( (string) $request->get_param( 'status' ) );
+			if ( ! in_array( $requested_status, array( 'publish', 'draft' ), true ) ) {
+				return new WP_Error(
+					'invalid_status',
+					__( 'Status must be either publish or draft.', 'wp-sell-services' ),
+					array( 'status' => 400 )
+				);
+			}
+			$update_data['post_status'] = $requested_status;
 		}
 
 		$result = wp_update_post( $update_data, true );
