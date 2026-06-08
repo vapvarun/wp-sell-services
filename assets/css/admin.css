@@ -2653,6 +2653,76 @@
 }
 
 /* ==========================================================================
+   Payments tab — consolidated gateway sub-heading + masked secret field.
+   The stored secret is never echoed; these styles only present the masked
+   input, its reveal toggle, and the "Configured" status row.
+   ========================================================================== */
+
+.wpss-settings-subhead {
+	margin: 28px 0 12px;
+	padding-top: 20px;
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-settings-subhead__title {
+	margin: 0 0 4px;
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--wpss-admin-text);
+}
+
+.wpss-settings-subhead__desc {
+	margin: 0;
+	font-size: 13px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-secret-field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-secret-field__input {
+	flex: 1 1 240px;
+	min-width: 0;
+	font-family: var(--wpss-admin-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+	letter-spacing: 0.02em;
+}
+
+.wpss-secret-field__toggle {
+	min-height: 40px;
+	display: inline-flex;
+	align-items: center;
+}
+
+.wpss-secret-field__toggle:focus-visible {
+	outline: 2px solid var(--wpss-admin-accent);
+	outline-offset: 2px;
+}
+
+.wpss-secret-field__status {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wpss-secret-field__badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: var(--wpss-admin-radius-sm);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.6;
+	color: var(--wpss-admin-success);
+	background: var(--wpss-success-bg, rgba(0, 163, 42, 0.1));
+}
+
+/* ==========================================================================
    Responsive — exactly two breakpoints, anchored at the bottom of the file
    (ux-foundation responsive contract: max-width 1024px tablet, 640px mobile).
    Every override that used the legacy 1200px / 782px WP-admin breakpoints has
@@ -2863,6 +2933,20 @@
 
 	.wpss-empty-state__actions .wpss-btn {
 		width: 100%;
+		justify-content: center;
+	}
+
+	.wpss-secret-field {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-secret-field__input,
+	.wpss-secret-field__toggle {
+		width: 100%;
+	}
+
+	.wpss-secret-field__toggle {
 		justify-content: center;
 	}
 }
