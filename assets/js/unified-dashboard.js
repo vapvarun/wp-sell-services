@@ -20,6 +20,7 @@
 		 */
 		init: function () {
 			this.bindEvents();
+			this.initWalletLedger();
 		},
 
 		/**
@@ -65,6 +66,187 @@
 
 			// Favorites — unfavorite from the saved grid.
 			$(document).on('click', '.wpss-favorites__remove', this.handleFavoriteRemove.bind(this));
+
+			// Wallet ledger — load the next page of transactions.
+			$(document).on('click', '#wpss-wallet-load-more', this.handleWalletLoadMore.bind(this));
+		},
+
+		// Current page already loaded into the wallet ledger.
+		walletPage: 0,
+
+		/**
+		 * Boot the wallet transactions ledger on the earnings/wallet section.
+		 *
+		 * Reads the additive, read-only GET /wallet/transactions endpoint
+		 * (standard list envelope: items at the response root, total in the
+		 * X-WP-Total header) and renders the vendor's credit/debit history.
+		 * No-ops on sections that don't contain the ledger container.
+		 */
+		initWalletLedger: function () {
+			if (!$('#wpss-wallet-transactions').length) {
+				return;
+			}
+			this.walletPage = 0;
+			this.loadWalletTransactions(1);
+		},
+
+		/**
+		 * Handle the "Load more" click in the wallet ledger.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleWalletLoadMore: function (e) {
+			e.preventDefault();
+			this.loadWalletTransactions(this.walletPage + 1);
+		},
+
+		/**
+		 * Fetch and render one page of wallet transactions.
+		 *
+		 * @param {number} page Page number to request (1-based).
+		 */
+		loadWalletTransactions: function (page) {
+			var self = this;
+			var $list = $('#wpss-wallet-transactions');
+			var $more = $('#wpss-wallet-load-more');
+			var i18n = (wpssUnifiedDashboard && wpssUnifiedDashboard.i18n) || {};
+			var perPage = parseInt($list.data('per-page'), 10) || 10;
+			var restPath = $list.data('rest-path') || 'wallet/transactions';
+
+			$more.prop('disabled', true);
+			$list.attr('aria-busy', 'true');
+
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + restPath,
+				type: 'GET',
+				data: { page: page, per_page: perPage },
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				}
+			}).done(function (transactions, status, xhr) {
+				var total = parseInt(xhr.getResponseHeader('X-WP-Total'), 10) || 0;
+				self.renderWalletTransactions(transactions || [], page);
+				self.walletPage = page;
+
+				// Show "Load more" while there are more rows than rendered so far.
+				if (page * perPage < total) {
+					$more.show().prop('disabled', false);
+				} else {
+					$more.hide();
+				}
+			}).fail(function () {
+				if (self.walletPage === 0) {
+					$list.html(
+						'<p class="wpss-text-muted">' +
+						(i18n.walletLoadFailed || 'Could not load transactions. Please try again.') +
+						'</p>'
+					);
+				} else {
+					$more.prop('disabled', false);
+					WPSS.showNotification(i18n.walletLoadFailed || 'Could not load transactions. Please try again.', 'error');
+				}
+			}).always(function () {
+				$list.attr('aria-busy', 'false');
+			});
+		},
+
+		/**
+		 * Render wallet transaction rows into the ledger container.
+		 *
+		 * @param {Array}  transactions Rows from GET /wallet/transactions.
+		 * @param {number} page         Page that produced these rows.
+		 */
+		renderWalletTransactions: function (transactions, page) {
+			var i18n = (wpssUnifiedDashboard && wpssUnifiedDashboard.i18n) || {};
+			var $list = $('#wpss-wallet-transactions');
+
+			if (page === 1) {
+				$list.empty();
+			}
+
+			if (page === 1 && !transactions.length) {
+				$list.html(
+					'<p class="wpss-text-muted">' +
+					(i18n.walletEmpty || 'No wallet transactions yet.') +
+					'</p>'
+				);
+				return;
+			}
+
+			var $tbody;
+			if (page === 1) {
+				var $table = $(
+					'<div class="wpss-table-responsive">' +
+						'<table class="wpss-table wpss-wallet__table">' +
+							'<thead><tr>' +
+								'<th>' + (i18n.walletColDate || 'Date') + '</th>' +
+								'<th>' + (i18n.walletColType || 'Type') + '</th>' +
+								'<th>' + (i18n.walletColDescription || 'Description') + '</th>' +
+								'<th class="wpss-wallet__amount-col">' + (i18n.walletColAmount || 'Amount') + '</th>' +
+								'<th class="wpss-wallet__amount-col">' + (i18n.walletColBalance || 'Balance') + '</th>' +
+							'</tr></thead>' +
+							'<tbody></tbody>' +
+						'</table>' +
+					'</div>'
+				);
+				$list.append($table);
+				$tbody = $table.find('tbody');
+			} else {
+				$tbody = $list.find('.wpss-wallet__table tbody');
+			}
+
+			var self = this;
+			transactions.forEach(function (txn) {
+				$tbody.append(self.buildWalletRow(txn, i18n));
+			});
+
+			if (window.lucide && typeof window.lucide.createIcons === 'function') {
+				window.lucide.createIcons();
+			}
+		},
+
+		/**
+		 * Build one wallet ledger <tr> from a transaction row. All dynamic
+		 * values are inserted via jQuery .text() so they are escaped.
+		 *
+		 * @param {Object} txn  Transaction row.
+		 * @param {Object} i18n Localized strings.
+		 * @return {jQuery} The row element.
+		 */
+		buildWalletRow: function (txn, i18n) {
+			var amount = parseFloat(txn.amount) || 0;
+			var isDebit = amount < 0;
+			var $row = $('<tr>').addClass(isDebit ? 'wpss-wallet__row--debit' : 'wpss-wallet__row--credit');
+
+			var dateText = txn.created_at || '';
+			if (dateText && window.Date) {
+				var d = new Date(dateText);
+				if (!isNaN(d.getTime())) {
+					dateText = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+				}
+			}
+
+			var typeLabel = (txn.type || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, function (c) {
+				return c.toUpperCase();
+			});
+
+			$('<td>').text(dateText).appendTo($row);
+			$('<td>').append(
+				$('<span>').addClass('wpss-badge wpss-badge--' + (txn.type || 'neutral')).text(typeLabel || (i18n.walletTypeUnknown || 'Transaction'))
+			).appendTo($row);
+			$('<td>').text(txn.description || '').appendTo($row);
+
+			var symbol = isDebit ? '-' : '+';
+			$('<td>')
+				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
+				.text(symbol + Math.abs(amount).toFixed(2) + ' ' + (txn.currency || ''))
+				.appendTo($row);
+			$('<td>')
+				.addClass('wpss-wallet__amount-col')
+				.text((parseFloat(txn.balance_after) || 0).toFixed(2) + ' ' + (txn.currency || ''))
+				.appendTo($row);
+
+			return $row;
 		},
 
 		/**
