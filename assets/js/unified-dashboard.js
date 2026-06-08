@@ -491,7 +491,11 @@
 
 			const $button = $(e.currentTarget);
 			const serviceId = $button.data('service-id');
-			const $card = $button.closest('.wpss-card');
+			// Card wrapper is .wpss-service-card (the dashboard template), not
+			// .wpss-card - without the correct selector the post-delete fadeOut
+			// is a no-op and the deleted card stays on screen (twin of the
+			// toggle-status selector bug).
+			const $card = $button.closest('.wpss-service-card');
 
 			WPSS.showConfirm(wpssUnifiedDashboard.i18n.confirmDelete || 'Are you sure you want to delete this service? This action cannot be undone.', function () {
 				$button.prop('disabled', true);
