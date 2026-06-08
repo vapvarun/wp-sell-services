@@ -275,7 +275,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				} ).then( function ( r ) { return r.json(); } )
 					.then( function ( res ) {
 					if ( res && res.success ) {
-						statusEl.textContent = <?php echo wp_json_encode( __( '✓ Preferences saved', 'wp-sell-services' ) ); ?>;
+						statusEl.textContent = <?php echo wp_json_encode( __( 'Preferences saved', 'wp-sell-services' ) ); ?>;
 						statusEl.style.color = '#16a34a';
 						window.setTimeout( function () { statusEl.textContent = ''; }, 3000 );
 					} else {
