@@ -1742,8 +1742,18 @@ function wpss_pagination( \WP_Query $query, array $args = array() ): void {
 
 	$current_page = max( 1, get_query_var( 'paged', 1 ) );
 
+	// get_pagenum_link() resolves the current request URL. Outside the main
+	// query (e.g. a REST render) it can return a non-string, which would make
+	// str_replace() fatal. Guard it so the default base is always a string; an
+	// off-main-query caller (wpss_render_services_grid) supplies an explicit
+	// 'base' + 'format' anyway.
+	$pagenum_link = get_pagenum_link( 999999999 );
+	$default_base = is_string( $pagenum_link )
+		? str_replace( '999999999', '%#%', esc_url( $pagenum_link ) )
+		: '';
+
 	$defaults = array(
-		'base'      => str_replace( 999999999, '%#%', esc_url( get_pagenum_link( 999999999 ) ) ),
+		'base'      => $default_base,
 		'format'    => '?paged=%#%',
 		'current'   => $current_page,
 		'total'     => $total_pages,
@@ -1907,5 +1917,86 @@ function wpss_render_video_embed( string $url, string $title = '' ): string {
 		'<div class="wpss-video-embed"><iframe src="%s" title="%s" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>',
 		esc_url( $parsed['embed'] ),
 		esc_attr( $title )
+	);
+}
+
+/**
+ * Render a paginated services grid (cards + pagination markup).
+ *
+ * Single source of truth for the services-block grid: both the REST
+ * grid endpoint (ServicesController::get_grid) and the legacy
+ * admin-ajax delegate (AjaxHandlers::load_services) call this so the
+ * card template + every `wpss_*_service_card` extension hook + theme
+ * override stay identical across both transports. Server-side rendering
+ * is intentional — the card fires extension hooks a client-side JSON
+ * renderer could not reproduce.
+ *
+ * @since 1.2.0
+ *
+ * @param array  $attributes Block attributes (postsPerPage, orderBy, order, category).
+ * @param int    $page       Page number (1-based).
+ * @param string $base_url   Optional page URL the grid lives on, used as the
+ *                           pagination base. Required when rendering outside
+ *                           the main query (e.g. a REST request) where
+ *                           get_pagenum_link() cannot resolve the request URL.
+ * @return array{html: string, pagination: string, total: int, pages: int} Rendered grid parts.
+ */
+function wpss_render_services_grid( array $attributes, int $page = 1, string $base_url = '' ): array {
+	$args = array(
+		'post_type'      => 'wpss_service',
+		'post_status'    => 'publish',
+		'posts_per_page' => absint( $attributes['postsPerPage'] ?? 12 ),
+		'paged'          => max( 1, $page ),
+		'orderby'        => sanitize_key( $attributes['orderBy'] ?? 'date' ),
+		'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
+	);
+
+	// Category filter.
+	if ( ! empty( $attributes['category'] ) ) {
+		$args['tax_query'] = array(
+			array(
+				'taxonomy' => 'wpss_service_category',
+				'field'    => 'term_id',
+				'terms'    => absint( $attributes['category'] ),
+			),
+		);
+	}
+
+	$query = new \WP_Query( $args );
+
+	ob_start();
+	if ( $query->have_posts() ) {
+		while ( $query->have_posts() ) {
+			$query->the_post();
+			wpss_get_template_part( 'content', 'service-card' );
+		}
+	} else {
+		echo '<p class="wpss-no-services">' . esc_html__( 'No services found.', 'wp-sell-services' ) . '</p>';
+	}
+	wp_reset_postdata();
+	$html = ob_get_clean();
+
+	// Pagination. When a base URL is supplied (REST/off-main-query render),
+	// build an explicit base + format so paginate_links does not depend on
+	// get_pagenum_link() resolving the ambient request URL.
+	$pagination_args = array();
+	if ( '' !== $base_url ) {
+		$clean = remove_query_arg( 'paged', $base_url );
+		$sep   = ( false === strpos( $clean, '?' ) ) ? '?' : '&';
+
+		$pagination_args['base']    = $clean . '%_%';
+		$pagination_args['format']  = $sep . 'paged=%#%';
+		$pagination_args['current'] = max( 1, $page );
+	}
+
+	ob_start();
+	wpss_pagination( $query, $pagination_args );
+	$pagination = ob_get_clean();
+
+	return array(
+		'html'       => $html,
+		'pagination' => $pagination,
+		'total'      => (int) $query->found_posts,
+		'pages'      => (int) $query->max_num_pages,
 	);
 }

@@ -2927,49 +2927,14 @@ class AjaxHandlers {
 		$page       = absint( $_POST['page'] ?? 1 );
 		$attributes = isset( $_POST['attributes'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['attributes'] ) ), true ) : array();
 
-		$args = array(
-			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
-			'posts_per_page' => absint( $attributes['postsPerPage'] ?? 12 ),
-			'paged'          => $page,
-			'orderby'        => sanitize_key( $attributes['orderBy'] ?? 'date' ),
-			'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
-		);
-
-		// Category filter.
-		if ( ! empty( $attributes['category'] ) ) {
-			$args['tax_query'] = array(
-				array(
-					'taxonomy' => 'wpss_service_category',
-					'field'    => 'term_id',
-					'terms'    => absint( $attributes['category'] ),
-				),
-			);
-		}
-
-		$query = new \WP_Query( $args );
-
-		ob_start();
-		if ( $query->have_posts() ) {
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				wpss_get_template_part( 'content', 'service-card' );
-			}
-		} else {
-			echo '<p class="wpss-no-services">' . esc_html__( 'No services found.', 'wp-sell-services' ) . '</p>';
-		}
-		wp_reset_postdata();
-		$html = ob_get_clean();
-
-		// Pagination.
-		ob_start();
-		wpss_pagination( $query );
-		$pagination = ob_get_clean();
+		// Shared renderer — same code path as the REST grid endpoint so card
+		// markup + extension hooks stay identical across both transports.
+		$grid = wpss_render_services_grid( is_array( $attributes ) ? $attributes : array(), $page );
 
 		wp_send_json_success(
 			array(
-				'html'       => $html,
-				'pagination' => $pagination,
+				'html'       => $grid['html'],
+				'pagination' => $grid['pagination'],
 			)
 		);
 	}

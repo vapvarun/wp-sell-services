@@ -55,6 +55,54 @@ class ServicesController extends RestController {
 			)
 		);
 
+		// GET /services/grid - Server-rendered services grid for the services
+		// block (cards + pagination HTML). Public read; mirrors the legacy
+		// wpss_load_services admin-ajax response shape so the block's
+		// progressive enhancement (filters / pagination) works without
+		// admin-ajax. Rendering stays server-side so the card template's
+		// extension hooks + theme overrides are preserved.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/grid',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_grid' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'page'         => array(
+							'type'              => 'integer',
+							'default'           => 1,
+							'minimum'           => 1,
+							'sanitize_callback' => 'absint',
+						),
+						'postsPerPage' => array(
+							'type'              => 'integer',
+							'default'           => 12,
+							'minimum'           => 1,
+							'maximum'           => 48,
+							'sanitize_callback' => 'absint',
+						),
+						'orderBy'      => array(
+							'type'              => 'string',
+							'default'           => 'date',
+							'sanitize_callback' => 'sanitize_key',
+						),
+						'order'        => array(
+							'type'    => 'string',
+							'default' => 'DESC',
+							'enum'    => array( 'ASC', 'DESC' ),
+						),
+						'category'     => array(
+							'type'              => 'integer',
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /services/{id} - Get single service.
 		register_rest_route(
 			$this->namespace,
@@ -371,6 +419,45 @@ class ServicesController extends RestController {
 			$query->found_posts,
 			$pagination['page'],
 			$pagination['per_page']
+		);
+	}
+
+	/**
+	 * Get the server-rendered services grid (cards + pagination HTML).
+	 *
+	 * Powers the services block's progressive enhancement (filters /
+	 * pagination) over REST instead of admin-ajax. Returns the same
+	 * { html, pagination } shape the legacy wpss_load_services handler
+	 * produced. Rendering is delegated to wpss_render_services_grid() so the
+	 * card template + extension hooks + theme overrides are identical to a
+	 * first server-side paint.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_grid( $request ): WP_REST_Response {
+		$attributes = array(
+			'postsPerPage' => (int) $request->get_param( 'postsPerPage' ),
+			'orderBy'      => (string) $request->get_param( 'orderBy' ),
+			'order'        => (string) $request->get_param( 'order' ),
+			'category'     => (int) $request->get_param( 'category' ),
+		);
+
+		// Pagination links should point back at the page the block lives on,
+		// not at the REST URL. Use the request Referer when present, falling
+		// back to the services archive.
+		$referer  = (string) $request->get_header( 'referer' );
+		$base_url = ( '' !== $referer ) ? esc_url_raw( $referer ) : get_post_type_archive_link( 'wpss_service' );
+
+		$grid = wpss_render_services_grid( $attributes, (int) $request->get_param( 'page' ), (string) $base_url );
+
+		return new WP_REST_Response(
+			array(
+				'html'       => $grid['html'],
+				'pagination' => $grid['pagination'],
+				'total'      => $grid['total'],
+				'pages'      => $grid['pages'],
+			)
 		);
 	}
 
