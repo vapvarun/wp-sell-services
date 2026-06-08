@@ -831,7 +831,7 @@ class UnifiedDashboard {
 		$earnings_url = $this->get_section_url( 'earnings' );
 		?>
 		<div class="wpss-dashboard__payout-banner">
-			<span class="wpss-payout-banner__icon">&#128176;</span>
+			<span class="wpss-payout-banner__icon"><i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i></span>
 			<div class="wpss-payout-banner__content">
 				<strong class="wpss-payout-banner__title">
 					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
