@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -258,6 +258,23 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.2.0 - June 2026 =
+
+Full audit and hardening sprint. Every customer-facing surface rebuilt on the shared design system, all known issues from the 1.1.x cycle resolved.
+
+* New      - Review Moderation admin page - approve, reject, and audit customer reviews with status filters and a four-card stats strip.
+* New      - My Notifications admin page - a read-only mirror of your in-app marketplace notification stream.
+* Improve  - Unified dashboard shell across every frontend template so Services, Dashboard, and profile sections read as one product.
+* Improve  - Premium UX uplift on all frontend surfaces - token-driven styling, designed empty states, consistent buttons, badges, and notices at AA contrast.
+* Improve  - Lucide line icons throughout, replacing emoji in notifications, single-service highlights, and helpful-vote controls.
+* Improve  - Dashboard sections now use pretty permalinks (/dashboard/section/) with a 301 fallback for legacy ?section= URLs.
+* Fix      - Services archive no longer shows visitor-scoped data when set as the site front page.
+* Fix      - Services archive and single templates - card borders, category-label overlay, button backgrounds, transparent popups, and sidebar filters.
+* Fix      - Favorites now read and write a single canonical meta key, with a one-time lazy merge of the legacy key.
+* Fix      - Resubmitting a rejected service re-queues it for moderation and clears the prior rejection reason.
+* Dev      - REST status parameter on service update (publish or draft), owner-gated.
+* Dev      - audit/manifest.json refreshed; full inventory of REST routes, hooks, tables, shortcodes, and admin pages.
 
 = 1.1.1 =
 
