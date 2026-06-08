@@ -722,6 +722,37 @@ class VendorsPage {
 				float: none;
 				margin: 0 10px 0 0;
 			}
+			.wpss-admin-confirm__box {
+				max-width: 420px;
+				margin: 12% auto;
+				padding: var(--wpss-space-6, 24px);
+				width: auto;
+			}
+			.wpss-admin-confirm__msg {
+				margin: 0 0 var(--wpss-space-5, 20px);
+				font-size: var(--wpss-text-sm, 14px);
+				line-height: 1.5;
+			}
+			.wpss-admin-confirm__actions {
+				display: flex;
+				gap: var(--wpss-space-3, 12px);
+				justify-content: flex-end;
+			}
+			.wpss-form-row--inline {
+				display: flex;
+				align-items: center;
+				gap: var(--wpss-space-3, 12px);
+				margin-top: var(--wpss-space-4, 16px);
+			}
+			.wpss-status-line {
+				margin-top: var(--wpss-space-3, 12px);
+			}
+			.wpss-status-line__muted {
+				color: var(--wpss-wp-admin-text-secondary, #646970);
+			}
+			.wpss-status-line__success {
+				color: var(--wpss-success, #00a32a);
+			}
 
 			#wpss-vendor-modal-body .wpss-vendor-details {
 				padding: 20px;
@@ -788,6 +819,59 @@ class VendorsPage {
 			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
 			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
 		}
+
+		// Accessible, design-system confirm dialog (no native confirm()).
+		window.wpssAdminConfirm = window.wpssAdminConfirm || function( message, onConfirm, options ) {
+			var $ = jQuery;
+			options = options || {};
+			var confirmText = options.confirmText || '<?php echo esc_js( __( 'Confirm', 'wp-sell-services' ) ); ?>';
+			var cancelText  = options.cancelText || '<?php echo esc_js( __( 'Cancel', 'wp-sell-services' ) ); ?>';
+			var okClass     = 'danger' === options.tone ? 'wpss-btn--danger' : 'wpss-btn--primary';
+
+			$( '#wpss-admin-confirm' ).remove();
+
+			var $modal = $(
+				'<div id="wpss-admin-confirm" class="wpss-modal wpss-modal-open" role="dialog" aria-modal="true">' +
+					'<div class="wpss-modal-content wpss-admin-confirm__box">' +
+						'<p class="wpss-admin-confirm__msg"></p>' +
+						'<div class="wpss-admin-confirm__actions">' +
+							'<button type="button" class="wpss-btn wpss-admin-confirm__cancel"></button>' +
+							'<button type="button" class="wpss-btn ' + okClass + ' wpss-admin-confirm__ok"></button>' +
+						'</div>' +
+					'</div>' +
+				'</div>'
+			);
+
+			$modal.find( '.wpss-admin-confirm__msg' ).text( message );
+			$modal.find( '.wpss-admin-confirm__cancel' ).text( cancelText );
+			$modal.find( '.wpss-admin-confirm__ok' ).text( confirmText );
+
+			$( 'body' ).append( $modal );
+			$modal.find( '.wpss-admin-confirm__ok' ).trigger( 'focus' );
+
+			function close() {
+				$modal.remove();
+				$( document ).off( 'keydown.wpssAdminConfirm' );
+			}
+
+			$modal.find( '.wpss-admin-confirm__ok' ).on( 'click', function() {
+				close();
+				if ( onConfirm ) {
+					onConfirm();
+				}
+			} );
+			$modal.on( 'click', function( e ) {
+				if ( e.target === $modal[0] ) {
+					close();
+				}
+			} );
+			$modal.find( '.wpss-admin-confirm__cancel' ).on( 'click', close );
+			$( document ).on( 'keydown.wpssAdminConfirm', function( e ) {
+				if ( 27 === e.keyCode ) {
+					close();
+				}
+			} );
+		};
 
 		jQuery(function($) {
 			var $modal = $('#wpss-vendor-modal');
@@ -1575,7 +1659,7 @@ class VendorsPage {
 						},
 						success: function(response) {
 							if (response.success) {
-								$('#wpss-level-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
+								$('#wpss-level-status').html('<span class="wpss-status-line__success"></span>').find('span').text(response.data.message);
 								delete tabCache['settings'];
 								delete tabCache['overview'];
 							} else {
@@ -1598,37 +1682,42 @@ class VendorsPage {
 					var itemId = $btn.data('item-id');
 					var modAction = $btn.data('mod-action');
 
-					if (modAction === 'delete' && !confirm('<?php echo esc_js( __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ) ); ?>')) {
+					function proceed() {
+						$btn.prop('disabled', true);
+
+						$.ajax({
+							url: ajaxUrl,
+							type: 'POST',
+							data: {
+								action: 'wpss_moderate_portfolio_item',
+								nonce: nonce,
+								vendor_id: vendorId,
+								item_id: itemId,
+								mod_action: modAction
+							},
+							success: function(response) {
+								if (response.success) {
+									delete tabCache['portfolio'];
+									$('#wpss-tab-content').html(response.data.html);
+									initPortfolioHandlers();
+								} else {
+									wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
+									$btn.prop('disabled', false);
+								}
+							},
+							error: function() {
+								wpssAdminNotice('<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
+								$btn.prop('disabled', false);
+							}
+						});
+					}
+
+					if (modAction === 'delete') {
+						window.wpssAdminConfirm('<?php echo esc_js( __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ) ); ?>', proceed, { tone: 'danger' });
 						return;
 					}
 
-					$btn.prop('disabled', true);
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_moderate_portfolio_item',
-							nonce: nonce,
-							vendor_id: vendorId,
-							item_id: itemId,
-							mod_action: modAction
-						},
-						success: function(response) {
-							if (response.success) {
-								delete tabCache['portfolio'];
-								$('#wpss-tab-content').html(response.data.html);
-								initPortfolioHandlers();
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
-								$btn.prop('disabled', false);
-							}
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.prop('disabled', false);
-						}
-					});
+					proceed();
 				});
 			}
 
@@ -3200,7 +3289,7 @@ class VendorsPage {
 									<?php if ( $is_featured ) : ?>
 										<span class="wpss-status-badge wpss-status-active"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></span>
 									<?php else : ?>
-										<span style="color: #646970;">&mdash;</span>
+										<span class="wpss-status-line__muted">&mdash;</span>
 									<?php endif; ?>
 								</td>
 								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $item->created_at ) ) ); ?></td>
@@ -3341,7 +3430,7 @@ class VendorsPage {
 					);
 					?>
 				</p>
-				<div class="form-row" style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
+				<div class="form-row wpss-form-row--inline">
 					<label for="wpss-level-select-detail" class="screen-reader-text">
 						<?php esc_html_e( 'Seller Level', 'wp-sell-services' ); ?>
 					</label>
@@ -3356,8 +3445,8 @@ class VendorsPage {
 						<?php esc_html_e( 'Save Level', 'wp-sell-services' ); ?>
 					</button>
 				</div>
-				<p id="wpss-level-status" style="margin-top: 10px;">
-					<span style="color: #646970;">
+				<p id="wpss-level-status" class="wpss-status-line">
+					<span class="wpss-status-line__muted">
 						<?php
 						printf(
 							/* translators: %s: current seller level label */
