@@ -20,6 +20,7 @@ use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
+use WPSellServices\Admin\Pages\AuditLogPage;
 use WPSellServices\Admin\Pages\SetupWizardPage;
 use WPSellServices\Admin\Pages\UpgradePage;
 use WPSellServices\Admin\Tables\OrdersListTable;
@@ -71,6 +72,13 @@ class Admin {
 	private WithdrawalsPage $withdrawals_page;
 
 	/**
+	 * Audit log viewer page instance.
+	 *
+	 * @var AuditLogPage
+	 */
+	private AuditLogPage $audit_log_page;
+
+	/**
 	 * Setup wizard page instance.
 	 *
 	 * @var SetupWizardPage
@@ -93,6 +101,7 @@ class Admin {
 		$this->vendors_page      = new VendorsPage();
 		$this->moderation_page   = new ServiceModerationPage();
 		$this->withdrawals_page  = new WithdrawalsPage();
+		$this->audit_log_page    = new AuditLogPage();
 		$this->setup_wizard_page = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
@@ -149,6 +158,7 @@ class Admin {
 			'wpss-disputes',                                                 // Disputes.
 			'wpss-analytics',                                                // Analytics (Pro).
 			'wpss-settings',                                                 // Settings.
+			'wpss-audit-log',                                                // Audit Log (forensic trail).
 			'wpss-license',                                                  // License (Pro).
 			'wpss-upgrade',                                                  // Upgrade to Pro (free only).
 		);
@@ -268,6 +278,7 @@ class Admin {
 		$this->vendors_page->init();
 		$this->moderation_page->init();
 		$this->withdrawals_page->init();
+		$this->audit_log_page->init();
 		$this->setup_wizard_page->init();
 
 		if ( $this->upgrade_page ) {
@@ -914,6 +925,7 @@ class Admin {
 			'sell-services_page_wpss-moderation',
 			'sell-services_page_wpss-disputes',
 			'sell-services_page_wpss-settings',
+			'sell-services_page_wpss-audit-log',
 			'admin_page_wpss-create-order',
 			'admin_page_wpss-setup-wizard',
 			'sell-services_page_wpss-upgrade',
@@ -1113,6 +1125,10 @@ class Admin {
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings' ) ); ?>" class="wpss-action-btn">
 								<i data-lucide="settings" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Settings', 'wp-sell-services' ); ?>
+							</a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-audit-log' ) ); ?>" class="wpss-action-btn">
+								<i data-lucide="scroll-text" class="wpss-icon" aria-hidden="true"></i>
+								<?php esc_html_e( 'Audit Log', 'wp-sell-services' ); ?>
 							</a>
 						</div>
 					</div>
