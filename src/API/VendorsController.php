@@ -94,6 +94,31 @@ class VendorsController extends RestController {
 			)
 		);
 
+		// Toggle vacation mode for the current vendor.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/me/vacation',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_vacation_mode' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'enabled' => array(
+							'description' => __( 'Whether vacation mode is enabled.', 'wp-sell-services' ),
+							'type'        => 'boolean',
+							'required'    => true,
+						),
+						'message' => array(
+							'description'       => __( 'Optional vacation message shown to buyers.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+			)
+		);
+
 		// Vendor services.
 		register_rest_route(
 			$this->namespace,
@@ -381,6 +406,53 @@ class VendorsController extends RestController {
 		$vendor = get_userdata( $user_id );
 
 		return $this->prepare_item_for_response( $vendor, $request, true );
+	}
+
+	/**
+	 * Toggle vacation mode for the current vendor.
+	 *
+	 * Additive REST surface over the existing
+	 * `VendorService::set_vacation_mode()` flow so app/web clients can pause a
+	 * vendor account without the legacy form/AJAX path.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_vacation_mode( $request ) {
+		$user_id = get_current_user_id();
+
+		if ( ! get_user_meta( $user_id, '_wpss_is_vendor', true ) ) {
+			return new WP_Error(
+				'rest_not_vendor',
+				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$enabled = (bool) $request->get_param( 'enabled' );
+		$message = $request->has_param( 'message' )
+			? sanitize_textarea_field( (string) $request->get_param( 'message' ) )
+			: '';
+
+		$vendor_service = new \WPSellServices\Services\VendorService();
+		$result         = $vendor_service->set_vacation_mode( $user_id, $enabled, $message );
+
+		if ( ! $result ) {
+			return new WP_Error(
+				'rest_vacation_update_failed',
+				__( 'Could not update vacation mode. Please try again.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'enabled' => $enabled,
+				'message' => $message,
+			)
+		);
 	}
 
 	/**
