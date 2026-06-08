@@ -981,6 +981,13 @@ class ReviewsController extends RestController {
 			'vendor_reply_at' => $review->vendor_reply_at ?? null,
 			'created_at'      => $review->created_at,
 			'updated_at'      => $review->updated_at ?? null,
+			// Additive presentation fields so REST consumers (single-service.js
+			// reviews block) can render with parity to the legacy server-rendered
+			// markup without reimplementing wpautop/time-ago client-side.
+			'created_human'   => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
+			'review_html'     => wp_kses_post( wpautop( (string) $review->review ) ),
+			'vendor_reply_html'  => ! empty( $review->vendor_reply ) ? wp_kses_post( wpautop( (string) $review->vendor_reply ) ) : '',
+			'vendor_reply_human' => ! empty( $review->vendor_reply_at ) ? wpss_time_ago( (string) $review->vendor_reply_at ) : '',
 		);
 
 		/**

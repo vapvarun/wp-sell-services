@@ -242,34 +242,42 @@
                 return;
             }
 
-            // Load more reviews.
+            // Load more reviews — REST GET /reviews, rendered client-side with
+            // markup parity to the server-rendered review item.
+            const perPage = 10;
             $reviews.on('click', '.wpss-load-more-reviews', function(e) {
                 e.preventDefault();
 
                 const $btn = $(this);
                 const serviceId = $btn.data('service');
-                const page = parseInt($btn.data('page'));
+                const page = parseInt($btn.data('page'), 10);
 
                 $btn.prop('disabled', true).text((wpssService.i18n && wpssService.i18n.loading) || 'Loading...');
 
                 $.ajax({
-                    url: wpssService.ajaxUrl,
-                    type: 'POST',
-                    data: {
-                        action: 'wpss_load_reviews',
-                        service_id: serviceId,
-                        page: page,
-                        nonce: wpssService.nonce
+                    url: wpssService.apiUrl + '/reviews?service_id=' + serviceId + '&page=' + page + '&per_page=' + perPage,
+                    method: 'GET',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-WP-Nonce', wpssService.restNonce);
                     },
-                    success: function(response) {
-                        if (response.success) {
-                            $reviews.find('.wpss-reviews-list').append(response.data.html);
+                    success: function(reviews, status, xhr) {
+                        const list = Array.isArray(reviews) ? reviews : [];
+                        const $list = $reviews.find('.wpss-reviews-list');
+                        list.forEach(function(review) {
+                            $list.append(self.renderReviewItem(review));
+                        });
 
-                            if (response.data.has_more) {
-                                $btn.data('page', page + 1).prop('disabled', false).text((wpssService.i18n && wpssService.i18n.loadMoreReviews) || 'Load More Reviews');
-                            } else {
-                                $btn.remove();
-                            }
+                        // Hydrate Lucide icons in the freshly inserted markup.
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                            window.lucide.createIcons();
+                        }
+
+                        const total = parseInt(xhr.getResponseHeader('X-WP-Total'), 10) || 0;
+                        const hasMore = (page * perPage) < total;
+                        if (hasMore) {
+                            $btn.data('page', page + 1).prop('disabled', false).text((wpssService.i18n && wpssService.i18n.loadMoreReviews) || 'Load More Reviews');
+                        } else {
+                            $btn.remove();
                         }
                     },
                     error: function() {
@@ -287,30 +295,102 @@
                 }, 500);
             });
 
-            // Helpful button.
+            // Helpful button — REST POST /reviews/{id}/helpful.
             $reviews.on('click', '.wpss-review-helpful-btn', function(e) {
                 e.preventDefault();
 
                 const $btn = $(this);
                 const reviewId = $btn.data('review');
 
+                if ($btn.hasClass('marked')) {
+                    return;
+                }
+
                 $.ajax({
-                    url: wpssService.ajaxUrl,
-                    type: 'POST',
-                    data: {
-                        action: 'wpss_mark_review_helpful',
-                        review_id: reviewId,
-                        nonce: wpssService.nonce
+                    url: wpssService.apiUrl + '/reviews/' + reviewId + '/helpful',
+                    method: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-WP-Nonce', wpssService.restNonce);
                     },
                     success: function(response) {
-                        if (response.success) {
-                            const $count = $btn.find('.wpss-helpful-count');
-                            $count.text(response.data.count);
+                        if (response && typeof response.count !== 'undefined') {
+                            let $count = $btn.find('.wpss-helpful-count');
+                            if (!$count.length) {
+                                // Server omits the count span at zero; add it now.
+                                $count = $('<span class="wpss-helpful-count"></span>').appendTo($btn);
+                            }
+                            $count.text('(' + response.count + ')');
                             $btn.addClass('marked');
                         }
                     }
                 });
             });
+        },
+
+        /**
+         * Render a single review item from a REST /reviews object, matching the
+         * server-rendered markup so REST-loaded reviews are visually identical
+         * to the first page rendered by PHP.
+         *
+         * @param {Object} review REST review object.
+         * @return {string} HTML markup for one review.
+         */
+        renderReviewItem: function(review) {
+            const i18n = (wpssService && wpssService.i18n) || {};
+            const esc = function(s) { return $('<div>').text(s == null ? '' : s).html(); };
+
+            const author = review.customer_name || i18n.anonymous || 'Anonymous';
+            const avatar = review.customer_avatar || '';
+            const rating = parseInt(review.rating, 10) || 0;
+
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += '<span class="wpss-star ' + (i <= rating ? 'filled' : '') + '">★</span>';
+            }
+
+            let reply = '';
+            if (review.vendor_reply_html) {
+                let replyDate = '';
+                if (review.vendor_reply_human) {
+                    replyDate = '<span class="wpss-reply-date">' + esc(review.vendor_reply_human) + '</span>';
+                }
+                reply =
+                    '<div class="wpss-review-reply">' +
+                        '<div class="wpss-reply-header">' +
+                            '<strong>' + esc(i18n.sellerResponse || 'Seller Response:') + '</strong>' +
+                            replyDate +
+                        '</div>' +
+                        review.vendor_reply_html +
+                    '</div>';
+            }
+
+            let count = '';
+            const helpfulCount = parseInt(review.helpful_count, 10) || 0;
+            if (helpfulCount > 0) {
+                count = '<span class="wpss-helpful-count">(' + helpfulCount + ')</span>';
+            }
+
+            return (
+                '<div class="wpss-review">' +
+                    '<div class="wpss-review-header">' +
+                        '<img src="' + esc(avatar) + '" alt="' + esc(author) + '" class="wpss-review-avatar">' +
+                        '<div class="wpss-review-info">' +
+                            '<strong class="wpss-review-author">' + esc(author) + '</strong>' +
+                            '<div class="wpss-review-rating">' + stars + '</div>' +
+                        '</div>' +
+                        '<span class="wpss-review-date">' + esc(review.created_human || '') + '</span>' +
+                    '</div>' +
+                    '<div class="wpss-review-content">' + (review.review_html || '') + '</div>' +
+                    reply +
+                    '<div class="wpss-review-actions">' +
+                        '<button type="button" class="wpss-review-helpful-btn" data-review="' + esc(review.id) + '">' +
+                            '<span class="wpss-helpful-icon"><i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></span>' +
+                            '<span class="wpss-helpful-text">' + esc(i18n.helpful || 'Helpful') + '</span>' +
+                            count +
+                        '</button>' +
+                    '</div>' +
+                '</div>'
+            );
         },
 
         /**
@@ -931,65 +1011,17 @@
         }
     };
 
-    /**
-     * Save/Favorite functionality.
-     */
-    const WPSSFavorite = {
-        init: function() {
-            this.bindEvents();
-        },
-
-        bindEvents: function() {
-            $(document).on('click', '.wpss-favorite-btn', function(e) {
-                e.preventDefault();
-
-                // Guest check — redirect to login if not authenticated.
-                if (typeof wpssService !== 'undefined' && !wpssService.isLoggedIn) {
-                    window.location.href = wpssService.loginUrl || '/wp-login.php?redirect_to=' + encodeURIComponent(window.location.href);
-                    return;
-                }
-
-                const $btn = $(this);
-                const serviceId = $btn.data('service');
-                const isFavorited = $btn.hasClass('favorited');
-
-                $btn.prop('disabled', true);
-
-                $.ajax({
-                    url: wpssService.ajaxUrl,
-                    type: 'POST',
-                    data: {
-                        action: isFavorited ? 'wpss_unfavorite_service' : 'wpss_favorite_service',
-                        service_id: serviceId,
-                        nonce: wpssService.nonce
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $btn.toggleClass('favorited');
-
-                            const $icon = $btn.find('.wpss-favorite-icon');
-                            $icon.text(isFavorited ? '♡' : '♥');
-
-                            const $count = $btn.find('.wpss-favorite-count');
-                            if ($count.length) {
-                                $count.text(response.data.count);
-                            }
-                        }
-                    },
-                    complete: function() {
-                        $btn.prop('disabled', false);
-                    }
-                });
-            });
-        }
-    };
+    // Note: the single-service favorite toggle (.wpss-fav-toggle) is handled by
+    // frontend.js (WPSS.initFavorites), which already talks to the REST favorites
+    // controller (POST/DELETE /wpss/v1/favorites/{id}). The previous WPSSFavorite
+    // handler here bound .wpss-favorite-btn, a class no template renders — it was
+    // dead code and has been removed to avoid a second, divergent favorites path.
 
     // Initialize on document ready.
     $(document).ready(function() {
         WPSSService.init();
         WPSSPackageCompare.init();
         WPSSShare.init();
-        WPSSFavorite.init();
     });
 
     // Expose globally.
