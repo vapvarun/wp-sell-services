@@ -509,70 +509,108 @@ class Shortcodes {
 			) . '</div>';
 		}
 
+		// Where to send the buyer after a successful post. Buyer requests
+		// archive when one exists, otherwise the requests page, otherwise home.
+		$success_redirect = get_post_type_archive_link( 'wpss_request' );
+		if ( ! $success_redirect ) {
+			$success_redirect = wpss_get_page_url( 'requests' );
+		}
+
 		ob_start();
 		?>
-		<form id="wpss-post-request-form" class="wpss-form">
-			<?php wp_nonce_field( 'wpss_post_request', 'wpss_request_nonce' ); ?>
+		<div class="wpss-post-request" data-wpss-post-request>
+			<form id="wpss-post-request-form" class="wpss-form" novalidate
+				data-success-redirect="<?php echo esc_url( $success_redirect ); ?>">
+				<?php wp_nonce_field( 'wpss_post_request', 'wpss_request_nonce' ); ?>
 
-			<div class="wpss-form-row">
-				<label for="request_title"><?php esc_html_e( 'Title', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-				<input type="text" name="title" id="request_title" required maxlength="100" placeholder="<?php esc_attr_e( 'e.g., I need a WordPress website designed', 'wp-sell-services' ); ?>">
-			</div>
+				<div
+					class="wpss-form-feedback wpss-form-feedback--error"
+					data-request-form-error
+					role="alert"
+					aria-live="assertive"
+					hidden></div>
 
-			<div class="wpss-form-row">
-				<label for="request_description"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-				<textarea name="description" id="request_description" rows="5" required placeholder="<?php esc_attr_e( 'Describe what you need in detail...', 'wp-sell-services' ); ?>"></textarea>
-			</div>
+				<div class="wpss-form-row">
+					<label for="request_title"><?php esc_html_e( 'Title', 'wp-sell-services' ); ?> <span class="required">*</span></label>
+					<input type="text" name="title" id="request_title" required maxlength="100" placeholder="<?php esc_attr_e( 'e.g., I need a WordPress website designed', 'wp-sell-services' ); ?>" data-field="title" aria-describedby="request_title_error">
+					<p class="wpss-field-error" id="request_title_error" data-field-error="title" role="alert" hidden></p>
+				</div>
 
-			<div class="wpss-form-row">
-				<label for="request_category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></label>
-				<select name="category" id="request_category">
-					<option value=""><?php esc_html_e( 'Select a category', 'wp-sell-services' ); ?></option>
+				<div class="wpss-form-row">
+					<label for="request_description"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?> <span class="required">*</span></label>
+					<textarea name="description" id="request_description" rows="5" required placeholder="<?php esc_attr_e( 'Describe what you need in detail...', 'wp-sell-services' ); ?>" data-field="description" aria-describedby="request_description_error"></textarea>
+					<p class="wpss-field-error" id="request_description_error" data-field-error="description" role="alert" hidden></p>
+				</div>
+
+				<div class="wpss-form-row">
+					<label for="request_category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></label>
+					<select name="category" id="request_category" data-field="category">
+						<option value=""><?php esc_html_e( 'Select a category', 'wp-sell-services' ); ?></option>
+						<?php
+						$categories = get_terms(
+							array(
+								'taxonomy'   => 'wpss_service_category',
+								'hide_empty' => false,
+							)
+						);
+
+						if ( ! is_wp_error( $categories ) ) :
+							foreach ( $categories as $category ) :
+								?>
+								<option value="<?php echo esc_attr( $category->term_id ); ?>"><?php echo esc_html( $category->name ); ?></option>
+								<?php
+							endforeach;
+						endif;
+						?>
+					</select>
+				</div>
+
+				<div class="wpss-form-row wpss-form-row-double">
+					<div class="wpss-form-col">
+						<label for="request_budget_min"><?php esc_html_e( 'Budget Min', 'wp-sell-services' ); ?></label>
+						<input type="number" name="budget_min" id="request_budget_min" min="0" step="0.01" placeholder="0" data-field="budget_min" aria-describedby="request_budget_error">
+					</div>
+					<div class="wpss-form-col">
+						<label for="request_budget_max"><?php esc_html_e( 'Budget Max', 'wp-sell-services' ); ?></label>
+						<input type="number" name="budget_max" id="request_budget_max" min="0" step="0.01" placeholder="0" data-field="budget_max" aria-describedby="request_budget_error">
+					</div>
+					<p class="wpss-field-error" id="request_budget_error" data-field-error="budget_max" role="alert" hidden></p>
+				</div>
+
+				<div class="wpss-form-row">
+					<label for="request_deadline"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></label>
+					<input type="date" name="deadline" id="request_deadline" min="<?php echo esc_attr( wp_date( 'Y-m-d', strtotime( '+1 day' ) ) ); ?>" data-field="deadline">
+				</div>
+
+				<div class="wpss-form-row">
+					<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
+					<input type="text" name="skills_required" id="request_skills" placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>" data-field="skills_required">
+					<p class="wpss-form-hint"><?php esc_html_e( 'Separate multiple skills with commas.', 'wp-sell-services' ); ?></p>
+				</div>
+
+				<div class="wpss-form-actions">
+					<button type="submit" class="wpss-btn wpss-btn-primary" data-request-submit><?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?></button>
+				</div>
+			</form>
+
+			<div class="wpss-post-request__success wpss-empty-state" data-request-success hidden>
+				<div class="wpss-empty-state__icon">
 					<?php
-					$categories = get_terms(
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
+					echo \WPSellServices\Services\Icon::render(
+						'badge-check',
 						array(
-							'taxonomy'   => 'wpss_service_category',
-							'hide_empty' => false,
+							'width'  => '48',
+							'height' => '48',
 						)
 					);
-
-					if ( ! is_wp_error( $categories ) ) :
-						foreach ( $categories as $category ) :
-							?>
-							<option value="<?php echo esc_attr( $category->term_id ); ?>"><?php echo esc_html( $category->name ); ?></option>
-							<?php
-						endforeach;
-					endif;
 					?>
-				</select>
-			</div>
-
-			<div class="wpss-form-row wpss-form-row-double">
-				<div class="wpss-form-col">
-					<label for="request_budget_min"><?php esc_html_e( 'Budget Min', 'wp-sell-services' ); ?></label>
-					<input type="number" name="budget_min" id="request_budget_min" min="0" step="0.01" placeholder="0">
 				</div>
-				<div class="wpss-form-col">
-					<label for="request_budget_max"><?php esc_html_e( 'Budget Max', 'wp-sell-services' ); ?></label>
-					<input type="number" name="budget_max" id="request_budget_max" min="0" step="0.01" placeholder="0">
-				</div>
+				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'Request posted', 'wp-sell-services' ); ?></h3>
+				<p class="wpss-empty-state__body"><?php esc_html_e( 'Your request is now live. Vendors can browse it and send you proposals.', 'wp-sell-services' ); ?></p>
+				<a href="#" class="wpss-btn wpss-btn-primary" data-request-success-link><?php esc_html_e( 'View buyer requests', 'wp-sell-services' ); ?></a>
 			</div>
-
-			<div class="wpss-form-row">
-				<label for="request_deadline"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></label>
-				<input type="date" name="deadline" id="request_deadline" min="<?php echo esc_attr( wp_date( 'Y-m-d', strtotime( '+1 day' ) ) ); ?>">
-			</div>
-
-			<div class="wpss-form-row">
-				<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
-				<input type="text" name="skills_required" id="request_skills" placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>">
-				<p class="wpss-form-hint"><?php esc_html_e( 'Separate multiple skills with commas.', 'wp-sell-services' ); ?></p>
-			</div>
-
-			<div class="wpss-form-actions">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?></button>
-			</div>
-		</form>
+		</div>
 		<?php
 		return ob_get_clean();
 	}
