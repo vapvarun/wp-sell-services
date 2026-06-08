@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.3';
+	const DB_VERSION = '1.4.4';
 
 	/**
 	 * Option name for storing DB version.
@@ -323,6 +323,7 @@ class SchemaManager {
 			KEY idx_service (service_id),
 			KEY idx_status (status),
 			KEY idx_status_date (status,created_at),
+			KEY idx_vendor_status (vendor_id,status),
 			KEY idx_platform (platform,platform_order_id),
 			KEY idx_deadline (delivery_deadline)
 		) {$charset_collate};";
@@ -722,6 +723,8 @@ class SchemaManager {
 			PRIMARY KEY (id),
 			KEY idx_user (user_id),
 			KEY idx_type (type),
+			KEY idx_user_created (user_id,created_at,id),
+			KEY idx_user_type_created (user_id,type,created_at),
 			KEY idx_reference (reference_type,reference_id)
 		) {$charset_collate};";
 	}
@@ -752,6 +755,26 @@ class SchemaManager {
 			KEY idx_status (status),
 			KEY idx_vendor_status (vendor_id, status)
 		) {$charset_collate};";
+	}
+
+	/**
+	 * Re-run dbDelta for every core table to apply additive schema changes.
+	 *
+	 * Unlike {@see install()} this ignores the stored version gate and always
+	 * runs dbDelta, which is the only safe way to add new KEYs to existing
+	 * tables idempotently (dbDelta is a no-op for columns/indexes that already
+	 * exist). The scale benchmark calls this so the per-query budgets are
+	 * measured against the indexes the release ships, not whatever happens to
+	 * be installed on the bench host. Stamps the stored DB version on success.
+	 *
+	 * @return void
+	 */
+	public function sync(): void {
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		$this->create_tables();
+
+		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
 
 	/**

@@ -2025,4 +2025,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'wpss validate', ValidateCommand::class, array( 'shortdesc' => 'Validate models and schema.' ) );
 	WP_CLI::add_command( 'wpss preflight', PreflightCommand::class, array( 'shortdesc' => 'Run release-readiness preflight checks.' ) );
 	WP_CLI::add_command( 'wpss test:flow', TestFlowCommand::class, array( 'shortdesc' => 'Run end-to-end data flow tests.' ) );
+	WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
 }
