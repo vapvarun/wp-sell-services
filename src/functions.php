@@ -2100,6 +2100,45 @@ function wpss_handle_message_attachments( array $files ): array {
 }
 
 /**
+ * Normalize PHP's grouped $_FILES entry into a list of per-file specs.
+ *
+ * Turns the `name[]/type[]/tmp_name[]/error[]/size[]` shape PHP produces for a
+ * multi-file field into a flat array of single-file specs (name/type/tmp_name/
+ * error/size), skipping empty slots and sanitizing the client-supplied name +
+ * mime. tmp_name/error/size are not user-controlled. Shared by the REST
+ * deliverables endpoint and the legacy admin-ajax delivery handler so both
+ * feed DeliveryService::submit() the same shape.
+ *
+ * @since 1.2.0
+ *
+ * @param array $files A single grouped $_FILES['field'] entry.
+ * @return array<int, array{name:string,type:string,tmp_name:string,error:int,size:int}>
+ */
+function wpss_normalize_uploaded_files( array $files ): array {
+	$out = array();
+
+	if ( empty( $files['name'] ) || ! is_array( $files['name'] ) ) {
+		return $out;
+	}
+
+	$count = count( $files['name'] );
+	for ( $i = 0; $i < $count; $i++ ) {
+		if ( empty( $files['name'][ $i ] ) ) {
+			continue;
+		}
+		$out[] = array(
+			'name'     => sanitize_file_name( $files['name'][ $i ] ),
+			'type'     => sanitize_mime_type( $files['type'][ $i ] ),
+			'tmp_name' => $files['tmp_name'][ $i ],
+			'error'    => (int) $files['error'][ $i ],
+			'size'     => (int) $files['size'][ $i ],
+		);
+	}
+
+	return $out;
+}
+
+/**
  * Build a sanitized vendor-profile update payload from a posted field set.
  *
  * Single source of truth for the vendor-profile form fields, shared by the

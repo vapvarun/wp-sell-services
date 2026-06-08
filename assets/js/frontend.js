@@ -622,13 +622,12 @@
 	 * Submit delivery via AJAX with file uploads.
 	 */
 	WPSS.submitDelivery = function(orderId, message, fileInput) {
+		// REST: POST /orders/{id}/deliverables (multipart files[]). The endpoint
+		// ingests raw uploads via DeliveryService, the same path the legacy
+		// admin-ajax handler used.
 		var formData = new FormData();
-		formData.append('action', 'wpss_deliver_order');
-		formData.append('order_id', orderId);
-		formData.append('message', message);
-		formData.append('nonce', wpssData.orderNonce || wpssData.nonce);
+		formData.append('description', message || '');
 
-		// Add files from file input element.
 		if (fileInput && fileInput.files) {
 			for (var i = 0; i < fileInput.files.length; i++) {
 				formData.append('files[]', fileInput.files[i]);
@@ -636,23 +635,25 @@
 		}
 
 		$.ajax({
-			url: wpssData.ajaxUrl,
-			type: 'POST',
+			url: wpssData.apiUrl + 'orders/' + orderId + '/deliverables',
+			method: 'POST',
 			data: formData,
 			processData: false,
 			contentType: false,
-			success: function(response) {
-				if (response.success) {
-					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.deliverySubmitted) || 'Delivery submitted successfully!', 'success');
-					setTimeout(function() {
-						location.reload();
-					}, 1500);
-				} else {
-					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.deliveryFailed) || 'Failed to submit delivery.', 'error');
-				}
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
 			},
-			error: function() {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+			success: function() {
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.deliverySubmitted) || 'Delivery submitted successfully!', 'success');
+				setTimeout(function() {
+					location.reload();
+				}, 1500);
+			},
+			error: function(xhr) {
+				var msg = (xhr.responseJSON && xhr.responseJSON.message)
+					|| (wpssData.i18n && wpssData.i18n.deliveryFailed)
+					|| 'Failed to submit delivery.';
+				WPSS.showNotification(msg, 'error');
 			}
 		});
 	};

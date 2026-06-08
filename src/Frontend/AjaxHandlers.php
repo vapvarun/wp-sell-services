@@ -352,25 +352,13 @@ class AjaxHandlers {
 		$message  = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
 		$user_id  = get_current_user_id();
 
-		// Process uploaded files from $_FILES.
+		// Process uploaded files from $_FILES via the shared normalizer (same
+		// shape the REST deliverables endpoint feeds DeliveryService::submit()).
 		$files = array();
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput -- $_FILES fields are individually sanitized below; tmp_name/error/size are not user-controlled.
-		if ( ! empty( $_FILES['files'] ) && is_array( $_FILES['files']['name'] ) ) {
-			$file_count = count( $_FILES['files']['name'] );
-			for ( $i = 0; $i < $file_count; $i++ ) {
-				if ( empty( $_FILES['files']['name'][ $i ] ) ) {
-					continue;
-				}
-				$files[] = array(
-					'name'     => sanitize_file_name( $_FILES['files']['name'][ $i ] ),
-					'type'     => sanitize_mime_type( $_FILES['files']['type'][ $i ] ),
-					'tmp_name' => $_FILES['files']['tmp_name'][ $i ],
-					'error'    => (int) $_FILES['files']['error'][ $i ],
-					'size'     => (int) $_FILES['files']['size'][ $i ],
-				);
-			}
+		if ( ! empty( $_FILES['files'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Grouped $_FILES is normalized/sanitized inside wpss_normalize_uploaded_files().
+			$files = wpss_normalize_uploaded_files( (array) $_FILES['files'] );
 		}
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
