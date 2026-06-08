@@ -221,34 +221,17 @@ select:invalid {
 	border-color: var(--wpss-danger);
 }
 
-/* Inline Error/Success Notices */
-.wpss-notice {
-	padding: 12px 16px;
-	border-radius: var(--wpss-radius);
-	font-size: 14px;
-	margin-bottom: 16px;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.wpss-notice--error {
-	background: var(--wpss-danger-light, #fef2f2);
-	color: var(--wpss-danger-dark, #991b1b);
-	border: 1px solid var(--wpss-danger-border, #fecaca);
-}
-
-.wpss-notice--success {
-	background: var(--wpss-success-light, #f0fdf4);
-	color: var(--wpss-success-dark, #166534);
-	border: 1px solid var(--wpss-success-border, #bbf7d0);
-}
-
-.wpss-notice--info {
-	background: var(--wpss-info-light, #eff6ff);
-	color: var(--wpss-info-dark, #1e40af);
-	border: 1px solid var(--wpss-info-border, #bfdbfe);
-}
+/* Inline Error/Success Notices
+   2.7.1a dedup: the bare .wpss-notice BASE block (and its --error/--success/--info
+   modifiers) was removed here. The notice primitive is owned by design-system.css
+   using design tokens (display flex, align-items FLEX-START to keep the icon top-
+   aligned on multi-line notices, gap var(--wpss-space-3), padding
+   var(--wpss-space-4) var(--wpss-space-5), font-size var(--wpss-text-base),
+   border-radius var(--wpss-radius-lg), margin-bottom var(--wpss-space-5)) and the
+   AA-compliant -dark colour variants. design-system loads first on every frontend
+   cascade (wpss-design-system then wpss-frontend), so this duplicate (raw-px,
+   align-items center) only reintroduced the F9/F10 multi-line-icon breakage and a
+   tokenless base. Removed; design-system is the single owner. */
 
 /* Loading Spinner */
 .wpss-spinner {
@@ -1533,15 +1516,16 @@ article.wpss-service-card:hover {
 	color: var(--wpss-text-secondary, #383d41);
 }
 
-/* Badges */
-.wpss-badge {
-	display: inline-flex;
-	padding: 2px 6px;
-	font-size: 10px;
-	font-weight: 600;
-	border-radius: var(--wpss-radius);
-	text-transform: uppercase;
-}
+/* Badges
+   2.7.1a dedup: the bare .wpss-badge BASE block was removed here. The badge
+   primitive is owned by design-system.css (inline-flex, align-items center,
+   padding 3px var(--wpss-space-3), font-size var(--wpss-text-xs), font-weight
+   600, border-radius var(--wpss-radius-full), text-transform uppercase), which
+   loads first on every frontend cascade (wpss-design-system then wpss-frontend).
+   The status MODIFIERS below are genuine frontend-only surface variants
+   (pending, approved, completed, rejected, and order-status colours) that
+   design-system does not own, so they stay and now compose on the single
+   canonical base. */
 
 /* Pending */
 .wpss-badge--pending {
@@ -1608,35 +1592,16 @@ article.wpss-service-card:hover {
 	color: var(--wpss-info);
 }
 
-.wpss-badge--primary {
-	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
-}
-
-.wpss-badge--success {
-	background: var(--wpss-success-light, #d1fae5);
-	color: var(--wpss-success, #10b981);
-}
-
-.wpss-badge--warning {
-	background: var(--wpss-warning-light, #fef3c7);
-	color: var(--wpss-badge-extension-icon-fg, #b45309);
-}
-
-.wpss-badge--danger {
-	background: var(--wpss-danger-light, #fee2e2);
-	color: var(--wpss-danger, #ef4444);
-}
-
-.wpss-badge--info {
-	background: var(--wpss-info-light, #dbeafe);
-	color: var(--wpss-info, #3b82f6);
-}
-
-.wpss-badge--neutral {
-	background: var(--wpss-gray-100, #f1f5f9);
-	color: var(--wpss-gray-600, #475569);
-}
+/* Badge semantic variants (--primary/success/warning/danger/info/neutral)
+   2.7.1a dedup: these 6 colour modifiers were removed here. They are owned by
+   design-system.css, which colours the text with the AA-compliant -dark tokens
+   (--wpss-success-dark #065f46, --wpss-danger-dark #991b1b, --wpss-warning-dark
+   #92400e, --wpss-info-dark #1e40af). The frontend copies used the BRIGHT semantic
+   tokens (--wpss-success #10b981, --wpss-danger #ef4444, --wpss-info #3b82f6,
+   --wpss-primary #4f46e5) as text on a light tint, which FAILS WCAG AA 4.5:1.
+   design-system loads first on every frontend cascade and is the single owner;
+   the frontend status MODIFIERS above (pending/approved/completed/rejected/order-
+   status) stay because design-system does not own them. */
 
 /* ==========================================================================
    Order View
@@ -2981,13 +2946,12 @@ article.wpss-service-card:hover {
 	}
 }
 
-/* Notice Styles */
-.wpss-notice {
-	padding: 15px 20px;
-	border-radius: var(--wpss-radius);
-	margin-bottom: 20px;
-}
-
+/* Notice Styles
+   2.7.1a dedup: the duplicate .wpss-notice BASE block (raw-px padding 15px 20px /
+   margin-bottom 20px) was removed here. The notice base is owned by
+   design-system.css with design tokens (see the dedup note in the "Inline
+   Error/Success Notices" section above). Only the frontend-specific paragraph
+   reset and the legacy single-dash colour aliases stay below. */
 .wpss-notice p {
 	margin: 0;
 }

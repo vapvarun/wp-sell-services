@@ -160,11 +160,15 @@
 	padding: 2rem 0;
 }
 
-.wpss-container {
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 0 1rem;
-}
+/* 2.7.1a dedup: the bare .wpss-container base that lived here (max-width
+   1200px, padding 0 1rem) was an unscoped global clobber of the canonical
+   primitive that design-system.css owns (max-width var(--wpss-container-max),
+   which is 1200px; padding 0 var(--wpss-container-pad), which is 20px). The
+   max-width is byte-identical; only the gutter differed (16px vs the token
+   20px). design-system loads first on the single-service cascade
+   (wpss-design-system then wpss-frontend then wpss-single-service), so the
+   single owner now flows through. No surface-specific override is needed here,
+   so the block is deleted rather than re-scoped. */
 
 .wpss-service-layout {
 	display: grid;

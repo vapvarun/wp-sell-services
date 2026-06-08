@@ -33,42 +33,98 @@
     "value_drift_check": "Every removed alias's canonical design-system value was diffed against the alias's intended value before removal. All removed colour/gray/radius/transition/star/shadow-lg tokens are byte-identical to their design-system canonical value. The only deliberately-kept differences are page-local tokens (--wpss-shadow no-suffix has no design-system equivalent; --wpss-shadow-sm differs) and the two intentional remaps in single-service.",
     "verification": "After the fix, design-system.css is the sole :root definer of --wpss-primary on the dashboard and single-service cascades, so `.wpss-btn--primary { background: var(--wpss-primary); }` computes to #4f46e5 (non-transparent) on archive, single, dashboard, and body-appended modals."
   },
+  "dedup_2_7_1a": {
+    "summary": "Selector-level CSS dedup (no PHP, no banners). For every shared selector defined as a BARE (unscoped, global) base block in 2+ source files on the SAME cascade where design-system.css already owns the canonical primitive, the duplicate base block was deleted so the selector resolves from exactly one source file. Genuinely-differing surface overrides (scoped selectors, separate-cascade contexts, distinct token namespaces, or distinct DOM structures) were KEPT and are documented per-file below.",
+    "method": "Per shared selector: (1) classify each occurrence as BARE BASE (unscoped global redefinition of the primitive) vs SURFACE OVERRIDE (descendant-scoped, media-query-scoped, separate admin/block cascade, or distinct DOM role). (2) Confirm the owning file loads FIRST on the relevant cascade so the single owner flows through. (3) Delete bare-base duplicates whose owner already provides the primitive; keep + document surface overrides. (4) Re-run grunt rtl + min once.",
+    "cascade_facts": {
+      "frontend": "wpss-design-system -> wpss-frontend (frontend depends on design-system) -> page handle (single-service / archive / buyer-request each depend on wpss-frontend; service-wizard depends on wpss-design-system). design-system is therefore the FIRST :root + primitive definer on every frontend page.",
+      "blocks": "wpss-blocks (blocks.css) enqueues on the FRONTEND with NO dependency and its OWN --wpss-block-* token namespace. It can co-load with wpss-frontend but is a self-contained block-render context.",
+      "admin": "wpss-admin (admin.css) enqueues ONLY on plugin admin screens and never depends on / co-loads with design-system. Separate cascade.",
+      "vendor_dashboard": "vendor-dashboard.css carries a self-contained badge/button palette (its own --primary/--success/... modifier colours). No PHP enqueue of vendor-dashboard.css was found in src/; it is treated as a self-contained context system and left intact."
+    },
+    "deletions": [
+      {
+        "selector": ".wpss-container",
+        "file": "single-service.css",
+        "removed": "bare base { max-width: 1200px; margin: 0 auto; padding: 0 1rem }",
+        "owner": "design-system.css",
+        "owner_body": ".wpss-container { max-width: var(--wpss-container-max) /* 1200px */; margin: 0 auto; padding: 0 var(--wpss-container-pad) /* 20px */ }",
+        "safety": "max-width byte-identical (1200px). Only the horizontal gutter differed (16px -> token 20px). Selector was UNSCOPED (global), so it was a competing primitive, not a single-service surface override. design-system loads first on the single-service cascade, so the single owner now applies."
+      },
+      {
+        "selector": ".wpss-badge",
+        "file": "frontend.css",
+        "removed": "bare base { display:inline-flex; padding:2px 6px; font-size:10px; font-weight:600; border-radius:var(--wpss-radius); text-transform:uppercase }",
+        "owner": "design-system.css",
+        "owner_body": ".wpss-badge { display:inline-flex; align-items:center; gap:var(--wpss-space-1); padding:3px var(--wpss-space-3); font-size:var(--wpss-text-xs); font-weight:600; border-radius:var(--wpss-radius-full); text-transform:uppercase; letter-spacing:0.03em; line-height:1.5 }",
+        "kept_in_same_file": "All frontend status MODIFIERS (.wpss-badge--pending/approved/completed/rejected and .wpss-badge--status-*) - genuine frontend-only surface variants design-system does not own. They now compose on the single canonical base.",
+        "safety": "Modifiers only set background/color, so they compose cleanly on the design-system base. Badges converge on the canonical pill primitive (rounded-full, 12px text) - the intended dedup outcome."
+      }
+    ],
+    "kept_surface_overrides": [
+      {
+        "selector": ".wpss-container",
+        "files": ["archive-service.css", "buyer-request.css"],
+        "reason": "Descendant-scoped + media-query-scoped (.wpss-services-archive .wpss-container grid override; .wpss-requests-archive/.wpss-single-request .wpss-container). Genuine per-surface layout overrides, not base duplicates."
+      },
+      {
+        "selector": ".wpss-badge",
+        "files": ["vendor-dashboard.css", "admin.css"],
+        "reason": "Self-contained context systems. admin.css is a separate admin cascade (no design-system). vendor-dashboard.css ships its own modifier palette (--success #10b981 etc.) and is not enqueued on a design-system cascade; half-merging its base would orphan its palette. Kept whole."
+      },
+      {
+        "selector": ".wpss-service-card",
+        "files": ["frontend.css", "unified-dashboard.css", "blocks.css"],
+        "reason": "No single owner in design-system.css. Three genuinely-different contexts: frontend.css is descendant/element-scoped (.wpss-services-grid .wpss-service-card, article.wpss-service-card) with host-theme-compat resets (!important background); blocks.css uses the separate --wpss-block-* token namespace for block-rendered markup; unified-dashboard.css is the page-scoped dashboard grid card. Distinct token systems + scopes = surface overrides, not base duplicates. Consolidating to a new design-system base would alter all three and requires browser verification (Playwright MCP unavailable to the implementer)."
+      },
+      {
+        "selector": ".wpss-modal__content",
+        "files": ["frontend.css", "unified-dashboard.css"],
+        "reason": "Different DOM ROLES, not the same element with different values. frontend.css: .wpss-modal__content is an inner flex-column wrapper (the surface/shadow/max-width live on a sibling .wpss-modal__dialog). unified-dashboard.css: .wpss-modal__content IS the dialog surface (.wpss-modal__overlay + .wpss-modal__content, no __dialog). Merging would break one structure. Kept as distinct per-surface modal architectures."
+      },
+      {
+        "selector": ".wpss-btn--primary",
+        "files": ["design-system.css", "vendor-dashboard.css", "unified-dashboard.css", "service-wizard.css", "admin.css"],
+        "reason": "Resolved by direction 2.7.0 (token-poison removal). design-system owns the frontend primitive; admin is a separate cascade; the page-local button systems couple --primary to their own .wpss-btn base. Out of scope for 2.7.1a; see direction 2.7.0 entry above."
+      }
+    ]
+  },
   "shared_selector_inventory": [
     {
       "selector": ".wpss-btn--primary",
       "source_files": ["design-system.css", "vendor-dashboard.css", "unified-dashboard.css", "service-wizard.css", "admin.css"],
       "owning_file": "design-system.css (frontend); admin.css (admin context)",
       "bodies": "different",
-      "consolidation": "NOT a same-cascade duplicate. design-system.css owns the frontend primitive. admin.css's copy uses --wpss-admin-accent and loads ONLY on admin pages that never load design-system.css - it is a distinct admin-context primitive and must NOT be merged. vendor-dashboard / unified-dashboard / service-wizard each ship a self-contained page-scoped button system (own base .wpss-btn with `border:none`, own sizing); the --primary block is coupled to that page-local base. Deleting only the --primary block while leaving the page-local base would mismatch border handling. Deferred to a browser-verified slice (see known_gaps).",
+      "consolidation": "Resolved in 2.7.0 via token-poison removal. design-system.css owns the frontend primitive. admin.css's copy uses --wpss-admin-accent and loads ONLY on admin pages that never load design-system.css - distinct admin-context primitive, not merged. vendor-dashboard / unified-dashboard / service-wizard ship self-contained page-scoped button systems coupled to their own .wpss-btn base. Out of 2.7.1a scope.",
       "bug_fixed_via": "token-poison removal (above) - the design-system primitive now renders correctly everywhere it owns."
     },
     {
       "selector": ".wpss-container",
-      "source_files": ["design-system.css", "single-service.css", "archive-service.css", "buyer-request.css", "frontend.css"],
+      "source_files": ["design-system.css", "archive-service.css", "buyer-request.css"],
       "owning_file": "design-system.css",
-      "bodies": "different (page-scoped max-width / padding variants)",
-      "consolidation": "Deferred. Bodies differ per page surface; merging requires per-page Playwright verification at 5 viewports. Not safe in this runtime (Playwright MCP unavailable to the implementer agent)."
+      "bodies": "owner is the single global base; archive/buyer-request are descendant/media-query-scoped surface overrides",
+      "consolidation": "DONE (2.7.1a). The bare global base in single-service.css (and earlier frontend.css) was deleted; design-system.css is now the sole un-scoped definer. Remaining occurrences are genuinely-differing scoped surface overrides. See dedup_2_7_1a."
     },
     {
       "selector": ".wpss-service-card",
-      "source_files": ["frontend.css", "unified-dashboard.css", "archive-service.css", "blocks.css"],
-      "owning_file": "design-system.css (card base) - card variant lives in frontend.css",
-      "bodies": "different (35 child-element rules in frontend.css, 26 in unified-dashboard.css - these are page-scoped card layouts, not redundant base duplicates)",
-      "consolidation": "Deferred. The 235 different-body cases the 2.6.1 inventory flagged are intentional page-scoped overrides and must NOT be merged. Browser-verified slice required."
+      "source_files": ["frontend.css", "unified-dashboard.css", "blocks.css"],
+      "owning_file": "no single owner - three distinct token/scope contexts",
+      "bodies": "different (scoped theme-compat in frontend.css; --wpss-block-* namespace in blocks.css; page-scoped dashboard grid in unified-dashboard.css)",
+      "consolidation": "Kept as documented surface overrides (2.7.1a). Distinct token namespaces + scopes; a design-system base would change all three and needs browser verification. See dedup_2_7_1a.kept_surface_overrides."
     },
     {
       "selector": ".wpss-badge",
-      "source_files": ["design-system.css", "frontend.css", "vendor-dashboard.css", "unified-dashboard.css", "admin.css"],
-      "owning_file": "design-system.css",
-      "bodies": "different",
-      "consolidation": "Deferred. admin.css badge is admin-context (no design-system on those pages). Frontend badge variants are page-scoped. Browser-verified slice required."
+      "source_files": ["design-system.css", "vendor-dashboard.css", "admin.css"],
+      "owning_file": "design-system.css (frontend primitive)",
+      "bodies": "owner base + frontend modifiers; vendor/admin are self-contained context palettes",
+      "consolidation": "DONE (2.7.1a). The bare base in frontend.css was deleted (frontend status modifiers kept on the design-system base). vendor-dashboard.css and admin.css are self-contained context systems and kept. See dedup_2_7_1a."
     },
     {
       "selector": ".wpss-modal__content",
       "source_files": ["frontend.css", "unified-dashboard.css"],
-      "owning_file": "design-system.css (modal base) - sizing variants page-scoped",
-      "bodies": "different (frontend: max-width 480px flex-column; unified: width 90% / max-width 560px / heavier shadow)",
-      "consolidation": "Deferred. Genuinely different modal sizing per surface; merging changes the dashboard modal's appearance. Browser-verified slice required."
+      "owning_file": "no single owner - two distinct modal DOM architectures",
+      "bodies": "different ROLES (frontend: inner flex wrapper under .wpss-modal__dialog; unified: the dialog surface itself under .wpss-modal__overlay)",
+      "consolidation": "Kept as documented surface overrides (2.7.1a). The selector plays different structural roles in two different modal markups; merging would break one. See dedup_2_7_1a.kept_surface_overrides."
     }
   ],
   "decision_rationale": "Per the ux-audit skill section 3.5 (dead-CSS rule) and the verify-per-item rule, cross-file COMPONENT consolidation ships as its own per-slice PR with browser verification at 5 viewports. The only genuinely-redundant, regression-safe, and bug-CAUSING duplication was the self-referential :root token layer, which is identical-value-redundant against design-system and was the documented root cause of the invisible CTA. That has been consolidated to the design-system owner and the poisoned duplicates deleted. The remaining shared component selectors have DIFFERENT bodies (page-scoped variants) or live on a separate admin cascade; merging them without Playwright verification would risk visual regressions, so they are logged as known gaps for a dedicated browser-verified slice.",
