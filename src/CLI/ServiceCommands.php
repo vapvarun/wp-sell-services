@@ -218,13 +218,21 @@ class ServiceCommands extends WP_CLI_Command {
 	 * default: 55
 	 * ---
 	 *
+	 * [--no-images]
+	 * : Skip attaching demo images (service galleries, portfolio items, vendor
+	 * avatars). Images are sideloaded by default so the marketplace looks
+	 * complete for demos/screenshots; pass this for a faster, text-only seed.
+	 *
 	 * ## EXAMPLES
 	 *
-	 *     # Seed the default marketplace
+	 *     # Seed the default marketplace (with images)
 	 *     $ wp wpss demo marketplace
 	 *
 	 *     # Seed a larger marketplace
 	 *     $ wp wpss demo marketplace --orders=100
+	 *
+	 *     # Fast text-only seed (no images)
+	 *     $ wp wpss demo marketplace --no-images
 	 *
 	 * @subcommand marketplace
 	 *
@@ -233,8 +241,9 @@ class ServiceCommands extends WP_CLI_Command {
 	 */
 	public function marketplace( array $args, array $assoc_args ): void {
 		$min_orders = (int) ( $assoc_args['orders'] ?? 55 );
+		$with_images = ! isset( $assoc_args['no-images'] );
 
-		WP_CLI::log( 'Seeding demo marketplace...' );
+		WP_CLI::log( 'Seeding demo marketplace' . ( $with_images ? ' (with images)...' : ' (no images)...' ) );
 		WP_CLI::log( '' );
 
 		$seeder = new MarketplaceSeeder(
@@ -243,7 +252,12 @@ class ServiceCommands extends WP_CLI_Command {
 			}
 		);
 
-		$summary = $seeder->seed( array( 'orders' => $min_orders ) );
+		$summary = $seeder->seed(
+			array(
+				'orders' => $min_orders,
+				'images' => $with_images,
+			)
+		);
 
 		WP_CLI::log( '' );
 		WP_CLI::success( 'Demo marketplace seeded.' );

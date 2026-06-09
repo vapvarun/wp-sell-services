@@ -216,6 +216,16 @@ class MarketplaceSeeder {
 	private $logger;
 
 	/**
+	 * Whether to attach demo images (service galleries, portfolio items, vendor
+	 * avatars). On by default so the seeded marketplace is image-complete out of
+	 * the box - the demo is the customer's first impression. Disable via the
+	 * seed() 'images' arg (e.g. CLI --no-images) for a fast text-only seed.
+	 *
+	 * @var bool
+	 */
+	private bool $seed_images = true;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param callable|null $logger Optional progress logger receiving a string.
@@ -236,7 +246,8 @@ class MarketplaceSeeder {
 	 * @return array<string, int> Structured summary of what was created.
 	 */
 	public function seed( array $args = array() ): array {
-		$min_orders = max( 50, (int) ( $args['orders'] ?? 55 ) );
+		$min_orders         = max( 50, (int) ( $args['orders'] ?? 55 ) );
+		$this->seed_images  = ! isset( $args['images'] ) || (bool) $args['images'];
 
 		$summary = array(
 			'categories'    => 0,
@@ -404,6 +415,12 @@ class MarketplaceSeeder {
 				$wpdb->insert( $table, $data );
 			}
 
+			// Vendor avatar (square) so profiles and cards are not faceless.
+			$avatar_id = $this->sideload_image( 'wpss-vendor-' . $user_id, 400, 400, 0, $blueprint['name'] );
+			if ( $avatar_id ) {
+				update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
+			}
+
 			$vendors[] = array(
 				'user_id'   => $user_id,
 				'blueprint' => $blueprint,
@@ -504,6 +521,22 @@ class MarketplaceSeeder {
 					update_post_meta( $post_id, '_wpss_featured', 1 );
 				}
 
+				// Service gallery (landscape). First image doubles as the WP
+				// featured image so both the grid card and single-service gallery
+				// render. Stored as attachment IDs (the format Service::normalize
+				// _gallery_ids expects).
+				$gallery = array();
+				for ( $g = 0; $g < 3; $g++ ) {
+					$attachment_id = $this->sideload_image( 'wpss-service-' . $post_id . '-' . $g, 800, 600, $post_id, $title );
+					if ( $attachment_id ) {
+						$gallery[] = $attachment_id;
+					}
+				}
+				if ( ! empty( $gallery ) ) {
+					update_post_meta( $post_id, '_wpss_gallery', $gallery );
+					set_post_thumbnail( $post_id, $gallery[0] );
+				}
+
 				$services[] = array(
 					'id'             => (int) $post_id,
 					'vendor_id'      => $vendor['user_id'],
@@ -577,6 +610,14 @@ class MarketplaceSeeder {
 			}
 
 			for ( $i = 1; $i <= 3; $i++ ) {
+				// Portfolio image (attachment IDs, the format PortfolioController
+				// stores + the UI renders).
+				$media_ids     = array();
+				$portfolio_img = $this->sideload_image( 'wpss-portfolio-' . $vendor['user_id'] . '-' . $i, 800, 600, 0, $vendor['blueprint']['name'] . ' project' );
+				if ( $portfolio_img ) {
+					$media_ids[] = $portfolio_img;
+				}
+
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->insert(
 					$table,
@@ -585,7 +626,7 @@ class MarketplaceSeeder {
 						'service_id'  => $vendor_service,
 						'title'       => sprintf( '%s - Project #%d', $vendor['blueprint']['name'], $i ),
 						'description' => 'A representative sample of recent client work delivered end to end.',
-						'media'       => wp_json_encode( array() ),
+						'media'       => wp_json_encode( $media_ids ),
 						'tags'        => wp_json_encode( $vendor['blueprint']['skills'] ),
 						'is_featured' => 1 === $i ? 1 : 0,
 						'sort_order'  => $i,
@@ -1138,6 +1179,107 @@ class MarketplaceSeeder {
 			default:
 				return 4.5;
 		}
+	}
+
+	/**
+	 * Sideload a demo image into the media library and return its attachment ID.
+	 *
+	 * Pulls a realistic stock photo from picsum.photos using a deterministic seed
+	 * (so re-seeds are reproducible) and falls back to a locally generated
+	 * placeholder when the download is unavailable (offline / rate-limited). A
+	 * seed therefore always produces an image-complete marketplace, online or not.
+	 *
+	 * @param string $seed   Deterministic seed that varies the photo.
+	 * @param int    $width  Image width in pixels.
+	 * @param int    $height Image height in pixels.
+	 * @param int    $parent Parent post ID to attach to (0 for none).
+	 * @param string $label  Human label used for alt text + placeholder fallback.
+	 * @return int Attachment ID, or 0 when images are disabled or all paths fail.
+	 */
+	private function sideload_image( string $seed, int $width, int $height, int $parent, string $label ): int {
+		if ( ! $this->seed_images ) {
+			return 0;
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		$url = sprintf( 'https://picsum.photos/seed/%s/%d/%d', rawurlencode( $seed ), $width, $height );
+		$tmp = download_url( $url, 15 );
+
+		if ( ! is_wp_error( $tmp ) ) {
+			$file = array(
+				'name'     => sanitize_file_name( $seed . '.jpg' ),
+				'tmp_name' => $tmp,
+			);
+			$attachment_id = media_handle_sideload( $file, $parent, $label );
+			if ( is_wp_error( $attachment_id ) ) {
+				if ( file_exists( $tmp ) ) {
+					wp_delete_file( $tmp );
+				}
+			} else {
+				return (int) $attachment_id;
+			}
+		}
+
+		// Network unavailable - guarantee an image via a generated placeholder.
+		return $this->generate_placeholder_image( $label, $width, $height, $parent );
+	}
+
+	/**
+	 * Generate a simple branded placeholder image locally and attach it.
+	 *
+	 * Used as the offline fallback for sideload_image() so a demo seed never
+	 * leaves a service, portfolio item, or vendor without an image.
+	 *
+	 * @param string $label  Label drawn on the placeholder + used as alt text.
+	 * @param int    $width  Image width in pixels.
+	 * @param int    $height Image height in pixels.
+	 * @param int    $parent Parent post ID to attach to (0 for none).
+	 * @return int Attachment ID, or 0 when GD is unavailable / insertion fails.
+	 */
+	private function generate_placeholder_image( string $label, int $width, int $height, int $parent ): int {
+		if ( ! function_exists( 'imagecreatetruecolor' ) ) {
+			return 0;
+		}
+
+		$image = imagecreatetruecolor( $width, $height );
+		$bg    = imagecolorallocate(
+			$image,
+			60 + ( (int) crc32( $label ) % 120 ),
+			70 + ( (int) crc32( $label . 'g' ) % 120 ),
+			90 + ( (int) crc32( $label . 'b' ) % 120 )
+		);
+		imagefilledrectangle( $image, 0, 0, $width, $height, $bg );
+		$white = imagecolorallocate( $image, 255, 255, 255 );
+		imagestring( $image, 5, 20, (int) ( $height / 2 ) - 8, strtoupper( substr( $label, 0, 28 ) ), $white );
+
+		$uploads  = wp_upload_dir();
+		$filename = 'wpss-demo-' . md5( $label . $width . 'x' . $height ) . '.png';
+		$path     = trailingslashit( $uploads['path'] ) . $filename;
+
+		if ( ! imagepng( $image, $path ) ) {
+			imagedestroy( $image );
+			return 0;
+		}
+		imagedestroy( $image );
+
+		$filetype   = wp_check_filetype( $filename, null );
+		$attachment = array(
+			'post_mime_type' => $filetype['type'],
+			'post_title'     => $label,
+			'post_status'    => 'inherit',
+		);
+
+		$attachment_id = wp_insert_attachment( $attachment, $path, $parent );
+		if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
+			return 0;
+		}
+
+		wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $path ) );
+
+		return (int) $attachment_id;
 	}
 
 	/**
