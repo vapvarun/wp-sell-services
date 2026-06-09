@@ -234,7 +234,21 @@
 			$('<td>').append(
 				$('<span>').addClass('wpss-badge wpss-badge--' + (txn.type || 'neutral')).text(typeLabel || (i18n.walletTypeUnknown || 'Transaction'))
 			).appendTo($row);
-			$('<td>').text(txn.description || '').appendTo($row);
+
+			// Description + an optional clickable reference link ("View Order" /
+			// "View Tip" / ...). The server resolves reference_url (empty when the
+			// reference is not a linkable order), so vendors get a real link to the
+			// related order instead of an opaque internal ID.
+			var $descCell = $('<td>');
+			$('<span>').addClass('wpss-wallet__desc').text(txn.description || '').appendTo($descCell);
+			if (txn.reference_url && txn.reference_label) {
+				$('<a>')
+					.addClass('wpss-wallet__reference-link')
+					.attr('href', txn.reference_url)
+					.text(txn.reference_label)
+					.appendTo($descCell);
+			}
+			$descCell.appendTo($row);
 
 			var symbol = isDebit ? '-' : '+';
 			$('<td>')

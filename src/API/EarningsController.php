@@ -359,19 +359,46 @@ class EarningsController extends RestController {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+		// Reference types that resolve to an order (incl. order sub-types — tips,
+		// extensions and milestones are all stored as sub-orders), mapped to the
+		// vendor-facing link label.
+		$reference_labels = array(
+			'order'     => __( 'View Order', 'wp-sell-services' ),
+			'tip'       => __( 'View Tip', 'wp-sell-services' ),
+			'extension' => __( 'View Extension', 'wp-sell-services' ),
+			'milestone' => __( 'View Milestone', 'wp-sell-services' ),
+		);
+
 		$items = array();
 		foreach ( $rows ? $rows : array() as $row ) {
+			$reference_id   = null !== $row['reference_id'] ? (int) $row['reference_id'] : null;
+			$reference_type = (string) $row['reference_type'];
+
+			// Build a clickable reference (label + order detail URL) instead of an
+			// opaque internal ID. Empty url => the JS renders plain text.
+			$reference_label = '';
+			$reference_url   = '';
+			if ( $reference_id && isset( $reference_labels[ $reference_type ] ) ) {
+				$url = wpss_get_order_url( $reference_id );
+				if ( '' !== $url ) {
+					$reference_label = $reference_labels[ $reference_type ];
+					$reference_url   = $url;
+				}
+			}
+
 			$items[] = array(
-				'id'             => (int) $row['id'],
-				'type'           => $row['type'],
-				'amount'         => (float) $row['amount'],
-				'balance_after'  => (float) $row['balance_after'],
-				'currency'       => $row['currency'],
-				'description'    => $row['description'],
-				'reference_type' => $row['reference_type'],
-				'reference_id'   => null !== $row['reference_id'] ? (int) $row['reference_id'] : null,
-				'status'         => $row['status'],
-				'created_at'     => $this->format_datetime( $row['created_at'] ),
+				'id'              => (int) $row['id'],
+				'type'            => $row['type'],
+				'amount'          => (float) $row['amount'],
+				'balance_after'   => (float) $row['balance_after'],
+				'currency'        => $row['currency'],
+				'description'     => $row['description'],
+				'reference_type'  => $reference_type,
+				'reference_id'    => $reference_id,
+				'reference_label' => $reference_label,
+				'reference_url'   => $reference_url,
+				'status'          => $row['status'],
+				'created_at'      => $this->format_datetime( $row['created_at'] ),
 			);
 		}
 

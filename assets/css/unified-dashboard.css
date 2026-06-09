@@ -1143,6 +1143,26 @@
 	color: var(--wpss-danger);
 }
 
+/* Clickable "View Order" / "View Tip" reference link under the ledger description. */
+.wpss-wallet__reference-link {
+	display: inline-block;
+	margin-top: 2px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--wpss-primary, #4f46e5);
+	text-decoration: none;
+}
+
+.wpss-wallet__reference-link::before {
+	content: "↗";
+	margin-right: 4px;
+}
+
+.wpss-wallet__reference-link:hover,
+.wpss-wallet__reference-link:focus-visible {
+	text-decoration: underline;
+}
+
 @media (max-width: 640px) {
 	.wpss-wallet__table th,
 	.wpss-wallet__table td {
