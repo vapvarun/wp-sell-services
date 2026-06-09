@@ -221,6 +221,20 @@
 	color: var(--wpss-gray-900);
 }
 
+/* Header layout (admin-ux Rule 4: primary action top-right). The title also
+   carries .wpss-page-header__title, which zeroes its margin and breaks the
+   right-alignment, while the replay-tour button picks up a margin-left:auto from
+   the page-header system. Re-assert here (2-class specificity wins): the title's
+   auto right-margin absorbs the free space so the action button + replay-tour
+   group together on the right with the header's 12px gap between them. */
+.wpss-dashboard__header .wpss-dashboard__title {
+	margin-right: auto;
+}
+
+.wpss-dashboard__header .wpss-dashboard__tour-replay {
+	margin-left: 0;
+}
+
 @media (max-width: 640px) {
 	.wpss-dashboard__header {
 		flex-wrap: wrap;
