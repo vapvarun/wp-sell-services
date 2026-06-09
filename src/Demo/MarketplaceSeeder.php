@@ -1182,16 +1182,20 @@ class MarketplaceSeeder {
 	}
 
 	/**
-	 * Sideload a demo image into the media library and return its attachment ID.
+	 * Attach a bundled demo image to the media library and return its ID.
 	 *
-	 * Pulls a realistic stock photo from picsum.photos using a deterministic seed
-	 * (so re-seeds are reproducible) and falls back to a locally generated
-	 * placeholder when the download is unavailable (offline / rate-limited). A
-	 * seed therefore always produces an image-complete marketplace, online or not.
+	 * Images ship inside the plugin (assets/demo-media/) so the seeded
+	 * marketplace is image-complete with NO network dependency - the demo is the
+	 * customer's first impression and must look good on any install. A file is
+	 * chosen from the matching pool deterministically by seed (square => avatars,
+	 * otherwise the landscape service pool), copied into the media library, and
+	 * the bundled original is left untouched. If the bundled folder is ever
+	 * missing, a locally generated placeholder is used so a seed is never
+	 * imageless.
 	 *
-	 * @param string $seed   Deterministic seed that varies the photo.
-	 * @param int    $width  Image width in pixels.
-	 * @param int    $height Image height in pixels.
+	 * @param string $seed   Deterministic seed that varies which bundled file is picked.
+	 * @param int    $width  Intended width (square => avatar pool; used for the placeholder fallback).
+	 * @param int    $height Intended height (used for the placeholder fallback).
 	 * @param int    $parent Parent post ID to attach to (0 for none).
 	 * @param string $label  Human label used for alt text + placeholder fallback.
 	 * @return int Attachment ID, or 0 when images are disabled or all paths fail.
@@ -1205,25 +1209,31 @@ class MarketplaceSeeder {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
-		$url = sprintf( 'https://picsum.photos/seed/%s/%d/%d', rawurlencode( $seed ), $width, $height );
-		$tmp = download_url( $url, 15 );
+		$pool  = ( $width === $height ) ? 'avatars' : 'services';
+		$files = glob( WPSS_PLUGIN_DIR . 'assets/demo-media/' . $pool . '/*.jpg' );
 
-		if ( ! is_wp_error( $tmp ) ) {
-			$file = array(
-				'name'     => sanitize_file_name( $seed . '.jpg' ),
-				'tmp_name' => $tmp,
-			);
-			$attachment_id = media_handle_sideload( $file, $parent, $label );
-			if ( is_wp_error( $attachment_id ) ) {
-				if ( file_exists( $tmp ) ) {
-					wp_delete_file( $tmp );
+		if ( ! empty( $files ) ) {
+			sort( $files );
+			$source = $files[ abs( (int) crc32( $seed ) ) % count( $files ) ];
+			$tmp    = wp_tempnam( basename( $source ) );
+
+			if ( $tmp && copy( $source, $tmp ) ) {
+				$file          = array(
+					'name'     => sanitize_file_name( basename( $source ) ),
+					'tmp_name' => $tmp,
+				);
+				$attachment_id = media_handle_sideload( $file, $parent, $label );
+				if ( is_wp_error( $attachment_id ) ) {
+					if ( file_exists( $tmp ) ) {
+						wp_delete_file( $tmp );
+					}
+				} else {
+					return (int) $attachment_id;
 				}
-			} else {
-				return (int) $attachment_id;
 			}
 		}
 
-		// Network unavailable - guarantee an image via a generated placeholder.
+		// Bundled media missing - guarantee an image via a generated placeholder.
 		return $this->generate_placeholder_image( $label, $width, $height, $parent );
 	}
 
