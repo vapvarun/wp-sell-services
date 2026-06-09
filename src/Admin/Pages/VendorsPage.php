@@ -820,59 +820,6 @@ class VendorsPage {
 			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
 		}
 
-		// Accessible, design-system confirm dialog (no native confirm()).
-		window.wpssAdminConfirm = window.wpssAdminConfirm || function( message, onConfirm, options ) {
-			var $ = jQuery;
-			options = options || {};
-			var confirmText = options.confirmText || '<?php echo esc_js( __( 'Confirm', 'wp-sell-services' ) ); ?>';
-			var cancelText  = options.cancelText || '<?php echo esc_js( __( 'Cancel', 'wp-sell-services' ) ); ?>';
-			var okClass     = 'danger' === options.tone ? 'wpss-btn--danger' : 'wpss-btn--primary';
-
-			$( '#wpss-admin-confirm' ).remove();
-
-			var $modal = $(
-				'<div id="wpss-admin-confirm" class="wpss-modal wpss-modal-open" role="dialog" aria-modal="true">' +
-					'<div class="wpss-modal-content wpss-admin-confirm__box">' +
-						'<p class="wpss-admin-confirm__msg"></p>' +
-						'<div class="wpss-admin-confirm__actions">' +
-							'<button type="button" class="wpss-btn wpss-admin-confirm__cancel"></button>' +
-							'<button type="button" class="wpss-btn ' + okClass + ' wpss-admin-confirm__ok"></button>' +
-						'</div>' +
-					'</div>' +
-				'</div>'
-			);
-
-			$modal.find( '.wpss-admin-confirm__msg' ).text( message );
-			$modal.find( '.wpss-admin-confirm__cancel' ).text( cancelText );
-			$modal.find( '.wpss-admin-confirm__ok' ).text( confirmText );
-
-			$( 'body' ).append( $modal );
-			$modal.find( '.wpss-admin-confirm__ok' ).trigger( 'focus' );
-
-			function close() {
-				$modal.remove();
-				$( document ).off( 'keydown.wpssAdminConfirm' );
-			}
-
-			$modal.find( '.wpss-admin-confirm__ok' ).on( 'click', function() {
-				close();
-				if ( onConfirm ) {
-					onConfirm();
-				}
-			} );
-			$modal.on( 'click', function( e ) {
-				if ( e.target === $modal[0] ) {
-					close();
-				}
-			} );
-			$modal.find( '.wpss-admin-confirm__cancel' ).on( 'click', close );
-			$( document ).on( 'keydown.wpssAdminConfirm', function( e ) {
-				if ( 27 === e.keyCode ) {
-					close();
-				}
-			} );
-		};
-
 		jQuery(function($) {
 			var $modal = $('#wpss-vendor-modal');
 			var $modalBody = $('#wpss-vendor-modal-body');
@@ -1713,7 +1660,9 @@ class VendorsPage {
 					}
 
 					if (modAction === 'delete') {
-						window.wpssAdminConfirm('<?php echo esc_js( __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ) ); ?>', proceed, { tone: 'danger' });
+						window.wpssConfirm('<?php echo esc_js( __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ) ); ?>', { tone: 'danger' }).then(function(ok) {
+							if (ok) { proceed(); }
+						});
 						return;
 					}
 

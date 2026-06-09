@@ -666,6 +666,17 @@ class Admin {
 
 		wp_enqueue_media();
 
+		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
+		// Enqueued globally on all WPSS admin surfaces so Pro's admin.js can rely
+		// on window.wpssConfirm being present (loaded in footer before pro script).
+		wp_enqueue_script(
+			'wpss-ui',
+			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
+			array(),
+			\WPSS_VERSION,
+			true
+		);
+
 		wp_enqueue_script(
 			'wpss-admin',
 			\WPSS_PLUGIN_URL . 'assets/js/admin.js',
@@ -723,18 +734,9 @@ class Admin {
 		// Settings page scripts.
 		if ( $this->is_settings_page( $hook ) ) {
 			wp_enqueue_script(
-				'wpss-admin-toast',
-				\WPSS_PLUGIN_URL . 'assets/js/admin-toast.js',
-				array(),
-				\WPSS_VERSION,
-				true
-			);
-			wp_set_script_translations( 'wpss-admin-toast', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
-
-			wp_enqueue_script(
 				'wpss-admin-settings-nav',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-nav.js',
-				array( 'wpss-admin-toast' ),
+				array( 'wpss-ui' ),
 				\WPSS_VERSION,
 				true
 			);
@@ -744,7 +746,7 @@ class Admin {
 			wp_enqueue_script(
 				'wpss-admin-settings-pages',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-pages.js',
-				array( 'jquery', 'wpss-admin-toast' ),
+				array( 'jquery', 'wpss-ui' ),
 				\WPSS_VERSION,
 				true
 			);

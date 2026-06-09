@@ -577,6 +577,20 @@ button.wpss-btn--success,
 .wpss-confirm__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-2); }
 .wpss-confirm__actions .wpss-btn { min-width: 110px; }
 
+/* wpss-ui.js confirm primitive — overlay + dialog wrapper.
+   The dialog reuses .wpss-modal__dialog.wpss-confirm (above) + .wpss-btn
+   primitives so no extra component tokens are needed here. */
+.wpss-ui-confirm-wrap { position: fixed; inset: 0; z-index: 160001; display: flex; align-items: center; justify-content: center; padding: var(--wpss-space-5, 20px); }
+.wpss-ui-confirm-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
+.wpss-ui-modal { position: relative; /* stacks above overlay */ }
+
+@media (max-width: 640px) {
+	.wpss-ui-confirm-wrap { padding: var(--wpss-space-4, 16px); align-items: flex-end; }
+	.wpss-ui-modal.wpss-modal__dialog.wpss-confirm { max-width: 100%; margin-bottom: var(--wpss-space-2, 8px); }
+	.wpss-confirm__actions { flex-direction: column; }
+	.wpss-confirm__actions .wpss-btn { width: 100%; min-width: 0; }
+}
+
 /* ==========================================================================
    11. LAYOUT UTILITIES
    ========================================================================== */

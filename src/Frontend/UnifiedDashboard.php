@@ -95,6 +95,17 @@ class UnifiedDashboard {
 		// Enqueue frontend assets to ensure wpssData is available for WPSS functions
 		wpss_enqueue_frontend_assets();
 
+		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
+		// Must be enqueued before any dashboard script (free or pro) that calls
+		// wpssConfirm() / wpssToast().
+		wp_enqueue_script(
+			'wpss-ui',
+			WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
+			array(),
+			WPSS_VERSION,
+			true
+		);
+
 		wp_enqueue_style(
 			'wpss-unified-dashboard',
 			WPSS_PLUGIN_URL . 'assets/css/unified-dashboard.css',
