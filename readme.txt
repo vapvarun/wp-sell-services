@@ -285,6 +285,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * Fix      - Order conversation messages can be sent with only an image attached and no text.
 * Fix      - Saving settings now shows a confirmation message instead of completing silently.
 * Fix      - Service add-ons created from the admin service editor or WP-CLI now appear in the cart and checkout, not just the order modal.
+* Fix      - Vendor vacation mode is now honored on the single service page - a notice banner shows the seller's message and return date and the order button is disabled, so buyers cannot purchase while the seller is away. Vendors and admins can set an optional return date.
 * Dev      - REST status parameter on service update (publish or draft), owner-gated.
 * Dev      - Service wizard extension hooks (wpss_wizard_service_data, wpss_wizard_pricing_after, wpss_wizard_sanitize_service_data, wpss_wizard_save_service_meta) let extensions inject fields into the frontend Create Service flow. New filters wpss_use_fullwidth_template, wpss_fullwidth_page_keys, wpss_dashboard_default_section, and wpss_realtime_settings.
 * Dev      - audit/manifest.json refreshed; full inventory of REST routes, hooks, tables, shortcodes, and admin pages.
