@@ -1792,3 +1792,74 @@ body.wpss-modal-open {
 		border-radius: 0;
 	}
 }
+
+/* ==========================================================================
+   Vacation Mode (seller away) — buyer-facing notice + disabled order CTA
+   ========================================================================== */
+
+.wpss-vacation-notice {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin: 0 0 24px;
+	padding: 16px 18px;
+	border: 1px solid var(--wpss-warning-border, #fde68a);
+	border-radius: var(--wpss-radius, 8px);
+	background: var(--wpss-warning-light, #fffbeb);
+	color: var(--wpss-warning-dark, #92400e);
+}
+
+.wpss-vacation-notice__icon {
+	display: inline-flex;
+	flex-shrink: 0;
+	color: var(--wpss-warning, #f59e0b);
+}
+
+.wpss-vacation-notice__icon .wpss-icon {
+	width: 22px;
+	height: 22px;
+}
+
+.wpss-vacation-notice__body {
+	min-width: 0;
+}
+
+.wpss-vacation-notice__message {
+	margin: 0;
+	font-weight: 600;
+}
+
+.wpss-vacation-notice__resume {
+	margin: 4px 0 0;
+	font-size: var(--wpss-text-sm, 0.875rem);
+	opacity: 0.9;
+}
+
+/* Order CTA rendered when the seller is on vacation: looks like the primary
+   button but is visually muted and non-interactive (also lacks the
+   wpss-order-btn JS hook so the modal can never open). */
+.wpss-order-btn--disabled {
+	cursor: not-allowed;
+	opacity: 0.55;
+	filter: grayscale(35%);
+	pointer-events: none;
+}
+
+.wpss-package-vacation-note {
+	margin: 8px 0 0;
+	font-size: var(--wpss-text-sm, 0.875rem);
+	color: var(--wpss-warning-dark, #92400e);
+	text-align: center;
+}
+
+@media (max-width: 991px) {
+	.wpss-vacation-notice {
+		margin-bottom: 18px;
+	}
+}
+
+@media (max-width: 575px) {
+	.wpss-vacation-notice {
+		padding: 12px 14px;
+	}
+}

@@ -1536,10 +1536,12 @@ class VendorsPage {
 					});
 				});
 
-				// Vacation mode toggle.
-				$('#wpss-vacation-mode-toggle').off('change').on('change', function() {
-					var enabled = $(this).is(':checked');
+				// Vacation mode toggle (and return-date change re-saves with the
+				// current toggle state so admins can set/clear the date directly).
+				var saveVacation = function() {
+					var enabled = $('#wpss-vacation-mode-toggle').is(':checked');
 					var message = $('#wpss-vacation-message').val() || '';
+					var returnDate = $('#wpss-vacation-return-date').val() || '';
 
 					$.ajax({
 						url: ajaxUrl,
@@ -1549,7 +1551,8 @@ class VendorsPage {
 							nonce: nonce,
 							vendor_id: vendorId,
 							enabled: enabled ? 1 : 0,
-							message: message
+							message: message,
+							return_date: returnDate
 						},
 						success: function(response) {
 							if (response.success) {
@@ -1561,7 +1564,10 @@ class VendorsPage {
 							}
 						}
 					});
-				});
+				};
+
+				$('#wpss-vacation-mode-toggle').off('change').on('change', saveVacation);
+				$('#wpss-vacation-return-date').off('change').on('change', saveVacation);
 
 				// Availability toggle.
 				$('#wpss-availability-toggle').off('change').on('change', function() {
@@ -3358,6 +3364,12 @@ class VendorsPage {
 					</label>
 					<textarea id="wpss-vacation-message" rows="3"><?php echo esc_textarea( $profile->vacation_message ?? '' ); ?></textarea>
 				</div>
+				<div class="wpss-vacation-return-date">
+					<label for="wpss-vacation-return-date">
+						<?php esc_html_e( 'Back on (optional)', 'wp-sell-services' ); ?>
+					</label>
+					<input type="date" id="wpss-vacation-return-date" value="<?php echo esc_attr( $profile->vacation_return_date ?? '' ); ?>">
+				</div>
 				<p id="wpss-vacation-status"></p>
 			</div>
 		</div>
@@ -3438,15 +3450,16 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
-		$enabled   = ! empty( $_POST['enabled'] );
-		$message   = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
+		$vendor_id   = absint( $_POST['vendor_id'] ?? 0 );
+		$enabled     = ! empty( $_POST['enabled'] );
+		$message     = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
+		$return_date = isset( $_POST['return_date'] ) ? wpss_sanitize_date( sanitize_text_field( wp_unslash( $_POST['return_date'] ) ) ) : null;
 
 		if ( ! $vendor_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
 		}
 
-		$result = $this->vendor_repo->set_vacation_mode( $vendor_id, $enabled, $message );
+		$result = $this->vendor_repo->set_vacation_mode( $vendor_id, $enabled, $message, $return_date );
 
 		if ( ! $result ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to update vacation mode.', 'wp-sell-services' ) ) );

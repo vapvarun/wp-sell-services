@@ -204,6 +204,21 @@ class VendorProfile {
 	public ?\DateTimeImmutable $vacation_until;
 
 	/**
+	 * Optional buyer-facing vacation return date (Y-m-d), shown to buyers as
+	 * "Orders resume on {date}". NULL when the vendor did not set one.
+	 *
+	 * @var string|null
+	 */
+	public ?string $vacation_return_date = null;
+
+	/**
+	 * Optional buyer-facing vacation message shown on the profile and service pages.
+	 *
+	 * @var string
+	 */
+	public string $vacation_message = '';
+
+	/**
 	 * Intro video URL (YouTube or Vimeo link).
 	 *
 	 * Rendered as a responsive oEmbed on the vendor profile + seller card
@@ -278,8 +293,13 @@ class VendorProfile {
 		$profile->social_links     = isset( $row->social_links ) && $row->social_links ? json_decode( $row->social_links, true ) : array();
 
 		// Vacation mode is manual-only (vendor toggles on/off, no auto-expiry).
-		$profile->vacation_mode  = ! empty( $row->vacation_mode );
-		$profile->vacation_until = null;
+		$profile->vacation_mode    = ! empty( $row->vacation_mode );
+		$profile->vacation_until   = null;
+		$profile->vacation_message = (string) ( $row->vacation_message ?? '' );
+
+		// Optional buyer-facing return date (Y-m-d). Normalise blank/zero dates to null.
+		$return_date = isset( $row->vacation_return_date ) ? (string) $row->vacation_return_date : '';
+		$profile->vacation_return_date = ( '' !== $return_date && '0000-00-00' !== $return_date ) ? $return_date : null;
 
 		// Timestamps.
 		$profile->member_since = isset( $row->created_at ) && $row->created_at ? new \DateTimeImmutable( $row->created_at ) : null;

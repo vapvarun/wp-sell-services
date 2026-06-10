@@ -2164,6 +2164,34 @@ function wpss_normalize_uploaded_files( array $files ): array {
 }
 
 /**
+ * Sanitize a date string to a strict Y-m-d value or null.
+ *
+ * Accepts only a calendar-valid Y-m-d date that round-trips exactly; anything
+ * else (empty string, partial, or impossible date like 2026-13-40) returns
+ * null so the DATE column stores SQL NULL.
+ *
+ * @since 1.2.0
+ *
+ * @param string $value Raw date string.
+ * @return string|null Valid Y-m-d date, or null.
+ */
+function wpss_sanitize_date( string $value ): ?string {
+	$value = trim( sanitize_text_field( $value ) );
+
+	if ( '' === $value ) {
+		return null;
+	}
+
+	$parsed = \DateTimeImmutable::createFromFormat( 'Y-m-d', $value );
+
+	if ( ! $parsed || $parsed->format( 'Y-m-d' ) !== $value ) {
+		return null;
+	}
+
+	return $value;
+}
+
+/**
  * Build a sanitized vendor-profile update payload from a posted field set.
  *
  * Single source of truth for the vendor-profile form fields, shared by the
@@ -2213,6 +2241,10 @@ function wpss_build_vendor_profile_update( array $src, int $avatar_id, int $cove
 	}
 	if ( array_key_exists( 'vacation_message', $src ) ) {
 		$data['vacation_message'] = sanitize_textarea_field( (string) $src['vacation_message'] );
+	}
+	if ( array_key_exists( 'vacation_return_date', $src ) ) {
+		// Accept only a strict Y-m-d date; anything else (incl. empty) stores NULL.
+		$data['vacation_return_date'] = wpss_sanitize_date( (string) $src['vacation_return_date'] );
 	}
 
 	if ( $avatar_id > 0 ) {

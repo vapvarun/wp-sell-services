@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.4';
+	const DB_VERSION = '1.4.5';
 
 	/**
 	 * Option name for storing DB version.
@@ -149,8 +149,86 @@ class SchemaManager {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$this->create_tables();
+		$this->run_column_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Run additive column migrations on existing tables.
+	 *
+	 * The dbDelta() pass already reconciles most schema deltas from the CREATE
+	 * TABLE definitions, but on some sites/collations it can silently skip an
+	 * added column. This belt-and-suspenders pass explicitly checks
+	 * INFORMATION_SCHEMA.COLUMNS before each ALTER TABLE so it is safe to run
+	 * repeatedly and on fresh installs (no-op when the column already exists).
+	 *
+	 * Append a new entry to the map whenever a column is added to an existing
+	 * table; keep the matching CREATE TABLE definition in sync so fresh installs
+	 * and dbDelta stay aligned.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	private function run_column_migrations(): void {
+		$migrations = array(
+			// Buyer-facing vacation return date (Basecamp #9982757528).
+			array(
+				'table'      => 'vendor_profiles',
+				'column'     => 'vacation_return_date',
+				'definition' => 'date DEFAULT NULL',
+				'after'      => 'vacation_message',
+			),
+		);
+
+		foreach ( $migrations as $migration ) {
+			$this->maybe_add_column(
+				$migration['table'],
+				$migration['column'],
+				$migration['definition'],
+				$migration['after'] ?? ''
+			);
+		}
+	}
+
+	/**
+	 * Add a column to a table only if it does not already exist.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param string $table      Table name without prefix.
+	 * @param string $column     Column name to add.
+	 * @param string $definition Column definition (type + default).
+	 * @param string $after      Optional column to place the new one after.
+	 * @return void
+	 */
+	private function maybe_add_column( string $table, string $column, string $definition, string $after = '' ): void {
+		$full_table = $this->get_table_name( $table );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$exists = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				$this->wpdb->dbname,
+				$full_table,
+				$column
+			)
+		);
+
+		if ( (int) $exists > 0 ) {
+			return;
+		}
+
+		$position = '' !== $after ? ' AFTER `' . esc_sql( $after ) . '`' : '';
+
+		// Identifiers are plugin-controlled constants (column names, not user input);
+		// no data is interpolated here. Safe to build the DDL string directly.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$this->wpdb->query(
+			"ALTER TABLE `{$full_table}` ADD COLUMN `{$column}` {$definition}{$position}"
+		);
 	}
 
 	/**
@@ -635,6 +713,7 @@ class SchemaManager {
 			is_available tinyint(1) DEFAULT 1,
 			vacation_mode tinyint(1) DEFAULT 0,
 			vacation_message text,
+			vacation_return_date date DEFAULT NULL,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
@@ -773,6 +852,7 @@ class SchemaManager {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$this->create_tables();
+		$this->run_column_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}

@@ -94,14 +94,15 @@ class VendorsController extends RestController {
 					'args'                => array_merge(
 						$this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
 						array(
-							'country'          => array( 'type' => 'string' ),
-							'city'             => array( 'type' => 'string' ),
-							'website'          => array( 'type' => 'string' ),
-							'intro_video_url'  => array( 'type' => 'string' ),
-							'vacation_mode'    => array( 'type' => 'boolean' ),
-							'vacation_message' => array( 'type' => 'string' ),
-							'cover_image_id'   => array( 'type' => 'integer' ),
-							'cover_id'         => array( 'type' => 'integer' ),
+							'country'              => array( 'type' => 'string' ),
+							'city'                 => array( 'type' => 'string' ),
+							'website'              => array( 'type' => 'string' ),
+							'intro_video_url'      => array( 'type' => 'string' ),
+							'vacation_mode'        => array( 'type' => 'boolean' ),
+							'vacation_message'     => array( 'type' => 'string' ),
+							'vacation_return_date' => array( 'type' => 'string' ),
+							'cover_image_id'       => array( 'type' => 'integer' ),
+							'cover_id'             => array( 'type' => 'integer' ),
 						)
 					),
 				),
@@ -123,10 +124,15 @@ class VendorsController extends RestController {
 							'type'        => 'boolean',
 							'required'    => true,
 						),
-						'message' => array(
+						'message'     => array(
 							'description'       => __( 'Optional vacation message shown to buyers.', 'wp-sell-services' ),
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+						'return_date' => array(
+							'description' => __( 'Optional buyer-facing return date (Y-m-d). Empty/invalid clears it.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'format'      => 'date',
 						),
 					),
 				),
@@ -391,7 +397,7 @@ class VendorsController extends RestController {
 		// vacation/cover entirely (KG-5 data-loss). Now one store: the
 		// wpss_vendor_profiles table.
 		$src = array();
-		foreach ( array( 'tagline', 'bio', 'country', 'city', 'website', 'intro_video_url', 'vacation_mode', 'vacation_message' ) as $key ) {
+		foreach ( array( 'tagline', 'bio', 'country', 'city', 'website', 'intro_video_url', 'vacation_mode', 'vacation_message', 'vacation_return_date' ) as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$src[ $key ] = $request->get_param( $key );
 			}
@@ -474,8 +480,13 @@ class VendorsController extends RestController {
 			? sanitize_textarea_field( (string) $request->get_param( 'message' ) )
 			: '';
 
+		// Strict Y-m-d (empty/invalid -> null/cleared) via the shared validator.
+		$return_date = $request->has_param( 'return_date' )
+			? wpss_sanitize_date( (string) $request->get_param( 'return_date' ) )
+			: null;
+
 		$vendor_service = new \WPSellServices\Services\VendorService();
-		$result         = $vendor_service->set_vacation_mode( $user_id, $enabled, $message );
+		$result         = $vendor_service->set_vacation_mode( $user_id, $enabled, $message, $return_date );
 
 		if ( ! $result ) {
 			return new WP_Error(
@@ -487,8 +498,9 @@ class VendorsController extends RestController {
 
 		return new WP_REST_Response(
 			array(
-				'enabled' => $enabled,
-				'message' => $message,
+				'enabled'     => $enabled,
+				'message'     => $message,
+				'return_date' => $return_date,
 			)
 		);
 	}

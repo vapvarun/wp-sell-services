@@ -447,6 +447,7 @@ class VendorService {
 			'social_links',
 			'vacation_mode',
 			'vacation_message',
+			'vacation_return_date',
 		);
 
 		/**
@@ -508,24 +509,26 @@ class VendorService {
 	/**
 	 * Set vacation mode.
 	 *
-	 * @param int    $user_id User ID.
-	 * @param bool   $enabled Enable or disable.
-	 * @param string $message Vacation message.
+	 * @param int         $user_id     User ID.
+	 * @param bool        $enabled     Enable or disable.
+	 * @param string      $message     Vacation message.
+	 * @param string|null $return_date Optional buyer-facing return date (Y-m-d).
 	 * @return bool True on success.
 	 */
-	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '' ): bool {
-		$result = $this->profile_repo->set_vacation_mode( $user_id, $enabled, $message );
+	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '', ?string $return_date = null ): bool {
+		$result = $this->profile_repo->set_vacation_mode( $user_id, $enabled, $message, $return_date );
 
 		if ( $result ) {
 			/**
 			 * Fires when vacation mode is toggled.
 			 *
 			 * @since 1.0.0
-			 * @param int    $user_id User ID.
-			 * @param bool   $enabled Whether enabled.
-			 * @param string $message Vacation message.
+			 * @param int         $user_id     User ID.
+			 * @param bool        $enabled     Whether enabled.
+			 * @param string      $message     Vacation message.
+			 * @param string|null $return_date Optional buyer-facing return date (Y-m-d).
 			 */
-			do_action( 'wpss_vendor_vacation_mode_changed', $user_id, $enabled, $message );
+			do_action( 'wpss_vendor_vacation_mode_changed', $user_id, $enabled, $message, $return_date );
 		}
 
 		return $result;

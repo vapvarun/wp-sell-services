@@ -791,6 +791,11 @@ article.wpss-service-card:hover {
 	color: var(--wpss-tier-pro-text);
 }
 
+.wpss-seller-badge--vacation {
+	background: var(--wpss-warning-light, #fffbeb);
+	color: var(--wpss-warning-dark, #92400e);
+}
+
 .wpss-seller-badge .wpss-icon {
 	vertical-align: -1px;
 	margin-inline-end: 2px;

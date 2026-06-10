@@ -10,12 +10,20 @@
  * @var WPSellServices\Models\Service $service Service object.
  * @var int                            $service_id Service post ID.
  * @var array                          $packages Service packages array.
+ * @var array|null                     $wpss_vacation Vendor vacation state
+ *                                                    (message/return_date_display)
+ *                                                    assembled in SingleServiceView,
+ *                                                    or null when not on vacation.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 $service_id = get_the_ID();
 $packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
+
+// Vendor vacation state is resolved in the view (no DB queries in templates).
+$wpss_vacation = ( isset( $wpss_vacation ) && is_array( $wpss_vacation ) ) ? $wpss_vacation : null;
+$wpss_on_vacation = null !== $wpss_vacation;
 
 // If no packages, show single price (omit description to avoid duplicating "About This Service").
 if ( empty( $packages ) ) {
@@ -218,14 +226,45 @@ do_action( 'wpss_before_service_packages', $service_id );
 						$button_text = apply_filters( 'wpss_package_button_text', $button_text, $index );
 						?>
 
-						<button type="button"
-								class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn"
-								data-service="<?php echo esc_attr( $service_id ); ?>"
-								data-package="<?php echo esc_attr( $index ); ?>"
-								data-price="<?php echo esc_attr( $package['price'] ?? 0 ); ?>">
-							<?php echo esc_html( $button_text ); ?>
-							<span class="wpss-btn-price">(<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>)</span>
-						</button>
+						<?php if ( $wpss_on_vacation ) : ?>
+							<?php
+							// Seller on vacation: render the CTA visually disabled and
+							// non-interactive. Crucially this button does NOT carry the
+							// `wpss-order-btn` class, so the single-service JS click
+							// handler never matches it and the order modal cannot open.
+							$wpss_vacation_label_id = 'wpss-vacation-cta-note-' . esc_attr( $index );
+							?>
+							<button type="button"
+									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									disabled
+									aria-disabled="true"
+									aria-describedby="<?php echo esc_attr( $wpss_vacation_label_id ); ?>">
+								<?php echo esc_html( $button_text ); ?>
+								<span class="wpss-btn-price">(<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>)</span>
+							</button>
+							<p id="<?php echo esc_attr( $wpss_vacation_label_id ); ?>" class="wpss-package-vacation-note">
+								<?php
+								if ( ! empty( $wpss_vacation['return_date_display'] ) ) {
+									printf(
+										/* translators: %s: formatted return date */
+										esc_html__( 'Seller is on vacation. Orders resume on %s.', 'wp-sell-services' ),
+										esc_html( $wpss_vacation['return_date_display'] )
+									);
+								} else {
+									esc_html_e( 'Seller is on vacation and not accepting new orders right now.', 'wp-sell-services' );
+								}
+								?>
+							</p>
+						<?php else : ?>
+							<button type="button"
+									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn"
+									data-service="<?php echo esc_attr( $service_id ); ?>"
+									data-package="<?php echo esc_attr( $index ); ?>"
+									data-price="<?php echo esc_attr( $package['price'] ?? 0 ); ?>">
+								<?php echo esc_html( $button_text ); ?>
+								<span class="wpss-btn-price">(<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>)</span>
+							</button>
+						<?php endif; ?>
 					<?php endif; ?>
 				</div>
 			</div>

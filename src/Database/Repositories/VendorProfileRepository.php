@@ -241,17 +241,21 @@ class VendorProfileRepository extends AbstractRepository {
 	/**
 	 * Set vacation mode.
 	 *
-	 * @param int    $user_id         User ID.
-	 * @param bool   $enabled         Whether to enable vacation mode.
-	 * @param string $message         Vacation message.
+	 * @param int         $user_id     User ID.
+	 * @param bool        $enabled     Whether to enable vacation mode.
+	 * @param string      $message     Vacation message.
+	 * @param string|null $return_date Optional buyer-facing return date (Y-m-d).
+	 *                                 Empty/invalid stores NULL.
 	 * @return bool True on success.
 	 */
-	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '' ): bool {
+	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '', ?string $return_date = null ): bool {
 		return $this->upsert(
 			$user_id,
 			array(
-				'vacation_mode'    => $enabled ? 1 : 0,
-				'vacation_message' => $message,
+				'vacation_mode'        => $enabled ? 1 : 0,
+				'vacation_message'     => $message,
+				// Reuse the shared validator so REST/AJAX/admin all normalize identically.
+				'vacation_return_date' => wpss_sanitize_date( (string) $return_date ),
 			)
 		) !== false;
 	}
