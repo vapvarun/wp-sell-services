@@ -719,15 +719,13 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	public function render_addons_metabox( \WP_Post $post ): void {
-		$addons = get_post_meta( $post->ID, '_wpss_addons', true );
-		if ( empty( $addons ) || ! is_array( $addons ) ) {
-			$addons = array();
-		}
+		$addons = $this->get_addons_for_editor( $post->ID );
 
 		$field_types = $this->get_addon_field_types();
 		$price_types = $this->get_addon_price_types();
 		?>
 		<div class="wpss-addons-wrapper">
+			<input type="hidden" name="wpss_addons_present" value="1">
 			<p class="description"><?php esc_html_e( 'Add extra services buyers can purchase with this service.', 'wp-sell-services' ); ?></p>
 
 			<div id="wpss-addons-list">
@@ -836,6 +834,36 @@ class ServiceMetabox {
 			</div>
 		</script>
 		<?php
+	}
+
+	/**
+	 * Get add-ons for the admin editor with the wizard meta-key fallback.
+	 *
+	 * Reads through wpss_get_service_extras() (`_wpss_extras` first, then
+	 * `_wpss_addons`) so wizard-created services surface their add-ons in the
+	 * metabox. Wizard rows store the extra delivery days as `extra_days`
+	 * (legacy rows as `delivery_time`) while the metabox fields use
+	 * `delivery_days_extra`, so the value is mapped with the same coalesce
+	 * wpss_resolve_checkout_addons() already uses. The remaining metabox-only
+	 * fields (field_type, price_type, quantities, options, is_required) fall
+	 * back to the render defaults.
+	 *
+	 * @param int $post_id Service post ID.
+	 * @return array Add-on rows in the metabox field shape.
+	 */
+	private function get_addons_for_editor( int $post_id ): array {
+		$addons = wpss_get_service_extras( $post_id );
+
+		$normalized = array();
+		foreach ( $addons as $addon ) {
+			if ( ! is_array( $addon ) ) {
+				continue;
+			}
+			$addon['delivery_days_extra'] = (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 );
+			$normalized[]                 = $addon;
+		}
+
+		return $normalized;
 	}
 
 	/**
@@ -1103,8 +1131,17 @@ class ServiceMetabox {
 				}
 			}
 			update_post_meta( $post_id, '_wpss_addons', $addons );
-		} else {
+			// Admin data wins from now on: drop the wizard key so
+			// wpss_get_service_extras() resolves to the rows just saved
+			// instead of preferring stale `_wpss_extras` wizard data.
+			delete_post_meta( $post_id, '_wpss_extras' );
+		} elseif ( isset( $_POST['wpss_addons_present'] ) ) {
+			// The add-ons UI was rendered on this form and submitted zero
+			// rows: the admin removed every add-on, so clear both keys.
+			// Without the sentinel guard, save paths that never render the
+			// add-ons panel would silently wipe wizard-created add-ons.
 			delete_post_meta( $post_id, '_wpss_addons' );
+			delete_post_meta( $post_id, '_wpss_extras' );
 		}
 
 		// Save gallery -- only process if the gallery metabox was rendered on this page.
@@ -1499,15 +1536,14 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_addons_content( \WP_Post $post ): void {
-		$addons = get_post_meta( $post->ID, '_wpss_addons', true );
-		if ( empty( $addons ) || ! is_array( $addons ) ) {
-			$addons = array();
-		}
+		$addons = $this->get_addons_for_editor( $post->ID );
 
 		$field_types = $this->get_addon_field_types();
 		$price_types = $this->get_addon_price_types();
 		?>
 		<h3 class="wpss-panel-title"><?php esc_html_e( 'Service Add-ons', 'wp-sell-services' ); ?></h3>
+
+		<input type="hidden" name="wpss_addons_present" value="1">
 
 		<p class="description"><?php esc_html_e( 'Add extra services buyers can purchase with this service.', 'wp-sell-services' ); ?></p>
 
