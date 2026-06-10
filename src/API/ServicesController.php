@@ -1040,7 +1040,7 @@ class ServicesController extends RestController {
 			),
 			'delivery'    => array(
 				'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
-				'revisions' => (int) get_post_meta( $service->ID, '_wpss_max_revisions', true ),
+				'revisions' => wpss_get_service_revisions( $service->ID ),
 			),
 			'images'      => $this->get_service_images( $service->ID ),
 			'categories'  => wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ),
@@ -1170,7 +1170,11 @@ class ServicesController extends RestController {
 				$fastest_delivery = ! empty( $delivery_days ) ? min( $delivery_days ) : 7;
 				update_post_meta( $service_id, '_wpss_fastest_delivery', $fastest_delivery );
 				update_post_meta( $service_id, '_wpss_delivery_days', $fastest_delivery );
-				update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revisions ) ? max( $revisions ) : 0 );
+				// Both revision meta keys are kept in sync so the wizard key
+				// and the admin/REST key agree regardless of creation path.
+				$max_revisions = ! empty( $revisions ) ? max( $revisions ) : 0;
+				update_post_meta( $service_id, '_wpss_max_revisions', $max_revisions );
+				update_post_meta( $service_id, '_wpss_revisions', $max_revisions );
 			}
 		}
 

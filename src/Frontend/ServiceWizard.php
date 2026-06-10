@@ -2127,6 +2127,12 @@ class ServiceWizard {
 		$delivery_values = array_filter( array_map( 'intval', wp_list_pluck( $numeric_packages, 'delivery_days' ) ) );
 		update_post_meta( $service_id, '_wpss_fastest_delivery', ! empty( $delivery_values ) ? min( $delivery_values ) : (int) ( $basic['delivery_days'] ?? 7 ) );
 
+		// Sync the admin/REST revisions key too (max across packages, same
+		// formula as the admin metabox) so REST responses see revisions for
+		// wizard-created services.
+		$revision_values = array_map( 'intval', wp_list_pluck( $numeric_packages, 'revisions' ) );
+		update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revision_values ) ? max( $revision_values ) : (int) ( $basic['revisions'] ?? 0 ) );
+
 		// Save starting price (from first/basic package).
 		update_post_meta( $service_id, '_wpss_starting_price', $basic['price'] ?? 0 );
 

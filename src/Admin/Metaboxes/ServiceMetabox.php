@@ -1018,8 +1018,11 @@ class ServiceMetabox {
 			update_post_meta( $post_id, '_wpss_delivery_days', $fastest_delivery );
 
 			// Max revisions = maximum revisions across packages.
+			// Both revision meta keys are kept in sync so the wizard key and
+			// the admin/REST key agree regardless of creation path.
 			$max_revisions = ! empty( $revisions ) ? max( $revisions ) : 0;
 			update_post_meta( $post_id, '_wpss_max_revisions', $max_revisions );
+			update_post_meta( $post_id, '_wpss_revisions', $max_revisions );
 		}
 
 		// Save FAQs.

@@ -1508,6 +1508,34 @@ function wpss_get_service_delivery_days( int $service_id ): int {
 }
 
 /**
+ * Get a service's revision count with the dual meta-key fallback.
+ *
+ * Revision counts live under two historical keys: `_wpss_revisions`
+ * (written by the frontend Service Wizard) and `_wpss_max_revisions`
+ * (written by the admin metabox, the REST API, and CLI). Every PHP read
+ * site MUST use this helper so services created via either path surface
+ * their revision count in REST responses and package fallbacks alike.
+ * Unlike the delivery-days helper, 0 ("No revisions") and -1 ("Unlimited")
+ * are both valid stored values, so the fallback only triggers when the
+ * primary key is truly absent. A full meta-key consolidation is parked
+ * for 1.2 - see plans/future-features/from-1.1.0-audit.md.
+ *
+ * @since 1.2.0
+ *
+ * @param int $service_id Service post ID.
+ * @return int Revision count. -1 means unlimited, 0 means none (or unset).
+ */
+function wpss_get_service_revisions( int $service_id ): int {
+	$revisions = get_post_meta( $service_id, '_wpss_revisions', true );
+
+	if ( '' === $revisions ) {
+		$revisions = get_post_meta( $service_id, '_wpss_max_revisions', true );
+	}
+
+	return (int) $revisions;
+}
+
+/**
  * Resolve addon data from checkout POST data.
  *
  * Reads addon_ids from $_POST, validates each addon belongs to the service

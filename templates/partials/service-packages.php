@@ -36,7 +36,7 @@ if ( empty( $packages ) ) {
 			'description'   => '',
 			'price'         => $price,
 			'delivery_time' => $delivery_time,
-			'revisions'     => get_post_meta( $service_id, '_wpss_revisions', true ) ?: 1,
+			'revisions'     => wpss_get_service_revisions( $service_id ) ?: 1,
 			'features'      => [],
 		],
 	];

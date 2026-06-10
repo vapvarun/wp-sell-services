@@ -515,7 +515,10 @@ class MarketplaceSeeder {
 				update_post_meta( $post_id, '_wpss_starting_price', min( $prices ) );
 				update_post_meta( $post_id, '_wpss_fastest_delivery', min( $delivery ) );
 				update_post_meta( $post_id, '_wpss_delivery_days', min( $delivery ) );
+				// Both revision meta keys are kept in sync so the wizard key
+				// and the admin/REST key agree regardless of creation path.
 				update_post_meta( $post_id, '_wpss_max_revisions', max( $revisions ) );
+				update_post_meta( $post_id, '_wpss_revisions', max( $revisions ) );
 
 				if ( 0 === $s ) {
 					update_post_meta( $post_id, '_wpss_featured', 1 );

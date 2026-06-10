@@ -470,7 +470,10 @@ class ServiceCommands extends WP_CLI_Command {
 			update_post_meta( $post_id, '_wpss_starting_price', min( $prices ) );
 			update_post_meta( $post_id, '_wpss_fastest_delivery', min( $delivery ) );
 			update_post_meta( $post_id, '_wpss_delivery_days', min( $delivery ) );
+			// Both revision meta keys are kept in sync so the wizard key and
+			// the admin/REST key agree regardless of creation path.
 			update_post_meta( $post_id, '_wpss_max_revisions', max( $revisions ) );
+			update_post_meta( $post_id, '_wpss_revisions', max( $revisions ) );
 		}
 
 		// Save other meta.
@@ -717,7 +720,10 @@ class ServiceCommands extends WP_CLI_Command {
 					update_post_meta( $post_id, '_wpss_delivery_days', min( $delivery ) );
 				}
 				if ( ! empty( $revisions ) ) {
+					// Both revision meta keys are kept in sync so the wizard
+					// key and the admin/REST key agree either way.
 					update_post_meta( $post_id, '_wpss_max_revisions', max( $revisions ) );
+					update_post_meta( $post_id, '_wpss_revisions', max( $revisions ) );
 				}
 
 				++$updated;
