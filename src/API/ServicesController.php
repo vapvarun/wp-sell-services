@@ -1039,7 +1039,7 @@ class ServicesController extends RestController {
 				'currency'   => wpss_get_currency(),
 			),
 			'delivery'    => array(
-				'time'      => (int) get_post_meta( $service->ID, '_wpss_fastest_delivery', true ) ?: 7,
+				'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
 				'revisions' => (int) get_post_meta( $service->ID, '_wpss_max_revisions', true ),
 			),
 			'images'      => $this->get_service_images( $service->ID ),
@@ -1165,7 +1165,11 @@ class ServicesController extends RestController {
 				$revisions     = wp_list_pluck( $packages, 'revisions' );
 
 				update_post_meta( $service_id, '_wpss_starting_price', ! empty( $prices ) ? min( $prices ) : 0 );
-				update_post_meta( $service_id, '_wpss_fastest_delivery', ! empty( $delivery_days ) ? min( $delivery_days ) : 7 );
+				// Both delivery meta keys are kept in sync so meta-query
+				// filters (archive + REST) match services from either path.
+				$fastest_delivery = ! empty( $delivery_days ) ? min( $delivery_days ) : 7;
+				update_post_meta( $service_id, '_wpss_fastest_delivery', $fastest_delivery );
+				update_post_meta( $service_id, '_wpss_delivery_days', $fastest_delivery );
 				update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revisions ) ? max( $revisions ) : 0 );
 			}
 		}

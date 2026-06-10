@@ -39,10 +39,13 @@ class ServicePostType {
 	}
 
 	/**
-	 * Sync _wpss_delivery_days flat meta from packages on every save.
+	 * Sync the delivery-days flat meta keys from packages on every save.
 	 *
-	 * Ensures the delivery time filter on the archive page always has data
-	 * to filter on, even for services not created via the wizard.
+	 * Ensures the delivery time filters (archive page reads
+	 * `_wpss_delivery_days`, REST max_delivery_days reads
+	 * `_wpss_fastest_delivery`) always have data to filter on, even for
+	 * services not created via the wizard. Both keys are written so either
+	 * meta query matches regardless of creation path.
 	 *
 	 * @param int      $post_id Post ID.
 	 * @param \WP_Post $post    Post object.
@@ -65,6 +68,19 @@ class ServicePostType {
 
 		if ( $delivery_days > 0 ) {
 			update_post_meta( $post_id, '_wpss_delivery_days', $delivery_days );
+		}
+
+		// Fastest delivery = minimum delivery days across all packages.
+		$all_days = array();
+		foreach ( $packages as $package ) {
+			$days = (int) ( $package['delivery_days'] ?? $package['delivery_time'] ?? 0 );
+			if ( $days > 0 ) {
+				$all_days[] = $days;
+			}
+		}
+
+		if ( ! empty( $all_days ) ) {
+			update_post_meta( $post_id, '_wpss_fastest_delivery', min( $all_days ) );
 		}
 	}
 

@@ -28,7 +28,7 @@ $wpss_on_vacation = null !== $wpss_vacation;
 // If no packages, show single price (omit description to avoid duplicating "About This Service").
 if ( empty( $packages ) ) {
 	$price         = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-	$delivery_time = get_post_meta( $service_id, '_wpss_delivery_days', true );
+	$delivery_time = wpss_get_service_delivery_days( $service_id );
 
 	$packages = [
 		[

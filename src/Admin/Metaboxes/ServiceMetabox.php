@@ -1011,8 +1011,11 @@ class ServiceMetabox {
 			update_post_meta( $post_id, '_wpss_starting_price', $starting_price );
 
 			// Fastest delivery = minimum delivery days (for SEO/display).
+			// Both delivery meta keys are kept in sync so meta-query filters
+			// (archive + REST) match services regardless of creation path.
 			$fastest_delivery = ! empty( $delivery_days ) ? min( $delivery_days ) : 7;
 			update_post_meta( $post_id, '_wpss_fastest_delivery', $fastest_delivery );
+			update_post_meta( $post_id, '_wpss_delivery_days', $fastest_delivery );
 
 			// Max revisions = maximum revisions across packages.
 			$max_revisions = ! empty( $revisions ) ? max( $revisions ) : 0;

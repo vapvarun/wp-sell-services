@@ -103,7 +103,7 @@ class SchemaMarkup {
 
 		// Get service meta.
 		$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+		$delivery_days  = wpss_get_service_delivery_days( $service_id );
 		$rating         = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$review_count   = (int) get_post_meta( $service_id, '_wpss_review_count', true );
 		$orders_count   = (int) get_post_meta( $service_id, '_wpss_order_count', true );

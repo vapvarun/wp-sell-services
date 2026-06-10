@@ -841,6 +841,9 @@ class ServiceArchiveView {
 
 			if ( $delivery_days > 0 ) {
 				update_post_meta( (int) $service->ID, '_wpss_delivery_days', $delivery_days );
+				// Keep the admin/REST key populated too, without clobbering
+				// an existing value written by the metabox or REST API.
+				add_post_meta( (int) $service->ID, '_wpss_fastest_delivery', $delivery_days, true );
 			}
 		}
 	}

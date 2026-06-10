@@ -711,7 +711,10 @@ class ServiceCommands extends WP_CLI_Command {
 					update_post_meta( $post_id, '_wpss_starting_price', min( $prices ) );
 				}
 				if ( ! empty( $delivery ) ) {
+					// Both delivery meta keys are kept in sync so meta-query
+					// filters (archive + REST) match either creation path.
 					update_post_meta( $post_id, '_wpss_fastest_delivery', min( $delivery ) );
+					update_post_meta( $post_id, '_wpss_delivery_days', min( $delivery ) );
 				}
 				if ( ! empty( $revisions ) ) {
 					update_post_meta( $post_id, '_wpss_max_revisions', max( $revisions ) );

@@ -2122,6 +2122,11 @@ class ServiceWizard {
 		update_post_meta( $service_id, '_wpss_delivery_days', (int) ( $basic['delivery_days'] ?? 7 ) );
 		update_post_meta( $service_id, '_wpss_revisions', (int) ( $basic['revisions'] ?? 0 ) );
 
+		// Sync the admin/REST key too so SEO schema and the REST
+		// max_delivery_days filter work for wizard-created services.
+		$delivery_values = array_filter( array_map( 'intval', wp_list_pluck( $numeric_packages, 'delivery_days' ) ) );
+		update_post_meta( $service_id, '_wpss_fastest_delivery', ! empty( $delivery_values ) ? min( $delivery_values ) : (int) ( $basic['delivery_days'] ?? 7 ) );
+
 		// Save starting price (from first/basic package).
 		update_post_meta( $service_id, '_wpss_starting_price', $basic['price'] ?? 0 );
 

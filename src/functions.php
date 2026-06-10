@@ -1480,6 +1480,34 @@ function wpss_get_service_extras( int $service_id ): array {
 }
 
 /**
+ * Get a service's minimum delivery days with the dual meta-key fallback.
+ *
+ * Delivery days live under two historical keys: `_wpss_delivery_days`
+ * (written by the frontend Service Wizard and the save_post sync) and
+ * `_wpss_fastest_delivery` (written by the admin metabox and the REST API).
+ * Every PHP read site MUST use this helper so services created via either
+ * path surface their delivery time in SEO schema, REST responses, and
+ * package fallbacks alike. Meta-query filters cannot use this helper —
+ * for those, every write site syncs BOTH keys instead. A full meta-key
+ * consolidation is parked for 1.2 — see
+ * plans/future-features/from-1.1.0-audit.md.
+ *
+ * @since 1.2.0
+ *
+ * @param int $service_id Service post ID.
+ * @return int Delivery days, 0 when neither key is set.
+ */
+function wpss_get_service_delivery_days( int $service_id ): int {
+	$delivery_days = (int) get_post_meta( $service_id, '_wpss_delivery_days', true );
+
+	if ( $delivery_days <= 0 ) {
+		$delivery_days = (int) get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+	}
+
+	return max( 0, $delivery_days );
+}
+
+/**
  * Resolve addon data from checkout POST data.
  *
  * Reads addon_ids from $_POST, validates each addon belongs to the service

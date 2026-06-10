@@ -156,7 +156,7 @@ class RankMathIntegration {
 
 		$service_id    = get_the_ID();
 		$price         = get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days = get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+		$delivery_days = wpss_get_service_delivery_days( $service_id );
 
 		$additions = array();
 
@@ -208,7 +208,7 @@ class RankMathIntegration {
 
 		// Get service meta.
 		$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		$delivery_days  = (int) get_post_meta( $service_id, '_wpss_fastest_delivery', true );
+		$delivery_days  = wpss_get_service_delivery_days( $service_id );
 		$rating         = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 		$review_count   = (int) get_post_meta( $service_id, '_wpss_review_count', true );
 

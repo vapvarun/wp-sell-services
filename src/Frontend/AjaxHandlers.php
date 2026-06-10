@@ -2412,7 +2412,7 @@ class AjaxHandlers {
 				array(
 					'name'          => __( 'Standard', 'wp-sell-services' ),
 					'price'         => $starting_price,
-					'delivery_time' => (int) get_post_meta( $service_id, '_wpss_delivery_days', true ),
+					'delivery_time' => wpss_get_service_delivery_days( $service_id ),
 				),
 			);
 		}
