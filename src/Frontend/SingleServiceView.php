@@ -777,16 +777,7 @@ class SingleServiceView {
 	public function render_order_modal( Service $service ): void {
 		$service_id = $service->id;
 		$packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
-		// Service add-ons live under `_wpss_extras` (Wizard's key) but the
-		// admin metabox and CLI command write to `_wpss_addons`. Fall back
-		// to the legacy key when the canonical one is empty so admin /
-		// CLI-seeded services still surface their add-ons in the order
-		// modal. A full meta-key consolidation is parked for 1.2 — see
-		// plans/future-features/from-1.1.0-audit.md.
-		$extras = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
-		if ( empty( $extras ) ) {
-			$extras = get_post_meta( $service_id, '_wpss_addons', true ) ?: array();
-		}
+		$extras = wpss_get_service_extras( $service_id );
 
 		// Don't show modal for own services.
 		$vendor_id = (int) get_post_field( 'post_author', $service_id );

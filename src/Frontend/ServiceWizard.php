@@ -1239,8 +1239,7 @@ class ServiceWizard {
 		$gallery      = ! empty( $gallery ) ? $gallery : array();
 		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
 		$requirements = ! empty( $requirements ) ? $requirements : array();
-		$extras       = get_post_meta( $service_id, '_wpss_extras', true );
-		$extras       = ! empty( $extras ) ? $extras : array();
+		$extras       = wpss_get_service_extras( $service_id );
 		$faqs         = get_post_meta( $service_id, '_wpss_faqs', true );
 		$faqs         = ! empty( $faqs ) ? $faqs : array();
 		$categories   = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'ids' ) );

@@ -1455,6 +1455,31 @@ function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\Orde
 }
 
 /**
+ * Get a service's add-ons with the legacy meta-key fallback.
+ *
+ * Add-ons live under `_wpss_extras` (the frontend Service Wizard's key) but
+ * the admin metabox and CLI commands write to `_wpss_addons`. Every place
+ * that resolves add-on indices MUST use this helper so admin / CLI-seeded
+ * services surface their add-ons in the order modal, cart, checkout, and
+ * orders alike. A full meta-key consolidation is parked for 1.2 — see
+ * plans/future-features/from-1.1.0-audit.md.
+ *
+ * @since 1.2.0
+ *
+ * @param int $service_id Service post ID.
+ * @return array Add-on rows (title, price, delivery_time), keyed by index.
+ */
+function wpss_get_service_extras( int $service_id ): array {
+	$extras = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
+
+	if ( empty( $extras ) ) {
+		$extras = get_post_meta( $service_id, '_wpss_addons', true ) ?: array();
+	}
+
+	return is_array( $extras ) ? $extras : array();
+}
+
+/**
  * Resolve addon data from checkout POST data.
  *
  * Reads addon_ids from $_POST, validates each addon belongs to the service
@@ -1503,7 +1528,7 @@ function wpss_resolve_checkout_addons( int $service_id ): array {
 	}
 
 	$addon_indices = array_map( 'intval', explode( ',', $addon_ids_raw ) );
-	$all_extras    = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
+	$all_extras    = wpss_get_service_extras( $service_id );
 
 	foreach ( $addon_indices as $index ) {
 		if ( $index < 0 || ! isset( $all_extras[ $index ] ) ) {

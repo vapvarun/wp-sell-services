@@ -2426,8 +2426,7 @@ class AjaxHandlers {
 		$package_price    = (float) ( $selected_package['price'] ?? 0 );
 
 		// Calculate extras price.
-		$extras_raw      = get_post_meta( $service_id, '_wpss_extras', true );
-		$all_extras      = $extras_raw ? $extras_raw : array();
+		$all_extras      = wpss_get_service_extras( $service_id );
 		$extras_price    = 0;
 		$extras_days     = 0;
 		$selected_extras = array();
