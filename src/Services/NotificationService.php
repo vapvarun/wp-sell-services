@@ -94,7 +94,7 @@ class NotificationService {
 			&& ! $this->is_wc_handling_email( $type )
 			&& ! $this->is_email_service_handling( $type )
 		) {
-			$this->send_email( $user_id, $title, $message, $data );
+			$this->send_email( $user_id, $title, $message, $data, $type );
 		}
 
 		return $notification_id;
@@ -1672,9 +1672,10 @@ class NotificationService {
 	 * @param string $subject Email subject.
 	 * @param string $message Email message.
 	 * @param array  $data    Additional data.
+	 * @param string $type    Notification type (passed to branding filters).
 	 * @return bool
 	 */
-	private function send_email( int $user_id, string $subject, string $message, array $data = array() ): bool {
+	private function send_email( int $user_id, string $subject, string $message, array $data = array(), string $type = '' ): bool {
 		$user = get_user_by( 'id', $user_id );
 
 		if ( ! $user || ! $user->user_email ) {
@@ -1684,7 +1685,7 @@ class NotificationService {
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
 		// Build email content.
-		$email_content = $this->build_email_content( $message, $data );
+		$email_content = $this->build_email_content( $message, $data, $type );
 
 		/**
 		 * Filter email content before sending.
@@ -1702,13 +1703,44 @@ class NotificationService {
 	/**
 	 * Build email content.
 	 *
+	 * Header/footer variables (site name, logo, base color, footer text) run
+	 * through the same `wpss_email_header_vars` filter the EmailService
+	 * templates use, so white-label branding (Pro) applies to notification
+	 * emails too.
+	 *
 	 * @param string $message Message.
 	 * @param array  $data    Additional data.
+	 * @param string $type    Notification type (passed to branding filters).
 	 * @return string
 	 */
-	private function build_email_content( string $message, array $data = array() ): string {
-		$site_name = wpss_get_platform_name();
-		$site_url  = home_url();
+	private function build_email_content( string $message, array $data = array(), string $type = '' ): string {
+		$vars = array(
+			'site_name'    => wpss_get_platform_name(),
+			'site_url'     => home_url(),
+			'header_image' => '',
+			'footer_text'  => '',
+			'base_color'   => '#1e3a5f',
+		);
+
+		/** This filter is documented in src/Services/EmailService.php */
+		$vars = apply_filters( 'wpss_email_header_vars', $vars, $type );
+
+		$site_name    = (string) ( $vars['site_name'] ?? wpss_get_platform_name() );
+		$site_url     = (string) ( $vars['site_url'] ?? home_url() );
+		$header_image = (string) ( $vars['header_image'] ?? '' );
+		$footer_text  = (string) ( $vars['footer_text'] ?? '' );
+		$base_color   = sanitize_hex_color( (string) ( $vars['base_color'] ?? '' ) );
+
+		if ( ! $base_color ) {
+			$base_color = '#1e3a5f';
+		}
+
+		// Branded logo when configured; plain site-name heading otherwise.
+		if ( '' !== $header_image ) {
+			$header_inner = '<img src="' . esc_url( $header_image ) . '" alt="' . esc_attr( $site_name ) . '" style="max-height: 60px; max-width: 100%; display: inline-block;">';
+		} else {
+			$header_inner = '<h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">' . esc_html( $site_name ) . '</h1>';
+		}
 
 		// Professional email template.
 		$content = '<!DOCTYPE html>
@@ -1724,8 +1756,8 @@ class NotificationService {
 				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 					<!-- Header -->
 					<tr>
-						<td style="background-color: #1e3a5f; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-							<h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">' . esc_html( $site_name ) . '</h1>
+						<td style="background-color: ' . esc_attr( $base_color ) . '; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+							' . $header_inner . '
 						</td>
 					</tr>
 					<!-- Content -->
@@ -1740,7 +1772,7 @@ class NotificationService {
 			$order_url = wpss_get_order_url( (int) $data['order_id'] );
 			$content  .= '
 							<div style="text-align: center; margin-top: 30px;">
-								<a href="' . esc_url( $order_url ) . '" style="display: inline-block; background-color: #1e3a5f; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Order Details</a>
+								<a href="' . esc_url( $order_url ) . '" style="display: inline-block; background-color: ' . esc_attr( $base_color ) . '; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Order Details</a>
 							</div>';
 		}
 
@@ -1751,11 +1783,21 @@ class NotificationService {
 					<tr>
 						<td style="background-color: #f8f9fa; padding: 25px 30px; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
 							<p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0; text-align: center;">
-								This email was sent from <a href="' . esc_url( $site_url ) . '" style="color: #1e3a5f; text-decoration: none;">' . esc_html( $site_name ) . '</a>
+								This email was sent from <a href="' . esc_url( $site_url ) . '" style="color: ' . esc_attr( $base_color ) . '; text-decoration: none;">' . esc_html( $site_name ) . '</a>
 							</p>
 							<p style="color: #adb5bd; font-size: 12px; margin: 0; text-align: center;">
 								If you have any questions, please contact our support team.
-							</p>
+							</p>';
+
+		// Custom footer text (white-label) appended as its own line.
+		if ( '' !== $footer_text ) {
+			$content .= '
+							<p style="color: #adb5bd; font-size: 12px; margin: 10px 0 0 0; text-align: center;">
+								' . wp_kses_post( $footer_text ) . '
+							</p>';
+		}
+
+		$content .= '
 						</td>
 					</tr>
 				</table>

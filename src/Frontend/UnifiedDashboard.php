@@ -523,6 +523,33 @@ class UnifiedDashboard {
 				<div class="wpss-dashboard__body">
 					<?php $this->render_section( $this->current_section ); ?>
 				</div>
+
+				<?php
+				/**
+				 * Filters whether the "Powered by WP Sell Services" footer credit
+				 * is rendered on the frontend dashboard.
+				 *
+				 * Pro's WhiteLabel branding hooks this filter to remove the credit
+				 * when the "Remove Powered by" white-label toggle is enabled.
+				 *
+				 * @since 1.2.0
+				 *
+				 * @param bool $show_powered_by Whether to render the credit. Default true.
+				 */
+				if ( apply_filters( 'wpss_show_powered_by', true ) ) :
+					?>
+					<footer class="wpss-dashboard__footer">
+						<p class="wpss-powered-by">
+							<?php
+							printf(
+								/* translators: %s: linked plugin name "WP Sell Services". */
+								esc_html__( 'Powered by %s', 'wp-sell-services' ),
+								'<a href="https://wbcomdesigns.com/downloads/wp-sell-services/" target="_blank" rel="noopener nofollow">' . esc_html__( 'WP Sell Services', 'wp-sell-services' ) . '</a>'
+							);
+							?>
+						</p>
+					</footer>
+				<?php endif; ?>
 			</main>
 				</div>
 			</div>

@@ -221,6 +221,20 @@
 	color: var(--wpss-gray-900);
 }
 
+/* Header layout (admin-ux Rule 4: primary action top-right). The title also
+   carries .wpss-page-header__title, which zeroes its margin and breaks the
+   right-alignment, while the replay-tour button picks up a margin-left:auto from
+   the page-header system. Re-assert here (2-class specificity wins): the title's
+   auto right-margin absorbs the free space so the action button + replay-tour
+   group together on the right with the header's 12px gap between them. */
+.wpss-dashboard__header .wpss-dashboard__title {
+	margin-left: auto;
+}
+
+.wpss-dashboard__header .wpss-dashboard__tour-replay {
+	margin-right: 0;
+}
+
 @media (max-width: 640px) {
 	.wpss-dashboard__header {
 		flex-wrap: wrap;
@@ -237,6 +251,39 @@
 	flex: 1;
 	padding: 24px;
 	overflow-y: auto;
+}
+
+/* ==========================================================================
+   Footer credit ("Powered by WP Sell Services")
+   Hidden/removed by Pro white-label branding via the wpss_show_powered_by
+   filter and the .wpss-powered-by CSS hook.
+   ========================================================================== */
+
+.wpss-dashboard__footer {
+	padding: 12px 24px 20px;
+	text-align: center;
+}
+
+.wpss-powered-by {
+	margin: 0;
+	font-size: 12px;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-powered-by a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.wpss-powered-by a:hover,
+.wpss-powered-by a:focus {
+	color: var(--wpss-primary, #4f46e5);
+}
+
+@media (max-width: 640px) {
+	.wpss-dashboard__footer {
+		padding: 8px 16px 16px;
+	}
 }
 
 /* ==========================================================================
@@ -1127,6 +1174,26 @@
 
 .wpss-wallet__row--debit .wpss-wallet__amount {
 	color: var(--wpss-danger);
+}
+
+/* Clickable "View Order" / "View Tip" reference link under the ledger description. */
+.wpss-wallet__reference-link {
+	display: inline-block;
+	margin-top: 2px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--wpss-primary, #4f46e5);
+	text-decoration: none;
+}
+
+.wpss-wallet__reference-link::before {
+	content: "↗";
+	margin-left: 4px;
+}
+
+.wpss-wallet__reference-link:hover,
+.wpss-wallet__reference-link:focus-visible {
+	text-decoration: underline;
 }
 
 @media (max-width: 640px) {

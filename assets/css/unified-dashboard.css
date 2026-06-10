@@ -254,6 +254,39 @@
 }
 
 /* ==========================================================================
+   Footer credit ("Powered by WP Sell Services")
+   Hidden/removed by Pro white-label branding via the wpss_show_powered_by
+   filter and the .wpss-powered-by CSS hook.
+   ========================================================================== */
+
+.wpss-dashboard__footer {
+	padding: 12px 24px 20px;
+	text-align: center;
+}
+
+.wpss-powered-by {
+	margin: 0;
+	font-size: 12px;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-powered-by a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.wpss-powered-by a:hover,
+.wpss-powered-by a:focus {
+	color: var(--wpss-primary, #4f46e5);
+}
+
+@media (max-width: 640px) {
+	.wpss-dashboard__footer {
+		padding: 8px 16px 16px;
+	}
+}
+
+/* ==========================================================================
    Login Prompt
    ========================================================================== */
 

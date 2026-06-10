@@ -359,7 +359,7 @@
   },
   "hooks_fired": {
     "do_action_count": 247,
-    "apply_filters_count": 142,
+    "apply_filters_count": 144,
     "key_extension_hooks": [
       {
         "name": "wpss_loaded",
@@ -450,6 +450,11 @@
         "name": "wpss_dashboard_default_section",
         "type": "filter",
         "purpose": "Role-aware dashboard landing section (active vendors → sales, buyers → orders)"
+      },
+      {
+        "name": "wpss_show_powered_by",
+        "type": "filter",
+        "purpose": "Whether the 'Powered by WP Sell Services' dashboard footer credit renders (Pro white-label returns false when hide_branding is on)"
       }
     ],
     "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 232 hook firings."
