@@ -272,6 +272,11 @@ final class Plugin {
 		// the REST completion endpoint internally.
 		( new Tour() )->init();
 
+		// Realtime bridge — relays wpss_message_sent / wpss_notification_created
+		// to the configured Pusher-protocol server (Pusher.com or self-hosted
+		// Soketi). Every publish no-ops while realtime is disabled.
+		( new \WPSellServices\Services\RealtimeBridge() )->init();
+
 		// Run the loader to register all hooks.
 		$this->loader->run();
 

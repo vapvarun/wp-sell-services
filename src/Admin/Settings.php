@@ -1127,6 +1127,138 @@ class Settings {
 				'description' => __( 'Position of the currency symbol relative to the amount.', 'wp-sell-services' ),
 			)
 		);
+
+		// Realtime (WebSocket) settings.
+		register_setting(
+			'wpss_realtime',
+			'wpss_realtime_settings',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_realtime_settings' ),
+			)
+		);
+
+		add_settings_section(
+			'wpss_realtime_section',
+			__( 'Real-time Settings', 'wp-sell-services' ),
+			array( $this, 'render_realtime_section' ),
+			'wpss_realtime'
+		);
+
+		add_settings_field(
+			'enabled',
+			__( 'Enable Real-time Updates', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'enabled',
+				'label'       => __( 'Push live messages and notifications to logged-in users over WebSockets', 'wp-sell-services' ),
+				'default'     => false,
+			)
+		);
+
+		add_settings_field(
+			'app_id',
+			__( 'App ID', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'app_id',
+				'default'     => '',
+				'description' => __( 'The application ID from your Pusher.com app or Soketi configuration.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'key',
+			__( 'Key', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'key',
+				'default'     => '',
+				'description' => __( 'The publishable app key. This is shared with browsers; it cannot publish events on its own.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'secret',
+			__( 'Secret', 'wp-sell-services' ),
+			array( $this, 'render_secret_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'secret',
+				'label'       => __( 'Realtime app secret', 'wp-sell-services' ),
+				'description' => __( 'The app secret used to sign events and channel authorizations. Never sent to browsers.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'host',
+			__( 'Host', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'host',
+				'default'     => '',
+				'description' => __( 'Leave empty for Pusher.com, or enter your self-hosted Pusher-compatible (Soketi) server hostname, e.g. wss-server.example.com.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'cluster',
+			__( 'Cluster', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'cluster',
+				'default'     => 'mt1',
+				'description' => __( 'Pusher.com cluster (e.g. mt1, eu, ap2). Ignored when a custom host is set.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'port',
+			__( 'Port', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'port',
+				'default'     => 443,
+				'min'         => 1,
+				'max'         => 65535,
+				'step'        => 1,
+				'description' => __( 'Server port. 443 for Pusher.com and TLS-terminated Soketi servers.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'use_tls',
+			__( 'Use TLS', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'use_tls',
+				'label'       => __( 'Connect over TLS (wss/https) - recommended', 'wp-sell-services' ),
+				'default'     => true,
+			)
+		);
 	}
 
 	/**
@@ -1535,6 +1667,13 @@ class Settings {
 					'settings_id'  => 'wpss_advanced',
 				),
 				array(
+					'id'           => 'realtime',
+					'title'        => __( 'Real-time (WebSockets)', 'wp-sell-services' ),
+					'description'  => __( 'Push live messages and notifications to logged-in users. Works with Pusher.com or any self-hosted Pusher-compatible server such as Soketi.', 'wp-sell-services' ),
+					'option_group' => 'wpss_realtime',
+					'settings_id'  => 'wpss_realtime',
+				),
+				array(
 					'id'          => 'demo-content',
 					'title'       => __( 'Demo Content', 'wp-sell-services' ),
 					'description' => __( 'Import sample services, vendors, and categories to preview your marketplace. Demo content can be removed at any time.', 'wp-sell-services' ),
@@ -1655,6 +1794,16 @@ class Settings {
 	 */
 	public function render_advanced_section(): void {
 		echo '<p>' . esc_html__( 'Advanced configuration options.', 'wp-sell-services' ) . '</p>';
+	}
+
+	/**
+	 * Render realtime section description.
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	public function render_realtime_section(): void {
+		echo '<p>' . esc_html__( 'Real-time updates power live order messages and notifications without page refreshes. Paste credentials from a Pusher.com app, or point the host at any self-hosted Pusher-compatible server (e.g. Soketi).', 'wp-sell-services' ) . '</p>';
 	}
 
 	/**
@@ -2468,6 +2617,43 @@ class Settings {
 		update_option( 'wpss_max_file_size', $sanitized['max_file_size'] );
 		update_option( 'wpss_allowed_file_types', $sanitized['allowed_file_types'] );
 		update_option( 'wpss_currency_position', $sanitized['currency_position'] );
+
+		return $sanitized;
+	}
+
+	/**
+	 * Sanitize realtime (WebSocket) settings.
+	 *
+	 * The secret follows the masked-field contract ({@see sanitize_secret()}):
+	 * an empty submission keeps the stored secret, so admins never re-type it
+	 * to save other fields and the secret never travels back to the browser.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
+	 * @return array<string, mixed> Sanitized input.
+	 */
+	public function sanitize_realtime_settings( ?array $input ): array {
+		$input     = $input ?? array();
+		$sanitized = array();
+
+		$sanitized['enabled'] = ! empty( $input['enabled'] );
+		$sanitized['app_id']  = sanitize_text_field( $input['app_id'] ?? '' );
+		$sanitized['key']     = sanitize_text_field( $input['key'] ?? '' );
+		$sanitized['secret']  = $this->sanitize_secret( (string) ( $input['secret'] ?? '' ), 'wpss_realtime_settings', 'secret' );
+
+		// Host: bare hostname only — strip scheme and trailing slash so both
+		// "soketi.example.com" and "https://soketi.example.com/" work.
+		$host              = sanitize_text_field( $input['host'] ?? '' );
+		$sanitized['host'] = (string) preg_replace( '#^[a-z][a-z0-9+.-]*://#i', '', untrailingslashit( $host ) );
+
+		$cluster              = sanitize_text_field( $input['cluster'] ?? 'mt1' );
+		$sanitized['cluster'] = '' !== $cluster ? $cluster : 'mt1';
+
+		$port              = absint( $input['port'] ?? 443 );
+		$sanitized['port'] = ( $port >= 1 && $port <= 65535 ) ? $port : 443;
+
+		$sanitized['use_tls'] = ! empty( $input['use_tls'] );
 
 		return $sanitized;
 	}

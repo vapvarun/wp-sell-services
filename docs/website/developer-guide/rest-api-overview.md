@@ -1,12 +1,12 @@
 # REST API Overview
 
-WP Sell Services provides a comprehensive REST API for building custom integrations, mobile apps, and external applications. The API follows WordPress REST API standards with 20 dedicated controllers plus generic endpoints.
+WP Sell Services provides a comprehensive REST API for building custom integrations, mobile apps, and external applications. The API follows WordPress REST API standards with 21 dedicated controllers plus generic endpoints.
 
 ## Overview
 
 **Base URL**: `/wp-json/wpss/v1/`
 
-**Controllers**: 20 specialized controllers handling services, orders, vendors, reviews, conversations, disputes, buyer requests, proposals, notifications, portfolio, earnings, extension requests, milestones, tipping, seller levels, moderation, favorites, media, cart, and authentication.
+**Controllers**: 21 specialized controllers handling services, orders, vendors, reviews, conversations, disputes, buyer requests, proposals, notifications, portfolio, earnings, extension requests, milestones, tipping, seller levels, moderation, favorites, media, cart, authentication, and realtime channel authorization.
 
 **Authentication Methods**:
 - Cookie authentication (browser-based)
@@ -140,9 +140,20 @@ Get public marketplace settings.
     "dashboard": 125,
     "checkout": 126,
     "terms": 127
+  },
+  "realtime": {
+    "enabled": false,
+    "key": "",
+    "host": "",
+    "cluster": "mt1",
+    "port": 443,
+    "use_tls": true,
+    "auth_endpoint": "https://yoursite.com/wp-json/wpss/v1/realtime/auth"
   }
 }
 ```
+
+The `realtime` key carries the non-sensitive client config for the realtime (WebSocket) layer - see [Realtime controller](rest-api-controllers.md#21-realtime-realtime). The app secret is never included.
 
 ### GET /me
 

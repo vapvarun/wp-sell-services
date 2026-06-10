@@ -13,7 +13,7 @@
   },
   "rest": {
     "namespace": "wpss/v1",
-    "endpoint_count": 138,
+    "endpoint_count": 139,
     "controllers": [
       {
         "class": "API",
@@ -106,6 +106,11 @@
         "purpose": "Proposals CRUD, accept, reject, withdraw"
       },
       {
+        "class": "RealtimeController",
+        "file": "src/API/RealtimeController.php",
+        "purpose": "POST /realtime/auth — Pusher private-channel authorization (private-wpss-user-{id} own-user only; private-wpss-order-{id} customer/vendor/admin)"
+      },
+      {
         "class": "RestController",
         "file": "src/API/RestController.php",
         "purpose": "Base controller — permissions, pagination helpers"
@@ -192,7 +197,7 @@
     ]
   },
   "settings": {
-    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced."
+    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract)."
   },
   "shortcodes": {
     "count": 19,
@@ -350,7 +355,7 @@
     "_note": "Plugin uses standard WP capabilities (edit_posts, manage_options) plus role-based ownership. No custom capability slugs registered. Vendor role created via add_role on activation."
   },
   "services": {
-    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, AnalyticsService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon."
+    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, AnalyticsService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon, RealtimeService (Pusher-protocol publisher; secret stays server-side), RealtimeBridge (relays wpss_message_sent + wpss_notification_created to private channels)."
   },
   "hooks_fired": {
     "do_action_count": 118,
@@ -405,6 +410,11 @@
         "name": "wpss_order_paid",
         "type": "action",
         "purpose": "Fired when order payment is confirmed (sub-order credit handler)"
+      },
+      {
+        "name": "wpss_realtime_settings",
+        "type": "filter",
+        "purpose": "Filter the realtime (Pusher-protocol) connection settings loaded from the wpss_realtime_settings option"
       }
     ],
     "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 232 hook firings."
@@ -419,7 +429,9 @@
       "wpss-tour",
       "wpss-blocks-editor",
       "wpss-blocks",
-      "wpss-service-wizard"
+      "wpss-service-wizard",
+      "wpss-realtime",
+      "wpss-pusher"
     ],
     "i18n_registered": true,
     "i18n_method": "wp_set_script_translations() on every wpss-* handle (commit 4c74224)"

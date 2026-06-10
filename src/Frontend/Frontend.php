@@ -122,8 +122,65 @@ class Frontend {
 		);
 		wp_set_script_translations( 'wpss-frontend', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
+		// Realtime (WebSocket) client — vendored pusher-js + thin bridge.
+		// Registered always, enqueued only when realtime is enabled and the
+		// user is logged in (see enqueue_realtime_script()).
+		wp_register_script(
+			'wpss-pusher',
+			\WPSS_PLUGIN_URL . 'assets/js/vendor/pusher.min.js',
+			array(),
+			'8.4.0',
+			true
+		);
+
+		wp_register_script(
+			'wpss-realtime',
+			\WPSS_PLUGIN_URL . 'assets/js/wpss-realtime.js',
+			array( 'wpss-pusher' ),
+			\WPSS_VERSION,
+			true
+		);
+
+		$this->enqueue_realtime_script();
+
 		// Localize only when the script is actually enqueued.
 		add_action( 'wp_footer', array( $this, 'maybe_localize_scripts' ), 1 );
+	}
+
+	/**
+	 * Enqueue the realtime client when realtime is enabled and the user is
+	 * logged in.
+	 *
+	 * The localized config is the NON-SENSITIVE client config only
+	 * ({@see \WPSellServices\Services\RealtimeService::get_client_config()})
+	 * plus the current user ID and a REST nonce for the private-channel
+	 * auth endpoint. The app secret never reaches the browser.
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	private function enqueue_realtime_script(): void {
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+
+		$realtime = new \WPSellServices\Services\RealtimeService();
+		if ( ! $realtime->is_enabled() ) {
+			return;
+		}
+
+		wp_enqueue_script( 'wpss-realtime' );
+		wp_localize_script(
+			'wpss-realtime',
+			'wpssRealtime',
+			array_merge(
+				$realtime->get_client_config(),
+				array(
+					'userId'    => get_current_user_id(),
+					'restNonce' => wp_create_nonce( 'wp_rest' ),
+				)
+			)
+		);
 	}
 
 	/**
