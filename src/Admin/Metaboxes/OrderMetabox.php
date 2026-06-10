@@ -173,7 +173,12 @@ class OrderMetabox {
 	 * @return void
 	 */
 	public function enqueue_assets( string $hook ): void {
-		if ( 'wpss_orders' !== get_current_screen()->id ) {
+		$screen    = get_current_screen();
+		$screen_id = $screen ? $screen->id : '';
+
+		// Load on the orders admin page (hook suffix survives white-labeled
+		// parent menus) and the legacy wpss_orders metabox screen.
+		if ( 'wpss_orders' !== $screen_id && ! str_ends_with( $screen_id, '_page_wpss-orders' ) ) {
 			return;
 		}
 
@@ -185,10 +190,20 @@ class OrderMetabox {
 		);
 		wp_style_add_data( 'wpss-order-metabox', 'rtl', 'replace' );
 
+		// Shared design-system primitives (wpssConfirm / wpssToast). Same
+		// handle + src as Admin::enqueue_scripts() — no-op when already queued.
+		wp_enqueue_script(
+			'wpss-ui',
+			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
+			array(),
+			\WPSS_VERSION,
+			true
+		);
+
 		wp_enqueue_script(
 			'wpss-order-metabox',
 			\WPSS_PLUGIN_URL . 'assets/js/admin-order.js',
-			array( 'jquery' ),
+			array( 'jquery', 'wpss-ui' ),
 			\WPSS_VERSION,
 			true
 		);
@@ -201,7 +216,8 @@ class OrderMetabox {
 				'nonce'   => wp_create_nonce( 'wpss_order_admin' ),
 				'i18n'    => array(
 					'confirmStatusChange' => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
-					'confirmRefund'       => __( 'Are you sure you want to process a refund?', 'wp-sell-services' ),
+					'confirmRefund'       => __( 'Refund this order? The gateway payment will be refunded where supported.', 'wp-sell-services' ),
+					'refund'              => __( 'Refund', 'wp-sell-services' ),
 					'noteAdded'           => __( 'Note added successfully.', 'wp-sell-services' ),
 					'requirementsSaved'   => __( 'Requirements saved successfully.', 'wp-sell-services' ),
 					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),

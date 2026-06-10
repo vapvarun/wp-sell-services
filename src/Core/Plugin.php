@@ -1744,6 +1744,7 @@ final class Plugin {
 			'wpss_order_status_changed'                => array( 'handle_status_change', 10, 3 ),
 			'wpss_order_status_completed'              => array( 'handle_order_completed', 10, 2 ),
 			'wpss_order_status_cancelled'              => array( 'handle_order_cancelled', 10, 2 ),
+			'wpss_order_status_refunded'               => array( 'handle_order_refunded', 10, 2 ),
 			'wpss_order_status_cancellation_requested' => array( 'handle_cancellation_requested', 10, 2 ),
 		);
 

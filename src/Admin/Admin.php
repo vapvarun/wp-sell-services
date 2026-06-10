@@ -1788,6 +1788,21 @@ class Admin {
 						</div>
 					<?php endif; ?>
 
+					<!-- Admin Actions -->
+					<?php if ( current_user_can( 'manage_options' ) && in_array( $order->status, array( 'completed', 'cancelled' ), true ) && 'paid' === $order->payment_status ) : ?>
+						<div class="postbox">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Admin Actions', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<button type="button" class="button button-link-delete wpss-process-refund" data-order="<?php echo esc_attr( $order_id ); ?>">
+									<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
+								</button>
+								<p class="description">
+									<?php esc_html_e( 'Sets the order status to Refunded and refunds the gateway payment where supported.', 'wp-sell-services' ); ?>
+								</p>
+							</div>
+						</div>
+					<?php endif; ?>
+
 					<!-- Financial Summary -->
 					<div class="postbox">
 						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>

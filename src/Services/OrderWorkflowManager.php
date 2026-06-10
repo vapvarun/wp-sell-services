@@ -77,6 +77,7 @@ class OrderWorkflowManager {
 		add_action( 'wpss_order_status_changed', [ $this, 'handle_status_change' ], 10, 3 );
 		add_action( 'wpss_order_status_completed', [ $this, 'handle_order_completed' ], 10, 2 );
 		add_action( 'wpss_order_status_cancelled', [ $this, 'handle_order_cancelled' ], 10, 2 );
+		add_action( 'wpss_order_status_refunded', [ $this, 'handle_order_refunded' ], 10, 2 );
 		add_action( 'wpss_order_status_cancellation_requested', [ $this, 'handle_cancellation_requested' ], 10, 2 );
 
 		// Log status changes to conversation system messages AND audit log.
@@ -708,6 +709,42 @@ class OrderWorkflowManager {
 		 * @param ServiceOrder $order    Order object.
 		 */
 		do_action( 'wpss_order_cancelled', $order_id, $order );
+	}
+
+	/**
+	 * Handle order refund status.
+	 *
+	 * Fired on `wpss_order_status_refunded` (admin Process Refund button,
+	 * status dropdown, dispute resolved in buyer's favor). Attempts to refund
+	 * the buyer's original payment through the gateway — same auto-refund used
+	 * by the cancellation path. attempt_payment_refund() is idempotent: it
+	 * skips orders whose payment is already refunded or was never captured.
+	 *
+	 * @since 1.2.0
+	 * @param int    $order_id   Order ID.
+	 * @param string $old_status Old status.
+	 * @return void
+	 */
+	public function handle_order_refunded( int $order_id, string $old_status ): void {
+		$order = $this->order_service->get( $order_id );
+
+		if ( ! $order ) {
+			return;
+		}
+
+		// Auto-refund the buyer's original payment via the payment gateway.
+		$this->attempt_payment_refund( $order );
+
+		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
+
+		/**
+		 * Fires when an order is refunded.
+		 *
+		 * @since 1.2.0
+		 * @param int          $order_id Order ID.
+		 * @param ServiceOrder $order    Order object.
+		 */
+		do_action( 'wpss_order_refunded', $order_id, $order );
 	}
 
 	/**

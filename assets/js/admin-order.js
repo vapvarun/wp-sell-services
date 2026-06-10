@@ -7,7 +7,7 @@
  * @since 1.0.0
  */
 
-/* global jQuery, wpssOrderAdmin */
+/* global jQuery, wpssOrderAdmin, wpssConfirm, wpssToast */
 
 (function($) {
 	'use strict';
@@ -261,19 +261,51 @@
 	/**
 	 * Handle process refund.
 	 *
+	 * Routes through the same wpss_admin_update_order_status AJAX the status
+	 * dropdown uses with status=refunded, so the full server-side refund flow
+	 * runs (gateway auto-refund via OrderWorkflowManager, notifications,
+	 * audit trail) and the page refreshes exactly like a dropdown change.
+	 *
 	 * @param {Event} e Click event.
 	 */
 	function handleProcessRefund(e) {
 		e.preventDefault();
 
 		var $button = $(this);
+		var orderId = $button.data('order');
 
-		adminConfirm(wpssOrderAdmin.i18n.confirmRefund, function() {
+		wpssConfirm(wpssOrderAdmin.i18n.confirmRefund, {
+			confirmText: wpssOrderAdmin.i18n.refund || 'Refund',
+			tone: 'danger'
+		}).then(function(confirmed) {
+			if (!confirmed) {
+				return;
+			}
+
 			$button.prop('disabled', true);
 
-			// This would need a backend handler.
-			notify('Refund processing is not yet implemented.', 'info');
-			$button.prop('disabled', false);
+			$.ajax({
+				url: wpssOrderAdmin.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'wpss_admin_update_order_status',
+					nonce: wpssOrderAdmin.nonce,
+					order_id: orderId,
+					status: 'refunded'
+				},
+				success: function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						(window.wpssToast || notify)(response.data.message || wpssOrderAdmin.i18n.error, 'error');
+						$button.prop('disabled', false);
+					}
+				},
+				error: function() {
+					(window.wpssToast || notify)(wpssOrderAdmin.i18n.error, 'error');
+					$button.prop('disabled', false);
+				}
+			});
 		});
 	}
 
