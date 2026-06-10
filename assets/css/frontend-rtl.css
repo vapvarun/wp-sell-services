@@ -3859,8 +3859,6 @@ body.wpss-modal-active {
 	.wpss-empty-state { padding: 32px 16px; }
 	.wpss-empty-state .wpss-btn { width: 100%; }
 }
-	.wpss-empty-state .wpss-btn { width: 100%; }
-}
 
 /* ==========================================================================
    Full-width plugin page template (wpss-fullwidth-template.php)
