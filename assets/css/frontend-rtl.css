@@ -3859,3 +3859,21 @@ body.wpss-modal-active {
 	.wpss-empty-state { padding: 32px 16px; }
 	.wpss-empty-state .wpss-btn { width: 100%; }
 }
+	.wpss-empty-state .wpss-btn { width: 100%; }
+}
+
+/* ==========================================================================
+   Full-width plugin page template (wpss-fullwidth-template.php)
+   ========================================================================== */
+
+.wpss-fullwidth-page {
+	width: 100%;
+	padding: var( --wpss-space-6, 24px ) var( --wpss-space-4, 16px );
+}
+.wpss-fullwidth-inner {
+	max-width: 1280px;
+	margin: 0 auto;
+}
+@media ( max-width: 640px ) {
+	.wpss-fullwidth-page { padding: var( --wpss-space-4, 16px ) var( --wpss-space-3, 12px ); }
+}

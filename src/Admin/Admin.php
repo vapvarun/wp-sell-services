@@ -141,6 +141,63 @@ class Admin {
 		add_filter( 'parent_file', array( $this, 'set_parent_menu' ) );
 		add_filter( 'submenu_file', array( $this, 'set_submenu_file' ) );
 		add_action( 'admin_menu', array( $this, 'reorder_admin_submenu' ), 999 );
+		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ), 1 );
+	}
+
+	/**
+	 * Suppress third-party admin notices on plugin screens.
+	 *
+	 * Theme/other-plugin banners (TGMPA "recommended plugins", update nags,
+	 * promo notices) crowd the plugin's admin pages and undermine trust.
+	 * Removes every admin_notices / all_admin_notices callback that does not
+	 * belong to WP Sell Services (Free or Pro), so the plugin's own notices
+	 * still render.
+	 *
+	 * @return void
+	 */
+	public function hide_third_party_notices(): void {
+		$screen = get_current_screen();
+
+		if ( ! $screen || ! $this->is_plugin_page( $screen->id ) ) {
+			return;
+		}
+
+		global $wp_filter;
+
+		foreach ( array( 'admin_notices', 'all_admin_notices' ) as $hook ) {
+			if ( empty( $wp_filter[ $hook ] ) ) {
+				continue;
+			}
+
+			foreach ( $wp_filter[ $hook ]->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $callback ) {
+					if ( ! $this->is_own_notice_callback( $callback['function'] ) ) {
+						remove_action( $hook, $callback['function'], $priority );
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check whether a notice callback belongs to this plugin (Free or Pro).
+	 *
+	 * @param callable|string|array $callback Hooked callback.
+	 * @return bool
+	 */
+	private function is_own_notice_callback( $callback ): bool {
+		if ( is_string( $callback ) ) {
+			return str_starts_with( $callback, 'wpss_' )
+				|| str_starts_with( $callback, 'WPSellServices' );
+		}
+
+		if ( is_array( $callback ) && isset( $callback[0] ) ) {
+			$class = is_object( $callback[0] ) ? get_class( $callback[0] ) : (string) $callback[0];
+			return str_starts_with( $class, 'WPSellServices' );
+		}
+
+		// Closures and other callables can't be attributed — treat as third-party.
+		return false;
 	}
 
 	/**

@@ -212,7 +212,7 @@ class UnifiedDashboard {
 	 * Prefers the pretty-permalink endpoint query var (`wpss_section`, populated
 	 * by the /{dashboard}/{section}/ rewrite). Falls back to the legacy
 	 * `?section=` query arg so plain-permalink sites and old links keep working.
-	 * Defaults to `orders` (the dashboard landing section).
+	 * Defaults to the role-aware landing section (see default_section()).
 	 *
 	 * @since 1.2.0
 	 *
@@ -228,7 +228,38 @@ class UnifiedDashboard {
 
 		$section = sanitize_key( $section );
 
-		return '' === $section ? 'orders' : $section;
+		return '' === $section ? $this->default_section() : $section;
+	}
+
+	/**
+	 * Resolve the role-aware default landing section.
+	 *
+	 * Active vendors land on their selling overview (`sales`) — a seller's
+	 * operational home — while buyers land on `orders`. Explicit section
+	 * requests always win (see resolve_current_section()).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string Section slug.
+	 */
+	private function default_section(): string {
+		$user_id = get_current_user_id();
+		$default = 'orders';
+
+		if ( $this->vendor_service->is_vendor( $user_id )
+			&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) ) {
+			$default = 'sales';
+		}
+
+		/**
+		 * Filter the dashboard's default landing section.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param string $default Section slug (`sales` for active vendors, `orders` otherwise).
+		 * @param int    $user_id Current user ID.
+		 */
+		return (string) apply_filters( 'wpss_dashboard_default_section', $default, $user_id );
 	}
 
 	/**
