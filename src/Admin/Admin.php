@@ -734,6 +734,20 @@ class Admin {
 			true
 		);
 
+		// Settings saved via the options.php round-trip reload with
+		// settings-updated=true but custom admin pages never render core's
+		// notice — surface the confirmation as a design-system toast.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag from core options.php redirect.
+		if ( isset( $_GET['settings-updated'] ) && 'true' === sanitize_key( wp_unslash( $_GET['settings-updated'] ) ) ) {
+			wp_add_inline_script(
+				'wpss-ui',
+				sprintf(
+					'(function(){var fire=function(){if(window.wpssToast){wpssToast(%s,"success");}else{setTimeout(fire,200);}};if("loading"===document.readyState){document.addEventListener("DOMContentLoaded",fire);}else{fire();}})();',
+					wp_json_encode( __( 'Settings saved.', 'wp-sell-services' ) )
+				)
+			);
+		}
+
 		wp_enqueue_script(
 			'wpss-admin',
 			\WPSS_PLUGIN_URL . 'assets/js/admin.js',

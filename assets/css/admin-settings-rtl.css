@@ -270,17 +270,6 @@
 }
 
 /* ==========================================================================
-   Notice Suppression — Hide third-party notices on settings page
-   ========================================================================== */
-
-.sell-services_page_wpss-settings .notice:not(.wpss-notice),
-.sell-services_page_wpss-settings .update-nag,
-.sell-services_page_wpss-settings div.error:not(.wpss-notice),
-.sell-services_page_wpss-settings div.updated:not(.wpss-notice) {
-	display: none !important;
-}
-
-/* ==========================================================================
    Responsive — sidebar collapses on mobile (ux-foundation 640px breakpoint)
    ========================================================================== */
 

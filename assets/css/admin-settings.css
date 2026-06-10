@@ -269,16 +269,10 @@
 	flex: 1;
 }
 
-/* ==========================================================================
-   Notice Suppression — Hide third-party notices on settings page
-   ========================================================================== */
-
-.sell-services_page_wpss-settings .notice:not(.wpss-notice),
-.sell-services_page_wpss-settings .update-nag,
-.sell-services_page_wpss-settings div.error:not(.wpss-notice),
-.sell-services_page_wpss-settings div.updated:not(.wpss-notice) {
-	display: none !important;
-}
+/* Third-party notice suppression moved to PHP (Admin::hide_third_party_notices,
+   in_admin_header:1). The old CSS display:none rule here also swallowed the
+   plugin's OWN AJAX save notices after WP core relocated them under the page
+   h1 — the root cause of "settings save shows no feedback". */
 
 /* ==========================================================================
    Responsive — sidebar collapses on mobile (ux-foundation 640px breakpoint)
