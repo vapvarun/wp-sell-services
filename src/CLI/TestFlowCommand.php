@@ -640,7 +640,9 @@ class TestFlowCommand extends WP_CLI_Command {
 			WP_CLI::log( WP_CLI::colorize( "  %G✓%n {$label}" ) );
 			return;
 		}
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- CLI test diagnostics.
 		$this->fail( sprintf( '%s (expected %s, got %s)', $label, var_export( $expected, true ), var_export( $actual, true ) ) );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- CLI test diagnostics.
 		WP_CLI::log( WP_CLI::colorize( "  %R✗%n {$label} (expected " . var_export( $expected, true ) . ', got ' . var_export( $actual, true ) . ')' ) );
 	}
 

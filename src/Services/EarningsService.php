@@ -33,6 +33,15 @@ class EarningsService {
 	public const WITHDRAWAL_REJECTED  = 'rejected';
 
 	/**
+	 * Earnings grouping periods (consumed by get_by_period() and the REST
+	 * `period` filter). Canonical source for both.
+	 */
+	public const PERIOD_DAY   = 'day';
+	public const PERIOD_WEEK  = 'week';
+	public const PERIOD_MONTH = 'month';
+	public const PERIOD_YEAR  = 'year';
+
+	/**
 	 * Get vendor earnings summary.
 	 *
 	 * @param int $vendor_id Vendor user ID.
@@ -219,24 +228,24 @@ class EarningsService {
 	 * @param int    $count     Number of periods.
 	 * @return array Earnings by period.
 	 */
-	public function get_by_period( int $vendor_id, string $period = 'month', int $count = 12 ): array {
+	public function get_by_period( int $vendor_id, string $period = self::PERIOD_MONTH, int $count = 12 ): array {
 		global $wpdb;
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
 		$format = match ( $period ) {
-			'day'   => '%Y-%m-%d',
-			'week'  => '%Y-%u',
-			'month' => '%Y-%m',
-			'year'  => '%Y',
-			default => '%Y-%m',
+			self::PERIOD_DAY   => '%Y-%m-%d',
+			self::PERIOD_WEEK  => '%Y-%u',
+			self::PERIOD_MONTH => '%Y-%m',
+			self::PERIOD_YEAR  => '%Y',
+			default            => '%Y-%m',
 		};
 
 		$interval = match ( $period ) {
-			'day'   => 'DAY',
-			'week'  => 'WEEK',
-			'month' => 'MONTH',
-			'year'  => 'YEAR',
-			default => 'MONTH',
+			self::PERIOD_DAY   => 'DAY',
+			self::PERIOD_WEEK  => 'WEEK',
+			self::PERIOD_MONTH => 'MONTH',
+			self::PERIOD_YEAR  => 'YEAR',
+			default            => 'MONTH',
 		};
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -600,6 +609,39 @@ class EarningsService {
 			self::WITHDRAWAL_APPROVED  => __( 'Approved', 'wp-sell-services' ),
 			self::WITHDRAWAL_COMPLETED => __( 'Completed', 'wp-sell-services' ),
 			self::WITHDRAWAL_REJECTED  => __( 'Rejected', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Terminal/processed states an admin may transition a withdrawal into.
+	 *
+	 * Excludes the initial `pending` state (a request can never be moved back
+	 * to pending). Canonical source for the REST process-withdrawal `status`
+	 * action enum.
+	 *
+	 * @return array<int, string> Status keys.
+	 */
+	public static function get_processable_withdrawal_statuses(): array {
+		return array(
+			self::WITHDRAWAL_APPROVED,
+			self::WITHDRAWAL_REJECTED,
+			self::WITHDRAWAL_COMPLETED,
+		);
+	}
+
+	/**
+	 * Earnings grouping periods, keyed by period slug.
+	 *
+	 * Canonical source for the REST `period` filter and get_by_period().
+	 *
+	 * @return array<string, string> Period labels.
+	 */
+	public static function get_periods(): array {
+		return array(
+			self::PERIOD_DAY   => __( 'Day', 'wp-sell-services' ),
+			self::PERIOD_WEEK  => __( 'Week', 'wp-sell-services' ),
+			self::PERIOD_MONTH => __( 'Month', 'wp-sell-services' ),
+			self::PERIOD_YEAR  => __( 'Year', 'wp-sell-services' ),
 		);
 	}
 

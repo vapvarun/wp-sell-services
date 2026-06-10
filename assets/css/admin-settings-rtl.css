@@ -121,6 +121,12 @@
 	text-decoration: none;
 }
 
+.wpss-settings-nav-item:focus-visible,
+.wpss-card[data-gateway] .wpss-card__head:focus-visible {
+	outline: 2px solid var(--wpss-admin-accent, #2271b1);
+	outline-offset: -2px;
+}
+
 .wpss-settings-nav-item:hover [data-lucide] {
 	opacity: 1;
 }
@@ -264,21 +270,10 @@
 }
 
 /* ==========================================================================
-   Notice Suppression — Hide third-party notices on settings page
+   Responsive — sidebar collapses on mobile (ux-foundation 640px breakpoint)
    ========================================================================== */
 
-.sell-services_page_wpss-settings .notice:not(.wpss-notice),
-.sell-services_page_wpss-settings .update-nag,
-.sell-services_page_wpss-settings div.error:not(.wpss-notice),
-.sell-services_page_wpss-settings div.updated:not(.wpss-notice) {
-	display: none !important;
-}
-
-/* ==========================================================================
-   Responsive — Sidebar collapses at 782px
-   ========================================================================== */
-
-@media screen and (max-width: 782px) {
+@media (max-width: 640px) {
 	.wpss-settings-wrap {
 		flex-direction: column;
 		min-height: auto;

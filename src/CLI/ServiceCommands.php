@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WP_CLI;
 use WP_CLI_Command;
+use WPSellServices\Demo\MarketplaceSeeder;
 
 /**
  * Manage WP Sell Services from the command line.
@@ -196,6 +197,80 @@ class ServiceCommands extends WP_CLI_Command {
 		$progress->finish();
 
 		WP_CLI::success( "Deleted {$count} services." );
+	}
+
+	/**
+	 * Seed a full demo marketplace.
+	 *
+	 * Creates vendors (with profiles + portfolios), buyers, services, orders
+	 * spanning every order status, reviews, buyer requests + proposals,
+	 * conversations + messages, favorites, and withdrawals - everything a
+	 * realistic marketplace needs for demos and QA. Delegates all logic to
+	 * {@see \WPSellServices\Demo\MarketplaceSeeder} so the same seeding can be
+	 * driven from REST or a unit test.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--orders=<number>]
+	 * : Minimum number of orders to create (every order status is always
+	 * represented at least twice).
+	 * ---
+	 * default: 55
+	 * ---
+	 *
+	 * [--no-images]
+	 * : Skip attaching demo images (service galleries, portfolio items, vendor
+	 * avatars). Images are sideloaded by default so the marketplace looks
+	 * complete for demos/screenshots; pass this for a faster, text-only seed.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Seed the default marketplace (with images)
+	 *     $ wp wpss demo marketplace
+	 *
+	 *     # Seed a larger marketplace
+	 *     $ wp wpss demo marketplace --orders=100
+	 *
+	 *     # Fast text-only seed (no images)
+	 *     $ wp wpss demo marketplace --no-images
+	 *
+	 * @subcommand marketplace
+	 *
+	 * @param array<int, string>    $args       Positional arguments.
+	 * @param array<string, string> $assoc_args Associative arguments.
+	 */
+	public function marketplace( array $args, array $assoc_args ): void {
+		$min_orders = (int) ( $assoc_args['orders'] ?? 55 );
+		$with_images = ! isset( $assoc_args['no-images'] );
+
+		WP_CLI::log( 'Seeding demo marketplace' . ( $with_images ? ' (with images)...' : ' (no images)...' ) );
+		WP_CLI::log( '' );
+
+		$seeder = new MarketplaceSeeder(
+			static function ( string $message ): void {
+				WP_CLI::log( '  ' . $message );
+			}
+		);
+
+		$summary = $seeder->seed(
+			array(
+				'orders' => $min_orders,
+				'images' => $with_images,
+			)
+		);
+
+		WP_CLI::log( '' );
+		WP_CLI::success( 'Demo marketplace seeded.' );
+
+		$rows = array();
+		foreach ( $summary as $entity => $count ) {
+			$rows[] = array(
+				'Entity' => ucfirst( str_replace( '_', ' ', $entity ) ),
+				'Count'  => $count,
+			);
+		}
+
+		WP_CLI\Utils\format_items( 'table', $rows, array( 'Entity', 'Count' ) );
 	}
 
 	/**
@@ -1964,4 +2039,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'wpss validate', ValidateCommand::class, array( 'shortdesc' => 'Validate models and schema.' ) );
 	WP_CLI::add_command( 'wpss preflight', PreflightCommand::class, array( 'shortdesc' => 'Run release-readiness preflight checks.' ) );
 	WP_CLI::add_command( 'wpss test:flow', TestFlowCommand::class, array( 'shortdesc' => 'Run end-to-end data flow tests.' ) );
+	WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
 }

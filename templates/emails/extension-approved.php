@@ -53,6 +53,8 @@ $order_url    = $parent_id ? add_query_arg(
 	),
 	$dashboard
 ) : $dashboard;
+
+do_action( 'wpss_email_content_before', 'extension_approved', $extension, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -118,3 +120,6 @@ if ( '' !== $old_deadline && '' !== $new_deadline ) :
 		<?php esc_html_e( 'Open the order', 'wp-sell-services' ); ?>
 	</a>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'extension_approved', $extension, $recipient );

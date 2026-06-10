@@ -31,6 +31,51 @@ use WPSellServices\Models\ServiceOrder;
 /**
  * Handles frontend AJAX requests.
  *
+ * Authorization model (object-ownership, not role capabilities)
+ * -------------------------------------------------------------
+ * These are marketplace endpoints for logged-in buyers and vendors, not admin
+ * screens. The right authorization question is almost never "does this user
+ * hold capability X?" but "does this user *own* the object they are acting on?"
+ * (their order, their service, their proposal, their conversation, their cart).
+ * A nonce check alone proves the request is intentional; it does not prove
+ * ownership. Every mutating handler therefore enforces ownership through ONE of
+ * the four accepted patterns below. A security scan that flags "nonce verified
+ * but no current_user_can()" on a handler matching one of these patterns is a
+ * false positive for this class — capability checks are the wrong tool here.
+ *
+ * Pattern A — inline object-ownership guard.
+ *   The handler loads the object and compares its owner column to
+ *   get_current_user_id() before mutating, e.g.
+ *     `if ( ! $order || (int) $order->vendor_id !== $user_id ) { reject; }`
+ *   or for CPTs `(int) $post->post_author !== $user_id`. Used by the order,
+ *   service, request, proposal-accept/reject and portfolio-edit handlers.
+ *
+ * Pattern B — service-layer ownership enforcement.
+ *   The handler forwards get_current_user_id() to a service method that rejects
+ *   when the caller does not own the row (e.g. ProposalService::withdraw(),
+ *   MilestoneService::submit()/approve()/decline()/delete_unpaid(),
+ *   ExtensionOrderService::decline(), ConversationService::mark_as_read() /
+ *   user_can_access()). The guard lives once in the service so every caller
+ *   (AJAX + REST + CLI) shares it. The handler must pass the *current* user id,
+ *   never a client-supplied id.
+ *
+ * Pattern C — self-scoped data only.
+ *   The handler reads or writes data keyed to the current user and can never
+ *   touch another user's data: own user-meta cart/favorites/email-prefs/profile,
+ *   notifications and dashboard stats filtered by `user_id = %d` /
+ *   `vendor_id = %d`, or a `wpss_user_id` query var pinned to
+ *   get_current_user_id(). No object id from the client widens the scope.
+ *
+ * Pattern D — intentionally public.
+ *   Read-only, non-sensitive, `nopriv`-exposed endpoints (live_search,
+ *   load_reviews, load_services) and the guest helpful-vote (mark_review_helpful,
+ *   deduped per user/IP). These have no ownership concept by design and are
+ *   rate-limited instead.
+ *
+ * Admin-only / cross-user actions are the exception: those DO require an
+ * explicit current_user_can( 'manage_options' ) check (see order_action,
+ * submit_requirements, add_dispute_evidence) in addition to the nonce.
+ *
  * @since 1.0.0
  */
 class AjaxHandlers {
@@ -307,25 +352,13 @@ class AjaxHandlers {
 		$message  = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
 		$user_id  = get_current_user_id();
 
-		// Process uploaded files from $_FILES.
+		// Process uploaded files from $_FILES via the shared normalizer (same
+		// shape the REST deliverables endpoint feeds DeliveryService::submit()).
 		$files = array();
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput -- $_FILES fields are individually sanitized below; tmp_name/error/size are not user-controlled.
-		if ( ! empty( $_FILES['files'] ) && is_array( $_FILES['files']['name'] ) ) {
-			$file_count = count( $_FILES['files']['name'] );
-			for ( $i = 0; $i < $file_count; $i++ ) {
-				if ( empty( $_FILES['files']['name'][ $i ] ) ) {
-					continue;
-				}
-				$files[] = array(
-					'name'     => sanitize_file_name( $_FILES['files']['name'][ $i ] ),
-					'type'     => sanitize_mime_type( $_FILES['files']['type'][ $i ] ),
-					'tmp_name' => $_FILES['files']['tmp_name'][ $i ],
-					'error'    => (int) $_FILES['files']['error'][ $i ],
-					'size'     => (int) $_FILES['files']['size'][ $i ],
-				);
-			}
+		if ( ! empty( $_FILES['files'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Grouped $_FILES is normalized/sanitized inside wpss_normalize_uploaded_files().
+			$files = wpss_normalize_uploaded_files( (array) $_FILES['files'] );
 		}
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput
 
 		if ( ! $order_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
@@ -634,33 +667,49 @@ class AjaxHandlers {
 			}
 		}
 
-		// Legacy format: field_* keys.
-		foreach ( $_POST as $key => $value ) {
-			if ( strpos( $key, 'field_' ) === 0 ) {
-				$field_id                = str_replace( 'field_', '', $key );
-				$field_data[ $field_id ] = is_array( $value )
-					? array_map( 'sanitize_text_field', $value )
-					: sanitize_text_field( wp_unslash( $value ) );
+		// Legacy format: field_{index} keys.
+		// Read each known requirement index explicitly instead of iterating the
+		// entire $_POST superglobal — only the indices that exist in the service
+		// requirement definitions are ever valid legacy keys.
+		foreach ( array_keys( $requirements ) as $req_index ) {
+			$legacy_key = 'field_' . $req_index;
+			if ( ! isset( $_POST[ $legacy_key ] ) ) {
+				continue;
 			}
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above, value sanitized on the next line.
+			$legacy_value             = wp_unslash( $_POST[ $legacy_key ] );
+			$field_data[ $req_index ] = is_array( $legacy_value )
+				? array_map( 'sanitize_text_field', $legacy_value )
+				: sanitize_text_field( $legacy_value );
 		}
 
 		// Handle file uploads.
+		// Read explicit, known file input keys rather than iterating the whole
+		// $_FILES superglobal.
 		$files = array();
-		if ( ! empty( $_FILES ) ) {
-			foreach ( $_FILES as $key => $file ) {
-				// Support requirements[index] format.
-				if ( strpos( $key, 'requirements' ) === 0 ) {
-					preg_match( '/requirements\[(\d+)\]/', $key, $matches );
-					if ( ! empty( $matches[1] ) ) {
-						$index = absint( $matches[1] );
-						if ( isset( $requirements[ $index ] ) ) {
-							$question           = $requirements[ $index ]['question'] ?? "field_{$index}";
-							$files[ $question ] = $file;
-						}
-					}
-				} else {
-					$files[ $key ] = $file;
-				}
+
+		// Per-requirement file inputs in the requirements[index] format.
+		foreach ( array_keys( $requirements ) as $req_index ) {
+			$file_key = 'requirements[' . $req_index . ']';
+			if ( ! isset( $_FILES[ $file_key ] ) ) {
+				continue;
+			}
+			$question = $requirements[ $req_index ]['question'] ?? "field_{$req_index}";
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entry is validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
+			$files[ $question ] = $_FILES[ $file_key ];
+		}
+
+		// Named file inputs used by the requirements templates.
+		$named_file_inputs = apply_filters(
+			'wpss_requirements_file_inputs',
+			array( 'requirement_files', 'requirements_files', 'requirements' ),
+			$order_id
+		);
+		foreach ( $named_file_inputs as $file_key ) {
+			$file_key = sanitize_key( $file_key );
+			if ( isset( $_FILES[ $file_key ] ) ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entry is validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
+				$files[ $file_key ] = $_FILES[ $file_key ];
 			}
 		}
 
@@ -731,86 +780,16 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to send messages in this order.', 'wp-sell-services' ) ) );
 		}
 
-		// Handle file attachments.
+		// Handle file attachments via the shared validator/uploader (same
+		// allow-list, MIME re-check, size cap, and upload behaviour as the REST
+		// ConversationsController::send_message path).
 		$attachments_data = array();
 		$skipped_files    = array();
 		if ( ! empty( $_FILES['attachments'] ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-			require_once ABSPATH . 'wp-admin/includes/media.php';
-
-			// Allowed file types for conversation attachments.
-			$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
-			$allowed_mimes = array(
-				'image/jpeg',
-				'image/png',
-				'image/gif',
-				'image/webp',
-				'application/pdf',
-				'application/msword',
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-				'application/zip',
-				'text/plain',
-			);
-			$max_size      = 10 * 1024 * 1024; // 10MB per file.
-
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$files = $_FILES['attachments'];
-
-			// Handle multiple files.
-			if ( is_array( $files['name'] ) ) {
-				$file_count = count( $files['name'] );
-				for ( $i = 0; $i < $file_count; $i++ ) {
-					if ( empty( $files['name'][ $i ] ) ) {
-						continue;
-					}
-
-					$file = array(
-						'name'     => $files['name'][ $i ],
-						'type'     => $files['type'][ $i ],
-						'tmp_name' => $files['tmp_name'][ $i ],
-						'error'    => $files['error'][ $i ],
-						'size'     => $files['size'][ $i ],
-					);
-
-					$file_name = sanitize_file_name( $file['name'] );
-
-					// Validate file extension.
-					$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-					if ( ! in_array( $ext, $allowed_types, true ) ) {
-						$skipped_files[] = $file_name . ': ' . __( 'unsupported file type', 'wp-sell-services' );
-						continue;
-					}
-
-					// Validate MIME type to prevent extension spoofing.
-					$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-					$mime_type = $file_info['type'] ?? '';
-					if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
-						$skipped_files[] = $file_name . ': ' . __( 'invalid MIME type', 'wp-sell-services' );
-						continue;
-					}
-
-					// Validate file size.
-					if ( $file['size'] > $max_size ) {
-						$skipped_files[] = $file_name . ': ' . __( 'file too large (max 10MB)', 'wp-sell-services' );
-						continue;
-					}
-
-					$_FILES['upload_file'] = $file;
-					$attachment_id         = media_handle_upload( 'upload_file', 0 );
-
-					if ( ! is_wp_error( $attachment_id ) ) {
-						$attachments_data[] = array(
-							'id'   => $attachment_id,
-							'url'  => wp_get_attachment_url( $attachment_id ),
-							'name' => $files['name'][ $i ],
-							'type' => $mime_type, // Use server-verified MIME type, not client-provided.
-						);
-					} else {
-						$skipped_files[] = $file_name . ': ' . $attachment_id->get_error_message();
-					}
-				}
-			}
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
+			$uploaded         = wpss_handle_message_attachments( (array) $_FILES['attachments'] );
+			$attachments_data = $uploaded['attachments'];
+			$skipped_files    = $uploaded['skipped'];
 		}
 
 		// Get or create conversation for this order.
@@ -838,46 +817,10 @@ class AjaxHandlers {
 		}
 
 		$message_id = $message->id;
-		$user       = get_userdata( $user_id );
 
-		// Generate HTML for the new message.
-		ob_start();
-		?>
-		<div class="wpss-messaging__message wpss-messaging__message--sent" data-message-id="<?php echo esc_attr( $message_id ); ?>">
-			<div class="wpss-messaging__message-content">
-				<div class="wpss-messaging__bubble">
-					<div class="wpss-messaging__text">
-						<?php echo wp_kses_post( nl2br( $content ) ); ?>
-					</div>
-					<?php if ( ! empty( $attachments_data ) ) : ?>
-						<div class="wpss-messaging__attachments">
-							<?php foreach ( $attachments_data as $attachment ) : ?>
-								<?php $is_image = strpos( $attachment['type'], 'image/' ) === 0; ?>
-								<?php if ( $is_image ) : ?>
-									<a href="<?php echo esc_url( $attachment['url'] ); ?>" target="_blank" class="wpss-messaging__attachment-image">
-										<img src="<?php echo esc_url( $attachment['url'] ); ?>" alt="<?php echo esc_attr( $attachment['name'] ); ?>">
-									</a>
-								<?php else : ?>
-									<a href="<?php echo esc_url( $attachment['url'] ); ?>" target="_blank" class="wpss-messaging__attachment-file">
-										<span class="wpss-messaging__attachment-icon">
-											<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-										</span>
-										<span class="wpss-messaging__attachment-info">
-											<span class="wpss-messaging__attachment-name"><?php echo esc_html( $attachment['name'] ); ?></span>
-										</span>
-									</a>
-								<?php endif; ?>
-							<?php endforeach; ?>
-						</div>
-					<?php endif; ?>
-				</div>
-				<span class="wpss-messaging__message-time">
-					<?php echo esc_html( wp_date( get_option( 'time_format' ) ) ); ?>
-				</span>
-			</div>
-		</div>
-		<?php
-		$html = ob_get_clean();
+		// Render the new row through the shared renderer so the markup matches
+		// the initial server render + the REST message response exactly.
+		$html = wpss_render_message_row( $message, $user_id );
 
 		$response = array(
 			'message'    => __( 'Message sent.', 'wp-sell-services' ),
@@ -1061,78 +1004,16 @@ class AjaxHandlers {
 			}
 		}
 
-		// Build HTML for each message.
+		// Build HTML for each message via the shared renderer (same markup as
+		// the initial server render + the REST message response). These are all
+		// other-party messages (the query excludes the current user), so they
+		// render with avatar + sender name.
 		$result = array();
 
 		foreach ( $messages as $msg ) {
-			$is_system = 'system' === $msg->type;
-
-			ob_start();
-			if ( $is_system ) :
-				?>
-				<div class="wpss-messaging__system">
-					<span class="wpss-messaging__system-text">
-						<?php echo wp_kses_post( $msg->content ); ?>
-						<span class="wpss-messaging__message-time">
-							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $msg->created_at ) ) ); ?>
-						</span>
-					</span>
-				</div>
-				<?php
-			else :
-				?>
-				<div class="wpss-messaging__message" data-message-id="<?php echo esc_attr( $msg->id ); ?>">
-					<div class="wpss-messaging__message-avatar">
-						<?php echo get_avatar( $msg->sender_id, 32 ); ?>
-					</div>
-					<div class="wpss-messaging__message-content">
-						<div class="wpss-messaging__bubble">
-							<span class="wpss-messaging__sender"><?php echo esc_html( $msg->sender_name ); ?></span>
-							<div class="wpss-messaging__text">
-								<?php echo wp_kses_post( nl2br( $msg->content ) ); ?>
-							</div>
-							<?php if ( ! empty( $msg->attachments ) ) : ?>
-								<?php $attachments = json_decode( $msg->attachments, true ); ?>
-								<?php if ( ! empty( $attachments ) ) : ?>
-									<div class="wpss-messaging__attachments">
-										<?php foreach ( $attachments as $attachment ) : ?>
-											<?php
-											$file_url  = $attachment['url'] ?? '';
-											$file_name = $attachment['name'] ?? basename( $file_url );
-											$file_type = $attachment['type'] ?? '';
-											$is_image  = strpos( $file_type, 'image/' ) === 0;
-											?>
-											<?php if ( $is_image && $file_url ) : ?>
-												<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-image">
-													<img src="<?php echo esc_url( $file_url ); ?>" alt="<?php echo esc_attr( $file_name ); ?>">
-												</a>
-											<?php else : ?>
-												<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
-													<span class="wpss-messaging__attachment-icon">
-														<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-													</span>
-													<span class="wpss-messaging__attachment-info">
-														<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
-													</span>
-												</a>
-											<?php endif; ?>
-										<?php endforeach; ?>
-									</div>
-								<?php endif; ?>
-							<?php endif; ?>
-						</div>
-						<span class="wpss-messaging__message-time">
-							<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $msg->created_at ) ) ); ?>
-						</span>
-					</div>
-				</div>
-				<?php
-			endif;
-			$html = ob_get_clean();
-
 			$result[] = array(
 				'id'   => (int) $msg->id,
-				'html' => $html,
+				'html' => wpss_render_message_row( $msg, $user_id ),
 			);
 		}
 
@@ -1298,7 +1179,12 @@ class AjaxHandlers {
 
 				<div class="wpss-review-actions">
 					<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
-						<span class="wpss-helpful-icon">👍</span>
+						<span class="wpss-helpful-icon">
+							<?php
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
+							echo \WPSellServices\Services\Icon::render( 'thumbs-up', array( 'class' => 'wpss-icon--sm' ) );
+							?>
+						</span>
 						<span class="wpss-helpful-text"><?php esc_html_e( 'Helpful', 'wp-sell-services' ); ?></span>
 						<?php if ( $review->helpful_count > 0 ) : ?>
 							<span class="wpss-helpful-count">(<?php echo esc_html( $review->helpful_count ); ?>)</span>
@@ -2006,13 +1892,7 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 
-		$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );
-		$favorites     = $favorites_raw ? $favorites_raw : array();
-
-		if ( ! in_array( $service_id, $favorites, true ) ) {
-			$favorites[] = $service_id;
-			update_user_meta( $user_id, '_wpss_favorite_services', $favorites );
-		}
+		$favorites = \WPSellServices\Services\FavoritesService::add( $user_id, $service_id );
 
 		wp_send_json_success(
 			array(
@@ -2037,11 +1917,7 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 
-		$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );
-		$favorites     = $favorites_raw ? $favorites_raw : array();
-		$favorites     = array_diff( $favorites, array( $service_id ) );
-
-		update_user_meta( $user_id, '_wpss_favorite_services', array_values( $favorites ) );
+		$favorites = \WPSellServices\Services\FavoritesService::remove( $user_id, $service_id );
 
 		wp_send_json_success(
 			array(
@@ -2059,9 +1935,8 @@ class AjaxHandlers {
 	public function get_favorites(): void {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
-		$user_id       = get_current_user_id();
-		$favorites_raw = get_user_meta( $user_id, '_wpss_favorite_services', true );
-		$favorites     = $favorites_raw ? $favorites_raw : array();
+		$user_id   = get_current_user_id();
+		$favorites = \WPSellServices\Services\FavoritesService::get_ids( $user_id );
 
 		wp_send_json_success( array( 'favorites' => $favorites ) );
 	}
@@ -2551,8 +2426,7 @@ class AjaxHandlers {
 		$package_price    = (float) ( $selected_package['price'] ?? 0 );
 
 		// Calculate extras price.
-		$extras_raw      = get_post_meta( $service_id, '_wpss_extras', true );
-		$all_extras      = $extras_raw ? $extras_raw : array();
+		$all_extras      = wpss_get_service_extras( $service_id );
 		$extras_price    = 0;
 		$extras_days     = 0;
 		$selected_extras = array();
@@ -2872,49 +2746,14 @@ class AjaxHandlers {
 		$page       = absint( $_POST['page'] ?? 1 );
 		$attributes = isset( $_POST['attributes'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['attributes'] ) ), true ) : array();
 
-		$args = array(
-			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
-			'posts_per_page' => absint( $attributes['postsPerPage'] ?? 12 ),
-			'paged'          => $page,
-			'orderby'        => sanitize_key( $attributes['orderBy'] ?? 'date' ),
-			'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
-		);
-
-		// Category filter.
-		if ( ! empty( $attributes['category'] ) ) {
-			$args['tax_query'] = array(
-				array(
-					'taxonomy' => 'wpss_service_category',
-					'field'    => 'term_id',
-					'terms'    => absint( $attributes['category'] ),
-				),
-			);
-		}
-
-		$query = new \WP_Query( $args );
-
-		ob_start();
-		if ( $query->have_posts() ) {
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				wpss_get_template_part( 'content', 'service-card' );
-			}
-		} else {
-			echo '<p class="wpss-no-services">' . esc_html__( 'No services found.', 'wp-sell-services' ) . '</p>';
-		}
-		wp_reset_postdata();
-		$html = ob_get_clean();
-
-		// Pagination.
-		ob_start();
-		wpss_pagination( $query );
-		$pagination = ob_get_clean();
+		// Shared renderer — same code path as the REST grid endpoint so card
+		// markup + extension hooks stay identical across both transports.
+		$grid = wpss_render_services_grid( is_array( $attributes ) ? $attributes : array(), $page );
 
 		wp_send_json_success(
 			array(
-				'html'       => $html,
-				'pagination' => $pagination,
+				'html'       => $grid['html'],
+				'pagination' => $grid['pagination'],
 			)
 		);
 	}
@@ -3686,75 +3525,26 @@ class AjaxHandlers {
 		// Check if user is a vendor and update vendor-specific fields.
 		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
 
+		// Check if user is a vendor (canonical capability/role check - role-based
+		// vendors do not always carry the _wpss_is_vendor meta).
+		$is_vendor = wpss_is_vendor( $user_id );
+
 		if ( $is_vendor ) {
-			$vendor_service = new VendorService();
-			$profile        = $vendor_service->get_profile( $user_id );
+			// Build the field set from the posted form, then persist through the
+			// canonical VendorService::update_profile() (writes the
+			// wpss_vendor_profiles table) - the same path the REST twin uses, so
+			// both transports stay byte-identical and write to one store.
+			$cover_id  = absint( $_POST['cover_id'] ?? 0 );
+			$post_data = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce checked at top; each field sanitized individually inside wpss_build_vendor_profile_update().
 
-			if ( $profile ) {
-				global $wpdb;
-				$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
+			// The composer posts the whole form, so an absent vacation_mode
+			// checkbox means "off" - make that explicit so the builder writes 0.
+			$post_data['vacation_mode'] = empty( $post_data['vacation_mode'] ) ? 0 : 1;
 
-				$update_data = array(
-					'updated_at' => current_time( 'mysql' ),
-				);
+			$profile_data = wpss_build_vendor_profile_update( $post_data, $avatar_id, $cover_id );
 
-				// Vendor-specific fields.
-				if ( isset( $_POST['tagline'] ) ) {
-					$update_data['tagline'] = sanitize_text_field( wp_unslash( $_POST['tagline'] ) );
-				}
-
-				if ( isset( $_POST['bio'] ) ) {
-					$update_data['bio'] = sanitize_textarea_field( wp_unslash( $_POST['bio'] ) );
-				}
-
-				if ( isset( $_POST['country'] ) ) {
-					$update_data['country'] = sanitize_text_field( wp_unslash( $_POST['country'] ) );
-				}
-
-				if ( isset( $_POST['city'] ) ) {
-					$update_data['city'] = sanitize_text_field( wp_unslash( $_POST['city'] ) );
-				}
-
-				if ( isset( $_POST['website'] ) ) {
-					$update_data['website'] = esc_url_raw( wp_unslash( $_POST['website'] ) );
-				}
-
-				if ( isset( $_POST['intro_video_url'] ) ) {
-					// Accept only YouTube/Vimeo origins — stored verbatim, rendered
-					// through wpss_vendor_video_embed_url() which turns a valid
-					// watch/share link into a safe embed iframe. Anything else
-					// clears the field so the UI falls back to no-video state.
-					$raw_video                      = esc_url_raw( wp_unslash( $_POST['intro_video_url'] ) );
-					$update_data['intro_video_url'] = wpss_is_supported_video_url( $raw_video ) ? $raw_video : '';
-				}
-
-				// Vacation mode.
-				$update_data['vacation_mode'] = ! empty( $_POST['vacation_mode'] ) ? 1 : 0;
-
-				if ( isset( $_POST['vacation_message'] ) ) {
-					$update_data['vacation_message'] = sanitize_textarea_field( wp_unslash( $_POST['vacation_message'] ) );
-				}
-
-				// Avatar and cover for vendor profile table.
-				if ( $avatar_id > 0 ) {
-					$update_data['avatar_id'] = $avatar_id;
-				} elseif ( isset( $_POST['avatar_id'] ) ) {
-					$update_data['avatar_id'] = null;
-				}
-
-				$cover_id = absint( $_POST['cover_id'] ?? 0 );
-				if ( $cover_id > 0 ) {
-					$update_data['cover_image_id'] = $cover_id;
-				} elseif ( isset( $_POST['cover_id'] ) ) {
-					$update_data['cover_image_id'] = null;
-				}
-
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->update(
-					$profiles_table,
-					$update_data,
-					array( 'user_id' => $user_id )
-				);
+			if ( ! empty( $profile_data ) ) {
+				( new VendorService() )->update_profile( $user_id, $profile_data );
 			}
 		}
 

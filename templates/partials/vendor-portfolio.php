@@ -19,6 +19,15 @@ defined( 'ABSPATH' ) || exit;
 if ( empty( $portfolio_items ) ) {
 	return;
 }
+
+/**
+ * Fires before the vendor portfolio grid.
+ *
+ * @since 1.1.0
+ *
+ * @param int $vendor_id Vendor user ID.
+ */
+do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 ?>
 
 <style>
@@ -290,3 +299,14 @@ if ( empty( $portfolio_items ) ) {
 		<?php endforeach; ?>
 	</div>
 </div>
+
+<?php
+/**
+ * Fires after the vendor portfolio grid.
+ *
+ * @since 1.1.0
+ *
+ * @param int $vendor_id Vendor user ID.
+ */
+do_action( 'wpss_after_vendor_portfolio', $vendor_id );
+

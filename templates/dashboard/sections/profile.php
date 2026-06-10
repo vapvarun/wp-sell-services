@@ -159,6 +159,12 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					<textarea id="vacation_message" name="vacation_message" rows="3" class="wpss-textarea" placeholder="<?php esc_attr_e( 'e.g., Out of office until March 15. Orders will resume then.', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $vendor_profile->vacation_message ?? '' ); ?></textarea>
 					<p class="wpss-form-hint"><?php esc_html_e( 'Shown to buyers on your profile and services while Vacation Mode is on. Leave empty for the default notice.', 'wp-sell-services' ); ?></p>
 				</div>
+
+				<div class="wpss-form-row">
+					<label for="vacation_return_date"><?php esc_html_e( 'Back on (optional)', 'wp-sell-services' ); ?></label>
+					<input type="date" id="vacation_return_date" name="vacation_return_date" class="wpss-input" value="<?php echo esc_attr( $vendor_profile->vacation_return_date ?? '' ); ?>">
+					<p class="wpss-form-hint"><?php esc_html_e( 'Optional date when you will resume taking orders. Shown to buyers on your service pages.', 'wp-sell-services' ); ?></p>
+				</div>
 			</div>
 		<?php endif; ?>
 
@@ -275,7 +281,7 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				} ).then( function ( r ) { return r.json(); } )
 					.then( function ( res ) {
 					if ( res && res.success ) {
-						statusEl.textContent = <?php echo wp_json_encode( __( '✓ Preferences saved', 'wp-sell-services' ) ); ?>;
+						statusEl.textContent = <?php echo wp_json_encode( __( 'Preferences saved', 'wp-sell-services' ) ); ?>;
 						statusEl.style.color = '#16a34a';
 						window.setTimeout( function () { statusEl.textContent = ''; }, 3000 );
 					} else {

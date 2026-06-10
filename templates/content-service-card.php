@@ -35,6 +35,16 @@ $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array
 
 // Filter card classes.
 $card_classes = apply_filters( 'wpss_service_card_classes', array( 'wpss-service-card' ), $service_id );
+
+// Favorite state — resolved server-side so the toggle renders in the correct
+// state on first paint (no flash). The toggle reads/writes the canonical
+// the canonical favorites store via the REST favorites controller (frontend.js).
+$wpss_card_is_logged_in = is_user_logged_in();
+$wpss_card_favorited    = false;
+if ( $wpss_card_is_logged_in ) {
+	$wpss_card_favs = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
+	$wpss_card_favorited = is_array( $wpss_card_favs ) && in_array( $service_id, array_map( 'intval', $wpss_card_favs ), true );
+}
 ?>
 
 <?php
@@ -93,6 +103,24 @@ do_action( 'wpss_before_service_card', $service_id );
 			do_action( 'wpss_service_card_image_overlay', $service_id );
 			?>
 
+			<?php
+			$wpss_card_fav_label = $wpss_card_favorited
+				? __( 'Remove from favorites', 'wp-sell-services' )
+				: __( 'Add to favorites', 'wp-sell-services' );
+			?>
+			<button
+				type="button"
+				class="wpss-fav-toggle wpss-service-card__fav<?php echo $wpss_card_favorited ? ' is-favorited' : ''; ?>"
+				data-service-id="<?php echo esc_attr( (string) $service_id ); ?>"
+				data-logged-in="<?php echo $wpss_card_is_logged_in ? '1' : '0'; ?>"
+				aria-pressed="<?php echo $wpss_card_favorited ? 'true' : 'false'; ?>"
+				aria-label="<?php echo esc_attr( $wpss_card_fav_label ); ?>"
+				title="<?php echo esc_attr( $wpss_card_fav_label ); ?>"
+			>
+				<i data-lucide="heart" class="wpss-icon wpss-icon--sm wpss-fav-toggle__icon" aria-hidden="true"></i>
+				<span class="screen-reader-text wpss-fav-toggle__label"><?php echo esc_html( $wpss_card_fav_label ); ?></span>
+			</button>
+
 			<?php if ( ! empty( $categories ) ) : ?>
 				<span class="wpss-service-card__category"><?php echo esc_html( $categories[0] ); ?></span>
 			<?php endif; ?>
@@ -119,15 +147,12 @@ do_action( 'wpss_before_service_card', $service_id );
 					if ( \WPSellServices\Models\VendorProfile::TIER_NEW !== $card_tier ) {
 						// Earned-tier badge — Rising / Top Rated / Pro.
 						$card_tier_label  = $card_vendor_profile->get_tier_label();
-						$card_tier_colors = array(
-							'rising'    => 'background:#eff6ff;color:#2563eb;',
-							'top_rated' => 'background:#fefce8;color:#ca8a04;',
-							'pro'       => 'background:#faf5ff;color:#7c3aed;',
-						);
-						$card_tier_style  = $card_tier_colors[ $card_tier ] ?? '';
-						if ( $card_tier_style ) {
+						$card_known_tiers = array( 'rising', 'top_rated', 'pro' );
+						if ( in_array( $card_tier, $card_known_tiers, true ) ) {
+							// Colour comes from the .wpss-seller-badge--{tier} modifier in
+							// frontend.css (token-driven), not an inline style attribute.
 							?>
-							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>" style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:9999px;margin-left:4px;<?php echo esc_attr( $card_tier_style ); ?>">
+							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>">
 								<?php echo esc_html( $card_tier_label ); ?>
 							</span>
 							<?php
@@ -138,10 +163,31 @@ do_action( 'wpss_before_service_card', $service_id );
 						// country. Soft signal — vendor is still listed; buyer
 						// just sees the badge as a "ask more questions" hint.
 						?>
-						<span class="wpss-seller-badge wpss-seller-badge--new" style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:9999px;margin-left:4px;background:#f3f4f6;color:#6b7280;">
+						<span class="wpss-seller-badge wpss-seller-badge--new">
 							<?php esc_html_e( 'New seller', 'wp-sell-services' ); ?>
 						</span>
 						<?php
+					}
+
+					// Vacation badge — only when on vacation AND a return date is set.
+					// Vacationing vendors are excluded from the archive query by
+					// default, so this only surfaces if a site opts to include them
+					// via filter. Reuses the already-loaded profile (no extra query).
+					if ( $card_vendor_profile->is_on_vacation() && ! empty( $card_vendor_profile->vacation_return_date ) ) {
+						$card_vacation_ts = strtotime( (string) $card_vendor_profile->vacation_return_date );
+						if ( $card_vacation_ts ) {
+							?>
+							<span class="wpss-seller-badge wpss-seller-badge--vacation">
+								<?php
+								printf(
+									/* translators: %s: formatted return date */
+									esc_html__( 'Back on %s', 'wp-sell-services' ),
+									esc_html( date_i18n( get_option( 'date_format' ), $card_vacation_ts ) )
+								);
+								?>
+							</span>
+							<?php
+						}
 					}
 				endif;
 				?>

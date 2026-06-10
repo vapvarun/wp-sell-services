@@ -239,7 +239,7 @@ class ReviewsController extends RestController {
 		$order   = $request->get_param( 'order' ) ?: 'DESC';
 
 		$allowed_orderby = array( 'created_at', 'rating', 'helpful_count' );
-		$allowed_order   = array( 'ASC', 'DESC' );
+		$allowed_order   = self::sort_directions();
 
 		if ( ! in_array( $orderby, $allowed_orderby, true ) ) {
 			$orderby = 'created_at';
@@ -471,7 +471,7 @@ class ReviewsController extends RestController {
 		// Admins can update status.
 		if ( current_user_can( 'manage_options' ) && $request->has_param( 'status' ) ) {
 			$status = $request->get_param( 'status' );
-			if ( in_array( $status, array( 'pending', 'approved', 'rejected' ), true ) ) {
+			if ( in_array( $status, array_keys( \WPSellServices\Models\Review::get_statuses() ), true ) ) {
 				$updates['status'] = $status;
 			}
 		}
@@ -981,6 +981,13 @@ class ReviewsController extends RestController {
 			'vendor_reply_at' => $review->vendor_reply_at ?? null,
 			'created_at'      => $review->created_at,
 			'updated_at'      => $review->updated_at ?? null,
+			// Additive presentation fields so REST consumers (single-service.js
+			// reviews block) can render with parity to the legacy server-rendered
+			// markup without reimplementing wpautop/time-ago client-side.
+			'created_human'   => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
+			'review_html'     => wp_kses_post( wpautop( (string) $review->review ) ),
+			'vendor_reply_html'  => ! empty( $review->vendor_reply ) ? wp_kses_post( wpautop( (string) $review->vendor_reply ) ) : '',
+			'vendor_reply_human' => ! empty( $review->vendor_reply_at ) ? wpss_time_ago( (string) $review->vendor_reply_at ) : '',
 		);
 
 		/**
@@ -1040,8 +1047,8 @@ class ReviewsController extends RestController {
 			'order'      => array(
 				'description' => __( 'Order direction.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'default'     => 'DESC',
-				'enum'        => array( 'ASC', 'DESC' ),
+				'default'     => self::SORT_DESC,
+				'enum'        => self::sort_directions(),
 			),
 		);
 	}
@@ -1091,7 +1098,7 @@ class ReviewsController extends RestController {
 					'description' => __( 'Review status.', 'wp-sell-services' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
-					'enum'        => array( 'pending', 'approved', 'rejected' ),
+					'enum'        => array_keys( \WPSellServices\Models\Review::get_statuses() ),
 				),
 				'vendor_reply' => array(
 					'description' => __( 'Vendor reply.', 'wp-sell-services' ),

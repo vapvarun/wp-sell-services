@@ -1,0 +1,192 @@
+{
+  "$schema": "https://wbcomdesigns.com/schemas/css-inventory.v1.json",
+  "generated_by": "autovap-implementer direction 2.6.1 (wave-2-6-css-cleanup)",
+  "generated_at": "2026-06-07",
+  "plugin": "wp-sell-services",
+  "summary": {
+    "source_css_files": 17,
+    "files_with_live_references": 17,
+    "evidenced_dead_files": 0,
+    "files_deleted": 0,
+    "gruntfile_css_entries_removed": 0,
+    "note": "Every plugin-owned source stylesheet under assets/css/ is enqueued or registered with live evidence. There are ZERO evidenced-dead files, so no files were deleted and no Gruntfile entries were removed. The Gruntfile generates -rtl.css (rtlcss glob) and .min.css (scripts/build-min.js) siblings dynamically from the source globs '*.css' (minus '*-rtl.css' / '*.min.css'); it contains no per-file CSS entries, so dead-file deletion would have been glob-driven with no manual Gruntfile edit required."
+  },
+  "evidence_method": {
+    "enqueue_scan": "grep wp_(enqueue|register)_style across src/, includes/, templates/, blocks/",
+    "path_literal_scan": "grep -oE 'assets/css/[a-z0-9-]+\\.css' across *.php and *.js (excluding vendor/node_modules/dist)",
+    "import_scan": "grep '@import' across assets/css/*.css source files -> none found",
+    "cross_plugin_scan": "grep css references in paired plugin wp-sell-services-pro -> references free 'admin.css' (confirms admin.css is a cross-plugin dependency, must not be deleted)",
+    "dynamic_path_scan": "grep for variable-constructed css paths -> none found"
+  },
+  "enqueue_map": [
+    {
+      "file": "assets/css/design-system.css",
+      "handle": "wpss-design-system",
+      "registered_at": "src/Frontend/Frontend.php:48",
+      "enqueued_at": ["src/functions.php:1724"],
+      "depends_on": [],
+      "rtl": true,
+      "role": "base token + component layer; dependency of most frontend handles",
+      "status": "live"
+    },
+    {
+      "file": "assets/css/frontend.css",
+      "handle": "wpss-frontend",
+      "registered_at": "src/Frontend/Frontend.php:56",
+      "enqueued_at": ["src/functions.php:1725"],
+      "depends_on": ["wpss-design-system"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/single-service.css",
+      "handle": "wpss-single-service",
+      "enqueued_at": ["src/Frontend/SingleServiceView.php:96"],
+      "depends_on": ["wpss-frontend"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/archive-service.css",
+      "handle": "wpss-archive",
+      "enqueued_at": ["src/Frontend/ServiceArchiveView.php:77"],
+      "depends_on": ["wpss-frontend"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/buyer-request.css",
+      "handle": "wpss-request",
+      "enqueued_at": ["src/Frontend/BuyerRequestArchiveView.php:70"],
+      "depends_on": ["wpss-frontend"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/service-wizard.css",
+      "handle": "wpss-service-wizard",
+      "enqueued_at": ["src/Frontend/ServiceWizard.php:1372"],
+      "depends_on": ["wpss-design-system"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/unified-dashboard.css",
+      "handle": "wpss-unified-dashboard",
+      "enqueued_at": ["src/Frontend/UnifiedDashboard.php:98"],
+      "depends_on": [],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/vendor-dashboard.css",
+      "handle": "wpss-vendor-dashboard",
+      "enqueued_at": ["templates/myaccount/vendor-dashboard.php:18"],
+      "depends_on": ["wpss-design-system"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/orders.css",
+      "handle": "wpss-orders / wpss-order-metabox",
+      "enqueued_at": [
+        "templates/order/requirements-form.php:22",
+        "templates/order/order-requirements.php:23",
+        "templates/order/order-view.php:33",
+        "templates/order/order-confirmation.php:22",
+        "templates/myaccount/service-orders.php:17",
+        "src/Admin/Metaboxes/OrderMetabox.php:180"
+      ],
+      "depends_on": ["wpss-design-system"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/messaging.css",
+      "handle": "wpss-messaging",
+      "enqueued_at": ["templates/order/conversation.php:31"],
+      "depends_on": ["wpss-design-system"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/wpss-tour.css",
+      "handle": "wpss-tour (Tour::STYLE_TOUR)",
+      "registered_at": "src/Frontend/Tour.php:143",
+      "enqueued_at": ["src/Frontend/Tour.php:164"],
+      "depends_on": ["wpss-shepherd"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/blocks.css",
+      "handle": "wpss-blocks",
+      "enqueued_at": ["src/Blocks/BlocksManager.php:178"],
+      "depends_on": [],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/blocks-editor.css",
+      "handle": "wpss-blocks-editor",
+      "enqueued_at": ["src/Blocks/BlocksManager.php:158"],
+      "depends_on": ["wp-edit-blocks"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/admin.css",
+      "handle": "wpss-admin / wpss-free-admin",
+      "registered_at": "src/Admin/Admin.php:586",
+      "enqueued_at": [
+        "src/Admin/Admin.php:586",
+        "src/Admin/Pages/WithdrawalsPage.php:118",
+        "src/Admin/Pages/ServiceModerationPage.php:213",
+        "src/Admin/Pages/ManualOrderPage.php:72",
+        "src/Admin/Pages/VendorsPage.php:151"
+      ],
+      "depends_on": [],
+      "rtl": true,
+      "cross_plugin": "Referenced by paired plugin wp-sell-services-pro (admin surface).",
+      "status": "live"
+    },
+    {
+      "file": "assets/css/admin-settings.css",
+      "handle": "wpss-admin-settings",
+      "enqueued_at": ["src/Admin/Admin.php:596"],
+      "depends_on": ["wpss-admin"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/admin-manual-order.css",
+      "handle": "wpss-admin-manual-order",
+      "enqueued_at": ["src/Admin/Pages/ManualOrderPage.php:75"],
+      "depends_on": ["wpss-admin"],
+      "rtl": true,
+      "status": "live"
+    },
+    {
+      "file": "assets/css/service-edit.css",
+      "handle": "wpss-service-edit",
+      "enqueued_at": ["src/Admin/Metaboxes/ServiceMetabox.php:78"],
+      "depends_on": [],
+      "rtl": true,
+      "status": "live"
+    }
+  ],
+  "duplicate_selector_findings": {
+    "identical_body_across_files": 55,
+    "different_body_across_files": 235,
+    "decision": "ADVISORY ONLY - not auto-applied this run.",
+    "rationale": "Per the ux-audit skill (3.5 dead-CSS rule): cross-file selector consolidation ships as its own per-slice PR with browser verification of the affected page at multiple viewports. Most identical-body duplicates live in stylesheets that load on DIFFERENT page contexts (e.g. archive-service.css vs buyer-request.css each load on their own archive page and are self-contained for that page; vendor-dashboard.css vs frontend.css load on different surfaces). Removing a rule from one file would only be safe where the consuming page ALSO loads the owning file as a hard dependency, which holds for very few pairs. The 235 different-body cases are intentional page-scoped overrides and must NOT be merged. Consolidating cross-page-scope stylesheets without per-page Playwright verification risks visual regressions, which violates the verify-per-item rule. Logged as known gaps for a dedicated, browser-verified consolidation slice.",
+    "safe_consolidation_candidates": [
+      {
+        "owning_file": "assets/css/design-system.css",
+        "redundant_in": "assets/css/frontend.css",
+        "selectors": [".wpss-btn:hover", ".wpss-btn:active:not(:disabled)", ".wpss-table", ".wpss-modal.wpss-modal-open"],
+        "reason": "wpss-frontend declares wpss-design-system as a dependency, so these 4 identical rules in frontend.css are redundant overrides of the base layer. Safe to remove from frontend.css ONLY after browser-verifying the frontend pages render unchanged. Deferred to a verified slice."
+      }
+    ]
+  }
+}

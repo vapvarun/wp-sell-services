@@ -30,19 +30,11 @@ if ( empty( $order_id ) || empty( $order ) ) {
 // Enqueue messaging styles.
 wp_enqueue_style( 'wpss-messaging', WPSS_PLUGIN_URL . 'assets/css/messaging.css', array( 'wpss-design-system' ), WPSS_VERSION );
 
-// Enqueue frontend script to get wpss object localized.
+// Enqueue frontend script. The `wpss` object (ajaxUrl, restUrl, nonce,
+// restNonce) is localized once, authoritatively, in Frontend.php on
+// wp_enqueue_scripts; re-localizing here during the_content runs too late
+// (the script data is already printed) and would be a no-op.
 wp_enqueue_script( 'wpss-frontend', WPSS_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), WPSS_VERSION, true );
-
-// Localize wpss object for AJAX calls.
-wp_localize_script(
-	'wpss-frontend',
-	'wpss',
-	array(
-		'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-		'restUrl' => rest_url( 'wpss/v1/' ),
-		'nonce'   => wp_create_nonce( 'wpss_frontend_nonce' ),
-	)
-);
 
 $user_id     = get_current_user_id();
 $is_vendor   = $is_vendor ?? ( (int) $order->vendor_id === $user_id );
@@ -133,7 +125,7 @@ $can_message = in_array( $order->status, array( 'pending_requirements', 'in_prog
 do_action( 'wpss_before_conversation', $order );
 ?>
 
-<div class="wpss-messaging wpss-messaging--order" data-order-id="<?php echo esc_attr( $order_id ); ?>">
+<div class="wpss-messaging wpss-messaging--order" data-order-id="<?php echo esc_attr( $order_id ); ?>" data-conversation-id="<?php echo esc_attr( $conversation ? (string) $conversation->id : '' ); ?>">
 	<!-- Conversation Header -->
 	<div class="wpss-messaging__header">
 		<div class="wpss-messaging__header-info">
@@ -228,75 +220,13 @@ do_action( 'wpss_before_conversation', $order );
 					</div>
 				<?php endif; ?>
 
-				<?php if ( $is_system ) : ?>
-					<div class="wpss-messaging__system">
-						<span class="wpss-messaging__system-text">
-							<?php echo wp_kses_post( $message->content ); ?>
-							<span class="wpss-messaging__message-time">
-								<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
-							</span>
-						</span>
-					</div>
-				<?php else : ?>
-					<div class="wpss-messaging__message <?php echo $is_own ? 'wpss-messaging__message--sent' : ''; ?>" data-message-id="<?php echo esc_attr( $message->id ); ?>">
-						<?php if ( ! $is_own ) : ?>
-							<div class="wpss-messaging__message-avatar">
-								<?php echo get_avatar( $message->sender_id, 32 ); ?>
-							</div>
-						<?php endif; ?>
-						<div class="wpss-messaging__message-content">
-							<div class="wpss-messaging__bubble">
-								<?php if ( ! $is_own ) : ?>
-									<span class="wpss-messaging__sender"><?php echo esc_html( $message->sender_name ); ?></span>
-								<?php endif; ?>
-								<div class="wpss-messaging__text">
-									<?php echo wp_kses_post( nl2br( $message->content ) ); ?>
-								</div>
-								<?php if ( ! empty( $message->attachments ) ) : ?>
-									<?php $attachments = json_decode( $message->attachments, true ); ?>
-									<?php if ( ! empty( $attachments ) ) : ?>
-										<div class="wpss-messaging__attachments">
-											<?php foreach ( $attachments as $attachment ) : ?>
-												<?php
-												$file_url  = $attachment['url'] ?? '';
-												$file_name = $attachment['name'] ?? basename( $file_url );
-												$file_type = $attachment['type'] ?? '';
-												$is_image  = strpos( $file_type, 'image/' ) === 0;
-												?>
-												<?php if ( $is_image && $file_url ) : ?>
-													<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-image">
-														<img src="<?php echo esc_url( $file_url ); ?>" alt="<?php echo esc_attr( $file_name ); ?>">
-													</a>
-												<?php else : ?>
-													<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
-														<span class="wpss-messaging__attachment-icon">
-															<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-														</span>
-														<span class="wpss-messaging__attachment-info">
-															<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
-														</span>
-													</a>
-												<?php endif; ?>
-											<?php endforeach; ?>
-										</div>
-									<?php endif; ?>
-								<?php endif; ?>
-							</div>
-							<span class="wpss-messaging__message-time">
-								<?php echo esc_html( wp_date( get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
-								<?php
-								$read_by_data = $message->read_by ? json_decode( $message->read_by, true ) : array();
-								$is_read      = ! empty( array_diff_key( $read_by_data, array( $user_id => '' ) ) );
-								?>
-							<?php if ( $is_own && $is_read ) : ?>
-									<span class="wpss-messaging__message-status wpss-messaging__message-status--read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
-										<i data-lucide="check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-									</span>
-								<?php endif; ?>
-							</span>
-						</div>
-					</div>
-					<?php
+				<?php
+				// Canonical message row markup — shared with the REST message
+				// response and the AJAX/REST poll so first paint and appended
+				// messages are byte-identical.
+				echo wpss_render_message_row( $message, $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Renderer returns internally-escaped markup.
+
+				if ( ! $is_system ) {
 					/**
 					 * Hook: wpss_after_message
 					 *
@@ -308,8 +238,8 @@ do_action( 'wpss_before_conversation', $order );
 					 * @param object $order   Order object.
 					 */
 					do_action( 'wpss_after_message', $message, $order );
-					?>
-				<?php endif; ?>
+				}
+				?>
 			<?php endforeach; ?>
 		<?php endif; ?>
 	</div>
@@ -498,6 +428,18 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
 
 	// Submit message function.
+	// Conversation id is known once a conversation exists (always, after the
+	// first message). The order-scoped send endpoint creates it on first send
+	// and echoes the id back so polling can begin.
+	var conversationId = $conversation.data('conversation-id') || 0;
+	var restBase = wpss.restUrl; // e.g. http://site/wp-json/wpss/v1/
+
+	function hydrateIcons() {
+		if (window.lucide && typeof window.lucide.createIcons === 'function') {
+			window.lucide.createIcons();
+		}
+	}
+
 	function submitMessage() {
 
 		var message = $messageInput.val().trim();
@@ -505,12 +447,10 @@ document.addEventListener('DOMContentLoaded', function() {
 			return;
 		}
 
+		// REST: POST /orders/{order_id}/conversation/messages (creates the
+		// conversation on first send). Multipart for file attachments.
 		var formData = new FormData();
-		formData.append('action', 'wpss_send_message');
-		formData.append('nonce', $('#wpss_message_nonce').val());
-		formData.append('order_id', $conversation.data('order-id'));
-		formData.append('message', message);
-
+		formData.append('content', message);
 		selectedFiles.forEach(function(file) {
 			formData.append('attachments[]', file);
 		});
@@ -518,29 +458,39 @@ document.addEventListener('DOMContentLoaded', function() {
 		$sendBtn.prop('disabled', true);
 
 		$.ajax({
-			url: wpss.ajaxUrl,
-			type: 'POST',
+			url: restBase + 'orders/' + $conversation.data('order-id') + '/conversation/messages',
+			method: 'POST',
 			data: formData,
 			processData: false,
 			contentType: false,
-			success: function(response) {
-				if (response.success) {
-					// Add message to container.
-					$messagesContainer.find('.wpss-messaging__empty').remove();
-					$messagesContainer.append(response.data.html);
-					scrollToBottom();
-
-					// Clear form.
-					$messageInput.val('').css('height', 'auto');
-					selectedFiles = [];
-					updateAttachmentsPreview();
-					$fileInput.val('');
-				} else {
-					wpssShowNotice(response.data.message || '<?php esc_html_e( 'Failed to send message.', 'wp-sell-services' ); ?>', 'error');
-				}
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpss.restNonce);
 			},
-			error: function() {
-				wpssShowNotice('<?php esc_html_e( 'An error occurred. Please try again.', 'wp-sell-services' ); ?>', 'error');
+			success: function(response) {
+				// Add message to container.
+				$messagesContainer.find('.wpss-messaging__empty').remove();
+				$messagesContainer.append(response.html);
+				hydrateIcons();
+				scrollToBottom();
+
+				// Track ids so polling does not re-append this message.
+				if (response.conversation_id) {
+					conversationId = response.conversation_id;
+				}
+				if (response.data && response.data.id && response.data.id > lastMessageId) {
+					lastMessageId = response.data.id;
+				}
+
+				// Clear form.
+				$messageInput.val('').css('height', 'auto');
+				selectedFiles = [];
+				updateAttachmentsPreview();
+				$fileInput.val('');
+			},
+			error: function(xhr) {
+				var msg = (xhr.responseJSON && xhr.responseJSON.message)
+					|| '<?php esc_html_e( 'Failed to send message.', 'wp-sell-services' ); ?>';
+				wpssShowNotice(msg, 'error');
 			},
 			complete: function() {
 				$sendBtn.prop('disabled', false);
@@ -553,29 +503,32 @@ document.addEventListener('DOMContentLoaded', function() {
 	var lastMessageId = $messagesContainer.find('.wpss-messaging__message:last').data('message-id') || 0;
 
 	function pollMessages() {
-		if (!$conversation.length || $conversation.is(':hidden')) {
+		if (!$conversation.length || $conversation.is(':hidden') || !conversationId) {
 			return;
 		}
 
+		// REST: GET /conversations/{id}/messages?after_id=N - only new messages.
 		$.ajax({
-			url: wpss.ajaxUrl,
-			type: 'POST',
-			data: {
-				action: 'wpss_get_new_messages',
-				nonce: wpss.nonce,
-				order_id: $conversation.data('order-id'),
-				last_id: lastMessageId
+			url: restBase + 'conversations/' + conversationId + '/messages',
+			method: 'GET',
+			data: { after_id: lastMessageId, per_page: 50 },
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpss.restNonce);
 			},
-			success: function(response) {
-				if (response.success && response.data.messages && response.data.messages.length > 0) {
-					response.data.messages.forEach(function(msg) {
-						if (msg.id > lastMessageId) {
-							$messagesContainer.append(msg.html);
-							lastMessageId = msg.id;
-						}
-					});
-					scrollToBottom();
+			success: function(messages) {
+				if (!Array.isArray(messages) || !messages.length) {
+					return;
 				}
+				messages.forEach(function(msg) {
+					// Skip our own just-sent message (already appended) and
+					// anything at/under the high-water mark.
+					if (msg.id > lastMessageId) {
+						$messagesContainer.append(msg.html);
+						lastMessageId = msg.id;
+					}
+				});
+				hydrateIcons();
+				scrollToBottom();
 			}
 		});
 	}

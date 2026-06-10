@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wp-sell-services",
     "name": "WP Sell Services",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "namespace": "WPSellServices",
     "main_file": "wp-sell-services.php",
     "text_domain": "wp-sell-services",
@@ -13,32 +13,133 @@
   },
   "rest": {
     "namespace": "wpss/v1",
-    "endpoint_count": 138,
+    "endpoint_count": 139,
     "controllers": [
-      { "class": "API", "file": "src/API/API.php", "purpose": "Generic endpoints — categories, tags, settings, /me, /dashboard, /search, /batch" },
-      { "class": "AuditLogController", "file": "src/API/AuditLogController.php", "purpose": "Audit log access" },
-      { "class": "AuthController", "file": "src/API/AuthController.php", "purpose": "Login, register, logout, devices" },
-      { "class": "BuyerRequestsController", "file": "src/API/BuyerRequestsController.php", "purpose": "CRUD buyer requests, proposals" },
-      { "class": "CartController", "file": "src/API/CartController.php", "purpose": "Cart add/get/remove/checkout" },
-      { "class": "ConversationsController", "file": "src/API/ConversationsController.php", "purpose": "Order messages + attachments" },
-      { "class": "DisputesController", "file": "src/API/DisputesController.php", "purpose": "Dispute open/respond/resolve" },
-      { "class": "EarningsController", "file": "src/API/EarningsController.php", "purpose": "Vendor earnings summary, history, withdrawals" },
-      { "class": "ExtensionRequestsController", "file": "src/API/ExtensionRequestsController.php", "purpose": "Extension order requests (catalog orders)" },
-      { "class": "FavoritesController", "file": "src/API/FavoritesController.php", "purpose": "Favorites add/remove/list" },
-      { "class": "MediaController", "file": "src/API/MediaController.php", "purpose": "Upload, info, delete" },
-      { "class": "MilestonesController", "file": "src/API/MilestonesController.php", "purpose": "Milestone CRUD, submit, approve" },
-      { "class": "ModerationController", "file": "src/API/ModerationController.php", "purpose": "Approve, reject, moderation history" },
-      { "class": "NotificationsController", "file": "src/API/NotificationsController.php", "purpose": "Notifications list/read/delete" },
-      { "class": "OrdersController", "file": "src/API/OrdersController.php", "purpose": "Order CRUD + status transitions" },
-      { "class": "PaymentController", "file": "src/API/PaymentController.php", "purpose": "Gateways list, process, status, webhook" },
-      { "class": "PortfolioController", "file": "src/API/PortfolioController.php", "purpose": "Portfolio CRUD, reorder" },
-      { "class": "ProposalsController", "file": "src/API/ProposalsController.php", "purpose": "Proposals CRUD, accept, reject, withdraw" },
-      { "class": "RestController", "file": "src/API/RestController.php", "purpose": "Base controller — permissions, pagination helpers" },
-      { "class": "ReviewsController", "file": "src/API/ReviewsController.php", "purpose": "Reviews CRUD, vendor reviews" },
-      { "class": "SellerLevelsController", "file": "src/API/SellerLevelsController.php", "purpose": "Seller-level definitions, vendor progress" },
-      { "class": "ServicesController", "file": "src/API/ServicesController.php", "purpose": "Services CRUD, search, featured" },
-      { "class": "TippingController", "file": "src/API/TippingController.php", "purpose": "Tip send, list" },
-      { "class": "VendorsController", "file": "src/API/VendorsController.php", "purpose": "Vendor list, profile, stats" }
+      {
+        "class": "API",
+        "file": "src/API/API.php",
+        "purpose": "Generic endpoints — categories, tags, settings, /me, /dashboard, /search, /batch"
+      },
+      {
+        "class": "AuditLogController",
+        "file": "src/API/AuditLogController.php",
+        "purpose": "Audit log access"
+      },
+      {
+        "class": "AuthController",
+        "file": "src/API/AuthController.php",
+        "purpose": "Login, register, logout, devices"
+      },
+      {
+        "class": "BuyerRequestsController",
+        "file": "src/API/BuyerRequestsController.php",
+        "purpose": "CRUD buyer requests, proposals"
+      },
+      {
+        "class": "CartController",
+        "file": "src/API/CartController.php",
+        "purpose": "Cart add/get/remove/checkout"
+      },
+      {
+        "class": "ConversationsController",
+        "file": "src/API/ConversationsController.php",
+        "purpose": "Order messages + attachments"
+      },
+      {
+        "class": "DisputesController",
+        "file": "src/API/DisputesController.php",
+        "purpose": "Dispute open/respond/resolve"
+      },
+      {
+        "class": "EarningsController",
+        "file": "src/API/EarningsController.php",
+        "purpose": "Vendor earnings summary, history, withdrawals"
+      },
+      {
+        "class": "ExtensionRequestsController",
+        "file": "src/API/ExtensionRequestsController.php",
+        "purpose": "Extension order requests (catalog orders)"
+      },
+      {
+        "class": "FavoritesController",
+        "file": "src/API/FavoritesController.php",
+        "purpose": "Favorites add/remove/list"
+      },
+      {
+        "class": "MediaController",
+        "file": "src/API/MediaController.php",
+        "purpose": "Upload, info, delete"
+      },
+      {
+        "class": "MilestonesController",
+        "file": "src/API/MilestonesController.php",
+        "purpose": "Milestone CRUD, submit, approve"
+      },
+      {
+        "class": "ModerationController",
+        "file": "src/API/ModerationController.php",
+        "purpose": "Approve, reject, moderation history"
+      },
+      {
+        "class": "NotificationsController",
+        "file": "src/API/NotificationsController.php",
+        "purpose": "Notifications list/read/delete"
+      },
+      {
+        "class": "OrdersController",
+        "file": "src/API/OrdersController.php",
+        "purpose": "Order CRUD + status transitions"
+      },
+      {
+        "class": "PaymentController",
+        "file": "src/API/PaymentController.php",
+        "purpose": "Gateways list, process, status, webhook"
+      },
+      {
+        "class": "PortfolioController",
+        "file": "src/API/PortfolioController.php",
+        "purpose": "Portfolio CRUD, reorder"
+      },
+      {
+        "class": "ProposalsController",
+        "file": "src/API/ProposalsController.php",
+        "purpose": "Proposals CRUD, accept, reject, withdraw"
+      },
+      {
+        "class": "RealtimeController",
+        "file": "src/API/RealtimeController.php",
+        "purpose": "POST /realtime/auth — Pusher private-channel authorization (private-wpss-user-{id} own-user only; private-wpss-order-{id} customer/vendor/admin)"
+      },
+      {
+        "class": "RestController",
+        "file": "src/API/RestController.php",
+        "purpose": "Base controller — permissions, pagination helpers"
+      },
+      {
+        "class": "ReviewsController",
+        "file": "src/API/ReviewsController.php",
+        "purpose": "Reviews CRUD, vendor reviews"
+      },
+      {
+        "class": "SellerLevelsController",
+        "file": "src/API/SellerLevelsController.php",
+        "purpose": "Seller-level definitions, vendor progress"
+      },
+      {
+        "class": "ServicesController",
+        "file": "src/API/ServicesController.php",
+        "purpose": "Services CRUD, search, featured"
+      },
+      {
+        "class": "TippingController",
+        "file": "src/API/TippingController.php",
+        "purpose": "Tip send, list"
+      },
+      {
+        "class": "VendorsController",
+        "file": "src/API/VendorsController.php",
+        "purpose": "Vendor list, profile, stats"
+      }
     ],
     "endpoints_detail_at": "Refresh manifest with --rebuild to enumerate all 138 endpoints individually."
   },
@@ -49,91 +150,324 @@
   },
   "admin_pages": {
     "count": 25,
-    "registered_in": ["src/Admin/Admin.php"],
+    "registered_in": [
+      "src/Admin/Admin.php"
+    ],
     "main_pages": [
-      { "title": "WPSS Dashboard", "slug": "wp-sell-services" },
-      { "title": "All Services", "slug": "edit.php?post_type=wpss_service" },
-      { "title": "All Requests", "slug": "edit.php?post_type=wpss_request" },
-      { "title": "Orders", "slug": "wpss-orders" },
-      { "title": "Vendors", "slug": "wpss-vendors" },
-      { "title": "Withdrawals", "slug": "wpss-withdrawals" },
-      { "title": "Disputes", "slug": "wpss-disputes" },
-      { "title": "Moderation", "slug": "wpss-moderation" },
-      { "title": "Analytics", "slug": "wpss-analytics" },
-      { "title": "Settings", "slug": "wpss-settings" }
+      {
+        "title": "WPSS Dashboard",
+        "slug": "wp-sell-services"
+      },
+      {
+        "title": "All Services",
+        "slug": "edit.php?post_type=wpss_service"
+      },
+      {
+        "title": "All Requests",
+        "slug": "edit.php?post_type=wpss_request"
+      },
+      {
+        "title": "Orders",
+        "slug": "wpss-orders"
+      },
+      {
+        "title": "Vendors",
+        "slug": "wpss-vendors"
+      },
+      {
+        "title": "Withdrawals",
+        "slug": "wpss-withdrawals"
+      },
+      {
+        "title": "Disputes",
+        "slug": "wpss-disputes"
+      },
+      {
+        "title": "Moderation",
+        "slug": "wpss-moderation"
+      },
+      {
+        "title": "Analytics",
+        "slug": "wpss-analytics"
+      },
+      {
+        "title": "Settings",
+        "slug": "wpss-settings"
+      }
     ]
   },
   "settings": {
-    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced."
+    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract)."
   },
   "shortcodes": {
     "count": 19,
-    "examples": ["wpss_dashboard", "wpss_services", "wpss_service_search", "wpss_buyer_requests", "wpss_become_vendor", "wpss_vendor_profile"],
+    "examples": [
+      "wpss_dashboard",
+      "wpss_services",
+      "wpss_service_search",
+      "wpss_buyer_requests",
+      "wpss_become_vendor",
+      "wpss_vendor_profile"
+    ],
     "registered_in": "src/Frontend/Shortcodes.php"
   },
   "blocks": [
-    { "name": "wpss/buyer-requests", "class": "BuyerRequests", "file": "src/Blocks/BuyerRequests.php", "interactivity": false, "layout_owning": false },
-    { "name": "wpss/featured-services", "class": "FeaturedServices", "file": "src/Blocks/FeaturedServices.php", "interactivity": false, "layout_owning": false },
-    { "name": "wpss/seller-card", "class": "SellerCard", "file": "src/Blocks/SellerCard.php", "interactivity": false, "layout_owning": false },
-    { "name": "wpss/service-categories", "class": "ServiceCategories", "file": "src/Blocks/ServiceCategories.php", "interactivity": false, "layout_owning": false },
-    { "name": "wpss/service-grid", "class": "ServiceGrid", "file": "src/Blocks/ServiceGrid.php", "interactivity": false, "layout_owning": false },
-    { "name": "wpss/service-search", "class": "ServiceSearch", "file": "src/Blocks/ServiceSearch.php", "interactivity": false, "layout_owning": false }
+    {
+      "name": "wpss/buyer-requests",
+      "class": "BuyerRequests",
+      "file": "src/Blocks/BuyerRequests.php",
+      "interactivity": false,
+      "layout_owning": false
+    },
+    {
+      "name": "wpss/featured-services",
+      "class": "FeaturedServices",
+      "file": "src/Blocks/FeaturedServices.php",
+      "interactivity": false,
+      "layout_owning": false
+    },
+    {
+      "name": "wpss/seller-card",
+      "class": "SellerCard",
+      "file": "src/Blocks/SellerCard.php",
+      "interactivity": false,
+      "layout_owning": false
+    },
+    {
+      "name": "wpss/service-categories",
+      "class": "ServiceCategories",
+      "file": "src/Blocks/ServiceCategories.php",
+      "interactivity": false,
+      "layout_owning": false
+    },
+    {
+      "name": "wpss/service-grid",
+      "class": "ServiceGrid",
+      "file": "src/Blocks/ServiceGrid.php",
+      "interactivity": false,
+      "layout_owning": false
+    },
+    {
+      "name": "wpss/service-search",
+      "class": "ServiceSearch",
+      "file": "src/Blocks/ServiceSearch.php",
+      "interactivity": false,
+      "layout_owning": false
+    }
   ],
   "post_types": [
-    { "name": "wpss_service", "purpose": "Service offering (vendor-created)" },
-    { "name": "wpss_request", "purpose": "Buyer request (job post)" }
+    {
+      "name": "wpss_service",
+      "purpose": "Service offering (vendor-created)"
+    },
+    {
+      "name": "wpss_request",
+      "purpose": "Buyer request (job post)"
+    }
   ],
   "taxonomies": [
-    { "name": "wpss_service_category", "post_type": "wpss_service", "hierarchical": true },
-    { "name": "wpss_service_tag", "post_type": "wpss_service", "hierarchical": false }
+    {
+      "name": "wpss_service_category",
+      "post_type": "wpss_service",
+      "hierarchical": true
+    },
+    {
+      "name": "wpss_service_tag",
+      "post_type": "wpss_service",
+      "hierarchical": false
+    }
   ],
   "tables": [
-    { "name": "{prefix}wpss_service_packages", "purpose": "Service pricing tiers" },
-    { "name": "{prefix}wpss_service_addons", "purpose": "Add-on items per service" },
-    { "name": "{prefix}wpss_orders", "purpose": "Service orders (parent + sub-orders for tip/extension/milestone)" },
-    { "name": "{prefix}wpss_order_requirements", "purpose": "Buyer-submitted order requirements per question" },
-    { "name": "{prefix}wpss_conversations", "purpose": "Order messages metadata" },
-    { "name": "{prefix}wpss_messages", "purpose": "Conversation messages content" },
-    { "name": "{prefix}wpss_deliveries", "purpose": "Final order deliveries" },
-    { "name": "{prefix}wpss_extension_requests", "purpose": "Extension order requests on catalog orders" },
-    { "name": "{prefix}wpss_reviews", "purpose": "Order ratings + reviews" },
-    { "name": "{prefix}wpss_disputes", "purpose": "Dispute cases" },
-    { "name": "{prefix}wpss_dispute_messages", "purpose": "Dispute conversation thread" },
-    { "name": "{prefix}wpss_proposals", "purpose": "Vendor proposals on buyer requests" },
-    { "name": "{prefix}wpss_vendor_profiles", "purpose": "Vendor profile data (level, intro, settings)" },
-    { "name": "{prefix}wpss_portfolio_items", "purpose": "Vendor portfolio gallery" },
-    { "name": "{prefix}wpss_notifications", "purpose": "In-app notifications" },
-    { "name": "{prefix}wpss_wallet_transactions", "purpose": "Wallet ledger entries" },
-    { "name": "{prefix}wpss_withdrawals", "purpose": "Vendor withdrawal requests" },
-    { "name": "{prefix}wpss_audit_log", "purpose": "Privileged-action audit trail" }
+    {
+      "name": "{prefix}wpss_service_packages",
+      "purpose": "Service pricing tiers"
+    },
+    {
+      "name": "{prefix}wpss_service_addons",
+      "purpose": "Add-on items per service"
+    },
+    {
+      "name": "{prefix}wpss_orders",
+      "purpose": "Service orders (parent + sub-orders for tip/extension/milestone)"
+    },
+    {
+      "name": "{prefix}wpss_order_requirements",
+      "purpose": "Buyer-submitted order requirements per question"
+    },
+    {
+      "name": "{prefix}wpss_conversations",
+      "purpose": "Order messages metadata"
+    },
+    {
+      "name": "{prefix}wpss_messages",
+      "purpose": "Conversation messages content"
+    },
+    {
+      "name": "{prefix}wpss_deliveries",
+      "purpose": "Final order deliveries"
+    },
+    {
+      "name": "{prefix}wpss_extension_requests",
+      "purpose": "Extension order requests on catalog orders"
+    },
+    {
+      "name": "{prefix}wpss_reviews",
+      "purpose": "Order ratings + reviews"
+    },
+    {
+      "name": "{prefix}wpss_disputes",
+      "purpose": "Dispute cases"
+    },
+    {
+      "name": "{prefix}wpss_dispute_messages",
+      "purpose": "Dispute conversation thread"
+    },
+    {
+      "name": "{prefix}wpss_proposals",
+      "purpose": "Vendor proposals on buyer requests"
+    },
+    {
+      "name": "{prefix}wpss_vendor_profiles",
+      "purpose": "Vendor profile data (level, intro, settings)"
+    },
+    {
+      "name": "{prefix}wpss_portfolio_items",
+      "purpose": "Vendor portfolio gallery"
+    },
+    {
+      "name": "{prefix}wpss_notifications",
+      "purpose": "In-app notifications"
+    },
+    {
+      "name": "{prefix}wpss_wallet_transactions",
+      "purpose": "Wallet ledger entries"
+    },
+    {
+      "name": "{prefix}wpss_withdrawals",
+      "purpose": "Vendor withdrawal requests"
+    },
+    {
+      "name": "{prefix}wpss_audit_log",
+      "purpose": "Privileged-action audit trail"
+    }
   ],
   "capabilities": {
     "_note": "Plugin uses standard WP capabilities (edit_posts, manage_options) plus role-based ownership. No custom capability slugs registered. Vendor role created via add_role on activation."
   },
   "services": {
-    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, AnalyticsService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon."
+    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, AnalyticsService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon, RealtimeService (Pusher-protocol publisher; secret stays server-side), RealtimeBridge (relays wpss_message_sent + wpss_notification_created to private channels)."
   },
   "hooks_fired": {
-    "do_action_count": 118,
-    "apply_filters_count": 114,
+    "do_action_count": 247,
+    "apply_filters_count": 142,
     "key_extension_hooks": [
-      { "name": "wpss_loaded", "type": "action", "purpose": "Pro plugin entry point — Pro hooks here" },
-      { "name": "wpss_ecommerce_adapters", "type": "filter", "purpose": "Register ecommerce platform adapters" },
-      { "name": "wpss_payment_gateways", "type": "filter", "purpose": "Register payment gateways" },
-      { "name": "wpss_storage_providers", "type": "filter", "purpose": "Register storage providers" },
-      { "name": "wpss_analytics_widgets", "type": "filter", "purpose": "Add analytics dashboard widgets" },
-      { "name": "wpss_dashboard_sections", "type": "filter", "purpose": "Customize dashboard sections" },
-      { "name": "wpss_can_access_dashboard_section", "type": "filter", "purpose": "Section access gate" },
-      { "name": "wpss_buyer_request_created", "type": "action", "purpose": "Fired after buyer request post insert" },
-      { "name": "wpss_proposal_submitted", "type": "action", "purpose": "Fired after proposal DB insert" },
-      { "name": "wpss_order_paid", "type": "action", "purpose": "Fired when order payment is confirmed (sub-order credit handler)" }
+      {
+        "name": "wpss_loaded",
+        "type": "action",
+        "purpose": "Pro plugin entry point — Pro hooks here"
+      },
+      {
+        "name": "wpss_ecommerce_adapters",
+        "type": "filter",
+        "purpose": "Register ecommerce platform adapters"
+      },
+      {
+        "name": "wpss_payment_gateways",
+        "type": "filter",
+        "purpose": "Register payment gateways"
+      },
+      {
+        "name": "wpss_storage_providers",
+        "type": "filter",
+        "purpose": "Register storage providers"
+      },
+      {
+        "name": "wpss_analytics_widgets",
+        "type": "filter",
+        "purpose": "Add analytics dashboard widgets"
+      },
+      {
+        "name": "wpss_dashboard_sections",
+        "type": "filter",
+        "purpose": "Customize dashboard sections"
+      },
+      {
+        "name": "wpss_can_access_dashboard_section",
+        "type": "filter",
+        "purpose": "Section access gate"
+      },
+      {
+        "name": "wpss_buyer_request_created",
+        "type": "action",
+        "purpose": "Fired after buyer request post insert"
+      },
+      {
+        "name": "wpss_proposal_submitted",
+        "type": "action",
+        "purpose": "Fired after proposal DB insert"
+      },
+      {
+        "name": "wpss_order_paid",
+        "type": "action",
+        "purpose": "Fired when order payment is confirmed (sub-order credit handler)"
+      },
+      {
+        "name": "wpss_realtime_settings",
+        "type": "filter",
+        "purpose": "Filter the realtime (Pusher-protocol) connection settings loaded from the wpss_realtime_settings option"
+      },
+      {
+        "name": "wpss_wizard_service_data",
+        "type": "filter",
+        "purpose": "Seed extra keys into the service wizard Alpine edit model (Pro recurring billing uses this)"
+      },
+      {
+        "name": "wpss_wizard_pricing_after",
+        "type": "action",
+        "purpose": "Render extra fields after the wizard Pricing step (inside the Alpine scope)"
+      },
+      {
+        "name": "wpss_wizard_sanitize_service_data",
+        "type": "filter",
+        "purpose": "Sanitize extension keys from the wizard JSON payload"
+      },
+      {
+        "name": "wpss_wizard_save_service_meta",
+        "type": "action",
+        "purpose": "Persist extension meta after a wizard save — fires on BOTH save-draft and publish"
+      },
+      {
+        "name": "wpss_use_fullwidth_template",
+        "type": "filter",
+        "purpose": "Opt out of the sidebar-free full-width template on plugin pages"
+      },
+      {
+        "name": "wpss_fullwidth_page_keys",
+        "type": "filter",
+        "purpose": "Which mapped plugin pages render full-width (default dashboard/cart/checkout/become_vendor)"
+      },
+      {
+        "name": "wpss_dashboard_default_section",
+        "type": "filter",
+        "purpose": "Role-aware dashboard landing section (active vendors → sales, buyers → orders)"
+      }
     ],
     "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 232 hook firings."
   },
   "frontend_assets": {
     "js_count_unminified": 23,
     "css_count_unminified": 16,
-    "key_handles": ["wpss-frontend", "wpss-icons", "wpss-ux-primitives", "wpss-tour", "wpss-blocks-editor", "wpss-blocks", "wpss-service-wizard"],
+    "key_handles": [
+      "wpss-frontend",
+      "wpss-icons",
+      "wpss-ux-primitives",
+      "wpss-tour",
+      "wpss-blocks-editor",
+      "wpss-blocks",
+      "wpss-service-wizard",
+      "wpss-realtime",
+      "wpss-pusher"
+    ],
     "i18n_registered": true,
     "i18n_method": "wp_set_script_translations() on every wpss-* handle (commit 4c74224)"
   },
@@ -170,20 +504,52 @@
     "test": "composer test"
   },
   "category_sources": {
-    "rest": ["src/API/**/*.php"],
-    "ajax": ["src/Frontend/AjaxHandlers.php", "src/Admin/Admin.php"],
-    "admin_pages": ["src/Admin/**/*.php"],
-    "settings": ["src/Admin/Settings.php"],
-    "shortcodes": ["src/Frontend/Shortcodes.php"],
-    "blocks": ["src/Blocks/**/*.php"],
-    "post_types": ["src/PostTypes/**/*.php"],
-    "taxonomies": ["src/Taxonomies/**/*.php"],
-    "tables": ["src/Database/**/*.php"],
-    "services": ["src/Services/**/*.php"],
-    "hooks_fired": ["src/**/*.php", "templates/**/*.php"],
-    "frontend_assets": ["assets/**/*.{js,css}"],
-    "cron": ["src/Services/Scheduler.php", "src/Core/Activator.php", "src/Core/Deactivator.php"],
-    "wp_cli": ["src/CLI/**/*.php"]
+    "rest": [
+      "src/API/**/*.php"
+    ],
+    "ajax": [
+      "src/Frontend/AjaxHandlers.php",
+      "src/Admin/Admin.php"
+    ],
+    "admin_pages": [
+      "src/Admin/**/*.php"
+    ],
+    "settings": [
+      "src/Admin/Settings.php"
+    ],
+    "shortcodes": [
+      "src/Frontend/Shortcodes.php"
+    ],
+    "blocks": [
+      "src/Blocks/**/*.php"
+    ],
+    "post_types": [
+      "src/PostTypes/**/*.php"
+    ],
+    "taxonomies": [
+      "src/Taxonomies/**/*.php"
+    ],
+    "tables": [
+      "src/Database/**/*.php"
+    ],
+    "services": [
+      "src/Services/**/*.php"
+    ],
+    "hooks_fired": [
+      "src/**/*.php",
+      "templates/**/*.php"
+    ],
+    "frontend_assets": [
+      "assets/**/*.{js,css}"
+    ],
+    "cron": [
+      "src/Services/Scheduler.php",
+      "src/Core/Activator.php",
+      "src/Core/Deactivator.php"
+    ],
+    "wp_cli": [
+      "src/CLI/**/*.php"
+    ]
   },
   "static_analysis": {
     "_note": "Streamlined onboarding mode — full Phase 2.5 sub-checks (1-14) deferred. Findings to date:",
@@ -204,13 +570,14 @@
     }
   },
   "generated": {
-    "at": "2026-05-08T00:00:00Z",
+    "at": "2026-06-10T00:00:00Z",
     "from": "wp-plugin-onboard skill (streamlined mode)",
-    "branch": "1.1.0",
+    "branch": "1.2.0",
     "schema_version": "v2.2-streamlined",
     "scan_scope": "distignore",
     "scan_path": ".",
     "php_file_count": 266,
-    "_note": "Streamlined mode — produces summary-level manifest sufficient for CLAUDE.md auto-load context. Full enumeration of 138 REST endpoints, 106 AJAX handlers, 232 hooks deferred to a future refresh+rebuild pass. Coverage gates per sub-category not enforced. wppqa baseline + PCP scan results captured. graph.html, local-CI scaffold, scale benchmark, paired-plugin contract artefacts deferred."
+    "_note": "Streamlined mode — produces summary-level manifest sufficient for CLAUDE.md auto-load context. Full enumeration of 138 REST endpoints, 106 AJAX handlers, 232 hooks deferred to a future refresh+rebuild pass. Coverage gates per sub-category not enforced. wppqa baseline + PCP scan results captured. graph.html, local-CI scaffold, scale benchmark, paired-plugin contract artefacts deferred.",
+    "refresh_note": "Diff-driven refresh 2026-06-10 after the 1.2.0 feature sprint. Re-scanned hooks (do_action 247 / apply_filters 142 unique), REST (added RealtimeController, endpoint_count 138→139), settings (Real-time card on Advanced). New extension hooks: wizard injection surface (wpss_wizard_service_data, wpss_wizard_pricing_after, wpss_wizard_sanitize_service_data, wpss_wizard_save_service_meta), full-width template (wpss_use_fullwidth_template, wpss_fullwidth_page_keys), role-aware dashboard landing (wpss_dashboard_default_section), realtime (wpss_realtime_settings). New shared helper wpss_get_service_extras(). wppqa baseline 2026-06-10: rest-js-contract clean, plugin-dev-rules failures all pre-existing heuristic FPs."
   }
 }

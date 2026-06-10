@@ -120,6 +120,47 @@ class OrdersListTable extends \WP_List_Table {
 			),
 		];
 
+		// Sub-orders (tip / extension / milestone) carry their parent order id
+		// in `platform_order_id`; surface a quick "view parent" affordance so an
+		// admin can jump from a sub-order row to the order it belongs to. The
+		// `?? 0` defensive reads keep stdClass access PHPStan-clean at level 6
+		// regardless of which columns a given row actually populated.
+		$platform  = (string) ( $item->platform ?? 'standalone' );
+		$parent_id = (int) ( $item->platform_order_id ?? 0 );
+
+		if ( array_key_exists( $platform, ServiceOrder::get_sub_order_types() ) && $parent_id > 0 ) {
+			$parent_url = add_query_arg(
+				[
+					'page'     => 'wpss-orders',
+					'action'   => 'view',
+					'order_id' => $parent_id,
+				],
+				admin_url( 'admin.php' )
+			);
+
+			$actions['parent_order'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $parent_url ),
+				esc_html(
+					sprintf(
+						/* translators: %d: parent order ID */
+						__( 'View parent #%d', 'wp-sell-services' ),
+						$parent_id
+					)
+				)
+			);
+		}
+
+		// Quick contact affordance for the customer on this order.
+		$customer = get_userdata( (int) ( $item->customer_id ?? 0 ) );
+		if ( $customer && is_email( $customer->user_email ) ) {
+			$actions['email_customer'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( 'mailto:' . $customer->user_email ),
+				esc_html__( 'Email customer', 'wp-sell-services' )
+			);
+		}
+
 		return sprintf(
 			'<strong><a href="%s">#%s</a></strong>%s',
 			esc_url( $view_url ),
@@ -415,10 +456,64 @@ class OrdersListTable extends \WP_List_Table {
 				<?php
 			}
 
+			// Sub-order type filter. Lets admins isolate the shared sub-order
+			// rows (tips, extensions, milestones) that otherwise read as
+			// ambiguous entries in a single flat order list. Only rendered when
+			// the current scope actually contains sub-orders, so a plain catalog
+			// store never sees an empty dropdown.
+			$sub_order_types  = ServiceOrder::get_sub_order_types();
+			$present_subtypes = $this->get_present_sub_order_types();
+
+			if ( ! empty( $present_subtypes ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$selected_type = isset( $_GET['suborder_type'] ) ? sanitize_key( wp_unslash( $_GET['suborder_type'] ) ) : '';
+				?>
+				<label for="wpss-orders-suborder-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by sub-order type', 'wp-sell-services' ); ?></label>
+				<select name="suborder_type" id="wpss-orders-suborder-filter">
+					<option value=""><?php esc_html_e( 'All order types', 'wp-sell-services' ); ?></option>
+					<?php foreach ( $present_subtypes as $type ) : ?>
+						<option value="<?php echo esc_attr( $type ); ?>" <?php selected( $selected_type, $type ); ?>>
+							<?php echo esc_html( $sub_order_types[ $type ] ?? ucfirst( $type ) ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<?php
+			}
+
 			submit_button( __( 'Filter', 'wp-sell-services' ), '', 'filter_action', false );
 			?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Get the sub-order type slugs actually present in the current scope.
+	 *
+	 * Intersects the distinct `platform` values stored on the table with the
+	 * canonical sub-order type list so the filter only offers types the admin
+	 * really has. Scoped to the current vendor for non-admin vendors.
+	 *
+	 * @return string[] Sub-order type slugs (subset of ServiceOrder::get_sub_order_types() keys).
+	 */
+	private function get_present_sub_order_types(): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// Vendor filter for non-admin vendors.
+		$vendor_where = '';
+		if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
+			$vendor_where = $wpdb->prepare( ' AND vendor_id = %d', get_current_user_id() );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_col(
+			"SELECT DISTINCT platform FROM {$table} WHERE platform IS NOT NULL AND platform != ''{$vendor_where} ORDER BY platform ASC"
+		);
+
+		$present = array_values( array_filter( array_map( 'strval', (array) $rows ) ) );
+		$known   = array_keys( ServiceOrder::get_sub_order_types() );
+
+		return array_values( array_intersect( $present, $known ) );
 	}
 
 	/**
@@ -482,6 +577,18 @@ class OrdersListTable extends \WP_List_Table {
 			$where .= ' AND DATE_FORMAT(created_at, "%%Y-%%m") = %s';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$params[] = sanitize_text_field( wp_unslash( $_GET['m'] ) );
+		}
+
+		// Sub-order type filter. Restricted to canonical sub-order types so an
+		// arbitrary `platform` value can never be injected through the query arg.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['suborder_type'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$requested_type = sanitize_key( wp_unslash( $_GET['suborder_type'] ) );
+			if ( array_key_exists( $requested_type, ServiceOrder::get_sub_order_types() ) ) {
+				$where   .= ' AND platform = %s';
+				$params[] = $requested_type;
+			}
 		}
 
 		// Search.

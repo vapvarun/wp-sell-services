@@ -66,6 +66,14 @@ class ServiceArchiveView {
 			return;
 		}
 
+		// The archive surface owns its full asset set. Since the converted
+		// services-page query became a true post-type archive (template
+		// hierarchy serves the archive template, not page.php), the shortcode
+		// render path that used to pull in the frontend bundle never runs -
+		// without this, WPSS (frontend.js) is undefined on the archive and the
+		// mobile filter-sidebar toggle + Apply Filters handlers are dead.
+		wpss_enqueue_frontend_assets();
+
 		wp_enqueue_style(
 			'wpss-archive',
 			\WPSS_PLUGIN_URL . 'assets/css/archive-service.css',
@@ -84,22 +92,31 @@ class ServiceArchiveView {
 		$title         = $this->get_archive_title();
 		$description   = $this->get_archive_description();
 		$platform_name = wpss_get_platform_name();
+
+		$subtitle = $description;
+		if ( '' === (string) $subtitle && $platform_name && ( is_post_type_archive( 'wpss_service' ) || wpss_is_page( 'services_page' ) ) ) {
+			$subtitle = sprintf(
+				/* translators: %s: platform name */
+				__( 'Browse professional services on %s', 'wp-sell-services' ),
+				$platform_name
+			);
+		}
+
+		// F1: one wpss-page-header component on every plugin surface, rendered
+		// by the app shell. Replaces the bespoke .wpss-archive-header so the
+		// archive H1 aligns and sizes identically to the dashboard + single
+		// surfaces. Kept inside a .wpss-archive-header wrapper for the filter
+		// bar that follows, but the heading itself is the shared component.
 		?>
 		<header class="wpss-archive-header">
-			<h1 class="wpss-archive-title"><?php echo esc_html( $title ); ?></h1>
-			<?php if ( $description ) : ?>
-				<p class="wpss-archive-description"><?php echo esc_html( $description ); ?></p>
-			<?php elseif ( $platform_name && ( is_post_type_archive( 'wpss_service' ) || wpss_is_page( 'services_page' ) ) ) : ?>
-				<p class="wpss-archive-description">
-					<?php
-					printf(
-						/* translators: %s: platform name */
-						esc_html__( 'Browse professional services on %s', 'wp-sell-services' ),
-						esc_html( $platform_name )
-					);
-					?>
-				</p>
-			<?php endif; ?>
+			<?php
+			ShellHeader::render(
+				array(
+					'title'    => $title,
+					'subtitle' => $subtitle,
+				)
+			);
+			?>
 		</header>
 		<?php
 	}
@@ -130,7 +147,8 @@ class ServiceArchiveView {
 
 		// Use the services page (or CPT archive) as the base URL for category filter links.
 		// This prevents broken URLs when navigating categories from a taxonomy archive page.
-		$base_url = wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' );
+		$services_page_url = wpss_get_page_url( 'services_page' );
+		$base_url          = $services_page_url ? $services_page_url : get_post_type_archive_link( 'wpss_service' );
 
 		// Preserve current sort param when switching categories.
 		$base_args = array();
@@ -305,20 +323,34 @@ class ServiceArchiveView {
 				</button>
 			</div>
 
-			<form class="wpss-filter-form" method="get">
+			<form class="wpss-filter-form" method="get" action="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' ) ); ?>">
 				<?php
-				// Preserve category and sort params as hidden fields so the sidebar
-				// form submission does not lose them (they are not form inputs).
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				if ( isset( $_GET['category'] ) && absint( $_GET['category'] ) > 0 ) :
+				// F6: Apply Filters must carry the active category so combined category +
+				// price (+ rating / delivery) filtering works. $active_category_id is
+				// resolved above from EITHER the ?category query param OR the
+				// taxonomy-archive term, so submitting the price filter from inside a
+				// /service-category/<slug>/ archive keeps the category scope instead of
+				// widening to all services. The form also posts to the canonical archive
+				// URL so a GET submit from a taxonomy archive does not lose context.
+				if ( $active_category_id > 0 ) :
 					?>
-					<input type="hidden" name="category" value="<?php echo esc_attr( absint( $_GET['category'] ) ); ?>">
+					<input type="hidden" name="category" value="<?php echo esc_attr( (string) $active_category_id ); ?>">
 				<?php endif; ?>
 				<?php
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				if ( isset( $_GET['sort'] ) && '' !== $_GET['sort'] ) :
+				$preserved_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : '';
+				if ( '' !== $preserved_sort ) :
 					?>
-					<input type="hidden" name="sort" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_GET['sort'] ) ) ); ?>">
+					<input type="hidden" name="sort" value="<?php echo esc_attr( $preserved_sort ); ?>">
+				<?php endif; ?>
+				<?php
+				// Preserve an active keyword search so price/rating/delivery filtering
+				// does not silently drop the buyer's search term.
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$preserved_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
+				if ( '' !== $preserved_search ) :
+					?>
+					<input type="hidden" name="search" value="<?php echo esc_attr( $preserved_search ); ?>">
 				<?php endif; ?>
 
 				<!-- Categories -->
@@ -428,7 +460,8 @@ class ServiceArchiveView {
 						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
 					</button>
 					<?php
-					$clear_url = wpss_get_page_url( 'services_page' ) ?: get_post_type_archive_link( 'wpss_service' );
+					$services_page_url = wpss_get_page_url( 'services_page' );
+					$clear_url         = $services_page_url ? $services_page_url : get_post_type_archive_link( 'wpss_service' );
 					?>
 					<a href="<?php echo esc_url( $clear_url ); ?>" class="wpss-btn wpss-btn-outline wpss-btn-block">
 						<?php esc_html_e( 'Clear All', 'wp-sell-services' ); ?>
@@ -500,6 +533,52 @@ class ServiceArchiveView {
 	}
 
 	/**
+	 * Determine whether a query targets the mapped services page.
+	 *
+	 * Safe to call from pre_get_posts, where the queried object is not yet
+	 * resolved and the global $post is unset (so wpss_is_page() cannot be
+	 * trusted). Detection is based on the query's own page_id / pagename vars,
+	 * both of which WordPress has already populated by pre_get_posts time —
+	 * including when the services page is the static front page.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param \WP_Query $query The WP_Query instance.
+	 * @return bool True when the query resolves to the mapped services page.
+	 */
+	private function query_targets_services_page( \WP_Query $query ): bool {
+		$services_page_id = wpss_get_page_id( 'services_page' );
+
+		if ( ! $services_page_id ) {
+			return false;
+		}
+
+		// Static front page: WordPress sets page_id to the front page ID.
+		$page_id = (int) $query->get( 'page_id' );
+		if ( $page_id && $page_id === $services_page_id ) {
+			return true;
+		}
+
+		// Pretty-permalink page request: WordPress sets the pagename var.
+		$pagename = (string) $query->get( 'pagename' );
+		if ( '' !== $pagename ) {
+			$services_page = get_post( $services_page_id );
+			if ( $services_page instanceof \WP_Post && $pagename === $services_page->post_name ) {
+				return true;
+			}
+		}
+
+		// Fallback for contexts where the queried object is already resolved
+		// (e.g. some custom main-query setups) — harmless during pre_get_posts
+		// because it returns 0 there.
+		if ( $query->is_page() && (int) $query->get_queried_object_id() === $services_page_id ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Modify the archive query to apply filters.
 	 *
 	 * @param \WP_Query $query The WP_Query instance.
@@ -511,7 +590,15 @@ class ServiceArchiveView {
 			return;
 		}
 
-		$is_services_page = wpss_is_page( 'services_page' );
+		// Detect the mapped services page from the query itself rather than
+		// wpss_is_page(). During pre_get_posts the queried object is not yet
+		// resolved (get_queried_object_id() returns 0) and the global $post is
+		// unset, so wpss_is_page() always returns false here. That made the
+		// conversion below silently skip whenever the services page was the
+		// static front page (or accessed by page_id/pagename), leaving the main
+		// query as a singular page lookup that returns only the page itself
+		// (found_posts = 1) instead of all published services. See BC 9966680633.
+		$is_services_page = $this->query_targets_services_page( $query );
 
 		if ( ! $is_services_page && ! $query->is_post_type_archive( 'wpss_service' ) && ! $query->is_tax( 'wpss_service_category' ) && ! $query->is_tax( 'wpss_service_tag' ) ) {
 			return;
@@ -524,12 +611,37 @@ class ServiceArchiveView {
 			$query->set( 'pagename', '' );
 			$query->set( 'posts_per_page', apply_filters( 'wpss_services_per_page', 12 ) );
 
+			// Translate singular sub-page paging into archive paging. When the
+			// services page is the static front page (or any page) and is
+			// requested at /page/N/, WordPress stores N in the singular `page`
+			// query var (intended for <!--nextpage--> within one post), NOT in
+			// `paged`. Converting to an archive without this translation leaves
+			// `paged` at 0 (so page 2+ re-queries page 1's services) while the
+			// leftover `page` var makes WordPress treat the request as a missing
+			// singular sub-page and return a 404. Move the value to `paged` and
+			// clear `page` so archive pagination resolves correctly. See BC
+			// 9966680633 (pagination follow-up to the front-page scoping fix).
+			$paged = (int) $query->get( 'paged' );
+			$page  = (int) $query->get( 'page' );
+			if ( ! $paged && $page > 1 ) {
+				$query->set( 'paged', $page );
+			}
+			$query->set( 'page', '' );
+
 			// Reset singular flags so WP_Query treats this as an archive query.
 			// Without this, WordPress singular post status logic can allow draft/pending
 			// posts to leak through for users with edit capabilities.
 			$query->is_singular = false;
 			$query->is_page     = false;
 
+			// Declare the converted query as a wpss_service post-type archive.
+			// Clearing the singular flags without setting these leaves the main
+			// query context-less: body_class() emits no page/archive classes and
+			// themes cannot classify the request (Reign, for one, falls through
+			// to its unconditional sub-header branch, so the Customizer
+			// sub-header toggle has no effect on the services page).
+			$query->is_archive           = true;
+			$query->is_post_type_archive = true;
 		}
 
 		// Ensure only published services are shown (prevents rejected/draft services from leaking through).
@@ -538,18 +650,23 @@ class ServiceArchiveView {
 		// Exclude services from vendors who are on vacation mode.
 		global $wpdb;
 		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$vacation_vendors = $wpdb->get_col(
-			"SELECT user_id FROM {$profiles_table} WHERE vacation_mode = 1"
+			$wpdb->prepare(
+				'SELECT user_id FROM %i WHERE vacation_mode = 1',
+				$profiles_table
+			)
 		);
 		if ( ! empty( $vacation_vendors ) ) {
-			$existing_excludes = $query->get( 'author__not_in' ) ?: array();
+			$existing_excludes = $query->get( 'author__not_in' );
+			$existing_excludes = $existing_excludes ? $existing_excludes : array();
 			$query->set( 'author__not_in', array_merge( $existing_excludes, array_map( 'intval', $vacation_vendors ) ) );
 		}
 
 		// Always filter out rejected/pending services regardless of moderation setting.
 		// Services without moderation meta (legacy) are allowed through.
-		$meta_query   = $query->get( 'meta_query' ) ?: array();
+		$meta_query   = $query->get( 'meta_query' );
+		$meta_query   = $meta_query ? $meta_query : array();
 		$meta_query[] = array(
 			'relation' => 'OR',
 			array(
@@ -581,7 +698,8 @@ class ServiceArchiveView {
 
 		// Category filter (dropdown in filters bar).
 		if ( isset( $_GET['category'] ) && absint( $_GET['category'] ) > 0 ) {
-			$tax_query   = $query->get( 'tax_query' ) ?: array();
+			$tax_query   = $query->get( 'tax_query' );
+			$tax_query   = $tax_query ? $tax_query : array();
 			$tax_query[] = array(
 				'taxonomy' => 'wpss_service_category',
 				'field'    => 'term_id',
@@ -591,7 +709,8 @@ class ServiceArchiveView {
 		}
 
 		// Price range filters.
-		$meta_query = $query->get( 'meta_query' ) ?: array();
+		$meta_query = $query->get( 'meta_query' );
+		$meta_query = $meta_query ? $meta_query : array();
 
 		if ( isset( $_GET['min_price'] ) && '' !== $_GET['min_price'] ) {
 			$meta_query[] = array(

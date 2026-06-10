@@ -35,6 +35,15 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		? wpss_format_price( $amount, $currency )
 		: number_format_i18n( $amount, 2 ) . ' ' . $currency;
 };
+
+/**
+ * Fires before the tip sub-order view content.
+ *
+ * @since 1.1.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $current_order The tip order row.
+ */
+do_action( 'wpss_before_tip_view', $current_order );
 ?>
 
 <div class="wpss-tip-view">
@@ -128,3 +137,13 @@ $format = static function ( float $amount ) use ( $currency ): string {
 		<?php endif; ?>
 	</div>
 </div>
+
+<?php
+/**
+ * Fires after the tip sub-order view content.
+ *
+ * @since 1.1.0
+ *
+ * @param \WPSellServices\Models\ServiceOrder $current_order The tip order row.
+ */
+do_action( 'wpss_after_tip_view', $current_order );

@@ -55,8 +55,11 @@ class TippingService {
 	 * Mirrors how buyer-request conversions use `platform='request'` — the
 	 * orders table stays schema-stable and the checkout flow routes on the
 	 * platform column instead of a new order_type field.
+	 *
+	 * Aliases the canonical sub-order type on the ServiceOrder model so the
+	 * value has a single source of truth.
 	 */
-	public const ORDER_TYPE = 'tip';
+	public const ORDER_TYPE = ServiceOrder::SUB_ORDER_TYPE_TIP;
 
 	/**
 	 * Tip status constants.

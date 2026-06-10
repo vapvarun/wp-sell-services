@@ -25,7 +25,9 @@
 		WPSS.initContactVendor();
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
+		WPSS.initPostRequest();
 		WPSS.initRequirementsView();
+		WPSS.initFavorites();
 		WPSS.portfolioServicesOptions();
 	};
 
@@ -308,39 +310,41 @@
 	 * Perform order action via AJAX.
 	 */
 	WPSS.performOrderAction = function(orderId, action, reason) {
-		// Map frontend actions to AJAX action names.
-		const actionMap = {
-			accept: 'wpss_accept_order',
-			reject: 'wpss_decline_order',
-			start: 'wpss_start_work',
-			deliver: 'wpss_deliver_order',
-			complete: 'wpss_accept_delivery',
-			cancel: 'wpss_cancel_order',
-			'accept-cancellation': 'wpss_accept_cancellation',
-			'reject-cancellation': 'wpss_reject_cancellation'
+		// Map frontend action keys to the wpss/v1 order-lifecycle REST action
+		// segments (POST /orders/{id}/{action}). The legacy admin-ajax handlers
+		// (wpss_accept_order, wpss_start_work, ...) remain registered as thin
+		// delegates for backward compatibility; the frontend now drives the
+		// REST twin, which routes through the same OrderService transitions.
+		const restActionMap = {
+			accept: 'accept',
+			reject: 'reject',
+			start: 'start',
+			deliver: 'deliver',
+			complete: 'complete',
+			cancel: 'cancel',
+			'accept-cancellation': 'accept-cancellation',
+			'reject-cancellation': 'reject-cancellation'
 		};
 
-		const ajaxAction = actionMap[action] || 'wpss_' + action + '_order';
+		const restAction = restActionMap[action] || action;
 
 		$.ajax({
-			url: wpssData.ajaxUrl,
+			url: wpssData.apiUrl + 'orders/' + orderId + '/' + restAction,
 			type: 'POST',
-			data: {
-				action: ajaxAction,
-				order_id: orderId,
-				reason: reason || '',
-				nonce: wpssData.orderNonce || wpssData.nonce
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
 			},
-			success: function(response) {
-				if (response.success) {
-					// Reload page to show updated state.
-					location.reload();
-				} else {
-					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.actionFailed) || 'Action failed. Please try again.', 'error');
-				}
+			data: { reason: reason || '' },
+			success: function() {
+				// Reload page to show updated state (consumer ignores body).
+				location.reload();
 			},
 			error: function(xhr) {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+				var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
+					|| (wpssData.i18n && wpssData.i18n.actionFailed)
+					|| (wpssData.i18n && wpssData.i18n.error)
+					|| 'Action failed. Please try again.';
+				WPSS.showNotification(msg, 'error');
 			}
 		});
 	};
@@ -618,13 +622,12 @@
 	 * Submit delivery via AJAX with file uploads.
 	 */
 	WPSS.submitDelivery = function(orderId, message, fileInput) {
+		// REST: POST /orders/{id}/deliverables (multipart files[]). The endpoint
+		// ingests raw uploads via DeliveryService, the same path the legacy
+		// admin-ajax handler used.
 		var formData = new FormData();
-		formData.append('action', 'wpss_deliver_order');
-		formData.append('order_id', orderId);
-		formData.append('message', message);
-		formData.append('nonce', wpssData.orderNonce || wpssData.nonce);
+		formData.append('description', message || '');
 
-		// Add files from file input element.
 		if (fileInput && fileInput.files) {
 			for (var i = 0; i < fileInput.files.length; i++) {
 				formData.append('files[]', fileInput.files[i]);
@@ -632,23 +635,25 @@
 		}
 
 		$.ajax({
-			url: wpssData.ajaxUrl,
-			type: 'POST',
+			url: wpssData.apiUrl + 'orders/' + orderId + '/deliverables',
+			method: 'POST',
 			data: formData,
 			processData: false,
 			contentType: false,
-			success: function(response) {
-				if (response.success) {
-					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.deliverySubmitted) || 'Delivery submitted successfully!', 'success');
-					setTimeout(function() {
-						location.reload();
-					}, 1500);
-				} else {
-					WPSS.showNotification(response.data?.message || (wpssData.i18n && wpssData.i18n.deliveryFailed) || 'Failed to submit delivery.', 'error');
-				}
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
 			},
-			error: function() {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+			success: function() {
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.deliverySubmitted) || 'Delivery submitted successfully!', 'success');
+				setTimeout(function() {
+					location.reload();
+				}, 1500);
+			},
+			error: function(xhr) {
+				var msg = (xhr.responseJSON && xhr.responseJSON.message)
+					|| (wpssData.i18n && wpssData.i18n.deliveryFailed)
+					|| 'Failed to submit delivery.';
+				WPSS.showNotification(msg, 'error');
 			}
 		});
 	};
@@ -1166,6 +1171,174 @@
 	};
 
 	/**
+	 * Buyer request posting form ([wpss_post_request]).
+	 *
+	 * Wires #wpss-post-request-form to POST /wpss/v1/buyer-requests. Performs
+	 * client-side validation, sends the REST request with the wp_rest nonce,
+	 * renders per-field server errors, and swaps the form for a success state.
+	 */
+	WPSS.initPostRequest = function() {
+		$(document).on('submit', '#wpss-post-request-form', function(e) {
+			e.preventDefault();
+			WPSS.submitPostRequest($(this));
+		});
+	};
+
+	/**
+	 * Clear all error messaging on the post-request form.
+	 *
+	 * @param {jQuery} $form The post-request form.
+	 */
+	WPSS.clearRequestErrors = function($form) {
+		const $wrapper = $form.closest('[data-wpss-post-request]');
+		$wrapper.find('[data-request-form-error]').prop('hidden', true).text('');
+		$form.find('[data-field-error]').prop('hidden', true).text('');
+		$form.find('[data-field]').removeClass('wpss-input--invalid').removeAttr('aria-invalid');
+	};
+
+	/**
+	 * Display a per-field error on the post-request form.
+	 *
+	 * @param {jQuery} $form   The post-request form.
+	 * @param {string} field   The field key (matches data-field).
+	 * @param {string} message The error message.
+	 */
+	WPSS.showRequestFieldError = function($form, field, message) {
+		const $error = $form.find('[data-field-error="' + field + '"]');
+		const $input = $form.find('[data-field="' + field + '"]');
+
+		$input.addClass('wpss-input--invalid').attr('aria-invalid', 'true');
+
+		if ($error.length) {
+			$error.text(message).prop('hidden', false);
+		} else {
+			// No dedicated slot for this field — fall back to the form-level banner.
+			$form.closest('[data-wpss-post-request]')
+				.find('[data-request-form-error]')
+				.text(message)
+				.prop('hidden', false);
+		}
+	};
+
+	/**
+	 * Submit the buyer request via the REST API.
+	 *
+	 * @param {jQuery} $form The post-request form.
+	 */
+	WPSS.submitPostRequest = function($form) {
+		const i18n     = (wpssData && wpssData.i18n) || {};
+		const $wrapper = $form.closest('[data-wpss-post-request]');
+		const $btn     = $form.find('[data-request-submit]');
+		const btnText  = $btn.text();
+
+		WPSS.clearRequestErrors($form);
+
+		// Client-side validation — title + description are required.
+		const title       = ($form.find('[data-field="title"]').val() || '').trim();
+		const description = ($form.find('[data-field="description"]').val() || '').trim();
+		let hasError = false;
+
+		if (!title) {
+			WPSS.showRequestFieldError($form, 'title', i18n.requestTitleRequired || 'Please enter a title for your request.');
+			hasError = true;
+		}
+
+		if (!description) {
+			WPSS.showRequestFieldError($form, 'description', i18n.requestDescriptionRequired || 'Please describe what you need.');
+			hasError = true;
+		}
+
+		// Budget sanity — when both supplied, max must be >= min.
+		const budgetMin = parseFloat($form.find('[data-field="budget_min"]').val());
+		const budgetMax = parseFloat($form.find('[data-field="budget_max"]').val());
+		if (!isNaN(budgetMin) && !isNaN(budgetMax) && budgetMax < budgetMin) {
+			WPSS.showRequestFieldError($form, 'budget_max', i18n.requestBudgetRange || 'Maximum budget must be greater than or equal to the minimum.');
+			hasError = true;
+		}
+
+		if (hasError) {
+			return;
+		}
+
+		// Skills: comma-separated string -> trimmed array, drop empties.
+		const skills = ($form.find('[data-field="skills_required"]').val() || '')
+			.split(',')
+			.map(function(s) { return s.trim(); })
+			.filter(function(s) { return s.length > 0; });
+
+		const payload = {
+			title: title,
+			description: description,
+			category: parseInt($form.find('[data-field="category"]').val(), 10) || 0,
+			budget_min: isNaN(budgetMin) ? 0 : budgetMin,
+			budget_max: isNaN(budgetMax) ? 0 : budgetMax,
+			deadline: $form.find('[data-field="deadline"]').val() || '',
+			skills_required: skills
+		};
+
+		$btn.prop('disabled', true).text(i18n.submitting || 'Submitting...');
+
+		$.ajax({
+			url: wpssData.apiUrl + 'buyer-requests',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(payload),
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
+			},
+			success: function(response) {
+				const message = (response && response.message) || i18n.requestPosted || 'Request posted successfully.';
+				WPSS.showNotification(message, 'success');
+
+				// Swap the form for the success state.
+				const redirect = $form.data('success-redirect') || '';
+				const $success = $wrapper.find('[data-request-success]');
+				const $link    = $success.find('[data-request-success-link]');
+
+				if (redirect) {
+					$link.attr('href', redirect);
+				} else {
+					$link.prop('hidden', true);
+				}
+
+				$form.prop('hidden', true);
+				$success.prop('hidden', false);
+
+				// Refresh Lucide icons if available.
+				if (window.lucide && typeof window.lucide.createIcons === 'function') {
+					window.lucide.createIcons();
+				}
+			},
+			error: function(xhr) {
+				$btn.prop('disabled', false).text(btnText);
+
+				const res = (xhr && xhr.responseJSON) || {};
+
+				// Per-field validation errors (WP_Error data.errors / data.params).
+				const fieldErrors = (res.data && (res.data.errors || res.data.params)) || null;
+				if (fieldErrors && typeof fieldErrors === 'object') {
+					let shown = false;
+					Object.keys(fieldErrors).forEach(function(field) {
+						const val = fieldErrors[field];
+						const msg = Array.isArray(val) ? val[0] : val;
+						if (msg) {
+							WPSS.showRequestFieldError($form, field, msg);
+							shown = true;
+						}
+					});
+					if (shown) {
+						return;
+					}
+				}
+
+				const message = res.message || i18n.requestFailed || i18n.error || 'Failed to post request. Please try again.';
+				$wrapper.find('[data-request-form-error]').text(message).prop('hidden', false);
+				WPSS.showNotification(message, 'error');
+			}
+		});
+	};
+
+	/**
 	 * Submit proposal via AJAX.
 	 */
 	WPSS.submitProposal = function($form) {
@@ -1358,6 +1531,100 @@
 	};
 
 	/**
+	 * Favorites toggle.
+	 *
+	 * Wires the heart toggle rendered on archive service cards and on the single
+	 * service page. Reads/writes the canonical `_wpss_favorites` user-meta through
+	 * the existing REST favorites controller (no AJAX, no new endpoints):
+	 *   POST   /wpss/v1/favorites/{id}  -> add
+	 *   DELETE /wpss/v1/favorites/{id}  -> remove
+	 * The initial favorited state is rendered server-side on each button, so the
+	 * toggle paints correctly on first load. Guests are redirected to log in.
+	 */
+	WPSS.initFavorites = function() {
+		// Delegated so dynamically loaded cards (load-more / filters) also work.
+		$(document).on('click', '.wpss-fav-toggle', function(e) {
+			// The toggle lives inside the card's <a> wrapper on archives — stop
+			// the click from navigating to the service page.
+			e.preventDefault();
+			e.stopPropagation();
+
+			var $btn = $(this);
+
+			if ($btn.prop('disabled') || $btn.hasClass('is-loading')) {
+				return;
+			}
+
+			// Guest gate — send to login, then back to the current page.
+			var isLoggedIn = $btn.data('logged-in') === 1 || $btn.data('logged-in') === '1';
+			if (!isLoggedIn) {
+				var loginUrl = (window.wpssData && wpssData.loginUrl) ? wpssData.loginUrl : '/wp-login.php';
+				var sep = loginUrl.indexOf('?') === -1 ? '?' : '&';
+				window.location.href = loginUrl + sep + 'redirect_to=' + encodeURIComponent(window.location.href);
+				return;
+			}
+
+			var serviceId = parseInt($btn.data('service-id'), 10);
+			if (!serviceId) {
+				return;
+			}
+
+			var willFavorite = !$btn.hasClass('is-favorited');
+
+			$btn.prop('disabled', true).addClass('is-loading');
+
+			$.ajax({
+				url: wpssData.apiUrl + 'favorites/' + serviceId,
+				method: willFavorite ? 'POST' : 'DELETE',
+				beforeSend: function(xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
+				}
+			}).done(function(response) {
+				// Controller echoes the resulting state; trust it, fall back to intent.
+				var favorited = (response && typeof response.favorited !== 'undefined') ? !!response.favorited : willFavorite;
+				WPSS.setFavoriteState($btn, favorited);
+
+				var savedMsg = (wpssData.i18n && wpssData.i18n.favoriteSaved) || 'Saved to favorites.';
+				var removedMsg = (wpssData.i18n && wpssData.i18n.favoriteRemoved) || 'Removed from favorites.';
+				WPSS.showNotification(favorited ? savedMsg : removedMsg, 'success');
+			}).fail(function(xhr) {
+				var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
+					|| (wpssData.i18n && wpssData.i18n.favoriteFailed)
+					|| (wpssData.i18n && wpssData.i18n.ajaxError)
+					|| 'Could not update favorites. Please try again.';
+				WPSS.showNotification(msg, 'error');
+			}).always(function() {
+				$btn.prop('disabled', false).removeClass('is-loading');
+			});
+		});
+	};
+
+	/**
+	 * Sync a favorite toggle's visual + a11y state.
+	 *
+	 * @param {jQuery}  $btn      The toggle button.
+	 * @param {boolean} favorited Whether the service is now favorited.
+	 */
+	WPSS.setFavoriteState = function($btn, favorited) {
+		$btn.toggleClass('is-favorited', favorited);
+		$btn.attr('aria-pressed', favorited ? 'true' : 'false');
+
+		var isInline = $btn.hasClass('wpss-fav-toggle--inline');
+		var label;
+		if (isInline) {
+			label = favorited
+				? ((wpssData.i18n && wpssData.i18n.favoriteSavedLabel) || 'Saved to favorites')
+				: ((wpssData.i18n && wpssData.i18n.favoriteSaveLabel) || 'Save to favorites');
+		} else {
+			label = favorited
+				? ((wpssData.i18n && wpssData.i18n.favoriteRemoveLabel) || 'Remove from favorites')
+				: ((wpssData.i18n && wpssData.i18n.favoriteAddLabel) || 'Add to favorites');
+			$btn.attr('aria-label', label).attr('title', label);
+		}
+		$btn.find('.wpss-fav-toggle__label').text(label);
+	};
+
+	/**
 	 * Escape HTML entities.
 	 */
 	WPSS.escapeHtml = function(text) {
@@ -1429,45 +1696,94 @@
 	/**
 	 * Show confirm dialog (replaces browser confirm()).
 	 *
+	 * Renders ONE clean modal surface — overlay + single dialog card with an
+	 * optional title, a message, and an action row (visible primary/danger
+	 * confirm + outline cancel). Focus is trapped inside the dialog, Escape
+	 * closes it, and focus is restored to the element that opened it. All
+	 * styling lives in design-system.css (.wpss-confirm); no inline styles.
+	 *
 	 * @param {string}   message   - The confirmation message.
 	 * @param {Function} onConfirm - Callback when confirmed.
-	 * @param {Object}   options   - Optional: title, confirmText, cancelText.
+	 * @param {Object}   options   - Optional: title, confirmText, cancelText,
+	 *                               tone ('danger' renders a danger confirm).
 	 */
 	WPSS.showConfirm = function(message, onConfirm, options) {
 		options = options || {};
 		var i18n = (wpssData && wpssData.i18n) || {};
-		var confirmText = options.confirmText || i18n.confirm || 'Confirm';
+		var isDanger = 'danger' === options.tone;
+		// Default the action label to a danger verb when this is a destructive
+		// confirm so the Delete button reads correctly even if the caller does
+		// not pass an explicit confirmText.
+		var defaultConfirm = isDanger ? (i18n.delete || 'Delete') : (i18n.confirm || 'Confirm');
+		var confirmText = options.confirmText || defaultConfirm;
 		var cancelText = options.cancelText || i18n.cancel || 'Cancel';
+		var title = options.title || '';
+		var confirmVariant = isDanger ? 'wpss-btn--danger' : 'wpss-btn--primary';
 
 		$('#wpss-confirm-modal').remove();
 
-		var $modal = $('<div id="wpss-confirm-modal" class="wpss-modal wpss-modal-open">' +
-			'<div class="wpss-modal__backdrop"></div>' +
-			'<div class="wpss-modal__dialog wpss-modal__dialog--sm">' +
-				'<div class="wpss-modal__content">' +
-					'<div class="wpss-modal__body" style="padding:24px;text-align:center;">' +
-						'<p style="margin:0 0 20px;font-size:15px;">' + WPSS.escapeHtml(message) + '</p>' +
-						'<div style="display:flex;gap:10px;justify-content:center;">' +
-							'<button type="button" class="wpss-btn wpss-btn--outline wpss-confirm-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
-							'<button type="button" class="wpss-btn wpss-btn--primary wpss-confirm-ok">' + WPSS.escapeHtml(confirmText) + '</button>' +
-						'</div>' +
-					'</div>' +
+		// Remember the opener so focus can return to it on close.
+		var opener = document.activeElement;
+
+		var titleId = 'wpss-confirm-title';
+		var msgId = 'wpss-confirm-message';
+		var labelledBy = title ? titleId : msgId;
+
+		var $modal = $('<div id="wpss-confirm-modal" class="wpss-modal wpss-modal-open" role="dialog" aria-modal="true" aria-labelledby="' + labelledBy + '">' +
+			'<div class="wpss-modal__overlay"></div>' +
+			'<div class="wpss-modal__dialog wpss-confirm" role="document">' +
+				(title ? '<h2 id="' + titleId + '" class="wpss-confirm__title">' + WPSS.escapeHtml(title) + '</h2>' : '') +
+				'<p id="' + msgId + '" class="wpss-confirm__message">' + WPSS.escapeHtml(message) + '</p>' +
+				'<div class="wpss-confirm__actions">' +
+					'<button type="button" class="wpss-btn wpss-btn--outline wpss-confirm-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
+					'<button type="button" class="wpss-btn ' + confirmVariant + ' wpss-confirm-ok">' + WPSS.escapeHtml(confirmText) + '</button>' +
 				'</div>' +
 			'</div>' +
 		'</div>');
 
 		$('body').append($modal).addClass('wpss-modal-active');
 
-		$modal.find('.wpss-confirm-ok').on('click', function() {
+		var close = function() {
+			$modal.off('keydown.wpss-confirm');
 			$modal.remove();
 			$('body').removeClass('wpss-modal-active');
+			if (opener && typeof opener.focus === 'function') {
+				opener.focus();
+			}
+		};
+
+		$modal.find('.wpss-confirm-ok').on('click', function() {
+			close();
 			if (onConfirm) onConfirm();
 		});
 
-		$modal.find('.wpss-confirm-cancel, .wpss-modal__backdrop').on('click', function() {
-			$modal.remove();
-			$('body').removeClass('wpss-modal-active');
+		$modal.find('.wpss-confirm-cancel, .wpss-modal__overlay').on('click', function() {
+			close();
 		});
+
+		// Keyboard: Escape closes; Tab is trapped between the two buttons.
+		var $focusable = $modal.find('button');
+		$modal.on('keydown.wpss-confirm', function(e) {
+			if ('Escape' === e.key) {
+				e.preventDefault();
+				close();
+				return;
+			}
+			if ('Tab' === e.key && $focusable.length) {
+				var first = $focusable.get(0);
+				var last = $focusable.get($focusable.length - 1);
+				if (e.shiftKey && document.activeElement === first) {
+					e.preventDefault();
+					last.focus();
+				} else if (!e.shiftKey && document.activeElement === last) {
+					e.preventDefault();
+					first.focus();
+				}
+			}
+		});
+
+		// Move focus into the dialog (cancel first — the safe default).
+		$modal.find('.wpss-confirm-cancel').trigger('focus');
 	};
 
 	/**

@@ -347,6 +347,9 @@ class VendorService {
 		// Set vendor meta.
 		update_user_meta( $user_id, '_wpss_is_vendor', true );
 
+		// Flow finding #13: notify the vendor that their application was approved.
+		$this->send_status_email( $user_id, 'vendor_approved' );
+
 		/**
 		 * Fires when vendor access is granted (after admin approval).
 		 *
@@ -392,6 +395,15 @@ class VendorService {
 		// Remove vendor meta.
 		delete_user_meta( $user_id, '_wpss_is_vendor' );
 
+		// Flow finding #13: notify the vendor only when their application was
+		// actually rejected. revoke_vendor_access() is also used for temporary
+		// suspensions, which must NOT trigger the "not approved" email. The
+		// caller updates the profile status before invoking this method, so the
+		// stored status reflects the admin's decision.
+		if ( 'rejected' === $this->get_vendor_status( $user_id ) ) {
+			$this->send_status_email( $user_id, 'vendor_rejected' );
+		}
+
 		/**
 		 * Fires when vendor access is revoked (suspended/rejected).
 		 *
@@ -433,6 +445,9 @@ class VendorService {
 			'website',
 			'intro_video_url',
 			'social_links',
+			'vacation_mode',
+			'vacation_message',
+			'vacation_return_date',
 		);
 
 		/**
@@ -494,24 +509,26 @@ class VendorService {
 	/**
 	 * Set vacation mode.
 	 *
-	 * @param int    $user_id User ID.
-	 * @param bool   $enabled Enable or disable.
-	 * @param string $message Vacation message.
+	 * @param int         $user_id     User ID.
+	 * @param bool        $enabled     Enable or disable.
+	 * @param string      $message     Vacation message.
+	 * @param string|null $return_date Optional buyer-facing return date (Y-m-d).
 	 * @return bool True on success.
 	 */
-	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '' ): bool {
-		$result = $this->profile_repo->set_vacation_mode( $user_id, $enabled, $message );
+	public function set_vacation_mode( int $user_id, bool $enabled, string $message = '', ?string $return_date = null ): bool {
+		$result = $this->profile_repo->set_vacation_mode( $user_id, $enabled, $message, $return_date );
 
 		if ( $result ) {
 			/**
 			 * Fires when vacation mode is toggled.
 			 *
 			 * @since 1.0.0
-			 * @param int    $user_id User ID.
-			 * @param bool   $enabled Whether enabled.
-			 * @param string $message Vacation message.
+			 * @param int         $user_id     User ID.
+			 * @param bool        $enabled     Whether enabled.
+			 * @param string      $message     Vacation message.
+			 * @param string|null $return_date Optional buyer-facing return date (Y-m-d).
 			 */
-			do_action( 'wpss_vendor_vacation_mode_changed', $user_id, $enabled, $message );
+			do_action( 'wpss_vendor_vacation_mode_changed', $user_id, $enabled, $message, $return_date );
 		}
 
 		return $result;
@@ -616,6 +633,137 @@ class VendorService {
 
 		$threshold = time() - ( $minutes * 60 );
 		return strtotime( $last_active ) > $threshold;
+	}
+
+	/**
+	 * Send a vendor status-change email (approval / rejection).
+	 *
+	 * Flow finding #13: previously, approving or rejecting a vendor changed the
+	 * profile status silently with no notification to the applicant. This
+	 * renders the dedicated HTML template (wrapped in the shared email header /
+	 * footer parts) and dispatches it via wp_mail(), respecting the same
+	 * white-label settings and admin enable toggle the rest of the email system
+	 * uses.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param int    $user_id User ID of the recipient vendor.
+	 * @param string $type    Email type: 'vendor_approved' or 'vendor_rejected'.
+	 * @return bool True if the email was accepted for delivery.
+	 */
+	private function send_status_email( int $user_id, string $type ): bool {
+		$user = get_userdata( $user_id );
+
+		if ( ! $user || empty( $user->user_email ) ) {
+			return false;
+		}
+
+		// Respect the admin notification toggle (moderation category covers
+		// vendor approval/rejection). Unknown types default to enabled.
+		if ( ! \WPSellServices\Services\EmailService::is_type_enabled( $type ) ) {
+			return false;
+		}
+
+		$config = array(
+			'vendor_approved' => array(
+				'template' => 'vendor-approved.php',
+				'heading'  => __( 'Your vendor application is approved', 'wp-sell-services' ),
+				'subject'  => __( 'Your vendor application has been approved', 'wp-sell-services' ),
+			),
+			'vendor_rejected' => array(
+				'template' => 'vendor-rejected.php',
+				'heading'  => __( 'Update on your vendor application', 'wp-sell-services' ),
+				'subject'  => __( 'Update on your vendor application', 'wp-sell-services' ),
+			),
+		);
+
+		if ( ! isset( $config[ $type ] ) ) {
+			return false;
+		}
+
+		$site_name     = wpss_get_platform_name();
+		$site_url      = home_url();
+		$dashboard_url = wpss_get_dashboard_url();
+
+		$template_vars = array(
+			'recipient'        => $user,
+			'email_heading'    => $config[ $type ]['heading'],
+			'site_name'        => $site_name,
+			'site_url'         => $site_url,
+			'dashboard_url'    => $dashboard_url,
+			'rejection_reason' => '',
+			'base_color'       => '#7f54b3',
+			'bg_color'         => '#f7f7f7',
+			'body_color'       => '#ffffff',
+			'text_color'       => '#3c3c3c',
+		);
+
+		/**
+		 * Filters the template variables for a vendor status-change email.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param array  $template_vars Variables passed to the email template.
+		 * @param string $type          Email type identifier.
+		 * @param int    $user_id       Recipient user ID.
+		 */
+		$template_vars = apply_filters( 'wpss_vendor_status_email_vars', $template_vars, $type, $user_id );
+
+		$body = $this->render_email_part( $config[ $type ]['template'], $template_vars );
+
+		if ( '' === $body ) {
+			wpss_log( 'Vendor status email template missing: ' . $config[ $type ]['template'], 'error' );
+			return false;
+		}
+
+		$content = $this->render_email_part( 'email-header.php', $template_vars )
+			. $body
+			. $this->render_email_part( 'email-footer.php', $template_vars );
+
+		$subject = apply_filters( 'wpss_email_subject', $config[ $type ]['subject'], $type, $user->user_email );
+
+		$from_name  = $site_name;
+		$from_email = get_option( 'admin_email' );
+
+		if ( function_exists( 'WC' ) && WC() && WC()->mailer() ) {
+			$from_name  = WC()->mailer()->get_from_name();
+			$from_email = WC()->mailer()->get_from_address();
+		}
+
+		$from_name = apply_filters( 'wpss_email_from_name', $from_name );
+
+		$headers = array(
+			'Content-Type: text/html; charset=UTF-8',
+			sprintf( 'From: %s <%s>', $from_name, $from_email ),
+		);
+
+		return wp_mail( $user->user_email, $subject, $content, $headers );
+	}
+
+	/**
+	 * Render an email template part (header, body, or footer) to a string.
+	 *
+	 * Resolves theme overrides first, then falls back to the bundled template,
+	 * mirroring the lookup the core email system uses.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param string               $template_name Template file name, e.g. 'vendor-approved.php'.
+	 * @param array<string, mixed> $template_vars Variables extracted into template scope.
+	 * @return string Rendered HTML, or empty string when the template is missing.
+	 */
+	private function render_email_part( string $template_name, array $template_vars ): string {
+		$theme_template = locate_template( 'wp-sell-services/emails/' . $template_name );
+		$template_file  = $theme_template ? $theme_template : WPSS_PLUGIN_DIR . 'templates/emails/' . $template_name;
+
+		if ( ! file_exists( $template_file ) ) {
+			return '';
+		}
+
+		ob_start();
+		extract( $template_vars, EXTR_SKIP ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
+		include $template_file;
+		return (string) ob_get_clean();
 	}
 
 	/**

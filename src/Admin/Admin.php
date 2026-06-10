@@ -19,7 +19,10 @@ use WPSellServices\Admin\Metaboxes\OrderMetabox;
 use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
+use WPSellServices\Admin\Pages\ReviewModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
+use WPSellServices\Admin\Pages\NotificationsPage;
+use WPSellServices\Admin\Pages\AuditLogPage;
 use WPSellServices\Admin\Pages\SetupWizardPage;
 use WPSellServices\Admin\Pages\UpgradePage;
 use WPSellServices\Admin\Tables\OrdersListTable;
@@ -64,11 +67,32 @@ class Admin {
 	private ServiceModerationPage $moderation_page;
 
 	/**
+	 * Review moderation page instance.
+	 *
+	 * @var ReviewModerationPage
+	 */
+	private ReviewModerationPage $review_moderation_page;
+
+	/**
 	 * Withdrawals page instance.
 	 *
 	 * @var WithdrawalsPage
 	 */
 	private WithdrawalsPage $withdrawals_page;
+
+	/**
+	 * Notifications viewer page instance.
+	 *
+	 * @var NotificationsPage
+	 */
+	private NotificationsPage $notifications_page;
+
+	/**
+	 * Audit log viewer page instance.
+	 *
+	 * @var AuditLogPage
+	 */
+	private AuditLogPage $audit_log_page;
 
 	/**
 	 * Setup wizard page instance.
@@ -88,12 +112,15 @@ class Admin {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->settings          = new Settings();
-		$this->manual_order_page = new ManualOrderPage();
-		$this->vendors_page      = new VendorsPage();
-		$this->moderation_page   = new ServiceModerationPage();
-		$this->withdrawals_page  = new WithdrawalsPage();
-		$this->setup_wizard_page = new SetupWizardPage();
+		$this->settings               = new Settings();
+		$this->manual_order_page      = new ManualOrderPage();
+		$this->vendors_page           = new VendorsPage();
+		$this->moderation_page        = new ServiceModerationPage();
+		$this->review_moderation_page = new ReviewModerationPage();
+		$this->withdrawals_page       = new WithdrawalsPage();
+		$this->notifications_page     = new NotificationsPage();
+		$this->audit_log_page         = new AuditLogPage();
+		$this->setup_wizard_page      = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
 			$this->upgrade_page = new UpgradePage();
@@ -114,6 +141,63 @@ class Admin {
 		add_filter( 'parent_file', array( $this, 'set_parent_menu' ) );
 		add_filter( 'submenu_file', array( $this, 'set_submenu_file' ) );
 		add_action( 'admin_menu', array( $this, 'reorder_admin_submenu' ), 999 );
+		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ), 1 );
+	}
+
+	/**
+	 * Suppress third-party admin notices on plugin screens.
+	 *
+	 * Theme/other-plugin banners (TGMPA "recommended plugins", update nags,
+	 * promo notices) crowd the plugin's admin pages and undermine trust.
+	 * Removes every admin_notices / all_admin_notices callback that does not
+	 * belong to WP Sell Services (Free or Pro), so the plugin's own notices
+	 * still render.
+	 *
+	 * @return void
+	 */
+	public function hide_third_party_notices(): void {
+		$screen = get_current_screen();
+
+		if ( ! $screen || ! $this->is_plugin_page( $screen->id ) ) {
+			return;
+		}
+
+		global $wp_filter;
+
+		foreach ( array( 'admin_notices', 'all_admin_notices' ) as $hook ) {
+			if ( empty( $wp_filter[ $hook ] ) ) {
+				continue;
+			}
+
+			foreach ( $wp_filter[ $hook ]->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $callback ) {
+					if ( ! $this->is_own_notice_callback( $callback['function'] ) ) {
+						remove_action( $hook, $callback['function'], $priority );
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check whether a notice callback belongs to this plugin (Free or Pro).
+	 *
+	 * @param callable|string|array $callback Hooked callback.
+	 * @return bool
+	 */
+	private function is_own_notice_callback( $callback ): bool {
+		if ( is_string( $callback ) ) {
+			return str_starts_with( $callback, 'wpss_' )
+				|| str_starts_with( $callback, 'WPSellServices' );
+		}
+
+		if ( is_array( $callback ) && isset( $callback[0] ) ) {
+			$class = is_object( $callback[0] ) ? get_class( $callback[0] ) : (string) $callback[0];
+			return str_starts_with( $class, 'WPSellServices' );
+		}
+
+		// Closures and other callables can't be attributed — treat as third-party.
+		return false;
 	}
 
 	/**
@@ -138,6 +222,7 @@ class Admin {
 			'edit.php?post_type=wpss_service',                               // All Services.
 			'post-new.php?post_type=wpss_service',                           // Add New Service.
 			'wpss-moderation',                                               // Service Moderation.
+			'wpss-review-moderation',                                        // Review Moderation.
 			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
 			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
 			'edit.php?post_type=wpss_request',                               // Buyer Requests.
@@ -149,6 +234,8 @@ class Admin {
 			'wpss-disputes',                                                 // Disputes.
 			'wpss-analytics',                                                // Analytics (Pro).
 			'wpss-settings',                                                 // Settings.
+			'wpss-notifications',                                             // My Notifications (read-only viewer).
+			'wpss-audit-log',                                                // Audit Log (forensic trail).
 			'wpss-license',                                                  // License (Pro).
 			'wpss-upgrade',                                                  // Upgrade to Pro (free only).
 		);
@@ -267,7 +354,12 @@ class Admin {
 		$this->manual_order_page->init();
 		$this->vendors_page->init();
 		$this->moderation_page->init();
+		$this->review_moderation_page->init();
 		$this->withdrawals_page->init();
+		$this->notifications_page->init();
+		$this->audit_log_page->init();
+		$this->review_moderation_page->init();
+		$this->notifications_page->init();
 		$this->setup_wizard_page->init();
 
 		if ( $this->upgrade_page ) {
@@ -631,6 +723,31 @@ class Admin {
 
 		wp_enqueue_media();
 
+		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
+		// Enqueued globally on all WPSS admin surfaces so Pro's admin.js can rely
+		// on window.wpssConfirm being present (loaded in footer before pro script).
+		wp_enqueue_script(
+			'wpss-ui',
+			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
+			array(),
+			\WPSS_VERSION,
+			true
+		);
+
+		// Settings saved via the options.php round-trip reload with
+		// settings-updated=true but custom admin pages never render core's
+		// notice — surface the confirmation as a design-system toast.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only flag from core options.php redirect.
+		if ( isset( $_GET['settings-updated'] ) && 'true' === sanitize_key( wp_unslash( $_GET['settings-updated'] ) ) ) {
+			wp_add_inline_script(
+				'wpss-ui',
+				sprintf(
+					'(function(){var fire=function(){if(window.wpssToast){wpssToast(%s,"success");}else{setTimeout(fire,200);}};if("loading"===document.readyState){document.addEventListener("DOMContentLoaded",fire);}else{fire();}})();',
+					wp_json_encode( __( 'Settings saved.', 'wp-sell-services' ) )
+				)
+			);
+		}
+
 		wp_enqueue_script(
 			'wpss-admin',
 			\WPSS_PLUGIN_URL . 'assets/js/admin.js',
@@ -688,18 +805,9 @@ class Admin {
 		// Settings page scripts.
 		if ( $this->is_settings_page( $hook ) ) {
 			wp_enqueue_script(
-				'wpss-admin-toast',
-				\WPSS_PLUGIN_URL . 'assets/js/admin-toast.js',
-				array(),
-				\WPSS_VERSION,
-				true
-			);
-			wp_set_script_translations( 'wpss-admin-toast', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
-
-			wp_enqueue_script(
 				'wpss-admin-settings-nav',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-nav.js',
-				array( 'wpss-admin-toast' ),
+				array( 'wpss-ui' ),
 				\WPSS_VERSION,
 				true
 			);
@@ -709,7 +817,7 @@ class Admin {
 			wp_enqueue_script(
 				'wpss-admin-settings-pages',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-pages.js',
-				array( 'jquery', 'wpss-admin-toast' ),
+				array( 'jquery', 'wpss-ui' ),
 				\WPSS_VERSION,
 				true
 			);
@@ -912,8 +1020,11 @@ class Admin {
 			'sell-services_page_wpss-vendors',
 			'sell-services_page_wpss-withdrawals',
 			'sell-services_page_wpss-moderation',
+			'sell-services_page_wpss-review-moderation',
 			'sell-services_page_wpss-disputes',
 			'sell-services_page_wpss-settings',
+			'sell-services_page_wpss-notifications',
+			'sell-services_page_wpss-audit-log',
 			'admin_page_wpss-create-order',
 			'admin_page_wpss-setup-wizard',
 			'sell-services_page_wpss-upgrade',
@@ -1114,6 +1225,10 @@ class Admin {
 								<i data-lucide="settings" class="wpss-icon" aria-hidden="true"></i>
 								<?php esc_html_e( 'Settings', 'wp-sell-services' ); ?>
 							</a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-audit-log' ) ); ?>" class="wpss-action-btn">
+								<i data-lucide="scroll-text" class="wpss-icon" aria-hidden="true"></i>
+								<?php esc_html_e( 'Audit Log', 'wp-sell-services' ); ?>
+							</a>
 						</div>
 					</div>
 
@@ -1265,6 +1380,12 @@ class Admin {
 
 		check_admin_referer( 'bulk-orders' );
 
+		// Bulk status changes act on arbitrary order IDs (not ownership-scoped),
+		// so require admin-level access in addition to the nonce.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$order_ids = isset( $_GET['order_ids'] ) ? array_map( 'absint', (array) $_GET['order_ids'] ) : array();
 
@@ -1317,6 +1438,12 @@ class Admin {
 		}
 
 		check_admin_referer( 'bulk-disputes' );
+
+		// Bulk status changes act on arbitrary dispute IDs (not ownership-scoped),
+		// so require admin-level access in addition to the nonce.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$dispute_ids = isset( $_GET['dispute_ids'] ) ? array_map( 'absint', (array) $_GET['dispute_ids'] ) : array();

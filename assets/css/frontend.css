@@ -9,29 +9,58 @@
    CSS Variables
    ========================================================================== */
 
+/* Token fallbacks.
+   design-system.css is the canonical token source and always loads first
+   (wpss-frontend depends on wpss-design-system). These declarations only
+   provide concrete fallbacks for the handful of legacy aliases this file
+   consumes, so a theme that fails to load design-system.css — or one (like
+   Reign 8.0.0) that re-declares neutral vars — can never resolve a frontend
+   token to an empty string and blow out card colours/borders.
+
+   Note: these are NOT self-referential (the old `var(--wpss-x, #fff)` form
+   resolved to itself and silently inherited a theme value of the same name).
+   Each alias now points at its design-system source with a hard hex fallback. */
 :root {
 	/* Primary - Indigo */
-	--wpss-primary: var(--wpss-primary, #4f46e5);
-	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
-	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
+	--wpss-primary: #4f46e5;
+	--wpss-primary-dark: #4338ca;
+	--wpss-primary-hover: #4338ca;
+	--wpss-primary-light: #eef2ff;
 
 	/* Secondary & Text */
-	--wpss-secondary: var(--wpss-secondary, #1e293b);
-	--wpss-text: var(--wpss-gray-800, #1f2937);
-	--wpss-text-light: var(--wpss-text-muted, #6b7280);
+	--wpss-secondary: #1e293b;
+	--wpss-text: #1f2937;
+	--wpss-text-light: #6b7280;
+	--wpss-text-muted: #6b7280;
 
 	/* UI Colors */
-	--wpss-border: var(--wpss-border, #e5e7eb);
-	--wpss-background: var(--wpss-bg-subtle, #f9fafb);
-	--wpss-white: var(--wpss-white, #fff);
-	--wpss-black: var(--wpss-text, #111827);
+	--wpss-border: #e5e7eb;
+	--wpss-bg: #ffffff;
+	--wpss-background: #f9fafb;
+	--wpss-white: #ffffff;
+	--wpss-black: #111827;
+	--wpss-gray-100: #f3f4f6;
+	--wpss-gray-400: #9ca3af;
 
 	/* Semantic Colors */
-	--wpss-success: var(--wpss-success, #10b981);
-	--wpss-warning: var(--wpss-warning, #f59e0b);
-	--wpss-danger: var(--wpss-danger, #ef4444);
-	--wpss-info: var(--wpss-info, #3b82f6);
-	--wpss-star: var(--wpss-star, #fbbf24);
+	--wpss-success: #10b981;
+	--wpss-warning: #f59e0b;
+	--wpss-danger: #ef4444;
+	--wpss-info: #3b82f6;
+	--wpss-star: #fbbf24;
+
+	/* Seller-tier badge palette.
+	   Tiers were previously coloured via inline style="" with raw hex in three
+	   templates (service card, vendor card, vendor profile). Tokenised here so a
+	   single edit re-skins every surface and the templates stay markup-only. */
+	--wpss-tier-new-bg: #f1f5f9;
+	--wpss-tier-new-text: #64748b;
+	--wpss-tier-rising-bg: #eff6ff;
+	--wpss-tier-rising-text: #2563eb;
+	--wpss-tier-top-rated-bg: #fefce8;
+	--wpss-tier-top-rated-text: #ca8a04;
+	--wpss-tier-pro-bg: #faf5ff;
+	--wpss-tier-pro-text: #7c3aed;
 
 	/* Border Radius */
 	--wpss-radius: 8px;
@@ -73,11 +102,11 @@
    Base Styles
    ========================================================================== */
 
-.wpss-container {
-	max-width: 1400px;
-	margin: 0 auto;
-	padding: 0 20px;
-}
+/* F3: the .wpss-container definition that lived here (max-width 1400px,
+   raw 20px padding) was deleted. The single source of truth is now
+   design-system.css, which is loaded before frontend.css on every surface,
+   so the token-driven .wpss-container there is the one definition. Nested
+   containers collapse to fluid width via the rule in design-system.css. */
 
 /* ==========================================================================
    Buttons
@@ -192,34 +221,17 @@ select:invalid {
 	border-color: var(--wpss-danger);
 }
 
-/* Inline Error/Success Notices */
-.wpss-notice {
-	padding: 12px 16px;
-	border-radius: var(--wpss-radius);
-	font-size: 14px;
-	margin-bottom: 16px;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.wpss-notice--error {
-	background: var(--wpss-danger-light, #fef2f2);
-	color: var(--wpss-danger-dark, #991b1b);
-	border: 1px solid var(--wpss-danger-border, #fecaca);
-}
-
-.wpss-notice--success {
-	background: var(--wpss-success-light, #f0fdf4);
-	color: var(--wpss-success-dark, #166534);
-	border: 1px solid var(--wpss-success-border, #bbf7d0);
-}
-
-.wpss-notice--info {
-	background: var(--wpss-info-light, #eff6ff);
-	color: var(--wpss-info-dark, #1e40af);
-	border: 1px solid var(--wpss-info-border, #bfdbfe);
-}
+/* Inline Error/Success Notices
+   2.7.1a dedup: the bare .wpss-notice BASE block (and its --error/--success/--info
+   modifiers) was removed here. The notice primitive is owned by design-system.css
+   using design tokens (display flex, align-items FLEX-START to keep the icon top-
+   aligned on multi-line notices, gap var(--wpss-space-3), padding
+   var(--wpss-space-4) var(--wpss-space-5), font-size var(--wpss-text-base),
+   border-radius var(--wpss-radius-lg), margin-bottom var(--wpss-space-5)) and the
+   AA-compliant -dark colour variants. design-system loads first on every frontend
+   cascade (wpss-design-system then wpss-frontend), so this duplicate (raw-px,
+   align-items center) only reintroduced the F9/F10 multi-line-icon breakage and a
+   tokenless base. Removed; design-system is the single owner. */
 
 /* Loading Spinner */
 .wpss-spinner {
@@ -298,40 +310,62 @@ select:invalid {
    Service Cards
    ========================================================================== */
 
-.wpss-services-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 24px;
-}
-
+/* F7: the base .wpss-services-grid (and the --2/--3/--4 modifiers) now live in
+   design-system.css so the grid lays out on EVERY surface, not just where
+   frontend.css happened to load. Only the legacy single-hyphen alias used by
+   templates/vendor/profile.php is kept here, mapped onto the shared 3-up
+   modifier so it stays a modifier of the one grid, not a re-implementation. */
 .wpss-services-grid-3 {
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
 	.wpss-services-grid-3 {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
 
-@media (max-width: 576px) {
-	.wpss-services-grid,
+@media (max-width: 600px) {
 	.wpss-services-grid-3 {
 		grid-template-columns: 1fr;
 	}
 }
 
-.wpss-service-card {
-	background: var(--wpss-white);
+/* The card renders as <article class="wpss-service-card post-N hentry">, so
+   the host theme's generic article / .hentry rules land on it. Reign 8.0.0
+   ships `article { background: 0 0 !important; padding: 0 0 30px; margin: 30px 0;
+   border-bottom: 1px solid ... }` plus `.hentry { background; border-color }`,
+   which strips our card surface, removes the border on three sides, and adds a
+   stray bottom rule. We re-assert every box property on the article selector
+   (and override the theme's !important background) so the card looks identical
+   on any theme. */
+.wpss-services-grid .wpss-service-card,
+article.wpss-service-card {
+	margin: 0;
+	padding: 0;
+	background: var(--wpss-white) !important;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
 	transition: all var(--wpss-transition);
 }
 
-.wpss-service-card:hover {
+.wpss-services-grid .wpss-service-card:hover,
+article.wpss-service-card:hover {
+	border-color: var(--wpss-primary);
 	box-shadow: var(--wpss-shadow-lg);
 	transform: translateY(-2px);
+}
+
+/* Reset the host theme's link colour bleed onto card text.
+   Reign sets `a { color: var(--reign-site-link-color) }` (and #fff in its dark
+   skin), which would otherwise recolour the whole card via the wrapping
+   <a class="wpss-service-card__link">. Inherit so child rules win. */
+.wpss-service-card .wpss-service-card__link,
+.wpss-service-card .wpss-service-card__link:hover,
+.wpss-service-card .wpss-service-card__link:focus,
+.wpss-service-card .wpss-service-card__link:visited {
+	color: var(--wpss-text);
 }
 
 .wpss-card-link {
@@ -502,17 +536,115 @@ select:invalid {
 	color: var(--wpss-gray-400);
 }
 
+/* Category overlay sits on top of the service image, so it needs its own
+   solid surface + dark text + a soft shadow to stay legible over any photo or
+   gradient. A semi-transparent white made the label wash out on light images
+   (BC 9958056390); a fully opaque chip with a drop shadow reads on everything. */
 .wpss-service-card__category {
 	position: absolute;
 	top: 10px;
 	left: 10px;
+	max-width: calc(100% - 20px);
 	padding: 4px 10px;
 	background: var(--wpss-white);
 	border-radius: var(--wpss-radius);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 	font-size: 11px;
 	font-weight: 600;
+	line-height: 1.4;
 	text-transform: uppercase;
-	color: var(--wpss-text);
+	letter-spacing: 0.02em;
+	color: var(--wpss-secondary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Favorite toggle — overlay heart on archive cards + inline button on the
+   single service page. Both share the .wpss-fav-toggle base. Card variant is an
+   absolutely positioned icon-only button on the media; single variant is an
+   inline icon + label button. Tokens only, 40px tap target, focus-visible ring,
+   logical inset/margin for RTL. */
+.wpss-fav-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-width: 40px;
+	min-height: 40px;
+	padding: 8px;
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	background: var(--wpss-white);
+	color: var(--wpss-text-light);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+	cursor: pointer;
+	transition: color var(--wpss-transition), background-color var(--wpss-transition), box-shadow var(--wpss-transition), border-color var(--wpss-transition);
+}
+
+.wpss-fav-toggle:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+}
+
+.wpss-fav-toggle .wpss-fav-toggle__icon {
+	width: 18px;
+	height: 18px;
+	transition: fill var(--wpss-transition), color var(--wpss-transition);
+}
+
+.wpss-fav-toggle.is-favorited {
+	color: var(--wpss-danger);
+	border-color: var(--wpss-danger);
+}
+
+.wpss-fav-toggle.is-favorited .wpss-fav-toggle__icon {
+	fill: var(--wpss-danger);
+}
+
+.wpss-fav-toggle.is-loading {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+/* Card variant — icon-only overlay pinned to the top-end corner of the media. */
+.wpss-service-card__fav {
+	position: absolute;
+	inset-block-start: 10px;
+	inset-inline-end: 10px;
+	padding: 0;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+	z-index: 2;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.wpss-service-card__fav:hover {
+		color: var(--wpss-danger);
+		border-color: var(--wpss-danger);
+	}
+}
+
+/* Single service variant — inline icon + visible label. */
+.wpss-single-service__actions {
+	margin-block: 12px 4px;
+}
+
+.wpss-fav-toggle--inline {
+	padding: 8px 16px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.wpss-fav-toggle--inline:hover {
+		color: var(--wpss-danger);
+		border-color: var(--wpss-danger);
+		background: var(--wpss-primary-light);
+	}
+
+	.wpss-fav-toggle--inline.is-favorited:hover {
+		background: var(--wpss-white);
+	}
 }
 
 .wpss-service-card__body {
@@ -602,6 +734,71 @@ select:invalid {
 	font-size: 16px;
 	font-weight: 700;
 	color: var(--wpss-secondary);
+}
+
+/* ==========================================================================
+   Seller-tier badge
+   --------------------------------------------------------------------------
+   Shared pill rendered next to the vendor name on the service card, vendor
+   card, and vendor profile. Colour comes from the tier modifier (token-driven)
+   rather than an inline style="" so every surface stays consistent and the
+   templates carry no presentation. Size modifiers cover the three contexts.
+   ========================================================================== */
+
+.wpss-seller-badge {
+	display: inline-block;
+	vertical-align: middle;
+	margin-inline-start: 4px;
+	padding: 1px 6px;
+	border-radius: var(--wpss-radius-full, 9999px);
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 1.6;
+	white-space: nowrap;
+	background: var(--wpss-tier-new-bg);
+	color: var(--wpss-tier-new-text);
+}
+
+.wpss-seller-badge--md {
+	margin-inline-start: 6px;
+	padding: 2px 8px;
+	font-size: 11px;
+}
+
+.wpss-seller-badge--lg {
+	margin-inline-start: 8px;
+	padding: 3px 10px;
+	font-size: 13px;
+}
+
+.wpss-seller-badge--new {
+	background: var(--wpss-tier-new-bg);
+	color: var(--wpss-tier-new-text);
+}
+
+.wpss-seller-badge--rising {
+	background: var(--wpss-tier-rising-bg);
+	color: var(--wpss-tier-rising-text);
+}
+
+.wpss-seller-badge--top_rated {
+	background: var(--wpss-tier-top-rated-bg);
+	color: var(--wpss-tier-top-rated-text);
+}
+
+.wpss-seller-badge--pro {
+	background: var(--wpss-tier-pro-bg);
+	color: var(--wpss-tier-pro-text);
+}
+
+.wpss-seller-badge--vacation {
+	background: var(--wpss-warning-light, #fffbeb);
+	color: var(--wpss-warning-dark, #92400e);
+}
+
+.wpss-seller-badge .wpss-icon {
+	vertical-align: -1px;
+	margin-inline-end: 2px;
 }
 
 /* ==========================================================================
@@ -1324,15 +1521,16 @@ select:invalid {
 	color: var(--wpss-text-secondary, #383d41);
 }
 
-/* Badges */
-.wpss-badge {
-	display: inline-flex;
-	padding: 2px 6px;
-	font-size: 10px;
-	font-weight: 600;
-	border-radius: var(--wpss-radius);
-	text-transform: uppercase;
-}
+/* Badges
+   2.7.1a dedup: the bare .wpss-badge BASE block was removed here. The badge
+   primitive is owned by design-system.css (inline-flex, align-items center,
+   padding 3px var(--wpss-space-3), font-size var(--wpss-text-xs), font-weight
+   600, border-radius var(--wpss-radius-full), text-transform uppercase), which
+   loads first on every frontend cascade (wpss-design-system then wpss-frontend).
+   The status MODIFIERS below are genuine frontend-only surface variants
+   (pending, approved, completed, rejected, and order-status colours) that
+   design-system does not own, so they stay and now compose on the single
+   canonical base. */
 
 /* Pending */
 .wpss-badge--pending {
@@ -1399,35 +1597,16 @@ select:invalid {
 	color: var(--wpss-info);
 }
 
-.wpss-badge--primary {
-	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
-}
-
-.wpss-badge--success {
-	background: var(--wpss-success-light, #d1fae5);
-	color: var(--wpss-success, #10b981);
-}
-
-.wpss-badge--warning {
-	background: var(--wpss-warning-light, #fef3c7);
-	color: var(--wpss-badge-extension-icon-fg, #b45309);
-}
-
-.wpss-badge--danger {
-	background: var(--wpss-danger-light, #fee2e2);
-	color: var(--wpss-danger, #ef4444);
-}
-
-.wpss-badge--info {
-	background: var(--wpss-info-light, #dbeafe);
-	color: var(--wpss-info, #3b82f6);
-}
-
-.wpss-badge--neutral {
-	background: var(--wpss-gray-100, #f1f5f9);
-	color: var(--wpss-gray-600, #475569);
-}
+/* Badge semantic variants (--primary/success/warning/danger/info/neutral)
+   2.7.1a dedup: these 6 colour modifiers were removed here. They are owned by
+   design-system.css, which colours the text with the AA-compliant -dark tokens
+   (--wpss-success-dark #065f46, --wpss-danger-dark #991b1b, --wpss-warning-dark
+   #92400e, --wpss-info-dark #1e40af). The frontend copies used the BRIGHT semantic
+   tokens (--wpss-success #10b981, --wpss-danger #ef4444, --wpss-info #3b82f6,
+   --wpss-primary #4f46e5) as text on a light tint, which FAILS WCAG AA 4.5:1.
+   design-system loads first on every frontend cascade and is the single owner;
+   the frontend status MODIFIERS above (pending/approved/completed/rejected/order-
+   status) stay because design-system does not own them. */
 
 /* ==========================================================================
    Order View
@@ -2772,13 +2951,12 @@ select:invalid {
 	}
 }
 
-/* Notice Styles */
-.wpss-notice {
-	padding: 15px 20px;
-	border-radius: var(--wpss-radius);
-	margin-bottom: 20px;
-}
-
+/* Notice Styles
+   2.7.1a dedup: the duplicate .wpss-notice BASE block (raw-px padding 15px 20px /
+   margin-bottom 20px) was removed here. The notice base is owned by
+   design-system.css with design tokens (see the dedup note in the "Inline
+   Error/Success Notices" section above). Only the frontend-specific paragraph
+   reset and the legacy single-dash colour aliases stay below. */
 .wpss-notice p {
 	margin: 0;
 }
@@ -3685,4 +3863,20 @@ body.wpss-modal-active {
 @media ( max-width: 640px ) {
 	.wpss-empty-state { padding: 32px 16px; }
 	.wpss-empty-state .wpss-btn { width: 100%; }
+}
+
+/* ==========================================================================
+   Full-width plugin page template (wpss-fullwidth-template.php)
+   ========================================================================== */
+
+.wpss-fullwidth-page {
+	width: 100%;
+	padding: var( --wpss-space-6, 24px ) var( --wpss-space-4, 16px );
+}
+.wpss-fullwidth-inner {
+	max-width: 1280px;
+	margin: 0 auto;
+}
+@media ( max-width: 640px ) {
+	.wpss-fullwidth-page { padding: var( --wpss-space-4, 16px ) var( --wpss-space-3, 12px ); }
 }

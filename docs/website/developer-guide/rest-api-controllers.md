@@ -1,6 +1,6 @@
 # REST API Controllers Reference
 
-WP Sell Services includes 20 dedicated REST API controllers. All endpoints use the base URL `/wp-json/wpss/v1/`.
+WP Sell Services includes 21 dedicated REST API controllers. All endpoints use the base URL `/wp-json/wpss/v1/`.
 
 For authentication, pagination, error handling, and generic endpoints, see [REST API Overview](rest-api-overview.md).
 
@@ -193,6 +193,49 @@ Authentication and session management **[PRO]**.
 **POST /auth/logout** - Logout
 **GET /auth/validate** - Validate token
 **POST /auth/refresh** - Refresh token
+
+## 21. Realtime (/realtime)
+
+Private-channel authorization for the realtime (WebSocket) layer. The plugin speaks the Pusher protocol, so this works with Pusher.com or any self-hosted Pusher-compatible server (e.g. Soketi). Client connection settings (key, host, cluster, port, TLS) are exposed under the `realtime` key of `GET /settings`; the app secret never leaves the server.
+
+### POST /realtime/auth
+
+Authorize a private-channel subscription per the Pusher auth contract. Called automatically by the bundled `wpss-realtime.js` client (with the `X-WP-Nonce` header); external clients can call it with any supported authentication method.
+
+**Authentication Required**: Yes (logged-in user)
+
+**Parameters**:
+- `socket_id` (string, required) - Pusher socket ID of the connecting client (format `123.456`)
+- `channel_name` (string, required) - Private channel to subscribe to
+
+**Allowed channels**:
+- `private-wpss-user-{ID}` - Only the user themself
+- `private-wpss-order-{ID}` - The order's customer, its vendor, or administrators
+
+**Response** (200):
+```json
+{
+  "auth": "app_key:hmac_sha256_signature"
+}
+```
+
+**Errors**:
+- `401 rest_not_logged_in` - Not authenticated
+- `403 wpss_realtime_forbidden` - Channel not owned by the current user (any channel outside the two shapes above is also refused)
+- `404 wpss_realtime_disabled` - Realtime is not enabled/configured on this site
+
+**Example**:
+```bash
+curl -X POST \
+  https://yoursite.com/wp-json/wpss/v1/realtime/auth \
+  -u "username:xxxx xxxx xxxx xxxx" \
+  -d "socket_id=1234.5678" \
+  -d "channel_name=private-wpss-user-45"
+```
+
+**Events published by the plugin**:
+- `notification.created` on `private-wpss-user-{ID}` - payload `{ id, type }`
+- `message.created` on `private-wpss-order-{ID}` and the recipient's `private-wpss-user-{ID}` - payload `{ order_id, sender_id, message_id, excerpt }`
 
 ## Related Documentation
 

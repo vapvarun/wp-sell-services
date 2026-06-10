@@ -148,7 +148,9 @@ class ValidateCommand {
 		$files = glob( $models_dir . '/*.php' );
 
 		foreach ( $files as $file ) {
-			$content  = file_get_contents( $file );
+			// Reading a local plugin source file in a WP-CLI command; wp_remote_get()
+			// (the sniff's suggestion) is for remote URLs and does not apply here.
+			$content  = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file read in CLI context.
 			$filename = basename( $file, '.php' );
 
 			// Check for from_row (should be from_db).

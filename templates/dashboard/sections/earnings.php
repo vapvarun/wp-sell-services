@@ -29,9 +29,37 @@ $earnings         = $earnings_service->get_summary( $user_id );
 $withdrawals      = $earnings_service->get_withdrawals( $user_id, array( 'limit' => 10 ) );
 $methods          = EarningsService::get_withdrawal_methods();
 $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
+
+// F9 payout banner: surface when the vendor has cleared earnings but has not
+// yet configured a payout method, so the section opens with a single, designed
+// call-to-action rather than a bare notice. Consumes the existing
+// .wpss-payout-banner primitive (design-system.css / unified-dashboard.css) —
+// info notice token surface, solid icon chip, primary-token CTA.
+$payout_method      = get_user_meta( $user_id, 'wpss_payout_method', true );
+$show_payout_banner = empty( $payout_method )
+	&& ( (float) $earnings['available_balance'] > 0 || (float) $earnings['pending_clearance'] > 0 );
 ?>
 
 <div class="wpss-section wpss-section--earnings">
+	<?php if ( $show_payout_banner ) : ?>
+		<div class="wpss-dashboard__payout-banner" role="status">
+			<span class="wpss-payout-banner__icon">
+				<i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i>
+			</span>
+			<div class="wpss-payout-banner__content">
+				<strong class="wpss-payout-banner__title">
+					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
+				</strong>
+				<span class="wpss-payout-banner__text">
+					<?php esc_html_e( 'Set up your payout method below to start receiving payments.', 'wp-sell-services' ); ?>
+				</span>
+			</div>
+			<a href="#wpss-withdrawal" class="wpss-btn wpss-btn--primary wpss-payout-banner__btn">
+				<?php esc_html_e( 'Set Up Payouts', 'wp-sell-services' ); ?>
+			</a>
+		</div>
+	<?php endif; ?>
+
 	<!-- Earnings Summary Cards -->
 	<div class="wpss-stats-grid wpss-stats-grid--4">
 		<div class="wpss-stat-card wpss-stat-card--highlight">
@@ -78,7 +106,7 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 	?>
 
 	<!-- Withdrawal Request Form -->
-	<div class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
+	<div id="wpss-withdrawal" class="wpss-earnings__withdrawal" style="margin-top: 2rem;">
 		<h3><?php esc_html_e( 'Request Withdrawal', 'wp-sell-services' ); ?></h3>
 
 		<?php if ( $earnings['available_balance'] >= $min_withdrawal ) : ?>
@@ -139,22 +167,107 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 				<div id="wpss-withdrawal-message" class="wpss-notice" style="display: none;"></div>
 			</form>
 		<?php else : ?>
-			<div class="wpss-notice wpss-notice--info">
-				<p>
-					<?php
-					printf(
-						/* translators: %s: minimum withdrawal amount */
-						esc_html__( 'You need at least %s in available balance to request a withdrawal.', 'wp-sell-services' ),
-						esc_html( wpss_format_price( $min_withdrawal ) )
-					);
-					?>
-				</p>
+			<?php
+			$wpss_earn_more_url = wpss_append_dashboard_section( get_permalink(), 'services' );
+			?>
+			<div class="wpss-banner wpss-banner--warning wpss-earnings__payout-banner" role="status">
+				<i data-lucide="piggy-bank" class="wpss-icon wpss-icon--lg wpss-banner__icon" aria-hidden="true"></i>
+				<div class="wpss-banner__content">
+					<span class="wpss-banner__title">
+						<?php esc_html_e( 'Not enough to cash out yet', 'wp-sell-services' ); ?>
+					</span>
+					<span class="wpss-banner__text">
+						<?php
+						printf(
+							/* translators: 1: current available balance, 2: minimum withdrawal amount */
+							esc_html__( 'You have %1$s available. Earn at least %2$s before you can request a withdrawal.', 'wp-sell-services' ),
+							esc_html( wpss_format_price( $earnings['available_balance'] ) ),
+							esc_html( wpss_format_price( $min_withdrawal ) )
+						);
+						?>
+					</span>
+				</div>
+				<a href="<?php echo esc_url( $wpss_earn_more_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm wpss-banner__action">
+					<i data-lucide="briefcase" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+					<?php esc_html_e( 'Manage your services', 'wp-sell-services' ); ?>
+				</a>
 			</div>
 		<?php endif; ?>
 	</div>
 
+	<?php
+	/**
+	 * Fires in the Payouts section's payout-methods area.
+	 *
+	 * The single place where payout-method rails render their vendor-facing UI,
+	 * so every method lives in ONE vendor section instead of separate nav items.
+	 * Manual withdrawal (above) is the universal baseline; add-ons (Pro PayPal
+	 * Payouts, Stripe Connect) hook here to render their setup/status when the
+	 * site owner has enabled that rail. Guarded with has_action() so a manual-
+	 * only site shows no empty block.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int    $user_id       Current vendor user ID.
+	 * @param string $payout_method The vendor's saved payout-method meta, if any.
+	 */
+	if ( has_action( 'wpss_payout_methods' ) ) :
+		?>
+		<div class="wpss-earnings__payout-methods wpss-payout-methods" style="margin-top: 2rem;">
+			<h3><?php esc_html_e( 'Payout Methods', 'wp-sell-services' ); ?></h3>
+			<p class="wpss-payout-methods__intro">
+				<?php esc_html_e( 'Set up how you would like to get paid. Your site can pay you manually using the withdrawal request above, or through one of the connected methods below.', 'wp-sell-services' ); ?>
+			</p>
+			<?php do_action( 'wpss_payout_methods', $user_id, $payout_method ); ?>
+		</div>
+		<?php
+	endif;
+	?>
+
+	<!-- Wallet Transactions Ledger -->
+	<div class="wpss-earnings__wallet wpss-wallet wpss-card" style="margin-top: 2rem;">
+		<div class="wpss-wallet__header">
+			<div>
+				<h3><?php esc_html_e( 'Wallet Transactions', 'wp-sell-services' ); ?></h3>
+				<p class="wpss-form-hint"><?php esc_html_e( 'Every credit and debit on your wallet, newest first.', 'wp-sell-services' ); ?></p>
+			</div>
+			<?php
+			/**
+			 * Fires in the wallet ledger header, for ledger controls.
+			 *
+			 * Add-ons (Pro) hook here to add a period selector + CSV export for
+			 * the ledger, so those controls live in the one Earnings & Payouts
+			 * section rather than a duplicate template.
+			 *
+			 * @since 1.2.0
+			 * @param int $user_id Current vendor user ID.
+			 */
+			do_action( 'wpss_earnings_ledger_actions', $user_id );
+			?>
+		</div>
+
+		<div id="wpss-wallet-transactions"
+			class="wpss-wallet__list"
+			data-rest-path="wallet/transactions"
+			data-per-page="10"
+			aria-live="polite"
+			aria-busy="true">
+			<div class="wpss-wallet__loading">
+				<span class="wpss-spinner" aria-hidden="true"></span>
+				<?php esc_html_e( 'Loading transactions…', 'wp-sell-services' ); ?>
+			</div>
+		</div>
+
+		<button type="button"
+			id="wpss-wallet-load-more"
+			class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-wallet__more"
+			style="display: none; margin-top: 1rem;">
+			<?php esc_html_e( 'Load more', 'wp-sell-services' ); ?>
+		</button>
+	</div>
+
 	<!-- Withdrawal History -->
-	<div class="wpss-earnings__history" style="margin-top: 2rem;">
+	<div class="wpss-earnings__history wpss-card" style="margin-top: 2rem;">
 		<h3><?php esc_html_e( 'Withdrawal History', 'wp-sell-services' ); ?></h3>
 
 		<?php if ( ! empty( $withdrawals ) ) : ?>

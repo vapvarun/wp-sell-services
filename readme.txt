@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -258,6 +258,37 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.2.0 - June 2026 =
+
+Full audit and hardening sprint. Every customer-facing surface rebuilt on the shared design system, all known issues from the 1.1.x cycle resolved.
+
+* New      - Real-time updates (optional): live order messages and notification badges over WebSockets, powered by Pusher.com or a self-hosted Pusher-compatible server such as Soketi. Disabled by default; enable under Settings - Advanced.
+* New      - Review Moderation admin page - approve, reject, and audit customer reviews with status filters and a four-card stats strip.
+* New      - My Notifications admin page - a read-only mirror of your in-app marketplace notification stream.
+* New      - Wallet ledger entries now link straight to the related order, tip, extension, or milestone.
+* Improve  - Unified dashboard shell across every frontend template so Services, Dashboard, and profile sections read as one product.
+* Improve  - Premium UX uplift on all frontend surfaces - token-driven styling, designed empty states, consistent buttons, badges, and notices at AA contrast.
+* Improve  - Lucide line icons throughout, replacing emoji in notifications, single-service highlights, and helpful-vote controls.
+* Improve  - Dashboard sections now use pretty permalinks (/dashboard/section/) with a 301 fallback for legacy ?section= URLs.
+* Improve  - The earnings area is now "Earnings & Payouts" with manual withdrawal plus extension points so Pro can add PayPal and Stripe payout rails in the same section.
+* Improve  - Confirmation prompts and toast messages use a shared design-system dialog instead of the browser native pop-ups.
+* Improve  - Marketplace pages (Dashboard, Cart, Checkout, Become a Vendor) now render full-width without the theme blog sidebar, with native layout support for the Reign and BuddyX themes and a sidebar-free fallback for any other theme.
+* Improve  - Opening the dashboard lands active vendors on their Sales overview and buyers on My Orders.
+* Improve  - Plugin admin screens hide unrelated third-party notices so the marketplace pages stay focused.
+* Fix      - Services archive no longer shows visitor-scoped data when set as the site front page.
+* Fix      - Services archive and single templates - card borders, category-label overlay, button backgrounds, transparent popups, and sidebar filters.
+* Fix      - Favorites now read and write a single canonical meta key, with a one-time lazy merge of the legacy key.
+* Fix      - Resubmitting a rejected service re-queues it for moderation and clears the prior rejection reason.
+* Fix      - Dashboard section header keeps the title on the left and groups the primary action with the Replay tour control on the right, with a clean wrap on mobile.
+* Fix      - The set-up-payouts prompt no longer repeats on every dashboard tab; it stays within the Earnings & Payouts section.
+* Fix      - Order conversation messages can be sent with only an image attached and no text.
+* Fix      - Saving settings now shows a confirmation message instead of completing silently.
+* Fix      - Service add-ons created from the admin service editor or WP-CLI now appear in the cart and checkout, not just the order modal.
+* Fix      - Vendor vacation mode is now honored on the single service page - a notice banner shows the seller's message and return date and the order button is disabled, so buyers cannot purchase while the seller is away. Vendors and admins can set an optional return date.
+* Dev      - REST status parameter on service update (publish or draft), owner-gated.
+* Dev      - Service wizard extension hooks (wpss_wizard_service_data, wpss_wizard_pricing_after, wpss_wizard_sanitize_service_data, wpss_wizard_save_service_meta) let extensions inject fields into the frontend Create Service flow. New filters wpss_use_fullwidth_template, wpss_fullwidth_page_keys, wpss_dashboard_default_section, and wpss_realtime_settings.
+* Dev      - audit/manifest.json refreshed; full inventory of REST routes, hooks, tables, shortcodes, and admin pages.
 
 = 1.1.1 =
 

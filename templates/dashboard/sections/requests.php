@@ -63,7 +63,7 @@ $active_count = count(
 			</div>
 			<h3><?php esc_html_e( 'No requests yet', 'wp-sell-services' ); ?></h3>
 			<p><?php esc_html_e( "Can't find the right service? Post a request and let sellers come to you.", 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( add_query_arg( 'section', 'create-request', wpss_get_page_url( 'dashboard' ) ?: get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary">
+			<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'create-request' ) ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Post a Request', 'wp-sell-services' ); ?>
 			</a>
 		</div>

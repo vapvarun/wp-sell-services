@@ -34,6 +34,24 @@ abstract class RestController extends WP_REST_Controller {
 	protected $namespace = 'wpss/v1';
 
 	/**
+	 * Sort directions.
+	 */
+	public const SORT_ASC  = 'ASC';
+	public const SORT_DESC = 'DESC';
+
+	/**
+	 * Allowed sort directions for list endpoints.
+	 *
+	 * Canonical source for every REST `order`/`sort` direction enum so the
+	 * accepted values never drift between controllers.
+	 *
+	 * @return array<int, string> Sort direction keys.
+	 */
+	public static function sort_directions(): array {
+		return array( self::SORT_ASC, self::SORT_DESC );
+	}
+
+	/**
 	 * Check if user can access endpoints.
 	 *
 	 * @param WP_REST_Request $request Request object.

@@ -67,7 +67,7 @@ class ProposalsController extends RestController {
 						[
 							'status' => [
 								'type' => 'string',
-								'enum' => [ 'pending', 'accepted', 'rejected', 'withdrawn' ],
+								'enum' => array_keys( ProposalService::get_statuses() ),
 							],
 						]
 					),

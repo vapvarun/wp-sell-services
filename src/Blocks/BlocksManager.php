@@ -196,8 +196,10 @@ class BlocksManager {
 			'wpss-blocks',
 			'wpssBlocksFrontend',
 			[
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wpss_blocks_frontend' ),
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'nonce'     => wp_create_nonce( 'wpss_blocks_frontend' ),
+				'apiUrl'    => esc_url_raw( rest_url( 'wpss/v1' ) ),
+				'restNonce' => wp_create_nonce( 'wp_rest' ),
 			]
 		);
 	}

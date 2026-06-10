@@ -1,0 +1,149 @@
+{
+  "$schema": "internal://wpss/ajax-rest-map/v1",
+  "title": "WP Sell Services - admin-ajax to wpss/v1 REST migration map",
+  "direction": "6.3.1",
+  "generated": "2026-06-08",
+  "summary": "Maps every frontend admin-ajax action to its wpss/v1 REST twin. As of 1.2.0 ALL flows (KG-1 through KG-7) are migrated and browser-verified - the HTML-rendering flows now use shared server-side renderers (wpss_render_services_grid, wpss_render_message_row) exposed over REST, and the vendor-profile twin was brought to full field+table parity (one canonical store). All legacy wp_ajax_* handlers remain registered as backward-compatible delegates - nothing was removed. former_blocker fields are retained as the historical record of what was resolved.",
+  "resolved_1_2_0": "KG-1 reviews load-more, KG-2 review helpful, KG-3 services grid, KG-4 conversation send+poll (incl. multipart attachments), KG-5 vendor profile parity (intro video + table storage; also fixed the _wpss_is_vendor vs wpss_is_vendor() guard bug shared by both transports), KG-6 single-service favorites (dead handler removed; live toggle already REST), KG-7 delivery multipart upload.",
+  "conventions": {
+    "rest_namespace": "wpss/v1",
+    "auth_header": "X-WP-Nonce (wp_rest nonce)",
+    "js_client": "jQuery $.ajax with beforeSend X-WP-Nonce (the established in-repo REST idiom; see assets/js/frontend.js favorites + reviews flows)",
+    "legacy_handlers": "kept registered in src/Frontend/AjaxHandlers.php for backward compatibility; each already delegates to the same Service its REST twin uses"
+  },
+  "flows": [
+    {
+      "name": "favorites - toggle (single service page)",
+      "ajax_actions": ["wpss_favorite_service", "wpss_unfavorite_service"],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::favorite_service / ::unfavorite_service",
+      "rest_twin": ["POST /wpss/v1/favorites/{service_id}", "DELETE /wpss/v1/favorites/{service_id}"],
+      "rest_controller": "WPSellServices\\API\\FavoritesController",
+      "shared_service": "WPSellServices\\Services\\FavoritesService::add / ::remove",
+      "js_call_site": "assets/js/single-service.js (WPSSFavorite.bindEvents)",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "Migration requires localizing apiUrl + restNonce onto the wpssService object, which lives in src/Frontend/SingleServiceView.php::enqueue_assets() - that file is OUTSIDE this direction's scope (scope allows only src/Frontend/AjaxHandlers.php under src/Frontend/). The dependent single-service.js change was reverted to avoid calling an undefined wpssService.apiUrl (which would break favorites). FavoritesController add_favorite/remove_favorite were still given an additive `count` field (in-scope, src/API/**) so the migration is a one-line localization away once SingleServiceView.php is in scope.",
+      "follow_up": "KG-6"
+    },
+    {
+      "name": "favorites - toggle (services archive / cards)",
+      "ajax_actions": ["wpss_favorite_service", "wpss_unfavorite_service"],
+      "rest_twin": ["POST /wpss/v1/favorites/{service_id}", "DELETE /wpss/v1/favorites/{service_id}"],
+      "rest_controller": "WPSellServices\\API\\FavoritesController",
+      "shared_service": "WPSellServices\\Services\\FavoritesService",
+      "js_call_site": "assets/js/frontend.js (WPSS favorite toggle)",
+      "migrated": true,
+      "notes": "Already migrated to REST before this wave (pre-existing); left unchanged. Proven reference pattern for this direction."
+    },
+    {
+      "name": "favorites - remove from saved grid (unified dashboard)",
+      "ajax_actions": ["wpss_unfavorite_service"],
+      "rest_twin": ["DELETE /wpss/v1/favorites/{service_id}"],
+      "rest_controller": "WPSellServices\\API\\FavoritesController",
+      "shared_service": "WPSellServices\\Services\\FavoritesService::remove",
+      "js_call_site": "assets/js/unified-dashboard.js (handleFavoriteRemove)",
+      "migrated": true,
+      "notes": "Migrated to REST DELETE. Reads response.count (now returned by remove_favorite) to update the saved-count label. Uses the dashboard's existing restUrl + restNonce localized keys."
+    },
+    {
+      "name": "service status toggle (pause / publish on dashboard)",
+      "ajax_actions": ["wpss_update_service_status"],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::update_service_status",
+      "rest_twin": ["PUT /wpss/v1/services/{id} (status param)"],
+      "rest_controller": "WPSellServices\\API\\ServicesController::update_item",
+      "shared_backend": "wp_update_post (both paths); REST restricts status to publish|draft (6.0b merged)",
+      "js_call_site": "assets/js/unified-dashboard.js (handleToggleStatus)",
+      "migrated": true,
+      "notes": "Migrated to PUT /services/{id} with explicit target status. The legacy AJAX flipped status server-side; the JS now flips client-side (currentStatus -> targetStatus) and reads response.status (= post_status) from the prepared service response. update_item_permissions_check enforces vendor ownership, matching the AJAX post_author check."
+    },
+    {
+      "name": "order lifecycle transitions (accept/reject/start/deliver/complete/cancel/accept-cancellation/reject-cancellation)",
+      "ajax_actions": [
+        "wpss_accept_order", "wpss_decline_order", "wpss_start_work", "wpss_deliver_order",
+        "wpss_accept_delivery", "wpss_cancel_order", "wpss_accept_cancellation", "wpss_reject_cancellation"
+      ],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::accept_order / ::decline_order / ::start_work / ...",
+      "rest_twin": ["POST /wpss/v1/orders/{id}/{action} where action in accept|reject|start|deliver|complete|cancel|accept-cancellation|reject-cancellation"],
+      "rest_controller": "WPSellServices\\API\\OrdersController::perform_action",
+      "shared_service": "WPSellServices\\Services\\OrderService (update_status / start_work / request_revision / cancel) - the SAME service both the AJAX handlers and the REST twin route through",
+      "js_call_site": "assets/js/frontend.js (WPSS.performOrderAction)",
+      "migrated": true,
+      "notes": "Migrated to REST. The frontend consumer only needs success/failure (it does location.reload() on success and ignores the body), so the migration is byte-compatible from the consumer's perspective. Frontend action keys map 1:1 to the REST action regex segments. Legacy wp_ajax_* handlers remain as delegates to the same OrderService methods."
+    },
+    {
+      "name": "reviews - load more (single service page)",
+      "ajax_actions": ["wpss_load_reviews"],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::load_reviews",
+      "rest_twin": ["GET /wpss/v1/reviews?service_id=&page=&per_page="],
+      "rest_controller": "WPSellServices\\API\\ReviewsController::get_items",
+      "shared_service": "WPSellServices\\Services\\ReviewService",
+      "js_call_site": "assets/js/single-service.js (WPSSReviews load-more)",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "NOT byte-compatible. load_reviews returns ob_get_clean() server-rendered review HTML ({html, has_more}); the JS appends response.data.html directly. The REST GET /reviews returns a structured JSON list envelope, not HTML. Migrating requires client-side review rendering (a behavior/markup change) which violates direction 6.3.1's 'byte-compatible response shapes; nothing removed' constraint. frontend.js's reviews-load was migrated separately with bespoke client rendering; replicating that for single-service.js is a markup-parity rewrite that must be browser-verified, out of safe scope for this static pass.",
+      "follow_up": "KG-1"
+    },
+    {
+      "name": "reviews - mark helpful (single service page)",
+      "ajax_actions": ["wpss_mark_review_helpful"],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::mark_review_helpful",
+      "rest_twin": ["POST /wpss/v1/reviews/{id}/helpful (ReviewsController CREATABLE helpful route)"],
+      "rest_controller": "WPSellServices\\API\\ReviewsController",
+      "js_call_site": "assets/js/single-service.js (helpful button)",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "Adjacent to reviews-load; deferred with it to keep the single-service reviews block migrated as one verified unit rather than half-converted. Response shape ({count}) is compatible, but it shares the reviews block and should be browser-verified together.",
+      "follow_up": "KG-2"
+    },
+    {
+      "name": "services - load / pagination (services block)",
+      "ajax_actions": ["wpss_load_services"],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::load_services",
+      "rest_twin": ["GET /wpss/v1/services?... (ServicesController::get_items)"],
+      "rest_controller": "WPSellServices\\API\\ServicesController",
+      "shared_service": "WP_Query via ServicesController",
+      "js_call_site": "assets/js/blocks-frontend.js (load services)",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "NOT byte-compatible. load_services returns ob_get_clean() server-rendered cards HTML ({html, pagination}); the JS appends it to the grid. GET /services returns structured JSON. Same HTML-vs-JSON mismatch as reviews-load. Migrating requires a client-side card renderer with markup parity, browser-verified - out of safe scope for this static pass.",
+      "follow_up": "KG-3"
+    },
+    {
+      "name": "conversation / messaging - send message (order thread)",
+      "ajax_actions": ["wpss_send_message", "wpss_send_direct_message"],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::send_message / ::send_direct_message",
+      "rest_twin": ["POST /wpss/v1/conversations/{id}/messages (ConversationsController CREATABLE)"],
+      "rest_controller": "WPSellServices\\API\\ConversationsController",
+      "shared_service": "WPSellServices\\Services\\ConversationService::send_message",
+      "js_call_site": "assets/js/conversation.js (sendMessage)",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "Pre-existing JS<->PHP contract inconsistency must be resolved before a safe migration. The AJAX send_message returns {message: 'Message sent.' (string), message_id, html (rendered)}, but conversation.js reads response.data.message as a structured object (message.id, message.attachments) and re-renders it client-side - so the current consumer/handler contract is already inconsistent. The REST twin returns prepare_message_for_response (a structured object), which actually matches the JS consumer's expectation, but switching to it changes the response shape vs the (inconsistent) AJAX shape and must be browser-verified on a live thread (text + image attachment) before shipping. Per the stability mandate (never fix blindly; browser-verify every messaging flow), deferred from this static pass.",
+      "follow_up": "KG-4"
+    },
+    {
+      "name": "profile update incl. intro video (flow #12)",
+      "ajax_actions": ["wpss_update_vendor_profile"],
+      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::update_vendor_profile",
+      "rest_twin": ["PUT /wpss/v1/vendors/me (VendorsController::update_current_vendor)"],
+      "rest_controller": "WPSellServices\\API\\VendorsController",
+      "js_call_site": "assets/js/unified-dashboard.js (profile form submit)",
+      "migrated": true,
+      "migrated_in": "1.2.0",
+      "former_blocker": "The REST twin is NOT a faithful twin. (1) Field coverage diverges: the AJAX handler writes tagline, bio, country, city, website, intro_video_url (validated via wpss_is_supported_video_url), vacation_mode, vacation_message, avatar_id, cover_image_id; VendorsController::update_current_vendor handles only bio, tagline, skills, languages, social_links, avatar_id, response_time, display_name - it does NOT handle intro_video_url (the flow #12 field), country, city, website, vacation_*, or cover. (2) Storage backend diverges: AJAX writes to the {prefix}wpss_vendor_profiles custom table; the REST twin writes to user_meta. Migrating as-is would silently DROP the intro video + several profile fields and split storage - a guaranteed data-loss regression that violates 'byte-compatible; nothing removed'. A correct migration requires bringing update_current_vendor to full field + custom-table parity AND a profile read/write round-trip browser-verified for the intro-video embed - a larger piece of work than a static JS swap.",
+      "follow_up": "KG-5"
+    }
+  ],
+  "migrated_count": 10,
+  "deferred_count": 0,
+  "removed_handlers": [],
+  "resolved_gaps": [
+    "KG-1: single-service.js reviews load-more now GETs /wpss/v1/reviews and renders each item client-side via renderReviewItem() with markup parity; ReviewsController gained additive presentation fields (created_human, review_html, vendor_reply_html/_human). Browser-verified on service 16 (198 reviews).",
+    "KG-2: review 'helpful' now POSTs /wpss/v1/reviews/{id}/helpful, reads {count}. Verified with KG-1 as one unit.",
+    "KG-3: services grid now GETs /wpss/v1/services/grid (server-rendered cards+pagination via shared wpss_render_services_grid; the service-card template + its extension hooks preserved). Fixed a REST-context fatal in wpss_pagination (get_pagenum_link guard + explicit base). Verified page 2 of 30.",
+    "KG-4: order + dashboard messaging migrated to REST (POST /orders/{id}/conversation/messages creates-on-first-send + multipart attachments; poll via GET /conversations/{id}/messages?after_id=). Shared wpss_render_message_row + wpss_handle_message_attachments. Dead conversation.js removed. Browser-verified text + image + live poll on order 49 / conversation 9.",
+    "KG-5: vendor-profile now writes ONE canonical store (wpss_vendor_profiles) via VendorService::update_profile() for both REST PUT /vendors/me and the legacy AJAX; intro_video_url/country/city/website/vacation/cover all persist. Also fixed the vendor guard (wpss_is_vendor() vs raw _wpss_is_vendor meta) that rejected role-based vendors on both transports. Browser-verified: PUT 200, DB persisted, read-back, intro-video embed renders.",
+    "KG-6: the live single-service favorite (.wpss-fav-toggle) was already REST via frontend.js; the dead .wpss-favorite-btn handler in single-service.js was removed. apiUrl+restNonce localized.",
+    "KG-7: delivery submission now POSTs /orders/{id}/deliverables with multipart files[] (create_deliverable ingests raw $_FILES via shared wpss_normalize_uploaded_files; the prior integer-ID files arg never actually attached files). Browser-verified on order 49: 201, attachment stored, order -> pending_approval."
+  ]
+}

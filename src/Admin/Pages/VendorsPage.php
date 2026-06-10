@@ -15,7 +15,9 @@ namespace WPSellServices\Admin\Pages;
 use WPSellServices\Database\Repositories\VendorProfileRepository;
 use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Services\CommissionService;
+use WPSellServices\Services\SellerLevelService;
 use WPSellServices\Services\VendorService;
+use WPSellServices\Models\VendorProfile;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -55,13 +57,21 @@ class VendorsPage {
 	private VendorService $vendor_service;
 
 	/**
+	 * Seller level service.
+	 *
+	 * @var SellerLevelService
+	 */
+	private SellerLevelService $seller_level_service;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->vendor_repo        = new VendorProfileRepository();
-		$this->order_repo         = new OrderRepository();
-		$this->commission_service = new CommissionService();
-		$this->vendor_service     = new VendorService();
+		$this->vendor_repo          = new VendorProfileRepository();
+		$this->order_repo           = new OrderRepository();
+		$this->commission_service   = new CommissionService();
+		$this->vendor_service       = new VendorService();
+		$this->seller_level_service = new SellerLevelService();
 	}
 
 	/**
@@ -80,6 +90,8 @@ class VendorsPage {
 		add_action( 'wp_ajax_wpss_vendor_tab_content', array( $this, 'ajax_get_tab_content' ) );
 		add_action( 'wp_ajax_wpss_update_vendor_vacation', array( $this, 'ajax_update_vendor_vacation' ) );
 		add_action( 'wp_ajax_wpss_update_vendor_availability', array( $this, 'ajax_update_vendor_availability' ) );
+		add_action( 'wp_ajax_wpss_update_vendor_level', array( $this, 'ajax_update_vendor_level' ) );
+		add_action( 'wp_ajax_wpss_moderate_portfolio_item', array( $this, 'ajax_moderate_portfolio_item' ) );
 	}
 
 	/**
@@ -710,6 +722,37 @@ class VendorsPage {
 				float: none;
 				margin: 0 10px 0 0;
 			}
+			.wpss-admin-confirm__box {
+				max-width: 420px;
+				margin: 12% auto;
+				padding: var(--wpss-space-6, 24px);
+				width: auto;
+			}
+			.wpss-admin-confirm__msg {
+				margin: 0 0 var(--wpss-space-5, 20px);
+				font-size: var(--wpss-text-sm, 14px);
+				line-height: 1.5;
+			}
+			.wpss-admin-confirm__actions {
+				display: flex;
+				gap: var(--wpss-space-3, 12px);
+				justify-content: flex-end;
+			}
+			.wpss-form-row--inline {
+				display: flex;
+				align-items: center;
+				gap: var(--wpss-space-3, 12px);
+				margin-top: var(--wpss-space-4, 16px);
+			}
+			.wpss-status-line {
+				margin-top: var(--wpss-space-3, 12px);
+			}
+			.wpss-status-line__muted {
+				color: var(--wpss-wp-admin-text-secondary, #646970);
+			}
+			.wpss-status-line__success {
+				color: var(--wpss-success, #00a32a);
+			}
 
 			#wpss-vendor-modal-body .wpss-vendor-details {
 				padding: 20px;
@@ -1303,8 +1346,14 @@ class VendorsPage {
 				<button type="button" class="wpss-detail-tab" data-tab="earnings">
 					<?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?>
 				</button>
+				<button type="button" class="wpss-detail-tab" data-tab="wallet">
+					<?php esc_html_e( 'Wallet', 'wp-sell-services' ); ?>
+				</button>
 				<button type="button" class="wpss-detail-tab" data-tab="reviews">
 					<?php esc_html_e( 'Reviews', 'wp-sell-services' ); ?>
+				</button>
+				<button type="button" class="wpss-detail-tab" data-tab="portfolio">
+					<?php esc_html_e( 'Portfolio', 'wp-sell-services' ); ?>
 				</button>
 				<button type="button" class="wpss-detail-tab" data-tab="settings">
 					<?php esc_html_e( 'Settings', 'wp-sell-services' ); ?>
@@ -1412,6 +1461,8 @@ class VendorsPage {
 					initOrdersHandlers();
 				} else if (tab === 'reviews') {
 					initReviewsHandlers();
+				} else if (tab === 'portfolio') {
+					initPortfolioHandlers();
 				}
 			}
 
@@ -1485,10 +1536,12 @@ class VendorsPage {
 					});
 				});
 
-				// Vacation mode toggle.
-				$('#wpss-vacation-mode-toggle').off('change').on('change', function() {
-					var enabled = $(this).is(':checked');
+				// Vacation mode toggle (and return-date change re-saves with the
+				// current toggle state so admins can set/clear the date directly).
+				var saveVacation = function() {
+					var enabled = $('#wpss-vacation-mode-toggle').is(':checked');
 					var message = $('#wpss-vacation-message').val() || '';
+					var returnDate = $('#wpss-vacation-return-date').val() || '';
 
 					$.ajax({
 						url: ajaxUrl,
@@ -1498,7 +1551,8 @@ class VendorsPage {
 							nonce: nonce,
 							vendor_id: vendorId,
 							enabled: enabled ? 1 : 0,
-							message: message
+							message: message,
+							return_date: returnDate
 						},
 						success: function(response) {
 							if (response.success) {
@@ -1510,7 +1564,10 @@ class VendorsPage {
 							}
 						}
 					});
-				});
+				};
+
+				$('#wpss-vacation-mode-toggle').off('change').on('change', saveVacation);
+				$('#wpss-vacation-return-date').off('change').on('change', saveVacation);
 
 				// Availability toggle.
 				$('#wpss-availability-toggle').off('change').on('change', function() {
@@ -1535,6 +1592,87 @@ class VendorsPage {
 							}
 						}
 					});
+				});
+
+				// Seller-level override (admin manually sets the verification tier; bypasses auto-calc).
+				$('#wpss-save-level-detail').off('click').on('click', function() {
+					var level = $('#wpss-level-select-detail').val();
+					var $btn = $(this);
+
+					$btn.prop('disabled', true);
+
+					$.ajax({
+						url: ajaxUrl,
+						type: 'POST',
+						data: {
+							action: 'wpss_update_vendor_level',
+							nonce: nonce,
+							vendor_id: vendorId,
+							level: level
+						},
+						success: function(response) {
+							if (response.success) {
+								$('#wpss-level-status').html('<span class="wpss-status-line__success"></span>').find('span').text(response.data.message);
+								delete tabCache['settings'];
+								delete tabCache['overview'];
+							} else {
+								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating seller level.', 'wp-sell-services' ) ); ?>', 'error');
+							}
+							$btn.prop('disabled', false);
+						},
+						error: function() {
+							wpssAdminNotice('<?php echo esc_js( __( 'Error updating seller level.', 'wp-sell-services' ) ); ?>', 'error');
+							$btn.prop('disabled', false);
+						}
+					});
+				});
+			}
+
+			// Portfolio tab handlers (moderation: feature/unfeature/delete).
+			function initPortfolioHandlers() {
+				$('.wpss-portfolio-action').off('click').on('click', function() {
+					var $btn = $(this);
+					var itemId = $btn.data('item-id');
+					var modAction = $btn.data('mod-action');
+
+					function proceed() {
+						$btn.prop('disabled', true);
+
+						$.ajax({
+							url: ajaxUrl,
+							type: 'POST',
+							data: {
+								action: 'wpss_moderate_portfolio_item',
+								nonce: nonce,
+								vendor_id: vendorId,
+								item_id: itemId,
+								mod_action: modAction
+							},
+							success: function(response) {
+								if (response.success) {
+									delete tabCache['portfolio'];
+									$('#wpss-tab-content').html(response.data.html);
+									initPortfolioHandlers();
+								} else {
+									wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
+									$btn.prop('disabled', false);
+								}
+							},
+							error: function() {
+								wpssAdminNotice('<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
+								$btn.prop('disabled', false);
+							}
+						});
+					}
+
+					if (modAction === 'delete') {
+						window.wpssConfirm('<?php echo esc_js( __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ) ); ?>', { tone: 'danger' }).then(function(ok) {
+							if (ok) { proceed(); }
+						});
+						return;
+					}
+
+					proceed();
 				});
 			}
 
@@ -2198,8 +2336,14 @@ class VendorsPage {
 			case 'earnings':
 				$this->render_tab_earnings( $vendor_id );
 				break;
+			case 'wallet':
+				$this->render_tab_wallet( $vendor_id );
+				break;
 			case 'reviews':
 				$this->render_tab_reviews( $vendor_id );
+				break;
+			case 'portfolio':
+				$this->render_tab_portfolio( $vendor_id );
 				break;
 			case 'settings':
 				$this->render_tab_settings( $vendor_id );
@@ -2775,6 +2919,118 @@ class VendorsPage {
 	}
 
 	/**
+	 * Render Wallet tab content (read-only).
+	 *
+	 * Surfaces the vendor's `wpss_wallet_transactions` ledger inside the admin
+	 * detail drawer. Read-only: admins audit balance movements here; mutations
+	 * stay in their owning flows (orders, tips, withdrawals).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return void
+	 */
+	private function render_tab_wallet( int $vendor_id ): void {
+		global $wpdb;
+
+		$limit = 50;
+
+		// Current balance = balance_after on the latest transaction.
+		$wallet_balance = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(balance_after, 0)
+				FROM {$wpdb->prefix}wpss_wallet_transactions
+				WHERE user_id = %d
+				ORDER BY created_at DESC, id DESC
+				LIMIT 1",
+				$vendor_id
+			)
+		);
+
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_wallet_transactions WHERE user_id = %d",
+				$vendor_id
+			)
+		);
+
+		// Most recent transactions (read-only audit view).
+		$transactions = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, type, amount, balance_after, currency, description, reference_type, reference_id, status, created_at
+				FROM {$wpdb->prefix}wpss_wallet_transactions
+				WHERE user_id = %d
+				ORDER BY created_at DESC, id DESC
+				LIMIT %d",
+				$vendor_id,
+				$limit
+			)
+		);
+		?>
+		<div class="wpss-tab-section">
+			<h3><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></h3>
+			<div class="wpss-earnings-summary">
+				<div class="wpss-earnings-card">
+					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
+					<?php esc_html_e( 'Current Balance', 'wp-sell-services' ); ?>
+				</div>
+				<div class="wpss-earnings-card">
+					<strong><?php echo esc_html( number_format_i18n( $total ) ); ?></strong>
+					<?php esc_html_e( 'Total Transactions', 'wp-sell-services' ); ?>
+				</div>
+			</div>
+		</div>
+
+		<div class="wpss-tab-section">
+			<h3><?php esc_html_e( 'Transaction History', 'wp-sell-services' ); ?></h3>
+			<?php if ( $total > $limit ) : ?>
+				<p class="description">
+					<?php
+					printf(
+						/* translators: %d: number of transactions shown */
+						esc_html__( 'Showing the %d most recent transactions.', 'wp-sell-services' ),
+						(int) $limit
+					);
+					?>
+				</p>
+			<?php endif; ?>
+			<?php if ( empty( $transactions ) ) : ?>
+				<p><?php esc_html_e( 'No wallet transactions yet.', 'wp-sell-services' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Balance', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $transactions as $txn ) : ?>
+							<tr>
+								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $txn->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
+								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
+								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
+								<td><?php echo esc_html( wpss_format_price( (float) $txn->balance_after ) ); ?></td>
+								<td>
+									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $txn->status ); ?>">
+										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>
+									</span>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render Reviews tab content.
 	 *
 	 * @param int $vendor_id Vendor user ID.
@@ -2915,6 +3171,105 @@ class VendorsPage {
 	}
 
 	/**
+	 * Render Portfolio tab content (admin moderation).
+	 *
+	 * Lists the vendor's portfolio_items so an admin can moderate the public
+	 * showcase from inside the drawer: feature/unfeature an item, or remove an
+	 * inappropriate one. Mirrors the operations exposed by PortfolioController
+	 * (toggle_featured / delete_item) but gated to manage_options.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return void
+	 */
+	private function render_tab_portfolio( int $vendor_id ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- vendor profile portfolio audit read; vendor_id bound via %d.
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, service_id, title, description, external_url, is_featured, sort_order, created_at
+				FROM {$wpdb->prefix}wpss_portfolio_items
+				WHERE vendor_id = %d
+				ORDER BY is_featured DESC, sort_order ASC, created_at DESC",
+				$vendor_id
+			)
+		);
+		?>
+		<div class="wpss-tab-section">
+			<h3><?php esc_html_e( 'Portfolio Moderation', 'wp-sell-services' ); ?></h3>
+			<p class="description">
+				<?php esc_html_e( 'Review the items this vendor shows on their public profile. Feature an item to pin it to the top, or remove items that breach your marketplace policy.', 'wp-sell-services' ); ?>
+			</p>
+			<?php if ( empty( $items ) ) : ?>
+				<p><?php esc_html_e( 'This vendor has no portfolio items.', 'wp-sell-services' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Title', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Linked Service', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Added', 'wp-sell-services' ); ?></th>
+							<th><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $items as $item ) : ?>
+							<?php
+							$is_featured   = ! empty( $item->is_featured );
+							$service_title = $item->service_id ? get_the_title( (int) $item->service_id ) : '';
+							?>
+							<tr>
+								<td>
+									<strong><?php echo esc_html( $item->title ); ?></strong>
+									<?php if ( $item->external_url ) : ?>
+										<br>
+										<a href="<?php echo esc_url( $item->external_url ); ?>" target="_blank" rel="noopener noreferrer">
+											<?php esc_html_e( 'View link', 'wp-sell-services' ); ?>
+										</a>
+									<?php endif; ?>
+								</td>
+								<td>
+									<?php if ( $service_title ) : ?>
+										<a href="<?php echo esc_url( (string) get_edit_post_link( (int) $item->service_id ) ); ?>">
+											<?php echo esc_html( $service_title ); ?>
+										</a>
+									<?php else : ?>
+										&mdash;
+									<?php endif; ?>
+								</td>
+								<td>
+									<?php if ( $is_featured ) : ?>
+										<span class="wpss-status-badge wpss-status-active"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></span>
+									<?php else : ?>
+										<span class="wpss-status-line__muted">&mdash;</span>
+									<?php endif; ?>
+								</td>
+								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $item->created_at ) ) ); ?></td>
+								<td>
+									<button type="button" class="button button-small wpss-portfolio-action"
+											data-item-id="<?php echo esc_attr( (string) $item->id ); ?>"
+											data-mod-action="<?php echo $is_featured ? 'unfeature' : 'feature'; ?>">
+										<?php echo $is_featured ? esc_html__( 'Unfeature', 'wp-sell-services' ) : esc_html__( 'Feature', 'wp-sell-services' ); ?>
+									</button>
+									<button type="button" class="button button-small wpss-portfolio-action"
+											data-item-id="<?php echo esc_attr( (string) $item->id ); ?>"
+											data-mod-action="delete">
+										<?php esc_html_e( 'Remove', 'wp-sell-services' ); ?>
+									</button>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render Settings tab content.
 	 *
 	 * @param int $vendor_id Vendor user ID.
@@ -2992,8 +3347,11 @@ class VendorsPage {
 		</div>
 
 		<div class="wpss-tab-section">
-			<h3><?php esc_html_e( 'Vacation Mode', 'wp-sell-services' ); ?></h3>
+			<h3><?php esc_html_e( 'Vacation Mode (Admin Override)', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-settings-section">
+				<p class="description">
+					<?php esc_html_e( 'Toggle vacation mode on the vendor\'s behalf. While on vacation the vendor cannot accept new orders and their services are hidden from search.', 'wp-sell-services' ); ?>
+				</p>
 				<div class="wpss-toggle-row">
 					<label for="wpss-vacation-mode-toggle">
 						<input type="checkbox" id="wpss-vacation-mode-toggle" <?php checked( ! empty( $profile->vacation_mode ) ); ?>>
@@ -3006,7 +3364,59 @@ class VendorsPage {
 					</label>
 					<textarea id="wpss-vacation-message" rows="3"><?php echo esc_textarea( $profile->vacation_message ?? '' ); ?></textarea>
 				</div>
+				<div class="wpss-vacation-return-date">
+					<label for="wpss-vacation-return-date">
+						<?php esc_html_e( 'Back on (optional)', 'wp-sell-services' ); ?>
+					</label>
+					<input type="date" id="wpss-vacation-return-date" value="<?php echo esc_attr( $profile->vacation_return_date ?? '' ); ?>">
+				</div>
 				<p id="wpss-vacation-status"></p>
+			</div>
+		</div>
+
+		<?php
+		$current_level = $profile->verification_tier ?? VendorProfile::TIER_NEW;
+		$level_labels  = VendorProfile::get_tiers();
+		$auto_level    = $this->seller_level_service->calculate_level( $vendor_id );
+		?>
+		<div class="wpss-tab-section">
+			<h3><?php esc_html_e( 'Seller Level (Admin Override)', 'wp-sell-services' ); ?></h3>
+			<div class="wpss-settings-section">
+				<p class="description">
+					<?php
+					printf(
+						/* translators: %s: auto-calculated seller level label */
+						esc_html__( 'Levels normally update automatically from vendor performance (the calculated level is %s). Use the override below to grant or revoke a level manually, including the admin-only Pro Seller tier.', 'wp-sell-services' ),
+						'<strong>' . esc_html( $level_labels[ $auto_level ] ?? ucfirst( $auto_level ) ) . '</strong>'
+					);
+					?>
+				</p>
+				<div class="form-row wpss-form-row--inline">
+					<label for="wpss-level-select-detail" class="screen-reader-text">
+						<?php esc_html_e( 'Seller Level', 'wp-sell-services' ); ?>
+					</label>
+					<select id="wpss-level-select-detail" data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>">
+						<?php foreach ( $level_labels as $level_key => $level_label ) : ?>
+							<option value="<?php echo esc_attr( $level_key ); ?>" <?php selected( $current_level, $level_key ); ?>>
+								<?php echo esc_html( $level_label ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+					<button type="button" class="button button-primary" id="wpss-save-level-detail">
+						<?php esc_html_e( 'Save Level', 'wp-sell-services' ); ?>
+					</button>
+				</div>
+				<p id="wpss-level-status" class="wpss-status-line">
+					<span class="wpss-status-line__muted">
+						<?php
+						printf(
+							/* translators: %s: current seller level label */
+							esc_html__( 'Current level: %s', 'wp-sell-services' ),
+							esc_html( $level_labels[ $current_level ] ?? ucfirst( $current_level ) )
+						);
+						?>
+					</span>
+				</p>
 			</div>
 		</div>
 
@@ -3040,15 +3450,16 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
-		$enabled   = ! empty( $_POST['enabled'] );
-		$message   = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
+		$vendor_id   = absint( $_POST['vendor_id'] ?? 0 );
+		$enabled     = ! empty( $_POST['enabled'] );
+		$message     = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
+		$return_date = isset( $_POST['return_date'] ) ? wpss_sanitize_date( sanitize_text_field( wp_unslash( $_POST['return_date'] ) ) ) : null;
 
 		if ( ! $vendor_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
 		}
 
-		$result = $this->vendor_repo->set_vacation_mode( $vendor_id, $enabled, $message );
+		$result = $this->vendor_repo->set_vacation_mode( $vendor_id, $enabled, $message, $return_date );
 
 		if ( ! $result ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to update vacation mode.', 'wp-sell-services' ) ) );
@@ -3093,6 +3504,151 @@ class VendorsPage {
 				'message' => $available
 					? __( 'Vendor is now available.', 'wp-sell-services' )
 					: __( 'Vendor is now unavailable.', 'wp-sell-services' ),
+			)
+		);
+	}
+
+	/**
+	 * AJAX handler for the seller-level admin override.
+	 *
+	 * Manually sets the vendor's verification_tier (seller level), bypassing the
+	 * auto-calculation. Delegates the write + `wpss_vendor_level_updated` action
+	 * to SellerLevelService so the override behaves identically to the cron-driven
+	 * recalculation. The admin-only Pro Seller tier can only be granted here.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	public function ajax_update_vendor_level(): void {
+		check_ajax_referer( 'wpss_vendors_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ), 403 );
+		}
+
+		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
+		$level     = sanitize_key( $_POST['level'] ?? '' );
+
+		if ( ! $vendor_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
+		}
+
+		$allowed_levels = array_keys( VendorProfile::get_tiers() );
+		if ( ! in_array( $level, $allowed_levels, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid seller level.', 'wp-sell-services' ) ) );
+		}
+
+		$result = $this->seller_level_service->update_vendor_level( $vendor_id, $level );
+
+		if ( ! $result ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to update seller level.', 'wp-sell-services' ) ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					/* translators: %s: seller level label */
+					__( 'Seller level set to %s.', 'wp-sell-services' ),
+					SellerLevelService::get_level_label( $level )
+				),
+				'level'   => $level,
+			)
+		);
+	}
+
+	/**
+	 * AJAX handler for portfolio moderation actions.
+	 *
+	 * Lets an admin feature/unfeature or remove a single portfolio item that
+	 * belongs to the vendor. The vendor_id is verified against the item row so an
+	 * admin can never accidentally moderate another vendor's item via a stale id.
+	 * On success the refreshed portfolio table HTML is returned so the drawer can
+	 * re-render without a full reload.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	public function ajax_moderate_portfolio_item(): void {
+		check_ajax_referer( 'wpss_vendors_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ), 403 );
+		}
+
+		$vendor_id  = absint( $_POST['vendor_id'] ?? 0 );
+		$item_id    = absint( $_POST['item_id'] ?? 0 );
+		$mod_action = sanitize_key( $_POST['mod_action'] ?? '' );
+
+		if ( ! $vendor_id || ! $item_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! in_array( $mod_action, array( 'feature', 'unfeature', 'delete' ), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid moderation action.', 'wp-sell-services' ) ) );
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_portfolio_items';
+
+		// Confirm the item belongs to this vendor before touching it.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- ownership guard; id bound via %d.
+		$owner_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT vendor_id FROM {$wpdb->prefix}wpss_portfolio_items WHERE id = %d",
+				$item_id
+			)
+		);
+
+		if ( ! $owner_id || $owner_id !== $vendor_id ) {
+			wp_send_json_error( array( 'message' => __( 'Portfolio item not found for this vendor.', 'wp-sell-services' ) ) );
+		}
+
+		if ( 'delete' === $mod_action ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$result = $wpdb->delete( $table, array( 'id' => $item_id ), array( '%d' ) );
+		} else {
+			$is_featured = 'feature' === $mod_action ? 1 : 0;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$result = $wpdb->update(
+				$table,
+				array( 'is_featured' => $is_featured ),
+				array( 'id' => $item_id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+		}
+
+		if ( false === $result ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to moderate the portfolio item.', 'wp-sell-services' ) ) );
+		}
+
+		/**
+		 * Fires after an admin moderates a vendor portfolio item from the drawer.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param int    $item_id    Portfolio item ID.
+		 * @param int    $vendor_id  Vendor user ID.
+		 * @param string $mod_action Moderation action (feature|unfeature|delete).
+		 */
+		do_action( 'wpss_portfolio_item_moderated', $item_id, $vendor_id, $mod_action );
+
+		$messages = array(
+			'feature'   => __( 'Portfolio item featured.', 'wp-sell-services' ),
+			'unfeature' => __( 'Portfolio item unfeatured.', 'wp-sell-services' ),
+			'delete'    => __( 'Portfolio item removed.', 'wp-sell-services' ),
+		);
+
+		ob_start();
+		$this->render_tab_portfolio( $vendor_id );
+		$html = ob_get_clean();
+
+		wp_send_json_success(
+			array(
+				'message' => $messages[ $mod_action ],
+				'html'    => $html,
 			)
 		);
 	}

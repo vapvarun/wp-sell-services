@@ -53,6 +53,14 @@ class TemplateLoader {
 		add_filter( 'taxonomy_template', array( $this, 'taxonomy_template' ) );
 		// Note: rewrite rules and query vars are registered in Plugin::register_rewrite_rules()
 		// so they work in both admin and frontend contexts (required for flush).
+
+		// Reign renders plugin pages full-width through its own layout meta
+		// (same pattern Reign uses for FluentCart) so the theme keeps its
+		// page wrappers and subheader. Other themes go through
+		// fullwidth_template() in template_include.
+		if ( 'reign-theme' === get_template() ) {
+			add_filter( 'get_post_metadata', array( $this, 'reign_force_fullwidth_layout' ), 10, 4 );
+		}
 	}
 
 	/**
@@ -134,6 +142,14 @@ class TemplateLoader {
 				// Also set as query var for template access.
 				set_query_var( 'wpss_vendor', $user->ID );
 
+				// F7: the /vendor/{slug}/ rewrite route renders the service-card
+				// grid (Related/owned services). Unlike the [wpss_vendor_profile]
+				// shortcode, this rewrite path never pulled in the frontend
+				// bundle, so the cards rendered naked (no design-system / card
+				// surface / grid layout). Enqueue the shared component layer here
+				// so the cards match every other surface.
+				wpss_enqueue_frontend_assets();
+
 				// Track profile view (skip own views and duplicate sessions).
 				$this->track_profile_view( $user->ID );
 
@@ -159,6 +175,14 @@ class TemplateLoader {
 			}
 		}
 
+		// App-like plugin pages render full-width — never next to the
+		// theme's blog sidebar/widgets. Registered as a real template per
+		// the design-system rule: register, never CSS-hide theme HTML.
+		$fullwidth = $this->fullwidth_template();
+		if ( $fullwidth ) {
+			return $fullwidth;
+		}
+
 		// Check for buyer request single.
 		if ( is_singular( 'wpss_request' ) ) {
 			wpss_enqueue_frontend_assets();
@@ -177,6 +201,144 @@ class TemplateLoader {
 		}
 
 		return $template;
+	}
+
+	/**
+	 * Resolve the full-width template for app-like plugin pages.
+	 *
+	 * Returns the sidebar-free template when the current request is one of
+	 * the mapped plugin pages (dashboard, cart, checkout, become vendor),
+	 * the page has no explicit page template selected, and the
+	 * `wpss_use_fullwidth_template` filter allows it.
+	 *
+	 * @return string Template path, or empty string to leave the theme template.
+	 */
+	private function fullwidth_template(): string {
+		if ( ! is_page() || ! $this->is_fullwidth_plugin_page( get_queried_object_id() ) ) {
+			return '';
+		}
+
+		// Respect an explicit page-template selection made in the editor.
+		$selected = get_page_template_slug();
+		if ( ! empty( $selected ) && 'default' !== $selected ) {
+			return '';
+		}
+
+		/**
+		 * Filter whether plugin pages use the full-width template.
+		 *
+		 * Return false to keep the active theme's page template (including
+		 * its sidebar) on dashboard, cart, checkout, and become-vendor pages.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param bool $use_fullwidth Default true.
+		 */
+		if ( ! apply_filters( 'wpss_use_fullwidth_template', true ) ) {
+			return '';
+		}
+
+		// Reign: layout is forced via reign_force_fullwidth_layout() so the
+		// theme's own page template (wrappers, subheader) stays in charge.
+		$parent_theme = get_template();
+		if ( 'reign-theme' === $parent_theme ) {
+			return '';
+		}
+
+		// BuddyX / BuddyX Pro: use the theme's native "Page No Sidebar"
+		// template so plugin pages match the theme's container styling.
+		if ( in_array( $parent_theme, array( 'buddyx', 'buddyx-pro' ), true ) ) {
+			$theme_fullwidth = \locate_template( 'page-templates/full-width-container.php' );
+			if ( $theme_fullwidth ) {
+				return $theme_fullwidth;
+			}
+		}
+
+		// Every other theme: the plugin's generic sidebar-free template.
+		return $this->locate_template( 'wpss-fullwidth-template.php' );
+	}
+
+	/**
+	 * Check whether a page ID is one of the mapped full-width plugin pages.
+	 *
+	 * @param int $page_id Page ID.
+	 * @return bool
+	 */
+	private function is_fullwidth_plugin_page( int $page_id ): bool {
+		if ( ! $page_id ) {
+			return false;
+		}
+
+		static $page_ids = null;
+
+		if ( null === $page_ids ) {
+			/**
+			 * Filter which mapped plugin pages render full-width.
+			 *
+			 * @since 1.2.0
+			 *
+			 * @param string[] $page_keys Keys from the wpss_pages option.
+			 */
+			$page_keys = apply_filters(
+				'wpss_fullwidth_page_keys',
+				array( 'dashboard', 'cart', 'checkout', 'become_vendor' )
+			);
+
+			$page_ids = array();
+			foreach ( $page_keys as $page_key ) {
+				$mapped_id = wpss_get_page_id( $page_key );
+				if ( $mapped_id ) {
+					$page_ids[] = $mapped_id;
+				}
+			}
+		}
+
+		return in_array( $page_id, $page_ids, true );
+	}
+
+	/**
+	 * Force Reign's full-width layout on plugin pages via its layout meta.
+	 *
+	 * Mirrors Reign's own FluentCart integration: intercepts reads of
+	 * `reign_wbcom_metabox_data` for mapped plugin pages and sets
+	 * `layout.site_layout = full_width` when no explicit layout was chosen,
+	 * so the theme's blog sidebar never renders next to marketplace UI.
+	 * An explicitly configured per-page layout always wins.
+	 *
+	 * @param mixed  $metadata  Pre-filtered meta value (null = use DB).
+	 * @param int    $object_id Post ID being read.
+	 * @param string $meta_key  Meta key being read.
+	 * @param bool   $single    Whether a single value was requested.
+	 * @return mixed
+	 */
+	public function reign_force_fullwidth_layout( $metadata, $object_id, $meta_key, $single ) {
+		if ( 'reign_wbcom_metabox_data' !== $meta_key || is_admin() ) {
+			return $metadata;
+		}
+
+		if ( ! $this->is_fullwidth_plugin_page( (int) $object_id ) ) {
+			return $metadata;
+		}
+
+		if ( ! apply_filters( 'wpss_use_fullwidth_template', true ) ) {
+			return $metadata;
+		}
+
+		// Temporarily unhook to read the real meta without recursion.
+		remove_filter( 'get_post_metadata', array( $this, 'reign_force_fullwidth_layout' ), 10 );
+		$actual_meta = get_post_meta( $object_id, 'reign_wbcom_metabox_data', true );
+		add_filter( 'get_post_metadata', array( $this, 'reign_force_fullwidth_layout' ), 10, 4 );
+
+		if ( ! is_array( $actual_meta ) ) {
+			$actual_meta = array();
+		}
+
+		// Only force when the page owner hasn't chosen a layout.
+		if ( empty( $actual_meta['layout']['site_layout'] ) || '0' === $actual_meta['layout']['site_layout'] ) {
+			$actual_meta['layout']['site_layout'] = 'full_width';
+		}
+
+		return $single ? array( $actual_meta ) : array( array( $actual_meta ) );
 	}
 
 	/**

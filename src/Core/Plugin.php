@@ -58,7 +58,7 @@ final class Plugin {
 	 *
 	 * @var string
 	 */
-	public const VERSION = '1.0.0';
+	public const VERSION = '1.2.0';
 
 	/**
 	 * Loader instance for managing hooks.
@@ -272,6 +272,11 @@ final class Plugin {
 		// the REST completion endpoint internally.
 		( new Tour() )->init();
 
+		// Realtime bridge — relays wpss_message_sent / wpss_notification_created
+		// to the configured Pusher-protocol server (Pusher.com or self-hosted
+		// Soketi). Every publish no-ops while realtime is disabled.
+		( new \WPSellServices\Services\RealtimeBridge() )->init();
+
 		// Run the loader to register all hooks.
 		$this->loader->run();
 
@@ -338,7 +343,6 @@ final class Plugin {
 					// version get registered without a deactivate / reactivate.
 					// Idempotent — Scheduler::has_pending() gates every insert.
 					Activator::schedule_cron_events();
-					flush_rewrite_rules();
 
 					/**
 					 * Fires after the plugin has been installed or upgraded.
@@ -351,6 +355,14 @@ final class Plugin {
 				},
 				5
 			);
+
+			// Flush rewrite rules at init:99 — AFTER register_rewrite_rules()
+			// registers the dashboard section endpoint and the vendor/order
+			// rules at init:5. Flushing earlier (same closure at init:5, which
+			// runs before endpoint registration because maybe_run_install() is
+			// called before register_rewrite_rules() in boot order) would drop
+			// the new /{dashboard}/{section}/ pretty permalink rule on upgrade.
+			add_action( 'init', 'flush_rewrite_rules', 99 );
 
 			update_option( 'wpss_version', WPSS_VERSION );
 		}
@@ -472,6 +484,21 @@ final class Plugin {
 					'index.php?wpss_service_order=$matches[1]',
 					'top'
 				);
+
+				// Dashboard section: /{dashboard-page-path}/{section}/.
+				//
+				// add_rewrite_endpoint() is deliberately NOT used here: it
+				// produces /{dashboard}/wpss_section/{section}/ (the endpoint
+				// name leaks into the path), which 404s every section because
+				// internal links emit the clean /{dashboard}/{section}/ shape.
+				//
+				// Instead, anchor an explicit rule to the live dashboard page
+				// path so the clean URL resolves to the dashboard page with
+				// `wpss_section` populated as a query var. Reading the path from
+				// the live page slug keeps the rule correct when the dashboard
+				// page slug (or its parent) changes. The query-arg form
+				// (?section=services) keeps working as a 301 fallback.
+				$this->register_dashboard_section_rule();
 			},
 			5
 		);
@@ -483,9 +510,14 @@ final class Plugin {
 				$vars[] = 'wpss_vendor';
 				$vars[] = 'wpss_service_order';
 				$vars[] = 'wpss_order_action';
+				$vars[] = 'wpss_section';
 				return $vars;
 			}
 		);
+
+		// 301-redirect legacy ?section= URLs to the pretty endpoint when
+		// permalinks are pretty, so old links and bookmarks resolve cleanly.
+		add_action( 'template_redirect', array( $this, 'redirect_legacy_section_url' ) );
 
 		// Flush rewrite rules once after activation (consumes transient set by Activator).
 		add_action(
@@ -498,6 +530,139 @@ final class Plugin {
 			},
 			99
 		);
+	}
+
+	/**
+	 * Register the dashboard section rewrite rule, anchored to the live page path.
+	 *
+	 * Resolves the dashboard WP page's path (relative to home, accounting for
+	 * any parent-page nesting) and registers a rule of the form
+	 * `^{path}/([^/]+)/?$` → `index.php?page_id={id}&wpss_section=$matches[1]`.
+	 *
+	 * Routing by `page_id` (not `pagename`) sidesteps the front-page slug
+	 * collision: when the dashboard is the front page, WordPress canonical-
+	 * redirects `/dashboard/...` to `/`, but a `page_id` query var resolves the
+	 * page directly without triggering that redirect.
+	 *
+	 * Bails when no dashboard page is mapped yet (e.g. before activation seeds
+	 * the pages) — the `?section=` query-arg form remains the canonical URL
+	 * until a page exists.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	private function register_dashboard_section_rule(): void {
+		if ( ! function_exists( 'wpss_get_page_id' ) ) {
+			return;
+		}
+
+		$dashboard_id = wpss_get_page_id( 'dashboard' );
+
+		// Legacy fallback so sites mapped via the older single option still work.
+		if ( ! $dashboard_id ) {
+			$dashboard_id = (int) get_option( 'wpss_dashboard_page' );
+		}
+
+		if ( ! $dashboard_id ) {
+			return;
+		}
+
+		// get_page_uri() returns the full nested slug path (parent/child/...)
+		// without a leading or trailing slash, e.g. "account/dashboard".
+		$page_path = get_page_uri( $dashboard_id );
+		if ( ! is_string( $page_path ) || '' === $page_path ) {
+			return;
+		}
+
+		// Trim slashes and escape regex metacharacters in the path segments
+		// (slashes between segments are intentional and must NOT be escaped).
+		$page_path = trim( $page_path, '/' );
+		$segments  = array_map( 'preg_quote', explode( '/', $page_path ) );
+		$path_re   = implode( '/', $segments );
+
+		$rule_regex = '^' . $path_re . '/([^/]+)/?$';
+
+		add_rewrite_rule(
+			$rule_regex,
+			'index.php?page_id=' . $dashboard_id . '&wpss_section=$matches[1]',
+			'top'
+		);
+
+		// Self-healing flush: a registered rule is invisible to WordPress
+		// until the rules option is regenerated. The upgrade-path flush only
+		// fires on a version change, which misses same-version deploys (and
+		// any plugin/user action that rebuilt the option without our rule -
+		// the rule itself re-registers on every request, so a flush here is
+		// always safe). Flush once whenever the live option lacks our rule.
+		$live_rules = get_option( 'rewrite_rules' );
+		if ( is_array( $live_rules ) && ! isset( $live_rules[ $rule_regex ] ) ) {
+			add_action(
+				'wp_loaded',
+				static function (): void {
+					flush_rewrite_rules( false );
+				}
+			);
+		}
+	}
+
+	/**
+	 * Redirect legacy `?section=` dashboard URLs to the pretty endpoint.
+	 *
+	 * Only fires on the dashboard page when permalinks are pretty (a permalink
+	 * structure is set) and a `section` query arg is present without the pretty
+	 * endpoint already being matched. Issues a 301 to the canonical pretty URL,
+	 * preserving every other query arg (order_id, action, conversation_id, etc.).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	public function redirect_legacy_section_url(): void {
+		// Pretty permalinks must be active; on "plain" permalinks the
+		// query-arg form is the canonical URL, so do nothing.
+		if ( ! get_option( 'permalink_structure' ) ) {
+			return;
+		}
+
+		if ( ! function_exists( 'wpss_is_page' ) || ! wpss_is_page( 'dashboard' ) ) {
+			return;
+		}
+
+		// Already on the pretty endpoint — nothing to redirect.
+		if ( '' !== (string) get_query_var( 'wpss_section', '' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+		if ( ! isset( $_GET['section'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+		$section = sanitize_key( wp_unslash( $_GET['section'] ) );
+		if ( '' === $section ) {
+			return;
+		}
+
+		if ( ! function_exists( 'wpss_get_dashboard_url' ) ) {
+			return;
+		}
+
+		$target = wpss_get_dashboard_url( $section );
+		if ( '' === $target ) {
+			return;
+		}
+
+		// Carry over any sibling query args (order_id, action, etc.), minus `section`.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+		$extra = array_diff_key( wp_unslash( $_GET ), array( 'section' => '' ) );
+		if ( ! empty( $extra ) ) {
+			$target = add_query_arg( array_map( 'sanitize_text_field', $extra ), $target );
+		}
+
+		wp_safe_redirect( $target, 301 );
+		exit;
 	}
 
 	/**

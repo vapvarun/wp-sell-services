@@ -94,6 +94,17 @@ if ( ! $service ) {
  */
 $layout = apply_filters( 'wpss_single_service_layout', 'default', $service_id );
 
+// Favorite state — resolved server-side so the toggle paints in the correct
+// state immediately. Reads the canonical favorites store (FavoritesService) that the
+// REST favorites controller and the buyer dashboard both use (frontend.js
+// drives the toggle through POST/DELETE /wpss/v1/favorites/{id}).
+$wpss_single_is_logged_in = is_user_logged_in();
+$wpss_single_favorited    = false;
+if ( $wpss_single_is_logged_in ) {
+	$wpss_single_favs = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
+	$wpss_single_favorited = is_array( $wpss_single_favs ) && in_array( (int) $service_id, array_map( 'intval', $wpss_single_favs ), true );
+}
+
 /**
  * Hook: wpss_before_single_service
  *
@@ -121,6 +132,24 @@ do_action( 'wpss_before_single_service', $service );
 					 * @hooked wpss_service_meta - 15
 					 */
 					do_action( 'wpss_single_service_header', $service );
+
+					$wpss_single_fav_label = $wpss_single_favorited
+						? __( 'Saved to favorites', 'wp-sell-services' )
+						: __( 'Save to favorites', 'wp-sell-services' );
+					?>
+					<div class="wpss-single-service__actions">
+						<button
+							type="button"
+							class="wpss-fav-toggle wpss-fav-toggle--inline wpss-single-service__fav<?php echo $wpss_single_favorited ? ' is-favorited' : ''; ?>"
+							data-service-id="<?php echo esc_attr( (string) $service_id ); ?>"
+							data-logged-in="<?php echo $wpss_single_is_logged_in ? '1' : '0'; ?>"
+							aria-pressed="<?php echo $wpss_single_favorited ? 'true' : 'false'; ?>"
+						>
+							<i data-lucide="heart" class="wpss-icon wpss-icon--sm wpss-fav-toggle__icon" aria-hidden="true"></i>
+							<span class="wpss-fav-toggle__label"><?php echo esc_html( $wpss_single_fav_label ); ?></span>
+						</button>
+					</div>
+					<?php
 
 					/**
 					 * Hook: wpss_single_service_meta

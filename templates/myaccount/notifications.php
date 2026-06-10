@@ -11,17 +11,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Services\Icon;
+
+/**
+ * Lucide icon slug per notification type. Rendered via {@see Icon::render()}
+ * so the markup matches the plugin's icon system (no UI emoji).
+ */
 $notification_icons = array(
-	'order_created'      => '📦',
-	'order_status'       => '🔄',
-	'new_message'        => '💬',
-	'delivery_submitted' => '📤',
-	'delivery_accepted'  => '✅',
-	'revision_requested' => '🔁',
-	'review_received'    => '⭐',
-	'dispute_opened'     => '⚠️',
-	'dispute_resolved'   => '✓',
-	'deadline_warning'   => '⏰',
+	'order_created'      => 'package',
+	'order_status'       => 'refresh-cw',
+	'new_message'        => 'message-circle',
+	'delivery_submitted' => 'upload',
+	'delivery_accepted'  => 'check-circle',
+	'revision_requested' => 'rotate-ccw',
+	'review_received'    => 'star',
+	'dispute_opened'     => 'alert-triangle',
+	'dispute_resolved'   => 'check',
+	'deadline_warning'   => 'alarm-clock',
 );
 
 /**
@@ -53,12 +59,12 @@ do_action( 'wpss_notifications_before', $user_id );
 			<?php foreach ( $notifications as $notification ) : ?>
 				<?php
 				$data      = $notification->data ? json_decode( $notification->data, true ) : array();
-				$icon      = $notification_icons[ $notification->type ] ?? '📣';
+				$icon_slug = $notification_icons[ $notification->type ] ?? 'megaphone';
 				$is_unread = ! $notification->is_read;
 				$created   = new \DateTimeImmutable( $notification->created_at );
 				?>
 				<div class="wpss-notification <?php echo $is_unread ? 'wpss-unread' : ''; ?>" data-id="<?php echo esc_attr( $notification->id ); ?>">
-					<div class="wpss-notification-icon"><?php echo esc_html( $icon ); ?></div>
+					<div class="wpss-notification-icon"><?php echo Icon::render( $icon_slug ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns pre-escaped markup. ?></div>
 					<div class="wpss-notification-content">
 						<div class="wpss-notification-title"><?php echo esc_html( $notification->title ); ?></div>
 						<div class="wpss-notification-message"><?php echo esc_html( $notification->message ); ?></div>
@@ -91,89 +97,6 @@ do_action( 'wpss_notifications_before', $user_id );
 do_action( 'wpss_notifications_after', $user_id );
 ?>
 
-<style>
-.wpss-notifications {
-	padding: 20px 0;
-}
-
-.wpss-notifications-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 20px;
-}
-
-.wpss-notifications-header h2 {
-	margin: 0;
-}
-
-.wpss-notifications-list {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-}
-
-.wpss-notification {
-	display: flex;
-	align-items: flex-start;
-	gap: 15px;
-	padding: 15px;
-	background: var(--wpss-white, #fff);
-	border: 1px solid var(--wpss-border, #e5e5e5);
-	border-radius: 8px;
-	transition: background 0.2s;
-}
-
-.wpss-notification.wpss-unread {
-	background: var(--wpss-info-light, #f0f8ff);
-	border-color: var(--wpss-info, #74b9ff);
-}
-
-.wpss-notification-icon {
-	font-size: 24px;
-	line-height: 1;
-}
-
-.wpss-notification-content {
-	flex: 1;
-}
-
-.wpss-notification-title {
-	font-weight: 600;
-	margin-bottom: 4px;
-}
-
-.wpss-notification-message {
-	color: var(--wpss-gray-600, #636e72);
-	font-size: 14px;
-	margin-bottom: 4px;
-}
-
-.wpss-notification-time {
-	font-size: 12px;
-	color: var(--wpss-text-hint, #999);
-}
-
-.wpss-notification-link {
-	display: inline-block;
-	padding: 6px 12px;
-	background: var(--wpss-bg-subtle, #f5f5f5);
-	border-radius: 4px;
-	text-decoration: none;
-	font-size: 13px;
-	color: var(--wpss-gray-800, #333);
-}
-
-.wpss-notification-link:hover {
-	background: var(--wpss-border, #e5e5e5);
-}
-
-.wpss-no-notifications {
-	text-align: center;
-	padding: 40px 20px;
-	color: var(--wpss-gray-600, #636e72);
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

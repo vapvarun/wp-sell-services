@@ -55,6 +55,54 @@ class ServicesController extends RestController {
 			)
 		);
 
+		// GET /services/grid - Server-rendered services grid for the services
+		// block (cards + pagination HTML). Public read; mirrors the legacy
+		// wpss_load_services admin-ajax response shape so the block's
+		// progressive enhancement (filters / pagination) works without
+		// admin-ajax. Rendering stays server-side so the card template's
+		// extension hooks + theme overrides are preserved.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/grid',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_grid' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'page'         => array(
+							'type'              => 'integer',
+							'default'           => 1,
+							'minimum'           => 1,
+							'sanitize_callback' => 'absint',
+						),
+						'postsPerPage' => array(
+							'type'              => 'integer',
+							'default'           => 12,
+							'minimum'           => 1,
+							'maximum'           => 48,
+							'sanitize_callback' => 'absint',
+						),
+						'orderBy'      => array(
+							'type'              => 'string',
+							'default'           => 'date',
+							'sanitize_callback' => 'sanitize_key',
+						),
+						'order'        => array(
+							'type'    => 'string',
+							'default' => 'DESC',
+							'enum'    => array( 'ASC', 'DESC' ),
+						),
+						'category'     => array(
+							'type'              => 'integer',
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /services/{id} - Get single service.
 		register_rest_route(
 			$this->namespace,
@@ -99,7 +147,16 @@ class ServicesController extends RestController {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+					'args'                => array_merge(
+						$this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+						array(
+							'status' => array(
+								'description' => __( 'Vendor-controllable publish state.', 'wp-sell-services' ),
+								'type'        => 'string',
+								'enum'        => array( 'publish', 'draft' ),
+							),
+						)
+					),
 				),
 			)
 		);
@@ -366,6 +423,45 @@ class ServicesController extends RestController {
 	}
 
 	/**
+	 * Get the server-rendered services grid (cards + pagination HTML).
+	 *
+	 * Powers the services block's progressive enhancement (filters /
+	 * pagination) over REST instead of admin-ajax. Returns the same
+	 * { html, pagination } shape the legacy wpss_load_services handler
+	 * produced. Rendering is delegated to wpss_render_services_grid() so the
+	 * card template + extension hooks + theme overrides are identical to a
+	 * first server-side paint.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_grid( $request ): WP_REST_Response {
+		$attributes = array(
+			'postsPerPage' => (int) $request->get_param( 'postsPerPage' ),
+			'orderBy'      => (string) $request->get_param( 'orderBy' ),
+			'order'        => (string) $request->get_param( 'order' ),
+			'category'     => (int) $request->get_param( 'category' ),
+		);
+
+		// Pagination links should point back at the page the block lives on,
+		// not at the REST URL. Use the request Referer when present, falling
+		// back to the services archive.
+		$referer  = (string) $request->get_header( 'referer' );
+		$base_url = ( '' !== $referer ) ? esc_url_raw( $referer ) : get_post_type_archive_link( 'wpss_service' );
+
+		$grid = wpss_render_services_grid( $attributes, (int) $request->get_param( 'page' ), (string) $base_url );
+
+		return new WP_REST_Response(
+			array(
+				'html'       => $grid['html'],
+				'pagination' => $grid['pagination'],
+				'total'      => $grid['total'],
+				'pages'      => $grid['pages'],
+			)
+		);
+	}
+
+	/**
 	 * Get single service.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -484,6 +580,23 @@ class ServicesController extends RestController {
 
 		if ( $request->has_param( 'excerpt' ) ) {
 			$update_data['post_excerpt'] = sanitize_textarea_field( $request->get_param( 'excerpt' ) );
+		}
+
+		// Status toggle (publish <-> draft) - the REST twin of the legacy
+		// wpss_update_service_status AJAX handler the dashboard "pause/publish"
+		// control used. Restricted to the two vendor-controllable states; any
+		// other value is rejected so the route cannot be used to force a
+		// rejected/pending service live.
+		if ( $request->has_param( 'status' ) ) {
+			$requested_status = sanitize_key( (string) $request->get_param( 'status' ) );
+			if ( ! in_array( $requested_status, array( 'publish', 'draft' ), true ) ) {
+				return new WP_Error(
+					'invalid_status',
+					__( 'Status must be either publish or draft.', 'wp-sell-services' ),
+					array( 'status' => 400 )
+				);
+			}
+			$update_data['post_status'] = $requested_status;
 		}
 
 		$result = wp_update_post( $update_data, true );
@@ -1167,8 +1280,8 @@ class ServicesController extends RestController {
 			'order'             => array(
 				'description' => __( 'Sort order.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'enum'        => array( 'ASC', 'DESC' ),
-				'default'     => 'DESC',
+				'enum'        => self::sort_directions(),
+				'default'     => self::SORT_DESC,
 			),
 			'max_delivery_days' => array(
 				'description' => __( 'Maximum delivery days filter.', 'wp-sell-services' ),

@@ -1684,3 +1684,44 @@ button.wpss-write-review-btn:focus,
 .wpss-admin-requirements-form .wpss-form-errors li {
 	margin-bottom: 4px;
 }
+
+/* ==========================================================================
+   Accessibility - keyboard focus rings (WCAG 2.1 AA)
+   Single scoped ring for every interactive element on the order surfaces so
+   keyboard users always see where focus is. Uses :focus-visible so the ring
+   only appears for keyboard interaction, not mouse clicks.
+   ========================================================================== */
+
+.wpss-orders a:focus-visible,
+.wpss-orders button:focus-visible,
+.wpss-orders input:focus-visible,
+.wpss-orders select:focus-visible,
+.wpss-orders textarea:focus-visible,
+.wpss-orders [tabindex]:focus-visible,
+.wpss-order-detail a:focus-visible,
+.wpss-order-detail button:focus-visible,
+.wpss-order-detail input:focus-visible,
+.wpss-order-detail select:focus-visible,
+.wpss-order-detail textarea:focus-visible,
+.wpss-order-detail [tabindex]:focus-visible,
+.wpss-order-view a:focus-visible,
+.wpss-order-view button:focus-visible,
+.wpss-order-view input:focus-visible,
+.wpss-order-view select:focus-visible,
+.wpss-order-view textarea:focus-visible,
+.wpss-order-view [tabindex]:focus-visible,
+.wpss-requirements-form input:focus-visible,
+.wpss-requirements-form select:focus-visible,
+.wpss-requirements-form textarea:focus-visible,
+.wpss-review-form button:focus-visible,
+.wpss-review-form [tabindex]:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
+}
+
+/* Star rating is a custom widget - give the focused star a clear ring. */
+.wpss-review-form .wpss-star-rating .wpss-star:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
+	border-radius: var(--wpss-radius-sm, 6px);
+}

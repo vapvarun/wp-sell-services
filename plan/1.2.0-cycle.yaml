@@ -1,0 +1,842 @@
+# ─────────────────────────────────────────────────────────────────────────
+# AutoVAP v2 — Migration Manifest
+# Target: wp-sell-services (FREE)  ·  "1.2.0 full cycle — customer-first"
+#
+# Supersedes plan/1.2.0-hardening.yaml. Re-prioritized around END-CUSTOMER
+# USABILITY: live Basecamp bugs first, internal hardening after, polish last.
+# Validate:  node ~/autovap-agent/scripts/validate-plan.mjs plan/1.2.0-cycle.yaml
+#
+# ── STATUS — WHAT WE HAVE (done before this plan runs) ─────────────────────
+#  ✓ Branch 1.2.0 cut from v1.1.1; onboarding refreshed (manifest + wppqa
+#    baseline 2026-06-06, zero drift) and committed.
+#  ✓ wave SECURITY already implemented + statically verified + merged to
+#    autovap/wp-sell-services/integration by the prior run:
+#      e3f2d21  [1.1] capability checks after nonce (Admin.php bulk
+#               order/dispute processors, manage_options)
+#      9f640cb  [1.2] AjaxHandlers nonce triage — ownership patterns documented
+#    Wave-3-security below re-verifies these commits; builders must NOT redo.
+#  ✓ Local env ready: Reign 8.0.0 active, free+pro active, all 18 tables
+#    present, 20 demo services seeded, users vendor1/buyer1 (demo1234),
+#    autologin mu-plugin (?autologin=1|vendor1|buyer1).
+#
+# ── WHAT NEEDS TO BE DONE (this plan, in customer-value order) ─────────────
+#  1. Model-site demo data — extend `wpss demo` to seed the FULL marketplace
+#     (vendors, buyers, orders in all statuses, reviews, buyer requests,
+#     proposals, conversations, favorites) and seed the local site with it.
+#     Rich data is a prerequisite for meaningful UX verification.
+#  2. Basecamp bug 9966680633 — homepage shows user-scoped services, not all
+#  3. Basecamp bugs 9958056390 + 9959210393 — services archive/single UI
+#     broken (borders, button bg, category-label overlay, sidebar filters,
+#     colours/transparency) + transparent message/inquiry popups
+#  4. Favorites wiring gap — REST /favorites exists but no archive/single UI
+#     (three-entry-point rule violation)
+#  5. FRONTEND USABILITY UPLIFT — the plugin predates the current
+#     wp-plugin-development + ux-foundation guidelines; bring EVERY frontend
+#     surface (archive, single, vendor profile, dashboard, wizard,
+#     cart/checkout, buyer requests) up to the design system: tokens,
+#     component vocabulary, 3-breakpoint responsive contract, 40px tap
+#     targets, focus rings, WCAG 2.1 AA, no native alert/confirm.
+#  6. Re-verify merged security wave (functional + contract gates never ran)
+#  7. wppqa input-handling refactors (superglobal iteration)
+#  8. Admin UX (alert/confirm → toast, tap targets, breakpoints)
+#  9. Basecamp 9826303369 — pretty dashboard permalinks (polish)
+# 10. Shippability audit verdict
+#
+# ── WHY THIS ORDER (end-customer usability) ────────────────────────────────
+#  Wave 1 gives every later wave realistic data to verify against. Waves 2-3
+#  are what buyers/vendors SEE broken today (filed Jun 3-5 from a live Crisp
+#  session). Wave 4 is the systematic usability uplift the owner ordered.
+#  Waves 5-7 are invisible-but-important hardening. Wave 8 is visible polish.
+# ─────────────────────────────────────────────────────────────────────────
+version: 1
+
+target:
+  type: plugin
+  slug: wp-sell-services
+  path: /Users/varundubey/Local Sites/wpsellservices/app/public/wp-content/plugins/wp-sell-services
+  repo: wbcomdesigns/wp-sell-services
+  local_wp_site: wpsellservices
+  site_url: https://wpsellservices.local
+  pair: wp-sell-services-pro
+
+goal: >
+  1.2.0 release cycle, customer-first, engineered for a 100k-site install
+  base. FIRST build the model-site demo seeder and seed the local site.
+  THEN fix the three live Basecamp bugs (homepage services query showing
+  only user-scoped data; services archive + single UI breakage incl.
+  borders, button backgrounds, category-label overlays, sidebar filters,
+  transparent popups - reproduce on Reign 8.0.0 before fixing; surface the
+  existing Favorites feature on archive + single). THEN run the systematic
+  frontend usability uplift: this plugin predates the current
+  wp-plugin-development and ux-foundation guidelines, so every frontend
+  surface must be brought up to the design system via /ux-audit findings.
+  THEN re-verify the already-merged security wave, finish the wppqa
+  hardening backlog, add pretty dashboard permalinks with a 301 fallback,
+  and prove 100k-site scale readiness with measured hot-path query budgets.
+  All planning and execution follows wp-plugin-development and ux-audit
+  guidelines and boundaries - no exceptions. Verify root cause before
+  fixing - bug reports may be theme-interaction issues. Every UI change is
+  browser-verified at 390px and 1280px on Reign 8.0.0. No public contract
+  may change: every hook, REST route, AJAX action, shortcode, block, CLI
+  command, option, DB table, and every free service/model signature the Pro
+  plugin consumes stays byte-for-byte compatible (additive DB indexes
+  allowed). Contract db_schema checks must query the live DB with SHOW
+  TABLES via wp db query (NOT wp db tables, which lists only
+  core-registered tables). Contract shortcode checks must verify against the
+  live registry (wp eval 'global $shortcode_tags; ...') or grep add_shortcode
+  in src/Frontend/Shortcodes.php - all 19 wpss_* shortcodes are registered
+  unconditionally; a "removed" verdict for any of them is a verification
+  error, re-check before reporting. Contract hook checks grep for
+  do_action/apply_filters in THIS plugin's src/ and templates/ only.
+
+contracts:
+  rest_routes:
+    - namespace: "wpss/v1"
+      routes:
+        - "/categories"
+        - "/tags"
+        - "/settings"
+        - "/me"
+        - "/dashboard"
+        - "/search"
+        - "/batch"
+        - "/services"
+        - "/orders"
+        - "/reviews"
+        - "/vendors"
+        - "/conversations"
+        - "/disputes"
+        - "/buyer-requests"
+        - "/proposals"
+        - "/notifications"
+        - "/portfolio"
+        - "/earnings"
+        - "/extensions"
+        - "/milestones"
+        # (tips have no top-level base: they live under /orders/{id}/tip and
+        #  /vendors/{id}/tips - covered by those bases)
+        - "/seller-levels"
+        - "/moderation"
+        - "/favorites"
+        - "/media"
+        - "/cart"
+        - "/auth"
+        - "/payments"
+        - "/withdrawals"
+        - "/audit-log"
+        - "/tour"
+  hooks:
+    actions:
+      # NOTE: wpss_pro_loaded is fired by PRO (wp-sell-services-pro.php:230),
+      # not by Free - it lives in Pro's contract, never here.
+      - "wpss_loaded"
+      - "wpss_order_created"
+      - "wpss_order_paid"
+      - "wpss_order_status_changed"
+      - "wpss_order_status_completed"
+      - "wpss_order_status_cancelled"
+      - "wpss_buyer_request_created"
+      - "wpss_proposal_submitted"
+      - "wpss_delivery_submitted"
+      - "wpss_delivery_accepted"
+      - "wpss_revision_requested"
+      - "wpss_vendor_registered"
+      - "wpss_withdrawal_processed"
+      - "wpss_stripe_webhook_received"
+    filters:
+      - "wpss_ecommerce_adapters"
+      - "wpss_payment_gateways"
+      - "wpss_storage_providers"
+      - "wpss_wallet_providers"
+      - "wpss_wallet_manager"
+      - "wpss_analytics_widgets"
+      - "wpss_dashboard_sections"
+      - "wpss_dashboard_section_template"
+      - "wpss_dashboard_section_before_content"
+      - "wpss_dashboard_header"
+      - "wpss_can_access_dashboard_section"
+      - "wpss_api_controllers"
+      - "wpss_settings_tabs"
+      - "wpss_settings_tab_branding"
+      - "wpss_settings_tab_stripe"
+      - "wpss_settings_sections_payments"
+      - "wpss_settings_sections_vendor"
+      - "wpss_settings_sections_orders"
+      - "wpss_gateway_cards"
+      - "wpss_gateway_settings_razorpay"
+      - "wpss_payment_callback_razorpay"
+      - "wpss_admin_menu_label"
+      - "wpss_commission_rate"
+      - "wpss_email_from_name"
+      - "wpss_email_header_vars"
+      - "wpss_service_meta_fields"
+      - "wpss_service_wizard_features"
+      - "wpss_service_max_videos"
+      - "wpss_service_max_gallery"
+      - "wpss_service_max_faq"
+      - "wpss_service_max_requirements"
+      - "wpss_service_max_extras"
+      - "wpss_service_limit_error_message"
+      - "wpss_add_service_to_cart"
+      - "wpss_tour_steps"
+  options:
+    - "wpss_version"
+    - "wpss_general"
+    - "wpss_vendor"
+    - "wpss_orders"
+    - "wpss_commission"
+    - "wpss_payouts"
+    - "wpss_tax"
+    - "wpss_pages"
+    - "wpss_advanced"
+    - "wpss_notifications"
+    - "wpss_review_moderation"
+    - "wpss_stripe_settings"
+    - "wpss_paypal_settings"
+    - "wpss_offline_settings"
+    - "wpss_wallet_provider"
+    - "wpss_dashboard_page"
+    - "wpss_vendors_page"
+    - "wpss_order_confirmation_page"
+    - "wpss_terms_page"
+    - "wpss_setup_wizard_completed"
+    - "wpss_order_meta_table_version"
+  db_schema:
+    - { table: "{prefix}wpss_service_packages" }
+    - { table: "{prefix}wpss_service_addons" }
+    - { table: "{prefix}wpss_orders" }
+    - { table: "{prefix}wpss_order_requirements" }
+    - { table: "{prefix}wpss_conversations" }
+    - { table: "{prefix}wpss_messages" }
+    - { table: "{prefix}wpss_deliveries" }
+    - { table: "{prefix}wpss_extension_requests" }
+    - { table: "{prefix}wpss_reviews" }
+    - { table: "{prefix}wpss_disputes" }
+    - { table: "{prefix}wpss_dispute_messages" }
+    - { table: "{prefix}wpss_proposals" }
+    - { table: "{prefix}wpss_vendor_profiles" }
+    - { table: "{prefix}wpss_portfolio_items" }
+    - { table: "{prefix}wpss_notifications" }
+    - { table: "{prefix}wpss_wallet_transactions" }
+    - { table: "{prefix}wpss_withdrawals" }
+    - { table: "{prefix}wpss_audit_log" }
+  shortcodes:
+    - "wpss_dashboard"
+    - "wpss_account"
+    - "wpss_services"
+    - "wpss_service_search"
+    - "wpss_featured_services"
+    - "wpss_service_categories"
+    - "wpss_service_wizard"
+    - "wpss_vendors"
+    - "wpss_vendor_profile"
+    - "wpss_top_vendors"
+    - "wpss_vendor_registration"
+    - "wpss_buyer_requests"
+    - "wpss_post_request"
+    - "wpss_my_orders"
+    - "wpss_order_details"
+    - "wpss_cart"
+    - "wpss_checkout"
+    - "wpss_login"
+    - "wpss_register"
+  cli_commands:
+    - "wpss demo"
+    - "wpss preflight"
+    - "wpss service"
+    - "wpss validate"
+
+# Dashboard pretty permalinks (wave-6) change dashboard section URLs from
+# ?section=X to /dashboard/X/. Old URLs MUST 301 to new — sanctioned here so
+# the verifier does not flag the URL-shape change as a breach.
+migrations:
+  - kind: url_shape
+    name: dashboard-section-permalinks
+    reason: "Basecamp 9826303369 - dashboard sections move from ?section=<x> query strings to /dashboard/<x>/ rewrite endpoints for usability parity with WooCommerce/Dokan; old ?section=<x> URLs 301-redirect to the pretty form; no option, hook, or REST change"
+  - kind: cli_commands
+    name: wpss-scale-command
+    reason: "Owner-directed 100k-site scale wave adds the ADDITIVE `wpss scale` WP-CLI command (seed/bench/teardown). No existing command changes or is removed."
+  - kind: db_schema
+    name: additive-hot-path-indexes
+    reason: "Scale wave may ADD indexes to existing wpss_* tables for hot-path query budgets. Columns and tables themselves never change or get removed."
+  - kind: hook
+    name: wpss_dashboard_header
+    reason: "Pre-existing Free/Pro drift surfaced by the wave-1 contract gate: Pro's WhiteLabel DashboardBrandingService has listened on wpss_dashboard_header since Pro 1.3.0 but Free NEVER fired it (dead listener; branded dashboard header never rendered). Free now fires do_action('wpss_dashboard_header') at the start of the unified dashboard header (UnifiedDashboard.php, additive, owner-committed). The hook stays in contracts: it is now a real fired hook. The fix is merged into every direction branch (2026-06-07), so all worktrees fire it."
+
+standards:
+  build_skills:  [wp-plugin-development, ux-foundation]
+  audit_skills:  [wp-security-review, ux-audit, action-audit]
+  phpstan_level: 6
+  wpcs_standard: WordPress-Extra
+
+gates:
+  default_static:     [php-lint, wpcs, phpstan]
+  default_functional: [browser-smoke, qa-suite]
+
+journeys:
+  # CUSTOMER journeys first — these mirror the Basecamp reports.
+  - id: buyer-browse-services
+    role: anonymous
+    steps:
+      - "open the site homepage (Services page set as front page): ALL published services from every vendor render, not just one user's"
+      - "open /services/ archive: cards show borders, readable category labels with background overlay, buttons with background colors, working hover/selected states"
+      - "sidebar filters render in the current design language and filter correctly"
+      - "no JS console errors; correct at 390px and 1280px on Reign 8.0.0"
+  - id: buyer-single-service
+    role: subscriber
+    steps:
+      - "as buyer1, open a single service page: layout, colours, and buttons correct on Reign 8.0.0"
+      - "open the message/inquiry popup: solid background, fully readable and usable (not transparent)"
+      - "favorite the service from the single page; unfavorite; state persists on reload"
+      - "no JS console errors; correct at 390px and 1280px"
+  - id: buyer-favorites-archive
+    role: subscriber
+    steps:
+      - "as buyer1, favorite a service from the /services/ archive card"
+      - "favorite state reflects instantly and persists; favorites list shows the service in the dashboard"
+      - "logged-out visitor sees a login prompt (not a silent failure) when tapping favorite"
+  - id: admin-moderation-actions
+    role: admin
+    steps:
+      - "WP Admin -> WPSS -> Moderation; approve and reject a pending service"
+      - "WP Admin -> WPSS Dashboard; perform the admin actions that hit Admin.php nonce-guarded handlers"
+      - "each action succeeds for an admin and is rejected for a non-capable user"
+      - "no JS console errors; correct at 390px and 1280px"
+  - id: admin-metabox-save
+    role: admin
+    steps:
+      - "edit a wpss_service: change packages/addons in the Service metabox, save"
+      - "edit a wpss_request: change fields in the Buyer Request metabox, save"
+      - "saved values persist and re-render correctly; no PHP notices in debug.log"
+  - id: admin-settings-toast
+    role: admin
+    steps:
+      - "WP Admin -> WPSS -> Settings -> Pages; trigger the page-create action"
+      - "WP Admin -> WPSS -> Settings -> Demo content import/reset"
+      - "feedback shows as the wpss admin-toast (no native alert/confirm dialog)"
+      - "no JS console errors; correct at 390px and 1280px"
+  - id: vendor-dashboard-ajax
+    role: subscriber
+    steps:
+      - "open [wpss_dashboard] as vendor1 (?autologin=vendor1); trigger the unified-dashboard actions"
+      - "destructive actions confirm via the wpss modal (not native confirm)"
+      - "AJAX handlers in AjaxHandlers.php respond correctly and never return 0"
+  - id: dashboard-pretty-urls
+    role: subscriber
+    steps:
+      - "as vendor1 open /dashboard/: section nav links use /dashboard/<section>/ pretty URLs"
+      - "navigate to analytics, services, earnings sections via pretty URLs - each renders its section"
+      - "legacy /dashboard/?section=services 301-redirects to /dashboard/services/"
+      - "works on plain AND post-name permalink structures; no 404 after rules flush"
+  - id: pro-pair-still-loads
+    role: admin
+    steps:
+      - "activate wp-sell-services-pro alongside the hardened free build"
+      - "Pro dashboard sections, gateway cards, and settings tabs all render"
+      - "no fatal/notice from a missing free hook, filter, service, or method"
+
+waves:
+
+  # ══ Wave 0 — MODEL-SITE DEMO DATA (prerequisite for all UX verification) ══
+  # `wp wpss demo create` currently seeds services only. Extend it so the
+  # local site becomes a model marketplace: multiple vendors with profiles +
+  # portfolios, buyers, orders across the 11-status lifecycle, reviews,
+  # buyer requests + proposals, conversations/messages, favorites,
+  # withdrawals. Then RUN it against the local site. The seeder ships in the
+  # plugin (dev tooling, not a customer feature) and reads the REAL data
+  # model - never invent a schema; reuse Models/Services classes.
+  - id: wave-0-model-demo-data
+    depends_on: []
+    functional_gates: [qa-suite]
+    journeys: [buyer-browse-services]
+    directions:
+      - id: "0.1"
+        title: "Extend `wpss demo` CLI to seed a full model marketplace (5+ vendors w/ profiles+portfolios, 10+ buyers, 50+ orders across all 11 statuses, reviews, buyer requests + proposals, conversations, favorites, withdrawals) using existing Models/Services classes - then seed the local site with it"
+        journey: develop
+        scope:
+          - "src/CLI/**"
+          - "src/Demo/**"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 1 — CUSTOMER BUG: data correctness (Basecamp 9966680633) ══
+  # Highest usability impact: buyers landing on the homepage cannot see the
+  # marketplace. Root-cause first: the services archive query is being
+  # user-scoped when the page is the static front page (likely a vendor-
+  # dashboard query filter leaking into the main query, or the shortcode
+  # falling back to current-author scope). Reproduce, trace, fix the query.
+  - id: wave-1-homepage-data
+    depends_on: [wave-0-model-demo-data]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services]
+    directions:
+      - id: "1.1"
+        title: "Fix services homepage/archive showing user-scoped data instead of all services (BC card 9966680633) - reproduce with Services page as front page, trace the query scoping, fix without touching the wpss_services shortcode signature"
+        journey: fix
+        scope:
+          - "src/Frontend/**"
+          - "src/Shortcodes/**"
+          - "src/Blocks/**"
+          - "templates/archive-*.php"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 2 — CUSTOMER BUGS: services UI + favorites (BC 9958056390, 9959210393) ══
+  # What customers see broken today. Directions serialized inside the wave
+  # because they share templates/ + frontend CSS. Every fix verified on
+  # Reign 8.0.0 at 390px + 1280px. Verify root cause: some findings may be
+  # Reign-theme interaction, not plugin CSS - if so, fix via plugin-side
+  # theme-compat CSS, never by editing the theme.
+  # Journeys: ONLY buyer-browse-services here. The favorites + popup steps in
+  # buyer-single-service / buyer-favorites-archive verify work that lands in
+  # wave-2b - gating them here tests the next wave's directions (learned the
+  # hard way: first wave-2 gate run failed on the not-yet-built favorites UI).
+  - id: wave-2-customer-ui
+    depends_on: [wave-1-homepage-data]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services]
+    directions:
+      - id: "2.1"
+        title: "Services archive + single UI repair (BC 9958056390/9959210393): card borders, button background colors, category-label overlay readability, hover/selected states, sidebar filter restyle, colour/transparency fixes - reproduce on Reign 8.0.0 first"
+        journey: fix
+        scope:
+          - "assets/css/frontend.css"
+          - "assets/css/archive-service.css"
+          - "assets/css/single-service.css"
+          - "assets/css/design-system.css"
+          - "templates/**"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: []
+  # ══ Wave 2b — CUSTOMER BUGS part 2 (disjoint scopes, runs after 2.1 lands) ══
+  - id: wave-2b-customer-ui
+    depends_on: [wave-2-customer-ui]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-single-service, buyer-favorites-archive]
+    directions:
+      - id: "2b.1"
+        title: "Fix transparent message/inquiry popups (BC 9958056390 item 11): solid background, readable at both viewports, usable on Reign 8.0.0 - keep all popup styling in messaging.css"
+        journey: fix
+        scope:
+          - "assets/css/messaging.css"
+          - "assets/js/single-service.js"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: []
+      - id: "2b.2"
+        title: "Surface Favorites on archive cards + single service page (three-entry-point gap: REST /favorites + dashboard exist, frontend toggle missing) - reuse the existing favorites REST controller, no new endpoints; favorites JS lives in frontend.js"
+        journey: improve
+        scope:
+          - "templates/**"
+          - "assets/js/frontend.js"
+          - "assets/css/frontend.css"
+        skills: [wp-plugin-development, ux-foundation]
+        static_gates: [php-lint, wpcs, ux-audit, wiring]
+        depends_on: []
+
+  # ══ Wave 2.4 — FRONTEND SHELL UNIFICATION (architecture, owner-directed) ══
+  # Implements plan/ux-uplift-findings.md F1-F5: ONE page-header system
+  # owned by the plugin app shell on every surface, ONE container system
+  # (tokens, no nesting double-gutters, defer to theme width), theme
+  # entry-title suppressed on plugin-shell pages via a theme-agnostic compat
+  # layer, banner CTA token contrast. This is the structural fix for the
+  # "services and dashboard headers look disconnected" report - per-surface
+  # uplift directions in wave 2.5 build ON this, never around it.
+  - id: wave-2-4-shell
+    depends_on: [wave-2b-customer-ui]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services, buyer-single-service, vendor-dashboard-ajax]
+    directions:
+      - id: "2.4.1"
+        title: "Unify the frontend shell per plan/ux-uplift-findings.md: single wpss-page-header component rendered by the app shell on ALL plugin surfaces (archive, single, dashboard, account); suppress theme entry-title on plugin-shell pages via documented theme-agnostic filter (Reign verified, no theme-specific CSS hacks); single .wpss-container source in design-system.css (delete frontend.css duplicate); nested wpss containers collapse to fluid width (no double gutters, defer to theme width); banner CTA contrast via token pairs (F4); one shell top-spacing token (F5). Verify same header alignment/width on /services/, /service/<slug>/, /dashboard/ at 1280px+390px on Reign AND twentytwentyfive"
+        journey: improve
+        scope:
+          - "src/Frontend/**"
+          - "templates/**"
+          - "assets/css/design-system.css"
+          - "assets/css/frontend.css"
+          - "assets/css/unified-dashboard.css"
+        skills: [wp-plugin-development, ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, phpstan, ux-audit]
+        depends_on: []
+
+  # ══ Wave 2.5 — FRONTEND USABILITY UPLIFT (ux-foundation compliance) ══
+  # OWNER DIRECTIVE: this plugin predates the current wp-plugin-development +
+  # ux-foundation guidelines. Bring EVERY frontend surface up to the design
+  # system: design tokens (no raw hex/px where a token exists), component
+  # vocabulary (button/card/input/badge/empty-state), 3-breakpoint responsive
+  # contract (640/1024/1440), 40px tap targets, visible focus rings, WCAG
+  # 2.1 AA contrast, keyboard operability, hover/focus/visited states on
+  # every <a> button. Run /ux-audit per surface FIRST to get the drift list,
+  # then fix. Directions are split by surface; 2.5.1 owns the shared
+  # design-system.css so it runs first, the rest serialize after it.
+  # Every direction: browser-verified on Reign 8.0.0 at 390px + 1280px.
+  - id: wave-2-5-ux-uplift
+    depends_on: [wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services, buyer-single-service, vendor-dashboard-ajax]
+    directions:
+      - id: "2.5.1"
+        title: "ux-audit + token foundation: audit all frontend CSS against ux-foundation, consolidate design tokens in design-system.css, kill raw-hex/px drift, establish the 3-breakpoint contract shared by every surface"
+        journey: improve
+        scope:
+          - "assets/css/design-system.css"
+        skills: [ux-audit, ux-foundation]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: []
+      - id: "2.5.2"
+        title: "Usability uplift - browse surfaces: services archive, single service, vendor profile/listing (cards, filters, badges, CTAs, empty states, focus rings, tap targets, a11y, hover/focus/visited on every <a> button) + fix F6 from plan/ux-uplift-findings.md: Apply Filters form must carry the active category (hidden inputs) so combined category+price filtering works"
+        journey: improve
+        scope:
+          - "assets/css/frontend.css"
+          - "assets/css/archive-service.css"
+          - "assets/css/single-service.css"
+          - "src/Frontend/ServiceArchiveView.php"
+          - "assets/js/frontend.js"
+          - "templates/archive-service.php"
+          - "templates/single-service.php"
+          - "templates/content-service-card.php"
+          - "templates/content-no-services.php"
+          - "templates/vendor/**"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: ["2.5.1"]
+      - id: "2.5.3"
+        title: "Usability uplift - vendor/buyer dashboard + service wizard/edit: unified dashboard sections, wizard steps, forms, modals, toasts, empty states, mobile nav at 390px"
+        journey: improve
+        scope:
+          - "assets/css/unified-dashboard.css"
+          - "assets/css/vendor-dashboard.css"
+          - "assets/css/service-wizard.css"
+          - "assets/css/service-edit.css"
+          - "templates/dashboard/**"
+          - "templates/myaccount/**"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: ["2.5.1"]
+      - id: "2.5.4"
+        title: "Usability uplift - transaction + communication surfaces: cart, order details, disputes, buyer requests + proposals, messaging/conversations (forms, validation states, progress, receipts, empty states)"
+        journey: improve
+        scope:
+          - "assets/css/orders.css"
+          - "assets/css/buyer-request.css"
+          - "assets/css/messaging.css"
+          - "templates/cart/**"
+          - "templates/order/**"
+          - "templates/disputes/**"
+          - "templates/partials/**"
+          - "templates/archive-request.php"
+          - "templates/single-request.php"
+          - "templates/content-request-card.php"
+          - "templates/content-no-requests.php"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: ["2.5.1"]
+
+  # ══ Wave 2.6 — CSS INVENTORY + DEAD-FILE CLEANUP (owner-directed) ══
+  # Runs AFTER shell unification + all surface uplifts so the inventory
+  # reflects the final state. Cleanup-framework discipline applies: evidence
+  # before deletion, never guess.
+  #   1. Build the enqueue map: every assets/css/*.css (non -rtl, non .min)
+  #      traced to its wp_register_style/wp_enqueue_style handle and the
+  #      surfaces that load it (src/Frontend/Assets.php + all enqueue sites).
+  #   2. A file is DEAD only if: zero enqueue/register references, zero
+  #      @import references, zero handle deps, and its -rtl/.min siblings are
+  #      equally unreferenced. Write the evidence to
+  #      audit/cleanup/css-inventory.json BEFORE removing anything.
+  #   3. Delete dead sources + their -rtl/.min artefacts + their Gruntfile
+  #      entries; rebuild artefacts; every journey still green.
+  #   4. Duplicate component definitions across surviving files (same
+  #      selector styled in 2+ files) get consolidated into the owning file -
+  #      design-system.css for primitives, surface CSS for surface-specifics.
+  - id: wave-2-6-css-cleanup
+    depends_on: [wave-2-5-ux-uplift]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services, buyer-single-service, vendor-dashboard-ajax]
+    directions:
+      - id: "2.6.1"
+        title: "CSS inventory + dead-file cleanup: build the enqueue map (every assets/css source -> handle -> surfaces) into audit/cleanup/css-inventory.json, delete only evidenced-dead files (zero enqueue/@import/dep references incl. -rtl/.min siblings) plus their Gruntfile entries, consolidate duplicate selector definitions into their owning file, rebuild artefacts with grunt - evidence before deletion, journeys green after"
+        journey: improve
+        scope:
+          - "assets/css/**"
+          - "src/Frontend/Assets.php"
+          - "Gruntfile.js"
+          - "audit/cleanup/**"
+        skills: [ux-audit, ux-foundation, wp-plugin-development]
+        static_gates: ["php-lint", "wpcs", "ux-audit"]
+        depends_on: []
+
+  # ══ Wave 3 — SECURITY (ALREADY IMPLEMENTED - verify only) ══
+  # Commits e3f2d21 (1.1) + 9f640cb (1.2) are merged on the integration
+  # branch from the prior run. Builders: check out the existing branches,
+  # confirm the commits satisfy the direction, fix only gaps. Do NOT
+  # re-implement. The functional + contract gates for this work have never
+  # run - that is what this wave completes.
+  - id: wave-3-security
+    depends_on: [wave-2-6-css-cleanup]
+    functional_gates: [qa-suite, browser-smoke]
+    journeys: [admin-moderation-actions, vendor-dashboard-ajax, pro-pair-still-loads]
+    directions:
+      - id: "3.1"
+        title: "VERIFY existing commit e3f2d21: capability checks after nonce in Admin.php + ServiceModerationPage.php (branch autovap/wp-sell-services/wave-1-security-1.1) - confirm, gap-fix only"
+        journey: fix
+        scope:
+          - "src/Admin/Admin.php"
+          - "src/Admin/Pages/ServiceModerationPage.php"
+        skills: [wp-security-review, action-audit]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "3.2"
+        title: "VERIFY existing commit 9f640cb: AjaxHandlers nonce-no-cap triage + ownership documentation (branch autovap/wp-sell-services/wave-1-security-1.2) - confirm, gap-fix only"
+        journey: fix
+        scope:
+          - "src/Frontend/AjaxHandlers.php"
+        skills: [wp-security-review, action-audit]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 4 — INPUT-HANDLING hardening (wppqa backlog) ══
+  - id: wave-4-input-handling
+    depends_on: [wave-3-security]
+    functional_gates: [qa-suite, browser-smoke]
+    journeys: [admin-metabox-save, vendor-dashboard-ajax]
+    directions:
+      - id: "4.1"
+        title: "Metabox hardening + a11y: refactor superglobal iteration to explicit-key reads (BuyerRequestMetabox.php:327, ServiceMetabox.php:1065) AND fix the wppqa a11y baseline in these files - every form input gets an associated label (or aria-label), enum values read from the canonical Models constants (no inline string lists)"
+        journey: improve
+        scope:
+          - "src/Admin/Metaboxes/BuyerRequestMetabox.php"
+          - "src/Admin/Metaboxes/ServiceMetabox.php"
+          - "src/Admin/Metaboxes/OrderMetabox.php"
+        skills: [wp-plugin-development, wp-security-review, ux-foundation]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "4.2"
+        title: "Refactor AjaxHandlers superglobal iteration (line ~638) to explicit-key reads"
+        journey: improve
+        scope:
+          - "src/Frontend/AjaxHandlers.php"
+        skills: [wp-plugin-development, wp-security-review]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "4.3"
+        title: "Enum-consistency fix (wppqa baseline: 7 high-severity drifts on status, period, action, orderby, type, new_status, sort): single canonical source per enum (Models class constants), every API controller / service / demo seeder reads from it, REST args validated against the canonical list - response values byte-identical (no contract change)"
+        journey: improve
+        scope:
+          - "src/API/**"
+          - "src/Services/**"
+          - "src/Demo/**"
+          - "src/Models/**"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 5 — ADMIN UX hardening (wppqa backlog) ══
+  - id: wave-5-admin-ux
+    depends_on: [wave-3-security, wave-4-input-handling]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [admin-settings-toast, vendor-dashboard-ajax]
+    directions:
+      - id: "5.1"
+        title: "Replace 5 alert()/confirm() with existing wpss admin-toast / UX-primitive modal (admin-settings-demo.js:21,56; admin-settings-pages.js:53; unified-dashboard.js:116,120) - reuse existing components, no new library"
+        journey: improve
+        scope:
+          - "assets/js/admin-settings-demo.js"
+          - "assets/js/admin-settings-pages.js"
+          - "assets/js/unified-dashboard.js"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit, wiring]
+        depends_on: []
+      - id: "5.2"
+        title: "Tap-target (>=40px) + breakpoint consolidation + focus-visible remediation in ADMIN CSS (every outline:none gets a :focus-visible ring per ux-foundation; frontend CSS already uplifted in wave 2.5; sources are non-rtl non-min files; rebuild artefacts with grunt after editing)"
+        journey: improve
+        scope:
+          - "assets/css/admin.css"
+          - "assets/css/admin-settings.css"
+          - "assets/css/admin-manual-order.css"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: []
+
+  # ══ Wave 6 — USABILITY POLISH: pretty dashboard permalinks (BC 9826303369) ══
+  # Sanctioned by the dashboard-section-permalinks migration entry above.
+  - id: wave-6-pretty-urls
+    depends_on: [wave-5-admin-ux]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [dashboard-pretty-urls, vendor-dashboard-ajax]
+    directions:
+      - id: "6.1"
+        title: "Dashboard pretty permalinks (BC 9826303369) - REWORK per gate evidence: add_rewrite_endpoint produces /dashboard/wpss_section/x URLs (wrong shape; first attempt 404'd every section). Use add_rewrite_rule anchored to the dashboard page path: '^{dashboard-page-path}/([^/]+)/?$' -> index.php?page_id={wpss_get_page_id(dashboard)}&wpss_section=$matches[1], registered on init from the live page slug (works when page slug or parent changes), register wpss_section as a query var, keep get_section_url() + 301 ?section= fallback + all internal links (already correct from first attempt). Beware the front-page slug collision (/dashboard/services/ canonical-redirecting to /). Rules flush handled by the 1.2.0 version bump (owner commit) - also flush on activation. Test plain AND post-name permalinks at 1280px+390px"
+        journey: improve
+        scope:
+          - "src/Frontend/**"
+          - "src/Core/**"
+          - "templates/dashboard/**"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 6.2 — TEMPLATE EXTENSIBILITY HOOKS (wppqa advisory, owner: fix now) ══
+  # The 31 missing do_action hooks in email/order templates flagged by
+  # wppqa_check_templates. Additive extension points only (sanctioned by the
+  # wpss-shell-compat-filters migration pattern): each template gets the
+  # standard before/after action pairs so themes and Pro can inject content
+  # without overriding whole templates. No markup or behaviour change.
+  - id: wave-6-2-template-hooks
+    depends_on: [wave-6-pretty-urls]
+    functional_gates: [qa-suite]
+    journeys: [buyer-single-service]
+    directions:
+      - id: "6.2.1"
+        title: "Add the standard before/after do_action extension hooks to email + order templates (the 31 wppqa template-check advisories): wpss_email_* and wpss_order_* hook pairs, additive only, zero markup/behaviour change, wppqa_check_templates passes clean after"
+        journey: improve
+        scope:
+          - "templates/emails/**"
+          - "templates/order/**"
+          - "templates/partials/**"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs]
+        depends_on: []
+
+  # ══ Wave 6.3 — FRONTEND AJAX -> REST MIGRATION (owner: no deferral, fix now) ══
+  # The plugin carries two transport layers: 106 admin-ajax handlers + 138
+  # REST endpoints, with duplicated flows (favorites, dashboard actions).
+  # admin-ajax boots full admin context per hit and bypasses caching - the
+  # known 100k-site hotspot. Migrate NOW, contract-safe:
+  #   1. Every frontend JS call routes to the existing wpss/v1 REST
+  #      controllers (apiFetch/X-WP-Nonce).
+  #   2. Every wp_ajax_* handler becomes a thin delegate to the SAME service
+  #      the REST controller uses - action names, request params, and
+  #      response shapes stay byte-compatible (frozen contract honored;
+  #      third-party callers unaffected).
+  #   3. No new REST endpoints unless a flow has no controller - then it is
+  #      added under the existing namespace and sanctioned below.
+  - id: wave-6-3-ajax-rest
+    depends_on: [wave-6-2-template-hooks]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [vendor-dashboard-ajax, buyer-single-service, buyer-favorites-archive, buyer-browse-services]
+    directions:
+      - id: "6.3.1"
+        title: "Migrate ALL frontend JS from admin-ajax.php to the existing wpss/v1 REST controllers (apiFetch + X-WP-Nonce); convert every wp_ajax_* handler in AjaxHandlers.php to a thin delegate calling the same service as its REST twin - action names, params, and response shapes byte-compatible; document the mapping in audit/ajax-rest-map.json; browser-verify every dashboard/favorites/messaging/wizard flow at 1280px+390px"
+        journey: improve
+        scope:
+          - "assets/js/**"
+          - "src/Frontend/AjaxHandlers.php"
+          - "src/API/**"
+          - "audit/ajax-rest-map.json"
+        skills: [wp-plugin-development, action-audit]
+        static_gates: [php-lint, wpcs, phpstan, wiring]
+        depends_on: []
+
+  # ══ Wave 6.4a — FLOW COMPLETION: user-facing (owner: fold all 14 findings) ══
+  # plan/flow-completeness-findings.md P1 items. Three-entry-point rule:
+  # every feature reachable via frontend UX + admin UI + REST or documented
+  # as an intentional exception.
+  - id: wave-6-4a-flows-user
+    depends_on: [wave-6-3-ajax-rest]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [buyer-browse-services, vendor-dashboard-ajax]
+    directions:
+      - id: "6.4a.1"
+        title: "Buyer request posting flow (findings #1): wire the [wpss_post_request] form to POST /buyer-requests end-to-end (template + frontend.js + validation + success state) - buyers can post a request from the frontend; vendors already browse/propose. No new endpoints"
+        journey: improve
+        scope:
+          - "src/Frontend/Shortcodes.php"
+          - "templates/content-request-card.php"
+          - "templates/archive-request.php"
+          - "assets/js/frontend.js"
+        skills: [wp-plugin-development, ux-foundation]
+        static_gates: [php-lint, wpcs, phpstan, wiring]
+        depends_on: []
+      - id: "6.4a.2"
+        title: "Wallet transactions API + vacation REST (findings #2, #11): ADDITIVE GET /wallet/transactions (paginated, own data) reading wpss_wallet_transactions, plus PATCH /vendors/me/vacation - sanctioned additive routes; admin vendor drawer gains a read-only Wallet tab (VendorsPage)"
+        journey: develop
+        scope:
+          - "src/API/**"
+          - "src/Admin/Pages/VendorsPage.php"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "6.4a.3"
+        title: "Vendor approval/rejection emails (findings #13): two templates + wiring on wpss_vendor_registered status changes - vendors learn their application outcome without checking back manually"
+        journey: improve
+        scope:
+          - "templates/emails/**"
+          - "src/Services/VendorService.php"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 6.4b — FLOW COMPLETION: dashboards + admin management ══
+  - id: wave-6-4b-flows-admin
+    depends_on: [wave-6-4a-flows-user]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [vendor-dashboard-ajax, admin-moderation-actions]
+    directions:
+      - id: "6.4b.1"
+        title: "Vendor-facing money + moderation UX (findings #2, #3): dashboard Wallet/Transactions section reading GET /wallet/transactions; explicit 'Resubmit for review' CTA + helper text on rejected services (re-queue on republish already works, make it visible)"
+        journey: improve
+        scope:
+          - "templates/dashboard/**"
+          - "assets/js/unified-dashboard.js"
+          - "assets/css/unified-dashboard.css"
+        skills: [wp-plugin-development, ux-foundation]
+        static_gates: [php-lint, wpcs, ux-audit, wiring]
+        depends_on: []
+      - id: "6.4b.2"
+        title: "Requirements auto-transition (findings #4, bug-class): verify and wire pending_requirements -> in_progress when the buyer submits requirements; order timeline reflects it; vendor notified"
+        journey: fix
+        scope:
+          - "src/Services/RequirementsService.php"
+          - "src/Services/OrderService.php"
+        skills: [wp-plugin-development]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "6.4b.3"
+        title: "Admin management completeness (findings #5,6,7,8,10,11,14): audit-log viewer page (reads existing REST), review moderation queue (ServiceModerationPage pattern), seller-level override control, suborder filters+row actions (tips/milestones/extensions) on OrdersListTable, portfolio moderation actions in vendor drawer, admin vacation override, gateway settings consolidated into the Payments tab with safe webhook-secret UX. Notifications admin view: implement read-only viewer OR document as intentional user-private exception in the manifest"
+        journey: develop
+        scope:
+          - "src/Admin/**"
+          - "assets/css/admin.css"
+          - "assets/js/admin-settings.js"
+        skills: [wp-plugin-development, ux-foundation]
+        static_gates: [php-lint, wpcs, phpstan, ux-audit]
+        depends_on: []
+
+  # ══ Wave 6.5 — 100K-SITE SCALE READINESS ══
+  # OWNER DIRECTIVE: 100k sites will run this plugin. Theory is not enough -
+  # measure. Hot paths: services archive query, single-service load,
+  # dashboard sections, favorites toggle, order list. Budgets per
+  # wp-plugin-development: PK lookups <=5ms, indexed scans <=30ms, no full
+  # aggregations on hot paths. Seed a production-shape dataset (10k users x
+  # 10 rows via the wave-0 seeder at scale), time the hot queries cold-cache,
+  # fix any over-budget read path (add indexes, materialize aggregates,
+  # cache). No schema changes to the 18 contract tables without a
+  # migrations: entry - indexes are additive and allowed.
+  - id: wave-6-5-scale
+    depends_on: [wave-6-4b-flows-admin]
+    functional_gates: [qa-suite]
+    journeys: [buyer-browse-services, vendor-dashboard-ajax]
+    directions:
+      - id: "6.5.1"
+        title: "Scale benchmark: add `wpss scale` WP-CLI command (seed/bench/teardown) with per-query budgets, seed 10k-user production-shape dataset, time every hot-path query cold-cache, fix over-budget paths (additive indexes, caching, no hot-path aggregations) until bench passes"
+        journey: develop
+        scope:
+          - "src/CLI/**"
+          - "src/Database/**"
+          - "src/Services/**"
+        skills: [wp-plugin-development, wp-performance]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # ══ Wave 7 — AUDIT: shippability verdict ══
+  - id: wave-7-audit
+    depends_on: [wave-0-model-demo-data, wave-1-homepage-data, wave-2-customer-ui, wave-2b-customer-ui, wave-2-4-shell, wave-2-5-ux-uplift, wave-2-6-css-cleanup, wave-3-security, wave-4-input-handling, wave-5-admin-ux, wave-6-pretty-urls, wave-6-2-template-hooks, wave-6-3-ajax-rest, wave-6-4a-flows-user, wave-6-4b-flows-admin, wave-6-5-scale]
+    directions:
+      - id: "7.1"
+        title: "Product-readiness audit verdict for the 1.2.0 cycle: shippable for a 100k-site install base with ZERO known bugs remaining? Verify every wppqa baseline finding (a11y labels, focus-visible, enum drift, template hooks) is resolved, the ajax-rest map is complete, all 14 flow-completeness findings (plan/flow-completeness-findings.md) are closed or documented as intentional exceptions, and include per-Basecamp-card fix status (9966680633, 9958056390, 9959210393, 9826303369) so the owner can wrap the cards. Anything still open is a BLOCKED verdict, not a follow-up"
+        journey: audit
+        scope: ["**"]
+        depends_on: []

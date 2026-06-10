@@ -23,6 +23,8 @@ defined( 'ABSPATH' ) || exit;
 $rating  = max( 1, min( 5, (int) $rating ) );
 $comment = trim( (string) $comment );
 $stars   = str_repeat( '★', $rating ) . str_repeat( '☆', 5 - $rating );
+
+do_action( 'wpss_email_content_before', 'review_received', null, $recipient );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
@@ -79,3 +81,6 @@ $stars   = str_repeat( '★', $rating ) . str_repeat( '☆', 5 - $rating );
 <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.5;">
 	<?php esc_html_e( 'Tip: thoughtful replies to reviews build trust with future buyers. You can reply from the service page.', 'wp-sell-services' ); ?>
 </p>
+
+<?php
+do_action( 'wpss_email_content_after', 'review_received', null, $recipient );

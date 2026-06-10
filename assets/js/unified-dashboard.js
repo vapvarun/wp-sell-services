@@ -20,6 +20,7 @@
 		 */
 		init: function () {
 			this.bindEvents();
+			this.initWalletLedger();
 		},
 
 		/**
@@ -65,6 +66,201 @@
 
 			// Favorites — unfavorite from the saved grid.
 			$(document).on('click', '.wpss-favorites__remove', this.handleFavoriteRemove.bind(this));
+
+			// Wallet ledger — load the next page of transactions.
+			$(document).on('click', '#wpss-wallet-load-more', this.handleWalletLoadMore.bind(this));
+		},
+
+		// Current page already loaded into the wallet ledger.
+		walletPage: 0,
+
+		/**
+		 * Boot the wallet transactions ledger on the earnings/wallet section.
+		 *
+		 * Reads the additive, read-only GET /wallet/transactions endpoint
+		 * (standard list envelope: items at the response root, total in the
+		 * X-WP-Total header) and renders the vendor's credit/debit history.
+		 * No-ops on sections that don't contain the ledger container.
+		 */
+		initWalletLedger: function () {
+			if (!$('#wpss-wallet-transactions').length) {
+				return;
+			}
+			this.walletPage = 0;
+			this.loadWalletTransactions(1);
+		},
+
+		/**
+		 * Handle the "Load more" click in the wallet ledger.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleWalletLoadMore: function (e) {
+			e.preventDefault();
+			this.loadWalletTransactions(this.walletPage + 1);
+		},
+
+		/**
+		 * Fetch and render one page of wallet transactions.
+		 *
+		 * @param {number} page Page number to request (1-based).
+		 */
+		loadWalletTransactions: function (page) {
+			var self = this;
+			var $list = $('#wpss-wallet-transactions');
+			var $more = $('#wpss-wallet-load-more');
+			var i18n = (wpssUnifiedDashboard && wpssUnifiedDashboard.i18n) || {};
+			var perPage = parseInt($list.data('per-page'), 10) || 10;
+			var restPath = $list.data('rest-path') || 'wallet/transactions';
+
+			$more.prop('disabled', true);
+			$list.attr('aria-busy', 'true');
+
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + restPath,
+				type: 'GET',
+				data: { page: page, per_page: perPage },
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				}
+			}).done(function (transactions, status, xhr) {
+				var total = parseInt(xhr.getResponseHeader('X-WP-Total'), 10) || 0;
+				self.renderWalletTransactions(transactions || [], page);
+				self.walletPage = page;
+
+				// Show "Load more" while there are more rows than rendered so far.
+				if (page * perPage < total) {
+					$more.show().prop('disabled', false);
+				} else {
+					$more.hide();
+				}
+			}).fail(function () {
+				if (self.walletPage === 0) {
+					$list.html(
+						'<p class="wpss-text-muted">' +
+						(i18n.walletLoadFailed || 'Could not load transactions. Please try again.') +
+						'</p>'
+					);
+				} else {
+					$more.prop('disabled', false);
+					WPSS.showNotification(i18n.walletLoadFailed || 'Could not load transactions. Please try again.', 'error');
+				}
+			}).always(function () {
+				$list.attr('aria-busy', 'false');
+			});
+		},
+
+		/**
+		 * Render wallet transaction rows into the ledger container.
+		 *
+		 * @param {Array}  transactions Rows from GET /wallet/transactions.
+		 * @param {number} page         Page that produced these rows.
+		 */
+		renderWalletTransactions: function (transactions, page) {
+			var i18n = (wpssUnifiedDashboard && wpssUnifiedDashboard.i18n) || {};
+			var $list = $('#wpss-wallet-transactions');
+
+			if (page === 1) {
+				$list.empty();
+			}
+
+			if (page === 1 && !transactions.length) {
+				$list.html(
+					'<p class="wpss-text-muted">' +
+					(i18n.walletEmpty || 'No wallet transactions yet.') +
+					'</p>'
+				);
+				return;
+			}
+
+			var $tbody;
+			if (page === 1) {
+				var $table = $(
+					'<div class="wpss-table-responsive">' +
+						'<table class="wpss-table wpss-wallet__table">' +
+							'<thead><tr>' +
+								'<th>' + (i18n.walletColDate || 'Date') + '</th>' +
+								'<th>' + (i18n.walletColType || 'Type') + '</th>' +
+								'<th>' + (i18n.walletColDescription || 'Description') + '</th>' +
+								'<th class="wpss-wallet__amount-col">' + (i18n.walletColAmount || 'Amount') + '</th>' +
+								'<th class="wpss-wallet__amount-col">' + (i18n.walletColBalance || 'Balance') + '</th>' +
+							'</tr></thead>' +
+							'<tbody></tbody>' +
+						'</table>' +
+					'</div>'
+				);
+				$list.append($table);
+				$tbody = $table.find('tbody');
+			} else {
+				$tbody = $list.find('.wpss-wallet__table tbody');
+			}
+
+			var self = this;
+			transactions.forEach(function (txn) {
+				$tbody.append(self.buildWalletRow(txn, i18n));
+			});
+
+			if (window.lucide && typeof window.lucide.createIcons === 'function') {
+				window.lucide.createIcons();
+			}
+		},
+
+		/**
+		 * Build one wallet ledger <tr> from a transaction row. All dynamic
+		 * values are inserted via jQuery .text() so they are escaped.
+		 *
+		 * @param {Object} txn  Transaction row.
+		 * @param {Object} i18n Localized strings.
+		 * @return {jQuery} The row element.
+		 */
+		buildWalletRow: function (txn, i18n) {
+			var amount = parseFloat(txn.amount) || 0;
+			var isDebit = amount < 0;
+			var $row = $('<tr>').addClass(isDebit ? 'wpss-wallet__row--debit' : 'wpss-wallet__row--credit');
+
+			var dateText = txn.created_at || '';
+			if (dateText && window.Date) {
+				var d = new Date(dateText);
+				if (!isNaN(d.getTime())) {
+					dateText = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+				}
+			}
+
+			var typeLabel = (txn.type || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, function (c) {
+				return c.toUpperCase();
+			});
+
+			$('<td>').text(dateText).appendTo($row);
+			$('<td>').append(
+				$('<span>').addClass('wpss-badge wpss-badge--' + (txn.type || 'neutral')).text(typeLabel || (i18n.walletTypeUnknown || 'Transaction'))
+			).appendTo($row);
+
+			// Description + an optional clickable reference link ("View Order" /
+			// "View Tip" / ...). The server resolves reference_url (empty when the
+			// reference is not a linkable order), so vendors get a real link to the
+			// related order instead of an opaque internal ID.
+			var $descCell = $('<td>');
+			$('<span>').addClass('wpss-wallet__desc').text(txn.description || '').appendTo($descCell);
+			if (txn.reference_url && txn.reference_label) {
+				$('<a>')
+					.addClass('wpss-wallet__reference-link')
+					.attr('href', txn.reference_url)
+					.text(txn.reference_label)
+					.appendTo($descCell);
+			}
+			$descCell.appendTo($row);
+
+			var symbol = isDebit ? '-' : '+';
+			$('<td>')
+				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
+				.text(symbol + Math.abs(amount).toFixed(2) + ' ' + (txn.currency || ''))
+				.appendTo($row);
+			$('<td>')
+				.addClass('wpss-wallet__amount-col')
+				.text((parseFloat(txn.balance_after) || 0).toFixed(2) + ' ' + (txn.currency || ''))
+				.appendTo($row);
+
+			return $row;
 		},
 
 		/**
@@ -88,10 +284,14 @@
 
 			var i18n = (wpssUnifiedDashboard && wpssUnifiedDashboard.i18n) || {};
 
-			$.post(wpssUnifiedDashboard.ajaxUrl, {
-				action: 'wpss_unfavorite_service',
-				service_id: serviceId,
-				nonce: wpssUnifiedDashboard.serviceNonce
+			// Migrated from admin-ajax to the wpss/v1 favorites REST twin:
+			// DELETE /favorites/{id}.
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'favorites/' + serviceId,
+				type: 'DELETE',
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				}
 			}).done(function (response) {
 				if (response && response.success) {
 					$card.fadeOut(180, function () {
@@ -101,23 +301,23 @@
 							window.location.reload();
 						} else {
 							var $count = $('.wpss-favorites__count');
-							if ($count.length && typeof response.data.count === 'number') {
+							if ($count.length && typeof response.count === 'number') {
 								$count.text(
-									(response.data.count === 1
+									(response.count === 1
 										? (i18n.favoriteCountSingular || '%d saved service')
 										: (i18n.favoriteCountPlural || '%d saved services')
-									).replace('%d', response.data.count)
+									).replace('%d', response.count)
 								);
 							}
 						}
 					});
 				} else {
 					$button.prop('disabled', false);
-					window.alert((response && response.data && response.data.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.');
+					WPSS.showNotification((response && response.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.', 'error');
 				}
 			}).fail(function () {
 				$button.prop('disabled', false);
-				window.alert(i18n.favoriteRemoveFailed || 'Could not remove favorite. Please try again.');
+				WPSS.showNotification(i18n.favoriteRemoveFailed || 'Could not remove favorite. Please try again.', 'error');
 			});
 		},
 
@@ -202,35 +402,49 @@
 				.prop('disabled', true)
 				.text(wpssUnifiedDashboard.i18n.processing);
 
-			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: $form.serialize() + '&action=wpss_update_vendor_profile',
-				success: function (response) {
-					if (response.success) {
-						// Show success message
-						$form.prepend(
-							'<div class="wpss-alert wpss-alert--success" style="margin-bottom: 16px;">' +
-							response.data.message +
-							'</div>'
-						);
+			// Build the field set from the form. The whole form is submitted, so
+			// force vacation_mode to an explicit 0/1 - an unchecked checkbox is
+			// absent from serialize() and would otherwise leave vacation on.
+			const data = {};
+			$form.serializeArray().forEach(function (f) { data[f.name] = f.value; });
+			const $vac = $form.find('[name="vacation_mode"]');
+			if ($vac.length && $vac.is(':checkbox')) {
+				data.vacation_mode = $vac.is(':checked') ? 1 : 0;
+			}
 
-						// Remove after 3 seconds
-						setTimeout(function () {
-							$form.find('.wpss-alert--success').fadeOut(function () {
-								$(this).remove();
-							});
-						}, 3000);
-					} else {
-						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
-					}
+			// REST: PUT /vendors/me (via POST + method override for host
+			// compatibility). Writes the wpss_vendor_profiles table - the single
+			// canonical store - so intro video, country, city, website, vacation,
+			// and cover all persist (the old AJAX twin split storage / dropped them).
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'vendors/me',
+				method: 'PUT',
+				data: data,
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				},
+				success: function () {
+					$form.prepend(
+						'<div class="wpss-alert wpss-alert--success" style="margin-bottom: 16px;">' +
+						((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.profileSaved) || 'Profile updated successfully.') +
+						'</div>'
+					);
+
+					setTimeout(function () {
+						$form.find('.wpss-alert--success').fadeOut(function () {
+							$(this).remove();
+						});
+					}, 3000);
 
 					$button
 						.prop('disabled', false)
 						.text(originalText);
 				},
-				error: function () {
-					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
+				error: function (xhr) {
+					const msg = (xhr.responseJSON && xhr.responseJSON.message)
+						|| (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain)
+						|| 'An error occurred. Please try again.';
+					WPSS.showNotification(msg, 'error');
 					$button
 						.prop('disabled', false)
 						.text(originalText);
@@ -249,43 +463,47 @@
 			const $button = $(e.currentTarget);
 			const serviceId = $button.data('service-id');
 			const currentStatus = $button.data('current-status');
+			// The REST twin takes an explicit target state, so flip here
+			// (the legacy AJAX handler flipped server-side).
+			const targetStatus = currentStatus === 'publish' ? 'draft' : 'publish';
 
 			$button.prop('disabled', true);
 
+			// Migrated from admin-ajax wpss_update_service_status to the REST
+			// twin PUT /services/{id} with the status param (6.0b).
 			$.ajax({
-				url: wpssUnifiedDashboard.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_update_service_status',
-					nonce: wpssUnifiedDashboard.nonce,
-					service_id: serviceId,
-					status: currentStatus
+				url: wpssUnifiedDashboard.restUrl + 'services/' + serviceId,
+				type: 'PUT',
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
+				data: { status: targetStatus },
 				success: function (response) {
-					if (response.success) {
-						$button.data('current-status', response.data.new_status);
+					var newStatus = response && response.status;
+					if (newStatus) {
+						$button.data('current-status', newStatus);
 
-						const $card = $button.closest('.wpss-card');
-						const $badge = $card.find('.wpss-badge');
-						const newStatusText = response.data.new_status === 'publish' ? ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.published) || 'Published') : ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.draft) || 'Draft');
+						// Match the actual card markup in
+						// templates/dashboard/sections/services.php:
+						// .wpss-service-card wrapper + .wpss-service-card__status badge.
+						const $card = $button.closest('.wpss-service-card');
+						const $badge = $card.find('.wpss-service-card__status');
+						const newStatusText = newStatus === 'publish' ? ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.published) || 'Published') : ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.draft) || 'Draft');
 						$badge.text(newStatusText);
-						$badge.removeClass('wpss-badge--success wpss-badge--neutral');
-						$badge.addClass(response.data.new_status === 'publish' ? 'wpss-badge--success' : 'wpss-badge--neutral');
+						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--draft');
+						$badge.addClass(newStatus === 'publish' ? 'wpss-service-card__status--publish' : 'wpss-service-card__status--draft');
 
-						if (response.data.new_status === 'publish') {
-							$button.html('<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>');
-							$button.attr('title', wpssUnifiedDashboard.i18n.pause || 'Pause');
-						} else {
-							$button.html('<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>');
-							$button.attr('title', wpssUnifiedDashboard.i18n.activate || 'Activate');
-						}
+						// Button label is plain text ("Pause" / "Publish"),
+						// matching how the template renders it.
+						$button.text(newStatus === 'publish' ? (wpssUnifiedDashboard.i18n.pause || 'Pause') : (wpssUnifiedDashboard.i18n.publish || 'Publish'));
 					} else {
-						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
+						WPSS.showNotification((response && response.message) || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
 					}
 					$button.prop('disabled', false);
 				},
-				error: function () {
-					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
+				error: function (xhr) {
+					var msg = (xhr.responseJSON && xhr.responseJSON.message) || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.';
+					WPSS.showNotification(msg, 'error');
 					$button.prop('disabled', false);
 				}
 			});
@@ -301,7 +519,11 @@
 
 			const $button = $(e.currentTarget);
 			const serviceId = $button.data('service-id');
-			const $card = $button.closest('.wpss-card');
+			// Card wrapper is .wpss-service-card (the dashboard template), not
+			// .wpss-card - without the correct selector the post-delete fadeOut
+			// is a no-op and the deleted card stays on screen (twin of the
+			// toggle-status selector bug).
+			const $card = $button.closest('.wpss-service-card');
 
 			WPSS.showConfirm(wpssUnifiedDashboard.i18n.confirmDelete || 'Are you sure you want to delete this service? This action cannot be undone.', function () {
 				$button.prop('disabled', true);
@@ -329,7 +551,7 @@
 						$button.prop('disabled', false);
 					}
 				});
-			}, { confirmText: 'Delete' });
+			}, { confirmText: 'Delete', tone: 'danger' });
 		},
 
 		/**
@@ -543,7 +765,7 @@
 						}
 					});
 				},
-				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete' }
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete', tone: 'danger' }
 			);
 		},
 
@@ -643,7 +865,7 @@
 						}
 					});
 				},
-				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete' }
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete', tone: 'danger' }
 			);
 		},
 

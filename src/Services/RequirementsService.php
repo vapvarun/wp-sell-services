@@ -161,8 +161,16 @@ class RequirementsService {
 				);
 			}
 
-			// Start order work.
-			$this->order_service->start_work( $order_id );
+			// Advance the order to in_progress. Requirements are already saved at
+			// this point, so a failed transition must NOT be reported as success —
+			// otherwise the order is silently stuck in pending_requirements while
+			// the buyer is told the vendor has started.
+			if ( ! $this->order_service->start_work( $order_id ) ) {
+				return array(
+					'success' => false,
+					'message' => __( 'Requirements were saved but the order could not be started. Please contact support.', 'wp-sell-services' ),
+				);
+			}
 
 			return array(
 				'success'         => true,
@@ -204,9 +212,15 @@ class RequirementsService {
 			);
 		}
 
-		// Start order work (only if not a late submission - order is already in progress).
-		if ( ! $is_late_submission ) {
-			$this->order_service->start_work( $order_id );
+		// Start order work (only if not a late submission - order is already in
+		// progress). The transition to in_progress is the source of truth for
+		// the order timeline; if it fails, the requirements are saved but the
+		// order is stuck, so surface that instead of a false success.
+		if ( ! $is_late_submission && ! $this->order_service->start_work( $order_id ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Requirements were saved but the order could not be started. Please contact support.', 'wp-sell-services' ),
+			);
 		}
 
 		$success_message = $is_late_submission

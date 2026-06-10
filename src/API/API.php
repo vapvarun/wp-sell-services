@@ -71,6 +71,7 @@ class API {
 			new AuthController(),
 			new PaymentController(),
 			new AuditLogController(),
+			new RealtimeController(),
 		];
 
 		/**
@@ -363,6 +364,8 @@ class API {
 				'checkout'  => (int) ( $pages_settings['checkout'] ?? 0 ),
 				'terms'     => (int) get_option( 'wpss_terms_page' ),
 			],
+			// Non-sensitive realtime (WebSocket) client config — never the secret.
+			'realtime'            => ( new \WPSellServices\Services\RealtimeService() )->get_client_config(),
 		];
 
 		/**

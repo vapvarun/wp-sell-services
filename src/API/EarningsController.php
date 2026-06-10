@@ -73,7 +73,38 @@ class EarningsController extends RestController {
 						'period'   => array(
 							'description' => __( 'Group by period.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'enum'        => array( 'day', 'week', 'month', 'year' ),
+							'enum'        => array_keys( \WPSellServices\Services\EarningsService::get_periods() ),
+						),
+					),
+				),
+			)
+		);
+
+		// GET /wallet/transactions - Get own wallet transaction ledger.
+		register_rest_route(
+			$this->namespace,
+			'/wallet/transactions',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_wallet_transactions' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'type'    => 'integer',
+							'default' => 1,
+							'minimum' => 1,
+						),
+						'per_page' => array(
+							'type'    => 'integer',
+							'default' => 20,
+							'minimum' => 1,
+							'maximum' => 100,
+						),
+						'type'     => array(
+							'description'       => __( 'Filter by transaction type.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_key',
 						),
 					),
 				),
@@ -134,7 +165,7 @@ class EarningsController extends RestController {
 						'status'   => array(
 							'description' => __( 'Filter by status.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'enum'        => array( 'pending', 'approved', 'rejected', 'completed' ),
+							'enum'        => array_keys( \WPSellServices\Services\EarningsService::get_withdrawal_statuses() ),
 						),
 					),
 				),
@@ -155,7 +186,7 @@ class EarningsController extends RestController {
 							'description' => __( 'New status.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
-							'enum'        => array( 'approved', 'rejected', 'completed' ),
+							'enum'        => \WPSellServices\Services\EarningsService::get_processable_withdrawal_statuses(),
 						),
 						'note'   => array(
 							'description' => __( 'Admin note.', 'wp-sell-services' ),
@@ -278,6 +309,96 @@ class EarningsController extends RestController {
 				'commission'      => (float) $order['platform_fee'],
 				'currency'        => $order['currency'],
 				'completed_at'    => $order['completed_at'],
+			);
+		}
+
+		return $this->paginated_response( $items, $total, $pagination['page'], $pagination['per_page'] );
+	}
+
+	/**
+	 * Get the current user's wallet transaction ledger.
+	 *
+	 * Additive, read-only endpoint exposing the rows in
+	 * `wpss_wallet_transactions` for the authenticated vendor only. Returns the
+	 * standard list envelope so app/web clients can paginate the ledger that
+	 * already drives the admin wallet view and the earnings dashboard balance.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_wallet_transactions( WP_REST_Request $request ): WP_REST_Response {
+		global $wpdb;
+
+		$pagination = $this->get_pagination_args( $request );
+		$user_id    = get_current_user_id();
+		$txn_table  = $wpdb->prefix . 'wpss_wallet_transactions';
+
+		$type  = $request->get_param( 'type' );
+		$where = $wpdb->prepare( 'user_id = %d', $user_id );
+
+		if ( ! empty( $type ) ) {
+			$where .= $wpdb->prepare( ' AND type = %s', sanitize_key( $type ) );
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $txn_table from $wpdb->prefix; $where built from $wpdb->prepare fragments only; LIMIT/OFFSET prepared below.
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$txn_table} WHERE {$where}" );
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, type, amount, balance_after, currency, description, reference_type, reference_id, status, created_at
+				FROM {$txn_table}
+				WHERE {$where}
+				ORDER BY created_at DESC, id DESC
+				LIMIT %d OFFSET %d",
+				$pagination['per_page'],
+				$pagination['offset']
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// Reference types that resolve to an order (incl. order sub-types — tips,
+		// extensions and milestones are all stored as sub-orders), mapped to the
+		// vendor-facing link label.
+		$reference_labels = array(
+			'order'     => __( 'View Order', 'wp-sell-services' ),
+			'tip'       => __( 'View Tip', 'wp-sell-services' ),
+			'extension' => __( 'View Extension', 'wp-sell-services' ),
+			'milestone' => __( 'View Milestone', 'wp-sell-services' ),
+		);
+
+		$items = array();
+		foreach ( $rows ? $rows : array() as $row ) {
+			$reference_id   = null !== $row['reference_id'] ? (int) $row['reference_id'] : null;
+			$reference_type = (string) $row['reference_type'];
+
+			// Build a clickable reference (label + order detail URL) instead of an
+			// opaque internal ID. Empty url => the JS renders plain text.
+			$reference_label = '';
+			$reference_url   = '';
+			if ( $reference_id && isset( $reference_labels[ $reference_type ] ) ) {
+				$url = wpss_get_order_url( $reference_id );
+				if ( '' !== $url ) {
+					$reference_label = $reference_labels[ $reference_type ];
+					$reference_url   = $url;
+				}
+			}
+
+			$items[] = array(
+				'id'              => (int) $row['id'],
+				'type'            => $row['type'],
+				'amount'          => (float) $row['amount'],
+				'balance_after'   => (float) $row['balance_after'],
+				'currency'        => $row['currency'],
+				'description'     => $row['description'],
+				'reference_type'  => $reference_type,
+				'reference_id'    => $reference_id,
+				'reference_label' => $reference_label,
+				'reference_url'   => $reference_url,
+				'status'          => $row['status'],
+				'created_at'      => $this->format_datetime( $row['created_at'] ),
 			);
 		}
 

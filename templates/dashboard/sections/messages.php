@@ -62,7 +62,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 		?>
 		<div class="wpss-conversation-thread">
 			<div class="wpss-conversation-thread__header">
-				<a href="<?php echo esc_url( add_query_arg( 'section', 'messages', wpss_get_dashboard_url() ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--outline">&larr; <?php esc_html_e( 'Back', 'wp-sell-services' ); ?></a>
+				<a href="<?php echo esc_url( wpss_get_dashboard_url( 'messages' ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--outline">&larr; <?php esc_html_e( 'Back', 'wp-sell-services' ); ?></a>
 				<h3><?php echo esc_html( $conv_title ); ?></h3>
 				<?php if ( $active_conversation->subject ) : ?>
 					<span class="wpss-conversation-thread__subject"><?php echo esc_html( $active_conversation->subject ); ?></span>
@@ -149,24 +149,22 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 
 						$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Sending...', 'wp-sell-services' ) ); ?>');
 
+						// REST: POST /conversations/{id}/messages (text-only here).
+						var convId = $form.find('[name="conversation_id"]').val();
 						$.ajax({
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-							type: 'POST',
-							data: {
-								action: 'wpss_send_direct_message',
-								conversation_id: $form.find('[name="conversation_id"]').val(),
-								message: $textarea.val(),
-								wpss_message_nonce: $form.find('[name="wpss_message_nonce"]').val()
+							url: '<?php echo esc_url_raw( rest_url( 'wpss/v1/conversations/' ) ); ?>' + convId + '/messages',
+							method: 'POST',
+							data: { content: $textarea.val() },
+							beforeSend: function(xhr) {
+								xhr.setRequestHeader('X-WP-Nonce', '<?php echo esc_js( wp_create_nonce( 'wp_rest' ) ); ?>');
 							},
-							success: function(response) {
-								if (response.success) {
-									location.reload();
-								} else {
-									wpssShowNotice(response.data.message || '<?php echo esc_js( __( 'Failed to send message.', 'wp-sell-services' ) ); ?>', 'error');
-								}
+							success: function() {
+								location.reload();
 							},
-							error: function() {
-								wpssShowNotice('<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>', 'error');
+							error: function(xhr) {
+								var msg = (xhr.responseJSON && xhr.responseJSON.message)
+									|| '<?php echo esc_js( __( 'Failed to send message.', 'wp-sell-services' ) ); ?>';
+								wpssShowNotice(msg, 'error');
 							},
 							complete: function() {
 								$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send', 'wp-sell-services' ) ); ?>');
@@ -184,7 +182,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 	<?php else : ?>
 		<div class="wpss-notice wpss-notice--error">
 			<p><?php esc_html_e( 'Conversation not found or you do not have permission to view it.', 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( add_query_arg( 'section', 'messages', wpss_get_dashboard_url() ) ); ?>">&larr; <?php esc_html_e( 'Back to Messages', 'wp-sell-services' ); ?></a>
+			<a href="<?php echo esc_url( wpss_get_dashboard_url( 'messages' ) ); ?>">&larr; <?php esc_html_e( 'Back to Messages', 'wp-sell-services' ); ?></a>
 		</div>
 	<?php endif; ?>
 

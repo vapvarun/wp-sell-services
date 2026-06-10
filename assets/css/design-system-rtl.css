@@ -8,8 +8,10 @@
  * @since   1.2.0
  *
  * Sections:
- *   1. Design Tokens (CSS Variables)
- *   2. Typography
+ *   1.  Design Tokens (CSS Variables)
+ *   1a. Dark Mode (root token overrides)
+ *   1c. Reduced Motion
+ *   2.  Typography
  *   3. Buttons
  *   4. Cards
  *   5. Badges & Status
@@ -178,6 +180,24 @@
 	/* ---- Transitions ---- */
 	--wpss-ease: 0.2s ease;
 	--wpss-ease-in-out: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	/* Legacy alias consumed by archive/single CSS; points at the canonical ease. */
+	--wpss-transition: 0.2s ease;
+
+	/* ---- Layout (F2/F3: single container source of truth) ----
+	   Every wpss container caps at --wpss-container-max and gutters at
+	   --wpss-container-pad. The app shell defers to the active theme's content
+	   width when the theme constrains it, so we set a generous cap that the
+	   theme box (e.g. Reign 1170px) naturally wins inside. Override either
+	   token on a :root block to retune every container at once. */
+	--wpss-container-max: 1200px;
+	--wpss-container-pad: var(--wpss-space-5);
+
+	/* ---- Shell vertical rhythm (F5: one top-spacing token) ----
+	   The single top-spacing every plugin surface uses below the (suppressed)
+	   theme title. Kept small because the theme's own .site-content already
+	   contributes top padding; surfaces must NOT add their own ad-hoc top
+	   padding on top of this. */
+	--wpss-shell-top: var(--wpss-space-3);
 
 	/* ---- Icon Sizing (Lucide) ----
 	   Every icon in the plugin flows through the .wpss-icon utility class
@@ -187,6 +207,25 @@
 	--wpss-icon-size: 18px;
 	--wpss-icon-size-lg: 24px;
 	--wpss-icon-stroke: 1.75;
+
+	/* ---- Focus ring (single source of truth) ----
+	   Every interactive element draws the SAME 2px keyboard-focus ring from
+	   these tokens, so focus reads identically across every surface. */
+	--wpss-ring-width: 2px;
+	--wpss-ring-offset: 2px;
+	--wpss-ring-spread: 3px;
+	--wpss-ring-color: var(--wpss-primary);
+
+	/* ---- Responsive breakpoint contract (3 breakpoints, shared by EVERY
+	   surface) ----
+	   The plugin ships exactly two max-width breakpoints below desktop:
+	     mobile  <= --wpss-bp-mobile (640px)
+	     tablet  <= --wpss-bp-tablet (1024px)
+	   These tokens document the contract; CSS @media queries cannot read
+	   custom properties, so the literal values below MUST match these. No
+	   surface may introduce a different breakpoint. */
+	--wpss-bp-mobile: 640px;
+	--wpss-bp-tablet: 1024px;
 
 	/* ---- WordPress Admin Chrome ----
 	   Mirrors the WP admin theme so plugin admin pages blend with WP's UI.
@@ -228,6 +267,81 @@
 	   semantic tokens where the visual difference is &lt; 5% (imperceptible). */
 	--wpss-shadow-tint: rgba(0, 0, 0, 0.1);
 	--wpss-overlay: rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   1a. DARK MODE (token overrides at the root ONLY — never per-component)
+   --------------------------------------------------------------------------
+   Every component reads the semantic tokens above, so flipping the tokens
+   here re-themes the entire plugin with zero per-component dark rules. Two
+   entry points, identical overrides:
+     - prefers-color-scheme: dark  -> respects the OS / browser setting
+     - [data-theme="dark"], .wpss-dark .wpss-app  -> explicit in-app toggle
+   Dark token pairs are chosen to clear WCAG AA contrast on body copy.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--wpss-text: #e5e7eb;
+		--wpss-text-secondary: #d1d5db;
+		--wpss-text-muted: #9ca3af;
+		--wpss-text-light: #9ca3af;
+		--wpss-text-hint: #6b7280;
+
+		--wpss-bg: #111827;
+		--wpss-bg-subtle: #1f2937;
+		--wpss-bg-muted: #374151;
+		--wpss-background: #0b1220;
+		--wpss-border: #374151;
+		--wpss-border-light: #1f2937;
+
+		--wpss-primary-light: #312e81;
+		--wpss-primary-50: rgba(129, 140, 248, 0.16);
+
+		--wpss-shadow-tint: rgba(0, 0, 0, 0.5);
+		--wpss-overlay: rgba(0, 0, 0, 0.7);
+	}
+}
+
+:root[data-theme="dark"],
+.wpss-dark .wpss-app {
+	--wpss-text: #e5e7eb;
+	--wpss-text-secondary: #d1d5db;
+	--wpss-text-muted: #9ca3af;
+	--wpss-text-light: #9ca3af;
+	--wpss-text-hint: #6b7280;
+
+	--wpss-bg: #111827;
+	--wpss-bg-subtle: #1f2937;
+	--wpss-bg-muted: #374151;
+	--wpss-background: #0b1220;
+	--wpss-border: #374151;
+	--wpss-border-light: #1f2937;
+
+	--wpss-primary-light: #312e81;
+	--wpss-primary-50: rgba(129, 140, 248, 0.16);
+
+	--wpss-shadow-tint: rgba(0, 0, 0, 0.5);
+	--wpss-overlay: rgba(0, 0, 0, 0.7);
+}
+
+/* ==========================================================================
+   1c. REDUCED MOTION
+   --------------------------------------------------------------------------
+   Honour the user's "reduce motion" preference for every transition /
+   animation the design system ships (spinner, skeleton shimmer, button
+   press, autosave fade, card hover).
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 /* ==========================================================================
@@ -285,7 +399,9 @@
 
 .wpss-btn {
 	display: inline-flex; align-items: center; justify-content: center;
-	gap: var(--wpss-space-2); padding: 10px 20px;
+	gap: var(--wpss-space-2);
+	min-height: var(--wpss-space-10); /* 40px tap-target floor */
+	padding: var(--wpss-space-3) var(--wpss-space-5);
 	font-size: var(--wpss-text-base); font-weight: 600; line-height: 1.4;
 	text-decoration: none; border: 2px solid transparent;
 	border-radius: var(--wpss-radius); cursor: pointer;
@@ -294,7 +410,7 @@
 
 .wpss-btn:hover { text-decoration: none; }
 .wpss-btn:active:not(:disabled) { transform: scale(0.97); }
-.wpss-btn:focus-visible { outline: 2px solid var(--wpss-primary); outline-offset: 2px; }
+.wpss-btn:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
 .wpss-btn:disabled, .wpss-btn[aria-disabled="true"], .wpss-btn--loading { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
 .wpss-btn--primary { background: var(--wpss-primary); color: var(--wpss-white, #fff); border-color: var(--wpss-primary); }
@@ -303,16 +419,34 @@
 .wpss-btn--secondary:hover { background: var(--wpss-border); color: var(--wpss-text); }
 .wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border-color: var(--wpss-border); }
 .wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
-.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: 8px 12px; }
+.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 .wpss-btn--danger { background: var(--wpss-danger); color: var(--wpss-white, #fff); border-color: var(--wpss-danger); }
+.wpss-btn--danger:hover { background: var(--wpss-danger-dark, #b91c1c); border-color: var(--wpss-danger-dark, #b91c1c); color: var(--wpss-white, #fff); }
 .wpss-btn--success { background: var(--wpss-success); color: var(--wpss-white, #fff); border-color: var(--wpss-success); }
 
-.wpss-btn--sm { padding: 6px 14px; font-size: var(--wpss-text-sm); }
-.wpss-btn--lg { padding: 14px 28px; font-size: var(--wpss-text-lg); }
-.wpss-btn--xl { padding: 16px 36px; font-size: var(--wpss-text-xl); }
+/* Theme-proof filled CTAs — when a .wpss-btn renders OUTSIDE the .wpss-app
+   scope (e.g. a confirm modal appended straight to <body>), the host theme's
+   generic `a` / `button` rules can override the fill and leave white text on
+   a transparent button (an invisible "Confirm" / "Delete"). Pinning the
+   token pair on link/visited states here — at a specificity theme link rules
+   cannot beat — guarantees every filled CTA reads correctly on every surface,
+   in every theme. Mirrors the banner-CTA fix from 2.7.1. */
+a.wpss-btn--primary, a.wpss-btn--primary:link, a.wpss-btn--primary:visited,
+button.wpss-btn--primary,
+.wpss-btn--primary { background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-white, #fff); }
+a.wpss-btn--danger, a.wpss-btn--danger:link, a.wpss-btn--danger:visited,
+button.wpss-btn--danger,
+.wpss-btn--danger { background: var(--wpss-danger); border-color: var(--wpss-danger); color: var(--wpss-white, #fff); }
+a.wpss-btn--success, a.wpss-btn--success:link, a.wpss-btn--success:visited,
+button.wpss-btn--success,
+.wpss-btn--success { background: var(--wpss-success); border-color: var(--wpss-success); color: var(--wpss-white, #fff); }
+
+.wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
+.wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }
+.wpss-btn--xl { padding: var(--wpss-space-4) var(--wpss-space-10); font-size: var(--wpss-text-xl); }
 .wpss-btn--full { width: 100%; }
-.wpss-btn--icon { padding: 8px; border-radius: var(--wpss-radius-full); }
+.wpss-btn--icon { padding: var(--wpss-space-2); border-radius: var(--wpss-radius-full); }
 
 /* ==========================================================================
    4. CARDS
@@ -337,8 +471,8 @@
    ========================================================================== */
 
 .wpss-badge {
-	display: inline-flex; align-items: center; gap: 4px;
-	padding: 3px 10px; font-size: var(--wpss-text-xs); font-weight: 600;
+	display: inline-flex; align-items: center; gap: var(--wpss-space-1);
+	padding: 3px var(--wpss-space-3); font-size: var(--wpss-text-xs); font-weight: 600;
 	border-radius: var(--wpss-radius-full); text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.5;
 }
 .wpss-badge--primary { background: var(--wpss-primary-light); color: var(--wpss-primary); }
@@ -357,13 +491,18 @@
 .wpss-field__label .wpss-required { color: var(--wpss-danger); }
 
 .wpss-field__input, .wpss-field__select, .wpss-field__textarea {
-	width: 100%; padding: 10px 14px; font-size: var(--wpss-text-base); font-family: inherit;
+	width: 100%; min-height: var(--wpss-space-10); padding: var(--wpss-space-3) var(--wpss-space-4); font-size: var(--wpss-text-base); font-family: inherit;
 	color: var(--wpss-text); background: var(--wpss-bg);
 	border: 1px solid var(--wpss-border); border-radius: var(--wpss-radius);
 	transition: border-color var(--wpss-ease), box-shadow var(--wpss-ease);
 }
-.wpss-field__input:focus, .wpss-field__select:focus, .wpss-field__textarea:focus {
-	outline: none; border-color: var(--wpss-primary); box-shadow: 0 0 0 3px var(--wpss-primary-50);
+/* Keyboard focus: suppress the native outline ONLY because the box-shadow
+   below is the replacement focus indicator (a 3px primary ring). This is the
+   sanctioned "outline: none + custom :focus-visible ring" pattern. */
+.wpss-field__input:focus-visible, .wpss-field__select:focus-visible, .wpss-field__textarea:focus-visible {
+	outline: none; /* replaced by the :focus-visible ring on the next line */
+	border-color: var(--wpss-primary);
+	box-shadow: 0 0 0 var(--wpss-ring-spread) var(--wpss-primary-50);
 }
 .wpss-field__input::placeholder, .wpss-field__textarea::placeholder { color: var(--wpss-text-hint); }
 .wpss-field__hint { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); margin-top: var(--wpss-space-1); }
@@ -411,7 +550,7 @@
 .wpss-empty { text-align: center; padding: var(--wpss-space-12) var(--wpss-space-6); }
 .wpss-empty__icon { font-size: 48px; margin-bottom: var(--wpss-space-4); line-height: 1; color: var(--wpss-text-hint); }
 .wpss-empty__title { font-size: var(--wpss-text-xl); font-weight: 600; color: var(--wpss-text); margin: 0 0 var(--wpss-space-2); }
-.wpss-empty__text { font-size: var(--wpss-text-md); color: var(--wpss-text-muted); margin: 0 0 var(--wpss-space-6); max-width: 400px; margin-right: auto; margin-left: auto; line-height: 1.6; }
+.wpss-empty__text { font-size: var(--wpss-text-md); color: var(--wpss-text-muted); margin: 0 0 var(--wpss-space-6); max-width: 400px; margin-inline: auto; line-height: 1.6; }
 
 /* ==========================================================================
    10. MODALS
@@ -419,22 +558,46 @@
 
 .wpss-modal { position: fixed; inset: 0; z-index: var(--wpss-z-modal); display: none; align-items: center; justify-content: center; padding: var(--wpss-space-5); }
 .wpss-modal.wpss-modal-open { display: flex; }
-.wpss-modal__overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
+.wpss-modal__overlay { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
 .wpss-modal__dialog { position: relative; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); padding: var(--wpss-space-8); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
-.wpss-modal__close { position: absolute; top: var(--wpss-space-4); left: var(--wpss-space-4); background: none; border: none; cursor: pointer; padding: var(--wpss-space-1); color: var(--wpss-text-hint); transition: color var(--wpss-ease); border-radius: var(--wpss-radius); }
+.wpss-modal__close { position: absolute; top: var(--wpss-space-4); inset-inline-end: var(--wpss-space-4); background: none; border: none; cursor: pointer; padding: var(--wpss-space-1); color: var(--wpss-text-hint); transition: color var(--wpss-ease); border-radius: var(--wpss-radius); }
 .wpss-modal__close:hover { color: var(--wpss-text); }
-.wpss-modal__close:focus-visible { outline: 2px solid var(--wpss-primary); outline-offset: 2px; }
-.wpss-modal__title { font-size: var(--wpss-text-2xl); font-weight: 600; color: var(--wpss-text); margin: 0 0 var(--wpss-space-6); padding-left: var(--wpss-space-10); }
+.wpss-modal__close:focus-visible { outline: var(--wpss-ring-width) solid var(--wpss-ring-color); outline-offset: var(--wpss-ring-offset); }
+.wpss-modal__title { font-size: var(--wpss-text-2xl); font-weight: 600; color: var(--wpss-text); margin: 0 0 var(--wpss-space-6); padding-inline-end: var(--wpss-space-10); }
 .wpss-modal__actions { display: flex; gap: var(--wpss-space-3); justify-content: flex-end; margin-top: var(--wpss-space-6); }
+
+/* Confirm dialog (WPSS.showConfirm) — ONE clean surface: title + message +
+   action row. The dialog card is the only box; there is no nested
+   content/body wrapper, so the modal never reads as a double-card. */
+.wpss-modal__dialog.wpss-confirm { padding: var(--wpss-space-8); max-width: 420px; }
+.wpss-confirm { display: flex; flex-direction: column; gap: var(--wpss-space-4); text-align: center; }
+.wpss-confirm__title { margin: 0; font-size: var(--wpss-text-xl); font-weight: 600; color: var(--wpss-text); }
+.wpss-confirm__message { margin: 0; font-size: var(--wpss-text-base); line-height: 1.55; color: var(--wpss-text-secondary); }
+.wpss-confirm__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-2); }
+.wpss-confirm__actions .wpss-btn { min-width: 110px; }
 
 /* ==========================================================================
    11. LAYOUT UTILITIES
    ========================================================================== */
 
-.wpss-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--wpss-space-5); }
+/* Single source of truth for the plugin content container (F3). The old
+   second definition in frontend.css (max-width 1400px, raw 20px padding) was
+   deleted in favour of this token-driven block. */
+.wpss-container { max-width: var(--wpss-container-max); margin: 0 auto; padding: 0 var(--wpss-container-pad); }
 .wpss-container--sm { max-width: 640px; }
 .wpss-container--md { max-width: 800px; }
 .wpss-container--lg { max-width: 1000px; }
+
+/* Nested-container collapse (F2): once a wpss container sits inside the app
+   shell (or inside another wpss container) the outer box already owns the
+   max-width + gutters, so the inner one must go fluid with zero horizontal
+   padding. Without this the archive page stacked three max-widths + three
+   gutter layers, shifting the H1 x-position page-to-page. */
+.wpss-app-shell__container .wpss-container,
+.wpss-container .wpss-container {
+	max-width: none;
+	padding-inline: 0;
+}
 
 .wpss-grid { display: grid; gap: var(--wpss-space-6); }
 .wpss-grid--2 { grid-template-columns: repeat(2, 1fr); }
@@ -491,7 +654,7 @@
 /* Form-level error summary, rendered above the first field. */
 .wpss-form-error-summary { background: var(--wpss-danger-light, #fef2f2); border: 1px solid var(--wpss-danger); border-radius: var(--wpss-radius); padding: var(--wpss-space-3) var(--wpss-space-4); margin: 0 0 var(--wpss-space-4); color: var(--wpss-danger); font-size: var(--wpss-text-sm); }
 .wpss-form-error-summary__title { font-weight: 600; margin: 0 0 var(--wpss-space-1); display: flex; align-items: center; gap: var(--wpss-space-2); }
-.wpss-form-error-summary__list { margin: 0; padding-right: var(--wpss-space-5); }
+.wpss-form-error-summary__list { margin: 0; padding-inline-start: var(--wpss-space-5); }
 .wpss-form-error-summary__list li { margin: var(--wpss-space-1) 0; }
 
 /* Invalid input outline (matches the form-error colour). */
@@ -518,7 +681,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-autosave { display: inline-flex; align-items: center; gap: var(--wpss-space-2); padding: var(--wpss-space-1) var(--wpss-space-3); border-radius: 9999px; font-size: var(--wpss-text-xs); font-weight: 500; line-height: 1; transition: opacity 0.3s ease, background-color 0.2s ease, color 0.2s ease; opacity: 1; }
 .wpss-autosave[data-state="idle"] { opacity: 0; pointer-events: none; }
 .wpss-autosave[data-state="saving"] { background: var(--wpss-bg-muted); color: var(--wpss-text-muted); }
-.wpss-autosave[data-state="saved"] { background: rgba(16, 185, 129, 0.1); color: var(--wpss-success, #10b981); }
+.wpss-autosave[data-state="saved"] { background: rgba(16, 185, 129, 0.1); background: color-mix(in srgb, var(--wpss-success) 10%, transparent); color: var(--wpss-success, #10b981); }
 .wpss-autosave[data-state="saved"].wpss-autosave--fading { opacity: 0.4; }
 .wpss-autosave[data-state="error"] { background: var(--wpss-danger-light, #fef2f2); color: var(--wpss-danger); }
 
@@ -552,27 +715,125 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
    ========================================================================== */
 
 .wpss-app-shell { position: relative; isolation: isolate; contain: layout; width: 100%; max-width: 100%; }
-.wpss-app-shell__container { max-width: var(--wpss-container-max, 1200px); margin: 0 auto; padding: var(--wpss-space-6) var(--wpss-space-4); }
 
-@media (max-width: 768px) {
-	.wpss-app-shell__container { padding: var(--wpss-space-4) var(--wpss-space-3); }
+/* F5: the shell owns ONE top-spacing token used by every surface. Bottom
+   padding stays comfortable; horizontal gutters use the shared container pad
+   so the shell aligns pixel-for-pixel with .wpss-container. */
+.wpss-app-shell__container {
+	max-width: var(--wpss-container-max);
+	margin: 0 auto;
+	padding: var(--wpss-shell-top) var(--wpss-container-pad) var(--wpss-space-6);
 }
 
 /* ==========================================================================
-   17. RESPONSIVE
+   16b. PAGE HEADER (UX PRIMITIVE — F1)
+   ----------------------------------------------------------------------------
+   The single page-header component the app shell renders on EVERY plugin
+   surface (archive, single, dashboard, vendor, requests, cart/order). The
+   theme's own entry-title is suppressed on plugin-shell pages via the
+   theme-agnostic compat filter (WPSellServices\Frontend\ShellHeader) so there
+   is exactly ONE header, in the plugin's design language, with identical
+   alignment + width to .wpss-container / .wpss-app-shell__container.
+
+   Mark-up (emitted by ShellHeader::render()):
+     <header class="wpss-page-header">
+       <div class="wpss-page-header__main">
+         <h1 class="wpss-page-header__title">Title</h1>
+         <p class="wpss-page-header__subtitle">Optional subtitle</p>
+       </div>
+       <div class="wpss-page-header__actions"> ...optional... </div>
+     </header>
    ========================================================================== */
 
-@media (max-width: 768px) {
+.wpss-page-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-4);
+	margin: 0 0 var(--wpss-space-6);
+}
+.wpss-page-header__main { min-width: 0; flex: 1 1 auto; }
+.wpss-page-header__title {
+	font-size: var(--wpss-text-4xl);
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: -0.02em;
+	color: var(--wpss-text);
+	margin: 0;
+}
+.wpss-page-header__subtitle {
+	font-size: var(--wpss-text-md);
+	color: var(--wpss-text-muted);
+	line-height: 1.5;
+	margin: var(--wpss-space-2) 0 0;
+}
+.wpss-page-header__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3);
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   16c. SHARED SERVICE-CARD COMPONENT LAYER (F7)
+   ----------------------------------------------------------------------------
+   The services grid lives here, in the design-system layer the app shell
+   loads on EVERY surface, so cards lay out identically on archive, single
+   (Related Services), vendor profile, dashboard, favorites, and after any
+   AJAX refresh. Surface CSS keeps only surface-specific layout; it no longer
+   owns the grid. The card SURFACE (border/bg/hover/badge/price) is asserted
+   in frontend.css (also loaded everywhere via the wpss-frontend handle).
+
+   Dashboard and favorites cards are MODIFIERS of this grid, not parallel
+   re-implementations. */
+
+.wpss-services-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: var(--wpss-space-6);
+}
+.wpss-services-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wpss-services-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wpss-services-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* ==========================================================================
+   17. RESPONSIVE — THE 3-BREAKPOINT CONTRACT
+   --------------------------------------------------------------------------
+   Desktop (>= 1025px) is the default (every rule above). Below it there are
+   EXACTLY two max-width breakpoints, both anchored here at the bottom of the
+   file, and every plugin surface must reuse these same two widths (mirrors
+   --wpss-bp-tablet / --wpss-bp-mobile). No surface introduces a third
+   breakpoint; if a component needs a different reflow, adjust the component,
+   not the grid.
+
+     tablet  <= 1024px  -> multi-column grids drop to 2-up; sidebars stack
+     mobile  <=  640px  -> everything single-column; full-width actions
+   ========================================================================== */
+
+/* ── Tablet (<= 1024px) ── */
+@media (max-width: 1024px) {
+	.wpss-grid--3, .wpss-grid--4 { grid-template-columns: repeat(2, 1fr); }
+	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: 1fr; }
+	.wpss-services-grid--3,
+	.wpss-services-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Mobile (<= 640px) ── */
+@media (max-width: 640px) {
+	.wpss-app-shell__container { padding-inline: var(--wpss-space-3); }
 	.wpss-grid--2, .wpss-grid--3, .wpss-grid--4 { grid-template-columns: 1fr; }
 	.wpss-layout--sidebar-right, .wpss-layout--sidebar-left { grid-template-columns: 1fr; }
+	.wpss-services-grid,
+	.wpss-services-grid--2,
+	.wpss-services-grid--3,
+	.wpss-services-grid--4 { grid-template-columns: 1fr; }
 	.wpss-modal__dialog { padding: var(--wpss-space-6); margin: var(--wpss-space-4); }
 	.wpss-modal__actions { flex-direction: column; }
 	.wpss-modal__actions .wpss-btn { width: 100%; }
 	.wpss-banner { flex-direction: column; text-align: center; gap: var(--wpss-space-3); }
 	.wpss-banner__action { width: 100%; }
-}
-
-@media (max-width: 480px) {
 	.wpss-card { padding: var(--wpss-space-4); }
 	.wpss-btn--lg { width: 100%; }
 }

@@ -1,0 +1,353 @@
+# ─────────────────────────────────────────────────────────────────────────
+# AutoVAP v2 — Migration Manifest
+# Target: wp-sell-services (FREE)  ·  "1.2.0 audit + hardening cycle"
+#
+# Drafted by autovap-planner from audit/manifest.json + the
+# audit/wppqa-baseline-2026-06-06 hardening backlog. Review + edit before run.
+# Validate:  node ~/autovap-agent/scripts/validate-plan.mjs plan/1.2.0-hardening.yaml
+#
+# SCOPE: hardening only — code quality, security, escaping, consistency.
+# NO new features. The public surface (contracts:) is FROZEN because the Pro
+# sibling consumes 41 of these hooks + 15 free service/model classes directly.
+# ─────────────────────────────────────────────────────────────────────────
+version: 1
+
+target:
+  type: plugin
+  slug: wp-sell-services
+  path: /Users/varundubey/Local Sites/wpsellservices/app/public/wp-content/plugins/wp-sell-services
+  repo: wbcomdesigns/wp-sell-services
+  local_wp_site: wpsellservices
+  site_url: https://wpsellservices.local
+  pair: wp-sell-services-pro              # Pro is a hard consumer — coupling rules apply
+
+goal: >
+  Full audit + hardening for the 1.2.0 release cycle. Resolve the triaged
+  wppqa hardening backlog without changing any public contract: replace the
+  5 alert()/confirm() calls with the existing admin-toast/UX-primitive
+  components, refactor the 3 $_POST/$_GET iteration patterns to explicit-key
+  reads, close the real nonce-without-capability gaps in Admin.php and
+  ServiceModerationPage.php, triage-and-document the AjaxHandlers
+  object-ownership nonce findings, and clean up tap-target / breakpoint drift.
+  No new features. Every public hook, REST route, AJAX action, shortcode,
+  block, CLI command, option, and DB table — and every free service/model
+  signature the Pro plugin consumes — must remain byte-for-byte compatible.
+
+# ── CONTRACTS ──────────────────────────────────────────────────────────────
+# FROZEN public surface. Seeded from audit/manifest.json and verified against
+# what wp-sell-services-pro actually consumes (add_action/add_filter on 41
+# wpss_* hooks + 15 WPSellServices\{Services,Models,API,Integrations} classes).
+# The verifier diffs live state against this at every wave. Any change without a
+# matching migrations: entry = HARD HALT. migrations is intentionally EMPTY —
+# this is a hardening cycle; nothing on the public surface is allowed to move.
+contracts:
+  rest_routes:
+    - namespace: "wpss/v1"
+      # 138 endpoints across 24 controllers — the namespace + controller bases
+      # are the contract. Route paths must not be renamed/removed.
+      routes:
+        - "/categories"
+        - "/tags"
+        - "/settings"
+        - "/me"
+        - "/dashboard"
+        - "/search"
+        - "/batch"
+        - "/services"
+        - "/orders"
+        - "/reviews"
+        - "/vendors"
+        - "/conversations"
+        - "/disputes"
+        - "/buyer-requests"
+        - "/proposals"
+        - "/notifications"
+        - "/portfolio"
+        - "/earnings"
+        - "/extensions"
+        - "/milestones"
+        - "/tips"
+        - "/seller-levels"
+        - "/moderation"
+        - "/favorites"
+        - "/media"
+        - "/cart"
+        - "/auth"
+        - "/payment"
+        - "/audit-log"
+        - "/tour/complete"
+  hooks:
+    actions:
+      # Pro entry + lifecycle actions Pro hooks into (verified in Pro source)
+      - "wpss_loaded"
+      - "wpss_pro_loaded"
+      - "wpss_order_created"
+      - "wpss_order_paid"
+      - "wpss_order_status_changed"
+      - "wpss_order_status_completed"
+      - "wpss_order_status_cancelled"
+      - "wpss_buyer_request_created"
+      - "wpss_proposal_submitted"
+      - "wpss_delivery_submitted"
+      - "wpss_delivery_accepted"
+      - "wpss_revision_requested"
+      - "wpss_vendor_registered"
+      - "wpss_withdrawal_processed"
+      - "wpss_stripe_webhook_received"
+    filters:
+      # Extension filters Pro registers against (verified in Pro source)
+      - "wpss_ecommerce_adapters"
+      - "wpss_payment_gateways"
+      - "wpss_storage_providers"
+      - "wpss_wallet_providers"
+      - "wpss_wallet_manager"
+      - "wpss_analytics_widgets"
+      - "wpss_dashboard_sections"
+      - "wpss_dashboard_section_template"
+      - "wpss_dashboard_section_before_content"
+      - "wpss_dashboard_header"
+      - "wpss_can_access_dashboard_section"
+      - "wpss_api_controllers"
+      - "wpss_settings_tabs"
+      - "wpss_settings_tab_branding"
+      - "wpss_settings_tab_stripe"
+      - "wpss_settings_sections_payments"
+      - "wpss_settings_sections_vendor"
+      - "wpss_settings_sections_orders"
+      - "wpss_gateway_cards"
+      - "wpss_gateway_settings_razorpay"
+      - "wpss_payment_callback_razorpay"
+      - "wpss_admin_menu_label"
+      - "wpss_commission_rate"
+      - "wpss_email_from_name"
+      - "wpss_email_header_vars"
+      - "wpss_service_meta_fields"
+      - "wpss_service_wizard_features"
+      - "wpss_service_max_videos"
+      - "wpss_service_max_gallery"
+      - "wpss_service_max_faq"
+      - "wpss_service_max_requirements"
+      - "wpss_service_max_extras"
+      - "wpss_service_limit_error_message"
+      - "wpss_add_service_to_cart"
+      - "wpss_tour_steps"
+  options:
+    # Stable, externally-observable option keys (settings groups + page refs +
+    # versioning + gateway settings). Hardening must not rename these.
+    - "wpss_version"
+    - "wpss_general"
+    - "wpss_vendor"
+    - "wpss_orders"
+    - "wpss_commission"
+    - "wpss_payouts"
+    - "wpss_tax"
+    - "wpss_pages"
+    - "wpss_advanced"
+    - "wpss_notifications"
+    - "wpss_review_moderation"
+    - "wpss_stripe_settings"
+    - "wpss_paypal_settings"
+    - "wpss_offline_settings"
+    - "wpss_wallet_provider"
+    - "wpss_dashboard_page"
+    - "wpss_vendors_page"
+    - "wpss_order_confirmation_page"
+    - "wpss_terms_page"
+    - "wpss_setup_wizard_completed"
+    - "wpss_order_meta_table_version"
+  db_schema:
+    - { table: "{prefix}wpss_service_packages" }
+    - { table: "{prefix}wpss_service_addons" }
+    - { table: "{prefix}wpss_orders" }
+    - { table: "{prefix}wpss_order_requirements" }
+    - { table: "{prefix}wpss_conversations" }
+    - { table: "{prefix}wpss_messages" }
+    - { table: "{prefix}wpss_deliveries" }
+    - { table: "{prefix}wpss_extension_requests" }
+    - { table: "{prefix}wpss_reviews" }
+    - { table: "{prefix}wpss_disputes" }
+    - { table: "{prefix}wpss_dispute_messages" }
+    - { table: "{prefix}wpss_proposals" }
+    - { table: "{prefix}wpss_vendor_profiles" }
+    - { table: "{prefix}wpss_portfolio_items" }
+    - { table: "{prefix}wpss_notifications" }
+    - { table: "{prefix}wpss_wallet_transactions" }
+    - { table: "{prefix}wpss_withdrawals" }
+    - { table: "{prefix}wpss_audit_log" }
+  shortcodes:
+    - "wpss_dashboard"
+    - "wpss_account"
+    - "wpss_services"
+    - "wpss_service_search"
+    - "wpss_featured_services"
+    - "wpss_service_categories"
+    - "wpss_service_wizard"
+    - "wpss_vendors"
+    - "wpss_vendor_profile"
+    - "wpss_top_vendors"
+    - "wpss_vendor_registration"
+    - "wpss_buyer_requests"
+    - "wpss_post_request"
+    - "wpss_my_orders"
+    - "wpss_order_details"
+    - "wpss_cart"
+    - "wpss_checkout"
+    - "wpss_login"
+    - "wpss_register"
+  cli_commands:
+    - "wpss demo"
+    - "wpss preflight"
+    - "wpss service"
+    - "wpss validate"
+
+# Hardening cycle — NOTHING on the public surface may change. Empty by design.
+# (Blocks wpss/buyer-requests, wpss/featured-services, wpss/seller-card,
+#  wpss/service-categories, wpss/service-grid, wpss/service-search are equally
+#  frozen; the verifier tracks them via the live block registry.)
+migrations: []
+
+# ── STANDARDS ────────────────────────────────────────────────────────────────
+# REFERENCES only. Slaves invoke these skills/MCP for HOW.
+standards:
+  build_skills:  [wp-plugin-development, ux-foundation]
+  audit_skills:  [wp-security-review, ux-audit, action-audit]
+  phpstan_level: 6
+  wpcs_standard: WordPress-Extra
+
+# ── GATES ──────────────────────────────────────────────────────────────────
+gates:
+  default_static:     [php-lint, wpcs, phpstan]
+  default_functional: [browser-smoke, qa-suite]
+
+# ── JOURNEYS ─────────────────────────────────────────────────────────────────
+# Hardening must not regress behaviour — these flows exercise the surfaces the
+# changes touch, on the live site, after each wave.
+journeys:
+  - id: admin-moderation-actions
+    role: admin
+    steps:
+      - "WP Admin -> WPSS -> Moderation; approve and reject a pending service"
+      - "WP Admin -> WPSS Dashboard; perform the admin actions that hit Admin.php nonce-guarded handlers"
+      - "each action succeeds for an admin and is rejected for a non-capable user"
+      - "no JS console errors; correct at 390px and 1280px"
+  - id: admin-metabox-save
+    role: admin
+    steps:
+      - "edit a wpss_service: change packages/addons in the Service metabox, save"
+      - "edit a wpss_request: change fields in the Buyer Request metabox, save"
+      - "saved values persist and re-render correctly; no PHP notices in debug.log"
+  - id: admin-settings-toast
+    role: admin
+    steps:
+      - "WP Admin -> WPSS -> Settings -> Pages; trigger the page-create action"
+      - "WP Admin -> WPSS -> Settings -> Demo content import/reset"
+      - "feedback shows as the wpss admin-toast (no native alert/confirm dialog)"
+      - "no JS console errors; correct at 390px and 1280px"
+  - id: vendor-dashboard-ajax
+    role: subscriber
+    steps:
+      - "open [wpss_dashboard] as a vendor; trigger the unified-dashboard actions"
+      - "destructive actions confirm via the wpss modal (not native confirm)"
+      - "AJAX handlers in AjaxHandlers.php respond correctly and never return 0"
+  - id: pro-pair-still-loads
+    role: admin
+    steps:
+      - "activate wp-sell-services-pro alongside the hardened free build"
+      - "Pro dashboard sections, gateway cards, and settings tabs all render"
+      - "no fatal/notice from a missing free hook, filter, service, or method"
+
+# ── WAVES ────────────────────────────────────────────────────────────────────
+waves:
+
+  # Wave 1 — SECURITY (highest priority hardening). PHP-only, backend.
+  # Two directions: real nonce-no-cap fixes vs. AjaxHandlers triage+doc.
+  # Scopes are disjoint (Admin/* vs Frontend/AjaxHandlers.php).
+  - id: wave-1-security
+    depends_on: []
+    functional_gates: [qa-suite, browser-smoke]
+    journeys: [admin-moderation-actions, vendor-dashboard-ajax, pro-pair-still-loads]
+    directions:
+      - id: "1.1"
+        title: "Add capability checks after nonce in real gaps (Admin.php, ServiceModerationPage.php)"
+        journey: fix
+        scope:
+          - "src/Admin/Admin.php"
+          - "src/Admin/Pages/ServiceModerationPage.php"
+        skills: [wp-security-review, action-audit]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "1.2"
+        title: "Triage AjaxHandlers nonce-no-cap findings; add ownership guard where missing, document accepted object-ownership patterns"
+        journey: fix
+        scope:
+          - "src/Frontend/AjaxHandlers.php"
+        skills: [wp-security-review, action-audit]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # Wave 2 — INPUT-HANDLING hardening. PHP-only, backend.
+  # Refactor 3 superglobal-iteration patterns to explicit-key reads.
+  # Independent of wave 1 (different files), but ordered after so security
+  # lands first and the contract-verifier runs on a clean base.
+  - id: wave-2-input-handling
+    depends_on: [wave-1-security]
+    functional_gates: [qa-suite, browser-smoke]
+    journeys: [admin-metabox-save, vendor-dashboard-ajax]
+    directions:
+      - id: "2.1"
+        title: "Refactor metabox superglobal iteration to explicit-key reads (BuyerRequestMetabox, ServiceMetabox)"
+        journey: improve
+        scope:
+          - "src/Admin/Metaboxes/BuyerRequestMetabox.php"
+          - "src/Admin/Metaboxes/ServiceMetabox.php"
+        skills: [wp-plugin-development, wp-security-review]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+      - id: "2.2"
+        title: "Refactor AjaxHandlers superglobal iteration (line ~638) to explicit-key reads"
+        journey: improve
+        scope:
+          - "src/Frontend/AjaxHandlers.php"
+        skills: [wp-plugin-development, wp-security-review]
+        static_gates: [php-lint, wpcs, phpstan]
+        depends_on: []
+
+  # Wave 3 — FRONTEND / JS UX hardening. JS + CSS only, no PHP, no contracts.
+  # Disjoint by file: alert/confirm replacement vs. tap-target/breakpoint CSS.
+  # Reuse existing admin-toast.js + components/wpss-ux-primitives.js — do NOT
+  # introduce a new toast/modal library.
+  - id: wave-3-frontend-ux
+    depends_on: [wave-1-security, wave-2-input-handling]
+    functional_gates: [browser-smoke, qa-suite]
+    journeys: [admin-settings-toast, vendor-dashboard-ajax]
+    directions:
+      - id: "3.1"
+        title: "Replace 5 alert()/confirm() with existing wpss admin-toast / UX-primitive modal"
+        journey: improve
+        scope:
+          - "assets/js/admin-settings-demo.js"
+          - "assets/js/admin-settings-pages.js"
+          - "assets/js/unified-dashboard.js"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit, wiring]
+        depends_on: []
+      - id: "3.2"
+        title: "Tap-target (>=40px) + breakpoint-proliferation cleanup in dashboard/wizard CSS"
+        journey: improve
+        scope:
+          - "assets/css/dashboard.css"
+          - "assets/css/wizard.css"
+          - "assets/css/admin.css"
+        skills: [ux-foundation, ux-audit]
+        static_gates: [php-lint, wpcs, ux-audit]
+        depends_on: []
+
+  # Wave 4 — AUDIT verdict. Read-only producer; runs after all hardening green.
+  - id: wave-4-audit
+    depends_on: [wave-1-security, wave-2-input-handling, wave-3-frontend-ux]
+    directions:
+      - id: "4.1"
+        title: "Product-readiness audit verdict for the 1.2.0 hardening cycle (is it shippable?)"
+        journey: audit
+        scope: ["**"]
+        depends_on: []

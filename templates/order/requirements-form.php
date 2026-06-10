@@ -55,6 +55,16 @@ if ( ! empty( $requirements ) && is_array( $requirements ) ) {
 	// Default form has 1 required field (Project Description).
 	$required_count = 1;
 }
+
+/**
+ * Fires before the requirements form content.
+ *
+ * @since 1.0.0
+ *
+ * @param int    $order_id Order ID.
+ * @param object $order    Order object.
+ */
+do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 ?>
 
 <?php if ( $requirements_meta_corrupt ) : ?>
@@ -407,6 +417,18 @@ if ( ! empty( $requirements ) && is_array( $requirements ) ) {
 		</p>
 	</div>
 </form>
+
+<?php
+/**
+ * Fires after the requirements form content.
+ *
+ * @since 1.0.0
+ *
+ * @param int    $order_id Order ID.
+ * @param object $order    Order object.
+ */
+do_action( 'wpss_after_requirements_form_component', $order_id, $order );
+?>
 
 <style>
 	/* CB2 + VS4 (plans/ORDER-FLOW-AUDIT.md) progress bar + corrupt-meta notice */

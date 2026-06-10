@@ -75,9 +75,8 @@ class Settings {
 			// Setup.
 			'general'  => __( 'General', 'wp-sell-services' ),
 			'pages'    => __( 'Pages', 'wp-sell-services' ),
-			// Business.
+			// Business. Gateways are consolidated into the Payments tab.
 			'payments' => __( 'Payments', 'wp-sell-services' ),
-			'gateways' => __( 'Gateways', 'wp-sell-services' ),
 			'vendor'   => __( 'Vendor', 'wp-sell-services' ),
 			// Operations.
 			'orders'   => __( 'Orders', 'wp-sell-services' ),
@@ -88,7 +87,7 @@ class Settings {
 
 		$this->tab_groups = array(
 			'setup'      => array( 'general', 'pages' ),
-			'business'   => array( 'payments', 'gateways', 'vendor' ),
+			'business'   => array( 'payments', 'vendor' ),
 			'operations' => array( 'orders', 'emails' ),
 			'pro'        => array(), // Pro tabs added via filter.
 			'system'     => array( 'advanced' ),
@@ -110,7 +109,6 @@ class Settings {
 			'general',
 			'pages',
 			'payments',
-			'gateways',
 			'vendor',
 			'orders',
 			'emails',
@@ -156,7 +154,6 @@ class Settings {
 			'general'  => 'settings',
 			'pages'    => 'layout-template',
 			'payments' => 'credit-card',
-			'gateways' => 'wallet',
 			'vendor'   => 'store',
 			'orders'   => 'shopping-cart',
 			'emails'   => 'mail',
@@ -199,6 +196,53 @@ class Settings {
 		$this->register_settings();
 		add_action( 'wp_ajax_wpss_create_page', array( $this, 'ajax_create_page' ) );
 		add_action( 'wp_ajax_wpss_send_test_email', array( $this, 'ajax_send_test_email' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+
+		// Expose the safe masked-secret renderer as a shared extension point so
+		// gateway settings renderers (Stripe, PayPal, Pro gateways) emit secret
+		// fields that never echo the stored value. Usage:
+		// do_action( 'wpss_render_secret_field', $args );
+		add_action( 'wpss_render_secret_field', array( $this, 'render_secret_field' ) );
+	}
+
+	/**
+	 * Enqueue the masked-secret progressive-enhancement script.
+	 *
+	 * Loaded only on the plugin settings page. The script is pure progressive
+	 * enhancement: the masked-secret fields rendered by render_secret_field()
+	 * work without it (the stored secret is never echoed regardless of JS).
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 * @return void
+	 */
+	public function enqueue_assets( string $hook ): void {
+		if ( ! is_string( $hook ) || ! str_contains( $hook, 'wpss-settings' ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'wpss-admin-settings',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-settings.js',
+			array(),
+			\WPSS_VERSION,
+			true
+		);
+
+		wp_set_script_translations( 'wpss-admin-settings', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+
+		wp_localize_script(
+			'wpss-admin-settings',
+			'wpssSettingsSecret',
+			array(
+				'reveal'      => __( 'Reveal', 'wp-sell-services' ),
+				'hide'        => __( 'Hide', 'wp-sell-services' ),
+				'replace'     => __( 'Replace', 'wp-sell-services' ),
+				'cancel'      => __( 'Cancel', 'wp-sell-services' ),
+				'enterSecret' => __( 'Enter the new secret value', 'wp-sell-services' ),
+			)
+		);
 	}
 
 	/**
@@ -1083,6 +1127,138 @@ class Settings {
 				'description' => __( 'Position of the currency symbol relative to the amount.', 'wp-sell-services' ),
 			)
 		);
+
+		// Realtime (WebSocket) settings.
+		register_setting(
+			'wpss_realtime',
+			'wpss_realtime_settings',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_realtime_settings' ),
+			)
+		);
+
+		add_settings_section(
+			'wpss_realtime_section',
+			__( 'Real-time Settings', 'wp-sell-services' ),
+			array( $this, 'render_realtime_section' ),
+			'wpss_realtime'
+		);
+
+		add_settings_field(
+			'enabled',
+			__( 'Enable Real-time Updates', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'enabled',
+				'label'       => __( 'Push live messages and notifications to logged-in users over WebSockets', 'wp-sell-services' ),
+				'default'     => false,
+			)
+		);
+
+		add_settings_field(
+			'app_id',
+			__( 'App ID', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'app_id',
+				'default'     => '',
+				'description' => __( 'The application ID from your Pusher.com app or Soketi configuration.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'key',
+			__( 'Key', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'key',
+				'default'     => '',
+				'description' => __( 'The publishable app key. This is shared with browsers; it cannot publish events on its own.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'secret',
+			__( 'Secret', 'wp-sell-services' ),
+			array( $this, 'render_secret_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'secret',
+				'label'       => __( 'Realtime app secret', 'wp-sell-services' ),
+				'description' => __( 'The app secret used to sign events and channel authorizations. Never sent to browsers.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'host',
+			__( 'Host', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'host',
+				'default'     => '',
+				'description' => __( 'Leave empty for Pusher.com, or enter your self-hosted Pusher-compatible (Soketi) server hostname, e.g. wss-server.example.com.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'cluster',
+			__( 'Cluster', 'wp-sell-services' ),
+			array( $this, 'render_text_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'cluster',
+				'default'     => 'mt1',
+				'description' => __( 'Pusher.com cluster (e.g. mt1, eu, ap2). Ignored when a custom host is set.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'port',
+			__( 'Port', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'port',
+				'default'     => 443,
+				'min'         => 1,
+				'max'         => 65535,
+				'step'        => 1,
+				'description' => __( 'Server port. 443 for Pusher.com and TLS-terminated Soketi servers.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'use_tls',
+			__( 'Use TLS', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_realtime',
+			'wpss_realtime_section',
+			array(
+				'option_name' => 'wpss_realtime_settings',
+				'field'       => 'use_tls',
+				'label'       => __( 'Connect over TLS (wss/https) - recommended', 'wp-sell-services' ),
+				'default'     => true,
+			)
+		);
 	}
 
 	/**
@@ -1100,7 +1276,7 @@ class Settings {
 
 		$this->init_tabs();
 
-		$core_tabs = array( 'general', 'payments', 'gateways', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
+		$core_tabs = array( 'general', 'payments', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
 		?>
 		<div class="wrap wpss-admin">
 			<div class="wpss-page-header">
@@ -1141,7 +1317,7 @@ class Settings {
 		$grouped_tabs = $this->get_grouped_tabs();
 		$group_labels = $this->get_group_labels();
 		$icon_map     = $this->get_icon_map();
-		$core_tabs    = array( 'general', 'pages', 'payments', 'gateways', 'vendor', 'orders', 'emails', 'advanced' );
+		$core_tabs    = array( 'general', 'pages', 'payments', 'vendor', 'orders', 'emails', 'advanced' );
 		?>
 		<div class="wpss-settings-sidebar">
 			<div class="wpss-settings-sidebar__brand">
@@ -1225,9 +1401,6 @@ class Settings {
 				break;
 			case 'payments':
 				$this->render_payments_tab();
-				break;
-			case 'gateways':
-				$this->render_gateways_tab();
 				break;
 			case 'vendor':
 				$this->render_vendor_tab();
@@ -1333,17 +1506,30 @@ class Settings {
 				),
 			)
 		);
+
+		// Payment gateways are consolidated into the Payments tab so all
+		// money-flow configuration lives in one place.
+		echo '<div class="wpss-settings-subhead">';
+		echo '<p class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</p>';
+		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
+		echo '</div>';
+
+		$this->render_gateway_cards();
 	}
 
 	/**
-	 * Render the Gateways tab with card sections.
+	 * Render the consolidated payment-gateway cards.
 	 *
-	 * Consolidates Stripe, PayPal, and Offline payment gateway settings.
+	 * Renders Stripe, PayPal, and Offline gateway settings as collapsible
+	 * cards. Pro and extensions inject additional gateways via the
+	 * wpss_gateway_cards and wpss_settings_sections_gateways hooks, which are
+	 * preserved here unchanged so the Pro contract is unaffected by moving the
+	 * cards from a standalone tab into the Payments tab.
 	 *
 	 * @since 1.1.0
 	 * @return void
 	 */
-	private function render_gateways_tab(): void {
+	private function render_gateway_cards(): void {
 		// Test Gateway section (only in debug mode).
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			$this->render_gateway_card(
@@ -1481,6 +1667,13 @@ class Settings {
 					'settings_id'  => 'wpss_advanced',
 				),
 				array(
+					'id'           => 'realtime',
+					'title'        => __( 'Real-time (WebSockets)', 'wp-sell-services' ),
+					'description'  => __( 'Push live messages and notifications to logged-in users. Works with Pusher.com or any self-hosted Pusher-compatible server such as Soketi.', 'wp-sell-services' ),
+					'option_group' => 'wpss_realtime',
+					'settings_id'  => 'wpss_realtime',
+				),
+				array(
 					'id'          => 'demo-content',
 					'title'       => __( 'Demo Content', 'wp-sell-services' ),
 					'description' => __( 'Import sample services, vendors, and categories to preview your marketplace. Demo content can be removed at any time.', 'wp-sell-services' ),
@@ -1601,6 +1794,16 @@ class Settings {
 	 */
 	public function render_advanced_section(): void {
 		echo '<p>' . esc_html__( 'Advanced configuration options.', 'wp-sell-services' ) . '</p>';
+	}
+
+	/**
+	 * Render realtime section description.
+	 *
+	 * @since 1.2.0
+	 * @return void
+	 */
+	public function render_realtime_section(): void {
+		echo '<p>' . esc_html__( 'Real-time updates power live order messages and notifications without page refreshes. Paste credentials from a Pusher.com app, or point the host at any self-hosted Pusher-compatible server (e.g. Soketi).', 'wp-sell-services' ) . '</p>';
 	}
 
 	/**
@@ -1887,6 +2090,114 @@ class Settings {
 		if ( ! empty( $args['description'] ) ) {
 			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
 		}
+	}
+
+	/**
+	 * Render a masked webhook-secret / API-secret field.
+	 *
+	 * Security contract: the stored secret value is NEVER echoed into the page.
+	 * When a secret is already saved, the field shows a fixed masked placeholder
+	 * and an empty input — submitting an empty value keeps the existing secret
+	 * (see sanitize_secret()). Admins type a new value only when rotating the
+	 * secret, so the real secret never travels to the browser in markup, browser
+	 * history, autofill caches, or page-source views.
+	 *
+	 * Expected $args keys:
+	 *   - option_name (string) Option array name.
+	 *   - field       (string) Field key within the option array.
+	 *   - label       (string) Optional accessible label (falls back to field).
+	 *   - description (string) Optional help text.
+	 *   - prefix      (string) Optional non-secret prefix to hint which key is set
+	 *                          (e.g. 'whsec_'). Shown for recognition only.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array<string, mixed> $args Field arguments.
+	 * @return void
+	 */
+	public function render_secret_field( array $args ): void {
+		$option_name = (string) ( $args['option_name'] ?? '' );
+		$field       = (string) ( $args['field'] ?? '' );
+		$options     = get_option( $option_name, array() );
+		$options     = is_array( $options ) ? $options : array();
+		$has_secret  = ! empty( $options[ $field ] );
+		$label       = (string) ( $args['label'] ?? $field );
+		$prefix_hint = isset( $args['prefix'] ) ? (string) $args['prefix'] : '';
+
+		$placeholder = $has_secret
+			? __( '••••••••••••  (saved — leave blank to keep)', 'wp-sell-services' )
+			: __( 'Not set', 'wp-sell-services' );
+
+		printf(
+			'<div class="wpss-secret-field" data-has-secret="%1$s">',
+			$has_secret ? '1' : '0'
+		);
+
+		printf(
+			'<input type="password" id="%1$s" name="%2$s[%1$s]" value="" autocomplete="off" spellcheck="false" placeholder="%3$s" aria-label="%4$s" class="regular-text wpss-secret-field__input">',
+			esc_attr( $field ),
+			esc_attr( $option_name ),
+			esc_attr( $placeholder ),
+			esc_attr( $label )
+		);
+
+		printf(
+			'<button type="button" class="button wpss-secret-field__toggle" aria-pressed="false" hidden>%s</button>',
+			esc_html__( 'Reveal', 'wp-sell-services' )
+		);
+
+		echo '</div>';
+
+		if ( $has_secret && '' !== $prefix_hint ) {
+			printf(
+				'<p class="description wpss-secret-field__status"><span class="wpss-secret-field__badge">%1$s</span> %2$s</p>',
+				esc_html__( 'Configured', 'wp-sell-services' ),
+				esc_html(
+					sprintf(
+						/* translators: %s: non-secret key prefix, e.g. whsec_ */
+						__( 'A secret starting with %s is stored. Type a new value to replace it.', 'wp-sell-services' ),
+						$prefix_hint
+					)
+				)
+			);
+		} elseif ( $has_secret ) {
+			printf(
+				'<p class="description wpss-secret-field__status"><span class="wpss-secret-field__badge">%1$s</span> %2$s</p>',
+				esc_html__( 'Configured', 'wp-sell-services' ),
+				esc_html__( 'A secret is stored. Type a new value to replace it.', 'wp-sell-services' )
+			);
+		}
+
+		if ( ! empty( $args['description'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( (string) $args['description'] ) );
+		}
+	}
+
+	/**
+	 * Sanitize a masked secret value for a settings field.
+	 *
+	 * Companion to render_secret_field(). An empty submitted value means
+	 * "keep the existing secret" (the input is always rendered blank), so the
+	 * admin never has to re-enter the secret to save unrelated fields. A
+	 * non-empty value replaces the stored secret.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $submitted   Raw submitted value.
+	 * @param string $option_name Option array name holding the stored secret.
+	 * @param string $field       Field key within the option array.
+	 * @return string Sanitized secret to persist.
+	 */
+	public function sanitize_secret( string $submitted, string $option_name, string $field ): string {
+		$submitted = trim( wp_unslash( $submitted ) );
+
+		if ( '' === $submitted ) {
+			$options = get_option( $option_name, array() );
+			$options = is_array( $options ) ? $options : array();
+			return isset( $options[ $field ] ) ? (string) $options[ $field ] : '';
+		}
+
+		return sanitize_text_field( $submitted );
 	}
 
 	/**
@@ -2306,6 +2617,43 @@ class Settings {
 		update_option( 'wpss_max_file_size', $sanitized['max_file_size'] );
 		update_option( 'wpss_allowed_file_types', $sanitized['allowed_file_types'] );
 		update_option( 'wpss_currency_position', $sanitized['currency_position'] );
+
+		return $sanitized;
+	}
+
+	/**
+	 * Sanitize realtime (WebSocket) settings.
+	 *
+	 * The secret follows the masked-field contract ({@see sanitize_secret()}):
+	 * an empty submission keeps the stored secret, so admins never re-type it
+	 * to save other fields and the secret never travels back to the browser.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
+	 * @return array<string, mixed> Sanitized input.
+	 */
+	public function sanitize_realtime_settings( ?array $input ): array {
+		$input     = $input ?? array();
+		$sanitized = array();
+
+		$sanitized['enabled'] = ! empty( $input['enabled'] );
+		$sanitized['app_id']  = sanitize_text_field( $input['app_id'] ?? '' );
+		$sanitized['key']     = sanitize_text_field( $input['key'] ?? '' );
+		$sanitized['secret']  = $this->sanitize_secret( (string) ( $input['secret'] ?? '' ), 'wpss_realtime_settings', 'secret' );
+
+		// Host: bare hostname only — strip scheme and trailing slash so both
+		// "soketi.example.com" and "https://soketi.example.com/" work.
+		$host              = sanitize_text_field( $input['host'] ?? '' );
+		$sanitized['host'] = (string) preg_replace( '#^[a-z][a-z0-9+.-]*://#i', '', untrailingslashit( $host ) );
+
+		$cluster              = sanitize_text_field( $input['cluster'] ?? 'mt1' );
+		$sanitized['cluster'] = '' !== $cluster ? $cluster : 'mt1';
+
+		$port              = absint( $input['port'] ?? 443 );
+		$sanitized['port'] = ( $port >= 1 && $port <= 65535 ) ? $port : 443;
+
+		$sanitized['use_tls'] = ! empty( $input['use_tls'] );
 
 		return $sanitized;
 	}

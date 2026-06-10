@@ -32,7 +32,8 @@ $rating_count     = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true 
 $completed_orders = (int) get_user_meta( $vendor_id, '_wpss_completed_orders', true );
 $response_time    = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
 $country          = get_user_meta( $vendor_id, '_wpss_vendor_country', true );
-$member_since     = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
+$member_since     = get_user_meta( $vendor_id, '_wpss_vendor_since', true );
+$member_since     = $member_since ? $member_since : $vendor->user_registered;
 $is_verified      = get_user_meta( $vendor_id, '_wpss_vendor_verified', true );
 $is_online        = get_user_meta( $vendor_id, '_wpss_last_active', true );
 
@@ -52,7 +53,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 <div class="wpss-vendor-card">
 	<div class="wpss-vendor-header">
 		<div class="wpss-vendor-avatar-wrapper">
-			<img src="<?php echo esc_url( get_avatar_url( $vendor_id, [ 'size' => 80 ] ) ); ?>"
+			<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 80 ) ) ); ?>"
 				alt="<?php echo esc_attr( $vendor->display_name ); ?>"
 				class="wpss-vendor-avatar">
 			<?php if ( $is_currently_online ) : ?>
@@ -73,19 +74,14 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 				<?php
 				$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
 				if ( $vendor_profile ) :
-					$tier        = $vendor_profile->tier;
-					$tier_label  = $vendor_profile->get_tier_label();
-					$tier_colors = array(
-						'new'       => 'background:#f1f5f9;color:#64748b;',
-						'rising'    => 'background:#eff6ff;color:#2563eb;',
-						'top_rated' => 'background:#fefce8;color:#ca8a04;',
-						'pro'       => 'background:#faf5ff;color:#7c3aed;',
-					);
-					$tier_style  = $tier_colors[ $tier ] ?? $tier_colors['new'];
+					$tier       = $vendor_profile->tier;
+					$tier_label = $vendor_profile->get_tier_label();
+					// Colour comes from the .wpss-seller-badge--{tier} modifier in
+					// frontend.css (token-driven), not an inline style attribute.
 					?>
-					<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" style="display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:9999px;vertical-align:middle;margin-left:6px;<?php echo esc_attr( $tier_style ); ?>">
+					<span class="wpss-seller-badge wpss-seller-badge--md wpss-seller-badge--<?php echo esc_attr( $tier ); ?>">
 						<?php if ( 'pro' === $tier ) : ?>
-							<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true" style="vertical-align:-1px;margin-right:2px;"></i>
+							<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 						<?php endif; ?>
 						<?php echo esc_html( $tier_label ); ?>
 					</span>

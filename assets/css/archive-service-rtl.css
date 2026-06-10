@@ -38,14 +38,17 @@
 	color: var(--wpss-text);
 }
 
-/* Reset theme link styles */
-.wpss-services-archive a {
+/* Reset theme link styles.
+   Scoped to plain links inside the archive chrome (header, results bar). The
+   service-card link is deliberately excluded — its colour is owned by the card
+   component (frontend.css) so card text never turns link-blue / Reign-white. */
+.wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *) {
 	color: var(--wpss-primary);
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
 
-.wpss-services-archive a:hover {
+.wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *):hover {
 	color: var(--wpss-primary-hover);
 }
 
@@ -102,9 +105,29 @@
 
 .wpss-services-archive .wpss-btn-outline:hover,
 .wpss-services-archive .wpss-btn-outline:focus {
-	background-color: var(--wpss-bg);
+	background-color: var(--wpss-bg-subtle);
 	color: var(--wpss-text);
-	border-color: var(--wpss-border);
+	border-color: var(--wpss-secondary);
+}
+
+/* Filter actions (submit <button> + clear <a>). Reign restyles bare form
+   <button>/<input type=submit> with its own bg/colour; re-assert ours with the
+   submit-element selector so the Apply button keeps its brand fill and the
+   Clear link keeps its outline treatment regardless of theme. */
+.wpss-services-archive button.wpss-btn-primary,
+.wpss-services-archive input[type="submit"].wpss-btn-primary {
+	background-color: var(--wpss-primary);
+	color: var(--wpss-white);
+	border-color: var(--wpss-primary);
+}
+
+.wpss-services-archive button.wpss-btn-primary:hover,
+.wpss-services-archive button.wpss-btn-primary:focus,
+.wpss-services-archive input[type="submit"].wpss-btn-primary:hover,
+.wpss-services-archive input[type="submit"].wpss-btn-primary:focus {
+	background-color: var(--wpss-primary-hover);
+	color: var(--wpss-white);
+	border-color: var(--wpss-primary-hover);
 }
 
 /* ==========================================================================
@@ -112,7 +135,11 @@
    ========================================================================== */
 
 .wpss-services-archive {
-	padding: 2rem 0;
+	/* F5: one shell top-spacing token, owned by the design system, instead of
+	   each surface inventing its own top padding. The theme's .site-content
+	   already pads the content area, so the surface only adds the small shared
+	   shell-top rhythm plus a comfortable bottom band. */
+	padding: var(--wpss-shell-top) 0 var(--wpss-space-8);
 }
 
 .wpss-services-content {
@@ -123,6 +150,12 @@
 
 /* ==========================================================================
    Archive Header
+   ----------------------------------------------------------------------------
+   F1: the heading is now the shared .wpss-page-header component (title +
+   subtitle), so the bespoke .wpss-archive-title / .wpss-archive-description
+   rules were removed. This wrapper keeps only the divider below the header.
+   The shared component already supplies its own bottom margin, so this wrapper
+   contributes the rule, not the spacing.
    ========================================================================== */
 
 .wpss-archive-header {
@@ -131,16 +164,10 @@
 	border-bottom: 1px solid var(--wpss-border);
 }
 
-.wpss-archive-title {
-	margin: 0 0 0.5rem;
-	font-size: 1.75rem;
-	color: var(--wpss-black);
-}
-
-.wpss-archive-description {
-	margin: 0;
-	color: var(--wpss-text);
-	font-size: 1rem;
+/* The shared page header carries its own bottom margin; inside the archive
+   header wrapper the divider owns the gap, so zero the component margin. */
+.wpss-archive-header .wpss-page-header {
+	margin-bottom: 0;
 }
 
 /* ==========================================================================
@@ -162,11 +189,24 @@
 .wpss-filter-toggle {
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: 0.5rem;
+	/* 40px tap-target floor (Rule 13). */
+	min-height: 40px;
+}
+
+.wpss-filter-toggle:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 }
 
 .wpss-filter-toggle .wpss-icon-filter::before {
 	content: "\2630";
+}
+
+.wpss-filter-toggle:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 }
 
 /* Search form */
@@ -178,13 +218,15 @@
 
 .wpss-search-input {
 	width: 100%;
-	padding: 0.6rem 1rem;
+	/* 40px tap-target floor (0.625rem * 2 + line-height ~= 40px) per the
+	   responsive contract; the bare 0.6rem padding fell just under it. */
+	min-height: 40px;
+	padding: 0.625rem 1rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	background: var(--wpss-bg);
 	font-size: 0.875rem;
 	color: var(--wpss-text);
-	outline: none;
 	transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -192,21 +234,29 @@
 	color: var(--wpss-text-muted);
 }
 
-.wpss-search-input:focus {
+.wpss-search-input:focus-visible {
 	border-color: var(--wpss-primary);
-	box-shadow: 0 0 0 3px rgba(29, 191, 115, 0.1);
+	/* Ring must track the brand primary (indigo), not a hard-coded green that
+	   pre-dated the indigo palette switch. color-mix() tints the primary; the
+	   hex fallback covers browsers without color-mix support. */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
+	outline: none;
 }
 
 .wpss-filters-bar-controls {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 1rem;
-	margin-right: auto;
+	/* Logical property so the controls cluster flips correctly in RTL. */
+	margin-inline-start: auto;
 	flex-shrink: 0;
 }
 
 .wpss-category-filter,
 .wpss-sort-filter {
+	/* 40px tap-target floor for the filter selects (Rule 13). */
+	min-height: 40px;
 	padding: 0.5rem 1rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
@@ -216,10 +266,18 @@
 	min-width: 160px;
 }
 
-.wpss-category-filter:focus,
-.wpss-sort-filter:focus {
-	outline: none;
+/* Rule 14: keyboard focus must show a visible ring, never a bare outline:none.
+   :focus-visible keeps the ring off mouse clicks but on for keyboard users. */
+.wpss-category-filter:focus-visible,
+.wpss-sort-filter:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 	border-color: var(--wpss-primary);
+	/* Visible keyboard focus ring tracking the brand primary; hex fallback
+	   covers browsers without color-mix(). Replaces the bare outline:none so a
+	   keyboard user always sees where focus is (WCAG 2.4.7). */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 /* ==========================================================================
@@ -233,13 +291,11 @@
 
 /* ==========================================================================
    Services Grid
+   ----------------------------------------------------------------------------
+   F7: the base .wpss-services-grid now lives in design-system.css (loaded on
+   every surface), so the archive no longer owns the grid. Nothing remains
+   here — the archive consumes the shared grid component unchanged.
    ========================================================================== */
-
-.wpss-services-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 1.5rem;
-}
 
 /* ==========================================================================
    Pagination
@@ -299,7 +355,9 @@
 .wpss-archive-sidebar {
 	position: fixed;
 	top: 0;
-	right: 0;
+	/* Logical inset so the off-canvas drawer anchors to the start edge and slides
+	   in from the correct side in both LTR and RTL. */
+	inset-inline-start: 0;
 	width: 320px;
 	height: 100%;
 	background: var(--wpss-white);
@@ -354,6 +412,12 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-sidebar-close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	/* 40px tap target for the close affordance (Rule 13). */
+	width: 40px;
+	height: 40px;
 	background: none !important;
 	border: none !important;
 	font-size: 1.5rem !important;
@@ -361,12 +425,18 @@ body.wpss-sidebar-open::after {
 	color: var(--wpss-text-light);
 	padding: 0 !important;
 	line-height: 1;
+	border-radius: var(--wpss-radius);
 }
 
 .wpss-sidebar-close:hover {
 	color: var(--wpss-text);
-	background: none !important;
+	background: var(--wpss-bg-subtle) !important;
 	border: none !important;
+}
+
+.wpss-sidebar-close:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 }
 
 /* ==========================================================================
@@ -412,19 +482,33 @@ body.wpss-sidebar-open::after {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 0.5rem 0;
+	gap: 0.5rem;
+	padding: 0.5rem 0.625rem;
+	margin: 0 -0.625rem;
+	border-radius: var(--wpss-radius);
 	color: var(--wpss-text);
 	text-decoration: none;
 	font-size: 0.938rem;
-	transition: color var(--wpss-transition);
+	transition: color var(--wpss-transition), background-color var(--wpss-transition);
 }
 
+/* A colour-only hover was invisible against Reign's section background; add a
+   tinted row so the hovered / selected category is unmistakable. */
 .wpss-category-link:hover {
+	color: var(--wpss-primary);
+	background: var(--wpss-primary-light);
+}
+
+.wpss-category-link:focus-visible,
+.wpss-subcategory-list a:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 	color: var(--wpss-primary);
 }
 
 .wpss-category-link.is-active {
 	color: var(--wpss-primary);
+	background: var(--wpss-primary-light);
 	font-weight: 600;
 }
 
@@ -438,7 +522,7 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-subcategory-list {
-	padding-right: 1rem;
+	padding-inline-start: 1rem;
 	margin-top: 0.25rem;
 }
 
@@ -464,6 +548,13 @@ body.wpss-sidebar-open::after {
 	color: var(--wpss-primary);
 }
 
+.wpss-category-link:focus-visible,
+.wpss-subcategory-list a:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
+	color: var(--wpss-primary);
+}
+
 /* Price Inputs */
 .wpss-price-inputs {
 	display: flex;
@@ -474,6 +565,7 @@ body.wpss-sidebar-open::after {
 .wpss-price-inputs input {
 	width: 100%;
 	flex: 1;
+	min-height: 40px;
 	padding: 0.5rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
@@ -481,9 +573,14 @@ body.wpss-sidebar-open::after {
 	text-align: center;
 }
 
-.wpss-price-inputs input:focus {
-	outline: none;
+.wpss-price-inputs input:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: 2px;
 	border-color: var(--wpss-primary);
+	/* Match the search/filter focus ring so keyboard focus is unmistakable on
+	   the price-range fields too (WCAG 2.4.7). */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 .wpss-price-separator {
@@ -574,7 +671,7 @@ body.wpss-sidebar-open::after {
 	.wpss-archive-sidebar {
 		position: sticky;
 		top: 2rem;
-		right: auto;
+		inset-inline-start: auto;
 		width: 100%;
 		height: auto;
 		max-height: none;
@@ -628,15 +725,11 @@ body.wpss-sidebar-open::after {
 
 	.wpss-filters-bar-controls {
 		flex-direction: column;
-		margin-right: 0;
+		margin-inline-start: 0;
 	}
 
 	.wpss-category-filter,
 	.wpss-sort-filter {
 		width: 100%;
-	}
-
-	.wpss-services-grid {
-		grid-template-columns: 1fr;
 	}
 }

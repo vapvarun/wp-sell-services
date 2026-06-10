@@ -1,0 +1,36 @@
+{
+  "direction": "2.7.1",
+  "title": "UX polish COMPLETE on 1.2.0 — builder confirmation",
+  "journey": "improve",
+  "verified_on": "1.2.0",
+  "branch": "autovap/wp-sell-services/wave-2-7-ux-polish-2.7.1",
+  "head_commit": "dcc2d9a",
+  "verdict": "approved-with-note",
+  "note": "All wave-2-7 UX-polish fixes are merged on 1.2.0 and verified in code. No re-implementation performed (per direction instruction). The only change in this confirmation commit is this verification record under audit/cleanup/**.",
+  "journeys_confirmed": [
+    {
+      "journey": "delete service",
+      "result": "pass",
+      "evidence": "unified-dashboard.js handleDeleteService closest('.wpss-service-card') matches the dashboard DOM (services.php:202); on AJAX success $card.fadeOut(300, remove) so the card visibly fades out after delete. Confirm modal uses tone:'danger' + confirmText:'Delete'. AJAX action wpss_delete_service matches PHP handler AjaxHandlers.php:171. Corrected selector present in unified-dashboard.min.js (build current)."
+    },
+    {
+      "journey": "toggle service status",
+      "result": "pass",
+      "evidence": "handleToggleStatus closest('.wpss-service-card') + .wpss-service-card__status badge swap matches DOM (services.php:224). Status migrated to REST; legacy wp_ajax_wpss_update_service_status handler retained."
+    },
+    {
+      "journey": "banners + rejected notice (no-emoji, both paths)",
+      "result": "pass",
+      "evidence": "Payout banner rendered on BOTH paths with Lucide wallet icon, no emoji: earnings.php:47 (template) and UnifiedDashboard.php maybe_render_payout_banner (render path, line ~431). Rejected-service notice in services.php:264 (.wpss-service-card__rejection.wpss-notice--error) with title, reason, help, and stacked Resubmit CTA. Emoji sweep across scope files clean (only typographic rating star U+2605 in review rendering, out of scope)."
+    }
+  ],
+  "css_dedup_confirmed": {
+    "result": "pass",
+    "evidence": ".wpss-btn--primary base single-owner in design-system.css; .wpss-notice base consolidated to design-system.css (frontend.css count 0)."
+  },
+  "static_gates": {
+    "php-lint": "pass (services.php, earnings.php, UnifiedDashboard.php — no syntax errors)",
+    "wpcs": "pass (0 errors across the three scope PHP files; 2 pre-existing warnings: services.php:51 UnfinishedPrepare false-positive @ e96d411, UnifiedDashboard.php:185 unused $atts shortcode param @ 440ae4c)",
+    "ux-audit": "no NEW block-severity violations introduced by wave-2-7. 72 pre-existing plugin-wide block violations (inline <style>/<script> in admin/integrations/email/metabox templates) predate this wave; the 3 in-scope hits (earnings.php:264 @ 7d7e41d, UnifiedDashboard.php:777 @ 6d9e851, UnifiedDashboard.php:473 onclick @ 2fa7a9a) all predate wave-2-7 and are logged as Known Gaps."
+  }
+}

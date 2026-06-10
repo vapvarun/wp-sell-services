@@ -144,16 +144,16 @@ class OrdersController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_deliverable' ),
 					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+					// Files are sent as a multipart files[] upload (handled in the
+					// callback), not as JSON args - DeliveryService requires raw
+					// uploaded-file specs. description is optional (a delivery may
+					// be files-only).
 					'args'                => array(
 						'description' => array(
 							'description' => __( 'Deliverable description.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'required'    => true,
-						),
-						'files'       => array(
-							'description' => __( 'Attachment IDs.', 'wp-sell-services' ),
-							'type'        => 'array',
-							'items'       => array( 'type' => 'integer' ),
+							'required'    => false,
+							'default'     => '',
 						),
 					),
 				),
@@ -249,7 +249,7 @@ class OrdersController extends RestController {
 						'type' => array(
 							'description' => __( 'Filter by sub-order type: milestone, extension, or tip.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'enum'        => array( 'milestone', 'extension', 'tip' ),
+							'enum'        => array_keys( ServiceOrder::get_sub_order_types() ),
 						),
 					),
 				),
@@ -612,9 +612,17 @@ class OrdersController extends RestController {
 	 */
 	public function create_deliverable( $request ) {
 		$order_id    = (int) $request->get_param( 'id' );
-		$description = sanitize_textarea_field( $request->get_param( 'description' ) );
-		$files_raw   = $request->get_param( 'files' );
-		$files       = is_array( $files_raw ) ? $files_raw : array();
+		$description = sanitize_textarea_field( (string) $request->get_param( 'description' ) );
+
+		// Raw multipart uploads (the delivery composer posts files[]).
+		// DeliveryService::submit()/process_file() require uploaded-file specs
+		// (tmp_name), so we feed the normalized $_FILES group - the same shape
+		// the legacy admin-ajax deliver handler used.
+		$files       = array();
+		$file_params = $request->get_file_params();
+		if ( ! empty( $file_params['files'] ) ) {
+			$files = wpss_normalize_uploaded_files( (array) $file_params['files'] );
+		}
 
 		// Use DeliveryService to create the delivery.
 		$delivery_service = new DeliveryService();

@@ -52,7 +52,9 @@ class SingleServiceView {
 		// Gallery.
 		add_action( 'wpss_single_service_gallery', array( $this, 'render_gallery' ), 10 );
 
-		// Content.
+		// Content. Vacation notice paints first (priority 1) so buyers see it
+		// before the service description when the seller is away.
+		add_action( 'wpss_single_service_content', array( $this, 'render_vacation_notice' ), 1 );
 		add_action( 'wpss_single_service_content', array( $this, 'render_description' ), 10 );
 		add_action( 'wpss_single_service_content', array( $this, 'render_about_vendor' ), 20 );
 
@@ -120,6 +122,8 @@ class SingleServiceView {
 				'serviceId'      => get_the_ID(),
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'wpss_service_nonce' ),
+				'apiUrl'         => esc_url_raw( rest_url( 'wpss/v1' ) ),
+				'restNonce'      => wp_create_nonce( 'wp_rest' ),
 				'checkoutUrl'    => $checkout_url,
 				'cartUrl'        => $cart_url,
 				'currencyFormat' => wpss_get_currency_symbol() . '%s',
@@ -135,6 +139,9 @@ class SingleServiceView {
 					'total'              => __( 'Total', 'wp-sell-services' ),
 					'loading'            => __( 'Loading...', 'wp-sell-services' ),
 					'loadMoreReviews'    => __( 'Load More Reviews', 'wp-sell-services' ),
+					'helpful'            => __( 'Helpful', 'wp-sell-services' ),
+					'sellerResponse'     => __( 'Seller Response:', 'wp-sell-services' ),
+					'anonymous'          => __( 'Anonymous', 'wp-sell-services' ),
 					'day'                => __( 'Day', 'wp-sell-services' ),
 					'days'               => __( 'Days', 'wp-sell-services' ),
 					'sending'            => __( 'Sending...', 'wp-sell-services' ),
@@ -303,7 +310,12 @@ class SingleServiceView {
 
 			<?php if ( $order_count > 0 ) : ?>
 				<div class="wpss-meta-item wpss-meta-orders">
-					<span class="wpss-orders-icon">📦</span>
+					<span class="wpss-orders-icon">
+						<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
+						echo \WPSellServices\Services\Icon::render( 'package', array( 'class' => 'wpss-icon--sm' ) );
+						?>
+					</span>
 					<span class="wpss-orders-count">
 						<?php
 						printf(
@@ -385,7 +397,12 @@ class SingleServiceView {
 				<?php foreach ( $highlights as $highlight ) : ?>
 					<?php if ( ! empty( $highlight ) ) : ?>
 						<li class="wpss-highlight-item">
-							<span class="wpss-highlight-icon">✓</span>
+							<span class="wpss-highlight-icon">
+								<?php
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
+								echo \WPSellServices\Services\Icon::render( 'check', array( 'class' => 'wpss-icon--sm' ) );
+								?>
+							</span>
 							<?php echo esc_html( $highlight ); ?>
 						</li>
 					<?php endif; ?>
@@ -622,13 +639,106 @@ class SingleServiceView {
 	}
 
 	/**
+	 * Resolve the vendor's buyer-facing vacation state for a service.
+	 *
+	 * Assembled here (in the view) so templates never hit the DB. Returns null
+	 * when the seller is not on vacation, or when the current user is the seller
+	 * themselves (the owner is never blocked from their own service page).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param Service $service Service object.
+	 * @return array{message:string,return_date:?string,return_date_display:string}|null
+	 */
+	private function get_vendor_vacation( Service $service ): ?array {
+		$vendor_id = (int) $service->vendor_id;
+
+		// Never block the seller on their own service page.
+		if ( is_user_logged_in() && get_current_user_id() === $vendor_id ) {
+			return null;
+		}
+
+		$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
+
+		if ( ! $profile || ! $profile->is_on_vacation() ) {
+			return null;
+		}
+
+		$message = trim( (string) ( $profile->vacation_message ?? '' ) );
+		if ( '' === $message ) {
+			$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
+		}
+
+		$return_date         = $profile->vacation_return_date ?? null;
+		$return_date_display = '';
+		if ( $return_date ) {
+			$timestamp = strtotime( $return_date );
+			if ( $timestamp ) {
+				$return_date_display = date_i18n( get_option( 'date_format' ), $timestamp );
+			}
+		}
+
+		return array(
+			'message'             => $message,
+			'return_date'         => $return_date,
+			'return_date_display' => $return_date_display,
+		);
+	}
+
+	/**
+	 * Render the vacation notice banner above the service content.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param Service $service Service object.
+	 * @return void
+	 */
+	public function render_vacation_notice( Service $service ): void {
+		$vacation = $this->get_vendor_vacation( $service );
+
+		if ( null === $vacation ) {
+			return;
+		}
+		?>
+		<div class="wpss-vacation-notice" role="status">
+			<span class="wpss-vacation-notice__icon" aria-hidden="true">
+				<i data-lucide="palmtree" class="wpss-icon"></i>
+			</span>
+			<div class="wpss-vacation-notice__body">
+				<p class="wpss-vacation-notice__message"><?php echo esc_html( $vacation['message'] ); ?></p>
+				<?php if ( '' !== $vacation['return_date_display'] ) : ?>
+					<p class="wpss-vacation-notice__resume">
+						<?php
+						printf(
+							/* translators: %s: formatted return date */
+							esc_html__( 'Orders resume on %s', 'wp-sell-services' ),
+							esc_html( $vacation['return_date_display'] )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render packages widget.
 	 *
 	 * @param Service $service Service object.
 	 * @return void
 	 */
 	public function render_packages( Service $service ): void {
-		wpss_get_template_part( 'partials/service', 'packages', array( 'service' => $service ) );
+		// Resolve vacation state in the view so the template stays DB-free; the
+		// partial uses it to disable the order CTA when the seller is away.
+		wpss_get_template_part(
+			'partials/service',
+			'packages',
+			array(
+				'service'       => $service,
+				'wpss_vacation' => $this->get_vendor_vacation( $service ),
+			)
+		);
 	}
 
 	/**
@@ -762,20 +872,17 @@ class SingleServiceView {
 	public function render_order_modal( Service $service ): void {
 		$service_id = $service->id;
 		$packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
-		// Service add-ons live under `_wpss_extras` (Wizard's key) but the
-		// admin metabox and CLI command write to `_wpss_addons`. Fall back
-		// to the legacy key when the canonical one is empty so admin /
-		// CLI-seeded services still surface their add-ons in the order
-		// modal. A full meta-key consolidation is parked for 1.2 — see
-		// plans/future-features/from-1.1.0-audit.md.
-		$extras = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
-		if ( empty( $extras ) ) {
-			$extras = get_post_meta( $service_id, '_wpss_addons', true ) ?: array();
-		}
+		$extras     = wpss_get_service_extras( $service_id );
 
 		// Don't show modal for own services.
 		$vendor_id = (int) get_post_field( 'post_author', $service_id );
 		if ( get_current_user_id() === $vendor_id ) {
+			return;
+		}
+
+		// Seller on vacation: don't render the order modal at all, so there is no
+		// path to checkout even if a client tried to open it programmatically.
+		if ( null !== $this->get_vendor_vacation( $service ) ) {
 			return;
 		}
 		?>

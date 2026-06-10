@@ -1,6 +1,6 @@
 # Hooks and Filters Reference
 
-WP Sell Services exposes 179 action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
+WP Sell Services exposes 187 action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
 
 ## Using Hooks
 
@@ -329,6 +329,8 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `ServiceWizard.php:1603` |
+| `wpss_wizard_pricing_after` | `WP_Post\|null $service` | `ServiceWizard.php` |
+| `wpss_wizard_save_service_meta` | `int $service_id, array $data` | `ServiceWizard.php` |
 
 ### Service Wizard Filters
 
@@ -336,6 +338,8 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 |--------|-----------|------|
 | `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `ServiceWizard.php:288` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `ServiceArchiveView.php:525` |
+| `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
+| `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
 
 ```php
 // Prevent unverified vendors from creating services
@@ -347,11 +351,68 @@ add_filter( 'wpss_vendor_can_create_service', function( $allowed, $user_id ) {
 }, 10, 2 );
 ```
 
+### Wizard Extension Surface (Add-on Integration — 1.2.0)
+
+These four hooks form the contract that lets add-ons (such as Pro's recurring billing) inject fields into the frontend Create/Edit Service wizard without patching core files.
+
+**`wpss_wizard_service_data`** — seed extra keys into the wizard's edit-form data model so they pre-fill when a vendor edits an existing service:
+
+```php
+add_filter( 'wpss_wizard_service_data', function( $data, $service_id ) {
+    $data['my_billing_cycle'] = get_post_meta( $service_id, '_wpss_billing_cycle', true ) ?: 'one_time';
+    return $data;
+}, 10, 2 );
+```
+
+**`wpss_wizard_pricing_after`** — render extra fields after the Pricing step. Markup runs inside the wizard's Alpine.js scope; bind inputs with `x-model="data.your_key"`:
+
+```php
+add_action( 'wpss_wizard_pricing_after', function( $service ) {
+    ?>
+    <div class="wpss-field-group">
+        <label><?php esc_html_e( 'Billing cycle', 'my-addon' ); ?></label>
+        <select x-model="data.my_billing_cycle">
+            <option value="one_time"><?php esc_html_e( 'One-time', 'my-addon' ); ?></option>
+            <option value="monthly"><?php esc_html_e( 'Monthly', 'my-addon' ); ?></option>
+        </select>
+    </div>
+    <?php
+} );
+```
+
+**`wpss_wizard_sanitize_service_data`** — sanitize your injected keys from the untrusted client JSON payload before save:
+
+```php
+add_filter( 'wpss_wizard_sanitize_service_data', function( $sanitized, $raw ) {
+    $allowed = [ 'one_time', 'monthly', 'yearly' ];
+    $sanitized['my_billing_cycle'] = in_array( $raw['my_billing_cycle'] ?? '', $allowed, true )
+        ? $raw['my_billing_cycle']
+        : 'one_time';
+    return $sanitized;
+}, 10, 2 );
+```
+
+**`wpss_wizard_save_service_meta`** — persist your custom meta. Fires on **both** save-draft and publish (unlike `wpss_service_wizard_saved`, which fires on publish only):
+
+```php
+add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
+    if ( isset( $data['my_billing_cycle'] ) ) {
+        update_post_meta( $service_id, '_wpss_billing_cycle', $data['my_billing_cycle'] );
+    }
+}, 10, 2 );
+```
+
 ## Dashboard Actions
 
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `UnifiedDashboard.php:529` |
+
+### Dashboard Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_dashboard_default_section` | `string $section, int $user_id` | `UnifiedDashboard.php` |
 
 ```php
 // Add a notice at the top of the earnings dashboard section
@@ -359,6 +420,15 @@ add_action( 'wpss_dashboard_section_before_content', function( $section, $user_i
     if ( 'earnings' === $section ) {
         echo '<div class="wpss-notice">Minimum withdrawal is $50.</div>';
     }
+}, 10, 2 );
+```
+
+**`wpss_dashboard_default_section`** — the landing section when no section is in the URL. Defaults to `sales` for active vendors and `orders` for buyers:
+
+```php
+// Always land on the messages section regardless of role
+add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
+    return 'messages';
 }, 10, 2 );
 ```
 
@@ -506,6 +576,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 
 | Filter | Parameters | File |
 |--------|-----------|------|
+| `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
 | `wpss_review_window_days` | `$days` | `ReviewService.php:420` |
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `ReviewsController.php:350` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `VendorsController.php:380` |
@@ -527,6 +598,38 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `UnifiedDashboard.php:243` |
 | `wpss_dashboard_section_titles` | `$titles` | `UnifiedDashboard.php:371` |
 | `wpss_service_to_wc_status_map` **[PRO]** | `$status_map, $new_status, $old_status` | `WooCommerceAdapter.php:388` |
+
+**`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
+
+```php
+add_filter( 'wpss_realtime_settings', function( $settings ) {
+    // Force a specific cluster at runtime
+    $settings['cluster'] = 'eu';
+    return $settings;
+} );
+```
+
+### Full-width Plugin Pages Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_use_fullwidth_template` | `bool $use` | `FullwidthTemplate.php` |
+| `wpss_fullwidth_page_keys` | `string[] $page_keys` | `FullwidthTemplate.php` |
+
+**`wpss_use_fullwidth_template`** — return `false` to keep the active theme's normal page template (with sidebar) on the plugin's pages instead of the sidebar-free full-width layout:
+
+```php
+add_filter( 'wpss_use_fullwidth_template', '__return_false' );
+```
+
+**`wpss_fullwidth_page_keys`** — control which mapped plugin pages render full-width. Default: `['dashboard', 'cart', 'checkout', 'become_vendor']`:
+
+```php
+// Remove the cart page from full-width treatment
+add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
+    return array_diff( $keys, [ 'cart' ] );
+} );
+```
 
 ### SEO and Email Filters
 

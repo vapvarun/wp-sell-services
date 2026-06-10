@@ -277,20 +277,38 @@
 	WPSSBlocks.loadServices = function($container, params) {
 		$container.addClass('wpss-loading');
 
+		// REST: GET /wpss/v1/services/grid. The grid is rendered server-side
+		// (cards + pagination markup) so the service-card template + its
+		// extension hooks + theme overrides stay identical to first paint.
+		var attributes = (params && params.attributes) || {};
+		var query = {
+			page: (params && params.page) || 1,
+			postsPerPage: attributes.postsPerPage || 12,
+			orderBy: attributes.orderBy || 'date',
+			order: attributes.order || 'DESC'
+		};
+		if (attributes.category) {
+			query.category = attributes.category;
+		}
+
 		$.ajax({
-			url: wpssBlocksFrontend.ajaxUrl,
-			type: 'POST',
-			data: {
-				action: 'wpss_load_services',
-				nonce: wpssBlocksFrontend.nonce,
-				...params
+			url: wpssBlocksFrontend.apiUrl + '/services/grid',
+			method: 'GET',
+			data: query,
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', wpssBlocksFrontend.restNonce);
 			},
 			success: function(response) {
-				if (response.success && response.data.html) {
-					$container.find('.wpss-services-grid').html(response.data.html);
+				if (response && typeof response.html !== 'undefined') {
+					$container.find('.wpss-services-grid').html(response.html);
 
-					if (response.data.pagination) {
-						$container.find('.wpss-pagination').html(response.data.pagination);
+					if (typeof response.pagination !== 'undefined') {
+						$container.find('.wpss-pagination').html(response.pagination);
+					}
+
+					// Re-hydrate Lucide icons inside the freshly rendered cards.
+					if (window.lucide && typeof window.lucide.createIcons === 'function') {
+						window.lucide.createIcons();
 					}
 				}
 			},

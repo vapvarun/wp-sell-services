@@ -1,6 +1,8 @@
 <?php
 /**
  * PHPStan bootstrap file — defines constants and stubs.
+ *
+ * @package WPSellServices
  */
 
 // Plugin constants.

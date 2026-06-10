@@ -9,43 +9,23 @@
    Variables
    ========================================================================== */
 
+/* Primary/text/border/background/radius/shadow-lg/transition/star tokens are
+   owned by design-system.css (the base layer this page loads first). They were
+   previously re-declared here as `var(--wpss-x, #fallback)` self-references,
+   which CSS treats as invalid-at-computed-value (a custom property cannot
+   reference itself) — that poisoned --wpss-primary and rendered the primary
+   CTA background transparent (invisible) on the single-service page and any
+   body-appended modal. Removed so the canonical design-system tokens flow
+   through unchanged. Only page-local tokens that design-system does NOT define,
+   plus the two intentional cross-token remaps (which point at a different
+   canonical token, never at themselves), are kept below. */
 :root {
-	/* Primary - Indigo */
-	--wpss-primary: var(--wpss-primary, #4f46e5);
-	--wpss-primary-hover: var(--wpss-primary-dark, #4338ca);
-	--wpss-primary-dark: var(--wpss-primary-dark, #4338ca);
-	--wpss-primary-light: var(--wpss-primary-light, #eef2ff);
-
-	/* Secondary */
+	/* Page-local remaps — point at a different canonical token (not self). */
 	--wpss-secondary: var(--wpss-success, #10b981);
-
-	/* Text */
-	--wpss-text: var(--wpss-gray-800, #1f2937);
-	--wpss-text-muted: var(--wpss-text-muted, #6b7280);
-
-	/* UI Colors */
-	--wpss-border: var(--wpss-border, #e5e7eb);
-	--wpss-bg: var(--wpss-bg-subtle, #f9fafb);
-	--wpss-white: var(--wpss-white, #fff);
-
-	/* Semantic */
-	--wpss-star: var(--wpss-star, #fbbf24);
-	--wpss-success: var(--wpss-success, #10b981);
 	--wpss-error: var(--wpss-danger, #ef4444);
-	--wpss-warning: var(--wpss-warning, #f59e0b);
 
-	/* Shadows */
+	/* Page-local tokens with no design-system equivalent. */
 	--wpss-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
-	--wpss-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
-
-	/* Border Radius */
-	--wpss-radius: 8px;
-	--wpss-radius-lg: 12px;
-
-	/* Transitions */
-	--wpss-transition: 0.2s ease;
-
-	/* Layout */
 	--wpss-sticky-top: 32px;
 }
 
@@ -180,11 +160,15 @@
 	padding: 2rem 0;
 }
 
-.wpss-container {
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 0 1rem;
-}
+/* 2.7.1a dedup: the bare .wpss-container base that lived here (max-width
+   1200px, padding 0 1rem) was an unscoped global clobber of the canonical
+   primitive that design-system.css owns (max-width var(--wpss-container-max),
+   which is 1200px; padding 0 var(--wpss-container-pad), which is 20px). The
+   max-width is byte-identical; only the gutter differed (16px vs the token
+   20px). design-system loads first on the single-service cascade
+   (wpss-design-system then wpss-frontend then wpss-single-service), so the
+   single owner now flows through. No surface-specific override is needed here,
+   so the block is deleted rather than re-scoped. */
 
 .wpss-service-layout {
 	display: grid;
@@ -1673,9 +1657,16 @@ body.wpss-modal-open {
 }
 
 .wpss-form-field textarea:focus,
-.wpss-form-field input:focus {
+.wpss-form-field input:focus,
+.wpss-form-field textarea:focus-visible,
+.wpss-form-field input:focus-visible {
 	outline: none;
 	border-color: var(--wpss-primary);
+	/* Add a visible focus ring so keyboard focus on the contact-form fields is
+	   unmistakable, not just a subtle border-colour shift (WCAG 2.4.7). Hex
+	   fallback first, color-mix() progressive enhancement second. */
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
 }
 
 .wpss-field-hint {
@@ -1799,5 +1790,76 @@ body.wpss-modal-open {
 		max-height: 100vh;
 		height: 100%;
 		border-radius: 0;
+	}
+}
+
+/* ==========================================================================
+   Vacation Mode (seller away) — buyer-facing notice + disabled order CTA
+   ========================================================================== */
+
+.wpss-vacation-notice {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin: 0 0 24px;
+	padding: 16px 18px;
+	border: 1px solid var(--wpss-warning-border, #fde68a);
+	border-radius: var(--wpss-radius, 8px);
+	background: var(--wpss-warning-light, #fffbeb);
+	color: var(--wpss-warning-dark, #92400e);
+}
+
+.wpss-vacation-notice__icon {
+	display: inline-flex;
+	flex-shrink: 0;
+	color: var(--wpss-warning, #f59e0b);
+}
+
+.wpss-vacation-notice__icon .wpss-icon {
+	width: 22px;
+	height: 22px;
+}
+
+.wpss-vacation-notice__body {
+	min-width: 0;
+}
+
+.wpss-vacation-notice__message {
+	margin: 0;
+	font-weight: 600;
+}
+
+.wpss-vacation-notice__resume {
+	margin: 4px 0 0;
+	font-size: var(--wpss-text-sm, 0.875rem);
+	opacity: 0.9;
+}
+
+/* Order CTA rendered when the seller is on vacation: looks like the primary
+   button but is visually muted and non-interactive (also lacks the
+   wpss-order-btn JS hook so the modal can never open). */
+.wpss-order-btn--disabled {
+	cursor: not-allowed;
+	opacity: 0.55;
+	filter: grayscale(35%);
+	pointer-events: none;
+}
+
+.wpss-package-vacation-note {
+	margin: 8px 0 0;
+	font-size: var(--wpss-text-sm, 0.875rem);
+	color: var(--wpss-warning-dark, #92400e);
+	text-align: center;
+}
+
+@media (max-width: 991px) {
+	.wpss-vacation-notice {
+		margin-bottom: 18px;
+	}
+}
+
+@media (max-width: 575px) {
+	.wpss-vacation-notice {
+		padding: 12px 14px;
 	}
 }

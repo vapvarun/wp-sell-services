@@ -720,7 +720,7 @@ function wpss_get_vendor_url( int $user_id ): string {
 /**
  * Get dashboard URL.
  *
- * @param string $tab Optional tab/section.
+ * @param string $section Optional dashboard section slug.
  * @return string
  */
 function wpss_get_dashboard_url( string $section = '' ): string {
@@ -743,11 +743,62 @@ function wpss_get_dashboard_url( string $section = '' ): string {
 		return '';
 	}
 
-	if ( $section ) {
-		$url = add_query_arg( 'section', $section, $url );
+	if ( '' !== $section ) {
+		$url = wpss_append_dashboard_section( $url, $section );
 	}
 
 	return $url;
+}
+
+/**
+ * Append a dashboard section to a base dashboard URL.
+ *
+ * Emits a pretty endpoint path (e.g. /dashboard/services/) when permalinks
+ * are pretty, falling back to the `?section=` query arg on plain permalinks.
+ * Centralizing this keeps every internal link, breadcrumb, and redirect on
+ * the same URL shape, and means a single behavior change toggles them all.
+ *
+ * The default `orders` section maps to the bare dashboard URL (no segment)
+ * to keep the canonical dashboard landing URL clean.
+ *
+ * @since 1.2.0
+ *
+ * @param string $base_url Base dashboard page permalink (may already carry query args).
+ * @param string $section  Section slug (e.g. 'services', 'earnings').
+ * @return string Section URL.
+ */
+function wpss_append_dashboard_section( string $base_url, string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section || 'orders' === $section ) {
+		return $base_url;
+	}
+
+	// Plain permalinks: keep the query-arg form.
+	if ( ! get_option( 'permalink_structure' ) ) {
+		return add_query_arg( 'section', $section, $base_url );
+	}
+
+	// Split off any query string / fragment so the endpoint segment is
+	// inserted into the path, not appended after the query args.
+	$query    = '';
+	$fragment = '';
+
+	$hash_pos = strpos( $base_url, '#' );
+	if ( false !== $hash_pos ) {
+		$fragment = substr( $base_url, $hash_pos );
+		$base_url = substr( $base_url, 0, $hash_pos );
+	}
+
+	$query_pos = strpos( $base_url, '?' );
+	if ( false !== $query_pos ) {
+		$query    = substr( $base_url, $query_pos );
+		$base_url = substr( $base_url, 0, $query_pos );
+	}
+
+	$path = trailingslashit( $base_url ) . $section . '/';
+
+	return $path . $query . $fragment;
 }
 
 /**
@@ -1167,7 +1218,7 @@ function wpss_get_create_service_url(): string {
 	if ( ! $dashboard_url ) {
 		return '';
 	}
-	return add_query_arg( 'section', 'create', $dashboard_url );
+	return wpss_append_dashboard_section( $dashboard_url, 'create' );
 }
 
 /**
@@ -1189,7 +1240,7 @@ function wpss_get_become_vendor_url(): string {
 	// Fall back to dashboard with become-vendor section.
 	$dashboard_url = wpss_get_page_url( 'dashboard' );
 	if ( $dashboard_url ) {
-		return add_query_arg( 'section', 'become-vendor', $dashboard_url );
+		return wpss_append_dashboard_section( $dashboard_url, 'become-vendor' );
 	}
 
 	return wpss_get_page_url( 'become_vendor' );
@@ -1404,6 +1455,31 @@ function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\Orde
 }
 
 /**
+ * Get a service's add-ons with the legacy meta-key fallback.
+ *
+ * Add-ons live under `_wpss_extras` (the frontend Service Wizard's key) but
+ * the admin metabox and CLI commands write to `_wpss_addons`. Every place
+ * that resolves add-on indices MUST use this helper so admin / CLI-seeded
+ * services surface their add-ons in the order modal, cart, checkout, and
+ * orders alike. A full meta-key consolidation is parked for 1.2 — see
+ * plans/future-features/from-1.1.0-audit.md.
+ *
+ * @since 1.2.0
+ *
+ * @param int $service_id Service post ID.
+ * @return array Add-on rows (title, price, delivery_time), keyed by index.
+ */
+function wpss_get_service_extras( int $service_id ): array {
+	$extras = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
+
+	if ( empty( $extras ) ) {
+		$extras = get_post_meta( $service_id, '_wpss_addons', true ) ?: array();
+	}
+
+	return is_array( $extras ) ? $extras : array();
+}
+
+/**
  * Resolve addon data from checkout POST data.
  *
  * Reads addon_ids from $_POST, validates each addon belongs to the service
@@ -1452,7 +1528,7 @@ function wpss_resolve_checkout_addons( int $service_id ): array {
 	}
 
 	$addon_indices = array_map( 'intval', explode( ',', $addon_ids_raw ) );
-	$all_extras    = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
+	$all_extras    = wpss_get_service_extras( $service_id );
 
 	foreach ( $addon_indices as $index ) {
 		if ( $index < 0 || ! isset( $all_extras[ $index ] ) ) {
@@ -1691,8 +1767,18 @@ function wpss_pagination( \WP_Query $query, array $args = array() ): void {
 
 	$current_page = max( 1, get_query_var( 'paged', 1 ) );
 
+	// get_pagenum_link() resolves the current request URL. Outside the main
+	// query (e.g. a REST render) it can return a non-string, which would make
+	// str_replace() fatal. Guard it so the default base is always a string; an
+	// off-main-query caller (wpss_render_services_grid) supplies an explicit
+	// 'base' + 'format' anyway.
+	$pagenum_link = get_pagenum_link( 999999999 );
+	$default_base = is_string( $pagenum_link )
+		? str_replace( '999999999', '%#%', esc_url( $pagenum_link ) )
+		: '';
+
 	$defaults = array(
-		'base'      => str_replace( 999999999, '%#%', esc_url( get_pagenum_link( 999999999 ) ) ),
+		'base'      => $default_base,
 		'format'    => '?paged=%#%',
 		'current'   => $current_page,
 		'total'     => $total_pages,
@@ -1857,4 +1943,445 @@ function wpss_render_video_embed( string $url, string $title = '' ): string {
 		esc_url( $parsed['embed'] ),
 		esc_attr( $title )
 	);
+}
+
+/**
+ * Render a paginated services grid (cards + pagination markup).
+ *
+ * Single source of truth for the services-block grid: both the REST
+ * grid endpoint (ServicesController::get_grid) and the legacy
+ * admin-ajax delegate (AjaxHandlers::load_services) call this so the
+ * card template + every `wpss_*_service_card` extension hook + theme
+ * override stay identical across both transports. Server-side rendering
+ * is intentional — the card fires extension hooks a client-side JSON
+ * renderer could not reproduce.
+ *
+ * @since 1.2.0
+ *
+ * @param array  $attributes Block attributes (postsPerPage, orderBy, order, category).
+ * @param int    $page       Page number (1-based).
+ * @param string $base_url   Optional page URL the grid lives on, used as the
+ *                           pagination base. Required when rendering outside
+ *                           the main query (e.g. a REST request) where
+ *                           get_pagenum_link() cannot resolve the request URL.
+ * @return array{html: string, pagination: string, total: int, pages: int} Rendered grid parts.
+ */
+function wpss_render_services_grid( array $attributes, int $page = 1, string $base_url = '' ): array {
+	$args = array(
+		'post_type'      => 'wpss_service',
+		'post_status'    => 'publish',
+		'posts_per_page' => absint( $attributes['postsPerPage'] ?? 12 ),
+		'paged'          => max( 1, $page ),
+		'orderby'        => sanitize_key( $attributes['orderBy'] ?? 'date' ),
+		'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
+	);
+
+	// Category filter.
+	if ( ! empty( $attributes['category'] ) ) {
+		$args['tax_query'] = array(
+			array(
+				'taxonomy' => 'wpss_service_category',
+				'field'    => 'term_id',
+				'terms'    => absint( $attributes['category'] ),
+			),
+		);
+	}
+
+	$query = new \WP_Query( $args );
+
+	ob_start();
+	if ( $query->have_posts() ) {
+		while ( $query->have_posts() ) {
+			$query->the_post();
+			wpss_get_template_part( 'content', 'service-card' );
+		}
+	} else {
+		echo '<p class="wpss-no-services">' . esc_html__( 'No services found.', 'wp-sell-services' ) . '</p>';
+	}
+	wp_reset_postdata();
+	$html = ob_get_clean();
+
+	// Pagination. When a base URL is supplied (REST/off-main-query render),
+	// build an explicit base + format so paginate_links does not depend on
+	// get_pagenum_link() resolving the ambient request URL.
+	$pagination_args = array();
+	if ( '' !== $base_url ) {
+		$clean = remove_query_arg( 'paged', $base_url );
+		$sep   = ( false === strpos( $clean, '?' ) ) ? '?' : '&';
+
+		$pagination_args['base']    = $clean . '%_%';
+		$pagination_args['format']  = $sep . 'paged=%#%';
+		$pagination_args['current'] = max( 1, $page );
+	}
+
+	ob_start();
+	wpss_pagination( $query, $pagination_args );
+	$pagination = ob_get_clean();
+
+	return array(
+		'html'       => $html,
+		'pagination' => $pagination,
+		'total'      => (int) $query->found_posts,
+		'pages'      => (int) $query->max_num_pages,
+	);
+}
+
+/**
+ * Validate + upload conversation message file attachments.
+ *
+ * Single source of truth for message attachment handling. Used by both the
+ * REST ConversationsController::send_message and the legacy admin-ajax
+ * AjaxHandlers::send_message so the allow-list, MIME re-check, size cap, and
+ * upload behaviour are identical across transports.
+ *
+ * @since 1.2.0
+ *
+ * @param array $files A single $_FILES['attachments'] entry (PHP's grouped
+ *                     multi-file shape: name[], type[], tmp_name[], etc.).
+ * @return array{attachments: array<int, array{id:int,url:string,name:string,type:string}>, skipped: array<int,string>}
+ */
+function wpss_handle_message_attachments( array $files ): array {
+	$attachments = array();
+	$skipped     = array();
+
+	if ( empty( $files['name'] ) || ! is_array( $files['name'] ) ) {
+		return array(
+			'attachments' => $attachments,
+			'skipped'     => $skipped,
+		);
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+
+	$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
+	$allowed_mimes = array(
+		'image/jpeg',
+		'image/png',
+		'image/gif',
+		'image/webp',
+		'application/pdf',
+		'application/msword',
+		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'application/zip',
+		'text/plain',
+	);
+	$max_size      = 10 * 1024 * 1024; // 10MB per file.
+
+	$file_count = count( $files['name'] );
+	for ( $i = 0; $i < $file_count; $i++ ) {
+		if ( empty( $files['name'][ $i ] ) ) {
+			continue;
+		}
+
+		$file = array(
+			'name'     => $files['name'][ $i ],
+			'type'     => $files['type'][ $i ],
+			'tmp_name' => $files['tmp_name'][ $i ],
+			'error'    => $files['error'][ $i ],
+			'size'     => $files['size'][ $i ],
+		);
+
+		$file_name = sanitize_file_name( $file['name'] );
+
+		$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+		if ( ! in_array( $ext, $allowed_types, true ) ) {
+			$skipped[] = $file_name . ': ' . __( 'unsupported file type', 'wp-sell-services' );
+			continue;
+		}
+
+		$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+		$mime_type = $file_info['type'] ?? '';
+		if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
+			$skipped[] = $file_name . ': ' . __( 'invalid MIME type', 'wp-sell-services' );
+			continue;
+		}
+
+		if ( $file['size'] > $max_size ) {
+			$skipped[] = $file_name . ': ' . __( 'file too large (max 10MB)', 'wp-sell-services' );
+			continue;
+		}
+
+		$_FILES['upload_file'] = $file;
+		$attachment_id         = media_handle_upload( 'upload_file', 0 );
+
+		if ( ! is_wp_error( $attachment_id ) ) {
+			$attachments[] = array(
+				'id'   => $attachment_id,
+				'url'  => wp_get_attachment_url( $attachment_id ),
+				'name' => $files['name'][ $i ],
+				'type' => $mime_type, // Server-verified MIME, not client-provided.
+			);
+		} else {
+			$skipped[] = $file_name . ': ' . $attachment_id->get_error_message();
+		}
+	}
+
+	return array(
+		'attachments' => $attachments,
+		'skipped'     => $skipped,
+	);
+}
+
+/**
+ * Normalize PHP's grouped $_FILES entry into a list of per-file specs.
+ *
+ * Turns the `name[]/type[]/tmp_name[]/error[]/size[]` shape PHP produces for a
+ * multi-file field into a flat array of single-file specs (name/type/tmp_name/
+ * error/size), skipping empty slots and sanitizing the client-supplied name +
+ * mime. tmp_name/error/size are not user-controlled. Shared by the REST
+ * deliverables endpoint and the legacy admin-ajax delivery handler so both
+ * feed DeliveryService::submit() the same shape.
+ *
+ * @since 1.2.0
+ *
+ * @param array $files A single grouped $_FILES['field'] entry.
+ * @return array<int, array{name:string,type:string,tmp_name:string,error:int,size:int}>
+ */
+function wpss_normalize_uploaded_files( array $files ): array {
+	$out = array();
+
+	if ( empty( $files['name'] ) || ! is_array( $files['name'] ) ) {
+		return $out;
+	}
+
+	$count = count( $files['name'] );
+	for ( $i = 0; $i < $count; $i++ ) {
+		if ( empty( $files['name'][ $i ] ) ) {
+			continue;
+		}
+		$out[] = array(
+			'name'     => sanitize_file_name( $files['name'][ $i ] ),
+			'type'     => sanitize_mime_type( $files['type'][ $i ] ),
+			'tmp_name' => $files['tmp_name'][ $i ],
+			'error'    => (int) $files['error'][ $i ],
+			'size'     => (int) $files['size'][ $i ],
+		);
+	}
+
+	return $out;
+}
+
+/**
+ * Sanitize a date string to a strict Y-m-d value or null.
+ *
+ * Accepts only a calendar-valid Y-m-d date that round-trips exactly; anything
+ * else (empty string, partial, or impossible date like 2026-13-40) returns
+ * null so the DATE column stores SQL NULL.
+ *
+ * @since 1.2.0
+ *
+ * @param string $value Raw date string.
+ * @return string|null Valid Y-m-d date, or null.
+ */
+function wpss_sanitize_date( string $value ): ?string {
+	$value = trim( sanitize_text_field( $value ) );
+
+	if ( '' === $value ) {
+		return null;
+	}
+
+	$parsed = \DateTimeImmutable::createFromFormat( 'Y-m-d', $value );
+
+	if ( ! $parsed || $parsed->format( 'Y-m-d' ) !== $value ) {
+		return null;
+	}
+
+	return $value;
+}
+
+/**
+ * Build a sanitized vendor-profile update payload from a posted field set.
+ *
+ * Single source of truth for the vendor-profile form fields, shared by the
+ * REST VendorsController::update_current_vendor and the legacy admin-ajax
+ * AjaxHandlers::update_vendor_profile so both transports sanitize identically
+ * and write the SAME wpss_vendor_profiles columns (via
+ * VendorService::update_profile()). Only keys present in $src are included, so
+ * partial updates leave untouched fields alone.
+ *
+ * @since 1.2.0
+ *
+ * @param array $src       Unslashed field set (tagline, bio, country, city,
+ *                         website, intro_video_url, vacation_mode,
+ *                         vacation_message; avatar_id/cover_id keys signal an
+ *                         intent to clear when the id is 0).
+ * @param int   $avatar_id Resolved avatar attachment id (0 = none/clear).
+ * @param int   $cover_id  Resolved cover attachment id (0 = none/clear).
+ * @return array<string, mixed> Sanitized data for VendorService::update_profile().
+ */
+function wpss_build_vendor_profile_update( array $src, int $avatar_id, int $cover_id ): array {
+	$data = array();
+
+	if ( array_key_exists( 'tagline', $src ) ) {
+		$data['tagline'] = sanitize_text_field( (string) $src['tagline'] );
+	}
+	if ( array_key_exists( 'bio', $src ) ) {
+		$data['bio'] = sanitize_textarea_field( (string) $src['bio'] );
+	}
+	if ( array_key_exists( 'country', $src ) ) {
+		$data['country'] = sanitize_text_field( (string) $src['country'] );
+	}
+	if ( array_key_exists( 'city', $src ) ) {
+		$data['city'] = sanitize_text_field( (string) $src['city'] );
+	}
+	if ( array_key_exists( 'website', $src ) ) {
+		$data['website'] = esc_url_raw( (string) $src['website'] );
+	}
+	if ( array_key_exists( 'intro_video_url', $src ) ) {
+		// Accept only YouTube/Vimeo origins - stored verbatim, rendered through
+		// the safe embed helper. Anything else clears the field so the UI falls
+		// back to the no-video state.
+		$raw_video               = esc_url_raw( (string) $src['intro_video_url'] );
+		$data['intro_video_url'] = wpss_is_supported_video_url( $raw_video ) ? $raw_video : '';
+	}
+	if ( array_key_exists( 'vacation_mode', $src ) ) {
+		$data['vacation_mode'] = empty( $src['vacation_mode'] ) ? 0 : 1;
+	}
+	if ( array_key_exists( 'vacation_message', $src ) ) {
+		$data['vacation_message'] = sanitize_textarea_field( (string) $src['vacation_message'] );
+	}
+	if ( array_key_exists( 'vacation_return_date', $src ) ) {
+		// Accept only a strict Y-m-d date; anything else (incl. empty) stores NULL.
+		$data['vacation_return_date'] = wpss_sanitize_date( (string) $src['vacation_return_date'] );
+	}
+
+	if ( $avatar_id > 0 ) {
+		$data['avatar_id'] = $avatar_id;
+	} elseif ( array_key_exists( 'avatar_id', $src ) ) {
+		$data['avatar_id'] = null;
+	}
+
+	if ( $cover_id > 0 ) {
+		$data['cover_image_id'] = $cover_id;
+	} elseif ( array_key_exists( 'cover_id', $src ) ) {
+		$data['cover_image_id'] = null;
+	}
+
+	return $data;
+}
+
+/**
+ * Render one conversation message row (the canonical messaging markup).
+ *
+ * Single source of truth for a message bubble in the order/dashboard thread.
+ * Used by the initial server render (templates/order/conversation.php), the
+ * REST message response (additive `html` field), the REST/AJAX send response,
+ * and the AJAX poll - so every transport appends byte-identical markup.
+ *
+ * Accepts either a Message model (attachments/read_by as arrays, created_at as
+ * DateTimeImmutable) or a raw $wpdb row (JSON strings, string created_at, with
+ * an optional sender_name from a JOIN); the shape is normalised internally.
+ *
+ * @since 1.2.0
+ *
+ * @param object $message         Message model or raw DB row.
+ * @param int    $current_user_id Viewer user ID (controls sent/received styling).
+ * @return string Message row HTML.
+ */
+function wpss_render_message_row( object $message, int $current_user_id ): string {
+	$sender_id = (int) ( $message->sender_id ?? 0 );
+	$content   = (string) ( $message->content ?? '' );
+	$type      = $message->type ?? ( $message->content_type ?? 'text' );
+	$is_own    = $sender_id === $current_user_id;
+	$is_system = 'system' === $type;
+
+	// Normalise created_at to a timestamp.
+	$created = $message->created_at ?? null;
+	if ( $created instanceof \DateTimeInterface ) {
+		$created_ts = $created->getTimestamp();
+	} else {
+		$created_ts = $created ? strtotime( (string) $created ) : time();
+	}
+	$time_text = wp_date( get_option( 'time_format' ), $created_ts );
+
+	// Normalise attachments + read_by to arrays.
+	$attachments = $message->attachments ?? array();
+	if ( is_string( $attachments ) ) {
+		$attachments = json_decode( $attachments, true ) ?: array();
+	}
+	$read_by = $message->read_by ?? array();
+	if ( is_string( $read_by ) ) {
+		$read_by = json_decode( $read_by, true ) ?: array();
+	}
+
+	// Sender display name (prefer a JOIN-supplied value, else look it up).
+	$sender_name = $message->sender_name ?? '';
+	if ( '' === $sender_name && $sender_id ) {
+		$sender      = get_userdata( $sender_id );
+		$sender_name = $sender ? $sender->display_name : '';
+	}
+
+	ob_start();
+
+	if ( $is_system ) :
+		?>
+		<div class="wpss-messaging__system">
+			<span class="wpss-messaging__system-text">
+				<?php echo wp_kses_post( $content ); ?>
+				<span class="wpss-messaging__message-time">
+					<?php echo esc_html( $time_text ); ?>
+				</span>
+			</span>
+		</div>
+		<?php
+	else :
+		?>
+		<div class="wpss-messaging__message <?php echo $is_own ? 'wpss-messaging__message--sent' : ''; ?>" data-message-id="<?php echo esc_attr( (string) ( $message->id ?? 0 ) ); ?>">
+			<?php if ( ! $is_own ) : ?>
+				<div class="wpss-messaging__message-avatar">
+					<?php echo get_avatar( $sender_id, 32 ); ?>
+				</div>
+			<?php endif; ?>
+			<div class="wpss-messaging__message-content">
+				<div class="wpss-messaging__bubble">
+					<?php if ( ! $is_own ) : ?>
+						<span class="wpss-messaging__sender"><?php echo esc_html( $sender_name ); ?></span>
+					<?php endif; ?>
+					<div class="wpss-messaging__text">
+						<?php echo wp_kses_post( nl2br( $content ) ); ?>
+					</div>
+					<?php if ( ! empty( $attachments ) ) : ?>
+						<div class="wpss-messaging__attachments">
+							<?php foreach ( $attachments as $attachment ) : ?>
+								<?php
+								$file_url  = $attachment['url'] ?? '';
+								$file_name = $attachment['name'] ?? ( $attachment['filename'] ?? basename( (string) $file_url ) );
+								$file_type = $attachment['type'] ?? '';
+								$is_image  = 0 === strpos( (string) $file_type, 'image/' );
+								?>
+								<?php if ( $is_image && $file_url ) : ?>
+									<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-image">
+										<img src="<?php echo esc_url( $file_url ); ?>" alt="<?php echo esc_attr( $file_name ); ?>">
+									</a>
+								<?php else : ?>
+									<a href="<?php echo esc_url( $file_url ); ?>" target="_blank" class="wpss-messaging__attachment-file">
+										<span class="wpss-messaging__attachment-icon">
+											<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
+										</span>
+										<span class="wpss-messaging__attachment-info">
+											<span class="wpss-messaging__attachment-name"><?php echo esc_html( $file_name ); ?></span>
+										</span>
+									</a>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+				<span class="wpss-messaging__message-time">
+					<?php echo esc_html( $time_text ); ?>
+					<?php $is_read = ! empty( array_diff_key( (array) $read_by, array( $current_user_id => '' ) ) ); ?>
+					<?php if ( $is_own && $is_read ) : ?>
+						<span class="wpss-messaging__message-status wpss-messaging__message-status--read" title="<?php esc_attr_e( 'Read', 'wp-sell-services' ); ?>">
+							<i data-lucide="check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+						</span>
+					<?php endif; ?>
+				</span>
+			</div>
+		</div>
+		<?php
+	endif;
+
+	return (string) ob_get_clean();
 }

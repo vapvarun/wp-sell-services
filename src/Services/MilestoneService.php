@@ -55,8 +55,11 @@ class MilestoneService {
 	 * Checked by checkout, stats filters, notification gating, sales/orders
 	 * list routing, and email gating to treat milestone sub-orders as
 	 * phases of a parent service order rather than standalone orders.
+	 *
+	 * Aliases the canonical sub-order type on the ServiceOrder model so the
+	 * value has a single source of truth.
 	 */
-	public const ORDER_TYPE = 'milestone';
+	public const ORDER_TYPE = ServiceOrder::SUB_ORDER_TYPE_MILESTONE;
 
 	/**
 	 * Wallet-transaction type for milestone earnings.

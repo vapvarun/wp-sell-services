@@ -224,11 +224,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p>' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		// Resolve selected addons from URL param (comma-separated _wpss_extras indices).
+		// Resolve selected addons from URL param (comma-separated add-on indices).
 		$selected_addons = array();
 		if ( $addon_ids_raw ) {
 			$addon_ids  = array_map( 'absint', explode( ',', $addon_ids_raw ) );
-			$all_extras = get_post_meta( $service->id, '_wpss_extras', true ) ?: [];
+			$all_extras = wpss_get_service_extras( $service->id );
 
 			foreach ( $addon_ids as $addon_index ) {
 				if ( isset( $all_extras[ $addon_index ] ) ) {

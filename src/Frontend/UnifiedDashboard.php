@@ -95,6 +95,17 @@ class UnifiedDashboard {
 		// Enqueue frontend assets to ensure wpssData is available for WPSS functions
 		wpss_enqueue_frontend_assets();
 
+		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
+		// Must be enqueued before any dashboard script (free or pro) that calls
+		// wpssConfirm() / wpssToast().
+		wp_enqueue_script(
+			'wpss-ui',
+			WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
+			array(),
+			WPSS_VERSION,
+			true
+		);
+
 		wp_enqueue_style(
 			'wpss-unified-dashboard',
 			WPSS_PLUGIN_URL . 'assets/css/unified-dashboard.css',
@@ -187,18 +198,68 @@ class UnifiedDashboard {
 			return $this->render_login_prompt();
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
-		$section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'orders';
-
-		// Validate section access — vendor-only sections show a fallback message
-		// instead of silently redirecting to orders (which confused users).
-
-		$this->current_section = $section;
+		$this->current_section = $this->resolve_current_section();
 		$this->sections        = $this->get_sections();
 
 		ob_start();
 		$this->render_shell();
 		return ob_get_clean();
+	}
+
+	/**
+	 * Resolve the current dashboard section from request state.
+	 *
+	 * Prefers the pretty-permalink endpoint query var (`wpss_section`, populated
+	 * by the /{dashboard}/{section}/ rewrite). Falls back to the legacy
+	 * `?section=` query arg so plain-permalink sites and old links keep working.
+	 * Defaults to the role-aware landing section (see default_section()).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string Sanitized section slug.
+	 */
+	private function resolve_current_section(): string {
+		$section = (string) get_query_var( 'wpss_section', '' );
+
+		if ( '' === $section ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
+			$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
+		}
+
+		$section = sanitize_key( $section );
+
+		return '' === $section ? $this->default_section() : $section;
+	}
+
+	/**
+	 * Resolve the role-aware default landing section.
+	 *
+	 * Active vendors land on their selling overview (`sales`) — a seller's
+	 * operational home — while buyers land on `orders`. Explicit section
+	 * requests always win (see resolve_current_section()).
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string Section slug.
+	 */
+	private function default_section(): string {
+		$user_id = get_current_user_id();
+		$default = 'orders';
+
+		if ( $this->vendor_service->is_vendor( $user_id )
+			&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) ) {
+			$default = 'sales';
+		}
+
+		/**
+		 * Filter the dashboard's default landing section.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param string $default Section slug (`sales` for active vendors, `orders` otherwise).
+		 * @param int    $user_id Current user ID.
+		 */
+		return (string) apply_filters( 'wpss_dashboard_default_section', $default, $user_id );
 	}
 
 	/**
@@ -279,7 +340,7 @@ class UnifiedDashboard {
 					),
 					'earnings'  => array(
 						'icon'  => 'wallet',
-						'label' => __( 'Earnings', 'wp-sell-services' ),
+						'label' => __( 'Earnings & Payouts', 'wp-sell-services' ),
 					),
 					'portfolio' => array(
 						'icon'  => 'folder',
@@ -409,11 +470,26 @@ class UnifiedDashboard {
 
 			<main class="wpss-dashboard__content">
 				<?php
-				$this->maybe_render_payout_banner( $user_id, $is_active );
-				$this->maybe_render_profile_banner( $user_id, $is_active );
+				// Contextual prompts live in their own sections (the payout prompt
+				// in Earnings & Payouts, profile completeness in the Profile
+				// section) - they are NOT rendered globally here, which previously
+				// leaked the same banner onto every dashboard tab.
 				?>
 				<header class="wpss-dashboard__header">
-					<h1 class="wpss-dashboard__title">
+					<?php
+					/**
+					 * Fires at the start of the unified dashboard header.
+					 *
+					 * Pro's WhiteLabel DashboardBrandingService listens here (priority 5)
+					 * to render a branded logo or brand name before the section title.
+					 * Free shipped without firing this action, leaving that listener
+					 * dead; added in 1.2.0 to complete the contract.
+					 *
+					 * @since 1.2.0
+					 */
+					do_action( 'wpss_dashboard_header' );
+					?>
+					<h1 class="wpss-dashboard__title wpss-page-header__title">
 						<?php
 						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
 						if ( $id && 'create' !== $this->current_section ) {
@@ -467,8 +543,8 @@ class UnifiedDashboard {
 			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
 			'services'       => __( 'My Services', 'wp-sell-services' ),
 			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),
-			'earnings'       => __( 'Earnings', 'wp-sell-services' ),
-			'wallet'         => __( 'Wallet & Earnings', 'wp-sell-services' ),
+			'earnings'       => __( 'Earnings & Payouts', 'wp-sell-services' ),
+			'wallet'         => __( 'Earnings & Payouts', 'wp-sell-services' ),
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
 			'portfolio'      => __( 'Portfolio', 'wp-sell-services' ),
 			'messages'       => __( 'Messages', 'wp-sell-services' ),
@@ -505,11 +581,9 @@ class UnifiedDashboard {
 			$base_url = get_permalink() ?: home_url();
 		}
 
-		if ( 'orders' === $section ) {
-			return $base_url;
-		}
-
-		return add_query_arg( 'section', $section, $base_url );
+		// Centralized builder emits the pretty endpoint (/dashboard/{section}/)
+		// when permalinks are pretty and falls back to ?section= otherwise.
+		return wpss_append_dashboard_section( $base_url, $section );
 	}
 
 	/**
@@ -519,7 +593,13 @@ class UnifiedDashboard {
 	 * @return void
 	 */
 	private function render_section( string $section ): void {
-		$template_path = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$section}.php";
+		// `wallet` and `earnings` are one screen ("Wallet & Earnings"):
+		// earnings.php renders both the earnings summary and the wallet ledger
+		// (#wpss-wallet-transactions). The wallet slug is kept as a friendly
+		// URL/nav entry but resolves to the single earnings template - no
+		// duplicate template, one source of truth.
+		$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
+		$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
 
 		/**
 		 * Filter the template path for a dashboard section.
@@ -666,149 +746,6 @@ class UnifiedDashboard {
 
 		$cache[ $user_id ] = $count > 0;
 		return $cache[ $user_id ];
-	}
-
-	/**
-	 * Show a soft "Complete your profile" banner when the vendor's profile
-	 * is missing key fields (tagline, bio, country).
-	 *
-	 * Soft signal — vendors can publish services without it, but a complete
-	 * profile attracts more buyers. Banner is dismissible per-session via
-	 * sessionStorage; it returns next session until the profile is complete.
-	 *
-	 * F7 part a from baseline-2026-04-25.md.
-	 *
-	 * @param int  $user_id   Current user ID.
-	 * @param bool $is_active Whether the user is an active vendor.
-	 * @return void
-	 */
-	private function maybe_render_profile_banner( int $user_id, bool $is_active ): void {
-		if ( ! $is_active ) {
-			return;
-		}
-
-		$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
-		if ( ! $profile ) {
-			return;
-		}
-
-		$missing = array();
-		if ( empty( trim( (string) $profile->title ) ) ) {
-			$missing[] = __( 'tagline', 'wp-sell-services' );
-		}
-		if ( empty( trim( (string) $profile->bio ) ) ) {
-			$missing[] = __( 'bio', 'wp-sell-services' );
-		}
-		if ( empty( trim( (string) $profile->country ) ) ) {
-			$missing[] = __( 'country', 'wp-sell-services' );
-		}
-
-		if ( empty( $missing ) ) {
-			return;
-		}
-
-		$profile_url = $this->get_section_url( 'profile' );
-		$missing_str = implode( ', ', $missing );
-		?>
-		<div class="wpss-dashboard__profile-banner" data-wpss-profile-banner role="status">
-			<span class="wpss-profile-banner__icon" aria-hidden="true">
-				<i data-lucide="user-circle" class="wpss-icon" aria-hidden="true"></i>
-			</span>
-			<div class="wpss-profile-banner__content">
-				<strong class="wpss-profile-banner__title">
-					<?php esc_html_e( 'Complete your profile to attract more buyers', 'wp-sell-services' ); ?>
-				</strong>
-				<span class="wpss-profile-banner__text">
-					<?php
-					printf(
-						/* translators: %s: comma-separated list of missing profile fields (e.g. "tagline, bio, country") */
-						esc_html__( 'Buyers want to know who they are working with. Add your %s to your profile.', 'wp-sell-services' ),
-						esc_html( $missing_str )
-					);
-					?>
-				</span>
-			</div>
-			<a href="<?php echo esc_url( $profile_url ); ?>" class="wpss-btn wpss-btn--primary wpss-profile-banner__btn">
-				<?php esc_html_e( 'Complete profile', 'wp-sell-services' ); ?>
-			</a>
-			<button type="button"
-				class="wpss-profile-banner__dismiss"
-				data-wpss-profile-banner-dismiss
-				aria-label="<?php esc_attr_e( 'Dismiss for this session', 'wp-sell-services' ); ?>">
-				&times;
-			</button>
-		</div>
-		<script>
-			(function () {
-				if ( typeof sessionStorage === 'undefined' ) { return; }
-				var banner = document.querySelector( '[data-wpss-profile-banner]' );
-				if ( ! banner ) { return; }
-				if ( sessionStorage.getItem( 'wpss_profile_banner_dismissed' ) === '1' ) {
-					banner.style.display = 'none';
-					return;
-				}
-				var dismissBtn = banner.querySelector( '[data-wpss-profile-banner-dismiss]' );
-				if ( dismissBtn ) {
-					dismissBtn.addEventListener( 'click', function () {
-						sessionStorage.setItem( 'wpss_profile_banner_dismissed', '1' );
-						banner.style.display = 'none';
-					} );
-				}
-			})();
-		</script>
-		<?php
-	}
-
-	/**
-	 * Render the "configure your payout method" banner for active vendors who
-	 * have earnings but haven't set up a payout destination yet.
-	 *
-	 * Silently no-ops when the vendor is inactive, has already configured a
-	 * payout method, or has no earnings to withdraw — banner only shows when
-	 * the vendor would actually be blocked by the missing config.
-	 *
-	 * @param int  $user_id   The current dashboard user.
-	 * @param bool $is_active Whether the user is an active vendor.
-	 * @return void
-	 */
-	private function maybe_render_payout_banner( int $user_id, bool $is_active ): void {
-		if ( ! $is_active ) {
-			return;
-		}
-
-		$payout_method = get_user_meta( $user_id, 'wpss_payout_method', true );
-
-		// Already configured - no banner needed.
-		if ( ! empty( $payout_method ) ) {
-			return;
-		}
-
-		// Check if vendor has any earnings.
-		$earnings_service = new \WPSellServices\Services\EarningsService();
-		$summary          = $earnings_service->get_summary( $user_id );
-		$has_earnings     = ( $summary['available_balance'] ?? 0 ) > 0 || ( $summary['pending_clearance'] ?? 0 ) > 0;
-
-		if ( ! $has_earnings ) {
-			return;
-		}
-
-		$earnings_url = $this->get_section_url( 'earnings' );
-		?>
-		<div class="wpss-dashboard__payout-banner">
-			<span class="wpss-payout-banner__icon">&#128176;</span>
-			<div class="wpss-payout-banner__content">
-				<strong class="wpss-payout-banner__title">
-					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
-				</strong>
-				<span class="wpss-payout-banner__text">
-					<?php esc_html_e( 'Set up your payout method to start receiving payments.', 'wp-sell-services' ); ?>
-				</span>
-			</div>
-			<a href="<?php echo esc_url( $earnings_url ); ?>" class="wpss-btn wpss-btn--primary wpss-payout-banner__btn">
-				<?php esc_html_e( 'Set Up Payouts', 'wp-sell-services' ); ?>
-			</a>
-		</div>
-		<?php
 	}
 
 	/**

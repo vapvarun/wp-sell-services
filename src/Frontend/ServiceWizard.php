@@ -773,6 +773,18 @@ class ServiceWizard {
 			<?php endforeach; ?>
 		</div>
 		<?php
+		/**
+		 * Fires after the pricing tiers in the wizard's Pricing step.
+		 *
+		 * Markup rendered here lives inside the Alpine.js scope — bind inputs
+		 * with x-model="data.your_key" and seed the key via the
+		 * wpss_wizard_service_data filter. Pro uses this for recurring billing.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param \WP_Post|null $_service Existing service post or null when creating.
+		 */
+		do_action( 'wpss_wizard_pricing_after', $_service );
 	}
 
 	/**
@@ -1239,8 +1251,7 @@ class ServiceWizard {
 		$gallery      = ! empty( $gallery ) ? $gallery : array();
 		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
 		$requirements = ! empty( $requirements ) ? $requirements : array();
-		$extras       = get_post_meta( $service_id, '_wpss_extras', true );
-		$extras       = ! empty( $extras ) ? $extras : array();
+		$extras       = wpss_get_service_extras( $service_id );
 		$faqs         = get_post_meta( $service_id, '_wpss_faqs', true );
 		$faqs         = ! empty( $faqs ) ? $faqs : array();
 		$categories   = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'ids' ) );
@@ -1248,7 +1259,7 @@ class ServiceWizard {
 		$tags         = wp_get_post_terms( $service_id, 'wpss_service_tag', array( 'fields' => 'names' ) );
 		$tags         = is_wp_error( $tags ) ? array() : $tags;
 
-		return array(
+		$data = array(
 			'id'           => $service_id,
 			'title'        => $service->post_title,
 			'description'  => $service->post_content,
@@ -1261,6 +1272,20 @@ class ServiceWizard {
 			'extras'       => $extras,
 			'faqs'         => $faqs,
 		);
+
+		/**
+		 * Filter the wizard's Alpine seed data for an existing service.
+		 *
+		 * Lets extensions (e.g. Pro recurring billing) expose their meta in
+		 * the wizard edit form. Keys added here ride the same JSON payload on
+		 * save and must be sanitized via wpss_wizard_sanitize_service_data.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param array $data       Wizard data model.
+		 * @param int   $service_id Service post ID.
+		 */
+		return apply_filters( 'wpss_wizard_service_data', $data, $service_id );
 	}
 
 	/**
@@ -1720,6 +1745,16 @@ class ServiceWizard {
 
 		// Prepare success response based on post status.
 		if ( 'pending' === $post_status ) {
+			// Re-queue for moderation: the post_status is pending, but the
+			// admin queue filters on _wpss_moderation_status. A resubmitted
+			// (previously rejected) service must flip its moderation meta to
+			// 'pending' and shed its stale rejection reason, or it stays
+			// invisible to reviewers. Fire the pending hook so notifications +
+			// audit log run, matching ModerationService::set_pending().
+			update_post_meta( $service_id, \WPSellServices\Services\ModerationService::META_MODERATION_STATUS, \WPSellServices\Services\ModerationService::STATUS_PENDING );
+			delete_post_meta( $service_id, \WPSellServices\Services\ModerationService::META_REJECTION_REASON );
+			do_action( 'wpss_service_pending_moderation', $service_id );
+
 			$message      = __( 'Service submitted for review. You will be notified once it is approved.', 'wp-sell-services' );
 			$redirect_url = wpss_get_dashboard_url( 'services' );
 		} else {
@@ -1824,7 +1859,7 @@ class ServiceWizard {
 	 * @return array Sanitized data.
 	 */
 	private function sanitize_service_data( array $data ): array {
-		return array(
+		$sanitized = array(
 			'title'        => sanitize_text_field( $data['title'] ?? '' ),
 			'description'  => wp_kses_post( $data['description'] ?? '' ),
 			'category'     => absint( $data['category'] ?? 0 ),
@@ -1836,6 +1871,20 @@ class ServiceWizard {
 			'extras'       => $this->sanitize_extras( $data['extras'] ?? array() ),
 			'faqs'         => $this->sanitize_faqs( $data['faqs'] ?? array() ),
 		);
+
+		/**
+		 * Filter the sanitized wizard payload.
+		 *
+		 * Extensions that render extra wizard fields (wpss_wizard_pricing_after,
+		 * wpss_wizard_service_data) MUST sanitize their own keys here — raw
+		 * values from $data are untrusted client JSON.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param array $sanitized Sanitized data the wizard will persist.
+		 * @param array $data      Raw decoded request payload.
+		 */
+		return apply_filters( 'wpss_wizard_sanitize_service_data', $sanitized, $data );
 	}
 
 	/**
@@ -2130,6 +2179,21 @@ class ServiceWizard {
 
 		// Save FAQs.
 		update_post_meta( $service_id, '_wpss_faqs', $data['faqs'] );
+
+		/**
+		 * Fires after the wizard persists service meta.
+		 *
+		 * Runs on BOTH save-draft and publish (unlike
+		 * wpss_service_wizard_saved, which fires on publish only) — the
+		 * extension point for persisting custom wizard fields added via
+		 * wpss_wizard_pricing_after / wpss_wizard_sanitize_service_data.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param int   $service_id Service post ID.
+		 * @param array $data       Sanitized wizard payload.
+		 */
+		do_action( 'wpss_wizard_save_service_meta', $service_id, $data );
 	}
 
 	/**

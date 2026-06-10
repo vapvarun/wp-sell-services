@@ -44,6 +44,14 @@ class ServiceOrder {
 	public const STATUS_REFUNDED               = 'refunded';
 	public const STATUS_PARTIALLY_REFUNDED     = 'partially_refunded';
 
+	// Sub-order types (rows on wpss_orders with a non-empty `platform` marker
+	// that route through the shared sub-order pattern). Canonical source for the
+	// REST `type` filter; each owning service mirrors the value in its own
+	// ORDER_TYPE constant. See docs/architecture/SUB_ORDER_PATTERN.md.
+	public const SUB_ORDER_TYPE_MILESTONE = 'milestone';
+	public const SUB_ORDER_TYPE_EXTENSION = 'extension';
+	public const SUB_ORDER_TYPE_TIP       = 'tip';
+
 	/**
 	 * Order ID.
 	 *
@@ -569,6 +577,22 @@ class ServiceOrder {
 			self::STATUS_CANCELLATION_REQUESTED => __( 'Cancellation Requested', 'wp-sell-services' ),
 			self::STATUS_REFUNDED               => __( 'Refunded', 'wp-sell-services' ),
 			self::STATUS_PARTIALLY_REFUNDED     => __( 'Partially Refunded', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Get all sub-order types.
+	 *
+	 * Canonical list consumed by REST `type` validation and any caller that
+	 * needs to filter sub-orders. Keys are the stored `platform` markers.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_sub_order_types(): array {
+		return array(
+			self::SUB_ORDER_TYPE_MILESTONE => __( 'Milestone', 'wp-sell-services' ),
+			self::SUB_ORDER_TYPE_EXTENSION => __( 'Extension', 'wp-sell-services' ),
+			self::SUB_ORDER_TYPE_TIP       => __( 'Tip', 'wp-sell-services' ),
 		);
 	}
 
