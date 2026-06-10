@@ -4,6 +4,17 @@ Sell services that bill on a schedule: weekly, monthly, quarterly, or yearly. Th
 
 ## Enable recurring billing on a service
 
+### From the frontend Service Wizard
+
+Vendors can enable recurring billing directly from the frontend wizard at **Dashboard → Create Service → Pricing step**. A **Recurring Billing** section appears in the Pricing step when both conditions are met:
+
+- The Pro plugin is active.
+- Recurring services are globally enabled in **Sell Services → Settings → Orders → Recurring Services**.
+
+Toggle **Enable recurring billing** on, then pick a billing frequency: Weekly, Monthly, Quarterly, or Yearly.
+
+### From wp-admin
+
 1. Edit the service and open the pricing section.
 2. Mark the package as **Recurring** and pick the interval.
 3. Buyers see the interval on the service page and at checkout.

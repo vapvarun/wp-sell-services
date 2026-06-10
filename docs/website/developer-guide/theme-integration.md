@@ -247,6 +247,49 @@ add_filter( 'wpss_dashboard_section_titles', function( $titles ) {
 } );
 ```
 
+## Full-width Plugin Pages
+
+Since 1.2.0, the plugin's app-like pages — Dashboard, Cart, Checkout, and Become a Vendor — render full-width without a theme sidebar. This prevents marketplace UI from appearing next to widgets such as Recent Posts.
+
+### How it works per theme
+
+The plugin detects the active theme and uses its native mechanism rather than hiding the sidebar with CSS:
+
+| Theme | Method |
+|-------|--------|
+| **Reign** | Sets Reign's native per-page layout meta (`reign_wbcom_metabox_data`), the same mechanism Reign uses for FluentCart. Reign's page wrappers and subheader remain intact. |
+| **BuddyX / BuddyX Pro** | Uses the theme's bundled "Page No Sidebar" template (`page-templates/full-width-container.php`). |
+| **Any other theme** | Falls back to `templates/wpss-fullwidth-template.php`, which calls `get_header()` / `get_footer()` and emits a contained full-width wrapper. |
+
+If a site owner has already set a specific Page Template on a plugin page in the editor, that choice wins and the plugin does not override it.
+
+### Customizing the fallback template
+
+Copy `templates/wpss-fullwidth-template.php` into your theme to override the fallback wrapper:
+
+```
+yourtheme/wp-sell-services/wpss-fullwidth-template.php
+```
+
+### Opting out and controlling scope
+
+Turn off full-width handling entirely — the active theme's normal sidebar layout will be used on all plugin pages:
+
+```php
+add_filter( 'wpss_use_fullwidth_template', '__return_false' );
+```
+
+Control which plugin pages receive the full-width treatment (default: `dashboard`, `cart`, `checkout`, `become_vendor`):
+
+```php
+// Remove the dashboard from full-width treatment
+add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
+    return array_diff( $keys, [ 'dashboard' ] );
+} );
+```
+
+See also [`wpss_use_fullwidth_template` and `wpss_fullwidth_page_keys`](hooks-filters.md#full-width-plugin-pages-filters) in the hooks reference.
+
 ## CSS Classes Reference
 
 The plugin uses `wpss-` prefixed CSS classes. Verified classes from `SingleServiceView.php`:

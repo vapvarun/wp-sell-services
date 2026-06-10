@@ -79,7 +79,7 @@ After selecting a package, buyers see the available add-ons listed below. Each a
 - The price (or "Free" if no charge)
 - Any impact on delivery time (e.g., rush delivery subtracts days, extra work adds days)
 
-Selected add-ons are added to the order total at checkout.
+Selected add-ons are added to the order total at checkout. This applies regardless of whether the add-ons were created through the frontend wizard or the wp-admin service editor.
 
 ## Delivery Time Impact
 

@@ -469,6 +469,12 @@
           "slug": "email-configuration-wpss",
           "file": "notifications-emails/email-configuration.md",
           "order": 3
+        },
+        {
+          "title": "Real-Time Updates (Live Messages & Notifications)",
+          "slug": "realtime-updates-wpss",
+          "file": "notifications-emails/realtime-updates.md",
+          "order": 4
         }
       ]
     },
