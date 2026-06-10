@@ -256,21 +256,17 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return array Refund result.
 	 */
 	public function process_refund( string $transaction_id, ?float $amount = null, string $reason = '' ): array {
-		$data = array(
-			'payment_intent' => $transaction_id,
-		);
+		// Retrieve the original PaymentIntent: needed to resolve the currency
+		// for partial refunds AND to detect Stripe Connect split payments
+		// (transfer_data) so the refund carries explicit Connect flags.
+		$payment_intent = $this->api_request( "payment_intents/{$transaction_id}", array(), 'GET' );
 
-		if ( null !== $amount ) {
-			// Get original currency from payment intent.
-			$payment        = $this->api_request( "payment_intents/{$transaction_id}", array(), 'GET' );
-			$currency       = $payment['currency'] ?? 'usd';
-			$data['amount'] = $this->format_amount( $amount, $currency );
+		if ( isset( $payment_intent['error'] ) ) {
+			wpss_log( "Stripe refund: could not retrieve PaymentIntent {$transaction_id} before refunding; proceeding without Connect detection.", 'warning' );
+			$payment_intent = array();
 		}
 
-		if ( $reason ) {
-			$data['reason']   = 'requested_by_customer';
-			$data['metadata'] = array( 'reason_detail' => $reason );
-		}
+		$data = $this->build_refund_args( $transaction_id, $amount, $reason, $payment_intent );
 
 		$response = $this->api_request( 'refunds', $data );
 
@@ -287,6 +283,92 @@ class StripeGateway implements PaymentGatewayInterface {
 			'status'    => $response['status'],
 			'amount'    => $this->parse_amount( $response['amount'], $response['currency'] ),
 		);
+	}
+
+	/**
+	 * Build the argument array for a POST /v1/refunds request.
+	 *
+	 * Stripe Connect semantics for destination charges (PaymentIntents created
+	 * with `transfer_data` + `application_fee_amount`):
+	 *
+	 * - `reverse_transfer` — when true, Stripe reverses the transfer to the
+	 *   CONNECTED (vendor) account so the buyer's refund is funded from the
+	 *   vendor's balance. Stripe's API default is FALSE, which leaves the
+	 *   platform out of pocket, so this gateway defaults it to TRUE for
+	 *   Connect split payments. On partial refunds Stripe reverses the
+	 *   transfer proportionally — only the flag needs to be passed.
+	 * - `refund_application_fee` — when true, the platform's application fee
+	 *   is also refunded. Stripe's API default is FALSE; this gateway keeps
+	 *   FALSE so the platform retains its commission (common marketplace
+	 *   policy). Override per refund via the `wpss_stripe_refund_args` filter.
+	 *
+	 * Both flags are sent only when the original PaymentIntent was a Connect
+	 * split (detected via `transfer_data.destination` on the retrieved
+	 * PaymentIntent). Non-Connect refunds send the same request as before:
+	 * `payment_intent` plus optional `amount`/`reason` — no new parameters.
+	 *
+	 * Public (rather than private) so the request shape can be inspected in
+	 * tests without performing live Stripe calls.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param string     $transaction_id PaymentIntent ID being refunded.
+	 * @param float|null $amount         Refund amount (null for full refund).
+	 * @param string     $reason         Refund reason.
+	 * @param array      $payment_intent Retrieved PaymentIntent data (empty array if retrieval failed).
+	 * @return array Refund request arguments.
+	 */
+	public function build_refund_args( string $transaction_id, ?float $amount, string $reason, array $payment_intent ): array {
+		$args = array(
+			'payment_intent' => $transaction_id,
+		);
+
+		if ( null !== $amount ) {
+			$currency       = $payment_intent['currency'] ?? 'usd';
+			$args['amount'] = $this->format_amount( $amount, $currency );
+		}
+
+		if ( $reason ) {
+			$args['reason']   = 'requested_by_customer';
+			$args['metadata'] = array( 'reason_detail' => $reason );
+		}
+
+		// Connect split payment: the intent was created with transfer_data
+		// (injected by Pro via the wpss_stripe_payment_intent_args filter).
+		if ( ! empty( $payment_intent['transfer_data']['destination'] ) ) {
+			$args['reverse_transfer']       = true;
+			$args['refund_application_fee'] = false;
+		}
+
+		/**
+		 * Filter the Stripe refund request arguments.
+		 *
+		 * Lets platforms (and Pro) override the Connect refund flags per
+		 * refund — e.g. set `refund_application_fee` to true to return the
+		 * platform commission to the customer, or `reverse_transfer` to
+		 * false to fund the refund from the platform balance instead of the
+		 * connected vendor account.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param array      $args           Refund arguments sent to POST /v1/refunds.
+		 * @param string     $transaction_id PaymentIntent ID being refunded.
+		 * @param array      $payment_intent Retrieved PaymentIntent data (empty array if retrieval failed).
+		 * @param float|null $amount         Requested refund amount (null for full refund).
+		 * @param string     $reason         Refund reason supplied by the caller.
+		 */
+		$args = apply_filters( 'wpss_stripe_refund_args', $args, $transaction_id, $payment_intent, $amount, $reason );
+
+		// Stripe's form-encoded API requires literal "true"/"false" strings:
+		// build_request_body() casts values with (string), and PHP false
+		// would encode as an empty string, which Stripe rejects.
+		foreach ( array( 'reverse_transfer', 'refund_application_fee' ) as $flag ) {
+			if ( array_key_exists( $flag, $args ) ) {
+				$args[ $flag ] = filter_var( $args[ $flag ], FILTER_VALIDATE_BOOLEAN ) ? 'true' : 'false';
+			}
+		}
+
+		return $args;
 	}
 
 	/**
