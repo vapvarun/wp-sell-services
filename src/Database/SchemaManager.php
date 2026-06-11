@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.5';
+	const DB_VERSION = '1.4.6';
 
 	/**
 	 * Option name for storing DB version.
