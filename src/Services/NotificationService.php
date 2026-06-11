@@ -1615,11 +1615,17 @@ class NotificationService {
 			}
 		}
 
-		// Check user preferences.
-		$email_preferences = get_user_meta( $user_id, 'wpss_email_notifications', true );
+		// Check user preferences. Saved by the dashboard profile form as a
+		// category=>bool array under `wpss_email_preferences` (the previous
+		// `wpss_email_notifications` key was never written anywhere, so user
+		// preferences silently had no effect — Basecamp #9983528063). The
+		// category mapping mirrors EmailService::get_user_pref_category();
+		// types without a category are not user-controllable.
+		$email_preferences = get_user_meta( $user_id, 'wpss_email_preferences', true );
+		$category          = $this->get_user_pref_category( $type );
 
-		if ( is_array( $email_preferences ) && isset( $email_preferences[ $type ] ) ) {
-			return (bool) $email_preferences[ $type ];
+		if ( null !== $category && is_array( $email_preferences ) && array_key_exists( $category, $email_preferences ) ) {
+			return ! empty( $email_preferences[ $category ] );
 		}
 
 		// Default: send emails for important notifications (WooCommerce-independent).
@@ -1663,6 +1669,55 @@ class NotificationService {
 		);
 
 		return in_array( $type, $important_types, true );
+	}
+
+	/**
+	 * Map a notification type to its user-facing email preference category.
+	 *
+	 * The dashboard profile form stores preferences as a category=>bool array
+	 * (`orders`, `messages`, `completion`, `cancellation`, `disputes`, `tips`,
+	 * `withdrawals`, `proposals`) in `wpss_email_preferences` user meta — the
+	 * same store EmailService::get_user_pref_category() consults. Covers both
+	 * the TYPE_* constants and the raw workflow strings that
+	 * OrderWorkflowManager / DisputeWorkflowManager pass through notify().
+	 * Types without a category (vendor approval, deadline warnings) are not
+	 * user-controllable and always send.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param string $type Notification type.
+	 * @return string|null Preference category, or null when not user-controllable.
+	 */
+	private function get_user_pref_category( string $type ): ?string {
+		$type_to_category = array(
+			self::TYPE_ORDER_CREATED       => 'orders',
+			self::TYPE_ORDER_STATUS        => 'orders',
+			'new_order'                    => 'orders',
+			'order_confirmation'           => 'orders',
+			'order_started'                => 'orders',
+			'order_in_progress'            => 'orders',
+			'submit_requirements'          => 'orders',
+			self::TYPE_NEW_MESSAGE         => 'messages',
+			self::TYPE_DELIVERY_SUBMITTED  => 'completion',
+			self::TYPE_DELIVERY_ACCEPTED   => 'completion',
+			self::TYPE_REVISION_REQUESTED  => 'completion',
+			self::TYPE_REVIEW_RECEIVED     => 'completion',
+			'order_completed'              => 'completion',
+			'order_completed_vendor'       => 'completion',
+			'order_auto_completed'         => 'completion',
+			'delivery_received'            => 'completion',
+			'order_cancelled'              => 'cancellation',
+			'cancellation_requested'       => 'cancellation',
+			'cancellation_submitted'       => 'cancellation',
+			'cancellation_auto_approved'   => 'cancellation',
+			self::TYPE_DISPUTE_OPENED      => 'disputes',
+			self::TYPE_DISPUTE_RESOLVED    => 'disputes',
+			'dispute_response_received'    => 'disputes',
+			'dispute_reminder'             => 'disputes',
+			self::TYPE_TIP_RECEIVED        => 'tips',
+		);
+
+		return $type_to_category[ $type ] ?? null;
 	}
 
 	/**
