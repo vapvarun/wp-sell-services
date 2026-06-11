@@ -99,7 +99,20 @@ class VendorService {
 			return false;
 		}
 
-		$needs_approval = 'approval' === $registration_mode;
+		/**
+		 * Filter whether new vendors are auto-approved.
+		 *
+		 * The Plugin.php settings bridge resolves the default from
+		 * wpss_vendor['vendor_registration'] ('open' = auto-approve); third
+		 * parties can override approval programmatically.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param bool $auto_approve Whether the vendor activates without admin review.
+		 */
+		$auto_approve = (bool) apply_filters( 'wpss_auto_approve_vendors', 'approval' !== $registration_mode );
+
+		$needs_approval = ! $auto_approve;
 		$default_status = $needs_approval ? 'pending' : 'active';
 
 		// Only grant role, capabilities, and vendor meta when approval is NOT required.

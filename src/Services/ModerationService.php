@@ -91,7 +91,19 @@ class ModerationService {
 	 */
 	public static function is_enabled(): bool {
 		$settings = get_option( 'wpss_vendor', array() );
-		return ! empty( $settings['require_service_moderation'] );
+
+		/**
+		 * Filter whether new/updated services require moderation.
+		 *
+		 * The Plugin.php settings bridge resolves the default from
+		 * wpss_vendor['require_service_moderation']; third parties can
+		 * override the moderation gate programmatically.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param bool $require Whether services land as pending for review.
+		 */
+		return (bool) apply_filters( 'wpss_require_service_moderation', ! empty( $settings['require_service_moderation'] ) );
 	}
 
 	/**
