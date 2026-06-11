@@ -1,0 +1,28 @@
+{
+  "suppressions": [
+    {
+      "id": "hook-consumed-never-fired:wpss_service_category_add_form_fields",
+      "reason": "WP core fires {$taxonomy}_add_form_fields dynamically for the wpss_service_category taxonomy; verified 2026-06-11"
+    },
+    {
+      "id": "hook-consumed-never-fired:wpss_service_category_edit_form_fields",
+      "reason": "WP core fires {$taxonomy}_edit_form_fields dynamically for the wpss_service_category taxonomy; verified 2026-06-11"
+    },
+    {
+      "id": "option-read-never-written:wpss_dashboard_page",
+      "reason": "Documented legacy fallback after wpss_pages lookup (Plugin.php:564 'Legacy fallback so sites mapped via the older single option still work'); verified 2026-06-11"
+    },
+    {
+      "id": "option-read-never-written:wpss_vendors_page",
+      "reason": "Documented legacy fallback after wpss_pages lookup (functions.php:709 'Fallback to legacy option'); verified 2026-06-11"
+    },
+    {
+      "id": "post_meta-read-never-written:_wpss_budget",
+      "reason": "Documented legacy fallback for pre-min/max single budget key (edit-request.php:38 'Support both the old single _wpss_budget key'); verified 2026-06-11"
+    },
+    {
+      "id": "user_meta-read-never-written:wpss_moderation_per_page",
+      "reason": "WP screen option — core writes it via the set-screen-option filter (ServiceModerationPage.php:63,194); verified 2026-06-11"
+    }
+  ]
+}
