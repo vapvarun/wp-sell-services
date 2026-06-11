@@ -422,7 +422,18 @@ class VendorsController extends RestController {
 		}
 
 		if ( ! empty( $profile_data ) ) {
-			( new \WPSellServices\Services\VendorService() )->update_profile( $user_id, $profile_data );
+			$updated = ( new \WPSellServices\Services\VendorService() )->update_profile( $user_id, $profile_data );
+
+			// Surface DB-level failures (missing column, constraint violation)
+			// instead of returning HTTP 200 with stale data — a silent failure
+			// here is how the vacation-mode persistence bug went unnoticed.
+			if ( ! $updated ) {
+				return new WP_Error(
+					'wpss_profile_update_failed',
+					__( 'Your profile could not be saved. Please try again or contact support.', 'wp-sell-services' ),
+					array( 'status' => 500 )
+				);
+			}
 		}
 
 		// Fields without a wpss_vendor_profiles column stay in user_meta

@@ -173,6 +173,22 @@ class SchemaManager {
 	 */
 	private function run_column_migrations(): void {
 		$migrations = array(
+			// Vacation mode + message (Basecamp #9983528280): dbDelta can fail
+			// to add columns on upgrade, leaving every vacation-mode save to
+			// fail silently — list all three vacation columns so the upgrade
+			// path self-heals. Order matches the CREATE TABLE definition.
+			array(
+				'table'      => 'vendor_profiles',
+				'column'     => 'vacation_mode',
+				'definition' => 'tinyint(1) DEFAULT 0',
+				'after'      => 'is_available',
+			),
+			array(
+				'table'      => 'vendor_profiles',
+				'column'     => 'vacation_message',
+				'definition' => 'text',
+				'after'      => 'vacation_mode',
+			),
 			// Buyer-facing vacation return date (Basecamp #9982757528).
 			array(
 				'table'      => 'vendor_profiles',
