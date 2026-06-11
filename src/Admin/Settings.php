@@ -564,6 +564,23 @@ class Settings {
 			'wpss_payouts'
 		);
 
+		// Wallet provider lives as a standalone option (single canonical key
+		// read by free Plugin::get_active_wallet_provider() and Pro's
+		// WalletManager — Basecamp #9985173976).
+		register_setting(
+			'wpss_payouts',
+			'wpss_wallet_provider',
+			array( 'sanitize_callback' => 'sanitize_key' )
+		);
+
+		add_settings_field(
+			'wpss_wallet_provider',
+			__( 'Wallet Provider', 'wp-sell-services' ),
+			array( $this, 'render_wallet_provider_field' ),
+			'wpss_payouts',
+			'wpss_payouts_section'
+		);
+
 		add_settings_field(
 			'min_withdrawal',
 			__( 'Minimum Withdrawal', 'wp-sell-services' ),
@@ -2270,6 +2287,45 @@ class Settings {
 		if ( ! empty( $args['description'] ) ) {
 			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
 		}
+	}
+
+	/**
+	 * Render the wallet provider select.
+	 *
+	 * Lists every registered wallet provider (Pro's WalletManager when
+	 * present, otherwise the free registry) and writes the single canonical
+	 * `wpss_wallet_provider` option both sides read.
+	 *
+	 * @return void
+	 */
+	public function render_wallet_provider_field(): void {
+		$providers = array();
+
+		if ( class_exists( '\\WPSellServicesPro\\Integrations\\Wallets\\WalletManager' ) ) {
+			foreach ( \WPSellServicesPro\Integrations\Wallets\WalletManager::get_instance()->get_providers() as $id => $provider ) {
+				$providers[ $id ] = method_exists( $provider, 'get_name' ) ? $provider->get_name() : ucfirst( $id );
+			}
+		}
+
+		if ( empty( $providers ) ) {
+			foreach ( \WPSellServices\Core\Plugin::get_instance()->get_wallet_providers() as $id => $provider ) {
+				$providers[ $id ] = is_object( $provider ) && method_exists( $provider, 'get_name' ) ? $provider->get_name() : ucfirst( (string) $id );
+			}
+		}
+
+		if ( empty( $providers ) ) {
+			$providers = array( 'internal' => __( 'Internal Wallet', 'wp-sell-services' ) );
+		}
+
+		$selected = get_option( 'wpss_wallet_provider', 'internal' );
+		?>
+		<select id="wpss_wallet_provider" name="wpss_wallet_provider">
+			<?php foreach ( $providers as $id => $label ) : ?>
+				<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $selected, $id ); ?>><?php echo esc_html( $label ); ?></option>
+			<?php endforeach; ?>
+		</select>
+		<p class="description"><?php esc_html_e( 'Which wallet integration funds and receives marketplace wallet operations. Providers appear here when their plugin is active.', 'wp-sell-services' ); ?></p>
+		<?php
 	}
 
 	/**
