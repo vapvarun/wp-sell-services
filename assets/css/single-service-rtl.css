@@ -170,6 +170,17 @@
    single owner now flows through. No surface-specific override is needed here,
    so the block is deleted rather than re-scoped. */
 
+/* The app shell's `contain: layout` (design-system.css) turns the shell into
+   the containing block for positioned descendants, which stops the sidebar's
+   position: sticky from ever engaging against the viewport (verified in
+   Chrome: sidebar scrolls away as static content). Lift layout containment
+   on single-service pages only — the shell's stacking-context isolation
+   (position: relative + isolation: isolate) is untouched, so the B2
+   duplicate-header fix is preserved (Basecamp #9983376083). */
+.wpss-app-shell:has(.wpss-single-service) {
+	contain: none;
+}
+
 .wpss-service-layout {
 	display: grid;
 	grid-template-columns: 1fr 340px;
@@ -184,8 +195,14 @@
 .wpss-service-sidebar {
 	position: sticky;
 	top: var(--wpss-sticky-top, 32px);
-	max-height: none;
-	overflow-y: visible;
+	/* Cap the sidebar at the visible viewport so sticky never releases
+	   abruptly when the packages widget + vendor card grow taller than
+	   100vh — overflowing content scrolls internally instead
+	   (Basecamp #9983376083). --wpss-sticky-top already accounts for the
+	   admin bar (32px / 64px / 78px tiers). */
+	max-height: calc(100vh - var(--wpss-sticky-top, 32px) - 16px);
+	overflow-y: auto;
+	overscroll-behavior: contain;
 	width: 340px;
 	justify-self: end;
 }
@@ -201,6 +218,7 @@
 		width: 100%;
 		max-width: 100%;
 		max-height: none;
+		overflow-y: visible;
 		justify-self: stretch;
 		order: 2;
 	}
