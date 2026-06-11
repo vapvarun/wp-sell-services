@@ -313,16 +313,16 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 **Install & reliability**
 
 * Fix: The plugin now activates cleanly from the downloaded zip on every install. Previously, on some hosts the plugin could fatal-error on activation if the install was missing a runtime dependency. The release zip now bundles everything the plugin needs to run.
-* Improvement: The release zip and the source repository are now both complete and self-contained — no extra setup step is required after install.
+* Improvement: The release zip and the source repository are now both complete and self-contained - no extra setup step is required after install.
 
 = 1.1.0 - 2026-04-23 =
 
 **Admin UX Consistency**
 
-* Vendors, Withdrawals, and Moderation admin pages now share the same shell — wrapper, heading, stats strip, and filter row — so operators see a consistent surface regardless of which list they open
+* Vendors, Withdrawals, and Moderation admin pages now share the same shell - wrapper, heading, stats strip, and filter row - so operators see a consistent surface regardless of which list they open
 * Moderation gains a 4-card stats strip (Total / Pending / Approved / Rejected) matching the other two listing pages
 * Stats cards now use a single responsive grid that collapses from 5-up on desktop to 2-up on small phones, with no per-page styling required
-* Shared status-color palette — green for active/approved/completed, amber for pending, red for suspended/rejected
+* Shared status-color palette - green for active/approved/completed, amber for pending, red for suspended/rejected
 
 **First-Time Guide (Admin + Frontend)**
 
@@ -334,27 +334,27 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 **Reliable background jobs**
 
 * Improvement: Every recurring job the plugin runs (order lifecycle sweeps, dispute deadlines, sub-order cleanups, auto-withdrawal, vendor-stat refresh, seller-level recalc) is now powered by the more reliable Action Scheduler library. You can review and replay any background job from Tools &gt; Scheduled Actions. Page loads are no longer slowed down when the dispute cron is due.
-* Upgrade path: on the first admin page load after upgrading from a pre-1.1.0 install, the plugin migrates its old scheduled jobs to the new system automatically — no action required from you.
+* Upgrade path: on the first admin page load after upgrading from a pre-1.1.0 install, the plugin migrates its old scheduled jobs to the new system automatically - no action required from you.
 
 **Empty-state polish**
 
-* Improvement: Empty lists (Orders, Disputes, the buyer-orders tab on the frontend dashboard, and the vendor profile services section) now show a designed empty state with an icon, a one-line explanation, and a call-to-action button — instead of a bare "No X found." sentence.
+* Improvement: Empty lists (Orders, Disputes, the buyer-orders tab on the frontend dashboard, and the vendor profile services section) now show a designed empty state with an icon, a one-line explanation, and a call-to-action button - instead of a bare "No X found." sentence.
 * Improvement: Orders and Disputes admin screens now use the same card-shell layout as Vendors, Withdrawals, and Moderation, so all six listing screens look and behave consistently.
 * New: Help tabs added to the Orders and Disputes admin screens, linking to the plugin docs and workflow guides.
 
 **Database housekeeping**
 
-* Improvement: The plugin's database setup / teardown code is now refactored so that adding or removing a plugin table is a single-line change. Uninstall removes tables in the correct dependency order — no more orphaned data after deactivation + delete.
+* Improvement: The plugin's database setup / teardown code is now refactored so that adding or removing a plugin table is a single-line change. Uninstall removes tables in the correct dependency order - no more orphaned data after deactivation + delete.
 
 **Milestone Contracts (Upwork-style)**
 
 * Vendors choose Fixed or Milestone contract type when submitting a proposal
 * Milestone proposals carry a phase repeater: title, description, amount, days
 * Buyers compare proposals with a phase-count badge and see the full breakdown before accepting
-* Acceptance pre-creates every phase on the order timeline — no upfront parent checkout
+* Acceptance pre-creates every phase on the order timeline - no upfront parent checkout
 * Lock-step payment enforced on the server: phase N only unlocks after every earlier phase is approved or cancelled
 * Ad-hoc milestones can still be proposed during a contract for legitimate scope changes
-* Parent order auto-completes when every phase is terminal — standard completion email and review prompt fire
+* Parent order auto-completes when every phase is terminal - standard completion email and review prompt fire
 * Cancellation rules: paid phases stand, unpaid phases auto-cancel, paid-but-open phases route through dispute
 
 **Paid Extensions (catalog orders)**
@@ -363,7 +363,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * Buyers accept and pay, or decline with one click
 * Commission is split at payment time; vendor wallet credited immediately
 * Parent order deadline extends by the quoted days on acceptance
-* Extensions are mutually exclusive with milestone contracts — a single order only ever shows one flow
+* Extensions are mutually exclusive with milestone contracts - a single order only ever shows one flow
 
 **Vendor Intro Video**
 
@@ -373,7 +373,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 
 **Earnings Ledger & CSV Export (Pro)**
 
-* Wallet dashboard surfaces a dated ledger of every transaction — Earning, Tip, Extension, Milestone, Withdrawal, Credit, Debit, Dispute Refund
+* Wallet dashboard surfaces a dated ledger of every transaction - Earning, Tip, Extension, Milestone, Withdrawal, Credit, Debit, Dispute Refund
 * Period selector: Last 30 Days, This Month, Last Month, This Year, All Time
 * CSV export streams the same rows plus a summary block (Total Credits, Total Debits, Net, Tips, Total Withdrawn)
 * Row columns: Date, Type, Description, Reference (linkable), Currency, Amount (signed), Balance After
@@ -382,7 +382,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 **Money-flow integrity**
 
 * Fix: Sending more than one tip on the same order now credits each one correctly.
-* Fix: When the final milestone of a contract is approved, the parent order now completes end-to-end — vendor stats update, the review prompt appears, and the completion email is sent.
+* Fix: When the final milestone of a contract is approved, the parent order now completes end-to-end - vendor stats update, the review prompt appears, and the completion email is sent.
 * Fix: Converting a buyer request into a milestone contract is now an all-or-nothing operation. Partial conversions no longer leak premature notification emails to vendors.
 * Fix: Buyers no longer receive a "Complete your requirements" email when they send a tip, request a paid extension, or pay a milestone. That email is only sent on the original order.
 * Improvement: Email rate-limiting now applies only to high-volume notification types. Milestone, extension, tip, and proposal events are never silently dropped.
@@ -392,7 +392,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 
 * Improvement: Tips, paid extensions, and milestone payments now share a common credit / cleanup flow under the hood. Vendor wallets are credited consistently, and abandoned-payment cleanup behaves the same across all three.
 * New: Seven new email templates for the milestone (proposed / paid / submitted / approved) and extension (proposed / approved / declined) flows. Every template ships with a plain-text fallback for clients that don't render HTML.
-* For developers: New REST endpoints for milestones, extensions, and the Fixed vs Milestone proposal contract type — mobile app developers get full parity with the web frontend.
+* For developers: New REST endpoints for milestones, extensions, and the Fixed vs Milestone proposal contract type - mobile app developers get full parity with the web frontend.
 
 **Documentation**
 
@@ -463,10 +463,10 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 == Upgrade Notice ==
 
 = 1.1.1 =
-Fixes an install-side fatal error that could occur on some hosts where a runtime dependency was missing from the previous release zip. The 1.1.1 zip now bundles everything the plugin needs to run, so the plugin activates cleanly out of the box. Safe to upgrade — no settings changes required.
+Fixes an install-side fatal error that could occur on some hosts where a runtime dependency was missing from the previous release zip. The 1.1.1 zip now bundles everything the plugin needs to run, so the plugin activates cleanly out of the box. Safe to upgrade - no settings changes required.
 
 = 1.1.0 =
-Adds Upwork-style milestone contracts on buyer-request orders, paid extensions on catalog orders, vendor intro video, (Pro) Earnings Ledger with CSV export, a unified admin listing UX, a first-time admin guided tour, and moves all recurring background jobs onto a more reliable scheduler with replay support. Includes money-flow integrity fixes — safe to upgrade; on the first admin page load after upgrade the plugin migrates its existing scheduled jobs to the new system automatically.
+Adds Upwork-style milestone contracts on buyer-request orders, paid extensions on catalog orders, vendor intro video, (Pro) Earnings Ledger with CSV export, a unified admin listing UX, a first-time admin guided tour, and moves all recurring background jobs onto a more reliable scheduler with replay support. Includes money-flow integrity fixes - safe to upgrade; on the first admin page load after upgrade the plugin migrates its existing scheduled jobs to the new system automatically.
 
 = 1.0.0 =
 Initial release of WP Sell Services. Transform your WordPress site into a complete service marketplace with vendor management, order workflow, and commission system.
