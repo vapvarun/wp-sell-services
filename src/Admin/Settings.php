@@ -422,6 +422,8 @@ class Settings {
 	 * @return void
 	 */
 	public function register_settings(): void {
+		$this->register_tuning_settings();
+
 		// General settings.
 		register_setting(
 			'wpss_general',
@@ -2326,6 +2328,297 @@ class Settings {
 		</select>
 		<p class="description"><?php esc_html_e( 'Which wallet integration funds and receives marketplace wallet operations. Providers appear here when their plugin is active.', 'wp-sell-services' ); ?></p>
 		<?php
+	}
+
+	/**
+	 * Register tuning options that previously had no writer anywhere
+	 * (Basecamp #9985175023). Each is a STANDALONE option (not part of a
+	 * settings array) so the existing runtime read sites keep their keys.
+	 *
+	 * @return void
+	 */
+	private function register_tuning_settings(): void {
+		$number = fn( string $option, string $group, string $section, string $label, array $args ) => array(
+			register_setting( $group, $option, array( 'sanitize_callback' => $args['float'] ?? false ? 'floatval' : 'absint' ) ),
+			add_settings_field(
+				$option,
+				$label,
+				array( $this, 'render_standalone_number_field' ),
+				$group,
+				$section,
+				array_merge( array( 'option' => $option ), $args )
+			),
+		);
+
+		// General: order amount limits + currency decimals (exposed via GET /settings).
+		$number(
+			'wpss_decimal_places',
+			'wpss_general',
+			'wpss_general_section',
+			__( 'Price Decimal Places', 'wp-sell-services' ),
+			array(
+				'default'     => 2,
+				'min'         => 0,
+				'max'         => 4,
+				'description' => __( 'Decimal places used when formatting prices.', 'wp-sell-services' ),
+			)
+		);
+		$number(
+			'wpss_min_order_amount',
+			'wpss_general',
+			'wpss_general_section',
+			__( 'Minimum Order Amount', 'wp-sell-services' ),
+			array(
+				'default'     => 5,
+				'min'         => 0,
+				'max'         => 100000,
+				'float'       => true,
+				'step'        => '0.01',
+				'description' => __( 'Smallest order total buyers can place.', 'wp-sell-services' ),
+			)
+		);
+		$number(
+			'wpss_max_order_amount',
+			'wpss_general',
+			'wpss_general_section',
+			__( 'Maximum Order Amount', 'wp-sell-services' ),
+			array(
+				'default'     => 10000,
+				'min'         => 0,
+				'max'         => 10000000,
+				'float'       => true,
+				'step'        => '0.01',
+				'description' => __( 'Largest order total buyers can place.', 'wp-sell-services' ),
+			)
+		);
+
+		// Orders: extension + buyer-request tuning.
+		$number(
+			'wpss_max_extension_days',
+			'wpss_orders',
+			'wpss_orders_section',
+			__( 'Max Extension Days', 'wp-sell-services' ),
+			array(
+				'default'     => 14,
+				'min'         => 1,
+				'max'         => 90,
+				'description' => __( 'Longest deadline extension a vendor can quote on an order.', 'wp-sell-services' ),
+			)
+		);
+		$number(
+			'wpss_request_expiry_days',
+			'wpss_orders',
+			'wpss_orders_section',
+			__( 'Buyer Request Expiry (Days)', 'wp-sell-services' ),
+			array(
+				'default'     => 30,
+				'min'         => 1,
+				'max'         => 365,
+				'description' => __( 'Open buyer requests expire after this many days.', 'wp-sell-services' ),
+			)
+		);
+
+		// Disputes: SLA timing + escalation contact.
+		add_settings_section(
+			'wpss_disputes_section',
+			__( 'Dispute Settings', 'wp-sell-services' ),
+			'__return_empty_string',
+			'wpss_orders'
+		);
+		$number(
+			'wpss_dispute_response_days',
+			'wpss_orders',
+			'wpss_disputes_section',
+			__( 'Response Window (Days)', 'wp-sell-services' ),
+			array(
+				'default'     => 3,
+				'min'         => 1,
+				'max'         => 30,
+				'description' => __( 'Days the other party has to respond to a dispute before it can escalate.', 'wp-sell-services' ),
+			)
+		);
+		$number(
+			'wpss_dispute_reminder_days',
+			'wpss_orders',
+			'wpss_disputes_section',
+			__( 'Reminder After (Days)', 'wp-sell-services' ),
+			array(
+				'default'     => 2,
+				'min'         => 1,
+				'max'         => 30,
+				'description' => __( 'Days of silence before a dispute reminder email is sent.', 'wp-sell-services' ),
+			)
+		);
+		$number(
+			'wpss_dispute_auto_escalate_days',
+			'wpss_orders',
+			'wpss_disputes_section',
+			__( 'Auto-Escalate After (Days)', 'wp-sell-services' ),
+			array(
+				'default'     => 7,
+				'min'         => 1,
+				'max'         => 60,
+				'description' => __( 'Unresolved disputes escalate to admin review after this many days.', 'wp-sell-services' ),
+			)
+		);
+
+		register_setting( 'wpss_orders', 'wpss_dispute_admin_email', array( 'sanitize_callback' => 'sanitize_email' ) );
+		add_settings_field(
+			'wpss_dispute_admin_email',
+			__( 'Dispute Notifications Email', 'wp-sell-services' ),
+			array( $this, 'render_standalone_email_field' ),
+			'wpss_orders',
+			'wpss_disputes_section',
+			array(
+				'option'      => 'wpss_dispute_admin_email',
+				'description' => __( 'Escalated disputes are sent here. Leave blank to use the site admin email.', 'wp-sell-services' ),
+			)
+		);
+
+		// Vendor: portfolio caps.
+		$number(
+			'wpss_max_portfolio_items',
+			'wpss_vendor',
+			'wpss_vendor_section',
+			__( 'Max Portfolio Items', 'wp-sell-services' ),
+			array(
+				'default'     => 50,
+				'min'         => 1,
+				'max'         => 500,
+				'description' => __( 'Portfolio items each vendor can publish.', 'wp-sell-services' ),
+			)
+		);
+		$number(
+			'wpss_max_featured_portfolio',
+			'wpss_vendor',
+			'wpss_vendor_section',
+			__( 'Max Featured Portfolio Items', 'wp-sell-services' ),
+			array(
+				'default'     => 6,
+				'min'         => 1,
+				'max'         => 24,
+				'description' => __( 'Portfolio items a vendor can mark as featured.', 'wp-sell-services' ),
+			)
+		);
+
+		// Advanced: audit log retention.
+		$number(
+			'wpss_audit_log_retention_days',
+			'wpss_advanced',
+			'wpss_advanced_section',
+			__( 'Audit Log Retention (Days)', 'wp-sell-services' ),
+			array(
+				'default'     => 0,
+				'min'         => 0,
+				'max'         => 3650,
+				'description' => __( 'Audit log entries older than this are pruned. 0 keeps entries forever.', 'wp-sell-services' ),
+			)
+		);
+
+		// Pages: confirmation + terms mapping.
+		foreach ( array(
+			'wpss_order_confirmation_page' => array( __( 'Order Confirmation Page', 'wp-sell-services' ), __( 'Custom thank-you page buyers land on after checkout. Leave unset to use the default order view.', 'wp-sell-services' ) ),
+			'wpss_terms_page'              => array( __( 'Terms & Conditions Page', 'wp-sell-services' ), __( 'Linked from checkout and exposed to API clients.', 'wp-sell-services' ) ),
+		) as $option => $labels ) {
+			register_setting( 'wpss_pages', $option, array( 'sanitize_callback' => 'absint' ) );
+			add_settings_field(
+				$option,
+				$labels[0],
+				array( $this, 'render_standalone_page_field' ),
+				'wpss_pages',
+				'wpss_pages_section',
+				array(
+					'option'      => $option,
+					'description' => $labels[1],
+				)
+			);
+		}
+	}
+
+	/**
+	 * Render a number input for a standalone option.
+	 *
+	 * @param array<string, mixed> $args Field arguments (option, default, min, max, step, description).
+	 * @return void
+	 */
+	public function render_standalone_number_field( array $args ): void {
+		$option = (string) $args['option'];
+		$value  = get_option( $option, $args['default'] ?? 0 );
+
+		printf(
+			'<input type="number" id="%1$s" name="%1$s" value="%2$s" class="small-text" min="%3$s" max="%4$s" step="%5$s">',
+			esc_attr( $option ),
+			esc_attr( (string) $value ),
+			esc_attr( (string) ( $args['min'] ?? 0 ) ),
+			esc_attr( (string) ( $args['max'] ?? 999999 ) ),
+			esc_attr( (string) ( $args['step'] ?? '1' ) )
+		);
+
+		if ( ! empty( $args['description'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( (string) $args['description'] ) );
+		}
+	}
+
+	/**
+	 * Render an email input for a standalone option.
+	 *
+	 * @param array<string, mixed> $args Field arguments (option, description).
+	 * @return void
+	 */
+	public function render_standalone_email_field( array $args ): void {
+		$option = (string) $args['option'];
+
+		printf(
+			'<input type="email" id="%1$s" name="%1$s" value="%2$s" class="regular-text" placeholder="%3$s">',
+			esc_attr( $option ),
+			esc_attr( (string) get_option( $option, '' ) ),
+			esc_attr( get_option( 'admin_email' ) )
+		);
+
+		if ( ! empty( $args['description'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( (string) $args['description'] ) );
+		}
+	}
+
+	/**
+	 * Render a page dropdown for a standalone option.
+	 *
+	 * @param array<string, mixed> $args Field arguments (option, description).
+	 * @return void
+	 */
+	public function render_standalone_page_field( array $args ): void {
+		$option = (string) $args['option'];
+
+		$dropdown = wp_dropdown_pages( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_dropdown_pages_wp_dropdown_pages
+			array(
+				'name'              => esc_attr( $option ),
+				'id'                => esc_attr( $option ),
+				'selected'          => (int) get_option( $option, 0 ),
+				'show_option_none'  => esc_html__( '— Not set —', 'wp-sell-services' ),
+				'option_none_value' => '0',
+				'echo'              => 0,
+			)
+		);
+
+		echo wp_kses(
+			$dropdown,
+			array(
+				'select' => array(
+					'name'  => true,
+					'id'    => true,
+					'class' => true,
+				),
+				'option' => array(
+					'value'    => true,
+					'selected' => true,
+					'class'    => true,
+				),
+			)
+		);
+
+		if ( ! empty( $args['description'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( (string) $args['description'] ) );
+		}
 	}
 
 	/**
