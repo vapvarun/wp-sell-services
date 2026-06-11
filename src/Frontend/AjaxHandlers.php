@@ -3474,6 +3474,20 @@ class AjaxHandlers {
 
 		update_user_meta( $user_id, 'wpss_email_preferences', $preferences );
 
+		// Verify persistence instead of trusting update_user_meta()'s return
+		// (false also means "value unchanged"). Read back and compare so a
+		// DB-level failure surfaces as an error, not a fake success
+		// (Basecamp #9983538201).
+		wp_cache_delete( $user_id, 'user_meta' );
+		$persisted = get_user_meta( $user_id, 'wpss_email_preferences', true );
+
+		if ( $persisted !== $preferences ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Your preferences could not be saved. Please try again.', 'wp-sell-services' ) ),
+				500
+			);
+		}
+
 		wp_send_json_success(
 			array(
 				'message'     => __( 'Preferences saved.', 'wp-sell-services' ),
