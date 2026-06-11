@@ -23,6 +23,14 @@
     {
       "id": "user_meta-read-never-written:wpss_moderation_per_page",
       "reason": "WP screen option — core writes it via the set-screen-option filter (ServiceModerationPage.php:63,194); verified 2026-06-11"
+    },
+    {
+      "id": "option-read-never-written:wpss_mycred_settings",
+      "reason": "MyCred point-type dev-config with safe default; a wallet-card UI is deferred until the MyCred integration is next touched (noted on card 9985175023); verified 2026-06-12"
+    },
+    {
+      "id": "option-read-never-written:wpss_fluentcart_settings",
+      "reason": "Settings form renders inside FluentCart's own settings page (fluent_cart/settings_service_marketplace); save path unverifiable locally (FluentCart not installed) — follow-up card when the integration is next testable; verified 2026-06-12"
     }
   ]
 }
