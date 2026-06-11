@@ -305,6 +305,23 @@ function wpss_get_vendor( int $user_id ): ?\WPSellServices\Models\VendorProfile 
 }
 
 /**
+ * Get the datetime of a vendor's most recent completed delivery.
+ *
+ * Shared accessor for every "Last Delivery" display (single-service page,
+ * vendor card partial). Resolves from the orders table
+ * (MAX(completed_at), tip sub-orders excluded) — the legacy
+ * _wpss_last_delivery user-meta key was never written.
+ *
+ * @since 1.2.0
+ *
+ * @param int $vendor_id Vendor user ID.
+ * @return string|null MySQL datetime, or null when nothing was delivered yet.
+ */
+function wpss_get_vendor_last_delivery( int $vendor_id ): ?string {
+	return ( new \WPSellServices\Services\VendorService() )->get_last_delivery_date( $vendor_id );
+}
+
+/**
  * Check if user is a vendor.
  *
  * Checks the wpss_vendor capability first, then falls back to checking

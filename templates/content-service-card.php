@@ -134,13 +134,18 @@ do_action( 'wpss_before_service_card', $service_id );
 				<span class="wpss-service-card__vendor-name">
 					<?php echo esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?>
 				</span>
-				<?php if ( get_user_meta( $vendor_id, '_wpss_vendor_verified', true ) ) : ?>
+				<?php
+				// Verified state derives from the canonical wpss_vendor_profiles
+				// table (verification_tier) — the _wpss_vendor_verified user-meta
+				// key was never written.
+				$card_vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
+				?>
+				<?php if ( $card_vendor_profile && $card_vendor_profile->is_verified ) : ?>
 					<span class="wpss-service-card__verified" title="<?php esc_attr_e( 'Verified Vendor', 'wp-sell-services' ); ?>">
 						<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 					</span>
 				<?php endif; ?>
 				<?php
-				$card_vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
 				if ( $card_vendor_profile ) :
 					$card_tier = $card_vendor_profile->tier;
 

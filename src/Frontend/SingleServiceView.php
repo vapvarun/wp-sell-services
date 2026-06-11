@@ -372,42 +372,7 @@ class SingleServiceView {
 				<?php echo wp_kses_post( apply_filters( 'the_content', $service->description ) ); ?>
 			</div>
 
-			<?php $this->render_service_highlights( $service ); ?>
 			<?php $this->render_requirements( $service ); ?>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Render service highlights.
-	 *
-	 * @param Service $service Service object.
-	 * @return void
-	 */
-	private function render_service_highlights( Service $service ): void {
-		$highlights = get_post_meta( $service->id, '_wpss_highlights', true );
-
-		if ( empty( $highlights ) || ! is_array( $highlights ) ) {
-			return;
-		}
-		?>
-		<div class="wpss-service-highlights">
-			<h3><?php esc_html_e( 'Service Highlights', 'wp-sell-services' ); ?></h3>
-			<ul class="wpss-highlights-list">
-				<?php foreach ( $highlights as $highlight ) : ?>
-					<?php if ( ! empty( $highlight ) ) : ?>
-						<li class="wpss-highlight-item">
-							<span class="wpss-highlight-icon">
-								<?php
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
-								echo \WPSellServices\Services\Icon::render( 'check', array( 'class' => 'wpss-icon--sm' ) );
-								?>
-							</span>
-							<?php echo esc_html( $highlight ); ?>
-						</li>
-					<?php endif; ?>
-				<?php endforeach; ?>
-			</ul>
 		</div>
 		<?php
 	}
@@ -488,7 +453,7 @@ class SingleServiceView {
 							</a>
 						</h3>
 						<?php
-						$tagline = $profile->tagline ?? get_user_meta( $vendor_id, '_wpss_vendor_tagline', true );
+						$tagline = $profile->tagline ?? '';
 						if ( $tagline ) :
 							?>
 							<p class="wpss-vendor-tagline"><?php echo esc_html( $tagline ); ?></p>
@@ -552,7 +517,7 @@ class SingleServiceView {
 
 				<div class="wpss-vendor-meta-grid">
 					<?php
-					$country = $profile->country ?? get_user_meta( $vendor_id, '_wpss_vendor_country', true );
+					$country = $profile->country ?? '';
 					if ( $country ) :
 						?>
 						<div class="wpss-vendor-meta-item">
@@ -577,7 +542,9 @@ class SingleServiceView {
 					<?php endif; ?>
 
 					<?php
-					$last_delivery = get_user_meta( $vendor_id, '_wpss_last_delivery', true );
+					// Real source: most recent completed order for this vendor
+					// (the _wpss_last_delivery user-meta key was never written).
+					$last_delivery = wpss_get_vendor_last_delivery( $vendor_id );
 					if ( $last_delivery ) :
 						?>
 						<div class="wpss-vendor-meta-item">
@@ -936,18 +903,16 @@ class SingleServiceView {
 						 * Filters the maximum order quantity for a service.
 						 *
 						 * Services default to quantity 1. The quantity UI is only
-						 * shown when a filter or per-service meta allows more than 1.
+						 * shown when a filter allows more than 1. (The legacy
+						 * _wpss_max_quantity post meta had no write surface, so the
+						 * filter is the only supported extension point.)
 						 *
 						 * @since 1.0.0
 						 *
 						 * @param int $max_quantity Maximum quantity (default 1).
 						 * @param int $service_id   Service post ID.
 						 */
-						$service_max_quantity = (int) get_post_meta( $service_id, '_wpss_max_quantity', true );
-						if ( $service_max_quantity <= 0 ) {
-							$service_max_quantity = 1;
-						}
-						$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', $service_max_quantity, $service_id );
+						$max_quantity = (int) apply_filters( 'wpss_max_order_quantity', 1, $service_id );
 
 						if ( $max_quantity > 1 ) :
 							?>

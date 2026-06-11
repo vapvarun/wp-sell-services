@@ -631,6 +631,21 @@ class VendorService {
 	}
 
 	/**
+	 * Get the datetime of the vendor's most recent completed delivery.
+	 *
+	 * Resolves from the orders table (MAX(completed_at), tips excluded) —
+	 * the _wpss_last_delivery user-meta key was never written.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int $user_id Vendor user ID.
+	 * @return string|null MySQL datetime, or null when nothing was delivered yet.
+	 */
+	public function get_last_delivery_date( int $user_id ): ?string {
+		return $this->order_repo->get_last_completed_date( $user_id );
+	}
+
+	/**
 	 * Check if vendor is online.
 	 *
 	 * @param int $user_id User ID.

@@ -316,8 +316,11 @@ class VendorsController extends RestController {
 			);
 		}
 
-		// Verify user is a vendor.
-		if ( ! get_user_meta( $vendor_id, '_wpss_is_vendor', true ) ) {
+		// Verify user is a vendor. wpss_is_vendor() checks the capability and
+		// role, not just the legacy _wpss_is_vendor meta — vendors created via
+		// role grant (e.g. demo seeder, admin approval) have no meta row and
+		// were 404ing here.
+		if ( ! wpss_is_vendor( $vendor_id ) ) {
 			return new WP_Error(
 				'rest_vendor_not_found',
 				__( 'Vendor not found.', 'wp-sell-services' ),
@@ -752,8 +755,13 @@ class VendorsController extends RestController {
 			)
 		);
 
-		// Response time (average from meta).
-		$avg_response_time = get_user_meta( $vendor_id, '_wpss_avg_response_time', true );
+		// Response time (response_time_hours column on the canonical
+		// wpss_vendor_profiles table — the _wpss_avg_response_time user-meta
+		// key was never written).
+		$stats_profile     = wpss_get_vendor( $vendor_id );
+		$avg_response_time = $stats_profile && $stats_profile->response_time > 0
+			? $stats_profile->get_response_time_label()
+			: null;
 
 		// Completion rate.
 		$total_orders     = (int) $order_stats->total_orders;
@@ -782,7 +790,7 @@ class VendorsController extends RestController {
 				'on_time_rate'      => $on_time_rate,
 				'total_reviews'     => (int) $review_stats->total,
 				'average_rating'    => round( (float) $review_stats->average, 1 ),
-				'avg_response_time' => $avg_response_time ?: null,
+				'avg_response_time' => $avg_response_time,
 				'member_since'      => get_user_meta( $vendor_id, '_wpss_vendor_since', true ),
 			)
 		);
@@ -799,24 +807,32 @@ class VendorsController extends RestController {
 	public function prepare_item_for_response( $vendor, $request, bool $is_self = false ): WP_REST_Response {
 		$vendor_id = $vendor->ID;
 
+		// Canonical vendor data lives in the wpss_vendor_profiles table (1.2.0
+		// migration). The old _wpss_vendor_tagline/bio/social/verified/country
+		// and _wpss_completed_orders user-meta keys were never written, so
+		// those fields are sourced from the profile row. skills, languages,
+		// response_time, rating_average, rating_count, and member_since keep
+		// their user-meta source because those keys DO have write paths.
+		$profile = wpss_get_vendor( $vendor_id );
+
 		$data = array(
 			'id'               => $vendor_id,
 			'display_name'     => $vendor->display_name,
 			'username'         => $vendor->user_nicename,
 			'avatar'           => get_avatar_url( $vendor_id, array( 'size' => 96 ) ),
 			'avatar_large'     => get_avatar_url( $vendor_id, array( 'size' => 256 ) ),
-			'tagline'          => get_user_meta( $vendor_id, '_wpss_vendor_tagline', true ) ?: '',
-			'bio'              => get_user_meta( $vendor_id, '_wpss_vendor_bio', true ) ?: '',
+			'tagline'          => $profile ? $profile->title : '',
+			'bio'              => $profile ? $profile->bio : '',
 			'skills'           => get_user_meta( $vendor_id, '_wpss_vendor_skills', true ) ?: array(),
 			'languages'        => get_user_meta( $vendor_id, '_wpss_vendor_languages', true ) ?: array(),
 			'response_time'    => get_user_meta( $vendor_id, '_wpss_vendor_response_time', true ) ?: '',
-			'social_links'     => get_user_meta( $vendor_id, '_wpss_vendor_social', true ) ?: array(),
+			'social_links'     => $profile ? $profile->social_links : array(),
 			'rating_average'   => (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ) ?: 0,
 			'rating_count'     => (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ) ?: 0,
-			'completed_orders' => (int) get_user_meta( $vendor_id, '_wpss_completed_orders', true ) ?: 0,
+			'completed_orders' => $profile ? $profile->orders_completed : 0,
 			'member_since'     => get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered,
-			'is_verified'      => (bool) get_user_meta( $vendor_id, '_wpss_vendor_verified', true ),
-			'country'          => get_user_meta( $vendor_id, '_wpss_vendor_country', true ) ?: '',
+			'is_verified'      => $profile ? $profile->is_verified : false,
+			'country'          => $profile ? $profile->country : '',
 		);
 
 		// Add private data for self.

@@ -142,8 +142,13 @@ class SellerCard extends AbstractBlock {
 			return '';
 		}
 
+		// Canonical vendor data lives in the wpss_vendor_profiles table (1.2.0
+		// migration) — the old wpss_seller_title / wpss_avg_response_time /
+		// wpss_last_active user-meta keys were never written.
+		$profile = wpss_get_vendor( $user_id );
+
 		// Get seller stats.
-		$stats = $this->get_seller_stats( $user_id );
+		$stats = $this->get_seller_stats( $user_id, $profile );
 
 		$wrapper_classes = array( 'wpss-seller-layout-' . $attributes['layout'] );
 		?>
@@ -161,7 +166,7 @@ class SellerCard extends AbstractBlock {
 						<h3 class="wpss-seller-name"><?php echo esc_html( $user->display_name ); ?></h3>
 
 						<?php
-						$title = get_user_meta( $user_id, 'wpss_seller_title', true );
+						$title = $profile ? $profile->title : '';
 						if ( $title ) :
 							?>
 							<p class="wpss-seller-title"><?php echo esc_html( $title ); ?></p>
@@ -229,10 +234,11 @@ class SellerCard extends AbstractBlock {
 	/**
 	 * Get seller statistics.
 	 *
-	 * @param int $user_id User ID.
+	 * @param int                                       $user_id User ID.
+	 * @param \WPSellServices\Models\VendorProfile|null $profile Vendor profile (canonical wpss_vendor_profiles row).
 	 * @return array
 	 */
-	private function get_seller_stats( int $user_id ): array {
+	private function get_seller_stats( int $user_id, ?\WPSellServices\Models\VendorProfile $profile = null ): array {
 		global $wpdb;
 
 		// Count services.
@@ -264,12 +270,16 @@ class SellerCard extends AbstractBlock {
 			)
 		);
 
-		// Get response time.
-		$response_time = get_user_meta( $user_id, 'wpss_avg_response_time', true );
-		$response_time = $response_time ? $this->format_response_time( $response_time ) : __( 'N/A', 'wp-sell-services' );
+		// Response time comes from the response_time_hours column on the
+		// canonical wpss_vendor_profiles table.
+		$response_time = $profile && $profile->response_time > 0
+			? $profile->get_response_time_label()
+			: __( 'N/A', 'wp-sell-services' );
 
-		// Check if online (active in last 15 minutes).
-		$last_active = get_user_meta( $user_id, 'wpss_last_active', true );
+		// Check if online (active in last 15 minutes). _wpss_last_active is
+		// the canonical presence key (VendorService::update_last_active()),
+		// also used by templates/partials/vendor-card.php.
+		$last_active = get_user_meta( $user_id, '_wpss_last_active', true );
 		$is_online   = $last_active && ( time() - strtotime( $last_active ) ) < 900;
 
 		return array(
@@ -280,24 +290,6 @@ class SellerCard extends AbstractBlock {
 			'response_time'    => $response_time,
 			'is_online'        => $is_online,
 		);
-	}
-
-	/**
-	 * Format response time.
-	 *
-	 * @param int $seconds Response time in seconds.
-	 * @return string
-	 */
-	private function format_response_time( int $seconds ): string {
-		if ( $seconds < 3600 ) {
-			$minutes = round( $seconds / 60 );
-			/* translators: %d: number of minutes */
-			return sprintf( _n( '%d min', '%d mins', $minutes, 'wp-sell-services' ), $minutes );
-		}
-
-		$hours = round( $seconds / 3600 );
-		/* translators: %d: number of hours */
-		return sprintf( _n( '%d hour', '%d hours', $hours, 'wp-sell-services' ), $hours );
 	}
 
 	/**

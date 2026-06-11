@@ -569,11 +569,15 @@ class API {
 
 			$vendors = [];
 			foreach ( $vendors_query->get_results() as $user ) {
+				// Tagline lives on the canonical wpss_vendor_profiles table —
+				// the _wpss_vendor_tagline user-meta key was never written.
+				$vendor_profile = wpss_get_vendor( $user->ID );
+
 				$vendors[] = [
 					'id'           => $user->ID,
 					'display_name' => $user->display_name,
 					'avatar'       => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
-					'tagline'      => get_user_meta( $user->ID, '_wpss_vendor_tagline', true ) ?: '',
+					'tagline'      => $vendor_profile ? $vendor_profile->title : '',
 					'rating'       => (float) get_user_meta( $user->ID, '_wpss_rating_average', true ) ?: 0,
 					'url'          => wpss_get_vendor_url( $user->ID ),
 				];

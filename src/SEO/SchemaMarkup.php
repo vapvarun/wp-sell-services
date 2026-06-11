@@ -295,11 +295,17 @@ class SchemaMarkup {
 	 * @return array
 	 */
 	public function get_person_schema( int $user_id ): array {
-		$user         = get_userdata( $user_id );
-		$profile_url  = get_author_posts_url( $user_id );
-		$avatar_url   = get_avatar_url( $user_id, array( 'size' => 256 ) );
-		$vendor_title = get_user_meta( $user_id, 'wpss_vendor_title', true );
-		$vendor_bio   = get_user_meta( $user_id, 'description', true );
+		$user        = get_userdata( $user_id );
+		$profile_url = get_author_posts_url( $user_id );
+		$avatar_url  = get_avatar_url( $user_id, array( 'size' => 256 ) );
+
+		// Canonical vendor data lives in the wpss_vendor_profiles table (1.2.0
+		// migration) — the old wpss_vendor_* user-meta keys were never written.
+		$vendor_profile = wpss_get_vendor( $user_id );
+		$vendor_title   = $vendor_profile ? $vendor_profile->title : '';
+		$vendor_bio     = $vendor_profile && '' !== $vendor_profile->bio
+			? $vendor_profile->bio
+			: get_user_meta( $user_id, 'description', true );
 
 		$schema = array(
 			'@type' => 'Person',
@@ -320,9 +326,9 @@ class SchemaMarkup {
 			$schema['description'] = wp_trim_words( $vendor_bio, 50 );
 		}
 
-		// Add vendor stats.
-		$rating       = (float) get_user_meta( $user_id, 'wpss_vendor_rating', true );
-		$review_count = (int) get_user_meta( $user_id, 'wpss_vendor_review_count', true );
+		// Add vendor stats (avg_rating / total_reviews columns on the profile table).
+		$rating       = $vendor_profile ? $vendor_profile->rating : 0.0;
+		$review_count = $vendor_profile ? $vendor_profile->review_count : 0;
 
 		if ( $rating > 0 && $review_count > 0 ) {
 			$schema['aggregateRating'] = array(

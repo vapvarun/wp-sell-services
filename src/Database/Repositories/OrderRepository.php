@@ -420,6 +420,35 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Get the datetime of a vendor's most recent completed order.
+	 *
+	 * Backs the "Last Delivery" display on the single-service page and the
+	 * vendor card partial. Tip sub-orders are excluded because a tip is a
+	 * payment receipt, not delivered work; extension and milestone sub-orders
+	 * count because completing them means the vendor delivered something.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return string|null MySQL datetime of the last completed order, or null.
+	 */
+	public function get_last_completed_date( int $vendor_id ): ?string {
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+
+		$date = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				"SELECT MAX(completed_at)
+				FROM {$this->table}
+				WHERE vendor_id = %d AND status = 'completed' AND platform != %s",
+				$vendor_id,
+				$tip_platform
+			)
+		);
+
+		return $date ? (string) $date : null;
+	}
+
+	/**
 	 * Get customer order statistics.
 	 *
 	 * @param int $customer_id Customer user ID.

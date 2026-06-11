@@ -26,16 +26,22 @@ if ( ! $vendor ) {
 	return;
 }
 
-$tagline          = get_user_meta( $vendor_id, '_wpss_vendor_tagline', true );
+// Canonical vendor data lives in the wpss_vendor_profiles table (1.2.0
+// migration) — the _wpss_vendor_tagline/country/verified and
+// _wpss_completed_orders user-meta keys were never written. Rating,
+// response time, and member-since meta keys DO have write paths.
+$vendor_profile   = wpss_get_vendor( $vendor_id );
+$tagline          = $vendor_profile ? $vendor_profile->title : '';
 $rating_avg       = (float) get_user_meta( $vendor_id, '_wpss_rating_average', true );
 $rating_count     = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true );
-$completed_orders = (int) get_user_meta( $vendor_id, '_wpss_completed_orders', true );
+$completed_orders = $vendor_profile ? $vendor_profile->orders_completed : 0;
 $response_time    = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
-$country          = get_user_meta( $vendor_id, '_wpss_vendor_country', true );
+$country          = $vendor_profile ? $vendor_profile->country : '';
 $member_since     = get_user_meta( $vendor_id, '_wpss_vendor_since', true );
 $member_since     = $member_since ? $member_since : $vendor->user_registered;
-$is_verified      = get_user_meta( $vendor_id, '_wpss_vendor_verified', true );
+$is_verified      = $vendor_profile && $vendor_profile->is_verified;
 $is_online        = get_user_meta( $vendor_id, '_wpss_last_active', true );
+$last_delivery    = wpss_get_vendor_last_delivery( $vendor_id );
 
 // Check if vendor is online (active in last 5 minutes).
 $is_currently_online = $is_online && ( time() - strtotime( $is_online ) ) < 300;
@@ -72,7 +78,6 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 					<?php echo esc_html( $vendor->display_name ); ?>
 				</a>
 				<?php
-				$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
 				if ( $vendor_profile ) :
 					$tier       = $vendor_profile->tier;
 					$tier_label = $vendor_profile->get_tier_label();
@@ -152,13 +157,13 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 			</li>
 		<?php endif; ?>
 
-		<?php if ( $is_online ) : ?>
+		<?php if ( $last_delivery ) : ?>
 			<li>
 				<span class="wpss-detail-icon wpss-icon-activity">
 					<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
 				</span>
 				<span class="wpss-detail-label"><?php esc_html_e( 'Last Delivery', 'wp-sell-services' ); ?></span>
-				<span class="wpss-detail-value"><?php echo esc_html( wpss_time_ago( $is_online ) ); ?></span>
+				<span class="wpss-detail-value"><?php echo esc_html( wpss_time_ago( $last_delivery ) ); ?></span>
 			</li>
 		<?php endif; ?>
 	</ul>

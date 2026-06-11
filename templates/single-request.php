@@ -243,9 +243,14 @@ do_action( 'wpss_before_single_request', $request_id );
 							<div class="wpss-proposals-list">
 								<?php foreach ( $proposals as $proposal ) : ?>
 									<?php
-									$vendor        = get_userdata( $proposal->vendor_id );
-									$vendor_rating = (float) get_user_meta( $proposal->vendor_id, '_wpss_vendor_rating', true );
-									$vendor_orders = (int) get_user_meta( $proposal->vendor_id, '_wpss_completed_orders', true );
+									$vendor = get_userdata( $proposal->vendor_id );
+
+									// Rating + completed orders come from the canonical
+									// wpss_vendor_profiles table — the _wpss_vendor_rating /
+									// _wpss_completed_orders user-meta keys were never written.
+									$vendor_profile = wpss_get_vendor( (int) $proposal->vendor_id );
+									$vendor_rating  = $vendor_profile ? $vendor_profile->rating : 0.0;
+									$vendor_orders  = $vendor_profile ? $vendor_profile->orders_completed : 0;
 									?>
 									<div class="wpss-proposal-item" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
 										<div class="wpss-proposal-header">

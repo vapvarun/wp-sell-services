@@ -186,15 +186,19 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 			$schema['image'] = $avatar;
 		}
 
-		// Add job title.
-		$title = get_user_meta( $vendor->ID, 'wpss_vendor_title', true );
+		// Canonical vendor data lives in the wpss_vendor_profiles table (1.2.0
+		// migration) — the old wpss_vendor_* user-meta keys were never written.
+		$vendor_profile = wpss_get_vendor( $vendor->ID );
+
+		// Add job title (tagline column).
+		$title = $vendor_profile ? $vendor_profile->title : '';
 		if ( $title ) {
 			$schema['jobTitle'] = $title;
 		}
 
-		// Add vendor rating.
-		$rating       = (float) get_user_meta( $vendor->ID, 'wpss_vendor_rating', true );
-		$review_count = (int) get_user_meta( $vendor->ID, 'wpss_vendor_review_count', true );
+		// Add vendor rating (avg_rating / total_reviews columns).
+		$rating       = $vendor_profile ? $vendor_profile->rating : 0.0;
+		$review_count = $vendor_profile ? $vendor_profile->review_count : 0;
 
 		if ( $rating > 0 && $review_count > 0 ) {
 			$schema['aggregateRating'] = array(
