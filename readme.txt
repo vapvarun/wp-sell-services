@@ -288,6 +288,24 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * Fix      - Vendor vacation mode is now honored on the single service page - a notice banner shows the seller's message and return date and the order button is disabled, so buyers cannot purchase while the seller is away. Vendors and admins can set an optional return date.
 * Dev      - REST status parameter on service update (publish or draft), owner-gated.
 * Dev      - Service wizard extension hooks (wpss_wizard_service_data, wpss_wizard_pricing_after, wpss_wizard_sanitize_service_data, wpss_wizard_save_service_meta) let extensions inject fields into the frontend Create Service flow. New filters wpss_use_fullwidth_template, wpss_fullwidth_page_keys, wpss_dashboard_default_section, and wpss_realtime_settings.
+* New      - Review moderation can now be switched on under Settings - Vendor; new reviews hold for approval and the API reports the same state.
+* New      - Dispute timing is configurable: response window, reminder delay, auto-escalation, and a dedicated dispute notifications email under Settings - Orders.
+* New      - Order amount limits, price decimal places, deadline-extension cap, buyer-request expiry, portfolio caps, and audit-log retention all have settings fields instead of fixed defaults.
+* New      - Order Confirmation and Terms pages can be mapped under Settings - Pages.
+* New      - Wallet provider selection under Settings - Payouts; the free plugin and Pro now resolve the same configured provider.
+* Improve  - Vendor profile data (tagline, rating, review count, country, social links) now reads from the canonical vendor profile store everywhere: SEO schema, the vendors API, the Seller Card block, and proposal lists.
+* Improve  - Single service pages show the vendor's real last delivery date.
+* Fix      - Vendor SEO schema now includes the seller's title and aggregate rating; previously both were always empty.
+* Fix      - Vacation mode and other profile changes persist reliably; failed saves now report an error instead of false success, and missing database columns self-heal on update.
+* Fix      - Per-member email notification preferences are honored when sending; muted categories no longer email.
+* Fix      - Admin service editor shows recurring billing fields and saves them with the same keys as the frontend wizard.
+* Fix      - Admin Process Refund button performs the refund through the payment gateway instead of showing a placeholder notice.
+* Fix      - Single service sidebar sticks smoothly while scrolling and scrolls internally when taller than the screen.
+* Fix      - Delivery time and revision counts are consistent across the wizard, admin editor, REST API, SEO schema, and archive filters.
+* Fix      - Vendors approved by an admin can set their PayPal payout email from their profile and it now saves.
+* Security - Gateway settings pages no longer print saved secret keys into the page HTML; secret fields are masked and keep the saved value when left blank.
+* Dev      - New filters wpss_show_powered_by, wpss_stripe_refund_args, wpss_auto_approve_vendors and wpss_require_service_moderation (now live at the decision points), and action wpss_vendor_profile_saved on both profile save paths.
+* Dev      - Static contract audit gate added to the release pipeline; the free/pro pair ships with a clean audit baseline.
 * Dev      - audit/manifest.json refreshed; full inventory of REST routes, hooks, tables, shortcodes, and admin pages.
 
 = 1.1.1 =
