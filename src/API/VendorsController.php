@@ -458,6 +458,9 @@ class VendorsController extends RestController {
 			);
 		}
 
+		/** This action is documented in src/Frontend/AjaxHandlers.php */
+		do_action( 'wpss_vendor_profile_saved', $user_id, $request->get_params() );
+
 		$vendor = get_userdata( $user_id );
 
 		return $this->prepare_item_for_response( $vendor, $request, true );

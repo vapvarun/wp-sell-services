@@ -3558,8 +3558,29 @@ class AjaxHandlers {
 			$profile_data = wpss_build_vendor_profile_update( $post_data, $avatar_id, $cover_id );
 
 			if ( ! empty( $profile_data ) ) {
-				( new VendorService() )->update_profile( $user_id, $profile_data );
+				$updated = ( new VendorService() )->update_profile( $user_id, $profile_data );
+
+				if ( ! $updated ) {
+					wp_send_json_error(
+						array( 'message' => __( 'Your profile could not be saved. Please try again or contact support.', 'wp-sell-services' ) ),
+						500
+					);
+				}
 			}
+
+			/**
+			 * Fires after a vendor profile is saved from a frontend form.
+			 *
+			 * Receives the unslashed submitted fields so extensions can persist
+			 * their own profile inputs (e.g. Pro's PayPal payout email).
+			 * Consumers MUST sanitize the values they read.
+			 *
+			 * @since 1.2.0
+			 *
+			 * @param int   $user_id   Vendor user ID.
+			 * @param array $post_data Unslashed submitted form fields.
+			 */
+			do_action( 'wpss_vendor_profile_saved', $user_id, $post_data );
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Profile updated successfully.', 'wp-sell-services' ) ) );
