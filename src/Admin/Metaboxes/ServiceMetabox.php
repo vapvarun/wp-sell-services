@@ -200,31 +200,128 @@ class ServiceMetabox {
 				<?php esc_html_e( 'Delivery time and revisions are configured per package below.', 'wp-sell-services' ); ?>
 			</p>
 
-			<?php
-			/**
-			 * Filter additional service meta fields rendered in the metabox.
-			 *
-			 * Pro uses this to add recurring billing toggle and other options.
-			 *
-			 * @since 1.1.0
-			 *
-			 * @param array $extra_fields Array of extra field HTML strings.
-			 * @param int   $post_id      The service post ID.
-			 */
-			$extra_fields = apply_filters( 'wpss_service_meta_fields', array(), $post->ID );
-
-			if ( ! empty( $extra_fields ) ) :
-				?>
-				<div class="wpss-extra-fields" style="margin-top: 15px;">
-					<?php
-					foreach ( $extra_fields as $field_html ) {
-						echo wp_kses_post( $field_html );
-					}
-					?>
-				</div>
-			<?php endif; ?>
+			<?php $this->render_extra_fields( $post ); ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Apply the `wpss_service_meta_fields` filter and render the returned fields.
+	 *
+	 * Shared by the active Overview panel and the legacy details metabox so the
+	 * extension surface renders identically wherever it is used.
+	 *
+	 * @param \WP_Post $post Post object.
+	 * @return void
+	 */
+	private function render_extra_fields( \WP_Post $post ): void {
+		/**
+		 * Filter additional service meta fields rendered in the metabox.
+		 *
+		 * Pro uses this to add recurring billing toggle and other options.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $extra_fields Array of extra field HTML strings.
+		 * @param int   $post_id      The service post ID.
+		 */
+		$extra_fields = apply_filters( 'wpss_service_meta_fields', array(), $post->ID );
+
+		if ( empty( $extra_fields ) ) {
+			return;
+		}
+
+		$allowed_html = $this->get_extra_fields_allowed_html();
+		?>
+		<div class="wpss-extra-fields" style="margin-top: 15px;">
+			<?php
+			foreach ( $extra_fields as $field_html ) {
+				echo wp_kses( (string) $field_html, $allowed_html );
+			}
+			?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Allowed HTML for extension-supplied metabox fields.
+	 *
+	 * `wp_kses_post()` strips form elements (`<input>`, `<select>`, `<option>`,
+	 * `<textarea>`, `<label>`), which silently removed the controls Pro injects
+	 * through `wpss_service_meta_fields` — only headings and label text
+	 * survived. This allow-list extends the post context with the form tags
+	 * those fields need while still routing all output through wp_kses()
+	 * (extension HTML is never echoed raw).
+	 *
+	 * @return array Allowed tags/attributes for wp_kses().
+	 */
+	private function get_extra_fields_allowed_html(): array {
+		$allowed = wp_kses_allowed_html( 'post' );
+
+		$allowed['input']    = array(
+			'type'        => true,
+			'id'          => true,
+			'name'        => true,
+			'value'       => true,
+			'class'       => true,
+			'style'       => true,
+			'checked'     => true,
+			'placeholder' => true,
+			'min'         => true,
+			'max'         => true,
+			'step'        => true,
+			'required'    => true,
+			'readonly'    => true,
+			'disabled'    => true,
+			'data-*'      => true,
+			'aria-*'      => true,
+		);
+		$allowed['select']   = array(
+			'id'       => true,
+			'name'     => true,
+			'class'    => true,
+			'style'    => true,
+			'multiple' => true,
+			'disabled' => true,
+			'data-*'   => true,
+			'aria-*'   => true,
+		);
+		$allowed['option']   = array(
+			'value'    => true,
+			'selected' => true,
+			'disabled' => true,
+		);
+		$allowed['optgroup'] = array(
+			'label'    => true,
+			'disabled' => true,
+		);
+		$allowed['textarea'] = array(
+			'id'          => true,
+			'name'        => true,
+			'class'       => true,
+			'style'       => true,
+			'rows'        => true,
+			'cols'        => true,
+			'placeholder' => true,
+			'readonly'    => true,
+			'disabled'    => true,
+			'aria-*'      => true,
+		);
+		$allowed['label']    = array(
+			'for'   => true,
+			'class' => true,
+			'style' => true,
+		);
+		$allowed['fieldset'] = array(
+			'class' => true,
+			'style' => true,
+		);
+		$allowed['legend']   = array(
+			'class' => true,
+			'style' => true,
+		);
+
+		return $allowed;
 	}
 
 	/**
@@ -1439,6 +1536,8 @@ class ServiceMetabox {
 			<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
 			<?php esc_html_e( 'Delivery time and revisions are configured per package in the Pricing tab.', 'wp-sell-services' ); ?>
 		</p>
+
+		<?php $this->render_extra_fields( $post ); ?>
 		<?php
 	}
 
