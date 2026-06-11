@@ -354,7 +354,7 @@ class API {
 			'max_order_amount'    => (float) get_option( 'wpss_max_order_amount', 10000 ),
 			'vendor_registration' => $vendor_settings['vendor_registration'] ?? 'open',
 			'service_moderation'  => ! empty( $vendor_settings['require_service_moderation'] ),
-			'review_moderation'   => (bool) get_option( 'wpss_review_moderation', false ),
+			'review_moderation'   => ! empty( $vendor_settings['moderate_reviews'] ),
 			'max_file_size'       => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
 			'allowed_file_types'  => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
 			'pages'               => [

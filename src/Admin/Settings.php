@@ -798,6 +798,21 @@ class Settings {
 			)
 		);
 
+		add_settings_field(
+			'moderate_reviews',
+			__( 'Review Moderation', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_vendor',
+			'wpss_vendor_section',
+			array(
+				'option_name' => 'wpss_vendor',
+				'field'       => 'moderate_reviews',
+				'label'       => __( 'Hold new reviews for admin approval before they are published', 'wp-sell-services' ),
+				'default'     => false,
+				'description' => __( 'New reviews land as pending and appear on the Review Moderation page until approved.', 'wp-sell-services' ),
+			)
+		);
+
 		// Order settings.
 		register_setting(
 			'wpss_orders',
@@ -2495,6 +2510,7 @@ class Settings {
 		$sanitized['max_services_per_vendor'] = absint( $input['max_services_per_vendor'] ?? 20 );
 		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
+		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );
 
 		return $sanitized;
 	}

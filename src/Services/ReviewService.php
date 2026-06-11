@@ -363,7 +363,12 @@ class ReviewService {
 	 * @return bool
 	 */
 	private function requires_moderation(): bool {
-		return (bool) get_option( 'wpss_moderate_reviews', false );
+		// Stored in the wpss_vendor settings array beside the service
+		// moderation toggle - the old standalone wpss_moderate_reviews
+		// option never had a writer (Basecamp #9985174862).
+		$vendor_settings = get_option( 'wpss_vendor', array() );
+
+		return ! empty( $vendor_settings['moderate_reviews'] );
 	}
 
 	/**
