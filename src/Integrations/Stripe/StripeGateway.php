@@ -1174,6 +1174,16 @@ class StripeGateway implements PaymentGatewayInterface {
 					$out[ $key ] = (string) $num;
 					break;
 				case 'password':
+					$raw = sanitize_text_field( wp_unslash( (string) $raw ) );
+					// Masked secret fields submit empty to mean "keep the
+					// saved value" (Basecamp #9985175367).
+					if ( '' === $raw ) {
+						$saved       = get_option( self::OPTION_NAME, array() );
+						$out[ $key ] = (string) ( is_array( $saved ) ? ( $saved[ $key ] ?? '' ) : '' );
+					} else {
+						$out[ $key ] = $raw;
+					}
+					break;
 				case 'text':
 				default:
 					$out[ $key ] = sanitize_text_field( wp_unslash( (string) $raw ) );
@@ -1302,9 +1312,17 @@ class StripeGateway implements PaymentGatewayInterface {
 				break;
 
 			case 'password':
-				?>
-				<input type="password" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>" class="regular-text">
-				<?php
+				// Masked secret field — never echoes the stored value into
+				// HTML; empty submission means "keep saved" (Basecamp
+				// #9985175367). Rendered by Settings::render_secret_field().
+				do_action(
+					'wpss_render_secret_field',
+					array(
+						'option_name' => self::OPTION_NAME,
+						'field'       => $key,
+						'label'       => $field['label'],
+					)
+				);
 				break;
 
 			case 'number':
