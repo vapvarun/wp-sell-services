@@ -955,12 +955,6 @@ parameters:
 			path: src/CLI/PreflightCommand.php
 
 		-
-			message: '#^Call to WP_CLI\:\:add_command\(\) on a separate line has no effect\.$#'
-			identifier: staticMethod.resultUnused
-			count: 5
-			path: src/CLI/ServiceCommands.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1

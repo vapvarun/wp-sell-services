@@ -203,7 +203,7 @@ class SchemaManager {
 				$migration['table'],
 				$migration['column'],
 				$migration['definition'],
-				$migration['after'] ?? ''
+				$migration['after']
 			);
 		}
 	}
@@ -227,7 +227,7 @@ class SchemaManager {
 			$this->wpdb->prepare(
 				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
 				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
-				$this->wpdb->dbname,
+				DB_NAME,
 				$full_table,
 				$column
 			)

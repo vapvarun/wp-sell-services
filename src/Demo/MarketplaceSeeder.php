@@ -238,16 +238,17 @@ class MarketplaceSeeder {
 	/**
 	 * Seed the full marketplace.
 	 *
-	 * @param array<string, int> $args {
+	 * @param array<string, int|bool> $args {
 	 *     Optional overrides.
 	 *
-	 *     @type int $orders Minimum number of orders to create. Default 55.
+	 *     @type int  $orders Minimum number of orders to create. Default 55.
+	 *     @type bool $images Whether to attach demo images. Default false.
 	 * }
 	 * @return array<string, int> Structured summary of what was created.
 	 */
 	public function seed( array $args = array() ): array {
-		$min_orders         = max( 50, (int) ( $args['orders'] ?? 55 ) );
-		$this->seed_images  = ! isset( $args['images'] ) || (bool) $args['images'];
+		$min_orders        = max( 50, (int) ( $args['orders'] ?? 55 ) );
+		$this->seed_images = ! isset( $args['images'] ) || (bool) $args['images'];
 
 		$summary = array(
 			'categories'    => 0,

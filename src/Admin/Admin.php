@@ -182,7 +182,7 @@ class Admin {
 	/**
 	 * Check whether a notice callback belongs to this plugin (Free or Pro).
 	 *
-	 * @param callable|string|array $callback Hooked callback.
+	 * @param callable|string|array<int, mixed> $callback Hooked callback.
 	 * @return bool
 	 */
 	private function is_own_notice_callback( $callback ): bool {
@@ -1098,11 +1098,11 @@ class Admin {
 		// Each tile links to the page where the work happens, so the
 		// dashboard answers "what's on my plate?" before "how big is the
 		// marketplace?" (see plans/1.1.0-ADMIN-OVERWHELM-AUDIT.md finding #4).
-		$disputes_table     = $wpdb->prefix . 'wpss_disputes';
-		$withdrawals_table  = $wpdb->prefix . 'wpss_withdrawals';
-		$vendor_profiles    = $wpdb->prefix . 'wpss_vendor_profiles';
-		$vendor_settings    = get_option( 'wpss_vendor', array() );
-		$is_approval_mode   = isset( $vendor_settings['vendor_registration'] ) && 'approval' === $vendor_settings['vendor_registration'];
+		$disputes_table    = $wpdb->prefix . 'wpss_disputes';
+		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
+		$vendor_profiles   = $wpdb->prefix . 'wpss_vendor_profiles';
+		$vendor_settings   = get_option( 'wpss_vendor', array() );
+		$is_approval_mode  = isset( $vendor_settings['vendor_registration'] ) && 'approval' === $vendor_settings['vendor_registration'];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$open_disputes = (int) $wpdb->get_var(
@@ -1112,7 +1112,7 @@ class Admin {
 		$pending_withdrawals = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$withdrawals_table} WHERE status = 'pending'"
 		);
-		$pending_vendors = 0;
+		$pending_vendors     = 0;
 		if ( $is_approval_mode ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$pending_vendors = (int) $wpdb->get_var(
@@ -1129,7 +1129,7 @@ class Admin {
 
 			<div class="wpss-dashboard-grid">
 				<!-- Daily action items — counts >0 are highlighted, =0 dim out
-					 so admin can confirm "nothing on my plate today" at a glance. -->
+					so admin can confirm "nothing on my plate today" at a glance. -->
 				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Action items', 'wp-sell-services' ); ?></h2>
 				<div class="wpss-stats-row wpss-stats-row--action">
 					<a class="wpss-stat-card wpss-stat-card--action <?php echo $open_disputes > 0 ? 'is-active' : 'is-empty'; ?>"
@@ -2244,7 +2244,7 @@ class Admin {
 									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 10px;">
 										<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
 										<input type="hidden" name="action" value="wpss_resolve_dispute">
-										<input type="hidden" name="dispute_id" value="<?php echo esc_attr( $dispute_id ); ?>">
+										<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
 										<input type="hidden" name="dispute_status" value="resolved">
 
 										<p>

@@ -3395,7 +3395,7 @@ class VendorsPage {
 					<label for="wpss-level-select-detail" class="screen-reader-text">
 						<?php esc_html_e( 'Seller Level', 'wp-sell-services' ); ?>
 					</label>
-					<select id="wpss-level-select-detail" data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>">
+					<select id="wpss-level-select-detail" data-vendor-id="<?php echo esc_attr( (string) $vendor_id ); ?>">
 						<?php foreach ( $level_labels as $level_key => $level_label ) : ?>
 							<option value="<?php echo esc_attr( $level_key ); ?>" <?php selected( $current_level, $level_key ); ?>>
 								<?php echo esc_html( $level_label ); ?>

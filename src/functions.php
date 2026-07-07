@@ -1665,7 +1665,7 @@ function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\Orde
  * @since 1.2.0
  *
  * @param int $service_id Service post ID.
- * @return array Add-on rows (title, price, delivery_time), keyed by index.
+ * @return array<int, array<string, mixed>> Add-on rows (title, price, delivery_time), keyed by index.
  */
 function wpss_get_service_extras( int $service_id ): array {
 	$extras = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
@@ -2212,12 +2212,12 @@ function wpss_render_video_embed( string $url, string $title = '' ): string {
  *
  * @since 1.2.0
  *
- * @param array  $attributes Block attributes (postsPerPage, orderBy, order, category).
- * @param int    $page       Page number (1-based).
- * @param string $base_url   Optional page URL the grid lives on, used as the
- *                           pagination base. Required when rendering outside
- *                           the main query (e.g. a REST request) where
- *                           get_pagenum_link() cannot resolve the request URL.
+ * @param array<string, mixed> $attributes Block attributes (postsPerPage, orderBy, order, category).
+ * @param int                  $page       Page number (1-based).
+ * @param string               $base_url   Optional page URL the grid lives on, used as the
+ *                                         pagination base. Required when rendering outside
+ *                                         the main query (e.g. a REST request) where
+ *                                         get_pagenum_link() cannot resolve the request URL.
  * @return array{html: string, pagination: string, total: int, pages: int} Rendered grid parts.
  */
 function wpss_render_services_grid( array $attributes, int $page = 1, string $base_url = '' ): array {
@@ -2290,7 +2290,7 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
  *
  * @since 1.2.0
  *
- * @param array $files A single $_FILES['attachments'] entry (PHP's grouped
+ * @param array<string, mixed> $files A single $_FILES['attachments'] entry (PHP's grouped
  *                     multi-file shape: name[], type[], tmp_name[], etc.).
  * @return array{attachments: array<int, array{id:int,url:string,name:string,type:string}>, skipped: array<int,string>}
  */
@@ -2390,7 +2390,7 @@ function wpss_handle_message_attachments( array $files ): array {
  *
  * @since 1.2.0
  *
- * @param array $files A single grouped $_FILES['field'] entry.
+ * @param array<string, mixed> $files A single grouped $_FILES['field'] entry.
  * @return array<int, array{name:string,type:string,tmp_name:string,error:int,size:int}>
  */
 function wpss_normalize_uploaded_files( array $files ): array {
@@ -2457,12 +2457,12 @@ function wpss_sanitize_date( string $value ): ?string {
  *
  * @since 1.2.0
  *
- * @param array $src       Unslashed field set (tagline, bio, country, city,
+ * @param array<string, mixed> $src Unslashed field set (tagline, bio, country, city,
  *                         website, intro_video_url, vacation_mode,
  *                         vacation_message; avatar_id/cover_id keys signal an
  *                         intent to clear when the id is 0).
- * @param int   $avatar_id Resolved avatar attachment id (0 = none/clear).
- * @param int   $cover_id  Resolved cover attachment id (0 = none/clear).
+ * @param int                  $avatar_id Resolved avatar attachment id (0 = none/clear).
+ * @param int                  $cover_id  Resolved cover attachment id (0 = none/clear).
  * @return array<string, mixed> Sanitized data for VendorService::update_profile().
  */
 function wpss_build_vendor_profile_update( array $src, int $avatar_id, int $cover_id ): array {

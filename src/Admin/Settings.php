@@ -218,7 +218,7 @@ class Settings {
 	 * @return void
 	 */
 	public function enqueue_assets( string $hook ): void {
-		if ( ! is_string( $hook ) || ! str_contains( $hook, 'wpss-settings' ) ) {
+		if ( ! str_contains( $hook, 'wpss-settings' ) ) {
 			return;
 		}
 

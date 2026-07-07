@@ -90,10 +90,10 @@ class RealtimeBridge {
 	/**
 	 * Publish a notification to the recipient's user channel.
 	 *
-	 * @param int    $notification_id Notification ID.
-	 * @param int    $user_id         Recipient user ID.
-	 * @param string $type            Notification type.
-	 * @param array  $data            Notification data (unused — payload stays minimal).
+	 * @param int                  $notification_id Notification ID.
+	 * @param int                  $user_id         Recipient user ID.
+	 * @param string               $type            Notification type.
+	 * @param array<string, mixed> $data Notification data (unused — payload stays minimal).
 	 * @return void
 	 */
 	public function on_notification_created( int $notification_id, int $user_id, string $type, array $data = array() ): void {

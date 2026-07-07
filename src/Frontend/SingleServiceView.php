@@ -632,7 +632,7 @@ class SingleServiceView {
 			return null;
 		}
 
-		$message = trim( (string) ( $profile->vacation_message ?? '' ) );
+		$message = trim( $profile->vacation_message );
 		if ( '' === $message ) {
 			$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
 		}
@@ -1034,7 +1034,7 @@ class SingleServiceView {
 					<?php else : ?>
 						<form id="wpss-contact-form" class="wpss-contact-form">
 							<input type="hidden" name="vendor_id" value="<?php echo esc_attr( $vendor_id ); ?>">
-							<input type="hidden" name="service_id" value="<?php echo esc_attr( $service->id ); ?>">
+							<input type="hidden" name="service_id" value="<?php echo esc_attr( (string) $service->id ); ?>">
 
 							<div class="wpss-form-field">
 								<label for="wpss-contact-message"><?php esc_html_e( 'Your Message', 'wp-sell-services' ); ?></label>

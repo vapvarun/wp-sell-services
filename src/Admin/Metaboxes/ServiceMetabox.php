@@ -253,7 +253,7 @@ class ServiceMetabox {
 	 * those fields need while still routing all output through wp_kses()
 	 * (extension HTML is never echoed raw).
 	 *
-	 * @return array Allowed tags/attributes for wp_kses().
+	 * @return array<string, mixed> Allowed tags/attributes for wp_kses().
 	 */
 	private function get_extra_fields_allowed_html(): array {
 		$allowed = wp_kses_allowed_html( 'post' );
@@ -946,7 +946,7 @@ class ServiceMetabox {
 	 * back to the render defaults.
 	 *
 	 * @param int $post_id Service post ID.
-	 * @return array Add-on rows in the metabox field shape.
+	 * @return array<int, array<string, mixed>> Add-on rows in the metabox field shape.
 	 */
 	private function get_addons_for_editor( int $post_id ): array {
 		$addons = wpss_get_service_extras( $post_id );
