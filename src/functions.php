@@ -40,23 +40,15 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 		$currency = wpss_get_currency();
 	}
 
-	$symbols = array(
-		'USD' => '$',
-		'EUR' => '€',
-		'GBP' => '£',
-		'JPY' => '¥',
-		'INR' => '₹',
-		'AUD' => 'A$',
-		'CAD' => 'C$',
-		'CHF' => 'CHF',
-		'CNY' => '¥',
-		'KRW' => '₩',
-		'BRL' => 'R$',
-		'MXN' => 'MX$',
-	);
-
-	$symbol   = $symbols[ $currency ] ?? $currency . ' ';
-	$decimals = in_array( $currency, array( 'JPY', 'KRW' ), true ) ? 0 : 2;
+	// Use the canonical symbol map (wpss_get_currency_symbol) so every
+	// supported currency renders with its proper symbol out of the box - no
+	// code snippet required. Falls back to the code plus a space for a
+	// currency with no known symbol.
+	$symbol = wpss_get_currency_symbol( $currency );
+	if ( $symbol === $currency ) {
+		$symbol .= ' ';
+	}
+	$decimals = wpss_get_currency_decimals( $currency );
 
 	/**
 	 * Filter the formatted price.
@@ -71,6 +63,60 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 		$price,
 		$currency
 	);
+}
+
+/**
+ * Get the number of decimal places to display for a currency.
+ *
+ * Zero-decimal currencies (e.g. JPY, KRW, VND) are conventionally shown
+ * without minor units - "¥120,000", not "¥120,000.00". This is the single
+ * source of truth used by both PHP price formatting and the client-side
+ * JS formatter (localized as `currencyDecimals`).
+ *
+ * @since 1.2.1
+ *
+ * @param string $currency Currency code. Defaults to site currency.
+ * @return int Number of decimal places (0 or 2).
+ */
+function wpss_get_currency_decimals( string $currency = '' ): int {
+	if ( empty( $currency ) ) {
+		$currency = wpss_get_currency();
+	}
+
+	$registry = wpss_get_currency_registry();
+	$decimals = isset( $registry[ $currency ] ) ? (int) $registry[ $currency ]['decimals'] : 2;
+
+	// Default zero-decimal list is derived from the registry, so it stays in
+	// sync automatically. The filter remains a back-compat extension point.
+	$default_zero = array();
+	foreach ( $registry as $code => $data ) {
+		if ( 0 === (int) $data['decimals'] ) {
+			$default_zero[] = $code;
+		}
+	}
+
+	/**
+	 * Filter the list of zero-decimal currency codes.
+	 *
+	 * @since 1.2.1
+	 *
+	 * @param array<int, string> $zero_decimal Currency codes rendered without minor units.
+	 */
+	$zero_decimal = apply_filters( 'wpss_zero_decimal_currencies', $default_zero );
+
+	if ( in_array( $currency, $zero_decimal, true ) ) {
+		$decimals = 0;
+	}
+
+	/**
+	 * Filter the number of decimal places for a currency.
+	 *
+	 * @since 1.2.1
+	 *
+	 * @param int    $decimals Number of decimal places.
+	 * @param string $currency Currency code.
+	 */
+	return (int) apply_filters( 'wpss_currency_decimals', $decimals, $currency );
 }
 
 /**
@@ -486,43 +532,15 @@ function wpss_get_currency_symbol( string $currency = '' ): string {
 		$currency = wpss_get_currency();
 	}
 
-	$symbols = array(
-		'USD' => '$',
-		'EUR' => '€',
-		'GBP' => '£',
-		'JPY' => '¥',
-		'INR' => '₹',
-		'AUD' => 'A$',
-		'CAD' => 'C$',
-		'CHF' => 'CHF',
-		'CNY' => '¥',
-		'KRW' => '₩',
-		'BRL' => 'R$',
-		'MXN' => 'MX$',
-		'SGD' => 'S$',
-		'HKD' => 'HK$',
-		'NOK' => 'kr',
-		'SEK' => 'kr',
-		'DKK' => 'kr',
-		'NZD' => 'NZ$',
-		'ZAR' => 'R',
-		'RUB' => '₽',
-		'TRY' => '₺',
-		'PLN' => 'zł',
-		'THB' => '฿',
-		'MYR' => 'RM',
-		'PHP' => '₱',
-		'IDR' => 'Rp',
-		'VND' => '₫',
-		'AED' => 'د.إ',
-		'SAR' => '﷼',
-		'EGP' => 'E£',
-	);
+	$symbols = array();
+	foreach ( wpss_get_currency_registry() as $code => $data ) {
+		$symbols[ $code ] = $data['symbol'];
+	}
 
 	/**
 	 * Filter currency symbols.
 	 *
-	 * @param array $symbols Currency symbols array.
+	 * @param array $symbols Currency symbols array (code => symbol).
 	 */
 	$symbols = apply_filters( 'wpss_currency_symbols', $symbols );
 
@@ -555,48 +573,211 @@ function wpss_get_currency_format( string $currency = '' ): string {
 }
 
 /**
- * Get supported currencies.
+ * Get the canonical currency registry.
  *
- * @return array
+ * Single source of truth for every supported currency - its display name,
+ * symbol, and number of decimal places. Modeled on WooCommerce's currency
+ * list: all currency surfaces (settings dropdowns, price formatting, symbols,
+ * decimals, JS localization) derive from this one array, so the name, symbol,
+ * and decimals lists can never drift apart.
+ *
+ * Free owns this registry; Pro (and any add-on) reuses it through the
+ * accessors below rather than maintaining its own currency list.
+ *
+ * @since 1.2.1
+ *
+ * @return array<string, array{name: string, symbol: string, decimals: int}>
+ */
+function wpss_get_currency_registry(): array {
+	$registry = array(
+		'USD' => array(
+			'name'     => __( 'US Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'EUR' => array(
+			'name'     => __( 'Euro', 'wp-sell-services' ),
+			'symbol'   => '€',
+			'decimals' => 2,
+		),
+		'GBP' => array(
+			'name'     => __( 'British Pound', 'wp-sell-services' ),
+			'symbol'   => '£',
+			'decimals' => 2,
+		),
+		'JPY' => array(
+			'name'     => __( 'Japanese Yen', 'wp-sell-services' ),
+			'symbol'   => '¥',
+			'decimals' => 0,
+		),
+		'INR' => array(
+			'name'     => __( 'Indian Rupee', 'wp-sell-services' ),
+			'symbol'   => '₹',
+			'decimals' => 2,
+		),
+		'AUD' => array(
+			'name'     => __( 'Australian Dollar', 'wp-sell-services' ),
+			'symbol'   => 'A$',
+			'decimals' => 2,
+		),
+		'CAD' => array(
+			'name'     => __( 'Canadian Dollar', 'wp-sell-services' ),
+			'symbol'   => 'C$',
+			'decimals' => 2,
+		),
+		'CHF' => array(
+			'name'     => __( 'Swiss Franc', 'wp-sell-services' ),
+			'symbol'   => 'CHF',
+			'decimals' => 2,
+		),
+		'CNY' => array(
+			'name'     => __( 'Chinese Yuan', 'wp-sell-services' ),
+			'symbol'   => '¥',
+			'decimals' => 2,
+		),
+		'KRW' => array(
+			'name'     => __( 'South Korean Won', 'wp-sell-services' ),
+			'symbol'   => '₩',
+			'decimals' => 0,
+		),
+		'BRL' => array(
+			'name'     => __( 'Brazilian Real', 'wp-sell-services' ),
+			'symbol'   => 'R$',
+			'decimals' => 2,
+		),
+		'MXN' => array(
+			'name'     => __( 'Mexican Peso', 'wp-sell-services' ),
+			'symbol'   => 'MX$',
+			'decimals' => 2,
+		),
+		'SGD' => array(
+			'name'     => __( 'Singapore Dollar', 'wp-sell-services' ),
+			'symbol'   => 'S$',
+			'decimals' => 2,
+		),
+		'HKD' => array(
+			'name'     => __( 'Hong Kong Dollar', 'wp-sell-services' ),
+			'symbol'   => 'HK$',
+			'decimals' => 2,
+		),
+		'NOK' => array(
+			'name'     => __( 'Norwegian Krone', 'wp-sell-services' ),
+			'symbol'   => 'kr',
+			'decimals' => 2,
+		),
+		'SEK' => array(
+			'name'     => __( 'Swedish Krona', 'wp-sell-services' ),
+			'symbol'   => 'kr',
+			'decimals' => 2,
+		),
+		'DKK' => array(
+			'name'     => __( 'Danish Krone', 'wp-sell-services' ),
+			'symbol'   => 'kr',
+			'decimals' => 2,
+		),
+		'NZD' => array(
+			'name'     => __( 'New Zealand Dollar', 'wp-sell-services' ),
+			'symbol'   => 'NZ$',
+			'decimals' => 2,
+		),
+		'ZAR' => array(
+			'name'     => __( 'South African Rand', 'wp-sell-services' ),
+			'symbol'   => 'R',
+			'decimals' => 2,
+		),
+		'RUB' => array(
+			'name'     => __( 'Russian Ruble', 'wp-sell-services' ),
+			'symbol'   => '₽',
+			'decimals' => 2,
+		),
+		'TRY' => array(
+			'name'     => __( 'Turkish Lira', 'wp-sell-services' ),
+			'symbol'   => '₺',
+			'decimals' => 2,
+		),
+		'PLN' => array(
+			'name'     => __( 'Polish Zloty', 'wp-sell-services' ),
+			'symbol'   => 'zł',
+			'decimals' => 2,
+		),
+		'THB' => array(
+			'name'     => __( 'Thai Baht', 'wp-sell-services' ),
+			'symbol'   => '฿',
+			'decimals' => 2,
+		),
+		'MYR' => array(
+			'name'     => __( 'Malaysian Ringgit', 'wp-sell-services' ),
+			'symbol'   => 'RM',
+			'decimals' => 2,
+		),
+		'PHP' => array(
+			'name'     => __( 'Philippine Peso', 'wp-sell-services' ),
+			'symbol'   => '₱',
+			'decimals' => 2,
+		),
+		'IDR' => array(
+			'name'     => __( 'Indonesian Rupiah', 'wp-sell-services' ),
+			'symbol'   => 'Rp',
+			'decimals' => 2,
+		),
+		'VND' => array(
+			'name'     => __( 'Vietnamese Dong', 'wp-sell-services' ),
+			'symbol'   => '₫',
+			'decimals' => 0,
+		),
+		'AED' => array(
+			'name'     => __( 'UAE Dirham', 'wp-sell-services' ),
+			'symbol'   => 'د.إ',
+			'decimals' => 2,
+		),
+		'SAR' => array(
+			'name'     => __( 'Saudi Riyal', 'wp-sell-services' ),
+			'symbol'   => '﷼',
+			'decimals' => 2,
+		),
+		'EGP' => array(
+			'name'     => __( 'Egyptian Pound', 'wp-sell-services' ),
+			'symbol'   => 'E£',
+			'decimals' => 2,
+		),
+		'NGN' => array(
+			'name'     => __( 'Nigerian Naira', 'wp-sell-services' ),
+			'symbol'   => '₦',
+			'decimals' => 2,
+		),
+	);
+
+	/**
+	 * Filter the canonical currency registry.
+	 *
+	 * Add, remove, or adjust a currency (name / symbol / decimals) in ONE
+	 * place and every currency surface updates. Preferred over the
+	 * per-surface currency filters.
+	 *
+	 * @since 1.2.1
+	 *
+	 * @param array<string, array{name: string, symbol: string, decimals: int}> $registry Currency registry.
+	 */
+	return apply_filters( 'wpss_currency_registry', $registry );
+}
+
+/**
+ * Get supported currencies (code => name).
+ *
+ * Derived from {@see wpss_get_currency_registry()}.
+ *
+ * @return array<string, string>
  */
 function wpss_get_currencies(): array {
-	$currencies = array(
-		'USD' => __( 'US Dollar', 'wp-sell-services' ),
-		'EUR' => __( 'Euro', 'wp-sell-services' ),
-		'GBP' => __( 'British Pound', 'wp-sell-services' ),
-		'JPY' => __( 'Japanese Yen', 'wp-sell-services' ),
-		'INR' => __( 'Indian Rupee', 'wp-sell-services' ),
-		'AUD' => __( 'Australian Dollar', 'wp-sell-services' ),
-		'CAD' => __( 'Canadian Dollar', 'wp-sell-services' ),
-		'CHF' => __( 'Swiss Franc', 'wp-sell-services' ),
-		'CNY' => __( 'Chinese Yuan', 'wp-sell-services' ),
-		'KRW' => __( 'South Korean Won', 'wp-sell-services' ),
-		'BRL' => __( 'Brazilian Real', 'wp-sell-services' ),
-		'MXN' => __( 'Mexican Peso', 'wp-sell-services' ),
-		'SGD' => __( 'Singapore Dollar', 'wp-sell-services' ),
-		'HKD' => __( 'Hong Kong Dollar', 'wp-sell-services' ),
-		'NOK' => __( 'Norwegian Krone', 'wp-sell-services' ),
-		'SEK' => __( 'Swedish Krona', 'wp-sell-services' ),
-		'DKK' => __( 'Danish Krone', 'wp-sell-services' ),
-		'NZD' => __( 'New Zealand Dollar', 'wp-sell-services' ),
-		'ZAR' => __( 'South African Rand', 'wp-sell-services' ),
-		'RUB' => __( 'Russian Ruble', 'wp-sell-services' ),
-		'TRY' => __( 'Turkish Lira', 'wp-sell-services' ),
-		'PLN' => __( 'Polish Zloty', 'wp-sell-services' ),
-		'THB' => __( 'Thai Baht', 'wp-sell-services' ),
-		'MYR' => __( 'Malaysian Ringgit', 'wp-sell-services' ),
-		'PHP' => __( 'Philippine Peso', 'wp-sell-services' ),
-		'IDR' => __( 'Indonesian Rupiah', 'wp-sell-services' ),
-		'VND' => __( 'Vietnamese Dong', 'wp-sell-services' ),
-		'AED' => __( 'UAE Dirham', 'wp-sell-services' ),
-		'SAR' => __( 'Saudi Riyal', 'wp-sell-services' ),
-		'EGP' => __( 'Egyptian Pound', 'wp-sell-services' ),
-	);
+	$currencies = array();
+	foreach ( wpss_get_currency_registry() as $code => $data ) {
+		$currencies[ $code ] = $data['name'];
+	}
 
 	/**
 	 * Filter supported currencies.
 	 *
-	 * @param array $currencies Currencies array.
+	 * @param array $currencies Currencies array (code => name).
 	 */
 	return apply_filters( 'wpss_currencies', $currencies );
 }

@@ -1486,7 +1486,8 @@
 			days  += parseInt($(this).find('[data-milestone-days]').val(), 10) || 0;
 		});
 		const symbol = (wpssData && wpssData.currencySymbol) || '$';
-		$('#wpss-proposal-modal [data-milestones-total]').text(symbol + total.toFixed(2));
+		const decimals = (wpssData && typeof wpssData.currencyDecimals !== 'undefined') ? wpssData.currencyDecimals : 2;
+		$('#wpss-proposal-modal [data-milestones-total]').text(symbol + total.toFixed(decimals));
 		$('#wpss-proposal-modal [data-milestones-days]').text(days);
 	};
 

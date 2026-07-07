@@ -36,7 +36,8 @@
 	 */
 	function formatPrice(amount) {
 		var num = parseFloat(amount) || 0;
-		return wpssManualOrder.currencyFormat.replace('%s', num.toFixed(2));
+		var decimals = (typeof wpssManualOrder.currencyDecimals !== 'undefined') ? wpssManualOrder.currencyDecimals : 2;
+		return wpssManualOrder.currencyFormat.replace('%s', num.toFixed(decimals));
 	}
 
 	/**

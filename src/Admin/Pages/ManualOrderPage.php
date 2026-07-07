@@ -98,6 +98,7 @@ class ManualOrderPage {
 				'nonce'                 => wp_create_nonce( 'wpss_create_manual_order' ),
 				'defaultCommissionRate' => $default_rate,
 				'currencyFormat'        => wpss_get_currency_format(),
+				'currencyDecimals'      => wpss_get_currency_decimals(),
 				'i18n'                  => array(
 					'selectPackage'       => __( '-- Select Package --', 'wp-sell-services' ),
 					'loadingPackages'     => __( 'Loading packages...', 'wp-sell-services' ),
@@ -792,32 +793,24 @@ class ManualOrderPage {
 	 * @return array<string, string>
 	 */
 	private function get_currencies(): array {
-		return array(
-			'USD' => 'USD ($)',
-			'EUR' => 'EUR (€)',
-			'GBP' => 'GBP (£)',
-			'INR' => 'INR (₹)',
-			'AUD' => 'AUD (A$)',
-			'CAD' => 'CAD (C$)',
-			'JPY' => 'JPY (¥)',
-			'CHF' => 'CHF',
-			'CNY' => 'CNY (¥)',
-			'BRL' => 'BRL (R$)',
-			'MXN' => 'MXN (MX$)',
-			'SGD' => 'SGD (S$)',
-			'HKD' => 'HKD (HK$)',
-			'NZD' => 'NZD (NZ$)',
-			'KRW' => 'KRW (₩)',
-			'TRY' => 'TRY (₺)',
-			'ZAR' => 'ZAR (R)',
-			'AED' => 'AED (د.إ)',
-			'SAR' => 'SAR (﷼)',
-			'PLN' => 'PLN (zł)',
-			'THB' => 'THB (฿)',
-			'MYR' => 'MYR (RM)',
-			'PHP' => 'PHP (₱)',
-			'IDR' => 'IDR (Rp)',
-			'VND' => 'VND (₫)',
-		);
+		// Derive from the single canonical currency list so the Manual Order
+		// dropdown offers every supported currency out of the box - no code
+		// snippet required.
+		$currencies = array();
+		foreach ( wpss_get_currencies() as $code => $name ) {
+			$currencies[ $code ] = sprintf( '%1$s (%2$s)', $code, wpss_get_currency_symbol( $code ) );
+		}
+
+		/**
+		 * Filter the currencies available on the Manual Order page dropdown.
+		 *
+		 * The default list already covers every supported currency; this is
+		 * an optional developer extension point.
+		 *
+		 * @since 1.2.1
+		 *
+		 * @param array<string, string> $currencies Currency code => label map.
+		 */
+		return apply_filters( 'wpss_manual_order_currencies', $currencies );
 	}
 }
