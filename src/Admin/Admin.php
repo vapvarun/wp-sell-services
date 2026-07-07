@@ -761,9 +761,11 @@ class Admin {
 			'wpss-admin',
 			'wpssAdmin',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wpss_admin_nonce' ),
-				'i18n'    => array(
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'wpss_admin_nonce' ),
+				'currencyFormat'   => wpss_get_currency_symbol() . '%s',
+				'currencyDecimals' => wpss_get_currency_decimals(),
+				'i18n'             => array(
 					'selectImage'  => __( 'Select Image', 'wp-sell-services' ),
 					'selectImages' => __( 'Select Images', 'wp-sell-services' ),
 					'useImage'     => __( 'Use Image', 'wp-sell-services' ),

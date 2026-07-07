@@ -86,25 +86,7 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 	$registry = wpss_get_currency_registry();
 	$decimals = isset( $registry[ $currency ] ) ? (int) $registry[ $currency ]['decimals'] : 2;
 
-	// Default zero-decimal list is derived from the registry, so it stays in
-	// sync automatically. The filter remains a back-compat extension point.
-	$default_zero = array();
-	foreach ( $registry as $code => $data ) {
-		if ( 0 === (int) $data['decimals'] ) {
-			$default_zero[] = $code;
-		}
-	}
-
-	/**
-	 * Filter the list of zero-decimal currency codes.
-	 *
-	 * @since 1.2.1
-	 *
-	 * @param array<int, string> $zero_decimal Currency codes rendered without minor units.
-	 */
-	$zero_decimal = apply_filters( 'wpss_zero_decimal_currencies', $default_zero );
-
-	if ( in_array( $currency, $zero_decimal, true ) ) {
+	if ( in_array( $currency, wpss_get_zero_decimal_currencies(), true ) ) {
 		$decimals = 0;
 	}
 
@@ -117,6 +99,56 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 	 * @param string $currency Currency code.
 	 */
 	return (int) apply_filters( 'wpss_currency_decimals', $decimals, $currency );
+}
+
+/**
+ * Get the list of zero-decimal currency codes.
+ *
+ * Derived from the registry (codes whose `decimals` is 0), so it stays in sync
+ * automatically. Exposed as its own accessor so JS surfaces that format
+ * arbitrary per-row currencies (e.g. the wallet ledger) can localize it.
+ *
+ * @since 1.2.1
+ *
+ * @return array<int, string> Currency codes rendered without minor units.
+ */
+function wpss_get_zero_decimal_currencies(): array {
+	$codes = array();
+	foreach ( wpss_get_currency_registry() as $code => $data ) {
+		if ( 0 === (int) $data['decimals'] ) {
+			$codes[] = $code;
+		}
+	}
+
+	/**
+	 * Filter the list of zero-decimal currency codes.
+	 *
+	 * @since 1.2.1
+	 *
+	 * @param array<int, string> $codes Currency codes rendered without minor units.
+	 */
+	return apply_filters( 'wpss_zero_decimal_currencies', $codes );
+}
+
+/**
+ * Get the HTML attributes for a price <input type="number"> in a currency.
+ *
+ * Zero-decimal currencies (JPY, KRW, VND) get whole-number step + placeholder;
+ * everything else gets cent precision. Single source so no template hardcodes
+ * step="0.01" / placeholder="0.00".
+ *
+ * @since 1.2.1
+ *
+ * @param string $currency Currency code. Defaults to site currency.
+ * @return array{step: string, placeholder: string} Input step + placeholder.
+ */
+function wpss_get_price_input_attrs( string $currency = '' ): array {
+	$decimals = wpss_get_currency_decimals( $currency );
+
+	return array(
+		'step'        => $decimals > 0 ? '0.01' : '1',
+		'placeholder' => $decimals > 0 ? '0.00' : '0',
+	);
 }
 
 /**

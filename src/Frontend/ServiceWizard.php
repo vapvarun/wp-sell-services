@@ -709,7 +709,7 @@ class ServiceWizard {
 										class="wpss-form-input"
 										x-model="data.packages.<?php echo esc_attr( $tier ); ?>.price"
 										min="5"
-										step="0.01">
+										step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
 								</div>
 							</div>
 
@@ -1017,7 +1017,7 @@ class ServiceWizard {
 												class="wpss-form-input"
 												x-model="data.extras[index].price"
 												min="0"
-												step="0.01">
+												step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
 										</div>
 									</div>
 									<div class="wpss-form-group">

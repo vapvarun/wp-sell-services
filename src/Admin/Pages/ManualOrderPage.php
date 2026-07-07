@@ -273,7 +273,7 @@ class ManualOrderPage {
 												<input type="number"
 														name="total_override"
 														id="wpss-total-override"
-														step="0.01"
+														step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>"
 														min="0"
 														placeholder="<?php esc_attr_e( 'Auto-calculated', 'wp-sell-services' ); ?>"
 														disabled

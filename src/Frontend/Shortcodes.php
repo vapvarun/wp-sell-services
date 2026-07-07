@@ -568,11 +568,11 @@ class Shortcodes {
 				<div class="wpss-form-row wpss-form-row-double">
 					<div class="wpss-form-col">
 						<label for="request_budget_min"><?php esc_html_e( 'Budget Min', 'wp-sell-services' ); ?></label>
-						<input type="number" name="budget_min" id="request_budget_min" min="0" step="0.01" placeholder="0" data-field="budget_min" aria-describedby="request_budget_error">
+						<input type="number" name="budget_min" id="request_budget_min" min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="0" data-field="budget_min" aria-describedby="request_budget_error">
 					</div>
 					<div class="wpss-form-col">
 						<label for="request_budget_max"><?php esc_html_e( 'Budget Max', 'wp-sell-services' ); ?></label>
-						<input type="number" name="budget_max" id="request_budget_max" min="0" step="0.01" placeholder="0" data-field="budget_max" aria-describedby="request_budget_error">
+						<input type="number" name="budget_max" id="request_budget_max" min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="0" data-field="budget_max" aria-describedby="request_budget_error">
 					</div>
 					<p class="wpss-field-error" id="request_budget_error" data-field-error="budget_max" role="alert" hidden></p>
 				</div>

@@ -251,13 +251,19 @@
 			$descCell.appendTo($row);
 
 			var symbol = isDebit ? '-' : '+';
+			// Decimals depend on the transaction's own currency (the ledger can
+			// mix currencies), so resolve per-row against the zero-decimal set.
+			var cfg = window.wpssUnifiedDashboard || {};
+			var zeroDecimal = cfg.zeroDecimalCurrencies || [];
+			var txnDecimals = (txn.currency && zeroDecimal.indexOf(txn.currency) !== -1) ? 0
+				: (typeof cfg.currencyDecimals !== 'undefined' ? cfg.currencyDecimals : 2);
 			$('<td>')
 				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
-				.text(symbol + Math.abs(amount).toFixed(2) + ' ' + (txn.currency || ''))
+				.text(symbol + Math.abs(amount).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
 				.appendTo($row);
 			$('<td>')
 				.addClass('wpss-wallet__amount-col')
-				.text((parseFloat(txn.balance_after) || 0).toFixed(2) + ' ' + (txn.currency || ''))
+				.text((parseFloat(txn.balance_after) || 0).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
 				.appendTo($row);
 
 			return $row;
