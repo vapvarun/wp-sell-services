@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -258,6 +258,14 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.2.1 - July 2026 =
+
+Currency now works correctly out of the box and displays consistently across every surface.
+
+* Improve  - Unified WooCommerce-style currency system so prices are formatted correctly out of the box.
+* Fix      - Currency-aware price display and inputs across all admin and frontend surfaces.
+* Dev      - Resolved all PHPStan analysis errors and repaired the static-analysis tooling.
 
 = 1.2.0 - June 2026 =
 

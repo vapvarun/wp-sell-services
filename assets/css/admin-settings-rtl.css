@@ -269,6 +269,11 @@
 	flex: 1;
 }
 
+/* Third-party notice suppression moved to PHP (Admin::hide_third_party_notices,
+   in_admin_header:1). The old CSS display:none rule here also swallowed the
+   plugin's OWN AJAX save notices after WP core relocated them under the page
+   h1 — the root cause of "settings save shows no feedback". */
+
 /* ==========================================================================
    Responsive — sidebar collapses on mobile (ux-foundation 640px breakpoint)
    ========================================================================== */
