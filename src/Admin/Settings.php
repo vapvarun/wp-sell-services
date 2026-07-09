@@ -218,7 +218,7 @@ class Settings {
 	 * @return void
 	 */
 	public function enqueue_assets( string $hook ): void {
-		if ( ! is_string( $hook ) || ! str_contains( $hook, 'wpss-settings' ) ) {
+		if ( ! str_contains( $hook, 'wpss-settings' ) ) {
 			return;
 		}
 
@@ -3029,18 +3029,27 @@ class Settings {
 	 * @return array<string, string> Currency codes and labels.
 	 */
 	private function get_currencies(): array {
-		return array(
-			'USD' => __( 'US Dollar ($)', 'wp-sell-services' ),
-			'EUR' => __( 'Euro (€)', 'wp-sell-services' ),
-			'GBP' => __( 'British Pound (£)', 'wp-sell-services' ),
-			'CAD' => __( 'Canadian Dollar (C$)', 'wp-sell-services' ),
-			'AUD' => __( 'Australian Dollar (A$)', 'wp-sell-services' ),
-			'INR' => __( 'Indian Rupee (₹)', 'wp-sell-services' ),
-			'JPY' => __( 'Japanese Yen (¥)', 'wp-sell-services' ),
-			'CNY' => __( 'Chinese Yuan (¥)', 'wp-sell-services' ),
-			'BRL' => __( 'Brazilian Real (R$)', 'wp-sell-services' ),
-			'MXN' => __( 'Mexican Peso ($)', 'wp-sell-services' ),
-		);
+		// Derive from the single canonical currency list so the Settings
+		// dropdown offers every supported currency (with its symbol) out of
+		// the box - a site owner never needs a code snippet to make a
+		// currency selectable.
+		$currencies = array();
+		foreach ( wpss_get_currencies() as $code => $name ) {
+			$currencies[ $code ] = sprintf( '%1$s (%2$s)', $name, wpss_get_currency_symbol( $code ) );
+		}
+
+		/**
+		 * Filter the currencies available in the Settings currency dropdown.
+		 *
+		 * The default list already covers every supported currency; this is
+		 * an optional developer extension point, not a requirement for a
+		 * currency to appear.
+		 *
+		 * @since 1.2.1
+		 *
+		 * @param array<string, string> $currencies Currency code => label map.
+		 */
+		return apply_filters( 'wpss_settings_currencies', $currencies );
 	}
 
 	/**

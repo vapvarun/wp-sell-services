@@ -29,6 +29,10 @@ parameters:
         - '#Variable \$\w+ might not be defined#'
         # WP functions returning mixed types
         - '#Cannot access offset .* on mixed#'
+        # WP_CLI::add_command() registers a command as its side effect; its
+        # return value is intentionally unused (phpstan-wordpress cannot model
+        # the registration side effect).
+        - '#Call to WP_CLI::add_command\(\) on a separate line has no effect#'
         # Build artifacts not present in CI (assets/ not built)
         -
             message: '#Path in include\(\).*\.asset\.php.*is not a file#'

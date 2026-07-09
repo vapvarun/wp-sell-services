@@ -334,7 +334,7 @@ class TemplateLoader {
 		}
 
 		// Only force when the page owner hasn't chosen a layout.
-		if ( empty( $actual_meta['layout']['site_layout'] ) || '0' === $actual_meta['layout']['site_layout'] ) {
+		if ( empty( $actual_meta['layout']['site_layout'] ) ) {
 			$actual_meta['layout']['site_layout'] = 'full_width';
 		}
 

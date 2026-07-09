@@ -118,13 +118,13 @@ class BuyerRequestMetabox {
 						<?php esc_html_e( 'Min:', 'wp-sell-services' ); ?>
 						<input type="number" id="wpss_budget_min" name="wpss_budget_min"
 								value="<?php echo esc_attr( $budget_min ); ?>"
-								min="0" step="0.01" class="small-text">
+								min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" class="small-text">
 					</label>
 					<label for="wpss_budget_max" style="margin-left: 10px;">
 						<?php esc_html_e( 'Max:', 'wp-sell-services' ); ?>
 						<input type="number" id="wpss_budget_max" name="wpss_budget_max"
 								value="<?php echo esc_attr( $budget_max ); ?>"
-								min="0" step="0.01" class="small-text">
+								min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" class="small-text">
 					</label>
 				</td>
 			</tr>

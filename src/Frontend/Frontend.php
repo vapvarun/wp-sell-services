@@ -228,6 +228,7 @@ class Frontend {
 				'restNonce'        => wp_create_nonce( 'wp_rest' ),
 				'pollingInterval'  => 10000,
 				'currencyFormat'   => wpss_get_currency_format(),
+				'currencyDecimals' => wpss_get_currency_decimals(),
 				'cartCount'        => $cart_count,
 				'checkoutUrl'      => wpss_get_checkout_base_url(),
 				'cartNonce'        => wp_create_nonce( 'wpss_cart_nonce' ),

@@ -253,7 +253,7 @@ class ServiceMetabox {
 	 * those fields need while still routing all output through wp_kses()
 	 * (extension HTML is never echoed raw).
 	 *
-	 * @return array Allowed tags/attributes for wp_kses().
+	 * @return array<string, mixed> Allowed tags/attributes for wp_kses().
 	 */
 	private function get_extra_fields_allowed_html(): array {
 		$allowed = wp_kses_allowed_html( 'post' );
@@ -399,10 +399,10 @@ class ServiceMetabox {
 								<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 							</label>
 							<div class="wpss-input-with-prefix">
-								<span class="wpss-input-prefix">$</span>
+								<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 								<input type="number" name="wpss_packages[{{data.index}}][price]"
 										class="wpss-package-price-input"
-										min="0" step="0.01" placeholder="0.00">
+										min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
 							</div>
 						</div>
 					</div>
@@ -474,7 +474,7 @@ class ServiceMetabox {
 				<span class="wpss-package-title"><?php echo esc_html( $package_name ); ?></span>
 				<span class="wpss-package-price-display">
 					<?php if ( $price > 0 ) : ?>
-						$<?php echo esc_html( number_format( $price, 2 ) ); ?>
+						<?php echo esc_html( wpss_format_price( $price ) ); ?>
 					<?php endif; ?>
 				</span>
 				<div class="wpss-package-actions">
@@ -503,11 +503,11 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-prefix">
-							<span class="wpss-input-prefix">$</span>
+							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][price]"
 									value="<?php echo esc_attr( $package['price'] ?? '' ); ?>"
 									class="wpss-package-price-input"
-									min="0" step="0.01" placeholder="0.00">
+									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
 						</div>
 					</div>
 				</div>
@@ -886,9 +886,9 @@ class ServiceMetabox {
 						<div class="wpss-addon-field">
 							<label><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 							<div class="wpss-input-with-prefix">
-								<span class="wpss-input-prefix">$</span>
+								<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 								<input type="number" name="wpss_addons[{{data.index}}][price]"
-										min="0" step="0.01" placeholder="0.00">
+										min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
 							</div>
 						</div>
 					</div>
@@ -946,7 +946,7 @@ class ServiceMetabox {
 	 * back to the render defaults.
 	 *
 	 * @param int $post_id Service post ID.
-	 * @return array Add-on rows in the metabox field shape.
+	 * @return array<int, array<string, mixed>> Add-on rows in the metabox field shape.
 	 */
 	private function get_addons_for_editor( int $post_id ): array {
 		$addons = wpss_get_service_extras( $post_id );
@@ -1028,10 +1028,10 @@ class ServiceMetabox {
 					<div class="wpss-addon-field">
 						<label for="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-prefix">
-							<span class="wpss-input-prefix">$</span>
+							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" id="wpss_addon_<?php echo esc_attr( (string) $index ); ?>_price" name="wpss_addons[<?php echo esc_attr( (string) $index ); ?>][price]"
 									value="<?php echo esc_attr( $addon['price'] ?? '' ); ?>"
-									min="0" step="0.01" placeholder="0.00">
+									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
 						</div>
 					</div>
 				</div>
@@ -1773,10 +1773,10 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-prefix">
-							<span class="wpss-input-prefix">$</span>
+							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" name="wpss_packages[{{data.index}}][price]"
 									class="wpss-package-price-input"
-									min="0" step="0.01" placeholder="0.00">
+									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
 						</div>
 					</div>
 				</div>
@@ -1886,9 +1886,9 @@ class ServiceMetabox {
 					<div class="wpss-addon-field">
 						<label for="wpss_addon_{{data.index}}_price"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 						<div class="wpss-input-with-prefix">
-							<span class="wpss-input-prefix">$</span>
+							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 							<input type="number" id="wpss_addon_{{data.index}}_price" name="wpss_addons[{{data.index}}][price]"
-									min="0" step="0.01" placeholder="0.00">
+									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
 						</div>
 					</div>
 				</div>

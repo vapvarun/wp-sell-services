@@ -312,11 +312,11 @@ class StripeGateway implements PaymentGatewayInterface {
 	 *
 	 * @since 1.2.0
 	 *
-	 * @param string     $transaction_id PaymentIntent ID being refunded.
-	 * @param float|null $amount         Refund amount (null for full refund).
-	 * @param string     $reason         Refund reason.
-	 * @param array      $payment_intent Retrieved PaymentIntent data (empty array if retrieval failed).
-	 * @return array Refund request arguments.
+	 * @param string               $transaction_id PaymentIntent ID being refunded.
+	 * @param float|null           $amount         Refund amount (null for full refund).
+	 * @param string               $reason         Refund reason.
+	 * @param array<string, mixed> $payment_intent Retrieved PaymentIntent data (empty array if retrieval failed).
+	 * @return array<string, mixed> Refund request arguments.
 	 */
 	public function build_refund_args( string $transaction_id, ?float $amount, string $reason, array $payment_intent ): array {
 		$args = array(

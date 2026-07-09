@@ -751,10 +751,11 @@
          * Format price.
          */
         formatPrice: function(amount) {
+            var decimals = (typeof wpssService.currencyDecimals !== 'undefined') ? wpssService.currencyDecimals : 2;
             if (typeof wpssService.currencyFormat !== 'undefined') {
-                return wpssService.currencyFormat.replace('%s', parseFloat(amount).toFixed(2));
+                return wpssService.currencyFormat.replace('%s', parseFloat(amount).toFixed(decimals));
             }
-            return '$' + parseFloat(amount).toFixed(2);
+            return '$' + parseFloat(amount).toFixed(decimals);
         },
 
         /**

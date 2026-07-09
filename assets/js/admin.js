@@ -85,7 +85,9 @@
 		$(document).on('input', '.wpss-package-price-input', function() {
 			var $item = $(this).closest('.wpss-package-item');
 			var price = parseFloat($(this).val()) || 0;
-			var formatted = price > 0 ? '$' + price.toFixed(2) : '';
+			var decimals = (window.wpssAdmin && typeof wpssAdmin.currencyDecimals !== 'undefined') ? wpssAdmin.currencyDecimals : 2;
+			var fmt = (window.wpssAdmin && wpssAdmin.currencyFormat) ? wpssAdmin.currencyFormat : '$%s';
+			var formatted = price > 0 ? fmt.replace('%s', price.toFixed(decimals)) : '';
 			$item.find('.wpss-package-price-display').text(formatted);
 		});
 	}

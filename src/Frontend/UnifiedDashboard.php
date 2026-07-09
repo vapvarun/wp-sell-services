@@ -126,11 +126,13 @@ class UnifiedDashboard {
 			'wpss-unified-dashboard',
 			'wpssUnifiedDashboard',
 			array(
-				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
-				'nonce'        => wp_create_nonce( 'wpss_dashboard_nonce' ),
-				'serviceNonce' => wp_create_nonce( 'wpss_service_nonce' ),
-				'restUrl'      => esc_url_raw( rest_url( 'wpss/v1/' ) ),
-				'restNonce'    => wp_create_nonce( 'wp_rest' ),
+				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
+				'nonce'                  => wp_create_nonce( 'wpss_dashboard_nonce' ),
+				'serviceNonce'           => wp_create_nonce( 'wpss_service_nonce' ),
+				'restUrl'                => esc_url_raw( rest_url( 'wpss/v1/' ) ),
+				'restNonce'              => wp_create_nonce( 'wp_rest' ),
+				'currencyDecimals'       => wpss_get_currency_decimals(),
+				'zeroDecimalCurrencies'  => wpss_get_zero_decimal_currencies(),
 				'i18n'         => array(
 					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),

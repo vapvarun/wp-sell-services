@@ -119,17 +119,18 @@ class SingleServiceView {
 			'wpss-single-service',
 			'wpssService',
 			array(
-				'serviceId'      => get_the_ID(),
-				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
-				'nonce'          => wp_create_nonce( 'wpss_service_nonce' ),
-				'apiUrl'         => esc_url_raw( rest_url( 'wpss/v1' ) ),
-				'restNonce'      => wp_create_nonce( 'wp_rest' ),
-				'checkoutUrl'    => $checkout_url,
-				'cartUrl'        => $cart_url,
-				'currencyFormat' => wpss_get_currency_symbol() . '%s',
-				'isLoggedIn'     => is_user_logged_in(),
-				'loginUrl'       => wp_login_url( get_permalink() ),
-				'i18n'           => array(
+				'serviceId'        => get_the_ID(),
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'wpss_service_nonce' ),
+				'apiUrl'           => esc_url_raw( rest_url( 'wpss/v1' ) ),
+				'restNonce'        => wp_create_nonce( 'wp_rest' ),
+				'checkoutUrl'      => $checkout_url,
+				'cartUrl'          => $cart_url,
+				'currencyFormat'   => wpss_get_currency_symbol() . '%s',
+				'currencyDecimals' => wpss_get_currency_decimals(),
+				'isLoggedIn'       => is_user_logged_in(),
+				'loginUrl'         => wp_login_url( get_permalink() ),
+				'i18n'             => array(
 					'addingToCart'       => __( 'Adding to cart...', 'wp-sell-services' ),
 					'added'              => __( 'Added to cart!', 'wp-sell-services' ),
 					'viewCart'           => __( 'View Cart', 'wp-sell-services' ),
@@ -631,7 +632,7 @@ class SingleServiceView {
 			return null;
 		}
 
-		$message = trim( (string) ( $profile->vacation_message ?? '' ) );
+		$message = trim( $profile->vacation_message );
 		if ( '' === $message ) {
 			$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
 		}
@@ -1033,7 +1034,7 @@ class SingleServiceView {
 					<?php else : ?>
 						<form id="wpss-contact-form" class="wpss-contact-form">
 							<input type="hidden" name="vendor_id" value="<?php echo esc_attr( $vendor_id ); ?>">
-							<input type="hidden" name="service_id" value="<?php echo esc_attr( $service->id ); ?>">
+							<input type="hidden" name="service_id" value="<?php echo esc_attr( (string) $service->id ); ?>">
 
 							<div class="wpss-form-field">
 								<label for="wpss-contact-message"><?php esc_html_e( 'Your Message', 'wp-sell-services' ); ?></label>
