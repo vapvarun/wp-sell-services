@@ -1,6 +1,6 @@
 # Hooks and Filters Reference
 
-WP Sell Services exposes 187 action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
+WP Sell Services exposes 192 action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
 
 ## Using Hooks
 
@@ -531,6 +531,52 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_max_upload_size` | `$upload_max` | `functions.php:834` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `functions.php:888` |
 | `wpss_wallet_manager` | `null` | `functions.php:1029` |
+
+### Currency System Filters (1.2.1)
+
+As of 1.2.1, currencies are driven by a single canonical registry (code → name, symbol, decimals). Every currency surface — price formatting, the settings dropdown, manual orders, decimal handling — reads from it, so overriding one filter updates all of them consistently.
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `functions.php:793` |
+| `wpss_currency_decimals` | `int $decimals, string $currency` | `functions.php:101` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `functions.php:130` |
+| `wpss_settings_currencies` | `array $currencies` | `Settings.php:3052` |
+| `wpss_manual_order_currencies` | `array $currencies` | `ManualOrderPage.php:814` |
+
+**`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
+
+```php
+// Register a custom currency and change USD's symbol
+add_filter( 'wpss_currency_registry', function( $registry ) {
+    $registry['XCD'] = [
+        'name'     => 'East Caribbean Dollar',
+        'symbol'   => 'EC$',
+        'decimals' => 2,
+    ];
+    $registry['USD']['symbol'] = 'US$';
+    return $registry;
+} );
+```
+
+**`wpss_currency_decimals`** overrides the decimal places for a specific currency at format time (for example, to render USD without minor units):
+
+```php
+add_filter( 'wpss_currency_decimals', function( $decimals, $currency ) {
+    return 'USD' === $currency ? 0 : $decimals;
+}, 10, 2 );
+```
+
+**`wpss_zero_decimal_currencies`** returns the codes rendered without minor units. It is derived from the registry (`decimals === 0`); filter it only when you need to force a currency into or out of zero-decimal formatting independently of its registry entry.
+
+**`wpss_settings_currencies`** and **`wpss_manual_order_currencies`** narrow (or extend) the currency choices offered in the admin settings dropdown and the manual-order screen respectively — useful for restricting a store to a subset of the registry:
+
+```php
+// Only allow USD and EUR to be selected in settings
+add_filter( 'wpss_settings_currencies', function( $currencies ) {
+    return array_intersect_key( $currencies, array_flip( [ 'USD', 'EUR' ] ) );
+} );
+```
 
 ### Template Filters
 
