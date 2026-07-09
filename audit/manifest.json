@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wp-sell-services",
     "name": "WP Sell Services",
-    "version": "1.1.1",
+    "version": "1.2.1",
     "namespace": "WPSellServices",
     "main_file": "wp-sell-services.php",
     "text_domain": "wp-sell-services",
@@ -359,7 +359,7 @@
   },
   "hooks_fired": {
     "do_action_count": 247,
-    "apply_filters_count": 144,
+    "apply_filters_count": 149,
     "key_extension_hooks": [
       {
         "name": "wpss_loaded",
@@ -460,9 +460,34 @@
         "name": "wpss_show_powered_by",
         "type": "filter",
         "purpose": "Whether the 'Powered by WP Sell Services' dashboard footer credit renders (Pro white-label returns false when hide_branding is on)"
+      },
+      {
+        "name": "wpss_currency_registry",
+        "type": "filter",
+        "purpose": "Register or override the currency registry (codes, symbols, formatting)"
+      },
+      {
+        "name": "wpss_currency_decimals",
+        "type": "filter",
+        "purpose": "Override the number of decimal places used when formatting a currency"
+      },
+      {
+        "name": "wpss_zero_decimal_currencies",
+        "type": "filter",
+        "purpose": "List of zero-decimal currencies (e.g. JPY) formatted without decimals"
+      },
+      {
+        "name": "wpss_settings_currencies",
+        "type": "filter",
+        "purpose": "Currencies offered in the settings currency dropdown"
+      },
+      {
+        "name": "wpss_manual_order_currencies",
+        "type": "filter",
+        "purpose": "Currencies available when creating a manual order"
       }
     ],
-    "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 232 hook firings."
+    "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings."
   },
   "frontend_assets": {
     "js_count_unminified": 23,
