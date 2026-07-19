@@ -355,15 +355,19 @@ class UnifiedDashboard {
 		$sections['account'] = array(
 			'label' => __( 'Account', 'wp-sell-services' ),
 			'items' => array(
-				'messages' => array(
+				'messages'      => array(
 					'icon'  => 'chat',
 					'label' => __( 'Messages', 'wp-sell-services' ),
 				),
-				'disputes' => array(
+				'notifications' => array(
+					'icon'  => 'bell',
+					'label' => __( 'Notifications', 'wp-sell-services' ),
+				),
+				'disputes'      => array(
 					'icon'  => 'shield',
 					'label' => __( 'Disputes', 'wp-sell-services' ),
 				),
-				'profile'  => array(
+				'profile'       => array(
 					'icon'  => 'user',
 					'label' => __( 'Profile', 'wp-sell-services' ),
 				),
