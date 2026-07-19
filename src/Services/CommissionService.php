@@ -59,12 +59,45 @@ class CommissionService {
 		$commission_base = (float) apply_filters( 'wpss_commission_base_amount', $commission_base, $order_id, $order->vendor_id );
 
 		$commission_rate = $this->get_commission_rate( $order );
-		$platform_fee    = round( $commission_base * ( $commission_rate / 100 ), 2 );
+
+		// Percentage remains the default fee model. The amount-based seam below
+		// lets extensions express fees a percentage cannot — a FLAT fee, or an
+		// absolute per-plan override — so every consumer (wallet, Stripe Connect
+		// split, PayPal payout) reads ONE authoritative fee instead of each
+		// re-deriving its own. Percentage-only sites (no hook) are unaffected.
+		$default_fee = round( $commission_base * ( $commission_rate / 100 ), 2 );
+
+		/**
+		 * Filters the platform fee AMOUNT for an order.
+		 *
+		 * This is the single source of truth for the platform fee. Return an
+		 * absolute amount (in the store currency) to override the default
+		 * percentage-derived fee — e.g. a flat fee or a subscription-plan
+		 * override. Payment gateways must consume this value, never recompute.
+		 *
+		 * @since 1.2.2
+		 *
+		 * @param float  $default_fee     Percentage-derived fee (base * rate / 100).
+		 * @param object $order           Order object.
+		 * @param float  $commission_base Base amount the fee applies to.
+		 * @param float  $commission_rate Resolved percentage rate.
+		 */
+		$platform_fee = (float) apply_filters( 'wpss_commission_fee', $default_fee, $order, $commission_base, $commission_rate );
+
+		// The fee can never be negative or exceed the base.
+		$fee_overridden  = abs( $platform_fee - $default_fee ) > 0.0001;
+		$platform_fee    = round( max( 0.0, min( $platform_fee, $commission_base ) ), 2 );
 		$vendor_earnings = round( $commission_base - $platform_fee, 2 );
+
+		// Preserve the exact resolved rate for percentage fees (BC); report the
+		// effective rate only when an amount override changed the fee.
+		$effective_rate = ( $fee_overridden && $commission_base > 0 )
+			? round( ( $platform_fee / $commission_base ) * 100, 4 )
+			: (float) $commission_rate;
 
 		return array(
 			'order_total'     => $commission_base,
-			'commission_rate' => $commission_rate,
+			'commission_rate' => $effective_rate,
 			'platform_fee'    => $platform_fee,
 			'vendor_earnings' => $vendor_earnings,
 		);
