@@ -33,7 +33,11 @@
 			}
 
 			this.stripe = Stripe(publishableKey);
-			this.form = document.getElementById('wpss-checkout-form');
+			// Single-service checkout and cart (multi) checkout use different form
+			// IDs; bind to whichever is present so cart checkout also gets the
+			// confirmPayment step instead of being left with no handler.
+			this.form = document.getElementById('wpss-checkout-form')
+				|| document.getElementById('wpss-multi-checkout-form');
 			this.errorElement = document.getElementById('wpss-stripe-error');
 
 			this.setupEventListeners();
@@ -112,6 +116,15 @@
 					},
 				});
 
+				// TODO (India export compliance): Stripe accounts registered in India
+				// reject export (cross-border) charges unless the PaymentIntent
+				// carries a description (added server-side in StripeGateway) AND a
+				// customer name + address. The Payment Element does NOT collect an
+				// address here — that needs a separate Address Element
+				// (elements.create('address', { mode: 'billing' })) mounted into its
+				// own container, with the result passed to confirmPayment() as
+				// shipping/billing details. Until then confirmPayment() fails with
+				// "export transactions require a customer name and address".
 				this.paymentElement = this.elements.create('payment', {
 					layout: 'tabs',
 				});
@@ -217,6 +230,8 @@
 					service_id: serviceId,
 					package_id: packageId,
 					addon_ids: addonIds,
+					// Cart checkout creates one order per cart item server-side.
+					is_multi_checkout: (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '',
 				},
 				success: (response) => {
 					this.setLoading(false);

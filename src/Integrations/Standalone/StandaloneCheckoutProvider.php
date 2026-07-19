@@ -1186,6 +1186,17 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							return;
 						}
 
+						// Gateways that mount their own payment UI (Stripe Elements)
+						// declare data-wpss-own-submit and are bound to this same
+						// form by their own script. They MUST confirm the card with
+						// the PSP before an order is created, so this generic handler
+						// stands down — otherwise it races them and posts an
+						// unconfirmed payment intent (card never charged).
+						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
+						if (ownSubmit) {
+							return;
+						}
+
 						submitBtn.disabled = true;
 						submitBtnText.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
 
@@ -1709,6 +1720,17 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						var paymentMethod = form.querySelector('input[name="payment_method"]:checked');
 						if (!paymentMethod) {
 							showNotice('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
+							return;
+						}
+
+						// Gateways that mount their own payment UI (Stripe Elements)
+						// declare data-wpss-own-submit and are bound to this same
+						// form by their own script. They MUST confirm the card with
+						// the PSP before an order is created, so this generic handler
+						// stands down — otherwise it races them and posts an
+						// unconfirmed payment intent (card never charged).
+						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
+						if (ownSubmit) {
 							return;
 						}
 

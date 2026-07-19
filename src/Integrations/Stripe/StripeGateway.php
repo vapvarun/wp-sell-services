@@ -162,10 +162,33 @@ class StripeGateway implements PaymentGatewayInterface {
 		$order_id  = (int) ( $metadata['order_id'] ?? 0 );
 		$vendor_id = (int) ( $metadata['vendor_id'] ?? 0 );
 
+		// A description is REQUIRED by Stripe for export transactions on Indian
+		// accounts (and is good practice everywhere — it shows on the customer's
+		// statement/receipt). Without it confirmPayment() fails outright with
+		// "As per Indian regulations, export transactions require a description".
+		$service_id  = (int) ( $metadata['service_id'] ?? 0 );
+		$description = $service_id ? get_the_title( $service_id ) : '';
+		if ( '' === trim( (string) $description ) ) {
+			$description = __( 'Service purchase', 'wp-sell-services' );
+		}
+		if ( $order_id ) {
+			$description .= ' (#' . $order_id . ')';
+		}
+
 		$params = array(
 			'amount'                    => $this->format_amount( $amount, $currency ),
 			'currency'                  => strtolower( $currency ),
 			'automatic_payment_methods' => array( 'enabled' => 'true' ),
+			/**
+			 * Filter the Stripe PaymentIntent description.
+			 *
+			 * @since 1.2.2
+			 *
+			 * @param string $description Statement/receipt description.
+			 * @param int    $order_id    Order ID (0 if not yet created).
+			 * @param array  $metadata    Payment metadata.
+			 */
+			'description'               => apply_filters( 'wpss_stripe_payment_description', $description, $order_id, $metadata ),
 			'metadata'                  => array_merge(
 				array(
 					'site_url' => home_url(),
@@ -597,7 +620,14 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		ob_start();
 		?>
-		<div class="wpss-stripe-payment" data-publishable-key="<?php echo esc_attr( $publishable_key ); ?>">
+		<?php
+		// `data-wpss-own-submit` tells the generic checkout submit handler to
+		// stand down for this gateway: Stripe must confirm the card with the PSP
+		// (stripe.js -> confirmPayment) BEFORE any order is created. Without it
+		// the generic handler raced stripe.js and posted the still-unconfirmed
+		// PaymentIntent, so the card was never charged.
+		?>
+		<div class="wpss-stripe-payment" data-wpss-own-submit="1" data-publishable-key="<?php echo esc_attr( $publishable_key ); ?>">
 			<div id="wpss-stripe-payment-element"></div>
 			<div id="wpss-stripe-error" class="wpss-payment-error" style="display: none;"></div>
 			<input type="hidden" name="stripe_payment_intent_id" id="wpss-stripe-payment-intent-id">
