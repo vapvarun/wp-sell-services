@@ -26,6 +26,7 @@ use WPSellServices\Models\Review;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\VendorProfile;
 use WPSellServices\PostTypes\BuyerRequestPostType;
+use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\EarningsService;
 
@@ -38,13 +39,6 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.1.2
  */
 class MarketplaceSeeder {
-
-	/**
-	 * Default platform commission rate applied to seeded orders (percent).
-	 *
-	 * @var float
-	 */
-	private const COMMISSION_RATE = 20.0;
 
 	/**
 	 * Vendor display-name pool. Each entry seeds one vendor with a profile.
@@ -682,8 +676,20 @@ class MarketplaceSeeder {
 			$subtotal     = $service['starting_price'] * ( 1 + ( $i % 3 ) );
 			$addons_total = 0 === $i % 4 ? 15.0 : 0.0;
 			$order_total  = $subtotal + $addons_total;
-			$platform_fee = round( $order_total * ( self::COMMISSION_RATE / 100 ), 2 );
-			$earnings     = round( $order_total - $platform_fee, 2 );
+
+			// Compute through the single authority so demo orders carry the same
+			// breakdown the live engine would produce (no divergent local math).
+			$breakdown       = CommissionService::compute_breakdown(
+				(float) $order_total,
+				(object) array(
+					'id'         => 0,
+					'vendor_id'  => (int) $service['vendor_id'],
+					'service_id' => (int) $service['id'],
+				)
+			);
+			$platform_fee    = $breakdown['platform_fee'];
+			$earnings        = $breakdown['vendor_earnings'];
+			$commission_rate = $breakdown['commission_rate'];
 
 			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( ( $i * 3 ) + 1 ) . ' days' ) );
 			$deadline   = gmdate( 'Y-m-d H:i:s', strtotime( $created_at . ' +' . $service['delivery_days'] . ' days' ) );
@@ -703,7 +709,7 @@ class MarketplaceSeeder {
 				'addons_total'       => $addons_total,
 				'total'              => $order_total,
 				'currency'           => 'USD',
-				'commission_rate'    => self::COMMISSION_RATE,
+				'commission_rate'    => $commission_rate,
 				'platform_fee'       => $platform_fee,
 				'vendor_earnings'    => $earnings,
 				'status'             => $status,
