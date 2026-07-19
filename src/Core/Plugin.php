@@ -761,8 +761,7 @@ final class Plugin {
 				if ( ! $review ) {
 					return;
 				}
-				$buyer      = get_user_by( 'id', (int) $review->customer_id );
-				$buyer_name = $buyer ? $buyer->display_name : __( 'A buyer', 'wp-sell-services' );
+				$buyer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
 
 				$email_service->send_review_received(
 					$review_id,

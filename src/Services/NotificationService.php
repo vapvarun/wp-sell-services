@@ -750,9 +750,9 @@ class NotificationService {
 			return;
 		}
 
-		// Get reviewer info.
-		$reviewer      = get_user_by( 'id', $review->customer_id );
-		$reviewer_name = $reviewer ? $reviewer->display_name : __( 'A customer', 'wp-sell-services' );
+		// Get reviewer info. Migrated guest reviews (customer_id = 0) carry the
+		// name in reviewer_name; resolve through the shared helper.
+		$reviewer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
 
 		// Get service info.
 		$service      = get_post( $review->service_id );

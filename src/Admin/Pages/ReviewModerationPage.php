@@ -237,9 +237,10 @@ JS;
 		$is_enabled    = ! empty( get_option( 'wpss_vendor', array() )['moderate_reviews'] ?? '' );
 		$status_filter = $this->read_status_filter();
 		$current_page  = $this->read_paged();
+		$search        = $this->read_search();
 
 		$counts = $this->get_status_counts();
-		$result = $this->query_reviews( $status_filter, $current_page );
+		$result = $this->query_reviews( $status_filter, $current_page, $search );
 		$rows   = $result['rows'];
 		$total  = $result['total'];
 
@@ -298,7 +299,22 @@ JS;
 							?>
 							<li>
 								<a
-									href="<?php echo esc_url( add_query_arg( array( 'status' => $key ), admin_url( 'admin.php?page=wpss-review-moderation' ) ) ); ?>"
+									href="
+									<?php
+									echo esc_url(
+										add_query_arg(
+											array_filter(
+												array(
+													'status' => $key,
+													's' => $search,
+												),
+												static fn( $v ) => '' !== $v
+											),
+											admin_url( 'admin.php?page=wpss-review-moderation' )
+										)
+									);
+									?>
+									"
 									class="<?php echo $status_filter === $key ? 'current' : ''; ?>"
 								>
 									<?php echo esc_html( $label ); ?>
@@ -307,6 +323,23 @@ JS;
 							</li>
 						<?php endforeach; ?>
 					</ul>
+
+					<form class="wpss-review-search search-form" method="get">
+						<input type="hidden" name="page" value="wpss-review-moderation">
+						<input type="hidden" name="status" value="<?php echo esc_attr( $status_filter ); ?>">
+						<label class="screen-reader-text" for="wpss-review-search-input"><?php esc_html_e( 'Search reviews by reviewer name', 'wp-sell-services' ); ?></label>
+						<input
+							type="search"
+							id="wpss-review-search-input"
+							name="s"
+							value="<?php echo esc_attr( $search ); ?>"
+							placeholder="<?php esc_attr_e( 'Search by reviewer or text&hellip;', 'wp-sell-services' ); ?>"
+						>
+						<button type="submit" class="button"><?php esc_html_e( 'Search', 'wp-sell-services' ); ?></button>
+						<?php if ( '' !== $search ) : ?>
+							<a class="button-link" href="<?php echo esc_url( add_query_arg( array( 'status' => $status_filter ), admin_url( 'admin.php?page=wpss-review-moderation' ) ) ); ?>"><?php esc_html_e( 'Clear', 'wp-sell-services' ); ?></a>
+						<?php endif; ?>
+					</form>
 				</div>
 
 				<div class="wpss-list-card__body">
@@ -481,37 +514,45 @@ JS;
 	 * @param int    $page   1-indexed page number.
 	 * @return array{rows: array<int, object>, total: int}
 	 */
-	private function query_reviews( string $status, int $page ): array {
+	private function query_reviews( string $status, int $page, string $search = '' ): array {
 		global $wpdb;
 		$table  = $wpdb->prefix . 'wpss_reviews';
 		$offset = ( $page - 1 ) * self::PER_PAGE;
 
-		if ( 'all' === $status ) {
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
-			$rows  = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT * FROM {$table} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
-					self::PER_PAGE,
-					$offset
-				)
-			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		} else {
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$total = (int) $wpdb->get_var(
-				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status = %s", $status )
-			);
-			$rows  = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE status = %s ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
-					$status,
-					self::PER_PAGE,
-					$offset
-				)
-			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Build the WHERE clause dynamically so status + reviewer search compose.
+		$where  = array();
+		$params = array();
+
+		if ( 'all' !== $status ) {
+			$where[]  = 'r.status = %s';
+			$params[] = $status;
 		}
+
+		// Search matches the migrated guest name, the registered reviewer's
+		// display_name, or the review text. The users JOIN is added only when
+		// searching so the default queue keeps its single-table query.
+		$join = '';
+		if ( '' !== $search ) {
+			$join     = "LEFT JOIN {$wpdb->users} u ON r.reviewer_id = u.ID";
+			$like     = '%' . $wpdb->esc_like( $search ) . '%';
+			$where[]  = '( r.reviewer_name LIKE %s OR u.display_name LIKE %s OR r.review LIKE %s )';
+			$params[] = $like;
+			$params[] = $like;
+			$params[] = $like;
+		}
+
+		$where_sql = ! empty( $where ) ? ( 'WHERE ' . implode( ' AND ', $where ) ) : '';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		$count_sql = "SELECT COUNT(*) FROM {$table} r {$join} {$where_sql}";
+		$total     = (int) ( empty( $params )
+			? $wpdb->get_var( $count_sql )
+			: $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) ) );
+
+		$rows_sql    = "SELECT r.* FROM {$table} r {$join} {$where_sql} ORDER BY r.created_at DESC, r.id DESC LIMIT %d OFFSET %d";
+		$rows_params = array_merge( $params, array( self::PER_PAGE, $offset ) );
+		$rows        = $wpdb->get_results( $wpdb->prepare( $rows_sql, ...$rows_params ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
 		return array(
 			'rows'  => is_array( $rows ) ? $rows : array(),
@@ -567,6 +608,16 @@ JS;
 		);
 
 		return in_array( $status, $allowed, true ) ? $status : Review::STATUS_PENDING;
+	}
+
+	/**
+	 * Read the reviewer search term from the query string.
+	 *
+	 * @return string
+	 */
+	private function read_search(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only listing filter; no state change.
+		return isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 	}
 
 	/**

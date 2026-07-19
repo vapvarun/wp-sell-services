@@ -477,6 +477,15 @@ class ReviewsController extends RestController {
 			}
 		}
 
+		// Admins can set/correct the guest author name on migrated reviews
+		// (reviewer_id = 0). This is the write path for the reviewer_name column,
+		// which otherwise only the Woo->WP migration populates. Empty string
+		// clears it back to NULL so the review falls back to "Anonymous".
+		if ( current_user_can( 'manage_options' ) && $request->has_param( 'reviewer_name' ) ) {
+			$name                     = sanitize_text_field( (string) $request->get_param( 'reviewer_name' ) );
+			$updates['reviewer_name'] = '' !== $name ? $name : null;
+		}
+
 		if ( ! empty( $updates ) ) {
 			$updates['updated_at'] = current_time( 'mysql' );
 
