@@ -140,6 +140,14 @@ class StripeGateway implements PaymentGatewayInterface {
 		// AJAX handlers.
 		add_action( 'wp_ajax_wpss_stripe_create_payment_intent', array( $this, 'ajax_create_payment_intent' ) );
 		add_action( 'wp_ajax_wpss_stripe_confirm_payment', array( $this, 'ajax_confirm_payment' ) );
+
+		// The standalone checkout form submits to the generic gateway contract
+		// `wpss_{gateway}_process_payment` (see StandaloneCheckoutProvider). Only
+		// the Offline and Test gateways implemented that name, so clicking "Pay"
+		// with Stripe posted to an unregistered action and admin-ajax returned a
+		// bare `0` — checkout could never complete. Map the contract onto the
+		// existing confirm handler rather than duplicating the finalize logic.
+		add_action( 'wp_ajax_wpss_stripe_process_payment', array( $this, 'ajax_confirm_payment' ) );
 	}
 
 	/**
@@ -844,14 +852,25 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function ajax_confirm_payment(): void {
-		check_ajax_referer( 'wpss_stripe', 'nonce' );
+		// Accept the Stripe nonce (stripe.js flow) OR the checkout nonce (the
+		// standalone checkout form, which posts wpss_stripe_process_payment and
+		// carries wpss_checkout_nonce). Mirrors OfflineGateway::ajax_create_order.
+		$posted_nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
+		if ( ! wp_verify_nonce( $posted_nonce, 'wpss_stripe' )
+			&& ! wp_verify_nonce( $posted_nonce, 'wpss_checkout' )
+			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+			return;
+		}
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 			return; // Explicit return for defensive coding.
 		}
 
-		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? '' ) );
+		// stripe.js sends `payment_intent_id`; the checkout form sends
+		// `stripe_payment_intent_id`. Accept both.
+		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? $_POST['stripe_payment_intent_id'] ?? '' ) );
 		$service_id        = absint( $_POST['service_id'] ?? 0 );
 		$package_id        = absint( $_POST['package_id'] ?? 0 );
 		$pay_order_id      = absint( $_POST['pay_order'] ?? 0 );
