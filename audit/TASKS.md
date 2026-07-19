@@ -75,7 +75,7 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - [~] ManualOrderPage — intentionally left on its admin-supplied per-order rate (admin authority applied to `$total`, not engine-resolved rate on pre-tax base); documented in `COMMISSION-ARCHITECTURE.md`
 - Verified (`wp eval-file`, 11/11): parity byte-identical for pure-% global orders; flat rule → flat fee (not flat%); override 25% beats flat $10; Connect reads persisted $50 → 5000 cents (not recomputed). PHPCS net-zero. PHPStan project run blocked by phpstan-wordpress extension autoload gap in this checkout (needs `composer install`); standalone level-5 shows changed logic type-clean.
 
-## H. Buyer/vendor UX (6 done · 2 deferred to browser/JS batch)
+## H. Buyer/vendor UX (7 done · 1 deferred JS)
 - [x] (P2) Buyer request card budget/deadline blank — read real keys `_wpss_budget_min/_max` + `_wpss_delivery_days` (were `_wpss_budget`/`_wpss_deadline`, never written) · `dashboard/sections/requests.php` · `26ff392`
 - [x] (P2) Editing a service showed H1 "Create Service" — inverted guard (`!== 'create'` → `=== 'create'`); added `edit-request` title · `UnifiedDashboard.php` · `26ff392`
 - [x] (P2) Messaging composer locked on 7 legit active statuses — expanded allow-list (accepted, requirements_submitted, pending_approval, on_hold, late, cancellation_requested, disputed) · `templates/order/conversation.php` · `26ff392`
@@ -83,7 +83,7 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - [x] (P2) Orders/Services/Requests hard-cap at 20 — added pagination (Orders via new `OrderRepository::count_by_customer()`+offset; Services/Requests via WP_Query `paged`+`max_num_pages`), pager links relative to the current section URL · `dashboard/sections/{orders,services,requests}.php` · `22e8efa` — ✅ BROWSER-VERIFIED on BuddyX (seeded 22 orders → Page 1/2 → Next → Page 2/2 → Previous)
 - [x] (P2) Portfolio cards fake-clickable + keyboard-trapped — card now non-focusable `role=figure`, overlay exposed + revealed on `:focus-within`, "View Project" link keyboard-reachable (was `tabindex=-1` in aria-hidden overlay) · `templates/partials/vendor-portfolio.php` · `22e8efa`
 - [x] (P2) "View all reviews" skipped reviews #6-10 — initial render aligned to 10 (button threshold >10) to match the load-more JS's per_page=10/offset-10 model; no JS change, no gap · `templates/vendor/profile.php` · `966b2ec`
-- [ ] (P2) Notifications promised on Profile but no surface exists · `UnifiedDashboard.php:355` — DEFERRED (needs a `notifications` dashboard section + template; mark-read backends exist. Mirror the disputes section pattern from `16daaad`.)
+- [x] (P2) Notifications promised on Profile but no surface — added a "Notifications" dashboard section + `templates/dashboard/sections/notifications.php` (list + working mark-all/one-read via existing AJAX) · `UnifiedDashboard.php` · `a4cad8f` — ✅ BROWSER-VERIFIED on BuddyX (8 notifs render, unread highlighted, "Mark all as read" clears DB 8→0 + UI). NOTE: used `wpss-notif-*` classes — `wpss-notification` is the fixed-position toast component (reusing it hid the list off-screen).
 - [ ] (P2) Drag-dropped requirement files never submitted (DataTransfer) · `assets/js/requirements-form.js:149` — DEFERRED JS (sync dropped files into `input.files` via DataTransfer)
 
 ## I. Big-site / P3 backlog (verify each in source before fixing) — NOT STARTED
@@ -97,7 +97,7 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 ## Coverage still owed (before calling the audit fully closed)
 
 ### Browser batch (one focused session — all `[browser-owed]` items + JS/template fixes)
-- [ ] F#2 Standalone notifications: render the good `templates/myaccount/notifications.php` + add mark-read JS (backends exist: REST `NotificationsController::mark_as_read`, ajax `wpss_mark_notification_read`/`_all_`)
+- [ ] F#2 Standalone notifications (WC/EDD myaccount surface only — the UNIFIED dashboard now has a working notifications center from H#6/`a4cad8f`): render the good `templates/myaccount/notifications.php` + add mark-read JS for the standalone/myaccount provider path (backends exist)
 - [ ] F#3 Realtime JS: add consumers for `wpss:realtime:notification`/`wpss:realtime:message` (or document as a public extension API) · `assets/js/wpss-realtime.js`
 - [ ] F#8 Manual Order page: convert all-users/all-services `<select>`s to AJAX search (select2) — currently unbounded, hangs at scale · `ManualOrderPage.php:124`
 - [ ] H#2 "View all reviews" load-more offset (JS+REST) · `frontend.js:394` + `vendor/profile.php:446`
