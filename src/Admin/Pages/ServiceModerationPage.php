@@ -923,6 +923,17 @@ class ServiceModerationPage {
 				if ( $reason ) {
 					update_post_meta( $service_id, self::REJECTION_REASON_KEY, $reason );
 				}
+				// Take the service OFF the marketplace, mirroring the single-reject
+				// handler. Updating only the moderation meta left a published
+				// service live (and hid the vendor's "Resubmit for review" CTA).
+				if ( 'draft' !== get_post_status( $service_id ) ) {
+					wp_update_post(
+						array(
+							'ID'          => $service_id,
+							'post_status' => 'draft',
+						)
+					);
+				}
 				do_action( 'wpss_service_rejected', $service_id, $reason );
 				$this->notify_vendor( $service_id, 'rejected', $reason );
 			}

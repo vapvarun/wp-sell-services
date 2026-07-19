@@ -124,8 +124,13 @@ class ServiceSearch extends AbstractBlock {
 		// Read-only, bookmarkable search/archive filters from the query string -
 		// no state change, so nonce verification does not apply. Values sanitized inline.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$search_value = isset( $_GET['wpss_search'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_search'] ) ) : '';
-		$category     = isset( $_GET['wpss_category'] ) ? absint( $_GET['wpss_category'] ) : 0;
+		// Param names must match the archive's pre_get_posts reader
+		// (ServiceArchiveView::modify_archive_query reads `search` / `category`,
+		// as does the archive's own filter bar). The block previously emitted
+		// `wpss_search` / `wpss_category`, which the archive ignored — so the
+		// block's search + category filters silently did nothing.
+		$search_value = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
+		$category     = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$wrapper_classes = [ 'wpss-search-style-' . $attributes['style'] ];
@@ -137,7 +142,7 @@ class ServiceSearch extends AbstractBlock {
 						<i data-lucide="search" class="wpss-icon wpss-search-icon" aria-hidden="true"></i>
 						<input
 							type="text"
-							name="wpss_search"
+							name="search"
 							class="wpss-search-input"
 							value="<?php echo esc_attr( $search_value ); ?>"
 							placeholder="<?php echo esc_attr( $attributes['placeholder'] ); ?>"
@@ -154,7 +159,7 @@ class ServiceSearch extends AbstractBlock {
 								]
 							);
 							?>
-							<select name="wpss_category" class="wpss-category-select">
+							<select name="category" class="wpss-category-select">
 								<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
 								<?php if ( ! is_wp_error( $categories ) ) : ?>
 									<?php foreach ( $categories as $cat ) : ?>

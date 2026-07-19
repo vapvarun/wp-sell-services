@@ -128,9 +128,13 @@ class Shortcodes {
 
 		// Featured filter.
 		if ( 'true' === $atts['featured'] || '1' === $atts['featured'] ) {
+			// The written meta key is `_wpss_featured` (MarketplaceSeeder, CLI,
+			// ServiceGrid + the FeaturedServices block all use it). `_wpss_is_featured`
+			// was an orphan that matched nothing, so [wpss_featured_services]
+			// returned no featured items.
 			$args['meta_query'] = array(
 				array(
-					'key'   => '_wpss_is_featured',
+					'key'   => '_wpss_featured',
 					'value' => '1',
 				),
 			);

@@ -1020,17 +1020,21 @@ class DisputeWorkflowManager {
 			);
 		}
 
-		// Add evidence items.
+		// Add evidence items. DisputeService stores evidence as associative
+		// arrays (JSON-decoded with assoc=true), so these must be read with
+		// array access — the previous object access ($item->user_id, etc.)
+		// silently yielded null, so every evidence row rendered as "System"
+		// with blank content.
 		foreach ( $evidence as $item ) {
 			$timeline[] = array(
 				'type'       => 'evidence',
-				'user_id'    => $item->user_id,
-				'content'    => $item->description,
+				'user_id'    => $item['user_id'] ?? 0,
+				'content'    => $item['description'] ?? '',
 				'data'       => array(
-					'evidence_type' => $item->type,
-					'content'       => $item->content,
+					'evidence_type' => $item['type'] ?? '',
+					'content'       => $item['content'] ?? '',
 				),
-				'created_at' => $item->created_at,
+				'created_at' => $item['created_at'] ?? '',
 			);
 		}
 

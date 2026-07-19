@@ -216,10 +216,10 @@ class SellerCard extends AbstractBlock {
 
 				<?php if ( $attributes['showButton'] ) : ?>
 					<div class="wpss-seller-actions">
-						<a href="<?php echo esc_url( get_author_posts_url( $user_id ) ); ?>" class="wpss-button wpss-button-primary">
+						<a href="<?php echo esc_url( wpss_get_vendor_url( $user_id ) ); ?>" class="wpss-button wpss-button-primary">
 							<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
 						</a>
-						<a href="<?php echo esc_url( add_query_arg( 'contact', $user_id, get_author_posts_url( $user_id ) ) ); ?>" class="wpss-button wpss-button-secondary">
+						<a href="<?php echo esc_url( add_query_arg( 'contact', $user_id, wpss_get_vendor_url( $user_id ) ) ); ?>" class="wpss-button wpss-button-secondary">
 							<?php esc_html_e( 'Contact', 'wp-sell-services' ); ?>
 						</a>
 					</div>
@@ -253,11 +253,15 @@ class SellerCard extends AbstractBlock {
 			)
 		);
 
-		// Calculate average rating.
+		// Calculate average rating. Match the canonical vendor-rating query used
+		// everywhere else (VendorProfileRepository, ReviewRepository,
+		// VendorsController): only APPROVED customer-to-vendor reviews count.
+		// Without these filters the card averaged in pending/rejected reviews
+		// and vendor->customer reviews, so its stars diverged from the profile.
 		$rating = (float) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT AVG(rating) FROM {$wpdb->prefix}wpss_reviews
-				WHERE vendor_id = %d",
+				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
 				$user_id
 			)
 		);
@@ -265,7 +269,7 @@ class SellerCard extends AbstractBlock {
 		$reviews = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_reviews
-				WHERE vendor_id = %d",
+				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
 				$user_id
 			)
 		);
