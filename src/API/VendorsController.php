@@ -342,7 +342,9 @@ class VendorsController extends RestController {
 		$user_id = get_current_user_id();
 		$vendor  = get_userdata( $user_id );
 
-		if ( ! get_user_meta( $user_id, '_wpss_is_vendor', true ) ) {
+		// Canonical vendor check (matches PUT /vendors/me) so role-based / demo
+		// vendors without the legacy _wpss_is_vendor meta are not 404'd.
+		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
@@ -485,7 +487,7 @@ class VendorsController extends RestController {
 	public function update_vacation_mode( $request ) {
 		$user_id = get_current_user_id();
 
-		if ( ! get_user_meta( $user_id, '_wpss_is_vendor', true ) ) {
+		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
