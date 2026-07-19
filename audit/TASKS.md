@@ -34,12 +34,13 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - [x] (P1) API register creates corrupt vendor · `AuthController.php` · `e2a1be2`
 
 ## D. Onboarding & broken wiring
-- [ ] (P1) Setup wizard saves PayPal creds under keys the gateway never reads · `SetupWizardPage.php:178`
-- [ ] (P1) Buyer proposal decision reads non-existent `price`/`delivery_days` → $0/0 · `BuyerRequestsController.php:770`
-- [ ] (P2) Proposal admin metabox shows 0.00/blank · `BuyerRequestMetabox.php:196` (shared formatter with above)
-- [ ] (P2) Nested proposal submit field mismatch → always 400 · `BuyerRequestsController.php:636`
-- [ ] (P2) Audit-log cleanup cron never bound → retention no-op · `AuditLogService.php:266`
-- [ ] (P2) Cart deleted before order confirmed + `wpss_cart_checkout` no handler · `CartController.php:344`
+- [ ] (P1) Setup wizard saves PayPal creds under keys the gateway never reads · `SetupWizardPage.php:178` — DEFERRED to PayPal/Stripe session (verify write-key == gateway read-key end-to-end there)
+- [x] (P1) Buyer proposal $0/0 — response preparer read non-existent `price`/`delivery_days`; now reads `proposed_price`/`proposed_days` (+contract_type/milestones) · `BuyerRequestsController.php` · `ad5bfa1`
+- [x] (P2) Proposal admin metabox 0.00/blank — same key fix (`proposed_price`/`proposed_days`) · `BuyerRequestMetabox.php` · `ad5bfa1`
+- [x] (P2) REST proposal submit always 400 — controller sent `cover_letter`, `submit()` requires `description`; now mapped + forwards contract_type/milestones/attachments · `BuyerRequestsController.php` · `ad5bfa1`
+- [x] (P2) Audit-log cleanup cron never bound — event scheduled but no handler; added `AuditLogService::init()` binding `wpss_audit_log_cleanup`, wired in bootstrap · `AuditLogService.php` + `Plugin.php` · `ad5bfa1`
+- [x] (P2) Cart destroyed on failed/absent checkout — `wpss_cart_checkout` has no handler yet cart was deleted + "Order created" faked; now clears cart ONLY on a real order, returns 501 otherwise (seam kept) · `CartController.php` · `ad5bfa1`
+- Verified (`wp eval-file`): submit no longer 400s + stores 250/5; response surfaces 250/5 (was $0/0); audit cron prunes a 60-day row at retention 30; no-handler checkout returns WP_Error + PRESERVES cart, real order clears it. PHPCS net-zero (5 files).
 
 ## E. Data-fidelity & moderation trust
 - [x] (P1/P2) Tips list/total/badge empty + tipper/message · `TippingController.php` · `dc367b7`
