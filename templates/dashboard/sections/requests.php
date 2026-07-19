@@ -73,8 +73,22 @@ $active_count = count(
 			while ( $requests->have_posts() ) :
 				$requests->the_post();
 				$request_id = get_the_ID();
-				$budget     = get_post_meta( $request_id, '_wpss_budget', true );
-				$deadline   = get_post_meta( $request_id, '_wpss_deadline', true );
+				// Real requests store budget as _wpss_budget_min/_max (+ _wpss_budget_type)
+				// and the timeframe as _wpss_delivery_days. The old singular _wpss_budget
+				// and _wpss_deadline keys are never written by the create flow, so the
+				// card showed both blank for every real request.
+				$budget_min    = (float) get_post_meta( $request_id, '_wpss_budget_min', true );
+				$budget_max    = (float) get_post_meta( $request_id, '_wpss_budget_max', true );
+				$delivery_days = (int) get_post_meta( $request_id, '_wpss_delivery_days', true );
+
+				$budget_display = '';
+				if ( $budget_min > 0 && $budget_max > 0 && $budget_min !== $budget_max ) {
+					$budget_display = wpss_format_price( $budget_min ) . ' – ' . wpss_format_price( $budget_max );
+				} elseif ( $budget_max > 0 ) {
+					$budget_display = wpss_format_price( $budget_max );
+				} elseif ( $budget_min > 0 ) {
+					$budget_display = wpss_format_price( $budget_min );
+				}
 				// Query actual proposal count from DB instead of potentially stale meta.
 				global $wpdb;
 				$offers      = (int) $wpdb->get_var(
@@ -90,25 +104,25 @@ $active_count = count(
 						<h4 class="wpss-request-card__title"><?php the_title(); ?></h4>
 						<p class="wpss-request-card__excerpt"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 20 ) ); ?></p>
 						<div class="wpss-request-card__meta">
-							<?php if ( $budget ) : ?>
+							<?php if ( $budget_display ) : ?>
 								<span>
 									<?php
 									printf(
-										/* translators: %s: budget amount */
+										/* translators: %s: budget amount or range */
 										esc_html__( 'Budget: %s', 'wp-sell-services' ),
-										esc_html( wpss_format_price( $budget ) )
+										esc_html( $budget_display )
 									);
 									?>
 								</span>
 							<?php endif; ?>
-							<?php if ( $deadline ) : ?>
+							<?php if ( $delivery_days > 0 ) : ?>
 								<span class="wpss-request-card__sep">&bull;</span>
 								<span>
 									<?php
 									printf(
-										/* translators: %s: deadline date */
-										esc_html__( 'Deadline: %s', 'wp-sell-services' ),
-										esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) )
+										/* translators: %d: desired delivery time in days */
+										esc_html( _n( 'Delivery: %d day', 'Delivery: %d days', $delivery_days, 'wp-sell-services' ) ),
+										esc_html( $delivery_days )
 									);
 									?>
 								</span>

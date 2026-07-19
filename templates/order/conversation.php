@@ -110,8 +110,25 @@ if ( $conversation ) {
 	}
 }
 
-// Can send messages?
-$can_message = in_array( $order->status, array( 'pending_requirements', 'in_progress', 'revision_requested', 'delivered' ), true );
+// Can send messages? Allow messaging for every status where the order is still
+// in flight — buyers and sellers need to communicate through requirements,
+// approval, holds, lateness, cancellation requests and disputes, not just the
+// original four. Only true terminals (completed / cancelled / refunded /
+// partially_refunded / rejected) and the pre-payment states block the composer.
+$active_message_statuses = array(
+	'pending_requirements',
+	'requirements_submitted',
+	'accepted',
+	'in_progress',
+	'pending_approval',
+	'revision_requested',
+	'delivered',
+	'on_hold',
+	'late',
+	'cancellation_requested',
+	'disputed',
+);
+$can_message             = in_array( $order->status, $active_message_statuses, true );
 
 /**
  * Hook: wpss_before_conversation

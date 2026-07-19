@@ -498,7 +498,11 @@ class UnifiedDashboard {
 					<h1 class="wpss-dashboard__title wpss-page-header__title">
 						<?php
 						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
-						if ( $id && 'create' !== $this->current_section ) {
+						// Service edit reuses the `create` section with ?id=<service_id>, so
+						// an editing context is `create` section + a present id. The guard was
+						// inverted (`!== 'create'`), so editing a service always fell through to
+						// the "Create Service" title.
+						if ( $id && 'create' === $this->current_section ) {
 							esc_html_e( 'Update Service', 'wp-sell-services' );
 						} else {
 							echo esc_html( $section_data['title'] );
@@ -584,6 +588,7 @@ class UnifiedDashboard {
 			'profile'        => __( 'Profile', 'wp-sell-services' ),
 			'create'         => __( 'Create Service', 'wp-sell-services' ),
 			'create-request' => __( 'Post a Request', 'wp-sell-services' ),
+			'edit-request'   => __( 'Edit Request', 'wp-sell-services' ),
 		);
 
 		/**
