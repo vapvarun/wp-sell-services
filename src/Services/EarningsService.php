@@ -464,6 +464,19 @@ class EarningsService {
 			);
 		}
 
+		// Terminal-state guard (mirrors EarningsController::process_withdrawal).
+		// Only a still-open request (pending/approved) may be moved. Once a
+		// withdrawal is completed or rejected its amount is already reconciled
+		// in the balance calculation; re-processing it (e.g. rejecting a
+		// completed payout) would re-inflate available_balance and pay the
+		// vendor twice.
+		if ( self::WITHDRAWAL_PENDING !== $withdrawal->status && self::WITHDRAWAL_APPROVED !== $withdrawal->status ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This withdrawal has already been finalised and can no longer be changed.', 'wp-sell-services' ),
+			);
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$table,
