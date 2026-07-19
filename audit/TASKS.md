@@ -75,15 +75,15 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - [~] ManualOrderPage — intentionally left on its admin-supplied per-order rate (admin authority applied to `$total`, not engine-resolved rate on pre-tax base); documented in `COMMISSION-ARCHITECTURE.md`
 - Verified (`wp eval-file`, 11/11): parity byte-identical for pure-% global orders; flat rule → flat fee (not flat%); override 25% beats flat $10; Connect reads persisted $50 → 5000 cents (not recomputed). PHPCS net-zero. PHPStan project run blocked by phpstan-wordpress extension autoload gap in this checkout (needs `composer install`); standalone level-5 shows changed logic type-clean.
 
-## H. Buyer/vendor UX (mostly template layer)
-- [ ] (P2) Drag-dropped requirement files never submitted (DataTransfer) · `assets/js/requirements-form.js:58`
-- [ ] (P2) Orders/Services/Requests hard-cap at 20, no pager (shared fix, mirror `sales.php:379`) · `dashboard/sections/{orders,services,requests}.php`
-- [ ] (P2) Buyer request card budget/deadline blank (wrong meta keys) · `dashboard/sections/requests.php:76`
-- [ ] (P2) Editing a service shows H1 "Create Service" · `UnifiedDashboard.php:497` (+ edit-request title `:582`)
-- [ ] (P2) Notifications promised on Profile but no surface exists · `UnifiedDashboard.php:355`
-- [ ] (P2) Portfolio cards fake-clickable + keyboard-trapped · `templates/partials/vendor-portfolio.php:207`
-- [ ] (P2) "View all reviews" skips reviews #6-10 · `templates/vendor/profile.php:448`
-- [ ] (P2) Messaging composer locked on 7 legit active statuses · `templates/order/conversation.php:114`
+## H. Buyer/vendor UX (3 pure-logic done · 5 deferred to browser batch)
+- [x] (P2) Buyer request card budget/deadline blank — read real keys `_wpss_budget_min/_max` + `_wpss_delivery_days` (were `_wpss_budget`/`_wpss_deadline`, never written) · `dashboard/sections/requests.php` · `26ff392`
+- [x] (P2) Editing a service showed H1 "Create Service" — inverted guard (`!== 'create'` → `=== 'create'`); added `edit-request` title · `UnifiedDashboard.php` · `26ff392`
+- [x] (P2) Messaging composer locked on 7 legit active statuses — expanded allow-list (accepted, requirements_submitted, pending_approval, on_hold, late, cancellation_requested, disputed) · `templates/order/conversation.php` · `26ff392`
+- [ ] (P2) Drag-dropped requirement files never submitted (DataTransfer) · `assets/js/requirements-form.js:149` — DEFERRED browser/JS (fix: sync dropped files into `input.files` via DataTransfer)
+- [ ] (P2) Orders/Services/Requests hard-cap at 20, no pager · `dashboard/sections/{orders,services,requests}.php` — DEFERRED browser (mirror `sales.php:379`; Orders also needs a new `OrderRepository::count_by_customer()`)
+- [ ] (P2) Notifications promised on Profile but no surface exists · `UnifiedDashboard.php:355` — DEFERRED browser (needs a `notifications` section + template; mark-read backends already exist)
+- [ ] (P2) Portfolio cards fake-clickable + keyboard-trapped · `templates/partials/vendor-portfolio.php:239` — DEFERRED browser/a11y (card is a `role=article` div with cursor:pointer but no handler; the real link is `tabindex=-1` in an `aria-hidden` overlay)
+- [ ] (P2) "View all reviews" skips reviews #6-10 · `templates/vendor/profile.php:446` + `assets/js/frontend.js:394` — DEFERRED browser/JS (initial LIMIT 5 but load-more sends page=2&per_page=10 → offset 10, skipping rows 5-9)
 
 ## I. Big-site / P3 backlog (verify each in source before fixing)
 - [ ] Messaging unread badge unindexed `JSON_CONTAINS` full scan · `ConversationRepository.php:169`
