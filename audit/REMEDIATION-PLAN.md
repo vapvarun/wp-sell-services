@@ -1,14 +1,15 @@
 # WP Sell Services — Master Remediation Plan (Journey Audit 2026-07-19)
 
-Consolidates two multi-agent audits, every P1/P2 adversarially source-verified:
+Consolidates three multi-agent audit passes, every P1/P2 adversarially source-verified:
 - Wave 1 — user+admin journeys / API+data contract: **10 P1 + 27 P2** — `audit/journey-audit-2026-07-19.md`
 - Wave 2 — usability + template flow: **2 P1 + 13 P2** — `audit/usability-audit-2026-07-19.md`
+- Wave 3 — gap-fill (disputes, admin screens, discovery): **2 P1 + 9 P2** — `audit/gapfill-audit-2026-07-19.md`
 
-**Combined confirmed: 12 P1 + 40 P2** (+ ~35 P3/unverified backlog).
+**Combined confirmed: 14 P1 + 49 P2** (+ ~40 P3/unverified backlog).
 
-> **Not yet complete.** 3 clusters were NOT really audited (agent errored / placeholder
-> output): **disputes-templates-flow**, **admin-screens-usability**, **discovery-single-service-blocks**.
-> Re-run those + one browser/responsive pass before calling the gap map final.
+> **Static-only.** All findings are source-traced; NONE runtime-repro'd. Still owed: one
+> browser + responsive (≤480px) + dark-mode pass, and Pro-repo check of whether the
+> `wpss_dashboard_sections` filter masks the disputes P1 on Pro sites.
 
 ---
 
@@ -91,23 +92,44 @@ Shared seam: one proposals formatter/service.
 | REST review create ignores "Moderate reviews" toggle | `src/API/ReviewsController.php:390` |
 | SellerCard rating/count omits `status='approved'` | `src/Blocks/SellerCard.php:259` |
 | Featured block/grid vs shortcode key drift | `src/Blocks/FeaturedServices.php:154` |
+| Featured block INNER-JOINs `_wpss_rating_average` → hides every zero-review featured service (P2, wave-3) | `src/Blocks/FeaturedServices.php:160` |
 | Bulk Reject doesn't set `draft` → stays live | `src/Admin/Pages/ServiceModerationPage.php:921` |
-| Search/Category block param drift vs archive | `src/Blocks/ServiceSearch.php:140` |
+| Search/Category blocks post `wpss_search`/`wpss_category`; archive reads `search`/`category` → filter silently no-ops (P1, wave-3) | `src/Blocks/ServiceSearch.php:140`, `src/Blocks/ServiceCategories.php:197` |
+| SellerCard "View Profile" → theme author archive, not vendor storefront; dead `?contact=` (P2, wave-3) | `src/Blocks/SellerCard.php:219` |
+| Guest "Continue to Checkout" dead-ends (5s error, no login link) though `login_url`/`isLoggedIn` are localized (P2, wave-3) | `assets/js/single-service.js:642` |
 | Dispute timeline array-as-object access → "System"/blank | `src/Services/DisputeWorkflowManager.php:1024` |
 | Dispute-opened email omits buyer reason (incl. admin copy) | `templates/emails/dispute-opened.php:113` |
 | Order-cancelled email reason always blank (P3) | `templates/emails/order-cancelled.php:71` |
 
-## WP-F — Ship or gate half-built surfaces (P2)
+## WP-F — Ship or gate half-built surfaces (P1 + P2)
 
+**Disputes on-site surface (P1, wave-3) — build it as a unit:** a member can OPEN a dispute
+but has nowhere on the site to view/respond/add-evidence/see resolution; both dispute
+templates are orphaned. Wire it AND fix the 3 latent template/data bugs so they don't bite
+the moment it renders:
 | Finding | file:line |
 |---|---|
-| Member dispute UI orphaned (open but can't view/respond) | `templates/order/order-view.php:1003` |
+| No on-site dispute surface — add `disputes` dashboard section + render `dispute-view.php` | `src/Frontend/UnifiedDashboard.php:311` |
+| Order page shows only "Disputed" dot, no path to the dispute | `templates/order/order-view.php:1003` |
+| Evidence file stored as `absint(url)=0` → attachment lost on reload | `src/Services/DisputeService.php:314` |
+| dispute-view reads arrays as objects → evidence blank (P3) | `templates/disputes/dispute-view.php:240` |
+| dispute-view reads `initiator_id`; row is `initiated_by` → "Opened by Unknown" (P3) | `templates/disputes/dispute-view.php:54` |
+
+Check Pro first: `wpss_dashboard_sections` filter may already add this on Pro sites (masks the P1 there); free installs still have nothing.
+
+**Other half-built surfaces (P2):**
+| Finding | file:line |
+|---|---|
 | Standalone notifications no mark-read; the good template never renders | `src/Integrations/Standalone/StandaloneAccountProvider.php:547` |
 | Realtime JS dispatches events nothing consumes | `assets/js/wpss-realtime.js:86` |
 | Analytics export → 403 (Deny-from-all dir + direct URL) | `src/Analytics/DataExporter.php:70` |
 | /upload ignores `order_id` → participants 403 | `src/API/StorageController.php:353` |
 | Two dead admin order buttons ("not yet implemented") | `src/Admin/Metaboxes/OrderMetabox.php:829` |
 | Delivered-order admin actions key on `'delivered'` not `pending_approval` (P3) | `src/Admin/Metaboxes/OrderMetabox.php:953` |
+| Bulk payout/vendor actions discard per-row failure report on `location.reload()` → silent partial success (P2, wave-3) | `src/Admin/Pages/WithdrawalsPage.php:709`, `src/Admin/Pages/VendorsPage.php:867` |
+| Manual Order page eager-loads ALL services + ALL users (twice) → hangs at scale (P2, wave-3) | `src/Admin/Pages/ManualOrderPage.php:124` |
+| Setup wizard "Save & Continue" advances even on save error → step config lost (P3, wave-3) | `src/Admin/Pages/SetupWizardPage.php:928` |
+| ServiceModeration uses native `confirm()`/`prompt()` (blocked/mobile-broken) + missing aria-labels (P3, wave-3) | `src/Admin/Pages/ServiceModerationPage.php:572` |
 
 ## WP-H — Buyer/vendor free UX (P2) — usability, mostly template-layer
 
@@ -132,7 +154,9 @@ Shared seam: one proposals formatter/service.
 
 ---
 
-## Coverage still owed before "all gaps" is true
-1. Re-run **disputes-templates-flow** + **admin-screens-usability** + **discovery-single-service-blocks** (agent errors/placeholders).
-2. One **browser + responsive (≤480px) + dark-mode** pass — zero runtime verification so far.
-3. Verify the ~35 P3/unverified items in source before scheduling.
+## Coverage status
+- ✅ All 3 previously-uncovered clusters (disputes, admin-screens, discovery) re-audited (wave 3).
+- ⬜ One **browser + responsive (≤480px) + dark-mode** pass — zero runtime verification so far (findings are static-source only; each WP's replicate step covers its own).
+- ⬜ Pro-repo check: does `wpss_dashboard_sections` add a disputes surface on Pro (masking the WP-F P1 there)?
+- ⬜ Verify the ~40 P3/unverified items in source before scheduling.
+- Not deep-audited: `Settings.php` (3067 lines) + `admin-settings*.js`, `UpgradePage.php`, Vendors single-vendor detail sub-tabs, Pro payment-webhook signature depth.
