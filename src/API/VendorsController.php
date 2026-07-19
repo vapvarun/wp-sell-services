@@ -231,14 +231,30 @@ class VendorsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
+		global $wpdb;
 		$pagination = $this->get_pagination_args( $request );
 
+		// Identify vendors by EITHER the wpss_vendor role (matched via the
+		// capabilities meta, the same way WP_User_Query implements role queries)
+		// OR the legacy _wpss_is_vendor meta. Role-based and demo-seeded vendors
+		// never carry the legacy meta, so a meta-only clause hid them from the
+		// directory even though they show in the admin vendor list. Stays a
+		// SQL-paginated meta_query (big-site safe); AND-composes with the skill
+		// filter and the rating/orders sort JOIN below.
 		$args = array(
 			'meta_query' => array(
 				'relation'      => 'AND',
 				'vendor_clause' => array(
-					'key'   => '_wpss_is_vendor',
-					'value' => '1',
+					'relation' => 'OR',
+					array(
+						'key'     => $wpdb->prefix . 'capabilities',
+						'value'   => '"' . \WPSellServices\Services\VendorService::ROLE . '"',
+						'compare' => 'LIKE',
+					),
+					array(
+						'key'   => '_wpss_is_vendor',
+						'value' => '1',
+					),
 				),
 			),
 			'number'     => $pagination['per_page'],
