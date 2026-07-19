@@ -193,13 +193,20 @@ class BuyerRequestMetabox {
 								<?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?>
 							<?php endif; ?>
 						</td>
-						<td><?php echo esc_html( number_format( (float) ( $proposal->price ?? 0 ), 2 ) ); ?></td>
+						<?php
+						// DB columns are proposed_price / proposed_days; reading
+						// price / delivery_days (which do not exist) rendered 0.00
+						// and "0 days" for every proposal in this admin table.
+						$proposed_price = (float) ( $proposal->proposed_price ?? 0 );
+						$proposed_days  = (int) ( $proposal->proposed_days ?? 0 );
+						?>
+						<td><?php echo esc_html( number_format( $proposed_price, 2 ) ); ?></td>
 						<td>
 							<?php
 							printf(
 								/* translators: %d: number of days */
-								esc_html( _n( '%d day', '%d days', $proposal->delivery_days, 'wp-sell-services' ) ),
-								esc_html( (string) $proposal->delivery_days )
+								esc_html( _n( '%d day', '%d days', $proposed_days, 'wp-sell-services' ) ),
+								esc_html( (string) $proposed_days )
 							);
 							?>
 						</td>

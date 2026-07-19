@@ -268,6 +268,11 @@ final class Plugin {
 		// so the vendor can submit delivery.
 		( new \WPSellServices\Services\MilestoneService() )->init();
 
+		// Audit-log retention: binds wpss_audit_log_cleanup (scheduled on
+		// activation) to the pruning handler. Without this the cron fired with
+		// no listener, so the retention setting never trimmed the table.
+		( new \WPSellServices\Services\AuditLogService() )->init();
+
 		// Guided onboarding tour — registers its own admin/front hooks and
 		// the REST completion endpoint internally.
 		( new Tour() )->init();
