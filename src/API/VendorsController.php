@@ -18,6 +18,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use WP_User_Query;
+use WPSellServices\Models\Review;
 
 /**
  * REST API controller for vendors.
@@ -685,14 +686,13 @@ class VendorsController extends RestController {
 
 		$data = array();
 		foreach ( $reviews as $review ) {
-			$customer = get_userdata( (int) $review->customer_id );
-			$service  = get_post( (int) $review->service_id );
+			$service = get_post( (int) $review->service_id );
 
 			$data[] = array(
 				'id'              => (int) $review->id,
 				'service_id'      => (int) $review->service_id,
 				'service_title'   => $service ? $service->post_title : '',
-				'customer_name'   => $customer ? $customer->display_name : '',
+				'customer_name'   => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
 				'customer_avatar' => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
 				'rating'          => (int) $review->rating,
 				'review'          => $review->review,

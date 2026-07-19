@@ -17,6 +17,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Models\Review;
 
 /**
  * REST API controller for reviews.
@@ -959,9 +960,8 @@ class ReviewsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $review, $request ): WP_REST_Response {
-		$customer = get_userdata( (int) $review->customer_id );
-		$vendor   = get_userdata( (int) $review->vendor_id );
-		$service  = get_post( (int) $review->service_id );
+		$vendor  = get_userdata( (int) $review->vendor_id );
+		$service = get_post( (int) $review->service_id );
 
 		$data = array(
 			'id'              => (int) $review->id,
@@ -971,7 +971,7 @@ class ReviewsController extends RestController {
 			'vendor_id'       => (int) $review->vendor_id,
 			'vendor_name'     => $vendor ? $vendor->display_name : '',
 			'customer_id'     => (int) $review->customer_id,
-			'customer_name'   => $customer ? $customer->display_name : '',
+			'customer_name'   => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
 			'customer_avatar' => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
 			'rating'          => (int) $review->rating,
 			'review'          => $review->review,
