@@ -56,7 +56,7 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - Verified (`wp eval-file`): featured query includes an UNRATED featured service (control proves old orderby excluded it); SellerCard rating=5.0 counting only approved c2v; dispute evidence timeline shows real user_id + content. PHPCS net-zero (8 files). `.min.js` not enqueued (source authoritative; regenerated at release build).
 
 ## F. Ship or gate half-built surfaces
-- [x] (P1) Disputes on-site surface — new "Disputes" dashboard section + self-contained `templates/dashboard/sections/disputes.php` (list + party-gated detail via `get_timeline`) · `UnifiedDashboard.php` · `16daaad` — [browser-owed: visual]. (Orphaned `dispute-view.php` left for a future richer view.)
+- [x] (P1) Disputes on-site surface — new "Disputes" dashboard section + self-contained `templates/dashboard/sections/disputes.php` (list + party-gated detail via `get_timeline`) · `UnifiedDashboard.php` · `16daaad` — ✅ BROWSER-VERIFIED on **BuddyX** (desktop + 390px mobile): nav item renders, list table stacks responsively, detail shows status/reason and the Activity timeline with the REAL user name (confirms the E6 evidence array-access fix end-to-end, not "System"). (Orphaned `dispute-view.php` left for a future richer view.)
 - [ ] (P2) Standalone notifications no mark-read; good template never renders · `StandaloneAccountProvider.php:547` — DEFERRED to browser batch (needs mark-read JS)
 - [ ] (P2) Realtime JS dispatches events nothing consumes · `assets/js/wpss-realtime.js:86` — DEFERRED to browser batch (needs Pusher + JS consumers; events are a public API)
 - [x] (P2) Analytics export → 403 — now served via authenticated `wpss_analytics_download_export` streamer (nonce + manage_options + traversal-safe filename) · pro `AnalyticsManager.php` · `d2c8d0e`
@@ -120,4 +120,7 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 ## Environment state (Local, for the next session)
 - Stripe TEST keys + webhook secret set; webhook live via cloudflare tunnel (ephemeral — restart if the tunnel died).
 - Pro active; `wpss_pro_license_status='valid'` set for local testing (revert with `wp option delete wpss_pro_license_status`).
+- **Theme: BuddyX 5.1.3 active** (installed + switched this session for theme testing per owner request; was twentytwentyfive). BuddyX Pro / Reign not installed (no local zips found) — install a premium zip to test those.
+- **Browser testing: use the HOST Playwright MCP** (`mcp__plugin_playwright_playwright__*`), NOT the Docker one — the Docker browser can't resolve `wp-sell-services.local`. Site: `http://wp-sell-services.local`, dashboard `/dashboard/` (sections are pretty-permalinked, e.g. `/dashboard/disputes/`). Auto-login via `?autologin=1`. Tour modal suppressed via `wp user meta update 1 wpss_tour_completed 1`.
+- Demo dispute seeded for browser test: order #18 / dispute #4 (user 1 as customer). Delete when done.
 - Verification pattern used: seed real rows via `wp eval-file`, assert before/after with positive+negative controls.
