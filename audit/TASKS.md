@@ -9,6 +9,18 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 
 ---
 
+## J. CHECKOUT IS BROKEN (P0 — found 2026-07-19 by running a real browser checkout)
+
+**No customer can buy anything with a real payment gateway.** Found only by
+clicking through checkout in the browser; every prior verification was
+`wp eval-file`/unit-level and missed it entirely.
+
+- [x] (P0) **Pay button posted to an unregistered AJAX action → admin-ajax returned bare `0`.** Checkout JS builds `wpss_{gateway}_process_payment` (`StandaloneCheckoutProvider.php:1193,1719`) but ONLY Offline + Test register that name. Registered the contract on Stripe's existing confirm handler + accepted the checkout nonce and `stripe_payment_intent_id`. · `StripeGateway.php` · `ab93f8a` — verified: response went `400`+`0` → `200`+real JSON.
+- [ ] (P0) **Checkout never charges the card.** The checkout page's INLINE JS mounts the Stripe Payment Element, collects the card, then posts the UNCONFIRMED intent to the server — it never calls `stripe.confirmPayment()`. Result: `{"success":false,"message":"Payment requires additional action."}` even with a valid 4242 test card. `assets/js/stripe.js:176-192` already implements the correct flow (`confirmPayment()` → `confirmPaymentAndCreateOrder()`), so there are TWO parallel Stripe implementations and the checkout page runs the broken duplicate. **Right fix = delete the inline duplicate and drive checkout through `assets/js/stripe.js`** (matches the no-duplicate-code rule); do NOT bolt a second confirm call into the inline copy.
+- [ ] (P0) **Same contract break for PayPal + Razorpay** — they register `create_order`/`capture` and `create_order`/`verify_payment`, so they hit the identical unregistered-action wall. Apply the same mapping once the confirm-flow above is settled.
+- [ ] (P2) Pay button stays stuck on "Processing..." after a failed payment (never re-enabled) · `StandaloneCheckoutProvider.php` submit handler.
+- [ ] Re-run the full browser checkout after the confirm fix and verify: order row created, `platform_fee`/`vendor_earnings` persisted by `compute_breakdown()`, wallet ledger credited. **The commission work (cluster G) has never had a real payment run through it.**
+
 ## A. Money-loss guards
 - [x] (P1) Withdrawal double cash-out — terminal-state guard · `EarningsService.php` · `774643f`
 - [x] (P2) Withdrawal ignores clearance hold · `EarningsController.php` · `07c36c5`
