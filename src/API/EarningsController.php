@@ -454,7 +454,23 @@ class EarningsController extends RestController {
 			)
 		);
 
-		$available = $earned - $withdrawn_and_pending;
+		// Earnings from orders completed less than clearance_days ago are still
+		// on hold and NOT withdrawable yet. get_summary() subtracts this; the
+		// withdrawal-request path must too, or a vendor can cash out un-cleared
+		// funds. (Mirror EarningsService::get_summary().)
+		$payouts_settings = get_option( 'wpss_payouts', array() );
+		$clearance_days   = (int) ( $payouts_settings['clearance_days'] ?? 14 );
+		$in_clearance     = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0) FROM {$orders_table}
+				WHERE vendor_id = %d AND status = 'completed'
+				AND completed_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
+				$vendor_id,
+				$clearance_days
+			)
+		);
+
+		$available = $earned - $withdrawn_and_pending - $in_clearance;
 
 		if ( $amount > $available ) {
 			$wpdb->query( 'ROLLBACK' );
