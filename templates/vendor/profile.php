@@ -118,10 +118,13 @@ $total_services = count(
 global $wpdb;
 $reviews = $wpdb->get_results(
 	$wpdb->prepare(
+		// Show the first 10 to match the load-more JS, which requests page 2 at
+		// per_page 10 (offset 10). Rendering only 5 here meant "View all reviews"
+		// jumped straight to offset 10 and permanently skipped reviews #6-10.
 		"SELECT * FROM {$wpdb->prefix}wpss_reviews
 		WHERE vendor_id = %d AND status = 'approved'
 		ORDER BY created_at DESC
-		LIMIT 5",
+		LIMIT 10",
 		$vendor_id
 	)
 );
@@ -443,7 +446,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							<?php endforeach; ?>
 						</div>
 
-						<?php if ( $rating_count > 5 ) : ?>
+						<?php if ( $rating_count > 10 ) : ?>
 							<p class="wpss-view-all">
 								<a href="#" class="wpss-load-more-reviews" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 									<?php esc_html_e( 'View all reviews', 'wp-sell-services' ); ?> &rarr;
