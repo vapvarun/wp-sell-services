@@ -56,14 +56,14 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - Verified (`wp eval-file`): featured query includes an UNRATED featured service (control proves old orderby excluded it); SellerCard rating=5.0 counting only approved c2v; dispute evidence timeline shows real user_id + content. PHPCS net-zero (8 files). `.min.js` not enqueued (source authoritative; regenerated at release build).
 
 ## F. Ship or gate half-built surfaces
-- [ ] (P1) Disputes have NO on-site surface — add dashboard section + wire `dispute-view.php` · `UnifiedDashboard.php:311` (+ order-view link, evidence-absint, initiated_by/array-access latents)
-- [ ] (P2) Standalone notifications no mark-read; good template never renders · `StandaloneAccountProvider.php:547`
-- [ ] (P2) Realtime JS dispatches events nothing consumes · `assets/js/wpss-realtime.js:86`
-- [ ] (P2) Analytics export → 403 (Deny-from-all dir + direct URL) · pro `DataExporter.php:70`
-- [ ] (P2) /upload ignores `order_id` → participants 403 · `StorageController.php:353`
-- [ ] (P2) Two dead admin order buttons ("not implemented") · `OrderMetabox.php:829`
-- [ ] (P2) Admin bulk payout/vendor actions discard per-row failure report on reload · `WithdrawalsPage.php:709` + `VendorsPage.php:867`
-- [ ] (P2) Manual Order page eager-loads ALL services + ALL users (twice) → hangs at scale · `ManualOrderPage.php:124`
+- [x] (P1) Disputes on-site surface — new "Disputes" dashboard section + self-contained `templates/dashboard/sections/disputes.php` (list + party-gated detail via `get_timeline`) · `UnifiedDashboard.php` · `16daaad` — [browser-owed: visual]. (Orphaned `dispute-view.php` left for a future richer view.)
+- [ ] (P2) Standalone notifications no mark-read; good template never renders · `StandaloneAccountProvider.php:547` — DEFERRED to browser batch (needs mark-read JS)
+- [ ] (P2) Realtime JS dispatches events nothing consumes · `assets/js/wpss-realtime.js:86` — DEFERRED to browser batch (needs Pusher + JS consumers; events are a public API)
+- [x] (P2) Analytics export → 403 — now served via authenticated `wpss_analytics_download_export` streamer (nonce + manage_options + traversal-safe filename) · pro `AnalyticsManager.php` · `d2c8d0e`
+- [x] (P2) /upload ignored `order_id` → participants 403 — now persists `_wpss_order_id` (+ participant check) so downloads authorize · pro `StorageController.php` · `d2c8d0e`
+- [x] (P2) Two dead admin order buttons — "Resend Notifications" + "Extend Deadline" removed (no backend; gated) · `OrderMetabox.php` · `474d436` — [browser-owed]
+- [x] (P2) Admin bulk payout/vendor per-row report now survives reload via a per-user transient notice · `WithdrawalsPage.php` + `VendorsPage.php` · `474d436` — [browser-owed]
+- [ ] (P2) Manual Order page eager-loads ALL services + ALL users (twice) → hangs at scale · `ManualOrderPage.php:124` — DEFERRED to browser batch (needs AJAX/select2 search)
 
 ## G. Commission architecture (CONSOLIDATION DONE)
 - [x] Phase 1 — `wpss_commission_fee` amount seam + parity · `CommissionService.php` · `4e45059`
