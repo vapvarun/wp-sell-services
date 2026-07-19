@@ -386,9 +386,12 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		// Auto-approve or require moderation.
-		$auto_approve = apply_filters( 'wpss_auto_approve_reviews', true );
-		$status       = $auto_approve ? 'approved' : 'pending';
+		// Auto-approve unless the site owner turned on review moderation
+		// (wpss_vendor['moderate_reviews']). Previously hard-defaulted to true,
+		// so REST-created reviews went live even with moderation enabled.
+		$moderate_reviews = ! empty( get_option( 'wpss_vendor', array() )['moderate_reviews'] );
+		$auto_approve     = apply_filters( 'wpss_auto_approve_reviews', ! $moderate_reviews );
+		$status           = $auto_approve ? 'approved' : 'pending';
 
 		// Create review.
 		$result = $wpdb->insert(
@@ -420,7 +423,7 @@ class ReviewsController extends RestController {
 		$review_id = (int) $wpdb->insert_id;
 
 		// Update service rating cache.
-		$this->update_rating_cache( (int) $order->service_id, (int) $order->vendor_id );
+		self::update_rating_cache( (int) $order->service_id, (int) $order->vendor_id );
 
 		// Trigger actions.
 		do_action( 'wpss_review_created', $review_id, $order_id );
@@ -499,7 +502,7 @@ class ReviewsController extends RestController {
 
 			// Update rating cache if rating changed.
 			if ( isset( $updates['rating'] ) ) {
-				$this->update_rating_cache( (int) $review->service_id, (int) $review->vendor_id );
+				self::update_rating_cache( (int) $review->service_id, (int) $review->vendor_id );
 			}
 		}
 
@@ -538,7 +541,7 @@ class ReviewsController extends RestController {
 		);
 
 		// Update rating cache.
-		$this->update_rating_cache( $service_id, $vendor_id );
+		self::update_rating_cache( $service_id, $vendor_id );
 
 		return new WP_REST_Response(
 			array(
@@ -828,7 +831,7 @@ class ReviewsController extends RestController {
 	 * @param int $vendor_id  Vendor ID.
 	 * @return void
 	 */
-	private function update_rating_cache( int $service_id, int $vendor_id ): void {
+	public static function update_rating_cache( int $service_id, int $vendor_id ): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 

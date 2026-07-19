@@ -61,6 +61,37 @@ class ReviewModerationPage {
 		// AJAX moderation actions (admin one-click utilities; nonce + capability guarded).
 		add_action( 'wp_ajax_wpss_approve_review', array( $this, 'ajax_approve_review' ) );
 		add_action( 'wp_ajax_wpss_reject_review', array( $this, 'ajax_reject_review' ) );
+
+		// Recompute the cached service + vendor rating when a review is approved
+		// or rejected — the rating cache is written on create but was never
+		// refreshed on moderation, so approving a pending review (or rejecting a
+		// live one) left stale star counts everywhere they display.
+		add_action( 'wpss_review_moderated', array( $this, 'recompute_rating_on_moderation' ), 10, 2 );
+	}
+
+	/**
+	 * Refresh the service + vendor rating cache after a moderation status change.
+	 *
+	 * @param int    $review_id  Moderated review ID.
+	 * @param string $new_status New review status (unused; recompute is always
+	 *                           over approved rows).
+	 * @return void
+	 */
+	public function recompute_rating_on_moderation( int $review_id, string $new_status ): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_reviews';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT service_id, vendor_id FROM {$table} WHERE id = %d", $review_id )
+		);
+		if ( ! $row ) {
+			return;
+		}
+
+		// Reuse the canonical rating-cache recompute (same keys + rounding the
+		// create/update paths use) so every surface stays consistent.
+		\WPSellServices\API\ReviewsController::update_rating_cache( (int) $row->service_id, (int) $row->vendor_id );
 	}
 
 	/**
