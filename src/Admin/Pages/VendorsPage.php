@@ -394,6 +394,19 @@ class VendorsPage {
 		<div class="wrap wpss-listing-page wpss-vendors-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendors', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
+			<?php
+			// Surface the last bulk-action report (incl. per-row failures) that
+			// the post-action reload would otherwise have discarded.
+			$bulk_report_key = 'wpss_bulk_vendor_report_' . get_current_user_id();
+			$bulk_report     = get_transient( $bulk_report_key );
+			if ( $bulk_report ) {
+				delete_transient( $bulk_report_key );
+				printf(
+					'<div class="notice notice-info is-dismissible"><p>%s</p></div>',
+					esc_html( (string) $bulk_report )
+				);
+			}
+			?>
 
 			<!-- Stats Cards -->
 			<div class="wpss-listing-stats wpss-vendor-stats">
@@ -1991,6 +2004,10 @@ class VendorsPage {
 				implode( ', ', $failed )
 			);
 		}
+
+		// Persist the per-row report so it survives the JS success reload, which
+		// otherwise discarded this message and hid partial failures from the admin.
+		set_transient( 'wpss_bulk_vendor_report_' . get_current_user_id(), $message, MINUTE_IN_SECONDS );
 
 		wp_send_json_success( array( 'message' => $message ) );
 	}

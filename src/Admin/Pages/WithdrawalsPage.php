@@ -273,6 +273,19 @@ class WithdrawalsPage {
 		<div class="wrap wpss-listing-page wpss-withdrawals-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Withdrawals', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
+			<?php
+			// Surface the last bulk-action report (incl. per-row failures) that
+			// the post-action reload would otherwise have thrown away.
+			$bulk_report_key = 'wpss_bulk_withdrawal_report_' . get_current_user_id();
+			$bulk_report     = get_transient( $bulk_report_key );
+			if ( $bulk_report ) {
+				delete_transient( $bulk_report_key );
+				printf(
+					'<div class="notice notice-info is-dismissible"><p>%s</p></div>',
+					esc_html( (string) $bulk_report )
+				);
+			}
+			?>
 
 			<!-- Stats Cards -->
 			<div class="wpss-listing-stats wpss-withdrawal-stats">
@@ -992,6 +1005,11 @@ class WithdrawalsPage {
 				implode( ', ', $failed )
 			);
 		}
+
+		// Persist the per-row report so it survives the JS success reload. The
+		// success callback reloads the page, which discarded this message and
+		// hid partial failures (e.g. "Failed: #12 (already paid)") from the admin.
+		set_transient( 'wpss_bulk_withdrawal_report_' . get_current_user_id(), $message, MINUTE_IN_SECONDS );
 
 		wp_send_json_success( array( 'message' => $message ) );
 	}

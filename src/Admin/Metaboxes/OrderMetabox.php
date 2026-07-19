@@ -826,9 +826,7 @@ class OrderMetabox {
 					</a>
 				<?php endif; ?>
 
-				<button type="button" class="button wpss-resend-notification" data-order="<?php echo esc_attr( $order->get_id() ); ?>">
-					<?php esc_html_e( 'Resend Notifications', 'wp-sell-services' ); ?>
-				</button>
+				<?php // "Resend Notifications" removed — it had no backend handler and only toasted "not yet implemented". ?>
 
 				<?php if ( in_array( $status, array( 'completed', 'cancelled' ), true ) ) : ?>
 					<button type="button" class="button button-link-delete wpss-process-refund" data-order="<?php echo esc_attr( $order->get_id() ); ?>">
@@ -946,10 +944,9 @@ class OrderMetabox {
 				$actions['start'] = __( 'Force Start', 'wp-sell-services' );
 				break;
 
-			case 'in_progress':
-				$actions['extend'] = __( 'Extend Deadline', 'wp-sell-services' );
-				break;
-
+			// 'in_progress' previously offered "Extend Deadline", which mapped to
+			// no handler and only toasted "not yet implemented" — removed until a
+			// real deadline-extend action exists.
 			case 'delivered':
 				$actions['complete'] = __( 'Force Complete', 'wp-sell-services' );
 				$actions['revision'] = __( 'Request Revision', 'wp-sell-services' );
