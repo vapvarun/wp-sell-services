@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wp-sell-services",
     "name": "WP Sell Services",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "namespace": "WPSellServices",
     "main_file": "wp-sell-services.php",
     "text_domain": "wp-sell-services",
@@ -312,7 +312,7 @@
     },
     {
       "name": "{prefix}wpss_reviews",
-      "purpose": "Order ratings + reviews"
+      "purpose": "Order ratings + reviews. reviewer_name column (1.2.2) holds the original author name for migrated guest reviews (reviewer_id = 0); resolved via Review::resolve_reviewer_name()."
     },
     {
       "name": "{prefix}wpss_disputes",
