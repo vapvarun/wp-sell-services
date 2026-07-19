@@ -22,11 +22,14 @@ defined( 'ABSPATH' ) || exit;
  */
 do_action( 'wpss_dashboard_section_before', 'requests', $user_id );
 
-// Get user's buyer requests.
-$args = array(
+// Get user's buyer requests (paginated so the list doesn't hard-cap at 20).
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
+$requests_page = isset( $_GET['requests_page'] ) ? max( 1, absint( $_GET['requests_page'] ) ) : 1;
+$args          = array(
 	'post_type'      => 'wpss_request',
 	'author'         => $user_id,
 	'posts_per_page' => 20,
+	'paged'          => $requests_page,
 	'post_status'    => array( 'publish', 'draft', 'pending' ),
 	'orderby'        => 'date',
 	'order'          => 'DESC',
@@ -181,6 +184,39 @@ $active_count = count(
 			<?php endwhile; ?>
 			<?php wp_reset_postdata(); ?>
 		</div>
+
+		<?php if ( (int) $requests->max_num_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Request pages', 'wp-sell-services' ); ?>">
+				<?php
+				// Paginate relative to the current section URL (see orders.php).
+				$requests_page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'requests_page', $page ) : remove_query_arg( 'requests_page' );
+				};
+	?>
+				<?php if ( $requests_page > 1 ) : ?>
+					<a href="<?php echo esc_url( $requests_page_url( $requests_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="wpss-pagination__current">
+					<?php
+					printf(
+						/* translators: 1: current page, 2: total pages */
+						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+						(int) $requests_page,
+						(int) $requests->max_num_pages
+					);
+					?>
+				</span>
+				<?php if ( $requests_page < (int) $requests->max_num_pages ) : ?>
+					<a href="<?php echo esc_url( $requests_page_url( $requests_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+						<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
 

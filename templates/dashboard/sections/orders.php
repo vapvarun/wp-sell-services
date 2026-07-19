@@ -72,7 +72,21 @@ if ( $order_id ) {
 }
 
 $order_repo = new OrderRepository();
-$orders     = $order_repo->get_by_customer( $user_id, array( 'limit' => 20 ) );
+
+// Paginated so the buyer's order list doesn't hard-cap at 20 (and doesn't try
+// to render an unbounded list on big accounts).
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
+$orders_page  = isset( $_GET['orders_page'] ) ? max( 1, absint( $_GET['orders_page'] ) ) : 1;
+$orders_per   = 20;
+$orders_total = $order_repo->count_by_customer( $user_id );
+$orders_pages = max( 1, (int) ceil( $orders_total / $orders_per ) );
+$orders       = $order_repo->get_by_customer(
+	$user_id,
+	array(
+		'limit'  => $orders_per,
+		'offset' => ( $orders_page - 1 ) * $orders_per,
+	)
+);
 
 // Get order stats.
 $stats           = $order_repo->get_customer_stats( $user_id );
@@ -268,6 +282,42 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 				</div>
 			<?php endforeach; ?>
 		</div>
+
+		<?php if ( $orders_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Order pages', 'wp-sell-services' ); ?>">
+				<?php
+				// Paginate relative to the CURRENT section URL so the link stays on
+				// this section regardless of how it's routed (pretty path vs default
+				// dashboard). Rebuilding the URL from the page slug dropped the
+				// section and landed the user back on the default view.
+				$orders_page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'orders_page', $page ) : remove_query_arg( 'orders_page' );
+				};
+	?>
+				<?php if ( $orders_page > 1 ) : ?>
+					<a href="<?php echo esc_url( $orders_page_url( $orders_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="wpss-pagination__current">
+					<?php
+					printf(
+						/* translators: 1: current page, 2: total pages */
+						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+						(int) $orders_page,
+						(int) $orders_pages
+					);
+					?>
+				</span>
+				<?php if ( $orders_page < $orders_pages ) : ?>
+					<a href="<?php echo esc_url( $orders_page_url( $orders_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+						<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
 

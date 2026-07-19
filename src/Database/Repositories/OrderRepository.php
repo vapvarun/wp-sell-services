@@ -180,6 +180,45 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Count orders for a customer matching optional filters.
+	 *
+	 * Counterpart to get_by_customer() — used by the paginated buyer "My Orders"
+	 * dashboard view to compute the total page count without re-running the full
+	 * SELECT.
+	 *
+	 * @since 1.2.2
+	 *
+	 * @param int                  $customer_id Customer user ID.
+	 * @param array<string, mixed> $args        Filter arguments (status, platform).
+	 * @return int Total matching row count.
+	 */
+	public function count_by_customer( int $customer_id, array $args = array() ): int {
+		$defaults = array(
+			'status'   => '',
+			'platform' => '',
+		);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$sql    = "SELECT COUNT(*) FROM {$this->table} WHERE customer_id = %d";
+		$params = array( $customer_id );
+
+		if ( ! empty( $args['status'] ) ) {
+			$sql     .= ' AND status = %s';
+			$params[] = $args['status'];
+		}
+
+		if ( ! empty( $args['platform'] ) ) {
+			$sql     .= ' AND platform = %s';
+			$params[] = $args['platform'];
+		}
+
+		return (int) $this->wpdb->get_var(
+			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		);
+	}
+
+	/**
 	 * Count orders for a vendor matching optional filters.
 	 *
 	 * Counterpart to get_by_vendor() — used by paginated dashboard views to

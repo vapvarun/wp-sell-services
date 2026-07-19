@@ -25,11 +25,14 @@ do_action( 'wpss_dashboard_section_before', 'services', $user_id );
 // Save dashboard URL before custom query changes the global post.
 $dashboard_url = get_permalink();
 
-// Get vendor's services.
-$args = array(
+// Get vendor's services (paginated so the list doesn't hard-cap at 20).
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
+$services_page = isset( $_GET['services_page'] ) ? max( 1, absint( $_GET['services_page'] ) ) : 1;
+$args          = array(
 	'post_type'      => 'wpss_service',
 	'author'         => $user_id,
 	'posts_per_page' => 20,
+	'paged'          => $services_page,
 	'post_status'    => array( 'publish', 'draft', 'pending' ),
 	'orderby'        => 'date',
 	'order'          => 'DESC',
@@ -326,6 +329,39 @@ $pending_count = count(
 			<?php endwhile; ?>
 			<?php wp_reset_postdata(); ?>
 		</div>
+
+		<?php if ( (int) $services->max_num_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Service pages', 'wp-sell-services' ); ?>">
+				<?php
+				// Paginate relative to the current section URL (see orders.php).
+				$services_page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'services_page', $page ) : remove_query_arg( 'services_page' );
+				};
+	?>
+				<?php if ( $services_page > 1 ) : ?>
+					<a href="<?php echo esc_url( $services_page_url( $services_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="wpss-pagination__current">
+					<?php
+					printf(
+						/* translators: 1: current page, 2: total pages */
+						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+						(int) $services_page,
+						(int) $services->max_num_pages
+					);
+					?>
+				</span>
+				<?php if ( $services_page < (int) $services->max_num_pages ) : ?>
+					<a href="<?php echo esc_url( $services_page_url( $services_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+						<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
 
