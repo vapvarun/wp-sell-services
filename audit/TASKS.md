@@ -85,18 +85,36 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - [ ] (P2) Portfolio cards fake-clickable + keyboard-trapped · `templates/partials/vendor-portfolio.php:239` — DEFERRED browser/a11y (card is a `role=article` div with cursor:pointer but no handler; the real link is `tabindex=-1` in an `aria-hidden` overlay)
 - [ ] (P2) "View all reviews" skips reviews #6-10 · `templates/vendor/profile.php:446` + `assets/js/frontend.js:394` — DEFERRED browser/JS (initial LIMIT 5 but load-more sends page=2&per_page=10 → offset 10, skipping rows 5-9)
 
-## I. Big-site / P3 backlog (verify each in source before fixing)
-- [ ] Messaging unread badge unindexed `JSON_CONTAINS` full scan · `ConversationRepository.php:169`
-- [ ] Dead template routes + orphaned `requirements-form.php` · `TemplateLoader.php:389`
-- [ ] Dead `templates/myaccount/*` + false Preflight pass; dead `templates/emails/plain/*` (14 files) — multipart or delete
-- [ ] ~30 UNVERIFIED P3s across both audit reports (favorites total, notifications pagination, deleted-user name fallbacks, wizard save-on-error, offline-instructions key, ledger balance column, order-cancelled email reason, email heading bands, etc.)
+## I. Big-site / P3 backlog (verify each in source before fixing) — NOT STARTED
+- [ ] Messaging unread badge unindexed `JSON_CONTAINS` full scan · `ConversationRepository.php:169` — CONFIRMED real. NOT a quick fix: `JSON_CONTAINS(participants, …)` can't use an index → full table scan per call, fetches all rows + sums in PHP. Proper fix = schema migration (participants join table w/ indexed participant_id, OR indexed generated column) + write-path updates + a per-user unread cache with write-time invalidation. Own focused effort with seeded 1000+ conversation scale test; no band-aid.
+- [ ] Dead template routes + orphaned `requirements-form.php` · `TemplateLoader.php:389` — entangled with browser-batch F#2 (the "good" `templates/myaccount/notifications.php` should be WIRED, not deleted) and the intentionally-retained `templates/disputes/dispute-view.php`. Resolve alongside those, don't bulk-delete.
+- [ ] Dead `templates/myaccount/*` + false Preflight pass; dead `templates/emails/plain/*` (14 files) — decide multipart-vs-delete AFTER F#2 + the dispute email plain-sibling reason fix.
+- [ ] ~30 UNVERIFIED P3s across both audit reports — each needs source verification first (favorites total, notifications pagination, deleted-user name fallbacks, wizard save-on-error, offline-instructions key, ledger balance column, order-cancelled email reason, email heading bands, etc.). Treat as leads, not specs.
 
 ---
 
 ## Coverage still owed (before calling the audit fully closed)
-- [ ] One BROWSER + responsive (≤480px) + dark-mode pass — nothing has had runtime UI verification yet
-- [ ] Confirm Pro `wpss_dashboard_sections` doesn't already mask the disputes P1 on Pro sites
-- [ ] Re-verify the ~30 P3/UNVERIFIED items in source
+
+### Browser batch (one focused session — all `[browser-owed]` items + JS/template fixes)
+- [ ] F#2 Standalone notifications: render the good `templates/myaccount/notifications.php` + add mark-read JS (backends exist: REST `NotificationsController::mark_as_read`, ajax `wpss_mark_notification_read`/`_all_`)
+- [ ] F#3 Realtime JS: add consumers for `wpss:realtime:notification`/`wpss:realtime:message` (or document as a public extension API) · `assets/js/wpss-realtime.js`
+- [ ] F#8 Manual Order page: convert all-users/all-services `<select>`s to AJAX search (select2) — currently unbounded, hangs at scale · `ManualOrderPage.php:124`
+- [ ] H#2 "View all reviews" load-more offset (JS+REST) · `frontend.js:394` + `vendor/profile.php:446`
+- [ ] H#5 Orders/Services/Requests pagination (mirror `sales.php:379`; add `OrderRepository::count_by_customer()`)
+- [ ] H#6 Profile notifications surface (new `notifications` dashboard section + template)
+- [ ] H#7 Portfolio card a11y (real anchor/button, not a `role=article` div; fix the `tabindex=-1`/`aria-hidden` overlay trap)
+- [ ] H#8 Drag-drop requirement files: sync dropped files into `input.files` via DataTransfer · `requirements-form.js:149`
+- [ ] Visual/responsive (≤480px) + dark-mode sign-off on every `[browser-owed]` fix already shipped (E: SellerCard View-Profile, guest-checkout redirect, bulk-reject; F: disputes surface, dead-button removal, bulk-report notice)
+
+### PayPal + Stripe live session (needs real gateway / browser 3DS)
+- [ ] Cluster A (PayPal payout: mark paid_out, idempotency, N+1/cap)
+- [ ] Cluster B (Stripe billing 3DS trio + #8 rules-table "Active" display)
+- [ ] Commission Phase 2/4 END-TO-END: real Connect account, verify flat + override reach `application_fee_amount` in a live 3DS payment (unit/DB path already verified)
+- [ ] D setup-wizard PayPal cred keys (confirm write-key == gateway read-key end-to-end)
+
+### Then
+- [ ] Confirm Pro `wpss_dashboard_sections` doesn't already register/mask a `disputes` section on Pro sites (my free-side add)
+- [ ] Cluster I (P3 backlog) — JSON_CONTAINS migration + verify-then-fix the ~30 P3s
 - [ ] Release: version bump + changelog + MANDATORY Docker install test (Reign + free/pro) before tagging 1.2.2
 
 ## Environment state (Local, for the next session)
