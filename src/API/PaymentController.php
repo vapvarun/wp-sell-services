@@ -465,10 +465,49 @@ class PaymentController extends RestController {
 		// WPSS order. confirm_payment() creates an order internally, so we use
 		// process_payment() for the verify-only path.
 		if ( $pay_order ) {
+			$order = wpss_get_order( $pay_order );
+
+			// The order must exist, belong to the caller, and still be awaiting
+			// payment — none of which was checked before. Without these guards a
+			// buyer could confirm a small payment intent (e.g. a $5 capture)
+			// against someone else's $500 order and have it marked paid.
+			if ( ! $order ) {
+				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+			}
+
+			if ( (int) $order->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			}
+
+			// Idempotency: never re-process an order that is already paid.
+			if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+				return new WP_REST_Response(
+					array(
+						'gateway'      => 'stripe',
+						'order_id'     => $pay_order,
+						'order_number' => $order->order_number,
+						'status'       => 'paid',
+					)
+				);
+			}
+
 			$payment = $gateway->process_payment( $payment_id );
 
 			if ( empty( $payment['success'] ) ) {
 				return new WP_Error( 'stripe_confirm_error', $payment['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+			}
+
+			// The captured amount MUST match the order total. process_payment()
+			// returns the amount in the store currency; compare with a small
+			// epsilon to absorb float rounding.
+			$captured = (float) ( $payment['amount'] ?? 0 );
+			$expected = (float) ( $order->total ?? 0 );
+			if ( abs( $captured - $expected ) > 0.01 ) {
+				return new WP_Error(
+					'rest_amount_mismatch',
+					__( 'The paid amount does not match the order total.', 'wp-sell-services' ),
+					array( 'status' => 400 )
+				);
 			}
 
 			$order_provider = wpss_get_order_provider();
