@@ -72,3 +72,32 @@ the **Stripe Connect** path pays a different number. Two answers to "what's the 
 
 This replaces the per-symptom commission fixes (#3/#7/#8) with one correct foundation and
 closes the gateway-recompute gap the audit found.
+
+---
+
+## Exact surface map (from the 2026-07-19 sweep — start here next session)
+
+The fee formula `round(base * rate/100, 2)` / independent fee derivation lives in **6 places**.
+Phase 1 (shipped, `4e45059`) added the `wpss_commission_fee` seam in surface #1. The remaining
+work repoints the other five + the two Pro rate hooks:
+
+| # | Surface | File:line | Action |
+|---|---|---|---|
+| 1 | `CommissionService::calculate()` | free `src/Services/CommissionService.php` | ✅ done — home of the amount seam. Extract a `compute_breakdown(float $base, object $order): array` static that #2–#5 all call. |
+| 2 | Standalone order create | free `src/Integrations/Standalone/StandaloneOrderProvider.php:98` | replace local `round(base*rate/100,2)` with the shared helper |
+| 3 | Woo order create (pro) | pro `src/Integrations/WooCommerce/WCOrderProvider.php:407` | shared helper |
+| 4 | Manual order (admin) | free `src/Admin/Pages/ManualOrderPage.php:609` | shared helper |
+| 5 | Demo seeder | free `src/Demo/MarketplaceSeeder.php:685` | shared helper (test data; low risk) |
+| 6 | Stripe Connect split (pro) | pro `src/StripeConnect/ConnectPaymentProcessor.php:147` `calculate_fee()` | read the order's persisted `platform_fee`; delete the independent `total*global_rate/100` math |
+| + | Tiered rules (pro) | pro `src/TieredCommission/TieredCommissionManager.php:67` | move off `wpss_commission_rate` (percentage) onto `wpss_commission_fee` (amount); return flat directly, percentage as base*rate/100 |
+| + | Plan override (pro) | pro `src/VendorSubscriptions/SubscriptionManager.php:133` | same — move onto `wpss_commission_fee` so it also reaches the Stripe split |
+
+Consumers already reading the persisted breakdown (leave, just confirm): `EarningsController`,
+`VendorAnalyticsController`, `OrdersController`, `Admin::…` fee display, `VendorProfileRepository`
+total_commission, PayPal `PayoutsBatchService::get_pending_payouts` (confirm it sums ledger earnings).
+
+Parity gate for every step: a pure-percentage global-rate order must produce identical
+`platform_fee` + `vendor_earnings` before/after. Verify a flat rule AND a plan override both
+flow through to the Stripe Connect `application_fee_amount`, not just the wallet.
+
+QA verification card: Basecamp WP Sell Services / Bugs #10109128594.
