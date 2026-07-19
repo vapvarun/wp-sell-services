@@ -45,14 +45,15 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 ## E. Data-fidelity & moderation trust
 - [x] (P1/P2) Tips list/total/badge empty + tipper/message · `TippingController.php` · `dc367b7`
 - [x] (P2) Review moderation toggle + rating recompute · `ReviewsController.php` + `ReviewModerationPage.php` · `042b98a`
-- [ ] (P2) SellerCard rating omits `status='approved'` · `SellerCard.php:259`
-- [ ] (P1) Search/Category blocks post `wpss_search`/`wpss_category`; archive reads `search`/`category` · `ServiceSearch.php:140` + `ServiceCategories.php:197`
-- [ ] (P2) Featured block/grid vs shortcode key drift + zero-review INNER JOIN hides featured · `FeaturedServices.php:154,160`
-- [ ] (P2) SellerCard "View Profile" → theme author archive, not vendor storefront · `SellerCard.php:219`
-- [ ] (P2) Guest "Continue to Checkout" dead-ends (login_url localized but unused) · `assets/js/single-service.js:642`
-- [ ] (P2) Bulk Reject service doesn't set draft → stays live · `ServiceModerationPage.php:921`
-- [ ] (P2) Dispute timeline reads arrays as objects → "System"/blank · `DisputeWorkflowManager.php:1024`
-- [ ] (P2) Dispute-opened email omits buyer reason (incl. admin copy) · `templates/emails/dispute-opened.php:113`
+- [x] (P2) SellerCard rating omits `status='approved'` — now matches canonical `status='approved' AND review_type='customer_to_vendor'` · `SellerCard.php` · `2fecf09`
+- [x] (P1) Search/Category blocks posted `wpss_search`/`wpss_category`; archive reads `search`/`category` — blocks realigned to `search`/`category` · `ServiceSearch.php` + `ServiceCategories.php` · `2fecf09`
+- [x] (P2) Featured shortcode orphan key `_wpss_is_featured`→`_wpss_featured`; block zero-review INNER JOIN → OR EXISTS/NOT EXISTS (LEFT JOIN) · `FeaturedServices.php` + `Shortcodes.php` · `2fecf09`
+- [x] (P2) SellerCard "View Profile" → now `wpss_get_vendor_url()` storefront (was theme author archive) · `SellerCard.php` · `2fecf09` — [browser-owed: visual]
+- [x] (P2) Guest "Continue to Checkout" — JS now redirects to the returned `login_url` instead of dead-ending · `assets/js/single-service.js` · `2fecf09` — [browser-owed]
+- [x] (P2) Bulk Reject now sets `post_status=draft` (was meta-only, stayed live) · `ServiceModerationPage.php` · `2fecf09` — [browser-owed: admin UI]
+- [x] (P2) Dispute timeline read array evidence as objects → "System"/blank; now array access · `DisputeWorkflowManager.php` · `2fecf09`
+- [x] (P2) Dispute-opened email omitted buyer reason (incl. admin copy); `send_dispute_opened()` now loads the dispute + passes `dispute_reason` · `EmailService.php` · `2fecf09`
+- Verified (`wp eval-file`): featured query includes an UNRATED featured service (control proves old orderby excluded it); SellerCard rating=5.0 counting only approved c2v; dispute evidence timeline shows real user_id + content. PHPCS net-zero (8 files). `.min.js` not enqueued (source authoritative; regenerated at release build).
 
 ## F. Ship or gate half-built surfaces
 - [ ] (P1) Disputes have NO on-site surface — add dashboard section + wire `dispute-view.php` · `UnifiedDashboard.php:311` (+ order-view link, evidence-absint, initiated_by/array-access latents)
