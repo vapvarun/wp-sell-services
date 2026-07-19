@@ -101,3 +101,42 @@ Parity gate for every step: a pure-percentage global-rate order must produce ide
 flow through to the Stripe Connect `application_fee_amount`, not just the wallet.
 
 QA verification card: Basecamp WP Sell Services / Bugs #10109128594.
+
+---
+
+## Consolidation COMPLETE (2026-07-19 — free `1a68189`, pro `24093f8`)
+
+The design above is now implemented. Status per surface:
+
+| # | Surface | Status |
+|---|---|---|
+| 1 | `CommissionService::calculate()` | ✅ delegates to the new `compute_breakdown(float $base, object $order)` static authority; `get_commission_rate()` → static `resolve_commission_rate()` |
+| 2 | Standalone order create | ✅ repointed to `compute_breakdown` (partial order `{id:0,vendor_id,service_id}`) |
+| 3 | Woo order create (pro) | ✅ repointed to `compute_breakdown` |
+| 4 | Manual order (admin) | ⏸ intentionally NOT repointed — admin sets an explicit per-order rate in the form; re-resolving via the engine would silently override that choice. Admin authority preserved; low divergence risk (offline/admin-created). |
+| 5 | Demo seeder | ✅ repointed; fixed `COMMISSION_RATE` constant removed (demo now matches the live engine) |
+| 6 | Stripe Connect split (pro) | ✅ `filter_payment_intent_args` reads the persisted `platform_fee` (zero-decimal-aware → smallest unit), capped at the charge. `calculate_fee()` renamed `calculate_fee_fallback()` and used ONLY when order_id 0 / no persisted fee. |
+| + | Tiered rules (pro) | ✅ percentage rules stay on `wpss_commission_rate`; FLAT rules resolve on `wpss_commission_fee` (return the flat amount, not "flat %"). Shared `find_matching_rule()` keeps both filters on the same rule. |
+| + | Plan override (pro) | ✅ stays on `wpss_commission_rate` (percentage) AND re-asserts on `wpss_commission_fee` (prio 30) so an active override beats a flat tiered rule. Reaches the Stripe split automatically now that the split reads the persisted fee. |
+| — | PayPal payout | ✅ already summed the persisted ledger `vendor_earnings` — confirmed, unchanged. |
+
+**Why the split needed BOTH the creation-time repoint AND the persisted read:** the
+Connect split runs at PAYMENT time, before completion. It reads the fee persisted
+at order CREATION. So the creation-time sites had to resolve the full rate
+(tiered/override via `wpss_commission_rate`) for the persisted value to be correct
+when the gateway reads it. Repoint + gateway-read together kill the divergence.
+
+**Precedence (highest first):** plan `commission_override` (%) → tiered rule
+(% or flat) → per-vendor rate → global. Enforced by filter priorities:
+tiered rate 20 / override rate 30 on `wpss_commission_rate`; tiered flat 20 /
+override 30 on `wpss_commission_fee`.
+
+**Verification (`wp eval-file`, 11/11 pass):** pure-% global order byte-identical
+before/after; flat rule → flat fee; override 25% beats flat $10; Connect reads
+persisted $50 → 5000 cents (not recomputed); both Pro filters wired at runtime.
+PHPCS net-zero across all 7 files.
+
+**Not yet done (separate cards):** #8 rules table "always Active" display
+(`CommissionSettingsRenderer.php:148`); full end-to-end Stripe Connect 3DS split
+verification in the browser with a real connected account (unit/DB path verified,
+live 3DS pass still owed alongside the Stripe subscription trio).

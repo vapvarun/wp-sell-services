@@ -23,8 +23,8 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - [ ] (P1) Subscribe marks Active with NO card captured · pro `SubscriptionBillingHandler.php:444` · needs browser 3DS
 - [ ] (P2) Plan switch double-bills (new Stripe sub, old not cancelled) · pro `SubscriptionBillingHandler.php:154` · browser 3DS
 - [ ] (P1) Recurring Stripe sub has no payment method → never charges · pro `StripeRecurringBilling.php:547` · browser 3DS
-- [ ] (P2) Tiered commission `flat` applied as a percentage · pro `AbstractCommissionRule.php:184` — folded into commission refactor
-- [ ] (P2) Commission rules table always prints "Active" · pro `CommissionSettingsRenderer.php:148`
+- [x] (P2) Tiered commission `flat` applied as a percentage — now resolves on the `wpss_commission_fee` amount seam · pro `TieredCommissionManager.php` · `24093f8`
+- [ ] (P2) Commission rules table always prints "Active" · pro `CommissionSettingsRenderer.php:148` (display-only #8; still open)
 
 ## C. Vendor identity (COMPLETE)
 - [x] (P1) Portfolio add/edit 403 for role vendors · `PortfolioController.php` · `d325cc0`
@@ -63,12 +63,15 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 - [ ] (P2) Admin bulk payout/vendor actions discard per-row failure report on reload · `WithdrawalsPage.php:709` + `VendorsPage.php:867`
 - [ ] (P2) Manual Order page eager-loads ALL services + ALL users (twice) → hangs at scale · `ManualOrderPage.php:124`
 
-## G. Commission architecture (foundation done; consolidation = FRESH SESSION)
+## G. Commission architecture (CONSOLIDATION DONE)
 - [x] Phase 1 — `wpss_commission_fee` amount seam + parity · `CommissionService.php` · `4e45059`
-- [ ] Phase 2 — extract `compute_breakdown()`; repoint the 5 dup fee computations (Standalone/WC/ManualOrder/Seeder) — see `COMMISSION-ARCHITECTURE.md` surface map
-- [ ] Phase 2 — Stripe Connect split + PayPal payout read the persisted breakdown (kill divergent math)
-- [ ] Phase 3 — move Tiered (flat+%) + subscription override onto `wpss_commission_fee`
-- [ ] Phase 4 — retire `ConnectPaymentProcessor::calculate_fee()`; parity + flat + override → Stripe `application_fee_amount` verified
+- [x] Phase 2 — extract `compute_breakdown()` authority; `calculate()` delegates · free `CommissionService.php` · `1a68189`
+- [x] Phase 2 — repoint creation-time fee sites (Standalone, WC, Seeder) so the PERSISTED fee already reflects tiered/override/flat · `1a68189` (free) + `24093f8` (pro WC)
+- [x] Phase 2/4 — Stripe Connect split reads the persisted `platform_fee` (zero-decimal-aware cents); legacy %-of-total kept only as order_id-0 fallback; divergent math killed · pro `ConnectPaymentProcessor.php` · `24093f8`
+- [x] Phase 3 — flat tiered rules onto `wpss_commission_fee` (amount); subscription override re-asserts on the same seam at higher priority so override > flat · pro `TieredCommissionManager.php` + `SubscriptionManager.php` · `24093f8`
+- [x] PayPal payout — CONFIRMED already sums the persisted ledger `vendor_earnings` (`get_pending_payouts`); no change needed
+- [~] ManualOrderPage — intentionally left on its admin-supplied per-order rate (admin authority applied to `$total`, not engine-resolved rate on pre-tax base); documented in `COMMISSION-ARCHITECTURE.md`
+- Verified (`wp eval-file`, 11/11): parity byte-identical for pure-% global orders; flat rule → flat fee (not flat%); override 25% beats flat $10; Connect reads persisted $50 → 5000 cents (not recomputed). PHPCS net-zero. PHPStan project run blocked by phpstan-wordpress extension autoload gap in this checkout (needs `composer install`); standalone level-5 shows changed logic type-clean.
 
 ## H. Buyer/vendor UX (mostly template layer)
 - [ ] (P2) Drag-dropped requirement files never submitted (DataTransfer) · `assets/js/requirements-form.js:58`
