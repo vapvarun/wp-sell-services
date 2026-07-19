@@ -120,7 +120,7 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 ## Environment state (Local, for the next session)
 - Stripe TEST keys + webhook secret set; webhook live via cloudflare tunnel (ephemeral — restart if the tunnel died).
 - Pro active; `wpss_pro_license_status='valid'` set for local testing (revert with `wp option delete wpss_pro_license_status`).
-- **Theme: BuddyX 5.1.3 active** (installed + switched this session for theme testing per owner request; was twentytwentyfive). BuddyX Pro / Reign not installed (no local zips found) — install a premium zip to test those.
+- **Theme: BuddyX 5.1.4 active** (GitHub `master` from github.com/wbcomdesigns/buddyx, installed into `wp-content/themes/buddyx` per owner request; ships built `.min` assets, no npm build needed. Was twentytwentyfive → wp.org 5.1.3 → master 5.1.4). BuddyX Pro / Reign not installed (no local zips) — drop a premium zip to test those.
 - **Browser testing: use the HOST Playwright MCP** (`mcp__plugin_playwright_playwright__*`), NOT the Docker one — the Docker browser can't resolve `wp-sell-services.local`. Site: `http://wp-sell-services.local`, dashboard `/dashboard/` (sections are pretty-permalinked, e.g. `/dashboard/disputes/`). Auto-login via `?autologin=1`. Tour modal suppressed via `wp user meta update 1 wpss_tour_completed 1`.
 - Demo dispute seeded for browser test: order #18 / dispute #4 (user 1 as customer). Delete when done.
 - Verification pattern used: seed real rows via `wp eval-file`, assert before/after with positive+negative controls.
