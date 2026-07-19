@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.6';
+	const DB_VERSION = '1.4.7';
 
 	/**
 	 * Option name for storing DB version.
@@ -195,6 +195,17 @@ class SchemaManager {
 				'column'     => 'vacation_return_date',
 				'definition' => 'date DEFAULT NULL',
 				'after'      => 'vacation_message',
+			),
+			// Original author name for guest/legacy reviews with no WP account
+			// (reviewer_id = 0) — e.g. WooCommerce comment_author carried over by
+			// the Woo->WP migration (Basecamp #10108962763 / Zoho #40660). NULL
+			// for native reviews, which always come from a real logged-in user.
+			// Listed here so the upgrade path self-heals if dbDelta misses it.
+			array(
+				'table'      => 'reviews',
+				'column'     => 'reviewer_name',
+				'definition' => 'varchar(255) DEFAULT NULL',
+				'after'      => 'reviewer_id',
 			),
 		);
 
@@ -570,6 +581,7 @@ class SchemaManager {
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			order_id bigint(20) unsigned NOT NULL,
 			reviewer_id bigint(20) unsigned NOT NULL,
+			reviewer_name varchar(255) DEFAULT NULL,
 			reviewee_id bigint(20) unsigned NOT NULL,
 			service_id bigint(20) unsigned NOT NULL,
 			customer_id bigint(20) unsigned NOT NULL,

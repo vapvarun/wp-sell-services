@@ -831,6 +831,22 @@ function wpss_time_ago( string $datetime ): string {
 }
 
 /**
+ * Resolve a reviewer's display name for templates.
+ *
+ * Thin template-facing wrapper over Review::resolve_reviewer_name() so raw
+ * review rows in templates (which expose reviewer_name / customer_id) render
+ * migrated guest authors instead of "Anonymous". Precedence: registered user
+ * display_name -> stored guest name -> "Anonymous".
+ *
+ * @param int         $reviewer_id   Reviewer user ID (0 for guest/legacy).
+ * @param string|null $reviewer_name Stored guest author name, if any.
+ * @return string
+ */
+function wpss_get_reviewer_name( int $reviewer_id, ?string $reviewer_name = null ): string {
+	return \WPSellServices\Models\Review::resolve_reviewer_name( $reviewer_id, $reviewer_name );
+}
+
+/**
  * Get order status label.
  *
  * @param string $status Status key.

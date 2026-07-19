@@ -3045,7 +3045,7 @@ class VendorsPage {
 
 		$reviews = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT r.*, o.order_number, s.post_title as service_title, u.display_name as reviewer_name
+				"SELECT r.*, o.order_number, s.post_title as service_title, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name
 				FROM {$wpdb->prefix}wpss_reviews r
 				LEFT JOIN {$wpdb->prefix}wpss_orders o ON r.order_id = o.id
 				LEFT JOIN {$wpdb->posts} s ON o.service_id = s.ID
@@ -3119,7 +3119,7 @@ class VendorsPage {
 										<?php echo esc_html( str_repeat( '★', (int) $review->rating ) ); ?>
 										<?php echo esc_html( str_repeat( '☆', 5 - (int) $review->rating ) ); ?>
 									</span>
-									<strong><?php echo esc_html( $review->reviewer_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
+									<strong><?php echo esc_html( $review->reviewer_display_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
 								</div>
 								<span class="wpss-review-meta">
 									<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?>

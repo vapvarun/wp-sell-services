@@ -987,7 +987,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								$vendor_joined     = $vendor_member_obj ? wp_date( 'M Y', strtotime( $vendor_member_obj->user_registered ) ) : '';
 
 								// Get latest review for this vendor.
-								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, u.display_name as reviewer_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								?>
 							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
 								<div class="wpss-card__header">
@@ -1024,7 +1024,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									<?php if ( $latest_review ) : ?>
 									<div class="wpss-co-testimonial">
 										<p class="wpss-co-testimonial__text">&ldquo;<?php echo esc_html( wp_trim_words( $latest_review->content ?? $latest_review->review ?? '', 30 ) ); ?>&rdquo;</p>
-										<span class="wpss-co-testimonial__author">&mdash; <?php echo esc_html( $latest_review->reviewer_name ?? __( 'Verified Buyer', 'wp-sell-services' ) ); ?></span>
+										<span class="wpss-co-testimonial__author">&mdash; <?php echo esc_html( $latest_review->reviewer_display_name ?? __( 'Verified Buyer', 'wp-sell-services' ) ); ?></span>
 									</div>
 									<?php endif; ?>
 								</div>

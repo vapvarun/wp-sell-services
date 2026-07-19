@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -258,6 +258,14 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.2.2 - July 2026 =
+
+Migrated guest reviews now keep their original reviewer name instead of showing "Anonymous".
+
+* Fix      - Migrated guest reviews with no linked account now show the original reviewer name across service pages, vendor profiles, and review moderation.
+* Fix      - Review author name in the REST API and SEO review schema no longer falls back to "Anonymous" for migrated guest reviews.
+* Dev      - Added a nullable reviewer_name column to the reviews table and a shared reviewer-name resolver so every review surface renders names consistently.
 
 = 1.2.1 - July 2026 =
 

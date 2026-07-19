@@ -392,7 +392,7 @@ JS;
 		$created_at  = isset( $row->created_at ) ? (string) $row->created_at : '';
 
 		$reviewer      = $reviewer_id > 0 ? get_userdata( $reviewer_id ) : false;
-		$reviewer_name = $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' );
+		$reviewer_name = Review::resolve_reviewer_name( $reviewer_id, $row->reviewer_name ?? null );
 
 		$service       = $service_id > 0 ? get_post( $service_id ) : null;
 		$service_title = $service ? $service->post_title : '';

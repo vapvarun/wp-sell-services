@@ -1137,16 +1137,16 @@ class AjaxHandlers {
 		// Generate HTML for reviews.
 		ob_start();
 		foreach ( $reviews as $review ) {
-			$reviewer = get_userdata( $review->reviewer_id );
+			$reviewer_name = $review->get_reviewer_name();
 			?>
 			<div class="wpss-review">
 				<div class="wpss-review-header">
 					<img src="<?php echo esc_url( get_avatar_url( $review->reviewer_id, array( 'size' => 48 ) ) ); ?>"
-						alt="<?php echo esc_attr( $reviewer ? $reviewer->display_name : '' ); ?>"
+						alt="<?php echo esc_attr( $reviewer_name ); ?>"
 						class="wpss-review-avatar">
 					<div class="wpss-review-info">
 						<strong class="wpss-review-author">
-							<?php echo esc_html( $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+							<?php echo esc_html( $reviewer_name ); ?>
 						</strong>
 						<div class="wpss-review-rating">
 							<?php for ( $i = 1; $i <= 5; $i++ ) : ?>

@@ -223,7 +223,7 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 
 		$reviews = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT r.*, u.display_name as reviewer_name
+				"SELECT r.*, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name
 				FROM {$wpdb->prefix}wpss_reviews r
 				LEFT JOIN {$wpdb->users} u ON r.reviewer_id = u.ID
 				WHERE r.service_id = %d
@@ -244,7 +244,7 @@ class ServiceSchemaPiece extends Abstract_Schema_Piece {
 				'@type'         => 'Review',
 				'author'        => array(
 					'@type' => 'Person',
-					'name'  => $review->reviewer_name ?: __( 'Anonymous', 'wp-sell-services' ),
+					'name'  => $review->reviewer_display_name ?: __( 'Anonymous', 'wp-sell-services' ),
 				),
 				'datePublished' => gmdate( 'c', strtotime( $review->created_at ) ),
 				'reviewBody'    => $review->comment,

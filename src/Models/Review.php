@@ -56,6 +56,15 @@ class Review {
 	public int $reviewer_id;
 
 	/**
+	 * Original author name for guest/legacy reviews with no WP account
+	 * (reviewer_id = 0). NULL for native reviews, which always come from a
+	 * real logged-in user resolved via get_userdata( reviewer_id ).
+	 *
+	 * @var string|null
+	 */
+	public ?string $reviewer_name = null;
+
+	/**
 	 * Reviewed user ID (vendor).
 	 *
 	 * @var int
@@ -166,6 +175,11 @@ class Review {
 		$review->order_id    = (int) $row->order_id;
 		$review->service_id  = (int) $row->service_id;
 		$review->reviewer_id = (int) $row->reviewer_id;
+		// Carried-over guest author name (WooCommerce comment_author). NULL/empty
+		// for native reviews, which resolve their name from the user account.
+		$review->reviewer_name = isset( $row->reviewer_name ) && '' !== (string) $row->reviewer_name
+			? (string) $row->reviewer_name
+			: null;
 		// Map reviewee_id from DB to reviewed_id property.
 		$review->reviewed_id = (int) ( $row->reviewee_id ?? $row->vendor_id ?? 0 );
 		$review->rating      = (int) $row->rating;
@@ -214,13 +228,45 @@ class Review {
 	}
 
 	/**
-	 * Get reviewer name.
+	 * Get reviewer name for display.
 	 *
 	 * @return string
 	 */
 	public function get_reviewer_name(): string {
-		$user = $this->get_reviewer();
-		return $user ? $user->display_name : __( 'Anonymous', 'wp-sell-services' );
+		return self::resolve_reviewer_name( $this->reviewer_id, $this->reviewer_name );
+	}
+
+	/**
+	 * Resolve a reviewer's display name from an ID + stored guest name.
+	 *
+	 * Canonical name-resolution used by every review display surface
+	 * (frontend, admin moderation, REST, SEO schema) so migrated guest
+	 * reviews (reviewer_id = 0, name carried in reviewer_name) never fall
+	 * back to "Anonymous" when the original author is known.
+	 *
+	 * Order of precedence:
+	 *   1. Registered user's display_name (get_userdata( reviewer_id )).
+	 *   2. Stored guest name (reviewer_name — e.g. WooCommerce comment_author).
+	 *   3. "Anonymous" for genuinely nameless rows.
+	 *
+	 * @param int         $reviewer_id   Reviewer user ID (0 for guest/legacy).
+	 * @param string|null $reviewer_name Stored guest author name, if any.
+	 * @return string
+	 */
+	public static function resolve_reviewer_name( int $reviewer_id, ?string $reviewer_name = null ): string {
+		if ( $reviewer_id > 0 ) {
+			$user = get_userdata( $reviewer_id );
+			if ( $user && '' !== (string) $user->display_name ) {
+				return $user->display_name;
+			}
+		}
+
+		$reviewer_name = null !== $reviewer_name ? trim( $reviewer_name ) : '';
+		if ( '' !== $reviewer_name ) {
+			return $reviewer_name;
+		}
+
+		return __( 'Anonymous', 'wp-sell-services' );
 	}
 
 	/**
