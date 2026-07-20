@@ -1244,16 +1244,7 @@ class VendorsPage {
 		$response_time = __( 'N/A', 'wp-sell-services' );
 
 		// Get wallet balance.
-		$wallet_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
-				$vendor_id
-			)
-		);
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 		?>
 		<div class="wrap wpss-vendor-detail-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendor Details', 'wp-sell-services' ); ?></h1>
@@ -2773,16 +2764,7 @@ class VendorsPage {
 		$global_rate        = CommissionService::get_global_commission_rate();
 
 		// Get wallet balance.
-		$wallet_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
-				$vendor_id
-			)
-		);
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
 		// Get withdrawal history.
 		$withdrawals_page = isset( $_POST['withdrawals_page'] ) ? absint( $_POST['withdrawals_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
@@ -2953,16 +2935,7 @@ class VendorsPage {
 		$limit = 50;
 
 		// Current balance = balance_after on the latest transaction.
-		$wallet_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
-				$vendor_id
-			)
-		);
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(

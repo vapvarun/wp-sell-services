@@ -130,9 +130,12 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 
 	$table = $wpdb->prefix . 'wpss_wallet_transactions';
 
+	// Only COMPLETED rows count toward a spendable balance — a pending or failed
+	// transaction must never inflate it. (Pro's provider already filtered this;
+	// the free helper did not, which would have been a second silent divergence.)
 	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( 'withdrawal', 'debit', 'dispute_refund' ) THEN -amount ELSE amount END ), 0 )
 		FROM {$table}
-		WHERE user_id = %d";
+		WHERE user_id = %d AND status = 'completed'";
 
 	if ( $lock ) {
 		$sql .= ' FOR UPDATE';
