@@ -775,6 +775,26 @@ class OrderWorkflowManager {
 			return true;
 		}
 
+		// Stripe Connect orders were settled directly to the vendor's connected
+		// account, and CommissionService wrote an offsetting 'connect_transfer'
+		// debit — so the vendor's NET wallet position for this order is already
+		// zero. Reversing here would debit them a second time and drive the
+		// balance negative, clawing back money the wallet never gave them.
+		//
+		// The real clawback happens at Stripe: the free gateway sets
+		// reverse_transfer on the refund (StripeGateway::build_refund_args),
+		// which pulls the funds back out of the connected account.
+		if ( ! empty( $order->connect_transfer_id ) ) {
+			wpss_log(
+				sprintf(
+					'Order %1$d was Stripe Connect settled (%2$s); skipping ledger reversal — the refund reverses the transfer at Stripe instead.',
+					$order_id,
+					$order->connect_transfer_id
+				)
+			);
+			return true;
+		}
+
 		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
 		$profiles_table     = $wpdb->prefix . 'wpss_vendor_profiles';
 		$orders_table       = $wpdb->prefix . 'wpss_orders';

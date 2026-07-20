@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.7';
+	const DB_VERSION = '1.4.8';
 
 	/**
 	 * Option name for storing DB version.
@@ -206,6 +206,19 @@ class SchemaManager {
 				'column'     => 'reviewer_name',
 				'definition' => 'varchar(255) DEFAULT NULL',
 				'after'      => 'reviewer_id',
+			),
+			// Stripe Connect transfer id, set when the vendor's share was paid
+			// DIRECTLY to their connected account at charge time (transfer_data
+			// on the PaymentIntent). Non-null means the vendor already has this
+			// money and the wallet credit must be offset, or they get paid
+			// twice. Must be persisted at charge time, not re-derived later:
+			// Connect settings change, and a vendor who onboards after an order
+			// was charged would otherwise have that older order mis-classified.
+			array(
+				'table'      => 'orders',
+				'column'     => 'connect_transfer_id',
+				'definition' => 'varchar(255) DEFAULT NULL',
+				'after'      => 'transaction_id',
 			),
 		);
 
@@ -412,6 +425,7 @@ class SchemaManager {
 			payment_method varchar(50) DEFAULT NULL,
 			payment_status varchar(50) DEFAULT 'pending',
 			transaction_id varchar(255) DEFAULT NULL,
+			connect_transfer_id varchar(255) DEFAULT NULL,
 			paid_at datetime DEFAULT NULL,
 			revisions_included int(11) DEFAULT 0,
 			revisions_used int(11) DEFAULT 0,

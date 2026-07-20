@@ -279,6 +279,34 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Retrieve a PaymentIntent from Stripe.
+	 *
+	 * Narrow public accessor over the private api_request(). Exists so Pro can
+	 * inspect an intent (e.g. StripeConnect reading transfer_data to detect a
+	 * direct vendor settlement) without duplicating the API key handling,
+	 * endpoint and error conventions that live in this class.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param string $payment_intent_id Stripe PaymentIntent id.
+	 * @return array Intent data, or an empty array when it cannot be retrieved.
+	 */
+	public function get_payment_intent( string $payment_intent_id ): array {
+		if ( '' === $payment_intent_id ) {
+			return array();
+		}
+
+		$intent = $this->api_request( "payment_intents/{$payment_intent_id}", array(), 'GET' );
+
+		if ( isset( $intent['error'] ) ) {
+			wpss_log( "Stripe: could not retrieve PaymentIntent {$payment_intent_id}.", 'warning' );
+			return array();
+		}
+
+		return $intent;
+	}
+
+	/**
 	 * Process a refund.
 	 *
 	 * @param string     $transaction_id Original transaction ID.
