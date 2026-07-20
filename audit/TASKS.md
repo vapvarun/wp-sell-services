@@ -9,16 +9,24 @@ Legend: `[x]` shipped + verified · `[~]` in progress · `[ ]` todo · (P1/P2/P3
 
 ---
 
-## J. CHECKOUT IS BROKEN (P0 — found 2026-07-19 by running a real browser checkout)
+## J. CHECKOUT — WAS BROKEN, NOW WORKS END-TO-END (P0 chain, 2026-07-19/20)
 
-**No customer can buy anything with a real payment gateway.** Found only by
-clicking through checkout in the browser; every prior verification was
-`wp eval-file`/unit-level and missed it entirely.
+Found only by clicking through a real checkout in the browser; every prior
+verification was `wp eval-file`/unit-level and missed it entirely. **Stripe
+checkout now completes: order 41 paid, real PaymentIntent, correct commission.**
+
+**⚠️ BUILD GOTCHA (bit me mid-fix):** `Assets.php` rewrites asset URLs to `.min`
+when the file exists, so the site loads `stripe.min.js` and **edits to
+`assets/js/*.js` are inert until the min is rebuilt**. `npm run build:min` fails
+(no node_modules); use `npx terser assets/js/FILE.js -c -m -o assets/js/FILE.min.js`.
+This also applies to the deferred H#8 drag-drop fix.
 
 - [x] (P0) **Pay button posted to an unregistered AJAX action → admin-ajax returned bare `0`.** Checkout JS builds `wpss_{gateway}_process_payment` (`StandaloneCheckoutProvider.php:1193,1719`) but ONLY Offline + Test register that name. Registered the contract on Stripe's existing confirm handler + accepted the checkout nonce and `stripe_payment_intent_id`. · `StripeGateway.php` · `ab93f8a` — verified: response went `400`+`0` → `200`+real JSON.
 - [x] (P0) **Checkout never charged the card — FIXED** · `42a0def`. Root cause: TWO submit handlers on the same form; stripe.js had the correct flow but the generic inline handler raced it and posted the unconfirmed intent. Gateways now declare `data-wpss-own-submit` and the generic handler stands down; stripe.js also binds the cart form + sends `is_multi_checkout`; PaymentIntents now carry a `description` (required by Stripe for India exports). Verified by the error advancing at each step: `0` → "requires additional action" → "requires a description" → "requires customer name and address".
-- [ ] (P0) **India-export compliance: customer name + address.** Stripe rejects cross-border charges from India-registered accounts without them. The Payment Element does NOT collect an address — needs `elements.create('address', {mode:'billing'})` in its own container, passed to `confirmPayment()` as billing/shipping. TODO is in `assets/js/stripe.js`. **This is the only thing now blocking a completed purchase.** Affects every India-registered merchant selling cross-border.
-- [ ] (superseded) ~~Checkout never charges the card~~ The checkout page's INLINE JS mounts the Stripe Payment Element, collects the card, then posts the UNCONFIRMED intent to the server — it never calls `stripe.confirmPayment()`. Result: `{"success":false,"message":"Payment requires additional action."}` even with a valid 4242 test card. `assets/js/stripe.js:176-192` already implements the correct flow (`confirmPayment()` → `confirmPaymentAndCreateOrder()`), so there are TWO parallel Stripe implementations and the checkout page runs the broken duplicate. **Right fix = delete the inline duplicate and drive checkout through `assets/js/stripe.js`** (matches the no-duplicate-code rule); do NOT bolt a second confirm call into the inline copy.
+- [x] (P0) **India-export compliance: customer name + address — FIXED** · `818ecca`. Added the Stripe Address Element, passed to `confirmPayment()` as `billing_details` + `shipping`, with a field-level prompt when incomplete. Affects every India-registered merchant selling cross-border.
+- [x] **✅ VERIFIED END-TO-END** (BuddyX, Stripe test): buyer "Real Customer" bought a $50 service → `/dashboard/?order_id=41&action=requirements`, no error. Order 41: `payment_status=paid`, `payment_method=stripe`, `transaction_id=pi_3TvBOkSY8ch105Oa1irGYMdv`, **commission_rate 10.00 / platform_fee 5.00 / vendor_earnings 45.00** — first real payment through cluster G's `compute_breakdown()`, split correct.
+- [ ] (P1) **PayPal + Razorpay still hit the original unregistered-action wall** (`wpss_{gateway}_process_payment` doesn't exist for them). They now have a clean seam to use: declare `data-wpss-own-submit` on their payment-fields container and own their submit, exactly like Stripe. PayPal also still has EMPTY credentials (`wpss_paypal_settings`) — needs client_id, client_secret, webhook_id.
+- [ ] (P2) Verify the wallet ledger credit + vendor earnings roll-up once order 41 is completed (commission is persisted at creation; `CommissionService::record()` fires on completion). The checkout page's INLINE JS mounts the Stripe Payment Element, collects the card, then posts the UNCONFIRMED intent to the server — it never calls `stripe.confirmPayment()`. Result: `{"success":false,"message":"Payment requires additional action."}` even with a valid 4242 test card. `assets/js/stripe.js:176-192` already implements the correct flow (`confirmPayment()` → `confirmPaymentAndCreateOrder()`), so there are TWO parallel Stripe implementations and the checkout page runs the broken duplicate. **Right fix = delete the inline duplicate and drive checkout through `assets/js/stripe.js`** (matches the no-duplicate-code rule); do NOT bolt a second confirm call into the inline copy.
 - [ ] (P0) **Same contract break for PayPal + Razorpay** — they register `create_order`/`capture` and `create_order`/`verify_payment`, so they hit the identical unregistered-action wall. Apply the same mapping once the confirm-flow above is settled.
 - [ ] (P2) Pay button stays stuck on "Processing..." after a failed payment (never re-enabled) · `StandaloneCheckoutProvider.php` submit handler.
 - [ ] Re-run the full browser checkout after the confirm fix and verify: order row created, `platform_fee`/`vendor_earnings` persisted by `compute_breakdown()`, wallet ledger credited. **The commission work (cluster G) has never had a real payment run through it.**
