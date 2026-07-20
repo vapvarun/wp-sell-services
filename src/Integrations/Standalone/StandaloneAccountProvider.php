@@ -465,7 +465,9 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return void
 	 */
 	private function render_orders_table( int $limit = 20 ): void {
-		$orders = wpss_get_user_orders( get_current_user_id(), $limit );
+		// wpss_get_user_orders( int $user_id, array $args ) — passing the bare int
+		// threw a TypeError under strict_types, white-screening this page.
+		$orders = wpss_get_user_orders( get_current_user_id(), array( 'limit' => $limit ) );
 
 		if ( empty( $orders ) ) {
 			echo '<p>' . esc_html__( 'No orders found.', 'wp-sell-services' ) . '</p>';
@@ -592,7 +594,8 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 
 		<h3><?php esc_html_e( 'Recent Orders', 'wp-sell-services' ); ?></h3>
 		<?php
-		$orders = wpss_get_vendor_orders( get_current_user_id(), 5 );
+		// Same TypeError as render_orders_table(): second arg is an args array.
+		$orders = wpss_get_vendor_orders( get_current_user_id(), array( 'limit' => 5 ) );
 		if ( ! empty( $orders ) ) {
 			$this->render_vendor_orders_table( $orders );
 		} else {

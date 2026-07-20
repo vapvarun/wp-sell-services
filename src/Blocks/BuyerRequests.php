@@ -147,9 +147,15 @@ class BuyerRequests extends AbstractBlock {
 			'orderby'        => $attributes['orderBy'],
 			'order'          => $attributes['order'],
 			'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+			// BuyerRequestService writes `_wpss_status` (and reads it back for
+			// listings). `_wpss_request_status` is written by nothing except a CLI
+			// test helper, so this required clause matched nothing and the block
+			// rendered "No requests" on every real site while the shortcode — which
+			// goes through the service — listed them fine. Same class of bug as the
+			// `_wpss_featured` / `_wpss_is_featured` drift.
 			'meta_query'     => [
 				[
-					'key'     => '_wpss_request_status',
+					'key'     => '_wpss_status',
 					'value'   => 'open',
 					'compare' => '=',
 				],
