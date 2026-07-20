@@ -1548,14 +1548,10 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return int
 	 */
 	private function format_amount( float $amount, string $currency ): int {
-		// Zero-decimal currencies.
-		$zero_decimal = array( 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF' );
-
-		if ( in_array( strtoupper( $currency ), $zero_decimal, true ) ) {
-			return (int) round( $amount );
-		}
-
-		return (int) round( $amount * 100 );
+		// Delegates to the canonical converter. This used to carry its own copy of
+		// the zero-decimal list and assume two decimals for everything else, so
+		// three-decimal currencies (BHD/KWD/TND) were charged 10x wrong.
+		return wpss_amount_to_minor_units( $amount, $currency );
 	}
 
 	/**
@@ -1566,12 +1562,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return float
 	 */
 	private function parse_amount( int $amount, string $currency ): float {
-		$zero_decimal = array( 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF' );
-
-		if ( in_array( strtoupper( $currency ), $zero_decimal, true ) ) {
-			return (float) $amount;
-		}
-
-		return $amount / 100.0;
+		// Inverse of format_amount(); same canonical, currency-aware conversion.
+		return wpss_amount_from_minor_units( $amount, $currency );
 	}
 }

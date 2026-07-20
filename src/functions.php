@@ -90,6 +90,10 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 		$decimals = 0;
 	}
 
+	if ( in_array( $currency, wpss_get_three_decimal_currencies(), true ) ) {
+		$decimals = 3;
+	}
+
 	/**
 	 * Filter the number of decimal places for a currency.
 	 *
@@ -99,6 +103,31 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 	 * @param string $currency Currency code.
 	 */
 	return (int) apply_filters( 'wpss_currency_decimals', $decimals, $currency );
+}
+
+/**
+ * Get the list of three-decimal currency codes (ISO 4217).
+ *
+ * These are charged in thousandths, not hundredths — a 10.000 BHD charge is
+ * 10000 minor units, not 1000. They are NOT in the built-in currency registry,
+ * so without this list they silently fell back to two decimals and every
+ * gateway amount for them was 10x wrong.
+ *
+ * @since 1.2.2
+ *
+ * @return string[] Uppercase currency codes.
+ */
+function wpss_get_three_decimal_currencies(): array {
+	$codes = array( 'BHD', 'IQD', 'JOD', 'KWD', 'LYD', 'OMR', 'TND' );
+
+	/**
+	 * Filter the list of three-decimal currency codes.
+	 *
+	 * @since 1.2.2
+	 *
+	 * @param string[] $codes Uppercase currency codes.
+	 */
+	return apply_filters( 'wpss_three_decimal_currencies', $codes );
 }
 
 /**
@@ -122,6 +151,25 @@ function wpss_amount_to_minor_units( float $amount, string $currency = '' ): int
 	$decimals = wpss_get_currency_decimals( $currency );
 
 	return (int) round( $amount * ( 10 ** $decimals ) );
+}
+
+/**
+ * Convert integer minor units back to a major-unit amount.
+ *
+ * Inverse of {@see wpss_amount_to_minor_units()}; mirrors WooCommerce's
+ * `wc_remove_number_precision()`. Use this when reading an amount back from a
+ * gateway — Stripe reports amounts in the smallest currency unit.
+ *
+ * @since 1.2.2
+ *
+ * @param int    $minor    Amount in minor units (e.g. cents).
+ * @param string $currency Optional. Currency code. Defaults to the store currency.
+ * @return float Amount in major units.
+ */
+function wpss_amount_from_minor_units( int $minor, string $currency = '' ): float {
+	$decimals = wpss_get_currency_decimals( $currency );
+
+	return $minor / ( 10 ** $decimals );
 }
 
 /**
