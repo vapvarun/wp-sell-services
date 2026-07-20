@@ -102,6 +102,47 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 }
 
 /**
+ * Convert a major-unit amount to integer minor units for the given currency.
+ *
+ * Mirrors WooCommerce's `wc_add_number_precision()`: scale by the currency's
+ * decimal places and round to an integer, so money is compared and transported
+ * as integers instead of floats. Currency-aware by construction — JPY/KRW have
+ * no minor unit (x1), USD/EUR have two (x100), BHD/KWD have three (x1000).
+ *
+ * THE canonical converter. Do not hand-roll `* 100` or a `0.01` epsilon
+ * anywhere — both are wrong for zero-decimal and three-decimal currencies.
+ *
+ * @since 1.2.2
+ *
+ * @param float  $amount   Amount in major units (e.g. dollars).
+ * @param string $currency Optional. Currency code. Defaults to the store currency.
+ * @return int Amount in minor units (e.g. cents).
+ */
+function wpss_amount_to_minor_units( float $amount, string $currency = '' ): int {
+	$decimals = wpss_get_currency_decimals( $currency );
+
+	return (int) round( $amount * ( 10 ** $decimals ) );
+}
+
+/**
+ * Whether two amounts are equal for the given currency.
+ *
+ * Compares integer minor units, so there is no float epsilon to tune and the
+ * comparison is exact at the currency's real precision. Use this for every
+ * "did the buyer pay what we expected?" check.
+ *
+ * @since 1.2.2
+ *
+ * @param float  $a        First amount in major units.
+ * @param float  $b        Second amount in major units.
+ * @param string $currency Optional. Currency code. Defaults to the store currency.
+ * @return bool True when the two amounts are the same to the currency's precision.
+ */
+function wpss_amounts_match( float $a, float $b, string $currency = '' ): bool {
+	return wpss_amount_to_minor_units( $a, $currency ) === wpss_amount_to_minor_units( $b, $currency );
+}
+
+/**
  * Get the list of zero-decimal currency codes.
  *
  * Derived from the registry (codes whose `decimals` is 0), so it stays in sync

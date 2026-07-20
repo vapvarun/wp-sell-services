@@ -497,12 +497,13 @@ class PaymentController extends RestController {
 				return new WP_Error( 'stripe_confirm_error', $payment['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 			}
 
-			// The captured amount MUST match the order total. process_payment()
-			// returns the amount in the store currency; compare with a small
-			// epsilon to absorb float rounding.
+			// The captured amount MUST match the order total. Compared in the
+			// ORDER's currency via integer minor units (wpss_amounts_match), not a
+			// hardcoded 0.01 epsilon — that would be wrong for zero-decimal
+			// currencies (JPY/KRW) and three-decimal ones (BHD/KWD).
 			$captured = (float) ( $payment['amount'] ?? 0 );
 			$expected = (float) ( $order->total ?? 0 );
-			if ( abs( $captured - $expected ) > 0.01 ) {
+			if ( ! wpss_amounts_match( $captured, $expected, (string) ( $order->currency ?? '' ) ) ) {
 				return new WP_Error(
 					'rest_amount_mismatch',
 					__( 'The paid amount does not match the order total.', 'wp-sell-services' ),
@@ -597,10 +598,10 @@ class PaymentController extends RestController {
 				return new WP_Error( 'paypal_confirm_error', $capture['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 			}
 
-			// The captured amount MUST match the order total.
+			// Same currency-aware comparison as the Stripe twin.
 			$captured = (float) ( $capture['amount'] ?? 0 );
 			$expected = (float) ( $order->total ?? 0 );
-			if ( abs( $captured - $expected ) > 0.01 ) {
+			if ( ! wpss_amounts_match( $captured, $expected, (string) ( $order->currency ?? '' ) ) ) {
 				return new WP_Error(
 					'rest_amount_mismatch',
 					__( 'The paid amount does not match the order total.', 'wp-sell-services' ),
