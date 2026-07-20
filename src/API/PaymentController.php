@@ -475,7 +475,7 @@ class PaymentController extends RestController {
 				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 			}
 
-			if ( (int) $order->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
 				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
@@ -575,7 +575,7 @@ class PaymentController extends RestController {
 				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 			}
 
-			if ( (int) $order->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
 				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
