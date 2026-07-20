@@ -605,9 +605,32 @@ class ManualOrderPage {
 		}
 
 		// --- 7. Calculate commission ---
+		// The admin picks the rate for a manual order, so that choice stays
+		// authoritative — but the arithmetic goes through the single authority
+		// rather than being hand-rolled here. The rate is pinned for this call
+		// only, so tiered rules / plan overrides cannot silently replace what the
+		// admin explicitly entered.
 		$commission_rate = max( 0, min( 100, $commission_rate ) );
-		$platform_fee    = round( $total * ( $commission_rate / 100 ), 2 );
-		$vendor_earnings = round( $total - $platform_fee, 2 );
+
+		$pin_manual_rate = static function () use ( $commission_rate ): float {
+			return (float) $commission_rate;
+		};
+
+		add_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
+
+		$manual_breakdown = CommissionService::compute_breakdown(
+			(float) $total,
+			(object) array(
+				'id'         => 0,
+				'vendor_id'  => (int) $vendor_id,
+				'service_id' => (int) $service_id,
+			)
+		);
+
+		remove_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
+
+		$platform_fee    = $manual_breakdown['platform_fee'];
+		$vendor_earnings = $manual_breakdown['vendor_earnings'];
 
 		// --- 8. Smart status ---
 		$service_requirements     = get_post_meta( $service_id, '_wpss_requirements', true );
