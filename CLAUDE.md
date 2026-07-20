@@ -181,6 +181,46 @@ apply_filters('wpss_analytics_widgets', $widgets);
 
 ## Important Patterns
 
+### ONE FLOW, ONE IMPLEMENTATION (non-negotiable)
+
+The single biggest source of customer-facing bugs in this plugin has been the
+**same flow implemented in more than one place**, with the copies drifting apart.
+Real cases found and fixed in 1.2.2:
+
+| Flow | Copies | What customers hit |
+|---|---|---|
+| Stripe checkout | 2 (`assets/js/stripe.js` + inline JS in `StandaloneCheckoutProvider`) | **Checkout could not complete at all** — both bound to the same form, the inline one won the race and posted an unconfirmed PaymentIntent, so the card was never charged |
+| Commission fee math | 6 sites | Wallet ledger and Stripe Connect split paid **different numbers** |
+| Notifications surface | 3 (dashboard / standalone account / myaccount) | Two rendered nothing or had no mark-read |
+| Featured services | 2 meta keys (`_wpss_featured` vs `_wpss_is_featured`) | Shortcode returned **no** featured services |
+| Archive search params | 2 conventions (`wpss_search` vs `search`) | Search + category filters silently did nothing |
+
+**Rules — apply to every change:**
+
+1. **Before writing a flow, grep for an existing one.** If any code already does
+   this job (a service, repository, template partial, or JS module), extend or
+   call it. Never fork a second copy "just for this surface."
+2. **Money math lives in exactly one place.** All fee/earnings computation goes
+   through `CommissionService::compute_breakdown()`. Gateways are execution
+   adapters: they move the amount we already persisted, they never re-derive it.
+3. **A shared UI surface is a shared partial.** If two locations show the same
+   thing (notifications, service cards, order rows), extract
+   `templates/partials/*.php` and have both `require` it — see
+   `templates/partials/notifications-list.php`.
+4. **One writer, one reader, one key.** A meta/option/query-arg key must be
+   written and read by the same name everywhere. Grep for near-identical
+   siblings (`_wpss_featured` vs `_wpss_is_featured`) before inventing a key.
+5. **Only one JS handler per form/element.** If a gateway or component owns
+   submission, it declares `data-wpss-own-submit` and generic handlers stand
+   down — never let two listeners race on the same submit.
+6. **Editing `assets/js/*.js`? Rebuild the `.min`.** `Assets.php` rewrites asset
+   URLs to `.min` when present, so source edits are **inert** until rebuilt.
+   `npm run build:min` needs node_modules; otherwise:
+   `npx terser assets/js/FILE.js -c -m -o assets/js/FILE.min.js`
+
+Standing audit: `audit/DUPLICATE-FLOWS-money.md` and `audit/DUPLICATE-FLOWS-ui.md`
+inventory known duplications. Re-run that sweep before any major release.
+
 ### Adding a New Integration
 1. Create class in `src/Integrations/{Platform}/`
 2. Implement `EcommerceAdapterInterface`
