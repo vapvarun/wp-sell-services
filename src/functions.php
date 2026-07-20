@@ -106,6 +106,62 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 }
 
 /**
+ * Ledger transaction types that DEBIT the vendor (money leaving the wallet).
+ *
+ * Amounts are always stored POSITIVE; the sign is applied on read. Every
+ * consumer that sums, filters or renders the ledger must agree on which types
+ * are debits, so this is the one list.
+ *
+ * It used to be hardcoded in five places across both plugins (the balance
+ * helper, two EarningsService queries, two LedgerExporter branches). Adding a
+ * type meant finding all five, and missing one produced a silently wrong
+ * balance or a wrong statement CSV.
+ *
+ * @since 1.2.3
+ *
+ * @return string[] Debit transaction types.
+ */
+function wpss_get_ledger_debit_types(): array {
+	/**
+	 * Filter the ledger transaction types treated as debits.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param string[] $types Debit transaction types.
+	 */
+	$types = apply_filters(
+		'wpss_ledger_debit_types',
+		array(
+			'withdrawal',
+			'debit',
+			'dispute_refund',
+			// Vendor was paid directly by Stripe at charge time (Connect
+			// transfer_data). The matching credit is still written so the
+			// statement shows what was earned; this offsets it so the wallet
+			// does not pay them a second time.
+			'connect_transfer',
+		)
+	);
+
+	return array_values( array_unique( array_map( 'sanitize_key', (array) $types ) ) );
+}
+
+/**
+ * Build a quoted, comma-separated SQL list of the ledger debit types.
+ *
+ * Values pass through sanitize_key() in wpss_get_ledger_debit_types(), so they
+ * are already restricted to [a-z0-9_-]; they are quoted here for interpolation
+ * into an IN () clause. Kept private to this file's SQL builders.
+ *
+ * @since 1.2.3
+ *
+ * @return string e.g. "'withdrawal','debit','dispute_refund','connect_transfer'"
+ */
+function wpss_get_ledger_debit_types_sql(): string {
+	return "'" . implode( "','", wpss_get_ledger_debit_types() ) . "'";
+}
+
+/**
  * Get a vendor's balance derived from the wallet ledger.
  *
  * THE canonical balance. Sums the wallet ledger rather than trusting the last
@@ -133,7 +189,9 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 	// Only COMPLETED rows count toward a spendable balance — a pending or failed
 	// transaction must never inflate it. (Pro's provider already filtered this;
 	// the free helper did not, which would have been a second silent divergence.)
-	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( 'withdrawal', 'debit', 'dispute_refund' ) THEN -amount ELSE amount END ), 0 )
+	$debit_types = wpss_get_ledger_debit_types_sql();
+
+	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -amount ELSE amount END ), 0 )
 		FROM {$table}
 		WHERE user_id = %d AND status = 'completed'";
 

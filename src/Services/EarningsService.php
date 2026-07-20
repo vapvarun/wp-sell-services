@@ -89,12 +89,13 @@ class EarningsService {
 		// dispute_refund) are excluded so this reads as "money ever earned"
 		// rather than a running balance.
 		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		$debit_types = wpss_get_ledger_debit_types_sql();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$total_earned = (float) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(amount), 0) FROM {$txn_table}
 				WHERE user_id = %d AND status = 'completed'
-				AND type NOT IN ('withdrawal', 'debit', 'dispute_refund')",
+				AND type NOT IN ({$debit_types})",
 				$vendor_id
 			)
 		);
@@ -108,7 +109,7 @@ class EarningsService {
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(amount), 0) FROM {$txn_table}
 				WHERE user_id = %d AND status = 'completed'
-				AND type NOT IN ('withdrawal', 'debit', 'dispute_refund')
+				AND type NOT IN ({$debit_types})
 				AND created_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
 				$vendor_id,
 				$clearance_days
