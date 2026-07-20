@@ -12,6 +12,7 @@
 		stripe: null,
 		elements: null,
 		paymentElement: null,
+		addressElement: null,
 		form: null,
 		submitButton: null,
 		errorElement: null,
@@ -116,20 +117,22 @@
 					},
 				});
 
-				// TODO (India export compliance): Stripe accounts registered in India
-				// reject export (cross-border) charges unless the PaymentIntent
-				// carries a description (added server-side in StripeGateway) AND a
-				// customer name + address. The Payment Element does NOT collect an
-				// address here — that needs a separate Address Element
-				// (elements.create('address', { mode: 'billing' })) mounted into its
-				// own container, with the result passed to confirmPayment() as
-				// shipping/billing details. Until then confirmPayment() fails with
-				// "export transactions require a customer name and address".
 				this.paymentElement = this.elements.create('payment', {
 					layout: 'tabs',
 				});
 
 				this.paymentElement.mount(elementContainer);
+
+				// Billing name + address. Stripe rejects export (cross-border)
+				// charges on India-registered accounts without them, and the
+				// Payment Element does not collect an address on its own.
+				const addressContainer = document.getElementById('wpss-stripe-address-element');
+				if (addressContainer) {
+					this.addressElement = this.elements.create('address', {
+						mode: 'billing',
+					});
+					this.addressElement.mount(addressContainer);
+				}
 
 				this.paymentElement.on('change', (event) => {
 					if (event.error) {
@@ -185,12 +188,38 @@
 			this.hideError();
 
 			try {
+				// Collect billing name + address (required by Stripe for export
+				// charges on India-registered accounts). Validate before charging
+				// so the buyer gets a field-level prompt instead of a raw API error.
+				const confirmParams = {
+					return_url: wpssStripe.returnUrl,
+				};
+
+				if (this.addressElement) {
+					const address = await this.addressElement.getValue();
+
+					if (!address.complete) {
+						this.showError(wpssStripe.i18n.addressRequired || 'Please complete your billing name and address.');
+						this.setLoading(false);
+						return;
+					}
+
+					confirmParams.payment_method_data = {
+						billing_details: {
+							name: address.value.name,
+							address: address.value.address,
+						},
+					};
+					confirmParams.shipping = {
+						name: address.value.name,
+						address: address.value.address,
+					};
+				}
+
 				// Confirm payment with Stripe.
 				const { error, paymentIntent } = await this.stripe.confirmPayment({
 					elements: this.elements,
-					confirmParams: {
-						return_url: wpssStripe.returnUrl,
-					},
+					confirmParams: confirmParams,
 					redirect: 'if_required',
 				});
 

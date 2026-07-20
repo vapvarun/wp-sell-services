@@ -629,6 +629,13 @@ class StripeGateway implements PaymentGatewayInterface {
 		?>
 		<div class="wpss-stripe-payment" data-wpss-own-submit="1" data-publishable-key="<?php echo esc_attr( $publishable_key ); ?>">
 			<div id="wpss-stripe-payment-element"></div>
+			<?php
+			// Billing name + address. Stripe REQUIRES these for export
+			// (cross-border) charges on India-registered accounts; the Payment
+			// Element does not collect an address, so a dedicated Address Element
+			// is mounted here and passed to confirmPayment().
+			?>
+			<div id="wpss-stripe-address-element" class="wpss-stripe-address"></div>
 			<div id="wpss-stripe-error" class="wpss-payment-error" style="display: none;"></div>
 			<input type="hidden" name="stripe_payment_intent_id" id="wpss-stripe-payment-intent-id">
 		</div>
@@ -680,8 +687,9 @@ class StripeGateway implements PaymentGatewayInterface {
 				'nonce'          => wp_create_nonce( 'wpss_stripe' ),
 				'returnUrl'      => add_query_arg( 'step', 'complete', wpss_get_page_url( 'checkout' ) ),
 				'i18n'           => array(
-					'processing' => __( 'Processing...', 'wp-sell-services' ),
-					'error'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'processing'      => __( 'Processing...', 'wp-sell-services' ),
+					'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'addressRequired' => __( 'Please complete your billing name and address.', 'wp-sell-services' ),
 				),
 			)
 		);
