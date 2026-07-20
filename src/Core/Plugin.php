@@ -339,6 +339,26 @@ final class Plugin {
 				self::clear_legacy_wpcron_hooks();
 			}
 
+			// One-time wallet-ledger reconciliation for installs upgrading from
+			// pre-1.2.3. The vendor balance is now derived from the wallet
+			// ledger, and completed withdrawals are debited into it. On a
+			// free-only site nothing ever wrote those debit rows, so without
+			// this backfill every past payout would be missing from the ledger
+			// and each vendor's balance would read HIGH by the total they have
+			// already been paid — letting them withdraw it a second time.
+			//
+			// Idempotent: skips any withdrawal that already has a ledger row
+			// (including the type 'debit' rows Pro wrote on paired installs).
+			if ( $installed_version && version_compare( $installed_version, '1.2.3', '<' ) ) {
+				add_action(
+					'init',
+					static function (): void {
+						( new \WPSellServices\Services\EarningsService() )->backfill_withdrawal_debits();
+					},
+					20
+				);
+			}
+
 			// Page creation needs $wp_rewrite — defer to init.
 			add_action(
 				'init',
@@ -1769,6 +1789,20 @@ final class Plugin {
 		// signature is ($order_id, $new_status, $old_status) — the positional
 		// swap mismatched the log_status_change() signature and bypassed the
 		// static dedup key.
+
+		// Debit the wallet ledger when a withdrawal completes. The ledger is the
+		// balance authority, so a payout that never lands in it leaves the
+		// vendor's balance inflated. Previously only Pro listened here, which
+		// meant a free-only site paid vendors out without ever debiting them.
+		add_action(
+			'wpss_withdrawal_processed',
+			static function ( int $withdrawal_id, string $status, $withdrawal ): void {
+				( new \WPSellServices\Services\EarningsService() )
+					->record_withdrawal_debit( $withdrawal_id, $status, $withdrawal );
+			},
+			10,
+			3
+		);
 
 		// Payment hooks.
 		add_action(

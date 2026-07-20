@@ -218,45 +218,21 @@ class EarningsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_summary( WP_REST_Request $request ): WP_REST_Response {
-		global $wpdb;
-
-		$vendor_id    = get_current_user_id();
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-		$wallet_table = $wpdb->prefix . 'wpss_wallet_transactions';
-		$wd_table     = $wpdb->prefix . 'wpss_withdrawals';
-
-		// Total earned from completed orders.
-		$total_earned = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(vendor_earnings), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
-				$vendor_id
-			)
-		);
-
-		// Total withdrawn.
-		$total_withdrawn = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status IN ('approved', 'completed')",
-				$vendor_id
-			)
-		);
-
-		// Pending withdrawal.
-		$pending_withdrawal = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status = 'pending'",
-				$vendor_id
-			)
-		);
-
-		$available = $total_earned - $total_withdrawn - $pending_withdrawal;
+		// Delegate to EarningsService — it is the ONE place the balance is
+		// computed. This endpoint used to run its own three queries against
+		// wpss_orders and wpss_withdrawals, and disagreed with the dashboard on
+		// two counts: it ignored the clearance window entirely (reporting money
+		// as withdrawable days before it was), and it counted 'approved'
+		// withdrawals as already withdrawn rather than as reserved.
+		$summary = ( new \WPSellServices\Services\EarningsService() )->get_summary( get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
-				'total_earned'       => round( $total_earned, 2 ),
-				'total_withdrawn'    => round( $total_withdrawn, 2 ),
-				'pending_withdrawal' => round( $pending_withdrawal, 2 ),
-				'available_balance'  => round( max( 0, $available ), 2 ),
+				'total_earned'       => round( $summary['total_earned'], 2 ),
+				'total_withdrawn'    => round( $summary['withdrawn'], 2 ),
+				'pending_withdrawal' => round( $summary['pending_withdrawal'], 2 ),
+				'available_balance'  => round( $summary['available_balance'], 2 ),
+				'in_clearance'       => round( $summary['in_clearance'], 2 ),
 				'currency'           => wpss_get_currency(),
 			)
 		);
@@ -435,42 +411,28 @@ class EarningsController extends RestController {
 		}
 
 		// Check available balance using transaction to prevent race conditions.
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-		$wd_table     = $wpdb->prefix . 'wpss_withdrawals';
+		$wd_table = $wpdb->prefix . 'wpss_withdrawals';
 
 		$wpdb->query( 'START TRANSACTION' );
 
-		$earned = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(vendor_earnings), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
-				$vendor_id
-			)
-		);
-
-		$withdrawn_and_pending = (float) $wpdb->get_var(
+		// Take the row lock on this vendor's open withdrawals first, so two
+		// concurrent requests cannot both pass the gate below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status IN ('pending', 'approved', 'completed') FOR UPDATE",
 				$vendor_id
 			)
 		);
 
-		// Earnings from orders completed less than clearance_days ago are still
-		// on hold and NOT withdrawable yet. get_summary() subtracts this; the
-		// withdrawal-request path must too, or a vendor can cash out un-cleared
-		// funds. (Mirror EarningsService::get_summary().)
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		$clearance_days   = (int) ( $payouts_settings['clearance_days'] ?? 14 );
-		$in_clearance     = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0) FROM {$orders_table}
-				WHERE vendor_id = %d AND status = 'completed'
-				AND completed_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
-				$vendor_id,
-				$clearance_days
-			)
-		);
-
-		$available = $earned - $withdrawn_and_pending - $in_clearance;
+		// Ask the ONE balance authority rather than re-deriving it. This block
+		// used to re-implement get_summary() inline — its own comment said so —
+		// and had already drifted: it counted completed withdrawals from the
+		// withdrawals table, which double-debits them now that they are in the
+		// ledger, and it scoped clearance to order rows so tips and milestone
+		// credits were withdrawable immediately.
+		$available = ( new \WPSellServices\Services\EarningsService() )
+			->get_summary( $vendor_id )['available_balance'];
 
 		if ( $amount > $available ) {
 			$wpdb->query( 'ROLLBACK' );

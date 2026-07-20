@@ -375,13 +375,15 @@
    "authority": "wpss_amount_to_minor_units() / wpss_amount_from_minor_units() / wpss_amounts_match() — src/functions.php",
    "rule": "Never multiply by 100 inline when talking to a gateway, and never compare gateway amounts with a hardcoded epsilon. Zero-decimal (JPY) and 3-decimal (BHD/JOD/KWD/OMR/TND) currencies both break the naive form."
   },
-  "UNRESOLVED_withdrawable_balance": {
-   "problem": "The vendor's WITHDRAWABLE balance is computed by a SECOND, independent authority that does not consult the wallet ledger at all.",
-   "authority_a": "wpss_get_ledger_balance() — SUM of wpss_wallet_transactions. Drives the wallet UI and every credit/debit path.",
-   "authority_b": "EarningsService::get_summary()['available_balance'] — src/Services/EarningsService.php:138. Derived from wpss_orders (vendor_earnings) minus wpss_withdrawals, ignoring the ledger entirely. THIS is what gates withdrawal requests (EarningsService.php:323) and auto-payout eligibility (:744).",
-   "risk": "The two numbers can diverge — any ledger entry with no matching order row (manual adjustment, refund reversal, tip credit) moves A without moving B, and vice versa. A vendor can be shown one balance and gated on another.",
-   "status": "IDENTIFIED 2026-07-20, NOT YET FIXED. Reconciling these is a design decision (does the ledger become the single authority, with orders/withdrawals only feeding it?) — do not patch one caller in isolation.",
-   "also_dead": "{prefix}wpss_vendor_profiles.available_balance / .pending_balance are mutated by a raw UPDATE at src/Frontend/AjaxHandlers.php:3405 but read by NO balance path. Write-only columns.",
+  "withdrawable_balance": {
+   "authority": "EarningsService::get_summary()['available_balance'] — and it derives from the wallet ledger.",
+   "formula": "available = wpss_get_ledger_balance() - pending_withdrawal - in_clearance. The ledger is ALREADY net of completed withdrawals, so completed payouts must never be subtracted again. 'pending_withdrawal' covers still-open requests (pending + approved) that have not reached the ledger yet. 'in_clearance' is the sum of ledger CREDIT rows inside the clearance window.",
+   "rule": "Never re-derive a balance inline. Both prior inline copies are gone: EarningsController::get_summary (REST) and the withdrawal-request gate in EarningsController::create_withdrawal now both call EarningsService::get_summary().",
+   "history": "Until 1.2.3 this was a SECOND authority — it summed vendor_earnings over completed orders and never consulted the ledger, so any ledger entry with no matching order row (manual adjustment, tip credit, order reversal) moved one number and not the other. A vendor was shown one balance and gated on another. Resolved 2026-07-20 (ledger wins).",
+   "withdrawal_debits": "Completed withdrawals are debited into the ledger by EarningsService::record_withdrawal_debit(), wired to wpss_withdrawal_processed in FREE (Plugin.php). It used to live only in Pro's WalletManager, so a free-only site paid vendors out without ever debiting them and the same install grew a different balance depending on whether Pro was active. Pro's listener is now removed to avoid a double debit; idempotency matches on (reference_type='withdrawal', reference_id) so Pro's existing type='debit' rows are recognised.",
+   "upgrade_migration": "EarningsService::backfill_withdrawal_debits() runs once on upgrade to 1.2.3 (Plugin::maybe_run_install). Without it, installs that never wrote withdrawal debits would read HIGH by everything already paid out and vendors could withdraw it twice. Idempotent and safe to re-run.",
+   "clearance_note": "Clearance is now derived from ledger row created_at rather than orders.completed_at, so tips, milestone and extension credits observe the clearance window too — the orders-derived version exempted all three.",
+   "also_dead": "{prefix}wpss_vendor_profiles.available_balance / .pending_balance are mutated by a raw UPDATE at src/Frontend/AjaxHandlers.php:3405 but read by NO balance path. Write-only columns — safe to retire.",
    "also_note": "wpss_wallet_transactions.balance_after IS still read — Pro's LedgerExporter (src/Services/LedgerExporter.php) selects it for statement CSVs. Retiring the column requires giving the exporter a running-balance computation first."
   }
  },

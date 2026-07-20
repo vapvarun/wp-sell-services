@@ -57,14 +57,27 @@ class EarningsService {
 		$payouts_settings = get_option( 'wpss_payouts', array() );
 		$clearance_days   = (int) ( $payouts_settings['clearance_days'] ?? 14 );
 
-		// Get completed orders earnings (uses vendor_earnings after commission).
-		// COALESCE(vendor_earnings, 0) prevents inflated earnings when vendor_earnings is NULL.
+		// THE WALLET LEDGER IS THE AUTHORITY FOR EARNED MONEY.
+		//
+		// This used to derive earnings from wpss_orders (SUM of vendor_earnings
+		// over completed orders) while the wallet UI derived them from
+		// wpss_wallet_transactions. The two could not agree: any ledger entry
+		// with no matching order row — a manual adjustment, a tip credit, an
+		// order reversal — moved one number and not the other, so a vendor was
+		// shown one balance and gated on a different one.
+		//
+		// wpss_get_ledger_balance() is now the single formula (see the free
+		// manifest's money_authorities section). It is net of withdrawals:
+		// completed withdrawals are debited into the ledger by
+		// record_withdrawal_debit(), so they must NOT be subtracted again below.
+		$ledger_balance = wpss_get_ledger_balance( $vendor_id );
+
+		// Order count is presentational only — it labels the earnings card and
+		// never feeds the balance, so it may still come from the orders table.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$completed = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT
-					COUNT(*) as order_count,
-					COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0) as total_earned
+				"SELECT COUNT(*) as order_count
 				FROM {$orders_table}
 				WHERE vendor_id = %d AND status = %s",
 				$vendor_id,
@@ -72,16 +85,32 @@ class EarningsService {
 			)
 		);
 
-		// Get earnings still within the clearance window (completed less than clearance_days ago).
+		// Gross lifetime credits, for display. Debit rows (withdrawal / debit /
+		// dispute_refund) are excluded so this reads as "money ever earned"
+		// rather than a running balance.
+		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total_earned = (float) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(amount), 0) FROM {$txn_table}
+				WHERE user_id = %d AND status = 'completed'
+				AND type NOT IN ('withdrawal', 'debit', 'dispute_refund')",
+				$vendor_id
+			)
+		);
+
+		// Credits still inside the clearance window are not withdrawable yet.
+		// Derived from the ledger (not from orders' completed_at) so that tips,
+		// milestones and extension credits observe clearance too — the
+		// orders-derived version silently exempted all three.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$in_clearance = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0)
-				FROM {$orders_table}
-				WHERE vendor_id = %d AND status = %s
-				AND completed_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
+				"SELECT COALESCE(SUM(amount), 0) FROM {$txn_table}
+				WHERE user_id = %d AND status = 'completed'
+				AND type NOT IN ('withdrawal', 'debit', 'dispute_refund')
+				AND created_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
 				$vendor_id,
-				ServiceOrder::STATUS_COMPLETED,
 				$clearance_days
 			)
 		);
@@ -128,13 +157,18 @@ class EarningsService {
 			)
 		);
 
-		$total_earned       = (float) $completed->total_earned;
 		$withdrawn          = (float) $withdrawn;
 		$pending_withdrawal = (float) $pending_withdrawal;
-		$available          = $total_earned - $withdrawn - $pending_withdrawal - $in_clearance;
+
+		// $ledger_balance is ALREADY net of completed withdrawals — subtracting
+		// $withdrawn here would debit them twice. Only still-open requests
+		// (pending / approved) need reserving, because those have not reached
+		// the ledger yet.
+		$available = $ledger_balance - $pending_withdrawal - $in_clearance;
 
 		return array(
 			'total_earned'       => $total_earned,
+			'ledger_balance'     => $ledger_balance,
 			'available_balance'  => max( 0, $available ),
 			'pending_clearance'  => (float) $pending + $in_clearance,
 			'in_clearance'       => $in_clearance,
@@ -142,6 +176,149 @@ class EarningsService {
 			'pending_withdrawal' => $pending_withdrawal,
 			'completed_orders'   => (int) $completed->order_count,
 		);
+	}
+
+	/**
+	 * Backfill ledger debits for withdrawals completed before 1.2.3.
+	 *
+	 * The balance is now derived from the wallet ledger. On installs where
+	 * nothing ever wrote a withdrawal debit (any free-only site — the debit
+	 * used to live in Pro), every past payout is missing from the ledger, so
+	 * each vendor's balance reads high by the total they have already been
+	 * paid. Left unreconciled they could withdraw that money a second time.
+	 *
+	 * Idempotent, so it is safe to run repeatedly and safe on paired installs
+	 * where Pro already wrote the rows: record_withdrawal_debit() matches on
+	 * (reference_type, reference_id) and skips anything already present.
+	 *
+	 * @return array{scanned:int, written:int} Reconciliation counts.
+	 */
+	public function backfill_withdrawal_debits(): array {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$withdrawals = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE status = %s ORDER BY id ASC",
+				self::WITHDRAWAL_COMPLETED
+			)
+		);
+
+		$written = 0;
+
+		foreach ( $withdrawals as $withdrawal ) {
+			if ( $this->record_withdrawal_debit( (int) $withdrawal->id, self::WITHDRAWAL_COMPLETED, $withdrawal ) ) {
+				++$written;
+			}
+		}
+
+		if ( $written > 0 ) {
+			wpss_log(
+				sprintf(
+					'Wallet ledger reconciliation: wrote %1$d missing withdrawal debit(s) across %2$d completed withdrawal(s).',
+					$written,
+					count( $withdrawals )
+				)
+			);
+		}
+
+		return array(
+			'scanned' => count( $withdrawals ),
+			'written' => $written,
+		);
+	}
+
+	/**
+	 * Debit the wallet ledger when a withdrawal completes.
+	 *
+	 * The ledger is the authority for the vendor balance, so a payout that
+	 * never reaches it leaves the vendor's balance permanently inflated. This
+	 * lives in FREE deliberately: it used to exist only in Pro
+	 * (Integrations\Wallets\WalletManager), which meant a free-only site paid
+	 * vendors out without ever debiting them, and the same install grew a
+	 * different balance depending on whether Pro happened to be active.
+	 *
+	 * Idempotent on (reference_type, reference_id) rather than on transaction
+	 * type, so the debit rows Pro already wrote as type 'debit' on existing
+	 * installs are recognised and never doubled.
+	 *
+	 * @param int          $withdrawal_id Withdrawal record ID.
+	 * @param string       $status        New withdrawal status.
+	 * @param object|array $withdrawal    Withdrawal row.
+	 * @return bool True when a debit row was written.
+	 */
+	public function record_withdrawal_debit( int $withdrawal_id, string $status, $withdrawal ): bool {
+		global $wpdb;
+
+		if ( self::WITHDRAWAL_COMPLETED !== $status ) {
+			return false;
+		}
+
+		$withdrawal = (object) $withdrawal;
+		$vendor_id  = (int) ( $withdrawal->vendor_id ?? 0 );
+		$amount     = (float) ( $withdrawal->amount ?? 0 );
+
+		if ( $vendor_id <= 0 || $amount <= 0 ) {
+			return false;
+		}
+
+		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
+
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Re-check under the row lock taken by wpss_get_ledger_balance(), so two
+		// concurrent "mark completed" clicks cannot both write a debit.
+		$current_balance = (float) wpss_get_ledger_balance( $vendor_id, true );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$already = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$txn_table}
+				WHERE user_id = %d AND reference_type = 'withdrawal' AND reference_id = %d",
+				$vendor_id,
+				$withdrawal_id
+			)
+		);
+
+		if ( $already > 0 ) {
+			$wpdb->query( 'COMMIT' );
+			return false;
+		}
+
+		// Amount is stored POSITIVE; the sign is applied on read by
+		// wpss_get_ledger_balance(), which treats 'withdrawal' as a debit.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$inserted = $wpdb->insert(
+			$txn_table,
+			array(
+				'user_id'        => $vendor_id,
+				'type'           => 'withdrawal',
+				'amount'         => $amount,
+				'balance_after'  => $current_balance - $amount,
+				'currency'       => $withdrawal->currency ?? wpss_get_currency(),
+				'description'    => sprintf(
+					/* translators: %d: withdrawal ID */
+					__( 'Withdrawal #%d completed', 'wp-sell-services' ),
+					$withdrawal_id
+				),
+				'reference_type' => 'withdrawal',
+				'reference_id'   => $withdrawal_id,
+				'status'         => 'completed',
+				'created_at'     => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
+		);
+
+		if ( false === $inserted ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		return true;
 	}
 
 	/**
