@@ -827,17 +827,7 @@ class OrderWorkflowManager {
 
 			// 2. Look up current wallet balance for the reversal transaction row.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$current_balance = (float) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COALESCE(balance_after, 0)
-					FROM {$transactions_table}
-					WHERE user_id = %d
-					ORDER BY created_at DESC, id DESC
-					LIMIT 1
-					FOR UPDATE",
-					$vendor_id
-				)
-			);
+			$current_balance = (float) wpss_get_ledger_balance( (int) $vendor_id, true );
 
 			$new_balance = max( 0, $current_balance - $vendor_earnings );
 

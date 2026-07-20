@@ -106,6 +106,43 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 }
 
 /**
+ * Get a vendor's balance derived from the wallet ledger.
+ *
+ * THE canonical balance. Sums the wallet ledger rather than trusting the last
+ * row's `balance_after`, because that denormalised column is only correct while
+ * every write happens in order through one path — it silently drifts after a
+ * withdrawal, a reversal, or any out-of-order insert.
+ *
+ * Free code used to read the last row's `balance_after` in six places while Pro
+ * derived the sum, so the two disagreed the moment a withdrawal landed and the
+ * vendor's displayed balance, withdrawable amount and ledger diverged
+ * permanently. `balance_after` is now a cache; this is the source of truth.
+ *
+ * @since 1.2.2
+ *
+ * @param int  $user_id Vendor user ID.
+ * @param bool $lock    Optional. Lock the ledger rows (FOR UPDATE) — pass true
+ *                      inside a transaction that is about to write a new row.
+ * @return float Current balance.
+ */
+function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_wallet_transactions';
+
+	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( 'withdrawal', 'debit', 'dispute_refund' ) THEN -amount ELSE amount END ), 0 )
+		FROM {$table}
+		WHERE user_id = %d";
+
+	if ( $lock ) {
+		$sql .= ' FOR UPDATE';
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return (float) $wpdb->get_var( $wpdb->prepare( $sql, $user_id ) );
+}
+
+/**
  * Get the list of three-decimal currency codes (ISO 4217).
  *
  * These are charged in thousandths, not hundredths — a 10.000 BHD charge is
@@ -1636,7 +1673,11 @@ function wpss_get_wallet_balance( ?int $user_id = null ): float {
 	$wallet = wpss_get_wallet_manager();
 
 	if ( ! $wallet || ! method_exists( $wallet, 'get_balance' ) ) {
-		return 0.0;
+		// No wallet manager (Pro inactive): fall back to the ledger instead of
+		// reporting 0.00. Free sites still accrue vendor earnings in
+		// wpss_wallet_transactions, so returning zero here understated every
+		// balance on a free-only install.
+		return wpss_get_ledger_balance( $user_id );
 	}
 
 	return (float) $wallet->get_balance( $user_id );
