@@ -564,10 +564,48 @@ class PaymentController extends RestController {
 		// a new WPSS order. capture_order() creates an order internally, so we use
 		// process_payment() for the capture-only path.
 		if ( $pay_order ) {
+			$order = wpss_get_order( $pay_order );
+
+			// Same three guards as the Stripe twin (see confirm_stripe_payment).
+			// Without them a buyer could capture a small PayPal payment (e.g. $5)
+			// against someone else's $500 order and have it marked paid. This hole
+			// was closed on Stripe but left open here — fixing the class, not just
+			// the instance.
+			if ( ! $order ) {
+				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+			}
+
+			if ( (int) $order->customer_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			}
+
+			// Idempotency: never re-process an order that is already paid.
+			if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+				return new WP_REST_Response(
+					array(
+						'gateway'      => 'paypal',
+						'order_id'     => $pay_order,
+						'order_number' => $order->order_number,
+						'status'       => 'paid',
+					)
+				);
+			}
+
 			$capture = $gateway->process_payment( $payment_id );
 
 			if ( empty( $capture['success'] ) ) {
 				return new WP_Error( 'paypal_confirm_error', $capture['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+			}
+
+			// The captured amount MUST match the order total.
+			$captured = (float) ( $capture['amount'] ?? 0 );
+			$expected = (float) ( $order->total ?? 0 );
+			if ( abs( $captured - $expected ) > 0.01 ) {
+				return new WP_Error(
+					'rest_amount_mismatch',
+					__( 'The paid amount does not match the order total.', 'wp-sell-services' ),
+					array( 'status' => 400 )
+				);
 			}
 
 			$transaction_id = $capture['transaction_id'] ?? $payment_id;
