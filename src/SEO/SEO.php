@@ -304,7 +304,7 @@ class SEO {
 		}
 
 		// Check if service is active.
-		$status = get_post_meta( $service_id, '_wpss_service_status', true );
+		$status = wpss_get_service_status( $service_id );
 		if ( 'paused' === $status ) {
 			return 'noindex,follow';
 		}
@@ -340,12 +340,12 @@ class SEO {
 		$args['meta_query'] = [
 			'relation' => 'OR',
 			[
-				'key'     => '_wpss_service_status',
+				'key'     => '_wpss_status',
 				'value'   => 'active',
 				'compare' => '=',
 			],
 			[
-				'key'     => '_wpss_service_status',
+				'key'     => '_wpss_status',
 				'compare' => 'NOT EXISTS',
 			],
 		];

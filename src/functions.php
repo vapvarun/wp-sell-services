@@ -512,6 +512,29 @@ function wpss_get_vendor( int $user_id ): ?\WPSellServices\Models\VendorProfile 
 }
 
 /**
+ * Get a service's publish status (active / paused).
+ *
+ * Shared accessor for every service-status read. Resolves the canonical
+ * _wpss_status meta written by the admin service metabox Status select
+ * (values: 'active', 'paused').
+ *
+ * The three SEO integrations used to read '_wpss_service_status', which
+ * nothing has ever written, so every "paused service should be noindexed"
+ * rule silently evaluated false and paused services stayed indexed.
+ *
+ * @since 1.2.3
+ *
+ * @param int $service_id Service post ID.
+ * @return string 'active' or 'paused'. Defaults to 'active' when unset, which
+ *                matches how an unsaved service behaves everywhere else.
+ */
+function wpss_get_service_status( int $service_id ): string {
+	$status = get_post_meta( $service_id, '_wpss_status', true );
+
+	return is_string( $status ) && '' !== $status ? $status : 'active';
+}
+
+/**
  * Get a vendor's account status.
  *
  * Shared accessor for every vendor-status read. Resolves from the canonical

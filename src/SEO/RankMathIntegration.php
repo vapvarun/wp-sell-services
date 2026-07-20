@@ -389,7 +389,7 @@ class RankMathIntegration {
 			return $exclude;
 		}
 
-		$status = get_post_meta( $post_id, '_wpss_service_status', true );
+		$status = wpss_get_service_status( $post_id );
 
 		return 'paused' === $status;
 	}
@@ -406,7 +406,7 @@ class RankMathIntegration {
 		}
 
 		$service_id = get_the_ID();
-		$status     = get_post_meta( $service_id, '_wpss_service_status', true );
+		$status     = wpss_get_service_status( $service_id );
 
 		if ( 'paused' === $status ) {
 			$robots['index'] = 'noindex';
