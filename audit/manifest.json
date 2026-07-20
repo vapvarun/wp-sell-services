@@ -359,8 +359,17 @@
    "purpose": "Privileged-action audit trail"
   }
  ],
+ "ecommerce_adapter_boundary": {
+  "principle": "LOCKED 2026-07-20 (owner). We support WooCommerce PRECISELY SO the site owner can run any payment gateway, any coupon plugin, any currency plugin, any tax plugin — without us knowing or caring. From an adapter, exactly ONE fact matters: is the platform order COMPLETE or not.",
+  "what_we_read_from_the_platform": "Completion status. The platform order id, for reference. That is the contract surface.",
+  "what_we_do_NOT_read": "Charged amount, currency, coupon/discount, tax, gateway, fees. Reading any of those couples us to whatever plugin the owner installed and puts foreign values into our order rows, our commission split and our ledger.",
+  "what_we_price_from": "OUR OWN service/package price, always. A $49 service is a $49 order — completed is completed. Vendor earnings and the commission split are computed from our list price and never move because a buyer used a coupon, switched currency, or paid through a different gateway.",
+  "consequence_owner_accepted": "Discounts and FX differences are absorbed by the PLATFORM OWNER, not the vendor. A coupon is the owner's promotion, so the owner funds it; the vendor is still paid on the list price they set. This makes vendor earnings predictable and keeps the ledger in one unit — the point of the whole boundary.",
+  "why_this_is_the_right_seam": "It is also why the adapter layer exists at all (wpss_ecommerce_adapters). Every time an adapter reaches past 'is it complete?' into the platform's money, it re-couples us to that platform's plugin ecosystem and imports a class of bugs we cannot test against. See money_authorities.currency_storage.KNOWN_GAP_woo_path_contradicts_this for a live instance.",
+  "applies_to": "WooCommerce, EDD, SureCart, FluentCart adapters equally."
+ },
  "money_authorities": {
-  "_note": "READ THIS BEFORE TOUCHING ANY MONEY PATH. There is exactly one authority per concept — plus one UNRESOLVED split flagged below.",
+  "_note": "READ THIS BEFORE TOUCHING ANY MONEY PATH. There is exactly one authority per concept — plus one UNRESOLVED split flagged below. See also ecommerce_adapter_boundary, which governs what an adapter may read from the host platform at all.",
   "commission": {
    "authority": "WPSellServices\\Services\\CommissionService::compute_breakdown()",
    "rule": "Never compute a fee inline. Free (ManualOrderPage, OrderWorkflowManager) and Pro (TieredCommission flat rules, SubscriptionManager plan override, Stripe Connect split, EDD orders, subscription renewals) all route through it; the Connect split reads the PERSISTED fee and never recomputes.",
