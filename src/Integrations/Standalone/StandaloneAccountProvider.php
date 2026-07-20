@@ -544,46 +544,15 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return void
 	 */
 	private function render_notifications_page(): void {
-		$notifications = wpss_get_user_notifications( get_current_user_id() );
-		?>
-		<h2><?php esc_html_e( 'Notifications', 'wp-sell-services' ); ?></h2>
+		// Renders the SHARED notifications partial so this account page is
+		// identical to the dashboard section and the myaccount template — same
+		// markup, same styling, and working mark-read. It previously hand-rolled
+		// a read-only list with no mark-read control, using the `wpss-notification`
+		// class, which is the fixed-position TOAST component (so the list rendered
+		// off-screen).
+		$user_id = get_current_user_id();
 
-		<?php if ( empty( $notifications ) ) : ?>
-			<p><?php esc_html_e( 'No notifications.', 'wp-sell-services' ); ?></p>
-		<?php else : ?>
-			<div class="wpss-notifications-list">
-				<?php foreach ( $notifications as $notification ) : ?>
-					<div class="wpss-notification <?php echo esc_attr( $notification->is_read ? '' : 'unread' ); ?>">
-						<div class="wpss-notification-content">
-							<strong><?php echo esc_html( $notification->title ); ?></strong>
-							<p><?php echo esc_html( $notification->message ); ?></p>
-							<span class="wpss-notification-time">
-								<?php echo esc_html( human_time_diff( strtotime( $notification->created_at ) ) ); ?>
-								<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
-							</span>
-						</div>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		<?php endif; ?>
-
-		<style>
-			.wpss-notification {
-				padding: 15px;
-				border: 1px solid var(--wpss-bg-muted, #eee);
-				border-radius: 4px;
-				margin-bottom: 10px;
-			}
-			.wpss-notification.unread {
-				background: var(--wpss-primary-light, #f8f9ff);
-				border-color: var(--wpss-info-border, #cce5ff);
-			}
-			.wpss-notification-time {
-				font-size: 12px;
-				color: var(--wpss-text-hint, #999);
-			}
-		</style>
-		<?php
+		require WPSS_PLUGIN_DIR . 'templates/partials/notifications-list.php';
 	}
 
 	/**
