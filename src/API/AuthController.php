@@ -585,7 +585,8 @@ class AuthController extends RestController {
 			'display_name'  => $user->display_name,
 			'avatar'        => get_avatar_url( $user->ID, array( 'size' => 256 ) ),
 			'is_vendor'     => $is_vendor,
-			'vendor_status' => $is_vendor ? ( get_user_meta( $user->ID, '_wpss_vendor_status', true ) ?: 'active' ) : null,
+			// Canonical profile status — _wpss_vendor_status was never written.
+			'vendor_status' => $is_vendor ? ( wpss_get_vendor_status( $user->ID ) ?: 'active' ) : null,
 			'is_admin'      => $user->has_cap( 'manage_options' ),
 			'registered'    => $user->user_registered,
 		);

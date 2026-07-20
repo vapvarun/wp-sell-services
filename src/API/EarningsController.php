@@ -641,8 +641,11 @@ class EarningsController extends RestController {
 			return new WP_Error( 'rest_forbidden', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		// Prevent pending vendors from accessing earnings.
-		$vendor_status = get_user_meta( get_current_user_id(), '_wpss_vendor_status', true );
+		// Prevent pending vendors from accessing earnings. Reads the canonical
+		// profile status — this used to read _wpss_vendor_status user meta,
+		// which nothing ever wrote, so the gate never fired and a pending
+		// vendor could reach every earnings endpoint.
+		$vendor_status = wpss_get_vendor_status( get_current_user_id() );
 		if ( 'pending' === $vendor_status ) {
 			return new WP_Error( 'rest_forbidden', __( 'Your vendor account is pending approval.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}

@@ -399,7 +399,8 @@ class API {
 		];
 
 		if ( $data['is_vendor'] ) {
-			$data['vendor_status'] = get_user_meta( $user_id, '_wpss_vendor_status', true ) ?: 'approved';
+			// Canonical profile status — _wpss_vendor_status was never written.
+			$data['vendor_status'] = wpss_get_vendor_status( $user_id ) ?: 'active';
 			$data['rating']        = (float) get_user_meta( $user_id, '_wpss_rating_average', true ) ?: 0;
 			$data['review_count']  = (int) get_user_meta( $user_id, '_wpss_rating_count', true ) ?: 0;
 		}

@@ -856,7 +856,10 @@ class VendorsController extends RestController {
 		// Add private data for self.
 		if ( $is_self ) {
 			$data['email']  = $vendor->user_email;
-			$data['status'] = get_user_meta( $vendor_id, '_wpss_vendor_status', true ) ?: 'approved';
+			// Canonical profile status. The old _wpss_vendor_status user meta was
+			// never written, so this always fell through to 'approved' and the
+			// endpoint reported every vendor as approved regardless of reality.
+			$data['status'] = wpss_get_vendor_status( $vendor_id ) ?: 'active';
 		}
 
 		/**

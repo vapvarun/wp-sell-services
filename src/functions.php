@@ -512,6 +512,28 @@ function wpss_get_vendor( int $user_id ): ?\WPSellServices\Models\VendorProfile 
 }
 
 /**
+ * Get a vendor's account status.
+ *
+ * Shared accessor for every vendor-status read. Resolves from the canonical
+ * wpss_vendor_profiles.status column — the legacy _wpss_vendor_status user
+ * meta key was READ in four places and written in none, so every caller fell
+ * through to its own hardcoded default. The REST API reported every vendor as
+ * approved regardless of their real status, and the "pending vendors cannot
+ * access earnings" gate in EarningsController never fired.
+ *
+ * @since 1.2.3
+ *
+ * @param int $user_id Vendor user ID.
+ * @return string One of 'active', 'pending', 'suspended', or '' when the
+ *                user has no vendor profile row at all.
+ */
+function wpss_get_vendor_status( int $user_id ): string {
+	$vendor = wpss_get_vendor( $user_id );
+
+	return $vendor instanceof \WPSellServices\Models\VendorProfile ? $vendor->status : '';
+}
+
+/**
  * Get the datetime of a vendor's most recent completed delivery.
  *
  * Shared accessor for every "Last Delivery" display (single-service page,
