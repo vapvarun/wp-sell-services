@@ -327,6 +327,34 @@ final class Plugin {
 	private function maybe_run_install(): void {
 		$installed_version = get_option( 'wpss_version', '' );
 
+		// One-time wallet-ledger reconciliation. Deliberately gated on its OWN
+		// flag rather than on a version comparison: the vendor balance is now
+		// derived from the wallet ledger, and on any install that never wrote
+		// withdrawal debit rows (every free-only site — the debit used to live
+		// in Pro) each vendor's balance reads HIGH by the total they have
+		// already been paid, and they could withdraw it a second time.
+		//
+		// A version guard would have tied this to someone remembering to bump
+		// the version in the same release that shipped the new balance formula.
+		// If the two ever came apart, sites would silently run the new formula
+		// without the reconciliation — which is the failure mode this exists to
+		// prevent. The flag makes it self-triggering and exactly-once.
+		//
+		// Safe to run on a fresh install: there are no withdrawals to scan.
+		// Idempotent regardless — backfill_withdrawal_debits() skips any
+		// withdrawal that already has a ledger row, including the type 'debit'
+		// rows Pro wrote on paired installs.
+		if ( ! get_option( 'wpss_ledger_reconciled', false ) ) {
+			add_action(
+				'init',
+				static function (): void {
+					( new \WPSellServices\Services\EarningsService() )->backfill_withdrawal_debits();
+					update_option( 'wpss_ledger_reconciled', 1, false );
+				},
+				20
+			);
+		}
+
 		if ( version_compare( $installed_version, WPSS_VERSION, '<' ) ) {
 			// DB, roles, settings — safe on plugins_loaded.
 			Activator::install();
@@ -339,25 +367,9 @@ final class Plugin {
 				self::clear_legacy_wpcron_hooks();
 			}
 
-			// One-time wallet-ledger reconciliation for installs upgrading from
-			// pre-1.2.3. The vendor balance is now derived from the wallet
-			// ledger, and completed withdrawals are debited into it. On a
-			// free-only site nothing ever wrote those debit rows, so without
-			// this backfill every past payout would be missing from the ledger
-			// and each vendor's balance would read HIGH by the total they have
-			// already been paid — letting them withdraw it a second time.
-			//
-			// Idempotent: skips any withdrawal that already has a ledger row
-			// (including the type 'debit' rows Pro wrote on paired installs).
-			if ( $installed_version && version_compare( $installed_version, '1.2.3', '<' ) ) {
-				add_action(
-					'init',
-					static function (): void {
-						( new \WPSellServices\Services\EarningsService() )->backfill_withdrawal_debits();
-					},
-					20
-				);
-			}
+			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
+			// own wpss_ledger_reconciled flag at the top of this method, so it
+			// cannot be missed by a release that forgets to bump the version.
 
 			// Page creation needs $wp_rewrite — defer to init.
 			add_action(
