@@ -166,22 +166,27 @@ class SetupWizardPage {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_save_step().
 		$gateway = sanitize_key( $_POST['gateway'] ?? '' );
 
+		// The wizard picks WHICH gateway to use and switches it on. It does NOT
+		// collect API credentials — the Payments settings screen is the single
+		// owner of those, and a second writer here had already drifted: the
+		// wizard wrote PayPal `client_id` / `client_secret`, while the gateway
+		// reads `sandbox_client_id` / `live_client_id` (+ `webhook_id`, never
+		// collected). Every credential typed into the wizard was silently
+		// discarded, so PayPal looked configured but could never authenticate.
+		// Keeping one writer removes the whole drift class — and most owners do
+		// not have API keys to hand during first-run onboarding anyway.
 		if ( 'stripe' === $gateway ) {
 			$settings = get_option( 'wpss_stripe_settings', array() );
 
-			$settings['enabled']              = true;
-			$settings['test_mode']            = ! empty( $_POST['stripe_test_mode'] );
-			$settings['test_secret_key']      = sanitize_text_field( wp_unslash( $_POST['stripe_test_secret_key'] ?? '' ) );
-			$settings['test_publishable_key'] = sanitize_text_field( wp_unslash( $_POST['stripe_test_publishable_key'] ?? '' ) );
+			$settings['enabled']   = true;
+			$settings['test_mode'] = ! empty( $_POST['stripe_test_mode'] );
 
 			update_option( 'wpss_stripe_settings', $settings );
 		} elseif ( 'paypal' === $gateway ) {
 			$settings = get_option( 'wpss_paypal_settings', array() );
 
-			$settings['enabled']       = true;
-			$settings['sandbox']       = ! empty( $_POST['paypal_sandbox'] );
-			$settings['client_id']     = sanitize_text_field( wp_unslash( $_POST['paypal_client_id'] ?? '' ) );
-			$settings['client_secret'] = sanitize_text_field( wp_unslash( $_POST['paypal_client_secret'] ?? '' ) );
+			$settings['enabled'] = true;
+			$settings['sandbox'] = ! empty( $_POST['paypal_sandbox'] );
 
 			update_option( 'wpss_paypal_settings', $settings );
 		} elseif ( 'offline' === $gateway ) {
@@ -438,14 +443,15 @@ class SetupWizardPage {
 							<?php esc_html_e( 'Test Mode', 'wp-sell-services' ); ?>
 						</label>
 					</div>
-					<div class="wpss-wizard-field">
-						<label for="wpss-wiz-stripe-sk"><?php esc_html_e( 'Test Secret Key', 'wp-sell-services' ); ?></label>
-						<input type="text" id="wpss-wiz-stripe-sk" placeholder="sk_test_...">
-					</div>
-					<div class="wpss-wizard-field">
-						<label for="wpss-wiz-stripe-pk"><?php esc_html_e( 'Test Publishable Key', 'wp-sell-services' ); ?></label>
-						<input type="text" id="wpss-wiz-stripe-pk" placeholder="pk_test_...">
-					</div>
+					<p class="description">
+						<?php
+						printf(
+							/* translators: %s: link to the Stripe payment settings screen */
+							esc_html__( 'API keys are entered on the payment settings screen: %s', 'wp-sell-services' ),
+							'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-settings&tab=payments' ) ) . '" target="_blank" rel="noopener">' . esc_html__( 'Payments settings', 'wp-sell-services' ) . '</a>'
+						);
+						?>
+					</p>
 				</div>
 
 				<!-- PayPal panel -->
@@ -456,14 +462,15 @@ class SetupWizardPage {
 							<?php esc_html_e( 'Sandbox Mode', 'wp-sell-services' ); ?>
 						</label>
 					</div>
-					<div class="wpss-wizard-field">
-						<label for="wpss-wiz-paypal-id"><?php esc_html_e( 'Client ID', 'wp-sell-services' ); ?></label>
-						<input type="text" id="wpss-wiz-paypal-id">
-					</div>
-					<div class="wpss-wizard-field">
-						<label for="wpss-wiz-paypal-secret"><?php esc_html_e( 'Client Secret', 'wp-sell-services' ); ?></label>
-						<input type="text" id="wpss-wiz-paypal-secret">
-					</div>
+					<p class="description">
+						<?php
+						printf(
+							/* translators: %s: link to the PayPal payment settings screen */
+							esc_html__( 'Client ID, secret and webhook ID are entered on the payment settings screen: %s', 'wp-sell-services' ),
+							'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-settings&tab=payments' ) ) . '" target="_blank" rel="noopener">' . esc_html__( 'Payments settings', 'wp-sell-services' ) . '</a>'
+						);
+						?>
+					</p>
 				</div>
 
 				<!-- Offline panel -->
@@ -885,12 +892,10 @@ class SetupWizardPage {
 					data.gateway = $('input[name="wpss_gateway"]:checked').val();
 					if (data.gateway === 'stripe') {
 						data.stripe_test_mode = $('#wpss-wiz-stripe-test').is(':checked') ? 1 : 0;
-						data.stripe_test_secret_key = $('#wpss-wiz-stripe-sk').val();
-						data.stripe_test_publishable_key = $('#wpss-wiz-stripe-pk').val();
+					// Credentials belong to the Payments settings screen, not the
+						// wizard — see save_step_gateway().
 					} else if (data.gateway === 'paypal') {
 						data.paypal_sandbox = $('#wpss-wiz-paypal-sandbox').is(':checked') ? 1 : 0;
-						data.paypal_client_id = $('#wpss-wiz-paypal-id').val();
-						data.paypal_client_secret = $('#wpss-wiz-paypal-secret').val();
 					} else if (data.gateway === 'offline') {
 						data.offline_title = $('#wpss-wiz-offline-title').val();
 						data.offline_description = $('#wpss-wiz-offline-desc').val();
