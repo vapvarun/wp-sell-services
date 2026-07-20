@@ -146,6 +146,14 @@
  "ajax": {
   "handler_count": 106,
   "handlers_file": "src/Frontend/AjaxHandlers.php (4158 lines, ~106 unique wp_ajax_wpss_* actions)",
+  "handlers_outside_ajaxhandlers": [
+   {
+    "action": "wpss_stripe_process_payment",
+    "registered_in": "src/Integrations/Stripe/StripeGateway.php:150",
+    "callback": "StripeGateway::ajax_confirm_payment",
+    "note": "Logged-in only (no nopriv). Added 1.2.2 — the checkout JS had always posted this action but nothing was listening, so Pay returned a bare `0`. Confirms the PaymentIntent server-side; the client no longer confirms."
+   }
+  ],
   "_note": "Per-handler enumeration deferred to refresh-with-rebuild. Audit conclusions: nonces present on all (verified). Capability/ownership checks via three patterns: inline current_user_can, service-class delegation, WHERE clause user_id scoping. See audit/wppqa-baseline-2026-05-08/SUMMARY.md for findings (13 nonce-no-cap warnings — most are valid object-ownership patterns the regex doesn't credit; 3-5 in Admin.php / ServiceModerationPage.php may be real gaps)."
  },
  "admin_pages": {
@@ -340,7 +348,7 @@
   },
   {
    "name": "{prefix}wpss_wallet_transactions",
-   "purpose": "Wallet ledger entries"
+   "purpose": "Wallet ledger entries — THE authority for wallet balance as of 1.2.2. Read only via wpss_get_ledger_balance(); never SUM this table inline. Rows with status 'pending' are excluded from balance. CAVEAT: the balance_after column is written but no longer read by any balance path; it is a denormalised trail whose retirement is an OPEN DECISION (see audit/HANDOFF.md)."
   },
   {
    "name": "{prefix}wpss_withdrawals",
@@ -351,6 +359,32 @@
    "purpose": "Privileged-action audit trail"
   }
  ],
+ "money_authorities": {
+  "_note": "READ THIS BEFORE TOUCHING ANY MONEY PATH. There is exactly one authority per concept — plus one UNRESOLVED split flagged below.",
+  "commission": {
+   "authority": "WPSellServices\\Services\\CommissionService::compute_breakdown()",
+   "rule": "Never compute a fee inline. Free (ManualOrderPage, OrderWorkflowManager) and Pro (TieredCommission flat rules, SubscriptionManager plan override, Stripe Connect split, EDD orders, subscription renewals) all route through it; the Connect split reads the PERSISTED fee and never recomputes.",
+   "extension_points": "wpss_commission_fee (amount) / wpss_commission_rate (percent) / wpss_commission_base_amount (base)"
+  },
+  "wallet_balance": {
+   "authority": "wpss_get_ledger_balance( int $user_id, bool $lock = false ) — src/functions.php:128",
+   "rule": "SUM over {prefix}wpss_wallet_transactions, 'pending' rows excluded. Never SUM the table inline; pass $lock = true inside a credit/debit transaction to take FOR UPDATE. Replaced the stale vendor_profiles balance column (free) and three divergent SUM copies (Pro) in 1.2.2.",
+   "callers": "free: VendorsPage x3, CommissionService, OrderWorkflowManager, MilestoneService, ExtensionOrderService, TippingService; pro: InternalWalletProvider x3"
+  },
+  "currency_conversion": {
+   "authority": "wpss_amount_to_minor_units() / wpss_amount_from_minor_units() / wpss_amounts_match() — src/functions.php",
+   "rule": "Never multiply by 100 inline when talking to a gateway, and never compare gateway amounts with a hardcoded epsilon. Zero-decimal (JPY) and 3-decimal (BHD/JOD/KWD/OMR/TND) currencies both break the naive form."
+  },
+  "UNRESOLVED_withdrawable_balance": {
+   "problem": "The vendor's WITHDRAWABLE balance is computed by a SECOND, independent authority that does not consult the wallet ledger at all.",
+   "authority_a": "wpss_get_ledger_balance() — SUM of wpss_wallet_transactions. Drives the wallet UI and every credit/debit path.",
+   "authority_b": "EarningsService::get_summary()['available_balance'] — src/Services/EarningsService.php:138. Derived from wpss_orders (vendor_earnings) minus wpss_withdrawals, ignoring the ledger entirely. THIS is what gates withdrawal requests (EarningsService.php:323) and auto-payout eligibility (:744).",
+   "risk": "The two numbers can diverge — any ledger entry with no matching order row (manual adjustment, refund reversal, tip credit) moves A without moving B, and vice versa. A vendor can be shown one balance and gated on another.",
+   "status": "IDENTIFIED 2026-07-20, NOT YET FIXED. Reconciling these is a design decision (does the ledger become the single authority, with orders/withdrawals only feeding it?) — do not patch one caller in isolation.",
+   "also_dead": "{prefix}wpss_vendor_profiles.available_balance / .pending_balance are mutated by a raw UPDATE at src/Frontend/AjaxHandlers.php:3405 but read by NO balance path. Write-only columns.",
+   "also_note": "wpss_wallet_transactions.balance_after IS still read — Pro's LedgerExporter (src/Services/LedgerExporter.php) selects it for statement CSVs. Retiring the column requires giving the exporter a running-balance computation first."
+  }
+ },
  "capabilities": {
   "_note": "Plugin uses standard WP capabilities (edit_posts, manage_options) plus role-based ownership. No custom capability slugs registered. Vendor role created via add_role on activation."
  },
@@ -490,6 +524,21 @@
     "name": "wpss_manual_order_currencies",
     "type": "filter",
     "purpose": "Currencies available when creating a manual order"
+   },
+   {
+    "name": "wpss_three_decimal_currencies",
+    "type": "filter",
+    "purpose": "List of 3-decimal currencies (BHD, JOD, KWD, OMR, TND) whose gateway minor-unit conversion is x1000, not x100. Consumed by wpss_amount_to_minor_units()/wpss_amount_from_minor_units() — pairs with wpss_zero_decimal_currencies."
+   },
+   {
+    "name": "wpss_stripe_payment_description",
+    "type": "filter",
+    "purpose": "Override the description sent on the Stripe PaymentIntent (StripeGateway)"
+   },
+   {
+    "name": "wpss_dashboard_section_before",
+    "type": "action",
+    "purpose": "Fires inside a dashboard section wrapper before its body renders; receives the section key"
    }
   ],
   "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings."
@@ -618,6 +667,6 @@
   "scan_path": ".",
   "php_file_count": 266,
   "_note": "Streamlined mode — produces summary-level manifest sufficient for CLAUDE.md auto-load context. Full enumeration of 138 REST endpoints, 106 AJAX handlers, 232 hooks deferred to a future refresh+rebuild pass. Coverage gates per sub-category not enforced. wppqa baseline + PCP scan results captured. graph.html, local-CI scaffold, scale benchmark, paired-plugin contract artefacts deferred.",
-  "refresh_note": "Diff-driven refresh 2026-06-10 after the 1.2.0 feature sprint. Re-scanned hooks (do_action 247 / apply_filters 142 unique), REST (added RealtimeController, endpoint_count 138→139), settings (Real-time card on Advanced). New extension hooks: wizard injection surface (wpss_wizard_service_data, wpss_wizard_pricing_after, wpss_wizard_sanitize_service_data, wpss_wizard_save_service_meta), full-width template (wpss_use_fullwidth_template, wpss_fullwidth_page_keys), role-aware dashboard landing (wpss_dashboard_default_section), realtime (wpss_realtime_settings). New shared helper wpss_get_service_extras(). wppqa baseline 2026-06-10: rest-js-contract clean, plugin-dev-rules failures all pre-existing heuristic FPs. Delta 2026-06-10 (Basecamp #9983214498): new shared helper wpss_get_service_delivery_days() in src/functions.php (_wpss_delivery_days -> _wpss_fastest_delivery fallback); all service write paths (wizard, admin metabox, REST ServicesController, save_post sync, archive backfill, CLI regenerate) now sync BOTH delivery meta keys. Delta 2026-06-10 (Basecamp #9983236795): new shared helper wpss_get_service_revisions() in src/functions.php (_wpss_revisions -> _wpss_max_revisions fallback, preserves -1 unlimited and explicit 0); read sites (service-packages template, REST ServicesController payload) use the helper; all revision write paths (wizard, admin metabox, REST ServicesController, CLI create + regenerate-meta, demo MarketplaceSeeder) now sync BOTH revision meta keys. Delta 2026-06-10 (Basecamp #9983237242): admin metabox add-ons read sites (ServiceMetabox render_addons_content + legacy render_addons_metabox) now resolve via wpss_get_service_extras() through new private ServiceMetabox::get_addons_for_editor() (maps wizard extra_days / legacy delivery_time onto delivery_days_extra); metabox save deletes _wpss_extras so admin rows win in the helper afterwards, gated by new wpss_addons_present sentinel field (gallery-sentinel pattern) so non-metabox save paths never wipe wizard add-ons. Delta 2026-06-11 (Basecamp #9983472211): wpss_service_meta_fields filter wired into the ACTIVE admin metabox pipeline (ServiceMetabox::render_overview_content via new private render_extra_fields()); extension field HTML renders through wp_kses() with a form-aware allow-list (get_extra_fields_allowed_html()) because wp_kses_post stripped input/select/option/textarea/label; legacy render_details_metabox delegates to the same helper. Delta 2026-06-11 (Basecamp #9985174504): vendor read surfaces migrated off dead legacy meta onto the canonical wpss_vendor_profiles table via the shared wpss_get_vendor() model accessor — SchemaMarkup + ServiceSchemaPiece Person schema (jobTitle/aggregateRating from tagline/avg_rating/total_reviews), VendorsController prepare_item_for_response (tagline/bio/social_links/country/completed_orders/is_verified; is_verified derives from verification_tier='pro' per VendorProfile::from_db) and get_vendor_stats avg_response_time (response_time_hours via get_response_time_label), API.php vendor search tagline, SellerCard block (title/response time; online key aligned to canonical _wpss_last_active), single-request.php proposal rating/orders, vendor-card.php + content-service-card.php partials. New shared accessor wpss_get_vendor_last_delivery() in src/functions.php -> VendorService::get_last_delivery_date() -> OrderRepository::get_last_completed_date() (orders MAX(completed_at), tips excluded) backs every Last Delivery display. Dead reads removed: _wpss_highlights render block, _wpss_max_quantity meta (wpss_max_order_quantity filter is the only quantity extension point). VendorsController::get_item vendor guard now uses wpss_is_vendor() instead of raw _wpss_is_vendor meta (role-granted vendors 404ed)."
+  "refresh_note": "Diff-driven refresh 2026-06-10 after the 1.2.0 feature sprint. Re-scanned hooks (do_action 247 / apply_filters 142 unique), REST (added RealtimeController, endpoint_count 138→139), settings (Real-time card on Advanced). New extension hooks: wizard injection surface (wpss_wizard_service_data, wpss_wizard_pricing_after, wpss_wizard_sanitize_service_data, wpss_wizard_save_service_meta), full-width template (wpss_use_fullwidth_template, wpss_fullwidth_page_keys), role-aware dashboard landing (wpss_dashboard_default_section), realtime (wpss_realtime_settings). New shared helper wpss_get_service_extras(). wppqa baseline 2026-06-10: rest-js-contract clean, plugin-dev-rules failures all pre-existing heuristic FPs. Delta 2026-06-10 (Basecamp #9983214498): new shared helper wpss_get_service_delivery_days() in src/functions.php (_wpss_delivery_days -> _wpss_fastest_delivery fallback); all service write paths (wizard, admin metabox, REST ServicesController, save_post sync, archive backfill, CLI regenerate) now sync BOTH delivery meta keys. Delta 2026-06-10 (Basecamp #9983236795): new shared helper wpss_get_service_revisions() in src/functions.php (_wpss_revisions -> _wpss_max_revisions fallback, preserves -1 unlimited and explicit 0); read sites (service-packages template, REST ServicesController payload) use the helper; all revision write paths (wizard, admin metabox, REST ServicesController, CLI create + regenerate-meta, demo MarketplaceSeeder) now sync BOTH revision meta keys. Delta 2026-06-10 (Basecamp #9983237242): admin metabox add-ons read sites (ServiceMetabox render_addons_content + legacy render_addons_metabox) now resolve via wpss_get_service_extras() through new private ServiceMetabox::get_addons_for_editor() (maps wizard extra_days / legacy delivery_time onto delivery_days_extra); metabox save deletes _wpss_extras so admin rows win in the helper afterwards, gated by new wpss_addons_present sentinel field (gallery-sentinel pattern) so non-metabox save paths never wipe wizard add-ons. Delta 2026-06-11 (Basecamp #9983472211): wpss_service_meta_fields filter wired into the ACTIVE admin metabox pipeline (ServiceMetabox::render_overview_content via new private render_extra_fields()); extension field HTML renders through wp_kses() with a form-aware allow-list (get_extra_fields_allowed_html()) because wp_kses_post stripped input/select/option/textarea/label; legacy render_details_metabox delegates to the same helper. Delta 2026-06-11 (Basecamp #9985174504): vendor read surfaces migrated off dead legacy meta onto the canonical wpss_vendor_profiles table via the shared wpss_get_vendor() model accessor — SchemaMarkup + ServiceSchemaPiece Person schema (jobTitle/aggregateRating from tagline/avg_rating/total_reviews), VendorsController prepare_item_for_response (tagline/bio/social_links/country/completed_orders/is_verified; is_verified derives from verification_tier='pro' per VendorProfile::from_db) and get_vendor_stats avg_response_time (response_time_hours via get_response_time_label), API.php vendor search tagline, SellerCard block (title/response time; online key aligned to canonical _wpss_last_active), single-request.php proposal rating/orders, vendor-card.php + content-service-card.php partials. New shared accessor wpss_get_vendor_last_delivery() in src/functions.php -> VendorService::get_last_delivery_date() -> OrderRepository::get_last_completed_date() (orders MAX(completed_at), tips excluded) backs every Last Delivery display. Dead reads removed: _wpss_highlights render block, _wpss_max_quantity meta (wpss_max_order_quantity filter is the only quantity extension point). VendorsController::get_item vendor guard now uses wpss_is_vendor() instead of raw _wpss_is_vendor meta (role-granted vendors 404ed). Delta 2026-07-20 (money-path consolidation sprint, commits ab93f8a..87f9229): FIVE new canonical money helpers in src/functions.php — wpss_get_ledger_balance( user_id, lock ) is now THE ONLY wallet-balance formula (SUM over wpss_wallet_transactions, pending rows excluded, optional FOR UPDATE lock); it replaced the stale wpss_vendor_profiles balance column read in free and three divergent SUM copies in Pro. wpss_amount_to_minor_units() / wpss_amount_from_minor_units() are the single gateway minor-unit converter (3-decimal currencies were being sent 10x wrong via a hardcoded *100); wpss_amounts_match() is the single currency-aware webhook amount comparator (replaced a hardcoded 0.01 epsilon); wpss_get_three_decimal_currencies() backs both. New filters: wpss_three_decimal_currencies, wpss_stripe_payment_description, wpss_dashboard_section_before (action). New AJAX action wpss_stripe_process_payment registered in StripeGateway (see ajax.handlers_outside_ajaxhandlers). New shared template partial templates/partials/notifications-list.php now backs BOTH the dashboard notifications section and templates/myaccount/notifications.php (the Woo My Account copy previously rendered nothing); new templates/dashboard/sections/{disputes,notifications}.php. CommissionService::compute_breakdown is the sole commission authority — ManualOrderPage and Pro's EDD/renewal/Connect-split paths now call it instead of hand-rolled math. Standing rule added to CLAUDE.md this sprint: ONE FLOW, ONE IMPLEMENTATION (every P0 found in this sprint was a second copy of an existing flow drifting from the first)."
  }
 }
