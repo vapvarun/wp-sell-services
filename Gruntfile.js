@@ -149,6 +149,7 @@ module.exports = function ( grunt ) {
 							'!phpstan.neon',
 							'!phpstan-baseline.neon',
 							'!phpstan-bootstrap.php',
+							'!plan/**',
 							'!plans/**',
 
 							// Exclude dev vendor packages.
@@ -240,7 +241,7 @@ module.exports = function ( grunt ) {
 			'languages/wp-sell-services.pot',
 			'--slug=wp-sell-services',
 			'--domain=wp-sell-services',
-			'--exclude=node_modules,vendor,tests,dist,scripts,plans,docs,marketing,bin',
+			'--exclude=node_modules,vendor,tests,dist,scripts,plan,plans,docs,marketing,bin,audit',
 			'--headers={"Report-Msgid-Bugs-To":"https://wbcomdesigns.com/support/","Last-Translator":"Wbcom Designs <admin@wbcomdesigns.com>","Language-Team":"Wbcom Designs <admin@wbcomdesigns.com>"}',
 		];
 		const child = spawn( 'wp', args, { stdio: 'inherit' } );

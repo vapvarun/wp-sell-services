@@ -56,3 +56,6 @@ vendor/theseer
 .DS_Store
 Thumbs.db
 **/.DS_Store
+plan
+audit
+.contract-audit-baseline.json
