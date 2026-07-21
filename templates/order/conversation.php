@@ -319,7 +319,29 @@ do_action( 'wpss_before_conversation', $order );
 				} elseif ( 'cancelled' === $order->status ) {
 					esc_html_e( 'This order has been cancelled.', 'wp-sell-services' );
 				} elseif ( 'refunded' === $order->status ) {
-					esc_html_e( 'This order has been refunded.', 'wp-sell-services' );
+					if ( ! empty( $order->refunded_amount ) ) {
+						printf(
+							/* translators: %s: refunded amount */
+							esc_html__( 'This order has been refunded (%s returned).', 'wp-sell-services' ),
+							esc_html( wpss_format_price( (float) $order->refunded_amount, $order->currency ) )
+						);
+					} else {
+						esc_html_e( 'This order has been refunded.', 'wp-sell-services' );
+					}
+				} elseif ( 'partially_refunded' === $order->status ) {
+					// Already treated as terminal by the composer guard above,
+					// but it had no message of its own — so a partially
+					// refunded buyer fell through to the generic "Messaging is
+					// not available" and was told nothing about their money.
+					if ( ! empty( $order->refunded_amount ) ) {
+						printf(
+							/* translators: %s: refunded amount */
+							esc_html__( 'This order has been partially refunded (%s returned).', 'wp-sell-services' ),
+							esc_html( wpss_format_price( (float) $order->refunded_amount, $order->currency ) )
+						);
+					} else {
+						esc_html_e( 'This order has been partially refunded.', 'wp-sell-services' );
+					}
 				} else {
 					esc_html_e( 'Messaging is not available for this order status.', 'wp-sell-services' );
 				}

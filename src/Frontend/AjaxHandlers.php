@@ -3016,6 +3016,8 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function order_action(): void {
+		global $wpdb;
+
 		$nonce = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) );
 
 		// Accept nonce from both dashboard context and order detail page context.
@@ -3065,7 +3067,28 @@ class AjaxHandlers {
 			case 'refund':
 				// Only customer can request refund, or vendor can issue refund.
 				if ( in_array( $order->status, array( 'pending_payment', 'pending_requirements', 'accepted' ), true ) ) {
-					$result = $order_service->update_status( $order_id, 'refunded' );
+					// Record how much is going back BEFORE the status change —
+					// the refund handlers read refunded_amount off the order to
+					// size both the buyer refund and the vendor's reversal.
+					// Absent or zero means the whole order.
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified at the top of this handler.
+					$wpss_refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
+					$wpss_order_total   = (float) $order->total;
+					$wpss_is_partial    = $wpss_refund_amount > 0 && $wpss_refund_amount < $wpss_order_total;
+
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->update(
+						$wpdb->prefix . 'wpss_orders',
+						array( 'refunded_amount' => $wpss_is_partial ? round( $wpss_refund_amount, 2 ) : $wpss_order_total ),
+						array( 'id' => $order_id ),
+						array( '%f' ),
+						array( '%d' )
+					);
+
+					$result = $order_service->update_status(
+						$order_id,
+						$wpss_is_partial ? 'partially_refunded' : 'refunded'
+					);
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Order cannot be refunded in its current status.', 'wp-sell-services' ) ) );
 				}

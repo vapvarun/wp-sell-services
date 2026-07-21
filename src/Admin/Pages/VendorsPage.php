@@ -2807,9 +2807,21 @@ class VendorsPage {
 					<strong><?php echo esc_html( wpss_format_price( $commission_summary['total_commission'] ) ); ?></strong>
 					<?php esc_html_e( 'Platform Fees', 'wp-sell-services' ); ?>
 				</div>
-				<div class="wpss-earnings-card">
+				<?php
+				// A negative wallet balance means a refund reclaimed earnings
+				// this vendor had already been paid, so they owe the platform.
+				// Flagged rather than shown as a plain figure, because an admin
+				// scanning this screen needs to spot a debt without doing the
+				// arithmetic themselves.
+				$wpss_balance_owed = $wallet_balance < 0;
+				?>
+				<div class="wpss-earnings-card<?php echo $wpss_balance_owed ? ' wpss-earnings-card--owed' : ''; ?>">
 					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
-					<?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?>
+					<?php
+					echo $wpss_balance_owed
+						? esc_html__( 'Wallet Balance (owed to platform)', 'wp-sell-services' )
+						: esc_html__( 'Wallet Balance', 'wp-sell-services' );
+					?>
 				</div>
 			</div>
 		</div>
@@ -2960,9 +2972,13 @@ class VendorsPage {
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-earnings-summary">
-				<div class="wpss-earnings-card">
+				<div class="wpss-earnings-card<?php echo $wallet_balance < 0 ? ' wpss-earnings-card--owed' : ''; ?>">
 					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
-					<?php esc_html_e( 'Current Balance', 'wp-sell-services' ); ?>
+					<?php
+					echo $wallet_balance < 0
+						? esc_html__( 'Current Balance (owed to platform)', 'wp-sell-services' )
+						: esc_html__( 'Current Balance', 'wp-sell-services' );
+					?>
 				</div>
 				<div class="wpss-earnings-card">
 					<strong><?php echo esc_html( number_format_i18n( $total ) ); ?></strong>

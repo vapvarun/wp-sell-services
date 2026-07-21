@@ -2305,6 +2305,18 @@
 	margin-bottom: 5px;
 }
 
+/* Negative wallet balance: a refund reclaimed earnings the vendor had already
+   been paid, so they owe the platform. Flagged so an admin scanning the screen
+   spots a debt without having to read the sign. */
+.wpss-earnings-card--owed {
+	background: var(--wpss-danger-light, #fef2f2);
+	border: 1px solid var(--wpss-danger-border, #fecaca);
+}
+
+.wpss-earnings-card--owed strong {
+	color: var(--wpss-danger-dark, #991b1b);
+}
+
 /* Commission Form */
 .wpss-commission-form {
 	background: var(--wpss-bg-subtle, #f6f7f7);
