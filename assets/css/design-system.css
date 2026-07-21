@@ -531,6 +531,8 @@ button.wpss-btn--success,
 .wpss-banner__content { flex: 1; }
 .wpss-banner__title { display: block; font-weight: 600; font-size: var(--wpss-text-md); color: var(--wpss-warning-dark, #92400e); margin-bottom: 2px; }
 .wpss-banner__text { font-size: var(--wpss-text-sm); color: var(--wpss-warning-dark, #a16207); }
+.wpss-banner--danger { background: linear-gradient(135deg, var(--wpss-danger-light, #fef2f2), var(--wpss-danger-light, #fff1f2)); border: 1px solid var(--wpss-danger-border, #fecaca); }
+.wpss-banner--danger .wpss-banner__title, .wpss-banner--danger .wpss-banner__text { color: var(--wpss-danger-dark, #991b1b); }
 .wpss-banner__action { flex-shrink: 0; white-space: nowrap; }
 
 /* ==========================================================================

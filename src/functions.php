@@ -57,9 +57,20 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	 * @param float  $price     Original price.
 	 * @param string $currency  Currency code.
 	 */
+	// Negative amounts put the minus BEFORE the symbol ("-$90.00"), not after
+	// it ("$-90.00"). Concatenating the symbol onto a pre-signed number gave
+	// the latter, which reads as a typo — and negatives became reachable in the
+	// UI once refunds started driving vendor balances below zero.
+	$is_negative = $price < 0;
+	$formatted   = $symbol . number_format( abs( $price ), $decimals );
+
+	if ( $is_negative ) {
+		$formatted = '-' . $formatted;
+	}
+
 	return apply_filters(
 		'wpss_format_price',
-		$symbol . number_format( $price, $decimals ),
+		$formatted,
 		$price,
 		$currency
 	);

@@ -366,6 +366,14 @@ class EarningsController extends RestController {
 				'id'              => (int) $row['id'],
 				'type'            => $row['type'],
 				'amount'          => (float) $row['amount'],
+				// Whether this row REDUCES the balance. The client cannot infer
+				// it from the sign: debits are stored POSITIVE and the sign is
+				// applied on read from wpss_get_ledger_debit_types(), so a
+				// withdrawal rendered as "+90.00" — a payout looking like a
+				// credit. The server owns the debit-type list, so it answers
+				// here rather than the JS duplicating the rule.
+				'is_debit'        => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
+					|| (float) $row['amount'] < 0,
 				'balance_after'   => (float) $row['balance_after'],
 				'currency'        => $row['currency'],
 				'description'     => $row['description'],

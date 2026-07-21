@@ -971,7 +971,11 @@ class OrderWorkflowManager {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$current_balance = (float) wpss_get_ledger_balance( (int) $vendor_id, true );
 
-			$new_balance = max( 0, $current_balance - $vendor_earnings );
+			// Not clamped: if the vendor already withdrew this money the running
+			// balance genuinely goes negative, and the statement should say so.
+			// Clamping here made balance_after disagree with the actual ledger
+			// SUM on exactly the rows where the truth matters most.
+			$new_balance = $current_balance - $vendor_earnings;
 
 			// 3. Create reversal wallet transaction.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery

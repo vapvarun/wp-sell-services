@@ -215,7 +215,11 @@
 		 */
 		buildWalletRow: function (txn, i18n) {
 			var amount = parseFloat(txn.amount) || 0;
-			var isDebit = amount < 0;
+			// Trust the server's is_debit. Debits are stored POSITIVE — the sign
+			// is applied on read from the debit-type list — so inferring it from
+			// amount < 0 rendered every withdrawal as "+90.00", a payout that
+			// looked like a credit. Falls back to the sign for older payloads.
+			var isDebit = ( typeof txn.is_debit !== 'undefined' ) ? !! txn.is_debit : ( amount < 0 );
 			var $row = $('<tr>').addClass(isDebit ? 'wpss-wallet__row--debit' : 'wpss-wallet__row--credit');
 
 			var dateText = txn.created_at || '';

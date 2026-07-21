@@ -104,12 +104,21 @@ class EarningsService {
 		// Derived from the ledger (not from orders' completed_at) so that tips,
 		// milestones and extension credits observe clearance too — the
 		// orders-derived version silently exempted all three.
+		//
+		// `amount > 0` is essential, not decorative. Reversal rows
+		// ('order_reversal') are NOT in the debit-types list — they carry a
+		// NEGATIVE amount instead — so without this guard a reversal landing
+		// inside the clearance window would be summed as a clearance "credit",
+		// and available = ledger - in_clearance would ADD the debt straight
+		// back. A vendor refunded on already-withdrawn money would read $0.00
+		// owed instead of -$90.00.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$in_clearance = (float) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(amount), 0) FROM {$txn_table}
 				WHERE user_id = %d AND status = 'completed'
 				AND type NOT IN ({$debit_types})
+				AND amount > 0
 				AND created_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
 				$vendor_id,
 				$clearance_days
@@ -165,18 +174,66 @@ class EarningsService {
 		// $withdrawn here would debit them twice. Only still-open requests
 		// (pending / approved) need reserving, because those have not reached
 		// the ledger yet.
+		// NOT clamped to zero. A refund reverses the vendor's earnings, and if
+		// they had already withdrawn that money the balance goes NEGATIVE —
+		// which is the correct record of a debt to the platform. Because the
+		// balance is a SUM over the ledger, future earnings pay it down
+		// automatically with no separate collection machinery.
+		//
+		// Clamping hid the debt and let the vendor start earning again as if
+		// nothing had happened, so the platform silently ate every refund on
+		// already-withdrawn money.
 		$available = $ledger_balance - $pending_withdrawal - $in_clearance;
 
 		return array(
 			'total_earned'       => $total_earned,
 			'ledger_balance'     => $ledger_balance,
-			'available_balance'  => max( 0, $available ),
+			'available_balance'  => $available,
 			'pending_clearance'  => (float) $pending + $in_clearance,
 			'in_clearance'       => $in_clearance,
 			'withdrawn'          => $withdrawn,
 			'pending_withdrawal' => $pending_withdrawal,
 			'completed_orders'   => (int) $completed->order_count,
 		);
+	}
+
+	/**
+	 * Classify a vendor's balance so every surface renders the same states.
+	 *
+	 * Three templates need to answer "is this vendor in debt?" — the earnings
+	 * card, the withdrawal form and the admin vendors list. Deriving it in each
+	 * of them is how they drift apart, so it is derived once here.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return string One of 'positive', 'zero' or 'negative'.
+	 */
+	public function get_balance_state( int $vendor_id ): string {
+		return self::classify_balance( $this->get_summary( $vendor_id )['available_balance'] );
+	}
+
+	/**
+	 * Classify an already-known balance figure.
+	 *
+	 * Same rule as {@see get_balance_state()} without the extra query, for
+	 * callers that already hold a summary.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param float $available Available balance.
+	 * @return string One of 'positive', 'zero' or 'negative'.
+	 */
+	public static function classify_balance( float $available ): string {
+		// Sub-cent noise is not a debt. Rounding keeps a -0.004 float from
+		// rendering as "You owe $0.00".
+		$available = round( $available, 2 );
+
+		if ( $available < 0 ) {
+			return 'negative';
+		}
+
+		return $available > 0 ? 'positive' : 'zero';
 	}
 
 	/**
@@ -599,7 +656,9 @@ class EarningsService {
 					'id'           => (int) $row->id,
 					'amount'       => (float) $row->amount,
 					'method'       => $row->method,
-					'details'      => json_decode( $row->details, true ) ?: array(),
+					// Cast: the column is nullable, and under strict_types a NULL here
+					// is a TypeError that fatals the whole earnings page.
+					'details'      => json_decode( (string) ( $row->details ?? '' ), true ) ?: array(),
 					'status'       => $row->status,
 					'admin_note'   => $row->admin_note ?? '',
 					'processed_at' => $row->processed_at,
@@ -759,7 +818,9 @@ class EarningsService {
 					'vendor_name'  => $row->vendor_name,
 					'amount'       => (float) $row->amount,
 					'method'       => $row->method,
-					'details'      => json_decode( $row->details, true ) ?: array(),
+					// Cast: the column is nullable, and under strict_types a NULL here
+					// is a TypeError that fatals the whole earnings page.
+					'details'      => json_decode( (string) ( $row->details ?? '' ), true ) ?: array(),
 					'status'       => $row->status,
 					'admin_note'   => $row->admin_note ?? '',
 					'processed_at' => $row->processed_at,
