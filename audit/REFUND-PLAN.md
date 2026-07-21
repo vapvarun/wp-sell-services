@@ -77,13 +77,60 @@ debt. The real clawback is `reverse_transfer` on the Stripe refund, which
 `build_refund_args()` already sets. **This is the one case where D1 does not
 apply**, and it is deliberate.
 
-**D4 — `refunded` means refunded on every platform.** Pro's Woo provider
-currently maps Woo `refunded` → wpss `cancelled`
-(`WCOrderProvider.php:487`). That is why Woo refunds accidentally reverse
-earnings today — via the cancelled handler, through a raw `$wpdb->update` that
-bypasses the transition authority. Once `handle_order_refunded` is fixed, the
-mapping must be retired so a Woo buyer and a standalone buyer see the same
+**D4 — `refunded` means refunded on every platform. RESOLVED: Woo is a payment
+gateway, not a platform.**
+
+Owner, 2026-07-21: *"Woo is just a payment gateway for us like Stripe or PayPal."*
+
+That settles the mapping question and simplifies the model. Woo/EDD/SureCart/
+FluentCart are **payment rails**, exactly like Stripe and PayPal. They report one
+fact — was the money taken, or given back — and we own the order semantics on our
+side. They do not get their own status vocabulary that we translate.
+
+So a status **map** is the wrong shape entirely. Stripe does not tell us to call
+an order `cancelled`; it tells us a refund succeeded, and *we* decide the order is
+`refunded`. Woo gets the same treatment:
+
+- Woo refund → our order `refunded` (or `partially_refunded` when
+  `get_total_refunded()` < total). Never `cancelled`.
+- Retire the `'refunded' => 'cancelled'` entry at `WCOrderProvider.php:487`.
+- Route through `OrderService::update_status()` instead of the raw
+  `$wpdb->update` at `:513`, so the transition is validated and the timeline
+  logged like every other rail.
+
+**Why the mapping existed and why removing it is safe now:** it was load-bearing
+by accident. Mapping refund→cancelled routed Woo refunds into
+`handle_order_cancelled`, which *does* reverse earnings — so Woo refunds worked
+while standalone refunds silently did not. Once `handle_order_refunded` reverses
+correctly (§3.1), the mapping stops being a workaround and becomes a lie about
+what happened. Removing it makes a Woo buyer and a standalone buyer see the same
 status for the same event.
+
+**Regression risk to watch:** existing Woo sites will start seeing `refunded`
+where they saw `cancelled`. Verification case 9 must confirm the vendor is
+reversed exactly once — not twice via both handlers — during the transition.
+
+**D4a — THE RAIL NEVER CHANGES THE NUMBERS.** Owner, 2026-07-21: the gateway
+"should not impact how we are calculating earning and refunds."
+
+The rail decides only *whether* money moved and *how much the buyer got back*.
+It never influences the arithmetic:
+
+| Quantity | Source | Identical across rails? |
+|---|---|---|
+| order `total` | our service/package price | yes — never the rail's line total |
+| `platform_fee` / `vendor_earnings` | `CommissionService::compute_breakdown()` | yes |
+| vendor share of a refund | `wpss_get_refund_vendor_share()` | yes |
+| ledger rows written | `reverse_order_earnings()` | yes |
+| currency of stored amounts | store base currency | yes |
+
+A $49 service refunded in full reverses the same $44.10 vendor share whether the
+buyer paid via Woo, Stripe, PayPal, EDD or SureCart. If swapping the rail changes
+any persisted number, that is the bug — not a configuration difference.
+
+This is the refund-side restatement of `ecommerce_adapter_boundary` in the
+manifest, and it is why §13 forbids Pro from owning any `reverse_*` or fee math:
+per-rail money logic is precisely how the numbers would drift apart.
 
 ---
 
