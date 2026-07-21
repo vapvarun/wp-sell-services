@@ -758,3 +758,80 @@ Stripe only. Then:
 - free-only site: refund reverses normally, no Connect concepts anywhere
 - Pro active: Connect order still nets to zero, still skips the reversal
 - both proven by the same case 6 and 13/14 tests
+
+---
+
+# PART VI — QA SWEEP RESULTS (2026-07-21)
+
+Environment: BuddyX, PHP 8.2, Stripe test mode. Woo and a generic theme were
+activated for their cases and restored afterwards. All test data removed; the
+DB is back to its pre-sweep baseline.
+
+## 28. Functional + money integrity — 16/16 PASS
+
+| # | Case | Result |
+|---|---|---|
+| 1 | Full refund reverses | −90.00 |
+| 2 | Partial $50 reverses proportionally | −45.00, order keeps 45.00 |
+| 5 | Replay (double-click) | no movement, exactly 1 reversal row |
+| 6 | Connect order nets to zero on earn | 0.00 |
+| 13 | Connect refund, clawback SUCCEEDS | ledger untouched |
+| 14 | Connect refund, clawback FAILS | −90.00 debt recorded |
+| 3 | Refund after withdrawal | balance goes negative, state `negative` |
+| 4 | Negative vendor earns again | debt pays down automatically |
+| 7 | Dispute resolved full | −90.00, order `refunded`, amount 100.00 |
+| 8 | Dispute resolved partial $25 | −22.50, amount on dispute AND order |
+| 9 | **Woo refund (real `wc_create_refund`)** | status `refunded` (not `cancelled`), amount 100.00, **exactly 1** reversal row, −90.00 |
+| D4a | Rail parity | standalone / woocommerce / surecart / edd all −90.00 |
+
+Hook wiring verified at runtime: `wpss_dispute_resolved` = 1,
+`wpss_order_status_refunded` = 1, `wpss_order_status_partially_refunded` = 1
+(was 0), `wpss_order_status_cancelled` = 1.
+
+## 29. Cross-cutting — PASS
+
+| Check | Result |
+|---|---|
+| 390px | no horizontal scroll, banner fits, CTA 44px |
+| Desktop | no horizontal scroll |
+| Tap targets | 0 buttons under 40px |
+| A11y | banner `role="status"`, 0 icon-only buttons missing a label |
+| RTL | no overflow, no horizontal scroll |
+| Dark mode | danger tokens resolve; banner keeps its light surface, **consistent with the existing `--warning` banner** (verified by comparison, not assumed) |
+| Generic theme (Twenty Twenty-Four) | banner renders correctly, tokens apply, CTA 58px |
+
+## 30. Findings NOT caused by this work — for follow-up
+
+Both reproduce independently of the refund changes and affect shared code.
+
+**F1 — `.wpss-btn--primary` hover does nothing.** The rule exists in
+`design-system.css`, and the tokens differ (`--wpss-primary` `#4f46e5` vs
+`--wpss-primary-hover` `#4338ca`), yet a real mouse-move produces no change in
+computed background. Reproduces on **BuddyX and Twenty Twenty-Four**, so it is
+not a theme override. Focus is fine (2px solid outline). This affects every
+primary button in the plugin, not just the refund banner. Worth a dedicated
+look — the team standard explicitly calls out hover/focus on `<a>` buttons.
+
+**F2 — dashboard shell overflows horizontally on a generic theme.**
+`wpss-fullwidth-page` measures 1312px inside a 1280px viewport on Twenty
+Twenty-Four (BuddyX is clean). The refund banner is **not** among the
+offenders — the overflow is the page shell itself. Given most installs do not
+run our themes, this is worth its own card.
+
+## 31. Not verified — stated plainly
+
+- **Case 16, live Stripe Connect onboarding.** Still needs a test-mode Connect
+  account. Every Connect result above was produced by injecting the clawback
+  outcome, not by Stripe. The ledger logic is proven; the live leg is not.
+- **Admin partial-refund UI.** The server accepts an amount
+  (`order_action` → `refund_amount`) and the AJAX path was exercised, but the
+  metabox still offers only a full refund. Server side done, UI not built.
+- **Big-site (2000+ rows).** Not run. The two admin lists gained a label
+  change, not a new query or column, so the risk is low —
+  `refunded_amount` is never filtered or sorted on and needs no index.
+
+## 32. Release note
+
+Free and Pro **must ship together**. Free's reversal fix and Pro's Woo status
+change are two halves of one behaviour: free alone makes Woo reverse twice
+(the map still routes to `cancelled`), Pro alone stops Woo reversing at all.
