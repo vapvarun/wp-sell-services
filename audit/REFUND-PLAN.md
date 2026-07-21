@@ -236,3 +236,164 @@ Roles: admin, vendor, buyer. Viewports: desktop + 390px. Theme: BuddyX.
 8. Full matrix in the browser
 
 Steps 1–3 are the money fix and could ship alone if the pass has to be split.
+
+---
+
+# PART II — Data-level and function-level plan
+
+Added 2026-07-21 after inventorying the real files, so implementation reuses
+what exists instead of growing twins. Every signature below was read from
+source, not recalled.
+
+## 9. Runtime facts verified before planning
+
+```
+wpss_dispute_resolved                    listeners=2   <- DOUBLE-WIRED (bug, §12)
+wpss_order_status_refunded               listeners=1
+wpss_order_status_partially_refunded     listeners=0   <- no handler (confirms §2)
+wpss_order_status_cancelled              listeners=1
+```
+
+## 10. DATA LEVEL
+
+### 10.1 Already exists — do NOT re-invent
+
+| Store | Column | Note |
+|---|---|---|
+| `wpss_disputes` | `refund_amount decimal(10,2) DEFAULT NULL` | **The partial amount already exists.** `DisputeService::resolve()` accepts it, `handle_resolution()` receives it — and drops it. Plumb, don't add. |
+| `wpss_orders` | `total`, `vendor_earnings`, `platform_fee`, `currency` | Everything needed to compute a proportional share. |
+| `wpss_orders` | `payment_status` | Already the double-refund guard (`refunded`/`pending` short-circuit). |
+| `wpss_orders` | `connect_transfer_id` | Added `7c6b1c4`. Drives the D3 skip. |
+| `wpss_wallet_transactions` | `reference_type` + `reference_id` | The idempotency key used by every write path. Reuse for reversals. |
+
+### 10.2 New — exactly one column
+
+| Table | Column | Why |
+|---|---|---|
+| `wpss_orders` | `refunded_amount decimal(10,2) DEFAULT NULL` | How much actually went back to the buyer. Without it a partial reversal cannot be computed, and an admin-screen refund leaves no record of the amount. NULL = never refunded. |
+
+Migration: `SchemaManager` CREATE TABLE + `run_column_migrations()` entry
+(`after` => `connect_transfer_id`) + `DB_VERSION` 1.4.8 → 1.4.9.
+**`ServiceOrder::from_db()` must map it** — the Connect work proved an unmapped
+column is silently dropped and the feature no-ops with no error.
+
+### 10.3 Ledger sign convention — a trap
+
+`order_reversal` rows store a **NEGATIVE** `amount`
+(`OrderWorkflowManager` writes `'amount' => -$vendor_earnings`), unlike every
+other type, which stores positive and has the sign applied on read.
+
+- **Do NOT** add `order_reversal` to `wpss_get_ledger_debit_types()` — it would
+  negate twice and flip every historical reversal into a credit.
+- New partial reversals **follow the existing negative convention** for this
+  type, so no data migration and no mixed semantics within one type.
+- The manifest's "amounts are always stored POSITIVE" claim is wrong for this
+  type and must be corrected.
+
+### 10.4 Data flow
+
+```
+admin refund (amount) ─┐
+dispute resolve ───────┼─> wpss_orders.refunded_amount  (persist FIRST)
+gateway webhook ───────┘            │
+                                    v
+                       update_status( refunded | partially_refunded )
+                                    │
+                                    v
+                    handle_order_(partially_)refunded
+                          │                    │
+                          v                    v
+              attempt_payment_refund    reverse_order_earnings
+                  (buyer money)          (vendor ledger, may go negative)
+```
+`refunded_amount` is persisted **before** the status change so the handler can
+read it off the order rather than threading it through hook args (which would
+break the 2-arg `$status_hooks` signature every other handler shares).
+
+## 11. FUNCTION LEVEL
+
+### 11.1 REUSE — extend, do not duplicate
+
+| Function | Current signature | Change |
+|---|---|---|
+| `OrderWorkflowManager::reverse_order_earnings()` | `(int $order_id, ServiceOrder $order): bool` — private | Add `?float $refund_amount = null`. Null = full. Already idempotent on `(order, order_reversal\|refund)`, already Connect-aware, already transactional. **This is the single reversal authority.** |
+| `OrderWorkflowManager::attempt_payment_refund()` | `(ServiceOrder $order): void` — private, hardcodes `(float) $order->total` at `:945` | Add `?float $amount = null`. Already guards `payment_status IN (refunded, pending)`. |
+| `PaymentGatewayInterface::process_refund()` | `(string $transaction_id, ?float $amount = null, string $reason = ''): array` | **No change — already supports partial.** All 5 implementations (Stripe, PayPal, Offline, Test, pro Razorpay) already honour the amount. |
+| `DisputeService::handle_resolution()` | `(object $dispute, string $resolution, float $refund_amount): void` | Stop dropping `$refund_amount` — persist it to `wpss_orders.refunded_amount` before `update_status()`. |
+| `CommissionService::compute_breakdown()` | static | Reuse for the proportional platform-fee reversal. Do not hand-roll. |
+| `wpss_get_ledger_balance()` | `(int, bool): float` | No change. Already returns negatives correctly — only the display clamp hides them. |
+
+### 11.2 NEW — three functions, no more
+
+| Function | Signature | Home |
+|---|---|---|
+| `handle_order_partially_refunded()` | `(int $order_id, string $old_status): void` | `OrderWorkflowManager`. Mirrors `handle_order_refunded`; both delegate to the shared reversal. |
+| `wpss_get_refund_vendor_share()` | `(ServiceOrder $order, float $refunded_amount): float` | `src/functions.php`. `refunded × (vendor_earnings ÷ total)`. One formula; full refund is the case where the amounts are equal. Guards total = 0. |
+| `EarningsService::get_balance_state()` | `(int $vendor_id): string` — `positive\|zero\|negative` | Backs the vendor negative-state UI so three templates don't each re-derive "is it negative". |
+
+### 11.3 DELETE — confirmed dead duplicate
+
+`StandaloneOrderProvider::process_refund( ServiceOrder $order, float $amount, string $reason = '' ): bool` (`:286`)
+
+Grep proves **zero callers**. It duplicates `attempt_payment_refund()` — resolves
+the gateway from `wpss_payment_gateways` and calls `process_refund()`, but
+without the `payment_status` double-refund guard, without the audit-log write and
+without updating the order. Deleting it removes a trap where someone "reuses" the
+unguarded twin later. This is the audit's 4th "refund implementation".
+
+### 11.4 MODIFY — clamp removal
+
+`EarningsService::get_summary()` — `'available_balance' => max( 0, $available )`
+becomes `$available` (D1). Verified consumers that already tolerate negatives:
+withdrawal gate (`$amount > $available`), auto-payout (`>= $threshold`),
+REST `get_summary`. Only the earnings template needs the new state.
+
+## 12. Bug found while inventorying — fix in this pass
+
+**`wpss_dispute_resolved` fires every listener TWICE.** Verified at runtime
+(listeners=2).
+
+`DisputeWorkflowManager::__construct()` registers
+`add_action( 'wpss_dispute_resolved', [$this, 'on_dispute_resolved'], 10, 4 )`
+(`:81`), **and** `Plugin.php:1904` wires the same method through a static
+closure. WordPress cannot dedupe a closure against an object-array callback, so
+both run. `DisputesController.php:56` does `new DisputeWorkflowManager()`, so the
+constructor registration is live.
+
+Effect: on every dispute resolution both parties get **two** notifications, and
+any side effect added to `on_dispute_resolved` (such as a refund reversal) would
+run twice. Since this plan puts refund logic in that path, it must be fixed
+first or the reversal double-fires — the idempotency guard would mask it, which
+is worse because it hides the duplication.
+
+Fix: drop the constructor registrations (same precedent as the comment already at
+`Plugin.php:1799`, where a duplicate `log_status_change` listener caused
+duplicate audit rows). `Plugin.php` is the single wiring point.
+
+## 13. Free ↔ Pro contract
+
+Pro adds **no** refund logic. It persists `refunded_amount` and sets a status;
+free owns money movement.
+
+| Pro file | Change |
+|---|---|
+| `WooCommerce/WCOrderProvider.php:487` | Retire `refunded → cancelled` (D4). Route via `OrderService::update_status()` instead of the raw `$wpdb->update` at `:513`. Persist `refunded_amount` from `$order->get_total_refunded()`. |
+| `SureCart/SureCartOrderProvider.php:227` | Persist `refunded_amount` from the webhook before `update_order_status()`. |
+| `FluentCart/FluentCartOrderProvider.php` | Same shape; confirm the mapped status. |
+| `EDD/EDDOrderProvider.php:477` | Persist `refunded_amount`; mapping already correct. |
+| `StripeConnect/*` | No change (D3). Add a regression test so the skip is not "fixed" later. |
+| `Services/LedgerExporter.php` | No change — partial reversals are the same type, different amount. |
+
+**Pro must not gain a `reverse_*` or `process_refund` of its own.** Any new one
+is a contract violation.
+
+## 14. Anti-duplication checklist
+
+- [ ] One reversal authority: `reverse_order_earnings()`. No second reversal.
+- [ ] One buyer-refund path: `attempt_payment_refund()`. Dead twin deleted.
+- [ ] One proportional formula: `wpss_get_refund_vendor_share()`.
+- [ ] One debit-types list: `wpss_get_ledger_debit_types()` — unchanged, and
+      `order_reversal` stays OUT of it.
+- [ ] One commission authority: `CommissionService::compute_breakdown()`.
+- [ ] One hook wiring point: `Plugin.php`. Constructor registrations removed.
+- [ ] Pro adds no money logic.
