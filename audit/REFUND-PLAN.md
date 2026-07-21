@@ -444,3 +444,101 @@ is a contract violation.
 - [ ] One commission authority: `CommissionService::compute_breakdown()`.
 - [ ] One hook wiring point: `Plugin.php`. Constructor registrations removed.
 - [ ] Pro adds no money logic.
+
+---
+
+# PART III — Stripe Connect: what exists, and the refund gaps
+
+Added 2026-07-21. **Connect is already implemented** — this is not a greenfield
+build. Surveyed from source before planning.
+
+## 15. What already exists (do not rebuild)
+
+| Layer | Component | State |
+|---|---|---|
+| Storage | `wpss_pro_connect_accounts` table | built |
+| Backend | `ConnectAccountService`, `ConnectOnboardingHandler`, `ConnectPaymentProcessor`, `ConnectWebhookHandler`, `StripeConnectManager` | built |
+| REST | 6 routes — `/onboard`, `/status`, `/disconnect`, `/accounts`, `/accounts/{vendor_id}`, `/settings` | built |
+| Webhooks | `account.updated`, `payout.paid`, `payout.failed`, `transfer.created` | built |
+| Admin | `ConnectSettingsRenderer` (Gateways tab, `wpss_pro_stripe_connect_enabled`) | built |
+| Vendor frontend | `PayoutMethodsCoordinator` — renders not-connected / active / pending-restricted in Dashboard → Earnings & Payouts | built |
+| Split payment | `transfer_data` + `application_fee_amount` on the PaymentIntent | built |
+| Double-pay fix | `connect_transfer_id` + offsetting ledger row | shipped `7c6b1c4` / `85cd4de` |
+
+No dedicated Connect JS — the vendor UI is server-rendered and posts to the REST
+routes. That is fine; do not introduce a JS layer for this.
+
+## 16. GAP 1 — nothing verifies the Connect clawback succeeded
+
+**This undermines an assumption in D3.**
+
+D3 says a refunded Connect order skips the ledger reversal because "the clawback
+happens at Stripe" via `reverse_transfer` (set in
+`StripeGateway::build_refund_args()`). That is true only when the reversal
+*succeeds*.
+
+`reverse_transfer` fails routinely in production: it pulls funds back out of the
+connected account, and if the vendor has already paid out to their bank the
+balance is insufficient. Stripe then returns an error or creates a negative
+balance on the connected account.
+
+**Grep shows no Connect webhook handles this.** `ConnectWebhookHandler` covers
+`account.updated`, `payout.paid`, `payout.failed`, `transfer.created` — there is
+**no** `charge.refunded`, no `transfer.reversed`, no failure branch.
+
+Failure mode: buyer refunded, `reverse_transfer` fails silently, ledger reversal
+skipped by D3, vendor keeps the money, platform absorbs the loss with **no record
+anywhere**. Strictly worse than the standalone bug this plan fixes, because at
+least that one leaves a wallet balance an admin could spot.
+
+**Fix:**
+- Handle `transfer.reversed` — confirm the clawback landed.
+- On refund, inspect the Stripe refund response for reversal failure; when the
+  transfer could not be reversed, **fall back to the ledger reversal** (D1) so the
+  debt is recorded on our side and nets off future earnings.
+- Surface it to the admin: "Stripe could not reclaim $X from the vendor's
+  connected account; recorded as a wallet debt instead."
+
+This makes D3 conditional, which is what it should always have been: *skip the
+ledger reversal only when Stripe actually took the money back.*
+
+## 17. GAP 2 — disconnect has no balance guard
+
+`StripeConnectController::disconnect()` checks only `is_connected()`. A vendor can
+disconnect at any time.
+
+Under D1 (negative balances allowed) a vendor could carry a wallet debt,
+disconnect, and remove the rail the platform would have reclaimed through. Low
+severity today because Connect orders net to zero in the wallet — but GAP 1's
+fallback creates exactly this state, so the two must land together.
+
+**Fix:** refuse disconnect while `wpss_get_ledger_balance() < 0`, with a message
+explaining the outstanding amount. Admin override stays available.
+
+## 18. Connect work folded into the refund pass
+
+| # | Change | File |
+|---|---|---|
+| C1 | Make D3 conditional — reverse the ledger when `reverse_transfer` failed | free `OrderWorkflowManager::reverse_order_earnings()` + `StripeGateway::process_refund()` return shape |
+| C2 | Handle `transfer.reversed` | pro `ConnectWebhookHandler` |
+| C3 | Admin notice when a clawback failed | pro + free admin order screen |
+| C4 | Block disconnect while balance is negative | pro `StripeConnectController::disconnect()` |
+| C5 | Regression test that the D3 skip is not "fixed" away | pro |
+
+**Still no Pro money logic:** C1 lives in free. Pro reports the Stripe outcome;
+free decides what the ledger does. Consistent with D4a — the rail never changes
+the numbers, it only reports whether money moved.
+
+## 19. Verification additions
+
+| # | Case | Expected |
+|---|---|---|
+| 13 | Connect refund, `reverse_transfer` **succeeds** | ledger unchanged (D3 holds) |
+| 14 | Connect refund, `reverse_transfer` **fails** | ledger reversed, balance may go negative, admin notified |
+| 15 | Vendor with negative balance tries to disconnect | refused with the amount explained |
+| 16 | Connect onboarding end-to-end | test-mode account, real `transfer_data`, verified at Stripe |
+
+**Case 16 is the one still genuinely unverified.** Everything shipped in
+`7c6b1c4` was proven at the ledger level with a synthetic `connect_transfer_id`;
+the live Stripe leg — onboarding, `transfer_data` landing, the intent read-back —
+has never been exercised. **This needs a Stripe test-mode Connect account.**
