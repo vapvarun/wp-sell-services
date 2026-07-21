@@ -732,16 +732,7 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		// Auto-refund the buyer's original payment via the payment gateway.
-		$this->attempt_payment_refund( $order );
-
-		// Reverse the vendor's earnings. This block was missing entirely: only
-		// handle_order_cancelled() had it, so refunding gave the buyer their
-		// money back while the vendor KEPT the wallet credit and could withdraw
-		// it. The platform paid out on both sides of an order it collected
-		// nothing for. Gateway idempotency never caught it because the two
-		// payouts run through different systems, weeks apart.
-		$this->reverse_earnings_for_refund( $order_id, $order );
+		$this->settle_refund( $order_id, $order );
 
 		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
@@ -756,6 +747,72 @@ class OrderWorkflowManager {
 	}
 
 	/**
+	 * Handle a partially refunded order.
+	 *
+	 * Same settlement as a full refund — the amount on the order decides how
+	 * much comes back. Until 1.2.3 this status had NO handler at all, so a
+	 * dispute resolved as a partial refund told the buyer they were partially
+	 * refunded and then did nothing: no gateway refund, no vendor reversal.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param int    $order_id   Order ID.
+	 * @param string $old_status Previous status.
+	 * @return void
+	 */
+	public function handle_order_partially_refunded( int $order_id, string $old_status ): void {
+		$order = $this->order_service->get( $order_id );
+
+		if ( ! $order ) {
+			return;
+		}
+
+		$this->settle_refund( $order_id, $order );
+
+		/**
+		 * Fires when an order is partially refunded.
+		 *
+		 * @since 1.2.3
+		 * @param int          $order_id Order ID.
+		 * @param ServiceOrder $order    Order object.
+		 */
+		do_action( 'wpss_order_partially_refunded', $order_id, $order );
+	}
+
+	/**
+	 * Settle a refund: money back to the buyer, earnings back off the vendor.
+	 *
+	 * THE shared refund path. Both handle_order_refunded() and
+	 * handle_order_partially_refunded() route through here so the two can never
+	 * drift — which is exactly how this bug class started, with the reversal
+	 * living in the cancelled handler and nowhere else.
+	 *
+	 * How much comes back is read from `refunded_amount` on the order, persisted
+	 * before the status change by whoever triggered the refund (admin screen,
+	 * dispute resolution, or a payment rail's webhook). NULL means the whole
+	 * order.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param int          $order_id Order ID.
+	 * @param ServiceOrder $order    Order object.
+	 * @return void
+	 */
+	private function settle_refund( int $order_id, ServiceOrder $order ): void {
+		$refunded = null === $order->refunded_amount ? null : (float) $order->refunded_amount;
+
+		// 1. Buyer's money back, for the refunded amount only.
+		$this->attempt_payment_refund( $order, $refunded );
+
+		// 2. Vendor's earnings back off the wallet. This step was missing
+		// entirely before 1.2.3 — only the cancelled handler had it — so a
+		// refund returned the buyer's money while the vendor kept the credit
+		// and could withdraw it. Gateway idempotency could never catch that:
+		// the two payouts run through different systems, weeks apart.
+		$this->reverse_earnings_for_refund( $order_id, $order, $refunded );
+	}
+
+	/**
 	 * Reverse vendor earnings for a refunded order.
 	 *
 	 * Shared by the full-refund and partial-refund handlers so there is exactly
@@ -767,15 +824,14 @@ class OrderWorkflowManager {
 	 *
 	 * @param int          $order_id Order ID.
 	 * @param ServiceOrder $order    Order object.
+	 * @param float|null   $refunded Amount refunded to the buyer, or NULL for all.
 	 * @return void
 	 */
-	private function reverse_earnings_for_refund( int $order_id, ServiceOrder $order ): void {
+	private function reverse_earnings_for_refund( int $order_id, ServiceOrder $order, ?float $refunded = null ): void {
 		// Nothing to reverse if commission was never recorded.
 		if ( null === $order->vendor_earnings || '' === $order->vendor_earnings ) {
 			return;
 		}
-
-		$refunded = null === $order->refunded_amount ? null : (float) $order->refunded_amount;
 
 		if ( ! $this->reverse_order_earnings( $order_id, $order, $refunded ) ) {
 			wpss_log(
@@ -1000,10 +1056,14 @@ class OrderWorkflowManager {
 	 * payment gateway with a process_refund() method. On success, updates the order's
 	 * payment_status to 'refunded'. On failure, logs the error for admin review.
 	 *
-	 * @param ServiceOrder $order Order object.
+	 * @param ServiceOrder $order  Order object.
+	 * @param float|null   $amount Amount to refund. NULL refunds the full order
+	 *                             total. Every gateway already accepts a partial
+	 *                             amount via PaymentGatewayInterface, so no
+	 *                             gateway needed changing for partial refunds.
 	 * @return void
 	 */
-	private function attempt_payment_refund( ServiceOrder $order ): void {
+	private function attempt_payment_refund( ServiceOrder $order, ?float $amount = null ): void {
 		// Skip if no payment was made (offline/pending orders, or already refunded).
 		if ( empty( $order->transaction_id ) || empty( $order->payment_method ) ) {
 			return;
@@ -1021,7 +1081,12 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		$refund_result = $gateway->process_refund( $order->transaction_id, (float) $order->total );
+		$order_total   = (float) $order->total;
+		$refund_amount = ( null === $amount || $amount <= 0 || $amount > $order_total )
+			? $order_total
+			: $amount;
+
+		$refund_result = $gateway->process_refund( $order->transaction_id, $refund_amount );
 
 		$audit = new AuditLogService();
 

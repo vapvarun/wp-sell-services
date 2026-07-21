@@ -409,6 +409,42 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
 				</div>
 				<?php
+				// Refunded amount. Without this the order reads "Partially
+				// Refunded — Total $100.00" and neither party can tell how much
+				// actually came back. Shown to buyer and vendor alike: the buyer
+				// needs to reconcile it against their statement, the vendor
+				// against the reversal on their wallet.
+				$refunded_amount = isset( $order->refunded_amount ) && null !== $order->refunded_amount
+					? (float) $order->refunded_amount
+					: 0.0;
+
+				if ( $refunded_amount > 0 ) :
+					$is_full_refund = $refunded_amount >= (float) $order->total;
+					?>
+					<div class="wpss-order-detail-item wpss-order-detail-item--refunded">
+						<span class="wpss-order-detail-item__label">
+							<?php
+							echo $is_full_refund
+								? esc_html__( 'Refunded', 'wp-sell-services' )
+								: esc_html__( 'Partially Refunded', 'wp-sell-services' );
+							?>
+						</span>
+						<span class="wpss-order-detail-item__value">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %s: refunded amount */
+									__( '-%s', 'wp-sell-services' ),
+									wpss_format_price( $refunded_amount, $order->currency )
+								)
+							);
+							?>
+						</span>
+					</div>
+					<?php
+				endif;
+				?>
+				<?php
 				// Vendor-only NET earnings breakdown. Buyers see the gross "Total Amount"
 				// above (which is what they paid); vendors additionally see what they
 				// actually receive after the platform commission, so the detail view
