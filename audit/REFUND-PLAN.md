@@ -542,3 +542,138 @@ the numbers, it only reports whether money moved.
 `7c6b1c4` was proven at the ledger level with a synthetic `connect_transfer_id`;
 the live Stripe leg — onboarding, `transfer_data` landing, the intent read-back —
 has never been exercised. **This needs a Stripe test-mode Connect account.**
+
+---
+
+# PART IV — Code-level touch list + QA gate
+
+Added 2026-07-21. Every line number below was re-verified against current
+source. **This is the anti-duplication contract: if a change is not in this
+table, it is not in scope — and if you find yourself writing a second reversal,
+a second refund call or a second proportional formula, stop.**
+
+## 20. Build order — exact edits
+
+### Step 0 — kill the double-wiring FIRST (blocking)
+
+| File:line | Edit |
+|---|---|
+| free `Services/DisputeWorkflowManager.php:78-81` | **Delete** the four `add_action()` calls from `__construct()`. `Plugin.php:1901-1904` already wires all four via the dispute-hook map. Constructor registration double-fires because `DisputesController.php:56` does `new DisputeWorkflowManager()` and WP cannot dedupe a closure against an object-array callback. |
+
+Verify with the runtime counter (§9): `wpss_dispute_resolved` must drop 2 → 1.
+**Do this before anything else** — otherwise every reversal added below fires
+twice and the idempotency guard hides it.
+
+### Step 1 — data
+
+| File | Edit |
+|---|---|
+| free `Database/SchemaManager.php` | Add `refunded_amount decimal(10,2) DEFAULT NULL` to the orders CREATE TABLE (after `connect_transfer_id`); add a `run_column_migrations()` entry `after => 'connect_transfer_id'`; bump `DB_VERSION` 1.4.8 → 1.4.9. |
+| free `Models/ServiceOrder.php` | Declare `public ?string $refunded_amount = null;` **and** map it in `from_db()` with `?? null`. Non-negotiable: the Connect work proved an unmapped column is dropped silently and the feature no-ops. |
+
+### Step 2 — the shared reversal (closes the leak)
+
+| File:line | Edit |
+|---|---|
+| free `Services/OrderWorkflowManager.php:764` | `reverse_order_earnings( int, ServiceOrder )` → add `?float $refund_amount = null`. Null = full. Keep the existing idempotency key, the Connect skip and the transaction. **This stays the only reversal.** |
+| free `Services/OrderWorkflowManager.php:728` | `handle_order_refunded()` — add the reversal call, guarded exactly as `handle_order_cancelled():674` guards it (`null !== $order->vendor_earnings`). |
+| free `functions.php` | New `wpss_get_refund_vendor_share( ServiceOrder $order, float $refunded ): float` — `refunded × (vendor_earnings ÷ total)`, guard `total <= 0`. **The only proportional formula.** |
+| free `Integrations/Standalone/StandaloneOrderProvider.php:286` | **DELETE** `process_refund()`. Zero callers; unguarded duplicate of `attempt_payment_refund()`. |
+
+### Step 3 — partial refunds
+
+| File:line | Edit |
+|---|---|
+| free `Services/OrderWorkflowManager.php:927` | `attempt_payment_refund( ServiceOrder )` → add `?float $amount = null`; pass to `process_refund()` at `:945` instead of hardcoded `$order->total`. Gateway interface already accepts it — **no gateway edits at all**. |
+| free `Services/OrderWorkflowManager.php` | New `handle_order_partially_refunded( int, string )`. Mirrors `handle_order_refunded`; reads `$order->refunded_amount`; delegates to the same two helpers. |
+| free `Core/Plugin.php:1783` | Add `'wpss_order_status_partially_refunded' => array( 'handle_order_partially_refunded', 10, 2 )` to `$status_hooks`. |
+
+### Step 4 — dispute plumbing
+
+| File:line | Edit |
+|---|---|
+| free `Services/DisputeService.php:516` | `handle_resolution()` — persist `$refund_amount` to `wpss_orders.refunded_amount` **before** `update_status()`. Full refund / favour-buyer = order total; partial = the dispute's stored amount. Stop dropping the parameter. |
+
+### Step 5 — un-clamp + vendor UI
+
+| File:line | Edit |
+|---|---|
+| free `Services/EarningsService.php:173` | `max( 0, $available )` → `$available`. |
+| free `Services/EarningsService.php` | New `get_balance_state( int ): string` — `positive\|zero\|negative`. One derivation, consumed by every template. |
+| free `templates/dashboard/sections/earnings.php` | Negative state: amount, "deducted from future earnings" explanation, withdrawal form replaced by the reason. Tokens only, no raw hex. |
+
+### Step 6 — Connect (Part III)
+
+| File:line | Edit |
+|---|---|
+| free `Integrations/Stripe/StripeGateway.php` | `process_refund()` return shape carries whether the transfer reversal succeeded. |
+| free `Services/OrderWorkflowManager.php:764` | Make the D3 skip **conditional** — reverse the ledger when the clawback failed (C1). |
+| pro `StripeConnect/ConnectWebhookHandler.php:79` | Add `transfer.reversed` alongside `transfer.created` (C2). |
+| pro `API/StripeConnectController.php:286` | `disconnect()` — refuse while `wpss_get_ledger_balance() < 0` (C4). |
+
+### Step 7 — Pro rails (D4/D4a)
+
+| File:line | Edit |
+|---|---|
+| pro `Integrations/WooCommerce/WCOrderProvider.php:487` | Delete `'refunded' => 'cancelled'`. Map `refunded → refunded`, and `partially_refunded` when `get_total_refunded() < total`. |
+| pro `Integrations/WooCommerce/WCOrderProvider.php:295` | `handle_order_refunded()` — persist `refunded_amount` from `get_total_refunded()`; route the status write through `OrderService::update_status()` (retires the raw `$wpdb->update` at `:513`). |
+| pro `Integrations/SureCart/SureCartOrderProvider.php:227` | Persist `refunded_amount` from the webhook before the status write. |
+| pro `Integrations/FluentCart/FluentCartOrderProvider.php` | Same shape; confirm the mapped status. |
+| pro `Integrations/EDD/EDDOrderProvider.php:477` | Persist `refunded_amount`; mapping already correct. |
+
+### Step 8 — admin + buyer surfaces
+
+| File | Edit |
+|---|---|
+| free `Admin/Metaboxes/OrderMetabox.php:219` | Partial-amount input; post-refund confirmation naming the vendor impact. |
+| free `Admin/Pages/OrdersPage.php` | Show `refunded_amount` on partially-refunded rows. |
+| free `Admin/Pages/VendorsPage.php` | Surface negative balances in the list. |
+| free `templates/order/conversation.php:321` | Add the `partially_refunded` branch with the amount (the status is already terminal at `:116` but has no message). |
+| free `templates/dashboard/sections/orders.php` | Show refunded amount, not just the status word. |
+
+## 21. QA gate — nothing ships until every row passes
+
+Per the team standard: code-quality passing is **not** verification, and a plan
+item is done when its browser check passes, not when the code is written.
+
+### 21.1 Functional matrix (cases 1-16 from §6 and §19)
+Run each in the browser at the real URL as the real role — not `wp eval`.
+Unit-level checks passed for months while checkout was 100% broken.
+
+### 21.2 Per-surface browser checks
+
+| Surface | Role | Must verify |
+|---|---|---|
+| Earnings dashboard | vendor | positive / zero / **negative** states; withdrawal form blocked with a reason, not a bare disabled control; wallet rows readable |
+| Order metabox | admin | partial input validates (> 0, ≤ total); confirmation states the vendor impact |
+| Orders list | admin | refunded vs partially-refunded distinguishable at a glance |
+| Vendors list | admin | negative balances visible without opening each vendor |
+| Order conversation | buyer | refunded **and** partially-refunded messages, with amounts |
+| Payout methods | vendor | Connect states unchanged by this work (regression) |
+
+### 21.3 Cross-cutting (every changed surface)
+- **390px** — required, not optional
+- **Hover / focus / visited** on every `<a>` styled as a button (themes override these)
+- **Dark mode** — token-driven colours only, no raw hex
+- **RTL** — `margin-inline-*`, not `margin-left/right`
+- **Empty / error / loading** states on every async surface
+- **A11y** — semantic markup, ARIA labels on icon-only buttons, keyboard reachable
+- **Theme matrix** — BuddyX **and** a generic theme (most installs are not ours)
+
+### 21.4 Big-site readiness
+Admin Orders and Vendors lists gain a new column each: confirm pagination,
+`COUNT(*)` totals and no N+1 at 2000+ orders. `refunded_amount` needs no index
+(never filtered on) — state that explicitly rather than adding one by reflex.
+
+### 21.5 Money integrity (the ones that actually matter)
+- Ledger never double-reverses — replay every refund path twice
+- Balance arithmetic identical across all five rails (**D4a**)
+- Connect: ledger untouched on success, reversed on clawback failure
+- No negative balance created where the vendor was never wallet-credited
+- `wpss_dispute_resolved` listeners = 1 (step 0 held)
+
+### 21.6 Regression
+- Existing Woo sites: `cancelled` → `refunded` transition reverses **once**
+- Historical `order_reversal` rows still sum correctly (negative-amount convention)
+- Statement CSV renders partial reversals correctly
+- Withdrawal, auto-payout and Connect onboarding all unaffected
