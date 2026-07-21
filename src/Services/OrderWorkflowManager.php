@@ -1092,6 +1092,27 @@ class OrderWorkflowManager {
 
 		$refund_result = $gateway->process_refund( $order->transaction_id, $refund_amount );
 
+		/**
+		 * Fires after the gateway has processed a refund, with its raw result.
+		 *
+		 * Lets a payout rail react to how the refund actually went before the
+		 * ledger is settled. Pro's Stripe Connect uses it to see whether the
+		 * clawback from the vendor's connected account succeeded: when it did
+		 * not, the vendor still holds the money and the reversal must fall
+		 * through to the wallet instead of being skipped.
+		 *
+		 * Fires on failure too, so a rail can tell "refund failed" from
+		 * "refund succeeded but the clawback did not".
+		 *
+		 * @since 1.2.3
+		 *
+		 * @param int          $order_id      Order ID.
+		 * @param array        $refund_result Gateway result. Rails should read
+		 *                                    their own keys defensively.
+		 * @param ServiceOrder $order         Order object.
+		 */
+		do_action( 'wpss_order_refund_processed', (int) $order->id, $refund_result, $order );
+
 		$audit = new AuditLogService();
 
 		if ( ! empty( $refund_result['success'] ) ) {

@@ -329,18 +329,43 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		$response = $this->api_request( 'refunds', $data );
 
+		// Did this refund pull funds back out of a connected account? Reported
+		// so callers can tell a settled clawback from a failed one. Split
+		// payments send the vendor's share directly at charge time, and
+		// reverse_transfer fails routinely once they have paid out to their
+		// bank — in which case the money must be recovered some other way, and
+		// silently assuming success is how a platform eats the loss.
+		//
+		// null = not a split payment, so there was nothing to reverse.
+		$expected_reversal = ! empty( $data['reverse_transfer'] );
+		$transfer_reversed = $expected_reversal
+			? ! empty( $response['transfer_reversal'] )
+			: null;
+
 		if ( isset( $response['error'] ) ) {
 			return array(
-				'success' => false,
-				'error'   => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'success'           => false,
+				'error'             => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'transfer_reversed' => $expected_reversal ? false : null,
+			);
+		}
+
+		if ( $expected_reversal && ! $transfer_reversed ) {
+			wpss_log(
+				sprintf(
+					'Stripe refund %1$s succeeded but the transfer reversal did NOT settle — the vendor still holds their share.',
+					$response['id'] ?? $transaction_id
+				),
+				'warning'
 			);
 		}
 
 		return array(
-			'success'   => true,
-			'refund_id' => $response['id'],
-			'status'    => $response['status'],
-			'amount'    => $this->parse_amount( $response['amount'], $response['currency'] ),
+			'success'           => true,
+			'refund_id'         => $response['id'],
+			'status'            => $response['status'],
+			'amount'            => $this->parse_amount( $response['amount'], $response['currency'] ),
+			'transfer_reversed' => $transfer_reversed,
 		);
 	}
 
