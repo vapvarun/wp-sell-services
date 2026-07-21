@@ -230,19 +230,6 @@ class ServiceOrder {
 	public ?string $transaction_id;
 
 	/**
-	 * Stripe Connect destination account, when the vendor's share was paid
-	 * DIRECTLY to their connected account at charge time.
-	 *
-	 * Non-null means the vendor already holds this money, so the wallet credit
-	 * is offset (CommissionService) and the ledger reversal is skipped on
-	 * refund (OrderWorkflowManager) — the clawback happens at Stripe instead.
-	 *
-	 * @since 1.2.3
-	 * @var string|null
-	 */
-	public ?string $connect_transfer_id = null;
-
-	/**
 	 * Paid timestamp.
 	 *
 	 * @var \DateTimeImmutable|null
@@ -548,9 +535,6 @@ class ServiceOrder {
 		$order->payment_method     = $row->payment_method;
 		$order->payment_status     = $row->payment_status;
 		$order->transaction_id     = $row->transaction_id;
-		// Null-coalesced: rows read before the 1.2.3 column migration ran (or
-		// from a partial SELECT) simply have no Connect settlement.
-		$order->connect_transfer_id = $row->connect_transfer_id ?? null;
 		$order->revisions_included = (int) $row->revisions_included;
 		$order->revisions_used     = (int) $row->revisions_used;
 		$order->vendor_notes       = $row->vendor_notes ?? null;

@@ -135,11 +135,10 @@ function wpss_get_ledger_debit_types(): array {
 			'withdrawal',
 			'debit',
 			'dispute_refund',
-			// Vendor was paid directly by Stripe at charge time (Connect
-			// transfer_data). The matching credit is still written so the
-			// statement shows what was earned; this offsets it so the wallet
-			// does not pay them a second time.
-			'connect_transfer',
+			// Payout rails that settle the vendor OUTSIDE this wallet register
+			// their own debit types through the filter below — Pro's Stripe
+			// Connect adds 'connect_transfer'. Free pays vendors manually, so
+			// its own list stays rail-free.
 		)
 	);
 

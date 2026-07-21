@@ -775,21 +775,28 @@ class OrderWorkflowManager {
 			return true;
 		}
 
-		// Stripe Connect orders were settled directly to the vendor's connected
-		// account, and CommissionService wrote an offsetting 'connect_transfer'
-		// debit — so the vendor's NET wallet position for this order is already
-		// zero. Reversing here would debit them a second time and drive the
-		// balance negative, clawing back money the wallet never gave them.
-		//
-		// The real clawback happens at Stripe: the free gateway sets
-		// reverse_transfer on the refund (StripeGateway::build_refund_args),
-		// which pulls the funds back out of the connected account.
-		if ( ! empty( $order->connect_transfer_id ) ) {
+		/**
+		 * Filters whether the vendor's wallet earnings should be reversed.
+		 *
+		 * Free always reverses: it pays vendors manually, so the wallet credit
+		 * is real money owed and a refund must take it back.
+		 *
+		 * A payout rail that settled the vendor OUTSIDE this wallet returns
+		 * false — Pro's Stripe Connect does, because with a split payment the
+		 * vendor was paid directly at charge time and the wallet already nets
+		 * to zero for that order. Reversing anyway would debit them a second
+		 * time and invent a debt; the real clawback happens on the rail.
+		 *
+		 * @since 1.2.3
+		 *
+		 * @param bool         $should_reverse Whether to reverse the ledger.
+		 * @param ServiceOrder $order          The order being unwound.
+		 */
+		if ( ! apply_filters( 'wpss_should_reverse_vendor_earnings', true, $order ) ) {
 			wpss_log(
 				sprintf(
-					'Order %1$d was Stripe Connect settled (%2$s); skipping ledger reversal — the refund reverses the transfer at Stripe instead.',
-					$order_id,
-					$order->connect_transfer_id
+					'Order %d: ledger reversal skipped — the vendor was settled outside the wallet by a payout rail.',
+					$order_id
 				)
 			);
 			return true;

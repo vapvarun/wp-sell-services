@@ -203,12 +203,16 @@ class CommissionService {
 		// Create wallet transaction for vendor earnings.
 		$this->create_earnings_transaction( $order_id, $order->vendor_id, $commission );
 
-		// If Stripe Connect already paid the vendor directly at charge time,
-		// offset that credit — otherwise the wallet pays them a second time.
-		$this->create_connect_offset_transaction( $order_id, $order->vendor_id, $commission, $order );
-
 		/**
 		 * Fires when commission is recorded for an order.
+		 *
+		 * Extension point for payout rails that settle the vendor OUTSIDE this
+		 * wallet — Pro's Stripe Connect hooks this to write an offsetting debit,
+		 * because with a split payment the vendor was already paid directly at
+		 * charge time and the credit above would pay them a second time.
+		 *
+		 * Free has no such rail: it pays vendors manually (wallet credit →
+		 * withdrawal request → admin marks paid), so nothing offsets here.
 		 *
 		 * @param int   $order_id   Order ID.
 		 * @param array $commission Commission breakdown.
@@ -372,100 +376,6 @@ class CommissionService {
 		$wpdb->query( 'COMMIT' );
 	}
 
-	/**
-	 * Offset the wallet credit when Stripe Connect already paid the vendor.
-	 *
-	 * With Connect enabled, the PaymentIntent carries transfer_data, so Stripe
-	 * routes the vendor's share straight to their connected account at CHARGE
-	 * time — the money never passes through us. The earnings credit above still
-	 * runs unconditionally, which means without this offset the vendor is
-	 * credited a second time and can withdraw it: the platform pays twice.
-	 *
-	 * Both rows are written deliberately rather than skipping the credit. The
-	 * ledger stays a complete account of what the vendor earned AND how it was
-	 * settled, so their statement reads "earned $49 / paid directly by Stripe
-	 * -$49" instead of the order silently missing from their earnings history.
-	 *
-	 * Idempotent on (reference_type, reference_id) so replays and re-runs of
-	 * record() cannot double-offset.
-	 *
-	 * @since 1.2.3
-	 *
-	 * @param int    $order_id   Order ID.
-	 * @param int    $vendor_id  Vendor user ID.
-	 * @param array  $commission Commission breakdown.
-	 * @param object $order      Order row (carries connect_transfer_id).
-	 * @return void
-	 */
-	private function create_connect_offset_transaction( int $order_id, int $vendor_id, array $commission, $order ): void {
-		global $wpdb;
-
-		$destination = $order->connect_transfer_id ?? '';
-
-		if ( empty( $destination ) ) {
-			return;
-		}
-
-		$amount = (float) ( $commission['vendor_earnings'] ?? 0 );
-
-		if ( $amount <= 0 ) {
-			return;
-		}
-
-		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
-
-		$wpdb->query( 'START TRANSACTION' );
-
-		$current_balance = (float) wpss_get_ledger_balance( $vendor_id, true );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$already = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$transactions_table}
-				WHERE user_id = %d AND reference_type = 'connect_transfer' AND reference_id = %d",
-				$vendor_id,
-				$order_id
-			)
-		);
-
-		if ( $already > 0 ) {
-			$wpdb->query( 'COMMIT' );
-			return;
-		}
-
-		// Stored POSITIVE; 'connect_transfer' is in wpss_get_ledger_debit_types()
-		// so the sign is applied on read, exactly like a withdrawal.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$inserted = $wpdb->insert(
-			$transactions_table,
-			array(
-				'user_id'        => $vendor_id,
-				'type'           => 'connect_transfer',
-				'amount'         => $amount,
-				'balance_after'  => $current_balance - $amount,
-				'currency'       => $order->currency ?? wpss_get_currency(),
-				'description'    => sprintf(
-					/* translators: 1: order ID, 2: Stripe connected account ID */
-					__( 'Paid directly to your Stripe account for order #%1$d (%2$s)', 'wp-sell-services' ),
-					$order_id,
-					$destination
-				),
-				'reference_type' => 'connect_transfer',
-				'reference_id'   => $order_id,
-				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
-		);
-
-		if ( ! $inserted ) {
-			$wpdb->query( 'ROLLBACK' );
-			wpss_log( "Failed to write Connect offset for order {$order_id}; vendor {$vendor_id} may be credited twice.", 'error' );
-			return;
-		}
-
-		$wpdb->query( 'COMMIT' );
-	}
 
 	/**
 	 * Get order commission details.
