@@ -1901,7 +1901,12 @@ final class Plugin {
 			'wpss_dispute_opened'             => array( 'on_dispute_opened', 10, 4 ),
 			'wpss_dispute_response_submitted' => array( 'on_response_submitted', 10, 3 ),
 			'wpss_dispute_evidence_added'     => array( 'on_evidence_added', 10, 2 ),
-			'wpss_dispute_resolved'           => array( 'on_dispute_resolved', 10, 4 ),
+			// NOTE: 'wpss_dispute_resolved' is deliberately NOT wired here.
+			// NotificationService::notify_dispute_resolved() (wired above, ~:818)
+			// already notifies both parties with resolution-aware copy. Listening
+			// again through DisputeWorkflowManager::on_dispute_resolved() sent a
+			// second, generic notification of the SAME type to the SAME people —
+			// two "Dispute Resolved" entries per party, every time.
 		);
 
 		foreach ( $dispute_event_hooks as $hook => $config ) {
