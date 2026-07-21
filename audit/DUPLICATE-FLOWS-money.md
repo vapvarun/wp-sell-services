@@ -75,27 +75,41 @@ closed on the Stripe twin — we fixed the instance, not the class.
 
 ---
 
-## 4. HIGH — 4 order-creation paths persist NO commission fields
+## 4. ~~HIGH~~ → MOSTLY REFUTED — insert-time NULL commission is NOT "never paid"
 
-15 distinct inserts into `wpss_orders`. Correct (delegate to
-`CommissionService::compute_breakdown()`):
-`StandaloneOrderProvider.php:117` ✅, pro `WCOrderProvider.php:409` ✅.
+**Correction 2026-07-21 (verified empirically).** The headline claim — that a
+NULL `platform_fee`/`vendor_earnings` at insert means the vendor is never paid —
+is FALSE for any order that reaches `completed` through the normal workflow.
 
-Missing commission entirely:
+`CommissionService::record()` (hooked to `handle_order_completed`) calls
+`calculate()`, which computes the breakdown FRESH from `subtotal + addons_total`
+at completion time — it does not read a persisted fee. So insert-time NULL is
+irrelevant as long as the order transitions to `completed`.
 
-| Path | Problem |
+**Pro `API/PaymentController.php:341` (`offline_submit`) — REFUTED.** Reproduced
+on the local DB: an order inserted exactly as `offline_submit` writes it (subtotal
+set, fee + earnings NULL, no `platform` column) is credited correctly the moment
+it completes (fee 10, earnings 90, wallet 120→210). Offline orders start
+`pending_payment` and only complete after an admin marks them paid — an
+admin-mediated, low-stakes flow (bank transfer, invoice, or assigning a task to a
+vendor/self). Not a bug. No fix applied.
+
+**The real question for the remaining paths is NOT insert-time NULL** — it is
+whether the path reaches `handle_order_completed` at all, or short-circuits into a
+paid/completed state by another route (in which case `record()` never runs and the
+credit is genuinely missed):
+
+| Path | Actual concern to verify |
 |---|---|
-| pro `EDD/EDDOrderProvider.php:580` | no `platform_fee` / `vendor_earnings` |
-| pro `RecurringServices/RecurringOrderFactory.php:95` | none, **and** writes `payment_status=paid` unverified |
-| pro `API/PaymentController.php:341` | none |
-| `Admin/Pages/ManualOrderPage.php:711` | hand-rolled fee math at `:609` |
+| pro `EDD/EDDOrderProvider.php:580` | Fixed in pro 503e76f. Re-verify it was a real gap (purchase reaching completion without the hook), not redundant. |
+| pro `RecurringServices/RecurringOrderFactory.php:95` | Fixed in pro 503e76f. Genuine risk is `payment_status=paid` unverified + whether a renewal fires the completion hook. |
+| pro `API/PaymentController.php:341` (offline) | **REFUTED — not broken.** |
+| `Admin/Pages/ManualOrderPage.php:711` | Fixed in de43c1b (uses the commission authority). |
 
-**Customer impact:** EDD purchases, subscription renewals and Pro offline orders
-record `platform_fee`/`vendor_earnings` as NULL → **the vendor is never paid for
-those orders** and platform revenue under-counts silently.
-
-**Fix:** route all 4 through `compute_breakdown()`. (ManualOrderPage keeps its
-admin-chosen rate but should still persist via the shared helper.)
+**Lesson:** this item was written from the insert site alone, without tracing the
+completion path. The insert-time NULL was real but harmless; the sweep inferred
+"never paid" without reproducing. Any remaining work is per-path verification of
+the completion trigger, not a blanket "route all 4 through compute_breakdown()."
 
 ---
 
