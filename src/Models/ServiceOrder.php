@@ -230,6 +230,18 @@ class ServiceOrder {
 	public ?string $transaction_id;
 
 	/**
+	 * Amount actually refunded to the buyer.
+	 *
+	 * NULL when the order was never refunded. Equal to `total` for a full
+	 * refund, less for a partial one — which is what lets the vendor's
+	 * proportional share be computed (see wpss_get_refund_vendor_share()).
+	 *
+	 * @since 1.2.3
+	 * @var string|null
+	 */
+	public ?string $refunded_amount = null;
+
+	/**
 	 * Paid timestamp.
 	 *
 	 * @var \DateTimeImmutable|null
@@ -535,6 +547,9 @@ class ServiceOrder {
 		$order->payment_method     = $row->payment_method;
 		$order->payment_status     = $row->payment_status;
 		$order->transaction_id     = $row->transaction_id;
+		// Null-coalesced: rows read before the 1.4.9 migration ran, or from a
+		// partial SELECT, simply have no refund recorded.
+		$order->refunded_amount    = $row->refunded_amount ?? null;
 		$order->revisions_included = (int) $row->revisions_included;
 		$order->revisions_used     = (int) $row->revisions_used;
 		$order->vendor_notes       = $row->vendor_notes ?? null;

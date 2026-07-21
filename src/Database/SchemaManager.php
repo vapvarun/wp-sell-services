@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.8';
+	const DB_VERSION = '1.4.9';
 
 	/**
 	 * Option name for storing DB version.
@@ -206,6 +206,19 @@ class SchemaManager {
 				'column'     => 'reviewer_name',
 				'definition' => 'varchar(255) DEFAULT NULL',
 				'after'      => 'reviewer_id',
+			),
+			// How much was actually refunded to the buyer. NULL = never
+			// refunded; equal to total = full refund; less = partial.
+			//
+			// Needed because the amount was previously knowable only inside a
+			// dispute (wpss_disputes.refund_amount), so an order refunded from
+			// the admin screen had no record of how much went back, and the
+			// vendor's proportional share could not be computed at all.
+			array(
+				'table'      => 'orders',
+				'column'     => 'refunded_amount',
+				'definition' => 'decimal(10,2) DEFAULT NULL',
+				'after'      => 'paid_at',
 			),
 		);
 
@@ -413,6 +426,7 @@ class SchemaManager {
 			payment_status varchar(50) DEFAULT 'pending',
 			transaction_id varchar(255) DEFAULT NULL,
 			paid_at datetime DEFAULT NULL,
+			refunded_amount decimal(10,2) DEFAULT NULL,
 			revisions_included int(11) DEFAULT 0,
 			revisions_used int(11) DEFAULT 0,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
