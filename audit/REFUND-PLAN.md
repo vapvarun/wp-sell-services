@@ -677,3 +677,84 @@ Admin Orders and Vendors lists gain a new column each: confirm pagination,
 - Historical `order_reversal` rows still sum correctly (negative-amount convention)
 - Statement CSV renders partial reversals correctly
 - Withdrawal, auto-payout and Connect onboarding all unaffected
+
+---
+
+# PART V — ARCHITECTURE CORRECTION: Connect is Pro-only
+
+Added 2026-07-21. **This supersedes how D3 was implemented in `7c6b1c4`.**
+
+## 22. The rule
+
+Owner: *"stripe connect should be part of pro"* / *"without stripe connect they
+will pay manually in free standalone."*
+
+| Plugin | Payout model |
+|---|---|
+| **Free** | **Manual only.** Vendor earns → wallet credit → withdrawal request → admin marks paid → ledger debit. |
+| **Pro** | Adds Stripe Connect: automatic split at charge time, vendor paid directly. |
+
+Free must have **zero** knowledge of Connect. A free-only site has no split
+payments, so the offset and the reversal-skip are meaningless there.
+
+## 23. What I got wrong in 7c6b1c4
+
+Eleven Connect-specific references were put into free:
+
+| File:line | Leak |
+|---|---|
+| `Services/CommissionService.php:208,403-460` | `create_connect_offset_transaction()` — a whole Connect method in free |
+| `functions.php:142` | `'connect_transfer'` hardcoded in the default debit types |
+| `Database/SchemaManager.php:219,428` | `connect_transfer_id` column in free's schema |
+| `Models/ServiceOrder.php:243,553` | property + `from_db()` mapping |
+| `Services/OrderWorkflowManager.php:787-795` | reversal skip keyed on `connect_transfer_id` |
+
+The behaviour was right; the placement was not. Corrected **before** step 2
+builds on it — otherwise the shared reversal inherits the leak and the cost of
+undoing it triples.
+
+## 24. The seams already exist
+
+Only **one** new hook is needed. The other two shipped earlier today:
+
+| Seam | Status | Pro uses it to |
+|---|---|---|
+| `wpss_commission_recorded` (action) | exists, `CommissionService:216` | write its own offset ledger row after free credits the vendor |
+| `wpss_ledger_debit_types` (filter) | exists, `functions.php:133` | register `connect_transfer` as a debit type |
+| `wpss_should_reverse_vendor_earnings( bool, ServiceOrder ): bool` | **NEW** | return false for Connect-settled orders |
+
+That third filter is the generic form of the D3 decision. Free asks "should I
+reverse this?"; Pro answers. Free never learns why.
+
+## 25. Ownership after the correction
+
+**Free keeps** (generic, not Connect):
+- `StripeGateway::get_payment_intent()` — generic Stripe read, Pro consumes it
+- `StripeGateway::build_refund_args()` `reverse_transfer` flags — derived from the
+  intent itself, stores nothing
+- the ledger, the reversal authority, every calculation (D4a unchanged)
+
+**Pro takes**:
+- `connect_transfer_id` storage — via a **new** `maybe_add_column()` helper on
+  `ProSchemaManager`, which today only creates Pro tables. Pro owns the column on
+  `wpss_orders` through its own migration.
+- the offset ledger row, written with the existing `InternalWalletProvider`
+  pattern
+- the reversal-skip decision, via the new filter
+- `transfer.reversed` handling and the disconnect guard (Part III)
+
+## 26. Effect on Part IV
+
+- **Step 0b** inserted after step 0, before step 2. Both are blocking.
+- **Step 6** shrinks: the conditional-D3 logic becomes a Pro filter return value
+  rather than a free code path. Free only gains the filter.
+- Free file count drops by 1 (no `connect_transfer_id` in `SchemaManager` /
+  `ServiceOrder` for Connect — `refunded_amount` from step 1 still stands).
+
+## 27. Acceptance
+
+`grep -rn "connect" free/src` returns **zero code hits** — comments and generic
+Stripe only. Then:
+- free-only site: refund reverses normally, no Connect concepts anywhere
+- Pro active: Connect order still nets to zero, still skips the reversal
+- both proven by the same case 6 and 13/14 tests
