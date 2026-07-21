@@ -275,32 +275,19 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		return $order->payment_status;
 	}
 
-	/**
-	 * Process refund.
+	/*
+	 * NOTE: there is deliberately no process_refund() here.
 	 *
-	 * @param ServiceOrder $order  Service order.
-	 * @param float        $amount Refund amount.
-	 * @param string       $reason Refund reason.
-	 * @return bool
+	 * One used to exist with zero callers. It duplicated
+	 * OrderWorkflowManager::attempt_payment_refund() — resolve the gateway from
+	 * wpss_payment_gateways, call its process_refund() — but WITHOUT that
+	 * method's payment_status guard against refunding twice, without the audit
+	 * log write, and without updating the order. Anyone "reusing" it would have
+	 * reintroduced the double-refund the guard exists to prevent.
+	 *
+	 * Refunds go through OrderWorkflowManager, which owns the guard, the audit
+	 * trail and the vendor-earnings reversal.
 	 */
-	public function process_refund( ServiceOrder $order, float $amount, string $reason = '' ): bool {
-		if ( empty( $order->transaction_id ) ) {
-			return false;
-		}
-
-		// Get the payment gateway used.
-		$gateway_id = $order->payment_method;
-		$gateways   = apply_filters( 'wpss_payment_gateways', [] );
-
-		if ( ! isset( $gateways[ $gateway_id ] ) ) {
-			return false;
-		}
-
-		$gateway = $gateways[ $gateway_id ];
-		$result  = $gateway->process_refund( $order->transaction_id, $amount, $reason );
-
-		return ! empty( $result['success'] );
-	}
 
 	/**
 	 * Get orders URL.

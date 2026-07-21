@@ -735,6 +735,14 @@ class OrderWorkflowManager {
 		// Auto-refund the buyer's original payment via the payment gateway.
 		$this->attempt_payment_refund( $order );
 
+		// Reverse the vendor's earnings. This block was missing entirely: only
+		// handle_order_cancelled() had it, so refunding gave the buyer their
+		// money back while the vendor KEPT the wallet credit and could withdraw
+		// it. The platform paid out on both sides of an order it collected
+		// nothing for. Gateway idempotency never caught it because the two
+		// payouts run through different systems, weeks apart.
+		$this->reverse_earnings_for_refund( $order_id, $order );
+
 		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
 		/**
@@ -748,27 +756,78 @@ class OrderWorkflowManager {
 	}
 
 	/**
+	 * Reverse vendor earnings for a refunded order.
+	 *
+	 * Shared by the full-refund and partial-refund handlers so there is exactly
+	 * one place that decides how much comes back. Reads `refunded_amount` off
+	 * the order — persisted before the status change by whoever triggered the
+	 * refund (admin screen, dispute resolution, or a payment rail's webhook).
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param int          $order_id Order ID.
+	 * @param ServiceOrder $order    Order object.
+	 * @return void
+	 */
+	private function reverse_earnings_for_refund( int $order_id, ServiceOrder $order ): void {
+		// Nothing to reverse if commission was never recorded.
+		if ( null === $order->vendor_earnings || '' === $order->vendor_earnings ) {
+			return;
+		}
+
+		$refunded = null === $order->refunded_amount ? null : (float) $order->refunded_amount;
+
+		if ( ! $this->reverse_order_earnings( $order_id, $order, $refunded ) ) {
+			wpss_log(
+				sprintf(
+					'Order %d refunded but earnings reversal failed — vendor profile and wallet may be out of sync. Manual adjustment required.',
+					$order_id
+				),
+				'error'
+			);
+		}
+	}
+
+	/**
 	 * Reverse earnings for a cancelled order.
 	 *
 	 * Subtracts the vendor earnings from the vendor profile totals and creates
 	 * a reversal wallet transaction. All writes are wrapped in a DB transaction
 	 * and rolled back on any failure so partial state cannot be committed.
 	 *
-	 * @param int          $order_id Order ID.
-	 * @param ServiceOrder $order    Order object.
+	 * @param int          $order_id       Order ID.
+	 * @param ServiceOrder $order          Order object.
+	 * @param float|null   $refund_amount  Amount refunded to the buyer. NULL (or
+	 *                                     the full total) reverses everything;
+	 *                                     a smaller value reverses the vendor's
+	 *                                     proportional share.
 	 * @return bool True on success, false on failure (rolled back).
 	 * @throws \RuntimeException When DB writes fail (caught internally — the
 	 *                            transaction is rolled back and false is
 	 *                            returned to the caller).
 	 */
-	private function reverse_order_earnings( int $order_id, ServiceOrder $order ): bool {
+	private function reverse_order_earnings( int $order_id, ServiceOrder $order, ?float $refund_amount = null ): bool {
 		global $wpdb;
 
-		$vendor_id       = $order->vendor_id;
-		$vendor_earnings = (float) $order->vendor_earnings;
-		$order_total     = (float) $order->total;
-		$platform_fee    = (float) ( $order->platform_fee ?? 0 );
-		$currency        = $order->currency ? $order->currency : wpss_get_currency();
+		$vendor_id    = $order->vendor_id;
+		$order_total  = (float) $order->total;
+		$platform_fee = (float) ( $order->platform_fee ?? 0 );
+		$currency     = $order->currency ? $order->currency : wpss_get_currency();
+
+		// A partial refund claws back the same proportion the buyer got back.
+		// NULL means "reverse everything", which is also what a full refund
+		// resolves to — one formula, no separate partial path.
+		$full_earnings   = (float) $order->vendor_earnings;
+		$is_partial      = null !== $refund_amount && $refund_amount < $order_total;
+		$vendor_earnings = $is_partial
+			? wpss_get_refund_vendor_share( $order, (float) $refund_amount )
+			: $full_earnings;
+
+		// Reverse the platform's cut in the same proportion, so platform revenue
+		// reporting stays honest on partial refunds.
+		if ( $is_partial && $order_total > 0 ) {
+			$platform_fee = round( $platform_fee * ( (float) $refund_amount / $order_total ), 2 );
+		}
 
 		// Skip zero-amount reversals.
 		if ( $vendor_earnings <= 0 && $order_total <= 0 ) {
@@ -887,15 +946,28 @@ class OrderWorkflowManager {
 				);
 			}
 
-			// 4. Clear order commission fields to prevent double-reversal.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$update_result = $wpdb->update(
-				$orders_table,
-				array(
+			// 4. Settle the order's commission fields.
+			//
+			// Full reversal clears them, which also prevents a double-reversal.
+			// A PARTIAL refund must NOT clear them: the vendor genuinely kept
+			// the un-refunded share and the platform kept its proportional fee,
+			// so the remainders are written back instead. Nulling them here
+			// would erase real earnings from every report.
+			$commission_fields = $is_partial
+				? array(
+					'vendor_earnings' => round( $full_earnings - $vendor_earnings, 2 ),
+					'platform_fee'    => round( (float) ( $order->platform_fee ?? 0 ) - $platform_fee, 2 ),
+				)
+				: array(
 					'vendor_earnings' => null,
 					'platform_fee'    => null,
 					'commission_rate' => null,
-				),
+				);
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$update_result = $wpdb->update(
+				$orders_table,
+				$commission_fields,
 				array( 'id' => $order_id )
 			);
 

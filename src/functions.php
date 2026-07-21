@@ -161,6 +161,36 @@ function wpss_get_ledger_debit_types_sql(): string {
 }
 
 /**
+ * Vendor's share of a refund.
+ *
+ * THE single proportional formula. A refund gives the buyer back some or all of
+ * what they paid; the vendor gives back the same proportion of what they earned,
+ * and the platform gives back the same proportion of its fee. A full refund is
+ * simply the case where $refunded equals the order total, so one formula covers
+ * both and there is no separate "partial" path to drift.
+ *
+ * @since 1.2.3
+ *
+ * @param object $order    Order exposing total and vendor_earnings.
+ * @param float  $refunded Amount refunded to the buyer.
+ * @return float Vendor's share, never negative, never more than they earned.
+ */
+function wpss_get_refund_vendor_share( object $order, float $refunded ): float {
+	$total    = (float) ( $order->total ?? 0 );
+	$earnings = (float) ( $order->vendor_earnings ?? 0 );
+
+	if ( $total <= 0 || $earnings <= 0 || $refunded <= 0 ) {
+		return 0.0;
+	}
+
+	// Clamp: refunding more than the order total would otherwise claw back more
+	// than the vendor ever earned.
+	$refunded = min( $refunded, $total );
+
+	return round( $earnings * ( $refunded / $total ), 2 );
+}
+
+/**
  * Get a vendor's balance derived from the wallet ledger.
  *
  * THE canonical balance. Sums the wallet ledger rather than trusting the last
