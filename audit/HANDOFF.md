@@ -4,7 +4,8 @@ Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
 Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
 **Both repos are clean and committed.** Free `2dc698b`+, Pro `4a48c11`.
-Local DB restored to baseline (seed vendor 987655 = 120, 4 ledger rows).
+Local DB is NO LONGER at the old baseline — the P3 Stripe run added order 112
+and ledger rows #127/#128 (they net to zero). See the test-data note in §0.
 
 ---
 

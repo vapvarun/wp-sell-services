@@ -410,7 +410,8 @@
    "clearance_note": "Clearance is now derived from ledger row created_at rather than orders.completed_at, so tips, milestone and extension credits observe the clearance window too — the orders-derived version exempted all three.",
    "also_dead": "{prefix}wpss_vendor_profiles.available_balance / .pending_balance are mutated by a raw UPDATE at src/Frontend/AjaxHandlers.php:3405 but read by NO balance path. Write-only columns — safe to retire.",
    "also_note": "wpss_wallet_transactions.balance_after IS still read — Pro's LedgerExporter (src/Services/LedgerExporter.php) selects it for statement CSVs. Retiring the column requires giving the exporter a running-balance computation first."
-  }
+  },
+  "refunded_amount_display": "wpss_get_order_refunded_amount( object $order ): float in src/functions.php is THE ONLY way a display, invoice or export surface may ask how much was refunded. wpss_orders.refunded_amount stores a SENTINEL, not a plain number: NULL means 'fully refunded', a value means 'this much was refunded'. That sentinel is load-bearing for the money layer (OrderWorkflowManager::settle_refund reads NULL as 'reverse everything', DisputeService::persist_refunded_amount writes NULL for full refunds) and MUST NOT be changed to store the total. The hazard is read-side: templates/order/order-view.php read the raw column and tested `> 0`, which silently dropped every FULL refund - the buyer saw the status 'Refunded' with no amount beside it, while a PARTIAL refund correctly showed one. Its own is_full_refund branch was dead code. The helper disambiguates 'full refund' from 'no refund' via order status and returns 0.0 when nothing was refunded. Never read the column directly from a template. Commit 2dc698b."
  },
  "capabilities": {
   "_note": "Plugin uses standard WP capabilities (edit_posts, manage_options) plus role-based ownership. No custom capability slugs registered. Vendor role created via add_role on activation."
