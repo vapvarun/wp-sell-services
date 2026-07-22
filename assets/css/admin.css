@@ -2962,3 +2962,83 @@
 		justify-content: center;
 	}
 }
+/* ==========================================================================
+   CONFIRM MODAL (wpssConfirm) — wp-admin
+   ==========================================================================
+   wpss-ui.js provides wpssConfirm() on admin screens, but design-system.css is
+   NOT enqueued in wp-admin, so the overlay and dialog rendered UNSTYLED:
+   position:static, no z-index, transparent. The dialog fell into normal
+   document flow and landed underneath #adminmenuback (z-index 1, fixed), which
+   swallowed the pointer events — every confirm dialog in wp-admin was
+   literally unclickable, including "Process Refund".
+
+   These are the modal primitives from design-system.css, ported so the admin
+   bundle is self-contained. Keep in sync with design-system.css.
+   ========================================================================== */
+
+.wpss-ui-confirm-wrap {
+	position: fixed;
+	inset: 0;
+	/* Above #adminmenuback (1), the admin menu (9990) and WP's own modals. */
+	z-index: 160001;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.wpss-ui-confirm-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.wpss-ui-modal {
+	position: relative; /* stacks above the overlay */
+}
+
+.wpss-modal__dialog.wpss-confirm {
+	background: var(--wpss-bg, #fff);
+	border-radius: 8px;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+	padding: 32px;
+	max-width: 420px;
+	width: 100%;
+}
+
+.wpss-confirm {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	text-align: center;
+}
+
+.wpss-confirm__title {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+}
+
+.wpss-confirm__message {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.wpss-confirm__actions {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	margin-top: 8px;
+}
+
+.wpss-confirm__actions .wpss-btn {
+	min-width: 110px;
+}
+
+@media (max-width: 640px) {
+	.wpss-ui-confirm-wrap {
+		padding: 16px;
+		align-items: flex-end;
+	}
+}
