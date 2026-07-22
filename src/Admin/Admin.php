@@ -1805,6 +1805,18 @@ class Admin {
 						</div>
 					<?php endif; ?>
 
+					<?php
+					// Billing address as recorded when the order was paid — the
+					// SAME partial the buyer's order view renders, so the admin
+					// and the customer never see different invoice detail.
+					// Silent on pre-1.5.0 orders, which carry no snapshot.
+					?>
+					<div class="postbox wpss-billing-postbox">
+						<div class="inside">
+							<?php wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) ); ?>
+						</div>
+					</div>
+
 					<!-- Financial Summary -->
 					<div class="postbox">
 						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>

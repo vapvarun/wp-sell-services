@@ -3042,3 +3042,16 @@
 		align-items: flex-end;
 	}
 }
+
+/* Billing summary in wp-admin. design-system.css is not enqueued here (see the
+   confirm-modal note above), so the component needs its own copy. Keep in sync
+   with design-system.css. */
+.wpss-billing-postbox .inside { padding: 0; }
+.wpss-billing-summary { padding: 12px; }
+.wpss-billing-summary__title { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.wpss-billing-summary__address { display: flex; flex-direction: column; gap: 2px; font-style: normal; font-size: 13px; line-height: 1.5; }
+.wpss-billing-summary__name, .wpss-billing-summary__company { font-weight: 600; }
+.wpss-billing-summary__contact { margin-top: 6px; color: #646970; }
+.wpss-billing-summary__gst { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin: 10px 0 0; padding-top: 8px; border-top: 1px solid #dcdcde; font-size: 13px; }
+.wpss-billing-summary__gst-label { color: #646970; }
+.wpss-billing-summary__gst-value { font-weight: 600; font-variant-numeric: tabular-nums; }

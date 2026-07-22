@@ -964,6 +964,15 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
+	<?php
+	// Billing address as recorded when the order was paid. Shown to both
+	// parties: the buyer reconciles it against their statement and their
+	// accountant needs the GST line, and the vendor needs to see what the
+	// invoice says. Renders nothing on orders placed before DB_VERSION 1.5.0,
+	// which carry no snapshot.
+	wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) );
+	?>
+
 	<!-- Order Timeline Section -->
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
