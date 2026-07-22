@@ -868,6 +868,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								</div>
 							</div>
 
+							<?php
+							// Billing details — OUR block, above the payment
+							// block, identical on every gateway. Prefilled from
+							// the buyer's profile and collapsed to a summary
+							// when complete, so a returning customer only has
+							// to enter card details.
+							//
+							// Deliberately not a gateway element: an address
+							// rendered by Stripe would not exist for PayPal,
+							// Razorpay or Woo buyers, and carries no company or
+							// GST field for the invoice.
+							wpss_get_template_part( 'partials/billing', 'fields' );
+							?>
+
 							<!-- Payment methods -->
 							<div class="wpss-card">
 								<div class="wpss-card__header">
@@ -1584,6 +1598,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									<?php endforeach; ?>
 								</div>
 							</div>
+
+							<?php
+							// Billing details — OUR block, above the payment
+							// block, identical on every gateway. Prefilled from
+							// the buyer's profile and collapsed to a summary
+							// when complete, so a returning customer only has
+							// to enter card details.
+							//
+							// Deliberately not a gateway element: an address
+							// rendered by Stripe would not exist for PayPal,
+							// Razorpay or Woo buyers, and carries no company or
+							// GST field for the invoice.
+							wpss_get_template_part( 'partials/billing', 'fields' );
+							?>
 
 							<!-- Payment methods -->
 							<div class="wpss-card">

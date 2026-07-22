@@ -189,26 +189,26 @@
 					return_url: wpssStripe.returnUrl,
 				};
 
-				if (this.addressElement) {
-					const address = await this.addressElement.getValue();
+				// Billing details come from OUR block, not a gateway element.
+				// Stripe REQUIRES name + address for export (cross-border)
+				// charges on India-registered accounts, so this is validated
+				// before charging — the buyer gets a field-level prompt rather
+				// than a raw API error.
+				//
+				// No confirmParams.shipping: services are not shippable, and it
+				// used to mirror billing_details for no reason.
+				const billing = this.readBillingDetails();
 
-					if (!address.complete) {
-						this.showError(wpssStripe.i18n.addressRequired || 'Please complete your billing name and address.');
-						this.setLoading(false);
-						return;
-					}
-
-					confirmParams.payment_method_data = {
-						billing_details: {
-							name: address.value.name,
-							address: address.value.address,
-						},
-					};
-					confirmParams.shipping = {
-						name: address.value.name,
-						address: address.value.address,
-					};
+				if (!billing.complete) {
+					this.showError(wpssStripe.i18n.addressRequired || 'Please complete your billing name and address.');
+					this.revealBillingForm();
+					this.setLoading(false);
+					return;
 				}
+
+				confirmParams.payment_method_data = {
+					billing_details: billing.details,
+				};
 
 				// Confirm payment with Stripe.
 				const { error, paymentIntent } = await this.stripe.confirmPayment({
@@ -233,6 +233,75 @@
 				this.showError(wpssStripe.i18n.error);
 				this.setLoading(false);
 			}
+		},
+
+		/**
+		 * Read billing details out of OUR billing block.
+		 *
+		 * Gateway-agnostic by design: the same block feeds Stripe here, and
+		 * PayPal / Razorpay / Woo elsewhere. Reads from the visible form when
+		 * the buyer is editing, and from the server-rendered profile values
+		 * when the block is collapsed to its summary — so a returning customer
+		 * who never opens the form still sends a complete address.
+		 *
+		 * @return {{complete: boolean, details: Object}}
+		 */
+		readBillingDetails: function() {
+			const val = (key) => {
+				const el = document.querySelector('[name="' + key + '"]');
+				return el ? (el.value || '').trim() : '';
+			};
+
+			// Collapsed summary state: the form is present but hidden, and its
+			// inputs still carry the profile values, so the same read works.
+			const details = {
+				name: [val('billing_first_name'), val('billing_last_name')].filter(Boolean).join(' '),
+				email: val('billing_email'),
+				phone: val('billing_phone'),
+				address: {
+					line1: val('billing_address_1'),
+					line2: val('billing_address_2'),
+					city: val('billing_city'),
+					state: val('billing_state'),
+					postal_code: val('billing_postcode'),
+					country: (val('billing_country') || '').toUpperCase(),
+				},
+			};
+
+			// Stripe rejects empty strings on optional fields; drop them.
+			if (!details.phone) { delete details.phone; }
+			if (!details.email) { delete details.email; }
+			if (!details.address.line2) { delete details.address.line2; }
+			if (!details.address.state) { delete details.address.state; }
+
+			const complete = !!(
+				details.name &&
+				details.address.line1 &&
+				details.address.city &&
+				details.address.postal_code &&
+				details.address.country
+			);
+
+			return { complete: complete, details: details };
+		},
+
+		/**
+		 * Expand the billing form when validation fails on a collapsed block.
+		 *
+		 * Without this the buyer is told to complete their address while the
+		 * fields are still hidden behind the summary — an error with nothing
+		 * to act on.
+		 */
+		revealBillingForm: function() {
+			const form = document.querySelector('[data-wpss-billing-form]');
+			const summary = document.querySelector('[data-wpss-billing-summary]');
+
+			if (form) {
+				form.removeAttribute('hidden');
+				const firstEmpty = form.querySelector('input[required]:invalid, select[required]:invalid');
+				if (firstEmpty && firstEmpty.focus) { firstEmpty.focus(); }
+			}
+			if (summary) { summary.setAttribute('hidden', 'hidden'); }
 		},
 
 		/**
