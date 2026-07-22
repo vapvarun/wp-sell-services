@@ -33,7 +33,7 @@ Full stage-by-stage audit in `MONEY-FLOW-PLAN.md`. Summary:
 | Order money fields | ✅ (with the payment-vs-completion trap documented) |
 | Completion → ledger credit | ✅ verified |
 | Clearance hold | ✅ proven empirically |
-| **Payout** | ❌ **the run never pays anyone** |
+| **Payout** | ❌ run never pays; PayPal rail re-pays every cycle (P0) |
 | Refund / partial / dispute | ⚠️ 3 open (status gates, uncredited guard, partial UI) |
 | Reconciliation / statements | ❓ never audited |
 
@@ -84,7 +84,14 @@ several are almost certainly still live. Highest-signal, unverified:
   by the order 112 run (`ledger #127 +45.00`); re-check against the item as
   written.
 
-**Triage status: 2 of 38 done.** 36 remain unchecked. Continue: mark each fixed / live / invalid
+**Triage status: 8 of 38 done** (28/30, 29, 32, 38, 39, 40 and the duplicates
+they collapse). Confirmed real and promoted into `MONEY-FLOW-PLAN.md` S6.5-S6.8:
+PayPal payouts re-pay every run, bypass the ledger, have no batch idempotency,
+and cap at 500 vendors. Item 32 (re-run browser checkout, verify
+`platform_fee`/`vendor_earnings` persisted) is **done** — order 112 persisted
+45.00/5.00 via `compute_breakdown`.
+
+30 remain unchecked. Continue: mark each fixed / live / invalid
 with evidence, fold the live ones into the flow rows above, then archive
 `TASKS.md`.
 

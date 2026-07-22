@@ -99,6 +99,33 @@ batch is the right starting point — it just has no ending.
 Every payout must end in one place that writes the ledger debit — a rail on
 success, or the admin by hand. Must be idempotent (mark twice → debit once).
 
+**Open — S6.5 PayPal payouts RE-PAY vendors every run. P0.**
+`PayoutsBatchService::get_pending_payouts()` computes what a vendor is owed as
+`SUM(vendor_earnings)` over completed orders `WHERE payment_status != 'paid_out'`
+— but **nothing anywhere writes `paid_out`**. The string appears exactly twice in
+both repos: once in a docblock, once in that SELECT. So every run computes the
+same amount again. Run a batch twice and the vendor is paid twice; put it on a
+weekly cadence and they are paid weekly, forever.
+
+**Open — S6.6 PayPal payouts bypass the ledger entirely. Architectural.**
+That query reads `wpss_orders.vendor_earnings` directly. It never consults
+`wpss_wallet_transactions`, so it is a **second money authority** — violating
+rule 2.1 — and it ignores clearance completely, paying out earnings that have
+not matured. Any withdrawal already taken through the wallet is invisible to it.
+
+**Open — S6.7 No idempotency on batch creation.**
+`create_batch()` takes no lock or transaction, so a double-click or two admins
+acting at once create two batches. Compounds S6.5.
+
+**Open — S6.8 Payout vendor query caps at 500 with an N+1.**
+`VendorPayoutProfileService` uses `'number' => 500` and loops
+`foreach ( $user_query->get_results() … )`. Vendor 501 is silently never paid.
+
+**Consequence for the plan: T5/T6 must NOT build on `PayoutsBatchService` as it
+stands.** PayPal payouts have to move onto the ledger and terminate in the same
+mark-paid step as every other rail (T1). Treating PayPal as "the rail that
+already works" — which is how it was sequenced — was wrong.
+
 **Open — S6.4 Stripe Connect is the wrong shape.**
 `ConnectPaymentProcessor` injects `transfer_data`, so per `ConnectLedgerBridge`:
 *"Stripe pays the vendor's share straight to their connected account at CHARGE
