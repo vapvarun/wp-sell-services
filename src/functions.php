@@ -633,6 +633,247 @@ function wpss_get_service_status( int $service_id ): string {
 }
 
 /**
+ * The billing address fields, in display order.
+ *
+ * THE canonical field list — the profile form, the checkout prefill, the order
+ * snapshot, the admin screen and any invoice all read it, so a field is added
+ * in exactly one place.
+ *
+ * Keys are WooCommerce's, deliberately. On a site running WooCommerce the
+ * buyer's address is ALREADY stored under these keys, so we prefill from it and
+ * they never type it twice; on a standalone site we own the same keys and a
+ * later Woo install inherits them. One address per user, whichever plugin
+ * captured it.
+ *
+ * `billing_gst` is the exception — it has no Woo-core equivalent, so it is
+ * ours. It is the general tax-registration field (GSTIN in India, VAT ID in the
+ * EU), not one key per jurisdiction.
+ *
+ * @since 1.2.3
+ *
+ * @return array<string, array{label:string, required:bool, type:string, autocomplete:string}>
+ */
+function wpss_get_billing_fields(): array {
+	$fields = array(
+		'billing_first_name' => array(
+			'label'        => __( 'First name', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'given-name',
+		),
+		'billing_last_name'  => array(
+			'label'        => __( 'Last name', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'family-name',
+		),
+		'billing_company'    => array(
+			'label'        => __( 'Company', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'organization',
+		),
+		'billing_gst'        => array(
+			// GSTIN / VAT / tax registration number. A B2B buyer needs this on
+			// the invoice to claim input credit, so an invoice without it is
+			// unusable to them.
+			'label'        => __( 'GST / VAT number', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'off',
+		),
+		'billing_address_1'  => array(
+			'label'        => __( 'Street address', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'address-line1',
+		),
+		'billing_address_2'  => array(
+			'label'        => __( 'Apartment, suite, etc.', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'address-line2',
+		),
+		'billing_city'       => array(
+			'label'        => __( 'Town / City', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'address-level2',
+		),
+		'billing_state'      => array(
+			'label'        => __( 'State / County', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'address-level1',
+		),
+		'billing_postcode'   => array(
+			'label'        => __( 'Postcode / ZIP', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'postal-code',
+		),
+		'billing_country'    => array(
+			'label'        => __( 'Country', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'country',
+			'autocomplete' => 'country',
+		),
+		'billing_email'      => array(
+			'label'        => __( 'Email', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'email',
+			'autocomplete' => 'email',
+		),
+		'billing_phone'      => array(
+			'label'        => __( 'Phone', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'tel',
+			'autocomplete' => 'tel',
+		),
+	);
+
+	/**
+	 * Filter the billing address fields.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param array $fields Field definitions keyed by meta key.
+	 */
+	return apply_filters( 'wpss_billing_fields', $fields );
+}
+
+/**
+ * Read a user's saved billing address.
+ *
+ * Reads the WooCommerce-compatible user meta, so on a Woo site this returns the
+ * address the buyer already gave WooCommerce — no re-entry, no migration.
+ *
+ * @since 1.2.3
+ *
+ * @param int $user_id User ID. Defaults to the current user.
+ * @return array<string, string> Field key => value. Missing fields are ''.
+ */
+function wpss_get_billing_address( int $user_id = 0 ): array {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	if ( $user_id <= 0 ) {
+		return array();
+	}
+
+	$address = array();
+
+	foreach ( array_keys( wpss_get_billing_fields() ) as $key ) {
+		$value = get_user_meta( $user_id, $key, true );
+
+		// Fall back to the account email so a first-time buyer does not retype
+		// something we already know.
+		if ( '' === $value && 'billing_email' === $key ) {
+			$user  = get_userdata( $user_id );
+			$value = $user ? $user->user_email : '';
+		}
+
+		$address[ $key ] = is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Filter a user's billing address after it is read.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param array $address Field key => value.
+	 * @param int   $user_id User ID.
+	 */
+	return apply_filters( 'wpss_billing_address', $address, $user_id );
+}
+
+/**
+ * Save a user's billing address to their profile.
+ *
+ * Writes the same WooCommerce keys it reads, so the address stays shared with
+ * WooCommerce rather than forking into a WPSS-only copy that drifts.
+ *
+ * @since 1.2.3
+ *
+ * @param int                   $user_id User ID.
+ * @param array<string, string> $address Raw field values.
+ * @return bool True when something was written.
+ */
+function wpss_save_billing_address( int $user_id, array $address ): bool {
+	if ( $user_id <= 0 ) {
+		return false;
+	}
+
+	$fields  = wpss_get_billing_fields();
+	$written = false;
+
+	foreach ( $fields as $key => $definition ) {
+		if ( ! array_key_exists( $key, $address ) ) {
+			continue;
+		}
+
+		$value = $address[ $key ];
+
+		switch ( $definition['type'] ) {
+			case 'email':
+				$value = sanitize_email( (string) $value );
+				break;
+			case 'country':
+				// ISO-3166 alpha-2, upper-cased.
+				$value = strtoupper( substr( sanitize_text_field( (string) $value ), 0, 2 ) );
+				break;
+			default:
+				$value = sanitize_text_field( (string) $value );
+		}
+
+		update_user_meta( $user_id, $key, $value );
+		$written = true;
+	}
+
+	if ( $written ) {
+		/**
+		 * Fires after a user's billing address is saved.
+		 *
+		 * @since 1.2.3
+		 *
+		 * @param int   $user_id User ID.
+		 * @param array $address Sanitized values that were written.
+		 */
+		do_action( 'wpss_billing_address_saved', $user_id, $address );
+	}
+
+	return $written;
+}
+
+/**
+ * Whether a user's billing address has everything required.
+ *
+ * Drives the checkout decision: complete means the address block collapses and
+ * the buyer only has to enter card details.
+ *
+ * @since 1.2.3
+ *
+ * @param int|array $user_or_address User ID, or an address array to test directly.
+ * @return bool
+ */
+function wpss_is_billing_address_complete( $user_or_address = 0 ): bool {
+	$address = is_array( $user_or_address )
+		? $user_or_address
+		: wpss_get_billing_address( (int) $user_or_address );
+
+	if ( empty( $address ) ) {
+		return false;
+	}
+
+	foreach ( wpss_get_billing_fields() as $key => $definition ) {
+		if ( ! empty( $definition['required'] ) && empty( $address[ $key ] ) ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
  * Get a vendor's account status.
  *
  * Shared accessor for every vendor-status read. Resolves from the canonical

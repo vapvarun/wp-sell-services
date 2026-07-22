@@ -360,6 +360,22 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			'updated_at'     => current_time( 'mysql' ),
 		);
 
+		// Snapshot the buyer's billing address AT PAYMENT TIME. The profile
+		// holds the current address; the order holds the one that was billed,
+		// so editing the profile later cannot rewrite past invoices. Same split
+		// WooCommerce uses between billing_* on the user and _billing_* on the
+		// order.
+		//
+		// Only written when it is not already set — a re-run of mark_as_paid()
+		// must not overwrite the address the buyer actually paid under.
+		if ( empty( $order->billing_address ) ) {
+			$billing = wpss_get_billing_address( (int) $order->customer_id );
+
+			if ( ! empty( array_filter( $billing ) ) ) {
+				$update_data['billing_address'] = wp_json_encode( $billing );
+			}
+		}
+
 		if ( ! $is_sub_order ) {
 			$update_data['status'] = ServiceOrder::STATUS_PENDING_REQUIREMENTS;
 

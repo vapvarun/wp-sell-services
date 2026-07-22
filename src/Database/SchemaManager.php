@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.4.9';
+	const DB_VERSION = '1.5.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -219,6 +219,21 @@ class SchemaManager {
 				'column'     => 'refunded_amount',
 				'definition' => 'decimal(10,2) DEFAULT NULL',
 				'after'      => 'paid_at',
+			),
+			// Billing address as it stood WHEN THE ORDER WAS PAID, as JSON.
+			//
+			// A snapshot, not a pointer to the profile: an invoice has to show
+			// what was billed at the time, so editing the profile next year
+			// must not rewrite last year's receipts. Same split WooCommerce
+			// uses between _billing_* on the order and billing_* on the user.
+			//
+			// JSON rather than a dozen columns because nothing filters or sorts
+			// on it — it is read whole, for display and export.
+			array(
+				'table'      => 'orders',
+				'column'     => 'billing_address',
+				'definition' => 'longtext',
+				'after'      => 'refunded_amount',
 			),
 		);
 
@@ -427,6 +442,7 @@ class SchemaManager {
 			transaction_id varchar(255) DEFAULT NULL,
 			paid_at datetime DEFAULT NULL,
 			refunded_amount decimal(10,2) DEFAULT NULL,
+			billing_address longtext,
 			revisions_included int(11) DEFAULT 0,
 			revisions_used int(11) DEFAULT 0,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
