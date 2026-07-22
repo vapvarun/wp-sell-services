@@ -3,7 +3,7 @@
 Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
 Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
-**Both repos are clean and committed.** Free `6b15377`, Pro `4a48c11`.
+**Both repos are clean and committed.** Free `2dc698b`+, Pro `4a48c11`.
 Local DB restored to baseline (seed vendor 987655 = 120, 4 ledger rows).
 
 ---
@@ -120,19 +120,43 @@ inheriting whatever the theme gave it.
 **Billing identity is now complete end to end: captured, stored, snapshotted,
 and displayed.**
 
-### P3. Live Stripe charge — still UNVERIFIED
+### ~~P3. Live Stripe charge~~ — DONE 2026-07-22 (free `2dc698b`)
 
-The flow is proven up to the point of charge; the charge itself never ran.
-**A manual browser run settles it in five minutes** — buy the $50 service as
-`realcustomer` (billing profile complete as of 2026-07-22), card `4242…`, then
-refund from wp-admin.
+**Money moved, and came back.** Fully scripted — the old blocker (Stripe's
+React-controlled Address Element) died with `3f83379`.
 
-The original blocker — automating Stripe's React-controlled Address Element —
-is **gone**: `3f83379` replaced it with our own native fields, so this may now
-be scriptable end to end. Worth one attempt before falling back to manual.
+Order 112, `realcustomer` buys the $50 service:
+
+| Stage | Evidence |
+|---|---|
+| Charge | `pi_3Tw2R4SY8ch105Oa0oAnnFqN` — **Stripe API** says `succeeded`, 5000 usd, metadata `order_id: 112` |
+| Minor units | 5000 for $50.00 — correct |
+| Currency | stored `USD` (base), not the display currency |
+| Snapshot | written automatically at payment: 12 keys, company + GST |
+| Split | 45.00 vendor / 5.00 platform |
+| Completion | ledger `#127 order_earning +45.00`, balance 45 |
+| Refund | clicked **Process Refund** in real wp-admin; confirm dialog `position:fixed z-index:160001` (the `5406736` P0 fix holds) |
+| Refund at Stripe | `re_3Tw2R4SY8ch105Oa0Lau4aUw succeeded 5000 usd` — **exactly one**, no double refund |
+| Reversal | ledger `#128 order_reversal -45.00`, balance back to 0 |
+
+Order 112 is left refunded on the local site as the reference artefact.
+
+**The run found a real bug** (see commit): a full refund showed the buyer no
+amount at all, because `refunded_amount`'s NULL-means-full sentinel was being
+read directly by the template. Now resolved once in
+`wpss_get_order_refunded_amount()`. Same lesson as every other P0 this sprint —
+reading the code would not have caught it; running the flow did.
 
 ### P4. Smaller
 
+- **Paid in-flight orders cannot be refunded from admin at all.** The Process
+  Refund button is gated to `completed` / `cancelled` (`Admin.php:1794`), so a
+  buyer who paid and is sitting in `pending_requirements`, `in_progress` or
+  `delivered` has no admin refund path — the admin must first move the order to
+  cancelled. Disputes are covered by their own resolution UI, but the plain
+  "paid, vendor never started, buyer wants out" case is not. Found during the
+  P3 run. **Policy call, not a silent fix** — decide whether the gate should
+  include every paid status.
 - Admin partial-refund input — the server accepts `refund_amount`, the metabox
   UI only offers a full refund.
 - Vendor profile `city` is still free text next to a country select.
