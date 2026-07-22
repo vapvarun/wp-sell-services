@@ -739,10 +739,18 @@ class StripeGateway implements PaymentGatewayInterface {
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'wpss_stripe' ),
 				'returnUrl'      => add_query_arg( 'step', 'complete', wpss_get_page_url( 'checkout' ) ),
+				// Prefill the Address Element from the buyer's saved profile so
+				// a returning customer enters card details and nothing else.
+				// Guest checkout is not allowed on a services marketplace (the
+				// buyer has to talk to the vendor), so every checkout has a
+				// profile to read from.
+				'billing'        => $this->get_billing_defaults(),
 				'i18n'           => array(
 					'processing'      => __( 'Processing...', 'wp-sell-services' ),
 					'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'addressRequired' => __( 'Please complete your billing name and address.', 'wp-sell-services' ),
+					'editAddress'     => __( 'Edit billing address', 'wp-sell-services' ),
+					'billedTo'        => __( 'Billed to', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -1489,6 +1497,54 @@ class StripeGateway implements PaymentGatewayInterface {
 		return $this->is_test_mode()
 			? ( $this->settings['test_secret_key'] ?? '' )
 			: ( $this->settings['live_secret_key'] ?? '' );
+	}
+
+	/**
+	 * Billing defaults for the Stripe Address Element, from the saved profile.
+	 *
+	 * Shaped for Stripe's `defaultValues`, so a returning buyer sees their
+	 * address already filled and only has to enter card details. `complete`
+	 * tells the client whether the address block can start collapsed.
+	 *
+	 * Reads WooCommerce-compatible user meta, so on a Woo site — or any other
+	 * Wbcom product that captured an address — this is already populated and
+	 * the buyer never types it twice.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @return array{complete:bool, name:string, address:array<string,string>}
+	 */
+	private function get_billing_defaults(): array {
+		$empty = array(
+			'complete' => false,
+			'name'     => '',
+			'address'  => array(),
+		);
+
+		if ( ! function_exists( 'wpss_get_billing_address' ) || ! is_user_logged_in() ) {
+			return $empty;
+		}
+
+		$billing = wpss_get_billing_address( get_current_user_id() );
+
+		if ( empty( $billing ) ) {
+			return $empty;
+		}
+
+		$name = trim( ( $billing['billing_first_name'] ?? '' ) . ' ' . ( $billing['billing_last_name'] ?? '' ) );
+
+		return array(
+			'complete' => wpss_is_billing_address_complete( $billing ),
+			'name'     => $name,
+			'address'  => array(
+				'line1'       => $billing['billing_address_1'] ?? '',
+				'line2'       => $billing['billing_address_2'] ?? '',
+				'city'        => $billing['billing_city'] ?? '',
+				'state'       => $billing['billing_state'] ?? '',
+				'postal_code' => $billing['billing_postcode'] ?? '',
+				'country'     => $billing['billing_country'] ?? '',
+			),
+		);
 	}
 
 	/**

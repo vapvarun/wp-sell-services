@@ -1079,3 +1079,58 @@ meta keys, not the function names. If duplication across products becomes
 painful later, this is the shape to extract into a shared package; until then
 each product carries a thin copy over one shared data contract, which is
 cheaper than a mandatory dependency between six plugins.
+
+## 46. CORRECTION — the address block must NOT live inside the card element
+
+Owner, 2026-07-22, with a screenshot: the address fields were rendering inside
+the Stripe payment card. *"these address are still part of payment cards as
+they should be independent from card section."*
+
+**Right, and it invalidates the approach I started.** Using Stripe's Address
+Element means:
+
+- the address is rendered **by the gateway**, inside its iframe, so it visually
+  and structurally belongs to the card block;
+- it only exists when **Stripe** is the gateway — PayPal, Razorpay, offline and
+  Woo checkouts collect nothing, so the same buyer has an address on one rail
+  and not another;
+- it contradicts §43-44: the account layer is supposed to be gateway-agnostic
+  and portfolio-shared. An address that only appears for one gateway is neither.
+- it cannot carry `billing_company` or `billing_gst` at all — Stripe's Address
+  Element has no such fields — so the invoice requirement is unmeetable through
+  it.
+
+That last point is decisive on its own: the GST field the owner requires
+**cannot** be collected by Stripe's Address Element.
+
+### The corrected design
+
+**We render the billing section ourselves**, as its own block above the payment
+block, from `wpss_get_billing_fields()`:
+
+```
+┌─ Billing details ──────────────────────────┐
+│  Billed to: John Smith, Acme Ltd            │
+│  1600 Amphitheatre Pkwy, Mountain View…     │
+│  GST 29ABCDE1234F1Z5          [ Edit ]      │
+└─────────────────────────────────────────────┘
+┌─ Payment ──────────────────────────────────┐
+│  [ Stripe / PayPal / … card fields ]        │
+└─────────────────────────────────────────────┘
+```
+
+- Native fields, our markup, our design tokens — no gateway iframe.
+- Prefilled from the profile; **collapsed to a one-line summary when complete**,
+  so a returning buyer sees "Billed to …" and goes straight to the card.
+- Identical on every rail. The gateway is handed the values at confirm time
+  (`billing_details` for Stripe, equivalents elsewhere) — it consumes the
+  address, it does not own it.
+- Carries company and GST, which no gateway element does.
+- Saved back to the profile on successful payment.
+
+Stripe's `#wpss-stripe-address-element` is removed, along with the
+`confirmParams.shipping` duplicate (§40 — services are non-shippable).
+
+**Incidental benefit:** the checkout stops depending on a React-controlled
+third-party iframe, which is also what blocked automated end-to-end testing
+(§33). Our own fields are ordinary DOM and can be filled by a test.
