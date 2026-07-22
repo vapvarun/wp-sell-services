@@ -2399,7 +2399,7 @@ class VendorsPage {
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Country', 'wp-sell-services' ); ?></span>
-					<span class="wpss-info-value"><?php echo $profile->country ? esc_html( $profile->country ) : '-'; ?></span>
+					<span class="wpss-info-value"><?php echo $profile->country ? esc_html( wpss_get_country_name( (string) $profile->country ) ) : '-'; ?></span>
 				</div>
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'City', 'wp-sell-services' ); ?></span>

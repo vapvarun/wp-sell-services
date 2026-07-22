@@ -123,7 +123,25 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				<div class="wpss-form-row wpss-form-row--half">
 					<div>
 						<label for="country"><?php esc_html_e( 'Country', 'wp-sell-services' ); ?></label>
-						<input type="text" id="country" name="country" value="<?php echo esc_attr( $vendor_profile->country ?? '' ); ?>" class="wpss-input">
+						<?php
+						// Was a free-text input, which meant every vendor stored
+						// a different spelling and nothing could be filtered or
+						// grouped by country. Now the shared list, like every
+						// other country field in the plugin.
+						//
+						// resolve_country_code() maps legacy free-text values
+						// ("India") onto their code so an existing vendor's
+						// country stays selected instead of silently blanking.
+						$wpss_country_code = wpss_resolve_country_code( (string) ( $vendor_profile->country ?? '' ) );
+						?>
+						<select id="country" name="country" class="wpss-input">
+							<option value=""><?php esc_html_e( 'Select a country…', 'wp-sell-services' ); ?></option>
+							<?php foreach ( wpss_get_countries() as $wpss_code => $wpss_label ) : ?>
+								<option value="<?php echo esc_attr( $wpss_code ); ?>" <?php selected( $wpss_country_code, $wpss_code ); ?>>
+									<?php echo esc_html( $wpss_label ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
 					</div>
 					<div>
 						<label for="city"><?php esc_html_e( 'City', 'wp-sell-services' ); ?></label>

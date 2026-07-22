@@ -81,7 +81,9 @@ $bio           = $profile->bio ?? '';
 $skills        = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : [];
 $languages     = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : [];
 $response_time = $vendor_service->get_response_time( $vendor_id );
-$country       = $profile->country ?? '';
+// Shared resolver: renders a stored code as its country name, and leaves
+// legacy free-text values readable rather than blanking them.
+$country       = wpss_get_country_name( (string) ( $profile->country ?? '' ) );
 $member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
 $is_verified   = ( $profile->verification_tier ?? '' ) === VendorProfile::TIER_PRO;
 $social_links  = ! empty( $profile->social_links ) ? json_decode( $profile->social_links, true ) : [];

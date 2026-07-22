@@ -848,6 +848,69 @@ function wpss_get_countries(): array {
 }
 
 /**
+ * Resolve any stored country value to an ISO-3166 alpha-2 code.
+ *
+ * Country was a FREE-TEXT field on the vendor profile before 1.2.3, so stored
+ * values are a mix of codes ("IN"), full names ("India") and whatever else was
+ * typed. Switching that input to a select without this would render blank for
+ * every existing vendor and silently drop their country on the next save.
+ *
+ * @since 1.2.3
+ *
+ * @param string $value Stored country value.
+ * @return string ISO-2 code, or '' when it cannot be resolved.
+ */
+function wpss_resolve_country_code( string $value ): string {
+	$value = trim( $value );
+
+	if ( '' === $value ) {
+		return '';
+	}
+
+	$countries = wpss_get_countries();
+
+	// Already a valid code.
+	$upper = strtoupper( $value );
+	if ( isset( $countries[ $upper ] ) ) {
+		return $upper;
+	}
+
+	// Legacy free text — match on name, case-insensitively.
+	foreach ( $countries as $code => $name ) {
+		if ( 0 === strcasecmp( $name, $value ) ) {
+			return $code;
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Display name for a stored country value.
+ *
+ * Read-side counterpart of {@see wpss_resolve_country_code()}. Every surface
+ * that SHOWS a country goes through this, so the vendor card, the public
+ * profile and the admin screen can never disagree. Falls back to the raw value
+ * when it cannot be resolved, so nothing a vendor typed simply vanishes.
+ *
+ * @since 1.2.3
+ *
+ * @param string $value Stored country value (code or legacy free text).
+ * @return string Display name.
+ */
+function wpss_get_country_name( string $value ): string {
+	$code = wpss_resolve_country_code( $value );
+
+	if ( '' === $code ) {
+		return trim( $value );
+	}
+
+	$countries = wpss_get_countries();
+
+	return $countries[ $code ] ?? trim( $value );
+}
+
+/**
  * Read a user's saved billing address.
  *
  * Reads the WooCommerce-compatible user meta, so on a Woo site this returns the
