@@ -1,62 +1,70 @@
-# HANDOFF — 2026-07-22
+# HANDOFF — 2026-07-23
 
 Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
 Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
-**Both repos are clean and committed.** Free `2dc698b`+, Pro `4a48c11`.
+**Both repos are clean and committed.** Free at the T1/T2 commit, Pro `4a48c11`.
 Local DB is NO LONGER at the old baseline — the P3 Stripe run added order 112
 and ledger rows #127/#128 (they net to zero). See the test-data note in §0.
 
 ---
 
-## START HERE — T1: payouts screen + mark paid
+## ✅ T1 + T2 DONE (2026-07-23) — the manual payout rail is complete
 
-The next task, specified. Full context in `audit/MONEY-FLOW-PLAN.md`; the rules
-that govern it in `docs/architecture/MONEY-FLOW.md` (2.3 and 2.4 are the two
-that matter).
+The acceptance test passes end to end **on a site with no Stripe and no PayPal
+configured**: batch (pending rows) → Withdrawals screen → Export CSV → pay
+offline → Mark paid → ledger debit → vendor balance drops → vendor sees it in
+their dashboard. Verified in the browser with real clicks, plus CLI and REST
+replays for idempotency.
 
-**Why this one.** It ships a complete payout flow for a site with **no gateway
-configured at all** — no Stripe, no PayPal, no approval, any country. Stripe
-Connect is not available everywhere and PayPal Payouts needs PayPal's per-account
-approval, so manual is the only rail that can be assumed to exist. It is the
-default, not the fallback.
+**What was built (free repo):**
 
-**What exists already:** cadence, threshold and cron scheduling all work
-(`auto_withdrawal_schedule`, `auto_withdrawal_threshold`,
-`EarningsService::schedule_auto_withdrawal_cron()`), and
-`create_auto_withdrawal()` already produces the batch — `wpss_withdrawals` rows
-at status `pending`. **That batch is the starting point. Do not rebuild it.**
-What is missing is the ending.
+1. **`EarningsService::mark_paid()`** — the keystone, now in the manifest as
+   `money_authorities.payout_terminal`. Row lock (`FOR UPDATE`) → terminal
+   guard → status flip + ledger debit in ONE transaction (debit core extracted
+   from `record_withdrawal_debit()`, which stays as the transactional wrapper
+   for the hook listener + backfill). Verified: mark twice = one debit; REST
+   replay = 400 `wpss_already_finalised`.
+2. **One transition path.** `process_withdrawal('completed')` routes through
+   `mark_paid()`; approve/reject now also row-lock. The REST controller's
+   duplicate inline UPDATE (second money path — no notification, no ledger
+   guarantee) was deleted; it delegates to the service.
+3. **Withdrawals screen upgraded, not rebuilt** (a "new Payouts screen" would
+   have duplicated the page that already existed): Mark-paid on pending AND
+   approved rows, method filter, filtered empty state, `wpssConfirm` for bulk
+   (native `confirm()` removed), inline `<style>`/`<script>` migrated to
+   `admin.css` / `admin-withdrawals.js` (F1/F2 gates). Verified at 2003 rows
+   (0.7 ms page query, pagination correct) and at 390px.
+4. **Schema 1.5.1**: `idx_status_created (status, created_at)` + `idx_method`.
+5. **T2 CSV export** — `export_csv()` admin-post handler, keyset-batched,
+   columns a bank/PayPal bulk upload needs. **Free-side**, because the plan's
+   "reuse `Analytics/DataExporter`" premise was wrong — that class is Pro-only
+   and the manual rail must be complete on free-only sites. Export never
+   mutates status (verified before/after).
 
-**Build:**
+**Found while building:** `WithdrawalsPage::enqueue_scripts()` compared against
+a hook suffix (`wp-sell-services_page_…`) that never matches the real one
+(`sell-services_page_…`) — its enqueue block was dead code; now keyed off the
+stored `add_submenu_page()` return.
 
-1. **`mark_paid( int $withdrawal_id ): bool`** — the terminal step. Flips the row
-   to completed and writes the ledger debit via the existing
-   `record_withdrawal_debit()`. **Idempotent**: marking twice debits once. Take
-   the row lock first; two admins will click at the same time. This is the
-   keystone — every rail terminates here, so no rail keeps its own bookkeeping.
-2. **Admin Payouts screen** — list the batch (vendor, matured amount, method,
-   status), filter by status/method, mark paid single **and** bulk.
-3. **Big-site from day one**: `LIMIT`/`OFFSET`, a real `COUNT(*)`, index on
-   `(status, vendor_id)`, no N+1 on vendor lookups. 2000 vendors.
-4. **Empty / error / loading states**, 390px, dark mode, RTL.
+**Test data on this site (2026-07-23):** withdrawals #10/#11/#12 completed with
+ledger debits #133/#134/#135 for vendor user 1, backed by three `T1 QA seed
+credit` ledger rows dated -20 days. Left as the T1 reference artefacts (same
+convention as refunded order 112).
 
-**Then T2** — CSV export via `Analytics/DataExporter`, columns a bank or PayPal
-bulk upload actually needs. **Export must NOT change status**: an export that
-auto-marked would lie the moment a transfer failed.
+## NEXT — T4: the rail seam
 
-**Acceptance test** (from the plan §3, walk it as the admin):
-settings → run fires → Payouts screen → export CSV → pay offline → mark paid →
-ledger debit → vendor balance drops → vendor sees it in their dashboard.
-**On a site with no Stripe and no PayPal configured.**
-
-**Do not** build on Pro's `PayoutsBatchService` — it re-pays vendors every run,
-bypasses the ledger and has no idempotency (`MONEY-FLOW-PLAN.md` S6.5-S6.8).
+`apply_filters( 'wpss_execute_payout', … )` so Pro rails (T5/T6 Stripe
+transfers, rebuilt PayPal) can pick up pending rows and terminate in
+`mark_paid()`. Free implements nothing — free-only sites stay manual, which is
+now a complete flow. Full context: `audit/MONEY-FLOW-PLAN.md` §3. Still true:
+**do not build on Pro's `PayoutsBatchService`** (S6.5-S6.8).
 
 **Environment:** log out before `?autologin=` (it no-ops when logged in);
 `npm run build:min` after any JS/CSS edit; verify in a browser, not by reading —
 every money defect found so far was found by running the flow while automated
-checks passed.
+checks passed. PHPStan is currently broken on this machine (homebrew PHP 8.5 vs
+vendored extension classes — pre-existing, not from this change); WPCS works.
 
 ---
 

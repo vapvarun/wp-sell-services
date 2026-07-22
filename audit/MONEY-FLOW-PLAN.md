@@ -76,7 +76,9 @@ the same credit at 16 days reports `available 45.00`.
 `request_withdrawal()` gates on `get_summary()['available_balance']` under a row
 lock — the one balance authority, not a re-derivation.
 
-**Open — S5.1** `clearance_days` has `min => 0` in `Settings.php`. Zero silently
+**S5.1 — ✅ DONE 2026-07-22 (`e32f17c`, T3).** Floored at 1 day server-side:
+`max( 1, absint( … ) )` in the sanitizer (`Settings.php:2829`).
+Original finding: `clearance_days` had `min => 0` in `Settings.php`. Zero silently
 deletes the entire protection the model depends on. Raise the floor, or present
 as Weekly / Bi-weekly / Monthly so it reads as policy. *(10 minutes.)*
 
@@ -86,18 +88,31 @@ Cadence, threshold and cron scheduling are built
 (`auto_withdrawal_schedule`, `auto_withdrawal_threshold`,
 `schedule_auto_withdrawal_cron()`). **Nothing actually pays.**
 
-**Open — S6.1 The run stops at "pending".**
-`create_auto_withdrawal()` inserts a `wpss_withdrawals` row at
-`WITHDRAWAL_PENDING` and returns; no rail is called. "Automatic withdrawals"
-today means automatically creating requests an admin still pays by hand. That
-batch is the right starting point — it just has no ending.
+**S6.1 The run stops at "pending" — ✅ RESOLVED for the manual rail (2026-07-23, T1).**
+`create_auto_withdrawal()` still inserts rows at `WITHDRAWAL_PENDING` — that is
+now correct by design: pending IS the manual batch, and the ending exists
+(admin: export → pay offline → mark paid). Automated rails picking rows up from
+`pending` is T4-T6 work.
 
-**Open — S6.2 No CSV export of a payout batch.**
-`Analytics/DataExporter` exists but is not wired to a payout run.
+**S6.2 CSV export — ✅ DONE 2026-07-23 (T2).**
+`WithdrawalsPage::export_csv()` (admin_post, nonce + cap) streams the current
+status/method filter as CSV, keyset-batched at 500 rows, columns a bank or
+PayPal bulk upload needs. Free-side — the plan's "reuse `Analytics/DataExporter`"
+premise was wrong: that class is **Pro-only**, and the manual rail must be
+complete on free-only sites. **Export never mutates status** (rule 2.4) —
+verified: exported, then confirmed statuses unchanged.
 
-**Open — S6.3 No "mark paid" terminal step.**
-Every payout must end in one place that writes the ledger debit — a rail on
-success, or the admin by hand. Must be idempotent (mark twice → debit once).
+**S6.3 "Mark paid" terminal step — ✅ DONE 2026-07-23 (T1).**
+`EarningsService::mark_paid()` (manifest → `money_authorities.payout_terminal`):
+row lock (`FOR UPDATE`), terminal-state guard, status flip + ledger debit in ONE
+transaction. Idempotent — verified twice = one debit (browser + CLI replay, and
+REST replay returns 400 `wpss_already_finalised`). Every path routes through
+it: `process_withdrawal('completed')`, admin single + bulk, REST
+`PUT /withdrawals/{id}` — the REST controller's duplicate inline UPDATE (a
+second money path with no notification and no ledger guarantee) was removed.
+Admin screen: Mark-paid on pending AND approved rows, method filter,
+`(status, created_at)` + `method` indexes, `wpssConfirm` bulk, empty/filtered
+states, 390px, verified at 2003 rows (0.7 ms page query).
 
 **Open — S6.5 PayPal payouts RE-PAY vendors every run. P0.**
 `PayoutsBatchService::get_pending_payouts()` computes what a vendor is owed as
@@ -230,9 +245,9 @@ migration risk.
 
 | # | Repo | Task | Stage |
 |---|---|---|---|
-| T1 | free | Payouts admin screen + **mark paid** (single + bulk, idempotent, writes ledger debit) | S6.1 S6.3 |
-| T2 | free | CSV export of a batch, reusing `DataExporter`. **Export never mutates status** | S6.2 |
-| T3 | free | `clearance_days` floor / presets | S5.1 |
+| ~~T1~~ | free | ✅ DONE 2026-07-23. `mark_paid()` keystone + Withdrawals screen upgraded (NOT rebuilt — the page existed; a second screen would have duplicated it) | S6.1 S6.3 |
+| ~~T2~~ | free | ✅ DONE 2026-07-23. Free-side `export_csv()` — `DataExporter` premise was wrong (Pro-only). Export never mutates status, verified | S6.2 |
+| ~~T3~~ | free | ✅ DONE 2026-07-22 (`e32f17c`) — clearance floored at 1 day server-side | S5.1 |
 | T4 | free | Rail seam `apply_filters( 'wpss_execute_payout', … )`. Free implements nothing — free-only sites stay manual, and that is a complete flow | S6 |
 | T5 | pro | `StripeConnectPayoutsProvider implements PayoutsProviderInterface` — N × `/v1/transfers`, **Idempotency-Key from withdrawal_id**, per-item results | S6.4 |
 | T6 | pro | `PayoutMethodsCoordinator` implements the seam, dispatching by vendor method | S6.4 |

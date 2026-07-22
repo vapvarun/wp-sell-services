@@ -571,44 +571,29 @@ class EarningsController extends RestController {
 		$note          = sanitize_textarea_field( $request->get_param( 'note' ) ?: '' );
 		$wd_table      = $wpdb->prefix . 'wpss_withdrawals';
 
+		// Delegate to the service — the ONE transition path. It row-locks the
+		// withdrawal, enforces the terminal-state guard, and for 'completed'
+		// routes through mark_paid(), which writes the wallet-ledger debit in
+		// the same transaction. This controller used to run its own UPDATE and
+		// fire the hook itself: a second, driftable copy of the money path with
+		// no vendor notification and no ledger guarantee.
+		$result = ( new \WPSellServices\Services\EarningsService() )->process_withdrawal( $withdrawal_id, $new_status, $note );
+
+		if ( empty( $result['success'] ) ) {
+			$code        = $result['code'] ?? 'update_failed';
+			$http_status = 'not_found' === $code ? 404 : 400;
+			return new WP_Error( 'wpss_' . $code, $result['message'], array( 'status' => $http_status ) );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$withdrawal = $wpdb->get_row(
 			$wpdb->prepare( "SELECT * FROM {$wd_table} WHERE id = %d", $withdrawal_id ),
 			ARRAY_A
 		);
 
-		if ( ! $withdrawal ) {
-			return new WP_Error( 'not_found', __( 'Withdrawal not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		if ( $withdrawal ) {
+			$withdrawal['notes'] = $withdrawal['admin_note'] ?? '';
 		}
-
-		if ( 'pending' !== $withdrawal['status'] && 'approved' !== $withdrawal['status'] ) {
-			return new WP_Error( 'invalid_status', __( 'This withdrawal cannot be updated.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		$wpdb->update(
-			$wd_table,
-			array(
-				'status'       => $new_status,
-				'admin_note'   => $note,
-				'processed_by' => get_current_user_id(),
-				'processed_at' => current_time( 'mysql', true ),
-			),
-			array( 'id' => $withdrawal_id ),
-			array( '%s', '%s', '%d', '%s' ),
-			array( '%d' )
-		);
-
-		/**
-		 * Fires after a withdrawal is processed.
-		 *
-		 * @param int    $withdrawal_id Withdrawal ID.
-		 * @param string $new_status    New status.
-		 * @param array  $withdrawal    Original withdrawal data.
-		 */
-		do_action( 'wpss_withdrawal_processed', $withdrawal_id, $new_status, (object) $withdrawal );
-
-		$withdrawal['status']       = $new_status;
-		$withdrawal['notes']        = $note;
-		$withdrawal['processed_at'] = current_time( 'mysql', true );
 
 		return new WP_REST_Response( $withdrawal );
 	}

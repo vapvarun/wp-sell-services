@@ -384,6 +384,11 @@
    "rule": "SUM over {prefix}wpss_wallet_transactions, 'pending' rows excluded. Never SUM the table inline; pass $lock = true inside a credit/debit transaction to take FOR UPDATE. Replaced the stale vendor_profiles balance column (free) and three divergent SUM copies (Pro) in 1.2.2.",
    "callers": "free: VendorsPage x3, CommissionService, OrderWorkflowManager, MilestoneService, ExtensionOrderService, TippingService; pro: InternalWalletProvider x3"
   },
+  "payout_terminal": {
+   "authority": "WPSellServices\\Services\\EarningsService::mark_paid( int $withdrawal_id, string $note = '' ) — added 1.5.1 (T1)",
+   "rule": "THE terminal step of every payout rail (MONEY-FLOW.md rule 2.3). Row-locks the withdrawal (SELECT … FOR UPDATE), enforces the terminal-state guard, flips status to completed and writes the wallet-ledger debit in ONE transaction via the private insert_withdrawal_debit() core. Idempotent: marking twice debits once. process_withdrawal('completed'), the admin Withdrawals page (single + bulk) and REST PUT /wpss/v1/withdrawals/{id} all route through it — no rail may keep its own bookkeeping. record_withdrawal_debit() remains the transactional wrapper for the wpss_withdrawal_processed hook listener and the 1.2.3 backfill, both idempotent on (reference_type='withdrawal', reference_id).",
+   "export_rule": "CSV export (WithdrawalsPage::export_csv via admin_post_wpss_export_withdrawals) NEVER mutates status (rule 2.4) — SELECT-only, keyset-batched at 500 rows."
+  },
   "currency_storage": {
    "decision": "LOCKED 2026-07-20 (owner). Every amount this plugin persists is a SINGLE value in the store's BASE currency. Full stop.",
    "rule": "wpss_orders (total, platform_fee, vendor_earnings) and wpss_wallet_transactions.amount are always base currency. We do NOT store a second shopper-currency amount, and we do NOT persist an exchange rate. There is no dual-currency order row.",

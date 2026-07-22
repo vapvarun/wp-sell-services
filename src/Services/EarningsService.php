@@ -88,7 +88,7 @@ class EarningsService {
 		// Gross lifetime credits, for display. Debit rows (withdrawal / debit /
 		// dispute_refund) are excluded so this reads as "money ever earned"
 		// rather than a running balance.
-		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		$txn_table   = $wpdb->prefix . 'wpss_wallet_transactions';
 		$debit_types = wpss_get_ledger_debit_types_sql();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$total_earned = (float) $wpdb->get_var(
@@ -314,20 +314,49 @@ class EarningsService {
 			return false;
 		}
 
-		$withdrawal = (object) $withdrawal;
-		$vendor_id  = (int) ( $withdrawal->vendor_id ?? 0 );
-		$amount     = (float) ( $withdrawal->amount ?? 0 );
+		$wpdb->query( 'START TRANSACTION' );
+
+		$result = $this->insert_withdrawal_debit( $withdrawal_id, (object) $withdrawal );
+
+		if ( 'failed' === $result ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		return 'written' === $result;
+	}
+
+	/**
+	 * Write the ledger debit row for a completed withdrawal — transactionless core.
+	 *
+	 * The caller MUST hold an open transaction: the idempotency check and the
+	 * balance read (FOR UPDATE) are only race-safe under one. mark_paid() runs
+	 * this inside the same transaction as the status flip, so a completed
+	 * withdrawal without its debit can never be persisted;
+	 * record_withdrawal_debit() wraps it for the hook/backfill callers.
+	 *
+	 * @param int    $withdrawal_id Withdrawal record ID.
+	 * @param object $withdrawal    Withdrawal row.
+	 * @return string 'written' when the debit row was inserted, 'skipped' when it
+	 *                already exists (or the row is invalid), 'failed' on DB error
+	 *                — the caller must roll back on 'failed'.
+	 */
+	private function insert_withdrawal_debit( int $withdrawal_id, object $withdrawal ): string {
+		global $wpdb;
+
+		$vendor_id = (int) ( $withdrawal->vendor_id ?? 0 );
+		$amount    = (float) ( $withdrawal->amount ?? 0 );
 
 		if ( $vendor_id <= 0 || $amount <= 0 ) {
-			return false;
+			return 'skipped';
 		}
 
 		$txn_table = $wpdb->prefix . 'wpss_wallet_transactions';
 
-		$wpdb->query( 'START TRANSACTION' );
-
 		// Re-check under the row lock taken by wpss_get_ledger_balance(), so two
-		// concurrent "mark completed" clicks cannot both write a debit.
+		// concurrent "mark paid" clicks cannot both write a debit.
 		$current_balance = (float) wpss_get_ledger_balance( $vendor_id, true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -341,8 +370,7 @@ class EarningsService {
 		);
 
 		if ( $already > 0 ) {
-			$wpdb->query( 'COMMIT' );
-			return false;
+			return 'skipped';
 		}
 
 		// Amount is stored POSITIVE; the sign is applied on read by
@@ -370,13 +398,137 @@ class EarningsService {
 		);
 
 		if ( false === $inserted ) {
+			return 'failed';
+		}
+
+		return 'written';
+	}
+
+	/**
+	 * Mark a withdrawal as paid — THE terminal step of every payout rail.
+	 *
+	 * Manual admin clicks, bulk actions, the REST controller and (later) the
+	 * Stripe/PayPal rails all finish a payout here, so no rail keeps its own
+	 * bookkeeping (MONEY-FLOW.md rule 2.3). The status flip and the ledger
+	 * debit commit in ONE transaction: a completed withdrawal without its
+	 * debit can never be observed or persisted.
+	 *
+	 * Idempotent: the row lock serialises concurrent calls, and the loser
+	 * re-reads a completed row and is refused — marking twice debits once.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int    $withdrawal_id Withdrawal record ID.
+	 * @param string $note          Optional admin note.
+	 * @return array{success: bool, message: string, code?: string} Result.
+	 */
+	public function mark_paid( int $withdrawal_id, string $note = '' ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Row lock FIRST: two admins will click "Mark paid" at the same time.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$withdrawal = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d FOR UPDATE", $withdrawal_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		if ( ! $withdrawal ) {
 			$wpdb->query( 'ROLLBACK' );
-			return false;
+			return array(
+				'success' => false,
+				'message' => __( 'Withdrawal not found.', 'wp-sell-services' ),
+				'code'    => 'not_found',
+			);
+		}
+
+		if ( self::WITHDRAWAL_PENDING !== $withdrawal->status && self::WITHDRAWAL_APPROVED !== $withdrawal->status ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'This withdrawal has already been finalised and can no longer be changed.', 'wp-sell-services' ),
+				'code'    => 'already_finalised',
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$updated = $wpdb->update(
+			$table,
+			array(
+				'status'       => self::WITHDRAWAL_COMPLETED,
+				'admin_note'   => sanitize_textarea_field( $note ),
+				'processed_at' => current_time( 'mysql' ),
+				'processed_by' => get_current_user_id(),
+			),
+			array( 'id' => $withdrawal_id ),
+			array( '%s', '%s', '%s', '%d' ),
+			array( '%d' )
+		);
+
+		if ( false === $updated ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to update withdrawal.', 'wp-sell-services' ),
+				'code'    => 'update_failed',
+			);
+		}
+
+		$debit = $this->insert_withdrawal_debit( $withdrawal_id, $withdrawal );
+
+		if ( 'failed' === $debit ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'The wallet ledger debit could not be written, so the withdrawal was left unchanged.', 'wp-sell-services' ),
+				'code'    => 'debit_failed',
+			);
 		}
 
 		$wpdb->query( 'COMMIT' );
 
-		return true;
+		// Side effects only after commit — the money record is already safe.
+		// The wpss_withdrawal_processed listener re-runs record_withdrawal_debit,
+		// which finds the row we just wrote and skips (idempotent by design).
+		$this->notify_withdrawal_processed( $withdrawal_id, self::WITHDRAWAL_COMPLETED, $withdrawal );
+
+		/** This action is documented in process_withdrawal(). */
+		do_action( 'wpss_withdrawal_processed', $withdrawal_id, self::WITHDRAWAL_COMPLETED, $withdrawal );
+
+		return array(
+			'success' => true,
+			'message' => __( 'Withdrawal marked as paid.', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Notify the vendor that their withdrawal changed state.
+	 *
+	 * Shared by mark_paid() and process_withdrawal() so the message and the
+	 * notification type stay identical across every path.
+	 *
+	 * @param int    $withdrawal_id Withdrawal record ID.
+	 * @param string $status        New withdrawal status.
+	 * @param object $withdrawal    Withdrawal row (pre-transition).
+	 * @return void
+	 */
+	private function notify_withdrawal_processed( int $withdrawal_id, string $status, object $withdrawal ): void {
+		$notification_service = new NotificationService();
+		$status_labels        = self::get_withdrawal_statuses();
+
+		$notification_service->create(
+			(int) $withdrawal->vendor_id,
+			'withdrawal_' . $status,
+			__( 'Withdrawal Update', 'wp-sell-services' ),
+			sprintf(
+				/* translators: 1: amount, 2: status */
+				__( 'Your withdrawal request for %1$s has been %2$s.', 'wp-sell-services' ),
+				wpss_format_price( (float) $withdrawal->amount ),
+				strtolower( $status_labels[ $status ] ?? $status )
+			),
+			array( 'withdrawal_id' => $withdrawal_id )
+		);
 	}
 
 	/**
@@ -686,31 +838,45 @@ class EarningsService {
 			return array(
 				'success' => false,
 				'message' => __( 'Invalid status.', 'wp-sell-services' ),
+				'code'    => 'invalid_status',
 			);
 		}
 
+		// Completing IS paying — every payout terminates in mark_paid(), which
+		// flips the status and writes the ledger debit in one transaction.
+		if ( self::WITHDRAWAL_COMPLETED === $status ) {
+			return $this->mark_paid( $withdrawal_id, $note );
+		}
+
+		$wpdb->query( 'START TRANSACTION' );
+
+		// Row lock: two admins acting on the same request at once serialise
+		// here, and the loser is refused by the terminal guard below.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$withdrawal = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $withdrawal_id )
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d FOR UPDATE", $withdrawal_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		);
 
 		if ( ! $withdrawal ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'Withdrawal not found.', 'wp-sell-services' ),
+				'code'    => 'not_found',
 			);
 		}
 
-		// Terminal-state guard (mirrors EarningsController::process_withdrawal).
-		// Only a still-open request (pending/approved) may be moved. Once a
-		// withdrawal is completed or rejected its amount is already reconciled
-		// in the balance calculation; re-processing it (e.g. rejecting a
-		// completed payout) would re-inflate available_balance and pay the
-		// vendor twice.
+		// Terminal-state guard. Only a still-open request (pending/approved) may
+		// be moved. Once a withdrawal is completed or rejected its amount is
+		// already reconciled in the balance calculation; re-processing it (e.g.
+		// rejecting a completed payout) would re-inflate available_balance and
+		// pay the vendor twice.
 		if ( self::WITHDRAWAL_PENDING !== $withdrawal->status && self::WITHDRAWAL_APPROVED !== $withdrawal->status ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'This withdrawal has already been finalised and can no longer be changed.', 'wp-sell-services' ),
+				'code'    => 'already_finalised',
 			);
 		}
 
@@ -729,28 +895,17 @@ class EarningsService {
 		);
 
 		if ( false === $result ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to update withdrawal.', 'wp-sell-services' ),
+				'code'    => 'update_failed',
 			);
 		}
 
-		// Notify vendor.
-		$notification_service = new NotificationService();
-		$status_labels        = self::get_withdrawal_statuses();
+		$wpdb->query( 'COMMIT' );
 
-		$notification_service->create(
-			(int) $withdrawal->vendor_id,
-			'withdrawal_' . $status,
-			__( 'Withdrawal Update', 'wp-sell-services' ),
-			sprintf(
-				/* translators: 1: amount, 2: status */
-				__( 'Your withdrawal request for %1$s has been %2$s.', 'wp-sell-services' ),
-				wpss_format_price( (float) $withdrawal->amount ),
-				strtolower( $status_labels[ $status ] ?? $status )
-			),
-			array( 'withdrawal_id' => $withdrawal_id )
-		);
+		$this->notify_withdrawal_processed( $withdrawal_id, $status, $withdrawal );
 
 		/**
 		 * Fires when withdrawal is processed.

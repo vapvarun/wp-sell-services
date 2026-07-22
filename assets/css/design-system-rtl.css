@@ -531,6 +531,8 @@ button.wpss-btn--success,
 .wpss-banner__content { flex: 1; }
 .wpss-banner__title { display: block; font-weight: 600; font-size: var(--wpss-text-md); color: var(--wpss-warning-dark, #92400e); margin-bottom: 2px; }
 .wpss-banner__text { font-size: var(--wpss-text-sm); color: var(--wpss-warning-dark, #a16207); }
+.wpss-banner--danger { background: linear-gradient(-135deg, var(--wpss-danger-light, #fef2f2), var(--wpss-danger-light, #fff1f2)); border: 1px solid var(--wpss-danger-border, #fecaca); }
+.wpss-banner--danger .wpss-banner__title, .wpss-banner--danger .wpss-banner__text { color: var(--wpss-danger-dark, #991b1b); }
 .wpss-banner__action { flex-shrink: 0; white-space: nowrap; }
 
 /* ==========================================================================
@@ -852,3 +854,28 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	.wpss-card { padding: var(--wpss-space-4); }
 	.wpss-btn--lg { width: 100%; }
 }
+
+/* Billing summary — the read-only "Billed to" block on an order / invoice.
+   One component for the buyer order view and the admin order screen, so the
+   customer and the admin never see different invoice detail. */
+.wpss-billing-summary { padding: var(--wpss-space-5) var(--wpss-space-6); border: 1px solid var(--wpss-border); border-radius: var(--wpss-radius-lg); margin-bottom: var(--wpss-space-6); }
+.wpss-billing-summary__title { margin: 0 0 var(--wpss-space-3); font-size: var(--wpss-text-md); font-weight: 600; color: var(--wpss-text); }
+.wpss-billing-summary__address { display: flex; flex-direction: column; gap: 2px; font-style: normal; font-size: var(--wpss-text-sm); color: var(--wpss-text-secondary); line-height: 1.5; }
+.wpss-billing-summary__name { color: var(--wpss-text); font-weight: 600; }
+.wpss-billing-summary__company { color: var(--wpss-text); }
+.wpss-billing-summary__contact { margin-top: var(--wpss-space-2); }
+/* GST gets its own line: a B2B buyer needs it on the invoice to claim input
+   credit, so it must not read as just another address line. */
+.wpss-billing-summary__gst { display: flex; flex-wrap: wrap; gap: var(--wpss-space-2); align-items: baseline; margin: var(--wpss-space-4) 0 0; padding-top: var(--wpss-space-3); border-top: 1px solid var(--wpss-border); font-size: var(--wpss-text-sm); }
+.wpss-billing-summary__gst-label { color: var(--wpss-text-secondary); }
+.wpss-billing-summary__gst-value { font-weight: 600; color: var(--wpss-text); font-variant-numeric: tabular-nums; }
+
+/* Order summary rows had NO styling anywhere in the codebase — they inherited
+   whatever the theme happened to give them, so the same order looked different
+   on BuddyX and a generic theme. */
+.wpss-order-detail-item { display: flex; justify-content: space-between; align-items: baseline; gap: var(--wpss-space-4); padding: var(--wpss-space-2) 0; font-size: var(--wpss-text-sm); }
+.wpss-order-detail-item__label { color: var(--wpss-text-secondary); }
+.wpss-order-detail-item__value { color: var(--wpss-text); font-weight: 500; text-align: left; }
+.wpss-order-detail-item--highlight .wpss-order-detail-item__value { font-weight: 700; font-size: var(--wpss-text-md); }
+.wpss-order-detail-item--refunded .wpss-order-detail-item__label,
+.wpss-order-detail-item--refunded .wpss-order-detail-item__value { color: var(--wpss-danger-dark, #991b1b); }

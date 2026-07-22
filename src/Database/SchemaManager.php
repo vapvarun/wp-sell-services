@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.5.0';
+	const DB_VERSION = '1.5.1';
 
 	/**
 	 * Option name for storing DB version.
@@ -890,7 +890,9 @@ class SchemaManager {
 			PRIMARY KEY (id),
 			KEY idx_vendor (vendor_id),
 			KEY idx_status (status),
-			KEY idx_vendor_status (vendor_id, status)
+			KEY idx_vendor_status (vendor_id, status),
+			KEY idx_status_created (status, created_at),
+			KEY idx_method (method)
 		) {$charset_collate};";
 	}
 

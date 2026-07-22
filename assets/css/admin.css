@@ -1948,6 +1948,77 @@
 	color: var(--wpss-admin-text-light);
 }
 
+/* Withdrawals (Payouts) page */
+.wpss-withdrawals-table .column-id { width: 6%; }
+.wpss-withdrawals-table .column-vendor { width: 20%; }
+.wpss-withdrawals-table .column-amount { width: 12%; text-align: end; }
+.wpss-withdrawals-table .column-method { width: 12%; }
+.wpss-withdrawals-table .column-status { width: 12%; }
+.wpss-withdrawals-table .column-date { width: 15%; }
+.wpss-withdrawals-table .column-actions { width: 18%; }
+
+.wpss-withdrawals-filters {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.wpss-withdrawals-method-filter {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wpss-withdrawal-actions {
+	display: flex;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+.wpss-withdrawal-actions .button {
+	padding: 2px 8px;
+	font-size: 12px;
+}
+
+.wpss-withdrawal-details {
+	margin-top: 5px;
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-withdrawal-details code {
+	font-size: 11px;
+	background: var(--wpss-admin-bg);
+	padding: 1px 4px;
+}
+
+/* Compound selector: .wpss-modal-content (defined later for the vendors
+   modal) sets max-width 800px and padding 0 — this must win over it. */
+.wpss-modal-content.wpss-modal-small {
+	max-width: 400px;
+	margin: 10% auto;
+	padding: 20px;
+}
+
+.wpss-form-field {
+	margin-bottom: 15px;
+}
+
+.wpss-form-field label {
+	display: block;
+	margin-bottom: 5px;
+	font-weight: 500;
+}
+
+.wpss-modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 20px;
+}
+
 /* Vendors Modal */
 .wpss-modal {
 	position: fixed;
@@ -2960,6 +3031,24 @@
 
 	.wpss-secret-field__toggle {
 		justify-content: center;
+	}
+
+	/* Withdrawals (Payouts) page: filters stack, table scrolls inside its card. */
+	.wpss-withdrawals-filters {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-withdrawals-method-filter select {
+		flex: 1;
+	}
+
+	.wpss-withdrawals-page .wpss-list-card__body {
+		overflow-x: auto;
+	}
+
+	.wpss-withdrawals-table {
+		min-width: 720px;
 	}
 }
 /* ==========================================================================
