@@ -906,3 +906,72 @@ A completed real payment. The flow is proven to the point of charge; the
 charge itself needs either a manual run-through in a browser, or a country
 whose Address Element has no state dropdown, to get past the automation
 barrier. Everything downstream of "order paid" is separately verified (§28).
+
+---
+
+# PART VIII — BILLING ADDRESS: profile-level, reusable (OWNER DECISION)
+
+Owner, 2026-07-22: *"all address must be saved at profile level like
+woocommerce does"* / *"we need to login user can reuse it"*.
+
+Not implemented — recorded here so it is built once, properly. It is a feature,
+not part of the refund fix.
+
+## 37. Current state
+
+- `stripe.js` collects name + address and sends them to Stripe as
+  `billing_details` / `shipping`. Nothing is stored on our side.
+- `wpss_orders` has **no** billing column among its 33.
+- `wpss_vendor_profiles` has `country` and `city`, but those are the VENDOR's
+  own profile fields, not a buyer billing address.
+- No Woo-style billing user meta is written anywhere. Pro's `WCOrderProvider`
+  only READS `get_billing_first_name()` when Woo is the rail.
+
+Net: a buyer re-types their address on every purchase, no invoice can show it,
+and there is no local tax record.
+
+## 38. The model — WooCommerce's, deliberately
+
+**Profile level (user meta), reused on every checkout.** Use WooCommerce's
+EXACT meta keys:
+
+```
+billing_first_name  billing_last_name  billing_company
+billing_address_1   billing_address_2  billing_city
+billing_state       billing_postcode   billing_country
+billing_email       billing_phone
+```
+
+Reusing Woo's key names is the whole point, not a shortcut: on a site running
+WooCommerce the buyer's address is **already there**, so WPSS prefills from it
+and the customer never types it twice. On a standalone site WPSS owns the same
+keys and a later Woo install inherits them. One address per user, whichever
+plugin captured it.
+
+**Plus a snapshot on the order.** The profile address is the *current* one;
+an invoice must show what was billed at the time. So the order stores its own
+copy at payment, and editing the profile later does not rewrite history. This
+is exactly what Woo does (`_billing_*` on the order vs `billing_*` on the user).
+
+## 39. Scope
+
+| Layer | Work |
+|---|---|
+| Data | Woo-compatible `billing_*` user meta; a billing snapshot on `wpss_orders` (JSON column, or discrete columns if reporting needs to query them) |
+| Checkout | Prefill the Stripe Address Element from the profile for logged-in buyers; save back on successful payment so the next purchase is one click |
+| Profile | An address form in the dashboard profile section — the primary edit surface |
+| Admin | Billing address on the order screen; included in exports |
+| Buyer | Billing address on the order view and any invoice |
+| Rails | Woo already has it; EDD/SureCart/FluentCart should populate the same meta from their own checkout data |
+
+## 40. Decisions to settle before building
+
+1. **Guest checkout** — is it allowed? If so the snapshot is the only record,
+   and there is no profile to save to.
+2. **Separate shipping address?** Services are non-shippable, so billing alone
+   is probably right — Stripe's Address Element is already configured for
+   billing. Confirm before adding a second address block.
+3. **Which fields are required.** Stripe's export rule needs name + full
+   address. Tax/invoicing may also want company and VAT/GST — that is a real
+   requirement in the EU and India, and is worth deciding now rather than
+   migrating later.
