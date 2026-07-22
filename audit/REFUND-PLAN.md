@@ -835,3 +835,74 @@ run our themes, this is worth its own card.
 Free and Pro **must ship together**. Free's reversal fix and Pro's Woo status
 change are two halves of one behaviour: free alone makes Woo reverse twice
 (the map still routes to `cancelled`), Pro alone stops Woo reversing at all.
+
+---
+
+# PART VII — REAL CHECKOUT RUN (2026-07-22)
+
+Ran the buyer flow in the browser as `realcustomer`, because every prior test
+entered mid-flow with a hand-inserted order. Two P0s were found that no amount
+of `wp eval` would have surfaced.
+
+## 33. Flow verified up to the payment gate
+
+service page → "Continue ($50.00)" → Order Options modal → added to cart →
+`/service-checkout/9/` → gateway radio → **Stripe Payment Element mounts** →
+card `4242…` accepted → Address Element renders.
+
+Blocked at the plugin's own pre-flight guard: *"Please complete your billing
+name and address."* That guard is **correct behaviour** — `stripe.js` calls
+`addressElement.getValue()` and refuses to charge unless `.complete` is true,
+so the buyer gets a field-level prompt instead of a raw Stripe API error.
+
+Could not satisfy it through automation: the Address Element is a
+React-controlled Stripe iframe, so setting `.value` + dispatching `change` does
+not update Stripe's internal state, and `selectOption()` on its `<select>`
+times out. **A harness limitation, not a product defect.** The Element also
+defaults to the account country (India), so the state list is Indian until
+country is changed.
+
+## 34. P0 — the auto-refund never found the gateway (FIXED, e6b77a5)
+
+`attempt_payment_refund()` resolved gateways via
+`apply_filters( 'wpss_payment_gateways', [] )`. Free registers stripe, paypal
+and offline into `Plugin::$payment_gateways` and applies the filter to THAT
+array once at init — re-running it from an empty array returns only what Pro
+adds (razorpay here). So the lookup returned null for every Stripe/PayPal/
+offline order, logged a warning, and returned. **The buyer's money never went
+back**, for as long as the method has existed.
+
+Today's work made it worse, not better: the vendor reversal now fires
+correctly, so the platform was debiting the vendor while never refunding the
+buyer. Fixed by using `wpss()->get_payment_gateways()`, which
+`PaymentController` already used — this was the odd one out. Verified:
+`payment_status` now flips to `refunded`, which only happens when the gateway
+call actually succeeds.
+
+## 35. GAP — billing address is collected but never stored (NOT fixed)
+
+Owner: *"lots of people need that for tax and invoices."*
+
+`stripe.js` collects name + address and sends them to Stripe as
+`billing_details` and `shipping`. **Nothing persists them locally** — grep over
+`src/` finds no billing field, and `wpss_orders` has no billing column among
+its 33.
+
+Consequences:
+- The plugin cannot render an invoice showing the billing address.
+- There is no local record for tax reporting; it exists only in the Stripe
+  dashboard, and not at all for PayPal/offline orders.
+- A buyer's own order view cannot show what address the purchase was billed to.
+
+Shape of the fix (not attempted here — it is a feature, not a refund bug):
+persist the billing block on the order at payment time, from the same
+`address.value` the gateway already receives. Needs a column or a JSON blob on
+`wpss_orders`, plus display on the buyer order view, the admin order screen and
+any invoice/export surface. Worth its own card.
+
+## 36. Still not verified
+
+A completed real payment. The flow is proven to the point of charge; the
+charge itself needs either a manual run-through in a browser, or a country
+whose Address Element has no state dropdown, to get past the automation
+barrier. Everything downstream of "order paid" is separately verified (§28).
