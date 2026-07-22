@@ -12,7 +12,6 @@
 		stripe: null,
 		elements: null,
 		paymentElement: null,
-		addressElement: null,
 		form: null,
 		submitButton: null,
 		errorElement: null,

@@ -1094,7 +1094,11 @@ class OrderWorkflowManager {
 		$gateway = $gateways[ $order->payment_method ] ?? null;
 
 		if ( ! $gateway || ! method_exists( $gateway, 'process_refund' ) ) {
-			wpss_log( "Auto-refund skipped for order {$order->id}: gateway '{$order->payment_method}' not available or missing process_refund().", 'warning' );
+			// error, not warning: a refund that never reaches the gateway means
+			// the buyer's money did not go back. The standard requires a
+			// skipped money step to shout, not shrug (§6.5) — this logging at
+			// warning is how the gateway-lookup bug stayed invisible.
+			wpss_log( "Auto-refund FAILED for order {$order->id}: gateway '{$order->payment_method}' not available or missing process_refund(). The buyer has NOT been refunded.", 'error' );
 			return;
 		}
 
