@@ -743,6 +743,111 @@ function wpss_get_billing_fields(): array {
 }
 
 /**
+ * Country list for the billing country selector.
+ *
+ * ISO-3166 alpha-2 => display name. Defers to WooCommerce's list when Woo is
+ * active so the two never disagree on a country name or code; otherwise falls
+ * back to WordPress's own translated list, and finally to a minimal set.
+ *
+ * @since 1.2.3
+ *
+ * @return array<string, string>
+ */
+function wpss_get_countries(): array {
+	static $countries = null;
+
+	if ( null !== $countries ) {
+		return $countries;
+	}
+
+	// Woo is a rail we already integrate with; reuse its list when present.
+	if ( function_exists( 'WC' ) && WC() && isset( WC()->countries ) ) {
+		$countries = WC()->countries->get_countries();
+	}
+
+	if ( empty( $countries ) ) {
+		// Complete ISO 3166-1 alpha-2 list. A partial list silently blocks
+		// checkout for every country left out, so this is the whole set.
+		$countries = array(
+			'AF' => __( 'Afghanistan', 'wp-sell-services' ), 'AX' => __( 'Åland Islands', 'wp-sell-services' ), 'AL' => __( 'Albania', 'wp-sell-services' ), 'DZ' => __( 'Algeria', 'wp-sell-services' ),
+			'AS' => __( 'American Samoa', 'wp-sell-services' ), 'AD' => __( 'Andorra', 'wp-sell-services' ), 'AO' => __( 'Angola', 'wp-sell-services' ), 'AI' => __( 'Anguilla', 'wp-sell-services' ),
+			'AQ' => __( 'Antarctica', 'wp-sell-services' ), 'AG' => __( 'Antigua and Barbuda', 'wp-sell-services' ), 'AR' => __( 'Argentina', 'wp-sell-services' ), 'AM' => __( 'Armenia', 'wp-sell-services' ),
+			'AW' => __( 'Aruba', 'wp-sell-services' ), 'AU' => __( 'Australia', 'wp-sell-services' ), 'AT' => __( 'Austria', 'wp-sell-services' ), 'AZ' => __( 'Azerbaijan', 'wp-sell-services' ),
+			'BS' => __( 'Bahamas', 'wp-sell-services' ), 'BH' => __( 'Bahrain', 'wp-sell-services' ), 'BD' => __( 'Bangladesh', 'wp-sell-services' ), 'BB' => __( 'Barbados', 'wp-sell-services' ),
+			'BY' => __( 'Belarus', 'wp-sell-services' ), 'BE' => __( 'Belgium', 'wp-sell-services' ), 'BZ' => __( 'Belize', 'wp-sell-services' ), 'BJ' => __( 'Benin', 'wp-sell-services' ),
+			'BM' => __( 'Bermuda', 'wp-sell-services' ), 'BT' => __( 'Bhutan', 'wp-sell-services' ), 'BO' => __( 'Bolivia', 'wp-sell-services' ), 'BQ' => __( 'Bonaire, Sint Eustatius and Saba', 'wp-sell-services' ),
+			'BA' => __( 'Bosnia and Herzegovina', 'wp-sell-services' ), 'BW' => __( 'Botswana', 'wp-sell-services' ), 'BV' => __( 'Bouvet Island', 'wp-sell-services' ), 'BR' => __( 'Brazil', 'wp-sell-services' ),
+			'IO' => __( 'British Indian Ocean Territory', 'wp-sell-services' ), 'BN' => __( 'Brunei', 'wp-sell-services' ), 'BG' => __( 'Bulgaria', 'wp-sell-services' ), 'BF' => __( 'Burkina Faso', 'wp-sell-services' ),
+			'BI' => __( 'Burundi', 'wp-sell-services' ), 'CV' => __( 'Cabo Verde', 'wp-sell-services' ), 'KH' => __( 'Cambodia', 'wp-sell-services' ), 'CM' => __( 'Cameroon', 'wp-sell-services' ),
+			'CA' => __( 'Canada', 'wp-sell-services' ), 'KY' => __( 'Cayman Islands', 'wp-sell-services' ), 'CF' => __( 'Central African Republic', 'wp-sell-services' ), 'TD' => __( 'Chad', 'wp-sell-services' ),
+			'CL' => __( 'Chile', 'wp-sell-services' ), 'CN' => __( 'China', 'wp-sell-services' ), 'CX' => __( 'Christmas Island', 'wp-sell-services' ), 'CC' => __( 'Cocos (Keeling) Islands', 'wp-sell-services' ),
+			'CO' => __( 'Colombia', 'wp-sell-services' ), 'KM' => __( 'Comoros', 'wp-sell-services' ), 'CG' => __( 'Congo', 'wp-sell-services' ), 'CD' => __( 'Congo (DRC)', 'wp-sell-services' ),
+			'CK' => __( 'Cook Islands', 'wp-sell-services' ), 'CR' => __( 'Costa Rica', 'wp-sell-services' ), 'CI' => __( "Côte d'Ivoire", 'wp-sell-services' ), 'HR' => __( 'Croatia', 'wp-sell-services' ),
+			'CU' => __( 'Cuba', 'wp-sell-services' ), 'CW' => __( 'Curaçao', 'wp-sell-services' ), 'CY' => __( 'Cyprus', 'wp-sell-services' ), 'CZ' => __( 'Czechia', 'wp-sell-services' ),
+			'DK' => __( 'Denmark', 'wp-sell-services' ), 'DJ' => __( 'Djibouti', 'wp-sell-services' ), 'DM' => __( 'Dominica', 'wp-sell-services' ), 'DO' => __( 'Dominican Republic', 'wp-sell-services' ),
+			'EC' => __( 'Ecuador', 'wp-sell-services' ), 'EG' => __( 'Egypt', 'wp-sell-services' ), 'SV' => __( 'El Salvador', 'wp-sell-services' ), 'GQ' => __( 'Equatorial Guinea', 'wp-sell-services' ),
+			'ER' => __( 'Eritrea', 'wp-sell-services' ), 'EE' => __( 'Estonia', 'wp-sell-services' ), 'SZ' => __( 'Eswatini', 'wp-sell-services' ), 'ET' => __( 'Ethiopia', 'wp-sell-services' ),
+			'FK' => __( 'Falkland Islands', 'wp-sell-services' ), 'FO' => __( 'Faroe Islands', 'wp-sell-services' ), 'FJ' => __( 'Fiji', 'wp-sell-services' ), 'FI' => __( 'Finland', 'wp-sell-services' ),
+			'FR' => __( 'France', 'wp-sell-services' ), 'GF' => __( 'French Guiana', 'wp-sell-services' ), 'PF' => __( 'French Polynesia', 'wp-sell-services' ), 'TF' => __( 'French Southern Territories', 'wp-sell-services' ),
+			'GA' => __( 'Gabon', 'wp-sell-services' ), 'GM' => __( 'Gambia', 'wp-sell-services' ), 'GE' => __( 'Georgia', 'wp-sell-services' ), 'DE' => __( 'Germany', 'wp-sell-services' ),
+			'GH' => __( 'Ghana', 'wp-sell-services' ), 'GI' => __( 'Gibraltar', 'wp-sell-services' ), 'GR' => __( 'Greece', 'wp-sell-services' ), 'GL' => __( 'Greenland', 'wp-sell-services' ),
+			'GD' => __( 'Grenada', 'wp-sell-services' ), 'GP' => __( 'Guadeloupe', 'wp-sell-services' ), 'GU' => __( 'Guam', 'wp-sell-services' ), 'GT' => __( 'Guatemala', 'wp-sell-services' ),
+			'GG' => __( 'Guernsey', 'wp-sell-services' ), 'GN' => __( 'Guinea', 'wp-sell-services' ), 'GW' => __( 'Guinea-Bissau', 'wp-sell-services' ), 'GY' => __( 'Guyana', 'wp-sell-services' ),
+			'HT' => __( 'Haiti', 'wp-sell-services' ), 'HM' => __( 'Heard Island and McDonald Islands', 'wp-sell-services' ), 'HN' => __( 'Honduras', 'wp-sell-services' ), 'HK' => __( 'Hong Kong', 'wp-sell-services' ),
+			'HU' => __( 'Hungary', 'wp-sell-services' ), 'IS' => __( 'Iceland', 'wp-sell-services' ), 'IN' => __( 'India', 'wp-sell-services' ), 'ID' => __( 'Indonesia', 'wp-sell-services' ),
+			'IR' => __( 'Iran', 'wp-sell-services' ), 'IQ' => __( 'Iraq', 'wp-sell-services' ), 'IE' => __( 'Ireland', 'wp-sell-services' ), 'IM' => __( 'Isle of Man', 'wp-sell-services' ),
+			'IL' => __( 'Israel', 'wp-sell-services' ), 'IT' => __( 'Italy', 'wp-sell-services' ), 'JM' => __( 'Jamaica', 'wp-sell-services' ), 'JP' => __( 'Japan', 'wp-sell-services' ),
+			'JE' => __( 'Jersey', 'wp-sell-services' ), 'JO' => __( 'Jordan', 'wp-sell-services' ), 'KZ' => __( 'Kazakhstan', 'wp-sell-services' ), 'KE' => __( 'Kenya', 'wp-sell-services' ),
+			'KI' => __( 'Kiribati', 'wp-sell-services' ), 'KW' => __( 'Kuwait', 'wp-sell-services' ), 'KG' => __( 'Kyrgyzstan', 'wp-sell-services' ), 'LA' => __( 'Laos', 'wp-sell-services' ),
+			'LV' => __( 'Latvia', 'wp-sell-services' ), 'LB' => __( 'Lebanon', 'wp-sell-services' ), 'LS' => __( 'Lesotho', 'wp-sell-services' ), 'LR' => __( 'Liberia', 'wp-sell-services' ),
+			'LY' => __( 'Libya', 'wp-sell-services' ), 'LI' => __( 'Liechtenstein', 'wp-sell-services' ), 'LT' => __( 'Lithuania', 'wp-sell-services' ), 'LU' => __( 'Luxembourg', 'wp-sell-services' ),
+			'MO' => __( 'Macao', 'wp-sell-services' ), 'MG' => __( 'Madagascar', 'wp-sell-services' ), 'MW' => __( 'Malawi', 'wp-sell-services' ), 'MY' => __( 'Malaysia', 'wp-sell-services' ),
+			'MV' => __( 'Maldives', 'wp-sell-services' ), 'ML' => __( 'Mali', 'wp-sell-services' ), 'MT' => __( 'Malta', 'wp-sell-services' ), 'MH' => __( 'Marshall Islands', 'wp-sell-services' ),
+			'MQ' => __( 'Martinique', 'wp-sell-services' ), 'MR' => __( 'Mauritania', 'wp-sell-services' ), 'MU' => __( 'Mauritius', 'wp-sell-services' ), 'YT' => __( 'Mayotte', 'wp-sell-services' ),
+			'MX' => __( 'Mexico', 'wp-sell-services' ), 'FM' => __( 'Micronesia', 'wp-sell-services' ), 'MD' => __( 'Moldova', 'wp-sell-services' ), 'MC' => __( 'Monaco', 'wp-sell-services' ),
+			'MN' => __( 'Mongolia', 'wp-sell-services' ), 'ME' => __( 'Montenegro', 'wp-sell-services' ), 'MS' => __( 'Montserrat', 'wp-sell-services' ), 'MA' => __( 'Morocco', 'wp-sell-services' ),
+			'MZ' => __( 'Mozambique', 'wp-sell-services' ), 'MM' => __( 'Myanmar', 'wp-sell-services' ), 'NA' => __( 'Namibia', 'wp-sell-services' ), 'NR' => __( 'Nauru', 'wp-sell-services' ),
+			'NP' => __( 'Nepal', 'wp-sell-services' ), 'NL' => __( 'Netherlands', 'wp-sell-services' ), 'NC' => __( 'New Caledonia', 'wp-sell-services' ), 'NZ' => __( 'New Zealand', 'wp-sell-services' ),
+			'NI' => __( 'Nicaragua', 'wp-sell-services' ), 'NE' => __( 'Niger', 'wp-sell-services' ), 'NG' => __( 'Nigeria', 'wp-sell-services' ), 'NU' => __( 'Niue', 'wp-sell-services' ),
+			'NF' => __( 'Norfolk Island', 'wp-sell-services' ), 'KP' => __( 'North Korea', 'wp-sell-services' ), 'MK' => __( 'North Macedonia', 'wp-sell-services' ), 'MP' => __( 'Northern Mariana Islands', 'wp-sell-services' ),
+			'NO' => __( 'Norway', 'wp-sell-services' ), 'OM' => __( 'Oman', 'wp-sell-services' ), 'PK' => __( 'Pakistan', 'wp-sell-services' ), 'PW' => __( 'Palau', 'wp-sell-services' ),
+			'PS' => __( 'Palestine', 'wp-sell-services' ), 'PA' => __( 'Panama', 'wp-sell-services' ), 'PG' => __( 'Papua New Guinea', 'wp-sell-services' ), 'PY' => __( 'Paraguay', 'wp-sell-services' ),
+			'PE' => __( 'Peru', 'wp-sell-services' ), 'PH' => __( 'Philippines', 'wp-sell-services' ), 'PN' => __( 'Pitcairn', 'wp-sell-services' ), 'PL' => __( 'Poland', 'wp-sell-services' ),
+			'PT' => __( 'Portugal', 'wp-sell-services' ), 'PR' => __( 'Puerto Rico', 'wp-sell-services' ), 'QA' => __( 'Qatar', 'wp-sell-services' ), 'RE' => __( 'Réunion', 'wp-sell-services' ),
+			'RO' => __( 'Romania', 'wp-sell-services' ), 'RU' => __( 'Russia', 'wp-sell-services' ), 'RW' => __( 'Rwanda', 'wp-sell-services' ), 'BL' => __( 'Saint Barthélemy', 'wp-sell-services' ),
+			'SH' => __( 'Saint Helena', 'wp-sell-services' ), 'KN' => __( 'Saint Kitts and Nevis', 'wp-sell-services' ), 'LC' => __( 'Saint Lucia', 'wp-sell-services' ), 'MF' => __( 'Saint Martin', 'wp-sell-services' ),
+			'PM' => __( 'Saint Pierre and Miquelon', 'wp-sell-services' ), 'VC' => __( 'Saint Vincent and the Grenadines', 'wp-sell-services' ), 'WS' => __( 'Samoa', 'wp-sell-services' ), 'SM' => __( 'San Marino', 'wp-sell-services' ),
+			'ST' => __( 'Sao Tome and Principe', 'wp-sell-services' ), 'SA' => __( 'Saudi Arabia', 'wp-sell-services' ), 'SN' => __( 'Senegal', 'wp-sell-services' ), 'RS' => __( 'Serbia', 'wp-sell-services' ),
+			'SC' => __( 'Seychelles', 'wp-sell-services' ), 'SL' => __( 'Sierra Leone', 'wp-sell-services' ), 'SG' => __( 'Singapore', 'wp-sell-services' ), 'SX' => __( 'Sint Maarten', 'wp-sell-services' ),
+			'SK' => __( 'Slovakia', 'wp-sell-services' ), 'SI' => __( 'Slovenia', 'wp-sell-services' ), 'SB' => __( 'Solomon Islands', 'wp-sell-services' ), 'SO' => __( 'Somalia', 'wp-sell-services' ),
+			'ZA' => __( 'South Africa', 'wp-sell-services' ), 'GS' => __( 'South Georgia', 'wp-sell-services' ), 'KR' => __( 'South Korea', 'wp-sell-services' ), 'SS' => __( 'South Sudan', 'wp-sell-services' ),
+			'ES' => __( 'Spain', 'wp-sell-services' ), 'LK' => __( 'Sri Lanka', 'wp-sell-services' ), 'SD' => __( 'Sudan', 'wp-sell-services' ), 'SR' => __( 'Suriname', 'wp-sell-services' ),
+			'SJ' => __( 'Svalbard and Jan Mayen', 'wp-sell-services' ), 'SE' => __( 'Sweden', 'wp-sell-services' ), 'CH' => __( 'Switzerland', 'wp-sell-services' ), 'SY' => __( 'Syria', 'wp-sell-services' ),
+			'TW' => __( 'Taiwan', 'wp-sell-services' ), 'TJ' => __( 'Tajikistan', 'wp-sell-services' ), 'TZ' => __( 'Tanzania', 'wp-sell-services' ), 'TH' => __( 'Thailand', 'wp-sell-services' ),
+			'TL' => __( 'Timor-Leste', 'wp-sell-services' ), 'TG' => __( 'Togo', 'wp-sell-services' ), 'TK' => __( 'Tokelau', 'wp-sell-services' ), 'TO' => __( 'Tonga', 'wp-sell-services' ),
+			'TT' => __( 'Trinidad and Tobago', 'wp-sell-services' ), 'TN' => __( 'Tunisia', 'wp-sell-services' ), 'TR' => __( 'Türkiye', 'wp-sell-services' ), 'TM' => __( 'Turkmenistan', 'wp-sell-services' ),
+			'TC' => __( 'Turks and Caicos Islands', 'wp-sell-services' ), 'TV' => __( 'Tuvalu', 'wp-sell-services' ), 'UG' => __( 'Uganda', 'wp-sell-services' ), 'UA' => __( 'Ukraine', 'wp-sell-services' ),
+			'AE' => __( 'United Arab Emirates', 'wp-sell-services' ), 'GB' => __( 'United Kingdom', 'wp-sell-services' ), 'US' => __( 'United States', 'wp-sell-services' ), 'UM' => __( 'United States Minor Outlying Islands', 'wp-sell-services' ),
+			'UY' => __( 'Uruguay', 'wp-sell-services' ), 'UZ' => __( 'Uzbekistan', 'wp-sell-services' ), 'VU' => __( 'Vanuatu', 'wp-sell-services' ), 'VA' => __( 'Vatican City', 'wp-sell-services' ),
+			'VE' => __( 'Venezuela', 'wp-sell-services' ), 'VN' => __( 'Vietnam', 'wp-sell-services' ), 'VG' => __( 'Virgin Islands (British)', 'wp-sell-services' ), 'VI' => __( 'Virgin Islands (U.S.)', 'wp-sell-services' ),
+			'WF' => __( 'Wallis and Futuna', 'wp-sell-services' ), 'EH' => __( 'Western Sahara', 'wp-sell-services' ), 'YE' => __( 'Yemen', 'wp-sell-services' ), 'ZM' => __( 'Zambia', 'wp-sell-services' ),
+			'ZW' => __( 'Zimbabwe', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Filter the billing country list.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param array $countries ISO-2 code => country name.
+	 */
+	$countries = apply_filters( 'wpss_countries', $countries );
+
+	return $countries;
+}
+
+/**
  * Read a user's saved billing address.
  *
  * Reads the WooCommerce-compatible user meta, so on a Woo site this returns the
@@ -1288,6 +1393,591 @@ function wpss_get_currency_registry(): array {
 		'NGN' => array(
 			'name'     => __( 'Nigerian Naira', 'wp-sell-services' ),
 			'symbol'   => '₦',
+			'decimals' => 2,
+		),
+		'AFN' => array(
+			'name'     => __( 'Afghan Afghani', 'wp-sell-services' ),
+			'symbol'   => '؋',
+			'decimals' => 2,
+		),
+		'ALL' => array(
+			'name'     => __( 'Albanian Lek', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'AMD' => array(
+			'name'     => __( 'Armenian Dram', 'wp-sell-services' ),
+			'symbol'   => '֏',
+			'decimals' => 2,
+		),
+		'ANG' => array(
+			'name'     => __( 'Netherlands Antillean Guilder', 'wp-sell-services' ),
+			'symbol'   => 'ƒ',
+			'decimals' => 2,
+		),
+		'AOA' => array(
+			'name'     => __( 'Angolan Kwanza', 'wp-sell-services' ),
+			'symbol'   => 'Kz',
+			'decimals' => 2,
+		),
+		'ARS' => array(
+			'name'     => __( 'Argentine Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'AWG' => array(
+			'name'     => __( 'Aruban Florin', 'wp-sell-services' ),
+			'symbol'   => 'ƒ',
+			'decimals' => 2,
+		),
+		'AZN' => array(
+			'name'     => __( 'Azerbaijani Manat', 'wp-sell-services' ),
+			'symbol'   => '₼',
+			'decimals' => 2,
+		),
+		'BAM' => array(
+			'name'     => __( 'Bosnia-Herzegovina Mark', 'wp-sell-services' ),
+			'symbol'   => 'KM',
+			'decimals' => 2,
+		),
+		'BBD' => array(
+			'name'     => __( 'Barbadian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BDT' => array(
+			'name'     => __( 'Bangladeshi Taka', 'wp-sell-services' ),
+			'symbol'   => '৳',
+			'decimals' => 2,
+		),
+		'BGN' => array(
+			'name'     => __( 'Bulgarian Lev', 'wp-sell-services' ),
+			'symbol'   => 'лв',
+			'decimals' => 2,
+		),
+		'BHD' => array(
+			'name'     => __( 'Bahraini Dinar', 'wp-sell-services' ),
+			'symbol'   => 'BD',
+			'decimals' => 3,
+		),
+		'BIF' => array(
+			'name'     => __( 'Burundian Franc', 'wp-sell-services' ),
+			'symbol'   => 'FBu',
+			'decimals' => 0,
+		),
+		'BMD' => array(
+			'name'     => __( 'Bermudan Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BND' => array(
+			'name'     => __( 'Brunei Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BOB' => array(
+			'name'     => __( 'Bolivian Boliviano', 'wp-sell-services' ),
+			'symbol'   => 'Bs.',
+			'decimals' => 2,
+		),
+		'BSD' => array(
+			'name'     => __( 'Bahamian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BTN' => array(
+			'name'     => __( 'Bhutanese Ngultrum', 'wp-sell-services' ),
+			'symbol'   => 'Nu.',
+			'decimals' => 2,
+		),
+		'BWP' => array(
+			'name'     => __( 'Botswanan Pula', 'wp-sell-services' ),
+			'symbol'   => 'P',
+			'decimals' => 2,
+		),
+		'BYN' => array(
+			'name'     => __( 'Belarusian Ruble', 'wp-sell-services' ),
+			'symbol'   => 'Br',
+			'decimals' => 2,
+		),
+		'BZD' => array(
+			'name'     => __( 'Belize Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CDF' => array(
+			'name'     => __( 'Congolese Franc', 'wp-sell-services' ),
+			'symbol'   => 'FC',
+			'decimals' => 2,
+		),
+		'CLP' => array(
+			'name'     => __( 'Chilean Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 0,
+		),
+		'COP' => array(
+			'name'     => __( 'Colombian Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CRC' => array(
+			'name'     => __( 'Costa Rican Colon', 'wp-sell-services' ),
+			'symbol'   => '₡',
+			'decimals' => 2,
+		),
+		'CUP' => array(
+			'name'     => __( 'Cuban Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CVE' => array(
+			'name'     => __( 'Cape Verdean Escudo', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CZK' => array(
+			'name'     => __( 'Czech Koruna', 'wp-sell-services' ),
+			'symbol'   => 'Kc',
+			'decimals' => 2,
+		),
+		'DJF' => array(
+			'name'     => __( 'Djiboutian Franc', 'wp-sell-services' ),
+			'symbol'   => 'Fdj',
+			'decimals' => 0,
+		),
+		'DOP' => array(
+			'name'     => __( 'Dominican Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'DZD' => array(
+			'name'     => __( 'Algerian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'DA',
+			'decimals' => 2,
+		),
+		'ETB' => array(
+			'name'     => __( 'Ethiopian Birr', 'wp-sell-services' ),
+			'symbol'   => 'Br',
+			'decimals' => 2,
+		),
+		'FJD' => array(
+			'name'     => __( 'Fijian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'GEL' => array(
+			'name'     => __( 'Georgian Lari', 'wp-sell-services' ),
+			'symbol'   => '₾',
+			'decimals' => 2,
+		),
+		'GHS' => array(
+			'name'     => __( 'Ghanaian Cedi', 'wp-sell-services' ),
+			'symbol'   => '₵',
+			'decimals' => 2,
+		),
+		'GMD' => array(
+			'name'     => __( 'Gambian Dalasi', 'wp-sell-services' ),
+			'symbol'   => 'D',
+			'decimals' => 2,
+		),
+		'GNF' => array(
+			'name'     => __( 'Guinean Franc', 'wp-sell-services' ),
+			'symbol'   => 'FG',
+			'decimals' => 0,
+		),
+		'GTQ' => array(
+			'name'     => __( 'Guatemalan Quetzal', 'wp-sell-services' ),
+			'symbol'   => 'Q',
+			'decimals' => 2,
+		),
+		'GYD' => array(
+			'name'     => __( 'Guyanaese Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'HNL' => array(
+			'name'     => __( 'Honduran Lempira', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'HRK' => array(
+			'name'     => __( 'Croatian Kuna', 'wp-sell-services' ),
+			'symbol'   => 'kn',
+			'decimals' => 2,
+		),
+		'HTG' => array(
+			'name'     => __( 'Haitian Gourde', 'wp-sell-services' ),
+			'symbol'   => 'G',
+			'decimals' => 2,
+		),
+		'HUF' => array(
+			'name'     => __( 'Hungarian Forint', 'wp-sell-services' ),
+			'symbol'   => 'Ft',
+			'decimals' => 2,
+		),
+		'ILS' => array(
+			'name'     => __( 'Israeli Shekel', 'wp-sell-services' ),
+			'symbol'   => '₪',
+			'decimals' => 2,
+		),
+		'IQD' => array(
+			'name'     => __( 'Iraqi Dinar', 'wp-sell-services' ),
+			'symbol'   => 'ID',
+			'decimals' => 3,
+		),
+		'IRR' => array(
+			'name'     => __( 'Iranian Rial', 'wp-sell-services' ),
+			'symbol'   => 'IR',
+			'decimals' => 2,
+		),
+		'ISK' => array(
+			'name'     => __( 'Icelandic Krona', 'wp-sell-services' ),
+			'symbol'   => 'kr',
+			'decimals' => 0,
+		),
+		'JMD' => array(
+			'name'     => __( 'Jamaican Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'JOD' => array(
+			'name'     => __( 'Jordanian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'JD',
+			'decimals' => 3,
+		),
+		'KES' => array(
+			'name'     => __( 'Kenyan Shilling', 'wp-sell-services' ),
+			'symbol'   => 'KSh',
+			'decimals' => 2,
+		),
+		'KGS' => array(
+			'name'     => __( 'Kyrgystani Som', 'wp-sell-services' ),
+			'symbol'   => 'c',
+			'decimals' => 2,
+		),
+		'KHR' => array(
+			'name'     => __( 'Cambodian Riel', 'wp-sell-services' ),
+			'symbol'   => '៛',
+			'decimals' => 2,
+		),
+		'KMF' => array(
+			'name'     => __( 'Comorian Franc', 'wp-sell-services' ),
+			'symbol'   => 'CF',
+			'decimals' => 0,
+		),
+		'KWD' => array(
+			'name'     => __( 'Kuwaiti Dinar', 'wp-sell-services' ),
+			'symbol'   => 'KD',
+			'decimals' => 3,
+		),
+		'KYD' => array(
+			'name'     => __( 'Cayman Islands Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'KZT' => array(
+			'name'     => __( 'Kazakhstani Tenge', 'wp-sell-services' ),
+			'symbol'   => '₸',
+			'decimals' => 2,
+		),
+		'LAK' => array(
+			'name'     => __( 'Laotian Kip', 'wp-sell-services' ),
+			'symbol'   => '₭',
+			'decimals' => 2,
+		),
+		'LBP' => array(
+			'name'     => __( 'Lebanese Pound', 'wp-sell-services' ),
+			'symbol'   => 'LL',
+			'decimals' => 2,
+		),
+		'LKR' => array(
+			'name'     => __( 'Sri Lankan Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'LRD' => array(
+			'name'     => __( 'Liberian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'LSL' => array(
+			'name'     => __( 'Lesotho Loti', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'LYD' => array(
+			'name'     => __( 'Libyan Dinar', 'wp-sell-services' ),
+			'symbol'   => 'LD',
+			'decimals' => 3,
+		),
+		'MAD' => array(
+			'name'     => __( 'Moroccan Dirham', 'wp-sell-services' ),
+			'symbol'   => 'DH',
+			'decimals' => 2,
+		),
+		'MDL' => array(
+			'name'     => __( 'Moldovan Leu', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'MGA' => array(
+			'name'     => __( 'Malagasy Ariary', 'wp-sell-services' ),
+			'symbol'   => 'Ar',
+			'decimals' => 2,
+		),
+		'MKD' => array(
+			'name'     => __( 'Macedonian Denar', 'wp-sell-services' ),
+			'symbol'   => 'den',
+			'decimals' => 2,
+		),
+		'MMK' => array(
+			'name'     => __( 'Myanmar Kyat', 'wp-sell-services' ),
+			'symbol'   => 'K',
+			'decimals' => 2,
+		),
+		'MNT' => array(
+			'name'     => __( 'Mongolian Tugrik', 'wp-sell-services' ),
+			'symbol'   => '₮',
+			'decimals' => 2,
+		),
+		'MOP' => array(
+			'name'     => __( 'Macanese Pataca', 'wp-sell-services' ),
+			'symbol'   => 'MOP$',
+			'decimals' => 2,
+		),
+		'MUR' => array(
+			'name'     => __( 'Mauritian Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'MVR' => array(
+			'name'     => __( 'Maldivian Rufiyaa', 'wp-sell-services' ),
+			'symbol'   => 'Rf',
+			'decimals' => 2,
+		),
+		'MWK' => array(
+			'name'     => __( 'Malawian Kwacha', 'wp-sell-services' ),
+			'symbol'   => 'MK',
+			'decimals' => 2,
+		),
+		'MZN' => array(
+			'name'     => __( 'Mozambican Metical', 'wp-sell-services' ),
+			'symbol'   => 'MT',
+			'decimals' => 2,
+		),
+		'NAD' => array(
+			'name'     => __( 'Namibian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'NIO' => array(
+			'name'     => __( 'Nicaraguan Cordoba', 'wp-sell-services' ),
+			'symbol'   => 'C$',
+			'decimals' => 2,
+		),
+		'NPR' => array(
+			'name'     => __( 'Nepalese Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'OMR' => array(
+			'name'     => __( 'Omani Rial', 'wp-sell-services' ),
+			'symbol'   => 'RO',
+			'decimals' => 3,
+		),
+		'PAB' => array(
+			'name'     => __( 'Panamanian Balboa', 'wp-sell-services' ),
+			'symbol'   => 'B/.',
+			'decimals' => 2,
+		),
+		'PEN' => array(
+			'name'     => __( 'Peruvian Sol', 'wp-sell-services' ),
+			'symbol'   => 'S/',
+			'decimals' => 2,
+		),
+		'PGK' => array(
+			'name'     => __( 'Papua New Guinean Kina', 'wp-sell-services' ),
+			'symbol'   => 'K',
+			'decimals' => 2,
+		),
+		'PKR' => array(
+			'name'     => __( 'Pakistani Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'PYG' => array(
+			'name'     => __( 'Paraguayan Guarani', 'wp-sell-services' ),
+			'symbol'   => '₲',
+			'decimals' => 0,
+		),
+		'QAR' => array(
+			'name'     => __( 'Qatari Rial', 'wp-sell-services' ),
+			'symbol'   => 'QR',
+			'decimals' => 2,
+		),
+		'RON' => array(
+			'name'     => __( 'Romanian Leu', 'wp-sell-services' ),
+			'symbol'   => 'lei',
+			'decimals' => 2,
+		),
+		'RSD' => array(
+			'name'     => __( 'Serbian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'din.',
+			'decimals' => 2,
+		),
+		'RWF' => array(
+			'name'     => __( 'Rwandan Franc', 'wp-sell-services' ),
+			'symbol'   => 'FRw',
+			'decimals' => 0,
+		),
+		'SBD' => array(
+			'name'     => __( 'Solomon Islands Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'SCR' => array(
+			'name'     => __( 'Seychellois Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'SDG' => array(
+			'name'     => __( 'Sudanese Pound', 'wp-sell-services' ),
+			'symbol'   => 'SDG',
+			'decimals' => 2,
+		),
+		'SLE' => array(
+			'name'     => __( 'Sierra Leonean Leone', 'wp-sell-services' ),
+			'symbol'   => 'Le',
+			'decimals' => 2,
+		),
+		'SOS' => array(
+			'name'     => __( 'Somali Shilling', 'wp-sell-services' ),
+			'symbol'   => 'S',
+			'decimals' => 2,
+		),
+		'SRD' => array(
+			'name'     => __( 'Surinamese Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'SSP' => array(
+			'name'     => __( 'South Sudanese Pound', 'wp-sell-services' ),
+			'symbol'   => 'GBP',
+			'decimals' => 2,
+		),
+		'SVC' => array(
+			'name'     => __( 'Salvadoran Colon', 'wp-sell-services' ),
+			'symbol'   => '₡',
+			'decimals' => 2,
+		),
+		'SZL' => array(
+			'name'     => __( 'Swazi Lilangeni', 'wp-sell-services' ),
+			'symbol'   => 'E',
+			'decimals' => 2,
+		),
+		'TJS' => array(
+			'name'     => __( 'Tajikistani Somoni', 'wp-sell-services' ),
+			'symbol'   => 'SM',
+			'decimals' => 2,
+		),
+		'TMT' => array(
+			'name'     => __( 'Turkmenistani Manat', 'wp-sell-services' ),
+			'symbol'   => 'm',
+			'decimals' => 2,
+		),
+		'TND' => array(
+			'name'     => __( 'Tunisian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'DT',
+			'decimals' => 3,
+		),
+		'TOP' => array(
+			'name'     => __( 'Tongan Paanga', 'wp-sell-services' ),
+			'symbol'   => 'T$',
+			'decimals' => 2,
+		),
+		'TTD' => array(
+			'name'     => __( 'Trinidad and Tobago Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'TWD' => array(
+			'name'     => __( 'New Taiwan Dollar', 'wp-sell-services' ),
+			'symbol'   => 'NT$',
+			'decimals' => 2,
+		),
+		'TZS' => array(
+			'name'     => __( 'Tanzanian Shilling', 'wp-sell-services' ),
+			'symbol'   => 'TSh',
+			'decimals' => 2,
+		),
+		'UAH' => array(
+			'name'     => __( 'Ukrainian Hryvnia', 'wp-sell-services' ),
+			'symbol'   => '₴',
+			'decimals' => 2,
+		),
+		'UGX' => array(
+			'name'     => __( 'Ugandan Shilling', 'wp-sell-services' ),
+			'symbol'   => 'USh',
+			'decimals' => 0,
+		),
+		'UYU' => array(
+			'name'     => __( 'Uruguayan Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'UZS' => array(
+			'name'     => __( 'Uzbekistani Som', 'wp-sell-services' ),
+			'symbol'   => 'soum',
+			'decimals' => 2,
+		),
+		'VES' => array(
+			'name'     => __( 'Venezuelan Bolivar', 'wp-sell-services' ),
+			'symbol'   => 'Bs.',
+			'decimals' => 2,
+		),
+		'VUV' => array(
+			'name'     => __( 'Vanuatu Vatu', 'wp-sell-services' ),
+			'symbol'   => 'VT',
+			'decimals' => 0,
+		),
+		'WST' => array(
+			'name'     => __( 'Samoan Tala', 'wp-sell-services' ),
+			'symbol'   => 'T',
+			'decimals' => 2,
+		),
+		'XAF' => array(
+			'name'     => __( 'Central African CFA Franc', 'wp-sell-services' ),
+			'symbol'   => 'FCFA',
+			'decimals' => 0,
+		),
+		'XCD' => array(
+			'name'     => __( 'East Caribbean Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'XOF' => array(
+			'name'     => __( 'West African CFA Franc', 'wp-sell-services' ),
+			'symbol'   => 'CFA',
+			'decimals' => 0,
+		),
+		'XPF' => array(
+			'name'     => __( 'CFP Franc', 'wp-sell-services' ),
+			'symbol'   => 'F',
+			'decimals' => 0,
+		),
+		'YER' => array(
+			'name'     => __( 'Yemeni Rial', 'wp-sell-services' ),
+			'symbol'   => 'YR',
+			'decimals' => 2,
+		),
+		'ZMW' => array(
+			'name'     => __( 'Zambian Kwacha', 'wp-sell-services' ),
+			'symbol'   => 'ZK',
+			'decimals' => 2,
+		),
+		'ZWL' => array(
+			'name'     => __( 'Zimbabwean Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
 			'decimals' => 2,
 		),
 	);

@@ -123,16 +123,10 @@
 
 				this.paymentElement.mount(elementContainer);
 
-				// Billing name + address. Stripe rejects export (cross-border)
-				// charges on India-registered accounts without them, and the
-				// Payment Element does not collect an address on its own.
-				const addressContainer = document.getElementById('wpss-stripe-address-element');
-				if (addressContainer) {
-					this.addressElement = this.elements.create('address', {
-						mode: 'billing',
-					});
-					this.addressElement.mount(addressContainer);
-				}
+				// No Stripe Address Element. Billing details are our own block
+				// (templates/partials/billing-fields.php), rendered above the
+				// payment section and identical on every gateway. We read the
+				// values out of it at confirm time — see readBillingDetails().
 
 				this.paymentElement.on('change', (event) => {
 					if (event.error) {

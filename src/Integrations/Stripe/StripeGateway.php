@@ -683,12 +683,20 @@ class StripeGateway implements PaymentGatewayInterface {
 		<div class="wpss-stripe-payment" data-wpss-own-submit="1" data-publishable-key="<?php echo esc_attr( $publishable_key ); ?>">
 			<div id="wpss-stripe-payment-element"></div>
 			<?php
-			// Billing name + address. Stripe REQUIRES these for export
-			// (cross-border) charges on India-registered accounts; the Payment
-			// Element does not collect an address, so a dedicated Address Element
-			// is mounted here and passed to confirmPayment().
+			// NOTE: no address element here. Billing details are OUR OWN block,
+			// rendered above the payment section from
+			// templates/partials/billing-fields.php, because the address is
+			// account data rather than card data.
+			//
+			// Stripe's Address Element used to be mounted here and was wrong on
+			// three counts: it rendered the address INSIDE the card iframe, it
+			// only existed when Stripe was the gateway (so PayPal/Razorpay/Woo
+			// buyers had no address at all), and it has no company or tax-number
+			// field — which made the GST an invoice needs impossible to collect.
+			//
+			// Stripe still RECEIVES the values as billing_details at confirm
+			// time; it consumes them, it does not own them.
 			?>
-			<div id="wpss-stripe-address-element" class="wpss-stripe-address"></div>
 			<div id="wpss-stripe-error" class="wpss-payment-error" style="display: none;"></div>
 			<input type="hidden" name="stripe_payment_intent_id" id="wpss-stripe-payment-intent-id">
 		</div>
