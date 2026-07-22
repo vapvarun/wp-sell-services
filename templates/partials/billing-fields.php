@@ -35,7 +35,13 @@ $wpss_summary_addr = array_filter(
 		$wpss_billing['billing_city'] ?? '',
 		$wpss_billing['billing_state'] ?? '',
 		$wpss_billing['billing_postcode'] ?? '',
-		$wpss_billing['billing_country'] ?? '',
+		// Readable name, not the stored ISO code — the collapsed summary was
+		// showing "US" where the order view shows "United States", and the
+		// buyer confirming their address at checkout is exactly who should not
+		// have to recognise a country code.
+		! empty( $wpss_billing['billing_country'] )
+			? wpss_get_country_name( (string) $wpss_billing['billing_country'] )
+			: '',
 	)
 );
 ?>

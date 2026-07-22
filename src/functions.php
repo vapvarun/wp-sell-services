@@ -172,6 +172,41 @@ function wpss_get_ledger_debit_types_sql(): string {
 }
 
 /**
+ * How much was refunded on an order, for DISPLAY.
+ *
+ * `wpss_orders.refunded_amount` carries a sentinel the money layer relies on:
+ * NULL means "fully refunded", a number means "this much was refunded". That is
+ * deliberate and load-bearing — OrderWorkflowManager::settle_refund() reads NULL
+ * to mean "reverse everything" — but it is a terrible thing for a template to
+ * interpret. Reading the column directly and testing `> 0` silently drops every
+ * FULL refund, which is how the buyer's order view came to show "Refunded" with
+ * no figure next to it while a partial refund showed one.
+ *
+ * So the sentinel is resolved in exactly one place, here, and every display and
+ * invoice surface asks this instead of touching the column. Returns 0.0 when
+ * nothing was refunded.
+ *
+ * @since 1.2.3
+ *
+ * @param object $order Order exposing refunded_amount, total, status, payment_status.
+ * @return float Amount refunded to the buyer.
+ */
+function wpss_get_order_refunded_amount( object $order ): float {
+	$recorded = $order->refunded_amount ?? null;
+
+	if ( null !== $recorded ) {
+		return (float) $recorded;
+	}
+
+	// NULL means one of two very different things: a full refund, or no refund
+	// at all. Only the status can tell them apart.
+	$is_refunded = 'refunded' === ( $order->status ?? '' )
+		|| 'refunded' === ( $order->payment_status ?? '' );
+
+	return $is_refunded ? (float) ( $order->total ?? 0 ) : 0.0;
+}
+
+/**
  * Vendor's share of a refund.
  *
  * THE single proportional formula. A refund gives the buyer back some or all of

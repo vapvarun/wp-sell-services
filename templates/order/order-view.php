@@ -414,9 +414,11 @@ do_action( 'wpss_before_order_view', $order );
 				// actually came back. Shown to buyer and vendor alike: the buyer
 				// needs to reconcile it against their statement, the vendor
 				// against the reversal on their wallet.
-				$refunded_amount = isset( $order->refunded_amount ) && null !== $order->refunded_amount
-					? (float) $order->refunded_amount
-					: 0.0;
+				// Through the shared resolver, NOT the raw column: a full refund
+				// leaves refunded_amount NULL as a sentinel for the money layer,
+				// so reading the column here showed the buyer no figure at all
+				// on exactly the orders where the whole charge came back.
+				$refunded_amount = wpss_get_order_refunded_amount( $order );
 
 				if ( $refunded_amount > 0 ) :
 					$is_full_refund = $refunded_amount >= (float) $order->total;
