@@ -3067,26 +3067,22 @@ class AjaxHandlers {
 			case 'refund':
 				// Only customer can request refund, or vendor can issue refund.
 				if ( in_array( $order->status, array( 'pending_payment', 'pending_requirements', 'accepted' ), true ) ) {
-					// Record how much is going back BEFORE the status change —
-					// the refund handlers read refunded_amount off the order to
-					// size both the buyer refund and the vendor's reversal.
-					// Absent or zero means the whole order.
+					// How much is going back. Absent or zero means the whole order.
 					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified at the top of this handler.
 					$wpss_refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
 					$wpss_order_total   = (float) $order->total;
 					$wpss_is_partial    = $wpss_refund_amount > 0 && $wpss_refund_amount < $wpss_order_total;
 
-					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-					$wpdb->update(
-						$wpdb->prefix . 'wpss_orders',
-						array( 'refunded_amount' => $wpss_is_partial ? round( $wpss_refund_amount, 2 ) : $wpss_order_total ),
-						array( 'id' => $order_id ),
-						array( '%f' ),
-						array( '%d' )
-					);
-
-					$result = $order_service->update_status(
+					// The amount must be on the row before the status hook runs
+					// — the refund handlers read it there to size both the buyer
+					// refund and the vendor's reversal. Writing it here and
+					// transitioning separately left the column claiming a refund
+					// whenever the transition was refused; apply_refund_status()
+					// owns that ordering and undoes the write if the order does
+					// not actually move.
+					$result = $order_service->apply_refund_status(
 						$order_id,
+						$wpss_is_partial ? round( $wpss_refund_amount, 2 ) : $wpss_order_total,
 						$wpss_is_partial ? 'partially_refunded' : 'refunded'
 					);
 				} else {

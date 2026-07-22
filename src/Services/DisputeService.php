@@ -525,14 +525,16 @@ class DisputeService {
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
-				// Ruling for the buyer returns everything they paid.
-				$this->persist_refunded_amount( $order_id, null );
-				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_REFUNDED );
+				// Ruling for the buyer returns everything they paid; NULL asks
+				// apply_refund_status() to resolve that to the order total.
+				$this->order_service->apply_refund_status( $order_id, null, ServiceOrder::STATUS_REFUNDED );
 				break;
 
 			case self::RESOLUTION_PARTIAL_REFUND:
-				$this->persist_refunded_amount( $order_id, $refund_amount );
-				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
+				// Through apply_refund_status(), never a persist-then-transition
+				// pair: a refused transition used to leave the order claiming a
+				// refund that never happened.
+				$this->order_service->apply_refund_status( $order_id, $refund_amount, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
 				break;
 
 			case self::RESOLUTION_FAVOR_VENDOR:
@@ -540,55 +542,6 @@ class DisputeService {
 				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 				break;
 		}
-	}
-
-	/**
-	 * Record on the order how much is being refunded, before the status change.
-	 *
-	 * The refund handlers read `refunded_amount` off the order to decide how
-	 * much money goes back to the buyer and how much of the vendor's earnings
-	 * to reverse. It must therefore be written BEFORE update_status() fires
-	 * them — the status hooks carry only (order_id, old_status), so the amount
-	 * cannot be threaded through as a hook argument without breaking the
-	 * signature every other status handler shares.
-	 *
-	 * Until 1.2.3 the amount was accepted by resolve(), passed into
-	 * handle_resolution() — and then dropped. A partial refund therefore had no
-	 * amount recorded anywhere on the order, which is why the proportional
-	 * reversal could not be computed at all.
-	 *
-	 * @since 1.2.3
-	 *
-	 * @param int        $order_id Order ID.
-	 * @param float|null $amount   Amount refunded, or NULL for the full total.
-	 * @return void
-	 */
-	private function persist_refunded_amount( int $order_id, ?float $amount ): void {
-		global $wpdb;
-
-		$order = wpss_get_order( $order_id );
-
-		if ( ! $order ) {
-			return;
-		}
-
-		$order_total = (float) $order->total;
-
-		// NULL means "all of it". A partial larger than the order total is
-		// clamped rather than trusted — it would otherwise claw back more from
-		// the vendor than they ever earned.
-		$refunded = ( null === $amount || $amount <= 0 || $amount >= $order_total )
-			? $order_total
-			: round( $amount, 2 );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
-			$wpdb->prefix . 'wpss_orders',
-			array( 'refunded_amount' => $refunded ),
-			array( 'id' => $order_id ),
-			array( '%f' ),
-			array( '%d' )
-		);
 	}
 
 	/**
