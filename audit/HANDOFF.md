@@ -3,7 +3,7 @@
 Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
 Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
-**Both repos are clean and committed.** Free `367ae41`, Pro `8a99634`.
+**Both repos are clean and committed.** Free `d64487d`+, Pro `4a48c11`.
 Local DB restored to baseline (seed vendor 987655 = 120, 4 ledger rows).
 
 ---
@@ -80,22 +80,17 @@ Also fixed: Woo/SureCart/FluentCart status hooks fataled under `strict_types`
 
 ## 2. PENDING — priority order
 
-### P1. Pro `WCOrderProvider` violates the money standard (SMALL — do first)
+### ~~P1. Pro `WCOrderProvider`~~ — FIXED 2026-07-22 (Pro `4a48c11`)
 
-The only place the money contract is actively broken. Dormant purely because
-nobody has run a multi-currency plugin against it.
+Both violations closed. The provider now reads OUR `_wpss_packages` price
+instead of `$item->get_total()` / `_line_total`, and stores the BASE currency
+from the raw `woocommerce_currency` option instead of `$order->get_currency()`.
 
-- `src/Integrations/WooCommerce/WCOrderProvider.php:183` — reads
-  `$item->get_total()`. Must read OUR package price from `_wpss_packages`
-  (standard §6.1: the rail never supplies the amount).
-- `:494` — stores `$order->get_currency()`. Must store the BASE currency
-  (standard §6.4). This is what would put mixed currencies into the ledger and
-  make `wpss_get_ledger_balance()` sum EUR onto USD.
+Verified with Woo active: a line charging 31.75 EUR against our 50.00 package
+yields 50.00; with `woocommerce_currency` filtered to EUR — exactly what
+CURCY/Aelia do — the stored currency stays USD.
 
-Written up in `manifest.json` →
-`money_authorities.currency_storage.KNOWN_GAP_woo_path_contradicts_this`.
-I documented it and did not fix it — that is an annotated violation, not
-compliance.
+**The money contract now has no known violations.**
 
 ### P2. Invoice display — last slice of task 12
 
