@@ -148,74 +148,19 @@ read directly by the template. Now resolved once in
 `wpss_get_order_refunded_amount()`. Same lesson as every other P0 this sprint —
 reading the code would not have caught it; running the flow did.
 
-### Payout model — ALREADY BUILT (verified 2026-07-23, no code written)
+### Payout model — see `audit/PAYOUT-PLAN.md`
 
-Asked for: "payout weekly / bi-weekly / monthly on a minimum threshold, via
-Stripe Connect or manual CSV — so we never take money back from vendors."
+Not restated here, to stop the two drifting. That file is the single source for
+payout cadence, thresholds, clearance, rails, and the Stripe Connect conflict.
 
-**All of it exists.** Do not rebuild it.
+Correction to an earlier claim in this file: the payout model is **not** "already
+built". Cadence, threshold, cron and the clearance hold are built and the hold is
+proven; but `create_auto_withdrawal()` stops at status `pending` and never pays
+anyone, and Connect splits at charge time instead of paying on a schedule. See
+the plan's audit table.
 
-| Piece | Where | Default |
-|---|---|---|
-| Cadence select | `Settings.php` `auto_withdrawal_schedule` | weekly (Mon) / biweekly (1st+15th) / **monthly (1st)** |
-| Minimum threshold | `auto_withdrawal_threshold` | 500 (min 100) |
-| On/off | `auto_withdrawal_enabled` | false |
-| Cron | `EarningsService::schedule_auto_withdrawal_cron()` | reschedules on option save |
-| Clearance hold | `wpss_payouts.clearance_days` | **14 days** |
-| Rail abstraction | Pro `Payouts/PayoutMethodsCoordinator`, `PayoutsProviderInterface` | pluggable |
-| Stripe Connect | Pro `StripeConnect/` | — |
-| PayPal Payouts | Pro `PayPalPayouts/` (batch) | — |
-| CSV | Pro `Analytics/DataExporter` | — |
-
-**The clawback protection is real and enforced**, proved empirically: a credit
-dated today reports `ledger 45.00 / in_clearance 45.00 / available 0.00`; the
-same credit dated 16 days ago reports `available 45.00`.
-`EarningsController::request_withdrawal()` gates on
-`get_summary()['available_balance']` under a row lock — the ONE balance
-authority, not a re-derivation. So a refund inside the window finds the money
-still unwithdrawn and nothing is taken back from the vendor.
-
-Note it is a **rolling per-credit hold**, not a calendar cycle: each credit
-matures 14 days after ITS completion. That is stronger than a fixed cycle for
-this goal, and worth stating before someone "fixes" it into cycle dates.
-
-#### CONFLICT: Stripe Connect bypasses the clearance hold entirely
-
-Pro has full Stripe Connect (`ConnectAccountService`, `ConnectOnboardingHandler`,
-`ConnectPaymentProcessor`, `ConnectWebhookHandler`, `ConnectLedgerBridge`,
-`ConnectSettingsRenderer`, `StripeConnectManager`). But it is **charge-time
-split, not scheduled payout** — the PaymentIntent carries `transfer_data`, so
-per `ConnectLedgerBridge`'s own docblock: *"Stripe pays the vendor's share
-straight to their connected account at CHARGE time — the money never passes
-through the wallet."*
-
-So on a Connect site the payout model above **does not apply to Connect
-vendors**. There is no 14-day hold, because Stripe moved the money at payment.
-A later refund needs `reverse_transfer`, which the same file describes as
-failing routinely: *"it pulls funds back out of the connected account, and once
-the vendor has paid out to their bank there is nothing to pull."*
-
-That is precisely "taking money back from vendors" — the thing the payout model
-exists to prevent. The wallet path and the Connect path want opposite things.
-
-**To make Connect obey the payout model** it has to move from destination
-charges to *separate charges and transfers*: take the full amount on the
-platform account, hold it through clearance, then create `/v1/transfers` to
-connected accounts on the weekly/bi-weekly/monthly run. That is real Connect
-Payout, it makes `reverse_transfer` unnecessary, and it is a deliberate change
-in `ConnectPaymentProcessor` — not a setting.
-
-Until then, be explicit that enabling Connect opts a site OUT of clearance
-protection.
-
-**Gaps worth deciding (not bugs):**
-
-1. `clearance_days` has `min => 0` — a site owner can set 0 and silently delete
-   the entire protection this model depends on. Consider a floor, or presets
-   (Weekly / Bi-weekly / Monthly) that read as policy rather than a raw number.
-2. Not verified: whether the auto-withdrawal cron itself honours clearance, and
-   whether cadence + threshold have ever been run end to end. The settings and
-   the cron scheduler exist; **the payout run was not exercised.**
+Money-flow rules for anyone touching this area:
+`docs/architecture/MONEY-FLOW.md`.
 
 ### P4. Smaller
 
