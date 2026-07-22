@@ -3,7 +3,7 @@
 Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
 Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
-**Both repos are clean and committed.** Free `d64487d`+, Pro `4a48c11`.
+**Both repos are clean and committed.** Free `6b15377`, Pro `4a48c11`.
 Local DB restored to baseline (seed vendor 987655 = 120, 4 ledger rows).
 
 ---
@@ -28,6 +28,12 @@ Local DB restored to baseline (seed vendor 987655 = 120, 4 ledger rows).
 - Use the host Playwright MCP, not Docker (Docker cannot resolve `.local`).
 - WooCommerce is installed but INACTIVE. Activate to test Woo paths, deactivate
   afterwards.
+- **Local test data added 2026-07-22:** `realcustomer` (user 2) now has a
+  complete US billing profile (Dana Whitfield / Northwind Analytics LLC / GST
+  `27AABCU9603R1ZX`), and order 41 carries the matching snapshot. Written
+  through the real `wpss_save_billing_address()` path. Ledger baseline is
+  untouched. Order 18 deliberately has NO snapshot — keep it that way, it is
+  the pre-1.5.0 degradation case.
 
 ---
 
@@ -92,21 +98,38 @@ CURCY/Aelia do — the stored currency stays USD.
 
 **The money contract now has no known violations.**
 
-### P2. Invoice display — last slice of task 12
+### ~~P2. Invoice display~~ — DONE 2026-07-22 (free `6b15377`)
 
-GST is captured but displayed nowhere, so it cannot do the job it was added
-for. Read from `$order->billing_address` (already decoded on the model).
+`templates/partials/billing-summary.php` is now the ONLY read-only billing
+renderer; the buyer order view and the admin order screen both include it, so
+the two surfaces cannot drift. Reads the order snapshot only — never the live
+profile, which would print an address the buyer was not billed under.
 
-- Admin order screen: billing address + company + GST
-- Buyer order view: same
-- Any invoice / export surface
+One thing the plan did not anticipate: `billing_address` arrives in **two
+shapes**. `ServiceOrder` decodes it to an array, but `Admin::render_order_detail`
+passes a raw `$wpdb` row where it is still a JSON string. Both confirmed against
+real rows. The partial handles both rather than making callers hydrate a model.
+
+Verified on order 41 (full snapshot) and order 18 (none): identical content on
+both surfaces, `US` → "United States", clean at 1280px and 390px, and order 18
+renders nothing without disturbing the section after it.
+
+Also styled `.wpss-order-detail-item`, which had no CSS anywhere and was
+inheriting whatever the theme gave it.
+
+**Billing identity is now complete end to end: captured, stored, snapshotted,
+and displayed.**
 
 ### P3. Live Stripe charge — still UNVERIFIED
 
 The flow is proven up to the point of charge; the charge itself never ran.
-Blocked on automating Stripe's React-controlled Address Element. **A manual
-browser run settles it in five minutes** — buy the $50 service as
-`realcustomer`, whose billing profile is already complete.
+**A manual browser run settles it in five minutes** — buy the $50 service as
+`realcustomer` (billing profile complete as of 2026-07-22), card `4242…`, then
+refund from wp-admin.
+
+The original blocker — automating Stripe's React-controlled Address Element —
+is **gone**: `3f83379` replaced it with our own native fields, so this may now
+be scriptable end to end. Worth one attempt before falling back to manual.
 
 ### P4. Smaller
 
