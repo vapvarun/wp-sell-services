@@ -9,6 +9,57 @@ and ledger rows #127/#128 (they net to zero). See the test-data note in §0.
 
 ---
 
+## START HERE — T1: payouts screen + mark paid
+
+The next task, specified. Full context in `audit/MONEY-FLOW-PLAN.md`; the rules
+that govern it in `docs/architecture/MONEY-FLOW.md` (2.3 and 2.4 are the two
+that matter).
+
+**Why this one.** It ships a complete payout flow for a site with **no gateway
+configured at all** — no Stripe, no PayPal, no approval, any country. Stripe
+Connect is not available everywhere and PayPal Payouts needs PayPal's per-account
+approval, so manual is the only rail that can be assumed to exist. It is the
+default, not the fallback.
+
+**What exists already:** cadence, threshold and cron scheduling all work
+(`auto_withdrawal_schedule`, `auto_withdrawal_threshold`,
+`EarningsService::schedule_auto_withdrawal_cron()`), and
+`create_auto_withdrawal()` already produces the batch — `wpss_withdrawals` rows
+at status `pending`. **That batch is the starting point. Do not rebuild it.**
+What is missing is the ending.
+
+**Build:**
+
+1. **`mark_paid( int $withdrawal_id ): bool`** — the terminal step. Flips the row
+   to completed and writes the ledger debit via the existing
+   `record_withdrawal_debit()`. **Idempotent**: marking twice debits once. Take
+   the row lock first; two admins will click at the same time. This is the
+   keystone — every rail terminates here, so no rail keeps its own bookkeeping.
+2. **Admin Payouts screen** — list the batch (vendor, matured amount, method,
+   status), filter by status/method, mark paid single **and** bulk.
+3. **Big-site from day one**: `LIMIT`/`OFFSET`, a real `COUNT(*)`, index on
+   `(status, vendor_id)`, no N+1 on vendor lookups. 2000 vendors.
+4. **Empty / error / loading states**, 390px, dark mode, RTL.
+
+**Then T2** — CSV export via `Analytics/DataExporter`, columns a bank or PayPal
+bulk upload actually needs. **Export must NOT change status**: an export that
+auto-marked would lie the moment a transfer failed.
+
+**Acceptance test** (from the plan §3, walk it as the admin):
+settings → run fires → Payouts screen → export CSV → pay offline → mark paid →
+ledger debit → vendor balance drops → vendor sees it in their dashboard.
+**On a site with no Stripe and no PayPal configured.**
+
+**Do not** build on Pro's `PayoutsBatchService` — it re-pays vendors every run,
+bypasses the ledger and has no idempotency (`MONEY-FLOW-PLAN.md` S6.5-S6.8).
+
+**Environment:** log out before `?autologin=` (it no-ops when logged in);
+`npm run build:min` after any JS/CSS edit; verify in a browser, not by reading —
+every money defect found so far was found by running the flow while automated
+checks passed.
+
+---
+
 ## 0. Read these before touching anything
 
 1. **`~/.claude/workflows/wbcom-account-billing-standard.md`** — the portfolio
