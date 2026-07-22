@@ -1,138 +1,156 @@
-# WP Sell Services 1.2.2 — session handoff
+# HANDOFF — 2026-07-22
 
-Last updated 2026-07-20. Branch **1.2.2** on both repos, everything committed
-and pushed. Repos live at `~/dev/repos/wp-sell-services{,-pro}` (the Local site
-symlinks to them).
+Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
+Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
----
-
-## READ THIS FIRST — three things that will waste your time
-
-1. **`.min` assets are what actually ship.** `Assets.php` rewrites asset URLs to
-   `.min` when the file exists, so **edits to `assets/js/*.js` are inert until
-   you rebuild**. `npm run build:min` fails (no node_modules). Use:
-   `npx terser assets/js/FILE.js -c -m -o assets/js/FILE.min.js`
-   This silently ate part of a session.
-2. **Use the HOST Playwright MCP** (`mcp__plugin_playwright_playwright__*`), not
-   the Docker one — the Docker browser cannot resolve `wp-sell-services.local`.
-3. **`?autologin=N` does nothing if you are already logged in** (the mu-plugin
-   bails on `is_user_logged_in()`). Log out first via the admin-bar logout URL,
-   or you will silently test as the wrong user. This caused one false "bug".
+**Both repos are clean and committed.** Free `367ae41`, Pro `8a99634`.
+Local DB restored to baseline (seed vendor 987655 = 120, 4 ledger rows).
 
 ---
 
-## Environment
+## 0. Read these before touching anything
 
-- Site: `http://wp-sell-services.local` · dashboard `/dashboard/`, sections are
-  pretty-permalinked (`/dashboard/disputes/`). `orders` is the DEFAULT section,
-  so bare `/dashboard/` IS the orders view.
-- Auto-login: `?autologin=1` (admin `varundubey`, ID 1) / `?autologin=realcustomer`
-  (buyer `realcustomer`, ID 2).
-- Theme: **BuddyX 5.1.4** (GitHub `master`, ships built assets). BuddyX Pro /
-  Reign not installed.
-- Stripe: TEST keys + webhook configured and working. Webhook URL pattern
-  `/wpss-payment/{gateway}/callback/`.
-- Public tunnel (ephemeral — restart if dead):
-  `https://gig-democrat-absolutely-timber.trycloudflare.com`
-- **PayPal: `wpss_paypal_settings` is EMPTY.** Needs `client_id`,
-  `client_secret`, `webhook_id` before any PayPal work can be tested.
-- WooCommerce: installed but **deactivated** (activate to test the Woo path).
-- Tour modal: suppress with `wp user meta update <id> wpss_tour_completed 1`.
-- Seeded test data: order #41 (paid, real Stripe PaymentIntent), demo dispute #4,
-  notifications for users 1 + 2, service #9 priced ($50 Basic / $100 Standard).
+1. **`~/.claude/workflows/wbcom-account-billing-standard.md`** — the portfolio
+   standard locked this session. Billing identity lives on the USER; gateways
+   are RAILS that only report whether money moved; the plugin owns every
+   calculation and every log. Backed up at `~/claude-backup/workflows/`.
+2. **`audit/manifest.json`** → `money_authorities`,
+   `ecommerce_adapter_boundary`, `portfolio_standards`. One authority per
+   concept, and which one it is.
+3. **`audit/REFUND-PLAN.md`** — Parts I-IX: plan, corrections, QA results.
 
----
+**Environment gotchas that cost time this session:**
 
-## What shipped this session
-
-**Checkout was completely broken and is now fixed** — no gateway could complete a
-purchase. Chain of three P0s, each proven by the error advancing:
-`bare 0` (unregistered action) → "requires additional action" (unconfirmed
-intent) → "requires a description" → "requires name and address" → **paid**.
-End-to-end proof: order **41**, `payment_status=paid`,
-`transaction_id=pi_3TvBOkSY8ch105Oa1irGYMdv`, commission 10% → `platform_fee`
-5.00 / `vendor_earnings` 45.00. That was also the first real payment ever to
-exercise the commission engine.
-
-Clusters **D, E, F, G, H** closed (see `TASKS.md`), plus: Woo currency deferral,
-uniform notifications partial, PayPal pay_order guards, currency-aware amount
-matching, 3-decimal currency fix, commission on EDD/renewal/manual orders, the
-wallet balance consolidation, and the setup-wizard credential removal.
+- `?autologin=` **no-ops when already logged in.** Log out first, or you will
+  silently test as the wrong user. This caught me three separate times.
+- `.min` assets are what ship. Run `npm run build:min` after ANY JS/CSS edit —
+  `Assets::filter_loader_src()` swaps to `.min` unless `SCRIPT_DEBUG`.
+- Use the host Playwright MCP, not Docker (Docker cannot resolve `.local`).
+- WooCommerce is installed but INACTIVE. Activate to test Woo paths, deactivate
+  afterwards.
 
 ---
 
-## NEXT — in priority order
+## 1. DONE and verified (14/14 automated + browser)
 
-### 1. Refund — CRITICAL, and **UNVERIFIED**
-Card `10110740922`. Claim: 8 divergent refund implementations; only the
-`cancelled` path reverses earnings, so a refund leaves the vendor credited and
-**the platform pays twice**; Woo maps refund→`cancelled` while SureCart
-maps→`refunded`.
+### Money flow — complete
 
-**This came from a sub-agent audit and I never verified it at code level.** Both
-wallet claims that came from the same sweep turned out to be *understated*, so
-treat this as a lead, not a spec. **Read the eight paths first** (listed in
-`DUPLICATE-FLOWS-money.md` §2), confirm with a seeded refund, then design one
-`RefundService`.
+| Behaviour | Verified |
+|---|---|
+| Earn credits vendor | +90 |
+| Full refund reverses | −90 |
+| Partial refund proportional | −36 on $40 of $100; remainder 54.00 left on the order |
+| Replay / double-click | idempotent, exactly one reversal row |
+| Rail parity (D4a) | identical across standalone / woo / surecart / edd |
+| Negative balance | allowed, self-clears from future earnings |
+| Connect double-payment | offset row, nets to zero |
+| Connect clawback FAILURE | falls back to a wallet debt |
+| Dispute full + partial | reverses correctly; amount recorded on dispute AND order |
+| Woo refund | real `wc_create_refund()`; status `refunded` not `cancelled`; ONE reversal |
+| Admin refund | clicked through the real wp-admin UI |
 
-### 2. Finish the commission card
-Card `10110741743`. Three of four paths done. Remaining:
-- pro `API/PaymentController.php:341` — 4th order-creation path, still NULL commission
-- `TippingService.php:376` — last hand-rolled fee math
-- Not yet done: a live EDD purchase / renewal proving non-NULL `platform_fee`.
+### Four P0s fixed — all found by REAL-FLOW testing, none by reading code
 
-### 3. Order status authority
-Card `10110741858`. Six writers bypass `OrderService::update_status()`. Largest
-blast radius — do it with a regression pass over every platform integration.
+1. **Refund never reversed vendor earnings** (`7a47aab`) — buyer refunded,
+   vendor kept the money.
+2. **`partially_refunded` had no handler at all** (`11d48c6`) — buyer told they
+   were refunded; nothing happened.
+3. **Auto-refund never found the gateway** (`e6b77a5`) —
+   `apply_filters('wpss_payment_gateways', [])` returns only Pro-registered
+   rails, so for every Stripe/PayPal/offline order **the buyer was never
+   refunded**.
+4. **Every confirm dialog in wp-admin was unclickable** (`5406736`) —
+   `design-system.css` is not enqueued in wp-admin, so the modal rendered
+   `position:static` underneath `#adminmenuback`.
 
-### 4. UI duplications
-Card `10110742943`, full list in `DUPLICATE-FLOWS-ui.md`. Best first picks: the
-search-shortcode param contract (silently disables moderation + vacation
-filtering), then the four read/write key mismatches (each shows a customer a
-wrong number), then service card ×6.
+Also fixed: Woo/SureCart/FluentCart status hooks fataled under `strict_types`
+(`8a99634`); dispute resolution sent every notification twice (`1d6cb48`).
 
-### 5. Gateways
-PayPal `10110287493` / Razorpay `10110288339` — both hit the original
-unregistered-action wall. The seam already exists: declare
-`data-wpss-own-submit` on the gateway's payment-fields container and let its own
-script own submit (see `StripeGateway` + `StandaloneCheckoutProvider`).
+### Profile / billing — data + capture complete
 
-### 6. Before tagging 1.2.2
-Version bump, changelog, and the **mandatory Docker install test** of the built
-zip with Reign + free/pro. QA should re-run a full checkout now that it works.
-
----
-
-## Blocked on the owner
-
-- **Wallet formula** — resolved for now (derived ledger sum is canonical), but if
-  you want `balance_after` retired as a column entirely that is a schema call.
-- **Multi-currency storage contract** (card `10110476797`) — does an order row
-  store base currency + rate, or the shopper's currency? `platform_fee` /
-  `vendor_earnings` are persisted per order, so payouts and the Connect split
-  depend on the answer. Nothing should be coded until this is decided.
+- 12 fields on WooCommerce's exact meta keys + `billing_gst` (`a86b867`)
+- 249 countries, 148 currencies, correct minor units (`7655e99`)
+- Order snapshot at payment — profile edits cannot rewrite past invoices
+- Checkout block ABOVE the payment card, prefilled, collapses to a summary so a
+  returning buyer enters card details only (`3f83379`)
+- Save-back on payment + profile edit form (`cd38f4f`)
+- Vendor profile country: select, with legacy free-text migration (`c714a51`)
 
 ---
 
-## The rule that came out of this session
+## 2. PENDING — priority order
 
-Codified in `CLAUDE.md` → **"ONE FLOW, ONE IMPLEMENTATION"**. Every serious bug
-found this session was the same shape — the same flow implemented more than once,
-copies drifting apart:
+### P1. Pro `WCOrderProvider` violates the money standard (SMALL — do first)
 
-| Flow | Copies | Customer impact |
-|---|---|---|
-| Stripe checkout | 2 | checkout could not complete at all |
-| Commission fee math | 6 | wallet ≠ Stripe Connect split |
-| Wallet balance | 2 families | balance shown as 9999 vs true 120 |
-| Notifications | 3 | two surfaces broken |
-| Wizard vs Settings | 2 writers | PayPal credentials silently discarded |
-| Featured services | 2 meta keys | shortcode returned nothing |
+The only place the money contract is actively broken. Dormant purely because
+nobody has run a multi-currency plugin against it.
 
-**Verification discipline that mattered:** unit-level `wp eval-file` checks passed
-for months while checkout was 100% broken. Nothing counts as verified until the
-real user flow runs. When a fix lands, prove it by showing the *behaviour change*
-(error advancing, DB row before/after), not by asserting it.
+- `src/Integrations/WooCommerce/WCOrderProvider.php:183` — reads
+  `$item->get_total()`. Must read OUR package price from `_wpss_packages`
+  (standard §6.1: the rail never supplies the amount).
+- `:494` — stores `$order->get_currency()`. Must store the BASE currency
+  (standard §6.4). This is what would put mixed currencies into the ledger and
+  make `wpss_get_ledger_balance()` sum EUR onto USD.
 
-**Audit inventories:** `DUPLICATE-FLOWS-money.md` (9 families),
-`DUPLICATE-FLOWS-ui.md` (17), `TASKS.md` (the 1.2.2 sprint, cluster J = checkout).
+Written up in `manifest.json` →
+`money_authorities.currency_storage.KNOWN_GAP_woo_path_contradicts_this`.
+I documented it and did not fix it — that is an annotated violation, not
+compliance.
+
+### P2. Invoice display — last slice of task 12
+
+GST is captured but displayed nowhere, so it cannot do the job it was added
+for. Read from `$order->billing_address` (already decoded on the model).
+
+- Admin order screen: billing address + company + GST
+- Buyer order view: same
+- Any invoice / export surface
+
+### P3. Live Stripe charge — still UNVERIFIED
+
+The flow is proven up to the point of charge; the charge itself never ran.
+Blocked on automating Stripe's React-controlled Address Element. **A manual
+browser run settles it in five minutes** — buy the $50 service as
+`realcustomer`, whose billing profile is already complete.
+
+### P4. Smaller
+
+- Admin partial-refund input — the server accepts `refund_amount`, the metabox
+  UI only offers a full refund.
+- Vendor profile `city` is still free text next to a country select.
+- `CLI/PreflightCommand.php:591` counts gateways via `apply_filters([])`, so its
+  "N registered" figure under-reports (same bug class as P0 #3; cosmetic here).
+
+### P5. Findings NOT from this work (raised during QA, not fixed)
+
+- **F1** `.wpss-btn--primary` hover does nothing — on BuddyX **and** Twenty
+  Twenty-Four, despite the rule existing and the tokens differing. Affects every
+  primary button in the plugin.
+- **F2** `wpss-fullwidth-page` overflows horizontally on a generic theme
+  (1312px inside a 1280px viewport). Most installs do not run our themes.
+
+---
+
+## 3. Release requirement
+
+**Free and Pro must ship together.** Free's reversal fix and Pro's Woo status
+change are two halves of one behaviour: free alone makes Woo reverse **twice**
+(the old map still routes to `cancelled`); Pro alone stops Woo reversing at all.
+
+`DB_VERSION` is now **1.5.0** (`refunded_amount`, `billing_address`).
+The wallet-ledger backfill runs off its own `wpss_ledger_reconciled` flag, NOT a
+version compare, so a release that forgets to bump cannot skip it.
+
+---
+
+## 4. The lesson worth carrying
+
+**Every P0 this session was found by running the real flow, not by reading.**
+16/16 automated checks passed while the admin confirm dialog was unclickable and
+buyers were never being refunded.
+
+Equally: **five plan premises turned out false** when actually checked —
+`offline_submit` "pays vendors nothing" (it doesn't); the dispute double-wiring
+mechanism; `wpss_disputes.refund_amount` "already stored" (that column was
+dead); FluentCart and EDD "have refund handlers" (neither does). Treat every
+audit claim as a lead, and reproduce before writing code.
