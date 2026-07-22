@@ -1077,8 +1077,21 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		$gateways = apply_filters( 'wpss_payment_gateways', [] );
-		$gateway  = $gateways[ $order->payment_method ] ?? null;
+		// Ask the plugin for its registered gateways, NOT the filter with an
+		// empty array. Free registers stripe/paypal/offline into
+		// Plugin::$payment_gateways and applies the filter to THAT array once
+		// at init; re-running the filter from scratch returns only what Pro or
+		// a third party adds. So this resolved 'stripe' to null and every
+		// auto-refund on a Stripe, PayPal or offline order was silently
+		// skipped — the buyer's money never went back.
+		//
+		// PaymentController already used get_payment_gateways(); this was the
+		// odd one out.
+		$gateways = function_exists( 'wpss' ) && method_exists( wpss(), 'get_payment_gateways' )
+			? wpss()->get_payment_gateways()
+			: apply_filters( 'wpss_payment_gateways', [] );
+
+		$gateway = $gateways[ $order->payment_method ] ?? null;
 
 		if ( ! $gateway || ! method_exists( $gateway, 'process_refund' ) ) {
 			wpss_log( "Auto-refund skipped for order {$order->id}: gateway '{$order->payment_method}' not available or missing process_refund().", 'warning' );
