@@ -18,7 +18,14 @@ and ledger rows #127/#128 (they net to zero). See the test-data note in §0.
 2. **`audit/manifest.json`** → `money_authorities`,
    `ecommerce_adapter_boundary`, `portfolio_standards`. One authority per
    concept, and which one it is.
-3. **`audit/REFUND-PLAN.md`** — Parts I-IX: plan, corrections, QA results.
+3. **`audit/MONEY-FLOW-PLAN.md`** — all money work, stage by stage.
+4. **`audit/FLOW-AUDIT.md`** — what we have vs what users expect, per flow.
+   Most flows are marked NOT AUDITED, which means unknown, not fine.
+5. **`audit/REFUND-PLAN.md`** — Parts I-IX: refund sprint history.
+
+Nine superseded audits moved to `audit/archive/` (see its README). **`TASKS.md`
+is NOT archived** — it still holds 38 open items including P0s that have not
+been triaged; see FLOW-AUDIT.md section C.
 
 **Environment gotchas that cost time this session:**
 
