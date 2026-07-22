@@ -121,6 +121,29 @@ acting at once create two batches. Compounds S6.5.
 `VendorPayoutProfileService` uses `'number' => 500` and loops
 `foreach ( $user_query->get_results() … )`. Vendor 501 is silently never paid.
 
+**Open — S6.9 PayPal Payouts is gated behind PayPal approval.**
+Verified against PayPal's own docs 2026-07-23. The Payouts API (formerly Mass
+Pay) is still supported, but it is **not enabled on Business accounts by
+default**: it needs a verified Business account plus an application stating
+business type, purpose and expected volume, and approval takes days. Sandbox
+works without approval; **production does not**.
+
+Two consequences:
+
+1. A site owner can enter valid credentials, pass every settings check, and
+   still be unable to pay anyone. The code must surface "not approved yet" as a
+   distinct, explainable state — not a generic API failure. **Whether it does is
+   unverified.**
+2. PayPal Payouts is a **third** set of credentials for the owner to obtain:
+   the PayPal *checkout* gateway has its own client ID/secret, and Payouts uses
+   a separate pair (`PayoutsSettingsRenderer`). Nothing in the UI explains that
+   they are different.
+
+This strengthens decision 3 rather than weakening it: **even PayPal is not
+universally available.** Manual/CSV — no credentials, no approval, works in
+every country — is the only rail that can be relied on to exist, which is
+exactly why it is the default.
+
 **Consequence for the plan: T5/T6 must NOT build on `PayoutsBatchService` as it
 stands.** PayPal payouts have to move onto the ledger and terminate in the same
 mark-paid step as every other rail (T1). Treating PayPal as "the rail that
