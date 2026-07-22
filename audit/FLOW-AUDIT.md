@@ -84,16 +84,43 @@ several are almost certainly still live. Highest-signal, unverified:
   by the order 112 run (`ledger #127 +45.00`); re-check against the item as
   written.
 
-**Triage status: 8 of 38 done** (28/30, 29, 32, 38, 39, 40 and the duplicates
-they collapse). Confirmed real and promoted into `MONEY-FLOW-PLAN.md` S6.5-S6.8:
-PayPal payouts re-pay every run, bypass the ledger, have no batch idempotency,
-and cap at 500 vendors. Item 32 (re-run browser checkout, verify
-`platform_fee`/`vendor_earnings` persisted) is **done** — order 112 persisted
-45.00/5.00 via `compute_breakdown`.
+### Triage results — the list was stale, the count was wrong
 
-30 remain unchecked. Continue: mark each fixed / live / invalid
-with evidence, fold the live ones into the flow rows above, then archive
-`TASKS.md`.
+I repeated "36 remain" from `TASKS.md` without checking it. Cross-checked
+against current code, a third of what I checked was already fixed and several
+line references have drifted so far they no longer point at the described code.
+**Treat every remaining item as unverified until re-checked**, and do not quote
+the open count as if it were real.
+
+**Already done — close these:**
+
+| Item | Claim | Evidence it is fixed |
+|---|---|---|
+| 126 | Orders/Services pagination needs `count_by_customer()` | method exists in `OrderRepository` |
+| 127 | H#6 profile notifications surface | `templates/dashboard/sections/notifications.php` present (item 122's own text also says H#6 shipped in `a4cad8f`) |
+| 125 | H#2 "View all reviews" load-more | `load-more` wired in `frontend.js` |
+| 49 | Commission rules table "always prints Active" | now reads `get_conditions()['is_active']`; no longer unconditional |
+| 32 | Re-run checkout, verify fee/earnings persisted | order 112 persisted 45.00/5.00 via `compute_breakdown` |
+| 28/30 | PayPal + Razorpay unregistered-action wall | refuted above — JS and PHP action names match |
+
+**Confirmed still open:**
+
+| Item | Claim | Evidence it is real |
+|---|---|---|
+| 38/39/40 | PayPal payouts re-pay, no lock, 500 cap | promoted to `MONEY-FLOW-PLAN.md` S6.5-S6.8 (P0) |
+| 104/109/129 | Drag-dropped requirement files never submitted | `DataTransfer` appears 0 times in `requirements-form.js` |
+| 112 | Messaging unread badge unindexed `JSON_CONTAINS` | still 3 occurrences in `ConversationRepository` |
+| 88/124 | Manual Order page unbounded selects | no select2/AJAX search in `ManualOrderPage` |
+
+**Line references have drifted — re-locate before trusting:**
+45, 46, 47 (the Stripe subscription trio) cite lines in
+`SubscriptionBillingHandler.php` / `StripeRecurringBilling.php` that no longer
+contain the described code; the files have since moved under
+`VendorSubscriptions/` and `RecurringServices/`. These are money and need a real
+browser 3DS run, not a grep.
+
+**Not yet re-checked:** 31, 59, 82/122, 83/123, 113, 114, 115 (~30 P3s), 128,
+130, 135, 136, 139, 140, 141.
 
 ---
 
