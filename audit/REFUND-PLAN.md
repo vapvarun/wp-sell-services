@@ -964,14 +964,37 @@ is exactly what Woo does (`_billing_*` on the order vs `billing_*` on the user).
 | Buyer | Billing address on the order view and any invoice |
 | Rails | Woo already has it; EDD/SureCart/FluentCart should populate the same meta from their own checkout data |
 
-## 40. Decisions to settle before building
+## 40. Decisions — SETTLED (owner, 2026-07-22)
 
-1. **Guest checkout** — is it allowed? If so the snapshot is the only record,
-   and there is no profile to save to.
-2. **Separate shipping address?** Services are non-shippable, so billing alone
-   is probably right — Stripe's Address Element is already configured for
-   billing. Confirm before adding a second address block.
-3. **Which fields are required.** Stripe's export rule needs name + full
-   address. Tax/invoicing may also want company and VAT/GST — that is a real
-   requirement in the EU and India, and is worth deciding now rather than
-   migrating later.
+**No guest checkout.** This is a services marketplace: the buyer has to talk to
+the vendor about requirements, revisions and delivery, so an account is
+mandatory. Every purchase therefore HAS a user profile to read from and write
+back to — which is what makes "prefill and pay" possible at all, and removes
+the orphan-snapshot case entirely.
+
+**No shipping address.** Services are non-shippable. One billing address, one
+address block. Stripe's Address Element stays in billing mode; do not add a
+second block, and drop the `confirmParams.shipping` duplicate that `stripe.js`
+currently sends alongside `billing_details` — it mirrors billing for no reason.
+
+**Company and GST are required fields.** Adds to the Woo-compatible set:
+
+```
+billing_company   (Woo-standard key, reuses any existing Woo value)
+billing_gst       (new — GSTIN / VAT / tax registration number)
+```
+
+`billing_company` is already a WooCommerce key, so it inherits like the rest.
+The tax number has no Woo-core equivalent, so WPSS owns `billing_gst`; treat it
+as the general tax-registration field (GSTIN in India, VAT ID in the EU) rather
+than minting one key per jurisdiction.
+
+This matters concretely here: the platform's own Stripe account is
+India-registered, which is why the export rule forces name + address in the
+first place. A B2B buyer needs their GSTIN on the invoice to claim input
+credit, so an invoice without it is not usable by the customer.
+
+## 41. Resulting checkout, in one line
+
+A logged-in returning buyer opens checkout, sees their address already filled,
+**enters card details, and pays.** Nothing else. That is the acceptance test.
