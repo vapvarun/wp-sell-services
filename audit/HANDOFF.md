@@ -179,6 +179,35 @@ Note it is a **rolling per-credit hold**, not a calendar cycle: each credit
 matures 14 days after ITS completion. That is stronger than a fixed cycle for
 this goal, and worth stating before someone "fixes" it into cycle dates.
 
+#### CONFLICT: Stripe Connect bypasses the clearance hold entirely
+
+Pro has full Stripe Connect (`ConnectAccountService`, `ConnectOnboardingHandler`,
+`ConnectPaymentProcessor`, `ConnectWebhookHandler`, `ConnectLedgerBridge`,
+`ConnectSettingsRenderer`, `StripeConnectManager`). But it is **charge-time
+split, not scheduled payout** — the PaymentIntent carries `transfer_data`, so
+per `ConnectLedgerBridge`'s own docblock: *"Stripe pays the vendor's share
+straight to their connected account at CHARGE time — the money never passes
+through the wallet."*
+
+So on a Connect site the payout model above **does not apply to Connect
+vendors**. There is no 14-day hold, because Stripe moved the money at payment.
+A later refund needs `reverse_transfer`, which the same file describes as
+failing routinely: *"it pulls funds back out of the connected account, and once
+the vendor has paid out to their bank there is nothing to pull."*
+
+That is precisely "taking money back from vendors" — the thing the payout model
+exists to prevent. The wallet path and the Connect path want opposite things.
+
+**To make Connect obey the payout model** it has to move from destination
+charges to *separate charges and transfers*: take the full amount on the
+platform account, hold it through clearance, then create `/v1/transfers` to
+connected accounts on the weekly/bi-weekly/monthly run. That is real Connect
+Payout, it makes `reverse_transfer` unnecessary, and it is a deliberate change
+in `ConnectPaymentProcessor` — not a setting.
+
+Until then, be explicit that enabling Connect opts a site OUT of clearance
+protection.
+
 **Gaps worth deciding (not bugs):**
 
 1. `clearance_days` has `min => 0` — a site owner can set 0 and silently delete
