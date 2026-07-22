@@ -148,7 +148,67 @@ read directly by the template. Now resolved once in
 `wpss_get_order_refunded_amount()`. Same lesson as every other P0 this sprint —
 reading the code would not have caught it; running the flow did.
 
+### Payout model — ALREADY BUILT (verified 2026-07-23, no code written)
+
+Asked for: "payout weekly / bi-weekly / monthly on a minimum threshold, via
+Stripe Connect or manual CSV — so we never take money back from vendors."
+
+**All of it exists.** Do not rebuild it.
+
+| Piece | Where | Default |
+|---|---|---|
+| Cadence select | `Settings.php` `auto_withdrawal_schedule` | weekly (Mon) / biweekly (1st+15th) / **monthly (1st)** |
+| Minimum threshold | `auto_withdrawal_threshold` | 500 (min 100) |
+| On/off | `auto_withdrawal_enabled` | false |
+| Cron | `EarningsService::schedule_auto_withdrawal_cron()` | reschedules on option save |
+| Clearance hold | `wpss_payouts.clearance_days` | **14 days** |
+| Rail abstraction | Pro `Payouts/PayoutMethodsCoordinator`, `PayoutsProviderInterface` | pluggable |
+| Stripe Connect | Pro `StripeConnect/` | — |
+| PayPal Payouts | Pro `PayPalPayouts/` (batch) | — |
+| CSV | Pro `Analytics/DataExporter` | — |
+
+**The clawback protection is real and enforced**, proved empirically: a credit
+dated today reports `ledger 45.00 / in_clearance 45.00 / available 0.00`; the
+same credit dated 16 days ago reports `available 45.00`.
+`EarningsController::request_withdrawal()` gates on
+`get_summary()['available_balance']` under a row lock — the ONE balance
+authority, not a re-derivation. So a refund inside the window finds the money
+still unwithdrawn and nothing is taken back from the vendor.
+
+Note it is a **rolling per-credit hold**, not a calendar cycle: each credit
+matures 14 days after ITS completion. That is stronger than a fixed cycle for
+this goal, and worth stating before someone "fixes" it into cycle dates.
+
+**Gaps worth deciding (not bugs):**
+
+1. `clearance_days` has `min => 0` — a site owner can set 0 and silently delete
+   the entire protection this model depends on. Consider a floor, or presets
+   (Weekly / Bi-weekly / Monthly) that read as policy rather than a raw number.
+2. Not verified: whether the auto-withdrawal cron itself honours clearance, and
+   whether cadence + threshold have ever been run end to end. The settings and
+   the cron scheduler exist; **the payout run was not exercised.**
+
 ### P4. Smaller
+
+- **Two refund entry points with DISJOINT status gates.** `AjaxHandlers.php`
+  case `'refund'` allows `pending_payment` / `pending_requirements` /
+  `accepted`; the admin Process Refund button allows `completed` / `cancelled`
+  (`Admin.php:1794`). Neither covers `in_progress`, `delivered`, `revision`,
+  `late`, `on_hold`. Nobody owns "which statuses are refundable" — it is
+  duplicated and contradictory.
+- **`refunded_amount` is written BEFORE the status change, and is left lying if
+  the transition is rejected.** Reproduced on order 40: `update_status(40,
+  'refunded')` returned **false** for a paid `pending_requirements` order — the
+  status AjaxHandlers explicitly advertises as refundable — but the column had
+  already been set to 50.00. The order then reads as "$50.00 refunded" on every
+  display surface while never having been refunded. Had to restore it by hand.
+  Fix: write the amount only after the transition is accepted, or roll it back.
+- **A refund on a paid-but-uncredited order would debit a vendor who was never
+  paid.** `reverse_earnings_for_refund()` guards only on
+  `vendor_earnings === null`, but a paid order carries `vendor_earnings=45.00`
+  with ZERO ledger rows (credit lands at completion). Currently masked because
+  the transition is refused — remove that gate without fixing this and the
+  vendor goes to −45 for money they never received.
 
 - **Paid in-flight orders cannot be refunded from admin at all.** The Process
   Refund button is gated to `completed` / `cancelled` (`Admin.php:1794`), so a
