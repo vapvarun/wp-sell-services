@@ -67,15 +67,24 @@ on a theme we do not ship, and record have/expect/gap.
 have not been re-checked against current code. Several may already be fixed;
 several are almost certainly still live. Highest-signal, unverified:
 
-- **(P0) PayPal and Razorpay hit the unregistered-gateway-action wall** —
-  they register `create_order` / `capture` style actions the same way Stripe did
-  before `wpss_stripe_process_payment` was wired. If true, **those gateways are
-  broken end to end**, the same class as the P0 where buyers were never refunded.
-  Bug-card rule applies: **reproduce before fixing.**
-- (P2) Verify wallet credit + earnings roll-up on completion — partly covered by
-  the order 112 run; needs re-check against the item as written.
+- ~~**(P0) PayPal and Razorpay hit the unregistered-gateway-action wall**~~ —
+  **REFUTED 2026-07-23.** The Stripe bug was a *mismatch*: the checkout JS posted
+  `wpss_stripe_process_payment` and nothing listened. Both of these match:
 
-**Next action for this file:** triage all 38, mark each fixed / live / invalid
+  | Gateway | JS posts | PHP registers |
+  |---|---|---|
+  | PayPal | `wpss_paypal_create_order`, `wpss_paypal_capture` | both |
+  | Razorpay | `wpss_razorpay_create_order`, `wpss_razorpay_verify_payment` | both |
+
+  **Caveat:** matching action names proves the wiring exists, not that either
+  flow works. Neither has been run. They stay ❓ until a real payment is put
+  through each, to the standard set by order 112 (confirmed at the rail's API).
+
+- (P2) Verify wallet credit + earnings roll-up on completion — largely covered
+  by the order 112 run (`ledger #127 +45.00`); re-check against the item as
+  written.
+
+**Triage status: 2 of 38 done.** 36 remain unchecked. Continue: mark each fixed / live / invalid
 with evidence, fold the live ones into the flow rows above, then archive
 `TASKS.md`.
 
