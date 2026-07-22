@@ -1,0 +1,229 @@
+# Money flow — audit and plan
+
+**Single source for ALL money work.** Charge, commission, credit, clearance,
+payout, refund, dispute, reconciliation. Payout is one stage of this, not a
+separate project.
+
+- Rules that govern the code: `docs/architecture/MONEY-FLOW.md`
+- Refund sprint detail and history: `audit/REFUND-PLAN.md`
+- HANDOFF.md restates none of this; it links here. **If docs disagree, this
+  file wins.**
+
+Last updated 2026-07-23.
+
+---
+
+## 0. The decisions that shape everything
+
+1. **The platform holds the money.** Buyer pays the full amount to the platform;
+   the vendor is credited in our ledger and paid later. No real-time splits.
+2. **Payout on a schedule** — weekly / bi-weekly / monthly, above a threshold,
+   after a clearance window. A refund inside the window finds the money still
+   unpaid, so **nothing is ever clawed back from a vendor**.
+3. **Never force a rail on the site owner.** We do not know what they have —
+   Stripe Connect is not available everywhere and many owners pay by bank
+   transfer. **Manual/CSV is the default and first-class.** Stripe and PayPal
+   layer on top. A site with no gateway configured must have a complete flow.
+4. **Gateways are rails.** They report whether money moved. Every amount, split,
+   commission and log belongs to this plugin.
+5. **One authority per concept**, and money moves idempotently everywhere.
+
+---
+
+## 1. The full flow, stage by stage
+
+Each stage: what it does, whether it is verified, and what is open.
+
+### Stage 1 — Checkout and billing identity ✅ DONE
+
+Billing captured on WooCommerce's own `billing_*` user meta (+ `billing_gst`),
+249 countries / 148 currencies from one helper each, snapshotted onto the order
+at payment so a later profile edit cannot rewrite an invoice, and displayed via
+one partial on buyer + admin screens.
+
+Verified: `6b15377`, `2dc698b`. Nothing open.
+
+### Stage 2 — Charge ✅ DONE
+
+Full amount to the platform, stored once in **base currency**, correct minor
+units (3-decimal and zero-decimal currencies included).
+
+Verified end to end against the Stripe API on order 112: `pi_…` succeeded,
+5000 usd, metadata `order_id: 112`. Adapter boundary holds — Pro's
+`WCOrderProvider` reads OUR package price and the site's base currency, not
+Woo's (`4a48c11`).
+
+### Stage 3 — Order money fields ✅ DONE, with a trap
+
+`vendor_earnings` / `platform_fee` are written on the order **at payment**, via
+the single commission authority (`CommissionService::compute_breakdown`).
+
+⚠️ **The trap:** payment does NOT credit the vendor. The ledger row is created
+at *completion*. A paid in-flight order therefore has `vendor_earnings = 45.00`
+and **zero ledger rows** — confirmed on orders 40, 41 and 112. See Stage 6 open
+item 3.
+
+### Stage 4 — Completion → ledger credit ✅ DONE
+
+`order_earning` row written at completion. Verified on order 112:
+ledger `#127 +45.00`, balance 45.
+
+### Stage 5 — Clearance ✅ BUILT AND PROVEN
+
+`clearance_days` (default 14) holds credits from withdrawal. Proved
+empirically: a credit dated today reports `available 0.00` at `ledger 45.00`;
+the same credit at 16 days reports `available 45.00`.
+`request_withdrawal()` gates on `get_summary()['available_balance']` under a row
+lock — the one balance authority, not a re-derivation.
+
+**Open — S5.1** `clearance_days` has `min => 0` in `Settings.php`. Zero silently
+deletes the entire protection the model depends on. Raise the floor, or present
+as Weekly / Bi-weekly / Monthly so it reads as policy. *(10 minutes.)*
+
+### Stage 6 — Payout ❌ THE BIG GAP
+
+Cadence, threshold and cron scheduling are built
+(`auto_withdrawal_schedule`, `auto_withdrawal_threshold`,
+`schedule_auto_withdrawal_cron()`). **Nothing actually pays.**
+
+**Open — S6.1 The run stops at "pending".**
+`create_auto_withdrawal()` inserts a `wpss_withdrawals` row at
+`WITHDRAWAL_PENDING` and returns; no rail is called. "Automatic withdrawals"
+today means automatically creating requests an admin still pays by hand. That
+batch is the right starting point — it just has no ending.
+
+**Open — S6.2 No CSV export of a payout batch.**
+`Analytics/DataExporter` exists but is not wired to a payout run.
+
+**Open — S6.3 No "mark paid" terminal step.**
+Every payout must end in one place that writes the ledger debit — a rail on
+success, or the admin by hand. Must be idempotent (mark twice → debit once).
+
+**Open — S6.4 Stripe Connect is the wrong shape.**
+`ConnectPaymentProcessor` injects `transfer_data`, so per `ConnectLedgerBridge`:
+*"Stripe pays the vendor's share straight to their connected account at CHARGE
+time — the money never passes through the wallet."* That bypasses clearance
+entirely and makes refunds depend on `reverse_transfer`, which the same file
+says *"fails routinely … once the vendor has paid out to their bank there is
+nothing to pull."* Directly opposed to decision 2.
+
+### Stage 7 — Refund, partial refund, dispute ✅ MOSTLY DONE
+
+One proportional formula (`wpss_get_refund_vendor_share`), one shared settle
+path, clamped partials, idempotent reversal. Verified against the Stripe API on
+order 112: `re_… succeeded 5000 usd`, exactly one refund, ledger `#128 −45.00`.
+Dispute full + partial verified. `apply_refund_status()` now writes the amount,
+transitions, and undoes the write if the transition is refused (`085cf14`).
+
+**Open — S7.1 Refundable statuses are duplicated and contradictory.**
+`AjaxHandlers` case `'refund'` allows `pending_payment` / `pending_requirements`
+/ `accepted`; the admin button allows `completed` / `cancelled`
+(`Admin.php:1794`). Neither covers `in_progress`, `delivered`, `revision`,
+`late`, `on_hold`. **Nobody owns "which statuses are refundable."** Needs one
+authority, and a policy decision on the set.
+
+**Open — S7.2 A refund on a paid-but-uncredited order would debit a vendor who
+was never paid.** `reverse_earnings_for_refund()` guards only on
+`vendor_earnings === null`, but Stage 3's trap means a paid order has earnings
+set with no ledger row. Currently masked because the transition is refused —
+**fix this before widening S7.1's gate**, or the vendor goes to −45 for money
+they never received.
+
+**Open — S7.3** Admin metabox offers only full refunds; the server already
+accepts `refund_amount`.
+
+### Stage 8 — Reconciliation and reporting ⚠️ UNAUDITED
+
+Pro's `LedgerExporter` reads `balance_after` for statement CSVs. Not reviewed
+this sprint. Assume nothing.
+
+**Open — S8.1** `CLI/PreflightCommand.php:591` counts gateways via
+`apply_filters([])`, so its "N registered" figure under-reports (same bug class
+as the P0 that meant buyers were never refunded; cosmetic here).
+
+---
+
+## 2. Target payout flow (Stage 6 detail)
+
+```
+charge (FULL, platform) → completion credit → clearance
+  └─ scheduled run: matured balance ≥ threshold
+       └─ payout batch (pending)
+            ├─ manual  → CSV → admin pays offline → MARK PAID
+            ├─ stripe  → /v1/transfers → MARK PAID on success
+            └─ paypal  → batch payout → MARK PAID on success
+                 └─ MARK PAID (one terminal step) → ledger debit
+```
+
+**The admin's actual flow** — this is the acceptance test:
+
+1. Settings → Payouts: cadence, threshold, clearance, and **payout method:
+   Manual (CSV) / Stripe / PayPal**. Manual is default and needs no config.
+2. Run fires. Admin sees a **Payouts** screen: vendor, matured amount, method,
+   status.
+3. Manual: *Export CSV* → pay by bank/PayPal outside the system → *Mark Paid*
+   (per row and bulk).
+4. Stripe/PayPal: rows settle themselves; failures stay `pending` with the error
+   visible and retryable. A partial failure never blocks the batch.
+5. Marked-paid writes the ledger debit; vendor balance drops.
+6. Vendor sees the payout and its status in their dashboard.
+
+Anything an admin cannot do from that screen is not done.
+
+---
+
+## 3. Tasks, sequenced
+
+Manual path first — it ships a complete flow for every site owner on earth with
+no gateway dependency. Then rails. Charge-time changes last, because they carry
+migration risk.
+
+| # | Repo | Task | Stage |
+|---|---|---|---|
+| T1 | free | Payouts admin screen + **mark paid** (single + bulk, idempotent, writes ledger debit) | S6.1 S6.3 |
+| T2 | free | CSV export of a batch, reusing `DataExporter`. **Export never mutates status** | S6.2 |
+| T3 | free | `clearance_days` floor / presets | S5.1 |
+| T4 | free | Rail seam `apply_filters( 'wpss_execute_payout', … )`. Free implements nothing — free-only sites stay manual, and that is a complete flow | S6 |
+| T5 | pro | `StripeConnectPayoutsProvider implements PayoutsProviderInterface` — N × `/v1/transfers`, **Idempotency-Key from withdrawal_id**, per-item results | S6.4 |
+| T6 | pro | `PayoutMethodsCoordinator` implements the seam, dispatching by vendor method | S6.4 |
+| T7 | pro | Remove `transfer_data` from `ConnectPaymentProcessor` | S6.4 |
+| T8 | pro | Retire the `reverse_transfer` clawback path for new orders | S6.4 |
+| T9 | free | One authority for refundable statuses + policy decision | S7.1 |
+| T10 | free | Guard reversal against uncredited orders — **before T9** | S7.2 |
+| T11 | free | Admin partial-refund input | S7.3 |
+| T12 | free | Audit `LedgerExporter` / reconciliation; fix Preflight gateway count | S8 |
+
+**T7 migration hazard — do not skip.** Sites already on Connect have in-flight
+orders that WERE split; those vendors must not be credited again at completion.
+`ConnectLedgerBridge` exists to prevent exactly that double credit and must keep
+handling pre-change orders while new orders take the wallet path. Gate on
+something durable per order (`connect_transfer_id` present), never a global
+setting.
+
+---
+
+## 4. Verification — nothing is done until these pass
+
+**Payout**
+1. Threshold: under → skipped; over → included.
+2. Clearance: a credit inside the window is NOT paid, even above threshold.
+3. Cadence: weekly / bi-weekly / monthly each schedule and fire.
+4. **Manual path end to end on a site with NO Stripe and NO PayPal configured**:
+   batch → CSV → mark paid → ledger debit → vendor balance drops.
+5. Mark-paid idempotency: twice = one debit.
+6. Export does not mutate status.
+7. Real Stripe test-mode transfer confirmed **at the Stripe API** — the standard
+   set by order 112, not our own DB columns.
+8. Cron run twice → ONE transfer, ONE debit.
+9. One bad destination does not block the batch.
+
+**Refund**
+10. Refund during clearance: no `reverse_transfer`, no negative balance.
+11. Refund on a paid-but-uncredited order does not debit the vendor.
+12. Legacy split orders still reconcile after T7 — no double credit.
+
+**Every surface**
+13. Payouts list at 2000+ rows: paginated, `COUNT(*)`, indexed, no N+1.
+14. 390px, dark mode, RTL, empty/error/loading states.
+15. Verified in a browser, not by reading code — every money defect found so far
+    was found by running the flow while automated checks passed.

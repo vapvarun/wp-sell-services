@@ -148,10 +148,12 @@ read directly by the template. Now resolved once in
 `wpss_get_order_refunded_amount()`. Same lesson as every other P0 this sprint —
 reading the code would not have caught it; running the flow did.
 
-### Payout model — see `audit/PAYOUT-PLAN.md`
+### Money flow — see `audit/MONEY-FLOW-PLAN.md`
 
 Not restated here, to stop the two drifting. That file is the single source for
-payout cadence, thresholds, clearance, rails, and the Stripe Connect conflict.
+the WHOLE money flow: charge, commission, credit, clearance, payout, refund,
+dispute and reconciliation, stage by stage with what is open in each. Payout is
+one stage of it, not a separate project.
 
 Correction to an earlier claim in this file: the payout model is **not** "already
 built". Cadence, threshold, cron and the clearance hold are built and the hold is
@@ -161,6 +163,9 @@ the plan's audit table.
 
 Money-flow rules for anyone touching this area:
 `docs/architecture/MONEY-FLOW.md`.
+
+The refund and payout items formerly listed under P4 below now live in that
+plan, so there is one money task list rather than three.
 
 ### P4. Smaller
 

@@ -3,7 +3,7 @@
 How money moves through this plugin, and the rules that keep it correct. Read
 this before touching anything that charges, credits, refunds, or pays out.
 
-Live plan and open work: `audit/PAYOUT-PLAN.md`. This document describes the
+Live plan and open work: `audit/MONEY-FLOW-PLAN.md`. This document describes the
 rules; that one tracks the tasks. If they disagree, the plan is newer.
 
 ---
@@ -127,7 +127,7 @@ Any code that reverses earnings must not assume a credit exists just because
 Connect is currently wired as a **charge-time split** (`transfer_data` on the
 PaymentIntent), which pays the vendor at charge and bypasses clearance entirely.
 That contradicts §1 and is scheduled to move to scheduled transfers — see
-`audit/PAYOUT-PLAN.md` P7/P8, including the migration hazard for orders that
+`audit/MONEY-FLOW-PLAN.md` T7/T8, including the migration hazard for orders that
 were already split.
 
 ---
