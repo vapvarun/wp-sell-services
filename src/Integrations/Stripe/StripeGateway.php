@@ -995,6 +995,15 @@ class StripeGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Remember any billing details the buyer corrected at checkout, BEFORE
+		// the order is created. mark_as_paid() snapshots the address from the
+		// profile, so saving after that point would stamp the order with the
+		// stale address and silently discard the correction.
+		//
+		// Nonce was verified at the top of this handler.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		wpss_save_billing_from_request( $_POST );
+
 		$order_provider = wpss_get_order_provider();
 
 		if ( ! $order_provider ) {

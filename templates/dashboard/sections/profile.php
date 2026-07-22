@@ -106,6 +106,27 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			</div>
 		</div>
 
+		<div class="wpss-profile-form__section">
+			<h3><?php esc_html_e( 'Billing details', 'wp-sell-services' ); ?></h3>
+			<p class="wpss-form-hint">
+				<?php esc_html_e( 'Used on your invoices and filled in for you at checkout, so you only have to enter it once.', 'wp-sell-services' ); ?>
+			</p>
+			<?php
+			// The SAME partial checkout renders — one field definition, one
+			// markup, so the two can never drift. Forced open here because this
+			// is the edit surface; checkout collapses it to a summary.
+			//
+			// Shown to every user, not just vendors: a buyer needs a billing
+			// address for invoices and never sees the seller fields below.
+			$wpss_billing  = wpss_get_billing_address( $user->ID );
+			$wpss_complete = false;
+			wpss_get_template_part( 'partials/billing', 'fields', array(
+				'wpss_billing'  => $wpss_billing,
+				'wpss_complete' => $wpss_complete,
+			) );
+			?>
+		</div>
+
 		<?php if ( $is_vendor && $vendor_profile ) : ?>
 			<div class="wpss-profile-form__section">
 				<h3><?php esc_html_e( 'Seller Profile', 'wp-sell-services' ); ?></h3>

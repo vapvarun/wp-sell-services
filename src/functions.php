@@ -1013,6 +1013,50 @@ function wpss_save_billing_address( int $user_id, array $address ): bool {
 }
 
 /**
+ * Save billing fields posted with a checkout submission to the buyer's profile.
+ *
+ * Gateway-agnostic on purpose: any checkout completion handler — Stripe,
+ * PayPal, Razorpay, offline — calls this with its own request payload, so an
+ * address the buyer corrected at checkout is remembered for next time no matter
+ * how they paid.
+ *
+ * MUST run BEFORE the order is marked paid. mark_as_paid() snapshots the
+ * address from the profile, so saving afterwards would stamp the order with the
+ * OLD address and silently discard the correction the buyer just made.
+ *
+ * Only writes keys actually present in the request, so a gateway that posts a
+ * partial payload cannot blank the rest of the profile.
+ *
+ * @since 1.2.3
+ *
+ * @param array $request Raw request data ($_POST or a REST payload).
+ * @param int   $user_id Optional. Defaults to the current user.
+ * @return bool True when something was written.
+ */
+function wpss_save_billing_from_request( array $request, int $user_id = 0 ): bool {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	if ( $user_id <= 0 ) {
+		return false;
+	}
+
+	$posted = array();
+
+	foreach ( array_keys( wpss_get_billing_fields() ) as $key ) {
+		if ( isset( $request[ $key ] ) ) {
+			$posted[ $key ] = wp_unslash( $request[ $key ] );
+		}
+	}
+
+	if ( empty( $posted ) ) {
+		return false;
+	}
+
+	// wpss_save_billing_address() sanitises per field type.
+	return wpss_save_billing_address( $user_id, $posted );
+}
+
+/**
  * Whether a user's billing address has everything required.
  *
  * Drives the checkout decision: complete means the address block collapses and

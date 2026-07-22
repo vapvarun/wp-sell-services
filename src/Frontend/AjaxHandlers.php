@@ -3540,6 +3540,13 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
 		}
 
+		// Billing address — available to ALL users, not just vendors, because a
+		// buyer needs one for invoices and they never see the vendor fields.
+		// Shares the exact helper the checkout save-back uses, so both surfaces
+		// write the same WooCommerce-compatible keys with the same sanitising.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+		wpss_save_billing_from_request( $_POST, $user_id );
+
 		// Update display name (available for all users).
 		$display_name = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );
 		if ( ! empty( $display_name ) ) {
