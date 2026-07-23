@@ -185,7 +185,109 @@ each screen is touched in Phases 1-3, not as separate work:
 
 ---
 
-## 7. Definition of done
+## 7. Task list (execution order — tick as they land)
+
+Each task is one commit, browser-verified before/after. Phases don't overlap:
+finishing Phase 1 makes Phase 2 safe, and so on.
+
+### Phase 1 — remove per-page CSS/JS (the source of the duplication)
+
+| # | Task | Size | Status |
+|---|---|---|---|
+| 1.1 | `VendorsPage` inline `<style>` — 30 selectors, 21 dup | 182 lines | **DONE** `e60c4da` |
+| 1.2 | `ServiceModerationPage` inline `<style>` — 7 selectors, 2 dup | small | |
+| 1.3 | `ProTeaser` inline `<style>` — 8 selectors | small | |
+| 1.4 | `UpgradePage` inline `<style>` — 14 selectors | medium | |
+| 1.5 | `SetupWizardPage` inline `<style>` — 25 selectors | medium | |
+| 1.6 | `Admin.php` — 2 inline `<script>` + 1 inline `onclick` | small | |
+| 1.7 | `VendorsPage` + `ServiceModerationPage` + `SetupWizardPage` inline `<script>` | medium | |
+| 1.8 | `ServiceMetabox` — 8 inline `<script>` (worst single file) | large | |
+
+### Phase 2 — collapse competing roots (one component per commit, shim for one release)
+
+| # | Task | Roots | Status |
+|---|---|---|---|
+| 2.1 | Button — `.wpss-button` → `.wpss-btn` | 2 → 1 | |
+| 2.2 | Badge / status — `.wpss-status-*`, `.wpss-tag` → `.wpss-badge--*` | 3 → 1 | |
+| 2.3 | Empty state — `.wpss-no-items`, `.wpss-no-data` → `.wpss-empty-state` | 3 → 1 | |
+| 2.4 | Input — `.wpss-field`, `.wpss-form-field`, `.wpss-form-row` → `.wpss-form-group` + `.wpss-input` | 7 → 2 | |
+| 2.5 | Card — `.wpss-panel`, `.wpss-section`, `.wpss-detail-card` → `.wpss-card` + modifiers | 6 → 1+2 | |
+| 2.6 | Table — introduce `.wpss-table`; per-screen classes keep widths only | 9 → 1 | |
+
+### Phase 3 — one definition per class
+
+| # | Task | Status |
+|---|---|---|
+| 3.1 | Resolve cross-sheet duplicates (`.wpss-btn` ×7, `.wpss-modal` ×6, …) — keep one, delete the rest, wire `depends` | |
+| 3.2 | Add the gate to `bin/ux-audit.sh`: fail when any `.wpss-*` class is defined in >1 non-RTL sheet | |
+
+### Phase 4 — screen anatomy (do while touching each screen)
+
+| # | Task | Status |
+|---|---|---|
+| 4.1 | `render_page_header()` helper + adopt on all 14 screens | |
+| 4.2 | Apply the stat-card rule everywhere (Dashboard 7 → 2-3; Moderation 4 → 0-2) | |
+| 4.3 | Withdrawals: Actions column → `.row-actions`; add search; add sortable headers | |
+| 4.4 | Audit Log: actor/event filters + search. My Notifications: read/unread filter + pagination | |
+| 4.5 | Moderation card grid → table, or record the exception (**owner decision**) | |
+| 4.6 | Vendors Earnings → wallet ledger, or relabel (**owner decision**) | |
+
+### Phase 6 — FRONTEND, screen by screen, on seeded data
+
+**Same discipline as the admin, and the frontend matters more** — it is what the
+site owner's customers and vendors actually see. Every screen gets: seeded data
+first, then rendered at 1440 + 390, light + dark, LTR + RTL, in **both roles**
+(buyer and vendor), across empty / populated / error states.
+
+**Seed before starting.** Every bug below was invisible on a near-empty site;
+the broken card only appeared because a real request existed. Required:
+20+ services across categories, 10+ buyer requests with and without offers,
+30+ orders across every status, a vendor with 0 of everything, long titles and
+long vendor names (the overflow cases), and at least one order with milestones.
+
+| # | Screen | Seeded state needed | Status |
+|---|---|---|---|
+| 6.1 | Dashboard → Buyer Requests | requests with 0 and N offers, long titles | **card layout FIXED** (below) |
+| 6.2 | Dashboard → My Orders / Sales Orders | orders in every status | |
+| 6.3 | Dashboard → Earnings & Payouts | positive, zero and NEGATIVE balance; in-clearance | |
+| 6.4 | Dashboard → My Services | 0, 1 and 20+ services; draft/pending/published | |
+| 6.5 | Dashboard → Messages | 0 and 50+ conversations, long messages | |
+| 6.6 | Dashboard → Portfolio / Analytics / Favorites / Disputes / Profile | empty + populated | |
+| 6.7 | Service archive + single service | long titles, no image, many packages, no reviews | |
+| 6.8 | Buyer request archive + single request | open/closed, with/without offers | |
+| 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | |
+| 6.10 | Become a vendor / registration | open / approval / closed states | |
+| 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | |
+
+**Known frontend findings so far**
+
+- **FIXED — Buyer Requests card collapsed to one word per line.**
+  `.wpss-request-card__main` had `min-width: 0` and **no grow factor**, while
+  `__actions` had `flex-shrink: 0`; the five action links wanted ~490px of a
+  ~500px column, so main computed to **0px** and the title wrapped behind the
+  status badge. Root cause is the duplication theme again:
+  `.wpss-request-card__actions` is declared in **two** stylesheets —
+  `buyer-request.css` with `flex-flow: row wrap`, `unified-dashboard.css`
+  without wrapping — and the dashboard loads the non-wrapping one. Fix: card
+  wraps, main gets `flex: 1 1 260px` floor, actions wrap and align end.
+- **OPEN — action styling is inconsistent on that card.** "Delete" is a solid
+  red button while View Offers / Close / Edit are plain text links. Pick one
+  ladder (`.wpss-btn--ghost` for secondary, `--danger` for destructive) — folds
+  into Phase 2.1.
+
+### Phase 5 — drift cleanup
+
+| # | Task | Status |
+|---|---|---|
+| 5.1 | 17 breakpoints → 3 | |
+| 5.2 | `:focus-visible` ring wherever `outline: none` removed one (~24 places) | |
+| 5.3 | Drop the Phase 2 back-compat shims | |
+| 5.4 | Seed the big dataset (§5) and verify pagination + empty states on all screens | |
+| 5.5 | Per-screen records under `audit/screens/` — 1440 + 390, light + dark + RTL | |
+
+---
+
+## 8. Definition of done
 
 - [ ] Zero inline `<style>` in admin PHP
 - [ ] One root per component (card, input, button, badge, empty, table, modal)

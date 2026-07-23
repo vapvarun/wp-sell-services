@@ -634,9 +634,22 @@
 	background: var(--wpss-white, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
+	/* Actions drop to their own line when the title cannot keep its floor.
+	   The dashboard content column is ~500px and the five action links alone
+	   want ~490px, so side-by-side is not physically possible here: without
+	   wrapping, the title column was squeezed to zero. */
+	flex-wrap: wrap;
 }
 
 .wpss-request-card__main {
+	/* flex:1 is load-bearing, not decorative. Without a grow factor this column
+	   had none while __actions refused to shrink, so main collapsed to ZERO
+	   width: the request title wrapped one word per line behind the status
+	   badge while the action links ate the entire row. min-width:0 alone only
+	   permits the collapse — the grow factor is what claims the space back.
+	   The 260px basis is a FLOOR: below it the card wraps and the actions take
+	   their own line, rather than the title shrinking to one word per line. */
+	flex: 1 1 260px;
 	min-width: 0;
 }
 
@@ -663,7 +676,14 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
+	/* Wrap rather than crush the title. buyer-request.css declares this same
+	   class with `flex-flow: row wrap`; this sheet wins on the dashboard, so
+	   without wrapping here the two definitions disagreed and the dashboard got
+	   the unwrappable one. (Duplicate class — Phase 3 of ADMIN-UX-PLAN keeps
+	   exactly one definition; until then the two must at least agree.) */
+	flex-wrap: wrap;
 	flex-shrink: 0;
+	justify-content: flex-end;
 }
 
 /* ==========================================================================
