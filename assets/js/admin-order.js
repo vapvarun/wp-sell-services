@@ -273,8 +273,20 @@
 
 		var $button = $(this);
 		var orderId = $button.data('order');
+		var orderTotal = parseFloat($button.data('order-total')) || 0;
 
-		wpssConfirm(wpssOrderAdmin.i18n.confirmRefund, {
+		// The amount input sits next to the button (order-view postbox or the
+		// metabox row). A blank or full value is a full refund; a smaller value
+		// is a partial one, and the server resolves the status from the amount.
+		var rawAmount = $button.closest('.inside, .wpss-refund-controls').find('.wpss-refund-amount').val();
+		var amount = parseFloat(rawAmount);
+		var isPartial = !isNaN(amount) && amount > 0 && amount < orderTotal;
+
+		var confirmMessage = isPartial && wpssOrderAdmin.i18n.confirmPartialRefund
+			? wpssOrderAdmin.i18n.confirmPartialRefund
+			: wpssOrderAdmin.i18n.confirmRefund;
+
+		wpssConfirm(confirmMessage, {
 			confirmText: wpssOrderAdmin.i18n.refund || 'Refund',
 			tone: 'danger'
 		}).then(function(confirmed) {
@@ -291,7 +303,8 @@
 					action: 'wpss_admin_update_order_status',
 					nonce: wpssOrderAdmin.nonce,
 					order_id: orderId,
-					status: 'refunded'
+					status: isPartial ? 'partially_refunded' : 'refunded',
+					refund_amount: isPartial ? amount : 0
 				},
 				success: function(response) {
 					if (response.success) {

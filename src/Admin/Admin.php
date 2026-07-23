@@ -1808,14 +1808,30 @@ class Admin {
 
 					<!-- Admin Actions -->
 					<?php if ( current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) : ?>
+						<?php
+						$wpss_already_refunded = wpss_get_order_refunded_amount( $order );
+						$wpss_refundable_left  = max( 0, (float) $order->total - $wpss_already_refunded );
+						?>
 						<div class="postbox">
 							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Admin Actions', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
-								<button type="button" class="button button-link-delete wpss-process-refund" data-order="<?php echo esc_attr( $order_id ); ?>">
+								<p>
+									<label for="wpss-refund-amount-<?php echo esc_attr( $order_id ); ?>">
+										<strong><?php esc_html_e( 'Refund amount', 'wp-sell-services' ); ?></strong>
+									</label><br>
+									<input type="number" id="wpss-refund-amount-<?php echo esc_attr( $order_id ); ?>"
+										class="wpss-refund-amount" min="0" step="0.01"
+										max="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
+										placeholder="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
+										style="width: 140px;">
+								</p>
+								<button type="button" class="button button-link-delete wpss-process-refund"
+									data-order="<?php echo esc_attr( $order_id ); ?>"
+									data-order-total="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>">
 									<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
 								</button>
 								<p class="description">
-									<?php esc_html_e( 'Sets the order status to Refunded and refunds the gateway payment where supported.', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Leave the amount blank for a full refund. A smaller amount issues a partial refund and claws back the vendor\'s proportional share. The gateway payment is refunded where supported.', 'wp-sell-services' ); ?>
 								</p>
 							</div>
 						</div>

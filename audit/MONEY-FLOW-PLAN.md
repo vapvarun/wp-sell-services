@@ -233,6 +233,15 @@ set with no ledger row. Currently masked because the transition is refused —
 **fix this before widening S7.1's gate**, or the vendor goes to −45 for money
 they never received.
 
+**RESOLVED — S7.3 (T11, 2026-07-24).** Both admin refund surfaces (the
+order-view Admin Actions postbox and the order metabox) now render a "Refund
+amount" number input alongside Process Refund. The JS reads it: blank or the full
+remaining amount stays a full refund; a smaller value posts
+`status=partially_refunded` + `refund_amount`, which `ajax_update_status()` routes
+through `apply_refund_status()` (the same sizing/clamping path the vendor AJAX
+already used). The input's max/placeholder is the REMAINING refundable
+(total − already refunded), so successive partials can never exceed the order.
+
 **Open — S7.3** Admin metabox offers only full refunds; the server already
 accepts `refund_amount`.
 
@@ -294,7 +303,7 @@ migration risk.
 | T8 | pro | Retire the `reverse_transfer` clawback path for new orders | S6.4 |
 | ~~T9~~ | free | ✅ DONE 2026-07-24. `wpss_order_is_refundable()` is the ONE authority (paid && not fully refunded, filterable); consulted by the AJAX action + both admin buttons. Natural transition map now reaches refunded/partially_refunded from every paid stage. Verified: order 40 (pending_requirements, paid) refunded from admin — impossible before | S7.1 |
 | ~~T10~~ | free | ✅ DONE 2026-07-24 (landed WITH T9). Reversal now skips when the ledger holds no completed credit for the order. Verified: refunding uncredited order 40 created 0 reversal rows and left the vendor balance at $130 (no phantom −$45) | S7.2 |
-| T11 | free | Admin partial-refund input | S7.3 |
+| ~~T11~~ | free | ✅ DONE 2026-07-24. Admin refund UI (order-view postbox + metabox) gained an amount input; blank/full = full refund, a smaller value routes through apply_refund_status() as partially_refunded. Verified: partial $20 on a $50 order → status partially_refunded, refunded_amount 20, input placeholder drops to the remaining $30 | S7.3 |
 | T12 | free | Audit `LedgerExporter` / reconciliation; fix Preflight gateway count | S8 |
 
 **T7 migration hazard — do not skip.** Sites already on Connect have in-flight
