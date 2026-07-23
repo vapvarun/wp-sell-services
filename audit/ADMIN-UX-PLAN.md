@@ -448,11 +448,62 @@ long vendor names (the overflow cases), and at least one order with milestones.
 | 6.4 | Dashboard → My Services | 0, 1 and 20+ services; draft/pending/published | looked, ok at 4 |
 | 6.5 | Dashboard → Messages | 0 and 50+ conversations, long messages | **looked, ok**; needs 50+ for the scroll case |
 | 6.6 | Dashboard → Portfolio / Analytics / Favorites / Disputes / Profile | empty + populated | **all looked**; Portfolio + Analytics findings recorded |
-| 6.7 | Service archive + single service | long titles, no image, many packages, no reviews | |
+| 6.7 | Service archive + single service | long titles, no image, many packages, no reviews | **DONE 2026-07-24 — 2 fixes** (below) |
 | 6.8 | Buyer request archive + single request | open/closed, with/without offers | |
 | 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | |
 | 6.10 | Become a vendor / registration | open / approval / closed states | |
 | 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | |
+
+### 6.7 Service archive + single service — rendered 2026-07-24
+
+**Seeded first** with the plugin's own `wp wpss demo marketplace --orders=60`
+(6 vendors, 12 buyers, 12 services w/ images, 60 orders across 13 statuses,
+5 reviews, 6 requests + 15 proposals, 23 conversations, 36 favorites), plus a
+hand-built edge-case service (#121): 200-char title, NO image, 5 package tiers,
+zero reviews.
+
+**Archive — clean at 1440 and 390.** Filters sidebar, 14 cards, pagination.
+Long titles clamp to 2 lines; a service with no image renders
+`.wpss-service-card__placeholder` (icon on a tint) that preserves the 238px
+media height so the grid stays aligned. At 390 the filter rail collapses to a
+"Filters" toggle and cards go 1-up; no horizontal scroll.
+*Method note:* full-page screenshots on this site must scroll first — lazy
+images render as blank voids otherwise, which briefly looked like a missing
+placeholder bug and was not one.
+
+**Single service — two real bugs found and FIXED.**
+
+1. **Extra package tiers were invisible AND unclickable.**
+   `.wpss-package-tab { flex: 1 }` cannot shrink below its min-content width and
+   the widget wrapper is `overflow: hidden`, so a service with more tiers than
+   fit had its last tab(s) rendered *outside* the card and clipped — measured
+   `scrollWidth 445` vs `clientWidth 338`, last tab 107px beyond the edge,
+   `lastTabReachable: false`. A buyer could not see or select the vendor's top
+   package. Reachable in the wild: the tier count is filterable
+   (`wpss_service_max_packages`, default 3) and tier titles are vendor-authored
+   free text (wizard "Tier title", no maxlength, hint suggests "Logo + 3
+   revisions"). Fix: the strip scrolls (`overflow-x: auto`) and tabs use
+   `flex: 1 0 33.333%` + `min-width: 0` + `border-box`, so three tiers still
+   divide the strip exactly as before while a fourth+ scrolls into reach.
+   *Rejected first attempt:* `min-width: 33.333%` — padding pushed each tab past
+   a third, so the common 3-tier case started scrolling and cut off tier 3.
+   Verified: 3 tiers unchanged (no scroll, all visible) at 1440 and 390;
+   5 tiers scroll with every tier reachable; no page-level scroll.
+
+2. **Wide sidebar content blew out the mobile layout.** `.wpss-service-sidebar`
+   is a grid item left at `min-width: auto`, so its min-content size (driven by
+   the tab strip) pushed it to 447px inside a 336px track at 390px — overflowing
+   the viewport and getting silently clipped by the theme's `overflow-x: hidden`
+   rather than scrolling inside its own widget. Its sibling
+   `.wpss-service-main` already carried `min-width: 0`; the sidebar never got
+   the same treatment. Fixed by matching it. This also hardens the sidebar
+   against any other wide content (long vendor names, badges).
+
+**Dedup:** `.wpss-packages-tabs` / `.wpss-package-tab` were defined in BOTH
+`frontend.css` and `single-service.css` with different padding, font-weight and
+active indicator. Consolidated into `frontend.css` (loads on every frontend
+surface, so the widget can never render unstyled), keeping single-service's
+visual treatment; the duplicate is gone.
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 

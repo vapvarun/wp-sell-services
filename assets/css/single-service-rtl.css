@@ -205,6 +205,12 @@
 	overscroll-behavior: contain;
 	width: 340px;
 	justify-self: end;
+	/* Match .wpss-service-main: a grid item defaults to min-width:auto, so its
+	   min-content size can push it past its track. Wide sidebar content (a
+	   package tab strip with several tiers, a long vendor name) would then
+	   overflow the page and get clipped by the theme's overflow-x:hidden
+	   instead of scrolling inside its own widget. */
+	min-width: 0;
 }
 
 @media (max-width: 991px) {
@@ -1015,32 +1021,11 @@
 	overflow: hidden;
 }
 
-.wpss-packages-tabs {
-	display: flex;
-	border-bottom: 1px solid var(--wpss-border);
-}
-
-.wpss-package-tab {
-	flex: 1;
-	padding: 1rem;
-	background: none;
-	border: none;
-	border-bottom: 2px solid transparent;
-	cursor: pointer;
-	font-weight: 500;
-	color: var(--wpss-text-muted);
-	transition: all var(--wpss-transition);
-}
-
-.wpss-package-tab:hover {
-	color: var(--wpss-text);
-}
-
-.wpss-package-tab.active {
-	color: var(--wpss-primary);
-	border-bottom-color: var(--wpss-primary);
-	border-radius: 0;
-}
+/* Package tier tabs are owned by frontend.css (search "Package tier tabs"),
+   which loads on every frontend surface. This file's copy was removed: it
+   duplicated the rules with different padding/weight and, like the original,
+   could not scroll — so extra tiers were clipped out of reach by the widget's
+   overflow:hidden. The canonical block keeps this file's visual treatment. */
 
 .wpss-packages-content {
 	padding: 1.5rem;

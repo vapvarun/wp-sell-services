@@ -908,26 +908,55 @@ article.wpss-service-card:hover {
 	overflow: hidden;
 }
 
+/* Package tier tabs — ONE definition (single-service.css used to carry a
+   second, divergent copy that won the cascade on the only screen that renders
+   this widget; the two disagreed on padding, weight and the active indicator).
+   Lives here because frontend.css loads on every frontend surface, so the
+   widget can never render unstyled.
+
+   The strip scrolls. `flex: 1` alone could not shrink tabs below their
+   min-content width, and the widget wrapper is `overflow: hidden`, so a
+   service with more tiers than fit had its last tab(s) rendered OUTSIDE the
+   card and clipped — invisible AND unclickable, meaning a buyer could not see
+   or select the vendor's top package. Three tiers still divide the strip
+   exactly as before (min-width 33.333% + grow); a fourth or fifth scrolls into
+   reach instead of disappearing. Tier titles are vendor-authored free text
+   (wizard "Tier title" field, no maxlength) and the tier count is filterable
+   via `wpss_service_max_packages`, so neither label length nor tier count can
+   be assumed. */
 .wpss-packages-tabs {
 	display: flex;
 	border-bottom: 1px solid var(--wpss-border);
+	overflow-x: auto;
+	scrollbar-width: thin;
 }
 
 .wpss-package-tab {
-	flex: 1;
-	padding: 15px;
-	background: var(--wpss-background);
+	/* basis (not min-width) so the 1rem padding is inside the third — with
+	   border-box, three tiers total exactly 100% and never scroll; shrink 0
+	   keeps a fourth+ tier readable and pushes it into the scroll instead of
+	   collapsing every tab to an illegible sliver. */
+	flex: 1 0 33.333%;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 1rem;
+	background: none;
 	border: none;
+	border-bottom: 2px solid transparent;
 	font-size: 14px;
-	font-weight: 600;
+	font-weight: 500;
+	color: var(--wpss-text-muted);
 	cursor: pointer;
 	transition: all var(--wpss-transition);
 }
 
-.wpss-package-tab:hover,
+.wpss-package-tab:hover {
+	color: var(--wpss-text);
+}
+
 .wpss-package-tab.active {
-	background: var(--wpss-white);
 	color: var(--wpss-primary);
+	border-bottom-color: var(--wpss-primary);
 	border-radius: 0;
 }
 
