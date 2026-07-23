@@ -239,7 +239,21 @@ finishing Phase 1 makes Phase 2 safe, and so on.
 | 1.7a | `ServiceModerationPage` inline `<script>` (144 lines) → `admin-moderation.js` | medium | **DONE** |
 | 1.7b | `SetupWizardPage` inline `<script>` (262 lines, 20 PHP interpolations) | medium | |
 | 1.7c | `VendorsPage` inline `<script>` (695 lines, 32 interpolations) | large | |
-| 1.8 | `ServiceMetabox` — 8 inline `<script>`, 229 lines, **69 PHP interpolations** (densest coupling in the plugin) | large | |
+| 1.8 | `ServiceMetabox` — 8 blocks were 4 DEAD duplicate `wp.template` markup + 4 live ones. Deleted the dead methods (337 lines). | large | **DONE** |
+
+**ServiceMetabox was not a JS-extraction at all — it was dead-code + dedup.**
+The 8 `<script>` blocks the audit flagged are ALL `<script type="text/html">`
+`wp.template` markup, not executable JS (F2 false positives — the idiomatic
+WordPress client-template pattern). But each template id
+(`tmpl-wpss-package-item` etc.) was defined **twice**: once in a live
+`render_*_content()` path (reached via the registered tabbed
+`render_service_data_metabox`) and once in an orphaned `render_*_metabox()`
+method left over from before the metabox was consolidated into tabs. Those four
+old methods (packages/faqs/requirements/addons, 337 lines) were registered
+nowhere and called nowhere — `wp.template` fetched the FIRST id and the second
+was dead markup. Deleting them removed the duplicate-id bug and the F2 flags in
+one move. Verified: metabox renders 2 seeded packages, "Add Package" instantiates
+a 3rd from the surviving template, and a save persisted all three to the DB.
 
 **Dead-enqueue bug, third instance.** `ServiceModerationPage::enqueue_scripts()`
 compared against `'wp-sell-services_page_wpss-moderation'`; the real suffix is
