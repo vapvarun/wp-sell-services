@@ -449,7 +449,7 @@ long vendor names (the overflow cases), and at least one order with milestones.
 | 6.5 | Dashboard → Messages | 0 and 50+ conversations, long messages | **looked, ok**; needs 50+ for the scroll case |
 | 6.6 | Dashboard → Portfolio / Analytics / Favorites / Disputes / Profile | empty + populated | **all looked**; Portfolio + Analytics findings recorded |
 | 6.7 | Service archive + single service | long titles, no image, many packages, no reviews | **DONE 2026-07-24 — 2 fixes** (below) |
-| 6.8 | Buyer request archive + single request | open/closed, with/without offers | |
+| 6.8 | Buyer request archive + single request | open/closed, with/without offers | **DONE 2026-07-24 — 2 fixes** (below) |
 | 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | |
 | 6.10 | Become a vendor / registration | open / approval / closed states | |
 | 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | |
@@ -504,6 +504,43 @@ placeholder bug and was not one.
 active indicator. Consolidated into `frontend.css` (loads on every frontend
 surface, so the widget can never render unstyled), keeping single-service's
 visual treatment; the duplicate is gone.
+
+### 6.8 Buyer request archive + single request — rendered 2026-07-24
+
+Seeded: 6 requests with 2-3 proposals each, one with 0, one moved to `hired`
+through `BuyerRequestService::update_status()` (not hand-forced meta).
+
+**Archive — clean at 1440.** Filter rail, card list, budget / proposal count /
+"Send Proposal" per card. It shows only `open`, unexpired requests **by design**
+(documented meta_query in `BuyerRequestArchiveView`), so a hired request
+correctly disappears from the listing. "6 requests found" vs 7 published was
+traced to request #21, a leftover test artifact with **no `_wpss_*` meta at
+all** — not a product bug; anything created through the real flow always has it.
+
+**Single request — two real bugs found and FIXED.**
+
+1. **Every buyer-request page rendered with NO visible title and an empty
+   `<h1>`.** `ShellHeader::maybe_suppress_theme_title()` blanks the queried
+   object's `the_title` inside the main loop so a theme's duplicate entry-title
+   disappears on plugin surfaces. `single-request.php` renders its own heading
+   with `the_title()` *inside that same loop* — so the plugin blanked its own
+   `<h1>`. The buyer/vendor could not see which request they were reading, and
+   the page shipped an empty heading to search engines and screen readers.
+   Fixed by printing the raw post title (`get_post_field(..., 'raw')`), the same
+   dodge `SingleServiceView::render_title()` already used (`$service->title`) —
+   which is exactly why the single SERVICE page never showed this symptom.
+   Verified: exactly one populated `<h1>`, theme duplicate still suppressed.
+
+2. **"Proposals" meant two different numbers.** The archive card counts every
+   proposal on the request and the buyer's own view counts every proposal, but
+   the vendor-facing detail counted `status = 'pending'` only — so the same
+   request read "2 proposals" in the listing and "1" on its own page. Made the
+   non-buyer branch count them all: consistent across all three surfaces, and a
+   vendor sizing up competition needs to know one was already accepted.
+
+**Closed state verified** (`hired`): status badge flips, the Submit Proposal CTA
+is replaced by "This request is no longer accepting proposals", title renders.
+390px: no horizontal scroll, sidebar fits, title wraps cleanly.
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 
