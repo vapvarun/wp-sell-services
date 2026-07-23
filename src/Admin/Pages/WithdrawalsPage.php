@@ -159,15 +159,27 @@ class WithdrawalsPage {
 			'wpss-admin-withdrawals',
 			'wpssWithdrawals',
 			array(
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( 'wpss_withdrawals_admin' ),
-				'bulkNonce' => wp_create_nonce( 'wpss_withdrawals_bulk' ),
-				'i18n'      => array(
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'wpss_withdrawals_admin' ),
+				'bulkNonce'        => wp_create_nonce( 'wpss_withdrawals_bulk' ),
+				// Currency parts for the settlement total shown in the bulk
+				// mark-paid confirmation. Same pair Admin::enqueue_scripts
+				// localizes; wpss_format_price() always prefixes the symbol.
+				'currencySymbol'   => wpss_get_currency_symbol(),
+				'currencyDecimals' => wpss_get_currency_decimals(),
+				'i18n'             => array(
 					'loading'      => __( 'Processing…', 'wp-sell-services' ),
 					'error'        => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'selectFirst'  => __( 'Select at least one withdrawal first.', 'wp-sell-services' ),
 					/* translators: %action%: bulk action label, %count%: number of selected withdrawals. Placeholders are replaced in JS. */
 					'bulkConfirm'  => __( '%action% %count% withdrawal(s)? This applies to every selected row.', 'wp-sell-services' ),
+					// Second confirmation, shown ONLY for bulk mark-as-paid. The
+					// plugin records the payout; it never sends the money on the
+					// manual rail, and saying so is the whole point of this step.
+					'settleTitle'  => __( 'Confirm you have already paid these vendors', 'wp-sell-services' ),
+					/* translators: %total%: formatted settlement total, %vendors%: number of distinct vendors, %count%: number of withdrawals, %methods%: payout-method breakdown such as "PayPal x3, Bank Transfer x2". Placeholders are replaced in JS. */
+					'settleBody'   => __( 'This settles %total% across %vendors% vendor(s) in %count% withdrawal(s) — %methods%. It marks the outstanding amount paid and debits each vendor wallet, but it does NOT send any money. Paying each vendor by their own method is your manual step, outside this site.', 'wp-sell-services' ),
+					'settleAction' => __( 'Yes, mark as paid', 'wp-sell-services' ),
 					'bulkLabels'   => array(
 						'approve'  => __( 'Approve', 'wp-sell-services' ),
 						'complete' => __( 'Mark as paid', 'wp-sell-services' ),
@@ -605,7 +617,16 @@ class WithdrawalsPage {
 		<tr data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>">
 			<th scope="row" class="check-column">
 				<label class="screen-reader-text" for="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>"><?php esc_html_e( 'Select withdrawal', 'wp-sell-services' ); ?></label>
-				<input type="checkbox" id="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>" name="withdrawal_ids[]" value="<?php echo esc_attr( $withdrawal->id ); ?>">
+				<?php
+				// data-amount / data-vendor-id feed the bulk mark-paid settlement
+				// confirmation, which states the exact total and how many vendors
+				// it settles before the admin commits.
+				?>
+				<input type="checkbox" id="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>" name="withdrawal_ids[]" value="<?php echo esc_attr( $withdrawal->id ); ?>"
+					data-amount="<?php echo esc_attr( (string) (float) $withdrawal->amount ); ?>"
+					data-vendor-id="<?php echo esc_attr( (string) (int) $withdrawal->vendor_id ); ?>"
+					data-method="<?php echo esc_attr( $methods[ $withdrawal->method ] ?? ucfirst( (string) $withdrawal->method ) ); ?>"
+					<?php disabled( ! in_array( $status, array( 'pending', 'approved' ), true ) ); ?>>
 			</th>
 			<td class="column-id">
 				<strong>#<?php echo esc_html( $withdrawal->id ); ?></strong>

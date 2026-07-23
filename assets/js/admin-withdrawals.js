@@ -34,6 +34,37 @@
 			window.console && console.error( message );
 		}
 
+		/**
+		 * Format a settlement total the way wpss_format_price() does server-side:
+		 * symbol first, grouped thousands, the currency's own decimal count.
+		 *
+		 * @param {number} amount Raw amount.
+		 * @return {string} Display string.
+		 */
+		function formatMoney( amount ) {
+			var decimals = parseInt( settings.currencyDecimals, 10 );
+
+			if ( isNaN( decimals ) ) {
+				decimals = 2;
+			}
+
+			return settings.currencySymbol + ( Number( amount ) || 0 ).toLocaleString( undefined, {
+				minimumFractionDigits: decimals,
+				maximumFractionDigits: decimals
+			} );
+		}
+
+		/**
+		 * The rows an admin may still act on. Completed and rejected rows render
+		 * their checkbox disabled, so they can never be swept into a bulk action
+		 * by "select all".
+		 *
+		 * @return {jQuery} Checked, enabled row checkboxes.
+		 */
+		function selectedRows() {
+			return $( 'input[name="withdrawal_ids[]"]:checked' ).not( ':disabled' );
+		}
+
 		/* ---- Single actions: open the note modal ---- */
 
 		$( '.wpss-process-withdrawal' ).on( 'click', function( e ) {
@@ -102,7 +133,7 @@
 		/* ---- Bulk actions ---- */
 
 		$( '#cb-select-all-1, #cb-select-all-2' ).on( 'change', function() {
-			$( 'input[name="withdrawal_ids[]"]' ).prop( 'checked', $( this ).prop( 'checked' ) );
+			$( 'input[name="withdrawal_ids[]"]' ).not( ':disabled' ).prop( 'checked', $( this ).prop( 'checked' ) );
 		} );
 
 		$( '.wpss-withdrawals-bulk-apply' ).on( 'click', function( e ) {
@@ -113,7 +144,8 @@
 				return;
 			}
 
-			var ids = $( 'input[name="withdrawal_ids[]"]:checked' ).map( function() {
+			var $rows = selectedRows();
+			var ids   = $rows.map( function() {
 				return this.value;
 			} ).get();
 
@@ -135,6 +167,51 @@
 				tone: 'reject' === bulkAction ? 'danger' : undefined
 			} ).then( function( confirmed ) {
 				if ( ! confirmed ) {
+					return false;
+				}
+
+				// Only marking paid moves money records. Approve and reject are
+				// reversible bookkeeping, so they stop at one confirmation.
+				if ( 'complete' !== bulkAction ) {
+					return true;
+				}
+
+				// Second confirmation: state the exact total, how many vendors it
+				// settles, and that the site does NOT send the money. On the
+				// manual rail the admin has already paid out-of-band; this step
+				// only records it and debits the wallets.
+				var total   = 0;
+				var vendors = {};
+				var methods = {};
+
+				$rows.each( function() {
+					total += parseFloat( this.getAttribute( 'data-amount' ) ) || 0;
+					vendors[ this.getAttribute( 'data-vendor-id' ) ] = true;
+
+					// A batch normally spans rails — some vendors take PayPal,
+					// some a bank transfer. Show the breakdown so the admin can
+					// see what they still have to pay, and by which method.
+					var method = this.getAttribute( 'data-method' ) || '';
+					methods[ method ] = ( methods[ method ] || 0 ) + 1;
+				} );
+
+				var breakdown = Object.keys( methods ).sort().map( function( method ) {
+					return method + ' ×' + methods[ method ];
+				} ).join( ', ' );
+
+				var settleMsg = settings.i18n.settleBody
+					.replace( '%total%', formatMoney( total ) )
+					.replace( '%vendors%', String( Object.keys( vendors ).length ) )
+					.replace( '%count%', String( ids.length ) )
+					.replace( '%methods%', breakdown );
+
+				return window.wpssConfirm( settleMsg, {
+					title: settings.i18n.settleTitle,
+					confirmText: settings.i18n.settleAction,
+					tone: 'danger'
+				} );
+			} ).then( function( proceed ) {
+				if ( ! proceed ) {
 					return;
 				}
 

@@ -601,15 +601,20 @@ class Settings {
 		);
 
 		// clearance_days is stored AND enforced by EarningsService::get_summary()
-		// — reads from wpss_payouts.clearance_days, defaults to 14, used in the
-		// in_clearance bucket query. (VS1 from plans/ORDER-FLOW-AUDIT.md.)
+		// — reads from wpss_payouts.clearance_days, used in the in_clearance
+		// bucket query. (VS1 from plans/ORDER-FLOW-AUDIT.md.)
 		//
-		// The minimum is 1, not 0. Zero means earnings are withdrawable the
-		// instant an order completes, which deletes the protection the whole
-		// payout model rests on: a refund then arrives after the vendor has
-		// already been paid, and the money has to be clawed back out of their
-		// bank — which fails routinely and leaves the platform absorbing it.
-		// A site owner setting "0" is very unlikely to intend that trade.
+		// OWNER DECISION 2026-07-23: default 0 (no hold); the owner opts in.
+		// How long to hold a vendor's money is a business-policy call, not a
+		// safety rail we impose — many marketplaces pay out the moment an order
+		// completes and want the vendor experience to match.
+		//
+		// Zero is safe HERE specifically because the wallet ledger records a
+		// refund-after-payout as a NEGATIVE balance that future earnings pay
+		// down automatically (get_summary() deliberately does not clamp at
+		// zero), so the platform never silently absorbs the loss and nobody
+		// chases money already in a vendor's bank. Owners who would rather never
+		// have that conversation set a refund window: 7 / 14 / 30.
 		add_settings_field(
 			'clearance_days',
 			__( 'Clearance Period (Days)', 'wp-sell-services' ),
@@ -619,11 +624,11 @@ class Settings {
 			array(
 				'option_name' => 'wpss_payouts',
 				'field'       => 'clearance_days',
-				'min'         => 1,
+				'min'         => 0,
 				'max'         => 90,
 				'step'        => 1,
-				'default'     => 14,
-				'description' => __( 'Days to hold earnings after an order completes, before a vendor can be paid. This is what protects you from refunds landing after a payout — with a short hold you have to chase vendors for money already in their bank. 7 = weekly, 14 = fortnightly, 30 = monthly.', 'wp-sell-services' ),
+				'default'     => 0,
+				'description' => __( 'Days to hold earnings after an order completes, before a vendor can be paid. 0 pays out as soon as an order completes. A hold is your refund window: if a refund lands after you have already paid the vendor, their balance goes negative and future earnings clear it — a hold avoids that situation entirely. 7 = weekly, 14 = fortnightly, 30 = monthly.', 'wp-sell-services' ),
 			)
 		);
 
@@ -2821,12 +2826,12 @@ class Settings {
 
 		$sanitized['min_withdrawal'] = absint( $input['min_withdrawal'] ?? 50 );
 
-		// Floor of 1 day, enforced HERE and not just by the field's min
-		// attribute — that is a browser hint, and a posted 0 would sail past it
-		// straight into the option. Zero clearance means a refund can land after
-		// the vendor has been paid, which is the one outcome the payout model
-		// exists to prevent.
-		$sanitized['clearance_days'] = max( 1, absint( $input['clearance_days'] ?? 14 ) );
+		// 0 is a legitimate, supported value: pay vendors out the moment an
+		// order completes (owner decision 2026-07-23 — see the field definition
+		// for why the wallet ledger makes that safe). Capped at 90 to match the
+		// field, enforced HERE and not just by the max attribute, which is only
+		// a browser hint a posted value can sail straight past.
+		$sanitized['clearance_days'] = min( 90, absint( $input['clearance_days'] ?? 0 ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
 		$sanitized['auto_withdrawal_threshold'] = absint( $input['auto_withdrawal_threshold'] ?? 500 );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );

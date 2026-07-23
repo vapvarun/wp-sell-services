@@ -76,9 +76,18 @@ the same credit at 16 days reports `available 45.00`.
 `request_withdrawal()` gates on `get_summary()['available_balance']` under a row
 lock — the one balance authority, not a re-derivation.
 
-**S5.1 — ✅ DONE 2026-07-22 (`e32f17c`, T3).** Floored at 1 day server-side:
-`max( 1, absint( … ) )` in the sanitizer (`Settings.php:2829`).
-Original finding: `clearance_days` had `min => 0` in `Settings.php`. Zero silently
+**S5.1 — ✅ CLOSED 2026-07-23, but the OPPOSITE way round (owner decision).**
+T3 (`e32f17c`) floored clearance at 1 day. The owner has since ruled that the
+hold is **their** policy call, not ours: clearance now **defaults to 0 (no
+hold)** and 0 is a supported value, with 7 / 14 / 30 offered as the owner's
+refund window. Zero is safe here because the wallet ledger records a
+refund-after-payout as a negative balance that future earnings clear (2.1) —
+the platform never silently absorbs it. One accessor
+(`EarningsService::get_clearance_days()`) now owns the value so the field,
+activator and runtime cannot drift. Both modes verified: 7 holds recent credits
+out of `available_balance`, 0 makes the full ledger balance available.
+
+Original finding (superseded): `clearance_days` had `min => 0` in `Settings.php`. Zero silently
 deletes the entire protection the model depends on. Raise the floor, or present
 as Weekly / Bi-weekly / Monthly so it reads as policy. *(10 minutes.)*
 
@@ -247,7 +256,7 @@ migration risk.
 |---|---|---|---|
 | ~~T1~~ | free | ✅ DONE 2026-07-23. `mark_paid()` keystone + Withdrawals screen upgraded (NOT rebuilt — the page existed; a second screen would have duplicated it) | S6.1 S6.3 |
 | ~~T2~~ | free | ✅ DONE 2026-07-23. Free-side `export_csv()` — `DataExporter` premise was wrong (Pro-only). Export never mutates status, verified | S6.2 |
-| ~~T3~~ | free | ✅ DONE 2026-07-22 (`e32f17c`) — clearance floored at 1 day server-side | S5.1 |
+| ~~T3~~ | free | ✅ CLOSED 2026-07-23 — clearance is the OWNER's call: default 0 (no hold), 0 supported, 7/14/30 offered; one accessor owns the value. Supersedes `e32f17c`'s 1-day floor | S5.1 |
 | T4 | free | Rail seam `apply_filters( 'wpss_execute_payout', … )`. Free implements nothing — free-only sites stay manual, and that is a complete flow | S6 |
 | T5 | pro | `StripeConnectPayoutsProvider implements PayoutsProviderInterface` — N × `/v1/transfers`, **Idempotency-Key from withdrawal_id**, per-item results | S6.4 |
 | T6 | pro | `PayoutMethodsCoordinator` implements the seam, dispatching by vendor method | S6.4 |

@@ -42,10 +42,27 @@ replays for idempotency.
    and the manual rail must be complete on free-only sites. Export never
    mutates status (verified before/after).
 
+6. **Dual confirmation on bulk mark-paid** (owner request). Step 2 states the
+   exact settlement — "settles $220.00 across 2 vendor(s) in 3 withdrawal(s) —
+   Bank Transfer ×1, PayPal ×2" — and says plainly that the site records the
+   payout but does **not** send money; paying each vendor by their own method is
+   the owner's manual step. A batch normally spans rails, so the method
+   breakdown is shown before committing. Already-settled rows now render their
+   checkbox **disabled**, so "select all" can never sweep them into a bulk
+   action. Approve/reject keep a single confirm — they move no money.
+7. **Clearance is the owner's call now** (owner decision, supersedes T3's
+   1-day floor): default **0 = no hold**, 0 supported, 7/14/30 offered as a
+   refund window. Safe because the ledger drives a refund-after-payout negative
+   and future earnings clear it. `EarningsService::get_clearance_days()` is the
+   single accessor so field/activator/runtime cannot drift. Both modes verified.
+
 **Found while building:** `WithdrawalsPage::enqueue_scripts()` compared against
 a hook suffix (`wp-sell-services_page_…`) that never matches the real one
 (`sell-services_page_…`) — its enqueue block was dead code; now keyed off the
 stored `add_submenu_page()` return.
+
+**⚠️ OPEN FINDING (not fixed, needs an owner call — see §P4):** an out-of-range
+stored option value makes an ENTIRE settings form silently unsubmittable.
 
 **Test data on this site (2026-07-23):** withdrawals #10/#11/#12 completed with
 ledger debits #133/#134/#135 for vendor user 1, backed by three `T1 QA seed
@@ -234,6 +251,25 @@ The refund and payout items formerly listed under P4 below now live in that
 plan, so there is one money task list rather than three.
 
 ### P4. Smaller
+
+- **An out-of-range stored option silently bricks a whole settings form.**
+  Found 2026-07-23 while testing the clearance field. Number fields render
+  `min`/`max` from their field definition; if the STORED value falls outside
+  that range the browser blocks submission of the entire form, and because the
+  offending field may be scrolled out of view the owner sees **nothing at all**
+  — Save appears dead. Reproduced: `auto_withdrawal_threshold = 40` against
+  `min = 100` made the whole Payout Settings form unsubmittable, so
+  `clearance_days` could not be saved either. The invalid value came from WP-CLI
+  here, but any of these produce it: an older release with different bounds, a
+  migration, a `wpss_*` filter, or a direct DB edit. Nothing warns.
+  **Fix options** (needs a decision, blast radius = every number field):
+  (a) widen the rendered `min`/`max` to include the stored value so the form
+  always submits and the server clamps on save — preserves the true value;
+  (b) clamp the displayed value into range — submittable, but shows a number
+  that is not what is stored; (c) drop HTML range attributes and rely on the
+  sanitizers, which already clamp. Recommend (a). Note this class is why the
+  new `clearance_days` field uses `min = 0`: a stored 0 with `min = 1` would
+  have bricked that form.
 
 - **Two refund entry points with DISJOINT status gates.** `AjaxHandlers.php`
   case `'refund'` allows `pending_payment` / `pending_requirements` /

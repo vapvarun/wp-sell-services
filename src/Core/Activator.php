@@ -155,7 +155,9 @@ class Activator {
 			// Payouts settings - matches Settings.php wpss_payouts.
 			'wpss_payouts'       => array(
 				'min_withdrawal'            => 25,
-				'clearance_days'            => 14,
+				// 0 = no hold; the owner opts into a refund window if they want
+				// one. See Settings.php clearance_days for the rationale.
+				'clearance_days'            => 0,
 				'auto_withdrawal_enabled'   => false,
 				'auto_withdrawal_threshold' => 500,
 				'auto_withdrawal_schedule'  => 'monthly',

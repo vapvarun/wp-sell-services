@@ -13,7 +13,7 @@ rules; that one tracks the tasks. If they disagree, the plan is newer.
 ```
 buyer pays FULL amount to the platform
   └─ order completion → vendor credited in the wallet ledger
-       └─ clearance window (default 14 days)
+       └─ clearance window (OPTIONAL, default 0 = no hold)
             └─ scheduled run (weekly / bi-weekly / monthly, above a threshold)
                  └─ payout batch
                       ├─ manual  → CSV → admin pays offline → MARK PAID
@@ -22,11 +22,24 @@ buyer pays FULL amount to the platform
                            └─ MARK PAID → ledger debit
 ```
 
-The platform holds the money until it matures. That is the whole point: a
-refund inside the clearance window finds the money still unpaid, so **nothing
-is ever clawed back from a vendor**. Clawing money back out of someone's bank
-account is the failure mode this design exists to avoid — it fails often, and
-when it fails the platform eats the loss.
+The platform holds the money until it is paid out. **The clearance window is
+the owner's choice, not ours** (owner decision 2026-07-23): it defaults to
+**0 — pay out as soon as an order completes** — and an owner who wants a refund
+window sets 7 / 14 / 30 in Settings → Payments → Payout Settings. How long to
+sit on a vendor's money is business policy, and many marketplaces pay
+immediately.
+
+A hold, when the owner sets one, means a refund arriving inside the window
+finds the money still unpaid, so nothing has to be clawed back. **With no hold
+we do not eat the loss either**, because the ledger records it honestly: a
+refund on already-withdrawn money drives the vendor's balance NEGATIVE and
+future earnings pay it down automatically (see 2.1 — the balance is deliberately
+not clamped at zero). Clearance prevents that conversation; the ledger survives
+it. Both are correct; the owner picks.
+
+`EarningsService::get_clearance_days()` is the single accessor — read the hold
+through it, never the raw option, so the settings field, the activator and
+runtime can never disagree.
 
 ---
 

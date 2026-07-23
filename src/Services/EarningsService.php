@@ -52,10 +52,9 @@ class EarningsService {
 		$orders_table      = $wpdb->prefix . 'wpss_orders';
 		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
 
-		// Get clearance_days setting — earnings from orders completed less than
-		// clearance_days ago are not yet available for withdrawal.
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		$clearance_days   = (int) ( $payouts_settings['clearance_days'] ?? 14 );
+		// Earnings credited less than clearance_days ago are not yet available
+		// for withdrawal. One authority for the value (see get_clearance_days).
+		$clearance_days = self::get_clearance_days();
 
 		// THE WALLET LEDGER IS THE AUTHORITY FOR EARNED MONEY.
 		//
@@ -1074,6 +1073,35 @@ class EarningsService {
 
 		// Default.
 		return 50.0;
+	}
+
+	/**
+	 * Get the clearance period in days — THE authority for the payout hold.
+	 *
+	 * How long a vendor's credited earnings are held before they can be
+	 * withdrawn. **Defaults to 0: no hold.** How long to sit on someone else's
+	 * money is a business-policy call for the site owner, not a rail the plugin
+	 * imposes — plenty of marketplaces pay out the moment an order completes.
+	 *
+	 * Zero is safe in this plugin specifically because the wallet ledger is the
+	 * balance authority and {@see get_summary()} deliberately does NOT clamp the
+	 * balance at zero: a refund landing after a payout drives the vendor
+	 * negative, which is an honest record of a debt that future earnings pay
+	 * down on their own. Owners who would rather never have that conversation
+	 * set a refund window (7 / 14 / 30) in Settings → Payouts.
+	 *
+	 * Read through this helper rather than the raw option so the default can
+	 * never disagree between the settings field, the activator and runtime —
+	 * that drift is how "saved but not applied" bugs start.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return int Days to hold earnings. 0 means no hold.
+	 */
+	public static function get_clearance_days(): int {
+		$payouts_settings = get_option( 'wpss_payouts', array() );
+
+		return max( 0, (int) ( $payouts_settings['clearance_days'] ?? 0 ) );
 	}
 
 	/**
