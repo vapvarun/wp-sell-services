@@ -295,7 +295,35 @@ it is a real file the audit can see it. Folds into the modal work, Phase 2.
 **Still open (Phase 3, recorded not fixed):** `.wpss-btn--link` (5 uses) is
 defined only in `vendor-dashboard.css`, non-canonical. Either promote to the
 design system or migrate to `--ghost`.
-| 2.2 | Badge / status — `.wpss-status-*`, `.wpss-tag` → `.wpss-badge--*` | 3 → 1 | |
+| 2.2 | Badge / status — `.wpss-status-*`, `.wpss-tag` → `.wpss-badge--*` | 3 → 1 | **BLOCKED on owner decision** |
+
+**Phase 2.2 analysis (2026-07-24) — bigger than "remove dups", needs one owner call.**
+Two compounding problems:
+
+1. **The colours DISAGREE across sheets.** `.wpss-status-pending` is neutral
+   grey in `admin.css`, warning-yellow in `unified-dashboard.css`, amber via
+   token in `frontend.css` — so the same status is a different colour depending
+   on the screen. It is defined **18 times**; most statuses 8×. design-system.css
+   already holds canonical `--wpss-status-*` TOKENS and frontend.css consumes
+   them; admin.css and unified-dashboard.css hardcode divergent values instead.
+
+2. **TWO naming conventions in live code.** Frontend emits
+   `wpss-status-<esc_attr($status)>` → UNDERSCORE; `Admin.php` / `order-view.php`
+   emit `str_replace('_','-',$status)` → HYPHEN. So the CSS defines BOTH
+   spellings for every multi-word status and neither copy is dead — they style
+   different surfaces.
+
+**Fix once decided:** (a) one colour source = the design-system tokens, delete
+divergent copies; (b) one `wpss_status_class( $status )` helper so every render
+path spells the class identically, collapsing the hyphen/underscore doubles.
+
+**OWNER DECISION — what does a status badge look like?** Recommended: the
+design-system token palette EVERYWHERE (soft tints: pending=amber,
+completed=green, rejected/cancelled=red, in-progress=indigo). Consequence: admin
+pills, now flat WP-grey, adopt the same tints the frontend uses — one look
+across admin + frontend. Alternative: keep admin WP-native, unify each context
+only internally. Visible repaint of ~10 screens; verified light + dark + both
+contexts before shipping.
 | 2.3 | Empty state — `.wpss-no-items`, `.wpss-no-data` → `.wpss-empty-state` | 3 → 1 | |
 | 2.4 | Input — `.wpss-field`, `.wpss-form-field`, `.wpss-form-row` → `.wpss-form-group` + `.wpss-input` | 7 → 2 | |
 | 2.5 | Card — `.wpss-panel`, `.wpss-section`, `.wpss-detail-card` → `.wpss-card` + modifiers | 6 → 1+2 | |
