@@ -276,12 +276,12 @@ long vendor names (the overflow cases), and at least one order with milestones.
 
 | # | Screen | Seeded state needed | Status |
 |---|---|---|---|
-| 6.1 | Dashboard → Buyer Requests | requests with 0 and N offers, long titles | **card layout FIXED** (below) |
-| 6.2 | Dashboard → My Orders / Sales Orders | orders in every status | |
-| 6.3 | Dashboard → Earnings & Payouts | positive, zero and NEGATIVE balance; in-clearance | |
-| 6.4 | Dashboard → My Services | 0, 1 and 20+ services; draft/pending/published | |
-| 6.5 | Dashboard → Messages | 0 and 50+ conversations, long messages | |
-| 6.6 | Dashboard → Portfolio / Analytics / Favorites / Disputes / Profile | empty + populated | |
+| 6.1 | Dashboard → Buyer Requests | requests with 0 and N offers, long titles | **FIXED** |
+| 6.2 | Dashboard → My Orders / Sales Orders | orders in every status | looked, ok at 1-3 rows; **still needs every-status seed** |
+| 6.3 | Dashboard → Earnings & Payouts | positive, zero and NEGATIVE balance; in-clearance | looked, ok; negative-balance state verified earlier |
+| 6.4 | Dashboard → My Services | 0, 1 and 20+ services; draft/pending/published | looked, ok at 4 |
+| 6.5 | Dashboard → Messages | 0 and 50+ conversations, long messages | **looked, ok**; needs 50+ for the scroll case |
+| 6.6 | Dashboard → Portfolio / Analytics / Favorites / Disputes / Profile | empty + populated | **all looked**; Portfolio + Analytics findings recorded |
 | 6.7 | Service archive + single service | long titles, no image, many packages, no reviews | |
 | 6.8 | Buyer request archive + single request | open/closed, with/without offers | |
 | 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | |
@@ -290,20 +290,39 @@ long vendor names (the overflow cases), and at least one order with milestones.
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 
-| Tab | State on this site | Findings |
+**All 12 tabs seeded and rendered.** The four that were empty were seeded
+through their real write paths (`FavoritesService::add()`, portfolio rows,
+a conversation with three messages) — never by hand-forcing a view state.
+
+| Tab | State | Findings |
 |---|---|---|
 | My Orders | 1 order | ok |
-| Favorites | **empty** | needs seed |
+| Favorites | 1 saved service | ok — card grid, remove control top-right |
 | Buyer Requests | 1 request | **card collapse FIXED** |
 | My Services | 4 services | ok |
 | Sales Orders | 3 orders | ok |
 | Earnings & Payouts | populated | ok |
-| Portfolio | **empty** | needs seed |
-| Analytics | **empty** | needs seed |
-| Messages | **empty** | needs seed |
-| Notifications | populated | title missing (**FIXED**); 1 inline `<style>` |
+| Portfolio | 3 items, 1 featured | **Delete over-weighted; action row wraps badly** (below) |
+| Analytics | 3 orders, impressions | **stat-card labels wrap 2-3 lines** (below) |
+| Messages | 1 thread, 3 messages | ok — minor: relative time reads "48 seconds", missing "ago" |
+| Notifications | populated | title missing (**FIXED**); 1 inline `<style>` → Phase 1 |
 | Disputes | 1 dispute | title missing, raw slug, double heading (**all FIXED**) |
 | Profile | form | ok |
+
+**Portfolio action row.** Each card ends with a solid red **Delete** block while
+Edit / Feature / Unfeature are plain text links — the destructive action is the
+single loudest element on a card whose job is to show work. On the featured card
+the row wraps mid-way ("FEATURED" + Edit on one line, "Unfeature" + Delete on
+the next), so the actions read as two unrelated groups. Same over-weighted-
+destructive pattern as the buyer-request card, and the same fix: Delete becomes
+`.wpss-btn--ghost` with danger text, promoted to solid only inside a confirm.
+Folds into Phase 2.1.
+
+**Analytics stat cards.** Six cards in an auto-fit grid land 4-up then 2-up, and
+at that width the labels wrap: "NET EARNINGS" over two lines, its sub-label
+("Last 30 Days · after platform fee") over three. The row reads ragged and the
+numbers stop being scannable. Needs a wider `minmax()` floor so cards hold their
+label on one line, or shorter labels.
 
 **The button vocabulary is the frontend's version of the same disease.** Across
 these 12 tabs the dashboard ships:
