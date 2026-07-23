@@ -1,5 +1,12 @@
 # Admin UX — one component set, no per-page CSS
 
+> **Sequencing (owner, 2026-07-23):** cover ALL tasks; the Pro PayPal-payout
+> rebuild goes LAST. So the order is: finish Phase 1 (scripts) → Phase 2-5 (UX
+> consolidation) → Phase 6 (frontend) → refund policy (money T10/T9/T11) → the
+> PayPal rebuild + rail seam as the final release-gating item. Nothing ships to
+> customers until PayPal stops double-paying, but it is built last.
+
+
 **The problem, in one line: every screen ships its own CSS for the same
 components.** Sections, inputs, badges, tables and modals are each implemented
 several times over, so a fix in one place doesn't reach the others and the

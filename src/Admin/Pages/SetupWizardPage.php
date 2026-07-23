@@ -72,7 +72,7 @@ class SetupWizardPage {
 	}
 
 	/**
-	 * Enqueue the onboarding stylesheet on the wizard screen only.
+	 * Enqueue the wizard stylesheet + script on the wizard screen only.
 	 *
 	 * Matches on the page query arg rather than only the stored hook suffix:
 	 * once setup is complete the submenu is no longer registered, so there IS
@@ -99,6 +99,38 @@ class SetupWizardPage {
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-admin-wizard', 'rtl', 'replace' );
+
+		wp_enqueue_script(
+			'wpss-admin-wizard',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-wizard.js',
+			array( 'jquery' ),
+			\WPSS_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wpss-admin-wizard', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+
+		// Config + button labels the wizard JS used to interpolate inline.
+		// wp_localize_script prints before the file it attaches to.
+		wp_localize_script(
+			'wpss-admin-wizard',
+			'wpssWizard',
+			array(
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'wizardNonce'   => wp_create_nonce( 'wpss_wizard_nonce' ),
+				'settingsNonce' => wp_create_nonce( 'wpss_settings_nonce' ),
+				'demoNonce'     => wp_create_nonce( 'wpss_demo_content' ),
+				'i18n'          => array(
+					'creating'     => __( 'Creating...', 'wp-sell-services' ),
+					'create'       => __( 'Create', 'wp-sell-services' ),
+					'created'      => __( 'Created', 'wp-sell-services' ),
+					'done'         => __( 'Done', 'wp-sell-services' ),
+					'allCreated'   => __( 'All Created', 'wp-sell-services' ),
+					'importing'    => __( 'Importing...', 'wp-sell-services' ),
+					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
+					'importFailed' => __( 'Import Failed', 'wp-sell-services' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -713,291 +745,8 @@ class SetupWizardPage {
 			</div>
 		</div>
 
-		<?php $this->render_styles(); ?>
-		<?php $this->render_scripts(); ?>
 		<?php
-	}
-
-	/**
-	 * Output inline styles.
-	 *
-	 * @return void
-	 */
-	private function render_styles(): void {
-		?>
-		<?php
-	}
-
-	/**
-	 * Output inline scripts.
-	 *
-	 * @return void
-	 */
-	private function render_scripts(): void {
-		?>
-		<script>
-		function wpssAdminNotice(msg, type) {
-			type = type || 'error';
-			var cls = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-			jQuery('.wrap h1, .wrap h2').first().after($notice);
-			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-		}
-		jQuery(function($) {
-			var ajaxUrl = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';
-			var wizardNonce = '<?php echo esc_js( wp_create_nonce( 'wpss_wizard_nonce' ) ); ?>';
-			var settingsNonce = '<?php echo esc_js( wp_create_nonce( 'wpss_settings_nonce' ) ); ?>';
-			var demoNonce = '<?php echo esc_js( wp_create_nonce( 'wpss_demo_content' ) ); ?>';
-			var totalSteps = 6;
-			var currentStep = 1;
-
-			function updateIndicator() {
-				var html = '';
-				for (var i = 1; i <= totalSteps; i++) {
-					var cls = 'step-dot';
-					if (i === currentStep) cls += ' active';
-					else if (i < currentStep) cls += ' done';
-					html += '<div class="' + cls + '"></div>';
-				}
-				$('#wpss-steps-indicator').html(html);
-			}
-
-			function goToStep(step) {
-				$('.wpss-wizard-step').removeClass('active');
-				$('.wpss-wizard-step[data-step="' + step + '"]').addClass('active');
-				currentStep = step;
-				updateIndicator();
-				$('#wpss-wizard-wrap').scrollTop(0);
-
-				// If arriving at step 6, mark complete (with validation).
-				if (step === 6) {
-					$.post(ajaxUrl, { action: 'wpss_wizard_complete', nonce: wizardNonce }, function(response) {
-						if (!response.success && response.data && response.data.message) {
-							wpssAdminNotice(response.data.message, 'error');
-							goToStep(3);
-						}
-					});
-				}
-			}
-
-			updateIndicator();
-
-			// Skip buttons: just advance step (no AJAX).
-			$(document).on('click', '.wpss-wizard-skip', function() {
-				goToStep(parseInt($(this).data('skip'), 10) + 1);
-			});
-
-			// Back buttons.
-			$(document).on('click', '.wpss-wizard-back', function() {
-				goToStep(parseInt($(this).data('back'), 10));
-			});
-
-			// Next buttons (no save, just advance).
-			$(document).on('click', '.wpss-wizard-next', function() {
-				goToStep(parseInt($(this).data('next'), 10));
-			});
-
-			// Save & Continue: steps 1, 2, 5 via wpss_wizard_save_step.
-			$(document).on('click', '.wpss-wizard-save', function() {
-				var btn = $(this);
-				var step = parseInt(btn.data('step'), 10);
-				var data = { action: 'wpss_wizard_save_step', nonce: wizardNonce, step: step };
-
-				btn.prop('disabled', true);
-
-				if (step === 1) {
-					data.platform_name = $('#wpss-wiz-name').val();
-					data.currency = $('#wpss-wiz-currency').val();
-					data.commission_rate = $('#wpss-wiz-commission').val();
-				} else if (step === 2) {
-					data.gateway = $('input[name="wpss_gateway"]:checked').val();
-					if (data.gateway === 'stripe') {
-						data.stripe_test_mode = $('#wpss-wiz-stripe-test').is(':checked') ? 1 : 0;
-					// Credentials belong to the Payments settings screen, not the
-						// wizard — see save_step_gateway().
-					} else if (data.gateway === 'paypal') {
-						data.paypal_sandbox = $('#wpss-wiz-paypal-sandbox').is(':checked') ? 1 : 0;
-					} else if (data.gateway === 'offline') {
-						data.offline_title = $('#wpss-wiz-offline-title').val();
-						data.offline_description = $('#wpss-wiz-offline-desc').val();
-					}
-				} else if (step === 4) {
-					// Categories: collect selected chip names.
-					var cats = [];
-					$('.wpss-wizard-chip.active:not(.disabled)').each(function() {
-						cats.push($(this).data('name'));
-					});
-					if (cats.length === 0) {
-						btn.prop('disabled', false);
-						goToStep(5);
-						return;
-					}
-					// Use category-specific AJAX.
-					$.post(ajaxUrl, {
-						action: 'wpss_wizard_create_categories',
-						nonce: wizardNonce,
-						categories: cats
-					}, function() {
-						btn.prop('disabled', false);
-						goToStep(5);
-					}).fail(function() {
-						btn.prop('disabled', false);
-					});
-					return;
-				} else if (step === 5) {
-					data.vendor_registration = $('input[name="wpss_vendor_reg"]:checked').val();
-					data.max_services_per_vendor = $('#wpss-wiz-max-services').val();
-					data.require_service_moderation = $('#wpss-wiz-moderation').is(':checked') ? 1 : 0;
-				}
-
-				$.post(ajaxUrl, data, function() {
-					btn.prop('disabled', false);
-					goToStep(step + 1);
-				}).fail(function() {
-					btn.prop('disabled', false);
-				});
-			});
-
-			// Gateway radio: show/hide panels.
-			$('input[name="wpss_gateway"]').on('change', function() {
-				$('.wpss-wizard-gateway-panel').hide();
-				$('.wpss-wizard-gateway-panel[data-gateway="' + $(this).val() + '"]').show();
-			});
-
-			// Category chips: toggle selection.
-			$(document).on('click', '.wpss-wizard-chip:not(.disabled)', function() {
-				$(this).toggleClass('active');
-			});
-
-			// Custom category add.
-			$('#wpss-wiz-add-cat').on('click', function() {
-				var input = $('#wpss-wiz-custom-cat');
-				var name = $.trim(input.val());
-				if (!name) return;
-
-				// Check if chip already exists.
-				var exists = false;
-				$('.wpss-wizard-chip').each(function() {
-					if ($(this).data('name').toLowerCase() === name.toLowerCase()) {
-						exists = true;
-						$(this).addClass('active');
-						return false;
-					}
-				});
-
-				if (!exists) {
-					$('#wpss-wizard-chips').append(
-						'<button type="button" class="wpss-wizard-chip active" data-name="' + $('<div>').text(name).html() + '">' +
-						$('<span>').text(name).html() +
-						'</button>'
-					);
-				}
-				input.val('');
-			});
-
-			// Enter key for custom category.
-			$('#wpss-wiz-custom-cat').on('keypress', function(e) {
-				if (e.which === 13) {
-					e.preventDefault();
-					$('#wpss-wiz-add-cat').click();
-				}
-			});
-
-			// Create single page (reuses existing wpss_create_page handler).
-			$(document).on('click', '.wpss-wizard-create-page:not(:disabled)', function() {
-				var btn = $(this);
-				var row = btn.closest('.wpss-wizard-page-row');
-				var field = btn.data('field');
-				var title = btn.data('title');
-
-				btn.prop('disabled', true).text('<?php echo esc_js( __( 'Creating...', 'wp-sell-services' ) ); ?>');
-
-				$.post(ajaxUrl, {
-					action: 'wpss_create_page',
-					nonce: settingsNonce,
-					field: field,
-					title: title
-				}, function(response) {
-					if (response.success) {
-						btn.text('<?php echo esc_js( __( 'Done', 'wp-sell-services' ) ); ?>');
-						row.find('.wpss-wizard-badge')
-							.removeClass('wpss-badge-pending')
-							.addClass('wpss-badge-success')
-							.text('<?php echo esc_js( __( 'Created', 'wp-sell-services' ) ); ?>');
-					} else {
-						btn.prop('disabled', false).text('<?php echo esc_js( __( 'Create', 'wp-sell-services' ) ); ?>');
-					}
-				}).fail(function() {
-					btn.prop('disabled', false).text('<?php echo esc_js( __( 'Create', 'wp-sell-services' ) ); ?>');
-				});
-			});
-
-			// Create all pages (sequentially to avoid race condition on wpss_pages option).
-			$('#wpss-wizard-create-all-pages').on('click', function() {
-				var allBtn = $(this);
-				var buttons = $('.wpss-wizard-create-page:not(:disabled)').toArray();
-				allBtn.prop('disabled', true).text('<?php echo esc_js( __( 'Creating...', 'wp-sell-services' ) ); ?>');
-
-				function createNext(index) {
-					if (index >= buttons.length) {
-						allBtn.text('<?php echo esc_js( __( 'All Created', 'wp-sell-services' ) ); ?>');
-						return;
-					}
-					var btn = $(buttons[index]);
-					var row = btn.closest('.wpss-wizard-page-row');
-					var field = btn.data('field');
-					var title = btn.data('title');
-
-					btn.prop('disabled', true).text('<?php echo esc_js( __( 'Creating...', 'wp-sell-services' ) ); ?>');
-
-					$.post(ajaxUrl, {
-						action: 'wpss_create_page',
-						nonce: settingsNonce,
-						field: field,
-						title: title
-					}, function(response) {
-						if (response.success) {
-							btn.text('<?php echo esc_js( __( 'Done', 'wp-sell-services' ) ); ?>');
-							row.find('.wpss-wizard-badge')
-								.removeClass('wpss-badge-pending')
-								.addClass('wpss-badge-success')
-								.text('<?php echo esc_js( __( 'Created', 'wp-sell-services' ) ); ?>');
-						} else {
-							btn.prop('disabled', false).text('<?php echo esc_js( __( 'Create', 'wp-sell-services' ) ); ?>');
-						}
-						createNext(index + 1);
-					}).fail(function() {
-						btn.prop('disabled', false).text('<?php echo esc_js( __( 'Create', 'wp-sell-services' ) ); ?>');
-						createNext(index + 1);
-					});
-				}
-
-				createNext(0);
-			});
-
-			// Import demo content.
-			$('#wpss-wizard-import-demo').on('click', function(e) {
-				e.preventDefault();
-				var card = $(this);
-				card.find('strong').text('<?php echo esc_js( __( 'Importing...', 'wp-sell-services' ) ); ?>');
-
-				$.post(ajaxUrl, {
-					action: 'wpss_import_demo_content',
-					nonce: demoNonce
-				}, function(response) {
-					if (response.success) {
-						card.find('strong').text('<?php echo esc_js( __( 'Demo Imported!', 'wp-sell-services' ) ); ?>');
-						card.find('span:last').text(response.data.message);
-					} else {
-						card.find('strong').text('<?php echo esc_js( __( 'Import Failed', 'wp-sell-services' ) ); ?>');
-					}
-				}).fail(function() {
-					card.find('strong').text('<?php echo esc_js( __( 'Import Failed', 'wp-sell-services' ) ); ?>');
-				});
-			});
-		});
-		</script>
-		<?php
+		// Styles + scripts are enqueued (admin-wizard.css / .js), not printed
+		// here — see enqueue_styles().
 	}
 }
