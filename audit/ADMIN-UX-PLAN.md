@@ -203,7 +203,25 @@ What remains true for these two screens: they duplicate CSS like every other
 page (Phase 1.2), and their stat cards restate their filter rows (Phase 4.2).
 No conversion, no paradigm split.
 
-### D2 — Vendors "Earnings" reads the wallet ledger
+### D2 — Vendors "Earnings" reads the wallet ledger — **DONE (2026-07-24)**
+
+**Landed.** The list column is now **"Earned"** and reads a correlated
+sub-query over `wpss_wallet_transactions` (completed rows, debit types excluded)
+whose SQL is byte-for-byte the vendor dashboard's `EarningsService::
+get_summary()['total_earned']` — so the admin can no longer show a different
+lifetime figure than the vendor's own dashboard. One indexed sub-query per row
+(on `wallet_transactions.user_id`), sibling to `services_count`; NO per-row
+`get_summary()` call. The `total_earned` sort maps to the sub-query alias so the
+column sorts by the value shown. The summary stat card became **"Total Earned"**,
+a single aggregate over the ledger **scoped to current `vendor_profiles`** so it
+equals the sum of the listed column (not ledger rows for former vendors/buyers).
+Both detail surfaces (the tabbed `render_vendor_detail` and the AJAX
+`ajax_get_vendor_details`) now show **"Balance"** = `wpss_get_ledger_balance()`
+(current, signed) instead of the denormalised `total_earnings`, so the list
+answers "who is producing" and the drawer answers "what do I owe". Verified in
+the browser: Earned $380 (order_earning 425 − order_reversal 45, matching the
+dashboard), Total Earned $380, Balance $130 (380 − 250 withdrawn). WPCS-neutral
+(baseline 21/37 unchanged).
 
 The ledger is the money authority (`manifest.money_authorities.wallet_balance`).
 The admin list must not be able to contradict the vendor's own dashboard, so the
@@ -407,7 +425,7 @@ pass (each empty view rendered with a genuinely empty list), not blind.
 | 4.3 | Withdrawals: Actions column → `.row-actions`; add search; add sortable headers | |
 | 4.4 | Audit Log: actor/event filters + search. My Notifications: read/unread filter + pagination | |
 | 4.5 | ~~Moderation card grid → table~~ — **cancelled, finding was wrong (D1)** | N/A |
-| 4.6 | Vendors Earnings → wallet ledger via ONE grouped query, label "Earned" (D2) | |
+| 4.6 | Vendors Earnings → wallet ledger via ONE grouped query, label "Earned" (D2) | **done 2026-07-24** |
 
 ### Phase 6 — FRONTEND, screen by screen, on seeded data
 

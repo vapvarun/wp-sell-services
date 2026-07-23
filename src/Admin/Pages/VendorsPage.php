@@ -297,7 +297,7 @@ class VendorsPage {
 			'display_name'    => 'u.display_name',
 			'rating'          => 'vp.avg_rating',
 			'total_orders'    => 'vp.total_orders',
-			'total_earned'    => 'vp.total_earnings',
+			'total_earned'    => 'ledger_earned',
 			'milestone_count' => 'milestone_count',
 		);
 
@@ -315,6 +315,23 @@ class VendorsPage {
 		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
 		$milestone_platform = \WPSellServices\Services\MilestoneService::ORDER_TYPE;
 		$orders_table       = $wpdb->prefix . 'wpss_orders';
+		$wallet_table       = $wpdb->prefix . 'wpss_wallet_transactions';
+
+		// Lifetime earnings, read from the wallet ledger (the money authority),
+		// NOT the denormalised vp.total_earnings which the list must never be
+		// able to contradict the vendor's own dashboard with. "Earned" = the sum
+		// of completed CREDIT rows (debit types — withdrawals, payouts, refund
+		// reversals — are excluded). One correlated sub-query per row, indexed on
+		// wallet_transactions.user_id, exactly like services_count above — no
+		// per-row PHP call to get_summary(), which would N+1 at 500 vendors.
+		// $debit_types_sql values are sanitize_key()'d in the helper, safe to
+		// interpolate into the IN () list.
+		$debit_types_sql   = wpss_get_ledger_debit_types_sql();
+		$ledger_earned_sql = "(SELECT COALESCE( SUM( wt.amount ), 0 )
+			FROM {$wallet_table} wt
+			WHERE wt.user_id = vp.user_id
+			AND wt.status = 'completed'
+			AND wt.type NOT IN ({$debit_types_sql}))";
 
 		$fixed_count_sql = $wpdb->prepare(
 			"(SELECT COUNT(*) FROM {$orders_table} o
@@ -350,7 +367,8 @@ class VendorsPage {
 				u.user_registered,
 				(SELECT COUNT(*) FROM {$wpdb->posts} p WHERE p.post_author = vp.user_id AND p.post_type = 'wpss_service' AND p.post_status = 'publish') as services_count,
 				{$fixed_count_sql} as fixed_count,
-				{$milestone_count_sql} as milestone_count
+				{$milestone_count_sql} as milestone_count,
+				{$ledger_earned_sql} as ledger_earned
 			FROM {$wpdb->prefix}wpss_vendor_profiles vp
 			LEFT JOIN {$wpdb->users} u ON vp.user_id = u.ID
 			WHERE {$where_clause}
@@ -383,9 +401,25 @@ class VendorsPage {
 				SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_vendors,
 				SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_vendors,
 				SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_vendors,
-				AVG(avg_rating) as avg_rating,
-				SUM(total_earnings) as total_earnings
+				AVG(avg_rating) as avg_rating
 			FROM {$wpdb->prefix}wpss_vendor_profiles"
+		);
+
+		// Marketplace lifetime earnings from the ledger authority (completed
+		// credits, debit types excluded) so the summary card and the per-vendor
+		// "Earned" column are the same number on the same screen. One aggregate
+		// query — no per-vendor loop. Scoped to current vendor_profiles so the
+		// total equals the sum of the listed column and never counts ledger rows
+		// for user_ids that are no longer vendors (former vendors, buyers who
+		// received a credit, orphaned rows).
+		$debit_types_sql = wpss_get_ledger_debit_types_sql();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- debit types are sanitize_key()'d; no user input.
+		$total_earned = (float) $wpdb->get_var(
+			"SELECT COALESCE( SUM( wt.amount ), 0 )
+			FROM {$wpdb->prefix}wpss_wallet_transactions wt
+			WHERE wt.status = 'completed'
+			AND wt.type NOT IN ({$debit_types_sql})
+			AND wt.user_id IN ( SELECT user_id FROM {$wpdb->prefix}wpss_vendor_profiles )"
 		);
 
 		return array(
@@ -394,7 +428,7 @@ class VendorsPage {
 			'pending'        => (int) ( $stats->pending_vendors ?? 0 ),
 			'suspended'      => (int) ( $stats->suspended_vendors ?? 0 ),
 			'avg_rating'     => round( (float) ( $stats->avg_rating ?? 0 ), 2 ),
-			'total_earnings' => (float) ( $stats->total_earnings ?? 0 ),
+			'total_earnings' => $total_earned,
 		);
 	}
 
@@ -468,7 +502,7 @@ class VendorsPage {
 				</div>
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Total Earnings', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 
@@ -581,7 +615,7 @@ class VendorsPage {
 							<?php $this->sortable_column_header( 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
 						<th scope="col" class="column-earnings">
-							<?php $this->sortable_column_header( 'total_earned', __( 'Earnings', 'wp-sell-services' ), $orderby, $order ); ?>
+							<?php $this->sortable_column_header( 'total_earned', __( 'Earned', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
 						<th scope="col" class="column-status">
 							<?php esc_html_e( 'Status', 'wp-sell-services' ); ?>
@@ -602,7 +636,7 @@ class VendorsPage {
 						<th scope="col" class="column-services"><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-orders"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-rating"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-earnings"><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></th>
+						<th scope="col" class="column-earnings"><?php esc_html_e( 'Earned', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 					</tr>
 				</tfoot>
@@ -797,8 +831,8 @@ class VendorsPage {
 					<span class="wpss-rating-count"><?php esc_html_e( 'No reviews', 'wp-sell-services' ); ?></span>
 				<?php endif; ?>
 			</td>
-			<td class="column-earnings" data-colname="<?php esc_attr_e( 'Earnings', 'wp-sell-services' ); ?>">
-				<?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?>
+			<td class="column-earnings" data-colname="<?php esc_attr_e( 'Earned', 'wp-sell-services' ); ?>">
+				<?php echo esc_html( wpss_format_price( (float) ( $vendor->ledger_earned ?? 0 ) ) ); ?>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
@@ -925,8 +959,8 @@ class VendorsPage {
 					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></span>
+					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></span>
+					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Balance', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
@@ -1180,6 +1214,10 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
 		}
 
+		// Payout-relevant number: current wallet balance ("what do I owe"),
+		// read from the ledger authority rather than vp.total_earnings.
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
+
 		// Get services.
 		$services = get_posts(
 			array(
@@ -1234,8 +1272,8 @@ class VendorsPage {
 					<?php esc_html_e( 'Rating', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?></strong>
-					<?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?>
+					<strong><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></strong>
+					<?php esc_html_e( 'Balance', 'wp-sell-services' ); ?>
 				</div>
 			</div>
 
