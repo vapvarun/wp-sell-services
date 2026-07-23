@@ -228,9 +228,24 @@ finishing Phase 1 makes Phase 2 safe, and so on.
 | 1.3 | `ProTeaser` inline `<style>` — 8 selectors | small | |
 | 1.4 | `UpgradePage` inline `<style>` — 14 selectors | medium | |
 | 1.5 | `SetupWizardPage` inline `<style>` — 25 selectors | medium | |
-| 1.6 | `Admin.php` — 2 inline `<script>` + 1 inline `onclick` | small | |
-| 1.7 | `VendorsPage` + `ServiceModerationPage` + `SetupWizardPage` inline `<script>` | medium | |
-| 1.8 | `ServiceMetabox` — 8 inline `<script>` (worst single file) | large | |
+| 1.6 | `Admin.php` — 2 inline `<script>` + 1 inline `onclick` | small | **DONE** |
+| 1.7a | `ServiceModerationPage` inline `<script>` (144 lines) → `admin-moderation.js` | medium | **DONE** |
+| 1.7b | `SetupWizardPage` inline `<script>` (262 lines, 20 PHP interpolations) | medium | |
+| 1.7c | `VendorsPage` inline `<script>` (695 lines, 32 interpolations) | large | |
+| 1.8 | `ServiceMetabox` — 8 inline `<script>`, 229 lines, **69 PHP interpolations** (densest coupling in the plugin) | large | |
+
+**Dead-enqueue bug, third instance.** `ServiceModerationPage::enqueue_scripts()`
+compared against `'wp-sell-services_page_wpss-moderation'`; the real suffix is
+`sell-services_page_…` (derived from the parent MENU TITLE), so the method was
+**dead code** — which is exactly why the page printed its config and 120 lines
+of JS inline. Same root cause as WithdrawalsPage and, before it, the enqueue on
+UpgradePage. **Every `add_submenu_page()` caller must store the returned hook**
+rather than reconstruct it; a grep for hardcoded `_page_wpss-` strings should
+become a gate.
+
+**F8 finding (new):** `admin-moderation.js` uses native `confirm()` and
+`prompt()` for approve / reject / rejection-reason, not `wpssConfirm`. Now that
+it is a real file the audit can see it. Folds into the modal work, Phase 2.
 
 ### Phase 2 — collapse competing roots (one component per commit, shim for one release)
 

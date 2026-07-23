@@ -456,17 +456,6 @@ class Admin {
 
 		// Inline script to handle dismiss via AJAX.
 		?>
-		<script>
-		jQuery( function( $ ) {
-			$( document ).on( 'click', '.wpss-pages-notice .notice-dismiss', function() {
-				var notice = $( this ).closest( '.wpss-pages-notice' );
-				$.post( ajaxurl, {
-					action: 'wpss_dismiss_pages_notice',
-					nonce: notice.data( 'nonce' )
-				} );
-			} );
-		} );
-		</script>
 		<?php
 	}
 
@@ -1151,7 +1140,7 @@ class Admin {
 		?>
 		<div class="wrap wpss-dashboard-wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
-			<button type="button" class="page-title-action wpss-tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+			<button type="button" class="page-title-action wpss-tour-replay">
 				<?php esc_html_e( 'Replay guide', 'wp-sell-services' ); ?>
 			</button>
 			<hr class="wp-header-end">
@@ -2245,17 +2234,6 @@ class Admin {
 
 									<?php submit_button( __( 'Update Dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 								</form>
-								<script>
-								jQuery(function($) {
-									$('#dispute_status').on('change', function() {
-										if ($(this).val() === 'resolved') {
-											$('#wpss-resolution-fields').show();
-										} else {
-											$('#wpss-resolution-fields').hide();
-										}
-									});
-								});
-								</script>
 							</div>
 						</div>
 					<?php else : ?>

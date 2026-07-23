@@ -484,6 +484,45 @@
 		$form.find('.wpss-remove-image').hide();
 	});
 
+	/**
+	 * Dismissible "essential pages missing" notice.
+	 *
+	 * Moved out of an inline <script> in Admin.php (ux-audit F2). Delegated so
+	 * it also covers notices injected after load.
+	 */
+	$(document).on('click', '.wpss-pages-notice .notice-dismiss', function () {
+		var $notice = $(this).closest('.wpss-pages-notice');
+
+		$.post(ajaxurl, {
+			action: 'wpss_dismiss_pages_notice',
+			nonce: $notice.data('nonce')
+		});
+	});
+
+	/**
+	 * Dispute metabox: the resolution fields only apply when resolving.
+	 *
+	 * Moved out of an inline <script> in Admin.php. Delegated rather than bound
+	 * directly — the old block was printed inside the metabox markup, so it
+	 * re-bound the handler on every dispute render.
+	 */
+	$(document).on('change', '#dispute_status', function () {
+		$('#wpss-resolution-fields').toggle($(this).val() === 'resolved');
+	});
+
+	/**
+	 * Replay the onboarding tour.
+	 *
+	 * Replaces an inline onclick="" attribute on the dashboard heading button.
+	 */
+	$(document).on('click', '.wpss-tour-replay', function (e) {
+		e.preventDefault();
+
+		if (window.wpssTour && typeof window.wpssTour.start === 'function') {
+			window.wpssTour.start();
+		}
+	});
+
 	// Initialize on document ready
 	$(document).ready(init);
 
