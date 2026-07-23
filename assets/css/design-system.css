@@ -459,12 +459,24 @@ button.wpss-btn--ghost.wpss-btn--danger:hover {
 .wpss-btn--success { background: var(--wpss-success); color: var(--wpss-white, #fff); border-color: var(--wpss-success); }
 
 /* Theme-proof filled CTAs — when a .wpss-btn renders OUTSIDE the .wpss-app
-   scope (e.g. a confirm modal appended straight to <body>), the host theme's
-   generic `a` / `button` rules can override the fill and leave white text on
-   a transparent button (an invisible "Confirm" / "Delete"). Pinning the
-   token pair on link/visited states here — at a specificity theme link rules
-   cannot beat — guarantees every filled CTA reads correctly on every surface,
-   in every theme. Mirrors the banner-CTA fix from 2.7.1. */
+   scope (e.g. a confirm modal appended straight to <body>), or INSIDE the
+   theme's content wrapper (cart, checkout and any shortcode-driven page live
+   in `.entry-content`), the host theme's generic `a` rules can override the
+   fill and leave an unreadable CTA.
+
+   These declarations are `!important` because specificity alone cannot win:
+   BuddyX ships
+     `.entry-content a:not(.wp-element-button):not(.wp-block-button__link)
+      :not(.button):not([class*="button"])`
+   which scores (0,5,1) against this block's (0,1,1) — so an <a class="wpss-btn
+   wpss-btn--primary"> on the cart page rendered near-black #111 text on the
+   indigo fill: contrast 3.0, below the 4.5 WCAG AA floor. Note the theme's
+   escape hatch matches `[class*="button"]`, which our `wpss-btn` name does not
+   satisfy ("btn" != "button"), so no themes-agree-by-luck fallback exists.
+
+   A filled CTA's foreground is a correctness requirement, not a themeable
+   preference — if a site owner wants different button colours they retint the
+   `--wpss-*` tokens these rules read, which still works. */
 a.wpss-btn--primary, a.wpss-btn--primary:link, a.wpss-btn--primary:visited,
 button.wpss-btn--primary,
 .wpss-btn--primary { background: var(--wpss-primary); border-color: var(--wpss-primary); color: var(--wpss-white, #fff); }
@@ -474,6 +486,41 @@ button.wpss-btn--danger,
 a.wpss-btn--success, a.wpss-btn--success:link, a.wpss-btn--success:visited,
 button.wpss-btn--success,
 .wpss-btn--success { background: var(--wpss-success); border-color: var(--wpss-success); color: var(--wpss-white, #fff); }
+
+/* Link-state foreground, pinned. The block above loses the specificity race
+   inside a theme's content wrapper: BuddyX ships
+     `.entry-content a:not(.wp-element-button):not(.wp-block-button__link)
+      :not(.button):not([class*="button"])`
+   at (0,5,1) versus (0,1,1) here, so an <a class="wpss-btn wpss-btn--primary">
+   on the cart/checkout pages (which render inside `.entry-content`) took the
+   theme's near-black link colour: #111 on the indigo fill measured contrast
+   3.0, under the 4.5 WCAG AA floor. The theme's own escape hatch matches
+   `[class*="button"]`, and our class is `wpss-btn` — "btn" is not "button" —
+   so nothing exempts us by luck.
+
+   Scope notes, deliberately narrow:
+   - Only `color`, never `background`: the variant `:hover` rules below set
+     their background WITHOUT !important, so pinning it here would kill every
+     hover state.
+   - Only filled variants: `--ghost` / `--outline` compositions (e.g. the
+     `.wpss-btn--ghost.wpss-btn--danger` destructive-action pattern) legitimately
+     use a coloured foreground on a light fill and are excluded.
+   - Only anchors: <button> is not targeted by theme link rules.
+   Site owners retint buttons through the `--wpss-*` tokens, which still works. */
+a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline),
+a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
+a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
+a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
+a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline),
+a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
+a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
+a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
+	color: var(--wpss-white, #fff) !important;
+}
 
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 .wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }

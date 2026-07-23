@@ -215,7 +215,25 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		if ( ! $service_id ) {
-			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'No service selected.', 'wp-sell-services' ) . '</p>';
+			// Reaching checkout with an empty cart is an ordinary state, not a
+			// failure: a red "No service selected." error alert blamed the buyer
+			// for something that had not gone wrong and offered no way forward.
+			// Mirror the cart page's empty state — same icon/title/text/CTA
+			// shape — so the dead end becomes a route back to browsing.
+			ob_start();
+			?>
+			<div class="wpss-cart-empty">
+				<div class="wpss-cart-empty__icon">
+					<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
+				</div>
+				<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty', 'wp-sell-services' ); ?></h2>
+				<p class="wpss-cart-empty__text"><?php esc_html_e( 'Choose a service and a package to check out.', 'wp-sell-services' ); ?></p>
+				<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ? wpss_get_page_url( 'services_page' ) : home_url( '/' ) ); ?>" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+				</a>
+			</div>
+			<?php
+			return (string) ob_get_clean();
 		}
 
 		$service = wpss_get_service( $service_id );

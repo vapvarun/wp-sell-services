@@ -450,7 +450,7 @@ long vendor names (the overflow cases), and at least one order with milestones.
 | 6.6 | Dashboard → Portfolio / Analytics / Favorites / Disputes / Profile | empty + populated | **all looked**; Portfolio + Analytics findings recorded |
 | 6.7 | Service archive + single service | long titles, no image, many packages, no reviews | **DONE 2026-07-24 — 2 fixes** (below) |
 | 6.8 | Buyer request archive + single request | open/closed, with/without offers | **DONE 2026-07-24 — 2 fixes** (below) |
-| 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | |
+| 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | **PARTIAL 2026-07-24** — cart + empty checkout done, 2 fixes; paid flow still to do |
 | 6.10 | Become a vendor / registration | open / approval / closed states | |
 | 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | |
 
@@ -541,6 +541,63 @@ all** — not a product bug; anything created through the real flow always has i
 **Closed state verified** (`hired`): status badge flips, the Submit Proposal CTA
 is replaced by "This request is no longer accepting proposals", title renders.
 390px: no horizontal scroll, sidebar fits, title wraps cleanly.
+
+### 6.9 Cart + checkout — PARTIAL, rendered 2026-07-24
+
+**Two fixes landed.**
+
+1. **Filled CTAs failed WCAG AA inside theme content — FIXED.** On the cart
+   page an `<a class="wpss-btn wpss-btn--primary">` rendered near-black #111 on
+   the indigo fill: **contrast 3.0**, under the 4.5 AA floor. design-system.css
+   already had a block *claiming* to be "theme-proof at a specificity theme link
+   rules cannot beat" — it is (0,1,1), and BuddyX ships
+   `.entry-content a:not(.wp-element-button):not(.wp-block-button__link)
+   :not(.button):not([class*="button"])` at (0,5,1), so it loses. Cart, checkout
+   and every shortcode-driven page render inside `.entry-content`, so all their
+   CTAs were affected. **The theme's own escape hatch matches
+   `[class*="button"]` and our class is `wpss-btn` — "btn" is not "button" — so
+   nothing exempted us.** Fixed with a narrowly-scoped `color: … !important`
+   rule: anchors only, filled variants only (`:not(--ghost):not(--outline)`, so
+   the Phase 2.1 `.wpss-btn--ghost.wpss-btn--danger` pattern is untouched), and
+   `color` only (never `background`, whose `:hover` rules are not `!important`
+   and would have been frozen). Verified 3.0 → **6.29**, ghost-danger Delete
+   still red-on-transparent, hovers intact.
+
+2. **Checkout's empty state was a red error — FIXED.** Arriving at checkout with
+   an empty cart showed `<p class="wpss-alert wpss-alert-error">No service
+   selected.</p>`: it blamed the buyer for an ordinary state and offered no way
+   forward. Now mirrors the cart page's empty state (icon, title, explanation,
+   "Browse Services" CTA).
+
+**Corrected a wrong first read (recorded so it is not repeated).** `/checkout/`
+appeared to render a completely blank page — it is actually **WooCommerce's**
+checkout block (`wp-block-woocommerce-checkout … is-loading`), because WC is
+active here and owns that slug. The plugin's mapped checkout page is
+`/service-checkout/` (page 7) and renders correctly. The plugin links by page
+ID, so this is not a product bug, but it is a good reminder that on a WC site
+`/checkout/` is not ours.
+
+**Still open for 6.9** (needs a buyer session — the `?autologin=` mu-plugin
+no-ops when someone is already logged in, so switch users first):
+- add-to-cart → populated cart → checkout → order confirmation, end to end
+- the paid path per gateway, and the genuinely-no-gateway-configured case
+  (`wpss_payment_gateways` is `[]` on this site, which is a fresh install's
+  state — what the owner sees when they try the first purchase is untested)
+
+**Recorded, not fixed (button vocabulary, feeds the Phase 2.1 follow-up):**
+a THIRD button spelling is in wide use — single-dash `.wpss-btn-primary` (18),
+`.wpss-btn-outline` (13), `.wpss-btn-block` (13), `.wpss-btn-secondary` (3),
+`.wpss-btn-sm` (2) — alongside canonical `--primary` and the retired
+`.wpss-button`. `.wpss-btn-primary` is defined in BOTH frontend.css and
+single-service.css (another duplicate pair) and again scoped inside
+archive-service.css. It renders correctly today (6.29 contrast on the single
+service Continue CTA) so this is drift, not a live defect — but note the
+theme-proof rule above targets `--primary`, so a single-dash **anchor** in
+theme content would NOT be protected.
+
+**Also recorded:** `templates/cart/cart.php` carries an inline `<style>` block
+(F1 gate violation) and the empty-state centering lives inside it, which is why
+the reused empty state on checkout renders left-aligned rather than centred.
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 
