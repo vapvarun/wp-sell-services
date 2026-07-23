@@ -1869,14 +1869,62 @@
 	margin: 0;
 }
 
-.wpss-vendors-table .column-vendor { width: 20%; }
-.wpss-vendors-table .column-services { width: 8%; text-align: center; }
-.wpss-vendors-table .column-orders { width: 8%; text-align: center; }
-.wpss-vendors-table .column-rating { width: 10%; text-align: center; }
-.wpss-vendors-table .column-earnings { width: 12%; text-align: right; }
-.wpss-vendors-table .column-status { width: 10%; }
-.wpss-vendors-table .column-joined { width: 12%; }
-.wpss-vendors-table .column-actions { width: 15%; }
+/* Vendors list — column widths only. These are the ONE definition; the page
+   used to repeat them (and 20 other shared rules) in an inline <style>, so two
+   sets fought and load order decided. Joined folded under the vendor name and
+   Actions became row-actions, so those two widths are gone. */
+.wpss-vendors-table .column-vendor { width: 42%; }
+.wpss-vendors-table .column-services { width: 9%; text-align: center; }
+.wpss-vendors-table .column-orders { width: 9%; text-align: center; }
+.wpss-vendors-table .column-rating { width: 12%; text-align: center; }
+.wpss-vendors-table .column-earnings { width: 14%; text-align: right; }
+.wpss-vendors-table .column-status { width: 14%; }
+
+.wpss-vendor-joined {
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+	margin-top: 2px;
+}
+
+/* Confirm dialog + inline form row + status line — page-agnostic, so they live
+   here rather than in whichever screen happened to need them first. */
+.wpss-admin-confirm__box {
+	max-width: 420px;
+	margin: 12% auto;
+	padding: var(--wpss-space-6, 24px);
+	width: auto;
+}
+
+.wpss-admin-confirm__msg {
+	margin: 0 0 var(--wpss-space-5, 20px);
+	font-size: var(--wpss-text-sm, 14px);
+	line-height: 1.5;
+}
+
+.wpss-admin-confirm__actions {
+	display: flex;
+	gap: var(--wpss-space-3, 12px);
+	justify-content: flex-end;
+}
+
+.wpss-form-row--inline {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3, 12px);
+	margin-top: var(--wpss-space-4, 16px);
+}
+
+.wpss-status-line {
+	margin-top: var(--wpss-space-3, 12px);
+}
+
+.wpss-status-line__muted {
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-status-line__success {
+	color: var(--wpss-admin-success);
+}
 
 .wpss-vendor-info {
 	display: flex;
