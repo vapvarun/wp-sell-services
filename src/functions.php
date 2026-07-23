@@ -246,6 +246,58 @@ function wpss_get_order_refunded_amount( object $order ): float {
 }
 
 /**
+ * THE single authority for "can this order be refunded".
+ *
+ * Replaces two hardcoded, contradictory status lists — the vendor/customer AJAX
+ * path allowed pending_payment / pending_requirements / accepted; the admin
+ * button allowed only completed / cancelled — neither of which covered
+ * in_progress, delivered, revision, late, on_hold or disputed. Every refund
+ * surface (AJAX action, admin metabox button, admin order-view button) now asks
+ * this one function, so the answer can never diverge by screen again.
+ *
+ * Policy (owner, 2026-07-23): if the buyer PAID, the order is refundable at ANY
+ * workflow stage — quality problems routinely surface AFTER delivery, so the
+ * gate is payment capture, not workflow progress. An unpaid order is not
+ * refundable because there is nothing to give back; a fully-refunded order is
+ * not refundable because there is nothing left. A partial refund keeps
+ * payment_status 'paid' (only the order status moves to partially_refunded), so
+ * this still returns true for it — the remaining balance can be clawed back.
+ *
+ * The `wpss_order_is_refundable` filter lets a site owner TIGHTEN this (e.g.
+ * block refunds once an order is completed); widening past "paid" is on them.
+ *
+ * @since 1.2.4
+ *
+ * @param object|int $order Order object (exposing status + payment_status) or ID.
+ * @return bool True when the order may be refunded.
+ */
+function wpss_order_is_refundable( $order ): bool {
+	if ( is_numeric( $order ) ) {
+		$order = wpss_get_order( (int) $order );
+	}
+
+	if ( ! is_object( $order ) ) {
+		return false;
+	}
+
+	// Money captured ('paid' survives a partial refund) and not yet fully
+	// returned ('refunded' payment_status, or the terminal refunded status,
+	// ends it).
+	$refundable = 'paid' === ( $order->payment_status ?? '' )
+		&& 'refunded' !== ( $order->status ?? '' );
+
+	/**
+	 * Filter whether an order may be refunded.
+	 *
+	 * @since 1.2.4
+	 *
+	 * @param bool   $refundable Default policy: any paid, not-fully-refunded order.
+	 * @param object $order      The order being tested.
+	 */
+	return (bool) apply_filters( 'wpss_order_is_refundable', $refundable, $order );
+}
+
+/**
  * Vendor's share of a refund.
  *
  * THE single proportional formula. A refund gives the buyer back some or all of

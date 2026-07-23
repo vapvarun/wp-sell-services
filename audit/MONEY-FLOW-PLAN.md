@@ -189,6 +189,15 @@ order 112: `re_… succeeded 5000 usd`, exactly one refund, ledger `#128 −45.0
 Dispute full + partial verified. `apply_refund_status()` now writes the amount,
 transitions, and undoes the write if the transition is refused (`085cf14`).
 
+**RESOLVED — S7.1 (T9, 2026-07-24).** `wpss_order_is_refundable( $order )` in
+`functions.php` is the single authority: refundable iff `payment_status === 'paid'`
+and not fully refunded, behind a `wpss_order_is_refundable` filter for owners who
+want to tighten. Both hardcoded lists are gone — the AJAX `refund` case
+(`AjaxHandlers`), the admin order-view button (`Admin.php`) and the metabox button
+(`OrderMetabox`) all call it. The natural transition map gained refunded /
+partially_refunded as targets from every post-payment status so the state machine
+agrees with the policy. History below.
+
 **Open — S7.1 Refundable statuses are duplicated and contradictory.**
 `AjaxHandlers` case `'refund'` allows `pending_payment` / `pending_requirements`
 / `accepted`; the admin button allows `completed` / `cancelled`
@@ -207,6 +216,15 @@ consulted by the AJAX path, the admin button and REST — replacing both hardcod
 lists — with a filter so a site owner can tighten it. **T10 must land first**
 (see S7.2): widening the gate before the uncredited-order guard exists would
 debit vendors who were never credited.
+
+**RESOLVED — S7.2 (T10, 2026-07-24).** `reverse_order_earnings()` now checks the
+ledger for a completed credit on the order before writing any reversal; if none
+exists (the paid-but-uncredited trap), it logs a reconciliation warning and
+returns without inserting a debit. Verified end to end: refunding uncredited
+order 40 (which shows `vendor_earnings $45` on the order but has no ledger credit)
+produced zero reversal rows and left the vendor balance unchanged at $130. This
+had to land with T9 — the widened gate is only safe because this guard exists.
+History below.
 
 **Open — S7.2 A refund on a paid-but-uncredited order would debit a vendor who
 was never paid.** `reverse_earnings_for_refund()` guards only on
@@ -274,8 +292,8 @@ migration risk.
 | T6 | pro | `PayoutMethodsCoordinator` implements the seam, dispatching by vendor method | S6.4 |
 | T7 | pro | Remove `transfer_data` from `ConnectPaymentProcessor` | S6.4 |
 | T8 | pro | Retire the `reverse_transfer` clawback path for new orders | S6.4 |
-| T9 | free | One authority for refundable statuses + policy decision | S7.1 |
-| T10 | free | Guard reversal against uncredited orders — **before T9** | S7.2 |
+| ~~T9~~ | free | ✅ DONE 2026-07-24. `wpss_order_is_refundable()` is the ONE authority (paid && not fully refunded, filterable); consulted by the AJAX action + both admin buttons. Natural transition map now reaches refunded/partially_refunded from every paid stage. Verified: order 40 (pending_requirements, paid) refunded from admin — impossible before | S7.1 |
+| ~~T10~~ | free | ✅ DONE 2026-07-24 (landed WITH T9). Reversal now skips when the ledger holds no completed credit for the order. Verified: refunding uncredited order 40 created 0 reversal rows and left the vendor balance at $130 (no phantom −$45) | S7.2 |
 | T11 | free | Admin partial-refund input | S7.3 |
 | T12 | free | Audit `LedgerExporter` / reconciliation; fix Preflight gateway count | S8 |
 

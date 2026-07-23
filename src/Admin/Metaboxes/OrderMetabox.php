@@ -831,7 +831,7 @@ class OrderMetabox {
 
 				<?php // "Resend Notifications" removed — it had no backend handler and only toasted "not yet implemented". ?>
 
-				<?php if ( in_array( $status, array( 'completed', 'cancelled' ), true ) ) : ?>
+				<?php if ( wpss_order_is_refundable( $order ) ) : ?>
 					<button type="button" class="button button-link-delete wpss-process-refund" data-order="<?php echo esc_attr( $order->get_id() ); ?>">
 						<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
 					</button>

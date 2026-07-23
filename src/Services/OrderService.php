@@ -449,6 +449,40 @@ class OrderService {
 			),
 		);
 
+		// Refund is a money action, not a workflow step: policy is that any PAID
+		// order is refundable at any stage (quality problems surface after
+		// delivery). So refunded / partially_refunded are reachable targets from
+		// every post-payment status, making the state machine agree with
+		// wpss_order_is_refundable() instead of only permitting disputed →
+		// refunded. Whether the order was actually PAID is enforced at the refund
+		// gates by wpss_order_is_refundable(); the map only says the transition is
+		// structurally legal. Unpaid stages (pending_payment) are intentionally
+		// excluded — there is nothing to refund before capture.
+		$refund_targets = array(
+			ServiceOrder::STATUS_REFUNDED,
+			ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+		);
+		$paid_stage_statuses = array(
+			ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+			ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED,
+			ServiceOrder::STATUS_ACCEPTED,
+			ServiceOrder::STATUS_IN_PROGRESS,
+			ServiceOrder::STATUS_PENDING_APPROVAL,
+			ServiceOrder::STATUS_DELIVERED,
+			ServiceOrder::STATUS_REVISION_REQUESTED,
+			ServiceOrder::STATUS_LATE,
+			ServiceOrder::STATUS_ON_HOLD,
+			ServiceOrder::STATUS_CANCELLATION_REQUESTED,
+			ServiceOrder::STATUS_COMPLETED,
+			ServiceOrder::STATUS_CANCELLED,
+			ServiceOrder::STATUS_DISPUTED,
+			ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+		);
+		foreach ( $paid_stage_statuses as $paid_status ) {
+			$existing                    = $transitions[ $paid_status ] ?? array();
+			$transitions[ $paid_status ] = array_values( array_unique( array_merge( $existing, $refund_targets ) ) );
+		}
+
 		/**
 		 * Filter allowed status transitions.
 		 *

@@ -1807,7 +1807,7 @@ class Admin {
 					<?php endif; ?>
 
 					<!-- Admin Actions -->
-					<?php if ( current_user_can( 'manage_options' ) && in_array( $order->status, array( 'completed', 'cancelled' ), true ) && 'paid' === $order->payment_status ) : ?>
+					<?php if ( current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) : ?>
 						<div class="postbox">
 							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Admin Actions', 'wp-sell-services' ); ?></h2>
 							<div class="inside">

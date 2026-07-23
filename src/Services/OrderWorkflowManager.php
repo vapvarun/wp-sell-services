@@ -934,6 +934,43 @@ class OrderWorkflowManager {
 			return true;
 		}
 
+		// Never debit a vendor for money they were never credited. The order may
+		// carry vendor_earnings and even an inflated profile total while its
+		// wallet credit was never written — CommissionService::record() sets the
+		// order fields and the profile in writes that commit BEFORE its own
+		// create_earnings_transaction() transaction, so a rolled-back credit
+		// leaves exactly this "paid but uncredited" state. Inserting a reversal
+		// debit against a credit that never existed would invent a negative
+		// balance (the vendor goes to -X for money they never received). The
+		// ledger is the authority: if it holds no completed credit for this
+		// order, there is nothing to claw back — skip the reversal and flag it
+		// for manual reconciliation rather than fabricate debt. Connect orders,
+		// settled outside the wallet, are already short-circuited above by the
+		// wpss_should_reverse_vendor_earnings filter and never reach here.
+		$debit_types_sql = wpss_get_ledger_debit_types_sql();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; debit types are sanitize_key()'d; order_id is prepared.
+		$credited = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$transactions_table}
+				WHERE reference_type = 'order' AND reference_id = %d
+				AND status = 'completed' AND amount > 0
+				AND type NOT IN ({$debit_types_sql})",
+				$order_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		if ( 0 === $credited ) {
+			wpss_log(
+				sprintf(
+					'Order %d refund: no completed wallet credit found for the vendor, so the earnings reversal is skipped — a reversal here would debit money never credited. If vendor_profiles shows earnings for this order they are a stale cache from an interrupted credit and need manual reconciliation.',
+					$order_id
+				),
+				'warning'
+			);
+			return true;
+		}
+
 		// All operations in a single transaction.
 		$wpdb->query( 'START TRANSACTION' );
 

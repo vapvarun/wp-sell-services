@@ -3065,8 +3065,11 @@ class AjaxHandlers {
 				break;
 
 			case 'refund':
-				// Only customer can request refund, or vendor can issue refund.
-				if ( in_array( $order->status, array( 'pending_payment', 'pending_requirements', 'accepted' ), true ) ) {
+				// Refundable iff the buyer paid — at any workflow stage. One
+				// authority (wpss_order_is_refundable) governs every refund
+				// surface so the AJAX path, the admin buttons and any future
+				// caller cannot disagree about which orders qualify.
+				if ( wpss_order_is_refundable( $order ) ) {
 					// How much is going back. Absent or zero means the whole order.
 					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified at the top of this handler.
 					$wpss_refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
