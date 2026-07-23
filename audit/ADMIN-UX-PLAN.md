@@ -370,10 +370,26 @@ pills, now flat WP-grey, adopt the same tints the frontend uses — one look
 across admin + frontend. Alternative: keep admin WP-native, unify each context
 only internally. Visible repaint of ~10 screens; verified light + dark + both
 contexts before shipping.
-| 2.3 | Empty state — `.wpss-no-items`, `.wpss-no-data` → `.wpss-empty-state` | 3 → 1 | |
+| 2.3 | Empty state — `.wpss-no-items`, `.wpss-no-data`, `.wpss-no-results` → `.wpss-empty-state` | 4 files → 1(ds)+1(admin) | audited 2026-07-24, mostly frontend → do in Phase 6 |
 | 2.4 | Input — `.wpss-field`, `.wpss-form-field`, `.wpss-form-row` → `.wpss-form-group` + `.wpss-input` | 7 → 2 | |
 | 2.5 | Card — `.wpss-panel`, `.wpss-section`, `.wpss-detail-card` → `.wpss-card` + modifiers | 6 → 1+2 | |
 | 2.6 | Table — introduce `.wpss-table`; per-screen classes keep widths only | 9 → 1 | |
+
+**Phase 2.3 audit (2026-07-24).** `.wpss-empty-state` is the de-facto standard
+(25 markup uses) but defined in FOUR sheets — admin.css, frontend.css,
+unified-dashboard.css, vendor-dashboard.css — and they diverge on sub-element
+names (`__body` in admin, `__description` in vendor-dashboard, `__body`+`__text`
++bare `p`/`h2`/`h3` in frontend). frontend.css defines the base TWICE (2335 +
+3739); admin's second copy (3094) is a legit `@media` override, not a dup.
+`.wpss-no-items` = 0 uses (dead → delete from admin.css). `.wpss-no-data` = 6
+uses. `.wpss-no-results` = 8 uses with NO CSS definition anywhere (renders
+unstyled — a bug). design-system.css owns a separate `.wpss-empty` BEM component
+(`__icon/__title/__text`) with only 2 uses. **Plan:** promote ONE canonical
+`.wpss-empty-state` into design-system.css (frontend) + one in admin.css, settle
+on `__icon/__title/__body/__actions`, migrate `__description`/`__text`/`no-data`/
+`no-results` call sites, delete the 3 frontend copies + dead `.wpss-no-items`.
+Three of four sheets are frontend, so this lands in the Phase 6 seeded per-screen
+pass (each empty view rendered with a genuinely empty list), not blind.
 
 ### Phase 3 — one definition per class
 
