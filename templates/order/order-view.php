@@ -136,7 +136,7 @@ do_action( 'wpss_before_order_view', $order );
 			 */
 			$status_label = apply_filters( 'wpss_order_status_label', $status_label, $order->status, $order );
 			?>
-			<span class="wpss-badge wpss-badge--lg wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+			<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 				<?php echo esc_html( $status_label ); ?>
 			</span>
 
@@ -1149,7 +1149,7 @@ do_action( 'wpss_before_order_view', $order );
 							<span class="wpss-delivery-item__date">
 								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
 							</span>
-							<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( $delivery->status ); ?>">
+							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
 								<?php echo esc_html( ucfirst( $delivery->status ) ); ?>
 							</span>
 						</div>
@@ -2804,13 +2804,6 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 .wpss-requirement-view__thumbnail:hover {
 	transform: scale(1.02);
-}
-
-/* Cancellation Requested Status Badge */
-.wpss-badge--status-cancellation-requested {
-	background: rgba(245, 158, 11, 0.1);
-	color: var(--wpss-warning-dark, #92400e);
-	border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 /* Alert Styles */

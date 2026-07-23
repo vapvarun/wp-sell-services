@@ -716,61 +716,87 @@
 	line-height: 1.5;
 }
 
-.wpss-status-pending {
-	background: var(--wpss-border-light, #f0f0f1);
-	color: var(--wpss-text-secondary, #50575e);
+/* Canonical status palette — ONE definition, semantic colour per status.
+   Every status badge class is emitted by wpss_status_class() (hyphen spelling),
+   so this is the single set the admin needs. Replaces two divergent in-file
+   copies (one had pending=grey, completed=grey-blue; the other pending=amber)
+   plus a stray approved rule. Colour families:
+     amber   waiting/pending        indigo  active/in-progress
+     sky     revision               blue    delivered
+     green   done/approved          red     cancelled/rejected
+     orange  disputed               purple  refunded      yellow  late/on-hold  */
+
+/* Amber — waiting on someone */
+.wpss-status-pending,
+.wpss-status-pending-payment,
+.wpss-status-pending-requirements,
+.wpss-status-pending-approval,
+.wpss-status-open,
+.wpss-status-requirements-submitted,
+.wpss-status-cancellation-requested,
+.wpss-status-withdrawn {
+	background: var(--wpss-status-pending-bg, #fff3cd);
+	color: var(--wpss-status-pending-fg, #856404);
 }
 
-.wpss-status-processing {
-	background: var(--wpss-status-pending-approval-bg, #c6e1c6);
-	color: var(--wpss-status-pending-approval-fg, #5b841b);
+/* Indigo — actively in progress */
+.wpss-status-in-progress,
+.wpss-status-accepted,
+.wpss-status-processing,
+.wpss-status-escalated {
+	background: var(--wpss-status-in-progress-bg, #e0e7ff);
+	color: var(--wpss-status-in-progress-fg, #3730a3);
 }
 
-.wpss-status-completed {
-	background: var(--wpss-gray-200, #c8d7e1);
-	color: var(--wpss-gray-700, #2e4453);
-}
-
-.wpss-status-cancelled {
-	background: var(--wpss-danger-border, #eba3a3);
-	color: var(--wpss-danger-dark, #761919);
-}
-
-.wpss-status-on-hold,
-.wpss-status-pending-requirements {
-	background: var(--wpss-warning-border, #f8dda7);
-	color: var(--wpss-warning-dark, #94660c);
-}
-
-.wpss-status-failed {
-	background: var(--wpss-danger-border, #eba3a3);
-	color: var(--wpss-danger-dark, #761919);
-}
-
-.wpss-status-pending-payment {
-	background: var(--wpss-warning-border, #f8dda7);
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-.wpss-status-revision-requested,
-.wpss-status-revision_requested {
+/* Sky — revision requested */
+.wpss-status-revision-requested {
 	background: var(--wpss-status-revision-bg, #e0f2fe);
 	color: var(--wpss-status-revision-fg, #075985);
 }
 
+/* Blue — delivered, awaiting review */
 .wpss-status-delivered {
 	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-info-dark, #1e40af); 
+	color: var(--wpss-status-delivered-fg, #1e40af);
 }
 
-.wpss-status-in-progress {
-    background: var(--wpss-status-in-progress-bg, #e0e7ff);
-    color: var(--wpss-status-in-progress-fg, #3730a3);
+/* Green — done */
+.wpss-status-completed,
+.wpss-status-approved,
+.wpss-status-active,
+.wpss-status-resolved,
+.wpss-status-closed {
+	background: var(--wpss-status-completed-bg, #d4edda);
+	color: var(--wpss-status-completed-fg, #155724);
 }
 
+/* Red — cancelled, rejected, failed, suspended */
+.wpss-status-cancelled,
+.wpss-status-rejected,
+.wpss-status-failed,
+.wpss-status-suspended {
+	background: var(--wpss-status-rejected-bg, #f8d7da);
+	color: var(--wpss-status-rejected-fg, #721c24);
+}
+
+/* Orange — disputed */
 .wpss-status-disputed {
-	background: var(--wpss-warning-border, #fed7aa);
+	background: var(--wpss-status-disputed-bg, #fed7aa);
 	color: var(--wpss-status-disputed-fg, #9a3412);
+}
+
+/* Purple — refunded */
+.wpss-status-refunded,
+.wpss-status-partially-refunded {
+	background: var(--wpss-status-refunded-bg, #f3e8ff);
+	color: var(--wpss-status-refunded-fg, #6b21a8);
+}
+
+/* Yellow — needs attention */
+.wpss-status-late,
+.wpss-status-on-hold {
+	background: var(--wpss-status-late-bg, #fef9c3);
+	color: var(--wpss-status-late-fg, #854d0e);
 }
 
 /* ==========================================================================
@@ -1956,28 +1982,10 @@
 	color: var(--wpss-admin-text-light);
 }
 
-.wpss-status-active,
-.wpss-status-approved,
-.wpss-status-accepted {
-	background: var(--wpss-success-light, #d4edda);
-	color: var(--wpss-success-dark, #155724);
-}
-
-.wpss-status-pending,
-.wpss-status-withdrawn {
-	background: var(--wpss-warning-light, #fff3cd);
-	color: var(--wpss-warning-dark, #856404);
-}
-
-.wpss-status-suspended {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
-
-.wpss-status-rejected {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
+/* Status badge palette is defined once, canonically, near the top of this
+   file (search "Canonical status palette"). The active/approved/accepted/
+   pending/withdrawn/suspended/rejected rules that used to live here were
+   removed — they duplicated (and disagreed with) the canonical block. */
 
 .wpss-vendor-actions {
 	display: flex;
@@ -2028,14 +2036,6 @@
 	font-size: 12px;
 	font-style: italic;
 	margin-top: 5px;
-}
-
-/* Approved status pill — the counterpart to .wpss-status-pending/-rejected,
-   which already lived here. It was only ever defined inside the moderation
-   page, so any other screen rendering an "approved" badge got nothing. */
-.wpss-status-approved {
-	background: var(--wpss-success-light, #d4edda);
-	color: var(--wpss-success-dark, #155724);
 }
 
 .wpss-moderation-metabox select { margin-top: 5px; }

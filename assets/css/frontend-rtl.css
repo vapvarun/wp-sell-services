@@ -1465,61 +1465,11 @@ article.wpss-service-card:hover {
 	text-transform: capitalize;
 }
 
-.wpss-status-badge {
-	display: inline-block;
-	padding: 4px 10px;
-	border-radius: 4px;
-	font-size: 12px;
-	font-weight: 500;
-	text-transform: capitalize;
-}
-
-.wpss-status-pending,
-.wpss-status-withdrawn {
-	background: var(--wpss-warning-light, #fff3cd);
-	color: var(--wpss-warning-dark, #856404);
-}
-
-.wpss-status-accepted {
-	background: var(--wpss-success-light, #d4edda);
-	color: var(--wpss-success-dark, #155724);
-}
-
-.wpss-status-processing {
-	background: var(--wpss-info-light, #cce5ff);
-	color: var(--wpss-info-dark, #004085);
-}
-
-.wpss-status-in_progress {
-	background: var(--wpss-info-light, #d1ecf1);
-	color: var(--wpss-info-dark, #0c5460);
-}
-
-.wpss-status-delivered {
-	background: var(--wpss-success-light, #d4edda);
-	color: var(--wpss-success-dark, #155724);
-}
-
-.wpss-status-completed {
-	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-dark);
-}
-
-.wpss-status-cancelled,
-.wpss-status-rejected {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
-
-.wpss-status-disputed {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
-
-.wpss-status-refunded {
-	background: var(--wpss-gray-200, #e2e3e5);
-	color: var(--wpss-text-secondary, #383d41);
-}
+/* Status pills (.wpss-status-badge + .wpss-status-*) are now owned by the ONE
+   canonical palette in design-system.css, which loads before this file on
+   every frontend cascade. The copies that used to live here disagreed with
+   admin (completed rendered primary-purple here vs green in admin; refunded
+   grey here vs purple in admin) and are removed so every surface matches. */
 
 /* Badges
    2.7.1a dedup: the bare .wpss-badge BASE block was removed here. The badge
@@ -1532,60 +1482,10 @@ article.wpss-service-card:hover {
    design-system does not own, so they stay and now compose on the single
    canonical base. */
 
-/* Pending */
-.wpss-badge--pending {
-	background: var(--wpss-warning-light, #fef3c7);
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-/* Approved */
-.wpss-badge--approved {
-	background: var(--wpss-success-light, #d1fae5);
-	color: var(--wpss-success-dark, #065f46);
-}
-
-/* Completed */
-.wpss-badge--completed {
-	background: var(--wpss-success-border, #bbf7d0);
-	color: var(--wpss-success-dark, #065f46);
-}
-
-/* Rejected */
-.wpss-badge--rejected {
-	background: var(--wpss-badge-tip-bg, #fee2e2);
-	color: var(--wpss-danger-dark, #991b1b);
-}
-
-/* Order Status Badges */
-.wpss-badge--status-pending {
-	background: var(--wpss-status-pending-bg, #fef3c7);
-	color: var(--wpss-status-pending-text, #92400e);
-}
-
-.wpss-badge--status-in-progress {
-	background: var(--wpss-status-in-progress-bg, #e0e7ff);
-	color: var(--wpss-status-in-progress-text, #3730a3);
-}
-
-.wpss-badge--status-completed {
-	background: var(--wpss-status-completed-bg, #d1fae5);
-	color: var(--wpss-status-completed-text, #065f46);
-}
-
-.wpss-badge--status-delivered {
-	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-status-delivered-text, #1e40af);
-}
-
-.wpss-badge--status-disputed {
-	background: var(--wpss-status-disputed-bg, #fee2e2);
-	color: var(--wpss-status-disputed-text, #991b1b);
-}
-
-.wpss-badge--status-cancelled {
-	background: var(--wpss-status-cancelled-bg, #f1f5f9);
-	color: var(--wpss-status-cancelled-text, #475569);
-}
+/* .wpss-badge--pending / --approved / --completed / --rejected were dead
+   (zero call sites) and are removed. The .wpss-badge--status-* order pills
+   were migrated to the canonical .wpss-status-* palette (design-system.css)
+   at their six call sites, so those rules are gone too. */
 
 .wpss-badge-vendor {
 	background: var(--wpss-primary-light);

@@ -578,7 +578,7 @@ class ServiceModerationPage {
 				<?php echo esc_html( get_the_date( '', $service ) ); ?>
 			</td>
 			<td class="column-status">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>
 				<?php if ( self::STATUS_REJECTED === $status && $rejection_reason ) : ?>
@@ -980,12 +980,10 @@ class ServiceModerationPage {
 		$label = $status_labels[ $status ] ?? ucfirst( $status );
 
 		printf(
-			'<span class="wpss-status-badge wpss-status-%s" style="display:inline-block;padding:3px 8px;border-radius:3px;font-size:11px;font-weight:600;">%s</span>',
-			esc_attr( $status ),
+			'<span class="%s">%s</span>',
+			esc_attr( wpss_status_class( $status ) ),
 			esc_html( $label )
 		);
-
-		// Add inline styles for status badges.
 	}
 
 	/**

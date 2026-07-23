@@ -295,9 +295,55 @@ it is a real file the audit can see it. Folds into the modal work, Phase 2.
 **Still open (Phase 3, recorded not fixed):** `.wpss-btn--link` (5 uses) is
 defined only in `vendor-dashboard.css`, non-canonical. Either promote to the
 design system or migrate to `--ghost`.
-| 2.2 | Badge / status — `.wpss-status-*`, `.wpss-tag` → `.wpss-badge--*` | 3 → 1 | **BLOCKED on owner decision** |
+| 2.2 | Badge / status — `.wpss-status-*` unified on ONE token palette + `wpss_status_class()` render authority | 18 defs → 1 (admin) + 1 (design-system) | **ADMIN DONE (2026-07-24)** — frontend non-order status systems deferred to Phase 6 |
 
-**Phase 2.2 analysis (2026-07-24) — bigger than "remove dups", needs one owner call.**
+**Phase 2.2 landed for admin (2026-07-24).** Owner chose **(a)** — the
+design-system token palette everywhere, one look across admin + frontend.
+
+- **One render authority:** `wpss_status_class( $status )` (src/functions.php)
+  emits `wpss-status-badge wpss-status-<hyphenated>` for every status. It
+  replaces scattered `str_replace('_','-',$status)` inlines AND the drifting
+  PHP hand-maps (OrdersListTable fell through to `pending` for refunded/
+  delivered/accepted → **refunded rendered amber**; now purple).
+- **One colour source:** the canonical `.wpss-status-*` block lives ONCE in
+  `admin.css` (admin screens) and ONCE in `design-system.css` (frontend). Both
+  reference the same `--wpss-status-*` tokens with identical hex fallbacks, so
+  admin (tokens absent → fallback) and frontend (tokens present) render every
+  pill the same colour. Added missing tokens `--wpss-status-pending-*` and
+  `--wpss-status-completed-*`; added missing pills (refunded, partially-refunded,
+  requirements-submitted, cancellation-requested) that previously rendered
+  unstyled.
+- **Divergent copies removed:** admin.css (2 blocks + 1 stray), frontend.css
+  (the `.wpss-status-*` block + dead `.wpss-badge--pending/approved/completed/
+  rejected` + the `.wpss-badge--status-*` order pills, migrated at their 6 call
+  sites to `wpss_status_class()`). Also removed the inline
+  `.wpss-badge--status-cancellation-requested` rule in order-view.php.
+- **Admin render sites routed through the helper:** OrdersListTable,
+  Admin.php (×2 order, ×1 dispute), VendorsPage (×9), OrderMetabox,
+  BuyerRequestMetabox, WithdrawalsPage, ServiceModerationPage (dropped its
+  inline-style pill), ReviewModerationPage. This fixed a latent bug: sites
+  emitting raw `wpss-status-<?php echo $order->status ?>` produced UNDERSCORE
+  classes (`wpss-status-in_progress`) that never matched the hyphenated CSS, so
+  those statuses rendered unstyled on Vendors detail screens.
+- **Verified (browser):** admin Orders list — refunded=purple, pending_requirements=amber,
+  disputed=orange; frontend order-view header (order #112) — refunded=purple,
+  matching admin. Light theme confirmed.
+
+**Deferred to Phase 6 (frontend, needs seeded per-screen verification):** three
+OTHER frontend status naming systems still exist and were intentionally NOT
+swept blind — `.wpss-status .wpss-status--<status>` (double-dash; sales.php,
+orders.php), `.wpss-badge .wpss-badge--<withdrawal-status>` (earnings.php), and
+`.wpss-request-status-badge.wpss-status-*` (buyer requests, higher-specificity
+compound — currently still wins in its own context, no regression). Plus:
+`unified-dashboard.css` has NO design-system dependency (`array()`), so it
+carries its OWN `.wpss-status-badge` + moderation-status copies and its
+`var(--wpss-*)` rely on fallbacks only — add the `wpss-design-system` dep and
+drop the copies during the dashboard screen pass. Dispute statuses
+(open/pending_review/escalated/resolved/closed) are a self-consistent UNDERSCORE
+subsystem (dispute-view.php inline CSS uses underscore selectors matching raw
+markup); unifying them requires updating that inline CSS in lockstep.
+
+**Original Phase 2.2 analysis (2026-07-24) — bigger than "remove dups", needs one owner call.**
 Two compounding problems:
 
 1. **The colours DISAGREE across sheets.** `.wpss-status-pending` is neutral

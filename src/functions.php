@@ -77,6 +77,45 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 }
 
 /**
+ * THE status → CSS class authority for status badges.
+ *
+ * One place that turns any status value into its badge class, so no surface can
+ * invent its own mapping and drift. Two prior bugs this replaces:
+ *
+ *  - `OrdersListTable` kept a hand-maintained status→class array that was
+ *    MISSING refunded / delivered / accepted / resolved, so every one of those
+ *    fell through to a `wpss-status-pending` default and a refunded order
+ *    rendered amber ("pending") instead of its own colour.
+ *  - Half the render sites emitted `wpss-status-<raw_status>` (underscore) while
+ *    the other half emitted `str_replace('_','-', $status)` (hyphen), so the CSS
+ *    had to carry BOTH spellings of every multi-word status.
+ *
+ * Emits the HYPHEN spelling (CSS-idiomatic) — every render site routed through
+ * here produces the same class, and the CSS needs one rule per status, not two.
+ * The status keeps its own semantic colour, defined once in the status-badge
+ * CSS. Filterable so a site can recolour a status without editing core.
+ *
+ * @since 1.5.1
+ *
+ * @param string $status Raw status value (e.g. 'revision_requested').
+ * @return string Space-joined classes: the badge base + the status class.
+ */
+function wpss_status_class( string $status ): string {
+	$status = sanitize_key( $status );
+	$class  = 'wpss-status-badge wpss-status-' . str_replace( '_', '-', $status );
+
+	/**
+	 * Filter the CSS classes for a status badge.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param string $class  Space-joined badge classes.
+	 * @param string $status Raw status value.
+	 */
+	return apply_filters( 'wpss_status_class', $class, $status );
+}
+
+/**
  * Get the number of decimal places to display for a currency.
  *
  * Zero-decimal currencies (e.g. JPY, KRW, VND) are conventionally shown

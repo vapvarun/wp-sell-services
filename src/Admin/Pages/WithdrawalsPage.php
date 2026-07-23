@@ -670,7 +670,7 @@ class WithdrawalsPage {
 				<?php endif; ?>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( $statuses[ $status ] ?? ucfirst( $status ) ); ?>
 				</span>
 			</td>

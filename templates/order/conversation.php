@@ -157,7 +157,7 @@ do_action( 'wpss_before_conversation', $order );
 			</div>
 		</div>
 		<div class="wpss-messaging__header-actions">
-			<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+			<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 				<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 			</span>
 		</div>

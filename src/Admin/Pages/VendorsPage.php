@@ -801,7 +801,7 @@ class VendorsPage {
 				<?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>
 			</td>
@@ -886,7 +886,7 @@ class VendorsPage {
 				</div>
 				<div class="wpss-detail-status-area">
 					<div class="wpss-detail-status-row">
-						<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+						<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 							<?php echo esc_html( ucfirst( $status ) ); ?>
 						</span>
 						<select id="wpss-vendor-status-select" data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>" data-current="<?php echo esc_attr( $status ); ?>">
@@ -1214,7 +1214,7 @@ class VendorsPage {
 				<div>
 					<h2><?php echo esc_html( $vendor->display_name ); ?></h2>
 					<p><?php echo esc_html( $vendor->user_email ); ?></p>
-					<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $vendor->status ); ?>">
+					<span class="<?php echo esc_attr( wpss_status_class( $vendor->status ) ); ?>">
 						<?php echo esc_html( ucfirst( $vendor->status ) ); ?>
 					</span>
 				</div>
@@ -1350,7 +1350,7 @@ class VendorsPage {
 								<td><?php echo esc_html( $order->service_title ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $order->total ) ); ?></td>
 								<td>
-									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $order->status ); ?>">
+									<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 										<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 									</span>
 								</td>
@@ -1703,7 +1703,7 @@ class VendorsPage {
 							<strong><?php echo esc_html( $service->post_title ); ?></strong>
 						</td>
 						<td>
-							<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status_class ); ?>">
+							<span class="<?php echo esc_attr( wpss_status_class( $status_class ) ); ?>">
 								<?php echo esc_html( ucfirst( $service->post_status ) ); ?>
 							</span>
 						</td>
@@ -1850,7 +1850,7 @@ class VendorsPage {
 							<td><?php echo esc_html( $order->service_title ); ?></td>
 							<td><?php echo esc_html( wpss_format_price( (float) $order->total ) ); ?></td>
 							<td>
-								<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $order->status ); ?>">
+								<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 									<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 								</span>
 							</td>
@@ -2038,7 +2038,7 @@ class VendorsPage {
 								<td><?php echo esc_html( wpss_format_price( (float) $withdrawal->amount ) ); ?></td>
 								<td><?php echo esc_html( ucfirst( $withdrawal->method ?? 'bank' ) ); ?></td>
 								<td>
-									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $withdrawal->status ); ?>">
+									<span class="<?php echo esc_attr( wpss_status_class( $withdrawal->status ) ); ?>">
 										<?php echo esc_html( ucfirst( $withdrawal->status ) ); ?>
 									</span>
 								</td>
@@ -2165,7 +2165,7 @@ class VendorsPage {
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->balance_after ) ); ?></td>
 								<td>
-									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $txn->status ); ?>">
+									<span class="<?php echo esc_attr( wpss_status_class( $txn->status ) ); ?>">
 										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>
 									</span>
 								</td>
@@ -2278,7 +2278,7 @@ class VendorsPage {
 							</div>
 							<p class="wpss-review-content"><?php echo wp_kses_post( $review->comment ); ?></p>
 							<?php if ( 'approved' !== $review->status ) : ?>
-								<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $review->status ); ?>">
+								<span class="<?php echo esc_attr( wpss_status_class( $review->status ) ); ?>">
 									<?php echo esc_html( ucfirst( $review->status ) ); ?>
 								</span>
 							<?php endif; ?>

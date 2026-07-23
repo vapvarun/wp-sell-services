@@ -511,7 +511,7 @@ JS;
 			</td>
 			<td class="column-date"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
 			<td class="column-status">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $status_label ); ?></span>
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>"><?php echo esc_html( $status_label ); ?></span>
 			</td>
 			<td class="column-actions">
 				<?php if ( Review::STATUS_APPROVED !== $status ) : ?>

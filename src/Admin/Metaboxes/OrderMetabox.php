@@ -274,7 +274,7 @@ class OrderMetabox {
 
 			<div class="wpss-order-detail">
 				<label><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $order->get_status() ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $order->get_status() ) ); ?>">
 					<?php echo esc_html( wpss_get_order_status_label( $order->get_status() ) ); ?>
 				</span>
 			</div>

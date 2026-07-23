@@ -1308,7 +1308,7 @@ class Admin {
 										<td><?php echo esc_html( $service ? $service->post_title : __( 'Deleted', 'wp-sell-services' ) ); ?></td>
 										<td><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></td>
 										<td>
-											<span class="wpss-status-badge wpss-status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+											<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 												<?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
 											</span>
 										</td>
@@ -1595,7 +1595,7 @@ class Admin {
 								<tr>
 									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 									<td>
-										<span class="wpss-status-badge wpss-status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+										<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 											<?php echo esc_html( $statuses[ $order->status ] ?? ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
 										</span>
 									</td>
@@ -2085,7 +2085,7 @@ class Admin {
 								<tr>
 									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 									<td>
-										<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $dispute->status ); ?>">
+										<span class="<?php echo esc_attr( wpss_status_class( $dispute->status ) ); ?>">
 											<?php echo esc_html( $statuses[ $dispute->status ] ?? $dispute->status ); ?>
 										</span>
 									</td>

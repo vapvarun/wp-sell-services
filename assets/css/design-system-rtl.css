@@ -107,7 +107,15 @@
 	--wpss-badge-milestone-icon-bg: #ccfbf1;
 	--wpss-badge-milestone-icon-fg: #0f766e;
 
-	/* Status tints used by order-status pills */
+	/* Status tints used by order-status pills.
+	   These back the ONE canonical .wpss-status-* palette (see the
+	   "Canonical status palette" block below). admin.css references the same
+	   token names with identical hex fallbacks, so the admin (tokens absent →
+	   fallback) and the frontend (tokens present) render every pill the same. */
+	--wpss-status-pending-bg: #fff3cd;
+	--wpss-status-pending-fg: #856404;
+	--wpss-status-completed-bg: #d4edda;
+	--wpss-status-completed-fg: #155724;
 	--wpss-status-pending-approval-bg: #c6e1c6;
 	--wpss-status-pending-approval-fg: #5b841b;
 	--wpss-status-in-progress-bg: #e0e7ff;
@@ -506,6 +514,100 @@ button.wpss-btn--success,
 .wpss-badge--danger  { background: var(--wpss-danger-light); color: var(--wpss-danger-dark, #991b1b); }
 .wpss-badge--info    { background: var(--wpss-info-light); color: var(--wpss-info-dark, #1e40af); }
 .wpss-badge--neutral { background: var(--wpss-bg-muted); color: var(--wpss-text-muted); }
+
+/* ==========================================================================
+   5b. CANONICAL STATUS PALETTE
+   ONE definition of every order/vendor/withdrawal status pill, shared by the
+   whole frontend (this file loads first on every frontend cascade). admin.css
+   carries an identical copy for admin screens, which don't load this file.
+   Both reference the same --wpss-status-* tokens with the same hex fallbacks,
+   so a "refunded" pill is the same purple in wp-admin and on the dashboard.
+   Every pill class here is emitted by wpss_status_class() (hyphen spelling).
+   Colour families: amber=waiting, indigo=active, sky=revision, blue=delivered,
+   green=done, red=cancelled/rejected, orange=disputed, purple=refunded,
+   yellow=needs-attention.
+   ========================================================================== */
+.wpss-status-badge {
+	display: inline-block;
+	padding: 3px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.5;
+}
+
+/* Amber — waiting on someone */
+.wpss-status-pending,
+.wpss-status-pending-payment,
+.wpss-status-pending-requirements,
+.wpss-status-pending-approval,
+.wpss-status-open,
+.wpss-status-requirements-submitted,
+.wpss-status-cancellation-requested,
+.wpss-status-withdrawn {
+	background: var(--wpss-status-pending-bg, #fff3cd);
+	color: var(--wpss-status-pending-fg, #856404);
+}
+
+/* Indigo — actively in progress */
+.wpss-status-in-progress,
+.wpss-status-accepted,
+.wpss-status-processing,
+.wpss-status-escalated {
+	background: var(--wpss-status-in-progress-bg, #e0e7ff);
+	color: var(--wpss-status-in-progress-fg, #3730a3);
+}
+
+/* Sky — revision requested */
+.wpss-status-revision-requested {
+	background: var(--wpss-status-revision-bg, #e0f2fe);
+	color: var(--wpss-status-revision-fg, #075985);
+}
+
+/* Blue — delivered, awaiting review */
+.wpss-status-delivered {
+	background: var(--wpss-status-delivered-bg, #dbeafe);
+	color: var(--wpss-status-delivered-fg, #1e40af);
+}
+
+/* Green — done */
+.wpss-status-completed,
+.wpss-status-approved,
+.wpss-status-active,
+.wpss-status-resolved,
+.wpss-status-closed {
+	background: var(--wpss-status-completed-bg, #d4edda);
+	color: var(--wpss-status-completed-fg, #155724);
+}
+
+/* Red — cancelled, rejected, failed, suspended */
+.wpss-status-cancelled,
+.wpss-status-rejected,
+.wpss-status-failed,
+.wpss-status-suspended {
+	background: var(--wpss-status-rejected-bg, #f8d7da);
+	color: var(--wpss-status-rejected-fg, #721c24);
+}
+
+/* Orange — disputed */
+.wpss-status-disputed {
+	background: var(--wpss-status-disputed-bg, #fed7aa);
+	color: var(--wpss-status-disputed-fg, #9a3412);
+}
+
+/* Purple — refunded */
+.wpss-status-refunded,
+.wpss-status-partially-refunded {
+	background: var(--wpss-status-refunded-bg, #f3e8ff);
+	color: var(--wpss-status-refunded-fg, #6b21a8);
+}
+
+/* Yellow — needs attention */
+.wpss-status-late,
+.wpss-status-on-hold {
+	background: var(--wpss-status-late-bg, #fef9c3);
+	color: var(--wpss-status-late-fg, #854d0e);
+}
 
 /* ==========================================================================
    6. FORMS
