@@ -757,11 +757,14 @@ class OrderMetabox {
 					<p class="wpss-no-data"><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
 				<?php endif; ?>
 			</div>
-			<p class="wpss-view-all">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-conversations&id=' . $conversation->id ) ); ?>">
-					<?php esc_html_e( 'View Full Conversation', 'wp-sell-services' ); ?>
-				</a>
-			</p>
+			<?php
+			// No "View Full Conversation" link here. It pointed at
+			// admin.php?page=wpss-conversations, which nothing registers, so
+			// every click landed on "Sorry, you are not allowed to access this
+			// page." The conversation is already rendered above this point, so a
+			// dead end is strictly worse than no link. Restore a link only if a
+			// real admin conversation screen is ever built.
+			?>
 		<?php else : ?>
 			<p class="wpss-no-data"><?php esc_html_e( 'No conversation started.', 'wp-sell-services' ); ?></p>
 		<?php endif; ?>

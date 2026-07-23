@@ -193,8 +193,20 @@ transitions, and undoes the write if the transition is refused (`085cf14`).
 `AjaxHandlers` case `'refund'` allows `pending_payment` / `pending_requirements`
 / `accepted`; the admin button allows `completed` / `cancelled`
 (`Admin.php:1794`). Neither covers `in_progress`, `delivered`, `revision`,
-`late`, `on_hold`. **Nobody owns "which statuses are refundable."** Needs one
-authority, and a policy decision on the set.
+`late`, `on_hold`. **Nobody owns "which statuses are refundable."**
+
+**POLICY DECIDED 2026-07-23 (owner): if the buyer PAID, it is refundable — at
+any stage.** Do not gate refunds on workflow progress. The reason is the common
+real case: quality problems surface *after* delivery, so `delivered`,
+`revision`, `late`, `on_hold` and `in_progress` must all be refundable, not just
+the two disjoint sets we have today. An unpaid order stays out of scope simply
+because there is nothing to refund.
+
+Implementation: ONE authority (e.g. `wpss_order_is_refundable( $order )`)
+consulted by the AJAX path, the admin button and REST — replacing both hardcoded
+lists — with a filter so a site owner can tighten it. **T10 must land first**
+(see S7.2): widening the gate before the uncredited-order guard exists would
+debit vendors who were never credited.
 
 **Open — S7.2 A refund on a paid-but-uncredited order would debit a vendor who
 was never paid.** `reverse_earnings_for_refund()` guards only on

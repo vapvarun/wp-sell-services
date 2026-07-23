@@ -1316,8 +1316,18 @@ class Settings {
 	 * @return void
 	 */
 	public function render(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
+		// Guard on the SAME capability the menu registers this page under
+		// (Admin::add_admin_menu uses `wpss_manage_settings`). Guarding on
+		// `manage_options` instead meant a role granted only
+		// `wpss_manage_settings` saw the menu item, clicked it, and got a
+		// completely blank page with no explanation. Administrators are
+		// unaffected — they hold both.
+		if ( ! current_user_can( 'wpss_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die(
+				esc_html__( 'You do not have permission to manage these settings.', 'wp-sell-services' ),
+				esc_html__( 'Permission denied', 'wp-sell-services' ),
+				array( 'response' => 403 )
+			);
 		}
 
 		$this->init_tabs();
@@ -2256,19 +2266,82 @@ class Settings {
 		$options = get_option( $args['option_name'], array() );
 		$value   = $options[ $args['field'] ] ?? ( $args['default'] ?? 0 );
 
+		$min  = (float) ( $args['min'] ?? 0 );
+		$max  = (float) ( $args['max'] ?? 100 );
+		$step = $args['step'] ?? 1;
+
+		// A STORED value outside this field's constraints must never make the
+		// form unsubmittable.
+		//
+		// min/max/step are browser constraints on the whole FORM, not just this
+		// field: if the stored value violates one, the browser refuses to submit
+		// and — when the offending field is scrolled out of view — the admin
+		// sees nothing at all. Save simply appears dead, and one bad value
+		// silently bricks every other setting on that tab. Reproduced
+		// 2026-07-23: auto_withdrawal_threshold = 40 against min = 100 made the
+		// entire Payout Settings form unsubmittable, so clearance_days could not
+		// be saved either.
+		//
+		// Such a value arrives from an older release with different bounds, a
+		// migration, a filter, WP-CLI or a direct DB edit — and nothing warns.
+		// So relax the constraints just enough to let the form through, keeping
+		// the TRUE value on screen (clamping the display would show a number
+		// that is not what is stored).
+		//
+		// Nothing is weakened by this: min/max/step are browser hints only, and
+		// the sanitizer for each option group is the real authority on what may
+		// be stored. Where a bound genuinely matters it must be enforced THERE
+		// (as sanitize_payouts_settings does for clearance_days) — never left to
+		// an attribute a posted request can ignore anyway.
+		if ( is_numeric( $value ) ) {
+			$numeric_value = (float) $value;
+			$min           = min( $min, $numeric_value );
+			$max           = max( $max, $numeric_value );
+
+			// Step is measured from min, so a stored value off the ladder (120
+			// against min 100 step 50) blocks submission just as hard as an
+			// out-of-range one. Fall back to a free-form step for that render
+			// only; valid values keep the intended stepping.
+			if ( is_numeric( $step ) && (float) $step > 0 ) {
+				$offset = ( $numeric_value - $min ) / (float) $step;
+				if ( abs( $offset - round( $offset ) ) > 0.00001 ) {
+					$step = 'any';
+				}
+			}
+		}
+
 		printf(
 			'<input type="number" id="%1$s" name="%2$s[%1$s]" value="%3$s" min="%4$s" max="%5$s" step="%6$s" class="small-text">',
 			esc_attr( $args['field'] ),
 			esc_attr( $args['option_name'] ),
 			esc_attr( (string) $value ),
-			esc_attr( (string) ( $args['min'] ?? 0 ) ),
-			esc_attr( (string) ( $args['max'] ?? 100 ) ),
-			esc_attr( (string) ( $args['step'] ?? 1 ) )
+			esc_attr( self::format_number_attr( $min ) ),
+			esc_attr( self::format_number_attr( $max ) ),
+			esc_attr( (string) $step )
 		);
 
 		if ( ! empty( $args['description'] ) ) {
 			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
 		}
+	}
+
+	/**
+	 * Format a bound for a number input's min/max attribute.
+	 *
+	 * Keeps whole numbers whole — `min="0"`, not `min="0.0"` — while preserving
+	 * a genuine decimal bound (a 2.5 % rate stays 2.5).
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param float $bound Bound value.
+	 * @return string Attribute-ready value.
+	 */
+	private static function format_number_attr( float $bound ): string {
+		if ( abs( $bound - round( $bound ) ) < 0.00001 ) {
+			return (string) (int) round( $bound );
+		}
+
+		return rtrim( rtrim( number_format( $bound, 4, '.', '' ), '0' ), '.' );
 	}
 
 	/**
@@ -2969,8 +3042,25 @@ class Settings {
 			'checkout',
 		);
 
+		// Preserve the stored value for any key the submitted form did not
+		// contain, instead of zeroing it.
+		//
+		// `become_vendor` is only REGISTERED as a field while vendor
+		// registration is open (see the field loop), so with registration
+		// closed the Pages panel posts no `become_vendor` at all — and the old
+		// unconditional `absint( $input[$key] ?? 0 )` wrote 0 over a perfectly
+		// good page ID. One save of an unrelated panel silently destroyed the
+		// mapping, and reopening registration then pointed at nothing. Absent
+		// key now means "unchanged", not "clear it".
+		$existing = get_option( 'wpss_pages', array() );
+
 		foreach ( $page_keys as $key ) {
-			$sanitized[ $key ] = absint( $input[ $key ] ?? 0 );
+			if ( array_key_exists( $key, $input ) ) {
+				$sanitized[ $key ] = absint( $input[ $key ] );
+				continue;
+			}
+
+			$sanitized[ $key ] = absint( $existing[ $key ] ?? 0 );
 		}
 
 		return $sanitized;

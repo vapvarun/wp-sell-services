@@ -186,7 +186,12 @@ class SetupWizardPage {
 			$settings = get_option( 'wpss_paypal_settings', array() );
 
 			$settings['enabled'] = true;
-			$settings['sandbox'] = ! empty( $_POST['paypal_sandbox'] );
+			// `sandbox_mode`, NOT `sandbox` — PayPalGateway reads
+			// `sandbox_mode`. The wizard wrote a key nothing consumed, so the
+			// sandbox toggle silently did nothing and a wizard-configured PayPal
+			// went live even when the owner asked for sandbox. Same drift class
+			// the comment above says was eliminated; this was the survivor.
+			$settings['sandbox_mode'] = ! empty( $_POST['paypal_sandbox'] );
 
 			update_option( 'wpss_paypal_settings', $settings );
 		} elseif ( 'offline' === $gateway ) {
@@ -221,8 +226,13 @@ class SetupWizardPage {
 			$vendor['max_services_per_vendor'] = absint( $_POST['max_services_per_vendor'] );
 		}
 
+		// `require_verification` is deliberately NOT written. Nothing in free or
+		// Pro reads it to gate anything, the Vendor settings panel has no field
+		// for it, and sanitize_vendor_settings() drops it the first time an
+		// admin saves that panel — so the wizard was promising a control that
+		// did nothing and then losing it anyway. Its checkbox is gone from the
+		// wizard too; a toggle that changes no behaviour is worse than none.
 		$vendor['require_service_moderation'] = ! empty( $_POST['require_service_moderation'] );
-		$vendor['require_verification']       = ! empty( $_POST['require_verification'] );
 
 		update_option( 'wpss_vendor', $vendor );
 
@@ -345,10 +355,9 @@ class SetupWizardPage {
 		$currency        = $general['currency'] ?? 'USD';
 		$commission_rate = $commission['commission_rate'] ?? 10;
 
-		$vendor_registration  = $vendor['vendor_registration'] ?? 'open';
-		$max_services         = $vendor['max_services_per_vendor'] ?? 20;
-		$require_moderation   = ! empty( $vendor['require_service_moderation'] );
-		$require_verification = ! empty( $vendor['require_verification'] );
+		$vendor_registration = $vendor['vendor_registration'] ?? 'open';
+		$max_services        = $vendor['max_services_per_vendor'] ?? 20;
+		$require_moderation  = ! empty( $vendor['require_service_moderation'] );
 
 		$page_fields = array(
 			'services_page' => __( 'Services', 'wp-sell-services' ),
@@ -616,12 +625,7 @@ class SetupWizardPage {
 					</label>
 				</div>
 
-				<div class="wpss-wizard-field">
-					<label>
-						<input type="checkbox" id="wpss-wiz-verification" <?php checked( $require_verification ); ?>>
-						<?php esc_html_e( 'Require vendor verification', 'wp-sell-services' ); ?>
-					</label>
-				</div>
+		<?php // "Require vendor verification" removed: no code gated on it, so it promised a control that changed nothing. See the note in the vendor-step save handler. ?>
 
 				<div class="wpss-wizard-actions">
 					<button type="button" class="button wpss-wizard-back" data-back="4"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
@@ -927,7 +931,6 @@ class SetupWizardPage {
 					data.vendor_registration = $('input[name="wpss_vendor_reg"]:checked').val();
 					data.max_services_per_vendor = $('#wpss-wiz-max-services').val();
 					data.require_service_moderation = $('#wpss-wiz-moderation').is(':checked') ? 1 : 0;
-					data.require_verification = $('#wpss-wiz-verification').is(':checked') ? 1 : 0;
 				}
 
 				$.post(ajaxUrl, data, function() {

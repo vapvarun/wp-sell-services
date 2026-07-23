@@ -219,6 +219,12 @@ class Admin {
 		// Define the desired order of menu slugs.
 		$order = array(
 			'wp-sell-services',                                              // Dashboard.
+			// Setup Wizard only registers while setup is incomplete (or there
+			// are no published services). Listing it here keeps it at the TOP
+			// on exactly those fresh installs — omitting it sent the first
+			// screen a new owner needs to the very bottom of the menu, under
+			// "Upgrade to Pro", via the unlisted-items tail below.
+			'wpss-setup-wizard',                                             // Setup Wizard (onboarding, conditional).
 			'edit.php?post_type=wpss_service',                               // All Services.
 			'post-new.php?post_type=wpss_service',                           // Add New Service.
 			'wpss-moderation',                                               // Service Moderation.
