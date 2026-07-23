@@ -288,6 +288,37 @@ long vendor names (the overflow cases), and at least one order with milestones.
 | 6.10 | Become a vendor / registration | open / approval / closed states | |
 | 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | |
 
+### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
+
+| Tab | State on this site | Findings |
+|---|---|---|
+| My Orders | 1 order | ok |
+| Favorites | **empty** | needs seed |
+| Buyer Requests | 1 request | **card collapse FIXED** |
+| My Services | 4 services | ok |
+| Sales Orders | 3 orders | ok |
+| Earnings & Payouts | populated | ok |
+| Portfolio | **empty** | needs seed |
+| Analytics | **empty** | needs seed |
+| Messages | **empty** | needs seed |
+| Notifications | populated | title missing (**FIXED**); 1 inline `<style>` |
+| Disputes | 1 dispute | title missing, raw slug, double heading (**all FIXED**) |
+| Profile | form | ok |
+
+**The button vocabulary is the frontend's version of the same disease.** Across
+these 12 tabs the dashboard ships:
+
+- **two roots** — `.wpss-btn` (11 tabs) and `.wpss-button` (Disputes only)
+- **two size conventions** — `--sm` (most) and `--small` (Portfolio, Profile),
+  plus `.wpss-button-small` on Disputes
+- **six variants** — `--primary`, `--secondary`, `--outline`, `--ghost`,
+  `--link`, plus `.wpss-button-secondary`
+
+The design system defines exactly `.wpss-btn` + `--primary/--secondary/--ghost/
+--danger` + `--sm/--md/--lg`. So `--outline`, `--link`, `--small` and the whole
+`.wpss-button` family are drift, and Disputes is on a different system entirely.
+Folds into Phase 2.1.
+
 **Known frontend findings so far**
 
 - **FIXED — Buyer Requests card collapsed to one word per line.**

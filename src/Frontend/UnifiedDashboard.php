@@ -589,6 +589,13 @@ class UnifiedDashboard {
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
 			'portfolio'      => __( 'Portfolio', 'wp-sell-services' ),
 			'messages'       => __( 'Messages', 'wp-sell-services' ),
+			// Disputes and Notifications are in the dashboard nav but were
+			// missing from this map, so both fell through to the generic
+			// "Dashboard" default: the page header read "Dashboard" while the
+			// section repeated its own name below it — two headings, and the
+			// top one wrong. Every nav destination needs an entry here.
+			'disputes'       => __( 'Disputes', 'wp-sell-services' ),
+			'notifications'  => __( 'Notifications', 'wp-sell-services' ),
 			'profile'        => __( 'Profile', 'wp-sell-services' ),
 			'create'         => __( 'Create Service', 'wp-sell-services' ),
 			'create-request' => __( 'Post a Request', 'wp-sell-services' ),

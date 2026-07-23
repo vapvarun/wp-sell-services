@@ -14,10 +14,16 @@
  * @var bool          $is_vendor      Whether user is a vendor.
  */
 
+use WPSellServices\Models\Dispute;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\DisputeWorkflowManager;
 
 defined( 'ABSPATH' ) || exit;
+
+// Reason labels come from the model, which already owns the map. This template
+// printed the raw column instead, so members were shown machine slugs like
+// "not_as_described" where the open-dispute form offers "Not as described".
+$wpss_dispute_reasons = Dispute::get_reasons();
 
 do_action( 'wpss_dashboard_section_before', 'disputes', $user_id );
 
@@ -77,7 +83,7 @@ if ( $view_dispute_id ) {
 			<div class="wpss-dispute-detail__reason">
 				<h3><?php esc_html_e( 'Reason', 'wp-sell-services' ); ?></h3>
 				<?php if ( ! empty( $dispute->reason ) ) : ?>
-					<p class="wpss-dispute-detail__reason-label"><strong><?php echo esc_html( $dispute->reason ); ?></strong></p>
+					<p class="wpss-dispute-detail__reason-label"><strong><?php echo esc_html( $wpss_dispute_reasons[ $dispute->reason ] ?? $dispute->reason ); ?></strong></p>
 				<?php endif; ?>
 				<?php if ( ! empty( $dispute->description ) ) : ?>
 					<p><?php echo esc_html( $dispute->description ); ?></p>
@@ -138,7 +144,13 @@ if ( $view_dispute_id ) {
 $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 ?>
 <div class="wpss-dashboard-section wpss-disputes">
-	<h2><?php esc_html_e( 'Disputes', 'wp-sell-services' ); ?></h2>
+	<?php
+	// No <h2>Disputes</h2> here. The dashboard shell already renders the
+	// section title in its header; this was the ONLY section of the fourteen
+	// that also printed its own, so the page showed "Disputes" twice. (It was
+	// hidden until now because the title map was missing 'disputes', so the
+	// header said "Dashboard" and this looked like the real title.)
+	?>
 
 	<?php if ( empty( $disputes ) ) : ?>
 		<div class="wpss-dashboard__empty">
@@ -169,7 +181,8 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 					?>
 					<tr>
 						<td><?php echo esc_html( $order_number ); ?></td>
-						<td><?php echo esc_html( (string) ( $dispute->reason ?? '' ) ); ?></td>
+						<?php $wpss_reason_key = (string) ( $dispute->reason ?? '' ); ?>
+						<td><?php echo esc_html( $wpss_dispute_reasons[ $wpss_reason_key ] ?? $wpss_reason_key ); ?></td>
 						<td>
 							<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status_key ); ?>">
 								<?php echo esc_html( $statuses[ $status_key ] ?? $status_key ); ?>
