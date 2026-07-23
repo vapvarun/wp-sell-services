@@ -176,19 +176,64 @@ class VendorsPage {
 			true
 		);
 
-		wp_add_inline_script(
-			'wpss-free-admin',
-			'window.wpssVendors = ' . wp_json_encode(
-				array(
-					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'wpss_vendors_admin' ),
-					'i18n'    => array(
-						'confirmStatusChange' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
-						'loading'             => __( 'Loading...', 'wp-sell-services' ),
-						'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					),
-				)
-			) . ';'
+		// wpss-ui provides wpssConfirm() for the portfolio-item delete confirm.
+		wp_enqueue_script(
+			'wpss-admin-vendors',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-vendors.js',
+			array( 'jquery', 'wpss-free-admin', 'wpss-ui' ),
+			\WPSS_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wpss-admin-vendors', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+
+		$this->localize_vendors_script();
+	}
+
+	/**
+	 * Localise the vendors admin script.
+	 *
+	 * Split out so render_vendor_detail() can call it again with the specific
+	 * vendor id merged in — the detail drawer's AJAX needs it, and it is the
+	 * one genuinely per-render value in an otherwise static config.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int $vendor_id Vendor being viewed, or 0 on the list screen.
+	 * @return void
+	 */
+	private function localize_vendors_script( int $vendor_id = 0 ): void {
+		wp_localize_script(
+			'wpss-admin-vendors',
+			'wpssVendors',
+			array(
+				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'wpss_vendors_admin' ),
+				'vendorId' => $vendor_id,
+				'i18n'     => array(
+					'selectAtLeastOneVendorFirst'        => __( 'Select at least one vendor first.', 'wp-sell-services' ),
+					'approve'                            => __( 'Approve', 'wp-sell-services' ),
+					'suspend'                            => __( 'Suspend', 'wp-sell-services' ),
+					'reactivate'                         => __( 'Reactivate', 'wp-sell-services' ),
+					/* translators: 1: bulk action label, 2: number of vendors. */
+					'bulkConfirm'                        => __( '%1$s %2$d vendor(s)? This applies to every selected row.', 'wp-sell-services' ),
+					'confirmStatusChange'                => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
+					'areYouSureYouWantToChangeThisVendorSStatus' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
+					'pleaseEnterACommissionRate'         => __( 'Please enter a commission rate.', 'wp-sell-services' ),
+					'resetThisVendorsCommission'         => __( 'Reset this vendor\'s commission rate to the global rate?', 'wp-sell-services' ),
+					'resetToGlobalCommissionRate'        => __( 'Reset to global commission rate?', 'wp-sell-services' ),
+					'anErrorOccurredPleaseTryAgain'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'failedToLoadContent'                => __( 'Failed to load content.', 'wp-sell-services' ),
+					'errorUpdatingCommissionRate'        => __( 'Error updating commission rate.', 'wp-sell-services' ),
+					'errorResettingCommissionRate'       => __( 'Error resetting commission rate.', 'wp-sell-services' ),
+					'errorUpdatingVacationMode'          => __( 'Error updating vacation mode.', 'wp-sell-services' ),
+					'errorUpdatingAvailability'          => __( 'Error updating availability.', 'wp-sell-services' ),
+					'errorUpdatingSellerLevel'           => __( 'Error updating seller level.', 'wp-sell-services' ),
+					'errorModeratingPortfolioItem'       => __( 'Error moderating portfolio item.', 'wp-sell-services' ),
+					'permanentlyRemoveThisPortfolioItem' => __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ),
+					'loading'                            => __( 'Loading...', 'wp-sell-services' ),
+					'loadingVendorDetails'               => __( 'Loading vendor details...', 'wp-sell-services' ),
+				),
+			)
 		);
 	}
 
@@ -612,244 +657,6 @@ class VendorsPage {
 		</div>
 
 
-		<script>
-		// Define wpssVendors for inline script (wp_add_inline_script runs in footer, after this).
-		window.wpssVendors = window.wpssVendors || 
-		<?php
-		echo wp_json_encode(
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wpss_vendors_admin' ),
-				'i18n'    => array(
-					'confirmStatusChange' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
-					'loading'             => __( 'Loading...', 'wp-sell-services' ),
-					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-				),
-			)
-		);
-		?>
-		;
-
-		function wpssAdminNotice(msg, type) {
-			type = type || 'error';
-			var cls = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-			jQuery('.wrap h1, .wrap h2').first().after($notice);
-			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-		}
-
-		jQuery(function($) {
-			var $modal = $('#wpss-vendor-modal');
-			var $modalBody = $('#wpss-vendor-modal-body');
-
-			// Bulk actions: select-all + apply.
-			$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
-				$('input[name="vendor_ids[]"]').prop('checked', $(this).prop('checked'));
-			});
-
-			$('.wpss-vendors-bulk-apply').on('click', function(e) {
-				e.preventDefault();
-				var bulkAction = $('.wpss-vendors-bulk-select').val();
-				if ( ! bulkAction ) {
-					return;
-				}
-				var ids = $('input[name="vendor_ids[]"]:checked').map(function() { return this.value; }).get();
-				if ( ids.length === 0 ) {
-					wpssAdminNotice('<?php echo esc_js( __( 'Select at least one vendor first.', 'wp-sell-services' ) ); ?>', 'error');
-					return;
-				}
-				var labels = {
-					'approve':    '<?php echo esc_js( __( 'Approve', 'wp-sell-services' ) ); ?>',
-					'suspend':    '<?php echo esc_js( __( 'Suspend', 'wp-sell-services' ) ); ?>',
-					'reactivate': '<?php echo esc_js( __( 'Reactivate', 'wp-sell-services' ) ); ?>'
-				};
-				/* translators: 1: action label, 2: count */
-				var confirmMsg = '<?php echo esc_js( __( '%1$s %2$d vendor(s)? This applies to every selected row.', 'wp-sell-services' ) ); ?>';
-				confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
-				if ( ! confirm( confirmMsg ) ) {
-					return;
-				}
-				var $btn = $(this);
-				$btn.prop('disabled', true);
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_bulk_update_vendor_status',
-						bulk_action: bulkAction,
-						vendor_ids: ids,
-						nonce: $('input[name="wpss_vendors_bulk_nonce"]').val()
-					},
-					success: function(response) {
-						if ( response.success ) {
-							location.reload();
-						} else {
-							wpssAdminNotice( response.data && response.data.message ? response.data.message : i18n.error, 'error' );
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice( i18n.error, 'error' );
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-
-			// View vendor details
-			$('.wpss-view-vendor').on('click', function(e) {
-				e.preventDefault();
-				var vendorId = $(this).data('vendor-id');
-
-				$modalBody.html('<div class="wpss-modal-loading"><span class="spinner is-active"></span> <?php esc_html_e( 'Loading vendor details...', 'wp-sell-services' ); ?></div>');
-				$modal.show();
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_get_vendor_details',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId
-					},
-					success: function(response) {
-						if (response.success) {
-							$modalBody.html(response.data.html);
-						} else {
-							$modalBody.html('<div class="notice notice-error"><p>' + (response.data.message || i18n.error) + '</p></div>');
-						}
-					},
-					error: function() {
-						$modalBody.html('<div class="notice notice-error"><p>' + i18n.error + '</p></div>');
-					}
-				});
-			});
-
-			// Close modal
-			$('.wpss-modal-close, .wpss-modal').on('click', function(e) {
-				if (e.target === this) {
-					$modal.hide();
-				}
-			});
-
-			// Update vendor status
-			$('.wpss-change-status').on('click', function(e) {
-				e.preventDefault();
-
-				if (!confirm(wpssVendors.i18n.confirmStatusChange)) {
-					return;
-				}
-
-				var $btn = $(this);
-				var vendorId = $btn.data('vendor-id');
-				var newStatus = $btn.data('status');
-				var $row = $btn.closest('tr');
-
-				$btn.prop('disabled', true);
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_status',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId,
-						status: newStatus
-					},
-					success: function(response) {
-						if (response.success) {
-							location.reload();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-
-			// Save vendor commission rate
-			$(document).on('click', '#wpss-save-commission', function(e) {
-				e.preventDefault();
-				var $btn = $(this);
-				var vendorId = $btn.data('vendor-id');
-				var rate = $('#wpss-vendor-commission-rate').val();
-
-				if (rate === '') {
-					wpssAdminNotice('<?php echo esc_js( __( 'Please enter a commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-					return;
-				}
-
-				$btn.prop('disabled', true);
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_commission',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId,
-						rate: rate
-					},
-					success: function(response) {
-						if (response.success) {
-							$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-							// Reload modal content to update UI
-							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-
-			// Reset vendor commission to global rate
-			$(document).on('click', '#wpss-reset-commission', function(e) {
-				e.preventDefault();
-				if (!confirm('<?php echo esc_js( __( 'Reset this vendor\'s commission rate to the global rate?', 'wp-sell-services' ) ); ?>')) {
-					return;
-				}
-
-				var $btn = $(this);
-				var vendorId = $btn.data('vendor-id');
-
-				$btn.prop('disabled', true);
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_commission',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId,
-						reset: 'true'
-					},
-					success: function(response) {
-						if (response.success) {
-							$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-							// Reload modal content to update UI
-							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-		});
-		</script>
 		<?php
 	}
 
@@ -1174,479 +981,13 @@ class VendorsPage {
 			</div>
 		</div>
 
-		<?php $this->render_vendor_detail_scripts( $vendor_id ); ?>
 		<?php
+		// Re-localise with this vendor's id so the detail-drawer AJAX (in
+		// admin-vendors.js) has it. The tab loader, commission override,
+		// vacation/availability toggles and portfolio moderation all post it.
+		$this->localize_vendors_script( $vendor_id );
 	}
 
-	/**
-	 * Render JavaScript for vendor detail page.
-	 *
-	 * @param int $vendor_id Vendor user ID.
-	 * @return void
-	 */
-	private function render_vendor_detail_scripts( int $vendor_id ): void {
-		?>
-		<script>
-		jQuery(function($) {
-			// Define local config (script runs before footer where wpssVendors is defined).
-			var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
-			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_vendors_admin' ) ); ?>';
-			var i18n = {
-				confirmStatusChange: '<?php echo esc_js( __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ) ); ?>',
-				error: '<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>'
-			};
-
-			var vendorId = <?php echo (int) $vendor_id; ?>;
-			var currentTab = 'overview';
-			var tabCache = {};
-
-			// Load initial tab.
-			loadTab('overview');
-
-			// Tab click handler.
-			$('.wpss-detail-tab').on('click', function() {
-				var tab = $(this).data('tab');
-				if (tab === currentTab) {
-					return;
-				}
-
-				$('.wpss-detail-tab').removeClass('active');
-				$(this).addClass('active');
-				currentTab = tab;
-
-				loadTab(tab);
-			});
-
-			// Load tab content via AJAX.
-			function loadTab(tab) {
-				var $content = $('#wpss-tab-content');
-
-				// Check cache.
-				if (tabCache[tab]) {
-					$content.html(tabCache[tab]);
-					initTabHandlers(tab);
-					return;
-				}
-
-				$content.html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: tab
-					},
-					success: function(response) {
-						if (response.success) {
-							tabCache[tab] = response.data.html;
-							$content.html(response.data.html);
-							initTabHandlers(tab);
-						} else {
-							$content.html('<div class="notice notice-error"><p>' + (response.data.message || '<?php echo esc_js( __( 'Failed to load content.', 'wp-sell-services' ) ); ?>') + '</p></div>');
-						}
-					},
-					error: function() {
-						$content.html('<div class="notice notice-error"><p><?php echo esc_js( __( 'Failed to load content.', 'wp-sell-services' ) ); ?></p></div>');
-					}
-				});
-			}
-
-			// Initialize handlers for specific tabs.
-			function initTabHandlers(tab) {
-				if (tab === 'settings') {
-					initSettingsHandlers();
-				} else if (tab === 'earnings') {
-					initEarningsHandlers();
-				} else if (tab === 'services') {
-					initServicesHandlers();
-				} else if (tab === 'orders') {
-					initOrdersHandlers();
-				} else if (tab === 'reviews') {
-					initReviewsHandlers();
-				} else if (tab === 'portfolio') {
-					initPortfolioHandlers();
-				}
-			}
-
-			// Settings tab handlers.
-			function initSettingsHandlers() {
-				// Commission rate save.
-				$('#wpss-save-commission-detail').off('click').on('click', function() {
-					var rate = $('#wpss-commission-rate-detail').val();
-					var $btn = $(this);
-
-					$btn.prop('disabled', true);
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_commission',
-							nonce: nonce,
-							vendor_id: vendorId,
-							rate: rate
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-commission-detail-status').html('<span style="color: #00a32a;">' + response.message + '</span>');
-								delete tabCache['settings'];
-								delete tabCache['earnings'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-							$btn.prop('disabled', false);
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.prop('disabled', false);
-						}
-					});
-				});
-
-				// Reset commission.
-				$('#wpss-reset-commission-detail').off('click').on('click', function() {
-					if (!confirm('<?php echo esc_js( __( 'Reset to global commission rate?', 'wp-sell-services' ) ); ?>')) {
-						return;
-					}
-
-					var $btn = $(this);
-					$btn.prop('disabled', true);
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_commission',
-							nonce: nonce,
-							vendor_id: vendorId,
-							reset: 'true'
-						},
-						success: function(response) {
-							if (response.success) {
-								delete tabCache['settings'];
-								delete tabCache['earnings'];
-								loadTab('settings');
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-							$btn.prop('disabled', false);
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.prop('disabled', false);
-						}
-					});
-				});
-
-				// Vacation mode toggle (and return-date change re-saves with the
-				// current toggle state so admins can set/clear the date directly).
-				var saveVacation = function() {
-					var enabled = $('#wpss-vacation-mode-toggle').is(':checked');
-					var message = $('#wpss-vacation-message').val() || '';
-					var returnDate = $('#wpss-vacation-return-date').val() || '';
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_vacation',
-							nonce: nonce,
-							vendor_id: vendorId,
-							enabled: enabled ? 1 : 0,
-							message: message,
-							return_date: returnDate
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-vacation-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-								delete tabCache['settings'];
-								delete tabCache['overview'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating vacation mode.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-						}
-					});
-				};
-
-				$('#wpss-vacation-mode-toggle').off('change').on('change', saveVacation);
-				$('#wpss-vacation-return-date').off('change').on('change', saveVacation);
-
-				// Availability toggle.
-				$('#wpss-availability-toggle').off('change').on('change', function() {
-					var available = $(this).is(':checked');
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_availability',
-							nonce: nonce,
-							vendor_id: vendorId,
-							available: available ? 1 : 0
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-availability-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-								delete tabCache['settings'];
-								delete tabCache['overview'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating availability.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-						}
-					});
-				});
-
-				// Seller-level override (admin manually sets the verification tier; bypasses auto-calc).
-				$('#wpss-save-level-detail').off('click').on('click', function() {
-					var level = $('#wpss-level-select-detail').val();
-					var $btn = $(this);
-
-					$btn.prop('disabled', true);
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_level',
-							nonce: nonce,
-							vendor_id: vendorId,
-							level: level
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-level-status').html('<span class="wpss-status-line__success"></span>').find('span').text(response.data.message);
-								delete tabCache['settings'];
-								delete tabCache['overview'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating seller level.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-							$btn.prop('disabled', false);
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'Error updating seller level.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.prop('disabled', false);
-						}
-					});
-				});
-			}
-
-			// Portfolio tab handlers (moderation: feature/unfeature/delete).
-			function initPortfolioHandlers() {
-				$('.wpss-portfolio-action').off('click').on('click', function() {
-					var $btn = $(this);
-					var itemId = $btn.data('item-id');
-					var modAction = $btn.data('mod-action');
-
-					function proceed() {
-						$btn.prop('disabled', true);
-
-						$.ajax({
-							url: ajaxUrl,
-							type: 'POST',
-							data: {
-								action: 'wpss_moderate_portfolio_item',
-								nonce: nonce,
-								vendor_id: vendorId,
-								item_id: itemId,
-								mod_action: modAction
-							},
-							success: function(response) {
-								if (response.success) {
-									delete tabCache['portfolio'];
-									$('#wpss-tab-content').html(response.data.html);
-									initPortfolioHandlers();
-								} else {
-									wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
-									$btn.prop('disabled', false);
-								}
-							},
-							error: function() {
-								wpssAdminNotice('<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
-								$btn.prop('disabled', false);
-							}
-						});
-					}
-
-					if (modAction === 'delete') {
-						window.wpssConfirm('<?php echo esc_js( __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ) ); ?>', { tone: 'danger' }).then(function(ok) {
-							if (ok) { proceed(); }
-						});
-						return;
-					}
-
-					proceed();
-				});
-			}
-
-			// Earnings tab handlers (pagination).
-			function initEarningsHandlers() {
-				$('.wpss-withdrawals-pagination a').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					loadWithdrawalsPage(page);
-				});
-			}
-
-			function loadWithdrawalsPage(page) {
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'earnings',
-						withdrawals_page: page
-					},
-					success: function(response) {
-						if (response.success) {
-							$('#wpss-tab-content').html(response.data.html);
-							initEarningsHandlers();
-						}
-					}
-				});
-			}
-
-			// Services tab handlers (pagination).
-			function initServicesHandlers() {
-				$('.wpss-services-page').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					loadServicesPage(page);
-				});
-			}
-
-			function loadServicesPage(page) {
-				$('#wpss-tab-content').html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'services',
-						services_page: page
-					},
-					success: function(response) {
-						if (response.success) {
-							delete tabCache['services'];
-							$('#wpss-tab-content').html(response.data.html);
-							initServicesHandlers();
-						}
-					}
-				});
-			}
-
-			// Orders tab handlers (pagination and filter).
-			function initOrdersHandlers() {
-				$('.wpss-orders-page').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					var status = $('#wpss-order-status-filter').val();
-					loadOrdersPage(page, status);
-				});
-
-				$('#wpss-order-status-filter').off('change').on('change', function() {
-					var status = $(this).val();
-					loadOrdersPage(1, status);
-				});
-			}
-
-			function loadOrdersPage(page, status) {
-				$('#wpss-tab-content').html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'orders',
-						orders_page: page,
-						order_status: status || ''
-					},
-					success: function(response) {
-						if (response.success) {
-							delete tabCache['orders'];
-							$('#wpss-tab-content').html(response.data.html);
-							initOrdersHandlers();
-						}
-					}
-				});
-			}
-
-			// Reviews tab handlers (pagination).
-			function initReviewsHandlers() {
-				$('.wpss-reviews-page').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					loadReviewsPage(page);
-				});
-			}
-
-			function loadReviewsPage(page) {
-				$('#wpss-tab-content').html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'reviews',
-						reviews_page: page
-					},
-					success: function(response) {
-						if (response.success) {
-							delete tabCache['reviews'];
-							$('#wpss-tab-content').html(response.data.html);
-							initReviewsHandlers();
-						}
-					}
-				});
-			}
-
-			// Status change dropdown.
-			$('#wpss-vendor-status-select').on('change', function() {
-				var newStatus = $(this).val();
-				if (!newStatus) {
-					return;
-				}
-
-				if (!confirm(i18n.confirmStatusChange)) {
-					$(this).val('');
-					return;
-				}
-
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_status',
-						nonce: nonce,
-						vendor_id: vendorId,
-						status: newStatus
-					},
-					success: function(response) {
-						if (response.success) {
-							location.reload();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-					}
-				});
-			});
-		});
-		</script>
-		<?php
-	}
 
 	/**
 	 * AJAX handler for updating vendor status.
