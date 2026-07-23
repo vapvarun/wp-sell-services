@@ -216,10 +216,10 @@ class SellerCard extends AbstractBlock {
 
 				<?php if ( $attributes['showButton'] ) : ?>
 					<div class="wpss-seller-actions">
-						<a href="<?php echo esc_url( wpss_get_vendor_url( $user_id ) ); ?>" class="wpss-button wpss-button-primary">
+						<a href="<?php echo esc_url( wpss_get_vendor_url( $user_id ) ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
 						</a>
-						<a href="<?php echo esc_url( add_query_arg( 'contact', $user_id, wpss_get_vendor_url( $user_id ) ) ); ?>" class="wpss-button wpss-button-secondary">
+						<a href="<?php echo esc_url( add_query_arg( 'contact', $user_id, wpss_get_vendor_url( $user_id ) ) ); ?>" class="wpss-btn wpss-btn--secondary">
 							<?php esc_html_e( 'Contact', 'wp-sell-services' ); ?>
 						</a>
 					</div>

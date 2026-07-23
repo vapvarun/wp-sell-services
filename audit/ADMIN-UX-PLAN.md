@@ -272,7 +272,29 @@ it is a real file the audit can see it. Folds into the modal work, Phase 2.
 
 | # | Task | Roots | Status |
 |---|---|---|---|
-| 2.1 | Button — `.wpss-button` → `.wpss-btn` | 2 → 1 | |
+| 2.1 | Button — `.wpss-button` → `.wpss-btn`; `--small`→`--sm`; define `--ghost --danger` composition | 2 → 1 | **DONE** |
+
+**Phase 2.1 landed (2026-07-24).** Three button-drift fixes:
+1. **Root collapse** — all 14 `.wpss-button` / `.wpss-button-primary/-secondary/
+   -outline/-small` usages migrated to canonical `.wpss-btn` + `--primary/
+   --secondary/--outline/--sm` (5 files). Legacy `.wpss-button*` rules kept in
+   `blocks.css` as a one-release shim → **remove in Phase 4**.
+2. **`--small` orphan → `--sm`** — 11 usages across portfolio/profile/JS. The
+   old `--small` was defined NOWHERE, so those "small" buttons silently rendered
+   full-size.
+3. **Over-weighted Delete fixed at the source** — Portfolio and Buyer-Requests
+   cards stacked `--link --outline --danger` (or `--link --danger`) on one
+   button; `--danger`'s solid fill won on specificity, so Delete was a loud red
+   block while its peers were plain text. Defined `.wpss-btn--ghost.wpss-btn--
+   danger` ONCE in design-system.css (ghost layout + danger text, 0,2,0 beats
+   the theme-proof 0,1,1 solid rule), then set both cards' actions to clean
+   single-intent ghost/ghost-danger. Destructive emphasis now lives at confirm
+   (both already use `tone:danger`). Verified in the browser — both cards read
+   as balanced peer rows.
+
+**Still open (Phase 3, recorded not fixed):** `.wpss-btn--link` (5 uses) is
+defined only in `vendor-dashboard.css`, non-canonical. Either promote to the
+design system or migrate to `--ghost`.
 | 2.2 | Badge / status — `.wpss-status-*`, `.wpss-tag` → `.wpss-badge--*` | 3 → 1 | |
 | 2.3 | Empty state — `.wpss-no-items`, `.wpss-no-data` → `.wpss-empty-state` | 3 → 1 | |
 | 2.4 | Input — `.wpss-field`, `.wpss-form-field`, `.wpss-form-row` → `.wpss-form-group` + `.wpss-input` | 7 → 2 | |

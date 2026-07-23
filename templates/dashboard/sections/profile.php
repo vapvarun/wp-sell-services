@@ -50,11 +50,11 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php esc_attr_e( 'Profile photo', 'wp-sell-services' ); ?>" class="wpss-avatar-upload__image" id="wpss-avatar-preview" data-gravatar="<?php echo esc_url( get_avatar_url( $user_id, array( 'size' => 150 ) ) ); ?>">
 					<input type="hidden" name="avatar_id" id="wpss-avatar-id" value="<?php echo esc_attr( $avatar_id ); ?>">
 					<div class="wpss-avatar-upload__actions">
-						<button type="button" class="wpss-btn wpss-btn--small wpss-btn--secondary" id="wpss-avatar-upload-btn">
+						<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-avatar-upload-btn">
 							<?php esc_html_e( 'Upload Photo', 'wp-sell-services' ); ?>
 						</button>
 						<?php if ( $avatar_id ) : ?>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-avatar-remove-btn">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-avatar-remove-btn">
 								<?php esc_html_e( 'Remove', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>
@@ -81,11 +81,11 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 						<input type="hidden" name="cover_id" id="wpss-cover-id" value="<?php echo esc_attr( $cover_id ); ?>">
 					</div>
 					<div class="wpss-cover-upload__actions" style="margin-top:8px;">
-						<button type="button" class="wpss-btn wpss-btn--small wpss-btn--secondary" id="wpss-cover-upload-btn">
+						<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-cover-upload-btn">
 							<?php esc_html_e( 'Upload Cover', 'wp-sell-services' ); ?>
 						</button>
 						<?php if ( $cover_id ) : ?>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-cover-remove-btn">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-cover-remove-btn">
 								<?php esc_html_e( 'Remove', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>

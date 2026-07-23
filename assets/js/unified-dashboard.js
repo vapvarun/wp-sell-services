@@ -596,7 +596,7 @@
 				// Show remove button if not already visible.
 				if ($('#wpss-avatar-remove-btn').length === 0) {
 					$('#wpss-avatar-upload-btn').after(
-						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-avatar-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
+						' <button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-avatar-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
 					);
 				}
 			}.bind(this));
@@ -655,7 +655,7 @@
 				// Show remove button if not already visible.
 				if ($('#wpss-cover-remove-btn').length === 0) {
 					$('#wpss-cover-upload-btn').after(
-						' <button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-cover-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
+						' <button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-cover-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
 					);
 				}
 			}.bind(this));

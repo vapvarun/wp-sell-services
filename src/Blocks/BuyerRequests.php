@@ -309,7 +309,7 @@ class BuyerRequests extends AbstractBlock {
 					<?php endif; ?>
 				</div>
 
-				<a href="<?php the_permalink(); ?>" class="wpss-button wpss-button-outline">
+				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline">
 					<?php esc_html_e( 'Send Offer', 'wp-sell-services' ); ?>
 				</a>
 			</div>

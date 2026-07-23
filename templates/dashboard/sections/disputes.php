@@ -48,7 +48,7 @@ if ( $view_dispute_id ) {
 		?>
 		<div class="wpss-dashboard__empty">
 			<p><?php esc_html_e( 'Dispute not found, or you do not have access to it.', 'wp-sell-services' ); ?></p>
-			<a class="wpss-button wpss-button-secondary" href="<?php echo esc_url( $section_base_url ); ?>">
+			<a class="wpss-btn wpss-btn--secondary" href="<?php echo esc_url( $section_base_url ); ?>">
 				<?php esc_html_e( 'Back to disputes', 'wp-sell-services' ); ?>
 			</a>
 		</div>
@@ -129,7 +129,7 @@ if ( $view_dispute_id ) {
 				$section_base_url
 			);
 			?>
-			<a class="wpss-button wpss-button-secondary" href="<?php echo esc_url( $view_order_url ); ?>">
+			<a class="wpss-btn wpss-btn--secondary" href="<?php echo esc_url( $view_order_url ); ?>">
 				<?php esc_html_e( 'View order', 'wp-sell-services' ); ?>
 			</a>
 		</p>
@@ -190,7 +190,7 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 						</td>
 						<td><?php echo esc_html( $opened ); ?></td>
 						<td>
-							<a class="wpss-button wpss-button-small wpss-button-secondary" href="<?php echo esc_url( $detail_url ); ?>">
+							<a class="wpss-btn wpss-btn--sm wpss-btn--secondary" href="<?php echo esc_url( $detail_url ); ?>">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 							</a>
 						</td>

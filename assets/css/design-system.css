@@ -422,6 +422,30 @@
 .wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
 .wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
+
+/* Ghost + danger = a low-emphasis destructive action: transparent like a ghost,
+   but danger-coloured text so it still reads as "delete". Defines what the two
+   modifiers COMPOSE to, instead of leaving the solid --danger fill to win by
+   specificity and turn a card's Delete into a loud red block. The 0,2,0
+   compound selector beats the 0,1,1 `button.wpss-btn--danger` theme-proof rule
+   below, so this holds on link, button and modal surfaces alike. Destructive
+   emphasis belongs at confirm time (the confirm dialog already uses tone:danger),
+   not on the resting button in a peer action row. */
+.wpss-btn--ghost.wpss-btn--danger,
+a.wpss-btn--ghost.wpss-btn--danger,
+button.wpss-btn--ghost.wpss-btn--danger {
+	background: transparent;
+	border-color: transparent;
+	color: var(--wpss-danger);
+}
+
+.wpss-btn--ghost.wpss-btn--danger:hover,
+a.wpss-btn--ghost.wpss-btn--danger:hover,
+button.wpss-btn--ghost.wpss-btn--danger:hover {
+	background: var(--wpss-danger-light, #fef2f2);
+	color: var(--wpss-danger-dark, #b91c1c);
+}
+
 /* .wpss-btn--danger base declarations live in the theme-proof block below. */
 .wpss-btn--danger:hover { background: var(--wpss-danger-dark, #b91c1c); border-color: var(--wpss-danger-dark, #b91c1c); color: var(--wpss-white, #fff); }
 .wpss-btn--success { background: var(--wpss-success); color: var(--wpss-white, #fff); border-color: var(--wpss-success); }
