@@ -216,8 +216,14 @@ class Admin {
 		$ordered   = array();
 		$rest      = array();
 
-		// Define the desired order of menu slugs.
+		// Desired order, grouped by what the admin is DOING — not by which
+		// class happens to register the page. The blocks below are the house
+		// convention: Overview → Content → Moderation → Users → Money →
+		// Insights → Config. Keeping every screen of one job together is the
+		// whole point; the previous order split the three moderation queues
+		// nine slots apart and buried Vendors inside the money block.
 		$order = array(
+			// --- Overview: where you land, and how you get set up. ---
 			'wp-sell-services',                                              // Dashboard.
 			// Setup Wizard only registers while setup is incomplete (or there
 			// are no published services). Listing it here keeps it at the TOP
@@ -225,23 +231,38 @@ class Admin {
 			// screen a new owner needs to the very bottom of the menu, under
 			// "Upgrade to Pro", via the unlisted-items tail below.
 			'wpss-setup-wizard',                                             // Setup Wizard (onboarding, conditional).
+
+			// --- Content: the things being sold and asked for. Both CPTs stay
+			// adjacent, with their taxonomies clustered after them rather than
+			// wedged between Services and Requests. ---
 			'edit.php?post_type=wpss_service',                               // All Services.
 			'post-new.php?post_type=wpss_service',                           // Add New Service.
-			'wpss-moderation',                                               // Service Moderation.
-			'wpss-review-moderation',                                        // Review Moderation.
-			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
-			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
 			'edit.php?post_type=wpss_request',                               // Buyer Requests.
 			'post-new.php?post_type=wpss_request',                           // Add New Request.
+			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
+			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
+
+			// --- Moderation: every queue an admin works in the same sitting.
+			// Disputes belongs here, not marooned in the money block. ---
+			'wpss-moderation',                                               // Service Moderation.
+			'wpss-review-moderation',                                        // Review Moderation.
+			'wpss-disputes',                                                 // Disputes.
+
+			// --- Users: who is selling. Precedes the money they generate. ---
+			'wpss-vendors',                                                  // Vendors.
+
+			// --- Money: the full journey, in the order it happens. ---
 			'wpss-orders',                                                   // Orders.
 			'wpss-subscriptions',                                            // Subscriptions (Pro).
-			'wpss-vendors',                                                  // Vendors.
-			'wpss-withdrawals',                                              // Withdrawals.
-			'wpss-disputes',                                                 // Disputes.
+			'wpss-withdrawals',                                              // Withdrawals (payouts).
+
+			// --- Insights: reporting and trails, read not acted on. ---
 			'wpss-analytics',                                                // Analytics (Pro).
-			'wpss-settings',                                                 // Settings.
-			'wpss-notifications',                                             // My Notifications (read-only viewer).
 			'wpss-audit-log',                                                // Audit Log (forensic trail).
+			'wpss-notifications',                                            // My Notifications (personal inbox).
+
+			// --- Config: last, so day-to-day work is never scrolled past it. ---
+			'wpss-settings',                                                 // Settings.
 			'wpss-license',                                                  // License (Pro).
 			'wpss-upgrade',                                                  // Upgrade to Pro (free only).
 		);

@@ -73,24 +73,61 @@ class Settings {
 
 		$this->tabs = array(
 			// Setup.
-			'general'  => __( 'General', 'wp-sell-services' ),
-			'pages'    => __( 'Pages', 'wp-sell-services' ),
-			// Business. Gateways are consolidated into the Payments tab.
-			'payments' => __( 'Payments', 'wp-sell-services' ),
-			'vendor'   => __( 'Vendor', 'wp-sell-services' ),
-			// Operations.
-			'orders'   => __( 'Orders', 'wp-sell-services' ),
-			'emails'   => __( 'Emails', 'wp-sell-services' ),
+			'general'    => __( 'General', 'wp-sell-services' ),
+			'pages'      => __( 'Pages', 'wp-sell-services' ),
+			// Money. The old single "Payments" tab carried commission, tax,
+			// payouts AND every gateway credential set — eight independent
+			// forms with eight save buttons, where editing across two cards
+			// silently lost the unsaved one. Split into the three questions an
+			// owner actually asks: how does money come IN, what do we KEEP, and
+			// how does it go OUT.
+			'payments'   => __( 'Payment Gateways', 'wp-sell-services' ),
+			'commission' => __( 'Commission &amp; Tax', 'wp-sell-services' ),
+			'payouts'    => __( 'Payouts', 'wp-sell-services' ),
+			// Marketplace.
+			'vendor'     => __( 'Vendors', 'wp-sell-services' ),
+			'orders'     => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
+			'emails'     => __( 'Emails', 'wp-sell-services' ),
 			// System (Pro tabs inserted before this via filter).
-			'advanced' => __( 'Advanced', 'wp-sell-services' ),
+			'advanced'   => __( 'Advanced', 'wp-sell-services' ),
 		);
 
 		$this->tab_groups = array(
 			'setup'      => array( 'general', 'pages' ),
-			'business'   => array( 'payments', 'vendor' ),
-			'operations' => array( 'orders', 'emails' ),
+			'money'      => array( 'payments', 'commission', 'payouts' ),
+			'operations' => array( 'vendor', 'orders', 'emails' ),
 			'pro'        => array(), // Pro tabs added via filter.
 			'system'     => array( 'advanced' ),
+		);
+	}
+
+	/**
+	 * The tabs FREE ships — the single authority for "is this a Pro tab?".
+	 *
+	 * Anything not in this list is treated as added by Pro or an extension: it
+	 * lands in the EXTENSIONS group, gets a Pro badge, and renders through the
+	 * `wpss_settings_tab_{slug}` action instead of a core method.
+	 *
+	 * This list previously existed as three separate copies (grouping, panel
+	 * dispatch, sidebar). Splitting the Payments tab updated two of them and
+	 * missed the sidebar, which promptly badged two free tabs as "Pro" — so it
+	 * is defined once here and read everywhere.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return array<int, string> Core tab slugs.
+	 */
+	private function get_core_tabs(): array {
+		return array(
+			'general',
+			'pages',
+			'payments',
+			'commission',
+			'payouts',
+			'vendor',
+			'orders',
+			'emails',
+			'advanced',
 		);
 	}
 
@@ -105,19 +142,11 @@ class Settings {
 	private function get_grouped_tabs(): array {
 		$this->init_tabs();
 
-		$core_tabs = array(
-			'general',
-			'pages',
-			'payments',
-			'vendor',
-			'orders',
-			'emails',
-			'advanced',
-		);
+		$core_tabs = $this->get_core_tabs();
 
 		$grouped = array(
 			'setup'      => array(),
-			'business'   => array(),
+			'money'      => array(),
 			'operations' => array(),
 			'pro'        => array(),
 			'system'     => array(),
@@ -151,13 +180,15 @@ class Settings {
 	 */
 	private function get_icon_map(): array {
 		return array(
-			'general'  => 'settings',
-			'pages'    => 'layout-template',
-			'payments' => 'credit-card',
-			'vendor'   => 'store',
-			'orders'   => 'shopping-cart',
-			'emails'   => 'mail',
-			'advanced' => 'wrench',
+			'general'    => 'settings',
+			'pages'      => 'layout-template',
+			'payments'   => 'credit-card',
+			'commission' => 'percent',
+			'payouts'    => 'banknote',
+			'vendor'     => 'store',
+			'orders'     => 'shopping-cart',
+			'emails'     => 'mail',
+			'advanced'   => 'wrench',
 		);
 	}
 
@@ -169,8 +200,8 @@ class Settings {
 	private function get_group_labels(): array {
 		return array(
 			'setup'      => __( 'SETUP', 'wp-sell-services' ),
-			'business'   => __( 'BUSINESS', 'wp-sell-services' ),
-			'operations' => __( 'OPERATIONS', 'wp-sell-services' ),
+			'money'      => __( 'MONEY', 'wp-sell-services' ),
+			'operations' => __( 'MARKETPLACE', 'wp-sell-services' ),
 			'pro'        => __( 'EXTENSIONS', 'wp-sell-services' ),
 			'system'     => __( 'SYSTEM', 'wp-sell-services' ),
 		);
@@ -1332,7 +1363,7 @@ class Settings {
 
 		$this->init_tabs();
 
-		$core_tabs = array( 'general', 'payments', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
+		$core_tabs = $this->get_core_tabs();
 		?>
 		<div class="wrap wpss-admin">
 			<div class="wpss-page-header">
@@ -1373,7 +1404,7 @@ class Settings {
 		$grouped_tabs = $this->get_grouped_tabs();
 		$group_labels = $this->get_group_labels();
 		$icon_map     = $this->get_icon_map();
-		$core_tabs    = array( 'general', 'pages', 'payments', 'vendor', 'orders', 'emails', 'advanced' );
+		$core_tabs    = $this->get_core_tabs();
 		?>
 		<div class="wpss-settings-sidebar">
 			<div class="wpss-settings-sidebar__brand">
@@ -1458,6 +1489,12 @@ class Settings {
 			case 'payments':
 				$this->render_payments_tab();
 				break;
+			case 'commission':
+				$this->render_commission_tab();
+				break;
+			case 'payouts':
+				$this->render_payouts_tab();
+				break;
 			case 'vendor':
 				$this->render_vendor_tab();
 				break;
@@ -1528,16 +1565,47 @@ class Settings {
 	}
 
 	/**
-	 * Render the Payments tab with collapsible sections.
+	 * Render the Payment Gateways tab — how money comes IN.
 	 *
-	 * Combines Commission, Tax, and Payouts settings into one tab
-	 * with expandable accordion sections.
+	 * Gateways only. Commission/tax moved to the Commission &amp; Tax tab and
+	 * withdrawal config to the Payouts tab: this one panel used to carry all
+	 * three plus every gateway, which meant eight independent forms and eight
+	 * save buttons on a single screen, where editing across two cards silently
+	 * discarded whichever you did not save.
 	 *
 	 * @return void
 	 */
 	private function render_payments_tab(): void {
+		echo '<div class="wpss-settings-subhead">';
+		echo '<p class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</p>';
+		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
+		echo '</div>';
+
+		$this->render_gateway_cards();
+
+		/**
+		 * Legacy payments-sections hook.
+		 *
+		 * Kept firing HERE so extensions written against the old single
+		 * "Payments" tab keep rendering after the split. Free + Pro ship
+		 * version-locked, so Pro's own renderers move to the precise
+		 * wpss_settings_sections_commission / _payouts hooks below; this remains
+		 * for third-party code.
+		 *
+		 * @since 1.1.0
+		 */
+		do_action( 'wpss_settings_sections_payments', $this );
+	}
+
+	/**
+	 * Render the Commission &amp; Tax tab — what the platform KEEPS.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	private function render_commission_tab(): void {
 		$this->render_tab_sections(
-			'payments',
+			'commission',
 			array(
 				array(
 					'id'           => 'commission',
@@ -1553,6 +1621,25 @@ class Settings {
 					'option_group' => 'wpss_tax',
 					'settings_id'  => 'wpss_tax',
 				),
+			)
+		);
+	}
+
+	/**
+	 * Render the Payouts tab — how money goes OUT to vendors.
+	 *
+	 * Sits next to the Withdrawals screen in the admin's mental model: this is
+	 * where the rules are set, that is where the batch is worked. Previously
+	 * buried inside "Payments", so an owner looking for payout configuration
+	 * had to guess it lived under the tab about taking payments.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	private function render_payouts_tab(): void {
+		$this->render_tab_sections(
+			'payouts',
+			array(
 				array(
 					'id'           => 'payouts',
 					'title'        => __( 'Payout Settings', 'wp-sell-services' ),
@@ -1563,14 +1650,16 @@ class Settings {
 			)
 		);
 
-		// Payment gateways are consolidated into the Payments tab so all
-		// money-flow configuration lives in one place.
-		echo '<div class="wpss-settings-subhead">';
-		echo '<p class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</p>';
-		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
-		echo '</div>';
-
-		$this->render_gateway_cards();
+		printf(
+			'<p class="description wpss-settings-crosslink">%s</p>',
+			wp_kses_post(
+				sprintf(
+					/* translators: %s: link to the Withdrawals admin screen. */
+					__( 'Work the payout batch itself on the %s screen.', 'wp-sell-services' ),
+					'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ) . '">' . esc_html__( 'Withdrawals', 'wp-sell-services' ) . '</a>'
+				)
+			)
+		);
 	}
 
 	/**
