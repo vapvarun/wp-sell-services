@@ -408,23 +408,18 @@ class VendorsPage {
 			}
 			?>
 
-			<!-- Stats Cards -->
+			<?php
+			// Two cards, not five. Active / Pending / Suspended were duplicated
+			// verbatim as counts in the status filter row immediately below
+			// ("All (1) | Active (1) | Pending (0) | Suspended (0)"), so the
+			// cards restated what the filters already say — and the filters are
+			// the version you can click. Only the two totals that appear nowhere
+			// else are kept.
+			?>
 			<div class="wpss-listing-stats wpss-vendor-stats">
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card wpss-stat-active">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['active'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Active', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card wpss-stat-pending">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['pending'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card wpss-stat-suspended">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['suspended'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Suspended', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
@@ -518,6 +513,16 @@ class VendorsPage {
 						<td class="manage-column column-cb check-column">
 							<input type="checkbox" id="cb-select-all-1" aria-label="<?php esc_attr_e( 'Select all vendors', 'wp-sell-services' ); ?>">
 						</td>
+						<?php
+						// Six columns, down from nine. Dropped: Contract Types
+						// ("0x Fixed · 0x Milestone" — derived, wide, and almost
+						// never what an admin scans for; it lives in the detail
+						// drawer). Joined folded under the vendor name, still
+						// sortable via its header link. Actions folded into
+						// WordPress row-actions on the primary column, which
+						// also stops three buttons wrapping onto two lines and
+						// inflating every row's height.
+						?>
 						<th scope="col" class="column-vendor">
 							<?php $this->sortable_column_header( 'display_name', __( 'Vendor', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
@@ -527,9 +532,6 @@ class VendorsPage {
 						<th scope="col" class="column-orders">
 							<?php $this->sortable_column_header( 'total_orders', __( 'Orders', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
-						<th scope="col" class="column-contract-types">
-							<?php $this->sortable_column_header( 'milestone_count', __( 'Contract Types', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
 						<th scope="col" class="column-rating">
 							<?php $this->sortable_column_header( 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
@@ -538,12 +540,6 @@ class VendorsPage {
 						</th>
 						<th scope="col" class="column-status">
 							<?php esc_html_e( 'Status', 'wp-sell-services' ); ?>
-						</th>
-						<th scope="col" class="column-joined">
-							<?php $this->sortable_column_header( 'created_at', __( 'Joined', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
-						<th scope="col" class="column-actions">
-							<?php esc_html_e( 'Actions', 'wp-sell-services' ); ?>
 						</th>
 					</tr>
 				</thead>
@@ -560,12 +556,9 @@ class VendorsPage {
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-services"><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-orders"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-contract-types"><?php esc_html_e( 'Contract Types', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-rating"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-earnings"><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-joined"><?php esc_html_e( 'Joined', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-actions"><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
 					</tr>
 				</tfoot>
 			</table>
@@ -624,22 +617,17 @@ class VendorsPage {
 				`.wpss-listing-stats` rules. Keep only vendor-page specific
 				utilities below. */
 
-			.wpss-vendors-table .column-vendor { width: 18%; }
-			.wpss-vendors-table .column-services { width: 7%; text-align: center; }
-			.wpss-vendors-table .column-orders { width: 7%; text-align: center; }
-			.wpss-vendors-table .column-contract-types { width: 12%; text-align: center; white-space: nowrap; }
-			.wpss-vendors-table .column-rating { width: 9%; text-align: center; }
-			.wpss-vendors-table .column-earnings { width: 10%; text-align: right; }
-			.wpss-vendors-table .column-status { width: 9%; }
-			.wpss-vendors-table .column-joined { width: 11%; }
-			.wpss-vendors-table .column-actions { width: 15%; }
+			.wpss-vendors-table .column-vendor { width: 42%; }
+			.wpss-vendors-table .column-services { width: 9%; text-align: center; }
+			.wpss-vendors-table .column-orders { width: 9%; text-align: center; }
+			.wpss-vendors-table .column-rating { width: 12%; text-align: center; }
+			.wpss-vendors-table .column-earnings { width: 14%; text-align: right; }
+			.wpss-vendors-table .column-status { width: 14%; }
 
-			@media (max-width: 1024px) {
-				.wpss-vendors-table .column-contract-types { white-space: normal; }
-			}
-
-			@media (max-width: 782px) {
-				.wpss-vendors-table .column-contract-types { text-align: left; }
+			.wpss-vendor-joined {
+				font-size: 12px;
+				color: var(--wpss-admin-text-light);
+				margin-top: 2px;
 			}
 
 			.wpss-vendor-info {
@@ -1105,7 +1093,58 @@ class VendorsPage {
 						<div class="wpss-vendor-email">
 							<?php echo esc_html( $vendor->user_email ?? $user->user_email ?? '' ); ?>
 						</div>
+						<?php
+						$joined = $vendor->created_at ?? $user->user_registered ?? '';
+						if ( $joined ) :
+							?>
+							<div class="wpss-vendor-joined">
+								<?php
+								printf(
+									/* translators: %s: date the vendor joined. */
+									esc_html__( 'Joined %s', 'wp-sell-services' ),
+									esc_html( date_i18n( get_option( 'date_format' ), strtotime( $joined ) ) )
+								);
+								?>
+							</div>
+						<?php endif; ?>
 					</div>
+				</div>
+				<?php
+				// WordPress row-actions: secondary controls appear on hover, so
+				// the row stays one line tall instead of carrying three
+				// permanently-visible buttons that wrapped.
+				?>
+				<div class="row-actions">
+					<span class="view">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&action=view&vendor_id=' . $vendor->user_id ) ); ?>"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a> |
+					</span>
+					<span class="edit">
+						<a href="<?php echo esc_url( get_edit_user_link( $vendor->user_id ) ); ?>"><?php esc_html_e( 'Edit User', 'wp-sell-services' ); ?></a>
+					</span>
+					<?php if ( 'active' === $status ) : ?>
+						<span class="trash">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="suspended"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></button>
+						</span>
+					<?php elseif ( 'suspended' === $status ) : ?>
+						<span class="untrash">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="active"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></button>
+						</span>
+					<?php elseif ( 'pending' === $status ) : ?>
+						<span class="approve">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="active"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></button>
+						</span>
+						<span class="trash">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="rejected"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></button>
+						</span>
+					<?php endif; ?>
 				</div>
 			</td>
 			<td class="column-services" data-colname="<?php esc_attr_e( 'Services', 'wp-sell-services' ); ?>">
@@ -1120,20 +1159,6 @@ class VendorsPage {
 			</td>
 			<td class="column-orders" data-colname="<?php esc_attr_e( 'Orders', 'wp-sell-services' ); ?>">
 				<?php echo esc_html( number_format_i18n( (int) ( $vendor->total_orders ?? 0 ) ) ); ?>
-			</td>
-			<td class="column-contract-types" data-colname="<?php esc_attr_e( 'Contract Types', 'wp-sell-services' ); ?>">
-				<?php
-				$fixed_count     = (int) ( $vendor->fixed_count ?? 0 );
-				$milestone_count = (int) ( $vendor->milestone_count ?? 0 );
-				echo esc_html(
-					sprintf(
-						/* translators: 1: fixed-price contract count, 2: milestone contract count */
-						__( '%1$dx Fixed · %2$dx Milestone', 'wp-sell-services' ),
-						$fixed_count,
-						$milestone_count
-					)
-				);
-				?>
 			</td>
 			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<?php if ( $reviews > 0 ) : ?>
@@ -1154,48 +1179,6 @@ class VendorsPage {
 				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>
-			</td>
-			<td class="column-joined" data-colname="<?php esc_attr_e( 'Joined', 'wp-sell-services' ); ?>">
-				<?php
-				$joined = $vendor->created_at ?? $user->user_registered ?? '';
-				if ( $joined ) {
-					echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $joined ) ) );
-				}
-				?>
-			</td>
-			<td class="column-actions">
-				<div class="wpss-vendor-actions">
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&action=view&vendor_id=' . $vendor->user_id ) ); ?>" class="button">
-						<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
-					</a>
-					<a href="<?php echo esc_url( get_edit_user_link( $vendor->user_id ) ); ?>" class="button">
-						<?php esc_html_e( 'Edit User', 'wp-sell-services' ); ?>
-					</a>
-					<?php if ( $status === 'active' ) : ?>
-						<button type="button" class="button wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="suspended">
-							<?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?>
-						</button>
-					<?php elseif ( $status === 'suspended' ) : ?>
-						<button type="button" class="button wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="active">
-							<?php esc_html_e( 'Activate', 'wp-sell-services' ); ?>
-						</button>
-					<?php elseif ( $status === 'pending' ) : ?>
-						<button type="button" class="button button-primary wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="active">
-							<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
-						</button>
-						<button type="button" class="button wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="rejected">
-							<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
-						</button>
-					<?php endif; ?>
-				</div>
 			</td>
 		</tr>
 		<?php
