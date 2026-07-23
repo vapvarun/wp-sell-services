@@ -154,7 +154,7 @@ each screen is touched in Phases 1-3, not as separate work:
 | **13 of 14 screens have no page header** | Only Settings renders `.wpss-page-header`. Everything else opens with a bare `<h1>`, so there is nowhere consistent for a description or the primary action. |
 | **Stat cards follow no rule** | 7 (Dashboard), 4, 4, 4, 2, 2, 0, 0… Rule: show only totals that appear nowhere else. Vendors went 5 → 2 on 2026-07-23 because 3 restated the filter row. |
 | **Two action paradigms** | Orders / Vendors / Disputes use `.row-actions`; Withdrawals uses a persistent Actions column. Standardise on `.row-actions`. |
-| **Two list paradigms** | Service Moderation + Review Moderation are card grids; every other queue is a table. **Decision needed** — see §6. |
+| ~~Two list paradigms~~ | **WITHDRAWN — this finding was wrong.** Both moderation screens already use `wp-list-table`; the scan misread "queue is empty" as "no table". See D1 in §6. |
 | **Search missing** | Withdrawals, Audit Log, My Notifications, Service Moderation — all grow without bound. |
 | **Withdrawals sorts nothing**; **Audit Log has no filters** | A forensic trail you can't filter by actor or event is unusable past a few hundred rows. |
 
@@ -173,15 +173,44 @@ each screen is touched in Phases 1-3, not as separate work:
 
 ---
 
-## 6. Decisions needed
+## 6. Decisions — MADE 2026-07-23 (owner delegated the presentation call)
 
-1. **Moderation card grids** — deliberate (you want a visual preview of the
-   service/review before judging) or an accident? If deliberate, keep them and
-   record the exception; if not, convert both to `wp-list-table`.
-2. **Vendors "Earnings" column** reads `vendor_profiles.total_earnings`
-   (order-derived) while the vendor's dashboard reads the wallet ledger. They
-   can disagree. Point it at the ledger, or relabel it precisely — but do not
-   ship two numbers both called "earnings".
+### D1 — WITHDRAWN. The premise was wrong: moderation already uses tables.
+
+**Correction (2026-07-23).** §4 originally reported "Service Moderation and
+Review Moderation are card grids; every other queue is a table." That was
+**false**. Both render `<table class="wp-list-table … wpss-moderation-table">` /
+`wpss-review-table`, with `.row-actions` and per-column widths, exactly like
+every other queue.
+
+The rendered scan reported `table: false` for both because **both queues were
+empty** on the audit site, so the empty state rendered and the table never did.
+I read absence-of-rows as absence-of-table.
+
+**This is the single best argument for the seeded-data rule in Phase 6.** An
+audit run against an empty site invented a design problem that does not exist,
+and would have spent a phase "converting" screens that were already correct.
+Any screen whose state depends on data must be judged with data.
+
+What remains true for these two screens: they duplicate CSS like every other
+page (Phase 1.2), and their stat cards restate their filter rows (Phase 4.2).
+No conversion, no paradigm split.
+
+### D2 — Vendors "Earnings" reads the wallet ledger
+
+The ledger is the money authority (`manifest.money_authorities.wallet_balance`).
+The admin list must not be able to contradict the vendor's own dashboard, so the
+column reads ledger credits, not `vendor_profiles.total_earnings`.
+
+**Scale constraint, non-negotiable:** do NOT call `get_summary()` per row — that
+is an N+1 that dies at 500 vendors. Add ONE grouped query
+(`SELECT user_id, SUM(...) FROM wpss_wallet_transactions WHERE status='completed'
+GROUP BY user_id`) joined into the existing vendor list query, exactly as
+`services_count` and `total_orders` are already batched.
+
+Label it **"Earned"** (lifetime credits) and keep the payout-relevant number —
+current balance — in the detail drawer, so the list answers "who is producing"
+and the drawer answers "what do I owe".
 
 ---
 
@@ -229,8 +258,8 @@ finishing Phase 1 makes Phase 2 safe, and so on.
 | 4.2 | Apply the stat-card rule everywhere (Dashboard 7 → 2-3; Moderation 4 → 0-2) | |
 | 4.3 | Withdrawals: Actions column → `.row-actions`; add search; add sortable headers | |
 | 4.4 | Audit Log: actor/event filters + search. My Notifications: read/unread filter + pagination | |
-| 4.5 | Moderation card grid → table, or record the exception (**owner decision**) | |
-| 4.6 | Vendors Earnings → wallet ledger, or relabel (**owner decision**) | |
+| 4.5 | ~~Moderation card grid → table~~ — **cancelled, finding was wrong (D1)** | N/A |
+| 4.6 | Vendors Earnings → wallet ledger via ONE grouped query, label "Earned" (D2) | |
 
 ### Phase 6 — FRONTEND, screen by screen, on seeded data
 

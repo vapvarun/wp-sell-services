@@ -477,27 +477,6 @@ class ServiceModerationPage {
 			</form>
 		</div>
 
-		<style>
-			.wpss-moderation-table .column-cb { width: 30px; }
-			.wpss-moderation-table .column-thumbnail { width: 60px; }
-			.wpss-moderation-table .column-title { width: 25%; }
-			.wpss-moderation-table .column-vendor { width: 12%; }
-			.wpss-moderation-table .column-category { width: 12%; }
-			.wpss-moderation-table .column-price { width: 8%; }
-			.wpss-moderation-table .column-date { width: 10%; }
-			.wpss-moderation-table .column-status { width: 10%; }
-			.wpss-moderation-table .column-actions { width: 15%; }
-			.wpss-moderation-table .service-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
-			.wpss-moderation-table .wpss-status-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-			.wpss-moderation-table .wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-			.wpss-moderation-table .wpss-status-approved { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
-			.wpss-moderation-table .wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
-			.wpss-moderation-table .row-actions { padding-top: 5px; }
-			.wpss-moderation-table .row-actions a { margin-right: 10px; }
-			.wpss-moderation-table .approve-action { color: var(--wpss-success, #46b450); }
-			.wpss-moderation-table .reject-action { color: var(--wpss-danger, #dc3232); }
-			.wpss-rejection-reason { color: var(--wpss-text-muted, #666); font-size: 12px; font-style: italic; margin-top: 5px; }
-		</style>
 
 		<script>
 		// Define wpssModeration inline (wp_add_inline_script runs in footer, after this script).
@@ -1127,15 +1106,6 @@ class ServiceModerationPage {
 		);
 
 		// Add inline styles for status badges.
-		static $styles_added = false;
-		if ( ! $styles_added ) {
-			echo '<style>
-				.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-				.wpss-status-approved { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
-				.wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
-			</style>';
-			$styles_added = true;
-		}
 	}
 
 	/**
@@ -1187,9 +1157,6 @@ class ServiceModerationPage {
 			return;
 		}
 		?>
-		<style>
-			.inline-edit-row .inline-edit-status { display: none !important; }
-		</style>
 		<?php
 	}
 
@@ -1355,9 +1322,6 @@ class ServiceModerationPage {
 				<?php endif; ?>
 			</p>
 		</div>
-		<style>
-			.wpss-moderation-metabox select { margin-top: 5px; }
-		</style>
 		<?php
 	}
 

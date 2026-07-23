@@ -1996,6 +1996,54 @@
 	color: var(--wpss-admin-text-light);
 }
 
+/* Service Moderation queue — column widths + queue-specific bits only.
+   The status badge/pending/rejected rules that used to sit alongside these in
+   the page's inline <style> are gone: admin.css already defined them, so the
+   page was shipping a second copy that only differed by being scoped to
+   .wpss-moderation-table. */
+.wpss-moderation-table .column-cb { width: 30px; }
+.wpss-moderation-table .column-thumbnail { width: 60px; }
+.wpss-moderation-table .column-title { width: 25%; }
+.wpss-moderation-table .column-vendor { width: 12%; }
+.wpss-moderation-table .column-category { width: 12%; }
+.wpss-moderation-table .column-price { width: 8%; }
+.wpss-moderation-table .column-date { width: 10%; }
+.wpss-moderation-table .column-status { width: 10%; }
+.wpss-moderation-table .column-actions { width: 15%; }
+
+.wpss-moderation-table .service-thumb {
+	width: 50px;
+	height: 50px;
+	object-fit: cover;
+	border-radius: 4px;
+}
+
+.wpss-moderation-table .row-actions { padding-top: 5px; }
+.wpss-moderation-table .row-actions a { margin-inline-end: 10px; }
+.wpss-moderation-table .approve-action { color: var(--wpss-admin-success); }
+.wpss-moderation-table .reject-action { color: var(--wpss-admin-danger); }
+
+.wpss-rejection-reason {
+	color: var(--wpss-admin-text-light);
+	font-size: 12px;
+	font-style: italic;
+	margin-top: 5px;
+}
+
+/* Approved status pill — the counterpart to .wpss-status-pending/-rejected,
+   which already lived here. It was only ever defined inside the moderation
+   page, so any other screen rendering an "approved" badge got nothing. */
+.wpss-status-approved {
+	background: var(--wpss-success-light, #d4edda);
+	color: var(--wpss-success-dark, #155724);
+}
+
+.wpss-moderation-metabox select { margin-top: 5px; }
+
+/* Quick Edit: the core status dropdown is hidden because moderation status is
+   driven by the queue's own approve/reject actions, not by post status. */
+.inline-edit-row .inline-edit-status { display: none !important; }
+
 /* Withdrawals (Payouts) page */
 .wpss-withdrawals-table .column-id { width: 6%; }
 .wpss-withdrawals-table .column-vendor { width: 20%; }
