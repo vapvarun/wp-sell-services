@@ -22,12 +22,25 @@ defined( 'ABSPATH' ) || exit;
 class UpgradePage {
 
 	/**
+	 * Admin page hook suffix returned by add_submenu_page().
+	 *
+	 * Stored rather than hardcoded: the real suffix is derived from the PARENT
+	 * menu title, so a hand-written guess silently never matches and the
+	 * enqueue becomes dead code — exactly what had happened on the Withdrawals
+	 * screen before 1.5.1.
+	 *
+	 * @var string
+	 */
+	private string $hook_suffix = '';
+
+	/**
 	 * Initialize the page.
 	 *
 	 * @return void
 	 */
 	public function init(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 	}
 
 	/**
@@ -36,7 +49,7 @@ class UpgradePage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Upgrade to Pro', 'wp-sell-services' ),
 			__( 'Upgrade to Pro', 'wp-sell-services' ),
@@ -44,6 +57,32 @@ class UpgradePage {
 			'wpss-upgrade',
 			array( $this, 'render' )
 		);
+
+		if ( $hook ) {
+			$this->hook_suffix = $hook;
+		}
+	}
+
+	/**
+	 * Enqueue the onboarding stylesheet on this screen only.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 * @return void
+	 */
+	public function enqueue_styles( string $hook ): void {
+		if ( '' === $this->hook_suffix || $this->hook_suffix !== $hook ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'wpss-admin-upgrade',
+			\WPSS_PLUGIN_URL . 'assets/css/admin-upgrade.css',
+			array( 'wpss-admin' ),
+			\WPSS_VERSION
+		);
+		wp_style_add_data( 'wpss-admin-upgrade', 'rtl', 'replace' );
 	}
 
 	/**
@@ -304,88 +343,6 @@ class UpgradePage {
 			</div>
 		</div>
 
-		<style>
-			.wpss-upgrade-wrap {
-				max-width: 900px;
-			}
-			.wpss-upgrade-header {
-				text-align: center;
-				padding: 40px 20px 30px;
-			}
-			.wpss-upgrade-header h1 {
-				font-size: 28px;
-				margin-bottom: 10px;
-			}
-			.wpss-upgrade-tagline {
-				font-size: 15px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-				max-width: 600px;
-				margin: 0 auto 20px;
-			}
-			.wpss-upgrade-cta {
-				font-size: 16px !important;
-				padding: 8px 32px !important;
-				height: auto !important;
-				background: var(--wpss-vendor-green, #1dbf73) !important;
-				border-color: var(--wpss-vendor-green, #1dbf73) !important;
-			}
-			.wpss-upgrade-cta:hover,
-			.wpss-upgrade-cta:focus {
-				background: var(--wpss-vendor-green-dark, #19a463) !important;
-				border-color: var(--wpss-vendor-green-dark, #19a463) !important;
-			}
-			.wpss-comparison-section {
-				margin-bottom: 30px;
-			}
-			.wpss-comparison-section h2 {
-				font-size: 16px;
-				margin: 0 0 8px;
-				padding: 0;
-			}
-			.wpss-comparison-table {
-				border-collapse: collapse;
-			}
-			.wpss-comparison-table th,
-			.wpss-comparison-table td {
-				padding: 10px 14px;
-			}
-			.wpss-comparison-table thead th {
-				font-weight: 600;
-				background: var(--wpss-wp-admin-bg, #f0f0f1);
-			}
-			.wpss-feature-col {
-				width: 60%;
-			}
-			.wpss-plan-col {
-				width: 20%;
-				text-align: center;
-			}
-			.wpss-plan-pro {
-				background: var(--wpss-success-light, #f0faf5);
-			}
-			.wpss-feature-yes {
-				color: var(--wpss-success, #00a32a);
-				font-size: 20px;
-			}
-			.wpss-feature-no {
-				color: var(--wpss-danger-dark, #cc1818);
-				font-size: 20px;
-			}
-			.wpss-feature-text {
-				font-size: 13px;
-				color: var(--wpss-warning-dark, #996800);
-				font-weight: 500;
-			}
-			.wpss-upgrade-footer {
-				text-align: center;
-				padding: 30px 20px 10px;
-			}
-			.wpss-upgrade-guarantee {
-				margin-top: 10px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-				font-size: 13px;
-			}
-		</style>
 		<?php
 	}
 }
