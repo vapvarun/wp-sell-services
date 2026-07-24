@@ -32,10 +32,13 @@ browser-verified before/after and is WPCS neutral-or-better on touched files.
   vocabulary), the admin backend regroup, T1–T3 payout keystone + clearance.
 
 **Pending, in the owner's sequence.**
-1. **CSS consolidation finish:** the SCOPED trio — `.wpss-modal` (dedicated
-   per-modal migration), `.wpss-card` + `.wpss-table` (per-surface visual
-   passes) — plus 2.4 inputs, and `.wpss-btn` across 8 files (likely the same
-   convention-drift as modals; inventory before touching).
+1. **CSS consolidation finish:** the SCOPED items — `.wpss-btn` (now fully
+   scoped: base conflict across 7 files + BEM-vs-single-dash across ~60 call
+   sites + a hidden WCAG-AA gap; 3-phase plan in notes), `.wpss-modal`
+   (per-modal migration), `.wpss-card` + `.wpss-table` (per-surface visual
+   passes) — plus 2.4 inputs. `.wpss-btn` base reconciliation (phase 1) is the
+   highest-value next step: it fixes a 40px tap-target a11y gap on every
+   non-canonical surface and unifies font-weight.
 2. **Frontend loose ends:** the WooCommerce My Account vendor dashboard
    (empty-state + card changes there are unverified); the other payment
    gateways + a genuinely no-gateway-configured install; approval-required /
@@ -434,6 +437,7 @@ contexts before shipping.
 | 2.6 | Table — `.wpss-table` plain-vs-bordered-vs-WC | 4 files | **SCOPED 2026-07-24** — per-surface visual change, see consolidation notes |
 | 2.7 | Services grid — one `.wpss-services-grid` + responsive modifiers | 4 → 1(ds) | **DONE 2026-07-24** (fixed a 4-col-on-mobile bug; see notes) |
 | 2.8 | Modal — 3 conventions + 2 show/hide contracts across 6 files | ~40 call sites | **SCOPED 2026-07-24** — dedicated per-modal migration, see notes |
+| 2.9 | Button — base conflict (7 files) + BEM-vs-single-dash (~60 legacy call sites) | 7 bases → 1 | **SCOPED 2026-07-24** — 3-phase migration, see notes (biggest one) |
 
 **Phase 2.3 audit (2026-07-24).** `.wpss-empty-state` is the de-facto standard
 (25 markup uses) but defined in FOUR sheets — admin.css, frontend.css,
@@ -841,6 +845,62 @@ class, verify open/close/submit on every modal surface — confirm dialog, order
 modal, messaging, dispute), NOT a CSS-only dedup; ramming it risks the exact
 "invisible confirm button" failure the design system's own theme-proof comments
 warn about. Left for a dedicated pass.
+
+### `.wpss-btn` consolidation — SCOPED 2026-07-24 (the biggest one)
+
+Scoped, not started: buttons are on every screen, so this needs a phased,
+per-surface-verified migration, not a bulk edit. Two independent problems.
+
+**Problem 1 — the base `.wpss-btn` conflicts across 7 files.** design-system,
+frontend, single-service, unified-dashboard, vendor-dashboard, service-wizard
+and admin each define the base with different values. Whichever loads last on a
+given page wins, so the "same" button differs by surface:
+
+| file | padding | font-weight | border | 40px tap floor |
+|------|---------|-------------|--------|----------------|
+| design-system (canonical) | 12/20 | **600** | **2px transparent** | **yes** |
+| frontend | 10/20 | 600 | 2px transparent | no |
+| single-service | 12/24 | 500 | none | no |
+| unified-dashboard | 10/20 | 500 | none | no |
+| vendor-dashboard | 10/20 | 500 | none | no |
+| service-wizard | 12/24 | 600 | **none !important** | no |
+
+Two real defects hide in here: (a) the **40px tap-target floor exists ONLY in
+the canonical** — every other surface's buttons can render shorter than the
+a11y minimum; (b) service-wizard's `border: none !important` would strip the
+border off any `--outline`/`--ghost` button used on the wizard. font-weight also
+splits 600 vs 500.
+
+**Problem 2 — two variant naming conventions, plus BEM gaps.** BEM double-dash
+is decisively canonical: **~253 markup uses** (`--primary` 81, `--sm` 48,
+`--secondary` 36, `--outline` 28, …) vs **~60 single-dash** legacy uses
+(`-primary` 20, `-outline` 15, `-block` 13, `-text` 3, `-secondary` 3, `-sm` 2,
+`-price` 2, `-icon` 2) spread across ~15 files (single-request.php 14,
+service-packages.php 8, ServiceArchiveView 6, BuyerRequestArchiveView 6,
+SingleServiceView 5, vendor/profile 4, …). Migration map: `-primary/-outline/
+-secondary/-sm/-icon` → direct `--` rename; `-block` → `--full` (both are
+width:100%); `-text` → `--link`; `-price` (font-weight:400, opacity:.9) has no
+BEM twin — either add `--muted` or keep as a one-off. And even within BEM,
+`--link` (3), `--locked` (1) and `--disabled` (2) are **used in markup but not
+defined in design-system** — they live in other sheets and must be folded into
+the canonical set.
+
+**Hidden correctness win.** The 6.9 WCAG-AA theme-proof rule targets
+`a.wpss-btn--primary` and covers ZERO single-dash `-primary` — so the ~20
+single-dash primary call sites, including anchors inside theme `.entry-content`,
+are NOT protected from the near-black-on-indigo 3.0-contrast failure. Migrating
+them to `--primary` extends that AA protection for free.
+
+**Execution order when it runs (each phase browser-verified across button
+surfaces — dashboard, checkout, wizard, archive, single service, modals):**
+1. **Base reconciliation.** design-system becomes the sole base owner; delete
+   the 6 duplicate bases; remove service-wizard's `border: none !important`;
+   confirm the 40px floor + 2px-border model + font-weight 600 land everywhere.
+   This alone fixes the tap-target-floor a11y gap and the weight drift.
+2. **Fold the orphan BEM variants** (`--link`, `--locked`, `--disabled`) into
+   design-system.
+3. **Migrate the 60 single-dash call sites** to BEM per the map above (extends
+   the WCAG-AA protection), then delete the single-dash CSS defs.
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 
