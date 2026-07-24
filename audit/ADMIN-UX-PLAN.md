@@ -54,13 +54,27 @@ they repair every affected surface at once):**
   usable, correctly bounded (Min $20 / Max = available).
 All at 1440 and 390, no h-scroll.
 
-**Still to sweep (actions not yet driven):** accept/decline a NEW order + start
-work; Request-Revision + Open-Dispute form submits (buyer); dispute-view actions;
-complete a withdrawal SUBMIT; messaging send; the remaining dashboard section
-actions (delete/feature portfolio item, remove favorite, edit profile,
-create/edit buyer request); milestone orders. Each still needs a real action +
-390 pass. The 3 systemic fixes (modal visibility, filled-button colour, seeded
-ledger) already cover much of the shared mechanics these depend on.
+**More actions verified working (real login where REST is involved):**
+- **Withdrawal submit** — new $30 pending row created; screen reconciled exactly
+  (available 54→24, pending withdrawal 81→111, no negative).
+- **Portfolio Feature toggle** — REST POST 200, `is_featured` 0→1 in DB.
+- **Profile save** — form submit → REST PUT `/vendors/me` 200 → success alert →
+  bio persisted in `wpss_vendor_profiles`.
+
+**METHODOLOGY FINDING (not a product bug — avoids false positives):** the dev
+`?autologin=` mu-plugin sets the auth cookie mid-request, which invalidates the
+REST cookie nonce, so REST-based writes (portfolio featured, profile save) return
+**403 `rest_cookie_invalid_nonce`** under autologin even though the page shows the
+user logged in. They work under a REAL wp-login session (verified: 200 + DB
+persisted). AJAX/admin-ajax actions (accept/complete, deliver, withdrawal,
+review, tip) are unaffected by autologin. So: **use a real login to verify any
+REST-based action**; a 403 under autologin is a test-harness artifact. (Caught
+here before mis-filing the portfolio 403 as a bug.)
+
+**Still to sweep:** accept/decline a NEW order + start work; Request-Revision +
+Open-Dispute form submits (buyer); dispute-view actions; messaging send; remove
+favorite, portfolio add/delete, create/edit buyer request; milestone orders.
+Each needs a real action + 390 pass (REST ones under a real login).
 
 ---
 
