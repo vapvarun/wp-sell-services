@@ -577,12 +577,34 @@ active here and owns that slug. The plugin's mapped checkout page is
 ID, so this is not a product bug, but it is a good reminder that on a WC site
 `/checkout/` is not ours.
 
-**Still open for 6.9** (needs a buyer session — the `?autologin=` mu-plugin
-no-ops when someone is already logged in, so switch users first):
-- add-to-cart → populated cart → checkout → order confirmation, end to end
-- the paid path per gateway, and the genuinely-no-gateway-configured case
-  (`wpss_payment_gateways` is `[]` on this site, which is a fresh install's
-  state — what the owner sees when they try the first purchase is untested)
+**Buyer journey walked 2026-07-24** as a real buyer (logged out, then
+`?autologin=wpss_buyer_noah` — the helper no-ops while another user is logged
+in, which is why the first attempt silently stayed on the owner account).
+
+Service → **Continue** → Order Options modal (package, delivery, total) →
+**Continue to Checkout** → added-to-cart modal (View Cart / Checkout) →
+`/service-checkout/89/`. All steps work. The checkout renders service details,
+the full `billing_*` form (matching the account-and-billing standard), order
+summary, payment method, trust row and a "What happens next?" stepper.
+Submitting empty blocks correctly and focuses the first invalid field. With the
+Stripe Payment Element mounted, **Pay** returns Stripe's own inline validation
+("Your card number is incomplete") — correct behaviour, not a silent failure.
+
+**Third fix from this pass: the phone field was a stunted 190px** in a column of
+748px inputs on the checkout billing form. `frontend.css` gave `width: 100%` to
+an *allowlist* of input types — `text`, `email`, `number` — so `type="tel"`
+missed it entirely (and `url`, `password`, `search`, `date`… were queued up to
+hit the same hole). Note the neighbouring `input:focus` rule was already
+generic, which is exactly why the gap went unnoticed. Rewritten as an
+**exclusion** (`input:not([type="checkbox"]):not([type="radio"])…`) so the whole
+bug class dies at once; verified all 11 billing inputs now measure identically
+at 1440 and 390, radios still 18×18, no page scroll.
+
+**Still open for 6.9:** completing a card payment (needs typing into Stripe's
+cross-origin iframe) and therefore the **order confirmation** screen; the other
+gateways; and the genuinely-no-gateway case — note this site DOES have Stripe
+test keys, so the earlier "`wpss_payment_gateways` is `[]`" reading was about a
+different option and the fresh-install no-gateway state remains untested.
 
 **Recorded, not fixed (button vocabulary, feeds the Phase 2.1 follow-up):**
 a THIRD button spelling is in wide use — single-dash `.wpss-btn-primary` (18),

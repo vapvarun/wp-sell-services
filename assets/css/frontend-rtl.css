@@ -3068,11 +3068,18 @@ body.wpss-modal-active {
 	color: var(--wpss-danger);
 }
 
+/* Text-like inputs are matched by EXCLUSION, not by an allowlist of types.
+   The previous rule listed only text/email/number, so every other text-like
+   type silently missed `width: 100%` and rendered at the browser default:
+   `billing_phone` (type="tel") sat at 190px in a column of 748px fields on the
+   checkout billing form. The same hole was waiting for url, password, search,
+   date and friends. Excluding the controls that must NOT be full-width and
+   padded (checkbox, radio, buttons, file, range, color, hidden) fixes the whole
+   class at once and matches the `input:focus` rule below, which was already
+   generic — that mismatch is what let the gap go unnoticed. */
 .wpss-form-group textarea,
 .wpss-form-group select,
-.wpss-form-group input[type="text"],
-.wpss-form-group input[type="email"],
-.wpss-form-group input[type="number"] {
+.wpss-form-group input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]) {
 	width: 100%;
 	padding: 0.75rem;
 	border: 1px solid var(--wpss-border);
