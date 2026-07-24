@@ -452,7 +452,7 @@ long vendor names (the overflow cases), and at least one order with milestones.
 | 6.8 | Buyer request archive + single request | open/closed, with/without offers | **DONE 2026-07-24 — 2 fixes** (below) |
 | 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | **PARTIAL 2026-07-24** — cart + empty checkout done, 2 fixes; paid flow still to do |
 | 6.10 | Become a vendor / registration | open / approval / closed states | **DONE 2026-07-24 — 2 fixes** (below); approval/closed modes still to try |
-| 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | |
+| 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | **DONE 2026-07-24 — 1 fix** (below) |
 
 ### 6.7 Service archive + single service — rendered 2026-07-24
 
@@ -653,6 +653,32 @@ Verified: `context: "frontend"`, class `wpss-shepherd--frontend`, header
 **Not yet covered:** the approval-required and registration-closed modes (this
 site runs auto-approve). The dialog's focus ring is still WP-admin blue — a
 visible focus ring is correct a11y, only its colour is off-system; left alone.
+
+### 6.11 Vendor public profile — rendered 2026-07-24
+
+Route is `/provider/{user_nicename}/` (not `/vendor/…`).
+
+**Public profiles 404'd for vendors created by any path that skips a legacy
+meta — FIXED.** `TemplateLoader` gated the route on
+`get_user_meta( $user->ID, '_wpss_is_vendor' )` — a THIRD source of truth
+alongside the `wpss_vendor` role/capability (what the canonical
+`wpss_is_vendor()` actually checks) and the `wpss_vendor_profiles` row. Every
+seeded vendor has the role, the capability, a profile row, published services,
+completed orders and reviews, but an EMPTY `_wpss_is_vendor` meta — so their
+public profile was a hard 404 and every "About the seller" link on their service
+pages pointed at a dead page. The gate now asks `wpss_is_vendor()`, so one
+authority answers "is this a vendor" everywhere.
+
+**Both states verified.** Populated (Aisha Khan): cover, avatar, Top Rated badge,
+tagline, stats row, Contact Me, About, services grid, portfolio, reviews, and a
+sidebar of response time / active services / orders. Empty (a buyer who
+registered as a vendor minutes earlier): "New Seller" badge, 0/0 stats, a proper
+"No services yet" empty state with a Browse services CTA, and — because it is
+your own profile — a wallet card instead of Contact Me.
+
+**Nit, not fixed:** the CONNECT card renders empty grey circles for social links
+a vendor has not filled in (it is hidden entirely when none are set, so the
+half-filled case is the odd one out).
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 

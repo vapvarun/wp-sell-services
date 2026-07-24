@@ -134,7 +134,16 @@ class TemplateLoader {
 			// Look up user by nicename (URL slug).
 			$user = get_user_by( 'slug', sanitize_text_field( $vendor_slug ) );
 
-			if ( $user && get_user_meta( $user->ID, '_wpss_is_vendor', true ) ) {
+			// Ask the ONE authority whether this user is a vendor. This gate used
+			// to read the `_wpss_is_vendor` user meta directly — a third source
+			// of truth alongside the `wpss_vendor` role/capability (which
+			// wpss_is_vendor() uses) and the `wpss_vendor_profiles` row. Any
+			// vendor created through a path that does not write that legacy meta
+			// — the demo seeder, a REST/CLI creation, an older signup — got a
+			// hard 404 on their public profile while still having a profile row,
+			// published services and completed orders, and every "About the
+			// seller" link on their service pages pointed at that dead page.
+			if ( $user && wpss_is_vendor( $user->ID ) ) {
 				// Set global for template use.
 				global $wpss_vendor_id;
 				$wpss_vendor_id = $user->ID;
