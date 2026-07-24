@@ -310,26 +310,11 @@ select:invalid {
    Service Cards
    ========================================================================== */
 
-/* F7: the base .wpss-services-grid (and the --2/--3/--4 modifiers) now live in
-   design-system.css so the grid lays out on EVERY surface, not just where
-   frontend.css happened to load. Only the legacy single-hyphen alias used by
-   templates/vendor/profile.php is kept here, mapped onto the shared 3-up
-   modifier so it stays a modifier of the one grid, not a re-implementation. */
-.wpss-services-grid-3 {
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-@media (max-width: 1024px) {
-	.wpss-services-grid-3 {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-}
-
-@media (max-width: 600px) {
-	.wpss-services-grid-3 {
-		grid-template-columns: 1fr;
-	}
-}
+/* The base .wpss-services-grid and its --2/--3/--4 modifiers — including the
+   responsive step-down these once carried — live ONCE in design-system.css.
+   The legacy single-hyphen `.wpss-services-grid-3` alias that used to sit here
+   is gone: its one call site (templates/vendor/profile.php) was migrated to the
+   canonical `--3` modifier, which now owns the 1024→2col / 640→1col collapse. */
 
 /* The card renders as <article class="wpss-service-card post-N hentry">, so
    the host theme's generic article / .hentry rules land on it. Reign 8.0.0

@@ -3218,11 +3218,8 @@ select.wpss-input option,
 	margin: 0;
 }
 
-.wpss-services-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 20px;
-}
+/* .wpss-services-grid is owned by design-system.css (identical auto-fill; the
+   only difference here was a 20px vs 24px gap, not worth a second definition). */
 
 .wpss-service-card {
 	border: 1px solid var(--wpss-border, #e5e5e5);

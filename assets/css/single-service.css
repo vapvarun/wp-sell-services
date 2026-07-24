@@ -1267,26 +1267,11 @@
 	text-align: center;
 }
 
-.wpss-services-grid {
-	display: grid;
-	gap: 1.5rem;
-}
-
-.wpss-services-grid--4 {
-	grid-template-columns: repeat(4, 1fr);
-}
-
-@media (max-width: 991px) {
-	.wpss-services-grid--4 {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
-
-@media (max-width: 575px) {
-	.wpss-services-grid--4 {
-		grid-template-columns: 1fr;
-	}
-}
+/* The related-services grid (.wpss-services-grid.--4) is owned by
+   design-system.css. This file's copy used repeat(4, 1fr) — which lets a long
+   card title force horizontal overflow — where the canonical modifier uses
+   repeat(4, minmax(0, 1fr)); the canonical version and its responsive step-down
+   are strictly better, so the copy here is removed. */
 
 /* ==========================================================================
    Buttons

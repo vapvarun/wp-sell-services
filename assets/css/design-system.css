@@ -1054,6 +1054,23 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-services-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .wpss-services-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
+/* Fixed-count modifiers MUST collapse on narrow viewports. Without this a
+   `--4` grid held four columns down to 320px — the single-service "related
+   services" grid rendered four slivers on a phone. The auto-fill base already
+   reflows on its own; only the fixed-count modifiers need the step-down. This
+   is also why a single-dash `.wpss-services-grid-3` existed in frontend.css
+   (it carried its own 1024→2col breakpoint); folding that behaviour in here
+   lets the modifier be the one responsive definition. */
+@media (max-width: 1024px) {
+	.wpss-services-grid--3,
+	.wpss-services-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+	.wpss-services-grid--2,
+	.wpss-services-grid--3,
+	.wpss-services-grid--4 { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* ==========================================================================
    17. RESPONSIVE — THE 3-BREAKPOINT CONTRACT
    --------------------------------------------------------------------------

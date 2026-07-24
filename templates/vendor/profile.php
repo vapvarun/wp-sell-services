@@ -324,7 +324,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					?>
 
 					<?php if ( ! empty( $services ) ) : ?>
-						<div class="wpss-services-grid wpss-services-grid-3">
+						<div class="wpss-services-grid wpss-services-grid--3">
 							<?php foreach ( $services as $service_post ) : ?>
 								<?php
 								global $post;

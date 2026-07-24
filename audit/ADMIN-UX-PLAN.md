@@ -736,6 +736,49 @@ reach that endpoint to look at it — **needs a visual check on the WC My Accoun
 vendor dashboard.** (I first mis-read this file as dead because I grepped only
 `src/`; it is referenced from `templates/`.)
 
+### CSS consolidation — services-grid DONE + modal scoped 2026-07-24
+
+**`.wpss-services-grid` consolidated, and it fixed a real mobile bug.** The base
+was defined in four frontend-cascade files (design-system, frontend as a
+single-dash `-3` alias, single-service, unified-dashboard) plus blocks.css. The
+divergences hid a defect: the canonical `--3`/`--4` modifiers had **no responsive
+breakpoints**, and single-service's `--4` copy used `repeat(4, 1fr)` with none
+either — so the single-service "related services" grid held **four columns down
+to 320px**, four slivers on a phone. (The lone single-dash `.wpss-services-grid-3`
+existed precisely because someone had bolted a 1024→2col breakpoint onto that one
+surface.)
+
+Fix: design-system.css is the sole owner of the base + `--2/--3/--4`, and the
+fixed-count modifiers now carry the responsive step-down (1024→2col, 640→1col).
+The single call site on `wpss-services-grid-3` (vendor profile) was migrated to
+the canonical `--3`; frontend's alias, single-service's inferior `--4`
+(`1fr` → overflow) and unified-dashboard's near-dup base (only a 20-vs-24px gap)
+were removed. blocks.css is intentionally LEFT — it is a standalone Gutenberg
+bundle with empty deps, the same status as admin.css.
+
+Verified: related `--4` grid = 4 cols at 1440, **1 col at 390 (was 4)**, no
+h-scroll; vendor `--3` = 3 cols at 1440, 1 at 390; dashboard grid unchanged bar
+the 4px gap. Base now defined in 1 frontend file (design-system) + blocks +
+admin, down from 4 in the frontend cascade.
+
+**Modal consolidation — SCOPED, deliberately not touched this pass.** Inventory:
+`.wpss-modal` + family is defined across **6 files** (admin, design-system,
+frontend, messaging, single-service, unified-dashboard) in **three competing
+conventions** — BEM `.wpss-modal__dialog` (design-system + frontend + unified,
+~15 markup uses of `__close`/`__backdrop`), single-dash `.wpss-modal-dialog`
+(messaging + single-service + frontend again, ~14 uses of `-close`), and **two
+different show/hide contracts**: `.wpss-modal-open` (BEM side) vs
+`.active` / `[hidden]` (messaging + single-service). frontend.css carries BOTH
+conventions. messaging and single-service share the `.active` convention but
+diverge on values (one uses `inset`+z-index token+theme-proof `!important`, the
+other hardcoded `9991`+px). Each modal has its own JS controller whose
+visibility contract must not change. This is a real per-modal migration (pick
+BEM, migrate ~40 single-dash call sites in markup AND JS, unify the visibility
+class, verify open/close/submit on every modal surface — confirm dialog, order
+modal, messaging, dispute), NOT a CSS-only dedup; ramming it risks the exact
+"invisible confirm button" failure the design system's own theme-proof comments
+warn about. Left for a dedicated pass.
+
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 
 **All 12 tabs seeded and rendered.** The four that were empty were seeded
