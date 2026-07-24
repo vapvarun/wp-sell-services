@@ -522,6 +522,36 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
 	color: var(--wpss-white, #fff) !important;
 }
 
+/* Filled BACKGROUND, pinned. The color block above fixed the foreground leak
+   but not the fill: BuddyX ships `button[type="submit"] { background:
+   var(--button-background-color) }` at specificity (0,1,1)=11, which beats
+   `.wpss-btn--primary` (0,1,0)=10 — so a filled SUBMIT button took the theme's
+   button colour (the review modal's "Submit Review" rendered RED instead of
+   indigo). Unlike the theme's link-colour rule, this one targets <button>, so
+   buttons must be pinned, not just anchors. Base and :hover are both listed so
+   hover still animates under !important. Filled variants only — ghost/outline
+   are excluded and keep their transparent fill. */
+button.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline),
+a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
+	background: var(--wpss-primary) !important; border-color: var(--wpss-primary) !important;
+}
+button.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
+a.wpss-btn--primary:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
+	background: var(--wpss-primary-hover) !important; border-color: var(--wpss-primary-hover) !important;
+}
+button.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline),
+a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
+	background: var(--wpss-danger) !important; border-color: var(--wpss-danger) !important;
+}
+button.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
+a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
+	background: var(--wpss-danger-dark, #b91c1c) !important; border-color: var(--wpss-danger-dark, #b91c1c) !important;
+}
+button.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
+	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
+}
+
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 .wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }
 .wpss-btn--xl { padding: var(--wpss-space-4) var(--wpss-space-10); font-size: var(--wpss-text-xl); }
