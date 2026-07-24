@@ -33,16 +33,34 @@ they repair every affected surface at once):**
    variants (primary/danger/success, `<a>`+`<button>`, base+hover, ghost/outline
    excluded). Commit `d460b95`.
 
-**Verified working end-to-end (buyer order lifecycle):** view delivered order →
-**Accept & Complete** (order→completed, vendor credited `order_earning 40.50`,
-balance 0→40.50) → **Write a Review** (5★ row written, approved) → **Send a tip**
-modal (opens, indigo submit, fits 390). All at 1440 and 390, no h-scroll.
+3. **Demo seeder didn't fund the wallet ledger → vendor Earnings screens showed
+   impossible figures.** Seeded vendors showed $0 earned beside money withdrawn,
+   and a phantom NEGATIVE "Available for Withdrawal" with a refund message that
+   blocked the withdrawal form. The SCREEN is correct (reads the ledger, the
+   money authority); the seeder inserted order/withdrawal rows without the
+   `wallet_transactions` that fund them. Fixed: seed_wallet_ledger() writes an
+   `order_earning` credit per completed order; withdrawals are sized to ~60% of
+   real earnings; only COMPLETED withdrawals debit (pending/approved reserve, as
+   in production). Demo data is a primary evaluation surface. Commit `afa9b47`.
+   Verified after clean reset+reseed: every vendor's ledger ≥0 and reconciles.
 
-**Still to sweep (actions not yet driven):** vendor side (submit delivery,
-accept/decline order, start work); Request-Revision + Open-Dispute form submits;
-dispute-view actions; messaging send; and the dashboard section actions
-(withdraw request, delete/feature portfolio item, remove favorite, edit profile,
-create/edit buyer request). Each still needs a real action + 390 pass.
+**Verified working end-to-end:**
+- Buyer: **Accept & Complete** (order→completed, vendor credited `order_earning
+  40.50`, balance 0→40.50) → **Write a Review** (5★ written, approved) → **Send a
+  tip** modal (opens, indigo submit, fits 390).
+- Vendor: **Deliver Revision** / Submit Delivery (order 117 revision_requested →
+  pending_approval; modal visible, form works).
+- Earnings: screen reconciles after the seeder fix; Request Withdrawal form
+  usable, correctly bounded (Min $20 / Max = available).
+All at 1440 and 390, no h-scroll.
+
+**Still to sweep (actions not yet driven):** accept/decline a NEW order + start
+work; Request-Revision + Open-Dispute form submits (buyer); dispute-view actions;
+complete a withdrawal SUBMIT; messaging send; the remaining dashboard section
+actions (delete/feature portfolio item, remove favorite, edit profile,
+create/edit buyer request); milestone orders. Each still needs a real action +
+390 pass. The 3 systemic fixes (modal visibility, filled-button colour, seeded
+ledger) already cover much of the shared mechanics these depend on.
 
 ---
 
