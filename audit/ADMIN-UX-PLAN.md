@@ -451,7 +451,7 @@ long vendor names (the overflow cases), and at least one order with milestones.
 | 6.7 | Service archive + single service | long titles, no image, many packages, no reviews | **DONE 2026-07-24 — 2 fixes** (below) |
 | 6.8 | Buyer request archive + single request | open/closed, with/without offers | **DONE 2026-07-24 — 2 fixes** (below) |
 | 6.9 | Checkout + cart + order confirmation | each gateway, plus no-gateway-configured | **PARTIAL 2026-07-24** — cart + empty checkout done, 2 fixes; paid flow still to do |
-| 6.10 | Become a vendor / registration | open / approval / closed states | |
+| 6.10 | Become a vendor / registration | open / approval / closed states | **DONE 2026-07-24 — 2 fixes** (below); approval/closed modes still to try |
 | 6.11 | Vendor public profile | new vendor with nothing; vendor with everything | |
 
 ### 6.7 Service archive + single service — rendered 2026-07-24
@@ -620,6 +620,39 @@ theme content would NOT be protected.
 **Also recorded:** `templates/cart/cart.php` carries an inline `<style>` block
 (F1 gate violation) and the empty-state centering lives inside it, which is why
 the reused empty state on checkout renders left-aligned rather than centred.
+
+### 6.10 Become a vendor — rendered 2026-07-24 (as a real buyer)
+
+The landing page reads well (benefits list, one clear CTA) and registration is
+one click in auto-approve mode: the buyer becomes a Seller, gains the SELLING
+nav group, and lands on My Services with 0/0/0 stats and the onboarding tour.
+The CTA is white-on-indigo here, which also confirms the 6.9 contrast fix
+holding on a shortcode page inside `.entry-content`.
+
+**Two fixes, both in the first thing a new vendor ever sees.**
+
+1. **The frontend tour wore the wp-admin skin.** `wpss-tour.js` hardcoded
+   `classes: 'wpss-shepherd wpss-shepherd--admin'` for BOTH contexts, even
+   though `Tour.php` already screen-gates which step set to ship. So a brand new
+   vendor's welcome dialog opened in WP-admin blue (#2271b1), 3px radius and the
+   system font stack, on a dashboard built in the marketplace's indigo. PHP now
+   reports `context` (`admin` / `frontend`), the JS picks the modifier, and a
+   new `.wpss-shepherd--frontend` block dresses it in design-system tokens
+   (indigo primary, muted secondary, `--wpss-radius-lg`, inherited font).
+
+2. **The header grey was never the plugin's colour — in EITHER skin.** Shepherd
+   ships `.shepherd-has-title .shepherd-content .shepherd-header
+   { background:#e6e6e6 }` at (0,3,0), which had been quietly beating the
+   plugin's own (0,2,0) header rule since the tour was written. Both variants
+   now set it at a specificity that wins: admin gets the WP grey it always
+   intended, frontend gets white.
+
+Verified: `context: "frontend"`, class `wpss-shepherd--frontend`, header
+`rgb(255,255,255)`, border `rgb(229,231,235)`, primary button `rgb(79,70,229)`.
+
+**Not yet covered:** the approval-required and registration-closed modes (this
+site runs auto-approve). The dialog's focus ring is still WP-admin blue — a
+visible focus ring is correct a11y, only its colour is off-system; left alone.
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 

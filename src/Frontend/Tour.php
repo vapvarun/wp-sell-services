@@ -275,6 +275,11 @@ final class Tour {
 			'completed'   => $completed,
 			'completeUrl' => esc_url_raw( rest_url( self::REST_NAMESPACE . self::REST_ROUTE_COMPLETE ) ),
 			'nonce'       => wp_create_nonce( 'wp_rest' ),
+			// Which skin the tour wears. The step SETS are already screen-gated
+			// above, but the JS hardcoded the admin modifier for both contexts,
+			// so a new vendor's very first tour opened in wp-admin blue on a
+			// frontend dashboard built in the marketplace's indigo.
+			'context'     => is_admin() ? 'admin' : 'frontend',
 		);
 	}
 
