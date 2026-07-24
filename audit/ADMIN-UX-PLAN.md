@@ -388,7 +388,7 @@ pills, now flat WP-grey, adopt the same tints the frontend uses — one look
 across admin + frontend. Alternative: keep admin WP-native, unify each context
 only internally. Visible repaint of ~10 screens; verified light + dark + both
 contexts before shipping.
-| 2.3 | Empty state — `.wpss-no-items`, `.wpss-no-data`, `.wpss-no-results` → `.wpss-empty-state` | 4 files → 1(ds)+1(admin) | audited 2026-07-24, mostly frontend → do in Phase 6 |
+| 2.3 | Empty state — one `.wpss-empty-state` owner | 4 defs → 1(ds) + 1(admin) | **DONE 2026-07-24** (below) |
 | 2.4 | Input — `.wpss-field`, `.wpss-form-field`, `.wpss-form-row` → `.wpss-form-group` + `.wpss-input` | 7 → 2 | |
 | 2.5 | Card — `.wpss-panel`, `.wpss-section`, `.wpss-detail-card` → `.wpss-card` + modifiers | 6 → 1+2 | |
 | 2.6 | Table — introduce `.wpss-table`; per-screen classes keep widths only | 9 → 1 | |
@@ -699,6 +699,42 @@ your own profile — a wallet card instead of Contact Me.
 **Nit, not fixed:** the CONNECT card renders empty grey circles for social links
 a vendor has not filled in (it is hidden entirely when none are set, so the
 half-filled case is the odd one out).
+
+### CSS consolidation — 2.3 empty state DONE 2026-07-24
+
+**Fresh inventory first.** Extracting every class rule-head across the
+non-RTL / non-min stylesheets shows **473 classes defined in more than one
+file**. Worst offenders: `.wpss-btn` (8 files), `.wpss-services-grid` (7),
+`.wpss-modal` (7), `.wpss-stats-grid` (6), `.wpss-empty-state` (6 counting
+sub-elements), `.wpss-card` (5), `.wpss-table` (4). That count is the honest
+size of the job — the earlier per-row estimates understated it.
+
+**`.wpss-empty-state` consolidated.** It had FOUR base definitions —
+frontend.css **twice** (one bare centred text, one bordered card, 1,400 lines
+apart), unified-dashboard.css (border, 48px), vendor-dashboard.css (shadow, no
+border, 4rem) — three different paddings and a border-vs-shadow disagreement,
+so the same empty view changed shape depending on which sheet loaded last.
+Sub-element names had drifted too: `__body` vs `__description` vs `__text` vs
+bare `h2/h3/p`.
+
+One owner now lives in design-system.css (loads first on every frontend
+surface); admin.css keeps its own copy because the admin never loads that file.
+The canonical block **aliases every legacy sub-element name**, so all ~25 call
+sites keep working without touching markup. Each file keeps only what is
+genuinely local: unified-dashboard keeps its flex-centred icon and
+`__categories` extensions, frontend keeps the full-width mobile button.
+
+Verified: `.wpss-empty-state` base is now defined in exactly 2 files (was 4);
+rendered the Favorites empty state — 48px/24px padding, 1px #e5e7eb border,
+12px radius, no shadow, centred icon/title/body/CTA.
+
+**Honest gap:** `templates/myaccount/vendor-dashboard.php` (the WooCommerce My
+Account endpoint) enqueues vendor-dashboard.css, whose copy used a **shadow and
+a 64px circular icon badge**. Those surfaces now take the shared border
+treatment and a plain icon. That is the intended unification, but I could not
+reach that endpoint to look at it — **needs a visual check on the WC My Account
+vendor dashboard.** (I first mis-read this file as dead because I grepped only
+`src/`; it is referenced from `templates/`.)
 
 ### Dashboard tab sweep — all 12 tabs rendered 2026-07-23
 

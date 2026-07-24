@@ -710,46 +710,10 @@ select.wpss-input::-ms-expand {
    Empty State
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 4rem 2rem;
-	background: var(--wpss-white, #fff);
-	border-radius: var(--wpss-radius-lg, 12px);
-	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
-}
-
-.wpss-empty-state__icon {
-	width: 64px;
-	height: 64px;
-	margin: 0 auto 1.5rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--wpss-background, #f9fafb);
-	border-radius: 50%;
-	color: var(--wpss-text-muted, #6b7280);
-	font-size: 1.5rem;
-}
-
-.wpss-empty-state__title {
-	margin: 0 0 0.5rem;
-	font-size: 1.125rem;
-	font-weight: 600;
-	color: var(--wpss-text, #1f2937);
-}
-
-.wpss-empty-state__description {
-	margin: 0 0 1.5rem;
-	color: var(--wpss-text-muted, #6b7280);
-	max-width: 400px;
-	margin-inline: auto;
-}
-
-.wpss-empty-state__actions {
-	display: flex;
-	justify-content: center;
-	gap: 0.75rem;
-}
+/* Empty state is owned by design-system.css (search "EMPTY STATE"), which loads
+   first on every frontend surface and aliases this file's `__description` name.
+   The copy here used a shadow where the other three used a border, so the same
+   empty view changed shape from one dashboard to the next. */
 
 /* ==========================================================================
    Section Component

@@ -723,6 +723,72 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
    9. EMPTY STATES
    ========================================================================== */
 
+/* ==========================================================================
+   EMPTY STATE — the single definition
+   `.wpss-empty-state` was defined FOUR times (frontend.css twice,
+   unified-dashboard.css, vendor-dashboard.css) with three different paddings
+   and a border-vs-shadow disagreement, so the same empty view changed
+   appearance depending on which stylesheet happened to load last. This is the
+   one owner for every frontend surface; admin.css keeps its own copy because
+   the admin never loads this file.
+
+   Sub-element names had drifted too — `__body` (frontend), `__description`
+   (vendor dashboard) and bare `h2/h3/p` (unified + frontend). All of them are
+   aliased here so the ~25 existing call sites keep working untouched; new
+   markup should use `__icon` / `__title` / `__body` / `__actions`.
+   ========================================================================== */
+.wpss-empty-state {
+	text-align: center;
+	padding: var(--wpss-space-12, 48px) var(--wpss-space-6, 24px);
+	background: var(--wpss-surface, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	margin: var(--wpss-space-6, 24px) 0;
+}
+
+.wpss-empty-state--compact {
+	padding: var(--wpss-space-8, 32px) var(--wpss-space-4, 16px);
+}
+
+.wpss-empty-state__icon {
+	color: var(--wpss-text-muted, #6b7280);
+	margin-bottom: var(--wpss-space-4, 16px);
+}
+
+.wpss-empty-state__icon i { display: inline-block; }
+
+.wpss-empty-state__title,
+.wpss-empty-state h2,
+.wpss-empty-state h3 {
+	font-size: var(--wpss-text-xl, 20px);
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+	margin: 0 0 var(--wpss-space-2, 8px);
+}
+
+.wpss-empty-state__body,
+.wpss-empty-state__description,
+.wpss-empty-state__text,
+.wpss-empty-state p {
+	color: var(--wpss-text-muted, #6b7280);
+	max-width: 480px;
+	margin: 0 auto var(--wpss-space-6, 24px);
+	line-height: 1.6;
+}
+
+.wpss-empty-state__actions {
+	display: flex;
+	justify-content: center;
+	gap: var(--wpss-space-3, 12px);
+	flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+	.wpss-empty-state {
+		padding: var(--wpss-space-8, 32px) var(--wpss-space-4, 16px);
+	}
+}
+
 .wpss-empty { text-align: center; padding: var(--wpss-space-12) var(--wpss-space-6); }
 .wpss-empty__icon { font-size: 48px; margin-bottom: var(--wpss-space-4); line-height: 1; color: var(--wpss-text-hint); }
 .wpss-empty__title { font-size: var(--wpss-text-xl); font-weight: 600; color: var(--wpss-text); margin: 0 0 var(--wpss-space-2); }

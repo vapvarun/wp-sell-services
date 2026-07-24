@@ -2361,26 +2361,14 @@ article.wpss-service-card:hover {
    Empty States
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 60px 20px;
-}
+/* Empty state is owned by design-system.css — search "EMPTY STATE". This was
+   the FIRST of two copies in this same file; it had no surface at all (just
+   centred text) while the second one 1400 lines below drew a bordered card. */
 
 .wpss-empty-icon {
 	display: inline-block;
 	margin-bottom: 20px;
 	color: var(--wpss-border);
-}
-
-.wpss-empty-state h2,
-.wpss-empty-state h3 {
-	margin: 0 0 10px;
-	color: var(--wpss-secondary);
-}
-
-.wpss-empty-state p {
-	color: var(--wpss-text);
-	margin-bottom: 20px;
 }
 
 .wpss-empty-actions {
@@ -3772,32 +3760,10 @@ body.wpss-modal-active {
    Empty State (BEM - Shared Frontend Pattern)
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 48px 24px;
-	background: var( --wpss-surface, #fff );
-	border: 1px solid var( --wpss-border, #e5e7eb );
-	border-radius: 12px;
-	margin: 24px 0;
-}
-.wpss-empty-state__icon {
-	color: var( --wpss-muted, #6b7280 );
-	margin-bottom: 16px;
-}
-.wpss-empty-state__icon i { display: inline-block; }
-.wpss-empty-state__title {
-	font-size: 20px;
-	margin: 0 0 8px;
-	color: var( --wpss-text, #111827 );
-}
-.wpss-empty-state__body {
-	color: var( --wpss-muted, #6b7280 );
-	max-width: 480px;
-	margin: 0 auto 24px;
-	line-height: 1.6;
-}
+/* Moved to design-system.css — search "EMPTY STATE". This block was the
+   canonical-looking one and its treatment is what the shared definition kept;
+   only the full-width mobile button below is frontend-specific. */
 @media ( max-width: 640px ) {
-	.wpss-empty-state { padding: 32px 16px; }
 	.wpss-empty-state .wpss-btn { width: 100%; }
 }
 

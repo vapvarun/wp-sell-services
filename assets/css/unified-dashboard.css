@@ -369,35 +369,16 @@
    Empty State
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 48px 24px;
-	background: var(--wpss-white, #fff);
-	border-radius: var(--wpss-radius);
-	border: 1px solid var(--wpss-gray-200);
-}
+/* Empty state (base, --compact, __icon and the bare h3/p descendants) is owned
+   by design-system.css — search "EMPTY STATE". This file keeps only the
+   dashboard-specific `__categories` extensions further down. */
 
-.wpss-empty-state--compact {
-	padding: 24px;
-}
-
+/* The icon here centred itself with flex; the canonical block relies on the
+   container's text-align, so keep that one behaviour for this dashboard's
+   inline-svg icons. */
 .wpss-empty-state__icon {
 	display: flex;
 	justify-content: center;
-	margin-bottom: 16px;
-	color: var(--wpss-gray-300);
-}
-
-.wpss-empty-state h3 {
-	margin: 0 0 8px;
-	font-size: 18px;
-	color: var(--wpss-gray-900);
-}
-
-.wpss-empty-state p {
-	margin: 0 0 20px;
-	color: var(--wpss-gray-500);
-	font-size: 14px;
 }
 
 /* ==========================================================================
