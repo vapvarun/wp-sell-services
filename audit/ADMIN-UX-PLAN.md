@@ -7,6 +7,46 @@
 > customers until PayPal stops double-paying, but it is built last.
 
 
+## STATUS SNAPSHOT — updated 2026-07-24
+
+**Done and pushed (branch `1.2.2`), most recent first.** Every item below was
+browser-verified before/after and is WPCS neutral-or-better on touched files.
+
+- **CSS consolidation (in progress):** `.wpss-empty-state` unified 4→1 owner;
+  `.wpss-services-grid` unified 4→1 AND fixed a 4-columns-on-mobile bug in the
+  related-services grid. `.wpss-card`, `.wpss-table`, `.wpss-modal` inventoried
+  and SCOPED (real per-surface visual/behavioural divergence — deferred, not
+  blind-deduped). Full analysis in "CSS consolidation" below.
+- **Phase 6 frontend sweep (6.1–6.11 all rendered on seeded data):** 6.7 single
+  service (unreachable package tiers + mobile sidebar overflow), 6.8 buyer
+  request (empty `<h1>` + proposal-count mismatch), 6.9 cart/checkout (WCAG-AA
+  CTA contrast, empty-cart error→empty-state, phone-field width, and the full
+  card payment completed end-to-end → a bought order was mis-filed under "Sales
+  Orders"), 6.10 become-a-vendor (tour wore wp-admin skin), 6.11 vendor profile
+  (404 for any vendor missing a legacy meta).
+- **Money — refund policy:** T9 (one `wpss_order_is_refundable()` authority),
+  T10 (reversal guarded against uncredited orders), T11 (admin partial-refund
+  input). Status badges unified on one token palette (Phase 2.2). D2 (Vendors
+  "Earned" reads the ledger).
+- **Earlier this arc:** Phase 1 (per-page CSS/JS removed), Phase 2.1 (button
+  vocabulary), the admin backend regroup, T1–T3 payout keystone + clearance.
+
+**Pending, in the owner's sequence.**
+1. **CSS consolidation finish:** the SCOPED trio — `.wpss-modal` (dedicated
+   per-modal migration), `.wpss-card` + `.wpss-table` (per-surface visual
+   passes) — plus 2.4 inputs, and `.wpss-btn` across 8 files (likely the same
+   convention-drift as modals; inventory before touching).
+2. **Frontend loose ends:** the WooCommerce My Account vendor dashboard
+   (empty-state + card changes there are unverified); the other payment
+   gateways + a genuinely no-gateway-configured install; approval-required /
+   registration-closed vendor modes; the CONNECT-card empty-circles nit.
+3. **Money:** T12 (audit `LedgerExporter` / reconciliation; fix Preflight
+   gateway count).
+4. **RELEASE GATE, built LAST:** the Pro PayPal-payout rebuild on the ledger +
+   the T4–T6 Stripe-Connect rail seam. Free + Pro ship together, version-locked.
+
+---
+
 **The problem, in one line: every screen ships its own CSS for the same
 components.** Sections, inputs, badges, tables and modals are each implemented
 several times over, so a fix in one place doesn't reach the others and the
@@ -389,9 +429,11 @@ across admin + frontend. Alternative: keep admin WP-native, unify each context
 only internally. Visible repaint of ~10 screens; verified light + dark + both
 contexts before shipping.
 | 2.3 | Empty state — one `.wpss-empty-state` owner | 4 defs → 1(ds) + 1(admin) | **DONE 2026-07-24** (below) |
-| 2.4 | Input — `.wpss-field`, `.wpss-form-field`, `.wpss-form-row` → `.wpss-form-group` + `.wpss-input` | 7 → 2 | |
-| 2.5 | Card — `.wpss-panel`, `.wpss-section`, `.wpss-detail-card` → `.wpss-card` + modifiers | 6 → 1+2 | |
-| 2.6 | Table — introduce `.wpss-table`; per-screen classes keep widths only | 9 → 1 | |
+| 2.4 | Input — `.wpss-field`, `.wpss-form-field`, `.wpss-form-row` → `.wpss-form-group` + `.wpss-input` | 7 → 2 | pending (checkout input-width bug already fixed in 6.9) |
+| 2.5 | Card — `.wpss-card` shadow-vs-border split | 3 files | **SCOPED 2026-07-24** — per-surface visual change (WC My Account), see consolidation notes |
+| 2.6 | Table — `.wpss-table` plain-vs-bordered-vs-WC | 4 files | **SCOPED 2026-07-24** — per-surface visual change, see consolidation notes |
+| 2.7 | Services grid — one `.wpss-services-grid` + responsive modifiers | 4 → 1(ds) | **DONE 2026-07-24** (fixed a 4-col-on-mobile bug; see notes) |
+| 2.8 | Modal — 3 conventions + 2 show/hide contracts across 6 files | ~40 call sites | **SCOPED 2026-07-24** — dedicated per-modal migration, see notes |
 
 **Phase 2.3 audit (2026-07-24).** `.wpss-empty-state` is the de-facto standard
 (25 markup uses) but defined in FOUR sheets — admin.css, frontend.css,
@@ -760,6 +802,27 @@ Verified: related `--4` grid = 4 cols at 1440, **1 col at 390 (was 4)**, no
 h-scroll; vendor `--3` = 3 cols at 1440, 1 at 390; dashboard grid unchanged bar
 the 4px gap. Base now defined in 1 frontend file (design-system) + blocks +
 admin, down from 4 in the frontend cascade.
+
+**Card + table consolidation — SCOPED, not blind-deduped.** Both share the same
+shape as the modal problem: a trivially-identical base wrapped around genuinely
+DIVERGENT per-surface styling, so "remove the dup" is really "change the look on
+that surface."
+- `.wpss-card` (3 files): design-system is **border**-based with
+  `--interactive`/`--flat`/`--elevated` modifiers and hover gated behind
+  `--interactive`; vendor-dashboard.css is **shadow**-based with an always-on
+  `:hover` shadow and `overflow:hidden`; admin.css is its own admin-token
+  cascade. Collapsing vendor-dashboard onto the canonical flips every card on
+  the **WooCommerce My Account** vendor dashboard from shadow to border — the
+  same unverifiable surface flagged under empty-state.
+- `.wpss-table` (4 files): the base `{width:100%; border-collapse:collapse}` is
+  identical everywhere, but the th/td styling is three real variants — a plain
+  frontend table, a **bordered-card** dashboard table (border+radius+overflow+
+  header bg, a deliberate look), and the WC vendor table (0.875rem padding).
+  frontend.css's copy actually *downgrades* the canonical (drops the header bg,
+  hover and letter-spacing design-system provides). Unifying is an improvement
+  but a visible change on order-confirmation / order-view tables and the WC
+  dashboard, so it needs those surfaces rendered, not a CSS-only edit.
+Both are real per-surface migrations, deferred with the modal work.
 
 **Modal consolidation — SCOPED, deliberately not touched this pass.** Inventory:
 `.wpss-modal` + family is defined across **6 files** (admin, design-system,
