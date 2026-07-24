@@ -799,7 +799,22 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
    ========================================================================== */
 
 .wpss-modal { position: fixed; inset: 0; z-index: var(--wpss-z-modal); display: none; align-items: center; justify-content: center; padding: var(--wpss-space-5); }
-.wpss-modal.wpss-modal-open { display: flex; }
+/* `display: flex !important` is load-bearing, not lazy. Two modal show/hide
+   contracts coexist in this codebase: the design-system's `.wpss-modal-open`
+   (used by the global confirm dialog and the order-action modals) and
+   messaging/single-service's `.wpss-modal:not(.active)` / `[hidden]`. Those
+   `:not(.active)` hide rules match ANY modal lacking `.active` — including one
+   opened via `.wpss-modal-open` — at equal (0,2,0) specificity, so whichever of
+   messaging.css / single-service.css loads AFTER this file wins and forces the
+   open confirm dialog to `display: none`. That silently broke "Accept &
+   Complete", "Request Revision", "Open Dispute" and every other wpssConfirm()
+   action on the order view (which embeds the conversation, so messaging.css is
+   present): the confirm modal was in the DOM with `.wpss-modal-open` but 0×0 and
+   unclickable. Until the modal systems are unified (scoped task 2.8), the
+   `-open` contract must win whenever it is applied — an open modal always shows.
+   Only affects elements that carry `.wpss-modal-open`; messaging's own
+   `.active` modals never do, so they are untouched. */
+.wpss-modal.wpss-modal-open { display: flex !important; }
 .wpss-modal__overlay { position: absolute; inset: 0; background: var(--wpss-overlay); backdrop-filter: blur(2px); }
 .wpss-modal__dialog { position: relative; background: var(--wpss-bg); border-radius: var(--wpss-radius-xl); padding: var(--wpss-space-8); max-width: 480px; width: 100%; box-shadow: var(--wpss-shadow-xl); max-height: 90vh; overflow-y: auto; }
 .wpss-modal__close { position: absolute; top: var(--wpss-space-4); inset-inline-end: var(--wpss-space-4); background: none; border: none; cursor: pointer; padding: var(--wpss-space-1); color: var(--wpss-text-hint); transition: color var(--wpss-ease); border-radius: var(--wpss-radius); }
