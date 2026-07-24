@@ -7,6 +7,45 @@
 > customers until PayPal stops double-paying, but it is built last.
 
 
+## ACTION SWEEP — every screen ready on all devices, every action working (started 2026-07-24)
+
+Owner directive: not a count exercise — every frontend screen must be responsive
+on all devices, premium, and every action must actually work. Driving real
+actions as the correct party (seeded data) at 1440 + 390.
+
+**Two systemic bugs found and fixed (both at the design-system authority, so
+they repair every affected surface at once):**
+
+1. **Confirm modal was invisible on the order view → core actions unclickable.**
+   The design-system confirm/order modals open via `.wpss-modal-open`, but
+   messaging.css ships `.wpss-modal:not(.active){display:none}` at equal
+   specificity; loading after design-system on the order view (which embeds the
+   conversation) it forced the open confirm dialog to `display:none`, 0×0. So
+   Accept & Complete / Request Revision / Open Dispute / Write a Review — every
+   `wpssConfirm()`/`-open` modal — could not be used. Fix: `.wpss-modal.wpss-
+   modal-open{display:flex !important}` (only matches modals carrying the open
+   class; messaging's `.active` modals untouched). Commit `6c8a8ed`. This is
+   the scoped-2.8 modal collision, caught live.
+2. **Filled submit buttons rendered in the THEME's colour.** "Submit Review"
+   (a `.wpss-btn--primary`) came out red: the theme's `button[type="submit"]`
+   (spec 11) beats `.wpss-btn--primary` (spec 10) on background. The 6.9 fix
+   pinned foreground only. Added a theme-proof background+border pin for filled
+   variants (primary/danger/success, `<a>`+`<button>`, base+hover, ghost/outline
+   excluded). Commit `d460b95`.
+
+**Verified working end-to-end (buyer order lifecycle):** view delivered order →
+**Accept & Complete** (order→completed, vendor credited `order_earning 40.50`,
+balance 0→40.50) → **Write a Review** (5★ row written, approved) → **Send a tip**
+modal (opens, indigo submit, fits 390). All at 1440 and 390, no h-scroll.
+
+**Still to sweep (actions not yet driven):** vendor side (submit delivery,
+accept/decline order, start work); Request-Revision + Open-Dispute form submits;
+dispute-view actions; messaging send; and the dashboard section actions
+(withdraw request, delete/feature portfolio item, remove favorite, edit profile,
+create/edit buyer request). Each still needs a real action + 390 pass.
+
+---
+
 ## STATUS SNAPSHOT — updated 2026-07-24
 
 **Done and pushed (branch `1.2.2`), most recent first.** Every item below was
