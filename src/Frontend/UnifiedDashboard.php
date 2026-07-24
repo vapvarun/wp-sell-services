@@ -230,7 +230,71 @@ class UnifiedDashboard {
 
 		$section = sanitize_key( $section );
 
-		return '' === $section ? $this->default_section() : $section;
+		if ( '' !== $section ) {
+			return $section;
+		}
+
+		// A URL that names an order belongs to THAT order's side of the trade,
+		// not to whatever the viewer's role defaults to. Without this, a member
+		// who both buys and sells — which is every vendor who also orders, and
+		// the state a buyer lands in the moment they register as a vendor — was
+		// sent to "Sales Orders" straight after PAYING for something: the page
+		// title, and the highlighted nav item, both claimed a purchase was a
+		// sale. Deciding from the order keeps buying and selling honest.
+		$section_for_order = $this->section_for_order( $this->resolve_requested_order_id() );
+
+		return '' !== $section_for_order ? $section_for_order : $this->default_section();
+	}
+
+	/**
+	 * Read the order ID a dashboard URL is pointing at, if any.
+	 *
+	 * @since 1.2.4
+	 *
+	 * @return int Order ID, or 0 when the URL names no order.
+	 */
+	private function resolve_requested_order_id(): int {
+		$order_id = (int) get_query_var( 'wpss_order_id', 0 );
+
+		if ( ! $order_id ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
+			$order_id = isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
+		}
+
+		return $order_id;
+	}
+
+	/**
+	 * Which dashboard section an order belongs to for the current viewer.
+	 *
+	 * @since 1.2.4
+	 *
+	 * @param int $order_id Order ID (0 for none).
+	 * @return string `orders` when the viewer bought it, `sales` when they sold
+	 *                it, empty string when neither (or no order).
+	 */
+	private function section_for_order( int $order_id ): string {
+		if ( ! $order_id ) {
+			return '';
+		}
+
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return '';
+		}
+
+		$user_id = get_current_user_id();
+
+		if ( (int) ( $order->customer_id ?? 0 ) === $user_id ) {
+			return 'orders';
+		}
+
+		if ( (int) ( $order->vendor_id ?? 0 ) === $user_id ) {
+			return 'sales';
+		}
+
+		return '';
 	}
 
 	/**

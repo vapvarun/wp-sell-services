@@ -600,11 +600,31 @@ generic, which is exactly why the gap went unnoticed. Rewritten as an
 bug class dies at once; verified all 11 billing inputs now measure identically
 at 1440 and 390, radios still 18×18, no page scroll.
 
-**Still open for 6.9:** completing a card payment (needs typing into Stripe's
-cross-origin iframe) and therefore the **order confirmation** screen; the other
-gateways; and the genuinely-no-gateway case — note this site DOES have Stripe
-test keys, so the earlier "`wpss_payment_gateways` is `[]`" reading was about a
-different option and the fresh-install no-gateway state remains untested.
+**Card payment COMPLETED end to end 2026-07-24.** The Playwright aria snapshot
+does reach inside Stripe's cross-origin iframe, so the Payment Element can be
+driven directly (test card 4242…). Paying $75 created order **173**:
+`payment_status: paid`, `total 75.00`, `vendor_earnings 67.50`,
+`platform_fee 7.50` (10%), status `pending_requirements`, and the buyer was
+routed to Submit Requirements with order number, total, expected delivery,
+seller card and an upload field. **Money-correctness check passed: ZERO ledger
+rows for the order and the vendor's balance still $0.00** — the wallet is
+credited at completion, not at charge, exactly as the money model intends.
+
+**Fourth fix: a purchase was filed under "Sales Orders".** Straight after
+paying, the dashboard heading AND the highlighted nav item both read *Sales
+Orders* for an order the user had just BOUGHT. `resolve_current_section()` fell
+back to the role-aware default (active vendors land on `sales`) whenever the URL
+carried no explicit `section` — and the post-payment URL carries only
+`order_id` + `action`. Any member who both buys and sells hit this, which is
+every vendor who orders anything and, notably, every buyer the instant they
+register as a vendor. The section is now derived from the ORDER: `orders` when
+the viewer is its customer, `sales` when they are its vendor, role default only
+when neither. Verified with two real sessions on the same URL — buyer sees
+"My Orders", vendor sees "Sales Orders".
+
+**Still open for 6.9:** the other gateways, and the genuinely-no-gateway case —
+this site has Stripe test keys, so the earlier "`wpss_payment_gateways` is `[]`"
+reading was a different option and the fresh-install state remains untested.
 
 **Recorded, not fixed (button vocabulary, feeds the Phase 2.1 follow-up):**
 a THIRD button spelling is in wide use — single-dash `.wpss-btn-primary` (18),
