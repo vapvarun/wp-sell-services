@@ -7,6 +7,91 @@
 > customers until PayPal stops double-paying, but it is built last.
 
 
+## ✅ STATUS MATRIX — at a glance (updated 2026-07-25)
+
+Legend: ✅ done + verified (browser + DB) · 🟡 partial / needs a pass · ⬜ not started · 🔒 release-gate (built last)
+
+### A. Frontend screens — rendered on seeded data, 1440 + 390
+
+| Screen | Desktop | Mobile 390 | Notes |
+|---|---|---|---|
+| Service archive | ✅ | ✅ | filters, pagination, placeholder for no-image |
+| Single service | ✅ | ✅ | package tiers scroll (fixed); sidebar overflow (fixed) |
+| Buyer request archive | ✅ | ✅ | open-only by design |
+| Single buyer request | ✅ | ✅ | title + proposal-count fixed |
+| Cart | ✅ | ✅ | empty state, CTA contrast fixed |
+| Checkout (Stripe) | ✅ | ✅ | full card payment completed; phone-width fixed |
+| Order confirmation / requirements | ✅ | ✅ | |
+| Become a vendor | ✅ | ✅ | tour skin fixed |
+| Vendor public profile | ✅ | ✅ | 404-for-missing-meta fixed; empty + populated |
+| Dashboard — all 12 tabs | ✅ | ✅ | swept 2026-07-23; Earnings reconciles post seeder-fix |
+| Order view (buyer + vendor) | ✅ | ✅ | both parties; confirm-modal visibility fixed |
+| WooCommerce My-Account vendor dashboard | 🟡 | 🟡 | **unverified** — could not reach endpoint |
+
+### B. Actions — driven for real, verified in browser + DB
+
+| Action | Status | Evidence |
+|---|---|---|
+| Buyer: Accept & Complete | ✅ | order→completed, vendor `order_earning` credit, balance moved |
+| Buyer: Write a Review | ✅ | 5★ row written, approved |
+| Buyer: Send a Tip (modal) | ✅ | modal opens, indigo submit, fits 390 |
+| Buyer: Open Dispute | ✅ | dispute row created, order→disputed |
+| Buyer: Remove Favorite | ✅ | removed from meta |
+| Buyer: Post a Request | ✅ | new `wpss_request` published |
+| Vendor: Deliver / Deliver Revision | ✅ | order revision_requested→pending_approval |
+| Vendor: Withdrawal submit | ✅ | pending row created, balances reconcile to the cent |
+| Vendor: Portfolio Feature toggle | ✅ | REST 200, `is_featured` 0→1 |
+| Vendor: Profile save | ✅ | REST PUT 200, bio persisted |
+| Messaging send | ✅ | message row + UI render + input clear |
+| Buyer: Request Revision (submit) | ⬜ | form exists; not yet driven |
+| Vendor: accept/decline NEW order, start work | ⬜ | not yet driven |
+| Dispute-VIEW actions (resolve/escalate/evidence) | ⬜ | not yet driven |
+| Portfolio add / delete | ⬜ | toggle verified; add/delete pending |
+| Buyer request edit / close | ⬜ | create verified; edit/close pending |
+| Milestone orders (create/submit/approve) | ⬜ | not touched |
+| Other gateways + no-gateway-configured | ⬜ | site has Stripe only |
+| Approval-required / registration-closed vendor modes | ⬜ | site is auto-approve |
+
+**Testing rule:** REST-based actions (portfolio, profile) must be verified under a
+REAL wp-login session — the `?autologin=` mu-plugin invalidates the REST nonce
+(403), an artifact, not a bug. AJAX actions are unaffected.
+
+### C. Systemic bugs fixed this sweep (design-system authority → fix all surfaces)
+
+| # | Bug | Commit |
+|---|---|---|
+| 1 | Confirm modal invisible → core actions unclickable | `6c8a8ed` |
+| 2 | Filled submit buttons rendered in theme colour | `d460b95` |
+| 3 | Demo seeder didn't fund the ledger → impossible earnings | `afa9b47` |
+
+Plus earlier this session: status-badge palette unified (2.2), D2 Vendors "Earned"
+reads ledger, refund policy T9/T10/T11, empty-state + services-grid consolidation.
+
+### D. CSS consolidation
+
+| Item | Status |
+|---|---|
+| Empty-state → one owner | ✅ |
+| Services-grid → one owner (+ mobile-collapse bug fixed) | ✅ |
+| Status-badge palette | ✅ (2.2) |
+| `.wpss-card` | 🟡 SCOPED (per-surface visual pass) |
+| `.wpss-table` | 🟡 SCOPED |
+| `.wpss-modal` full unification | 🟡 SCOPED (visibility symptom fixed; 3-convention merge pending) |
+| `.wpss-btn` (base + BEM vs single-dash) | 🟡 SCOPED (3-phase plan; owner said don't add extra btn work) |
+| 2.4 inputs | ⬜ |
+
+### E. Money & release gate
+
+| Item | Status |
+|---|---|
+| T1–T3 payout keystone + clearance | ✅ |
+| T9/T10/T11 refund policy | ✅ |
+| D2 Vendors "Earned" ← ledger | ✅ |
+| T12 LedgerExporter / reconciliation / Preflight gateway count | ⬜ |
+| PayPal payout rebuild (double-pay fix) + T4–T6 Connect rail seam | 🔒 built LAST; free+pro version-locked |
+
+---
+
 ## ACTION SWEEP — every screen ready on all devices, every action working (started 2026-07-24)
 
 Owner directive: not a count exercise — every frontend screen must be responsive
