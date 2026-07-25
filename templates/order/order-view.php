@@ -256,6 +256,28 @@ do_action( 'wpss_before_order_view', $order );
 					);
 				}
 
+				// Submit Requirements CTA. A paid order sits in pending_requirements
+				// until the buyer provides their brief. The inline requirements
+				// FORM further down only renders when the SERVICE defined custom
+				// fields; for the (common) service with none, the buyer's order
+				// view otherwise showed only "Cancel Order" and no way to proceed
+				// — they could reach the working generic form ONLY via the
+				// post-payment redirect's `action=requirements` URL, so anyone who
+				// navigated back to the order later was stranded. This button
+				// always links there, so requirements can be submitted regardless
+				// of whether the service configured fields. Submitting advances the
+				// order out of pending_requirements, so the status check alone is
+				// enough — a pending_requirements order never has a completed brief.
+				// The $has_submitted_requirements flag is computed further down.
+				if ( 'pending_requirements' === $order->status ) {
+					$requirements_url        = add_query_arg( 'action', 'requirements', wpss_get_order_url( $order_id ) );
+					$actions['requirements'] = array(
+						'label' => __( 'Submit Requirements', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--primary',
+						'attrs' => 'onclick="window.location.href=\'' . esc_url( $requirements_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
+
 				if ( 'pending_approval' === $order->status ) {
 					$actions['complete'] = array(
 						'label' => __( 'Accept & Complete', 'wp-sell-services' ),
