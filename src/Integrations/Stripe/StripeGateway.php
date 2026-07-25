@@ -910,6 +910,61 @@ class StripeGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Pay-existing-order flow (proposal-accepted order, milestone phase): the
+		// amount is the order total, not a catalog service+package price. Price the
+		// intent from the order and skip the service/package validation, which only
+		// applies to buying a service listing. The confirm half already branches on
+		// pay_order (see ajax_confirm_payment); the intent half must match or the
+		// Payment Element never mounts and the phase can never be paid.
+		$pay_order_id = absint( $_POST['pay_order'] ?? 0 );
+		if ( $pay_order_id ) {
+			$order = wpss_get_order( $pay_order_id );
+			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			if ( 'pending_payment' !== $order->status ) {
+				wp_send_json_error( array( 'message' => __( 'This order has already been paid.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			// Lock-step backstop: a locked milestone phase cannot be funded before
+			// the previous phase is approved. The dashboard hides the Pay button,
+			// but the server is the only authority against a hand-crafted request.
+			if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+				$milestones = new \WPSellServices\Services\MilestoneService();
+				if ( $milestones->is_locked( $pay_order_id ) ) {
+					wp_send_json_error( array( 'message' => __( 'This phase is locked. Pay the previous phase first.', 'wp-sell-services' ) ) );
+					return;
+				}
+			}
+
+			$amount = (float) $order->total;
+			if ( $amount <= 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			$result = $this->create_payment(
+				$amount,
+				$order->currency ?: $currency,
+				array(
+					'order_id'    => (int) $order->id,
+					'vendor_id'   => (int) $order->vendor_id,
+					'service_id'  => (int) $order->service_id,
+					'customer_id' => get_current_user_id(),
+				)
+			);
+
+			if ( $result['success'] ) {
+				wp_send_json_success( $result );
+			} else {
+				wp_send_json_error( array( 'message' => $result['error'] ) );
+			}
+			return;
+		}
+
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$package_id = absint( $_POST['package_id'] ?? 0 );
 

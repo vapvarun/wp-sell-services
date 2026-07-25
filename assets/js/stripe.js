@@ -146,6 +146,11 @@
 		 */
 		createPaymentIntent: function(amount, currency, serviceId, packageId) {
 			var addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
+			// pay_order flow (proposal-accepted order, milestone phase): the amount
+			// is the order total, not a service+package price. Forward the order id
+			// so the server prices the intent from the order and skips the
+			// service/package validation that only applies to catalog purchases.
+			var payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
 
 			return new Promise((resolve) => {
 				$.ajax({
@@ -159,6 +164,7 @@
 						service_id: serviceId,
 						package_id: packageId,
 						addon_ids: addonIds,
+						pay_order: payOrder,
 					},
 					success: resolve,
 					error: () => {
@@ -327,6 +333,11 @@
 			const serviceId = document.querySelector('input[name="service_id"]')?.value || 0;
 			const packageId = document.querySelector('input[name="package_id"]')?.value || 0;
 			const addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
+			// pay_order flow: settle the existing order instead of creating a new
+			// one from service+package. Without this the confirm handler falls
+			// through to the "create new order" branch and the milestone/proposal
+			// order is left unpaid.
+			const payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
 
 			$.ajax({
 				url: wpssStripe.ajaxUrl,
@@ -338,6 +349,7 @@
 					service_id: serviceId,
 					package_id: packageId,
 					addon_ids: addonIds,
+					pay_order: payOrder,
 					// Cart checkout creates one order per cart item server-side.
 					is_multi_checkout: (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '',
 					// Billing fields, so a correction made at checkout is saved

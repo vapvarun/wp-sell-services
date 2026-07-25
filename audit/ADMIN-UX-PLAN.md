@@ -47,9 +47,12 @@ Legend: ✅ done + verified (browser + DB) · 🟡 partial / needs a pass · ⬜
 | Buyer: Submit Requirements | ✅ | pending_requirements→in_progress; **found+fixed stranded-buyer bug** (below) |
 | Vendor: Start Working / accept-decline | ✅ | for standard service orders, submitting requirements AUTO-advances to in_progress — no separate step; explicit Start/Accept exists only for accepted/requirements_submitted (proposal flow) |
 | Dispute-VIEW actions (admin) | ✅ | escalate (status→escalated); **resolve→full_refund**: order→refunded $45, buyer refunded, **Diego balance unchanged + 0 reversal rows (T10 guard held via dispute path)**. Minor: resolution-type validation renders as a raw WP error page, not an inline notice |
-| Portfolio add / delete | ⬜ | toggle verified; add/delete pending |
-| Buyer request edit / close | ⬜ | create verified; edit/close pending |
-| Milestone orders (create/submit/approve) | ⬜ | not touched |
+| Portfolio add / delete | ✅ | delete: confirm modal shown, item 4 removed (3→2 for vendor 56); add form present. Toggle already verified |
+| Buyer request edit / close / delete | ✅ | edit persists (title `[EDITED]` + budget_min 800/budget_max 1500 on req 279); close: `publish→draft` (req 279); delete: row removed (req 275). All 3 use confirm modal with distinct copy |
+| Milestone orders (full lifecycle) | ✅ | **verified end-to-end** on a real Stripe test-card charge: milestone proposal (2 phases) → buyer accept → parent request order 61 + sub-orders 62/63 → phase-1 checkout (`?pay_order=62`) → **paid via Stripe** (`pi_3Tx7T8…`, order 62 in_progress/paid) → vendor submit → pending_approval → buyer approve → completed, vendor_earnings $108, ledger credit $108 (type=`milestone`, counted in balance via `type NOT IN debit_types`) → **phase 2 unlocked** ("Accept & Pay $80"). Fixed a blocking bug + found an F8 issue (below) |
+| Proposal submit + accept (milestone contract) | ✅ | Diego → milestone proposal 16 on request 274 (builder totals live-compute $200/7d); Oliver accepts via confirm modal → request order + sub-orders created |
+| **BUG FIXED — Stripe pay_order intent** | ✅ | `ajax_create_payment_intent` had NO `pay_order` branch (only service+package or multi), and stripe.js/stripe.min.js never sent `pay_order` → Payment Element never mounted → **no buyer could pay a milestone phase OR any proposal-accepted order via Stripe (the only gateway)**. Server branch added + both JS files send `pay_order` on intent AND confirm. Verified: real PaymentIntent + card charge succeeds. phpcs clean |
+| **FINDING — milestone actions use native confirm()** | ⬜ | approve/decline/delete milestone buttons fire browser `confirm()` (F8 violation); rest of plugin uses `wpssConfirm()` modal. Functional but off-pattern — migrate to design-system modal |
 | Other gateways + no-gateway-configured | ⬜ | site has Stripe only |
 | Approval-required / registration-closed vendor modes | ⬜ | site is auto-approve |
 
