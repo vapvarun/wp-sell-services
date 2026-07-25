@@ -43,8 +43,9 @@ Legend: ✅ done + verified (browser + DB) · 🟡 partial / needs a pass · ⬜
 | Vendor: Portfolio Feature toggle | ✅ | REST 200, `is_featured` 0→1 |
 | Vendor: Profile save | ✅ | REST PUT 200, bio persisted |
 | Messaging send | ✅ | message row + UI render + input clear |
-| Buyer: Request Revision (submit) | ⬜ | form exists; not yet driven |
-| Vendor: accept/decline NEW order, start work | ⬜ | not yet driven |
+| Buyer: Request Revision (submit) | ✅ | order pending_approval→revision_requested, revisions_used++ |
+| Buyer: Submit Requirements | ✅ | pending_requirements→in_progress; **found+fixed stranded-buyer bug** (below) |
+| Vendor: Start Working / accept-decline | ✅ | for standard service orders, submitting requirements AUTO-advances to in_progress — no separate step; explicit Start/Accept exists only for accepted/requirements_submitted (proposal flow) |
 | Dispute-VIEW actions (resolve/escalate/evidence) | ⬜ | not yet driven |
 | Portfolio add / delete | ⬜ | toggle verified; add/delete pending |
 | Buyer request edit / close | ⬜ | create verified; edit/close pending |
@@ -63,6 +64,7 @@ REAL wp-login session — the `?autologin=` mu-plugin invalidates the REST nonce
 | 1 | Confirm modal invisible → core actions unclickable | `6c8a8ed` |
 | 2 | Filled submit buttons rendered in theme colour | `d460b95` |
 | 3 | Demo seeder didn't fund the ledger → impossible earnings | `afa9b47` |
+| 4 | Buyer stranded on pending-requirements order (service w/o custom fields showed only "Cancel Order", no way to submit the brief) | `4390fb4` |
 
 Plus earlier this session: status-badge palette unified (2.2), D2 Vendors "Earned"
 reads ledger, refund policy T9/T10/T11, empty-state + services-grid consolidation.
