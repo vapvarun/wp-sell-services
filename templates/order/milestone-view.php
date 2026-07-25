@@ -320,35 +320,56 @@ do_action( 'wpss_after_milestone_view', $current_order );
 		});
 	});
 
+	// Confirm via the design-system modal (wpssConfirm), never native confirm()/
+	// alert() — matches the rest of the plugin (portfolio/request delete, admin
+	// order actions). wpss-ui is enqueued by UnifiedDashboard, so both helpers
+	// are present; fall back gracefully if it ever fails to load.
+	function confirmAction(message, tone) {
+		if (window.wpssConfirm) {
+			return window.wpssConfirm(message, tone ? { tone: tone } : {});
+		}
+		return Promise.resolve(window.confirm(message));
+	}
+	function notifyError(message) {
+		if (window.wpssToast) { window.wpssToast(message, 'error'); }
+		else { window.alert(message); }
+	}
+
 	document.querySelectorAll('.wpss-milestone-approve-btn').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			if (!confirm('<?php echo esc_js( __( 'Approve delivery of this phase? This marks it as complete and cannot be undone.', 'wp-sell-services' ) ); ?>')) return;
-			btn.disabled = true;
-			post('wpss_approve_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
-				if (res && res.success) window.location.reload();
-				else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
+			confirmAction('<?php echo esc_js( __( 'Approve delivery of this phase? This marks it as complete and cannot be undone.', 'wp-sell-services' ) ); ?>').then(function (ok) {
+				if (!ok) return;
+				btn.disabled = true;
+				post('wpss_approve_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
+					if (res && res.success) window.location.reload();
+					else { btn.disabled = false; notifyError((res && res.data && res.data.message) || 'Error'); }
+				});
 			});
 		});
 	});
 
 	document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			if (!confirm('<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>')) return;
-			btn.disabled = true;
-			post('wpss_decline_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
-				if (res && res.success) window.location.reload();
-				else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
+			confirmAction('<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>', 'danger').then(function (ok) {
+				if (!ok) return;
+				btn.disabled = true;
+				post('wpss_decline_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
+					if (res && res.success) window.location.reload();
+					else { btn.disabled = false; notifyError((res && res.data && res.data.message) || 'Error'); }
+				});
 			});
 		});
 	});
 
 	document.querySelectorAll('.wpss-milestone-delete-btn').forEach(function (btn) {
 		btn.addEventListener('click', function () {
-			if (!confirm('<?php echo esc_js( __( 'Cancel this phase proposal? This removes it and cannot be undone.', 'wp-sell-services' ) ); ?>')) return;
-			btn.disabled = true;
-			post('wpss_delete_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
-				if (res && res.success) window.location.reload();
-				else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
+			confirmAction('<?php echo esc_js( __( 'Cancel this phase proposal? This removes it and cannot be undone.', 'wp-sell-services' ) ); ?>', 'danger').then(function (ok) {
+				if (!ok) return;
+				btn.disabled = true;
+				post('wpss_delete_milestone', { milestone_id: btn.dataset.milestone }).then(function (res) {
+					if (res && res.success) window.location.reload();
+					else { btn.disabled = false; notifyError((res && res.data && res.data.message) || 'Error'); }
+				});
 			});
 		});
 	});
