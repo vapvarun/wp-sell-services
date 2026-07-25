@@ -3072,7 +3072,7 @@ class AjaxHandlers {
 				// caller cannot disagree about which orders qualify.
 				if ( wpss_order_is_refundable( $order ) ) {
 					// How much is going back. Absent or zero means the whole order.
-					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified at the top of this handler.
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified at the top of this handler; the (float) cast sanitizes the numeric amount.
 					$wpss_refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
 					$wpss_order_total   = (float) $order->total;
 					$wpss_is_partial    = $wpss_refund_amount > 0 && $wpss_refund_amount < $wpss_order_total;
@@ -3086,7 +3086,7 @@ class AjaxHandlers {
 					// not actually move.
 					$result = $order_service->apply_refund_status(
 						$order_id,
-						$wpss_is_partial ? round( $wpss_refund_amount, 2 ) : $wpss_order_total,
+						$wpss_is_partial ? round( $wpss_refund_amount, wpss_get_currency_decimals( $order->currency ?? '' ) ) : $wpss_order_total,
 						$wpss_is_partial ? 'partially_refunded' : 'refunded'
 					);
 				} else {
