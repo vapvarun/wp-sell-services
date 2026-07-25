@@ -71,10 +71,30 @@ review, tip) are unaffected by autologin. So: **use a real login to verify any
 REST-based action**; a 403 under autologin is a test-harness artifact. (Caught
 here before mis-filing the portfolio 403 as a bug.)
 
-**Still to sweep:** accept/decline a NEW order + start work; Request-Revision +
-Open-Dispute form submits (buyer); dispute-view actions; messaging send; remove
-favorite, portfolio add/delete, create/edit buyer request; milestone orders.
-Each needs a real action + 390 pass (REST ones under a real login).
+**Round 3 — more actions verified (real logins; message send/dispute/favorite/
+request all write correctly):**
+- **Messaging send** — message row written (content + sender), rendered in the
+  conversation with timestamp, input cleared.
+- **Open Dispute** (buyer) — form modal visible (modal fix holds), dispute row
+  created (open, reason), order 4 → `disputed`.
+- **Remove favorite** — service removed from `_wpss_favorite_services` meta.
+- **Buyer request create** — "Post a Request" form → new `wpss_request` post
+  published (title/description persisted).
+- Note: the Buyer-Requests dashboard slug is `/dashboard/requests/` (not
+  `/buyer-requests/`); a wrong slug shows a graceful "Section Not Available"
+  fallback — good empty-state handling, not a bug.
+
+**Action-sweep tally so far — all verified end-to-end (browser + DB):** buyer
+accept/complete (+ledger credit), review, tip; vendor deliver; withdrawal
+submit; portfolio feature toggle; profile save; messaging send; open dispute;
+remove favorite; buyer request create. Plus 3 systemic bugs fixed (confirm-modal
+visibility, filled-button colour, seeded ledger) and the autologin/REST-nonce
+methodology guard.
+
+**Still to sweep:** accept/decline a NEW order + start work; Request-Revision
+submit; dispute-VIEW actions (resolve/escalate/evidence); portfolio add/delete;
+edit/close buyer request; milestone orders. Each needs a real action + 390 pass
+(REST ones under a real login).
 
 ---
 
