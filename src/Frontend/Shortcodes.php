@@ -199,13 +199,22 @@ class Shortcodes {
 
 		ob_start();
 		?>
+		<?php
+		// Match the contract ServiceArchiveView::modify_archive_query reads:
+		// `search` (text) and `category` (term_id). The old form posted `s` +
+		// `post_type=wpss_service` + `service_category` (slug), which is WP core
+		// search — the archive query returns early, so moderation filtering,
+		// vacation-vendor exclusion and the category dropdown were all ignored
+		// (Basecamp #10110742943). This is the same contract the block uses.
+		$wpss_current_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
+		$wpss_current_cat    = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
+		?>
 		<form class="wpss-search-form" action="<?php echo esc_url( $action ); ?>" method="get">
 			<div class="wpss-search-fields">
-				<input type="text" name="s" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>">
-				<input type="hidden" name="post_type" value="wpss_service">
+				<input type="text" name="search" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( $wpss_current_search ); ?>">
 
 				<?php if ( 'true' === $atts['show_categories'] ) : ?>
-					<select name="service_category" class="wpss-search-category">
+					<select name="category" class="wpss-search-category">
 						<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
 						<?php
 						$categories = get_terms(
@@ -219,7 +228,7 @@ class Shortcodes {
 						if ( ! is_wp_error( $categories ) ) :
 							foreach ( $categories as $category ) :
 								?>
-								<option value="<?php echo esc_attr( $category->slug ); ?>"><?php echo esc_html( $category->name ); ?></option>
+								<option value="<?php echo esc_attr( $category->term_id ); ?>" <?php selected( $wpss_current_cat, $category->term_id ); ?>><?php echo esc_html( $category->name ); ?></option>
 								<?php
 							endforeach;
 						endif;
