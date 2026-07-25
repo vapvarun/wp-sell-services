@@ -3571,3 +3571,27 @@ select.wpss-input option,
 		text-align: end;
 	}
 }
+
+/* Dispute evidence thread + reply form (frontend party messaging, since 1.2.2). */
+.wpss-dispute-detail__evidence{margin-top:24px}
+.wpss-dispute-detail__evidence>h3{margin:0 0 8px}
+.wpss-evidence-thread{display:flex;flex-direction:column;gap:12px;margin:12px 0 16px}
+.wpss-evidence-empty{color:var(--wpss-gray-500,#6b7280);font-size:14px;margin:0}
+.wpss-evidence-item{display:flex;max-width:100%}
+.wpss-evidence-item.wpss-evidence-own{justify-content:flex-end}
+.wpss-evidence-bubble{max-width:82%;padding:10px 14px;border-radius:14px;background:var(--wpss-gray-100,#f3f4f6);border:1px solid var(--wpss-border-color,#e5e7eb)}
+.wpss-evidence-own .wpss-evidence-bubble{background:var(--wpss-primary-light,#eef2ff);border-color:var(--wpss-primary,#4f46e5)}
+.wpss-evidence-author{display:block;font-size:12px;color:var(--wpss-gray-600,#4b5563);margin-bottom:2px}
+.wpss-evidence-text{font-size:14px;line-height:1.5;color:var(--wpss-gray-800,#1f2937);white-space:pre-wrap;word-break:break-word}
+.wpss-evidence-image img{max-width:220px;border-radius:8px;margin-top:6px}
+.wpss-evidence-file{margin-top:6px}
+.wpss-evidence-file .wpss-file-link{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.wpss-evidence-time{display:block;font-size:11px;color:var(--wpss-gray-400,#9ca3af);margin-top:4px}
+.wpss-add-evidence-form{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--wpss-border-color,#e5e7eb);padding-top:14px}
+.wpss-add-evidence-form .wpss-form-label{font-weight:600;font-size:14px}
+.wpss-add-evidence-form__row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:auto}
+.wpss-evidence-attach{cursor:pointer}
+.wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
+.wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
+@media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}

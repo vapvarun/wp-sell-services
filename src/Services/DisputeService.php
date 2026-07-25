@@ -309,12 +309,14 @@ class DisputeService {
 		// Get existing evidence or initialize empty array.
 		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
 
-		// Sanitize content based on evidence type.
+		// Sanitize content based on evidence type. image/file/link all carry a
+		// URL (the AJAX handler stores the wp_handle_upload() URL, not an
+		// attachment ID) — absint() here silently zeroed every uploaded file,
+		// so the frontend rendered a broken link. Treat them all as URLs.
 		$sanitized_type    = sanitize_key( $type );
 		$sanitized_content = match ( $sanitized_type ) {
-			'link'          => esc_url_raw( $content ),
-			'image', 'file' => absint( $content ),
-			default         => sanitize_textarea_field( $content ),
+			'link', 'image', 'file' => esc_url_raw( $content ),
+			default                 => sanitize_textarea_field( $content ),
 		};
 
 		// Add new evidence item.

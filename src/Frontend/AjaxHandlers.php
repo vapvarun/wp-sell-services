@@ -1368,7 +1368,7 @@ class AjaxHandlers {
 
 		// Verify user can add evidence (is part of the order).
 		$order_repo = new \WPSellServices\Database\Repositories\OrderRepository();
-		$order      = $order_repo->find( $dispute->order_id );
+		$order      = $order_repo->find( (int) $dispute->order_id );
 
 		if ( ! $order ) {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
@@ -1451,6 +1451,7 @@ class AjaxHandlers {
 		?>
 		<div class="wpss-evidence-item wpss-evidence-own">
 			<div class="wpss-evidence-bubble">
+				<span class="wpss-evidence-author"><strong><?php echo esc_html( $evidence_user ? $evidence_user->display_name : '' ); ?></strong></span>
 				<div class="wpss-evidence-content">
 					<?php if ( ! empty( $description ) ) : ?>
 						<div class="wpss-evidence-text">

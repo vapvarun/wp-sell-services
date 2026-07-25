@@ -119,6 +119,93 @@ if ( $view_dispute_id ) {
 			</div>
 		<?php endif; ?>
 
+		<?php
+		// Messages & evidence thread. The AJAX write path
+		// (wpss_add_dispute_evidence) and DisputeService::add_evidence() already
+		// existed, but no member-facing surface ever rendered the thread or a
+		// reply form — a party could OPEN a dispute and then never respond to it.
+		// This wires the existing backend to the dashboard.
+		$evidence_items = $dispute_service->get_evidence( (int) $dispute->id );
+		$can_add_evidence = ! in_array( $status_key, array( 'resolved', 'closed' ), true );
+		?>
+		<div class="wpss-dispute-detail__evidence">
+			<h3><?php esc_html_e( 'Messages &amp; evidence', 'wp-sell-services' ); ?></h3>
+
+			<div class="wpss-evidence-thread" id="wpss-evidence-thread">
+				<?php if ( empty( $evidence_items ) ) : ?>
+					<p class="wpss-evidence-empty"><?php esc_html_e( 'No messages yet. Add one below to make your case to the reviewer and the other party.', 'wp-sell-services' ); ?></p>
+				<?php else : ?>
+					<?php
+					foreach ( $evidence_items as $item ) :
+						$ev_user_id = (int) ( $item['user_id'] ?? 0 );
+						$ev_user    = $ev_user_id ? get_userdata( $ev_user_id ) : null;
+						$ev_name    = $ev_user ? $ev_user->display_name : __( 'System', 'wp-sell-services' );
+						$ev_own     = $ev_user_id === $user_id;
+						$ev_type    = (string) ( $item['type'] ?? 'text' );
+						$ev_content = (string) ( $item['content'] ?? '' );
+						$ev_desc    = (string) ( $item['description'] ?? '' );
+						$ev_when    = ! empty( $item['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created_at'] ) : '';
+						?>
+						<div class="wpss-evidence-item <?php echo $ev_own ? 'wpss-evidence-own' : 'wpss-evidence-other'; ?>">
+							<div class="wpss-evidence-bubble">
+								<span class="wpss-evidence-author"><strong><?php echo esc_html( $ev_name ); ?></strong></span>
+								<div class="wpss-evidence-content">
+									<?php if ( 'text' === $ev_type && '' !== $ev_content ) : ?>
+										<div class="wpss-evidence-text"><?php echo wp_kses_post( nl2br( esc_html( $ev_content ) ) ); ?></div>
+									<?php endif; ?>
+									<?php if ( '' !== $ev_desc && 'text' !== $ev_type ) : ?>
+										<div class="wpss-evidence-text"><?php echo wp_kses_post( nl2br( esc_html( $ev_desc ) ) ); ?></div>
+									<?php endif; ?>
+									<?php if ( 'image' === $ev_type && '' !== $ev_content ) : ?>
+										<div class="wpss-evidence-image">
+											<a href="<?php echo esc_url( $ev_content ); ?>" target="_blank" rel="noopener noreferrer">
+												<img src="<?php echo esc_url( $ev_content ); ?>" alt="<?php esc_attr_e( 'Evidence image', 'wp-sell-services' ); ?>">
+											</a>
+										</div>
+									<?php elseif ( in_array( $ev_type, array( 'file', 'link' ), true ) && '' !== $ev_content ) : ?>
+										<div class="wpss-evidence-file">
+											<a href="<?php echo esc_url( $ev_content ); ?>" target="_blank" rel="noopener noreferrer" class="wpss-file-link">
+												<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
+												<span><?php echo esc_html( basename( $ev_content ) ); ?></span>
+											</a>
+										</div>
+									<?php endif; ?>
+								</div>
+								<?php if ( $ev_when ) : ?>
+									<span class="wpss-evidence-time"><?php echo esc_html( $ev_when ); ?></span>
+								<?php endif; ?>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+
+			<?php if ( $can_add_evidence ) : ?>
+				<form id="wpss-add-evidence-form" class="wpss-add-evidence-form" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'wpss_add_evidence', 'nonce' ); ?>
+					<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (int) $dispute->id ); ?>">
+					<label class="wpss-form-label" for="wpss-evidence-message">
+						<?php esc_html_e( 'Add a message or evidence', 'wp-sell-services' ); ?>
+					</label>
+					<textarea id="wpss-evidence-message" name="description" class="wpss-form-textarea" rows="3"
+						placeholder="<?php esc_attr_e( 'Explain your side, or add context for the reviewer…', 'wp-sell-services' ); ?>"></textarea>
+					<div class="wpss-add-evidence-form__row">
+						<label class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-evidence-attach">
+							<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
+							<span><?php esc_html_e( 'Attach file', 'wp-sell-services' ); ?></span>
+							<input type="file" name="evidence_file" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.txt" hidden>
+						</label>
+						<span class="wpss-evidence-filename" aria-live="polite"></span>
+						<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm">
+							<?php esc_html_e( 'Send', 'wp-sell-services' ); ?>
+						</button>
+					</div>
+				</form>
+			<?php else : ?>
+				<p class="wpss-evidence-locked"><?php esc_html_e( 'This dispute is closed. No further messages can be added.', 'wp-sell-services' ); ?></p>
+			<?php endif; ?>
+		</div>
+
 		<p class="wpss-dispute-detail__actions">
 			<?php
 			$view_order_url = add_query_arg(
