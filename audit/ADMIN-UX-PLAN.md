@@ -46,7 +46,7 @@ Legend: ✅ done + verified (browser + DB) · 🟡 partial / needs a pass · ⬜
 | Buyer: Request Revision (submit) | ✅ | order pending_approval→revision_requested, revisions_used++ |
 | Buyer: Submit Requirements | ✅ | pending_requirements→in_progress; **found+fixed stranded-buyer bug** (below) |
 | Vendor: Start Working / accept-decline | ✅ | for standard service orders, submitting requirements AUTO-advances to in_progress — no separate step; explicit Start/Accept exists only for accepted/requirements_submitted (proposal flow) |
-| Dispute-VIEW actions (resolve/escalate/evidence) | ⬜ | not yet driven |
+| Dispute-VIEW actions (admin) | ✅ | escalate (status→escalated); **resolve→full_refund**: order→refunded $45, buyer refunded, **Diego balance unchanged + 0 reversal rows (T10 guard held via dispute path)**. Minor: resolution-type validation renders as a raw WP error page, not an inline notice |
 | Portfolio add / delete | ⬜ | toggle verified; add/delete pending |
 | Buyer request edit / close | ⬜ | create verified; edit/close pending |
 | Milestone orders (create/submit/approve) | ⬜ | not touched |
