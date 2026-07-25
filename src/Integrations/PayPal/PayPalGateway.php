@@ -506,7 +506,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		ob_start();
 		?>
-		<div class="wpss-paypal-payment" data-client-id="<?php echo esc_attr( $client_id ); ?>">
+		<div class="wpss-paypal-payment" data-gateway="paypal" data-wpss-own-submit="1" data-client-id="<?php echo esc_attr( $client_id ); ?>">
 			<div id="wpss-paypal-button-container"></div>
 			<div id="wpss-paypal-error" class="wpss-payment-error" style="display: none;"></div>
 			<input type="hidden" name="paypal_order_id" id="wpss-paypal-order-id">

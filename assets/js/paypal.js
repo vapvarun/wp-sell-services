@@ -32,18 +32,36 @@
 		 * Set up event listeners.
 		 */
 		setupEventListeners: function() {
-			// Listen for payment method selection.
-			const paypalRadio = document.querySelector('input[name="payment_method"][value="paypal"]');
-			if (paypalRadio) {
-				paypalRadio.addEventListener('change', () => {
-					this.renderPayPalButtons();
-				});
+			// The PayPal Smart Button owns the payment flow (it posts to the
+			// registered wpss_paypal_create_order / wpss_paypal_capture actions).
+			// The generic checkout Pay button stands down for PayPal because our
+			// container carries data-wpss-own-submit — previously clicking it
+			// posted wpss_paypal_process_payment, an action no one registers, and
+			// admin-ajax returned a bare 0 (Basecamp #10110287493). Hide that Pay
+			// button whenever PayPal is selected so buyers only see the working
+			// PayPal button; restore it when another method is chosen.
+			const syncForPayPal = () => {
+				const selected = document.querySelector('input[name="payment_method"]:checked');
+				const isPayPal = selected && selected.value === 'paypal';
 
-				// Auto-render if already selected.
-				if (paypalRadio.checked) {
+				const submitBtn = this.form
+					? this.form.querySelector('button[type="submit"], .wpss-checkout-button')
+					: null;
+				if (submitBtn) {
+					submitBtn.style.display = isPayPal ? 'none' : '';
+				}
+
+				if (isPayPal) {
 					this.renderPayPalButtons();
 				}
-			}
+			};
+
+			document.querySelectorAll('input[name="payment_method"]').forEach((radio) => {
+				radio.addEventListener('change', syncForPayPal);
+			});
+
+			// Reflect the initially-selected method on load.
+			syncForPayPal();
 		},
 
 		/**
