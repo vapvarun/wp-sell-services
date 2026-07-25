@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.5.1';
+	const DB_VERSION = '1.5.2';
 
 	/**
 	 * Option name for storing DB version.
@@ -150,6 +150,7 @@ class SchemaManager {
 
 		$this->create_tables();
 		$this->run_column_migrations();
+		$this->run_precision_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
@@ -217,7 +218,7 @@ class SchemaManager {
 			array(
 				'table'      => 'orders',
 				'column'     => 'refunded_amount',
-				'definition' => 'decimal(10,2) DEFAULT NULL',
+				'definition' => 'decimal(11,3) DEFAULT NULL',
 				'after'      => 'paid_at',
 			),
 			// Billing address as it stood WHEN THE ORDER WAS PAID, as JSON.
@@ -283,6 +284,83 @@ class SchemaManager {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$this->wpdb->query(
 			"ALTER TABLE `{$full_table}` ADD COLUMN `{$column}` {$definition}{$position}"
+		);
+	}
+
+	/**
+	 * Widen the settled-money columns to hold 3 decimal places (Basecamp #10132235432).
+	 *
+	 * Every money column was decimal(10,2), so the third minor digit of a
+	 * 3-decimal currency (KWD/BHD — which wpss_get_currency_decimals() explicitly
+	 * supports) was silently rounded on write: KWD 12.535 stored as 12.54, a real
+	 * ~0.005 fund discrepancy per row. decimal(11,3) keeps the original 8 integer
+	 * digits (a bare (10,3) would shrink the integer range) and adds the third
+	 * decimal. Scope is the columns where money SETTLES — orders, the wallet
+	 * ledger, withdrawals (payouts) and dispute refunds. Catalog/quote inputs
+	 * (service_packages/addons price, proposals.proposed_price) are recomputed
+	 * into these on order creation and are a separate follow-up.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @return void
+	 */
+	private function run_precision_migrations(): void {
+		$money = array(
+			array( 'orders', 'subtotal', 'decimal(11,3) NOT NULL' ),
+			array( 'orders', 'addons_total', 'decimal(11,3) DEFAULT 0' ),
+			array( 'orders', 'total', 'decimal(11,3) NOT NULL' ),
+			array( 'orders', 'platform_fee', 'decimal(11,3) DEFAULT NULL' ),
+			array( 'orders', 'vendor_earnings', 'decimal(11,3) DEFAULT NULL' ),
+			array( 'orders', 'refunded_amount', 'decimal(11,3) DEFAULT NULL' ),
+			array( 'wallet_transactions', 'amount', 'decimal(11,3) NOT NULL' ),
+			array( 'wallet_transactions', 'balance_after', 'decimal(11,3) NOT NULL' ),
+			array( 'withdrawals', 'amount', 'decimal(11,3) NOT NULL' ),
+			array( 'disputes', 'refund_amount', 'decimal(11,3) DEFAULT NULL' ),
+		);
+
+		foreach ( $money as $col ) {
+			$this->maybe_modify_column( $col[0], $col[1], $col[2], 'decimal(11,3)' );
+		}
+	}
+
+	/**
+	 * Change a column's type only if it does not already match the target.
+	 *
+	 * Reads INFORMATION_SCHEMA.COLUMNS.COLUMN_TYPE first so the ALTER is skipped
+	 * when the column is already at the target type — safe to run repeatedly and
+	 * on fresh installs (where the CREATE TABLE already used the target type).
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param string $table       Logical table name (without prefix).
+	 * @param string $column      Column name.
+	 * @param string $definition  Full target column definition (type + null/default).
+	 * @param string $target_type Bare target COLUMN_TYPE to compare against, e.g. 'decimal(11,3)'.
+	 * @return void
+	 */
+	private function maybe_modify_column( string $table, string $column, string $definition, string $target_type ): void {
+		$full_table = $this->get_table_name( $table );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$current_type = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				'SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				DB_NAME,
+				$full_table,
+				$column
+			)
+		);
+
+		// Column absent (older/newer schema) or already the target — nothing to do.
+		if ( null === $current_type || 0 === strcasecmp( (string) $current_type, $target_type ) ) {
+			return;
+		}
+
+		// Identifiers + definition are plugin-controlled constants; no user input.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$this->wpdb->query(
+			"ALTER TABLE `{$full_table}` MODIFY COLUMN `{$column}` {$definition}"
 		);
 	}
 
@@ -427,13 +505,13 @@ class SchemaManager {
 			platform varchar(50) DEFAULT 'standalone',
 			platform_order_id bigint(20) unsigned DEFAULT NULL,
 			platform_item_id bigint(20) unsigned DEFAULT NULL,
-			subtotal decimal(10,2) NOT NULL,
-			addons_total decimal(10,2) DEFAULT 0,
-			total decimal(10,2) NOT NULL,
+			subtotal decimal(11,3) NOT NULL,
+			addons_total decimal(11,3) DEFAULT 0,
+			total decimal(11,3) NOT NULL,
 			currency varchar(10) DEFAULT 'USD',
 			commission_rate decimal(5,2) DEFAULT NULL,
-			platform_fee decimal(10,2) DEFAULT NULL,
-			vendor_earnings decimal(10,2) DEFAULT NULL,
+			platform_fee decimal(11,3) DEFAULT NULL,
+			vendor_earnings decimal(11,3) DEFAULT NULL,
 			status varchar(50) DEFAULT 'pending_payment',
 			delivery_deadline datetime DEFAULT NULL,
 			original_deadline datetime DEFAULT NULL,
@@ -441,7 +519,7 @@ class SchemaManager {
 			payment_status varchar(50) DEFAULT 'pending',
 			transaction_id varchar(255) DEFAULT NULL,
 			paid_at datetime DEFAULT NULL,
-			refunded_amount decimal(10,2) DEFAULT NULL,
+			refunded_amount decimal(11,3) DEFAULT NULL,
 			billing_address longtext,
 			revisions_included int(11) DEFAULT 0,
 			revisions_used int(11) DEFAULT 0,
@@ -662,7 +740,7 @@ class SchemaManager {
 			last_response_by bigint(20) unsigned DEFAULT NULL,
 			resolution varchar(50) DEFAULT NULL,
 			resolution_notes text,
-			refund_amount decimal(10,2) DEFAULT NULL,
+			refund_amount decimal(11,3) DEFAULT NULL,
 			resolved_by bigint(20) unsigned DEFAULT NULL,
 			resolved_at datetime DEFAULT NULL,
 			assigned_admin bigint(20) unsigned DEFAULT NULL,
@@ -849,8 +927,8 @@ class SchemaManager {
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			user_id bigint(20) unsigned NOT NULL,
 			type varchar(50) NOT NULL,
-			amount decimal(10,2) NOT NULL,
-			balance_after decimal(10,2) NOT NULL,
+			amount decimal(11,3) NOT NULL,
+			balance_after decimal(11,3) NOT NULL,
 			currency varchar(10) DEFAULT 'USD',
 			description text,
 			reference_type varchar(50) DEFAULT NULL,
@@ -878,7 +956,7 @@ class SchemaManager {
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			vendor_id bigint(20) unsigned NOT NULL,
-			amount decimal(10,2) NOT NULL,
+			amount decimal(11,3) NOT NULL,
 			method varchar(50) NOT NULL,
 			details longtext,
 			status varchar(50) DEFAULT 'pending',
@@ -913,6 +991,7 @@ class SchemaManager {
 
 		$this->create_tables();
 		$this->run_column_migrations();
+		$this->run_precision_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}

@@ -81,6 +81,13 @@ class CommissionService {
 		$order_id  = (int) ( $order->id ?? 0 );
 		$vendor_id = (int) ( $order->vendor_id ?? 0 );
 
+		// Round money to the ORDER's currency precision, not a hardcoded 2dp.
+		// A 0-decimal currency (JPY) must not carry phantom decimals, and a
+		// 3-decimal currency (KWD/BHD) must keep its third minor digit or ~0.005
+		// silently shifts to the platform. wpss_get_currency_decimals() falls back
+		// to the store currency when the order has none (e.g. at creation time).
+		$decimals = wpss_get_currency_decimals( (string) ( $order->currency ?? '' ) );
+
 		/**
 		 * Filters the base amount used for commission calculation.
 		 *
@@ -101,7 +108,7 @@ class CommissionService {
 		// absolute per-plan override — so every consumer (wallet, Stripe Connect
 		// split, PayPal payout) reads ONE authoritative fee instead of each
 		// re-deriving its own. Percentage-only sites (no hook) are unaffected.
-		$default_fee = round( $base * ( $commission_rate / 100 ), 2 );
+		$default_fee = round( $base * ( $commission_rate / 100 ), $decimals );
 
 		/**
 		 * Filters the platform fee AMOUNT for an order.
@@ -122,8 +129,8 @@ class CommissionService {
 
 		// The fee can never be negative or exceed the base.
 		$fee_overridden  = abs( $platform_fee - $default_fee ) > 0.0001;
-		$platform_fee    = round( max( 0.0, min( $platform_fee, $base ) ), 2 );
-		$vendor_earnings = round( $base - $platform_fee, 2 );
+		$platform_fee    = round( max( 0.0, min( $platform_fee, $base ) ), $decimals );
+		$vendor_earnings = round( $base - $platform_fee, $decimals );
 
 		// Preserve the exact resolved rate for percentage fees (BC); report the
 		// effective rate only when an amount override changed the fee.
