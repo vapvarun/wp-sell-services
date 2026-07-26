@@ -372,7 +372,7 @@
 
 .wpss-service-gallery {
 	margin-bottom: 2rem;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
 	box-shadow: var(--wpss-shadow);
@@ -475,7 +475,7 @@
    ========================================================================== */
 
 .wpss-service-description {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -555,7 +555,7 @@
    ========================================================================== */
 
 .wpss-about-vendor {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -698,7 +698,7 @@
    ========================================================================== */
 
 .wpss-service-faqs {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -819,8 +819,8 @@
 	display: block !important;
 	visibility: visible !important;
 	opacity: 1 !important;
-	background: var(--wpss-white) !important;
-	background-color: var(--wpss-white) !important;
+	background: var(--wpss-surface) !important;
+	background-color: var(--wpss-surface) !important;
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -1015,7 +1015,7 @@
    ========================================================================== */
 
 .wpss-packages-widget {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	box-shadow: var(--wpss-shadow);
 	overflow: hidden;
@@ -1164,7 +1164,7 @@
    ========================================================================== */
 
 .wpss-vendor-card {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-top: 1.5rem;
@@ -1200,7 +1200,7 @@
 	bottom: -4px;
 	left: -4px;
 	color: var(--wpss-primary);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: 50%;
 	padding: 2px;
 }
@@ -1364,7 +1364,7 @@
 
 .wpss-modal-content {
 	position: relative;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	width: 100%;
 	max-width: 480px;

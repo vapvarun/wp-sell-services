@@ -49,7 +49,7 @@
 
 .wpss-dashboard__sidebar {
 	width: var(--wpss-sidebar-width);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-right: 1px solid var(--wpss-gray-200);
 	display: flex;
 	flex-direction: column;
@@ -209,7 +209,7 @@
 	align-items: center;
 	gap: 12px;
 	padding: 20px 24px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-bottom: 1px solid var(--wpss-gray-200);
 }
 
@@ -332,7 +332,7 @@
 }
 
 .wpss-stat-card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	padding: 20px;
 	box-shadow: var(--wpss-shadow-sm);
@@ -398,7 +398,7 @@
 	flex-flow: row wrap;
 	gap: 16px;
 	padding: 16px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
 	transition: border-color 0.15s ease;
@@ -497,7 +497,7 @@
 .wpss-service-card--dashboard {
 	display: flex;
 	flex-direction: column;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg);
 	border: 1px solid var(--wpss-border);
 	overflow: hidden;
@@ -612,7 +612,7 @@
 	justify-content: space-between;
 	gap: 16px;
 	padding: 16px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
 	/* Actions drop to their own line when the title cannot keep its floor.
@@ -776,7 +776,7 @@
 	display: flex;
 	flex-direction: column;
 	min-height: 620px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-200);
 	border-radius: 16px;
 	overflow: hidden;
@@ -788,7 +788,7 @@
 	align-items: center;
 	gap: 12px;
 	padding: 18px 20px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-bottom: 1px solid var(--wpss-gray-200);
 }
 
@@ -868,7 +868,7 @@
 	font-size: 14px;
 	line-height: 1.5;
 	color: var(--wpss-gray-900);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 16px 16px 16px 4px;
 	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
@@ -912,7 +912,7 @@
 
 .wpss-section--messages .wpss-conversation-thread__reply {
 	padding: 16px 20px 18px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-top: 1px solid var(--wpss-gray-200);
 }
 
@@ -976,7 +976,7 @@
 } */
 
 .wpss-profile-form__section {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
 	padding: 24px;
@@ -1045,7 +1045,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	transition: transform 0.2s;
 }
 
@@ -1113,7 +1113,7 @@
 .wpss-table {
 	width: 100%;
 	border-collapse: collapse;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	overflow: hidden;
 	border: 1px solid var(--wpss-gray-200);
@@ -1549,7 +1549,7 @@
 }
 
 .wpss-vendor-registration__card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: 48px 40px;
@@ -1666,7 +1666,7 @@
 
 /* .wpss-btn--primary: see design-system.css (single owner) */
 .wpss-btn--outline {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-gray-700);
 	border: 1px solid var(--wpss-gray-300);
 }
@@ -1761,7 +1761,7 @@
 	padding: 10px 12px;
 	font-size: 14px;
 	color: var(--wpss-gray-900);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-300);
 	border-radius: var(--wpss-radius);
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1842,7 +1842,7 @@ select.wpss-input option,
 	border: 1px solid var(--wpss-gray-200);
 	border-radius: var(--wpss-radius);
 	overflow: hidden;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	transition: box-shadow 0.2s;
 }
 
@@ -1927,7 +1927,7 @@ select.wpss-input option,
 
 .wpss-modal__content {
 	position: relative;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 8px;
 	width: 90%;
 	max-width: 560px;
@@ -2030,7 +2030,7 @@ select.wpss-input option,
 		padding: 8px 12px;
 		border: 1px solid var(--wpss-gray-200);
 		border-radius: var(--wpss-radius);
-		background: var(--wpss-white, #fff);
+		background: var(--wpss-surface, #fff);
 		font-size: 13px;
 		font-weight: 500;
 		white-space: nowrap;
@@ -2111,7 +2111,7 @@ select.wpss-input option,
    re-implementation. Border / radius / surface / hover read the same design
    tokens as .wpss-service-card so it renders identically. */
 .wpss-favorites__card {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
@@ -2364,7 +2364,7 @@ select.wpss-input option,
 	font-size: 13px;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 }
 
 .wpss-sales-filter__count {
@@ -2388,7 +2388,7 @@ select.wpss-input option,
 	align-items: center;
 	gap: 4px;
 	padding: 6px 12px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-text, #1f2937);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
@@ -2463,7 +2463,7 @@ select.wpss-input option,
 }
 
 .wpss-tip-view__card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-100);
 	border-radius: 14px;
 	padding: 32px 28px;
@@ -2710,7 +2710,7 @@ select.wpss-input option,
 	padding: 14px 16px;
 	border-radius: 10px;
 	border: 1px solid var(--wpss-border, #e5e7eb);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 /* Milestone item state pills use design-system tokens so white-label /
@@ -2775,7 +2775,7 @@ select.wpss-input option,
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-success, #22c55e);
 	display: inline-flex;
 	align-items: center;
@@ -3138,7 +3138,7 @@ select.wpss-input option,
 	align-items: flex-start;
 	gap: 15px;
 	padding: 15px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e5e5);
 	border-radius: 8px;
 }
@@ -3225,7 +3225,7 @@ select.wpss-input option,
 	border: 1px solid var(--wpss-border, #e5e5e5);
 	border-radius: 8px;
 	overflow: hidden;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 .wpss-service-image {
@@ -3256,7 +3256,7 @@ select.wpss-input option,
 	border-radius: 4px;
 	font-size: 11px;
 	font-weight: 500;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 .wpss-status-publish {
@@ -3349,7 +3349,7 @@ select.wpss-input option,
 	max-width: 900px;
 	max-height: 90vh;
 	width: 90vw;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 12px;
 	overflow: hidden;
 	z-index: 1;

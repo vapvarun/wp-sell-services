@@ -328,7 +328,7 @@ select:invalid {
 article.wpss-service-card {
 	margin: 0;
 	padding: 0;
-	background: var(--wpss-white) !important;
+	background: var(--wpss-surface) !important;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
@@ -377,7 +377,7 @@ article.wpss-service-card:hover {
 	top: 10px;
 	right: 10px;
 	padding: 4px 10px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -531,7 +531,7 @@ article.wpss-service-card:hover {
 	right: 10px;
 	max-width: calc(100% - 20px);
 	padding: 4px 10px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius);
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 	font-size: 11px;
@@ -560,7 +560,7 @@ article.wpss-service-card:hover {
 	padding: 8px;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	color: var(--wpss-text-light);
 	font-size: 14px;
 	font-weight: 600;
@@ -628,7 +628,7 @@ article.wpss-service-card:hover {
 	}
 
 	.wpss-fav-toggle--inline.is-favorited:hover {
-		background: var(--wpss-white);
+		background: var(--wpss-surface);
 	}
 }
 
@@ -887,7 +887,7 @@ article.wpss-service-card:hover {
    ========================================================================== */
 
 .wpss-packages-widget {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
@@ -1341,7 +1341,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-dashboard-sidebar {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 20px;
 	height: fit-content;
@@ -1400,7 +1400,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-dashboard-content {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 30px;
 }
@@ -1432,7 +1432,7 @@ article.wpss-service-card:hover {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius);
 	font-size: 20px;
 }
@@ -1715,7 +1715,7 @@ article.wpss-service-card:hover {
 	gap: 4px;
 	margin-top: 10px;
 	padding: 6px 12px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-sm);
 	font-size: 13px;
@@ -1750,7 +1750,7 @@ article.wpss-service-card:hover {
 	width: 32px;
 	height: 32px;
 	padding: 0;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-sm);
 	color: var(--wpss-text-light);
@@ -1803,7 +1803,7 @@ article.wpss-service-card:hover {
 	align-items: center;
 	gap: 8px;
 	padding: 10px 16px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	font-size: 14px;
@@ -1926,7 +1926,7 @@ article.wpss-service-card:hover {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: none;
 	border-radius: 50%;
 	font-size: 24px;
@@ -1943,7 +1943,7 @@ article.wpss-service-card:hover {
 
 /* Sidebar Cards */
 .wpss-sidebar-card {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	padding: 20px;
@@ -1974,7 +1974,7 @@ article.wpss-service-card:hover {
 
 /* Pro Profile Widget */
 .wpss-profile-sidebar .wpss-pro-profile-widget {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
     border: 1px solid var(--wpss-border);
     border-radius: var(--wpss-radius-lg);
     padding: 20px;
@@ -2063,7 +2063,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-message-content {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	padding: 12px;
 	border-radius: var(--wpss-radius);
 	max-width: 80%;
@@ -2177,7 +2177,7 @@ article.wpss-service-card:hover {
 	height: 150px;
 	border-radius: 50%;
 	border: 4px solid var(--wpss-white);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	object-fit: cover;
 }
 
@@ -2185,7 +2185,7 @@ article.wpss-service-card:hover {
 	position: absolute;
 	bottom: 5px;
 	left: 5px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: 50%;
 	padding: 4px;
 }
@@ -2423,7 +2423,7 @@ article.wpss-service-card:hover {
 	min-width: 36px;
 	height: 36px;
 	padding: 0 10px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	color: var(--wpss-text);
@@ -2544,7 +2544,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-requirements-form {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	padding: 30px;
@@ -2604,7 +2604,7 @@ article.wpss-service-card:hover {
 	background-repeat: no-repeat;
 	background-position: left 12px center;
 	background-size: 16px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 	cursor: pointer;
 }
 
@@ -2792,7 +2792,7 @@ article.wpss-service-card:hover {
 	align-items: center;
 	gap: 8px;
 	padding: 10px 15px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	color: var(--wpss-text);
@@ -2924,7 +2924,7 @@ article.wpss-service-card:hover {
 
 .wpss-modal-dialog {
 	position: relative;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	width: 100%;
 	max-width: 480px;
@@ -3125,7 +3125,7 @@ body.wpss-modal-active {
 	background-repeat: no-repeat;
 	background-position: left 12px center;
 	background-size: 16px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 	cursor: pointer;
 }
 
@@ -3167,7 +3167,7 @@ body.wpss-modal-active {
 
 .wpss-modal__dialog {
 	position: relative;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	width: 100%;
 	max-width: 480px;
@@ -3501,7 +3501,7 @@ body.wpss-modal-active {
 	align-items: center;
 	gap: 12px;
 	padding: 14px 16px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius, 8px);
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 	min-width: 300px;
@@ -3693,7 +3693,7 @@ body.wpss-modal-active {
 .wpss-tip-form__preset:hover,
 .wpss-tip-form__preset:focus-visible {
 	border-color: var(--wpss-gray-300, #d1d5db);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	outline: none;
 }
 

@@ -17,7 +17,7 @@
 	grid-template-columns: 320px 1fr;
 	height: calc(100vh - var(--wpss-sticky-top, 32px) - 100px);
 	min-height: 500px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
 	overflow: hidden;
@@ -51,7 +51,7 @@
 	justify-content: space-between;
 	padding: 16px 20px;
 	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 .wpss-messaging__sidebar-title {
@@ -91,7 +91,7 @@
 	font-size: 14px;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
-	background: var(--wpss-white, #fff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 10px center;
+	background: var(--wpss-surface, #fff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 10px center;
 	background-size: 18px;
 	transition: border-color var(--wpss-transition, 0.2s ease), box-shadow var(--wpss-transition, 0.2s ease);
 }
@@ -128,7 +128,7 @@
 }
 
 .wpss-messaging__conversation--unread {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 /* Avatar */
@@ -249,7 +249,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 16px 24px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
 }
 
@@ -440,7 +440,7 @@
 	font-size: 14px;
 	line-height: 1.5;
 	color: var(--wpss-text, #1f2937);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 16px 16px 4px 16px;
 	box-shadow: var(--wpss-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 }
@@ -606,7 +606,7 @@
 	align-items: center;
 	gap: 4px;
 	padding: 8px 12px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 16px;
 	box-shadow: var(--wpss-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 }
@@ -645,7 +645,7 @@
 
 .wpss-messaging__composer {
 	padding: 16px 24px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-top: 1px solid var(--wpss-border, #e5e7eb);
 }
 
@@ -785,7 +785,7 @@
 	height: 20px;
 	padding: 0;
 	color: var(--wpss-text-muted, #6b7280);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: none;
 	border-radius: var(--wpss-radius-full, 9999px);
 	cursor: pointer;
@@ -793,7 +793,7 @@
 
 .wpss-messaging__composer-attachment-remove:hover {
 	color: var(--wpss-danger, #ef4444);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: none;
 }
 
@@ -814,7 +814,7 @@
 	padding: 6px 12px;
 	font-size: 13px;
 	color: var(--wpss-text-muted, #6b7280);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-full, 9999px);
 	cursor: pointer;
@@ -903,7 +903,7 @@
 	overflow-y: auto;
 	/* Solid surface - hard fallback first, !important to survive theme resets. */
 	background-color: #fff !important;
-	background-color: var(--wpss-white, #fff) !important;
+	background-color: var(--wpss-surface, #fff) !important;
 	color: var(--wpss-text, #1f2937) !important;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
@@ -1094,7 +1094,7 @@ body.wpss-modal-open {
 	align-items: center;
 	gap: 12px;
 	padding: 16px 20px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
 	z-index: 1000;
@@ -1229,7 +1229,7 @@ body.wpss-modal-open {
 	max-height: 80vh;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	overflow: hidden;
 }
 

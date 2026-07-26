@@ -991,7 +991,7 @@
 }
 
 .wpss-detail-card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 20px;
@@ -1089,7 +1089,7 @@
 
 /* Package Card Item */
 .wpss-package-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	overflow: hidden;
@@ -1356,7 +1356,7 @@
 }
 
 #wpss-faqs-list .wpss-faq-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 15px;
@@ -1434,7 +1434,7 @@
 }
 
 #wpss-requirements-list .wpss-requirement-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 15px;
@@ -1534,7 +1534,7 @@
 
 .wpss-requirement-choices input {
 	width: 100%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 /* ==========================================================================
@@ -1684,7 +1684,7 @@
 }
 
 .wpss-addon-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	margin-bottom: 12px;

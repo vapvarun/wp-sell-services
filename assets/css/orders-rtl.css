@@ -26,7 +26,7 @@
 	flex-wrap: wrap;
 	gap: 1rem;
 	padding: 1rem;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
@@ -70,7 +70,7 @@
    ========================================================================== */
 
 .wpss-orders__table-wrapper {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 	overflow: hidden;
@@ -239,7 +239,7 @@
    ========================================================================== */
 
 .wpss-order-card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
@@ -450,7 +450,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 2px solid var(--wpss-border, #e5e7eb);
 }
 
@@ -518,7 +518,7 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.625rem 1rem;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
 	font-size: 0.875rem;
@@ -554,7 +554,7 @@
 	display: flex;
 	justify-content: space-between;
 	padding: 1.5rem;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
@@ -693,7 +693,7 @@
 }
 
 .wpss-order-confirmation__card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: 1.5rem;
@@ -925,7 +925,7 @@
 	display: flex;
 	align-items: center;
 	gap: 1rem;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: 1rem;
@@ -965,7 +965,7 @@
    ========================================================================== */
 
 .wpss-requirements-form {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: 1.5rem;
@@ -1033,7 +1033,7 @@
 	background-repeat: no-repeat;
 	background-position: left 12px center;
 	background-size: 16px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 	cursor: pointer;
 }
 
@@ -1157,7 +1157,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-sm, 4px);
 	color: var(--wpss-text-muted, #6b7280);
 }
@@ -1295,7 +1295,7 @@
 .wpss-orders__empty {
 	text-align: center;
 	padding: 3rem 2rem;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
 	color: var(--wpss-text-light, #6b7280);

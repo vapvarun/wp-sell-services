@@ -112,7 +112,7 @@
 	align-items: center;
 	gap: 1rem;
 	padding: 1rem;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	margin-bottom: 1.5rem;
@@ -140,7 +140,7 @@
 	padding: 0.5rem 1rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	font-size: 0.875rem;
 	cursor: pointer;
 	min-width: 160px;
@@ -406,7 +406,7 @@
 	padding: 0.5rem 0.75rem;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
-	background: var(--wpss-white, #ffffff);
+	background: var(--wpss-surface, #ffffff);
 	color: var(--wpss-text, #1f2937);
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -459,7 +459,7 @@
    ========================================================================== */
 
 .wpss-request-card {
-	background: var(--wpss-white, #ffffff);
+	background: var(--wpss-surface, #ffffff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
 	padding: 1.5rem;
@@ -707,7 +707,7 @@
    ========================================================================== */
 
 .wpss-request-section {
-	background: var(--wpss-white, #ffffff);
+	background: var(--wpss-surface, #ffffff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
 	margin-bottom: 1rem;
@@ -771,7 +771,7 @@
 	padding: 1.25rem;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
-	background: var(--wpss-white, #ffffff);
+	background: var(--wpss-surface, #ffffff);
 }
 
 .wpss-proposal-header {
@@ -859,7 +859,7 @@
 
 .wpss-request-details-card,
 .wpss-buyer-card {
-	background: var(--wpss-white, #ffffff);
+	background: var(--wpss-surface, #ffffff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
 	padding: 1.5rem;
@@ -964,7 +964,7 @@
 .wpss-no-requests {
 	text-align: center;
 	padding: 3rem 2rem;
-	background: var(--wpss-white, #ffffff);
+	background: var(--wpss-surface, #ffffff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
 }
@@ -995,7 +995,7 @@
 	right: 0;
 	width: 320px;
 	height: 100%;
-	background: var(--wpss-white, #ffffff);
+	background: var(--wpss-surface, #ffffff);
 	z-index: 9991;
 	transform: translateX(100%);
 	transition: transform 0.3s ease;
@@ -1049,7 +1049,7 @@
 	border-bottom: 1px solid var(--wpss-border);
 	position: sticky;
 	top: 0;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	z-index: 1;
 }
 
@@ -1241,7 +1241,7 @@
 }
 
 .wpss-milestone-row {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
 	padding: 12px;
@@ -1392,7 +1392,7 @@
 }
 
 .wpss-proposal-milestone-list__item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
 	padding: 10px 12px;

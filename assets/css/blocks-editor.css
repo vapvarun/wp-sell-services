@@ -245,7 +245,7 @@
 	height: 36px;
 	border: 1px solid var(--wpss-border, #e0e0e0);
 	border-radius: 4px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	cursor: pointer;
 	font-size: 14px;
 	font-weight: 500;

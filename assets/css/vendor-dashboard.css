@@ -29,7 +29,7 @@
    ========================================================================== */
 
 .wpss-dashboard__sidebar {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-right: 1px solid var(--wpss-border, #e5e7eb);
 	padding: 1.5rem;
 	position: sticky;
@@ -182,7 +182,7 @@
 	align-items: center;
 	gap: 1rem;
 	padding: 1.5rem;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
@@ -297,7 +297,7 @@
    ========================================================================== */
 
 .wpss-card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 	overflow: hidden;
@@ -452,7 +452,7 @@
    ========================================================================== */
 
 .wpss-table-wrapper {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 	overflow: hidden;
@@ -643,7 +643,7 @@
 	font-size: 0.9375rem;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-text, #1f2937);
 	transition: border-color var(--wpss-transition, 0.2s ease);
 }
@@ -685,7 +685,7 @@ select.wpss-input {
 	background-repeat: no-repeat;
 	background-position: right 12px center;
 	background-size: 16px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 	cursor: pointer;
 }
 
@@ -720,7 +720,7 @@ select.wpss-input::-ms-expand {
    ========================================================================== */
 
 .wpss-section {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 }

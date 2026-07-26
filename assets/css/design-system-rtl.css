@@ -43,6 +43,10 @@
 	--wpss-white: #ffffff;
 	--wpss-black: #111827;
 
+	/* Raised surface — white in light, dark tone in the dark block. Surfaces use
+	   this; --wpss-white stays literal white for on-colour text. */
+	--wpss-surface: #ffffff;
+
 	--wpss-text: #111827;
 	--wpss-text-secondary: #374151;
 	--wpss-text-muted: #6b7280;
@@ -312,6 +316,7 @@
 }
 
 :root[data-theme="dark"],
+:root[data-bx-mode="dark"],
 .wpss-dark .wpss-app {
 	--wpss-text: #e5e7eb;
 	--wpss-text-secondary: #d1d5db;
@@ -323,6 +328,7 @@
 	--wpss-bg-subtle: #1f2937;
 	--wpss-bg-muted: #374151;
 	--wpss-background: #0b1220;
+	--wpss-surface: #1f2937;
 	--wpss-border: #374151;
 	--wpss-border-light: #1f2937;
 

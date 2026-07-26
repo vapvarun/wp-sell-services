@@ -43,6 +43,14 @@
 	--wpss-white: #ffffff;
 	--wpss-black: #111827;
 
+	/* Raised surface (cards, sidebar, panels). Identical to --wpss-white in
+	   light — so light mode is unchanged — but flips to a dark raised tone in the
+	   dark block below. Surfaces MUST use this, never --wpss-white: the latter is
+	   a literal white kept for on-colour text (button labels) that must stay
+	   white in dark mode too. Mixing them was why cards/sidebar stayed white when
+	   the host theme (BuddyX/Reign) went dark. */
+	--wpss-surface: #ffffff;
+
 	--wpss-text: #111827;
 	--wpss-text-secondary: #374151;
 	--wpss-text-muted: #6b7280;
@@ -285,6 +293,10 @@
    entry points, identical overrides:
      - prefers-color-scheme: dark  -> respects the OS / browser setting
      - [data-theme="dark"], .wpss-dark .wpss-app  -> explicit in-app toggle
+     - [data-bx-mode="dark"]  -> host-theme toggle. BuddyX and Reign 8.x both
+       flip dark by setting data-bx-mode="dark" on the root and re-emitting their
+       --bx-*/--reign-* tokens under it. Without this selector the plugin stayed
+       light while the theme went dark (the Reign dark-mode bug).
    Dark token pairs are chosen to clear WCAG AA contrast on body copy.
    ========================================================================== */
 
@@ -312,6 +324,7 @@
 }
 
 :root[data-theme="dark"],
+:root[data-bx-mode="dark"],
 .wpss-dark .wpss-app {
 	--wpss-text: #e5e7eb;
 	--wpss-text-secondary: #d1d5db;
@@ -323,6 +336,7 @@
 	--wpss-bg-subtle: #1f2937;
 	--wpss-bg-muted: #374151;
 	--wpss-background: #0b1220;
+	--wpss-surface: #1f2937;
 	--wpss-border: #374151;
 	--wpss-border-light: #1f2937;
 

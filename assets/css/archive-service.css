@@ -180,7 +180,7 @@
 	align-items: center;
 	gap: 1rem;
 	padding: 1rem;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	margin-bottom: 1.5rem;
@@ -260,7 +260,7 @@
 	padding: 0.5rem 1rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	font-size: 0.875rem;
 	cursor: pointer;
 	min-width: 160px;
@@ -330,7 +330,7 @@
 	padding: 0 0.75rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	color: var(--wpss-text);
 	text-decoration: none;
 	font-size: 0.875rem;
@@ -360,7 +360,7 @@
 	inset-inline-start: 0;
 	width: 320px;
 	height: 100%;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	z-index: 9991;
 	transform: translateX(-100%);
 	transition: transform 0.3s ease;
@@ -402,7 +402,7 @@ body.wpss-sidebar-open::after {
 	border-bottom: 1px solid var(--wpss-border);
 	position: sticky;
 	top: 0;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	z-index: 1;
 }
 

@@ -14,7 +14,7 @@
  */
 
 .wpss-shepherd.shepherd-element {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-wp-admin-border, #c3c4c7);
 	border-radius: 6px;
 	box-shadow: 0 8px 24px rgba( 0, 0, 0, 0.12 );
@@ -71,7 +71,7 @@
 }
 
 .wpss-shepherd .shepherd-footer {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-top: 1px solid var(--wpss-wp-admin-bg, #f0f0f1);
 	border-radius: 0 0 6px 6px;
 	display: flex;
@@ -120,7 +120,7 @@
 }
 
 .wpss-shepherd .shepherd-arrow::before {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-wp-admin-border, #c3c4c7);
 }
 
@@ -271,7 +271,7 @@
 }
 
 .wpss-shepherd--frontend .shepherd-header {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px) var(--wpss-radius-lg, 12px) 0 0;
 	padding: var(--wpss-space-4, 16px) var(--wpss-space-5, 20px);
@@ -290,5 +290,5 @@
 }
 
 .wpss-shepherd--frontend.shepherd-has-title .shepherd-content .shepherd-header {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
