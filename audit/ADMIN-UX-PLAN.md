@@ -26,7 +26,7 @@ Legend: ✅ done + verified (browser + DB) · 🟡 partial / needs a pass · ⬜
 | Vendor public profile | ✅ | ✅ | 404-for-missing-meta fixed; empty + populated |
 | Dashboard — all 12 tabs | ✅ | ✅ | swept 2026-07-23; Earnings reconciles post seeder-fix |
 | Order view (buyer + vendor) | ✅ | ✅ | both parties; confirm-modal visibility fixed |
-| WooCommerce My-Account vendor dashboard | 🟡 | 🟡 | **unverified** — could not reach endpoint |
+| WooCommerce My-Account vendor dashboard | ❌→carded | | **VERIFIED broken + root-caused 2026-07-26.** In Woo platform mode, /my-account/vendor-dashboard/ 404s. Root cause: `WCAccountProvider` is instantiated but **never hooked** (no `woocommerce_account_menu_items`, no `init`→`register_endpoints`, no `woocommerce_get_query_vars`, no `_endpoint` content actions); render methods mis-target `account/*` template parts instead of `templates/myaccount/*.php`; no `render_vendor_dashboard_endpoint()`. Filed **Basecamp #10132672937** with the fix scope. Needs a focused Woo-mode implementation pass |
 
 ### B. Actions — driven for real, verified in browser + DB
 
@@ -54,8 +54,8 @@ Legend: ✅ done + verified (browser + DB) · 🟡 partial / needs a pass · ⬜
 | Proposal submit + accept (milestone contract) | ✅ | Diego → milestone proposal 16 on request 274 (builder totals live-compute $200/7d); Oliver accepts via confirm modal → request order + sub-orders created |
 | **BUG FIXED — Stripe pay_order intent** | ✅ | `ajax_create_payment_intent` had NO `pay_order` branch (only service+package or multi), and stripe.js/stripe.min.js never sent `pay_order` → Payment Element never mounted → **no buyer could pay a milestone phase OR any proposal-accepted order via Stripe (the only gateway)**. Server branch added + both JS files send `pay_order` on intent AND confirm. Verified: real PaymentIntent + card charge succeeds. phpcs clean |
 | **FIXED — milestone actions use wpssConfirm modal** | ✅ | approve/decline/delete migrated from native `confirm()`/`alert()` to `wpssConfirm()` + `wpssToast()` via a `confirmAction()`/`notifyError()` helper (danger tone on decline/cancel, native fallback). Verified: decline shows design-system modal → confirming cancels phase (order 63 → cancelled). Commit 5d38343 |
-| Other gateways + no-gateway-configured | ⬜ | site has Stripe only |
-| Approval-required / registration-closed vendor modes | ⬜ | site is auto-approve |
+| Other gateways + no-gateway-configured | ✅ | no-gateway → graceful "No payment methods available. Please contact support." (no fatal, no dead Pay button); Offline gateway renders + completes E2E (order 64, offline/pending_payment, vendor_earnings 22.500 = commission on offline path, 3dp). Verified 2026-07-26 |
+| Approval-required / registration-closed vendor modes | ✅ | `wpss_vendor[vendor_registration]` open/approval/closed. closed → "Registration is closed" card, no form. approval → form + "Applications are reviewed by our team. You'll be notified once approved."; `wpss_auto_approve_vendors` returns false unless 'open' (Plugin.php:1200) so submissions land pending. Verified 2026-07-26 |
 
 **Testing rule:** REST-based actions (portfolio, profile) must be verified under a
 REAL wp-login session — the `?autologin=` mu-plugin invalidates the REST nonce
