@@ -588,7 +588,19 @@ class PreflightCommand {
 
 		// Filters.
 		$this->record( 'Pro', 'Adapters', 'pass', count( apply_filters( 'wpss_ecommerce_adapters', array() ) ) . ' registered' );
-		$this->record( 'Pro', 'Gateways', 'pass', count( apply_filters( 'wpss_payment_gateways', array() ) ) . ' registered' );
+		// Count the authoritative registry, not apply_filters( 'wpss_payment_gateways' ):
+		// the free gateways (Stripe, Offline, Test) and PayPal register directly on
+		// wpss()->get_payment_gateways(); only Pro's Razorpay rides the filter. Counting
+		// the filter under-reported 1 when 4 were actually registered. Warn when nothing
+		// is enabled — a store that cannot take a payment is a real preflight failure.
+		$wpss_gateways         = wpss()->get_payment_gateways();
+		$wpss_enabled_gateways = array_filter( $wpss_gateways, static fn( $g ) => $g->is_enabled() );
+		$this->record(
+			'Pro',
+			'Gateways',
+			empty( $wpss_enabled_gateways ) ? 'warn' : 'pass',
+			sprintf( '%d registered, %d enabled', count( $wpss_gateways ), count( $wpss_enabled_gateways ) )
+		);
 		$this->record( 'Pro', 'Wallets', 'pass', count( apply_filters( 'wpss_wallet_providers', array() ) ) . ' registered' );
 		$this->record( 'Pro', 'Storage', 'pass', count( apply_filters( 'wpss_storage_providers', array() ) ) . ' registered' );
 
