@@ -93,8 +93,8 @@ reads ledger, refund policy T9/T10/T11, empty-state + services-grid consolidatio
 | T1–T3 payout keystone + clearance | ✅ |
 | T9/T10/T11 refund policy | ✅ |
 | D2 Vendors "Earned" ← ledger | ✅ |
-| T12 LedgerExporter / reconciliation / Preflight gateway count | ⬜ |
-| PayPal payout rebuild (double-pay fix) + T4–T6 Connect rail seam | 🔒 built LAST; free+pro version-locked |
+| T12 LedgerExporter / reconciliation / Preflight gateway count | ✅ 2026-07-26 — Preflight now counts the real registry (was 1, now 4/1-enabled + warns on 0); LedgerExporter net reconciles with wpss_get_ledger_balance (148.5==148.5); CSV precision fixed |
+| PayPal payout rebuild (double-pay fix) + T4–T6 Connect rail seam | 🔒 **DIAGNOSED 2026-07-26; rebuild is its own focused session (needs PayPal Payouts sandbox creds to verify).** ROOT CAUSE of double-pay: `PayoutsBatchService` computes owed from `SUM(orders.vendor_earnings) WHERE payment_status != 'paid_out'` (:403) and marks orders `paid_out`, but writes **NO ledger debit** — the whole PayPalPayouts module never touches `wpss_wallet_transactions`. So after a PayPal payout the SUM-authoritative ledger (dashboard balance + manual-withdrawal source) is unchanged → a manual withdrawal pays the vendor AGAIN. **Rebuild spec:** (1) compute owed from `wpss_get_ledger_balance`, not orders; (2) on payout-item completion write a ledger debit via the shared withdrawal-debit path so the balance drops and reconciles with manual withdrawals; (3) refund-after-payout → record a debt and net it (money-journey §6); (4) T4–T6 Connect rail seam. Do NOT ship unverified — highest-stakes money-out path |
 
 ---
 
