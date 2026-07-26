@@ -203,6 +203,13 @@ class UnifiedDashboard {
 		$this->current_section = $this->resolve_current_section();
 		$this->sections        = $this->get_sections();
 
+		// A hidden/denied section reached by direct URL falls back to the default
+		// landing section — hiding a menu item must also block its address, not
+		// just remove the link.
+		if ( ! $this->can_access_section( $this->current_section ) ) {
+			$this->current_section = $this->default_section();
+		}
+
 		ob_start();
 		$this->render_shell();
 		return ob_get_clean();
@@ -341,14 +348,20 @@ class UnifiedDashboard {
 		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
 		$user_id              = get_current_user_id();
 
-		if ( in_array( $section, $vendor_only_sections, true ) ) {
-			// Must be an active vendor (not just registered/pending).
-			return $this->vendor_service->is_vendor( $user_id )
-				&& 'active' === $this->vendor_service->get_vendor_status( $user_id );
+		// A vendor-only section requires an active (approved) vendor — pending
+		// vendors and non-vendors are refused outright.
+		if ( in_array( $section, $vendor_only_sections, true )
+			&& ! ( $this->vendor_service->is_vendor( $user_id )
+				&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) ) ) {
+			return false;
 		}
 
 		/**
 		 * Filter whether user can access a dashboard section.
+		 *
+		 * Runs for EVERY section — including vendor-only ones — so role-based menu
+		 * visibility can hide a selling section too. The filter only ever tightens
+		 * access; a section already refused above never reaches here.
 		 *
 		 * @since 1.1.0
 		 * @param bool   $can_access Whether user can access section.
@@ -504,11 +517,28 @@ class UnifiedDashboard {
 				</div>
 
 				<nav class="wpss-dashboard__nav">
-					<?php foreach ( $this->sections as $group_key => $group ) : ?>
+					<?php
+					foreach ( $this->sections as $group_key => $group ) :
+						// Drop items the current user's role cannot access (vendor-only
+						// gate + role-based menu visibility, via can_access_section) so
+						// the nav never shows a link that would be denied. A group whose
+						// items are all hidden is skipped entirely — no empty header.
+						$visible_items = array_filter(
+							$group['items'],
+							function ( $item_key ) {
+								return $this->can_access_section( (string) $item_key );
+							},
+							ARRAY_FILTER_USE_KEY
+						);
+
+						if ( empty( $visible_items ) ) {
+							continue;
+						}
+						?>
 						<div class="wpss-dashboard__nav-group">
 							<span class="wpss-dashboard__nav-label"><?php echo esc_html( $group['label'] ); ?></span>
 							<ul class="wpss-dashboard__nav-list">
-								<?php foreach ( $group['items'] as $item_key => $item ) : ?>
+								<?php foreach ( $visible_items as $item_key => $item ) : ?>
 									<li>
 										<a href="<?php echo esc_url( $this->get_section_url( $item_key ) ); ?>"
 											class="wpss-dashboard__nav-item <?php echo $this->current_section === $item_key ? 'wpss-dashboard__nav-item--active' : ''; ?>">

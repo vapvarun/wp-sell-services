@@ -1443,6 +1443,11 @@ final class Plugin {
 
 		$this->loader->add_action( 'init', $this->unified_dashboard, 'init' );
 
+		// Role-based menu visibility: hides dashboard sections + admin submenu
+		// pages per role (config under Settings > Advanced). No-op until an owner
+		// configures wpss_menu_visibility.
+		( new \WPSellServices\Frontend\MenuVisibility() )->register();
+
 		// Public signup AJAX handler — registered on init so it's available to
 		// both logged-in (re-promote) and logged-out (new signup) requests.
 		( new PublicSignup() )->init();
