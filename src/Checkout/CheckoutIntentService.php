@@ -348,6 +348,28 @@ class CheckoutIntentService {
 
 		$provider->mark_as_paid( $order->id, $txn, $gateway );
 
+		// Remove the purchased line from the cart so it can't be re-paid.
+		// settle_cart() clears the whole cart after a multi-item checkout; the
+		// single path buys one service/package, so drop just that line (matched
+		// on service_id + package_id) and leave any unrelated items intact.
+		// Without this, a single Stripe checkout left the item in the cart —
+		// PayPal and Offline already cleared it (re-checkout risk).
+		$cart = get_user_meta( $intent->buyer_id, '_wpss_cart', true );
+		if ( is_array( $cart ) && ! empty( $cart ) ) {
+			foreach ( $cart as $key => $item ) {
+				if ( (int) ( $item['service_id'] ?? 0 ) === $intent->service_id
+					&& (int) ( $item['package_id'] ?? 0 ) === $intent->package_id ) {
+					unset( $cart[ $key ] );
+				}
+			}
+
+			if ( empty( $cart ) ) {
+				delete_user_meta( $intent->buyer_id, '_wpss_cart' );
+			} else {
+				update_user_meta( $intent->buyer_id, '_wpss_cart', $cart );
+			}
+		}
+
 		return array(
 			'success'      => true,
 			'order_id'     => (int) $order->id,
