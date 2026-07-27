@@ -774,8 +774,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							<span>
 								<?php
 								printf(
-									/* translators: 1: number of remaining items, 2: current service title */
 									esc_html(
+										/* translators: 1: number of remaining items, 2: current service title */
 										_n(
 											'You have %1$d more item in your cart. This checkout is for %2$s only. Your other item will remain in your cart for separate checkout.',
 											'You have %1$d more items in your cart. This checkout is for %2$s only. Your other items will remain in your cart for separate checkout.',

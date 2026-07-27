@@ -188,8 +188,11 @@ class OrdersListTable extends \WP_List_Table {
 		// Sub-order platforms — render relationship to the parent rather
 		// than try to resolve a non-existent service post.
 		$sub_order_labels = array(
+			/* translators: %s: parent order number. */
 			'tip'       => __( 'Tip on order #%s', 'wp-sell-services' ),
+			/* translators: %s: parent order number. */
 			'extension' => __( 'Extension on order #%s', 'wp-sell-services' ),
+			/* translators: %s: parent order number. */
 			'milestone' => __( 'Milestone of order #%s', 'wp-sell-services' ),
 		);
 		if ( isset( $sub_order_labels[ $platform ] ) ) {

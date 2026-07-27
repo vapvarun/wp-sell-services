@@ -993,6 +993,7 @@ class Shortcodes {
 					if ( $min && $max ) {
 						echo esc_html( sprintf( '$%s - $%s', number_format( (float) $min ), number_format( (float) $max ) ) );
 					} elseif ( $max ) {
+						/* translators: %s: maximum budget amount. */
 						echo esc_html( sprintf( __( 'Up to $%s', 'wp-sell-services' ), number_format( (float) $max ) ) );
 					} else {
 						esc_html_e( 'Open budget', 'wp-sell-services' );

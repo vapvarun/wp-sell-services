@@ -1440,7 +1440,9 @@ class ServiceWizard {
 					'validationDesc'     => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
 					'validationPrice'    => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
 					'validationImage'    => __( 'Please upload a main image', 'wp-sell-services' ),
+					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgName'  => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
+					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgDesc'  => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
 					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
 					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),

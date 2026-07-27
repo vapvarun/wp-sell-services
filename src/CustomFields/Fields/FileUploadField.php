@@ -92,8 +92,8 @@ class FileUploadField extends AbstractField {
 
 			<p class="wpss-field-hint">
 				<?php
-				/* translators: 1: allowed file types, 2: max file size */
 				printf(
+					/* translators: 1: allowed file types, 2: max file size */
 					esc_html__( 'Allowed types: %1$s. Max size: %2$d MB.', 'wp-sell-services' ),
 					esc_html( $allowed ),
 					(int) $field['max_size']

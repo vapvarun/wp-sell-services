@@ -157,7 +157,9 @@ class UnifiedDashboard {
 					'deleteFailed'           => __( 'Delete failed.', 'wp-sell-services' ),
 					'saveFailed'             => __( 'Save failed.', 'wp-sell-services' ),
 					'failed'                 => __( 'Failed.', 'wp-sell-services' ),
+					/* translators: %d: number of saved services. */
 					'favoriteCountSingular'  => __( '%d saved service', 'wp-sell-services' ),
+					/* translators: %d: number of saved services. */
 					'favoriteCountPlural'    => __( '%d saved services', 'wp-sell-services' ),
 					'favoriteRemoveFailed'   => __( 'Could not remove favorite. Please try again.', 'wp-sell-services' ),
 					'chooseProfilePhoto'     => __( 'Choose Profile Photo', 'wp-sell-services' ),
