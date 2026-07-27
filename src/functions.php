@@ -29,6 +29,43 @@ function wpss_get_option( string $group, string $key, $default = null ) {
 }
 
 /**
+ * Convert a catalog price (service/package/addon) from the store base amount to
+ * the shopper's active currency.
+ *
+ * THE single seam for multi-currency amounts. Identity by default, so on the
+ * overwhelming majority of installs — no multi-currency plugin — nothing changes.
+ * A multi-currency integration (WooCommerceAdapter wires WOOCS/CURCY, Aelia or
+ * WCML) hooks `wpss_convert_price` to return the converted amount.
+ *
+ * Apply this ONLY to catalog prices the shopper pays — NOT to vendor-facing money
+ * (wallet balance, earnings, payouts, commission, refunds), which stay in the
+ * store base currency. Call it exactly once per amount, at the display boundary
+ * and again independently at the charge boundary from the SAME base value, so the
+ * two always agree and nothing is ever double-converted.
+ *
+ * @since 1.5.2
+ *
+ * @param float  $base     Amount in the store base currency.
+ * @param string $currency Target currency code (defaults to the active currency).
+ * @return float Converted amount, or $base unchanged when no converter is hooked.
+ */
+function wpss_convert_price( float $base, string $currency = '' ): float {
+	if ( '' === $currency ) {
+		$currency = wpss_get_currency();
+	}
+
+	/**
+	 * Filter a catalog price into the shopper's active currency.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param float  $base     Amount in the store base currency.
+	 * @param string $currency Target currency code.
+	 */
+	return (float) apply_filters( 'wpss_convert_price', $base, $currency );
+}
+
+/**
  * Format price with currency symbol.
  *
  * @param float  $price    The price to format.

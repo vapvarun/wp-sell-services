@@ -42,6 +42,17 @@ if ( empty( $packages ) ) {
 	];
 }
 
+// Convert each package price to the shopper's active currency ONCE here, so the
+// displayed price, the data-price attribute the order JS reads, and the total it
+// computes all agree. The server re-derives the charge from base meta and converts
+// independently (single conversion each side), so display and charge never drift.
+foreach ( $packages as $wpss_pkg_key => $wpss_pkg ) {
+	if ( isset( $wpss_pkg['price'] ) ) {
+		$packages[ $wpss_pkg_key ]['price'] = wpss_convert_price( (float) $wpss_pkg['price'] );
+	}
+}
+unset( $wpss_pkg_key, $wpss_pkg );
+
 $first_package_key = array_key_first( $packages );
 
 /**

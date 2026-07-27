@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
 $service_id     = get_the_ID();
 $vendor_id      = (int) get_post_field( 'post_author', $service_id );
 $vendor         = get_userdata( $vendor_id );
-$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
+$starting_price = wpss_convert_price( (float) get_post_meta( $service_id, '_wpss_starting_price', true ) );
 $rating_avg     = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 $rating_count   = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
 $categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'names' ) );
