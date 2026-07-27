@@ -77,6 +77,41 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 }
 
 /**
+ * Format a CATALOG price (what a shopper pays) with an optional display hint.
+ *
+ * Identical to wpss_format_price() by default, but scoped to catalog surfaces —
+ * service card, package tiers, single-service price — so an add-on (Pro) can
+ * append a "≈ €46" converted hint next to the base amount WITHOUT the hint ever
+ * appearing on vendor-facing money (wallet, earnings, payouts) that runs through
+ * plain wpss_format_price().
+ *
+ * The stored value is ALWAYS the base amount; any hint is presentation only and
+ * changes nothing in the database, the charge, or the ledger.
+ *
+ * @since 1.5.2
+ *
+ * @param float  $amount  Catalog amount in the store base currency.
+ * @param string $context Where it is shown ('card', 'package', 'single', …).
+ * @return string Base-price HTML, with a display hint appended if one is hooked.
+ */
+function wpss_catalog_price_html( float $amount, string $context = '' ): string {
+	/**
+	 * Filter catalog price HTML to append a display-currency hint.
+	 *
+	 * Hooked by Pro's display-currency feature. Receives the base-formatted HTML
+	 * and the raw base amount; must return HTML that still shows the base price
+	 * (append, never replace) so the shopper always sees what they are charged.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param string $html    Base price HTML from wpss_format_price().
+	 * @param float  $amount  Raw base amount.
+	 * @param string $context Catalog surface identifier.
+	 */
+	return apply_filters( 'wpss_catalog_price_html', wpss_format_price( $amount ), $amount, $context );
+}
+
+/**
  * THE status → CSS class authority for status badges.
  *
  * One place that turns any status value into its badge class, so no surface can

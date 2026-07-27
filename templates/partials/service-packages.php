@@ -89,7 +89,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 					<h3 class="wpss-package-name"><?php echo esc_html( $package['name'] ?? '' ); ?></h3>
 					<div class="wpss-package-price">
 						<?php
-						$price_html = wpss_format_price( (float) ( $package['price'] ?? 0 ) );
+						$price_html = wpss_catalog_price_html( (float) ( $package['price'] ?? 0 ), 'package' );
 
 						/**
 						 * Filters the package price HTML.
@@ -102,7 +102,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 						 */
 						$price_html = apply_filters( 'wpss_package_price_html', $price_html, $package, $service_id );
 
-						echo esc_html( $price_html );
+						echo wp_kses_post( $price_html );
 						?>
 					</div>
 				</div>
