@@ -689,10 +689,11 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// Multi-service checkout: accept total directly from the form.
 		$is_multi = ! empty( $_POST['is_multi_checkout'] );
 		if ( $is_multi ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float is sanitization.
-			$amount = (float) wp_unslash( $_POST['amount'] ?? 0 );
-			if ( $amount <= 0 ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
+			// Price the cart SERVER-SIDE via the shared seam — never trust the
+			// client amount (parity with Stripe; see CheckoutIntentService).
+			$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( array( 'is_multi_checkout' => true ) );
+			if ( is_wp_error( $intent ) ) {
+				wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
 				return;
 			}
 
@@ -702,7 +703,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'description'       => __( 'Multi-service cart checkout', 'wp-sell-services' ),
 			);
 
-			$result = $this->create_payment( $amount, $currency, $metadata );
+			$result = $this->create_payment( $intent->amount, $intent->currency, $metadata );
 
 			if ( $result['success'] ) {
 				wp_send_json_success( $result );

@@ -161,6 +161,14 @@
 		 * Create PayPal order via AJAX.
 		 */
 		createOrder: function(amount, currency, serviceId, packageId) {
+			// Parity with stripe.js: forward the pay-order / multi-cart routing
+			// signals so the server settles the right context (add-ons, an existing
+			// order, or a cart) instead of only the single-service case. The server
+			// prices from these keys, not from the client amount (BC 10134360358).
+			const payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
+			const isMulti = (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '';
+			const addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
+			const addonsData = document.querySelector('input[name="addons_data"], [name="addons_data"]')?.value || '';
 			return new Promise((resolve) => {
 				$.ajax({
 					url: wpssPayPal.ajaxUrl,
@@ -172,6 +180,10 @@
 						currency: currency,
 						service_id: serviceId,
 						package_id: packageId,
+						pay_order: payOrder,
+						is_multi_checkout: isMulti,
+						addon_ids: addonIds,
+						addons_data: addonsData,
 					},
 					success: resolve,
 					error: () => {
