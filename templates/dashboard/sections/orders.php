@@ -260,7 +260,7 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 							<p class="wpss-order-card__meta">
 								<?php
 								printf(
-									/* translators: %s: vendor name */
+									/* translators: %s: vendor or user display name */
 									esc_html__( 'by %s', 'wp-sell-services' ),
 									esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) )
 								);

@@ -1166,7 +1166,7 @@ class VendorsPage {
 		);
 		if ( ! empty( $failed ) ) {
 			$message .= ' ' . sprintf(
-				/* translators: %s: comma-separated list of failed vendor IDs */
+				/* translators: %s: comma-separated list of failed IDs and reasons */
 				__( 'Failed: %s', 'wp-sell-services' ),
 				implode( ', ', $failed )
 			);
@@ -2330,7 +2330,7 @@ class VendorsPage {
 							<span class="displaying-num">
 								<?php
 								printf(
-									/* translators: %s: number of items */
+									/* translators: %s: number of reviews */
 									esc_html( _n( '%s review', '%s reviews', $total, 'wp-sell-services' ) ),
 									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
 									number_format_i18n( $total )

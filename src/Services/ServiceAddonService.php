@@ -425,7 +425,7 @@ class ServiceAddonService {
 			return array(
 				'valid'   => false,
 				'message' => sprintf(
-					/* translators: %s: Addon title */
+					/* translators: %s: field label */
 					__( '%s is required.', 'wp-sell-services' ),
 					$addon->title
 				),
@@ -475,7 +475,7 @@ class ServiceAddonService {
 					return array(
 						'valid'   => false,
 						'message' => sprintf(
-							/* translators: %s: Addon title */
+							/* translators: %s: field label */
 							__( 'Invalid selection for %s.', 'wp-sell-services' ),
 							$addon->title
 						),

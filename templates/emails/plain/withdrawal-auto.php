@@ -29,9 +29,11 @@ echo "\n\n";
 echo "----------\n";
 printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->display_name : __( 'Unknown', 'wp-sell-services' ) ) );
 echo "\n";
+/* translators: %s: vendor email address. */
 printf( esc_html__( 'Email: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->user_email : '' ) );
 echo "\n";
 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is a safe function.
+/* translators: %s: payout amount. */
 printf( esc_html__( 'Amount: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $amount ) ) );
 echo "\n----------\n\n";
 

@@ -292,7 +292,7 @@ do_action( 'wpss_before_single_request', $request_id );
 														<span class="wpss-vendor-orders">
 															<?php
 															printf(
-																/* translators: %d: number of completed orders */
+																/* translators: %d: number of orders */
 																esc_html( _n( '%d order', '%d orders', $vendor_orders, 'wp-sell-services' ) ),
 																esc_html( $vendor_orders )
 															);
@@ -354,7 +354,7 @@ do_action( 'wpss_before_single_request', $request_id );
 																	<?php
 																	$row_days = (int) ( $ms['days'] ?? 0 );
 																	printf(
-																		/* translators: %d days */
+																		/* translators: %d: number of days */
 																		esc_html( _n( '%d day', '%d days', $row_days, 'wp-sell-services' ) ),
 																		(int) $row_days
 																	);
@@ -575,7 +575,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								<p class="wpss-form-help">
 									<?php
 									printf(
-										/* translators: %s: budget range */
+										/* translators: %s: budget amount or range */
 										esc_html__( 'Budget: %s', 'wp-sell-services' ),
 										esc_html( $budget_display )
 									);

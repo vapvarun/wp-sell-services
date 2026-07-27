@@ -122,7 +122,7 @@ do_action( 'wpss_before_dispute_view', $dispute, $order );
 			<span class="wpss-dispute-opener">
 				<?php
 				printf(
-					/* translators: %s: user name */
+					/* translators: %s: vendor or user display name */
 					esc_html__( 'by %s', 'wp-sell-services' ),
 					esc_html( $opener ? $opener->display_name : __( 'Unknown', 'wp-sell-services' ) )
 				);

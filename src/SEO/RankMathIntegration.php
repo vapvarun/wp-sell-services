@@ -170,7 +170,7 @@ class RankMathIntegration {
 
 		if ( $delivery_days ) {
 			$additions[] = sprintf(
-				/* translators: %d: days */
+				/* translators: %d: number of days */
 				_n( '%d day delivery', '%d days delivery', (int) $delivery_days, 'wp-sell-services' ),
 				(int) $delivery_days
 			);

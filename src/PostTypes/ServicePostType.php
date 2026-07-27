@@ -255,8 +255,8 @@ class ServicePostType {
 			2  => __( 'Custom field updated.', 'wp-sell-services' ),
 			3  => __( 'Custom field deleted.', 'wp-sell-services' ),
 			4  => __( 'Service updated.', 'wp-sell-services' ),
-			/* translators: %s: date and time of the revision */
 			5  => isset( $_GET['revision'] )
+				/* translators: %s: date and time of the revision */
 				? sprintf( __( 'Service restored to revision from %s', 'wp-sell-services' ), wp_post_revision_title( (int) $_GET['revision'], false ) )
 				: false,
 			/* translators: %s: post permalink */
@@ -264,8 +264,8 @@ class ServicePostType {
 			7  => __( 'Service saved.', 'wp-sell-services' ),
 			/* translators: %s: post permalink */
 			8  => sprintf( __( 'Service submitted. <a target="_blank" href="%s">Preview Service</a>', 'wp-sell-services' ), esc_url( add_query_arg( 'preview', 'true', $permalink ) ) ),
-			/* translators: 1: Publish box date format, 2: Post permalink */
 			9  => sprintf(
+				/* translators: 1: Publish box date format, 2: Post permalink */
 				__( 'Service scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview Service</a>', 'wp-sell-services' ),
 				date_i18n( __( 'M j, Y @ G:i', 'wp-sell-services' ), strtotime( $post->post_date ) ),
 				esc_url( $permalink )

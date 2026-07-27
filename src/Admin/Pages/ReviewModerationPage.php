@@ -408,7 +408,7 @@ JS;
 									<span class="displaying-num">
 										<?php
 										printf(
-											/* translators: %s: number of reviews. */
+											/* translators: %s: number of reviews */
 											esc_html( _n( '%s review', '%s reviews', $total, 'wp-sell-services' ) ),
 											esc_html( number_format_i18n( $total ) )
 										);
@@ -478,7 +478,7 @@ JS;
 				<?php
 				echo esc_attr(
 					sprintf(
-						/* translators: %d: rating out of 5. */
+						/* translators: %d: star rating out of 5 */
 						__( '%d out of 5 stars', 'wp-sell-services' ),
 						$rating
 					)

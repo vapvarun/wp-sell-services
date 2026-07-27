@@ -41,6 +41,7 @@ echo "\n";
 if ( ! empty( $is_admin ) ) {
 	$customer = get_user_by( 'id', $order->customer_id );
 	$vendor   = get_user_by( 'id', $order->vendor_id );
+	/* translators: %s: customer name or ID. */
 	printf( esc_html__( 'Customer: %s', 'wp-sell-services' ), esc_html( $customer ? $customer->display_name : '#' . $order->customer_id ) );
 	echo "\n";
 	printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->display_name : '#' . $order->vendor_id ) );

@@ -731,7 +731,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'service_id'  => (int) $pay_order->service_id,
 				'customer_id' => get_current_user_id(),
 				'description' => sprintf(
-					/* translators: %d: Order ID */
+					/* translators: %d: order ID */
 					__( 'Order #%d', 'wp-sell-services' ),
 					$pay_order_id
 				),

@@ -43,10 +43,13 @@ if ( ! empty( $is_customer ) ) {
 echo "\n\n";
 
 echo "----------\n";
+/* translators: %s: order number. */
 printf( esc_html__( 'Order: #%s', 'wp-sell-services' ), esc_html( $order->order_number ) );
 echo "\n";
+/* translators: %s: service title. */
 printf( esc_html__( 'Service: %s', 'wp-sell-services' ), esc_html( get_the_title( $order->service_id ) ) );
 echo "\n";
+/* translators: %s: order total amount. */
 printf( esc_html__( 'Order Total: %s', 'wp-sell-services' ), esc_html( wpss_format_price( (float) $order->total, $order->currency ) ) );
 echo "\n";
 echo esc_html__( 'Status: Cancellation Requested', 'wp-sell-services' );

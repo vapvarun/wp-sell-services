@@ -23,7 +23,7 @@ $vendor_name = $vendor ? $vendor->display_name : __( 'the vendor', 'wp-sell-serv
 echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
-	/* translators: %s: customer name */
+	/* translators: %s: recipient name */
 	esc_html__( 'Hi %s,', 'wp-sell-services' ),
 	esc_html( $customer ? $customer->display_name : __( 'there', 'wp-sell-services' ) )
 );

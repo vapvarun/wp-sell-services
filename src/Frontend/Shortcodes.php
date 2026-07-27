@@ -319,7 +319,7 @@ class Shortcodes {
 						<span class="wpss-category-count">
 							<?php
 							printf(
-								/* translators: %d: service count */
+								/* translators: %d: number of services */
 								esc_html( _n( '%d service', '%d services', $category->count, 'wp-sell-services' ) ),
 								(int) $category->count
 							);

@@ -334,7 +334,7 @@ class Review {
 	 * @return string
 	 */
 	public static function get_stars_html( int $rating ): string {
-		/* translators: %d: star rating (1-5) */
+		/* translators: %d: star rating out of 5 */
 		$html = '<span class="wpss-stars" aria-label="' . esc_attr( sprintf( __( '%d out of 5 stars', 'wp-sell-services' ), $rating ) ) . '">';
 
 		for ( $i = 1; $i <= 5; $i++ ) {

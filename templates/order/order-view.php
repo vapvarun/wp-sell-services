@@ -1678,7 +1678,7 @@ do_action( 'wpss_before_order_view', $order );
 						<strong><?php esc_html_e( 'Extra days', 'wp-sell-services' ); ?></strong>
 						<?php
 						printf(
-							/* translators: %d: extra days */
+							/* translators: %d: number of days */
 							esc_html( _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ) ),
 							absint( $pending_extension->extra_days )
 						);
@@ -1696,7 +1696,7 @@ do_action( 'wpss_before_order_view', $order );
 						<a href="<?php echo esc_url( $ext_pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php
 							printf(
-								/* translators: %s: formatted amount */
+								/* translators: %s: amount */
 								esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
 								esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) )
 							);

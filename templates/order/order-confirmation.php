@@ -95,7 +95,7 @@ do_action( 'wpss_before_order_confirmation', $order );
 						<p class="wpss-order-confirmation__item-vendor">
 							<?php
 							printf(
-								/* translators: %s: vendor name */
+								/* translators: %s: vendor or user display name */
 								esc_html__( 'by %s', 'wp-sell-services' ),
 								esc_html( $vendor->display_name )
 							);

@@ -1265,8 +1265,11 @@ class EmailService {
 		}
 
 		$subjects = array(
+			/* translators: 1: site name, 2: order number. */
 			1 => __( '[%1$s] Submit Your Requirements - Order #%2$s', 'wp-sell-services' ),
+			/* translators: 1: site name, 2: order number. */
 			2 => __( '[%1$s] Reminder: Requirements Needed - Order #%2$s', 'wp-sell-services' ),
+			/* translators: 1: site name, 2: order number. */
 			3 => __( '[%1$s] Final Reminder: Action Required - Order #%2$s', 'wp-sell-services' ),
 		);
 

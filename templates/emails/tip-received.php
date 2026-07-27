@@ -47,7 +47,7 @@ $earnings_url = add_query_arg( 'section', 'wallet', $dashboard );
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
 	printf(
-		/* translators: %s: vendor name */
+		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
 		esc_html( $vendor_name )
 	);

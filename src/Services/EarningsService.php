@@ -682,7 +682,7 @@ class EarningsService {
 			return array(
 				'success' => false,
 				'message' => sprintf(
-					/* translators: %s: minimum amount */
+					/* translators: %s: minimum withdrawal amount */
 					__( 'Minimum withdrawal amount is %s.', 'wp-sell-services' ),
 					wpss_format_price( $min_withdrawal )
 				),

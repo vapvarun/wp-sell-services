@@ -883,8 +883,8 @@ class OrderService {
 			$old_label = $statuses[ $old_status ] ?? $old_status;
 			$new_label = $statuses[ $new_status ] ?? $new_status;
 
-			/* translators: 1: old status, 2: new status */
 			$message = sprintf(
+				/* translators: 1: old status, 2: new status */
 				__( 'Order status changed from %1$s to %2$s', 'wp-sell-services' ),
 				$old_label,
 				$new_label

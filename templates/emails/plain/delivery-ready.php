@@ -23,7 +23,7 @@ $vendor_name = $vendor ? $vendor->display_name : __( 'The vendor', 'wp-sell-serv
 echo '= ' . esc_html( $email_heading ) . " =\n\n";
 
 printf(
-	/* translators: %s: customer name */
+	/* translators: %s: recipient name */
 	esc_html__( 'Hi %s,', 'wp-sell-services' ),
 	esc_html( $customer ? $customer->display_name : __( 'there', 'wp-sell-services' ) )
 );
@@ -41,6 +41,7 @@ printf( esc_html__( 'Order: #%s', 'wp-sell-services' ), esc_html( $order->order_
 echo "\n";
 printf( esc_html__( 'Service: %s', 'wp-sell-services' ), esc_html( get_the_title( $order->service_id ) ) );
 echo "\n";
+/* translators: %s: vendor name. */
 printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor_name ) );
 echo "\n----------\n\n";
 
