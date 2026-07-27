@@ -267,7 +267,7 @@ function wpssServiceWizard(existingData = {}) {
 
 				case 'pricing':
 					if (!this.isPackageValid('basic')) {
-						this.validationErrors.push(wpssWizard.strings.validationPrice);
+						this.validationErrors.push(this.basicPriceError());
 					}
 					// Validate enabled packages have a name. Description is no longer
 					// required — vendors describe their tier via the Features list
@@ -346,8 +346,29 @@ function wpssServiceWizard(existingData = {}) {
 
 			const price = parseFloat(pkg.price);
 			const deliveryTime = parseInt(pkg.delivery_time, 10);
+			// Enforce the same minimum the server requires at Publish, so the
+			// buyer can't Continue with $1–4.99 and only fail on the Publish AJAX.
+			const minPrice = parseFloat(wpssWizard.minPrice) || 0;
 
-			return !isNaN(price) && price > 0 && !isNaN(deliveryTime) && deliveryTime > 0;
+			return !isNaN(price) && price > 0 && price >= minPrice && !isNaN(deliveryTime) && deliveryTime > 0;
+		},
+
+		/**
+		 * Pick the right Basic-price error: the currency-aware "at least $X"
+		 * message when a price is set but below the minimum, otherwise the
+		 * generic "set a price" prompt.
+		 *
+		 * @return {string} Validation message.
+		 */
+		basicPriceError() {
+			const basicPrice = parseFloat(this.data.packages.basic.price);
+			const minPrice = parseFloat(wpssWizard.minPrice) || 0;
+
+			if (!isNaN(basicPrice) && basicPrice > 0 && basicPrice < minPrice && wpssWizard.strings.validationPriceMin) {
+				return wpssWizard.strings.validationPriceMin;
+			}
+
+			return wpssWizard.strings.validationPrice;
 		},
 
 		/**
@@ -702,7 +723,7 @@ function wpssServiceWizard(existingData = {}) {
 				this.validationErrors.push(wpssWizard.strings.validationDesc);
 			}
 			if (!this.isPackageValid('basic')) {
-				this.validationErrors.push(wpssWizard.strings.validationPrice);
+				this.validationErrors.push(this.basicPriceError());
 			}
 			if (!this.data.gallery.main) {
 				this.validationErrors.push(wpssWizard.strings.validationImage);

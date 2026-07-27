@@ -1424,6 +1424,10 @@ class ServiceWizard {
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
 				'currencySymbol' => wpss_get_currency_symbol(),
+				// Minimum Basic price, shared with the server validation via the
+				// same filter so the client can't Continue past a price the
+				// server will reject at Publish.
+				'minPrice'       => (float) apply_filters( 'wpss_min_service_price', 5 ),
 				'limits'         => $this->get_limits(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
@@ -1439,6 +1443,11 @@ class ServiceWizard {
 					'validationCat'      => __( 'Please select a category', 'wp-sell-services' ),
 					'validationDesc'     => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
 					'validationPrice'    => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
+					'validationPriceMin' => sprintf(
+						/* translators: %s: formatted minimum price (e.g. $5.00). */
+						__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
+						wpss_format_price( (float) apply_filters( 'wpss_min_service_price', 5 ) )
+					),
 					'validationImage'    => __( 'Please upload a main image', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgName'  => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
@@ -2077,8 +2086,13 @@ class ServiceWizard {
 			$errors[] = __( 'Description must be at least 120 characters.', 'wp-sell-services' );
 		}
 
-		if ( empty( $data['packages']['basic']['price'] ) || floatval( $data['packages']['basic']['price'] ) < 5 ) {
-			$errors[] = __( 'Basic package price must be at least $5.', 'wp-sell-services' );
+		$min_price = (float) apply_filters( 'wpss_min_service_price', 5 );
+		if ( empty( $data['packages']['basic']['price'] ) || floatval( $data['packages']['basic']['price'] ) < $min_price ) {
+			$errors[] = sprintf(
+				/* translators: %s: formatted minimum price (e.g. $5.00). */
+				__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
+				wpss_format_price( $min_price )
+			);
 		}
 
 		if ( empty( $data['packages']['basic']['delivery_time'] ) ) {
