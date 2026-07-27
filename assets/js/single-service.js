@@ -635,9 +635,17 @@
                         // Update cart count in header.
                         self.updateCartCount(response.data.cart_count);
 
-                        // Show success state.
+                        // The button says "Continue to Checkout" — honor it:
+                        // go straight to checkout after adding, instead of
+                        // parking on a cart-options panel. Fall back to that
+                        // panel only if no checkout URL is available.
                         setTimeout(function() {
-                            self.showCartOptions();
+                            const checkoutUrl = self.state.checkoutUrl || wpssService.checkoutUrl;
+                            if (checkoutUrl) {
+                                window.location.href = checkoutUrl;
+                            } else {
+                                self.showCartOptions();
+                            }
                         }, 500);
                     } else {
                         // Guests can't have a cart — the server returns a login_url.
