@@ -255,6 +255,24 @@ do_action( 'wpss_before_service_packages', $service_id );
 								}
 								?>
 							</p>
+						<?php elseif ( (float) ( $package['price'] ?? 0 ) <= 0 ) : ?>
+							<?php
+							// A package with no price is not a real, purchasable package
+							// (e.g. an admin published a service before configuring it).
+							// Render the CTA disabled WITHOUT the `wpss-order-btn` class so
+							// the order modal can never open — nothing is buyable at $0.
+							$wpss_price_note_id = 'wpss-price-cta-note-' . esc_attr( $index );
+							?>
+							<button type="button"
+									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									disabled
+									aria-disabled="true"
+									aria-describedby="<?php echo esc_attr( $wpss_price_note_id ); ?>">
+								<?php esc_html_e( 'Not available', 'wp-sell-services' ); ?>
+							</button>
+							<p id="<?php echo esc_attr( $wpss_price_note_id ); ?>" class="wpss-package-vacation-note">
+								<?php esc_html_e( 'This package is not available for purchase yet.', 'wp-sell-services' ); ?>
+							</p>
 						<?php else : ?>
 							<button type="button"
 									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn"
