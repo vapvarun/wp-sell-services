@@ -174,7 +174,13 @@ class Activator {
 				'vendor_registration'        => 'open',
 				'max_services_per_vendor'    => 20,
 				'require_verification'       => false,
-				'require_service_moderation' => true,
+				// Publish-and-sell by default so a new marketplace isn't empty on
+				// launch day (first vendor listings would otherwise stay hidden
+				// until an admin approves each one). Consistent with the open
+				// registration + no-verification defaults above. Owners who want
+				// to review listings first can enable moderation in the setup
+				// wizard or Vendor settings.
+				'require_service_moderation' => false,
 			),
 			// Order settings - matches Settings.php wpss_orders.
 			// Revision limits are defined per-package in service packages, not as a global setting.
