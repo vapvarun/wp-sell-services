@@ -22,7 +22,12 @@
 				return;
 			}
 
-			this.form = document.getElementById('wpss-checkout-form');
+			// Bind whichever checkout form is on the page: the single-service
+			// form or the multi-cart form. Without the multi fallback, this.form
+			// was null on the multi-cart page, so is_multi_checkout was never
+			// sent and multi-cart PayPal never settled (parity with stripe.js).
+			this.form = document.getElementById('wpss-checkout-form')
+				|| document.getElementById('wpss-multi-checkout-form');
 			this.errorElement = document.getElementById('wpss-paypal-error');
 
 			this.setupEventListeners();
