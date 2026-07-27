@@ -1042,7 +1042,8 @@
 .wpss-package-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-start;
+	align-items: baseline;
+	gap: var(--wpss-space-2, 0.5rem);
 	margin-bottom: 1rem;
 }
 
