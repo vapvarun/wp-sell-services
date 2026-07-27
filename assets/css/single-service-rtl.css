@@ -1054,9 +1054,22 @@
 }
 
 .wpss-package-price {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
 	font-size: 1.5rem;
 	font-weight: 700;
+	line-height: 1.2;
 	color: var(--wpss-text);
+}
+
+/* Keep the converted hint on its own line under the price, right-aligned, so
+   every tier looks the same whether the amount is $85 or $340 (logical flex-end
+   flips for RTL automatically). */
+.wpss-package-price .wpss-price-approx {
+	display: block;
+	margin-block-start: 0.15rem;
+	margin-inline-start: 0;
 }
 
 .wpss-package-description {
