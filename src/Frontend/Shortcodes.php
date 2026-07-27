@@ -211,10 +211,10 @@ class Shortcodes {
 		?>
 		<form class="wpss-search-form" action="<?php echo esc_url( $action ); ?>" method="get">
 			<div class="wpss-search-fields">
-				<input type="text" name="search" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( $wpss_current_search ); ?>">
+				<input type="text" name="search" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( $wpss_current_search ); ?>" aria-label="<?php esc_attr_e( 'Search services', 'wp-sell-services' ); ?>">
 
 				<?php if ( 'true' === $atts['show_categories'] ) : ?>
-					<select name="category" class="wpss-search-category">
+					<select name="category" class="wpss-search-category" aria-label="<?php esc_attr_e( 'Filter by category', 'wp-sell-services' ); ?>">
 						<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
 						<?php
 						$categories = get_terms(
