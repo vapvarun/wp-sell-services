@@ -194,7 +194,7 @@ Full documentation at [wbcomdesigns.com/docs/wp-sell-services](https://wbcomdesi
 
 = Is WooCommerce required? =
 
-No. WP Sell Services includes a built-in standalone checkout system with an offline payment gateway. Your marketplace is fully functional out of the box — service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds direct Stripe, PayPal, and Razorpay payment gateways, plus WooCommerce, EDD, FluentCart, and SureCart integrations for sites that prefer those platforms.
+No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box — service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, EDD, FluentCart, and SureCart integrations for sites that prefer those platforms.
 
 = Does this work with my WordPress theme? =
 
