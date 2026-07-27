@@ -361,7 +361,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-wide">
 						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_packages[<?php echo esc_attr( $index ); ?>][name]"
+						<input type="text" name="wpss_packages[<?php echo esc_attr( $index ); ?>][name]" aria-label="<?php esc_attr_e( 'Package name', 'wp-sell-services' ); ?>"
 								value="<?php echo esc_attr( $package['name'] ?? '' ); ?>"
 								class="widefat wpss-package-name-input"
 								placeholder="<?php esc_attr_e( 'e.g., Standard, Premium, Enterprise', 'wp-sell-services' ); ?>">
@@ -373,7 +373,7 @@ class ServiceMetabox {
 						</label>
 						<div class="wpss-input-with-prefix">
 							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
-							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][price]"
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][price]" aria-label="<?php esc_attr_e( 'Package price', 'wp-sell-services' ); ?>"
 									value="<?php echo esc_attr( $package['price'] ?? '' ); ?>"
 									class="wpss-package-price-input"
 									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
@@ -383,7 +383,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-full">
 						<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
-						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][description]"
+						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][description]" aria-label="<?php esc_attr_e( 'Package description', 'wp-sell-services' ); ?>"
 								rows="2" class="widefat"
 								placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"><?php echo esc_textarea( $package['description'] ?? '' ); ?></textarea>
 					</div>
@@ -395,7 +395,7 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][delivery_days]"
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][delivery_days]" aria-label="<?php esc_attr_e( 'Delivery time in days', 'wp-sell-services' ); ?>"
 									value="<?php echo esc_attr( ! empty( $package['delivery_days'] ) ? $package['delivery_days'] : '' ); ?>"
 									min="1" max="365" placeholder="7">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
@@ -407,7 +407,7 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][revisions]"
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][revisions]" aria-label="<?php esc_attr_e( 'Number of revisions', 'wp-sell-services' ); ?>"
 									value="<?php echo esc_attr( ! empty( $package['revisions'] ) ? $package['revisions'] : '' ); ?>"
 									min="0" max="20" placeholder="2">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
@@ -420,7 +420,7 @@ class ServiceMetabox {
 							<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
 						</label>
-						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][features]"
+						<textarea name="wpss_packages[<?php echo esc_attr( $index ); ?>][features]" aria-label="<?php esc_attr_e( 'Features included', 'wp-sell-services' ); ?>"
 								rows="3" class="widefat"
 								placeholder="<?php esc_attr_e( "Feature 1\nFeature 2\nFeature 3", 'wp-sell-services' ); ?>"><?php echo esc_textarea( implode( "\n", (array) ( $package['features'] ?? array() ) ) ); ?></textarea>
 						<p class="description"><?php esc_html_e( 'Enter one feature per line', 'wp-sell-services' ); ?></p>
@@ -1346,14 +1346,14 @@ class ServiceMetabox {
 				<div class="wpss-faq-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
 					<div class="wpss-faq-header">
 						<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
-						<input type="text" name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][question]"
+						<input type="text" name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][question]" aria-label="<?php esc_attr_e( 'FAQ question', 'wp-sell-services' ); ?>"
 								value="<?php echo esc_attr( $faq['question'] ?? '' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter question...', 'wp-sell-services' ); ?>" class="widefat">
 						<button type="button" class="wpss-remove-faq" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
 							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 						</button>
 					</div>
-					<textarea name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][answer]"
+					<textarea name="wpss_faqs[<?php echo esc_attr( (string) $index ); ?>][answer]" aria-label="<?php esc_attr_e( 'FAQ answer', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter answer...', 'wp-sell-services' ); ?>"
 								rows="3" class="widefat"><?php echo esc_textarea( $faq['answer'] ?? '' ); ?></textarea>
 				</div>
@@ -1396,7 +1396,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-wide">
 						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_packages[{{data.index}}][name]"
+						<input type="text" name="wpss_packages[{{data.index}}][name]" aria-label="<?php esc_attr_e( 'Package name', 'wp-sell-services' ); ?>"
 								class="widefat wpss-package-name-input"
 								placeholder="<?php esc_attr_e( 'e.g., Standard, Premium, Enterprise', 'wp-sell-services' ); ?>">
 					</div>
@@ -1407,7 +1407,7 @@ class ServiceMetabox {
 						</label>
 						<div class="wpss-input-with-prefix">
 							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
-							<input type="number" name="wpss_packages[{{data.index}}][price]"
+							<input type="number" name="wpss_packages[{{data.index}}][price]" aria-label="<?php esc_attr_e( 'Package price', 'wp-sell-services' ); ?>"
 									class="wpss-package-price-input"
 									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
 						</div>
@@ -1416,7 +1416,7 @@ class ServiceMetabox {
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-full">
 						<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
-						<textarea name="wpss_packages[{{data.index}}][description]"
+						<textarea name="wpss_packages[{{data.index}}][description]" aria-label="<?php esc_attr_e( 'Package description', 'wp-sell-services' ); ?>"
 								rows="2" class="widefat"
 								placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"></textarea>
 					</div>
@@ -1428,7 +1428,7 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[{{data.index}}][delivery_days]"
+							<input type="number" name="wpss_packages[{{data.index}}][delivery_days]" aria-label="<?php esc_attr_e( 'Delivery time in days', 'wp-sell-services' ); ?>"
 									min="1" max="365" placeholder="7">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
 						</div>
@@ -1439,7 +1439,7 @@ class ServiceMetabox {
 							<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
 						</label>
 						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[{{data.index}}][revisions]"
+							<input type="number" name="wpss_packages[{{data.index}}][revisions]" aria-label="<?php esc_attr_e( 'Number of revisions', 'wp-sell-services' ); ?>"
 									min="0" max="20" placeholder="2">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
 						</div>
@@ -1451,7 +1451,7 @@ class ServiceMetabox {
 							<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
 						</label>
-						<textarea name="wpss_packages[{{data.index}}][features]"
+						<textarea name="wpss_packages[{{data.index}}][features]" aria-label="<?php esc_attr_e( 'Features included', 'wp-sell-services' ); ?>"
 								rows="3" class="widefat"
 								placeholder="<?php esc_attr_e( "Feature 1\nFeature 2\nFeature 3", 'wp-sell-services' ); ?>"></textarea>
 						<p class="description"><?php esc_html_e( 'Enter one feature per line', 'wp-sell-services' ); ?></p>
@@ -1617,13 +1617,13 @@ class ServiceMetabox {
 		<div class="wpss-faq-item" data-index="{{data.index}}">
 			<div class="wpss-faq-header">
 				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
-				<input type="text" name="wpss_faqs[{{data.index}}][question]"
+				<input type="text" name="wpss_faqs[{{data.index}}][question]" aria-label="<?php esc_attr_e( 'FAQ question', 'wp-sell-services' ); ?>"
 						placeholder="<?php esc_attr_e( 'Enter question...', 'wp-sell-services' ); ?>" class="widefat">
 				<button type="button" class="wpss-remove-faq" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
 					<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 			</div>
-			<textarea name="wpss_faqs[{{data.index}}][answer]"
+			<textarea name="wpss_faqs[{{data.index}}][answer]" aria-label="<?php esc_attr_e( 'FAQ answer', 'wp-sell-services' ); ?>"
 						placeholder="<?php esc_attr_e( 'Enter answer...', 'wp-sell-services' ); ?>"
 						rows="3" class="widefat"></textarea>
 		</div>
