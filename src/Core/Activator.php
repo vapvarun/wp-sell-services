@@ -240,6 +240,22 @@ class Activator {
 			delete_option( $old_option );
 		}
 
+		// First-run only: enable Manual/Offline payment so day-one checkout works
+		// without any API keys — a fresh install must be able to take an order
+		// (owner accepts bank/manual payment). Gated on BOTH "no offline settings
+		// yet" AND "never activated before", so upgrades never re-enable it and an
+		// owner who disabled it is never overridden (BC 10134397011).
+		if ( false === get_option( 'wpss_offline_settings' ) && false === get_option( 'wpss_activated_at' ) ) {
+			add_option(
+				'wpss_offline_settings',
+				array(
+					'enabled'      => '1',
+					'title'        => __( 'Manual / Offline Payment', 'wp-sell-services' ),
+					'instructions' => __( 'The site owner will contact you with payment instructions after you place your order.', 'wp-sell-services' ),
+				)
+			);
+		}
+
 		// Set activation timestamp.
 		if ( false === get_option( 'wpss_activated_at' ) ) {
 			add_option( 'wpss_activated_at', time() );
