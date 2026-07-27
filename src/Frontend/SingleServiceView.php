@@ -467,10 +467,15 @@ class SingleServiceView {
 							$rating_count = (int) ( $profile->total_reviews ?? get_user_meta( $vendor_id, '_wpss_rating_count', true ) );
 							if ( $rating_count > 0 ) :
 								?>
-								<span class="wpss-quick-stat">
+								<?php // This is the SELLER's overall rating (across all their
+								// services). Label it so it doesn't read as this one
+								// service's rating and contradict the service-scoped
+								// "No reviews yet" in the Reviews section below. ?>
+								<span class="wpss-quick-stat" title="<?php esc_attr_e( 'Overall seller rating across all their services', 'wp-sell-services' ); ?>">
 									<span class="wpss-star filled">★</span>
 									<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
 									(<?php echo esc_html( $rating_count ); ?>)
+									<span class="wpss-quick-stat__note"><?php esc_html_e( 'seller rating', 'wp-sell-services' ); ?></span>
 								</span>
 							<?php endif; ?>
 
