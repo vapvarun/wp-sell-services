@@ -842,21 +842,6 @@ class SingleServiceView {
 		$packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
 		$extras     = wpss_get_service_extras( $service_id );
 
-		// Convert catalog prices to the shopper's active currency ONCE, so the
-		// data-price attribute the order JS sums and the visible price agree. The
-		// server re-derives the charge from base meta and converts independently.
-		foreach ( $packages as $wpss_k => $wpss_pkg ) {
-			if ( isset( $wpss_pkg['price'] ) ) {
-				$packages[ $wpss_k ]['price'] = wpss_convert_price( (float) $wpss_pkg['price'] );
-			}
-		}
-		foreach ( $extras as $wpss_k => $wpss_extra ) {
-			if ( isset( $wpss_extra['price'] ) ) {
-				$extras[ $wpss_k ]['price'] = wpss_convert_price( (float) $wpss_extra['price'] );
-			}
-		}
-		unset( $wpss_k, $wpss_pkg, $wpss_extra );
-
 		// Don't show modal for own services.
 		$vendor_id = (int) get_post_field( 'post_author', $service_id );
 		if ( get_current_user_id() === $vendor_id ) {
