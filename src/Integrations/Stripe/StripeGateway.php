@@ -881,126 +881,23 @@ class StripeGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$currency = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
-
-		// Multi-service checkout: accept total directly from the form.
-		$is_multi = ! empty( $_POST['is_multi_checkout'] );
-		if ( $is_multi ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float is sanitization.
-			$amount = (float) wp_unslash( $_POST['amount'] ?? 0 );
-			if ( $amount <= 0 ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			$result = $this->create_payment(
-				$amount,
-				$currency,
-				array(
-					'is_multi_checkout' => '1',
-					'customer_id'       => get_current_user_id(),
-				)
-			);
-
-			if ( $result['success'] ) {
-				wp_send_json_success( $result );
-			} else {
-				wp_send_json_error( array( 'message' => $result['error'] ) );
-			}
-			return;
-		}
-
-		// Pay-existing-order flow (proposal-accepted order, milestone phase): the
-		// amount is the order total, not a catalog service+package price. Price the
-		// intent from the order and skip the service/package validation, which only
-		// applies to buying a service listing. The confirm half already branches on
-		// pay_order (see ajax_confirm_payment); the intent half must match or the
-		// Payment Element never mounts and the phase can never be paid.
-		$pay_order_id = absint( $_POST['pay_order'] ?? 0 );
-		if ( $pay_order_id ) {
-			$order = wpss_get_order( $pay_order_id );
-			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			if ( 'pending_payment' !== $order->status ) {
-				wp_send_json_error( array( 'message' => __( 'This order has already been paid.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			// Lock-step backstop: a locked milestone phase cannot be funded before
-			// the previous phase is approved. The dashboard hides the Pay button,
-			// but the server is the only authority against a hand-crafted request.
-			if ( \WPSellServices\Services\MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
-				$milestones = new \WPSellServices\Services\MilestoneService();
-				if ( $milestones->is_locked( $pay_order_id ) ) {
-					wp_send_json_error( array( 'message' => __( 'This phase is locked. Pay the previous phase first.', 'wp-sell-services' ) ) );
-					return;
-				}
-			}
-
-			$amount = (float) $order->total;
-			if ( $amount <= 0 ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			$result = $this->create_payment(
-				$amount,
-				$order->currency ?: $currency,
-				array(
-					'order_id'    => (int) $order->id,
-					'vendor_id'   => (int) $order->vendor_id,
-					'service_id'  => (int) $order->service_id,
-					'customer_id' => get_current_user_id(),
-				)
-			);
-
-			if ( $result['success'] ) {
-				wp_send_json_success( $result );
-			} else {
-				wp_send_json_error( array( 'message' => $result['error'] ) );
-			}
-			return;
-		}
-
-		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$package_id = absint( $_POST['package_id'] ?? 0 );
-
-		// Verify amount server-side from package price.
-		$service = get_post( $service_id );
-		if ( ! $service || 'wpss_service' !== $service->post_type || 'publish' !== $service->post_status ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid package.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$amount = (float) $packages[ $package_id ]['price'];
-		if ( $amount <= 0 ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Include addon prices in the payment amount.
-		$addon_data = wpss_resolve_checkout_addons( $service_id );
-		$amount    += $addon_data['addons_total'];
-
-		$result = $this->create_payment(
-			$amount,
-			$currency,
-			array(
-				'service_id'  => $service_id,
-				'package_id'  => $package_id,
-				'customer_id' => get_current_user_id(),
-			)
+		// Pricing + routing (single / multi-cart / pay-order) is resolved once,
+		// server-side, by the gateway-agnostic CheckoutIntentService — the client
+		// amount is never trusted. See audit/PAYMENT-ARCHITECTURE-RND.md.
+		$request = array(
+			'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
+			'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
+			'service_id'        => absint( $_POST['service_id'] ?? 0 ),
+			'package_id'        => absint( $_POST['package_id'] ?? 0 ),
 		);
 
+		$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( $request );
+		if ( is_wp_error( $intent ) ) {
+			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
+			return;
+		}
+
+		$result = $this->create_payment( $intent->amount, $intent->currency, $intent->metadata );
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
 		} else {
@@ -1033,9 +930,6 @@ class StripeGateway implements PaymentGatewayInterface {
 		// stripe.js sends `payment_intent_id`; the checkout form sends
 		// `stripe_payment_intent_id`. Accept both.
 		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? $_POST['stripe_payment_intent_id'] ?? '' ) );
-		$service_id        = absint( $_POST['service_id'] ?? 0 );
-		$package_id        = absint( $_POST['package_id'] ?? 0 );
-		$pay_order_id      = absint( $_POST['pay_order'] ?? 0 );
 
 		if ( ! $payment_intent_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid payment.', 'wp-sell-services' ) ) );
@@ -1059,122 +953,42 @@ class StripeGateway implements PaymentGatewayInterface {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		wpss_save_billing_from_request( $_POST );
 
-		$order_provider = wpss_get_order_provider();
-
-		if ( ! $order_provider ) {
-			wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$is_multi = ! empty( $_POST['is_multi_checkout'] );
-
-		// Multi-service checkout: create one order per cart item.
-		if ( $is_multi ) {
-			$customer_id = get_current_user_id();
-			$cart        = get_user_meta( $customer_id, '_wpss_cart', true );
-			$cart        = is_array( $cart ) ? $cart : array();
-
-			if ( empty( $cart ) ) {
-				$this->process_refund( $payment_intent_id );
-				wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			$order_ids = $order_provider->create_orders_from_cart( $cart, 'stripe', $payment_intent_id, $customer_id );
-
-			if ( empty( $order_ids ) ) {
-				$refund_result = $this->process_refund( $payment_intent_id );
-				if ( empty( $refund_result['success'] ) ) {
-					wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but multi-order creation AND refund both failed. Manual intervention required.", 'error' );
-				}
-				wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please contact support.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			// Mark all created orders as paid.
-			foreach ( $order_ids as $oid ) {
-				$order_provider->mark_as_paid( $oid, $payment_intent_id, 'stripe' );
-			}
-
-			// Update PaymentIntent metadata with comma-separated order IDs for webhook recovery.
-			$this->api_request(
-				"payment_intents/{$payment_intent_id}",
-				array( 'metadata' => array( 'order_ids' => implode( ',', $order_ids ) ) )
-			);
-
-			// Clear entire cart.
-			delete_user_meta( $customer_id, '_wpss_cart' );
-
-			wp_send_json_success(
-				array(
-					'order_ids'    => $order_ids,
-					'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
-				)
-			);
-			return;
-		}
-
-		// Pay for existing order (from proposal acceptance) or create new order.
-		if ( $pay_order_id ) {
-			$order = wpss_get_order( $pay_order_id );
-			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
-				$this->process_refund( $payment_intent_id );
-				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-				return;
-			}
-		} else {
-			$service = wpss_get_service( $service_id );
-			if ( ! $service ) {
-				wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			// Resolve addon data from checkout form.
-			$addon_data   = wpss_resolve_checkout_addons( $service_id );
-			$addons_total = $addon_data['addons_total'];
-
-			$order = $order_provider->create_order(
-				array(
-					'service_id'     => $service_id,
-					'package_id'     => $package_id,
-					'customer_id'    => get_current_user_id(),
-					'subtotal'       => $payment['amount'] - $addons_total,
-					'addons'         => $addon_data['addons'],
-					'addons_total'   => $addons_total,
-					'currency'       => $payment['currency'],
-					'payment_method' => 'stripe',
-				)
-			);
-
-			if ( ! $order ) {
-				$refund_result = $this->process_refund( $payment_intent_id );
-				if ( empty( $refund_result['success'] ) ) {
-					wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
-				}
-				wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
-				return;
-			}
-		}
-
-		// Update Stripe PaymentIntent metadata with order_id so webhooks can recover.
-		$this->api_request(
-			"payment_intents/{$payment_intent_id}",
-			array( 'metadata' => array( 'order_id' => $order->id ) )
-		);
-
-		// Mark as paid.
-		$paid = $order_provider->mark_as_paid( $order->id, $payment_intent_id, 'stripe' );
-		if ( ! $paid ) {
-			wpss_log( "Failed to mark order {$order->id} as paid for Stripe payment {$payment_intent_id}.", 'error' );
-		}
-
-		wp_send_json_success(
+		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$intent   = $checkout->resolve(
 			array(
-				'order_id'     => $order->id,
-				'order_number' => $order->order_number,
-				'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+				'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
+				'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
+				'service_id'        => absint( $_POST['service_id'] ?? 0 ),
+				'package_id'        => absint( $_POST['package_id'] ?? 0 ),
 			)
 		);
+
+		// Resolve failed after a successful charge — refund and bail.
+		if ( is_wp_error( $intent ) ) {
+			$this->process_refund( $payment_intent_id );
+			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
+			return;
+		}
+
+		$settle = $checkout->settle( $intent, 'stripe', $payment_intent_id, (float) $payment['amount'], (string) $payment['currency'] );
+
+		if ( empty( $settle['success'] ) ) {
+			$refund = $this->process_refund( $payment_intent_id );
+			if ( empty( $refund['success'] ) ) {
+				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+			}
+			wp_send_json_error( array( 'message' => $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Stamp order id(s) on the PaymentIntent so webhooks can recover.
+		if ( ! empty( $settle['order_ids'] ) ) {
+			$this->api_request( "payment_intents/{$payment_intent_id}", array( 'metadata' => array( 'order_ids' => implode( ',', $settle['order_ids'] ) ) ) );
+		} elseif ( ! empty( $settle['order_id'] ) ) {
+			$this->api_request( "payment_intents/{$payment_intent_id}", array( 'metadata' => array( 'order_id' => $settle['order_id'] ) ) );
+		}
+
+		wp_send_json_success( $settle );
 	}
 
 	/**

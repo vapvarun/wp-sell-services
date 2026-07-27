@@ -165,6 +165,10 @@
 						package_id: packageId,
 						addon_ids: addonIds,
 						pay_order: payOrder,
+						// Routing signal only (not the price) — the server resolves the
+						// authoritative amount from the cart. Parity with the confirm path
+						// so the multi-cart Payment Element mounts (BC 10134360287).
+						is_multi_checkout: (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '',
 					},
 					success: resolve,
 					error: () => {
