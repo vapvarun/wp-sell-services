@@ -2580,7 +2580,53 @@ function wpss_get_order_requirements_url( int $order_id ): string {
  */
 function wpss_get_service_requirements( int $service_id ): array {
 	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-	return is_array( $requirements ) ? $requirements : array();
+	$requirements = is_array( $requirements ) ? $requirements : array();
+
+	return array_map( 'wpss_normalize_requirement_choices', $requirements );
+}
+
+/**
+ * Normalize a requirement's choice list into one canonical shape.
+ *
+ * Choice-type requirements (select / radio / multiple) were saved under two
+ * different keys and types — the frontend wizard wrote `options` (comma string),
+ * the admin metabox wrote `choices` (comma string) — while the buyer form reads
+ * `options` as a value=>label ARRAY and validation reads `choices`. That mismatch
+ * left dropdowns empty and choice validation broken (BC 10134408650).
+ *
+ * This makes every consumer agree: it sets BOTH
+ *   - `choices` : canonical comma STRING  (admin field + RequirementsService validation)
+ *   - `options` : value=>label ARRAY      (buyer requirements form)
+ * derived from whichever key/type was stored. Non-choice fields are untouched.
+ *
+ * @since 1.5.2
+ *
+ * @param array<string,mixed> $req A single requirement definition.
+ * @return array<string,mixed>
+ */
+function wpss_normalize_requirement_choices( array $req ): array {
+	$raw = $req['options'] ?? $req['choices'] ?? '';
+
+	if ( is_array( $raw ) ) {
+		// Already an array — could be a plain list or a value=>label map.
+		$list = array();
+		foreach ( $raw as $key => $value ) {
+			$list[] = is_string( $value ) && '' !== trim( $value ) ? trim( $value ) : trim( (string) $key );
+		}
+	} else {
+		$list = array_map( 'trim', explode( ',', (string) $raw ) );
+	}
+
+	$list = array_values( array_unique( array_filter( $list, static fn( $v ) => '' !== $v ) ) );
+
+	if ( empty( $list ) ) {
+		return $req; // Not a choice field (or no choices) — leave as-is.
+	}
+
+	$req['choices'] = implode( ', ', $list );
+	$req['options'] = array_combine( $list, $list );
+
+	return $req;
 }
 
 /**

@@ -385,7 +385,8 @@ class SingleServiceView {
 	 * @return void
 	 */
 	private function render_requirements( Service $service ): void {
-		$requirements = get_post_meta( $service->id, '_wpss_requirements', true );
+		// Canonical getter → choice fields normalized (options array + choices string).
+		$requirements = wpss_get_service_requirements( $service->id );
 
 		if ( empty( $requirements ) ) {
 			return;
