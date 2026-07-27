@@ -56,9 +56,10 @@ class MenuVisibility {
 		add_action( 'admin_menu', array( $this, 'hide_admin_pages' ), 999 );
 
 		// Settings UI: register the option in the Advanced tab's group so its form
-		// saves it, and render the role x section matrix in that tab.
+		// saves it, and render the role x section matrix in that tab. Uses the
+		// current sections hook (unified .wpss-card chrome), not the legacy action.
 		add_action( 'admin_init', array( $this, 'register_setting' ) );
-		add_action( 'wpss_advanced_settings_sections', array( $this, 'render_settings_ui' ) );
+		add_action( 'wpss_settings_sections_advanced', array( $this, 'render_settings_ui' ) );
 	}
 
 	/**
@@ -168,47 +169,53 @@ class MenuVisibility {
 		$sections = self::dashboard_sections();
 		$roles    = wp_roles()->get_names();
 		?>
-		<div class="wpss-settings-card wpss-settings-card--auto">
-			<h2><?php esc_html_e( 'Menu Visibility', 'wp-sell-services' ); ?></h2>
-			<p class="description">
-				<?php esc_html_e( 'Tick a box to hide that dashboard section from a role. Hiding a section also blocks its direct URL. Leave everything unticked to show all sections to everyone (the default).', 'wp-sell-services' ); ?>
-			</p>
-			<form method="post" action="options.php">
-				<?php settings_fields( 'wpss_menu_visibility' ); ?>
-			<div style="overflow-x:auto;">
-				<table class="widefat striped" style="min-width:640px;">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'Dashboard section', 'wp-sell-services' ); ?></th>
-							<?php foreach ( $roles as $role_slug => $role_name ) : ?>
-								<th style="text-align:center;"><?php echo esc_html( $role_name ); ?></th>
-							<?php endforeach; ?>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $sections as $section_key => $section_label ) : ?>
+		<div class="wpss-card" data-section="menu-visibility">
+			<div class="wpss-card__head">
+				<p class="wpss-card__title"><?php esc_html_e( 'MENU VISIBILITY', 'wp-sell-services' ); ?></p>
+				<p class="wpss-card__desc">
+					<?php esc_html_e( 'Tick a box to hide that dashboard section from a role. Hiding a section also blocks its direct URL. Leave everything unticked to show all sections to everyone (the default).', 'wp-sell-services' ); ?>
+				</p>
+			</div>
+			<div class="wpss-card__body">
+				<form method="post" action="options.php">
+					<?php settings_fields( 'wpss_menu_visibility' ); ?>
+				<div style="overflow-x:auto;">
+					<table class="widefat striped" style="min-width:640px;">
+						<thead>
 							<tr>
-								<td><?php echo esc_html( $section_label ); ?></td>
-								<?php
-								foreach ( $roles as $role_slug => $role_name ) :
-									$hidden  = ! empty( $map[ $role_slug ]['dashboard'] ) && in_array( $section_key, (array) $map[ $role_slug ]['dashboard'], true );
-									$name    = self::OPTION . '[' . esc_attr( $role_slug ) . '][dashboard][]';
-									?>
-									<td style="text-align:center;">
-										<input type="checkbox"
-											name="<?php echo esc_attr( $name ); ?>"
-											value="<?php echo esc_attr( $section_key ); ?>"
-											<?php checked( $hidden ); ?>
-											aria-label="<?php echo esc_attr( sprintf( /* translators: 1: section, 2: role */ __( 'Hide %1$s from %2$s', 'wp-sell-services' ), $section_label, $role_name ) ); ?>">
-									</td>
+								<th><?php esc_html_e( 'Dashboard section', 'wp-sell-services' ); ?></th>
+								<?php foreach ( $roles as $role_slug => $role_name ) : ?>
+									<th style="text-align:center;"><?php echo esc_html( $role_name ); ?></th>
 								<?php endforeach; ?>
 							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							<?php foreach ( $sections as $section_key => $section_label ) : ?>
+								<tr>
+									<td><?php echo esc_html( $section_label ); ?></td>
+									<?php
+									foreach ( $roles as $role_slug => $role_name ) :
+										$hidden = ! empty( $map[ $role_slug ]['dashboard'] ) && in_array( $section_key, (array) $map[ $role_slug ]['dashboard'], true );
+										$name   = self::OPTION . '[' . esc_attr( $role_slug ) . '][dashboard][]';
+										?>
+										<td style="text-align:center;">
+											<input type="checkbox"
+												name="<?php echo esc_attr( $name ); ?>"
+												value="<?php echo esc_attr( $section_key ); ?>"
+												<?php checked( $hidden ); ?>
+												aria-label="<?php echo esc_attr( sprintf( /* translators: 1: section, 2: role */ __( 'Hide %1$s from %2$s', 'wp-sell-services' ), $section_label, $role_name ) ); ?>">
+										</td>
+									<?php endforeach; ?>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+					<div class="wpss-settings-section__footer">
+						<?php submit_button( __( 'Save Menu Visibility', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
+					</div>
+				</form>
 			</div>
-				<?php submit_button( __( 'Save Menu Visibility', 'wp-sell-services' ) ); ?>
-			</form>
 		</div>
 		<?php
 	}
