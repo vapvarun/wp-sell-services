@@ -284,11 +284,38 @@ do_action( 'wpss_before_service_packages', $service_id );
 		<?php endforeach; ?>
 	</div>
 
-	<?php if ( ! $is_own_service ) : ?>
-		<div class="wpss-contact-seller">
-			<a href="#" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
-				<?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?>
-			</a>
+	<?php
+	if ( ! $is_own_service ) :
+		// Per-service favourite toggle, in the order sidebar next to the CTA
+		// (moved here from the main column). Same classes/attributes as every
+		// other favourite toggle so frontend.js drives it and the state stays in
+		// sync with the archive card and the buyer dashboard.
+		$wpss_pkg_logged_in = is_user_logged_in();
+		$wpss_pkg_favorited = false;
+		if ( $wpss_pkg_logged_in ) {
+			$wpss_pkg_favs      = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
+			$wpss_pkg_favorited = is_array( $wpss_pkg_favs ) && in_array( (int) $service_id, array_map( 'intval', $wpss_pkg_favs ), true );
+		}
+		$wpss_pkg_fav_label = $wpss_pkg_favorited
+			? __( 'Saved to favorites', 'wp-sell-services' )
+			: __( 'Save to favorites', 'wp-sell-services' );
+		?>
+		<div class="wpss-package-actions">
+			<button
+				type="button"
+				class="wpss-btn wpss-btn-ghost wpss-btn-block wpss-fav-toggle wpss-fav-toggle--inline wpss-package-fav<?php echo $wpss_pkg_favorited ? ' is-favorited' : ''; ?>"
+				data-service-id="<?php echo esc_attr( (string) $service_id ); ?>"
+				data-logged-in="<?php echo $wpss_pkg_logged_in ? '1' : '0'; ?>"
+				aria-pressed="<?php echo $wpss_pkg_favorited ? 'true' : 'false'; ?>"
+			>
+				<i data-lucide="heart" class="wpss-icon wpss-icon--sm wpss-fav-toggle__icon" aria-hidden="true"></i>
+				<span class="wpss-fav-toggle__label"><?php echo esc_html( $wpss_pkg_fav_label ); ?></span>
+			</button>
+			<div class="wpss-contact-seller">
+				<a href="#" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+					<?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?>
+				</a>
+			</div>
 		</div>
 	<?php endif; ?>
 </div>

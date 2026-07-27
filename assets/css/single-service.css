@@ -1160,6 +1160,31 @@
 	color: var(--wpss-primary);
 }
 
+/* Sidebar order actions: favourite toggle + contact seller, below the packages. */
+.wpss-package-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border);
+}
+
+/* The favourite toggle spans the sidebar like the order CTA above it. */
+.wpss-package-actions .wpss-fav-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+}
+
+/* Divider is owned by the actions wrapper now, so the nested contact block
+   drops its own border/padding to avoid a double rule. */
+.wpss-package-actions .wpss-contact-seller {
+	padding-top: 0;
+	border-top: 0;
+}
+
 /* ==========================================================================
    Vendor Card (Sidebar)
    ========================================================================== */
