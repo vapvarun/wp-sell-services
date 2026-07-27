@@ -136,6 +136,13 @@ class CartController extends RestController {
 			return new WP_Error( 'own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
+		// Paused services are not purchasable. The listing hides the CTA, but
+		// enforce it server-side too so a paused service can't be added via a
+		// direct API call (parity with the vendor-vacation block).
+		if ( 'paused' === wpss_get_service_status( $service_id ) ) {
+			return new WP_Error( 'service_paused', __( 'This service is not accepting orders right now.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
 		// Get package.
 		$packages = get_post_meta( $service_id, '_wpss_packages', true );
 		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {

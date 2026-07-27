@@ -25,6 +25,12 @@ $packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
 $wpss_vacation = ( isset( $wpss_vacation ) && is_array( $wpss_vacation ) ) ? $wpss_vacation : null;
 $wpss_on_vacation = null !== $wpss_vacation;
 
+// Service-level paused status (distinct from vendor vacation). Resolved in the
+// view; falls back to a status read so a directly-included template is safe.
+$wpss_paused = isset( $wpss_paused )
+	? (bool) $wpss_paused
+	: ( 'paused' === wpss_get_service_status( $service_id ) );
+
 // If no packages, show single price (omit description to avoid duplicating "About This Service").
 if ( empty( $packages ) ) {
 	$price         = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
@@ -254,6 +260,25 @@ do_action( 'wpss_before_service_packages', $service_id );
 									esc_html_e( 'Seller is on vacation and not accepting new orders right now.', 'wp-sell-services' );
 								}
 								?>
+							</p>
+						<?php elseif ( $wpss_paused ) : ?>
+							<?php
+							// Service paused by the vendor/admin: render the CTA visually
+							// disabled and non-interactive. Like the vacation branch, this
+							// button omits the `wpss-order-btn` class so the single-service
+							// JS click handler never matches it and the modal cannot open.
+							$wpss_paused_note_id = 'wpss-paused-cta-note-' . esc_attr( $index );
+							?>
+							<button type="button"
+									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									disabled
+									aria-disabled="true"
+									aria-describedby="<?php echo esc_attr( $wpss_paused_note_id ); ?>">
+								<?php echo esc_html( $button_text ); ?>
+								<span class="wpss-btn-price">(<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>)</span>
+							</button>
+							<p id="<?php echo esc_attr( $wpss_paused_note_id ); ?>" class="wpss-package-vacation-note">
+								<?php esc_html_e( 'This service is paused and not accepting new orders right now.', 'wp-sell-services' ); ?>
 							</p>
 						<?php elseif ( (float) ( $package['price'] ?? 0 ) <= 0 ) : ?>
 							<?php

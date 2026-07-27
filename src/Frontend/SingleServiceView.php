@@ -706,6 +706,7 @@ class SingleServiceView {
 			array(
 				'service'       => $service,
 				'wpss_vacation' => $this->get_vendor_vacation( $service ),
+				'wpss_paused'   => 'paused' === wpss_get_service_status( $service->id ),
 			)
 		);
 	}
@@ -852,6 +853,12 @@ class SingleServiceView {
 		// Seller on vacation: don't render the order modal at all, so there is no
 		// path to checkout even if a client tried to open it programmatically.
 		if ( null !== $this->get_vendor_vacation( $service ) ) {
+			return;
+		}
+
+		// Paused service: same treatment — no modal, so there is no path to
+		// checkout for a service the vendor has paused.
+		if ( 'paused' === wpss_get_service_status( $service->id ) ) {
 			return;
 		}
 		?>
