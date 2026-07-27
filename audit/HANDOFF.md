@@ -3,6 +3,34 @@
 Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
 Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
+---
+
+## ADDENDUM 2026-07-27 — multi-currency seam (BC 10110476797, P1)
+
+`wpss_convert_price( $base, $currency )` added in `src/functions.php` — the
+single conversion seam for **catalog prices only** (never vendor-facing money).
+**Identity by default**: no listener → returns base unchanged → zero regression
+on every non-multicurrency install. Wired at the DISPLAY points that read base
+meta: `content-service-card.php`, `partials/service-packages.php` (badge +
+`data-price` + Continue, converted once at source), and `SingleServiceView`
+order-modal package/extra prices. Free commit `62bf580`.
+
+**Order-storage contract decided** (per card): order stores BASE + rate;
+commission/ledger/payouts stay base; only display + charge convert; refunds
+reuse persisted rate.
+
+**Verified:** identity → $85/$170/$340 unchanged; temp ×0.90 converter →
+$76.50 identically in badge + data-price button (single conversion, no
+double-convert), reverted clean.
+
+**STILL OPEN (Next release — ship charge WITH display, never display alone):**
+(1) gateway charge-side conversion before Stripe smallest-unit formatting;
+(2) per-order rate persistence + refund-rate reuse; (3) `WooCommerceAdapter`
+converter → CURCY/Aelia/WCML; (4) remaining display surfaces: SEO `<title>`
+price, checkout order-summary, archive/grid, dashboard earnings; (5) the
+Woo+CURCY 2-currency test matrix. Converter (3) is deliberately NOT hooked —
+hooking it now would convert display without charge, worse than current state.
+
 **Both repos are clean and committed.** Free at the T1/T2 commit, Pro `4a48c11`.
 Local DB is NO LONGER at the old baseline — the P3 Stripe run added order 112
 and ledger rows #127/#128 (they net to zero). See the test-data note in §0.
