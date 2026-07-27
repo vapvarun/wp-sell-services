@@ -5,31 +5,33 @@ Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
 ---
 
-## ADDENDUM 2026-07-27 — multi-currency seam (BC 10110476797, P1)
+## ADDENDUM 2026-07-27 — multi-currency: base currency is authoritative (BC 10110476797, P1 — DONE)
 
-`wpss_convert_price( $base, $currency )` added in `src/functions.php` — the
-single conversion seam for **catalog prices only** (never vendor-facing money).
-**Identity by default**: no listener → returns base unchanged → zero regression
-on every non-multicurrency install. Wired at the DISPLAY points that read base
-meta: `content-service-card.php`, `partials/service-packages.php` (badge +
-`data-price` + Continue, converted once at source), and `SingleServiceView`
-order-modal package/extra prices. Free commit `62bf580`.
+**Architecture decision (site owner):** WPSS is a single base-currency system.
+Every stored value — service, package, milestone, tip, earnings, wallet ledger,
+payout — is one base currency and is NEVER converted. Displaying another
+currency does not change the value, so there is nothing to convert on our side.
+The card's charge-conversion / per-order-rate / CURCY-converter scope is
+explicitly NOT wanted (it would create a second source of truth to sync).
 
-**Order-storage contract decided** (per card): order stores BASE + rate;
-commission/ledger/payouts stay base; only display + charge convert; refunds
-reuse persisted rate.
+**What was actually broken:** Pro 1.2.2 made `wpss_currency` defer to
+`get_woocommerce_currency()`, which CURCY/Aelia filter to the SHOPPER's switched
+currency — so a base `50` rendered as "€50"/"£50" (symbol drifted off the value).
 
-**Verified:** identity → $85/$170/$340 unchanged; temp ×0.90 converter →
-$76.50 identically in badge + data-price button (single conversion, no
-double-convert), reverted clean.
+**Fix:** `WooCommerceAdapter::use_woocommerce_currency()` now reports the store
+BASE currency (`woocommerce_currency` option), not the shopper's switch — the
+same base source `WCOrderProvider::get_base_currency()` already uses for storage.
+Display symbol = amount = order-row currency, all base. Pro `7e311f4`. The
+short-lived `wpss_convert_price` display seam (free `62bf580`) was removed as
+dead intent in free `423b691`.
 
-**STILL OPEN (Next release — ship charge WITH display, never display alone):**
-(1) gateway charge-side conversion before Stripe smallest-unit formatting;
-(2) per-order rate persistence + refund-rate reuse; (3) `WooCommerceAdapter`
-converter → CURCY/Aelia/WCML; (4) remaining display surfaces: SEO `<title>`
-price, checkout order-summary, archive/grid, dashboard earnings; (5) the
-Woo+CURCY 2-currency test matrix. Converter (3) is deliberately NOT hooked —
-hooking it now would convert display without charge, worse than current state.
+**Verified:** base=EUR + simulated CURCY switch to GBP → `get_woocommerce_currency()`
+=GBP but `wpss_get_currency()`=EUR and `wpss_format_price(85)`=€85.00. Reference
+site restored to standalone/USD. Card moved to Ready for Testing.
+
+**Future (NOT this card):** true multi-currency, if ever wanted, gets our OWN
+conversion layer (base + persisted rate, e.g. openexchangerates.org) — never by
+leaning on Woo's shopper-switch surface.
 
 **Both repos are clean and committed.** Free at the T1/T2 commit, Pro `4a48c11`.
 Local DB is NO LONGER at the old baseline — the P3 Stripe run added order 112
