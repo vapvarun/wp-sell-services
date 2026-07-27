@@ -991,10 +991,12 @@ class Shortcodes {
 					$min = $request->budget_min ?? 0;
 					$max = $request->budget_max ?? 0;
 					if ( $min && $max ) {
-						echo esc_html( sprintf( '$%s - $%s', number_format( (float) $min ), number_format( (float) $max ) ) );
+						// Currency-aware, not a hardcoded $ — non-USD marketplaces
+						// were showing dollar budgets (Basecamp #10110742943).
+						echo esc_html( sprintf( '%s - %s', wpss_format_price( (float) $min ), wpss_format_price( (float) $max ) ) );
 					} elseif ( $max ) {
-						/* translators: %s: maximum budget amount. */
-						echo esc_html( sprintf( __( 'Up to $%s', 'wp-sell-services' ), number_format( (float) $max ) ) );
+						/* translators: %s: maximum budget amount (currency-formatted). */
+						echo esc_html( sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_price( (float) $max ) ) );
 					} else {
 						esc_html_e( 'Open budget', 'wp-sell-services' );
 					}

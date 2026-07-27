@@ -355,7 +355,7 @@ class ServiceCommands extends WP_CLI_Command {
 				'Price'    => '$' . get_post_meta( $service->ID, '_wpss_starting_price', true ),
 				'Rating'   => get_post_meta( $service->ID, '_wpss_rating_average', true ) ?: '0',
 				'Orders'   => get_post_meta( $service->ID, '_wpss_order_count', true ) ?: '0',
-				'Views'    => get_post_meta( $service->ID, '_wpss_view_count', true ) ?: '0',
+				'Views'    => get_post_meta( $service->ID, '_wpss_views', true ) ?: '0',
 				'Featured' => get_post_meta( $service->ID, '_wpss_featured', true ) ? 'Yes' : 'No',
 			);
 		}
@@ -489,7 +489,7 @@ class ServiceCommands extends WP_CLI_Command {
 
 		// Save stats.
 		if ( ! empty( $data['stats'] ) ) {
-			update_post_meta( $post_id, '_wpss_view_count', $data['stats']['views'] );
+			update_post_meta( $post_id, '_wpss_views', $data['stats']['views'] );
 			update_post_meta( $post_id, '_wpss_order_count', $data['stats']['orders'] );
 			update_post_meta( $post_id, '_wpss_rating_average', $data['stats']['rating'] );
 			update_post_meta( $post_id, '_wpss_rating_count', $data['stats']['reviews'] );

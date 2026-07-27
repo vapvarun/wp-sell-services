@@ -527,7 +527,7 @@ class ServiceMetabox {
 		$review_count   = ! empty( $review_count ) ? $review_count : 0;
 		$average_rating = get_post_meta( $post->ID, '_wpss_rating_average', true );
 		$average_rating = ! empty( $average_rating ) ? $average_rating : 0;
-		$view_count     = get_post_meta( $post->ID, '_wpss_view_count', true );
+		$view_count     = get_post_meta( $post->ID, '_wpss_views', true );
 		$view_count     = ! empty( $view_count ) ? $view_count : 0;
 		?>
 		<div class="wpss-stats-wrapper">
@@ -1127,7 +1127,7 @@ class ServiceMetabox {
 		$order_count    = (int) get_post_meta( $post->ID, '_wpss_order_count', true );
 		$review_count   = (int) get_post_meta( $post->ID, '_wpss_review_count', true );
 		$average_rating = (float) get_post_meta( $post->ID, '_wpss_rating_average', true );
-		$view_count     = (int) get_post_meta( $post->ID, '_wpss_view_count', true );
+		$view_count     = (int) get_post_meta( $post->ID, '_wpss_views', true );
 		?>
 		<h3 class="wpss-panel-title"><?php esc_html_e( 'Overview', 'wp-sell-services' ); ?></h3>
 
