@@ -252,6 +252,13 @@ class SetupWizardPage {
 		// discarded, so PayPal looked configured but could never authenticate.
 		// Keeping one writer removes the whole drift class — and most owners do
 		// not have API keys to hand during first-run onboarding anyway.
+		// Whether the selected gateway still needs API keys before it can accept
+		// payments. Stripe/PayPal is_enabled() requires credentials, and the
+		// wizard does not collect them, so enabling the flag alone leaves
+		// checkout with zero gateways — a silent failure the owner reads as
+		// "configured". Detect it and return honest guidance instead.
+		$needs_keys = false;
+
 		if ( 'stripe' === $gateway ) {
 			$settings = get_option( 'wpss_stripe_settings', array() );
 
@@ -259,6 +266,10 @@ class SetupWizardPage {
 			$settings['test_mode'] = ! empty( $_POST['stripe_test_mode'] );
 
 			update_option( 'wpss_stripe_settings', $settings );
+
+			// Fresh instance reads the just-saved option; enabled is now true, so
+			// is_enabled() is false only when the required keys are missing.
+			$needs_keys = ! ( new \WPSellServices\Integrations\Stripe\StripeGateway() )->is_enabled();
 		} elseif ( 'paypal' === $gateway ) {
 			$settings = get_option( 'wpss_paypal_settings', array() );
 
@@ -271,6 +282,8 @@ class SetupWizardPage {
 			$settings['sandbox_mode'] = ! empty( $_POST['paypal_sandbox'] );
 
 			update_option( 'wpss_paypal_settings', $settings );
+
+			$needs_keys = ! ( new \WPSellServices\Integrations\PayPal\PayPalGateway() )->is_enabled();
 		} elseif ( 'offline' === $gateway ) {
 			$settings = get_option( 'wpss_offline_settings', array() );
 
@@ -279,6 +292,21 @@ class SetupWizardPage {
 			$settings['description'] = sanitize_textarea_field( wp_unslash( $_POST['offline_description'] ?? '' ) );
 
 			update_option( 'wpss_offline_settings', $settings );
+		}
+
+		if ( $needs_keys ) {
+			$settings_url = admin_url( 'admin.php?page=wpss-settings#payments' );
+			wp_send_json_success(
+				array(
+					'needs_keys'   => true,
+					'settings_url' => $settings_url,
+					'message'      => sprintf(
+						/* translators: %s: gateway name (e.g. Stripe). */
+						__( '%s selected. Add your API keys under Payments settings before checkout can accept payments.', 'wp-sell-services' ),
+						ucfirst( $gateway )
+					),
+				)
+			);
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Gateway configured.', 'wp-sell-services' ) ) );
