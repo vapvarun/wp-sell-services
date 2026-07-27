@@ -45,7 +45,10 @@
 .wpss-shepherd .shepherd-cancel-icon:hover,
 .wpss-shepherd .shepherd-cancel-icon:focus {
 	color: var(--wpss-wp-admin-red, #d63638);
+	/* A visible ring, not just a colour change (WCAG 1.4.1 / 2.4.7). */
 	outline: none;
+	box-shadow: 0 0 0 2px var(--wpss-primary, #4f46e5);
+	border-radius: 2px;
 }
 
 .wpss-shepherd .shepherd-text {

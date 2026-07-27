@@ -324,6 +324,14 @@
 	box-shadow: none;
 }
 
+/* The search input and category select are transparent/borderless inside the
+   bordered container, so focus is shown as a ring on the container — keyboard
+   users always get a visible focus indicator (WCAG 2.4.7). */
+.wpss-search-fields:focus-within {
+	border-color: var(--wpss-primary, #4f46e5);
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
 .wpss-category-select-wrap {
 	border-left: 1px solid var(--wpss-block-border);
 }
