@@ -747,12 +747,17 @@ class ServiceMetabox {
 			foreach ( $packages_data as $package ) {
 				// Only save packages with name or price.
 				if ( ! empty( $package['name'] ) || ! empty( $package['price'] ) ) {
+					// Revisions: preserve -1 (Unlimited). absint() would turn the
+					// wizard's Unlimited (-1) into 1 on every admin re-save.
+					$revisions_raw = isset( $package['revisions'] ) ? (int) $package['revisions'] : 0;
+					$revisions_val = $revisions_raw < 0 ? -1 : $revisions_raw;
+
 					$packages[] = array(
 						'name'          => sanitize_text_field( $package['name'] ?? '' ),
 						'description'   => sanitize_textarea_field( $package['description'] ?? '' ),
 						'price'         => (float) ( $package['price'] ?? 0 ),
 						'delivery_days' => absint( $package['delivery_days'] ?? 0 ),
-						'revisions'     => absint( $package['revisions'] ?? 0 ),
+						'revisions'     => $revisions_val,
 						'features'      => array_filter( array_map( 'sanitize_text_field', explode( "\n", $package['features'] ?? '' ) ) ),
 					);
 				}
@@ -775,10 +780,14 @@ class ServiceMetabox {
 			update_post_meta( $post_id, '_wpss_fastest_delivery', $fastest_delivery );
 			update_post_meta( $post_id, '_wpss_delivery_days', $fastest_delivery );
 
-			// Max revisions = maximum revisions across packages.
-			// Both revision meta keys are kept in sync so the wizard key and
-			// the admin/REST key agree regardless of creation path.
-			$max_revisions = ! empty( $revisions ) ? max( $revisions ) : 0;
+			// Max revisions = maximum revisions across packages. A package with
+			// -1 (Unlimited) is the highest possible, so it wins over any finite
+			// count instead of being beaten numerically by max().
+			if ( in_array( -1, array_map( 'intval', $revisions ), true ) ) {
+				$max_revisions = -1;
+			} else {
+				$max_revisions = ! empty( $revisions ) ? max( $revisions ) : 0;
+			}
 			update_post_meta( $post_id, '_wpss_max_revisions', $max_revisions );
 			update_post_meta( $post_id, '_wpss_revisions', $max_revisions );
 		}
@@ -797,6 +806,11 @@ class ServiceMetabox {
 				}
 			}
 			update_post_meta( $post_id, '_wpss_faqs', $faqs );
+		} elseif ( isset( $_POST['wpss_faqs_present'] ) ) {
+			// The FAQ panel was on the form and submitted zero rows: the admin
+			// removed every FAQ, so clear the meta. Without this sentinel guard
+			// an empty submit silently kept the old FAQs (could not clear them).
+			delete_post_meta( $post_id, '_wpss_faqs' );
 		}
 
 		// Save requirements.
@@ -824,6 +838,11 @@ class ServiceMetabox {
 				}
 			}
 			update_post_meta( $post_id, '_wpss_requirements', $requirements );
+		} elseif ( isset( $_POST['wpss_requirements_present'] ) ) {
+			// The requirements panel was on the form and submitted zero rows:
+			// the admin removed every requirement, so clear the meta (same
+			// sentinel pattern as FAQs / add-ons / gallery).
+			delete_post_meta( $post_id, '_wpss_requirements' );
 		}
 
 		// Save addons.
@@ -1082,9 +1101,14 @@ class ServiceMetabox {
 			<?php $this->render_addons_content( $post ); ?>
 		</div>
 		<div id="wpss_requirements_panel" class="wpss-panel">
+			<?php // Sentinel: marks that the requirements UI was on this form, so a
+			// save with zero rows means "cleared" rather than "not rendered". ?>
+			<input type="hidden" name="wpss_requirements_present" value="1">
 			<?php $this->render_requirements_content( $post ); ?>
 		</div>
 		<div id="wpss_faq_panel" class="wpss-panel">
+			<?php // Sentinel: same pattern as requirements/add-ons/gallery. ?>
+			<input type="hidden" name="wpss_faqs_present" value="1">
 			<?php $this->render_faq_content( $post ); ?>
 		</div>
 		<?php
