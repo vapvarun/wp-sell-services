@@ -759,6 +759,10 @@ class StripeGateway implements PaymentGatewayInterface {
 					'addressRequired' => __( 'Please complete your billing name and address.', 'wp-sell-services' ),
 					'editAddress'     => __( 'Edit billing address', 'wp-sell-services' ),
 					'billedTo'        => __( 'Billed to', 'wp-sell-services' ),
+					'invalidAmount'   => __( 'Invalid payment amount.', 'wp-sell-services' ),
+					'initFailed'      => __( 'Failed to initialize payment.', 'wp-sell-services' ),
+					'notInitialized'  => __( 'Payment not initialized. Please refresh and try again.', 'wp-sell-services' ),
+					'orderFailed'     => __( 'Failed to create order.', 'wp-sell-services' ),
 				),
 			)
 		);

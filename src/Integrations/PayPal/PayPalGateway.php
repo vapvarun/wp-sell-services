@@ -563,8 +563,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_paypal' ),
 				'i18n'    => array(
-					'processing' => __( 'Processing...', 'wp-sell-services' ),
-					'error'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'processing'    => __( 'Processing...', 'wp-sell-services' ),
+					'error'         => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'invalidAmount' => __( 'Invalid payment amount.', 'wp-sell-services' ),
+					'createFailed'  => __( 'Failed to create PayPal order.', 'wp-sell-services' ),
+					'captureFailed' => __( 'Payment capture failed.', 'wp-sell-services' ),
+					'cancelled'     => __( 'Payment cancelled.', 'wp-sell-services' ),
 				),
 			)
 		);

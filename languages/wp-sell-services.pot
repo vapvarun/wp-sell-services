@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-28T07:47:05+00:00\n"
+"POT-Creation-Date: 2026-07-28T07:49:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -190,7 +190,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:3026
 #: src/Integrations/Gateways/OfflineGateway.php:317
 #: src/Integrations/Gateways/TestGateway.php:242
-#: src/Integrations/Stripe/StripeGateway.php:921
+#: src/Integrations/Stripe/StripeGateway.php:925
 msgid "Security check failed."
 msgstr ""
 
@@ -213,7 +213,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:3180
 #: src/Frontend/AjaxHandlers.php:3376
 #: src/Frontend/ServiceWizard.php:1796
-#: src/Integrations/PayPal/PayPalGateway.php:816
+#: src/Integrations/PayPal/PayPalGateway.php:820
 msgid "Invalid request."
 msgstr ""
 
@@ -1767,7 +1767,7 @@ msgstr ""
 #: src/Integrations/Gateways/TestGateway.php:349
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:242
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:336
-#: src/Integrations/Stripe/StripeGateway.php:826
+#: src/Integrations/Stripe/StripeGateway.php:830
 #: src/Services/RequirementsService.php:187
 msgid "Service not found."
 msgstr ""
@@ -2479,10 +2479,11 @@ msgstr ""
 #: src/Checkout/CheckoutIntentService.php:345
 #: src/Integrations/Gateways/OfflineGateway.php:474
 #: src/Integrations/Gateways/TestGateway.php:400
-#: src/Integrations/PayPal/PayPalGateway.php:657
-#: src/Integrations/PayPal/PayPalGateway.php:1007
-#: src/Integrations/Stripe/StripeGateway.php:854
-#: src/Integrations/Stripe/StripeGateway.php:980
+#: src/Integrations/PayPal/PayPalGateway.php:661
+#: src/Integrations/PayPal/PayPalGateway.php:1011
+#: src/Integrations/Stripe/StripeGateway.php:765
+#: src/Integrations/Stripe/StripeGateway.php:858
+#: src/Integrations/Stripe/StripeGateway.php:984
 msgid "Failed to create order."
 msgstr ""
 
@@ -2733,7 +2734,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2643
 #: src/Integrations/Gateways/OfflineGateway.php:410
 #: src/Integrations/Gateways/TestGateway.php:334
-#: src/Integrations/PayPal/PayPalGateway.php:754
+#: src/Integrations/PayPal/PayPalGateway.php:758
 msgid "Invalid service."
 msgstr ""
 
@@ -2814,7 +2815,7 @@ msgstr[1] ""
 
 #: src/Admin/Pages/NotificationsPage.php:294
 #: src/functions.php:4199
-#: src/Integrations/Stripe/StripeGateway.php:1258
+#: src/Integrations/Stripe/StripeGateway.php:1262
 msgid "Read"
 msgstr ""
 
@@ -6330,7 +6331,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2649
 #: src/Integrations/Gateways/OfflineGateway.php:417
 #: src/Integrations/Gateways/TestGateway.php:341
-#: src/Integrations/PayPal/PayPalGateway.php:760
+#: src/Integrations/PayPal/PayPalGateway.php:764
 msgid "You cannot purchase your own service."
 msgstr ""
 
@@ -6993,7 +6994,7 @@ msgstr ""
 #: src/Integrations/Gateways/OfflineGateway.php:332
 #: src/Integrations/Gateways/OfflineGateway.php:518
 #: src/Integrations/Gateways/TestGateway.php:263
-#: src/Integrations/PayPal/PayPalGateway.php:724
+#: src/Integrations/PayPal/PayPalGateway.php:728
 msgid "Invalid order."
 msgstr ""
 
@@ -7009,9 +7010,9 @@ msgstr ""
 #: src/Checkout/CheckoutIntentService.php:93
 #: src/Checkout/CheckoutIntentService.php:153
 #: src/Checkout/CheckoutIntentService.php:190
-#: src/Integrations/PayPal/PayPalGateway.php:586
-#: src/Integrations/PayPal/PayPalGateway.php:772
-#: src/Integrations/Stripe/StripeGateway.php:780
+#: src/Integrations/PayPal/PayPalGateway.php:590
+#: src/Integrations/PayPal/PayPalGateway.php:776
+#: src/Integrations/Stripe/StripeGateway.php:784
 msgid "Invalid amount."
 msgstr ""
 
@@ -7035,6 +7036,7 @@ msgstr ""
 
 #: src/API/PaymentController.php:370
 #: src/Integrations/PayPal/PayPalGateway.php:208
+#: src/Integrations/PayPal/PayPalGateway.php:569
 msgid "Failed to create PayPal order."
 msgstr ""
 
@@ -7048,10 +7050,10 @@ msgstr ""
 #: src/Integrations/Gateways/OfflineGateway.php:453
 #: src/Integrations/Gateways/OfflineGateway.php:544
 #: src/Integrations/Gateways/TestGateway.php:377
-#: src/Integrations/PayPal/PayPalGateway.php:638
-#: src/Integrations/PayPal/PayPalGateway.php:888
-#: src/Integrations/PayPal/PayPalGateway.php:981
-#: src/Integrations/Stripe/StripeGateway.php:835
+#: src/Integrations/PayPal/PayPalGateway.php:642
+#: src/Integrations/PayPal/PayPalGateway.php:892
+#: src/Integrations/PayPal/PayPalGateway.php:985
+#: src/Integrations/Stripe/StripeGateway.php:839
 msgid "No order provider available."
 msgstr ""
 
@@ -7072,8 +7074,9 @@ msgstr ""
 
 #: src/API/PaymentController.php:598
 #: src/API/PaymentController.php:639
-#: src/Integrations/PayPal/PayPalGateway.php:629
-#: src/Integrations/PayPal/PayPalGateway.php:839
+#: src/Integrations/PayPal/PayPalGateway.php:570
+#: src/Integrations/PayPal/PayPalGateway.php:633
+#: src/Integrations/PayPal/PayPalGateway.php:843
 msgid "Payment capture failed."
 msgstr ""
 
@@ -7822,9 +7825,9 @@ msgstr ""
 #: src/Frontend/ServiceWizard.php:1606
 #: src/Integrations/Gateways/OfflineGateway.php:322
 #: src/Integrations/Gateways/TestGateway.php:247
-#: src/Integrations/PayPal/PayPalGateway.php:683
-#: src/Integrations/Stripe/StripeGateway.php:880
-#: src/Integrations/Stripe/StripeGateway.php:926
+#: src/Integrations/PayPal/PayPalGateway.php:687
+#: src/Integrations/Stripe/StripeGateway.php:884
+#: src/Integrations/Stripe/StripeGateway.php:930
 msgid "Please log in to continue."
 msgstr ""
 
@@ -7834,17 +7837,17 @@ msgstr ""
 
 #: src/Checkout/CheckoutIntentService.php:126
 #: src/Integrations/Gateways/OfflineGateway.php:367
-#: src/Integrations/PayPal/PayPalGateway.php:902
+#: src/Integrations/PayPal/PayPalGateway.php:906
 msgid "Your cart is empty."
 msgstr ""
 
 #: src/Checkout/CheckoutIntentService.php:185
-#: src/Integrations/PayPal/PayPalGateway.php:766
+#: src/Integrations/PayPal/PayPalGateway.php:770
 msgid "Invalid package."
 msgstr ""
 
 #: src/Checkout/CheckoutIntentService.php:297
-#: src/Integrations/PayPal/PayPalGateway.php:915
+#: src/Integrations/PayPal/PayPalGateway.php:919
 msgid "Failed to create orders. Please contact support."
 msgstr ""
 
@@ -12896,124 +12899,133 @@ msgstr ""
 msgid "Fixed fee per transaction in your currency (default: $0.30 for US)."
 msgstr ""
 
+#: src/Integrations/PayPal/PayPalGateway.php:568
+#: src/Integrations/Stripe/StripeGateway.php:762
+msgid "Invalid payment amount."
+msgstr ""
+
+#: src/Integrations/PayPal/PayPalGateway.php:571
+msgid "Payment cancelled."
+msgstr ""
+
 #. translators: %d: Service ID
-#: src/Integrations/PayPal/PayPalGateway.php:599
-#: src/Integrations/PayPal/PayPalGateway.php:787
+#: src/Integrations/PayPal/PayPalGateway.php:603
+#: src/Integrations/PayPal/PayPalGateway.php:791
 #, php-format
 msgid "Service #%d"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:620
-#: src/Integrations/PayPal/PayPalGateway.php:826
+#: src/Integrations/PayPal/PayPalGateway.php:624
+#: src/Integrations/PayPal/PayPalGateway.php:830
 msgid "Invalid PayPal order."
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:703
+#: src/Integrations/PayPal/PayPalGateway.php:707
 msgid "Multi-service cart checkout"
 msgstr ""
 
 #. translators: %d: order ID
-#: src/Integrations/PayPal/PayPalGateway.php:736
+#: src/Integrations/PayPal/PayPalGateway.php:740
 #: templates/disputes/dispute-view.php:450
 #, php-format
 msgid "Order #%d"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1210
+#: src/Integrations/PayPal/PayPalGateway.php:1214
 msgid "PayPal Setup Guide"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1212
+#: src/Integrations/PayPal/PayPalGateway.php:1216
 msgid "Step 1: Create a REST API App"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1214
+#: src/Integrations/PayPal/PayPalGateway.php:1218
 msgid "Go to PayPal Developer Dashboard → My Apps & Credentials"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1215
+#: src/Integrations/PayPal/PayPalGateway.php:1219
 msgid "Click \"Create App\" under REST API apps"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1216
+#: src/Integrations/PayPal/PayPalGateway.php:1220
 msgid "Copy the Client ID and Secret from the app details"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1217
+#: src/Integrations/PayPal/PayPalGateway.php:1221
 msgid "For testing, switch to \"Sandbox\" mode to get sandbox credentials"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1220
-#: src/Integrations/Stripe/StripeGateway.php:1234
+#: src/Integrations/PayPal/PayPalGateway.php:1224
+#: src/Integrations/Stripe/StripeGateway.php:1238
 msgid "Step 2: Configure Webhook"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1222
+#: src/Integrations/PayPal/PayPalGateway.php:1226
 msgid "In your REST API app, scroll to \"Webhooks\" and click \"Add Webhook\""
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1223
+#: src/Integrations/PayPal/PayPalGateway.php:1227
 msgid "Enter this URL:"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1226
+#: src/Integrations/PayPal/PayPalGateway.php:1230
 msgid "Select the following events to subscribe:"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1233
+#: src/Integrations/PayPal/PayPalGateway.php:1237
 msgid "After creating the webhook, copy the \"Webhook ID\" and paste it in the Webhook ID field above."
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1236
+#: src/Integrations/PayPal/PayPalGateway.php:1240
 msgid "Step 3: Required API Scopes"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1238
+#: src/Integrations/PayPal/PayPalGateway.php:1242
 msgid "Your REST API app needs these scopes enabled. Configure them in the PayPal Developer Dashboard under your app settings:"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1243
+#: src/Integrations/PayPal/PayPalGateway.php:1247
 msgid "Scope"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1244
-#: src/Integrations/Stripe/StripeGateway.php:1260
+#: src/Integrations/PayPal/PayPalGateway.php:1248
+#: src/Integrations/Stripe/StripeGateway.php:1264
 msgid "Used For"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1250
+#: src/Integrations/PayPal/PayPalGateway.php:1254
 msgid "Create checkout orders (Orders v2 API)"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1254
+#: src/Integrations/PayPal/PayPalGateway.php:1258
 msgid "Capture approved payments"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1258
+#: src/Integrations/PayPal/PayPalGateway.php:1262
 msgid "Issue full or partial refunds"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1262
+#: src/Integrations/PayPal/PayPalGateway.php:1266
 msgid "Read capture details for refund calculations"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1266
+#: src/Integrations/PayPal/PayPalGateway.php:1270
 msgid "Verify webhook signatures"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1271
+#: src/Integrations/PayPal/PayPalGateway.php:1275
 msgid "Full scope URIs are prefixed with https://uri.paypal.com/services/. Most scopes are enabled by default for new apps."
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1274
+#: src/Integrations/PayPal/PayPalGateway.php:1278
 msgid "PayPal documentation: Apps & scopes &rarr;"
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1460
+#: src/Integrations/PayPal/PayPalGateway.php:1464
 msgid "Failed to authenticate with PayPal."
 msgstr ""
 
-#: src/Integrations/PayPal/PayPalGateway.php:1496
+#: src/Integrations/PayPal/PayPalGateway.php:1500
 msgid "PayPal API error."
 msgstr ""
 
@@ -13389,112 +13401,120 @@ msgstr ""
 msgid "Billed to"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:809
-#: src/Integrations/Stripe/StripeGateway.php:935
+#: src/Integrations/Stripe/StripeGateway.php:763
+msgid "Failed to initialize payment."
+msgstr ""
+
+#: src/Integrations/Stripe/StripeGateway.php:764
+msgid "Payment not initialized. Please refresh and try again."
+msgstr ""
+
+#: src/Integrations/Stripe/StripeGateway.php:813
+#: src/Integrations/Stripe/StripeGateway.php:939
 msgid "Invalid payment."
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:818
-#: src/Integrations/Stripe/StripeGateway.php:943
+#: src/Integrations/Stripe/StripeGateway.php:822
+#: src/Integrations/Stripe/StripeGateway.php:947
 msgid "Payment verification failed."
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1225
+#: src/Integrations/Stripe/StripeGateway.php:1229
 msgid "Stripe Setup Guide"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1227
+#: src/Integrations/Stripe/StripeGateway.php:1231
 msgid "Step 1: Get your API keys"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1229
+#: src/Integrations/Stripe/StripeGateway.php:1233
 msgid "Go to your Stripe Dashboard → Developers → API keys"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1230
+#: src/Integrations/Stripe/StripeGateway.php:1234
 msgid "Copy your Publishable key and Secret key"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1231
+#: src/Integrations/Stripe/StripeGateway.php:1235
 msgid "For testing, use the Test mode keys (starting with pk_test_ and sk_test_)"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1236
+#: src/Integrations/Stripe/StripeGateway.php:1240
 msgid "Go to your Stripe Dashboard → Developers → Webhooks"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1237
+#: src/Integrations/Stripe/StripeGateway.php:1241
 msgid "Click \"Add endpoint\" and enter this URL:"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1240
+#: src/Integrations/Stripe/StripeGateway.php:1244
 msgid "Select the following events to listen for:"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1247
+#: src/Integrations/Stripe/StripeGateway.php:1251
 msgid "After creating the endpoint, copy the \"Signing secret\" (starts with whsec_) and paste it in the Webhook Secret field above."
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1250
+#: src/Integrations/Stripe/StripeGateway.php:1254
 msgid "Step 3: Required Permissions (for Restricted API Keys)"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1252
+#: src/Integrations/Stripe/StripeGateway.php:1256
 msgid "If you use a restricted API key instead of a standard (unrestricted) key, enable these Core resource permissions in your Stripe Dashboard:"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1257
+#: src/Integrations/Stripe/StripeGateway.php:1261
 msgid "Resource"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1259
+#: src/Integrations/Stripe/StripeGateway.php:1263
 msgid "Write"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1265
+#: src/Integrations/Stripe/StripeGateway.php:1269
 msgid "Payment Intents"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1268
+#: src/Integrations/Stripe/StripeGateway.php:1272
 msgid "Create and retrieve payment intents"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1271
+#: src/Integrations/Stripe/StripeGateway.php:1275
 msgid "Charges and Refunds"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1274
+#: src/Integrations/Stripe/StripeGateway.php:1278
 msgid "Process charge webhooks and create refunds"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1277
+#: src/Integrations/Stripe/StripeGateway.php:1281
 msgid "Payment Methods"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1280
+#: src/Integrations/Stripe/StripeGateway.php:1284
 msgid "Required by automatic payment methods"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1285
+#: src/Integrations/Stripe/StripeGateway.php:1289
 msgid "Standard (unrestricted) API keys include all permissions by default. Webhook signature verification uses the Signing Secret — no additional API key permission is needed."
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1288
+#: src/Integrations/Stripe/StripeGateway.php:1292
 msgid "Stripe documentation: Restricted keys &rarr;"
 msgstr ""
 
 #. translators: 1: HTTP status code, 2: HTTP status message.
-#: src/Integrations/Stripe/StripeGateway.php:1499
+#: src/Integrations/Stripe/StripeGateway.php:1503
 #, php-format
 msgid "Stripe API request failed (HTTP %1$d: %2$s)."
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1501
+#: src/Integrations/Stripe/StripeGateway.php:1505
 #: src/Services/OrderWorkflowManager.php:1210
 msgid "Unknown error"
 msgstr ""
 
-#: src/Integrations/Stripe/StripeGateway.php:1510
+#: src/Integrations/Stripe/StripeGateway.php:1514
 msgid "Stripe returned an empty or invalid response."
 msgstr ""
 

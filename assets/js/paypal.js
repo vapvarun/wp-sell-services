@@ -102,7 +102,7 @@
 					const packageId = document.querySelector('input[name="package_id"]')?.value || 0;
 
 					if (amount <= 0) {
-						this.showError('Invalid payment amount.');
+						this.showError(wpssPayPal.i18n.invalidAmount);
 						return Promise.reject(new Error('Invalid amount'));
 					}
 
@@ -110,7 +110,7 @@
 						const response = await this.createOrder(amount, currency, serviceId, packageId);
 
 						if (!response.success) {
-							this.showError(response.data?.message || 'Failed to create PayPal order.');
+							this.showError(response.data?.message || wpssPayPal.i18n.createFailed);
 							return Promise.reject(new Error(response.data?.message));
 						}
 
@@ -137,7 +137,7 @@
 						if (response.success) {
 							window.location.href = response.data.redirect_url;
 						} else {
-							this.showError(response.data?.message || 'Payment capture failed.');
+							this.showError(response.data?.message || wpssPayPal.i18n.captureFailed);
 							this.setLoading(false);
 						}
 
@@ -156,7 +156,7 @@
 
 				// Handle cancel.
 				onCancel: () => {
-					this.showError('Payment cancelled.');
+					this.showError(wpssPayPal.i18n.cancelled);
 				},
 
 			}).render(buttonContainer);

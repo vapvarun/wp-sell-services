@@ -88,7 +88,7 @@
 			const packageId = document.querySelector('input[name="package_id"]')?.value || 0;
 
 			if (amount <= 0) {
-				this.showError('Invalid payment amount.');
+				this.showError(wpssStripe.i18n.invalidAmount);
 				return;
 			}
 
@@ -97,7 +97,7 @@
 				const response = await this.createPaymentIntent(amount, currency, serviceId, packageId);
 
 				if (!response.success) {
-					this.showError(response.data?.message || 'Failed to initialize payment.');
+					this.showError(response.data?.message || wpssStripe.i18n.initFailed);
 					return;
 				}
 
@@ -183,7 +183,7 @@
 		 */
 		handlePayment: async function() {
 			if (!this.stripe || !this.elements) {
-				this.showError('Payment not initialized. Please refresh and try again.');
+				this.showError(wpssStripe.i18n.notInitialized);
 				return;
 			}
 
@@ -367,7 +367,7 @@
 						// Redirect to requirements page.
 						window.location.href = response.data.redirect_url;
 					} else {
-						this.showError(response.data?.message || 'Failed to create order.');
+						this.showError(response.data?.message || wpssStripe.i18n.orderFailed);
 					}
 				},
 				error: () => {
