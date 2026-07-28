@@ -273,16 +273,86 @@ All errors follow WordPress REST API error format:
 }
 ```
 
-### Common Error Codes
+### Error codes
 
-| Code | Status | Description |
-|------|--------|-------------|
-| `rest_forbidden` | 401 | Authentication required |
-| `rest_forbidden_context` | 403 | Insufficient permissions |
-| `invalid_request` | 400 | Invalid or missing parameters |
-| `not_found` | 404 | Resource not found |
-| `server_error` | 500 | Internal server error |
-| `rate_limit_exceeded` | 429 | Too many requests **[PRO]** |
+The plugin returns **78 distinct error codes**. Branch on `code`, never on
+`message` -- messages are translated and will not match on a non-English site.
+
+Codes are grouped by the status they return. Anything not listed here comes from
+WordPress core (`rest_no_route`, `rest_cookie_invalid_nonce`, and friends).
+
+#### 401 -- not authenticated
+
+`rest_not_logged_in` · `invalid_credentials`
+
+#### 403 -- authenticated but not allowed
+
+`rest_forbidden` (admin-only action) · `not_vendor` · `disputes_disabled` ·
+`registration_disabled`
+
+#### 404 -- not found
+
+`rest_order_not_found` · `wpss_order_not_found` · `rest_vendor_not_found` ·
+`rest_review_not_found` · `request_not_found` · `proposal_not_found` ·
+`dispute_not_found` · `conversation_not_found` · `addon_not_found` ·
+`invalid_service` · `invalid_package` · `rest_file_not_found` ·
+`rest_not_vendor` · `not_found`
+
+#### 409 -- conflicting state
+
+`wpss_order_not_payable` -- the order is not awaiting payment
+`wpss_milestone_locked` -- an earlier phase must be paid and approved first
+
+These two are the ones worth handling explicitly: they mean "your request was
+valid, but the object has moved on." Re-fetch the order rather than retrying.
+
+#### 429 -- rate limited
+
+`rate_limit_exceeded` · `rate_limited`
+
+Both ship in **free** (login and registration are rate limited). Back off and
+retry; do not loop.
+
+#### 500 / 501 -- server side
+
+`order_failed` · `create_failed` · `update_failed` · `delete_failed` ·
+`upload_failed` · `addon_create_failed` · `rest_review_failed` ·
+`rest_message_failed` · `rest_conversation_failed` · `rest_deliverable_failed` ·
+`rest_vacation_update_failed` · `wpss_profile_update_failed` ·
+`conversation_unavailable` · `user_lookup_failed` · `no_provider` ·
+`app_passwords_unavailable` · `checkout_unavailable` (501)
+
+`no_provider` and `checkout_unavailable` mean the marketplace is misconfigured
+(no e-commerce adapter or gateway available), not that the request was wrong.
+
+#### 400 -- bad request or rejected business rule
+
+Most codes fall here. The ones you are most likely to handle:
+
+| Code | Means |
+|------|-------|
+| `rest_validation_failed` | Generic parameter validation failure |
+| `rest_invalid_rating` | Rating outside 1-5 |
+| `rest_invalid_message`, `message_empty` | Empty message body |
+| `rest_already_reviewed`, `rest_already_replied`, `rest_already_voted` | Duplicate action |
+| `rest_review_window_expired` | Past the review window (default 30 days) |
+| `rest_order_not_completed` | Reviewing an order that is not complete |
+| `rest_action_failed` | The order status transition is not allowed from here |
+| `rest_amount_mismatch` | Paid amount does not match the order total |
+| `own_service` | Buying your own service |
+| `service_paused` | Vendor paused the service or is on vacation |
+| `empty_cart`, `not_found` | Cart empty, or item key not in cart |
+| `insufficient_balance`, `below_minimum`, `pending_exists` | Withdrawal rejected |
+| `invalid_amount` | Amount must be greater than zero |
+| `rest_registration_closed`, `rest_already_vendor`, `rest_pending_application` | Vendor registration rejected |
+| `username_exists`, `email_exists`, `weak_password`, `incorrect_password` | Account problems |
+| `invalid_gateway`, `unsupported_gateway` | Gateway not enabled, or does not support REST confirmation |
+| `stripe_error`, `stripe_confirm_error`, `paypal_error`, `paypal_confirm_error` | Gateway declined or errored |
+| `file_too_large`, `invalid_type`, `no_file` | Upload rejected |
+
+`rest_action_failed` is the one that most often looks like a bug and is not: it
+means the transition you asked for is not legal from the order's current status.
+Check the status first -- see [Order Lifecycle](../order-management/order-lifecycle.md).
 
 ## Pagination
 

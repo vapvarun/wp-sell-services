@@ -99,13 +99,13 @@ Audience key: **B** buyer, **V** vendor, **O** site owner/admin, **D** developer
 
 | Feature | Doc | Audience | Status |
 |---------|-----|----------|--------|
-| REST overview (auth, errors, paging) | `developer-guide/rest-api-overview.md` | D | OK |
+| REST overview (auth, errors, paging) | `developer-guide/rest-api-overview.md` | D | **78 error codes documented by status; 3 fabricated codes removed** |
 | 23 free + 10 Pro controllers | `developer-guide/rest-api-controllers.md` | D | **Rewritten from source** |
 | Hooks & filters (behavioural) | `developer-guide/hooks-filters.md` | D | **Phantom hooks removed; signatures corrected; template hooks split out** |
 | Custom integrations | `developer-guide/custom-integrations.md` | D | OK |
 | Theme integration | `developer-guide/theme-integration.md` | D | OK |
 | Email customization | `developer-guide/email-customization.md` | D | OK |
-| Action Scheduler | `developer-guide/action-scheduler.md` | D | OK |
+| Action Scheduler (17 jobs) | `developer-guide/action-scheduler.md` | D | OK -- `wpss_cleanup_review_votes` added |
 | WP-CLI (7 commands) | `developer-guide/wp-cli-commands.md` | O D | **Rewritten -- `demo marketplace`, `test`, `test:flow`, `scale` added** |
 | Pro extension seams | `developer-guide/pro-extension-points.md` | D | **New -- ported from Pro tree** |
 | Database schema (25 tables) | `developer-guide/database-schema.md` | D | **New** |
@@ -168,10 +168,11 @@ Tracked, not silently dropped.
 |-----|--------|----------|
 | **No screenshots on Pro setup pages.** Blocked: Pro loads nothing without a valid license key, so its screens cannot be captured on a dev site | Pro setup is text-only | P1 |
 | ~30 free pages still have no screenshot | Setup is harder to follow | P2 |
-| 77 of 454 hooks remain undocumented (declared internal) | Low -- the template and behavioural surfaces are both covered now | P3 |
+| 77 of 454 hooks remain undocumented (declared internal) | Low -- template and behavioural surfaces are both covered | P3 |
+| REST overview lists generic endpoints; per-endpoint request/response examples are thin | Clients infer payload shapes | P3 |
 
-| REST error codes: 24 in code, ~2 in the overview | Clients cannot branch on failure without triggering each one | P3 |
-| `wpss_auto_approve_vendors` missing from the cron reference (6 of 7 covered) | Minor | P3 |
+
+
 | `MONEY-FLOW.md` / `SUB_ORDER_PATTERN.md` linked from some dev pages, not all | Minor | P3 |
 | Nav ordering still puts Platform Settings / Admin Tools late; the new Launch Checklist partly compensates | Owner path is discoverable but not front-loaded | P3 |
 
