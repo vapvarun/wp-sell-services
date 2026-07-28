@@ -607,30 +607,22 @@
 }
 
 .wpss-request-card {
+	/* Column layout: content block on top, a dedicated action FOOTER row at the
+	   bottom (Basecamp #9985554351). Side-by-side never fit — five actions want
+	   ~400px next to a title that needs its own width — so the actions used to
+	   sprawl on wide cards and clip on narrow ones. A footer row is consistent
+	   at every width: desktop, iPad, and mobile all read the same. */
 	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 16px;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 12px;
 	padding: 16px;
 	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
-	/* Actions drop to their own line when the title cannot keep its floor.
-	   The dashboard content column is ~500px and the five action links alone
-	   want ~490px, so side-by-side is not physically possible here: without
-	   wrapping, the title column was squeezed to zero. */
-	flex-wrap: wrap;
 }
 
 .wpss-request-card__main {
-	/* flex:1 is load-bearing, not decorative. Without a grow factor this column
-	   had none while __actions refused to shrink, so main collapsed to ZERO
-	   width: the request title wrapped one word per line behind the status
-	   badge while the action links ate the entire row. min-width:0 alone only
-	   permits the collapse — the grow factor is what claims the space back.
-	   The 260px basis is a FLOOR: below it the card wraps and the actions take
-	   their own line, rather than the title shrinking to one word per line. */
-	flex: 1 1 260px;
 	min-width: 0;
 }
 
@@ -654,18 +646,58 @@
 }
 
 .wpss-request-card__actions {
+	/* Footer action row: a hairline separates it from the content above; the
+	   status badge pins to the start and the icon buttons flow to the end. */
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	/* Wrap rather than crush the title. buyer-request.css declares this same
-	   class with `flex-flow: row wrap`; this sheet wins on the dashboard, so
-	   without wrapping here the two definitions disagreed and the dashboard got
-	   the unwrappable one. (Duplicate class — Phase 3 of ADMIN-UX-PLAN keeps
-	   exactly one definition; until then the two must at least agree.) */
-	flex-wrap: wrap;
-	flex-shrink: 0;
-	justify-content: flex-end;
+	gap: 8px;
+	width: 100%;
+	padding-top: 12px;
+	border-top: 1px solid var(--wpss-gray-100);
 }
+
+/* Status is state, not an action — hold the left edge so the icon buttons
+   collect at the right of the footer. */
+.wpss-request-card__actions > .wpss-status {
+	margin-inline-end: auto;
+}
+
+/* Compact icon actions — the fix for Basecamp #9985554351.
+   Five text buttons (status + View Offers + Close/Reopen + Edit + Delete) total
+   ~400px. On a wide card they sprawled with a dead gap; on a narrow card the
+   base rule's `flex-shrink: 0` sized __actions to its content and OVERFLOWED,
+   clipping Delete off the right edge. Collapsing every action to an icon button
+   (~40px) keeps the whole set on ONE tidy line at every width — desktop, iPad,
+   and mobile alike — while the label survives in the DOM for assistive tech and
+   as a hover tooltip (title attr). */
+.wpss-request-card__actions .wpss-btn--action {
+	gap: 0;
+	padding-inline: 0;
+	min-width: 40px;
+	min-height: 40px;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.wpss-request-card__actions .wpss-btn--action .wpss-icon {
+	width: 18px;
+	height: 18px;
+}
+
+/* Visually hide the label but keep it for screen readers (the icon carries the
+   meaning visually; aria-label + title name the control for AT and on hover). */
+.wpss-request-card__actions .wpss-btn--action .wpss-btn__label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 
 /* ==========================================================================
    Conversation Cards
