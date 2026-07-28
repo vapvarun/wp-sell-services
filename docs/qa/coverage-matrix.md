@@ -78,7 +78,7 @@ Audience key: **B** buyer, **V** vendor, **O** site owner/admin, **D** developer
 | 19 shortcodes + attributes | `marketplace-display/shortcodes-reference.md` | O D | **Rewritten -- tags + attributes now listed** |
 | 6 blocks + attributes | `marketplace-display/gutenberg-blocks.md` | O D | OK -- attribute reference added |
 | Search & filters | `marketplace-display/search-filters.md` | O | OK |
-| Template overrides | `marketplace-display/template-overrides.md` | D | OK |
+| Template overrides + 137 template hooks | `marketplace-display/template-overrides.md` | D | **Rewritten -- all 47 frontend templates listed, 110 hooks + 24 filters documented** |
 | SEO & schema | `marketplace-display/seo-schema.md` | O | OK |
 | Email types (23 switchable) | `notifications-emails/email-types.md` | O | OK -- count corrected |
 | Email configuration | `notifications-emails/email-configuration.md` | O | OK |
@@ -101,7 +101,7 @@ Audience key: **B** buyer, **V** vendor, **O** site owner/admin, **D** developer
 |---------|-----|----------|--------|
 | REST overview (auth, errors, paging) | `developer-guide/rest-api-overview.md` | D | OK |
 | 23 free + 10 Pro controllers | `developer-guide/rest-api-controllers.md` | D | **Rewritten from source** |
-| Hooks & filters (272 tabled) | `developer-guide/hooks-filters.md` | D | **Phantom hooks removed; signatures corrected** |
+| Hooks & filters (behavioural) | `developer-guide/hooks-filters.md` | D | **Phantom hooks removed; signatures corrected; template hooks split out** |
 | Custom integrations | `developer-guide/custom-integrations.md` | D | OK |
 | Theme integration | `developer-guide/theme-integration.md` | D | OK |
 | Email customization | `developer-guide/email-customization.md` | D | OK |
@@ -168,8 +168,8 @@ Tracked, not silently dropped.
 |-----|--------|----------|
 | **No screenshots on Pro setup pages.** Blocked: Pro loads nothing without a valid license key, so its screens cannot be captured on a dev site | Pro setup is text-only | P1 |
 | ~30 free pages still have no screenshot | Setup is harder to follow | P2 |
-| 182 of 454 hooks remain undocumented (declared internal in the reference header) | Themers miss the ~40 `wpss_before_*` / `wpss_after_*` template pairs | P2 |
-| Template overrides: 98 templates ship, the page names 2 | Themers cannot discover what is overridable | P2 |
+| 77 of 454 hooks remain undocumented (declared internal) | Low -- the template and behavioural surfaces are both covered now | P3 |
+
 | REST error codes: 24 in code, ~2 in the overview | Clients cannot branch on failure without triggering each one | P3 |
 | `wpss_auto_approve_vendors` missing from the cron reference (6 of 7 covered) | Minor | P3 |
 | `MONEY-FLOW.md` / `SUB_ORDER_PATTERN.md` linked from some dev pages, not all | Minor | P3 |

@@ -551,7 +551,7 @@
           "order": 3
         },
         {
-          "title": "Template Overrides",
+          "title": "Template Overrides & Hooks",
           "slug": "template-overrides-wpss",
           "file": "marketplace-display/template-overrides.md",
           "order": 4

@@ -1,8 +1,12 @@
 # Hooks and Filters Reference
 
-WP Sell Services and WP Sell Services Pro fire **454** actions and filters between them. This page documents the **282** that are part of the supported extension surface, each with its parameters and the source file that fires it.
+WP Sell Services and WP Sell Services Pro fire **454** actions and filters between them.
 
-The rest are internal and may change without notice -- if you need one of them, open a support request and we will promote it to this page rather than have you bind to a moving target.
+This page covers the **behavioural** surface -- services, orders, delivery, money, disputes, REST, and the Pro seams -- each with its parameters and the source file that fires it.
+
+**Template hooks are on their own page.** The ~110 `wpss_before_*` / `wpss_after_*` markup slots, the dashboard section hooks, and the display filters are documented next to the templates that fire them, in [Template Overrides](../marketplace-display/template-overrides.md). Use that page when you want to inject markup rather than change behaviour.
+
+Between the two, **377 of the 454** hooks are documented. The rest are internal and may change without notice -- if you need one, open a support request and we will promote it rather than have you bind to a moving target.
 
 > **Verify before you ship.** Hook names and signatures on this page are checked against the 1.3.0 source. Some names in pre-1.3.0 documentation were never fired at all -- if a callback of yours has silently stopped running, search this page for the hook name before assuming a regression.
 
