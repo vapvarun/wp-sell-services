@@ -34,8 +34,8 @@
 }
 
 .wpss-upgrade-docs {
-	display: inline-block;
-	margin-inline-start: 16px;
+	display: block;
+	margin: 14px auto 0;
 	color: var(--wpss-wp-admin-text-secondary, #646970);
 	font-size: 13px;
 	text-decoration: underline;
