@@ -1120,7 +1120,7 @@
 .wpss-form-hint {
 	margin: 6px 0 0;
 	font-size: 12px;
-	color: var(--wpss-gray-400);
+	color: var(--wpss-text-muted);
 }
 
 /* ==========================================================================
@@ -3117,7 +3117,7 @@ select.wpss-input option,
 
 .wpss-status-pending_review {
 	background: var(--wpss-info-light, #e8f4fd);
-	color: var(--wpss-secondary, #0a4b78);
+	color: var(--wpss-secondary-accent, #0a4b78);
 }
 
 .wpss-status-escalated {

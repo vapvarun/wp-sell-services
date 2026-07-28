@@ -909,7 +909,7 @@ select.wpss-input::-ms-expand {
 
 .wpss-deadline__date {
 	font-weight: 600;
-	color: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-secondary-accent, #1e293b);
 }
 
 .wpss-deadline__remaining {
@@ -947,7 +947,7 @@ select.wpss-input::-ms-expand {
 
 .wpss-funnel__value {
 	font-weight: 600;
-	color: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-secondary-accent, #1e293b);
 }
 
 .wpss-funnel__rate {
@@ -980,7 +980,7 @@ select.wpss-input::-ms-expand {
 .wpss-metric__value {
 	font-size: 1.125rem;
 	font-weight: 600;
-	color: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-secondary-accent, #1e293b);
 }
 
 .wpss-metric__bar {

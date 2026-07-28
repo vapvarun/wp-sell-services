@@ -1283,7 +1283,7 @@
 	margin: 0;
 	font-size: 1.5rem;
 	font-weight: 600;
-	color: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-secondary-accent, #1e293b);
 }
 
 .wpss-orders__list {
@@ -1491,7 +1491,7 @@
 	padding: 0 !important;
 	font-size: 1.25rem !important;
 	font-weight: 600 !important;
-	color: var(--wpss-secondary, #111827) !important;
+	color: var(--wpss-secondary-accent, #111827) !important;
 	line-height: 1.3 !important;
 	font-family: inherit;
 }

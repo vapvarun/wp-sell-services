@@ -461,7 +461,7 @@ body.wpss-sidebar-open::after {
 	margin: 0 0 1rem;
 	font-size: 0.875rem;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 }

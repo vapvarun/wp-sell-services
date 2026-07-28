@@ -152,7 +152,7 @@
 
 .wpss-btn-outline {
 	background: transparent;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	border-color: var(--wpss-border);
 }
 
@@ -416,7 +416,7 @@ article.wpss-service-card:hover {
 	font-size: 15px;
 	font-weight: 600;
 	line-height: 1.4;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
@@ -475,7 +475,7 @@ article.wpss-service-card:hover {
 .wpss-card-price {
 	font-size: 16px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 /* ==========================================================================
@@ -539,7 +539,7 @@ article.wpss-service-card:hover {
 	line-height: 1.4;
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -665,7 +665,7 @@ article.wpss-service-card:hover {
 	font-size: 15px;
 	font-weight: 600;
 	line-height: 1.4;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
@@ -686,7 +686,7 @@ article.wpss-service-card:hover {
 
 .wpss-service-card__rating-value {
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-service-card__rating-count {
@@ -718,7 +718,7 @@ article.wpss-service-card:hover {
 .wpss-service-card__price {
 	font-size: 16px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 /* ==========================================================================
@@ -969,7 +969,7 @@ article.wpss-service-card:hover {
 .wpss-package-price {
 	font-size: 24px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-package-description {
@@ -1209,7 +1209,7 @@ article.wpss-service-card:hover {
 	display: block;
 	font-size: 48px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	line-height: 1;
 }
 
@@ -1441,7 +1441,7 @@ article.wpss-service-card:hover {
 	display: block;
 	font-size: 24px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-stat-label {
@@ -1631,7 +1631,7 @@ article.wpss-service-card:hover {
 	margin: 0;
 	font-size: 16px;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-order-section__title svg {
@@ -1663,7 +1663,7 @@ article.wpss-service-card:hover {
 	margin: 0 0 10px;
 	font-size: 14px;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-requirement-view__answer {
@@ -2491,7 +2491,7 @@ article.wpss-service-card:hover {
 .wpss-requirements-header h1 {
 	margin: 0 0 16px;
 	font-size: 28px;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-requirements-intro {
@@ -2562,7 +2562,7 @@ article.wpss-service-card:hover {
 	display: block;
 	margin-bottom: 8px;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-required {
@@ -3034,7 +3034,7 @@ body.wpss-modal-active {
 	display: block;
 	margin-bottom: 0.5rem;
 	font-weight: 500;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-form-group label .required {
@@ -3081,7 +3081,7 @@ body.wpss-modal-active {
 	display: block;
 	margin-bottom: 0.5rem;
 	font-weight: 500;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-form-group__required {
@@ -3190,7 +3190,7 @@ body.wpss-modal-active {
 .wpss-modal__title {
 	margin: 0;
 	font-size: 1.25rem;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-modal__close,
@@ -3369,7 +3369,7 @@ body.wpss-modal-active {
 
 .wpss-profile__name {
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	font-size: 1rem;
 }
 
@@ -3439,7 +3439,7 @@ body.wpss-modal-active {
 .wpss-registration__title {
 	font-size: 1.75rem;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	margin: 0 0 0.5rem;
 }
 
@@ -3470,7 +3470,7 @@ body.wpss-modal-active {
 
 .wpss-service-info__title {
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
