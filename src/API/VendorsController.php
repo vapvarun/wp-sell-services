@@ -283,14 +283,26 @@ class VendorsController extends RestController {
 		// Order by rating or orders (uses custom query modifier to LEFT JOIN).
 		$orderby = $request->get_param( 'orderby' );
 		if ( 'rating' === $orderby || 'orders' === $orderby ) {
-			$meta_key = 'rating' === $orderby ? '_wpss_rating_average' : '_wpss_completed_orders';
 			add_action(
 				'pre_user_query',
-				function ( $query ) use ( $meta_key ) {
+				function ( $query ) use ( $orderby ) {
 					global $wpdb;
+
+					if ( 'orders' === $orderby ) {
+						// completed_orders lives in the vendor profiles table. The
+						// _wpss_completed_orders user meta was never written, so the
+						// old meta join sorted every vendor as 0 (BC #10110742943).
+						$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
+						$query->query_from   .= " LEFT JOIN {$profiles} AS sort_prof ON ( {$wpdb->users}.ID = sort_prof.user_id )";
+						$query->query_orderby = 'ORDER BY COALESCE(sort_prof.completed_orders, 0) DESC';
+						return;
+					}
+
+					// Rating still comes from the _wpss_rating_average user meta,
+					// which does have a writer.
 					$query->query_from   .= $wpdb->prepare(
 						" LEFT JOIN {$wpdb->usermeta} AS sort_meta ON ( {$wpdb->users}.ID = sort_meta.user_id AND sort_meta.meta_key = %s )",
-						$meta_key
+						'_wpss_rating_average'
 					);
 					$query->query_orderby = 'ORDER BY COALESCE(sort_meta.meta_value+0, 0) DESC';
 				}
