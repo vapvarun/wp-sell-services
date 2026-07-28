@@ -786,9 +786,13 @@ class Shortcodes {
 			return '<div class="wpss-error">' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</div>';
 		}
 
-		$template = locate_template( 'wp-sell-services/order/details.php' );
+		// Render the canonical full order view. order-view.php is self-contained
+		// (it resolves the order from $order_id, which is set above). The old
+		// lookup targeted order/details.php, which never existed, so the shortcode
+		// always fell back to a reduced inline copy (Basecamp #10110742943).
+		$template = locate_template( 'wp-sell-services/order/order-view.php' );
 		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/order/details.php';
+			$template = WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
 		}
 
 		ob_start();

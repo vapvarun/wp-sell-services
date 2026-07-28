@@ -672,7 +672,15 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 		<h2><?php esc_html_e( 'My Services', 'wp-sell-services' ); ?></h2>
 
 		<p>
-			<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="button button-primary">
+			<?php
+			// Frontend vendors have no wp-admin access, so send them to the
+			// frontend Service Wizard (dashboard "create" section), not
+			// post-new.php. Fall back to the admin editor only if the dashboard
+			// page isn't configured.
+			$wpss_add_service_url = function_exists( 'wpss_get_dashboard_url' ) ? wpss_get_dashboard_url( 'create' ) : '';
+			$wpss_add_service_url = $wpss_add_service_url ? $wpss_add_service_url : admin_url( 'post-new.php?post_type=wpss_service' );
+			?>
+			<a href="<?php echo esc_url( $wpss_add_service_url ); ?>" class="button button-primary">
 				<?php esc_html_e( 'Add New Service', 'wp-sell-services' ); ?>
 			</a>
 		</p>

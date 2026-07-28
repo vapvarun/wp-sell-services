@@ -650,7 +650,7 @@ class TemplateLoader {
 		}
 
 		// Get templates from subdirectories.
-		$subdirs = array( 'partials', 'order', 'myaccount', 'dashboard', 'vendor', 'emails' );
+		$subdirs = array( 'partials', 'order', 'dashboard', 'vendor', 'emails' );
 		foreach ( $subdirs as $subdir ) {
 			$subdir_templates = glob( $this->default_path . $subdir . '/*.php' );
 			if ( $subdir_templates ) {
