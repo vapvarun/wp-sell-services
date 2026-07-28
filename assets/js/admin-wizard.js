@@ -25,7 +25,7 @@
 		var wizardNonce = wpssWizard.wizardNonce;
 		var settingsNonce = wpssWizard.settingsNonce;
 		var demoNonce = wpssWizard.demoNonce;
-		var totalSteps = 6;
+		var totalSteps = 5;
 		var currentStep = 1;
 
 		function updateIndicator() {
@@ -46,12 +46,12 @@
 			updateIndicator();
 			$('#wpss-wizard-wrap').scrollTop(0);
 
-			// If arriving at step 6, mark complete (with validation).
-			if (step === 6) {
+			// If arriving at the final step, mark complete (with validation).
+			if (step === 5) {
 				$.post(ajaxUrl, { action: 'wpss_wizard_complete', nonce: wizardNonce }, function(response) {
 					if (!response.success && response.data && response.data.message) {
 						wpssAdminNotice(response.data.message, 'error');
-						goToStep(3);
+						goToStep(2);
 					}
 				});
 			}
@@ -74,7 +74,8 @@
 			goToStep(parseInt($(this).data('next'), 10));
 		});
 
-		// Save & Continue: steps 1, 2, 5 via wpss_wizard_save_step.
+		// Save & Continue: steps 1 (basics) and 4 (vendor) via wpss_wizard_save_step;
+		// step 3 (categories) uses its own category-create AJAX.
 		$(document).on('click', '.wpss-wizard-save', function() {
 			var btn = $(this);
 			var step = parseInt(btn.data('step'), 10);
@@ -86,19 +87,7 @@
 				data.platform_name = $('#wpss-wiz-name').val();
 				data.currency = $('#wpss-wiz-currency').val();
 				data.commission_rate = $('#wpss-wiz-commission').val();
-			} else if (step === 2) {
-				data.gateway = $('input[name="wpss_gateway"]:checked').val();
-				if (data.gateway === 'stripe') {
-					data.stripe_test_mode = $('#wpss-wiz-stripe-test').is(':checked') ? 1 : 0;
-				// Credentials belong to the Payments settings screen, not the
-					// wizard — see save_step_gateway().
-				} else if (data.gateway === 'paypal') {
-					data.paypal_sandbox = $('#wpss-wiz-paypal-sandbox').is(':checked') ? 1 : 0;
-				} else if (data.gateway === 'offline') {
-					data.offline_title = $('#wpss-wiz-offline-title').val();
-					data.offline_description = $('#wpss-wiz-offline-desc').val();
-				}
-			} else if (step === 4) {
+			} else if (step === 3) {
 				// Categories: collect selected chip names.
 				var cats = [];
 				$('.wpss-wizard-chip.active:not(.disabled)').each(function() {
@@ -106,7 +95,7 @@
 				});
 				if (cats.length === 0) {
 					btn.prop('disabled', false);
-					goToStep(5);
+					goToStep(4);
 					return;
 				}
 				// Use category-specific AJAX.
@@ -116,12 +105,12 @@
 					categories: cats
 				}, function() {
 					btn.prop('disabled', false);
-					goToStep(5);
+					goToStep(4);
 				}).fail(function() {
 					btn.prop('disabled', false);
 				});
 				return;
-			} else if (step === 5) {
+			} else if (step === 4) {
 				data.vendor_registration = $('input[name="wpss_vendor_reg"]:checked').val();
 				data.max_services_per_vendor = $('#wpss-wiz-max-services').val();
 				data.require_service_moderation = $('#wpss-wiz-moderation').is(':checked') ? 1 : 0;

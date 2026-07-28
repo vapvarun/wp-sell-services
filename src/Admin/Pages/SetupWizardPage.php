@@ -179,7 +179,9 @@ class SetupWizardPage {
 	/**
 	 * AJAX: Save a wizard step.
 	 *
-	 * Handles steps 1 (basics), 2 (gateway), and 5 (vendor).
+	 * Handles steps 1 (basics) and 4 (vendor). Payment gateway is no longer a
+	 * wizard step — it is guided from the finish screen and configured on the
+	 * Payments settings page.
 	 *
 	 * @return void
 	 */
@@ -196,10 +198,7 @@ class SetupWizardPage {
 			case 1:
 				$this->save_step_basics();
 				break;
-			case 2:
-				$this->save_step_gateway();
-				break;
-			case 5:
+			case 4:
 				$this->save_step_vendor();
 				break;
 			default:
@@ -235,86 +234,7 @@ class SetupWizardPage {
 	}
 
 	/**
-	 * Save step 2 — Payment Gateway.
-	 *
-	 * @return void
-	 */
-	private function save_step_gateway(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_save_step().
-		$gateway = sanitize_key( $_POST['gateway'] ?? '' );
-
-		// The wizard picks WHICH gateway to use and switches it on. It does NOT
-		// collect API credentials — the Payments settings screen is the single
-		// owner of those, and a second writer here had already drifted: the
-		// wizard wrote PayPal `client_id` / `client_secret`, while the gateway
-		// reads `sandbox_client_id` / `live_client_id` (+ `webhook_id`, never
-		// collected). Every credential typed into the wizard was silently
-		// discarded, so PayPal looked configured but could never authenticate.
-		// Keeping one writer removes the whole drift class — and most owners do
-		// not have API keys to hand during first-run onboarding anyway.
-		// Whether the selected gateway still needs API keys before it can accept
-		// payments. Stripe/PayPal is_enabled() requires credentials, and the
-		// wizard does not collect them, so enabling the flag alone leaves
-		// checkout with zero gateways — a silent failure the owner reads as
-		// "configured". Detect it and return honest guidance instead.
-		$needs_keys = false;
-
-		if ( 'stripe' === $gateway ) {
-			$settings = get_option( 'wpss_stripe_settings', array() );
-
-			$settings['enabled']   = true;
-			$settings['test_mode'] = ! empty( $_POST['stripe_test_mode'] );
-
-			update_option( 'wpss_stripe_settings', $settings );
-
-			// Fresh instance reads the just-saved option; enabled is now true, so
-			// is_enabled() is false only when the required keys are missing.
-			$needs_keys = ! ( new \WPSellServices\Integrations\Stripe\StripeGateway() )->is_enabled();
-		} elseif ( 'paypal' === $gateway ) {
-			$settings = get_option( 'wpss_paypal_settings', array() );
-
-			$settings['enabled'] = true;
-			// `sandbox_mode`, NOT `sandbox` — PayPalGateway reads
-			// `sandbox_mode`. The wizard wrote a key nothing consumed, so the
-			// sandbox toggle silently did nothing and a wizard-configured PayPal
-			// went live even when the owner asked for sandbox. Same drift class
-			// the comment above says was eliminated; this was the survivor.
-			$settings['sandbox_mode'] = ! empty( $_POST['paypal_sandbox'] );
-
-			update_option( 'wpss_paypal_settings', $settings );
-
-			$needs_keys = ! ( new \WPSellServices\Integrations\PayPal\PayPalGateway() )->is_enabled();
-		} elseif ( 'offline' === $gateway ) {
-			$settings = get_option( 'wpss_offline_settings', array() );
-
-			$settings['enabled']     = true;
-			$settings['title']       = sanitize_text_field( wp_unslash( $_POST['offline_title'] ?? __( 'Offline Payment', 'wp-sell-services' ) ) );
-			$settings['description'] = sanitize_textarea_field( wp_unslash( $_POST['offline_description'] ?? '' ) );
-
-			update_option( 'wpss_offline_settings', $settings );
-		}
-
-		if ( $needs_keys ) {
-			$settings_url = admin_url( 'admin.php?page=wpss-settings#payments' );
-			wp_send_json_success(
-				array(
-					'needs_keys'   => true,
-					'settings_url' => $settings_url,
-					'message'      => sprintf(
-						/* translators: %s: gateway name (e.g. Stripe). */
-						__( '%s selected. Add your API keys under Payments settings before checkout can accept payments.', 'wp-sell-services' ),
-						ucfirst( $gateway )
-					),
-				)
-			);
-		}
-
-		wp_send_json_success( array( 'message' => __( 'Gateway configured.', 'wp-sell-services' ) ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-	}
-
-	/**
-	 * Save step 5 — Vendor Settings.
+	 * Save step 4 — Vendor Settings.
 	 *
 	 * @return void
 	 */
@@ -520,96 +440,8 @@ class SetupWizardPage {
 				</div>
 			</div>
 
-			<!-- Step 2: Payment Gateway -->
+			<!-- Step 2: Create Pages -->
 			<div class="wpss-wizard-step" data-step="2">
-				<h2><?php esc_html_e( 'Payment Gateway', 'wp-sell-services' ); ?></h2>
-				<p class="wpss-wizard-desc"><?php esc_html_e( 'Choose how you\'ll accept payments. You can change this later in Settings.', 'wp-sell-services' ); ?></p>
-
-				<div class="wpss-wizard-gateway-options">
-					<label class="wpss-wizard-radio-card">
-						<input type="radio" name="wpss_gateway" value="stripe">
-						<div class="wpss-wizard-radio-content">
-							<strong><?php esc_html_e( 'Stripe', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Credit cards, Apple Pay, Google Pay', 'wp-sell-services' ); ?></span>
-						</div>
-					</label>
-					<label class="wpss-wizard-radio-card">
-						<input type="radio" name="wpss_gateway" value="paypal">
-						<div class="wpss-wizard-radio-content">
-							<strong><?php esc_html_e( 'PayPal', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'PayPal checkout and credit cards', 'wp-sell-services' ); ?></span>
-						</div>
-					</label>
-					<label class="wpss-wizard-radio-card">
-						<input type="radio" name="wpss_gateway" value="offline" checked>
-						<div class="wpss-wizard-radio-content">
-							<strong><?php esc_html_e( 'Offline Payment', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Bank transfer, cash, or manual payments', 'wp-sell-services' ); ?></span>
-						</div>
-					</label>
-				</div>
-
-				<!-- Stripe panel -->
-				<div class="wpss-wizard-gateway-panel" data-gateway="stripe" style="display:none;">
-					<div class="wpss-wizard-field">
-						<label>
-							<input type="checkbox" id="wpss-wiz-stripe-test" checked>
-							<?php esc_html_e( 'Test Mode', 'wp-sell-services' ); ?>
-						</label>
-					</div>
-					<p class="description">
-						<?php
-						printf(
-							/* translators: %s: link to the Stripe payment settings screen */
-							esc_html__( 'API keys are entered on the payment settings screen: %s', 'wp-sell-services' ),
-							'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-settings&tab=payments' ) ) . '" target="_blank" rel="noopener">' . esc_html__( 'Payments settings', 'wp-sell-services' ) . '</a>'
-						);
-						?>
-					</p>
-				</div>
-
-				<!-- PayPal panel -->
-				<div class="wpss-wizard-gateway-panel" data-gateway="paypal" style="display:none;">
-					<div class="wpss-wizard-field">
-						<label>
-							<input type="checkbox" id="wpss-wiz-paypal-sandbox" checked>
-							<?php esc_html_e( 'Sandbox Mode', 'wp-sell-services' ); ?>
-						</label>
-					</div>
-					<p class="description">
-						<?php
-						printf(
-							/* translators: %s: link to the PayPal payment settings screen */
-							esc_html__( 'Client ID, secret and webhook ID are entered on the payment settings screen: %s', 'wp-sell-services' ),
-							'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-settings&tab=payments' ) ) . '" target="_blank" rel="noopener">' . esc_html__( 'Payments settings', 'wp-sell-services' ) . '</a>'
-						);
-						?>
-					</p>
-				</div>
-
-				<!-- Offline panel -->
-				<div class="wpss-wizard-gateway-panel" data-gateway="offline">
-					<div class="wpss-wizard-field">
-						<label for="wpss-wiz-offline-title"><?php esc_html_e( 'Payment Title', 'wp-sell-services' ); ?></label>
-						<input type="text" id="wpss-wiz-offline-title" value="<?php esc_attr_e( 'Offline Payment', 'wp-sell-services' ); ?>">
-					</div>
-					<div class="wpss-wizard-field">
-						<label for="wpss-wiz-offline-desc"><?php esc_html_e( 'Instructions', 'wp-sell-services' ); ?></label>
-						<textarea id="wpss-wiz-offline-desc" rows="3" placeholder="<?php esc_attr_e( 'Please transfer to our bank account...', 'wp-sell-services' ); ?>"></textarea>
-					</div>
-				</div>
-
-				<div class="wpss-wizard-actions">
-					<button type="button" class="button wpss-wizard-back" data-back="1"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
-					<div>
-						<button type="button" class="button wpss-wizard-skip" data-skip="2"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
-						<button type="button" class="button button-primary wpss-wizard-save" data-step="2"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
-					</div>
-				</div>
-			</div>
-
-			<!-- Step 3: Create Pages -->
-			<div class="wpss-wizard-step" data-step="3">
 				<h2><?php esc_html_e( 'Create Pages', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'These pages are required for your marketplace to work. We\'ll create them with the right shortcodes.', 'wp-sell-services' ); ?></p>
 
@@ -640,16 +472,16 @@ class SetupWizardPage {
 				</div>
 
 				<div class="wpss-wizard-actions">
-					<button type="button" class="button wpss-wizard-back" data-back="2"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
+					<button type="button" class="button wpss-wizard-back" data-back="1"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
 					<div>
-						<button type="button" class="button wpss-wizard-skip" data-skip="3"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
-						<button type="button" class="button button-primary wpss-wizard-next" data-next="4"><?php esc_html_e( 'Continue', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button wpss-wizard-skip" data-skip="2"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button button-primary wpss-wizard-next" data-next="3"><?php esc_html_e( 'Continue', 'wp-sell-services' ); ?></button>
 					</div>
 				</div>
 			</div>
 
-			<!-- Step 4: Service Categories -->
-			<div class="wpss-wizard-step" data-step="4">
+			<!-- Step 3: Service Categories -->
+			<div class="wpss-wizard-step" data-step="3">
 				<h2><?php esc_html_e( 'Service Categories', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'Select suggested categories or add your own. These help buyers find services.', 'wp-sell-services' ); ?></p>
 
@@ -691,16 +523,16 @@ class SetupWizardPage {
 				</div>
 
 				<div class="wpss-wizard-actions">
-					<button type="button" class="button wpss-wizard-back" data-back="3"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
+					<button type="button" class="button wpss-wizard-back" data-back="2"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
 					<div>
-						<button type="button" class="button wpss-wizard-skip" data-skip="4"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
-						<button type="button" class="button button-primary wpss-wizard-save" data-step="4"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button wpss-wizard-skip" data-skip="3"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button button-primary wpss-wizard-save" data-step="3"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
 					</div>
 				</div>
 			</div>
 
-			<!-- Step 5: Vendor Settings -->
-			<div class="wpss-wizard-step" data-step="5">
+			<!-- Step 4: Vendor Settings -->
+			<div class="wpss-wizard-step" data-step="4">
 				<h2><?php esc_html_e( 'Vendor Settings', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'Configure how vendors can join and operate on your marketplace.', 'wp-sell-services' ); ?></p>
 
@@ -733,16 +565,16 @@ class SetupWizardPage {
 		<?php // "Require vendor verification" removed: no code gated on it, so it promised a control that changed nothing. See the note in the vendor-step save handler. ?>
 
 				<div class="wpss-wizard-actions">
-					<button type="button" class="button wpss-wizard-back" data-back="4"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
+					<button type="button" class="button wpss-wizard-back" data-back="3"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
 					<div>
-						<button type="button" class="button wpss-wizard-skip" data-skip="5"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
-						<button type="button" class="button button-primary wpss-wizard-save" data-step="5"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button wpss-wizard-skip" data-skip="4"><?php esc_html_e( 'Skip', 'wp-sell-services' ); ?></button>
+						<button type="button" class="button button-primary wpss-wizard-save" data-step="4"><?php esc_html_e( 'Save & Continue', 'wp-sell-services' ); ?></button>
 					</div>
 				</div>
 			</div>
 
-			<!-- Step 6: Done -->
-			<div class="wpss-wizard-step" data-step="6">
+			<!-- Step 5: Done -->
+			<div class="wpss-wizard-step" data-step="5">
 				<div class="wpss-wizard-done">
 					<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
 					<h2><?php esc_html_e( 'Your Marketplace is Ready!', 'wp-sell-services' ); ?></h2>
@@ -754,6 +586,11 @@ class SetupWizardPage {
 						<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 						<strong><?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?></strong>
 						<span><?php esc_html_e( 'Add a service listing to your marketplace.', 'wp-sell-services' ); ?></span>
+					</a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#payments' ) ); ?>" class="wpss-wizard-card">
+						<i data-lucide="credit-card" class="wpss-icon" aria-hidden="true"></i>
+						<strong><?php esc_html_e( 'Set Up Payment Methods', 'wp-sell-services' ); ?></strong>
+						<span><?php esc_html_e( 'Offline payment works out of the box. Add Stripe, PayPal or your gateway keys to accept card payments.', 'wp-sell-services' ); ?></span>
 					</a>
 					<a href="#" class="wpss-wizard-card" id="wpss-wizard-import-demo">
 						<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
@@ -768,7 +605,7 @@ class SetupWizardPage {
 				</div>
 
 				<div class="wpss-wizard-actions" style="justify-content: center;">
-					<button type="button" class="button wpss-wizard-back" data-back="5"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
+					<button type="button" class="button wpss-wizard-back" data-back="4"><?php esc_html_e( 'Back', 'wp-sell-services' ); ?></button>
 				</div>
 			</div>
 		</div>
