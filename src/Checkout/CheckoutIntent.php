@@ -133,7 +133,7 @@ final class CheckoutIntent {
 	 * @param float  $amount   Amount.
 	 * @param string $currency Currency.
 	 * @param int    $buyer_id Buyer ID.
-	 * @param array  $metadata Gateway metadata.
+	 * @param array<string, mixed> $metadata Gateway metadata.
 	 */
 	private function __construct( string $kind, float $amount, string $currency, int $buyer_id, array $metadata ) {
 		$this->kind     = $kind;
@@ -152,7 +152,7 @@ final class CheckoutIntent {
 	 * @param float  $amount   Order total.
 	 * @param string $currency Currency.
 	 * @param int    $buyer_id Buyer ID.
-	 * @param array  $metadata Gateway metadata.
+	 * @param array<string, mixed> $metadata Gateway metadata.
 	 * @return self
 	 */
 	public static function order( int $order_id, float $amount, string $currency, int $buyer_id, array $metadata ): self {
@@ -167,11 +167,11 @@ final class CheckoutIntent {
 	 *
 	 * @since 1.5.2
 	 *
-	 * @param array  $cart     Cart line items.
+	 * @param array<int, mixed> $cart Cart line items.
 	 * @param float  $amount   Server-computed cart total.
 	 * @param string $currency Currency.
 	 * @param int    $buyer_id Buyer ID.
-	 * @param array  $metadata Gateway metadata.
+	 * @param array<string, mixed> $metadata Gateway metadata.
 	 * @return self
 	 */
 	public static function cart( array $cart, float $amount, string $currency, int $buyer_id, array $metadata ): self {
@@ -188,12 +188,12 @@ final class CheckoutIntent {
 	 *
 	 * @param int    $service_id   Service ID.
 	 * @param int    $package_id   Package ID.
-	 * @param array  $addons       Resolved add-ons.
+	 * @param array<int, mixed> $addons       Resolved add-ons.
 	 * @param float  $addons_total Add-ons total.
 	 * @param float  $amount       Package price + add-ons.
 	 * @param string $currency     Currency.
 	 * @param int    $buyer_id     Buyer ID.
-	 * @param array  $metadata     Gateway metadata.
+	 * @param array<string, mixed> $metadata     Gateway metadata.
 	 * @return self
 	 */
 	public static function single( int $service_id, int $package_id, array $addons, float $addons_total, float $amount, string $currency, int $buyer_id, array $metadata ): self {

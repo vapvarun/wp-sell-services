@@ -89,7 +89,7 @@ class RequirementsService {
 		// string and `options` array present) regardless of how they were saved.
 		$requirements = wpss_get_service_requirements( $service_id );
 
-		if ( empty( $requirements ) || ! is_array( $requirements ) ) {
+		if ( empty( $requirements ) ) {
 			return array();
 		}
 

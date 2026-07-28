@@ -277,7 +277,7 @@ class BuyerRequests extends AbstractBlock {
 								);
 							} elseif ( $budget_max ) {
 								printf(
-									/* translators: %s: budget amount */
+									/* translators: %s: maximum budget amount. */
 									esc_html__( 'Up to %s', 'wp-sell-services' ),
 									esc_html( wpss_format_currency( (float) $budget_max ) )
 								);

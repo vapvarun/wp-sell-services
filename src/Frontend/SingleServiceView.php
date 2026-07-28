@@ -399,18 +399,14 @@ class SingleServiceView {
 			</p>
 			<div class="wpss-requirements-content">
 				<?php
-				if ( is_array( $requirements ) ) {
-					echo '<ul class="wpss-requirements-list">';
-					foreach ( $requirements as $req ) {
-						$text = is_array( $req ) ? ( $req['question'] ?? $req['text'] ?? '' ) : $req;
-						if ( ! empty( $text ) ) {
-							echo '<li>' . esc_html( $text ) . '</li>';
-						}
+				echo '<ul class="wpss-requirements-list">';
+				foreach ( $requirements as $req ) {
+					$text = is_array( $req ) ? ( $req['question'] ?? $req['text'] ?? '' ) : $req;
+					if ( ! empty( $text ) ) {
+						echo '<li>' . esc_html( $text ) . '</li>';
 					}
-					echo '</ul>';
-				} else {
-					echo wp_kses_post( wpautop( $requirements ) );
 				}
+				echo '</ul>';
 				?>
 			</div>
 		</div>

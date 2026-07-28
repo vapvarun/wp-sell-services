@@ -829,7 +829,7 @@ class OrderWorkflowManager {
 	 */
 	private function reverse_earnings_for_refund( int $order_id, ServiceOrder $order, ?float $refunded = null ): void {
 		// Nothing to reverse if commission was never recorded.
-		if ( null === $order->vendor_earnings || '' === $order->vendor_earnings ) {
+		if ( null === $order->vendor_earnings ) {
 			return;
 		}
 
@@ -1124,7 +1124,7 @@ class OrderWorkflowManager {
 		//
 		// PaymentController already used get_payment_gateways(); this was the
 		// odd one out.
-		$gateways = function_exists( 'wpss' ) && method_exists( wpss(), 'get_payment_gateways' )
+		$gateways = function_exists( 'wpss' )
 			? wpss()->get_payment_gateways()
 			: apply_filters( 'wpss_payment_gateways', [] );
 

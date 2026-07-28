@@ -120,7 +120,7 @@ class MenuVisibility {
 	 * @since 1.5.2
 	 *
 	 * @param  mixed $input Raw posted value.
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public function sanitize( $input ): array {
 		$valid_sections = array_keys( self::dashboard_sections() );

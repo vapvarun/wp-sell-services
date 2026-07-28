@@ -1190,7 +1190,7 @@ function wpss_save_billing_address( int $user_id, array $address ): bool {
  *
  * @since 1.2.3
  *
- * @param array $request Raw request data ($_POST or a REST payload).
+ * @param array<string, mixed> $request Raw request data ($_POST or a REST payload).
  * @param int   $user_id Optional. Defaults to the current user.
  * @return bool True when something was written.
  */
@@ -1225,7 +1225,7 @@ function wpss_save_billing_from_request( array $request, int $user_id = 0 ): boo
  *
  * @since 1.2.3
  *
- * @param int|array $user_or_address User ID, or an address array to test directly.
+ * @param int|array<string, mixed> $user_or_address User ID, or an address array to test directly.
  * @return bool
  */
 function wpss_is_billing_address_complete( $user_or_address = 0 ): bool {

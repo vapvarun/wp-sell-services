@@ -570,7 +570,7 @@ class Shortcodes {
 						if ( ! is_wp_error( $categories ) ) :
 							foreach ( $categories as $category ) :
 								?>
-								<option value="<?php echo esc_attr( $category->term_id ); ?>"><?php echo esc_html( $category->name ); ?></option>
+								<option value="<?php echo esc_attr( (string) $category->term_id ); ?>"><?php echo esc_html( $category->name ); ?></option>
 								<?php
 							endforeach;
 						endif;
@@ -999,7 +999,7 @@ class Shortcodes {
 						// were showing dollar budgets (Basecamp #10110742943).
 						echo esc_html( sprintf( '%s - %s', wpss_format_price( (float) $min ), wpss_format_price( (float) $max ) ) );
 					} elseif ( $max ) {
-						/* translators: %s: maximum budget amount (currency-formatted). */
+						/* translators: %s: maximum budget amount. */
 						echo esc_html( sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_price( (float) $max ) ) );
 					} else {
 						esc_html_e( 'Open budget', 'wp-sell-services' );

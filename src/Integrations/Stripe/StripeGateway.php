@@ -289,7 +289,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @since 1.2.3
 	 *
 	 * @param string $payment_intent_id Stripe PaymentIntent id.
-	 * @return array Intent data, or an empty array when it cannot be retrieved.
+	 * @return array<string, mixed> Intent data, or an empty array when it cannot be retrieved.
 	 */
 	public function get_payment_intent( string $payment_intent_id ): array {
 		if ( '' === $payment_intent_id ) {

@@ -167,8 +167,8 @@ class CheckoutIntentService {
 	 *
 	 * @since 1.5.2
 	 *
-	 * @param array $request  Request data.
-	 * @param int   $buyer_id Buyer ID.
+	 * @param array<string, mixed> $request  Request data.
+	 * @param int                  $buyer_id Buyer ID.
 	 * @return CheckoutIntent|\WP_Error
 	 */
 	private function resolve_single( array $request, int $buyer_id ) {

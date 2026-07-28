@@ -1826,7 +1826,7 @@ class Admin {
 										style="width: 140px;">
 								</p>
 								<button type="button" class="button button-link-delete wpss-process-refund"
-									data-order="<?php echo esc_attr( $order_id ); ?>"
+									data-order="<?php echo esc_attr( (string) $order_id ); ?>"
 									data-order-total="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>">
 									<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
 								</button>
@@ -2216,7 +2216,7 @@ class Admin {
 								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 									<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
 									<input type="hidden" name="action" value="wpss_resolve_dispute">
-									<input type="hidden" name="dispute_id" value="<?php echo esc_attr( $dispute_id ); ?>">
+									<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
 
 									<p>
 										<label for="dispute_status"><strong><?php esc_html_e( 'Update Status:', 'wp-sell-services' ); ?></strong></label><br>
