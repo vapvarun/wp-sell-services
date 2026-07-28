@@ -1,95 +1,99 @@
 /**
  * Upgrade to Pro — comparison page.
  *
- * Its own file, NOT shared with the Setup Wizard: the wizard hides the WP admin
- * chrome with unscoped #wpadminbar / #adminmenumain rules, so a shared
- * stylesheet stripped the sidebar off this page too. Two full-page designs,
- * two stylesheets, no cross-contamination.
- *
- * Extracted from an inline <style> block in UpgradePage.php (ux-audit F1).
+ * Card-wrapped to match the standard plugin admin chrome (.wpss-admin,
+ * .wpss-page-header, .wpss-card) that every other settings screen uses, so the
+ * page is no longer a bare table on a naked background (Basecamp #10134362139).
+ * Only the upgrade-specific bits live here; the header/card styles come from the
+ * shared wpss-admin stylesheet this file depends on.
  */
-/* ==========================================================================
-   Upgrade to Pro — comparison page
-   ========================================================================== */
 
 .wpss-upgrade-wrap {
-	max-width: 900px;
+	max-width: 960px;
 }
-.wpss-upgrade-header {
+
+/* ---- Hero card: centered CTA + docs link + guarantee ---- */
+.wpss-upgrade-hero .wpss-card__body {
 	text-align: center;
-	padding: 40px 20px 30px;
+	padding: 28px 20px;
 }
-.wpss-upgrade-header h1 {
-	font-size: 28px;
-	margin-bottom: 10px;
-}
-.wpss-upgrade-tagline {
-	font-size: 15px;
-	color: var(--wpss-wp-admin-text-secondary, #646970);
-	max-width: 600px;
-	margin: 0 auto 20px;
-}
+
 .wpss-upgrade-cta {
 	font-size: 16px !important;
 	padding: 8px 32px !important;
 	height: auto !important;
 	background: var(--wpss-vendor-green, #1dbf73) !important;
 	border-color: var(--wpss-vendor-green, #1dbf73) !important;
+	color: #fff !important;
 }
+
 .wpss-upgrade-cta:hover,
 .wpss-upgrade-cta:focus {
 	background: var(--wpss-vendor-green-dark, #19a463) !important;
 	border-color: var(--wpss-vendor-green-dark, #19a463) !important;
 }
-.wpss-comparison-section {
-	margin-bottom: 30px;
+
+.wpss-upgrade-docs {
+	display: inline-block;
+	margin-inline-start: 16px;
+	color: var(--wpss-wp-admin-text-secondary, #646970);
+	font-size: 13px;
+	text-decoration: underline;
 }
-.wpss-comparison-section h2 {
-	font-size: 16px;
-	margin: 0 0 8px;
-	padding: 0;
-}
+
+/* ---- Comparison table inside each section card ---- */
 .wpss-comparison-table {
+	width: 100%;
 	border-collapse: collapse;
 }
+
 .wpss-comparison-table th,
 .wpss-comparison-table td {
 	padding: 10px 14px;
 }
+
 .wpss-comparison-table thead th {
 	font-weight: 600;
 	background: var(--wpss-wp-admin-bg, #f0f0f1);
 }
+
 .wpss-feature-col {
 	width: 60%;
 }
+
 .wpss-plan-col {
 	width: 20%;
 	text-align: center;
 }
+
 .wpss-plan-pro {
 	background: var(--wpss-success-light, #f0faf5);
 }
+
 .wpss-feature-yes {
 	color: var(--wpss-success, #00a32a);
 	font-size: 20px;
 }
+
 .wpss-feature-no {
-	color: var(--wpss-danger-dark, #cc1818);
+	color: var(--wpss-wp-admin-text-secondary, #8c8f94);
 	font-size: 20px;
 }
+
 .wpss-feature-text {
 	font-size: 13px;
 	color: var(--wpss-warning-dark, #996800);
 	font-weight: 500;
 }
-.wpss-upgrade-footer {
+
+/* ---- Footer card: centered CTA + guarantee ---- */
+.wpss-upgrade-footer .wpss-card__body {
 	text-align: center;
-	padding: 30px 20px 10px;
+	padding: 24px 20px;
 }
+
 .wpss-upgrade-guarantee {
 	margin-top: 10px;
 	color: var(--wpss-wp-admin-text-secondary, #646970);
 	font-size: 13px;
 }
-

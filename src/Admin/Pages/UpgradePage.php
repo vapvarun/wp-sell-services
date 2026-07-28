@@ -221,6 +221,38 @@ class UpgradePage {
 					'free'    => false,
 					'pro'     => true,
 				),
+				array(
+					'feature' => __( 'DigitalOcean Spaces', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+			),
+			__( 'Vendor Payouts & Commissions', 'wp-sell-services' ) => array(
+				array(
+					'feature' => __( 'Manual payouts (mark as paid)', 'wp-sell-services' ),
+					'free'    => true,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'Stripe Connect direct vendor payouts', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'PayPal mass payouts', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'Tiered commission rules (category, volume, seller level)', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'Vendor subscription plans', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
 			),
 			__( 'Analytics & Vendor Management', 'wp-sell-services' ) => array(
 				array(
@@ -245,6 +277,11 @@ class UpgradePage {
 				),
 				array(
 					'feature' => __( 'Wallet integrations', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'White-label branding (admin, emails, dashboard)', 'wp-sell-services' ),
 					'free'    => false,
 					'pro'     => true,
 				),
@@ -291,55 +328,87 @@ class UpgradePage {
 	 * @return void
 	 */
 	public function render(): void {
-		$features    = $this->get_features();
-		$upgrade_url = 'https://store.wbcomdesigns.com/wp-sell-services-pro/';
-		$docs_url    = 'https://store.wbcomdesigns.com/wp-sell-services/docs/';
+		$features = $this->get_features();
+
+		/**
+		 * Filters the "Get Pro" purchase URL shown on the upgrade screen.
+		 *
+		 * @since 1.2.2
+		 *
+		 * @param string $url Product site URL.
+		 */
+		$upgrade_url = apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' );
+
+		/**
+		 * Filters the documentation URL shown on the upgrade screen.
+		 *
+		 * @since 1.2.2
+		 *
+		 * @param string $url Documentation URL.
+		 */
+		$docs_url = apply_filters( 'wpss_docs_url', 'https://wpsellservices.com/docs/' );
 		?>
-		<div class="wrap wpss-upgrade-wrap">
-			<div class="wpss-upgrade-header">
-				<h1><?php esc_html_e( 'Upgrade to WP Sell Services Pro', 'wp-sell-services' ); ?></h1>
-				<p class="wpss-upgrade-tagline">
-					<?php esc_html_e( 'Unlock WooCommerce checkout, vendor analytics, cloud storage, automated payouts, and more.', 'wp-sell-services' ); ?>
-				</p>
-				<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
-				</a>
-				<a href="<?php echo esc_url( $docs_url ); ?>" style="display:inline-block;margin-top:10px;color:#646970;font-size:13px;text-decoration:underline;" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Read the Documentation', 'wp-sell-services' ); ?>
-				</a>
+		<div class="wrap wpss-admin wpss-upgrade-wrap">
+			<div class="wpss-page-header">
+				<div class="wpss-page-header__left">
+					<h1 class="wpss-page-header__title"><?php esc_html_e( 'Upgrade to WP Sell Services Pro', 'wp-sell-services' ); ?></h1>
+					<p class="wpss-page-header__desc">
+						<?php esc_html_e( 'Unlock WooCommerce checkout, Stripe Connect vendor payouts, tiered commissions, cloud storage, advanced analytics, and more.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
+			</div>
+
+			<div class="wpss-card wpss-upgrade-hero">
+				<div class="wpss-card__body">
+					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
+					</a>
+					<a href="<?php echo esc_url( $docs_url ); ?>" class="wpss-upgrade-docs" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Read the Documentation', 'wp-sell-services' ); ?>
+					</a>
+					<p class="wpss-upgrade-guarantee">
+						<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
 			</div>
 
 			<?php foreach ( $features as $section_label => $section_features ) : ?>
-				<div class="wpss-comparison-section">
-					<h2><?php echo esc_html( $section_label ); ?></h2>
-					<table class="wpss-comparison-table widefat">
-						<thead>
-							<tr>
-								<th class="wpss-feature-col"><?php esc_html_e( 'Feature', 'wp-sell-services' ); ?></th>
-								<th class="wpss-plan-col"><?php esc_html_e( 'Free', 'wp-sell-services' ); ?></th>
-								<th class="wpss-plan-col wpss-plan-pro"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $section_features as $feature ) : ?>
+				<div class="wpss-card wpss-comparison-section">
+					<div class="wpss-card__head">
+						<p class="wpss-card__title"><?php echo esc_html( $section_label ); ?></p>
+					</div>
+					<div class="wpss-card__body">
+						<table class="wpss-comparison-table widefat">
+							<thead>
 								<tr>
-									<td class="wpss-feature-col"><?php echo esc_html( $feature['feature'] ); ?></td>
-									<td class="wpss-plan-col"><?php $this->render_feature_value( $feature['free'] ); ?></td>
-									<td class="wpss-plan-col wpss-plan-pro"><?php $this->render_feature_value( $feature['pro'] ); ?></td>
+									<th class="wpss-feature-col"><?php esc_html_e( 'Feature', 'wp-sell-services' ); ?></th>
+									<th class="wpss-plan-col"><?php esc_html_e( 'Free', 'wp-sell-services' ); ?></th>
+									<th class="wpss-plan-col wpss-plan-pro"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></th>
 								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								<?php foreach ( $section_features as $feature ) : ?>
+									<tr>
+										<td class="wpss-feature-col"><?php echo esc_html( $feature['feature'] ); ?></td>
+										<td class="wpss-plan-col"><?php $this->render_feature_value( $feature['free'] ); ?></td>
+										<td class="wpss-plan-col wpss-plan-pro"><?php $this->render_feature_value( $feature['pro'] ); ?></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			<?php endforeach; ?>
 
-			<div class="wpss-upgrade-footer">
-				<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
-				</a>
-				<p class="wpss-upgrade-guarantee">
-					<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
-				</p>
+			<div class="wpss-card wpss-upgrade-footer">
+				<div class="wpss-card__body">
+					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
+					</a>
+					<p class="wpss-upgrade-guarantee">
+						<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
 			</div>
 		</div>
 

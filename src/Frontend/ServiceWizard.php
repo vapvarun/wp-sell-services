@@ -958,7 +958,7 @@ class ServiceWizard {
 			<div class="wpss-form-hint" x-show="!canAddRequirement()" x-cloak>
 				<span class="wpss-limit-notice"><?php esc_html_e( 'Requirement limit reached.', 'wp-sell-services' ); ?></span>
 				<?php if ( ! $this->is_pro_active() ) : ?>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#analytics' ) ); ?>" class="wpss-upgrade-link">
+				<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 				</a>
 				<?php endif; ?>
@@ -1049,7 +1049,7 @@ class ServiceWizard {
 				<div class="wpss-form-hint" x-show="!canAddExtra()" x-cloak>
 					<span class="wpss-limit-notice"><?php esc_html_e( 'Extras limit reached.', 'wp-sell-services' ); ?></span>
 					<?php if ( ! $this->is_pro_active() ) : ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#analytics' ) ); ?>" class="wpss-upgrade-link">
+					<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 					</a>
 					<?php endif; ?>
@@ -1098,7 +1098,7 @@ class ServiceWizard {
 				<div class="wpss-form-hint" x-show="!canAddFaq()" x-cloak>
 					<span class="wpss-limit-notice"><?php esc_html_e( 'FAQ limit reached.', 'wp-sell-services' ); ?></span>
 					<?php if ( ! $this->is_pro_active() ) : ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#analytics' ) ); ?>" class="wpss-upgrade-link">
+					<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 					</a>
 					<?php endif; ?>
