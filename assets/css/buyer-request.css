@@ -435,7 +435,7 @@
 .wpss-request-archive-header .wpss-archive-title {
 	margin: 0 0 0.5rem;
 	font-size: 1.75rem;
-	color: var(--wpss-black);
+	color: var(--wpss-text);
 }
 
 .wpss-request-archive-header .wpss-archive-description {
@@ -499,7 +499,7 @@
 
 .wpss-request-card__buyer-name {
 	font-weight: 500;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 	font-size: 0.938rem;
 }
 
@@ -528,7 +528,7 @@
 }
 
 .wpss-request-card__title a {
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 	text-decoration: none;
 }
 
@@ -595,7 +595,7 @@
 
 .wpss-request-card__meta-value {
 	font-weight: 600;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 	font-size: 0.938rem;
 }
 
@@ -686,7 +686,7 @@
 	margin: 0 0 0.75rem;
 	font-size: 1.75rem;
 	line-height: 1.3;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 }
 
 .wpss-request-meta-bar {
@@ -717,7 +717,7 @@
 .wpss-request-section h2 {
 	margin: 0 0 1rem;
 	font-size: 1.125rem;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 }
 
 .wpss-request-text {
@@ -794,7 +794,7 @@
 
 .wpss-proposal-vendor .wpss-vendor-name {
 	font-weight: 600;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 	text-decoration: none;
 }
 
@@ -869,7 +869,7 @@
 .wpss-buyer-card h3 {
 	margin: 0 0 1rem;
 	font-size: 1rem;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 }
 
 .wpss-details-list {
@@ -892,7 +892,7 @@
 
 .wpss-detail-value {
 	font-weight: 500;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 }
 
 .wpss-detail-budget {
@@ -947,7 +947,7 @@
 
 .wpss-buyer-profile .wpss-buyer-name {
 	font-weight: 600;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 	display: block;
 	margin-bottom: 0.25rem;
 }
@@ -977,7 +977,7 @@
 .wpss-no-requests .wpss-no-results-title {
 	margin: 0 0 0.5rem;
 	font-size: 1.25rem;
-	color: var(--wpss-black, #111827);
+	color: var(--wpss-text, #111827);
 }
 
 .wpss-no-requests .wpss-no-results-message {
