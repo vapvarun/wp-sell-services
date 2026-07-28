@@ -294,7 +294,7 @@ tip. Tips are excluded from commission by default, so the two usually match.
 
 A milestone is a **sub-order** of the parent order, so every hook passes both
 ids: `$milestone_id` is the sub-order, `$order_id` is the parent. See
-[Sub-Order Pattern](../../architecture/SUB_ORDER_PATTERN.md).
+[Sub-Order Pattern](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/SUB_ORDER_PATTERN.md).
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -308,7 +308,7 @@ ids: `$milestone_id` is the sub-order, `$order_id` is the parent. See
 | `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:455` |
 
 > **Renamed in 1.3.0.** The milestone lifecycle uses *proposed* and *declined*,
-> not *created* and *rejected* -- see [Milestone terminology](../../decisions/milestone-terminology.md).
+> not *created* and *rejected* -- see [Milestone terminology](https://github.com/vapvarun/wp-sell-services/blob/main/docs/decisions/milestone-terminology.md).
 > `wpss_milestone_created`, `wpss_milestone_rejected`, `wpss_extension_requested`
 > and `wpss_extension_approved` were listed in earlier docs but are **not fired
 > by the plugin**. Callbacks bound to those names never run. Note also that

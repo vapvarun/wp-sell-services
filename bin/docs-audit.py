@@ -97,7 +97,9 @@ if listed == on_disk:
 
 # --- 2 & 3. broken images and links ------------------------------------------
 img_re = re.compile(r"!\[[^\]]*\]\(([^)\s]+)")
-link_re = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s#]+\.md)")
+# Relative .md links only -- an http(s) target is an external link, not a file
+# this checker can resolve.
+link_re = re.compile(r"(?<!!)\[[^\]]*\]\((?!https?://)([^)\s#]+\.md)")
 bad_img = bad_link = 0
 for p in md_files(DOCS):
     body = open(p).read()
@@ -114,6 +116,20 @@ if not bad_img:
     ok("images", "no broken image references")
 if not bad_link:
     ok("links", "no broken internal links")
+
+# --- 3b. links must not escape the published tree ----------------------------
+# `../../architecture/FOO.md` resolves on disk but only docs/website/ publishes,
+# so it 404s on the docs site. Link to the repo URL instead.
+escaped = 0
+for p in md_files(DOCS):
+    rel = os.path.relpath(p, DOCS)
+    for i, line in enumerate(open(p), 1):
+        for m in re.finditer(r"\]\((\.\./\.\./[^)]+)\)", line):
+            fail("scope", f"{rel}:{i} links outside docs/website/: {m.group(1)} "
+                          f"-- use the repo URL, that path does not publish")
+            escaped += 1
+if not escaped:
+    ok("scope", "no page links outside the published tree")
 
 # --- 4. phantom hooks ---------------------------------------------------------
 fired = hooks_in_php(os.path.join(FREE, "src"), os.path.join(FREE, "templates"),

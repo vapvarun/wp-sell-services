@@ -135,5 +135,5 @@ REST routes register either way. See
 - [Hooks and Filters](hooks-filters.md) -- the full reference, free and Pro
 - [REST API Controllers](rest-api-controllers.md) -- including the 10 Pro controllers
 - [Building Custom Integrations](custom-integrations.md)
-- [Money Flow](../../architecture/MONEY-FLOW.md)
-- [Sub-Order Pattern](../../architecture/SUB_ORDER_PATTERN.md)
+- [Money Flow](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/MONEY-FLOW.md)
+- [Sub-Order Pattern](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/SUB_ORDER_PATTERN.md)

@@ -78,7 +78,7 @@ curl -X POST https://yoursite.com/wp-json/wpss/v1/orders/42/accept \
 ```
 
 `/sub-orders` lists the milestone, tip, and extension sub-orders attached to a
-parent order -- see [Sub-Order Pattern](../../architecture/SUB_ORDER_PATTERN.md).
+parent order -- see [Sub-Order Pattern](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/SUB_ORDER_PATTERN.md).
 
 ### Milestones
 
@@ -435,4 +435,4 @@ can render the same identity as the site.
 - [REST API Overview](rest-api-overview.md) - Authentication, error handling, pagination, CORS
 - [Hooks and Filters](hooks-filters.md) - Available action and filter hooks
 - [Custom Integrations](custom-integrations.md) - Building custom controllers
-- [Money Flow](../../architecture/MONEY-FLOW.md) - How the payment routes settle
+- [Money Flow](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/MONEY-FLOW.md) - How the payment routes settle

@@ -99,4 +99,4 @@ ledger, switching does not orphan balances.
 - [Automated Payouts](automated-payouts.md)
 - [Vendor Earnings Dashboard](earnings-dashboard.md)
 - [Withdrawal Approvals](../admin-tools/withdrawal-approvals.md)
-- [Money Flow](../../architecture/MONEY-FLOW.md) -- the architecture behind all of this
+- [Money Flow](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/MONEY-FLOW.md) -- the architecture behind all of this
