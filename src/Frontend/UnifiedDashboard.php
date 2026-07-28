@@ -552,6 +552,23 @@ class UnifiedDashboard {
 							</ul>
 						</div>
 					<?php endforeach; ?>
+
+					<?php
+					// Log Out — members sign in through the dashboard, so give them
+					// a way out here too (Basecamp #10092963015). Pinned in its own
+					// group at the bottom of the nav.
+					?>
+					<div class="wpss-dashboard__nav-group wpss-dashboard__nav-group--account">
+						<ul class="wpss-dashboard__nav-list">
+							<li>
+								<a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"
+									class="wpss-dashboard__nav-item wpss-dashboard__nav-item--logout">
+									<?php $this->render_icon( 'log-out' ); ?>
+									<span><?php esc_html_e( 'Log Out', 'wp-sell-services' ); ?></span>
+								</a>
+							</li>
+						</ul>
+					</div>
 				</nav>
 
 				<?php if ( $is_pending ) : ?>
