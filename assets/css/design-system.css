@@ -331,6 +331,27 @@
 
 	--wpss-shadow-tint: rgba(0, 0, 0, 0.5);
 	--wpss-overlay: rgba(0, 0, 0, 0.7);
+
+	/* ---- Gray Scale inversion ----
+	   The dashboard + pro consume the raw --wpss-gray-* ramp directly for text
+	   and borders (title uses gray-900, body uses gray-600, hairlines use
+	   gray-100/200), not only the semantic --wpss-text/--wpss-border aliases.
+	   If the ramp keeps its light values in dark mode, dark surfaces get dark
+	   text — the request-card dark-on-dark bug. Invert the ramp so the "ink"
+	   end (900→500) resolves light and the "paper" end (50→300) resolves dark,
+	   mirroring the semantic tokens above. Every component that reaches for a
+	   raw gray now flips correctly in one place. The single ramp value used as
+	   a *background* (gray-600 on .wpss-status-draft) is handled at that rule. */
+	--wpss-gray-50: #0b1220;
+	--wpss-gray-100: #111827;
+	--wpss-gray-200: #1f2937;
+	--wpss-gray-300: #374151;
+	--wpss-gray-400: #4b5563;
+	--wpss-gray-500: #9ca3af;
+	--wpss-gray-600: #d1d5db;
+	--wpss-gray-700: #e5e7eb;
+	--wpss-gray-800: #f3f4f6;
+	--wpss-gray-900: #f9fafb;
 }
 
 /* ==========================================================================

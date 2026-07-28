@@ -3306,6 +3306,16 @@ select.wpss-input option,
 	color: var(--wpss-white, #fff);
 }
 
+/* gray-600 is the one ramp value used as a *background*. In dark mode the ramp
+   inverts (gray-600 resolves light), which would put white text on a light
+   pill. Re-anchor this pill to a mid-dark bg + light ink so it stays legible. */
+:root[data-bx-mode="dark"] .wpss-status-draft,
+:root[data-theme="dark"] .wpss-status-draft,
+.wpss-dark .wpss-status-draft {
+	background: var(--wpss-gray-300);
+	color: var(--wpss-gray-900);
+}
+
 .wpss-service-info {
 	padding: 15px;
 }
