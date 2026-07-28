@@ -305,7 +305,7 @@
      - [data-theme="dark"], .wpss-dark .wpss-app  -> explicit in-app toggle
      - [data-bx-mode="dark"]  -> host-theme toggle. BuddyX and Reign 8.x both
        flip dark by setting data-bx-mode="dark" on the root and re-emitting their
-       --bx-*/--reign-* tokens under it. Without this selector the plugin stayed
+       --bx- and --reign- tokens under it. Without this selector the plugin stayed
        light while the theme went dark (the Reign dark-mode bug).
    Dark token pairs are chosen to clear WCAG AA contrast on body copy.
    ========================================================================== */

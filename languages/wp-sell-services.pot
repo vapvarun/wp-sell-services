@@ -3,13 +3,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WP Sell Services 1.3.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-sell-services\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Report-Msgid-Bugs-To: https://wbcomdesigns.com/support/\n"
+"Last-Translator: Wbcom Designs <admin@wbcomdesigns.com>\n"
+"Language-Team: Wbcom Designs <admin@wbcomdesigns.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-28T07:49:49+00:00\n"
+"POT-Creation-Date: 2026-07-28T08:05:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -1614,7 +1614,7 @@ msgid "Item"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:419
-#: src/Frontend/SingleServiceView.php:930
+#: src/Frontend/SingleServiceView.php:933
 #: src/Services/ServiceAddonService.php:585
 msgid "Quantity"
 msgstr ""
@@ -2018,7 +2018,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:1457
 #: src/Admin/Metaboxes/ServiceMetabox.php:1577
 #: src/Frontend/ServiceWizard.php:1191
-#: src/Frontend/SingleServiceView.php:902
+#: src/Frontend/SingleServiceView.php:905
 #: templates/single-request.php:595
 #: templates/single-request.php:612
 msgid "days"
@@ -3920,8 +3920,8 @@ msgstr[1] ""
 #: src/Admin/Pages/VendorsPage.php:683
 #: src/Admin/Pages/WithdrawalsPage.php:578
 #: src/Admin/Tables/DisputesListTable.php:321
-#: src/Frontend/SingleServiceView.php:869
-#: src/Frontend/SingleServiceView.php:995
+#: src/Frontend/SingleServiceView.php:872
+#: src/Frontend/SingleServiceView.php:998
 #: templates/dashboard/sections/portfolio.php:155
 #: templates/dashboard/sections/portfolio.php:216
 #: templates/dashboard/sections/requests.php:164
@@ -4021,7 +4021,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1002
 #: src/Frontend/MenuVisibility.php:83
-#: src/Frontend/SingleServiceView.php:752
+#: src/Frontend/SingleServiceView.php:755
 #: src/Frontend/UnifiedDashboard.php:428
 #: src/Frontend/UnifiedDashboard.php:703
 msgid "Portfolio"
@@ -7963,7 +7963,7 @@ msgstr ""
 
 #: src/Core/AbilitiesRegistrar.php:356
 #: src/Frontend/SingleServiceView.php:149
-#: src/Frontend/SingleServiceView.php:1074
+#: src/Frontend/SingleServiceView.php:1077
 msgid "Send Message"
 msgstr ""
 
@@ -10270,7 +10270,7 @@ msgid "Log in"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:930
-#: src/Frontend/SingleServiceView.php:527
+#: src/Frontend/SingleServiceView.php:530
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:700
 #: templates/emails/vendor-contact.php:72
 #: templates/order/extension-view.php:136
@@ -10294,7 +10294,7 @@ msgid "Service:"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1058
-#: src/Frontend/SingleServiceView.php:959
+#: src/Frontend/SingleServiceView.php:962
 msgid "Total:"
 msgstr ""
 
@@ -10435,7 +10435,7 @@ msgid "Copied!"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:156
-#: src/Frontend/SingleServiceView.php:965
+#: src/Frontend/SingleServiceView.php:968
 msgid "Continue to Checkout"
 msgstr ""
 
@@ -10475,123 +10475,123 @@ msgstr ""
 msgid "To get started, the seller needs:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:440
+#: src/Frontend/SingleServiceView.php:443
 msgid "About The Seller"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:470
+#: src/Frontend/SingleServiceView.php:473
 msgid "Overall seller rating across all their services"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:474
+#: src/Frontend/SingleServiceView.php:477
 msgid "seller rating"
 msgstr ""
 
 #. translators: %d: number of completed orders
-#: src/Frontend/SingleServiceView.php:483
+#: src/Frontend/SingleServiceView.php:486
 #, php-format
 msgid "%d order completed"
 msgid_plural "%d orders completed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Frontend/SingleServiceView.php:494
+#: src/Frontend/SingleServiceView.php:497
 msgid "Contact Me"
 msgstr ""
 
 #. translators: %s: vendor display name
-#: src/Frontend/SingleServiceView.php:510
+#: src/Frontend/SingleServiceView.php:513
 #, php-format
 msgid "Intro video from %s"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:533
+#: src/Frontend/SingleServiceView.php:536
 #: templates/partials/vendor-card.php:148
 msgid "Member since"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:542
+#: src/Frontend/SingleServiceView.php:545
 msgid "Avg. Response Time"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:554
+#: src/Frontend/SingleServiceView.php:557
 #: templates/partials/vendor-card.php:167
 msgid "Last Delivery"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:562
+#: src/Frontend/SingleServiceView.php:565
 msgid "Languages"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:578
+#: src/Frontend/SingleServiceView.php:581
 msgid "Skills"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:639
+#: src/Frontend/SingleServiceView.php:642
 msgid "This seller is currently on vacation."
 msgstr ""
 
 #. translators: %s: formatted return date
-#: src/Frontend/SingleServiceView.php:684
+#: src/Frontend/SingleServiceView.php:687
 #, php-format
 msgid "Orders resume on %s"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:822
+#: src/Frontend/SingleServiceView.php:825
 msgid "Related Services"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:874
+#: src/Frontend/SingleServiceView.php:877
 msgid "Order Options"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:884
+#: src/Frontend/SingleServiceView.php:887
 msgid "Add Extras"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:951
+#: src/Frontend/SingleServiceView.php:954
 msgid "Package:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:955
+#: src/Frontend/SingleServiceView.php:958
 msgid "Delivery:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1000
+#: src/Frontend/SingleServiceView.php:1003
 #: templates/partials/service-packages.php:359
 msgid "Contact Seller"
 msgstr ""
 
 #. translators: %s: response time
-#: src/Frontend/SingleServiceView.php:1018
+#: src/Frontend/SingleServiceView.php:1021
 #, php-format
 msgid "Usually responds in %s"
 msgstr ""
 
 #. translators: 1: login URL, 2: register URL
-#: src/Frontend/SingleServiceView.php:1034
+#: src/Frontend/SingleServiceView.php:1037
 #, php-format
 msgid "Please <a href=\"%1$s\">log in</a> or <a href=\"%2$s\">register</a> to contact this seller."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1049
+#: src/Frontend/SingleServiceView.php:1052
 msgid "Your Message"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1053
+#: src/Frontend/SingleServiceView.php:1056
 msgid "Tell the seller what you need..."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1056
+#: src/Frontend/SingleServiceView.php:1059
 msgid "Be specific about your requirements for better assistance."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1061
+#: src/Frontend/SingleServiceView.php:1064
 #: templates/order/order-requirements.php:260
 msgid "Attach Files (optional)"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1068
+#: src/Frontend/SingleServiceView.php:1071
 msgid "Max 5 files. Allowed: images, PDF, Word, ZIP."
 msgstr ""
 
