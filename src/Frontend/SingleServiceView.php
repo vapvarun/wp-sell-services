@@ -434,7 +434,10 @@ class SingleServiceView {
 		$bio              = $profile->bio ?? get_user_meta( $vendor_id, 'description', true );
 		$languages        = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : get_user_meta( $vendor_id, '_wpss_vendor_languages', true );
 		$skills           = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : get_user_meta( $vendor_id, '_wpss_vendor_skills', true );
-		$completed_orders = (int) ( $profile->completed_orders ?? get_user_meta( $vendor_id, '_wpss_completed_orders', true ) );
+		// completed_orders lives in the wpss_vendor_profiles table; the
+		// _wpss_completed_orders user meta was never written, so there is no
+		// meta fallback to read.
+		$completed_orders = (int) ( $profile->completed_orders ?? 0 );
 		?>
 		<div class="wpss-about-vendor">
 			<h2><?php esc_html_e( 'About The Seller', 'wp-sell-services' ); ?></h2>
