@@ -23,8 +23,10 @@ larger, separate effort.
 - **#7** orphaned `templates/myaccount/` family (5 files) deleted; subdir list
   trimmed (`6f3ef4f`).
 - **#8** admin view-count key `_wpss_view_count`→`_wpss_views` (`8d66216`).
-- **#9** EDD/SureCart delivery falls back to `wpss_get_service_delivery_days()`
-  when their own key is empty (pro `19269b5`).
+- **#9** Delivery is WPSS-internal — the payment rail must not source it. The
+  EDD + SureCart order providers now set the WPSS order's `delivery_deadline`
+  from the canonical `wpss_get_service_delivery_days()` at creation (like the Woo
+  adapter); the rail-side cart/product reads were reverted (pro `41d9a75`).
 - **#11** vendor "orders" sort now joins `wpss_vendor_profiles.completed_orders`
   instead of the never-written `_wpss_completed_orders` meta (`7c1b281`). The
   single-service reader already prefers the profiles table.
