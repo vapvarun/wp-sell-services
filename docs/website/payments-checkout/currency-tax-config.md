@@ -2,7 +2,7 @@
 
 Set your marketplace currency and configure tax collection so prices display correctly and comply with your local requirements.
 
-![Payment Settings](../images/settings-payments-tab.png)
+![Payment Settings](../images/settings-commission-tax.png)
 
 ## Setting Your Currency
 

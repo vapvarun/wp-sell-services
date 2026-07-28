@@ -2,6 +2,8 @@
 
 After you purchase a service, your order moves through a series of stages from payment to completion. This guide explains each stage, what to expect, and what actions you can take.
 
+![A buyer's order awaiting approval, with Accept, Request Revision and Open Dispute](../images/frontend-buyer-order-view.png)
+
 ## Finding Your Orders
 
 Go to your **Dashboard** and click **My Orders** in the sidebar. You will see a list of all your orders with their current status, vendor, amount, and date.

@@ -2,7 +2,7 @@
 
 These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendors**.
 
-![Vendor Settings Tab](../images/settings-vendor-tab.png)
+![Vendor Settings Tab](../images/settings-vendors-tab.png)
 
 ## Vendor Registration Mode
 
@@ -62,7 +62,7 @@ To review pending services, go to **Sell Services > Services** and filter by sta
 
 This is useful for maintaining marketplace quality, especially in the early days. As you build trust with your top vendors, you might consider disabling this to speed things up.
 
-![Full vendor settings panel](../images/settings-vendor.png)
+![Full vendor settings panel](../images/settings-vendors-tab.png)
 
 ## Registration Form Fields
 

@@ -2,6 +2,8 @@
 
 Beyond Stripe, WP Sell Services supports PayPal, Razorpay, and offline bank transfers so you can offer the payment methods your buyers prefer.
 
+![Payment gateway settings](../images/settings-payment-gateways.png)
+
 ## PayPal
 
 PayPal lets buyers pay with their PayPal balance, linked bank account, or credit/debit card -- even without a PayPal account.

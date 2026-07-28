@@ -11,7 +11,7 @@ Set up how your marketplace sends email notifications, test deliverability, and 
 
 ![Email settings tab](../images/settings-emails-tab.png)
 
-![Full email settings](../images/settings-emails.png)
+![Full email settings](../images/settings-emails-tab.png)
 
 ---
 

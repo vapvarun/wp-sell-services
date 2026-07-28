@@ -4,6 +4,8 @@ Instead of waiting for vendors to request withdrawals manually, you can set up a
 
 **Scheduled auto-withdrawals are included in the free plugin.** Pro adds bulk payment rails on top -- PayPal mass payouts and Stripe Connect -- but you do not need Pro to automate the withdrawal requests themselves.
 
+![Payout settings, including automatic withdrawals](../images/settings-payouts-tab.png)
+
 ## How Auto-Payouts Work
 
 Once enabled, the system checks vendor balances on a regular schedule (weekly or monthly). If a vendor's available balance meets the threshold you set, a withdrawal request is created automatically. You then review and process the payment as usual.

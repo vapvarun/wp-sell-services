@@ -4,6 +4,7 @@ Internal QA artifact -- **not published to customers**. It is the answer to
 "is every shipped feature documented, for the right audience?"
 
 - **Last verified:** 2026-07-29 against plugin 1.3.0 / Pro 1.3.0 (99 pages)
+- **Screenshots:** 15 captured live on 2026-07-29 at 1440px; 8 stale pre-restructure settings images replaced
 - **Docs root:** `wp-sell-services/docs/website/` (single source of truth; Pro tree retired)
 - **Automated gate:** `python3 bin/docs-audit.py`
 
@@ -167,7 +168,8 @@ Tracked, not silently dropped.
 | Gap | Impact | Priority |
 |-----|--------|----------|
 | **No screenshots on Pro setup pages.** Blocked: Pro loads nothing without a valid license key, so its screens cannot be captured on a dev site | Pro setup is text-only | P1 |
-| ~30 free pages still have no screenshot | Setup is harder to follow | P2 |
+| `image_map.json` / `image-mapping.json` map local filenames to docs.wbcomdesigns.com URLs, are duplicates of each other, and are read by nothing in the repo. **The 8 screenshots replaced on 2026-07-29 still map to the old uploaded files**, so any publish step driven by these maps would ship the pre-restructure images | Stale images could reappear on a published site | P1 |
+| ~20 free pages still have no screenshot (developer references and FAQs excluded -- they do not need one) | Minor | P3 |
 | 77 of 454 hooks remain undocumented (declared internal) | Low -- template and behavioural surfaces are both covered | P3 |
 | REST overview lists generic endpoints; per-endpoint request/response examples are thin | Clients infer payload shapes | P3 |
 

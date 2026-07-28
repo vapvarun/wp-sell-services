@@ -2,6 +2,8 @@
 
 The commission system controls how revenue is split between your platform and your vendors on every completed order.
 
+![Commission and tax settings](../images/settings-commission-tax.png)
+
 ## The Basic Idea
 
 When a buyer pays for a service, you (the platform owner) keep a percentage as commission, and the vendor receives the rest. For example, with a 10% commission rate on a $100 order:

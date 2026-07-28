@@ -2,6 +2,8 @@
 
 The `[wpss_dashboard]` shortcode — where buyers track orders and sellers manage services — ships with a role-aware onboarding tour. The first time a logged-in user opens the page they see a short Shepherd.js walkthrough that points out the sections they actually need.
 
+![The unified dashboard, seller view](../images/frontend-dashboard-vendor.png)
+
 ## Who Sees What
 
 The tour inspects the viewer's role and tailors the steps:

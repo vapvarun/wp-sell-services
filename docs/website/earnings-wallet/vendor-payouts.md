@@ -3,6 +3,8 @@
 This page is the map of how money reaches your vendors: what the platform keeps,
 what the vendor is owed, and every route you can use to actually pay them.
 
+![The Withdrawals screen: export what is owed, then mark each payout paid](../images/admin-withdrawals-queue.png)
+
 ## The golden rule: you never need an integration
 
 **You can run a complete marketplace and pay every vendor without connecting any

@@ -3,6 +3,8 @@
 Found a service you like but you are not ready to order? Save it to your
 favorites and come back when you are.
 
+![Saved services in the Favorites section, showing live prices](../images/frontend-favorites.png)
+
 ## Saving a service
 
 Tap the heart on any service card in the marketplace, or use the favorite button

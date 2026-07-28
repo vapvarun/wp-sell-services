@@ -17,7 +17,7 @@ Your marketplace needs four core pages:
 
 ![Pages settings tab](../images/settings-pages-tab.png)
 
-![Full pages settings](../images/settings-pages.png)
+![Full pages settings](../images/settings-pages-tab.png)
 
 ---
 

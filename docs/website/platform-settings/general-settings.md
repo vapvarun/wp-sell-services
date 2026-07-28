@@ -18,7 +18,7 @@ Give your marketplace a custom name that appears throughout the platform: in ema
 
 ![General settings tab](../images/settings-general-tab.png)
 
-![Full general settings](../images/settings-general.png)
+![Full general settings](../images/settings-general-tab.png)
 
 ---
 

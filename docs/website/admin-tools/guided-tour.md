@@ -2,6 +2,8 @@
 
 A built-in onboarding walkthrough runs the first time a new admin opens the WP Sell Services dashboard. It introduces the sidebar, the at-a-glance stats cards, and each of the main sub-screens — Services, Vendors, Orders, and Settings — so a first-time operator knows where everything lives without reading docs first.
 
+![The welcome tour shown on a user's first dashboard visit](../images/frontend-dashboard-welcome-tour.png)
+
 ## When The Tour Starts
 
 The tour auto-opens the first time a logged-in admin lands on **Sell Services > Dashboard**. It will not re-open on subsequent visits.

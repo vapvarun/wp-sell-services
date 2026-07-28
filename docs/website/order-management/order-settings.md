@@ -2,7 +2,7 @@
 
 Control how orders behave on your marketplace -- from auto-completion timing to revision limits and dispute windows. All of these settings are found at **Sell Services > Settings > Orders & Disputes**.
 
-![Order settings tab in WP Sell Services settings panel](../images/settings-orders-tab.png)
+![Order settings tab in WP Sell Services settings panel](../images/settings-orders-disputes.png)
 
 ## Auto-Complete Days
 

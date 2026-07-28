@@ -4,6 +4,8 @@ Every important event in your marketplace triggers an in-app notification so use
 
 ---
 
+![In-app notifications in the dashboard](../images/frontend-notifications.png)
+
 ## How It Works
 
 A notification bell appears in the dashboard with an unread count badge. When something happens -- a new order, a message, a delivery, a review -- a notification is created instantly. Users click the bell to see their alerts and navigate directly to the relevant page.
