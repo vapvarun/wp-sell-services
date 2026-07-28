@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.2.2
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -259,6 +259,41 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
+= 1.3.0 - July 2026 =
+
+Large stability and polish release. Payments hardened across every gateway, full dark-mode support on all frontend surfaces, and a lighter first-run setup.
+
+* New      - Role-based menu visibility so you can show or hide marketplace menu items per user role.
+* New      - Frontend dispute messaging: buyer and vendor can message and attach evidence on a dispute without leaving the order.
+* Improve  - Full dark-mode support on every frontend surface, following the active theme's toggle (BuddyX, BuddyX Pro, Reign) instead of the OS setting.
+* Improve  - The setup wizard no longer forces a payment gateway as the first step; offline payment works out of the box and the wizard guides you to configure a gateway when ready.
+* Improve  - Fresh installs are sell-ready: manual/offline payment enabled, default service categories seeded, and new services publish without forced moderation.
+* Improve  - Reworked the Upgrade screen with an in-plugin Pro feature tour, and pointed the upgrade calls-to-action at the product site so frontend vendors are not sent to wp-admin.
+* Improve  - Added a Log Out link to the frontend dashboard navigation.
+* Improve  - Add-to-cart now continues straight to checkout so the "Continue to Checkout" action matches its label.
+* Improve  - Accessibility pass: visible keyboard-focus indicators, service metabox field labels, and search input plus category select ARIA labels.
+* Fix      - Buyer request cards keep their actions on a single line as icon controls on mobile and tablet instead of overflowing off the card.
+* Fix      - Dark mode no longer renders dark text on dark surfaces anywhere in the dashboard or on frontend pages.
+* Fix      - PayPal checkout sends the full checkout context, handles multi-cart orders server-side, submits through its own seam, and no longer shows a dead Pay button.
+* Fix      - Money precision now respects 0- and 3-decimal currencies, and refunds round to the currency's precision instead of a hardcoded two places.
+* Fix      - Stripe pay-order flow for milestone phases and proposal orders creates the payment intent correctly.
+* Fix      - Paused services can no longer be ordered from the service call-to-action, the order modal, or the cart API.
+* Fix      - The order call-to-action is guarded against zero-price or unpriced packages.
+* Fix      - The purchased item is cleared from the cart after a single checkout.
+* Fix      - A buyer could get stranded on a pending-requirements order with no way to proceed; the flow now always offers a next step.
+* Fix      - A purchase no longer appears under Sales Orders the moment the buyer pays.
+* Fix      - Vendor public profiles no longer return 404 when a legacy user meta value is absent.
+* Fix      - The service-search shortcode now submits to the services archive with moderation and vacation filtering, not WordPress core search.
+* Fix      - Requirement choices use one schema across the wizard, admin, and buyer views, and drag-dropped requirement files now submit.
+* Fix      - Admin service save preserves Unlimited (-1) revisions and allows clearing FAQs and requirements.
+* Fix      - Confirmation prompts for milestones and order actions use the design-system dialog and are always clickable.
+* Fix      - Dead "Upgrade to Pro" links in the service wizard now resolve to the correct destination.
+* Fix      - Consolidated duplicated service-grid, empty-state, and card styles so the same component renders consistently on every surface.
+* Dev      - Added a gateway-agnostic CheckoutIntent seam (resolve plus settle) so payment gateways plug in uniformly.
+* Dev      - Base currency is now authoritative for money, with a display-currency hint provided through a catalog price-html seam.
+* Dev      - The free plugin reaches zero wp i18n make-pot warnings, with translator comments added throughout.
+* Compat   - Aligned with WP Sell Services Pro 1.3.0. Install both updates together.
+
 = 1.2.2 - July 2026 =
 
 Migrated guest reviews now keep their original reviewer name instead of showing "Anonymous".
@@ -477,6 +512,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+Hardens payments across every gateway, adds full dark-mode support on all frontend surfaces, and makes fresh installs sell-ready with offline payment and seeded categories. Safe to upgrade - no settings changes required.
 
 = 1.1.1 =
 Fixes an install-side fatal error that could occur on some hosts where a runtime dependency was missing from the previous release zip. The 1.1.1 zip now bundles everything the plugin needs to run, so the plugin activates cleanly out of the box. Safe to upgrade - no settings changes required.
