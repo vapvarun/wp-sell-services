@@ -276,6 +276,16 @@ class BuyerRequestsController extends RestController {
 							'type'              => 'integer',
 							'sanitize_callback' => 'absint',
 						],
+						'contract_type' => [
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_key',
+						],
+						'milestones'    => [
+							'type' => 'array',
+						],
+						'attachments'   => [
+							'type' => 'array',
+						],
 					],
 				],
 			]
@@ -633,11 +643,22 @@ class BuyerRequestsController extends RestController {
 		$request_id = (int) $request->get_param( 'id' );
 		$vendor_id  = get_current_user_id();
 
+		// ProposalService::submit() reads 'description' (mapped to the
+		// cover_letter column), 'price', 'delivery_days', 'contract_type' and
+		// 'milestones' — mirror the ajax handler exactly. The REST field is
+		// still named cover_letter for BC; map it to the service's 'description'
+		// key. Previously this sent 'cover_letter', which submit() ignored, so
+		// its empty-description guard rejected EVERY REST proposal with a 400.
+		$contract_type_param = $request->get_param( 'contract_type' );
+		$contract_type       = $contract_type_param ? (string) $contract_type_param : ProposalService::CONTRACT_TYPE_FIXED;
+
 		$data = [
-			'cover_letter'  => $request->get_param( 'cover_letter' ),
+			'description'   => $request->get_param( 'cover_letter' ),
 			'price'         => $request->get_param( 'price' ),
 			'delivery_days' => $request->get_param( 'delivery_days' ),
-			'service_id'    => $request->get_param( 'service_id' ),
+			'contract_type' => $contract_type,
+			'milestones'    => $request->get_param( 'milestones' ),
+			'attachments'   => $request->get_param( 'attachments' ),
 		];
 
 		$result = $this->proposal_service->submit( $request_id, $vendor_id, $data );
@@ -767,9 +788,13 @@ class BuyerRequestsController extends RestController {
 				'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
 			],
 			'cover_letter'  => $proposal->cover_letter,
-			'price'         => (float) $proposal->price,
-			'delivery_days' => (int) $proposal->delivery_days,
-			'service_id'    => $proposal->service_id ? (int) $proposal->service_id : null,
+			// DB columns are proposed_price / proposed_days; the old code read
+			// non-existent price / delivery_days, so every proposal came back as
+			// $0 / 0 days and the buyer could not tell proposals apart.
+			'price'         => (float) ( $proposal->proposed_price ?? 0 ),
+			'delivery_days' => (int) ( $proposal->proposed_days ?? 0 ),
+			'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
+			'milestones'    => is_array( $proposal->milestones ?? null ) ? $proposal->milestones : [],
 			'status'        => $proposal->status,
 			'created_at'    => $proposal->created_at,
 		];

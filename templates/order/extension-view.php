@@ -167,7 +167,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 				<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php
 					printf(
-						/* translators: %s: extension amount */
+						/* translators: %s: amount */
 						esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
 						esc_html( $format( $gross ) )
 					);

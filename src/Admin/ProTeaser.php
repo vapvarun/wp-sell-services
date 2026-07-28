@@ -23,13 +23,6 @@ defined( 'ABSPATH' ) || exit;
 class ProTeaser {
 
 	/**
-	 * Whether shared teaser styles have been output.
-	 *
-	 * @var bool
-	 */
-	private static bool $styles_rendered = false;
-
-	/**
 	 * Initialize teasers.
 	 *
 	 * Bails immediately if Pro is active.
@@ -50,6 +43,32 @@ class ProTeaser {
 
 		// Frontend: Service creation section teaser.
 		add_action( 'wpss_dashboard_section_after', array( $this, 'render_section_teasers' ), 10, 2 );
+
+		// The teaser renders on BOTH surfaces, so ONE stylesheet is registered
+		// for both rather than its rules being copied into an admin sheet and a
+		// frontend sheet — which is the duplicate-class problem this cleanup
+		// exists to remove.
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+	}
+
+	/**
+	 * Enqueue the teaser stylesheet.
+	 *
+	 * Replaces two inline <style> blocks — one of which needed a static flag
+	 * purely to stop it printing three times on a page with three teasers.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	public function enqueue_styles(): void {
+		wp_enqueue_style(
+			'wpss-pro-teaser',
+			\WPSS_PLUGIN_URL . 'assets/css/pro-teaser.css',
+			array(),
+			\WPSS_VERSION
+		);
+		wp_style_add_data( 'wpss-pro-teaser', 'rtl', 'replace' );
 	}
 
 	/**
@@ -115,30 +134,6 @@ class ProTeaser {
 			</div>
 		</div>
 
-		<style>
-			.wpss-pro-locked {
-				position: relative;
-				max-width: 900px;
-				margin-top: 20px;
-			}
-			.wpss-pro-locked__preview {
-				filter: blur(3px);
-				opacity: 0.6;
-				pointer-events: none;
-				user-select: none;
-			}
-			.wpss-pro-locked__overlay {
-				position: absolute;
-				inset: 0;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				text-align: center;
-				background: rgba(255, 255, 255, 0.4);
-				border-radius: 8px;
-			}
-		</style>
 		<?php
 	}
 
@@ -177,8 +172,6 @@ class ProTeaser {
 			</div>
 		</div>
 		<?php
-
-		$this->render_base_styles();
 	}
 
 	/**
@@ -205,8 +198,6 @@ class ProTeaser {
 			</a>
 		</div>
 		<?php
-
-		$this->render_base_styles();
 	}
 
 	/**
@@ -235,71 +226,6 @@ class ProTeaser {
 				<?php esc_html_e( 'Learn More', 'wp-sell-services' ); ?>
 			</a>
 		</div>
-		<?php
-
-		$this->render_base_styles();
-	}
-
-	/**
-	 * Output shared teaser CSS once per page load.
-	 *
-	 * @return void
-	 */
-	private function render_base_styles(): void {
-		if ( self::$styles_rendered ) {
-			return;
-		}
-		self::$styles_rendered = true;
-		?>
-		<style>
-			.wpss-pro-teaser {
-				border: 1px solid var(--wpss-primary-light, #e0d4f5);
-				border-left: 4px solid var(--wpss-primary, #7c3aed);
-				background: linear-gradient(135deg, var(--wpss-primary-light, #faf5ff) 0%, var(--wpss-info-light, #f0f7ff) 100%);
-				border-radius: 6px;
-				padding: 16px 20px;
-				margin: 16px 0;
-			}
-			.wpss-pro-teaser__badge {
-				display: inline-block;
-				background: linear-gradient(135deg, var(--wpss-primary, #7c3aed), var(--wpss-primary, #6366f1));
-				color: var(--wpss-white, #fff);
-				font-size: 10px;
-				font-weight: 700;
-				text-transform: uppercase;
-				padding: 2px 8px;
-				border-radius: 3px;
-				letter-spacing: 0.5px;
-			}
-			.wpss-pro-teaser__title {
-				margin: 8px 0 4px;
-				font-size: 14px;
-				font-weight: 600;
-				color: var(--wpss-gray-800, #1e1e1e);
-			}
-			.wpss-pro-teaser__text {
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-				font-size: 13px;
-				margin: 0 0 12px;
-				line-height: 1.5;
-			}
-			.wpss-pro-teaser__cta {
-				display: inline-block;
-				background: var(--wpss-primary, #7c3aed);
-				color: var(--wpss-white, #fff) !important;
-				font-size: 12px;
-				font-weight: 600;
-				padding: 6px 16px;
-				border-radius: 4px;
-				text-decoration: none !important;
-				transition: background 0.2s;
-			}
-			.wpss-pro-teaser__cta:hover,
-			.wpss-pro-teaser__cta:focus {
-				background: var(--wpss-primary-dark, #6d28d9);
-				color: var(--wpss-white, #fff) !important;
-			}
-		</style>
 		<?php
 	}
 }

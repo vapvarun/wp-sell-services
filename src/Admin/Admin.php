@@ -216,26 +216,53 @@ class Admin {
 		$ordered   = array();
 		$rest      = array();
 
-		// Define the desired order of menu slugs.
+		// Desired order, grouped by what the admin is DOING — not by which
+		// class happens to register the page. The blocks below are the house
+		// convention: Overview → Content → Moderation → Users → Money →
+		// Insights → Config. Keeping every screen of one job together is the
+		// whole point; the previous order split the three moderation queues
+		// nine slots apart and buried Vendors inside the money block.
 		$order = array(
+			// --- Overview: where you land, and how you get set up. ---
 			'wp-sell-services',                                              // Dashboard.
+			// Setup Wizard only registers while setup is incomplete (or there
+			// are no published services). Listing it here keeps it at the TOP
+			// on exactly those fresh installs — omitting it sent the first
+			// screen a new owner needs to the very bottom of the menu, under
+			// "Upgrade to Pro", via the unlisted-items tail below.
+			'wpss-setup-wizard',                                             // Setup Wizard (onboarding, conditional).
+
+			// --- Content: the things being sold and asked for. Both CPTs stay
+			// adjacent, with their taxonomies clustered after them rather than
+			// wedged between Services and Requests. ---
 			'edit.php?post_type=wpss_service',                               // All Services.
 			'post-new.php?post_type=wpss_service',                           // Add New Service.
-			'wpss-moderation',                                               // Service Moderation.
-			'wpss-review-moderation',                                        // Review Moderation.
-			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
-			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
 			'edit.php?post_type=wpss_request',                               // Buyer Requests.
 			'post-new.php?post_type=wpss_request',                           // Add New Request.
+			'edit-tags.php?taxonomy=wpss_service_category&post_type=wpss_service', // Categories.
+			'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service',      // Tags.
+
+			// --- Moderation: every queue an admin works in the same sitting.
+			// Disputes belongs here, not marooned in the money block. ---
+			'wpss-moderation',                                               // Service Moderation.
+			'wpss-review-moderation',                                        // Review Moderation.
+			'wpss-disputes',                                                 // Disputes.
+
+			// --- Users: who is selling. Precedes the money they generate. ---
+			'wpss-vendors',                                                  // Vendors.
+
+			// --- Money: the full journey, in the order it happens. ---
 			'wpss-orders',                                                   // Orders.
 			'wpss-subscriptions',                                            // Subscriptions (Pro).
-			'wpss-vendors',                                                  // Vendors.
-			'wpss-withdrawals',                                              // Withdrawals.
-			'wpss-disputes',                                                 // Disputes.
+			'wpss-withdrawals',                                              // Withdrawals (payouts).
+
+			// --- Insights: reporting and trails, read not acted on. ---
 			'wpss-analytics',                                                // Analytics (Pro).
-			'wpss-settings',                                                 // Settings.
-			'wpss-notifications',                                             // My Notifications (read-only viewer).
 			'wpss-audit-log',                                                // Audit Log (forensic trail).
+			'wpss-notifications',                                            // My Notifications (personal inbox).
+
+			// --- Config: last, so day-to-day work is never scrolled past it. ---
+			'wpss-settings',                                                 // Settings.
 			'wpss-license',                                                  // License (Pro).
 			'wpss-upgrade',                                                  // Upgrade to Pro (free only).
 		);
@@ -429,17 +456,6 @@ class Admin {
 
 		// Inline script to handle dismiss via AJAX.
 		?>
-		<script>
-		jQuery( function( $ ) {
-			$( document ).on( 'click', '.wpss-pages-notice .notice-dismiss', function() {
-				var notice = $( this ).closest( '.wpss-pages-notice' );
-				$.post( ajaxurl, {
-					action: 'wpss_dismiss_pages_notice',
-					nonce: notice.data( 'nonce' )
-				} );
-			} );
-		} );
-		</script>
 		<?php
 	}
 
@@ -1124,7 +1140,7 @@ class Admin {
 		?>
 		<div class="wrap wpss-dashboard-wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
-			<button type="button" class="page-title-action wpss-tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+			<button type="button" class="page-title-action wpss-tour-replay">
 				<?php esc_html_e( 'Replay guide', 'wp-sell-services' ); ?>
 			</button>
 			<hr class="wp-header-end">
@@ -1292,7 +1308,7 @@ class Admin {
 										<td><?php echo esc_html( $service ? $service->post_title : __( 'Deleted', 'wp-sell-services' ) ); ?></td>
 										<td><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></td>
 										<td>
-											<span class="wpss-status-badge wpss-status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+											<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 												<?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
 											</span>
 										</td>
@@ -1579,7 +1595,7 @@ class Admin {
 								<tr>
 									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 									<td>
-										<span class="wpss-status-badge wpss-status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+										<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 											<?php echo esc_html( $statuses[ $order->status ] ?? ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
 										</span>
 									</td>
@@ -1791,19 +1807,47 @@ class Admin {
 					<?php endif; ?>
 
 					<!-- Admin Actions -->
-					<?php if ( current_user_can( 'manage_options' ) && in_array( $order->status, array( 'completed', 'cancelled' ), true ) && 'paid' === $order->payment_status ) : ?>
+					<?php if ( current_user_can( 'manage_options' ) && wpss_order_is_refundable( $order ) ) : ?>
+						<?php
+						$wpss_already_refunded = wpss_get_order_refunded_amount( $order );
+						$wpss_refundable_left  = max( 0, (float) $order->total - $wpss_already_refunded );
+						?>
 						<div class="postbox">
 							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Admin Actions', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
-								<button type="button" class="button button-link-delete wpss-process-refund" data-order="<?php echo esc_attr( $order_id ); ?>">
+								<p>
+									<label for="wpss-refund-amount-<?php echo esc_attr( $order_id ); ?>">
+										<strong><?php esc_html_e( 'Refund amount', 'wp-sell-services' ); ?></strong>
+									</label><br>
+									<input type="number" id="wpss-refund-amount-<?php echo esc_attr( $order_id ); ?>"
+										class="wpss-refund-amount" min="0" step="0.01"
+										max="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
+										placeholder="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
+										style="width: 140px;">
+								</p>
+								<button type="button" class="button button-link-delete wpss-process-refund"
+									data-order="<?php echo esc_attr( (string) $order_id ); ?>"
+									data-order-total="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>">
 									<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
 								</button>
 								<p class="description">
-									<?php esc_html_e( 'Sets the order status to Refunded and refunds the gateway payment where supported.', 'wp-sell-services' ); ?>
+									<?php esc_html_e( 'Leave the amount blank for a full refund. A smaller amount issues a partial refund and claws back the vendor\'s proportional share. The gateway payment is refunded where supported.', 'wp-sell-services' ); ?>
 								</p>
 							</div>
 						</div>
 					<?php endif; ?>
+
+					<?php
+					// Billing address as recorded when the order was paid — the
+					// SAME partial the buyer's order view renders, so the admin
+					// and the customer never see different invoice detail.
+					// Silent on pre-1.5.0 orders, which carry no snapshot.
+					?>
+					<div class="postbox wpss-billing-postbox">
+						<div class="inside">
+							<?php wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) ); ?>
+						</div>
+					</div>
 
 					<!-- Financial Summary -->
 					<div class="postbox">
@@ -2057,7 +2101,7 @@ class Admin {
 								<tr>
 									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 									<td>
-										<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $dispute->status ); ?>">
+										<span class="<?php echo esc_attr( wpss_status_class( $dispute->status ) ); ?>">
 											<?php echo esc_html( $statuses[ $dispute->status ] ?? $dispute->status ); ?>
 										</span>
 									</td>
@@ -2172,7 +2216,7 @@ class Admin {
 								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 									<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
 									<input type="hidden" name="action" value="wpss_resolve_dispute">
-									<input type="hidden" name="dispute_id" value="<?php echo esc_attr( $dispute_id ); ?>">
+									<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
 
 									<p>
 										<label for="dispute_status"><strong><?php esc_html_e( 'Update Status:', 'wp-sell-services' ); ?></strong></label><br>
@@ -2206,17 +2250,6 @@ class Admin {
 
 									<?php submit_button( __( 'Update Dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 								</form>
-								<script>
-								jQuery(function($) {
-									$('#dispute_status').on('change', function() {
-										if ($(this).val() === 'resolved') {
-											$('#wpss-resolution-fields').show();
-										} else {
-											$('#wpss-resolution-fields').hide();
-										}
-									});
-								});
-								</script>
 							</div>
 						</div>
 					<?php else : ?>

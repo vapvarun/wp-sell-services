@@ -61,6 +61,37 @@ class ReviewModerationPage {
 		// AJAX moderation actions (admin one-click utilities; nonce + capability guarded).
 		add_action( 'wp_ajax_wpss_approve_review', array( $this, 'ajax_approve_review' ) );
 		add_action( 'wp_ajax_wpss_reject_review', array( $this, 'ajax_reject_review' ) );
+
+		// Recompute the cached service + vendor rating when a review is approved
+		// or rejected — the rating cache is written on create but was never
+		// refreshed on moderation, so approving a pending review (or rejecting a
+		// live one) left stale star counts everywhere they display.
+		add_action( 'wpss_review_moderated', array( $this, 'recompute_rating_on_moderation' ), 10, 2 );
+	}
+
+	/**
+	 * Refresh the service + vendor rating cache after a moderation status change.
+	 *
+	 * @param int    $review_id  Moderated review ID.
+	 * @param string $new_status New review status (unused; recompute is always
+	 *                           over approved rows).
+	 * @return void
+	 */
+	public function recompute_rating_on_moderation( int $review_id, string $new_status ): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_reviews';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare( "SELECT service_id, vendor_id FROM {$table} WHERE id = %d", $review_id )
+		);
+		if ( ! $row ) {
+			return;
+		}
+
+		// Reuse the canonical rating-cache recompute (same keys + rounding the
+		// create/update paths use) so every surface stays consistent.
+		\WPSellServices\API\ReviewsController::update_rating_cache( (int) $row->service_id, (int) $row->vendor_id );
 	}
 
 	/**
@@ -237,9 +268,10 @@ JS;
 		$is_enabled    = ! empty( get_option( 'wpss_vendor', array() )['moderate_reviews'] ?? '' );
 		$status_filter = $this->read_status_filter();
 		$current_page  = $this->read_paged();
+		$search        = $this->read_search();
 
 		$counts = $this->get_status_counts();
-		$result = $this->query_reviews( $status_filter, $current_page );
+		$result = $this->query_reviews( $status_filter, $current_page, $search );
 		$rows   = $result['rows'];
 		$total  = $result['total'];
 
@@ -298,7 +330,22 @@ JS;
 							?>
 							<li>
 								<a
-									href="<?php echo esc_url( add_query_arg( array( 'status' => $key ), admin_url( 'admin.php?page=wpss-review-moderation' ) ) ); ?>"
+									href="
+									<?php
+									echo esc_url(
+										add_query_arg(
+											array_filter(
+												array(
+													'status' => $key,
+													's' => $search,
+												),
+												static fn( $v ) => '' !== $v
+											),
+											admin_url( 'admin.php?page=wpss-review-moderation' )
+										)
+									);
+									?>
+									"
 									class="<?php echo $status_filter === $key ? 'current' : ''; ?>"
 								>
 									<?php echo esc_html( $label ); ?>
@@ -307,6 +354,23 @@ JS;
 							</li>
 						<?php endforeach; ?>
 					</ul>
+
+					<form class="wpss-review-search search-form" method="get">
+						<input type="hidden" name="page" value="wpss-review-moderation">
+						<input type="hidden" name="status" value="<?php echo esc_attr( $status_filter ); ?>">
+						<label class="screen-reader-text" for="wpss-review-search-input"><?php esc_html_e( 'Search reviews by reviewer name', 'wp-sell-services' ); ?></label>
+						<input
+							type="search"
+							id="wpss-review-search-input"
+							name="s"
+							value="<?php echo esc_attr( $search ); ?>"
+							placeholder="<?php esc_attr_e( 'Search by reviewer or text&hellip;', 'wp-sell-services' ); ?>"
+						>
+						<button type="submit" class="button"><?php esc_html_e( 'Search', 'wp-sell-services' ); ?></button>
+						<?php if ( '' !== $search ) : ?>
+							<a class="button-link" href="<?php echo esc_url( add_query_arg( array( 'status' => $status_filter ), admin_url( 'admin.php?page=wpss-review-moderation' ) ) ); ?>"><?php esc_html_e( 'Clear', 'wp-sell-services' ); ?></a>
+						<?php endif; ?>
+					</form>
 				</div>
 
 				<div class="wpss-list-card__body">
@@ -344,7 +408,7 @@ JS;
 									<span class="displaying-num">
 										<?php
 										printf(
-											/* translators: %s: number of reviews. */
+											/* translators: %s: number of reviews */
 											esc_html( _n( '%s review', '%s reviews', $total, 'wp-sell-services' ) ),
 											esc_html( number_format_i18n( $total ) )
 										);
@@ -392,7 +456,7 @@ JS;
 		$created_at  = isset( $row->created_at ) ? (string) $row->created_at : '';
 
 		$reviewer      = $reviewer_id > 0 ? get_userdata( $reviewer_id ) : false;
-		$reviewer_name = $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' );
+		$reviewer_name = Review::resolve_reviewer_name( $reviewer_id, $row->reviewer_name ?? null );
 
 		$service       = $service_id > 0 ? get_post( $service_id ) : null;
 		$service_title = $service ? $service->post_title : '';
@@ -414,7 +478,7 @@ JS;
 				<?php
 				echo esc_attr(
 					sprintf(
-						/* translators: %d: rating out of 5. */
+						/* translators: %d: star rating out of 5 */
 						__( '%d out of 5 stars', 'wp-sell-services' ),
 						$rating
 					)
@@ -447,7 +511,7 @@ JS;
 			</td>
 			<td class="column-date"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
 			<td class="column-status">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $status_label ); ?></span>
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>"><?php echo esc_html( $status_label ); ?></span>
 			</td>
 			<td class="column-actions">
 				<?php if ( Review::STATUS_APPROVED !== $status ) : ?>
@@ -481,37 +545,45 @@ JS;
 	 * @param int    $page   1-indexed page number.
 	 * @return array{rows: array<int, object>, total: int}
 	 */
-	private function query_reviews( string $status, int $page ): array {
+	private function query_reviews( string $status, int $page, string $search = '' ): array {
 		global $wpdb;
 		$table  = $wpdb->prefix . 'wpss_reviews';
 		$offset = ( $page - 1 ) * self::PER_PAGE;
 
-		if ( 'all' === $status ) {
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
-			$rows  = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT * FROM {$table} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
-					self::PER_PAGE,
-					$offset
-				)
-			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		} else {
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$total = (int) $wpdb->get_var(
-				$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status = %s", $status )
-			);
-			$rows  = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE status = %s ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d",
-					$status,
-					self::PER_PAGE,
-					$offset
-				)
-			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Build the WHERE clause dynamically so status + reviewer search compose.
+		$where  = array();
+		$params = array();
+
+		if ( 'all' !== $status ) {
+			$where[]  = 'r.status = %s';
+			$params[] = $status;
 		}
+
+		// Search matches the migrated guest name, the registered reviewer's
+		// display_name, or the review text. The users JOIN is added only when
+		// searching so the default queue keeps its single-table query.
+		$join = '';
+		if ( '' !== $search ) {
+			$join     = "LEFT JOIN {$wpdb->users} u ON r.reviewer_id = u.ID";
+			$like     = '%' . $wpdb->esc_like( $search ) . '%';
+			$where[]  = '( r.reviewer_name LIKE %s OR u.display_name LIKE %s OR r.review LIKE %s )';
+			$params[] = $like;
+			$params[] = $like;
+			$params[] = $like;
+		}
+
+		$where_sql = ! empty( $where ) ? ( 'WHERE ' . implode( ' AND ', $where ) ) : '';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		$count_sql = "SELECT COUNT(*) FROM {$table} r {$join} {$where_sql}";
+		$total     = (int) ( empty( $params )
+			? $wpdb->get_var( $count_sql )
+			: $wpdb->get_var( $wpdb->prepare( $count_sql, ...$params ) ) );
+
+		$rows_sql    = "SELECT r.* FROM {$table} r {$join} {$where_sql} ORDER BY r.created_at DESC, r.id DESC LIMIT %d OFFSET %d";
+		$rows_params = array_merge( $params, array( self::PER_PAGE, $offset ) );
+		$rows        = $wpdb->get_results( $wpdb->prepare( $rows_sql, ...$rows_params ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
 		return array(
 			'rows'  => is_array( $rows ) ? $rows : array(),
@@ -567,6 +639,16 @@ JS;
 		);
 
 		return in_array( $status, $allowed, true ) ? $status : Review::STATUS_PENDING;
+	}
+
+	/**
+	 * Read the reviewer search term from the query string.
+	 *
+	 * @return string
+	 */
+	private function read_search(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only listing filter; no state change.
+		return isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 	}
 
 	/**

@@ -81,7 +81,7 @@ do_action( 'wpss_email_content_before', 'extension_approved', $extension, $recip
 			<?php endif; ?>
 			<div style="margin-bottom: 8px;"><strong><?php esc_html_e( 'Credited to your wallet:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $format( $net_amount ) ); ?></div>
 			<?php if ( $extra_days > 0 ) : ?>
-				<div><strong><?php esc_html_e( 'Extra delivery time:', 'wp-sell-services' ); ?></strong> <?php printf( esc_html( _n( '+%d day', '+%d days', $extra_days, 'wp-sell-services' ) ), (int) $extra_days ); ?></div>
+				<div><strong><?php esc_html_e( 'Extra delivery time:', 'wp-sell-services' ); ?></strong> <?php /* translators: %d: number of extra delivery days. */ printf( esc_html( _n( '+%d day', '+%d days', $extra_days, 'wp-sell-services' ) ), (int) $extra_days ); ?></div>
 			<?php endif; ?>
 		</td>
 	</tr>

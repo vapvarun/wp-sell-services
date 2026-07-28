@@ -45,6 +45,49 @@ class CommissionService {
 		// Use pre-tax base (subtotal + addons) for commission calculation.
 		$commission_base = (float) $order->subtotal + (float) $order->addons_total;
 
+		return self::compute_breakdown( $commission_base, $order );
+	}
+
+	/**
+	 * Compute the definitive commission breakdown for an order context.
+	 *
+	 * THE single source of truth for platform fee + vendor earnings. Every
+	 * surface that needs a breakdown — order creation (standalone checkout,
+	 * WooCommerce, manual admin orders), completion recording, and demo
+	 * seeding — calls this rather than re-deriving `round( base * rate / 100 )`
+	 * on its own. Payment gateways then consume the PERSISTED result (they
+	 * never recompute), so the wallet ledger and the Stripe Connect split
+	 * always agree on one number.
+	 *
+	 * Resolution order (each step overridable): base filter → rate (per-vendor,
+	 * tiered rules, and subscription-plan override via `wpss_commission_rate`)
+	 * → percentage-derived default fee → amount seam (`wpss_commission_fee`,
+	 * for flat fees / absolute overrides) → clamp to [0, base].
+	 *
+	 * @since 1.2.2
+	 *
+	 * @param float  $base  Pre-tax base amount (subtotal + addons) the fee applies to.
+	 * @param object $order Order (or order-like) object exposing at least id,
+	 *                      vendor_id and service_id. `id` is 0 at creation time,
+	 *                      before the order row exists.
+	 * @return array{
+	 *     order_total: float,
+	 *     commission_rate: float,
+	 *     platform_fee: float,
+	 *     vendor_earnings: float
+	 * }
+	 */
+	public static function compute_breakdown( float $base, object $order ): array {
+		$order_id  = (int) ( $order->id ?? 0 );
+		$vendor_id = (int) ( $order->vendor_id ?? 0 );
+
+		// Round money to the ORDER's currency precision, not a hardcoded 2dp.
+		// A 0-decimal currency (JPY) must not carry phantom decimals, and a
+		// 3-decimal currency (KWD/BHD) must keep its third minor digit or ~0.005
+		// silently shifts to the platform. wpss_get_currency_decimals() falls back
+		// to the store currency when the order has none (e.g. at creation time).
+		$decimals = wpss_get_currency_decimals( (string) ( $order->currency ?? '' ) );
+
 		/**
 		 * Filters the base amount used for commission calculation.
 		 *
@@ -52,19 +95,52 @@ class CommissionService {
 		 *
 		 * @since 1.4.0
 		 *
-		 * @param float $commission_base Base amount (subtotal + addons, pre-tax).
-		 * @param int   $order_id        Order ID.
-		 * @param int   $vendor_id       Vendor user ID.
+		 * @param float $base      Base amount (subtotal + addons, pre-tax).
+		 * @param int   $order_id  Order ID (0 during order creation).
+		 * @param int   $vendor_id Vendor user ID.
 		 */
-		$commission_base = (float) apply_filters( 'wpss_commission_base_amount', $commission_base, $order_id, $order->vendor_id );
+		$base = (float) apply_filters( 'wpss_commission_base_amount', $base, $order_id, $vendor_id );
 
-		$commission_rate = $this->get_commission_rate( $order );
-		$platform_fee    = round( $commission_base * ( $commission_rate / 100 ), 2 );
-		$vendor_earnings = round( $commission_base - $platform_fee, 2 );
+		$commission_rate = self::resolve_commission_rate( $order );
+
+		// Percentage remains the default fee model. The amount-based seam below
+		// lets extensions express fees a percentage cannot — a FLAT fee, or an
+		// absolute per-plan override — so every consumer (wallet, Stripe Connect
+		// split, PayPal payout) reads ONE authoritative fee instead of each
+		// re-deriving its own. Percentage-only sites (no hook) are unaffected.
+		$default_fee = round( $base * ( $commission_rate / 100 ), $decimals );
+
+		/**
+		 * Filters the platform fee AMOUNT for an order.
+		 *
+		 * This is the single source of truth for the platform fee. Return an
+		 * absolute amount (in the store currency) to override the default
+		 * percentage-derived fee — e.g. a flat fee or a subscription-plan
+		 * override. Payment gateways must consume this value, never recompute.
+		 *
+		 * @since 1.2.2
+		 *
+		 * @param float  $default_fee Percentage-derived fee (base * rate / 100).
+		 * @param object $order       Order object.
+		 * @param float  $base        Base amount the fee applies to.
+		 * @param float  $commission_rate Resolved percentage rate.
+		 */
+		$platform_fee = (float) apply_filters( 'wpss_commission_fee', $default_fee, $order, $base, $commission_rate );
+
+		// The fee can never be negative or exceed the base.
+		$fee_overridden  = abs( $platform_fee - $default_fee ) > 0.0001;
+		$platform_fee    = round( max( 0.0, min( $platform_fee, $base ) ), $decimals );
+		$vendor_earnings = round( $base - $platform_fee, $decimals );
+
+		// Preserve the exact resolved rate for percentage fees (BC); report the
+		// effective rate only when an amount override changed the fee.
+		$effective_rate = ( $fee_overridden && $base > 0 )
+			? round( ( $platform_fee / $base ) * 100, 4 )
+			: (float) $commission_rate;
 
 		return array(
-			'order_total'     => $commission_base,
-			'commission_rate' => $commission_rate,
+			'order_total'     => $base,
+			'commission_rate' => $effective_rate,
 			'platform_fee'    => $platform_fee,
 			'vendor_earnings' => $vendor_earnings,
 		);
@@ -137,6 +213,14 @@ class CommissionService {
 		/**
 		 * Fires when commission is recorded for an order.
 		 *
+		 * Extension point for payout rails that settle the vendor OUTSIDE this
+		 * wallet — Pro's Stripe Connect hooks this to write an offsetting debit,
+		 * because with a split payment the vendor was already paid directly at
+		 * charge time and the credit above would pay them a second time.
+		 *
+		 * Free has no such rail: it pays vendors manually (wallet credit →
+		 * withdrawal request → admin marks paid), so nothing offsets here.
+		 *
 		 * @param int   $order_id   Order ID.
 		 * @param array $commission Commission breakdown.
 		 * @param int   $vendor_id  Vendor user ID.
@@ -147,23 +231,30 @@ class CommissionService {
 	}
 
 	/**
-	 * Get commission rate for an order.
+	 * Resolve the percentage commission rate for an order context.
 	 *
-	 * Checks for vendor-specific commission rate first, then falls back to global platform fee.
+	 * Checks for a vendor-specific rate first (when enabled), then falls back to
+	 * the global platform fee, and finally runs the `wpss_commission_rate`
+	 * filter — the seam Pro's tiered rules and subscription-plan override hook.
+	 * Static so every creation-time surface resolves the rate identically to
+	 * completion-time recording.
 	 *
-	 * @param object $order Order object.
+	 * @since 1.2.2 Made static; shared by compute_breakdown() and all callers.
+	 *
+	 * @param object $order Order (or order-like) object exposing vendor_id and service_id.
 	 * @return float Commission rate percentage.
 	 */
-	private function get_commission_rate( object $order ): float {
+	private static function resolve_commission_rate( object $order ): float {
 		global $wpdb;
 
-		$rate = null;
+		$rate      = null;
+		$vendor_id = (int) ( $order->vendor_id ?? 0 );
 
 		// Check if per-vendor rates are enabled in commission settings.
 		$commission_settings = get_option( 'wpss_commission', array() );
 		$enable_vendor_rates = ! empty( $commission_settings['enable_vendor_rates'] );
 
-		if ( $enable_vendor_rates ) {
+		if ( $enable_vendor_rates && $vendor_id > 0 ) {
 			// Check for vendor-specific commission rate.
 			$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
 
@@ -171,7 +262,7 @@ class CommissionService {
 			$vendor_rate = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT custom_commission_rate FROM {$profiles_table} WHERE user_id = %d",
-					$order->vendor_id
+					$vendor_id
 				)
 			);
 
@@ -189,7 +280,9 @@ class CommissionService {
 		/**
 		 * Filter the commission rate for a specific order.
 		 *
-		 * Allows for per-vendor or per-service commission overrides.
+		 * Allows for per-vendor or per-service commission overrides. Pro's
+		 * TieredCommission (percentage rules) and subscription-plan override
+		 * hook this filter; flat tiered fees use `wpss_commission_fee` instead.
 		 *
 		 * @param float  $rate       Commission rate percentage.
 		 * @param object $order      Order object.
@@ -200,8 +293,8 @@ class CommissionService {
 			'wpss_commission_rate',
 			$rate,
 			$order,
-			$order->vendor_id,
-			$order->service_id
+			$vendor_id,
+			(int) ( $order->service_id ?? 0 )
 		);
 	}
 
@@ -254,17 +347,7 @@ class CommissionService {
 
 		// Get current balance with row lock.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$current_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$transactions_table}
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1
-				FOR UPDATE",
-				$vendor_id
-			)
-		);
+		$current_balance = (float) wpss_get_ledger_balance( (int) $vendor_id, true );
 
 		$new_balance = $current_balance + $commission['vendor_earnings'];
 
@@ -299,6 +382,7 @@ class CommissionService {
 
 		$wpdb->query( 'COMMIT' );
 	}
+
 
 	/**
 	 * Get order commission details.

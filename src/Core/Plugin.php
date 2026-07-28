@@ -268,6 +268,11 @@ final class Plugin {
 		// so the vendor can submit delivery.
 		( new \WPSellServices\Services\MilestoneService() )->init();
 
+		// Audit-log retention: binds wpss_audit_log_cleanup (scheduled on
+		// activation) to the pruning handler. Without this the cron fired with
+		// no listener, so the retention setting never trimmed the table.
+		( new \WPSellServices\Services\AuditLogService() )->init();
+
 		// Guided onboarding tour — registers its own admin/front hooks and
 		// the REST completion endpoint internally.
 		( new Tour() )->init();
@@ -322,6 +327,34 @@ final class Plugin {
 	private function maybe_run_install(): void {
 		$installed_version = get_option( 'wpss_version', '' );
 
+		// One-time wallet-ledger reconciliation. Deliberately gated on its OWN
+		// flag rather than on a version comparison: the vendor balance is now
+		// derived from the wallet ledger, and on any install that never wrote
+		// withdrawal debit rows (every free-only site — the debit used to live
+		// in Pro) each vendor's balance reads HIGH by the total they have
+		// already been paid, and they could withdraw it a second time.
+		//
+		// A version guard would have tied this to someone remembering to bump
+		// the version in the same release that shipped the new balance formula.
+		// If the two ever came apart, sites would silently run the new formula
+		// without the reconciliation — which is the failure mode this exists to
+		// prevent. The flag makes it self-triggering and exactly-once.
+		//
+		// Safe to run on a fresh install: there are no withdrawals to scan.
+		// Idempotent regardless — backfill_withdrawal_debits() skips any
+		// withdrawal that already has a ledger row, including the type 'debit'
+		// rows Pro wrote on paired installs.
+		if ( ! get_option( 'wpss_ledger_reconciled', false ) ) {
+			add_action(
+				'init',
+				static function (): void {
+					( new \WPSellServices\Services\EarningsService() )->backfill_withdrawal_debits();
+					update_option( 'wpss_ledger_reconciled', 1, false );
+				},
+				20
+			);
+		}
+
 		if ( version_compare( $installed_version, WPSS_VERSION, '<' ) ) {
 			// DB, roles, settings — safe on plugins_loaded.
 			Activator::install();
@@ -333,6 +366,10 @@ final class Plugin {
 			if ( $installed_version && version_compare( $installed_version, '1.1.0', '<' ) ) {
 				self::clear_legacy_wpcron_hooks();
 			}
+
+			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
+			// own wpss_ledger_reconciled flag at the top of this method, so it
+			// cannot be missed by a release that forgets to bump the version.
 
 			// Page creation needs $wp_rewrite — defer to init.
 			add_action(
@@ -761,8 +798,7 @@ final class Plugin {
 				if ( ! $review ) {
 					return;
 				}
-				$buyer      = get_user_by( 'id', (int) $review->customer_id );
-				$buyer_name = $buyer ? $buyer->display_name : __( 'A buyer', 'wp-sell-services' );
+				$buyer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
 
 				$email_service->send_review_received(
 					$review_id,
@@ -1407,6 +1443,11 @@ final class Plugin {
 
 		$this->loader->add_action( 'init', $this->unified_dashboard, 'init' );
 
+		// Role-based menu visibility: hides dashboard sections + admin submenu
+		// pages per role (config under Settings > Advanced). No-op until an owner
+		// configures wpss_menu_visibility.
+		( new \WPSellServices\Frontend\MenuVisibility() )->register();
+
 		// Public signup AJAX handler — registered on init so it's available to
 		// both logged-in (re-promote) and logged-out (new signup) requests.
 		( new PublicSignup() )->init();
@@ -1745,6 +1786,7 @@ final class Plugin {
 			'wpss_order_status_completed'              => array( 'handle_order_completed', 10, 2 ),
 			'wpss_order_status_cancelled'              => array( 'handle_order_cancelled', 10, 2 ),
 			'wpss_order_status_refunded'               => array( 'handle_order_refunded', 10, 2 ),
+			'wpss_order_status_partially_refunded'     => array( 'handle_order_partially_refunded', 10, 2 ),
 			'wpss_order_status_cancellation_requested' => array( 'handle_cancellation_requested', 10, 2 ),
 		);
 
@@ -1765,6 +1807,20 @@ final class Plugin {
 		// signature is ($order_id, $new_status, $old_status) — the positional
 		// swap mismatched the log_status_change() signature and bypassed the
 		// static dedup key.
+
+		// Debit the wallet ledger when a withdrawal completes. The ledger is the
+		// balance authority, so a payout that never lands in it leaves the
+		// vendor's balance inflated. Previously only Pro listened here, which
+		// meant a free-only site paid vendors out without ever debiting them.
+		add_action(
+			'wpss_withdrawal_processed',
+			static function ( int $withdrawal_id, string $status, $withdrawal ): void {
+				( new \WPSellServices\Services\EarningsService() )
+					->record_withdrawal_debit( $withdrawal_id, $status, $withdrawal );
+			},
+			10,
+			3
+		);
 
 		// Payment hooks.
 		add_action(
@@ -1851,7 +1907,12 @@ final class Plugin {
 			'wpss_dispute_opened'             => array( 'on_dispute_opened', 10, 4 ),
 			'wpss_dispute_response_submitted' => array( 'on_response_submitted', 10, 3 ),
 			'wpss_dispute_evidence_added'     => array( 'on_evidence_added', 10, 2 ),
-			'wpss_dispute_resolved'           => array( 'on_dispute_resolved', 10, 4 ),
+			// NOTE: 'wpss_dispute_resolved' is deliberately NOT wired here.
+			// NotificationService::notify_dispute_resolved() (wired above, ~:818)
+			// already notifies both parties with resolution-aware copy. Listening
+			// again through DisputeWorkflowManager::on_dispute_resolved() sent a
+			// second, generic notification of the SAME type to the SAME people —
+			// two "Dispute Resolved" entries per party, every time.
 		);
 
 		foreach ( $dispute_event_hooks as $hook => $config ) {

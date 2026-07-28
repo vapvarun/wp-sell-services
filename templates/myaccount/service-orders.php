@@ -79,7 +79,6 @@ do_action( 'wpss_service_orders_before', $user_id );
 						$order        = \WPSellServices\Models\ServiceOrder::from_db( $order_data );
 						$service      = $order->get_service();
 						$status_label = $statuses[ $order->status ] ?? $order->status;
-						$status_class = str_replace( '_', '-', $order->status );
 						?>
 						<tr class="wpss-table__row">
 							<td class="wpss-table__col--order" data-label="<?php esc_attr_e( 'Order', 'wp-sell-services' ); ?>">
@@ -108,7 +107,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 								<?php endif; ?>
 							</td>
 							<td class="wpss-table__col--status" data-label="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
-								<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( $status_class ); ?>">
+								<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 									<?php echo esc_html( $status_label ); ?>
 								</span>
 								<?php if ( $order->is_late() ) : ?>

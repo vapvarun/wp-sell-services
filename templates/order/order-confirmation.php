@@ -95,7 +95,7 @@ do_action( 'wpss_before_order_confirmation', $order );
 						<p class="wpss-order-confirmation__item-vendor">
 							<?php
 							printf(
-								/* translators: %s: vendor name */
+								/* translators: %s: vendor or user display name */
 								esc_html__( 'by %s', 'wp-sell-services' ),
 								esc_html( $vendor->display_name )
 							);
@@ -206,7 +206,7 @@ do_action( 'wpss_before_order_confirmation', $order );
 
 				<dt><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></dt>
 				<dd>
-					<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+					<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 						<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 					</span>
 				</dd>

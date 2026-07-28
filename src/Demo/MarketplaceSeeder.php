@@ -26,6 +26,7 @@ use WPSellServices\Models\Review;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\VendorProfile;
 use WPSellServices\PostTypes\BuyerRequestPostType;
+use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\EarningsService;
 
@@ -38,13 +39,6 @@ defined( 'ABSPATH' ) || exit;
  * @since 1.1.2
  */
 class MarketplaceSeeder {
-
-	/**
-	 * Default platform commission rate applied to seeded orders (percent).
-	 *
-	 * @var float
-	 */
-	private const COMMISSION_RATE = 20.0;
 
 	/**
 	 * Vendor display-name pool. Each entry seeds one vendor with a profile.
@@ -299,6 +293,18 @@ class MarketplaceSeeder {
 		$summary['orders'] = count( $orders );
 		$this->log( 'Orders created: ' . count( $orders ) );
 
+		// Fund the wallet ledger from the completed orders BEFORE seeding
+		// withdrawals. The ledger is the money authority every earnings surface
+		// reads (available balance, "Total Earned", the wallet table); a real
+		// completion writes an `order_earning` credit, but seed_orders() inserts
+		// order rows directly and skips that. Without this step a demo vendor's
+		// Earnings screen showed impossible figures — $0 earned beside money
+		// withdrawn, or a phantom NEGATIVE balance once an unfunded withdrawal
+		// reserved against nothing. Returns per-vendor available balance so
+		// seed_withdrawals() can cap each request at what the vendor actually has.
+		$available = $this->seed_wallet_ledger( $orders );
+		$this->log( 'Wallet ledger funded for ' . count( $available ) . ' vendors.' );
+
 		$summary['reviews'] = $this->seed_reviews( $orders );
 		$this->log( 'Reviews created: ' . $summary['reviews'] );
 
@@ -315,7 +321,7 @@ class MarketplaceSeeder {
 		$summary['favorites'] = $this->seed_favorites( $buyers, $services );
 		$this->log( 'Favorites created: ' . $summary['favorites'] );
 
-		$summary['withdrawals'] = $this->seed_withdrawals( $vendors );
+		$summary['withdrawals'] = $this->seed_withdrawals( $vendors, $available );
 		$this->log( 'Withdrawals created: ' . $summary['withdrawals'] );
 
 		$this->refresh_vendor_stats( $vendors );
@@ -682,8 +688,20 @@ class MarketplaceSeeder {
 			$subtotal     = $service['starting_price'] * ( 1 + ( $i % 3 ) );
 			$addons_total = 0 === $i % 4 ? 15.0 : 0.0;
 			$order_total  = $subtotal + $addons_total;
-			$platform_fee = round( $order_total * ( self::COMMISSION_RATE / 100 ), 2 );
-			$earnings     = round( $order_total - $platform_fee, 2 );
+
+			// Compute through the single authority so demo orders carry the same
+			// breakdown the live engine would produce (no divergent local math).
+			$breakdown       = CommissionService::compute_breakdown(
+				(float) $order_total,
+				(object) array(
+					'id'         => 0,
+					'vendor_id'  => (int) $service['vendor_id'],
+					'service_id' => (int) $service['id'],
+				)
+			);
+			$platform_fee    = $breakdown['platform_fee'];
+			$earnings        = $breakdown['vendor_earnings'];
+			$commission_rate = $breakdown['commission_rate'];
 
 			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( ( $i * 3 ) + 1 ) . ' days' ) );
 			$deadline   = gmdate( 'Y-m-d H:i:s', strtotime( $created_at . ' +' . $service['delivery_days'] . ' days' ) );
@@ -703,7 +721,7 @@ class MarketplaceSeeder {
 				'addons_total'       => $addons_total,
 				'total'              => $order_total,
 				'currency'           => 'USD',
-				'commission_rate'    => self::COMMISSION_RATE,
+				'commission_rate'    => $commission_rate,
 				'platform_fee'       => $platform_fee,
 				'vendor_earnings'    => $earnings,
 				'status'             => $status,
@@ -1010,13 +1028,98 @@ class MarketplaceSeeder {
 	 * @param array<int, array{user_id: int, blueprint: array<string, mixed>}> $vendors Vendors.
 	 * @return int Number of withdrawal rows created.
 	 */
-	private function seed_withdrawals( array $vendors ): int {
+	/**
+	 * Write `order_earning` ledger credits for every completed order.
+	 *
+	 * The ledger (`wpss_wallet_transactions`) is the money authority every
+	 * earnings surface reads. A real order completion writes this credit;
+	 * seed_orders() inserts order rows directly and does not, so the ledger
+	 * would show nothing for seeded history. This backfills one credit per
+	 * completed order, with a per-vendor running `balance_after`, and returns
+	 * the resulting available balance per vendor so withdrawals can be sized to
+	 * fit (never reserving more than the vendor actually earned).
+	 *
+	 * @param array<int, array{id: int, status: string, vendor_id: int}> $orders Seeded orders.
+	 * @return array<int, float> vendor_id => available (credited) balance.
+	 */
+	private function seed_wallet_ledger( array $orders ): array {
 		global $wpdb;
 
-		$table    = $wpdb->prefix . 'wpss_withdrawals';
-		$statuses = array_keys( EarningsService::get_withdrawal_statuses() );
-		$methods  = array( 'paypal', 'bank_transfer', 'paypal', 'stripe' );
-		$created  = 0;
+		$table     = $wpdb->prefix . 'wpss_wallet_transactions';
+		$balances  = array();
+		$order_ids = array();
+
+		foreach ( $orders as $order ) {
+			if ( ServiceOrder::STATUS_COMPLETED !== $order['status'] ) {
+				continue;
+			}
+			$order_ids[] = (int) $order['id'];
+		}
+
+		if ( ! $order_ids ) {
+			return $balances;
+		}
+
+		// Pull the recorded vendor earnings for the completed orders in one read.
+		$orders_table = $wpdb->prefix . 'wpss_orders';
+		$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; placeholders are %d built from a count; ids passed to prepare().
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, vendor_id, vendor_earnings, currency, completed_at FROM {$orders_table} WHERE id IN ( {$placeholders} ) ORDER BY completed_at ASC, id ASC",
+				...$order_ids
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		foreach ( (array) $rows as $row ) {
+			$vendor_id = (int) $row->vendor_id;
+			$earnings  = round( (float) $row->vendor_earnings, 2 );
+			if ( $earnings <= 0 ) {
+				continue;
+			}
+
+			$balances[ $vendor_id ] = round( ( $balances[ $vendor_id ] ?? 0 ) + $earnings, 2 );
+			$created_at             = $row->completed_at ? $row->completed_at : current_time( 'mysql' );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert(
+				$table,
+				array(
+					'user_id'        => $vendor_id,
+					'type'           => 'order_earning',
+					'amount'         => $earnings,
+					'balance_after'  => $balances[ $vendor_id ],
+					'currency'       => $row->currency ? $row->currency : 'USD',
+					/* translators: %d: order ID */
+					'description'    => sprintf( __( 'Earning from order #%d', 'wp-sell-services' ), (int) $row->id ),
+					'reference_type' => 'order',
+					'reference_id'   => (int) $row->id,
+					'status'         => 'completed',
+					'created_at'     => $created_at,
+				),
+				array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
+			);
+		}
+
+		return $balances;
+	}
+
+	/**
+	 * Seed vendor withdrawals across pending/approved/completed/rejected states.
+	 *
+	 * @param array<int, array{user_id: int, blueprint: array<string, mixed>}> $vendors   Vendors.
+	 * @param array<int, float>                                                $available vendor_id => credited balance from the ledger.
+	 * @return int Number of withdrawals created.
+	 */
+	private function seed_withdrawals( array $vendors, array $available = array() ): int {
+		global $wpdb;
+
+		$table         = $wpdb->prefix . 'wpss_withdrawals';
+		$ledger_table  = $wpdb->prefix . 'wpss_wallet_transactions';
+		$statuses      = array_keys( EarningsService::get_withdrawal_statuses() );
+		$methods       = array( 'paypal', 'bank_transfer', 'paypal', 'stripe' );
+		$created       = 0;
 
 		foreach ( $vendors as $index => $vendor ) {
 			// Skip the newest vendor to keep the data realistic (no payouts yet).
@@ -1024,9 +1127,23 @@ class MarketplaceSeeder {
 				continue;
 			}
 
+			$vendor_id = (int) $vendor['user_id'];
+			$balance   = round( (float) ( $available[ $vendor_id ] ?? 0 ), 2 );
+
+			// A withdrawal must be funded by real ledger earnings, or the
+			// Earnings screen reserves against nothing and shows a phantom
+			// negative balance. Withdraw a realistic slice (up to ~60%) of what
+			// the vendor has actually earned; skip vendors with too little.
+			if ( $balance < 20 ) {
+				continue;
+			}
+			$amount = round( min( $balance * 0.6, $balance - 10 ), 2 );
+			if ( $amount < 10 ) {
+				continue;
+			}
+
 			$status     = $statuses[ $index % count( $statuses ) ];
 			$method     = $methods[ $index % count( $methods ) ];
-			$amount     = 150.0 + ( $index * 75 );
 			$created_at = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $index * 7 + 5 ) . ' days' ) );
 			$processed  = in_array( $status, EarningsService::get_processable_withdrawal_statuses(), true );
 
@@ -1034,7 +1151,7 @@ class MarketplaceSeeder {
 			$inserted = $wpdb->insert(
 				$table,
 				array(
-					'vendor_id'    => $vendor['user_id'],
+					'vendor_id'    => $vendor_id,
 					'amount'       => $amount,
 					'method'       => $method,
 					'details'      => wp_json_encode( array( 'account' => 'demo@' . sanitize_title( $vendor['blueprint']['name'] ) . '.test' ) ),
@@ -1046,9 +1163,41 @@ class MarketplaceSeeder {
 				)
 			);
 
-			if ( $inserted ) {
-				++$created;
+			if ( ! $inserted ) {
+				continue;
 			}
+			++$created;
+
+			// Only a COMPLETED withdrawal writes a ledger DEBIT — that is when
+			// the money has actually left, matching production's mark_paid().
+			// A pending or approved request is a RESERVATION: the Earnings
+			// screen subtracts it from available on its own (via the withdrawals
+			// table). Debiting the ledger for those too would double-count the
+			// amount — reserved once by the screen, again by the ledger — and
+			// drive available negative (a $81 approved withdrawal against a $54
+			// balance showed -$27 "available" with a phantom refund message).
+			if ( EarningsService::WITHDRAWAL_COMPLETED !== $status ) {
+				continue;
+			}
+
+			$balance = round( $balance - $amount, 2 );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->insert(
+				$ledger_table,
+				array(
+					'user_id'        => $vendor_id,
+					'type'           => 'withdrawal',
+					'amount'         => $amount,
+					'balance_after'  => $balance,
+					'currency'       => 'USD',
+					'description'    => __( 'Withdrawal to demo payout account', 'wp-sell-services' ),
+					'reference_type' => 'withdrawal',
+					'reference_id'   => (int) $wpdb->insert_id,
+					'status'         => 'completed',
+					'created_at'     => $processed ? gmdate( 'Y-m-d H:i:s', strtotime( $created_at . ' +2 days' ) ) : $created_at,
+				),
+				array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
+			);
 		}
 
 		return $created;

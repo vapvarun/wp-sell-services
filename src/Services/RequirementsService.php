@@ -85,9 +85,11 @@ class RequirementsService {
 	 * @return array
 	 */
 	public function get_service_fields( int $service_id ): array {
-		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
+		// Use the canonical getter so choice fields are normalized (both `choices`
+		// string and `options` array present) regardless of how they were saved.
+		$requirements = wpss_get_service_requirements( $service_id );
 
-		if ( empty( $requirements ) || ! is_array( $requirements ) ) {
+		if ( empty( $requirements ) ) {
 			return array();
 		}
 

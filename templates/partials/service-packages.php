@@ -25,6 +25,12 @@ $packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
 $wpss_vacation = ( isset( $wpss_vacation ) && is_array( $wpss_vacation ) ) ? $wpss_vacation : null;
 $wpss_on_vacation = null !== $wpss_vacation;
 
+// Service-level paused status (distinct from vendor vacation). Resolved in the
+// view; falls back to a status read so a directly-included template is safe.
+$wpss_paused = isset( $wpss_paused )
+	? (bool) $wpss_paused
+	: ( 'paused' === wpss_get_service_status( $service_id ) );
+
 // If no packages, show single price (omit description to avoid duplicating "About This Service").
 if ( empty( $packages ) ) {
 	$price         = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
@@ -89,7 +95,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 					<h3 class="wpss-package-name"><?php echo esc_html( $package['name'] ?? '' ); ?></h3>
 					<div class="wpss-package-price">
 						<?php
-						$price_html = wpss_format_price( (float) ( $package['price'] ?? 0 ) );
+						$price_html = wpss_catalog_price_html( (float) ( $package['price'] ?? 0 ), 'package' );
 
 						/**
 						 * Filters the package price HTML.
@@ -102,7 +108,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 						 */
 						$price_html = apply_filters( 'wpss_package_price_html', $price_html, $package, $service_id );
 
-						echo esc_html( $price_html );
+						echo wp_kses_post( $price_html );
 						?>
 					</div>
 				</div>
@@ -255,6 +261,43 @@ do_action( 'wpss_before_service_packages', $service_id );
 								}
 								?>
 							</p>
+						<?php elseif ( $wpss_paused ) : ?>
+							<?php
+							// Service paused by the vendor/admin: render the CTA visually
+							// disabled and non-interactive. Like the vacation branch, this
+							// button omits the `wpss-order-btn` class so the single-service
+							// JS click handler never matches it and the modal cannot open.
+							$wpss_paused_note_id = 'wpss-paused-cta-note-' . esc_attr( $index );
+							?>
+							<button type="button"
+									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									disabled
+									aria-disabled="true"
+									aria-describedby="<?php echo esc_attr( $wpss_paused_note_id ); ?>">
+								<?php echo esc_html( $button_text ); ?>
+								<span class="wpss-btn-price">(<?php echo esc_html( wpss_format_price( (float) ( $package['price'] ?? 0 ) ) ); ?>)</span>
+							</button>
+							<p id="<?php echo esc_attr( $wpss_paused_note_id ); ?>" class="wpss-package-vacation-note">
+								<?php esc_html_e( 'This service is paused and not accepting new orders right now.', 'wp-sell-services' ); ?>
+							</p>
+						<?php elseif ( (float) ( $package['price'] ?? 0 ) <= 0 ) : ?>
+							<?php
+							// A package with no price is not a real, purchasable package
+							// (e.g. an admin published a service before configuring it).
+							// Render the CTA disabled WITHOUT the `wpss-order-btn` class so
+							// the order modal can never open — nothing is buyable at $0.
+							$wpss_price_note_id = 'wpss-price-cta-note-' . esc_attr( $index );
+							?>
+							<button type="button"
+									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									disabled
+									aria-disabled="true"
+									aria-describedby="<?php echo esc_attr( $wpss_price_note_id ); ?>">
+								<?php esc_html_e( 'Not available', 'wp-sell-services' ); ?>
+							</button>
+							<p id="<?php echo esc_attr( $wpss_price_note_id ); ?>" class="wpss-package-vacation-note">
+								<?php esc_html_e( 'This package is not available for purchase yet.', 'wp-sell-services' ); ?>
+							</p>
 						<?php else : ?>
 							<button type="button"
 									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn"
@@ -284,11 +327,38 @@ do_action( 'wpss_before_service_packages', $service_id );
 		<?php endforeach; ?>
 	</div>
 
-	<?php if ( ! $is_own_service ) : ?>
-		<div class="wpss-contact-seller">
-			<a href="#" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
-				<?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?>
-			</a>
+	<?php
+	if ( ! $is_own_service ) :
+		// Per-service favourite toggle, in the order sidebar next to the CTA
+		// (moved here from the main column). Same classes/attributes as every
+		// other favourite toggle so frontend.js drives it and the state stays in
+		// sync with the archive card and the buyer dashboard.
+		$wpss_pkg_logged_in = is_user_logged_in();
+		$wpss_pkg_favorited = false;
+		if ( $wpss_pkg_logged_in ) {
+			$wpss_pkg_favs      = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
+			$wpss_pkg_favorited = is_array( $wpss_pkg_favs ) && in_array( (int) $service_id, array_map( 'intval', $wpss_pkg_favs ), true );
+		}
+		$wpss_pkg_fav_label = $wpss_pkg_favorited
+			? __( 'Saved to favorites', 'wp-sell-services' )
+			: __( 'Save to favorites', 'wp-sell-services' );
+		?>
+		<div class="wpss-package-actions">
+			<button
+				type="button"
+				class="wpss-btn wpss-btn-ghost wpss-btn-block wpss-fav-toggle wpss-fav-toggle--inline wpss-package-fav<?php echo $wpss_pkg_favorited ? ' is-favorited' : ''; ?>"
+				data-service-id="<?php echo esc_attr( (string) $service_id ); ?>"
+				data-logged-in="<?php echo $wpss_pkg_logged_in ? '1' : '0'; ?>"
+				aria-pressed="<?php echo $wpss_pkg_favorited ? 'true' : 'false'; ?>"
+			>
+				<i data-lucide="heart" class="wpss-icon wpss-icon--sm wpss-fav-toggle__icon" aria-hidden="true"></i>
+				<span class="wpss-fav-toggle__label"><?php echo esc_html( $wpss_pkg_fav_label ); ?></span>
+			</button>
+			<div class="wpss-contact-seller">
+				<a href="#" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+					<?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?>
+				</a>
+			</div>
 		</div>
 	<?php endif; ?>
 </div>

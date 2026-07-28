@@ -15,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Date | Version | Summary |
 |---|---|---|
+| 2026-07-23 | 1.5.1 | Manual payout rail complete (MONEY-FLOW-PLAN T1+T2). New money authority `EarningsService::mark_paid()` (manifest → `money_authorities.payout_terminal`): row-locked (`FOR UPDATE`), terminal-guarded, status flip + wallet-ledger debit in ONE transaction via extracted `insert_withdrawal_debit()` core; idempotent (twice = one debit). `process_withdrawal('completed')` routes through it; approve/reject row-locked; REST `PUT /withdrawals/{id}` delegates to the service (its duplicate inline UPDATE — no notification, no ledger guarantee — removed; replay returns 400 `wpss_already_finalised`). Withdrawals screen: Mark-paid on pending+approved rows, method filter, filtered empty state, `wpssConfirm` bulk (native `confirm()` removed), inline CSS/JS migrated to `admin.css`/`admin-withdrawals.js`, enqueue keyed off the real hook suffix (old hardcoded check never matched — dead code). T2: `export_csv()` admin-post CSV of the current filter (keyset-batched, bank/PayPal bulk-upload columns, **never mutates status** per MONEY-FLOW.md 2.4). Schema 1.5.1: `idx_status_created` + `idx_method` on `wpss_withdrawals`. Browser-verified end-to-end at 2003 rows + 390px; withdrawals #10-#12 / ledger #133-#135 kept as local reference artefacts. |
 | 2026-06-12 | 1.2.0 | Contract-audit sweep (Basecamp #9985173772/#9985173873/#9985174247/#9985174335/#9985175442/#9985174862/#9985173976/#9985174504/#9985175367/#9985175023): Connect fee + seller-level commission read real stores (money paths); `wpss_vendor_profile_saved` fired on both profile save paths (Pro PayPal email persists); all vendor surfaces (SEO schema/REST/SellerCard/templates) read the profile table via `wpss_get_vendor()` + new `wpss_get_vendor_last_delivery()`; gateway secrets masked via `wpss_render_secret_field` with keep-on-empty; review moderation enableable (`wpss_vendor[moderate_reviews]` + checkbox); wallet provider on one key + Payouts select; 14 tuning options got settings fields (new Dispute Settings section, page mappings); moderation/auto-approve filter bridges live. Contract audit: 0 errors (was 53). Baseline at `.contract-audit-baseline.json`. |
 | 2026-06-11 | 1.2.0 | Profile-table read migration (Basecamp #9985174504): every vendor read surface now resolves from the canonical `wpss_vendor_profiles` table via `wpss_get_vendor()` instead of dead legacy user-meta — Person schema (SchemaMarkup + ServiceSchemaPiece) emits jobTitle/aggregateRating, public vendor REST payload + vendor search return tagline/bio/country/social_links/is_verified/completed_orders from the table (field names unchanged), SellerCard block + vendor-card/content-service-card partials + single-request proposals render real values. New shared accessor `wpss_get_vendor_last_delivery()` (orders MAX(completed_at), tips excluded) backs all Last Delivery displays. Dead reads removed: `_wpss_highlights` block, `_wpss_max_quantity` meta (filter-only). `GET /vendors/{id}` guard fixed to `wpss_is_vendor()` (role-granted vendors 404ed). Contract-audit errors 34→18. |
 | 2026-06-11 | 1.2.0 | Second bug sweep (Basecamp #9983528280/#9983528063/#9983538201/#9983472211/#9983376083): vacation-mode persistence (self-healing `run_column_migrations()` now covers `vacation_mode`+`vacation_message`; REST profile saves return 500 `wpss_profile_update_failed` on DB failure instead of fake 200); email preferences now genuinely gate notification emails (`NotificationService` reads `wpss_email_preferences` via a new type→category map mirroring `EmailService::get_user_pref_category()`); email-prefs AJAX verifies persistence by read-back; `wpss_service_meta_fields` applied in the ACTIVE metabox pipeline with a form-aware kses allow-list (`wp_kses_post` was stripping Pro's recurring inputs); single-service sticky sidebar moved to native CSS sticky (lifted `contain:layout` on single-service via :has(), viewport-capped internal scroll, removed the fighting JS `initStickyPackages`). Browser-verified 1280px+390px. |
@@ -180,6 +181,46 @@ apply_filters('wpss_analytics_widgets', $widgets);
 | Buyer Request | `wpss_request` | Buyer job posts |
 
 ## Important Patterns
+
+### ONE FLOW, ONE IMPLEMENTATION (non-negotiable)
+
+The single biggest source of customer-facing bugs in this plugin has been the
+**same flow implemented in more than one place**, with the copies drifting apart.
+Real cases found and fixed in 1.2.2:
+
+| Flow | Copies | What customers hit |
+|---|---|---|
+| Stripe checkout | 2 (`assets/js/stripe.js` + inline JS in `StandaloneCheckoutProvider`) | **Checkout could not complete at all** — both bound to the same form, the inline one won the race and posted an unconfirmed PaymentIntent, so the card was never charged |
+| Commission fee math | 6 sites | Wallet ledger and Stripe Connect split paid **different numbers** |
+| Notifications surface | 3 (dashboard / standalone account / myaccount) | Two rendered nothing or had no mark-read |
+| Featured services | 2 meta keys (`_wpss_featured` vs `_wpss_is_featured`) | Shortcode returned **no** featured services |
+| Archive search params | 2 conventions (`wpss_search` vs `search`) | Search + category filters silently did nothing |
+
+**Rules — apply to every change:**
+
+1. **Before writing a flow, grep for an existing one.** If any code already does
+   this job (a service, repository, template partial, or JS module), extend or
+   call it. Never fork a second copy "just for this surface."
+2. **Money math lives in exactly one place.** All fee/earnings computation goes
+   through `CommissionService::compute_breakdown()`. Gateways are execution
+   adapters: they move the amount we already persisted, they never re-derive it.
+3. **A shared UI surface is a shared partial.** If two locations show the same
+   thing (notifications, service cards, order rows), extract
+   `templates/partials/*.php` and have both `require` it — see
+   `templates/partials/notifications-list.php`.
+4. **One writer, one reader, one key.** A meta/option/query-arg key must be
+   written and read by the same name everywhere. Grep for near-identical
+   siblings (`_wpss_featured` vs `_wpss_is_featured`) before inventing a key.
+5. **Only one JS handler per form/element.** If a gateway or component owns
+   submission, it declares `data-wpss-own-submit` and generic handlers stand
+   down — never let two listeners race on the same submit.
+6. **Editing `assets/js/*.js`? Rebuild the `.min`.** `Assets.php` rewrites asset
+   URLs to `.min` when present, so source edits are **inert** until rebuilt.
+   `npm run build:min` needs node_modules; otherwise:
+   `npx terser assets/js/FILE.js -c -m -o assets/js/FILE.min.js`
+
+Standing audit: `audit/DUPLICATE-FLOWS-money.md` and `audit/DUPLICATE-FLOWS-ui.md`
+inventory known duplications. Re-run that sweep before any major release.
 
 ### Adding a New Integration
 1. Create class in `src/Integrations/{Platform}/`

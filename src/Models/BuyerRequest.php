@@ -222,21 +222,16 @@ class BuyerRequest {
 	 */
 	public function get_budget_display(): string {
 		if ( $this->budget_min && $this->budget_max ) {
-			if ( function_exists( 'wpss_format_currency' ) ) {
-				return sprintf(
-					'%s - %s',
-					wpss_format_currency( $this->budget_min ),
-					wpss_format_currency( $this->budget_max )
-				);
-			}
-			return sprintf( '$%s - $%s', number_format( $this->budget_min, 2 ), number_format( $this->budget_max, 2 ) );
+			return sprintf(
+				'%s - %s',
+				wpss_format_currency( $this->budget_min ),
+				wpss_format_currency( $this->budget_max )
+			);
 		}
 
 		if ( $this->budget_max ) {
-			if ( function_exists( 'wpss_format_currency' ) ) {
-				return sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_currency( $this->budget_max ) );
-			}
-			return sprintf( __( 'Up to $%s', 'wp-sell-services' ), number_format( $this->budget_max, 2 ) );
+			/* translators: %s: maximum budget amount. */
+			return sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_currency( $this->budget_max ) );
 		}
 
 		return __( 'Open budget', 'wp-sell-services' );

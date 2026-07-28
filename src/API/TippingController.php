@@ -188,17 +188,27 @@ class TippingController extends RestController {
 		$vendor_id    = (int) $request->get_param( 'vendor_id' );
 		$pagination   = $this->get_pagination_args( $request );
 		$wallet_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		$orders_table = $wpdb->prefix . 'wpss_orders';
 
+		// Tip wallet rows are written with type = 'tip' (reference_type = 'order'
+		// points at the tip sub-order). Filtering on reference_type = 'tip'
+		// matched nothing, so the tips list/total/badge were always empty.
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wallet_table} WHERE user_id = %d AND reference_type = 'tip'",
+				"SELECT COUNT(*) FROM {$wallet_table} WHERE user_id = %d AND type = 'tip'",
 				$vendor_id
 			)
 		);
 
+		// The tipper + message live on the tip sub-order (reference_id), not on
+		// the wallet row (which has no meta column). Join it for the real data.
 		$tips = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wallet_table} WHERE user_id = %d AND reference_type = 'tip' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT w.amount, w.reference_id, w.created_at, o.customer_id AS tipper_id, o.vendor_notes AS tip_message
+				FROM {$wallet_table} w
+				LEFT JOIN {$orders_table} o ON o.id = w.reference_id
+				WHERE w.user_id = %d AND w.type = 'tip'
+				ORDER BY w.created_at DESC LIMIT %d OFFSET %d",
 				$vendor_id,
 				$pagination['per_page'],
 				$pagination['offset']
@@ -208,8 +218,7 @@ class TippingController extends RestController {
 
 		$items = array();
 		foreach ( $tips ?: array() as $tip ) {
-			$meta   = json_decode( $tip['meta'] ?? '{}', true );
-			$tipper = ! empty( $meta['tipper_id'] ) ? get_user_by( 'id', $meta['tipper_id'] ) : null;
+			$tipper = ! empty( $tip['tipper_id'] ) ? get_user_by( 'id', (int) $tip['tipper_id'] ) : null;
 
 			$items[] = array(
 				'amount'     => (float) $tip['amount'],
@@ -221,7 +230,7 @@ class TippingController extends RestController {
 						'avatar' => get_avatar_url( $tipper->ID, array( 'size' => 48 ) ),
 					)
 					: null,
-				'message'    => $meta['message'] ?? '',
+				'message'    => (string) ( $tip['tip_message'] ?? '' ),
 				'created_at' => $tip['created_at'],
 			);
 		}
@@ -243,14 +252,14 @@ class TippingController extends RestController {
 
 		$total = (float) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wallet_table} WHERE user_id = %d AND reference_type = 'tip'",
+				"SELECT COALESCE(SUM(amount), 0) FROM {$wallet_table} WHERE user_id = %d AND type = 'tip'",
 				$vendor_id
 			)
 		);
 
 		$count = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wallet_table} WHERE user_id = %d AND reference_type = 'tip'",
+				"SELECT COUNT(*) FROM {$wallet_table} WHERE user_id = %d AND type = 'tip'",
 				$vendor_id
 			)
 		);

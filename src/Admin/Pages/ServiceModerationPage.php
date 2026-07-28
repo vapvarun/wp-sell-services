@@ -25,6 +25,13 @@ defined( 'ABSPATH' ) || exit;
 class ServiceModerationPage {
 
 	/**
+	 * Admin page hook suffix returned by add_submenu_page().
+	 *
+	 * @var string
+	 */
+	private string $hook_suffix = '';
+
+	/**
 	 * Moderation statuses.
 	 */
 	public const STATUS_PENDING  = 'pending';
@@ -124,6 +131,8 @@ class ServiceModerationPage {
 			array( $this, 'render_page' )
 		);
 
+		$this->hook_suffix = (string) $hook;
+
 		// Add screen options.
 		add_action( "load-{$hook}", array( $this, 'add_screen_options' ) );
 
@@ -206,31 +215,47 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'wp-sell-services_page_wpss-moderation' !== $hook ) {
+		// Match the STORED hook suffix. The old check compared against
+		// 'wp-sell-services_page_wpss-moderation', which the real suffix
+		// ('sell-services_page_…', derived from the parent MENU TITLE) never
+		// equals — so this entire method was dead code. That is precisely why
+		// the page ended up printing its config and 120 lines of JS inline: the
+		// enqueue it was meant to rely on never fired.
+		if ( '' === $this->hook_suffix || $this->hook_suffix !== $hook ) {
 			return;
 		}
 
 		wp_enqueue_style( 'wpss-admin' );
 		wp_enqueue_script( 'wpss-admin' );
 
-		wp_add_inline_script(
-			'wpss-admin',
-			'window.wpssModeration = ' . wp_json_encode(
-				array(
-					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'wpss_moderation' ),
-					'i18n'    => array(
-						'confirmApprove' => __( 'Approve this service?', 'wp-sell-services' ),
-						'confirmReject'  => __( 'Reject this service?', 'wp-sell-services' ),
-						'rejectReason'   => __( 'Please provide a reason for rejection:', 'wp-sell-services' ),
-						'loading'        => __( 'Processing...', 'wp-sell-services' ),
-						'approved'       => __( 'Service approved!', 'wp-sell-services' ),
-						'rejected'       => __( 'Service rejected.', 'wp-sell-services' ),
-						'error'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-						'selectServices' => __( 'Please select at least one service.', 'wp-sell-services' ),
-						'confirmBulk'    => __( 'Apply this action to selected services?', 'wp-sell-services' ),
-					),
-				)
+		wp_enqueue_script(
+			'wpss-admin-moderation',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-moderation.js',
+			array( 'jquery', 'wpss-admin' ),
+			\WPSS_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wpss-admin-moderation', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+
+		// localize, NOT add_inline_script: this prints before the handle it is
+		// attached to, so the config exists by the time the file runs.
+		wp_localize_script(
+			'wpss-admin-moderation',
+			'wpssModeration',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wpss_moderation' ),
+				'i18n'    => array(
+					'confirmApprove' => __( 'Approve this service?', 'wp-sell-services' ),
+					'confirmReject'  => __( 'Reject this service?', 'wp-sell-services' ),
+					'rejectReason'   => __( 'Please provide a reason for rejection:', 'wp-sell-services' ),
+					'loading'        => __( 'Processing...', 'wp-sell-services' ),
+					'approved'       => __( 'Service approved!', 'wp-sell-services' ),
+					'rejected'       => __( 'Service rejected.', 'wp-sell-services' ),
+					'error'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'selectServices' => __( 'Please select at least one service.', 'wp-sell-services' ),
+					'confirmBulk'    => __( 'Apply this action to selected services?', 'wp-sell-services' ),
+				),
 			)
 		);
 	}
@@ -477,173 +502,7 @@ class ServiceModerationPage {
 			</form>
 		</div>
 
-		<style>
-			.wpss-moderation-table .column-cb { width: 30px; }
-			.wpss-moderation-table .column-thumbnail { width: 60px; }
-			.wpss-moderation-table .column-title { width: 25%; }
-			.wpss-moderation-table .column-vendor { width: 12%; }
-			.wpss-moderation-table .column-category { width: 12%; }
-			.wpss-moderation-table .column-price { width: 8%; }
-			.wpss-moderation-table .column-date { width: 10%; }
-			.wpss-moderation-table .column-status { width: 10%; }
-			.wpss-moderation-table .column-actions { width: 15%; }
-			.wpss-moderation-table .service-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
-			.wpss-moderation-table .wpss-status-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-			.wpss-moderation-table .wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-			.wpss-moderation-table .wpss-status-approved { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
-			.wpss-moderation-table .wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
-			.wpss-moderation-table .row-actions { padding-top: 5px; }
-			.wpss-moderation-table .row-actions a { margin-right: 10px; }
-			.wpss-moderation-table .approve-action { color: var(--wpss-success, #46b450); }
-			.wpss-moderation-table .reject-action { color: var(--wpss-danger, #dc3232); }
-			.wpss-rejection-reason { color: var(--wpss-text-muted, #666); font-size: 12px; font-style: italic; margin-top: 5px; }
-		</style>
 
-		<script>
-		// Define wpssModeration inline (wp_add_inline_script runs in footer, after this script).
-		window.wpssModeration = window.wpssModeration || 
-		<?php
-		echo wp_json_encode(
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wpss_moderation' ),
-				'i18n'    => array(
-					'confirmApprove' => __( 'Approve this service?', 'wp-sell-services' ),
-					'confirmReject'  => __( 'Reject this service?', 'wp-sell-services' ),
-					'rejectReason'   => __( 'Please provide a reason for rejection:', 'wp-sell-services' ),
-					'loading'        => __( 'Processing...', 'wp-sell-services' ),
-					'approved'       => __( 'Service approved!', 'wp-sell-services' ),
-					'rejected'       => __( 'Service rejected.', 'wp-sell-services' ),
-					'error'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'selectServices' => __( 'Please select at least one service.', 'wp-sell-services' ),
-					'confirmBulk'    => __( 'Apply this action to selected services?', 'wp-sell-services' ),
-				),
-			)
-		);
-		?>
-		;
-		function wpssAdminNotice(msg, type) {
-			type = type || 'error';
-			var cls = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = $('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-			$('.wrap h1, .wrap h2').first().after($notice);
-			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-		}
-
-		jQuery(function($) {
-			var wpssModeration = window.wpssModeration;
-
-			// Approve single service.
-			$(document).on('click', '.wpss-approve-service', function(e) {
-				e.preventDefault();
-				var $btn = $(this);
-				var serviceId = $btn.data('service');
-
-				if (!confirm(wpssModeration.i18n.confirmApprove)) {
-					return;
-				}
-
-				$btn.text(wpssModeration.i18n.loading);
-
-				$.post(wpssModeration.ajaxUrl, {
-					action: 'wpss_approve_service',
-					service_id: serviceId,
-					nonce: wpssModeration.nonce
-				}, function(response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
-						$btn.text('Approve');
-					}
-				}).fail(function() {
-					wpssAdminNotice(wpssModeration.i18n.error, 'error');
-					$btn.text('Approve');
-				});
-			});
-
-			// Reject single service.
-			$(document).on('click', '.wpss-reject-service', function(e) {
-				e.preventDefault();
-				var $btn = $(this);
-				var serviceId = $btn.data('service');
-
-				var reason = prompt(wpssModeration.i18n.rejectReason);
-				if (reason === null) {
-					return;
-				}
-
-				$btn.text(wpssModeration.i18n.loading);
-
-				$.post(wpssModeration.ajaxUrl, {
-					action: 'wpss_reject_service',
-					service_id: serviceId,
-					reason: reason,
-					nonce: wpssModeration.nonce
-				}, function(response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
-						$btn.text('Reject');
-					}
-				}).fail(function() {
-					wpssAdminNotice(wpssModeration.i18n.error, 'error');
-					$btn.text('Reject');
-				});
-			});
-
-			// Bulk actions.
-			$('#doaction').on('click', function() {
-				var action = $('#bulk-action-selector').val();
-				if (!action) {
-					return;
-				}
-
-				var serviceIds = [];
-				$('input[name="service_ids[]"]:checked').each(function() {
-					serviceIds.push($(this).val());
-				});
-
-				if (serviceIds.length === 0) {
-					wpssAdminNotice(wpssModeration.i18n.selectServices, 'error');
-					return;
-				}
-
-				if (!confirm(wpssModeration.i18n.confirmBulk)) {
-					return;
-				}
-
-				var reason = '';
-				if (action === 'reject') {
-					reason = prompt(wpssModeration.i18n.rejectReason);
-					if (reason === null) {
-						return;
-					}
-				}
-
-				$.post(wpssModeration.ajaxUrl, {
-					action: 'wpss_bulk_moderate_services',
-					bulk_action: action,
-					service_ids: serviceIds,
-					reason: reason,
-					nonce: wpssModeration.nonce
-				}, function(response) {
-					if (response.success) {
-						location.reload();
-					} else {
-						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
-					}
-				});
-			});
-
-			// Select all checkboxes.
-			$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
-				$('input[name="service_ids[]"]').prop('checked', $(this).prop('checked'));
-			});
-		});
-		</script>
 		<?php
 	}
 
@@ -719,7 +578,7 @@ class ServiceModerationPage {
 				<?php echo esc_html( get_the_date( '', $service ) ); ?>
 			</td>
 			<td class="column-status">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>
 				<?php if ( self::STATUS_REJECTED === $status && $rejection_reason ) : ?>
@@ -923,6 +782,17 @@ class ServiceModerationPage {
 				if ( $reason ) {
 					update_post_meta( $service_id, self::REJECTION_REASON_KEY, $reason );
 				}
+				// Take the service OFF the marketplace, mirroring the single-reject
+				// handler. Updating only the moderation meta left a published
+				// service live (and hid the vendor's "Resubmit for review" CTA).
+				if ( 'draft' !== get_post_status( $service_id ) ) {
+					wp_update_post(
+						array(
+							'ID'          => $service_id,
+							'post_status' => 'draft',
+						)
+					);
+				}
 				do_action( 'wpss_service_rejected', $service_id, $reason );
 				$this->notify_vendor( $service_id, 'rejected', $reason );
 			}
@@ -1110,21 +980,10 @@ class ServiceModerationPage {
 		$label = $status_labels[ $status ] ?? ucfirst( $status );
 
 		printf(
-			'<span class="wpss-status-badge wpss-status-%s" style="display:inline-block;padding:3px 8px;border-radius:3px;font-size:11px;font-weight:600;">%s</span>',
-			esc_attr( $status ),
+			'<span class="%s">%s</span>',
+			esc_attr( wpss_status_class( $status ) ),
 			esc_html( $label )
 		);
-
-		// Add inline styles for status badges.
-		static $styles_added = false;
-		if ( ! $styles_added ) {
-			echo '<style>
-				.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-				.wpss-status-approved { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
-				.wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
-			</style>';
-			$styles_added = true;
-		}
 	}
 
 	/**
@@ -1176,9 +1035,6 @@ class ServiceModerationPage {
 			return;
 		}
 		?>
-		<style>
-			.inline-edit-row .inline-edit-status { display: none !important; }
-		</style>
 		<?php
 	}
 
@@ -1344,9 +1200,6 @@ class ServiceModerationPage {
 				<?php endif; ?>
 			</p>
 		</div>
-		<style>
-			.wpss-moderation-metabox select { margin-top: 5px; }
-		</style>
 		<?php
 	}
 

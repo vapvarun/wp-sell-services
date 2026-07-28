@@ -32,6 +32,7 @@ echo "\n";
 printf( esc_html__( 'Email: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->user_email : '' ) );
 echo "\n";
 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is a safe function.
+/* translators: %s: requested withdrawal amount. */
 printf( esc_html__( 'Amount Requested: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $amount ) ) );
 echo "\n----------\n\n";
 

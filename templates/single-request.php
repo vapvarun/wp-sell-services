@@ -85,7 +85,13 @@ if ( ! isset( $proposal_service ) ) {
 if ( $is_buyer ) {
 	$proposals = $proposal_service->get_by_request( $request_id );
 }
-$proposal_count = $is_buyer ? count( $proposals ) : count( $proposal_service->get_by_request( $request_id, array( 'status' => 'pending' ) ) );
+// "Proposals" means the same number on every surface. The archive card counts
+// every proposal on the request, and the buyer branch below counts every
+// proposal too; counting only 'pending' for vendors made the same request read
+// "2 proposals" in the listing and "1" on its own page. A vendor sizing up the
+// competition also needs to know a proposal was already accepted, so the honest
+// figure is the total.
+$proposal_count = $is_buyer ? count( $proposals ) : count( $proposal_service->get_by_request( $request_id ) );
 
 // Format budget display.
 if ( 'range' === $budget_type && $budget_min && $budget_max ) {
@@ -144,7 +150,21 @@ do_action( 'wpss_before_single_request', $request_id );
 							<?php echo esc_html( ucfirst( str_replace( '_', ' ', $request_status ) ) ); ?>
 						</div>
 
-						<h1 class="wpss-request-title"><?php the_title(); ?></h1>
+						<?php
+						/*
+						 * Raw title, NOT the_title(). ShellHeader blanks the
+						 * queried object's `the_title` inside the main loop so a
+						 * theme's duplicate entry-title disappears on plugin
+						 * surfaces — and this heading sits inside that same loop,
+						 * so calling the_title() here made the plugin blank its
+						 * OWN <h1>: the request page rendered with no visible
+						 * title and an empty heading for SEO/screen readers.
+						 * SingleServiceView::render_title() already dodges this
+						 * by printing the model value; 'raw' context is the same
+						 * idea for a post field.
+						 */
+						?>
+						<h1 class="wpss-request-title"><?php echo esc_html( get_post_field( 'post_title', $request_id, 'raw' ) ); ?></h1>
 
 						<div class="wpss-request-meta-bar">
 							<?php if ( ! empty( $categories ) ) : ?>
@@ -272,7 +292,7 @@ do_action( 'wpss_before_single_request', $request_id );
 														<span class="wpss-vendor-orders">
 															<?php
 															printf(
-																/* translators: %d: number of completed orders */
+																/* translators: %d: number of orders */
 																esc_html( _n( '%d order', '%d orders', $vendor_orders, 'wp-sell-services' ) ),
 																esc_html( $vendor_orders )
 															);
@@ -334,7 +354,7 @@ do_action( 'wpss_before_single_request', $request_id );
 																	<?php
 																	$row_days = (int) ( $ms['days'] ?? 0 );
 																	printf(
-																		/* translators: %d days */
+																		/* translators: %d: number of days */
 																		esc_html( _n( '%d day', '%d days', $row_days, 'wp-sell-services' ) ),
 																		(int) $row_days
 																	);
@@ -555,7 +575,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								<p class="wpss-form-help">
 									<?php
 									printf(
-										/* translators: %s: budget range */
+										/* translators: %s: budget amount or range */
 										esc_html__( 'Budget: %s', 'wp-sell-services' ),
 										esc_html( $budget_display )
 									);

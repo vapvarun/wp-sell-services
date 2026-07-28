@@ -18,6 +18,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use WP_User_Query;
+use WPSellServices\Models\Review;
 
 /**
  * REST API controller for vendors.
@@ -230,14 +231,30 @@ class VendorsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
+		global $wpdb;
 		$pagination = $this->get_pagination_args( $request );
 
+		// Identify vendors by EITHER the wpss_vendor role (matched via the
+		// capabilities meta, the same way WP_User_Query implements role queries)
+		// OR the legacy _wpss_is_vendor meta. Role-based and demo-seeded vendors
+		// never carry the legacy meta, so a meta-only clause hid them from the
+		// directory even though they show in the admin vendor list. Stays a
+		// SQL-paginated meta_query (big-site safe); AND-composes with the skill
+		// filter and the rating/orders sort JOIN below.
 		$args = array(
 			'meta_query' => array(
 				'relation'      => 'AND',
 				'vendor_clause' => array(
-					'key'   => '_wpss_is_vendor',
-					'value' => '1',
+					'relation' => 'OR',
+					array(
+						'key'     => $wpdb->prefix . 'capabilities',
+						'value'   => '"' . \WPSellServices\Services\VendorService::ROLE . '"',
+						'compare' => 'LIKE',
+					),
+					array(
+						'key'   => '_wpss_is_vendor',
+						'value' => '1',
+					),
 				),
 			),
 			'number'     => $pagination['per_page'],
@@ -266,14 +283,26 @@ class VendorsController extends RestController {
 		// Order by rating or orders (uses custom query modifier to LEFT JOIN).
 		$orderby = $request->get_param( 'orderby' );
 		if ( 'rating' === $orderby || 'orders' === $orderby ) {
-			$meta_key = 'rating' === $orderby ? '_wpss_rating_average' : '_wpss_completed_orders';
 			add_action(
 				'pre_user_query',
-				function ( $query ) use ( $meta_key ) {
+				function ( $query ) use ( $orderby ) {
 					global $wpdb;
+
+					if ( 'orders' === $orderby ) {
+						// completed_orders lives in the vendor profiles table. The
+						// _wpss_completed_orders user meta was never written, so the
+						// old meta join sorted every vendor as 0 (BC #10110742943).
+						$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
+						$query->query_from   .= " LEFT JOIN {$profiles} AS sort_prof ON ( {$wpdb->users}.ID = sort_prof.user_id )";
+						$query->query_orderby = 'ORDER BY COALESCE(sort_prof.completed_orders, 0) DESC';
+						return;
+					}
+
+					// Rating still comes from the _wpss_rating_average user meta,
+					// which does have a writer.
 					$query->query_from   .= $wpdb->prepare(
 						" LEFT JOIN {$wpdb->usermeta} AS sort_meta ON ( {$wpdb->users}.ID = sort_meta.user_id AND sort_meta.meta_key = %s )",
-						$meta_key
+						'_wpss_rating_average'
 					);
 					$query->query_orderby = 'ORDER BY COALESCE(sort_meta.meta_value+0, 0) DESC';
 				}
@@ -341,7 +370,9 @@ class VendorsController extends RestController {
 		$user_id = get_current_user_id();
 		$vendor  = get_userdata( $user_id );
 
-		if ( ! get_user_meta( $user_id, '_wpss_is_vendor', true ) ) {
+		// Canonical vendor check (matches PUT /vendors/me) so role-based / demo
+		// vendors without the legacy _wpss_is_vendor meta are not 404'd.
+		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
@@ -484,7 +515,7 @@ class VendorsController extends RestController {
 	public function update_vacation_mode( $request ) {
 		$user_id = get_current_user_id();
 
-		if ( ! get_user_meta( $user_id, '_wpss_is_vendor', true ) ) {
+		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
@@ -685,14 +716,13 @@ class VendorsController extends RestController {
 
 		$data = array();
 		foreach ( $reviews as $review ) {
-			$customer = get_userdata( (int) $review->customer_id );
-			$service  = get_post( (int) $review->service_id );
+			$service = get_post( (int) $review->service_id );
 
 			$data[] = array(
 				'id'              => (int) $review->id,
 				'service_id'      => (int) $review->service_id,
 				'service_title'   => $service ? $service->post_title : '',
-				'customer_name'   => $customer ? $customer->display_name : '',
+				'customer_name'   => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
 				'customer_avatar' => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
 				'rating'          => (int) $review->rating,
 				'review'          => $review->review,
@@ -838,7 +868,10 @@ class VendorsController extends RestController {
 		// Add private data for self.
 		if ( $is_self ) {
 			$data['email']  = $vendor->user_email;
-			$data['status'] = get_user_meta( $vendor_id, '_wpss_vendor_status', true ) ?: 'approved';
+			// Canonical profile status. The old _wpss_vendor_status user meta was
+			// never written, so this always fell through to 'approved' and the
+			// endpoint reported every vendor as approved regardless of reality.
+			$data['status'] = wpss_get_vendor_status( $vendor_id ) ?: 'active';
 		}
 
 		/**

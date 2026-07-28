@@ -63,6 +63,28 @@ class AuditLogService {
 	}
 
 	/**
+	 * Bind the retention-cleanup handler to its scheduled cron event.
+	 *
+	 * Called from the plugin bootstrap (mirrors TippingService/MilestoneService/
+	 * ExtensionOrderService). Activator::schedule_cron_events() schedules
+	 * {@see self::CLEANUP_HOOK}; without this binding the event fired with no
+	 * handler, so `wpss_audit_log_retention_days` never actually pruned anything
+	 * and the audit table grew unbounded.
+	 *
+	 * @since 1.2.2
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		add_action(
+			self::CLEANUP_HOOK,
+			function (): void {
+				$this->cleanup_expired();
+			}
+		);
+	}
+
+	/**
 	 * Record an audit event.
 	 *
 	 * Captures `actor_id` / `actor_role` from the current WordPress user and

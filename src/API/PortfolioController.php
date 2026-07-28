@@ -401,7 +401,10 @@ class PortfolioController extends RestController {
 			return $perm_check;
 		}
 
-		if ( ! get_user_meta( get_current_user_id(), '_wpss_is_vendor', true ) ) {
+		// Canonical vendor check (capability/role + legacy meta) so role-based
+		// and demo-seeded vendors — who never carry the _wpss_is_vendor meta —
+		// are not wrongly 403'd.
+		if ( ! wpss_is_vendor() ) {
 			return new WP_Error( 'rest_forbidden', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 

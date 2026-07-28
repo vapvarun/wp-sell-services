@@ -36,7 +36,9 @@ $rating_avg       = (float) get_user_meta( $vendor_id, '_wpss_rating_average', t
 $rating_count     = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true );
 $completed_orders = $vendor_profile ? $vendor_profile->orders_completed : 0;
 $response_time    = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
-$country          = $vendor_profile ? $vendor_profile->country : '';
+// Through the shared resolver so a code renders as a name and legacy
+// free-text values still display. Same call on every country surface.
+$country          = $vendor_profile ? wpss_get_country_name( (string) $vendor_profile->country ) : '';
 $member_since     = get_user_meta( $vendor_id, '_wpss_vendor_since', true );
 $member_since     = $member_since ? $member_since : $vendor->user_registered;
 $is_verified      = $vendor_profile && $vendor_profile->is_verified;

@@ -260,7 +260,7 @@ do_action( 'wpss_before_service_card', $service_id );
 			?>
 
 			<span class="wpss-service-card__price-label"><?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?></span>
-			<span class="wpss-service-card__price"><?php echo esc_html( wpss_format_price( $starting_price ) ); ?></span>
+			<span class="wpss-service-card__price"><?php echo wp_kses_post( wpss_catalog_price_html( $starting_price, 'card' ) ); ?></span>
 		</div>
 	</a>
 

@@ -385,7 +385,8 @@ class SingleServiceView {
 	 * @return void
 	 */
 	private function render_requirements( Service $service ): void {
-		$requirements = get_post_meta( $service->id, '_wpss_requirements', true );
+		// Canonical getter → choice fields normalized (options array + choices string).
+		$requirements = wpss_get_service_requirements( $service->id );
 
 		if ( empty( $requirements ) ) {
 			return;
@@ -398,18 +399,14 @@ class SingleServiceView {
 			</p>
 			<div class="wpss-requirements-content">
 				<?php
-				if ( is_array( $requirements ) ) {
-					echo '<ul class="wpss-requirements-list">';
-					foreach ( $requirements as $req ) {
-						$text = is_array( $req ) ? ( $req['question'] ?? $req['text'] ?? '' ) : $req;
-						if ( ! empty( $text ) ) {
-							echo '<li>' . esc_html( $text ) . '</li>';
-						}
+				echo '<ul class="wpss-requirements-list">';
+				foreach ( $requirements as $req ) {
+					$text = is_array( $req ) ? ( $req['question'] ?? $req['text'] ?? '' ) : $req;
+					if ( ! empty( $text ) ) {
+						echo '<li>' . esc_html( $text ) . '</li>';
 					}
-					echo '</ul>';
-				} else {
-					echo wp_kses_post( wpautop( $requirements ) );
 				}
+				echo '</ul>';
 				?>
 			</div>
 		</div>
@@ -437,7 +434,10 @@ class SingleServiceView {
 		$bio              = $profile->bio ?? get_user_meta( $vendor_id, 'description', true );
 		$languages        = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : get_user_meta( $vendor_id, '_wpss_vendor_languages', true );
 		$skills           = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : get_user_meta( $vendor_id, '_wpss_vendor_skills', true );
-		$completed_orders = (int) ( $profile->completed_orders ?? get_user_meta( $vendor_id, '_wpss_completed_orders', true ) );
+		// completed_orders lives in the wpss_vendor_profiles table; the
+		// _wpss_completed_orders user meta was never written, so there is no
+		// meta fallback to read.
+		$completed_orders = (int) ( $profile->completed_orders ?? 0 );
 		?>
 		<div class="wpss-about-vendor">
 			<h2><?php esc_html_e( 'About The Seller', 'wp-sell-services' ); ?></h2>
@@ -466,10 +466,15 @@ class SingleServiceView {
 							$rating_count = (int) ( $profile->total_reviews ?? get_user_meta( $vendor_id, '_wpss_rating_count', true ) );
 							if ( $rating_count > 0 ) :
 								?>
-								<span class="wpss-quick-stat">
+								<?php // This is the SELLER's overall rating (across all their
+								// services). Label it so it doesn't read as this one
+								// service's rating and contradict the service-scoped
+								// "No reviews yet" in the Reviews section below. ?>
+								<span class="wpss-quick-stat" title="<?php esc_attr_e( 'Overall seller rating across all their services', 'wp-sell-services' ); ?>">
 									<span class="wpss-star filled">★</span>
 									<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
 									(<?php echo esc_html( $rating_count ); ?>)
+									<span class="wpss-quick-stat__note"><?php esc_html_e( 'seller rating', 'wp-sell-services' ); ?></span>
 								</span>
 							<?php endif; ?>
 
@@ -705,6 +710,7 @@ class SingleServiceView {
 			array(
 				'service'       => $service,
 				'wpss_vacation' => $this->get_vendor_vacation( $service ),
+				'wpss_paused'   => 'paused' === wpss_get_service_status( $service->id ),
 			)
 		);
 	}
@@ -851,6 +857,12 @@ class SingleServiceView {
 		// Seller on vacation: don't render the order modal at all, so there is no
 		// path to checkout even if a client tried to open it programmatically.
 		if ( null !== $this->get_vendor_vacation( $service ) ) {
+			return;
+		}
+
+		// Paused service: same treatment — no modal, so there is no path to
+		// checkout for a service the vendor has paused.
+		if ( 'paused' === wpss_get_service_status( $service->id ) ) {
 			return;
 		}
 		?>
@@ -1020,8 +1032,8 @@ class SingleServiceView {
 							<p>
 								<?php
 								printf(
-									/* translators: 1: login URL, 2: register URL */
 									wp_kses(
+										/* translators: 1: login URL, 2: register URL */
 										__( 'Please <a href="%1$s">log in</a> or <a href="%2$s">register</a> to contact this seller.', 'wp-sell-services' ),
 										array( 'a' => array( 'href' => array() ) )
 									),

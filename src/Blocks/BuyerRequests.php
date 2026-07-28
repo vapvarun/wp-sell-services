@@ -147,9 +147,15 @@ class BuyerRequests extends AbstractBlock {
 			'orderby'        => $attributes['orderBy'],
 			'order'          => $attributes['order'],
 			'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+			// BuyerRequestService writes `_wpss_status` (and reads it back for
+			// listings). `_wpss_request_status` is written by nothing except a CLI
+			// test helper, so this required clause matched nothing and the block
+			// rendered "No requests" on every real site while the shortcode — which
+			// goes through the service — listed them fine. Same class of bug as the
+			// `_wpss_featured` / `_wpss_is_featured` drift.
 			'meta_query'     => [
 				[
-					'key'     => '_wpss_request_status',
+					'key'     => '_wpss_status',
 					'value'   => 'open',
 					'compare' => '=',
 				],
@@ -271,7 +277,7 @@ class BuyerRequests extends AbstractBlock {
 								);
 							} elseif ( $budget_max ) {
 								printf(
-									/* translators: %s: budget amount */
+									/* translators: %s: maximum budget amount. */
 									esc_html__( 'Up to %s', 'wp-sell-services' ),
 									esc_html( wpss_format_currency( (float) $budget_max ) )
 								);
@@ -303,7 +309,7 @@ class BuyerRequests extends AbstractBlock {
 					<?php endif; ?>
 				</div>
 
-				<a href="<?php the_permalink(); ?>" class="wpss-button wpss-button-outline">
+				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline">
 					<?php esc_html_e( 'Send Offer', 'wp-sell-services' ); ?>
 				</a>
 			</div>

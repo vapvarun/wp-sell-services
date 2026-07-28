@@ -431,16 +431,16 @@ class VendorProfile {
 		}
 
 		if ( $this->response_time < 24 ) {
-			/* translators: %d: number of hours */
 			return sprintf(
+				/* translators: %d: number of hours */
 				_n( 'Within %d hour', 'Within %d hours', (int) $this->response_time, 'wp-sell-services' ),
 				(int) $this->response_time
 			);
 		}
 
 		$days = (int) ( $this->response_time / 24 );
-		/* translators: %d: number of days */
 		return sprintf(
+			/* translators: %d: number of days */
 			_n( 'Within %d day', 'Within %d days', $days, 'wp-sell-services' ),
 			$days
 		);

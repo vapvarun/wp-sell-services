@@ -218,45 +218,21 @@ class EarningsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_summary( WP_REST_Request $request ): WP_REST_Response {
-		global $wpdb;
-
-		$vendor_id    = get_current_user_id();
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-		$wallet_table = $wpdb->prefix . 'wpss_wallet_transactions';
-		$wd_table     = $wpdb->prefix . 'wpss_withdrawals';
-
-		// Total earned from completed orders.
-		$total_earned = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(vendor_earnings), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
-				$vendor_id
-			)
-		);
-
-		// Total withdrawn.
-		$total_withdrawn = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status IN ('approved', 'completed')",
-				$vendor_id
-			)
-		);
-
-		// Pending withdrawal.
-		$pending_withdrawal = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status = 'pending'",
-				$vendor_id
-			)
-		);
-
-		$available = $total_earned - $total_withdrawn - $pending_withdrawal;
+		// Delegate to EarningsService — it is the ONE place the balance is
+		// computed. This endpoint used to run its own three queries against
+		// wpss_orders and wpss_withdrawals, and disagreed with the dashboard on
+		// two counts: it ignored the clearance window entirely (reporting money
+		// as withdrawable days before it was), and it counted 'approved'
+		// withdrawals as already withdrawn rather than as reserved.
+		$summary = ( new \WPSellServices\Services\EarningsService() )->get_summary( get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
-				'total_earned'       => round( $total_earned, 2 ),
-				'total_withdrawn'    => round( $total_withdrawn, 2 ),
-				'pending_withdrawal' => round( $pending_withdrawal, 2 ),
-				'available_balance'  => round( max( 0, $available ), 2 ),
+				'total_earned'       => round( $summary['total_earned'], 2 ),
+				'total_withdrawn'    => round( $summary['withdrawn'], 2 ),
+				'pending_withdrawal' => round( $summary['pending_withdrawal'], 2 ),
+				'available_balance'  => round( $summary['available_balance'], 2 ),
+				'in_clearance'       => round( $summary['in_clearance'], 2 ),
 				'currency'           => wpss_get_currency(),
 			)
 		);
@@ -390,6 +366,14 @@ class EarningsController extends RestController {
 				'id'              => (int) $row['id'],
 				'type'            => $row['type'],
 				'amount'          => (float) $row['amount'],
+				// Whether this row REDUCES the balance. The client cannot infer
+				// it from the sign: debits are stored POSITIVE and the sign is
+				// applied on read from wpss_get_ledger_debit_types(), so a
+				// withdrawal rendered as "+90.00" — a payout looking like a
+				// credit. The server owns the debit-type list, so it answers
+				// here rather than the JS duplicating the rule.
+				'is_debit'        => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
+					|| (float) $row['amount'] < 0,
 				'balance_after'   => (float) $row['balance_after'],
 				'currency'        => $row['currency'],
 				'description'     => $row['description'],
@@ -435,26 +419,28 @@ class EarningsController extends RestController {
 		}
 
 		// Check available balance using transaction to prevent race conditions.
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-		$wd_table     = $wpdb->prefix . 'wpss_withdrawals';
+		$wd_table = $wpdb->prefix . 'wpss_withdrawals';
 
 		$wpdb->query( 'START TRANSACTION' );
 
-		$earned = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(vendor_earnings), 0) FROM {$orders_table} WHERE vendor_id = %d AND status = 'completed'",
-				$vendor_id
-			)
-		);
-
-		$withdrawn_and_pending = (float) $wpdb->get_var(
+		// Take the row lock on this vendor's open withdrawals first, so two
+		// concurrent requests cannot both pass the gate below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status IN ('pending', 'approved', 'completed') FOR UPDATE",
 				$vendor_id
 			)
 		);
 
-		$available = $earned - $withdrawn_and_pending;
+		// Ask the ONE balance authority rather than re-deriving it. This block
+		// used to re-implement get_summary() inline — its own comment said so —
+		// and had already drifted: it counted completed withdrawals from the
+		// withdrawals table, which double-debits them now that they are in the
+		// ledger, and it scoped clearance to order rows so tips and milestone
+		// credits were withdrawable immediately.
+		$available = ( new \WPSellServices\Services\EarningsService() )
+			->get_summary( $vendor_id )['available_balance'];
 
 		if ( $amount > $available ) {
 			$wpdb->query( 'ROLLBACK' );
@@ -585,44 +571,29 @@ class EarningsController extends RestController {
 		$note          = sanitize_textarea_field( $request->get_param( 'note' ) ?: '' );
 		$wd_table      = $wpdb->prefix . 'wpss_withdrawals';
 
+		// Delegate to the service — the ONE transition path. It row-locks the
+		// withdrawal, enforces the terminal-state guard, and for 'completed'
+		// routes through mark_paid(), which writes the wallet-ledger debit in
+		// the same transaction. This controller used to run its own UPDATE and
+		// fire the hook itself: a second, driftable copy of the money path with
+		// no vendor notification and no ledger guarantee.
+		$result = ( new \WPSellServices\Services\EarningsService() )->process_withdrawal( $withdrawal_id, $new_status, $note );
+
+		if ( empty( $result['success'] ) ) {
+			$code        = $result['code'] ?? 'update_failed';
+			$http_status = 'not_found' === $code ? 404 : 400;
+			return new WP_Error( 'wpss_' . $code, $result['message'], array( 'status' => $http_status ) );
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$withdrawal = $wpdb->get_row(
 			$wpdb->prepare( "SELECT * FROM {$wd_table} WHERE id = %d", $withdrawal_id ),
 			ARRAY_A
 		);
 
-		if ( ! $withdrawal ) {
-			return new WP_Error( 'not_found', __( 'Withdrawal not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		if ( $withdrawal ) {
+			$withdrawal['notes'] = $withdrawal['admin_note'] ?? '';
 		}
-
-		if ( 'pending' !== $withdrawal['status'] && 'approved' !== $withdrawal['status'] ) {
-			return new WP_Error( 'invalid_status', __( 'This withdrawal cannot be updated.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		$wpdb->update(
-			$wd_table,
-			array(
-				'status'       => $new_status,
-				'admin_note'   => $note,
-				'processed_by' => get_current_user_id(),
-				'processed_at' => current_time( 'mysql', true ),
-			),
-			array( 'id' => $withdrawal_id ),
-			array( '%s', '%s', '%d', '%s' ),
-			array( '%d' )
-		);
-
-		/**
-		 * Fires after a withdrawal is processed.
-		 *
-		 * @param int    $withdrawal_id Withdrawal ID.
-		 * @param string $new_status    New status.
-		 * @param array  $withdrawal    Original withdrawal data.
-		 */
-		do_action( 'wpss_withdrawal_processed', $withdrawal_id, $new_status, (object) $withdrawal );
-
-		$withdrawal['status']       = $new_status;
-		$withdrawal['notes']        = $note;
-		$withdrawal['processed_at'] = current_time( 'mysql', true );
 
 		return new WP_REST_Response( $withdrawal );
 	}
@@ -663,8 +634,11 @@ class EarningsController extends RestController {
 			return new WP_Error( 'rest_forbidden', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		// Prevent pending vendors from accessing earnings.
-		$vendor_status = get_user_meta( get_current_user_id(), '_wpss_vendor_status', true );
+		// Prevent pending vendors from accessing earnings. Reads the canonical
+		// profile status — this used to read _wpss_vendor_status user meta,
+		// which nothing ever wrote, so the gate never fired and a pending
+		// vendor could reach every earnings endpoint.
+		$vendor_status = wpss_get_vendor_status( get_current_user_id() );
 		if ( 'pending' === $vendor_status ) {
 			return new WP_Error( 'rest_forbidden', __( 'Your vendor account is pending approval.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}

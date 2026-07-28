@@ -336,8 +336,12 @@ class AuthController extends RestController {
 		}
 
 		if ( 'vendor' === $role ) {
-			update_user_meta( $user_id, '_wpss_is_vendor', '1' );
-			update_user_meta( $user_id, '_wpss_vendor_status', 'pending' );
+			// Register the vendor through the canonical service so they receive
+			// the wpss_vendor role, capabilities, a vendor_profiles record, and a
+			// status that honours the site's vendor_registration mode
+			// (open/approval/closed) — instead of an ad-hoc, capability-less,
+			// permanently-"pending" meta flag that no other surface recognises.
+			( new \WPSellServices\Services\VendorService() )->register( $user_id, array( 'display_name' => $display_name ) );
 		}
 
 		$user = get_user_by( 'ID', $user_id );
@@ -581,7 +585,8 @@ class AuthController extends RestController {
 			'display_name'  => $user->display_name,
 			'avatar'        => get_avatar_url( $user->ID, array( 'size' => 256 ) ),
 			'is_vendor'     => $is_vendor,
-			'vendor_status' => $is_vendor ? ( get_user_meta( $user->ID, '_wpss_vendor_status', true ) ?: 'active' ) : null,
+			// Canonical profile status — _wpss_vendor_status was never written.
+			'vendor_status' => $is_vendor ? ( wpss_get_vendor_status( $user->ID ) ?: 'active' ) : null,
 			'is_admin'      => $user->has_cap( 'manage_options' ),
 			'registered'    => $user->user_registered,
 		);

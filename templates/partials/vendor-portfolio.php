@@ -47,7 +47,6 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 	overflow: hidden;
 	background: var( --wpss-bg, #fff );
 	box-shadow: var( --wpss-shadow-sm, 0 1px 3px rgba(0,0,0,.1) );
-	cursor: pointer;
 	aspect-ratio: 4 / 3;
 }
 
@@ -126,7 +125,7 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 }
 
 .wpss-portfolio-public__card:hover .wpss-portfolio-public__overlay,
-.wpss-portfolio-public__card:focus-visible .wpss-portfolio-public__overlay {
+.wpss-portfolio-public__card:focus-within .wpss-portfolio-public__overlay {
 	opacity: 1;
 }
 
@@ -236,9 +235,15 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 			// Trim description for overlay.
 			$desc_excerpt = $description ? wp_trim_words( $description, 20 ) : '';
 			?>
+			<?php
+			// The card is a display container, not a control — it must NOT be a
+			// tab stop. Previously tabindex=0 + role=article trapped keyboard users
+			// on a non-interactive div whose only action (the "View Project" link)
+			// was tabindex=-1 inside an aria-hidden overlay. Now the link is the
+			// reachable focus target and :focus-within reveals the overlay.
+			?>
 			<div class="wpss-portfolio-public__card"
-				tabindex="0"
-				role="article"
+				role="figure"
 				aria-label="<?php echo esc_attr( $title ); ?>"
 				data-item-id="<?php echo esc_attr( $item_id ); ?>"
 			>
@@ -267,7 +272,7 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 				</div>
 
 				<!-- Hover overlay: description, tags, external link -->
-				<div class="wpss-portfolio-public__overlay" aria-hidden="true">
+				<div class="wpss-portfolio-public__overlay">
 					<p class="wpss-portfolio-public__overlay-title"><?php echo esc_html( $title ); ?></p>
 
 					<?php if ( $desc_excerpt ) : ?>
@@ -288,7 +293,6 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 							class="wpss-portfolio-public__ext-link"
 							target="_blank"
 							rel="noopener noreferrer"
-							tabindex="-1"
 						>
 							<i data-lucide="external-link" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 							<?php esc_html_e( 'View Project', 'wp-sell-services' ); ?>

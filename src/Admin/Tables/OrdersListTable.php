@@ -188,8 +188,11 @@ class OrdersListTable extends \WP_List_Table {
 		// Sub-order platforms — render relationship to the parent rather
 		// than try to resolve a non-existent service post.
 		$sub_order_labels = array(
+			/* translators: %s: parent order number. */
 			'tip'       => __( 'Tip on order #%s', 'wp-sell-services' ),
+			/* translators: %s: parent order number. */
 			'extension' => __( 'Extension on order #%s', 'wp-sell-services' ),
+			/* translators: %s: parent order number. */
 			'milestone' => __( 'Milestone of order #%s', 'wp-sell-services' ),
 		);
 		if ( isset( $sub_order_labels[ $platform ] ) ) {
@@ -318,24 +321,12 @@ class OrdersListTable extends \WP_List_Table {
 		$statuses = ServiceOrder::get_statuses();
 		$label    = $statuses[ $item->status ] ?? $item->status;
 
-		$status_classes = [
-			'pending_payment'      => 'wpss-status-pending',
-			'pending_requirements' => 'wpss-status-pending',
-			'in_progress'          => 'wpss-status-processing',
-			'pending_approval'     => 'wpss-status-processing',
-			'revision_requested'   => 'wpss-status-on-hold',
-			'completed'            => 'wpss-status-completed',
-			'cancelled'            => 'wpss-status-cancelled',
-			'disputed'             => 'wpss-status-failed',
-			'on_hold'              => 'wpss-status-on-hold',
-			'late'                 => 'wpss-status-failed',
-		];
-
-		$class = $status_classes[ $item->status ] ?? 'wpss-status-pending';
-
+		// One authority for status→class (wpss_status_class). The hand-map that
+		// used to live here was missing refunded / delivered / accepted, so
+		// those fell through to a "pending" default and rendered amber.
 		return sprintf(
-			'<span class="wpss-status-badge %s">%s</span>',
-			esc_attr( $class ),
+			'<span class="%s">%s</span>',
+			esc_attr( wpss_status_class( (string) $item->status ) ),
 			esc_html( $label )
 		);
 	}

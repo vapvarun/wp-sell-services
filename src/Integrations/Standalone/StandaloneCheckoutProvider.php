@@ -215,7 +215,25 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		if ( ! $service_id ) {
-			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'No service selected.', 'wp-sell-services' ) . '</p>';
+			// Reaching checkout with an empty cart is an ordinary state, not a
+			// failure: a red "No service selected." error alert blamed the buyer
+			// for something that had not gone wrong and offered no way forward.
+			// Mirror the cart page's empty state — same icon/title/text/CTA
+			// shape — so the dead end becomes a route back to browsing.
+			ob_start();
+			?>
+			<div class="wpss-cart-empty">
+				<div class="wpss-cart-empty__icon">
+					<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
+				</div>
+				<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Your cart is empty', 'wp-sell-services' ); ?></h2>
+				<p class="wpss-cart-empty__text"><?php esc_html_e( 'Choose a service and a package to check out.', 'wp-sell-services' ); ?></p>
+				<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ? wpss_get_page_url( 'services_page' ) : home_url( '/' ) ); ?>" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
+				</a>
+			</div>
+			<?php
+			return (string) ob_get_clean();
 		}
 
 		$service = wpss_get_service( $service_id );
@@ -756,8 +774,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							<span>
 								<?php
 								printf(
-									/* translators: 1: number of remaining items, 2: current service title */
 									esc_html(
+										/* translators: 1: number of remaining items, 2: current service title */
 										_n(
 											'You have %1$d more item in your cart. This checkout is for %2$s only. Your other item will remain in your cart for separate checkout.',
 											'You have %1$d more items in your cart. This checkout is for %2$s only. Your other items will remain in your cart for separate checkout.',
@@ -867,6 +885,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</div>
 								</div>
 							</div>
+
+							<?php
+							// Billing details — OUR block, above the payment
+							// block, identical on every gateway. Prefilled from
+							// the buyer's profile and collapsed to a summary
+							// when complete, so a returning customer only has
+							// to enter card details.
+							//
+							// Deliberately not a gateway element: an address
+							// rendered by Stripe would not exist for PayPal,
+							// Razorpay or Woo buyers, and carries no company or
+							// GST field for the invoice.
+							wpss_get_template_part( 'partials/billing', 'fields' );
+							?>
 
 							<!-- Payment methods -->
 							<div class="wpss-card">
@@ -987,7 +1019,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								$vendor_joined     = $vendor_member_obj ? wp_date( 'M Y', strtotime( $vendor_member_obj->user_registered ) ) : '';
 
 								// Get latest review for this vendor.
-								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, u.display_name as reviewer_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								$latest_review = $wpdb->get_row( $wpdb->prepare( "SELECT r.review as content, r.rating, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name FROM {$reviews_table} r LEFT JOIN {$wpdb->users} u ON r.customer_id = u.ID WHERE r.vendor_id = %d AND r.status = 'approved' ORDER BY r.created_at DESC LIMIT 1", $vendor_id_for_stats ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 								?>
 							<div class="wpss-card" style="margin-top: var(--wpss-space-4);">
 								<div class="wpss-card__header">
@@ -1024,7 +1056,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									<?php if ( $latest_review ) : ?>
 									<div class="wpss-co-testimonial">
 										<p class="wpss-co-testimonial__text">&ldquo;<?php echo esc_html( wp_trim_words( $latest_review->content ?? $latest_review->review ?? '', 30 ) ); ?>&rdquo;</p>
-										<span class="wpss-co-testimonial__author">&mdash; <?php echo esc_html( $latest_review->reviewer_name ?? __( 'Verified Buyer', 'wp-sell-services' ) ); ?></span>
+										<span class="wpss-co-testimonial__author">&mdash; <?php echo esc_html( $latest_review->reviewer_display_name ?? __( 'Verified Buyer', 'wp-sell-services' ) ); ?></span>
 									</div>
 									<?php endif; ?>
 								</div>
@@ -1183,6 +1215,17 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						var paymentMethod = form.querySelector('input[name="payment_method"]:checked');
 						if (!paymentMethod) {
 							showNotice('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
+							return;
+						}
+
+						// Gateways that mount their own payment UI (Stripe Elements)
+						// declare data-wpss-own-submit and are bound to this same
+						// form by their own script. They MUST confirm the card with
+						// the PSP before an order is created, so this generic handler
+						// stands down — otherwise it races them and posts an
+						// unconfirmed payment intent (card never charged).
+						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
+						if (ownSubmit) {
 							return;
 						}
 
@@ -1574,6 +1617,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 								</div>
 							</div>
 
+							<?php
+							// Billing details — OUR block, above the payment
+							// block, identical on every gateway. Prefilled from
+							// the buyer's profile and collapsed to a summary
+							// when complete, so a returning customer only has
+							// to enter card details.
+							//
+							// Deliberately not a gateway element: an address
+							// rendered by Stripe would not exist for PayPal,
+							// Razorpay or Woo buyers, and carries no company or
+							// GST field for the invoice.
+							wpss_get_template_part( 'partials/billing', 'fields' );
+							?>
+
 							<!-- Payment methods -->
 							<div class="wpss-card">
 								<div class="wpss-card__header">
@@ -1709,6 +1766,17 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						var paymentMethod = form.querySelector('input[name="payment_method"]:checked');
 						if (!paymentMethod) {
 							showNotice('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
+							return;
+						}
+
+						// Gateways that mount their own payment UI (Stripe Elements)
+						// declare data-wpss-own-submit and are bound to this same
+						// form by their own script. They MUST confirm the card with
+						// the PSP before an order is created, so this generic handler
+						// stands down — otherwise it races them and posts an
+						// unconfirmed payment intent (card never charged).
+						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
+						if (ownSubmit) {
 							return;
 						}
 

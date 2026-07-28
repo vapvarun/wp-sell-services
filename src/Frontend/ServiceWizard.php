@@ -958,7 +958,7 @@ class ServiceWizard {
 			<div class="wpss-form-hint" x-show="!canAddRequirement()" x-cloak>
 				<span class="wpss-limit-notice"><?php esc_html_e( 'Requirement limit reached.', 'wp-sell-services' ); ?></span>
 				<?php if ( ! $this->is_pro_active() ) : ?>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings&tab=pro' ) ); ?>" class="wpss-upgrade-link">
+				<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 				</a>
 				<?php endif; ?>
@@ -1049,7 +1049,7 @@ class ServiceWizard {
 				<div class="wpss-form-hint" x-show="!canAddExtra()" x-cloak>
 					<span class="wpss-limit-notice"><?php esc_html_e( 'Extras limit reached.', 'wp-sell-services' ); ?></span>
 					<?php if ( ! $this->is_pro_active() ) : ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings&tab=pro' ) ); ?>" class="wpss-upgrade-link">
+					<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 					</a>
 					<?php endif; ?>
@@ -1098,7 +1098,7 @@ class ServiceWizard {
 				<div class="wpss-form-hint" x-show="!canAddFaq()" x-cloak>
 					<span class="wpss-limit-notice"><?php esc_html_e( 'FAQ limit reached.', 'wp-sell-services' ); ?></span>
 					<?php if ( ! $this->is_pro_active() ) : ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings&tab=pro' ) ); ?>" class="wpss-upgrade-link">
+					<a href="<?php echo esc_url( apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' ) ); ?>" class="wpss-upgrade-link" target="_blank" rel="noopener noreferrer">
 						<?php esc_html_e( 'Upgrade to Pro for unlimited', 'wp-sell-services' ); ?>
 					</a>
 					<?php endif; ?>
@@ -1424,6 +1424,10 @@ class ServiceWizard {
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
 				'currencySymbol' => wpss_get_currency_symbol(),
+				// Minimum Basic price, shared with the server validation via the
+				// same filter so the client can't Continue past a price the
+				// server will reject at Publish.
+				'minPrice'       => (float) apply_filters( 'wpss_min_service_price', 5 ),
 				'limits'         => $this->get_limits(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
@@ -1439,8 +1443,15 @@ class ServiceWizard {
 					'validationCat'      => __( 'Please select a category', 'wp-sell-services' ),
 					'validationDesc'     => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
 					'validationPrice'    => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
+					'validationPriceMin' => sprintf(
+						/* translators: %s: formatted minimum price (e.g. $5.00). */
+						__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
+						wpss_format_price( (float) apply_filters( 'wpss_min_service_price', 5 ) )
+					),
 					'validationImage'    => __( 'Please upload a main image', 'wp-sell-services' ),
+					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgName'  => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
+					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgDesc'  => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
 					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
 					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
@@ -2075,8 +2086,13 @@ class ServiceWizard {
 			$errors[] = __( 'Description must be at least 120 characters.', 'wp-sell-services' );
 		}
 
-		if ( empty( $data['packages']['basic']['price'] ) || floatval( $data['packages']['basic']['price'] ) < 5 ) {
-			$errors[] = __( 'Basic package price must be at least $5.', 'wp-sell-services' );
+		$min_price = (float) apply_filters( 'wpss_min_service_price', 5 );
+		if ( empty( $data['packages']['basic']['price'] ) || floatval( $data['packages']['basic']['price'] ) < $min_price ) {
+			$errors[] = sprintf(
+				/* translators: %s: formatted minimum price (e.g. $5.00). */
+				__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
+				wpss_format_price( $min_price )
+			);
 		}
 
 		if ( empty( $data['packages']['basic']['delivery_time'] ) ) {

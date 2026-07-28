@@ -61,25 +61,19 @@ class DisputeWorkflowManager {
 		$this->notification_service = new NotificationService();
 	}
 
-	/**
-	 * Initialize workflow hooks.
+	/*
+	 * NOTE: there is deliberately no init()/define_hooks() here.
 	 *
-	 * @return void
+	 * Every hook this class responds to is wired in Plugin.php — the cron
+	 * handlers at ~:1888 and the dispute events at ~:1900, both through the
+	 * lazy-init closure so the manager is only constructed on first fire.
+	 *
+	 * A second init() used to exist that registered all of them again. It was
+	 * never called (nothing invoked it), so it was dead weight that would have
+	 * double-fired every handler the moment anyone did call it. Plugin.php is
+	 * the single wiring point — same rule as the comment at Plugin.php ~:1795
+	 * about duplicate log_status_change listeners.
 	 */
-	public function init(): void {
-		// Cron jobs. Scheduling lives in Activator::schedule_cron_events()
-		// (Action Scheduler recurring) so this class only wires handlers.
-		add_action( 'wpss_cron_daily', array( $this, 'check_response_deadlines' ) );
-		add_action( 'wpss_cron_daily', array( $this, 'auto_escalate_disputes' ) );
-		add_action( 'wpss_cron_daily', array( $this, 'send_reminder_notifications' ) );
-		add_action( 'wpss_cron_daily', array( $this, 'auto_open_disputes_for_late_orders' ) );
-
-		// Hooks for dispute events.
-		add_action( 'wpss_dispute_opened', array( $this, 'on_dispute_opened' ), 10, 4 );
-		add_action( 'wpss_dispute_response_submitted', array( $this, 'on_response_submitted' ), 10, 3 );
-		add_action( 'wpss_dispute_evidence_added', array( $this, 'on_evidence_added' ), 10, 2 );
-		add_action( 'wpss_dispute_resolved', array( $this, 'on_dispute_resolved' ), 10, 4 );
-	}
 
 	/**
 	 * Add custom cron schedules.
@@ -956,46 +950,6 @@ class DisputeWorkflowManager {
 		$this->on_response_submitted( 0, $dispute_id, $user_id );
 	}
 
-	/**
-	 * Handle dispute resolved event.
-	 *
-	 * @param int    $dispute_id Dispute ID.
-	 * @param string $resolution Resolution type.
-	 * @param object $dispute Dispute object.
-	 * @param float  $refund_amount Refund amount.
-	 * @return void
-	 */
-	public function on_dispute_resolved( int $dispute_id, string $resolution, object $dispute, float $refund_amount ): void {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT customer_id, vendor_id FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
-				$dispute->order_id
-			)
-		);
-
-		if ( ! $order ) {
-			return;
-		}
-
-		// Notify both parties.
-		$users = array( (int) $order->customer_id, (int) $order->vendor_id );
-
-		foreach ( $users as $user_id ) {
-			$this->notification_service->send(
-				$user_id,
-				'dispute_resolved',
-				array(
-					'dispute_id'    => $dispute_id,
-					'order_id'      => $dispute->order_id,
-					'resolution'    => $resolution,
-					'refund_amount' => $refund_amount,
-				)
-			);
-		}
-	}
 
 	/**
 	 * Get dispute timeline.
@@ -1020,17 +974,21 @@ class DisputeWorkflowManager {
 			);
 		}
 
-		// Add evidence items.
+		// Add evidence items. DisputeService stores evidence as associative
+		// arrays (JSON-decoded with assoc=true), so these must be read with
+		// array access — the previous object access ($item->user_id, etc.)
+		// silently yielded null, so every evidence row rendered as "System"
+		// with blank content.
 		foreach ( $evidence as $item ) {
 			$timeline[] = array(
 				'type'       => 'evidence',
-				'user_id'    => $item->user_id,
-				'content'    => $item->description,
+				'user_id'    => $item['user_id'] ?? 0,
+				'content'    => $item['description'] ?? '',
 				'data'       => array(
-					'evidence_type' => $item->type,
-					'content'       => $item->content,
+					'evidence_type' => $item['type'] ?? '',
+					'content'       => $item['content'] ?? '',
 				),
-				'created_at' => $item->created_at,
+				'created_at' => $item['created_at'] ?? '',
 			);
 		}
 

@@ -33,7 +33,11 @@
 			}
 
 			this.stripe = Stripe(publishableKey);
-			this.form = document.getElementById('wpss-checkout-form');
+			// Single-service checkout and cart (multi) checkout use different form
+			// IDs; bind to whichever is present so cart checkout also gets the
+			// confirmPayment step instead of being left with no handler.
+			this.form = document.getElementById('wpss-checkout-form')
+				|| document.getElementById('wpss-multi-checkout-form');
 			this.errorElement = document.getElementById('wpss-stripe-error');
 
 			this.setupEventListeners();
@@ -84,7 +88,7 @@
 			const packageId = document.querySelector('input[name="package_id"]')?.value || 0;
 
 			if (amount <= 0) {
-				this.showError('Invalid payment amount.');
+				this.showError(wpssStripe.i18n.invalidAmount);
 				return;
 			}
 
@@ -93,7 +97,7 @@
 				const response = await this.createPaymentIntent(amount, currency, serviceId, packageId);
 
 				if (!response.success) {
-					this.showError(response.data?.message || 'Failed to initialize payment.');
+					this.showError(response.data?.message || wpssStripe.i18n.initFailed);
 					return;
 				}
 
@@ -118,6 +122,11 @@
 
 				this.paymentElement.mount(elementContainer);
 
+				// No Stripe Address Element. Billing details are our own block
+				// (templates/partials/billing-fields.php), rendered above the
+				// payment section and identical on every gateway. We read the
+				// values out of it at confirm time — see readBillingDetails().
+
 				this.paymentElement.on('change', (event) => {
 					if (event.error) {
 						this.showError(event.error.message);
@@ -137,6 +146,11 @@
 		 */
 		createPaymentIntent: function(amount, currency, serviceId, packageId) {
 			var addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
+			// pay_order flow (proposal-accepted order, milestone phase): the amount
+			// is the order total, not a service+package price. Forward the order id
+			// so the server prices the intent from the order and skips the
+			// service/package validation that only applies to catalog purchases.
+			var payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
 
 			return new Promise((resolve) => {
 				$.ajax({
@@ -150,6 +164,11 @@
 						service_id: serviceId,
 						package_id: packageId,
 						addon_ids: addonIds,
+						pay_order: payOrder,
+						// Routing signal only (not the price) — the server resolves the
+						// authoritative amount from the cart. Parity with the confirm path
+						// so the multi-cart Payment Element mounts (BC 10134360287).
+						is_multi_checkout: (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '',
 					},
 					success: resolve,
 					error: () => {
@@ -164,7 +183,7 @@
 		 */
 		handlePayment: async function() {
 			if (!this.stripe || !this.elements) {
-				this.showError('Payment not initialized. Please refresh and try again.');
+				this.showError(wpssStripe.i18n.notInitialized);
 				return;
 			}
 
@@ -172,12 +191,38 @@
 			this.hideError();
 
 			try {
+				// Collect billing name + address (required by Stripe for export
+				// charges on India-registered accounts). Validate before charging
+				// so the buyer gets a field-level prompt instead of a raw API error.
+				const confirmParams = {
+					return_url: wpssStripe.returnUrl,
+				};
+
+				// Billing details come from OUR block, not a gateway element.
+				// Stripe REQUIRES name + address for export (cross-border)
+				// charges on India-registered accounts, so this is validated
+				// before charging — the buyer gets a field-level prompt rather
+				// than a raw API error.
+				//
+				// No confirmParams.shipping: services are not shippable, and it
+				// used to mirror billing_details for no reason.
+				const billing = this.readBillingDetails();
+
+				if (!billing.complete) {
+					this.showError(wpssStripe.i18n.addressRequired || 'Please complete your billing name and address.');
+					this.revealBillingForm();
+					this.setLoading(false);
+					return;
+				}
+
+				confirmParams.payment_method_data = {
+					billing_details: billing.details,
+				};
+
 				// Confirm payment with Stripe.
 				const { error, paymentIntent } = await this.stripe.confirmPayment({
 					elements: this.elements,
-					confirmParams: {
-						return_url: wpssStripe.returnUrl,
-					},
+					confirmParams: confirmParams,
 					redirect: 'if_required',
 				});
 
@@ -200,12 +245,103 @@
 		},
 
 		/**
+		 * Read billing details out of OUR billing block.
+		 *
+		 * Gateway-agnostic by design: the same block feeds Stripe here, and
+		 * PayPal / Razorpay / Woo elsewhere. Reads from the visible form when
+		 * the buyer is editing, and from the server-rendered profile values
+		 * when the block is collapsed to its summary — so a returning customer
+		 * who never opens the form still sends a complete address.
+		 *
+		 * @return {{complete: boolean, details: Object}}
+		 */
+		readBillingDetails: function() {
+			const val = (key) => {
+				const el = document.querySelector('[name="' + key + '"]');
+				return el ? (el.value || '').trim() : '';
+			};
+
+			// Collapsed summary state: the form is present but hidden, and its
+			// inputs still carry the profile values, so the same read works.
+			const details = {
+				name: [val('billing_first_name'), val('billing_last_name')].filter(Boolean).join(' '),
+				email: val('billing_email'),
+				phone: val('billing_phone'),
+				address: {
+					line1: val('billing_address_1'),
+					line2: val('billing_address_2'),
+					city: val('billing_city'),
+					state: val('billing_state'),
+					postal_code: val('billing_postcode'),
+					country: (val('billing_country') || '').toUpperCase(),
+				},
+			};
+
+			// Stripe rejects empty strings on optional fields; drop them.
+			if (!details.phone) { delete details.phone; }
+			if (!details.email) { delete details.email; }
+			if (!details.address.line2) { delete details.address.line2; }
+			if (!details.address.state) { delete details.address.state; }
+
+			const complete = !!(
+				details.name &&
+				details.address.line1 &&
+				details.address.city &&
+				details.address.postal_code &&
+				details.address.country
+			);
+
+			return { complete: complete, details: details };
+		},
+
+		/**
+		 * Flat billing_* map for posting back to the server.
+		 *
+		 * Separate from readBillingDetails(), which shapes the SAME values for
+		 * Stripe's nested billing_details. One read, two consumers — the server
+		 * wants meta keys, the gateway wants its own object shape.
+		 *
+		 * @return {Object} billing_* key => value.
+		 */
+		collectBillingFields: function() {
+			const out = {};
+			document.querySelectorAll('[data-wpss-billing] [name^="billing_"]').forEach((el) => {
+				out[el.name] = (el.value || '').trim();
+			});
+			return out;
+		},
+
+		/**
+		 * Expand the billing form when validation fails on a collapsed block.
+		 *
+		 * Without this the buyer is told to complete their address while the
+		 * fields are still hidden behind the summary — an error with nothing
+		 * to act on.
+		 */
+		revealBillingForm: function() {
+			const form = document.querySelector('[data-wpss-billing-form]');
+			const summary = document.querySelector('[data-wpss-billing-summary]');
+
+			if (form) {
+				form.removeAttribute('hidden');
+				const firstEmpty = form.querySelector('input[required]:invalid, select[required]:invalid');
+				if (firstEmpty && firstEmpty.focus) { firstEmpty.focus(); }
+			}
+			if (summary) { summary.setAttribute('hidden', 'hidden'); }
+		},
+
+		/**
 		 * Confirm payment and create order.
 		 */
 		confirmPaymentAndCreateOrder: function(paymentIntentId) {
 			const serviceId = document.querySelector('input[name="service_id"]')?.value || 0;
 			const packageId = document.querySelector('input[name="package_id"]')?.value || 0;
 			const addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
+			// pay_order flow: settle the existing order instead of creating a new
+			// one from service+package. Without this the confirm handler falls
+			// through to the "create new order" branch and the milestone/proposal
+			// order is left unpaid.
+			const payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
 
 			$.ajax({
 				url: wpssStripe.ajaxUrl,
@@ -217,6 +353,12 @@
 					service_id: serviceId,
 					package_id: packageId,
 					addon_ids: addonIds,
+					pay_order: payOrder,
+					// Cart checkout creates one order per cart item server-side.
+					is_multi_checkout: (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '',
+					// Billing fields, so a correction made at checkout is saved
+					// back to the profile and picked up by the order snapshot.
+					...this.collectBillingFields(),
 				},
 				success: (response) => {
 					this.setLoading(false);
@@ -225,7 +367,7 @@
 						// Redirect to requirements page.
 						window.location.href = response.data.redirect_url;
 					} else {
-						this.showError(response.data?.message || 'Failed to create order.');
+						this.showError(response.data?.message || wpssStripe.i18n.orderFailed);
 					}
 				},
 				error: () => {

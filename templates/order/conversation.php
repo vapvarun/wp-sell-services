@@ -110,8 +110,25 @@ if ( $conversation ) {
 	}
 }
 
-// Can send messages?
-$can_message = in_array( $order->status, array( 'pending_requirements', 'in_progress', 'revision_requested', 'delivered' ), true );
+// Can send messages? Allow messaging for every status where the order is still
+// in flight — buyers and sellers need to communicate through requirements,
+// approval, holds, lateness, cancellation requests and disputes, not just the
+// original four. Only true terminals (completed / cancelled / refunded /
+// partially_refunded / rejected) and the pre-payment states block the composer.
+$active_message_statuses = array(
+	'pending_requirements',
+	'requirements_submitted',
+	'accepted',
+	'in_progress',
+	'pending_approval',
+	'revision_requested',
+	'delivered',
+	'on_hold',
+	'late',
+	'cancellation_requested',
+	'disputed',
+);
+$can_message             = in_array( $order->status, $active_message_statuses, true );
 
 /**
  * Hook: wpss_before_conversation
@@ -140,7 +157,7 @@ do_action( 'wpss_before_conversation', $order );
 			</div>
 		</div>
 		<div class="wpss-messaging__header-actions">
-			<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+			<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 				<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 			</span>
 		</div>
@@ -302,7 +319,29 @@ do_action( 'wpss_before_conversation', $order );
 				} elseif ( 'cancelled' === $order->status ) {
 					esc_html_e( 'This order has been cancelled.', 'wp-sell-services' );
 				} elseif ( 'refunded' === $order->status ) {
-					esc_html_e( 'This order has been refunded.', 'wp-sell-services' );
+					if ( ! empty( $order->refunded_amount ) ) {
+						printf(
+							/* translators: %s: refunded amount */
+							esc_html__( 'This order has been refunded (%s returned).', 'wp-sell-services' ),
+							esc_html( wpss_format_price( (float) $order->refunded_amount, $order->currency ) )
+						);
+					} else {
+						esc_html_e( 'This order has been refunded.', 'wp-sell-services' );
+					}
+				} elseif ( 'partially_refunded' === $order->status ) {
+					// Already treated as terminal by the composer guard above,
+					// but it had no message of its own — so a partially
+					// refunded buyer fell through to the generic "Messaging is
+					// not available" and was told nothing about their money.
+					if ( ! empty( $order->refunded_amount ) ) {
+						printf(
+							/* translators: %s: refunded amount */
+							esc_html__( 'This order has been partially refunded (%s returned).', 'wp-sell-services' ),
+							esc_html( wpss_format_price( (float) $order->refunded_amount, $order->currency ) )
+						);
+					} else {
+						esc_html_e( 'This order has been partially refunded.', 'wp-sell-services' );
+					}
 				} else {
 					esc_html_e( 'Messaging is not available for this order status.', 'wp-sell-services' );
 				}

@@ -750,9 +750,9 @@ class NotificationService {
 			return;
 		}
 
-		// Get reviewer info.
-		$reviewer      = get_user_by( 'id', $review->customer_id );
-		$reviewer_name = $reviewer ? $reviewer->display_name : __( 'A customer', 'wp-sell-services' );
+		// Get reviewer info. Migrated guest reviews (customer_id = 0) carry the
+		// name in reviewer_name; resolve through the shared helper.
+		$reviewer_name = \WPSellServices\Models\Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
 
 		// Get service info.
 		$service      = get_post( $review->service_id );
@@ -1262,7 +1262,7 @@ class NotificationService {
 		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
 		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
 		$content .= '<p>' . sprintf(
-			/* translators: %s: vendor display name */
+			/* translators: %s: recipient display name */
 			esc_html__( 'Hello %s,', 'wp-sell-services' ),
 			esc_html( $display_name )
 		) . '</p>';
@@ -1314,7 +1314,7 @@ class NotificationService {
 		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
 		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
 		$content .= '<p>' . sprintf(
-			/* translators: %s: vendor display name */
+			/* translators: %s: recipient display name */
 			esc_html__( 'Hello %s,', 'wp-sell-services' ),
 			esc_html( $display_name )
 		) . '</p>';
@@ -1444,7 +1444,7 @@ class NotificationService {
 		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
 		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
 		$content .= '<p>' . sprintf(
-			/* translators: %s: user display name */
+			/* translators: %s: recipient display name */
 			esc_html__( 'Hello %s,', 'wp-sell-services' ),
 			esc_html( $user->display_name )
 		) . '</p>';
@@ -1520,7 +1520,7 @@ class NotificationService {
 		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
 		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
 		$content .= '<p>' . sprintf(
-			/* translators: %s: user display name */
+			/* translators: %s: recipient display name */
 			esc_html__( 'Hello %s,', 'wp-sell-services' ),
 			esc_html( $user->display_name )
 		) . '</p>';

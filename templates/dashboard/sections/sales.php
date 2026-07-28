@@ -355,7 +355,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 									<?php if ( abs( $row_gross - $row_net_amount ) > 0.005 ) : ?>
 										<small class="wpss-order-card__gross">
 										<?php
-										/* translators: %s: buyer-paid amount before platform fee */
+										/* translators: %s: buyer-paid amount */
 										printf( esc_html__( '(buyer paid %s)', 'wp-sell-services' ), esc_html( wpss_format_price( $row_gross ) ) );
 										?>
 										</small>

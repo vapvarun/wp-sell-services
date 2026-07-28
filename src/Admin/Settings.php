@@ -73,24 +73,61 @@ class Settings {
 
 		$this->tabs = array(
 			// Setup.
-			'general'  => __( 'General', 'wp-sell-services' ),
-			'pages'    => __( 'Pages', 'wp-sell-services' ),
-			// Business. Gateways are consolidated into the Payments tab.
-			'payments' => __( 'Payments', 'wp-sell-services' ),
-			'vendor'   => __( 'Vendor', 'wp-sell-services' ),
-			// Operations.
-			'orders'   => __( 'Orders', 'wp-sell-services' ),
-			'emails'   => __( 'Emails', 'wp-sell-services' ),
+			'general'    => __( 'General', 'wp-sell-services' ),
+			'pages'      => __( 'Pages', 'wp-sell-services' ),
+			// Money. The old single "Payments" tab carried commission, tax,
+			// payouts AND every gateway credential set — eight independent
+			// forms with eight save buttons, where editing across two cards
+			// silently lost the unsaved one. Split into the three questions an
+			// owner actually asks: how does money come IN, what do we KEEP, and
+			// how does it go OUT.
+			'payments'   => __( 'Payment Gateways', 'wp-sell-services' ),
+			'commission' => __( 'Commission &amp; Tax', 'wp-sell-services' ),
+			'payouts'    => __( 'Payouts', 'wp-sell-services' ),
+			// Marketplace.
+			'vendor'     => __( 'Vendors', 'wp-sell-services' ),
+			'orders'     => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
+			'emails'     => __( 'Emails', 'wp-sell-services' ),
 			// System (Pro tabs inserted before this via filter).
-			'advanced' => __( 'Advanced', 'wp-sell-services' ),
+			'advanced'   => __( 'Advanced', 'wp-sell-services' ),
 		);
 
 		$this->tab_groups = array(
 			'setup'      => array( 'general', 'pages' ),
-			'business'   => array( 'payments', 'vendor' ),
-			'operations' => array( 'orders', 'emails' ),
+			'money'      => array( 'payments', 'commission', 'payouts' ),
+			'operations' => array( 'vendor', 'orders', 'emails' ),
 			'pro'        => array(), // Pro tabs added via filter.
 			'system'     => array( 'advanced' ),
+		);
+	}
+
+	/**
+	 * The tabs FREE ships — the single authority for "is this a Pro tab?".
+	 *
+	 * Anything not in this list is treated as added by Pro or an extension: it
+	 * lands in the EXTENSIONS group, gets a Pro badge, and renders through the
+	 * `wpss_settings_tab_{slug}` action instead of a core method.
+	 *
+	 * This list previously existed as three separate copies (grouping, panel
+	 * dispatch, sidebar). Splitting the Payments tab updated two of them and
+	 * missed the sidebar, which promptly badged two free tabs as "Pro" — so it
+	 * is defined once here and read everywhere.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return array<int, string> Core tab slugs.
+	 */
+	private function get_core_tabs(): array {
+		return array(
+			'general',
+			'pages',
+			'payments',
+			'commission',
+			'payouts',
+			'vendor',
+			'orders',
+			'emails',
+			'advanced',
 		);
 	}
 
@@ -105,19 +142,11 @@ class Settings {
 	private function get_grouped_tabs(): array {
 		$this->init_tabs();
 
-		$core_tabs = array(
-			'general',
-			'pages',
-			'payments',
-			'vendor',
-			'orders',
-			'emails',
-			'advanced',
-		);
+		$core_tabs = $this->get_core_tabs();
 
 		$grouped = array(
 			'setup'      => array(),
-			'business'   => array(),
+			'money'      => array(),
 			'operations' => array(),
 			'pro'        => array(),
 			'system'     => array(),
@@ -151,13 +180,15 @@ class Settings {
 	 */
 	private function get_icon_map(): array {
 		return array(
-			'general'  => 'settings',
-			'pages'    => 'layout-template',
-			'payments' => 'credit-card',
-			'vendor'   => 'store',
-			'orders'   => 'shopping-cart',
-			'emails'   => 'mail',
-			'advanced' => 'wrench',
+			'general'    => 'settings',
+			'pages'      => 'layout-template',
+			'payments'   => 'credit-card',
+			'commission' => 'percent',
+			'payouts'    => 'banknote',
+			'vendor'     => 'store',
+			'orders'     => 'shopping-cart',
+			'emails'     => 'mail',
+			'advanced'   => 'wrench',
 		);
 	}
 
@@ -169,8 +200,8 @@ class Settings {
 	private function get_group_labels(): array {
 		return array(
 			'setup'      => __( 'SETUP', 'wp-sell-services' ),
-			'business'   => __( 'BUSINESS', 'wp-sell-services' ),
-			'operations' => __( 'OPERATIONS', 'wp-sell-services' ),
+			'money'      => __( 'MONEY', 'wp-sell-services' ),
+			'operations' => __( 'MARKETPLACE', 'wp-sell-services' ),
 			'pro'        => __( 'EXTENSIONS', 'wp-sell-services' ),
 			'system'     => __( 'SYSTEM', 'wp-sell-services' ),
 		);
@@ -601,8 +632,20 @@ class Settings {
 		);
 
 		// clearance_days is stored AND enforced by EarningsService::get_summary()
-		// — reads from wpss_payouts.clearance_days, defaults to 14, used in the
-		// in_clearance bucket query. (VS1 from plans/ORDER-FLOW-AUDIT.md.)
+		// — reads from wpss_payouts.clearance_days, used in the in_clearance
+		// bucket query. (VS1 from plans/ORDER-FLOW-AUDIT.md.)
+		//
+		// OWNER DECISION 2026-07-23: default 0 (no hold); the owner opts in.
+		// How long to hold a vendor's money is a business-policy call, not a
+		// safety rail we impose — many marketplaces pay out the moment an order
+		// completes and want the vendor experience to match.
+		//
+		// Zero is safe HERE specifically because the wallet ledger records a
+		// refund-after-payout as a NEGATIVE balance that future earnings pay
+		// down automatically (get_summary() deliberately does not clamp at
+		// zero), so the platform never silently absorbs the loss and nobody
+		// chases money already in a vendor's bank. Owners who would rather never
+		// have that conversation set a refund window: 7 / 14 / 30.
 		add_settings_field(
 			'clearance_days',
 			__( 'Clearance Period (Days)', 'wp-sell-services' ),
@@ -615,8 +658,8 @@ class Settings {
 				'min'         => 0,
 				'max'         => 90,
 				'step'        => 1,
-				'default'     => 14,
-				'description' => __( 'Hold period after order completion before earnings can be withdrawn. Protects against chargebacks. Example: 14 days.', 'wp-sell-services' ),
+				'default'     => 0,
+				'description' => __( 'Days to hold earnings after an order completes, before a vendor can be paid. 0 pays out as soon as an order completes. A hold is your refund window: if a refund lands after you have already paid the vendor, their balance goes negative and future earnings clear it — a hold avoids that situation entirely. 7 = weekly, 14 = fortnightly, 30 = monthly.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1304,13 +1347,23 @@ class Settings {
 	 * @return void
 	 */
 	public function render(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
+		// Guard on the SAME capability the menu registers this page under
+		// (Admin::add_admin_menu uses `wpss_manage_settings`). Guarding on
+		// `manage_options` instead meant a role granted only
+		// `wpss_manage_settings` saw the menu item, clicked it, and got a
+		// completely blank page with no explanation. Administrators are
+		// unaffected — they hold both.
+		if ( ! current_user_can( 'wpss_manage_settings' ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die(
+				esc_html__( 'You do not have permission to manage these settings.', 'wp-sell-services' ),
+				esc_html__( 'Permission denied', 'wp-sell-services' ),
+				array( 'response' => 403 )
+			);
 		}
 
 		$this->init_tabs();
 
-		$core_tabs = array( 'general', 'payments', 'vendor', 'orders', 'emails', 'pages', 'advanced' );
+		$core_tabs = $this->get_core_tabs();
 		?>
 		<div class="wrap wpss-admin">
 			<div class="wpss-page-header">
@@ -1351,7 +1404,7 @@ class Settings {
 		$grouped_tabs = $this->get_grouped_tabs();
 		$group_labels = $this->get_group_labels();
 		$icon_map     = $this->get_icon_map();
-		$core_tabs    = array( 'general', 'pages', 'payments', 'vendor', 'orders', 'emails', 'advanced' );
+		$core_tabs    = $this->get_core_tabs();
 		?>
 		<div class="wpss-settings-sidebar">
 			<div class="wpss-settings-sidebar__brand">
@@ -1436,6 +1489,12 @@ class Settings {
 			case 'payments':
 				$this->render_payments_tab();
 				break;
+			case 'commission':
+				$this->render_commission_tab();
+				break;
+			case 'payouts':
+				$this->render_payouts_tab();
+				break;
 			case 'vendor':
 				$this->render_vendor_tab();
 				break;
@@ -1506,16 +1565,47 @@ class Settings {
 	}
 
 	/**
-	 * Render the Payments tab with collapsible sections.
+	 * Render the Payment Gateways tab — how money comes IN.
 	 *
-	 * Combines Commission, Tax, and Payouts settings into one tab
-	 * with expandable accordion sections.
+	 * Gateways only. Commission/tax moved to the Commission &amp; Tax tab and
+	 * withdrawal config to the Payouts tab: this one panel used to carry all
+	 * three plus every gateway, which meant eight independent forms and eight
+	 * save buttons on a single screen, where editing across two cards silently
+	 * discarded whichever you did not save.
 	 *
 	 * @return void
 	 */
 	private function render_payments_tab(): void {
+		echo '<div class="wpss-settings-subhead">';
+		echo '<p class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</p>';
+		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
+		echo '</div>';
+
+		$this->render_gateway_cards();
+
+		/**
+		 * Legacy payments-sections hook.
+		 *
+		 * Kept firing HERE so extensions written against the old single
+		 * "Payments" tab keep rendering after the split. Free + Pro ship
+		 * version-locked, so Pro's own renderers move to the precise
+		 * wpss_settings_sections_commission / _payouts hooks below; this remains
+		 * for third-party code.
+		 *
+		 * @since 1.1.0
+		 */
+		do_action( 'wpss_settings_sections_payments', $this );
+	}
+
+	/**
+	 * Render the Commission &amp; Tax tab — what the platform KEEPS.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	private function render_commission_tab(): void {
 		$this->render_tab_sections(
-			'payments',
+			'commission',
 			array(
 				array(
 					'id'           => 'commission',
@@ -1531,6 +1621,25 @@ class Settings {
 					'option_group' => 'wpss_tax',
 					'settings_id'  => 'wpss_tax',
 				),
+			)
+		);
+	}
+
+	/**
+	 * Render the Payouts tab — how money goes OUT to vendors.
+	 *
+	 * Sits next to the Withdrawals screen in the admin's mental model: this is
+	 * where the rules are set, that is where the batch is worked. Previously
+	 * buried inside "Payments", so an owner looking for payout configuration
+	 * had to guess it lived under the tab about taking payments.
+	 *
+	 * @since 1.5.1
+	 * @return void
+	 */
+	private function render_payouts_tab(): void {
+		$this->render_tab_sections(
+			'payouts',
+			array(
 				array(
 					'id'           => 'payouts',
 					'title'        => __( 'Payout Settings', 'wp-sell-services' ),
@@ -1541,14 +1650,16 @@ class Settings {
 			)
 		);
 
-		// Payment gateways are consolidated into the Payments tab so all
-		// money-flow configuration lives in one place.
-		echo '<div class="wpss-settings-subhead">';
-		echo '<p class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</p>';
-		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
-		echo '</div>';
-
-		$this->render_gateway_cards();
+		printf(
+			'<p class="description wpss-settings-crosslink">%s</p>',
+			wp_kses_post(
+				sprintf(
+					/* translators: %s: link to the Withdrawals admin screen. */
+					__( 'Work the payout batch itself on the %s screen.', 'wp-sell-services' ),
+					'<a href="' . esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ) . '">' . esc_html__( 'Withdrawals', 'wp-sell-services' ) . '</a>'
+				)
+			)
+		);
 	}
 
 	/**
@@ -2244,19 +2355,82 @@ class Settings {
 		$options = get_option( $args['option_name'], array() );
 		$value   = $options[ $args['field'] ] ?? ( $args['default'] ?? 0 );
 
+		$min  = (float) ( $args['min'] ?? 0 );
+		$max  = (float) ( $args['max'] ?? 100 );
+		$step = $args['step'] ?? 1;
+
+		// A STORED value outside this field's constraints must never make the
+		// form unsubmittable.
+		//
+		// min/max/step are browser constraints on the whole FORM, not just this
+		// field: if the stored value violates one, the browser refuses to submit
+		// and — when the offending field is scrolled out of view — the admin
+		// sees nothing at all. Save simply appears dead, and one bad value
+		// silently bricks every other setting on that tab. Reproduced
+		// 2026-07-23: auto_withdrawal_threshold = 40 against min = 100 made the
+		// entire Payout Settings form unsubmittable, so clearance_days could not
+		// be saved either.
+		//
+		// Such a value arrives from an older release with different bounds, a
+		// migration, a filter, WP-CLI or a direct DB edit — and nothing warns.
+		// So relax the constraints just enough to let the form through, keeping
+		// the TRUE value on screen (clamping the display would show a number
+		// that is not what is stored).
+		//
+		// Nothing is weakened by this: min/max/step are browser hints only, and
+		// the sanitizer for each option group is the real authority on what may
+		// be stored. Where a bound genuinely matters it must be enforced THERE
+		// (as sanitize_payouts_settings does for clearance_days) — never left to
+		// an attribute a posted request can ignore anyway.
+		if ( is_numeric( $value ) ) {
+			$numeric_value = (float) $value;
+			$min           = min( $min, $numeric_value );
+			$max           = max( $max, $numeric_value );
+
+			// Step is measured from min, so a stored value off the ladder (120
+			// against min 100 step 50) blocks submission just as hard as an
+			// out-of-range one. Fall back to a free-form step for that render
+			// only; valid values keep the intended stepping.
+			if ( is_numeric( $step ) && (float) $step > 0 ) {
+				$offset = ( $numeric_value - $min ) / (float) $step;
+				if ( abs( $offset - round( $offset ) ) > 0.00001 ) {
+					$step = 'any';
+				}
+			}
+		}
+
 		printf(
 			'<input type="number" id="%1$s" name="%2$s[%1$s]" value="%3$s" min="%4$s" max="%5$s" step="%6$s" class="small-text">',
 			esc_attr( $args['field'] ),
 			esc_attr( $args['option_name'] ),
 			esc_attr( (string) $value ),
-			esc_attr( (string) ( $args['min'] ?? 0 ) ),
-			esc_attr( (string) ( $args['max'] ?? 100 ) ),
-			esc_attr( (string) ( $args['step'] ?? 1 ) )
+			esc_attr( self::format_number_attr( $min ) ),
+			esc_attr( self::format_number_attr( $max ) ),
+			esc_attr( (string) $step )
 		);
 
 		if ( ! empty( $args['description'] ) ) {
 			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
 		}
+	}
+
+	/**
+	 * Format a bound for a number input's min/max attribute.
+	 *
+	 * Keeps whole numbers whole — `min="0"`, not `min="0.0"` — while preserving
+	 * a genuine decimal bound (a 2.5 % rate stays 2.5).
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param float $bound Bound value.
+	 * @return string Attribute-ready value.
+	 */
+	private static function format_number_attr( float $bound ): string {
+		if ( abs( $bound - round( $bound ) ) < 0.00001 ) {
+			return (string) (int) round( $bound );
+		}
+
+		return rtrim( rtrim( number_format( $bound, 4, '.', '' ), '0' ), '.' );
 	}
 
 	/**
@@ -2812,8 +2986,14 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['min_withdrawal']            = absint( $input['min_withdrawal'] ?? 50 );
-		$sanitized['clearance_days']            = absint( $input['clearance_days'] ?? 14 );
+		$sanitized['min_withdrawal'] = absint( $input['min_withdrawal'] ?? 50 );
+
+		// 0 is a legitimate, supported value: pay vendors out the moment an
+		// order completes (owner decision 2026-07-23 — see the field definition
+		// for why the wallet ledger makes that safe). Capped at 90 to match the
+		// field, enforced HERE and not just by the max attribute, which is only
+		// a browser hint a posted value can sail straight past.
+		$sanitized['clearance_days'] = min( 90, absint( $input['clearance_days'] ?? 0 ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
 		$sanitized['auto_withdrawal_threshold'] = absint( $input['auto_withdrawal_threshold'] ?? 500 );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );
@@ -2951,8 +3131,25 @@ class Settings {
 			'checkout',
 		);
 
+		// Preserve the stored value for any key the submitted form did not
+		// contain, instead of zeroing it.
+		//
+		// `become_vendor` is only REGISTERED as a field while vendor
+		// registration is open (see the field loop), so with registration
+		// closed the Pages panel posts no `become_vendor` at all — and the old
+		// unconditional `absint( $input[$key] ?? 0 )` wrote 0 over a perfectly
+		// good page ID. One save of an unrelated panel silently destroyed the
+		// mapping, and reopening registration then pointed at nothing. Absent
+		// key now means "unchanged", not "clear it".
+		$existing = get_option( 'wpss_pages', array() );
+
 		foreach ( $page_keys as $key ) {
-			$sanitized[ $key ] = absint( $input[ $key ] ?? 0 );
+			if ( array_key_exists( $key, $input ) ) {
+				$sanitized[ $key ] = absint( $input[ $key ] );
+				continue;
+			}
+
+			$sanitized[ $key ] = absint( $existing[ $key ] ?? 0 );
 		}
 
 		return $sanitized;

@@ -1137,16 +1137,16 @@ class AjaxHandlers {
 		// Generate HTML for reviews.
 		ob_start();
 		foreach ( $reviews as $review ) {
-			$reviewer = get_userdata( $review->reviewer_id );
+			$reviewer_name = $review->get_reviewer_name();
 			?>
 			<div class="wpss-review">
 				<div class="wpss-review-header">
 					<img src="<?php echo esc_url( get_avatar_url( $review->reviewer_id, array( 'size' => 48 ) ) ); ?>"
-						alt="<?php echo esc_attr( $reviewer ? $reviewer->display_name : '' ); ?>"
+						alt="<?php echo esc_attr( $reviewer_name ); ?>"
 						class="wpss-review-avatar">
 					<div class="wpss-review-info">
 						<strong class="wpss-review-author">
-							<?php echo esc_html( $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+							<?php echo esc_html( $reviewer_name ); ?>
 						</strong>
 						<div class="wpss-review-rating">
 							<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
@@ -1368,7 +1368,7 @@ class AjaxHandlers {
 
 		// Verify user can add evidence (is part of the order).
 		$order_repo = new \WPSellServices\Database\Repositories\OrderRepository();
-		$order      = $order_repo->find( $dispute->order_id );
+		$order      = $order_repo->find( (int) $dispute->order_id );
 
 		if ( ! $order ) {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
@@ -1451,6 +1451,7 @@ class AjaxHandlers {
 		?>
 		<div class="wpss-evidence-item wpss-evidence-own">
 			<div class="wpss-evidence-bubble">
+				<span class="wpss-evidence-author"><strong><?php echo esc_html( $evidence_user ? $evidence_user->display_name : '' ); ?></strong></span>
 				<div class="wpss-evidence-content">
 					<?php if ( ! empty( $description ) ) : ?>
 						<div class="wpss-evidence-text">
@@ -3016,6 +3017,8 @@ class AjaxHandlers {
 	 * @return void
 	 */
 	public function order_action(): void {
+		global $wpdb;
+
 		$nonce = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) );
 
 		// Accept nonce from both dashboard context and order detail page context.
@@ -3063,9 +3066,29 @@ class AjaxHandlers {
 				break;
 
 			case 'refund':
-				// Only customer can request refund, or vendor can issue refund.
-				if ( in_array( $order->status, array( 'pending_payment', 'pending_requirements', 'accepted' ), true ) ) {
-					$result = $order_service->update_status( $order_id, 'refunded' );
+				// Refundable iff the buyer paid — at any workflow stage. One
+				// authority (wpss_order_is_refundable) governs every refund
+				// surface so the AJAX path, the admin buttons and any future
+				// caller cannot disagree about which orders qualify.
+				if ( wpss_order_is_refundable( $order ) ) {
+					// How much is going back. Absent or zero means the whole order.
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified at the top of this handler; the (float) cast sanitizes the numeric amount.
+					$wpss_refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
+					$wpss_order_total   = (float) $order->total;
+					$wpss_is_partial    = $wpss_refund_amount > 0 && $wpss_refund_amount < $wpss_order_total;
+
+					// The amount must be on the row before the status hook runs
+					// — the refund handlers read it there to size both the buyer
+					// refund and the vendor's reversal. Writing it here and
+					// transitioning separately left the column claiming a refund
+					// whenever the transition was refused; apply_refund_status()
+					// owns that ordering and undoes the write if the order does
+					// not actually move.
+					$result = $order_service->apply_refund_status(
+						$order_id,
+						$wpss_is_partial ? round( $wpss_refund_amount, wpss_get_currency_decimals( $order->currency ?? '' ) ) : $wpss_order_total,
+						$wpss_is_partial ? 'partially_refunded' : 'refunded'
+					);
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Order cannot be refunded in its current status.', 'wp-sell-services' ) ) );
 				}
@@ -3516,6 +3539,13 @@ class AjaxHandlers {
 		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
 		}
+
+		// Billing address — available to ALL users, not just vendors, because a
+		// buyer needs one for invoices and they never see the vendor fields.
+		// Shares the exact helper the checkout save-back uses, so both surfaces
+		// write the same WooCommerce-compatible keys with the same sanitising.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+		wpss_save_billing_from_request( $_POST, $user_id );
 
 		// Update display name (available for all users).
 		$display_name = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );

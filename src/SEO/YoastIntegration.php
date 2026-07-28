@@ -201,7 +201,7 @@ class YoastIntegration {
 
 		if ( $delivery_days ) {
 			$additions[] = sprintf(
-				/* translators: %d: days */
+				/* translators: %d: number of days */
 				_n( '%d day delivery', '%d days delivery', (int) $delivery_days, 'wp-sell-services' ),
 				(int) $delivery_days
 			);
@@ -411,7 +411,7 @@ class YoastIntegration {
 			return $exclude;
 		}
 
-		$status = get_post_meta( $post->ID, '_wpss_service_status', true );
+		$status = wpss_get_service_status( $post->ID );
 
 		return 'paused' === $status;
 	}
@@ -565,7 +565,7 @@ class YoastIntegration {
 		}
 
 		$service_id = get_the_ID();
-		$status     = get_post_meta( $service_id, '_wpss_service_status', true );
+		$status     = wpss_get_service_status( $service_id );
 
 		// Noindex paused services.
 		if ( 'paused' === $status ) {

@@ -197,3 +197,43 @@
 	};
 
 } )();
+
+/**
+ * Billing block: expand the form from its collapsed summary.
+ *
+ * Lives in wpss-ui (not stripe.js) because the block is gateway-agnostic — the
+ * same Edit control has to work when the buyer pays by PayPal, Razorpay or Woo,
+ * none of which load the Stripe script.
+ */
+( function () {
+	'use strict';
+
+	document.addEventListener( 'click', function ( e ) {
+		var trigger = e.target.closest( '[data-wpss-billing-edit]' );
+		if ( ! trigger ) {
+			return;
+		}
+
+		e.preventDefault();
+
+		var block = trigger.closest( '[data-wpss-billing]' );
+		if ( ! block ) {
+			return;
+		}
+
+		var form = block.querySelector( '[data-wpss-billing-form]' );
+		var summary = block.querySelector( '[data-wpss-billing-summary]' );
+
+		if ( form ) {
+			form.removeAttribute( 'hidden' );
+			var first = form.querySelector( 'input, select' );
+			if ( first && first.focus ) {
+				first.focus();
+			}
+		}
+		if ( summary ) {
+			summary.setAttribute( 'hidden', 'hidden' );
+		}
+		trigger.setAttribute( 'hidden', 'hidden' );
+	} );
+}() );

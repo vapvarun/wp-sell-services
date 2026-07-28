@@ -70,7 +70,7 @@ class FieldRenderer {
 			</div>
 
 			<div class="wpss-requirements-submit">
-				<button type="submit" class="wpss-button wpss-button-primary">
+				<button type="submit" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
 				</button>
 			</div>

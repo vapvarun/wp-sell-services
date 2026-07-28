@@ -635,11 +635,26 @@
                         // Update cart count in header.
                         self.updateCartCount(response.data.cart_count);
 
-                        // Show success state.
+                        // The button says "Continue to Checkout" — honor it:
+                        // go straight to checkout after adding, instead of
+                        // parking on a cart-options panel. Fall back to that
+                        // panel only if no checkout URL is available.
                         setTimeout(function() {
-                            self.showCartOptions();
+                            const checkoutUrl = self.state.checkoutUrl || wpssService.checkoutUrl;
+                            if (checkoutUrl) {
+                                window.location.href = checkoutUrl;
+                            } else {
+                                self.showCartOptions();
+                            }
                         }, 500);
                     } else {
+                        // Guests can't have a cart — the server returns a login_url.
+                        // Redirect them to log in (and back) instead of dead-ending
+                        // on a "Could not add to cart" error they can't resolve.
+                        if (response.data && response.data.login_url) {
+                            window.location.href = response.data.login_url;
+                            return;
+                        }
                         self.showError(response.data.message || (wpssService.i18n && wpssService.i18n.error) || 'Could not add to cart. Please try again.');
                         $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.continueToCheckout) || 'Continue to Checkout');
                     }

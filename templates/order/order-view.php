@@ -136,7 +136,7 @@ do_action( 'wpss_before_order_view', $order );
 			 */
 			$status_label = apply_filters( 'wpss_order_status_label', $status_label, $order->status, $order );
 			?>
-			<span class="wpss-badge wpss-badge--lg wpss-badge--status-<?php echo esc_attr( str_replace( '_', '-', $order->status ) ); ?>">
+			<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 				<?php echo esc_html( $status_label ); ?>
 			</span>
 
@@ -253,6 +253,28 @@ do_action( 'wpss_before_order_view', $order );
 						),
 						'class' => 'wpss-btn wpss-btn--success',
 						'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
+
+				// Submit Requirements CTA. A paid order sits in pending_requirements
+				// until the buyer provides their brief. The inline requirements
+				// FORM further down only renders when the SERVICE defined custom
+				// fields; for the (common) service with none, the buyer's order
+				// view otherwise showed only "Cancel Order" and no way to proceed
+				// — they could reach the working generic form ONLY via the
+				// post-payment redirect's `action=requirements` URL, so anyone who
+				// navigated back to the order later was stranded. This button
+				// always links there, so requirements can be submitted regardless
+				// of whether the service configured fields. Submitting advances the
+				// order out of pending_requirements, so the status check alone is
+				// enough — a pending_requirements order never has a completed brief.
+				// The $has_submitted_requirements flag is computed further down.
+				if ( 'pending_requirements' === $order->status ) {
+					$requirements_url        = add_query_arg( 'action', 'requirements', wpss_get_order_url( $order_id ) );
+					$actions['requirements'] = array(
+						'label' => __( 'Submit Requirements', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--primary',
+						'attrs' => 'onclick="window.location.href=\'' . esc_url( $requirements_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
 					);
 				}
 
@@ -408,6 +430,44 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Total Amount', 'wp-sell-services' ); ?></span>
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
 				</div>
+				<?php
+				// Refunded amount. Without this the order reads "Partially
+				// Refunded — Total $100.00" and neither party can tell how much
+				// actually came back. Shown to buyer and vendor alike: the buyer
+				// needs to reconcile it against their statement, the vendor
+				// against the reversal on their wallet.
+				// Through the shared resolver, NOT the raw column: a full refund
+				// leaves refunded_amount NULL as a sentinel for the money layer,
+				// so reading the column here showed the buyer no figure at all
+				// on exactly the orders where the whole charge came back.
+				$refunded_amount = wpss_get_order_refunded_amount( $order );
+
+				if ( $refunded_amount > 0 ) :
+					$is_full_refund = $refunded_amount >= (float) $order->total;
+					?>
+					<div class="wpss-order-detail-item wpss-order-detail-item--refunded">
+						<span class="wpss-order-detail-item__label">
+							<?php
+							echo $is_full_refund
+								? esc_html__( 'Refunded', 'wp-sell-services' )
+								: esc_html__( 'Partially Refunded', 'wp-sell-services' );
+							?>
+						</span>
+						<span class="wpss-order-detail-item__value">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %s: refunded amount */
+									__( '-%s', 'wp-sell-services' ),
+									wpss_format_price( $refunded_amount, $order->currency )
+								)
+							);
+							?>
+						</span>
+					</div>
+					<?php
+				endif;
+				?>
 				<?php
 				// Vendor-only NET earnings breakdown. Buyers see the gross "Total Amount"
 				// above (which is what they paid); vendors additionally see what they
@@ -928,6 +988,15 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
+	<?php
+	// Billing address as recorded when the order was paid. Shown to both
+	// parties: the buyer reconciles it against their statement and their
+	// accountant needs the GST line, and the vendor needs to see what the
+	// invoice says. Renders nothing on orders placed before DB_VERSION 1.5.0,
+	// which carry no snapshot.
+	wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) );
+	?>
+
 	<!-- Order Timeline Section -->
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
@@ -1102,7 +1171,7 @@ do_action( 'wpss_before_order_view', $order );
 							<span class="wpss-delivery-item__date">
 								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
 							</span>
-							<span class="wpss-badge wpss-badge--status-<?php echo esc_attr( $delivery->status ); ?>">
+							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
 								<?php echo esc_html( ucfirst( $delivery->status ) ); ?>
 							</span>
 						</div>
@@ -1609,7 +1678,7 @@ do_action( 'wpss_before_order_view', $order );
 						<strong><?php esc_html_e( 'Extra days', 'wp-sell-services' ); ?></strong>
 						<?php
 						printf(
-							/* translators: %d: extra days */
+							/* translators: %d: number of days */
 							esc_html( _n( '%d day', '%d days', (int) $pending_extension->extra_days, 'wp-sell-services' ) ),
 							absint( $pending_extension->extra_days )
 						);
@@ -1627,7 +1696,7 @@ do_action( 'wpss_before_order_view', $order );
 						<a href="<?php echo esc_url( $ext_pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php
 							printf(
-								/* translators: %s: formatted amount */
+								/* translators: %s: amount */
 								esc_html__( 'Accept & Pay %s', 'wp-sell-services' ),
 								esc_html( wpss_format_price( (float) $pending_extension->amount, $ext_currency ) )
 							);
@@ -2757,13 +2826,6 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 .wpss-requirement-view__thumbnail:hover {
 	transform: scale(1.02);
-}
-
-/* Cancellation Requested Status Badge */
-.wpss-badge--status-cancellation-requested {
-	background: rgba(245, 158, 11, 0.1);
-	color: var(--wpss-warning-dark, #92400e);
-	border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 /* Alert Styles */

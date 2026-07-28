@@ -1,0 +1,100 @@
+/**
+ * Pro teaser + locked-preview styles.
+ *
+ * ONE definition, loaded in both contexts, because ProTeaser renders on BOTH
+ * surfaces: the admin settings screens (vendor tab, analytics tab) and the
+ * FRONTEND member dashboard (earnings + section teasers). Copying these rules
+ * into admin.css and a frontend sheet would have recreated exactly the
+ * duplicate-class problem this cleanup exists to remove, so the file is
+ * enqueued twice instead of the rules being written twice.
+ *
+ * Previously printed as two inline <style> blocks in ProTeaser.php — the shared
+ * one guarded by a static flag purely to stop it printing three times per page.
+ */
+
+/* --------------------------------------------------------------------------
+   Locked preview — blurred Pro feature behind an upgrade overlay (admin only,
+   but kept here so the whole teaser vocabulary lives in one file).
+   -------------------------------------------------------------------------- */
+
+.wpss-pro-locked {
+	position: relative;
+	max-width: 900px;
+	margin-top: 20px;
+}
+
+.wpss-pro-locked__preview {
+	filter: blur(3px);
+	opacity: 0.6;
+	pointer-events: none;
+	user-select: none;
+}
+
+.wpss-pro-locked__overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	background: rgba(255, 255, 255, 0.4);
+	border-radius: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Inline teaser card — admin settings AND frontend dashboard.
+   -------------------------------------------------------------------------- */
+
+.wpss-pro-teaser {
+	border: 1px solid var(--wpss-primary-light, #e0d4f5);
+	border-inline-start: 4px solid var(--wpss-primary, #7c3aed);
+	background: linear-gradient(135deg, var(--wpss-primary-light, #faf5ff) 0%, var(--wpss-info-light, #f0f7ff) 100%);
+	border-radius: 6px;
+	padding: 16px 20px;
+	margin: 16px 0;
+}
+
+.wpss-pro-teaser__badge {
+	display: inline-block;
+	background: linear-gradient(135deg, var(--wpss-primary, #7c3aed), var(--wpss-primary, #6366f1));
+	color: var(--wpss-white, #fff);
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	padding: 2px 8px;
+	border-radius: 3px;
+	letter-spacing: 0.5px;
+}
+
+.wpss-pro-teaser__title {
+	margin: 8px 0 4px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--wpss-gray-800, #1e1e1e);
+}
+
+.wpss-pro-teaser__text {
+	color: var(--wpss-wp-admin-text-secondary, #646970);
+	font-size: 13px;
+	margin: 0 0 12px;
+	line-height: 1.5;
+}
+
+.wpss-pro-teaser__cta {
+	display: inline-block;
+	background: var(--wpss-primary, #7c3aed);
+	color: var(--wpss-white, #fff) !important;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 6px 16px;
+	border-radius: 4px;
+	text-decoration: none !important;
+	transition: background 0.2s;
+}
+
+.wpss-pro-teaser__cta:hover,
+.wpss-pro-teaser__cta:focus {
+	background: var(--wpss-primary-dark, #6d28d9);
+	color: var(--wpss-white, #fff) !important;
+}

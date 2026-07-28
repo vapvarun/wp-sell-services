@@ -50,11 +50,11 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 					<img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php esc_attr_e( 'Profile photo', 'wp-sell-services' ); ?>" class="wpss-avatar-upload__image" id="wpss-avatar-preview" data-gravatar="<?php echo esc_url( get_avatar_url( $user_id, array( 'size' => 150 ) ) ); ?>">
 					<input type="hidden" name="avatar_id" id="wpss-avatar-id" value="<?php echo esc_attr( $avatar_id ); ?>">
 					<div class="wpss-avatar-upload__actions">
-						<button type="button" class="wpss-btn wpss-btn--small wpss-btn--secondary" id="wpss-avatar-upload-btn">
+						<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-avatar-upload-btn">
 							<?php esc_html_e( 'Upload Photo', 'wp-sell-services' ); ?>
 						</button>
 						<?php if ( $avatar_id ) : ?>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-avatar-remove-btn">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-avatar-remove-btn">
 								<?php esc_html_e( 'Remove', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>
@@ -81,11 +81,11 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 						<input type="hidden" name="cover_id" id="wpss-cover-id" value="<?php echo esc_attr( $cover_id ); ?>">
 					</div>
 					<div class="wpss-cover-upload__actions" style="margin-top:8px;">
-						<button type="button" class="wpss-btn wpss-btn--small wpss-btn--secondary" id="wpss-cover-upload-btn">
+						<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-cover-upload-btn">
 							<?php esc_html_e( 'Upload Cover', 'wp-sell-services' ); ?>
 						</button>
 						<?php if ( $cover_id ) : ?>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link" id="wpss-cover-remove-btn">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-cover-remove-btn">
 								<?php esc_html_e( 'Remove', 'wp-sell-services' ); ?>
 							</button>
 						<?php endif; ?>
@@ -106,6 +106,27 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			</div>
 		</div>
 
+		<div class="wpss-profile-form__section">
+			<h3><?php esc_html_e( 'Billing details', 'wp-sell-services' ); ?></h3>
+			<p class="wpss-form-hint">
+				<?php esc_html_e( 'Used on your invoices and filled in for you at checkout, so you only have to enter it once.', 'wp-sell-services' ); ?>
+			</p>
+			<?php
+			// The SAME partial checkout renders — one field definition, one
+			// markup, so the two can never drift. Forced open here because this
+			// is the edit surface; checkout collapses it to a summary.
+			//
+			// Shown to every user, not just vendors: a buyer needs a billing
+			// address for invoices and never sees the seller fields below.
+			$wpss_billing  = wpss_get_billing_address( $user->ID );
+			$wpss_complete = false;
+			wpss_get_template_part( 'partials/billing', 'fields', array(
+				'wpss_billing'  => $wpss_billing,
+				'wpss_complete' => $wpss_complete,
+			) );
+			?>
+		</div>
+
 		<?php if ( $is_vendor && $vendor_profile ) : ?>
 			<div class="wpss-profile-form__section">
 				<h3><?php esc_html_e( 'Seller Profile', 'wp-sell-services' ); ?></h3>
@@ -123,7 +144,25 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				<div class="wpss-form-row wpss-form-row--half">
 					<div>
 						<label for="country"><?php esc_html_e( 'Country', 'wp-sell-services' ); ?></label>
-						<input type="text" id="country" name="country" value="<?php echo esc_attr( $vendor_profile->country ?? '' ); ?>" class="wpss-input">
+						<?php
+						// Was a free-text input, which meant every vendor stored
+						// a different spelling and nothing could be filtered or
+						// grouped by country. Now the shared list, like every
+						// other country field in the plugin.
+						//
+						// resolve_country_code() maps legacy free-text values
+						// ("India") onto their code so an existing vendor's
+						// country stays selected instead of silently blanking.
+						$wpss_country_code = wpss_resolve_country_code( (string) ( $vendor_profile->country ?? '' ) );
+						?>
+						<select id="country" name="country" class="wpss-input">
+							<option value=""><?php esc_html_e( 'Select a country…', 'wp-sell-services' ); ?></option>
+							<?php foreach ( wpss_get_countries() as $wpss_code => $wpss_label ) : ?>
+								<option value="<?php echo esc_attr( $wpss_code ); ?>" <?php selected( $wpss_country_code, $wpss_code ); ?>>
+									<?php echo esc_html( $wpss_label ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
 					</div>
 					<div>
 						<label for="city"><?php esc_html_e( 'City', 'wp-sell-services' ); ?></label>

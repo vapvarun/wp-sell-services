@@ -77,26 +77,21 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$delivery_days = (int) ( $order_data['delivery_days'] ?? 7 );
 		$revisions     = (int) ( $order_data['revisions'] ?? 0 );
 
-		// Pre-calculate commission rate so order details can display expected earnings.
-		$commission_rate = CommissionService::get_global_commission_rate();
-
-		// Check for vendor-specific commission rate.
-		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$vendor_rate = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT custom_commission_rate FROM {$profiles_table} WHERE user_id = %d",
-				$service->vendor_id
-			)
-		);
-		if ( null !== $vendor_rate && '' !== $vendor_rate ) {
-			$commission_rate = (float) $vendor_rate;
-		}
-
-		// Use pre-tax base for commission so vendors aren't charged fees on tax.
+		// Compute the commission breakdown through the single authority so the
+		// value PERSISTED here (read later by the Stripe Connect split at payment
+		// time) already reflects per-vendor rates, tiered rules, plan overrides
+		// and flat fees — instead of a divergent local round( base * rate / 100 ).
+		// Pre-tax base so vendors aren't charged fees on tax.
 		$commission_base = $subtotal + $addons_total;
-		$platform_fee    = round( $commission_base * ( $commission_rate / 100 ), 2 );
-		$vendor_earnings = round( $commission_base - $platform_fee, 2 );
+		$order_context   = (object) array(
+			'id'         => 0,
+			'vendor_id'  => (int) $service->vendor_id,
+			'service_id' => (int) $service->id,
+		);
+		$breakdown       = CommissionService::compute_breakdown( (float) $commission_base, $order_context );
+		$commission_rate = $breakdown['commission_rate'];
+		$platform_fee    = $breakdown['platform_fee'];
+		$vendor_earnings = $breakdown['vendor_earnings'];
 
 		// Snapshot the package data at order creation time so it's immune to later edits.
 		$package_snapshot = null;
@@ -280,32 +275,19 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		return $order->payment_status;
 	}
 
-	/**
-	 * Process refund.
+	/*
+	 * NOTE: there is deliberately no process_refund() here.
 	 *
-	 * @param ServiceOrder $order  Service order.
-	 * @param float        $amount Refund amount.
-	 * @param string       $reason Refund reason.
-	 * @return bool
+	 * One used to exist with zero callers. It duplicated
+	 * OrderWorkflowManager::attempt_payment_refund() — resolve the gateway from
+	 * wpss_payment_gateways, call its process_refund() — but WITHOUT that
+	 * method's payment_status guard against refunding twice, without the audit
+	 * log write, and without updating the order. Anyone "reusing" it would have
+	 * reintroduced the double-refund the guard exists to prevent.
+	 *
+	 * Refunds go through OrderWorkflowManager, which owns the guard, the audit
+	 * trail and the vendor-earnings reversal.
 	 */
-	public function process_refund( ServiceOrder $order, float $amount, string $reason = '' ): bool {
-		if ( empty( $order->transaction_id ) ) {
-			return false;
-		}
-
-		// Get the payment gateway used.
-		$gateway_id = $order->payment_method;
-		$gateways   = apply_filters( 'wpss_payment_gateways', [] );
-
-		if ( ! isset( $gateways[ $gateway_id ] ) ) {
-			return false;
-		}
-
-		$gateway = $gateways[ $gateway_id ];
-		$result  = $gateway->process_refund( $order->transaction_id, $amount, $reason );
-
-		return ! empty( $result['success'] );
-	}
 
 	/**
 	 * Get orders URL.
@@ -377,6 +359,22 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			'paid_at'        => current_time( 'mysql' ),
 			'updated_at'     => current_time( 'mysql' ),
 		);
+
+		// Snapshot the buyer's billing address AT PAYMENT TIME. The profile
+		// holds the current address; the order holds the one that was billed,
+		// so editing the profile later cannot rewrite past invoices. Same split
+		// WooCommerce uses between billing_* on the user and _billing_* on the
+		// order.
+		//
+		// Only written when it is not already set — a re-run of mark_as_paid()
+		// must not overwrite the address the buyer actually paid under.
+		if ( empty( $order->billing_address ) ) {
+			$billing = wpss_get_billing_address( (int) $order->customer_id );
+
+			if ( ! empty( array_filter( $billing ) ) ) {
+				$update_data['billing_address'] = wp_json_encode( $billing );
+			}
+		}
 
 		if ( ! $is_sub_order ) {
 			$update_data['status'] = ServiceOrder::STATUS_PENDING_REQUIREMENTS;

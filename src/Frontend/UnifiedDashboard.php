@@ -126,14 +126,14 @@ class UnifiedDashboard {
 			'wpss-unified-dashboard',
 			'wpssUnifiedDashboard',
 			array(
-				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
-				'nonce'                  => wp_create_nonce( 'wpss_dashboard_nonce' ),
-				'serviceNonce'           => wp_create_nonce( 'wpss_service_nonce' ),
-				'restUrl'                => esc_url_raw( rest_url( 'wpss/v1/' ) ),
-				'restNonce'              => wp_create_nonce( 'wp_rest' ),
-				'currencyDecimals'       => wpss_get_currency_decimals(),
-				'zeroDecimalCurrencies'  => wpss_get_zero_decimal_currencies(),
-				'i18n'         => array(
+				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
+				'nonce'                 => wp_create_nonce( 'wpss_dashboard_nonce' ),
+				'serviceNonce'          => wp_create_nonce( 'wpss_service_nonce' ),
+				'restUrl'               => esc_url_raw( rest_url( 'wpss/v1/' ) ),
+				'restNonce'             => wp_create_nonce( 'wp_rest' ),
+				'currencyDecimals'      => wpss_get_currency_decimals(),
+				'zeroDecimalCurrencies' => wpss_get_zero_decimal_currencies(),
+				'i18n'                  => array(
 					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
@@ -157,7 +157,9 @@ class UnifiedDashboard {
 					'deleteFailed'           => __( 'Delete failed.', 'wp-sell-services' ),
 					'saveFailed'             => __( 'Save failed.', 'wp-sell-services' ),
 					'failed'                 => __( 'Failed.', 'wp-sell-services' ),
+					/* translators: %d: number of saved services */
 					'favoriteCountSingular'  => __( '%d saved service', 'wp-sell-services' ),
+					/* translators: %d: number of saved services. */
 					'favoriteCountPlural'    => __( '%d saved services', 'wp-sell-services' ),
 					'favoriteRemoveFailed'   => __( 'Could not remove favorite. Please try again.', 'wp-sell-services' ),
 					'chooseProfilePhoto'     => __( 'Choose Profile Photo', 'wp-sell-services' ),
@@ -203,6 +205,13 @@ class UnifiedDashboard {
 		$this->current_section = $this->resolve_current_section();
 		$this->sections        = $this->get_sections();
 
+		// A hidden/denied section reached by direct URL falls back to the default
+		// landing section — hiding a menu item must also block its address, not
+		// just remove the link.
+		if ( ! $this->can_access_section( $this->current_section ) ) {
+			$this->current_section = $this->default_section();
+		}
+
 		ob_start();
 		$this->render_shell();
 		return ob_get_clean();
@@ -230,7 +239,71 @@ class UnifiedDashboard {
 
 		$section = sanitize_key( $section );
 
-		return '' === $section ? $this->default_section() : $section;
+		if ( '' !== $section ) {
+			return $section;
+		}
+
+		// A URL that names an order belongs to THAT order's side of the trade,
+		// not to whatever the viewer's role defaults to. Without this, a member
+		// who both buys and sells — which is every vendor who also orders, and
+		// the state a buyer lands in the moment they register as a vendor — was
+		// sent to "Sales Orders" straight after PAYING for something: the page
+		// title, and the highlighted nav item, both claimed a purchase was a
+		// sale. Deciding from the order keeps buying and selling honest.
+		$section_for_order = $this->section_for_order( $this->resolve_requested_order_id() );
+
+		return '' !== $section_for_order ? $section_for_order : $this->default_section();
+	}
+
+	/**
+	 * Read the order ID a dashboard URL is pointing at, if any.
+	 *
+	 * @since 1.2.4
+	 *
+	 * @return int Order ID, or 0 when the URL names no order.
+	 */
+	private function resolve_requested_order_id(): int {
+		$order_id = (int) get_query_var( 'wpss_order_id', 0 );
+
+		if ( ! $order_id ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
+			$order_id = isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
+		}
+
+		return $order_id;
+	}
+
+	/**
+	 * Which dashboard section an order belongs to for the current viewer.
+	 *
+	 * @since 1.2.4
+	 *
+	 * @param int $order_id Order ID (0 for none).
+	 * @return string `orders` when the viewer bought it, `sales` when they sold
+	 *                it, empty string when neither (or no order).
+	 */
+	private function section_for_order( int $order_id ): string {
+		if ( ! $order_id ) {
+			return '';
+		}
+
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return '';
+		}
+
+		$user_id = get_current_user_id();
+
+		if ( (int) ( $order->customer_id ?? 0 ) === $user_id ) {
+			return 'orders';
+		}
+
+		if ( (int) ( $order->vendor_id ?? 0 ) === $user_id ) {
+			return 'sales';
+		}
+
+		return '';
 	}
 
 	/**
@@ -277,14 +350,20 @@ class UnifiedDashboard {
 		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
 		$user_id              = get_current_user_id();
 
-		if ( in_array( $section, $vendor_only_sections, true ) ) {
-			// Must be an active vendor (not just registered/pending).
-			return $this->vendor_service->is_vendor( $user_id )
-				&& 'active' === $this->vendor_service->get_vendor_status( $user_id );
+		// A vendor-only section requires an active (approved) vendor — pending
+		// vendors and non-vendors are refused outright.
+		if ( in_array( $section, $vendor_only_sections, true )
+			&& ! ( $this->vendor_service->is_vendor( $user_id )
+				&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) ) ) {
+			return false;
 		}
 
 		/**
 		 * Filter whether user can access a dashboard section.
+		 *
+		 * Runs for EVERY section — including vendor-only ones — so role-based menu
+		 * visibility can hide a selling section too. The filter only ever tightens
+		 * access; a section already refused above never reaches here.
 		 *
 		 * @since 1.1.0
 		 * @param bool   $can_access Whether user can access section.
@@ -355,11 +434,19 @@ class UnifiedDashboard {
 		$sections['account'] = array(
 			'label' => __( 'Account', 'wp-sell-services' ),
 			'items' => array(
-				'messages' => array(
+				'messages'      => array(
 					'icon'  => 'chat',
 					'label' => __( 'Messages', 'wp-sell-services' ),
 				),
-				'profile'  => array(
+				'notifications' => array(
+					'icon'  => 'bell',
+					'label' => __( 'Notifications', 'wp-sell-services' ),
+				),
+				'disputes'      => array(
+					'icon'  => 'shield',
+					'label' => __( 'Disputes', 'wp-sell-services' ),
+				),
+				'profile'       => array(
 					'icon'  => 'user',
 					'label' => __( 'Profile', 'wp-sell-services' ),
 				),
@@ -432,11 +519,28 @@ class UnifiedDashboard {
 				</div>
 
 				<nav class="wpss-dashboard__nav">
-					<?php foreach ( $this->sections as $group_key => $group ) : ?>
+					<?php
+					foreach ( $this->sections as $group_key => $group ) :
+						// Drop items the current user's role cannot access (vendor-only
+						// gate + role-based menu visibility, via can_access_section) so
+						// the nav never shows a link that would be denied. A group whose
+						// items are all hidden is skipped entirely — no empty header.
+						$visible_items = array_filter(
+							$group['items'],
+							function ( $item_key ) {
+								return $this->can_access_section( (string) $item_key );
+							},
+							ARRAY_FILTER_USE_KEY
+						);
+
+						if ( empty( $visible_items ) ) {
+							continue;
+						}
+						?>
 						<div class="wpss-dashboard__nav-group">
 							<span class="wpss-dashboard__nav-label"><?php echo esc_html( $group['label'] ); ?></span>
 							<ul class="wpss-dashboard__nav-list">
-								<?php foreach ( $group['items'] as $item_key => $item ) : ?>
+								<?php foreach ( $visible_items as $item_key => $item ) : ?>
 									<li>
 										<a href="<?php echo esc_url( $this->get_section_url( $item_key ) ); ?>"
 											class="wpss-dashboard__nav-item <?php echo $this->current_section === $item_key ? 'wpss-dashboard__nav-item--active' : ''; ?>">
@@ -448,6 +552,23 @@ class UnifiedDashboard {
 							</ul>
 						</div>
 					<?php endforeach; ?>
+
+					<?php
+					// Log Out — members sign in through the dashboard, so give them
+					// a way out here too (Basecamp #10092963015). Pinned in its own
+					// group at the bottom of the nav.
+					?>
+					<div class="wpss-dashboard__nav-group wpss-dashboard__nav-group--account">
+						<ul class="wpss-dashboard__nav-list">
+							<li>
+								<a href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>"
+									class="wpss-dashboard__nav-item wpss-dashboard__nav-item--logout">
+									<?php $this->render_icon( 'log-out' ); ?>
+									<span><?php esc_html_e( 'Log Out', 'wp-sell-services' ); ?></span>
+								</a>
+							</li>
+						</ul>
+					</div>
 				</nav>
 
 				<?php if ( $is_pending ) : ?>
@@ -494,7 +615,11 @@ class UnifiedDashboard {
 					<h1 class="wpss-dashboard__title wpss-page-header__title">
 						<?php
 						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
-						if ( $id && 'create' !== $this->current_section ) {
+						// Service edit reuses the `create` section with ?id=<service_id>, so
+						// an editing context is `create` section + a present id. The guard was
+						// inverted (`!== 'create'`), so editing a service always fell through to
+						// the "Create Service" title.
+						if ( $id && 'create' === $this->current_section ) {
 							esc_html_e( 'Update Service', 'wp-sell-services' );
 						} else {
 							echo esc_html( $section_data['title'] );
@@ -577,9 +702,17 @@ class UnifiedDashboard {
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
 			'portfolio'      => __( 'Portfolio', 'wp-sell-services' ),
 			'messages'       => __( 'Messages', 'wp-sell-services' ),
+			// Disputes and Notifications are in the dashboard nav but were
+			// missing from this map, so both fell through to the generic
+			// "Dashboard" default: the page header read "Dashboard" while the
+			// section repeated its own name below it — two headings, and the
+			// top one wrong. Every nav destination needs an entry here.
+			'disputes'       => __( 'Disputes', 'wp-sell-services' ),
+			'notifications'  => __( 'Notifications', 'wp-sell-services' ),
 			'profile'        => __( 'Profile', 'wp-sell-services' ),
 			'create'         => __( 'Create Service', 'wp-sell-services' ),
 			'create-request' => __( 'Post a Request', 'wp-sell-services' ),
+			'edit-request'   => __( 'Edit Request', 'wp-sell-services' ),
 		);
 
 		/**

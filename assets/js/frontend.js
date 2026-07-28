@@ -785,6 +785,18 @@
 			WPSS.showModal('wpss-dispute-modal');
 		});
 
+		// Add-evidence: reflect the chosen file name next to the attach button.
+		$(document).on('change', '#wpss-add-evidence-form input[name="evidence_file"]', function() {
+			const name = (this.files && this.files.length) ? this.files[0].name : '';
+			$(this).closest('.wpss-add-evidence-form').find('.wpss-evidence-filename').text(name);
+		});
+
+		// Add-evidence form submission (dispute detail thread).
+		$(document).on('submit', '#wpss-add-evidence-form', function(e) {
+			e.preventDefault();
+			WPSS.submitDisputeEvidence($(this));
+		});
+
 		// Delivery form submission.
 		$(document).on('submit', '#wpss-deliver-form', function(e) {
 			e.preventDefault();
@@ -986,6 +998,53 @@
 					}, 1500);
 				} else {
 					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.disputeFailed) || 'Failed to open dispute.', 'error');
+				}
+			},
+			error: function() {
+				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+			},
+			complete: function() {
+				$btn.prop('disabled', false).text(btnText);
+			}
+		});
+	};
+
+	/**
+	 * Add a message/evidence to a dispute and append it to the thread.
+	 *
+	 * Uses FormData so the optional file upload rides along; the nonce and
+	 * dispute_id are carried by the form's own hidden fields.
+	 */
+	WPSS.submitDisputeEvidence = function($form) {
+		const $btn = $form.find('button[type="submit"]');
+		const btnText = $btn.text();
+		const formEl = $form.get(0);
+		const data = new FormData(formEl);
+		data.append('action', 'wpss_add_dispute_evidence');
+
+		$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.submitting) || 'Sending...');
+
+		$.ajax({
+			url: wpssData.ajaxUrl,
+			type: 'POST',
+			data: data,
+			processData: false,
+			contentType: false,
+			success: function(response) {
+				if (response.success) {
+					const $thread = $('#wpss-evidence-thread');
+					$thread.find('.wpss-evidence-empty').remove();
+					if (response.data && response.data.html) {
+						$thread.append(response.data.html);
+					}
+					formEl.reset();
+					$form.find('.wpss-evidence-filename').text('');
+					if (window.lucide && typeof window.lucide.createIcons === 'function') {
+						window.lucide.createIcons();
+					}
+					WPSS.showNotification((response.data && response.data.message) || 'Message added.', 'success');
+				} else {
+					WPSS.showNotification((response.data && response.data.message) || (wpssData.i18n && wpssData.i18n.error) || 'Failed to add message.', 'error');
 				}
 			},
 			error: function() {

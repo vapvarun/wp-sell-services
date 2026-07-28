@@ -57,12 +57,97 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	 * @param float  $price     Original price.
 	 * @param string $currency  Currency code.
 	 */
+	// Negative amounts put the minus BEFORE the symbol ("-$90.00"), not after
+	// it ("$-90.00"). Concatenating the symbol onto a pre-signed number gave
+	// the latter, which reads as a typo — and negatives became reachable in the
+	// UI once refunds started driving vendor balances below zero.
+	$is_negative = $price < 0;
+	$formatted   = $symbol . number_format( abs( $price ), $decimals );
+
+	if ( $is_negative ) {
+		$formatted = '-' . $formatted;
+	}
+
 	return apply_filters(
 		'wpss_format_price',
-		$symbol . number_format( $price, $decimals ),
+		$formatted,
 		$price,
 		$currency
 	);
+}
+
+/**
+ * Format a CATALOG price (what a shopper pays) with an optional display hint.
+ *
+ * Identical to wpss_format_price() by default, but scoped to catalog surfaces —
+ * service card, package tiers, single-service price — so an add-on (Pro) can
+ * append a "≈ €46" converted hint next to the base amount WITHOUT the hint ever
+ * appearing on vendor-facing money (wallet, earnings, payouts) that runs through
+ * plain wpss_format_price().
+ *
+ * The stored value is ALWAYS the base amount; any hint is presentation only and
+ * changes nothing in the database, the charge, or the ledger.
+ *
+ * @since 1.5.2
+ *
+ * @param float  $amount  Catalog amount in the store base currency.
+ * @param string $context Where it is shown ('card', 'package', 'single', …).
+ * @return string Base-price HTML, with a display hint appended if one is hooked.
+ */
+function wpss_catalog_price_html( float $amount, string $context = '' ): string {
+	/**
+	 * Filter catalog price HTML to append a display-currency hint.
+	 *
+	 * Hooked by Pro's display-currency feature. Receives the base-formatted HTML
+	 * and the raw base amount; must return HTML that still shows the base price
+	 * (append, never replace) so the shopper always sees what they are charged.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param string $html    Base price HTML from wpss_format_price().
+	 * @param float  $amount  Raw base amount.
+	 * @param string $context Catalog surface identifier.
+	 */
+	return apply_filters( 'wpss_catalog_price_html', wpss_format_price( $amount ), $amount, $context );
+}
+
+/**
+ * THE status → CSS class authority for status badges.
+ *
+ * One place that turns any status value into its badge class, so no surface can
+ * invent its own mapping and drift. Two prior bugs this replaces:
+ *
+ *  - `OrdersListTable` kept a hand-maintained status→class array that was
+ *    MISSING refunded / delivered / accepted / resolved, so every one of those
+ *    fell through to a `wpss-status-pending` default and a refunded order
+ *    rendered amber ("pending") instead of its own colour.
+ *  - Half the render sites emitted `wpss-status-<raw_status>` (underscore) while
+ *    the other half emitted `str_replace('_','-', $status)` (hyphen), so the CSS
+ *    had to carry BOTH spellings of every multi-word status.
+ *
+ * Emits the HYPHEN spelling (CSS-idiomatic) — every render site routed through
+ * here produces the same class, and the CSS needs one rule per status, not two.
+ * The status keeps its own semantic colour, defined once in the status-badge
+ * CSS. Filterable so a site can recolour a status without editing core.
+ *
+ * @since 1.5.1
+ *
+ * @param string $status Raw status value (e.g. 'revision_requested').
+ * @return string Space-joined classes: the badge base + the status class.
+ */
+function wpss_status_class( string $status ): string {
+	$status = sanitize_key( $status );
+	$class  = 'wpss-status-badge wpss-status-' . str_replace( '_', '-', $status );
+
+	/**
+	 * Filter the CSS classes for a status badge.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param string $class  Space-joined badge classes.
+	 * @param string $status Raw status value.
+	 */
+	return apply_filters( 'wpss_status_class', $class, $status );
 }
 
 /**
@@ -90,6 +175,10 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 		$decimals = 0;
 	}
 
+	if ( in_array( $currency, wpss_get_three_decimal_currencies(), true ) ) {
+		$decimals = 3;
+	}
+
 	/**
 	 * Filter the number of decimal places for a currency.
 	 *
@@ -99,6 +188,305 @@ function wpss_get_currency_decimals( string $currency = '' ): int {
 	 * @param string $currency Currency code.
 	 */
 	return (int) apply_filters( 'wpss_currency_decimals', $decimals, $currency );
+}
+
+/**
+ * Ledger transaction types that DEBIT the vendor (money leaving the wallet).
+ *
+ * Amounts are always stored POSITIVE; the sign is applied on read. Every
+ * consumer that sums, filters or renders the ledger must agree on which types
+ * are debits, so this is the one list.
+ *
+ * It used to be hardcoded in five places across both plugins (the balance
+ * helper, two EarningsService queries, two LedgerExporter branches). Adding a
+ * type meant finding all five, and missing one produced a silently wrong
+ * balance or a wrong statement CSV.
+ *
+ * @since 1.2.3
+ *
+ * @return string[] Debit transaction types.
+ */
+function wpss_get_ledger_debit_types(): array {
+	/**
+	 * Filter the ledger transaction types treated as debits.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param string[] $types Debit transaction types.
+	 */
+	$types = apply_filters(
+		'wpss_ledger_debit_types',
+		array(
+			'withdrawal',
+			'debit',
+			'dispute_refund',
+			// Payout rails that settle the vendor OUTSIDE this wallet register
+			// their own debit types through the filter below — Pro's Stripe
+			// Connect adds 'connect_transfer'. Free pays vendors manually, so
+			// its own list stays rail-free.
+		)
+	);
+
+	return array_values( array_unique( array_map( 'sanitize_key', (array) $types ) ) );
+}
+
+/**
+ * Build a quoted, comma-separated SQL list of the ledger debit types.
+ *
+ * Values pass through sanitize_key() in wpss_get_ledger_debit_types(), so they
+ * are already restricted to [a-z0-9_-]; they are quoted here for interpolation
+ * into an IN () clause. Kept private to this file's SQL builders.
+ *
+ * @since 1.2.3
+ *
+ * @return string e.g. "'withdrawal','debit','dispute_refund','connect_transfer'"
+ */
+function wpss_get_ledger_debit_types_sql(): string {
+	return "'" . implode( "','", wpss_get_ledger_debit_types() ) . "'";
+}
+
+/**
+ * How much was refunded on an order, for DISPLAY.
+ *
+ * `wpss_orders.refunded_amount` carries a sentinel the money layer relies on:
+ * NULL means "fully refunded", a number means "this much was refunded". That is
+ * deliberate and load-bearing — OrderWorkflowManager::settle_refund() reads NULL
+ * to mean "reverse everything" — but it is a terrible thing for a template to
+ * interpret. Reading the column directly and testing `> 0` silently drops every
+ * FULL refund, which is how the buyer's order view came to show "Refunded" with
+ * no figure next to it while a partial refund showed one.
+ *
+ * So the sentinel is resolved in exactly one place, here, and every display and
+ * invoice surface asks this instead of touching the column. Returns 0.0 when
+ * nothing was refunded.
+ *
+ * @since 1.2.3
+ *
+ * @param object $order Order exposing refunded_amount, total, status, payment_status.
+ * @return float Amount refunded to the buyer.
+ */
+function wpss_get_order_refunded_amount( object $order ): float {
+	$recorded = $order->refunded_amount ?? null;
+
+	if ( null !== $recorded ) {
+		return (float) $recorded;
+	}
+
+	// NULL means one of two very different things: a full refund, or no refund
+	// at all. Only the status can tell them apart.
+	$is_refunded = 'refunded' === ( $order->status ?? '' )
+		|| 'refunded' === ( $order->payment_status ?? '' );
+
+	return $is_refunded ? (float) ( $order->total ?? 0 ) : 0.0;
+}
+
+/**
+ * THE single authority for "can this order be refunded".
+ *
+ * Replaces two hardcoded, contradictory status lists — the vendor/customer AJAX
+ * path allowed pending_payment / pending_requirements / accepted; the admin
+ * button allowed only completed / cancelled — neither of which covered
+ * in_progress, delivered, revision, late, on_hold or disputed. Every refund
+ * surface (AJAX action, admin metabox button, admin order-view button) now asks
+ * this one function, so the answer can never diverge by screen again.
+ *
+ * Policy (owner, 2026-07-23): if the buyer PAID, the order is refundable at ANY
+ * workflow stage — quality problems routinely surface AFTER delivery, so the
+ * gate is payment capture, not workflow progress. An unpaid order is not
+ * refundable because there is nothing to give back; a fully-refunded order is
+ * not refundable because there is nothing left. A partial refund keeps
+ * payment_status 'paid' (only the order status moves to partially_refunded), so
+ * this still returns true for it — the remaining balance can be clawed back.
+ *
+ * The `wpss_order_is_refundable` filter lets a site owner TIGHTEN this (e.g.
+ * block refunds once an order is completed); widening past "paid" is on them.
+ *
+ * @since 1.2.4
+ *
+ * @param object|int $order Order object (exposing status + payment_status) or ID.
+ * @return bool True when the order may be refunded.
+ */
+function wpss_order_is_refundable( $order ): bool {
+	if ( is_numeric( $order ) ) {
+		$order = wpss_get_order( (int) $order );
+	}
+
+	if ( ! is_object( $order ) ) {
+		return false;
+	}
+
+	// Money captured ('paid' survives a partial refund) and not yet fully
+	// returned ('refunded' payment_status, or the terminal refunded status,
+	// ends it).
+	$refundable = 'paid' === ( $order->payment_status ?? '' )
+		&& 'refunded' !== ( $order->status ?? '' );
+
+	/**
+	 * Filter whether an order may be refunded.
+	 *
+	 * @since 1.2.4
+	 *
+	 * @param bool   $refundable Default policy: any paid, not-fully-refunded order.
+	 * @param object $order      The order being tested.
+	 */
+	return (bool) apply_filters( 'wpss_order_is_refundable', $refundable, $order );
+}
+
+/**
+ * Vendor's share of a refund.
+ *
+ * THE single proportional formula. A refund gives the buyer back some or all of
+ * what they paid; the vendor gives back the same proportion of what they earned,
+ * and the platform gives back the same proportion of its fee. A full refund is
+ * simply the case where $refunded equals the order total, so one formula covers
+ * both and there is no separate "partial" path to drift.
+ *
+ * @since 1.2.3
+ *
+ * @param object $order    Order exposing total and vendor_earnings.
+ * @param float  $refunded Amount refunded to the buyer.
+ * @return float Vendor's share, never negative, never more than they earned.
+ */
+function wpss_get_refund_vendor_share( object $order, float $refunded ): float {
+	$total    = (float) ( $order->total ?? 0 );
+	$earnings = (float) ( $order->vendor_earnings ?? 0 );
+
+	if ( $total <= 0 || $earnings <= 0 || $refunded <= 0 ) {
+		return 0.0;
+	}
+
+	// Clamp: refunding more than the order total would otherwise claw back more
+	// than the vendor ever earned.
+	$refunded = min( $refunded, $total );
+
+	return round( $earnings * ( $refunded / $total ), 2 );
+}
+
+/**
+ * Get a vendor's balance derived from the wallet ledger.
+ *
+ * THE canonical balance. Sums the wallet ledger rather than trusting the last
+ * row's `balance_after`, because that denormalised column is only correct while
+ * every write happens in order through one path — it silently drifts after a
+ * withdrawal, a reversal, or any out-of-order insert.
+ *
+ * Free code used to read the last row's `balance_after` in six places while Pro
+ * derived the sum, so the two disagreed the moment a withdrawal landed and the
+ * vendor's displayed balance, withdrawable amount and ledger diverged
+ * permanently. `balance_after` is now a cache; this is the source of truth.
+ *
+ * @since 1.2.2
+ *
+ * @param int  $user_id Vendor user ID.
+ * @param bool $lock    Optional. Lock the ledger rows (FOR UPDATE) — pass true
+ *                      inside a transaction that is about to write a new row.
+ * @return float Current balance.
+ */
+function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_wallet_transactions';
+
+	// Only COMPLETED rows count toward a spendable balance — a pending or failed
+	// transaction must never inflate it. (Pro's provider already filtered this;
+	// the free helper did not, which would have been a second silent divergence.)
+	$debit_types = wpss_get_ledger_debit_types_sql();
+
+	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -amount ELSE amount END ), 0 )
+		FROM {$table}
+		WHERE user_id = %d AND status = 'completed'";
+
+	if ( $lock ) {
+		$sql .= ' FOR UPDATE';
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return (float) $wpdb->get_var( $wpdb->prepare( $sql, $user_id ) );
+}
+
+/**
+ * Get the list of three-decimal currency codes (ISO 4217).
+ *
+ * These are charged in thousandths, not hundredths — a 10.000 BHD charge is
+ * 10000 minor units, not 1000. They are NOT in the built-in currency registry,
+ * so without this list they silently fell back to two decimals and every
+ * gateway amount for them was 10x wrong.
+ *
+ * @since 1.2.2
+ *
+ * @return string[] Uppercase currency codes.
+ */
+function wpss_get_three_decimal_currencies(): array {
+	$codes = array( 'BHD', 'IQD', 'JOD', 'KWD', 'LYD', 'OMR', 'TND' );
+
+	/**
+	 * Filter the list of three-decimal currency codes.
+	 *
+	 * @since 1.2.2
+	 *
+	 * @param string[] $codes Uppercase currency codes.
+	 */
+	return apply_filters( 'wpss_three_decimal_currencies', $codes );
+}
+
+/**
+ * Convert a major-unit amount to integer minor units for the given currency.
+ *
+ * Mirrors WooCommerce's `wc_add_number_precision()`: scale by the currency's
+ * decimal places and round to an integer, so money is compared and transported
+ * as integers instead of floats. Currency-aware by construction — JPY/KRW have
+ * no minor unit (x1), USD/EUR have two (x100), BHD/KWD have three (x1000).
+ *
+ * THE canonical converter. Do not hand-roll `* 100` or a `0.01` epsilon
+ * anywhere — both are wrong for zero-decimal and three-decimal currencies.
+ *
+ * @since 1.2.2
+ *
+ * @param float  $amount   Amount in major units (e.g. dollars).
+ * @param string $currency Optional. Currency code. Defaults to the store currency.
+ * @return int Amount in minor units (e.g. cents).
+ */
+function wpss_amount_to_minor_units( float $amount, string $currency = '' ): int {
+	$decimals = wpss_get_currency_decimals( $currency );
+
+	return (int) round( $amount * ( 10 ** $decimals ) );
+}
+
+/**
+ * Convert integer minor units back to a major-unit amount.
+ *
+ * Inverse of {@see wpss_amount_to_minor_units()}; mirrors WooCommerce's
+ * `wc_remove_number_precision()`. Use this when reading an amount back from a
+ * gateway — Stripe reports amounts in the smallest currency unit.
+ *
+ * @since 1.2.2
+ *
+ * @param int    $minor    Amount in minor units (e.g. cents).
+ * @param string $currency Optional. Currency code. Defaults to the store currency.
+ * @return float Amount in major units.
+ */
+function wpss_amount_from_minor_units( int $minor, string $currency = '' ): float {
+	$decimals = wpss_get_currency_decimals( $currency );
+
+	return $minor / ( 10 ** $decimals );
+}
+
+/**
+ * Whether two amounts are equal for the given currency.
+ *
+ * Compares integer minor units, so there is no float epsilon to tune and the
+ * comparison is exact at the currency's real precision. Use this for every
+ * "did the buyer pay what we expected?" check.
+ *
+ * @since 1.2.2
+ *
+ * @param float  $a        First amount in major units.
+ * @param float  $b        Second amount in major units.
+ * @param string $currency Optional. Currency code. Defaults to the store currency.
+ * @return bool True when the two amounts are the same to the currency's precision.
+ */
+function wpss_amounts_match( float $a, float $b, string $currency = '' ): bool {
+	return wpss_amount_to_minor_units( $a, $currency ) === wpss_amount_to_minor_units( $b, $currency );
 }
 
 /**
@@ -380,6 +768,504 @@ function wpss_get_order( int $order_id ): ?\WPSellServices\Models\ServiceOrder {
  */
 function wpss_get_vendor( int $user_id ): ?\WPSellServices\Models\VendorProfile {
 	return \WPSellServices\Models\VendorProfile::get_by_user_id( $user_id );
+}
+
+/**
+ * Get a service's publish status (active / paused).
+ *
+ * Shared accessor for every service-status read. Resolves the canonical
+ * _wpss_status meta written by the admin service metabox Status select
+ * (values: 'active', 'paused').
+ *
+ * The three SEO integrations used to read '_wpss_service_status', which
+ * nothing has ever written, so every "paused service should be noindexed"
+ * rule silently evaluated false and paused services stayed indexed.
+ *
+ * @since 1.2.3
+ *
+ * @param int $service_id Service post ID.
+ * @return string 'active' or 'paused'. Defaults to 'active' when unset, which
+ *                matches how an unsaved service behaves everywhere else.
+ */
+function wpss_get_service_status( int $service_id ): string {
+	$status = get_post_meta( $service_id, '_wpss_status', true );
+
+	return is_string( $status ) && '' !== $status ? $status : 'active';
+}
+
+/**
+ * The billing address fields, in display order.
+ *
+ * THE canonical field list — the profile form, the checkout prefill, the order
+ * snapshot, the admin screen and any invoice all read it, so a field is added
+ * in exactly one place.
+ *
+ * Keys are WooCommerce's, deliberately. On a site running WooCommerce the
+ * buyer's address is ALREADY stored under these keys, so we prefill from it and
+ * they never type it twice; on a standalone site we own the same keys and a
+ * later Woo install inherits them. One address per user, whichever plugin
+ * captured it.
+ *
+ * `billing_gst` is the exception — it has no Woo-core equivalent, so it is
+ * ours. It is the general tax-registration field (GSTIN in India, VAT ID in the
+ * EU), not one key per jurisdiction.
+ *
+ * @since 1.2.3
+ *
+ * @return array<string, array{label:string, required:bool, type:string, autocomplete:string}>
+ */
+function wpss_get_billing_fields(): array {
+	$fields = array(
+		'billing_first_name' => array(
+			'label'        => __( 'First name', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'given-name',
+		),
+		'billing_last_name'  => array(
+			'label'        => __( 'Last name', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'family-name',
+		),
+		'billing_company'    => array(
+			'label'        => __( 'Company', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'organization',
+		),
+		'billing_gst'        => array(
+			// GSTIN / VAT / tax registration number. A B2B buyer needs this on
+			// the invoice to claim input credit, so an invoice without it is
+			// unusable to them.
+			'label'        => __( 'GST / VAT number', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'off',
+		),
+		'billing_address_1'  => array(
+			'label'        => __( 'Street address', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'address-line1',
+		),
+		'billing_address_2'  => array(
+			'label'        => __( 'Apartment, suite, etc.', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'address-line2',
+		),
+		'billing_city'       => array(
+			'label'        => __( 'Town / City', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'address-level2',
+		),
+		'billing_state'      => array(
+			'label'        => __( 'State / County', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'text',
+			'autocomplete' => 'address-level1',
+		),
+		'billing_postcode'   => array(
+			'label'        => __( 'Postcode / ZIP', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'text',
+			'autocomplete' => 'postal-code',
+		),
+		'billing_country'    => array(
+			'label'        => __( 'Country', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'country',
+			'autocomplete' => 'country',
+		),
+		'billing_email'      => array(
+			'label'        => __( 'Email', 'wp-sell-services' ),
+			'required'     => true,
+			'type'         => 'email',
+			'autocomplete' => 'email',
+		),
+		'billing_phone'      => array(
+			'label'        => __( 'Phone', 'wp-sell-services' ),
+			'required'     => false,
+			'type'         => 'tel',
+			'autocomplete' => 'tel',
+		),
+	);
+
+	/**
+	 * Filter the billing address fields.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param array $fields Field definitions keyed by meta key.
+	 */
+	return apply_filters( 'wpss_billing_fields', $fields );
+}
+
+/**
+ * Country list for the billing country selector.
+ *
+ * ISO-3166 alpha-2 => display name. Defers to WooCommerce's list when Woo is
+ * active so the two never disagree on a country name or code; otherwise falls
+ * back to WordPress's own translated list, and finally to a minimal set.
+ *
+ * @since 1.2.3
+ *
+ * @return array<string, string>
+ */
+function wpss_get_countries(): array {
+	static $countries = null;
+
+	if ( null !== $countries ) {
+		return $countries;
+	}
+
+	// Woo is a rail we already integrate with; reuse its list when present.
+	if ( function_exists( 'WC' ) && WC() && isset( WC()->countries ) ) {
+		$countries = WC()->countries->get_countries();
+	}
+
+	if ( empty( $countries ) ) {
+		// Complete ISO 3166-1 alpha-2 list. A partial list silently blocks
+		// checkout for every country left out, so this is the whole set.
+		$countries = array(
+			'AF' => __( 'Afghanistan', 'wp-sell-services' ), 'AX' => __( 'Åland Islands', 'wp-sell-services' ), 'AL' => __( 'Albania', 'wp-sell-services' ), 'DZ' => __( 'Algeria', 'wp-sell-services' ),
+			'AS' => __( 'American Samoa', 'wp-sell-services' ), 'AD' => __( 'Andorra', 'wp-sell-services' ), 'AO' => __( 'Angola', 'wp-sell-services' ), 'AI' => __( 'Anguilla', 'wp-sell-services' ),
+			'AQ' => __( 'Antarctica', 'wp-sell-services' ), 'AG' => __( 'Antigua and Barbuda', 'wp-sell-services' ), 'AR' => __( 'Argentina', 'wp-sell-services' ), 'AM' => __( 'Armenia', 'wp-sell-services' ),
+			'AW' => __( 'Aruba', 'wp-sell-services' ), 'AU' => __( 'Australia', 'wp-sell-services' ), 'AT' => __( 'Austria', 'wp-sell-services' ), 'AZ' => __( 'Azerbaijan', 'wp-sell-services' ),
+			'BS' => __( 'Bahamas', 'wp-sell-services' ), 'BH' => __( 'Bahrain', 'wp-sell-services' ), 'BD' => __( 'Bangladesh', 'wp-sell-services' ), 'BB' => __( 'Barbados', 'wp-sell-services' ),
+			'BY' => __( 'Belarus', 'wp-sell-services' ), 'BE' => __( 'Belgium', 'wp-sell-services' ), 'BZ' => __( 'Belize', 'wp-sell-services' ), 'BJ' => __( 'Benin', 'wp-sell-services' ),
+			'BM' => __( 'Bermuda', 'wp-sell-services' ), 'BT' => __( 'Bhutan', 'wp-sell-services' ), 'BO' => __( 'Bolivia', 'wp-sell-services' ), 'BQ' => __( 'Bonaire, Sint Eustatius and Saba', 'wp-sell-services' ),
+			'BA' => __( 'Bosnia and Herzegovina', 'wp-sell-services' ), 'BW' => __( 'Botswana', 'wp-sell-services' ), 'BV' => __( 'Bouvet Island', 'wp-sell-services' ), 'BR' => __( 'Brazil', 'wp-sell-services' ),
+			'IO' => __( 'British Indian Ocean Territory', 'wp-sell-services' ), 'BN' => __( 'Brunei', 'wp-sell-services' ), 'BG' => __( 'Bulgaria', 'wp-sell-services' ), 'BF' => __( 'Burkina Faso', 'wp-sell-services' ),
+			'BI' => __( 'Burundi', 'wp-sell-services' ), 'CV' => __( 'Cabo Verde', 'wp-sell-services' ), 'KH' => __( 'Cambodia', 'wp-sell-services' ), 'CM' => __( 'Cameroon', 'wp-sell-services' ),
+			'CA' => __( 'Canada', 'wp-sell-services' ), 'KY' => __( 'Cayman Islands', 'wp-sell-services' ), 'CF' => __( 'Central African Republic', 'wp-sell-services' ), 'TD' => __( 'Chad', 'wp-sell-services' ),
+			'CL' => __( 'Chile', 'wp-sell-services' ), 'CN' => __( 'China', 'wp-sell-services' ), 'CX' => __( 'Christmas Island', 'wp-sell-services' ), 'CC' => __( 'Cocos (Keeling) Islands', 'wp-sell-services' ),
+			'CO' => __( 'Colombia', 'wp-sell-services' ), 'KM' => __( 'Comoros', 'wp-sell-services' ), 'CG' => __( 'Congo', 'wp-sell-services' ), 'CD' => __( 'Congo (DRC)', 'wp-sell-services' ),
+			'CK' => __( 'Cook Islands', 'wp-sell-services' ), 'CR' => __( 'Costa Rica', 'wp-sell-services' ), 'CI' => __( "Côte d'Ivoire", 'wp-sell-services' ), 'HR' => __( 'Croatia', 'wp-sell-services' ),
+			'CU' => __( 'Cuba', 'wp-sell-services' ), 'CW' => __( 'Curaçao', 'wp-sell-services' ), 'CY' => __( 'Cyprus', 'wp-sell-services' ), 'CZ' => __( 'Czechia', 'wp-sell-services' ),
+			'DK' => __( 'Denmark', 'wp-sell-services' ), 'DJ' => __( 'Djibouti', 'wp-sell-services' ), 'DM' => __( 'Dominica', 'wp-sell-services' ), 'DO' => __( 'Dominican Republic', 'wp-sell-services' ),
+			'EC' => __( 'Ecuador', 'wp-sell-services' ), 'EG' => __( 'Egypt', 'wp-sell-services' ), 'SV' => __( 'El Salvador', 'wp-sell-services' ), 'GQ' => __( 'Equatorial Guinea', 'wp-sell-services' ),
+			'ER' => __( 'Eritrea', 'wp-sell-services' ), 'EE' => __( 'Estonia', 'wp-sell-services' ), 'SZ' => __( 'Eswatini', 'wp-sell-services' ), 'ET' => __( 'Ethiopia', 'wp-sell-services' ),
+			'FK' => __( 'Falkland Islands', 'wp-sell-services' ), 'FO' => __( 'Faroe Islands', 'wp-sell-services' ), 'FJ' => __( 'Fiji', 'wp-sell-services' ), 'FI' => __( 'Finland', 'wp-sell-services' ),
+			'FR' => __( 'France', 'wp-sell-services' ), 'GF' => __( 'French Guiana', 'wp-sell-services' ), 'PF' => __( 'French Polynesia', 'wp-sell-services' ), 'TF' => __( 'French Southern Territories', 'wp-sell-services' ),
+			'GA' => __( 'Gabon', 'wp-sell-services' ), 'GM' => __( 'Gambia', 'wp-sell-services' ), 'GE' => __( 'Georgia', 'wp-sell-services' ), 'DE' => __( 'Germany', 'wp-sell-services' ),
+			'GH' => __( 'Ghana', 'wp-sell-services' ), 'GI' => __( 'Gibraltar', 'wp-sell-services' ), 'GR' => __( 'Greece', 'wp-sell-services' ), 'GL' => __( 'Greenland', 'wp-sell-services' ),
+			'GD' => __( 'Grenada', 'wp-sell-services' ), 'GP' => __( 'Guadeloupe', 'wp-sell-services' ), 'GU' => __( 'Guam', 'wp-sell-services' ), 'GT' => __( 'Guatemala', 'wp-sell-services' ),
+			'GG' => __( 'Guernsey', 'wp-sell-services' ), 'GN' => __( 'Guinea', 'wp-sell-services' ), 'GW' => __( 'Guinea-Bissau', 'wp-sell-services' ), 'GY' => __( 'Guyana', 'wp-sell-services' ),
+			'HT' => __( 'Haiti', 'wp-sell-services' ), 'HM' => __( 'Heard Island and McDonald Islands', 'wp-sell-services' ), 'HN' => __( 'Honduras', 'wp-sell-services' ), 'HK' => __( 'Hong Kong', 'wp-sell-services' ),
+			'HU' => __( 'Hungary', 'wp-sell-services' ), 'IS' => __( 'Iceland', 'wp-sell-services' ), 'IN' => __( 'India', 'wp-sell-services' ), 'ID' => __( 'Indonesia', 'wp-sell-services' ),
+			'IR' => __( 'Iran', 'wp-sell-services' ), 'IQ' => __( 'Iraq', 'wp-sell-services' ), 'IE' => __( 'Ireland', 'wp-sell-services' ), 'IM' => __( 'Isle of Man', 'wp-sell-services' ),
+			'IL' => __( 'Israel', 'wp-sell-services' ), 'IT' => __( 'Italy', 'wp-sell-services' ), 'JM' => __( 'Jamaica', 'wp-sell-services' ), 'JP' => __( 'Japan', 'wp-sell-services' ),
+			'JE' => __( 'Jersey', 'wp-sell-services' ), 'JO' => __( 'Jordan', 'wp-sell-services' ), 'KZ' => __( 'Kazakhstan', 'wp-sell-services' ), 'KE' => __( 'Kenya', 'wp-sell-services' ),
+			'KI' => __( 'Kiribati', 'wp-sell-services' ), 'KW' => __( 'Kuwait', 'wp-sell-services' ), 'KG' => __( 'Kyrgyzstan', 'wp-sell-services' ), 'LA' => __( 'Laos', 'wp-sell-services' ),
+			'LV' => __( 'Latvia', 'wp-sell-services' ), 'LB' => __( 'Lebanon', 'wp-sell-services' ), 'LS' => __( 'Lesotho', 'wp-sell-services' ), 'LR' => __( 'Liberia', 'wp-sell-services' ),
+			'LY' => __( 'Libya', 'wp-sell-services' ), 'LI' => __( 'Liechtenstein', 'wp-sell-services' ), 'LT' => __( 'Lithuania', 'wp-sell-services' ), 'LU' => __( 'Luxembourg', 'wp-sell-services' ),
+			'MO' => __( 'Macao', 'wp-sell-services' ), 'MG' => __( 'Madagascar', 'wp-sell-services' ), 'MW' => __( 'Malawi', 'wp-sell-services' ), 'MY' => __( 'Malaysia', 'wp-sell-services' ),
+			'MV' => __( 'Maldives', 'wp-sell-services' ), 'ML' => __( 'Mali', 'wp-sell-services' ), 'MT' => __( 'Malta', 'wp-sell-services' ), 'MH' => __( 'Marshall Islands', 'wp-sell-services' ),
+			'MQ' => __( 'Martinique', 'wp-sell-services' ), 'MR' => __( 'Mauritania', 'wp-sell-services' ), 'MU' => __( 'Mauritius', 'wp-sell-services' ), 'YT' => __( 'Mayotte', 'wp-sell-services' ),
+			'MX' => __( 'Mexico', 'wp-sell-services' ), 'FM' => __( 'Micronesia', 'wp-sell-services' ), 'MD' => __( 'Moldova', 'wp-sell-services' ), 'MC' => __( 'Monaco', 'wp-sell-services' ),
+			'MN' => __( 'Mongolia', 'wp-sell-services' ), 'ME' => __( 'Montenegro', 'wp-sell-services' ), 'MS' => __( 'Montserrat', 'wp-sell-services' ), 'MA' => __( 'Morocco', 'wp-sell-services' ),
+			'MZ' => __( 'Mozambique', 'wp-sell-services' ), 'MM' => __( 'Myanmar', 'wp-sell-services' ), 'NA' => __( 'Namibia', 'wp-sell-services' ), 'NR' => __( 'Nauru', 'wp-sell-services' ),
+			'NP' => __( 'Nepal', 'wp-sell-services' ), 'NL' => __( 'Netherlands', 'wp-sell-services' ), 'NC' => __( 'New Caledonia', 'wp-sell-services' ), 'NZ' => __( 'New Zealand', 'wp-sell-services' ),
+			'NI' => __( 'Nicaragua', 'wp-sell-services' ), 'NE' => __( 'Niger', 'wp-sell-services' ), 'NG' => __( 'Nigeria', 'wp-sell-services' ), 'NU' => __( 'Niue', 'wp-sell-services' ),
+			'NF' => __( 'Norfolk Island', 'wp-sell-services' ), 'KP' => __( 'North Korea', 'wp-sell-services' ), 'MK' => __( 'North Macedonia', 'wp-sell-services' ), 'MP' => __( 'Northern Mariana Islands', 'wp-sell-services' ),
+			'NO' => __( 'Norway', 'wp-sell-services' ), 'OM' => __( 'Oman', 'wp-sell-services' ), 'PK' => __( 'Pakistan', 'wp-sell-services' ), 'PW' => __( 'Palau', 'wp-sell-services' ),
+			'PS' => __( 'Palestine', 'wp-sell-services' ), 'PA' => __( 'Panama', 'wp-sell-services' ), 'PG' => __( 'Papua New Guinea', 'wp-sell-services' ), 'PY' => __( 'Paraguay', 'wp-sell-services' ),
+			'PE' => __( 'Peru', 'wp-sell-services' ), 'PH' => __( 'Philippines', 'wp-sell-services' ), 'PN' => __( 'Pitcairn', 'wp-sell-services' ), 'PL' => __( 'Poland', 'wp-sell-services' ),
+			'PT' => __( 'Portugal', 'wp-sell-services' ), 'PR' => __( 'Puerto Rico', 'wp-sell-services' ), 'QA' => __( 'Qatar', 'wp-sell-services' ), 'RE' => __( 'Réunion', 'wp-sell-services' ),
+			'RO' => __( 'Romania', 'wp-sell-services' ), 'RU' => __( 'Russia', 'wp-sell-services' ), 'RW' => __( 'Rwanda', 'wp-sell-services' ), 'BL' => __( 'Saint Barthélemy', 'wp-sell-services' ),
+			'SH' => __( 'Saint Helena', 'wp-sell-services' ), 'KN' => __( 'Saint Kitts and Nevis', 'wp-sell-services' ), 'LC' => __( 'Saint Lucia', 'wp-sell-services' ), 'MF' => __( 'Saint Martin', 'wp-sell-services' ),
+			'PM' => __( 'Saint Pierre and Miquelon', 'wp-sell-services' ), 'VC' => __( 'Saint Vincent and the Grenadines', 'wp-sell-services' ), 'WS' => __( 'Samoa', 'wp-sell-services' ), 'SM' => __( 'San Marino', 'wp-sell-services' ),
+			'ST' => __( 'Sao Tome and Principe', 'wp-sell-services' ), 'SA' => __( 'Saudi Arabia', 'wp-sell-services' ), 'SN' => __( 'Senegal', 'wp-sell-services' ), 'RS' => __( 'Serbia', 'wp-sell-services' ),
+			'SC' => __( 'Seychelles', 'wp-sell-services' ), 'SL' => __( 'Sierra Leone', 'wp-sell-services' ), 'SG' => __( 'Singapore', 'wp-sell-services' ), 'SX' => __( 'Sint Maarten', 'wp-sell-services' ),
+			'SK' => __( 'Slovakia', 'wp-sell-services' ), 'SI' => __( 'Slovenia', 'wp-sell-services' ), 'SB' => __( 'Solomon Islands', 'wp-sell-services' ), 'SO' => __( 'Somalia', 'wp-sell-services' ),
+			'ZA' => __( 'South Africa', 'wp-sell-services' ), 'GS' => __( 'South Georgia', 'wp-sell-services' ), 'KR' => __( 'South Korea', 'wp-sell-services' ), 'SS' => __( 'South Sudan', 'wp-sell-services' ),
+			'ES' => __( 'Spain', 'wp-sell-services' ), 'LK' => __( 'Sri Lanka', 'wp-sell-services' ), 'SD' => __( 'Sudan', 'wp-sell-services' ), 'SR' => __( 'Suriname', 'wp-sell-services' ),
+			'SJ' => __( 'Svalbard and Jan Mayen', 'wp-sell-services' ), 'SE' => __( 'Sweden', 'wp-sell-services' ), 'CH' => __( 'Switzerland', 'wp-sell-services' ), 'SY' => __( 'Syria', 'wp-sell-services' ),
+			'TW' => __( 'Taiwan', 'wp-sell-services' ), 'TJ' => __( 'Tajikistan', 'wp-sell-services' ), 'TZ' => __( 'Tanzania', 'wp-sell-services' ), 'TH' => __( 'Thailand', 'wp-sell-services' ),
+			'TL' => __( 'Timor-Leste', 'wp-sell-services' ), 'TG' => __( 'Togo', 'wp-sell-services' ), 'TK' => __( 'Tokelau', 'wp-sell-services' ), 'TO' => __( 'Tonga', 'wp-sell-services' ),
+			'TT' => __( 'Trinidad and Tobago', 'wp-sell-services' ), 'TN' => __( 'Tunisia', 'wp-sell-services' ), 'TR' => __( 'Türkiye', 'wp-sell-services' ), 'TM' => __( 'Turkmenistan', 'wp-sell-services' ),
+			'TC' => __( 'Turks and Caicos Islands', 'wp-sell-services' ), 'TV' => __( 'Tuvalu', 'wp-sell-services' ), 'UG' => __( 'Uganda', 'wp-sell-services' ), 'UA' => __( 'Ukraine', 'wp-sell-services' ),
+			'AE' => __( 'United Arab Emirates', 'wp-sell-services' ), 'GB' => __( 'United Kingdom', 'wp-sell-services' ), 'US' => __( 'United States', 'wp-sell-services' ), 'UM' => __( 'United States Minor Outlying Islands', 'wp-sell-services' ),
+			'UY' => __( 'Uruguay', 'wp-sell-services' ), 'UZ' => __( 'Uzbekistan', 'wp-sell-services' ), 'VU' => __( 'Vanuatu', 'wp-sell-services' ), 'VA' => __( 'Vatican City', 'wp-sell-services' ),
+			'VE' => __( 'Venezuela', 'wp-sell-services' ), 'VN' => __( 'Vietnam', 'wp-sell-services' ), 'VG' => __( 'Virgin Islands (British)', 'wp-sell-services' ), 'VI' => __( 'Virgin Islands (U.S.)', 'wp-sell-services' ),
+			'WF' => __( 'Wallis and Futuna', 'wp-sell-services' ), 'EH' => __( 'Western Sahara', 'wp-sell-services' ), 'YE' => __( 'Yemen', 'wp-sell-services' ), 'ZM' => __( 'Zambia', 'wp-sell-services' ),
+			'ZW' => __( 'Zimbabwe', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Filter the billing country list.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param array $countries ISO-2 code => country name.
+	 */
+	$countries = apply_filters( 'wpss_countries', $countries );
+
+	return $countries;
+}
+
+/**
+ * Resolve any stored country value to an ISO-3166 alpha-2 code.
+ *
+ * Country was a FREE-TEXT field on the vendor profile before 1.2.3, so stored
+ * values are a mix of codes ("IN"), full names ("India") and whatever else was
+ * typed. Switching that input to a select without this would render blank for
+ * every existing vendor and silently drop their country on the next save.
+ *
+ * @since 1.2.3
+ *
+ * @param string $value Stored country value.
+ * @return string ISO-2 code, or '' when it cannot be resolved.
+ */
+function wpss_resolve_country_code( string $value ): string {
+	$value = trim( $value );
+
+	if ( '' === $value ) {
+		return '';
+	}
+
+	$countries = wpss_get_countries();
+
+	// Already a valid code.
+	$upper = strtoupper( $value );
+	if ( isset( $countries[ $upper ] ) ) {
+		return $upper;
+	}
+
+	// Legacy free text — match on name, case-insensitively.
+	foreach ( $countries as $code => $name ) {
+		if ( 0 === strcasecmp( $name, $value ) ) {
+			return $code;
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Display name for a stored country value.
+ *
+ * Read-side counterpart of {@see wpss_resolve_country_code()}. Every surface
+ * that SHOWS a country goes through this, so the vendor card, the public
+ * profile and the admin screen can never disagree. Falls back to the raw value
+ * when it cannot be resolved, so nothing a vendor typed simply vanishes.
+ *
+ * @since 1.2.3
+ *
+ * @param string $value Stored country value (code or legacy free text).
+ * @return string Display name.
+ */
+function wpss_get_country_name( string $value ): string {
+	$code = wpss_resolve_country_code( $value );
+
+	if ( '' === $code ) {
+		return trim( $value );
+	}
+
+	$countries = wpss_get_countries();
+
+	return $countries[ $code ] ?? trim( $value );
+}
+
+/**
+ * Read a user's saved billing address.
+ *
+ * Reads the WooCommerce-compatible user meta, so on a Woo site this returns the
+ * address the buyer already gave WooCommerce — no re-entry, no migration.
+ *
+ * @since 1.2.3
+ *
+ * @param int $user_id User ID. Defaults to the current user.
+ * @return array<string, string> Field key => value. Missing fields are ''.
+ */
+function wpss_get_billing_address( int $user_id = 0 ): array {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	if ( $user_id <= 0 ) {
+		return array();
+	}
+
+	$address = array();
+
+	foreach ( array_keys( wpss_get_billing_fields() ) as $key ) {
+		$value = get_user_meta( $user_id, $key, true );
+
+		// Fall back to the account email so a first-time buyer does not retype
+		// something we already know.
+		if ( '' === $value && 'billing_email' === $key ) {
+			$user  = get_userdata( $user_id );
+			$value = $user ? $user->user_email : '';
+		}
+
+		$address[ $key ] = is_string( $value ) ? $value : '';
+	}
+
+	/**
+	 * Filter a user's billing address after it is read.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param array $address Field key => value.
+	 * @param int   $user_id User ID.
+	 */
+	return apply_filters( 'wpss_billing_address', $address, $user_id );
+}
+
+/**
+ * Save a user's billing address to their profile.
+ *
+ * Writes the same WooCommerce keys it reads, so the address stays shared with
+ * WooCommerce rather than forking into a WPSS-only copy that drifts.
+ *
+ * @since 1.2.3
+ *
+ * @param int                   $user_id User ID.
+ * @param array<string, string> $address Raw field values.
+ * @return bool True when something was written.
+ */
+function wpss_save_billing_address( int $user_id, array $address ): bool {
+	if ( $user_id <= 0 ) {
+		return false;
+	}
+
+	$fields  = wpss_get_billing_fields();
+	$written = false;
+
+	foreach ( $fields as $key => $definition ) {
+		if ( ! array_key_exists( $key, $address ) ) {
+			continue;
+		}
+
+		$value = $address[ $key ];
+
+		switch ( $definition['type'] ) {
+			case 'email':
+				$value = sanitize_email( (string) $value );
+				break;
+			case 'country':
+				// ISO-3166 alpha-2, upper-cased.
+				$value = strtoupper( substr( sanitize_text_field( (string) $value ), 0, 2 ) );
+				break;
+			default:
+				$value = sanitize_text_field( (string) $value );
+		}
+
+		update_user_meta( $user_id, $key, $value );
+		$written = true;
+	}
+
+	if ( $written ) {
+		/**
+		 * Fires after a user's billing address is saved.
+		 *
+		 * @since 1.2.3
+		 *
+		 * @param int   $user_id User ID.
+		 * @param array $address Sanitized values that were written.
+		 */
+		do_action( 'wpss_billing_address_saved', $user_id, $address );
+	}
+
+	return $written;
+}
+
+/**
+ * Save billing fields posted with a checkout submission to the buyer's profile.
+ *
+ * Gateway-agnostic on purpose: any checkout completion handler — Stripe,
+ * PayPal, Razorpay, offline — calls this with its own request payload, so an
+ * address the buyer corrected at checkout is remembered for next time no matter
+ * how they paid.
+ *
+ * MUST run BEFORE the order is marked paid. mark_as_paid() snapshots the
+ * address from the profile, so saving afterwards would stamp the order with the
+ * OLD address and silently discard the correction the buyer just made.
+ *
+ * Only writes keys actually present in the request, so a gateway that posts a
+ * partial payload cannot blank the rest of the profile.
+ *
+ * @since 1.2.3
+ *
+ * @param array<string, mixed> $request Raw request data ($_POST or a REST payload).
+ * @param int   $user_id Optional. Defaults to the current user.
+ * @return bool True when something was written.
+ */
+function wpss_save_billing_from_request( array $request, int $user_id = 0 ): bool {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	if ( $user_id <= 0 ) {
+		return false;
+	}
+
+	$posted = array();
+
+	foreach ( array_keys( wpss_get_billing_fields() ) as $key ) {
+		if ( isset( $request[ $key ] ) ) {
+			$posted[ $key ] = wp_unslash( $request[ $key ] );
+		}
+	}
+
+	if ( empty( $posted ) ) {
+		return false;
+	}
+
+	// wpss_save_billing_address() sanitises per field type.
+	return wpss_save_billing_address( $user_id, $posted );
+}
+
+/**
+ * Whether a user's billing address has everything required.
+ *
+ * Drives the checkout decision: complete means the address block collapses and
+ * the buyer only has to enter card details.
+ *
+ * @since 1.2.3
+ *
+ * @param int|array<string, mixed> $user_or_address User ID, or an address array to test directly.
+ * @return bool
+ */
+function wpss_is_billing_address_complete( $user_or_address = 0 ): bool {
+	$address = is_array( $user_or_address )
+		? $user_or_address
+		: wpss_get_billing_address( (int) $user_or_address );
+
+	if ( empty( $address ) ) {
+		return false;
+	}
+
+	foreach ( wpss_get_billing_fields() as $key => $definition ) {
+		if ( ! empty( $definition['required'] ) && empty( $address[ $key ] ) ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Get a vendor's account status.
+ *
+ * Shared accessor for every vendor-status read. Resolves from the canonical
+ * wpss_vendor_profiles.status column — the legacy _wpss_vendor_status user
+ * meta key was READ in four places and written in none, so every caller fell
+ * through to its own hardcoded default. The REST API reported every vendor as
+ * approved regardless of their real status, and the "pending vendors cannot
+ * access earnings" gate in EarningsController never fired.
+ *
+ * @since 1.2.3
+ *
+ * @param int $user_id Vendor user ID.
+ * @return string One of 'active', 'pending', 'suspended', or '' when the
+ *                user has no vendor profile row at all.
+ */
+function wpss_get_vendor_status( int $user_id ): string {
+	$vendor = wpss_get_vendor( $user_id );
+
+	return $vendor instanceof \WPSellServices\Models\VendorProfile ? $vendor->status : '';
 }
 
 /**
@@ -777,6 +1663,591 @@ function wpss_get_currency_registry(): array {
 			'symbol'   => '₦',
 			'decimals' => 2,
 		),
+		'AFN' => array(
+			'name'     => __( 'Afghan Afghani', 'wp-sell-services' ),
+			'symbol'   => '؋',
+			'decimals' => 2,
+		),
+		'ALL' => array(
+			'name'     => __( 'Albanian Lek', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'AMD' => array(
+			'name'     => __( 'Armenian Dram', 'wp-sell-services' ),
+			'symbol'   => '֏',
+			'decimals' => 2,
+		),
+		'ANG' => array(
+			'name'     => __( 'Netherlands Antillean Guilder', 'wp-sell-services' ),
+			'symbol'   => 'ƒ',
+			'decimals' => 2,
+		),
+		'AOA' => array(
+			'name'     => __( 'Angolan Kwanza', 'wp-sell-services' ),
+			'symbol'   => 'Kz',
+			'decimals' => 2,
+		),
+		'ARS' => array(
+			'name'     => __( 'Argentine Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'AWG' => array(
+			'name'     => __( 'Aruban Florin', 'wp-sell-services' ),
+			'symbol'   => 'ƒ',
+			'decimals' => 2,
+		),
+		'AZN' => array(
+			'name'     => __( 'Azerbaijani Manat', 'wp-sell-services' ),
+			'symbol'   => '₼',
+			'decimals' => 2,
+		),
+		'BAM' => array(
+			'name'     => __( 'Bosnia-Herzegovina Mark', 'wp-sell-services' ),
+			'symbol'   => 'KM',
+			'decimals' => 2,
+		),
+		'BBD' => array(
+			'name'     => __( 'Barbadian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BDT' => array(
+			'name'     => __( 'Bangladeshi Taka', 'wp-sell-services' ),
+			'symbol'   => '৳',
+			'decimals' => 2,
+		),
+		'BGN' => array(
+			'name'     => __( 'Bulgarian Lev', 'wp-sell-services' ),
+			'symbol'   => 'лв',
+			'decimals' => 2,
+		),
+		'BHD' => array(
+			'name'     => __( 'Bahraini Dinar', 'wp-sell-services' ),
+			'symbol'   => 'BD',
+			'decimals' => 3,
+		),
+		'BIF' => array(
+			'name'     => __( 'Burundian Franc', 'wp-sell-services' ),
+			'symbol'   => 'FBu',
+			'decimals' => 0,
+		),
+		'BMD' => array(
+			'name'     => __( 'Bermudan Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BND' => array(
+			'name'     => __( 'Brunei Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BOB' => array(
+			'name'     => __( 'Bolivian Boliviano', 'wp-sell-services' ),
+			'symbol'   => 'Bs.',
+			'decimals' => 2,
+		),
+		'BSD' => array(
+			'name'     => __( 'Bahamian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'BTN' => array(
+			'name'     => __( 'Bhutanese Ngultrum', 'wp-sell-services' ),
+			'symbol'   => 'Nu.',
+			'decimals' => 2,
+		),
+		'BWP' => array(
+			'name'     => __( 'Botswanan Pula', 'wp-sell-services' ),
+			'symbol'   => 'P',
+			'decimals' => 2,
+		),
+		'BYN' => array(
+			'name'     => __( 'Belarusian Ruble', 'wp-sell-services' ),
+			'symbol'   => 'Br',
+			'decimals' => 2,
+		),
+		'BZD' => array(
+			'name'     => __( 'Belize Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CDF' => array(
+			'name'     => __( 'Congolese Franc', 'wp-sell-services' ),
+			'symbol'   => 'FC',
+			'decimals' => 2,
+		),
+		'CLP' => array(
+			'name'     => __( 'Chilean Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 0,
+		),
+		'COP' => array(
+			'name'     => __( 'Colombian Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CRC' => array(
+			'name'     => __( 'Costa Rican Colon', 'wp-sell-services' ),
+			'symbol'   => '₡',
+			'decimals' => 2,
+		),
+		'CUP' => array(
+			'name'     => __( 'Cuban Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CVE' => array(
+			'name'     => __( 'Cape Verdean Escudo', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'CZK' => array(
+			'name'     => __( 'Czech Koruna', 'wp-sell-services' ),
+			'symbol'   => 'Kc',
+			'decimals' => 2,
+		),
+		'DJF' => array(
+			'name'     => __( 'Djiboutian Franc', 'wp-sell-services' ),
+			'symbol'   => 'Fdj',
+			'decimals' => 0,
+		),
+		'DOP' => array(
+			'name'     => __( 'Dominican Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'DZD' => array(
+			'name'     => __( 'Algerian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'DA',
+			'decimals' => 2,
+		),
+		'ETB' => array(
+			'name'     => __( 'Ethiopian Birr', 'wp-sell-services' ),
+			'symbol'   => 'Br',
+			'decimals' => 2,
+		),
+		'FJD' => array(
+			'name'     => __( 'Fijian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'GEL' => array(
+			'name'     => __( 'Georgian Lari', 'wp-sell-services' ),
+			'symbol'   => '₾',
+			'decimals' => 2,
+		),
+		'GHS' => array(
+			'name'     => __( 'Ghanaian Cedi', 'wp-sell-services' ),
+			'symbol'   => '₵',
+			'decimals' => 2,
+		),
+		'GMD' => array(
+			'name'     => __( 'Gambian Dalasi', 'wp-sell-services' ),
+			'symbol'   => 'D',
+			'decimals' => 2,
+		),
+		'GNF' => array(
+			'name'     => __( 'Guinean Franc', 'wp-sell-services' ),
+			'symbol'   => 'FG',
+			'decimals' => 0,
+		),
+		'GTQ' => array(
+			'name'     => __( 'Guatemalan Quetzal', 'wp-sell-services' ),
+			'symbol'   => 'Q',
+			'decimals' => 2,
+		),
+		'GYD' => array(
+			'name'     => __( 'Guyanaese Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'HNL' => array(
+			'name'     => __( 'Honduran Lempira', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'HRK' => array(
+			'name'     => __( 'Croatian Kuna', 'wp-sell-services' ),
+			'symbol'   => 'kn',
+			'decimals' => 2,
+		),
+		'HTG' => array(
+			'name'     => __( 'Haitian Gourde', 'wp-sell-services' ),
+			'symbol'   => 'G',
+			'decimals' => 2,
+		),
+		'HUF' => array(
+			'name'     => __( 'Hungarian Forint', 'wp-sell-services' ),
+			'symbol'   => 'Ft',
+			'decimals' => 2,
+		),
+		'ILS' => array(
+			'name'     => __( 'Israeli Shekel', 'wp-sell-services' ),
+			'symbol'   => '₪',
+			'decimals' => 2,
+		),
+		'IQD' => array(
+			'name'     => __( 'Iraqi Dinar', 'wp-sell-services' ),
+			'symbol'   => 'ID',
+			'decimals' => 3,
+		),
+		'IRR' => array(
+			'name'     => __( 'Iranian Rial', 'wp-sell-services' ),
+			'symbol'   => 'IR',
+			'decimals' => 2,
+		),
+		'ISK' => array(
+			'name'     => __( 'Icelandic Krona', 'wp-sell-services' ),
+			'symbol'   => 'kr',
+			'decimals' => 0,
+		),
+		'JMD' => array(
+			'name'     => __( 'Jamaican Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'JOD' => array(
+			'name'     => __( 'Jordanian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'JD',
+			'decimals' => 3,
+		),
+		'KES' => array(
+			'name'     => __( 'Kenyan Shilling', 'wp-sell-services' ),
+			'symbol'   => 'KSh',
+			'decimals' => 2,
+		),
+		'KGS' => array(
+			'name'     => __( 'Kyrgystani Som', 'wp-sell-services' ),
+			'symbol'   => 'c',
+			'decimals' => 2,
+		),
+		'KHR' => array(
+			'name'     => __( 'Cambodian Riel', 'wp-sell-services' ),
+			'symbol'   => '៛',
+			'decimals' => 2,
+		),
+		'KMF' => array(
+			'name'     => __( 'Comorian Franc', 'wp-sell-services' ),
+			'symbol'   => 'CF',
+			'decimals' => 0,
+		),
+		'KWD' => array(
+			'name'     => __( 'Kuwaiti Dinar', 'wp-sell-services' ),
+			'symbol'   => 'KD',
+			'decimals' => 3,
+		),
+		'KYD' => array(
+			'name'     => __( 'Cayman Islands Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'KZT' => array(
+			'name'     => __( 'Kazakhstani Tenge', 'wp-sell-services' ),
+			'symbol'   => '₸',
+			'decimals' => 2,
+		),
+		'LAK' => array(
+			'name'     => __( 'Laotian Kip', 'wp-sell-services' ),
+			'symbol'   => '₭',
+			'decimals' => 2,
+		),
+		'LBP' => array(
+			'name'     => __( 'Lebanese Pound', 'wp-sell-services' ),
+			'symbol'   => 'LL',
+			'decimals' => 2,
+		),
+		'LKR' => array(
+			'name'     => __( 'Sri Lankan Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'LRD' => array(
+			'name'     => __( 'Liberian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'LSL' => array(
+			'name'     => __( 'Lesotho Loti', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'LYD' => array(
+			'name'     => __( 'Libyan Dinar', 'wp-sell-services' ),
+			'symbol'   => 'LD',
+			'decimals' => 3,
+		),
+		'MAD' => array(
+			'name'     => __( 'Moroccan Dirham', 'wp-sell-services' ),
+			'symbol'   => 'DH',
+			'decimals' => 2,
+		),
+		'MDL' => array(
+			'name'     => __( 'Moldovan Leu', 'wp-sell-services' ),
+			'symbol'   => 'L',
+			'decimals' => 2,
+		),
+		'MGA' => array(
+			'name'     => __( 'Malagasy Ariary', 'wp-sell-services' ),
+			'symbol'   => 'Ar',
+			'decimals' => 2,
+		),
+		'MKD' => array(
+			'name'     => __( 'Macedonian Denar', 'wp-sell-services' ),
+			'symbol'   => 'den',
+			'decimals' => 2,
+		),
+		'MMK' => array(
+			'name'     => __( 'Myanmar Kyat', 'wp-sell-services' ),
+			'symbol'   => 'K',
+			'decimals' => 2,
+		),
+		'MNT' => array(
+			'name'     => __( 'Mongolian Tugrik', 'wp-sell-services' ),
+			'symbol'   => '₮',
+			'decimals' => 2,
+		),
+		'MOP' => array(
+			'name'     => __( 'Macanese Pataca', 'wp-sell-services' ),
+			'symbol'   => 'MOP$',
+			'decimals' => 2,
+		),
+		'MUR' => array(
+			'name'     => __( 'Mauritian Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'MVR' => array(
+			'name'     => __( 'Maldivian Rufiyaa', 'wp-sell-services' ),
+			'symbol'   => 'Rf',
+			'decimals' => 2,
+		),
+		'MWK' => array(
+			'name'     => __( 'Malawian Kwacha', 'wp-sell-services' ),
+			'symbol'   => 'MK',
+			'decimals' => 2,
+		),
+		'MZN' => array(
+			'name'     => __( 'Mozambican Metical', 'wp-sell-services' ),
+			'symbol'   => 'MT',
+			'decimals' => 2,
+		),
+		'NAD' => array(
+			'name'     => __( 'Namibian Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'NIO' => array(
+			'name'     => __( 'Nicaraguan Cordoba', 'wp-sell-services' ),
+			'symbol'   => 'C$',
+			'decimals' => 2,
+		),
+		'NPR' => array(
+			'name'     => __( 'Nepalese Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'OMR' => array(
+			'name'     => __( 'Omani Rial', 'wp-sell-services' ),
+			'symbol'   => 'RO',
+			'decimals' => 3,
+		),
+		'PAB' => array(
+			'name'     => __( 'Panamanian Balboa', 'wp-sell-services' ),
+			'symbol'   => 'B/.',
+			'decimals' => 2,
+		),
+		'PEN' => array(
+			'name'     => __( 'Peruvian Sol', 'wp-sell-services' ),
+			'symbol'   => 'S/',
+			'decimals' => 2,
+		),
+		'PGK' => array(
+			'name'     => __( 'Papua New Guinean Kina', 'wp-sell-services' ),
+			'symbol'   => 'K',
+			'decimals' => 2,
+		),
+		'PKR' => array(
+			'name'     => __( 'Pakistani Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'PYG' => array(
+			'name'     => __( 'Paraguayan Guarani', 'wp-sell-services' ),
+			'symbol'   => '₲',
+			'decimals' => 0,
+		),
+		'QAR' => array(
+			'name'     => __( 'Qatari Rial', 'wp-sell-services' ),
+			'symbol'   => 'QR',
+			'decimals' => 2,
+		),
+		'RON' => array(
+			'name'     => __( 'Romanian Leu', 'wp-sell-services' ),
+			'symbol'   => 'lei',
+			'decimals' => 2,
+		),
+		'RSD' => array(
+			'name'     => __( 'Serbian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'din.',
+			'decimals' => 2,
+		),
+		'RWF' => array(
+			'name'     => __( 'Rwandan Franc', 'wp-sell-services' ),
+			'symbol'   => 'FRw',
+			'decimals' => 0,
+		),
+		'SBD' => array(
+			'name'     => __( 'Solomon Islands Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'SCR' => array(
+			'name'     => __( 'Seychellois Rupee', 'wp-sell-services' ),
+			'symbol'   => 'Rs',
+			'decimals' => 2,
+		),
+		'SDG' => array(
+			'name'     => __( 'Sudanese Pound', 'wp-sell-services' ),
+			'symbol'   => 'SDG',
+			'decimals' => 2,
+		),
+		'SLE' => array(
+			'name'     => __( 'Sierra Leonean Leone', 'wp-sell-services' ),
+			'symbol'   => 'Le',
+			'decimals' => 2,
+		),
+		'SOS' => array(
+			'name'     => __( 'Somali Shilling', 'wp-sell-services' ),
+			'symbol'   => 'S',
+			'decimals' => 2,
+		),
+		'SRD' => array(
+			'name'     => __( 'Surinamese Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'SSP' => array(
+			'name'     => __( 'South Sudanese Pound', 'wp-sell-services' ),
+			'symbol'   => 'GBP',
+			'decimals' => 2,
+		),
+		'SVC' => array(
+			'name'     => __( 'Salvadoran Colon', 'wp-sell-services' ),
+			'symbol'   => '₡',
+			'decimals' => 2,
+		),
+		'SZL' => array(
+			'name'     => __( 'Swazi Lilangeni', 'wp-sell-services' ),
+			'symbol'   => 'E',
+			'decimals' => 2,
+		),
+		'TJS' => array(
+			'name'     => __( 'Tajikistani Somoni', 'wp-sell-services' ),
+			'symbol'   => 'SM',
+			'decimals' => 2,
+		),
+		'TMT' => array(
+			'name'     => __( 'Turkmenistani Manat', 'wp-sell-services' ),
+			'symbol'   => 'm',
+			'decimals' => 2,
+		),
+		'TND' => array(
+			'name'     => __( 'Tunisian Dinar', 'wp-sell-services' ),
+			'symbol'   => 'DT',
+			'decimals' => 3,
+		),
+		'TOP' => array(
+			'name'     => __( 'Tongan Paanga', 'wp-sell-services' ),
+			'symbol'   => 'T$',
+			'decimals' => 2,
+		),
+		'TTD' => array(
+			'name'     => __( 'Trinidad and Tobago Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'TWD' => array(
+			'name'     => __( 'New Taiwan Dollar', 'wp-sell-services' ),
+			'symbol'   => 'NT$',
+			'decimals' => 2,
+		),
+		'TZS' => array(
+			'name'     => __( 'Tanzanian Shilling', 'wp-sell-services' ),
+			'symbol'   => 'TSh',
+			'decimals' => 2,
+		),
+		'UAH' => array(
+			'name'     => __( 'Ukrainian Hryvnia', 'wp-sell-services' ),
+			'symbol'   => '₴',
+			'decimals' => 2,
+		),
+		'UGX' => array(
+			'name'     => __( 'Ugandan Shilling', 'wp-sell-services' ),
+			'symbol'   => 'USh',
+			'decimals' => 0,
+		),
+		'UYU' => array(
+			'name'     => __( 'Uruguayan Peso', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'UZS' => array(
+			'name'     => __( 'Uzbekistani Som', 'wp-sell-services' ),
+			'symbol'   => 'soum',
+			'decimals' => 2,
+		),
+		'VES' => array(
+			'name'     => __( 'Venezuelan Bolivar', 'wp-sell-services' ),
+			'symbol'   => 'Bs.',
+			'decimals' => 2,
+		),
+		'VUV' => array(
+			'name'     => __( 'Vanuatu Vatu', 'wp-sell-services' ),
+			'symbol'   => 'VT',
+			'decimals' => 0,
+		),
+		'WST' => array(
+			'name'     => __( 'Samoan Tala', 'wp-sell-services' ),
+			'symbol'   => 'T',
+			'decimals' => 2,
+		),
+		'XAF' => array(
+			'name'     => __( 'Central African CFA Franc', 'wp-sell-services' ),
+			'symbol'   => 'FCFA',
+			'decimals' => 0,
+		),
+		'XCD' => array(
+			'name'     => __( 'East Caribbean Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
+		'XOF' => array(
+			'name'     => __( 'West African CFA Franc', 'wp-sell-services' ),
+			'symbol'   => 'CFA',
+			'decimals' => 0,
+		),
+		'XPF' => array(
+			'name'     => __( 'CFP Franc', 'wp-sell-services' ),
+			'symbol'   => 'F',
+			'decimals' => 0,
+		),
+		'YER' => array(
+			'name'     => __( 'Yemeni Rial', 'wp-sell-services' ),
+			'symbol'   => 'YR',
+			'decimals' => 2,
+		),
+		'ZMW' => array(
+			'name'     => __( 'Zambian Kwacha', 'wp-sell-services' ),
+			'symbol'   => 'ZK',
+			'decimals' => 2,
+		),
+		'ZWL' => array(
+			'name'     => __( 'Zimbabwean Dollar', 'wp-sell-services' ),
+			'symbol'   => '$',
+			'decimals' => 2,
+		),
 	);
 
 	/**
@@ -828,6 +2299,22 @@ function wpss_time_ago( string $datetime ): string {
 	}
 
 	return human_time_diff( $timestamp, current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'wp-sell-services' );
+}
+
+/**
+ * Resolve a reviewer's display name for templates.
+ *
+ * Thin template-facing wrapper over Review::resolve_reviewer_name() so raw
+ * review rows in templates (which expose reviewer_name / customer_id) render
+ * migrated guest authors instead of "Anonymous". Precedence: registered user
+ * display_name -> stored guest name -> "Anonymous".
+ *
+ * @param int         $reviewer_id   Reviewer user ID (0 for guest/legacy).
+ * @param string|null $reviewer_name Stored guest author name, if any.
+ * @return string
+ */
+function wpss_get_reviewer_name( int $reviewer_id, ?string $reviewer_name = null ): string {
+	return \WPSellServices\Models\Review::resolve_reviewer_name( $reviewer_id, $reviewer_name );
 }
 
 /**
@@ -1093,7 +2580,53 @@ function wpss_get_order_requirements_url( int $order_id ): string {
  */
 function wpss_get_service_requirements( int $service_id ): array {
 	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-	return is_array( $requirements ) ? $requirements : array();
+	$requirements = is_array( $requirements ) ? $requirements : array();
+
+	return array_map( 'wpss_normalize_requirement_choices', $requirements );
+}
+
+/**
+ * Normalize a requirement's choice list into one canonical shape.
+ *
+ * Choice-type requirements (select / radio / multiple) were saved under two
+ * different keys and types — the frontend wizard wrote `options` (comma string),
+ * the admin metabox wrote `choices` (comma string) — while the buyer form reads
+ * `options` as a value=>label ARRAY and validation reads `choices`. That mismatch
+ * left dropdowns empty and choice validation broken (BC 10134408650).
+ *
+ * This makes every consumer agree: it sets BOTH
+ *   - `choices` : canonical comma STRING  (admin field + RequirementsService validation)
+ *   - `options` : value=>label ARRAY      (buyer requirements form)
+ * derived from whichever key/type was stored. Non-choice fields are untouched.
+ *
+ * @since 1.5.2
+ *
+ * @param array<string,mixed> $req A single requirement definition.
+ * @return array<string,mixed>
+ */
+function wpss_normalize_requirement_choices( array $req ): array {
+	$raw = $req['options'] ?? $req['choices'] ?? '';
+
+	if ( is_array( $raw ) ) {
+		// Already an array — could be a plain list or a value=>label map.
+		$list = array();
+		foreach ( $raw as $key => $value ) {
+			$list[] = is_string( $value ) && '' !== trim( $value ) ? trim( $value ) : trim( (string) $key );
+		}
+	} else {
+		$list = array_map( 'trim', explode( ',', (string) $raw ) );
+	}
+
+	$list = array_values( array_unique( array_filter( $list, static fn( $v ) => '' !== $v ) ) );
+
+	if ( empty( $list ) ) {
+		return $req; // Not a choice field (or no choices) — leave as-is.
+	}
+
+	$req['choices'] = implode( ', ', $list );
+	$req['options'] = array_combine( $list, $list );
+
+	return $req;
 }
 
 /**
@@ -1531,7 +3064,11 @@ function wpss_get_wallet_balance( ?int $user_id = null ): float {
 	$wallet = wpss_get_wallet_manager();
 
 	if ( ! $wallet || ! method_exists( $wallet, 'get_balance' ) ) {
-		return 0.0;
+		// No wallet manager (Pro inactive): fall back to the ledger instead of
+		// reporting 0.00. Free sites still accrue vendor earnings in
+		// wpss_wallet_transactions, so returning zero here understated every
+		// balance on a free-only install.
+		return wpss_get_ledger_balance( $user_id );
 	}
 
 	return (float) $wallet->get_balance( $user_id );

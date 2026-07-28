@@ -384,16 +384,7 @@ class TippingService {
 		$wpdb->query( 'START TRANSACTION' );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$current_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT balance_after FROM {$txn_table}
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1
-				FOR UPDATE",
-				(int) $tip_order->vendor_id
-			)
-		);
+		$current_balance = (float) wpss_get_ledger_balance( (int) $tip_order->vendor_id, true );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$new_balance = $current_balance + $vendor_earnings;

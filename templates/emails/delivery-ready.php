@@ -42,7 +42,7 @@ do_action( 'wpss_email_content_before', 'delivery_ready', $order, $recipient );
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
 	printf(
-		/* translators: %s: customer name */
+		/* translators: %s: recipient name */
 		esc_html__( 'Hi %s,', 'wp-sell-services' ),
 		esc_html( $customer ? $customer->display_name : __( 'there', 'wp-sell-services' ) )
 	);

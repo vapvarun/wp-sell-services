@@ -14,7 +14,7 @@
  */
 
 .wpss-shepherd.shepherd-element {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-wp-admin-border, #c3c4c7);
 	border-radius: 6px;
 	box-shadow: 0 8px 24px rgba( 0, 0, 0, 0.12 );
@@ -45,7 +45,10 @@
 .wpss-shepherd .shepherd-cancel-icon:hover,
 .wpss-shepherd .shepherd-cancel-icon:focus {
 	color: var(--wpss-wp-admin-red, #d63638);
+	/* A visible ring, not just a colour change (WCAG 1.4.1 / 2.4.7). */
 	outline: none;
+	box-shadow: 0 0 0 2px var(--wpss-primary, #4f46e5);
+	border-radius: 2px;
 }
 
 .wpss-shepherd .shepherd-text {
@@ -71,7 +74,7 @@
 }
 
 .wpss-shepherd .shepherd-footer {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-top: 1px solid var(--wpss-wp-admin-bg, #f0f0f1);
 	border-radius: 0 0 6px 6px;
 	display: flex;
@@ -120,7 +123,7 @@
 }
 
 .wpss-shepherd .shepherd-arrow::before {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-wp-admin-border, #c3c4c7);
 }
 
@@ -203,4 +206,92 @@
 .wpss-dashboard__tour-replay .wpss-icon {
 	width: 16px;
 	height: 16px;
+}
+
+/* ==========================================================================
+   Frontend skin
+   The rules above dress the tour as wp-admin (WP blue, 3px radius, 13px UI
+   text), which is right for the admin walkthrough. The same tour also runs on
+   the FRONTEND vendor dashboard — and it used to inherit that admin skin,
+   because the JS hardcoded `wpss-shepherd--admin` for both contexts. A brand
+   new vendor's very first screen therefore opened a wp-admin-blue dialog on a
+   page built in the marketplace's indigo. PHP now reports the context and the
+   JS picks the modifier; this block gives the frontend variant the design
+   system's own tokens so the tour matches the dashboard it sits on.
+   ========================================================================== */
+
+.wpss-shepherd--frontend .shepherd-button {
+	background: var(--wpss-primary, #4f46e5);
+	border-color: var(--wpss-primary, #4f46e5);
+	border-radius: var(--wpss-radius, 8px);
+	font-size: var(--wpss-text-sm, 14px);
+	font-weight: 600;
+	padding: var(--wpss-space-2, 8px) var(--wpss-space-4, 16px);
+}
+
+.wpss-shepherd--frontend .shepherd-button:hover,
+.wpss-shepherd--frontend .shepherd-button:focus {
+	background: var(--wpss-primary-hover, #4338ca);
+	border-color: var(--wpss-primary-hover, #4338ca);
+}
+
+.wpss-shepherd--frontend .shepherd-button:focus-visible {
+	box-shadow: 0 0 0 2px var(--wpss-white, #fff), 0 0 0 4px var(--wpss-primary, #4f46e5);
+}
+
+.wpss-shepherd--frontend .shepherd-button.shepherd-button-secondary {
+	background: var(--wpss-bg-muted, #f9fafb);
+	border-color: var(--wpss-border, #e5e7eb);
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-shepherd--frontend .shepherd-button.shepherd-button-secondary:hover,
+.wpss-shepherd--frontend .shepherd-button.shepherd-button-secondary:focus {
+	background: var(--wpss-bg, #fff);
+	border-color: var(--wpss-text-hint, #9ca3af);
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-shepherd--frontend.shepherd-element {
+	border-radius: var(--wpss-radius-lg, 12px);
+}
+
+.wpss-shepherd--frontend .shepherd-title {
+	font-size: var(--wpss-text-lg, 18px);
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-shepherd--frontend .shepherd-arrow::before {
+	border-color: var(--wpss-border, #e5e7eb);
+}
+
+/* Frontend chrome: the base block borrows wp-admin's greys for the surface and
+   header, which read as "settings screen" on a customer-facing dashboard. */
+.wpss-shepherd--frontend.shepherd-element {
+	border-color: var(--wpss-border, #e5e7eb);
+	font-family: inherit;
+}
+
+.wpss-shepherd--frontend .shepherd-header {
+	background: var(--wpss-surface, #fff);
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px) var(--wpss-radius-lg, 12px) 0 0;
+	padding: var(--wpss-space-4, 16px) var(--wpss-space-5, 20px);
+}
+
+.wpss-shepherd--frontend .shepherd-text {
+	color: var(--wpss-text-muted, #4b5563);
+}
+
+/* Header background, at a specificity that actually wins. Shepherd's own
+   `.shepherd-has-title .shepherd-content .shepherd-header { background:#e6e6e6 }`
+   is (0,3,0) and was quietly beating BOTH skins' (0,2,0) header rules — so the
+   grey header was never the plugin's colour, in admin or on the frontend. */
+.wpss-shepherd.shepherd-has-title .shepherd-content .shepherd-header {
+	background: var(--wpss-wp-admin-bg, #f0f0f1);
+}
+
+.wpss-shepherd--frontend.shepherd-has-title .shepherd-content .shepherd-header {
+	background: var(--wpss-surface, #fff);
 }

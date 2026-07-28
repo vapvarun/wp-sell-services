@@ -140,6 +140,14 @@ class StripeGateway implements PaymentGatewayInterface {
 		// AJAX handlers.
 		add_action( 'wp_ajax_wpss_stripe_create_payment_intent', array( $this, 'ajax_create_payment_intent' ) );
 		add_action( 'wp_ajax_wpss_stripe_confirm_payment', array( $this, 'ajax_confirm_payment' ) );
+
+		// The standalone checkout form submits to the generic gateway contract
+		// `wpss_{gateway}_process_payment` (see StandaloneCheckoutProvider). Only
+		// the Offline and Test gateways implemented that name, so clicking "Pay"
+		// with Stripe posted to an unregistered action and admin-ajax returned a
+		// bare `0` — checkout could never complete. Map the contract onto the
+		// existing confirm handler rather than duplicating the finalize logic.
+		add_action( 'wp_ajax_wpss_stripe_process_payment', array( $this, 'ajax_confirm_payment' ) );
 	}
 
 	/**
@@ -154,10 +162,33 @@ class StripeGateway implements PaymentGatewayInterface {
 		$order_id  = (int) ( $metadata['order_id'] ?? 0 );
 		$vendor_id = (int) ( $metadata['vendor_id'] ?? 0 );
 
+		// A description is REQUIRED by Stripe for export transactions on Indian
+		// accounts (and is good practice everywhere — it shows on the customer's
+		// statement/receipt). Without it confirmPayment() fails outright with
+		// "As per Indian regulations, export transactions require a description".
+		$service_id  = (int) ( $metadata['service_id'] ?? 0 );
+		$description = $service_id ? get_the_title( $service_id ) : '';
+		if ( '' === trim( (string) $description ) ) {
+			$description = __( 'Service purchase', 'wp-sell-services' );
+		}
+		if ( $order_id ) {
+			$description .= ' (#' . $order_id . ')';
+		}
+
 		$params = array(
 			'amount'                    => $this->format_amount( $amount, $currency ),
 			'currency'                  => strtolower( $currency ),
 			'automatic_payment_methods' => array( 'enabled' => 'true' ),
+			/**
+			 * Filter the Stripe PaymentIntent description.
+			 *
+			 * @since 1.2.2
+			 *
+			 * @param string $description Statement/receipt description.
+			 * @param int    $order_id    Order ID (0 if not yet created).
+			 * @param array  $metadata    Payment metadata.
+			 */
+			'description'               => apply_filters( 'wpss_stripe_payment_description', $description, $order_id, $metadata ),
 			'metadata'                  => array_merge(
 				array(
 					'site_url' => home_url(),
@@ -248,6 +279,34 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Retrieve a PaymentIntent from Stripe.
+	 *
+	 * Narrow public accessor over the private api_request(). Exists so Pro can
+	 * inspect an intent (e.g. StripeConnect reading transfer_data to detect a
+	 * direct vendor settlement) without duplicating the API key handling,
+	 * endpoint and error conventions that live in this class.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param string $payment_intent_id Stripe PaymentIntent id.
+	 * @return array<string, mixed> Intent data, or an empty array when it cannot be retrieved.
+	 */
+	public function get_payment_intent( string $payment_intent_id ): array {
+		if ( '' === $payment_intent_id ) {
+			return array();
+		}
+
+		$intent = $this->api_request( "payment_intents/{$payment_intent_id}", array(), 'GET' );
+
+		if ( isset( $intent['error'] ) ) {
+			wpss_log( "Stripe: could not retrieve PaymentIntent {$payment_intent_id}.", 'warning' );
+			return array();
+		}
+
+		return $intent;
+	}
+
+	/**
 	 * Process a refund.
 	 *
 	 * @param string     $transaction_id Original transaction ID.
@@ -270,18 +329,43 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		$response = $this->api_request( 'refunds', $data );
 
+		// Did this refund pull funds back out of a connected account? Reported
+		// so callers can tell a settled clawback from a failed one. Split
+		// payments send the vendor's share directly at charge time, and
+		// reverse_transfer fails routinely once they have paid out to their
+		// bank — in which case the money must be recovered some other way, and
+		// silently assuming success is how a platform eats the loss.
+		//
+		// null = not a split payment, so there was nothing to reverse.
+		$expected_reversal = ! empty( $data['reverse_transfer'] );
+		$transfer_reversed = $expected_reversal
+			? ! empty( $response['transfer_reversal'] )
+			: null;
+
 		if ( isset( $response['error'] ) ) {
 			return array(
-				'success' => false,
-				'error'   => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'success'           => false,
+				'error'             => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'transfer_reversed' => $expected_reversal ? false : null,
+			);
+		}
+
+		if ( $expected_reversal && ! $transfer_reversed ) {
+			wpss_log(
+				sprintf(
+					'Stripe refund %1$s succeeded but the transfer reversal did NOT settle — the vendor still holds their share.',
+					$response['id'] ?? $transaction_id
+				),
+				'warning'
 			);
 		}
 
 		return array(
-			'success'   => true,
-			'refund_id' => $response['id'],
-			'status'    => $response['status'],
-			'amount'    => $this->parse_amount( $response['amount'], $response['currency'] ),
+			'success'           => true,
+			'refund_id'         => $response['id'],
+			'status'            => $response['status'],
+			'amount'            => $this->parse_amount( $response['amount'], $response['currency'] ),
+			'transfer_reversed' => $transfer_reversed,
 		);
 	}
 
@@ -589,8 +673,30 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		ob_start();
 		?>
-		<div class="wpss-stripe-payment" data-publishable-key="<?php echo esc_attr( $publishable_key ); ?>">
+		<?php
+		// `data-wpss-own-submit` tells the generic checkout submit handler to
+		// stand down for this gateway: Stripe must confirm the card with the PSP
+		// (stripe.js -> confirmPayment) BEFORE any order is created. Without it
+		// the generic handler raced stripe.js and posted the still-unconfirmed
+		// PaymentIntent, so the card was never charged.
+		?>
+		<div class="wpss-stripe-payment" data-wpss-own-submit="1" data-publishable-key="<?php echo esc_attr( $publishable_key ); ?>">
 			<div id="wpss-stripe-payment-element"></div>
+			<?php
+			// NOTE: no address element here. Billing details are OUR OWN block,
+			// rendered above the payment section from
+			// templates/partials/billing-fields.php, because the address is
+			// account data rather than card data.
+			//
+			// Stripe's Address Element used to be mounted here and was wrong on
+			// three counts: it rendered the address INSIDE the card iframe, it
+			// only existed when Stripe was the gateway (so PayPal/Razorpay/Woo
+			// buyers had no address at all), and it has no company or tax-number
+			// field — which made the GST an invoice needs impossible to collect.
+			//
+			// Stripe still RECEIVES the values as billing_details at confirm
+			// time; it consumes them, it does not own them.
+			?>
 			<div id="wpss-stripe-error" class="wpss-payment-error" style="display: none;"></div>
 			<input type="hidden" name="stripe_payment_intent_id" id="wpss-stripe-payment-intent-id">
 		</div>
@@ -641,9 +747,22 @@ class StripeGateway implements PaymentGatewayInterface {
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'wpss_stripe' ),
 				'returnUrl'      => add_query_arg( 'step', 'complete', wpss_get_page_url( 'checkout' ) ),
+				// Prefill the Address Element from the buyer's saved profile so
+				// a returning customer enters card details and nothing else.
+				// Guest checkout is not allowed on a services marketplace (the
+				// buyer has to talk to the vendor), so every checkout has a
+				// profile to read from.
+				'billing'        => $this->get_billing_defaults(),
 				'i18n'           => array(
-					'processing' => __( 'Processing...', 'wp-sell-services' ),
-					'error'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'processing'      => __( 'Processing...', 'wp-sell-services' ),
+					'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'addressRequired' => __( 'Please complete your billing name and address.', 'wp-sell-services' ),
+					'editAddress'     => __( 'Edit billing address', 'wp-sell-services' ),
+					'billedTo'        => __( 'Billed to', 'wp-sell-services' ),
+					'invalidAmount'   => __( 'Invalid payment amount.', 'wp-sell-services' ),
+					'initFailed'      => __( 'Failed to initialize payment.', 'wp-sell-services' ),
+					'notInitialized'  => __( 'Payment not initialized. Please refresh and try again.', 'wp-sell-services' ),
+					'orderFailed'     => __( 'Failed to create order.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -766,71 +885,23 @@ class StripeGateway implements PaymentGatewayInterface {
 			return; // Explicit return for defensive coding.
 		}
 
-		$currency = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
-
-		// Multi-service checkout: accept total directly from the form.
-		$is_multi = ! empty( $_POST['is_multi_checkout'] );
-		if ( $is_multi ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float is sanitization.
-			$amount = (float) wp_unslash( $_POST['amount'] ?? 0 );
-			if ( $amount <= 0 ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			$result = $this->create_payment(
-				$amount,
-				$currency,
-				array(
-					'is_multi_checkout' => '1',
-					'customer_id'       => get_current_user_id(),
-				)
-			);
-
-			if ( $result['success'] ) {
-				wp_send_json_success( $result );
-			} else {
-				wp_send_json_error( array( 'message' => $result['error'] ) );
-			}
-			return;
-		}
-
-		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$package_id = absint( $_POST['package_id'] ?? 0 );
-
-		// Verify amount server-side from package price.
-		$service = get_post( $service_id );
-		if ( ! $service || 'wpss_service' !== $service->post_type || 'publish' !== $service->post_status ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid package.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$amount = (float) $packages[ $package_id ]['price'];
-		if ( $amount <= 0 ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Include addon prices in the payment amount.
-		$addon_data = wpss_resolve_checkout_addons( $service_id );
-		$amount    += $addon_data['addons_total'];
-
-		$result = $this->create_payment(
-			$amount,
-			$currency,
-			array(
-				'service_id'  => $service_id,
-				'package_id'  => $package_id,
-				'customer_id' => get_current_user_id(),
-			)
+		// Pricing + routing (single / multi-cart / pay-order) is resolved once,
+		// server-side, by the gateway-agnostic CheckoutIntentService — the client
+		// amount is never trusted. See audit/PAYMENT-ARCHITECTURE-RND.md.
+		$request = array(
+			'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
+			'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
+			'service_id'        => absint( $_POST['service_id'] ?? 0 ),
+			'package_id'        => absint( $_POST['package_id'] ?? 0 ),
 		);
 
+		$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( $request );
+		if ( is_wp_error( $intent ) ) {
+			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
+			return;
+		}
+
+		$result = $this->create_payment( $intent->amount, $intent->currency, $intent->metadata );
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
 		} else {
@@ -844,17 +915,25 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function ajax_confirm_payment(): void {
-		check_ajax_referer( 'wpss_stripe', 'nonce' );
+		// Accept the Stripe nonce (stripe.js flow) OR the checkout nonce (the
+		// standalone checkout form, which posts wpss_stripe_process_payment and
+		// carries wpss_checkout_nonce). Mirrors OfflineGateway::ajax_create_order.
+		$posted_nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
+		if ( ! wp_verify_nonce( $posted_nonce, 'wpss_stripe' )
+			&& ! wp_verify_nonce( $posted_nonce, 'wpss_checkout' )
+			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+			return;
+		}
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 			return; // Explicit return for defensive coding.
 		}
 
-		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? '' ) );
-		$service_id        = absint( $_POST['service_id'] ?? 0 );
-		$package_id        = absint( $_POST['package_id'] ?? 0 );
-		$pay_order_id      = absint( $_POST['pay_order'] ?? 0 );
+		// stripe.js sends `payment_intent_id`; the checkout form sends
+		// `stripe_payment_intent_id`. Accept both.
+		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? $_POST['stripe_payment_intent_id'] ?? '' ) );
 
 		if ( ! $payment_intent_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid payment.', 'wp-sell-services' ) ) );
@@ -869,122 +948,51 @@ class StripeGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		$order_provider = wpss_get_order_provider();
+		// Remember any billing details the buyer corrected at checkout, BEFORE
+		// the order is created. mark_as_paid() snapshots the address from the
+		// profile, so saving after that point would stamp the order with the
+		// stale address and silently discard the correction.
+		//
+		// Nonce was verified at the top of this handler.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		wpss_save_billing_from_request( $_POST );
 
-		if ( ! $order_provider ) {
-			wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$is_multi = ! empty( $_POST['is_multi_checkout'] );
-
-		// Multi-service checkout: create one order per cart item.
-		if ( $is_multi ) {
-			$customer_id = get_current_user_id();
-			$cart        = get_user_meta( $customer_id, '_wpss_cart', true );
-			$cart        = is_array( $cart ) ? $cart : array();
-
-			if ( empty( $cart ) ) {
-				$this->process_refund( $payment_intent_id );
-				wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			$order_ids = $order_provider->create_orders_from_cart( $cart, 'stripe', $payment_intent_id, $customer_id );
-
-			if ( empty( $order_ids ) ) {
-				$refund_result = $this->process_refund( $payment_intent_id );
-				if ( empty( $refund_result['success'] ) ) {
-					wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but multi-order creation AND refund both failed. Manual intervention required.", 'error' );
-				}
-				wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please contact support.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			// Mark all created orders as paid.
-			foreach ( $order_ids as $oid ) {
-				$order_provider->mark_as_paid( $oid, $payment_intent_id, 'stripe' );
-			}
-
-			// Update PaymentIntent metadata with comma-separated order IDs for webhook recovery.
-			$this->api_request(
-				"payment_intents/{$payment_intent_id}",
-				array( 'metadata' => array( 'order_ids' => implode( ',', $order_ids ) ) )
-			);
-
-			// Clear entire cart.
-			delete_user_meta( $customer_id, '_wpss_cart' );
-
-			wp_send_json_success(
-				array(
-					'order_ids'    => $order_ids,
-					'redirect_url' => add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) ),
-				)
-			);
-			return;
-		}
-
-		// Pay for existing order (from proposal acceptance) or create new order.
-		if ( $pay_order_id ) {
-			$order = wpss_get_order( $pay_order_id );
-			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
-				$this->process_refund( $payment_intent_id );
-				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-				return;
-			}
-		} else {
-			$service = wpss_get_service( $service_id );
-			if ( ! $service ) {
-				wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			// Resolve addon data from checkout form.
-			$addon_data   = wpss_resolve_checkout_addons( $service_id );
-			$addons_total = $addon_data['addons_total'];
-
-			$order = $order_provider->create_order(
-				array(
-					'service_id'     => $service_id,
-					'package_id'     => $package_id,
-					'customer_id'    => get_current_user_id(),
-					'subtotal'       => $payment['amount'] - $addons_total,
-					'addons'         => $addon_data['addons'],
-					'addons_total'   => $addons_total,
-					'currency'       => $payment['currency'],
-					'payment_method' => 'stripe',
-				)
-			);
-
-			if ( ! $order ) {
-				$refund_result = $this->process_refund( $payment_intent_id );
-				if ( empty( $refund_result['success'] ) ) {
-					wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
-				}
-				wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
-				return;
-			}
-		}
-
-		// Update Stripe PaymentIntent metadata with order_id so webhooks can recover.
-		$this->api_request(
-			"payment_intents/{$payment_intent_id}",
-			array( 'metadata' => array( 'order_id' => $order->id ) )
-		);
-
-		// Mark as paid.
-		$paid = $order_provider->mark_as_paid( $order->id, $payment_intent_id, 'stripe' );
-		if ( ! $paid ) {
-			wpss_log( "Failed to mark order {$order->id} as paid for Stripe payment {$payment_intent_id}.", 'error' );
-		}
-
-		wp_send_json_success(
+		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$intent   = $checkout->resolve(
 			array(
-				'order_id'     => $order->id,
-				'order_number' => $order->order_number,
-				'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+				'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
+				'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
+				'service_id'        => absint( $_POST['service_id'] ?? 0 ),
+				'package_id'        => absint( $_POST['package_id'] ?? 0 ),
 			)
 		);
+
+		// Resolve failed after a successful charge — refund and bail.
+		if ( is_wp_error( $intent ) ) {
+			$this->process_refund( $payment_intent_id );
+			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
+			return;
+		}
+
+		$settle = $checkout->settle( $intent, 'stripe', $payment_intent_id, (float) $payment['amount'], (string) $payment['currency'] );
+
+		if ( empty( $settle['success'] ) ) {
+			$refund = $this->process_refund( $payment_intent_id );
+			if ( empty( $refund['success'] ) ) {
+				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+			}
+			wp_send_json_error( array( 'message' => $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) ) );
+			return;
+		}
+
+		// Stamp order id(s) on the PaymentIntent so webhooks can recover.
+		if ( ! empty( $settle['order_ids'] ) ) {
+			$this->api_request( "payment_intents/{$payment_intent_id}", array( 'metadata' => array( 'order_ids' => implode( ',', $settle['order_ids'] ) ) ) );
+		} elseif ( ! empty( $settle['order_id'] ) ) {
+			$this->api_request( "payment_intents/{$payment_intent_id}", array( 'metadata' => array( 'order_id' => $settle['order_id'] ) ) );
+		}
+
+		wp_send_json_success( $settle );
 	}
 
 	/**
@@ -1382,6 +1390,54 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Billing defaults for the Stripe Address Element, from the saved profile.
+	 *
+	 * Shaped for Stripe's `defaultValues`, so a returning buyer sees their
+	 * address already filled and only has to enter card details. `complete`
+	 * tells the client whether the address block can start collapsed.
+	 *
+	 * Reads WooCommerce-compatible user meta, so on a Woo site — or any other
+	 * Wbcom product that captured an address — this is already populated and
+	 * the buyer never types it twice.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @return array{complete:bool, name:string, address:array<string,string>}
+	 */
+	private function get_billing_defaults(): array {
+		$empty = array(
+			'complete' => false,
+			'name'     => '',
+			'address'  => array(),
+		);
+
+		if ( ! function_exists( 'wpss_get_billing_address' ) || ! is_user_logged_in() ) {
+			return $empty;
+		}
+
+		$billing = wpss_get_billing_address( get_current_user_id() );
+
+		if ( empty( $billing ) ) {
+			return $empty;
+		}
+
+		$name = trim( ( $billing['billing_first_name'] ?? '' ) . ' ' . ( $billing['billing_last_name'] ?? '' ) );
+
+		return array(
+			'complete' => wpss_is_billing_address_complete( $billing ),
+			'name'     => $name,
+			'address'  => array(
+				'line1'       => $billing['billing_address_1'] ?? '',
+				'line2'       => $billing['billing_address_2'] ?? '',
+				'city'        => $billing['billing_city'] ?? '',
+				'state'       => $billing['billing_state'] ?? '',
+				'postal_code' => $billing['billing_postcode'] ?? '',
+				'country'     => $billing['billing_country'] ?? '',
+			),
+		);
+	}
+
+	/**
 	 * Get publishable key.
 	 *
 	 * @return string
@@ -1491,14 +1547,10 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return int
 	 */
 	private function format_amount( float $amount, string $currency ): int {
-		// Zero-decimal currencies.
-		$zero_decimal = array( 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF' );
-
-		if ( in_array( strtoupper( $currency ), $zero_decimal, true ) ) {
-			return (int) round( $amount );
-		}
-
-		return (int) round( $amount * 100 );
+		// Delegates to the canonical converter. This used to carry its own copy of
+		// the zero-decimal list and assume two decimals for everything else, so
+		// three-decimal currencies (BHD/KWD/TND) were charged 10x wrong.
+		return wpss_amount_to_minor_units( $amount, $currency );
 	}
 
 	/**
@@ -1509,12 +1561,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return float
 	 */
 	private function parse_amount( int $amount, string $currency ): float {
-		$zero_decimal = array( 'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF' );
-
-		if ( in_array( strtoupper( $currency ), $zero_decimal, true ) ) {
-			return (float) $amount;
-		}
-
-		return $amount / 100.0;
+		// Inverse of format_amount(); same canonical, currency-aware conversion.
+		return wpss_amount_from_minor_units( $amount, $currency );
 	}
 }

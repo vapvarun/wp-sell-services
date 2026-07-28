@@ -166,6 +166,25 @@
 				files.push(newFiles[i]);
 			}
 			renderFiles();
+			syncInput();
+		}
+
+		/**
+		 * Mirror the managed files[] list into the native file input via
+		 * DataTransfer, so the FormData built from the form on submit includes
+		 * drag-dropped files (and reflects removals). Without this the dropped
+		 * files lived only in this array and were never submitted — only
+		 * click-to-select worked, because the browser sets input.files itself.
+		 */
+		function syncInput() {
+			if (typeof DataTransfer === 'undefined' || !$input.length) {
+				return;
+			}
+			var dt = new DataTransfer();
+			files.forEach(function(file) {
+				dt.items.add(file);
+			});
+			$input[0].files = dt.files;
 		}
 
 		/**
@@ -203,6 +222,7 @@
 			var index = $(this).data('index');
 			files.splice(index, 1);
 			renderFiles();
+			syncInput();
 		});
 	}
 

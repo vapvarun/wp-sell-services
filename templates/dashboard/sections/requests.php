@@ -22,11 +22,14 @@ defined( 'ABSPATH' ) || exit;
  */
 do_action( 'wpss_dashboard_section_before', 'requests', $user_id );
 
-// Get user's buyer requests.
-$args = array(
+// Get user's buyer requests (paginated so the list doesn't hard-cap at 20).
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
+$requests_page = isset( $_GET['requests_page'] ) ? max( 1, absint( $_GET['requests_page'] ) ) : 1;
+$args          = array(
 	'post_type'      => 'wpss_request',
 	'author'         => $user_id,
 	'posts_per_page' => 20,
+	'paged'          => $requests_page,
 	'post_status'    => array( 'publish', 'draft', 'pending' ),
 	'orderby'        => 'date',
 	'order'          => 'DESC',
@@ -73,8 +76,22 @@ $active_count = count(
 			while ( $requests->have_posts() ) :
 				$requests->the_post();
 				$request_id = get_the_ID();
-				$budget     = get_post_meta( $request_id, '_wpss_budget', true );
-				$deadline   = get_post_meta( $request_id, '_wpss_deadline', true );
+				// Real requests store budget as _wpss_budget_min/_max (+ _wpss_budget_type)
+				// and the timeframe as _wpss_delivery_days. The old singular _wpss_budget
+				// and _wpss_deadline keys are never written by the create flow, so the
+				// card showed both blank for every real request.
+				$budget_min    = (float) get_post_meta( $request_id, '_wpss_budget_min', true );
+				$budget_max    = (float) get_post_meta( $request_id, '_wpss_budget_max', true );
+				$delivery_days = (int) get_post_meta( $request_id, '_wpss_delivery_days', true );
+
+				$budget_display = '';
+				if ( $budget_min > 0 && $budget_max > 0 && $budget_min !== $budget_max ) {
+					$budget_display = wpss_format_price( $budget_min ) . ' – ' . wpss_format_price( $budget_max );
+				} elseif ( $budget_max > 0 ) {
+					$budget_display = wpss_format_price( $budget_max );
+				} elseif ( $budget_min > 0 ) {
+					$budget_display = wpss_format_price( $budget_min );
+				}
 				// Query actual proposal count from DB instead of potentially stale meta.
 				global $wpdb;
 				$offers      = (int) $wpdb->get_var(
@@ -90,25 +107,25 @@ $active_count = count(
 						<h4 class="wpss-request-card__title"><?php the_title(); ?></h4>
 						<p class="wpss-request-card__excerpt"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 20 ) ); ?></p>
 						<div class="wpss-request-card__meta">
-							<?php if ( $budget ) : ?>
+							<?php if ( $budget_display ) : ?>
 								<span>
 									<?php
 									printf(
-										/* translators: %s: budget amount */
+										/* translators: %s: budget amount or range */
 										esc_html__( 'Budget: %s', 'wp-sell-services' ),
-										esc_html( wpss_format_price( $budget ) )
+										esc_html( $budget_display )
 									);
 									?>
 								</span>
 							<?php endif; ?>
-							<?php if ( $deadline ) : ?>
+							<?php if ( $delivery_days > 0 ) : ?>
 								<span class="wpss-request-card__sep">&bull;</span>
 								<span>
 									<?php
 									printf(
-										/* translators: %s: deadline date */
-										esc_html__( 'Deadline: %s', 'wp-sell-services' ),
-										esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) )
+										/* translators: %d: desired delivery time in days */
+										esc_html( _n( 'Delivery: %d day', 'Delivery: %d days', $delivery_days, 'wp-sell-services' ) ),
+										esc_html( $delivery_days )
 									);
 									?>
 								</span>
@@ -132,18 +149,31 @@ $active_count = count(
 							echo esc_html( $status_obj ? $status_obj->label : ucfirst( $item_status ) );
 							?>
 						</span>
-						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
-							<?php esc_html_e( 'View Offers', 'wp-sell-services' ); ?>
+						<?php
+						// Icon action buttons: label is visible on desktop and collapses to
+						// an icon + tooltip on mobile/tablet so the full action set stays on
+						// one line at every width (Basecamp #9985554351). aria-label + title
+						// keep every control named for assistive tech and hover tooltips.
+						$view_offers_label = esc_attr__( 'View Offers', 'wp-sell-services' );
+						?>
+						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo $view_offers_label; ?>" title="<?php echo $view_offers_label; ?>">
+							<i data-lucide="inbox" class="wpss-icon" aria-hidden="true"></i>
+							<span class="wpss-btn__label"><?php esc_html_e( 'View Offers', 'wp-sell-services' ); ?></span>
 						</a>
 						<?php if ( 'publish' === $item_status ) : ?>
-							<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
-								<?php esc_html_e( 'Close', 'wp-sell-services' ); ?>
+							<?php $close_label = esc_attr__( 'Close', 'wp-sell-services' ); ?>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo $close_label; ?>" title="<?php echo $close_label; ?>">
+								<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
+								<span class="wpss-btn__label"><?php esc_html_e( 'Close', 'wp-sell-services' ); ?></span>
 							</button>
 						<?php elseif ( 'draft' === $item_status ) : ?>
-							<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-reopen-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
-								<?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?>
+							<?php $reopen_label = esc_attr__( 'Reopen', 'wp-sell-services' ); ?>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-reopen-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo $reopen_label; ?>" title="<?php echo $reopen_label; ?>">
+								<i data-lucide="rotate-ccw" class="wpss-icon" aria-hidden="true"></i>
+								<span class="wpss-btn__label"><?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?></span>
 							</button>
 						<?php endif; ?>
+						<?php $edit_label = esc_attr__( 'Edit', 'wp-sell-services' ); ?>
 						<a href="
 						<?php
 						echo esc_url(
@@ -156,17 +186,53 @@ $active_count = count(
 							)
 						);
 						?>
-									" class="wpss-btn wpss-btn--outline wpss-btn--sm">
-							<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
+									" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo $edit_label; ?>" title="<?php echo $edit_label; ?>">
+							<i data-lucide="pencil" class="wpss-icon" aria-hidden="true"></i>
+							<span class="wpss-btn__label"><?php esc_html_e( 'Edit', 'wp-sell-services' ); ?></span>
 						</a>
-						<button type="button" class="wpss-btn wpss-btn--link wpss-btn--sm wpss-btn--danger wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>">
-							<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
+						<?php $delete_label = esc_attr__( 'Delete', 'wp-sell-services' ); ?>
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--danger wpss-btn--action wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo $delete_label; ?>" title="<?php echo $delete_label; ?>">
+							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
+							<span class="wpss-btn__label"><?php esc_html_e( 'Delete', 'wp-sell-services' ); ?></span>
 						</button>
 					</div>
 				</div>
 			<?php endwhile; ?>
 			<?php wp_reset_postdata(); ?>
 		</div>
+
+		<?php if ( (int) $requests->max_num_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Request pages', 'wp-sell-services' ); ?>">
+				<?php
+				// Paginate relative to the current section URL (see orders.php).
+				$requests_page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'requests_page', $page ) : remove_query_arg( 'requests_page' );
+				};
+	?>
+				<?php if ( $requests_page > 1 ) : ?>
+					<a href="<?php echo esc_url( $requests_page_url( $requests_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="wpss-pagination__current">
+					<?php
+					printf(
+						/* translators: 1: current page, 2: total pages */
+						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+						(int) $requests_page,
+						(int) $requests->max_num_pages
+					);
+					?>
+				</span>
+				<?php if ( $requests_page < (int) $requests->max_num_pages ) : ?>
+					<a href="<?php echo esc_url( $requests_page_url( $requests_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+						<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
 

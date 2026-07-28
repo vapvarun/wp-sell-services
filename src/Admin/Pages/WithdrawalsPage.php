@@ -31,6 +31,18 @@ class WithdrawalsPage {
 	private EarningsService $earnings_service;
 
 	/**
+	 * Admin page hook suffix returned by add_submenu_page().
+	 *
+	 * Stored so enqueue_scripts() matches the REAL hook — the previous
+	 * hardcoded 'wp-sell-services_page_wpss-withdrawals' never matched the
+	 * actual 'sell-services_page_wpss-withdrawals' suffix WordPress derives
+	 * from the parent menu title, so the page-specific enqueue was dead code.
+	 *
+	 * @var string
+	 */
+	private string $hook_suffix = '';
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -48,6 +60,7 @@ class WithdrawalsPage {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 		add_action( 'wp_ajax_wpss_process_withdrawal', array( $this, 'ajax_process_withdrawal' ) );
 		add_action( 'wp_ajax_wpss_bulk_process_withdrawals', array( $this, 'ajax_bulk_process_withdrawals' ) );
+		add_action( 'admin_post_wpss_export_withdrawals', array( $this, 'export_csv' ) );
 	}
 
 	/**
@@ -66,6 +79,7 @@ class WithdrawalsPage {
 		);
 
 		if ( $hook ) {
+			$this->hook_suffix = $hook;
 			add_action( 'load-' . $hook, array( $this, 'add_help_tabs' ) );
 		}
 	}
@@ -111,7 +125,7 @@ class WithdrawalsPage {
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'wp-sell-services_page_wpss-withdrawals' !== $hook ) {
+		if ( '' === $this->hook_suffix || $this->hook_suffix !== $hook ) {
 			return;
 		}
 
@@ -130,6 +144,64 @@ class WithdrawalsPage {
 		}
 
 		wp_enqueue_script( 'wpss-admin' );
+
+		// Page behaviour: modal actions, bulk apply (wpssConfirm), toasts.
+		wp_enqueue_script(
+			'wpss-admin-withdrawals',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-withdrawals.js',
+			array( 'jquery', 'wpss-ui' ),
+			\WPSS_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wpss-admin-withdrawals', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+
+		wp_localize_script(
+			'wpss-admin-withdrawals',
+			'wpssWithdrawals',
+			array(
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'wpss_withdrawals_admin' ),
+				'bulkNonce'        => wp_create_nonce( 'wpss_withdrawals_bulk' ),
+				// Currency parts for the settlement total shown in the bulk
+				// mark-paid confirmation. Same pair Admin::enqueue_scripts
+				// localizes; wpss_format_price() always prefixes the symbol.
+				'currencySymbol'   => wpss_get_currency_symbol(),
+				'currencyDecimals' => wpss_get_currency_decimals(),
+				'i18n'             => array(
+					'loading'      => __( 'Processing…', 'wp-sell-services' ),
+					'error'        => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'selectFirst'  => __( 'Select at least one withdrawal first.', 'wp-sell-services' ),
+					/* translators: %action%: bulk action label, %count%: number of selected withdrawals. Placeholders are replaced in JS. */
+					'bulkConfirm'  => __( '%action% %count% withdrawal(s)? This applies to every selected row.', 'wp-sell-services' ),
+					// Second confirmation, shown ONLY for bulk mark-as-paid. The
+					// plugin records the payout; it never sends the money on the
+					// manual rail, and saying so is the whole point of this step.
+					'settleTitle'  => __( 'Confirm you have already paid these vendors', 'wp-sell-services' ),
+					/* translators: %total%: formatted settlement total, %vendors%: number of distinct vendors, %count%: number of withdrawals, %methods%: payout-method breakdown such as "PayPal x3, Bank Transfer x2". Placeholders are replaced in JS. */
+					'settleBody'   => __( 'This settles %total% across %vendors% vendor(s) in %count% withdrawal(s) — %methods%. It marks the outstanding amount paid and debits each vendor wallet, but it does NOT send any money. Paying each vendor by their own method is your manual step, outside this site.', 'wp-sell-services' ),
+					'settleAction' => __( 'Yes, mark as paid', 'wp-sell-services' ),
+					'bulkLabels'   => array(
+						'approve'  => __( 'Approve', 'wp-sell-services' ),
+						'complete' => __( 'Mark as paid', 'wp-sell-services' ),
+						'reject'   => __( 'Reject', 'wp-sell-services' ),
+					),
+					'titles'       => array(
+						'approve'  => __( 'Approve Withdrawal', 'wp-sell-services' ),
+						'complete' => __( 'Mark as Paid', 'wp-sell-services' ),
+						'reject'   => __( 'Reject Withdrawal', 'wp-sell-services' ),
+						'fallback' => __( 'Process Withdrawal', 'wp-sell-services' ),
+					),
+					'descriptions' => array(
+						/* translators: %amount% / %vendor% placeholders are replaced in JS. */
+						'approve'  => __( 'Approve this withdrawal request for %amount% from %vendor%?', 'wp-sell-services' ),
+						/* translators: %vendor% placeholder is replaced in JS. */
+						'complete' => __( 'Mark this withdrawal as paid. Confirm only after the %amount% payment has actually been sent to %vendor% — this debits their wallet balance.', 'wp-sell-services' ),
+						/* translators: %vendor% placeholder is replaced in JS. */
+						'reject'   => __( 'Reject this withdrawal request from %vendor%? The funds will be returned to their available balance.', 'wp-sell-services' ),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -146,6 +218,7 @@ class WithdrawalsPage {
 			'per_page' => 20,
 			'page'     => 1,
 			'status'   => '',
+			'method'   => '',
 		);
 
 		$args   = wp_parse_args( $args, $defaults );
@@ -158,6 +231,11 @@ class WithdrawalsPage {
 		if ( $args['status'] ) {
 			$where[]  = 'w.status = %s';
 			$values[] = $args['status'];
+		}
+
+		if ( $args['method'] ) {
+			$where[]  = 'w.method = %s';
+			$values[] = $args['method'];
 		}
 
 		$where_clause = implode( ' AND ', $where );
@@ -256,23 +334,51 @@ class WithdrawalsPage {
 		$current_page = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$status = isset( $_GET['status'] ) ? sanitize_key( $_GET['status'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$method = isset( $_GET['method'] ) ? sanitize_key( $_GET['method'] ) : '';
+
+		$statuses = EarningsService::get_withdrawal_statuses();
+		$methods  = EarningsService::get_withdrawal_methods();
+
+		// Only filter on known values — an unknown slug silently matches nothing.
+		if ( $method && ! isset( $methods[ $method ] ) ) {
+			$method = '';
+		}
 
 		$result      = $this->get_withdrawals(
 			array(
 				'page'   => $current_page,
 				'status' => $status,
+				'method' => $method,
 			)
 		);
 		$withdrawals = $result['withdrawals'];
 		$total       = $result['total'];
 		$total_pages = $result['pages'];
 		$stats       = $this->get_stats();
-		$statuses    = EarningsService::get_withdrawal_statuses();
-		$methods     = EarningsService::get_withdrawal_methods();
+
+		// Status filter links keep the method filter, and vice versa.
+		$base_url = admin_url( 'admin.php?page=wpss-withdrawals' );
+		if ( $method ) {
+			$base_url = add_query_arg( 'method', $method, $base_url );
+		}
 		?>
 		<div class="wrap wpss-listing-page wpss-withdrawals-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Withdrawals', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
+			<?php
+			// Surface the last bulk-action report (incl. per-row failures) that
+			// the post-action reload would otherwise have thrown away.
+			$bulk_report_key = 'wpss_bulk_withdrawal_report_' . get_current_user_id();
+			$bulk_report     = get_transient( $bulk_report_key );
+			if ( $bulk_report ) {
+				delete_transient( $bulk_report_key );
+				printf(
+					'<div class="notice notice-info is-dismissible"><p>%s</p></div>',
+					esc_html( (string) $bulk_report )
+				);
+			}
+			?>
 
 			<!-- Stats Cards -->
 			<div class="wpss-listing-stats wpss-withdrawal-stats">
@@ -300,42 +406,62 @@ class WithdrawalsPage {
 			<div class="wpss-list-card">
 				<div class="wpss-list-card__filters wpss-withdrawals-filters">
 					<ul class="subsubsub">
+						<?php
+						$status_links = array(
+							''          => array( __( 'All', 'wp-sell-services' ), $stats['total'] ),
+							'pending'   => array( __( 'Pending', 'wp-sell-services' ), $stats['pending'] ),
+							'approved'  => array( __( 'Approved', 'wp-sell-services' ), $stats['approved'] ),
+							'completed' => array( __( 'Completed', 'wp-sell-services' ), $stats['completed'] ),
+							'rejected'  => array( __( 'Rejected', 'wp-sell-services' ), $stats['rejected'] ),
+						);
+						$last_key     = array_key_last( $status_links );
+						foreach ( $status_links as $status_key => $link ) :
+							$link_url = $status_key ? add_query_arg( 'status', $status_key, $base_url ) : $base_url;
+							?>
 						<li>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ); ?>"
-								class="<?php echo $status === '' ? 'current' : ''; ?>">
-								<?php esc_html_e( 'All', 'wp-sell-services' ); ?>
-								<span class="count">(<?php echo esc_html( $stats['total'] ); ?>)</span>
-							</a> |
+							<a href="<?php echo esc_url( $link_url ); ?>"
+								class="<?php echo $status === $status_key ? 'current' : ''; ?>">
+								<?php echo esc_html( $link[0] ); ?>
+								<span class="count">(<?php echo esc_html( number_format_i18n( $link[1] ) ); ?>)</span>
+							</a><?php echo $status_key === $last_key ? '' : ' |'; ?>
 						</li>
-						<li>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=pending' ) ); ?>"
-								class="<?php echo $status === 'pending' ? 'current' : ''; ?>">
-								<?php esc_html_e( 'Pending', 'wp-sell-services' ); ?>
-								<span class="count">(<?php echo esc_html( $stats['pending'] ); ?>)</span>
-							</a> |
-						</li>
-						<li>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=approved' ) ); ?>"
-								class="<?php echo $status === 'approved' ? 'current' : ''; ?>">
-								<?php esc_html_e( 'Approved', 'wp-sell-services' ); ?>
-								<span class="count">(<?php echo esc_html( $stats['approved'] ); ?>)</span>
-							</a> |
-						</li>
-						<li>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=completed' ) ); ?>"
-								class="<?php echo $status === 'completed' ? 'current' : ''; ?>">
-								<?php esc_html_e( 'Completed', 'wp-sell-services' ); ?>
-								<span class="count">(<?php echo esc_html( $stats['completed'] ); ?>)</span>
-							</a> |
-						</li>
-						<li>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=rejected' ) ); ?>"
-								class="<?php echo $status === 'rejected' ? 'current' : ''; ?>">
-								<?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?>
-								<span class="count">(<?php echo esc_html( $stats['rejected'] ); ?>)</span>
-							</a>
-						</li>
+						<?php endforeach; ?>
 					</ul>
+
+					<form method="get" class="wpss-withdrawals-method-filter">
+						<input type="hidden" name="page" value="wpss-withdrawals">
+						<?php if ( $status ) : ?>
+							<input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>">
+						<?php endif; ?>
+						<label for="wpss-filter-method" class="screen-reader-text"><?php esc_html_e( 'Filter by payout method', 'wp-sell-services' ); ?></label>
+						<select name="method" id="wpss-filter-method">
+							<option value=""><?php esc_html_e( 'All methods', 'wp-sell-services' ); ?></option>
+							<?php foreach ( $methods as $method_key => $method_label ) : ?>
+								<option value="<?php echo esc_attr( $method_key ); ?>" <?php selected( $method, $method_key ); ?>>
+									<?php echo esc_html( $method_label ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+						<button type="submit" class="button"><?php esc_html_e( 'Filter', 'wp-sell-services' ); ?></button>
+					</form>
+
+					<?php
+					// Export the CURRENT filter. Export never changes a row's
+					// status (MONEY-FLOW.md rule 2.4): pay offline first, then
+					// come back and Mark paid as a separate deliberate act.
+					$export_url = wp_nonce_url(
+						add_query_arg(
+							array(
+								'action' => 'wpss_export_withdrawals',
+								'status' => $status,
+								'method' => $method,
+							),
+							admin_url( 'admin-post.php' )
+						),
+						'wpss_export_withdrawals'
+					);
+					?>
+					<a href="<?php echo esc_url( $export_url ); ?>" class="button wpss-withdrawals-export"><?php esc_html_e( 'Export CSV', 'wp-sell-services' ); ?></a>
 				</div>
 
 				<div class="wpss-list-card__body">
@@ -344,23 +470,30 @@ class WithdrawalsPage {
 					<div class="wpss-empty-state__icon">
 						<?php echo \WPSellServices\Services\Icon::render( 'banknote' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</div>
-					<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No withdrawals yet', 'wp-sell-services' ); ?></h2>
-					<p class="wpss-empty-state__body"><?php esc_html_e( 'When vendors request a payout, their withdrawal requests appear here for approval.', 'wp-sell-services' ); ?></p>
-					<p class="wpss-empty-state__actions">
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#payouts' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Payout settings', 'wp-sell-services' ); ?></a>
-						<a href="https://wbcomdesigns.com/docs/wp-sell-services/withdrawals-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
-					</p>
+					<?php if ( $status || $method ) : ?>
+						<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No withdrawals match this filter', 'wp-sell-services' ); ?></h2>
+						<p class="wpss-empty-state__body"><?php esc_html_e( 'Try a different status or payout method, or clear the filter to see every withdrawal.', 'wp-sell-services' ); ?></p>
+						<p class="wpss-empty-state__actions">
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Clear filter', 'wp-sell-services' ); ?></a>
+						</p>
+					<?php else : ?>
+						<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No withdrawals yet', 'wp-sell-services' ); ?></h2>
+						<p class="wpss-empty-state__body"><?php esc_html_e( 'When vendors request a payout, their withdrawal requests appear here for approval.', 'wp-sell-services' ); ?></p>
+						<p class="wpss-empty-state__actions">
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#payouts' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Payout settings', 'wp-sell-services' ); ?></a>
+							<a href="https://wbcomdesigns.com/docs/wp-sell-services/withdrawals-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
+						</p>
+					<?php endif; ?>
 				</div>
 			<?php else : ?>
 			<!-- Bulk actions row (mirrors the Service Moderation pattern). -->
 			<div class="tablenav top">
 				<div class="alignleft actions bulkactions">
-					<?php wp_nonce_field( 'wpss_withdrawals_bulk', 'wpss_withdrawals_bulk_nonce' ); ?>
 					<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'wp-sell-services' ); ?></label>
 					<select name="bulk_action" id="bulk-action-selector-top" class="wpss-withdrawals-bulk-select">
 						<option value=""><?php esc_html_e( 'Bulk Actions', 'wp-sell-services' ); ?></option>
 						<option value="approve"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></option>
-						<option value="complete"><?php esc_html_e( 'Mark as completed', 'wp-sell-services' ); ?></option>
+						<option value="complete"><?php esc_html_e( 'Mark as paid', 'wp-sell-services' ); ?></option>
 						<option value="reject"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></option>
 					</select>
 					<button type="button" class="button wpss-withdrawals-bulk-apply"><?php esc_html_e( 'Apply', 'wp-sell-services' ); ?></button>
@@ -465,297 +598,6 @@ class WithdrawalsPage {
 			</div>
 		</div>
 
-		<style>
-			/* Stat-card, stat-number, stat-label, stat-amount, filter-row,
-				and status colors now live in assets/css/admin.css via the
-				shared `.wpss-listing-stats` rules. Keep only withdrawal-page
-				specific utilities below. */
-
-			.wpss-withdrawals-table .column-id { width: 6%; }
-			.wpss-withdrawals-table .column-vendor { width: 20%; }
-			.wpss-withdrawals-table .column-amount { width: 12%; text-align: right; }
-			.wpss-withdrawals-table .column-method { width: 12%; }
-			.wpss-withdrawals-table .column-status { width: 12%; }
-			.wpss-withdrawals-table .column-date { width: 15%; }
-			.wpss-withdrawals-table .column-actions { width: 18%; }
-
-			.wpss-vendor-info {
-				display: flex;
-				align-items: center;
-				gap: 10px;
-			}
-			.wpss-vendor-avatar {
-				width: 32px;
-				height: 32px;
-				border-radius: 50%;
-			}
-			.wpss-vendor-name {
-				font-weight: 500;
-			}
-			.wpss-vendor-email {
-				font-size: 12px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-
-			.wpss-status-badge {
-				display: inline-block;
-				padding: 3px 8px;
-				border-radius: 3px;
-				font-size: 12px;
-				font-weight: 500;
-			}
-			.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-			.wpss-status-approved { background: var(--wpss-info-light, #d1e7f3); color: var(--wpss-secondary, #0a4b78); }
-			.wpss-status-completed { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
-			.wpss-status-rejected { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
-
-			.wpss-withdrawal-actions {
-				display: flex;
-				gap: 5px;
-				flex-wrap: wrap;
-			}
-			.wpss-withdrawal-actions .button {
-				padding: 2px 8px;
-				font-size: 12px;
-			}
-
-			.wpss-withdrawal-details {
-				margin-top: 5px;
-				font-size: 12px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-			.wpss-withdrawal-details code {
-				font-size: 11px;
-				background: var(--wpss-wp-admin-bg, #f0f0f1);
-				padding: 1px 4px;
-			}
-
-			.wpss-no-items {
-				text-align: center;
-				padding: 40px 20px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-
-			/* Modal */
-			.wpss-modal {
-				position: fixed;
-				z-index: 100000;
-				left: 0;
-				top: 0;
-				width: 100%;
-				height: 100%;
-				background-color: rgba(0, 0, 0, 0.6);
-			}
-			.wpss-modal-content {
-				background-color: var(--wpss-white, #fff);
-				margin: 10% auto;
-				padding: 20px;
-				border-radius: 4px;
-				width: 90%;
-				max-width: 500px;
-				position: relative;
-			}
-			.wpss-modal-small {
-				max-width: 400px;
-			}
-			.wpss-modal-close {
-				position: absolute;
-				right: 15px;
-				top: 10px;
-				font-size: 28px;
-				font-weight: bold;
-				cursor: pointer;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-			.wpss-modal-close:hover { color: var(--wpss-wp-admin-text, #1d2327); }
-			.wpss-modal h2 {
-				margin-top: 0;
-				padding-right: 30px;
-			}
-			.wpss-form-field {
-				margin-bottom: 15px;
-			}
-			.wpss-form-field label {
-				display: block;
-				margin-bottom: 5px;
-				font-weight: 500;
-			}
-			.wpss-modal-actions {
-				display: flex;
-				justify-content: flex-end;
-				gap: 10px;
-				margin-top: 20px;
-			}
-
-		</style>
-
-		<script>
-		function wpssAdminNotice(msg, type) {
-			type = type || 'error';
-			var cls = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-			jQuery('.wrap h1, .wrap h2').first().after($notice);
-			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-		}
-		jQuery(function($) {
-			var wpssWithdrawals = 
-			<?php
-			echo wp_json_encode(
-				array(
-					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'wpss_withdrawals_admin' ),
-					'i18n'    => array(
-						'confirmApprove'  => __( 'Are you sure you want to approve this withdrawal?', 'wp-sell-services' ),
-						'confirmReject'   => __( 'Are you sure you want to reject this withdrawal?', 'wp-sell-services' ),
-						'confirmComplete' => __( 'Are you sure you want to mark this withdrawal as completed?', 'wp-sell-services' ),
-						'loading'         => __( 'Processing...', 'wp-sell-services' ),
-						'error'           => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					),
-				)
-			);
-			?>
-			;
-
-			var $modal = $('#wpss-withdrawal-modal');
-			var $form = $('#wpss-process-withdrawal-form');
-
-			// Open modal for processing
-			$('.wpss-process-withdrawal').on('click', function(e) {
-				e.preventDefault();
-				var $btn = $(this);
-				var withdrawalId = $btn.data('withdrawal-id');
-				var action = $btn.data('action');
-				var amount = $btn.data('amount');
-				var vendor = $btn.data('vendor');
-
-				$('#wpss-withdrawal-id').val(withdrawalId);
-				$('#wpss-action-type').val(action);
-				$('#wpss-admin-note').val('');
-
-				var actionLabels = {
-					'approve': '<?php echo esc_js( __( 'Approve Withdrawal', 'wp-sell-services' ) ); ?>',
-					'complete': '<?php echo esc_js( __( 'Mark as Completed', 'wp-sell-services' ) ); ?>',
-					'reject': '<?php echo esc_js( __( 'Reject Withdrawal', 'wp-sell-services' ) ); ?>'
-				};
-
-				var descriptions = {
-					'approve': '<?php echo esc_js( __( 'Approve this withdrawal request for', 'wp-sell-services' ) ); ?> ' + amount + ' <?php echo esc_js( __( 'from', 'wp-sell-services' ) ); ?> ' + vendor + '?',
-					'complete': '<?php echo esc_js( __( 'Mark this withdrawal as completed. This means payment has been sent to', 'wp-sell-services' ) ); ?> ' + vendor + '.',
-					'reject': '<?php echo esc_js( __( 'Reject this withdrawal request from', 'wp-sell-services' ) ); ?> ' + vendor + '? <?php echo esc_js( __( 'The funds will be returned to their available balance.', 'wp-sell-services' ) ); ?>'
-				};
-
-				$('#wpss-modal-title').text(actionLabels[action] || '<?php echo esc_js( __( 'Process Withdrawal', 'wp-sell-services' ) ); ?>');
-				$('#wpss-modal-description').text(descriptions[action] || '');
-
-				if (action === 'reject') {
-					$('#wpss-modal-submit').removeClass('button-primary').addClass('button-link-delete');
-				} else {
-					$('#wpss-modal-submit').addClass('button-primary').removeClass('button-link-delete');
-				}
-
-				$modal.show();
-			});
-
-			// Close modal
-			$('.wpss-modal-close, .wpss-modal-cancel').on('click', function() {
-				$modal.hide();
-			});
-
-			$modal.on('click', function(e) {
-				if (e.target === this) {
-					$modal.hide();
-				}
-			});
-
-			// Bulk actions: select-all + apply.
-			$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
-				$('input[name="withdrawal_ids[]"]').prop('checked', $(this).prop('checked'));
-			});
-
-			$('.wpss-withdrawals-bulk-apply').on('click', function(e) {
-				e.preventDefault();
-				var bulkAction = $('.wpss-withdrawals-bulk-select').val();
-				if ( ! bulkAction ) {
-					return;
-				}
-				var ids = $('input[name="withdrawal_ids[]"]:checked').map(function() { return this.value; }).get();
-				if ( ids.length === 0 ) {
-					wpssAdminNotice('<?php echo esc_js( __( 'Select at least one withdrawal first.', 'wp-sell-services' ) ); ?>', 'error');
-					return;
-				}
-				var labels = {
-					'approve':  '<?php echo esc_js( __( 'Approve', 'wp-sell-services' ) ); ?>',
-					'complete': '<?php echo esc_js( __( 'Mark as completed', 'wp-sell-services' ) ); ?>',
-					'reject':   '<?php echo esc_js( __( 'Reject', 'wp-sell-services' ) ); ?>'
-				};
-				/* translators: 1: action label, 2: count */
-				var confirmMsg = '<?php echo esc_js( __( '%1$s %2$d withdrawal(s)? This applies to every selected row.', 'wp-sell-services' ) ); ?>';
-				confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
-				if ( ! confirm( confirmMsg ) ) {
-					return;
-				}
-				var $btn = $(this);
-				$btn.prop('disabled', true);
-				$.ajax({
-					url: wpssWithdrawals.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_bulk_process_withdrawals',
-						bulk_action: bulkAction,
-						withdrawal_ids: ids,
-						nonce: $('input[name="wpss_withdrawals_bulk_nonce"]').val()
-					},
-					success: function(response) {
-						if ( response.success ) {
-							location.reload();
-						} else {
-							wpssAdminNotice( response.data && response.data.message ? response.data.message : wpssWithdrawals.i18n.error, 'error' );
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice( wpssWithdrawals.i18n.error, 'error' );
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-
-			// Submit form
-			$form.on('submit', function(e) {
-				e.preventDefault();
-
-				var $submit = $('#wpss-modal-submit');
-				var originalText = $submit.text();
-
-				$submit.prop('disabled', true).text(wpssWithdrawals.i18n.loading);
-
-				$.ajax({
-					url: wpssWithdrawals.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_process_withdrawal',
-						nonce: wpssWithdrawals.nonce,
-						withdrawal_id: $('#wpss-withdrawal-id').val(),
-						action_type: $('#wpss-action-type').val(),
-						admin_note: $('#wpss-admin-note').val()
-					},
-					success: function(response) {
-						if (response.success) {
-							location.reload();
-						} else {
-							wpssAdminNotice(response.data.message || wpssWithdrawals.i18n.error, 'error');
-							$submit.prop('disabled', false).text(originalText);
-						}
-					},
-					error: function() {
-						wpssAdminNotice(wpssWithdrawals.i18n.error, 'error');
-						$submit.prop('disabled', false).text(originalText);
-					}
-				});
-			});
-		});
-		</script>
 		<?php
 	}
 
@@ -775,7 +617,16 @@ class WithdrawalsPage {
 		<tr data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>">
 			<th scope="row" class="check-column">
 				<label class="screen-reader-text" for="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>"><?php esc_html_e( 'Select withdrawal', 'wp-sell-services' ); ?></label>
-				<input type="checkbox" id="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>" name="withdrawal_ids[]" value="<?php echo esc_attr( $withdrawal->id ); ?>">
+				<?php
+				// data-amount / data-vendor-id feed the bulk mark-paid settlement
+				// confirmation, which states the exact total and how many vendors
+				// it settles before the admin commits.
+				?>
+				<input type="checkbox" id="wpss-cb-withdrawal-<?php echo esc_attr( $withdrawal->id ); ?>" name="withdrawal_ids[]" value="<?php echo esc_attr( $withdrawal->id ); ?>"
+					data-amount="<?php echo esc_attr( (string) (float) $withdrawal->amount ); ?>"
+					data-vendor-id="<?php echo esc_attr( (string) (int) $withdrawal->vendor_id ); ?>"
+					data-method="<?php echo esc_attr( $methods[ $withdrawal->method ] ?? ucfirst( (string) $withdrawal->method ) ); ?>"
+					<?php disabled( ! in_array( $status, array( 'pending', 'approved' ), true ) ); ?>>
 			</th>
 			<td class="column-id">
 				<strong>#<?php echo esc_html( $withdrawal->id ); ?></strong>
@@ -819,7 +670,7 @@ class WithdrawalsPage {
 				<?php endif; ?>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( $statuses[ $status ] ?? ucfirst( $status ) ); ?>
 				</span>
 			</td>
@@ -839,29 +690,26 @@ class WithdrawalsPage {
 			</td>
 			<td class="column-actions">
 				<div class="wpss-withdrawal-actions">
-					<?php if ( $status === 'pending' ) : ?>
-						<button type="button" class="button button-primary wpss-process-withdrawal"
-								data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
-								data-action="approve"
-								data-amount="<?php echo esc_attr( wpss_format_price( (float) $withdrawal->amount ) ); ?>"
-								data-vendor="<?php echo esc_attr( $withdrawal->vendor_name ); ?>">
-							<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
-						</button>
-						<button type="button" class="button wpss-process-withdrawal"
-								data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
-								data-action="reject"
-								data-amount="<?php echo esc_attr( wpss_format_price( (float) $withdrawal->amount ) ); ?>"
-								data-vendor="<?php echo esc_attr( $withdrawal->vendor_name ); ?>">
-							<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
-						</button>
-					<?php elseif ( $status === 'approved' ) : ?>
+					<?php if ( in_array( $status, array( 'pending', 'approved' ), true ) ) : ?>
+						<?php // Mark paid is THE terminal step of the manual rail — offered on ?>
+						<?php // pending too, so the batch flow (export → pay offline → mark paid) ?>
+						<?php // does not force a pointless approve click per row. ?>
 						<button type="button" class="button button-primary wpss-process-withdrawal"
 								data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
 								data-action="complete"
 								data-amount="<?php echo esc_attr( wpss_format_price( (float) $withdrawal->amount ) ); ?>"
 								data-vendor="<?php echo esc_attr( $withdrawal->vendor_name ); ?>">
-							<?php esc_html_e( 'Mark Completed', 'wp-sell-services' ); ?>
+							<?php esc_html_e( 'Mark paid', 'wp-sell-services' ); ?>
 						</button>
+						<?php if ( 'pending' === $status ) : ?>
+							<button type="button" class="button wpss-process-withdrawal"
+									data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
+									data-action="approve"
+									data-amount="<?php echo esc_attr( wpss_format_price( (float) $withdrawal->amount ) ); ?>"
+									data-vendor="<?php echo esc_attr( $withdrawal->vendor_name ); ?>">
+								<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
+							</button>
+						<?php endif; ?>
 						<button type="button" class="button wpss-process-withdrawal"
 								data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
 								data-action="reject"
@@ -993,6 +841,141 @@ class WithdrawalsPage {
 			);
 		}
 
+		// Persist the per-row report so it survives the JS success reload. The
+		// success callback reloads the page, which discarded this message and
+		// hid partial failures (e.g. "Failed: #12 (already paid)") from the admin.
+		set_transient( 'wpss_bulk_withdrawal_report_' . get_current_user_id(), $message, MINUTE_IN_SECONDS );
+
 		wp_send_json_success( array( 'message' => $message ) );
+	}
+
+	/**
+	 * Stream the current withdrawal filter as CSV (admin-post handler).
+	 *
+	 * The manual payout rail: export the batch, pay by bank / PayPal bulk
+	 * upload OUTSIDE the system, then come back and Mark paid. Columns cover
+	 * what a bank transfer or a PayPal bulk-payments upload needs (recipient,
+	 * amount, currency, account detail).
+	 *
+	 * Export NEVER mutates status (MONEY-FLOW.md rule 2.4) — an export that
+	 * auto-marked rows paid would lie the moment a transfer failed. This
+	 * method runs SELECTs only.
+	 *
+	 * Batched at 500 rows per query so a 100k-row table streams without
+	 * exhausting memory; no LIMIT on the export itself — the admin asked for
+	 * the batch, a silently truncated batch means unpaid vendors.
+	 *
+	 * @return void
+	 */
+	public function export_csv(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), 403 );
+		}
+
+		check_admin_referer( 'wpss_export_withdrawals' );
+
+		$status = isset( $_GET['status'] ) ? sanitize_key( $_GET['status'] ) : '';
+		$method = isset( $_GET['method'] ) ? sanitize_key( $_GET['method'] ) : '';
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		$where  = array( '1=1' );
+		$values = array();
+
+		if ( $status ) {
+			$where[]  = 'w.status = %s';
+			$values[] = $status;
+		}
+
+		if ( $method ) {
+			$where[]  = 'w.method = %s';
+			$values[] = $method;
+		}
+
+		$where_clause = implode( ' AND ', $where );
+		$currency     = wpss_get_currency();
+
+		$filename = 'wpss-payouts-' . ( $status ? $status . '-' : '' ) . gmdate( 'Ymd-His' ) . '.csv';
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streaming CSV to the response body.
+		$out = fopen( 'php://output', 'w' );
+
+		fputcsv(
+			$out,
+			array(
+				'withdrawal_id',
+				'vendor_id',
+				'vendor_name',
+				'vendor_email',
+				'amount',
+				'currency',
+				'method',
+				'paypal_email',
+				'bank_name',
+				'account_number',
+				'status',
+				'requested_at',
+				'processed_at',
+			)
+		);
+
+		$batch_size = 500;
+		$last_id    = 0;
+
+		do {
+			// Keyset pagination on id — stable while rows are appended, and no
+			// O(N) OFFSET walk on large tables.
+			$query_values   = $values;
+			$query_values[] = $last_id;
+			$query_values[] = $batch_size;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT w.*, u.display_name AS vendor_name, u.user_email AS vendor_email
+					FROM {$table} w
+					LEFT JOIN {$wpdb->users} u ON w.vendor_id = u.ID
+					WHERE {$where_clause} AND w.id > %d
+					ORDER BY w.id ASC
+					LIMIT %d",
+					$query_values
+				)
+			);
+
+			$row_count = count( $rows );
+
+			foreach ( $rows as $row ) {
+				$last_id = (int) $row->id;
+				$details = json_decode( (string) ( $row->details ?? '' ), true ) ?: array();
+
+				fputcsv(
+					$out,
+					array(
+						(int) $row->id,
+						(int) $row->vendor_id,
+						(string) ( $row->vendor_name ?? '' ),
+						(string) ( $row->vendor_email ?? '' ),
+						number_format( (float) $row->amount, 2, '.', '' ),
+						$currency,
+						(string) $row->method,
+						(string) ( $details['email'] ?? '' ),
+						(string) ( $details['bank_name'] ?? '' ),
+						(string) ( $details['account_number'] ?? '' ),
+						(string) $row->status,
+						(string) $row->created_at,
+						(string) ( $row->processed_at ?? '' ),
+					)
+				);
+			}
+		} while ( $row_count === $batch_size );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		fclose( $out );
+		exit;
 	}
 }

@@ -73,12 +73,17 @@
 			return null;
 		}
 
+		// Skin follows the context PHP resolved. This was hardcoded to the admin
+		// modifier, so the frontend vendor dashboard rendered its tour in
+		// wp-admin blue instead of the marketplace design system.
+		var context = 'admin' === window.wpssTour.context ? 'admin' : 'frontend';
+
 		var tour = new window.Shepherd.Tour( {
 			useModalOverlay: true,
 			defaultStepOptions: {
 				scrollTo:   { behavior: 'smooth', block: 'center' },
 				cancelIcon: { enabled: true },
-				classes:    'wpss-shepherd wpss-shepherd--admin',
+				classes:    'wpss-shepherd wpss-shepherd--' + context,
 				arrow:      true
 			},
 			exitOnEsc:      true,

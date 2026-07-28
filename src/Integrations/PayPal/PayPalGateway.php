@@ -506,7 +506,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		ob_start();
 		?>
-		<div class="wpss-paypal-payment" data-client-id="<?php echo esc_attr( $client_id ); ?>">
+		<div class="wpss-paypal-payment" data-gateway="paypal" data-wpss-own-submit="1" data-client-id="<?php echo esc_attr( $client_id ); ?>">
 			<div id="wpss-paypal-button-container"></div>
 			<div id="wpss-paypal-error" class="wpss-payment-error" style="display: none;"></div>
 			<input type="hidden" name="paypal_order_id" id="wpss-paypal-order-id">
@@ -563,8 +563,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_paypal' ),
 				'i18n'    => array(
-					'processing' => __( 'Processing...', 'wp-sell-services' ),
-					'error'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'processing'    => __( 'Processing...', 'wp-sell-services' ),
+					'error'         => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'invalidAmount' => __( 'Invalid payment amount.', 'wp-sell-services' ),
+					'createFailed'  => __( 'Failed to create PayPal order.', 'wp-sell-services' ),
+					'captureFailed' => __( 'Payment capture failed.', 'wp-sell-services' ),
+					'cancelled'     => __( 'Payment cancelled.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -689,10 +693,11 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// Multi-service checkout: accept total directly from the form.
 		$is_multi = ! empty( $_POST['is_multi_checkout'] );
 		if ( $is_multi ) {
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Cast to float is sanitization.
-			$amount = (float) wp_unslash( $_POST['amount'] ?? 0 );
-			if ( $amount <= 0 ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
+			// Price the cart SERVER-SIDE via the shared seam — never trust the
+			// client amount (parity with Stripe; see CheckoutIntentService).
+			$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( array( 'is_multi_checkout' => true ) );
+			if ( is_wp_error( $intent ) ) {
+				wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
 				return;
 			}
 
@@ -702,7 +707,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'description'       => __( 'Multi-service cart checkout', 'wp-sell-services' ),
 			);
 
-			$result = $this->create_payment( $amount, $currency, $metadata );
+			$result = $this->create_payment( $intent->amount, $intent->currency, $metadata );
 
 			if ( $result['success'] ) {
 				wp_send_json_success( $result );
@@ -731,7 +736,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'service_id'  => (int) $pay_order->service_id,
 				'customer_id' => get_current_user_id(),
 				'description' => sprintf(
-					/* translators: %d: Order ID */
+					/* translators: %d: order ID */
 					__( 'Order #%d', 'wp-sell-services' ),
 					$pay_order_id
 				),

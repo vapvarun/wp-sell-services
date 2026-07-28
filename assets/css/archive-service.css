@@ -43,7 +43,7 @@
    service-card link is deliberately excluded — its colour is owned by the card
    component (frontend.css) so card text never turns link-blue / Reign-white. */
 .wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *) {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
@@ -180,7 +180,7 @@
 	align-items: center;
 	gap: 1rem;
 	padding: 1rem;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	margin-bottom: 1.5rem;
@@ -260,7 +260,7 @@
 	padding: 0.5rem 1rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	font-size: 0.875rem;
 	cursor: pointer;
 	min-width: 160px;
@@ -330,7 +330,7 @@
 	padding: 0 0.75rem;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	color: var(--wpss-text);
 	text-decoration: none;
 	font-size: 0.875rem;
@@ -339,7 +339,7 @@
 
 .wpss-pagination a:hover {
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-pagination .current {
@@ -360,7 +360,7 @@
 	inset-inline-start: 0;
 	width: 320px;
 	height: 100%;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	z-index: 9991;
 	transform: translateX(-100%);
 	transition: transform 0.3s ease;
@@ -402,7 +402,7 @@ body.wpss-sidebar-open::after {
 	border-bottom: 1px solid var(--wpss-border);
 	position: sticky;
 	top: 0;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	z-index: 1;
 }
 
@@ -461,7 +461,7 @@ body.wpss-sidebar-open::after {
 	margin: 0 0 1rem;
 	font-size: 0.875rem;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 }
@@ -495,7 +495,7 @@ body.wpss-sidebar-open::after {
 /* A colour-only hover was invisible against Reign's section background; add a
    tinted row so the hovered / selected category is unmistakable. */
 .wpss-category-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-light);
 }
 
@@ -503,11 +503,11 @@ body.wpss-sidebar-open::after {
 .wpss-subcategory-list a:focus-visible {
 	outline: 2px solid var(--wpss-primary);
 	outline-offset: 2px;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-category-link.is-active {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-light);
 	font-weight: 600;
 }
@@ -518,7 +518,7 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-category-link.is-active .wpss-count {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-subcategory-list {
@@ -540,19 +540,19 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-subcategory-list a.is-active {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	font-weight: 600;
 }
 
 .wpss-subcategory-list a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-category-link:focus-visible,
 .wpss-subcategory-list a:focus-visible {
 	outline: 2px solid var(--wpss-primary);
 	outline-offset: 2px;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* Price Inputs */

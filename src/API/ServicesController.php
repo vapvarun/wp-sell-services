@@ -19,6 +19,7 @@ use WP_REST_Response;
 use WP_Error;
 use WP_Query;
 use WPSellServices\Services\ModerationService;
+use WPSellServices\Models\Review;
 
 /**
  * REST controller for services.
@@ -738,12 +739,13 @@ class ServicesController extends RestController {
 			ARRAY_A
 		);
 
-		// Add reviewer info.
+		// Add reviewer info. Migrated guest reviews (customer_id = 0) carry the
+		// original author name in reviewer_name; resolve through the shared
+		// helper so the API never returns "Anonymous" for a known name.
 		foreach ( $reviews as &$review ) {
-			$user                 = get_user_by( 'id', $review['customer_id'] );
 			$review['reviewer']   = array(
 				'id'     => (int) $review['customer_id'],
-				'name'   => $user ? $user->display_name : 'Anonymous',
+				'name'   => Review::resolve_reviewer_name( (int) $review['customer_id'], $review['reviewer_name'] ?? null ),
 				'avatar' => get_avatar_url( $review['customer_id'], array( 'size' => 48 ) ),
 			);
 			$review['created_at'] = $this->format_datetime( $review['created_at'] ?? null );

@@ -147,6 +147,85 @@ class OrderService {
 	}
 
 	/**
+	 * Record how much is coming back, then move the order to a refund status.
+	 *
+	 * These two writes are ordered the way they are for a reason: the refund
+	 * handlers read `refunded_amount` off the order DURING the status hook, to
+	 * size both the buyer's refund and the vendor's reversal. The amount has to
+	 * be on the row before the transition fires.
+	 *
+	 * That ordering is a trap, and it was live. update_status() returns false
+	 * for a refused transition, but by then the amount is already written — so
+	 * the order reads as "$50.00 refunded" on every display surface while
+	 * nothing was refunded and no money moved. Reproduced on a paid
+	 * `pending_requirements` order: the status the buyer/vendor refund handler
+	 * explicitly advertises as refundable, and which can_transition() refuses.
+	 *
+	 * So the write is undone whenever the order does not actually move. Every
+	 * caller that sets refunded_amount goes through here; none may write the
+	 * column and call update_status() themselves, or the trap comes straight
+	 * back.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param int        $order_id Order ID.
+	 * @param float|null $amount   Amount refunded to the buyer. NULL, zero, or
+	 *                             anything at or above the order total means the
+	 *                             whole order.
+	 * @param string     $status   Target status.
+	 * @return bool True when the order actually moved.
+	 */
+	public function apply_refund_status( int $order_id, ?float $amount, string $status ): bool {
+		global $wpdb;
+
+		$order = $this->get( $order_id );
+
+		if ( ! $order ) {
+			return false;
+		}
+
+		$table = $wpdb->prefix . 'wpss_orders';
+		$total = (float) $order->total;
+
+		// A partial larger than the order is clamped rather than trusted — it
+		// would otherwise claw back more from the vendor than they ever earned.
+		// This clamp used to live in DisputeService and applied to disputes
+		// only; it belongs to every caller.
+		$refunded = ( null === $amount || $amount <= 0 || $amount >= $total )
+			? $total
+			: round( $amount, 2 );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$previous = $wpdb->get_var( $wpdb->prepare( "SELECT refunded_amount FROM {$table} WHERE id = %d", $order_id ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update( $table, array( 'refunded_amount' => $refunded ), array( 'id' => $order_id ), array( '%f' ), array( '%d' ) );
+
+		$moved = $this->update_status( $order_id, $status );
+
+		if ( ! $moved ) {
+			// Put the column back exactly as it was — including NULL, which is
+			// itself meaningful. Leaving the attempted amount behind would
+			// misreport a refund that never happened.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$table,
+				array( 'refunded_amount' => null === $previous ? null : (float) $previous ),
+				array( 'id' => $order_id ),
+				array( '%f' ),
+				array( '%d' )
+			);
+
+			wpss_log(
+				sprintf( 'Order %d: refund to "%s" was refused; refunded_amount restored.', $order_id, $status ),
+				'warning'
+			);
+		}
+
+		return $moved;
+	}
+
+	/**
 	 * Update order status.
 	 *
 	 * @param int    $order_id   Order ID.
@@ -369,6 +448,40 @@ class OrderService {
 				ServiceOrder::STATUS_DISPUTED,
 			),
 		);
+
+		// Refund is a money action, not a workflow step: policy is that any PAID
+		// order is refundable at any stage (quality problems surface after
+		// delivery). So refunded / partially_refunded are reachable targets from
+		// every post-payment status, making the state machine agree with
+		// wpss_order_is_refundable() instead of only permitting disputed →
+		// refunded. Whether the order was actually PAID is enforced at the refund
+		// gates by wpss_order_is_refundable(); the map only says the transition is
+		// structurally legal. Unpaid stages (pending_payment) are intentionally
+		// excluded — there is nothing to refund before capture.
+		$refund_targets = array(
+			ServiceOrder::STATUS_REFUNDED,
+			ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+		);
+		$paid_stage_statuses = array(
+			ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+			ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED,
+			ServiceOrder::STATUS_ACCEPTED,
+			ServiceOrder::STATUS_IN_PROGRESS,
+			ServiceOrder::STATUS_PENDING_APPROVAL,
+			ServiceOrder::STATUS_DELIVERED,
+			ServiceOrder::STATUS_REVISION_REQUESTED,
+			ServiceOrder::STATUS_LATE,
+			ServiceOrder::STATUS_ON_HOLD,
+			ServiceOrder::STATUS_CANCELLATION_REQUESTED,
+			ServiceOrder::STATUS_COMPLETED,
+			ServiceOrder::STATUS_CANCELLED,
+			ServiceOrder::STATUS_DISPUTED,
+			ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+		);
+		foreach ( $paid_stage_statuses as $paid_status ) {
+			$existing                    = $transitions[ $paid_status ] ?? array();
+			$transitions[ $paid_status ] = array_values( array_unique( array_merge( $existing, $refund_targets ) ) );
+		}
 
 		/**
 		 * Filter allowed status transitions.
@@ -770,8 +883,8 @@ class OrderService {
 			$old_label = $statuses[ $old_status ] ?? $old_status;
 			$new_label = $statuses[ $new_status ] ?? $new_status;
 
-			/* translators: 1: old status, 2: new status */
 			$message = sprintf(
+				/* translators: 1: old status, 2: new status */
 				__( 'Order status changed from %1$s to %2$s', 'wp-sell-services' ),
 				$old_label,
 				$new_label

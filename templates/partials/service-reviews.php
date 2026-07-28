@@ -125,17 +125,17 @@ do_action( 'wpss_before_service_reviews', $service_id );
 		<div class="wpss-reviews-list">
 			<?php foreach ( $reviews as $review ) : ?>
 				<?php
-				$reviewer     = get_userdata( $review->customer_id );
-				$service_post = get_post( $review->service_id );
+				$reviewer_name = wpss_get_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
+				$service_post  = get_post( $review->service_id );
 				?>
 				<div class="wpss-review">
 					<div class="wpss-review-header">
 						<img src="<?php echo esc_url( get_avatar_url( $review->customer_id, [ 'size' => 48 ] ) ); ?>"
-							alt="<?php echo esc_attr( $reviewer ? $reviewer->display_name : '' ); ?>"
+							alt="<?php echo esc_attr( $reviewer_name ); ?>"
 							class="wpss-review-avatar">
 						<div class="wpss-review-info">
 							<strong class="wpss-review-author">
-								<?php echo esc_html( $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+								<?php echo esc_html( $reviewer_name ); ?>
 							</strong>
 							<div class="wpss-review-rating">
 								<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
@@ -168,7 +168,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 
 					<div class="wpss-review-helpful">
 						<?php if ( is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id() ) : ?>
-							<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>" style="background:none;border:1px solid #ddd;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:13px;color:#666;display:inline-flex;align-items:center;gap:4px;">
+							<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
 								<span class="wpss-helpful-icon">
 									<i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								</span>

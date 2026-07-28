@@ -81,7 +81,9 @@ $bio           = $profile->bio ?? '';
 $skills        = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : [];
 $languages     = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : [];
 $response_time = $vendor_service->get_response_time( $vendor_id );
-$country       = $profile->country ?? '';
+// Shared resolver: renders a stored code as its country name, and leaves
+// legacy free-text values readable rather than blanking them.
+$country       = wpss_get_country_name( (string) ( $profile->country ?? '' ) );
 $member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
 $is_verified   = ( $profile->verification_tier ?? '' ) === VendorProfile::TIER_PRO;
 $social_links  = ! empty( $profile->social_links ) ? json_decode( $profile->social_links, true ) : [];
@@ -118,10 +120,13 @@ $total_services = count(
 global $wpdb;
 $reviews = $wpdb->get_results(
 	$wpdb->prepare(
+		// Show the first 10 to match the load-more JS, which requests page 2 at
+		// per_page 10 (offset 10). Rendering only 5 here meant "View all reviews"
+		// jumped straight to offset 10 and permanently skipped reviews #6-10.
 		"SELECT * FROM {$wpdb->prefix}wpss_reviews
 		WHERE vendor_id = %d AND status = 'approved'
 		ORDER BY created_at DESC
-		LIMIT 5",
+		LIMIT 10",
 		$vendor_id
 	)
 );
@@ -319,7 +324,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					?>
 
 					<?php if ( ! empty( $services ) ) : ?>
-						<div class="wpss-services-grid wpss-services-grid-3">
+						<div class="wpss-services-grid wpss-services-grid--3">
 							<?php foreach ( $services as $service_post ) : ?>
 								<?php
 								global $post;
@@ -410,15 +415,15 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					<?php if ( ! empty( $reviews ) ) : ?>
 						<div class="wpss-reviews-list">
 							<?php foreach ( $reviews as $review ) : ?>
-								<?php $reviewer = get_userdata( $review->customer_id ); ?>
+								<?php $reviewer_name = wpss_get_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ); ?>
 								<div class="wpss-review">
 									<div class="wpss-review-header">
 										<img src="<?php echo esc_url( get_avatar_url( $review->customer_id, [ 'size' => 48 ] ) ); ?>"
-											 alt="<?php echo esc_attr( $reviewer ? $reviewer->display_name : '' ); ?>"
+											 alt="<?php echo esc_attr( $reviewer_name ); ?>"
 											 class="wpss-review-avatar">
 										<div class="wpss-review-meta">
 											<strong class="wpss-review-author">
-												<?php echo esc_html( $reviewer ? $reviewer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
+												<?php echo esc_html( $reviewer_name ); ?>
 											</strong>
 											<span class="wpss-review-date">
 												<?php echo esc_html( wpss_time_ago( $review->created_at ) ); ?>
@@ -443,7 +448,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							<?php endforeach; ?>
 						</div>
 
-						<?php if ( $rating_count > 5 ) : ?>
+						<?php if ( $rating_count > 10 ) : ?>
 							<p class="wpss-view-all">
 								<a href="#" class="wpss-load-more-reviews" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 									<?php esc_html_e( 'View all reviews', 'wp-sell-services' ); ?> &rarr;

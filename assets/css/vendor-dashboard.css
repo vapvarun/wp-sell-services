@@ -29,7 +29,7 @@
    ========================================================================== */
 
 .wpss-dashboard__sidebar {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-right: 1px solid var(--wpss-border, #e5e7eb);
 	padding: 1.5rem;
 	position: sticky;
@@ -98,12 +98,12 @@
 
 .wpss-dashboard__nav-item:hover {
 	background: var(--wpss-background, #f9fafb);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-dashboard__nav-item--active {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	font-weight: 500;
 }
 
@@ -182,7 +182,7 @@
 	align-items: center;
 	gap: 1rem;
 	padding: 1.5rem;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
@@ -199,7 +199,7 @@
 
 .wpss-stat-card__icon--primary {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-stat-card__icon--success {
@@ -297,7 +297,7 @@
    ========================================================================== */
 
 .wpss-card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 	overflow: hidden;
@@ -345,7 +345,7 @@
 }
 
 .wpss-card__title a:hover {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-card__meta {
@@ -388,7 +388,7 @@
 
 .wpss-badge--primary {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-badge--success {
@@ -452,7 +452,7 @@
    ========================================================================== */
 
 .wpss-table-wrapper {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 	overflow: hidden;
@@ -585,7 +585,7 @@
 
 .wpss-btn--link {
 	background: none;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	padding: 0;
 }
 
@@ -643,7 +643,7 @@
 	font-size: 0.9375rem;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-text, #1f2937);
 	transition: border-color var(--wpss-transition, 0.2s ease);
 }
@@ -685,7 +685,7 @@ select.wpss-input {
 	background-repeat: no-repeat;
 	background-position: right 12px center;
 	background-size: 16px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 	cursor: pointer;
 }
 
@@ -710,53 +710,17 @@ select.wpss-input::-ms-expand {
    Empty State
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 4rem 2rem;
-	background: var(--wpss-white, #fff);
-	border-radius: var(--wpss-radius-lg, 12px);
-	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
-}
-
-.wpss-empty-state__icon {
-	width: 64px;
-	height: 64px;
-	margin: 0 auto 1.5rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--wpss-background, #f9fafb);
-	border-radius: 50%;
-	color: var(--wpss-text-muted, #6b7280);
-	font-size: 1.5rem;
-}
-
-.wpss-empty-state__title {
-	margin: 0 0 0.5rem;
-	font-size: 1.125rem;
-	font-weight: 600;
-	color: var(--wpss-text, #1f2937);
-}
-
-.wpss-empty-state__description {
-	margin: 0 0 1.5rem;
-	color: var(--wpss-text-muted, #6b7280);
-	max-width: 400px;
-	margin-inline: auto;
-}
-
-.wpss-empty-state__actions {
-	display: flex;
-	justify-content: center;
-	gap: 0.75rem;
-}
+/* Empty state is owned by design-system.css (search "EMPTY STATE"), which loads
+   first on every frontend surface and aliases this file's `__description` name.
+   The copy here used a shadow where the other three used a border, so the same
+   empty view changed shape from one dashboard to the next. */
 
 /* ==========================================================================
    Section Component
    ========================================================================== */
 
 .wpss-section {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg, 12px);
 	box-shadow: var(--wpss-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
 }
@@ -817,7 +781,7 @@ select.wpss-input::-ms-expand {
 	justify-content: center;
 	border-radius: 50%;
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	flex-shrink: 0;
 }
 
@@ -945,7 +909,7 @@ select.wpss-input::-ms-expand {
 
 .wpss-deadline__date {
 	font-weight: 600;
-	color: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-secondary-accent, #1e293b);
 }
 
 .wpss-deadline__remaining {
@@ -983,7 +947,7 @@ select.wpss-input::-ms-expand {
 
 .wpss-funnel__value {
 	font-weight: 600;
-	color: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-secondary-accent, #1e293b);
 }
 
 .wpss-funnel__rate {
@@ -1016,7 +980,7 @@ select.wpss-input::-ms-expand {
 .wpss-metric__value {
 	font-size: 1.125rem;
 	font-weight: 600;
-	color: var(--wpss-secondary, #1e293b);
+	color: var(--wpss-secondary-accent, #1e293b);
 }
 
 .wpss-metric__bar {

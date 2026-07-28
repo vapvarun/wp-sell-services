@@ -366,7 +366,7 @@ defined( 'ABSPATH' ) || exit;
 								<p class="wpss-cart-item__vendor">
 									<?php
 									printf(
-										/* translators: %s: vendor display name */
+										/* translators: %s: vendor or user display name */
 										esc_html__( 'by %s', 'wp-sell-services' ),
 										esc_html( $vendor_name )
 									);

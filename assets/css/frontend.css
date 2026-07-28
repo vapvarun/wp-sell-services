@@ -152,7 +152,7 @@
 
 .wpss-btn-outline {
 	background: transparent;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	border-color: var(--wpss-border);
 }
 
@@ -310,26 +310,11 @@ select:invalid {
    Service Cards
    ========================================================================== */
 
-/* F7: the base .wpss-services-grid (and the --2/--3/--4 modifiers) now live in
-   design-system.css so the grid lays out on EVERY surface, not just where
-   frontend.css happened to load. Only the legacy single-hyphen alias used by
-   templates/vendor/profile.php is kept here, mapped onto the shared 3-up
-   modifier so it stays a modifier of the one grid, not a re-implementation. */
-.wpss-services-grid-3 {
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-@media (max-width: 1024px) {
-	.wpss-services-grid-3 {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-}
-
-@media (max-width: 600px) {
-	.wpss-services-grid-3 {
-		grid-template-columns: 1fr;
-	}
-}
+/* The base .wpss-services-grid and its --2/--3/--4 modifiers — including the
+   responsive step-down these once carried — live ONCE in design-system.css.
+   The legacy single-hyphen `.wpss-services-grid-3` alias that used to sit here
+   is gone: its one call site (templates/vendor/profile.php) was migrated to the
+   canonical `--3` modifier, which now owns the 1024→2col / 640→1col collapse. */
 
 /* The card renders as <article class="wpss-service-card post-N hentry">, so
    the host theme's generic article / .hentry rules land on it. Reign 8.0.0
@@ -343,7 +328,7 @@ select:invalid {
 article.wpss-service-card {
 	margin: 0;
 	padding: 0;
-	background: var(--wpss-white) !important;
+	background: var(--wpss-surface) !important;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
@@ -392,7 +377,7 @@ article.wpss-service-card:hover {
 	top: 10px;
 	left: 10px;
 	padding: 4px 10px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -423,7 +408,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-verified-badge {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-card-title {
@@ -431,7 +416,7 @@ article.wpss-service-card:hover {
 	font-size: 15px;
 	font-weight: 600;
 	line-height: 1.4;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
@@ -467,7 +452,7 @@ article.wpss-service-card:hover {
 .wpss-no-rating {
 	padding: 2px 8px;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -490,7 +475,7 @@ article.wpss-service-card:hover {
 .wpss-card-price {
 	font-size: 16px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 /* ==========================================================================
@@ -546,7 +531,7 @@ article.wpss-service-card:hover {
 	left: 10px;
 	max-width: calc(100% - 20px);
 	padding: 4px 10px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius);
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 	font-size: 11px;
@@ -554,7 +539,7 @@ article.wpss-service-card:hover {
 	line-height: 1.4;
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -575,7 +560,7 @@ article.wpss-service-card:hover {
 	padding: 8px;
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	color: var(--wpss-text-light);
 	font-size: 14px;
 	font-weight: 600;
@@ -643,7 +628,7 @@ article.wpss-service-card:hover {
 	}
 
 	.wpss-fav-toggle--inline.is-favorited:hover {
-		background: var(--wpss-white);
+		background: var(--wpss-surface);
 	}
 }
 
@@ -671,7 +656,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-service-card__verified {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	display: inline-flex;
 }
 
@@ -680,7 +665,7 @@ article.wpss-service-card:hover {
 	font-size: 15px;
 	font-weight: 600;
 	line-height: 1.4;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
@@ -701,7 +686,7 @@ article.wpss-service-card:hover {
 
 .wpss-service-card__rating-value {
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-service-card__rating-count {
@@ -711,7 +696,7 @@ article.wpss-service-card:hover {
 .wpss-service-card__rating-new {
 	padding: 2px 8px;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -733,7 +718,7 @@ article.wpss-service-card:hover {
 .wpss-service-card__price {
 	font-size: 16px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 /* ==========================================================================
@@ -902,32 +887,61 @@ article.wpss-service-card:hover {
    ========================================================================== */
 
 .wpss-packages-widget {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
 }
 
+/* Package tier tabs — ONE definition (single-service.css used to carry a
+   second, divergent copy that won the cascade on the only screen that renders
+   this widget; the two disagreed on padding, weight and the active indicator).
+   Lives here because frontend.css loads on every frontend surface, so the
+   widget can never render unstyled.
+
+   The strip scrolls. `flex: 1` alone could not shrink tabs below their
+   min-content width, and the widget wrapper is `overflow: hidden`, so a
+   service with more tiers than fit had its last tab(s) rendered OUTSIDE the
+   card and clipped — invisible AND unclickable, meaning a buyer could not see
+   or select the vendor's top package. Three tiers still divide the strip
+   exactly as before (min-width 33.333% + grow); a fourth or fifth scrolls into
+   reach instead of disappearing. Tier titles are vendor-authored free text
+   (wizard "Tier title" field, no maxlength) and the tier count is filterable
+   via `wpss_service_max_packages`, so neither label length nor tier count can
+   be assumed. */
 .wpss-packages-tabs {
 	display: flex;
 	border-bottom: 1px solid var(--wpss-border);
+	overflow-x: auto;
+	scrollbar-width: thin;
 }
 
 .wpss-package-tab {
-	flex: 1;
-	padding: 15px;
-	background: var(--wpss-background);
+	/* basis (not min-width) so the 1rem padding is inside the third — with
+	   border-box, three tiers total exactly 100% and never scroll; shrink 0
+	   keeps a fourth+ tier readable and pushes it into the scroll instead of
+	   collapsing every tab to an illegible sliver. */
+	flex: 1 0 33.333%;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 1rem;
+	background: none;
 	border: none;
+	border-bottom: 2px solid transparent;
 	font-size: 14px;
-	font-weight: 600;
+	font-weight: 500;
+	color: var(--wpss-text-muted);
 	cursor: pointer;
 	transition: all var(--wpss-transition);
 }
 
-.wpss-package-tab:hover,
+.wpss-package-tab:hover {
+	color: var(--wpss-text);
+}
+
 .wpss-package-tab.active {
-	background: var(--wpss-white);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
+	border-bottom-color: var(--wpss-primary);
 	border-radius: 0;
 }
 
@@ -955,7 +969,7 @@ article.wpss-service-card:hover {
 .wpss-package-price {
 	font-size: 24px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-package-description {
@@ -1026,7 +1040,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-contact-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* Contact Modal
@@ -1195,7 +1209,7 @@ article.wpss-service-card:hover {
 	display: block;
 	font-size: 48px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	line-height: 1;
 }
 
@@ -1327,7 +1341,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-dashboard-sidebar {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 20px;
 	height: fit-content;
@@ -1382,11 +1396,11 @@ article.wpss-service-card:hover {
 .wpss-dashboard-nav a:hover,
 .wpss-dashboard-nav li.active a {
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-dashboard-content {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 30px;
 }
@@ -1418,7 +1432,7 @@ article.wpss-service-card:hover {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius);
 	font-size: 20px;
 }
@@ -1427,7 +1441,7 @@ article.wpss-service-card:hover {
 	display: block;
 	font-size: 24px;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-stat-label {
@@ -1465,61 +1479,11 @@ article.wpss-service-card:hover {
 	text-transform: capitalize;
 }
 
-.wpss-status-badge {
-	display: inline-block;
-	padding: 4px 10px;
-	border-radius: 4px;
-	font-size: 12px;
-	font-weight: 500;
-	text-transform: capitalize;
-}
-
-.wpss-status-pending,
-.wpss-status-withdrawn {
-	background: var(--wpss-warning-light, #fff3cd);
-	color: var(--wpss-warning-dark, #856404);
-}
-
-.wpss-status-accepted {
-	background: var(--wpss-success-light, #d4edda);
-	color: var(--wpss-success-dark, #155724);
-}
-
-.wpss-status-processing {
-	background: var(--wpss-info-light, #cce5ff);
-	color: var(--wpss-info-dark, #004085);
-}
-
-.wpss-status-in_progress {
-	background: var(--wpss-info-light, #d1ecf1);
-	color: var(--wpss-info-dark, #0c5460);
-}
-
-.wpss-status-delivered {
-	background: var(--wpss-success-light, #d4edda);
-	color: var(--wpss-success-dark, #155724);
-}
-
-.wpss-status-completed {
-	background: var(--wpss-primary-light);
-	color: var(--wpss-primary-dark);
-}
-
-.wpss-status-cancelled,
-.wpss-status-rejected {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
-
-.wpss-status-disputed {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
-
-.wpss-status-refunded {
-	background: var(--wpss-gray-200, #e2e3e5);
-	color: var(--wpss-text-secondary, #383d41);
-}
+/* Status pills (.wpss-status-badge + .wpss-status-*) are now owned by the ONE
+   canonical palette in design-system.css, which loads before this file on
+   every frontend cascade. The copies that used to live here disagreed with
+   admin (completed rendered primary-purple here vs green in admin; refunded
+   grey here vs purple in admin) and are removed so every surface matches. */
 
 /* Badges
    2.7.1a dedup: the bare .wpss-badge BASE block was removed here. The badge
@@ -1532,64 +1496,14 @@ article.wpss-service-card:hover {
    design-system does not own, so they stay and now compose on the single
    canonical base. */
 
-/* Pending */
-.wpss-badge--pending {
-	background: var(--wpss-warning-light, #fef3c7);
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-/* Approved */
-.wpss-badge--approved {
-	background: var(--wpss-success-light, #d1fae5);
-	color: var(--wpss-success-dark, #065f46);
-}
-
-/* Completed */
-.wpss-badge--completed {
-	background: var(--wpss-success-border, #bbf7d0);
-	color: var(--wpss-success-dark, #065f46);
-}
-
-/* Rejected */
-.wpss-badge--rejected {
-	background: var(--wpss-badge-tip-bg, #fee2e2);
-	color: var(--wpss-danger-dark, #991b1b);
-}
-
-/* Order Status Badges */
-.wpss-badge--status-pending {
-	background: var(--wpss-status-pending-bg, #fef3c7);
-	color: var(--wpss-status-pending-text, #92400e);
-}
-
-.wpss-badge--status-in-progress {
-	background: var(--wpss-status-in-progress-bg, #e0e7ff);
-	color: var(--wpss-status-in-progress-text, #3730a3);
-}
-
-.wpss-badge--status-completed {
-	background: var(--wpss-status-completed-bg, #d1fae5);
-	color: var(--wpss-status-completed-text, #065f46);
-}
-
-.wpss-badge--status-delivered {
-	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-status-delivered-text, #1e40af);
-}
-
-.wpss-badge--status-disputed {
-	background: var(--wpss-status-disputed-bg, #fee2e2);
-	color: var(--wpss-status-disputed-text, #991b1b);
-}
-
-.wpss-badge--status-cancelled {
-	background: var(--wpss-status-cancelled-bg, #f1f5f9);
-	color: var(--wpss-status-cancelled-text, #475569);
-}
+/* .wpss-badge--pending / --approved / --completed / --rejected were dead
+   (zero call sites) and are removed. The .wpss-badge--status-* order pills
+   were migrated to the canonical .wpss-status-* palette (design-system.css)
+   at their six call sites, so those rules are gone too. */
 
 .wpss-badge-vendor {
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-badge-customer {
@@ -1643,7 +1557,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-suborder-crumb a {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	font-weight: 500;
 	text-decoration: none;
 }
@@ -1660,7 +1574,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-back-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-order-title {
@@ -1717,7 +1631,7 @@ article.wpss-service-card:hover {
 	margin: 0;
 	font-size: 16px;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-order-section__title svg {
@@ -1749,7 +1663,7 @@ article.wpss-service-card:hover {
 	margin: 0 0 10px;
 	font-size: 14px;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-requirement-view__answer {
@@ -1801,12 +1715,12 @@ article.wpss-service-card:hover {
 	gap: 4px;
 	margin-top: 10px;
 	padding: 6px 12px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-sm);
 	font-size: 13px;
 	font-weight: 500;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
@@ -1836,7 +1750,7 @@ article.wpss-service-card:hover {
 	width: 32px;
 	height: 32px;
 	padding: 0;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-sm);
 	color: var(--wpss-text-light);
@@ -1889,7 +1803,7 @@ article.wpss-service-card:hover {
 	align-items: center;
 	gap: 8px;
 	padding: 10px 16px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	font-size: 14px;
@@ -2012,7 +1926,7 @@ article.wpss-service-card:hover {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: none;
 	border-radius: 50%;
 	font-size: 24px;
@@ -2029,7 +1943,7 @@ article.wpss-service-card:hover {
 
 /* Sidebar Cards */
 .wpss-sidebar-card {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	padding: 20px;
@@ -2060,7 +1974,7 @@ article.wpss-service-card:hover {
 
 /* Pro Profile Widget */
 .wpss-profile-sidebar .wpss-pro-profile-widget {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
     border: 1px solid var(--wpss-border);
     border-radius: var(--wpss-radius-lg);
     padding: 20px;
@@ -2149,7 +2063,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-message-content {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	padding: 12px;
 	border-radius: var(--wpss-radius);
 	max-width: 80%;
@@ -2263,7 +2177,7 @@ article.wpss-service-card:hover {
 	height: 150px;
 	border-radius: 50%;
 	border: 4px solid var(--wpss-white);
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	object-fit: cover;
 }
 
@@ -2271,7 +2185,7 @@ article.wpss-service-card:hover {
 	position: absolute;
 	bottom: 5px;
 	right: 5px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: 50%;
 	padding: 4px;
 }
@@ -2432,26 +2346,14 @@ article.wpss-service-card:hover {
    Empty States
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 60px 20px;
-}
+/* Empty state is owned by design-system.css — search "EMPTY STATE". This was
+   the FIRST of two copies in this same file; it had no surface at all (just
+   centred text) while the second one 1400 lines below drew a bordered card. */
 
 .wpss-empty-icon {
 	display: inline-block;
 	margin-bottom: 20px;
 	color: var(--wpss-border);
-}
-
-.wpss-empty-state h2,
-.wpss-empty-state h3 {
-	margin: 0 0 10px;
-	color: var(--wpss-secondary);
-}
-
-.wpss-empty-state p {
-	color: var(--wpss-text);
-	margin-bottom: 20px;
 }
 
 .wpss-empty-actions {
@@ -2521,7 +2423,7 @@ article.wpss-service-card:hover {
 	min-width: 36px;
 	height: 36px;
 	padding: 0 10px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	color: var(--wpss-text);
@@ -2550,7 +2452,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-view-all a {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	font-weight: 600;
 	text-decoration: none;
 }
@@ -2589,7 +2491,7 @@ article.wpss-service-card:hover {
 .wpss-requirements-header h1 {
 	margin: 0 0 16px;
 	font-size: 28px;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-requirements-intro {
@@ -2642,7 +2544,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-requirements-form {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	padding: 30px;
@@ -2660,7 +2562,7 @@ article.wpss-service-card:hover {
 	display: block;
 	margin-bottom: 8px;
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-required {
@@ -2702,7 +2604,7 @@ article.wpss-service-card:hover {
 	background-repeat: no-repeat;
 	background-position: right 12px center;
 	background-size: 16px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 	cursor: pointer;
 }
 
@@ -2809,7 +2711,7 @@ article.wpss-service-card:hover {
 	margin: 0;
 	font-size: 18px;
 	font-weight: 700;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* User Card */
@@ -2890,7 +2792,7 @@ article.wpss-service-card:hover {
 	align-items: center;
 	gap: 8px;
 	padding: 10px 15px;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius);
 	color: var(--wpss-text);
@@ -2901,7 +2803,7 @@ article.wpss-service-card:hover {
 .wpss-file-download:hover {
 	background: var(--wpss-primary-light);
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-file-icon::before {
@@ -3022,7 +2924,7 @@ article.wpss-service-card:hover {
 
 .wpss-modal-dialog {
 	position: relative;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	width: 100%;
 	max-width: 480px;
@@ -3132,18 +3034,25 @@ body.wpss-modal-active {
 	display: block;
 	margin-bottom: 0.5rem;
 	font-weight: 500;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-form-group label .required {
 	color: var(--wpss-danger);
 }
 
+/* Text-like inputs are matched by EXCLUSION, not by an allowlist of types.
+   The previous rule listed only text/email/number, so every other text-like
+   type silently missed `width: 100%` and rendered at the browser default:
+   `billing_phone` (type="tel") sat at 190px in a column of 748px fields on the
+   checkout billing form. The same hole was waiting for url, password, search,
+   date and friends. Excluding the controls that must NOT be full-width and
+   padded (checkbox, radio, buttons, file, range, color, hidden) fixes the whole
+   class at once and matches the `input:focus` rule below, which was already
+   generic — that mismatch is what let the gap go unnoticed. */
 .wpss-form-group textarea,
 .wpss-form-group select,
-.wpss-form-group input[type="text"],
-.wpss-form-group input[type="email"],
-.wpss-form-group input[type="number"] {
+.wpss-form-group input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]) {
 	width: 100%;
 	padding: 0.75rem;
 	border: 1px solid var(--wpss-border);
@@ -3172,7 +3081,7 @@ body.wpss-modal-active {
 	display: block;
 	margin-bottom: 0.5rem;
 	font-weight: 500;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-form-group__required {
@@ -3216,7 +3125,7 @@ body.wpss-modal-active {
 	background-repeat: no-repeat;
 	background-position: right 12px center;
 	background-size: 16px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 	cursor: pointer;
 }
 
@@ -3258,7 +3167,7 @@ body.wpss-modal-active {
 
 .wpss-modal__dialog {
 	position: relative;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	width: 100%;
 	max-width: 480px;
@@ -3281,7 +3190,7 @@ body.wpss-modal-active {
 .wpss-modal__title {
 	margin: 0;
 	font-size: 1.25rem;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 }
 
 .wpss-modal__close,
@@ -3365,7 +3274,7 @@ body.wpss-modal-active {
 
 .wpss-file-label:hover {
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-bg);
 }
 
@@ -3460,7 +3369,7 @@ body.wpss-modal-active {
 
 .wpss-profile__name {
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	font-size: 1rem;
 }
 
@@ -3474,7 +3383,7 @@ body.wpss-modal-active {
    ========================================================================== */
 
 .wpss-notice__link {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	text-decoration: underline;
 }
 
@@ -3530,7 +3439,7 @@ body.wpss-modal-active {
 .wpss-registration__title {
 	font-size: 1.75rem;
 	font-weight: 700;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	margin: 0 0 0.5rem;
 }
 
@@ -3561,7 +3470,7 @@ body.wpss-modal-active {
 
 .wpss-service-info__title {
 	font-weight: 600;
-	color: var(--wpss-secondary);
+	color: var(--wpss-secondary-accent);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -3592,7 +3501,7 @@ body.wpss-modal-active {
 	align-items: center;
 	gap: 12px;
 	padding: 14px 16px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius, 8px);
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 	min-width: 300px;
@@ -3784,7 +3693,7 @@ body.wpss-modal-active {
 .wpss-tip-form__preset:hover,
 .wpss-tip-form__preset:focus-visible {
 	border-color: var(--wpss-gray-300, #d1d5db);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	outline: none;
 }
 
@@ -3836,32 +3745,10 @@ body.wpss-modal-active {
    Empty State (BEM - Shared Frontend Pattern)
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 48px 24px;
-	background: var( --wpss-surface, #fff );
-	border: 1px solid var( --wpss-border, #e5e7eb );
-	border-radius: 12px;
-	margin: 24px 0;
-}
-.wpss-empty-state__icon {
-	color: var( --wpss-muted, #6b7280 );
-	margin-bottom: 16px;
-}
-.wpss-empty-state__icon i { display: inline-block; }
-.wpss-empty-state__title {
-	font-size: 20px;
-	margin: 0 0 8px;
-	color: var( --wpss-text, #111827 );
-}
-.wpss-empty-state__body {
-	color: var( --wpss-muted, #6b7280 );
-	max-width: 480px;
-	margin: 0 auto 24px;
-	line-height: 1.6;
-}
+/* Moved to design-system.css — search "EMPTY STATE". This block was the
+   canonical-looking one and its treatment is what the shared definition kept;
+   only the full-width mobile button below is frontend-specific. */
 @media ( max-width: 640px ) {
-	.wpss-empty-state { padding: 32px 16px; }
 	.wpss-empty-state .wpss-btn { width: 100%; }
 }
 

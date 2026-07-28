@@ -22,12 +22,25 @@ defined( 'ABSPATH' ) || exit;
 class UpgradePage {
 
 	/**
+	 * Admin page hook suffix returned by add_submenu_page().
+	 *
+	 * Stored rather than hardcoded: the real suffix is derived from the PARENT
+	 * menu title, so a hand-written guess silently never matches and the
+	 * enqueue becomes dead code — exactly what had happened on the Withdrawals
+	 * screen before 1.5.1.
+	 *
+	 * @var string
+	 */
+	private string $hook_suffix = '';
+
+	/**
 	 * Initialize the page.
 	 *
 	 * @return void
 	 */
 	public function init(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 	}
 
 	/**
@@ -36,7 +49,7 @@ class UpgradePage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		add_submenu_page(
+		$hook = add_submenu_page(
 			'wp-sell-services',
 			__( 'Upgrade to Pro', 'wp-sell-services' ),
 			__( 'Upgrade to Pro', 'wp-sell-services' ),
@@ -44,6 +57,32 @@ class UpgradePage {
 			'wpss-upgrade',
 			array( $this, 'render' )
 		);
+
+		if ( $hook ) {
+			$this->hook_suffix = $hook;
+		}
+	}
+
+	/**
+	 * Enqueue the onboarding stylesheet on this screen only.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 * @return void
+	 */
+	public function enqueue_styles( string $hook ): void {
+		if ( '' === $this->hook_suffix || $this->hook_suffix !== $hook ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'wpss-admin-upgrade',
+			\WPSS_PLUGIN_URL . 'assets/css/admin-upgrade.css',
+			array( 'wpss-admin' ),
+			\WPSS_VERSION
+		);
+		wp_style_add_data( 'wpss-admin-upgrade', 'rtl', 'replace' );
 	}
 
 	/**
@@ -182,6 +221,38 @@ class UpgradePage {
 					'free'    => false,
 					'pro'     => true,
 				),
+				array(
+					'feature' => __( 'DigitalOcean Spaces', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+			),
+			__( 'Vendor Payouts & Commissions', 'wp-sell-services' ) => array(
+				array(
+					'feature' => __( 'Manual payouts (mark as paid)', 'wp-sell-services' ),
+					'free'    => true,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'Stripe Connect direct vendor payouts', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'PayPal mass payouts', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'Tiered commission rules (category, volume, seller level)', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'Vendor subscription plans', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
 			),
 			__( 'Analytics & Vendor Management', 'wp-sell-services' ) => array(
 				array(
@@ -206,6 +277,11 @@ class UpgradePage {
 				),
 				array(
 					'feature' => __( 'Wallet integrations', 'wp-sell-services' ),
+					'free'    => false,
+					'pro'     => true,
+				),
+				array(
+					'feature' => __( 'White-label branding (admin, emails, dashboard)', 'wp-sell-services' ),
 					'free'    => false,
 					'pro'     => true,
 				),
@@ -252,140 +328,90 @@ class UpgradePage {
 	 * @return void
 	 */
 	public function render(): void {
-		$features    = $this->get_features();
-		$upgrade_url = 'https://store.wbcomdesigns.com/wp-sell-services-pro/';
-		$docs_url    = 'https://store.wbcomdesigns.com/wp-sell-services/docs/';
+		$features = $this->get_features();
+
+		/**
+		 * Filters the "Get Pro" purchase URL shown on the upgrade screen.
+		 *
+		 * @since 1.2.2
+		 *
+		 * @param string $url Product site URL.
+		 */
+		$upgrade_url = apply_filters( 'wpss_pro_upgrade_url', 'https://wpsellservices.com/' );
+
+		/**
+		 * Filters the documentation URL shown on the upgrade screen.
+		 *
+		 * @since 1.2.2
+		 *
+		 * @param string $url Documentation URL.
+		 */
+		$docs_url = apply_filters( 'wpss_docs_url', 'https://wpsellservices.com/docs/' );
 		?>
-		<div class="wrap wpss-upgrade-wrap">
-			<div class="wpss-upgrade-header">
-				<h1><?php esc_html_e( 'Upgrade to WP Sell Services Pro', 'wp-sell-services' ); ?></h1>
-				<p class="wpss-upgrade-tagline">
-					<?php esc_html_e( 'Unlock WooCommerce checkout, vendor analytics, cloud storage, automated payouts, and more.', 'wp-sell-services' ); ?>
-				</p>
-				<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
-				</a>
-				<a href="<?php echo esc_url( $docs_url ); ?>" style="display:inline-block;margin-top:10px;color:#646970;font-size:13px;text-decoration:underline;" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Read the Documentation', 'wp-sell-services' ); ?>
-				</a>
+		<div class="wrap wpss-admin wpss-upgrade-wrap">
+			<div class="wpss-page-header">
+				<div class="wpss-page-header__left">
+					<h1 class="wpss-page-header__title"><?php esc_html_e( 'Upgrade to WP Sell Services Pro', 'wp-sell-services' ); ?></h1>
+					<p class="wpss-page-header__desc">
+						<?php esc_html_e( 'Unlock WooCommerce checkout, Stripe Connect vendor payouts, tiered commissions, cloud storage, advanced analytics, and more.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
+			</div>
+
+			<div class="wpss-card wpss-upgrade-hero">
+				<div class="wpss-card__body">
+					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
+					</a>
+					<a href="<?php echo esc_url( $docs_url ); ?>" class="wpss-upgrade-docs" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Read the Documentation', 'wp-sell-services' ); ?>
+					</a>
+					<p class="wpss-upgrade-guarantee">
+						<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
 			</div>
 
 			<?php foreach ( $features as $section_label => $section_features ) : ?>
-				<div class="wpss-comparison-section">
-					<h2><?php echo esc_html( $section_label ); ?></h2>
-					<table class="wpss-comparison-table widefat">
-						<thead>
-							<tr>
-								<th class="wpss-feature-col"><?php esc_html_e( 'Feature', 'wp-sell-services' ); ?></th>
-								<th class="wpss-plan-col"><?php esc_html_e( 'Free', 'wp-sell-services' ); ?></th>
-								<th class="wpss-plan-col wpss-plan-pro"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $section_features as $feature ) : ?>
+				<div class="wpss-card wpss-comparison-section">
+					<div class="wpss-card__head">
+						<p class="wpss-card__title"><?php echo esc_html( $section_label ); ?></p>
+					</div>
+					<div class="wpss-card__body">
+						<table class="wpss-comparison-table widefat">
+							<thead>
 								<tr>
-									<td class="wpss-feature-col"><?php echo esc_html( $feature['feature'] ); ?></td>
-									<td class="wpss-plan-col"><?php $this->render_feature_value( $feature['free'] ); ?></td>
-									<td class="wpss-plan-col wpss-plan-pro"><?php $this->render_feature_value( $feature['pro'] ); ?></td>
+									<th class="wpss-feature-col"><?php esc_html_e( 'Feature', 'wp-sell-services' ); ?></th>
+									<th class="wpss-plan-col"><?php esc_html_e( 'Free', 'wp-sell-services' ); ?></th>
+									<th class="wpss-plan-col wpss-plan-pro"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></th>
 								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								<?php foreach ( $section_features as $feature ) : ?>
+									<tr>
+										<td class="wpss-feature-col"><?php echo esc_html( $feature['feature'] ); ?></td>
+										<td class="wpss-plan-col"><?php $this->render_feature_value( $feature['free'] ); ?></td>
+										<td class="wpss-plan-col wpss-plan-pro"><?php $this->render_feature_value( $feature['pro'] ); ?></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			<?php endforeach; ?>
 
-			<div class="wpss-upgrade-footer">
-				<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
-				</a>
-				<p class="wpss-upgrade-guarantee">
-					<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
-				</p>
+			<div class="wpss-card wpss-upgrade-footer">
+				<div class="wpss-card__body">
+					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="button button-primary button-hero wpss-upgrade-cta" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Get Pro Now — Starting at $69/year', 'wp-sell-services' ); ?>
+					</a>
+					<p class="wpss-upgrade-guarantee">
+						<?php esc_html_e( '30-day money-back guarantee. No questions asked.', 'wp-sell-services' ); ?>
+					</p>
+				</div>
 			</div>
 		</div>
 
-		<style>
-			.wpss-upgrade-wrap {
-				max-width: 900px;
-			}
-			.wpss-upgrade-header {
-				text-align: center;
-				padding: 40px 20px 30px;
-			}
-			.wpss-upgrade-header h1 {
-				font-size: 28px;
-				margin-bottom: 10px;
-			}
-			.wpss-upgrade-tagline {
-				font-size: 15px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-				max-width: 600px;
-				margin: 0 auto 20px;
-			}
-			.wpss-upgrade-cta {
-				font-size: 16px !important;
-				padding: 8px 32px !important;
-				height: auto !important;
-				background: var(--wpss-vendor-green, #1dbf73) !important;
-				border-color: var(--wpss-vendor-green, #1dbf73) !important;
-			}
-			.wpss-upgrade-cta:hover,
-			.wpss-upgrade-cta:focus {
-				background: var(--wpss-vendor-green-dark, #19a463) !important;
-				border-color: var(--wpss-vendor-green-dark, #19a463) !important;
-			}
-			.wpss-comparison-section {
-				margin-bottom: 30px;
-			}
-			.wpss-comparison-section h2 {
-				font-size: 16px;
-				margin: 0 0 8px;
-				padding: 0;
-			}
-			.wpss-comparison-table {
-				border-collapse: collapse;
-			}
-			.wpss-comparison-table th,
-			.wpss-comparison-table td {
-				padding: 10px 14px;
-			}
-			.wpss-comparison-table thead th {
-				font-weight: 600;
-				background: var(--wpss-wp-admin-bg, #f0f0f1);
-			}
-			.wpss-feature-col {
-				width: 60%;
-			}
-			.wpss-plan-col {
-				width: 20%;
-				text-align: center;
-			}
-			.wpss-plan-pro {
-				background: var(--wpss-success-light, #f0faf5);
-			}
-			.wpss-feature-yes {
-				color: var(--wpss-success, #00a32a);
-				font-size: 20px;
-			}
-			.wpss-feature-no {
-				color: var(--wpss-danger-dark, #cc1818);
-				font-size: 20px;
-			}
-			.wpss-feature-text {
-				font-size: 13px;
-				color: var(--wpss-warning-dark, #996800);
-				font-weight: 500;
-			}
-			.wpss-upgrade-footer {
-				text-align: center;
-				padding: 30px 20px 10px;
-			}
-			.wpss-upgrade-guarantee {
-				margin-top: 10px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-				font-size: 13px;
-			}
-		</style>
 		<?php
 	}
 }

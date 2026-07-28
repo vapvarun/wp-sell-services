@@ -34,7 +34,7 @@
 .wpss-service-data-wrap {
 	display: flex;
 	min-height: 500px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 /* ==========================================================================
@@ -72,7 +72,7 @@
 }
 
 .wpss-service-tabs li a:hover {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-admin-text);
 }
 
@@ -83,7 +83,7 @@
 }
 
 .wpss-service-tabs li.active a {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-admin-primary);
 	border-left-color: var(--wpss-admin-primary);
 	font-weight: 500;
@@ -97,7 +97,7 @@
 .wpss-service-panels {
 	flex: 1;
 	padding: 20px 24px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	min-width: 0;
 }
 
@@ -169,7 +169,7 @@
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 2px solid var(--wpss-admin-border);
 	display: flex;
 	align-items: center;

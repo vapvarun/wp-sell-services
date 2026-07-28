@@ -716,61 +716,87 @@
 	line-height: 1.5;
 }
 
-.wpss-status-pending {
-	background: var(--wpss-border-light, #f0f0f1);
-	color: var(--wpss-text-secondary, #50575e);
+/* Canonical status palette — ONE definition, semantic colour per status.
+   Every status badge class is emitted by wpss_status_class() (hyphen spelling),
+   so this is the single set the admin needs. Replaces two divergent in-file
+   copies (one had pending=grey, completed=grey-blue; the other pending=amber)
+   plus a stray approved rule. Colour families:
+     amber   waiting/pending        indigo  active/in-progress
+     sky     revision               blue    delivered
+     green   done/approved          red     cancelled/rejected
+     orange  disputed               purple  refunded      yellow  late/on-hold  */
+
+/* Amber — waiting on someone */
+.wpss-status-pending,
+.wpss-status-pending-payment,
+.wpss-status-pending-requirements,
+.wpss-status-pending-approval,
+.wpss-status-open,
+.wpss-status-requirements-submitted,
+.wpss-status-cancellation-requested,
+.wpss-status-withdrawn {
+	background: var(--wpss-status-pending-bg, #fff3cd);
+	color: var(--wpss-status-pending-fg, #856404);
 }
 
-.wpss-status-processing {
-	background: var(--wpss-status-pending-approval-bg, #c6e1c6);
-	color: var(--wpss-status-pending-approval-fg, #5b841b);
+/* Indigo — actively in progress */
+.wpss-status-in-progress,
+.wpss-status-accepted,
+.wpss-status-processing,
+.wpss-status-escalated {
+	background: var(--wpss-status-in-progress-bg, #e0e7ff);
+	color: var(--wpss-status-in-progress-fg, #3730a3);
 }
 
-.wpss-status-completed {
-	background: var(--wpss-gray-200, #c8d7e1);
-	color: var(--wpss-gray-700, #2e4453);
-}
-
-.wpss-status-cancelled {
-	background: var(--wpss-danger-border, #eba3a3);
-	color: var(--wpss-danger-dark, #761919);
-}
-
-.wpss-status-on-hold,
-.wpss-status-pending-requirements {
-	background: var(--wpss-warning-border, #f8dda7);
-	color: var(--wpss-warning-dark, #94660c);
-}
-
-.wpss-status-failed {
-	background: var(--wpss-danger-border, #eba3a3);
-	color: var(--wpss-danger-dark, #761919);
-}
-
-.wpss-status-pending-payment {
-	background: var(--wpss-warning-border, #f8dda7);
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-.wpss-status-revision-requested,
-.wpss-status-revision_requested {
+/* Sky — revision requested */
+.wpss-status-revision-requested {
 	background: var(--wpss-status-revision-bg, #e0f2fe);
 	color: var(--wpss-status-revision-fg, #075985);
 }
 
+/* Blue — delivered, awaiting review */
 .wpss-status-delivered {
 	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-info-dark, #1e40af); 
+	color: var(--wpss-status-delivered-fg, #1e40af);
 }
 
-.wpss-status-in-progress {
-    background: var(--wpss-status-in-progress-bg, #e0e7ff);
-    color: var(--wpss-status-in-progress-fg, #3730a3);
+/* Green — done */
+.wpss-status-completed,
+.wpss-status-approved,
+.wpss-status-active,
+.wpss-status-resolved,
+.wpss-status-closed {
+	background: var(--wpss-status-completed-bg, #d4edda);
+	color: var(--wpss-status-completed-fg, #155724);
 }
 
+/* Red — cancelled, rejected, failed, suspended */
+.wpss-status-cancelled,
+.wpss-status-rejected,
+.wpss-status-failed,
+.wpss-status-suspended {
+	background: var(--wpss-status-rejected-bg, #f8d7da);
+	color: var(--wpss-status-rejected-fg, #721c24);
+}
+
+/* Orange — disputed */
 .wpss-status-disputed {
-	background: var(--wpss-warning-border, #fed7aa);
+	background: var(--wpss-status-disputed-bg, #fed7aa);
 	color: var(--wpss-status-disputed-fg, #9a3412);
+}
+
+/* Purple — refunded */
+.wpss-status-refunded,
+.wpss-status-partially-refunded {
+	background: var(--wpss-status-refunded-bg, #f3e8ff);
+	color: var(--wpss-status-refunded-fg, #6b21a8);
+}
+
+/* Yellow — needs attention */
+.wpss-status-late,
+.wpss-status-on-hold {
+	background: var(--wpss-status-late-bg, #fef9c3);
+	color: var(--wpss-status-late-fg, #854d0e);
 }
 
 /* ==========================================================================
@@ -965,7 +991,7 @@
 }
 
 .wpss-detail-card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 20px;
@@ -1063,7 +1089,7 @@
 
 /* Package Card Item */
 .wpss-package-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	overflow: hidden;
@@ -1330,7 +1356,7 @@
 }
 
 #wpss-faqs-list .wpss-faq-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 15px;
@@ -1408,7 +1434,7 @@
 }
 
 #wpss-requirements-list .wpss-requirement-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	padding: 15px;
@@ -1508,7 +1534,7 @@
 
 .wpss-requirement-choices input {
 	width: 100%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 /* ==========================================================================
@@ -1658,7 +1684,7 @@
 }
 
 .wpss-addon-item {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 8px;
 	margin-bottom: 12px;
@@ -1869,14 +1895,62 @@
 	margin: 0;
 }
 
-.wpss-vendors-table .column-vendor { width: 20%; }
-.wpss-vendors-table .column-services { width: 8%; text-align: center; }
-.wpss-vendors-table .column-orders { width: 8%; text-align: center; }
-.wpss-vendors-table .column-rating { width: 10%; text-align: center; }
-.wpss-vendors-table .column-earnings { width: 12%; text-align: left; }
-.wpss-vendors-table .column-status { width: 10%; }
-.wpss-vendors-table .column-joined { width: 12%; }
-.wpss-vendors-table .column-actions { width: 15%; }
+/* Vendors list — column widths only. These are the ONE definition; the page
+   used to repeat them (and 20 other shared rules) in an inline <style>, so two
+   sets fought and load order decided. Joined folded under the vendor name and
+   Actions became row-actions, so those two widths are gone. */
+.wpss-vendors-table .column-vendor { width: 42%; }
+.wpss-vendors-table .column-services { width: 9%; text-align: center; }
+.wpss-vendors-table .column-orders { width: 9%; text-align: center; }
+.wpss-vendors-table .column-rating { width: 12%; text-align: center; }
+.wpss-vendors-table .column-earnings { width: 14%; text-align: left; }
+.wpss-vendors-table .column-status { width: 14%; }
+
+.wpss-vendor-joined {
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+	margin-top: 2px;
+}
+
+/* Confirm dialog + inline form row + status line — page-agnostic, so they live
+   here rather than in whichever screen happened to need them first. */
+.wpss-admin-confirm__box {
+	max-width: 420px;
+	margin: 12% auto;
+	padding: var(--wpss-space-6, 24px);
+	width: auto;
+}
+
+.wpss-admin-confirm__msg {
+	margin: 0 0 var(--wpss-space-5, 20px);
+	font-size: var(--wpss-text-sm, 14px);
+	line-height: 1.5;
+}
+
+.wpss-admin-confirm__actions {
+	display: flex;
+	gap: var(--wpss-space-3, 12px);
+	justify-content: flex-end;
+}
+
+.wpss-form-row--inline {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3, 12px);
+	margin-top: var(--wpss-space-4, 16px);
+}
+
+.wpss-status-line {
+	margin-top: var(--wpss-space-3, 12px);
+}
+
+.wpss-status-line__muted {
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-status-line__success {
+	color: var(--wpss-admin-success);
+}
 
 .wpss-vendor-info {
 	display: flex;
@@ -1908,28 +1982,10 @@
 	color: var(--wpss-admin-text-light);
 }
 
-.wpss-status-active,
-.wpss-status-approved,
-.wpss-status-accepted {
-	background: var(--wpss-success-light, #d4edda);
-	color: var(--wpss-success-dark, #155724);
-}
-
-.wpss-status-pending,
-.wpss-status-withdrawn {
-	background: var(--wpss-warning-light, #fff3cd);
-	color: var(--wpss-warning-dark, #856404);
-}
-
-.wpss-status-suspended {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
-
-.wpss-status-rejected {
-	background: var(--wpss-status-rejected-bg, #f8d7da);
-	color: var(--wpss-status-rejected-fg, #721c24);
-}
+/* Status badge palette is defined once, canonically, near the top of this
+   file (search "Canonical status palette"). The active/approved/accepted/
+   pending/withdrawn/suspended/rejected rules that used to live here were
+   removed — they duplicated (and disagreed with) the canonical block. */
 
 .wpss-vendor-actions {
 	display: flex;
@@ -1946,6 +2002,117 @@
 	text-align: center;
 	padding: 40px 20px;
 	color: var(--wpss-admin-text-light);
+}
+
+/* Service Moderation queue — column widths + queue-specific bits only.
+   The status badge/pending/rejected rules that used to sit alongside these in
+   the page's inline <style> are gone: admin.css already defined them, so the
+   page was shipping a second copy that only differed by being scoped to
+   .wpss-moderation-table. */
+.wpss-moderation-table .column-cb { width: 30px; }
+.wpss-moderation-table .column-thumbnail { width: 60px; }
+.wpss-moderation-table .column-title { width: 25%; }
+.wpss-moderation-table .column-vendor { width: 12%; }
+.wpss-moderation-table .column-category { width: 12%; }
+.wpss-moderation-table .column-price { width: 8%; }
+.wpss-moderation-table .column-date { width: 10%; }
+.wpss-moderation-table .column-status { width: 10%; }
+.wpss-moderation-table .column-actions { width: 15%; }
+
+.wpss-moderation-table .service-thumb {
+	width: 50px;
+	height: 50px;
+	object-fit: cover;
+	border-radius: 4px;
+}
+
+.wpss-moderation-table .row-actions { padding-top: 5px; }
+.wpss-moderation-table .row-actions a { margin-inline-end: 10px; }
+.wpss-moderation-table .approve-action { color: var(--wpss-admin-success); }
+.wpss-moderation-table .reject-action { color: var(--wpss-admin-danger); }
+
+.wpss-rejection-reason {
+	color: var(--wpss-admin-text-light);
+	font-size: 12px;
+	font-style: italic;
+	margin-top: 5px;
+}
+
+.wpss-moderation-metabox select { margin-top: 5px; }
+
+/* Quick Edit: the core status dropdown is hidden because moderation status is
+   driven by the queue's own approve/reject actions, not by post status. */
+.inline-edit-row .inline-edit-status { display: none !important; }
+
+/* Withdrawals (Payouts) page */
+.wpss-withdrawals-table .column-id { width: 6%; }
+.wpss-withdrawals-table .column-vendor { width: 20%; }
+.wpss-withdrawals-table .column-amount { width: 12%; text-align: end; }
+.wpss-withdrawals-table .column-method { width: 12%; }
+.wpss-withdrawals-table .column-status { width: 12%; }
+.wpss-withdrawals-table .column-date { width: 15%; }
+.wpss-withdrawals-table .column-actions { width: 18%; }
+
+.wpss-withdrawals-filters {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.wpss-withdrawals-method-filter {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wpss-withdrawal-actions {
+	display: flex;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+.wpss-withdrawal-actions .button {
+	padding: 2px 8px;
+	font-size: 12px;
+}
+
+.wpss-withdrawal-details {
+	margin-top: 5px;
+	font-size: 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-withdrawal-details code {
+	font-size: 11px;
+	background: var(--wpss-admin-bg);
+	padding: 1px 4px;
+}
+
+/* Compound selector: .wpss-modal-content (defined later for the vendors
+   modal) sets max-width 800px and padding 0 — this must win over it. */
+.wpss-modal-content.wpss-modal-small {
+	max-width: 400px;
+	margin: 10% auto;
+	padding: 20px;
+}
+
+.wpss-form-field {
+	margin-bottom: 15px;
+}
+
+.wpss-form-field label {
+	display: block;
+	margin-bottom: 5px;
+	font-weight: 500;
+}
+
+.wpss-modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 20px;
 }
 
 /* Vendors Modal */
@@ -2303,6 +2470,18 @@
 	display: block;
 	font-size: 20px;
 	margin-bottom: 5px;
+}
+
+/* Negative wallet balance: a refund reclaimed earnings the vendor had already
+   been paid, so they owe the platform. Flagged so an admin scanning the screen
+   spots a debt without having to read the sign. */
+.wpss-earnings-card--owed {
+	background: var(--wpss-danger-light, #fef2f2);
+	border: 1px solid var(--wpss-danger-border, #fecaca);
+}
+
+.wpss-earnings-card--owed strong {
+	color: var(--wpss-danger-dark, #991b1b);
 }
 
 /* Commission Form */
@@ -2949,4 +3128,115 @@
 	.wpss-secret-field__toggle {
 		justify-content: center;
 	}
+
+	/* Withdrawals (Payouts) page: filters stack, table scrolls inside its card. */
+	.wpss-withdrawals-filters {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-withdrawals-method-filter select {
+		flex: 1;
+	}
+
+	.wpss-withdrawals-page .wpss-list-card__body {
+		overflow-x: auto;
+	}
+
+	.wpss-withdrawals-table {
+		min-width: 720px;
+	}
 }
+/* ==========================================================================
+   CONFIRM MODAL (wpssConfirm) — wp-admin
+   ==========================================================================
+   wpss-ui.js provides wpssConfirm() on admin screens, but design-system.css is
+   NOT enqueued in wp-admin, so the overlay and dialog rendered UNSTYLED:
+   position:static, no z-index, transparent. The dialog fell into normal
+   document flow and landed underneath #adminmenuback (z-index 1, fixed), which
+   swallowed the pointer events — every confirm dialog in wp-admin was
+   literally unclickable, including "Process Refund".
+
+   These are the modal primitives from design-system.css, ported so the admin
+   bundle is self-contained. Keep in sync with design-system.css.
+   ========================================================================== */
+
+.wpss-ui-confirm-wrap {
+	position: fixed;
+	inset: 0;
+	/* Above #adminmenuback (1), the admin menu (9990) and WP's own modals. */
+	z-index: 160001;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.wpss-ui-confirm-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.wpss-ui-modal {
+	position: relative; /* stacks above the overlay */
+}
+
+.wpss-modal__dialog.wpss-confirm {
+	background: var(--wpss-bg, #fff);
+	border-radius: 8px;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+	padding: 32px;
+	max-width: 420px;
+	width: 100%;
+}
+
+.wpss-confirm {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	text-align: center;
+}
+
+.wpss-confirm__title {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+}
+
+.wpss-confirm__message {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.wpss-confirm__actions {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	margin-top: 8px;
+}
+
+.wpss-confirm__actions .wpss-btn {
+	min-width: 110px;
+}
+
+@media (max-width: 640px) {
+	.wpss-ui-confirm-wrap {
+		padding: 16px;
+		align-items: flex-end;
+	}
+}
+
+/* Billing summary in wp-admin. design-system.css is not enqueued here (see the
+   confirm-modal note above), so the component needs its own copy. Keep in sync
+   with design-system.css. */
+.wpss-billing-postbox .inside { padding: 0; }
+.wpss-billing-summary { padding: 12px; }
+.wpss-billing-summary__title { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.wpss-billing-summary__address { display: flex; flex-direction: column; gap: 2px; font-style: normal; font-size: 13px; line-height: 1.5; }
+.wpss-billing-summary__name, .wpss-billing-summary__company { font-weight: 600; }
+.wpss-billing-summary__contact { margin-top: 6px; color: #646970; }
+.wpss-billing-summary__gst { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin: 10px 0 0; padding-top: 8px; border-top: 1px solid #dcdcde; font-size: 13px; }
+.wpss-billing-summary__gst-label { color: #646970; }
+.wpss-billing-summary__gst-value { font-weight: 600; font-variant-numeric: tabular-nums; }

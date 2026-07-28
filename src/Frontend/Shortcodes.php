@@ -128,9 +128,13 @@ class Shortcodes {
 
 		// Featured filter.
 		if ( 'true' === $atts['featured'] || '1' === $atts['featured'] ) {
+			// The written meta key is `_wpss_featured` (MarketplaceSeeder, CLI,
+			// ServiceGrid + the FeaturedServices block all use it). `_wpss_is_featured`
+			// was an orphan that matched nothing, so [wpss_featured_services]
+			// returned no featured items.
 			$args['meta_query'] = array(
 				array(
-					'key'   => '_wpss_is_featured',
+					'key'   => '_wpss_featured',
 					'value' => '1',
 				),
 			);
@@ -195,13 +199,22 @@ class Shortcodes {
 
 		ob_start();
 		?>
+		<?php
+		// Match the contract ServiceArchiveView::modify_archive_query reads:
+		// `search` (text) and `category` (term_id). The old form posted `s` +
+		// `post_type=wpss_service` + `service_category` (slug), which is WP core
+		// search — the archive query returns early, so moderation filtering,
+		// vacation-vendor exclusion and the category dropdown were all ignored
+		// (Basecamp #10110742943). This is the same contract the block uses.
+		$wpss_current_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
+		$wpss_current_cat    = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
+		?>
 		<form class="wpss-search-form" action="<?php echo esc_url( $action ); ?>" method="get">
 			<div class="wpss-search-fields">
-				<input type="text" name="s" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>">
-				<input type="hidden" name="post_type" value="wpss_service">
+				<input type="text" name="search" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( $wpss_current_search ); ?>" aria-label="<?php esc_attr_e( 'Search services', 'wp-sell-services' ); ?>">
 
 				<?php if ( 'true' === $atts['show_categories'] ) : ?>
-					<select name="service_category" class="wpss-search-category">
+					<select name="category" class="wpss-search-category" aria-label="<?php esc_attr_e( 'Filter by category', 'wp-sell-services' ); ?>">
 						<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
 						<?php
 						$categories = get_terms(
@@ -215,7 +228,7 @@ class Shortcodes {
 						if ( ! is_wp_error( $categories ) ) :
 							foreach ( $categories as $category ) :
 								?>
-								<option value="<?php echo esc_attr( $category->slug ); ?>"><?php echo esc_html( $category->name ); ?></option>
+								<option value="<?php echo esc_attr( $category->term_id ); ?>" <?php selected( $wpss_current_cat, $category->term_id ); ?>><?php echo esc_html( $category->name ); ?></option>
 								<?php
 							endforeach;
 						endif;
@@ -306,7 +319,7 @@ class Shortcodes {
 						<span class="wpss-category-count">
 							<?php
 							printf(
-								/* translators: %d: service count */
+								/* translators: %d: number of services */
 								esc_html( _n( '%d service', '%d services', $category->count, 'wp-sell-services' ) ),
 								(int) $category->count
 							);
@@ -557,7 +570,7 @@ class Shortcodes {
 						if ( ! is_wp_error( $categories ) ) :
 							foreach ( $categories as $category ) :
 								?>
-								<option value="<?php echo esc_attr( $category->term_id ); ?>"><?php echo esc_html( $category->name ); ?></option>
+								<option value="<?php echo esc_attr( (string) $category->term_id ); ?>"><?php echo esc_html( $category->name ); ?></option>
 								<?php
 							endforeach;
 						endif;
@@ -773,9 +786,13 @@ class Shortcodes {
 			return '<div class="wpss-error">' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</div>';
 		}
 
-		$template = locate_template( 'wp-sell-services/order/details.php' );
+		// Render the canonical full order view. order-view.php is self-contained
+		// (it resolves the order from $order_id, which is set above). The old
+		// lookup targeted order/details.php, which never existed, so the shortcode
+		// always fell back to a reduced inline copy (Basecamp #10110742943).
+		$template = locate_template( 'wp-sell-services/order/order-view.php' );
 		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/order/details.php';
+			$template = WPSS_PLUGIN_DIR . 'templates/order/order-view.php';
 		}
 
 		ob_start();
@@ -978,9 +995,12 @@ class Shortcodes {
 					$min = $request->budget_min ?? 0;
 					$max = $request->budget_max ?? 0;
 					if ( $min && $max ) {
-						echo esc_html( sprintf( '$%s - $%s', number_format( (float) $min ), number_format( (float) $max ) ) );
+						// Currency-aware, not a hardcoded $ — non-USD marketplaces
+						// were showing dollar budgets (Basecamp #10110742943).
+						echo esc_html( sprintf( '%s - %s', wpss_format_price( (float) $min ), wpss_format_price( (float) $max ) ) );
 					} elseif ( $max ) {
-						echo esc_html( sprintf( __( 'Up to $%s', 'wp-sell-services' ), number_format( (float) $max ) ) );
+						/* translators: %s: maximum budget amount. */
+						echo esc_html( sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_price( (float) $max ) ) );
 					} else {
 						esc_html_e( 'Open budget', 'wp-sell-services' );
 					}

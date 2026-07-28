@@ -17,6 +17,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Models\Review;
 
 /**
  * REST API controller for reviews.
@@ -385,9 +386,12 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		// Auto-approve or require moderation.
-		$auto_approve = apply_filters( 'wpss_auto_approve_reviews', true );
-		$status       = $auto_approve ? 'approved' : 'pending';
+		// Auto-approve unless the site owner turned on review moderation
+		// (wpss_vendor['moderate_reviews']). Previously hard-defaulted to true,
+		// so REST-created reviews went live even with moderation enabled.
+		$moderate_reviews = ! empty( get_option( 'wpss_vendor', array() )['moderate_reviews'] );
+		$auto_approve     = apply_filters( 'wpss_auto_approve_reviews', ! $moderate_reviews );
+		$status           = $auto_approve ? 'approved' : 'pending';
 
 		// Create review.
 		$result = $wpdb->insert(
@@ -419,7 +423,7 @@ class ReviewsController extends RestController {
 		$review_id = (int) $wpdb->insert_id;
 
 		// Update service rating cache.
-		$this->update_rating_cache( (int) $order->service_id, (int) $order->vendor_id );
+		self::update_rating_cache( (int) $order->service_id, (int) $order->vendor_id );
 
 		// Trigger actions.
 		do_action( 'wpss_review_created', $review_id, $order_id );
@@ -476,6 +480,15 @@ class ReviewsController extends RestController {
 			}
 		}
 
+		// Admins can set/correct the guest author name on migrated reviews
+		// (reviewer_id = 0). This is the write path for the reviewer_name column,
+		// which otherwise only the Woo->WP migration populates. Empty string
+		// clears it back to NULL so the review falls back to "Anonymous".
+		if ( current_user_can( 'manage_options' ) && $request->has_param( 'reviewer_name' ) ) {
+			$name                     = sanitize_text_field( (string) $request->get_param( 'reviewer_name' ) );
+			$updates['reviewer_name'] = '' !== $name ? $name : null;
+		}
+
 		if ( ! empty( $updates ) ) {
 			$updates['updated_at'] = current_time( 'mysql' );
 
@@ -489,7 +502,7 @@ class ReviewsController extends RestController {
 
 			// Update rating cache if rating changed.
 			if ( isset( $updates['rating'] ) ) {
-				$this->update_rating_cache( (int) $review->service_id, (int) $review->vendor_id );
+				self::update_rating_cache( (int) $review->service_id, (int) $review->vendor_id );
 			}
 		}
 
@@ -528,7 +541,7 @@ class ReviewsController extends RestController {
 		);
 
 		// Update rating cache.
-		$this->update_rating_cache( $service_id, $vendor_id );
+		self::update_rating_cache( $service_id, $vendor_id );
 
 		return new WP_REST_Response(
 			array(
@@ -818,7 +831,7 @@ class ReviewsController extends RestController {
 	 * @param int $vendor_id  Vendor ID.
 	 * @return void
 	 */
-	private function update_rating_cache( int $service_id, int $vendor_id ): void {
+	public static function update_rating_cache( int $service_id, int $vendor_id ): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
@@ -959,9 +972,8 @@ class ReviewsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $review, $request ): WP_REST_Response {
-		$customer = get_userdata( (int) $review->customer_id );
-		$vendor   = get_userdata( (int) $review->vendor_id );
-		$service  = get_post( (int) $review->service_id );
+		$vendor  = get_userdata( (int) $review->vendor_id );
+		$service = get_post( (int) $review->service_id );
 
 		$data = array(
 			'id'              => (int) $review->id,
@@ -971,7 +983,7 @@ class ReviewsController extends RestController {
 			'vendor_id'       => (int) $review->vendor_id,
 			'vendor_name'     => $vendor ? $vendor->display_name : '',
 			'customer_id'     => (int) $review->customer_id,
-			'customer_name'   => $customer ? $customer->display_name : '',
+			'customer_name'   => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
 			'customer_avatar' => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
 			'rating'          => (int) $review->rating,
 			'review'          => $review->review,

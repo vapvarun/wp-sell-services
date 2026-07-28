@@ -176,19 +176,64 @@ class VendorsPage {
 			true
 		);
 
-		wp_add_inline_script(
-			'wpss-free-admin',
-			'window.wpssVendors = ' . wp_json_encode(
-				array(
-					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-					'nonce'   => wp_create_nonce( 'wpss_vendors_admin' ),
-					'i18n'    => array(
-						'confirmStatusChange' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
-						'loading'             => __( 'Loading...', 'wp-sell-services' ),
-						'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					),
-				)
-			) . ';'
+		// wpss-ui provides wpssConfirm() for the portfolio-item delete confirm.
+		wp_enqueue_script(
+			'wpss-admin-vendors',
+			\WPSS_PLUGIN_URL . 'assets/js/admin-vendors.js',
+			array( 'jquery', 'wpss-free-admin', 'wpss-ui' ),
+			\WPSS_VERSION,
+			true
+		);
+		wp_set_script_translations( 'wpss-admin-vendors', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+
+		$this->localize_vendors_script();
+	}
+
+	/**
+	 * Localise the vendors admin script.
+	 *
+	 * Split out so render_vendor_detail() can call it again with the specific
+	 * vendor id merged in — the detail drawer's AJAX needs it, and it is the
+	 * one genuinely per-render value in an otherwise static config.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int $vendor_id Vendor being viewed, or 0 on the list screen.
+	 * @return void
+	 */
+	private function localize_vendors_script( int $vendor_id = 0 ): void {
+		wp_localize_script(
+			'wpss-admin-vendors',
+			'wpssVendors',
+			array(
+				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'wpss_vendors_admin' ),
+				'vendorId' => $vendor_id,
+				'i18n'     => array(
+					'selectAtLeastOneVendorFirst'        => __( 'Select at least one vendor first.', 'wp-sell-services' ),
+					'approve'                            => __( 'Approve', 'wp-sell-services' ),
+					'suspend'                            => __( 'Suspend', 'wp-sell-services' ),
+					'reactivate'                         => __( 'Reactivate', 'wp-sell-services' ),
+					/* translators: 1: bulk action label, 2: number of vendors. */
+					'bulkConfirm'                        => __( '%1$s %2$d vendor(s)? This applies to every selected row.', 'wp-sell-services' ),
+					'confirmStatusChange'                => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
+					'areYouSureYouWantToChangeThisVendorSStatus' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
+					'pleaseEnterACommissionRate'         => __( 'Please enter a commission rate.', 'wp-sell-services' ),
+					'resetThisVendorsCommission'         => __( 'Reset this vendor\'s commission rate to the global rate?', 'wp-sell-services' ),
+					'resetToGlobalCommissionRate'        => __( 'Reset to global commission rate?', 'wp-sell-services' ),
+					'anErrorOccurredPleaseTryAgain'      => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'failedToLoadContent'                => __( 'Failed to load content.', 'wp-sell-services' ),
+					'errorUpdatingCommissionRate'        => __( 'Error updating commission rate.', 'wp-sell-services' ),
+					'errorResettingCommissionRate'       => __( 'Error resetting commission rate.', 'wp-sell-services' ),
+					'errorUpdatingVacationMode'          => __( 'Error updating vacation mode.', 'wp-sell-services' ),
+					'errorUpdatingAvailability'          => __( 'Error updating availability.', 'wp-sell-services' ),
+					'errorUpdatingSellerLevel'           => __( 'Error updating seller level.', 'wp-sell-services' ),
+					'errorModeratingPortfolioItem'       => __( 'Error moderating portfolio item.', 'wp-sell-services' ),
+					'permanentlyRemoveThisPortfolioItem' => __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ),
+					'loading'                            => __( 'Loading...', 'wp-sell-services' ),
+					'loadingVendorDetails'               => __( 'Loading vendor details...', 'wp-sell-services' ),
+				),
+			)
 		);
 	}
 
@@ -252,7 +297,7 @@ class VendorsPage {
 			'display_name'    => 'u.display_name',
 			'rating'          => 'vp.avg_rating',
 			'total_orders'    => 'vp.total_orders',
-			'total_earned'    => 'vp.total_earnings',
+			'total_earned'    => 'ledger_earned',
 			'milestone_count' => 'milestone_count',
 		);
 
@@ -270,6 +315,23 @@ class VendorsPage {
 		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
 		$milestone_platform = \WPSellServices\Services\MilestoneService::ORDER_TYPE;
 		$orders_table       = $wpdb->prefix . 'wpss_orders';
+		$wallet_table       = $wpdb->prefix . 'wpss_wallet_transactions';
+
+		// Lifetime earnings, read from the wallet ledger (the money authority),
+		// NOT the denormalised vp.total_earnings which the list must never be
+		// able to contradict the vendor's own dashboard with. "Earned" = the sum
+		// of completed CREDIT rows (debit types — withdrawals, payouts, refund
+		// reversals — are excluded). One correlated sub-query per row, indexed on
+		// wallet_transactions.user_id, exactly like services_count above — no
+		// per-row PHP call to get_summary(), which would N+1 at 500 vendors.
+		// $debit_types_sql values are sanitize_key()'d in the helper, safe to
+		// interpolate into the IN () list.
+		$debit_types_sql   = wpss_get_ledger_debit_types_sql();
+		$ledger_earned_sql = "(SELECT COALESCE( SUM( wt.amount ), 0 )
+			FROM {$wallet_table} wt
+			WHERE wt.user_id = vp.user_id
+			AND wt.status = 'completed'
+			AND wt.type NOT IN ({$debit_types_sql}))";
 
 		$fixed_count_sql = $wpdb->prepare(
 			"(SELECT COUNT(*) FROM {$orders_table} o
@@ -305,7 +367,8 @@ class VendorsPage {
 				u.user_registered,
 				(SELECT COUNT(*) FROM {$wpdb->posts} p WHERE p.post_author = vp.user_id AND p.post_type = 'wpss_service' AND p.post_status = 'publish') as services_count,
 				{$fixed_count_sql} as fixed_count,
-				{$milestone_count_sql} as milestone_count
+				{$milestone_count_sql} as milestone_count,
+				{$ledger_earned_sql} as ledger_earned
 			FROM {$wpdb->prefix}wpss_vendor_profiles vp
 			LEFT JOIN {$wpdb->users} u ON vp.user_id = u.ID
 			WHERE {$where_clause}
@@ -338,9 +401,25 @@ class VendorsPage {
 				SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_vendors,
 				SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_vendors,
 				SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_vendors,
-				AVG(avg_rating) as avg_rating,
-				SUM(total_earnings) as total_earnings
+				AVG(avg_rating) as avg_rating
 			FROM {$wpdb->prefix}wpss_vendor_profiles"
+		);
+
+		// Marketplace lifetime earnings from the ledger authority (completed
+		// credits, debit types excluded) so the summary card and the per-vendor
+		// "Earned" column are the same number on the same screen. One aggregate
+		// query — no per-vendor loop. Scoped to current vendor_profiles so the
+		// total equals the sum of the listed column and never counts ledger rows
+		// for user_ids that are no longer vendors (former vendors, buyers who
+		// received a credit, orphaned rows).
+		$debit_types_sql = wpss_get_ledger_debit_types_sql();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- debit types are sanitize_key()'d; no user input.
+		$total_earned = (float) $wpdb->get_var(
+			"SELECT COALESCE( SUM( wt.amount ), 0 )
+			FROM {$wpdb->prefix}wpss_wallet_transactions wt
+			WHERE wt.status = 'completed'
+			AND wt.type NOT IN ({$debit_types_sql})
+			AND wt.user_id IN ( SELECT user_id FROM {$wpdb->prefix}wpss_vendor_profiles )"
 		);
 
 		return array(
@@ -349,7 +428,7 @@ class VendorsPage {
 			'pending'        => (int) ( $stats->pending_vendors ?? 0 ),
 			'suspended'      => (int) ( $stats->suspended_vendors ?? 0 ),
 			'avg_rating'     => round( (float) ( $stats->avg_rating ?? 0 ), 2 ),
-			'total_earnings' => (float) ( $stats->total_earnings ?? 0 ),
+			'total_earnings' => $total_earned,
 		);
 	}
 
@@ -394,28 +473,36 @@ class VendorsPage {
 		<div class="wrap wpss-listing-page wpss-vendors-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendors', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
+			<?php
+			// Surface the last bulk-action report (incl. per-row failures) that
+			// the post-action reload would otherwise have discarded.
+			$bulk_report_key = 'wpss_bulk_vendor_report_' . get_current_user_id();
+			$bulk_report     = get_transient( $bulk_report_key );
+			if ( $bulk_report ) {
+				delete_transient( $bulk_report_key );
+				printf(
+					'<div class="notice notice-info is-dismissible"><p>%s</p></div>',
+					esc_html( (string) $bulk_report )
+				);
+			}
+			?>
 
-			<!-- Stats Cards -->
+			<?php
+			// Two cards, not five. Active / Pending / Suspended were duplicated
+			// verbatim as counts in the status filter row immediately below
+			// ("All (1) | Active (1) | Pending (0) | Suspended (0)"), so the
+			// cards restated what the filters already say — and the filters are
+			// the version you can click. Only the two totals that appear nowhere
+			// else are kept.
+			?>
 			<div class="wpss-listing-stats wpss-vendor-stats">
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>
 					<span class="wpss-stat-label"><?php esc_html_e( 'Total Vendors', 'wp-sell-services' ); ?></span>
 				</div>
-				<div class="wpss-stat-card wpss-stat-active">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['active'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Active', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card wpss-stat-pending">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['pending'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card wpss-stat-suspended">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['suspended'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Suspended', 'wp-sell-services' ); ?></span>
-				</div>
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( $stats['total_earnings'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Total Earnings', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Total Earned', 'wp-sell-services' ); ?></span>
 				</div>
 			</div>
 
@@ -505,6 +592,16 @@ class VendorsPage {
 						<td class="manage-column column-cb check-column">
 							<input type="checkbox" id="cb-select-all-1" aria-label="<?php esc_attr_e( 'Select all vendors', 'wp-sell-services' ); ?>">
 						</td>
+						<?php
+						// Six columns, down from nine. Dropped: Contract Types
+						// ("0x Fixed · 0x Milestone" — derived, wide, and almost
+						// never what an admin scans for; it lives in the detail
+						// drawer). Joined folded under the vendor name, still
+						// sortable via its header link. Actions folded into
+						// WordPress row-actions on the primary column, which
+						// also stops three buttons wrapping onto two lines and
+						// inflating every row's height.
+						?>
 						<th scope="col" class="column-vendor">
 							<?php $this->sortable_column_header( 'display_name', __( 'Vendor', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
@@ -514,23 +611,14 @@ class VendorsPage {
 						<th scope="col" class="column-orders">
 							<?php $this->sortable_column_header( 'total_orders', __( 'Orders', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
-						<th scope="col" class="column-contract-types">
-							<?php $this->sortable_column_header( 'milestone_count', __( 'Contract Types', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
 						<th scope="col" class="column-rating">
 							<?php $this->sortable_column_header( 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
 						<th scope="col" class="column-earnings">
-							<?php $this->sortable_column_header( 'total_earned', __( 'Earnings', 'wp-sell-services' ), $orderby, $order ); ?>
+							<?php $this->sortable_column_header( 'total_earned', __( 'Earned', 'wp-sell-services' ), $orderby, $order ); ?>
 						</th>
 						<th scope="col" class="column-status">
 							<?php esc_html_e( 'Status', 'wp-sell-services' ); ?>
-						</th>
-						<th scope="col" class="column-joined">
-							<?php $this->sortable_column_header( 'created_at', __( 'Joined', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
-						<th scope="col" class="column-actions">
-							<?php esc_html_e( 'Actions', 'wp-sell-services' ); ?>
 						</th>
 					</tr>
 				</thead>
@@ -547,12 +635,9 @@ class VendorsPage {
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-services"><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-orders"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-contract-types"><?php esc_html_e( 'Contract Types', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-rating"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-earnings"><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></th>
+						<th scope="col" class="column-earnings"><?php esc_html_e( 'Earned', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-joined"><?php esc_html_e( 'Joined', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-actions"><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
 					</tr>
 				</tfoot>
 			</table>
@@ -605,432 +690,7 @@ class VendorsPage {
 			</div>
 		</div>
 
-		<style>
-			/* Stat-card, stat-number, stat-label, filter-row, and status
-				colors now live in assets/css/admin.css via the shared
-				`.wpss-listing-stats` rules. Keep only vendor-page specific
-				utilities below. */
 
-			.wpss-vendors-table .column-vendor { width: 18%; }
-			.wpss-vendors-table .column-services { width: 7%; text-align: center; }
-			.wpss-vendors-table .column-orders { width: 7%; text-align: center; }
-			.wpss-vendors-table .column-contract-types { width: 12%; text-align: center; white-space: nowrap; }
-			.wpss-vendors-table .column-rating { width: 9%; text-align: center; }
-			.wpss-vendors-table .column-earnings { width: 10%; text-align: right; }
-			.wpss-vendors-table .column-status { width: 9%; }
-			.wpss-vendors-table .column-joined { width: 11%; }
-			.wpss-vendors-table .column-actions { width: 15%; }
-
-			@media (max-width: 1024px) {
-				.wpss-vendors-table .column-contract-types { white-space: normal; }
-			}
-
-			@media (max-width: 782px) {
-				.wpss-vendors-table .column-contract-types { text-align: left; }
-			}
-
-			.wpss-vendor-info {
-				display: flex;
-				align-items: center;
-				gap: 10px;
-			}
-			.wpss-vendor-avatar {
-				width: 40px;
-				height: 40px;
-				border-radius: 50%;
-			}
-			.wpss-vendor-name {
-				font-weight: 500;
-			}
-			.wpss-vendor-email {
-				font-size: 12px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-
-			.wpss-rating-stars {
-				color: var(--wpss-warning, #ffb900);
-			}
-			.wpss-rating-count {
-				font-size: 12px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-
-			.wpss-status-badge {
-				display: inline-block;
-				padding: 3px 8px;
-				border-radius: 3px;
-				font-size: 12px;
-				font-weight: 500;
-			}
-			.wpss-status-active { background: var(--wpss-alert-success-bg, #d4edda); color: var(--wpss-alert-success-fg, #155724); }
-			.wpss-status-pending { background: var(--wpss-alert-warning-bg, #fff3cd); color: var(--wpss-alert-warning-fg, #856404); }
-			.wpss-status-suspended { background: var(--wpss-alert-danger-bg, #f8d7da); color: var(--wpss-alert-danger-fg, #721c24); }
-
-			.wpss-vendor-actions {
-				display: flex;
-				gap: 5px;
-				flex-wrap: wrap;
-			}
-			.wpss-vendor-actions .button {
-				padding: 2px 8px;
-				font-size: 12px;
-			}
-
-			.wpss-no-items {
-				text-align: center;
-				padding: 40px 20px;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-
-			/* Modal */
-			.wpss-modal {
-				position: fixed;
-				z-index: 100000;
-				left: 0;
-				top: 0;
-				width: 100%;
-				height: 100%;
-				background-color: rgba(0, 0, 0, 0.6);
-			}
-			.wpss-modal-content {
-				background-color: var(--wpss-white, #fff);
-				margin: 5% auto;
-				padding: 0;
-				border-radius: 4px;
-				width: 80%;
-				max-width: 800px;
-				max-height: 80vh;
-				overflow-y: auto;
-				position: relative;
-			}
-			.wpss-modal-close {
-				position: absolute;
-				right: 15px;
-				top: 10px;
-				font-size: 28px;
-				font-weight: bold;
-				cursor: pointer;
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-				z-index: 1;
-			}
-			.wpss-modal-close:hover { color: var(--wpss-wp-admin-text, #1d2327); }
-			.wpss-modal-loading {
-				padding: 60px;
-				text-align: center;
-			}
-			.wpss-modal-loading .spinner {
-				float: none;
-				margin: 0 10px 0 0;
-			}
-			.wpss-admin-confirm__box {
-				max-width: 420px;
-				margin: 12% auto;
-				padding: var(--wpss-space-6, 24px);
-				width: auto;
-			}
-			.wpss-admin-confirm__msg {
-				margin: 0 0 var(--wpss-space-5, 20px);
-				font-size: var(--wpss-text-sm, 14px);
-				line-height: 1.5;
-			}
-			.wpss-admin-confirm__actions {
-				display: flex;
-				gap: var(--wpss-space-3, 12px);
-				justify-content: flex-end;
-			}
-			.wpss-form-row--inline {
-				display: flex;
-				align-items: center;
-				gap: var(--wpss-space-3, 12px);
-				margin-top: var(--wpss-space-4, 16px);
-			}
-			.wpss-status-line {
-				margin-top: var(--wpss-space-3, 12px);
-			}
-			.wpss-status-line__muted {
-				color: var(--wpss-wp-admin-text-secondary, #646970);
-			}
-			.wpss-status-line__success {
-				color: var(--wpss-success, #00a32a);
-			}
-
-			#wpss-vendor-modal-body .wpss-vendor-details {
-				padding: 20px;
-			}
-			.wpss-vendor-header {
-				display: flex;
-				align-items: center;
-				gap: 20px;
-				padding-bottom: 20px;
-				border-bottom: 1px solid var(--wpss-wp-admin-border-light, #dcdcde);
-				margin-bottom: 20px;
-			}
-			.wpss-vendor-header img {
-				width: 80px;
-				height: 80px;
-				border-radius: 50%;
-			}
-			.wpss-vendor-header h2 {
-				margin: 0 0 5px;
-			}
-			.wpss-vendor-stats-grid {
-				display: grid;
-				grid-template-columns: repeat(4, 1fr);
-				gap: 15px;
-				margin-bottom: 20px;
-			}
-			.wpss-vendor-stat {
-				background: var(--wpss-wp-admin-bg-alt, #f6f7f7);
-				padding: 15px;
-				border-radius: 4px;
-				text-align: center;
-			}
-			.wpss-vendor-stat strong {
-				display: block;
-				font-size: 20px;
-				margin-bottom: 5px;
-			}
-
-		</style>
-
-		<script>
-		// Define wpssVendors for inline script (wp_add_inline_script runs in footer, after this).
-		window.wpssVendors = window.wpssVendors || 
-		<?php
-		echo wp_json_encode(
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wpss_vendors_admin' ),
-				'i18n'    => array(
-					'confirmStatusChange' => __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ),
-					'loading'             => __( 'Loading...', 'wp-sell-services' ),
-					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-				),
-			)
-		);
-		?>
-		;
-
-		function wpssAdminNotice(msg, type) {
-			type = type || 'error';
-			var cls = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = jQuery('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
-			jQuery('.wrap h1, .wrap h2').first().after($notice);
-			$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
-		}
-
-		jQuery(function($) {
-			var $modal = $('#wpss-vendor-modal');
-			var $modalBody = $('#wpss-vendor-modal-body');
-
-			// Bulk actions: select-all + apply.
-			$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
-				$('input[name="vendor_ids[]"]').prop('checked', $(this).prop('checked'));
-			});
-
-			$('.wpss-vendors-bulk-apply').on('click', function(e) {
-				e.preventDefault();
-				var bulkAction = $('.wpss-vendors-bulk-select').val();
-				if ( ! bulkAction ) {
-					return;
-				}
-				var ids = $('input[name="vendor_ids[]"]:checked').map(function() { return this.value; }).get();
-				if ( ids.length === 0 ) {
-					wpssAdminNotice('<?php echo esc_js( __( 'Select at least one vendor first.', 'wp-sell-services' ) ); ?>', 'error');
-					return;
-				}
-				var labels = {
-					'approve':    '<?php echo esc_js( __( 'Approve', 'wp-sell-services' ) ); ?>',
-					'suspend':    '<?php echo esc_js( __( 'Suspend', 'wp-sell-services' ) ); ?>',
-					'reactivate': '<?php echo esc_js( __( 'Reactivate', 'wp-sell-services' ) ); ?>'
-				};
-				/* translators: 1: action label, 2: count */
-				var confirmMsg = '<?php echo esc_js( __( '%1$s %2$d vendor(s)? This applies to every selected row.', 'wp-sell-services' ) ); ?>';
-				confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
-				if ( ! confirm( confirmMsg ) ) {
-					return;
-				}
-				var $btn = $(this);
-				$btn.prop('disabled', true);
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_bulk_update_vendor_status',
-						bulk_action: bulkAction,
-						vendor_ids: ids,
-						nonce: $('input[name="wpss_vendors_bulk_nonce"]').val()
-					},
-					success: function(response) {
-						if ( response.success ) {
-							location.reload();
-						} else {
-							wpssAdminNotice( response.data && response.data.message ? response.data.message : i18n.error, 'error' );
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice( i18n.error, 'error' );
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-
-			// View vendor details
-			$('.wpss-view-vendor').on('click', function(e) {
-				e.preventDefault();
-				var vendorId = $(this).data('vendor-id');
-
-				$modalBody.html('<div class="wpss-modal-loading"><span class="spinner is-active"></span> <?php esc_html_e( 'Loading vendor details...', 'wp-sell-services' ); ?></div>');
-				$modal.show();
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_get_vendor_details',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId
-					},
-					success: function(response) {
-						if (response.success) {
-							$modalBody.html(response.data.html);
-						} else {
-							$modalBody.html('<div class="notice notice-error"><p>' + (response.data.message || i18n.error) + '</p></div>');
-						}
-					},
-					error: function() {
-						$modalBody.html('<div class="notice notice-error"><p>' + i18n.error + '</p></div>');
-					}
-				});
-			});
-
-			// Close modal
-			$('.wpss-modal-close, .wpss-modal').on('click', function(e) {
-				if (e.target === this) {
-					$modal.hide();
-				}
-			});
-
-			// Update vendor status
-			$('.wpss-change-status').on('click', function(e) {
-				e.preventDefault();
-
-				if (!confirm(wpssVendors.i18n.confirmStatusChange)) {
-					return;
-				}
-
-				var $btn = $(this);
-				var vendorId = $btn.data('vendor-id');
-				var newStatus = $btn.data('status');
-				var $row = $btn.closest('tr');
-
-				$btn.prop('disabled', true);
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_status',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId,
-						status: newStatus
-					},
-					success: function(response) {
-						if (response.success) {
-							location.reload();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-
-			// Save vendor commission rate
-			$(document).on('click', '#wpss-save-commission', function(e) {
-				e.preventDefault();
-				var $btn = $(this);
-				var vendorId = $btn.data('vendor-id');
-				var rate = $('#wpss-vendor-commission-rate').val();
-
-				if (rate === '') {
-					wpssAdminNotice('<?php echo esc_js( __( 'Please enter a commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-					return;
-				}
-
-				$btn.prop('disabled', true);
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_commission',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId,
-						rate: rate
-					},
-					success: function(response) {
-						if (response.success) {
-							$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-							// Reload modal content to update UI
-							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-
-			// Reset vendor commission to global rate
-			$(document).on('click', '#wpss-reset-commission', function(e) {
-				e.preventDefault();
-				if (!confirm('<?php echo esc_js( __( 'Reset this vendor\'s commission rate to the global rate?', 'wp-sell-services' ) ); ?>')) {
-					return;
-				}
-
-				var $btn = $(this);
-				var vendorId = $btn.data('vendor-id');
-
-				$btn.prop('disabled', true);
-
-				$.ajax({
-					url: wpssVendors.ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_commission',
-						nonce: wpssVendors.nonce,
-						vendor_id: vendorId,
-						reset: 'true'
-					},
-					success: function(response) {
-						if (response.success) {
-							$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-							// Reload modal content to update UI
-							$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-							$btn.prop('disabled', false);
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				});
-			});
-		});
-		</script>
 		<?php
 	}
 
@@ -1092,7 +752,58 @@ class VendorsPage {
 						<div class="wpss-vendor-email">
 							<?php echo esc_html( $vendor->user_email ?? $user->user_email ?? '' ); ?>
 						</div>
+						<?php
+						$joined = $vendor->created_at ?? $user->user_registered ?? '';
+						if ( $joined ) :
+							?>
+							<div class="wpss-vendor-joined">
+								<?php
+								printf(
+									/* translators: %s: date the vendor joined. */
+									esc_html__( 'Joined %s', 'wp-sell-services' ),
+									esc_html( date_i18n( get_option( 'date_format' ), strtotime( $joined ) ) )
+								);
+								?>
+							</div>
+						<?php endif; ?>
 					</div>
+				</div>
+				<?php
+				// WordPress row-actions: secondary controls appear on hover, so
+				// the row stays one line tall instead of carrying three
+				// permanently-visible buttons that wrapped.
+				?>
+				<div class="row-actions">
+					<span class="view">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&action=view&vendor_id=' . $vendor->user_id ) ); ?>"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a> |
+					</span>
+					<span class="edit">
+						<a href="<?php echo esc_url( get_edit_user_link( $vendor->user_id ) ); ?>"><?php esc_html_e( 'Edit User', 'wp-sell-services' ); ?></a>
+					</span>
+					<?php if ( 'active' === $status ) : ?>
+						<span class="trash">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="suspended"><?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?></button>
+						</span>
+					<?php elseif ( 'suspended' === $status ) : ?>
+						<span class="untrash">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="active"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></button>
+						</span>
+					<?php elseif ( 'pending' === $status ) : ?>
+						<span class="approve">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="active"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></button>
+						</span>
+						<span class="trash">
+							| <button type="button" class="button-link wpss-change-status"
+									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
+									data-status="rejected"><?php esc_html_e( 'Reject', 'wp-sell-services' ); ?></button>
+						</span>
+					<?php endif; ?>
 				</div>
 			</td>
 			<td class="column-services" data-colname="<?php esc_attr_e( 'Services', 'wp-sell-services' ); ?>">
@@ -1108,20 +819,6 @@ class VendorsPage {
 			<td class="column-orders" data-colname="<?php esc_attr_e( 'Orders', 'wp-sell-services' ); ?>">
 				<?php echo esc_html( number_format_i18n( (int) ( $vendor->total_orders ?? 0 ) ) ); ?>
 			</td>
-			<td class="column-contract-types" data-colname="<?php esc_attr_e( 'Contract Types', 'wp-sell-services' ); ?>">
-				<?php
-				$fixed_count     = (int) ( $vendor->fixed_count ?? 0 );
-				$milestone_count = (int) ( $vendor->milestone_count ?? 0 );
-				echo esc_html(
-					sprintf(
-						/* translators: 1: fixed-price contract count, 2: milestone contract count */
-						__( '%1$dx Fixed · %2$dx Milestone', 'wp-sell-services' ),
-						$fixed_count,
-						$milestone_count
-					)
-				);
-				?>
-			</td>
 			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<?php if ( $reviews > 0 ) : ?>
 					<span class="wpss-rating-stars">
@@ -1134,55 +831,13 @@ class VendorsPage {
 					<span class="wpss-rating-count"><?php esc_html_e( 'No reviews', 'wp-sell-services' ); ?></span>
 				<?php endif; ?>
 			</td>
-			<td class="column-earnings" data-colname="<?php esc_attr_e( 'Earnings', 'wp-sell-services' ); ?>">
-				<?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?>
+			<td class="column-earnings" data-colname="<?php esc_attr_e( 'Earned', 'wp-sell-services' ); ?>">
+				<?php echo esc_html( wpss_format_price( (float) ( $vendor->ledger_earned ?? 0 ) ) ); ?>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>
-			</td>
-			<td class="column-joined" data-colname="<?php esc_attr_e( 'Joined', 'wp-sell-services' ); ?>">
-				<?php
-				$joined = $vendor->created_at ?? $user->user_registered ?? '';
-				if ( $joined ) {
-					echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $joined ) ) );
-				}
-				?>
-			</td>
-			<td class="column-actions">
-				<div class="wpss-vendor-actions">
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&action=view&vendor_id=' . $vendor->user_id ) ); ?>" class="button">
-						<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
-					</a>
-					<a href="<?php echo esc_url( get_edit_user_link( $vendor->user_id ) ); ?>" class="button">
-						<?php esc_html_e( 'Edit User', 'wp-sell-services' ); ?>
-					</a>
-					<?php if ( $status === 'active' ) : ?>
-						<button type="button" class="button wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="suspended">
-							<?php esc_html_e( 'Suspend', 'wp-sell-services' ); ?>
-						</button>
-					<?php elseif ( $status === 'suspended' ) : ?>
-						<button type="button" class="button wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="active">
-							<?php esc_html_e( 'Activate', 'wp-sell-services' ); ?>
-						</button>
-					<?php elseif ( $status === 'pending' ) : ?>
-						<button type="button" class="button button-primary wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="active">
-							<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
-						</button>
-						<button type="button" class="button wpss-change-status"
-								data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
-								data-status="rejected">
-							<?php esc_html_e( 'Reject', 'wp-sell-services' ); ?>
-						</button>
-					<?php endif; ?>
-				</div>
 			</td>
 		</tr>
 		<?php
@@ -1231,16 +886,7 @@ class VendorsPage {
 		$response_time = __( 'N/A', 'wp-sell-services' );
 
 		// Get wallet balance.
-		$wallet_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
-				$vendor_id
-			)
-		);
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 		?>
 		<div class="wrap wpss-vendor-detail-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendor Details', 'wp-sell-services' ); ?></h1>
@@ -1274,7 +920,7 @@ class VendorsPage {
 				</div>
 				<div class="wpss-detail-status-area">
 					<div class="wpss-detail-status-row">
-						<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status ); ?>">
+						<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 							<?php echo esc_html( ucfirst( $status ) ); ?>
 						</span>
 						<select id="wpss-vendor-status-select" data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>" data-current="<?php echo esc_attr( $status ); ?>">
@@ -1313,8 +959,8 @@ class VendorsPage {
 					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></span>
+					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></span>
+					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Balance', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
@@ -1369,479 +1015,13 @@ class VendorsPage {
 			</div>
 		</div>
 
-		<?php $this->render_vendor_detail_scripts( $vendor_id ); ?>
 		<?php
+		// Re-localise with this vendor's id so the detail-drawer AJAX (in
+		// admin-vendors.js) has it. The tab loader, commission override,
+		// vacation/availability toggles and portfolio moderation all post it.
+		$this->localize_vendors_script( $vendor_id );
 	}
 
-	/**
-	 * Render JavaScript for vendor detail page.
-	 *
-	 * @param int $vendor_id Vendor user ID.
-	 * @return void
-	 */
-	private function render_vendor_detail_scripts( int $vendor_id ): void {
-		?>
-		<script>
-		jQuery(function($) {
-			// Define local config (script runs before footer where wpssVendors is defined).
-			var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
-			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_vendors_admin' ) ); ?>';
-			var i18n = {
-				confirmStatusChange: '<?php echo esc_js( __( 'Are you sure you want to change this vendor\'s status?', 'wp-sell-services' ) ); ?>',
-				error: '<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>'
-			};
-
-			var vendorId = <?php echo (int) $vendor_id; ?>;
-			var currentTab = 'overview';
-			var tabCache = {};
-
-			// Load initial tab.
-			loadTab('overview');
-
-			// Tab click handler.
-			$('.wpss-detail-tab').on('click', function() {
-				var tab = $(this).data('tab');
-				if (tab === currentTab) {
-					return;
-				}
-
-				$('.wpss-detail-tab').removeClass('active');
-				$(this).addClass('active');
-				currentTab = tab;
-
-				loadTab(tab);
-			});
-
-			// Load tab content via AJAX.
-			function loadTab(tab) {
-				var $content = $('#wpss-tab-content');
-
-				// Check cache.
-				if (tabCache[tab]) {
-					$content.html(tabCache[tab]);
-					initTabHandlers(tab);
-					return;
-				}
-
-				$content.html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: tab
-					},
-					success: function(response) {
-						if (response.success) {
-							tabCache[tab] = response.data.html;
-							$content.html(response.data.html);
-							initTabHandlers(tab);
-						} else {
-							$content.html('<div class="notice notice-error"><p>' + (response.data.message || '<?php echo esc_js( __( 'Failed to load content.', 'wp-sell-services' ) ); ?>') + '</p></div>');
-						}
-					},
-					error: function() {
-						$content.html('<div class="notice notice-error"><p><?php echo esc_js( __( 'Failed to load content.', 'wp-sell-services' ) ); ?></p></div>');
-					}
-				});
-			}
-
-			// Initialize handlers for specific tabs.
-			function initTabHandlers(tab) {
-				if (tab === 'settings') {
-					initSettingsHandlers();
-				} else if (tab === 'earnings') {
-					initEarningsHandlers();
-				} else if (tab === 'services') {
-					initServicesHandlers();
-				} else if (tab === 'orders') {
-					initOrdersHandlers();
-				} else if (tab === 'reviews') {
-					initReviewsHandlers();
-				} else if (tab === 'portfolio') {
-					initPortfolioHandlers();
-				}
-			}
-
-			// Settings tab handlers.
-			function initSettingsHandlers() {
-				// Commission rate save.
-				$('#wpss-save-commission-detail').off('click').on('click', function() {
-					var rate = $('#wpss-commission-rate-detail').val();
-					var $btn = $(this);
-
-					$btn.prop('disabled', true);
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_commission',
-							nonce: nonce,
-							vendor_id: vendorId,
-							rate: rate
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-commission-detail-status').html('<span style="color: #00a32a;">' + response.message + '</span>');
-								delete tabCache['settings'];
-								delete tabCache['earnings'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-							$btn.prop('disabled', false);
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'Error updating commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.prop('disabled', false);
-						}
-					});
-				});
-
-				// Reset commission.
-				$('#wpss-reset-commission-detail').off('click').on('click', function() {
-					if (!confirm('<?php echo esc_js( __( 'Reset to global commission rate?', 'wp-sell-services' ) ); ?>')) {
-						return;
-					}
-
-					var $btn = $(this);
-					$btn.prop('disabled', true);
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_commission',
-							nonce: nonce,
-							vendor_id: vendorId,
-							reset: 'true'
-						},
-						success: function(response) {
-							if (response.success) {
-								delete tabCache['settings'];
-								delete tabCache['earnings'];
-								loadTab('settings');
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-							$btn.prop('disabled', false);
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'Error resetting commission rate.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.prop('disabled', false);
-						}
-					});
-				});
-
-				// Vacation mode toggle (and return-date change re-saves with the
-				// current toggle state so admins can set/clear the date directly).
-				var saveVacation = function() {
-					var enabled = $('#wpss-vacation-mode-toggle').is(':checked');
-					var message = $('#wpss-vacation-message').val() || '';
-					var returnDate = $('#wpss-vacation-return-date').val() || '';
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_vacation',
-							nonce: nonce,
-							vendor_id: vendorId,
-							enabled: enabled ? 1 : 0,
-							message: message,
-							return_date: returnDate
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-vacation-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-								delete tabCache['settings'];
-								delete tabCache['overview'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating vacation mode.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-						}
-					});
-				};
-
-				$('#wpss-vacation-mode-toggle').off('change').on('change', saveVacation);
-				$('#wpss-vacation-return-date').off('change').on('change', saveVacation);
-
-				// Availability toggle.
-				$('#wpss-availability-toggle').off('change').on('change', function() {
-					var available = $(this).is(':checked');
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_availability',
-							nonce: nonce,
-							vendor_id: vendorId,
-							available: available ? 1 : 0
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-availability-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-								delete tabCache['settings'];
-								delete tabCache['overview'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating availability.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-						}
-					});
-				});
-
-				// Seller-level override (admin manually sets the verification tier; bypasses auto-calc).
-				$('#wpss-save-level-detail').off('click').on('click', function() {
-					var level = $('#wpss-level-select-detail').val();
-					var $btn = $(this);
-
-					$btn.prop('disabled', true);
-
-					$.ajax({
-						url: ajaxUrl,
-						type: 'POST',
-						data: {
-							action: 'wpss_update_vendor_level',
-							nonce: nonce,
-							vendor_id: vendorId,
-							level: level
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#wpss-level-status').html('<span class="wpss-status-line__success"></span>').find('span').text(response.data.message);
-								delete tabCache['settings'];
-								delete tabCache['overview'];
-							} else {
-								wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error updating seller level.', 'wp-sell-services' ) ); ?>', 'error');
-							}
-							$btn.prop('disabled', false);
-						},
-						error: function() {
-							wpssAdminNotice('<?php echo esc_js( __( 'Error updating seller level.', 'wp-sell-services' ) ); ?>', 'error');
-							$btn.prop('disabled', false);
-						}
-					});
-				});
-			}
-
-			// Portfolio tab handlers (moderation: feature/unfeature/delete).
-			function initPortfolioHandlers() {
-				$('.wpss-portfolio-action').off('click').on('click', function() {
-					var $btn = $(this);
-					var itemId = $btn.data('item-id');
-					var modAction = $btn.data('mod-action');
-
-					function proceed() {
-						$btn.prop('disabled', true);
-
-						$.ajax({
-							url: ajaxUrl,
-							type: 'POST',
-							data: {
-								action: 'wpss_moderate_portfolio_item',
-								nonce: nonce,
-								vendor_id: vendorId,
-								item_id: itemId,
-								mod_action: modAction
-							},
-							success: function(response) {
-								if (response.success) {
-									delete tabCache['portfolio'];
-									$('#wpss-tab-content').html(response.data.html);
-									initPortfolioHandlers();
-								} else {
-									wpssAdminNotice(response.data.message || '<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
-									$btn.prop('disabled', false);
-								}
-							},
-							error: function() {
-								wpssAdminNotice('<?php echo esc_js( __( 'Error moderating portfolio item.', 'wp-sell-services' ) ); ?>', 'error');
-								$btn.prop('disabled', false);
-							}
-						});
-					}
-
-					if (modAction === 'delete') {
-						window.wpssConfirm('<?php echo esc_js( __( 'Permanently remove this portfolio item? This cannot be undone.', 'wp-sell-services' ) ); ?>', { tone: 'danger' }).then(function(ok) {
-							if (ok) { proceed(); }
-						});
-						return;
-					}
-
-					proceed();
-				});
-			}
-
-			// Earnings tab handlers (pagination).
-			function initEarningsHandlers() {
-				$('.wpss-withdrawals-pagination a').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					loadWithdrawalsPage(page);
-				});
-			}
-
-			function loadWithdrawalsPage(page) {
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'earnings',
-						withdrawals_page: page
-					},
-					success: function(response) {
-						if (response.success) {
-							$('#wpss-tab-content').html(response.data.html);
-							initEarningsHandlers();
-						}
-					}
-				});
-			}
-
-			// Services tab handlers (pagination).
-			function initServicesHandlers() {
-				$('.wpss-services-page').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					loadServicesPage(page);
-				});
-			}
-
-			function loadServicesPage(page) {
-				$('#wpss-tab-content').html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'services',
-						services_page: page
-					},
-					success: function(response) {
-						if (response.success) {
-							delete tabCache['services'];
-							$('#wpss-tab-content').html(response.data.html);
-							initServicesHandlers();
-						}
-					}
-				});
-			}
-
-			// Orders tab handlers (pagination and filter).
-			function initOrdersHandlers() {
-				$('.wpss-orders-page').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					var status = $('#wpss-order-status-filter').val();
-					loadOrdersPage(page, status);
-				});
-
-				$('#wpss-order-status-filter').off('change').on('change', function() {
-					var status = $(this).val();
-					loadOrdersPage(1, status);
-				});
-			}
-
-			function loadOrdersPage(page, status) {
-				$('#wpss-tab-content').html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'orders',
-						orders_page: page,
-						order_status: status || ''
-					},
-					success: function(response) {
-						if (response.success) {
-							delete tabCache['orders'];
-							$('#wpss-tab-content').html(response.data.html);
-							initOrdersHandlers();
-						}
-					}
-				});
-			}
-
-			// Reviews tab handlers (pagination).
-			function initReviewsHandlers() {
-				$('.wpss-reviews-page').off('click').on('click', function(e) {
-					e.preventDefault();
-					var page = $(this).data('page');
-					loadReviewsPage(page);
-				});
-			}
-
-			function loadReviewsPage(page) {
-				$('#wpss-tab-content').html('<div class="wpss-tab-loading"><span class="spinner is-active"></span> <?php echo esc_js( __( 'Loading...', 'wp-sell-services' ) ); ?></div>');
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_vendor_tab_content',
-						nonce: nonce,
-						vendor_id: vendorId,
-						tab: 'reviews',
-						reviews_page: page
-					},
-					success: function(response) {
-						if (response.success) {
-							delete tabCache['reviews'];
-							$('#wpss-tab-content').html(response.data.html);
-							initReviewsHandlers();
-						}
-					}
-				});
-			}
-
-			// Status change dropdown.
-			$('#wpss-vendor-status-select').on('change', function() {
-				var newStatus = $(this).val();
-				if (!newStatus) {
-					return;
-				}
-
-				if (!confirm(i18n.confirmStatusChange)) {
-					$(this).val('');
-					return;
-				}
-
-				$.ajax({
-					url: ajaxUrl,
-					type: 'POST',
-					data: {
-						action: 'wpss_update_vendor_status',
-						nonce: nonce,
-						vendor_id: vendorId,
-						status: newStatus
-					},
-					success: function(response) {
-						if (response.success) {
-							location.reload();
-						} else {
-							wpssAdminNotice(response.data.message || i18n.error, 'error');
-						}
-					},
-					error: function() {
-						wpssAdminNotice(i18n.error, 'error');
-					}
-				});
-			});
-		});
-		</script>
-		<?php
-	}
 
 	/**
 	 * AJAX handler for updating vendor status.
@@ -1986,11 +1166,15 @@ class VendorsPage {
 		);
 		if ( ! empty( $failed ) ) {
 			$message .= ' ' . sprintf(
-				/* translators: %s: comma-separated list of failed vendor IDs */
+				/* translators: %s: comma-separated list of failed IDs and reasons */
 				__( 'Failed: %s', 'wp-sell-services' ),
 				implode( ', ', $failed )
 			);
 		}
+
+		// Persist the per-row report so it survives the JS success reload, which
+		// otherwise discarded this message and hid partial failures from the admin.
+		set_transient( 'wpss_bulk_vendor_report_' . get_current_user_id(), $message, MINUTE_IN_SECONDS );
 
 		wp_send_json_success( array( 'message' => $message ) );
 	}
@@ -2030,6 +1214,10 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
 		}
 
+		// Payout-relevant number: current wallet balance ("what do I owe"),
+		// read from the ledger authority rather than vp.total_earnings.
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
+
 		// Get services.
 		$services = get_posts(
 			array(
@@ -2064,7 +1252,7 @@ class VendorsPage {
 				<div>
 					<h2><?php echo esc_html( $vendor->display_name ); ?></h2>
 					<p><?php echo esc_html( $vendor->user_email ); ?></p>
-					<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $vendor->status ); ?>">
+					<span class="<?php echo esc_attr( wpss_status_class( $vendor->status ) ); ?>">
 						<?php echo esc_html( ucfirst( $vendor->status ) ); ?>
 					</span>
 				</div>
@@ -2084,8 +1272,8 @@ class VendorsPage {
 					<?php esc_html_e( 'Rating', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( wpss_format_price( (float) ( $vendor->total_earnings ?? 0 ) ) ); ?></strong>
-					<?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?>
+					<strong><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></strong>
+					<?php esc_html_e( 'Balance', 'wp-sell-services' ); ?>
 				</div>
 			</div>
 
@@ -2200,7 +1388,7 @@ class VendorsPage {
 								<td><?php echo esc_html( $order->service_title ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $order->total ) ); ?></td>
 								<td>
-									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $order->status ); ?>">
+									<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 										<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 									</span>
 								</td>
@@ -2391,7 +1579,7 @@ class VendorsPage {
 			<div class="wpss-info-grid">
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Country', 'wp-sell-services' ); ?></span>
-					<span class="wpss-info-value"><?php echo $profile->country ? esc_html( $profile->country ) : '-'; ?></span>
+					<span class="wpss-info-value"><?php echo $profile->country ? esc_html( wpss_get_country_name( (string) $profile->country ) ) : '-'; ?></span>
 				</div>
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'City', 'wp-sell-services' ); ?></span>
@@ -2553,7 +1741,7 @@ class VendorsPage {
 							<strong><?php echo esc_html( $service->post_title ); ?></strong>
 						</td>
 						<td>
-							<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status_class ); ?>">
+							<span class="<?php echo esc_attr( wpss_status_class( $status_class ) ); ?>">
 								<?php echo esc_html( ucfirst( $service->post_status ) ); ?>
 							</span>
 						</td>
@@ -2700,7 +1888,7 @@ class VendorsPage {
 							<td><?php echo esc_html( $order->service_title ); ?></td>
 							<td><?php echo esc_html( wpss_format_price( (float) $order->total ) ); ?></td>
 							<td>
-								<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $order->status ); ?>">
+								<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 									<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 								</span>
 							</td>
@@ -2756,16 +1944,7 @@ class VendorsPage {
 		$global_rate        = CommissionService::get_global_commission_rate();
 
 		// Get wallet balance.
-		$wallet_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
-				$vendor_id
-			)
-		);
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
 		// Get withdrawal history.
 		$withdrawals_page = isset( $_POST['withdrawals_page'] ) ? absint( $_POST['withdrawals_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in ajax_get_tab_content().
@@ -2808,9 +1987,21 @@ class VendorsPage {
 					<strong><?php echo esc_html( wpss_format_price( $commission_summary['total_commission'] ) ); ?></strong>
 					<?php esc_html_e( 'Platform Fees', 'wp-sell-services' ); ?>
 				</div>
-				<div class="wpss-earnings-card">
+				<?php
+				// A negative wallet balance means a refund reclaimed earnings
+				// this vendor had already been paid, so they owe the platform.
+				// Flagged rather than shown as a plain figure, because an admin
+				// scanning this screen needs to spot a debt without doing the
+				// arithmetic themselves.
+				$wpss_balance_owed = $wallet_balance < 0;
+				?>
+				<div class="wpss-earnings-card<?php echo $wpss_balance_owed ? ' wpss-earnings-card--owed' : ''; ?>">
 					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
-					<?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?>
+					<?php
+					echo $wpss_balance_owed
+						? esc_html__( 'Wallet Balance (owed to platform)', 'wp-sell-services' )
+						: esc_html__( 'Wallet Balance', 'wp-sell-services' );
+					?>
 				</div>
 			</div>
 		</div>
@@ -2885,7 +2076,7 @@ class VendorsPage {
 								<td><?php echo esc_html( wpss_format_price( (float) $withdrawal->amount ) ); ?></td>
 								<td><?php echo esc_html( ucfirst( $withdrawal->method ?? 'bank' ) ); ?></td>
 								<td>
-									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $withdrawal->status ); ?>">
+									<span class="<?php echo esc_attr( wpss_status_class( $withdrawal->status ) ); ?>">
 										<?php echo esc_html( ucfirst( $withdrawal->status ) ); ?>
 									</span>
 								</td>
@@ -2936,16 +2127,7 @@ class VendorsPage {
 		$limit = 50;
 
 		// Current balance = balance_after on the latest transaction.
-		$wallet_balance = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(balance_after, 0)
-				FROM {$wpdb->prefix}wpss_wallet_transactions
-				WHERE user_id = %d
-				ORDER BY created_at DESC, id DESC
-				LIMIT 1",
-				$vendor_id
-			)
-		);
+		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
@@ -2970,9 +2152,13 @@ class VendorsPage {
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></h3>
 			<div class="wpss-earnings-summary">
-				<div class="wpss-earnings-card">
+				<div class="wpss-earnings-card<?php echo $wallet_balance < 0 ? ' wpss-earnings-card--owed' : ''; ?>">
 					<strong><?php echo esc_html( wpss_format_price( $wallet_balance ) ); ?></strong>
-					<?php esc_html_e( 'Current Balance', 'wp-sell-services' ); ?>
+					<?php
+					echo $wallet_balance < 0
+						? esc_html__( 'Current Balance (owed to platform)', 'wp-sell-services' )
+						: esc_html__( 'Current Balance', 'wp-sell-services' );
+					?>
 				</div>
 				<div class="wpss-earnings-card">
 					<strong><?php echo esc_html( number_format_i18n( $total ) ); ?></strong>
@@ -3017,7 +2203,7 @@ class VendorsPage {
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->balance_after ) ); ?></td>
 								<td>
-									<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $txn->status ); ?>">
+									<span class="<?php echo esc_attr( wpss_status_class( $txn->status ) ); ?>">
 										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>
 									</span>
 								</td>
@@ -3045,7 +2231,7 @@ class VendorsPage {
 
 		$reviews = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT r.*, o.order_number, s.post_title as service_title, u.display_name as reviewer_name
+				"SELECT r.*, o.order_number, s.post_title as service_title, COALESCE(NULLIF(u.display_name, ''), r.reviewer_name) as reviewer_display_name
 				FROM {$wpdb->prefix}wpss_reviews r
 				LEFT JOIN {$wpdb->prefix}wpss_orders o ON r.order_id = o.id
 				LEFT JOIN {$wpdb->posts} s ON o.service_id = s.ID
@@ -3119,7 +2305,7 @@ class VendorsPage {
 										<?php echo esc_html( str_repeat( '★', (int) $review->rating ) ); ?>
 										<?php echo esc_html( str_repeat( '☆', 5 - (int) $review->rating ) ); ?>
 									</span>
-									<strong><?php echo esc_html( $review->reviewer_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
+									<strong><?php echo esc_html( $review->reviewer_display_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
 								</div>
 								<span class="wpss-review-meta">
 									<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?>
@@ -3130,7 +2316,7 @@ class VendorsPage {
 							</div>
 							<p class="wpss-review-content"><?php echo wp_kses_post( $review->comment ); ?></p>
 							<?php if ( 'approved' !== $review->status ) : ?>
-								<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $review->status ); ?>">
+								<span class="<?php echo esc_attr( wpss_status_class( $review->status ) ); ?>">
 									<?php echo esc_html( ucfirst( $review->status ) ); ?>
 								</span>
 							<?php endif; ?>
@@ -3144,7 +2330,7 @@ class VendorsPage {
 							<span class="displaying-num">
 								<?php
 								printf(
-									/* translators: %s: number of items */
+									/* translators: %s: number of reviews */
 									esc_html( _n( '%s review', '%s reviews', $total, 'wp-sell-services' ) ),
 									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
 									number_format_i18n( $total )

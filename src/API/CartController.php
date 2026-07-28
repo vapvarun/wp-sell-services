@@ -136,6 +136,13 @@ class CartController extends RestController {
 			return new WP_Error( 'own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
+		// Paused services are not purchasable. The listing hides the CTA, but
+		// enforce it server-side too so a paused service can't be added via a
+		// direct API call (parity with the vendor-vacation block).
+		if ( 'paused' === wpss_get_service_status( $service_id ) ) {
+			return new WP_Error( 'service_paused', __( 'This service is not accepting orders right now.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
 		// Get package.
 		$packages = get_post_meta( $service_id, '_wpss_packages', true );
 		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
@@ -340,19 +347,21 @@ class CartController extends RestController {
 			return $order_result;
 		}
 
-		// Clear cart after checkout.
-		delete_user_meta( $user_id, '_wpss_cart' );
-
-		if ( $order_result ) {
-			return new WP_REST_Response( $order_result );
+		// A handler must return a created order for checkout to succeed. When no
+		// handler is wired (or it returns null) NO order exists — clearing the
+		// cart here would destroy the buyer's selections and then falsely report
+		// "Order created". Keep the cart intact and report honestly instead.
+		if ( empty( $order_result ) ) {
+			return new WP_Error(
+				'checkout_unavailable',
+				__( 'Checkout could not be completed right now. Please try again or contact the site owner.', 'wp-sell-services' ),
+				array( 'status' => 501 )
+			);
 		}
 
-		return new WP_REST_Response(
-			array(
-				'method'          => 'pending',
-				'message'         => __( 'Order created. Select a payment method to complete.', 'wp-sell-services' ),
-				'payment_methods' => apply_filters( 'wpss_available_payment_methods', array() ),
-			)
-		);
+		// Clear the cart only after an order has actually been created.
+		delete_user_meta( $user_id, '_wpss_cart' );
+
+		return new WP_REST_Response( $order_result );
 	}
 }

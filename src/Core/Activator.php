@@ -155,7 +155,9 @@ class Activator {
 			// Payouts settings - matches Settings.php wpss_payouts.
 			'wpss_payouts'       => array(
 				'min_withdrawal'            => 25,
-				'clearance_days'            => 14,
+				// 0 = no hold; the owner opts into a refund window if they want
+				// one. See Settings.php clearance_days for the rationale.
+				'clearance_days'            => 0,
 				'auto_withdrawal_enabled'   => false,
 				'auto_withdrawal_threshold' => 500,
 				'auto_withdrawal_schedule'  => 'monthly',
@@ -172,7 +174,13 @@ class Activator {
 				'vendor_registration'        => 'open',
 				'max_services_per_vendor'    => 20,
 				'require_verification'       => false,
-				'require_service_moderation' => true,
+				// Publish-and-sell by default so a new marketplace isn't empty on
+				// launch day (first vendor listings would otherwise stay hidden
+				// until an admin approves each one). Consistent with the open
+				// registration + no-verification defaults above. Owners who want
+				// to review listings first can enable moderation in the setup
+				// wizard or Vendor settings.
+				'require_service_moderation' => false,
 			),
 			// Order settings - matches Settings.php wpss_orders.
 			// Revision limits are defined per-package in service packages, not as a global setting.
@@ -236,6 +244,22 @@ class Activator {
 		$old_options = array( 'wpss_general_settings', 'wpss_vendor_settings', 'wpss_notification_settings' );
 		foreach ( $old_options as $old_option ) {
 			delete_option( $old_option );
+		}
+
+		// First-run only: enable Manual/Offline payment so day-one checkout works
+		// without any API keys — a fresh install must be able to take an order
+		// (owner accepts bank/manual payment). Gated on BOTH "no offline settings
+		// yet" AND "never activated before", so upgrades never re-enable it and an
+		// owner who disabled it is never overridden (BC 10134397011).
+		if ( false === get_option( 'wpss_offline_settings' ) && false === get_option( 'wpss_activated_at' ) ) {
+			add_option(
+				'wpss_offline_settings',
+				array(
+					'enabled'      => '1',
+					'title'        => __( 'Manual / Offline Payment', 'wp-sell-services' ),
+					'instructions' => __( 'The site owner will contact you with payment instructions after you place your order.', 'wp-sell-services' ),
+				)
+			);
 		}
 
 		// Set activation timestamp.

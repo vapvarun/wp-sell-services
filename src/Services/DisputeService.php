@@ -309,12 +309,14 @@ class DisputeService {
 		// Get existing evidence or initialize empty array.
 		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
 
-		// Sanitize content based on evidence type.
+		// Sanitize content based on evidence type. image/file/link all carry a
+		// URL (the AJAX handler stores the wp_handle_upload() URL, not an
+		// attachment ID) — absint() here silently zeroed every uploaded file,
+		// so the frontend rendered a broken link. Treat them all as URLs.
 		$sanitized_type    = sanitize_key( $type );
 		$sanitized_content = match ( $sanitized_type ) {
-			'link'          => esc_url_raw( $content ),
-			'image', 'file' => absint( $content ),
-			default         => sanitize_textarea_field( $content ),
+			'link', 'image', 'file' => esc_url_raw( $content ),
+			default                 => sanitize_textarea_field( $content ),
 		};
 
 		// Add new evidence item.
@@ -476,6 +478,11 @@ class DisputeService {
 				'status'           => self::STATUS_RESOLVED,
 				'resolution'       => sanitize_key( $resolution ),
 				'resolution_notes' => sanitize_textarea_field( $notes ),
+				// The dedicated column, which nothing wrote until 1.2.3 — the
+				// amount was only ever tucked into the evidence JSON above, so
+				// the dispute record could not report its own outcome and the
+				// column read as NULL on every resolved dispute.
+				'refund_amount'    => $refund_amount > 0 ? round( $refund_amount, 2 ) : null,
 				'resolved_by'      => $resolved_by,
 				'resolved_at'      => current_time( 'mysql' ),
 				'evidence'         => wp_json_encode( $evidence ),
@@ -520,11 +527,16 @@ class DisputeService {
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
-				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_REFUNDED );
+				// Ruling for the buyer returns everything they paid; NULL asks
+				// apply_refund_status() to resolve that to the order total.
+				$this->order_service->apply_refund_status( $order_id, null, ServiceOrder::STATUS_REFUNDED );
 				break;
 
 			case self::RESOLUTION_PARTIAL_REFUND:
-				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
+				// Through apply_refund_status(), never a persist-then-transition
+				// pair: a refused transition used to leave the order claiming a
+				// refund that never happened.
+				$this->order_service->apply_refund_status( $order_id, $refund_amount, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
 				break;
 
 			case self::RESOLUTION_FAVOR_VENDOR:

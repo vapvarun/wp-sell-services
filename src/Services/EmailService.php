@@ -1175,9 +1175,22 @@ class EmailService {
 			$order->order_number
 		);
 
+		// Load the dispute so every copy of the email can show the buyer's
+		// reason. Previously no variant passed `dispute_reason`, so the template's
+		// reason block (gated on ! empty( $dispute_reason )) never rendered and
+		// the recipient — including admin — saw a dispute with no stated cause.
+		$dispute        = ( new DisputeService() )->get_by_order( (int) $order->id );
+		$dispute_reason = '';
+		if ( $dispute ) {
+			$dispute_reason = ! empty( $dispute->description )
+				? (string) $dispute->description
+				: (string) ( $dispute->reason ?? '' );
+		}
+
 		$base_vars = array(
-			'order'         => $order,
-			'email_heading' => __( 'Dispute Opened', 'wp-sell-services' ),
+			'order'          => $order,
+			'email_heading'  => __( 'Dispute Opened', 'wp-sell-services' ),
+			'dispute_reason' => $dispute_reason,
 		);
 
 		// Send to customer with customer-specific context.
@@ -1252,8 +1265,11 @@ class EmailService {
 		}
 
 		$subjects = array(
+			/* translators: 1: site name, 2: order number. */
 			1 => __( '[%1$s] Submit Your Requirements - Order #%2$s', 'wp-sell-services' ),
+			/* translators: 1: site name, 2: order number. */
 			2 => __( '[%1$s] Reminder: Requirements Needed - Order #%2$s', 'wp-sell-services' ),
+			/* translators: 1: site name, 2: order number. */
 			3 => __( '[%1$s] Final Reminder: Action Required - Order #%2$s', 'wp-sell-services' ),
 		);
 

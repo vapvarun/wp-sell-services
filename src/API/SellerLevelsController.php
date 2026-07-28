@@ -279,7 +279,9 @@ class SellerLevelsController extends RestController {
 			return $perm_check;
 		}
 
-		if ( ! get_user_meta( get_current_user_id(), '_wpss_is_vendor', true ) ) {
+		// Canonical vendor check (capability/role + legacy meta) so role-based
+		// and demo-seeded vendors are not wrongly 403'd.
+		if ( ! wpss_is_vendor() ) {
 			return new WP_Error( 'rest_forbidden', __( 'Only vendors can access this endpoint.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 

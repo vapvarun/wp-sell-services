@@ -57,7 +57,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 			?>
 		</p>
 		<?php if ( $item_count < $max_items ) : ?>
-			<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--small" id="wpss-portfolio-add-btn">
+			<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--sm" id="wpss-portfolio-add-btn">
 				<?php esc_html_e( 'Add Portfolio Item', 'wp-sell-services' ); ?>
 			</button>
 		<?php endif; ?>
@@ -132,13 +132,13 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 							<?php if ( ! empty( $item['is_featured'] ) ) : ?>
 								<span class="wpss-badge wpss-badge--warning wpss-badge--small"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></span>
 							<?php endif; ?>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-btn--outline wpss-portfolio-edit" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--ghost wpss-portfolio-edit" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 							</button>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-btn--outline wpss-portfolio-toggle-featured" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--ghost wpss-portfolio-toggle-featured" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
 								<?php echo $item['is_featured'] ? esc_html__( 'Unfeature', 'wp-sell-services' ) : esc_html__( 'Feature', 'wp-sell-services' ); ?>
 							</button>
-							<button type="button" class="wpss-btn wpss-btn--small wpss-btn--link wpss-btn--outline wpss-btn--danger wpss-portfolio-delete" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
+							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--ghost wpss-btn--danger wpss-portfolio-delete" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
 								<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
 							</button>
 						</div>
@@ -233,7 +233,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 					<label><?php esc_html_e( 'Images', 'wp-sell-services' ); ?></label>
 					<div class="wpss-portfolio-media-preview" id="wpss-portfolio-media-preview"></div>
 					<input type="hidden" name="media" id="wpss-portfolio-media" value="[]">
-					<button type="button" class="wpss-btn wpss-btn--small wpss-btn--secondary" id="wpss-portfolio-upload-media">
+					<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--secondary" id="wpss-portfolio-upload-media">
 						<?php esc_html_e( 'Upload Images', 'wp-sell-services' ); ?>
 					</button>
 				</div>

@@ -75,7 +75,7 @@
 
 /* Reset theme link styles */
 .wpss-single-service a {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 	transition: color var(--wpss-transition);
 }
@@ -205,6 +205,12 @@
 	overscroll-behavior: contain;
 	width: 340px;
 	justify-self: end;
+	/* Match .wpss-service-main: a grid item defaults to min-width:auto, so its
+	   min-content size can push it past its track. Wide sidebar content (a
+	   package tab strip with several tiers, a long vendor name) would then
+	   overflow the page and get clipped by the theme's overflow-x:hidden
+	   instead of scrolling inside its own widget. */
+	min-width: 0;
 }
 
 @media (max-width: 991px) {
@@ -258,7 +264,7 @@
 }
 
 .wpss-breadcrumb-item a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-breadcrumb-current {
@@ -312,11 +318,11 @@
 }
 
 .wpss-vendor-name:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-verified-badge {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	font-size: 0.75rem;
 }
 
@@ -329,7 +335,7 @@
 }
 
 .wpss-meta-rating a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-star {
@@ -366,7 +372,7 @@
 
 .wpss-service-gallery {
 	margin-bottom: 2rem;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
 	box-shadow: var(--wpss-shadow);
@@ -469,7 +475,7 @@
    ========================================================================== */
 
 .wpss-service-description {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -549,7 +555,7 @@
    ========================================================================== */
 
 .wpss-about-vendor {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -595,7 +601,7 @@
 }
 
 .wpss-vendor-info h3 a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-vendor-tagline {
@@ -692,7 +698,7 @@
    ========================================================================== */
 
 .wpss-service-faqs {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -743,7 +749,7 @@
 
 .wpss-faq-question:hover,
 .wpss-faq-question:focus {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: none !important;
 	background-color: transparent !important;
 	border: none !important;
@@ -777,11 +783,11 @@
 }
 
 .wpss-faq-question:hover .wpss-faq-icon {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-faq-question[aria-expanded="true"] .wpss-faq-icon {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* FAQ Answer - Theme-resistant styling */
@@ -813,8 +819,8 @@
 	display: block !important;
 	visibility: visible !important;
 	opacity: 1 !important;
-	background: var(--wpss-white) !important;
-	background-color: var(--wpss-white) !important;
+	background: var(--wpss-surface) !important;
+	background-color: var(--wpss-surface) !important;
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-bottom: 2rem;
@@ -986,6 +992,28 @@
 	color: var(--wpss-text-muted);
 }
 
+/* "Helpful" vote button. Token-based so it flips in dark mode (was an inline
+   style hardcoding #666 text + #ddd border, unreadable on dark surfaces, and
+   divergent between the server-rendered and AJAX-rendered review cards). */
+.wpss-review-helpful-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	font-size: 13px;
+	color: var(--wpss-text-muted);
+	background: none;
+	border: 1px solid var(--wpss-border);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.wpss-review-helpful-btn:hover {
+	color: var(--wpss-primary-accent);
+	border-color: var(--wpss-primary-accent);
+}
+
 .wpss-no-reviews {
 	display: block !important;
 	visibility: visible !important;
@@ -1009,38 +1037,17 @@
    ========================================================================== */
 
 .wpss-packages-widget {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	box-shadow: var(--wpss-shadow);
 	overflow: hidden;
 }
 
-.wpss-packages-tabs {
-	display: flex;
-	border-bottom: 1px solid var(--wpss-border);
-}
-
-.wpss-package-tab {
-	flex: 1;
-	padding: 1rem;
-	background: none;
-	border: none;
-	border-bottom: 2px solid transparent;
-	cursor: pointer;
-	font-weight: 500;
-	color: var(--wpss-text-muted);
-	transition: all var(--wpss-transition);
-}
-
-.wpss-package-tab:hover {
-	color: var(--wpss-text);
-}
-
-.wpss-package-tab.active {
-	color: var(--wpss-primary);
-	border-bottom-color: var(--wpss-primary);
-	border-radius: 0;
-}
+/* Package tier tabs are owned by frontend.css (search "Package tier tabs"),
+   which loads on every frontend surface. This file's copy was removed: it
+   duplicated the rules with different padding/weight and, like the original,
+   could not scroll — so extra tiers were clipped out of reach by the widget's
+   overflow:hidden. The canonical block keeps this file's visual treatment. */
 
 .wpss-packages-content {
 	padding: 1.5rem;
@@ -1057,7 +1064,8 @@
 .wpss-package-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-start;
+	align-items: baseline;
+	gap: var(--wpss-space-2, 0.5rem);
 	margin-bottom: 1rem;
 }
 
@@ -1068,9 +1076,22 @@
 }
 
 .wpss-package-price {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
 	font-size: 1.5rem;
 	font-weight: 700;
+	line-height: 1.2;
 	color: var(--wpss-text);
+}
+
+/* Keep the converted hint on its own line under the price, right-aligned, so
+   every tier looks the same whether the amount is $85 or $340 (logical flex-end
+   flips for RTL automatically). */
+.wpss-package-price .wpss-price-approx {
+	display: block;
+	margin-block-start: 0.15rem;
+	margin-inline-start: 0;
 }
 
 .wpss-package-description {
@@ -1171,7 +1192,32 @@
 }
 
 .wpss-contact-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
+}
+
+/* Sidebar order actions: favourite toggle + contact seller, below the packages. */
+.wpss-package-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border);
+}
+
+/* The favourite toggle spans the sidebar like the order CTA above it. */
+.wpss-package-actions .wpss-fav-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+}
+
+/* Divider is owned by the actions wrapper now, so the nested contact block
+   drops its own border/padding to avoid a double rule. */
+.wpss-package-actions .wpss-contact-seller {
+	padding-top: 0;
+	border-top: 0;
 }
 
 /* ==========================================================================
@@ -1179,7 +1225,7 @@
    ========================================================================== */
 
 .wpss-vendor-card {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	padding: 1.5rem;
 	margin-top: 1.5rem;
@@ -1214,8 +1260,8 @@
 	position: absolute;
 	bottom: -4px;
 	left: -4px;
-	color: var(--wpss-primary);
-	background: var(--wpss-white);
+	color: var(--wpss-primary-accent);
+	background: var(--wpss-surface);
 	border-radius: 50%;
 	padding: 2px;
 }
@@ -1282,26 +1328,11 @@
 	text-align: center;
 }
 
-.wpss-services-grid {
-	display: grid;
-	gap: 1.5rem;
-}
-
-.wpss-services-grid--4 {
-	grid-template-columns: repeat(4, 1fr);
-}
-
-@media (max-width: 991px) {
-	.wpss-services-grid--4 {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
-
-@media (max-width: 575px) {
-	.wpss-services-grid--4 {
-		grid-template-columns: 1fr;
-	}
-}
+/* The related-services grid (.wpss-services-grid.--4) is owned by
+   design-system.css. This file's copy used repeat(4, 1fr) — which lets a long
+   card title force horizontal overflow — where the canonical modifier uses
+   repeat(4, minmax(0, 1fr)); the canonical version and its responsive step-down
+   are strictly better, so the copy here is removed. */
 
 /* ==========================================================================
    Buttons
@@ -1344,7 +1375,7 @@
 
 .wpss-btn-outline:hover {
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-btn-block {
@@ -1394,7 +1425,7 @@
 
 .wpss-modal-content {
 	position: relative;
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border-radius: var(--wpss-radius-lg);
 	width: 100%;
 	max-width: 480px;

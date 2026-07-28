@@ -192,11 +192,11 @@ class ServiceCategories extends AbstractBlock {
 	 * @return void
 	 */
 	private function render_category_card( \WP_Term $category, array $attributes ): void {
+		// The archive reader filters on `category` (see ServiceArchiveView);
+		// `wpss_category` was ignored, so clicking a category card did nothing.
 		$link     = add_query_arg(
-			[
-				'wpss_search'   => '',
-				'wpss_category' => $category->term_id,
-			],
+			'category',
+			$category->term_id,
 			get_post_type_archive_link( 'wpss_service' )
 		);
 		$icon     = get_term_meta( $category->term_id, '_wpss_icon', true );

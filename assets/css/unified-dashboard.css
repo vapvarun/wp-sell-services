@@ -49,7 +49,7 @@
 
 .wpss-dashboard__sidebar {
 	width: var(--wpss-sidebar-width);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-right: 1px solid var(--wpss-gray-200);
 	display: flex;
 	flex-direction: column;
@@ -86,7 +86,7 @@
 	display: inline-flex;
 	align-items: center;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	font-size: 11px;
 	font-weight: 600;
 	padding: 2px 8px;
@@ -145,7 +145,7 @@
 }
 
 .wpss-dashboard__nav-item--active {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-light);
 	/* Active accent is an inset left bar via box-shadow, NOT a border-right.
 	   The old border-right landed exactly on the sidebar/content seam and
@@ -156,7 +156,7 @@
 }
 
 .wpss-dashboard__nav-item--active:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-light);
 }
 
@@ -209,7 +209,7 @@
 	align-items: center;
 	gap: 12px;
 	padding: 20px 24px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-bottom: 1px solid var(--wpss-gray-200);
 }
 
@@ -277,7 +277,7 @@
 
 .wpss-powered-by a:hover,
 .wpss-powered-by a:focus {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 @media (max-width: 640px) {
@@ -332,7 +332,7 @@
 }
 
 .wpss-stat-card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	padding: 20px;
 	box-shadow: var(--wpss-shadow-sm);
@@ -369,35 +369,16 @@
    Empty State
    ========================================================================== */
 
-.wpss-empty-state {
-	text-align: center;
-	padding: 48px 24px;
-	background: var(--wpss-white, #fff);
-	border-radius: var(--wpss-radius);
-	border: 1px solid var(--wpss-gray-200);
-}
+/* Empty state (base, --compact, __icon and the bare h3/p descendants) is owned
+   by design-system.css — search "EMPTY STATE". This file keeps only the
+   dashboard-specific `__categories` extensions further down. */
 
-.wpss-empty-state--compact {
-	padding: 24px;
-}
-
+/* The icon here centred itself with flex; the canonical block relies on the
+   container's text-align, so keep that one behaviour for this dashboard's
+   inline-svg icons. */
 .wpss-empty-state__icon {
 	display: flex;
 	justify-content: center;
-	margin-bottom: 16px;
-	color: var(--wpss-gray-300);
-}
-
-.wpss-empty-state h3 {
-	margin: 0 0 8px;
-	font-size: 18px;
-	color: var(--wpss-gray-900);
-}
-
-.wpss-empty-state p {
-	margin: 0 0 20px;
-	color: var(--wpss-gray-500);
-	font-size: 14px;
 }
 
 /* ==========================================================================
@@ -417,7 +398,7 @@
 	flex-flow: row wrap;
 	gap: 16px;
 	padding: 16px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
 	transition: border-color 0.15s ease;
@@ -516,7 +497,7 @@
 .wpss-service-card--dashboard {
 	display: flex;
 	flex-direction: column;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius-lg);
 	border: 1px solid var(--wpss-border);
 	overflow: hidden;
@@ -605,7 +586,7 @@
 .wpss-service-card__price {
 	font-size: 14px;
 	font-weight: 600;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-service-card__actions {
@@ -626,12 +607,17 @@
 }
 
 .wpss-request-card {
+	/* Column layout: content block on top, a dedicated action FOOTER row at the
+	   bottom (Basecamp #9985554351). Side-by-side never fit — five actions want
+	   ~400px next to a title that needs its own width — so the actions used to
+	   sprawl on wide cards and clip on narrow ones. A footer row is consistent
+	   at every width: desktop, iPad, and mobile all read the same. */
 	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 16px;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 12px;
 	padding: 16px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
 }
@@ -660,11 +646,58 @@
 }
 
 .wpss-request-card__actions {
+	/* Footer action row: a hairline separates it from the content above; the
+	   status badge pins to the start and the icon buttons flow to the end. */
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: 8px;
+	width: 100%;
+	padding-top: 12px;
+	border-top: 1px solid var(--wpss-gray-100);
+}
+
+/* Status is state, not an action — hold the left edge so the icon buttons
+   collect at the right of the footer. */
+.wpss-request-card__actions > .wpss-status {
+	margin-inline-end: auto;
+}
+
+/* Compact icon actions — the fix for Basecamp #9985554351.
+   Five text buttons (status + View Offers + Close/Reopen + Edit + Delete) total
+   ~400px. On a wide card they sprawled with a dead gap; on a narrow card the
+   base rule's `flex-shrink: 0` sized __actions to its content and OVERFLOWED,
+   clipping Delete off the right edge. Collapsing every action to an icon button
+   (~40px) keeps the whole set on ONE tidy line at every width — desktop, iPad,
+   and mobile alike — while the label survives in the DOM for assistive tech and
+   as a hover tooltip (title attr). */
+.wpss-request-card__actions .wpss-btn--action {
+	gap: 0;
+	padding-inline: 0;
+	min-width: 40px;
+	min-height: 40px;
+	justify-content: center;
 	flex-shrink: 0;
 }
+
+.wpss-request-card__actions .wpss-btn--action .wpss-icon {
+	width: 18px;
+	height: 18px;
+}
+
+/* Visually hide the label but keep it for screen readers (the icon carries the
+   meaning visually; aria-label + title name the control for AT and on hover). */
+.wpss-request-card__actions .wpss-btn--action .wpss-btn__label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 
 /* ==========================================================================
    Conversation Cards
@@ -775,7 +808,7 @@
 	display: flex;
 	flex-direction: column;
 	min-height: 620px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-200);
 	border-radius: 16px;
 	overflow: hidden;
@@ -787,7 +820,7 @@
 	align-items: center;
 	gap: 12px;
 	padding: 18px 20px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-bottom: 1px solid var(--wpss-gray-200);
 }
 
@@ -867,7 +900,7 @@
 	font-size: 14px;
 	line-height: 1.5;
 	color: var(--wpss-gray-900);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 16px 16px 16px 4px;
 	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
@@ -911,7 +944,7 @@
 
 .wpss-section--messages .wpss-conversation-thread__reply {
 	padding: 16px 20px 18px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-top: 1px solid var(--wpss-gray-200);
 }
 
@@ -975,7 +1008,7 @@
 } */
 
 .wpss-profile-form__section {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	border: 1px solid var(--wpss-gray-200);
 	padding: 24px;
@@ -1044,7 +1077,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	transition: transform 0.2s;
 }
 
@@ -1087,7 +1120,7 @@
 .wpss-form-hint {
 	margin: 6px 0 0;
 	font-size: 12px;
-	color: var(--wpss-gray-400);
+	color: var(--wpss-text-muted);
 }
 
 /* ==========================================================================
@@ -1112,7 +1145,7 @@
 .wpss-table {
 	width: 100%;
 	border-collapse: collapse;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
 	overflow: hidden;
 	border: 1px solid var(--wpss-gray-200);
@@ -1182,7 +1215,7 @@
 	margin-top: 2px;
 	font-size: 12px;
 	font-weight: 500;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	text-decoration: none;
 }
 
@@ -1548,7 +1581,7 @@
 }
 
 .wpss-vendor-registration__card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: 48px 40px;
@@ -1556,7 +1589,7 @@
 }
 
 .wpss-vendor-registration__icon {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	margin-bottom: 20px;
 }
 
@@ -1665,7 +1698,7 @@
 
 /* .wpss-btn--primary: see design-system.css (single owner) */
 .wpss-btn--outline {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-gray-700);
 	border: 1px solid var(--wpss-gray-300);
 }
@@ -1760,7 +1793,7 @@
 	padding: 10px 12px;
 	font-size: 14px;
 	color: var(--wpss-gray-900);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-300);
 	border-radius: var(--wpss-radius);
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1841,7 +1874,7 @@ select.wpss-input option,
 	border: 1px solid var(--wpss-gray-200);
 	border-radius: var(--wpss-radius);
 	overflow: hidden;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	transition: box-shadow 0.2s;
 }
 
@@ -1926,7 +1959,7 @@ select.wpss-input option,
 
 .wpss-modal__content {
 	position: relative;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 8px;
 	width: 90%;
 	max-width: 560px;
@@ -2029,7 +2062,7 @@ select.wpss-input option,
 		padding: 8px 12px;
 		border: 1px solid var(--wpss-gray-200);
 		border-radius: var(--wpss-radius);
-		background: var(--wpss-white, #fff);
+		background: var(--wpss-surface, #fff);
 		font-size: 13px;
 		font-weight: 500;
 		white-space: nowrap;
@@ -2110,7 +2143,7 @@ select.wpss-input option,
    re-implementation. Border / radius / surface / hover read the same design
    tokens as .wpss-service-card so it renders identically. */
 .wpss-favorites__card {
-	background: var(--wpss-white);
+	background: var(--wpss-surface);
 	border: 1px solid var(--wpss-border);
 	border-radius: var(--wpss-radius-lg);
 	overflow: hidden;
@@ -2363,7 +2396,7 @@ select.wpss-input option,
 	font-size: 13px;
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
-	background-color: var(--wpss-white, #fff);
+	background-color: var(--wpss-surface, #fff);
 }
 
 .wpss-sales-filter__count {
@@ -2387,7 +2420,7 @@ select.wpss-input option,
 	align-items: center;
 	gap: 4px;
 	padding: 6px 12px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-text, #1f2937);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 6px;
@@ -2458,11 +2491,11 @@ select.wpss-input option,
 
 .wpss-category-chip:hover {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-tip-view__card {
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-gray-100);
 	border-radius: 14px;
 	padding: 32px 28px;
@@ -2709,7 +2742,7 @@ select.wpss-input option,
 	padding: 14px 16px;
 	border-radius: 10px;
 	border: 1px solid var(--wpss-border, #e5e7eb);
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 /* Milestone item state pills use design-system tokens so white-label /
@@ -2774,7 +2807,7 @@ select.wpss-input option,
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	color: var(--wpss-success, #22c55e);
 	display: inline-flex;
 	align-items: center;
@@ -3084,7 +3117,7 @@ select.wpss-input option,
 
 .wpss-status-pending_review {
 	background: var(--wpss-info-light, #e8f4fd);
-	color: var(--wpss-secondary, #0a4b78);
+	color: var(--wpss-secondary-accent, #0a4b78);
 }
 
 .wpss-status-escalated {
@@ -3137,7 +3170,7 @@ select.wpss-input option,
 	align-items: flex-start;
 	gap: 15px;
 	padding: 15px;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e5e5);
 	border-radius: 8px;
 }
@@ -3217,17 +3250,14 @@ select.wpss-input option,
 	margin: 0;
 }
 
-.wpss-services-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	gap: 20px;
-}
+/* .wpss-services-grid is owned by design-system.css (identical auto-fill; the
+   only difference here was a 20px vs 24px gap, not worth a second definition). */
 
 .wpss-service-card {
 	border: 1px solid var(--wpss-border, #e5e5e5);
 	border-radius: 8px;
 	overflow: hidden;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 .wpss-service-image {
@@ -3258,7 +3288,7 @@ select.wpss-input option,
 	border-radius: 4px;
 	font-size: 11px;
 	font-weight: 500;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 }
 
 .wpss-status-publish {
@@ -3274,6 +3304,16 @@ select.wpss-input option,
 .wpss-status-draft {
 	background: var(--wpss-gray-600, #636e72);
 	color: var(--wpss-white, #fff);
+}
+
+/* gray-600 is the one ramp value used as a *background*. In dark mode the ramp
+   inverts (gray-600 resolves light), which would put white text on a light
+   pill. Re-anchor this pill to a mid-dark bg + light ink so it stays legible. */
+:root[data-bx-mode="dark"] .wpss-status-draft,
+:root[data-theme="dark"] .wpss-status-draft,
+.wpss-dark .wpss-status-draft {
+	background: var(--wpss-gray-300);
+	color: var(--wpss-gray-900);
 }
 
 .wpss-service-info {
@@ -3351,7 +3391,7 @@ select.wpss-input option,
 	max-width: 900px;
 	max-height: 90vh;
 	width: 90vw;
-	background: var(--wpss-white, #fff);
+	background: var(--wpss-surface, #fff);
 	border-radius: 12px;
 	overflow: hidden;
 	z-index: 1;
@@ -3469,7 +3509,7 @@ select.wpss-input option,
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	color: var(--wpss-primary, #6366f1);
+	color: var(--wpss-primary-accent, #6366f1);
 	font-size: 14px;
 	font-weight: 500;
 	text-decoration: none;
@@ -3573,3 +3613,27 @@ select.wpss-input option,
 		text-align: end;
 	}
 }
+
+/* Dispute evidence thread + reply form (frontend party messaging, since 1.2.2). */
+.wpss-dispute-detail__evidence{margin-top:24px}
+.wpss-dispute-detail__evidence>h3{margin:0 0 8px}
+.wpss-evidence-thread{display:flex;flex-direction:column;gap:12px;margin:12px 0 16px}
+.wpss-evidence-empty{color:var(--wpss-gray-500,#6b7280);font-size:14px;margin:0}
+.wpss-evidence-item{display:flex;max-width:100%}
+.wpss-evidence-item.wpss-evidence-own{justify-content:flex-end}
+.wpss-evidence-bubble{max-width:82%;padding:10px 14px;border-radius:14px;background:var(--wpss-gray-100,#f3f4f6);border:1px solid var(--wpss-border-color,#e5e7eb)}
+.wpss-evidence-own .wpss-evidence-bubble{background:var(--wpss-primary-light,#eef2ff);border-color:var(--wpss-primary,#4f46e5)}
+.wpss-evidence-author{display:block;font-size:12px;color:var(--wpss-gray-600,#4b5563);margin-bottom:2px}
+.wpss-evidence-text{font-size:14px;line-height:1.5;color:var(--wpss-gray-800,#1f2937);white-space:pre-wrap;word-break:break-word}
+.wpss-evidence-image img{max-width:220px;border-radius:8px;margin-top:6px}
+.wpss-evidence-file{margin-top:6px}
+.wpss-evidence-file .wpss-file-link{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.wpss-evidence-time{display:block;font-size:11px;color:var(--wpss-gray-400,#9ca3af);margin-top:4px}
+.wpss-add-evidence-form{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--wpss-border-color,#e5e7eb);padding-top:14px}
+.wpss-add-evidence-form .wpss-form-label{font-weight:600;font-size:14px}
+.wpss-add-evidence-form__row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:auto}
+.wpss-evidence-attach{cursor:pointer}
+.wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
+.wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
+@media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}

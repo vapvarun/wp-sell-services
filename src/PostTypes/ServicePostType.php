@@ -33,9 +33,86 @@ class ServicePostType {
 	public function init(): void {
 		add_action( 'init', [ $this, 'register_post_type' ] );
 		add_action( 'init', [ $this, 'register_taxonomies' ] );
+		// Seed a starter category set once, AFTER the taxonomy is registered, so a
+		// fresh install (or one where the owner skipped the setup wizard) is never
+		// left with an empty Category dropdown that hard-blocks the Service Wizard
+		// (BC 10134408693). Runs once; never re-seeds if the owner has categories.
+		add_action( 'init', [ $this, 'maybe_seed_default_categories' ], 20 );
 		add_filter( 'post_updated_messages', [ $this, 'filter_post_messages' ] );
 		add_filter( 'enter_title_here', [ $this, 'filter_title_placeholder' ], 10, 2 );
 		add_action( 'save_post_wpss_service', [ $this, 'sync_delivery_days_meta' ], 20, 2 );
+	}
+
+	/**
+	 * Seed a starter set of service categories on first run.
+	 *
+	 * Guarded so it runs at most once and never overwrites an owner's own
+	 * categories: if any term already exists, it just marks the job done.
+	 *
+	 * @since 1.5.2
+	 * @return void
+	 */
+	public function maybe_seed_default_categories(): void {
+		if ( get_option( 'wpss_default_categories_seeded' ) ) {
+			return;
+		}
+
+		// Mark done up-front so a transient failure never loops every request.
+		update_option( 'wpss_default_categories_seeded', 1, false );
+
+		// Respect an owner who already curated categories.
+		$existing = get_terms(
+			array(
+				'taxonomy'   => 'wpss_service_category',
+				'hide_empty' => false,
+				'number'     => 1,
+				'fields'     => 'ids',
+			)
+		);
+		if ( ! is_wp_error( $existing ) && ! empty( $existing ) ) {
+			return;
+		}
+
+		$this->seed_default_categories();
+	}
+
+	/**
+	 * Insert the default service categories. Returns the created term IDs.
+	 *
+	 * Separated from maybe_seed_default_categories() so it is directly testable
+	 * and reusable (e.g. from the setup wizard's "skip categories" path).
+	 *
+	 * @since 1.5.2
+	 * @return int[] Created term IDs.
+	 */
+	public function seed_default_categories(): array {
+		$defaults = apply_filters(
+			'wpss_default_service_categories',
+			array(
+				__( 'Graphics & Design', 'wp-sell-services' ),
+				__( 'Programming & Tech', 'wp-sell-services' ),
+				__( 'Digital Marketing', 'wp-sell-services' ),
+				__( 'Writing & Translation', 'wp-sell-services' ),
+				__( 'Video & Animation', 'wp-sell-services' ),
+				__( 'Music & Audio', 'wp-sell-services' ),
+				__( 'Business', 'wp-sell-services' ),
+				__( 'AI Services', 'wp-sell-services' ),
+			)
+		);
+
+		$created = array();
+		foreach ( $defaults as $name ) {
+			$name = trim( (string) $name );
+			if ( '' === $name || term_exists( $name, 'wpss_service_category' ) ) {
+				continue;
+			}
+			$term = wp_insert_term( $name, 'wpss_service_category' );
+			if ( ! is_wp_error( $term ) && ! empty( $term['term_id'] ) ) {
+				$created[] = (int) $term['term_id'];
+			}
+		}
+
+		return $created;
 	}
 
 	/**
@@ -255,8 +332,8 @@ class ServicePostType {
 			2  => __( 'Custom field updated.', 'wp-sell-services' ),
 			3  => __( 'Custom field deleted.', 'wp-sell-services' ),
 			4  => __( 'Service updated.', 'wp-sell-services' ),
-			/* translators: %s: date and time of the revision */
 			5  => isset( $_GET['revision'] )
+				/* translators: %s: date and time of the revision */
 				? sprintf( __( 'Service restored to revision from %s', 'wp-sell-services' ), wp_post_revision_title( (int) $_GET['revision'], false ) )
 				: false,
 			/* translators: %s: post permalink */
@@ -264,8 +341,8 @@ class ServicePostType {
 			7  => __( 'Service saved.', 'wp-sell-services' ),
 			/* translators: %s: post permalink */
 			8  => sprintf( __( 'Service submitted. <a target="_blank" href="%s">Preview Service</a>', 'wp-sell-services' ), esc_url( add_query_arg( 'preview', 'true', $permalink ) ) ),
-			/* translators: 1: Publish box date format, 2: Post permalink */
 			9  => sprintf(
+				/* translators: 1: Publish box date format, 2: Post permalink */
 				__( 'Service scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview Service</a>', 'wp-sell-services' ),
 				date_i18n( __( 'M j, Y @ G:i', 'wp-sell-services' ), strtotime( $post->post_date ) ),
 				esc_url( $permalink )

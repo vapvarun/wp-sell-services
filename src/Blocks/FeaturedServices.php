@@ -145,20 +145,35 @@ class FeaturedServices extends AbstractBlock {
 		$attributes = wp_parse_args( $attributes, $defaults );
 
 		// Query featured services.
+		// Order featured services by rating WITHOUT excluding unrated ones.
+		// Using `meta_key => _wpss_rating_average` forced an INNER JOIN on
+		// postmeta, so any featured service with zero reviews (no rating row)
+		// was dropped entirely. The OR EXISTS/NOT EXISTS rating clause produces
+		// a LEFT JOIN instead: unrated services still appear, sorted last.
 		$args = array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
 			'posts_per_page' => $attributes['limit'],
 			'meta_query'     => array(
-				array(
+				'relation'        => 'AND',
+				'featured_clause' => array(
 					'key'     => '_wpss_featured',
 					'value'   => '1',
 					'compare' => '=',
 				),
+				'rating_clause'   => array(
+					'relation' => 'OR',
+					array(
+						'key'     => '_wpss_rating_average',
+						'compare' => 'EXISTS',
+					),
+					array(
+						'key'     => '_wpss_rating_average',
+						'compare' => 'NOT EXISTS',
+					),
+				),
 			),
-			'orderby'        => 'meta_value_num',
-			'meta_key'       => '_wpss_rating_average',
-			'order'          => 'DESC',
+			'orderby'        => array( 'rating_clause' => 'DESC' ),
 		);
 
 		$query = new \WP_Query( $args );

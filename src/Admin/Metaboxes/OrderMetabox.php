@@ -216,8 +216,9 @@ class OrderMetabox {
 				'nonce'   => wp_create_nonce( 'wpss_order_admin' ),
 				'i18n'    => array(
 					'confirmStatusChange' => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
-					'confirmRefund'       => __( 'Refund this order? The gateway payment will be refunded where supported.', 'wp-sell-services' ),
-					'refund'              => __( 'Refund', 'wp-sell-services' ),
+					'confirmRefund'        => __( 'Refund this order? The gateway payment will be refunded where supported.', 'wp-sell-services' ),
+					'confirmPartialRefund' => __( 'Issue this partial refund? The buyer is refunded the amount entered and the vendor\'s proportional share is clawed back.', 'wp-sell-services' ),
+					'refund'               => __( 'Refund', 'wp-sell-services' ),
 					'noteAdded'           => __( 'Note added successfully.', 'wp-sell-services' ),
 					'requirementsSaved'   => __( 'Requirements saved successfully.', 'wp-sell-services' ),
 					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
@@ -274,7 +275,7 @@ class OrderMetabox {
 
 			<div class="wpss-order-detail">
 				<label><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
-				<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $order->get_status() ); ?>">
+				<span class="<?php echo esc_attr( wpss_status_class( $order->get_status() ) ); ?>">
 					<?php echo esc_html( wpss_get_order_status_label( $order->get_status() ) ); ?>
 				</span>
 			</div>
@@ -757,11 +758,14 @@ class OrderMetabox {
 					<p class="wpss-no-data"><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
 				<?php endif; ?>
 			</div>
-			<p class="wpss-view-all">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-conversations&id=' . $conversation->id ) ); ?>">
-					<?php esc_html_e( 'View Full Conversation', 'wp-sell-services' ); ?>
-				</a>
-			</p>
+			<?php
+			// No "View Full Conversation" link here. It pointed at
+			// admin.php?page=wpss-conversations, which nothing registers, so
+			// every click landed on "Sorry, you are not allowed to access this
+			// page." The conversation is already rendered above this point, so a
+			// dead end is strictly worse than no link. Restore a link only if a
+			// real admin conversation screen is ever built.
+			?>
 		<?php else : ?>
 			<p class="wpss-no-data"><?php esc_html_e( 'No conversation started.', 'wp-sell-services' ); ?></p>
 		<?php endif; ?>
@@ -826,14 +830,25 @@ class OrderMetabox {
 					</a>
 				<?php endif; ?>
 
-				<button type="button" class="button wpss-resend-notification" data-order="<?php echo esc_attr( $order->get_id() ); ?>">
-					<?php esc_html_e( 'Resend Notifications', 'wp-sell-services' ); ?>
-				</button>
+				<?php // "Resend Notifications" removed — it had no backend handler and only toasted "not yet implemented". ?>
 
-				<?php if ( in_array( $status, array( 'completed', 'cancelled' ), true ) ) : ?>
-					<button type="button" class="button button-link-delete wpss-process-refund" data-order="<?php echo esc_attr( $order->get_id() ); ?>">
-						<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
-					</button>
+				<?php if ( wpss_order_is_refundable( $order ) ) : ?>
+					<?php
+					$wpss_already_refunded = wpss_get_order_refunded_amount( $order );
+					$wpss_refundable_left  = max( 0, (float) $order->total - $wpss_already_refunded );
+					?>
+					<span class="wpss-refund-controls">
+						<input type="number" class="wpss-refund-amount" min="0" step="0.01"
+							max="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
+							placeholder="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
+							aria-label="<?php esc_attr_e( 'Refund amount (blank for full)', 'wp-sell-services' ); ?>"
+							style="width: 110px;">
+						<button type="button" class="button button-link-delete wpss-process-refund"
+							data-order="<?php echo esc_attr( $order->get_id() ); ?>"
+							data-order-total="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>">
+							<?php esc_html_e( 'Process Refund', 'wp-sell-services' ); ?>
+						</button>
+					</span>
 				<?php endif; ?>
 			</div>
 
@@ -946,10 +961,9 @@ class OrderMetabox {
 				$actions['start'] = __( 'Force Start', 'wp-sell-services' );
 				break;
 
-			case 'in_progress':
-				$actions['extend'] = __( 'Extend Deadline', 'wp-sell-services' );
-				break;
-
+			// 'in_progress' previously offered "Extend Deadline", which mapped to
+			// no handler and only toasted "not yet implemented" — removed until a
+			// real deadline-extend action exists.
 			case 'delivered':
 				$actions['complete'] = __( 'Force Complete', 'wp-sell-services' );
 				$actions['revision'] = __( 'Request Revision', 'wp-sell-services' );
@@ -996,10 +1010,39 @@ class OrderMetabox {
 			}
 		}
 
-		// Use OrderService instead of repository to ensure hooks fire.
-		// This triggers wpss_order_status_changed and wpss_order_status_{status} hooks
-		// which are needed for commission recording, notifications, etc.
-		$result = $this->order_service->update_status( $order_id, $status );
+		// A refund is a money action, not a bare status flip: apply_refund_status()
+		// sizes the amount, writes refunded_amount BEFORE the transition (the
+		// refund/reversal hooks read it there) and undoes the write if the move is
+		// refused. An empty or full amount is a full refund; a smaller value is a
+		// partial, and the status is resolved accordingly so the admin never has
+		// to pick "partially_refunded" by hand. Any non-refund status keeps the
+		// plain update_status() path.
+		if ( in_array( $status, array( 'refunded', 'partially_refunded' ), true ) ) {
+			$order = $this->order_service->get( $order_id );
+
+			if ( ! $order ) {
+				wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
+			}
+
+			if ( ! wpss_order_is_refundable( $order ) ) {
+				wp_send_json_error( array( 'message' => __( 'This order cannot be refunded in its current state.', 'wp-sell-services' ) ) );
+			}
+
+			$order_total = (float) $order->total;
+			$amount      = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
+			$is_partial  = $amount > 0 && $amount < $order_total;
+
+			$result = $this->order_service->apply_refund_status(
+				$order_id,
+				$is_partial ? round( $amount, 2 ) : $order_total,
+				$is_partial ? 'partially_refunded' : 'refunded'
+			);
+		} else {
+			// Use OrderService instead of repository to ensure hooks fire.
+			// This triggers wpss_order_status_changed and wpss_order_status_{status} hooks
+			// which are needed for commission recording, notifications, etc.
+			$result = $this->order_service->update_status( $order_id, $status );
+		}
 
 		if ( $result ) {
 			wp_send_json_success( array( 'message' => __( 'Status updated successfully.', 'wp-sell-services' ) ) );

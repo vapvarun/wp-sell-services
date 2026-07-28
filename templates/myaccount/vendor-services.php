@@ -80,10 +80,10 @@ do_action( 'wpss_vendor_services_before', $user_id );
 							</span>
 						</div>
 						<div class="wpss-service-actions">
-							<a href="<?php echo esc_url( get_edit_post_link( $service->id ) ); ?>" class="button wpss-button-small">
+							<a href="<?php echo esc_url( get_edit_post_link( $service->id ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--secondary">
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 							</a>
-							<a href="<?php echo esc_url( $service->get_permalink() ); ?>" class="button wpss-button-small" target="_blank">
+							<a href="<?php echo esc_url( $service->get_permalink() ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--secondary" target="_blank">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 							</a>
 						</div>

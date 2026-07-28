@@ -22,7 +22,12 @@
 				return;
 			}
 
-			this.form = document.getElementById('wpss-checkout-form');
+			// Bind whichever checkout form is on the page: the single-service
+			// form or the multi-cart form. Without the multi fallback, this.form
+			// was null on the multi-cart page, so is_multi_checkout was never
+			// sent and multi-cart PayPal never settled (parity with stripe.js).
+			this.form = document.getElementById('wpss-checkout-form')
+				|| document.getElementById('wpss-multi-checkout-form');
 			this.errorElement = document.getElementById('wpss-paypal-error');
 
 			this.setupEventListeners();
@@ -32,18 +37,36 @@
 		 * Set up event listeners.
 		 */
 		setupEventListeners: function() {
-			// Listen for payment method selection.
-			const paypalRadio = document.querySelector('input[name="payment_method"][value="paypal"]');
-			if (paypalRadio) {
-				paypalRadio.addEventListener('change', () => {
-					this.renderPayPalButtons();
-				});
+			// The PayPal Smart Button owns the payment flow (it posts to the
+			// registered wpss_paypal_create_order / wpss_paypal_capture actions).
+			// The generic checkout Pay button stands down for PayPal because our
+			// container carries data-wpss-own-submit — previously clicking it
+			// posted wpss_paypal_process_payment, an action no one registers, and
+			// admin-ajax returned a bare 0 (Basecamp #10110287493). Hide that Pay
+			// button whenever PayPal is selected so buyers only see the working
+			// PayPal button; restore it when another method is chosen.
+			const syncForPayPal = () => {
+				const selected = document.querySelector('input[name="payment_method"]:checked');
+				const isPayPal = selected && selected.value === 'paypal';
 
-				// Auto-render if already selected.
-				if (paypalRadio.checked) {
+				const submitBtn = this.form
+					? this.form.querySelector('button[type="submit"], .wpss-checkout-button')
+					: null;
+				if (submitBtn) {
+					submitBtn.style.display = isPayPal ? 'none' : '';
+				}
+
+				if (isPayPal) {
 					this.renderPayPalButtons();
 				}
-			}
+			};
+
+			document.querySelectorAll('input[name="payment_method"]').forEach((radio) => {
+				radio.addEventListener('change', syncForPayPal);
+			});
+
+			// Reflect the initially-selected method on load.
+			syncForPayPal();
 		},
 
 		/**
@@ -79,7 +102,7 @@
 					const packageId = document.querySelector('input[name="package_id"]')?.value || 0;
 
 					if (amount <= 0) {
-						this.showError('Invalid payment amount.');
+						this.showError(wpssPayPal.i18n.invalidAmount);
 						return Promise.reject(new Error('Invalid amount'));
 					}
 
@@ -87,7 +110,7 @@
 						const response = await this.createOrder(amount, currency, serviceId, packageId);
 
 						if (!response.success) {
-							this.showError(response.data?.message || 'Failed to create PayPal order.');
+							this.showError(response.data?.message || wpssPayPal.i18n.createFailed);
 							return Promise.reject(new Error(response.data?.message));
 						}
 
@@ -114,7 +137,7 @@
 						if (response.success) {
 							window.location.href = response.data.redirect_url;
 						} else {
-							this.showError(response.data?.message || 'Payment capture failed.');
+							this.showError(response.data?.message || wpssPayPal.i18n.captureFailed);
 							this.setLoading(false);
 						}
 
@@ -133,7 +156,7 @@
 
 				// Handle cancel.
 				onCancel: () => {
-					this.showError('Payment cancelled.');
+					this.showError(wpssPayPal.i18n.cancelled);
 				},
 
 			}).render(buttonContainer);
@@ -143,6 +166,14 @@
 		 * Create PayPal order via AJAX.
 		 */
 		createOrder: function(amount, currency, serviceId, packageId) {
+			// Parity with stripe.js: forward the pay-order / multi-cart routing
+			// signals so the server settles the right context (add-ons, an existing
+			// order, or a cart) instead of only the single-service case. The server
+			// prices from these keys, not from the client amount (BC 10134360358).
+			const payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
+			const isMulti = (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '';
+			const addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
+			const addonsData = document.querySelector('input[name="addons_data"], [name="addons_data"]')?.value || '';
 			return new Promise((resolve) => {
 				$.ajax({
 					url: wpssPayPal.ajaxUrl,
@@ -154,6 +185,10 @@
 						currency: currency,
 						service_id: serviceId,
 						package_id: packageId,
+						pay_order: payOrder,
+						is_multi_checkout: isMulti,
+						addon_ids: addonIds,
+						addons_data: addonsData,
 					},
 					success: resolve,
 					error: () => {
