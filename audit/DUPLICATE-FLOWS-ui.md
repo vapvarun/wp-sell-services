@@ -9,6 +9,41 @@ fixed · ❌ open.
 
 ---
 
+## Re-audit 2026-07-28 — the concrete drift/bugs are now cleared
+
+Re-checked every item at the code level. The **customer-visible defects** (a
+wrong number, a broken link, a reduced view, dead code) are fixed; what remains
+is the **"one renderer" consolidation** work (visual consistency) which is a
+larger, separate effort.
+
+**Fixed since the 07-20 audit:**
+- **#3** search shortcode — the shortcode now emits `search`+`category` on the
+  archive contract (no longer WP core search).
+- **#5 (currency)** buyer-request `$` hardcode → `wpss_format_price()` (`8d66216`).
+- **#7** orphaned `templates/myaccount/` family (5 files) deleted; subdir list
+  trimmed (`6f3ef4f`).
+- **#8** admin view-count key `_wpss_view_count`→`_wpss_views` (`8d66216`).
+- **#9** EDD/SureCart delivery falls back to `wpss_get_service_delivery_days()`
+  when their own key is empty (pro `19269b5`).
+- **#11** vendor "orders" sort now joins `wpss_vendor_profiles.completed_orders`
+  instead of the never-written `_wpss_completed_orders` meta (`7c1b281`). The
+  single-service reader already prefers the profiles table.
+- **#14** standalone "Add New Service" → frontend wizard, not wp-admin (`6f3ef4f`).
+- **#15** `[wpss_order_details]` → canonical `order-view.php`, not the missing
+  `order/details.php` (reduced fallback) (`6f3ef4f`).
+
+**Still open — consolidation / code-quality (each a real chunk, not one-line):**
+- **#16** 5 inline `<style>` blocks in `StandaloneAccountProvider` → enqueued CSS.
+- **#1** order-list ×4 (standalone lacks pagination/filter/routing parity).
+- **#4** service card ×6 → one renderer (biggest visible: favourite/verified
+  badge + two price formats). **#5 (structure)** request card ×4, **#6** vendor
+  card ×4, **#13** disputes ×2, **#12** message thread ×2 (largest/riskiest).
+
+Order of remaining work + the "one partial, every surface `require`s it" pattern
+are in the sections below.
+
+---
+
 ## 1. ✅ FIXED — Standalone account orders: fatal + 4 implementations
 
 Fixed in `271b90e` (the TypeError). The duplication itself is still open.
