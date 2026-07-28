@@ -690,6 +690,24 @@
           "slug": "pro-extension-points-wpss",
           "file": "developer-guide/pro-extension-points.md",
           "order": 9
+        },
+        {
+          "title": "Database Schema",
+          "slug": "database-schema-wpss",
+          "file": "developer-guide/database-schema.md",
+          "order": 10
+        },
+        {
+          "title": "Capabilities & Roles",
+          "slug": "capabilities-wpss",
+          "file": "developer-guide/capabilities.md",
+          "order": 11
+        },
+        {
+          "title": "Abilities API",
+          "slug": "abilities-api-wpss",
+          "file": "developer-guide/abilities-api.md",
+          "order": 12
         }
       ]
     },

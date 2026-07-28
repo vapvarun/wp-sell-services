@@ -3,7 +3,7 @@
 Internal QA artifact -- **not published to customers**. It is the answer to
 "is every shipped feature documented, for the right audience?"
 
-- **Last verified:** 2026-07-29 against plugin 1.3.0 / Pro 1.3.0 (96 pages)
+- **Last verified:** 2026-07-29 against plugin 1.3.0 / Pro 1.3.0 (99 pages)
 - **Docs root:** `wp-sell-services/docs/website/` (single source of truth; Pro tree retired)
 - **Automated gate:** `python3 bin/docs-audit.py`
 
@@ -108,6 +108,9 @@ Audience key: **B** buyer, **V** vendor, **O** site owner/admin, **D** developer
 | Action Scheduler | `developer-guide/action-scheduler.md` | D | OK |
 | WP-CLI (7 commands) | `developer-guide/wp-cli-commands.md` | O D | **Rewritten -- `demo marketplace`, `test`, `test:flow`, `scale` added** |
 | Pro extension seams | `developer-guide/pro-extension-points.md` | D | **New -- ported from Pro tree** |
+| Database schema (25 tables) | `developer-guide/database-schema.md` | D | **New** |
+| Capabilities & roles | `developer-guide/capabilities.md` | D | **New** |
+| Abilities API (15 abilities) | `developer-guide/abilities-api.md` | D | **New** |
 
 ## Pro
 
@@ -143,6 +146,7 @@ source before the doc was changed.
 
 | Claim in the docs | What the code does | Where |
 |-------------------|--------------------|-------|
+| (undocumented) Activation grants vendor capabilities to the **`author`** role | Every existing WordPress author silently becomes a vendor on activation | `capabilities.md` |
 | Tips are commission-free, vendor keeps 100% | Tips are commissioned at the **regular rate** by default; `tip_commission_rate` can be set to `0` | 4 pages |
 | An expired Pro license only stops updates | Expired/invalid license means **Pro features stop loading entirely** | 2 pages |
 | Pro adds AI titles, templates, bulk upload, video upload, custom fields, scheduled publishing | **Deferred to a future release**, not enabled in 1.3.0 | `free-vs-pro.md`, `readme.txt` |
@@ -164,6 +168,10 @@ Tracked, not silently dropped.
 |-----|--------|----------|
 | **No screenshots on Pro setup pages.** Blocked: Pro loads nothing without a valid license key, so its screens cannot be captured on a dev site | Pro setup is text-only | P1 |
 | ~30 free pages still have no screenshot | Setup is harder to follow | P2 |
+| 182 of 454 hooks remain undocumented (declared internal in the reference header) | Themers miss the ~40 `wpss_before_*` / `wpss_after_*` template pairs | P2 |
+| Template overrides: 98 templates ship, the page names 2 | Themers cannot discover what is overridable | P2 |
+| REST error codes: 24 in code, ~2 in the overview | Clients cannot branch on failure without triggering each one | P3 |
+| `wpss_auto_approve_vendors` missing from the cron reference (6 of 7 covered) | Minor | P3 |
 | `MONEY-FLOW.md` / `SUB_ORDER_PATTERN.md` linked from some dev pages, not all | Minor | P3 |
 | Nav ordering still puts Platform Settings / Admin Tools late; the new Launch Checklist partly compensates | Owner path is discoverable but not front-loaded | P3 |
 
