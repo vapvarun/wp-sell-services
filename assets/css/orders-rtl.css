@@ -108,7 +108,7 @@
 /* Order ID Cell */
 .wpss-orders__order-id {
 	font-weight: 600;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-orders__order-id:hover {
@@ -324,7 +324,7 @@
 .wpss-order-summary__total .wpss-order-summary__value {
 	font-size: 1.25rem;
 	font-weight: 700;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 /* ==========================================================================
@@ -409,7 +409,7 @@
 
 .wpss-order-requirements__file:hover {
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 /* ==========================================================================
@@ -529,7 +529,7 @@
 
 .wpss-deliverable__file:hover {
 	border-color: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 /* ==========================================================================
@@ -1383,7 +1383,7 @@
 }
 
 .wpss-table__link {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	text-decoration: none;
 }
 

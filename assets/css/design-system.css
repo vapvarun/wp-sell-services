@@ -39,6 +39,11 @@
 	--wpss-primary-dark: #4338ca;
 	--wpss-primary-light: #eef2ff;
 	--wpss-primary-50: rgba(79, 70, 229, 0.08);
+	/* Accent = primary used as TEXT/links/icons. Same brand indigo in light, but
+	   a lighter indigo in dark mode so it stays readable on dark surfaces
+	   (--wpss-primary itself must stay dark enough for white-on-fill buttons, so
+	   text and fill need separate tokens). */
+	--wpss-primary-accent: #4f46e5;
 
 	--wpss-white: #ffffff;
 	--wpss-black: #111827;
@@ -328,6 +333,10 @@
 
 	--wpss-primary-light: #312e81;
 	--wpss-primary-50: rgba(129, 140, 248, 0.16);
+	/* Lighter indigo for primary-as-text on dark surfaces: #a5b4fc on #1f2937 is
+	   ~7:1 (clears AA). --wpss-primary stays #4f46e5 so white-on-fill buttons keep
+	   their contrast. */
+	--wpss-primary-accent: #a5b4fc;
 
 	--wpss-shadow-tint: rgba(0, 0, 0, 0.5);
 	--wpss-overlay: rgba(0, 0, 0, 0.7);
@@ -606,7 +615,7 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
 	padding: 3px var(--wpss-space-3); font-size: var(--wpss-text-xs); font-weight: 600;
 	border-radius: var(--wpss-radius-full); text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.5;
 }
-.wpss-badge--primary { background: var(--wpss-primary-light); color: var(--wpss-primary); }
+.wpss-badge--primary { background: var(--wpss-primary-light); color: var(--wpss-primary-accent); }
 .wpss-badge--success { background: var(--wpss-success-light); color: var(--wpss-success-dark, #065f46); }
 .wpss-badge--warning { background: var(--wpss-warning-light); color: var(--wpss-warning-dark, #92400e); }
 .wpss-badge--danger  { background: var(--wpss-danger-light); color: var(--wpss-danger-dark, #991b1b); }

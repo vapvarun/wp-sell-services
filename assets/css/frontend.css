@@ -408,7 +408,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-verified-badge {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-card-title {
@@ -452,7 +452,7 @@ article.wpss-service-card:hover {
 .wpss-no-rating {
 	padding: 2px 8px;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -656,7 +656,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-service-card__verified {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	display: inline-flex;
 }
 
@@ -696,7 +696,7 @@ article.wpss-service-card:hover {
 .wpss-service-card__rating-new {
 	padding: 2px 8px;
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	border-radius: var(--wpss-radius);
 	font-size: 11px;
 	font-weight: 600;
@@ -940,7 +940,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-package-tab.active {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	border-bottom-color: var(--wpss-primary);
 	border-radius: 0;
 }
@@ -1040,7 +1040,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-contact-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* Contact Modal
@@ -1396,7 +1396,7 @@ article.wpss-service-card:hover {
 .wpss-dashboard-nav a:hover,
 .wpss-dashboard-nav li.active a {
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-dashboard-content {
@@ -1503,7 +1503,7 @@ article.wpss-service-card:hover {
 
 .wpss-badge-vendor {
 	background: var(--wpss-primary-light);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-badge-customer {
@@ -1557,7 +1557,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-suborder-crumb a {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	font-weight: 500;
 	text-decoration: none;
 }
@@ -1574,7 +1574,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-back-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-order-title {
@@ -1720,7 +1720,7 @@ article.wpss-service-card:hover {
 	border-radius: var(--wpss-radius-sm);
 	font-size: 13px;
 	font-weight: 500;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
@@ -2452,7 +2452,7 @@ article.wpss-service-card:hover {
 }
 
 .wpss-view-all a {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	font-weight: 600;
 	text-decoration: none;
 }
@@ -2711,7 +2711,7 @@ article.wpss-service-card:hover {
 	margin: 0;
 	font-size: 18px;
 	font-weight: 700;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* User Card */
@@ -2803,7 +2803,7 @@ article.wpss-service-card:hover {
 .wpss-file-download:hover {
 	background: var(--wpss-primary-light);
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-file-icon::before {
@@ -3274,7 +3274,7 @@ body.wpss-modal-active {
 
 .wpss-file-label:hover {
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-bg);
 }
 
@@ -3383,7 +3383,7 @@ body.wpss-modal-active {
    ========================================================================== */
 
 .wpss-notice__link {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	text-decoration: underline;
 }
 

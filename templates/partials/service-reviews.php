@@ -168,7 +168,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 
 					<div class="wpss-review-helpful">
 						<?php if ( is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id() ) : ?>
-							<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>" style="background:none;border:1px solid #ddd;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:13px;color:#666;display:inline-flex;align-items:center;gap:4px;">
+							<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
 								<span class="wpss-helpful-icon">
 									<i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								</span>

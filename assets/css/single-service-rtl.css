@@ -75,7 +75,7 @@
 
 /* Reset theme link styles */
 .wpss-single-service a {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 	transition: color var(--wpss-transition);
 }
@@ -264,7 +264,7 @@
 }
 
 .wpss-breadcrumb-item a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-breadcrumb-current {
@@ -318,11 +318,11 @@
 }
 
 .wpss-vendor-name:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-verified-badge {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	font-size: 0.75rem;
 }
 
@@ -335,7 +335,7 @@
 }
 
 .wpss-meta-rating a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-star {
@@ -601,7 +601,7 @@
 }
 
 .wpss-vendor-info h3 a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-vendor-tagline {
@@ -749,7 +749,7 @@
 
 .wpss-faq-question:hover,
 .wpss-faq-question:focus {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: none !important;
 	background-color: transparent !important;
 	border: none !important;
@@ -783,11 +783,11 @@
 }
 
 .wpss-faq-question:hover .wpss-faq-icon {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-faq-question[aria-expanded="true"] .wpss-faq-icon {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* FAQ Answer - Theme-resistant styling */
@@ -992,6 +992,28 @@
 	color: var(--wpss-text-muted);
 }
 
+/* "Helpful" vote button. Token-based so it flips in dark mode (was an inline
+   style hardcoding #666 text + #ddd border, unreadable on dark surfaces, and
+   divergent between the server-rendered and AJAX-rendered review cards). */
+.wpss-review-helpful-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	font-size: 13px;
+	color: var(--wpss-text-muted);
+	background: none;
+	border: 1px solid var(--wpss-border);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.wpss-review-helpful-btn:hover {
+	color: var(--wpss-primary-accent);
+	border-color: var(--wpss-primary-accent);
+}
+
 .wpss-no-reviews {
 	display: block !important;
 	visibility: visible !important;
@@ -1170,7 +1192,7 @@
 }
 
 .wpss-contact-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* Sidebar order actions: favourite toggle + contact seller, below the packages. */
@@ -1183,6 +1205,7 @@
 	border-top: 1px solid var(--wpss-border);
 }
 
+/* The favourite toggle spans the sidebar like the order CTA above it. */
 .wpss-package-actions .wpss-fav-toggle {
 	display: inline-flex;
 	align-items: center;
@@ -1190,6 +1213,8 @@
 	gap: 0.4rem;
 }
 
+/* Divider is owned by the actions wrapper now, so the nested contact block
+   drops its own border/padding to avoid a double rule. */
 .wpss-package-actions .wpss-contact-seller {
 	padding-top: 0;
 	border-top: 0;
@@ -1235,7 +1260,7 @@
 	position: absolute;
 	bottom: -4px;
 	left: -4px;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-surface);
 	border-radius: 50%;
 	padding: 2px;
@@ -1350,7 +1375,7 @@
 
 .wpss-btn-outline:hover {
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-btn-block {

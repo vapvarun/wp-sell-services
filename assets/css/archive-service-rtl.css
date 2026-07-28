@@ -43,7 +43,7 @@
    service-card link is deliberately excluded — its colour is owned by the card
    component (frontend.css) so card text never turns link-blue / Reign-white. */
 .wpss-services-archive a:not(.wpss-service-card__link):not(.wpss-service-card__link *) {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
@@ -339,7 +339,7 @@
 
 .wpss-pagination a:hover {
 	border-color: var(--wpss-primary);
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-pagination .current {
@@ -495,7 +495,7 @@ body.wpss-sidebar-open::after {
 /* A colour-only hover was invisible against Reign's section background; add a
    tinted row so the hovered / selected category is unmistakable. */
 .wpss-category-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-light);
 }
 
@@ -503,11 +503,11 @@ body.wpss-sidebar-open::after {
 .wpss-subcategory-list a:focus-visible {
 	outline: 2px solid var(--wpss-primary);
 	outline-offset: 2px;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-category-link.is-active {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	background: var(--wpss-primary-light);
 	font-weight: 600;
 }
@@ -518,7 +518,7 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-category-link.is-active .wpss-count {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-subcategory-list {
@@ -540,19 +540,19 @@ body.wpss-sidebar-open::after {
 }
 
 .wpss-subcategory-list a.is-active {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 	font-weight: 600;
 }
 
 .wpss-subcategory-list a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-category-link:focus-visible,
 .wpss-subcategory-list a:focus-visible {
 	outline: 2px solid var(--wpss-primary);
 	outline-offset: 2px;
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* Price Inputs */

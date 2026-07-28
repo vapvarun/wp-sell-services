@@ -115,7 +115,7 @@
 }
 
 .wpss-wizard__progress-item--active .wpss-wizard__progress-label {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	font-weight: 600;
 }
 
@@ -405,7 +405,7 @@ select.wpss-form-input::-ms-expand {
 }
 
 .wpss-pricing-tab.active {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	background: var(--wpss-surface, #fff);
 	box-shadow: var(--wpss-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 }
@@ -585,7 +585,7 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-gallery-add:hover {
 	border-color: var(--wpss-primary, #4f46e5);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-gallery-add .dashicons {
@@ -638,7 +638,7 @@ select.wpss-form-input::-ms-expand {
 	height: 28px;
 	font-size: 12px;
 	font-weight: 700;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	background: var(--wpss-primary-light, #eef2ff);
 	border-radius: var(--wpss-radius-full, 9999px);
 }
@@ -920,7 +920,7 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-btn--outline:hover:not(:disabled) {
 	border-color: var(--wpss-primary, #4f46e5) !important;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-btn--ghost {
@@ -1087,7 +1087,7 @@ select.wpss-form-input::-ms-expand {
 
 .wpss-wizard__btn-prev:hover {
 	border-color: var(--wpss-primary, #4f46e5) !important;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-wizard__btn-next {
@@ -1138,7 +1138,7 @@ select.wpss-form-input::-ms-expand {
 	gap: var(--wpss-space-2, 8px);
 	padding: var(--wpss-space-2, 8px) var(--wpss-space-4, 16px);
 	background: transparent;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	border: 1px dashed var(--wpss-primary, #4f46e5);
 	border-radius: var(--wpss-radius, 8px);
 	font-size: var(--wpss-text-sm, 14px);
@@ -1193,7 +1193,7 @@ select.wpss-form-input::-ms-expand {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--wpss-space-2, 8px);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	cursor: pointer;
 	font-weight: 500;
 	font-size: var(--wpss-text-sm, 14px);

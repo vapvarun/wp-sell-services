@@ -52,7 +52,7 @@
 /* Reset theme link styles */
 .wpss-requests-archive a,
 .wpss-single-request a {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
@@ -210,7 +210,7 @@
 }
 
 .wpss-category-link:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 .wpss-category-link .wpss-count {
@@ -237,7 +237,7 @@
 }
 
 .wpss-subcategory-list a:hover {
-	color: var(--wpss-primary);
+	color: var(--wpss-primary-accent);
 }
 
 /* Price Inputs */
@@ -533,7 +533,7 @@
 }
 
 .wpss-request-card__title a:hover {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-request-card__excerpt {
@@ -554,7 +554,7 @@
 	display: inline-block;
 	padding: 0.25rem 0.625rem;
 	background: var(--wpss-primary-light, #eef2ff);
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	font-size: 0.75rem;
 	border-radius: var(--wpss-radius-sm, 4px);
 }
@@ -600,7 +600,7 @@
 }
 
 .wpss-request-card__meta-item:first-child .wpss-request-card__meta-value {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-request-card__actions {
@@ -698,7 +698,7 @@
 }
 
 .wpss-request-meta-bar a {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 	text-decoration: none;
 }
 
@@ -799,7 +799,7 @@
 }
 
 .wpss-proposal-vendor .wpss-vendor-name:hover {
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-vendor-stats {
@@ -821,7 +821,7 @@
 .wpss-proposal-price {
 	font-size: 1.25rem;
 	font-weight: 700;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-proposal-delivery {
@@ -898,7 +898,7 @@
 .wpss-detail-budget {
 	font-size: 1.125rem;
 	font-weight: 700;
-	color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
 }
 
 .wpss-proposal-submitted {
