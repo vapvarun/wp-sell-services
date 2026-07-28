@@ -327,6 +327,52 @@ add_action( 'wp_enqueue_scripts', function() {
 }, 100 );
 ```
 
+## Dark Mode and Design Tokens
+
+_Added in 1.3.0._ Every plugin surface is built on CSS custom-property tokens in `design-system.css`, and the plugin follows the **active theme's** dark mode rather than the OS preference. This means WP Sell Services goes dark exactly when the theme does, and never darkens on top of a light theme.
+
+### How dark mode is triggered
+
+The plugin's dark tokens activate when any of these signals is present on the root element — the same signals BuddyX, BuddyX Pro, and Reign 8.x already set from their own dark-mode toggle:
+
+```css
+:root[data-theme="dark"],
+:root[data-bx-mode="dark"],
+.wpss-dark .wpss-app { /* dark token overrides */ }
+```
+
+If your theme has a dark toggle, set `data-bx-mode="dark"` (or `data-theme="dark"`) on `<html>` and the plugin follows automatically — no per-component CSS required. There is deliberately **no** `prefers-color-scheme` rule, so the plugin never fights a light theme on a dark OS.
+
+### Token model
+
+Components consume semantic and scale tokens, never raw hex. In dark mode the whole system flips in one place:
+
+| Token group | Light | Dark | Used for |
+|-------------|-------|------|----------|
+| `--wpss-surface` | `#ffffff` | `#1f2937` | Card / panel backgrounds |
+| `--wpss-text` / `--wpss-text-muted` | dark | light | Body + muted copy |
+| `--wpss-gray-*` ramp | light ramp | inverted ramp | Raw text + hairlines (ink end resolves light, paper end dark) |
+| `--wpss-primary` | `#4f46e5` | `#4f46e5` | Button/badge **fills** (stays dark enough for white text) |
+| `--wpss-primary-accent` | `#4f46e5` | `#a5b4fc` | Primary as **text/links/icons** (lightens on dark) |
+| `--wpss-secondary-accent` | `#1e293b` | `#e2e8f0` | Emphasis text (prices) |
+| `--wpss-block-surface` | `var(--wpss-surface)` | flips | Gutenberg block card backgrounds |
+
+Two rules matter when extending the UI:
+
+1. **Use `--wpss-primary-accent` / `--wpss-secondary-accent` for text, `--wpss-primary` / `--wpss-secondary` for fills.** The accent tokens lighten in dark mode so links stay readable on dark surfaces; the fill tokens stay dark so white button text keeps its contrast.
+2. **Never hard-code hex for text or surfaces** — reach for the tokens above so your addition flips with the rest of the plugin. Lucide icons inherit `currentColor`, so they follow the text token automatically.
+
+### Overriding tokens per theme
+
+Redefine any token under your theme's dark selector to match your palette exactly:
+
+```css
+html[data-bx-mode="dark"] {
+    --wpss-surface: #12141a;      /* match your theme's card colour */
+    --wpss-primary-accent: #93c5fd;
+}
+```
+
 ## JavaScript Integration
 
 | Handle | File | Dependencies |

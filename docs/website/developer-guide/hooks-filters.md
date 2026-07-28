@@ -311,6 +311,42 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_service_meta_fields` | `array $fields, int $post_id` | `ServiceMetabox.php:155` |
+| `wpss_pro_upgrade_url` | `string $url` (default `https://wpsellservices.com/`) | `UpgradePage.php`, `ServiceWizard.php:961` |
+| `wpss_docs_url` | `string $url` (default `https://wpsellservices.com/docs/`) | `UpgradePage.php:349` |
+
+_`wpss_pro_upgrade_url` (added 1.3.0) controls where every "Upgrade to Pro" call-to-action points — the admin upgrade screen and the in-wizard prompts. Point it at your own landing page or an in-site URL:_
+
+```php
+add_filter( 'wpss_pro_upgrade_url', function( $url ) {
+    return home_url( '/go-pro/' );
+} );
+```
+
+## Dashboard Menu Visibility Filters
+
+_Added in 1.3.0._ Role-based menu visibility lets you show or hide dashboard sections per user role. Gate a section programmatically with:
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_can_access_dashboard_section` | `bool $can_access, string $section, int $user_id` | `MenuVisibility.php` |
+
+```php
+// Hide the "Earnings" section from a custom role
+add_filter( 'wpss_can_access_dashboard_section', function( $can, $section, $user_id ) {
+    if ( 'earnings' === $section && user_can( $user_id, 'my_limited_role' ) ) {
+        return false;
+    }
+    return $can;
+}, 10, 3 );
+```
+
+## Currency Display Filters
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_catalog_price_html` | `string $html, float $amount, string $context` | `functions.php:111` |
+
+_`wpss_catalog_price_html` (added 1.3.0) is the single seam for catalog price display. Base currency is authoritative for all stored amounts; this filter is where an add-on (such as the Pro display-currency hint) injects a converted, visitor-facing price without changing the stored value._
 
 ```php
 // Add custom fields to the service meta box in wp-admin

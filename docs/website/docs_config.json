@@ -2,7 +2,7 @@
   "product_name": "WP Sell Services",
   "product_slug": "wp-sell-services",
   "short_id": "wpss",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "categories": [
     {
       "name": "Getting Started",
@@ -44,6 +44,12 @@
           "slug": "pro-license-wpss",
           "file": "getting-started/pro-license.md",
           "order": 6
+        },
+        {
+          "title": "What's New in 1.3.0",
+          "slug": "whats-new-1-3-0-wpss",
+          "file": "getting-started/whats-new-1-3-0.md",
+          "order": 7
         }
       ]
     },

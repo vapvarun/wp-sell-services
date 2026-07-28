@@ -124,6 +124,35 @@ Key methods to implement:
 - `get_settings_fields()` returns an array of field definitions (type, label)
 - `render_payment_form()` returns HTML for the payment form
 
+### The CheckoutIntent seam (gateway-agnostic)
+
+_Added in 1.3.0._ Every purchase — pay an existing order, buy a multi-item cart, or buy a single service + add-ons — resolves to a single value object, `CheckoutIntent`, before any gateway is involved. This is the seam that lets Stripe, PayPal, Razorpay (Pro), and your custom gateway all charge the same way, and it guarantees the amount is **server-computed, never trusted from the client**.
+
+The flow is always resolve → charge → settle:
+
+```php
+use WPSellServices\Checkout\CheckoutIntentService;
+
+$service = new CheckoutIntentService();
+
+// 1. RESOLVE — the server computes the authoritative amount + currency from the
+//    request. Returns a CheckoutIntent, or a WP_Error if the request is invalid.
+$intent = $service->resolve( $request, $buyer_id );   // $request: service_id/package_id, or cart, or order_id
+if ( is_wp_error( $intent ) ) {
+    return $intent;
+}
+
+// $intent->amount / ->currency are authoritative — charge THIS, never a client value.
+
+// 2. CHARGE — run your gateway with $intent->amount and $intent->currency.
+
+// 3. SETTLE — record the completed charge; the plugin creates/links the order,
+//    delivery deadline, commission split, and ledger entries.
+$result = $service->settle( $intent, 'custom_pay', $transaction_id, $charged_amount, $charged_currency );
+```
+
+`CheckoutIntent` is built through three factories that mirror the three purchase kinds — `CheckoutIntent::order()`, `::cart()`, `::single()` — but you normally get one back from `resolve()` rather than constructing it yourself. Base currency stays authoritative throughout; the `charged_currency` you pass to `settle()` records what the gateway actually took.
+
 ## REST API Controllers
 
 Custom controllers extend `RestController` (`src/API/RestController.php`) which provides:
