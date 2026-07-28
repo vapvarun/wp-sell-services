@@ -18,7 +18,7 @@ Stay impartial. Base every decision on evidence, not assumptions. Apply your mar
 
 ## Accessing Disputes
 
-Go to **WP Admin > WP Sell Services > Disputes** to see all disputes on your marketplace. The list shows each dispute's status, order reference, the parties involved, and the date it was opened.
+Go to **Sell Services > Disputes** to see all disputes on your marketplace. The list shows each dispute's status, order reference, the parties involved, and the date it was opened.
 
 Click any dispute to view the full details: the reason, description, all submitted evidence, the message thread, and the complete order history.
 
@@ -114,7 +114,7 @@ Both parties have negotiated a solution that works for them. You formalize and e
 
 ## How to Resolve a Dispute
 
-1. Open the dispute from **WP Sell Services > Disputes**.
+1. Open the dispute from **Sell Services > Disputes**.
 2. Complete your investigation (steps above).
 3. Choose a resolution type.
 4. Write clear resolution notes explaining your reasoning.

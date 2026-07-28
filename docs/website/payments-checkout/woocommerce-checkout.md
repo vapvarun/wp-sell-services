@@ -71,7 +71,7 @@ The buyer sees a completely normal WooCommerce cart. They have no idea a carrier
 
 1. Install and activate WooCommerce (if you have not already)
 2. Complete the WooCommerce setup wizard
-3. Go to **WP Sell Services > Settings > General**
+3. Go to **Sell Services > Settings > General**
 4. The plugin auto-detects WooCommerce -- no manual selection needed
 5. The hidden carrier product is created automatically
 

@@ -50,6 +50,12 @@
           "slug": "whats-new-1-3-0-wpss",
           "file": "getting-started/whats-new-1-3-0.md",
           "order": 7
+        },
+        {
+          "title": "Launch Checklist",
+          "slug": "launch-checklist-wpss",
+          "file": "getting-started/launch-checklist.md",
+          "order": 8
         }
       ]
     },
@@ -93,6 +99,12 @@
           "slug": "favorites-wpss",
           "file": "buyer-guide/favorites-saved-services.md",
           "order": 6
+        },
+        {
+          "title": "Buyer FAQ",
+          "slug": "buyer-faq-wpss",
+          "file": "buyer-guide/buyer-faq.md",
+          "order": 7
         }
       ]
     },
@@ -261,7 +273,7 @@
           "order": 3
         },
         {
-          "title": "Seller Levels (New/Rising/Top Rated)",
+          "title": "Seller Levels",
           "slug": "seller-levels-wpss",
           "file": "vendor-system/seller-levels.md",
           "order": 4
@@ -336,7 +348,7 @@
       "order": 9,
       "docs": [
         {
-          "title": "WooCommerce Checkout Integration",
+          "title": "WooCommerce Checkout Integration [PRO]",
           "slug": "woocommerce-checkout-wpss",
           "file": "payments-checkout/woocommerce-checkout.md",
           "order": 1
@@ -360,7 +372,7 @@
           "order": 4
         },
         {
-          "title": "PayPal, Razorpay & Offline Payments [PRO]",
+          "title": "PayPal, Razorpay & Offline Payments",
           "slug": "other-gateways-wpss",
           "file": "payments-checkout/other-gateways.md",
           "order": 5
@@ -376,6 +388,12 @@
           "slug": "stripe-connect-wpss",
           "file": "payments-checkout/stripe-connect.md",
           "order": 7
+        },
+        {
+          "title": "Display Currency [PRO]",
+          "slug": "display-currency-wpss",
+          "file": "payments-checkout/display-currency.md",
+          "order": 8
         }
       ]
     },
@@ -409,7 +427,7 @@
           "order": 4
         },
         {
-          "title": "Automated Payouts [PRO]",
+          "title": "Automated Payouts (Scheduled Withdrawals)",
           "slug": "automated-payouts-wpss",
           "file": "earnings-wallet/automated-payouts.md",
           "order": 5
@@ -425,6 +443,12 @@
           "slug": "tiered-commission-wpss",
           "file": "earnings-wallet/tiered-commission.md",
           "order": 7
+        },
+        {
+          "title": "Paying Your Vendors",
+          "slug": "vendor-payouts-wpss",
+          "file": "earnings-wallet/vendor-payouts.md",
+          "order": 8
         }
       ]
     },
@@ -459,7 +483,7 @@
       "order": 12,
       "docs": [
         {
-          "title": "11 Email Notification Types",
+          "title": "Email Notification Types",
           "slug": "email-types-wpss",
           "file": "notifications-emails/email-types.md",
           "order": 1
@@ -509,7 +533,7 @@
       "order": 14,
       "docs": [
         {
-          "title": "15+ Shortcodes Reference",
+          "title": "Shortcodes Reference",
           "slug": "shortcodes-reference-wpss",
           "file": "marketplace-display/shortcodes-reference.md",
           "order": 1
@@ -660,6 +684,12 @@
           "slug": "wp-cli-commands-wpss",
           "file": "developer-guide/wp-cli-commands.md",
           "order": 8
+        },
+        {
+          "title": "Pro Extension Points [PRO]",
+          "slug": "pro-extension-points-wpss",
+          "file": "developer-guide/pro-extension-points.md",
+          "order": 9
         }
       ]
     },

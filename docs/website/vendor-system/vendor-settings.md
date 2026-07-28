@@ -1,6 +1,6 @@
 # Vendor Settings (Admin)
 
-These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **WP Admin > WP Sell Services > Settings > Vendor**.
+These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendors**.
 
 ![Vendor Settings Tab](../images/settings-vendor-tab.png)
 
@@ -22,7 +22,7 @@ When set to "Requires Approval":
 
 1. A user submits the vendor registration form.
 2. You receive a notification.
-3. Go to **WP Sell Services > Vendors** and filter by "Pending" status.
+3. Go to **Sell Services > Vendors** and filter by "Pending" status.
 4. Review the application and click **Approve** or **Reject**.
 5. The applicant gets an email with the result.
 
@@ -58,7 +58,7 @@ This adds an extra quality gate -- vendors must be verified before they can list
 
 When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it.
 
-To review pending services, go to **WP Sell Services > Services** and filter by status.
+To review pending services, go to **Sell Services > Services** and filter by status.
 
 This is useful for maintaining marketplace quality, especially in the early days. As you build trust with your top vendors, you might consider disabling this to speed things up.
 
@@ -76,7 +76,7 @@ The vendor registration form collects:
 
 ## Admin Vendor Management
 
-From **WP Sell Services > Vendors**, you can manage all vendors on your marketplace:
+From **Sell Services > Vendors**, you can manage all vendors on your marketplace:
 
 - **View Profiles** -- See complete vendor information and statistics.
 - **Approve or Reject** -- For pending applications.

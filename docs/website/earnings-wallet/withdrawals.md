@@ -14,7 +14,7 @@ When vendors are ready to get paid, they submit a withdrawal request from their 
 
 ## Minimum Withdrawal Amount
 
-Vendors must have a minimum balance before they can request a withdrawal. The default minimum is $25, but you can change this in **Settings > Payments > Payout Settings**.
+Vendors must have a minimum balance before they can request a withdrawal. The default minimum is $25, but you can change this in **Settings > Payouts**.
 
 If a vendor's available balance is below the minimum, the withdrawal button is disabled and they see how much more they need to earn.
 
@@ -39,7 +39,7 @@ Vendors choose how they want to be paid when they submit a request:
 
 From the vendor dashboard:
 
-1. Go to **Earnings** section
+1. Go to the **Earnings & Payouts** section
 2. Check the available balance (must meet minimum threshold)
 3. Click **Request Withdrawal**
 4. Enter the amount (or click **Withdraw All** for the full balance)
@@ -66,7 +66,7 @@ If rejected, the funds go right back to the vendor's balance so they are not los
 
 See the full admin workflow in [Withdrawal Approvals](../admin-tools/withdrawal-approvals.md). In short:
 
-1. Go to **WP Sell Services > Withdrawals**
+1. Go to **Sell Services > Withdrawals**
 2. Review pending requests (vendor info, amount, payment details)
 3. **Approve** the request
 4. Process payment externally (send the bank transfer or PayPal payment)
@@ -76,7 +76,7 @@ Admins can also **Reject** a request with a reason if something is wrong (incomp
 
 ## Withdrawal History
 
-Vendors can see all their past withdrawal requests in **Dashboard > Earnings > Withdrawals**, including:
+Vendors can see all their past withdrawal requests in **Dashboard > Earnings & Payouts**, including:
 
 - Request ID and amount
 - Payment method used
@@ -86,13 +86,13 @@ Vendors can see all their past withdrawal requests in **Dashboard > Earnings > W
 
 ## Clearance Period
 
-Earnings do not become available for withdrawal immediately. After an order is completed, there is a clearance period (default: 14 days) before those earnings can be withdrawn. This protects against:
+After an order is completed, your marketplace may apply a clearance period before those earnings can be withdrawn. It ships at 0 days, so unless your admin raised it, earnings are withdrawable straight away. When it is set, it protects against:
 
 - Late buyer disputes
 - Chargebacks from payment processors
 - Quality issues discovered after delivery
 
-Admins can adjust the clearance period (0-90 days) in **Settings > Payments > Payout Settings**.
+Admins can adjust the clearance period (0-90 days) in **Settings > Payouts**.
 
 ## Common Questions
 

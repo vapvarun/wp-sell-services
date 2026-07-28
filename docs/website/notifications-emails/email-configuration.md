@@ -6,7 +6,7 @@ Set up how your marketplace sends email notifications, test deliverability, and 
 
 ## Accessing Email Settings
 
-1. Go to **WP Sell Services > Settings > Emails**
+1. Go to **Sell Services > Settings > Emails**
 2. You will see toggles for each email notification type and delivery options
 
 ![Email settings tab](../images/settings-emails-tab.png)

@@ -93,7 +93,7 @@ Your level is recalculated daily. If your stats drop below the requirements (for
 
 ## Admin Level Management
 
-Admins can manually adjust a vendor's seller level from **WP Admin > WP Sell Services > Vendors**. This is also the only way to grant or remove Pro Seller status. For the auto-calculated levels (New Seller, Rising Seller, Top Rated), manual changes persist until the next daily automatic assessment.
+Admins can manually adjust a vendor's seller level from **Sell Services > Vendors**. This is also the only way to grant or remove Pro Seller status. For the auto-calculated levels (New Seller, Rising Seller, Top Rated), manual changes persist until the next daily automatic assessment.
 
 ## Related Resources
 

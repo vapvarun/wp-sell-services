@@ -66,7 +66,7 @@ These system entries help both parties keep track of what is happening without h
 
 ## Admin Access
 
-Admins can view all order conversations from **WP Admin > WP Sell Services > Orders** by opening any order and clicking the Messages tab. This is useful for dispute investigation and monitoring marketplace quality.
+Admins can view all order conversations from **Sell Services > Orders** by opening any order and clicking the Messages tab. This is useful for dispute investigation and monitoring marketplace quality.
 
 Admins can see all messages, timestamps, and attachments, but they cannot reply directly. Admin involvement should go through the dispute resolution system or direct email contact.
 

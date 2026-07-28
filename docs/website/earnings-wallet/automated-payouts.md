@@ -1,8 +1,8 @@
-# Automated Payouts **[PRO]**
-
-> **This feature requires WP Sell Services Pro.**
+# Automated Payouts
 
 Instead of waiting for vendors to request withdrawals manually, you can set up automatic payouts that run on a schedule -- saving time for both you and your vendors.
+
+**Scheduled auto-withdrawals are included in the free plugin.** Pro adds bulk payment rails on top -- PayPal mass payouts and Stripe Connect -- but you do not need Pro to automate the withdrawal requests themselves.
 
 ## How Auto-Payouts Work
 
@@ -18,7 +18,7 @@ Here is the flow:
 
 ## Setting Up Auto-Payouts
 
-1. Go to **WP Sell Services > Settings > Payments**
+1. Go to **Sell Services > Settings > Payouts**
 2. Scroll to the **Automatic Withdrawals** section
 3. Check **Enable Auto-Withdrawal**
 4. Set the **Threshold Amount** -- the minimum balance that triggers an auto-payout (default: $500)
@@ -27,7 +27,7 @@ Here is the flow:
 
 ### Threshold Amount
 
-This is the minimum available balance a vendor must have for an auto-payout to trigger. You can set it anywhere from $100 to $10,000.
+This is the minimum available balance a vendor must have for an auto-payout to trigger. You can set it anywhere from $100 to $10,000, in steps of $50. The default is $500.
 
 **Example:**
 - Threshold: $500
@@ -69,7 +69,7 @@ Auto-withdrawal requests are flagged with an "Auto" badge in the admin panel so 
 
 Auto-payouts still need admin approval and payment processing, just like manual withdrawals:
 
-1. Go to **WP Sell Services > Withdrawals**
+1. Go to **Sell Services > Withdrawals**
 2. You will see new auto-withdrawal requests (marked with "Auto" badge)
 3. Review the request and click **Approve**
 4. Send the payment via PayPal or bank transfer
@@ -89,7 +89,7 @@ With WP Sell Services Pro, you can process PayPal payouts in bulk instead of one
 
 To turn off automatic payouts:
 
-1. Go to **Settings > Payments > Automatic Withdrawals**
+1. Go to **Settings > Payouts**
 2. Uncheck **Enable Auto-Withdrawal**
 3. Click **Save Payout Settings**
 

@@ -30,7 +30,7 @@ All of these are fully available in both versions -- nothing is held back:
 - Delivery management with revisions and deadline extensions
 - 5-star reviews, dispute resolution, and buyer requests with proposals
 - Vendor and buyer dashboards, 4 seller levels (New Seller, Rising Seller, Top Rated, Pro Seller), portfolios, vacation mode
-- Tipping system, in-app notifications, and 25 email notification types
+- Tipping system, in-app notifications, and 23 switchable email notification types
 - 6 page-building blocks, mobile-responsive templates, and theme customization
 
 ### Service Creation Limits
@@ -39,7 +39,7 @@ All of these are fully available in both versions -- nothing is held back:
 |---------|------|-----|
 | Pricing packages per service | 3 | 3 |
 | Gallery images | 4 | Unlimited **[PRO]** |
-| Video embeds | 1 | 3 **[PRO]** |
+| Video embeds | 1 | 1 |
 | Add-ons/extras | 3 | Unlimited **[PRO]** |
 | FAQs | 5 | Unlimited **[PRO]** |
 | Buyer requirements | 5 | Unlimited **[PRO]** |
@@ -67,7 +67,7 @@ All of these are fully available in both versions -- nothing is held back:
 
 ### Commission and Earnings (Included in Both Free and Pro)
 
-The entire commission and payout system is available in both versions: global commission rates (0-50%), per-vendor custom rates, earnings tracking, withdrawal management, minimum withdrawal amounts, clearance periods, automatic withdrawal scheduling, and tips excluded from commission.
+The entire commission and payout system is available in both versions: global commission rates (0-50%), per-vendor custom rates, earnings tracking, withdrawal management, minimum withdrawal amounts, clearance periods, automatic withdrawal scheduling, and a separate commission rate for tips.
 
 ### Wallet Integrations
 
@@ -98,28 +98,37 @@ The entire commission and payout system is available in both versions: global co
 | Google Cloud Storage | -- | **[PRO]** |
 | DigitalOcean Spaces | -- | **[PRO]** |
 
-### Service Wizard Enhancements
+### Service Wizard
 
 | Feature | Free | Pro |
 |---------|------|-----|
 | 6-step service creation wizard | Yes | Yes |
-| AI-powered title suggestions | -- | **[PRO]** |
-| Service templates | -- | **[PRO]** |
-| Bulk image upload | -- | **[PRO]** |
-| Direct video upload | -- | **[PRO]** |
-| Custom fields in packages | -- | **[PRO]** |
-| Scheduled publishing | -- | **[PRO]** |
+| Raised media, add-on, FAQ and requirement limits | -- | **[PRO]** (see the limits table above) |
+
+What Pro changes in the wizard is the **limits**, not the steps. Vendors get the
+same six-step flow either way; Pro simply stops capping how much they can add.
+
+> Earlier versions of this page listed AI title suggestions, service templates,
+> bulk image upload, direct video upload, custom package fields, and scheduled
+> publishing as Pro wizard features. **They do not ship in 1.3.0** -- they are
+> deferred to a future release and are not enabled in the plugin. They are listed
+> here only so nobody buys Pro expecting them.
 
 ### Advanced Pro Features
 
 | Feature | Free | Pro |
 |---------|------|-----|
-| Recurring Services (subscription billing for services) | -- | **[PRO]** |
 | Vendor Subscription Plans (paid vendor tiers) | -- | **[PRO]** |
 | PayPal Mass Payouts (batch vendor payouts) | -- | **[PRO]** |
 | Stripe Connect (direct vendor payments) | -- | **[PRO]** |
 | Tiered Commission Rules (category/volume/level-based rates) | -- | **[PRO]** |
 | White-Label Branding (rebrand the marketplace) | -- | **[PRO]** |
+| Display Currency (show prices in the shopper's currency) | -- | **[PRO]** |
+| Recurring Services (subscription billing for services) | -- | Not enabled in 1.3.0 |
+
+**Recurring Services** ships behind a default-off feature flag in 1.3.0 and its
+UI is hidden. Do not buy Pro for recurring billing yet -- see
+[Recurring Services](../order-management/recurring-services.md).
 
 ---
 
@@ -149,7 +158,7 @@ Upgrading preserves all your existing data. Nothing is lost.
 
 1. Keep the free version active (both plugins run together)
 2. Upload and activate the Pro plugin
-3. Enter your license key in **WP Sell Services > Settings > License**
+3. Enter your license key in **Sell Services > License**
 4. Pro features are available immediately
 
 ---
@@ -163,10 +172,13 @@ Yes. Install Pro at any time. All existing services, orders, vendors, reviews, a
 No. The free version includes its own checkout with Stripe, PayPal, and offline payment support. WooCommerce is entirely optional and only available as a Pro integration.
 
 **What happens if my Pro license expires?**
-Your site keeps working with all Pro features intact. You just will not receive updates or support until you renew.
+Your **marketplace** keeps running -- services, orders, messaging, deliveries, disputes, reviews, commission, earnings, and withdrawals all live in the free plugin and are unaffected. But **Pro features stop loading** until you renew: Stripe Connect, wallets, tiered commission, vendor subscriptions, white label, cloud storage, analytics, display currency, and the raised service limits. No data is deleted, and reactivating restores everything as it was. See [License Activation](pro-license.md).
 
 **Is per-vendor commission a Pro feature?**
-No. Per-vendor commission rates are included in the free version. You can set different rates for individual vendors right out of the box.
+No. Per-vendor commission rates are included in the free version. You can set different rates for individual vendors right out of the box. Pro adds *tiered* rules that resolve automatically by category, seller level, or sales volume.
+
+**Are automatic withdrawals a Pro feature?**
+No. Scheduled auto-withdrawals ship in the free plugin. Pro adds the bulk payment rails on top -- PayPal mass payouts and Stripe Connect.
 
 ---
 

@@ -45,7 +45,7 @@ Each package includes:
 - **Revisions** -- How many rounds of changes are included (0 to 5, or unlimited)
 - **Features list** -- A checklist of what is included in this package
 
-**[PRO]** When the Pro plugin is active and recurring services are globally enabled in **Sell Services → Settings → Orders → Recurring Services**, a **Recurring Billing** section appears in this step. Vendors can toggle recurring billing on and choose a frequency (Weekly, Monthly, Quarterly, or Yearly). See [Recurring Services](../order-management/recurring-services.md) for full details.
+**[PRO]** When the Pro plugin is active, the recurring-services feature flag is on, and recurring services are globally enabled in **Sell Services > Settings > Orders & Disputes**, a **Recurring Billing** section appears in this step. The flag is **off by default in 1.3.0**, so this section is normally hidden. Vendors can toggle recurring billing on and choose a frequency (Weekly, Monthly, Quarterly, or Yearly). See [Recurring Services](../order-management/recurring-services.md) for full details.
 
 For a deeper look at pricing strategy, see [Pricing and Packages](pricing-packages.md).
 

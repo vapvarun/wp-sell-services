@@ -20,7 +20,7 @@ The buyer has started checkout but payment has not gone through yet. Nothing hap
 
 Payment is confirmed. Now the buyer needs to fill in the project details the vendor needs before starting work. The system sends automatic reminders on day 1, day 3, and day 5 if the buyer has not submitted yet.
 
-If you have set a requirements timeout (in **Settings > Orders**), one of two things happens when time runs out:
+If you have set a requirements timeout (in **Settings > Orders & Disputes**), one of two things happens when time runs out:
 - **Auto-start enabled** -- The order moves forward without requirements, and the vendor starts work.
 - **Auto-start disabled** -- The order is cancelled and the buyer gets a refund.
 
@@ -73,7 +73,7 @@ Your marketplace runs several background tasks to keep orders moving:
 
 ## Admin Order Management
 
-Admins can view and manage all marketplace orders from **WP Admin > WP Sell Services > Orders**. From there you can:
+Admins can view and manage all marketplace orders from **Sell Services > Orders**. From there you can:
 
 - See every order with its current status
 - Filter and search orders
@@ -103,7 +103,7 @@ And here is one with a revision:
 
 ## Key Settings
 
-You can adjust how orders behave at **WP Admin > WP Sell Services > Settings > Orders**:
+You can adjust how orders behave at **Sell Services > Settings > Orders & Disputes**:
 
 | Setting | Default | What It Does |
 |---------|---------|--------------|
@@ -126,6 +126,6 @@ You can adjust how orders behave at **WP Admin > WP Sell Services > Settings > O
 - [Requirements Collection](requirements-collection.md)
 - [Order Messaging](order-messaging.md)
 - [Deliveries & Revisions](deliveries-revisions.md)
-- [Milestones](milestones.md)
+- [Milestones](milestones-wpss.md)
 - [Tipping & Extensions](tipping-extensions.md)
 - [Order Settings](order-settings.md)

@@ -6,7 +6,7 @@ The vendor management page gives you a bird's-eye view of everyone selling on yo
 
 ## Where to Find It
 
-Go to **WP Sell Services > Vendors** in your WordPress admin. You will see a dashboard with key stats at the top and a searchable list of all vendors below.
+Go to **Sell Services > Vendors** in your WordPress admin. You will see a dashboard with key stats at the top and a searchable list of all vendors below.
 
 ## Dashboard Stats
 
@@ -49,7 +49,7 @@ Click the tabs above the table to filter:
 
 If you want to screen vendors before they can sell, enable vendor verification:
 
-1. Go to **WP Sell Services > Settings > Vendor**
+1. Go to **Sell Services > Settings > Vendors**
 2. Check **Require Verification**
 3. Click **Save Changes**
 
@@ -59,7 +59,7 @@ If you want to screen vendors before they can sell, enable vendor verification:
 
 ### Approving a Vendor
 
-1. Go to **WP Sell Services > Vendors**
+1. Go to **Sell Services > Vendors**
 2. Click the **Pending** tab
 3. Click the vendor's name to review their profile
 4. Click **Approve** to activate their account

@@ -37,7 +37,7 @@ Even with this option enabled, some things are not removed:
 
 Enable detailed logging when you need to troubleshoot issues. When active, the plugin records information about orders, payments, emails, file uploads, and background tasks to your WordPress debug log.
 
-1. Go to **WP Sell Services > Settings > Advanced**
+1. Go to **Sell Services > Settings > Advanced**
 2. Check **Enable Debug Mode**
 3. Save Changes
 
@@ -51,7 +51,7 @@ Enable detailed logging when you need to troubleshoot issues. When active, the p
 
 **Where to view logs:**
 - **Free version:** Check the WordPress debug log at `wp-content/debug.log`
-- **Pro version:** Go to **WP Sell Services > System > Logs** for a filterable log viewer
+- **Pro version:** Go to **Sell Services > System > Logs** for a filterable log viewer
 
 **Tip:** Enable debug mode only when troubleshooting. Disable it in normal operation to keep your logs clean and avoid any (minor) overhead.
 
@@ -80,7 +80,7 @@ Choose where the currency symbol appears relative to the amount. Options include
 - **Left with space** -- $ 100
 - **Right with space** -- 100 $
 
-Configure this at **WP Sell Services > Settings > General**.
+Configure this at **Sell Services > Settings > General**.
 
 ---
 
@@ -104,7 +104,7 @@ WP Sell Services runs three scheduled tasks automatically to keep your marketpla
 
 **Runs every hour.** If a buyer does not accept or request revisions on a delivered order within the configured time limit (default: 3 days), the order is automatically marked as complete and payment is released to the vendor.
 
-Configure the auto-complete delay at **Settings > Orders > Auto-Complete Days**.
+Configure the auto-complete delay at **Settings > Orders & Disputes**.
 
 ### Expire Old Buyer Requests
 

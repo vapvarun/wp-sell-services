@@ -17,7 +17,7 @@ When disabled, the marketplace behaves exactly as before -- messages and notific
 
 ## Enabling Real-Time Updates
 
-1. Go to **WP Admin > Sell Services > Settings**
+1. Go to **Sell Services > Settings**
 2. Click the **Advanced** tab
 3. Find the **Real-time (WebSockets)** card
 4. Toggle **Enable** to on

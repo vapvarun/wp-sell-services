@@ -31,8 +31,6 @@ Changing the selector re-filters the ledger AND the **Export CSV**
 button — whatever range you're viewing is what the export will contain.
 That way the CSV you download always matches the screen.
 
-![Period selector and Export CSV button](../images/earnings-wallet/earnings-ledger-period-wpss.png)
-
 ## Ledger row types
 
 Every row carries a type so you can tell at a glance where the money

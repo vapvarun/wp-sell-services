@@ -6,7 +6,7 @@ When vendors request payouts, their requests land in your withdrawal queue. Here
 
 ## Where to Find Withdrawal Requests
 
-Go to **WP Sell Services > Withdrawals** in your WordPress admin. You will see summary cards at the top and a list of all withdrawal requests below.
+Go to **Sell Services > Withdrawals** in your WordPress admin. You will see summary cards at the top and a list of all withdrawal requests below.
 
 ### Summary Cards
 
@@ -95,9 +95,9 @@ Use the admin notes field to keep a record of:
 
 ## Withdrawal Limits
 
-**Minimum withdrawal amount:** Default is $25 (configurable in Settings > Payments > Payout Settings)
+**Minimum withdrawal amount:** Default is $25 (configurable in Settings > Payouts)
 
-**Clearance period:** Earnings must pass the clearance period (default 14 days) before they become available for withdrawal
+**Clearance period:** Earnings must pass the clearance period before they become available for withdrawal. It ships at 0 days (earnings clear immediately); raise it in **Settings > Payouts** if you want a refund buffer
 
 Vendors cannot request more than their available balance, and they cannot have multiple pending requests at the same time.
 

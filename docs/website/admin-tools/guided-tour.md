@@ -4,7 +4,7 @@ A built-in onboarding walkthrough runs the first time a new admin opens the WP S
 
 ## When The Tour Starts
 
-The tour auto-opens the first time a logged-in admin lands on **WP Sell Services > Dashboard**. It will not re-open on subsequent visits.
+The tour auto-opens the first time a logged-in admin lands on **Sell Services > Dashboard**. It will not re-open on subsequent visits.
 
 - Completion is persisted per-user in the `wpss_tour_completed` user meta
 - Clicking "Skip" counts as completion — the tour won't nag you again
@@ -26,8 +26,6 @@ Each step carries a short explainer, a Lucide icon, and Back / Next / Skip contr
 ## Replaying The Tour
 
 After the first run, the Dashboard header shows a **Replay guide** button next to the page title. Click it any time to walk through again — you don't need to reset any user meta.
-
-![Replay guide button on the Dashboard header](../images/admin-dashboard-replay-guide.png)
 
 ## Letting Pro Or Custom Code Add Steps
 

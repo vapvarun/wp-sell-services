@@ -11,7 +11,7 @@ PayPal lets buyers pay with their PayPal balance, linked bank account, or credit
 1. Create a PayPal Business account at [paypal.com/business](https://paypal.com/business) (if you do not have one)
 2. Go to the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/)
 3. Create an app to get your **Client ID** and **Secret**
-4. In WordPress, go to **WP Sell Services > Settings > Gateways > PayPal**
+4. In WordPress, go to **Sell Services > Settings > Payment Gateways**
 5. Check **Enable PayPal** and paste your credentials
 6. Click **Save Changes**
 
@@ -66,7 +66,7 @@ Razorpay is the go-to payment gateway for marketplaces serving buyers in India. 
 1. Create a Razorpay account at [razorpay.com](https://razorpay.com)
 2. Complete the KYC process (PAN, GSTIN, bank details)
 3. Get your API keys from **Settings > API Keys** in the Razorpay Dashboard
-4. In WordPress, go to **WP Sell Services > Settings > Gateways > Razorpay**
+4. In WordPress, go to **Sell Services > Settings > Payment Gateways**
 5. Check **Enable Razorpay** and enter your Key ID and Key Secret
 6. Click **Save Changes**
 
@@ -115,7 +115,7 @@ Offline payments let you accept bank transfers, checks, or any manual payment me
 
 ### Setting Up Offline Payments
 
-1. Go to **WP Sell Services > Settings > Gateways > Offline**
+1. Go to **Sell Services > Settings > Payment Gateways**
 2. Check **Enable Offline Payments**
 3. Set a title like "Bank Transfer" or "Pay by Check"
 4. In the **Instructions** field, add your payment details (bank name, account number, routing number, etc.)
@@ -190,9 +190,9 @@ Once enabled, "Test Gateway" appears as a payment option at checkout with a "Dev
 | PayPal webhook not received | Verify webhook URL is `https://yoursite.com/wpss-payment/paypal/callback`. PayPal requires HTTPS for webhooks. |
 | Razorpay "Bad Request" error | Check that Key ID and Key Secret match the same mode (test or live). |
 | Razorpay webhook failing | Verify the Webhook Secret matches. Razorpay webhooks require the exact URL with no trailing slash changes. |
-| Offline payment order stuck at "Pending" | Admin must manually confirm payment in WP Sell Services > Orders > click "Confirm Payment". |
+| Offline payment order stuck at "Pending" | Admin must manually confirm payment in Sell Services > Orders > click "Confirm Payment". |
 | Test Gateway not showing | Enable `WP_DEBUG` in wp-config.php. The Test Gateway is hidden on production sites. |
-| Gateway not appearing at checkout | Go to Settings > Gateways and verify the gateway is checked as "Enabled". |
+| Gateway not appearing at checkout | Go to Settings > Payment Gateways and verify the gateway is checked as "Enabled". |
 | Currency not supported | Check your gateway's supported currencies. Some gateways (Razorpay) only support certain currencies. |
 
 ## Related Docs

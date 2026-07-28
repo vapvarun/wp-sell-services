@@ -38,7 +38,7 @@ If there is a serious problem that cannot be resolved through revisions, the buy
 
 ## Auto-Complete
 
-If the buyer does not respond to a delivery within the auto-complete window, the order completes automatically. The default is 3 days, but admins can change this in **Settings > Orders > Auto-Complete Days**. Setting it to 0 disables auto-completion entirely.
+If the buyer does not respond to a delivery within the auto-complete window, the order completes automatically. The default is 3 days, but admins can change this in **Settings > Orders & Disputes**. Setting it to 0 disables auto-completion entirely.
 
 This protects vendors from orders that sit in limbo because a buyer never responds.
 
@@ -73,7 +73,7 @@ Delivery files are private and secure:
 
 ## Settings That Affect Deliveries
 
-Go to **Settings > Orders** to configure:
+Go to **Settings > Orders & Disputes** to configure:
 
 | Setting | Default | What It Does |
 |---------|---------|--------------|

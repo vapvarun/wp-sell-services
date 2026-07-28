@@ -25,7 +25,7 @@ Your marketplace needs four core pages:
 
 The fastest way to get started:
 
-1. Go to **WP Sell Services > Settings > Pages**
+1. Go to **Sell Services > Settings > Pages**
 2. Click **Auto-Create All Pages**
 3. Done -- the plugin creates and assigns all four core pages automatically
 
@@ -43,7 +43,7 @@ Prefer to create pages yourself? Here is how.
 2. Give it a title like "Services" or "Browse Services"
 3. Add the Services Grid block (or the services page element)
 4. Publish the page
-5. Go to **WP Sell Services > Settings > Pages** and select this page in the Services dropdown
+5. Go to **Sell Services > Settings > Pages** and select this page in the Services dropdown
 6. Save Changes
 
 **Tip:** For a richer catalog page, combine the search bar, category grid, and service grid on the same page.
@@ -52,7 +52,7 @@ Prefer to create pages yourself? Here is how.
 
 1. Create a new page titled "Dashboard"
 2. Add the Dashboard block (or the dashboard page element)
-3. Publish and assign it in **Settings > Pages > Dashboard**
+3. Publish and assign it in **Settings > Pages**
 
 The dashboard automatically shows different content based on who is logged in:
 
@@ -67,13 +67,13 @@ Logged-in buyers who are not yet vendors will see a "Become a Vendor" button in 
 1. Create a new page titled "Become a Vendor" or "Start Selling"
 2. Add the Vendor Registration block (or the vendor registration page element)
 3. Add some persuasive content above the form -- explain why someone should sell on your marketplace, highlight benefits like no listing fees and flexible pricing
-4. Publish and assign it in **Settings > Pages > Become a Vendor**
+4. Publish and assign it in **Settings > Pages**
 
 ### Service Checkout Page
 
 1. Create a new page titled "Checkout"
 2. Add the Service Checkout block (or the checkout page element)
-3. Publish and assign it in **Settings > Pages > Checkout**
+3. Publish and assign it in **Settings > Pages**
 
 This page handles the standalone checkout flow -- billing details, order review, payment method selection, and order placement.
 
@@ -97,7 +97,7 @@ Beyond the four required pages, you should also add a **Cart** page. Consider ad
 
 Already have pages you want to use instead?
 
-1. Go to **WP Sell Services > Settings > Pages**
+1. Go to **Sell Services > Settings > Pages**
 2. Each setting shows a dropdown of all your published pages
 3. Select the page you want for each function
 4. Make sure the page contains the correct block or page element

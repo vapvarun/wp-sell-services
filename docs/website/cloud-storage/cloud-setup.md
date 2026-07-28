@@ -32,7 +32,7 @@ You will need:
 
 ### Step 3: Configure in WP Sell Services
 
-1. Go to **WP Sell Services > Settings > Cloud Storage**
+1. Go to **Sell Services > Settings > Advanced**
 2. Select **Amazon S3** as the provider
 3. Enter your Access Key ID, Secret Access Key, bucket name, and region
 4. Click **Test Connection** to verify
@@ -59,7 +59,7 @@ You will need:
 
 ### Step 3: Configure in WP Sell Services
 
-1. Go to **WP Sell Services > Settings > Cloud Storage**
+1. Go to **Sell Services > Settings > Advanced**
 2. Select **Google Cloud Storage** as the provider
 3. Upload or paste your service account JSON key
 4. Enter your bucket name
@@ -85,7 +85,7 @@ You will need:
 
 ### Step 3: Configure in WP Sell Services
 
-1. Go to **WP Sell Services > Settings > Cloud Storage**
+1. Go to **Sell Services > Settings > Advanced**
 2. Select **DigitalOcean Spaces** as the provider
 3. Enter your Key, Secret, Space name, and region
 4. Click **Test Connection** to verify

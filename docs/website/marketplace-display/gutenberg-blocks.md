@@ -15,12 +15,17 @@ All blocks appear under the **WP Sell Services** category in the block inserter.
 Display a grid of services with visual controls for layout, filtering, and sorting.
 
 **What you can configure:**
-- Number of services to show
-- Grid columns (1 to 4)
-- Filter by category or tag
-- Sort by date, price, rating, or sales
+- Services per page (3 to 24, default 9)
+- Grid columns (2 to 5, default 3)
+- Filter by category, or show featured only
+- Sort by date, title, menu order, or random
+- Show or hide pagination, rating, price, and seller
 
 **Best for:** Service showcase pages, category-specific displays, homepage service sections.
+
+To filter by **tag** or by a specific **vendor**, use the
+[`[wpss_services]` shortcode](shortcodes-reference.md#wpss_services----services-catalog)
+instead -- the block exposes category only.
 
 ---
 
@@ -124,3 +129,98 @@ Check that matching content exists (published services, registered vendors, etc.
 
 **Block settings not saving?**
 Update to the latest plugin version, disable other plugins temporarily to check for conflicts, and check the browser console for JavaScript errors.
+
+---
+
+## Attribute reference (for developers)
+
+Block names and their attributes, as registered. Useful when inserting blocks
+programmatically, building patterns, or setting defaults in `theme.json`.
+
+### `wpss/service-grid`
+
+| Attribute | Type | Default | Range / values |
+|-----------|------|---------|----------------|
+| `columns` | number | `3` | 2-5 |
+| `perPage` | number | `9` | 3-24 |
+| `category` | number | `0` | term id, `0` = all |
+| `orderBy` | string | `date` | `date`, `title`, `menu_order`, `rand` |
+| `order` | string | `DESC` | `ASC`, `DESC` |
+| `featured` | boolean | `false` | |
+| `showPagination` | boolean | `true` | |
+| `showRating` | boolean | `true` | |
+| `showPrice` | boolean | `true` | |
+| `showSeller` | boolean | `true` | |
+
+### `wpss/service-search`
+
+| Attribute | Type | Default | Values |
+|-----------|------|---------|--------|
+| `placeholder` | string | *(empty)* | |
+| `buttonText` | string | *(empty)* | |
+| `showCategoryFilter` | boolean | `true` | |
+| `style` | string | `default` | `default`, `hero`, `minimal` |
+
+### `wpss/service-categories`
+
+| Attribute | Type | Default | Range / values |
+|-----------|------|---------|----------------|
+| `layout` | string | `grid` | `grid`, `list` |
+| `columns` | number | `4` | 2-6 |
+| `maxItems` | number | `8` | 2-20 |
+| `orderBy` | string | `name` | |
+| `order` | string | `ASC` | `ASC`, `DESC` |
+| `showCount` | boolean | `true` | |
+| `showIcon` | boolean | `true` | |
+| `showImage` | boolean | `false` | |
+| `hideEmpty` | boolean | `true` | |
+| `parentOnly` | boolean | `false` | |
+
+### `wpss/featured-services`
+
+| Attribute | Type | Default | Range / values |
+|-----------|------|---------|----------------|
+| `layout` | string | `carousel` | `carousel`, `grid` |
+| `columns` | number | `4` | 2-5 |
+| `limit` | number | `8` | 2-16 |
+| `title` | string | *(empty)* | |
+| `autoplay` | boolean | `true` | carousel only |
+| `interval` | number | `5000` | 2000-10000, step 500 |
+| `showDots` | boolean | `true` | carousel only |
+| `showArrows` | boolean | `true` | carousel only |
+| `showRating` | boolean | `true` | |
+| `showPrice` | boolean | `true` | |
+
+### `wpss/seller-card`
+
+| Attribute | Type | Default | Values |
+|-----------|------|---------|--------|
+| `userId` | number | `0` | `0` = current user |
+| `layout` | string | `vertical` | `vertical`, `horizontal` |
+| `showBio` | boolean | `true` | |
+| `showStats` | boolean | `true` | |
+| `showRating` | boolean | `true` | |
+| `showServices` | boolean | `true` | |
+| `showButton` | boolean | `true` | |
+
+### `wpss/buyer-requests`
+
+| Attribute | Type | Default | Range / values |
+|-----------|------|---------|----------------|
+| `perPage` | number | `10` | 3-20 |
+| `category` | number | `0` | term id, `0` = all |
+| `orderBy` | string | `date` | `date`, `title` |
+| `order` | string | `DESC` | `ASC`, `DESC` |
+| `layout` | string | `list` | |
+| `showPagination` | boolean | `true` | |
+| `showBudget` | boolean | `true` | |
+| `showDeadline` | boolean | `true` | |
+| `showOffers` | boolean | `true` | |
+
+All six blocks render server-side, so the front end always reflects current data
+rather than what was saved into the post content.
+
+## Related
+
+- [Shortcodes Reference](shortcodes-reference.md) -- the equivalent shortcodes, with extra options
+- [Template Overrides](template-overrides.md)

@@ -8,7 +8,9 @@ Buyers can show appreciation with a tip after an order is completed, and vendors
 
 ### How Tipping Works
 
-After an order is completed, the buyer can send a tip to the vendor as a thank-you for great work. Tips go directly to the vendor's wallet -- the platform does not take any commission on tips.
+After an order is completed, the buyer can send a tip to the vendor as a thank-you for great work. The tip is paid like any other order and credited to the vendor's wallet.
+
+**Tips are commissioned at your normal rate by default.** Marketplace owners can change this with the **Tip commission rate** setting under **Sell Services > Settings > Commission & Tax**: leave it empty to use the regular rate, or set it to `0` so vendors keep 100% of every tip.
 
 To send a tip:
 

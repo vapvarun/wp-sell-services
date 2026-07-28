@@ -8,7 +8,7 @@ Set your marketplace currency and configure tax collection so prices display cor
 
 Your currency applies everywhere -- service prices, order totals, vendor earnings, and withdrawal amounts.
 
-1. Go to **WP Sell Services > Settings > General**
+1. Go to **Sell Services > Settings > General**
 2. Select your **Currency** from the dropdown
 3. Click **Save Changes**
 
@@ -35,8 +35,8 @@ If you need to collect tax on services, the plugin has a built-in tax system tha
 
 ### How to Turn On Tax
 
-1. Go to **WP Sell Services > Settings > Payments**
-2. Scroll to the **Tax Configuration** section
+1. Go to **Sell Services > Settings > Commission & Tax**
+2. Scroll to the **Tax Settings** section
 3. Check **Enable Tax**
 4. Fill in the settings below
 5. Click **Save Tax Settings**

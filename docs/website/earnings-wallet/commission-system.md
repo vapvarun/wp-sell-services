@@ -13,7 +13,7 @@ This happens automatically when an order is marked as completed. You do not need
 
 ## Setting Your Global Commission Rate
 
-1. Go to **WP Sell Services > Settings > Payments**
+1. Go to **Sell Services > Settings > Commission & Tax**
 2. Find the **Commission Settings** section
 3. Enter your **Commission Rate (%)** -- this can be anything from 0% to 50%
 4. Click **Save Commission Settings**
@@ -24,7 +24,7 @@ The default rate is 10%. This applies to all vendors unless you set a custom rat
 
 Want to reward your top performers or offer promotional rates to new vendors? You can override the global rate for individual vendors.
 
-1. Go to **WP Sell Services > Vendors**
+1. Go to **Sell Services > Vendors**
 2. Click on a vendor's name
 3. Find **Commission Settings**
 4. Enter a custom commission rate
@@ -54,11 +54,23 @@ Until the order is completed, no money changes hands between the platform and ve
 
 **Add-ons:** Commission applies to the full order total, including any add-ons the buyer selected.
 
-**Tips:** Tips are commission-free. 100% of any tip goes directly to the vendor. For example:
+**Tips:** Tips are commissioned at the **same rate as regular orders by default**. You can change that with the **Tip commission rate** field in the same settings card:
 
-- Order total: $100.00
-- Tip: $10.00
-- Commission (10% of $100): $10.00
+| Tip commission rate | Effect |
+|--------------------|--------|
+| *(empty)* | Use the regular commission rate -- the default |
+| `0` | Vendors keep 100% of every tip |
+| any percentage | A tip-only rate, independent of your order rate |
+
+With the default 10% rate and no tip override:
+
+- Order total: $100.00, tip: $10.00
+- Commission on the order (10%): $10.00
+- Commission on the tip (10%): $1.00
+- **Vendor receives: $90.00 + $9.00 tip = $99.00**
+
+Set the tip rate to `0` if you want tips to reach vendors in full:
+
 - **Vendor receives: $90.00 + $10.00 tip = $100.00**
 
 ## Tiered Commission Rules **[PRO]**
@@ -86,7 +98,7 @@ When an order is refunded, commission reverses automatically:
 
 ## Clearance Period
 
-After an order is completed, vendor earnings do not become available for withdrawal immediately. There is a clearance period (default: 14 days) to allow time for disputes or issues. You can adjust this in **Settings > Payments > Payout Settings**.
+After an order is completed, vendor earnings do not become available for withdrawal immediately. There is an optional clearance period to allow time for disputes or issues. It ships at 0 days, so earnings clear as soon as the order completes. You can adjust this in **Settings > Payouts**.
 
 ## Related Docs
 

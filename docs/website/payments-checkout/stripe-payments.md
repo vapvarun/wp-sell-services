@@ -38,7 +38,7 @@ Test keys start with `pk_test_` and `sk_test_`. Live keys start with `pk_live_` 
 
 ### Add Keys to Your Site
 
-1. Go to **WP Sell Services > Settings > Gateways**
+1. Go to **Sell Services > Settings > Payment Gateways**
 2. Click the **Stripe** tab
 3. Check **Enable Stripe**
 4. Paste your Publishable Key and Secret Key
@@ -56,7 +56,7 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 4. Select these events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`
 5. Click **Add endpoint**
 6. Copy the **Signing secret** that appears
-7. Paste it into **WP Sell Services > Settings > Gateways > Stripe > Webhook Secret**
+7. Paste it into **Sell Services > Settings > Payment Gateways**
 8. Click **Save Changes**
 
 ## How Checkout Works with Stripe
@@ -104,7 +104,7 @@ With WP Sell Services Pro, you can enable Stripe Connect so payments go directly
 
 To refund an order:
 
-1. Go to **WP Sell Services > Orders** and open the order
+1. Go to **Sell Services > Orders** and open the order
 2. Click **Refund**
 3. Choose full or partial refund
 4. Click **Process Refund**

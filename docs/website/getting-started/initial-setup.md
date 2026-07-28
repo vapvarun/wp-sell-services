@@ -30,9 +30,9 @@ Choose how vendors join your marketplace:
 
 ## Essential Pages
 
-Your marketplace needs 3 pages to function. The plugin can create them for you automatically:
+Your marketplace needs 4 pages to function. The plugin can create them for you automatically:
 
-1. Go to **WP Sell Services > Settings > Pages**
+1. Go to **Sell Services > Settings > Pages**
 2. Click the **Create Page** button next to each page
 
 | Page | What It Does |
@@ -40,6 +40,9 @@ Your marketplace needs 3 pages to function. The plugin can create them for you a
 | **Services** | The public browsing page where buyers discover and search for services |
 | **Dashboard** | Where both vendors and buyers manage orders, messages, earnings, and services |
 | **Become a Vendor** | The registration page for new vendors |
+| **Checkout** | Where buyers complete payment in standalone mode |
+
+The **Become a Vendor** page only appears in this list while vendor registration is open. If you have closed registration, the field is hidden and your existing mapping is left untouched.
 
 After creating these pages, add the **Services** and **Become a Vendor** pages to your site's main menu at **Appearance > Menus**.
 
@@ -47,31 +50,43 @@ After creating these pages, add the **Services** and **Become a Vendor** pages t
 
 Here is everything you should review before inviting your first vendors:
 
-### Commission and Payouts
-Go to **WP Sell Services > Settings > Payments**:
+### Commission and Tax
+Go to **Sell Services > Settings > Commission & Tax**:
 
 - **Commission rate** -- Your platform's cut on each sale (default: 10%)
-- **Per-vendor rates** -- Turn on if you want to set different rates for specific vendors
-- **Minimum withdrawal** -- The smallest amount a vendor can cash out (default: $50)
-- **Clearance period** -- How many days earnings are held after order completion before they become available (default: 14 days)
+- **Per-vendor rates** -- Set different rates for specific vendors (on by default)
+- **Tax** -- Off by default. Turn it on to add a tax line at checkout
+
+### Payouts
+Go to **Sell Services > Settings > Payouts**:
+
+- **Minimum withdrawal** -- The smallest amount a vendor can cash out (default: $25)
+- **Clearance period** -- How many days earnings are held after order completion before they become available (default: 0 days, meaning earnings clear immediately)
+- **Wallet provider** -- Where vendor balances are held
+- **Automatic withdrawals** -- Off by default. Turn on to pay out on a schedule instead of per request
+
+If you want a buffer against refunds and chargebacks, raise the clearance period. It ships at 0 so a new marketplace does not hold vendor money by surprise.
 
 ### Vendor Settings
-Go to **WP Sell Services > Settings > Vendor**:
+Go to **Sell Services > Settings > Vendors**:
 
 - **Max services per vendor** -- How many active services each vendor can have (default: 20)
-- **Require verification** -- Whether vendors must verify their identity before selling
-- **Service moderation** -- Whether you want to review and approve every new service before it goes live
+- **Require verification** -- Whether vendors must verify their identity before selling (default: off)
+- **Service moderation** -- Whether you review and approve every new service before it goes live (default: off, so a new marketplace is not empty on launch day)
 
 ### Order Settings
-Go to **WP Sell Services > Settings > Orders**:
+Go to **Sell Services > Settings > Orders & Disputes**:
 
 - **Auto-complete days** -- If a buyer does not respond after delivery, the order auto-completes after this many days (default: 3)
-- **Revision limit** -- Default number of revisions per order (default: 2)
+- **Requirements timeout** -- How long a buyer has to submit order requirements (default: 7 days)
 - **Allow disputes** -- Whether buyers can open disputes (default: on)
 - **Dispute window** -- How many days after completion a buyer can dispute (default: 14)
+- **Auto-dispute late orders** -- Days past the deadline before an order is flagged (default: 3)
+
+Revision limits are not a global setting -- vendors set them per package when they build a service. See [Pricing Packages](../service-creation/pricing-packages.md).
 
 ### Email Notifications
-Go to **WP Sell Services > Settings > Emails** to review which emails are sent. All notification types are enabled by default:
+Go to **Sell Services > Settings > Emails**. There are **23 notification types**, each with its own on/off switch, and all are enabled by default. The ones you will see most:
 
 - New order placed (sent to vendor)
 - Order completed, cancelled (sent to both)
@@ -81,10 +96,12 @@ Go to **WP Sell Services > Settings > Emails** to review which emails are sent. 
 - New review (sent to vendor)
 - Dispute opened (sent to both parties and admin)
 
-### Tax Settings (Optional)
-If you need to charge tax, go to the **Tax** section under Payments:
+The same screen has a **Email Deliverability** test. Send yourself a test email before launch -- if it does not arrive, no other notification will either. See [Email Notifications](../notifications-emails/email-types.md) for the full list.
 
-- Enable tax and set a rate
+### Tax Settings (Optional)
+Tax lives with commission, in **Sell Services > Settings > Commission & Tax**:
+
+- Enable tax and set a rate (off by default)
 - Choose a label (Tax, VAT, GST, etc.)
 - Decide whether your service prices already include tax
 
@@ -103,7 +120,7 @@ This confirms your entire marketplace workflow is functioning.
 
 Once your settings are in place:
 
-- **Add service categories** at **WP Sell Services > Categories** (e.g., Design, Writing, Marketing, Development)
+- **Add service categories** at **Sell Services > Categories** (e.g., Design, Writing, Marketing, Development)
 - **Customize your homepage** using the included blocks (Service Grid, Featured Services, Categories) in the block editor
 - **Install an SMTP plugin** like WP Mail SMTP or FluentSMTP for reliable email delivery
 

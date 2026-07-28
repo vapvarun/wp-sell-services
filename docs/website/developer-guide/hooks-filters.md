@@ -1,6 +1,10 @@
 # Hooks and Filters Reference
 
-WP Sell Services exposes 192 action hooks and filter hooks throughout its codebase. Every hook listed here is verified in the source code with file location and parameters.
+WP Sell Services and WP Sell Services Pro fire **454** actions and filters between them. This page documents the **282** that are part of the supported extension surface, each with its parameters and the source file that fires it.
+
+The rest are internal and may change without notice -- if you need one of them, open a support request and we will promote it to this page rather than have you bind to a moving target.
+
+> **Verify before you ship.** Hook names and signatures on this page are checked against the 1.3.0 source. Some names in pre-1.3.0 documentation were never fired at all -- if a callback of yours has silently stopped running, search this page for the hook name before assuming a regression.
 
 ## Using Hooks
 
@@ -22,7 +26,6 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 | `wpss_loaded` | `Plugin $plugin` | `Plugin.php:261` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `IntegrationManager.php:124` |
 | `wpss_register_field_types` | `FieldManager $manager` | `FieldManager.php:59` |
-| `wpss_woocommerce_adapter_init` **[PRO]** | `WooCommerceAdapter $adapter` | `WooCommerceAdapter.php:162` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
 
@@ -50,7 +53,6 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `ServicesController.php:321` |
 | `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `ServicesController.php:386` |
 | `wpss_rest_service_deleted` | `int $service_id, bool $force` | `ServicesController.php:431` |
-| `wpss_service_synced_to_wc_product` **[PRO]** | `int $service_id, int $product_id` | `WCProductProvider.php:454` |
 
 ## Moderation Actions
 
@@ -86,7 +88,6 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `OrderWorkflowManager.php:638` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `OrderWorkflowManager.php:338` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `OrderWorkflowManager.php:472` |
-| `wpss_after_checkout_process` **[PRO]** | `int $order_id, array $order_data` | `WCCheckoutProvider.php:332` |
 
 ## Delivery Actions
 
@@ -236,7 +237,14 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `EarningsService.php:344` |
 | `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `EarningsService.php:489` |
 | `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `EarningsService.php:866` |
-| `wpss_tip_sent` | `int $tip_id, int $order_id, int $vendor_id, int $customer_id, float $amount, string $message` | `TippingService.php:171` |
+| `wpss_tip_order_created` | `int $tip_order_id, int $parent_order_id, int $customer_id, float $amount` | `TippingService.php:280` |
+| `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `TippingService.php:482` |
+
+`wpss_tip_order_created` fires when the tip checkout is started; `wpss_tip_sent`
+fires only once the tip is actually paid and credited. The first argument of
+`wpss_tip_sent` is the **wallet transaction id**, not the tip order id, and the
+amount passed is the vendor's net earnings after commission -- not the gross
+tip. Tips are excluded from commission by default, so the two usually match.
 
 ## Dispute Actions
 
@@ -284,17 +292,29 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 
 ## Milestone and Extension Actions
 
+A milestone is a **sub-order** of the parent order, so every hook passes both
+ids: `$milestone_id` is the sub-order, `$order_id` is the parent. See
+[Sub-Order Pattern](../../architecture/SUB_ORDER_PATTERN.md).
+
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_milestone_created` | `int $milestone_id, int $order_id, array $milestone` | `MilestoneService.php:111` |
-| `wpss_milestone_submitted` | `int $milestone_id, int $order_id` | `MilestoneService.php:263` |
-| `wpss_milestone_approved` | `int $milestone_id, int $order_id, float $amount` | `MilestoneService.php:311` |
-| `wpss_milestone_rejected` | `int $milestone_id, int $order_id, string $feedback` | `MilestoneService.php:360` |
-| `wpss_extension_request_created` | `int $request_id, int $order_id, array $data` | `ExtensionRequestService.php:246` |
-| `wpss_extension_request_approved` | `int $request_id, object $request` | `ExtensionRequestService.php:363` |
-| `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:447` |
-| `wpss_extension_requested` | `int $request_id, int $order_id, int $user_id` | `ExtensionRequestsController.php:196` |
-| `wpss_extension_approved` | `int $ext_id, int $order_id, int $extra_days` | `ExtensionRequestsController.php:291` |
+| `wpss_milestone_proposed` | `int $milestone_id, int $order_id, int $vendor_id` | `MilestoneService.php:262` |
+| `wpss_milestone_paid` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id, float $vendor_earnings` | `MilestoneService.php:411` |
+| `wpss_milestone_submitted` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id` | `MilestoneService.php:483` |
+| `wpss_milestone_approved` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id` | `MilestoneService.php:536` |
+| `wpss_milestone_declined` | `int $milestone_id, int $order_id, int $customer_id` | `MilestoneService.php:591` |
+| `wpss_extension_request_created` | `int $request_id, int $order_id, array $data` (`requested_by`, `extra_days`, `reason`) | `ExtensionRequestService.php:249` |
+| `wpss_extension_request_approved` | `int $request_id, object $request` | `ExtensionRequestService.php:371` |
+| `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:455` |
+
+> **Renamed in 1.3.0.** The milestone lifecycle uses *proposed* and *declined*,
+> not *created* and *rejected* -- see [Milestone terminology](../../decisions/milestone-terminology.md).
+> `wpss_milestone_created`, `wpss_milestone_rejected`, `wpss_extension_requested`
+> and `wpss_extension_approved` were listed in earlier docs but are **not fired
+> by the plugin**. Callbacks bound to those names never run. Note also that
+> `wpss_milestone_approved` passes `$vendor_id` as its third argument, not an
+> amount -- if you need the money, read it from the sub-order or hook
+> `wpss_milestone_paid`.
 
 ## Admin and Settings Actions
 
@@ -670,7 +690,6 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_search_suggestions` | `$suggestions, $query` | `SearchService.php:498` |
 | `wpss_related_services_args` | `$args, $service` | `SingleServiceView.php:647` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `CartController.php:378` |
-| `wpss_available_payment_methods` | `$methods` | `CartController.php:395` |
 | `wpss_seller_levels` | `$levels` | `SellerLevelsController.php:284` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `ServicesController.php:608` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
@@ -679,7 +698,6 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `UnifiedDashboard.php:173` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `UnifiedDashboard.php:243` |
 | `wpss_dashboard_section_titles` | `$titles` | `UnifiedDashboard.php:371` |
-| `wpss_service_to_wc_status_map` **[PRO]** | `$status_map, $new_status, $old_status` | `WooCommerceAdapter.php:388` |
 
 **`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 
@@ -729,7 +747,6 @@ add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
 | `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `NotificationService.php:1195` |
 | `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `NotificationService.php:994` |
 | `wpss_admin_vendor_notification_content` | `$content, $user` | `NotificationService.php:1049` |
-| `wpss_email_data` | `$email` | `EmailService.php:642` |
 
 ## Pro Plugin Actions **[PRO]**
 
@@ -737,11 +754,22 @@ These hooks are fired exclusively by the Pro plugin and require an active Pro li
 
 ### WooCommerce Integration Actions
 
+Unlike the EDD, FluentCart, and SureCart adapters, the WooCommerce adapter does
+not fire its own namespaced lifecycle hooks. It reuses the **core order hooks**
+instead, so code written against `wpss_order_created` /
+`wpss_order_status_changed` works identically whether the sale came through
+WooCommerce or standalone checkout.
+
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_woocommerce_adapter_init` | `WooCommerceAdapter $adapter` | `WooCommerceAdapter.php:162` |
-| `wpss_service_synced_to_wc_product` | `int $service_id, int $product_id` | `WCProductProvider.php:454` |
-| `wpss_after_checkout_process` | `int $order_id, array $order_data` | `WCCheckoutProvider.php:332` |
+| `wpss_order_created` | `int $order_id, string $status` | `WCOrderProvider.php` |
+| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `WCOrderProvider.php` |
+| `wpss_max_order_quantity` | `int $max, int $service_id` | `WCCheckoutProvider.php` |
+
+> Earlier documentation listed `wpss_woocommerce_adapter_init`,
+> `wpss_service_synced_to_wc_product`, `wpss_after_checkout_process` and
+> `wpss_service_to_wc_status_map`. **None of these are fired** -- use the core
+> order hooks above. To react to product sync, hook `wpss_service_updated`.
 
 ### EDD Integration Actions
 
@@ -831,7 +859,6 @@ These hooks are fired exclusively by the Pro plugin and require an active Pro li
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_service_to_wc_status_map` | `$status_map, $new_status, $old_status` | `WooCommerceAdapter.php:388` |
 
 ## Related Documentation
 

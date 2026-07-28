@@ -77,7 +77,7 @@ By default, reviews are published immediately after submission. If you want to r
 Go to **Settings > General** and enable **Moderate Reviews**. Once enabled:
 
 - New reviews go into "Pending" status instead of publishing immediately.
-- You review them from **WP Admin > WP Sell Services > Reviews**.
+- You review them from **Sell Services > Reviews**.
 - Click **Approve** to publish or **Reject** to hide a review.
 - The vendor is notified once an approved review goes live.
 

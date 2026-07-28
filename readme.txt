@@ -143,8 +143,8 @@ Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-ser
 * **Wallet Integrations**: Internal wallet, TeraWallet, WooWallet, MyCred
 * **Cloud Storage**: Amazon S3, Google Cloud Storage, DigitalOcean Spaces for file storage
 * **Advanced Analytics**: Revenue charts, order analytics, service performance, vendor statistics with CSV/Excel export
-* **Expanded Service Limits**: Unlimited gallery images, FAQs, add-ons, and requirements; 3 video embeds (free: 1)
-* **Wizard Enhancements**: AI title suggestions, service templates, bulk uploads, scheduled publishing
+* **Expanded Service Limits**: Unlimited gallery images, FAQs, add-ons, and requirements
+* **Display Currency**: Show shoppers prices in their own currency while your base currency stays authoritative
 
 = What Makes This Different =
 

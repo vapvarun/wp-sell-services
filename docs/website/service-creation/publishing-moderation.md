@@ -93,7 +93,7 @@ The following emails are sent during the publishing process:
 | Service approved | Vendor |
 | Service rejected (with reason) | Vendor |
 
-These emails can be enabled or disabled by the admin under **WP Sell Services > Settings > Emails**.
+These emails can be enabled or disabled by the admin under **Sell Services > Settings > Emails**.
 
 ## Tips for Getting Approved on the First Try
 

@@ -1,200 +1,274 @@
 # REST API Controllers Reference
 
-WP Sell Services includes 21 dedicated REST API controllers. All endpoints use the base URL `/wp-json/wpss/v1/`.
+WP Sell Services registers **23 REST controllers** plus a set of generic utility
+routes. WP Sell Services Pro adds **10 more**. Everything lives under one
+namespace:
 
-For authentication, pagination, error handling, and generic endpoints, see [REST API Overview](rest-api-overview.md).
+```
+/wp-json/wpss/v1/
+```
 
-## 1. Services (/services)
+Every route below is generated from the 1.3.0 source. Path parameters are shown
+as WordPress route regex (`(?P<id>[\d]+)`) so you can match them exactly.
 
-Manage service listings, packages, and metadata.
+For authentication, pagination, error shapes, and the generic endpoints, see
+[REST API Overview](rest-api-overview.md).
 
-**GET /services** - List services
-**GET /services/{id}** - Get service details
-**POST /services** - Create service (vendor only)
-**PUT /services/{id}** - Update service (owner/admin)
-**DELETE /services/{id}** - Delete service (owner/admin)
+> `POST/PUT/PATCH` means the route is registered as `EDITABLE`, so WordPress
+> accepts all three verbs on it.
 
-## 2. Orders (/orders)
+## Free controllers
 
-Handle order lifecycle, status changes, and order management.
+### Generic utility routes
 
-**GET /orders** - List orders (filtered by user role)
-**GET /orders/{id}** - Get order details
-**POST /orders/{id}/accept** - Accept order (vendor)
-**POST /orders/{id}/start** - Start work (vendor)
-**POST /orders/{id}/complete** - Complete order (buyer)
-**POST /orders/{id}/cancel** - Cancel order
+Registered by the API bootstrap rather than a dedicated controller.
 
-## 3. Reviews (/reviews)
+| Method | Route | Purpose |
+|--------|-------|---------|
+| GET | `/categories` | Service categories |
+| GET | `/tags` | Service tags |
+| GET | `/settings` | Public marketplace settings |
+| GET | `/me` | Current user summary |
+| GET | `/dashboard` | Dashboard payload for the current user |
+| GET | `/search` | Cross-entity search |
+| POST | `/batch` | Batch several reads into one request |
 
-Manage service and vendor reviews.
+### Services
 
-**GET /reviews** - List reviews
-**GET /reviews/{id}** - Get review details
-**POST /reviews** - Submit review (buyer, within review window)
-**PUT /reviews/{id}** - Update review (owner)
-**DELETE /reviews/{id}** - Delete review (owner/admin)
+| Method | Route |
+|--------|-------|
+| GET, POST | `/services` |
+| GET | `/services/grid` |
+| GET, POST/PUT/PATCH, DELETE | `/services/(?P<id>[\d]+)` |
+| GET | `/services/(?P<id>[\d]+)/packages` |
+| GET | `/services/(?P<id>[\d]+)/faqs` |
+| GET | `/services/(?P<id>[\d]+)/reviews` |
+| GET, POST | `/services/(?P<id>[\d]+)/addons` |
+| POST/PUT/PATCH, DELETE | `/services/(?P<id>[\d]+)/addons/(?P<addon_id>[\d]+)` |
 
-## 4. Vendors (/vendors)
+`/services/grid` returns the lighter payload used by the catalog grid. Prefer it
+over `/services` when you only need cards.
 
-Vendor profiles, statistics, and public information.
+### Orders
 
-**GET /vendors** - List vendors
-**GET /vendors/{id}** - Get vendor profile
-**PUT /vendors/{id}** - Update profile (own profile)
-**GET /vendors/{id}/services** - Get vendor's services
-**GET /vendors/{id}/stats** - Get vendor statistics
+| Method | Route |
+|--------|-------|
+| GET | `/orders` |
+| GET, POST/PUT/PATCH | `/orders/(?P<id>[\d]+)` |
+| GET, POST | `/orders/(?P<id>[\d]+)/messages` |
+| GET, POST | `/orders/(?P<id>[\d]+)/deliverables` |
+| POST | `/orders/(?P<id>[\d]+)/(?P<action>…)` |
+| GET, POST | `/orders/(?P<id>[\d]+)/requirements` |
+| POST | `/orders/(?P<id>[\d]+)/requirements/skip` |
+| DELETE | `/orders/(?P<id>[\d]+)/requirements/files/(?P<file_id>[\d]+)` |
+| GET | `/orders/(?P<id>[\d]+)/sub-orders` |
+| POST | `/orders/(?P<id>[\d]+)/pay` |
 
-## 5. Conversations (/conversations)
+Order transitions all go through **one** action route rather than a verb per
+transition. `(?P<action>…)` accepts exactly:
 
-Order messaging and communication.
+```
+accept | reject | start | deliver | complete | revision | cancel | dispute
+hold | resume | accept-cancellation | reject-cancellation
+```
 
-**GET /conversations/{order_id}** - Get messages for order
-**POST /conversations/{order_id}/message** - Send message
-**PUT /conversations/{message_id}/read** - Mark message as read
+```bash
+curl -X POST https://yoursite.com/wp-json/wpss/v1/orders/42/accept \
+  -H "X-WP-Nonce: $NONCE"
+```
 
-## 6. Disputes (/disputes)
+`/sub-orders` lists the milestone, tip, and extension sub-orders attached to a
+parent order -- see [Sub-Order Pattern](../../architecture/SUB_ORDER_PATTERN.md).
 
-Dispute management and resolution.
+### Milestones
 
-**GET /disputes** - List disputes
-**GET /disputes/{id}** - Get dispute details
-**POST /disputes** - Open dispute
-**POST /disputes/{id}/message** - Add evidence
-**POST /disputes/{id}/resolve** - Resolve dispute (admin)
+| Method | Route |
+|--------|-------|
+| GET, POST | `/orders/(?P<order_id>[\d]+)/milestones` |
+| GET, DELETE | `/milestones/(?P<id>[\d]+)` |
+| POST | `/milestones/(?P<id>[\d]+)/pay` |
+| POST | `/milestones/(?P<id>[\d]+)/submit` |
+| POST | `/milestones/(?P<id>[\d]+)/approve` |
+| POST | `/milestones/(?P<id>[\d]+)/decline` |
 
-## 7. Buyer Requests (/buyer-requests)
+The terminal actions are **approve** and **decline** (not "reject") -- the same
+vocabulary as the milestone hooks.
 
-Job posting and proposal system.
+### Extensions and tips
 
-**GET /buyer-requests** - List requests
-**GET /buyer-requests/{id}** - Get request details
-**POST /buyer-requests** - Post request (buyer)
-**PUT /buyer-requests/{id}** - Update request
-**DELETE /buyer-requests/{id}** - Delete request
+| Method | Route |
+|--------|-------|
+| GET, POST | `/orders/(?P<order_id>[\d]+)/extensions` |
+| POST | `/orders/(?P<order_id>[\d]+)/extension` |
+| POST | `/extensions/(?P<id>[\d]+)/decline` |
+| GET, POST | `/orders/(?P<order_id>[\d]+)/tip` |
+| GET | `/vendors/(?P<vendor_id>[\d]+)/tips` |
+| GET | `/vendors/(?P<vendor_id>[\d]+)/tips/total` |
 
-## 8. Proposals (/proposals)
+### Vendors
 
-Vendor proposals for buyer requests.
+| Method | Route |
+|--------|-------|
+| GET | `/vendors` |
+| GET | `/vendors/(?P<id>[\d]+)` |
+| GET, POST/PUT/PATCH | `/vendors/me` |
+| POST/PUT/PATCH | `/vendors/me/vacation` |
+| GET | `/vendors/(?P<id>[\d]+)/services` |
+| GET | `/vendors/(?P<id>[\d]+)/reviews` |
+| GET | `/vendors/(?P<id>[\d]+)/stats` |
+| POST | `/vendors/register` |
 
-**GET /proposals** - List proposals (filtered by user)
-**GET /proposals/{id}** - Get proposal details
-**POST /proposals** - Submit proposal (vendor)
-**PUT /proposals/{id}** - Update proposal
-**POST /proposals/{id}/accept** - Accept proposal (buyer)
-**DELETE /proposals/{id}** - Withdraw proposal (vendor)
+### Seller levels
 
-## 9. Notifications (/notifications)
+| Method | Route |
+|--------|-------|
+| GET | `/seller-levels` |
+| GET | `/seller-levels/(?P<level>[a-z_]+)` |
+| GET | `/vendors/me/level` |
+| GET | `/vendors/(?P<vendor_id>[\d]+)/level` |
 
-In-app notifications.
+### Portfolio
 
-**GET /notifications** - List notifications
-**GET /notifications/unread** - Get unread count
-**PUT /notifications/{id}/read** - Mark as read
-**POST /notifications/read-all** - Mark all as read
-**DELETE /notifications/{id}** - Delete notification
+| Method | Route |
+|--------|-------|
+| GET | `/vendors/(?P<vendor_id>[\d]+)/portfolio` |
+| POST | `/portfolio` |
+| GET, POST/PUT/PATCH, DELETE | `/portfolio/(?P<id>[\d]+)` |
+| POST | `/portfolio/(?P<id>[\d]+)/featured` |
+| POST | `/portfolio/reorder` |
 
-## 10. Portfolio (/portfolio)
+### Reviews
 
-Vendor portfolio items.
+| Method | Route |
+|--------|-------|
+| GET | `/reviews` |
+| GET, POST/PUT/PATCH, DELETE | `/reviews/(?P<id>[\d]+)` |
+| POST | `/orders/(?P<order_id>[\d]+)/review` |
+| POST | `/reviews/(?P<id>[\d]+)/reply` |
+| POST | `/reviews/(?P<id>[\d]+)/helpful` |
+| GET | `/services/(?P<service_id>[\d]+)/reviews/summary` |
+| GET | `/vendors/(?P<vendor_id>[\d]+)/reviews/summary` |
 
-**GET /portfolio** - List portfolio items
-**GET /portfolio/{id}** - Get portfolio item
-**POST /portfolio** - Add portfolio item (vendor)
-**PUT /portfolio/{id}** - Update portfolio item
-**DELETE /portfolio/{id}** - Delete portfolio item
+### Buyer requests and proposals
 
-## 11. Earnings (/earnings)
+| Method | Route |
+|--------|-------|
+| GET, POST | `/buyer-requests` |
+| GET | `/buyer-requests/mine` |
+| GET, POST/PUT/PATCH, DELETE | `/buyer-requests/(?P<id>[\d]+)` |
+| GET, POST | `/buyer-requests/(?P<id>[\d]+)/proposals` |
+| POST | `/buyer-requests/(?P<id>[\d]+)/proposals/(?P<proposal_id>[\d]+)/accept` |
+| POST | `/buyer-requests/(?P<id>[\d]+)/proposals/(?P<proposal_id>[\d]+)/reject` |
+| GET, POST | `/proposals` |
+| GET, POST/PUT/PATCH | `/proposals/(?P<id>[\d]+)` |
+| POST | `/proposals/(?P<id>[\d]+)/withdraw` |
+| GET | `/proposals/stats` |
 
-Vendor earnings and withdrawals.
+### Conversations
 
-**GET /earnings** - Get earnings summary (vendor)
-**GET /earnings/history** - Earnings history
-**GET /earnings/withdrawals** - Withdrawal history
-**POST /earnings/withdraw** - Request withdrawal
+| Method | Route |
+|--------|-------|
+| GET | `/conversations` |
+| GET | `/conversations/(?P<id>[\d]+)` |
+| GET, POST | `/conversations/(?P<id>[\d]+)/messages` |
+| POST | `/conversations/(?P<id>[\d]+)/read` |
+| GET | `/conversations/unread-count` |
+| GET | `/orders/(?P<order_id>[\d]+)/conversation` |
+| POST | `/orders/(?P<order_id>[\d]+)/conversation/messages` |
 
-## 12. Extension Requests (/extension-requests)
+### Disputes
 
-Order deadline extensions.
+| Method | Route |
+|--------|-------|
+| GET | `/disputes` |
+| GET | `/disputes/(?P<id>[\d]+)` |
+| GET, POST | `/orders/(?P<order_id>[\d]+)/dispute` |
+| POST | `/disputes/(?P<id>[\d]+)/respond` |
+| GET, POST | `/disputes/(?P<id>[\d]+)/evidence` |
+| GET | `/disputes/(?P<id>[\d]+)/timeline` |
+| POST | `/disputes/(?P<id>[\d]+)/escalate` |
+| POST | `/disputes/(?P<id>[\d]+)/cancel` |
+| POST | `/disputes/(?P<id>[\d]+)/resolve` |
+| POST | `/disputes/(?P<id>[\d]+)/assign` |
+| GET | `/disputes/options` |
 
-**GET /extension-requests** - List extension requests
-**POST /extension-requests** - Request extension (vendor)
-**POST /extension-requests/{id}/approve** - Approve (buyer)
-**POST /extension-requests/{id}/reject** - Reject (buyer)
+`resolve` and `assign` require dispute-management capability. See
+[Admin Mediation](../disputes-resolution/admin-dispute-mediation.md).
 
-## 13. Milestones (/milestones)
+### Earnings and withdrawals
 
-Milestone-based payments for complex projects.
+| Method | Route |
+|--------|-------|
+| GET | `/earnings/summary` |
+| GET | `/earnings/history` |
+| GET | `/wallet/transactions` |
+| GET, POST | `/withdrawals` |
+| POST/PUT/PATCH | `/withdrawals/(?P<id>[\d]+)` |
+| GET | `/withdrawals/methods` |
 
-**GET /milestones/{order_id}** - Get order milestones
-**POST /milestones** - Create milestone
-**POST /milestones/{id}/submit** - Submit milestone (vendor)
-**POST /milestones/{id}/approve** - Approve milestone (buyer)
-**POST /milestones/{id}/reject** - Reject milestone (buyer)
+### Payments (free)
 
-## 14. Tipping (/tips)
+| Method | Route |
+|--------|-------|
+| GET | `/payments/methods` |
+| POST | `/payments/create-intent` |
+| POST | `/payments/confirm` |
 
-Optional tipping system.
+These are the **standalone checkout** payment routes shipped in free. Pro
+replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#payments-pro).
 
-**POST /tips** - Send tip to vendor
-**GET /tips/sent** - Tips sent (buyer)
-**GET /tips/received** - Tips received (vendor)
+### Cart
 
-## 15. Seller Levels (/seller-levels)
+| Method | Route |
+|--------|-------|
+| GET | `/cart` |
+| POST | `/cart/add` |
+| DELETE | `/cart/(?P<item_key>[a-z0-9]+)` |
+| POST | `/cart/checkout` |
 
-Vendor tier system.
+Cart items are addressed by **`item_key`**, not by service id -- one service can
+appear more than once with different packages and add-ons.
 
-**GET /seller-levels** - List level definitions
-**GET /seller-levels/{id}** - Get level details
-**GET /seller-levels/progress** - Get vendor progress (own profile)
+### Authentication
 
-## 16. Moderation (/moderation)
+Authentication ships in the **free** plugin, not Pro.
 
-Content moderation tools (admin).
+| Method | Route |
+|--------|-------|
+| POST | `/auth/login` |
+| POST | `/auth/register` |
+| POST | `/auth/logout` |
+| GET | `/auth/me` |
+| POST | `/auth/forgot-password` |
+| POST | `/auth/change-password` |
+| POST | `/auth/devices` |
+| DELETE | `/auth/devices/(?P<device_id>[a-zA-Z0-9_-]+)` |
 
-**GET /moderation/services** - Services pending approval
-**POST /moderation/services/{id}/approve** - Approve service
-**POST /moderation/services/{id}/reject** - Reject service
-**GET /moderation/reviews** - Reviews pending moderation
-**POST /moderation/reviews/{id}/approve** - Approve review
+`/auth/devices` registers a device for push notifications -- what a mobile
+client calls after login.
 
-## 17. Favorites (/favorites)
+### Favorites, media, notifications, moderation, audit log
 
-Buyer favorites/wishlist.
+| Method | Route |
+|--------|-------|
+| GET | `/favorites` |
+| POST, DELETE | `/favorites/(?P<service_id>[\d]+)` |
+| GET | `/services/(?P<service_id>[\d]+)/favorited` |
+| POST | `/media` |
+| GET, DELETE | `/media/(?P<id>[\d]+)` |
+| GET | `/notifications` |
+| GET | `/notifications/unread-count` |
+| POST | `/notifications/(?P<id>[\d]+)/read` |
+| POST | `/notifications/read-all` |
+| DELETE | `/notifications/(?P<id>[\d]+)` |
+| GET | `/moderation/pending` |
+| GET | `/moderation/count` |
+| GET | `/moderation/(?P<service_id>[\d]+)` |
+| POST | `/moderation/(?P<service_id>[\d]+)/approve` |
+| POST | `/moderation/(?P<service_id>[\d]+)/reject` |
+| GET | `/audit-log` |
 
-**GET /favorites** - List favorites (buyer)
-**POST /favorites** - Add to favorites
-**DELETE /favorites/{service_id}** - Remove from favorites
-
-## 18. Media (/media)
-
-File upload and management.
-
-**POST /media/upload** - Upload file
-**GET /media/{id}** - Get file info
-**DELETE /media/{id}** - Delete file
-
-## 19. Cart (/cart)
-
-Shopping cart management.
-
-**GET /cart** - Get cart contents
-**POST /cart/add** - Add service to cart
-**PUT /cart/update** - Update cart item
-**DELETE /cart/remove** - Remove from cart
-**POST /cart/clear** - Clear cart
-
-## 20. Auth (/auth)
-
-Authentication and session management **[PRO]**.
-
-**POST /auth/login** - Login user
-**POST /auth/register** - Register new user
-**POST /auth/logout** - Logout
-**GET /auth/validate** - Validate token
-**POST /auth/refresh** - Refresh token
-
-## 21. Realtime (/realtime)
+### Realtime
 
 Private-channel authorization for the realtime (WebSocket) layer. The plugin speaks the Pusher protocol, so this works with Pusher.com or any self-hosted Pusher-compatible server (e.g. Soketi). Client connection settings (key, host, cluster, port, TLS) are exposed under the `realtime` key of `GET /settings`; the app secret never leaves the server.
 
@@ -237,9 +311,128 @@ curl -X POST \
 - `notification.created` on `private-wpss-user-{ID}` - payload `{ id, type }`
 - `message.created` on `private-wpss-order-{ID}` and the recipient's `private-wpss-user-{ID}` - payload `{ order_id, sender_id, message_id, excerpt }`
 
+## Pro controllers **[PRO]**
+
+Available only when WP Sell Services Pro is active with a valid license.
+
+### Payments (Pro)
+
+| Method | Route |
+|--------|-------|
+| GET | `/payments/methods` |
+| POST | `/payments/stripe/create-intent` |
+| POST | `/payments/stripe/confirm` |
+| POST | `/payments/paypal/create-order` |
+| POST | `/payments/paypal/capture` |
+| POST | `/payments/razorpay/create-order` |
+| POST | `/payments/razorpay/verify` |
+| POST | `/payments/offline/submit` |
+| GET | `/payments/(?P<order_id>[\d]+)/status` |
+
+### Wallet
+
+| Method | Route |
+|--------|-------|
+| GET | `/wallet/balance` |
+| GET | `/wallet/transactions` |
+| POST | `/wallet/withdraw` |
+| GET | `/wallet/withdrawals` |
+| GET | `/wallet/providers` |
+
+### Stripe Connect
+
+| Method | Route |
+|--------|-------|
+| POST | `/stripe-connect/onboard` |
+| GET | `/stripe-connect/status` |
+| POST | `/stripe-connect/disconnect` |
+| GET | `/stripe-connect/accounts` |
+| GET | `/stripe-connect/accounts/(?P<vendor_id>[\d]+)` |
+| GET, POST/PUT/PATCH | `/stripe-connect/settings` |
+
+### PayPal mass payouts
+
+| Method | Route |
+|--------|-------|
+| GET, POST | `/paypal-payouts/batches` |
+| GET | `/paypal-payouts/batches/(?P<id>[\d]+)` |
+| POST | `/paypal-payouts/batches/(?P<id>[\d]+)/sync` |
+| GET | `/paypal-payouts/pending` |
+| GET, POST/PUT/PATCH | `/paypal-payouts/profile` |
+
+`/pending` is what an owner exports to pay vendors manually; `sync` reconciles a
+submitted batch back against the wallet ledger.
+
+### Commission rules
+
+| Method | Route |
+|--------|-------|
+| GET, POST | `/commission-rules` |
+| GET | `/commission-rules/preview` |
+| GET, POST/PUT/PATCH, DELETE | `/commission-rules/(?P<id>[\d]+)` |
+
+`preview` resolves which rule *would* apply to a given vendor/category/amount
+without persisting anything -- use it to explain a rate in your own UI.
+
+### Vendor subscription plans
+
+| Method | Route |
+|--------|-------|
+| GET, POST | `/subscription-plans` |
+| GET, POST/PUT/PATCH, DELETE | `/subscription-plans/(?P<id>[\d]+)` |
+| GET | `/subscription-plans/my-subscription` |
+| POST | `/subscription-plans/subscribe` |
+
+### Recurring services
+
+| Method | Route |
+|--------|-------|
+| GET, POST | `/recurring-services` |
+| GET, DELETE | `/recurring-services/(?P<id>[\d]+)` |
+| GET | `/recurring-services/my-subscriptions` |
+| GET | `/recurring-services/vendor-subscriptions` |
+| POST | `/recurring-services/(?P<id>[\d]+)/cancel` |
+| POST | `/recurring-services/(?P<id>[\d]+)/pause` |
+| POST | `/recurring-services/(?P<id>[\d]+)/resume` |
+
+Recurring services sit behind a default-off feature flag in 1.3.0. The routes
+register, but the feature's UI is hidden until you opt in -- see
+[Recurring Services](../order-management/recurring-services.md).
+
+### Analytics
+
+| Method | Route |
+|--------|-------|
+| GET | `/analytics/vendor/overview` |
+| GET | `/analytics/vendor/revenue` |
+| GET | `/analytics/vendor/orders` |
+| GET | `/analytics/vendor/services` |
+| GET | `/analytics/export` |
+
+### Cloud storage
+
+| Method | Route |
+|--------|-------|
+| POST | `/storage/upload` |
+| GET | `/storage/(?P<file_id>[\d]+)/url` |
+| DELETE | `/storage/(?P<file_id>[\d]+)` |
+| GET | `/storage/providers` |
+
+`/storage/{file_id}/url` returns a time-limited signed URL. Do not cache it past
+its expiry.
+
+### White label
+
+| Method | Route |
+|--------|-------|
+| GET | `/white-label` |
+
+Returns the active branding (name, logo, colors) so a headless or mobile client
+can render the same identity as the site.
+
 ## Related Documentation
 
 - [REST API Overview](rest-api-overview.md) - Authentication, error handling, pagination, CORS
 - [Hooks and Filters](hooks-filters.md) - Available action and filter hooks
 - [Custom Integrations](custom-integrations.md) - Building custom controllers
-- [Theme Integration](theme-integration.md) - Frontend integration
+- [Money Flow](../../architecture/MONEY-FLOW.md) - How the payment routes settle

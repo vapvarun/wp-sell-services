@@ -57,7 +57,7 @@ Some services do not need upfront details from the buyer. If a vendor does not a
 
 ## Requirement Timeout Settings
 
-You can control what happens if a buyer never submits their requirements. Go to **Settings > Orders** and adjust these:
+You can control what happens if a buyer never submits their requirements. Go to **Settings > Orders & Disputes** and adjust these:
 
 **Requirements Timeout Days** -- How many days to wait before taking action. Set to 0 to disable (the order waits indefinitely).
 
@@ -73,7 +73,7 @@ You can control what happens if a buyer never submits their requirements. Go to 
 
 ![Completed requirements view showing all submitted information](../images/frontend-requirements-completed.png)
 
-**Admins** can view requirements from the order detail page in **WP Admin > WP Sell Services > Orders**.
+**Admins** can view requirements from the order detail page in **Sell Services > Orders**.
 
 ## Tips
 

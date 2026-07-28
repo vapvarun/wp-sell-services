@@ -8,7 +8,7 @@ Configure the basics of your marketplace -- your platform name, currency, and wh
 
 Give your marketplace a custom name that appears throughout the platform: in emails, page headers, notifications, and payment receipts.
 
-1. Go to **WP Sell Services > Settings > General**
+1. Go to **Sell Services > Settings > General**
 2. Enter your marketplace name in the **Platform Name** field
 3. Click **Save Changes**
 
@@ -88,7 +88,7 @@ The Pro version lets you plug into WooCommerce, Easy Digital Downloads, FluentCa
 
 ### Switching Platforms
 
-You can change platforms at any time under **Settings > General > E-Commerce Integration**. Keep in mind:
+You can change platforms at any time under **Settings > General**. Keep in mind:
 
 - Existing orders stay with the original platform
 - New orders use the new platform

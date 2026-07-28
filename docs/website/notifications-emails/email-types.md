@@ -1,6 +1,6 @@
 # Email Notifications
 
-WP Sell Services sends 27 email notifications to keep buyers, vendors, and admins informed at every stage. Each email can be individually enabled or disabled from your settings. Every email has both an HTML and a plain text version.
+WP Sell Services emails buyers, vendors, and admins at every stage of an order. **23 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all 23 are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable. Every email has both an HTML and a plain text version.
 
 ![Email Notification Settings](../images/settings-emails-tab.png)
 
@@ -63,7 +63,7 @@ These alert you to actions that need your attention.
 
 Every email type can be turned on or off individually.
 
-1. Go to **WP Sell Services > Settings > Emails**
+1. Go to **Sell Services > Settings > Emails**
 2. You will see a list of all notification types with checkboxes
 3. Uncheck any email you do not want sent
 4. Click **Save Changes**

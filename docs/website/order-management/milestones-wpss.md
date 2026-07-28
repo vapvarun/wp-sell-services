@@ -114,8 +114,6 @@ drops you into the order conversation with a reference to that phase so
 the vendor knows what you're talking about. There's no separate reject
 status; revisions are a conversation.
 
-![Review and approve a milestone delivery](../images/order-management/milestone-approve-wpss.png)
-
 ## Project completion
 
 Once the last phase is approved, the whole project flips to **Completed**

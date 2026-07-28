@@ -4,7 +4,7 @@ Anyone on your marketplace can apply to become a vendor and start selling servic
 
 ## Three Registration Modes
 
-You control how vendors join your marketplace from **Settings > Vendor > Vendor Registration**:
+You control how vendors join your marketplace from **Settings > Vendors**:
 
 ### Open Registration
 
@@ -14,7 +14,7 @@ Anyone can sign up and start selling immediately. Their account is activated rig
 
 Users can submit a vendor application, but their account stays in "Pending" status until you review and approve it. This gives you quality control over who sells on your marketplace. You will receive a notification when new applications come in.
 
-**To review applications:** Go to **WP Admin > WP Sell Services > Vendors**, filter by "Pending" status, and approve or reject each application. The applicant receives an email letting them know the outcome.
+**To review applications:** Go to **Sell Services > Vendors**, filter by "Pending" status, and approve or reject each application. The applicant receives an email letting them know the outcome.
 
 ### Closed Registration
 

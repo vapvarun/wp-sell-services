@@ -16,7 +16,7 @@ Manual orders work exactly like regular orders once created. Vendors and buyers 
 
 ## How to Create a Manual Order
 
-Go to **WP Sell Services > Orders** and click **Create Order**. The form walks you through each step:
+Go to **Sell Services > Orders** and click **Create Order**. The form walks you through each step:
 
 ### 1. Pick the Service and Package
 

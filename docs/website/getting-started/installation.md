@@ -8,10 +8,13 @@ Before you install, make sure your hosting meets these minimums:
 
 | Requirement | Minimum |
 |-------------|---------|
-| WordPress | 6.0 or higher |
+| WordPress | 6.4 or higher |
 | PHP | 8.1 or higher |
 
 Most modern WordPress hosts already meet these requirements. If you are unsure, check with your hosting provider.
+
+WP Sell Services Pro has the **same** minimums, and must run the same version
+number as the free plugin -- the two are released in lockstep.
 
 ## Install the Plugin
 
@@ -49,7 +52,7 @@ The Pro version adds premium features on top of the free plugin. Both run togeth
 2. Go to **Plugins > Add New > Upload Plugin**
 3. Upload `wp-sell-services-pro.zip`
 4. Click **Install Now**, then **Activate Plugin**
-5. Go to **WP Sell Services > Settings > License**
+5. Go to **Sell Services > License**
 6. Enter your license key and click **Activate License**
 
 Pro features become available immediately -- no migration or extra setup needed.

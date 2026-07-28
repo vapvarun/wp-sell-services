@@ -20,7 +20,7 @@ EDD is a popular choice if your site focuses on digital products and services. I
 
 1. Install and activate Easy Digital Downloads
 2. Configure your payment gateways in **Downloads > Settings**
-3. Go to **WP Sell Services > Settings > General**
+3. Go to **Sell Services > Settings > General**
 4. Select **Easy Digital Downloads** as your e-commerce platform
 5. Click **Save Changes**
 
@@ -36,7 +36,7 @@ FluentCart is a newer, lightweight checkout plugin that focuses on speed and sim
 
 1. Install and activate FluentCart
 2. Configure Stripe or PayPal in **FluentCart > Settings**
-3. Go to **WP Sell Services > Settings > General**
+3. Go to **Sell Services > Settings > General**
 4. Select **FluentCart** as your e-commerce platform
 5. Click **Save Changes**
 
@@ -50,7 +50,7 @@ SureCart is ideal if you need subscription billing or automated tax calculation.
 
 1. Install SureCart and create a free account at SureCart.com
 2. Connect your Stripe account through SureCart settings
-3. Go to **WP Sell Services > Settings > General**
+3. Go to **Sell Services > Settings > General**
 4. Select **SureCart** as your e-commerce platform
 5. Click **Save Changes**
 
@@ -71,7 +71,7 @@ Here is a practical guide:
 You can change platforms at any time:
 
 1. Finish all active orders on your current platform first
-2. Go to **WP Sell Services > Settings > General**
+2. Go to **Sell Services > Settings > General**
 3. Select your new platform and save
 4. Reconfigure payment gateways in the new platform
 5. Test checkout thoroughly

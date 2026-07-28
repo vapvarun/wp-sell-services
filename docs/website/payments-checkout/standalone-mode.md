@@ -32,10 +32,10 @@ Buyers can purchase services from multiple vendors in a single checkout. Each se
 
 ## Setting Up Standalone Mode
 
-1. Go to **WP Sell Services > Settings > General**
+1. Go to **Sell Services > Settings > General**
 2. Under **E-commerce Platform**, select **Standalone Mode**
 3. Click **Save Changes**
-4. Go to **Settings > Gateways** and enable at least one payment gateway
+4. Go to **Settings > Payment Gateways** and enable at least one payment gateway
 5. Test the full checkout with a sample service
 
 ## Available Payment Gateways

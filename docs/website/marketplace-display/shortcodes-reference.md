@@ -1,151 +1,258 @@
-# Displaying Your Marketplace
+# Shortcodes Reference
 
-WP Sell Services gives you 20 ready-made page elements to build every part of your marketplace. Add a services catalog, vendor directory, user dashboard, buyer requests board, and more -- all by placing elements on your WordPress pages.
+WP Sell Services registers **19 shortcodes**, and WP Sell Services Pro adds one
+more. Together they build every part of your marketplace -- catalog, vendor
+directory, dashboard, buyer requests board, checkout -- with no code.
 
----
+Paste a shortcode into any page or widget, publish, and it works. Every one is
+also available as a block; see [Block Editor Elements](gutenberg-blocks.md).
 
-## How It Works
+The plugin auto-creates the most important pages during setup, so you may
+already have most of these in place. See [Pages Setup](../platform-settings/pages-setup.md).
 
-Each page element is a building block you can place on any page using either the block editor or a simple tag. The plugin also auto-creates the most important pages during setup, so you may already have everything in place.
+## Quick reference
 
-You do not need to write any code. Just add the element to a page, publish, and it works.
+| Shortcode | What it renders |
+|-----------|-----------------|
+| `[wpss_services]` | Services catalog grid |
+| `[wpss_featured_services]` | Featured services only |
+| `[wpss_service_search]` | Search form with category dropdown |
+| `[wpss_service_categories]` | Category grid |
+| `[wpss_vendors]` | Vendor directory grid |
+| `[wpss_top_vendors]` | Highest-rated vendors |
+| `[wpss_vendor_profile]` | One vendor's full profile |
+| `[wpss_buyer_requests]` | Open buyer requests board |
+| `[wpss_post_request]` | Form to submit a buyer request |
+| `[wpss_dashboard]` | Unified buyer/vendor dashboard |
+| `[wpss_my_orders]` | The user's order list |
+| `[wpss_order_details]` | One order's detail view |
+| `[wpss_service_wizard]` | Service creation wizard |
+| `[wpss_login]` | Login form |
+| `[wpss_register]` | Registration form |
+| `[wpss_vendor_registration]` | Become-a-vendor form |
+| `[wpss_cart]` | Shopping cart |
+| `[wpss_checkout]` | Standalone checkout |
+| `[wpss_account]` | Standalone account page |
+| `[wpss_currency_switcher]` **[PRO]** | Shopper currency picker |
 
----
+## Marketplace pages
 
-## Marketplace Pages
+### `[wpss_services]` -- Services catalog
 
-These elements power the public-facing browsing experience.
+A grid of published services with thumbnails, prices, ratings, and vendor info.
+The main browsing page of your marketplace.
 
-### Services Catalog
+| Attribute | Default | Notes |
+|-----------|---------|-------|
+| `category` | *(empty)* | Limit to a category |
+| `tag` | *(empty)* | Limit to a tag |
+| `vendor` | *(empty)* | Limit to one vendor |
+| `limit` | `12` | Services shown |
+| `columns` | `4` | Grid columns |
+| `orderby` | `date` | `date`, `title`, `price`, `rating`, `sales` |
+| `order` | `DESC` | `ASC` or `DESC` |
+| `featured` | *(empty)* | `true` to show featured only |
 
-Displays a grid of all published services with thumbnails, prices, ratings, and vendor info. This is the main browsing page of your marketplace -- the equivalent of a product catalog. Supports filtering by category, tag, or vendor, and can be sorted by date, price, rating, or sales.
+```
+[wpss_services category="design" limit="8" columns="4" orderby="rating"]
+```
 
-### Service Search Bar
+### `[wpss_featured_services]` -- Featured services
 
-A search form with a keyword field and category dropdown. Place it on your homepage or at the top of your services page so visitors can quickly find what they need.
+Identical to `[wpss_services]` with `featured` forced on, so it accepts **all the
+same attributes**. Use it for homepage spotlights and Editor's Picks.
 
-### Service Categories
+```
+[wpss_featured_services limit="4" columns="4"]
+```
 
-Shows your service categories in a visual grid with icons and service counts. Great for your homepage or a dedicated "Browse by Category" section. Visitors click a category to see all services within it.
+### `[wpss_service_search]` -- Search bar
 
-### Featured Services
+A search form with a keyword field and category dropdown. Put it on your homepage
+or above your services grid.
 
-Highlights services you have marked as featured. Perfect for homepage spotlights, promotional sections, or "Editor's Picks" areas. Only shows services with the featured flag enabled.
+| Attribute | Default |
+|-----------|---------|
+| `placeholder` | `Search services...` |
+| `show_categories` | `true` |
+| `button_text` | `Search` |
+| `action` | the service archive URL |
 
-### Buyer Requests Board
+```
+[wpss_service_search placeholder="What do you need?" button_text="Find a pro"]
+```
 
-Lists all open buyer requests so vendors can browse projects and submit proposals. You can filter by category and budget range.
+### `[wpss_service_categories]` -- Category grid
 
-### Post a Request Form
+Your categories as a visual grid with counts.
 
-The form buyers use to submit a new request. Place it on a dedicated "Post a Request" page or alongside the requests board. Requires the user to be logged in.
+| Attribute | Default | Notes |
+|-----------|---------|-------|
+| `parent` | `0` | Parent term id; `0` for top level |
+| `show_count` | `true` | Show the service count |
+| `columns` | `4` | Grid columns |
+| `hide_empty` | `true` | Hide categories with no services |
+| `limit` | `12` | Categories shown |
 
----
+### `[wpss_buyer_requests]` -- Buyer requests board
 
-## User Pages
+Open buyer requests so vendors can browse projects and submit proposals. Also
+works as a compact sidebar listing -- just lower the `limit`.
 
-These elements power the logged-in user experience.
+| Attribute | Default |
+|-----------|---------|
+| `limit` | `10` |
+| `category` | *(empty)* |
+| `budget_min` | *(empty)* |
+| `budget_max` | *(empty)* |
 
-### Unified Dashboard
+```
+[wpss_buyer_requests limit="5" budget_min="500"]
+```
 
-The single most important page element. It creates a full-featured dashboard that automatically adapts to the user's role:
+### `[wpss_post_request]` -- Post a request form
 
-- **Buyers** see their orders, requests, messages, favorites, and profile settings
-- **Vendors** see their services, sales orders, earnings, analytics, messages, and portfolio
-- **Dual-role users** see both buyer and vendor sections
+The form buyers use to submit a new request. Requires the user to be logged in.
+No attributes.
 
-One page, one element, serves everyone.
+## Vendor elements
 
-### My Orders
+### `[wpss_vendors]` -- Vendor directory
 
-Shows the user's order list. Can be configured to show buyer orders (services purchased) or vendor orders (services sold). Includes status filtering and pagination.
+A grid of vendor profiles with names, avatars, ratings, and review counts.
 
-### Order Details
+| Attribute | Default | Notes |
+|-----------|---------|-------|
+| `limit` | `12` | Vendors shown |
+| `columns` | `4` | Grid columns |
+| `orderby` | `rating` | `rating`, `date`, `name`, `sales` |
+| `order` | `DESC` | `ASC` or `DESC` |
 
-Displays the full details of a specific order. Used on a dedicated page -- the order ID comes from the URL automatically. Only the buyer, vendor, or admin involved in the order can view it.
+### `[wpss_top_vendors]` -- Top vendors
 
-### Login Form
+`[wpss_vendors]` with `orderby="rating"` and `order="DESC"` forced. Accepts
+`limit` and `columns`.
 
-A simple login form using WordPress authentication. Shows an "already logged in" message for authenticated users. You can set a custom redirect URL for after login.
+```
+[wpss_top_vendors limit="6" columns="3"]
+```
 
-### Registration Form
+### `[wpss_vendor_profile]` -- Vendor profile
 
-A user registration form with username, email, and password fields. Requires WordPress registration to be enabled in Settings > General.
+One vendor's full profile page.
 
-### Vendor Registration
+| Attribute | Default |
+|-----------|---------|
+| `id` | the `vendor_id` query var |
 
-The registration form specifically for users who want to become vendors. This is different from the general registration form -- use this on your "Become a Vendor" or "Start Selling" page.
+On a dedicated profile page the id comes from the URL, so you can usually omit
+it. If no id is found, the shortcode renders "Vendor not found."
 
-### Shopping Cart
+## User pages
 
-Displays the shopping cart where buyers can review selected services, packages, and add-ons before proceeding to checkout. Shows item details, quantities, prices, and a total. Buyers can remove items or proceed to the checkout page.
+### `[wpss_dashboard]` -- Unified dashboard
 
-### Service Checkout
+The single most important element. One page that adapts to the visitor's role:
 
-The checkout flow for standalone mode. Displays billing details, order review, payment method selection, and the Place Order button. This is the page where buyers complete their purchase when using the built-in checkout system (not WooCommerce).
+- **Buyers** see orders, requests, messages, favorites, and profile settings
+- **Vendors** see services, sales orders, earnings, analytics, messages, and portfolio
+- **Dual-role users** see both
 
-### My Account
+One page, one shortcode, serves everyone. No attributes.
 
-An account management page for standalone mode. Shows the logged-in user's profile information, saved addresses, and account settings. This is separate from the vendor dashboard and focuses on personal account details.
+### `[wpss_my_orders]` -- Order list
 
-### Service Creation Wizard
+| Attribute | Default | Notes |
+|-----------|---------|-------|
+| `type` | `customer` | `customer` (bought) or `vendor` (sold) |
+| `status` | *(empty)* | Filter to one status |
+| `limit` | `20` | Orders per page |
 
-The multi-step service creation form available to vendors. Guides vendors through creating a new service with steps for title, description, category, pricing packages, add-ons, requirements, media uploads, and FAQs. Only visible to users with the vendor role.
+```
+[wpss_my_orders type="vendor" status="in_progress"]
+```
 
----
+### `[wpss_order_details]` -- Order detail
 
-## Widget Elements
+The full details of one order. The order id comes from the URL. Only the buyer,
+the vendor, or an admin on that order can view it. No attributes.
 
-Smaller, focused elements perfect for sidebars, footers, or supplementary sections.
+### `[wpss_service_wizard]` -- Service creation wizard
 
-### Vendor Directory
+The multi-step form vendors use to create a service.
 
-A grid of vendor profiles showing names, avatars, ratings, and review counts. Sort by rating, join date, name, or sales volume. Use it for a dedicated "Our Vendors" page or a sidebar widget.
+| Attribute | Default | Notes |
+|-----------|---------|-------|
+| `id` | `0` | Pass a service id to **edit** instead of create |
 
-### Top Vendors
+## Accounts and checkout
 
-Highlights the highest-rated vendors on your marketplace. Great for homepage sections like "Our Best Sellers" or sidebar widgets that showcase top talent.
+### `[wpss_login]` -- Login form
 
-### Vendor Profile
+| Attribute | Default |
+|-----------|---------|
+| `redirect` | *(empty)* |
 
-Displays a specific vendor's full profile page. Typically used on a dedicated profile page where the vendor ID comes from the URL. Can also be set to show a specific vendor by ID.
+Shows an "already logged in" message to authenticated users.
 
-### Buyer Request Listing
+### `[wpss_register]` -- Registration form
 
-A compact listing of active buyer requests with budget and category info. Useful for sidebar placements or "Latest Opportunities" sections on vendor-facing pages.
+Username, email, and password. **Requires WordPress registration to be enabled**
+in Settings > General ("Anyone can register") -- otherwise the form cannot create
+accounts. No attributes.
 
----
+### `[wpss_vendor_registration]` -- Become a vendor
 
-## Where to Use What
+The vendor-specific registration form. Different from `[wpss_register]` -- use
+this on your "Become a Vendor" page. What it does depends on your registration
+mode (open, requires approval, or closed); see
+[Vendor Settings](../vendor-system/vendor-settings.md). No attributes.
 
-| Goal | Recommended Element |
-|------|-------------------|
-| Main marketplace browsing page | Services Catalog + Service Search Bar |
-| Homepage | Featured Services + Service Categories + Top Vendors |
-| User account area | Unified Dashboard |
-| Vendor recruitment page | Vendor Registration |
-| Buyer request marketplace | Buyer Requests Board + Post a Request Form |
-| Vendor directory page | Vendor Directory |
-| Sidebar | Service Search Bar, Top Vendors, or Buyer Request Listing |
+### `[wpss_cart]` -- Shopping cart
 
----
+Selected services, packages, and add-ons with a total, before checkout. Buyers
+can remove items or continue. No attributes.
+
+### `[wpss_checkout]` -- Standalone checkout
+
+Billing details, order review, payment method, and Place Order. This is the
+checkout for **standalone mode** -- not used when WooCommerce or another
+e-commerce platform handles checkout. No attributes.
+
+### `[wpss_account]` -- My account
+
+Account management for standalone mode: profile, saved addresses, settings.
+Separate from the vendor dashboard. No attributes.
+
+## Pro
+
+### `[wpss_currency_switcher]` **[PRO]**
+
+A currency picker for shoppers. The selection is a **display-only** hint -- every
+order and payout stays in your base currency. See
+[Display Currency](../payments-checkout/display-currency.md). No attributes.
+
+## Where to use what
+
+| Goal | Recommended elements |
+|------|---------------------|
+| Main browsing page | `[wpss_services]` + `[wpss_service_search]` |
+| Homepage | `[wpss_featured_services]` + `[wpss_service_categories]` + `[wpss_top_vendors]` |
+| User account area | `[wpss_dashboard]` |
+| Vendor recruitment page | `[wpss_vendor_registration]` |
+| Buyer request marketplace | `[wpss_buyer_requests]` + `[wpss_post_request]` |
+| Vendor directory page | `[wpss_vendors]` |
+| Sidebar | `[wpss_service_search]`, `[wpss_top_vendors]`, `[wpss_buyer_requests limit="5"]` |
 
 ## Tips
 
-- **Start with auto-created pages.** During setup, the plugin creates the essential pages for you. Customize from there.
-- **Combine multiple elements** on a single page for richer layouts. For example, put the search bar above the service categories, then the service grid below.
-- **All elements work in widgets too.** Add them to sidebars or footer areas for compact displays.
-- **Elements also work as Gutenberg blocks.** See [Block Editor Elements](gutenberg-blocks.md) for the drag-and-drop alternative.
+- **Start with the auto-created pages.** Setup creates the essentials; customise from there.
+- **Combine elements** on one page -- search bar, then categories, then the grid.
+- **All of these work in widgets**, so sidebars and footers are fair game.
+- **Prefer blocks if you use the block editor** -- same features, visual controls. See [Block Editor Elements](gutenberg-blocks.md).
 
----
+## Related
 
-## Troubleshooting
-
-**Element not showing anything?**
-Make sure there is content to display -- published services, registered vendors, or open requests. An empty marketplace will show empty grids.
-
-**Page showing raw text instead of the element?**
-Check that the plugin is active, the page is published (not draft), and clear your site cache.
-
-**Styling looks off?**
-Some themes may need minor CSS adjustments. Check [Customizing the Look](template-overrides.md) for details on template customization.
+- [Block Editor Elements](gutenberg-blocks.md)
+- [Pages Setup & Auto-Creation](../platform-settings/pages-setup.md)
+- [Template Overrides](template-overrides.md)

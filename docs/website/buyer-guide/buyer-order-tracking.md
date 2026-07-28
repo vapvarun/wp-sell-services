@@ -55,7 +55,7 @@ If you take too long (default: 7 days), the marketplace may either auto-start th
 
 ---
 
-### Delivery Submitted
+### Pending Approval
 
 **What it means:** The vendor has submitted their completed work for your review.
 
@@ -156,7 +156,7 @@ Make sure your email address is correct in your profile, and check your spam fol
 | Pending Requirements | Submit project details |
 | In Progress | Message vendor |
 | Late | Message vendor, open dispute |
-| Delivery Submitted | Accept, request revision, or dispute |
+| Pending Approval | Accept, request revision, or dispute |
 | Revision Requested | Wait, message vendor |
 | Completed | Leave review, download files, tip vendor |
 | Disputed | Submit evidence |

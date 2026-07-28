@@ -6,7 +6,7 @@ The earnings dashboard gives every vendor a clear view of their income -- what t
 
 ## What Vendors See
 
-When a vendor goes to **Dashboard > Earnings**, they see these key numbers at a glance:
+When a vendor goes to **Dashboard > Earnings & Payouts**, they see these key numbers at a glance:
 
 | Metric | What It Means |
 |--------|-------------|
@@ -25,20 +25,20 @@ There is also a count of **Completed Orders** so vendors can see their overall a
 This is the amount a vendor can actually withdraw. For earnings to appear here, three things must be true:
 
 1. The order is **completed** (buyer accepted delivery)
-2. The **clearance period** has passed (default: 14 days after completion)
+2. The **clearance period** has passed (default: 0 days, so this is immediate unless your admin raised it)
 3. The amount is **not already** in a pending withdrawal request
 
 ### Pending Clearance
 
 These are earnings from completed orders that have not yet passed the clearance period. Think of it as a safety buffer -- it gives buyers time to report issues before funds are released.
 
-For example, if an order completed on January 15 and the clearance period is 14 days, those earnings become available on January 29.
+For example, if an order completed on January 15 and your admin set the clearance period to 14 days, those earnings become available on January 29. At the default of 0, they are available on January 15.
 
 ### Tips
 
 Tips from buyers are tracked separately. They are:
-- 100% commission-free (the vendor keeps everything)
-- Available immediately (no clearance period)
+- Commissioned at your marketplace's normal rate unless the admin set a separate tip rate (which can be `0`, giving the vendor 100%)
+- Subject to the same clearance period as other earnings -- which is 0 days by default, so normally available immediately
 - Shown as a separate line in the dashboard
 
 ## Earnings History
@@ -77,7 +77,7 @@ See [Withdrawals](withdrawals.md) for the full withdrawal process.
 
 ## Clearance Period
 
-The clearance period is set by the marketplace admin. The default is 14 days, but it can be adjusted from 0 to 90 days in **Settings > Payments > Payout Settings**.
+The clearance period is set by the marketplace admin. It defaults to 0 days and can be raised to 90 in **Settings > Payouts**.
 
 A clearance period protects both buyers and the platform by allowing time for:
 - Buyers to report quality issues after delivery

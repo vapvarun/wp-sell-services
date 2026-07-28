@@ -6,7 +6,7 @@ Keep your marketplace quality high by reviewing vendor services before they go l
 
 ## Turning On Moderation
 
-1. Go to **WP Sell Services > Settings > Vendor**
+1. Go to **Sell Services > Settings > Vendors**
 2. Check **Require Service Moderation**
 3. Click **Save Changes**
 
@@ -28,7 +28,7 @@ If you reject a service, the vendor can edit it and resubmit. The resubmitted se
 
 ## Reviewing Pending Services
 
-Go to **WP Sell Services > Moderation** to see all services waiting for your review. The moderation menu shows a badge with the pending count so you never miss new submissions.
+Go to **Sell Services > Moderation** to see all services waiting for your review. The moderation menu shows a badge with the pending count so you never miss new submissions.
 
 ### What You See in the Queue
 

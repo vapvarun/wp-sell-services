@@ -12,7 +12,7 @@ No. WP Sell Services works completely standalone with its own built-in checkout,
 
 ### How do I change the commission rate?
 
-Go to **WP Sell Services > Settings > Payments**. You can set a platform-wide commission percentage. With Pro, you can also set per-vendor commission rates and tiered commission rules.
+Go to **Sell Services > Settings > Commission & Tax** and set a platform-wide percentage (0-50%, default 10%). Per-vendor rates are also included free -- open a vendor under **Sell Services > Vendors** and give them their own rate, which overrides the global one. Pro adds **tiered** rules on top: rates that resolve automatically by category, seller level, or sales volume.
 
 ### Can vendors set their own prices?
 
@@ -60,12 +60,12 @@ Yes. WP Sell Services works on WordPress multisite. Each site in the network run
 ### Vendor registration not working
 
 1. **Enable WordPress registration** -- Go to **Settings > General** and check "Anyone can register"
-2. **Enable vendor registration** -- Go to **WP Sell Services > Settings > Vendors** and enable it
-3. **Check approval mode** -- If admin approval is required, approve pending vendors at **WP Sell Services > Vendors > Pending**
+2. **Enable vendor registration** -- Go to **Sell Services > Settings > Vendors** and enable it
+3. **Check approval mode** -- If admin approval is required, approve pending vendors at **Sell Services > Vendors > Pending**
 
 ### Pages showing 404 errors
 
-Go to **Settings > Permalinks** and click Save Changes. This refreshes URL routing. Also verify the page is published and assigned in **WP Sell Services > Settings > Pages**.
+Go to **Settings > Permalinks** and click Save Changes. This refreshes URL routing. Also verify the page is published and assigned in **Sell Services > Settings > Pages**.
 
 ### Orders not appearing in vendor dashboard
 
@@ -104,7 +104,7 @@ Request expiration runs on WordPress cron, which requires site traffic to trigge
 
 ## Getting Help
 
-**Enable debug mode** for troubleshooting: Go to **WP Sell Services > Settings > Advanced** and enable Debug Mode. Check `wp-content/debug.log` for detailed error messages.
+**Enable debug mode** for troubleshooting: Go to **Sell Services > Settings > Advanced** and enable Debug Mode. Check `wp-content/debug.log` for detailed error messages.
 
 **Have your details ready** when contacting support:
 - WordPress version and PHP version

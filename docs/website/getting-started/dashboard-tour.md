@@ -34,8 +34,6 @@ Clicking Skip, Finish, or the close icon all count as completion.
 
 The dashboard header has a subtle **Replay tour** button next to the primary CTAs (Create Service, Post Request). Click it any time to walk through again — no setting to toggle.
 
-![Replay tour trigger on the dashboard header](../images/frontend-dashboard-replay-tour.png)
-
 The replay uses `window.wpssTour.start()` under the hood, so you can also wire a theme-level "Take the tour" link anywhere on your site:
 
 ```html

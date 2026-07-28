@@ -229,7 +229,7 @@ When using WooCommerce as the e-commerce platform, marketplace emails can option
 
 ## Testing Emails
 
-1. Go to **WP Sell Services > Settings > Emails**
+1. Go to **Sell Services > Settings > Emails**
 2. Click **Send Test Email**
 3. Check your inbox (and spam folder)
 
@@ -239,7 +239,7 @@ The test email uses `emails/test-email.php` and shows your current header/footer
 
 ## Related Documentation
 
-- [Email Notification Types](../notifications-emails/email-types.md) -- All 27 email types explained
+- [Email Notification Types](../notifications-emails/email-types.md) -- Every email the plugin sends, explained
 - [Email Configuration](../notifications-emails/email-configuration.md) -- SMTP setup and delivery settings
 - [Hooks and Filters Reference](hooks-filters.md) -- Complete hooks reference
 - [Theme Integration](theme-integration.md) -- Template override system
