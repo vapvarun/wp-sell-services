@@ -289,9 +289,9 @@
    1a. DARK MODE (token overrides at the root ONLY — never per-component)
    --------------------------------------------------------------------------
    Every component reads the semantic tokens above, so flipping the tokens
-   here re-themes the entire plugin with zero per-component dark rules. Two
-   entry points, identical overrides:
-     - prefers-color-scheme: dark  -> respects the OS / browser setting
+   here re-themes the entire plugin with zero per-component dark rules. Dark is
+   driven ONLY by the host theme / explicit toggle — never OS preference — so
+   the plugin never darkens on top of a light theme (Basecamp #9985874872):
      - [data-theme="dark"], .wpss-dark .wpss-app  -> explicit in-app toggle
      - [data-bx-mode="dark"]  -> host-theme toggle. BuddyX and Reign 8.x both
        flip dark by setting data-bx-mode="dark" on the root and re-emitting their
@@ -300,28 +300,14 @@
    Dark token pairs are chosen to clear WCAG AA contrast on body copy.
    ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		--wpss-text: #e5e7eb;
-		--wpss-text-secondary: #d1d5db;
-		--wpss-text-muted: #9ca3af;
-		--wpss-text-light: #9ca3af;
-		--wpss-text-hint: #6b7280;
-
-		--wpss-bg: #111827;
-		--wpss-bg-subtle: #1f2937;
-		--wpss-bg-muted: #374151;
-		--wpss-background: #0b1220;
-		--wpss-border: #374151;
-		--wpss-border-light: #1f2937;
-
-		--wpss-primary-light: #312e81;
-		--wpss-primary-50: rgba(129, 140, 248, 0.16);
-
-		--wpss-shadow-tint: rgba(0, 0, 0, 0.5);
-		--wpss-overlay: rgba(0, 0, 0, 0.7);
-	}
-}
+/* OS-preference dark mode (@media prefers-color-scheme: dark) was removed: it
+   flipped the :root tokens to dark from the OS setting alone, so the plugin's
+   surfaces (dashboard, cards, tables) rendered dark while a LIGHT WordPress
+   theme stayed light — a jarring mismatch (Basecamp #9985874872). The plugin
+   now follows the THEME's dark mode only, via the explicit selectors below
+   (BuddyX/Reign data-bx-mode, data-theme, .wpss-dark). A theme that drives dark
+   from prefers-color-scheme sets one of those signals, so real theme dark mode
+   still works. */
 
 :root[data-theme="dark"],
 :root[data-bx-mode="dark"],

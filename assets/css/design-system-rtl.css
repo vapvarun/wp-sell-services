@@ -292,28 +292,8 @@
    Dark token pairs are chosen to clear WCAG AA contrast on body copy.
    ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		--wpss-text: #e5e7eb;
-		--wpss-text-secondary: #d1d5db;
-		--wpss-text-muted: #9ca3af;
-		--wpss-text-light: #9ca3af;
-		--wpss-text-hint: #6b7280;
-
-		--wpss-bg: #111827;
-		--wpss-bg-subtle: #1f2937;
-		--wpss-bg-muted: #374151;
-		--wpss-background: #0b1220;
-		--wpss-border: #374151;
-		--wpss-border-light: #1f2937;
-
-		--wpss-primary-light: #312e81;
-		--wpss-primary-50: rgba(129, 140, 248, 0.16);
-
-		--wpss-shadow-tint: rgba(0, 0, 0, 0.5);
-		--wpss-overlay: rgba(0, 0, 0, 0.7);
-	}
-}
+/* OS-preference dark mode removed — plugin follows theme dark mode only, never
+   OS, so it never darkens on top of a light theme (Basecamp #9985874872). */
 
 :root[data-theme="dark"],
 :root[data-bx-mode="dark"],
