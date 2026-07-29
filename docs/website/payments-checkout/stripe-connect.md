@@ -8,6 +8,8 @@ It uses **Stripe Connect Express**: each vendor completes a short Stripe-hosted
 onboarding to connect their bank account. Stripe handles their identity and
 compliance checks, so you never collect or store vendor bank details.
 
+![The Stripe Connect card on the Payment Gateways tab](../images/settings-stripe-connect.png)
+
 ## How it works
 
 1. You enable Stripe Connect once, using the Stripe keys you already configured.

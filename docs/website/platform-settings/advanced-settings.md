@@ -84,6 +84,36 @@ Configure this at **Sell Services > Settings > General**.
 
 ---
 
+## Menu Visibility
+
+Hide dashboard sections from specific roles. The **Menu Visibility** card is a
+grid: dashboard sections down the side, every role on your site across the top.
+Tick a box to hide that section from that role.
+
+Leave everything unticked -- the default -- and every role sees every section.
+
+Sections you can hide: My Orders, Favorites, Buyer Requests, My Services, Sales
+Orders, Earnings & Payouts, Portfolio, Analytics, Messages, Notifications,
+Disputes, Profile.
+
+**Hiding a section also blocks its direct URL.** This is access control, not just
+menu cosmetics -- a user who bookmarks a hidden section is refused, so you can use
+it to genuinely take a capability away from a role rather than merely hiding the
+link.
+
+A section is hidden for a user when **any** of their roles hides it. Someone with
+two roles gets the union of both restrictions, not the more permissive of the
+two.
+
+Typical uses:
+
+- Hide the whole selling side (My Services, Sales Orders, Earnings & Payouts, Portfolio) from a buyer-only role.
+- Hide Analytics from vendors while keeping it for administrators.
+- Hide Disputes from everyone while you decide on a mediation policy.
+
+For developers, the same gate is exposed as the `wpss_can_access_dashboard_section`
+filter -- see [Hooks and Filters](../developer-guide/hooks-filters.md).
+
 ## Demo Content
 
 ### Import Demo Content

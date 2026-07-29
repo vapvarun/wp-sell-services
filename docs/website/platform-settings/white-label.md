@@ -3,6 +3,8 @@
 Make the marketplace yours. White Label replaces WP Sell Services branding with
 your own across the admin, the vendor dashboard, and transactional emails.
 
+![White Label settings on the Branding tab](../images/settings-branding-tab.png)
+
 ## Setup
 
 1. Go to **Sell Services > Settings > Branding**.
@@ -16,9 +18,9 @@ Branding applies immediately. There are no template edits and no CSS to write.
 | Setting | What it changes | Default |
 |---------|----------------|---------|
 | **Brand name** | The admin menu label, and the name shown in emails and the dashboard header | *(empty -- uses the plugin name)* |
-| **Logo** | Shown in the vendor dashboard header and email headers | *(empty)* |
+| **Logo** | Shown in the vendor dashboard header and email headers. Recommended 240 x 60 px | *(empty)* |
 | **Primary colour** | Accent colour across admin, dashboard, and email headers | `#7f54b3` |
-| **Footer text** | Custom text in the dashboard footer | *(empty)* |
+| **Email footer text** | Small-print line at the bottom of every transactional email | *(empty)* |
 | **Email from name** | The sender name on every transactional email | *(empty -- uses your site name)* |
 | **Hide branding** | Removes the "powered by" attribution | Off |
 

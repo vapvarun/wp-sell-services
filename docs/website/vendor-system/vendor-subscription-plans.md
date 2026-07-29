@@ -7,6 +7,8 @@ commission rate they pay.
 Billing runs through **hosted Stripe Checkout**, so card details never touch your
 site.
 
+![Vendor Subscriptions on the Vendors tab](../images/settings-vendor-subscriptions.png)
+
 ## Setting up
 
 1. Add your Stripe keys under **Sell Services > Settings > Payment Gateways**.

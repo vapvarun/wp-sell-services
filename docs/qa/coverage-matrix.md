@@ -4,7 +4,7 @@ Internal QA artifact -- **not published to customers**. It is the answer to
 "is every shipped feature documented, for the right audience?"
 
 - **Last verified:** 2026-07-29 against plugin 1.3.0 / Pro 1.3.0 (99 pages)
-- **Screenshots:** 15 captured live on 2026-07-29 at 1440px; 8 stale pre-restructure settings images replaced
+- **Screenshots:** 23 captured live on 2026-07-29 at 1440px (16 free + 7 Pro); 8 stale pre-restructure settings images replaced
 - **Docs root:** `wp-sell-services/docs/website/` (single source of truth; Pro tree retired)
 - **Automated gate:** `python3 bin/docs-audit.py`
 
@@ -147,6 +147,8 @@ source before the doc was changed.
 
 | Claim in the docs | What the code does | Where |
 |-------------------|--------------------|-------|
+| (undocumented) Menu Visibility -- hide dashboard sections per role, and it blocks the direct URL too | Shipped free, never documented | `advanced-settings.md` |
+| White Label "footer text" described as a dashboard footer | It is the transactional **email** footer | `white-label.md` |
 | (undocumented) Activation grants vendor capabilities to the **`author`** role | Every existing WordPress author silently becomes a vendor on activation | `capabilities.md` |
 | Tips are commission-free, vendor keeps 100% | Tips are commissioned at the **regular rate** by default; `tip_commission_rate` can be set to `0` | 4 pages |
 | An expired Pro license only stops updates | Expired/invalid license means **Pro features stop loading entirely** | 2 pages |
@@ -167,7 +169,7 @@ Tracked, not silently dropped.
 
 | Gap | Impact | Priority |
 |-----|--------|----------|
-| **No screenshots on Pro setup pages.** Blocked: Pro loads nothing without a valid license key, so its screens cannot be captured on a dev site | Pro setup is text-only | P1 |
+
 | `image_map.json` / `image-mapping.json` map local filenames to docs.wbcomdesigns.com URLs, are duplicates of each other, and are read by nothing in the repo. **The 8 screenshots replaced on 2026-07-29 still map to the old uploaded files**, so any publish step driven by these maps would ship the pre-restructure images | Stale images could reappear on a published site | P1 |
 | ~20 free pages still have no screenshot (developer references and FAQs excluded -- they do not need one) | Minor | P3 |
 | 77 of 454 hooks remain undocumented (declared internal) | Low -- template and behavioural surfaces are both covered | P3 |

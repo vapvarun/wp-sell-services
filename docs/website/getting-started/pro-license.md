@@ -3,6 +3,8 @@
 WP Sell Services Pro uses a license key to unlock Pro features, deliver
 automatic updates, and give you priority support.
 
+![The License screen under Sell Services](../images/admin-pro-license.png)
+
 ## Activate your license
 
 1. Buy Pro. Your key is in the purchase receipt email and on your account page at [wbcomdesigns.com](https://wbcomdesigns.com).
@@ -59,6 +61,13 @@ expiry date. A key marked `lifetime` never expires.
 If activation fails, the screen reports the reason returned by the store -- an
 exhausted site limit and a mistyped key produce different messages, so read it
 before retrying.
+
+> **"Active" with an empty key field is normal after an upgrade.** Sites licensed
+> on an older version of Pro carry a legacy activation flag, and the plugin
+> honours it so that upgrading never silently switches Pro off. The key box
+> renders empty because the current option has not been written yet -- Pro is
+> genuinely active. Paste your key and activate again whenever convenient to move
+> the site onto the current record.
 
 ## Moving to a new site
 
