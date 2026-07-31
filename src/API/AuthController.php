@@ -576,7 +576,7 @@ class AuthController extends RestController {
 	 * @return array
 	 */
 	private function format_user( WP_User $user ): array {
-		$is_vendor = (bool) get_user_meta( $user->ID, '_wpss_is_vendor', true );
+		$is_vendor = wpss_is_vendor( $user->ID );
 
 		return array(
 			'id'            => $user->ID,

@@ -390,10 +390,14 @@ class API {
 			'email'        => $user->user_email,
 			'display_name' => $user->display_name,
 			'avatar'       => get_avatar_url( $user_id, [ 'size' => 96 ] ),
-			'is_vendor'    => (bool) get_user_meta( $user_id, '_wpss_is_vendor', true ),
+			// Canonical check, not the raw meta. A vendor created by role — which
+			// is every vendor the wizard, admin screen or demo seeder makes — has
+			// no _wpss_is_vendor meta, so /me told real sellers they were not
+			// sellers while /orders and /vendors/me said otherwise.
+			'is_vendor'    => wpss_is_vendor( $user_id ),
 			'is_admin'     => current_user_can( 'manage_options' ),
 			'capabilities' => [
-				'can_create_services' => current_user_can( 'wpss_manage_services' ) && get_user_meta( $user_id, '_wpss_is_vendor', true ),
+				'can_create_services' => current_user_can( 'wpss_manage_services' ) && wpss_is_vendor( $user_id ),
 				'can_manage_orders'   => current_user_can( 'manage_options' ),
 			],
 		];
@@ -417,7 +421,7 @@ class API {
 		global $wpdb;
 
 		$user_id   = get_current_user_id();
-		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+		$is_vendor = wpss_is_vendor( $user_id );
 
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
