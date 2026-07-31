@@ -347,7 +347,7 @@ class CartController extends RestController {
 				// Same seam the web add-to-cart uses, so the rail receives the
 				// item exactly as it does from the service page.
 				if ( apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter ) ) {
-					$transferred++;
+					++$transferred;
 				}
 			}
 
@@ -381,15 +381,53 @@ class CartController extends RestController {
 			return $order_result;
 		}
 
-		// A handler must return a created order for checkout to succeed. When no
-		// handler is wired (or it returns null) NO order exists — clearing the
-		// cart here would destroy the buyer's selections and then falsely report
-		// "Order created". Keep the cart intact and report honestly instead.
+		// Nothing is wired to wpss_cart_checkout on a stock install, so the
+		// standalone rail — the DEFAULT — had no checkout at all and answered
+		// 501. Create the orders here instead, using the provider that already
+		// knows how: it reads package prices from live post meta rather than
+		// trusting anything the client sent.
 		if ( empty( $order_result ) ) {
-			return new WP_Error(
-				'checkout_unavailable',
-				__( 'Checkout could not be completed right now. Please try again or contact the site owner.', 'wp-sell-services' ),
-				array( 'status' => 501 )
+			$provider  = new \WPSellServices\Integrations\Standalone\StandaloneOrderProvider();
+			$order_ids = $provider->create_orders_from_cart( $cart, $payment_method, '', $user_id );
+
+			if ( empty( $order_ids ) ) {
+				return new WP_Error(
+					'checkout_unavailable',
+					__( 'Checkout could not be completed right now. Please try again or contact the site owner.', 'wp-sell-services' ),
+					array( 'status' => 501 )
+				);
+			}
+
+			// Only now is it safe to drop the cart — an order exists.
+			delete_user_meta( $user_id, '_wpss_cart' );
+
+			$orders = array();
+
+			foreach ( $order_ids as $order_id ) {
+				$order = wpss_get_order( (int) $order_id );
+
+				$orders[] = array(
+					'order_id'     => (int) $order_id,
+					'order_number' => $order->order_number ?? '',
+					'status'       => $order->status ?? '',
+					'total'        => (float) ( $order->total ?? 0 ),
+					'currency'     => (string) ( $order->currency ?? wpss_get_currency() ),
+					// Where the buyer actually pays. Resolved through the shared
+					// seam, so it is right on whichever rail the site runs.
+					'checkout_url' => wpss_get_pay_order_url( (int) $order_id ),
+				);
+			}
+
+			return new WP_REST_Response(
+				array(
+					'orders'       => $orders,
+					// One cart can hold services from several vendors, which is
+					// several orders — but a client with a single-order screen
+					// needs somewhere to send the buyer, so surface the first.
+					'order_id'     => $orders[0]['order_id'],
+					'checkout_url' => $orders[0]['checkout_url'],
+				),
+				201
 			);
 		}
 
