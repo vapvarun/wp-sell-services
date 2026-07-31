@@ -16,6 +16,13 @@
 !/vendor/autoload.php
 !/vendor/composer/
 !/vendor/woocommerce/
+# NEVER commit this one. `composer install` (with dev) regenerates it listing
+# the dev packages' bootstrap files, which the autoloader then eagerly
+# requires — and dev packages are not tracked, so a fresh clone fataled on
+# every page before the plugin could even print its own "autoloader is
+# corrupt" notice. With --no-dev there are no files entries at all, so
+# Composer deletes the file and the autoloader never looks for it.
+/vendor/composer/autoload_files.php
 /node_modules/
 
 # Build artifacts

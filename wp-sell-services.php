@@ -276,7 +276,15 @@ function wpss_init(): void {
 		return;
 	}
 
-	wpss_load_composer_autoloader();
+	// Respect the guard's verdict. It pre-flights every file the autoloader
+	// eagerly requires and returns false (having queued an admin notice) when
+	// one is missing — but this caller discarded that and carried on to
+	// `require_once src/Core/Plugin.php`, which then fataled on the first
+	// namespaced class. The notice written to prevent a white screen was being
+	// rendered underneath one. See Basecamp #9828326478.
+	if ( ! wpss_load_composer_autoloader() ) {
+		return;
+	}
 
 	// Load WP-CLI commands.
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -450,7 +458,12 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\\wpss_activate' );
  * @return void
  */
 function wpss_deactivate(): void {
-	wpss_load_composer_autoloader();
+	// Same reason as wpss_init(): Deactivator is a namespaced class, so
+	// continuing past a failed autoloader turns "deactivate the broken plugin"
+	// — the one action left to a site owner in this state — into a fatal.
+	if ( ! wpss_load_composer_autoloader() ) {
+		return;
+	}
 
 	// Run deactivator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Deactivator.php';
