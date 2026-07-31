@@ -3403,6 +3403,25 @@ function wpss_get_pay_order_url( int $order_id ): string {
  *
  * @return array<int, string> Sub-order platform values.
  */
+/**
+ * Decode HTML entities for a JSON payload.
+ *
+ * WordPress stores term names and similar strings HTML-encoded, because its
+ * own consumer is HTML. A JSON API's string field is not HTML: a native client
+ * renders it into a text node, so "Graphics &amp; Design" reaches the screen
+ * verbatim. Entity encoding is a transport concern for HTML and does not
+ * belong in the payload — decode once here rather than making every consumer
+ * carry a decoder and remember to use it.
+ *
+ * @since 1.3.1
+ *
+ * @param mixed $value Raw stored value.
+ * @return string Decoded text.
+ */
+function wpss_rest_text( $value ): string {
+	return html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+}
+
 function wpss_get_sub_order_platforms(): array {
 	return array_keys( \WPSellServices\Models\ServiceOrder::get_sub_order_types() );
 }

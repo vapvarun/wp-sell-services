@@ -248,7 +248,14 @@ class API {
 						'q'        => [
 							'description' => __( 'Search query.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'required'    => true,
+							// Not `required`: /services calls this same thing
+							// `search`, and either name is accepted here, so the
+							// request is valid with one or the other.
+							'required'    => false,
+						],
+						'search'   => [
+							'description' => __( 'Search query. Alias of `q`, accepted for parity with /services.', 'wp-sell-services' ),
+							'type'        => 'string',
 						],
 						'type'     => [
 							'description' => __( 'Search type.', 'wp-sell-services' ),
@@ -324,9 +331,9 @@ class API {
 
 			$data[] = [
 				'id'          => $term->term_id,
-				'name'        => $term->name,
+				'name'        => wpss_rest_text( $term->name ),
 				'slug'        => $term->slug,
-				'description' => $term->description,
+				'description' => wpss_rest_text( $term->description ),
 				'count'       => $term->count,
 				'parent'      => $term->parent,
 				'icon'        => $icon ?: '',
@@ -385,7 +392,7 @@ class API {
 		foreach ( $terms as $term ) {
 			$data[] = [
 				'id'    => $term->term_id,
-				'name'  => $term->name,
+				'name'  => wpss_rest_text( $term->name ),
 				'slug'  => $term->slug,
 				'count' => $term->count,
 			];
@@ -460,7 +467,12 @@ class API {
 			'is_admin'     => current_user_can( 'manage_options' ),
 			'capabilities' => [
 				'can_create_services' => current_user_can( 'wpss_manage_services' ) && wpss_is_vendor( $user_id ),
-				'can_manage_orders'   => current_user_can( 'manage_options' ),
+				// The capability the vendor role actually grants, not the admin
+				// one. Every vendor holds wpss_manage_orders and manages their
+				// own orders daily, but this reported false for all of them —
+				// so a client gating its order screens on it hid the seller's
+				// core workflow. Admins keep access through manage_options.
+				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
 			],
 		];
 
@@ -587,7 +599,7 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function search( \WP_REST_Request $request ): \WP_REST_Response {
-		$query    = sanitize_text_field( $request->get_param( 'q' ) );
+		$query    = sanitize_text_field( $request->get_param( 'q' ) ?: $request->get_param( 'search' ) );
 		$type     = $request->get_param( 'type' );
 		$per_page = (int) $request->get_param( 'per_page' ) ?: 10;
 		$page     = max( 1, (int) $request->get_param( 'page' ) );

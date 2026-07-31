@@ -349,7 +349,7 @@ class ServicesController extends RestController {
 		}
 
 		// Search.
-		$search = $request->get_param( 'search' );
+		$search = $request->get_param( 'search' ) ?: $request->get_param( 'q' );
 		if ( $search ) {
 			$args['s'] = sanitize_text_field( $search );
 		}
@@ -1045,7 +1045,7 @@ class ServicesController extends RestController {
 				'revisions' => wpss_get_service_revisions( $service->ID ),
 			),
 			'images'      => $this->get_service_images( $service->ID ),
-			'categories'  => wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ),
+			'categories'  => $this->prepare_terms_for_response( wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ) ),
 			'tags'        => wp_get_object_terms( $service->ID, 'wpss_service_tag', array( 'fields' => 'names' ) ),
 			'rating'      => $this->get_service_rating( $service->ID ),
 			'created_at'  => $this->format_datetime( $service->post_date_gmt ),
@@ -1070,6 +1070,32 @@ class ServicesController extends RestController {
 	 * @param int $service_id Service ID.
 	 * @return array
 	 */
+	/**
+	 * Decode entity-encoded text on term objects bound for JSON.
+	 *
+	 * Keeps the existing response shape — these are still term objects — and
+	 * only fixes the encoding, so no client has to change how it reads them.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param mixed $terms Terms from wp_get_object_terms(), or a WP_Error.
+	 * @return array<int, \WP_Term>
+	 */
+	private function prepare_terms_for_response( $terms ): array {
+		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
+			return array();
+		}
+
+		foreach ( $terms as $term ) {
+			if ( $term instanceof \WP_Term ) {
+				$term->name        = wpss_rest_text( $term->name );
+				$term->description = wpss_rest_text( $term->description );
+			}
+		}
+
+		return $terms;
+	}
+
 	private function get_service_images( int $service_id ): array {
 		$images = array();
 
@@ -1092,8 +1118,21 @@ class ServicesController extends RestController {
 		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 
 		if ( ! empty( $gallery_ids ) ) {
+			// The gallery meta normally also contains the featured image, so it
+			// was emitted twice — once as the featured entry and again as the
+			// first gallery entry, same id and same URL. Every consumer building
+			// a carousel from this showed its first slide twice, and each one
+			// would have had to dedupe independently. Fixed here so the payload
+			// is right for all of them.
+			$seen = array_column( $images, 'id' );
+
 			foreach ( $gallery_ids as $attachment_id ) {
+				if ( in_array( (int) $attachment_id, array_map( 'intval', $seen ), true ) ) {
+					continue;
+				}
+
 				if ( $attachment_id && wp_attachment_is_image( $attachment_id ) ) {
+					$seen[] = (int) $attachment_id;
 					$images[] = array(
 						'id'    => $attachment_id,
 						'url'   => wp_get_attachment_url( $attachment_id ),
@@ -1271,6 +1310,14 @@ class ServicesController extends RestController {
 			),
 			'search'            => array(
 				'description' => __( 'Search term.', 'wp-sell-services' ),
+				'type'        => 'string',
+			),
+			// /search names this same thing `q`. Rather than have one endpoint
+			// silently ignore the other's parameter name — which returns 200
+			// and the whole unfiltered catalogue, so it reads as "search
+			// matched everything" — both names work on both endpoints.
+			'q'                 => array(
+				'description' => __( 'Search term. Alias of `search`, accepted for parity with /search.', 'wp-sell-services' ),
 				'type'        => 'string',
 			),
 			'min_price'         => array(
