@@ -96,7 +96,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		// Snapshot the package data at order creation time so it's immune to later edits.
 		$package_snapshot = null;
 		// package_id is an index, so 0 is a real package. isset(), not empty().
-		if ( $service && isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] && null !== $order_data['package_id'] ) {
+		if ( $service && isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] ) {
 			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
 			if ( isset( $packages[ $order_data['package_id'] ] ) ) {
 				$package_snapshot = $packages[ $order_data['package_id'] ];
@@ -124,7 +124,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'service_id'         => $service->id,
 				// Storing NULL for index 0 lost the package on every order of a
 				// service's first package - only a genuinely absent value is NULL.
-				'package_id'         => ( isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] && null !== $order_data['package_id'] ) ? (int) $order_data['package_id'] : null,
+				'package_id'         => ( isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] ) ? (int) $order_data['package_id'] : null,
 				'addons'             => wp_json_encode( $order_data['addons'] ?? [] ),
 				'platform'           => 'standalone',
 				'platform_order_id'  => null,

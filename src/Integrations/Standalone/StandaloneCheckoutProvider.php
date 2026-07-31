@@ -79,7 +79,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$url = home_url( '/' . StandaloneAdapter::get_checkout_slug() . '/' . $service_id . '/' );
 
 		// Index 0 is a real package, so the arg must survive it.
-		if ( isset( $args['package_id'] ) && '' !== $args['package_id'] && null !== $args['package_id'] ) {
+		if ( isset( $args['package_id'] ) && '' !== $args['package_id'] ) {
 			$url = add_query_arg( 'package', (int) $args['package_id'], $url );
 		}
 
