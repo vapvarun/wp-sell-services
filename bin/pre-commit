@@ -108,5 +108,44 @@ else
 fi
 
 echo ""
+
+# ---------------------------------------------------------------------------
+# 4. Composer autoloader must be the --no-dev build.
+#
+# `composer install` regenerates autoload_static.php with the DEV packages'
+# namespaces and, worse, a $files array whose entries autoload_real.php
+# require()s on every request. Those packages are not tracked, so committing a
+# dev autoloader means a fresh clone fatals on every page before the plugin can
+# print its own "autoloader is corrupt" notice.
+#
+# This has now happened twice, the second time from a `git add -A` immediately
+# after restoring the dev autoloader locally. A comment did not prevent it.
+# ---------------------------------------------------------------------------
+STAGED_AUTOLOAD=$(git diff --cached --name-only | grep -E "vendor/composer/autoload_(static|real|files)\.php" || true)
+
+if [ -n "$STAGED_AUTOLOAD" ]; then
+    if git diff --cached vendor/composer/autoload_static.php 2>/dev/null | grep -qE "^\+.*(PHPUnit|PHPStan|DeepCopy|Yoast\\\\PHPUnitPolyfills)"; then
+        echo "✗ BLOCKED: a DEV Composer autoloader is staged."
+        echo ""
+        echo "  vendor/composer/autoload_static.php contains dev-only packages."
+        echo "  Those packages are not tracked, so a fresh clone would fatal."
+        echo ""
+        echo "  Fix:"
+        echo "    composer dump-autoload --no-dev"
+        echo "    git add vendor/composer/"
+        echo "    # then re-run: composer dump-autoload   (to restore dev locally)"
+        exit 1
+    fi
+
+    if git diff --cached --name-only | grep -q "vendor/composer/autoload_files.php"; then
+        echo "✗ BLOCKED: vendor/composer/autoload_files.php is staged."
+        echo "  The --no-dev build does not produce this file at all."
+        exit 1
+    fi
+
+    echo "✓ Composer autoloader is a prod build"
+fi
+
+echo ""
 echo "✓ All pre-commit checks passed!"
 exit 0
