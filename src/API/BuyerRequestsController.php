@@ -387,7 +387,7 @@ class BuyerRequestsController extends RestController {
 		// Check if user is a vendor using the canonical helper.
 		if ( ! wpss_is_vendor() ) {
 			return new WP_Error(
-				'not_vendor',
+				'wpss_not_vendor',
 				__( 'You must be a vendor to submit proposals.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -749,22 +749,33 @@ class BuyerRequestsController extends RestController {
 		$author_id = $buyer_request->author_id ?? $buyer_request->post_author ?? 0;
 		$author    = get_userdata( $author_id );
 
+		// A buyer request has no currency of its own, so both budget bounds
+		// are in the store currency. Two money fields sharing one currency
+		// read better with the minor units added directly than with two
+		// wpss_rest_money() merges each repeating the same 'currency' key.
+		$currency   = wpss_get_currency();
+		$budget_min = (float) ( $buyer_request->budget_min ?? 0 );
+		$budget_max = (float) ( $buyer_request->budget_max ?? 0 );
+
 		$data = [
-			'id'             => (int) ( $buyer_request->id ?? $buyer_request->ID ),
-			'title'          => $buyer_request->title ?? $buyer_request->post_title ?? '',
-			'description'    => $buyer_request->description ?? $buyer_request->post_content ?? '',
-			'status'         => $buyer_request->status ?? 'open',
-			'budget_min'     => (float) ( $buyer_request->budget_min ?? 0 ),
-			'budget_max'     => (float) ( $buyer_request->budget_max ?? 0 ),
-			'deadline'       => $buyer_request->deadline ?? null,
-			'category'       => $buyer_request->category ?? null,
-			'proposal_count' => (int) ( $buyer_request->proposal_count ?? 0 ),
-			'author'         => [
+			'id'               => (int) ( $buyer_request->id ?? $buyer_request->ID ),
+			'title'            => $buyer_request->title ?? $buyer_request->post_title ?? '',
+			'description'      => $buyer_request->description ?? $buyer_request->post_content ?? '',
+			'status'           => $buyer_request->status ?? 'open',
+			'budget_min'       => $budget_min,
+			'budget_min_minor' => wpss_amount_to_minor_units( $budget_min, $currency ),
+			'budget_max'       => $budget_max,
+			'budget_max_minor' => wpss_amount_to_minor_units( $budget_max, $currency ),
+			'currency'         => $currency,
+			'deadline'         => $buyer_request->deadline ?? null,
+			'category'         => $buyer_request->category ?? null,
+			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
+			'author'           => [
 				'id'     => (int) $author_id,
 				'name'   => $author ? $author->display_name : '',
 				'avatar' => get_avatar_url( $author_id, [ 'size' => 48 ] ),
 			],
-			'created_at'     => $buyer_request->created_at ?? $buyer_request->post_date ?? '',
+			'created_at'       => $buyer_request->created_at ?? $buyer_request->post_date ?? '',
 		];
 
 		// Add attachments if owner.
@@ -784,24 +795,30 @@ class BuyerRequestsController extends RestController {
 	private function prepare_proposal_for_response( object $proposal ): array {
 		$vendor = get_userdata( $proposal->vendor_id );
 
-		return [
-			'id'            => (int) $proposal->id,
-			'vendor'        => [
-				'id'     => (int) $proposal->vendor_id,
-				'name'   => $vendor ? $vendor->display_name : '',
-				'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
+		return array_merge(
+			[
+				'id'           => (int) $proposal->id,
+				'vendor'       => [
+					'id'     => (int) $proposal->vendor_id,
+					'name'   => $vendor ? $vendor->display_name : '',
+					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
+				],
+				'cover_letter' => $proposal->cover_letter,
 			],
-			'cover_letter'  => $proposal->cover_letter,
 			// DB columns are proposed_price / proposed_days; the old code read
 			// non-existent price / delivery_days, so every proposal came back as
-			// $0 / 0 days and the buyer could not tell proposals apart.
-			'price'         => (float) ( $proposal->proposed_price ?? 0 ),
-			'delivery_days' => (int) ( $proposal->proposed_days ?? 0 ),
-			'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
-			'milestones'    => is_array( $proposal->milestones ?? null ) ? $proposal->milestones : [],
-			'status'        => $proposal->status,
-			'created_at'    => $proposal->created_at,
-		];
+			// $0 / 0 days and the buyer could not tell proposals apart. The
+			// proposals table has no currency column, so the store currency
+			// (the helper's default) is the right one.
+			wpss_rest_money( 'price', (float) ( $proposal->proposed_price ?? 0 ) ),
+			[
+				'delivery_days' => (int) ( $proposal->proposed_days ?? 0 ),
+				'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
+				'milestones'    => is_array( $proposal->milestones ?? null ) ? $proposal->milestones : [],
+				'status'        => $proposal->status,
+				'created_at'    => $proposal->created_at,
+			]
+		);
 	}
 
 	/**

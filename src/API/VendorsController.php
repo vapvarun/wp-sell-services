@@ -120,7 +120,7 @@ class VendorsController extends RestController {
 					'callback'            => array( $this, 'update_vacation_mode' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array(
-						'enabled' => array(
+						'enabled'     => array(
 							'description' => __( 'Whether vacation mode is enabled.', 'wp-sell-services' ),
 							'type'        => 'boolean',
 							'required'    => true,
@@ -374,7 +374,7 @@ class VendorsController extends RestController {
 		// vendors without the legacy _wpss_is_vendor meta are not 404'd.
 		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
-				'rest_not_vendor',
+				'wpss_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
 				// 403, not 404: the caller exists and the route exists, they are
 				// simply not a vendor. A 404 reads as "gone" and a client will
@@ -402,7 +402,7 @@ class VendorsController extends RestController {
 		// silently skipped the vendor block in the AJAX twin.
 		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
-				'rest_not_vendor',
+				'wpss_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
 				// 403, not 404: the caller exists and the route exists, they are
 				// simply not a vendor. A 404 reads as "gone" and a client will
@@ -525,7 +525,7 @@ class VendorsController extends RestController {
 
 		if ( ! wpss_is_vendor( $user_id ) ) {
 			return new WP_Error(
-				'rest_not_vendor',
+				'wpss_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
 				// 403, not 404: the caller exists and the route exists, they are
 				// simply not a vendor. A 404 reads as "gone" and a client will
@@ -879,7 +879,7 @@ class VendorsController extends RestController {
 
 		// Add private data for self.
 		if ( $is_self ) {
-			$data['email']  = $vendor->user_email;
+			$data['email'] = $vendor->user_email;
 			// Canonical profile status. The old _wpss_vendor_status user meta was
 			// never written, so this always fell through to 'approved' and the
 			// endpoint reported every vendor as approved regardless of reality.
@@ -909,16 +909,22 @@ class VendorsController extends RestController {
 	private function prepare_service_for_response( \WP_Post $post ): array {
 		$service_id = $post->ID;
 
-		return array(
-			'id'             => $service_id,
-			'title'          => $post->post_title,
-			'slug'           => $post->post_name,
-			'excerpt'        => get_the_excerpt( $post ),
-			'thumbnail'      => get_the_post_thumbnail_url( $service_id, 'medium' ) ?: '',
-			'price'          => (float) get_post_meta( $service_id, '_wpss_starting_price', true ) ?: 0,
-			'rating_average' => (float) get_post_meta( $service_id, '_wpss_rating_average', true ) ?: 0,
-			'rating_count'   => (int) get_post_meta( $service_id, '_wpss_rating_count', true ) ?: 0,
-			'category'       => $this->get_service_category_name( $service_id ),
+		return array_merge(
+			array(
+				'id'        => $service_id,
+				'title'     => $post->post_title,
+				'slug'      => $post->post_name,
+				'excerpt'   => get_the_excerpt( $post ),
+				'thumbnail' => get_the_post_thumbnail_url( $service_id, 'medium' ) ?: '',
+			),
+			// Services carry no currency of their own - they are priced in
+			// the store currency, which is the helper's default.
+			wpss_rest_money( 'price', (float) get_post_meta( $service_id, '_wpss_starting_price', true ) ?: 0 ),
+			array(
+				'rating_average' => (float) get_post_meta( $service_id, '_wpss_rating_average', true ) ?: 0,
+				'rating_count'   => (int) get_post_meta( $service_id, '_wpss_rating_count', true ) ?: 0,
+				'category'       => $this->get_service_category_name( $service_id ),
+			)
 		);
 	}
 

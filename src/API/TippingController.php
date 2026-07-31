@@ -127,14 +127,22 @@ class TippingController extends RestController {
 			);
 		}
 
+		// The tip order inherits the parent order's currency, so report the
+		// amount in that currency rather than the store default - a tip on a
+		// historic order is charged in the currency that order was sold in.
+		$parent   = wpss_get_order( $parent_order_id );
+		$currency = (string) ( $parent->currency ?? '' );
+
 		return new WP_REST_Response(
-			array(
-				'success'         => true,
-				'tip_order_id'    => (int) $result['tip_order_id'],
-				'checkout_url'    => $result['checkout_url'],
-				'parent_order_id' => $parent_order_id,
-				'amount'          => $amount,
-				'message'         => $result['message'],
+			array_merge(
+				array(
+					'success'         => true,
+					'tip_order_id'    => (int) $result['tip_order_id'],
+					'checkout_url'    => $result['checkout_url'],
+					'parent_order_id' => $parent_order_id,
+				),
+				wpss_rest_money( 'amount', $amount, $currency ),
+				array( 'message' => $result['message'] )
 			),
 			201
 		);
@@ -151,10 +159,29 @@ class TippingController extends RestController {
 
 		$order_id     = (int) $request->get_param( 'order_id' );
 		$wallet_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		$orders_table = $wpdb->prefix . 'wpss_orders';
 
+		// Two mismatches lived in the old one-line query, and each alone was
+		// enough to make this endpoint answer has_tip:false for every real tip:
+		//
+		// 1. It filtered on reference_type = 'tip'. Tip rows are written with
+		// type = 'tip' and reference_type = 'order'. get_vendor_tips() below
+		// already carries a comment describing this exact fix - it was made
+		// there and never reached this second consumer.
+		// 2. It compared reference_id to the parent order id. reference_id holds
+		// the TIP SUB-ORDER's id; the sub-order points at the parent through
+		// its own platform_order_id. So the join has to go through the
+		// sub-order, not straight at the wallet row.
+		//
+		// Joining is what keeps the two facts in one place instead of leaving a
+		// third consumer to rediscover them.
 		$tip = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$wallet_table} WHERE reference_type = 'tip' AND reference_id = %d",
+				"SELECT w.* FROM {$wallet_table} w
+				INNER JOIN {$orders_table} o ON o.id = w.reference_id
+				WHERE w.type = 'tip' AND o.platform = 'tip' AND o.platform_order_id = %d
+				ORDER BY w.id DESC
+				LIMIT 1",
 				$order_id
 			),
 			ARRAY_A
@@ -167,11 +194,13 @@ class TippingController extends RestController {
 		$meta = json_decode( $tip['meta'] ?? '{}', true );
 
 		return new WP_REST_Response(
-			array(
-				'has_tip'    => true,
-				'amount'     => (float) $tip['amount'],
-				'message'    => $meta['message'] ?? '',
-				'created_at' => $tip['created_at'],
+			array_merge(
+				array( 'has_tip' => true ),
+				wpss_rest_money( 'amount', (float) $tip['amount'], (string) ( $tip['currency'] ?? '' ) ),
+				array(
+					'message'    => $meta['message'] ?? '',
+					'created_at' => $tip['created_at'],
+				)
 			)
 		);
 	}
@@ -204,7 +233,7 @@ class TippingController extends RestController {
 		// the wallet row (which has no meta column). Join it for the real data.
 		$tips = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT w.amount, w.reference_id, w.created_at, o.customer_id AS tipper_id, o.vendor_notes AS tip_message
+				"SELECT w.amount, w.currency, w.reference_id, w.created_at, o.customer_id AS tipper_id, o.vendor_notes AS tip_message
 				FROM {$wallet_table} w
 				LEFT JOIN {$orders_table} o ON o.id = w.reference_id
 				WHERE w.user_id = %d AND w.type = 'tip'
@@ -220,18 +249,22 @@ class TippingController extends RestController {
 		foreach ( $tips ?: array() as $tip ) {
 			$tipper = ! empty( $tip['tipper_id'] ) ? get_user_by( 'id', (int) $tip['tipper_id'] ) : null;
 
-			$items[] = array(
-				'amount'     => (float) $tip['amount'],
-				'order_id'   => (int) $tip['reference_id'],
-				'tipper'     => $tipper
-					? array(
-						'id'     => $tipper->ID,
-						'name'   => $tipper->display_name,
-						'avatar' => get_avatar_url( $tipper->ID, array( 'size' => 48 ) ),
-					)
-					: null,
-				'message'    => (string) ( $tip['tip_message'] ?? '' ),
-				'created_at' => $tip['created_at'],
+			$items[] = array_merge(
+				// Each wallet row carries the currency it was credited in, so
+				// the minor units scale by that row - not the store default.
+				wpss_rest_money( 'amount', (float) $tip['amount'], (string) ( $tip['currency'] ?? '' ) ),
+				array(
+					'order_id'   => (int) $tip['reference_id'],
+					'tipper'     => $tipper
+						? array(
+							'id'     => $tipper->ID,
+							'name'   => $tipper->display_name,
+							'avatar' => get_avatar_url( $tipper->ID, array( 'size' => 48 ) ),
+						)
+						: null,
+					'message'    => (string) ( $tip['tip_message'] ?? '' ),
+					'created_at' => $tip['created_at'],
+				)
 			);
 		}
 
@@ -264,11 +297,18 @@ class TippingController extends RestController {
 			)
 		);
 
+		// The sum spans every tip row, so there is no single row currency to
+		// use - the store currency is the only meaningful one here. Keeping
+		// the existing key order means adding the minor units directly rather
+		// than merging wpss_rest_money(), which would move 'currency'.
+		$currency = wpss_get_currency();
+
 		return new WP_REST_Response(
 			array(
-				'total_amount' => round( $total, 2 ),
-				'total_count'  => $count,
-				'currency'     => wpss_get_currency(),
+				'total_amount'       => round( $total, wpss_get_currency_decimals( $currency ) ),
+				'total_amount_minor' => wpss_amount_to_minor_units( $total, $currency ),
+				'total_count'        => $count,
+				'currency'           => $currency,
 			)
 		);
 	}

@@ -1297,23 +1297,38 @@ class OrdersController extends RestController {
 
 		$data = array();
 		foreach ( $rows ?: array() as $row ) {
-			$meta = is_string( $row->meta ?? '' ) && '' !== $row->meta ? json_decode( $row->meta, true ) : array();
+			// `meta` is a nullable column. The old guard tested `$row->meta ??
+			// ''` for is_string but then compared the RAW value to '', so a
+			// NULL meta passed both halves and fatalled in json_decode( null ).
+			$meta_raw = is_string( $row->meta ?? null ) ? $row->meta : '';
+			$decoded  = '' !== $meta_raw ? json_decode( $meta_raw, true ) : null;
+			$meta     = is_array( $decoded ) ? $decoded : array();
+
+			// One currency for the whole row, so the minor units are added
+			// alongside the floats rather than through wpss_rest_money() -
+			// that would repeat the shared 'currency' key three times.
+			$row_currency    = (string) $row->currency;
+			$vendor_earnings = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
+			$platform_fee    = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
 
 			$item = array(
-				'id'              => (int) $row->id,
-				'parent_order_id' => $order_id,
-				'type'            => (string) $row->platform,
-				'order_number'    => (string) $row->order_number,
-				'status'          => (string) $row->status,
-				'payment_status'  => (string) $row->payment_status,
-				'amount'          => (float) $row->total,
-				'currency'        => (string) $row->currency,
-				'vendor_earnings' => isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null,
-				'platform_fee'    => isset( $row->platform_fee ) ? (float) $row->platform_fee : null,
-				'title'           => (string) ( $meta['title'] ?? '' ),
-				'description'     => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
-				'created_at'      => $this->format_datetime( $row->created_at ?? null ),
-				'completed_at'    => $this->format_datetime( $row->completed_at ?? null ),
+				'id'                    => (int) $row->id,
+				'parent_order_id'       => $order_id,
+				'type'                  => (string) $row->platform,
+				'order_number'          => (string) $row->order_number,
+				'status'                => (string) $row->status,
+				'payment_status'        => (string) $row->payment_status,
+				'amount'                => (float) $row->total,
+				'amount_minor'          => wpss_amount_to_minor_units( (float) $row->total, $row_currency ),
+				'currency'              => $row_currency,
+				'vendor_earnings'       => $vendor_earnings,
+				'vendor_earnings_minor' => null !== $vendor_earnings ? wpss_amount_to_minor_units( $vendor_earnings, $row_currency ) : null,
+				'platform_fee'          => $platform_fee,
+				'platform_fee_minor'    => null !== $platform_fee ? wpss_amount_to_minor_units( $platform_fee, $row_currency ) : null,
+				'title'                 => (string) ( $meta['title'] ?? '' ),
+				'description'           => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
+				'created_at'            => $this->format_datetime( $row->created_at ?? null ),
+				'completed_at'          => $this->format_datetime( $row->completed_at ?? null ),
 			);
 
 			if ( 'milestone' === $row->platform ) {
@@ -1648,10 +1663,9 @@ class OrdersController extends RestController {
 			// Exact integer minor units. `total` stays a float for existing
 			// clients, but it cannot represent most amounts precisely — 150.20
 			// serialises as 150.19999999999999 — so anything doing arithmetic
-			// should read this instead.
-			'total_minor'       => function_exists( 'wpss_amount_to_minor_units' )
-				? wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency )
-				: (int) round( (float) $order->total * 100 ),
+			// should read this instead. Scaled by the ORDER's currency: the
+			// old `* 100` fallback was wrong for JPY (x1) and KWD (x1000).
+			'total_minor'       => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
 			'currency'          => $order->currency,
 			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),
 			'due_date'          => $this->format_datetime( $order->delivery_deadline ),

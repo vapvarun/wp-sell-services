@@ -717,16 +717,33 @@ class MilestoneService {
 
 		$decorated = array();
 		foreach ( $rows as $row ) {
-			$meta        = is_string( $row->meta ?? '' ) && '' !== $row->meta ? json_decode( $row->meta, true ) : array();
+			// `meta` is a nullable column. The old guard tested `$row->meta ??
+			// ''` for is_string but then compared the RAW value to '', so a
+			// NULL meta passed both halves and fatalled in json_decode( null ).
+			$meta_raw = is_string( $row->meta ?? null ) ? $row->meta : '';
+			$decoded  = '' !== $meta_raw ? json_decode( $meta_raw, true ) : null;
+			$meta     = is_array( $decoded ) ? $decoded : array();
+
+			// This shape is what GET /milestones returns verbatim, so it
+			// carries the minor units too. One currency for the whole row, so
+			// they go in beside the floats rather than through
+			// wpss_rest_money(), which would repeat 'currency' three times.
+			$row_currency    = (string) $row->currency;
+			$vendor_earnings = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
+			$platform_fee    = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
+
 			$decorated[] = array(
 				'id'                    => (int) $row->id,
 				'order_number'          => (string) $row->order_number,
 				'status'                => (string) $row->status,
 				'payment_status'        => (string) $row->payment_status,
 				'amount'                => (float) $row->total,
-				'vendor_earnings'       => isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null,
-				'platform_fee'          => isset( $row->platform_fee ) ? (float) $row->platform_fee : null,
-				'currency'              => (string) $row->currency,
+				'amount_minor'          => wpss_amount_to_minor_units( (float) $row->total, $row_currency ),
+				'vendor_earnings'       => $vendor_earnings,
+				'vendor_earnings_minor' => null !== $vendor_earnings ? wpss_amount_to_minor_units( $vendor_earnings, $row_currency ) : null,
+				'platform_fee'          => $platform_fee,
+				'platform_fee_minor'    => null !== $platform_fee ? wpss_amount_to_minor_units( $platform_fee, $row_currency ) : null,
+				'currency'              => $row_currency,
 				'title'                 => (string) ( $meta['title'] ?? '' ),
 				'description'           => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
 				'deliverables'          => (string) ( $meta['deliverables'] ?? '' ),

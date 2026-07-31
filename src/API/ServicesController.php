@@ -825,12 +825,16 @@ class ServicesController extends RestController {
 
 		$data = array();
 		foreach ( $addons as $addon ) {
-			$data[] = array(
-				'id'          => (int) $addon->id,
-				'service_id'  => (int) $addon->service_id,
-				'title'       => $addon->title,
-				'description' => $addon->description ?? '',
-				'price'       => (float) $addon->price,
+			// Addons have no currency column - they are always priced in the
+			// store currency, so the helper's default is the right one.
+			$data[] = array_merge(
+				array(
+					'id'          => (int) $addon->id,
+					'service_id'  => (int) $addon->service_id,
+					'title'       => $addon->title,
+					'description' => $addon->description ?? '',
+				),
+				wpss_rest_money( 'price', (float) $addon->price )
 			);
 		}
 
@@ -865,12 +869,14 @@ class ServicesController extends RestController {
 		}
 
 		return new WP_REST_Response(
-			array(
-				'id'          => (int) $wpdb->insert_id,
-				'service_id'  => $service_id,
-				'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
-				'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
-				'price'       => (float) $request->get_param( 'price' ),
+			array_merge(
+				array(
+					'id'          => (int) $wpdb->insert_id,
+					'service_id'  => $service_id,
+					'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
+					'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
+				),
+				wpss_rest_money( 'price', (float) $request->get_param( 'price' ) )
 			),
 			201
 		);
@@ -933,12 +939,14 @@ class ServicesController extends RestController {
 		);
 
 		return new WP_REST_Response(
-			array(
-				'id'          => (int) $updated->id,
-				'service_id'  => (int) $updated->service_id,
-				'title'       => $updated->title,
-				'description' => $updated->description ?? '',
-				'price'       => (float) $updated->price,
+			array_merge(
+				array(
+					'id'          => (int) $updated->id,
+					'service_id'  => (int) $updated->service_id,
+					'title'       => $updated->title,
+					'description' => $updated->description ?? '',
+				),
+				wpss_rest_money( 'price', (float) $updated->price )
 			)
 		);
 	}
@@ -1086,10 +1094,9 @@ class ServicesController extends RestController {
 				'name'   => get_the_author_meta( 'display_name', $service->post_author ),
 				'avatar' => get_avatar_url( $service->post_author, array( 'size' => 96 ) ),
 			),
-			'pricing'     => array(
-				'base_price' => (float) get_post_meta( $service->ID, '_wpss_starting_price', true ),
-				'currency'   => wpss_get_currency(),
-			),
+			// wpss_rest_money() yields exactly the keys this block already
+			// carried - base_price and currency - plus the minor units.
+			'pricing'     => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
 			'delivery'    => array(
 				'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
 				'revisions' => wpss_get_service_revisions( $service->ID ),
