@@ -78,8 +78,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	public function get_checkout_url( int $service_id, array $args = [] ): string {
 		$url = home_url( '/' . StandaloneAdapter::get_checkout_slug() . '/' . $service_id . '/' );
 
-		if ( ! empty( $args['package_id'] ) ) {
-			$url = add_query_arg( 'package', $args['package_id'], $url );
+		// Index 0 is a real package, so the arg must survive it.
+		if ( isset( $args['package_id'] ) && '' !== $args['package_id'] && null !== $args['package_id'] ) {
+			$url = add_query_arg( 'package', (int) $args['package_id'], $url );
 		}
 
 		if ( ! empty( $args['addons'] ) ) {

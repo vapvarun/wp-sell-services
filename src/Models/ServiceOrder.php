@@ -543,7 +543,11 @@ class ServiceOrder {
 		$order->customer_id        = (int) $row->customer_id;
 		$order->vendor_id          = (int) $row->vendor_id;
 		$order->service_id         = (int) $row->service_id;
-		$order->package_id         = $row->package_id ? (int) $row->package_id : null;
+		// package_id is an INDEX into the service's _wpss_packages meta, so 0 is
+		// a real package (the first one, usually "Basic") and only NULL means
+		// "no package". A truthiness check here collapsed 0 to null, which is
+		// why the first package of every service resolved as "Custom".
+		$order->package_id         = null === $row->package_id ? null : (int) $row->package_id;
 		$order->addons             = $row->addons ? json_decode( $row->addons, true ) : array();
 		$order->platform           = $row->platform;
 		$order->platform_order_id  = $row->platform_order_id ? (int) $row->platform_order_id : null;
@@ -876,8 +880,9 @@ class ServiceOrder {
 			return $proposal;
 		}
 
-		// Fall back to live data.
-		if ( ! $this->package_id ) {
+		// Fall back to live data. Only NULL means "no package" — index 0 is the
+		// service's first package.
+		if ( null === $this->package_id ) {
 			return null;
 		}
 
@@ -899,7 +904,9 @@ class ServiceOrder {
 	 * @return string
 	 */
 	public function get_package_name(): string {
-		if ( ! $this->package_id && empty( $this->meta['proposal_snapshot'] ) ) {
+		// Only a NULL package_id means the order has no package (a custom
+		// quote). Index 0 is the service's first package.
+		if ( null === $this->package_id && empty( $this->meta['proposal_snapshot'] ) ) {
 			return __( 'Custom', 'wp-sell-services' );
 		}
 
@@ -910,15 +917,19 @@ class ServiceOrder {
 			return $snapshot['name'] ?? $snapshot['request_title'] ?? __( 'Package', 'wp-sell-services' );
 		}
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_packages';
+		// Live data, resolved the same way the service page, cart and checkout
+		// resolve it: package_id indexes the service's _wpss_packages meta.
+		// This used to query a wpss_service_packages table by primary key —
+		// a different meaning for the same column, and one nothing ever wrote
+		// to, so the lookup always missed and every package rendered as the
+		// generic "Package".
+		$package = $this->get_package();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$name = $wpdb->get_var(
-			$wpdb->prepare( "SELECT name FROM {$table} WHERE id = %d", $this->package_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		);
+		if ( is_array( $package ) && ! empty( $package['name'] ) ) {
+			return (string) $package['name'];
+		}
 
-		return $name ?: __( 'Package', 'wp-sell-services' );
+		return __( 'Package', 'wp-sell-services' );
 	}
 
 	/**
