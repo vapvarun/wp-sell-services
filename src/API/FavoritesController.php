@@ -118,6 +118,29 @@ class FavoritesController extends RestController {
 			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
 		}
 
+		// Count what the client will actually receive, not what the meta holds.
+		// The stored ID list can name services that were since deleted or
+		// unpublished, while the body below is filtered to published ones — so
+		// the total described a different set than the items, and a single
+		// orphaned ID produced a "Favorites (1)" badge over an empty list.
+		//
+		// Bounded by one user's own favourites, so the unbounded query is the
+		// size of their list, not the catalogue.
+		$favorites = get_posts(
+			array(
+				'post_type'      => 'wpss_service',
+				'post_status'    => 'publish',
+				'post__in'       => array_map( 'intval', $favorites ),
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'orderby'        => 'post__in',
+			)
+		);
+
+		if ( empty( $favorites ) ) {
+			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
+		}
+
 		$total = count( $favorites );
 
 		// Paginate the favorites.

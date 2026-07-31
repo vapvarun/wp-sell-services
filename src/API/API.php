@@ -120,7 +120,13 @@ class API {
 							'type'        => 'integer',
 							'default'     => 100,
 							'minimum'     => 1,
-							'maximum'     => 500,
+							'maximum'     => 100,
+						],
+						'page'       => [
+							'description' => __( 'Current page of the collection.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
 						],
 					],
 				],
@@ -137,9 +143,22 @@ class API {
 					'callback'            => [ $this, 'get_tags' ],
 					'permission_callback' => '__return_true',
 					'args'                => [
-						'search' => [
+						'search'   => [
 							'description' => __( 'Search tags.', 'wp-sell-services' ),
 							'type'        => 'string',
+						],
+						'per_page' => [
+							'description' => __( 'Maximum number of tags to return.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 50,
+							'minimum'     => 1,
+							'maximum'     => 100,
+						],
+						'page'     => [
+							'description' => __( 'Current page of the collection.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
 						],
 					],
 				],
@@ -244,6 +263,12 @@ class API {
 							'minimum'     => 1,
 							'maximum'     => 50,
 						],
+						'page'     => [
+							'description' => __( 'Current page of the results.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+						],
 					],
 				],
 			]
@@ -259,17 +284,33 @@ class API {
 	public function get_categories( \WP_REST_Request $request ): \WP_REST_Response {
 		$parent     = (int) $request->get_param( 'parent' );
 		$hide_empty = (bool) $request->get_param( 'hide_empty' );
-		$per_page   = (int) $request->get_param( 'per_page' ) ?: 100;
+		$per_page   = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 100 ) );
+		$page       = max( 1, (int) $request->get_param( 'page' ) );
+
+		// Shared with the count below so the total can never describe a
+		// different set than the page. This endpoint used to take a per_page
+		// but no page, so nothing past the first 100 categories was reachable
+		// and the client had no way to learn how many there were.
+		$query_args = [
+			'taxonomy'   => 'wpss_service_category',
+			'parent'     => $parent,
+			'hide_empty' => $hide_empty,
+		];
+
+		$total = (int) wp_count_terms(
+			array_merge( $query_args, [ 'hide_empty' => $hide_empty ] )
+		);
 
 		$terms = get_terms(
-			[
-				'taxonomy'   => 'wpss_service_category',
-				'parent'     => $parent,
-				'hide_empty' => $hide_empty,
-				'orderby'    => 'name',
-				'order'      => 'ASC',
-				'number'     => $per_page,
-			]
+			array_merge(
+				$query_args,
+				[
+					'orderby' => 'name',
+					'order'   => 'ASC',
+					'number'  => $per_page,
+					'offset'  => ( $page - 1 ) * $per_page,
+				]
+			)
 		);
 
 		if ( is_wp_error( $terms ) ) {
@@ -293,7 +334,11 @@ class API {
 			];
 		}
 
-		return new \WP_REST_Response( $data );
+		$response = new \WP_REST_Response( $data );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / $per_page ) );
+
+		return $response;
 	}
 
 	/**
@@ -303,21 +348,34 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function get_tags( \WP_REST_Request $request ): \WP_REST_Response {
-		$search = $request->get_param( 'search' );
+		$search   = $request->get_param( 'search' );
+		$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 50 ) );
+		$page     = max( 1, (int) $request->get_param( 'page' ) );
 
-		$args = [
+		// Was hardcoded to 50 with no page argument, so tag 51 onwards simply
+		// did not exist as far as any client was concerned.
+		$base_args = [
 			'taxonomy'   => 'wpss_service_tag',
 			'hide_empty' => false,
-			'orderby'    => 'count',
-			'order'      => 'DESC',
-			'number'     => 50,
 		];
 
 		if ( $search ) {
-			$args['search'] = $search;
+			$base_args['search'] = $search;
 		}
 
-		$terms = get_terms( $args );
+		$total = (int) wp_count_terms( $base_args );
+
+		$terms = get_terms(
+			array_merge(
+				$base_args,
+				[
+					'orderby' => 'count',
+					'order'   => 'DESC',
+					'number'  => $per_page,
+					'offset'  => ( $page - 1 ) * $per_page,
+				]
+			)
+		);
 
 		if ( is_wp_error( $terms ) ) {
 			return new \WP_REST_Response( [] );
@@ -333,7 +391,11 @@ class API {
 			];
 		}
 
-		return new \WP_REST_Response( $data );
+		$response = new \WP_REST_Response( $data );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / $per_page ) );
+
+		return $response;
 	}
 
 	/**
@@ -528,9 +590,15 @@ class API {
 		$query    = sanitize_text_field( $request->get_param( 'q' ) );
 		$type     = $request->get_param( 'type' );
 		$per_page = (int) $request->get_param( 'per_page' ) ?: 10;
+		$page     = max( 1, (int) $request->get_param( 'page' ) );
+		$offset   = ( $page - 1 ) * $per_page;
 
+		// Results were capped at per_page with no page argument, so there was
+		// no second page of anything. Totals are returned per type so a client
+		// can tell "no more results" from "the cap cut you off".
 		$results = [
 			'query' => $query,
+			'page'  => $page,
 		];
 
 		// Search services.
@@ -541,6 +609,7 @@ class API {
 					'post_status'    => 'publish',
 					's'              => $query,
 					'posts_per_page' => $per_page,
+					'offset'         => $offset,
 				]
 			);
 
@@ -557,18 +626,37 @@ class API {
 				];
 			}
 
-			$results['services'] = $services;
+			$results['services']       = $services;
+			$results['services_total'] = (int) $services_query->found_posts;
 		}
 
 		// Search vendors.
 		if ( 'all' === $type || 'vendors' === $type ) {
+			global $wpdb;
+
+			// Match the vendor directory: role OR the legacy meta. Searching on
+			// the meta alone missed every vendor created by role — which is
+			// every vendor the wizard, the admin screen and the seeder make —
+			// so they were unfindable by name.
 			$vendors_query = new \WP_User_Query(
 				[
-					'meta_key'       => '_wpss_is_vendor',
-					'meta_value'     => '1',
+					'meta_query'     => [
+						'relation' => 'OR',
+						[
+							'key'     => $wpdb->prefix . 'capabilities',
+							'value'   => '"' . \WPSellServices\Services\VendorService::ROLE . '"',
+							'compare' => 'LIKE',
+						],
+						[
+							'key'   => '_wpss_is_vendor',
+							'value' => '1',
+						],
+					],
 					'search'         => '*' . $query . '*',
 					'search_columns' => [ 'user_login', 'display_name', 'user_nicename' ],
 					'number'         => $per_page,
+					'offset'         => $offset,
+					'count_total'    => true,
 				]
 			);
 
@@ -588,7 +676,8 @@ class API {
 				];
 			}
 
-			$results['vendors'] = $vendors;
+			$results['vendors']       = $vendors;
+			$results['vendors_total'] = (int) $vendors_query->get_total();
 		}
 
 		return new \WP_REST_Response( $results );
