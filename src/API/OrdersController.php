@@ -1583,6 +1583,13 @@ class OrdersController extends RestController {
 			'parent_id'         => $this->get_parent_order_id( $order ),
 			'checkout_url'      => $this->get_checkout_url_for( $order ),
 			'total'             => (float) $order->total,
+			// Exact integer minor units. `total` stays a float for existing
+			// clients, but it cannot represent most amounts precisely — 150.20
+			// serialises as 150.19999999999999 — so anything doing arithmetic
+			// should read this instead.
+			'total_minor'       => function_exists( 'wpss_amount_to_minor_units' )
+				? wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency )
+				: (int) round( (float) $order->total * 100 ),
 			'currency'          => $order->currency,
 			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),
 			'due_date'          => $this->format_datetime( $order->delivery_deadline ),

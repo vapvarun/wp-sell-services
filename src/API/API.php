@@ -412,6 +412,48 @@ class API {
 	}
 
 	/**
+	 * Resolve each mapped page to a URL a client can navigate to.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param array<string, mixed> $pages_settings Stored page map.
+	 * @return array<string, string|null>
+	 */
+	private function get_page_urls( array $pages_settings ): array {
+		$ids = array(
+			'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
+			'vendors'       => (int) ( $pages_settings['vendors_page'] ?? 0 ),
+			'dashboard'     => (int) ( $pages_settings['dashboard'] ?? 0 ),
+			'checkout'      => (int) ( $pages_settings['checkout'] ?? 0 ),
+			'cart'          => (int) ( $pages_settings['cart'] ?? 0 ),
+			'become_vendor' => (int) ( $pages_settings['become_vendor'] ?? 0 ),
+			'terms'         => (int) get_option( 'wpss_terms_page' ),
+		);
+
+		$urls = array();
+
+		foreach ( $ids as $key => $id ) {
+			$url = $id > 0 ? get_permalink( $id ) : '';
+
+			$urls[ $key ] = $url ?: null;
+		}
+
+		// Checkout and cart belong to whichever rail owns the store, so read
+		// them through the same resolvers the rest of the plugin uses rather
+		// than trusting our own page map — on a WooCommerce site these point at
+		// WooCommerce's pages, not the standalone ones.
+		if ( function_exists( 'wpss_get_checkout_base_url' ) ) {
+			$urls['checkout'] = wpss_get_checkout_base_url() ?: $urls['checkout'];
+		}
+
+		if ( function_exists( 'wpss_get_cart_url' ) ) {
+			$urls['cart'] = wpss_get_cart_url() ?: $urls['cart'];
+		}
+
+		return $urls;
+	}
+
+	/**
 	 * Get public settings.
 	 *
 	 * @return \WP_REST_Response
@@ -432,13 +474,23 @@ class API {
 			'review_moderation'   => ! empty( $vendor_settings['moderate_reviews'] ),
 			'max_file_size'       => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
 			'allowed_file_types'  => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
+			// Page IDs, unchanged. A 0 here means the site has no such page —
+			// `vendors` and `terms` are never created by the installer, so they
+			// are 0 on a stock install.
 			'pages'               => [
-				'services'  => (int) ( $pages_settings['services_page'] ?? 0 ),
-				'vendors'   => (int) ( $pages_settings['vendors_page'] ?? 0 ),
-				'dashboard' => (int) ( $pages_settings['dashboard'] ?? 0 ),
-				'checkout'  => (int) ( $pages_settings['checkout'] ?? 0 ),
-				'terms'     => (int) get_option( 'wpss_terms_page' ),
+				'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
+				'vendors'       => (int) ( $pages_settings['vendors_page'] ?? 0 ),
+				'dashboard'     => (int) ( $pages_settings['dashboard'] ?? 0 ),
+				'checkout'      => (int) ( $pages_settings['checkout'] ?? 0 ),
+				'cart'          => (int) ( $pages_settings['cart'] ?? 0 ),
+				'become_vendor' => (int) ( $pages_settings['become_vendor'] ?? 0 ),
+				'terms'         => (int) get_option( 'wpss_terms_page' ),
 			],
+			// Resolved URLs for the same keys, because an ID of 0 is not
+			// something a client can navigate to and an ID alone still needs a
+			// second round trip. NULL where the site genuinely has no such page,
+			// so a client can hide the entry rather than link to nowhere.
+			'page_urls'           => $this->get_page_urls( $pages_settings ),
 			// Non-sensitive realtime (WebSocket) client config — never the secret.
 			'realtime'            => ( new \WPSellServices\Services\RealtimeService() )->get_client_config(),
 		];
@@ -481,6 +533,18 @@ class API {
 				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
 			],
 		];
+
+		// The other current-user endpoint, /auth/me, also returns these. Both
+		// answer the same question, so both carry the same fields — a client
+		// should not have to know which one it called.
+		$user_object          = get_userdata( $user_id );
+		$data['username']     = $user_object ? $user_object->user_login : '';
+		$data['registered']   = $user_object ? $user_object->user_registered : '';
+
+		// Always present, so a client can read them without branching on role.
+		$data['vendor_status'] = null;
+		$data['rating']        = 0.0;
+		$data['review_count']  = 0;
 
 		if ( $data['is_vendor'] ) {
 			// Canonical profile status — _wpss_vendor_status was never written.

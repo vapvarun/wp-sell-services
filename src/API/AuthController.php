@@ -589,6 +589,19 @@ class AuthController extends RestController {
 			'vendor_status' => $is_vendor ? ( wpss_get_vendor_status( $user->ID ) ?: 'active' ) : null,
 			'is_admin'      => $user->has_cap( 'manage_options' ),
 			'registered'    => $user->user_registered,
+			// /me and this endpoint both answer "who is the current user?" but
+			// returned different shapes, so a client had two contracts for one
+			// question and had to know which endpoint it had called. Both are
+			// supersets now: these are /me's fields, added here rather than
+			// dropping anything, so neither existing consumer breaks.
+			'capabilities'  => array(
+				'can_create_services' => current_user_can( 'wpss_manage_services' ) && $is_vendor,
+				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
+			),
+			// Same meta keys /me reads, so the two endpoints cannot report
+			// different numbers for the same user.
+			'rating'        => (float) get_user_meta( $user->ID, '_wpss_rating_average', true ) ?: 0,
+			'review_count'  => (int) get_user_meta( $user->ID, '_wpss_rating_count', true ) ?: 0,
 		);
 	}
 }
