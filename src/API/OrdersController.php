@@ -1487,6 +1487,75 @@ class OrdersController extends RestController {
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
 	 */
+	/**
+	 * What kind of order this is.
+	 *
+	 * `service` for a normal purchase, otherwise the sub-order type (tip,
+	 * milestone, extension). Sourced from the same platform column the rest of
+	 * the plugin keys off, so it cannot drift from how orders are filtered and
+	 * counted elsewhere.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param object $order Order row.
+	 * @return string
+	 */
+	private function get_order_type( $order ): string {
+		$platform = (string) ( $order->platform ?? '' );
+
+		return in_array( $platform, wpss_get_sub_order_platforms(), true ) ? $platform : 'service';
+	}
+
+	/**
+	 * The order a sub-order hangs off, if any.
+	 *
+	 * Sub-orders store the parent id in platform_order_id, with a copy in the
+	 * meta JSON; a normal order has no parent.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param object $order Order row.
+	 * @return int|null
+	 */
+	private function get_parent_order_id( $order ): ?int {
+		if ( 'service' === $this->get_order_type( $order ) ) {
+			return null;
+		}
+
+		$parent = (int) ( $order->platform_order_id ?? 0 );
+
+		if ( $parent <= 0 ) {
+			$meta   = $order->meta ?? array();
+			$meta   = is_string( $meta ) ? json_decode( $meta, true ) : $meta;
+			$parent = (int) ( is_array( $meta ) ? ( $meta['parent_order_id'] ?? 0 ) : 0 );
+		}
+
+		return $parent > 0 ? $parent : null;
+	}
+
+	/**
+	 * Where the buyer pays this order, when it is still unpaid.
+	 *
+	 * Resolved through the shared seam, so it is correct on whichever rail the
+	 * site runs — the standalone checkout, or a real WooCommerce order-pay URL.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param object $order Order row.
+	 * @return string|null
+	 */
+	private function get_checkout_url_for( $order ): ?string {
+		if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+			return null;
+		}
+
+		if ( ! function_exists( 'wpss_get_pay_order_url' ) ) {
+			return null;
+		}
+
+		return wpss_get_pay_order_url( (int) $order->id );
+	}
+
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
 		$service  = get_post( $order->service_id );
 		$vendor   = get_userdata( (int) $order->vendor_id );
@@ -1506,6 +1575,13 @@ class OrdersController extends RestController {
 			'customer_avatar'   => get_avatar_url( (int) $order->customer_id, array( 'size' => 48 ) ),
 			'status'            => $order->status,
 			'status_label'      => $this->get_status_label( $order->status ),
+			// A tip, milestone or extension was indistinguishable from a service
+			// purchase in this payload: same shape, no type, no link to the
+			// order it belongs to, and no way to pay it. A client could render
+			// the row but not explain or action it.
+			'type'              => $this->get_order_type( $order ),
+			'parent_id'         => $this->get_parent_order_id( $order ),
+			'checkout_url'      => $this->get_checkout_url_for( $order ),
 			'total'             => (float) $order->total,
 			'currency'          => $order->currency,
 			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),

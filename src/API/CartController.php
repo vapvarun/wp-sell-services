@@ -334,6 +334,40 @@ class CartController extends RestController {
 
 		$payment_method = sanitize_text_field( $request->get_param( 'payment_method' ) ?: '' );
 
+		// On a cart-based rail (WooCommerce, EDD) that plugin owns checkout, and
+		// nothing is wired to wpss_cart_checkout — so this returned 501 and a
+		// mobile client had nowhere to send the buyer at all. Hand the cart over
+		// to the rail and return the URL it should open instead.
+		$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+
+		if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+			$transferred = 0;
+
+			foreach ( $cart as $cart_item ) {
+				// Same seam the web add-to-cart uses, so the rail receives the
+				// item exactly as it does from the service page.
+				if ( apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter ) ) {
+					$transferred++;
+				}
+			}
+
+			if ( $transferred > 0 ) {
+				// The rail owns the cart now; ours would otherwise re-add on the
+				// next handoff and double the quantities.
+				delete_user_meta( $user_id, '_wpss_cart' );
+			}
+
+			return new WP_REST_Response(
+				array(
+					'handoff'      => true,
+					'rail'         => $adapter->get_id(),
+					'items'        => $transferred,
+					'checkout_url' => wpss_get_checkout_base_url(),
+					'message'      => __( 'Checkout is handled by the store. Open the checkout URL to complete payment.', 'wp-sell-services' ),
+				)
+			);
+		}
+
 		/**
 		 * Filter to create order from cart during standalone checkout.
 		 *

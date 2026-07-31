@@ -111,9 +111,15 @@ class API {
 							'default'     => 0,
 						],
 						'hide_empty' => [
-							'description' => __( 'Hide empty categories.', 'wp-sell-services' ),
+							'description' => __( 'Hide categories with no published services.', 'wp-sell-services' ),
 							'type'        => 'boolean',
-							'default'     => true,
+							// Defaulted to true, which meant a site whose services
+							// are not categorised — or a new site with no services
+							// yet — served an EMPTY browse tree to every client,
+							// with no error to explain it. A category list is
+							// navigation, not search results: show the taxonomy and
+							// let the caller opt into filtering.
+							'default'     => false,
 						],
 						'per_page'   => [
 							'description' => __( 'Maximum number of categories to return.', 'wp-sell-services' ),
