@@ -1460,16 +1460,31 @@ class Shortcodes {
 		$general  = get_option( 'wpss_general', array() );
 		$platform = $general['ecommerce_platform'] ?? 'standalone';
 
-		// When WooCommerce handles checkout, link to its checkout page.
+		// When WooCommerce handles checkout, this page is a dead standalone
+		// funnel — send the buyer to the rail that can actually take money.
 		if ( function_exists( 'wc_get_checkout_url' )
 			&& ( 'woocommerce' === $platform || ( 'auto' === $platform && class_exists( 'WooCommerce' ) ) )
 		) {
-			$checkout_url = wc_get_checkout_url();
+			// `?pay_order=N` is the standalone way to pay one order, and we
+			// have already emailed those links to buyers. Resolve the id
+			// through the shared seam so an old link lands on that order's
+			// real payment page instead of a generic (empty) checkout.
+			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
+
+			$target = $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' )
+				? wpss_get_pay_order_url( $pay_order )
+				: wc_get_checkout_url();
+
+			if ( ! headers_sent() ) {
+				wp_safe_redirect( $target );
+				exit;
+			}
+
 			return '<div class="wpss-checkout-redirect"><p>'
 				. sprintf(
 					/* translators: %s: checkout page link */
 					__( 'Checkout is handled by WooCommerce. <a href="%s">Go to checkout</a>.', 'wp-sell-services' ),
-					esc_url( $checkout_url )
+					esc_url( $target )
 				)
 				. '</p></div>';
 		}

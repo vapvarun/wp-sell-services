@@ -1612,10 +1612,11 @@ class Admin {
 										<?php endif; ?>
 									</td>
 								</tr>
-								<?php if ( ! empty( $order->package_name ) ) : ?>
+								<?php $wpss_package_name = $order->get_package_name(); ?>
+								<?php if ( '' !== $wpss_package_name ) : ?>
 									<tr>
 										<th><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></th>
-										<td><?php echo esc_html( $order->package_name ); ?></td>
+										<td><?php echo esc_html( $wpss_package_name ); ?></td>
 									</tr>
 								<?php endif; ?>
 								<tr>

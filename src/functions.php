@@ -3408,6 +3408,51 @@ function wpss_get_sub_order_platforms(): array {
 }
 
 /**
+ * Get the payment-rail receipt reference for an order, if any.
+ *
+ * A WPSS order is the order, and its lifecycle is the same whichever rail took
+ * the money — standalone Stripe/PayPal, WooCommerce, EDD, Razorpay. Those rails
+ * keep their own order flow and issue their own receipt number, so one purchase
+ * ends up with two identities and support lookups fail when the buyer quotes the
+ * receipt and the seller searches order numbers (or the reverse).
+ *
+ * This returns the rail's reference so it can sit beside the WPSS order number
+ * as a secondary identifier. Rail-neutral by design: each integration answers
+ * the filter rather than adding its own block to the order template.
+ *
+ * @since 1.3.1
+ *
+ * @param object $order WPSS order.
+ * @return array{label: string, number: string, url: string}|null Reference, or null when the rail has none.
+ */
+function wpss_get_order_payment_reference( object $order ): ?array {
+	/**
+	 * Filter the payment-rail receipt reference shown on an order.
+	 *
+	 * Return an array with `label` (e.g. "WooCommerce Order"), `number` (the
+	 * receipt number as the buyer sees it) and optionally `url` (a link the
+	 * current user is allowed to open). Return null for rails with no separate
+	 * receipt — standalone gateways record the transaction on the order itself.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param array|null $reference Reference data, or null.
+	 * @param object     $order     WPSS order.
+	 */
+	$reference = apply_filters( 'wpss_order_payment_reference', null, $order );
+
+	if ( ! is_array( $reference ) || empty( $reference['number'] ) ) {
+		return null;
+	}
+
+	return array(
+		'label'  => (string) ( $reference['label'] ?? __( 'Payment Reference', 'wp-sell-services' ) ),
+		'number' => (string) $reference['number'],
+		'url'    => (string) ( $reference['url'] ?? '' ),
+	);
+}
+
+/**
  * Get the cart page URL for the active adapter.
  *
  * For WooCommerce returns the WC cart page; for standalone returns the service-checkout page.

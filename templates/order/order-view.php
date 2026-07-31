@@ -420,6 +420,30 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
+				<?php
+				// Payment reference from whichever rail took the money. The WPSS
+				// order number above is THE order number; this is the receipt the
+				// buyer sees on their statement or in the store's own order list,
+				// so support and self-serve lookups work from either number.
+				// Rail-neutral on purpose: WooCommerce, EDD, Razorpay and any
+				// future gateway fill the same row instead of each adding a block.
+				$wpss_payment_ref = wpss_get_order_payment_reference( $order );
+
+				if ( $wpss_payment_ref ) :
+					?>
+					<div class="wpss-order-detail-item">
+						<span class="wpss-order-detail-item__label"><?php echo esc_html( $wpss_payment_ref['label'] ); ?></span>
+						<span class="wpss-order-detail-item__value">
+							<?php if ( ! empty( $wpss_payment_ref['url'] ) ) : ?>
+								<a href="<?php echo esc_url( $wpss_payment_ref['url'] ); ?>"><?php echo esc_html( $wpss_payment_ref['number'] ); ?></a>
+							<?php else : ?>
+								<?php echo esc_html( $wpss_payment_ref['number'] ); ?>
+							<?php endif; ?>
+						</span>
+					</div>
+					<?php
+				endif;
+				?>
 				<?php if ( $order->delivery_deadline ) : ?>
 					<div class="wpss-order-detail-item">
 						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
