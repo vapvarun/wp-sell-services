@@ -867,6 +867,27 @@ class ServiceOrder {
 	 *
 	 * @return array|null Package data array or null if not available.
 	 */
+	/**
+	 * Whether this order can carry a service package at all.
+	 *
+	 * Tips, milestones and extensions hang off a parent order and never have a
+	 * package of their own. This matters because package_id is an INDEX, so 0
+	 * is a real package, and a good number of order-creation paths default the
+	 * field to 0 when nothing was chosen — without this guard a tip would
+	 * confidently report the service's first package.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @return bool
+	 */
+	private function can_have_package(): bool {
+		return ! in_array(
+			$this->platform,
+			array( self::SUB_ORDER_TYPE_TIP, self::SUB_ORDER_TYPE_MILESTONE, self::SUB_ORDER_TYPE_EXTENSION ),
+			true
+		);
+	}
+
 	public function get_package_snapshot(): ?array {
 		// Try snapshot from meta first.
 		$snapshot = $this->meta['package_snapshot'] ?? null;
@@ -883,6 +904,10 @@ class ServiceOrder {
 		// Fall back to live data. Only NULL means "no package" — index 0 is the
 		// service's first package.
 		if ( null === $this->package_id ) {
+			return null;
+		}
+
+		if ( ! $this->can_have_package() ) {
 			return null;
 		}
 
@@ -906,7 +931,7 @@ class ServiceOrder {
 	public function get_package_name(): string {
 		// Only a NULL package_id means the order has no package (a custom
 		// quote). Index 0 is the service's first package.
-		if ( null === $this->package_id && empty( $this->meta['proposal_snapshot'] ) ) {
+		if ( ( null === $this->package_id || ! $this->can_have_package() ) && empty( $this->meta['proposal_snapshot'] ) ) {
 			return __( 'Custom', 'wp-sell-services' );
 		}
 
