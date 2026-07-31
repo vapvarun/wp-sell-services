@@ -560,8 +560,7 @@ class EmailService {
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
 
-		$base_url = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		$pay_url  = add_query_arg( 'pay_order', (int) $milestone->id, $base_url );
+		$pay_url = wpss_get_pay_order_url( (int) $milestone->id );
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: phase title */
@@ -756,8 +755,7 @@ class EmailService {
 		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
 		$reason      = (string) ( $extension->vendor_notes ?? '' );
 
-		$base_url = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		$pay_url  = add_query_arg( 'pay_order', (int) $extension->id, $base_url );
+		$pay_url = wpss_get_pay_order_url( (int) $extension->id );
 
 		$subject = sprintf(
 			/* translators: %s: site name */

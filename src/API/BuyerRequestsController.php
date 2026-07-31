@@ -700,7 +700,7 @@ class BuyerRequestsController extends RestController {
 			);
 		}
 
-		$checkout_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
+		$checkout_url = wpss_get_pay_order_url( (int) $result['order_id'] );
 
 		return new WP_REST_Response(
 			[

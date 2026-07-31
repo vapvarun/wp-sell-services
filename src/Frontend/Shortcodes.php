@@ -981,7 +981,7 @@ class Shortcodes {
 					<?php echo get_avatar( $buyer->ID, 40 ); ?>
 					<span><?php echo esc_html( $buyer->display_name ); ?></span>
 				</div>
-				<span class="wpss-request-date"><?php echo esc_html( human_time_diff( strtotime( $request->created_at ?? $request->post_date ), current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
+				<span class="wpss-request-date"><?php echo esc_html( human_time_diff( strtotime( ( $request->created_at ?? $request->post_date ) . ' UTC' ), time() ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
 			</div>
 			<h3 class="wpss-request-title">
 				<a href="<?php echo esc_url( get_permalink( $request->ID ?? $request->id ?? 0 ) ); ?>">

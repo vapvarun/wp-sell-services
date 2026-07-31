@@ -262,10 +262,10 @@ class TippingService {
 
 		$tip_order_id = (int) $wpdb->insert_id;
 		$base_url     = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		// The standalone checkout reads `pay_order` to resume an existing
-		// pending_payment order; using the same param keeps tip orders on
-		// the same code path as proposal-accepted orders.
-		$checkout_url = add_query_arg( 'pay_order', $tip_order_id, $base_url );
+		// Resolve through the shared seam so a cart-based rail (WooCommerce)
+		// can hand back its own order-pay URL instead of a query arg only the
+		// standalone checkout understands.
+		$checkout_url = wpss_get_pay_order_url( $tip_order_id );
 
 		/**
 		 * Fires when a pending-payment tip order is created and awaits the buyer's gateway charge.

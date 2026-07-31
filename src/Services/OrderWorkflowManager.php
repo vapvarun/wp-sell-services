@@ -1280,18 +1280,25 @@ class OrderWorkflowManager {
 			)
 		);
 
-		$now              = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		// Everything below is compared in real UTC. Two different conventions
+		// meet here: requested_at is written with current_time( 'mysql' ) and
+		// is therefore SITE-LOCAL, while updated_at is a UTC column. Reading
+		// both with a bare strtotime() and comparing against a site-local
+		// "now" made the two agree only on a UTC site — on any other site the
+		// updated_at fallback fired the 48h auto-cancel early or late by the
+		// site's offset.
+		$now              = time();
 		$timed_out_orders = array();
 
 		foreach ( $pending_orders as $order ) {
 			$cancel_data  = json_decode( $order->vendor_notes ?? '', true );
 			$requested_at = ! empty( $cancel_data['requested_at'] )
-				? strtotime( $cancel_data['requested_at'] )
+				? strtotime( get_gmt_from_date( (string) $cancel_data['requested_at'] ) . ' UTC' )
 				: 0;
 
 			// Fall back to updated_at if vendor_notes JSON is missing or corrupt.
 			if ( $requested_at <= 0 && ! empty( $order->updated_at ) ) {
-				$requested_at = strtotime( $order->updated_at );
+				$requested_at = strtotime( $order->updated_at . ' UTC' );
 			}
 
 			if ( $requested_at > 0 && ( $now - $requested_at ) >= 48 * HOUR_IN_SECONDS ) {

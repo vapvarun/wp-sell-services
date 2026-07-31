@@ -1796,7 +1796,7 @@ class AjaxHandlers {
 				$redirect_url = add_query_arg( 'order_id', $result['order_id'], wpss_get_dashboard_url() );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
-				$redirect_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
+				$redirect_url = wpss_get_pay_order_url( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted! Redirecting to payment…', 'wp-sell-services' );
 			}
 

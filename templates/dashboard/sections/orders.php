@@ -266,7 +266,7 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 								);
 								?>
 								<span class="wpss-order-card__sep">&bull;</span>
-								<?php echo esc_html( human_time_diff( strtotime( $order_item->created_at ), current_time( 'timestamp' ) ) ); ?>
+								<?php echo esc_html( human_time_diff( strtotime( $order_item->created_at . ' UTC' ), time() ) ); ?>
 								<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
 							</p>
 						</div>

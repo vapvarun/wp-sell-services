@@ -266,8 +266,7 @@ class ExtensionOrderService {
 
 		$wpdb->query( 'COMMIT' );
 
-		$base_url     = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		$checkout_url = add_query_arg( 'pay_order', $pay_order_id, $base_url );
+		$checkout_url = wpss_get_pay_order_url( (int) $pay_order_id );
 
 		/**
 		 * Fires after an extension sub-order has been created and is awaiting

@@ -111,6 +111,8 @@ class OrderRepository extends AbstractRepository {
 			$params[] = $args['platform'];
 		}
 
+		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+
 		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $args['limit'] > 0 ) {
@@ -166,6 +168,8 @@ class OrderRepository extends AbstractRepository {
 			$params[] = $args['date_from'];
 		}
 
+		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+
 		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $args['limit'] > 0 ) {
@@ -177,6 +181,51 @@ class OrderRepository extends AbstractRepository {
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
+	}
+
+	/**
+	 * Exclude sub-order rows from a list or count query.
+	 *
+	 * Tips, milestones and extensions live in this table as their own rows but
+	 * they are not orders anyone placed — they hang off a parent order. Listing
+	 * them alongside real orders is what made the seller dashboard show a
+	 * "Total Orders" stat that disagreed with its own list, and put
+	 * "Milestone: Phase 2" in the buyer's My Orders as if it were a purchase.
+	 *
+	 * get_vendor_stats() has always excluded them; this is the same rule for
+	 * the list and count paths, from one shared definition.
+	 *
+	 * Callers that genuinely want sub-orders pass include_sub_orders => true,
+	 * or ask for a specific platform.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param string               $sql    SQL built so far.
+	 * @param array<int, mixed>    $params Prepare params, appended in place.
+	 * @param array<string, mixed> $args   Query args.
+	 * @return string SQL with the exclusion applied.
+	 */
+	private function exclude_sub_orders( string $sql, array &$params, array $args ): string {
+		if ( ! empty( $args['include_sub_orders'] ) || ! empty( $args['platform'] ) ) {
+			return $sql;
+		}
+
+		$sub_platforms = function_exists( 'wpss_get_sub_order_platforms' )
+			? wpss_get_sub_order_platforms()
+			: array();
+
+		if ( empty( $sub_platforms ) ) {
+			return $sql;
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $sub_platforms ), '%s' ) );
+		$sql         .= " AND ( platform IS NULL OR platform NOT IN ( {$placeholders} ) )";
+
+		foreach ( $sub_platforms as $platform ) {
+			$params[] = $platform;
+		}
+
+		return $sql;
 	}
 
 	/**
@@ -212,6 +261,8 @@ class OrderRepository extends AbstractRepository {
 			$sql     .= ' AND platform = %s';
 			$params[] = $args['platform'];
 		}
+
+		$sql = $this->exclude_sub_orders( $sql, $params, $args );
 
 		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -256,6 +307,8 @@ class OrderRepository extends AbstractRepository {
 			$sql     .= ' AND created_at >= %s';
 			$params[] = $args['date_from'];
 		}
+
+		$sql = $this->exclude_sub_orders( $sql, $params, $args );
 
 		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared

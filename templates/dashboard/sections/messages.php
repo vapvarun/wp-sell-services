@@ -88,8 +88,8 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 									<strong><?php echo esc_html( $sender ? $sender->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
 									<time>
 										<?php
-										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at );
-										echo esc_html( human_time_diff( $msg_ts, current_time( 'timestamp' ) ) );
+										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at . ' UTC' );
+										echo esc_html( human_time_diff( $msg_ts, time() ) );
 										?>
 										<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
 									</time>
@@ -230,8 +230,8 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				$unread_data       = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
 				$my_unread         = (int) ( $unread_data[ $user_id ] ?? 0 );
 				$is_unread         = $my_unread > 0;
-				$last_message_time = ! empty( $conversation->last_message_at ) ? strtotime( $conversation->last_message_at ) : false;
-				$time_ago          = $last_message_time ? human_time_diff( $last_message_time, current_time( 'timestamp' ) ) : '';
+				$last_message_time = ! empty( $conversation->last_message_at ) ? strtotime( $conversation->last_message_at . ' UTC' ) : false;
+				$time_ago          = $last_message_time ? human_time_diff( $last_message_time, time() ) : '';
 
 				// Determine conversation title.
 				if ( $is_direct ) {

@@ -240,7 +240,7 @@ class BuyerRequests extends AbstractBlock {
 					<?php echo get_avatar( $buyer_id, 40 ); ?>
 					<div class="wpss-buyer-info">
 						<span class="wpss-buyer-name"><?php echo esc_html( get_the_author_meta( 'display_name', $buyer_id ) ); ?></span>
-						<span class="wpss-request-date"><?php echo esc_html( human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
+						<span class="wpss-request-date"><?php echo esc_html( human_time_diff( get_the_time( 'U' ), time() ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
 					</div>
 				</div>
 

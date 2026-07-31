@@ -930,68 +930,254 @@ function wpss_get_countries(): array {
 		// Complete ISO 3166-1 alpha-2 list. A partial list silently blocks
 		// checkout for every country left out, so this is the whole set.
 		$countries = array(
-			'AF' => __( 'Afghanistan', 'wp-sell-services' ), 'AX' => __( 'Åland Islands', 'wp-sell-services' ), 'AL' => __( 'Albania', 'wp-sell-services' ), 'DZ' => __( 'Algeria', 'wp-sell-services' ),
-			'AS' => __( 'American Samoa', 'wp-sell-services' ), 'AD' => __( 'Andorra', 'wp-sell-services' ), 'AO' => __( 'Angola', 'wp-sell-services' ), 'AI' => __( 'Anguilla', 'wp-sell-services' ),
-			'AQ' => __( 'Antarctica', 'wp-sell-services' ), 'AG' => __( 'Antigua and Barbuda', 'wp-sell-services' ), 'AR' => __( 'Argentina', 'wp-sell-services' ), 'AM' => __( 'Armenia', 'wp-sell-services' ),
-			'AW' => __( 'Aruba', 'wp-sell-services' ), 'AU' => __( 'Australia', 'wp-sell-services' ), 'AT' => __( 'Austria', 'wp-sell-services' ), 'AZ' => __( 'Azerbaijan', 'wp-sell-services' ),
-			'BS' => __( 'Bahamas', 'wp-sell-services' ), 'BH' => __( 'Bahrain', 'wp-sell-services' ), 'BD' => __( 'Bangladesh', 'wp-sell-services' ), 'BB' => __( 'Barbados', 'wp-sell-services' ),
-			'BY' => __( 'Belarus', 'wp-sell-services' ), 'BE' => __( 'Belgium', 'wp-sell-services' ), 'BZ' => __( 'Belize', 'wp-sell-services' ), 'BJ' => __( 'Benin', 'wp-sell-services' ),
-			'BM' => __( 'Bermuda', 'wp-sell-services' ), 'BT' => __( 'Bhutan', 'wp-sell-services' ), 'BO' => __( 'Bolivia', 'wp-sell-services' ), 'BQ' => __( 'Bonaire, Sint Eustatius and Saba', 'wp-sell-services' ),
-			'BA' => __( 'Bosnia and Herzegovina', 'wp-sell-services' ), 'BW' => __( 'Botswana', 'wp-sell-services' ), 'BV' => __( 'Bouvet Island', 'wp-sell-services' ), 'BR' => __( 'Brazil', 'wp-sell-services' ),
-			'IO' => __( 'British Indian Ocean Territory', 'wp-sell-services' ), 'BN' => __( 'Brunei', 'wp-sell-services' ), 'BG' => __( 'Bulgaria', 'wp-sell-services' ), 'BF' => __( 'Burkina Faso', 'wp-sell-services' ),
-			'BI' => __( 'Burundi', 'wp-sell-services' ), 'CV' => __( 'Cabo Verde', 'wp-sell-services' ), 'KH' => __( 'Cambodia', 'wp-sell-services' ), 'CM' => __( 'Cameroon', 'wp-sell-services' ),
-			'CA' => __( 'Canada', 'wp-sell-services' ), 'KY' => __( 'Cayman Islands', 'wp-sell-services' ), 'CF' => __( 'Central African Republic', 'wp-sell-services' ), 'TD' => __( 'Chad', 'wp-sell-services' ),
-			'CL' => __( 'Chile', 'wp-sell-services' ), 'CN' => __( 'China', 'wp-sell-services' ), 'CX' => __( 'Christmas Island', 'wp-sell-services' ), 'CC' => __( 'Cocos (Keeling) Islands', 'wp-sell-services' ),
-			'CO' => __( 'Colombia', 'wp-sell-services' ), 'KM' => __( 'Comoros', 'wp-sell-services' ), 'CG' => __( 'Congo', 'wp-sell-services' ), 'CD' => __( 'Congo (DRC)', 'wp-sell-services' ),
-			'CK' => __( 'Cook Islands', 'wp-sell-services' ), 'CR' => __( 'Costa Rica', 'wp-sell-services' ), 'CI' => __( "Côte d'Ivoire", 'wp-sell-services' ), 'HR' => __( 'Croatia', 'wp-sell-services' ),
-			'CU' => __( 'Cuba', 'wp-sell-services' ), 'CW' => __( 'Curaçao', 'wp-sell-services' ), 'CY' => __( 'Cyprus', 'wp-sell-services' ), 'CZ' => __( 'Czechia', 'wp-sell-services' ),
-			'DK' => __( 'Denmark', 'wp-sell-services' ), 'DJ' => __( 'Djibouti', 'wp-sell-services' ), 'DM' => __( 'Dominica', 'wp-sell-services' ), 'DO' => __( 'Dominican Republic', 'wp-sell-services' ),
-			'EC' => __( 'Ecuador', 'wp-sell-services' ), 'EG' => __( 'Egypt', 'wp-sell-services' ), 'SV' => __( 'El Salvador', 'wp-sell-services' ), 'GQ' => __( 'Equatorial Guinea', 'wp-sell-services' ),
-			'ER' => __( 'Eritrea', 'wp-sell-services' ), 'EE' => __( 'Estonia', 'wp-sell-services' ), 'SZ' => __( 'Eswatini', 'wp-sell-services' ), 'ET' => __( 'Ethiopia', 'wp-sell-services' ),
-			'FK' => __( 'Falkland Islands', 'wp-sell-services' ), 'FO' => __( 'Faroe Islands', 'wp-sell-services' ), 'FJ' => __( 'Fiji', 'wp-sell-services' ), 'FI' => __( 'Finland', 'wp-sell-services' ),
-			'FR' => __( 'France', 'wp-sell-services' ), 'GF' => __( 'French Guiana', 'wp-sell-services' ), 'PF' => __( 'French Polynesia', 'wp-sell-services' ), 'TF' => __( 'French Southern Territories', 'wp-sell-services' ),
-			'GA' => __( 'Gabon', 'wp-sell-services' ), 'GM' => __( 'Gambia', 'wp-sell-services' ), 'GE' => __( 'Georgia', 'wp-sell-services' ), 'DE' => __( 'Germany', 'wp-sell-services' ),
-			'GH' => __( 'Ghana', 'wp-sell-services' ), 'GI' => __( 'Gibraltar', 'wp-sell-services' ), 'GR' => __( 'Greece', 'wp-sell-services' ), 'GL' => __( 'Greenland', 'wp-sell-services' ),
-			'GD' => __( 'Grenada', 'wp-sell-services' ), 'GP' => __( 'Guadeloupe', 'wp-sell-services' ), 'GU' => __( 'Guam', 'wp-sell-services' ), 'GT' => __( 'Guatemala', 'wp-sell-services' ),
-			'GG' => __( 'Guernsey', 'wp-sell-services' ), 'GN' => __( 'Guinea', 'wp-sell-services' ), 'GW' => __( 'Guinea-Bissau', 'wp-sell-services' ), 'GY' => __( 'Guyana', 'wp-sell-services' ),
-			'HT' => __( 'Haiti', 'wp-sell-services' ), 'HM' => __( 'Heard Island and McDonald Islands', 'wp-sell-services' ), 'HN' => __( 'Honduras', 'wp-sell-services' ), 'HK' => __( 'Hong Kong', 'wp-sell-services' ),
-			'HU' => __( 'Hungary', 'wp-sell-services' ), 'IS' => __( 'Iceland', 'wp-sell-services' ), 'IN' => __( 'India', 'wp-sell-services' ), 'ID' => __( 'Indonesia', 'wp-sell-services' ),
-			'IR' => __( 'Iran', 'wp-sell-services' ), 'IQ' => __( 'Iraq', 'wp-sell-services' ), 'IE' => __( 'Ireland', 'wp-sell-services' ), 'IM' => __( 'Isle of Man', 'wp-sell-services' ),
-			'IL' => __( 'Israel', 'wp-sell-services' ), 'IT' => __( 'Italy', 'wp-sell-services' ), 'JM' => __( 'Jamaica', 'wp-sell-services' ), 'JP' => __( 'Japan', 'wp-sell-services' ),
-			'JE' => __( 'Jersey', 'wp-sell-services' ), 'JO' => __( 'Jordan', 'wp-sell-services' ), 'KZ' => __( 'Kazakhstan', 'wp-sell-services' ), 'KE' => __( 'Kenya', 'wp-sell-services' ),
-			'KI' => __( 'Kiribati', 'wp-sell-services' ), 'KW' => __( 'Kuwait', 'wp-sell-services' ), 'KG' => __( 'Kyrgyzstan', 'wp-sell-services' ), 'LA' => __( 'Laos', 'wp-sell-services' ),
-			'LV' => __( 'Latvia', 'wp-sell-services' ), 'LB' => __( 'Lebanon', 'wp-sell-services' ), 'LS' => __( 'Lesotho', 'wp-sell-services' ), 'LR' => __( 'Liberia', 'wp-sell-services' ),
-			'LY' => __( 'Libya', 'wp-sell-services' ), 'LI' => __( 'Liechtenstein', 'wp-sell-services' ), 'LT' => __( 'Lithuania', 'wp-sell-services' ), 'LU' => __( 'Luxembourg', 'wp-sell-services' ),
-			'MO' => __( 'Macao', 'wp-sell-services' ), 'MG' => __( 'Madagascar', 'wp-sell-services' ), 'MW' => __( 'Malawi', 'wp-sell-services' ), 'MY' => __( 'Malaysia', 'wp-sell-services' ),
-			'MV' => __( 'Maldives', 'wp-sell-services' ), 'ML' => __( 'Mali', 'wp-sell-services' ), 'MT' => __( 'Malta', 'wp-sell-services' ), 'MH' => __( 'Marshall Islands', 'wp-sell-services' ),
-			'MQ' => __( 'Martinique', 'wp-sell-services' ), 'MR' => __( 'Mauritania', 'wp-sell-services' ), 'MU' => __( 'Mauritius', 'wp-sell-services' ), 'YT' => __( 'Mayotte', 'wp-sell-services' ),
-			'MX' => __( 'Mexico', 'wp-sell-services' ), 'FM' => __( 'Micronesia', 'wp-sell-services' ), 'MD' => __( 'Moldova', 'wp-sell-services' ), 'MC' => __( 'Monaco', 'wp-sell-services' ),
-			'MN' => __( 'Mongolia', 'wp-sell-services' ), 'ME' => __( 'Montenegro', 'wp-sell-services' ), 'MS' => __( 'Montserrat', 'wp-sell-services' ), 'MA' => __( 'Morocco', 'wp-sell-services' ),
-			'MZ' => __( 'Mozambique', 'wp-sell-services' ), 'MM' => __( 'Myanmar', 'wp-sell-services' ), 'NA' => __( 'Namibia', 'wp-sell-services' ), 'NR' => __( 'Nauru', 'wp-sell-services' ),
-			'NP' => __( 'Nepal', 'wp-sell-services' ), 'NL' => __( 'Netherlands', 'wp-sell-services' ), 'NC' => __( 'New Caledonia', 'wp-sell-services' ), 'NZ' => __( 'New Zealand', 'wp-sell-services' ),
-			'NI' => __( 'Nicaragua', 'wp-sell-services' ), 'NE' => __( 'Niger', 'wp-sell-services' ), 'NG' => __( 'Nigeria', 'wp-sell-services' ), 'NU' => __( 'Niue', 'wp-sell-services' ),
-			'NF' => __( 'Norfolk Island', 'wp-sell-services' ), 'KP' => __( 'North Korea', 'wp-sell-services' ), 'MK' => __( 'North Macedonia', 'wp-sell-services' ), 'MP' => __( 'Northern Mariana Islands', 'wp-sell-services' ),
-			'NO' => __( 'Norway', 'wp-sell-services' ), 'OM' => __( 'Oman', 'wp-sell-services' ), 'PK' => __( 'Pakistan', 'wp-sell-services' ), 'PW' => __( 'Palau', 'wp-sell-services' ),
-			'PS' => __( 'Palestine', 'wp-sell-services' ), 'PA' => __( 'Panama', 'wp-sell-services' ), 'PG' => __( 'Papua New Guinea', 'wp-sell-services' ), 'PY' => __( 'Paraguay', 'wp-sell-services' ),
-			'PE' => __( 'Peru', 'wp-sell-services' ), 'PH' => __( 'Philippines', 'wp-sell-services' ), 'PN' => __( 'Pitcairn', 'wp-sell-services' ), 'PL' => __( 'Poland', 'wp-sell-services' ),
-			'PT' => __( 'Portugal', 'wp-sell-services' ), 'PR' => __( 'Puerto Rico', 'wp-sell-services' ), 'QA' => __( 'Qatar', 'wp-sell-services' ), 'RE' => __( 'Réunion', 'wp-sell-services' ),
-			'RO' => __( 'Romania', 'wp-sell-services' ), 'RU' => __( 'Russia', 'wp-sell-services' ), 'RW' => __( 'Rwanda', 'wp-sell-services' ), 'BL' => __( 'Saint Barthélemy', 'wp-sell-services' ),
-			'SH' => __( 'Saint Helena', 'wp-sell-services' ), 'KN' => __( 'Saint Kitts and Nevis', 'wp-sell-services' ), 'LC' => __( 'Saint Lucia', 'wp-sell-services' ), 'MF' => __( 'Saint Martin', 'wp-sell-services' ),
-			'PM' => __( 'Saint Pierre and Miquelon', 'wp-sell-services' ), 'VC' => __( 'Saint Vincent and the Grenadines', 'wp-sell-services' ), 'WS' => __( 'Samoa', 'wp-sell-services' ), 'SM' => __( 'San Marino', 'wp-sell-services' ),
-			'ST' => __( 'Sao Tome and Principe', 'wp-sell-services' ), 'SA' => __( 'Saudi Arabia', 'wp-sell-services' ), 'SN' => __( 'Senegal', 'wp-sell-services' ), 'RS' => __( 'Serbia', 'wp-sell-services' ),
-			'SC' => __( 'Seychelles', 'wp-sell-services' ), 'SL' => __( 'Sierra Leone', 'wp-sell-services' ), 'SG' => __( 'Singapore', 'wp-sell-services' ), 'SX' => __( 'Sint Maarten', 'wp-sell-services' ),
-			'SK' => __( 'Slovakia', 'wp-sell-services' ), 'SI' => __( 'Slovenia', 'wp-sell-services' ), 'SB' => __( 'Solomon Islands', 'wp-sell-services' ), 'SO' => __( 'Somalia', 'wp-sell-services' ),
-			'ZA' => __( 'South Africa', 'wp-sell-services' ), 'GS' => __( 'South Georgia', 'wp-sell-services' ), 'KR' => __( 'South Korea', 'wp-sell-services' ), 'SS' => __( 'South Sudan', 'wp-sell-services' ),
-			'ES' => __( 'Spain', 'wp-sell-services' ), 'LK' => __( 'Sri Lanka', 'wp-sell-services' ), 'SD' => __( 'Sudan', 'wp-sell-services' ), 'SR' => __( 'Suriname', 'wp-sell-services' ),
-			'SJ' => __( 'Svalbard and Jan Mayen', 'wp-sell-services' ), 'SE' => __( 'Sweden', 'wp-sell-services' ), 'CH' => __( 'Switzerland', 'wp-sell-services' ), 'SY' => __( 'Syria', 'wp-sell-services' ),
-			'TW' => __( 'Taiwan', 'wp-sell-services' ), 'TJ' => __( 'Tajikistan', 'wp-sell-services' ), 'TZ' => __( 'Tanzania', 'wp-sell-services' ), 'TH' => __( 'Thailand', 'wp-sell-services' ),
-			'TL' => __( 'Timor-Leste', 'wp-sell-services' ), 'TG' => __( 'Togo', 'wp-sell-services' ), 'TK' => __( 'Tokelau', 'wp-sell-services' ), 'TO' => __( 'Tonga', 'wp-sell-services' ),
-			'TT' => __( 'Trinidad and Tobago', 'wp-sell-services' ), 'TN' => __( 'Tunisia', 'wp-sell-services' ), 'TR' => __( 'Türkiye', 'wp-sell-services' ), 'TM' => __( 'Turkmenistan', 'wp-sell-services' ),
-			'TC' => __( 'Turks and Caicos Islands', 'wp-sell-services' ), 'TV' => __( 'Tuvalu', 'wp-sell-services' ), 'UG' => __( 'Uganda', 'wp-sell-services' ), 'UA' => __( 'Ukraine', 'wp-sell-services' ),
-			'AE' => __( 'United Arab Emirates', 'wp-sell-services' ), 'GB' => __( 'United Kingdom', 'wp-sell-services' ), 'US' => __( 'United States', 'wp-sell-services' ), 'UM' => __( 'United States Minor Outlying Islands', 'wp-sell-services' ),
-			'UY' => __( 'Uruguay', 'wp-sell-services' ), 'UZ' => __( 'Uzbekistan', 'wp-sell-services' ), 'VU' => __( 'Vanuatu', 'wp-sell-services' ), 'VA' => __( 'Vatican City', 'wp-sell-services' ),
-			'VE' => __( 'Venezuela', 'wp-sell-services' ), 'VN' => __( 'Vietnam', 'wp-sell-services' ), 'VG' => __( 'Virgin Islands (British)', 'wp-sell-services' ), 'VI' => __( 'Virgin Islands (U.S.)', 'wp-sell-services' ),
-			'WF' => __( 'Wallis and Futuna', 'wp-sell-services' ), 'EH' => __( 'Western Sahara', 'wp-sell-services' ), 'YE' => __( 'Yemen', 'wp-sell-services' ), 'ZM' => __( 'Zambia', 'wp-sell-services' ),
+			'AF' => __( 'Afghanistan', 'wp-sell-services' ),
+			'AX' => __( 'Åland Islands', 'wp-sell-services' ),
+			'AL' => __( 'Albania', 'wp-sell-services' ),
+			'DZ' => __( 'Algeria', 'wp-sell-services' ),
+			'AS' => __( 'American Samoa', 'wp-sell-services' ),
+			'AD' => __( 'Andorra', 'wp-sell-services' ),
+			'AO' => __( 'Angola', 'wp-sell-services' ),
+			'AI' => __( 'Anguilla', 'wp-sell-services' ),
+			'AQ' => __( 'Antarctica', 'wp-sell-services' ),
+			'AG' => __( 'Antigua and Barbuda', 'wp-sell-services' ),
+			'AR' => __( 'Argentina', 'wp-sell-services' ),
+			'AM' => __( 'Armenia', 'wp-sell-services' ),
+			'AW' => __( 'Aruba', 'wp-sell-services' ),
+			'AU' => __( 'Australia', 'wp-sell-services' ),
+			'AT' => __( 'Austria', 'wp-sell-services' ),
+			'AZ' => __( 'Azerbaijan', 'wp-sell-services' ),
+			'BS' => __( 'Bahamas', 'wp-sell-services' ),
+			'BH' => __( 'Bahrain', 'wp-sell-services' ),
+			'BD' => __( 'Bangladesh', 'wp-sell-services' ),
+			'BB' => __( 'Barbados', 'wp-sell-services' ),
+			'BY' => __( 'Belarus', 'wp-sell-services' ),
+			'BE' => __( 'Belgium', 'wp-sell-services' ),
+			'BZ' => __( 'Belize', 'wp-sell-services' ),
+			'BJ' => __( 'Benin', 'wp-sell-services' ),
+			'BM' => __( 'Bermuda', 'wp-sell-services' ),
+			'BT' => __( 'Bhutan', 'wp-sell-services' ),
+			'BO' => __( 'Bolivia', 'wp-sell-services' ),
+			'BQ' => __( 'Bonaire, Sint Eustatius and Saba', 'wp-sell-services' ),
+			'BA' => __( 'Bosnia and Herzegovina', 'wp-sell-services' ),
+			'BW' => __( 'Botswana', 'wp-sell-services' ),
+			'BV' => __( 'Bouvet Island', 'wp-sell-services' ),
+			'BR' => __( 'Brazil', 'wp-sell-services' ),
+			'IO' => __( 'British Indian Ocean Territory', 'wp-sell-services' ),
+			'BN' => __( 'Brunei', 'wp-sell-services' ),
+			'BG' => __( 'Bulgaria', 'wp-sell-services' ),
+			'BF' => __( 'Burkina Faso', 'wp-sell-services' ),
+			'BI' => __( 'Burundi', 'wp-sell-services' ),
+			'CV' => __( 'Cabo Verde', 'wp-sell-services' ),
+			'KH' => __( 'Cambodia', 'wp-sell-services' ),
+			'CM' => __( 'Cameroon', 'wp-sell-services' ),
+			'CA' => __( 'Canada', 'wp-sell-services' ),
+			'KY' => __( 'Cayman Islands', 'wp-sell-services' ),
+			'CF' => __( 'Central African Republic', 'wp-sell-services' ),
+			'TD' => __( 'Chad', 'wp-sell-services' ),
+			'CL' => __( 'Chile', 'wp-sell-services' ),
+			'CN' => __( 'China', 'wp-sell-services' ),
+			'CX' => __( 'Christmas Island', 'wp-sell-services' ),
+			'CC' => __( 'Cocos (Keeling) Islands', 'wp-sell-services' ),
+			'CO' => __( 'Colombia', 'wp-sell-services' ),
+			'KM' => __( 'Comoros', 'wp-sell-services' ),
+			'CG' => __( 'Congo', 'wp-sell-services' ),
+			'CD' => __( 'Congo (DRC)', 'wp-sell-services' ),
+			'CK' => __( 'Cook Islands', 'wp-sell-services' ),
+			'CR' => __( 'Costa Rica', 'wp-sell-services' ),
+			'CI' => __( "Côte d'Ivoire", 'wp-sell-services' ),
+			'HR' => __( 'Croatia', 'wp-sell-services' ),
+			'CU' => __( 'Cuba', 'wp-sell-services' ),
+			'CW' => __( 'Curaçao', 'wp-sell-services' ),
+			'CY' => __( 'Cyprus', 'wp-sell-services' ),
+			'CZ' => __( 'Czechia', 'wp-sell-services' ),
+			'DK' => __( 'Denmark', 'wp-sell-services' ),
+			'DJ' => __( 'Djibouti', 'wp-sell-services' ),
+			'DM' => __( 'Dominica', 'wp-sell-services' ),
+			'DO' => __( 'Dominican Republic', 'wp-sell-services' ),
+			'EC' => __( 'Ecuador', 'wp-sell-services' ),
+			'EG' => __( 'Egypt', 'wp-sell-services' ),
+			'SV' => __( 'El Salvador', 'wp-sell-services' ),
+			'GQ' => __( 'Equatorial Guinea', 'wp-sell-services' ),
+			'ER' => __( 'Eritrea', 'wp-sell-services' ),
+			'EE' => __( 'Estonia', 'wp-sell-services' ),
+			'SZ' => __( 'Eswatini', 'wp-sell-services' ),
+			'ET' => __( 'Ethiopia', 'wp-sell-services' ),
+			'FK' => __( 'Falkland Islands', 'wp-sell-services' ),
+			'FO' => __( 'Faroe Islands', 'wp-sell-services' ),
+			'FJ' => __( 'Fiji', 'wp-sell-services' ),
+			'FI' => __( 'Finland', 'wp-sell-services' ),
+			'FR' => __( 'France', 'wp-sell-services' ),
+			'GF' => __( 'French Guiana', 'wp-sell-services' ),
+			'PF' => __( 'French Polynesia', 'wp-sell-services' ),
+			'TF' => __( 'French Southern Territories', 'wp-sell-services' ),
+			'GA' => __( 'Gabon', 'wp-sell-services' ),
+			'GM' => __( 'Gambia', 'wp-sell-services' ),
+			'GE' => __( 'Georgia', 'wp-sell-services' ),
+			'DE' => __( 'Germany', 'wp-sell-services' ),
+			'GH' => __( 'Ghana', 'wp-sell-services' ),
+			'GI' => __( 'Gibraltar', 'wp-sell-services' ),
+			'GR' => __( 'Greece', 'wp-sell-services' ),
+			'GL' => __( 'Greenland', 'wp-sell-services' ),
+			'GD' => __( 'Grenada', 'wp-sell-services' ),
+			'GP' => __( 'Guadeloupe', 'wp-sell-services' ),
+			'GU' => __( 'Guam', 'wp-sell-services' ),
+			'GT' => __( 'Guatemala', 'wp-sell-services' ),
+			'GG' => __( 'Guernsey', 'wp-sell-services' ),
+			'GN' => __( 'Guinea', 'wp-sell-services' ),
+			'GW' => __( 'Guinea-Bissau', 'wp-sell-services' ),
+			'GY' => __( 'Guyana', 'wp-sell-services' ),
+			'HT' => __( 'Haiti', 'wp-sell-services' ),
+			'HM' => __( 'Heard Island and McDonald Islands', 'wp-sell-services' ),
+			'HN' => __( 'Honduras', 'wp-sell-services' ),
+			'HK' => __( 'Hong Kong', 'wp-sell-services' ),
+			'HU' => __( 'Hungary', 'wp-sell-services' ),
+			'IS' => __( 'Iceland', 'wp-sell-services' ),
+			'IN' => __( 'India', 'wp-sell-services' ),
+			'ID' => __( 'Indonesia', 'wp-sell-services' ),
+			'IR' => __( 'Iran', 'wp-sell-services' ),
+			'IQ' => __( 'Iraq', 'wp-sell-services' ),
+			'IE' => __( 'Ireland', 'wp-sell-services' ),
+			'IM' => __( 'Isle of Man', 'wp-sell-services' ),
+			'IL' => __( 'Israel', 'wp-sell-services' ),
+			'IT' => __( 'Italy', 'wp-sell-services' ),
+			'JM' => __( 'Jamaica', 'wp-sell-services' ),
+			'JP' => __( 'Japan', 'wp-sell-services' ),
+			'JE' => __( 'Jersey', 'wp-sell-services' ),
+			'JO' => __( 'Jordan', 'wp-sell-services' ),
+			'KZ' => __( 'Kazakhstan', 'wp-sell-services' ),
+			'KE' => __( 'Kenya', 'wp-sell-services' ),
+			'KI' => __( 'Kiribati', 'wp-sell-services' ),
+			'KW' => __( 'Kuwait', 'wp-sell-services' ),
+			'KG' => __( 'Kyrgyzstan', 'wp-sell-services' ),
+			'LA' => __( 'Laos', 'wp-sell-services' ),
+			'LV' => __( 'Latvia', 'wp-sell-services' ),
+			'LB' => __( 'Lebanon', 'wp-sell-services' ),
+			'LS' => __( 'Lesotho', 'wp-sell-services' ),
+			'LR' => __( 'Liberia', 'wp-sell-services' ),
+			'LY' => __( 'Libya', 'wp-sell-services' ),
+			'LI' => __( 'Liechtenstein', 'wp-sell-services' ),
+			'LT' => __( 'Lithuania', 'wp-sell-services' ),
+			'LU' => __( 'Luxembourg', 'wp-sell-services' ),
+			'MO' => __( 'Macao', 'wp-sell-services' ),
+			'MG' => __( 'Madagascar', 'wp-sell-services' ),
+			'MW' => __( 'Malawi', 'wp-sell-services' ),
+			'MY' => __( 'Malaysia', 'wp-sell-services' ),
+			'MV' => __( 'Maldives', 'wp-sell-services' ),
+			'ML' => __( 'Mali', 'wp-sell-services' ),
+			'MT' => __( 'Malta', 'wp-sell-services' ),
+			'MH' => __( 'Marshall Islands', 'wp-sell-services' ),
+			'MQ' => __( 'Martinique', 'wp-sell-services' ),
+			'MR' => __( 'Mauritania', 'wp-sell-services' ),
+			'MU' => __( 'Mauritius', 'wp-sell-services' ),
+			'YT' => __( 'Mayotte', 'wp-sell-services' ),
+			'MX' => __( 'Mexico', 'wp-sell-services' ),
+			'FM' => __( 'Micronesia', 'wp-sell-services' ),
+			'MD' => __( 'Moldova', 'wp-sell-services' ),
+			'MC' => __( 'Monaco', 'wp-sell-services' ),
+			'MN' => __( 'Mongolia', 'wp-sell-services' ),
+			'ME' => __( 'Montenegro', 'wp-sell-services' ),
+			'MS' => __( 'Montserrat', 'wp-sell-services' ),
+			'MA' => __( 'Morocco', 'wp-sell-services' ),
+			'MZ' => __( 'Mozambique', 'wp-sell-services' ),
+			'MM' => __( 'Myanmar', 'wp-sell-services' ),
+			'NA' => __( 'Namibia', 'wp-sell-services' ),
+			'NR' => __( 'Nauru', 'wp-sell-services' ),
+			'NP' => __( 'Nepal', 'wp-sell-services' ),
+			'NL' => __( 'Netherlands', 'wp-sell-services' ),
+			'NC' => __( 'New Caledonia', 'wp-sell-services' ),
+			'NZ' => __( 'New Zealand', 'wp-sell-services' ),
+			'NI' => __( 'Nicaragua', 'wp-sell-services' ),
+			'NE' => __( 'Niger', 'wp-sell-services' ),
+			'NG' => __( 'Nigeria', 'wp-sell-services' ),
+			'NU' => __( 'Niue', 'wp-sell-services' ),
+			'NF' => __( 'Norfolk Island', 'wp-sell-services' ),
+			'KP' => __( 'North Korea', 'wp-sell-services' ),
+			'MK' => __( 'North Macedonia', 'wp-sell-services' ),
+			'MP' => __( 'Northern Mariana Islands', 'wp-sell-services' ),
+			'NO' => __( 'Norway', 'wp-sell-services' ),
+			'OM' => __( 'Oman', 'wp-sell-services' ),
+			'PK' => __( 'Pakistan', 'wp-sell-services' ),
+			'PW' => __( 'Palau', 'wp-sell-services' ),
+			'PS' => __( 'Palestine', 'wp-sell-services' ),
+			'PA' => __( 'Panama', 'wp-sell-services' ),
+			'PG' => __( 'Papua New Guinea', 'wp-sell-services' ),
+			'PY' => __( 'Paraguay', 'wp-sell-services' ),
+			'PE' => __( 'Peru', 'wp-sell-services' ),
+			'PH' => __( 'Philippines', 'wp-sell-services' ),
+			'PN' => __( 'Pitcairn', 'wp-sell-services' ),
+			'PL' => __( 'Poland', 'wp-sell-services' ),
+			'PT' => __( 'Portugal', 'wp-sell-services' ),
+			'PR' => __( 'Puerto Rico', 'wp-sell-services' ),
+			'QA' => __( 'Qatar', 'wp-sell-services' ),
+			'RE' => __( 'Réunion', 'wp-sell-services' ),
+			'RO' => __( 'Romania', 'wp-sell-services' ),
+			'RU' => __( 'Russia', 'wp-sell-services' ),
+			'RW' => __( 'Rwanda', 'wp-sell-services' ),
+			'BL' => __( 'Saint Barthélemy', 'wp-sell-services' ),
+			'SH' => __( 'Saint Helena', 'wp-sell-services' ),
+			'KN' => __( 'Saint Kitts and Nevis', 'wp-sell-services' ),
+			'LC' => __( 'Saint Lucia', 'wp-sell-services' ),
+			'MF' => __( 'Saint Martin', 'wp-sell-services' ),
+			'PM' => __( 'Saint Pierre and Miquelon', 'wp-sell-services' ),
+			'VC' => __( 'Saint Vincent and the Grenadines', 'wp-sell-services' ),
+			'WS' => __( 'Samoa', 'wp-sell-services' ),
+			'SM' => __( 'San Marino', 'wp-sell-services' ),
+			'ST' => __( 'Sao Tome and Principe', 'wp-sell-services' ),
+			'SA' => __( 'Saudi Arabia', 'wp-sell-services' ),
+			'SN' => __( 'Senegal', 'wp-sell-services' ),
+			'RS' => __( 'Serbia', 'wp-sell-services' ),
+			'SC' => __( 'Seychelles', 'wp-sell-services' ),
+			'SL' => __( 'Sierra Leone', 'wp-sell-services' ),
+			'SG' => __( 'Singapore', 'wp-sell-services' ),
+			'SX' => __( 'Sint Maarten', 'wp-sell-services' ),
+			'SK' => __( 'Slovakia', 'wp-sell-services' ),
+			'SI' => __( 'Slovenia', 'wp-sell-services' ),
+			'SB' => __( 'Solomon Islands', 'wp-sell-services' ),
+			'SO' => __( 'Somalia', 'wp-sell-services' ),
+			'ZA' => __( 'South Africa', 'wp-sell-services' ),
+			'GS' => __( 'South Georgia', 'wp-sell-services' ),
+			'KR' => __( 'South Korea', 'wp-sell-services' ),
+			'SS' => __( 'South Sudan', 'wp-sell-services' ),
+			'ES' => __( 'Spain', 'wp-sell-services' ),
+			'LK' => __( 'Sri Lanka', 'wp-sell-services' ),
+			'SD' => __( 'Sudan', 'wp-sell-services' ),
+			'SR' => __( 'Suriname', 'wp-sell-services' ),
+			'SJ' => __( 'Svalbard and Jan Mayen', 'wp-sell-services' ),
+			'SE' => __( 'Sweden', 'wp-sell-services' ),
+			'CH' => __( 'Switzerland', 'wp-sell-services' ),
+			'SY' => __( 'Syria', 'wp-sell-services' ),
+			'TW' => __( 'Taiwan', 'wp-sell-services' ),
+			'TJ' => __( 'Tajikistan', 'wp-sell-services' ),
+			'TZ' => __( 'Tanzania', 'wp-sell-services' ),
+			'TH' => __( 'Thailand', 'wp-sell-services' ),
+			'TL' => __( 'Timor-Leste', 'wp-sell-services' ),
+			'TG' => __( 'Togo', 'wp-sell-services' ),
+			'TK' => __( 'Tokelau', 'wp-sell-services' ),
+			'TO' => __( 'Tonga', 'wp-sell-services' ),
+			'TT' => __( 'Trinidad and Tobago', 'wp-sell-services' ),
+			'TN' => __( 'Tunisia', 'wp-sell-services' ),
+			'TR' => __( 'Türkiye', 'wp-sell-services' ),
+			'TM' => __( 'Turkmenistan', 'wp-sell-services' ),
+			'TC' => __( 'Turks and Caicos Islands', 'wp-sell-services' ),
+			'TV' => __( 'Tuvalu', 'wp-sell-services' ),
+			'UG' => __( 'Uganda', 'wp-sell-services' ),
+			'UA' => __( 'Ukraine', 'wp-sell-services' ),
+			'AE' => __( 'United Arab Emirates', 'wp-sell-services' ),
+			'GB' => __( 'United Kingdom', 'wp-sell-services' ),
+			'US' => __( 'United States', 'wp-sell-services' ),
+			'UM' => __( 'United States Minor Outlying Islands', 'wp-sell-services' ),
+			'UY' => __( 'Uruguay', 'wp-sell-services' ),
+			'UZ' => __( 'Uzbekistan', 'wp-sell-services' ),
+			'VU' => __( 'Vanuatu', 'wp-sell-services' ),
+			'VA' => __( 'Vatican City', 'wp-sell-services' ),
+			'VE' => __( 'Venezuela', 'wp-sell-services' ),
+			'VN' => __( 'Vietnam', 'wp-sell-services' ),
+			'VG' => __( 'Virgin Islands (British)', 'wp-sell-services' ),
+			'VI' => __( 'Virgin Islands (U.S.)', 'wp-sell-services' ),
+			'WF' => __( 'Wallis and Futuna', 'wp-sell-services' ),
+			'EH' => __( 'Western Sahara', 'wp-sell-services' ),
+			'YE' => __( 'Yemen', 'wp-sell-services' ),
+			'ZM' => __( 'Zambia', 'wp-sell-services' ),
 			'ZW' => __( 'Zimbabwe', 'wp-sell-services' ),
 		);
 	}
@@ -1191,7 +1377,7 @@ function wpss_save_billing_address( int $user_id, array $address ): bool {
  * @since 1.2.3
  *
  * @param array<string, mixed> $request Raw request data ($_POST or a REST payload).
- * @param int   $user_id Optional. Defaults to the current user.
+ * @param int                  $user_id Optional. Defaults to the current user.
  * @return bool True when something was written.
  */
 function wpss_save_billing_from_request( array $request, int $user_id = 0 ): bool {
@@ -2288,17 +2474,24 @@ function wpss_get_currencies(): array {
 /**
  * Calculate time difference in human readable format.
  *
- * @param string $datetime MySQL datetime string.
+ * Both sides of the comparison must be real UTC timestamps. The stored
+ * datetime is UTC, so it is parsed as UTC; "now" is time(), not
+ * current_time( 'timestamp' ). current_time() returns UTC shifted by the
+ * site's offset — a fake timestamp — so comparing the two added the offset to
+ * every result: on a UTC+5:30 site an order placed 47 minutes ago rendered as
+ * "6 hours ago". Correct on a UTC site, wrong everywhere else.
+ *
+ * @param string $datetime MySQL datetime string, in UTC.
  * @return string
  */
 function wpss_time_ago( string $datetime ): string {
-	$timestamp = strtotime( $datetime );
+	$timestamp = strtotime( $datetime . ' UTC' );
 
 	if ( ! $timestamp ) {
 		return '';
 	}
 
-	return human_time_diff( $timestamp, current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'wp-sell-services' );
+	return human_time_diff( $timestamp, time() ) . ' ' . __( 'ago', 'wp-sell-services' );
 }
 
 /**
@@ -3158,6 +3351,60 @@ function wpss_get_checkout_base_url(): string {
 	// Fallback to adapter slug.
 	$slug = \WPSellServices\Integrations\Standalone\StandaloneAdapter::get_checkout_slug();
 	return home_url( '/' . $slug . '/' );
+}
+
+/**
+ * Get the URL a buyer uses to pay one existing order.
+ *
+ * This is the single seam for "send the buyer somewhere they can pay THIS
+ * order" — tips, milestones, extensions and accepted proposals all resolve
+ * through here, including the links we put in emails.
+ *
+ * The standalone checkout understands `?pay_order=N` and renders that order.
+ * A cart-based rail (WooCommerce, EDD) does not: appending the query arg to
+ * its checkout URL lands the buyer on an empty cart with no way to pay, so
+ * those rails hook `wpss_pay_order_url` and return a URL on their own
+ * payment flow instead. Never rebuild this URL inline — a caller that does
+ * is correct only on standalone.
+ *
+ * @since 1.3.1
+ *
+ * @param int $order_id WPSS order ID to be paid.
+ * @return string Payment URL for the active e-commerce rail.
+ */
+function wpss_get_pay_order_url( int $order_id ): string {
+	$url = add_query_arg( 'pay_order', $order_id, wpss_get_checkout_base_url() );
+
+	/**
+	 * Filter the URL a buyer is sent to in order to pay a single order.
+	 *
+	 * Cart-based rails replace this entirely — see the WooCommerce
+	 * implementation in Pro, which creates (or reuses) a real WC order and
+	 * returns its native order-pay URL so the link works from an email with
+	 * no cart session.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param string $url      Default standalone pay URL.
+	 * @param int    $order_id WPSS order ID being paid.
+	 */
+	return (string) apply_filters( 'wpss_pay_order_url', $url, $order_id );
+}
+
+/**
+ * Platform values that mark a row as a sub-order rather than a real order.
+ *
+ * Tips, milestones and extensions are stored as their own rows in
+ * wpss_orders but they are not orders a buyer placed or a seller sold —
+ * they hang off a parent order. Every list, count and stat has to agree on
+ * that, so the list lives here rather than being re-authored per query.
+ *
+ * @since 1.3.1
+ *
+ * @return array<int, string> Sub-order platform values.
+ */
+function wpss_get_sub_order_platforms(): array {
+	return array_keys( \WPSellServices\Models\ServiceOrder::get_sub_order_types() );
 }
 
 /**
