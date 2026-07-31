@@ -3408,6 +3408,131 @@ function wpss_get_sub_order_platforms(): array {
 }
 
 /**
+ * Freeze the package an order was bought on.
+ *
+ * Package data lives in the service's `_wpss_packages` post meta, which the
+ * vendor can edit at any time. Without a copy taken at purchase, a rename or a
+ * price change silently rewrites what every past order says it was — the buyer
+ * opens an old order and sees a package they never bought.
+ *
+ * @since 1.3.1
+ *
+ * @param int      $service_id Service post ID.
+ * @param int|null $package_id Package INDEX into the service's packages meta.
+ * @return array<string, mixed>|null Frozen package data, or null when the order has no package.
+ */
+function wpss_build_package_snapshot( int $service_id, ?int $package_id ): ?array {
+	if ( null === $package_id || $service_id <= 0 ) {
+		return null;
+	}
+
+	$packages = get_post_meta( $service_id, '_wpss_packages', true );
+
+	if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) || ! is_array( $packages[ $package_id ] ) ) {
+		return null;
+	}
+
+	return $packages[ $package_id ];
+}
+
+/**
+ * Run the shared post-creation steps for a service order.
+ *
+ * Every rail creates its order row itself — standalone, WooCommerce, EDD,
+ * recurring renewals, admin manual orders — and they had each grown their own
+ * idea of what happens next. Only standalone froze the package, and only
+ * standalone and the manual-order screen fired `wpss_order_created`, so
+ * anything listening to that hook silently never ran for a WooCommerce or EDD
+ * purchase.
+ *
+ * A buyer's order should behave the same whoever sold it and however they
+ * paid, so the steps that must happen for every order live here and each rail
+ * calls this once after its insert.
+ *
+ * Safe to call more than once: the snapshot is only written when missing.
+ *
+ * @since 1.3.1
+ *
+ * @param int                  $order_id   Newly created WPSS order ID.
+ * @param array<string, mixed> $order_data Raw creation data, passed to the hook.
+ * @return void
+ */
+function wpss_after_order_created( int $order_id, array $order_data = array() ): void {
+	if ( $order_id <= 0 ) {
+		return;
+	}
+
+	wpss_capture_order_package_snapshot( $order_id );
+
+	/**
+	 * Fires after a service order is created, on every e-commerce rail.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int   $order_id   The new order ID.
+	 * @param array $order_data The order creation data.
+	 */
+	do_action( 'wpss_order_created', $order_id, $order_data );
+}
+
+/**
+ * Write the package snapshot onto an order that does not have one yet.
+ *
+ * Idempotent, and a no-op for order types that cannot carry a package (tips,
+ * milestones, extensions) or for orders bought without one.
+ *
+ * @since 1.3.1
+ *
+ * @param int $order_id WPSS order ID.
+ * @return bool Whether a snapshot was written.
+ */
+function wpss_capture_order_package_snapshot( int $order_id ): bool {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT service_id, package_id, platform, meta FROM {$table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$order_id
+		)
+	);
+
+	if ( ! $row || null === $row->package_id ) {
+		return false;
+	}
+
+	if ( in_array( (string) $row->platform, wpss_get_sub_order_platforms(), true ) ) {
+		return false;
+	}
+
+	$meta = json_decode( (string) $row->meta, true );
+	$meta = is_array( $meta ) ? $meta : array();
+
+	if ( ! empty( $meta['package_snapshot'] ) ) {
+		return false;
+	}
+
+	$snapshot = wpss_build_package_snapshot( (int) $row->service_id, (int) $row->package_id );
+
+	if ( null === $snapshot ) {
+		return false;
+	}
+
+	$meta['package_snapshot'] = $snapshot;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	return false !== $wpdb->update(
+		$table,
+		array( 'meta' => wp_json_encode( $meta ) ),
+		array( 'id' => $order_id ),
+		array( '%s' ),
+		array( '%d' )
+	);
+}
+
+/**
  * Get the payment-rail receipt reference for an order, if any.
  *
  * A WPSS order is the order, and its lifecycle is the same whichever rail took

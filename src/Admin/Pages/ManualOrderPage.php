@@ -776,7 +776,7 @@ class ManualOrderPage {
 			'platform'       => 'manual',
 		);
 		ob_start();
-		do_action( 'wpss_order_created', $order_id, $order_data );
+		wpss_after_order_created( $order_id, $order_data );
 		do_action( 'wpss_order_status_changed', $order_id, $status, '' );
 		do_action( "wpss_order_status_{$status}", $order_id, '' );
 		ob_end_clean();
