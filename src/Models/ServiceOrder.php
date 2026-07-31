@@ -935,25 +935,26 @@ class ServiceOrder {
 			return __( 'Custom', 'wp-sell-services' );
 		}
 
-		// Try snapshot first.
+		// get_package_snapshot() resolves the frozen snapshot first and falls
+		// back to live data itself — package_id indexing the service's
+		// _wpss_packages meta, the same way the service page, cart and checkout
+		// resolve it. This used to run its own query against a
+		// wpss_service_packages table by primary key: a second meaning for the
+		// same column, against a table nothing has ever written to, so the
+		// lookup always missed and every package rendered as "Package".
 		$snapshot = $this->get_package_snapshot();
-		if ( $snapshot ) {
+
+		if ( is_array( $snapshot ) ) {
 			// Package snapshot has 'name', proposal snapshot has 'request_title'.
-			return $snapshot['name'] ?? $snapshot['request_title'] ?? __( 'Package', 'wp-sell-services' );
+			$name = $snapshot['name'] ?? $snapshot['request_title'] ?? '';
+
+			if ( '' !== $name ) {
+				return (string) $name;
+			}
 		}
 
-		// Live data, resolved the same way the service page, cart and checkout
-		// resolve it: package_id indexes the service's _wpss_packages meta.
-		// This used to query a wpss_service_packages table by primary key —
-		// a different meaning for the same column, and one nothing ever wrote
-		// to, so the lookup always missed and every package rendered as the
-		// generic "Package".
-		$package = $this->get_package();
-
-		if ( is_array( $package ) && ! empty( $package['name'] ) ) {
-			return (string) $package['name'];
-		}
-
+		// A package index that no longer resolves — e.g. the vendor deleted the
+		// tier, or the service never defined packages at all.
 		return __( 'Package', 'wp-sell-services' );
 	}
 
