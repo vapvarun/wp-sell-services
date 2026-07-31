@@ -338,26 +338,16 @@ class OrderTimelineService {
 	/**
 	 * Describe the user behind an event.
 	 *
+	 * Delegates to the shared actor shape, so a timeline actor is the same
+	 * object as a person named anywhere else in the API. A system event has
+	 * no actor and returns null rather than a fake "System" user.
+	 *
 	 * @since 1.3.1
 	 *
 	 * @param int $user_id User ID, 0 for system-generated events.
 	 * @return array<string, mixed>|null Null when the system did it.
 	 */
 	private function actor( int $user_id ): ?array {
-		if ( $user_id <= 0 ) {
-			return null;
-		}
-
-		$user = get_userdata( $user_id );
-
-		if ( ! $user ) {
-			return null;
-		}
-
-		return array(
-			'id'     => $user_id,
-			'name'   => $user->display_name,
-			'avatar' => get_avatar_url( $user_id ),
-		);
+		return wpss_rest_user( $user_id );
 	}
 }

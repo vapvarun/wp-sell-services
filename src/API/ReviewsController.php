@@ -954,15 +954,13 @@ class ReviewsController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function check_delete_permissions( WP_REST_Request $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error(
-				'rest_forbidden',
-				__( 'Only administrators can delete reviews.', 'wp-sell-services' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		return true;
+		// Delegate rather than hand-roll a fourth gate in this file. The three
+		// siblings here all check login before capability; this one went
+		// straight to manage_options, so a logged-out caller got 403 - an
+		// authorization answer to an authentication question. A client whose
+		// rule is "401 means refresh the token and retry" reads that as a
+		// permanent denial and never recovers from an expired token.
+		return $this->check_admin_permissions( $request );
 	}
 
 	/**

@@ -46,8 +46,12 @@ $is_submitted = 'pending_approval' === $status;
 $is_completed = 'completed' === $status;
 $is_cancelled = 'cancelled' === $status;
 
-$base_url = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-$pay_url  = add_query_arg( 'pay_order', (int) $current_order->id, $base_url );
+// Through the seam, never rebuilt inline: ?pay_order=N is a real payment page
+// only on the standalone rail. On WooCommerce it lands on the store cart and
+// bounces the buyer away - which is why "Accept & Pay" did nothing on Woo
+// sites while the same phase paid fine from the notification email, which
+// does use the seam.
+$pay_url = wpss_get_pay_order_url( (int) $current_order->id );
 
 $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_order->customer_id;
 $counterparty    = get_userdata( $counterparty_id );

@@ -192,7 +192,7 @@ class API {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_current_user' ],
-					'permission_callback' => 'is_user_logged_in',
+					'permission_callback' => 'wpss_rest_require_login',
 				],
 			]
 		);
@@ -205,7 +205,7 @@ class API {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_dashboard' ],
-					'permission_callback' => 'is_user_logged_in',
+					'permission_callback' => 'wpss_rest_require_login',
 				],
 			]
 		);
@@ -218,7 +218,7 @@ class API {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'handle_batch' ],
-					'permission_callback' => 'is_user_logged_in',
+					'permission_callback' => 'wpss_rest_require_login',
 					'args'                => [
 						'requests' => [
 							'description' => __( 'Array of sub-requests.', 'wp-sell-services' ),

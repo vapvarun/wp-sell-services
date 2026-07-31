@@ -238,13 +238,10 @@ do_action( 'wpss_before_order_view', $order );
 			if ( $is_customer ) {
 				// Pay Now button for unpaid orders (e.g., from accepted proposals).
 				if ( 'pending_payment' === $order->status ) {
-					// Use base checkout URL when service_id is 0 to avoid service-checkout/0/ URLs
-					if ( $order->service_id > 0 ) {
-						$checkout_url = wpss_get_service_checkout_url( $order->service_id );
-					} else {
-						$checkout_url = wpss_get_checkout_base_url();
-					}
-					$pay_url        = add_query_arg( 'pay_order', $order_id, $checkout_url );
+					// Through the seam, so the button is right on whichever rail
+					// the site runs. Building ?pay_order=N inline is correct only
+					// on standalone; on WooCommerce it lands on the store cart.
+					$pay_url        = wpss_get_pay_order_url( (int) $order_id );
 					$actions['pay'] = array(
 						'label' => sprintf(
 							/* translators: %s: formatted price */
@@ -1399,7 +1396,7 @@ do_action( 'wpss_before_order_view', $order );
 							$ms_status      = $m['status'];
 							$ms_sub_id      = (int) $m['id'];
 							$ms_sub_url     = add_query_arg( 'order_id', $ms_sub_id, remove_query_arg( 'order_id' ) );
-							$ms_pay_url     = add_query_arg( 'pay_order', $ms_sub_id, wpss_get_checkout_base_url() );
+							$ms_pay_url     = wpss_get_pay_order_url( $ms_sub_id );
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
 
@@ -1688,7 +1685,7 @@ do_action( 'wpss_before_order_view', $order );
 
 	if ( $buyer_sees_pending_extension ) :
 		$ext_pay_url  = $pending_extension->pay_order_id
-			? add_query_arg( 'pay_order', (int) $pending_extension->pay_order_id, wpss_get_checkout_base_url() )
+			? wpss_get_pay_order_url( (int) $pending_extension->pay_order_id )
 			: '';
 		$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
 		?>

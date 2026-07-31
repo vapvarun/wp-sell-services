@@ -299,9 +299,7 @@ final class Tour {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'handle_complete_request' ),
-				'permission_callback' => static function (): bool {
-					return is_user_logged_in();
-				},
+				'permission_callback' => 'wpss_rest_require_login',
 			)
 		);
 	}

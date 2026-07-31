@@ -3423,6 +3423,160 @@ function wpss_rest_text( $value ): string {
 }
 
 /**
+ * REST permission callback: the caller must be logged in.
+ *
+ * Use this instead of `'permission_callback' => 'is_user_logged_in'`. A bare
+ * boolean callback makes WordPress answer with the code `rest_forbidden`, so
+ * an anonymous caller is told it is FORBIDDEN when the truth is that it is
+ * UNAUTHENTICATED. A client whose rule is "401 means refresh the token and
+ * retry" then reads an expired token as a permanent denial and never
+ * recovers - and the two routes that did this, /me and /dashboard, are the
+ * first two a cold-starting app calls.
+ *
+ * The HTTP status was already 401; it was the machine-readable code that lied.
+ *
+ * @since 1.3.1
+ *
+ * @return true|WP_Error
+ */
+function wpss_rest_require_login() {
+	if ( is_user_logged_in() ) {
+		return true;
+	}
+
+	return new WP_Error(
+		'rest_not_logged_in',
+		__( 'You must be logged in to access this endpoint.', 'wp-sell-services' ),
+		array( 'status' => 401 )
+	);
+}
+
+/**
+ * REST permission callback: the caller must be a site administrator.
+ *
+ * Answers "who are you?" before "may you?", so an anonymous caller gets 401
+ * and a logged-in non-admin gets 403. Returning 403 to both is what breaks a
+ * client's re-auth logic.
+ *
+ * @since 1.3.1
+ *
+ * @return true|WP_Error
+ */
+function wpss_rest_require_admin() {
+	$logged_in = wpss_rest_require_login();
+
+	if ( is_wp_error( $logged_in ) ) {
+		return $logged_in;
+	}
+
+	if ( current_user_can( 'manage_options' ) ) {
+		return true;
+	}
+
+	return new WP_Error(
+		'rest_forbidden',
+		__( 'You do not have permission to access this endpoint.', 'wp-sell-services' ),
+		array( 'status' => 403 )
+	);
+}
+
+/**
+ * REST permission callback: the caller must be a vendor.
+ *
+ * One code for one condition. "You are not a vendor" was answered with four
+ * different codes across the API - rest_not_vendor, not_vendor, wpss_not_vendor
+ * and a plain rest_forbidden - so a client could not branch on it without
+ * knowing which endpoint it had called.
+ *
+ * @since 1.3.1
+ *
+ * @return true|WP_Error
+ */
+function wpss_rest_require_vendor() {
+	$logged_in = wpss_rest_require_login();
+
+	if ( is_wp_error( $logged_in ) ) {
+		return $logged_in;
+	}
+
+	if ( wpss_is_vendor( get_current_user_id() ) ) {
+		return true;
+	}
+
+	return new WP_Error(
+		'wpss_not_vendor',
+		__( 'Only vendors can access this endpoint.', 'wp-sell-services' ),
+		array( 'status' => 403 )
+	);
+}
+
+/**
+ * Shape a money value for the REST API.
+ *
+ * Returns the three fields every money value in the API carries, under
+ * predictable names derived from the base key: the float (unchanged, so no
+ * existing consumer breaks), the exact integer in minor units, and the
+ * currency needed to interpret both.
+ *
+ * Use this instead of adding `*_minor` by hand. Hand-written pairs are how
+ * the API ended up with money on some endpoints carrying minor units and
+ * money on others not, and with a `_minor` value scaled by the store currency
+ * on a row that was actually sold in a different one.
+ *
+ * Example: wpss_rest_money( 'total', 25.20, 'USD' ) returns
+ * array( 'total' => 25.2, 'total_minor' => 2520, 'currency' => 'USD' ).
+ *
+ * @since 1.3.1
+ *
+ * @param string $key      Base field name, e.g. 'total' or 'amount'.
+ * @param float  $amount   Amount in major units.
+ * @param string $currency Optional. Currency of THIS amount - pass the row's
+ *                         own currency, not the store default, or historic
+ *                         rows scale wrongly. Defaults to the store currency.
+ * @return array<string, mixed> The money fields, ready to merge into a response.
+ */
+function wpss_rest_money( string $key, float $amount, string $currency = '' ): array {
+	$currency = '' !== $currency ? $currency : wpss_get_currency();
+
+	return array(
+		$key            => round( $amount, wpss_get_currency_decimals( $currency ) ),
+		$key . '_minor' => wpss_amount_to_minor_units( $amount, $currency ),
+		'currency'      => $currency,
+	);
+}
+
+/**
+ * Shape a user for the REST API.
+ *
+ * One actor shape wherever the API names a person - order participants,
+ * timeline actors, review authors, vendors on a service card. Without a
+ * shared shape these drift into `user_id` here, `author` there and a bare
+ * display name somewhere else, and a client needs a parser per endpoint.
+ *
+ * @since 1.3.1
+ *
+ * @param int $user_id User ID. 0 or an unknown user yields null.
+ * @return array<string, mixed>|null
+ */
+function wpss_rest_user( int $user_id ): ?array {
+	if ( $user_id <= 0 ) {
+		return null;
+	}
+
+	$user = get_userdata( $user_id );
+
+	if ( ! $user ) {
+		return null;
+	}
+
+	return array(
+		'id'     => $user_id,
+		'name'   => wpss_rest_text( $user->display_name ),
+		'avatar' => get_avatar_url( $user_id ),
+	);
+}
+
+/**
  * Shape a taxonomy term for the REST API.
  *
  * One definition, because there were two: /categories returned
