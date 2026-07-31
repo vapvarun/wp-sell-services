@@ -334,40 +334,6 @@ class CartController extends RestController {
 
 		$payment_method = sanitize_text_field( $request->get_param( 'payment_method' ) ?: '' );
 
-		// On a cart-based rail (WooCommerce, EDD) that plugin owns checkout, and
-		// nothing is wired to wpss_cart_checkout — so this returned 501 and a
-		// mobile client had nowhere to send the buyer at all. Hand the cart over
-		// to the rail and return the URL it should open instead.
-		$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
-
-		if ( $adapter && 'standalone' !== $adapter->get_id() ) {
-			$transferred = 0;
-
-			foreach ( $cart as $cart_item ) {
-				// Same seam the web add-to-cart uses, so the rail receives the
-				// item exactly as it does from the service page.
-				if ( apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter ) ) {
-					++$transferred;
-				}
-			}
-
-			if ( $transferred > 0 ) {
-				// The rail owns the cart now; ours would otherwise re-add on the
-				// next handoff and double the quantities.
-				delete_user_meta( $user_id, '_wpss_cart' );
-			}
-
-			return new WP_REST_Response(
-				array(
-					'handoff'      => true,
-					'rail'         => $adapter->get_id(),
-					'items'        => $transferred,
-					'checkout_url' => wpss_get_checkout_base_url(),
-					'message'      => __( 'Checkout is handled by the store. Open the checkout URL to complete payment.', 'wp-sell-services' ),
-				)
-			);
-		}
-
 		/**
 		 * Filter to create order from cart during standalone checkout.
 		 *
@@ -381,11 +347,22 @@ class CartController extends RestController {
 			return $order_result;
 		}
 
-		// Nothing is wired to wpss_cart_checkout on a stock install, so the
-		// standalone rail — the DEFAULT — had no checkout at all and answered
-		// 501. Create the orders here instead, using the provider that already
-		// knows how: it reads package prices from live post meta rather than
-		// trusting anything the client sent.
+		// Nothing is wired to wpss_cart_checkout on a stock install, so create
+		// the orders here — on EVERY rail, not just standalone.
+		//
+		// Handing the cart to WooCommerce and returning /checkout/ instead was
+		// wrong for the same reason it is wrong for tips and milestones: that
+		// URL only shows a cart to a browser that already carries the WC
+		// session cookie, so a native client opening it in a fresh WebView
+		// sees an empty cart and cannot pay at all.
+		//
+		// So the WPSS order is created first and is the canonical record on
+		// every rail, and the URL where the buyer pays is resolved through
+		// wpss_get_pay_order_url() — the one seam tips, milestones and
+		// extensions already use. On Woo that filter returns a real order-pay
+		// URL carrying its own key, which needs no session; on standalone it
+		// stays the local pay page. One checkout, one contract, whatever the
+		// site sells through.
 		if ( empty( $order_result ) ) {
 			$provider  = new \WPSellServices\Integrations\Standalone\StandaloneOrderProvider();
 			$order_ids = $provider->create_orders_from_cart( $cart, $payment_method, '', $user_id );
@@ -418,6 +395,8 @@ class CartController extends RestController {
 				);
 			}
 
+			$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+
 			return new WP_REST_Response(
 				array(
 					'orders'       => $orders,
@@ -426,6 +405,9 @@ class CartController extends RestController {
 					// needs somewhere to send the buyer, so surface the first.
 					'order_id'     => $orders[0]['order_id'],
 					'checkout_url' => $orders[0]['checkout_url'],
+					// Informational only. The client opens checkout_url the same
+					// way regardless of what this says.
+					'rail'         => $adapter ? $adapter->get_id() : 'standalone',
 				),
 				201
 			);

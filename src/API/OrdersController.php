@@ -256,6 +256,34 @@ class OrdersController extends RestController {
 			)
 		);
 
+		// Order activity log. Disputes already exposed a timeline; orders did
+		// not, so an Activity tab had to be invented from notifications or
+		// left blank. Same participants-only gate as the order itself.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/timeline',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_timeline' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'type'    => 'integer',
+							'default' => 1,
+							'minimum' => 1,
+						),
+						'per_page' => array(
+							'type'    => 'integer',
+							'default' => 50,
+							'minimum' => 1,
+							'maximum' => 100,
+						),
+					),
+				),
+			)
+		);
+
 		// Trigger payment on an existing order (primarily used for
 		// milestone sub-orders where the lock-step rule must be enforced
 		// server-side so a crafted URL can't leapfrog phases).
@@ -1318,6 +1346,33 @@ class OrdersController extends RestController {
 	}
 
 	/**
+	 * GET /orders/{id}/timeline
+	 *
+	 * The ordered list of what actually happened on an order, so a client can
+	 * render an Activity tab from the record instead of reconstructing one
+	 * from notifications.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_timeline( WP_REST_Request $request ): WP_REST_Response {
+		$order_id = (int) $request->get_param( 'id' );
+		$events   = ( new \WPSellServices\Services\OrderTimelineService() )->get_timeline( $order_id );
+
+		$pagination = $this->get_pagination_args( $request );
+		$total      = count( $events );
+
+		$response = new WP_REST_Response( array_slice( $events, $pagination['offset'], $pagination['per_page'] ) );
+
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / $pagination['per_page'] ) );
+
+		return $response;
+	}
+
+	/**
 	 * POST /orders/{id}/pay
 	 *
 	 * Buyer-side endpoint that yields a checkout URL for a pending-payment
@@ -1556,6 +1611,13 @@ class OrdersController extends RestController {
 		return wpss_get_pay_order_url( (int) $order->id );
 	}
 
+	/**
+	 * Shape one order row for the API.
+	 *
+	 * @param object          $order   Order row.
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
 		$service  = get_post( $order->service_id );
 		$vendor   = get_userdata( (int) $order->vendor_id );

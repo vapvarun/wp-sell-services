@@ -226,14 +226,27 @@ class EarningsController extends RestController {
 		// withdrawals as already withdrawn rather than as reserved.
 		$summary = ( new \WPSellServices\Services\EarningsService() )->get_summary( get_current_user_id() );
 
+		$currency = wpss_get_currency();
+
+		// Floats stay exactly as they were - changing them would break every
+		// existing consumer to fix a problem only some clients have. The
+		// *_minor integers are added alongside for clients that do arithmetic
+		// rather than just print: a withdrawal form has to answer "is this
+		// amount within the balance", and in float 63 - 37.8 is
+		// 25.200000000000003, which fails a >= check against 25.2.
 		return new WP_REST_Response(
 			array(
-				'total_earned'       => round( $summary['total_earned'], 2 ),
-				'total_withdrawn'    => round( $summary['withdrawn'], 2 ),
-				'pending_withdrawal' => round( $summary['pending_withdrawal'], 2 ),
-				'available_balance'  => round( $summary['available_balance'], 2 ),
-				'in_clearance'       => round( $summary['in_clearance'], 2 ),
-				'currency'           => wpss_get_currency(),
+				'total_earned'             => round( $summary['total_earned'], 2 ),
+				'total_withdrawn'          => round( $summary['withdrawn'], 2 ),
+				'pending_withdrawal'       => round( $summary['pending_withdrawal'], 2 ),
+				'available_balance'        => round( $summary['available_balance'], 2 ),
+				'in_clearance'             => round( $summary['in_clearance'], 2 ),
+				'total_earned_minor'       => wpss_amount_to_minor_units( (float) $summary['total_earned'], $currency ),
+				'total_withdrawn_minor'    => wpss_amount_to_minor_units( (float) $summary['withdrawn'], $currency ),
+				'pending_withdrawal_minor' => wpss_amount_to_minor_units( (float) $summary['pending_withdrawal'], $currency ),
+				'available_balance_minor'  => wpss_amount_to_minor_units( (float) $summary['available_balance'], $currency ),
+				'in_clearance_minor'       => wpss_amount_to_minor_units( (float) $summary['in_clearance'], $currency ),
+				'currency'                 => $currency,
 			)
 		);
 	}
@@ -276,15 +289,24 @@ class EarningsController extends RestController {
 		foreach ( $orders ?: array() as $order ) {
 			$service = get_post( $order['service_id'] );
 
+			$row_currency = (string) $order['currency'];
+
 			$items[] = array(
-				'order_id'        => (int) $order['id'],
-				'order_number'    => $order['order_number'],
-				'service_title'   => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
-				'total'           => (float) $order['total'],
-				'vendor_earnings' => (float) $order['vendor_earnings'],
-				'commission'      => (float) $order['platform_fee'],
-				'currency'        => $order['currency'],
-				'completed_at'    => $order['completed_at'],
+				'order_id'              => (int) $order['id'],
+				'order_number'          => $order['order_number'],
+				'service_title'         => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
+				'total'                 => (float) $order['total'],
+				'vendor_earnings'       => (float) $order['vendor_earnings'],
+				'commission'            => (float) $order['platform_fee'],
+				// Minor units alongside the floats, same contract as /orders
+				// and /earnings/summary. Per-row currency, not the site
+				// default, because a historic row keeps the currency it was
+				// sold in and zero-decimal currencies scale differently.
+				'total_minor'           => wpss_amount_to_minor_units( (float) $order['total'], $row_currency ),
+				'vendor_earnings_minor' => wpss_amount_to_minor_units( (float) $order['vendor_earnings'], $row_currency ),
+				'commission_minor'      => wpss_amount_to_minor_units( (float) $order['platform_fee'], $row_currency ),
+				'currency'              => $row_currency,
+				'completed_at'          => $order['completed_at'],
 			);
 		}
 
@@ -363,26 +385,31 @@ class EarningsController extends RestController {
 			}
 
 			$items[] = array(
-				'id'              => (int) $row['id'],
-				'type'            => $row['type'],
-				'amount'          => (float) $row['amount'],
+				'id'                  => (int) $row['id'],
+				'type'                => $row['type'],
+				'amount'              => (float) $row['amount'],
+				// Minor units alongside the float, as everywhere else money is
+				// returned. A ledger is the one screen where a client may sum
+				// rows and expect the total to match balance_after exactly.
+				'amount_minor'        => wpss_amount_to_minor_units( (float) $row['amount'], (string) $row['currency'] ),
+				'balance_after_minor' => wpss_amount_to_minor_units( (float) $row['balance_after'], (string) $row['currency'] ),
 				// Whether this row REDUCES the balance. The client cannot infer
 				// it from the sign: debits are stored POSITIVE and the sign is
 				// applied on read from wpss_get_ledger_debit_types(), so a
 				// withdrawal rendered as "+90.00" — a payout looking like a
 				// credit. The server owns the debit-type list, so it answers
 				// here rather than the JS duplicating the rule.
-				'is_debit'        => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
+				'is_debit'            => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
 					|| (float) $row['amount'] < 0,
-				'balance_after'   => (float) $row['balance_after'],
-				'currency'        => $row['currency'],
-				'description'     => $row['description'],
-				'reference_type'  => $reference_type,
-				'reference_id'    => $reference_id,
-				'reference_label' => $reference_label,
-				'reference_url'   => $reference_url,
-				'status'          => $row['status'],
-				'created_at'      => $this->format_datetime( $row['created_at'] ),
+				'balance_after'       => (float) $row['balance_after'],
+				'currency'            => $row['currency'],
+				'description'         => $row['description'],
+				'reference_type'      => $reference_type,
+				'reference_id'        => $reference_id,
+				'reference_label'     => $reference_label,
+				'reference_url'       => $reference_url,
+				'status'              => $row['status'],
+				'created_at'          => $this->format_datetime( $row['created_at'] ),
 			);
 		}
 
@@ -488,11 +515,13 @@ class EarningsController extends RestController {
 
 		return new WP_REST_Response(
 			array(
-				'id'         => $withdrawal_id,
-				'amount'     => $amount,
-				'method'     => $method,
-				'status'     => 'pending',
-				'created_at' => current_time( 'mysql', true ),
+				'id'           => $withdrawal_id,
+				'amount'       => $amount,
+				'amount_minor' => wpss_amount_to_minor_units( (float) $amount, wpss_get_currency() ),
+				'currency'     => wpss_get_currency(),
+				'method'       => $method,
+				'status'       => 'pending',
+				'created_at'   => current_time( 'mysql', true ),
 			),
 			201
 		);
@@ -538,6 +567,10 @@ class EarningsController extends RestController {
 				'id'           => (int) $item['id'],
 				'vendor_id'    => (int) $item['vendor_id'],
 				'amount'       => (float) $item['amount'],
+				// See get_summary(): float kept, integer added. This is the
+				// value a client compares against available_balance_minor.
+				'amount_minor' => wpss_amount_to_minor_units( (float) $item['amount'], wpss_get_currency() ),
+				'currency'     => wpss_get_currency(),
 				'method'       => $item['method'],
 				'details'      => json_decode( $item['details'] ?? '{}', true ),
 				'status'       => $item['status'],

@@ -176,30 +176,53 @@ class AuthController extends RestController {
 			)
 		);
 
-		// POST /auth/devices - Register device for push notifications.
+		// GET + POST /auth/devices - list and register push devices.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/devices',
 			array(
 				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_devices' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'type'    => 'integer',
+							'default' => 1,
+							'minimum' => 1,
+						),
+						'per_page' => array(
+							'type'    => 'integer',
+							'default' => 20,
+							'minimum' => 1,
+							'maximum' => 100,
+						),
+					),
+				),
+				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'register_device' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array(
-						'token'     => array(
+						'token'       => array(
 							'description' => __( 'Push notification token (FCM/APNs).', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
 						),
-						'platform'  => array(
+						'platform'    => array(
 							'type'     => 'string',
 							'enum'     => array( 'ios', 'android', 'web' ),
 							'required' => true,
 						),
-						'device_id' => array(
+						'device_id'   => array(
 							'description' => __( 'Unique device identifier.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
+						),
+						'device_name' => array(
+							'description' => __( 'Human-readable device label shown in the account\'s device list.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'required'    => false,
 						),
 					),
 				),
@@ -484,14 +507,22 @@ class AuthController extends RestController {
 		$token     = sanitize_text_field( $request->get_param( 'token' ) );
 		$platform  = sanitize_text_field( $request->get_param( 'platform' ) );
 		$device_id = sanitize_text_field( $request->get_param( 'device_id' ) );
+		$label     = sanitize_text_field( (string) $request->get_param( 'device_name' ) );
 
 		$devices = get_user_meta( $user_id, '_wpss_push_devices', true ) ?: array();
+		$now     = current_time( 'mysql', true );
 
-		// Replace if device_id already exists, otherwise add.
+		// Re-registering the same device must not look like a new one in the
+		// account's device list, so keep the original registration date and
+		// only move last_seen_at forward.
+		$existing = is_array( $devices[ $device_id ] ?? null ) ? $devices[ $device_id ] : array();
+
 		$devices[ $device_id ] = array(
 			'token'         => $token,
 			'platform'      => $platform,
-			'registered_at' => current_time( 'mysql', true ),
+			'device_name'   => '' !== $label ? $label : (string) ( $existing['device_name'] ?? '' ),
+			'registered_at' => (string) ( $existing['registered_at'] ?? $now ),
+			'last_seen_at'  => $now,
 		);
 
 		update_user_meta( $user_id, '_wpss_push_devices', $devices );
@@ -504,6 +535,67 @@ class AuthController extends RestController {
 			),
 			201
 		);
+	}
+
+	/**
+	 * List the current user's registered push devices.
+	 *
+	 * Powers "this device / other devices" in account settings, which could not
+	 * be built before: registration and revocation both existed, but nothing
+	 * told the client which device ids the account actually had.
+	 *
+	 * Push tokens are deliberately not returned. They are the secret that lets
+	 * something send to the device, the client already knows its own, and a
+	 * settings screen has no use for anybody else's.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_devices( WP_REST_Request $request ): WP_REST_Response {
+		$user_id = get_current_user_id();
+		$devices = get_user_meta( $user_id, '_wpss_push_devices', true );
+		$devices = is_array( $devices ) ? $devices : array();
+
+		$items = array();
+
+		foreach ( $devices as $device_id => $device ) {
+			if ( ! is_array( $device ) ) {
+				continue;
+			}
+
+			// Devices registered before 1.3.1 carry neither a label nor a
+			// last-seen stamp; fall back to the registration date so the list
+			// still sorts and renders instead of showing blanks.
+			$registered = (string) ( $device['registered_at'] ?? '' );
+
+			$items[] = array(
+				'device_id'    => (string) $device_id,
+				'platform'     => (string) ( $device['platform'] ?? '' ),
+				'device_name'  => (string) ( $device['device_name'] ?? '' ),
+				'created_at'   => $registered,
+				'last_seen_at' => (string) ( $device['last_seen_at'] ?? $registered ),
+			);
+		}
+
+		// Most recently used first — that is the order a person scans the list in.
+		usort(
+			$items,
+			static function ( array $a, array $b ): int {
+				return strcmp( $b['last_seen_at'], $a['last_seen_at'] );
+			}
+		);
+
+		$total      = count( $items );
+		$pagination = $this->get_pagination_args( $request );
+
+		$response = new WP_REST_Response( array_slice( $items, $pagination['offset'], $pagination['per_page'] ) );
+
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / $pagination['per_page'] ) );
+
+		return $response;
 	}
 
 	/**

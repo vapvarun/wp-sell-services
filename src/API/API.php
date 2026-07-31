@@ -332,19 +332,7 @@ class API {
 
 		$data = [];
 		foreach ( $terms as $term ) {
-			$icon  = get_term_meta( $term->term_id, '_wpss_icon', true );
-			$image = get_term_meta( $term->term_id, '_wpss_image', true );
-
-			$data[] = [
-				'id'          => $term->term_id,
-				'name'        => wpss_rest_text( $term->name ),
-				'slug'        => $term->slug,
-				'description' => wpss_rest_text( $term->description ),
-				'count'       => $term->count,
-				'parent'      => $term->parent,
-				'icon'        => $icon ?: '',
-				'image'       => $image ? wp_get_attachment_url( $image ) : '',
-			];
+			$data[] = wpss_prepare_term_for_rest( $term );
 		}
 
 		$response = new \WP_REST_Response( $data );
@@ -537,9 +525,9 @@ class API {
 		// The other current-user endpoint, /auth/me, also returns these. Both
 		// answer the same question, so both carry the same fields — a client
 		// should not have to know which one it called.
-		$user_object          = get_userdata( $user_id );
-		$data['username']     = $user_object ? $user_object->user_login : '';
-		$data['registered']   = $user_object ? $user_object->user_registered : '';
+		$user_object        = get_userdata( $user_id );
+		$data['username']   = $user_object ? $user_object->user_login : '';
+		$data['registered'] = $user_object ? $user_object->user_registered : '';
 
 		// Always present, so a client can read them without branching on role.
 		$data['vendor_status'] = null;

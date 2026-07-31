@@ -3423,6 +3423,38 @@ function wpss_rest_text( $value ): string {
 }
 
 /**
+ * Shape a taxonomy term for the REST API.
+ *
+ * One definition, because there were two: /categories returned
+ * {id, name, slug, description, count, parent, icon, image} while the
+ * categories inside a service payload were raw WP_Term objects carrying
+ * term_taxonomy_id, term_group and filter, and an `id` that was actually
+ * called `term_id`. A client could not use one parser for both, so the
+ * category it read off a service did not match the category list it was
+ * asked to match it against.
+ *
+ * @since 1.3.1
+ *
+ * @param \WP_Term $term Term object.
+ * @return array<string, mixed> Term data.
+ */
+function wpss_prepare_term_for_rest( \WP_Term $term ): array {
+	$icon  = get_term_meta( $term->term_id, '_wpss_icon', true );
+	$image = get_term_meta( $term->term_id, '_wpss_image', true );
+
+	return array(
+		'id'          => (int) $term->term_id,
+		'name'        => wpss_rest_text( $term->name ),
+		'slug'        => (string) $term->slug,
+		'description' => wpss_rest_text( $term->description ),
+		'count'       => (int) $term->count,
+		'parent'      => (int) $term->parent,
+		'icon'        => $icon ?: '',
+		'image'       => $image ? wp_get_attachment_url( $image ) : '',
+	);
+}
+
+/**
  * Platform slugs that mark an order as a sub-order of another order.
  *
  * Sub-orders (tips, extras, revisions) hang off a parent order, so they must

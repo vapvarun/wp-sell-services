@@ -496,12 +496,66 @@ class ServicesController extends RestController {
 	}
 
 	/**
+	 * Resolve requested categories to term IDs.
+	 *
+	 * Accepts term IDs or slugs, because /categories hands the client both and
+	 * nothing said which one to send back. The previous intval() turned every
+	 * slug into 0 and assigned nothing at all — the service saved "successfully"
+	 * and came back uncategorised, which is the worst of both outcomes.
+	 * Unknown terms are dropped rather than created: taxonomy is the site
+	 * owner's, and an API that invents categories fills the catalog with
+	 * one-off duplicates.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param mixed $categories Term IDs or slugs.
+	 * @return int[] Term IDs that exist.
+	 */
+	private function resolve_category_terms( $categories ): array {
+		if ( ! is_array( $categories ) ) {
+			$categories = ( null === $categories || '' === $categories ) ? array() : array( $categories );
+		}
+
+		$term_ids = array();
+
+		foreach ( $categories as $category ) {
+			if ( is_numeric( $category ) ) {
+				$term = get_term( (int) $category, 'wpss_service_category' );
+			} else {
+				$term = get_term_by( 'slug', sanitize_title( (string) $category ), 'wpss_service_category' );
+			}
+
+			if ( $term instanceof \WP_Term ) {
+				$term_ids[] = (int) $term->term_id;
+			}
+		}
+
+		return array_values( array_unique( $term_ids ) );
+	}
+
+	/**
 	 * Create service.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
+		// The web wizard refuses to publish a service without a category, and
+		// this endpoint must refuse for the same reason: an uncategorised
+		// service is invisible to category browse, so it is published and
+		// unfindable at the same time. Letting the app create one produced
+		// exactly the "categories are empty, discovery is broken" catalogue
+		// the web form was written to prevent.
+		$requested_categories = $this->resolve_category_terms( $request->get_param( 'categories' ) );
+
+		if ( empty( $requested_categories ) ) {
+			return new WP_Error(
+				'wpss_category_required',
+				__( 'Select at least one category. A service without one cannot be found by buyers browsing the catalog.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Determine post status based on moderation setting.
 		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
 
@@ -523,11 +577,7 @@ class ServicesController extends RestController {
 		// Save meta.
 		$this->save_service_meta( $service_id, $request );
 
-		// Set categories.
-		$categories = $request->get_param( 'categories' );
-		if ( $categories ) {
-			wp_set_object_terms( $service_id, array_map( 'intval', $categories ), 'wpss_service_category' );
-		}
+		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
 
 		// Set tags.
 		$tags = $request->get_param( 'tags' );
@@ -611,7 +661,7 @@ class ServicesController extends RestController {
 
 		// Update categories.
 		if ( $request->has_param( 'categories' ) ) {
-			wp_set_object_terms( $service_id, array_map( 'intval', $request->get_param( 'categories' ) ), 'wpss_service_category' );
+			wp_set_object_terms( $service_id, $this->resolve_category_terms( $request->get_param( 'categories' ) ), 'wpss_service_category' );
 		}
 
 		// Update tags.
@@ -1065,37 +1115,39 @@ class ServicesController extends RestController {
 	}
 
 	/**
-	 * Get service images.
+	 * Shape a service's terms for JSON.
 	 *
-	 * @param int $service_id Service ID.
-	 * @return array
-	 */
-	/**
-	 * Decode entity-encoded text on term objects bound for JSON.
-	 *
-	 * Keeps the existing response shape — these are still term objects — and
-	 * only fixes the encoding, so no client has to change how it reads them.
+	 * Returns the same structure as GET /categories — one term shape across
+	 * the API, so a client parses a service's categories with the code it
+	 * already uses for the category list.
 	 *
 	 * @since 1.3.1
 	 *
 	 * @param mixed $terms Terms from wp_get_object_terms(), or a WP_Error.
-	 * @return array<int, \WP_Term>
+	 * @return array<int, array<string, mixed>>
 	 */
 	private function prepare_terms_for_response( $terms ): array {
 		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
 			return array();
 		}
 
+		$data = array();
+
 		foreach ( $terms as $term ) {
 			if ( $term instanceof \WP_Term ) {
-				$term->name        = wpss_rest_text( $term->name );
-				$term->description = wpss_rest_text( $term->description );
+				$data[] = wpss_prepare_term_for_rest( $term );
 			}
 		}
 
-		return $terms;
+		return $data;
 	}
 
+	/**
+	 * Collect a service's featured image and gallery.
+	 *
+	 * @param int $service_id Service ID.
+	 * @return array<int, array<string, mixed>>
+	 */
 	private function get_service_images( int $service_id ): array {
 		$images = array();
 
@@ -1132,7 +1184,7 @@ class ServicesController extends RestController {
 				}
 
 				if ( $attachment_id && wp_attachment_is_image( $attachment_id ) ) {
-					$seen[] = (int) $attachment_id;
+					$seen[]   = (int) $attachment_id;
 					$images[] = array(
 						'id'    => $attachment_id,
 						'url'   => wp_get_attachment_url( $attachment_id ),
@@ -1389,9 +1441,12 @@ class ServicesController extends RestController {
 						'context'     => array( 'view', 'edit' ),
 					),
 					'categories'  => array(
-						'description' => __( 'Category IDs.', 'wp-sell-services' ),
+						// IDs or slugs. /categories hands the client both and
+						// never said which to send back, so rejecting slugs
+						// here meant the API refused half of what it published.
+						'description' => __( 'Category IDs or slugs.', 'wp-sell-services' ),
 						'type'        => 'array',
-						'items'       => array( 'type' => 'integer' ),
+						'items'       => array( 'type' => array( 'integer', 'string' ) ),
 						'context'     => array( 'view', 'edit' ),
 					),
 					'tags'        => array(

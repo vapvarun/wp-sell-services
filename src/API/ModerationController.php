@@ -162,7 +162,16 @@ class ModerationController extends RestController {
 					'name'   => $author ? $author->display_name : __( 'Unknown', 'wp-sell-services' ),
 					'avatar' => get_avatar_url( $post->post_author, array( 'size' => 48 ) ),
 				),
-				'categories'   => wp_get_object_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'names' ) ),
+				// Same term shape as /categories and /services, so a moderation
+				// screen and a catalog screen parse categories the same way.
+				// This returned bare name strings, which was a third shape.
+				'categories'   => array_map(
+					'wpss_prepare_term_for_rest',
+					array_filter(
+						(array) wp_get_object_terms( $post->ID, 'wpss_service_category' ),
+						static fn( $term ): bool => $term instanceof \WP_Term
+					)
+				),
 				'price'        => (float) get_post_meta( $post->ID, '_wpss_starting_price', true ),
 				'submitted_at' => $post->post_date_gmt,
 			);
