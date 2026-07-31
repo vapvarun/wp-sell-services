@@ -204,12 +204,6 @@ class PortfolioController extends RestController {
 	}
 
 	/**
-	 * Get vendor portfolio.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	/**
 	 * List the current user's own portfolio.
 	 *
 	 * Delegates to get_vendor_portfolio() so there is one query, one shape and
@@ -226,6 +220,12 @@ class PortfolioController extends RestController {
 		return $this->get_vendor_portfolio( $request );
 	}
 
+	/**
+	 * Get vendor portfolio.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
 	public function get_vendor_portfolio( WP_REST_Request $request ) {
 		$vendor_id  = (int) $request->get_param( 'vendor_id' );
 		$pagination = $this->get_pagination_args( $request );

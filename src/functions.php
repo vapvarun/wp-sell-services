@@ -3422,6 +3422,16 @@ function wpss_rest_text( $value ): string {
 	return html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 }
 
+/**
+ * Platform slugs that mark an order as a sub-order of another order.
+ *
+ * Sub-orders (tips, extras, revisions) hang off a parent order, so they must
+ * never surface as standalone rows in a buyer's or vendor's order list.
+ *
+ * @since 1.3.1
+ *
+ * @return string[] Platform slugs.
+ */
 function wpss_get_sub_order_platforms(): array {
 	return array_keys( \WPSellServices\Models\ServiceOrder::get_sub_order_types() );
 }
