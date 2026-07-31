@@ -34,28 +34,34 @@
           "order": 4
         },
         {
+          "title": "WP Sell Services Pro Overview",
+          "slug": "pro-overview-wpss",
+          "file": "getting-started/pro-overview.md",
+          "order": 5
+        },
+        {
           "title": "Dashboard Tour (Buyer & Seller)",
           "slug": "dashboard-tour-wpss",
           "file": "getting-started/dashboard-tour.md",
-          "order": 5
+          "order": 6
         },
         {
           "title": "License Activation & Updates [PRO]",
           "slug": "pro-license-wpss",
           "file": "getting-started/pro-license.md",
-          "order": 6
+          "order": 7
         },
         {
           "title": "What's New in 1.3.0",
           "slug": "whats-new-1-3-0-wpss",
           "file": "getting-started/whats-new-1-3-0.md",
-          "order": 7
+          "order": 8
         },
         {
           "title": "Launch Checklist",
           "slug": "launch-checklist-wpss",
           "file": "getting-started/launch-checklist.md",
-          "order": 8
+          "order": 9
         }
       ]
     },

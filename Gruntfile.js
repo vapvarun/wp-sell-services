@@ -30,6 +30,7 @@ module.exports = function ( grunt ) {
 					exclude: [
 						'node_modules/.*',
 						'vendor/.*',
+						'libs/.*',
 						'tests/.*',
 						'dist/.*',
 						'scripts/.*',
@@ -68,10 +69,10 @@ module.exports = function ( grunt ) {
 					'!tests/**',
 					'!dist/**',
 					'!scripts/**',
-					// Bundled third-party SDK — ships with its own
-					// "easy-digital-downloads" text domain; not ours to
-					// translate or re-domain.
-					'!includes/EDD_SL_Plugin_Updater.php',
+					// Bundled third-party SDKs (EDD SL SDK) — they ship with
+					// their own text domains; not ours to translate or
+					// re-domain.
+					'!libs/**',
 				],
 				expand: true,
 			},

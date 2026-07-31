@@ -65,9 +65,22 @@ All of these are fully available in both versions -- nothing is held back:
 | Razorpay | -- | **[PRO]** |
 | All WooCommerce-compatible gateways (via WC adapter) | -- | **[PRO]** |
 
-### Commission and Earnings (Included in Both Free and Pro)
+### Commission and Earnings
 
-The entire commission and payout system is available in both versions: global commission rates (0-50%), per-vendor custom rates, earnings tracking, withdrawal management, minimum withdrawal amounts, clearance periods, automatic withdrawal scheduling, and a separate commission rate for tips.
+Free covers the complete flat-commission and manual-withdrawal path: global commission rates (0-50%), per-vendor custom rates, earnings tracking, withdrawal management, minimum withdrawal amounts, clearance periods, automatic withdrawal scheduling, and a separate commission rate for tips. You can run a marketplace and pay every vendor on Free alone.
+
+Pro adds the commission rules engine and the automated payout rails on top:
+
+| Feature | Free | Pro |
+|---------|------|-----|
+| Flat commission rate (global + per-vendor) | Yes | Yes |
+| Earnings tracking and wallet ledger | Yes | Yes |
+| Manual withdrawal requests and approvals | Yes | Yes |
+| Tiered commission rules | -- | **[PRO]** |
+| Subscription-plan commission override | -- | **[PRO]** |
+| Stripe Connect automated vendor payouts | -- | **[PRO]** |
+| PayPal mass payouts (batch) | -- | **[PRO]** |
+| Per-vendor payout profiles and methods | -- | **[PRO]** |
 
 ### Wallet Integrations
 

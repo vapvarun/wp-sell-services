@@ -36,6 +36,7 @@ use WPSellServices\API\API;
 use WPSellServices\Blocks\BlocksManager;
 use WPSellServices\SEO\SEO;
 use WPSellServices\Database\SchemaManager;
+use WPSellServices\Database\Repositories\VendorProfileRepository;
 
 /**
  * Main plugin class.
@@ -230,7 +231,6 @@ final class Plugin {
 		// in SCRIPT_DEBUG mode by Assets::init() itself.
 		\WPSellServices\Frontend\Assets::init();
 
-		$this->init_updater();
 		$this->maybe_run_install();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
@@ -292,20 +292,6 @@ final class Plugin {
 		 * @param Plugin $plugin Plugin instance.
 		 */
 		do_action( 'wpss_loaded', $this );
-	}
-
-	/**
-	 * Initialize the plugin updater.
-	 *
-	 * Sets up EDD Software Licensing for automatic updates.
-	 * No license required for the free version.
-	 *
-	 * @since 1.1.0
-	 * @return void
-	 */
-	private function init_updater(): void {
-		$updater = new Updater();
-		$updater->init();
 	}
 
 	/**
@@ -1244,9 +1230,12 @@ final class Plugin {
 		// In-memory cache to avoid repeated DB queries within a single request.
 		$cache = array();
 
+		// Whether the vendor-avatar table has been bulk-loaded this request.
+		$primed = false;
+
 		add_filter(
 			'pre_get_avatar_data',
-			function ( array $args, $id_or_email ) use ( &$cache ): array {
+			function ( array $args, $id_or_email ) use ( &$cache, &$primed ): array {
 				$user_id = 0;
 
 				if ( is_numeric( $id_or_email ) ) {
@@ -1271,17 +1260,61 @@ final class Plugin {
 					if ( $meta_avatar ) {
 						$cache[ $user_id ] = (int) $meta_avatar;
 					} else {
-						// Fall back to vendor profiles table for vendors.
-						global $wpdb;
-						$table = $wpdb->prefix . 'wpss_vendor_profiles';
-						$raw   = $wpdb->get_var(
-							$wpdb->prepare(
-								"SELECT avatar_id FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-								$user_id
-							)
-						);
+						// Fall back to the vendor profiles table. Prime EVERY
+						// vendor avatar in one query the first time we get here,
+						// instead of one query per user.
+						//
+						// Any page that renders many avatars — a leaderboard, a
+						// member directory, an order list — otherwise costs one
+						// query per avatar, and the overwhelming majority return
+						// nothing because most users are not vendors. Vendors are
+						// a small, bounded set (they are the sellers, not the
+						// buyers), so priming the whole table once is cheaper
+						// than N lookups and is what makes this O(1) per request.
+						if ( ! $primed ) {
+							$primed = true;
 
-						$cache[ $user_id ] = $raw ? (int) $raw : 0;
+							$map = wp_cache_get(
+								VendorProfileRepository::AVATAR_MAP_CACHE_KEY,
+								VendorProfileRepository::CACHE_GROUP
+							);
+
+							if ( false === $map ) {
+								global $wpdb;
+								$table = $wpdb->prefix . 'wpss_vendor_profiles';
+								$rows  = $wpdb->get_results(
+									"SELECT user_id, avatar_id FROM {$table} WHERE avatar_id > 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+									ARRAY_A
+								);
+
+								$map = array();
+								foreach ( (array) $rows as $row ) {
+									$map[ (int) $row['user_id'] ] = (int) $row['avatar_id'];
+								}
+
+								// Invalidated by VendorProfileRepository::upsert().
+								wp_cache_set(
+									VendorProfileRepository::AVATAR_MAP_CACHE_KEY,
+									$map,
+									VendorProfileRepository::CACHE_GROUP,
+									HOUR_IN_SECONDS
+								);
+							}
+
+							foreach ( (array) $map as $vendor_uid => $avatar ) {
+								// Never clobber a user-meta avatar already resolved
+								// this request — user meta wins over the table.
+								if ( ! array_key_exists( (int) $vendor_uid, $cache ) ) {
+									$cache[ (int) $vendor_uid ] = (int) $avatar;
+								}
+							}
+						}
+
+						// Absent from the primed set means "no vendor avatar" —
+						// record it so we do not look again this request.
+						if ( ! array_key_exists( $user_id, $cache ) ) {
+							$cache[ $user_id ] = 0;
+						}
 					}
 				}
 

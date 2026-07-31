@@ -4,14 +4,18 @@
 # So the prod Composer autoloader and every runtime library are TRACKED:
 #   - autoload.php + composer/   → the autoloader infrastructure
 #   - woocommerce/action-scheduler → runtime `require` (scheduled jobs)
-#   - easy-digital-downloads     → directly-bundled SDK (not in composer.json)
 # Dev-only tooling (phpunit, phpstan, wpcs, polyfills, …) stays ignored and is
 # restored locally via `composer install`.
+#
+# Hand-vendored libraries that Composer does NOT manage live in /libs (fully
+# tracked, never ignored) — see libs/edd-sl-sdk/WBCOM-PATCHES.md. Keeping them
+# under /vendor meant they survived only via negation rules here, so any
+# `composer install` that prunes vendor could ship a plugin with a half-present
+# SDK.
 /vendor/*
 !/vendor/autoload.php
 !/vendor/composer/
 !/vendor/woocommerce/
-!/vendor/easy-digital-downloads/
 /node_modules/
 
 # Build artifacts
