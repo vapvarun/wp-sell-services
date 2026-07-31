@@ -133,10 +133,25 @@ class Frontend {
 			true
 		);
 
+		// wpss-ui is otherwise only registered by the dashboard, so on any other
+		// page the realtime script's dependency on it would go unmet and
+		// WordPress would silently drop realtime entirely. Registering is
+		// idempotent, so this simply guarantees the handle exists wherever
+		// realtime runs.
+		wp_register_script(
+			'wpss-ui',
+			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
+			array(),
+			\WPSS_VERSION,
+			true
+		);
+
 		wp_register_script(
 			'wpss-realtime',
 			\WPSS_PLUGIN_URL . 'assets/js/wpss-realtime.js',
-			array( 'wpss-pusher' ),
+			// wpss-ui provides window.wpssToast, which is how a realtime event
+			// becomes something the user can actually see.
+			array( 'wpss-pusher', 'wpss-ui' ),
 			\WPSS_VERSION,
 			true
 		);
@@ -178,6 +193,10 @@ class Frontend {
 				array(
 					'userId'    => get_current_user_id(),
 					'restNonce' => wp_create_nonce( 'wp_rest' ),
+					'i18n'      => array(
+						'notification' => __( 'You have a new notification.', 'wp-sell-services' ),
+						'message'      => __( 'You have a new message.', 'wp-sell-services' ),
+					),
 				)
 			)
 		);
