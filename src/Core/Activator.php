@@ -361,13 +361,20 @@ class Activator {
 				'title'     => __( 'Become a Vendor', 'wp-sell-services' ),
 				'shortcode' => '[wpss_vendor_registration]',
 			),
+			// Both carry an explicit service-* slug. These pages are only the
+			// standalone rail; when WooCommerce or EDD runs the store, that
+			// plugin owns /cart/ and /checkout/. Letting the slug fall out of
+			// the title took the generic slug first, so WooCommerce activated
+			// into /cart-2/ and shipped that ugly URL to customers.
 			'checkout'      => array(
 				'title'     => __( 'Service Checkout', 'wp-sell-services' ),
 				'shortcode' => '[wpss_checkout]',
+				'slug'      => 'service-checkout',
 			),
 			'cart'          => array(
-				'title'     => __( 'Cart', 'wp-sell-services' ),
+				'title'     => __( 'Service Cart', 'wp-sell-services' ),
 				'shortcode' => '[wpss_cart]',
+				'slug'      => 'service-cart',
 			),
 		);
 
@@ -398,14 +405,18 @@ class Activator {
 			}
 
 			// Create the page.
-			$page_id = wp_insert_post(
-				array(
-					'post_title'   => $page_data['title'],
-					'post_content' => $page_data['shortcode'],
-					'post_status'  => 'publish',
-					'post_type'    => 'page',
-				)
+			$new_page = array(
+				'post_title'   => $page_data['title'],
+				'post_content' => $page_data['shortcode'],
+				'post_status'  => 'publish',
+				'post_type'    => 'page',
 			);
+
+			if ( ! empty( $page_data['slug'] ) ) {
+				$new_page['post_name'] = $page_data['slug'];
+			}
+
+			$page_id = wp_insert_post( $new_page );
 
 			if ( $page_id && ! is_wp_error( $page_id ) ) {
 				$saved_pages[ $key ] = $page_id;
