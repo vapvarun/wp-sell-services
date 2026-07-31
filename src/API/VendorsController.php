@@ -376,7 +376,11 @@ class VendorsController extends RestController {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
-				array( 'status' => 404 )
+				// 403, not 404: the caller exists and the route exists, they are
+				// simply not a vendor. A 404 reads as "gone" and a client will
+				// happily cache it, so the moment the user becomes a vendor the
+				// app still believes the endpoint is missing.
+				array( 'status' => 403 )
 			);
 		}
 
@@ -400,7 +404,11 @@ class VendorsController extends RestController {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
-				array( 'status' => 404 )
+				// 403, not 404: the caller exists and the route exists, they are
+				// simply not a vendor. A 404 reads as "gone" and a client will
+				// happily cache it, so the moment the user becomes a vendor the
+				// app still believes the endpoint is missing.
+				array( 'status' => 403 )
 			);
 		}
 
@@ -519,7 +527,11 @@ class VendorsController extends RestController {
 			return new WP_Error(
 				'rest_not_vendor',
 				__( 'You are not registered as a vendor.', 'wp-sell-services' ),
-				array( 'status' => 404 )
+				// 403, not 404: the caller exists and the route exists, they are
+				// simply not a vendor. A 404 reads as "gone" and a client will
+				// happily cache it, so the moment the user becomes a vendor the
+				// app still believes the endpoint is missing.
+				array( 'status' => 403 )
 			);
 		}
 
