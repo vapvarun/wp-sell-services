@@ -484,7 +484,11 @@ class BuyerRequestsController extends RestController {
 		}
 
 		// Check if owner for detailed view.
-		$is_owner = is_user_logged_in() && (int) $buyer_request['author_id'] === get_current_user_id();
+		// BuyerRequestService::get() is declared `?object`, so this indexed an
+		// object as an array and fataled — but only inside the logged-in branch,
+		// so anonymous callers got a 200 and the owner and bidding vendor, the
+		// only people who can act on the request, got a 500.
+		$is_owner = is_user_logged_in() && (int) $buyer_request->author_id === get_current_user_id();
 
 		return new WP_REST_Response( $this->prepare_request_for_response( (object) $buyer_request, $is_owner ) );
 	}

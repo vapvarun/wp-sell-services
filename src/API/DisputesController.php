@@ -374,7 +374,10 @@ class DisputesController extends RestController {
 		}
 
 		// Check if user is part of the order or admin.
-		if ( ! $this->user_owns_resource( $dispute->order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
+		// $wpdb hands every column back as a string, and user_owns_resource()
+		// declares an int parameter — so this threw a TypeError inside the
+		// PERMISSION callback, killing the route for every role at once.
+		if ( ! $this->user_owns_resource( (int) $dispute->order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this dispute.', 'wp-sell-services' ),
