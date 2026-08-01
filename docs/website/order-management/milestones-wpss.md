@@ -148,6 +148,48 @@ drops you into the order conversation with a reference to that phase so
 the vendor knows what you're talking about. There's no separate reject
 status; revisions are a conversation.
 
+## Where you actually click
+
+A milestone contract lives in the **WPSS Dashboard**, not in your store's order
+screens. The whole run, start to finish:
+
+| # | Who | Where | Action |
+|---|---|---|---|
+| 1 | Buyer | Buyer Request | Accepts a proposal whose contract type is *Milestone* |
+| 2 | Vendor | Dashboard → Sales Orders → the order | **Propose a phase** (title, amount, days) |
+| 3 | Buyer | Dashboard → My Orders → the order → timeline | **Pay** on that phase |
+| 4 | Vendor | Same order, same phase | Works, then **Submit Delivery** |
+| 5 | Buyer | Same phase | **Approve** — which unlocks the next phase |
+
+Repeat 2–5 per phase. Only one phase is payable at a time: the next stays
+**Locked** until the current one is approved or cancelled.
+
+**Where it is *not*:** milestone phases never appear in WooCommerce
+→ My Account → Orders as something to act on. That screen is a payment receipt.
+The work is managed in the Dashboard.
+
+---
+
+## If Pay does not work on your site
+
+Phase payment depends on which ecommerce platform the site runs.
+
+| Site setup | Phase Pay |
+|---|---|
+| Standalone WPSS payments | Works |
+| WooCommerce | Works — a real WooCommerce order is created for the phase, so the Pay link keeps working even from an email days later |
+| EDD, FluentCart, SureCart | **Not supported yet** |
+
+On EDD, FluentCart or SureCart the Pay link currently sends you to the
+standalone checkout, which is not the checkout your site uses — so payment
+cannot complete. If you are on one of those platforms, use **Extensions** for
+extra work instead, or ask the site owner about milestone support.
+
+Site owners: this is decided by **WP Sell Services → Settings → General →
+Ecommerce Integration**.
+
+---
+
 ## Project completion
 
 When the **last open phase reaches a terminal state**, the whole project

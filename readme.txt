@@ -66,6 +66,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * Mutual exclusion: a single order surfaces milestones OR extensions, never both
 * Ad-hoc milestone additions when scope grows mid-contract
 * Auto-complete the parent order once every phase is finished (approved, declined or cancelled)
+* Phase, tip and extension payments run on Standalone and WooCommerce. EDD, FluentCart and SureCart take the initial service purchase only, so milestones are not usable on those platforms.
 
 **Reviews and Ratings**
 

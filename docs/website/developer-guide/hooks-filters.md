@@ -943,3 +943,58 @@ WooCommerce or standalone checkout.
 - [REST API Reference](rest-api-overview.md) - API endpoints and authentication
 - [Custom Integrations](custom-integrations.md) - Building custom adapters and gateways
 - [Theme Integration](theme-integration.md) - Template overrides and styling
+
+---
+
+## Paying for a single order (sub-orders)
+
+Tips, milestone phases and extension quotes are **sub-orders**: a real WPSS
+order of their own, created against a parent order, that the buyer pays
+separately. They are the one deliberate exception to the one-rail catalog rule
+— the catalog checkout belongs entirely to the active platform, but a sub-order
+has no cart and cannot go through it.
+
+### `wpss_get_pay_order_url( int $order_id ): string`
+
+**The single source for "pay THIS order."** Every surface that links a buyer to
+a payment — dashboard timeline, order view, emails, notifications — must call
+it. Never build a `?pay_order=` link by hand; it is correct only on one rail.
+
+```php
+$url = wpss_get_pay_order_url( $order_id );
+```
+
+### `wpss_pay_order_url` (filter)
+
+```php
+apply_filters( 'wpss_pay_order_url', string $url, int $order_id );
+```
+
+A cart-based rail replaces the URL entirely. Pro's WooCommerce implementation
+(`WCPayOrderResolver`) creates — or reuses — a real WooCommerce order for the
+sub-order and returns its native order-pay URL, so the link works from an email
+days later with no cart session.
+
+### What each rail does today
+
+| `ecommerce_platform` | Sub-order Pay | How |
+|---|---|---|
+| `standalone` | Works | `?pay_order=N` on the WPSS checkout page |
+| `woocommerce` | Works | Real WC order + native order-pay URL (Pro) |
+| `edd` | **Not implemented** | Falls through to `?pay_order=N` |
+| `fluentcart` | **Not implemented** | Falls through to `?pay_order=N` |
+| `surecart` | **Not implemented** | Falls through to `?pay_order=N` |
+
+**On EDD, FluentCart and SureCart the fallback is a dead end.** The link lands
+on the standalone checkout, which is not the rail that owns payment on that
+site. Adding support means hooking `wpss_pay_order_url` for that platform the
+way `WCPayOrderResolver` does — do **not** solve it by re-enabling WPSS
+gateways alongside the platform's, which would break the one-rail contract.
+
+### Why `wpss_get_checkout_base_url()` is not the answer
+
+It returns the **active rail's** checkout — WooCommerce's under Woo. Sending a
+buyer there for a sub-order lands them on an empty cart, because a sub-order was
+never added to one. That is the trap the filter above exists to avoid, and the
+reason browser Pay never reaches `StandaloneCheckoutProvider::render_pay_order_checkout()`
+on a cart rail.
