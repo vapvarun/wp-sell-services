@@ -424,6 +424,55 @@ class Activator {
 		}
 
 		update_option( 'wpss_pages', $saved_pages );
+
+		self::map_existing_terms_page();
+	}
+
+	/**
+	 * Point the terms setting at a terms page the site ALREADY has.
+	 *
+	 * Deliberately maps, never creates. A site that sells anything almost always
+	 * has its own terms page, written by its owner and probably linked from the
+	 * footer; publishing a second empty one under our own slug would be the
+	 * plugin talking over the owner. Equally, leaving the setting empty forever
+	 * means checkout and the app's `pages.terms` stay null on a site that plainly
+	 * has the page - the owner just never told us which one.
+	 *
+	 * Only ever fills an EMPTY setting, so an owner's explicit choice is never
+	 * overwritten, and only matches a published page.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @return void
+	 */
+	private static function map_existing_terms_page(): void {
+		if ( get_option( 'wpss_terms_page' ) ) {
+			return;
+		}
+
+		/**
+		 * Filters the slugs searched when auto-mapping an existing terms page.
+		 *
+		 * @since 1.3.1
+		 *
+		 * @param string[] $slugs Candidate page slugs, most specific first.
+		 */
+		$slugs = apply_filters(
+			'wpss_terms_page_slugs',
+			array( 'terms', 'terms-and-conditions', 'terms-conditions', 'terms-of-service', 'terms-of-use' )
+		);
+
+		foreach ( (array) $slugs as $slug ) {
+			$page = get_page_by_path( (string) $slug );
+
+			if ( $page && 'publish' === $page->post_status ) {
+				update_option( 'wpss_terms_page', (int) $page->ID );
+				return;
+			}
+		}
+
+		// No terms page on this site. The setting stays empty and the API reports
+		// terms: null, which is the honest answer - not 0, which no client can open.
 	}
 
 	/**
