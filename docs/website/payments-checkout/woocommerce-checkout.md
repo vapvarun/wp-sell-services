@@ -296,10 +296,23 @@ The sync includes infinite-loop prevention -- a status change triggered by the s
 
 ## What Buyers and Vendors See
 
-**Buyers** see their service orders in two places:
+With WooCommerce active a buyer can reach something order-shaped in three
+places, which looks like duplication until you know what each one is for. They
+are not three copies of the same list — they answer different questions.
 
-- **WooCommerce My Account > Orders** -- The WooCommerce order with payment details
-- **Service Orders tab** -- A dedicated tab with delivery tracking, messaging, requirements, and file downloads for each marketplace order
+| Screen | Question it answers | Use it to |
+|---|---|---|
+| **WooCommerce → My Account → Orders** | *What did I pay, and when?* | Receipts, invoices, payment history |
+| **My Account → Service Orders** | *What is happening with my service?* | A bridge — see status, jump into the job |
+| **Dashboard → My Orders** | *Manage the job* | Requirements, messages, delivery, revisions, approval |
+
+**The rule:** WooCommerce owns the money record. The Dashboard owns the work.
+Service Orders is the doorway between them.
+
+Anything that progresses the job — submitting requirements, replying to the
+seller, approving a delivery, paying a milestone phase — happens in the
+**Dashboard**, never on the WooCommerce orders screen. A phase or tip will not
+appear there as something to act on.
 
 **Vendors** see their dashboard with:
 
@@ -308,7 +321,13 @@ The sync includes infinite-loop prevention -- a status change triggered by the s
 - Withdrawal requests
 - Service listings and messaging
 
-Vendors never interact with WooCommerce directly. Their entire experience happens through the marketplace dashboard.
+Vendors never interact with WooCommerce directly. Their entire experience
+happens through the marketplace dashboard.
+
+**Sellers: WooCommerce → My Account → Orders will look empty to you, and that is
+correct.** That screen lists orders *you placed as a customer*. Your sales are
+in **Dashboard → Sales Orders**. Seeing "No orders" there is not a sign anything
+is broken.
 
 ---
 
