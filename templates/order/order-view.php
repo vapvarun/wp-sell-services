@@ -205,18 +205,12 @@ do_action( 'wpss_before_order_view', $order );
 			$actions = array();
 
 			if ( $is_vendor ) {
-				if ( 'pending' === $order->status ) {
-					$actions['accept'] = array(
-						'label' => __( 'Accept Order', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--success wpss-order-action',
-						'attrs' => 'data-action="accept" data-order="' . esc_attr( $order_id ) . '"',
-					);
-					$actions['reject'] = array(
-						'label' => __( 'Decline', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
-						'attrs' => 'data-action="reject" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+				// No Accept / Decline buttons here. They only ever rendered for
+				// status 'pending', which nothing in the plugin writes - orders
+				// go pending_payment -> pending_requirements -> in_progress - so
+				// they were unreachable, and the REST verbs behind them have been
+				// removed. This product is payment-first: there is no vendor
+				// acceptance step to offer.
 
 				if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
 					$actions['start'] = array(

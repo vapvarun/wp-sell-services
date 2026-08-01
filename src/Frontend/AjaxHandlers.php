@@ -3049,11 +3049,9 @@ class AjaxHandlers {
 		$result = array( 'success' => false );
 
 		switch ( $action ) {
-			case 'accept':
-				if ( (int) $order->vendor_id === $user_id ) {
-					$result = $order_service->update_status( $order_id, 'accepted' );
-				}
-				break;
+			// No 'accept' case. It wrote status 'accepted', which only the
+			// removed accept verb ever produced and which no template renders.
+			// This product is payment-first - there is no acceptance step.
 
 			case 'start':
 				if ( (int) $order->vendor_id === $user_id ) {
@@ -3062,7 +3060,12 @@ class AjaxHandlers {
 				break;
 
 			case 'cancel':
-				$result = $order_service->update_status( $order_id, 'cancelled' );
+				// Assign to ['success'], not over the whole array.
+				// update_status() returns a BOOL, so `$result = ...` left the
+				// check below reading an array offset on a bool - always empty -
+				// and every successful cancellation answered "Action failed"
+				// while having actually cancelled the order.
+				$result['success'] = $order_service->update_status( $order_id, 'cancelled' );
 				break;
 
 			case 'refund':

@@ -161,9 +161,17 @@ class OrdersController extends RestController {
 		);
 
 		// Order status actions.
+		//
+		// 'accept' and 'reject' are deliberately absent. Both gated on status
+		// 'pending', which nothing in either plugin ever writes - real orders go
+		// pending_payment -> pending_requirements -> in_progress - so every call
+		// returned 400 and no order could ever reach the state they were written
+		// for. There is no vendor-acceptance step in this product; it is
+		// payment-first. Advertising verbs that can only fail is worse than not
+		// having them.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>accept|reject|start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -728,35 +736,6 @@ class OrdersController extends RestController {
 		$error  = null;
 
 		switch ( $action ) {
-			case 'accept':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can accept orders.', 'wp-sell-services' );
-				} elseif ( 'pending' !== $order->status ) {
-					$error = __( 'Order cannot be accepted in current status.', 'wp-sell-services' );
-				} else {
-					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_ACCEPTED );
-					if ( $result ) {
-						do_action( 'wpss_order_accepted', $order_id );
-					}
-				}
-				break;
-
-			case 'reject':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can reject orders.', 'wp-sell-services' );
-				} elseif ( 'pending' !== $order->status ) {
-					$error = __( 'Order cannot be rejected in current status.', 'wp-sell-services' );
-				} elseif ( empty( $reason ) ) {
-					$error = __( 'Reason is required for rejection.', 'wp-sell-services' );
-				} else {
-					$order->update( array( 'vendor_notes' => $reason ) );
-					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_REJECTED, $reason );
-					if ( $result ) {
-						do_action( 'wpss_order_rejected', $order_id, $reason );
-					}
-				}
-				break;
-
 			case 'start':
 				if ( ! $is_vendor && ! $is_admin ) {
 					$error = __( 'Only the vendor can start work.', 'wp-sell-services' );
@@ -776,9 +755,22 @@ class OrdersController extends RestController {
 				} elseif ( ! in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
 					$error = __( 'Order cannot be delivered in current status.', 'wp-sell-services' );
 				} else {
-					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_DELIVERED );
-					if ( $result ) {
-						do_action( 'wpss_order_delivered', $order_id );
+					// Through DeliveryService, the same seam the web AJAX handler
+					// and POST /orders/{id}/deliverables both use.
+					//
+					// This used to call update_status( STATUS_DELIVERED ) directly.
+					// It returned 200, so it looked like it worked - and then the
+					// order was stranded: no delivery row for the buyer to open,
+					// and a status no template understands. Every buyer-side
+					// surface keys on pending_approval, so the approval panel
+					// never rendered, "Accept delivery" failed its own guard and
+					// the revision button was hidden. A successful call left the
+					// order unfinishable by either party.
+					$delivery = new \WPSellServices\Services\DeliveryService();
+					$result   = $delivery->submit( $order_id, (string) $request->get_param( 'message' ), array() );
+
+					if ( ! $result ) {
+						$error = __( 'Delivery could not be submitted.', 'wp-sell-services' );
 					}
 				}
 				break;
@@ -1729,11 +1721,11 @@ class OrdersController extends RestController {
 		$actions = array();
 
 		switch ( $order->status ) {
+			// Kept only so an order somehow left in this legacy status still
+			// offers a way out. 'accept'/'reject' are not listed: the routes are
+			// gone, and advertising an action the client cannot call is how the
+			// app team ended up building screens around two dead verbs.
 			case 'pending':
-				if ( $is_vendor || $is_admin ) {
-					$actions[] = 'accept';
-					$actions[] = 'reject';
-				}
 				if ( $is_customer || $is_admin ) {
 					$actions[] = 'cancel';
 				}

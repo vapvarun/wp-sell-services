@@ -315,9 +315,9 @@
 		// (wpss_accept_order, wpss_start_work, ...) remain registered as thin
 		// delegates for backward compatibility; the frontend now drives the
 		// REST twin, which routes through the same OrderService transitions.
+		// No accept/reject entries: those verbs gated on a status nothing
+		// writes, so they could only ever fail, and the routes are gone.
 		const restActionMap = {
-			accept: 'accept',
-			reject: 'reject',
 			start: 'start',
 			deliver: 'deliver',
 			complete: 'complete',
