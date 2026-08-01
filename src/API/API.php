@@ -408,12 +408,18 @@ class API {
 	 * @return array<string, string|null>
 	 */
 	private function get_page_urls( array $pages_settings ): array {
+		// vendors, checkout and cart are resolved, not read straight from the
+		// option. vendors_page was a key nothing ever wrote, so it was
+		// permanently 0; checkout/cart in the option are the STANDALONE pages,
+		// which on a WooCommerce site are not the pages the URLs below point at
+		// - so `pages` and `page_urls` named different screens and a client
+		// deep-linking from `pages` landed on the wrong one.
 		$ids = array(
 			'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
-			'vendors'       => (int) ( $pages_settings['vendors_page'] ?? 0 ),
+			'vendors'       => function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : (int) ( $pages_settings['vendors_page'] ?? 0 ),
 			'dashboard'     => (int) ( $pages_settings['dashboard'] ?? 0 ),
-			'checkout'      => (int) ( $pages_settings['checkout'] ?? 0 ),
-			'cart'          => (int) ( $pages_settings['cart'] ?? 0 ),
+			'checkout'      => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'checkout' ) : (int) ( $pages_settings['checkout'] ?? 0 ),
+			'cart'          => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'cart' ) : (int) ( $pages_settings['cart'] ?? 0 ),
 			'become_vendor' => (int) ( $pages_settings['become_vendor'] ?? 0 ),
 			'terms'         => (int) get_option( 'wpss_terms_page' ),
 		);
@@ -436,6 +442,10 @@ class API {
 
 		if ( function_exists( 'wpss_get_cart_url' ) ) {
 			$urls['cart'] = wpss_get_cart_url() ?: $urls['cart'];
+		}
+
+		if ( function_exists( 'wpss_get_vendors_url' ) ) {
+			$urls['vendors'] = wpss_get_vendors_url() ?: $urls['vendors'];
 		}
 
 		return $urls;
@@ -467,10 +477,10 @@ class API {
 			// are 0 on a stock install.
 			'pages'               => [
 				'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
-				'vendors'       => (int) ( $pages_settings['vendors_page'] ?? 0 ),
+				'vendors'       => function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : (int) ( $pages_settings['vendors_page'] ?? 0 ),
 				'dashboard'     => (int) ( $pages_settings['dashboard'] ?? 0 ),
-				'checkout'      => (int) ( $pages_settings['checkout'] ?? 0 ),
-				'cart'          => (int) ( $pages_settings['cart'] ?? 0 ),
+				'checkout'      => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'checkout' ) : (int) ( $pages_settings['checkout'] ?? 0 ),
+				'cart'          => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'cart' ) : (int) ( $pages_settings['cart'] ?? 0 ),
 				'become_vendor' => (int) ( $pages_settings['become_vendor'] ?? 0 ),
 				'terms'         => (int) get_option( 'wpss_terms_page' ),
 			],
