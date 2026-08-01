@@ -32,6 +32,22 @@ class API {
 	 *
 	 * @return void
 	 */
+	/**
+	 * NOT CALLED. Kept for reference, and as a record of a real gap.
+	 *
+	 * Core\Plugin::define_api_hooks() constructs this class and hooks
+	 * register_routes() directly, so this method has never run on any install.
+	 * That means add_cors_headers() and the rest_pre_serve_request filter below
+	 * have never been applied either - the CORS support this plugin advertises
+	 * for frontend apps does not exist at runtime.
+	 *
+	 * Do not simply call this to "fix" it: switching CORS on for every REST
+	 * response is a behaviour change that needs its own release and testing,
+	 * not a side effect of an unrelated bug fix. The 405 handler is wired from
+	 * define_api_hooks() for that reason.
+	 *
+	 * @return void
+	 */
 	public function init(): void {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 
@@ -40,6 +56,87 @@ class API {
 
 		// Filter REST response.
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_request' ], 10, 4 );
+	}
+
+	/**
+	 * Turn "route not found" into "method not allowed" where that is the truth.
+	 *
+	 * WordPress answers a wrong-method request with `404 rest_no_route`, because
+	 * its dispatcher matches on path AND method together - so `DELETE /services`
+	 * looks identical to a path that does not exist. A client cannot tell "this
+	 * endpoint is gone" from "I used the wrong verb", and retrying or
+	 * re-authenticating never helps.
+	 *
+	 * Scoped to our own namespace: this inspects the route table only after core
+	 * has already decided it has nothing, and only rewrites the answer when the
+	 * same path IS registered under other methods. Anything genuinely unknown
+	 * keeps its 404, and no other plugin's routes are touched.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param \WP_HTTP_Response $result  Response to send.
+	 * @param \WP_REST_Server   $server  Server instance.
+	 * @param \WP_REST_Request  $request Request used to generate the response.
+	 * @return \WP_HTTP_Response
+	 */
+	public function clarify_method_not_allowed( $result, $server, $request ) {
+		if ( ! $result instanceof \WP_REST_Response || 404 !== $result->get_status() ) {
+			return $result;
+		}
+
+		$data = $result->get_data();
+
+		if ( ! is_array( $data ) || 'rest_no_route' !== ( $data['code'] ?? '' ) ) {
+			return $result;
+		}
+
+		$path = $request->get_route();
+
+		if ( 0 !== strpos( $path, '/wpss/v1' ) ) {
+			return $result;
+		}
+
+		$allowed = [];
+
+		foreach ( $server->get_routes() as $route => $handlers ) {
+			// get_routes() keys are regex patterns for parameterised routes.
+			if ( ! preg_match( '@^' . $route . '$@i', $path ) ) {
+				continue;
+			}
+
+			foreach ( $handlers as $handler ) {
+				$allowed = array_merge( $allowed, array_keys( array_filter( $handler['methods'] ) ) );
+			}
+		}
+
+		$allowed = array_values( array_unique( $allowed ) );
+
+		if ( empty( $allowed ) ) {
+			// Genuinely no such path - core's 404 is the right answer.
+			return $result;
+		}
+
+		$response = new \WP_REST_Response(
+			[
+				'code'    => 'rest_method_not_allowed',
+				'message' => sprintf(
+					/* translators: 1: HTTP method used, 2: comma-separated list of allowed methods. */
+					__( '%1$s is not supported on this endpoint. Allowed: %2$s.', 'wp-sell-services' ),
+					$request->get_method(),
+					implode( ', ', $allowed )
+				),
+				'data'    => [
+					'status'  => 405,
+					'allowed' => $allowed,
+				],
+			],
+			405
+		);
+
+		// RFC 9110 requires Allow on a 405.
+		$response->header( 'Allow', implode( ', ', $allowed ) );
+
+		return $response;
 	}
 
 	/**

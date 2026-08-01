@@ -436,6 +436,19 @@ final class Plugin {
 	private function define_api_hooks(): void {
 		$api = new API();
 		$this->loader->add_action( 'rest_api_init', $api, 'register_routes' );
+
+		// Wrong method on a known route answers 405 with an Allow header rather
+		// than 404. WordPress matches path AND method together, so DELETE on a
+		// GET-only route is indistinguishable from a path that does not exist -
+		// a client cannot tell "endpoint gone" from "wrong verb", and neither
+		// retrying nor re-authenticating helps.
+		//
+		// Hooked here rather than inside API::init(): that method is never
+		// called - this class wires register_routes directly - so everything in
+		// it has always been dead code. See the note on API::init() itself;
+		// enabling the rest of it is a behaviour change that belongs in its own
+		// release, not a quiet side effect of this fix.
+		$this->loader->add_filter( 'rest_post_dispatch', $api, 'clarify_method_not_allowed', 10, 3 );
 	}
 
 	/**

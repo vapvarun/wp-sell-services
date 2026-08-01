@@ -1687,6 +1687,38 @@ class Settings {
 	 * @return void
 	 */
 	private function render_gateway_cards(): void {
+		// When a cart plugin owns payment, say so before showing anything else.
+		//
+		// These gateways are for the standalone rail. With WooCommerce (or EDD,
+		// FluentCart, SureCart) active, that plugin takes the money and none of
+		// this is used - but the screen still rendered enabled toggles and key
+		// fields, so an owner could configure Stripe here, see it saved, and
+		// reasonably believe their store was taking card payments through it.
+		// A saved setting that silently does nothing is worse than one that is
+		// not offered.
+		if ( ! wpss_uses_standalone_payments() ) {
+			$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+			$rail    = $adapter ? $adapter->get_name() : __( 'your store plugin', 'wp-sell-services' );
+
+			printf(
+				'<div class="notice notice-info inline wpss-gateway-notice"><p><strong>%s</strong> %s</p><p>%s</p></div>',
+				esc_html__( 'Payments are handled by', 'wp-sell-services' ) . ' ' . esc_html( $rail ) . '.',
+				esc_html__( 'The gateways below belong to this plugin and are not used while a store plugin is taking payment.', 'wp-sell-services' ),
+				esc_html__( 'Configure your payment methods in that plugin instead. Switch Ecommerce Platform to Standalone under General if you want this plugin to take payment directly.', 'wp-sell-services' )
+			);
+
+			/**
+			 * Fires instead of the gateway cards when a cart rail owns payment.
+			 *
+			 * @since 1.3.1
+			 *
+			 * @param string $rail Active ecommerce rail name.
+			 */
+			do_action( 'wpss_gateway_settings_owned_by_rail', $rail );
+
+			return;
+		}
+
 		// Test Gateway section (only in debug mode).
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			$this->render_gateway_card(
