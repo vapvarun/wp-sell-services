@@ -1561,15 +1561,47 @@ function wpss_sanitize_html( string $content ): string {
 }
 
 /**
- * Generate unique order number.
+ * Generate a unique, human-quotable order number.
+ *
+ * THE single generator. Every rail calls this so one install never mixes
+ * formats: six call sites had hand-rolled the same eight-character shape while
+ * the standalone rail produced something else entirely, so a buyer's order
+ * number looked different depending on which checkout created it.
+ *
+ * The old standalone format was six random digits plus time() — e.g.
+ * WPSS-309001-1785562349. Twenty-two characters for a buyer to read out to
+ * support, and the length bought nothing: the timestamp was there for
+ * uniqueness and so was the random number, yet neither was ever checked against
+ * the table, so two orders created in the same second still collided at roughly
+ * one in 900k. It also published each order's creation time.
+ *
+ * @since 1.0.0
  *
  * @return string
  */
 function wpss_generate_order_number(): string {
-	$prefix = apply_filters( 'wpss_order_number_prefix', 'WPSS-' );
-	$number = wp_rand( 100000, 999999 );
+	global $wpdb;
 
-	return $prefix . $number . '-' . time();
+	$prefix = apply_filters( 'wpss_order_number_prefix', 'WPSS-' );
+	$table  = $wpdb->prefix . 'wpss_orders';
+
+	// Uniqueness is now verified rather than assumed. Ten attempts is far more
+	// than 36^8 needs; the time-suffixed fallback keeps checkout working rather
+	// than failing a payment over a cosmetic identifier.
+	for ( $attempt = 0; $attempt < 10; $attempt++ ) {
+		$candidate = $prefix . strtoupper( wp_generate_password( 8, false ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$taken = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE order_number = %s LIMIT 1", $candidate ) );
+
+		if ( ! $taken ) {
+			return $candidate;
+		}
+	}
+
+	wpss_log( 'Order number generation hit 10 collisions; falling back to a time-suffixed number.', 'warning' );
+
+	return $prefix . strtoupper( wp_generate_password( 8, false ) ) . '-' . time();
 }
 
 /**

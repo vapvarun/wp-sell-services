@@ -599,7 +599,7 @@ class BuyerRequestService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
 		// Generate order number.
-		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
+		$order_number = wpss_generate_order_number();
 
 		// Calculate delivery deadline.
 		$delivery_days = $proposal->proposed_days ?: $request->delivery_days ?: 7;

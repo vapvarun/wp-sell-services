@@ -648,7 +648,7 @@ class ManualOrderPage {
 		}
 
 		// Generate order number.
-		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
+		$order_number = wpss_generate_order_number();
 
 		// --- 10. Insert order ---
 		// Build data/format arrays dynamically to avoid passing null values
