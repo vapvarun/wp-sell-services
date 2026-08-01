@@ -112,10 +112,20 @@ class MenuVisibility {
 	}
 
 	/**
-	 * Sanitize the posted matrix into { role: { dashboard: [section_key, ...] } }.
+	 * Sanitize the posted form into { role: { dashboard: [section_key, ...] } }.
 	 *
-	 * Only known section keys and existing roles survive; a role with nothing
-	 * hidden is dropped so the stored map stays minimal.
+	 * STORAGE IS UNCHANGED — still a list of HIDDEN sections per role, so
+	 * existing installs, the runtime check and the admin-menu surface keep
+	 * working untouched. Only the FORM speaks in terms of what is visible,
+	 * because "tick to hide" inverted the usual meaning of a checked box and was
+	 * the likeliest way for an owner to configure the exact opposite of what
+	 * they intended.
+	 *
+	 * Unchecked boxes are not posted, so visible-checkboxes alone cannot tell
+	 * "the owner unticked everything" from "this role was never on the form".
+	 * Each rendered role therefore posts a `_present` marker and only those
+	 * roles are recomputed; without it, any partial submission would hide every
+	 * section from every absent role.
 	 *
 	 * @since 1.5.2
 	 *
@@ -125,32 +135,91 @@ class MenuVisibility {
 	public function sanitize( $input ): array {
 		$valid_sections = array_keys( self::dashboard_sections() );
 		$valid_roles    = array_keys( wp_roles()->get_names() );
+		$stored         = (array) get_option( self::OPTION, array() );
 		$clean          = array();
 
 		if ( ! is_array( $input ) ) {
 			return $clean;
 		}
 
+		// THIS METHOD MUST BE IDEMPOTENT. update_option() calls sanitize_option()
+		// internally, so WordPress runs this callback a SECOND time on the value
+		// this callback just returned. That value is in stored shape — `dashboard`
+		// keys, no `_present` markers — so the visible/complement logic below
+		// would find nothing to recompute, drop every role, and save an empty
+		// map. The setting then silently never persisted.
+		//
+		// A form submission always carries at least one `_present`; a re-filter
+		// of our own output never does. When it is the latter, validate the value
+		// and hand it straight back.
+		$is_form_submission = false;
+
+		foreach ( $input as $surfaces ) {
+			if ( is_array( $surfaces ) && isset( $surfaces['_present'] ) ) {
+				$is_form_submission = true;
+				break;
+			}
+		}
+
+		if ( ! $is_form_submission ) {
+			foreach ( $input as $role => $surfaces ) {
+				$role = sanitize_key( $role );
+
+				if ( ! in_array( $role, $valid_roles, true ) || empty( $surfaces['dashboard'] ) || ! is_array( $surfaces['dashboard'] ) ) {
+					continue;
+				}
+
+				$hidden = array_intersect( array_map( 'sanitize_key', $surfaces['dashboard'] ), $valid_sections );
+
+				if ( ! empty( $hidden ) ) {
+					$clean[ $role ]['dashboard'] = array_values( array_unique( $hidden ) );
+				}
+			}
+
+			return $clean;
+		}
+
+		// Roles absent from this submission keep what they already had.
+		foreach ( $stored as $stored_role => $surfaces ) {
+			$stored_role = sanitize_key( $stored_role );
+
+			if ( in_array( $stored_role, $valid_roles, true ) && ! empty( $surfaces['dashboard'] ) ) {
+				$kept = array_intersect( array_map( 'sanitize_key', (array) $surfaces['dashboard'] ), $valid_sections );
+
+				if ( ! empty( $kept ) ) {
+					$clean[ $stored_role ]['dashboard'] = array_values( array_unique( $kept ) );
+				}
+			}
+		}
+
 		foreach ( $input as $role => $surfaces ) {
 			$role = sanitize_key( $role );
 
-			if ( ! in_array( $role, $valid_roles, true ) || ! is_array( $surfaces ) ) {
+			if ( ! in_array( $role, $valid_roles, true ) || ! is_array( $surfaces ) || empty( $surfaces['_present'] ) ) {
 				continue;
 			}
 
-			$hidden = array();
+			$visible = array();
 
-			if ( ! empty( $surfaces['dashboard'] ) && is_array( $surfaces['dashboard'] ) ) {
-				foreach ( $surfaces['dashboard'] as $section ) {
+			if ( ! empty( $surfaces['visible'] ) && is_array( $surfaces['visible'] ) ) {
+				foreach ( $surfaces['visible'] as $section ) {
 					$section = sanitize_key( $section );
+
 					if ( in_array( $section, $valid_sections, true ) ) {
-						$hidden[] = $section;
+						$visible[] = $section;
 					}
 				}
 			}
 
+			// Hidden is simply the complement of what the owner left ticked.
+			$hidden = array_values( array_diff( $valid_sections, $visible ) );
+
 			if ( ! empty( $hidden ) ) {
-				$clean[ $role ]['dashboard'] = array_values( array_unique( $hidden ) );
+				$clean[ $role ]['dashboard'] = $hidden;
+			} else {
+				// Everything visible — drop the role so the stored map stays
+				// minimal and never persists an empty array.
+				unset( $clean[ $role ] );
 			}
 		}
 
@@ -173,44 +242,59 @@ class MenuVisibility {
 			<div class="wpss-card__head">
 				<p class="wpss-card__title"><?php esc_html_e( 'MENU VISIBILITY', 'wp-sell-services' ); ?></p>
 				<p class="wpss-card__desc">
-					<?php esc_html_e( 'Tick a box to hide that dashboard section from a role. Hiding a section also blocks its direct URL. Leave everything unticked to show all sections to everyone (the default).', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Choose which dashboard sections each role can see. Everything is visible by default; unticking a section also blocks its direct URL for that role.', 'wp-sell-services' ); ?>
 				</p>
 			</div>
 			<div class="wpss-card__body">
 				<form method="post" action="options.php">
 					<?php settings_fields( 'wpss_menu_visibility' ); ?>
-				<div style="overflow-x:auto;">
-					<table class="widefat striped" style="min-width:640px;">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Dashboard section', 'wp-sell-services' ); ?></th>
-								<?php foreach ( $roles as $role_slug => $role_name ) : ?>
-									<th style="text-align:center;"><?php echo esc_html( $role_name ); ?></th>
-								<?php endforeach; ?>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $sections as $section_key => $section_label ) : ?>
-								<tr>
-									<td><?php echo esc_html( $section_label ); ?></td>
+
+					<p class="description" style="margin:0 0 var(--wpss-space-4,16px);">
+						<?php esc_html_e( 'A member who has more than one role sees a section only if every one of their roles allows it. Hiding a section from Subscriber also hides it from someone who is both a Subscriber and a Vendor.', 'wp-sell-services' ); ?>
+					</p>
+
+					<?php
+					foreach ( $roles as $role_slug => $role_name ) :
+						$role_hidden = ! empty( $map[ $role_slug ]['dashboard'] ) ? (array) $map[ $role_slug ]['dashboard'] : array();
+						$hidden_count = count( array_intersect( $role_hidden, array_keys( $sections ) ) );
+						$field        = self::OPTION . '[' . $role_slug . ']';
+						?>
+						<details class="wpss-visibility-role" style="border:1px solid var(--wpss-admin-border,#dcdcde);border-radius:var(--wpss-radius,6px);margin-bottom:12px;">
+							<summary style="cursor:pointer;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600;">
+								<span><?php echo esc_html( $role_name ); ?></span>
+								<span style="font-weight:400;color:#646970;">
 									<?php
-									foreach ( $roles as $role_slug => $role_name ) :
-										$hidden = ! empty( $map[ $role_slug ]['dashboard'] ) && in_array( $section_key, (array) $map[ $role_slug ]['dashboard'], true );
-										$name   = self::OPTION . '[' . esc_attr( $role_slug ) . '][dashboard][]';
-										?>
-										<td style="text-align:center;">
-											<input type="checkbox"
-												name="<?php echo esc_attr( $name ); ?>"
-												value="<?php echo esc_attr( $section_key ); ?>"
-												<?php checked( $hidden ); ?>
-												aria-label="<?php echo esc_attr( sprintf( /* translators: 1: section, 2: role */ __( 'Hide %1$s from %2$s', 'wp-sell-services' ), $section_label, $role_name ) ); ?>">
-										</td>
-									<?php endforeach; ?>
-								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
-				</div>
+									if ( 0 === $hidden_count ) {
+										esc_html_e( 'Sees everything', 'wp-sell-services' );
+									} else {
+										printf(
+											/* translators: %d: number of hidden sections */
+											esc_html( _n( '%d section hidden', '%d sections hidden', $hidden_count, 'wp-sell-services' ) ),
+											(int) $hidden_count
+										);
+									}
+									?>
+								</span>
+							</summary>
+
+							<div style="padding:0 14px 14px;">
+								<?php // Marks this role as present in the submission; see sanitize(). ?>
+								<input type="hidden" name="<?php echo esc_attr( $field ); ?>[_present]" value="1">
+
+								<?php foreach ( $sections as $section_key => $section_label ) : ?>
+									<?php $is_visible = ! in_array( $section_key, $role_hidden, true ); ?>
+									<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--wpss-admin-border,#f0f0f1);">
+										<input type="checkbox"
+											name="<?php echo esc_attr( $field ); ?>[visible][]"
+											value="<?php echo esc_attr( $section_key ); ?>"
+											<?php checked( $is_visible ); ?>>
+										<span><?php echo esc_html( $section_label ); ?></span>
+									</label>
+								<?php endforeach; ?>
+							</div>
+						</details>
+					<?php endforeach; ?>
+
 					<div class="wpss-settings-section__footer">
 						<?php submit_button( __( 'Save Menu Visibility', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 					</div>

@@ -29,7 +29,7 @@ $vendor_profile = $is_vendor ? $vendor_service->get_profile( $user_id ) : null;
 do_action( 'wpss_dashboard_section_before', 'profile', $user );
 ?>
 
-<div class="wpss-section wpss-section--profile">
+<div class="wpss-section wpss-section--profile wpss-card">
 	<form class="wpss-profile-form" method="post" action="" data-ajax-form="update-profile">
 		<?php wp_nonce_field( 'wpss_update_profile', 'wpss_profile_nonce' ); ?>
 

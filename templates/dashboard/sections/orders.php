@@ -95,7 +95,7 @@ $completed_count = (int) ( $stats['completed_orders'] ?? 0 );
 $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 ?>
 
-<div class="wpss-section wpss-section--orders">
+<div class="wpss-section wpss-section--orders wpss-card">
 	<div class="wpss-stats-grid">
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $total_count ); ?></span>

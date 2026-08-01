@@ -109,7 +109,7 @@ $pending_count = count(
 );
 ?>
 
-<div class="wpss-section wpss-section--services">
+<div class="wpss-section wpss-section--services wpss-card">
 	<div class="wpss-stats-grid">
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $published_count ); ?></span>

@@ -34,7 +34,7 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash( $_GET['conversation_id'] ) ) : 0;
 ?>
 
-<div class="wpss-section wpss-section--messages">
+<div class="wpss-section wpss-section--messages wpss-card">
 
 <?php if ( $active_conversation_id ) : ?>
 	<?php

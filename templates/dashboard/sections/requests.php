@@ -51,7 +51,7 @@ $active_count = count(
 );
 ?>
 
-<div class="wpss-section wpss-section--requests">
+<div class="wpss-section wpss-section--requests wpss-card">
 	<div class="wpss-stats-grid">
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $active_count ); ?></span>

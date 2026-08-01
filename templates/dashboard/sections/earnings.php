@@ -40,7 +40,7 @@ $show_payout_banner = empty( $payout_method )
 	&& ( (float) $earnings['available_balance'] > 0 || (float) $earnings['pending_clearance'] > 0 );
 ?>
 
-<div class="wpss-section wpss-section--earnings">
+<div class="wpss-section wpss-section--earnings wpss-card">
 	<?php if ( $show_payout_banner ) : ?>
 		<div class="wpss-dashboard__payout-banner" role="status">
 			<span class="wpss-payout-banner__icon">
