@@ -41,7 +41,7 @@ if ( ! empty( $favorite_ids ) ) {
 }
 ?>
 
-<div class="wpss-favorites" data-wpss-favorites>
+<div class="wpss-section wpss-section--favorites wpss-card wpss-favorites" data-wpss-favorites>
 	<?php if ( empty( $services ) ) : ?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon" aria-hidden="true">
