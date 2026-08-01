@@ -1115,11 +1115,11 @@ class MarketplaceSeeder {
 	private function seed_withdrawals( array $vendors, array $available = array() ): int {
 		global $wpdb;
 
-		$table         = $wpdb->prefix . 'wpss_withdrawals';
-		$ledger_table  = $wpdb->prefix . 'wpss_wallet_transactions';
-		$statuses      = array_keys( EarningsService::get_withdrawal_statuses() );
-		$methods       = array( 'paypal', 'bank_transfer', 'paypal', 'stripe' );
-		$created       = 0;
+		$table        = $wpdb->prefix . 'wpss_withdrawals';
+		$ledger_table = $wpdb->prefix . 'wpss_wallet_transactions';
+		$statuses     = array_keys( EarningsService::get_withdrawal_statuses() );
+		$methods      = array( 'paypal', 'bank_transfer', 'paypal', 'stripe' );
+		$created      = 0;
 
 		foreach ( $vendors as $index => $vendor ) {
 			// Skip the newest vendor to keep the data realistic (no payouts yet).
@@ -1422,11 +1422,12 @@ class MarketplaceSeeder {
 		$filename = 'wpss-demo-' . md5( $label . $width . 'x' . $height ) . '.png';
 		$path     = trailingslashit( $uploads['path'] ) . $filename;
 
+		// imagedestroy() is deprecated from PHP 8.0: GD images are objects and
+		// are freed automatically, so calling it is a no-op that only trips the
+		// deprecation sniff.
 		if ( ! imagepng( $image, $path ) ) {
-			imagedestroy( $image );
 			return 0;
 		}
-		imagedestroy( $image );
 
 		$filetype   = wp_check_filetype( $filename, null );
 		$attachment = array(

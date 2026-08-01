@@ -240,7 +240,7 @@ class ServiceCommands extends WP_CLI_Command {
 	 * @param array<string, string> $assoc_args Associative arguments.
 	 */
 	public function marketplace( array $args, array $assoc_args ): void {
-		$min_orders = (int) ( $assoc_args['orders'] ?? 55 );
+		$min_orders  = (int) ( $assoc_args['orders'] ?? 55 );
 		$with_images = ! isset( $assoc_args['no-images'] );
 
 		WP_CLI::log( 'Seeding demo marketplace' . ( $with_images ? ' (with images)...' : ' (no images)...' ) );

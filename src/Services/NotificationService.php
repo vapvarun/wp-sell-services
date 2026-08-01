@@ -1804,7 +1804,8 @@ class NotificationService {
 			return __( 'a new phase', 'wp-sell-services' );
 		}
 
-		$meta  = is_string( $milestone->meta ) ? json_decode( $milestone->meta, true ) : (array) $milestone->meta;
+		// ServiceOrder decodes meta on load, so it is already an array here.
+		$meta  = (array) $milestone->meta;
 		$name  = (string) ( $meta['title'] ?? '' );
 		$price = function_exists( 'wpss_format_price' )
 			? wpss_format_price( (float) $milestone->total, (string) $milestone->currency )

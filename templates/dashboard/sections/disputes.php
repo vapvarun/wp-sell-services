@@ -125,7 +125,7 @@ if ( $view_dispute_id ) {
 		// existed, but no member-facing surface ever rendered the thread or a
 		// reply form — a party could OPEN a dispute and then never respond to it.
 		// This wires the existing backend to the dashboard.
-		$evidence_items = $dispute_service->get_evidence( (int) $dispute->id );
+		$evidence_items   = $dispute_service->get_evidence( (int) $dispute->id );
 		$can_add_evidence = ! in_array( $status_key, array( 'resolved', 'closed' ), true );
 		?>
 		<div class="wpss-dispute-detail__evidence">

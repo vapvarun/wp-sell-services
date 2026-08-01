@@ -41,9 +41,8 @@ printf( esc_html__( 'Package: %s', 'wp-sell-services' ), esc_html( ucfirst( $ord
 echo "\n";
 printf( esc_html__( 'Customer: %s', 'wp-sell-services' ), esc_html( $customer_name ) );
 echo "\n";
-// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is a safe function.
 /* translators: %s: order total amount. */
-printf( esc_html__( 'Total: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $order->total ) ) );
+printf( esc_html__( 'Total: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $order->total ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is safe here; esc_html() would encode entities into a plain-text body.
 echo "\n----------\n\n";
 
 echo esc_html__( 'The customer will submit their requirements shortly. You\'ll receive another notification when they do.', 'wp-sell-services' );

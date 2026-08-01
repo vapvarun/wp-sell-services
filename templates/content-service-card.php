@@ -42,7 +42,7 @@ $card_classes = apply_filters( 'wpss_service_card_classes', array( 'wpss-service
 $wpss_card_is_logged_in = is_user_logged_in();
 $wpss_card_favorited    = false;
 if ( $wpss_card_is_logged_in ) {
-	$wpss_card_favs = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
+	$wpss_card_favs      = \WPSellServices\Services\FavoritesService::get_ids( get_current_user_id() );
 	$wpss_card_favorited = is_array( $wpss_card_favs ) && in_array( $service_id, array_map( 'intval', $wpss_card_favs ), true );
 }
 ?>

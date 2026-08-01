@@ -301,8 +301,8 @@ class EarningsService {
 	 * type, so the debit rows Pro already wrote as type 'debit' on existing
 	 * installs are recognised and never doubled.
 	 *
-	 * @param int          $withdrawal_id Withdrawal record ID.
-	 * @param string       $status        New withdrawal status.
+	 * @param int                         $withdrawal_id Withdrawal record ID.
+	 * @param string                      $status        New withdrawal status.
 	 * @param object|array<string, mixed> $withdrawal    Withdrawal row.
 	 * @return bool True when a debit row was written.
 	 */

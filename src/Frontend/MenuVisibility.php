@@ -255,7 +255,7 @@ class MenuVisibility {
 
 					<?php
 					foreach ( $roles as $role_slug => $role_name ) :
-						$role_hidden = ! empty( $map[ $role_slug ]['dashboard'] ) ? (array) $map[ $role_slug ]['dashboard'] : array();
+						$role_hidden  = ! empty( $map[ $role_slug ]['dashboard'] ) ? (array) $map[ $role_slug ]['dashboard'] : array();
 						$hidden_count = count( array_intersect( $role_hidden, array_keys( $sections ) ) );
 						$field        = self::OPTION . '[' . $role_slug . ']';
 						?>

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-01T12:04:26+00:00\n"
+"POT-Creation-Date: 2026-08-01T12:13:29+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -140,8 +140,8 @@ msgstr ""
 #: src/Admin/Admin.php:2597
 #: src/Admin/Metaboxes/OrderMetabox.php:988
 #: src/Admin/Metaboxes/OrderMetabox.php:1002
-#: src/Admin/Metaboxes/OrderMetabox.php:1056
-#: src/Admin/Metaboxes/OrderMetabox.php:1167
+#: src/Admin/Metaboxes/OrderMetabox.php:1059
+#: src/Admin/Metaboxes/OrderMetabox.php:1170
 #: src/Admin/Pages/ManualOrderPage.php:460
 #: src/Admin/Pages/ManualOrderPage.php:501
 #: src/Admin/Pages/ReviewModerationPage.php:693
@@ -188,7 +188,7 @@ msgid "Invalid service ID."
 msgstr ""
 
 #: src/Admin/Admin.php:554
-#: src/Admin/Metaboxes/ServiceMetabox.php:1220
+#: src/Admin/Metaboxes/ServiceMetabox.php:1222
 #: src/Frontend/AjaxHandlers.php:2414
 #: src/Frontend/ServiceWizard.php:627
 #: src/Frontend/ServiceWizard.php:1310
@@ -209,7 +209,7 @@ msgstr ""
 #: src/Admin/Admin.php:594
 #: src/Admin/Admin.php:660
 #: src/Admin/Metaboxes/OrderMetabox.php:995
-#: src/Admin/Metaboxes/OrderMetabox.php:1174
+#: src/Admin/Metaboxes/OrderMetabox.php:1177
 #: src/Admin/Pages/VendorsPage.php:2767
 #: src/Frontend/AjaxHandlers.php:1566
 #: src/Frontend/AjaxHandlers.php:1639
@@ -418,7 +418,7 @@ msgstr ""
 #: src/Admin/Admin.php:1018
 #: src/Admin/Admin.php:1386
 #: src/Admin/Metaboxes/ServiceMetabox.php:540
-#: src/Admin/Metaboxes/ServiceMetabox.php:1165
+#: src/Admin/Metaboxes/ServiceMetabox.php:1167
 #: src/Admin/Pages/VendorsPage.php:608
 #: src/Admin/Pages/VendorsPage.php:633
 #: src/Admin/Pages/VendorsPage.php:815
@@ -682,7 +682,7 @@ msgstr ""
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:179
 #: src/Admin/Metaboxes/OrderMetabox.php:270
 #: src/Admin/Metaboxes/ServiceMetabox.php:187
-#: src/Admin/Metaboxes/ServiceMetabox.php:1144
+#: src/Admin/Metaboxes/ServiceMetabox.php:1146
 #: src/Admin/Pages/ReviewModerationPage.php:394
 #: src/Admin/Pages/ServiceModerationPage.php:453
 #: src/Admin/Pages/ServiceModerationPage.php:473
@@ -800,8 +800,8 @@ msgstr[1] ""
 #: src/Admin/Admin.php:1557
 #: src/Admin/Metaboxes/OrderMetabox.php:254
 #: src/Admin/Metaboxes/OrderMetabox.php:1017
-#: src/Admin/Metaboxes/OrderMetabox.php:1069
-#: src/Admin/Metaboxes/OrderMetabox.php:1180
+#: src/Admin/Metaboxes/OrderMetabox.php:1072
+#: src/Admin/Metaboxes/OrderMetabox.php:1183
 #: src/API/ExtensionRequestsController.php:306
 #: src/API/MilestonesController.php:518
 #: src/API/OrdersController.php:398
@@ -939,7 +939,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:1650
 #: src/Admin/Pages/ManualOrderPage.php:203
-#: src/Models/ServiceOrder.php:983
+#: src/Models/ServiceOrder.php:994
 #: templates/emails/new-order.php:70
 #: templates/partials/service-packages.php:70
 msgid "Package"
@@ -1109,7 +1109,7 @@ msgstr ""
 #: src/Admin/Admin.php:1995
 #: src/Admin/Admin.php:2029
 #: src/Admin/Metaboxes/ServiceMetabox.php:953
-#: src/Admin/Metaboxes/ServiceMetabox.php:1133
+#: src/Admin/Metaboxes/ServiceMetabox.php:1135
 #: src/Admin/Pages/AuditLogPage.php:110
 #: src/Admin/Pages/NotificationsPage.php:119
 #: src/Admin/Pages/ReviewModerationPage.php:139
@@ -1278,8 +1278,8 @@ msgstr ""
 #: src/Admin/Admin.php:2190
 #: src/Admin/Metaboxes/ServiceMetabox.php:386
 #: src/Admin/Metaboxes/ServiceMetabox.php:640
-#: src/Admin/Metaboxes/ServiceMetabox.php:1443
-#: src/Admin/Metaboxes/ServiceMetabox.php:1522
+#: src/Admin/Metaboxes/ServiceMetabox.php:1445
+#: src/Admin/Metaboxes/ServiceMetabox.php:1524
 #: src/Admin/Pages/VendorsPage.php:2187
 #: src/CustomFields/Fields/AbstractField.php:110
 #: src/Frontend/ServiceWizard.php:553
@@ -1456,8 +1456,8 @@ msgstr ""
 #: src/Admin/Metaboxes/OrderMetabox.php:413
 #: src/Admin/Metaboxes/ServiceMetabox.php:373
 #: src/Admin/Metaboxes/ServiceMetabox.php:663
-#: src/Admin/Metaboxes/ServiceMetabox.php:1431
-#: src/Admin/Metaboxes/ServiceMetabox.php:1545
+#: src/Admin/Metaboxes/ServiceMetabox.php:1433
+#: src/Admin/Metaboxes/ServiceMetabox.php:1547
 #: src/Admin/Pages/ServiceModerationPage.php:451
 #: src/Admin/Pages/ServiceModerationPage.php:471
 #: src/Admin/Pages/VendorsPage.php:1344
@@ -1470,7 +1470,7 @@ msgstr ""
 
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:178
 #: src/Admin/Metaboxes/ServiceMetabox.php:396
-#: src/Admin/Metaboxes/ServiceMetabox.php:1453
+#: src/Admin/Metaboxes/ServiceMetabox.php:1455
 #: src/Frontend/SingleServiceView.php:152
 #: src/Models/Message.php:143
 #: templates/content-request-card.php:202
@@ -1508,7 +1508,7 @@ msgid "Order Items"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:117
-#: src/Admin/Metaboxes/ServiceMetabox.php:1334
+#: src/Admin/Metaboxes/ServiceMetabox.php:1336
 #: src/Frontend/ServiceWizard.php:899
 msgid "Buyer Requirements"
 msgstr ""
@@ -1544,12 +1544,12 @@ msgid "Refund"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:215
-#: src/Admin/Metaboxes/OrderMetabox.php:1199
+#: src/Admin/Metaboxes/OrderMetabox.php:1202
 msgid "Note added successfully."
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:216
-#: src/Admin/Metaboxes/OrderMetabox.php:1153
+#: src/Admin/Metaboxes/OrderMetabox.php:1156
 msgid "Requirements saved successfully."
 msgstr ""
 
@@ -1625,7 +1625,7 @@ msgid "Item"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:412
-#: src/Frontend/SingleServiceView.php:932
+#: src/Frontend/SingleServiceView.php:934
 #: src/Services/ServiceAddonService.php:585
 msgid "Quantity"
 msgstr ""
@@ -1665,7 +1665,7 @@ msgid "Save Requirements"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:631
-#: src/Admin/Metaboxes/OrderMetabox.php:1084
+#: src/Admin/Metaboxes/OrderMetabox.php:1087
 msgid "This service has no requirements defined."
 msgstr ""
 
@@ -1751,19 +1751,19 @@ msgstr ""
 msgid "This order cannot be refunded in its current state."
 msgstr ""
 
-#: src/Admin/Metaboxes/OrderMetabox.php:1041
+#: src/Admin/Metaboxes/OrderMetabox.php:1044
 msgid "Status updated successfully."
 msgstr ""
 
-#: src/Admin/Metaboxes/OrderMetabox.php:1043
+#: src/Admin/Metaboxes/OrderMetabox.php:1046
 msgid "Failed to update status."
 msgstr ""
 
-#: src/Admin/Metaboxes/OrderMetabox.php:1063
+#: src/Admin/Metaboxes/OrderMetabox.php:1066
 msgid "Invalid order ID."
 msgstr ""
 
-#: src/Admin/Metaboxes/OrderMetabox.php:1077
+#: src/Admin/Metaboxes/OrderMetabox.php:1080
 #: src/API/FavoritesController.php:203
 #: src/API/ModerationController.php:211
 #: src/API/ModerationController.php:253
@@ -1784,7 +1784,7 @@ msgid "Service not found."
 msgstr ""
 
 #. translators: %s: field label
-#: src/Admin/Metaboxes/OrderMetabox.php:1097
+#: src/Admin/Metaboxes/OrderMetabox.php:1100
 #: src/CustomFields/FieldValidator.php:87
 #: src/Services/RequirementsService.php:265
 #: src/Services/RequirementsService.php:273
@@ -1793,12 +1793,12 @@ msgstr ""
 msgid "%s is required."
 msgstr ""
 
-#: src/Admin/Metaboxes/OrderMetabox.php:1106
+#: src/Admin/Metaboxes/OrderMetabox.php:1109
 #: src/Services/RequirementsService.php:199
 msgid "Please fix the following errors:"
 msgstr ""
 
-#: src/Admin/Metaboxes/OrderMetabox.php:1134
+#: src/Admin/Metaboxes/OrderMetabox.php:1137
 msgid "Failed to save requirements."
 msgstr ""
 
@@ -1917,7 +1917,7 @@ msgid "Skip to full editor"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:190
-#: src/Admin/Metaboxes/ServiceMetabox.php:1147
+#: src/Admin/Metaboxes/ServiceMetabox.php:1149
 #: src/Admin/Pages/VendorsPage.php:519
 #: templates/dashboard/sections/orders.php:106
 #: templates/dashboard/sections/sales.php:141
@@ -1926,19 +1926,19 @@ msgid "Active"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:191
-#: src/Admin/Metaboxes/ServiceMetabox.php:1148
+#: src/Admin/Metaboxes/ServiceMetabox.php:1150
 msgid "Paused"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:192
-#: src/Admin/Metaboxes/ServiceMetabox.php:1149
+#: src/Admin/Metaboxes/ServiceMetabox.php:1151
 #: src/Frontend/UnifiedDashboard.php:143
 #: templates/dashboard/sections/edit-request.php:142
 msgid "Draft"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:195
-#: src/Admin/Metaboxes/ServiceMetabox.php:1152
+#: src/Admin/Metaboxes/ServiceMetabox.php:1154
 msgid "Control service visibility"
 msgstr ""
 
@@ -1947,26 +1947,26 @@ msgid "Delivery time and revisions are configured per package below."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:338
-#: src/Admin/Metaboxes/ServiceMetabox.php:1409
+#: src/Admin/Metaboxes/ServiceMetabox.php:1411
 msgid "New Package"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:343
 #: src/Admin/Metaboxes/ServiceMetabox.php:450
 #: src/Admin/Metaboxes/ServiceMetabox.php:618
-#: src/Admin/Metaboxes/ServiceMetabox.php:1373
-#: src/Admin/Metaboxes/ServiceMetabox.php:1408
-#: src/Admin/Metaboxes/ServiceMetabox.php:1501
-#: src/Admin/Metaboxes/ServiceMetabox.php:1602
-#: src/Admin/Metaboxes/ServiceMetabox.php:1644
+#: src/Admin/Metaboxes/ServiceMetabox.php:1375
+#: src/Admin/Metaboxes/ServiceMetabox.php:1410
+#: src/Admin/Metaboxes/ServiceMetabox.php:1503
+#: src/Admin/Metaboxes/ServiceMetabox.php:1604
+#: src/Admin/Metaboxes/ServiceMetabox.php:1646
 #: src/Services/GalleryService.php:436
 msgid "Drag to reorder"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:351
 #: src/Admin/Metaboxes/ServiceMetabox.php:621
-#: src/Admin/Metaboxes/ServiceMetabox.php:1412
-#: src/Admin/Metaboxes/ServiceMetabox.php:1504
+#: src/Admin/Metaboxes/ServiceMetabox.php:1414
+#: src/Admin/Metaboxes/ServiceMetabox.php:1506
 msgid "Expand/Collapse"
 msgstr ""
 
@@ -1974,12 +1974,12 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:470
 #: src/Admin/Metaboxes/ServiceMetabox.php:503
 #: src/Admin/Metaboxes/ServiceMetabox.php:624
-#: src/Admin/Metaboxes/ServiceMetabox.php:1275
-#: src/Admin/Metaboxes/ServiceMetabox.php:1377
-#: src/Admin/Metaboxes/ServiceMetabox.php:1415
-#: src/Admin/Metaboxes/ServiceMetabox.php:1507
-#: src/Admin/Metaboxes/ServiceMetabox.php:1620
-#: src/Admin/Metaboxes/ServiceMetabox.php:1647
+#: src/Admin/Metaboxes/ServiceMetabox.php:1277
+#: src/Admin/Metaboxes/ServiceMetabox.php:1379
+#: src/Admin/Metaboxes/ServiceMetabox.php:1417
+#: src/Admin/Metaboxes/ServiceMetabox.php:1509
+#: src/Admin/Metaboxes/ServiceMetabox.php:1622
+#: src/Admin/Metaboxes/ServiceMetabox.php:1649
 #: src/Admin/Pages/VendorsPage.php:2442
 #: src/Frontend/UnifiedDashboard.php:166
 #: src/Services/FAQService.php:267
@@ -1990,53 +1990,53 @@ msgid "Remove"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:364
-#: src/Admin/Metaboxes/ServiceMetabox.php:1423
+#: src/Admin/Metaboxes/ServiceMetabox.php:1425
 msgid "Package Name"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:365
-#: src/Admin/Metaboxes/ServiceMetabox.php:1424
+#: src/Admin/Metaboxes/ServiceMetabox.php:1426
 msgid "Package name"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:368
-#: src/Admin/Metaboxes/ServiceMetabox.php:1426
+#: src/Admin/Metaboxes/ServiceMetabox.php:1428
 msgid "e.g., Standard, Premium, Enterprise"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:377
-#: src/Admin/Metaboxes/ServiceMetabox.php:1435
+#: src/Admin/Metaboxes/ServiceMetabox.php:1437
 msgid "Package price"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:387
-#: src/Admin/Metaboxes/ServiceMetabox.php:1444
+#: src/Admin/Metaboxes/ServiceMetabox.php:1446
 msgid "Package description"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:389
-#: src/Admin/Metaboxes/ServiceMetabox.php:1446
+#: src/Admin/Metaboxes/ServiceMetabox.php:1448
 msgid "Describe what's included in this package..."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:399
-#: src/Admin/Metaboxes/ServiceMetabox.php:1456
+#: src/Admin/Metaboxes/ServiceMetabox.php:1458
 msgid "Delivery time in days"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:402
 #: src/Admin/Metaboxes/ServiceMetabox.php:698
-#: src/Admin/Metaboxes/ServiceMetabox.php:1458
-#: src/Admin/Metaboxes/ServiceMetabox.php:1578
+#: src/Admin/Metaboxes/ServiceMetabox.php:1460
+#: src/Admin/Metaboxes/ServiceMetabox.php:1580
 #: src/Frontend/ServiceWizard.php:1191
-#: src/Frontend/SingleServiceView.php:904
+#: src/Frontend/SingleServiceView.php:906
 #: templates/single-request.php:595
 #: templates/single-request.php:612
 msgid "days"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:408
-#: src/Admin/Metaboxes/ServiceMetabox.php:1464
+#: src/Admin/Metaboxes/ServiceMetabox.php:1466
 #: src/Frontend/ServiceWizard.php:737
 #: src/Frontend/SingleServiceView.php:153
 #: src/functions.php:3876
@@ -2046,27 +2046,27 @@ msgid "Revisions"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:411
-#: src/Admin/Metaboxes/ServiceMetabox.php:1467
+#: src/Admin/Metaboxes/ServiceMetabox.php:1469
 msgid "Number of revisions"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:414
-#: src/Admin/Metaboxes/ServiceMetabox.php:1469
+#: src/Admin/Metaboxes/ServiceMetabox.php:1471
 msgid "times"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:422
-#: src/Admin/Metaboxes/ServiceMetabox.php:1477
+#: src/Admin/Metaboxes/ServiceMetabox.php:1479
 msgid "Features Included"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:424
-#: src/Admin/Metaboxes/ServiceMetabox.php:1479
+#: src/Admin/Metaboxes/ServiceMetabox.php:1481
 msgid "Features included"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:426
-#: src/Admin/Metaboxes/ServiceMetabox.php:1481
+#: src/Admin/Metaboxes/ServiceMetabox.php:1483
 msgid ""
 "Feature 1\n"
 "Feature 2\n"
@@ -2074,51 +2074,51 @@ msgid ""
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:427
-#: src/Admin/Metaboxes/ServiceMetabox.php:1482
+#: src/Admin/Metaboxes/ServiceMetabox.php:1484
 msgid "Enter one feature per line"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:455
-#: src/Admin/Metaboxes/ServiceMetabox.php:1606
+#: src/Admin/Metaboxes/ServiceMetabox.php:1608
 msgid "Requirement question"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:456
-#: src/Admin/Metaboxes/ServiceMetabox.php:1607
+#: src/Admin/Metaboxes/ServiceMetabox.php:1609
 msgid "Enter your question..."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:460
-#: src/Admin/Metaboxes/ServiceMetabox.php:1611
+#: src/Admin/Metaboxes/ServiceMetabox.php:1613
 msgid "Requirement field type"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:468
 #: src/Admin/Metaboxes/ServiceMetabox.php:705
-#: src/Admin/Metaboxes/ServiceMetabox.php:1584
-#: src/Admin/Metaboxes/ServiceMetabox.php:1618
+#: src/Admin/Metaboxes/ServiceMetabox.php:1586
+#: src/Admin/Metaboxes/ServiceMetabox.php:1620
 #: src/CustomFields/Fields/AbstractField.php:122
 #: src/Frontend/ServiceWizard.php:935
 msgid "Required"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:470
-#: src/Admin/Metaboxes/ServiceMetabox.php:1620
+#: src/Admin/Metaboxes/ServiceMetabox.php:1622
 msgid "Remove requirement"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:477
-#: src/Admin/Metaboxes/ServiceMetabox.php:1626
+#: src/Admin/Metaboxes/ServiceMetabox.php:1628
 msgid "Requirement choices"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:478
-#: src/Admin/Metaboxes/ServiceMetabox.php:1627
+#: src/Admin/Metaboxes/ServiceMetabox.php:1629
 msgid "Enter choices separated by comma (e.g., Option 1, Option 2, Option 3)"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:511
-#: src/Admin/Metaboxes/ServiceMetabox.php:1283
+#: src/Admin/Metaboxes/ServiceMetabox.php:1285
 msgid "Add Images"
 msgstr ""
 
@@ -2127,7 +2127,7 @@ msgid "Drag to reorder images."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:547
-#: src/Admin/Metaboxes/ServiceMetabox.php:1172
+#: src/Admin/Metaboxes/ServiceMetabox.php:1174
 #: src/Admin/Pages/ReviewModerationPage.php:389
 #: src/Admin/Pages/VendorsPage.php:611
 #: src/Admin/Pages/VendorsPage.php:634
@@ -2139,24 +2139,24 @@ msgid "Rating"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:554
-#: src/Admin/Metaboxes/ServiceMetabox.php:1179
+#: src/Admin/Metaboxes/ServiceMetabox.php:1181
 #: src/Admin/Pages/VendorsPage.php:995
 #: templates/partials/service-reviews.php:80
 msgid "Reviews"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:561
-#: src/Admin/Metaboxes/ServiceMetabox.php:1186
+#: src/Admin/Metaboxes/ServiceMetabox.php:1188
 msgid "Views"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:614
-#: src/Admin/Metaboxes/ServiceMetabox.php:1502
+#: src/Admin/Metaboxes/ServiceMetabox.php:1504
 msgid "New Add-on"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:632
-#: src/Admin/Metaboxes/ServiceMetabox.php:1515
+#: src/Admin/Metaboxes/ServiceMetabox.php:1517
 #: src/Admin/Pages/VendorsPage.php:2393
 #: src/Frontend/Shortcodes.php:547
 #: src/Integrations/Gateways/OfflineGateway.php:198
@@ -2170,37 +2170,37 @@ msgid "Title"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:635
-#: src/Admin/Metaboxes/ServiceMetabox.php:1517
+#: src/Admin/Metaboxes/ServiceMetabox.php:1519
 msgid "e.g., Extra Fast Delivery"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:642
-#: src/Admin/Metaboxes/ServiceMetabox.php:1524
+#: src/Admin/Metaboxes/ServiceMetabox.php:1526
 msgid "Brief description of this add-on..."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:647
-#: src/Admin/Metaboxes/ServiceMetabox.php:1529
+#: src/Admin/Metaboxes/ServiceMetabox.php:1531
 msgid "Field Type"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:655
-#: src/Admin/Metaboxes/ServiceMetabox.php:1537
+#: src/Admin/Metaboxes/ServiceMetabox.php:1539
 msgid "Price Type"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:674
-#: src/Admin/Metaboxes/ServiceMetabox.php:1555
+#: src/Admin/Metaboxes/ServiceMetabox.php:1557
 msgid "Min Quantity"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:679
-#: src/Admin/Metaboxes/ServiceMetabox.php:1560
+#: src/Admin/Metaboxes/ServiceMetabox.php:1562
 msgid "Max Quantity"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:686
-#: src/Admin/Metaboxes/ServiceMetabox.php:1567
+#: src/Admin/Metaboxes/ServiceMetabox.php:1569
 #: src/CustomFields/Fields/CheckboxField.php:110
 #: src/CustomFields/Fields/MultiSelectField.php:107
 #: src/CustomFields/Fields/RadioField.php:111
@@ -2210,12 +2210,12 @@ msgid "Options"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:689
-#: src/Admin/Metaboxes/ServiceMetabox.php:1569
+#: src/Admin/Metaboxes/ServiceMetabox.php:1571
 msgid "Option 1, Option 2, Option 3 (comma separated)"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:694
-#: src/Admin/Metaboxes/ServiceMetabox.php:1574
+#: src/Admin/Metaboxes/ServiceMetabox.php:1576
 msgid "Extra Delivery Days"
 msgstr ""
 
@@ -2240,95 +2240,95 @@ msgstr ""
 msgid "FAQ"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1137
+#: src/Admin/Metaboxes/ServiceMetabox.php:1139
 msgid "Service Status"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1159
+#: src/Admin/Metaboxes/ServiceMetabox.php:1161
 msgid "Statistics"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1195
+#: src/Admin/Metaboxes/ServiceMetabox.php:1197
 msgid "Delivery time and revisions are configured per package in the Pricing tab."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1232
+#: src/Admin/Metaboxes/ServiceMetabox.php:1234
 msgid "Pricing Packages"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1234
+#: src/Admin/Metaboxes/ServiceMetabox.php:1236
 msgid "Define your service package. Add more packages for tiered pricing (up to 3)."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1245
+#: src/Admin/Metaboxes/ServiceMetabox.php:1247
 msgid "Add Package"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1264
+#: src/Admin/Metaboxes/ServiceMetabox.php:1266
 #: src/Frontend/ServiceWizard.php:92
 #: src/Frontend/ServiceWizard.php:799
 msgid "Gallery"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1266
+#: src/Admin/Metaboxes/ServiceMetabox.php:1268
 msgid "Add images to showcase your service. Drag to reorder."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1301
+#: src/Admin/Metaboxes/ServiceMetabox.php:1303
 msgid "Service Add-ons"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1305
+#: src/Admin/Metaboxes/ServiceMetabox.php:1307
 msgid "Add extra services buyers can purchase with this service."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1315
+#: src/Admin/Metaboxes/ServiceMetabox.php:1317
 msgid "Add Add-on"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1336
+#: src/Admin/Metaboxes/ServiceMetabox.php:1338
 msgid "Questions to ask buyers when they place an order."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1346
+#: src/Admin/Metaboxes/ServiceMetabox.php:1348
 #: src/Frontend/ServiceWizard.php:955
 msgid "Add Requirement"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1365
+#: src/Admin/Metaboxes/ServiceMetabox.php:1367
 #: src/Frontend/ServiceWizard.php:1061
 #: src/Services/FAQService.php:158
 #: templates/partials/service-faqs.php:35
 msgid "Frequently Asked Questions"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1367
+#: src/Admin/Metaboxes/ServiceMetabox.php:1369
 msgid "Add frequently asked questions about your service."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1374
-#: src/Admin/Metaboxes/ServiceMetabox.php:1645
+#: src/Admin/Metaboxes/ServiceMetabox.php:1376
+#: src/Admin/Metaboxes/ServiceMetabox.php:1647
 msgid "FAQ question"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1376
-#: src/Admin/Metaboxes/ServiceMetabox.php:1646
+#: src/Admin/Metaboxes/ServiceMetabox.php:1378
+#: src/Admin/Metaboxes/ServiceMetabox.php:1648
 #: src/Services/FAQService.php:274
 msgid "Enter question..."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1381
-#: src/Admin/Metaboxes/ServiceMetabox.php:1651
+#: src/Admin/Metaboxes/ServiceMetabox.php:1383
+#: src/Admin/Metaboxes/ServiceMetabox.php:1653
 msgid "FAQ answer"
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1382
-#: src/Admin/Metaboxes/ServiceMetabox.php:1652
+#: src/Admin/Metaboxes/ServiceMetabox.php:1384
+#: src/Admin/Metaboxes/ServiceMetabox.php:1654
 #: src/Services/FAQService.php:278
 msgid "Enter answer..."
 msgstr ""
 
-#: src/Admin/Metaboxes/ServiceMetabox.php:1390
+#: src/Admin/Metaboxes/ServiceMetabox.php:1392
 #: src/Frontend/ServiceWizard.php:1095
 #: src/Services/FAQService.php:231
 msgid "Add FAQ"
@@ -3933,8 +3933,8 @@ msgstr[1] ""
 #: src/Admin/Pages/VendorsPage.php:679
 #: src/Admin/Pages/WithdrawalsPage.php:578
 #: src/Admin/Tables/DisputesListTable.php:321
-#: src/Frontend/SingleServiceView.php:871
-#: src/Frontend/SingleServiceView.php:997
+#: src/Frontend/SingleServiceView.php:873
+#: src/Frontend/SingleServiceView.php:999
 #: templates/dashboard/sections/portfolio.php:155
 #: templates/dashboard/sections/portfolio.php:216
 #: templates/dashboard/sections/requests.php:164
@@ -4034,7 +4034,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:998
 #: src/Frontend/MenuVisibility.php:83
-#: src/Frontend/SingleServiceView.php:754
+#: src/Frontend/SingleServiceView.php:756
 #: src/Frontend/UnifiedDashboard.php:432
 #: src/Frontend/UnifiedDashboard.php:720
 msgid "Portfolio"
@@ -8054,7 +8054,7 @@ msgstr ""
 
 #: src/Core/AbilitiesRegistrar.php:356
 #: src/Frontend/SingleServiceView.php:148
-#: src/Frontend/SingleServiceView.php:1076
+#: src/Frontend/SingleServiceView.php:1078
 msgid "Send Message"
 msgstr ""
 
@@ -10371,7 +10371,7 @@ msgid "Log in"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:930
-#: src/Frontend/SingleServiceView.php:529
+#: src/Frontend/SingleServiceView.php:531
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:704
 #: templates/emails/vendor-contact.php:72
 #: templates/order/extension-view.php:139
@@ -10411,7 +10411,7 @@ msgid "Service:"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1058
-#: src/Frontend/SingleServiceView.php:961
+#: src/Frontend/SingleServiceView.php:963
 msgid "Total:"
 msgstr ""
 
@@ -10558,7 +10558,7 @@ msgid "Copied!"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:155
-#: src/Frontend/SingleServiceView.php:967
+#: src/Frontend/SingleServiceView.php:969
 msgid "Continue to Checkout"
 msgstr ""
 
@@ -10602,119 +10602,119 @@ msgstr ""
 msgid "About The Seller"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:472
+#: src/Frontend/SingleServiceView.php:474
 msgid "Overall seller rating across all their services"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:476
+#: src/Frontend/SingleServiceView.php:478
 msgid "seller rating"
 msgstr ""
 
 #. translators: %d: number of completed orders
-#: src/Frontend/SingleServiceView.php:485
+#: src/Frontend/SingleServiceView.php:487
 #, php-format
 msgid "%d order completed"
 msgid_plural "%d orders completed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Frontend/SingleServiceView.php:496
+#: src/Frontend/SingleServiceView.php:498
 msgid "Contact Me"
 msgstr ""
 
 #. translators: %s: vendor display name
-#: src/Frontend/SingleServiceView.php:512
+#: src/Frontend/SingleServiceView.php:514
 #, php-format
 msgid "Intro video from %s"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:535
+#: src/Frontend/SingleServiceView.php:537
 #: templates/partials/vendor-card.php:148
 msgid "Member since"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:544
+#: src/Frontend/SingleServiceView.php:546
 msgid "Avg. Response Time"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:556
+#: src/Frontend/SingleServiceView.php:558
 #: templates/partials/vendor-card.php:167
 msgid "Last Delivery"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:564
+#: src/Frontend/SingleServiceView.php:566
 msgid "Languages"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:580
+#: src/Frontend/SingleServiceView.php:582
 msgid "Skills"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:641
+#: src/Frontend/SingleServiceView.php:643
 msgid "This seller is currently on vacation."
 msgstr ""
 
 #. translators: %s: formatted return date
-#: src/Frontend/SingleServiceView.php:686
+#: src/Frontend/SingleServiceView.php:688
 #, php-format
 msgid "Orders resume on %s"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:824
+#: src/Frontend/SingleServiceView.php:826
 msgid "Related Services"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:876
+#: src/Frontend/SingleServiceView.php:878
 msgid "Order Options"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:886
+#: src/Frontend/SingleServiceView.php:888
 msgid "Add Extras"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:953
+#: src/Frontend/SingleServiceView.php:955
 msgid "Package:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:957
+#: src/Frontend/SingleServiceView.php:959
 msgid "Delivery:"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1002
+#: src/Frontend/SingleServiceView.php:1004
 #: templates/partials/service-packages.php:359
 msgid "Contact Seller"
 msgstr ""
 
 #. translators: %s: response time
-#: src/Frontend/SingleServiceView.php:1020
+#: src/Frontend/SingleServiceView.php:1022
 #, php-format
 msgid "Usually responds in %s"
 msgstr ""
 
 #. translators: 1: login URL, 2: register URL
-#: src/Frontend/SingleServiceView.php:1036
+#: src/Frontend/SingleServiceView.php:1038
 #, php-format
 msgid "Please <a href=\"%1$s\">log in</a> or <a href=\"%2$s\">register</a> to contact this seller."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1051
+#: src/Frontend/SingleServiceView.php:1053
 msgid "Your Message"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1055
+#: src/Frontend/SingleServiceView.php:1057
 msgid "Tell the seller what you need..."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1058
+#: src/Frontend/SingleServiceView.php:1060
 msgid "Be specific about your requirements for better assistance."
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1063
+#: src/Frontend/SingleServiceView.php:1065
 #: templates/order/order-requirements.php:260
 msgid "Attach Files (optional)"
 msgstr ""
 
-#: src/Frontend/SingleServiceView.php:1070
+#: src/Frontend/SingleServiceView.php:1072
 msgid "Max 5 files. Allowed: images, PDF, Word, ZIP."
 msgstr ""
 
@@ -13916,11 +13916,11 @@ msgstr ""
 msgid "Tip"
 msgstr ""
 
-#: src/Models/ServiceOrder.php:960
+#: src/Models/ServiceOrder.php:971
 msgid "Custom"
 msgstr ""
 
-#: src/Models/ServiceOrder.php:1007
+#: src/Models/ServiceOrder.php:1018
 msgid "Add-on"
 msgstr ""
 
@@ -15503,7 +15503,7 @@ msgstr ""
 #. translators: %s: payout amount.
 #: src/Services/NotificationService.php:322
 #: src/Services/NotificationService.php:361
-#: templates/emails/plain/withdrawal-auto.php:37
+#: templates/emails/plain/withdrawal-auto.php:36
 #, php-format
 msgid "Amount: %s"
 msgstr ""
@@ -18368,7 +18368,7 @@ msgid "Please submit your requirements so the vendor can start working on your o
 msgstr ""
 
 #: templates/emails/new-order.php:93
-#: templates/emails/plain/new-order.php:49
+#: templates/emails/plain/new-order.php:48
 msgid "The customer will submit their requirements shortly. You'll receive another notification when they do."
 msgstr ""
 
@@ -18529,13 +18529,13 @@ msgid "Reply to Message:"
 msgstr ""
 
 #. translators: %s: order total amount.
-#: templates/emails/plain/new-order.php:46
+#: templates/emails/plain/new-order.php:45
 #: templates/emails/plain/order-completed.php:43
 #, php-format
 msgid "Total: %s"
 msgstr ""
 
-#: templates/emails/plain/new-order.php:52
+#: templates/emails/plain/new-order.php:51
 #: templates/emails/plain/order-in-progress.php:52
 msgid "View Order:"
 msgstr ""
@@ -18718,8 +18718,8 @@ msgstr ""
 msgid "Email: %s"
 msgstr ""
 
-#: templates/emails/plain/withdrawal-auto.php:40
-#: templates/emails/plain/withdrawal-requested.php:39
+#: templates/emails/plain/withdrawal-auto.php:39
+#: templates/emails/plain/withdrawal-requested.php:38
 msgid "Review Withdrawal:"
 msgstr ""
 
@@ -18729,7 +18729,7 @@ msgid "A vendor has submitted a new withdrawal request that requires your review
 msgstr ""
 
 #. translators: %s: requested withdrawal amount.
-#: templates/emails/plain/withdrawal-requested.php:36
+#: templates/emails/plain/withdrawal-requested.php:35
 #, php-format
 msgid "Amount Requested: %s"
 msgstr ""

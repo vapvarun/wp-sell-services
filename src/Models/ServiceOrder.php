@@ -538,34 +538,34 @@ class ServiceOrder {
 	public static function from_db( object $row ): self {
 		$order = new self();
 
-		$order->id                 = (int) $row->id;
-		$order->order_number       = $row->order_number;
-		$order->customer_id        = (int) $row->customer_id;
-		$order->vendor_id          = (int) $row->vendor_id;
-		$order->service_id         = (int) $row->service_id;
+		$order->id           = (int) $row->id;
+		$order->order_number = $row->order_number;
+		$order->customer_id  = (int) $row->customer_id;
+		$order->vendor_id    = (int) $row->vendor_id;
+		$order->service_id   = (int) $row->service_id;
 		// package_id is an INDEX into the service's _wpss_packages meta, so 0 is
 		// a real package (the first one, usually "Basic") and only NULL means
 		// "no package". A truthiness check here collapsed 0 to null, which is
 		// why the first package of every service resolved as "Custom".
-		$order->package_id         = null === $row->package_id ? null : (int) $row->package_id;
-		$order->addons             = $row->addons ? json_decode( $row->addons, true ) : array();
-		$order->platform           = $row->platform;
-		$order->platform_order_id  = $row->platform_order_id ? (int) $row->platform_order_id : null;
-		$order->platform_item_id   = $row->platform_item_id ? (int) $row->platform_item_id : null;
-		$order->subtotal           = (float) $row->subtotal;
-		$order->addons_total       = (float) $row->addons_total;
-		$order->total              = (float) $row->total;
-		$order->currency           = $row->currency;
-		$order->commission_rate    = isset( $row->commission_rate ) ? (float) $row->commission_rate : null;
-		$order->platform_fee       = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
-		$order->vendor_earnings    = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
-		$order->status             = $row->status;
-		$order->payment_method     = $row->payment_method;
-		$order->payment_status     = $row->payment_status;
-		$order->transaction_id     = $row->transaction_id;
+		$order->package_id        = null === $row->package_id ? null : (int) $row->package_id;
+		$order->addons            = $row->addons ? json_decode( $row->addons, true ) : array();
+		$order->platform          = $row->platform;
+		$order->platform_order_id = $row->platform_order_id ? (int) $row->platform_order_id : null;
+		$order->platform_item_id  = $row->platform_item_id ? (int) $row->platform_item_id : null;
+		$order->subtotal          = (float) $row->subtotal;
+		$order->addons_total      = (float) $row->addons_total;
+		$order->total             = (float) $row->total;
+		$order->currency          = $row->currency;
+		$order->commission_rate   = isset( $row->commission_rate ) ? (float) $row->commission_rate : null;
+		$order->platform_fee      = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
+		$order->vendor_earnings   = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
+		$order->status            = $row->status;
+		$order->payment_method    = $row->payment_method;
+		$order->payment_status    = $row->payment_status;
+		$order->transaction_id    = $row->transaction_id;
 		// Null-coalesced: rows read before the 1.4.9 migration ran, or from a
 		// partial SELECT, simply have no refund recorded.
-		$order->refunded_amount    = $row->refunded_amount ?? null;
+		$order->refunded_amount = $row->refunded_amount ?? null;
 		// Cast before decode: the column is nullable and this class runs under
 		// strict_types, where json_decode( null ) is a fatal TypeError.
 		$billing                   = json_decode( (string) ( $row->billing_address ?? '' ), true );
@@ -911,6 +911,17 @@ class ServiceOrder {
 		return null !== $this->package_id && $this->can_have_package();
 	}
 
+	/**
+	 * Get the package snapshot recorded on this order.
+	 *
+	 * Prefers the snapshot stored in meta, which is what the order was actually
+	 * bought against, so a later edit to the live package cannot rewrite history
+	 * on an existing order.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return array<string, mixed>|null Snapshot, or null when the order has none.
+	 */
 	public function get_package_snapshot(): ?array {
 		// Try snapshot from meta first.
 		$snapshot = $this->meta['package_snapshot'] ?? null;

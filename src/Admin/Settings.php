@@ -3174,7 +3174,7 @@ class Settings {
 		// for why the wallet ledger makes that safe). Capped at 90 to match the
 		// field, enforced HERE and not just by the max attribute, which is only
 		// a browser hint a posted value can sail straight past.
-		$sanitized['clearance_days'] = min( 90, absint( $input['clearance_days'] ?? 0 ) );
+		$sanitized['clearance_days']            = min( 90, absint( $input['clearance_days'] ?? 0 ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
 		$sanitized['auto_withdrawal_threshold'] = absint( $input['auto_withdrawal_threshold'] ?? 500 );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );

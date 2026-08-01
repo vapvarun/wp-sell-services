@@ -22,7 +22,7 @@ $service_id = get_the_ID();
 $packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: [];
 
 // Vendor vacation state is resolved in the view (no DB queries in templates).
-$wpss_vacation = ( isset( $wpss_vacation ) && is_array( $wpss_vacation ) ) ? $wpss_vacation : null;
+$wpss_vacation    = ( isset( $wpss_vacation ) && is_array( $wpss_vacation ) ) ? $wpss_vacation : null;
 $wpss_on_vacation = null !== $wpss_vacation;
 
 // Service-level paused status (distinct from vendor vacation). Resolved in the

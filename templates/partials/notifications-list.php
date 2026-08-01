@@ -69,10 +69,10 @@ foreach ( $wpss_notifications as $wpss_n ) {
 .wpss-notif-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var( --wpss-border, #e5e7eb ); border-radius: var( --wpss-radius, 8px ); background: var( --wpss-bg, #fff ); }
 .wpss-notif-row--unread { background: var( --wpss-primary-light, #eef2ff ); border-color: var( --wpss-primary, #4f46e5 ); }
 /* Icon, title and the mark-read control share ONE first-line band so they sit
-   on the same optical line. The icon is a replaced SVG whose box does not match
-   the title's line box, so flex-start alone left it floating above the text on
-   every multi-line row. Sizing the icon to the title's line-height and centring
-   the glyph inside it is what actually aligns them. */
+	on the same optical line. The icon is a replaced SVG whose box does not match
+	the title's line box, so flex-start alone left it floating above the text on
+	every multi-line row. Sizing the icon to the title's line-height and centring
+	the glyph inside it is what actually aligns them. */
 .wpss-notif-row__icon { flex: 0 0 auto; color: var( --wpss-primary, #4f46e5 ); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 24px; }
 .wpss-notif-row__icon svg { width: 18px; height: 18px; }
 .wpss-notif-row__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

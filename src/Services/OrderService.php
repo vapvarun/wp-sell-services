@@ -564,7 +564,7 @@ class OrderService {
 		// gates by wpss_order_is_refundable(); the map only says the transition is
 		// structurally legal. Unpaid stages (pending_payment) are intentionally
 		// excluded — there is nothing to refund before capture.
-		$refund_targets = array(
+		$refund_targets      = array(
 			ServiceOrder::STATUS_REFUNDED,
 			ServiceOrder::STATUS_PARTIALLY_REFUNDED,
 		);

@@ -1102,8 +1102,10 @@ class ServiceMetabox {
 			<?php $this->render_addons_content( $post ); ?>
 		</div>
 		<div id="wpss_requirements_panel" class="wpss-panel">
-			<?php // Sentinel: marks that the requirements UI was on this form, so a
-			// save with zero rows means "cleared" rather than "not rendered". ?>
+			<?php
+			// Sentinel: marks that the requirements UI was on this form, so a
+			// save with zero rows means "cleared" rather than "not rendered".
+			?>
 			<input type="hidden" name="wpss_requirements_present" value="1">
 			<?php $this->render_requirements_content( $post ); ?>
 		</div>
