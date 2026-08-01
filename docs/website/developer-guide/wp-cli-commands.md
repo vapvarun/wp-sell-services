@@ -9,7 +9,6 @@ wp wpss demo         Manage demo services
 wp wpss preflight    Run release-readiness preflight checks
 wp wpss scale        Seed, benchmark and teardown a production-shape dataset
 wp wpss service      Manage services (alias of `demo` -- same subcommands)
-wp wpss test         Run tests and gap detection
 wp wpss test:flow    Run end-to-end data flow tests
 wp wpss validate     Validate models and schema
 ```
@@ -53,13 +52,14 @@ Every check prints PASS or FAIL with the reason.
 ## Testing and gap detection
 
 ```bash
-wp wpss test run       # run the test suite
-wp wpss test tables    # check the plugin's database tables exist
-wp wpss test gaps      # report functionality gaps
-wp wpss test seed      # create test data for manual testing
-wp wpss test clean     # clean up test data
 wp wpss test:flow      # end-to-end data flow tests
 ```
+
+> Earlier documentation listed `wp wpss test run`, `test tables`, `test gaps`,
+> `test seed` and `test clean`. **No bare `wpss test` command is registered** --
+> those examples fail with "not a registered subcommand". The only command in
+> this group is `test:flow`. For seeding and cleanup use `wp wpss demo`, and for
+> release checks `wp wpss preflight`.
 
 `test:flow` walks a complete order lifecycle through the data layer and reports
 where a flow breaks. It is the fastest way to confirm a fresh install actually
