@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -263,7 +263,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
-= 1.3.1 - August 2026 =
+= 1.4.0 - August 2026 =
 
 Payment ownership is now unambiguous, milestone and tip payments work on WooCommerce, and the REST API tells clients the truth.
 
@@ -271,20 +271,37 @@ Payment ownership is now unambiguous, milestone and tip payments work on WooComm
 * New      - GET /orders/{id}/timeline returns one merged, chronological event history for an order.
 * New      - GET /auth/devices lists a user's registered push devices, and POST /reviews works as an alias for the order review route.
 * New      - New filter wpss_pay_order_url is the single seam for "send the buyer somewhere they can pay this order".
+* New      - Returning from an off-site card authentication now shows the outcome instead of the checkout form again, so a buyer cannot pay twice for the same order.
+* New      - Settings shows whether the Stripe webhook is actually receiving events, so an owner is not left guessing whether setup worked.
 * Improve  - When WooCommerce, Easy Digital Downloads, FluentCart or SureCart is active, that platform now owns all payment; the plugin's own gateways and payment routes stay out of the way.
 * Improve  - Switching e-commerce platform never rewrites past orders, and webhooks from the gateway that took the payment keep working.
 * Improve  - Notification text is now plain, with HTML composed only where it belongs, in email.
+* Improve  - Billing details are remembered on every payment method, not only Stripe, so a returning buyer confirms one line instead of retyping their address.
+* Improve  - Order numbers are shorter and easier to read out to support, and no longer carry the time the order was placed.
+* Improve  - Menu visibility is set one role at a time with plain "visible" toggles, rather than a grid of tick-to-hide boxes that meant the opposite of what it looked like.
+* Improve  - Notifications name the order the way the rest of the site does, and a proposed milestone says which phase and how much.
+* Improve  - Messages list every conversation by the person it is with, with a preview and what it is about.
+* Improve  - Dashboard sections share one card style, so borders and corners match from screen to screen.
 * Improve  - Every money value now carries a minor-unit integer alongside the decimal, so zero- and three-decimal currencies stay exact.
 * Fix      - Refunding a WooCommerce order now also reverses the tip, milestone phase or paid extension attached to it.
+* Fix      - A refund started at the payment gateway is no longer sent back to the gateway a second time, which could return double the money.
+* Fix      - A partially refunded order can be completed, and the vendor is credited on what the buyer actually paid rather than the original total.
+* Fix      - A vendor can no longer stack withdrawal requests past their available balance; pending requests and funds still clearing are now counted.
+* Fix      - A declined card says it was declined and why, instead of asking the buyer to complete an authentication step that does not exist.
+* Fix      - The settings API reports an unmapped page as null rather than 0, so an app no longer builds a link to a page that cannot open.
+* Fix      - An existing terms page on the site is picked up automatically instead of the setting staying empty.
 * Fix      - The REST API answers 401 for a caller with no session and 403 for one who is signed in but not allowed; a client refreshing an expired token no longer reads it as a permanent denial.
-* Fix      - Vendor-only routes report a single error code, wpss_not_vendor, instead of several spellings of the same thing.
+* Fix      - A 403 now names its reason so an app can act on it: wpss_not_vendor, wpss_vendor_pending, wpss_not_owner, wpss_not_admin, wpss_cannot_create or wpss_service_limit_reached, instead of one generic code for every refusal.
 * Fix      - Submitting a delivery over the REST API now records it and notifies exactly as the dashboard does.
 * Dev      - Removed the order actions accept and reject; they had no transition behind them. An order is accepted by being paid.
 * Dev      - Removed the hooks wpss_order_accepted, wpss_order_rejected and wpss_order_delivered. Use wpss_order_paid, wpss_order_cancelled, and wpss_delivery_submitted / wpss_delivery_accepted.
 * Dev      - The payment routes register only on the standalone rail; on a cart platform they are absent and answer rest_no_route.
 * Dev      - Translation catalogs (.mo and .json) are generated in the build, with a CI gate to keep them current.
+* Dev      - Every user-facing string in JavaScript is now translatable, including the whole wallet transactions table, which was English in every locale.
+* Dev      - An accepted proposal records which order it produced, and existing accepted proposals are linked on upgrade where the match is unambiguous.
+* Dev      - The dashboard credit is off by default; owners who want it can switch it on with the wpss_show_powered_by filter.
 * Dev      - Documented the pay-order seam, the two REST namespaces, the milestone failure paths, and the three money settings tabs.
-* Compat   - Aligned with WP Sell Services Pro 1.3.1. Install both updates together.
+* Compat   - Aligned with WP Sell Services Pro 1.4.0. Install both updates together.
 * Compat   - Milestone, tip and extension payment links are supported on Standalone and WooCommerce.
 
 = 1.3.0 - July 2026 =
@@ -541,7 +558,7 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 
 == Upgrade Notice ==
 
-= 1.3.1 =
+= 1.4.0 =
 WooCommerce sites can now take milestone, tip and extension payments. A cart plugin, when active, owns all payment. The order actions accept and reject, and the hooks wpss_order_accepted / wpss_order_rejected / wpss_order_delivered, have been removed.
 
 = 1.3.0 =

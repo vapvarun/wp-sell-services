@@ -441,7 +441,7 @@ class Activator {
 	 * Only ever fills an EMPTY setting, so an owner's explicit choice is never
 	 * overwritten, and only matches a published page.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @return void
 	 */
@@ -453,7 +453,7 @@ class Activator {
 		/**
 		 * Filters the slugs searched when auto-mapping an existing terms page.
 		 *
-		 * @since 1.3.1
+		 * @since 1.4.0
 		 *
 		 * @param string[] $slugs Candidate page slugs, most specific first.
 		 */

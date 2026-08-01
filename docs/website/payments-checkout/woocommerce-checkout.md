@@ -183,7 +183,7 @@ WooCommerce is cart-based. It has no notion of "pay this existing thing," so the
 default `?pay_order=N` URL appended to a WooCommerce checkout drops the buyer on
 an **empty cart, with no way to pay and no error message**. That was the actual
 behaviour of every tip, milestone and extension link in WooCommerce mode before
-1.3.1.
+1.4.0.
 
 The resolver fixes it by meeting WooCommerce on its own terms: it creates a real
 WooCommerce order for the amount owed and hands back WooCommerce's native
@@ -239,7 +239,7 @@ fires `wpss_order_paid`. That is what credits the vendor and moves the phase to
 Sub-orders are deliberately *not* pushed into `pending_requirements` when paid --
 requirements belong to the parent order, not to each phase.
 
-**Refunds (1.3.1):** refunding the WooCommerce order now reverses the tip,
+**Refunds (1.4.0):** refunding the WooCommerce order now reverses the tip,
 milestone or extension too. Previously only the *paid* handler knew how to
 resolve a sub-order, so a refunded or cancelled tip was silently ignored while
 the buyer got their money back. The refunded amount is apportioned across every

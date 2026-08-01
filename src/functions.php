@@ -3750,7 +3750,7 @@ function wpss_get_checkout_base_url(): string {
  * payment flow instead. Never rebuild this URL inline — a caller that does
  * is correct only on standalone.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param int $order_id WPSS order ID to be paid.
  * @return string Payment URL for the active e-commerce rail.
@@ -3766,7 +3766,7 @@ function wpss_get_pay_order_url( int $order_id ): string {
 	 * returns its native order-pay URL so the link works from an email with
 	 * no cart session.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param string $url      Default standalone pay URL.
 	 * @param int    $order_id WPSS order ID being paid.
@@ -3782,7 +3782,7 @@ function wpss_get_pay_order_url( int $order_id ): string {
  * they hang off a parent order. Every list, count and stat has to agree on
  * that, so the list lives here rather than being re-authored per query.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return array<int, string> Sub-order platform values.
  */
@@ -3796,7 +3796,7 @@ function wpss_get_pay_order_url( int $order_id ): string {
  * belong in the payload — decode once here rather than making every consumer
  * carry a decoder and remember to use it.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param mixed $value Raw stored value.
  * @return string Decoded text.
@@ -3830,7 +3830,7 @@ function wpss_rest_text( $value ): string {
  * resolve through wpss_get_pay_order_url(), which hands off to whichever rail
  * is active.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return bool True when new payments are taken through our own gateways.
  */
@@ -3856,7 +3856,7 @@ function wpss_uses_standalone_payments(): bool {
  * `delivery` and `revisions` carry no default sub-text because theirs comes
  * from the package being bought - see wpss_get_checkout_badges().
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return array<string, array<string, string>> Keyed by badge id.
  */
@@ -3887,7 +3887,7 @@ function wpss_get_checkout_badge_defaults(): array {
  * numbers on the package being bought, so the badge can never contradict the
  * order it sits next to.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param array<string, mixed> $package Package being purchased.
  * @return array<int, array<string, string>> Renderable badges.
@@ -3949,7 +3949,7 @@ function wpss_get_checkout_badges( array $package ): array {
 	/**
 	 * Filter the checkout reassurance badges.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param array $badges  Each entry: icon, title, note.
 	 * @param array $package Package being purchased.
@@ -3979,7 +3979,7 @@ function wpss_get_checkout_badges( array $package ): array {
  * store - the thing that makes "enable a test gateway by default" dangerous
  * in most plugins.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return bool
  */
@@ -4003,7 +4003,7 @@ function wpss_demo_payments_enabled(): bool {
  * "Configured" means enabled AND carrying the credentials it needs - an
  * enabled gateway with empty keys cannot take money, so it does not count.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return bool
  */
@@ -4040,7 +4040,7 @@ function wpss_has_live_gateway(): bool {
  *
  * The HTTP status was already 401; it was the machine-readable code that lied.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return true|WP_Error
  */
@@ -4063,7 +4063,7 @@ function wpss_rest_require_login() {
  * and a logged-in non-admin gets 403. Returning 403 to both is what breaks a
  * client's re-auth logic.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return true|WP_Error
  */
@@ -4093,7 +4093,7 @@ function wpss_rest_require_admin() {
  * and a plain rest_forbidden - so a client could not branch on it without
  * knowing which endpoint it had called.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return true|WP_Error
  */
@@ -4131,7 +4131,7 @@ function wpss_rest_require_vendor() {
  * Example: wpss_rest_money( 'total', 25.20, 'USD' ) returns
  * array( 'total' => 25.2, 'total_minor' => 2520, 'currency' => 'USD' ).
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param string $key      Base field name, e.g. 'total' or 'amount'.
  * @param float  $amount   Amount in major units.
@@ -4158,7 +4158,7 @@ function wpss_rest_money( string $key, float $amount, string $currency = '' ): a
  * shared shape these drift into `user_id` here, `author` there and a bare
  * display name somewhere else, and a client needs a parser per endpoint.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param int $user_id User ID. 0 or an unknown user yields null.
  * @return array<string, mixed>|null
@@ -4192,7 +4192,7 @@ function wpss_rest_user( int $user_id ): ?array {
  * category it read off a service did not match the category list it was
  * asked to match it against.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param \WP_Term $term Term object.
  * @return array<string, mixed> Term data.
@@ -4219,7 +4219,7 @@ function wpss_prepare_term_for_rest( \WP_Term $term ): array {
  * Sub-orders (tips, extras, revisions) hang off a parent order, so they must
  * never surface as standalone rows in a buyer's or vendor's order list.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @return string[] Platform slugs.
  */
@@ -4235,7 +4235,7 @@ function wpss_get_sub_order_platforms(): array {
  * price change silently rewrites what every past order says it was — the buyer
  * opens an old order and sees a package they never bought.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param int      $service_id Service post ID.
  * @param int|null $package_id Package INDEX into the service's packages meta.
@@ -4271,7 +4271,7 @@ function wpss_build_package_snapshot( int $service_id, ?int $package_id ): ?arra
  *
  * Safe to call more than once: the snapshot is only written when missing.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param int                  $order_id   Newly created WPSS order ID.
  * @param array<string, mixed> $order_data Raw creation data, passed to the hook.
@@ -4301,7 +4301,7 @@ function wpss_after_order_created( int $order_id, array $order_data = array() ):
  * Idempotent, and a no-op for order types that cannot carry a package (tips,
  * milestones, extensions) or for orders bought without one.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param int $order_id WPSS order ID.
  * @return bool Whether a snapshot was written.
@@ -4365,7 +4365,7 @@ function wpss_capture_order_package_snapshot( int $order_id ): bool {
  * as a secondary identifier. Rail-neutral by design: each integration answers
  * the filter rather than adding its own block to the order template.
  *
- * @since 1.3.1
+ * @since 1.4.0
  *
  * @param object $order WPSS order.
  * @return array{label: string, number: string, url: string}|null Reference, or null when the rail has none.
@@ -4379,7 +4379,7 @@ function wpss_get_order_payment_reference( object $order ): ?array {
 	 * current user is allowed to open). Return null for rails with no separate
 	 * receipt — standalone gateways record the transaction on the order itself.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param array|null $reference Reference data, or null.
 	 * @param object     $order     WPSS order.

@@ -415,7 +415,7 @@ class Admin {
 	 * configure a gateway, and wpss_demo_payments_enabled() is false on the
 	 * next request.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @return void
 	 */
 	public function demo_payments_notice(): void {

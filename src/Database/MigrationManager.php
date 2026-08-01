@@ -22,7 +22,7 @@ class MigrationManager {
 	/**
 	 * Option marking the proposal -> order backfill as done.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @var string
 	 */
 	const PROPOSAL_BACKFILL_OPTION = 'wpss_backfilled_proposal_order_ids';
@@ -65,7 +65,7 @@ class MigrationManager {
 			$results['wss_migration'] = $this->migrate_from_wss();
 		}
 
-		// Backfill the proposal -> order link for accepts that predate 1.3.1.
+		// Backfill the proposal -> order link for accepts that predate 1.4.0.
 		if ( ! get_option( self::PROPOSAL_BACKFILL_OPTION, false ) ) {
 			$results['proposal_order_ids'] = $this->backfill_proposal_order_ids();
 		}
@@ -74,7 +74,7 @@ class MigrationManager {
 	}
 
 	/**
-	 * Fill in proposals.order_id for proposals accepted before 1.3.1.
+	 * Fill in proposals.order_id for proposals accepted before 1.4.0.
 	 *
 	 * Accepting a proposal minted the order but never recorded WHICH order it
 	 * produced, while Proposal::to_array() published that column in
@@ -90,7 +90,7 @@ class MigrationManager {
 	 * known, so the row is left NULL rather than guessed: a wrong link would
 	 * point a buyer or vendor at somebody else's order.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @return bool True once the pass has run.
 	 */

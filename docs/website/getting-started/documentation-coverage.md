@@ -1,6 +1,6 @@
 # Documentation Coverage
 
-**As of WP Sell Services 1.3.1 and WP Sell Services Pro 1.3.1.**
+**As of WP Sell Services 1.4.0 and WP Sell Services Pro 1.4.0.**
 
 This page exists so you never have to guess whether something is missing or you
 just cannot find it. It states what is documented, and -- more usefully -- what
@@ -68,7 +68,7 @@ Stated plainly, because a gap you know about costs less than one you discover.
 
 | Not covered | Status |
 |---|---|
-| **A "What's New in 1.3.1" page** | The newest What's New page is 1.3.0. The 1.3.1 changes are in both plugins' `readme.txt` changelogs and in the pages they affect, but there is no single narrative page for the release yet. |
+| **A "What's New in 1.4.0" page** | The newest What's New page is 1.3.0. The 1.4.0 changes are in both plugins' `readme.txt` changelogs and in the pages they affect, but there is no single narrative page for the release yet. |
 | **A dedicated Audit Log page** | **Sell Services > Audit Log** is mentioned where it is relevant, and `GET /audit-log` is in the REST reference, but there is no page explaining what is recorded, retention, or how to read an entry. |
 | **The Vendors, Orders & Disputes, and Emails settings tabs** | These are documented by *feature*, not by *tab*: see [Vendor Settings](../vendor-system/vendor-settings.md), [Order Settings](../order-management/order-settings.md) and [Email Configuration](../notifications-emails/email-configuration.md). The Platform Settings section does not yet have a page per tab for these three, so a reader looking tab-by-tab will not find them where they expect. |
 | **Migration between e-commerce rails** | Switching rails is safe (past orders are never rewritten, old gateway webhooks keep working) and that is stated in the REST and WooCommerce pages, but there is no step-by-step migration guide. |
@@ -110,4 +110,4 @@ where a reader will hit them:
 It does not, and cannot, check whether prose is *true*. That is what code
 citations and the per-release resync pass are for. If you find a page that
 contradicts the plugin, that is a bug worth reporting -- the last full
-source-to-docs resync was **2026-08-01, against 1.3.1**.
+source-to-docs resync was **2026-08-01, against 1.4.0**.

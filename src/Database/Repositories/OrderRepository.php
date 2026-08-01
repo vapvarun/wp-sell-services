@@ -198,7 +198,7 @@ class OrderRepository extends AbstractRepository {
 	 * Callers that genuinely want sub-orders pass include_sub_orders => true,
 	 * or ask for a specific platform.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param string               $sql    SQL built so far.
 	 * @param array<int, mixed>    $params Prepare params, appended in place.

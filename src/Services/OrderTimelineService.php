@@ -3,7 +3,7 @@
  * Order activity timeline.
  *
  * @package WPSellServices
- * @since   1.3.1
+ * @since   1.4.0
  */
 
 namespace WPSellServices\Services;
@@ -19,16 +19,16 @@ namespace WPSellServices\Services;
  * agrees with the record rather than being reconstructed from notifications.
  *
  * Everything is derived from stored rows. There is no new table and nothing to
- * backfill, so orders created before 1.3.1 have the same history as new ones.
+ * backfill, so orders created before 1.4.0 have the same history as new ones.
  *
- * @since 1.3.1
+ * @since 1.4.0
  */
 class OrderTimelineService {
 
 	/**
 	 * Build the timeline for an order, oldest event first.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @return array<int, array<string, mixed>> Timeline events.
@@ -64,7 +64,7 @@ class OrderTimelineService {
 	/**
 	 * Events derived from the order's own timestamp columns.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param object $order Order row.
 	 * @return array<int, array<string, mixed>>
@@ -104,7 +104,7 @@ class OrderTimelineService {
 	/**
 	 * Requirement submissions.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @return array<int, array<string, mixed>>
@@ -132,7 +132,7 @@ class OrderTimelineService {
 	/**
 	 * Deliveries and the buyer's response to them.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @return array<int, array<string, mixed>>
@@ -190,7 +190,7 @@ class OrderTimelineService {
 	/**
 	 * Tips, extras and other sub-orders raised against this order.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @return array<int, array<string, mixed>>
@@ -244,7 +244,7 @@ class OrderTimelineService {
 	 * log does not say "Delivery #1 submitted" and "Status changed to
 	 * delivered" one line apart for the same act.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param object $order Order row.
 	 * @return array<int, array<string, mixed>>
@@ -295,7 +295,7 @@ class OrderTimelineService {
 	 * Every event carries the same keys whatever its type, so a client can
 	 * render an unknown future type instead of breaking on it.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param string               $type       Event type slug.
 	 * @param string               $created_at MySQL datetime.
@@ -322,7 +322,7 @@ class OrderTimelineService {
 	 * feed this timeline, so both are accepted here rather than each caller
 	 * remembering which is which.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param mixed $value DateTimeInterface, MySQL datetime string, or null.
 	 * @return string MySQL datetime, or '' when there is no usable value.
@@ -342,7 +342,7 @@ class OrderTimelineService {
 	 * object as a person named anywhere else in the API. A system event has
 	 * no actor and returns null rather than a fake "System" user.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $user_id User ID, 0 for system-generated events.
 	 * @return array<string, mixed>|null Null when the system did it.

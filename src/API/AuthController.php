@@ -548,7 +548,7 @@ class AuthController extends RestController {
 	 * something send to the device, the client already knows its own, and a
 	 * settings screen has no use for anybody else's.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
@@ -565,7 +565,7 @@ class AuthController extends RestController {
 				continue;
 			}
 
-			// Devices registered before 1.3.1 carry neither a label nor a
+			// Devices registered before 1.4.0 carry neither a label nor a
 			// last-seen stamp; fall back to the registration date so the list
 			// still sorts and renders instead of showing blanks.
 			$registered = (string) ( $device['registered_at'] ?? '' );

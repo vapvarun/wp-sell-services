@@ -673,7 +673,7 @@ class UnifiedDashboard {
 				 * Filters whether the "Powered by WP Sell Services" footer credit
 				 * is rendered on the frontend dashboard.
 				 *
-				 * DEFAULT FALSE since 1.3.1. This is a self-hosted plugin, not a
+				 * DEFAULT FALSE since 1.4.0. This is a self-hosted plugin, not a
 				 * hosted service: the dashboard belongs to the site owner and their
 				 * members, and we do not put our name and an outbound link on it
 				 * uninvited. It previously defaulted to true and could only be
@@ -689,7 +689,7 @@ class UnifiedDashboard {
 				 * off it simply has nothing left to remove.
 				 *
 				 * @since 1.2.0
-				 * @since 1.3.1 Default changed from true to false.
+				 * @since 1.4.0 Default changed from true to false.
 				 *
 				 * @param bool $show_powered_by Whether to render the credit. Default false.
 				 */

@@ -1359,7 +1359,7 @@ class OrdersController extends RestController {
 	 * render an Activity tab from the record instead of reconstructing one
 	 * from notifications.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
@@ -1557,7 +1557,7 @@ class OrdersController extends RestController {
 	 * the plugin keys off, so it cannot drift from how orders are filtered and
 	 * counted elsewhere.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param object $order Order row.
 	 * @return string
@@ -1574,7 +1574,7 @@ class OrdersController extends RestController {
 	 * Sub-orders store the parent id in platform_order_id, with a copy in the
 	 * meta JSON; a normal order has no parent.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param object $order Order row.
 	 * @return int|null
@@ -1601,7 +1601,7 @@ class OrdersController extends RestController {
 	 * Resolved through the shared seam, so it is correct on whichever rail the
 	 * site runs — the standalone checkout, or a real WooCommerce order-pay URL.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param object $order Order row.
 	 * @return string|null

@@ -209,7 +209,7 @@ class PortfolioController extends RestController {
 	 * Delegates to get_vendor_portfolio() so there is one query, one shape and
 	 * one pagination contract — the only difference is whose portfolio it is.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error

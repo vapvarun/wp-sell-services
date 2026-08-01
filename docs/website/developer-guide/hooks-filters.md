@@ -90,7 +90,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `OrderWorkflowManager.php:338` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `OrderWorkflowManager.php:472` |
 
-> **Removed in 1.3.1: `wpss_order_accepted`, `wpss_order_rejected`,
+> **Removed in 1.4.0: `wpss_order_accepted`, `wpss_order_rejected`,
 > `wpss_order_delivered`.** The first two went when the dead `accept` / `reject`
 > order verbs were removed -- they never had a real transition behind them.
 > `wpss_order_delivered` went when `deliver` was routed through
@@ -535,7 +535,7 @@ checkout understands that query arg and renders the single order.
 existing order." Appending `?pay_order=N` to a WooCommerce checkout URL lands
 the buyer on an **empty cart with no way to pay and no error message** -- which
 is exactly what every tip, milestone and extension link did in Woo mode before
-1.3.1.
+1.4.0.
 
 **Who hooks it:**
 

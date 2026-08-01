@@ -72,7 +72,7 @@ class API {
 	 * same path IS registered under other methods. Anything genuinely unknown
 	 * keeps its 404, and no other plugin's routes are touched.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param \WP_HTTP_Response $result  Response to send.
 	 * @param \WP_REST_Server   $server  Server instance.
@@ -517,7 +517,7 @@ class API {
 	 * trashed or unpublished is just as broken, so both collapse to null and the
 	 * client can hide the entry instead of linking nowhere.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param array<string, mixed> $pages_settings Stored page map.
 	 * @return array<string, int|null>
@@ -543,7 +543,7 @@ class API {
 	/**
 	 * Resolve each mapped page to a URL a client can navigate to.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param array<string, mixed> $pages_settings Stored page map.
 	 * @return array<string, string|null>

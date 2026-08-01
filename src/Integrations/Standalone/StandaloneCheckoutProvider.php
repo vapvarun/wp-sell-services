@@ -167,7 +167,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * succeeded. "Processing" deliberately does not, either: the money moved,
 	 * and the honest instruction is to wait, not to pay again.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param string $payment_intent_id PaymentIntent id from the return URL.
 	 * @return string

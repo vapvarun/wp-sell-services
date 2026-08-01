@@ -499,7 +499,7 @@ class ProposalService {
 	 * The link was only recoverable by joining orders.platform_order_id back to
 	 * the originating request, which is an inference, not a stored fact.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $proposal_id Proposal ID.
 	 * @param int $order_id    Order minted from this proposal.

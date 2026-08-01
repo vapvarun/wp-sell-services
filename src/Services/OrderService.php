@@ -44,7 +44,7 @@ class OrderService {
 	 * Only the gateway call is suppressed. The vendor-earnings reversal must
 	 * still run either way, because the rail knows nothing about our wallet.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @var array<int, true>
 	 */
 	private static array $settled_at_rail = array();
@@ -56,7 +56,7 @@ class OrderService {
 	 * WooCommerce provider persists the amount itself and then moves the
 	 * status. Always pair with clear_settled_at_rail() in a finally block.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @return void
@@ -68,7 +68,7 @@ class OrderService {
 	/**
 	 * Clear the rail-settled marker for an order.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @return void
@@ -83,7 +83,7 @@ class OrderService {
 	 * Read by OrderWorkflowManager::attempt_payment_refund() to decide whether
 	 * the buyer still needs paying back.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @return bool

@@ -19,7 +19,7 @@
  * must not be handed our text domain.
  *
  * @package WPSellServices\Assets
- * @since   1.3.1
+ * @since   1.4.0
  */
 
 declare(strict_types=1);
@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Static registrar that keeps registration and translation together.
  *
- * @since 1.3.1
+ * @since 1.4.0
  */
 class ScriptRegistry {
 

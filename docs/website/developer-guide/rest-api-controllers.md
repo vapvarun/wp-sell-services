@@ -8,7 +8,7 @@ namespace:
 /wp-json/wpss/v1/
 ```
 
-Every route below is generated from the 1.3.1 source. Path parameters are shown
+Every route below is generated from the 1.4.0 source. Path parameters are shown
 as WordPress route regex (`(?P<id>[\d]+)`) so you can match them exactly.
 
 For authentication, pagination, error shapes, and the generic endpoints, see
@@ -111,7 +111,7 @@ start | deliver | complete | revision | cancel | dispute
 hold | resume | accept-cancellation | reject-cancellation
 ```
 
-> **Changed in 1.3.1:** `accept` and `reject` were removed. They had no
+> **Changed in 1.4.0:** `accept` and `reject` were removed. They had no
 > handler behind them and returned a misleading success on some paths, so a
 > client built against them was never actually transitioning anything. There is
 > no replacement -- an order is accepted by being paid. `deliver` now routes
@@ -127,7 +127,7 @@ curl -X POST https://yoursite.com/wp-json/wpss/v1/orders/42/deliver \
 `/sub-orders` lists the milestone, tip, and extension sub-orders attached to a
 parent order -- see [Sub-Order Pattern](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/SUB_ORDER_PATTERN.md).
 
-`GET /orders/{id}/timeline` (**new in 1.3.1**) returns the merged, chronological
+`GET /orders/{id}/timeline` (**new in 1.4.0**) returns the merged, chronological
 event history for one order -- status transitions, deliveries, revisions,
 milestone and extension events, and payment events -- as a single list. It is
 what an order-detail screen renders instead of stitching four endpoints
@@ -338,7 +338,7 @@ vocabulary as the milestone hooks.
 These are the **standalone checkout** payment routes shipped in free. Pro
 replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#payments-pro).
 
-> **These routes do not exist on every site.** As of 1.3.1 the whole controller
+> **These routes do not exist on every site.** As of 1.4.0 the whole controller
 > is skipped unless `wpss_uses_standalone_payments()` is true
 > (`src/API/PaymentController.php`). With WooCommerce, EDD, FluentCart or
 > SureCart enabled, that rail owns **all** payment and these routes are never

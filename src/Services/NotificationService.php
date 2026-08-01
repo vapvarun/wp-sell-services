@@ -1790,7 +1790,7 @@ class NotificationService {
 	 * word. A buyer could not tell which phase each referred to, or what any of
 	 * them cost, without opening the order.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param mixed $milestone_id Milestone sub-order ID.
 	 * @return string Phase name with amount, or a generic fallback.
@@ -1832,7 +1832,7 @@ class NotificationService {
 	 * Falls back to the id only when the order has since been deleted, which is
 	 * better than rendering an empty "Order #".
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param mixed $order_id Order ID from the notification payload.
 	 * @return string

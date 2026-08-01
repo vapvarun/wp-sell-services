@@ -370,7 +370,7 @@ WordPress core (`rest_no_route`, `rest_cookie_invalid_nonce`, and friends).
 #### The codes you will actually branch on
 
 If you implement nothing else, implement these. They are the ones a real client
-hits, and several were undocumented before 1.3.1.
+hits, and several were undocumented before 1.4.0.
 
 | Status | Code | Means | What to do |
 |---|---|---|---|
@@ -386,7 +386,7 @@ hits, and several were undocumented before 1.3.1.
 | 409 | `wpss_milestone_not_cancellable` | The phase has moved past the cancellable window | Re-fetch |
 | 409 | `wpss_order_not_payable` | The order is not awaiting payment | Re-fetch |
 
-**On 401 vs 403 (changed in 1.3.1):** the plugin now answers these two
+**On 401 vs 403 (changed in 1.4.0):** the plugin now answers these two
 correctly. Routes that used a bare boolean permission callback made WordPress
 report `rest_forbidden` to an *anonymous* caller -- so a client whose rule is
 "401 means refresh the token and retry" read an expired token as a permanent
@@ -581,10 +581,10 @@ See [Custom Integrations](custom-integrations.md) for detailed examples.
 ---
 
 **API Version**: v1
-**Documented against**: WP Sell Services 1.3.1 (free) + WP Sell Services Pro 1.3.1
+**Documented against**: WP Sell Services 1.4.0 (free) + WP Sell Services Pro 1.4.0
 **WordPress Version**: Requires WordPress 6.4+ with REST API enabled
 
 The API has changed since 1.0.0 -- routes were added, `accept`/`reject` order
-actions were removed in 1.3.1, and `/payments/*` became conditional on the
-active e-commerce rail. Treat this page as describing 1.3.1, not "1.0.0 and
+actions were removed in 1.4.0, and `/payments/*` became conditional on the
+active e-commerce rail. Treat this page as describing 1.4.0, not "1.0.0 and
 everything after".

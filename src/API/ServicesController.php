@@ -506,7 +506,7 @@ class ServicesController extends RestController {
 	 * owner's, and an API that invents categories fills the catalog with
 	 * one-off duplicates.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param mixed $categories Term IDs or slugs.
 	 * @return int[] Term IDs that exist.
@@ -1131,7 +1131,7 @@ class ServicesController extends RestController {
 	 * the API, so a client parses a service's categories with the code it
 	 * already uses for the category list.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param mixed $terms Terms from wp_get_object_terms(), or a WP_Error.
 	 * @return array<int, array<string, mixed>>

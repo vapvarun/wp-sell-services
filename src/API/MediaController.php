@@ -195,7 +195,7 @@ class MediaController extends RestController {
 	 * fetched and sliced, so a heavy uploader does not load their whole
 	 * library to read one page.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response

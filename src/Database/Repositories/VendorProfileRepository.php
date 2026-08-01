@@ -94,7 +94,7 @@ class VendorProfileRepository extends AbstractRepository {
 	/**
 	 * Object-cache key for the user_id => avatar_id map.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @var   string
 	 */
 	public const AVATAR_MAP_CACHE_KEY = 'wpss_vendor_avatar_map';
@@ -102,7 +102,7 @@ class VendorProfileRepository extends AbstractRepository {
 	/**
 	 * Object-cache group shared by the plugin.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @var   string
 	 */
 	public const CACHE_GROUP = 'wpss';
@@ -115,7 +115,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 * instead of one per avatar. Any write that can change an avatar_id has to
 	 * drop it, or vendors keep showing a stale picture.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @return void
 	 */
 	public static function flush_avatar_map_cache(): void {

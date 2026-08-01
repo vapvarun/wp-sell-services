@@ -1750,7 +1750,7 @@ class Settings {
 			/**
 			 * Fires instead of the gateway cards when a cart rail owns payment.
 			 *
-			 * @since 1.3.1
+			 * @since 1.4.0
 			 *
 			 * @param string $rail Active ecommerce rail name.
 			 */
@@ -1935,7 +1935,7 @@ class Settings {
 	/**
 	 * Render the checkout badges section description.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @return void
 	 */
 	public function render_checkout_badges_section(): void {
@@ -1946,7 +1946,7 @@ class Settings {
 	/**
 	 * Render the editable checkout badge rows.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param array<string, mixed> $args Field args.
 	 * @return void

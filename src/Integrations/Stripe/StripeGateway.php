@@ -41,7 +41,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	/**
 	 * Where the last verified webhook receipt is recorded.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 * @var string
 	 */
 	private const HEALTH_OPTION = 'wpss_stripe_webhook_health';
@@ -169,7 +169,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * Returns an empty array when there is no usable address; a partial
 	 * shipping object is worse than none, because Stripe rejects it outright.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param int $user_id Buyer user ID.
 	 * @return array<string, mixed> Stripe shipping payload, or empty.
@@ -214,7 +214,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		/**
 		 * Filter the buyer shipping details sent to Stripe.
 		 *
-		 * @since 1.3.1
+		 * @since 1.4.0
 		 *
 		 * @param array $shipping Stripe shipping payload.
 		 * @param int   $user_id  Buyer user ID.
@@ -384,7 +384,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			 * reason verbatim — can replace it here without overriding a
 			 * template.
 			 *
-			 * @since 1.3.1
+			 * @since 1.4.0
 			 *
 			 * @param string $declined_message Message shown to the buyer.
 			 * @param array  $last_error       Stripe's last_payment_error payload.
@@ -407,7 +407,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			 * Filters the message shown when a payment still needs a buyer step
 			 * (typically 3D Secure authentication).
 			 *
-			 * @since 1.3.1
+			 * @since 1.4.0
 			 *
 			 * @param string $action_message Message shown to the buyer.
 			 * @param string $status         PaymentIntent status.
@@ -1172,7 +1172,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * working webhook is a site where a buyer can be charged and never get an
 	 * order. That state was completely silent — this makes it reportable.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @return array{state: string, message: string, last_event_at: int}
 	 */
@@ -1226,7 +1226,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * An order is looked up by transaction id before anything is created, so a
 	 * webhook that already landed cannot be duplicated by the return leg.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param string $payment_intent_id PaymentIntent id from the return URL.
 	 * @return array{status: string, order_id: int, message: string}
@@ -1310,7 +1310,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	/**
 	 * Find an order already settled against a transaction id.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @param string $transaction_id Gateway transaction id.
 	 * @return int Order ID, or 0.

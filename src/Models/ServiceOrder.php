@@ -876,7 +876,7 @@ class ServiceOrder {
 	 * field to 0 when nothing was chosen — without this guard a tip would
 	 * confidently report the service's first package.
 	 *
-	 * @since 1.3.1
+	 * @since 1.4.0
 	 *
 	 * @return bool
 	 */
